@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>Lacewing Client - Description</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#111111">
+<p align="center"><img src="Images/MyExt.bmp" width="358" height="76"></p>
+<p align="center"><font color="#DDDDDD"><font size="+2">Description</font></p>
+<p align="left">The Lacewing Relay Client object is a highly developed communication protocol, enabling you to create online programs, including multiplayer games, chatrooms, file transfer programs, etc.<br>
+Due to the advanced functionality of this extension, it is somewhat complicated to understand completely. This help file contains a description of all the parts of the extension - the actions, the conditions, the properties, and the expressions.<br>
+You can access more information on the <a href="http://lacewing-project.org" target="_blank">official Lacewing site</a> or search the <a href="http://www.clickteam.com/epicenter/ubbthreads.php?ubb=postlist&Board=80&page=1" target="_blank">Lacewing subforum on Clickteam</a>, including:<br>
+&nbsp;&nbsp;&#8226;&nbsp;&nbsp;<a href="http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=187470#Post187470" target="_blank">DizzyDoo's video tutorials</a><br>
+&nbsp;&nbsp;&#8226;&nbsp;&nbsp;<a href="http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=186341#Post186341" target="_blank">Binary message example</a><br>
+&nbsp;&nbsp;&#8226;&nbsp;&nbsp;<a href="http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=165368#Post165368" target="_blank">Details on public servers</a><br>
+&nbsp;&nbsp;&#8226;&nbsp;&nbsp;<a href="http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=109154#Post109154" target="_blank">pylacewing - Lacewing for Python</a><br>
+<br>
+<b>Legend:</b><br>
+When referencing to other parts of the extension:<br>
+<font color="#DD00DD">Pink: Expression.</font><br>
+<font color="#DDDD00">Yellow: Parameter.</font><br>
+<font color="#00DDDD">Cyan: Condition.</font><br>
+<font color="#00DD00">Green: Action.</font><br>
+<font color="#DD0000">Red: Property.</font><br><br>
+<b>Quick connection example:</b><br>
+To connect to a server, use the <font color="#00DD00">Connect</font> action. Once the <font color="#00DDDD">Connection&raquo;On connect</font> condition is TRUE, use the <font color="#00DD00">Set Name</font> action. Once the <font color="#00DDDD">Name&raquo;On name set</font> condition is TRUE, use the <font color="#00DD00">Channel&raquo;Join</font> action. Once the <font color="#00DDDD">Channel&raquo;On channel joined</font> condition is TRUE, you can send messages to the channel.<br><br>
+
+<b>Notes:</b><br>
+1. Server messages you send will not go to every user on the server.<br>
+2. Channel messages you send will not be sent to yourself.<br>
+3. Peer messages will not go to your own client.<br>
+4. Peer loops will not include your own client.<br>
+5. There is no expression to get your external IP as it is not visible to yourself normally.
+</p>
+</body>
+</html>

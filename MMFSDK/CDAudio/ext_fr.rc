@@ -1,0 +1,179 @@
+
+#ifdef APSTUDIO_INVOKED
+	#error this file is not editable by Microsoft Visual C++
+#endif //APSTUDIO_INVOKED
+
+#include "..\inc\ccx.h"
+#include "windows.h"
+#include "extrc.h"
+#include "ext.h"
+
+// Strings
+STRINGTABLE 
+{
+ KPX_NAME, "CD-Audio"
+}
+
+// Version infos
+1 VERSIONINFO 
+FILEVERSION 3,0,228,0
+PRODUCTVERSION 3,0,228,0
+FILEOS VOS_DOS_WINDOWS16
+FILETYPE VFT_APP
+FILEFLAGS 0x20L
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName", "Clickteam\000\000"
+   VALUE "FileDescription", "CD-Audio Object\000"
+   VALUE "FileVersion", "3,0,228,0\000\000"
+   VALUE "InternalName", "KCCDA\000"
+   VALUE "LegalCopyright", "Copyright © 1996-2006 Clickteam\000\000"
+   VALUE "OriginalFilename", "KCCDA.MFX\000"
+   VALUE "SpecialBuild", "00000001\000"
+  }
+ }
+
+ BLOCK "VarFileInfo"
+ {
+  VALUE "Translation", 0x40C, 1252
+ }
+}
+
+
+#ifdef VITALIZE
+VITALIZE_ID RCDATA
+{
+	0x0244, 0x5601, 0x7527, 0xA754, 0xBC60
+}
+#endif
+
+
+#ifndef RUN_ONLY
+
+// Magic number
+KPX_MAGICNUMBER	RCDATA
+{
+	0x2516, 0x5908
+}
+
+// Strings
+STRINGTABLE 
+{
+ KPX_MARK, "MF2"
+}
+
+// User bitmaps
+EXO_ICON BITMAP "res\exticon16b.bmp"
+EXO_IMAGE BITMAP "res\extimg16b.bmp"
+
+
+// CONDITIONS
+// ------------------
+MN_CONDITIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Comparer \340 la position temps", 				(ID_MENUCONDITIONS+CND_CMPOSITION)
+  MENUITEM "Comparer \340 la dur\351e \351coul\351e dans la piste",		(ID_MENUCONDITIONS+CND_CMPOSINTRACK)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPCONDITIONS+CND_CMPOSINTRACK), 			"%o: position temps dans la piste %0"
+	(M_DISPCONDITIONS+CND_CMPOSITION),   			"%o: la position temps %0"
+}
+
+
+
+
+
+// ACTIONS 
+// ---------------
+MN_ACTIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Jouer une piste", 							(ID_MENUACTIONS+ACT_PLAYTRACK)
+  MENUITEM "Jouer une piste et continuer", 			(ID_MENUACTIONS+ACT_PLAY)
+  MENUITEM "Jouer \340 la position", 						(ID_MENUACTIONS+ACT_TIMEPLAY)
+  MENUITEM "Stop", 									(ID_MENUACTIONS+ACT_STOP)
+  MENUITEM "Pause", 								(ID_MENUACTIONS+ACT_PAUSE)
+  MENUITEM "Reprendre", 								(ID_MENUACTIONS+ACT_RESUME)
+  MENUITEM "Piste pr\351c\351dente",	 					(ID_MENUACTIONS+ACT_PREVIOUS)
+  MENUITEM "Piste suivante", 							(ID_MENUACTIONS+ACT_NEXT)
+  MENUITEM SEPARATOR
+  MENUITEM "Ouvrir le tiroir", 							(ID_MENUACTIONS+ACT_OPENDOOR)
+  MENUITEM "Fermer le tiroir", 							(ID_MENUACTIONS+ACT_CLOSEDOOR)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPACTIONS+ACT_PLAYTRACK),      			"Jouer piste %0"
+	(M_DISPACTIONS+ACT_PLAY),      		   			"Jouer a partir de la piste %0"
+	(M_DISPACTIONS+ACT_STOP),        			 	"Stop"
+	(M_DISPACTIONS+ACT_PAUSE),     			    	"Pause"
+	(M_DISPACTIONS+ACT_RESUME),         			"Reprendre"
+	(M_DISPACTIONS+ACT_PREVIOUS),         			"Piste pr\351c\351dente"
+	(M_DISPACTIONS+ACT_NEXT),         				"Piste suivante"
+	(M_DISPACTIONS+ACT_TIMEPLAY),    		     	"Jouer \340 %0"
+	(M_DISPACTIONS+ACT_OPENDOOR),       		  	"Ouvrir le tiroir"
+	(M_DISPACTIONS+ACT_CLOSEDOOR),         			"Fermer le tiroir"
+}
+
+
+
+
+
+// EXPRESSIONS
+// -----------
+MN_EXPRESSIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Num\351ro de la piste courante", 				(ID_MENUEXPRESSIONS+EXP_TRACK)
+  MENUITEM "Nombre de pistes", 						(ID_MENUEXPRESSIONS+EXP_MAXTRACK)
+  MENUITEM "Position dans la piste courante (1/1000s)", 	(ID_MENUEXPRESSIONS+EXP_TRACKPOS)
+  MENUITEM "Longueur de la piste courante (1/1000s)", 	(ID_MENUEXPRESSIONS+EXP_TRACKLEN)
+  MENUITEM "Position dans le disque (1/1000s)", 			(ID_MENUEXPRESSIONS+EXP_POS)
+  MENUITEM "Longueur du disque (1/1000s)", 				(ID_MENUEXPRESSIONS+EXP_LEN)
+  MENUITEM "Dernier num\351ro de message d'erreur", 					(ID_MENUEXPRESSIONS+EXP_LASTERROR)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPEXPRESSIONS+EXP_TRACK),     				"Track("
+	(M_DISPEXPRESSIONS+EXP_MAXTRACK),     			"Maxtrack("
+	(M_DISPEXPRESSIONS+EXP_TRACKPOS),     			"PosInTrack("
+	(M_DISPEXPRESSIONS+EXP_TRACKLEN),     			"Track Length("
+	(M_DISPEXPRESSIONS+EXP_POS),     				"Position("
+	(M_DISPEXPRESSIONS+EXP_LEN),     				"Length("
+	(M_DISPEXPRESSIONS+EXP_LASTERROR),     			"Last Error("
+	IDST_OBJNAME			"Objet CD Audio"		
+	IDST_AUTHOR				"Clickteam"
+	IDST_COPYRIGHT			"Copyright \251 1996-2006 Clickteam"
+	IDST_COMMENT			"Permet de jouer les pistes d'un CD Audio"
+	IDST_HTTP				"http://www.clickteam.com"
+	IDS_PROP_OPENDRIVER			"Ouvrir le pilote au d\351but"
+	IDS_PROP_PLAYATSTART		"Jouer une piste au d\351but"
+	IDS_PROP_STOPATEND			"Arr\352te de jouer en fin de sc\350ne"
+	IDS_PROP_PLAYMINIMIZED		"Jouer m\352me quand minimis\351"
+	IDS_PROP_OPENDRIVER_INFO	"L'ouverture du pilote au d\351but de sc\350ne acc\351l\350re l'objet pendant l'application"
+	IDS_PROP_PLAYATSTART_INFO	"Entrer le num\351ro de la piste \340 jouer"
+	IDS_PROP_STOPATEND_INFO		"Arr\352te la musique en fin de sc\350ne"
+	IDS_PROP_PLAYMINIMIZED_INFO	"Continue de jouer m\352me lorsque l'application est minimis\351e"
+	IDS_CURRENTTRACK			"Num\351ro de piste courant: %i"
+	IDS_NUMBEROFTRACKS			"Nombre de pistes sur le disque: %i"
+	IDS_POSITIONINTRACK			"Position dans la piste courante: %02i:%02i"
+	IDS_TRACKLENGTH				"Longueur de la piste courante: %02i:%02i"
+	IDS_LENGTH					"Dur\351e totale du disque: %02i:%02i:%02i"
+	IDS_LASTERROR				"Derni\350re erreur connue: %i"
+}
+
+
+
+
+#endif
+

@@ -1,0 +1,178 @@
+
+#ifdef APSTUDIO_INVOKED
+	#error this file is not editable by Microsoft Visual C++
+#endif //APSTUDIO_INVOKED
+
+#include "..\inc\ccx.h"
+#include "windows.h"
+#include "extrc.h"
+#include "ext.h"
+
+// Strings
+STRINGTABLE 
+{
+ KPX_NAME, "CD-Audio"
+}
+
+// Version infos
+1 VERSIONINFO 
+FILEVERSION 3,0,228,0
+PRODUCTVERSION 3,0,228,0
+FILEOS VOS_DOS_WINDOWS16
+FILETYPE VFT_APP
+FILEFLAGS 0x20L
+{
+ BLOCK "StringFileInfo"
+ {
+  BLOCK "040904E4"
+  {
+   VALUE "CompanyName", "Clickteam\000\000"
+   VALUE "FileDescription", "CD-Audio Object\000"
+   VALUE "FileVersion", "3,0,228,0\000\000"
+   VALUE "InternalName", "KCCDA\000"
+   VALUE "LegalCopyright", "Copyright © 1996-2006 Clickteam\000\000"
+   VALUE "OriginalFilename", "KCCDA.MFX\000"
+   VALUE "SpecialBuild", "00000001\000"
+  }
+ }
+
+ BLOCK "VarFileInfo"
+ {
+  VALUE "Translation", 0x409, 1252
+ }
+}
+
+
+#ifdef VITALIZE
+VITALIZE_ID RCDATA
+{
+	0x0244, 0x5601, 0x7527, 0xA754, 0xBC60
+}
+#endif
+
+
+#ifndef RUN_ONLY
+
+// Magic number
+KPX_MAGICNUMBER	RCDATA
+{
+	0x2516, 0x5908
+}
+
+// Strings
+STRINGTABLE 
+{
+ KPX_MARK, "MF2"
+}
+
+// User bitmaps
+EXO_ICON BITMAP "res\exticon16b.bmp"
+EXO_IMAGE BITMAP "res\extimg16b.bmp"
+
+
+// CONDITIONS
+// ------------------
+MN_CONDITIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Compare to time position", 				(ID_MENUCONDITIONS+CND_CMPOSITION)
+  MENUITEM "Compare to track's elapsed time",		(ID_MENUCONDITIONS+CND_CMPOSINTRACK)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPCONDITIONS+CND_CMPOSINTRACK), 			"11%s:time position within track %s"
+	(M_DISPCONDITIONS+CND_CMPOSITION),   			"11%s:time position %s"
+}
+
+
+
+
+
+// ACTIONS 
+// ---------------
+MN_ACTIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Play a track", 							(ID_MENUACTIONS+ACT_PLAYTRACK)
+  MENUITEM "Play a track and continue", 			(ID_MENUACTIONS+ACT_PLAY)
+  MENUITEM "Play at position", 						(ID_MENUACTIONS+ACT_TIMEPLAY)
+  MENUITEM "Stop", 									(ID_MENUACTIONS+ACT_STOP)
+  MENUITEM "Pause", 								(ID_MENUACTIONS+ACT_PAUSE)
+  MENUITEM "Resume", 								(ID_MENUACTIONS+ACT_RESUME)
+  MENUITEM "Previous track",	 					(ID_MENUACTIONS+ACT_PREVIOUS)
+  MENUITEM "Next track", 							(ID_MENUACTIONS+ACT_NEXT)
+  MENUITEM SEPARATOR
+  MENUITEM "Open door", 							(ID_MENUACTIONS+ACT_OPENDOOR)
+  MENUITEM "Close door", 							(ID_MENUACTIONS+ACT_CLOSEDOOR)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPACTIONS+ACT_PLAYTRACK),      			"01Play track %s"
+	(M_DISPACTIONS+ACT_PLAY),      		   			"01Play from track %s"
+	(M_DISPACTIONS+ACT_STOP),        			 	"00Stop"
+	(M_DISPACTIONS+ACT_PAUSE),     			    	"00Pause"
+	(M_DISPACTIONS+ACT_RESUME),         			"00Resume"
+	(M_DISPACTIONS+ACT_PREVIOUS),         			"00Previous track"
+	(M_DISPACTIONS+ACT_NEXT),         				"00Next track"
+	(M_DISPACTIONS+ACT_TIMEPLAY),    		     	"01Play at %s"
+	(M_DISPACTIONS+ACT_OPENDOOR),       		  	"00Open door"
+	(M_DISPACTIONS+ACT_CLOSEDOOR),         			"00Close door"
+}
+
+
+
+
+
+// EXPRESSIONS
+// -----------
+MN_EXPRESSIONS MENU
+{
+ POPUP ""
+ {
+  MENUITEM "Number of current track", 				(ID_MENUEXPRESSIONS+EXP_TRACK)
+  MENUITEM "Number of tracks", 						(ID_MENUEXPRESSIONS+EXP_MAXTRACK)
+  MENUITEM "Position in current track (1/1000s)", 	(ID_MENUEXPRESSIONS+EXP_TRACKPOS)
+  MENUITEM "Length of current track (1/1000s)", 	(ID_MENUEXPRESSIONS+EXP_TRACKLEN)
+  MENUITEM "Position in disk (1/1000s)", 			(ID_MENUEXPRESSIONS+EXP_POS)
+  MENUITEM "Length of disk (1/1000s)", 				(ID_MENUEXPRESSIONS+EXP_LEN)
+  MENUITEM "Last error number", 					(ID_MENUEXPRESSIONS+EXP_LASTERROR)
+ }
+}
+STRINGTABLE
+{
+	(M_DISPEXPRESSIONS+EXP_TRACK),     				"Track("
+	(M_DISPEXPRESSIONS+EXP_MAXTRACK),     			"Maxtrack("
+	(M_DISPEXPRESSIONS+EXP_TRACKPOS),     			"PosInTrack("
+	(M_DISPEXPRESSIONS+EXP_TRACKLEN),     			"Track Length("
+	(M_DISPEXPRESSIONS+EXP_POS),     				"Position("
+	(M_DISPEXPRESSIONS+EXP_LEN),     				"Length("
+	(M_DISPEXPRESSIONS+EXP_LASTERROR),     			"Last Error("
+	IDST_OBJNAME			"CD Audio object"		
+	IDST_AUTHOR				"ClickTeam"
+	IDST_COPYRIGHT			"Copyright © 1996-2006 Clickteam"
+	IDST_COMMENT			"Lets you play compact disc audio tracks."
+	IDST_HTTP				"http://www.clickteam.com"
+	IDS_PROP_OPENDRIVER			"Open driver at start"
+	IDS_PROP_PLAYATSTART		"Play track at start"
+	IDS_PROP_STOPATEND			"Stop playing at end of frame"
+	IDS_PROP_PLAYMINIMIZED		"Play when minimized"
+	IDS_PROP_OPENDRIVER_INFO	"Opening the driver at start of frame makes the object faster during runtime"
+	IDS_PROP_PLAYATSTART_INFO	"Enter the number of the track to play"
+	IDS_PROP_STOPATEND_INFO		"Stops the music at end of frame"
+	IDS_PROP_PLAYMINIMIZED_INFO	"Continues playing even when the application is minimized"
+	IDS_CURRENTTRACK			"Current track number: %i"
+	IDS_NUMBEROFTRACKS			"Number of tracks on disk: %i"
+	IDS_POSITIONINTRACK			"Position in current track: %02i:%02i"
+	IDS_TRACKLENGTH				"Length of current track: %02i:%02i"
+	IDS_LENGTH					"Total length of disk: %02i:%02i:%02i"
+	IDS_LASTERROR				"Last known error: %i"
+}
+
+
+
+
+#endif

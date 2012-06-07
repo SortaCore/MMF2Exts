@@ -1,0 +1,160 @@
+
+// This file may also be external to your MFX file - just give it the same name
+// as your MFX and place it in Data/Runtime.  The same goes for the icon.
+
+"About":
+{
+    "Name": "MyCharSet"
+    "Author": "Darkwire Software"
+    "Copyright": "Copyright © 2011 by Darkwire Software"
+    "Comment": "Converts between Unicode and ASCII/UTF8."
+    "URL": "http://www.dark-wire.com/"
+    "Help": "Help/MyCharSet.chm"
+
+	// Four unique characters to identify this object
+    "Identifier": "MYCS"
+}
+
+"ActionMenu":
+[
+]
+
+"ConditionMenu":
+[
+	[0, "Is Unicode?"]
+	"Separator"
+	[1, "Darkwire Software", 1]
+]
+
+"ExpressionMenu":
+[
+	["Return text"
+		[0, "Get ASCII text string from Unicode string"]
+		[1, "Get Unicode text string from ASCII string"]
+		"Separator"
+		[2, "Get ASCII text string from Unicode string at address"]
+		[3, "Get Unicode text string from ASCII string at address"]
+	]
+	["Return address"
+		[4, "Get ASCII text address from Unicode string"]
+		[5, "Get Unicode text address from ASCII string"]
+		"Separator"
+		[6, "Get ASCII text address from Unicode string at address"]
+		[7, "Get Unicode text address from ASCII string at address"]
+	]
+	"Separator"
+]
+
+"Actions":
+[        
+]
+
+"Conditions":
+[
+	// ID = 0
+    {   "Title": "%o : Is Unicode version?",
+		"Triggered": false
+	}
+]
+
+"Expressions":
+[
+// From String
+	// ID = 0
+    { "Title": "ASCIIStrFromUnicodeStr$("
+	  "Returns": "Text"
+      
+      "Parameters":
+      [
+		  ["Text", "Unicode text:"]
+		  ["Integer", "Length of text (not byte count) (use 0 or less for auto-calculate):"]
+		  ["Integer", "Use ASCII (zero) or UTF8 (non-zero)?"]
+      ]
+    }
+
+	// ID = 1
+    { "Title": "UnicodeStrFromASCIIStr$("
+	  "Returns": "Text"
+      
+      "Parameters":
+      [
+		  ["Text", "ASCII text:"]
+		  ["Integer", "Length of text (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+    
+    // ID = 2
+    { "Title": "ASCIIStrFromUnicodeMem$("
+	  "Returns": "Text"
+      
+      "Parameters":
+      [
+		  ["Integer", "Unicode string address in memory:"]
+		  ["Integer", "Length of text (not byte count) (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+    
+    // ID = 3
+    { "Title": "UnicodeStrFromASCIIMem$("
+	  "Returns": "Text"
+      
+      "Parameters":
+      [
+		  ["Integer", "ASCII string address in memory:"]
+		  ["Integer", "Length of text (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+	
+// From Memory
+	// ID = 4
+    { "Title": "ASCIIMemFromUnicodeStr("
+	  "Returns": "Integer"
+      
+      "Parameters":
+      [
+		  ["Text", "Unicode text:"]
+		  ["Integer", "Length of text (not byte count) (use 0 or less for auto-calculate):"]
+		  ["Integer", "Use ASCII (zero) or UTF8 (non-zero)?"]
+      ]
+    }
+
+	// ID = 5
+    { "Title": "UnicodeMemFromASCIIStr("
+	  "Returns": "Integer"
+      
+      "Parameters":
+      [
+		  ["Text", "ASCII text:"]
+		  ["Integer", "Length of text (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+    
+    // ID = 6
+    { "Title": "ASCIIMemFromUnicodeMem("
+	  "Returns": "Integer"
+      
+      "Parameters":
+      [
+		  ["Integer", "Unicode string address in memory:"]
+		  ["Integer", "Length of text (not byte count) (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+    
+    // ID = 7
+    { "Title": "UnicodeMemFromASCIIMem("
+	  "Returns": "Integer"
+      
+      "Parameters":
+      [
+		  ["Integer", "ASCII string address in memory:"]
+		  ["Integer", "Length of text (use 0 or less for auto-calculate):"]
+		  ["Integer", "Enter zero for ASCII, or anything else for UTF8:"]
+      ]
+    }
+]
+

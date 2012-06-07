@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>ZlibStream - Conditions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#000000">
+<p align="center"><img src="Images/MyExt.bmp" width="32" height="32"></p>
+<p align="center"><font size="+2" color="#22EE22">Conditions</font></p>
+<p align="center"><font color="#EEEEEE">The ZlibStream object has 2 conditions.<br>
+</p>
+<a href="#Success">On success</a><br>
+<a href="#Error">On error</a><br><br>
+
+<b><a name="Success">On success:</a></b><br>
+On error is TRUE when a compression or a decompression action finishes. Use the <font color="#2222EE">LastOutputFile&#36;(&quot;ZlibStream&quot;)</font> expression to get the last completed compression's or decompression's output file.<br>
+Parameters: None. <br><br>
+
+<b><a name="Error">On error:</a></b><br>
+This condition is TRUE when an error has occured. This can be caused by a compression or decompression being unable to start properly, or by trying to use an invalid buffer size. Use the <font color="#2222EE">ReturnedString&#36;(&quot;ZlibStream&quot;)</font> expression to get a description of the error.<br>
+Parameters: None.
+</p>
+</body>
+</html>

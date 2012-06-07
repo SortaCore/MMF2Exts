@@ -1,0 +1,693 @@
+
+// This file may also be external to your MFX file - just give it the same name
+// as your MFX and place it in Data/Runtime.  The same goes for the icon.
+
+"About":
+{
+    "Name": "DarkSocket"
+    "Author": "Darkwire Software"
+    "Copyright": "Copyright © 2011 by Darkwire Software"
+    "Comment": "Utilizes WinSock v2.2 to provide socket functionality."
+    "URL": "http://www.dark-wire.com/"
+    "Help": "Help\\DarknetObject.chm"
+
+	// Four unique characters to identify this object
+    "Identifier": "DKSK"
+}
+
+"ActionMenu":
+[
+	"---"
+
+	["Debug"
+		[0, "Test regular and error reporting"]
+		[1, "Set popups on/off"]
+	]
+	["Client"
+		[2, "Basic initialise"]
+		[3, "Advanced initialise"]
+		[4, "Shutdown socket"]
+		[5, "Send message to server"]
+		[6, "Go independent (no undo)"]
+		[7, "Set to receive only (no undo)"]
+		[8, "Link socket output to file"]
+		[9, "Unlink socket output to file"]
+		[10, "MMF2 status reports on/off"]
+	]
+	["Server"
+		[11, "Basic initialise"]
+		[12, "Advanced initialise"]
+		[13, "Shutdown socket"]
+		[14, "Send message to client"]
+		[15, "Go independent (no undo)"]
+		[16, "Auto-accept connections (default: on)"]
+		[17, "Link socket output to file"]
+		[18, "Unlink socket output to file"]
+		[19, "MMF2 status reports on/off"]
+	]
+	["Form packet"
+		[20, "Create new packet"]
+		[21, "Resize packet"]
+		"Separator"
+		[22, "Set byte"]
+		[23, "Set short"]
+		[24, "Set integer"]
+		[25, "Set long"]
+		[26, "Set float"]
+		[27, "Set double"]
+		[28, "Set string (ascii)"]
+		[29, "Set string (unicode)"]
+		[30, "Set bank"]
+	]
+
+]
+
+"ConditionMenu":
+[
+	"Separator"
+
+	["Debug"
+		[0, "On error"]
+		"---"
+		[1, "On new status"]
+	]
+	["Client"
+		[2, "Client connected"]
+		[3, "Client disconnected"]
+		[4, "Client received message"]
+	]
+	["Server"
+		[5, "Server received message"]
+		[6, "Server socket done"]
+		[7, "Peer connected to server"]
+		[8, "Peer disconnected from server"]
+	]
+	
+	"---"
+	[9, "Darkwire Software", 1]
+]
+
+"ExpressionMenu":
+[
+	["Debug"
+		[0,"Last error"]
+		[1,"Last report"]
+	]
+	["Last message"
+		[2,"Socket ID"]
+		[3,"Text"]
+		"Separator"
+		[4,"Memory Address"]
+		[5,"Size"]
+		["Retrieve variable"
+			[12, "Get byte"]
+			[13, "Get short"]
+			[14, "Get integer"]
+			[15, "Get long"]
+			[16, "Get float"]
+			[17, "Get double"]
+			[18, "Get string (ascii)"]
+			[19, "Get string (unicode)"]
+		]
+	]
+	[6, "New Socket ID"]
+	[7, "Get ID for last event"]
+	[8, "Get port from name"]
+	["Form packet"
+		[9, "Address"]
+		[10, "Size"]
+		[11, "Calculate one's complement"]
+	]
+	
+	"---"
+]
+
+"Actions":
+[	
+	/// DEBUG
+	
+	// ID = 0
+    { "Title": "Test Report() and Explode()"
+    }
+
+	// ID = 1
+    { "Title": "Use popup messages"
+      
+      "Parameters":
+      [
+		  ["Integer", "Use 0 for off and 1 for on:"]
+      ]
+    }
+    
+    /// CLIENT
+    // ID = 2
+	{ "Title": "Initialise client - connect to (%0) on port (%1) with protocol (%2)"
+      
+      "Parameters":
+      [
+		  ["String", "Hostname"]
+		  ["Integer", "Port (0-65536)"]
+		  ["String", "Protocol (use \"TCP\", \"UDP\" or \"ICMP\"):"]
+		  ["String", "Initial text to send on connection (use \"PACKET\" to send the formed packet):"]
+      ]
+    }
+	
+	// ID = 3
+    { "Title": "Initialise advanced client - connect to (%0) on port (%1) with protocol (%2); use address family (%3) and socket (%4)"
+      
+      "Parameters":
+      [
+		  ["Text", "Hostname:"]
+		  ["Integer", "Port (0-36535):"]
+		  ["Text", "Protocol (use \"TCP\", \"UDP\", \"ICMP\" or see help file):"]
+		  ["Text", "Address family (use \"INTERNET\" if unsure):"]
+		  ["Text", "Socket type (use \"STREAM\" if unsure):"]
+		  ["String", "Initial text to send on connection (use \"PACKET\" to send the formed packet):"]
+      ]
+    }
+    
+	// ID = 4
+	{ "Title": "Shutdown client socket %0"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 5
+    { "Title": "Send message to server on socket %0"
+      
+      "Parameters":
+      [
+		  ["Integer", "Socket ID:"]
+		  ["Text", "Message (use \"PACKET\" for the formed packet):"]
+      ]
+    }
+	
+	// ID = 6
+	{ "Title": "Set client socket %0 to independent (no undo)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 7
+	{ "Title": "Set client socket %0 to receive only (no undo)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 8
+	{ "Title": "Link client socket %0 to %1"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+		  ["Text", "File to link output to:"]
+	  ]
+	}
+	
+	// ID = 9
+	{ "Title": "Unlink client socket %0 from file"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 10
+	{ "Title": "Set MMF2 status reports to %1 for socket %0"
+		
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+		  ["Integer", "Use 0 for off, anything else for on:"]
+	  ]
+	}
+    
+    /// SERVER
+    
+    // ID = 11
+    { "Title": "Initialise basic server (port %1, protocol %0)"
+      
+      "Parameters":
+      [
+		  ["Text", "Protocol (use \"TCP\", \"UDP\" or \"ICMP\" or see help file):"]
+		  ["Integer", "Port (0-65536)"]
+      ]
+    }
+    
+	// ID = 12
+    { "Title": "Initialise advanced server - port (%0), protocol (%1), address family (%2), socket type (%3)"
+      
+      "Parameters":
+      [
+		  ["Text", "Protocol (use \"TCP\", \"UDP\", \"ICMP\" or see help file):"]
+		  ["Text", "Address family (use \"INTERNET\" if unsure):"]
+		  ["Text", "Socket type (use \"STREAM\" if unsure):"]
+		  ["Integer", "Port (0-65535):"]
+		  ["Text", "InAddr type (use \"ANY\" if unsure):"]
+      ]
+    }
+
+	// ID = 13
+	{ "Title": "Shutdown server socket %0"
+		
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 14
+    { "Title": "Send message to client from server socket %0"
+      
+      "Parameters":
+      [
+		  ["Integer", "Socket ID:"]
+		  ["Text", "Message (use \"PACKET\" for the formed packet):"]
+		  ["Text", "Client identification:"]
+      ]
+    }
+
+	// ID = 15
+	{ "Title": "Set server socket %0 to independent."
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+    
+    // ID = 16
+	{ "Title": "Set auto-accept to %1 for server socket %0"
+		
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+		  ["Integer", "Use 0 for off, anything else for on:"]
+	  ]
+	}
+		
+	// ID = 17
+	{ "Title": "Link server socket %0 to %1"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+		  ["Text", "File to link output to:"]
+	  ]
+	}
+	
+	// ID = 18
+	{ "Title": "Unlink server socket %0 from file"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+	  ]
+	}
+	
+	// ID = 19
+	{ "Title": "Set MMF2 status reports to %1 for socket %0"
+		
+	  "Parameters":
+	  [
+		  ["Integer", "Socket ID:"]
+		  ["Integer", "Use 0 for off, anything else for on:"]
+	  ]
+	}
+
+	/// PACKET FORMING
+	// ID = 20
+	{ "Title": "Create new packet of size %0"
+		
+	  "Parameters":
+	  [
+		  ["Integer", "Size"]
+	  ]
+	}
+	
+	// ID = 21
+	{ "Title": "Resize packet to size %0"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Size (can be 0):"]
+	  ]
+	}
+	
+	// ID = 22
+	{ "Title": "Set byte to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Char value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+	  ]
+	}
+
+	// ID = 23
+	{ "Title": "Set short to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Short value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Run htons() on variable?"]
+	  ]
+	}
+
+	// ID = 24
+	{ "Title": "Set integer to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Integer value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Run htonl() on variable?"]
+	  ]
+	}
+
+	// ID = 25
+	{ "Title": "Set long to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Long value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Run htonl() on variable?"]
+	  ]
+	}
+
+	// ID = 26
+	{ "Title": "Set float to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Float", "Float value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+	  ]
+	}
+
+	// ID = 27
+	{ "Title": "Set double to (%0), at position (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Float", "Double value:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+	  ]
+	}
+
+	// ID = 28
+	{ "Title": "Set ASCII string (%0), at position (%1), number of bytes (%2)"
+	
+	  "Parameters":
+	  [
+		  ["Text", "ASCII string (MMF2 non-Unicode only):"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Size of string in bytes [Len(text)] (+1 for null character):"]
+	  ]
+	}
+
+	// ID = 29
+	{ "Title": "Set Unicode string (%0), at position (%1), number of bytes (%2)"
+	
+	  "Parameters":
+	  [
+		  ["Text", "Unicode string (MMF2 Unicode only):"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Size of string in bytes [Len(text)*2] (+2 for null character):"]
+	  ]
+	}
+	
+	// ID = 30
+	{ "Title": "Copy %2 bytes from (%0) to (%1)"
+	
+	  "Parameters":
+	  [
+		  ["Integer", "Address to read from:"]
+		  ["Integer", "Position in packet to write at (0+):"]
+		  ["Integer", "Number of bytes to copy:"]
+	  ]
+	}
+	
+]
+
+"Conditions":
+[
+	// ID = 0
+    {   "Title": "%o : On error",
+		"Triggered": true
+	}
+
+	// ID = 1
+    {   "Title": "%o : On status report",
+		"Triggered": true
+	}
+
+	// ID = 2
+    {   "Title": "%o : On client socket connected to server (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+	
+	// ID = 3
+    {   "Title": "%o : On client socket disconnected from server (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+
+	// ID = 4
+    {   "Title": "%o : On client received message (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+
+	// ID = 5
+    {   "Title": "%o : On server received message (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+	
+	// ID = 6
+    {   "Title": "%o : On server socket done (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+	
+	// ID = 7
+    {   "Title": "%o : On peer connected to server (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+
+	// ID = 8
+    {   "Title": "%o : On peer disconnected from server (Socket %0)",
+		"Triggered": true
+
+		"Parameters":
+		[
+			["Integer", "Socket ID (Use -1 for any):"]
+		]
+	}
+]
+
+"Expressions":
+[
+	// ID = 0
+    {   "Title": "Error$("
+        "Returns": "Text"
+        
+        "Parameters":
+        [
+			["Integer", "Clear the current error text?"]
+        ]
+    }
+
+	// ID = 1
+    {   "Title": "Report$("
+        "Returns": "Text"
+        
+        "Parameters":
+        [
+			["Integer", "Clear the current report text?"]
+        ]
+    }
+    
+    // ID = 2
+      {   "Title": "LastMessageSocketID("
+        "Returns": "Integer"
+    }
+    
+    // ID = 3
+    {   "Title": "LastMessageText$("
+        "Returns": "Text"
+    }
+    
+    // ID = 4
+    {   "Title": "LastMessageAddress("
+        "Returns": "Integer"
+    }
+    
+    // ID = 5
+    {   "Title": "LastMessageSize("
+        "Returns": "Integer"
+    }
+    
+    // ID = 6
+    {	"Title": "NewSocketID("
+		"Returns": "Integer"
+	}    
+	   
+    // ID = 7
+    {	"Title": "GetSocketIDForLastEvent("
+		"Returns": "Integer"
+	}    
+
+    // ID = 8
+    {	"Title": "GetPortFromName("
+		"Returns": "Integer"
+		
+		"Parameters":
+        [
+			["Text", "Name"]
+        ]
+	}   
+	
+	// ID = 9
+    {	"Title": "FormPacket_Address("
+		"Returns": "Integer"
+	}
+
+	// ID = 10
+    {	"Title": "FormPacket_Size("
+		"Returns": "Integer"
+	}
+
+	// ID = 11
+    {   "Title": "FormPacket_OnesComplement("
+        "Returns": "Integer"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet to start"]
+			["Integer", "Length of packet to read"]
+        ]
+    }
+
+	// ID = 12
+    {   "Title": "GetByte("
+        "Returns": "Integer"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+
+	// ID = 13
+    {   "Title": "GetShort("
+        "Returns": "Short"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+
+	// ID = 14
+    {   "Title": "GetInteger("
+        "Returns": "Integer"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+
+	// ID = 15
+    {   "Title": "GetLong("
+        "Returns": "Integer"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+
+	// ID = 16
+    {   "Title": "GetFloat("
+        "Returns": "Float"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+
+	// ID = 17
+    {   "Title": "GetDouble("
+        "Returns": "Float"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+        ]
+    }
+	
+	// ID = 18
+    {   "Title": "GetASCIIString$("
+        "Returns": "Text"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+			["Integer", "Length of string (bytes)"]
+        ]
+    }
+	
+	// ID = 19
+    {   "Title": "GetUnicodeString$("
+        "Returns": "Text"
+        
+        "Parameters":
+        [
+			["Integer", "Position in packet"]
+			["Integer", "Length of string (bytes)"]
+        ]
+    }
+]
+

@@ -1,0 +1,18 @@
+[OPTIONS]
+Auto Index=Yes
+Compatibility=1.1 or later
+Compiled file=FixedValueList.chm
+Contents file=Table of Contents.hhc
+Default Font=Arial,8,0
+Default topic=index.htm
+Display compile progress=Yes
+Index file=FixedValueList.hhk
+Language=0x809 English (United Kingdom)
+Title=FixedValueList
+
+
+[FILES]
+index.htm
+
+[INFOTYPES]
+

@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{94127e72-b5ef-4839-bc4a-b0b5e0315f54}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{e083bfec-c6cd-4de1-b429-9790e632fb74}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{eb67bbff-c240-43a5-ade3-96dcdec86443}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{2c6e3fa1-795a-4d3f-afea-f31c6865339e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif">
+      <UniqueIdentifier>{8cf3687b-671e-4777-854d-e4caf40b8fbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif\JSON">
+      <UniqueIdentifier>{89d331a3-1715-413a-8052-1beed8121363}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Actions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Conditions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Edittime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Expressions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Extension.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="General.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Runtime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Threads.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Unreferenced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\ObjectSelection.cpp">
+      <Filter>Global to all extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Edif.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Edif.Edittime.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Edif.General.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Edif.Runtime.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\json.c">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Ext.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Ext.json">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Icon.png">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Extension.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Ccx.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Ccxhdr.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\CfcError.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\CfcFile.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Cncf.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\cncr.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Cncy.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Cnpdll.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\colors.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\EVTCCX.H">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Fill.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\FilterMgr.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\ImageFlt.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\ImgFlt.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\ObjectSelection.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Palet.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Patch.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\PictEdDefs.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Props.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\PTYPE.H">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\SoundFilter.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\SoundFilterMgr.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Surface.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\WinMacro.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Edif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\json.h">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ext.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

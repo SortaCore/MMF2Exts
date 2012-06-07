@@ -1,0 +1,64 @@
+
+// This file may also be external to your MFX file - just give it the same name
+// as your MFX and place it in Data/Runtime.  The same goes for the icon.
+
+"About":
+{
+    "Name": "SHA-1 object"
+    "Author": "Darkwire Software"
+    "Copyright": "Copyright © 2012 by Darkwire Software"
+    "Comment": "A quick SHA-1 file hasher extension."
+    "URL": "http://dark-wire.com"
+    "Help": ""
+
+	// Four unique characters to identify this object
+    "Identifier": "SHA1"
+}
+
+"ActionMenu":
+[
+	[0, "Hash file"]
+	
+	"Separator"
+]
+
+"ConditionMenu":
+[
+   [0, "Darkwire Software", 1]
+]
+
+
+"ExpressionMenu":
+[
+   [0, "Get last hash/error"]
+   [1, "Get last hash/error memory address"]
+]
+
+"Actions":
+[
+    { "Title": "SHA-1 hash file: %0"
+      
+      "Parameters":
+      [
+		  ["Text", "File to hash"]
+		  ["Integer", "Output hexidecimal string (0) or pure binary (1)?"]
+      ]
+    }
+]
+
+"Conditions":
+[
+]
+
+"Expressions":
+[
+    {   "Title": "GetHash$("
+        "Returns": "Text"
+    }
+
+	{	"Title": "GetHashAddress("
+		"Returns": "Integer"
+	}
+    
+]
+

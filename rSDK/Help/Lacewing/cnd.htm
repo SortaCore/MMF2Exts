@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>Lacewing Relay Client - Conditions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#111111">
+<p align="center"><img src="Images/MyExt.bmp" width="358" height="76"></p>
+<p align="center"><font color="#DDDDDD"><font size="+2">Conditions</font></p>
+<p align="center">The Lacewing Relay Client has 55 conditions.<br></p>
+<p>
+<a href="#On error">On error</a><br>
+Connect:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Connect&raquo;On connect">On connect</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Connect&raquo;On connection denied">On connection denied</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Connect&raquo;Is connected">Is connected</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Connect&raquo;On disconnect">On disconnect</a><br>
+Channel listing:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel listing&raquo;On List Received">On List Received</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel listing&raquo;On loop">On loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel listing&raquo;On loop finished">On loop finished</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel listing&raquo;[With loop name] On loop">[With loop name] On loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel listing&raquo;[With loop name] On loop finished">[With loop name] On loop finished</a><br>
+Channel:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On join">On join</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On join denied">On join denied</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On leave">On leave</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On leave denied">On leave denied</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On joined channel loop">On joined channel loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;On joined channel loop finished">On joined channel loop finished</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;[With loop name] On joined channel loop">[With loop name] On joined channel loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;[With loop name] On joined channel loop finished">[With loop name] On joined channel loop finished</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peers:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;On peer connect">On peer connect</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;On peer disconnect">On peer disconnect</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;On peer changed name">On peer changed name</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;On loop">On loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;On loop finished">On loop finished</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;[With loop name] On loop">[With loop name] On loop</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;[With loop name] On loop finished">[With loop name] On loop finished</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;Peers&raquo;Selected peer is the channel master">Selected peer is the channel master</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Channel&raquo;You are the channel master">You are the channel master</a><br>
+Name:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Name&raquo;On name set">On name set</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Name&raquo;On name denied">On name denied</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Name&raquo;On name changed">On name changed</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Name&raquo;Client has a name">Client has a name</a><br>
+Message:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sent:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On text message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On text message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On text message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On number message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On number message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On number message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On binary message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On binary message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On binary message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On any message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On any message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On any message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On text message from channel">On text message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On number message from channel">On number message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On binary message from channel">On binary message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On any message from channel">On any message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On text message from peer">On text message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On number message from peer">On number message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On binary message from peer">On binary message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Sent&raquo;On any message from peer">On any message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Blast:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On text message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On text message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On text message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On number message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On number message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On number message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On binary message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On binary message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On binary message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On any message from server:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On any message from server&raquo;To me">To me</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On any message from server&raquo;To channel">To channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On any message from server">On any message from server</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On text message from channel">On text message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On number message from channel">On number message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On binary message from channel">On binary message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On any message from channel">On any message from channel</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On text message from peer">On text message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On number message from peer">On number message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On binary message from peer">On binary message from peer</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Message&raquo;Blast&raquo;On any message from peer">On any message from peer</a><br><br><br><br>
+<b><a name="On error">On error:</a></b><br>
+On error is TRUE whenever an error occurs. Use the <font color="#DD00DD">Error&#36;(&quot;Lacewing&quot;)</font> expression to get a description of the error.<br>
+Parameters: None. <br><br>
+
+<b><a name="Connect&raquo;On connect">Connect&raquo;On connect:</a></b><br>
+This condition is TRUE when a new connection has been made to a server, using the <font color="#00DD00">Connect</font> action. <br>
+Parameters: None.<br><br>
+
+<b><a name="Connect&raquo;On connection denied">Connect&raquo;On connection denied:</a></b><br>
+When a connection, triggered by the <font color="#00DD00">Connect</font> action, is refused by the server, this condition is TRUE. Use the <font color="#DD00DD">DenyStatus&#36;(&quot;Lacewing&quot;)</font> and/or the <font color="#DD00DD">Error&#36;(&quot;Lacewing&quot;)</font> expressions to find out why you were disconnected.<br>
+Parameters: None.<br><br>
+
+<b><a name="Connect&raquo;Is connected">Connect&raquo;Is connected:</a></b><br>
+This condition is TRUE while a connection to a server, caused by the <font color="#00DD00">Connect</font> action, is still active.<br>
+Parameters: None.<br><br>
+
+<b><a name="Connect&raquo;On disconnect">Connect&raquo;On disconnect:</a></b><br>
+This condition is TRUE when the connection to a server is closed. The connection is usually closed when you use the <font color="#00DD00">Disconnect</font> action.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel listing&raquo;On List Received">Channel listing&raquo;On List Received:</a></b><br>
+When the server replies with the list of channels, requested by the action <font color="#00DD00">Channel listing&raquo;Request list</font>. Use the <font color="#00DD00">Channel Listing&raquo;Loop Channel List</font> action to loop through the list.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel listing&raquo;On loop">Channel listing&raquo;On loop:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Loop Channel List</font> action, it starts a loop of all the items on the list. This condition is TRUE for each item on the list. Use the <font color="#DD00DD">ChannelListing_Name&#36;(&quot;Lacewing&quot;)</font> expression to get channel name that is being looped through. You can also use the <font color="#DD00DD">ChannelListing_PeerCount(&quot;Lacewing&quot;)</font> expression to get the number of peers on the channel being looped.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel listing&raquo;On loop finished">Channel listing&raquo;On loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Loop Channel List</font> action, it starts a loop of all the items on the list. This condition is TRUE after the loop finishes.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel listing&raquo;[With loop name] On loop">Channel listing&raquo;[With loop name] On loop:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Loop listed channels (with loop name)</font> action, it starts a list loop, with whatever name you choose. This condition is TRUE for each item on the channel list. Use <font color="#DD00DD">ChannelListing_Name&#36;(&quot;Lacewing&quot;)</font> expression to get channel name that is being looped through. You can also use <font color="#DD00DD">ChannelListing_PeerCount(&quot;Lacewing&quot;)</font> to get the number of peers on the channel being looped.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel listing&raquo;[With loop name] On loop finished">Channel listing&raquo;[With loop name] On loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Loop listed channels (with loop name)</font> action, it starts a list loop, with whatever name you choose. This condition is TRUE once after a named Channel List loop finishes.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel&raquo;On join">Channel&raquo;On join:</a></b><br>
+This condition is TRUE each time you successfully join a channel. <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> is automatically set to the name of the channel you just joined.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;On join denied">Channel&raquo;On join denied:</a></b><br>
+When a channel join request, triggered by the <font color="#00DD00">Channel&raquo;Join</font> action, is refused by the server, this condition is TRUE. Use the <font color="#DD00DD">DenyStatus&#36;(&quot;Lacewing&quot;)</font> and/or the <font color="#DD00DD">Error&#36;(&quot;Lacewing&quot;)</font> expressions to find out why joining the channel was refused.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;On leave">Channel&raquo;On leave:</a></b><br>
+This condition is TRUE when you leave a channel. Usually, this is caused by the <font color="#00DD00">Channel&raquo;Leave</font> action.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;On leave denied">Channel&raquo;On leave denied:</a></b><br>
+When a channel leave request, triggered by the <font color="#00DD00">Channel&raquo;Leave</font> action, is refused by the server, this condition is TRUE once. Use the <font color="#DD00DD">DenyStatus&#36;(&quot;Lacewing&quot;)</font> and/or the <font color="#DD00DD">Error&#36;(&quot;Lacewing&quot;)</font> expressions to find out why leaving the channel was refused.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;On joined channel loop">Channel&raquo;On joined channel loop:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Select&raquo;Loop</font> action, it starts a loop of all the channels you are joined to. This condition is TRUE for each channel you are joined to. Use the <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> expression to get channel name that is being looped through. You can also use the <font color="#DD00DD">Channel_PeerCount(&quot;Lacewing&quot;)</font> expression to get the number of peers on the channel being looped.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;On joined channel loop finished">Channel&raquo;On joined channel loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Select&raquo;Loop</font> action, it starts a loop of all the channels you are joined to.  When the loop finishes, this condition will be TRUE.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;[With loop name] On joined channel loop">Channel&raquo;[With loop name] On joined channel loop:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Select&raquo;[With loop name] Loop</font> action, it starts a loop of all the channels you are joined to with the name given. This condition is TRUE for each channel you are joined to. Use the <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> expression to get channel name that is being looped through. You can also use the <font color="#DD00DD">Channel_PeerCount(&quot;Lacewing&quot;)</font> expression to get the number of peers on the channel being looped.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel&raquo;[With loop name] On joined channel loop finished">Channel&raquo;[With loop name] On joined channel loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel Listing&raquo;Select&raquo;[With loop name] Loop</font> action, it starts a loop of all the channels you are joined to with the name given. When the named loop finishes, this condition will be TRUE.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;On peer connect">Channel&raquo;Peers&raquo;On peer connect:</a></b><br>
+When a peer joins a channel you are joined to, this condition will be TRUE. Use <font color="#DD00DD">Peer_Name&#36(&quot;Lacewing&quot;)</font> to get the joining peer's name. Alternatively, use <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the joining peer's ID.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;On peer disconnect">Channel&raquo;Peers&raquo;On peer disconnect:</a></b><br>
+When a peer leaves a channel you are joined to, this condition will be TRUE. Use <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> expression to get the leaving peer's name. Alternatively, use the <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> expression to get the leaving peer's ID.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;On peer changed name">Channel&raquo;Peers&raquo;On peer changed name:</a></b><br>
+When a peer changes his name, by using the <font color="#00DD00">Set Name</font> action, this condition will be TRUE. Use <font color="#DD00DD">Peer_PreviousName&#36;(&quot;Lacewing&quot;)</font> to get the old name and <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> to get the new name (or use <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the unchanged ID).<br>
+Parameters: None. <br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;On loop">Channel&raquo;Peers&raquo;On loop:</a></b><br>
+When you use the <font color="#00DD00">Channel&raquo;Peers&raquo;Select&raquo;Loop</font> action, it starts a loop of all the peers in the current channel (use the <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> expression to get the current channel's name). This condition is TRUE for each peer on the channel. Use the <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or the <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> expressions to get the currently looped peer.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;On loop finished">Channel&raquo;Peers&raquo;On loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel&raquo;Peers&raquo;Select&raquo;Loop</font> action, it starts a loop of all the peers in the current channel. When the loop finishes, this condition will be TRUE.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;[With loop name] On loop">Channel&raquo;Peers&raquo;[With loop name] On loop:</a></b><br>
+When you use the <font color="#00DD00">Channel&raquo;Peers&raquo;Select&raquo;[With loop name] Loop</font> action, it starts a loop of all the peers in the current channel with the loop name given (use <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> to get the current channel's name). This condition is TRUE for each peer on the channel. Use the <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or the <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> expressions to get the currently looped peer.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;[With loop name] On loop finished">Channel&raquo;Peers&raquo;[With loop name] On loop finished:</a></b><br>
+When you use the <font color="#00DD00">Channel&raquo;Peers&raquo;Select&raquo;[With loop name] Loop</font> action, it starts a loop of all the peers in the current channel with the loop name given. When the named loop finishes, this condition will be TRUE.<br>
+Parameters: The name of the loop (string).<br><br>
+
+<b><a name="Channel&raquo;Peers&raquo;Selected peer is the channel master">Channel&raquo;Peers&raquo;Selected peer is the channel master:</a></b><br>
+If the selected peer is the channel master (the first user to join the channel and create it), this condition will be TRUE. Use <font color="#DD00DD">Peer_Name(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to find out which peer is selected.<br>
+Parameters: None.<br><br>
+
+<b><a name="Channel&raquo;You are the channel master">Channel&raquo;You are the channel master:</a></b><br>
+If you are the channel master for the current channel (the first user to join the channel and create it), this will be TRUE. Use <font color="#DD00DD">Channel_Name&#36;(&quot;Lacewing&quot;)</font> to find out what channel is selected.<br>
+Parameters: None.<br><br>
+
+<b><a name="Name&raquo;On name set">Name&raquo;On name set:</a></b><br>
+When you first successfully set your name using the <font color="#00DD00">Set Name</font> action, this condition will be TRUE. If you already have a name, the <font color="#00DDDD">Name&raquo;On name changed</font> condition will be TRUE instead.<br>
+Parameters: None.<br><br>
+
+<b><a name="Name&raquo;On name denied">Name&raquo;On name denied:</a></b><br>
+When a name set request, triggered by the <font color="#00DD00">Name Set</font> action, is refused by the server, this condition is TRUE. Use the <font color="#DD00DD">DenyStatus&#36;(&quot;Lacewing&quot;)</font> and/or the <font color="#DD00DD">Error&#36;(&quot;Lacewing&quot;)</font> expressions to find out why your name set was denied.<br>
+Parameters: None.<br><br>
+
+<b><a name="Name&raquo;On name changed">Name&raquo;On name changed:</a></b><br>
+If you use the <font color="#00DD00">Set Name</font> action when you already have a name, and your name is changed successfully to a different name, this will be TRUE. If you don't have a name already, the <font color="#00DDDD">Name&raquo;On name set</font> condition will be TRUE instead.<br>
+Parameters: None. <br><br>
+
+<b><a name="Name&raquo;Client has a name">Name&raquo;Client has a name:</a></b><br>
+If your client has a name, set by the <font color="#00DD00">Set Name</font> action, this condition is TRUE. You can retrieve your name with the expression <font color="#DD00DD">Self_Name&#36;(&quot;Lacewing&quot;)</font>.<br>
+Parameters: None.<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On text message from server&raquo;To me">Message&raquo;Sent&raquo;On text message from server&raquo;To me:</a></b><br>
+When a text message is <b>sent</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On text message from server&raquo;To channel">Message&raquo;Sent&raquo;On text message from server&raquo;To channel:</a></b><br>
+When a text message is <b>sent</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On number message from server&raquo;To me">Message&raquo;Sent&raquo;On number message from server&raquo;To me:</a></b><br>
+When a number message is <b>sent</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On number message from server&raquo;To channel">Message&raquo;Sent&raquo;On number message from server&raquo;To channel:</a></b><br>
+When a number message is <b>sent</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On binary message from server&raquo;To me">Message&raquo;Sent&raquo;On binary message from server&raquo;To me:</a></b><br>
+When a binary message is <b>sent</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On binary message from server&raquo;To channel">Message&raquo;Sent&raquo;On binary message from server&raquo;To channel:</a></b><br>
+When a binary message is <b>sent</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On any message from server&raquo;To me">Message&raquo;Sent&raquo;On any message from server&raquo;To me:</a></b><br>
+When a text, number or binary message is <b>sent</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On any message from server&raquo;To channel">Message&raquo;Sent&raquo;On any message from server&raquo;To channel:</a></b><br>
+When a text, number or binary message is <b>sent</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On text message from channel">Message&raquo;Sent&raquo;On text message from channel:</a></b><br>
+When a text message is <b>sent</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On number message from channel">Message&raquo;Sent&raquo;On number message from channel:</a></b><br>
+When a number message is <b>sent</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On binary message from channel">Message&raquo;Sent&raquo;On binary message from channel:</a></b><br>
+When a binary message is <b>sent</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On any message from channel">Message&raquo;Sent&raquo;On any message from channel:</a></b><br>
+When a text, number or binary message is <b>sent</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On text message from peer">Message&raquo;Sent&raquo;On text message from peer:</a></b><br>
+When a text message is <b>sent</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On number message from peer">Message&raquo;Sent&raquo;On number message from peer:</a></b><br>
+When a number message is <b>sent</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On binary message from peer">Message&raquo;Sent&raquo;On binary message from peer:</a></b><br>
+When a binary message is <b>sent</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Sent&raquo;On any message from peer">Message&raquo;Sent&raquo;On any message from peer:</a></b><br>
+When a text, number or binary message is <b>sent</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who sent it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On text message from server&raquo;To me">Message&raquo;Blast&raquo;On text message from server&raquo;To me:</a></b><br>
+When a text message is <b>blasted</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On text message from server&raquo;To channel">Message&raquo;Blast&raquo;On text message from server&raquo;To channel:</a></b><br>
+When a text message is <b>blasted</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On number message from server&raquo;To me">Message&raquo;Blast&raquo;On number message from server&raquo;To me:</a></b><br>
+When a number message is <b>blasted</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On number message from server&raquo;To channel">Message&raquo;Blast&raquo;On number message from server&raquo;To channel:</a></b><br>
+When a number message is <b>blasted</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On binary message from server&raquo;To me">Message&raquo;Blast&raquo;On binary message from server&raquo;To me:</a></b><br>
+When a binary message is <b>blasted</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On binary message from server&raquo;To channel">Message&raquo;Blast&raquo;On binary message from server&raquo;To me:</a></b><br>
+When a binary message is <b>blasted</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On any message from server&raquo;To me">Message&raquo;Blast&raquo;On any message from server&raquo;To me:</a></b><br>
+When a text, number or binary message is <b>blasted</b> from the server directly to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On any message from server&raquo;To channel">Message&raquo;Blast&raquo;On any message from server&raquo;To channel:</a></b><br>
+When a text, number or binary message is <b>blasted</b> from the server to a channel your client is joined to, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On text message from channel">Message&raquo;Blast&raquo;On text message from channel:</a></b><br>
+When a text message is <b>blasted</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On number message from channel">Message&raquo;Blast&raquo;On number message from channel:</a></b><br>
+When a number message is <b>blasted</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On binary message from channel">Message&raquo;Blast&raquo;On binary message from channel:</a></b><br>
+When a binary message is <b>blasted</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On any message from channel">Message&raquo;Blast&raquo;On any message from channel:</a></b><br>
+When a text, number or binary message is <b>blasted</b> from the channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On text message from peer">Message&raquo;Blast&raquo;On text message from peer:</a></b><br>
+When a text message is <b>blasted</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On number message from peer">Message&raquo;Blast&raquo;On number message from peer:</a></b><br>
+When a number message is <b>blasted</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On binary message from peer">Message&raquo;Blast&raquo;On binary message from peer:</a></b><br>
+When a binary message is <b>blasted</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).<br><br>
+
+<b><a name="Message&raquo;Blast&raquo;On any message from peer">Message&raquo;Blast&raquo;On any message from peer:</a></b><br>
+When a text, number or binary message is <b>blasted</b> from a peer on your channel to your client, this condition will be TRUE. Use -1 as the <font color="#DDDD00">Subchannel</font> parameter for this condition to be TRUE for every subchannel. You can use the expressions <font color="#DD00DD">Peer_Name&#36;(&quot;Lacewing&quot;)</font> or <font color="#DD00DD">Peer_ID(&quot;Lacewing&quot;)</font> to get the identity of the peer who blasted it to you.<br>
+Parameters: Subchannel (number between 0 and 255, or -1 for any subchannel).
+</p>
+</body>
+</html>

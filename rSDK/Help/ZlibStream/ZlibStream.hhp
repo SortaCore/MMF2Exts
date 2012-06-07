@@ -1,0 +1,15 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=ZlibStream.chm
+Contents file=Table of Contents.hhc
+Default Font=Arial,10,0
+Default topic=index.htm
+Display compile progress=No
+Full-text search=Yes
+Index file=Index.hhk
+Language=0x809 English (United Kingdom)
+Title=ZlibStream object
+
+
+[INFOTYPES]
+

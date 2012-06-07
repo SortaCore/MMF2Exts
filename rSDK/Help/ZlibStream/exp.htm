@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>ZlibStream - Expressions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#000000">
+<p align="center"><a name="top"><img src="Images/MyExt.bmp" width="32" height="32"></a></p>
+<p align="center"><font size="+2" color="#22EE22">Expressions</font></p>
+<p align="center"><font color="#EEEEEE">The ZlibStream object has 4 expressions.</a></p><p>
+<a href="#Returned string">Returned string</a><br>
+<a href="#Percentage">Percentage</a><br>
+<a href="#Last output file">Last output file</a><br>
+<a href="#Buffer size">Buffer size</a><br><br>
+
+<b><a name="Returned string">Returned string:</a></b><br>
+<font color="#2222EE">ReturnedString&#36;(&quot;ZlibStream&quot;)</font><br>
+This expression gets the description of the last error, or the description of the last successful compression/decompression action. Use this when either of the conditions are set to TRUE.<br>
+Parameters: None.<br><br>
+
+<b><a name="Percentage">Percentage:</a></b><br>
+<font color="#2222EE">Percentage(&quot;ZlibStream&quot;)</font><br>
+This expression gets the size difference as a percentage (%) between the input file and the output file of the last successful compression/decompression action, accurate to two decimal places. For example, it can return 3.05, 114.30, etc.<br>
+Parameters: None.<br><br>
+
+<b><a name="Last output file">Last output file:</a></b><br>
+<font color="#2222EE">LastOutputFile&#36;(&quot;ZlibStream&quot;)</font><br>
+This expression gets the last output file path of the last successful compression/decompression action.<br>
+Parameters: None.<br><br>
+
+<b><a name="Buffer size">Get buffer size:</a></b><br>
+<font color="#2222EE">BufferSize(&quot;ZlibStream&quot;)</font><br>
+This expression gets the default buffer size, which is a number from 1 to 16384; by default it is 8192. Each compression/decompression loop will read that number of bytes from the input file - although it will write less or more bytes to the output (depending on whether it is compressing or decompressing). This is approximately the amount of new memory used by ZlibStream when you start a new compression/decompression action. You can change it with the <font color="#EE2222">Set buffer size</font> action. If the buffer size is larger than the size of the input file, the buffer is automatically made smaller for that input file only. Other actions are not affected (and this number is not changed). You can see the actual buffer used in the last completed compression/decompression action as part of the <font color="2222EE">ReturnedString&#36;(&quot;ZlibStream&quot;)</font> expression.<br>
+Parameters: None.<br><br>
+
+</p></font>
+</body>
+</html>

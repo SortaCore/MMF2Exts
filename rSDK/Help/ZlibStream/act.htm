@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>ZlibStream - Actions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#000000">
+<p align="center"><img src="Images/MyExt.bmp" width="32" height="32"></p>
+<p align="center"><font size="+2" color="#22EE22">Actions</font></p>
+<p align="center"><font color="#EEEEEE">The ZlibStream object has 3 actions.<br></p>
+<a href="#Compress">Compress a file</a><br>
+<a href="#Decompress">Decompress a file</a><br>
+<a href="#Set buffer">Set buffer size (bytes)</a><br><br>
+
+<p><b><a name="Compress">Compress a file:</a></b><br>
+This action initiates a compression of a file. It opens the file specified in the first parameter, and starts a compression loop where the <font color="#EEEE22">input file</font> is read, compressed, and copied into the <font color="#EEEE22">output file</font>. This is done at a rate of 1 to 16384 bytes per loop - by default it is <b>8192</b>. You can change the rate by changing the buffer size using the <font color="#EE2222">Set buffer size</font> action. After the compression finishes, you can use the <font color="#2222EE">LastOutputFile&#36;(&quot;ZlibStream&quot;)</font> expression to get the last completed compression <font color="#EEEE22">output file</font>.<br>
+The third parameter is simple: if the <font color="#EEEE22">output file</font> exists, do you want ZlibStream to overwrite it (erase the old contents) or add the new compression to the end(appending)? Use <b>0</b> to overwrite, <b>1</b> to append.<br>
+Parameters: Input file (string, filepath), Output file (string, filepath), Use append (number between 0 and 1).<br><br>
+
+<b><a name="Decompress">Decompress a file:</a></b><br>
+This action initiates a decompression of a file. It opens the file specified in the first parameter, and starts a decompression loop where the <font color="#EEEE22">input file</font> is read, decompressed, and copied into the <font color="#EEEE22">output file</font>. This is done at a rate of 1 to 16384 bytes per loop - by default it is <b>8192</b>. You can change the rate by changing the buffer size using the <font color="#EE2222">Set buffer size</font> action. After the decompression finishes, you can use the <font color="#2222EE">LastOutputFile&#36;(&quot;ZlibStream&quot;)</font> expression to get the last completed decompression <font color="#EEEE22">output file</font>.<br>The third parameter is simple: if the <font color="#EEEE22">output file</font> exists, do you want ZlibStream to overwrite it (erase the old contents) or add the new decompression to the end(appending)? Use <b>0</b> to overwrite, <b>1</b> to append.<br>
+Parameters: Input file (string, filepath), Output file (string, filepath), Use append (number between 0 and 1).<br><br>
+
+<b><a name="Set buffer">Set buffer size (bytes):</a></b><br>
+This action changes the rate that bytes are processed by ZlibStream. Use a lower number to compress/decompress slower and use less memory, and a higher number to compress/decompress faster and use more memory. The limit is 1 to 16384 bytes per loop. Any new compressions/decompressions you start then use that buffer size. This number should also be the amount of new memory taken up by ZlibStream with each compression/decompression action.<br>
+Parameters: Buffer size (number between 1 and 16384).
+</p>
+</font>
+</body>
+</html>

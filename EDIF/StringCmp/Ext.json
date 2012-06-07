@@ -1,0 +1,33 @@
+{
+    "About": {
+        "Name": "String comparision",
+        "Author": "Darkwire Software",
+        "Copyright": "Copyright © 2012 by Darkwire Software",
+        "Comment": "Quick string comparer",
+        "URL": "http://www.dark-wire.com",
+        "Help": "",
+        "Identifier": "STCM"
+    },
+    "ConditionMenu": [
+        [
+            0,
+            "Compare two strings"
+        ]
+    ],
+    "Conditions": [
+        {
+            "Title": "%0 == %1",
+            "Parameters": [
+                [
+                    "String",
+                    "First text"
+                ],
+                [
+                    "String",
+                    "Second text"
+                ]
+            ],
+            "Triggered": false
+        }
+    ]
+}

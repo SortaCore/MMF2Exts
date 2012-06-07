@@ -1,0 +1,276 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "ccx.h"
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+1 VERSIONINFO
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
+ FILEFLAGSMASK 0x0L
+#ifdef _DEBUG
+ FILEFLAGS 0x21L
+#else
+ FILEFLAGS 0x20L
+#endif
+ FILEOS 0x10001L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "Clickteam & Darkwire Software\0"
+            VALUE "FileDescription", "Download Object\0"
+            VALUE "FileVersion", "1, 1, 0, 0\0"
+            VALUE "InternalName", "Download\0"
+            VALUE "LegalCopyright", "Copyright © 2011 Clickteam &  Darkwire Software\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Download.mfx\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "\0"
+            VALUE "ProductVersion", "1, 1, 0, 0\0"
+            VALUE "SpecialBuild", "00000002\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Data
+//
+
+KPX_MAGICNUMBER RCDATA MOVEABLE PURE 
+BEGIN
+    0x2516, 0x5908
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+#if defined(APSTUDIO_INVOKED) || defined(EDITOR)
+#if defined(APSTUDIO_INVOKED)
+EXO_ICON$(EDITOR)       BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+#else
+EXO_ICON                BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+#endif
+#endif
+#if defined(APSTUDIO_INVOKED) || defined(EDITOR)
+#if defined(APSTUDIO_INVOKED)
+EXO_IMAGE$(EDITOR)      BITMAP  MOVEABLE PURE   "RES\\EXTIMG.BMP"
+#else
+EXO_IMAGE               BITMAP  MOVEABLE PURE   "RES\\EXTIMG.BMP"
+#endif
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+#if defined(APSTUDIO_INVOKED) || defined(EDITOR)
+#if defined(APSTUDIO_INVOKED)
+MN_CONDITIONS$(EDITOR) MENU DISCARDABLE 
+#else
+MN_CONDITIONS MENU DISCARDABLE 
+#endif
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Download in progress?",       IDMN_CONDITION_DOWNLOADING
+        MENUITEM "Download successfully completed?", 
+                                                IDMN_CONDITION_COMPLETED
+        MENUITEM "Connection error?",           IDMN_CONDITION_ERROR
+        MENUITEM "Download aborted?",           IDMN_CONDITION_ABORTED
+    END
+END
+#endif
+
+#if defined(APSTUDIO_INVOKED) || defined(EDITOR)
+#if defined(APSTUDIO_INVOKED)
+MN_ACTIONS$(EDITOR) MENU DISCARDABLE 
+#else
+MN_ACTIONS MENU DISCARDABLE 
+#endif
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Download file",               IDMN_ACTION_DOWNLOAD
+        MENUITEM "Abort download",              IDMN_ACTION_ABORT
+        MENUITEM "Pause download",              IDMN_ACTION_PAUSE
+        MENUITEM "Resume download",             IDMN_ACTION_RESUME
+    END
+END
+#endif
+
+#if defined(APSTUDIO_INVOKED) || defined(EDITOR)
+#if defined(APSTUDIO_INVOKED)
+MN_EXPRESSIONS$(EDITOR) MENU DISCARDABLE 
+#else
+MN_EXPRESSIONS MENU DISCARDABLE 
+#endif
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Get file size (without download)", IDMN_EXP_SIZE
+        MENUITEM SEPARATOR
+        MENUITEM "Current URL",                 IDMN_EXP_CURRENTURL
+        MENUITEM "Total file size",             IDMN_EXP_TOTALSIZE
+        MENUITEM "Current download position",   IDMN_EXP_CURRENTPOS
+        MENUITEM "Current download percentage", IDMN_EXP_CURRENTPERCENT
+        MENUITEM "Current speed (bytes per second)", IDMN_EXP_CURRENTSPEED
+        MENUITEM "Estimated download time",     IDMN_EXP_TOTALTIME
+    END
+END
+#endif
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""ccx.h""\r\n"
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    KPX_MARK                "MF2"
+    KPX_NAME                "Download object"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    M_CONDITION_COMPLETED   "%o: Download successfully completed slot %0"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    M_CONDITION_DOWNLOADING "%o: Download in progress slot %0"
+    M_CONDITION_ERROR       "%o: Connection error in slot %0"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    M_CONDITION_ABORTED     "%o: Download aborted in slot %0"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    M_EXP_TOTALSIZE         "TotalFileSize("
+    M_EXP_CURRENTPOS        "CurrentPos("
+    M_ACTION_DOWNLOAD       "Download file, Url=%0, destination=%1, slot %2"
+    M_URL                   "Enter the URL of the file. It must begin with HTTP:// or HTTPS://"
+    M_FILE                  "#Title#Enter the name of the destination file..."
+    M_SLOT                  "Enter the slot number (1-4)"
+    M_EXP_CURRENTPERCENT    "CurrentPercent("
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDST_OBJNAME            "Download Object"
+    IDST_AUTHOR             "François Lionet"
+    IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
+    IDST_COMMENT            "Allows you to download file from the Internet."
+    IDST_HTTP               "http://www.clickteam.com"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    M_EXP_CURRENTSPEED      "CurrentSpeed("
+    M_ACTION_ABORT          "Abort download slot %0"
+    M_EXP_TOTALTIME         "TotalTime("
+    IDS_SLOT0               "Slot 1"
+    IDS_SLOT1               "Slot 2"
+    IDS_SLOT2               "Slot 3"
+    IDS_SLOT3               "Slot 4"
+    IDS_TOTALSIZE           "Size of the file to download : %i"
+    IDS_TOTALREAD           "Number of bytes read : %i"
+    IDS_SPEED               "Average speed : %i bytes per second"
+    IDS_URL                 "Current URL : %s"
+    M_EXP_CURRENTURL        "CurrentUrl$("
+    M_EXP_SIZE              "InstantFileSize("
+    M_EXPURL                "Enter file URL"
+    M_ACTION_PAUSE          "Pause download slot %0"
+    M_ACTION_RESUME         "Resume download slot %0"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

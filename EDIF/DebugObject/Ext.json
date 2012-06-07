@@ -1,0 +1,120 @@
+{
+"About":
+{
+    "Name": "DebugObject",
+    "Author": "Darkwire Software",
+    "Copyright": "Copyright © 2012 Darkwire Software",
+    "Comment": "An easy debugging extension.",
+    "URL": "http://dark-wire.com/",
+    "Help": "Help/DebugObject.chm",
+
+    "Identifier": "DBGO"
+},
+
+"ActionMenu":
+[
+	[0, "Output"],
+	
+	"Separator",
+	
+	[1, "Set output file"],
+	[2, "Set output time format"],
+	[3, "Set output enabled/disabled"],
+	
+	"Separator",
+	
+	[4, "Set crash handling"],
+	["Cause crash",
+		[5, "Division by zero (int)"],
+		[6, "Division by zero (float)"],
+		"Separator",
+		[7, "Access violation (read)"],
+		[8, "Access violation (write)"],
+		[9, "Access violation (read array)"],
+		[9, "Access violation (write array)"]
+	]
+],
+
+"ConditionMenu":
+[
+   [0, "Darkwire Software", 1]
+],
+
+"ExpressionMenu":
+[
+],
+
+"Actions":
+[
+    { "Title": "Log (intensity %0 from line %1)",
+      
+      "Parameters":
+      [
+		["Integer", "Intensity of log (error, warning, notice):"],
+		["Integer", "Line of error (event number, occurance number, etc):"],
+		["Text", "Text to output:"]
+      ]
+    },
+    
+    { "Title": "Set log file to %0",
+      
+      "Parameters":
+      [
+		["Text", "File to output to:"],
+		["Integer", "Enable application description (output path & details):"]
+      ]
+    },
+    
+    { "Title": "Set output time format to %0",
+      
+      "Parameters":
+      [
+		["Text", "Time format to output to (Default %X - Google strftime() function):"]
+      ]
+    },
+    
+    { "Title": "Set debug enabled to %0",
+      
+      "Parameters":
+      [
+		["Integer", "Use non-zero for enable, zero for disabling:"]
+      ]
+    },
+    
+    { "Title": "Set crash handling: mode %0 (continues %1)",
+    
+	  "Parameters":
+      [
+		["Integer", "How to handle this? (see object help or forums, or ask Phi):"],
+		["Integer", "If you specified continuing, how many times before giving up? (1-100, <0 for infinite):"]
+      ]
+    },
+
+	{ "Title": "Cause crash: division by zero (int)"
+    },
+
+	{ "Title": "Cause crash: division by zero (float)"
+    },
+
+	{ "Title": "Cause crash: access violation (read)"
+    },
+
+	{ "Title": "Cause crash: access violation (write)"
+    },
+
+	{ "Title": "Cause crash: access violation (read array)"
+    },
+
+	{ "Title": "Cause crash: access violation (write array)"
+    }
+],
+
+"Conditions":
+[
+],
+
+"Expressions":
+[
+]
+
+}
