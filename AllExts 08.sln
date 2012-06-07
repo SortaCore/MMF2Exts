@@ -49,6 +49,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - StringCmp", "EDIF\St
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - StringReplacer", "EDIF\StringReplacer\EDIF - StringReplacer.vcproj", "{BF2B00B2-C4FF-48BC-A2B8-4646B1A29FB9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - ObjectAttacher", "EDIF\ObjectAttacher\EDIF - ObjectAttacher.vcproj", "{2C86B0A6-EEB7-4395-9F22-2D1217972D63}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Unicode|Win32 = Debug Unicode|Win32
@@ -379,6 +381,24 @@ Global
 		{BF2B00B2-C4FF-48BC-A2B8-4646B1A29FB9}.Runtime|Win32.ActiveCfg = Runtime|Win32
 		{BF2B00B2-C4FF-48BC-A2B8-4646B1A29FB9}.Runtime|Win32.Build.0 = Runtime|Win32
 		{BF2B00B2-C4FF-48BC-A2B8-4646B1A29FB9}.Vitalize|Win32.ActiveCfg = Runtime|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Debug Unicode|Win32.ActiveCfg = Debug Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Debug|Win32.Build.0 = Debug|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime French|Win32.ActiveCfg = Edittime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime French|Win32.Build.0 = Edittime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime|Win32.ActiveCfg = Edittime|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Edittime|Win32.Build.0 = Edittime|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime French|Win32.ActiveCfg = Runtime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime French|Win32.Build.0 = Runtime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime Unicode|Win32.ActiveCfg = Runtime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime Unicode|Win32.Build.0 = Runtime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime|Win32.ActiveCfg = Runtime|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Runtime|Win32.Build.0 = Runtime|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Vitalize|Win32.ActiveCfg = Runtime Unicode|Win32
+		{2C86B0A6-EEB7-4395-9F22-2D1217972D63}.Vitalize|Win32.Build.0 = Runtime Unicode|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

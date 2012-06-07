@@ -1,0 +1,35 @@
+{
+    "About": {
+        "Name": "Object Attacher",
+        "Author": "Looki",
+        "Copyright": "Copyright (C) 2012 Lukas Meller",
+        "Comment": "Teaches how to attach multiple Active objects to an extension to gain control over them.",
+        "URL": "http://www.example.com",
+        "Help": "Help/Example.chm",
+        "Identifier": "EXMP"
+    },
+    "ActionMenu": [
+        [0, "Attach objects"]
+    ],
+    "ConditionMenu": [
+    ],
+    "ExpressionMenu": [
+        [0, "Number of attached objects"],
+    ],
+    "Actions": [
+        {
+            "Title": "Attach %0",
+            "Parameters": [
+                ["Object", "The object that you want to attach."]
+            ]
+        }
+    ],
+    "Conditions": [
+    ],
+    "Expressions": [
+        {
+            "Title": "NumObjects(",
+            "Returns": "Integer"
+        }
+    ]
+}

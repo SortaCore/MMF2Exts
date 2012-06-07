@@ -110,8 +110,8 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>C:\Program Files\MMF2 Developer\Extensions\DebugObjectFull.pdb</ProgramDatabaseFile>
-      <StripPrivateSymbols>C:\Program Files\MMF2 Developer\Extensions\DebugObject.pdb</StripPrivateSymbols>
+      <ProgramDatabaseFile>$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName)Full.pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <LargeAddressAware>true</LargeAddressAware>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -169,7 +169,7 @@
       <UACExecutionLevel>HighestAvailable</UACExecutionLevel>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug/Template.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName)Full.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <LargeAddressAware>true</LargeAddressAware>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -177,6 +177,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>.\Debug/Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <StripPrivateSymbols>$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -224,8 +225,8 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>C:\Program Files\MMF2 Developer\Data\Runtime\DebugObjectFull.pdb</ProgramDatabaseFile>
-      <StripPrivateSymbols>C:\Program Files\MMF2 Developer\Data\Runtime\DebugObject.pdb</StripPrivateSymbols>
+      <ProgramDatabaseFile>$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName)Full.pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <LargeAddressAware>true</LargeAddressAware>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
