@@ -26,9 +26,6 @@ Extension::Extension(LPRDATA _rdPtr, LPEDATA edPtr, fpcob cobPtr)
         anything from edPtr to the extension class here.
     
     */
-
-
-    
 }
 
 Extension::~Extension()
@@ -37,9 +34,6 @@ Extension::~Extension()
         This is where you'd do anything you'd do in DestroyRunObject in the original SDK.
         (except calling destructors and other such atrocities, because that's automatic in Edif)
     */
-
-
-
 }
 
 
@@ -50,6 +44,17 @@ short Extension::Handle()
 	{
 		/* Store a pointer to the current loop's object */
 		RunObject* Object = AttachedObjects[i];
+
+		/* Check if this object was deleted */
+		if(Object->roHo.hoFlags & HOF_DESTROYED)
+		{
+			/* If so, remove it from this array */
+			AttachedObjects.erase(AttachedObjects.begin() + i);
+
+			/* Now we need to process this loop index again. */
+			i--;
+			continue;
+		}
 
 		/* Modify it somehow */
 		Object->roHo.hoX += (rand() % 5) - (rand() % 5);
