@@ -1,0 +1,33 @@
+Quick Help for PackX
+==========================================
+
+PackX allows short strings to be stored in Alterable values, numeric array elements, and so forth. The object allows you to specify the characters you wish to use.
+
+The characters that a string is packed with, and numbers are unpacked with, is called the key. The key is simply a list of the letters which should be allowed. For example, "ABCDE".
+
+Because this would be slow to write out, a quicker way of writing that could be "[A-E]". Multiple ranges can be used, too. 
+
+For example, "[A-Z][a-z]". Special characters can be escaped used the backslash character. For example, "\[\]" would allow [ and ].
+
+Use the SetKey action to change the key, or put it in the dialog box when you create the object.
+
+The strings that can be packed using PackX cannot be too long. For that reason, there is an expression to get the maximum amount of characters that can be stored using a key, and a condition for checking if a string fits in it. If a string is too long, however, it gets shortened down automatically.
+
+There is also an expression for getting the amount of characters a key contains. For example, "[A-Z]" includes 26 characters.
+
+If you pack a string, if you wish to unpack it again you must use the exact same key. Otherwise, you will get funky results.
+
+If you didn’t understand some of this, see the documentation (Click "Help") and examples.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Jack Webster, Jan 11th 2003.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Changes so far
+==========================================
+
+0.5 - Added all expressions
+0.6 - Added Condition
+0.7 - Made long strings automatically cut down.
+1.0 - Made Set Code an action, so each expression doesn't require a key. Allowed default key in dialog box.

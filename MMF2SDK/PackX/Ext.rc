@@ -1,0 +1,284 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "..\inc\ccx.h"
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+1 VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x0L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x10001L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "Jack Webster\0"
+            VALUE "FileDescription", "PackX Object\0"
+            VALUE "FileVersion", "2.00\0"
+            VALUE "InternalName", "PACKXOBJ\0"
+            VALUE "LegalCopyright", "Copyright © 2003 Jack Webster\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "packx.cox\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "\0"
+            VALUE "ProductVersion", "1, 0, 0, 0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Data
+//
+
+KPX_MAGICNUMBER RCDATA MOVEABLE PURE 
+BEGIN
+    0x83a7, 0xa92b
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+EXO_ICON                BITMAP  MOVEABLE PURE   "EXTICON.BMP"
+EXO_IMAGE               BITMAP  MOVEABLE PURE   "EXTIMG.BMP"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+MN_CONDITIONS MENU DISCARDABLE 
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Is String small enough to pack using key?", CID_IsInRange
+    END
+END
+
+MN_ACTIONS MENU DISCARDABLE 
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Set Key",                     AID_SetKey
+    END
+END
+
+MN_EXPRESSIONS MENU DISCARDABLE 
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "Pack String into Number",     EID_PackX
+        MENUITEM "Unpack a number back into a string", EID_UnPackX
+        MENUITEM "Find max length for key",     EID_StringMaxLength
+        MENUITEM "Count the amount of chars in a key", EID_KeyCharCount
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+DB_SETUP DIALOG DISCARDABLE  0, 4, 284, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Pack X Object for Multimedia Fusion"
+FONT 10, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,5,28,31,14
+    DEFPUSHBUTTON   "OK",IDOK,5,10,31,14
+    PUSHBUTTON      "Help",ID_HELP,5,46,31,14
+    GROUPBOX        "",IDC_STATIC,0,0,284,178
+    LTEXT           "Written by Jack Webster. This is Open Source Software.\n\nPlease refer to the manual and examples on how to use this object.\n\nThanks to Fodo and @Burkey! Written with the help of CICK.",
+                    IDC_STATIC,43,9,236,48
+    EDITTEXT        IDC_EMAIL,35,163,245,13,ES_READONLY
+    EDITTEXT        IDC_EXHELP,3,113,278,43,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_READONLY | WS_VSCROLL
+    RTEXT           "E-Mail:",IDC_STATIC,5,165,26,8
+    GROUPBOX        "Opitions",IDC_STATIC,3,62,278,38
+    EDITTEXT        IDC_INITKEY,42,72,234,10,ES_AUTOHSCROLL
+    LTEXT           "Inital Key:",IDC_STATIC,8,73,32,11
+    LTEXT           "Tip: For more information on how to write keys, click ""Help"", or check the quick help below.",
+                    IDC_STATIC,7,86,269,12
+    LTEXT           "Quick Help (Click ""Help"" for more detailed help!):",
+                    IDC_STATIC,6,102,159,8
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""..\\inc\\ccx.h""\r\n"
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    DB_SETUP, DIALOG
+    BEGIN
+        RIGHTMARGIN, 47
+        BOTTOMMARGIN, 63
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    KPX_MARK                "CC2"
+    KPX_NAME                "PackX Object"
+    KPX_CREATETITLE         "Create a new PackX object"
+    M_DESC                  " %s : PackX object"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDST_OBJNAME            "PackX object"
+    IDST_AUTHOR             "Jack Webster"
+    IDST_COPYRIGHT          "Copyright © 2003 Jack Webster"
+    IDST_HTTP               "http://www.sylviawebster.f2s.com"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    CID_IsInRange           "If %0 fits in key %1"
+    CP0ID_IsInRange         "String to pack"
+    CP1ID_IsInRange         "Key to pack by"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    AID_SetKey              "Set key to %0"
+    AP0ID_SetKey            "Set key to (eg '[A-Z]')"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    EID_PackX               "PackX("
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    EID_UnPackX             "UnPackX$("
+    EID_StringMaxLength     "MaxLen("
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    EID_KeyCharCount        "KeyCharCount("
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.K.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TXT
+//
+
+IDR_EXHELP              TXT     DISCARDABLE     "exhelp.txt"
+#endif    // English (U.K.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

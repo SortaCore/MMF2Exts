@@ -183,6 +183,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				GenerateManifest="false"
 				ModuleDefinitionFile=".\Ext.def"
 				GenerateDebugInformation="true"
@@ -1013,10 +1014,6 @@
 			</File>
 			<File
 				RelativePath="..\Inc\PTYPE.H"
-				>
-			</File>
-			<File
-				RelativePath="..\Inc\SHA1.h"
 				>
 			</File>
 			<File

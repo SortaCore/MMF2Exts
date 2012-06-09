@@ -2,25 +2,25 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{26385090-43a4-4cf5-8c4e-bd81938ad283}</UniqueIdentifier>
+      <UniqueIdentifier>{e624ef4e-54c2-4ebb-8367-b636b00ea31e}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{0e54bda6-2203-4ad4-a2eb-77c88ecf0959}</UniqueIdentifier>
+      <UniqueIdentifier>{649a6ee7-19bf-498a-8694-33cf81e27f19}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{6053989d-0102-4b8a-a5d3-d3442f348a02}</UniqueIdentifier>
+      <UniqueIdentifier>{431567a8-ce9b-4b1b-b19f-2fa51a8cdb88}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
     <Filter Include="Global to all extensions">
-      <UniqueIdentifier>{8591256e-9e38-4a78-9d58-99d1ca05979c}</UniqueIdentifier>
+      <UniqueIdentifier>{eead1e67-113e-4217-92ed-7f3e93d715f8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Global to all extensions\Edif">
-      <UniqueIdentifier>{07f9c927-a531-4967-ae83-fe771a3d28ba}</UniqueIdentifier>
+      <UniqueIdentifier>{cdf270d0-1fdd-457b-a455-db7850c3c22f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Global to all extensions\Edif\JSON">
-      <UniqueIdentifier>{febad2ab-890e-44d5-9d68-bcc8b3268b2e}</UniqueIdentifier>
+      <UniqueIdentifier>{7d38631c-b564-4957-9686-2969886046df}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

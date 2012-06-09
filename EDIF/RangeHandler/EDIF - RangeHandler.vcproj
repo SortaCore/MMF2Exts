@@ -182,7 +182,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\Lib"
+				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/Template.pdb"
@@ -750,10 +750,6 @@
 			</File>
 			<File
 				RelativePath="..\Inc\ImgFltDefs.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Inc\Lacewing.h"
 				>
 			</File>
 			<File

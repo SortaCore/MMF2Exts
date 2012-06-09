@@ -182,7 +182,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories=""
+				AdditionalLibraryDirectories="..\lib\"
 				IgnoreDefaultLibraryNames="libcmt"
 				ModuleDefinitionFile=".\Ext.def"
 				GenerateDebugInformation="true"

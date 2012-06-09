@@ -1,0 +1,51 @@
+BIT MASK OBJECT
+=====================
+Written by Jack Webster, at the request of Dines.
+Icon thanks to LIJI.
+
+This object only has expressions. There are no actions or conditions.
+
+
+BIT MASK ON TWO NUMBERS
+---------------------------------
+Given two integers and a mask, this expression produces a new integer which is the bitwise combition of the two given parameters subject to the mask.
+
+The mask is a string of 32 characters that represents how each bit should be combined. The n-th character represents how the n-th bit (low order first) should be changed. The possible characters are:
+
+0	Sets this bit to be 0
+1	Sets this bit to be 1
+&	ANDs the two bits
+|	ORs the two bits
+^	XORs the two bits
+f	Value of the first number at that bit
+L	Value of the second (last) number at that bit
+t	Not the value of the first bit
+
+If you leave out values at the end of the mask, they are assumed to be zero.
+
+For instance,
+
+17 (10001) and 28 (11100) combined with the mask "ff|&1" gives us 21 (10101). This is because:
+
+The most high order 27 bits are assumed to be zero, since they are not specified in the mask.
+The next most high order bit is combined with 'f', and therefore it is '1' (the 5th bit in 17. Remember this is the one on the last when it is written down in the usual manor!)
+The next most high order bit is combined with 'f' again, and so this time is 0.
+The next most high order bit is got from 'or'ing 0 and 1 together. This is 1.
+The next most high order bit is got from 'and'ing 0 with 0. This is 0.
+The next most high order bit (which is the very last bit now, the one which will be written most right) is just specified to be 1.
+
+Therefore we have an answer of 10101 (with 27 zeros on the front if you like). This represents 21.
+
+
+BIT MASK ON ONE NUMBER
+--------------------------------
+Like the above but operates on one number. In the bit mask use:
+
+0	Set bit to 0
+1	Set bit to 1
+t	Toggle bit
+-	Leave bit as it is
+
+GET Nth BIT
+--------------------------------
+This is a zero based index and will return 0 or 1.

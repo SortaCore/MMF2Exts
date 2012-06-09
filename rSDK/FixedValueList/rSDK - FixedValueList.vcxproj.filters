@@ -2,18 +2,18 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{05774fef-8efa-456d-b7f8-bce483046d89}</UniqueIdentifier>
+      <UniqueIdentifier>{42965b6f-41e8-4a9c-8b61-07593f3f2f07}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{35b14dde-1eae-49ac-85ee-e9aa1366f31c}</UniqueIdentifier>
+      <UniqueIdentifier>{96bc781f-39e5-4518-8e24-70b561de3369}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
     <Filter Include="MMF Headers">
-      <UniqueIdentifier>{de0f8a46-79aa-429e-99a9-b6d7efe149a0}</UniqueIdentifier>
+      <UniqueIdentifier>{5d72f8e2-0586-47a3-bbd6-e8928d8a259e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{35ea271a-914a-4a4a-abfa-40c3ed7e7987}</UniqueIdentifier>
+      <UniqueIdentifier>{c92686c1-ca1f-45e0-b0ad-400cb08eacc9}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
   </ItemGroup>

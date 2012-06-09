@@ -2,19 +2,19 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{03236864-6b57-4eec-89f6-8fab8de7a103}</UniqueIdentifier>
+      <UniqueIdentifier>{99fd77a8-ae9e-4bc2-a5b5-5c42903a4b11}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{44b958b9-9182-4399-89c4-574e6fd7f1dd}</UniqueIdentifier>
+      <UniqueIdentifier>{a50ef47f-04d8-4fd1-9151-ff4e71416e34}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{7dd729c1-58d0-4fcd-880b-7baa4d5e6597}</UniqueIdentifier>
+      <UniqueIdentifier>{e99c281c-50ce-4e48-ac4e-412b4a029df0}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
     <Filter Include="MMF Headers">
-      <UniqueIdentifier>{d35046c0-760b-490c-ac3b-cb5582eeaa18}</UniqueIdentifier>
+      <UniqueIdentifier>{a722251c-5581-410d-85d9-dbd5b2d5ddf5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

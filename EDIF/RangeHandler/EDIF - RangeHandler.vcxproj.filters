@@ -2,25 +2,25 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{8843c349-ea02-4e65-a447-1ad5ce87c511}</UniqueIdentifier>
+      <UniqueIdentifier>{25e554c5-49e6-4ba3-815b-2ee620ae9bcc}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{b0c23880-56a5-4fed-8cbd-6eb2dc4b9b4d}</UniqueIdentifier>
+      <UniqueIdentifier>{c05acfb9-233b-4540-ba08-29fd195682e9}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{baf34694-02ba-4a5a-a7a4-0f579e76947d}</UniqueIdentifier>
+      <UniqueIdentifier>{19190e95-62c2-4b4d-bca8-2373a0475de1}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
     <Filter Include="Global to all extensions">
-      <UniqueIdentifier>{420028e9-2e26-41ff-818c-9ec8f9ffc2d3}</UniqueIdentifier>
+      <UniqueIdentifier>{9309e991-1067-4361-95bb-76aef5de55aa}</UniqueIdentifier>
     </Filter>
     <Filter Include="Global to all extensions\Edif">
-      <UniqueIdentifier>{2cfd9898-1cd5-4986-8195-4b3661dc9f05}</UniqueIdentifier>
+      <UniqueIdentifier>{4b810d26-193f-46d0-be30-0ff1197dd477}</UniqueIdentifier>
     </Filter>
     <Filter Include="Global to all extensions\Edif\JSON">
-      <UniqueIdentifier>{a0352b62-b645-4b60-820c-d79afa0b3d65}</UniqueIdentifier>
+      <UniqueIdentifier>{1a3a11b8-67af-4af8-8ec8-259ef7891fee}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +140,6 @@
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\ImgFltDefs.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Lacewing.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Mvt.h">

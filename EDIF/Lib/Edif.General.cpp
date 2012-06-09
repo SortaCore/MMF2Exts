@@ -1,6 +1,7 @@
 
 #include "Common.h"
 
+
 LPCTSTR * Dependencies = 0;
 
 LPCTSTR * WINAPI DLLExport GetDependencies()
