@@ -22,7 +22,7 @@ int CurrentLanguage()
 	{
  		GetModuleFileNameA(hInstLib, FileToLookup, sizeof(FileToLookup));
 
-		char * Filename = FileToLookup + strlen(temp) - 1;
+		char * Filename = FileToLookup + strlen(FileToLookup) - 1;
 
 		while (*Filename != '\\' && *Filename != '/')
 			-- Filename;
