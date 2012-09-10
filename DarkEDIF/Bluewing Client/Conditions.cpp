@@ -229,7 +229,7 @@ bool Extension::IsJoinedToChannel(char * ChannelName)
 		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
 		while (C)
 		{
-			if (!strcmp(ChannelName, C->Name()))
+			if (!_stricmp(ChannelName, C->Name()))
 				return true;
 			C = C->Next();
 		}
@@ -241,19 +241,17 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 {
 	if (PeerName[0] == '\0')
 		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
-	else if (ChannelName[0] == '\0')
-		CreateError("Error checking if peer is joined to a channel, channel name supplied was blank.");
-	else
+	else if (ChannelName[0] != '\0')
 	{
 		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
 		while (C)
 		{
-			if (!strcmp(ChannelName, C->Name()))
+			if (!_stricmp(ChannelName, C->Name()))
 			{
 				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
 				while (P)
 				{
-					if (!strcmp(PeerName, P->Name()))
+					if (!_stricmp(PeerName, P->Name()))
 						return true;
 					P = P->Next();
 				}
@@ -263,6 +261,21 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 		}
 		
 		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
+	}
+	else if (ThreadData.Channel) // Use currently selected channel
+	{
+		Lacewing::RelayClient::Channel::Peer * P = ThreadData.Channel->FirstPeer();
+		while (P)
+		{
+			if (!_stricmp(P->Name(), PeerName))
+				return true;
+			P = P->Next();
+		}
+		return false;
+	}
+	else // No currently selected channel!
+	{
+		CreateError("Error checking if peer is joined to a channel; no channel selected, and no channel name supplied.");
 	}
 	return false;
 }
@@ -274,7 +287,7 @@ bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
 		while (C)
 		{
-			if (!strcmp(ChannelName, C->Name()))
+			if (!_stricmp(ChannelName, C->Name()))
 			{
 				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
 				while (P)
