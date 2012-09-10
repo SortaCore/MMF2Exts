@@ -9,8 +9,9 @@ public:
 
     Edif::Runtime Runtime;
 
-    static const int MinimumBuild = 251;
-    static const int Version = 3;
+    static const int MinimumBuild = 254;
+    static const int Version = 4;
+	// v4: First release with console
 	// v3: Release due to bug fixes
 	// v2: Release due to new features
 	// v1: First release
@@ -44,12 +45,10 @@ public:
 		void OutputNow(int Intensity, int Line, const char * TextToOutput);
 
     /// Actions
-
         void SetOutputFile(char * FileP, int DescribeAppI);
         void Output(int Intensity, int Line, const char * TextToOutput);
 		void SetOutputTimeFormat(char * Format);
 		void SetOutputOnOff(int OnOff);
-		void TestThis(void);
 		void SetHandler(int Reaction, int ContinuesCount);
 		void CauseCrash_ZeroDivisionInt(void);
 		void CauseCrash_ZeroDivisionFloat(void);
@@ -57,6 +56,15 @@ public:
 		void CauseCrash_ReadAccessViolation(void);
 		void CauseCrash_ArrayOutOfBoundsRead(void);
 		void CauseCrash_ArrayOutOfBoundsWrite(void);
+		void SetConsoleOnOff(int OnOff);
+
+	/// Conditions
+		bool OnSpecificConsoleInput(char * Command);
+		bool OnAnyConsoleInput(void);
+
+	/// Expressions
+		const char * FullCommand(void);
+		const char * CommandMinusName(void);
 
 
 

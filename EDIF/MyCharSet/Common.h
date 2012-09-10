@@ -73,3 +73,11 @@ inline wchar_t * Uni(const char * var)
 
 #endif
 #include "Extension.h"
+
+struct BOMThreadData {
+	const char * FileToAddTo;
+	const int TypeOfBOM;
+	const bool IgnoreCurrentBOM;
+	
+	BOMThreadData(const char * FTAT, const int TOB, const bool ICB) : FileToAddTo(FTAT), TypeOfBOM(TOB), IgnoreCurrentBOM(ICB) {}
+};

@@ -63,6 +63,7 @@
 				ProgramDataBaseFileName=".\Release_Small/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DisableSpecificWarnings="4700"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -83,6 +84,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				UACExecutionLevel="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\Ext.def"
@@ -167,6 +169,7 @@
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4700"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -271,6 +274,7 @@
 				ProgramDataBaseFileName=".\Run_Only_Small/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				DisableSpecificWarnings="4700"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -291,6 +295,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				UACExecutionLevel="1"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\Ext.def"
@@ -343,6 +348,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Conditions.cpp"
+				>
+			</File>
+			<File
 				RelativePath="Edittime.cpp"
 				>
 				<FileConfiguration
@@ -372,6 +381,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Expressions.cpp"
+				>
 			</File>
 			<File
 				RelativePath="Ext.def"
@@ -469,6 +482,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Unreferenced.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter

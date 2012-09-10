@@ -57,6 +57,15 @@
     <ClCompile Include="..\Lib\json.c">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>
+    <ClCompile Include="Unreferenced.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Conditions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Expressions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def">

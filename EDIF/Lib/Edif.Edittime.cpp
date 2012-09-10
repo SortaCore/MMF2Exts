@@ -145,7 +145,10 @@ LPINFOEVENTSV2 WINAPI DLLExport GetConditionInfos(mv _far *mV, short code)
 #endif // !defined(RUN_ONLY)
 	return NULL;
 }
+#include <sstream>
+void AddressOutput(short * Address, size_t NumOfShorts);
 
+//#error NO BUILD EDIF, JUST DARK EDIF! (remove if you actually want to build EDIF)
 LPINFOEVENTSV2 WINAPI DLLExport GetActionInfos(mv _far *mV, short code)
 {
 #ifndef RUN_ONLY

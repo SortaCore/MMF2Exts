@@ -1,15 +1,14 @@
-
 #include "Common.h"
 
-LPCTSTR * Dependencies = 0;
+const TCHAR ** Dependencies = 0;
 
-LPCTSTR * WINAPI DLLExport GetDependencies()
+const TCHAR ** DLLExport GetDependencies()
 {
-	if(!Dependencies)
+	if (!Dependencies)
     {
-        const json_value &DependenciesJSON = SDK->json["About"]["Dependencies"];
+        const json_value &DependenciesJSON = SDK->json["Dependencies"];
 
-        Dependencies = new LPCTSTR [DependenciesJSON.u.array.length + 2];
+        Dependencies = new const TCHAR * [DependenciesJSON.u.object.length + 2];
 
         int Offset = 0;
 
@@ -36,7 +35,7 @@ LPCTSTR * WINAPI DLLExport GetDependencies()
 
         unsigned int i = 0;
 
-        for(; i < DependenciesJSON.u.array.length; ++ i)
+        for(; i < DependenciesJSON.u.object.length; ++ i)
 		{
 			TCHAR* tstr = Edif::ConvertString(DependenciesJSON[i]);
             Dependencies[Offset + i] = tstr;
@@ -49,73 +48,83 @@ LPCTSTR * WINAPI DLLExport GetDependencies()
     return Dependencies;
 }
 
-short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
+short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 {
-	infoPtr->conditions = &SDK->ConditionJumps[0];
-	infoPtr->actions = &SDK->ActionJumps[0];
-	infoPtr->expressions = &SDK->ExpressionJumps[0];
+	infoPtr->Conditions = &::SDK->ConditionJumps[0];
+	infoPtr->Actions = &::SDK->ActionJumps[0];
+	infoPtr->Expressions = &::SDK->ExpressionJumps[0];
 
-	infoPtr->numOfConditions = SDK->json["Conditions"].u.array.length;
-	infoPtr->numOfActions = SDK->json["Actions"].u.array.length;
-	infoPtr->numOfExpressions = SDK->json["Expressions"].u.array.length;
-
-	infoPtr->editDataSize = sizeof(EDITDATA);
-
-    infoPtr->windowProcPriority = Extension::WindowProcPriority;
-
-	infoPtr->editFlags = Extension::OEFLAGS;
-	infoPtr->editPrefs = Extension::OEPREFS;
-
-    memcpy(&infoPtr->identifier, SDK->json["About"]["Identifier"], 4);
+	infoPtr->NumOfConditions = ::SDK->json[CurLang]["Conditions"].u.object.length;
+	infoPtr->NumOfActions = ::SDK->json[CurLang]["Actions"].u.object.length;
+	infoPtr->NumOfExpressions = ::SDK->json[CurLang]["Expressions"].u.object.length;
 	
-    infoPtr->version = Extension::Version;
+	infoPtr->EDITDATASize = sizeof(EDITDATA);
+#if 0 //NOPROPS
+	{
+		const json_value JSON = ::SDK->json[CurLang]["Properties"];
+		for(unsigned int i = 0; i < JSON.u.object.length; ++i)
+		{
+			switch (::SDK->EdittimeProperties[i].Type_ID)
+			{
+				case Edif::Properties::PROPTYPE_EDIT_STRING:
+				case Edif::Properties::PROPTYPE_STATIC:
+					infoPtr->editDataSize += sizeof(Prop_AStr)+255;
+					break;
+				default:
+					infoPtr->editDataSize += sizeof(Prop);
+			}
+			++infoPtr->editDataSize;
+		}
+	}
+#endif //NOPROPS
+	
+	//+(GetPropertyChbx(edPtr, ::SDK->json[CurLang]["Properties"].u.object.length+1)-&edPtr);
+
+    infoPtr->WindowProcPriority = Extension::WindowProcPriority;
+
+	infoPtr->EditFlags = Extension::OEFLAGS;
+	infoPtr->EditPrefs = Extension::OEPREFS;
+
+    memcpy(&infoPtr->Identifier, ::SDK->json["Identifier"], 4);
+	
+    infoPtr->Version = Extension::Version;
 	
 	return TRUE;
 }
 
-extern "C" 
+extern "C" unsigned int DLLExport GetInfos(int info)
 {
-	DWORD WINAPI DLLExport GetInfos(int info)
+	switch (info)
 	{
-		
-		switch (info)
-		{
-			case KGI_VERSION:
-				return EXT_VERSION2;
+		case KGI::VERSION:
+			return 0x300; // I'm a MMF2 extension!
 
-			case KGI_PLUGIN:
-				return EXT_PLUGIN_VERSION1;
+		case KGI::PLUGIN:
+			return 0x100; // Version 1 type o' plugin
 
-			case KGI_PRODUCT:
+		case KGI::PRODUCT:
+			#ifdef PROEXT
+				return 3; // MMF Developer
+			#endif
+			#ifdef TGFEXT
+				return 1; // TGF2
+			#endif
+			return 2;		// MMF Standard
 
-                #ifdef PROEXT
-				    return PRODUCT_VERSION_DEV;
-                #endif
+		case KGI::BUILD:
+			return Extension::MinimumBuild;
 
-                #ifdef TGFEXT
-				    return PRODUCT_VERSION_HOME;
-                #endif
+	#ifdef _UNICODE
+		case KGI::UNICODE:
+			return TRUE;	// I'm building in Unicode
+	#endif
 
-                return PRODUCT_VERSION_STANDARD;
-
-			case KGI_BUILD:
-				return Extension::MinimumBuild;
-
-            case KGI_UNICODE:
-
-                #ifdef _UNICODE
-                    return TRUE;
-                #else
-                    return FALSE;
-                #endif
-
-			default:
-				return 0;
-		}
+		default:
+			return 0;
 	}
 }
 
-short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
+short DLLExport CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
 {
     /* Global to all extensions! Use the constructor of your Extension class (Extension.cpp) instead! */
 
@@ -128,52 +137,45 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 
 /* Don't touch any of these, they're global to all extensions! See Extension.cpp */
 
-short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
+short DLLExport DestroyRunObject(RUNDATA * rdPtr, long fast)
 {
     delete rdPtr->pExtension;
+	rdPtr->pExtension = NULL;
 
 	return 0;
 }
 
-short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
+short DLLExport HandleRunObject(RUNDATA * rdPtr)
 {
     return rdPtr->pExtension->Handle();
 }
 
-short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
+short DLLExport DisplayRunObject(RUNDATA * rdPtr)
 {
 	return rdPtr->pExtension->Display();
 }
 
-ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
+unsigned short DLLExport GetRunObjectDataSize(RunHeader * rhPtr, EDITDATA * edPtr)
 {
-	return(sizeof(RUNDATA));
+	return (sizeof(RUNDATA));
 }
 
-short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
+short DLLExport PauseRunObject(RUNDATA * rdPtr)
 {
 	return rdPtr->pExtension->Pause();
 }
 
-short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
+short DLLExport ContinueRunObject(RUNDATA * rdPtr)
 {
 	return rdPtr->pExtension->Continue();
 }
 
-BOOL WINAPI SaveRunObject(LPRDATA rdPtr, HANDLE hf)
+BOOL SaveRunObject(RUNDATA * rdPtr, HANDLE hf)
 {            
     return rdPtr->pExtension->Save(hf) ? TRUE : FALSE;
 }
 
-BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
+BOOL LoadRunObject(RUNDATA * rdPtr, HANDLE hf)
 {            
     return rdPtr->pExtension->Load(hf) ? TRUE : FALSE;
-}
-
-LPEVENTINFOS2 GetEventInformations(LPEVENTINFOS2 eiPtr, short code)
-{
-	while(eiPtr->infos.code != code)
-		eiPtr = EVINFO2_NEXT(eiPtr);
-	
-	return eiPtr;
 }

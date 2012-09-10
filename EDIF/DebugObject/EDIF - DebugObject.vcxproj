@@ -245,6 +245,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actions.cpp" />
+    <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -253,6 +254,7 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="Expressions.cpp" />
     <ClCompile Include="Extension.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -283,6 +285,7 @@
     <ClCompile Include="..\Lib\Edif.General.cpp" />
     <ClCompile Include="..\Lib\Edif.Runtime.cpp" />
     <ClCompile Include="..\Lib\json.c" />
+    <ClCompile Include="Unreferenced.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def" />

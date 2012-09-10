@@ -1,7 +1,7 @@
 
 /* vim: set et ts=3 sw=3 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin et al. & Darkwire Software.  All rights reserved.
  * https://github.com/udp/json-parser
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,15 +107,6 @@ static int new_value
       switch (value->type)
       {
          case json_array:
-
-            if (! (value->u.array.values = (json_value **) json_alloc
-               (state, value->u.array.length * sizeof (json_value *), 0)) )
-            {
-               return 0;
-            }
-
-            break;
-
          case json_object:
 
             values_size = sizeof (*value->u.object.values) * value->u.object.length;
@@ -144,7 +135,8 @@ static int new_value
             break;
       };
 
-      value->u.array.length = 0;
+	  // CATS
+      value->u.object.length = 0;
 
       return 1;
    }
@@ -234,10 +226,10 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
 				case '/':
 						// <-- type of comment
-						if(*(i+1) == '/' && !(flags & flag_string))
+						if (*(i+1) == '/' && !(flags & flag_string))
 						{
 							// Did not find line break at any part in remainder of file.
-							if(!(i = strchr(i, '\n')))
+							if (!(i = strchr(i, '\n')))
 							{
 								sprintf (error, "Line %d, char %d: Opened // comment but no newline encountered.", cur_line, e_off);
 								goto e_failed;
@@ -251,20 +243,20 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 						}
 
 						/* <-- type of comment --> */
-						if(*(i+1) == '*' && !(flags & flag_string))
+						if (*(i+1) == '*' && !(flags & flag_string))
 						{
 							// There could be /* */ comments but with *s inside. So we cannot just search for the nearest '*'
-							for(;;)
+							for (;;)
 							{
 								// Did not find '*' at any part in remainder of file.
-								if(!strchr(i, '*'))
+								if (!strchr(i, '*'))
 								{
 									sprintf (error, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, e_off);
 									goto e_failed;
 								}
 
-								// Found * with '/ afterwards - finish '/' search.
-								if(*(i = (strchr(i, '*')+1)) == '/')
+								// Found * with '/' afterwards - finish '/' search.
+								if (*(i = (strchr(i, '*')+1)) == '/')
 									break;
 							}
 							continue;
@@ -403,7 +395,6 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
                   continue;
 
                case ']':
-
                   if (top->type == json_array)
                      flags = (flags & ~ (flag_need_comma | flag_seek_value)) | flag_next;
                   else
@@ -451,7 +442,6 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
                         continue;
 
                      case '[':
-
                         if (!new_value (&state, &top, &root, &alloc, json_array))
                            goto e_alloc_failure;
 
@@ -507,10 +497,10 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
 					case '/':
 						// <-- type of comment
-						if(*(i+1) == '/' && !(flags & flag_string))
+						if (*(i+1) == '/' && !(flags & flag_string))
 						{
 							// Did not find line break at any part in remainder of file.
-							if(!(i = strchr(i, '\n')))
+							if (!(i = strchr(i, '\n')))
 							{
 								sprintf (error, "Line %d, char %d: Opened // comment but no newline encountered.", cur_line, e_off);
 								goto e_failed;
@@ -524,20 +514,20 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 						}
 
 						/* <-- type of comment --> */
-						if(*(i+1) == '*' && !(flags & flag_string))
+						if (*(i+1) == '*' && !(flags & flag_string))
 						{
 							// There could be /* */ comments but with *s inside. So we cannot just search for the nearest '*'
 							for(;;)
 							{
 								// Did not find '*' at any part in remainder of file.
-								if(!strchr(i, '*'))
+								if (!strchr(i, '*'))
 								{
 									sprintf (error, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, e_off);
 									goto e_failed;
 								}
 
 								// Found * with '/ afterwards - finish '/' search.
-								if(*(i = (strchr(i, '*')+1)) == '/')
+								if (*(i = (strchr(i, '*')+1)) == '/')
 									break;
 							}
 							break;
@@ -612,10 +602,10 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 				
 				  case '/':
 					// <-- type of comment
-					if(*(i+1) == '/' && !(flags & flag_string))
+					if (*(i+1) == '/' && !(flags & flag_string))
 					{
 						// Did not find line break at any part in remainder of file.
-						if(!(i = strchr(i, '\n')))
+						if (!(i = strchr(i, '\n')))
 						{
 							sprintf (error, "Line %d, char %d: Opened // comment but no newline encountered.", cur_line, e_off);
 							goto e_failed;
@@ -629,20 +619,20 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 					}
 
 					/* <-- type of comment --> */
-					if(*(i+1) == '*' && !(flags & flag_string))
+					if (*(i+1) == '*' && !(flags & flag_string))
 					{
 						// There could be /* */ comments but with *s inside. So we cannot just search for the nearest '*'
 						for(;;)
 						{
 							// Did not find '*' at any part in remainder of file.
-							if(!strchr(i, '*'))
+							if (!strchr(i, '*'))
 							{
 								sprintf (error, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, e_off);
 								goto e_failed;
 							}
 
 							// Found * with '/ afterwards - finish '/' search.
-							if(*(i = (strchr(i, '*')+1)) == '/')
+							if (*(i = (strchr(i, '*')+1)) == '/')
 								break;
 						}
 						break;
@@ -729,17 +719,11 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
                switch (parent->type)
                {
+				  case json_array:
                   case json_object:
 
                      parent->u.object.values
                         [parent->u.object.length].value = top;
-
-                     break;
-
-                  case json_array:
-
-                     parent->u.array.values
-                           [parent->u.array.length] = top;
 
                      break;
 
@@ -748,7 +732,8 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
                };
             }
 
-            if ( (++ top->parent->u.array.length) > state.uint_max)
+			// CATS
+            if ( (++ top->parent->u.object.length) > state.uint_max)
                goto e_overflow;
 
             top = top->parent;
@@ -825,16 +810,6 @@ void json_value_free (json_value * value)
       switch (value->type)
       {
          case json_array:
-
-            if (!value->u.array.length)
-            {
-               free (value->u.array.values);
-               break;
-            }
-
-            value = value->u.array.values [-- value->u.array.length];
-            continue;
-
          case json_object:
 
             if (!value->u.object.length)

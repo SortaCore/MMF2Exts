@@ -25,7 +25,7 @@ typedef	struct DisplayMode {
 //	int		mDriver;
 } DisplayMode;
 
-typedef	BOOL (CALLBACK * LPENUMSCREENMODESPROC)(DisplayMode*, LPVOID);
+typedef	BOOL (CALLBACK * LPENUMSCREENMODESPROC)(DisplayMode *, LPVOID);
 
 #ifdef HWABETA
 // Lost device callback function

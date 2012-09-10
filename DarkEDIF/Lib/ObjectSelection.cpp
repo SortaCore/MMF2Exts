@@ -6,142 +6,141 @@
 
 #include "Common.h"
 
-Riggs::ObjectSelection::ObjectSelection(LPRH rhPtr)
+Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 {
 	this->rhPtr = rhPtr;
-	this->ObjectList = rhPtr->rhObjectList;		//get a pointer to the mmf object list
-	this->OiList = rhPtr->rhOiList;				//get a pointer to the mmf object info list
-	this->QualToOiList = rhPtr->rhQualToOiList;	//get a pointer to the mmf qualifier to Oi list
+	this->ObjectList = rhPtr->ObjectList;		//get a pointer to the mmf object list
+	this->OiList = rhPtr->OiList;				//get a pointer to the mmf object info list
+	this->QualToOiList = rhPtr->QualToOiList;	//get a pointer to the mmf qualifier to Oi list
 	oiListItemSize = sizeof(objInfoList);
 
 //Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
-#ifndef UNICODE
-	if ( rhPtr->rh4.rh4Mv->mvCallFunction(NULL, EF_ISUNICODE, 0, 0, 0) )
-		oiListItemSize += 24;
-#endif
-#ifndef HWABETA
-	if ( rhPtr->rh4.rh4Mv->mvCallFunction(NULL, EF_ISHWA, 0, 0, 0) )
-		oiListItemSize += sizeof(LPVOID);
-#endif
+	#ifndef UNICODE
+		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, EF_ISUNICODE, 0, 0, 0) )
+			oiListItemSize += 24;
+	#endif
+	#ifndef HWABETA
+		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, EF_ISHWA, 0, 0, 0) )
+			oiListItemSize += sizeof(LPVOID);
+	#endif
 }
 
 //Selects *all* objects of the given object-type
 void Riggs::ObjectSelection::SelectAll(short Oi)
 {
-	const LPOIL pObjectInfo = GetOILFromOI(Oi);
+	objInfoList * const ObjectInfo = GetOILFromOI(Oi);
 
-	pObjectInfo->oilNumOfSelected = pObjectInfo->oilNObjects;
-	pObjectInfo->oilListSelected = pObjectInfo->oilObject;
-	pObjectInfo->oilEventCount = rhPtr->rh2.rh2EventCount;
+	ObjectInfo->NumOfSelected = ObjectInfo->NObjects;
+	ObjectInfo->ListSelected = ObjectInfo->Object;
+	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
 
-	int i = pObjectInfo->oilObject;
+	int i = ObjectInfo->Object;
 	while(i >= 0)
 	{
-		LPHO pObject = ObjectList[i].oblOffset;
-		pObject->hoNextSelected = pObject->hoNumNext;
-		i = pObject->hoNumNext;
+		HeaderObject * Object = ObjectList[i].oblOffset;
+		Object->NextSelected = Object->NumNext;
+		i = Object->NumNext;
 	}
 }
 
 //Resets all objects of the given object-type
 void Riggs::ObjectSelection::SelectNone(short Oi)
 {
-	LPOIL pObjectInfo = GetOILFromOI(Oi);
+	objInfoList * ObjectInfo = GetOILFromOI(Oi);
 
-	pObjectInfo->oilNumOfSelected = 0;
-	pObjectInfo->oilListSelected = -1;
-	pObjectInfo->oilEventCount = rhPtr->rh2.rh2EventCount;
+	ObjectInfo->NumOfSelected = 0;
+	ObjectInfo->ListSelected = -1;
+	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
 }
 
 //Resets the SOL and inserts only one given object
-void Riggs::ObjectSelection::SelectOneObject(LPRO object)
+void Riggs::ObjectSelection::SelectOneObject(RunObject * object)
 {
-	LPOIL pObjectInfo = GetOILFromOI(object->roHo.hoOi);
+	objInfoList * ObjectInfo = GetOILFromOI(object->roHo.Oi);
 
-	pObjectInfo->oilNumOfSelected = 1;
-	pObjectInfo->oilEventCount = rhPtr->rh2.rh2EventCount;
-	pObjectInfo->oilListSelected = object->roHo.hoNumber;
-	ObjectList[object->roHo.hoNumber].oblOffset->hoNextSelected = -1;
+	ObjectInfo->NumOfSelected = 1;
+	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+	ObjectInfo->ListSelected = object->roHo.Number;
+	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
 }
 
 //Resets the SOL and inserts the given list of objects
-void Riggs::ObjectSelection::SelectObjects(short Oi, LPRO* objects, int count)
+void Riggs::ObjectSelection::SelectObjects(short Oi, RunObject ** objects, int count)
 {
-	if(count <= 0)
+	if (count <= 0)
 		return;
 
-	LPOIL pObjectInfo = GetOILFromOI(Oi);
+	objInfoList * const ObjectInfo = GetOILFromOI(Oi);
 
-	pObjectInfo->oilNumOfSelected = count;
-	pObjectInfo->oilEventCount = rhPtr->rh2.rh2EventCount;
+	ObjectInfo->NumOfSelected = count;
+	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
 	
-	short prevNumber = objects[0]->roHo.hoNumber;
-	pObjectInfo->oilListSelected = prevNumber;
+	short prevNumber = objects[0]->roHo.Number;
+	ObjectInfo->ListSelected = prevNumber;
 	
 	for(int i=1; i<count; i++)
 	{
-		short currentNumber = objects[i]->roHo.hoNumber;
-		ObjectList[prevNumber].oblOffset->hoNextSelected = currentNumber;
+		short currentNumber = objects[i]->roHo.Number;
+		ObjectList[prevNumber].oblOffset->NextSelected = currentNumber;
 		prevNumber = currentNumber;
 	}
-	ObjectList[prevNumber].oblOffset->hoNextSelected = -1;
+	ObjectList[prevNumber].oblOffset->NextSelected = -1;
 }
 
 //Return the number of selected objects for the given object-type
 int Riggs::ObjectSelection::GetNumberOfSelected(short Oi)
 {
-	if(Oi & 0x8000)
+	if (Oi & 0x8000)
 	{
 		Oi &= 0x7FFF;	//Mask out the qualifier part
 		int numberSelected = 0;
 
-		LPQOI CurrentQualToOiStart = (LPQOI)((char*)QualToOiList + Oi);
-		LPQOI CurrentQualToOi = CurrentQualToOiStart;
+		qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
+		qualToOi * CurrentQualToOi = CurrentQualToOiStart;
 
-		while(CurrentQualToOi->qoiOiList >= 0)
+		while(CurrentQualToOi->OiList >= 0)
 		{
-			LPOIL CurrentOi = GetOILFromOI(CurrentQualToOi->qoiOiList);
-			numberSelected += CurrentOi->oilNumOfSelected;
-			CurrentQualToOi = (LPQOI)((char*)CurrentQualToOi + 4);
+			objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
+			numberSelected += CurrentOi->NumOfSelected;
+			CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
 		}
 		return numberSelected;
 	}
 	else
 	{
-		LPOIL pObjectInfo = GetOILFromOI(Oi);
-		return pObjectInfo->oilNumOfSelected;
+		return GetOILFromOI(Oi)->NumOfSelected;
 	}
 }
 
-bool Riggs::ObjectSelection::ObjectIsOfType(LPRO object, short Oi)
+bool Riggs::ObjectSelection::ObjectIsOfType(RunObject * object, short Oi)
 {
-	if(Oi & 0x8000)
+	if (Oi & 0x8000)
 	{
 		Oi &= 0x7FFF;	//Mask out the qualifier part
-		LPQOI CurrentQualToOiStart = (LPQOI)((char*)QualToOiList + Oi);
-		LPQOI CurrentQualToOi = CurrentQualToOiStart;
+		qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
+		qualToOi * CurrentQualToOi = CurrentQualToOiStart;
 
-		while(CurrentQualToOi->qoiOiList >= 0)
+		while(CurrentQualToOi->OiList >= 0)
 		{
-			LPOIL CurrentOi = GetOILFromOI(CurrentQualToOi->qoiOiList);
-			if(CurrentOi->oilOi == object->roHo.hoOi)
+			objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
+			if (CurrentOi->Oi == object->roHo.Oi)
 				return true;
-			CurrentQualToOi = (LPQOI)((char*)CurrentQualToOi + 4);
+			CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
 		}
 		return false;
 	}
 	else
-		return (object->roHo.hoOi == Oi);
+		return (object->roHo.Oi == Oi);
 }
 
 
 //Returns the object-info structure from a given object-type
-LPOIL Riggs::ObjectSelection::GetOILFromOI(short Oi)
+objInfoList * Riggs::ObjectSelection::GetOILFromOI(short Oi)
 {
-	for(int i=0; i<rhPtr->rhNumberOi; ++i)
+	for(int i = 0; i < rhPtr->NumberOi; ++i)
 	{
-		LPOIL oil = (LPOIL)(((char*)OiList) + oiListItemSize*i);
-		if(oil->oilOi == Oi)
+		objInfoList * oil = (objInfoList *)(((char*)OiList) + oiListItemSize*i);
+		if (oil->Oi == Oi)
 			return oil;
 	}
 	return NULL;

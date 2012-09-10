@@ -2,7 +2,7 @@
 #ifndef _Palet_h
 #define	_Palet_h
 
-#include "SurfaceDefs.h"
+#define SURFACES_API __declspec(dllimport)
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +33,7 @@ typedef	struct csPalette
 	UINT			refCount;
 
 } csPalette;
-typedef	csPalette FAR *	LPCSPALETTE;
+typedef	csPalette *	LPCSPALETTE;
 
 void csPalette_Remove(LPCSPALETTE pCsPal);
 
@@ -50,7 +50,7 @@ void 		FAR	Delete_CurrentPalList();
 // Create / Delete CSPalette
 SURFACES_API LPCSPALETTE 	FAR	WINAPI csPalette_Create (LPLOGPALETTE pLogPal);
 SURFACES_API void 		FAR	WINAPI csPalette_Delete (LPCSPALETTE pCsPal);		// another name for csPalette_SubRef
-SURFACES_API LPCSPALETTE  FAR WINAPI csPalette_NormalizePalette(LPCSPALETTE pCsPal, LPBYTE pTabRemap);
+SURFACES_API LPCSPALETTE  WINAPI csPalette_NormalizePalette(LPCSPALETTE pCsPal, LPBYTE pTabRemap);
 
 // Create default 256 color palette
 // This palette must be deleted using csPalette_Delete or csPalette_SubRef
@@ -65,11 +65,11 @@ SURFACES_API void 		FAR WINAPI csPalette_GetPaletteEntries(LPCSPALETTE ptCsPal, 
 int GetNearestColorIndex (LPPALETTEENTRY ppe, UINT nColors, COLORREF color);
 
 // Normalize palette: add system colors and replace black>0 by OPAQUE_BLACK
-SURFACES_API BOOL 		FAR	WINAPI NormalizePalette (PALETTEENTRY FAR *destPal, PALETTEENTRY FAR *srcPal, LPBYTE ptabRemap);
+SURFACES_API BOOL 		FAR	WINAPI NormalizePalette (PALETTEENTRY *destPal, PALETTEENTRY *srcPal, LPBYTE ptabRemap);
 
 // Copy RGB to BGR and reciprocally
-void 		FAR	CopyRGBToBGR ( RGBQUAD FAR *dest, PALETTEENTRY FAR *src, UINT nbColors );
-void 		FAR	CopyBGRToRGB ( PALETTEENTRY FAR *dest, RGBQUAD FAR *src, UINT nbColors );
+void 		FAR	CopyRGBToBGR ( RGBQUAD *dest, PALETTEENTRY *src, UINT nbColors );
+void 		FAR	CopyBGRToRGB ( PALETTEENTRY *dest, RGBQUAD *src, UINT nbColors );
 
 // Default palettes
 extern	BYTE	Palet16[], Palet256[];

@@ -3550,7 +3550,7 @@ typedef	objInfoList	*	LPOIL;
 
 // Object creation structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-typedef struct tagCOB {
+struct createObjectInfo {
 	LO*		cobLevObj;				// Leave first!
 	WORD	cobLevObjSeg;
 	WORD	cobFlags;
@@ -3559,9 +3559,9 @@ typedef struct tagCOB {
 	int		cobDir;
 	int		cobLayer;
 	int		cobZOrder;
-	} createObjectInfo;
-typedef	createObjectInfo *	LPCOB;
-typedef	createObjectInfo *	fpcob;
+};
+//typedef	createObjectInfo *	LPCOB;
+//typedef	createObjectInfo *	fpcob;
 
 // Flags for Create Objects
 // -------------------------

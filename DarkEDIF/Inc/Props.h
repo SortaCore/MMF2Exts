@@ -5,36 +5,37 @@
 
 
 ///////////////////////////////////////////////////////
-//
-// Property data - used in property definition tables
-//
-typedef struct PropData
+// Property data - used in property definition table.
+///////////////////////////////////////////////////////
+struct Prop_Custom;
+struct PropData
 {
-	int			dwID;				// Identifier (generated, 1+,)
-	UINT_PTR	sName;				// Name = ID of the property name in the resources, or LPCSTR
-	UINT_PTR	sInfo;				// Info = ID of the property description in the resources, or LPCSTR
-	UINT_PTR	lType;				// Property type, or pointer to CPropItem (custom properties)
-	DWORD		dwOptions;			// Options (check box, bold, etc)
-	LPARAM		lCreateParam;		// Parameter
-
+	int				ID;					// Identifier (generated, 1+,)
+	const char *	Title;				// Name = ID of the property name in the resources, or const char *
+	const char *	Info;				// Info = ID of the property description in the resources, or const char *
+	union { 
+		unsigned int	Type_ID;		// Property type...
+		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
+	}; 
+	unsigned int	Options;			// Options (check box, bold, etc)
+	LPARAM			CreateParam;		// Parameter
+	
 	// Use initialiser list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
 	PropData() { PropData(-1, 0);}
-	PropData(int ID, UINT_PTR Type) : dwID(ID+0x80000), sName(0), sInfo(0), lType(Type), dwOptions(0), lCreateParam(0) {}
-	void SetAllProperties(const char * Name = "", const char * Info = "", DWORD Options = 0, LPARAM CreateParam = 0)
+	PropData(int ID_, unsigned int Type_) : 
+		ID(ID_+0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) {}
+	void SetAllProperties(unsigned int Options = 0, LPARAM CreateParam = 0)
 	{
-		sName = (UINT_PTR)Name;
-		sInfo = (UINT_PTR)Info;
-		dwOptions = Options;
-		lCreateParam = CreateParam;
+		this->Options = Options;
+		this->CreateParam = CreateParam;
 	}
-} PropData;
+};
 
 
 ///////////////////////////////////////////////////////
-//
 // Property values - used to set or get property values
-//
-class CPropValue;
+///////////////////////////////////////////////////////
+class Prop;
 
 //////////////
 // Base class
@@ -43,366 +44,419 @@ class CPropValue;
 /**
  *  Property Value.
  *  This class is the base class of the classes that contain the values of editable properties.
- *  CPropValue objects allow to communicate values between the property window and the object data.
+ *  Prop objects allow to communicate values between the property window and the object data.
  *  This is a pure virtual class.
  */
-class CPropValue
+class Prop
 {
 protected:
-	virtual ~CPropValue() {}
+	virtual ~Prop() {}
 public:
-	CPropValue() {}
+	Prop() {};
 
 	virtual void Delete() = 0;
-	virtual CPropValue* CreateCopy() = 0;
-	virtual BOOL IsEqual(CPropValue* value) = 0;
-	virtual DWORD GetClassID() = 0;
+	virtual Prop * CreateCopy() = 0;
+	virtual BOOL IsEqual(Prop * P) = 0;
+	virtual unsigned int GetClassID() = 0;
 };
 
-//////////////
-// Int
-//////////////
-
-/**
- *  Integer Property Value.
- */
-class CPropIntValue : public CPropValue
+// Integer
+class Prop_SInt : public Prop
 {
 protected:
-	virtual ~CPropIntValue() {}
+	virtual ~Prop_SInt() {}
 public:
-	CPropIntValue() { m_nValue = 0; }
-	CPropIntValue(int nValue) { m_nValue = nValue; }
+	Prop_SInt(int Value_ = 0) : Value(Value_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropIntValue(m_nValue); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_nValue == ((CPropIntValue*)value)->m_nValue); }
-	virtual DWORD GetClassID() { return 'INT '; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_SInt(Value);
+	}
+	virtual BOOL IsEqual (Prop * P)
+	{
+		return (this->Value == ((Prop_SInt *)P)->Value);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'INT ';
+	}
 
-public:
-	int		m_nValue;
+	// Data
+	int Value;
 };
 
-//////////////
-// DWORD
-//////////////
-//
-/**
- *  DWORD Property Value.
- */
-class CPropDWordValue : public CPropValue
+// Unsigned integer
+class Prop_UInt : public Prop
 {
 protected:
-	virtual ~CPropDWordValue() {}
+	virtual ~Prop_UInt() {}
 public:
-	CPropDWordValue() { m_dwValue = 0L; }
-	CPropDWordValue(DWORD dwValue) { m_dwValue = dwValue; }
+	Prop_UInt(unsigned int Value_ = 0) : Value(Value_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropDWordValue(m_dwValue); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_dwValue == ((CPropDWordValue*)value)->m_dwValue); }
-	virtual DWORD GetClassID() { return 'DWRD'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_UInt(Value);
+	}
+	virtual BOOL IsEqual (Prop * P)
+	{
+		return (this->Value == ((Prop_UInt *)P)->Value);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'DWRD';
+	}
 
-public:
-	DWORD	m_dwValue;
+	// Data
+	unsigned int Value;
 };
 
-//////////////
 // Float
-//////////////
-//
-/**
- *  Float Property Value.
- */
-class CPropFloatValue : public CPropValue
+class Prop_Float : public Prop
 {
 protected:
-	virtual ~CPropFloatValue() {}
+	virtual ~Prop_Float() {}
 public:
-	CPropFloatValue() { m_fValue = 0.0f; }
-	CPropFloatValue(float fValue) { m_fValue = fValue; }
+	Prop_Float(float Value_ = 0.0f) : Value(Value_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropFloatValue(m_fValue); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_fValue == ((CPropFloatValue*)value)->m_fValue); }
-	virtual DWORD GetClassID() { return 'FLOT'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Float(Value);
+	}
+	virtual BOOL IsEqual (Prop * P)
+	{
+		return (this->Value == ((Prop_Float *)P)->Value);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'FLOT';
+	}
 
-public:
-	float	m_fValue;
+	// Data
+	float Value;
 };
 
-//////////////
-// Double
-//////////////
-//
-/**
- *  Double Property Value.
- */
-class CPropDoubleValue : public CPropValue
+// Double - double-size floating point variable
+class Prop_Double : public Prop
 {
 protected:
-	virtual ~CPropDoubleValue() {}
+	virtual ~Prop_Double() {}
 public:
-	CPropDoubleValue() { m_dValue = 0.0; }
-	CPropDoubleValue(double dValue) { m_dValue = dValue; }
+	Prop_Double(double Value_ = 0.0) : Value(Value_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropDoubleValue(m_dValue); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_dValue == ((CPropDoubleValue*)value)->m_dValue); }
-	virtual DWORD GetClassID() { return 'DBLE'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Double(Value);
+	}
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return (this->Value == ((Prop_Double *)P)->Value);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'DBLE';
+	}
 
-public:
-	double	m_dValue;
+	// Data
+	double Value;
 };
 
-//////////////
-// Size
-//////////////
-//
-/**
- *  Size Property Value.
- *  Width and height, integer values.
- */
-class CPropSizeValue : public CPropValue
+// Size - two SInts
+class Prop_Size : public Prop
 {
 protected:
-	virtual ~CPropSizeValue() {}
+	virtual ~Prop_Size() {}
 public:
-	CPropSizeValue() { m_cx = m_cy = 0L; }
-	CPropSizeValue(int cx, int cy) { m_cx = cx; m_cy = cy; }
+	Prop_Size(int X_ = 0, int Y_ = 0) : X(X_), Y(Y_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropSizeValue(m_cx, m_cy); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_cx == ((CPropSizeValue*)value)->m_cx && m_cy == ((CPropSizeValue*)value)->m_cy); }
-	virtual DWORD GetClassID() { return 'SIZE'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Size(X, Y);
+	}
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return	(this->X == ((Prop_Size *)P)->X) && 
+				(this->Y == ((Prop_Size *)P)->Y);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'SIZE';
+	}
 
-public:
-	int		m_cx;
-	int		m_cy;
+	// Data
+	int X, Y;
 };
 
-//////////////
-// Int64
-//////////////
-//
-/**
- *  Large Integer Property Value.
- */
-class CPropInt64Value : public CPropValue
+// Int64 - double-size SInt
+class Prop_Int64 : public Prop
 {
 protected:
-	virtual ~CPropInt64Value() {}
+	virtual ~Prop_Int64() {}
 public:
-	CPropInt64Value() { m_nValue = 0; }
-	CPropInt64Value(__int64 nValue) { m_nValue = nValue; }
+	Prop_Int64(__int64 Value_ = 0i64) : Value(Value_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropInt64Value(m_nValue); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_nValue == ((CPropInt64Value*)value)->m_nValue); }
-	virtual DWORD GetClassID() { return 'INT2'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Int64(Value);
+	}
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return (this->Value == ((Prop_Int64 *)P)->Value);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'INT2';
+	}
 
-public:
-	__int64	m_nValue;
+	// Data
+	__int64 Value;
 };
 
-//////////////
-// Pointer
-//////////////
-//
-/**
- *  Pointer Property Value.
- */
-class CPropPtrValue : public CPropValue
+// Pointer - do not use for strings, see A/WStr instead. To store size, use Buff.
+class Prop_Ptr : public Prop
 {
 protected:
-	virtual ~CPropPtrValue() {}
+	virtual ~Prop_Ptr() {}
 public:
-	CPropPtrValue() { m_ptr = NULL; }
-	CPropPtrValue(LPVOID ptr) { m_ptr = ptr; }
+	Prop_Ptr(void * Address_ = NULL) : Address(Address_) {}
 
-	virtual void Delete() { delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropPtrValue(m_ptr); }
-	virtual BOOL IsEqual(CPropValue* value) { return (m_ptr == ((CPropPtrValue*)value)->m_ptr); }
-	virtual DWORD GetClassID() { return 'LPTR'; }
+	virtual void Delete()
+	{
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Ptr(Address);
+	}
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return (this->Address == ((Prop_Ptr *)P)->Address);
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'LPTR';
+	}
 
-public:
-	LPVOID	m_ptr;
+	// Data
+	void * Address;
 };
 
-//////////////
-// Buffer
-//////////////
-//
-/**
- *  Buffer Property Value.
- */
-class CPropDataValue : public CPropValue
+// Buffer - pointer and size
+class Prop_Buff : public Prop
 {
 protected:
-	virtual ~CPropDataValue() {}
+	virtual ~Prop_Buff() {}
 public:
-	CPropDataValue() { m_dwDataSize = 0L; m_pData = 0; }
-	CPropDataValue(DWORD dwDataSize, LPBYTE pData) {
-		m_dwDataSize = dwDataSize;
-		m_pData = NULL;
-		if ( dwDataSize != 0 )
+	Prop_Buff(size_t Size_ = 0, void * Address_ = NULL) : Size(Size_)
+	{
+		if (Size == 0)
+			return; // Nothing to do
+
+		Address = malloc(Size); // Allocate size specified
+		if (Address != NULL && Address_ != NULL) // If existing address, duplicate memory
+			memcpy_s(Address, Size, Address_, Size);
+	}
+	Prop_Buff(char * Str)
+	{
+		Prop_Buff(Str ? (strlen(Str)+1)*sizeof(char) : 0, Str);
+	}
+	Prop_Buff(wchar_t * Str)
+	{
+		Prop_Buff(Str ? (wcslen(Str)+1)*sizeof(wchar_t) : 0, Str);
+	}
+
+	virtual void Delete()
+	{
+		if (Address) 
 		{
-			m_pData = (LPBYTE)malloc(dwDataSize);
-			if ( m_pData != NULL )
-			{
-				if ( pData != NULL )
-					memcpy(m_pData, pData, dwDataSize);
-			}
-			else
-				m_dwDataSize = 0;
+			free(Address);
+			Address = NULL;
 		}
+		Size = 0;
+		delete this;
 	}
-	CPropDataValue(LPCSTR pStr) {
-		m_dwDataSize = 0;
-		m_pData = NULL;
-		if ( pStr == NULL )
-			return;
-		m_pData = (LPBYTE)_strdup(pStr);
-		m_dwDataSize = strlen((LPCSTR)m_pData)+1;
-	};
-
-	virtual void Delete() { free(m_pData); m_pData = NULL; m_dwDataSize = 0; delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropDataValue(m_dwDataSize, m_pData); }
-	virtual BOOL IsEqual(CPropValue* value) {
-		if ( m_dwDataSize != ((CPropDataValue*)value)->m_dwDataSize )
-			return FALSE;
-		if ( m_dwDataSize == 0 )
-			return TRUE;
-		if ( m_pData == NULL || ((CPropDataValue*)value)->m_pData == NULL )
-			return FALSE;
-		return (memcmp(m_pData, ((CPropDataValue*)value)->m_pData, m_dwDataSize) == 0);
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_Buff(Size, Address);
 	}
-	virtual DWORD GetClassID() { return 'DATA'; }
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return ((this->Address == ((Prop_Buff *)P)->Address && this->Size == ((Prop_Buff *)P)->Size) ||	// Same address AND size means equiv.
+					!memcmp(this->Address, ((Prop_Buff *)P)->Address, this->Size));		// Otherwise compare buffers
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'DATA';
+	}
 
-public:
-	DWORD	m_dwDataSize;
-	LPBYTE	m_pData;
+	// Data
+	void * Address;
+	size_t Size;
 };
 
-/////////////////
 // String (ANSI)
-/////////////////
-//
-/**
- *  ANSI string Property Value.
- */
-class CPropAStringValue : public CPropValue
+class Prop_AStr : public Prop
 {
 protected:
-	virtual ~CPropAStringValue() {}
+	virtual ~Prop_AStr() {}
 public:
-	CPropAStringValue() { m_pStr = _strdup(""); m_unused = 0; }
-	CPropAStringValue(LPCSTR pStr) {
-		if ( pStr == NULL )
-			m_pStr = _strdup("");
-		else
-			m_pStr = _strdup(pStr);
-		m_unused = 0;
+	Prop_AStr(const char * Str = NULL)
+	{
+		String = _strdup(Str ? Str : ""); // Allocate size specified
 	}
-	CPropAStringValue(LPCWSTR pWStr) {
-		if ( pWStr == NULL )
-			m_pStr = _strdup("");
+	Prop_AStr(const wchar_t * Str)
+	{
+		if (Str == NULL)
+			String = _strdup("");
 		else
 		{
-			// m_pStr = _strdup(pStr);
-			int lg = wcslen(pWStr);
-			m_pStr = (LPSTR)calloc(lg+1, 1);		// TODO : change that if we use something else than CP_ACP
-			WideCharToMultiByte(CP_ACP, 0, pWStr, lg, m_pStr, lg, NULL, NULL);
-			m_pStr[lg] = 0;
+			size_t length = wcslen(Str);
+			String = (char *)calloc(length+1, sizeof(char));
+			
+			if (!String)
+				return; // Stops bad-access crashes
+			
+			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
+			// Use mvGetAppCodePage?
+			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
+			String[length] = 0;	// Force null ending
 		}
-		m_unused = 0;
 	}
-	CPropAStringValue(int nStringSize) {
-		if ( nStringSize > 0 )
-			m_pStr = (LPSTR)calloc(nStringSize+1, 1);
+	Prop_AStr(size_t Size)
+	{
+		if (Size > 0)
+			String = (char *)calloc(Size, sizeof(char)); // Allocate size specified
 		else
-			m_pStr = _strdup("");
+			String = _strdup("");
 	}
-	LPCSTR GetString() {
-		return m_pStr;
+	
+	virtual void Delete()
+	{
+		if (String) 
+		{
+			free(String);
+			String = NULL;
+		}
+		delete this;
 	}
-	virtual void Delete() { free(m_pStr); m_pStr = NULL; delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropAStringValue(m_pStr); }
-	virtual BOOL IsEqual(CPropValue* value) {
-		if ( m_pStr == NULL || ((CPropAStringValue*)value)->m_pStr == NULL )
-			return (m_pStr == ((CPropAStringValue*)value)->m_pStr);
-		return (strcmp(m_pStr, ((CPropAStringValue*)value)->m_pStr) == 0);
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_AStr(String);
 	}
-	virtual DWORD GetClassID() { return 'STRA'; }
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return (this->String == ((Prop_AStr *)P)->String)	|| 
+				this->String == NULL		||	// For some reason, default to true if
+				((Prop_AStr *)P)->String == NULL			||	// NULL for either of params
+				!strcmp(this->String, ((Prop_AStr *)P)->String);
+	}
+	char * GetString() {return String;}
+	virtual unsigned int GetClassID()
+	{
+		return 'STRA';
+	}
 
-public:
-	DWORD	m_unused;		// for compatibility with Data property
-	LPSTR	m_pStr;
+	// Data
+	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
+	char * String;
 };
 
-///////////////////
 // String (UNICODE)
-///////////////////
-//
-/**
- *  Unicode string Property Value.
- */
-class CPropWStringValue : public CPropValue
+class Prop_WStr : public Prop
 {
 protected:
-	virtual ~CPropWStringValue() {}
+	virtual ~Prop_WStr() {}
 public:
-	CPropWStringValue() { m_pWStr = _wcsdup(L""); m_unused = 0; }
-	CPropWStringValue(LPCWSTR pWStr) {
-		if ( pWStr == NULL )
-			m_pWStr = _wcsdup(L"");
-		else
-			m_pWStr = _wcsdup(pWStr);
-		m_unused = 0;
+	Prop_WStr(wchar_t * Str = NULL)
+	{
+		String = _wcsdup(Str ? Str : L""); // Allocate size specified
 	}
-	CPropWStringValue(LPCSTR pStr) {
-		if ( pStr == NULL )
-			m_pWStr = _wcsdup(L"");
+	Prop_WStr(char * Str)
+	{
+		if (!Str)
+			String = _wcsdup(L"");
 		else
 		{
-			// m_pStr = _strdup(pStr);
-			int lg = strlen(pStr);
-			m_pWStr = (LPWSTR)calloc(lg+1, sizeof(wchar_t));
-			MultiByteToWideChar(CP_ACP, 0, pStr, lg, m_pWStr, lg);
-			m_pWStr[lg] = 0;
+			size_t Size = strlen(Str);
+			String = (wchar_t *)calloc(Size+1, sizeof(wchar_t));
+			if (!String)
+				return; // Stops bad-access crashes
+			
+			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
+			// Use mvGetAppCodePage?
+			MultiByteToWideChar(CP_ACP, 0, Str, Size, String, Size);
+			String[Size] = 0;
 		}
-		m_unused = 0;
 	}
-	CPropWStringValue(int nStringSize) {
-		if ( nStringSize > 0 )
-			m_pWStr = (LPWSTR)calloc(nStringSize+1, sizeof(wchar_t));
+	Prop_WStr(size_t Size)
+	{
+		if (Size > 0)
+			String = (wchar_t *)calloc(Size, sizeof(wchar_t)); // Allocate size specified
 		else
-			m_pWStr = _wcsdup(L"");
+			String = _wcsdup(L"");
 	}
-	LPCWSTR GetString() {
-		return m_pWStr;
-	}
-	virtual void Delete() { free(m_pWStr); m_pWStr = NULL; delete this; }
-	virtual CPropValue* CreateCopy() { return new CPropWStringValue(m_pWStr); }
-	virtual BOOL IsEqual(CPropValue* value) {
-		if ( m_pWStr == NULL || ((CPropWStringValue*)value)->m_pWStr == NULL )
-			return (m_pWStr == ((CPropWStringValue*)value)->m_pWStr);
-		return (wcscmp(m_pWStr, ((CPropWStringValue*)value)->m_pWStr) == 0);
-	}
-	virtual DWORD GetClassID() { return 'STRW'; }
 
-public:
-	DWORD	m_unused;		// for compatibility with Data property
-	LPWSTR	m_pWStr;
+	virtual void Delete()
+	{
+		if (String) 
+		{
+			free(String);
+			String = NULL;
+		}
+		delete this;
+	}
+	virtual Prop * CreateCopy()
+	{
+		return new Prop_WStr(String);
+	}
+	virtual BOOL IsEqual(Prop * P)
+	{
+		return (this->String == ((Prop_WStr *)P)->String)	||
+				this->String == NULL						||
+				((Prop_WStr *)P)->String == NULL			||
+				!wcscmp(this->String, ((Prop_WStr *)P)->String); // Otherwise compare buffers
+	}
+	virtual unsigned int GetClassID()
+	{
+		return 'STRW';
+	}
+
+	// Data
+	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
+	wchar_t * String;
 };
+
 
 //////////////////////////////////////////////////////////////////
 // String (ANSI or UNICODE, depending on preprocessor definitions)
 //////////////////////////////////////////////////////////////////
 #ifdef _UNICODE
-#define CPropStringValue	CPropWStringValue
+	#define Prop_Str	Prop_WStr
 #else
-#define CPropStringValue	CPropAStringValue
+	#define Prop_Str	Prop_AStr
 #endif
 
 
@@ -415,36 +469,35 @@ public:
  *  Derived classes must implement the methods to draw, activate, deactivate the control,
  *  as well as the methods to get and set values.
  */
-class CCustomProp
+struct Prop_Custom
 {
-public:
-	CCustomProp() {}
+	Prop_Custom() {}
 
-	virtual void		Initialize(HINSTANCE hInst, LPARAM lCreateParam, BOOL bReInit) {}
-	virtual void		Delete() { delete this; }
+	virtual void	Initialize(HINSTANCE hInst, LPARAM lCreateParam, BOOL bReInit) {}
+	virtual void	Delete() { delete this; }
 
-	virtual void		Draw(HDC hDC, LPRECT pRc, HFONT hFont, COLORREF textColor) {}
-	virtual CPropValue*	GetPropValue() { return NULL; }
-	virtual void		SetPropValue(CPropValue* pValue) {}
+	virtual void	Draw(HDC hDC, LPRECT pRc, HFONT hFont, COLORREF textColor) {}
+	virtual Prop *	GetPropValue() { return NULL; }
+	virtual void	SetPropValue(Prop * pValue) {}
 
-	virtual void		Activate(HWND hParent, LPRECT pRc, HFONT hFont) {}
-	virtual void		Deactivate() {}
-	virtual void		Refresh() {}
-	virtual void		Move(LPRECT pRc) {}
-	virtual BOOL		UpdateData() { return FALSE; }
+	virtual void	Activate(HWND hParent, LPRECT pRc, HFONT hFont) {}
+	virtual void	Deactivate() {}
+	virtual void	Refresh() {}
+	virtual void	Move(LPRECT pRc) {}
+	virtual BOOL	UpdateData() { return FALSE; }
 
 protected:
-	virtual ~CCustomProp() {}
+	virtual ~Prop_Custom() {
+	
+	}
 };
 
-typedef	CCustomProp* (CALLBACK* CP_CREATEINSTANCE)();
+//typedef	Prop_Custom* (CALLBACK* CP_CREATEINSTANCE)();
 
-typedef struct CustomPropCreateStruct {
-
-	CP_CREATEINSTANCE	m_pCreateCustomPropFnc;
+struct CustomPropCreateStruct {
+	Prop_Custom *		(CALLBACK * m_pCreateCustomPropFnc)();
 	LPARAM				m_lCreateParam;
-
-} CustomPropCreateStruct;
+};
 
 // Notification Codes for custom properties
 #define PWN_FIRST					(0U-2000U)
@@ -457,9 +510,9 @@ typedef struct CustomPropCreateStruct {
 // Parameter structure for the PWN_VALIDATECUSTOMITEM notification message
 typedef struct _NMPROPWND
 {
-    NMHDR			hdr;
-	CCustomProp*	pCP;
-} NMPROPWND, *PNMPROPWND, FAR *LPNMPROPWND;
+    NMHDR				hdr;
+	Prop_Custom *	pCP;
+} NMPROPWND, *PNMPROPWND, *LPNMPROPWND;
 
 // Example:
 //
@@ -489,6 +542,7 @@ typedef struct _NMPROPWND
 /**
  *  List of property types.
  */
+/*
 enum {
 	PROPTYPE_STATIC = 1,		//! Simple static text
 	PROPTYPE_FOLDER,			//! Folder
@@ -517,26 +571,25 @@ enum {
 	PROPTYPE_URLBUTTON,			//! URL button
 	PROPTYPE_DIRECTORYNAME,		//! Directory pathname
 	PROPTYPE_SPINEDITFLOAT,		//! Edit + Spin, value = floating point number
-};
+};*/
 
 ///////////////////
 // Property options
 ///////////////////
 //
-#define	PROPOPT_NIL				0x00000000
-#define	PROPOPT_CHECKBOX		0x00000001		// Left check box
-#define PROPOPT_BOLD			0x00000002		// Name must be displayed in bold characters
-#define PROPOPT_PARAMREQUIRED	0x00000004		// A non-null parameter must be provided
-#define PROPOPT_REMOVABLE		0x00000008		// The property can be deleted by the user
-#define PROPOPT_RENAMEABLE		0x00000010		// The property can be renamed by the user
-#define PROPOPT_MOVABLE			0x00000020		// The property can be moved by the user (list only)
-#define	PROPOPT_LIST			0x00000040		// The property is a list
-#define	PROPOPT_SINGLESEL		0x00000080		// This property is not displayed in multi-selection mode
+#define	PROPOPT_CHECKBOX		bit1		// Left check box
+#define PROPOPT_BOLD			bit2		// Name must be displayed in bold characters
+#define PROPOPT_PARAMREQUIRED	bit3		// A non-null parameter must be provided or it will be requested immediately
+#define PROPOPT_REMOVABLE		bit4		// The property can be deleted by the user
+#define PROPOPT_RENAMEABLE		bit5		// The property can be renamed by the user
+#define PROPOPT_MOVABLE			bit6		// The property can be moved by the user (list only)
+#define	PROPOPT_LIST			bit7		// The property is a list
+#define	PROPOPT_SINGLESEL		bit8		// This property is not displayed in multi-selection mode
 
 // Property-specific options
-#define PROPOPT_EDIT_PASSWORD	0x00010000		// For Edit String property
-#define PROPOPT_EDIT_LOWERCASE	0x00020000		// For Edit String property
-#define PROPOPT_EDIT_UPPERCASE	0x00040000		// For Edit String property
+#define PROPOPT_EDIT_PASSWORD	0x10000		// For Edit String property
+#define PROPOPT_EDIT_LOWERCASE	0x20000		// For Edit String property
+#define PROPOPT_EDIT_UPPERCASE	0x40000		// For Edit String property
 
 // Internal, not used by extensions
 #define PROPID_ROOT				0
@@ -643,33 +696,33 @@ typedef MinMaxFloatParam* LPMINMAXFLOATPARAM;
 // Direction Control Styles
 enum 
 {
-	DCS_NOBORDER	= 0,		// No border
-	DCS_FLAT		= 1,		// Flat
-	DCS_3D			= 2,		// 3D
-	DCS_SLIDER		= 4,		// Slider to change the number of directions
-	DCS_EMPTY		= 8,		// ??? should affect the appearance of direction spots...
-	DCS_SETALL_BTNS	= 16,		// "Select All" and "Reset" buttons
+	DCS_NOBORDER	= 0x0,		// No border
+	DCS_FLAT		= 0x1,		// Flat
+	DCS_3D			= 0x2,		// 3D
+	DCS_SLIDER		= 0x4,		// Slider to change the number of directions
+	DCS_EMPTY		= 0x8,		// ??? should affect the appearance of direction spots...
+	DCS_SETALL_BTNS	= 0x10,		// "Select All" and "Reset" buttons
 };
 
 // Initialization structure for direction property
 typedef struct {
 	BOOL	bMultiSel;	// TRUE for multi-selection
 	int		numDirs;	// Number of directions: 4,8,16,32
-	DWORD	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
+	unsigned int	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
 } DirCtrlCreateParam;
 
 // Direction Property Value 
 typedef struct {
 	int		selDir;		// Direction index, single selection mode
-	DWORD	selDir32;	// 32-bit direction mask, multi-selection mode
+	unsigned int	selDir32;	// 32-bit direction mask, multi-selection mode
 	int		numDirs;	// Number of directions (4, 8, 16 or 32)
 	int		reserved;	// Not used
 } PropDirValue;
 
 // Initialization structure for file selector property
 typedef struct {
-	LPCSTR	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
-	DWORD	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
+	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
+	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
 } FilenameCreateParam;	
 
 ////////////////////////////////////////////////

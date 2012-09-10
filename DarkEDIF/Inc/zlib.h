@@ -30,9 +30,9 @@
 
 #ifndef ZLIB_H
 #define ZLIB_H
-#pragma comment(lib, "zlib.lib")
+//#pragma comment(lib, "zlib.lib")
 
-#include "..\Inc\zlib\zconf.h"
+#include "zconf.h"
 
 #ifdef __cplusplus
 extern "C" {

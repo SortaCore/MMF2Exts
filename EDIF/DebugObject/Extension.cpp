@@ -27,9 +27,17 @@ Extension::Extension(LPRDATA _rdPtr, LPEDATA edPtr, fpcob cobPtr)
 	LinkAction(6, CauseCrash_ZeroDivisionFloat);
 	LinkAction(7, CauseCrash_ReadAccessViolation);
 	LinkAction(8, CauseCrash_WriteAccessViolation);
+	LinkAction(9, CauseCrash_ArrayOutOfBoundsRead);
+	LinkAction(10, CauseCrash_ArrayOutOfBoundsWrite);
+	LinkAction(11, SetConsoleOnOff);
 
+	LinkCondition(0, OnSpecificConsoleInput);
+	LinkCondition(1, OnAnyConsoleInput);
+
+	// Initialise from edittime
 	SetOutputOnOff(edPtr->EnableAtStart);
 	Data->DoMsgBoxIfPathNotSet = edPtr->DoMsgBoxIfPathNotSet;
+	SetConsoleOnOff(edPtr->ConsoleEnabled);
 
 	if (edPtr->InitialPath[0] != '\0') // ""
 		SetOutputFile(edPtr->InitialPath, 0);

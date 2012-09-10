@@ -43,7 +43,7 @@
             "Title": "Action Example with parameter %0",
             "Parameters": [
                 [
-                    "Integer",
+                    "String",
                     "Example Parameter"
                 ]
             ]

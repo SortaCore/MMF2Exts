@@ -73,43 +73,43 @@ typedef struct _json_value
 
    union
    {
-      int boolean;
-      long integer;
-      double dbl;
+	  int boolean;
+	  long integer;
+	  double dbl;
 
-      struct
-      {
-         unsigned int length;
-         json_char * ptr; /* null terminated */
+	  struct
+	  {
+		 unsigned int length;
+		 json_char * ptr; /* null terminated */
 
-      } string;
+	  } string;
 
-      struct
-      {
-         unsigned int length;
+	  struct
+	  {
+		 unsigned int length;
 
-         struct
-         {
-            json_char * name;
-            struct _json_value * value;
+		 struct
+		 {
+			json_char * name;
+			struct _json_value * value;
 
-         } * values;
+		 } * values;
 
-      } object;
+	  } object;
+	  /*
+	  struct
+	  {
+		 unsigned int length;
+		 struct _json_value ** values;
 
-      struct
-      {
-         unsigned int length;
-         struct _json_value ** values;
-
-      } array;
-
+	  } array;
+	  */
    } u;
 
    union
    {
-      struct _json_value * next_alloc;
-      void * object_mem;
+	  struct _json_value * next_alloc;
+	  void * object_mem;
 
    } _reserved;
 
@@ -118,54 +118,59 @@ typedef struct _json_value
 
    #ifdef __cplusplus
 
-      public:
+	  public:
 
-         inline _json_value ()
-         {  memset (this, 0, sizeof (_json_value));
-         }
+		 inline _json_value ()
+		 {
+			 memset (this, 0, sizeof (_json_value));
+		 }
 
-         inline const struct _json_value &operator [] (int index) const
-         {
-            if (type != json_array || index < 0
-                     || ((unsigned int) index) > u.array.length)
-            {
-               return json_value_none;
-            }
+		 inline const struct _json_value &operator [] (int index) const
+		 {
+			if ((type != json_object && type != json_array) || index < 0
+					 || ((unsigned int) index) > u.object.length)
+			{
+			   return json_value_none;
+			}
 
-            return *u.array.values [index];
-         }
+			//return *u.array.values [index];
+			return *u.object.values [index].value;
+		 }
 
-         inline const struct _json_value &operator [] (const char * index) const
-         { 
-            if (type != json_object)
-               return json_value_none;
+		inline const struct _json_value &operator [] (const char * index) const
+		{
+			if (type != json_object && type != json_array)
+				return json_value_none;
 
-            for (unsigned int i = 0; i < u.object.length; ++ i)
-               if (!strcmp (u.object.values [i].name, index))
-                  return *u.object.values [i].value;
+			for (unsigned int i = 0; i < u.object.length; ++ i)
+				if ((type == json_object && !strcmp (u.object.values [i].name, index)) ||
+					(type == json_array && u.object.values[i].value->type == json_string && !strcmp(u.object.values[i].value->u.string.ptr, index)))
+					return *u.object.values [i].value;
 
-            return json_value_none;
-         }
+			return json_value_none;
+		 }
 
-         inline operator const char * () const
-         {  
-            switch (type)
-            {
-               case json_string:
-                  return u.string.ptr;
+		 inline operator const char * () const
+		 {  
+			switch (type)
+			{
+			   case json_string:
+				  return u.string.ptr;
 
-               default:
-                  return "";
-            };
-         }
+			   default:
+				  return "";
+			};
+		 }
 
-         inline operator long () const
-         {  return u.integer;
-         }
+		 inline operator long () const
+		 {
+			 return u.integer;
+		 }
 
-         inline operator bool () const
-         {  return u.boolean != 0;
-         }
+		 inline operator bool () const
+		 {
+			 return u.boolean != 0;
+		 }
 
    #endif
 

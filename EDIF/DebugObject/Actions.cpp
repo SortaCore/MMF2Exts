@@ -133,12 +133,15 @@ void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
 	if (!Data)
 		return;
 
-	// Can't output if handle is invalid
-	if (!Data->FileHandle || !Data->DebugEnabled)
-		return;
-
 	// Get lock
 	OpenLock();
+
+	// Can't output if debug is off or no debug method is enabled
+	if (!Data->DebugEnabled || (!Data->ConsoleEnabled && !Data->FileHandle))
+	{
+		CloseLock();
+		return;
+	}
 	
 	// Get time (if blank, remove tab for time also)
 	if (Data->TimeFormat[0] != '\0')
@@ -147,13 +150,40 @@ void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
 		Data->timeinfo = localtime(&Data->rawtime);
 		strftime(Data->RealTime, 255, Data->TimeFormat, Data->timeinfo);
 		// Output
-		fprintf_s(Data->FileHandle, "%i\t%i\t%s\t%s\r\n", Intensity, Line, Data->RealTime, TextToOutput);
+		if (Data->FileHandle)
+			fprintf_s(Data->FileHandle, "%i\t%i\t%s\t%s\r\n", Intensity, Line, Data->RealTime, TextToOutput);
+		
+		// Console wants colourisin'
+		if (Data->ConsoleEnabled)
+		{
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x0A);
+			printf_s("%i\t%i\t%s\t", Intensity, Line, Data->RealTime);
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x0B);
+			printf_s("%s\r\n", TextToOutput);
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x07);
+		}
 	}
 	else
-		fprintf_s(Data->FileHandle, "%i\t%i\t%s\r\n", Intensity, Line, TextToOutput);
+	{
+		if (Data->FileHandle)
+			fprintf_s(Data->FileHandle, "%i\t%i\t%s\r\n", Intensity, Line, TextToOutput);
+		
+		// Console wants colourisin'
+		if (Data->ConsoleEnabled)
+		{
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x0A);
+			printf_s("%i\t%i\t", Intensity, Line);
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x0B);
+			printf_s("%s\r\n", TextToOutput);
+			SetConsoleTextAttribute(Data->ConsoleOut, 0x07);
+		}
+	}
 	
 	// Cleanup
-	fflush(Data->FileHandle);
+	if(Data->FileHandle)
+		fflush(Data->FileHandle);
+	if(Data->ConsoleEnabled)
+		std::cout.flush();
 	CloseLock();
 }
 void Extension::SetOutputTimeFormat(char * FormatP)
@@ -193,6 +223,83 @@ void Extension::SetOutputOnOff(int OnOff)
 	CloseLock();
 }
 
+void Extension::SetConsoleOnOff(int OnOff)
+{
+	// Can't continue if Data failed to initialise
+	if (!Data)
+		return;
+
+	// Acquire lock
+	OpenLock();
+
+	// AllocConsole() will fail if called >1 times.
+	if (Data->ConsoleEnabled == (OnOff != 0))
+	{
+		// Nothing to do!
+		CloseLock();
+		return;
+	}
+	// Set debug to boolean equivalent
+	Data->ConsoleEnabled = (OnOff != 0);
+	if (Data->DebugEnabled)
+	{
+		// Start up a console
+		if (Data->ConsoleEnabled)
+		{
+			// success
+			if (AllocConsole())
+			{
+				// Get console handle for log output
+				Data->ConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				Data->ConsoleIn = GetStdHandle(STD_INPUT_HANDLE);
+				// Default to shutdown off
+				// Shutdown = false;
+				std::setfill(' ');		// Set fill character to spaces
+				std::right(std::cout);	// Set padding to right
+
+				// Invoke the system to move the standard console streams
+				// to the new allocated console
+				freopen("CONOUT$", "w", stderr); 
+				freopen("CONIN$",  "r", stdin); 
+				freopen("CONOUT$", "w", stdout); 
+
+				// Handle all console events (the X was clicked, Ctrl+C pressed, etc)
+				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, TRUE);
+
+				Data->ReleaseConsoleInput = false;
+				Data->ConsoleReceived = "";
+				CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&ReceiveConsoleInput, NULL, NULL, NULL);
+
+				CloseLock();
+			}
+			else
+			{
+				CloseLock();
+				OutputNow(5, -1, "Console opening function AllocConsole() failed."
+								 "This generally occurs when a console has already been allocated.");
+			}
+		}
+		else // Close down a console
+		{
+			if (FreeConsole())
+			{
+				Data->ConsoleOut = NULL;
+				Data->ConsoleIn = NULL;
+				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, FALSE);
+				CloseLock();
+			}
+			else
+			{
+				CloseLock();
+				OutputNow(5, -1, "Console closing function FreeConsole() failed."
+								 "This generally occurs when a console has already been allocated.");
+			}
+
+		}
+		
+	}
+}
+
 void Extension::CauseCrash_ZeroDivisionInt(void)
 {
 	int a = 0, b = 0, c = 0;
@@ -219,13 +326,14 @@ void Extension::CauseCrash_ReadAccessViolation(void)
 
 void Extension::CauseCrash_ArrayOutOfBoundsRead(void)
 {
-	// For some reason, this warning still occurs even with #pragma disabling
 	// This warning is correct; a crash will occur since i[2] is not 
-	// initialised - in fact, i[2] doesn't even exxit.
-	#pragma warning (disable:4700)
-		int i[2];
+	// initialised - in fact, i[2] doesn't even exist.
+	#pragma warning (push)
+
+		int i[2] = {0,0};
+		__pragma(warning(suppress:4700)) \
 		int j = i[2];
-	#pragma warning (default:4700)
+	#pragma warning (pop)
 }
 
 void Extension::CauseCrash_ArrayOutOfBoundsWrite(void)

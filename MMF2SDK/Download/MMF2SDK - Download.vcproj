@@ -176,6 +176,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
 				ProgramDatabaseFile=".\Release/Download.pdb"
 				RandomizedBaseAddress="1"
@@ -272,6 +273,7 @@
 				OutputFile="$(ProjectDir)\..\..\MOX\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
 				ProgramDatabaseFile=".\Vitalize/Download.pdb"
 				RandomizedBaseAddress="1"
@@ -467,6 +469,7 @@
 				OutputFile="$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
 				ProgramDatabaseFile=".\RelRun/Download.pdb"
 				RandomizedBaseAddress="1"
@@ -991,10 +994,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="EXTICON.BMP"
-				>
-			</File>
-			<File
 				RelativePath="res\EXTICON.BMP"
 				>
 				<FileConfiguration
@@ -1047,7 +1046,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="EXTIMG.BMP"
+				RelativePath="EXTICON.BMP"
 				>
 			</File>
 			<File
@@ -1101,6 +1100,10 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="EXTIMG.BMP"
+				>
 			</File>
 		</Filter>
 		<Filter

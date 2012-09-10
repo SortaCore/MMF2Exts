@@ -1,31 +1,41 @@
 
 #pragma once
 
-#include "json.h"
 
-#include "ccxhdr.h"
-#include "CfcFile.h"
-#include "ImageFlt.h"
-#include "ImgFlt.h"
-#include "Surface.h"
-#include "Cncf.h"
-#include "Patch.h"
+#include "json.h"
 
 #include <vector>
 #include <list>
 #include <string>
 using namespace std;
 
+#include "MMFMasterHeader.h"
+
+/*
+#include "ccxhdr.h"
+#include "CfcFile.h"
+#include "ImageFlt.h"
+#include "ImgFlt.h"
+
+#include "Patch.h"
+*/
+
+
+
 class Extension;
 
 #include "ObjectSelection.h"
 
-#if defined(MMFEXT)
-#define	IS_COMPATIBLE(v) (v->mvGetVersion != nullptr && (v->mvGetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->mvGetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->mvGetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
-#elif defined(PROEXT)
-#define IS_COMPATIBLE(v) (v->mvGetVersion != nullptr && (v->mvGetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->mvGetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->mvGetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
+#ifndef RUN_ONLY
+	#if defined(MMFEXT)
+		#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
+	#elif defined(PROEXT)
+		#define IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
+	#else
+		#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
+	#endif
 #else
-#define	IS_COMPATIBLE(v) (v->mvGetVersion != nullptr && (v->mvGetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->mvGetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
+	#define IS_COMPATIBLE(v) (false)
 #endif
 
 #define LinkAction(ID, Function) \
@@ -42,11 +52,9 @@ extern HINSTANCE hInstLib;
 struct RUNDATA;
 struct EDITDATA;
 
-typedef RUNDATA * LPRDATA;
-typedef EDITDATA * LPEDATA;
-
-LPEVENTINFOS2 GetEventInformations(LPEVENTINFOS2 eiPtr, short code);
-
+//typedef RUNDATA * LPRDATA;
+//typedef EDITDATA * LPEDATA;
+struct ACEInfo;
 namespace Edif
 {
 	// New access properties
@@ -54,33 +62,33 @@ namespace Edif
 	{
 		// Synced with Names
 		static const enum IDs {
-			PROPTYPE_STATIC = 1,		//! Simple static text
-			PROPTYPE_FOLDER,			//! Folder
-			PROPTYPE_FOLDER_END,		//! Folder End
-			PROPTYPE_EDITBUTTON,		//! Edit button, param1 = button text, or nullptr if Edit
-			PROPTYPE_EDIT_STRING,		//! Edit box for strings, parameter = max length
-			PROPTYPE_EDIT_NUMBER,		//! Edit box for numbers, parameters = min value, max value
-			PROPTYPE_COMBOBOX,			//! Combo box, parameters = list of strings, options (sorted, etc)
-			PROPTYPE_SIZE,				//! Size
-			PROPTYPE_COLOR,				//! Color
-			PROPTYPE_LEFTCHECKBOX,		//! Checkbox
-			PROPTYPE_SLIDEREDIT,		//! Edit + Slider
-			PROPTYPE_SPINEDIT,			//! Edit + Spin
-			PROPTYPE_DIRCTRL,			//! Direction Selector
-			PROPTYPE_GROUP,				//! Group
-			PROPTYPE_LISTBTN,			//! Internal, do not use
-			PROPTYPE_FILENAME,			//! Edit box + browse file button, parameter = FilenameCreateParam
-			PROPTYPE_FONT,				//! Font dialog box
-			PROPTYPE_CUSTOM,			//! Custom property
-			PROPTYPE_PICTUREFILENAME,	//! Edit box + browse image file button
-			PROPTYPE_COMBOBOXBTN,		//! Combo box, parameters = list of strings, options (sorted, etc)
-			PROPTYPE_EDIT_FLOAT,		//! Edit box for floating point numbers, parameters = min value, max value, options (signed, float, spin)
-			PROPTYPE_EDIT_MULTILINE,	//! Edit box for multiline texts, no parameter
-			PROPTYPE_IMAGELIST,			//! Image list
-			PROPTYPE_ICONCOMBOBOX,		//! Combo box with icons
-			PROPTYPE_URLBUTTON,			//! URL button
-			PROPTYPE_DIRECTORYNAME,		//! Directory pathname
-			PROPTYPE_SPINEDITFLOAT,		//! Edit + Spin, value = floating point number
+			PROPTYPE_STATIC = 1,		// Simple static text
+			PROPTYPE_FOLDER,			// Folder
+			PROPTYPE_FOLDER_END,		// Folder End
+			PROPTYPE_EDITBUTTON,		// Edit button, param1 = button text, or nullptr if Edit
+			PROPTYPE_EDIT_STRING,		// Edit box for strings, parameter = max length
+			PROPTYPE_EDIT_NUMBER,		// Edit box for numbers, parameters = min value, max value
+			PROPTYPE_COMBOBOX,			// Combo box, parameters = list of strings, options (sorted, etc)
+			PROPTYPE_SIZE,				// Size
+			PROPTYPE_COLOR,				// Color
+			PROPTYPE_LEFTCHECKBOX,		// Checkbox
+			PROPTYPE_SLIDEREDIT,		// Edit + Slider
+			PROPTYPE_SPINEDIT,			// Edit + Spin
+			PROPTYPE_DIRCTRL,			// Direction Selector
+			PROPTYPE_GROUP,				// Group
+			PROPTYPE_LISTBTN,			// !Internal, do not use
+			PROPTYPE_FILENAME,			// Edit box + browse file button, parameter = FilenameCreateParam
+			PROPTYPE_FONT,				// Font dialog box
+			PROPTYPE_CUSTOM,			// Custom property
+			PROPTYPE_PICTUREFILENAME,	// Edit box + browse image file button
+			PROPTYPE_COMBOBOXBTN,		// Combo box, parameters = list of strings, options (sorted, etc)
+			PROPTYPE_EDIT_FLOAT,		// Edit box for floating point numbers, parameters = min value, max value, options (signed, float, spin)
+			PROPTYPE_EDIT_MULTILINE,	// Edit box for multiline texts, no parameter
+			PROPTYPE_IMAGELIST,			// Image list
+			PROPTYPE_ICONCOMBOBOX,		// Combo box with icons
+			PROPTYPE_URLBUTTON,			// URL button
+			PROPTYPE_DIRECTORYNAME,		// Directory pathname
+			PROPTYPE_SPINEDITFLOAT,		// Edit + Spin, value = floating point number
 			// For searches
 			PROPTYPE_FIRST_ITEM = PROPTYPE_STATIC,
 			PROPTYPE_LAST_ITEM = PROPTYPE_SPINEDITFLOAT,
@@ -122,14 +130,14 @@ namespace Edif
     {
     public:
 
-        json_value &json;
+		json_value &json;
 
         SDK (mv * mV, json_value &);
         ~SDK ();
 
-        vector<short> ActionInfos;
-        vector<short> ConditionInfos;
-        vector<short> ExpressionInfos;
+        vector<ACEInfo *>	ActionInfos;
+		vector<ACEInfo *>	ConditionInfos;
+		vector<ACEInfo *>	ExpressionInfos;
 
         void ** ActionJumps;
         void ** ConditionJumps;
@@ -139,12 +147,6 @@ namespace Edif
         vector<void *> ConditionFunctions;
         vector<void *> ExpressionFunctions;
 		PropData * EdittimeProperties;
-
-        vector<char> ExpressionTypes;
-
-        vector<short> ActionFloatFlags;
-        vector<short> ConditionFloatFlags;
-        vector<short> ExpressionFloatFlags;
 
         unsigned char * FunctionMemory;
 
@@ -156,13 +158,13 @@ namespace Edif
     {
     protected:
 
-        LPRDATA rdPtr;
+        RUNDATA * rdPtr;
 
     public:
 
         long param1, param2;
 
-        Runtime(LPRDATA _rdPtr);
+        Runtime(RUNDATA * _rdPtr);
         ~Runtime();
 
         void Rehandle();
@@ -178,11 +180,11 @@ namespace Edif
 
         void Redisplay();
         void Redraw();
-		LPRO LPROFromFixed(int fixedValue);
-		int FixedFromLPRO(LPRO object);
+		RunObject * RunObjPtrFromFixed(int fixedValue);
+		int FixedFromRunObjPtr(RunObject * object);
 
 		void SetPosition(int X, int Y);
-		CallTables* GetCallTables();
+		CallTables * GetCallTables();
         void CallMovement(int ID, long Parameter);
 
         void Destroy();
@@ -193,7 +195,7 @@ namespace Edif
         void GetApplicationName(TCHAR * Buffer);
         void GetApplicationTempPath(TCHAR * Buffer);
 
-        void ExecuteProgram(prgParam * Program);
+        void ExecuteProgram(ParamProgram * Program);
 
         long EditInteger(EditDebugInfo *);
         long EditText(EditDebugInfo *);
@@ -226,8 +228,8 @@ namespace Edif
 
     int GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource);
 
-	TCHAR* ConvertString(const char* urf8String);
-	TCHAR* ConvertAndCopyString(TCHAR* tstr, const char* urf8String, int maxLength);
+	TCHAR * ConvertString(const char* urf8String);
+	TCHAR * ConvertAndCopyString(TCHAR* tstr, const char* urf8String, int maxLength);
 	inline void FreeString(TCHAR* s)
 	{
 		free(s);
@@ -240,15 +242,15 @@ namespace Edif
 
     HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
 
-    int Init(mv _far * mV);
-    void Init(mv _far * mV, LPEDATA edPtr);
+    int Init(mv * mV);
+    void Init(mv * mV, EDITDATA * edPtr);
 
-    void Free(mv _far * mV);
-    void Free(LPEDATA edPtr);
+    void Free(mv * mV);
+    void Free(EDITDATA * edPtr);
 
-    long __stdcall Condition (LPRDATA rdPtr, long param1, long param2);
-    short __stdcall Action (LPRDATA rdPtr, long param1, long param2);
-    long __stdcall Expression (LPRDATA rdPtr, long param);
+    long __stdcall Condition (RUNDATA * rdPtr, long param1, long param2);
+    short __stdcall Action (RUNDATA * rdPtr, long param1, long param2);
+    long __stdcall Expression (RUNDATA * rdPtr, long param);
    
     inline int ActionID(int ID)
     {
@@ -271,5 +273,4 @@ namespace Edif
         return *(void **) &_Function;
     }
 }
-
 extern Edif::SDK * SDK;

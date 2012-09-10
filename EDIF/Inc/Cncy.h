@@ -36,10 +36,11 @@ struct CValue;
 struct PropData;
 struct RunHeader;
 
-// Force structure alignement
+// Force structure alignment to 2 bytes
+// See http://stupefydeveloper.blogspot.co.uk/2009/01/c-alignment-of-structure.html
 #ifndef      _H2INC
-#pragma pack( push, _pack_cncy_ )
-#pragma pack(2)
+#pragma pack (push, mmf_master_header)
+#pragma pack (2)
 #endif
 
 #ifndef      _H2INC
@@ -1613,10 +1614,9 @@ typedef	struct	MvxFnc {
 
 #endif	// RUN_TIME
 
-// Restore structure alignement
-#ifndef      _H2INC 
-#pragma pack( pop, _pack_cncy_ )
-#endif
+// Restore structure alignment
+// See http://stupefydeveloper.blogspot.co.uk/2009/01/c-alignment-of-structure.html
+#pragma pack (pop, mmf_master_header)
 
 #ifndef __cplusplus
 #undef CImageFilterMgr

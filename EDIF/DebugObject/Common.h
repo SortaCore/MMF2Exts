@@ -7,6 +7,8 @@
 #include	"Resource.h"
 #include	<time.h>
 #include	<sstream>
+#include	<iostream>
+#include	<iomanip>
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 
 
@@ -21,6 +23,7 @@ struct EDITDATA
 	bool EnableAtStart;
 	bool DoMsgBoxIfPathNotSet;
 	char InitialPath [MAX_PATH+1];
+	bool ConsoleEnabled;
 
 };
 
@@ -47,31 +50,33 @@ struct RUNDATA
 };
 struct GlobalData {
 	FILE * FileHandle;
-	volatile bool FileHandleOpen;
-	bool DebugEnabled, DoMsgBoxIfPathNotSet;
+	volatile bool ReadingThis, ReleaseConsoleInput;
+	bool DebugEnabled, DoMsgBoxIfPathNotSet, ConsoleEnabled;
 	time_t rawtime;
 	struct tm * timeinfo;
 	char * TimeFormat;
 	char * RealTime;
 	unsigned char NumUsages;
+	HANDLE ConsoleIn, ConsoleOut;
+	std::string ConsoleReceived;
 
 	// Allows debugging of what had the last lock
 	#ifdef _DEBUG
 		std::string LastLockFile;
 		int LastLockLine;
 		#define OpenLock() \
-			while (Data->FileHandleOpen) \
+			while (Data->ReadingThis) \
 				Sleep(0); \
-			Data->FileHandleOpen = true; \
+			Data->ReadingThis = true; \
 			Data->LastLockFile = __FILE__; \
 			Data->LastLockLine = __LINE__
-		#define CloseLock() Data->FileHandleOpen = false
+		#define CloseLock() Data->ReadingThis = false
 	#else
 		#define OpenLock() \
-			while (Data->FileHandleOpen) \
+			while (Data->ReadingThis) \
 				Sleep(0); \
-			Data->FileHandleOpen = true
-		#define CloseLock() Data->FileHandleOpen = false
+			Data->ReadingThis = true
+		#define CloseLock() Data->ReadingThis = false
 	#endif
 
 	// Handle exceptions
@@ -88,6 +93,9 @@ struct GlobalData {
 
 extern GlobalData * Data;
 extern class Extension * GlobalExt;
+
+extern bool WINAPI HandlerRoutine(DWORD ControlType);
+extern void WINAPI ReceiveConsoleInput();
 
 #include "Extension.h"
 

@@ -4,14 +4,14 @@
 
 // These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc..)
 
-#if !defined(OBJECTSELECTION)
+#ifndef OBJECTSELECTION
 #define OBJECTSELECTION
 
-#if !defined(EF_ISHWA)
-#define EF_ISHWA		112
+#ifndef EF_ISHWA
+	#define EF_ISHWA		112
 #endif
-#if !defined(EF_ISUNICODE)
-#define EF_ISUNICODE	113
+#ifndef EF_ISUNICODE
+	#define EF_ISUNICODE	113
 #endif
 
 namespace Riggs
@@ -22,18 +22,18 @@ namespace Riggs
 
         Extension * pExtension;
 
-	    ObjectSelection(LPRH rhPtr);
+	    ObjectSelection(RunHeader * rhPtr);
 
 	    void SelectAll(short Oi);
 	    void SelectNone(short Oi);
-	    void SelectOneObject(LPRO object);
-	    void SelectObjects(short Oi, LPRO* objects, int count);
-	    bool ObjectIsOfType(LPRO object, short Oi);
+	    void SelectOneObject(RunObject * object);
+	    void SelectObjects(short Oi, RunObject ** objects, int count);
+	    bool ObjectIsOfType(RunObject * object, short Oi);
 	    int GetNumberOfSelected(short Oi);
     	
 	    template<class T> bool FilterObjects(short Oi, bool negate, T filterFunction)
         {
-	        if(Oi & 0x8000)
+	        if (Oi & 0x8000)
 		        return FilterQualifierObjects(Oi & 0x7FFF, negate, filterFunction) ^ negate;
 	        else
 		        return FilterNonQualifierObjects(Oi, negate, filterFunction) ^ negate;
@@ -41,15 +41,15 @@ namespace Riggs
 
     protected:
 
-	    LPRH rhPtr;
-	    LPOBL ObjectList;
-	    LPOIL OiList;
-	    LPQOI QualToOiList;
+	    RunHeader * rhPtr;
+	    objectsList * ObjectList;
+	    objInfoList	* OiList;
+	    qualToOi * QualToOiList;
 	    int oiListItemSize;
 
-	    LPOIL GetOILFromOI(short Oi);
+	    objInfoList * GetOILFromOI(short Oi);
 
-        template<class T> bool DoCallback(void * Class, T Function, LPRO Parameter)
+        template<class T> bool DoCallback(void * Class, T Function, RunObject * Parameter)
         {
             T _Function = Function;
             void * FunctionPointer = *(void **) &_Function;
@@ -76,30 +76,30 @@ namespace Riggs
 
 	    template<class T> bool FilterQualifierObjects(short Oi, bool negate, T filterFunction)
         {
-	        LPQOI CurrentQualToOiStart = (LPQOI)((char*)QualToOiList + Oi);
-	        LPQOI CurrentQualToOi = CurrentQualToOiStart;
+	        qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
+	        qualToOi * CurrentQualToOi = CurrentQualToOiStart;
 
 	        bool hasSelected = false;
 
 	        while(CurrentQualToOi->qoiOiList >= 0)
 	        {
-		        LPOIL CurrentOi = GetOILFromOI(CurrentQualToOi->qoiOiList);
+		        objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->qoiOiList);
 		        hasSelected |= FilterNonQualifierObjects(CurrentOi->oilOi, negate, filterFunction);
-		        CurrentQualToOi = (LPQOI)((char*)CurrentQualToOi + 4);
+		        CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
 	        }
 	        return hasSelected;
         }
 
 	    template<class T> bool FilterNonQualifierObjects(short Oi, bool negate, T filterFunction)
         {
-	        LPOIL pObjectInfo = GetOILFromOI(Oi);
+	        objInfoList * pObjectInfo = GetOILFromOI(Oi);
 	        bool hasSelected = false;
 
-	        if(pObjectInfo->oilEventCount != rhPtr->rh2.rh2EventCount)
+	        if (pObjectInfo->oilEventCount != rhPtr->rh2.rh2EventCount)
 		        SelectAll(Oi);	//The SOL is invalid, must reset.
 
 	        //If SOL is empty
-	        if(pObjectInfo->oilNumOfSelected <= 0)
+	        if (pObjectInfo->oilNumOfSelected <= 0)
 		        return false;
 
 	        int firstSelected = -1;
@@ -110,19 +110,19 @@ namespace Riggs
 	        while(current >= 0)
 	        {
 		        LPHO pObject = ObjectList[current].oblOffset;
-		        bool useObject = DoCallback((void *) pExtension, filterFunction, (LPRO)pObject);
+		        bool useObject = DoCallback((void *) pExtension, filterFunction, (RunObject *)pObject);
 
-                if(negate)
+                if (negate)
                     useObject = !useObject;
 
 		        hasSelected |= useObject;
 
-		        if(useObject)
+		        if (useObject)
 		        {
-			        if(firstSelected == -1)
+			        if (firstSelected == -1)
 				        firstSelected = current;
 
-			        if(previous != NULL)
+			        if (previous != NULL)
 				        previous->hoNextSelected = current;
         			
 			        previous = pObject;
@@ -130,7 +130,7 @@ namespace Riggs
 		        }
 		        current = pObject->hoNextSelected;
 	        }
-	        if(previous != NULL)
+	        if (previous != NULL)
 		        previous->hoNextSelected = -1;
 
 	        pObjectInfo->oilListSelected = firstSelected;

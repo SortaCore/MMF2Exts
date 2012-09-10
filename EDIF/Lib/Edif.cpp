@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "Edif.h"
+#include <sstream>
 
 Edif::SDK * SDK;
 
@@ -213,31 +214,31 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
 
-#ifndef RUN_ONLY
-    Icon = new cSurface;
-    if (mV->mvImgFilterMgr)
-    {
-        char * IconData;
-        size_t IconSize;
+	#ifndef RUN_ONLY
+		Icon = new cSurface;
+		if (mV->mvImgFilterMgr)
+		{
+			char * IconData;
+			size_t IconSize;
 
-        int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
-		if (result != Edif::DependencyNotFound)
-        {
-            CInputMemFile * File = CInputMemFile::NewInstance ();
-            File->Create ((LPBYTE)IconData, IconSize);
+			int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
+			if (result != Edif::DependencyNotFound)
+			{
+				CInputMemFile * File = CInputMemFile::NewInstance ();
+				File->Create ((LPBYTE)IconData, IconSize);
 
-            DWORD PNG = FILTERID_PNG;
-            ImportImageFromInputFile(mV->mvImgFilterMgr, File, Icon, &PNG, 0);
+				DWORD PNG = FILTERID_PNG;
+				ImportImageFromInputFile(mV->mvImgFilterMgr, File, Icon, &PNG, 0);
                 
-            File->Delete();
+				File->Delete();
 
-            if (!Icon->HasAlpha())
-                Icon->SetTransparentColor(RGB(255, 0, 255));
-			if ( result != Edif::DependencyWasResource )
-				free(IconData);
-        }
-    }
-#endif // RUN_ONLY
+				if (!Icon->HasAlpha())
+					Icon->SetTransparentColor(RGB(255, 0, 255));
+				if ( result != Edif::DependencyWasResource )
+					free(IconData);
+			}
+		}
+	#endif // RUN_ONLY
 
     const json_value &Actions = json["Actions"];
     const json_value &Conditions = json["Conditions"];
@@ -292,7 +293,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
             ActionFloatFlags.push_back(IsFloat);
         }
-
+		
         for (unsigned int i = 0; i < Parameters.u.array.length; ++ i)
             ActionInfos.push_back(0);
     }
@@ -592,7 +593,6 @@ short __stdcall Edif::Action(LPRDATA rdPtr, long param1, long param2)
 
     return 0;
 }
-
 
 long __stdcall Edif::Expression(LPRDATA rdPtr, long param)
 {

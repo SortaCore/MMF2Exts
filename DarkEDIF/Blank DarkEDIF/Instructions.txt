@@ -1,8 +1,0 @@
-• Open with project file
-• Edit Ext.rc via View Code for the author.
-• Remove any unneeded files (e.g. Actions if there's no actions)
-• Rename the project in the solution
-• Save solution (ovewrite old)
-• Sort out JSON
-• Edit icon
-• Change mfx name in all solution configurations

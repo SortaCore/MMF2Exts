@@ -73,7 +73,7 @@ public:
 
 	// Info
 	virtual HINSTANCE	GetModuleHandle() { return NULL; }
-    virtual int			GetModuleName(LPTSTR pBuf, int bufSize) { return 0; }
+    virtual int			GetModuleName(TCHAR * pBuf, int bufSize) { return 0; }
 
 	// Operators
 	virtual CMvt*		Clone() { return NULL; }
@@ -102,8 +102,8 @@ public:
 	virtual int			DirAtStart()	{ return 0; }
 
 	// Load / Save
-	virtual BOOL		Load(LPBYTE pBuf, DWORD dwSize, DWORD dwFlags) { return 0; }
-	virtual BOOL		Save(LPBYTE pBuf, LPDWORD pDWSize, DWORD dwFlags) { return 0; }
+	virtual BOOL		Load(LPBYTE pBuf, unsigned int dwSize, unsigned int dwFlags) { return 0; }
+	virtual BOOL		Save(LPBYTE pBuf, LPDWORD pDWSize, unsigned int dwFlags) { return 0; }
 
 	// Run-time
 	virtual CRunMvt*	CreateRunMvt() { return NULL; }
@@ -168,8 +168,8 @@ public:
 	virtual void		SetRotSpeed(LPHO pHo, int speed) {}
 	virtual void		Set8Dirs(LPHO pHo, int dirs) {}
 	virtual void		SetGravity(LPHO hoPtr, int gravity) {}
-	virtual DWORD		Extension(LPHO hoPtr, int function, DWORD param) {return 0;}
-	virtual DWORD		ActionEntry(LPHO hoPtr, int action, DWORD param) {return 0;}
+	virtual unsigned int		Extension(LPHO hoPtr, int function, unsigned int param) {return 0;}
+	virtual unsigned int		ActionEntry(LPHO hoPtr, int action, unsigned int param) {return 0;}
 	virtual int			GetSpeed(LPHO hoPtr) {return 0;}
 	virtual int			GetAcceleration(LPHO hoPtr) {return 0;}
 	virtual int			GetDeceleration(LPHO hoPtr) {return 0;}

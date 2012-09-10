@@ -389,9 +389,9 @@ public:
 // String (ANSI or UNICODE, depending on preprocessor definitions)
 //////////////////////////////////////////////////////////////////
 #ifdef _UNICODE
-#define CPropStringValue	CPropWStringValue
+	#define CPropStringValue	CPropWStringValue
 #else
-#define CPropStringValue	CPropAStringValue
+	#define CPropStringValue	CPropAStringValue
 #endif
 
 

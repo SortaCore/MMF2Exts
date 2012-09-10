@@ -21,6 +21,7 @@ enum {
 	PROPID_ENABLE_AT_START,
 	PROPID_MSGBOX_IF_PATH_INVALID,
 	PROPID_INITIALPATH,	
+	PROPID_CONSOLE_ENABLED,
 
 };
 
@@ -46,6 +47,7 @@ PropData Properties[] = {
 	PropData_CheckBox	(PROPID_ENABLE_AT_START,		"Enable at start",				"Default to debug enabled at start"),
 	PropData_CheckBox	(PROPID_MSGBOX_IF_PATH_INVALID,	"Show message if path invalid",	"If encountered a crash with an invalid log path, show message box instead?"),
 	PropData_EditString	(PROPID_INITIALPATH,			"Initial path",					"Output here if debug is enabled."),
+	PropData_CheckBox	(PROPID_CONSOLE_ENABLED,		"Enable console",				"If debug output is enabled, show all outputs in console, at start?"),
 //	PropData_ComboBox	(PROPID_COMBO,		IDS_PROP_COMBO,			IDS_PROP_COMBO,	ComboList),
 //	PropData_Color		(PROPID_COLOR,		IDS_PROP_COLOR,			IDS_PROP_COLOR_INFO),
 
@@ -106,6 +108,7 @@ int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
 		edPtr->DoMsgBoxIfPathNotSet = false;
 		edPtr->EnableAtStart = false;
 		memset(edPtr->InitialPath, '\0', MAX_PATH+1);
+		edPtr->ConsoleEnabled = false;
 
         return 0;
 	}
@@ -335,13 +338,13 @@ void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 		long FileSize = ftell(File);
 
 		// File size should be 2 chars and a null-terminated string, limited to MAX_PATH bytes + null
-		if (FileSize < 2+0+1 || FileSize > 2+MAX_PATH+1)
+		if (FileSize < 3+0+1 || FileSize > 3+MAX_PATH+1)
 		{
 			MessageBoxA(NULL, "CreateFromFile() failed: File size is invalid.", "DebugObject load error", MB_OK | MB_ICONERROR | MB_DEFBUTTON2);
 			fclose(File);
 			goto ErrorWipe;
 		}
-		char Betsy[2+MAX_PATH+1];
+		char Betsy[3+MAX_PATH+1];
 
 		// Didn't read all the bytes
 		if (FileSize != fread_s(File, 2+MAX_PATH+1, sizeof(char), FileSize, File))
@@ -352,7 +355,7 @@ void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 		}
 
 		// String property is the only read operation that can encounter an error, so do it first
-		if (strcpy_s(edPtr->InitialPath, MAX_PATH, &Betsy[2]))
+		if (strcpy_s(edPtr->InitialPath, MAX_PATH, &Betsy[3]))
 		{
 			std::stringstream s; s << "CreateFromFile() failed: reading from file encountered error " << errno << ".";
 			MessageBoxA(NULL, s.str().c_str(), "DebugObject load error", MB_OK | MB_ICONERROR | MB_DEFBUTTON2);
@@ -363,6 +366,7 @@ void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 		// Read other variables from file
 		edPtr->EnableAtStart = Betsy[0] != 0;
 		edPtr->DoMsgBoxIfPathNotSet = Betsy[1] != 0;
+		edPtr->ConsoleEnabled = Betsy[2] != 0;
 
 		// Cleanup
 		fclose(File);
@@ -372,6 +376,7 @@ void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 		ErrorWipe:
 			edPtr->DoMsgBoxIfPathNotSet = false;
 			edPtr->EnableAtStart = false;
+			edPtr->ConsoleEnabled = false;
 			memset(edPtr->InitialPath, '\0', MAX_PATH+1);
 
 
@@ -494,6 +499,8 @@ BOOL WINAPI DLLExport GetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID)
 		return edPtr->EnableAtStart;
 	case PROPID_MSGBOX_IF_PATH_INVALID:
 		return edPtr->DoMsgBoxIfPathNotSet;
+	case PROPID_CONSOLE_ENABLED:
+		return edPtr->ConsoleEnabled;
 //	case PROPID_TEXT:
 //		return &edPtr->szText[0];
 	}
@@ -579,6 +586,9 @@ void WINAPI DLLExport SetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID, BOOL nC
 			return;
 		case PROPID_MSGBOX_IF_PATH_INVALID:
 			edPtr->DoMsgBoxIfPathNotSet = nCheck != 0;
+			return;
+		case PROPID_CONSOLE_ENABLED:
+			edPtr->ConsoleEnabled = nCheck != 0;
 			// mvInvalidateObject(mV, edPtr);
 			// mvRefreshProp(mV, edPtr, PROPID_COMBO, TRUE);
 			return;

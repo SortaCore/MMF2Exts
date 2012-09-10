@@ -334,7 +334,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 		Data = new GlobalData;
 		
 		// Open lock
-		Data->FileHandleOpen = true; // Open lock without checking if the handle is valid first
+		Data->ReadingThis = true; // Open lock without checking if the handle is valid first
 		
 		// Mark data position
 		mV->mvSetExtUserData(pApp, hInstLib, Data);
@@ -347,7 +347,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 		strcpy_s(Data->TimeFormat, 255, "%X");
 		Data->NumUsages = 1;
 		Data->DoMsgBoxIfPathNotSet = false;
-		Data->DebugEnabled = false;
+		Data->ConsoleEnabled = false;
 		
 		// Exception handling (container)
 		Data->ContinuesCount = -1;

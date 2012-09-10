@@ -2,31 +2,43 @@
 class Extension
 {
 public:
+	#ifdef MULTI_THREADING
+		ExtVariables // Must be first variable in Extension class
+		std::vector<SaveExtInfo> Saved;
+		void AddEvent(int Event, bool UseLastData);
+	#endif
 
-    LPRDATA rdPtr;
-    LPRH    rhPtr;
+    RUNDATA * rdPtr;
+    RunHeader *    rhPtr;
 
     Edif::Runtime Runtime;
 
-    static const int MinimumBuild = 251;
+    static const int MinimumBuild = 254;
     static const int Version = 1;
 
-    static const int OEFLAGS = 0;
+    static const int OEFLAGS = 0; // See OEFLAG structure
     static const int OEPREFS = 0;
     
     static const int WindowProcPriority = 100;
 
-    Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
+    Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
     ~Extension();
 
 
     /*  Add any data you want to store in your extension to this class
-        (eg. what you'd normally store in rdPtr)
+        (eg. what you'd normally store in rdPtr).
+		
+		For those using multi-threading, any variables that are modified
+		by the threads should be set in ExtVariables.
+		See MultiThreading.h.
 
         Unlike rdPtr, you can store real C++ objects with constructors
         and destructors, without having to call them manually or store
         a pointer.
     */
+
+	
+	
 
     // int MyVariable;
 
@@ -59,9 +71,9 @@ public:
 
     /* These are called if there's no function linked to an ID */
 
-    void Action(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Condition(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Expression(int ID, LPRDATA rdPtr, long param);
+    void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Expression(int ID, RUNDATA * rdPtr, long param);
 
 
 

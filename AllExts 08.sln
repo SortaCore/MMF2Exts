@@ -59,6 +59,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMF2SDK - VOLINFO", "MMF2SD
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - Stochastic Utility", "EDIF\Stochastic Utility\EDIF - Stochastic Utility.vcproj", "{5BC0EA76-0F7D-4F52-ADC9-CE378742E9B9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rSDK - WaveOut", "rSDK\WaveOut\rSDK - WaveOut.vcproj", "{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Unicode|Win32 = Debug Unicode|Win32
@@ -479,6 +481,22 @@ Global
 		{5BC0EA76-0F7D-4F52-ADC9-CE378742E9B9}.Runtime|Win32.Build.0 = Runtime|Win32
 		{5BC0EA76-0F7D-4F52-ADC9-CE378742E9B9}.Vitalize|Win32.ActiveCfg = Vitalize|Win32
 		{5BC0EA76-0F7D-4F52-ADC9-CE378742E9B9}.Vitalize|Win32.Build.0 = Vitalize|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Debug Unicode|Win32.ActiveCfg = Debug Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Debug|Win32.Build.0 = Debug|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Edittime French|Win32.ActiveCfg = Edittime Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Edittime|Win32.ActiveCfg = Edittime|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Edittime|Win32.Build.0 = Edittime|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Runtime French|Win32.ActiveCfg = Runtime|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Runtime Unicode|Win32.ActiveCfg = Runtime Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Runtime Unicode|Win32.Build.0 = Runtime Unicode|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Runtime|Win32.ActiveCfg = Runtime|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Runtime|Win32.Build.0 = Runtime|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Vitalize|Win32.ActiveCfg = Vitalize|Win32
+		{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}.Vitalize|Win32.Build.0 = Vitalize|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
