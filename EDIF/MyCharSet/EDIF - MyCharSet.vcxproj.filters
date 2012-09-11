@@ -63,6 +63,9 @@
     <ClCompile Include="..\Lib\json.c">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>
+    <ClCompile Include="Threads.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def">

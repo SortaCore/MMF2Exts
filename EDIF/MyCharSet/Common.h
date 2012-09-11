@@ -81,3 +81,4 @@ struct BOMThreadData {
 	
 	BOMThreadData(const char * FTAT, const int TOB, const bool ICB) : FileToAddTo(FTAT), TypeOfBOM(TOB), IgnoreCurrentBOM(ICB) {}
 };
+void WINAPI SetBOMMarkASCThread(void *);
