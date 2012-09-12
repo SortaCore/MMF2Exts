@@ -1,11 +1,12 @@
-
 class Extension
 {
 public:
 	#ifdef MULTI_THREADING
-		ExtVariables // Must be first variable in Extension class
-		std::vector<SaveExtInfo> Saved;
-		void AddEvent(int Event, bool UseLastData);
+		SaveExtInfo ThreadData; // Must be first variable in Extension class
+		std::vector<SaveExtInfo *> Saved;
+		SaveExtInfo & AddEvent(int Event, bool UseLastData = false);
+		void NewEvent(SaveExtInfo *);
+		// TODO: Threadsafe with a CRITICAL_SECTION
 	#endif
 
     RUNDATA * rdPtr;
