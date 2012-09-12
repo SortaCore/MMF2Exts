@@ -1,4 +1,3 @@
-
 #include "Common.h"
 
 
@@ -310,10 +309,20 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 {
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
-		do not cause reading of only the last condition's output. Useful for multi-threading.
+		do not cause reading of only the last condition's output. Only used in multi-threading.
 		
 		For example, if an error event changes an output variable, and immediately afterward a 
-		success event changes the same variable, only the success event's output can be read.
+		success event changes the same variable, only the success event's output can be read since it overwrote
+		the last event. However, using MMF2 in single-threaded mode, overwriting is impossible to do
+		provided you use GenerateEvent(). Since PushEvent() is not immediate, you can reproduce this
+		multi-threaded bug in single-thread mode. But PushEvent() isn't recommended for use anyway;
+		it's designed so extensions who don't have focus of MMF2 (gained by MMF2 calling, say, Rehandle)
+		can still create events. With GenerateEvent() + multithreading, this would cause serious issues.
+		
+		But in DarkEDIF, you'll note all the GenerateEvents() are handled on a queue, and the queue is
+		iterated through in Rehandle, thus it is quite safe. But we still need to protect potentially several
+		AddEvent() functions running at once and corrupting the memory at some point; so we need the
+		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
 	*/
 
 	// Cause a new event
