@@ -42,7 +42,6 @@ public:
     */
 
 		/// Actions
-		void SetBOMMarkASC(const char * FileToAddTo, int TypeOfBOM, int IgnoreCurrentBOM);
         
 	/// Conditions
 

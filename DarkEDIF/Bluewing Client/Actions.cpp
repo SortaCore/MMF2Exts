@@ -146,7 +146,7 @@ void Extension::SelectChannelWithName(char * ChannelName)
 	Lacewing::RelayClient::Channel * Selected = Cli.FirstChannel();
 	while (Selected)
 	{
-		if (!strcmp(Selected->Name(), ChannelName))
+		if (!_stricmp(Selected->Name(), ChannelName))
 			break;
 		Selected = Selected->Next();
 	}
@@ -156,7 +156,7 @@ void Extension::SelectChannelWithName(char * ChannelName)
 		ThreadData.Channel = Selected;
 	else
 	{
-		std::string Error = "Channel not found:\r\n";
+		std::string Error = "Could not selected channel, not found:\r\n";
 		Error += ChannelName;
 		CreateError(Error.c_str());
 	}
@@ -190,7 +190,7 @@ void Extension::SelectPeerOnChannelByName(char * PeerName)
 		Lacewing::RelayClient::Channel::Peer * Selected = ThreadData.Channel->FirstPeer();
 		while (Selected)
 		{
-			if (!strcmp(Selected->Name(), PeerName))
+			if (!_stricmp(Selected->Name(), PeerName))
 				break;
 			Selected = Selected->Next();
 		}
@@ -219,7 +219,7 @@ void Extension::SelectPeerOnChannelByID(int PeerID)
 		Lacewing::RelayClient::Channel::Peer * Selected = ThreadData.Channel->FirstPeer();
 		while (Selected)
 		{
-			if (Selected->ID() != PeerID)
+			if (Selected->ID() == PeerID)
 				break;
 			Selected = Selected->Next();
 		}
@@ -791,7 +791,7 @@ void Extension::MoveReceivedBinaryCursor(int Position)
 }
 void Extension::LoopListedChannelsWithLoopName(char * LoopName)
 {
-	if (!LoopName || LoopName[0] == '\0')
+	if (LoopName[0] == '\0')
 		CreateError("Cannot loop listed channels: invalid loop name supplied.");
 	else
 	{
@@ -803,39 +803,52 @@ void Extension::LoopListedChannelsWithLoopName(char * LoopName)
 			S.Loop.Name = _strdup(LoopName);
 			Selected = Selected->Next();
 		}
+		
+		SaveExtInfo &S = AddEvent(60);
+		S.Loop.Name = _strdup(LoopName);
 	}
-	SaveExtInfo &S = AddEvent(60);
-	S.Loop.Name = _strdup(LoopName);
 }
 void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 {
-	Lacewing::RelayClient::Channel * Stored = ThreadData.Channel,
-								   * LoopChannel = Cli.FirstChannel();
-	while (LoopChannel)
+	if (LoopName[0] == '\0')
+		CreateError("Cannot loop listed channels: invalid loop name supplied.");
+	else
 	{
-		SaveExtInfo &S = AddEvent(63);
-		S.Channel = LoopChannel;
+		Lacewing::RelayClient::Channel * Stored = ThreadData.Channel,
+									   * LoopChannel = Cli.FirstChannel();
+		while (LoopChannel)
+		{
+			SaveExtInfo &S = AddEvent(63);
+			S.Channel = LoopChannel;
+			S.Loop.Name = _strdup(LoopName);
+			LoopChannel = LoopChannel->Next();
+		}
+		SaveExtInfo &S = AddEvent(64);
+		S.Channel = Stored;
 		S.Loop.Name = _strdup(LoopName);
-		LoopChannel = LoopChannel->Next();
 	}
-	SaveExtInfo &S = AddEvent(64);
-	S.Channel = Stored;
-	S.Loop.Name = _strdup(LoopName);
 }
 void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 {
-	Lacewing::RelayClient::Channel::Peer * Stored = ThreadData.Peer,
-										 * LoopPeer = ThreadData.Channel->FirstPeer();
-	while (LoopPeer)
+	if (LoopName[0] == '\0')
+		CreateError("Cannot loop peers on channel: invalid loop name supplied.");
+	else if (!ThreadData.Channel)
+		CreateError("Cannot loop peers on channel: No channel currently selected.");
+	else
 	{
-		SaveExtInfo &S = AddEvent(61);
-		S.Peer = LoopPeer;
+		Lacewing::RelayClient::Channel::Peer * Stored = ThreadData.Peer,
+											 * LoopPeer = ThreadData.Channel->FirstPeer();
+		while (LoopPeer)
+		{
+			SaveExtInfo &S = AddEvent(61);
+			S.Peer = LoopPeer;
+			S.Loop.Name = _strdup(LoopName);
+			LoopPeer = LoopPeer->Next();
+		}
+		SaveExtInfo &S = AddEvent(62);
+		S.Peer = Stored;
 		S.Loop.Name = _strdup(LoopName);
-		LoopPeer = LoopPeer->Next();
 	}
-	SaveExtInfo &S = AddEvent(62);
-	S.Peer = Stored;
-	S.Loop.Name = _strdup(LoopName);
 }
 void Extension::Connect(char * Hostname)
 {

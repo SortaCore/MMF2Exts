@@ -354,7 +354,6 @@
     <ClCompile Include="..\Lib\Edif.General.cpp" />
     <ClCompile Include="..\Lib\Edif.Runtime.cpp" />
     <ClCompile Include="..\Lib\json.c" />
-    <ClCompile Include="Threads.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def" />
