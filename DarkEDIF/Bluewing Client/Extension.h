@@ -7,7 +7,7 @@ public:
 		std::vector<SaveExtInfo *> Saved;
 		SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
 		void NewEvent(SaveExtInfo *);
-		volatile bool Writable;
+		// TODO: Threadsafe with a CRITICAL_SECTION
 	#endif
 
     RUNDATA * rdPtr;
