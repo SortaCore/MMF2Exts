@@ -9,7 +9,6 @@ bool Edif::IsEdittime;
 bool Edif::ExternalJSON;
 
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
-#define CurLang CurrentLanguage()
 
 short ReadParameterType(const char * Text, bool &IsFloat)
 {
