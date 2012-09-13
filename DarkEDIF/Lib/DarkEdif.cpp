@@ -2,7 +2,9 @@
 extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
 
+#ifndef RUN_ONLY
 static int StoredCurrentLanguage = -1;
+
 static const int DefaultLanguageIndex()
 {
 	if (::SDK)
@@ -127,6 +129,7 @@ int CurrentLanguage()
 
 	return DefaultLanguageIndex();
 }
+#endif // !RUN_ONLY
 
 inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 {

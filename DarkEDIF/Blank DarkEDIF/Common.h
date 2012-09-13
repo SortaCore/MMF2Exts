@@ -4,8 +4,13 @@
    #define MMFEXT       // MMF2, MMF2 Dev
 // #define PROEXT       // MMF2 Dev only
 
-int CurrentLanguage();
-#define CurLang CurrentLanguage()
+#ifdef RUN_ONLY
+	#define CurLang 2
+#else
+	int CurrentLanguage();
+	#define CurLang CurrentLanguage()
+#endif
+
 #define DLLExport   __stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
