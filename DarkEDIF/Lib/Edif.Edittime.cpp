@@ -1,4 +1,3 @@
-
 #include "Common.h"
 
 void DLLExport GetObjInfos (mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * ObjAuthor,
@@ -46,7 +45,12 @@ void DLLExport GetExpressionParam(mv *mV, short code, short param, TCHAR * strBu
 void DLLExport GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, SDK->json[CurLang]["Expressions"][code]["Title"], maxLen);
+	{
+		std::string Return = SDK->json[CurLang]["Expressions"][code]["Title"];
+		if (Return.back() != '(')
+			Return.push_back('(')
+		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
+	}
 }
 
 void DLLExport GetConditionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
