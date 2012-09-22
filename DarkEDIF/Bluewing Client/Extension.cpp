@@ -8,7 +8,9 @@
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
 {
-	Writable = true;
+	// Create the thread lock
+	InitializeCriticalSection(&Lock);
+
 	// Nullify the thread-specific data
 	memset(&ThreadData, 0, sizeof(SaveExtInfo));
 
@@ -284,9 +286,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		Cli.onServerMessage(::OnServerMessage);
 	}
 	
-	Cli.Tag = this;
-
-	
+	Cli.Tag = this; // Useful so Lacewing callbacks can access Extension
 }
 
 void WINAPI LacewingLoopThread(Extension * ThisExt)
@@ -333,10 +333,13 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		// Initialise with one condition to be triggered
 		NewEvent->NumEvents = 1;
 		NewEvent->CondTrig = (unsigned short *)malloc(sizeof(unsigned short));
+		
+		// Failed to allocate memory
 		if (!NewEvent->CondTrig)
-			// Failed to allocate memory
 			return ThreadData;
 		NewEvent->CondTrig[0] = (unsigned short)Event;
+		
+		EnterCriticalSection(&Lock); // Needed before we access Extension
 		
 		// Copy Extension's data to vector
 		if (memcpy_s(((char *)NewEvent)+5, sizeof(SaveExtInfo)-5, ((char *)&ThreadData)+5, sizeof(SaveExtInfo)-5))
@@ -344,21 +347,31 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 			// Failed to copy memory (error in "errno")
 			return ThreadData;
 		}
+
 		Saved.push_back(NewEvent);
+
+		LeaveCriticalSection(&Lock); // We're done accessing Extension
 	}
 	else // New event is part of the last saved data (good for optimisation)
 	{
+		EnterCriticalSection(&Lock);
+
 		// Add current condition to saved expressions
-		SaveExtInfo & S = Saved.size() == 0 ? ThreadData : *Saved.back();
-		++S.NumEvents;
-		unsigned short * CurrentCond = (unsigned short *)realloc(&S.CondTrig[0], S.NumEvents * sizeof(short));
+		SaveExtInfo &S = (Saved.size() == 0) ? ThreadData : *Saved.back();
+		
+		unsigned short * CurrentCond = (unsigned short *)realloc(&S.CondTrig[0], S.NumEvents+1 * sizeof(short));
 		
 		if (!CurrentCond)
+		{
+			LeaveCriticalSection(&Lock);
 			return ThreadData;
+		}
 
-		CurrentCond[S.NumEvents-1] = (unsigned short)Event;
+		CurrentCond[S.NumEvents++] = (unsigned short)Event;
 		
 		S.CondTrig = CurrentCond;
+
+		LeaveCriticalSection(&Lock);
 	}
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
@@ -375,14 +388,14 @@ short Extension::Handle()
 {
 	#ifdef MULTI_THREADING
 		// AddEvent() was called and not yet handled
+		EnterCriticalSection(&Lock);
 		while (Saved.size() > 0)
 		{
-			// Copy from saved list of events to current extension
+			// Copy from saved list of events to current extension; use a try/catch block for added security
 			try {
 				if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
 					break; // Failed; leave until next Extension::Handle()
 			
-
 				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
 				for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
 					Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
@@ -394,6 +407,7 @@ short Extension::Handle()
 				break; // Failed; leave until next Extension::Handle()
 			}
 		}
+		LeaveCriticalSection(&Lock);
 	#endif // MULTI_THREADING
 	
 

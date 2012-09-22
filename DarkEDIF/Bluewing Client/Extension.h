@@ -7,7 +7,7 @@ public:
 		std::vector<SaveExtInfo *> Saved;
 		SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
 		void NewEvent(SaveExtInfo *);
-		// TODO: Threadsafe with a CRITICAL_SECTION
+		CRITICAL_SECTION Lock;
 	#endif
 
     RUNDATA * rdPtr;
@@ -16,7 +16,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 36;
+    static const int Version = 38;
 
     static const int OEFLAGS = 0; // Use OEFLAGS namespace
     static const int OEPREFS = 0; // Use OEPREFS namespace
@@ -109,14 +109,14 @@ public:
 		SendMsg = newptr;
 		SendMsgSize += Size;
 		
-		// memcpy_s does not allow copying from what's already inside SendMsg.
-		// Failed to copy memory.
+		// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
+		// If we failed to copy memory.
 		if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
 		{
 			char errorval [20];
 			SaveExtInfo &S = AddEvent(0);
 			std::string Error = "Received error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
+			if (_itoa_s(errno, &errorval[0], 20, 10))
 			{
 				Error += "with reallocating memory to append to binary message, and with converting error number.";
 			}

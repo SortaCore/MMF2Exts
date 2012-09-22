@@ -78,7 +78,6 @@ extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
-		__asm int 3;
 		switch (info)
 		{
 			case KGI_VERSION:

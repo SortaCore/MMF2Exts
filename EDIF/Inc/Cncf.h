@@ -3560,8 +3560,8 @@ struct createObjectInfo {
 	int		cobLayer;
 	int		cobZOrder;
 };
-//typedef	createObjectInfo *	LPCOB;
-//typedef	createObjectInfo *	fpcob;
+typedef	createObjectInfo *	LPCOB;
+typedef	createObjectInfo *	fpcob;
 
 // Flags for Create Objects
 // -------------------------
