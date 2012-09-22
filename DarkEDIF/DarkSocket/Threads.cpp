@@ -310,7 +310,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	Report("* Send initial buffer END *");
 
 	Report("* Blocking -> non-blocking change BEGIN *");
-	ulong UL = 1;
+	unsigned long UL = 1;
 	// Set to non-blocking
 	error = ioctlsocket(ConnectSocket, FIONBIO, &UL);
 	if (error != 0)
@@ -696,7 +696,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 
 	Report("MainSocket not invalid. Now moving on to main loop()");
 	
-	ulong UL = 1;
+	unsigned long UL = 1;
 	// Set to non-blocking
 	int error = ioctlsocket(MainSocket, FIONBIO, &UL);
 	if (error != 0)

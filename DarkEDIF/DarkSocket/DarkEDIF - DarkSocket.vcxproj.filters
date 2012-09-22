@@ -69,15 +69,18 @@
     <ClCompile Include="..\Lib\json.c">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\DarkEdif.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="Ext.json">
+    <None Include="Icon.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Icon.png">
+    <None Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -94,76 +97,7 @@
     <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Ccx.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Ccxhdr.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\CfcError.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\CfcFile.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Cncf.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\cncr.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Cncy.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Cnpdll.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\colors.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\EVTCCX.H">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Fill.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\FilterMgr.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\ImageFlt.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\ImgFlt.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
     <ClInclude Include="..\Inc\ObjectSelection.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Palet.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Patch.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\PictEdDefs.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Props.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\PTYPE.H">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\SoundFilter.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\SoundFilterMgr.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Surface.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\WinMacro.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Edif.h">
@@ -171,6 +105,15 @@
     </ClInclude>
     <ClInclude Include="..\Inc\json.h">
       <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\MMFMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\DarkEdif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiThreading.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

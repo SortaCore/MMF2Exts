@@ -22,7 +22,7 @@ HINSTANCE hInstLib;
 // -----------------
 // Usually you do not need to do any initialization here: you will prefer to 
 // do them in "Initialize" found in Edittime.cpp
-BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
 	{
@@ -30,6 +30,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_ATTACH:
 			
 			hInstLib = hDLL; // Store HINSTANCE
+			//__asm int 3; // Cause debuggers to recognise the MFX - debugger must be attached for object to appear in Create New Object
 			break;
 
 		// A new thread is being created in the current process.
@@ -56,9 +57,10 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 // Where you want to do COLD-START initialization.
 // Called when the extension is loaded into memory.
 //
-extern "C" int WINAPI DLLExport Initialize(mv _far *mV, int quiet)
+extern "C" int DLLExport Initialize(mv *mV, int quiet)
 {
-    Edif::Init(mV);
+    return Edif::Init(mV);
+
 
 	// No error
 	return 0;
@@ -70,8 +72,10 @@ extern "C" int WINAPI DLLExport Initialize(mv _far *mV, int quiet)
 // Where you want to kill and initialized data opened in the above routine
 // Called just before freeing the DLL.
 // 
-extern "C" int WINAPI DLLExport Free(mv _far *mV)
+extern "C" int DLLExport Free(mv *mV)
 {
+    Edif::Free(mV);
+
 	// No error
 	return 0;
 }
@@ -90,7 +94,7 @@ extern "C" int WINAPI DLLExport Free(mv _far *mV)
 // or from the CCN or EXE file (run time).
 // You can load data here, reserve memory etc...
 //
-int	WINAPI DLLExport LoadObject(mv _far *mV, LPCSTR fileName, LPEDATA edPtr, int reserved)
+int	DLLExport LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
 {
     Edif::Init(mV, edPtr);
 
@@ -104,9 +108,8 @@ int	WINAPI DLLExport LoadObject(mv _far *mV, LPCSTR fileName, LPEDATA edPtr, int
 // The counterpart of the above routine: called just before the object is
 // deleted from the frame.
 //
-void WINAPI DLLExport UnloadObject(mv _far *mV, LPEDATA edPtr, int reserved)
+void DLLExport UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 {
-	
 }
 
 // --------------------
@@ -115,7 +118,7 @@ void WINAPI DLLExport UnloadObject(mv _far *mV, LPEDATA edPtr, int reserved)
 // For you to update your object structure to newer versions
 // Called at both edit time and run time
 // 
-HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, void __far * OldEdPtr)
+HGLOBAL DLLExport UpdateEditStructure(mv *mV, void * OldEdPtr)
 {
 	// We do nothing here
 	return 0;
@@ -130,7 +133,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, void __far * OldEdPtr
 //
 // Call lpfnUpdate to update your file pathname (refer to the documentation)
 // 
-void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr, void (WINAPI * lpfnUpdate)(LPSTR, LPSTR))
+void DLLExport UpdateFileNames(mv *mV, char * appName, EDITDATA * edPtr, void (WINAPI * lpfnUpdate)(char *, char *))
 {
 }
 
@@ -144,7 +147,7 @@ void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr,
 // if you remove the comments below.
 //
 /*
-int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
+int DLLExport EnumElts (mv *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
 {  
 	int error = 0;
 

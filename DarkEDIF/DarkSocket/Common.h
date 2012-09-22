@@ -21,7 +21,6 @@ inline wchar_t * Uni(const char * var)
 // Suppress the deprecated warnings for VC2005
 //#define _CRT_SECURE_NO_WARNINGS
 
-#include "conversions.h"
 //Stream & String
 #include <string>
 #include <sstream>
@@ -89,16 +88,16 @@ using namespace std;
 #define Report(foo) Extension->Unreferenced_Report(_T(foo), SocketID)	// Ditto
 #define ReturnToMMF(a,b,c,d) Extension->Unreferenced_ReturnToMMF(a,b,c,d)	// Ditto
 #endif
-// Unicode thing
-#include <tchar.h>
-// rTemplate include
-#define NOTOLD 1
 
 // Include the structs/enums/etc used later on in the object
 #include "Structures.h"
 
 
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
+#include    "Edif.h"
+#include	"Resource.h"
+#include	"DarkEdif.h"
+extern Edif::SDK * SDK;
+// EDITDATA : Used at edittime and saved in the MFA/CCN/EXE files
 
 struct EDITDATA
 {
@@ -116,13 +115,13 @@ class Extension;
 struct RUNDATA
 {
 	// Main header - required
-	headerObject rHo;
+	HeaderObject rHo;
 
 	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	rSpr			rs;				// Sprite (displayable objects)
-	rVal			rv;				// Alterable values
+	AltVals			rv;				// Alterable values
 
     // Required
 	Extension * pExtension;
@@ -132,4 +131,24 @@ struct RUNDATA
         of the Extension class (Extension.h) instead.
     */
 };
+#pragma once
+
+#ifdef RUN_ONLY
+	#define CurLang 2
+#else
+	int CurrentLanguage();
+	#define CurLang CurrentLanguage()
+#endif
+
+#define DLLExport   __stdcall
+#pragma comment(lib, "..\\Lib\\mmfs2.lib")
+
+// If your extension will be using multithreading, remove the #if and #endif lines here.
+#if 0
+	#define MULTI_THREADING
+	#include "MultiThreading.h"
+#endif
+
+
+
 #include "Extension.h"

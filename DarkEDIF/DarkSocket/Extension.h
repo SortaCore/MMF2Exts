@@ -6,20 +6,20 @@ public:
 	#define MakeDelim() const char delim [] = "|" //Used for delimiters in tokenizing
 	#define FatalBox()	MessageBoxA(NULL, "Fatal error has not been repaired; bypassing erroneous code.", "DarkSocket Object - Bypass notification", MB_OK|MB_ICONERROR);
 
-    LPRDATA rdPtr;
-    LPRH    rhPtr;
+    RUNDATA * rdPtr;
+    RunHeader * rhPtr;
 
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 252;
     static const int Version = 3;
 
-    static const int OEFLAGS = OEFLAG_VALUES;
+    static const int OEFLAGS = OEFLAG::VALUES;
     static const int OEPREFS = 0;
     
     static const int WindowProcPriority = 100;
 
-    Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
+    Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
     ~Extension();
 
 
@@ -137,7 +137,7 @@ public:
 
 /* ID = 9 */	size_t PacketForm_GetAddress();
 /* ID = 10 */	size_t PacketForm_GetSize();
-/* ID = 11 */	ushort PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBank);
+/* ID = 11 */	unsigned short PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBank);
 /* ID = 12 */	char LastMessage_GetByte(size_t WhereFrom);
 /* ID = 13 */	short LastMessage_GetShort(size_t WhereFrom);
 /* ID = 14 */	int LastMessage_GetInteger(size_t WhereFrom);
@@ -149,9 +149,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-    void Action(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Condition(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Expression(int ID, LPRDATA rdPtr, long param);
+    void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Expression(int ID, RUNDATA * rdPtr, long param);
  
 
 	/*  These replace the functions like HandleRunObject that used to be

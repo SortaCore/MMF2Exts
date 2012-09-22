@@ -385,7 +385,7 @@ wchar_t * Extension::LastMessage_GetWString(size_t WhereFrom, size_t SizeOfStrin
 			{
 				wstring s((wchar_t *)Returns[0].Message, WhereFrom, SizeOfString);
 				ThreadSafe_End();
-				return Runtime.CopyString(s.c_str());
+				return _wcsdup(s.c_str());
 			}
 			else
 			{
@@ -405,7 +405,7 @@ wchar_t * Extension::LastMessage_GetWString(size_t WhereFrom, size_t SizeOfStrin
 }
 
 // ID = 19
-ushort Extension::PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBank)
+unsigned short Extension::PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBank)
 {
 	// 1's complement of VAR = ~VAR.
 
@@ -422,29 +422,29 @@ ushort Extension::PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBa
 */
 #define _16BITS 2	// 16 bits == 2 bytes. Used for readability.
 
-	ulong sum = 0;	// This is used to sum up all the data
+	unsigned long sum = 0;	// This is used to sum up all the data
 	size_t addr = ((size_t)PacketFormLocation)+WhereFrom; // Read from here originally
 
 	//  This is the inner loop
     while ( SizeOfBank > 1 )
 	{
-		sum += *((ushort *)addr);	// Read 16-bit integer from the FormPacket and add to sum
-		SizeOfBank -= _16BITS;		// I've read 16 bits bytes, so remove from remainder
-		addr += _16BITS;			// Read from 16 bits further in the current address
+		sum += *((unsigned short *)addr);	// Read 16-bit integer from the FormPacket and add to sum
+		SizeOfBank -= _16BITS;				// I've read 16 bits bytes, so remove from remainder
+		addr += _16BITS;					// Read from 16 bits further in the current address
     }
 
     //  Add left-over byte, if any 
     if ( SizeOfBank > 0 )
-        sum += *((uchar *)addr);		// If there's an odd number of bytes in the data, add the remainding char to the sum
+        sum += *((unsigned char *)addr);		// If there's an odd number of bytes in the data, add the remainding char to the sum
 
     //  Fold the 32-bit ulong sum to 16 bits short (neat part)
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
 
 	// Get the one's complement of the sum
-    ulong cksum = ~sum;
+    unsigned long cksum = ~sum;
 
 	// Rejoice evermore, for this annoying piece of code finally works.
-	ushort checksum = (ushort)cksum;
+	unsigned short checksum = (unsigned short)cksum;
 	return checksum;
 }
