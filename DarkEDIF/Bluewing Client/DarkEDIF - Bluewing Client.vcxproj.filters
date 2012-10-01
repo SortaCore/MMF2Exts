@@ -108,9 +108,6 @@
     <ClInclude Include="..\Inc\json.h">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\ObjectSelection.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
     <ClInclude Include="..\Inc\MMFMasterHeader.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
@@ -161,6 +158,9 @@
     </ClInclude>
     <ClInclude Include="..\Lib\MultiThreading.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\ObjectSelection.h">
+      <Filter>Global to all extensions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -84,7 +84,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -191,7 +191,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
       <ExceptionHandling>Sync</ExceptionHandling>

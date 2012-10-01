@@ -150,7 +150,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -206,7 +206,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR; %(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -265,7 +265,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -321,7 +321,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -373,7 +373,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -430,7 +430,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>

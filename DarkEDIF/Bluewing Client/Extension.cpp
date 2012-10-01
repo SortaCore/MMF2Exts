@@ -260,7 +260,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	GlobalID = GlobalIDCopy;
 
 	// Try to boot the Lacewing thread if multithreading and not already running
-	if (edPtr->MultiThreading && !Thread && !(Thread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&LacewingLoopThread, this, NULL, NULL)))
+	if (edPtr->MultiThreading && !Globals->_Thread && !(Globals->_Thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 		MessageBoxA(NULL, "Error: failed to boot thread. Falling back to single-threaded interface.", "DarkEDIF - runtime error", MB_OK);
 
 	// Link all callbacks
@@ -289,18 +289,19 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	Cli.Tag = this; // Useful so Lacewing callbacks can access Extension
 }
 
-void WINAPI LacewingLoopThread(Extension * ThisExt)
+DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
 	// If the loop thread is terminated, only 4 bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
-	Lacewing::Error * Error = ThisExt->ObjEventPump.StartEventLoop();
+	Lacewing::Error * Error = ((Extension *)ThisExt)->ObjEventPump.StartEventLoop();
 	if (Error)
 	{
 		std::string Text = "Error returned by StartEventLoop(): ";
 					Text += Error->ToString();
-		ThisExt->CreateError(Text.c_str());
+		((Extension *)ThisExt)->CreateError(Text.c_str());
 	}
-	ThisExt->Thread = NULL;
+	((Extension *)ThisExt)->Globals->_Thread = NULL;
+	return 0;
 }
 
 
@@ -380,6 +381,71 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 }
 #endif // MULTI_THREADING
 
+
+void Extension::CreateError(const char * Error)
+{
+	SaveExtInfo &event = AddEvent(0, false);
+	event.Error.Text = _strdup(Error);
+	// __asm int 3;
+}
+
+void Extension::AddToSend(void * Data, size_t Size)
+{
+	if (!Data)
+	{
+		CreateError("Error adding to send binary: pointer supplied is invalid.\r\n"
+					"The message has not been modified.");
+		return;
+	}
+	if (!Size)
+		return;
+	char * newptr = (char *)realloc(SendMsg, SendMsgSize+Size);
+		
+	// Failed to reallocate memory
+	if (!newptr)
+	{
+		char errorval [20];
+		SaveExtInfo &S = AddEvent(0);
+		std::string Error = "Received error ";
+		if (_itoa_s(*_errno(), &errorval[0], 20, 10))
+		{
+			Error += "with reallocating memory to append to binary message, and with converting error number.";
+		}
+		else
+		{
+			Error += "number [";
+			Error += &errorval[0];
+			Error += "] with reallocating memory to append to binary message.";
+		}
+		Error += "\r\nThe message has not been modified.";
+		S.Error.Text = _strdup(Error.c_str());
+		return;
+	}
+	SendMsg = newptr;
+	SendMsgSize += Size;
+		
+	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
+	// If we failed to copy memory.
+	if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
+	{
+		char errorval [20];
+		SaveExtInfo &S = AddEvent(0);
+		std::string Error = "Received error ";
+		if (_itoa_s(errno, &errorval[0], 20, 10))
+		{
+			Error += "with reallocating memory to append to binary message, and with converting error number.";
+		}
+		else
+		{
+			Error += "number [";
+			Error += &errorval[0];
+			Error += "] with copying memory to binary message.";
+		}
+		Error += "\r\nThe message has been resized but the data left uncopied.";
+		S.Error.Text = _strdup(Error.c_str());
+	}
+}
+
 Extension::~Extension()
 {
 }
@@ -395,10 +461,43 @@ short Extension::Handle()
 			try {
 				if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
 					break; // Failed; leave until next Extension::Handle()
-			
-				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-				for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
-					Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
+				
+				// Remove copies if this particular event number is used
+				if (ThreadData.CondTrig[0] == 0xFFFF)
+				{
+					if (ThreadData.Channel)
+						delete ThreadData.Channel;
+					else if (ThreadData.Peer)
+						delete ThreadData.Peer;
+					else // On disconnect, clear everyting
+					{
+						// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
+						// and thus we have a small, but reoccuring, memory leak.
+						// This should be fixed when this extension is updated to the more recent liblacewing version.
+
+						// for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+						//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
+
+						// Old username is stored in the tag and must be deleted separately from clear()
+						for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
+						{
+							if ((*u)->InternalTag)
+								free((*u)->InternalTag);
+
+							//	delete (struct ::PeerInternal *)((*u)->InternalTag);
+						}
+
+						// Delete main data of each struct (note larger Internal classes are not deleted, see above)
+						Channels.clear();
+						Peers.clear();
+					}
+				}
+				else
+				{
+					// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+					for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
+						Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
+				}
 
 				Saved.erase(Saved.begin());
 			}
@@ -442,7 +541,7 @@ short Extension::Handle()
     */
 
 	// If thread is not working, use Tick functionality.
-	if (!Thread)
+	if (!Globals->_Thread)
 	{
 		ObjEventPump.Tick();
 		return 0;

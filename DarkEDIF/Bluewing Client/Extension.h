@@ -16,7 +16,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 38;
+    static const int Version = 39;
 
     static const int OEFLAGS = 0; // Use OEFLAGS namespace
     static const int OEPREFS = 0; // Use OEPREFS namespace
@@ -63,75 +63,25 @@ public:
 	#define SendMsgSize					Globals->_SendMsgSize
 	#define AutomaticallyClearBinary	Globals->_AutomaticallyClearBinary
 	#define GlobalID					Globals->_GlobalID
-	#define Thread						Globals->_Thread
 
 	
 
-	inline void CreateError(const char * Error)
-	{
-		SaveExtInfo &event = AddEvent(0, false);
-		event.Error.Text = _strdup(Error);
-		// __asm int 3;
-	}
+	void CreateError(const char *);
 
-	inline void AddToSend(void * Data, size_t Size)
-	{
-		if (!Data)
-		{
-			CreateError("Error adding to send binary: pointer supplied is invalid.\r\n"
-						"The message has not been modified.");
-			return;
-		}
-		if (!Size)
-			return;
-		char * newptr = (char *)realloc(SendMsg, SendMsgSize+Size);
-		
-		// Failed to reallocate memory
-		if (!newptr)
-		{
-			char errorval [20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Received error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
-				Error += "with reallocating memory to append to binary message, and with converting error number.";
-			}
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] with reallocating memory to append to binary message.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			S.Error.Text = _strdup(Error.c_str());
-			return;
-		}
-		SendMsg = newptr;
-		SendMsgSize += Size;
-		
-		// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
-		// If we failed to copy memory.
-		if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
-		{
-			char errorval [20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Received error ";
-			if (_itoa_s(errno, &errorval[0], 20, 10))
-			{
-				Error += "with reallocating memory to append to binary message, and with converting error number.";
-			}
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] with copying memory to binary message.";
-			}
-			Error += "\r\nThe message has been resized but the data left uncopied.";
-			S.Error.Text = _strdup(Error.c_str());
-		}
-	}
+	void AddToSend(void *, size_t);
 	
-	
+
+	// Because Lacewing is singlethreaded, once we move the variables outside of its functions into DarkEDIF,
+	// the data may be overwritten, causing crashes and other such nasties.
+	// To work around this, we duplicate all the variables, and provide a special event number which will remove
+	// all the pointers in SaveExtInfo after they should no longer be valid.
+	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as
+	// Lacewing is concerned they no longer exist.
+
+	std::vector<Lacewing::RelayClient::Channel *> Channels;
+	std::vector<Lacewing::RelayClient::Channel::Peer *> Peers;
+	Lacewing::RelayClient::Channel * DuplicateChannel(Lacewing::RelayClient::Channel &);
+	Lacewing::RelayClient::Channel::Peer * DuplicatePeer(Lacewing::RelayClient::Channel::Peer &);
 
     // int MyVariable;
 

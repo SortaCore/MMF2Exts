@@ -153,7 +153,7 @@ const int lw_max_path = 512;
     #undef SendMessage
     #undef Yield
 
-    #define strcasecmp stricmp
+    #define strcasecmp _stricmp
 
     #ifndef SO_CONNECT_TIME
         #define SO_CONNECT_TIME 0x700C

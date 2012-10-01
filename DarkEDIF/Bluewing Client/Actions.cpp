@@ -153,7 +153,7 @@ void Extension::SelectChannelWithName(char * ChannelName)
 	
 	// Only modify ThreadData.Channel if we found it
 	if (Selected)
-		ThreadData.Channel = Selected;
+		ThreadData.Channel = (Lacewing::RelayClient::Channel *)Selected->Tag;
 	else
 	{
 		std::string Error = "Could not selected channel, not found:\r\n";
@@ -173,11 +173,10 @@ void Extension::LoopClientChannels()
 	while (Selected)
 	{
 		SaveExtInfo &S = AddEvent(14);
-		S.Channel = Selected;
+		S.Channel = (Lacewing::RelayClient::Channel *)Selected->Tag;
 		Selected = Selected->Next();
 	}
-	SaveExtInfo &S = AddEvent(18);
-	S.Channel = Stored;
+	AddEvent(18);
 }
 void Extension::SelectPeerOnChannelByName(char * PeerName)
 {
@@ -253,7 +252,7 @@ void Extension::LoopPeersOnChannel()
 		while (Selected)
 		{
 			SaveExtInfo &S = AddEvent(13);
-			S.Peer = Selected;
+			S.Peer = (Lacewing::RelayClient::Channel::Peer *)Selected->Tag;
 			Selected = Selected->Next();
 		}
 		SaveExtInfo &S = AddEvent(17);
@@ -620,8 +619,11 @@ void Extension::SelectChannelMaster()
 		ThreadData.Peer = ThreadData.Channel->FirstPeer();
 		while (ThreadData.Peer)
 		{
-			if (ThreadData.Channel->FirstPeer()->IsChannelMaster())
+			if (ThreadData.Peer->IsChannelMaster())
+			{
+				ThreadData.Peer = (Lacewing::RelayClient::Channel::Peer *)ThreadData.Peer->Tag;
 				return; // Selected the correct peer
+			}
 			ThreadData.Peer = ThreadData.Peer->Next();
 		}
 
@@ -819,13 +821,11 @@ void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 		while (LoopChannel)
 		{
 			SaveExtInfo &S = AddEvent(63);
-			S.Channel = LoopChannel;
+			S.Channel = (Lacewing::RelayClient::Channel *)LoopChannel->Tag;
 			S.Loop.Name = _strdup(LoopName);
 			LoopChannel = LoopChannel->Next();
 		}
 		SaveExtInfo &S = AddEvent(64);
-		S.Channel = Stored;
-		S.Loop.Name = _strdup(LoopName);
 	}
 }
 void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
@@ -841,7 +841,7 @@ void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 		while (LoopPeer)
 		{
 			SaveExtInfo &S = AddEvent(61);
-			S.Peer = LoopPeer;
+			S.Peer = (Lacewing::RelayClient::Channel::Peer *)LoopPeer->Tag;
 			S.Loop.Name = _strdup(LoopName);
 			LoopPeer = LoopPeer->Next();
 		}

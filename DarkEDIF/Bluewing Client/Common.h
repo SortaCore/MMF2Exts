@@ -5,9 +5,14 @@
 // #define PROEXT       // MMF2 Dev only
 
 int CurrentLanguage();
-#define CurLang CurrentLanguage()
+#ifdef RUN_ONLY
+	#define CurLang 2
+#else
+	#define CurLang CurrentLanguage()
+	extern int StoredCurrentLanguage;
+#endif
 #define DLLExport   __stdcall
-extern int StoredCurrentLanguage;
+
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 #pragma comment(lib, "..\\Lib\\zlib.lib")
 #include <sstream>
@@ -70,7 +75,7 @@ struct RUNDATA
         of the Extension class (Extension.h) instead.
     */
 };
-void WINAPI LacewingLoopThread(Extension * ThisExt);
+DWORD WINAPI LacewingLoopThread(void * ThisExt);
 
 
 #include "Extension.h"

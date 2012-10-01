@@ -759,8 +759,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 		TCHAR * Text = ConvertString(MenuItem[ItemOffset + 1]);
 		bool Disabled = MenuItem.u.object.length > (ItemOffset + 2) ? ((bool) MenuItem[ItemOffset + 2]) != 0 : false;
 
-		AppendMenu(Parent, Disabled ? MF_GRAYED | MF_UNCHECKED | MF_BYPOSITION | MF_STRING
-		                        : MF_BYPOSITION | MF_STRING, ID, Text);
+		AppendMenu(Parent, (Disabled ? MF_GRAYED | MF_UNCHECKED : 0) | MF_BYPOSITION | MF_STRING, ID, Text);
 
 		FreeString(Text);
     }

@@ -212,13 +212,13 @@ struct String
     inline String (const char * Source)
     {
         AllocatedFor = Length = strlen (Source);
-        Buffer = strdup (Source);
+        Buffer = _strdup (Source);
     }
 
     inline String (const String &Source)
     {
         AllocatedFor = Length = strlen (Source.Buffer);
-        Buffer = strdup (Source.Buffer);
+        Buffer = _strdup (Source.Buffer);
 
         MaxLength = Source.MaxLength;
     }
