@@ -5,6 +5,8 @@
 #include <windows.h>
 #pragma comment(lib, "winmm.lib")
 
+#include <tchar.h>
+
 // Suppress the deprecated warnings for VC2005
 #define _CRT_SECURE_NO_WARNINGS
 

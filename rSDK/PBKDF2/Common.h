@@ -5,6 +5,7 @@
 // Suppress the deprecated warnings for VC2005
 #define _CRT_SECURE_NO_WARNINGS
 
+#include	<tchar.h>
 
 // General includes
 #include	"TemplateInc.h"

@@ -86,6 +86,9 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'" />
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</GenerateManifest>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">false</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">false</PostBuildEventUseInBuild>
+    <PostBuildEventUseInBuild Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">
     <Midl>
@@ -190,8 +193,10 @@
       <OutputFile>.\Release_Small/Template.bsc</OutputFile>
     </Bscmake>
     <PostBuildEvent>
-      <Message>Copy file to installer directory</Message>
-      <Command>copy $(TargetPath) .\ToInstall\Files\Extensions</Command>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -297,8 +302,10 @@
       <OutputFile>.\Run_Only_Small/Template.bsc</OutputFile>
     </Bscmake>
     <PostBuildEvent>
-      <Message>Copy file to installer directory</Message>
-      <Command>copy $(TargetPath) .\ToInstall\Files\Data\Runtime</Command>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -223,6 +223,14 @@ public:
 		m_pData = (LPBYTE)_strdup(pStr);
 		m_dwDataSize = strlen((LPCSTR)m_pData)+1;
 	};
+	CPropDataValue(LPCWSTR pStr) {
+		m_dwDataSize = 0;
+		m_pData = NULL;
+		if ( pStr == NULL )
+			return;
+		m_pData = (LPBYTE)_wcsdup(pStr);
+		m_dwDataSize = (wcslen((LPCWSTR)m_pData)+1)*2;
+	};
 
 	virtual void Delete() { free(m_pData); m_pData = NULL; m_dwDataSize = 0; delete this; }
 	virtual CPropValue* CreateCopy() { return new CPropDataValue(m_dwDataSize, m_pData); }

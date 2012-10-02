@@ -12,7 +12,7 @@
 //
 // ============================================================================
 string returnstring = "";
-PTCHAR LastFileExtracted = "";
+TCHAR * LastFileExtracted = "";
 bool NoCurrentCompression = true, PasswordBeingUsed = false;
 int NumberOfFilesExtracted = 0;
 HANDLE MainThread;

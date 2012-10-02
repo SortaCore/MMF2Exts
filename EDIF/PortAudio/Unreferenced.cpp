@@ -22,7 +22,7 @@ void Extension::Unreferenced_Report(tchar * report = _T("Unknown report..."), in
 	// From a thread
 	{
 		tchar text [255];
-		sprintf_s(text, 255, "Socket ID = %i >> %s.", ThreadID, report);
+		_stprintf_s(text, 255, _T("Socket ID = %i >> %s."), ThreadID, report);
 		ThreadSafe_Start();
 		CompleteStatus += text;
 		CompleteStatus += _T("\r\n");
@@ -30,7 +30,7 @@ void Extension::Unreferenced_Report(tchar * report = _T("Unknown report..."), in
 		if (UsePopups)
 		{
 			tchar title [255];
-			sprintf_s(title, 255, "DarkSocket - Latest Report from %i:", ThreadID);
+			_stprintf_s(title, 255, _T("DarkSocket - Latest Report from %i:"), ThreadID);
 			MessageBox(NULL, report, title, MB_OK);
 		}
 	}
@@ -57,7 +57,7 @@ void Extension::Unreferenced_Error(tchar * error = _T("Unknown error..."), int T
 	// From a thread
 	{
 		tchar text [255];
-		sprintf_s(text, 255, "Socket ID = %i >> %s.", ThreadID, error);
+		_stprintf_s(text, 255, _T("Socket ID = %i >> %s."), ThreadID, error);
 		ThreadSafe_Start();
 		LastError += text;
 		LastError += _T("\r\n");
@@ -67,7 +67,7 @@ void Extension::Unreferenced_Error(tchar * error = _T("Unknown error..."), int T
 		if (UsePopups)
 		{
 			tchar title [255];
-			sprintf_s(title, 255, "DarkSocket - Latest Error from %i:", ThreadID);
+			_stprintf_s(title, 255, _T("DarkSocket - Latest Error from %i:"), ThreadID);
 			MessageBox(NULL, error, title, MB_OK);
 		}
 	}

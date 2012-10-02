@@ -228,7 +228,7 @@
       <OutputFile>$(ProjectDir)\..\..\MOX\$(ProjectName).mox</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\..\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <ProgramDatabaseFile>.\Vitalize_Small/Template.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>

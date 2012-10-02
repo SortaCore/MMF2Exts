@@ -90,7 +90,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *knpV, void __far * OldEdP
 
 void WINAPI	DLLExport PutObject(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr, ushort cpt)
 {
-	loPtr->loOiNum = 0;			// Protection!!!!!!!!!!! Cannot use run-only extensions in editor!
+	MessageBoxA(NULL, "You are using PackX runtime MFX at edittime. Please reinstall PackX extension.", "PackX - Error!", MB_OK);
 }
 
 void WINAPI	DLLExport RemoveObject(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr, ushort cpt)

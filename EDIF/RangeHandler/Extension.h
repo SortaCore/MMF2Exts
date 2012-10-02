@@ -34,7 +34,7 @@ inline vector<tstring> ParseStringToVector(tstring source, tstring delimiters)
 
 
 
-	#define MsgBox(text) MessageBoxA(NULL, text, "RangeHandler Object - Debug information", MB_OK|MB_ICONINFORMATION)
+	#define MsgBox(text) MessageBox(NULL, text, _T("RangeHandler Object - Debug information"), MB_OK|MB_ICONINFORMATION)
 	#define FatalBox()	MessageBoxA(NULL, "Fatal error has not been repaired; bypassing erroneous code.", "RangeHandler Object - Bypass notification", MB_OK|MB_ICONERROR);
     
 	LPRDATA rdPtr;

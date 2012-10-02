@@ -19,15 +19,15 @@ void Extension::SetBOMMarkASC(const char * FileToAddTo, int TypeOfBOM, int Ignor
 
 	// The entire file will have to stream, Windows doesn't support prepending
 	BOMThreadData * Data = new BOMThreadData(Copy, TypeOfBOM, IgnoreCurrentBOM == 1);
-	CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&SetBOMMarkASCThread, Data, NULL, NULL);
+	CreateThread(NULL, NULL, SetBOMMarkASCThread, Data, NULL, NULL);
 }
 
 // ?!
-void WINAPI SetBOMMarkASCThread(LPVOID Param)
+DWORD WINAPI SetBOMMarkASCThread(void * Param)
 {
 	// Invalid parameter (We'll assume all the struct variables are valid if Param is valid)
 	if(!Param)
-		return;
+		return 1;
 
 	BOMThreadData * Data = (BOMThreadData *)Param;
 	std::string ReadFromFilePath = Data->FileToAddTo, 
@@ -39,10 +39,10 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 	// Open file
 	FILE * ReadFromFile = NULL, * WriteToFile = NULL;
 	if (fopen_s(&ReadFromFile, ReadFromFilePath.c_str(), "rb") || !ReadFromFile)
-		return;
+		return 2;
 
 	if (fopen_s(&WriteToFile, WriteToFilePath.c_str(), "ab") || !WriteToFile)
-		return;
+		return 3;
 
 	fseek(ReadFromFile, 0, SEEK_END);
 	long FileSize = ftell(ReadFromFile);
@@ -58,7 +58,7 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 			// Errorz
 			fclose(ReadFromFile);
 			fclose(WriteToFile);
-			return;
+			return 4;
 		}
 
 		// UTF-16 BOM in original file (0xFF, 0xFE, N/A)
@@ -76,6 +76,7 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 			}
 		}
 		/*	else UTF-8, 3-byte BOM, fread() skipped over it already */
+	}
 
 	fseek(ReadFromFile, -255, SEEK_CUR);
 
@@ -88,7 +89,7 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 			fclose(ReadFromFile);
 			fclose(WriteToFile);
 			remove(WriteToFilePath.c_str());
-			return;
+			return 5;
 		}
 	}
 	// UTF-16
@@ -100,7 +101,7 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 			fclose(ReadFromFile);
 			fclose(WriteToFile);
 			remove(WriteToFilePath.c_str());
-			return;
+			return 6;
 		}
 	}
 
@@ -115,7 +116,7 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 			fclose(ReadFromFile);
 			fclose(WriteToFile);
 			remove(WriteToFilePath.c_str());
-			return;
+			return 7;
 		}
 	}
 
@@ -124,5 +125,5 @@ void WINAPI SetBOMMarkASCThread(LPVOID Param)
 	fclose(WriteToFile);
 	remove(ReadFromFilePath.c_str());
 	rename(WriteToFilePath.c_str(), ReadFromFilePath.c_str());
-	return;
+	return 0;
 }

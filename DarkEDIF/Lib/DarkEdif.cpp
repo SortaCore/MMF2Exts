@@ -43,7 +43,7 @@ int CurrentLanguage()
 
 	// Change to WinAPI?
 	// Open DarkEDIF.ini settings file in read binary, and deny other apps writing permissions.
-	FILE * F = _tfsopen(FileToLookup, _T("rb"), _SH_DENYWR);
+	FILE * F = _fsopen(FileToLookup, "rb", _SH_DENYWR);
 	
 	// Could not open; abort (should report error)
 	if (!F)

@@ -6,6 +6,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 // General includes
+#include	<tchar.h>
 #include	"TemplateInc.h"
 
 // Specific to this extension

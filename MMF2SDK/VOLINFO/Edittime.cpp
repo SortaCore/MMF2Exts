@@ -193,8 +193,6 @@ int WINAPI DLLExport MakeIconEx ( mv _far *mV, cSurface* pIconSf, LPSTR lpName, 
 // This routine is yours. You may even not need a setup dialog box.
 // I have put it as an example...
 
-#ifndef RUN_ONLY
-
 // --------------------
 // CreateObject
 // --------------------
@@ -1228,5 +1226,3 @@ void WINAPI GetParameterString(mv _far *mV, short code, paramExt* pExt, LPSTR pD
 
 #endif // !defined(RUN_ONLY)
 }
-
-#endif

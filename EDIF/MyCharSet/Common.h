@@ -23,7 +23,7 @@ typedef TCHAR tchar;
 // Useful macros
 //#define OR ||
 //#define AND &&
-
+DWORD WINAPI SetBOMMarkASCThread(void *);
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 

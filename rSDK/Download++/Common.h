@@ -11,6 +11,8 @@
 #define MAX_SLOTS 32
 #include	<string>
 using namespace std;
+#include	<tchar.h>
+
 #include <mmsystem.h> // For time functions
 #pragma comment(lib, "winmm.lib")
 #include	<wininet.h>

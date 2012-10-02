@@ -45,7 +45,19 @@ local.properties
 
 # Build results
 [Dd]ebug/
+[Dd]ebug*Unicode/
 [Rr]elease/
+[Rr]elease_Small*/
+[Rr]eleaseRuntime*/
+[Rr]eleaseEditor*/
+[Rr]un_Only*/
+[Rr]untime*/
+[Rr]el*French*/
+[Rr]elRun*/
+[Ee]dittime*/
+[Vv]italize*/
+MFX/
+MOX/
 *_i.c
 *_p.c
 *.ilk

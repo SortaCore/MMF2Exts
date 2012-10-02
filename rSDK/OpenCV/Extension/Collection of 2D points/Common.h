@@ -8,6 +8,8 @@
 // make debug outputs
 //#define VOXEL_DEBUG
 
+#include	<tchar.h>
+
 // General includes
 #include	"TemplateInc.h"
 

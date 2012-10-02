@@ -855,7 +855,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 				{
   					MessageBoxA(NULL, "Error calling expression: null pointer given as string parameter.", "DarkEDIF - Expression() error", MB_OK);
 					return (ExpressionRet != ExpParams::String) ? 0L :
-								(long)rdPtr->pExtension->Runtime.CopyString("");
+								(long)rdPtr->pExtension->Runtime.CopyString(_T(""));
 				}
 				break;
 

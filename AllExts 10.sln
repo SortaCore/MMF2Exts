@@ -124,12 +124,10 @@ Global
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug|Win32.ActiveCfg = Debug Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime French|Win32.ActiveCfg = Edittime Unicode|Win32
-		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime French|Win32.Build.0 = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime|Win32.ActiveCfg = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Runtime French|Win32.ActiveCfg = Runtime Unicode|Win32
-		{5F48AB59-1A62-42E2-8948-A909013537AA}.Runtime French|Win32.Build.0 = Runtime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Runtime Unicode|Win32.ActiveCfg = Runtime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Runtime Unicode|Win32.Build.0 = Runtime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Runtime|Win32.ActiveCfg = Runtime Unicode|Win32

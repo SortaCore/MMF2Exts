@@ -29,8 +29,8 @@ public:
         and destructors, without having to call them manually or store
         a pointer.
     */
-		wstring WideString;		// Unicode string
-		string ThinString;		// ASCII string
+		std::wstring WideString;		// Unicode string
+		std::string ThinString;		// ASCII string
 		long long locale;		// Current locale?
 		
     /*  Add your actions, conditions and expressions as real class member
@@ -42,6 +42,7 @@ public:
     */
 
 		/// Actions
+		void SetBOMMarkASC(const char * FileToAddTo, int TypeOfBOM, int IgnoreCurrentBOM);
         
 	/// Conditions
 

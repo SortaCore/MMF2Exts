@@ -134,7 +134,7 @@ tchar * Extension::RangeToString(tchar * StringP, tchar * SingleItemDelimiterP, 
 				// Iterate all values and add to list
 				for (unsigned int k = 0; k < diff; k++)
 				{
-					tchar temp[10] = "\0\0\0\0\0\0\0\0\0";
+					tchar temp[10] = {0};
 					_stprintf_s(temp, 10, _T("%i"), _tstoi(Ranges[i].c_str())+k);
 					Return += temp;
 					Return += OutputDelimiter;

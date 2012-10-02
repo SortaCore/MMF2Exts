@@ -790,11 +790,11 @@ void WINAPI	DLLExport CreateFromFile (LPMV mV, LPSTR fileName, LPEDATA edPtr)
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 {
 	int			n, id, nMn;
-	NPSTR		strBuf;
+	TCHAR *		strBuf;
 	HMENU		hSubMenu;
 
 	nMn = GetMenuItemCount(hSourceMenu);
-	strBuf = (NPSTR)LocalAlloc(LPTR, 80);
+	strBuf = (TCHAR *)LocalAlloc(LPTR, 80);
 	for (n=0; n<nMn; n++)
 	{
 		if (0 == (id = GetMenuItemID(hSourceMenu, n)))
@@ -896,7 +896,7 @@ HMENU WINAPI DLLExport GetExpressionMenu(mv _far *mV, fpObjInfo oiPtr, LPEDATA e
 //
 
 #ifndef RUN_ONLY
-void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR strBuf, WORD maxLen)
+void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPTSTR strBuf, WORD maxLen)
 {
 	HMENU		hMn;
 
@@ -911,19 +911,19 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 		case MN_CONDITIONS:
 			if(code>=0&&code<(short)Conditions.size()) {
 				if(param>=0&&param<(short)Conditions[code]->getParamCount())
-					strcpy(strBuf,Conditions[code]->getParamName(param));
+					_tcscpy(strBuf,Conditions[code]->getParamName(param));
 			}
 			break;
 		case MN_ACTIONS:
 			if(code>=0&&code<(short)Actions.size()) {
 				if(param>=0&&param<(short)Actions[code]->getParamCount())
-					strcpy(strBuf,Actions[code]->getParamName(param));
+					_tcscpy(strBuf,Actions[code]->getParamName(param));
 			}
 			break;
 		case MN_EXPRESSIONS:
 			if(code>=0&&code<(short)Expressions.size()) {
 				if(param>=0&&param<(short)Expressions[code]->getParamCount())
-					strcpy(strBuf,Expressions[code]->getParamName(param));
+					_tcscpy(strBuf,Expressions[code]->getParamName(param));
 			}
 			break;
 		}
@@ -938,13 +938,13 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 #define GetCodeTitle(a,b,c,d,e,f)
 #endif // !RUN_ONLY
 
-void WINAPI DLLExport GetConditionTitle(mv _far *mV, short code, short param, LPSTR strBuf, short maxLen) {
+void WINAPI DLLExport GetConditionTitle(mv _far *mV, short code, short param, LPTSTR strBuf, short maxLen) {
 	GetCodeTitle((LPEVENTINFOS2)conditionsInfos, code, param, MN_CONDITIONS, strBuf, maxLen);
 }
-void WINAPI DLLExport GetActionTitle(mv _far *mV, short code, short param, LPSTR strBuf, short maxLen) {
+void WINAPI DLLExport GetActionTitle(mv _far *mV, short code, short param, LPTSTR strBuf, short maxLen) {
 	GetCodeTitle((LPEVENTINFOS2)actionsInfos, code, param, MN_ACTIONS, strBuf, maxLen);
 }
-void WINAPI DLLExport GetExpressionTitle(mv _far *mV, short code, LPSTR strBuf, short maxLen) {
+void WINAPI DLLExport GetExpressionTitle(mv _far *mV, short code, LPTSTR strBuf, short maxLen) {
 	GetCodeTitle((LPEVENTINFOS2)expressionsInfos, code, 0, MN_EXPRESSIONS, strBuf, maxLen);
 }
 
@@ -1038,27 +1038,27 @@ LPINFOEVENTSV2 WINAPI DLLExport GetExpressionInfos(mv _far *mV, short code)
 // the string to use for displaying it under the event editor
 //
 
-void WINAPI DLLExport GetConditionString(mv _far *mV, short code, LPSTR strPtr, short maxLen)
+void WINAPI DLLExport GetConditionString(mv _far *mV, short code, LPTSTR strPtr, short maxLen)
 {
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Conditions.size())
-			strcpy(strPtr,Conditions[code]->getName());
+			_tcscpy(strPtr,Conditions[code]->getName());
 #endif // !RUN_ONLY
 }
 
-void WINAPI DLLExport GetActionString(mv _far *mV, short code, LPSTR strPtr, short maxLen)
+void WINAPI DLLExport GetActionString(mv _far *mV, short code, LPTSTR strPtr, short maxLen)
 {
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Actions.size())
-			strcpy(strPtr,Actions[code]->getName());
+			_tcscpy(strPtr,Actions[code]->getName());
 #endif // !RUN_ONLY
 }
 
-void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPSTR strPtr, short maxLen)
+void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPTSTR strPtr, short maxLen)
 {
 #ifndef RUN_ONLY
 		if(code>=0&&code<(short)Expressions.size())
-			strcpy(strPtr,Expressions[code]->getName());
+			_tcscpy(strPtr,Expressions[code]->getName());
 #endif // !RUN_ONLY
 }
 
@@ -1068,11 +1068,11 @@ void WINAPI DLLExport GetExpressionString(mv _far *mV, short code, LPSTR strPtr,
 // Returns the parameter name to display in the expression editor
 //
 
-void WINAPI DLLExport GetExpressionParam(mv _far *mV, short code, short param, LPSTR strBuf, short maxLen)
+void WINAPI DLLExport GetExpressionParam(mv _far *mV, short code, short param, LPTSTR strBuf, short maxLen)
 {
 #ifndef RUN_ONLY
-	if(strlen(Expressions[code]->getParamName(param)))
-		strcpy(strBuf,Expressions[code]->getParamName(param));
+	if(_tcslen(Expressions[code]->getParamName(param)))
+		_tcscpy(strBuf,Expressions[code]->getParamName(param));
 	else
 		*strBuf=0;
 #endif

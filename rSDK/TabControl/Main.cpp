@@ -47,7 +47,7 @@ typedef OverlayStructure _far * OVERLAY;
 
 CONDITION(
 	/* ID */			0,
-	/* Name */			_T("%o: On tab changed"),
+	/* Name */			"%o: On tab changed",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -55,7 +55,7 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			1,
-	/* Name */			_T("%o: On left mouse button clicked"),
+	/* Name */			"%o: On left mouse button clicked",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -63,7 +63,7 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			2,
-	/* Name */			_T("%o: On left mouse button double-clicked"),
+	/* Name */			"%o: On left mouse button double-clicked",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -71,7 +71,7 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			3,
-	/* Name */			_T("%o: On right mouse button clicked"),
+	/* Name */			"%o: On right mouse button clicked",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -80,7 +80,7 @@ CONDITION(
 
 CONDITION(
 	/* ID */			4,
-	/* Name */			_T("%o: On right mouse button double-clicked"),
+	/* Name */			"%o: On right mouse button double-clicked",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -88,7 +88,7 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			5,
-	/* Name */			_T("%o: On tab changed by user"),
+	/* Name */			"%o: On tab changed by user",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -96,9 +96,9 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			6,
-	/* Name */			_T("%o: On tab changed to %0"),
+	/* Name */			"%o: On tab changed to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_STRING,_T("Caption"))
+	/* Params */		(1,PARAM_STRING,"Caption")
 ) {	
 	TCHAR* caption = (TCHAR*)param1;
 	TCHAR buff[64];
@@ -111,9 +111,9 @@ CONDITION(
 }
 CONDITION(
 	/* ID */			7,
-	/* Name */			_T("%o: On tab index changed to %0"),
+	/* Name */			"%o: On tab index changed to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Index"))
+	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	return param1==TabCtrl_GetCurSel(rdPtr->hWnd);
 }
@@ -134,9 +134,9 @@ CONDITION(
 // 
 ACTION(
 	/* ID */			0,
-	/* Name */			_T("Insert tab with caption %0, icon %1 at %2"),
+	/* Name */			"Insert tab with caption %0, icon %1 at %2",
 	/* Flags */			0,
-	/* Params */		(3,PARAM_STRING,_T("Caption"),PARAM_NUMBER,_T("Icon index (-1: None)"),PARAM_NUMBER,_T("Index (-1: Add to the end)"))
+	/* Params */		(3,PARAM_STRING,"Caption",PARAM_NUMBER,"Icon index (-1: None)",PARAM_NUMBER,"Index (-1: Add to the end)")
 ) {
 	TCHAR* text = (TCHAR*)Param(TYPE_STRING);
 	int img = Param(TYPE_INT);
@@ -152,9 +152,9 @@ ACTION(
 
 ACTION(
 	/* ID */			1,
-	/* Name */			_T("Delete tab at %0"),
+	/* Name */			"Delete tab at %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Index"))
+	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	int index = param1;
 	index = max(index,0);
@@ -163,7 +163,7 @@ ACTION(
 
 ACTION(
 	/* ID */			2,
-	/* Name */			_T("Delete all tabs"),
+	/* Name */			"Delete all tabs",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -172,9 +172,9 @@ ACTION(
 
 ACTION(
 	/* ID */			3,
-	/* Name */			_T("Set current tab to %0"),
+	/* Name */			"Set current tab to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Index"))
+	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	TabCtrl_SetCurSel(rdPtr->hWnd,param1);
 	rdPtr->rRd->GenerateEvent(0);
@@ -182,9 +182,9 @@ ACTION(
 
 ACTION(
 	/* ID */			4,
-	/* Name */			_T("Set caption of tab %0 to %1"),
+	/* Name */			"Set caption of tab %0 to %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index"),PARAM_STRING,_T("Caption"))
+	/* Params */		(2,PARAM_NUMBER,"Index",PARAM_STRING,"Caption")
 ) {
 	int index = param1;
 	TCHAR* text = (TCHAR*)param2;
@@ -197,18 +197,18 @@ ACTION(
 
 ACTION(
 	/* ID */			5,
-	/* Name */			_T("Set width to %0"),
+	/* Name */			"Set width to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Width"))
+	/* Params */		(1,PARAM_NUMBER,"Width")
 ) {
 	rdPtr->rHo.hoImgWidth = max(0,param1);
 }
 
 ACTION(
 	/* ID */			6,
-	/* Name */			_T("Set visibility to %0"),
+	/* Name */			"Set visibility to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Visiblity (0 = Hide, 1 = Show)"))
+	/* Params */		(1,PARAM_NUMBER,"Visiblity (0 = Hide, 1 = Show)")
 ) {
 	bool visi = param1!=0;
 	SetWindowPos(rdPtr->hWnd,HWND_BOTTOM,0,0,0,0,SWP_NOMOVE | SWP_NOSIZE | (visi ? SWP_SHOWWINDOW : SWP_HIDEWINDOW));
@@ -216,43 +216,43 @@ ACTION(
 
 ACTION(
 	/* ID */			7,
-	/* Name */			_T("Hightlight tab %0: %1"),
+	/* Name */			"Hightlight tab %0: %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index"),PARAM_NUMBER,_T("Highlight (0 = False, 1 = True)"))
+	/* Params */		(2,PARAM_NUMBER,"Index",PARAM_NUMBER,"Highlight (0 = False, 1 = True)")
 ) {
 	TabCtrl_HighlightItem(rdPtr->hWnd,param1,param2);
 }
 
 ACTION(
 	/* ID */			8,
-	/* Name */			_T("Set minimal tab width to %0"),
+	/* Name */			"Set minimal tab width to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Width"))
+	/* Params */		(1,PARAM_NUMBER,"Width")
 ) {
 	TabCtrl_SetMinTabWidth(rdPtr->hWnd,param1);
 }
 
 ACTION(
 	/* ID */			9,
-	/* Name */			_T("Set padding to (%0,%1)"),
+	/* Name */			"Set padding to (%0,%1)",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Width"),PARAM_NUMBER,_T("Height"))
+	/* Params */		(2,PARAM_NUMBER,"Width",PARAM_NUMBER,"Height")
 ) {
 	TabCtrl_SetPadding(rdPtr->hWnd,param1,param2);
 }
 
 ACTION(
 	/* ID */			10,
-	/* Name */			_T("Set tab size to (%0,%1)"),
+	/* Name */			"Set tab size to (%0,%1)",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Width"),PARAM_NUMBER,_T("Height"))
+	/* Params */		(2,PARAM_NUMBER,"Width",PARAM_NUMBER,"Height")
 ) {
 	TabCtrl_SetItemSize(rdPtr->hWnd,param1,param2);
 }
 
 ACTION(
 	/* ID */			11,
-	/* Name */			_T("Deselect all"),
+	/* Name */			"Deselect all",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -261,27 +261,27 @@ ACTION(
 
 ACTION(
 	/* ID */			12,
-	/* Name */			_T("Set focused tab to %0"),
+	/* Name */			"Set focused tab to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Index"))
+	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	TabCtrl_SetCurFocus(rdPtr->hWnd,param1);
 }
 
 ACTION(
 	/* ID */			13,
-	/* Name */			_T("Set extended tab style to %0"),
+	/* Name */			"Set extended tab style to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Extended style (Merge with \"or\" operator)"))
+	/* Params */		(1,PARAM_NUMBER,"Extended style (Merge with \"or\" operator)")
 ) {
 	TabCtrl_SetExtendedStyle(rdPtr->hWnd,param1);
 }
 
 ACTION(
 	/* ID */			14,
-	/* Name */			_T("Insert tabs from list %0 at %1"),
+	/* Name */			"Insert tabs from list %0 at %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_STRING,_T("Semicolon-separated list"),PARAM_NUMBER,_T("Index (-1: Add to the end)"))
+	/* Params */		(2,PARAM_STRING,"Semicolon-separated list",PARAM_NUMBER,"Index (-1: Add to the end)")
 ) {
 	TCITEM tie; 
 	tie.mask = TCIF_TEXT | TCIF_IMAGE; 
@@ -301,36 +301,36 @@ ACTION(
 
 ACTION(
 	/* ID */			15,
-	/* Name */			_T("Set height to %0"),
+	/* Name */			"Set height to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Height"))
+	/* Params */		(1,PARAM_NUMBER,"Height")
 ) {
 	rdPtr->rHo.hoImgHeight = Param(TYPE_INT);
 }
 
 ACTION(
 	/* ID */			16,
-	/* Name */			_T("Set style to %0"),
+	/* Name */			"Set style to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Style (See \"Styles\", merge with \"or\" operator)"))
+	/* Params */		(1,PARAM_NUMBER,"Style (See \"Styles\", merge with \"or\" operator)")
 ) {
 	SetWindowLong(rdPtr->hWnd,GWL_STYLE,WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE | param1);
 }
 
 ACTION(
 	/* ID */			17,
-	/* Name */			_T("Set extended style to %0"),
+	/* Name */			"Set extended style to %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Extended style (See \"Extended styles\", merge with \"or\" operator)"))
+	/* Params */		(1,PARAM_NUMBER,"Extended style (See \"Extended styles\", merge with \"or\" operator)")
 ) {
 	SetWindowLong(rdPtr->hWnd,GWL_EXSTYLE,param1);
 }
 
 ACTION(
 	/* ID */			18,
-	/* Name */			_T("Set icon %0 from image %1, transparent color = %2"),
+	/* Name */			"Set icon %0 from image %1, transparent color = %2",
 	/* Flags */			0,
-	/* Params */		(3,PARAM_NUMBER,_T("Index (-1: Add to the end)"),PARAM_FILENAME2,_T("Image path"),PARAM_COLOUR,_T("Transparent color (-1: First pixel color)"))
+	/* Params */		(3,PARAM_NUMBER,"Index (-1: Add to the end)",PARAM_FILENAME2,"Image path",PARAM_COLOUR,"Transparent color (-1: First pixel color)")
 ) {
 		LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 		int index = Param(TYPE_INT);
@@ -354,9 +354,9 @@ ACTION(
 
 ACTION(
 	/* ID */			19,
-	/* Name */			_T("Set icon %0 from active object %1"),
+	/* Name */			"Set icon %0 from active object %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index (-1: Add to the end)"),PARAM_OBJECT,_T("Object"))
+	/* Params */		(2,PARAM_NUMBER,"Index (-1: Add to the end)",PARAM_OBJECT,"Object")
 ) {
 		LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 		unsigned int index = Param(TYPE_INT);
@@ -372,9 +372,9 @@ ACTION(
 
 ACTION(
 	/* ID */			20,
-	/* Name */			_T("Remove icon %0"),
+	/* Name */			"Remove icon %0",
 	/* Flags */			0,
-	/* Params */		(1,PARAM_NUMBER,_T("Index"))
+	/* Params */		(1,PARAM_NUMBER,"Index")
 ) {
 	int index = Param(TYPE_INT);
 	ImageList_Remove(rdPtr->imgl,index);
@@ -382,7 +382,7 @@ ACTION(
 
 ACTION(
 	/* ID */			21,
-	/* Name */			_T("Remove all icons"),
+	/* Name */			"Remove all icons",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -391,9 +391,9 @@ ACTION(
 
 ACTION(
 	/* ID */			22,
-	/* Name */			_T("Set icon %0 from overlay address %1"),
+	/* Name */			"Set icon %0 from overlay address %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index (-1: Add to the end)"),PARAM_NUMBER,_T("Overlay address"))
+	/* Params */		(2,PARAM_NUMBER,"Index (-1: Add to the end)",PARAM_NUMBER,"Overlay address")
 ) {
 		int index = Param(TYPE_INT);
 		OVERLAY ov = (OVERLAY)Param(TYPE_INT);
@@ -404,7 +404,7 @@ ACTION(
 
 ACTION(
 	/* ID */			23,
-	/* Name */			_T("Force redraw"),
+	/* Name */			"Force redraw",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -414,9 +414,9 @@ ACTION(
 
 ACTION(
 	/* ID */			24,
-	/* Name */			_T("Set icon of tab %0 to %1"),
+	/* Name */			"Set icon of tab %0 to %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index"),PARAM_NUMBER,_T("Icon index (-1: None)"))
+	/* Params */		(2,PARAM_NUMBER,"Index",PARAM_NUMBER,"Icon index (-1: None)")
 ) {
 	int index = Param(TYPE_INT);
 	int icon = Param(TYPE_INT);
@@ -427,9 +427,9 @@ ACTION(
 }
 ACTION(
 	/* ID */			25,
-	/* Name */			_T("Set icons at %0 from active object %1"),
+	/* Name */			"Set icons at %0 from active object %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Starting index (-1: Add to the end)"),PARAM_OBJECT,_T("Object"))
+	/* Params */		(2,PARAM_NUMBER,"Starting index (-1: Add to the end)",PARAM_OBJECT,"Object")
 ) {
 
 		LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
@@ -451,9 +451,9 @@ ACTION(
 
 ACTION(
 	/* ID */			26,
-	/* Name */			_T("Insert tabs with icons from list %0 at %1"),
+	/* Name */			"Insert tabs with icons from list %0 at %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_STRING,_T("List (icon1;text1;icon2;...)"),PARAM_NUMBER,_T("Index (-1: Add to the end)"))
+	/* Params */		(2,PARAM_STRING,"List (icon1;text1;icon2;...)",PARAM_NUMBER,"Index (-1: Add to the end)")
 ) {
 	TCITEM tie; 
 	tie.mask = TCIF_TEXT|TCIF_IMAGE; 
@@ -475,9 +475,9 @@ ACTION(
 
 ACTION(
 	/* ID */			27,
-	/* Name */			_T("Set parameter of tab %0 to %1"),
+	/* Name */			"Set parameter of tab %0 to %1",
 	/* Flags */			0,
-	/* Params */		(2,PARAM_NUMBER,_T("Index"),PARAM_NUMBER,_T("Parameter"))
+	/* Params */		(2,PARAM_NUMBER,"Index",PARAM_NUMBER,"Parameter")
 ) {
 	TCITEM tie; 
 	tie.mask = TCIF_PARAM; 
@@ -495,7 +495,7 @@ ACTION(
 #define CONSTEXPR(id,ex,label) \
 EXPRESSION( \
 	/* ID */			id, \
-	/* Name */			label _T("("), \
+	/* Name */			label, \
 	/* Flags */			0, \
 	/* Params */		(0) \
 ) { \
@@ -504,7 +504,7 @@ EXPRESSION( \
 
 EXPRESSION(
 	/* ID */			0,
-	/* Name */			_T("CurTab("),
+	/* Name */			"CurTab(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -513,9 +513,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			1,
-	/* Name */			_T("TabCaption$("),
+	/* Name */			"TabCaption$(",
 	/* Flags */			EXPFLAG_STRING,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index")
 ) {	
 	int index = ExParam(TYPE_INT);
 	TCHAR buff[64] = {0};
@@ -530,7 +530,7 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			2,
-	/* Name */			_T("TabCount("),
+	/* Name */			"TabCount(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -539,7 +539,7 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			3,
-	/* Name */			_T("RowCount("),
+	/* Name */			"RowCount(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -548,7 +548,7 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			4,
-	/* Name */			_T("Focus("),
+	/* Name */			"Focus(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -557,7 +557,7 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			5,
-	/* Name */			_T("W("),
+	/* Name */			"W(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
@@ -566,30 +566,30 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			6,
-	/* Name */			_T("H("),
+	/* Name */			"H(",
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
 	return rdPtr->rHo.hoImgHeight;
 }
 
-CONSTEXPR(7,TCS_BOTTOM,_T("StBottom"))
-CONSTEXPR(8,TCS_BUTTONS,_T("StButtons"))
-CONSTEXPR(9,TCS_FIXEDWIDTH,_T("StFixed"))
-CONSTEXPR(10,TCS_FLATBUTTONS,_T("StFlat"))
-CONSTEXPR(11,TCS_MULTILINE,_T("StMulti"))
-CONSTEXPR(12,TCS_VERTICAL,_T("StVertical"))
-CONSTEXPR(13,TCS_RIGHT,_T("StRight"))
-CONSTEXPR(14,TCS_SINGLELINE,_T("StSingle"))
-CONSTEXPR(15,TCS_TABS,_T("StTabs"))
-CONSTEXPR(16,TCS_RAGGEDRIGHT,_T("StNoStretch"))
+CONSTEXPR(7,TCS_BOTTOM,"StBottom(")
+CONSTEXPR(8,TCS_BUTTONS,"StButtons(")
+CONSTEXPR(9,TCS_FIXEDWIDTH,"StFixed(")
+CONSTEXPR(10,TCS_FLATBUTTONS,"StFlat(")
+CONSTEXPR(11,TCS_MULTILINE,"StMulti(")
+CONSTEXPR(12,TCS_VERTICAL,"StVertical(")
+CONSTEXPR(13,TCS_RIGHT,"StRight(")
+CONSTEXPR(14,TCS_SINGLELINE,"StSingle(")
+CONSTEXPR(15,TCS_TABS,"StTabs(")
+CONSTEXPR(16,TCS_RAGGEDRIGHT,"StNoStretch(")
 
 
 EXPRESSION(
 	/* ID */			17,
-	/* Name */			_T("TabIcon("),
+	/* Name */			"TabIcon(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index")
 ) {
 	int index = ExParam(TYPE_INT);
 	if (index < 0 || index > TabCtrl_GetItemCount(rdPtr->hWnd)-1) return -1;
@@ -601,9 +601,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			18,
-	/* Name */			_T("FindTab("),
+	/* Name */			"FindTab(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_STRING,_T("Caption"))
+	/* Params */		(1,EXPPARAM_STRING,"Caption")
 ) {	
 	TCHAR* capt = (TCHAR*)ExParam(TYPE_STRING);
 	TCHAR buff[64];
@@ -622,9 +622,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			19,
-	/* Name */			_T("TabX("),
+	/* Name */			"TabX(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index (-1: Last)"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
 ) {	
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
@@ -635,9 +635,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			20,
-	/* Name */			_T("TabY("),
+	/* Name */			"TabY(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index (-1: Last)"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
 ) {	
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
@@ -648,9 +648,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			21,
-	/* Name */			_T("TabW("),
+	/* Name */			"TabW(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index (-1: Last)"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
 ) {	
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
@@ -661,9 +661,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			22,
-	/* Name */			_T("TabH("),
+	/* Name */			"TabH(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index (-1: Last)"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
 ) {	
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
@@ -674,9 +674,9 @@ EXPRESSION(
 
 EXPRESSION(
 	/* ID */			23,
-	/* Name */			_T("TabParam("),
+	/* Name */			"TabParam(",
 	/* Flags */			0,
-	/* Params */		(1,EXPPARAM_NUMBER,_T("Index"))
+	/* Params */		(1,EXPPARAM_NUMBER,"Index")
 ) {
 	int index = ExParam(TYPE_INT);
 	TC_ITEM tie;

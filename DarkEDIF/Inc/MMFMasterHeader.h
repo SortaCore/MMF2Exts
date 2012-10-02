@@ -4177,6 +4177,7 @@ __inline int mvGetAppCodePage(mv * mV, void * pApp) \
 typedef	int (CALLBACK* ENUMELTPROC)(unsigned short *, int, LPARAM, LPARAM);
 
 // kpxGetInfos
+#undef UNICODE
 fancyenum(KGI) {
 	VERSION,			// Version (required)
 	NOTUSED,			// Not used

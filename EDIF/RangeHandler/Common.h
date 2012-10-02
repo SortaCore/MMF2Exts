@@ -26,7 +26,7 @@ using namespace std;
 inline wchar_t * Uni(const char * var)
 {
 	wchar_t ret [255] (L"\0");
-	MultiByteToWideChar(CP_AC, NULL, var, -1, ret, 255);
+	MultiByteToWideChar(CP_ACP, NULL, var, -1, ret, 255);
 	return ret;
 }
 #pragma warning (default:4172)

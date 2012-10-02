@@ -9,6 +9,7 @@
 #include	"TemplateInc.h"
 
 //Stream & String
+#include	<tchar.h>
 #include	<iostream>
 #include	<sstream>
 #include	<string>

@@ -43,28 +43,29 @@ ThreadSafe_End();
     err = Pa_Initialize(); //Dodginess!
 	if ( err != paNoError )
 	{
-		Explode( "Unknown error @ line 68ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		Explode( "Unknown error @ line 46ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
 	}
 
 
     inputParameters.device = Pa_GetDefaultInputDevice(); /* default input device */
-    if (inputParameters.device == paNoDevice) {
-		Explode("Error: No default input device.");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+    if (inputParameters.device == paNoDevice)
+	{
+		Explode( "Unknown error @ line 60ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
-    }
+	}
     inputParameters.channelCount = NUM_CHANNELS;
     inputParameters.sampleFormat = PA_SAMPLE_TYPE;
     inputParameters.suggestedLatency = Pa_GetDeviceInfo( inputParameters.device )->defaultLowInputLatency;
@@ -82,12 +83,12 @@ ThreadSafe_End();
               NULL ); /* no callback, so no callback userData */
     if ( err != paNoError )
 	{
-		Explode( "Unknown error @ line 106ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		Explode( "Unknown error @ line 86ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
 	}
@@ -96,12 +97,12 @@ ThreadSafe_End();
 
     if ( err != paNoError )
 	{
-		Explode( "Unknown error @ line 120ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		Explode( "Unknown error @ line 100ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
 	}
@@ -112,11 +113,11 @@ ThreadSafe_End();
     if ( err != paNoError )
 	{
 		Explode( "Unknown error @ line 135ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
 	}
@@ -124,12 +125,12 @@ ThreadSafe_End();
     err = Pa_CloseStream( stream );
     if ( err != paNoError )
 	{
-		Explode( "Unknown error @ line 148ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		Explode( "Unknown error @ line 128ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
 	}
@@ -188,11 +189,11 @@ ThreadSafe_End();
     outputParameters.device = Pa_GetDefaultOutputDevice(); /* default output device */
     if (outputParameters.device == paNoDevice) {
 		Explode("Error: No default output device.");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
 		return 0;
     }
@@ -213,13 +214,14 @@ ThreadSafe_End();
               NULL ); /* no callback, so no callback userData */
     if ( err != paNoError )
 	{
-		Explode( "Unknown error @ line 190ish");
-		char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-		sprintf(temp, "Error number: %d", err);
-		Report( temp);
-		sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-		Report( temp2);
+		Explode( "Unknown error @ line 217ish");
+		TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+		_stprintf_s(temp, 260, _T("Error number: %d"), err);
+		Extension->Unreferenced_Report(temp, ThreadID);
+		_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+		Extension->Unreferenced_Report(temp, ThreadID);
 		Pa_Terminate();
+		return 0;
 		return 0;
 	}
 
@@ -228,12 +230,12 @@ ThreadSafe_End();
         err = Pa_StartStream( stream );
         if ( err != paNoError )
 		{
-			Explode( "Unknown error @ line 199ish");
-			char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-			sprintf(temp, "Error number: %d", err);
-			Report( temp);
-			sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-			Report( temp2);
+			Explode( "Unknown error @ line 233ish");
+			TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+			_stprintf_s(temp, 260, _T("Error number: %d"), err);
+			Extension->Unreferenced_Report(temp, ThreadID);
+			_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+			Extension->Unreferenced_Report(temp, ThreadID);
 			Pa_Terminate();
 			return 0;
 		}
@@ -242,12 +244,12 @@ ThreadSafe_End();
         err = Pa_WriteStream( stream, recordedSamples, totalFrames );
         if ( err != paNoError )
 		{
-			Explode( "Unknown error @ line 266ish");
-			char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-			sprintf(temp, "Error number: %d", err);
-			Report( temp);
-			sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-			Report( temp2);
+			Explode( "Unknown error @ line 247ish");
+			TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+			_stprintf_s(temp, 260, _T("Error number: %d"), err);
+			Extension->Unreferenced_Report(temp, ThreadID);
+			_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+			Extension->Unreferenced_Report(temp, ThreadID);
 			Pa_Terminate();
 			return 0;
 		}
@@ -255,12 +257,12 @@ ThreadSafe_End();
         err = Pa_CloseStream( stream );
         if ( err != paNoError )
 		{
-			Explode( "Unknown error @ line 279ish");
-			char temp[260], temp2[260]; //Not sure if temp2 is needed here.
-			sprintf(temp, "Error number: %d", err);
-			Report( temp);
-			sprintf(temp2, "Error number: %s", Pa_GetErrorText( err ));
-			Report( temp2);
+			Explode( "Unknown error @ line 260ish");
+			TCHAR temp[260], temp2[260]; //Not sure if temp2 is needed here.
+			_stprintf_s(temp, 260, _T("Error number: %d"), err);
+			Extension->Unreferenced_Report(temp, ThreadID);
+			_stprintf_s(temp2, 260, _T("Error number: %s"), Pa_GetErrorText( err ));
+			Extension->Unreferenced_Report(temp, ThreadID);
 			Pa_Terminate();
 			return 0;
 		}
@@ -268,7 +270,7 @@ ThreadSafe_End();
     }
 
     free( recordedSamples );
-	Report("Successfully completed both playback and recording. Line 291.");
+	Report("Successfully completed both playback and recording. Line 273.");
     Pa_Terminate();
     return 0;
 }
