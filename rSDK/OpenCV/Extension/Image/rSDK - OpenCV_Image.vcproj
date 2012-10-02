@@ -177,7 +177,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\..\..\lib\mmfs2.lib ..\..\lib\cxcore.lib ..\..\lib\cv.lib ..\..\lib\highgui.lib"
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
 				IgnoreDefaultLibraryNames="libmmdd.lib"

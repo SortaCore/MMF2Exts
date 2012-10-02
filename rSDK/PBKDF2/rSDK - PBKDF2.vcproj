@@ -175,7 +175,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrt.lib odbc32.lib odbccp32.lib ..\lib\mmfs2.lib ..\lib\ChilkatDbg.lib crypt32.lib ws2_32.lib dnsapi.lib"
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
 				IgnoreAllDefaultLibraries="false"

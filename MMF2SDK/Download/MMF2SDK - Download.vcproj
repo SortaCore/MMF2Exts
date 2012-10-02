@@ -179,7 +179,7 @@
 				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/Download.pdb"
+				ProgramDatabaseFile=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\Release/Download.lib"
@@ -370,7 +370,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\lib\mmfs2.lib winmm.lib"
 				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
@@ -996,10 +996,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="EXTICON.BMP"
-				>
-			</File>
-			<File
 				RelativePath="res\EXTICON.BMP"
 				>
 				<FileConfiguration
@@ -1052,7 +1048,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="EXTIMG.BMP"
+				RelativePath="EXTICON.BMP"
 				>
 			</File>
 			<File
@@ -1106,6 +1102,10 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="EXTIMG.BMP"
+				>
 			</File>
 		</Filter>
 		<Filter

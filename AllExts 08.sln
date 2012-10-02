@@ -398,7 +398,6 @@ Global
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Debug|Win32.Build.0 = Debug|Win32
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Edittime French|Win32.ActiveCfg = Edittime|Win32
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Edittime Unicode|Win32.ActiveCfg = Edittime|Win32
-		{73003153-A942-4183-9B2B-DC69CDDF3445}.Edittime Unicode|Win32.Build.0 = Edittime|Win32
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Edittime|Win32.ActiveCfg = Edittime|Win32
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Edittime|Win32.Build.0 = Edittime|Win32
 		{73003153-A942-4183-9B2B-DC69CDDF3445}.Runtime French|Win32.ActiveCfg = Runtime|Win32

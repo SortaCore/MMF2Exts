@@ -55,7 +55,7 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">.\Run_Only_Small\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">.\Run_Only_Small\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">false</LinkIncremental>
@@ -68,6 +68,7 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" />
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">
     <Midl>
@@ -177,7 +178,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>.\Debug/Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
-      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName)_Full.pdb</StripPrivateSymbols>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
