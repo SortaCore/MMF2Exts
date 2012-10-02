@@ -174,12 +174,14 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
-      <ProgramDatabaseFile>$(IntDir)Template.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -229,12 +231,13 @@
       <AdditionalLibraryDirectories>..\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(IntDir)Template.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName)_Full.pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -280,12 +283,14 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
-      <ProgramDatabaseFile>$(IntDir)Template.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

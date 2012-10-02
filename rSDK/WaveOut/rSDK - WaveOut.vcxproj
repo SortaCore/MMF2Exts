@@ -176,12 +176,14 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
-      <ProgramDatabaseFile>.\Run_Only/Template.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>.\Run_Only/Template.lib</ImportLibrary>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -224,7 +226,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>..\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/rsdk.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>

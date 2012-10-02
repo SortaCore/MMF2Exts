@@ -117,7 +117,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Edittime|Win32"
+			Name="Edittime Unicode|Win32"
 			OutputDirectory=".\Release_Small"
 			IntermediateDirectory=".\Release_Small"
 			ConfigurationType="2"
@@ -186,6 +186,7 @@
 				AdditionalLibraryDirectories="..\lib\"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\Ext.def"
+				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Release_Small/Template.pdb"
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
@@ -219,7 +220,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|Win32"
+			Name="Debug Unicode|Win32"
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
@@ -285,7 +286,7 @@
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
 				ModuleDefinitionFile=".\Ext.def"
-				GenerateDebugInformation="true"
+				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Debug/Template.pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -317,7 +318,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Runtime|Win32"
+			Name="Runtime Unicode|Win32"
 			OutputDirectory=".\Run_Only_Small"
 			IntermediateDirectory=".\Run_Only_Small"
 			ConfigurationType="2"
@@ -386,6 +387,7 @@
 				AdditionalLibraryDirectories="..\lib\"
 				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\Ext.def"
+				GenerateDebugInformation="false"
 				ProgramDatabaseFile=".\Run_Only_Small/Template.pdb"
 				OptimizeForWindows98="1"
 				RandomizedBaseAddress="1"
@@ -439,7 +441,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Edittime|Win32"
+					Name="Edittime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -448,7 +450,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -457,7 +459,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Runtime|Win32"
+					Name="Runtime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -483,7 +485,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Edittime|Win32"
+					Name="Edittime Unicode|Win32"
 					>
 					<Tool
 						Name="VCResourceCompilerTool"
@@ -492,7 +494,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug Unicode|Win32"
 					>
 					<Tool
 						Name="VCResourceCompilerTool"
@@ -501,7 +503,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Runtime|Win32"
+					Name="Runtime Unicode|Win32"
 					>
 					<Tool
 						Name="VCResourceCompilerTool"
@@ -523,7 +525,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Edittime|Win32"
+					Name="Edittime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -532,7 +534,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -541,7 +543,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Runtime|Win32"
+					Name="Runtime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -563,7 +565,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Edittime|Win32"
+					Name="Edittime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -572,7 +574,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -581,7 +583,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Runtime|Win32"
+					Name="Runtime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -603,7 +605,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Edittime|Win32"
+					Name="Edittime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -612,7 +614,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="Debug Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -621,7 +623,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Runtime|Win32"
+					Name="Runtime Unicode|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

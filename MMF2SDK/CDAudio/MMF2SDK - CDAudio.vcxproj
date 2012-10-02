@@ -117,7 +117,7 @@
       <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx</OutputFile>
       <AdditionalLibraryDirectories>..\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
@@ -189,6 +189,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
+      <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">
