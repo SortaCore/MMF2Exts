@@ -217,7 +217,7 @@ Lacewing::RelayClient::Channel * Extension::DuplicateChannel(Lacewing::RelayClie
 
 	for (List <PeerInternal *>::Element * P = ((ChannelInternal *)Orig.InternalTag)->Peers.First; P; P = P->Next)
 	{
-		List<PeerInternal *>::Element * NewPeer = (*(ChannelInternal *)Orig.InternalTag).Peers.Push(new PeerInternal(***P));
+		List<PeerInternal *>::Element * NewPeer = Dup->Peers.Push(new PeerInternal(***P));
 	}
 	
 	// Finally nullify the element, shouldn't be accessed anyway

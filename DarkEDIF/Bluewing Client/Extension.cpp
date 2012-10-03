@@ -346,6 +346,7 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		if (memcpy_s(((char *)NewEvent)+5, sizeof(SaveExtInfo)-5, ((char *)&ThreadData)+5, sizeof(SaveExtInfo)-5))
 		{
 			// Failed to copy memory (error in "errno")
+			LeaveCriticalSection(&Lock);
 			return ThreadData;
 		}
 
@@ -448,65 +449,95 @@ void Extension::AddToSend(void * Data, size_t Size)
 
 Extension::~Extension()
 {
+	DeleteCriticalSection(&Lock);
 }
 
 short Extension::Handle()
 {
 	#ifdef MULTI_THREADING
+
 		// AddEvent() was called and not yet handled
-		EnterCriticalSection(&Lock);
-		while (Saved.size() > 0)
+		// (note all code that accesses Saved must have ownership of Lock)
+		while (true)
 		{
-			// Copy from saved list of events to current extension; use a try/catch block for added security
-			try {
-				if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
-					break; // Failed; leave until next Extension::Handle()
-				
-				// Remove copies if this particular event number is used
-				if (ThreadData.CondTrig[0] == 0xFFFF)
-				{
-					if (ThreadData.Channel)
-						delete ThreadData.Channel;
-					else if (ThreadData.Peer)
-						delete ThreadData.Peer;
-					else // On disconnect, clear everyting
-					{
-						// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
-						// and thus we have a small, but reoccuring, memory leak.
-						// This should be fixed when this extension is updated to the more recent liblacewing version.
-
-						// for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
-						//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
-
-						// Old username is stored in the tag and must be deleted separately from clear()
-						for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
-						{
-							if ((*u)->InternalTag)
-								free((*u)->InternalTag);
-
-							//	delete (struct ::PeerInternal *)((*u)->InternalTag);
-						}
-
-						// Delete main data of each struct (note larger Internal classes are not deleted, see above)
-						Channels.clear();
-						Peers.clear();
-					}
-				}
-				else
-				{
-					// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-					for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
-						Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
-				}
-
-				Saved.erase(Saved.begin());
-			}
-			catch (...)
+			EnterCriticalSection(&Lock);
+			if (Saved.size() == 0)
 			{
+				LeaveCriticalSection(&Lock);
+				break;
+			}
+			// Copy from saved list of events to current extension
+			if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
+			{
+				LeaveCriticalSection(&Lock);
 				break; // Failed; leave until next Extension::Handle()
 			}
+			LeaveCriticalSection(&Lock);
+				
+			// Remove copies if this particular event number is used
+			if (ThreadData.CondTrig[0] == 0xFFFF)
+			{
+				if (ThreadData.Channel)
+				{
+					if (!ThreadData.Channel)
+					{
+						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+						{
+							if (*u == ThreadData.Channel)
+							{
+								Channels.erase(u);
+								break;
+							}
+						}
+						delete ThreadData.Channel;
+					}
+					else
+					{
+						for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
+						{
+							if (*u == ThreadData.Peer)
+							{
+								Peers.erase(u);
+								break;
+							}
+						}
+						delete ThreadData.Peer;
+					}
+				}
+				else // On disconnect, clear everyting
+				{
+					// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
+					// and thus we have a small, but reoccuring, memory leak.
+					// This should be fixed when this extension is updated to the more recent liblacewing version.
+
+					// for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+					//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
+
+					// Old username is stored in the tag and must be deleted separately from clear()
+					for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
+					{
+						if ((*u)->InternalTag)
+							free((*u)->InternalTag);
+
+						//	delete (struct ::PeerInternal *)((*u)->InternalTag);
+					}
+
+					// Delete main data of each struct (note larger Internal classes are not deleted, see above)
+					Channels.clear();
+					Peers.clear();
+				}
+			}
+			else
+			{
+				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+				for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
+					Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
+			}
+
+			EnterCriticalSection(&Lock);
+			Saved.erase(Saved.begin());
+			LeaveCriticalSection(&Lock);
 		}
-		LeaveCriticalSection(&Lock);
 	#endif // MULTI_THREADING
 	
 

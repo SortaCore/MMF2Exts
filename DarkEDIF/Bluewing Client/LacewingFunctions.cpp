@@ -98,6 +98,7 @@ void OnJoinChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel
 {
 	SaveExtInfo &S = Ext.AddEvent(4);
 	S.Channel = Ext.DuplicateChannel(Target);
+	Target.Tag = S.Channel;
 }
 
 void OnJoinChannelDenied(Lacewing::RelayClient &Client, const char * ChannelName, const char * DenyReason)
@@ -121,7 +122,7 @@ void OnLeaveChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channe
 	
 	// Clear channel copy after this event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
-	C.Channel = (Lacewing::RelayClient::Channel *)Target.Tag;
+	C.Channel = S.Channel;
 }
 
 void OnLeaveChannelDenied(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target, const char * DenyReason)
@@ -173,10 +174,10 @@ void OnPeerConnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel
 {
 	SaveExtInfo &S = Ext.AddEvent(10);
 	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
-	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
 
-	// The Tag is used as char * to a name for the subpeer, and as a to the real peer in the main peer.
+	// The Tag is used as char * to a name for the subpeer, and as a pointer to the real peer in the main peer.
 	Peer.Tag = Ext.DuplicatePeer(Peer);
+	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
 }
 
 void OnPeerDisconnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
@@ -187,6 +188,7 @@ void OnPeerDisconnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Chan
 	
 	// Clear peer copy after this event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
+	C.Channel = S.Channel;
 	C.Peer = S.Peer;
 }
 

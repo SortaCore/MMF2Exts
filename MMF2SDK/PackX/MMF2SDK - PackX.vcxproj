@@ -435,11 +435,11 @@
     <ResourceCompile Include="Ext.rc">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">.\Release/</ResourceOutputFileName>
+      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">.\Release\Ext.res</ResourceOutputFileName>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">.\Release/</ResourceOutputFileName>
+      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">RelRun\Ext.res</ResourceOutputFileName>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">.\Release/</ResourceOutputFileName>
+      <ResourceOutputFileName Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">.\Vitalize\Ext.res</ResourceOutputFileName>
     </ResourceCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
