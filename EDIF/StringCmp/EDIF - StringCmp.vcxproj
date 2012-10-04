@@ -182,6 +182,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -238,6 +239,7 @@
       <ImportLibrary>$(IntDir)Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -291,6 +293,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -344,6 +347,7 @@
       <ImportLibrary>$(IntDir)Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\Unicode\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -397,6 +401,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\Unicode\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -454,6 +459,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\Unicode\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

@@ -120,6 +120,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>.\Release_Small/Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -179,6 +180,7 @@
       <ImportLibrary>.\Debug/Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -235,6 +237,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>.\Run_Only_Small/Template.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>

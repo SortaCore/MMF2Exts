@@ -124,6 +124,7 @@
       <AdditionalLibraryDirectories>..\Lib\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -183,6 +184,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>..\Lib\</AdditionalLibraryDirectories>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -242,6 +244,7 @@
       <AdditionalLibraryDirectories>..\Lib\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
+      <AssemblyDebug>false</AssemblyDebug>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
