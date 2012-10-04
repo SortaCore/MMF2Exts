@@ -26,6 +26,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -75,11 +76,12 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MOX\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MOX\$(ProjectName).mox"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -114,6 +116,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 		</Configuration>
 		<Configuration
@@ -127,6 +130,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -176,11 +180,12 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -216,8 +221,9 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Copy file to installer directory"
-				CommandLine="copy $(TargetPath) .\ToInstall\Files\Extensions"
+				Description=""
+				CommandLine=""
+				ExcludedFromBuild="true"
 			/>
 		</Configuration>
 		<Configuration
@@ -231,6 +237,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -278,11 +285,12 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -316,6 +324,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 		</Configuration>
 		<Configuration
@@ -329,6 +338,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -378,11 +388,12 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExcludedFromBuild="true"
 			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -418,8 +429,9 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Copy file to installer directory"
-				CommandLine="copy $(TargetPath) .\ToInstall\Files\Data\Runtime"
+				Description=""
+				CommandLine=""
+				ExcludedFromBuild="true"
 			/>
 		</Configuration>
 	</Configurations>

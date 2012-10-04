@@ -77,7 +77,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\..\..\lib\mmfs2.lib ..\..\lib\cxcore.lib ..\..\lib\cv.lib ..\..\lib\highgui.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -176,7 +176,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\..\..\lib\mmfs2.lib ..\..\lib\cxcore.lib ..\..\lib\cv.lib ..\..\lib\highgui.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -275,11 +275,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\..\..\lib\mmfs2.lib ..\..\lib\cxcore.lib ..\..\lib\cv.lib ..\..\lib\highgui.lib"
-				OutputFile="$(ProjectDir)\..\..\MOX\$(ProjectName).mox"
+				OutputFile="$(ProjectDir)..\..\MOX\$(ProjectName).mox"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
-				IgnoreAllDefaultLibraries="true"
+				IgnoreAllDefaultLibraries="false"
 				ModuleDefinitionFile=".\Ext.def"
 				ProgramDatabaseFile=".\Vitalize_Small/Template.pdb"
 				SubSystem="2"
@@ -373,7 +373,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\..\..\lib\mmfs2.lib ..\..\lib\cxcore.lib ..\..\lib\cv.lib ..\..\lib\highgui.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"

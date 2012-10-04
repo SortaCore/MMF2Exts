@@ -79,7 +79,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrt.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -177,7 +177,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrt.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Data\Runtime\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -275,7 +275,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrt.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MOX\$(ProjectName).mox"
+				OutputFile="$(ProjectDir)..\..\MOX\$(ProjectName).mox"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -377,7 +377,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib ..\lib\mmfs2.lib"
-				OutputFile="$(ProjectDir)\..\..\MFX\Extensions\$(ProjectName).mfx"
+				OutputFile="$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).mfx"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\lib\"
@@ -636,7 +636,7 @@
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						ResourceOutputFileName=".\Release/"
+						ResourceOutputFileName=".\Release_Small\Ext.res"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -645,7 +645,7 @@
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						ResourceOutputFileName=".\Release/"
+						ResourceOutputFileName=".\Run_Only_Small\Ext.res"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -654,7 +654,7 @@
 					<Tool
 						Name="VCResourceCompilerTool"
 						PreprocessorDefinitions=""
-						ResourceOutputFileName=".\Release/"
+						ResourceOutputFileName=".\Vitalize_Small\Ext.res"
 					/>
 				</FileConfiguration>
 				<FileConfiguration

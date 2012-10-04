@@ -117,7 +117,6 @@ Global
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug Unicode|Win32.ActiveCfg = Debug Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug|Win32.ActiveCfg = Debug Unicode|Win32
-		{5F48AB59-1A62-42E2-8948-A909013537AA}.Debug|Win32.Build.0 = Debug Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime French|Win32.ActiveCfg = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
 		{5F48AB59-1A62-42E2-8948-A909013537AA}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
@@ -258,8 +257,7 @@ Global
 		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Runtime Unicode|Win32.ActiveCfg = Runtime|Win32
 		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Runtime|Win32.ActiveCfg = Runtime|Win32
 		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Runtime|Win32.Build.0 = Runtime|Win32
-		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Vitalize|Win32.ActiveCfg = Vitalize|Win32
-		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Vitalize|Win32.Build.0 = Vitalize|Win32
+		{98A9382F-6DFC-4064-9F4C-2708BB38EC3C}.Vitalize|Win32.ActiveCfg = Runtime|Win32
 		{69B76D6E-1FBA-4D84-9CBC-40D7AB473315}.Debug Unicode|Win32.ActiveCfg = Debug|Win32
 		{69B76D6E-1FBA-4D84-9CBC-40D7AB473315}.Debug|Win32.ActiveCfg = Debug|Win32
 		{69B76D6E-1FBA-4D84-9CBC-40D7AB473315}.Debug|Win32.Build.0 = Debug|Win32
