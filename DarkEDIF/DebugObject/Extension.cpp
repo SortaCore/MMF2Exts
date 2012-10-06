@@ -7,8 +7,8 @@ class Extension * GlobalExt = NULL;
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
 
-Extension::Extension(LPRDATA _rdPtr, LPEDATA edPtr, fpcob cobPtr)
-    : rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.hoAdRunHeader), Runtime(_rdPtr)
+Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
+    : rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
 {
 	if (!GlobalExt)
 		GlobalExt = this;
@@ -85,7 +85,7 @@ short Extension::Handle()
     */
 
 	// Will not be called next loop	
-	return REFLAG_ONESHOT;
+	return REFLAG::ONE_SHOT;
 }
 
 
@@ -146,18 +146,18 @@ bool Extension::Load(HANDLE File)
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID, LPRDATA rdPtr, long param1, long param2)
+void Extension::Action(int ID, RUNDATA * rdPtr, long param1, long param2)
 {
 
 }
 
-long Extension::Condition(int ID, LPRDATA rdPtr, long param1, long param2)
+long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
 {
 
     return false;
 }
 
-long Extension::Expression(int ID, LPRDATA rdPtr, long param)
+long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
 {
 
     return 0;

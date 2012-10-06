@@ -52,8 +52,8 @@ extern HINSTANCE hInstLib;
 struct RUNDATA;
 struct EDITDATA;
 
-//typedef RUNDATA * LPRDATA;
-//typedef EDITDATA * LPEDATA;
+//typedef RUNDATA * RUNDATA *;
+//typedef EDITDATA * EDITDATA *;
 struct ACEInfo;
 namespace Edif
 {

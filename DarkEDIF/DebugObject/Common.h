@@ -3,15 +3,30 @@
 // #define TGFEXT       // TGF2, MMF2, MMF2 Dev
    #define MMFEXT       // MMF2, MMF2 Dev
 // #define PROEXT       // MMF2 Dev only
+
+#ifdef RUN_ONLY
+	#define CurLang 2
+#else
+	int CurrentLanguage();
+	#define CurLang CurrentLanguage()
+#endif
+
+#define DLLExport   __stdcall
+#pragma comment(lib, "..\\Lib\\mmfs2.lib")
+
 #include    "Edif.h"
 #include	"Resource.h"
+#include	"DarkEdif.h"
 #include	<time.h>
 #include	<sstream>
 #include	<iostream>
 #include	<iomanip>
+
+// If your extension will be using multithreading, remove the #if and #endif lines here.
+#define MULTI_THREADING
+#include "MultiThreading.h"
+
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
-
 struct EDITDATA
 {
 	// Header - required
@@ -32,7 +47,7 @@ class Extension;
 struct RUNDATA
 {
 	// Main header - required
-	headerObject rHo;
+	HeaderObject rHo;
 
 	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
 //	rCom			rc;				// Common structure for movements & animations

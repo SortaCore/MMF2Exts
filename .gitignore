@@ -58,6 +58,8 @@ local.properties
 [Vv]italize*/
 MFX/
 MOX/
+
+
 *_i.c
 *_p.c
 *.ilk
@@ -86,6 +88,9 @@ ipch/
 *.ncb
 *.opensdf
 *.sdf
+
+# Visual Studio projects that aren't to be synced
+*_excl_*
 
 # Visual Studio profiler
 *.psess

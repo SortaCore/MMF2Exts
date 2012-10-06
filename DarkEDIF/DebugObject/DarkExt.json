@@ -1,0 +1,177 @@
+{
+	"Identifier": "DBGO",
+	"UK English":
+	{
+		"About":
+		{
+			"Name": "DebugObject",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright © 2012 Darkwire Software",
+			"Comment": "An easy debugging extension.",
+			"URL": "http://dark-wire.com/",
+			"Help": "Help/DebugObject.chm",
+		},
+
+		"ActionMenu":
+		[
+			[0, "Output"],
+			
+			"Separator",
+			
+			[1, "Set output file"],
+			[2, "Set output time format"],
+			[3, "Set output enabled/disabled"],
+			[11, "Set console enabled/disabled"],
+			
+			"Separator",
+			
+			[4, "Set crash handling"],
+			["Cause crash",
+				[5, "Division by zero (int)"],
+				[6, "Division by zero (float)"],
+				"Separator",
+				[7, "Access violation (read)"],
+				[8, "Access violation (write)"],
+				[9, "Access violation (read array)"],
+				[10, "Access violation (write array)"]
+			]
+		],
+
+		"ConditionMenu":
+		[
+			[0, "On any console command"],
+			[1, "On specific console command"],
+			[2, "Darkwire Software", 1]
+		],
+
+		"ExpressionMenu":
+		[
+			[0, "Get parameters of command"],
+			[1, "Get full command"]
+		],
+
+		"Actions":
+		[
+			{ "Title": "Log (intensity %0 from line %1)",
+			  
+			  "Parameters":
+			  [
+				["Integer", "Intensity of log (error, warning, notice):"],
+				["Integer", "Line of error (event number, occurance number, etc):"],
+				["Text", "Text to output:"]
+			  ]
+			},
+			
+			{ "Title": "Set log file to %0",
+			  
+			  "Parameters":
+			  [
+				["Text", "File to output to:"],
+				["Integer", "Enable application description (output path & details):"]
+			  ]
+			},
+			
+			{ "Title": "Set output time format to %0",
+			  
+			  "Parameters":
+			  [
+				["Text", "Time format to output to (Default %X - Google strftime() function):"]
+			  ]
+			},
+			
+			{ "Title": "Set debug enabled to %0",
+			  
+			  "Parameters":
+			  [
+				["Integer", "Use non-zero for enable, zero for disabling:"]
+			  ]
+			},
+			
+			{ "Title": "Set crash handling: mode %0 (continues %1)",
+			
+			  "Parameters":
+			  [
+				["Integer", "How to handle this? (see object help or forums, or ask Phi):"],
+				["Integer", "If you specified continuing, how many times before giving up? (1-100, <0 for infinite):"]
+			  ]
+			},
+
+			{ "Title": "Cause crash: division by zero (int)"
+			},
+
+			{ "Title": "Cause crash: division by zero (float)"
+			},
+
+			{ "Title": "Cause crash: access violation (read)"
+			},
+
+			{ "Title": "Cause crash: access violation (write)"
+			},
+
+			{ "Title": "Cause crash: access violation (read array)"
+			},
+
+			{ "Title": "Cause crash: access violation (write array)"
+			},
+			
+			{ "Title": "Set console enabled to %0",
+			  
+			  "Parameters":
+			  [
+				["Integer", "Use non-zero for enable, zero for disabling:"]
+			  ]
+			}
+		],
+
+		"Conditions":
+		[
+			{ "Title": "%o: On console command %0",
+			  
+			  "Parameters":
+			  [
+				["Text", "Enter what will be before the first space:"]
+			  ]
+			},
+			
+			{ "Title": "%o: On any console command"
+			}
+		],
+
+		"Expressions":
+		[
+			{
+				"Title": "FullCommand$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "CommandParams$(",
+				"Returns": "Text"
+			}
+		],
+
+		"Properties":
+		[
+			{
+				"Title": "Enable at start",
+				"Info": "Default to debug enabled at start",
+				"Type": "Checkbox"
+			},
+			{
+				"Title": "Show message if path invalid",
+				"Info": "If encountered a crash with an invalid log path, show message box instead?",
+				"Type": "Checkbox"
+			},
+			{
+				"Title": "Initial path",
+				"Info": "Output here if debug is enabled.",
+				"Type": "Editbox String"
+			},
+			{
+				"Title": "Enable console",
+				"Info": "If debug output is enabled, show all outputs in console, at start?",
+				"Type": "Checkbox"
+			}
+		]
+	}
+
+}

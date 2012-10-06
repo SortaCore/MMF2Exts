@@ -53,8 +53,9 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 			std::stringstream s;
 			s << "Failed to open log file: \r\n"
 			  << File << "\r\n"
-			  << "Returned error: [" << errno << "].\r\n"
-			  << "Look for \"errno errors\" on Google for the number provided."; 
+			  << "Returned error: [" << errno << "] :\r\n"
+			  << "[" << strerror(errno) << "]\r\n"
+			  << "Look for \"errno errors\" on Google for more information."; 
 			if (MessageBoxA(NULL, s.str().c_str(), "DebugObject - Error", MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
 			{
 				CloseLock();
@@ -85,10 +86,10 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 		fprintf_s(Data->FileHandle,"\"%s\" executing from \"%s\"\r\n"
 				  "Original MFA path: [%s]\r\n"
 				  "File first opened from frame #%i [%s]\r\n",
-					rdPtr->rHo.hoAdRunHeader->rhApp->m_name,
-					rdPtr->rHo.hoAdRunHeader->rhApp->m_appFileName,
-					rdPtr->rHo.hoAdRunHeader->rhApp->m_editorFileName,
-					rdPtr->rHo.hoAdRunHeader->rhApp->m_nCurrentFrame, rdPtr->rHo.hoAdRunHeader->rhFrame->m_name);
+					rdPtr->rHo.AdRunHeader->App->name,
+					rdPtr->rHo.AdRunHeader->App->appFileName,
+					rdPtr->rHo.AdRunHeader->App->editorFileName,
+					rdPtr->rHo.AdRunHeader->App->nCurrentFrame, rdPtr->rHo.AdRunHeader->Frame->name);
 
 		// Close lock
 		CloseLock();

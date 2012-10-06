@@ -16,7 +16,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}</ProjectGuid>
-    <RootNamespace>EDIF - DebugObject</RootNamespace>
+    <RootNamespace>DarkEDIF - DebugObject</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="Configuration">
@@ -55,7 +55,7 @@
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">.\Run_Only_Small\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">.\Run_Only_Small\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">false</LinkIncremental>
@@ -249,6 +249,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Lib\DarkEdif.cpp" />
     <ClCompile Include="Actions.cpp" />
     <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp">
@@ -294,37 +295,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def" />
-    <None Include="Ext.json" />
+    <None Include="DarkExt.json" />
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Blank DarkEDIF\MultiThreading.h" />
+    <ClInclude Include="..\Inc\DarkEdif.h" />
+    <ClInclude Include="..\Inc\MMFMasterHeader.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Extension.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="..\Inc\Ccx.h" />
-    <ClInclude Include="..\Inc\Ccxhdr.h" />
-    <ClInclude Include="..\Inc\CfcError.h" />
-    <ClInclude Include="..\Inc\CfcFile.h" />
-    <ClInclude Include="..\Inc\Cncf.h" />
-    <ClInclude Include="..\Inc\cncr.h" />
-    <ClInclude Include="..\Inc\Cncy.h" />
-    <ClInclude Include="..\Inc\Cnpdll.h" />
-    <ClInclude Include="..\Inc\colors.h" />
-    <ClInclude Include="..\Inc\EVTCCX.H" />
-    <ClInclude Include="..\Inc\Fill.h" />
-    <ClInclude Include="..\Inc\FilterMgr.h" />
-    <ClInclude Include="..\Inc\ImageFlt.h" />
-    <ClInclude Include="..\Inc\ImgFlt.h" />
     <ClInclude Include="..\Inc\ObjectSelection.h" />
-    <ClInclude Include="..\Inc\Palet.h" />
-    <ClInclude Include="..\Inc\Patch.h" />
-    <ClInclude Include="..\Inc\PictEdDefs.h" />
-    <ClInclude Include="..\Inc\Props.h" />
-    <ClInclude Include="..\Inc\PTYPE.H" />
-    <ClInclude Include="..\Inc\SoundFilter.h" />
-    <ClInclude Include="..\Inc\SoundFilterMgr.h" />
-    <ClInclude Include="..\Inc\Surface.h" />
-    <ClInclude Include="..\Inc\WinMacro.h" />
     <ClInclude Include="..\Inc\Edif.h" />
     <ClInclude Include="..\Inc\json.h" />
   </ItemGroup>

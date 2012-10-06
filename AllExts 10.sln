@@ -33,8 +33,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rSDK - ZlibStream", "rSDK\Z
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - Blank", "EDIF\Blank EDIF\EDIF - Blank.vcxproj", "{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - DebugObject", "EDIF\DebugObject\EDIF - DebugObject.vcxproj", "{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - MyCharSet", "EDIF\MyCharSet\EDIF - MyCharSet.vcxproj", "{2537CB09-43D2-4AC4-AAF0-7A32C20D2FBE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EDIF - PortAudio", "EDIF\PortAudio\EDIF - PortAudio.vcxproj", "{A61FCD2A-AD2F-4455-B434-17D47CD76BE7}"
@@ -64,6 +62,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rSDK - WaveOut", "rSDK\WaveOut\rSDK - WaveOut.vcxproj", "{AAF834BB-E8B2-49B8-8086-0FCD7E7DE7A6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DarkEDIF - DarkSocket", "DarkEDIF\DarkSocket\DarkEDIF - DarkSocket.vcxproj", "{DB0A8EBF-29BB-4A09-A5D6-A4C0FDCD28DC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DarkEDIF - DebugObject", "DarkEDIF\DebugObject\DarkEDIF - DebugObject.vcxproj", "{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -293,18 +293,6 @@ Global
 		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime|Win32.ActiveCfg = Runtime|Win32
 		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime|Win32.Build.0 = Runtime|Win32
 		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Vitalize|Win32.ActiveCfg = Runtime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug Unicode|Win32.ActiveCfg = Debug|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug|Win32.Build.0 = Debug|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime French|Win32.ActiveCfg = Edittime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime Unicode|Win32.ActiveCfg = Edittime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime|Win32.ActiveCfg = Edittime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime|Win32.Build.0 = Edittime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime French|Win32.ActiveCfg = Runtime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime Unicode|Win32.ActiveCfg = Runtime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime|Win32.ActiveCfg = Runtime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime|Win32.Build.0 = Runtime|Win32
-		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Vitalize|Win32.ActiveCfg = Runtime|Win32
 		{2537CB09-43D2-4AC4-AAF0-7A32C20D2FBE}.Debug Unicode|Win32.ActiveCfg = Debug|Win32
 		{2537CB09-43D2-4AC4-AAF0-7A32C20D2FBE}.Debug|Win32.ActiveCfg = Debug|Win32
 		{2537CB09-43D2-4AC4-AAF0-7A32C20D2FBE}.Debug|Win32.Build.0 = Debug|Win32
@@ -505,6 +493,24 @@ Global
 		{DB0A8EBF-29BB-4A09-A5D6-A4C0FDCD28DC}.Runtime|Win32.ActiveCfg = Runtime|Win32
 		{DB0A8EBF-29BB-4A09-A5D6-A4C0FDCD28DC}.Runtime|Win32.Build.0 = Runtime|Win32
 		{DB0A8EBF-29BB-4A09-A5D6-A4C0FDCD28DC}.Vitalize|Win32.ActiveCfg = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug Unicode|Win32.ActiveCfg = Debug|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug Unicode|Win32.Build.0 = Debug|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Debug|Win32.Build.0 = Debug|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime French|Win32.ActiveCfg = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime French|Win32.Build.0 = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime Unicode|Win32.ActiveCfg = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime Unicode|Win32.Build.0 = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime|Win32.ActiveCfg = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Edittime|Win32.Build.0 = Edittime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime French|Win32.ActiveCfg = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime French|Win32.Build.0 = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime Unicode|Win32.ActiveCfg = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime Unicode|Win32.Build.0 = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime|Win32.ActiveCfg = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Runtime|Win32.Build.0 = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Vitalize|Win32.ActiveCfg = Runtime|Win32
+		{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}.Vitalize|Win32.Build.0 = Runtime|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

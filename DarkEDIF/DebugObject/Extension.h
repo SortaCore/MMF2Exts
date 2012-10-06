@@ -4,8 +4,8 @@ class Extension
 {
 public:
 
-    LPRDATA rdPtr;
-    LPRH    rhPtr;
+    RUNDATA *	rdPtr;
+    RunHeader *	rhPtr;
 
     Edif::Runtime Runtime;
 
@@ -20,7 +20,7 @@ public:
     
     static const int WindowProcPriority = 100;
 
-    Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
+    Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
     ~Extension();
 
 
@@ -70,9 +70,9 @@ public:
 
     /* These are called if there's no function linked to an ID */
 
-    void Action(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Condition(int ID, LPRDATA rdPtr, long param1, long param2);
-    long Expression(int ID, LPRDATA rdPtr, long param);
+    void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
+    long Expression(int ID, RUNDATA * rdPtr, long param);
 
 
 

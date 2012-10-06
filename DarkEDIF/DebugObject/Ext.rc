@@ -7,7 +7,6 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "..\Inc\ccx.h"
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "windows.h"
 #undef APSTUDIO_HIDDEN_SYMBOLS
@@ -94,7 +93,6 @@ END
 
 2 TEXTINCLUDE DISCARDABLE 
 BEGIN
-    "#include ""..\\Inc\\ccx.h""\r\n"
     "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
     "#include ""windows.h""\r\n"
     "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
@@ -117,7 +115,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    KPX_MARK                "MF2"
+    1                "MF2"
 END
 
 #endif    // English (U.S.) resources
@@ -139,7 +137,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 IDR_EDIF_ICON           EDIF    DISCARDABLE     "Icon.png"
-IDR_EDIF_JSON           EDIF    DISCARDABLE     "Ext.json"
+IDR_EDIF_JSON           EDIF    DISCARDABLE     "DarkExt.json"
 #endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
 

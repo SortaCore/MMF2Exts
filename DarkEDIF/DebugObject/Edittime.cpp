@@ -34,27 +34,6 @@ enum {
 //	NULL
 //};
 
-// Property definitions
-//
-// Type, ID, Text, Text of Info box [, Options, Init Param]
-//
-PropData Properties[] = {
-
-// Example
-// -------
-	// Enum, title, description
-//	PropData_Group		(PROPID_TEXTTITLE,	IDS_PROP_TEXTTITLE,		IDS_PROP_TEXTTITLE),
-	PropData_CheckBox	(PROPID_ENABLE_AT_START,		"Enable at start",				"Default to debug enabled at start"),
-	PropData_CheckBox	(PROPID_MSGBOX_IF_PATH_INVALID,	"Show message if path invalid",	"If encountered a crash with an invalid log path, show message box instead?"),
-	PropData_EditString	(PROPID_INITIALPATH,			"Initial path",					"Output here if debug is enabled."),
-	PropData_CheckBox	(PROPID_CONSOLE_ENABLED,		"Enable console",				"If debug output is enabled, show all outputs in console, at start?"),
-//	PropData_ComboBox	(PROPID_COMBO,		IDS_PROP_COMBO,			IDS_PROP_COMBO,	ComboList),
-//	PropData_Color		(PROPID_COLOR,		IDS_PROP_COLOR,			IDS_PROP_COLOR_INFO),
-
-
-	// End of table (required)
-	PropData_End()
-};
 
 
 #endif // !defined(RUN_ONLY)
@@ -74,7 +53,7 @@ PropData Properties[] = {
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
 
-int WINAPI DLLExport MakeIconEx ( mv _far *mV, cSurface* pIconSf, LPTSTR lpName, fpObjInfo oiPtr, LPEDATA edPtr )
+int WINAPI DLLExport MakeIconEx(mv * mV, cSurface* pIconSf, LPTSTR lpName, ObjectInfo * oiPtr, EDITDATA * edPtr )
 {
 #ifndef RUN_ONLY
 
@@ -95,7 +74,7 @@ int WINAPI DLLExport MakeIconEx ( mv _far *mV, cSurface* pIconSf, LPTSTR lpName,
 // Called when you choose "Create new object". It should display the setup box 
 // and initialize everything in the datazone.
 
-int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
+int WINAPI DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #ifndef RUN_ONLY
 
@@ -123,7 +102,7 @@ int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
 // --------------------
 // Called when the user selects the Edit command in the object's popup menu
 //
-BOOL WINAPI EditObject (mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr, LPEDATA edPtr)
+BOOL WINAPI EditObject (mv * mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #ifndef RUN_ONLY
 	// Check compatibility
@@ -142,7 +121,7 @@ BOOL WINAPI EditObject (mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr, LPEDATA ed
 //
 // Note: remove the comments if your object can be resized (and remove the comments in the .def file)
 /*
-BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
+BOOL WINAPI SetEditSize(LPMV mv, EDITDATA * edPtr, int cx, int cy)
 {
 #ifndef RUN_ONLY
 	edPtr->swidth = cx;
@@ -157,7 +136,7 @@ BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
 // --------------------
 // Called when each individual object is dropped in the frame.
 //
-void WINAPI	DLLExport PutObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, ushort cpt)
+void WINAPI	DLLExport PutObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr, unsigned short cpt)
 {
 #ifndef RUN_ONLY
 #endif // !defined(RUN_ONLY)
@@ -168,7 +147,7 @@ void WINAPI	DLLExport PutObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, usho
 // --------------------
 // Called when each individual object is removed from the frame.
 //
-void WINAPI	DLLExport RemoveObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, ushort cpt)
+void WINAPI	DLLExport RemoveObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr, unsigned short cpt)
 {
 #ifndef RUN_ONLY
 	// Is the last object removed?
@@ -186,7 +165,7 @@ void WINAPI	DLLExport RemoveObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, u
 // --------------------
 // Called when an object is created from another one (note: should be called CloneObject instead...)
 //
-void WINAPI DLLExport DuplicateObject(mv __far *mV, fpObjInfo oiPtr, LPEDATA edPtr)
+void WINAPI DLLExport DuplicateObject(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 {
 #ifndef RUN_ONLY
 #endif // !defined(RUN_ONLY)
@@ -197,7 +176,7 @@ void WINAPI DLLExport DuplicateObject(mv __far *mV, fpObjInfo oiPtr, LPEDATA edP
 // --------------------
 // Returns the size of the rectangle of the object in the frame editor.
 //
-void WINAPI DLLExport GetObjectRect(mv _far *mV, RECT FAR *rc, fpLevObj loPtr, LPEDATA edPtr)
+void WINAPI DLLExport GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #ifndef RUN_ONLY
 	rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
@@ -213,11 +192,12 @@ void WINAPI DLLExport GetObjectRect(mv _far *mV, RECT FAR *rc, fpLevObj loPtr, L
 // Displays the object under the frame editor
 //
 
-void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr, LPEDATA edPtr, RECT FAR *rc)
+cSurface * DLLExport WinGetSurface (int idWin, int surfID = 0);
+void WINAPI DLLExport EditorDisplay(mv * mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT FAR *rc)
 {
 #ifndef RUN_ONLY
 
-	LPSURFACE Surface = WinGetSurface((int) mV->mvIdEditWin);
+	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
 
 	if (!Surface)
         return;
@@ -234,7 +214,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 // This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
 // 
 
-extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far * mV, fpLevObj loPtr, LPEDATA edPtr, int dx, int dy)
+extern "C" BOOL WINAPI DLLExport IsTransparent(mv * mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
 {
 #ifndef RUN_ONLY
 	// Write your code here
@@ -247,7 +227,7 @@ extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far * mV, fpLevObj loPtr, LPE
 // --------------------
 // Just before writing the datazone when saving the application, MMF2 calls this routine.
 // 
-void WINAPI	DLLExport PrepareToWriteObject(mv _far * mV, LPEDATA edPtr, fpObjInfo adoi)
+void WINAPI	DLLExport PrepareToWriteObject(mv * mV, EDITDATA * edPtr, ObjectInfo * adoi)
 {
 #ifndef RUN_ONLY
 
@@ -259,7 +239,7 @@ void WINAPI	DLLExport PrepareToWriteObject(mv _far * mV, LPEDATA edPtr, fpObjInf
 // GetFilters
 // --------------------
 
-BOOL WINAPI GetFilters(LPMV mV, LPEDATA edPtr, DWORD dwFlags, LPVOID pReserved)
+BOOL WINAPI GetFilters(mv * mV, EDITDATA * edPtr, DWORD dwFlags, LPVOID pReserved)
 {
 #ifndef RUN_ONLY
 	// If your extension uses image filters
@@ -279,7 +259,7 @@ BOOL WINAPI GetFilters(LPMV mV, LPEDATA edPtr, DWORD dwFlags, LPVOID pReserved)
 // Triggers when a file is dropped onto the frame
 // Return TRUE if you can create an object from the given file
 //
-BOOL WINAPI	DLLExport UsesFile (LPMV mV, LPTSTR fileName)
+BOOL WINAPI	DLLExport UsesFile (mv * mV, LPTSTR fileName)
 {
 	BOOL r = FALSE;
 #ifndef RUN_ONLY
@@ -313,7 +293,7 @@ BOOL WINAPI	DLLExport UsesFile (LPMV mV, LPTSTR fileName)
 // --------------------
 // Creates a new object from file
 //
-void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
+void WINAPI DLLExport CreateFromFile (mv * mV, LPTSTR fileName, EDITDATA * edPtr)
 {
 	#ifndef RUN_ONLY
 		if (!edPtr || !fileName)
@@ -394,10 +374,10 @@ void WINAPI DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 // --------------------
 // Inserts properties into the properties of the object.
 //
-BOOL WINAPI DLLExport GetProperties(LPMV mV, LPEDATA edPtr, BOOL bMasterItem)
+BOOL WINAPI DLLExport GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 	#ifndef RUN_ONLY
-		mvInsertProps(mV, edPtr, Properties, PROPID_TAB_GENERAL, TRUE);
+		mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
 	#endif // !defined(RUN_ONLY)
 
 	// OK
@@ -409,7 +389,7 @@ BOOL WINAPI DLLExport GetProperties(LPMV mV, LPEDATA edPtr, BOOL bMasterItem)
 // --------------------
 // Called when the properties are removed from the property window.
 //
-void WINAPI DLLExport ReleaseProperties(LPMV mV, LPEDATA edPtr, BOOL bMasterItem)
+void WINAPI DLLExport ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 #ifndef RUN_ONLY
 	// Write your code here
@@ -422,7 +402,7 @@ void WINAPI DLLExport ReleaseProperties(LPMV mV, LPEDATA edPtr, BOOL bMasterItem
 // Called when a property is initialized and its creation parameter is NULL (in the PropData).
 // Allows you, for example, to change the content of a combobox property according to specific settings in the EDITDATA structure.
 //
-LPARAM WINAPI DLLExport GetPropCreateParam(LPMV mV, LPEDATA edPtr, UINT nPropID)
+LPARAM WINAPI DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
 	// Example
@@ -447,7 +427,7 @@ LPARAM WINAPI DLLExport GetPropCreateParam(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // Called after a property has been initialized.
 // Allows you, for example, to free memory allocated in GetPropCreateParam.
 //
-void WINAPI DLLExport ReleasePropCreateParam(LPMV mV, LPEDATA edPtr, UINT nPropID, LPARAM lParam)
+void WINAPI DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, UINT nPropID, LPARAM lParam)
 {
 #ifndef RUN_ONLY
 #endif // !defined(RUN_ONLY)
@@ -459,7 +439,7 @@ void WINAPI DLLExport ReleasePropCreateParam(LPMV mV, LPEDATA edPtr, UINT nPropI
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
 //
-LPVOID WINAPI DLLExport GetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID)
+LPVOID WINAPI DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
 	// Example
@@ -472,7 +452,7 @@ LPVOID WINAPI DLLExport GetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID)
 //
 //	// Returns a string
 	case PROPID_INITIALPATH:
-		return new CPropDataValue(&edPtr->InitialPath[0]);
+		return new Prop_AStr(&edPtr->InitialPath[0]);
 //
 //	// Returns the value of the combo box
 //	case PROPID_COMBO:
@@ -488,7 +468,7 @@ LPVOID WINAPI DLLExport GetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // --------------------
 // Returns the checked state of properties that have a check box.
 //
-BOOL WINAPI DLLExport GetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID)
+BOOL WINAPI DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
 	// Example
@@ -515,11 +495,11 @@ BOOL WINAPI DLLExport GetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // --------------------
 // This routine is called by MMF after a property has been modified.
 //
-void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID lParam)
+void WINAPI DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, UINT nPropID, LPVOID lParam)
 {
 #ifndef RUN_ONLY
 	// Gets the pointer to the CPropValue structure
-	CPropValue* pValue = (CPropValue*)lParam;
+	Prop * pValue = (Prop *)lParam;
 
 	// Example
 	// -------
@@ -538,7 +518,7 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 		case PROPID_INITIALPATH:
 		{
 			// Gets the string
-			LPSTR pStr = (LPSTR)((CPropDataValue*)pValue)->m_pData;
+			LPSTR pStr = (LPSTR)((Prop_AStr *)pValue)->String;
 
 			// You can simply poke the string if your EDITDATA structure has a fixed size
 			
@@ -572,7 +552,7 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 // --------------------
 // This routine is called by MMF when the user modifies a checkbox in the properties.
 //
-void WINAPI DLLExport SetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID, BOOL nCheck)
+void WINAPI DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, UINT nPropID, BOOL nCheck)
 {
 #ifndef RUN_ONLY
 	// Example
@@ -601,7 +581,7 @@ void WINAPI DLLExport SetPropCheck(LPMV mV, LPEDATA edPtr, UINT nPropID, BOOL nC
 // --------------------
 // This routine is called when the user clicks the button of a Button or EditButton property.
 //
-BOOL WINAPI DLLExport EditProp(LPMV mV, LPEDATA edPtr, UINT nPropID)
+BOOL WINAPI DLLExport EditProp(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
 
@@ -624,7 +604,7 @@ BOOL WINAPI DLLExport EditProp(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // --------------------
 // This routine returns the enabled state of a property.
 //
-BOOL WINAPI IsPropEnabled(LPMV mV, LPEDATA edPtr, UINT nPropID)
+BOOL WINAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
 	// Example
@@ -652,7 +632,7 @@ BOOL WINAPI IsPropEnabled(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // --------------------
 // Return the text capabilities of the object under the frame editor.
 //
-DWORD WINAPI DLLExport GetTextCaps(mv _far *mV, LPEDATA edPtr)
+DWORD WINAPI DLLExport GetTextCaps(mv * mV, EDITDATA * edPtr)
 {
 	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
 }
@@ -663,7 +643,7 @@ DWORD WINAPI DLLExport GetTextCaps(mv _far *mV, LPEDATA edPtr)
 // Return the font used the object.
 // Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
 //
-BOOL WINAPI DLLExport GetTextFont(mv _far *mV, LPEDATA edPtr, LPLOGFONT plf, LPTSTR pStyle, UINT cbSize)
+BOOL WINAPI DLLExport GetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPTSTR pStyle, UINT cbSize)
 {
 #if !defined(RUN_ONLY)
 	// Example: copy LOGFONT structure from EDITDATA
@@ -679,7 +659,7 @@ BOOL WINAPI DLLExport GetTextFont(mv _far *mV, LPEDATA edPtr, LPLOGFONT plf, LPT
 // Change the font used the object.
 // Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
 //
-BOOL WINAPI DLLExport SetTextFont(mv _far *mV, LPEDATA edPtr, LPLOGFONT plf, LPCSTR pStyle)
+BOOL WINAPI DLLExport SetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPCSTR pStyle)
 {
 #if !defined(RUN_ONLY)
 	// Example: copy LOGFONT structure to EDITDATA
@@ -694,7 +674,7 @@ BOOL WINAPI DLLExport SetTextFont(mv _far *mV, LPEDATA edPtr, LPLOGFONT plf, LPC
 // --------------------
 // Get the text color of the object.
 //
-COLORREF WINAPI DLLExport GetTextClr(mv _far *mV, LPEDATA edPtr)
+COLORREF WINAPI DLLExport GetTextClr(mv * mV, EDITDATA * edPtr)
 {
 	// Example
 	return 0;	// edPtr->fontColor;
@@ -705,7 +685,7 @@ COLORREF WINAPI DLLExport GetTextClr(mv _far *mV, LPEDATA edPtr)
 // --------------------
 // Set the text color of the object.
 //
-void WINAPI DLLExport SetTextClr(mv _far *mV, LPEDATA edPtr, COLORREF color)
+void WINAPI DLLExport SetTextClr(mv * mV, EDITDATA * edPtr, COLORREF color)
 {
 	// Example
 	//edPtr->fontColor = color;
@@ -716,7 +696,7 @@ void WINAPI DLLExport SetTextClr(mv _far *mV, LPEDATA edPtr, COLORREF color)
 // --------------------
 // Get the text alignment of the object.
 //
-DWORD WINAPI DLLExport GetTextAlignment(mv _far *mV, LPEDATA edPtr)
+DWORD WINAPI DLLExport GetTextAlignment(mv * mV, EDITDATA * edPtr)
 {
 	DWORD dw = 0;
 #if !defined(RUN_ONLY)
@@ -744,7 +724,7 @@ DWORD WINAPI DLLExport GetTextAlignment(mv _far *mV, LPEDATA edPtr)
 // --------------------
 // Set the text alignment of the object.
 //
-void WINAPI DLLExport SetTextAlignment(mv _far *mV, LPEDATA edPtr, DWORD dwAlignFlags)
+void WINAPI DLLExport SetTextAlignment(mv * mV, EDITDATA * edPtr, DWORD dwAlignFlags)
 {
 #if !defined(RUN_ONLY)
 	// Example
@@ -780,7 +760,7 @@ void WINAPI DLLExport SetTextAlignment(mv _far *mV, LPEDATA edPtr, DWORD dwAlign
 // --------------------
 // Initialize the parameter.
 //
-void WINAPI InitParameter(mv _far *mV, short code, paramExt* pExt)
+void WINAPI InitParameter(mv * mV, short code, ParamExtension * pExt)
 {
 #if !defined(RUN_ONLY)
 	// Example
@@ -840,7 +820,7 @@ BOOL CALLBACK DLLExport SetupProc(HWND hDlg, UINT msgType, WPARAM wParam, LPARAM
 // --------------------
 // Edit the parameter.
 //
-void WINAPI EditParameter(mv _far *mV, short code, paramExt* pExt)
+void WINAPI EditParameter(mv * mV, short code, ParamExtension * pExt)
 {
 #if !defined(RUN_ONLY)
 
@@ -856,7 +836,7 @@ void WINAPI EditParameter(mv _far *mV, short code, paramExt* pExt)
 // --------------------
 // Initialize the parameter.
 //
-void WINAPI GetParameterString(mv _far *mV, short code, paramExt* pExt, LPSTR pDest, short size)
+void WINAPI GetParameterString(mv * mV, short code, ParamExtension * pExt, LPSTR pDest, short size)
 {
 #if !defined(RUN_ONLY)
 
