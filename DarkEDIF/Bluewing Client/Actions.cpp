@@ -1,4 +1,7 @@
+
 #include "Common.h"
+char Buffer [200];
+std::string CriticalSection;
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
 									   "This is probably due to parameter changes.", "Lacewing Relay Client - DarkEDIF", MB_OK)
@@ -155,7 +158,7 @@ void Extension::SelectChannelWithName(char * ChannelName)
 		ThreadData.Channel = (Lacewing::RelayClient::Channel *)Selected->Tag;
 	else
 	{
-		std::string Error = "Could not select channel, not found:\r\n";
+		std::string Error = "Could not selected channel, not found:\r\n";
 		Error += ChannelName;
 		CreateError(Error.c_str());
 	}

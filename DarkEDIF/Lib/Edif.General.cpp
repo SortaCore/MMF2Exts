@@ -54,14 +54,14 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->Actions = &::SDK->ActionJumps[0];
 	infoPtr->Expressions = &::SDK->ExpressionJumps[0];
 
-	infoPtr->NumOfConditions = ::SDK->json[CurLang]["Conditions"].u.object.length;
-	infoPtr->NumOfActions = ::SDK->json[CurLang]["Actions"].u.object.length;
-	infoPtr->NumOfExpressions = ::SDK->json[CurLang]["Expressions"].u.object.length;
+	infoPtr->NumOfConditions = (*::SDK->json.u.object.values[CurLang].value)["Conditions"].u.object.length;
+	infoPtr->NumOfActions = (*::SDK->json.u.object.values[CurLang].value)["Actions"].u.object.length;
+	infoPtr->NumOfExpressions = (*::SDK->json.u.object.values[CurLang].value)["Expressions"].u.object.length;
 	
 	infoPtr->EDITDATASize = sizeof(EDITDATA);
 #if 0 //NOPROPS
 	{
-		const json_value JSON = ::SDK->json[CurLang]["Properties"];
+		const json_value JSON = (*::SDK->json.u.object.values[CurLang].value)["Properties"];
 		for(unsigned int i = 0; i < JSON.u.object.length; ++i)
 		{
 			switch (::SDK->EdittimeProperties[i].Type_ID)
@@ -78,7 +78,7 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	}
 #endif //NOPROPS
 	
-	//+(GetPropertyChbx(edPtr, ::SDK->json[CurLang]["Properties"].u.object.length+1)-&edPtr);
+	//+(GetPropertyChbx(edPtr, (*::SDK->json.u.object.values[CurLang].value)["Properties"].u.object.length+1)-&edPtr);
 
     infoPtr->WindowProcPriority = Extension::WindowProcPriority;
 

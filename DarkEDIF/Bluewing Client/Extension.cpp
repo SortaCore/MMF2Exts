@@ -337,26 +337,29 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		
 		// Failed to allocate memory
 		if (!NewEvent->CondTrig)
+		{
+			delete NewEvent;
 			return ThreadData;
+		}
 		NewEvent->CondTrig[0] = (unsigned short)Event;
 		
-		EnterCriticalSection(&Lock); // Needed before we access Extension
+		EnterCriticalSectionDerpy(&Lock); // Needed before we access Extension
 		
 		// Copy Extension's data to vector
 		if (memcpy_s(((char *)NewEvent)+5, sizeof(SaveExtInfo)-5, ((char *)&ThreadData)+5, sizeof(SaveExtInfo)-5))
 		{
 			// Failed to copy memory (error in "errno")
-			LeaveCriticalSection(&Lock);
+			LeaveCriticalSectionDerpy(&Lock);
 			return ThreadData;
 		}
 
 		Saved.push_back(NewEvent);
 
-		LeaveCriticalSection(&Lock); // We're done accessing Extension
+		LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
 	}
 	else // New event is part of the last saved data (good for optimisation)
 	{
-		EnterCriticalSection(&Lock);
+		EnterCriticalSectionDerpy(&Lock);
 
 		// Add current condition to saved expressions
 		SaveExtInfo &S = (Saved.size() == 0) ? ThreadData : *Saved.back();
@@ -365,7 +368,7 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		
 		if (!CurrentCond)
 		{
-			LeaveCriticalSection(&Lock);
+			LeaveCriticalSectionDerpy(&Lock);
 			return ThreadData;
 		}
 
@@ -373,7 +376,7 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		
 		S.CondTrig = CurrentCond;
 
-		LeaveCriticalSection(&Lock);
+		LeaveCriticalSectionDerpy(&Lock);
 	}
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
@@ -454,25 +457,40 @@ Extension::~Extension()
 
 short Extension::Handle()
 {
+	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
+	if (!Globals->_Thread)
+	{
+		ObjEventPump.Tick();
+		return 0;
+	}
+
 	#ifdef MULTI_THREADING
 
 		// AddEvent() was called and not yet handled
 		// (note all code that accesses Saved must have ownership of Lock)
+		bool RunNextLoop = false;
 		while (true)
 		{
-			EnterCriticalSection(&Lock);
+			if (!TryEnterCriticalSection(&Lock))
+			{
+				RunNextLoop = true;
+				break; // Lock already occupied; leave it and run next event loop
+			}
+			sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__);
+			::CriticalSection = ::Buffer + ::CriticalSection;
+
 			if (Saved.size() == 0)
 			{
-				LeaveCriticalSection(&Lock);
+				LeaveCriticalSectionDerpy(&Lock);
 				break;
 			}
 			// Copy from saved list of events to current extension
 			if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
 			{
-				LeaveCriticalSection(&Lock);
+				LeaveCriticalSectionDerpy(&Lock);
 				break; // Failed; leave until next Extension::Handle()
 			}
-			LeaveCriticalSection(&Lock);
+			LeaveCriticalSectionDerpy(&Lock);
 				
 			// Remove copies if this particular event number is used
 			if (ThreadData.CondTrig[0] == 0xFFFF)
@@ -534,9 +552,9 @@ short Extension::Handle()
 					Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
 			}
 
-			EnterCriticalSection(&Lock);
+			EnterCriticalSectionDerpy(&Lock);
 			Saved.erase(Saved.begin());
-			LeaveCriticalSection(&Lock);
+			LeaveCriticalSectionDerpy(&Lock);
 		}
 	#endif // MULTI_THREADING
 	
@@ -571,15 +589,8 @@ short Extension::Handle()
 
     */
 
-	// If thread is not working, use Tick functionality.
-	if (!Globals->_Thread)
-	{
-		ObjEventPump.Tick();
-		return 0;
-	}
-
-	// Will not be called next loop	
-	return REFLAG::ONE_SHOT;
+	// Will not be called next loop if RunNextLoop is false
+	return RunNextLoop ? 0 : REFLAG::ONE_SHOT;
 }
 
 

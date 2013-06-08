@@ -1,8 +1,10 @@
+
 #include "Edif.h"
 class Extension
 {
 public:
-	#ifdef MULTI_THREADING
+	// Hide stuff requiring other headers
+	#ifndef UNSIGHTLY_LACEWING_HEADER_HAX
 		SaveExtInfo ThreadData; // Must be first variable in Extension class
 		std::vector<SaveExtInfo *> Saved;
 		SaveExtInfo &AddEvent(int Event, bool UseLastData = false);

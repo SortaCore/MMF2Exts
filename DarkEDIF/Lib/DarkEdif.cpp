@@ -7,10 +7,16 @@ static int StoredCurrentLanguage = -1;
 
 static const int DefaultLanguageIndex()
 {
+	int i = 0;
 	if (::SDK)
-		for(unsigned int i = 0; i < SDK->json.u.object.length; ++i)
-			if (SDK->json[i]["About"]["Name"].type != json_none)
+	{
+		for (; i < SDK->json.u.object.length; ++i)
+		{
+			if ((*SDK->json.u.object.values[i].value).type == json_object 
+				&& (*SDK->json.u.object.values[i].value)["About"]["Name"].type == json_string)
 				return i;
+		}
+	}
 
 	return 2;
 }
@@ -37,11 +43,12 @@ int CurrentLanguage()
 			// DarkEDIF.ini non-existent
 			if (GetLastError() != ERROR_FILE_NOT_FOUND)
 				MessageBoxA(NULL, "Error opening DarkEDIF.ini.", "DarkEDIF SDK - Error", MB_OK);
+			
 			return DefaultLanguageIndex();
 		}
 	}
 
-	// Change to WinAPI?
+	// TODO: Change to WinAPI?
 	// Open DarkEDIF.ini settings file in read binary, and deny other apps writing permissions.
 	FILE * F = _fsopen(FileToLookup, "rb", _SH_DENYWR);
 	
@@ -141,7 +148,7 @@ char ReadExpressionReturnType(const char *);
 bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
-	const json_value & Action = SDK->json[CurLang]["Actions"][::SDK->ActionInfos.size()];
+	const json_value & Action = (*::SDK->json.u.object.values[CurLang].value)["Actions"][::SDK->ActionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Action.type != json_object)
@@ -195,7 +202,7 @@ bool CreateNewActionInfo(void)
 bool CreateNewConditionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Condition = ::SDK->json[CurLang]["Conditions"][::SDK->ConditionInfos.size()];
+	const json_value & Condition = (*::SDK->json.u.object.values[CurLang].value)["Conditions"][::SDK->ConditionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Condition.type != json_object)
@@ -251,7 +258,7 @@ bool CreateNewConditionInfo(void)
 bool CreateNewExpressionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Expression = ::SDK->json[CurLang]["Expressions"][::SDK->ExpressionInfos.size()];
+	const json_value & Expression = (*::SDK->json.u.object.values[CurLang].value)["Expressions"][::SDK->ExpressionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Expression.type != json_object)
@@ -313,9 +320,9 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	edPtr->DarkEDIF_Prop_Size = sizeof(EDITDATA);
 	
 	// Set default object settings from DefaultState.
-	for (unsigned int i = 0; i < ::SDK->json[CurLang]["Properties"].u.object.length; ++i)
+	for (unsigned int i = 0; i < (*::SDK->json.u.object.values[CurLang].value)["Properties"].u.object.length; ++i)
 	{
-		const json_value &JProp = ::SDK->json[CurLang]["Properties"][i]["DefaultState"];
+		const json_value &JProp = (*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["DefaultState"];
 		#define AddSingleProp(Type,Construct) AddSingleProp2(Type,Construct,0)
 		
 		#define AddSingleProp2(ThisType,Construct,AddSize) \
@@ -332,7 +339,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				{ \
 					edPtr->DarkEDIF_Prop_Size += sizeof(ThisType) + AddSize + 1; \
 					edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] = \
-						bool(::SDK->json[CurLang]["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]); \
+						bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]); \
 					Var->Delete(); \
 				} \
 			}
@@ -369,7 +376,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					{
 						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_AStr) + StrLen + 1;
 						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool(::SDK->json[CurLang]["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
+							bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
 						Var->Delete();
 						((Prop_AStr *)(edPtr->DarkEDIF_Props+PrevSize))->String = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_AStr));
 					}
@@ -403,7 +410,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					{
 						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1;
 						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool(::SDK->json[CurLang]["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
+							bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
 						Var->Delete();
 						((Prop_Buff *)(edPtr->DarkEDIF_Props+PrevSize))->Address = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_Buff));
 					}
@@ -422,9 +429,9 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 		}
 /*		// Checkbox-only property uses "DefaultState"
 		if (::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX)
-			edPtr->PropCheckboxes.push_back(bool(::SDK->json[CurLang]["Properties"][i]["DefaultState"]));
+			edPtr->PropCheckboxes.push_back(bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["DefaultState"]));
 		else // "DefaultState" reserved; use "ChkDefault"
-			edPtr->PropCheckboxes.push_back(bool(::SDK->json[CurLang]["Properties"][i]["ChkDefault"]));*/
+			edPtr->PropCheckboxes.push_back(bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["ChkDefault"]));*/
 	}
 }
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)

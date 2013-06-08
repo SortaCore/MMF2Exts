@@ -5,11 +5,11 @@ void DLLExport GetObjInfos (mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * 
 {
 	#ifndef RUN_ONLY
 
-		Edif::ConvertAndCopyString(ObjAuthor,       ::SDK->json[CurLang]["About"]["Author"],	MAX_PATH);
-		Edif::ConvertAndCopyString(ObjCopyright,    ::SDK->json[CurLang]["About"]["Copyright"],	MAX_PATH);
-		Edif::ConvertAndCopyString(ObjComment,      ::SDK->json[CurLang]["About"]["Comment"],	MAX_PATH);
-		Edif::ConvertAndCopyString(ObjHttp,         ::SDK->json[CurLang]["About"]["URL"],		MAX_PATH);
-		Edif::ConvertAndCopyString(ObjName,         ::SDK->json[CurLang]["About"]["Name"],		MAX_PATH);
+		Edif::ConvertAndCopyString(ObjAuthor,       (*::SDK->json.u.object.values[CurLang].value)["About"]["Author"],	MAX_PATH);
+		Edif::ConvertAndCopyString(ObjCopyright,    (*::SDK->json.u.object.values[CurLang].value)["About"]["Copyright"],	MAX_PATH);
+		Edif::ConvertAndCopyString(ObjComment,      (*::SDK->json.u.object.values[CurLang].value)["About"]["Comment"],	MAX_PATH);
+		Edif::ConvertAndCopyString(ObjHttp,         (*::SDK->json.u.object.values[CurLang].value)["About"]["URL"],		MAX_PATH);
+		Edif::ConvertAndCopyString(ObjName,         (*::SDK->json.u.object.values[CurLang].value)["About"]["Name"],		MAX_PATH);
 
 	#endif // !defined(RUN_ONLY)
 }
@@ -20,33 +20,33 @@ const TCHAR * WINAPI GetHelpFileName()
 		return NULL;
 	#else // !RUN_ONLY
 		static TCHAR TempString[MAX_PATH];
-		return Edif::ConvertAndCopyString(TempString, SDK->json[CurLang]["Help"], MAX_PATH);
+		return Edif::ConvertAndCopyString(TempString, (*::SDK->json.u.object.values[CurLang].value)["Help"], MAX_PATH);
 	#endif
 }
 
 void DLLExport GetConditionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, SDK->json[CurLang]["Conditions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, (*::SDK->json.u.object.values[CurLang].value)["Conditions"][code]["Parameters"][param][1], maxLen);
 }
 
 void DLLExport GetActionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, SDK->json[CurLang]["Actions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, (*::SDK->json.u.object.values[CurLang].value)["Actions"][code]["Parameters"][param][1], maxLen);
 }
 
 void DLLExport GetExpressionParam(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, SDK->json[CurLang]["Expressions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, (*::SDK->json.u.object.values[CurLang].value)["Expressions"][code]["Parameters"][param][1], maxLen);
 }
 
 void DLLExport GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
 	{
-		std::string Return = SDK->json[CurLang]["Expressions"][code]["Title"];
+		std::string Return = (*::SDK->json.u.object.values[CurLang].value)["Expressions"][code]["Title"];
 		if (Return.back() != '(')
 			Return.push_back('(');
 		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
@@ -56,19 +56,19 @@ void DLLExport GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxL
 void DLLExport GetConditionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, SDK->json[CurLang]["Conditions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, (*::SDK->json.u.object.values[CurLang].value)["Conditions"][code]["Title"], maxLen);
 }
 
 void DLLExport GetActionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, SDK->json[CurLang]["Actions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, (*::SDK->json.u.object.values[CurLang].value)["Actions"][code]["Title"], maxLen);
 }
 
 void DLLExport GetExpressionString(mv * mV, short code, TCHAR * strPtr, short maxLen)
 {
 	if (IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, SDK->json[CurLang]["Expressions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, (*::SDK->json.u.object.values[CurLang].value)["Expressions"][code]["Title"], maxLen);
 }
 
 void * DLLExport GetConditionInfos(mv *mV, short code)

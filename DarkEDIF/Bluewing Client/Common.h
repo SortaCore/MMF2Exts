@@ -13,6 +13,19 @@ int CurrentLanguage();
 #endif
 #define DLLExport   __stdcall
 
+
+#define EnterCriticalSectionDerpy(x) \
+	EnterCriticalSection(x); \
+	sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
+	::CriticalSection = ::Buffer + ::CriticalSection
+	
+
+#define LeaveCriticalSectionDerpy(x) \
+	sprintf_s(::Buffer, "Thread %u : Left on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
+	::CriticalSection = ::Buffer + ::CriticalSection; \
+	LeaveCriticalSection(x)
+
+
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 #pragma comment(lib, "..\\Lib\\zlib.lib")
 #include <sstream>
@@ -32,6 +45,8 @@ int CurrentLanguage();
 
 #include "DarkEDIF.h"
 
+extern char Buffer [200];
+extern std::string CriticalSection;
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
@@ -77,5 +92,6 @@ struct RUNDATA
 };
 DWORD WINAPI LacewingLoopThread(void * ThisExt);
 
-
+#define COMMON_H
 #include "Extension.h"
+#undef COMMON_H

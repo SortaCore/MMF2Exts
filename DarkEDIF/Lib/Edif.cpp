@@ -132,7 +132,13 @@ char ReadExpressionReturnType(const char * Text)
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return 3;
 	
-	MessageBoxA(NULL, "Error reading expression return; returns text unrecognised.", "DarkEDIF - Error", MB_OK);
+	// More specialised, but not allowed for
+	if (!_stricmp(Text, "Short"))
+		return 0;
+
+	char error [256];
+	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", Text);
+	MessageBoxA(NULL, error, "DarkEDIF - Error", MB_OK);
 	return 0;
 }
 
@@ -225,7 +231,7 @@ int Edif::Init(mv * mV)
     json_settings settings;
     memset (&settings, 0, sizeof (settings));
 
-    json_value * json = json_parse_ex (&settings, copy, json_error);
+    json_value * json = json_parse_ex (&settings, copy, json_error, JSON_Size);
 
     if (!json)
     {
@@ -273,10 +279,18 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	
 	if (!::SDK)
 		::SDK = this;
-    const json_value &Actions = json[CurLang]["Actions"];
-    const json_value &Conditions = json[CurLang]["Conditions"];
-    const json_value &Expressions = json[CurLang]["Expressions"];
-	const json_value &Properties = json[CurLang]["Properties"];
+
+	const json_value &JSONSpec = *::SDK->json.u.object.values[CurLang].value;
+	
+	if (&JSONSpec == &json_value_none)
+	{
+		MessageBoxA(NULL, "The JSON parser has encountered an internal malfunction.", "DarkEDIF - Internal JSON error.", MB_OK);
+		__asm int 3;
+	}
+    const json_value &Actions = JSONSpec["Actions"];
+    const json_value &Conditions = JSONSpec["Conditions"];
+    const json_value &Expressions = JSONSpec["Expressions"];
+	const json_value &Properties = JSONSpec["Properties"];
 
     ActionJumps = new void * [Actions.u.object.length + 1];
     ConditionJumps = new void * [Conditions.u.object.length + 1];
@@ -286,7 +300,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
     ConditionJumps [Conditions.u.object.length] = 0;
     ExpressionJumps [Expressions.u.object.length] = 0;
     
-    for(unsigned int i = 0; i < Actions.u.object.length; ++ i)
+    for (unsigned int i = 0; i < Actions.u.object.length; ++ i)
     {
 		ActionJumps [i] = (void *) Edif::Action;
 
@@ -296,7 +310,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewActionInfo();
     }
 
-    for(unsigned int i = 0; i < Conditions.u.object.length; ++ i)
+    for (unsigned int i = 0; i < Conditions.u.object.length; ++ i)
     {
 		ConditionJumps [i] = (void *) Edif::Condition;
 
@@ -306,7 +320,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewConditionInfo();
     }
 
-    for(unsigned int i = 0; i < Expressions.u.object.length; ++ i)
+    for (unsigned int i = 0; i < Expressions.u.object.length; ++ i)
     {
 		ExpressionJumps [i] = (void *) Edif::Expression;
 
@@ -629,9 +643,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
 
-    ActionMenu = LoadMenuJSON(Edif::ActionID(0), json[CurLang]["ActionMenu"]);
-    ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), json[CurLang]["ConditionMenu"]);
-    ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), json[CurLang]["ExpressionMenu"]);
+    ActionMenu = LoadMenuJSON(Edif::ActionID(0), JSONSpec["ActionMenu"]);
+    ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), JSONSpec["ConditionMenu"]);
+    ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), JSONSpec["ExpressionMenu"]);
 }
 
 Edif::SDK::~SDK()

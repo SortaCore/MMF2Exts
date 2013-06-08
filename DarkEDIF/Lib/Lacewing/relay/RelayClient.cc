@@ -204,8 +204,9 @@ struct ChannelInternal
     }
 };
 
+#define UNSIGHTLY_LACEWING_HEADER_HAX
 #include "Extension.h"
-
+#undef UNSIGHTLY_LACEWING_HEADER_HAX
 Lacewing::RelayClient::Channel * Extension::DuplicateChannel(Lacewing::RelayClient::Channel & Orig)
 {
 	// First, duplicate all data that can be copied automatically by the compiler

@@ -2008,8 +2008,8 @@ struct RunHeader {
 		 *				IdMainWin;
 	void *				IdAppli;			// Appli *, but evaluates to void *
 
-	HWND				HEditWin,
-						HMainWin,
+	HWND				HEditWin,			// Call GetClientRect(HEditWin, RECT *) to get the frame width/height (non-virtual) area
+						HMainWin,			// Call GetClientRect(HMainWin, RECT *) to get the real client area
 						HTopLevelWnd;
 
 	CRunApp *			App;				// Application info
@@ -3114,9 +3114,9 @@ struct MvtExtDesc {
 //
 struct FrameHeader
 {
-	// Playfield
-	LONG			Width,			// Playfield width in pixels
-					Height;			// Playfield height in pixels
+	// Frame width/height
+	LONG			Width,			// Frame width in pixels
+					Height;			// Frame height in pixels
 	COLORREF		Background;
 
 	// Options
@@ -4445,7 +4445,7 @@ struct CRunFrame {
 	RunFrameLayer *		LayerAccess;
 
 	// Virtual rectangle
-	RECT				VirtualRect;
+	RECT				VirtualRect;			// Contains the frame's virtual width/height in right/bottom, respectively
 
 	// Instances of frame objects
 	int					FrameObjects_MaxIndex,
@@ -4514,8 +4514,8 @@ struct CRunFrame {
 
 	// Other
 	cSurface *			SaveSurface;
-	int					EditWinWidth,
-						EditWinHeight;
+	int					EditWinWidth,	// Frame (not virtual) width
+						EditWinHeight;	// Frame (not virtual) height
 	unsigned long		ColMaskBits;
 	TCHAR *				demoFilePath;
 	unsigned short		RandomSeed,
@@ -4535,7 +4535,7 @@ struct CRunFrame {
 		cSurface *		SecondarySurface;
 
 		// List of sub-app surfaces to refresh at the end in D3D full screen mode
-		CPList *			SurfacedSubApps;
+		CPList *		SurfacedSubApps;
 	#endif
 
 };
@@ -4771,3 +4771,5 @@ struct CRunApp {
 };
 // typedef CRunApp*	fpRunApp;
 //#endif // mmf_master_header
+
+#define	KPX_MAGICNUMBER		200			// Magic number, used in Ext.rc
