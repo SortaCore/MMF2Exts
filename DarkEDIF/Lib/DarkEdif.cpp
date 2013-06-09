@@ -121,7 +121,7 @@ int CurrentLanguage()
 		{
 			// Return index
 			if ((*::SDK->json.u.object.values[i].value).type == json_object && 
-				!stricmp(::SDK->json.u.object.values[i].name, Language.c_str()))
+				!_stricmp(::SDK->json.u.object.values[i].name, Language.c_str()))
 			{
 				StoredCurrentLanguage = i;
 				return (int)i;

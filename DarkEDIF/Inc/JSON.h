@@ -30,6 +30,7 @@
 
 #ifndef _JSON_H
 #define _JSON_H
+#include <windows.h>
 
 #ifndef json_char
    #define json_char char
@@ -182,6 +183,7 @@ json_value * json_parse_ex
 
 void json_value_free (json_value *);
 
+void AttemptDebugBreak();
 
 #ifdef __cplusplus
    } /* extern "C" */

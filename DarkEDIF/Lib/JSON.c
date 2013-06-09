@@ -44,17 +44,6 @@ const struct _json_value json_value_none = { 0 };
 #include <ctype.h>
 
 typedef unsigned short json_uchar;
-char * listOfComments;
-
-static int sizeAlready;
-static void AddCommentToLog(int Type, unsigned int start, unsigned int stop, unsigned int flags)
-{
-	char latest[256] = {0};
-	sprintf(latest, "/%s comment; flags %u, position %u-%u.\n", Type == 1 ? "/" : "**/", flags, start, stop);
-	sizeAlready += strlen(latest) + 1;
-	listOfComments = (char *)realloc(listOfComments, sizeAlready);
-	strcat(listOfComments, latest);
-}
 
 static unsigned char hex_value (json_char c)
 {
@@ -87,16 +76,16 @@ static void * json_alloc (json_state * state, unsigned long size, int zero)
 	void * mem;
 
 	if ((state->ulong_max - state->used_memory) < size)
-	  return 0;
+		return 0;
 
 	if (state->settings.max_memory
-		 && (state->used_memory += size) > state->settings.max_memory)
+		&& (state->used_memory + size) > state->settings.max_memory)
 	{
-	  return 0;
+		return 0;
 	}
-
-	if (! (mem = zero ? calloc (size, 1) : malloc (size)))
-	  return 0;
+	
+	if (mem = zero ? calloc (size, 1) : malloc (size))
+		state->used_memory += size;
 
 	return mem;
 }
@@ -205,6 +194,7 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
    state.uint_max -= 8; /* limit of how much can be added before next check */
    state.ulong_max -= 8;
+
    if (!json_clean_comments (&json, &state, error, json_size))
 		goto e_failed;
 
@@ -537,8 +527,11 @@ json_value * json_parse_ex (json_settings * settings, const json_char * json, ch
 
 				  default:
 
-					 sprintf (error, "%d:%d: Unexpected `%c` in object", cur_line, e_off, b);
-					 goto e_failed;
+					if (!b)
+						sprintf (error, "%d:%d: Unexpected EOF in object", cur_line, e_off);
+					else
+						sprintf (error, "%d:%d: Unexpected `%c` in object", cur_line, e_off, b);
+					goto e_failed;
 			   };
 
 			   break;
@@ -663,6 +656,7 @@ e_overflow:
 
 e_failed:
 
+   AttemptDebugBreak(); // Attach debugger if available
    if (error_buf)
    {
 	  if (*error)
@@ -687,13 +681,12 @@ e_failed:
    return 0;
 }
 
-
 json_value * json_parse (const json_char * json)
 {
 	json_settings settings;
 	memset (&settings, 0, sizeof (json_settings));
 
-	return json_parse_ex (&settings, json, 0, strlen(json));
+	return json_parse_ex (&settings, json, 0, strlen(json) + 1);
 }
 
 void json_value_free (json_value * value)
@@ -737,19 +730,18 @@ void json_value_free (json_value * value)
 }
 
 // The goal of this function is a preprocessor that removes all comments then writes the new array to json_input.
-int json_clean_comments (const json_char ** json_input, json_state * state, json_char * const error, unsigned int size)
+int json_clean_comments (const char ** json_input, struct json_state * state, char * const error, unsigned int size)
 {
 	// Used as an indicator whether i is currently inside a string var.
 	int string = 0;
 	int comment = 0;
-	const json_char * json = *json_input, * i = json;
+	const char * json = *json_input, * i = json;
 	
-	json_char * newJSON = (json_char *)json_alloc(state, size, 1);
-	json_char * j = newJSON;
+	char * newJSON = (char *)json_alloc(state, size, 1);
+	char * j = newJSON;
 
 	const json_char * cur_line_begin = 0;
 	unsigned int cur_line = 0;
-	// FILE * File;
 
 	for (i = json; i - json < size; ++i)
 	{
@@ -757,8 +749,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 		if (*i == '\n')
 		{
 			++cur_line;
-			*j = *i;
-			++j;
+			*(j++) = *i;
 			if (comment == 0)
 				cur_line_begin = i + 1;
 			continue;
@@ -768,9 +759,9 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 		if (comment == 1)
 		{
 			// ...which just ended
-			if (*i == '*' && *(i+1) == '/')
+			if (*i == '*' && *(i + 1) == '/')
 			{
-				++i;
+				++i;		  // Skip past '*'
 				comment = 0;
 			}
 
@@ -778,11 +769,10 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 		}
 
 		// Not a comment: copy char to duplicate JSON allocation
-		*j = *i;
-		++j;
+		*(j++) = *i;
 
-		// Sets string marker
-		if (*i == '"' && *(i-1) != '\\')
+		// Sets string marker if " not escaped
+		if (*i == '"' && *(i - 1) != '\\')
 		{
 			string = 1 - string;
 			continue;
@@ -793,7 +783,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 			continue;
 
 		// <-- type of comment (newline ends it)
-		if (*(i+1) == '/')
+		if (*(i + 1) == '/')
 		{
 			// Did not find line break at any part in remainder of file.
 			int startPos = i - json;
@@ -804,19 +794,17 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 			}
 
 			++cur_line;
-			--j; // No idea why this is needed
-			*j = '\r';
-			++j;
-			*j = '\n';
-			++j;
+			*j		= '\r';	// Note j++ earlier
+			*(j++)	= '\n';
 				
 			continue;
 		}
+
 		/* <-- type of comment --> */
-		if (*(i+1) == '*')
+		if (*(i + 1) == '*')
 		{
 			comment = 1;
-			--j; // Ditto
+			--j; // Note j++ earlier
 			continue;
 		}
 	}
@@ -827,27 +815,23 @@ int json_clean_comments (const json_char ** json_input, json_state * state, json
 		sprintf(error, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, newJSON - cur_line_begin);
 		return 0;
 	}
+	size = j - newJSON;			// After skipping comments the size of the new buffer will be different
+	newJSON[size - 1] = '\0';	// Ensure new JSON ends with a null terminator (i.e. End Of File)
 
-	/*
-	File = fopen("C:\\Program Files\\MMF2 Developer\\latestdebugextout_input.txt", "wb");
-	if (File == NULL)
-	{
-		MessageBoxA(NULL, "Screw up opening 1st file.", "!", MB_OK);
-	}
-
-	fwrite(json, 1, size, File);
-	fclose(File);
-	File = fopen("C:\\Program Files\\MMF2 Developer\\latestdebugextout_output.txt", "wb");
-	if (File == NULL)
-	{
-		MessageBoxA(NULL, "Screw up opening 2nd file.", "!", MB_OK);
-	}
-
-	fwrite(newJSON, 1, size, File);
-	fclose(File);
-	*/
-	
-	free((void *)*json_input);
+	free((void *) *json_input);
 	*json_input = (const char *)newJSON;
 	return 1;
+}
+
+// Invokes debugger if attached, otherwise continues merrily
+void AttemptDebugBreak()
+{
+	__try 
+    {
+        DebugBreak();
+    }
+    __except(GetExceptionCode() == EXCEPTION_BREAKPOINT ? 
+             EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) 
+    {
+    }
 }

@@ -304,17 +304,16 @@
 				"MaxLength": 25
 			},
 			{
-				"Title": "Editable",
+				"Title": "Éditable",
 				"Info": "Celui-ci devrait être limité entre 20 et 25.",
 				"Type": "Editbox Number",
 				"Maximum": 25,
 				"Minimum": 20
 			}
-		
 		]
 	}
 	/*
-	"French":
+	"German":
 	{},
 	"Japanese":
 	{}*/

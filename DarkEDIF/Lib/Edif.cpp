@@ -196,25 +196,27 @@ int Edif::Init(mv * mV)
 		}
 		free(mmfname);
 	}
+	
+	// Get filename.mfx so we can use it in error messages
+	char errormsgtitle [MAX_PATH];
+	{
+		char temp [MAX_PATH];
+		GetModuleFileNameA(hInstLib, temp, sizeof(temp));
+		strcpy(errormsgtitle, strrchr(temp, '\\') + 1);
+		errormsgtitle[strlen(errormsgtitle) - 4] = '\0';
+	}
 
 	// Get JSON file
     char * JSON;
     size_t JSON_Size;
 
     int result = Edif::GetDependency (JSON, JSON_Size, _T("json"), IDR_EDIF_JSON);
-    
-    if (result == Edif::DependencyNotFound)
-    {
-		TCHAR temp [MAX_PATH];
-		GetModuleFileName (hInstLib, temp, sizeof(temp)/sizeof(TCHAR));
-		TCHAR * filetitle = _tcsrchr(temp, _T('\\'));
-		if ( filetitle != NULL )
-			_tcscpy(temp, filetitle);
-		else
-			temp[0] = 0;
-		_tcscat(temp, _T(" - Error"));
 
-		MessageBox(0, _T("JSON file not found on disk or in MFX resources"), temp, 0);
+    if (result == Edif::DependencyNotFound)
+	{
+		strcat(errormsgtitle, " - Error");
+		
+		MessageBoxA(0, "JSON file not found on disk or in MFX resources", errormsgtitle != NULL ? errormsgtitle : "Module name failed.", 0);
 		return -1;	// error, init failed
     }
 
@@ -227,20 +229,22 @@ int Edif::Init(mv * mV)
 		free(JSON);
 
     char json_error [256];
-    
-    json_settings settings;
+
+	json_settings settings;
     memset (&settings, 0, sizeof (settings));
 
-    json_value * json = json_parse_ex (&settings, copy, json_error, JSON_Size);
+	json_value * json = json_parse_ex (&settings, copy, json_error, JSON_Size);
 
     if (!json)
     {
-		MessageBoxA(0, json_error, "Error parsing JSON", 0);
+		strcat(errormsgtitle, " - Error parsing JSON");
+
+		MessageBoxA(0, json_error, errormsgtitle ? errormsgtitle : "Error parsing JSON", MB_OK);
 		return -1;
     }
 
     ::SDK = new Edif::SDK(mV, *json);
-
+	
     return 0;	// no error
 }
 
