@@ -117,16 +117,14 @@ int CurrentLanguage()
 		}
 
 		// Language matched, get index of language in JSON
-		if (::SDK->json[Language.c_str()].type != json_none)
+		for (unsigned int i = 0; i < ::SDK->json.u.object.length + 1; ++i)
 		{
-			for (unsigned int i = 0; i < ::SDK->json.u.object.length; ++i)
+			// Return index
+			if ((*::SDK->json.u.object.values[i].value).type == json_object && 
+				!stricmp(::SDK->json.u.object.values[i].name, Language.c_str()))
 			{
-				// Return index
-				if (&::SDK->json[Language.c_str()] == &::SDK->json[i])
-				{
-					StoredCurrentLanguage = i;
-					return (int)i;
-				}
+				StoredCurrentLanguage = i;
+				return (int)i;
 			}
 		}
 		Reading += Language.size()+1;
