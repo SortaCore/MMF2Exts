@@ -287,17 +287,17 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	if (!::SDK)
 		::SDK = this;
 
-	const json_value &JSONSpec = *::SDK->json.u.object.values[CurLang].value;
-	
-	if (&JSONSpec == &json_value_none)
+	if (CurLang.type != json_object)
 	{
-		MessageBoxA(NULL, "The JSON parser has encountered an internal malfunction.", "DarkEDIF - Internal JSON error.", MB_OK);
+		MessageBoxA(NULL, "The JSON parser could not find the current language object.", "DarkEDIF - Internal JSON error.", MB_OK);
 		__asm int 3;
+		return;
 	}
-    const json_value &Actions = JSONSpec["Actions"];
-    const json_value &Conditions = JSONSpec["Conditions"];
-    const json_value &Expressions = JSONSpec["Expressions"];
-	const json_value &Properties = JSONSpec["Properties"];
+
+    const json_value &Actions = CurLang["Actions"];
+    const json_value &Conditions = CurLang["Conditions"];
+    const json_value &Expressions = CurLang["Expressions"];
+	const json_value &Properties = CurLang["Properties"];
 
     ActionJumps = new void * [Actions.u.object.length + 1];
     ConditionJumps = new void * [Conditions.u.object.length + 1];
@@ -342,7 +342,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		std::vector <PropData> VariableProps;
 		PropData * CurrentProperty;
 
-		for (unsigned  int i = 0; i < Properties.u.object.length; ++ i)
+		for (unsigned  int i = 0; i < Properties.u.array.length; ++ i)
 		{
 			const json_value &Property = Properties[i];
 			CurrentProperty = nullptr;
@@ -650,9 +650,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
 
-    ActionMenu = LoadMenuJSON(Edif::ActionID(0), JSONSpec["ActionMenu"]);
-    ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), JSONSpec["ConditionMenu"]);
-    ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), JSONSpec["ExpressionMenu"]);
+    ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
+    ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
+    ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
 }
 
 Edif::SDK::~SDK()

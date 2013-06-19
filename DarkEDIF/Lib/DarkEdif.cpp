@@ -3,9 +3,9 @@ extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
 
 #ifndef RUN_ONLY
-static int StoredCurrentLanguage = -1;
+static const _json_value * StoredCurrentLanguage = &json_value_none;
 
-static const int DefaultLanguageIndex()
+static const _json_value * DefaultLanguageIndex()
 {
 	int i = 0;
 	if (::SDK)
@@ -14,17 +14,18 @@ static const int DefaultLanguageIndex()
 		{
 			if ((*SDK->json.u.object.values[i].value).type == json_object 
 				&& (*SDK->json.u.object.values[i].value)["About"]["Name"].type == json_string)
-				return i;
+				return SDK->json.u.object.values[i].value;
 		}
 	}
 
-	return 2;
+	// Fallback on last object
+	return SDK->json.u.object.values[SDK->json.u.object.length - 1].value;
 }
 
-int CurrentLanguage()
+const json_value & CurrentLanguage()
 {
-	if (StoredCurrentLanguage > -1)
-		return StoredCurrentLanguage;
+	if (StoredCurrentLanguage->type != json_none)
+		return *StoredCurrentLanguage;
 
 	char FileToLookup [MAX_PATH];
 	{
@@ -44,7 +45,7 @@ int CurrentLanguage()
 			if (GetLastError() != ERROR_FILE_NOT_FOUND)
 				MessageBoxA(NULL, "Error opening DarkEDIF.ini.", "DarkEDIF SDK - Error", MB_OK);
 			
-			return DefaultLanguageIndex();
+			return *DefaultLanguageIndex();
 		}
 	}
 
@@ -54,7 +55,7 @@ int CurrentLanguage()
 	
 	// Could not open; abort (should report error)
 	if (!F)
-		return DefaultLanguageIndex();
+		return *DefaultLanguageIndex();
 
 	fseek(F, 0, SEEK_END);
 	long S = ftell(F);
@@ -66,7 +67,7 @@ int CurrentLanguage()
 	if (!temp2)
 	{
 		fclose(F);
-		return DefaultLanguageIndex();
+		return *DefaultLanguageIndex();
 	}
 	
 	// Could not read all of the file properly
@@ -74,7 +75,7 @@ int CurrentLanguage()
 	{
 		fclose(F);
 		free(temp2);
-		return DefaultLanguageIndex();
+		return *DefaultLanguageIndex();
 	}
 
 	// Load entire file into a std::string for searches
@@ -93,7 +94,7 @@ int CurrentLanguage()
 		else
 		{
 			MessageBoxA(NULL, "Languages not found in .ini file.", "DarkEDIF Debug CurrentLanguage()", MB_OK);
-			return DefaultLanguageIndex();
+			return *DefaultLanguageIndex();
 		}
 	}
 
@@ -123,8 +124,8 @@ int CurrentLanguage()
 			if ((*::SDK->json.u.object.values[i].value).type == json_object && 
 				!_stricmp(::SDK->json.u.object.values[i].name, Language.c_str()))
 			{
-				StoredCurrentLanguage = i;
-				return (int)i;
+				StoredCurrentLanguage = SDK->json.u.object.values[i].value;
+				return *StoredCurrentLanguage;
 			}
 		}
 		Reading += Language.size()+1;
@@ -132,7 +133,7 @@ int CurrentLanguage()
 			break;
 	}
 
-	return DefaultLanguageIndex();
+	return *DefaultLanguageIndex();
 }
 #endif // !RUN_ONLY
 
@@ -146,7 +147,7 @@ char ReadExpressionReturnType(const char *);
 bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
-	const json_value & Action = (*::SDK->json.u.object.values[CurLang].value)["Actions"][::SDK->ActionInfos.size()];
+	const json_value & Action = CurLang["Actions"][::SDK->ActionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Action.type != json_object)
@@ -200,7 +201,7 @@ bool CreateNewActionInfo(void)
 bool CreateNewConditionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Condition = (*::SDK->json.u.object.values[CurLang].value)["Conditions"][::SDK->ConditionInfos.size()];
+	const json_value & Condition = CurLang["Conditions"][::SDK->ConditionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Condition.type != json_object)
@@ -256,7 +257,7 @@ bool CreateNewConditionInfo(void)
 bool CreateNewExpressionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Expression = (*::SDK->json.u.object.values[CurLang].value)["Expressions"][::SDK->ExpressionInfos.size()];
+	const json_value & Expression = CurLang["Expressions"][::SDK->ExpressionInfos.size()];
 	
 	// Invalid JSON reference
 	if (Expression.type != json_object)
@@ -318,9 +319,9 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	edPtr->DarkEDIF_Prop_Size = sizeof(EDITDATA);
 	
 	// Set default object settings from DefaultState.
-	for (unsigned int i = 0; i < (*::SDK->json.u.object.values[CurLang].value)["Properties"].u.object.length; ++i)
+	for (unsigned int i = 0; i < CurLang["Properties"].u.array.length; ++i)
 	{
-		const json_value &JProp = (*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["DefaultState"];
+		const json_value &JProp = (*CurLang["Properties"].u.array.values[i])["DefaultState"];
 		#define AddSingleProp(Type,Construct) AddSingleProp2(Type,Construct,0)
 		
 		#define AddSingleProp2(ThisType,Construct,AddSize) \
@@ -337,7 +338,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				{ \
 					edPtr->DarkEDIF_Prop_Size += sizeof(ThisType) + AddSize + 1; \
 					edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] = \
-						bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]); \
+						bool((*CurLang["Properties"].u.array.values[i])[(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]); \
 					Var->Delete(); \
 				} \
 			}
@@ -374,7 +375,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					{
 						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_AStr) + StrLen + 1;
 						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
+							bool(CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
 						Var->Delete();
 						((Prop_AStr *)(edPtr->DarkEDIF_Props+PrevSize))->String = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_AStr));
 					}
@@ -408,7 +409,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					{
 						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1;
 						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
+							bool(CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
 						Var->Delete();
 						((Prop_Buff *)(edPtr->DarkEDIF_Props+PrevSize))->Address = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_Buff));
 					}
@@ -427,9 +428,9 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 		}
 /*		// Checkbox-only property uses "DefaultState"
 		if (::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX)
-			edPtr->PropCheckboxes.push_back(bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["DefaultState"]));
+			edPtr->PropCheckboxes.push_back(bool(CurLang["Properties"][i]["DefaultState"]));
 		else // "DefaultState" reserved; use "ChkDefault"
-			edPtr->PropCheckboxes.push_back(bool((*::SDK->json.u.object.values[CurLang].value)["Properties"][i]["ChkDefault"]));*/
+			edPtr->PropCheckboxes.push_back(bool(CurLang["Properties"][i]["ChkDefault"]));*/
 	}
 }
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)
