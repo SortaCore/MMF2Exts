@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Example object",
 			"Author": "Your Name",
-			"Copyright": "Copyright © 2012 by Your Name",
+			"Copyright": "Copyright \u00A9 2013 by Your Name",
 			"Comment": "A sentence or two to describe your extension",
 			"Help": "Help/Example.chm",
 			"URL": "http://www.example.com"

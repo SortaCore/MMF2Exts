@@ -272,5 +272,7 @@ namespace Edif
         T _Function = Function;
         return *(void **) &_Function;
     }
+
+	void GetExtensionName(char * const writeTo);
 }
 extern Edif::SDK * SDK;

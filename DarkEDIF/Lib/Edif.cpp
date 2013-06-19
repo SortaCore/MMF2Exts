@@ -8,6 +8,14 @@ TCHAR Edif::LanguageCode[3];
 bool Edif::IsEdittime;
 bool Edif::ExternalJSON;
 
+void Edif::GetExtensionName(char * const writeTo)
+{
+	char temp [MAX_PATH];
+	GetModuleFileNameA(hInstLib, temp, sizeof(temp));
+	strcpy(writeTo, strrchr(temp, '\\') + 1);
+	writeTo[strlen(writeTo) - 4] = 0; // Remove ".mfx"
+}
+
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
 
 short ReadParameterType(const char * Text, bool &IsFloat)
@@ -198,14 +206,9 @@ int Edif::Init(mv * mV)
 	}
 	
 	// Get filename.mfx so we can use it in error messages
-	char errormsgtitle [MAX_PATH];
-	{
-		char temp [MAX_PATH];
-		GetModuleFileNameA(hInstLib, temp, sizeof(temp));
-		strcpy(errormsgtitle, strrchr(temp, '\\') + 1);
-		errormsgtitle[strlen(errormsgtitle) - 4] = '\0';
-	}
-
+	char errorMsgTitle [MAX_PATH];
+	Edif::GetExtensionName(errorMsgTitle);
+	
 	// Get JSON file
     char * JSON;
     size_t JSON_Size;
@@ -214,9 +217,9 @@ int Edif::Init(mv * mV)
 
     if (result == Edif::DependencyNotFound)
 	{
-		strcat(errormsgtitle, " - Error");
+		strcat(errorMsgTitle, " - Error");
 		
-		MessageBoxA(0, "JSON file not found on disk or in MFX resources", errormsgtitle != NULL ? errormsgtitle : "Module name failed.", 0);
+		MessageBoxA(0, "JSON file not found on disk or in MFX resources", errorMsgTitle, 0);
 		return -1;	// error, init failed
     }
 
@@ -233,13 +236,13 @@ int Edif::Init(mv * mV)
 	json_settings settings;
     memset (&settings, 0, sizeof (settings));
 
-	json_value * json = json_parse_ex (&settings, copy, json_error, JSON_Size);
+	json_value * json = json_parse_ex (&settings, copy, JSON_Size, json_error);
 
     if (!json)
     {
-		strcat(errormsgtitle, " - Error parsing JSON");
+		strcat(errorMsgTitle, " - Error parsing JSON");
 
-		MessageBoxA(0, json_error, errormsgtitle ? errormsgtitle : "Error parsing JSON", MB_OK);
+		MessageBoxA(0, json_error, errorMsgTitle, MB_OK);
 		return -1;
     }
 
@@ -511,14 +514,14 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 								Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	// Checkbox enabled by property option in JSON
 										|  ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0)	// Checkbox enabled by property option in JSON
 										|  ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD: 0);
-								SetAllProps(PROPOPT_PARAMREQUIRED, (long)Property["MaxLength"]);
+								SetAllProps(PROPOPT_PARAMREQUIRED, ((long long)Property["MaxLength"] & 0xFFFFFFFF));
 					
 							// Edit box for numbers, Parameters = min value, max value
 							case PROPTYPE_EDIT_NUMBER:
 							{
 								int * temp = new int[2];
-								temp[0] = long(Property["Minimum"]);
-								temp[1] = long(Property["Maximum"]);
+								temp[0] = long long(Property["Minimum"]) & 0xFFFFFFFF;
+								temp[1] = long long(Property["Maximum"]) & 0xFFFFFFFF;
 								SetAllProps(PROPOPT_PARAMREQUIRED, temp);
 							}
 
@@ -674,7 +677,8 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 
 	ParameterCount = Info->NumOfParams;
 	Parameters = (int *) alloca(sizeof(int) * ParameterCount);
-	for(int i = 0; i < ParameterCount; ++ i)
+	
+	for (int i = 0; i < ParameterCount; ++ i)
 	{
 		switch (Info->Parameter[i])
 		{
@@ -1108,3 +1112,4 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 	return str;
 }
 #endif // _UNICODE
+

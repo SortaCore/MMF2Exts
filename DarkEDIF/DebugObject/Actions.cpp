@@ -330,6 +330,7 @@ void Extension::CauseCrash_ArrayOutOfBoundsRead(void)
 	// This warning is correct; a crash will occur since i[2] is not 
 	// initialised - in fact, i[2] doesn't even exist.
 	#pragma warning (push)
+	#pragma warning (disable:4700)
 
 		int i[2] = {0,0};
 		__pragma(warning(suppress:4700)) \

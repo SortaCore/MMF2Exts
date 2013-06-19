@@ -117,7 +117,7 @@ int CurrentLanguage()
 		}
 
 		// Language matched, get index of language in JSON
-		for (unsigned int i = 0; i < ::SDK->json.u.object.length + 1; ++i)
+		for (unsigned int i = 0; i < ::SDK->json.u.object.length; ++i)
 		{
 			// Return index
 			if ((*::SDK->json.u.object.values[i].value).type == json_object && 

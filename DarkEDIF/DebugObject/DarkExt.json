@@ -1,12 +1,13 @@
 {
 	"Identifier": "DBGO",
+	"Dependencies": "",
 	"UK English":
 	{
 		"About":
 		{
 			"Name": "DebugObject",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright © 2012 Darkwire Software",
+			"Copyright": "Copyright \u00A9 2013 Darkwire Software",
 			"Comment": "An easy debugging extension.",
 			"URL": "http://dark-wire.com/",
 			"Help": "Help/DebugObject.chm",

@@ -7,7 +7,7 @@
 		{
 			"Name": "DarkSocket",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright © 2013 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2013 by Darkwire Software",
 			"Comment": "Utilizes WinSock v2.2 to provide socket functionality.",
 			"URL": "http://www.dark-wire.com/",
 			"Help": "Help\\DarkSocket.chm"
