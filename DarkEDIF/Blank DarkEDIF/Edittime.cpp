@@ -9,6 +9,7 @@
 // ============================================================================
 
 #include "Common.h"
+#include "DarkEdif.h"
 
 #ifndef RUN_ONLY
 
@@ -314,10 +315,15 @@ void WINAPI	DLLExport CreateFromFile (mv * mV, TCHAR * fileName, EDITDATA * edPt
 // --------------------
 // Inserts properties into the properties of the object.
 //
+void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr);
 BOOL DLLExport GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 	#ifndef RUN_ONLY
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
+
+	if (edPtr->DarkEDIF_Prop_Size == 0)
+		InitialisePropertiesFromJSON(mV, edPtr);
+
 	#endif // !defined(RUN_ONLY)
 
 	// OK
@@ -380,6 +386,8 @@ void DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
 //
+using namespace Edif::Properties;
+Prop * GetProperty(EDITDATA * edPtr, size_t ID);
 void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 	#ifndef RUN_ONLY
@@ -399,6 +407,13 @@ void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	//	case PROPID_COMBO:
 	//		return new CPropDWordValue(edPtr->nComboIndex);
 	//	}
+	unsigned int ID = PropID - 0x80000;
+	
+	const json_value & propJSON = CurLang["Properties"][ID];
+	Prop * P = GetProperty(edPtr, ID);
+	
+	return P ? P->CreateCopy() : nullptr;
+
 
 	#endif // !defined(RUN_ONLY)
 
@@ -439,7 +454,8 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 {
 	#ifndef RUN_ONLY
 		// Gets the pointer to the EditProp structure
-		Prop * pValue = (Prop *)Param;
+		PropData * propData = (PropData *)Param;
+		Prop * prop = (Prop *)Param;
 
 		// Example
 		// -------

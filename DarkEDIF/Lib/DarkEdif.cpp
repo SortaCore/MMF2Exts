@@ -7,14 +7,23 @@ static const _json_value * StoredCurrentLanguage = &json_value_none;
 
 static const _json_value * DefaultLanguageIndex()
 {
-	int i = 0;
-	if (::SDK)
+	// Misuse of function; called before ::SDK is valid
+	if (!::SDK)
 	{
-		for (; i < SDK->json.u.object.length; ++i)
+		char msgTitle[128] = {0};
+		Edif::GetExtensionName(msgTitle);
+		strcat_s(msgTitle, "- DarkEDIF error");
+		MessageBoxA(NULL, "Premature function call!\n  Called DefaultLanguageIndex() before ::SDK was a valid pointer.", msgTitle, MB_OK);
+
+		return &json_value_none;
+	}
+
+	for (unsigned int i = 0; i < SDK->json.u.object.length; ++i)
+	{
+		if ((*SDK->json.u.object.values[i].value).type == json_object 
+			&& (*SDK->json.u.object.values[i].value)["About"]["Name"].type == json_string)
 		{
-			if ((*SDK->json.u.object.values[i].value).type == json_object 
-				&& (*SDK->json.u.object.values[i].value)["About"]["Name"].type == json_string)
-				return SDK->json.u.object.values[i].value;
+			return SDK->json.u.object.values[i].value;
 		}
 	}
 
@@ -186,7 +195,7 @@ bool CreateNewActionInfo(void)
 		{
 			IsFloat = false;
 			ActInfo->Parameter[c] = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
-			ActInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a flag or not with a single bit
+			ActInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
 		// For some reason in EDIF an extra short is provided, initialised to 0, so duplicate that
@@ -242,7 +251,7 @@ bool CreateNewConditionInfo(void)
 		{
 			IsFloat = false;
 			CondInfo->Parameter[c] = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
-			CondInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a flag or not with a single bit
+			CondInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
 		// For some reason in EDIF an extra short is provided, initialised to 0, so duplicate that
@@ -298,7 +307,7 @@ bool CreateNewExpressionInfo(void)
 		{
 			IsFloat = false;
 			ExpInfo->Parameter[c] = ReadExpressionParameterType(Param[c][0], IsFloat);	// Store parameter type
-			ExpInfo->FloatFlags |= (IsFloat << c);										// Store whether it is a flag or not with a single bit
+			ExpInfo->FloatFlags |= (IsFloat << c);										// Store whether it is a float or not with a single bit
 		}
 
 		// For some reason in EDIF an extra short is provided, initialised to 0, so duplicate that
@@ -310,39 +319,22 @@ bool CreateNewExpressionInfo(void)
 	return true;
 }
 
+#ifndef NOPROPS
 // DarkEDIF - automatic property setup
-
-#if 0 // NO PROPS!!!
+using namespace Edif::Properties;
+#define WriteChkbox() *(bool *)(&Var[1]) = (bool)CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]
 void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 {
-	using namespace Edif::Properties;
-	edPtr->DarkEDIF_Prop_Size = sizeof(EDITDATA);
+	edPtr = (EDITDATA *) mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
+	size_t PrevSize;
+	char * endOfEditData = (char *)&edPtr->DarkEDIF_Props[0];
 	
 	// Set default object settings from DefaultState.
 	for (unsigned int i = 0; i < CurLang["Properties"].u.array.length; ++i)
 	{
-		const json_value &JProp = (*CurLang["Properties"].u.array.values[i])["DefaultState"];
-		#define AddSingleProp(Type,Construct) AddSingleProp2(Type,Construct,0)
-		
-		#define AddSingleProp2(ThisType,Construct,AddSize) \
-			size_t PrevSize = edPtr->DarkEDIF_Prop_Size; \
-			edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(ThisType) + AddSize + 1); \
-			if (!edPtr) \
-				MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK); \
-			else \
-			{ \
-				ThisType * Var = new ThisType(Construct); \
-				if (memcpy_s(((char *)edPtr)+PrevSize, sizeof(ThisType) + AddSize + 1, &*Var, sizeof(ThisType) + AddSize)) \
-					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK); \
-				else \
-				{ \
-					edPtr->DarkEDIF_Prop_Size += sizeof(ThisType) + AddSize + 1; \
-					edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] = \
-						bool((*CurLang["Properties"].u.array.values[i])[(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]); \
-					Var->Delete(); \
-				} \
-			}
-			
+		const json_value & JProp = CurLang["Properties"][i]["DefaultState"];
+		PrevSize = edPtr->DarkEDIF_Prop_Size;
+		endOfEditData = &((char *)&edPtr->DarkEDIF_Props)[PrevSize];
 		
 		switch (::SDK->EdittimeProperties[i].Type_ID)
 		{
@@ -351,7 +343,26 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			{
 				if (JProp.type != json_integer)
 					MessageBoxA(NULL, "Invalid or no default integer value specified.", "DarkEDIF setup warning", MB_OK);
-				AddSingleProp(Prop_SInt, (long)JProp);
+				
+				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_Int64) + 1);
+				
+				if (!edPtr)
+				{
+					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
+					return;
+				}
+
+				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Int64) + 1;
+				Prop_Int64 * Var = new Prop_Int64(JProp);
+					
+				if (!Var || !Var->CopyToAddr(endOfEditData))
+				{
+					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
+					return;
+				}
+
+				WriteChkbox();
+				Var->Delete();
 				break;
 			}
 				
@@ -361,25 +372,26 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				if (JProp.type != json_string)
 					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEDIF - setup warning", MB_OK);
 				
-				size_t PrevSize = edPtr->DarkEDIF_Prop_Size, StrLen = strlen(JProp) + 1;
+				size_t StrLen = strlen(JProp) + 1;
 				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_AStr) + StrLen + 1);
+				
 				if (!edPtr)
+				{
 					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-				else
-				{  
-					Prop_AStr * Var = new Prop_AStr((const char *)JProp);
-					if (memcpy_s(((char *)edPtr)+PrevSize, sizeof(Prop_AStr) + StrLen + 1, &*Var, sizeof(Prop_AStr)) ||
-						memcpy_s(((char *)edPtr)+PrevSize+sizeof(Prop_AStr), StrLen + 1, Var->String, StrLen))
-						MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					else
-					{
-						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_AStr) + StrLen + 1;
-						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool(CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
-						Var->Delete();
-						((Prop_AStr *)(edPtr->DarkEDIF_Props+PrevSize))->String = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_AStr));
-					}
+					return;
 				}
+
+				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_AStr) + StrLen + 1;
+				Prop_AStr * Var = new Prop_AStr((const char *)JProp);
+					
+				if (!Var || !Var->CopyToAddr(endOfEditData))
+				{
+					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
+					return;
+				}
+
+				WriteChkbox();
+				Var->Delete();
 				break;
 			}
 				
@@ -390,31 +402,31 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					
 				char ** DefaultItems = new char * [JProp.u.object.length+2];
 					
-				DefaultItems[0] = nullptr;
+				DefaultItems[0] = nullptr; // null at start required by MMF2
 				for (unsigned int j = 0; j < JProp.u.object.length; ++j)
 					DefaultItems[j+1] = _strdup(JProp[j]);
-				DefaultItems[JProp.u.object.length+1] = nullptr;
+				DefaultItems[JProp.u.object.length+1] = nullptr; // null at end required by MMF2
 
 				size_t PrevSize = edPtr->DarkEDIF_Prop_Size;
 				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1);
+				
 				if (!edPtr)
-					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-				else
 				{
-					Prop_Buff * Var = new Prop_Buff((JProp.u.object.length * sizeof(char *)), DefaultItems);
-					if (memcpy_s(((char *)edPtr)+PrevSize, sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1, &*Var, sizeof(Prop_Buff)) ||
-						memcpy_s(((char *)edPtr)+PrevSize+sizeof(Prop_Buff), (JProp.u.object.length * sizeof(char *)) + 1, Var->Address, Var->Size))
-						MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					else
-					{
-						edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1;
-						edPtr->DarkEDIF_Props[edPtr->DarkEDIF_Prop_Size] =
-							bool(CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]);
-						Var->Delete();
-						((Prop_Buff *)(edPtr->DarkEDIF_Props+PrevSize))->Address = (edPtr->DarkEDIF_Props+PrevSize+sizeof(Prop_Buff));
-					}
+					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
+					return;
 				}
-
+				
+				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1;
+				Prop_Buff * Var = new Prop_Buff((JProp.u.object.length * sizeof(char *)), DefaultItems);
+					
+				if (!Var || !Var->CopyToAddr(endOfEditData))
+				{
+					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
+					return;
+				}
+					
+				WriteChkbox();
+				Var->Delete();
 
 				delete [] DefaultItems; // Prop_Buff constructor would have duplicated it
 				break;
@@ -433,14 +445,24 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			edPtr->PropCheckboxes.push_back(bool(CurLang["Properties"][i]["ChkDefault"]));*/
 	}
 }
+
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 {
-	//
-	char * Current = &edPtr->DarkEDIF_Props[0];
+	// Premature call
+	if (edPtr->DarkEDIF_Prop_Size == 0)
+	{
+		char msgTitle [128] = {0};
+		Edif::GetExtensionName(msgTitle);
+		strcat_s(msgTitle, " - DarkEDIF error");
+		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK);
+		return nullptr;
+	}
+
+	char * Current = (char *)&edPtr->DarkEDIF_Props[0];
 	unsigned int i = 0;
 	while (i < ID)
 	{
-		if ((char *)Current > (edPtr->DarkEDIF_Props + edPtr->DarkEDIF_Prop_Size))
+		if ((char *)Current > (((char *)edPtr->DarkEDIF_Props) + edPtr->DarkEDIF_Prop_Size))
 		{
 			MessageBoxA(NULL, "Error: extended past properties.", "DarkEDIF error", MB_OK);
 			break;
@@ -448,7 +470,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 		switch (((Prop *)Current)->GetClassID())
 		{
 			case 'STRA':
-				Current += sizeof(Prop_AStr)+(strlen((((Prop_AStr *)Current)->String)+1)*sizeof(char))+1;
+				Current += sizeof(Prop_AStr)+((strlen(((Prop_AStr *)Current)->String)+1)*sizeof(char))+1;
 				break;
 			case 'STRW':
 				Current += sizeof(Prop_WStr)+((wcslen(((Prop_WStr *)Current)->String)+1)*sizeof(wchar_t))+1;
@@ -477,6 +499,8 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 }
 char * GetPropertyChbx(EDITDATA * edPtr, size_t ID)
 {
-	return ((char *)GetProperty(edPtr, ID+1))+1;
+	char * P = (char *)GetProperty(edPtr, ID + 1);
+	return P ? P - 1 : nullptr;
 }
-#endif // NO PROPS!
+
+#endif // NOPROPS

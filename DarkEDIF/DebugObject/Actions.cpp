@@ -86,10 +86,10 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 		fprintf_s(Data->FileHandle,"\"%s\" executing from \"%s\"\r\n"
 				  "Original MFA path: [%s]\r\n"
 				  "File first opened from frame #%i [%s]\r\n",
-					rdPtr->rHo.AdRunHeader->App->name,
-					rdPtr->rHo.AdRunHeader->App->appFileName,
-					rdPtr->rHo.AdRunHeader->App->editorFileName,
-					rdPtr->rHo.AdRunHeader->App->nCurrentFrame, rdPtr->rHo.AdRunHeader->Frame->name);
+					rhPtr->App->name,
+					rhPtr->App->appFileName,
+					rhPtr->App->editorFileName,
+					rhPtr->App->nCurrentFrame, rhPtr->Frame->name);
 
 		// Close lock
 		CloseLock();
@@ -132,7 +132,10 @@ void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
 {
 	// Can't output if Data failed to initialise
 	if (!Data)
+	{
+		__asm int 3;
 		return;
+	}
 
 	// Get lock
 	OpenLock();

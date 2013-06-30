@@ -59,7 +59,7 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->NumOfExpressions = CurLang["Expressions"].u.object.length;
 	
 	infoPtr->EDITDATASize = sizeof(EDITDATA);
-#if 0 //NOPROPS
+#ifndef NOPROPS
 	{
 		const json_value JSON = CurLang["Properties"];
 		for(unsigned int i = 0; i < JSON.u.object.length; ++i)
@@ -130,7 +130,7 @@ short DLLExport CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectI
 
     rdPtr->pExtension = new Extension(rdPtr, edPtr, cobPtr);
 	rdPtr->pExtension->Runtime.ObjectSelection.pExtension = rdPtr->pExtension;
-
+	
 	return 0;
 }
 

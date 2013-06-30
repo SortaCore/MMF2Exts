@@ -1,7 +1,6 @@
 
 #include "Common.h"
 
-GlobalData * Data = NULL;
 class Extension * GlobalExt = NULL;
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
@@ -12,6 +11,10 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 {
 	if (!GlobalExt)
 		GlobalExt = this;
+	Data = NULL;
+	
+	CheckStuff();
+
     /*
         Link all your action/condition/expression functions to their IDs to match the
         IDs in the JSON here
@@ -47,8 +50,52 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 Extension::~Extension()
 {
+	// Nothing to do if we don't have stored information
+	// We can't output log closure or free resources, y'see.
+	if (!Data)
+	{
+		MessageBoxA(NULL, "EndApp()::if(!Data) - DISABLED", "Super Debug!", MB_OK);
+		SetUnhandledExceptionFilter(NULL);
+		return;
+	}
+	
+	// Output closure message
+	if (GlobalExt)
+		GlobalExt->OutputNow(1, -1, "*** Log closed. ***");
+    
 	if (GlobalExt == this)
 		GlobalExt = NULL;
+	
+	// Open lock
+	OpenLock();
+
+	// Are we the last using this Data?
+	if ((--Data->NumUsages) == 0)
+	{
+		// Close resources
+		if (Data->FileHandle)
+			fclose(Data->FileHandle);
+		Data->FileHandle = NULL;
+
+		// Close MMF pointer to Data
+		CRunApp * thisApp = SDK->mV->AppList[0];
+		Runtime.WriteGlobal(GlobalID, NULL);
+		
+		// Close lock
+		CloseLock();
+
+		// Close container
+		delete Data;
+		Data = NULL;
+		
+		// Exception handling - invalidate
+		MessageBoxA(NULL, "EndApp()::if(!Data->NumUsages==0) - DISABLED", "Super Debug!", MB_OK);
+		SetUnhandledExceptionFilter(NULL);
+	}
+	else // Other extensions are using this
+	{
+		CloseLock();
+	}
 }
 
 

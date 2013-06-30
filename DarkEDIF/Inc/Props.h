@@ -58,6 +58,7 @@ public:
 	virtual Prop * CreateCopy() = 0;
 	virtual BOOL IsEqual(Prop * P) = 0;
 	virtual unsigned int GetClassID() = 0;
+	virtual bool CopyToAddr(void * const addr) = 0;
 };
 
 // Integer
@@ -83,6 +84,15 @@ public:
 	virtual unsigned int GetClassID()
 	{
 		return 'INT ';
+	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_SInt *)addr).Value = Value;
+		return true;
+	}
+	virtual void WriteCheckbox(bool const write)
+	{
+		*(bool *)(((char *)this) + sizeof(*this)) = write;
 	}
 
 	// Data
@@ -113,6 +123,12 @@ public:
 	{
 		return 'DWRD';
 	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_UInt *)addr).Value = Value;
+		return true;
+	}
+
 
 	// Data
 	unsigned int Value;
@@ -142,6 +158,11 @@ public:
 	{
 		return 'FLOT';
 	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_Float *)addr).Value = Value;
+		return true;
+	}
 
 	// Data
 	float Value;
@@ -170,6 +191,11 @@ public:
 	virtual unsigned int GetClassID()
 	{
 		return 'DBLE';
+	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_Double *)addr).Value = Value;
+		return true;
 	}
 
 	// Data
@@ -201,6 +227,13 @@ public:
 	{
 		return 'SIZE';
 	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_Size *)addr).X = X;
+		(*(Prop_Size *)addr).Y = Y;
+
+		return true;
+	}
 
 	// Data
 	int X, Y;
@@ -230,6 +263,11 @@ public:
 	{
 		return 'INT2';
 	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		*(__int64 *)addr = Value;
+		return true;
+	}
 
 	// Data
 	__int64 Value;
@@ -258,6 +296,11 @@ public:
 	virtual unsigned int GetClassID()
 	{
 		return 'LPTR';
+	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		*(void **)addr = Address;
+		return true;
 	}
 
 	// Data
@@ -310,6 +353,12 @@ public:
 	virtual unsigned int GetClassID()
 	{
 		return 'DATA';
+	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_Buff *)addr).Address = (char *)addr + sizeof(Prop_Buff);
+		(*(Prop_Buff *)addr).Size = Size;
+		return !memcpy_s((char *)addr + sizeof(Prop_Buff) + sizeof(bool), Size, (*(Prop_Buff *)addr).Address, Size);
 	}
 
 	// Data
@@ -369,7 +418,7 @@ public:
 	virtual BOOL IsEqual(Prop * P)
 	{
 		return (this->String == ((Prop_AStr *)P)->String)	|| 
-				this->String == NULL		||	// For some reason, default to true if
+				this->String == NULL						||	// For some reason, default to true if
 				((Prop_AStr *)P)->String == NULL			||	// NULL for either of params
 				!strcmp(this->String, ((Prop_AStr *)P)->String);
 	}
@@ -377,6 +426,13 @@ public:
 	virtual unsigned int GetClassID()
 	{
 		return 'STRA';
+	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_AStr *)addr).pad = pad;
+		(*(Prop_AStr *)addr).String = (char *)addr + sizeof(Prop_AStr);
+		
+		return !strcpy_s((char *)addr + sizeof(Prop_AStr), strlen(String) + 1 + sizeof(bool), (*(Prop_AStr *)addr).String);
 	}
 
 	// Data
@@ -443,6 +499,14 @@ public:
 	{
 		return 'STRW';
 	}
+	virtual bool CopyToAddr(void * const addr)
+	{
+		(*(Prop_WStr *)addr).pad = pad;
+		(*(Prop_WStr *)addr).String = (wchar_t *)((char *)addr + sizeof(Prop_WStr));
+		
+		return !wcscpy_s((wchar_t *)((char *)addr + sizeof(Prop_WStr) + sizeof(bool)), wcslen(String) + 1, (*(Prop_WStr *)addr).String);
+	}
+
 
 	// Data
 	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.

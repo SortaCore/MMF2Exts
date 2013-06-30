@@ -76,7 +76,7 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "Time format to output to (Default %X - Google strftime() function):"]
+				["Text", "Time format to output to (Default %%x - Google strftime() function):"]
 			  ]
 			},
 			

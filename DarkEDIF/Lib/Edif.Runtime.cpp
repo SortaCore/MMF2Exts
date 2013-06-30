@@ -180,8 +180,8 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
 {
     RunHeader * rhPtr = rdPtr->rHo.AdRunHeader;
 
-//	while (rhPtr->App->ParentApp)
-//		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
+	while (rhPtr->App->ParentApp)
+		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 
     EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
 
@@ -225,13 +225,13 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
 void * Edif::Runtime::ReadGlobal(const TCHAR * Name)
 {
     RunHeader * rhPtr = rdPtr->rHo.AdRunHeader;
-
-//	while(rhPtr->App->ParentApp)
-//		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
+	
+	while (rhPtr->App->ParentApp)
+		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 
     EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
 
-    while(Global)
+    while (Global)
     {
         if (!_tcsicmp(Global->Name, Name))
             return Global->Value;
@@ -241,3 +241,4 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * Name)
 
     return 0;
 }
+

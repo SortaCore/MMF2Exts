@@ -5,9 +5,9 @@
 // #define PROEXT       // MMF2 Dev only
 
 #ifdef RUN_ONLY
-	#define CurLang 2
+	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
 #else
-	int CurrentLanguage();
+	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
 
@@ -106,11 +106,12 @@ struct GlobalData {
 	};
 };
 
-extern GlobalData * Data;
+#define GlobalID _T("DebugObject")
 extern class Extension * GlobalExt;
 
 extern bool WINAPI HandlerRoutine(DWORD ControlType);
 extern void WINAPI ReceiveConsoleInput();
+extern LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs);
 
 #include "Extension.h"
 

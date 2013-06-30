@@ -179,8 +179,8 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
 {
     LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 
-	while (rhPtr->rhApp->m_pParentApp)
-		rhPtr = rhPtr->rhApp->m_pParentApp->m_Frame->m_rhPtr;
+    while (rhPtr->rhApp->m_pParentApp)
+        rhPtr = rhPtr->rhApp->m_pParentApp->m_Frame->m_rhPtr;
 
     EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->mvGetExtUserData(rhPtr->rhApp, hInstLib);
 

@@ -33,10 +33,13 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-//	PropData *		Properties;
+	
 //	short			swidth;
 //	short			sheight;
 
+	// Keep DarkEDIF variables as last. Undefined behaviour otherwise.
+	int				DarkEDIF_Prop_Size;
+	PropData		DarkEDIF_Props[0];
 };
 
 class Extension;

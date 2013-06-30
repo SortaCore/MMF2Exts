@@ -29,9 +29,9 @@ bool CreateNewActionInfo();
 bool CreateNewConditionInfo();
 bool CreateNewExpressionInfo();
 
-#if 0 // NOPROPS
+#ifndef NOPROPS
 void InitialisePropertiesFromJSON(mv *, EDITDATA *);
 
-Prop * GetProperty(EDITDATA *, size_t);
+Prop * GetProperty(EDITDATA *, size_t)
 char * GetPropertyChbx(EDITDATA *, size_t);
 #endif // NOPROPS

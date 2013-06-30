@@ -1,5 +1,5 @@
 
-
+static GlobalData * Data;
 class Extension
 {
 public:
@@ -9,14 +9,16 @@ public:
 
     Edif::Runtime Runtime;
 
-    static const int MinimumBuild = 254;
-    static const int Version = 4;
+	GlobalData * Data;
+    static const int MinimumBuild = 256;
+    static const int Version = 5;
+	// v5: Release for bug fixes and global settings
 	// v4: First release with console
 	// v3: Release due to bug fixes
 	// v2: Release due to new features
 	// v1: First release
-    static const int OEFLAGS = 0;
-    static const int OEPREFS = 0;
+	static const int OEFLAGS = OIFlags::GLOBAL;
+	static const int OEPREFS = OEPREFS::GLOBAL;
     
     static const int WindowProcPriority = 100;
 
@@ -66,7 +68,7 @@ public:
 		const char * FullCommand(void);
 		const char * CommandMinusName(void);
 
-
+		void CheckStuff();
 
     /* These are called if there's no function linked to an ID */
 

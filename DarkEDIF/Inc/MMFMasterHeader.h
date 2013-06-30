@@ -4635,9 +4635,9 @@ struct CRunApp {
 	unsigned short	nbEltOff[MAX_TABREF];		// Sizes of file offset tables
 	unsigned long * adTabEltOff[MAX_TABREF];	// File offsets of bank elements
 
-	unsigned short	nbEltMemToDisk[MAX_TABREF],	// Size of elt cross-ref tables
-					EltMemToDisk[MAX_TABREF],	// Element memory index -> element disk index
-					EltDiskToMem[MAX_TABREF],	// Element disk index -> memory index
+	unsigned short	nbEltMemToDisk[MAX_TABREF];	// Size of elt cross-ref tables
+	unsigned short * EltMemToDisk[MAX_TABREF],	// Element memory index -> element disk index
+					* EltDiskToMem[MAX_TABREF],	// Element disk index -> memory index
 
 					tabNbCpt[MAX_TABREF];		// Sizes of usage count tables
 	long *			tabAdCpt[MAX_TABREF];		// Usage count tables of bank elements

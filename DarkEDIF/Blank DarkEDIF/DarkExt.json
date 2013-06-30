@@ -109,6 +109,7 @@
 				"Title": "Static text",
 				"Info": "Blank text",
 				"Type": "Text",
+				"DefaultState": "Static text, default state. Or default text.",
 			},
 			{
 				"Title": "Static text",
