@@ -119,17 +119,12 @@ void WINAPI DLLExport StartApp(mv * mV, CRunApp* pApp)
 	// Initialise variables
 	
 	if (GlobalExt)
-		GlobalExt->CheckStuff();
+		GlobalExt->LoadDataVariable();
 	
 }
 
-void Extension::CheckStuff()
+void Extension::LoadDataVariable()
 {
-	if (Data)
-	{
-		MessageBoxA(NULL, "Note: Already valid Data.", "Super Debug!", MB_OK);
-	}
-	Runtime.WriteGlobal("Blergh", NULL);
 	Data = (GlobalData *)Runtime.ReadGlobal(_T("DebugObject"));
 	
 	// Not initialised

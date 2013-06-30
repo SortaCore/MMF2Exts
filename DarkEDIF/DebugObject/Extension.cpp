@@ -13,7 +13,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		GlobalExt = this;
 	Data = NULL;
 	
-	CheckStuff();
+	LoadDataVariable();
 
     /*
         Link all your action/condition/expression functions to their IDs to match the
@@ -53,11 +53,7 @@ Extension::~Extension()
 	// Nothing to do if we don't have stored information
 	// We can't output log closure or free resources, y'see.
 	if (!Data)
-	{
-		MessageBoxA(NULL, "EndApp()::if(!Data) - DISABLED", "Super Debug!", MB_OK);
-		SetUnhandledExceptionFilter(NULL);
 		return;
-	}
 	
 	// Output closure message
 	if (GlobalExt)
@@ -78,7 +74,6 @@ Extension::~Extension()
 		Data->FileHandle = NULL;
 
 		// Close MMF pointer to Data
-		CRunApp * thisApp = SDK->mV->AppList[0];
 		Runtime.WriteGlobal(GlobalID, NULL);
 		
 		// Close lock
@@ -89,7 +84,6 @@ Extension::~Extension()
 		Data = NULL;
 		
 		// Exception handling - invalidate
-		MessageBoxA(NULL, "EndApp()::if(!Data->NumUsages==0) - DISABLED", "Super Debug!", MB_OK);
 		SetUnhandledExceptionFilter(NULL);
 	}
 	else // Other extensions are using this

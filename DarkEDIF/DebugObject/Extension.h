@@ -1,5 +1,4 @@
 
-static GlobalData * Data;
 class Extension
 {
 public:
@@ -68,7 +67,7 @@ public:
 		const char * FullCommand(void);
 		const char * CommandMinusName(void);
 
-		void CheckStuff();
+		void LoadDataVariable();
 
     /* These are called if there's no function linked to an ID */
 
