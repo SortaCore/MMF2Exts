@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>DebugObject - Actions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#111111">
+<p align="center"><font size="+3" color="#00FF00">DebugObject - Actions</font></p>
+<p align="center"><img src="Images/MyExt.bmp" width="36" height="36"></p>
+<font color="#DDDDDD">
+<p align="center">The DebugObject has 12 actions.<br></p>
+<a href="#Output">Output</a><br><br>
+<a href="#SetOutputTimeFormat">Set output time format</a><br>
+<a href="#SetOutputFile">Set output file</a><br>
+<a href="#SetOutputEnabled">Set output enabled/disabled</a><br>
+<a href="#SetConsoleEnabled">Set console enabled/disabled</a><br><br>
+<a href="#SetCrashHandling">Set crash handling</a><br>
+Cause crash:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Divide by zero (int)">Division by zero (int)</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Divide by zero (float)">Division by zero (float)</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (read)">Access violation (read)</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (write)">Access violation (write)</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (read array)">Access violation (read array)</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (write array)">Access violation (write array)</a><br>
+<br><br><br>
+<b><a name="Output">Output:</a></b><br>
+This action logs an event to the file. You configure this event yourself, using the paramters as you want. It's recommended you use positive values for line numbers as some negative numbers are used by DebugObject during catches of unhandled exceptions and other errors.
+Parameters : Intensity of log (numeric), Line of error (numeric), Text to output (text).<br><br>
+
+<b><a name="SetOutputTimeFormat">Set output text format:</a></b><br>
+This action sets the format of the time that is automatically logged to each event and unhandled exception catch. The format is the same as supplied in the <a href="http://www.cplusplus.com/reference/ctime/strftime/">C++ page for strftime()</a>, and is usually &quot;%X&quot; (system time format). For any debugging help, just <a href="https://www.google.co.uk/search?q=C%2B%2B+strftime+examples">Google strftime()</a> examples and tutorials.<br>
+Parameters : Time format (string).<br><br>
+
+<b><a name="SetOutputFile">Set output file:</a></b><br>
+This action sets the output file where all the events and crashes are to be logged to.
+Parameters : File path (text).<br><br>
+
+<b><a name="SetOutputEnabled">Set output enabled/disabled:</a></b><br>
+This action sets the output of log actions and unhandled exceptions' handling. Nothing will be written to the log file if this is set to false. This is useful for enabling/disabling debugging depending on a commandline or UI option.<br>
+Parameters : Enable (true/false, non-zero or zero respectively).<br><br>
+
+<b><a name="SetConsoleEnabled">Set console enabled/disabled:</a></b><br>
+This action sets whether the console is visible, and whether it shows the output of log actions and unhandled exceptions' handling. If output is disabled, the console wil still show what the log file should show, and it can receive commands. This is useful for enabling/disabling debugging depending on a commandline or UI option.<br>
+Parameters : Enable (true/false, non-zero or zero respectively).<br><br>
+
+<b><a name="SetCrashHandling">Set crash handling:</a></b><br>
+This action sets a particular mode of handling the crash, from a selection of options:<br>
+0) HANDLE_VIA_QUIT: Logs the crash then quits the application<br>
+1) HANDLE_VIA_INFINITE_WAIT: Starts a Sleep(INFINITE) call, which will make your program go Not Responding without using any CPU, allowing you to attach a debugger or quit.<br>
+2) HANDLE_VIA_IGNORE: Log the crash and pass it on to the next handler (Windows post-mortern or Visual Studio JIT debugger usually).<br>
+3) HANDLE_VIA_JUMP: Jumps pass the crash's assembly code. <i>(Not coded)</i><br>
+4) HANDLE_VIA_CONTINUE: Tells Windows to carry on and attempt to continue the  program as normal. Use the Continues parameter with this. Can be done with some exceptions only, like ASM INT 3 breakpoints.<br>
+?) Any commands to set it to other modes are ignored. <br>
+Parameters : Continue attempt count (numeric, 1+).<br><br>
+
+</p></font>
+</body>
+</html>

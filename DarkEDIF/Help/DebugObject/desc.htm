@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>DebugObject - Description</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#000000">
+<p align="center"><font size="+3" color="#00FF00">DebugObject - Description</font></p>
+<p align="center"><img src="Images/MyExt.bmp" width="32" height="32"></p>
+<p align="left"><font color="#DDDDDD">DebugObject enhances your ability to debug programs, featuring debugging capability that borders on impossible, including allowing you to run events when your program crashes. <br>
+This is so your end user can be presented with a much more professional method of closing when the program crashes, and so you, the creator, can work with any automatically generated and sent crash reports.<br>
+This extension cannot <i>stop</i> the program from crashing and allow it to run as normal (in most cases); it merely acknowledges and handles it cleanly when possible. You should take all measures to ensure no crashes occur, of course.<br><br><br>
+
+<b>Example setup event</b>
+<img src="Images/SetupEvent.bmp" /><br><br>
+
+<b>Debugging in Visual Studio</b>
+The DebugObject comes with debugging information for automatically displaying the C++ code when you attach the Visual Studio debugger. To do so, use the following steps to obtain debugging information:<br><br>
+Step 1: Use handling mode 2 (infinite wait) or 6 (force debugger attach) when setting mode in DebugObject.<br>
+<img src="Images/SymbolStep1.bmp" /><br><br>h
+Step 2: If using method 2 and attach a Visual Studio instance using &quot;Debug &raquo; Attach to process&quot;<br>
+<img src="Images/SymbolStep2.bmp" /><br><br>
+Step 3: Select edrt.exe, if using Run Application, or your program name otherwise. <br>
+<font size="-1">Note: The edittime program is unknown if you have "Compress the runtime" <i>enabled</i> in the first tab of the application properties.</font><br>
+<img src="Images/SymbolStep3.bmp" /><br><br>
+Step 4: Pause the application (break) if using method 2.<br>
+<img src="Images/SymbolStep4.bmp" /><br><br>
+Step 5: Find the call stack in a window on the right.<br><font size="-1">(If DebugObject has a readable function name after '!', instead of an address, skip to step ??)</font><br>
+<img src="Images/SymbolStep5.bmp" /><br><br>
+Step 6: Right-click the mention of DebugObject in the call stack and select &quot;Load Symbols From &raquo; Symbol Path&quot;.<br>
+<img src="Images/SymbolStep6.bmp" /><br><br>
+Step 7: Browse to the folder:<br>
+&bull; MMF2\Data\Runtime\ &nbsp;&nbsp;&nbsp;&nbsp;<font size="-1">(if it's a built .exe file that's crashing) </font><br>
+&bull; MMF2\Extensions\ &nbsp;&nbsp;&nbsp;&nbsp;<font size="-1">(if you're using MMF2's Run Application command, and the running program crashed).</font><br>
+<img src="Images/SymbolStep7A.bmp" /><br><br>
+You should have a function name, as shown.
+<img src="Images/SymbolStep7B.bmp" /><br><br>
+Step 8:  select any DLLs and run &quot;Load Symbols From &raquo; Microsoft Symbol Servers&quot;.
+<img src="Images/SymbolStep8A.bmp" /><br><br>
+Repeat until you can see &quot;edrt.exe!<i>address</i>()&quot; in the call stack just above the &quot;[Frames below this...]&quot; warning.
+<img src="Images/SymbolStep8B.bmp" /><br><br>
+Step 9: Double-click on a DebugObject function in the call stack. Switch to the Dissambly tab, right-click the content of the tab, and select Go To Source.
+<img src="Images/SymbolStep9A.bmp" /><br><br>
+Visual Studio should present you with full access to DebugObject source code instead of a bunch of assembly language.<br>
+<img src="Images/SymbolStep9B.bmp" />
+</p>
+</body>
+</html>

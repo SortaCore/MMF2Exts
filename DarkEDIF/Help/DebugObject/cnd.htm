@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta name="GENERATOR" content="HTML Help Workshop">
+
+<title>DebugObject - Conditions</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+</head>
+<body bgcolor="#111111">
+<p align="center"><font size="+3" color="#00FF00">DebugObject - Conditions</font></p>
+<p align="center"><img src="Images/MyExt.bmp" width="36" height="36"></p>
+<p><font color="#DDDDDD">
+<b>On unhandled exception</b><br>
+This condition is triggered when an exception is thrown, and it's not within a try-catch clause; in other words, the exception has not been caught by any code. This means your program <i>is crashing</i>, and now's the time to do some fast reactions.<br>
+It's very important to emphasise that you cannot code anything that is not immediate. Fastloops are immediate, so they can be used as actions in this event. Processes that don't pause MMF2 until they're done - usually actions that need to trigger a condition on completion - are <i>not</i> suitable as <i>the program must exit forcibly as soon as the last <font color="00DDDD">On unhandled exception</font> event has finished executing<i>.<br>
+Parameters : None.<br><br>
+<b>On any console command</b><br>
+This condition is triggered when any console command is sent through. This means the debugging user has enabled DebugObject's console, and entered a command into it.<br>
+Parameters : None.<br><br>
+<b>On a specific console command</b><br>
+This condition is triggered when a specific console command is sent through. This means the debugging user has enabled DebugObject's console, and entered a specific command into it; the command is identified as what the text before the first ' ' character is.<br>
+Parameters: Command prefix (text).<br>
+
+</font></p>
+</body>
+</html>

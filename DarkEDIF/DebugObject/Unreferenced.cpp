@@ -7,6 +7,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 		GlobalExt->OutputNow(5, -1, "Failed to catch crash, invalid pointers supplied.");
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
+	GlobalExt->Runtime.GenerateEvent(2);
 	
 	std::stringstream OutputThis;
 	// Starting statment
@@ -136,6 +137,20 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 
 			case GlobalData::HANDLE_VIA_IGNORE:
 				GlobalExt->OutputNow(5, -1, "Handling via passing on.");
+				return EXCEPTION_CONTINUE_SEARCH;
+
+			case GlobalData::HANDLE_VIA_EMAIL:
+				GlobalExt->OutputNow(5, -1, "Handling via email.");
+				GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
+				return EXCEPTION_CONTINUE_SEARCH;
+
+			case GlobalData::HANDLE_VIA_BOOT_PROCESS:
+				GlobalExt->OutputNow(5, -1, "Booting crash process...");
+				GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
+				return EXCEPTION_CONTINUE_SEARCH;
+			
+			case GlobalData::HANDLE_VIA_FORCE_DEBUG_BREAK:
+				__asm int 3;
 				return EXCEPTION_CONTINUE_SEARCH;
 
 			case GlobalData::HANDLE_VIA_CONTINUE:

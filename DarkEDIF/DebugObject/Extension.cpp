@@ -36,6 +36,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	LinkCondition(0, OnSpecificConsoleInput);
 	LinkCondition(1, OnAnyConsoleInput);
+	LinkCondition(2, OnUnhandledException);
 
 	// Initialise from edittime
 	SetOutputOnOff(edPtr->EnableAtStart);
@@ -55,12 +56,12 @@ Extension::~Extension()
 	if (!Data)
 		return;
 	
-	// Output closure message
-	if (GlobalExt)
-		GlobalExt->OutputNow(1, -1, "*** Log closed. ***");
-    
+	// Output closure message and stop any other access to this Extension instance
 	if (GlobalExt == this)
+	{
+		GlobalExt->OutputNow(1, -1, "*** Log closed. ***");
 		GlobalExt = NULL;
+	}
 	
 	// Open lock
 	OpenLock();

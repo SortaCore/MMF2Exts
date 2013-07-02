@@ -1211,20 +1211,20 @@ fancyenum(OBJ) {
 
 // Flags 
 fancyenum(OEFLAG) {
-	DISPLAY_IN_FRONT		= bit1,
-	BACKGROUND				= bit2,
+	DISPLAY_IN_FRONT		= bit1,		// Active object/window control
+	BACKGROUND				= bit2,		// Background
 	BACK_SAVE				= bit3,
 	RUN_BEFORE_FADE_IN		= bit4,
 	MOVEMENTS				= bit5,
 	ANIMATIONS				= bit6,
 	TAB_STOP				= bit7,
-	WINDOW_PROC				= bit8,
-	VALUES					= bit9,
+	WINDOW_PROC				= bit8,		// Needs to receive window process messages (i.e. app was minimized)
+	VALUES					= bit9,		// Has alterable values/strings (will automatically create the associated a/c/e/p)
 	SPRITES					= bit10,
 	INTERNAL_BACK_SAVE		= bit11,
 	SCROLLING_INDEPENDENT	= bit12,
 	QUICK_DISPLAY			= bit13,
-	NEVER_KILL				= bit14,
+	NEVER_KILL				= bit14,	// Never destroy object if too far from frame
 	NEVER_SLEEP				= bit15,
 	MANUAL_SLEEP			= bit16,
 	TEXT					= 0x10000,
@@ -2750,14 +2750,6 @@ fancyenum(FILEINFO) {
 	APP_NAME,
 	TEMP_PATH
 };}
-
-// MACRO: next event
-#define		EVTNEXT(p)		   		((LPEVT)((unsigned char * )p+p->evtSize))
-// MACRO: returns first param
-#define		EVTPARAMS(p) 			((LPEVP)(p->evtCode < 0 ? (unsigned char * )p+CND_SIZE : (unsigned char * )p+ACT_SIZE ))
-// MACRO: returns the extension condition code
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)           
-#define		EXTACTIONNUM(i)			((short)(i>>16))
 
 #define		KPXNAME_SIZE	60
 #define		BADNAME_SIZE	(OINAME_SIZE+KPXNAME_SIZE+8)

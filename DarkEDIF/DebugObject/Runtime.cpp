@@ -155,7 +155,6 @@ void Extension::LoadDataVariable()
 		CloseLock();
 
 		// Exception handling (WinAPI call)
-		MessageBoxA(NULL, "CheckStuff()::if(!Data) - ENABLED", "Super Debug!", MB_OK);
 		SetUnhandledExceptionFilter(UnhandledExceptionCatcher);
 	}
 	else // Already initialised

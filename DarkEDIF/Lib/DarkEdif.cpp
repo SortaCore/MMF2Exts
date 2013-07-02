@@ -241,7 +241,7 @@ bool CreateNewConditionInfo(void)
 	// If a non-triggered condition, set the correct flags
 	CondInfo->ID = ::SDK->ConditionInfos.size();
 	CondInfo->NumOfParams = Param.u.object.length;
-	CondInfo->Flags = (EVFLAGS::ALWAYS | EVFLAGS_NOTABLE) * (!bool (Condition["Triggered"]));
+	CondInfo->Flags = (EVFLAGS::ALWAYS | EVFLAG2_NOTABLE) * (!bool (Condition["Triggered"]));
 
 	if (CondInfo->NumOfParams > 0)
 	{

@@ -61,11 +61,12 @@ public:
 
 	/// Conditions
 		bool OnSpecificConsoleInput(char * Command);
-		bool OnAnyConsoleInput(void);
+		bool OnAnyConsoleInput();
+		bool OnUnhandledException();
 
 	/// Expressions
-		const char * FullCommand(void);
-		const char * CommandMinusName(void);
+		const char * FullCommand();
+		const char * CommandMinusName();
 
 		void LoadDataVariable();
 

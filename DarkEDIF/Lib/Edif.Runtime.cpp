@@ -144,12 +144,12 @@ event &Edif::Runtime::CurrentEvent()
 RunObject * Edif::Runtime::RunObjPtrFromFixed(int fixedvalue)
 {
 	objectsList * objList = rdPtr->rHo.AdRunHeader->ObjectList;
-	int index = 0x0000FFFF & fixedvalue;
+	int index = fixedvalue & 0x0000FFFF;
 
 	if (index < 0 || index >= rdPtr->rHo.AdRunHeader->MaxObjects)
 		return NULL;
 
-	RunObject * theObject = (RunObject *)objList[0x0000FFFF & fixedvalue].oblOffset;
+	RunObject * theObject = (RunObject *)objList[index].oblOffset;
 
 	if (theObject == NULL)
 		return NULL;

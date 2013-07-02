@@ -11,3 +11,7 @@ bool Extension::OnAnyConsoleInput()
 {
 	return true;
 }
+bool Extension::OnUnhandledException()
+{
+	return true;
+}

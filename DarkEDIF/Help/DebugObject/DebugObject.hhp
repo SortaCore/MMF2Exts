@@ -1,0 +1,19 @@
+[OPTIONS]
+Auto Index=Yes
+Compatibility=1.1 or later
+Compiled file=DebugObject.chm
+Contents file=Table of Contents.hhc
+Default Font=Arial,8,0
+Default topic=index.htm
+Display compile progress=Yes
+Full-text search=Yes
+Index file=DebugObject.hhk
+Language=0x809 English (United Kingdom)
+Title=DebugObject
+
+
+[FILES]
+index.htm
+
+[INFOTYPES]
+

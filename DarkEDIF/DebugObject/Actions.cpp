@@ -13,6 +13,7 @@ void Extension::Output(int Intensity, int Line, const char * TextP)
 	free(Text);
 }
 
+
 void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 {
 	// Can't continue if Data failed to initialise
@@ -304,6 +305,7 @@ void Extension::SetConsoleOnOff(int OnOff)
 	}
 }
 
+#pragma optimize( "", off )
 void Extension::CauseCrash_ZeroDivisionInt(void)
 {
 	int a = 0, b = 0, c = 0;
@@ -346,3 +348,4 @@ void Extension::CauseCrash_ArrayOutOfBoundsWrite(void)
 	int i[2];
 	i[2] = 0;
 }
+#pragma optimize( "", on )

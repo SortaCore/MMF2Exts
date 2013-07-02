@@ -23,6 +23,7 @@
 			[2, "Set output time format"],
 			[3, "Set output enabled/disabled"],
 			[11, "Set console enabled/disabled"],
+			//[12, "Set process to boot on crash"],
 			
 			"Separator",
 			
@@ -36,19 +37,34 @@
 				[9, "Access violation (read array)"],
 				[10, "Access violation (write array)"]
 			]
+			/*,
+			["Set email format",
+				[13, "Email from"],
+				[14, "Email to"],
+				[15, "Email subject"],
+				[16, "Email content"],
+				[17, "Set log file position"]
+			]*/
 		],
 
 		"ConditionMenu":
 		[
+			[2, "Unhandled exception trigger"],
+
+			"Separator",
+
 			[0, "On any console command"],
 			[1, "On specific console command"],
-			[2, "Darkwire Software", 1]
+			
+			"Separator",
+
+			[3, "Darkwire Software", true]
 		],
 
 		"ExpressionMenu":
 		[
-			[0, "Get parameters of command"],
-			[1, "Get full command"]
+			[0, "Get full command"],
+			[1, "Get parameters of command"]
 		],
 
 		"Actions":
@@ -76,11 +92,11 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "Time format to output to (Default %%x - Google strftime() function):"]
+				["Text", "Time format to output to (Default %%X - Google strftime() function):"]
 			  ]
 			},
 			
-			{ "Title": "Set debug enabled to %0",
+			{ "Title": "Set output enabled to %0",
 			  
 			  "Parameters":
 			  [
@@ -126,16 +142,26 @@
 
 		"Conditions":
 		[
-			{ "Title": "%o: On any console command"
+			{ "Title": "%o: On any console command",
+			  "Triggered": true
 			},
 			
 			{ "Title": "%o: On console command %0",
+			  "Triggered": true,
 			  
 			  "Parameters":
 			  [
 				["Text", "Enter what will be before the first space:"]
 			  ]
+			},
+
+			{ "Title": "%o: Unhandled exception trigger",
+			  "Triggered": true
+			},
+
+			{ "Title": "%o: Wha?"
 			}
+			
 			
 		],
 
