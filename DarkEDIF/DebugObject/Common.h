@@ -13,6 +13,7 @@
 
 #define DLLExport   __stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
+#pragma comment(lib, "..\\Lib\\dbghelp.lib")
 
 #include    "Edif.h"
 #include	"Resource.h"
@@ -21,6 +22,7 @@
 #include	<sstream>
 #include	<iostream>
 #include	<iomanip>
+#include	<dbghelp.h>
 
 // If your extension will be using multithreading, remove the #if and #endif lines here.
 #define MULTI_THREADING
@@ -33,12 +35,12 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-//	short			swidth;
-//	short			sheight;
 	bool EnableAtStart;
 	bool DoMsgBoxIfPathNotSet;
 	char InitialPath [MAX_PATH+1];
 	bool ConsoleEnabled;
+	bool PauseForDebugger;
+	// TODO: Extend properties to default handling type?
 
 };
 
@@ -74,6 +76,9 @@ struct GlobalData {
 	unsigned char NumUsages;
 	HANDLE ConsoleIn, ConsoleOut;
 	std::string ConsoleReceived;
+	unsigned char ConsoleBreakType;
+	std::string MiniDumpPath;
+	int MiniDumpType; // See MINIDUMP_TYPE enum
 
 	// Allows debugging of what had the last lock
 	#ifdef _DEBUG
@@ -112,8 +117,8 @@ struct GlobalData {
 #define GlobalID _T("DebugObject")
 extern class Extension * GlobalExt;
 
-extern bool WINAPI HandlerRoutine(DWORD ControlType);
-extern void WINAPI ReceiveConsoleInput();
+extern BOOL WINAPI HandlerRoutine(DWORD ControlType);
+extern DWORD WINAPI ReceiveConsoleInput(void *);
 extern LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs);
 
 #include "Extension.h"

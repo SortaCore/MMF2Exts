@@ -5,7 +5,7 @@ void DLLExport GetObjInfos (mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * 
 {
 	#ifndef RUN_ONLY
 
-		Edif::ConvertAndCopyString(ObjAuthor,       CurLang["About"]["Author"],	MAX_PATH);
+		Edif::ConvertAndCopyString(ObjAuthor,       CurLang["About"]["Author"],		MAX_PATH);
 		Edif::ConvertAndCopyString(ObjCopyright,    CurLang["About"]["Copyright"],	MAX_PATH);
 		Edif::ConvertAndCopyString(ObjComment,      CurLang["About"]["Comment"],	MAX_PATH);
 		Edif::ConvertAndCopyString(ObjHttp,         CurLang["About"]["URL"],		MAX_PATH);
@@ -20,7 +20,7 @@ const TCHAR * WINAPI GetHelpFileName()
 		return NULL;
 	#else // !RUN_ONLY
 		static TCHAR TempString[MAX_PATH];
-		return Edif::ConvertAndCopyString(TempString, CurLang["Help"], MAX_PATH);
+		return Edif::ConvertAndCopyString(TempString, CurLang["About"]["Help"], MAX_PATH);
 	#endif
 }
 
@@ -75,24 +75,21 @@ void * DLLExport GetConditionInfos(mv *mV, short code)
 {
 	if (IS_COMPATIBLE(mV))
 		return ::SDK->ConditionInfos[code]->MMFPtr();
-	else
-		return NULL;
+	return NULL;
 }
 
 void * DLLExport GetActionInfos(mv * mV, short code)
 {
 	if (IS_COMPATIBLE(mV))
 		return ::SDK->ActionInfos[code]->MMFPtr();
-	else
-		return NULL;
+	return NULL;
 }
 
 void * DLLExport GetExpressionInfos(mv * mV, short code)
 {
 	if (IS_COMPATIBLE(mV))
 		return ::SDK->ExpressionInfos[code]->MMFPtr();
-	else
-		return NULL;
+	return NULL;
 }
 
 short DLLExport GetConditionCodeFromMenu(mv * mV, short menuId)
@@ -161,8 +158,7 @@ HMENU DLLExport GetConditionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 		menucpy(Menu, Edif::ConditionMenu);
 		return Menu;
 	}
-	else
-		return NULL;
+	return NULL;
 }
 
 HMENU DLLExport GetActionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
@@ -174,8 +170,7 @@ HMENU DLLExport GetActionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 		menucpy(Menu, Edif::ActionMenu);
 		return Menu;
 	}
-	else
-		return NULL;
+	return NULL;
 }
 
 HMENU DLLExport GetExpressionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
@@ -187,8 +182,7 @@ HMENU DLLExport GetExpressionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 		menucpy(Menu, Edif::ExpressionMenu);
 		return Menu;
 	}
-	else
-		return NULL;
+	return NULL;
 }
 
 #ifdef _UNICODE

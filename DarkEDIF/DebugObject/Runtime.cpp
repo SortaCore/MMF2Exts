@@ -147,7 +147,14 @@ void Extension::LoadDataVariable()
 		strcpy_s(Data->TimeFormat, 255, "%X");
 		Data->NumUsages = 1;
 		Data->DoMsgBoxIfPathNotSet = false;
+		Data->ConsoleIn = NULL;
+		Data->ConsoleOut = NULL;
 		Data->ConsoleEnabled = false;
+		Data->ConsoleReceived = "";
+		Data->ReleaseConsoleInput = true;
+		Data->ConsoleBreakType = 0;
+		Data->MiniDumpPath = "";
+		Data->MiniDumpType = 0;
 		
 		// Exception handling (container)
 		Data->ContinuesCount = -1;

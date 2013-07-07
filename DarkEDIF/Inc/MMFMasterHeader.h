@@ -1210,7 +1210,7 @@ fancyenum(OBJ) {
 // ------------------------------------------------------------
 
 // Flags 
-fancyenum(OEFLAG) {
+fancyenum(OEFLAGS) {
 	DISPLAY_IN_FRONT		= bit1,		// Active object/window control
 	BACKGROUND				= bit2,		// Background
 	BACK_SAVE				= bit3,

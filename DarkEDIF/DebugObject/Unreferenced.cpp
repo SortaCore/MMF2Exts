@@ -7,249 +7,260 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 		GlobalExt->OutputNow(5, -1, "Failed to catch crash, invalid pointers supplied.");
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
-	GlobalExt->Runtime.GenerateEvent(2);
 	
-	std::stringstream OutputThis;
+
+	// Run On Unhandled Exception event.
+	// It may encounter issues if the MMF2 runtime has crashed. In which case do the best we can.
+	try
+	{
+		GlobalExt->Runtime.GenerateEvent(2);
+	}
+	catch (...)
+	{
+		GlobalExt->OutputNow(5, -1, "Error generating event, this new exception was ignored.");
+	}
+
+	std::stringstream str;
+
+	// Create minidump
+	if (GlobalExt->Data->MiniDumpPath.size() > 0)
+	{
+		HANDLE dumpFile = CreateFileA(GlobalExt->Data->MiniDumpPath.c_str(), GENERIC_READ | GENERIC_WRITE, 
+			NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+		
+		// Opened the minidump file
+		if (dumpFile != NULL && dumpFile != INVALID_HANDLE_VALUE)
+		{
+			MINIDUMP_EXCEPTION_INFORMATION mdei; 
+			mdei.ClientPointers     = FALSE; 
+			mdei.ExceptionPointers  = pExceptionPtrs; 
+			mdei.ThreadId           = GetCurrentThreadId(); 
+			
+			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), NULL, (MINIDUMP_TYPE)GlobalExt->Data->MiniDumpType, (pExceptionPtrs != 0) ? &mdei : 0, NULL, NULL))
+			{
+				str << "MiniDumpWriteDump() function failed. Error [" << GetLastError() << "] occured.";
+				GlobalExt->OutputNow(5, -1, str.str().c_str());
+				GlobalExt->OutputNow(5, -1, "This error can be located from http://msdn.microsoft.com/en-us/library/ms681381(v=vs.85).aspx.");
+				GlobalExt->OutputNow(5, -1, "Please confirm your settings of the minidump.");
+			}
+			else // Minidump write successful
+			{
+				str << "Minidump created at path [" << GlobalExt->Data->MiniDumpPath << "].";
+				GlobalExt->OutputNow(5, -1, str.str().c_str());
+				str.str("");
+			}
+
+			CloseHandle(dumpFile);
+		}
+		else // Minidump file couldn't be opened
+		{
+			str << "CreateFile failed. Error [" << GetLastError() << "] occured.";
+			GlobalExt->OutputNow(5, -1, str.str().c_str());
+			str.str("");
+		}
+	}
+
 	// Starting statment
-	OutputThis << "*** Unhandled exception occured in the MMF2 program at address 0x"
+	str << "*** Unhandled exception occured in the MMF2 program at address 0x"
 			   << (void *)pExceptionPtrs->ExceptionRecord->ExceptionAddress
 			   << " ***";
-	GlobalExt->OutputNow(5, -1, OutputThis.str().c_str());
+	GlobalExt->OutputNow(5, -1, str.str().c_str());
 	if (GlobalExt->Data->FileHandle)
-		OutputThis.str("");
+		str.str("");
 	else
-		OutputThis << "\r\n";
+		str << "\r\n";
 	
 	bool NoHandling = false;
 	switch (pExceptionPtrs->ExceptionRecord->ExceptionCode)
 	{
 		case EXCEPTION_ACCESS_VIOLATION:
-			OutputThis << "The thread tried to read from or write to a virtual address for which "
+			str << "The thread tried to read from or write to a virtual address for which "
 						  "it does not have the appropriate access.";
 			break;
 		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-			OutputThis << "The thread tried to access an array element that is out of bounds (and "
+			str << "The thread tried to access an array element that is out of bounds (and "
 						  "the underlying hardware supports bounds checking)."; 
 			break;
 		case EXCEPTION_BREAKPOINT:
-			OutputThis << "A breakpoint exception was encountered - the object will pass the "
+			str << "A breakpoint exception was encountered - the object will pass the "
 						  "exception on.";
 			NoHandling = true;
 			break;
 		case EXCEPTION_DATATYPE_MISALIGNMENT:
-			OutputThis << "The thread tried to read or write data that is misaligned on hardware "
+			str << "The thread tried to read or write data that is misaligned on hardware "
 						  "that does not provide alignment. For example, 16-bit values must be "
 						  "aligned on 2-byte boundaries; 32-bit values on 4-byte boundaries, and "
 						  "so on.";
 			break;
 		case EXCEPTION_FLT_DENORMAL_OPERAND:
-			OutputThis << "One of the operands in a floating-point operation is denormal. A "
+			str << "One of the operands in a floating-point operation is denormal. A "
 						  "denormal value is one that is too small to represent as a standard "
 						  "floating-point value.";
 			break;
 		case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-			OutputThis << "The thread tried to divide a floating-point value by a floating-point "
+			str << "The thread tried to divide a floating-point value by a floating-point "
 						  "divisor of zero.";
 			break;
 		case EXCEPTION_FLT_INEXACT_RESULT:
-			OutputThis << "The result of a floating-point operation cannot be represented exactly "
+			str << "The result of a floating-point operation cannot be represented exactly "
 						  "as a decimal fraction.";
 			break;
 		case EXCEPTION_FLT_INVALID_OPERATION:
-			OutputThis << "This exception is an uncommon floating-point exception.";
+			str << "This exception is an uncommon floating-point exception.";
 			break;
 		case EXCEPTION_FLT_OVERFLOW:
-			OutputThis << "The exponent of a floating-point operation is greater than the magnitude "
+			str << "The exponent of a floating-point operation is greater than the magnitude "
 						  "allowed by the corresponding type.";
 			break;
 		case EXCEPTION_FLT_STACK_CHECK:
-			OutputThis << "The stack overflowed or underflowed as the result of a floating-point "
+			str << "The stack overflowed or underflowed as the result of a floating-point "
 						  "operation.";
 			break;
 		case EXCEPTION_FLT_UNDERFLOW:
-			OutputThis << "The exponent of a floating-point operation is less than the magnitude "
+			str << "The exponent of a floating-point operation is less than the magnitude "
 						  "allowed by the corresponding type.";
 			break;
 		case EXCEPTION_ILLEGAL_INSTRUCTION:
-			OutputThis << "The thread tried to execute an invalid instruction.";
+			str << "The thread tried to execute an invalid instruction.";
 			break;
 		case EXCEPTION_IN_PAGE_ERROR:
-			OutputThis << "The thread tried to access a page that was not present, and the system "
+			str << "The thread tried to access a page that was not present, and the system "
 						  "was unable to load the page. For example, this exception might occur if "
 						  "a network connection is lost while running a program over the network.";
 			break;
 		case EXCEPTION_INT_DIVIDE_BY_ZERO:
-			OutputThis << "The thread tried to divide an integer value by an integer divisor of zero.";
+			str << "The thread tried to divide an integer value by an integer divisor of zero.";
 			break;
 		case EXCEPTION_INT_OVERFLOW:
-			OutputThis << "The result of an integer operation caused a carry out of the most significant "
+			str << "The result of an integer operation caused a carry out of the most significant "
 						  "bit of the result.";
 			break;
 		case EXCEPTION_INVALID_DISPOSITION:
-			OutputThis << "An exception handler returned an invalid disposition to the exception dispatcher. "
+			str << "An exception handler returned an invalid disposition to the exception dispatcher. "
 						  "This is incredibly rare for C/C++ programs."; 
 			break;
 		case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-			OutputThis << "The thread tried to continue after an exception, but this exception type makes it "
+			str << "The thread tried to continue after an exception, but this exception type makes it "
 						  "impossible."/* " DebugObject will not attempt to continue after this error."*/;
 			break;
 		case EXCEPTION_PRIV_INSTRUCTION:
-			OutputThis << "The thread tried to execute an instruction whose operation is not allowed in the "
+			str << "The thread tried to execute an instruction whose operation is not allowed in the "
 						  "current machine mode.";
 			break;
 		case EXCEPTION_SINGLE_STEP:
-			OutputThis << "A trace trap or other single-instruction mechanism signaled that one instruction "
+			str << "A trace trap or other single-instruction mechanism signaled that one instruction "
 						  "has been executed.";
 			NoHandling = true;
 			break;
 		case EXCEPTION_STACK_OVERFLOW:
-			OutputThis << "The thread used up its allocated stack memory.";
+			str << "The thread used up its allocated stack memory.";
 			break;
 		default:
-			OutputThis << "Unrecognised exception code [" << pExceptionPtrs->ExceptionRecord->ExceptionCode << "].";
+			str << "Unrecognised exception code [" << pExceptionPtrs->ExceptionRecord->ExceptionCode << "].";
 			break;
 	}
+
 	if (!GlobalExt->Data->FileHandle)
 	{
 		if (GlobalExt->Data->DoMsgBoxIfPathNotSet)
-			MessageBoxA(NULL, OutputThis.str().c_str(), "DebugObject - caught exception.", MB_OK | MB_ICONERROR);
+			MessageBoxA(NULL, str.str().c_str(), "DebugObject - caught exception.", MB_OK | MB_ICONERROR);
 	}
 	else
-		GlobalExt->OutputNow(5, -2, OutputThis.str().c_str());
+		GlobalExt->OutputNow(5, -2, str.str().c_str());
 
+	// Not set to ignore
 	if (NoHandling || !GlobalExt->Data)
 		return EXCEPTION_CONTINUE_SEARCH;
-	else
+
+	switch (GlobalExt->Data->HandleExceptionVia)
 	{
-		DWORD d = 0;
-		switch (GlobalExt->Data->HandleExceptionVia)
-		{
-			case GlobalData::HANDLE_VIA_QUIT:
-				GlobalExt->OutputNow(5, -1, "Handling via quit.");
-				ExitProcess(-1);
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_QUIT:
+			GlobalExt->OutputNow(5, -1, "Handling via quit.");
+			ExitProcess(-1);
+			return EXCEPTION_CONTINUE_SEARCH;
 
-			case GlobalData::HANDLE_VIA_INFINITE_WAIT:
-				GlobalExt->OutputNow(5, -1, "Handling via infinite sleep.");
-				Sleep(INFINITE);
-				GlobalExt->OutputNow(5, -1, "Passed infinite sleep.");
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_INFINITE_WAIT:
+			GlobalExt->OutputNow(5, -1, "Handling via infinite sleep.");
+			Sleep(INFINITE);
+			GlobalExt->OutputNow(5, -1, "Passed infinite sleep.");
+			return EXCEPTION_CONTINUE_SEARCH;
 
-			case GlobalData::HANDLE_VIA_IGNORE:
-				GlobalExt->OutputNow(5, -1, "Handling via passing on.");
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_IGNORE:
+			GlobalExt->OutputNow(5, -1, "Handling via passing on.");
+			return EXCEPTION_CONTINUE_SEARCH;
 
-			case GlobalData::HANDLE_VIA_EMAIL:
-				GlobalExt->OutputNow(5, -1, "Handling via email.");
-				GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_EMAIL:
+			GlobalExt->OutputNow(5, -1, "Handling via email.");
+			GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
+			return EXCEPTION_CONTINUE_SEARCH;
 
-			case GlobalData::HANDLE_VIA_BOOT_PROCESS:
-				GlobalExt->OutputNow(5, -1, "Booting crash process...");
-				GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_BOOT_PROCESS:
+			GlobalExt->OutputNow(5, -1, "Booting crash process...");
+			GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
+			return EXCEPTION_CONTINUE_SEARCH;
 			
-			case GlobalData::HANDLE_VIA_FORCE_DEBUG_BREAK:
-				__asm int 3;
-				return EXCEPTION_CONTINUE_SEARCH;
+		case GlobalData::HANDLE_VIA_FORCE_DEBUG_BREAK:
+			__asm int 3;
+			return EXCEPTION_CONTINUE_SEARCH;
 
-			case GlobalData::HANDLE_VIA_CONTINUE:
-				if (GlobalExt->Data->ContinuesCount > 0)
+		case GlobalData::HANDLE_VIA_CONTINUE:
+			if (GlobalExt->Data->ContinuesCount > 0)
+			{
+				--(GlobalExt->Data->ContinuesCount);
+			}
+			else
+			{
+				if (GlobalExt->Data->ContinuesCount == 0)
 				{
-					--(GlobalExt->Data->ContinuesCount);
+					GlobalExt->OutputNow(5, -1, "Max continues expired; passing exception to debugger.");
+					GlobalExt->Data->ContinuesCount = GlobalExt->Data->ContinuesMax;
+					return EXCEPTION_CONTINUE_SEARCH;
 				}
-				else
-				{
-					if (GlobalExt->Data->ContinuesCount == 0)
-					{
-						GlobalExt->OutputNow(5, -1, "Max continues expired; passing exception to debugger.");
-						GlobalExt->Data->ContinuesCount = GlobalExt->Data->ContinuesMax;
-						return EXCEPTION_CONTINUE_SEARCH;
-					}
-				}
-				// No return, pass onto default
+			}
+			// No return, pass onto default
 
-			default:
-				GlobalExt->OutputNow(5, -1, "Handling via continuing execution.");
-				return EXCEPTION_CONTINUE_EXECUTION;
-		}
+		default:
+			GlobalExt->OutputNow(5, -1, "Handling via continuing execution.");
+			return EXCEPTION_CONTINUE_EXECUTION;
 	}
-/*
-	// Otherwise
-	DWORD rv;
-
-    EXCEPTION_RECORD* per = pep->ExceptionRecord;
-
-    if ( ( per->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ) &&
-         ( per->ExceptionInformation[0] != 0 ) )
-    {
-        rv = BasepCheckForReadOnlyResource( per->ExceptionInformation[1] );
-
-        if ( rv == EXCEPTION_CONTINUE_EXECUTION )
-            return EXCEPTION_CONTINUE_EXECUTION;
-    }
-
-    DWORD DebugPort = 0;
-
-    rv = NtQueryInformationProcess( GetCurrentProcess(), ProcessDebugPort,
-                                    &DebugPort, sizeof( DebugPort ), 0 );
-
-    if ( ( rv >= 0 ) && ( DebugPort != 0 ) )
-    {
-        // Yes, it is -> Pass exception to the debugger
-		OutputNow(5, -1, "*** Unhandled exception. Detected that a debug mode is enabled; passing control of unhandled exception to debugger. ***");
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-
-    // Is custom filter for unhandled exceptions registered ?
-
-    if ( BasepCurrentTopLevelFilter != 0 )
-    {
-        // Yes, it is -> Call the custom filter
-
-        rv = (BasepCurrentTopLevelFilter)(pep);
-
-        if ( rv == EXCEPTION_EXECUTE_HANDLER )
-		{
-			OutputNow(5, -1, "*** Unhandled exception. Caught and reported. ***");
-            return EXCEPTION_EXECUTE_HANDLER;
-		}
-
-        if ( rv == EXCEPTION_CONTINUE_EXECUTION )
-		{
-			OutputNow(5, -1, "*** Unhandled exception. Detected that a debug mode is enabled; passing control of unhandled exception to debugger. ***");
-            return EXCEPTION_CONTINUE_EXECUTION;
-		}
-    }   */
-
 }
 
 // Handles Ctrl+C, Ctrl+Break, and console's close button
-bool WINAPI HandlerRoutine(DWORD ControlType)
+BOOL WINAPI HandlerRoutine(DWORD ControlType)
 {
-	if (!GlobalExt)
-		return true;
-
 	// Note: always return true, to indicate this function has handled it.
+	if (!GlobalExt)
+		return TRUE;
+	
+	// Normally, we would handle everything here. But the system will terminate the MMF2
+	// program if we don't return quickly enough, so we delegate it to Extension::Handle().
+
 	switch (ControlType)
 	{
 		case CTRL_C_EVENT:
-			GlobalExt->OutputNow(5, -1, "Ctrl+C hit. No response set up...");
-			return true;
+			GlobalExt->OutputNow(5, -1, "Ctrl+C hit. Triggering event...");
+			break;
+
 		case CTRL_BREAK_EVENT:
-			GlobalExt->OutputNow(5, -1, "Ctrl+Break hit. No response set up...");
-			return true;
+			GlobalExt->OutputNow(5, -1, "Ctrl+Break hit. Triggering event...");
+			break;
+
 		case CTRL_CLOSE_EVENT:
-			GlobalExt->OutputNow(5, -1, "Close console hit. No response set up...");
-			return true;
+			GlobalExt->OutputNow(5, -1, "Close console hit. Triggering event...");
+			break;
+
 		default:
 			GlobalExt->OutputNow(5, -1, "Unknown control type sent to console. No response.");
-			return true;
+			return TRUE;
 	}
+
+	GlobalExt->Data->ConsoleBreakType = (ControlType & 0xFF) + 3; // Event 3+ for the correct condition events
+	GlobalExt->Runtime.Rehandle();
+	return TRUE;
 }
 
 // Receives input text from console
-void WINAPI ReceiveConsoleInput()
+DWORD WINAPI ReceiveConsoleInput(void *)
 {
 	char InputText[256];
 	
@@ -264,13 +275,37 @@ void WINAPI ReceiveConsoleInput()
 		if (std::cin.good()) 
 			std::cin.getline(InputText, 255);
 		else // Jump to next loop
+		{
+			std::cin.clear();
+			std::cin.getline(InputText, 255); // Remove current buffer of ctrl command
 			continue;
+		}
 
+		// On restart of app or other weirdness, std::cin.getline()
+		if (!GlobalExt || !GlobalExt->Data || !GlobalExt->Data->ConsoleEnabled)
+			break;
+
+		// Open lock
+		while (GlobalExt->Data->ReadingThis)
+			Sleep(0);
+
+		GlobalExt->Data->ReadingThis = true; 
+		#ifdef _DEBUG
+			GlobalExt->Data->LastLockFile = __FILE__;
+			GlobalExt->Data->LastLockLine = __LINE__;
+		#endif
 		GlobalExt->Data->ReleaseConsoleInput = false;
 		GlobalExt->Data->ConsoleReceived = InputText;
-		GlobalExt->Runtime.PushEvent(12);
 
+		// Close lock
+		GlobalExt->Data->ReadingThis = false;
+
+		// Boot events (since this is not the usual thread, multi-threadify it)
+		GlobalExt->Runtime.Rehandle();
+		
 		while (!GlobalExt->Data->ReleaseConsoleInput)
 			Sleep(10);
 	}
+
+	return 0;
 }

@@ -33,11 +33,21 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(9, CauseCrash_ArrayOutOfBoundsRead);
 	LinkAction(10, CauseCrash_ArrayOutOfBoundsWrite);
 	LinkAction(11, SetConsoleOnOff);
+	LinkAction(12, SetDumpFile);
 
-	LinkCondition(0, OnSpecificConsoleInput);
-	LinkCondition(1, OnAnyConsoleInput);
+	LinkCondition(0, OnAnyConsoleInput);
+	LinkCondition(1, OnSpecificConsoleInput);
 	LinkCondition(2, OnUnhandledException);
+	LinkCondition(3, OnCtrlCEvent);
+	LinkCondition(4, OnCtrlBreakEvent);
+	LinkCondition(5, OnConsoleCloseEvent);
 
+	LinkExpression(0, FullCommand);
+	LinkExpression(1, CommandMinusName);
+
+	if (false) //edPtr->PauseForDebugger)
+		MessageBoxA(NULL, "Pause for debugger property is enabled; attach your debugger now then continue the process.", "DebugObject - Information", MB_OK | MB_ICONASTERISK);
+	
 	// Initialise from edittime
 	SetOutputOnOff(edPtr->EnableAtStart);
 	Data->DoMsgBoxIfPathNotSet = edPtr->DoMsgBoxIfPathNotSet;
@@ -77,6 +87,23 @@ Extension::~Extension()
 		// Close MMF pointer to Data
 		Runtime.WriteGlobal(GlobalID, NULL);
 		
+		// Disable console
+		if (Data->ConsoleOut)
+		{
+			if (FreeConsole())
+			{
+				SetConsoleCtrlHandler(HandlerRoutine, FALSE);
+			}
+			else
+			{
+				OutputNow(5, -1, "Console closing function FreeConsole() failed.\r\n"
+								 "This generally occurs when a console has already been allocated.");
+			}
+
+			Data->ConsoleOut = NULL;
+			Data->ConsoleIn = NULL;
+		}
+		
 		// Close lock
 		CloseLock();
 
@@ -96,48 +123,32 @@ Extension::~Extension()
 
 short Extension::Handle()
 {
-    /*
-       If your extension will draw to the MMF window you should first 
-       check if anything about its display has changed :
+	// If console not enabled, this Handle event is not useful.
+	if (!Data->ConsoleEnabled)
+		return REFLAG::ONE_SHOT;
+	
+	// If releasing console input is currently set to false, there is a console input message.
+	if (!Data->ReleaseConsoleInput)
+	{
+		Runtime.GenerateEvent(0);
+		Runtime.GenerateEvent(1);
+		Data->ConsoleReceived = "";
+		Data->ReleaseConsoleInput = true;
+	}
 
-           if (rdPtr->roc.rcChanged)
-              return REFLAG_DISPLAY;
-           else
-              return 0;
+	// If console break type is greater than 0, someone's pressed Ctrl+C/Break.
+	if (Data->ConsoleBreakType > 0)
+	{
+		Runtime.GenerateEvent(Data->ConsoleBreakType);
+		Data->ConsoleBreakType = 0;
+	}
 
-       You will also need to make sure you change this flag yourself 
-       to 1 whenever you want to redraw your object
-     
-       If your extension won't draw to the window, but it still needs 
-       to do something every MMF loop use :
-
-            return 0;
-
-       If you don't need to do something every loop, use :
-
-            return REFLAG_ONESHOT;
-
-       This doesn't mean this function can never run again. If you want MMF
-       to handle your object again (causing this code to run) use this function:
-
-            Runtime.Rehandle();
-
-       At the end of the loop this code will run
-
-    */
-
-	// Will not be called next loop	
 	return REFLAG::ONE_SHOT;
 }
 
 
 short Extension::Display()
 {
-    /*
-       If you return REFLAG_DISPLAY in Handle() this routine will run.
-    */
-
-    // Ok
     return 0;
 }
 

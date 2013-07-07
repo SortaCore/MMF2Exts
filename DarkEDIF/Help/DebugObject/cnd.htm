@@ -10,16 +10,38 @@
 <p align="center"><font size="+3" color="#00FF00">DebugObject - Conditions</font></p>
 <p align="center"><img src="Images/MyExt.bmp" width="36" height="36"></p>
 <p><font color="#DDDDDD">
-<b>On unhandled exception</b><br>
+
+<p align="center">The DebugObject has 5 conditions.<br></p>
+<a href="#OnUnhandledException">On unhandled exception</a><br><br>
+Console<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConsoleOnAnyConsoleCommand">On any console command</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConsoleOnSpecificConsoleCommand">On specific console command</a><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConsoleOnCtrlCEvent">On console Ctrl+C event</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConsoleOnCtrlBreakEvent">On console Ctrl+Break event</a><br><br><br>
+
+
+
+<b><a name="OnUnhandledException">On unhandled exception</a></b><br>
 This condition is triggered when an exception is thrown, and it's not within a try-catch clause; in other words, the exception has not been caught by any code. This means your program <i>is crashing</i>, and now's the time to do some fast reactions.<br>
-It's very important to emphasise that you cannot code anything that is not immediate. Fastloops are immediate, so they can be used as actions in this event. Processes that don't pause MMF2 until they're done - usually actions that need to trigger a condition on completion - are <i>not</i> suitable as <i>the program must exit forcibly as soon as the last <font color="00DDDD">On unhandled exception</font> event has finished executing<i>.<br>
+It's very important to emphasise that you cannot code anything that is not immediate. Fastloops are immediate, so they can be used as actions in this event. Processes that don't pause MMF2 until they're done - usually actions that need to trigger a condition on completion - are <i>not</i> suitable as the program must exit forcibly as soon as the last <font color="00DDDD">On unhandled exception</font> event has finished executing.<br>
 Parameters : None.<br><br>
-<b>On any console command</b><br>
+
+<b><a name="ConsoleOnAnyConsoleCommand">Console &raquo; On any console command</a></b><br>
 This condition is triggered when any console command is sent through. This means the debugging user has enabled DebugObject's console, and entered a command into it.<br>
 Parameters : None.<br><br>
-<b>On a specific console command</b><br>
+
+<b><a name="ConsoleOnSpecificConsoleCommand">Console &raquo; On a specific console command</a></b><br>
 This condition is triggered when a specific console command is sent through. This means the debugging user has enabled DebugObject's console, and entered a specific command into it; the command is identified as what the text before the first ' ' character is.<br>
-Parameters: Command prefix (text).<br>
+Parameters: Command prefix (text).<br><br>
+
+<b><a name="ConsoleOnCtrlCEvent">Console &raquo; On console Ctrl+C event</a></b><br>
+This condition is triggered when debugging user has enabled DebugObject's console and pressed Ctrl+C whilst typing into the console. Ctrl+C is a special event that normally means a cancelation of the console process. You can chose to handle this as you want.<br>
+Parameters : None.<br><br>
+
+<b><a name="ConsoleOnCtrlBreakEvent">Console &raquo; On console Ctrl+Break event</a></b><br>
+This condition is triggered when debugging user has enabled DebugObject's console and pressed Ctrl+Break whilst typing into the console. Ctrl+Break is a special event that normally means a cancelation of the console process. You can chose to handle this as you want.<br>
+Parameters : None.<br><br>
 
 </font></p>
 </body>

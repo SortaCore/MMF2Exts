@@ -10,13 +10,17 @@
 <p align="center"><font size="+3" color="#00FF00">DebugObject - Actions</font></p>
 <p align="center"><img src="Images/MyExt.bmp" width="36" height="36"></p>
 <font color="#DDDDDD">
-<p align="center">The DebugObject has 12 actions.<br></p>
-<a href="#Output">Output</a><br><br>
+<p align="center">The DebugObject has 13 actions.<br></p>
+<a href="#Output">Output</a><br>
+<br>
 <a href="#SetOutputTimeFormat">Set output time format</a><br>
 <a href="#SetOutputFile">Set output file</a><br>
 <a href="#SetOutputEnabled">Set output enabled/disabled</a><br>
-<a href="#SetConsoleEnabled">Set console enabled/disabled</a><br><br>
+<a href="#SetConsoleEnabled">Set console enabled/disabled</a><br>
+<br>
 <a href="#SetCrashHandling">Set crash handling</a><br>
+<a href="#SetMinidumpGeneration">Set minidump generation</a><br>
+<br>
 Cause crash:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Divide by zero (int)">Division by zero (int)</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Divide by zero (float)">Division by zero (float)</a><br>
@@ -25,6 +29,8 @@ Cause crash:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (read array)">Access violation (read array)</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CauseCrash &raquo;Access violation (write array)">Access violation (write array)</a><br>
 <br><br><br>
+
+
 <b><a name="Output">Output:</a></b><br>
 This action logs an event to the file. You configure this event yourself, using the paramters as you want. It's recommended you use positive values for line numbers as some negative numbers are used by DebugObject during catches of unhandled exceptions and other errors.
 Parameters : Intensity of log (numeric), Line of error (numeric), Text to output (text).<br><br>
@@ -54,6 +60,37 @@ This action sets a particular mode of handling the crash, from a selection of op
 4) HANDLE_VIA_CONTINUE: Tells Windows to carry on and attempt to continue the  program as normal. Use the Continues parameter with this. Can be done with some exceptions only, like ASM INT 3 breakpoints.<br>
 ?) Any commands to set it to other modes are ignored. <br>
 Parameters : Continue attempt count (numeric, 1+).<br><br>
+
+<b><a name="SetMinidumpGeneration">Set minidump generation:</a></b><br>
+This action sets a particular mode of generating a minidump, a .dmp file that can be opened in a debugger to view the environment of the crash (variables, the call stack, etc).<br>
+The second parameter is flags combined with MMF2's &quot;<font color="#DD0000">or</font>&quot; operator. These flags are inside the MINIDUMP_TYPE enum, available in the &quot;dbghelp.h&quot; header file. They can be combined with a bitwise OR flag, or in MMF2, as &quot;flag1 <font color="#DD0000">or</font> flag2 <font color="#DD0000">or</font> flag3&quot;. A guide on the usage of these flags can be found <a href="http://www.debuginfo.com/articles/effminidumps2.html">here</a> and <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms680519(v=vs.85).aspx">here</a>.<br>
+Parameters : Enable (true/false, non-zero or zero respectively), mode (OR-combined flags).<br><br>
+
+<b><a name="CauseCrash &raquo;Divide by zero (int)">Cause crash &raquo; Division by zero (int)</a></b><br>
+This action causes the application to crash by dividing by zero, using integer values (values that can only store whole numbers, not decimals).<br>
+Parameters: None.<br><br>
+
+<b><a name="CauseCrash &raquo;Divide by zero (float)">Cause crash &raquo; Division by zero (float)</a></b><br>
+This action causes the application to crash by dividing by zero, using floating-point values (values that store numbers with decimal places).<br>
+Parameters: None.<br><br>
+
+<b><a name="CauseCrash &raquo;Access violation (read)">Cause crash &raquo; Access violation (read)</a></b><br>
+This action causes the application to crash by trying to read from the memory address 0x00000000, aka null, causing the application to detect an access violation.<br>
+Parameters: None.<br><br>
+
+<b><a name="CauseCrash &raquo;Access violation (write)">Cause crash &raquo; Access violation (write)</a></b><br>
+This action causes the application to crash by trying to write to the memory address 0x00000000, aka null, causing the application to detect an access violation.<br>
+Parameters: None.<br><br>
+
+<b><a name="CauseCrash &raquo;Access violation (read array)">Cause crash &raquo; Access violation (read array)</a></b><br>
+This action causes the application to crash by reading beyond the end of an array.<br>
+Parameters: None.<br><br>
+
+<b><a name="CauseCrash &raquo;Access violation (write array)">Cause crash &raquo; Access violation (write array)"</a></b><br>
+This action causes the application to crash by writing beyond the end of an array.<br>
+Parameters: None.<br><br>
+
+<br>
 
 </p></font>
 </body>

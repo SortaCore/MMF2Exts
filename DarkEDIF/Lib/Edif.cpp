@@ -153,6 +153,7 @@ char ReadExpressionReturnType(const char * Text)
 void Edif::Init(mv * mV, EDITDATA * edPtr)
 {
 	IsEdittime = mV->HMainWin != 0;
+
     mvInvalidateObject(mV, edPtr);
 }
 

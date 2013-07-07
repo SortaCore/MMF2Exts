@@ -1,5 +1,10 @@
 #include "Common.h"
 
+bool Extension::OnAnyConsoleInput()
+{
+	return true;
+}
+
 bool Extension::OnSpecificConsoleInput(char * Command)
 {
 	if (!Command || Command[0] == '\0')
@@ -7,11 +12,22 @@ bool Extension::OnSpecificConsoleInput(char * Command)
 	return _strnicmp(Command, Data->ConsoleReceived.c_str(), strnlen(Command, 255)) == 0;
 }
 
-bool Extension::OnAnyConsoleInput()
+bool Extension::OnUnhandledException()
 {
 	return true;
 }
-bool Extension::OnUnhandledException()
+
+bool Extension::OnCtrlCEvent()
+{
+	return true;
+}
+
+bool Extension::OnCtrlBreakEvent()
+{
+	return true;
+}
+
+bool Extension::OnConsoleCloseEvent()
 {
 	return true;
 }

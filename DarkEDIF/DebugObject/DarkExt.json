@@ -23,11 +23,12 @@
 			[2, "Set output time format"],
 			[3, "Set output enabled/disabled"],
 			[11, "Set console enabled/disabled"],
-			//[12, "Set process to boot on crash"],
+			//[13, "Set process to boot on crash"],
 			
 			"Separator",
 			
 			[4, "Set crash handling"],
+			[12, "Set minidump settings"],
 			["Cause crash",
 				[5, "Division by zero (int)"],
 				[6, "Division by zero (float)"],
@@ -39,11 +40,11 @@
 			]
 			/*,
 			["Set email format",
-				[13, "Email from"],
-				[14, "Email to"],
-				[15, "Email subject"],
-				[16, "Email content"],
-				[17, "Set log file position"]
+				[14, "Email from"],
+				[15, "Email to"],
+				[16, "Email subject"],
+				[17, "Email content"],
+				[18, "Set log file position"]
 			]*/
 		],
 
@@ -51,14 +52,19 @@
 		[
 			[2, "Unhandled exception trigger"],
 
-			"Separator",
-
-			[0, "On any console command"],
-			[1, "On specific console command"],
+			["Console",
+				[0, "On any console command"],
+				[1, "On specific console command"],
+				
+				"Separator",
+				
+				[3, "On console Ctrl+C event"],
+				[4, "On console Ctrl+Break event"]
+			],
 			
 			"Separator",
 
-			[3, "Darkwire Software", true]
+			[5, "Darkwire Software", true]
 		],
 
 		"ExpressionMenu":
@@ -73,8 +79,8 @@
 			  
 			  "Parameters":
 			  [
-				["Integer", "Intensity of log (error, warning, notice):"],
-				["Integer", "Line of error (event number, occurance number, etc):"],
+				["Integer", "Intensity of log (e.g. 0 = error, 1 = warning, 2 = notice ... you decide the meaning):"],
+				["Integer", "Line of log (event number, occurance number, etc):"],
 				["Text", "Text to output:"]
 			  ]
 			},
@@ -108,8 +114,8 @@
 			
 			  "Parameters":
 			  [
-				["Integer", "How to handle this? (see object help or forums, or ask Phi):"],
-				["Integer", "If you specified continuing, how many times before giving up? (1-100, <0 for infinite):"]
+				["Integer", "How to handle this? (see object help):"],
+				["Integer", "If you specified continuing, how many times before giving up? (1-10):"]
 			  ]
 			},
 
@@ -137,6 +143,15 @@
 			  [
 				["Integer", "Use non-zero for enable, zero for disabling:"]
 			  ]
+			},
+			
+			{ "Title": "Set minidump generation: path %0",
+			
+			  "Parameters":
+			  [
+				["Text", "Minidump file path (*.dmp, use \"\" for no minidump generation):"],
+				["Integer", "Minidump flags (see object help):"]
+			  ]
 			}
 		],
 
@@ -159,10 +174,17 @@
 			  "Triggered": true
 			},
 
+			{ "Title": "%o: On console Ctrl+C event",
+			  "Triggered": true
+			},
+
+			{ "Title": "%o: On console Ctrl+Break event",
+			  "Triggered": true
+			},
+			
+			// Disabled condition, shouldn't be creatable
 			{ "Title": "%o: Wha?"
 			}
-			
-			
 		],
 
 		"Expressions":
@@ -181,7 +203,7 @@
 		[
 			{
 				"Title": "Enable at start",
-				"Info": "Default to debug enabled at start",
+				"Info": "Default to output enabled at start",
 				"Type": "Checkbox"
 			},
 			{
@@ -191,12 +213,17 @@
 			},
 			{
 				"Title": "Initial path",
-				"Info": "Output here if debug is enabled.",
+				"Info": "Output to this path if debug is enabled.",
 				"Type": "Editbox String"
 			},
 			{
 				"Title": "Enable console",
 				"Info": "If debug output is enabled, show all outputs in console, at start?",
+				"Type": "Checkbox"
+			},
+			{
+				"Title": "Pause for debugger",
+				"Info": "When the extension initialises, it will pause and create a message box, allowing a debugger to be attached.",
 				"Type": "Checkbox"
 			}
 		]

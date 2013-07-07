@@ -16,12 +16,11 @@
 
 // Property identifiers
 enum {
-	PROPID_SETTINGS = PROPID_EXTITEM_CUSTOM_FIRST,
-
-	PROPID_ENABLE_AT_START,
+	PROPID_ENABLE_AT_START = PROPID_EXTITEM_CUSTOM_FIRST,
 	PROPID_MSGBOX_IF_PATH_INVALID,
 	PROPID_INITIALPATH,	
 	PROPID_CONSOLE_ENABLED,
+	PROPID_PAUSE_FOR_DEBUGGER,
 
 };
 
@@ -86,8 +85,9 @@ int WINAPI DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr
 		// Set default object settings
 		edPtr->DoMsgBoxIfPathNotSet = false;
 		edPtr->EnableAtStart = false;
-		memset(edPtr->InitialPath, '\0', MAX_PATH+1);
+		memset(edPtr->InitialPath, 0, sizeof(edPtr->InitialPath));
 		edPtr->ConsoleEnabled = false;
+		edPtr->PauseForDebugger = false;
 
         return 0;
 	}
@@ -241,15 +241,6 @@ void WINAPI	DLLExport PrepareToWriteObject(mv * mV, EDITDATA * edPtr, ObjectInfo
 
 BOOL WINAPI GetFilters(mv * mV, EDITDATA * edPtr, DWORD dwFlags, LPVOID pReserved)
 {
-#ifndef RUN_ONLY
-	// If your extension uses image filters
-//	if ( (dwFlags & GETFILTERS_IMAGES) != 0 )
-//		return TRUE;
-
-	// If your extension uses sound filters
-//	if ( (dwFlags & GETFILTERS_SOUNDS) != 0 )
-//		return TRUE;
-#endif // RUN_ONLY
 	return FALSE;
 }
 
@@ -261,30 +252,7 @@ BOOL WINAPI GetFilters(mv * mV, EDITDATA * edPtr, DWORD dwFlags, LPVOID pReserve
 //
 BOOL WINAPI	DLLExport UsesFile (mv * mV, LPTSTR fileName)
 {
-	BOOL r = FALSE;
-#ifndef RUN_ONLY
-
-	// Example: return TRUE if file extension is ".txt"
-/*	
-	LPSTR	ext, npath;
-
-	if ( fileName != NULL )
-	{
-		if ( (ext=(LPSTR)malloc(_MAX_EXT)) != NULL )
-		{
-			if ( (npath=(LPSTR)malloc(_MAX_PATH)) != NULL )
-			{
-				strcpy(npath, fileName);
-				_splitpath(npath, NULL, NULL, NULL, ext);
-				if ( _stricmp(ext, ".txt") == 0 )
-					r = TRUE;
-				free(npath);
-			}
-			free(ext);
-		}
-	} */
-#endif // !defined(RUN_ONLY)
-	return r;
+	return FALSE;
 }
 
 
@@ -295,72 +263,6 @@ BOOL WINAPI	DLLExport UsesFile (mv * mV, LPTSTR fileName)
 //
 void WINAPI DLLExport CreateFromFile (mv * mV, LPTSTR fileName, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
-		if (!edPtr || !fileName)
-		{
-			MessageBoxA(NULL, "CreateFromFile() failed: invalid calling parameters.", 
-						"DebugObject load error", MB_OK | MB_ICONERROR);
-			goto ErrorWipe;
-		}
-		// Initialise your extension data from the given file
-		FILE * File = NULL;
-		while (fopen_s(&File, fileName, "rb") || !File)
-		{
-			// Retry/cancel message box so user can choose whether to retry. Loops until cancel pressed or successful open.
-			if (IDCANCEL == MessageBoxA(NULL, "CreateFromFile() failed: could not open filename.", 
-										"DebugObject load error", MB_RETRYCANCEL | MB_ICONERROR | MB_DEFBUTTON2))
-				goto ErrorWipe;
-		}
-
-		// Goto end of file
-		fseek(File, 0, SEEK_END);
-	
-		long FileSize = ftell(File);
-
-		// File size should be 2 chars and a null-terminated string, limited to MAX_PATH bytes + null
-		if (FileSize < 3+0+1 || FileSize > 3+MAX_PATH+1)
-		{
-			MessageBoxA(NULL, "CreateFromFile() failed: File size is invalid.", "DebugObject load error", MB_OK | MB_ICONERROR | MB_DEFBUTTON2);
-			fclose(File);
-			goto ErrorWipe;
-		}
-		char Betsy[3+MAX_PATH+1];
-
-		// Didn't read all the bytes
-		if (FileSize != fread_s(File, 2+MAX_PATH+1, sizeof(char), FileSize, File))
-		{
-			MessageBoxA(NULL, "CreateFromFile() failed: reading from file encountered error.", "DebugObject load error", MB_OK | MB_ICONERROR | MB_DEFBUTTON2);
-			fclose(File);
-			goto ErrorWipe;
-		}
-
-		// String property is the only read operation that can encounter an error, so do it first
-		if (strcpy_s(edPtr->InitialPath, MAX_PATH, &Betsy[3]))
-		{
-			std::stringstream s; s << "CreateFromFile() failed: reading from file encountered error " << errno << ".";
-			MessageBoxA(NULL, s.str().c_str(), "DebugObject load error", MB_OK | MB_ICONERROR | MB_DEFBUTTON2);
-			fclose(File);
-			goto ErrorWipe;
-		}
-		
-		// Read other variables from file
-		edPtr->EnableAtStart = Betsy[0] != 0;
-		edPtr->DoMsgBoxIfPathNotSet = Betsy[1] != 0;
-		edPtr->ConsoleEnabled = Betsy[2] != 0;
-
-		// Cleanup
-		fclose(File);
-		return;
-
-		// On error, wipe to default variables
-		ErrorWipe:
-			edPtr->DoMsgBoxIfPathNotSet = false;
-			edPtr->EnableAtStart = false;
-			edPtr->ConsoleEnabled = false;
-			memset(edPtr->InitialPath, '\0', MAX_PATH+1);
-
-
-	#endif // #ifndef(RUN_ONLY)
 }
 
 // ============================================================================
@@ -404,20 +306,6 @@ void WINAPI DLLExport ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterI
 //
 LPARAM WINAPI DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
-#ifndef RUN_ONLY
-	// Example
-	// -------
-//	if ( nPropID == PROPID_COMBO )
-//	{
-//		switch (edPtr->sType)
-//		{
-//		case TYPE1:
-//			return (LPARAM)ComboList1;
-//		case TYPE2:
-//			return (LPARAM)ComboList2;
-//		}
-//	}
-#endif // !defined(RUN_ONLY)
 	return NULL;
 }
 
@@ -429,8 +317,6 @@ LPARAM WINAPI DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, UINT nProp
 //
 void WINAPI DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, UINT nPropID, LPARAM lParam)
 {
-#ifndef RUN_ONLY
-#endif // !defined(RUN_ONLY)
 }
 
 // --------------------
@@ -442,21 +328,10 @@ void WINAPI DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, UINT nPr
 LPVOID WINAPI DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
-	// Example
-	// -------
-	switch (nPropID) {
-//
-//	// Returns a color.
-//	case PROPID_COLOR:
-//		return new CPropDWordValue(edPtr->dwColor);
-//
-//	// Returns a string
-	case PROPID_INITIALPATH:
-		return new Prop_AStr(&edPtr->InitialPath[0]);
-//
-//	// Returns the value of the combo box
-//	case PROPID_COMBO:
-//		return new CPropDWordValue(edPtr->nComboIndex);
+	switch (nPropID)
+	{
+		case PROPID_INITIALPATH:
+			return new Prop_AStr(&edPtr->InitialPath[0]);
 	}
 
 #endif // !defined(RUN_ONLY)
@@ -471,23 +346,20 @@ LPVOID WINAPI DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, UINT nPropID)
 BOOL WINAPI DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
 #ifndef RUN_ONLY
-	// Example
-	// -------
-	switch (nPropID) {
 	// Return 0 (unchecked) or 1 (checked)
-	case PROPID_ENABLE_AT_START:
-		return edPtr->EnableAtStart;
-	case PROPID_MSGBOX_IF_PATH_INVALID:
-		return edPtr->DoMsgBoxIfPathNotSet;
-	case PROPID_CONSOLE_ENABLED:
-		return edPtr->ConsoleEnabled;
-//	case PROPID_TEXT:
-//		return &edPtr->szText[0];
+	switch (nPropID)
+	{
+		case PROPID_ENABLE_AT_START:
+			return edPtr->EnableAtStart;
+		case PROPID_MSGBOX_IF_PATH_INVALID:
+			return edPtr->DoMsgBoxIfPathNotSet;
+		case PROPID_CONSOLE_ENABLED:
+			return edPtr->ConsoleEnabled;
+		case PROPID_PAUSE_FOR_DEBUGGER:
+			return edPtr->PauseForDebugger;
 	}
-	
-
 #endif // !defined(RUN_ONLY)
-	return 0;		// Unchecked
+	return 0;
 }
 
 // --------------------
@@ -555,22 +427,19 @@ void WINAPI DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, UINT nPropID, LPVO
 void WINAPI DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, UINT nPropID, BOOL nCheck)
 {
 #ifndef RUN_ONLY
-	// Example
-	// -------
 	switch (nPropID)
 	{
 		case PROPID_ENABLE_AT_START:
-			edPtr->EnableAtStart = nCheck != 0;
-			// mvInvalidateObject(mV, edPtr);
-			// mvRefreshProp(mV, edPtr, PROPID_COMBO, TRUE);
+			edPtr->EnableAtStart = (nCheck != 0);
 			return;
 		case PROPID_MSGBOX_IF_PATH_INVALID:
-			edPtr->DoMsgBoxIfPathNotSet = nCheck != 0;
+			edPtr->DoMsgBoxIfPathNotSet = (nCheck != 0);
 			return;
 		case PROPID_CONSOLE_ENABLED:
-			edPtr->ConsoleEnabled = nCheck != 0;
-			// mvInvalidateObject(mV, edPtr);
-			// mvRefreshProp(mV, edPtr, PROPID_COMBO, TRUE);
+			edPtr->ConsoleEnabled = (nCheck != 0);
+			return;
+		case PROPID_PAUSE_FOR_DEBUGGER:
+			edPtr->PauseForDebugger = (nCheck != 0);
 			return;
 	}
 #endif // !defined(RUN_ONLY)
@@ -583,19 +452,6 @@ void WINAPI DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, UINT nPropID, BOOL
 //
 BOOL WINAPI DLLExport EditProp(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
-#ifndef RUN_ONLY
-
-	// Example
-	// -------
-/*
-	if (nPropID==PROPID_EDITCONTENT)
-	{
-		if ( EditObject(mV, NULL, NULL, edPtr) )
-			return TRUE;
-	}
-*/
-
-#endif // !defined(RUN_ONLY)
 	return FALSE;
 }
 
@@ -606,17 +462,6 @@ BOOL WINAPI DLLExport EditProp(mv * mV, EDITDATA * edPtr, UINT nPropID)
 //
 BOOL WINAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, UINT nPropID)
 {
-#ifndef RUN_ONLY
-	// Example
-	// -------
-/*
-	switch (nPropID) {
-
-	case PROPID_CHECK:
-		return (edPtr->nComboIndex != 0);
-	}
-*/
-#endif // !defined(RUN_ONLY)
 	return TRUE;
 }
 
@@ -645,11 +490,6 @@ DWORD WINAPI DLLExport GetTextCaps(mv * mV, EDITDATA * edPtr)
 //
 BOOL WINAPI DLLExport GetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPTSTR pStyle, UINT cbSize)
 {
-#if !defined(RUN_ONLY)
-	// Example: copy LOGFONT structure from EDITDATA
-	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
-#endif // !defined(RUN_ONLY)
-
 	return TRUE;
 }
 
@@ -661,11 +501,6 @@ BOOL WINAPI DLLExport GetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPTS
 //
 BOOL WINAPI DLLExport SetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPCSTR pStyle)
 {
-#if !defined(RUN_ONLY)
-	// Example: copy LOGFONT structure to EDITDATA
-	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
-#endif // !defined(RUN_ONLY)
-
 	return TRUE;
 }
 
@@ -676,8 +511,7 @@ BOOL WINAPI DLLExport SetTextFont(mv * mV, EDITDATA * edPtr, LPLOGFONT plf, LPCS
 //
 COLORREF WINAPI DLLExport GetTextClr(mv * mV, EDITDATA * edPtr)
 {
-	// Example
-	return 0;	// edPtr->fontColor;
+	return 0;
 }
 
 // --------------------
@@ -698,25 +532,7 @@ void WINAPI DLLExport SetTextClr(mv * mV, EDITDATA * edPtr, COLORREF color)
 //
 DWORD WINAPI DLLExport GetTextAlignment(mv * mV, EDITDATA * edPtr)
 {
-	DWORD dw = 0;
-#if !defined(RUN_ONLY)
-	// Example
-	// -------
-/*	if ( (edPtr->eData.dwFlags & ALIGN_LEFT) != 0 )
-		dw |= TEXT_ALIGN_LEFT;
-	if ( (edPtr->eData.dwFlags & ALIGN_HCENTER) != 0 )
-		dw |= TEXT_ALIGN_HCENTER;
-	if ( (edPtr->eData.dwFlags & ALIGN_RIGHT) != 0 )
-		dw |= TEXT_ALIGN_RIGHT;
-	if ( (edPtr->eData.dwFlags & ALIGN_TOP) != 0 )
-		dw |= TEXT_ALIGN_TOP;
-	if ( (edPtr->eData.dwFlags & ALIGN_VCENTER) != 0 )
-		dw |= TEXT_ALIGN_VCENTER;
-	if ( (edPtr->eData.dwFlags & ALIGN_BOTTOM) != 0 )
-		dw |= TEXT_ALIGN_BOTTOM;
-*/
-#endif // !defined(RUN_ONLY)
-	return dw;
+	return 0;
 }
 
 // --------------------
@@ -726,28 +542,6 @@ DWORD WINAPI DLLExport GetTextAlignment(mv * mV, EDITDATA * edPtr)
 //
 void WINAPI DLLExport SetTextAlignment(mv * mV, EDITDATA * edPtr, DWORD dwAlignFlags)
 {
-#if !defined(RUN_ONLY)
-	// Example
-	// -------
-/*	DWORD dw = edPtr->eData.dwFlags;
-
-	if ( (dwAlignFlags & TEXT_ALIGN_LEFT) != 0 )
-		dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_LEFT;
-	if ( (dwAlignFlags & TEXT_ALIGN_HCENTER) != 0 )
-		dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_HCENTER;
-	if ( (dwAlignFlags & TEXT_ALIGN_RIGHT) != 0 )
-		dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_RIGHT;
-
-	if ( (dwAlignFlags & TEXT_ALIGN_TOP) != 0 )
-		dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_TOP;
-	if ( (dwAlignFlags & TEXT_ALIGN_VCENTER) != 0 )
-		dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_VCENTER;
-	if ( (dwAlignFlags & TEXT_ALIGN_BOTTOM) != 0 )
-		dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_BOTTOM;
-
-	edPtr->eData.dwFlags = dw;
-*/
-#endif // !defined(RUN_ONLY)
 }
 
 
@@ -762,58 +556,7 @@ void WINAPI DLLExport SetTextAlignment(mv * mV, EDITDATA * edPtr, DWORD dwAlignF
 //
 void WINAPI InitParameter(mv * mV, short code, ParamExtension * pExt)
 {
-#if !defined(RUN_ONLY)
-	// Example
-	// -------
-	// strcpy(&pExt->pextData[0], "Parameter Test");
-	// pExt->pextSize = sizeof(paramExt) + strlen(pExt->pextData)+1;
-#endif // !defined(RUN_ONLY)
 }
-
-// Example of custom parameter setup proc
-// --------------------------------------
-/*
-#if !defined(RUN_ONLY)
-BOOL CALLBACK DLLExport SetupProc(HWND hDlg, UINT msgType, WPARAM wParam, LPARAM lParam)
-{
-	paramExt*			pExt;
-
-	switch (msgType)
-	{
-		case WM_INITDIALOG: // Init dialog
-
-			// Save edptr
-			SetWindowLong(hDlg, DWL_USER, lParam);
-			pExt=(paramExt*)lParam;
-
-			SetDlgItemText(hDlg, IDC_EDIT, pExt->pextData);
-			return TRUE;
-
-		case WM_COMMAND: // Command
-
-			// Retrieve edptr
-			pExt = (paramExt *)GetWindowLong(hDlg, DWL_USER);
-
-			switch (wmCommandID)
-			{
-			case IDOK:	// Exit
-				GetDlgItemText(hDlg, IDC_EDIT, pExt->pextData, 500);
-				pExt->pextSize=sizeof(paramExt)+strlen(pExt->pextData)+1;
-				EndDialog(hDlg, TRUE);
-				return TRUE;
-
-				default:
-					break;
-			}
-			break;
-
-		default:
-			break;
-	}
-	return FALSE;
-}
-#endif // !defined(RUN_ONLY)
-*/
 
 // --------------------
 // EditParameter
@@ -822,13 +565,6 @@ BOOL CALLBACK DLLExport SetupProc(HWND hDlg, UINT msgType, WPARAM wParam, LPARAM
 //
 void WINAPI EditParameter(mv * mV, short code, ParamExtension * pExt)
 {
-#if !defined(RUN_ONLY)
-
-	// Example
-	// -------
-	// DialogBoxParam(hInstLib, MAKEINTRESOURCE(DB_TRYPARAM), mV->mvHEditWin, SetupProc, (LPARAM)(LPBYTE)pExt);
-
-#endif // !defined(RUN_ONLY)
 }
 
 // --------------------
@@ -838,11 +574,4 @@ void WINAPI EditParameter(mv * mV, short code, ParamExtension * pExt)
 //
 void WINAPI GetParameterString(mv * mV, short code, ParamExtension * pExt, LPSTR pDest, short size)
 {
-#if !defined(RUN_ONLY)
-
-	// Example
-	// -------
-	// wsprintf(pDest, "Super parameter %s", pExt->pextData);
-
-#endif // !defined(RUN_ONLY)
 }

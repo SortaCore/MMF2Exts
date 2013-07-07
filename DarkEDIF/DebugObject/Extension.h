@@ -10,13 +10,14 @@ public:
 
 	GlobalData * Data;
     static const int MinimumBuild = 256;
-    static const int Version = 5;
-	// v5: Release for bug fixes and global settings
+    static const int Version = 6;
+	// v6: Release for edittime property fix, added runtime property, new minidump events
+	// v5: Release for bug fixes and global settings, and unhandled exception event
 	// v4: First release with console
 	// v3: Release due to bug fixes
 	// v2: Release due to new features
 	// v1: First release
-	static const int OEFLAGS = OIFlags::GLOBAL;
+	static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
 	static const int OEPREFS = OEPREFS::GLOBAL;
     
     static const int WindowProcPriority = 100;
@@ -51,18 +52,22 @@ public:
 		void SetOutputTimeFormat(char * Format);
 		void SetOutputOnOff(int OnOff);
 		void SetHandler(int Reaction, int ContinuesCount);
-		void CauseCrash_ZeroDivisionInt(void);
-		void CauseCrash_ZeroDivisionFloat(void);
-		void CauseCrash_WriteAccessViolation(void);
-		void CauseCrash_ReadAccessViolation(void);
-		void CauseCrash_ArrayOutOfBoundsRead(void);
-		void CauseCrash_ArrayOutOfBoundsWrite(void);
+		void CauseCrash_ZeroDivisionInt();
+		void CauseCrash_ZeroDivisionFloat();
+		void CauseCrash_WriteAccessViolation();
+		void CauseCrash_ReadAccessViolation();
+		void CauseCrash_ArrayOutOfBoundsRead();
+		void CauseCrash_ArrayOutOfBoundsWrite();
 		void SetConsoleOnOff(int OnOff);
+		void SetDumpFile(const char * path, int flags);
 
 	/// Conditions
 		bool OnSpecificConsoleInput(char * Command);
 		bool OnAnyConsoleInput();
 		bool OnUnhandledException();
+		bool OnCtrlCEvent();
+		bool OnCtrlBreakEvent();
+		bool OnConsoleCloseEvent();
 
 	/// Expressions
 		const char * FullCommand();

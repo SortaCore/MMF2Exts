@@ -1,6 +1,7 @@
 
 #include "Common.h"
 
+// Called by action only
 void Extension::Output(int Intensity, int Line, const char * TextP)
 {
 	// Duplicate variables
@@ -43,25 +44,31 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 	}
 	
 	// Get handle to file
-	unsigned char c = 0;
 	while (true)
 	{
 		// Returns false on success
 		if ((Data->FileHandle = _fsopen(File, "wb", _SH_DENYNO)) != NULL)
 			break;
-		else
+
+		if (!Data->DoMsgBoxIfPathNotSet)
 		{
-			std::stringstream s;
-			s << "Failed to open log file: \r\n"
-			  << File << "\r\n"
-			  << "Returned error: [" << errno << "] :\r\n"
-			  << "[" << strerror(errno) << "]\r\n"
-			  << "Look for \"errno errors\" on Google for more information."; 
-			if (MessageBoxA(NULL, s.str().c_str(), "DebugObject - Error", MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
-			{
-				CloseLock();
-				return;
-			}
+			CloseLock();
+			free(File);
+			return;
+		}
+
+		std::stringstream s;
+		s << "Failed to open log file: \r\n"
+			<< File << "\r\n"
+			<< "Returned error: [" << errno << "] :\r\n"
+			<< "[" << strerror(errno) << "]\r\n"
+			<< "Look for \"errno errors\" on Google for more information."; 
+		
+		if (MessageBoxA(NULL, s.str().c_str(), "DebugObject - Error", MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
+		{
+			CloseLock();
+			free(File);
+			return;
 		}
 	}
 	
@@ -129,6 +136,8 @@ void Extension::SetHandler(int Reaction, int Continues)
 	}
 	
 }
+
+// Called by non-action only
 void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
 {
 	// Can't output if Data failed to initialise
@@ -268,19 +277,30 @@ void Extension::SetConsoleOnOff(int OnOff)
 				freopen("CONIN$",  "r", stdin); 
 				freopen("CONOUT$", "w", stdout); 
 
-				// Handle all console events (the X was clicked, Ctrl+C pressed, etc)
-				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, TRUE);
+				// Handle all console events (Ctrl+C pressed, etc)
+				SetConsoleCtrlHandler(HandlerRoutine, TRUE);
 
-				Data->ReleaseConsoleInput = false;
+				// Disable close window button (this terminates the process after a delay, so cannot be handled)
+				HWND hwnd = ::GetConsoleWindow();
+				if (hwnd != NULL)
+				{
+					HMENU hMenu = ::GetSystemMenu(hwnd, FALSE);
+					if (hMenu != NULL)
+						DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
+				}
+
+				Data->ReleaseConsoleInput = true;
 				Data->ConsoleReceived = "";
-				CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&ReceiveConsoleInput, NULL, NULL, NULL);
+				Data->ConsoleBreakType = 0;
+				
+				CreateThread(NULL, NULL, ReceiveConsoleInput, NULL, NULL, NULL);
 
 				CloseLock();
 			}
 			else
 			{
 				CloseLock();
-				OutputNow(5, -1, "Console opening function AllocConsole() failed."
+				OutputNow(5, -1, "Console opening function AllocConsole() failed.\r\n"
 								 "This generally occurs when a console has already been allocated.");
 			}
 		}
@@ -290,7 +310,7 @@ void Extension::SetConsoleOnOff(int OnOff)
 			{
 				Data->ConsoleOut = NULL;
 				Data->ConsoleIn = NULL;
-				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, FALSE);
+				SetConsoleCtrlHandler(HandlerRoutine, FALSE);
 				CloseLock();
 			}
 			else
@@ -349,3 +369,19 @@ void Extension::CauseCrash_ArrayOutOfBoundsWrite(void)
 	i[2] = 0;
 }
 #pragma optimize( "", on )
+
+void Extension::SetDumpFile(const char * path, int flags)
+{
+	char * path2 = _strdup(path);
+
+	if ((flags & MiniDumpValidTypeFlags) != flags)
+		OutputNow(5, -1, "Invalid minidump flags specified.");
+	else
+	{
+		OpenLock();
+		Data->MiniDumpPath = path2;
+		Data->MiniDumpType = flags;
+		CloseLock();
+	}
+	free(path2);
+}
