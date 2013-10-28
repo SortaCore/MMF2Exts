@@ -92,7 +92,7 @@
 		],
 		"Properties": [
 			{
-				"Title": "Folder",
+				"Title": "Folder of props",
 				"Info": "Folder information",
 				"Type": "Folder"
 			},
@@ -100,57 +100,64 @@
 					"Title": "Checkbox within folder",
 					"Info": "yeah, it should be bold.",
 					"Type": "Checkbox",
-					"Bold": true
+					"DefaultState": true, // or false
 				},
 			{
 				"Type": "FolderEnd"
 			},
 			{
-				"Title": "Static text",
+				"Title": "Static text 1",
 				"Info": "Blank text",
 				"Type": "Text",
 				"DefaultState": "Static text, default state. Or default text.",
 			},
 			{
-				"Title": "Static text",
+				"Title": "Static text 2",
 				"Info": "Blank text, bold'd",
 				"Type": "Text",
+				"DefaultState": "Bolded static text.",
 				"Bold": true
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 3",
 				"Info": "yeah, it shouldn't be bold.",
 				"Type": "Edit button",
+				"DefaultState": "Bolded static text.",
 				"Text": "Button"
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 4",
 				"Info": "yeah, it are very bold.",
 				"Type": "Edit button",
+				"DefaultState": "Verah Boldz Edit Butt.",
 				"Bold": true
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 5",
 				"Info": "yeah, it are very bold.",
+				"DefaultState": "Verah Boldz Edit Strng..",
 				"Type": "Editbox String"
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 6",
 				"Info": "This one should force uppercase.",
 				"Type": "Editbox String",
+				"DefaultState": "Non Bolz Edit Strng Upperz!",
 				"Case": "Upper"
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 7",
 				"Info": "This one should be limited to 25 characters.",
 				"Type": "Editbox String",
+				"DefaultState": "Non Bolz Edit Strng Loalwas!",
 				"Case": "Lower",
 				"MaxLength": 25
 			},
 			{
-				"Title": "Editable",
+				"Title": "Editable 8",
 				"Info": "yeah, limited between 25 and 20",
 				"Type": "Editbox Number",
+				"DefaultState": 21,
 				"Maximum": 25,
 				"Minimum": 20
 			}
@@ -256,56 +263,56 @@
 			},
 				{
 					"Title": "Case à cocher dans le dossier",
-					"Info": "yeah, it should be bold.",
+					"Info": "oui, il faut faire preuve d'audace.",
 					"Type": "Checkbox",
-					"Bold": true
+					"DefaultState": true
 				},
 			{
 				"Type": "FolderEnd"
 			},
 			{
-				"Title": "Texte statique",
+				"Title": "Texte statique 1",
 				"Info": "Texte vide",
 				"Type": "Text",
 			},
 			{
-				"Title": "Texte statique",
+				"Title": "Texte statique 2",
 				"Info": "Texte vide, en caractères gras",
 				"Type": "Text",
 				"Bold": true
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 3",
 				"Info": "Ouais, il ne devrait pas faire preuve d'audace.",
 				"Type": "Edit button",
 				"Text": "Bouton"
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 4",
 				"Info": "Ouais, il est très gras.",
 				"Type": "Edit button",
 				"Bold": true
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 5",
 				"Info": "Régulière chaîne de boîte d'édition.",
 				"Type": "Editbox String"
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 6",
 				"Info": "Celui-ci devrait obliger les majuscules.",
 				"Type": "Editbox String",
 				"Case": "Upper"
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 7",
 				"Info": "Celui-ci devrait être limité à 25 caractères.",
 				"Type": "Editbox String",
 				"Case": "Lower",
 				"MaxLength": 25
 			},
 			{
-				"Title": "Éditable",
+				"Title": "Éditable 8",
 				"Info": "Celui-ci devrait être limité entre 20 et 25.",
 				"Type": "Editbox Number",
 				"Maximum": 25,

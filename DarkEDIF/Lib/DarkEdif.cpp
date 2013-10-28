@@ -319,131 +319,117 @@ bool CreateNewExpressionInfo(void)
 	return true;
 }
 
-#ifndef NOPROPS
 // DarkEDIF - automatic property setup
 using namespace Edif::Properties;
-#define WriteChkbox() *(bool *)(&Var[1]) = (bool)CurLang["Properties"][i][(::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX) ? "DefaultState" : "ChkDefault"]
+
+#include <sstream>
+#include <algorithm>
+
 void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 {
-	edPtr = (EDITDATA *) mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
-	size_t PrevSize;
-	char * endOfEditData = (char *)&edPtr->DarkEDIF_Props[0];
+	std::stringstream mystr;
+	char * chkboxes = (char *)calloc(size_t(ceil(CurLang["Properties"].u.array.length / 8.0f)), 1);
 	
 	// Set default object settings from DefaultState.
 	for (unsigned int i = 0; i < CurLang["Properties"].u.array.length; ++i)
 	{
-		const json_value & JProp = CurLang["Properties"][i]["DefaultState"];
-		PrevSize = edPtr->DarkEDIF_Prop_Size;
-		endOfEditData = &((char *)&edPtr->DarkEDIF_Props)[PrevSize];
+		const json_value & JProp = CurLang["Properties"][i];
 		
+		// TODO: If default state is missing, say the name of the property for easy repair by dev
 		switch (::SDK->EdittimeProperties[i].Type_ID)
 		{
+			case PROPTYPE_LEFTCHECKBOX:
+			{
+				if (JProp["DefaultState"].type != json_boolean)
+					MessageBoxA(NULL, "Invalid or no default checkbox value specified.", "DarkEDIF setup warning", MB_OK);
+
+				if (JProp["DefaultState"])
+					chkboxes[i >> 3] |= 1 << (i % 8);
+
+				break;
+			}
+
 			case PROPTYPE_COLOR:
 			case PROPTYPE_EDIT_NUMBER:
 			{
-				if (JProp.type != json_integer)
+				if (JProp["DefaultState"].type != json_integer)
 					MessageBoxA(NULL, "Invalid or no default integer value specified.", "DarkEDIF setup warning", MB_OK);
 				
-				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_Int64) + 1);
+				unsigned int i = unsigned int(long long(JProp["DefaultState"]) & 0xFFFFFFFF);
+				mystr.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
 				
-				if (!edPtr)
-				{
-					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
+				if (JProp["ChkDefault"])
+					chkboxes[i >> 3] |= 1 << (i % 8);
 
-				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Int64) + 1;
-				Prop_Int64 * Var = new Prop_Int64(JProp);
-					
-				if (!Var || !Var->CopyToAddr(endOfEditData))
-				{
-					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
-
-				WriteChkbox();
-				Var->Delete();
 				break;
 			}
 				
 			case PROPTYPE_STATIC:
+			case PROPTYPE_FOLDER:
+			case PROPTYPE_FOLDER_END:
+			case PROPTYPE_EDITBUTTON:
+				break; // do not store
+			
+
 			case PROPTYPE_EDIT_STRING:
 			{
-				if (JProp.type != json_string)
+				if (JProp["DefaultState"].type != json_string)
 					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEDIF - setup warning", MB_OK);
 				
-				size_t StrLen = strlen(JProp) + 1;
-				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_AStr) + StrLen + 1);
+				// No casing change necessary				
+				if (_stricmp(JProp["Case"], "Upper") && _stricmp(JProp["Case"], "Lower"))
+					mystr << (const char *)(JProp["DefaultState"]) << char(0);
+				else
+				{
+					std::string dup(JProp["DefaultState"]);
+					std::transform(dup.begin(), dup.end(), dup.begin(), !_stricmp(JProp["Case"], "Upper") ? toupper : tolower);
+					mystr << dup.c_str() << char(0);
+				}
 				
-				if (!edPtr)
-				{
-					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
+				if (JProp["ChkDefault"])
+					chkboxes[i >> 3] |= 1 << (i % 8);
 
-				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_AStr) + StrLen + 1;
-				Prop_AStr * Var = new Prop_AStr((const char *)JProp);
-					
-				if (!Var || !Var->CopyToAddr(endOfEditData))
-				{
-					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
-
-				WriteChkbox();
-				Var->Delete();
 				break;
 			}
 				
+
 			case PROPTYPE_COMBOBOX:
 			{
 				if (JProp.type != json_array)
 					MessageBoxA(NULL, "Invalid or no default array specified.", "DarkEDIF - setup warning", MB_OK);
-					
-				char ** DefaultItems = new char * [JProp.u.object.length+2];
-					
-				DefaultItems[0] = nullptr; // null at start required by MMF2
-				for (unsigned int j = 0; j < JProp.u.object.length; ++j)
-					DefaultItems[j+1] = _strdup(JProp[j]);
-				DefaultItems[JProp.u.object.length+1] = nullptr; // null at end required by MMF2
-
-				size_t PrevSize = edPtr->DarkEDIF_Prop_Size;
-				edPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, PrevSize + sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1);
 				
-				if (!edPtr)
-				{
-					MessageBoxA(NULL, "Could not reallocate edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
-				
-				edPtr->DarkEDIF_Prop_Size += sizeof(Prop_Buff) + (JProp.u.object.length * sizeof(char *)) + 1;
-				Prop_Buff * Var = new Prop_Buff((JProp.u.object.length * sizeof(char *)), DefaultItems);
-					
-				if (!Var || !Var->CopyToAddr(endOfEditData))
-				{
-					MessageBoxA(NULL, "Could not copy variable into edPtr, initialisation of properties failed.", "DarkEDIF error", MB_OK);
-					return;
-				}
-					
-				WriteChkbox();
-				Var->Delete();
+				for (unsigned int j = 0; j < JProp["DefaultState"].u.object.length; ++j)
+					mystr << (const char *)(JProp["DefaultState"][j]) << char(0);
 
-				delete [] DefaultItems; // Prop_Buff constructor would have duplicated it
+				mystr << char(0); // Extra empty string
+				if (JProp["ChkDefault"])
+					chkboxes[i >> 3] |= 1 << (i % 8);
+
 				break;
 			}
 
 			// These have no ID or property that can be changed
 			default:
-				//AddSingleProp(nullptr);
-				//edPtr->Properties.push_back(*(Prop *)(nullptr));
 				break;
 		}
-/*		// Checkbox-only property uses "DefaultState"
-		if (::SDK->EdittimeProperties[i].Type_ID == PROPTYPE_LEFTCHECKBOX)
-			edPtr->PropCheckboxes.push_back(bool(CurLang["Properties"][i]["DefaultState"]));
-		else // "DefaultState" reserved; use "ChkDefault"
-			edPtr->PropCheckboxes.push_back(bool(CurLang["Properties"][i]["ChkDefault"]));*/
 	}
+
+	std::string mystr2(chkboxes, _msize(chkboxes));
+	mystr2 += mystr.str();
+
+	free(chkboxes);
+	mystr.clear();
+	
+	edPtr = (EDITDATA *) mvReAllocEditData(mV, edPtr, sizeof(EDITDATA) + mystr2.size());
+	if (!edPtr)
+	{
+		MessageBoxA(NULL, "Could not reallocate EDITDATA.\n\n*cough* MMF2's fault.", "DarkEDIF - setup warning", MB_OK);
+		return;
+	}
+
+	edPtr->DarkEDIF_Prop_Size = sizeof(EDITDATA) + mystr2.size();
+	memset(edPtr->DarkEDIF_Props, 0, mystr2.size());
+	memcpy(edPtr->DarkEDIF_Props, mystr2.data(), mystr2.size());
 }
 
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)
@@ -458,49 +444,159 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 		return nullptr;
 	}
 
-	char * Current = (char *)&edPtr->DarkEDIF_Props[0];
-	unsigned int i = 0;
-	while (i < ID)
-	{
-		if ((char *)Current > (((char *)edPtr->DarkEDIF_Props) + edPtr->DarkEDIF_Prop_Size))
-		{
-			MessageBoxA(NULL, "Error: extended past properties.", "DarkEDIF error", MB_OK);
-			break;
-		}
-		switch (((Prop *)Current)->GetClassID())
-		{
-			case 'STRA':
-				Current += sizeof(Prop_AStr)+((strlen(((Prop_AStr *)Current)->String)+1)*sizeof(char))+1;
-				break;
-			case 'STRW':
-				Current += sizeof(Prop_WStr)+((wcslen(((Prop_WStr *)Current)->String)+1)*sizeof(wchar_t))+1;
-				break;
-			case 'LPTR':
-				Current += sizeof(Prop_Buff)+((Prop_Buff *)Current)->Size+1;
-				break;
-			case 'INT ':
-				Current += sizeof(Prop_SInt)+1;
-				break;
-			case 'INT2':
-				Current += sizeof(Prop_Int64)+1;
-				break;
-			case 'DWRD':
-				Current += sizeof(Prop_UInt)+1;
-				break;
-			case 'FLOT':
-				Current += sizeof(Prop_Float)+1;
-				break;
-			default:
-				MessageBoxA(NULL, "FREAK OUT!!!!", "DarkEDIF - error", MB_OK);
-		}
-		++i;
-	}
-	return (Prop *)Current;
-}
-char * GetPropertyChbx(EDITDATA * edPtr, size_t ID)
-{
-	char * P = (char *)GetProperty(edPtr, ID + 1);
-	return P ? P - 1 : nullptr;
+	const char * curStr = (const char *)CurLang["Properties"][ID]["Type"]; 
+
+	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
+		return new Prop_Str(CurLang["Properties"][ID]["DefaultState"]);
+
+
+	unsigned int size;
+	char * Current = PropIndex(edPtr, ID, &size);
+	
+	Prop * ret = nullptr;
+
+	if (!_stricmp(curStr, "Editbox String"))
+		ret = new Prop_Str(Current);
+	else if (!_stricmp(curStr, "Editbox Number"))
+		ret = new Prop_UInt(*(unsigned int *)Current);
+	else if (!_stricmp(curStr, "Combo Box"))
+		ret = new Prop_Buff(size, (void *)Current);
+	else if (_stricmp(curStr, "Checkbox"))
+		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
+
+	return ret;
 }
 
-#endif // NOPROPS
+void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue)
+{
+	// The DarkEDIF_Props consists of a set of chars, whereby each bit in the char is the "checked"
+	// value for the Prop ID specified. Thus each char supports 8 properties.
+	int byteIndex = PropID >> 3, bitIndex = PropID % 8;
+
+	if (newValue)
+		edPtr->DarkEDIF_Props[byteIndex] |= 1 << bitIndex;
+	else
+		edPtr->DarkEDIF_Props[byteIndex] &= ~(1 << bitIndex);
+}
+
+void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize)
+{
+	unsigned int oldSize; // Set by PropIndex
+	const char * curStr = CurLang["Properties"][PropID]["Type"];
+	char * oldData = PropIndex(edPtr, PropID, &oldSize);
+	bool rearrangementRequired = false;
+
+	if (!_stricmp(curStr, "Editbox String"))
+		rearrangementRequired = newSize != oldSize; // May need resizing
+	else if (!_stricmp(curStr, "Editbox Number"))
+		rearrangementRequired = false; //
+	else if (!_stricmp(curStr, "Combo Box"))
+		rearrangementRequired = newSize != oldSize; // If one string was made longer and the other shorter - we can't test via size
+	else if (_stricmp(curStr, "Checkbox"))
+		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
+
+	if (!rearrangementRequired)
+	{
+		memcpy(oldData, newData, newSize);
+		return;
+	}
+
+
+	if (oldSize == 0)
+		MessageBoxA(NULL, "Editbox String size is 0!", "DarkEDIF - Debug info", MB_OK);
+
+	size_t beforeOldSize = oldData - edPtr->DarkEDIF_Props; // Pointer to O|<P|O
+	size_t afterOldSize = beforeOldSize + oldSize;			// Pointer to O|P>|O
+
+	// Duplicate memory to another buffer (if new arragement is smaller - we can't just copy from old buffer after realloc)
+	char * newEdPtr = (char *)malloc(edPtr->DarkEDIF_Prop_Size + (newSize - oldSize));
+
+	if (!newEdPtr)
+	{
+		MessageBoxA(NULL, "Out of memory attempting to rewrite properties!", "DarkEDIF - Property Error", MB_OK);
+		return;
+	}
+
+	char * oldEdPtr = (char *)edPtr;
+	EDITDATA * oldEdPtr_ = edPtr;
+
+	/// Before data
+	memcpy(newEdPtr, oldEdPtr, oldData - oldEdPtr);
+
+	/// New data
+	memcpy(newEdPtr + (oldData - oldEdPtr), newData, newSize);
+
+	/// After data
+	memcpy(newEdPtr + (oldData - oldEdPtr) + newSize, 
+		oldData + oldSize,
+		oldEdPtr_->DarkEDIF_Prop_Size - ((oldData - oldEdPtr) + oldSize));
+	
+	// Reallocate edPtr
+	EDITDATA * v = (EDITDATA *)mvReAllocEditData(mV, edPtr, _msize(newEdPtr));
+	if (!v)
+	{
+		MessageBoxA(NULL, "NULL returned from EDITDATA reallocation. Property changed cancelled.", "DarkEDIF - Propery Error", MB_OK);
+		free(newEdPtr);
+		return;
+	}
+
+	// Copy into edPtr
+	memcpy(v, newEdPtr, _msize(newEdPtr));
+	v->DarkEDIF_Prop_Size = _msize(newEdPtr);
+	free(newEdPtr);
+}	
+
+char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
+{
+	char * Current = &edPtr->DarkEDIF_Props[(size_t)ceil(CurLang["Properties"].u.array.length / 8.0f)], * StartPos, * EndPos;
+	
+	json_value j = CurLang["Properties"];
+
+	if (j.type != json_array)
+	{
+		char msgTitle [128] = {0};
+		Edif::GetExtensionName(msgTitle);
+		strcat_s(msgTitle, " - DarkEDIF error");
+		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK);
+		return nullptr;
+	}
+	
+	const char * curStr = (const char *)j[ID]["Type"];
+	// Read unchangable properties
+	if (!_stricmp(curStr, "Text"))
+		return nullptr;
+	// if (curStr == "other stuff")
+	//	return new Prop_XXX();
+
+	// Read changable properties
+	unsigned int i = 0;
+	while (i <= ID)
+	{
+		curStr = (const char *)j[i]["Type"]; 
+		
+		if (!_stricmp(curStr, "Editbox String"))
+			Current += (_tcslen(Current) + 1) * sizeof(TCHAR);
+		else if (!_stricmp(curStr, "Editbox Number"))
+			Current += sizeof(unsigned int);
+		else if (!_stricmp(curStr, "Combo Box"))
+		{
+			// Loop null-terminated strings until there's a blank one
+			while (((TCHAR *)Current)[1] != _T('\0'))
+				Current += (_tcslen(Current) + 1) * sizeof(TCHAR);
+				
+			Current += sizeof(TCHAR);
+		}
+
+		if (i == ID - 1)
+			StartPos = Current;
+
+		++i;
+	}
+	
+	EndPos = Current;
+
+	*size = EndPos - StartPos;
+	return StartPos;
+}
+
+

@@ -32,6 +32,10 @@ bool CreateNewExpressionInfo();
 #ifndef NOPROPS
 void InitialisePropertiesFromJSON(mv *, EDITDATA *);
 
-Prop * GetProperty(EDITDATA *, size_t)
-char * GetPropertyChbx(EDITDATA *, size_t);
+Prop * GetProperty(EDITDATA *, size_t);
+
+void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue);
+void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize);
+char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
+
 #endif // NOPROPS

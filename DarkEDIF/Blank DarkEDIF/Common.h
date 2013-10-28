@@ -39,7 +39,7 @@ struct EDITDATA
 
 	// Keep DarkEDIF variables as last. Undefined behaviour otherwise.
 	int				DarkEDIF_Prop_Size;
-	PropData		DarkEDIF_Props[0];
+	char			DarkEDIF_Props[0];
 };
 
 class Extension;

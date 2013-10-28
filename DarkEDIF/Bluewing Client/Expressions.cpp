@@ -19,7 +19,7 @@ int Extension::Self_ChannelCount()
 }
 const char * Extension::Peer_Name()
 {
-	return Runtime.CopyString((!ThreadData.Peer || !ThreadData.Peer->Name()) ? "" : ThreadData.Peer->Name());
+	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->IsClosed || !ThreadData.Peer->Name()) ? "" : ThreadData.Peer->Name());
 }
 const char * Extension::ReceivedStr()
 {
@@ -51,7 +51,7 @@ int Extension::Peer_ID()
 }
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? ThreadData.Channel->Name() : ThreadData.Loop.Name ? ThreadData.Loop.Name : "");
+	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->IsClosed ? "" : ThreadData.Channel->Name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
 }
 int Extension::Channel_PeerCount()
 {
@@ -63,7 +63,7 @@ const char * Extension::ChannelListing_Name()
 }
 int Extension::ChannelListing_PeerCount()
 {
-	return ThreadData.Channel ? ThreadData.Channel->PeerCount() : -1;
+	return (!ThreadData.Channel || ThreadData.Channel->IsClosed) ? -1 : ThreadData.Channel->PeerCount();
 }
 int Extension::Self_ID()
 {
@@ -238,11 +238,11 @@ int Extension::SendBinarySize()
 }
 const char * Extension::Self_PreviousName()
 {
-	return Cli.Tag ? (char *)Cli.Tag : "";
+	return Runtime.CopyString(Cli.Tag ? (char *)Cli.Tag : "");
 }
 const char * Extension::Peer_PreviousName()
 {
-	return ThreadData.Peer->Tag ? (char *)ThreadData.Peer->Tag : "";
+	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->IsClosed || !ThreadData.Peer->Tag) ? "" : (char *)ThreadData.Peer->Tag);
 }
 const char * Extension::DenyReason()
 {
@@ -250,7 +250,7 @@ const char * Extension::DenyReason()
 }
 const char * Extension::HostIP()
 {
-	return Cli.ServerAddress().ToString();
+	return Runtime.CopyString(Cli.ServerAddress().ToString());
 }
 int Extension::HostPort()
 {
@@ -258,7 +258,7 @@ int Extension::HostPort()
 }
 const char * Extension::WelcomeMessage()
 {
-	return Cli.WelcomeMessage(); 
+	return  Runtime.CopyString(Cli.WelcomeMessage()); 
 }
 long Extension::ReceivedBinaryAddress()
 {
@@ -408,159 +408,156 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 	{
 		CreateError("Dumping message failed; format supplied was null or \"\".");
 	}
+	else if (ThreadData.ReceivedMsg.Size - Index <= 0)
+	{
+		CreateError("Dumping message failed; index exceeds size of message.");
+	}
 	else
 	{
-		if (ThreadData.ReceivedMsg.Size - Index <= 0)
+		std::stringstream Output;
+		size_t SizeOfFormat = strlen(Format);
+		bool Signed;
+		size_t Count = 0;
+		const char * Msg = &ThreadData.ReceivedMsg.Content[Index];
+		// +c10c20c
+ 		for (const char * i = Format; i < Format+SizeOfFormat;)
 		{
-			CreateError("Dumping message failed; index exceeds size of message.");
-		}
-		else
-		{
-			std::stringstream Output;
-			size_t SizeOfFormat = strlen(Format);
-			bool Signed;
-			size_t Count = 0;
-			const char * Msg = &ThreadData.ReceivedMsg.Content[Index];
-			// +c10c20c
- 			for (const char * i = Format; i < Format+SizeOfFormat;)
+			// Skip past last loop's numbers to get to variable type letter
+			while (isdigit(i[0]))
+				++i;
+
+			// Determine if variable should be signed or unsigned
+			if (i[0] != '+')
+				Signed = true;
+			else
 			{
-				// Skip past last loop's numbers to get to variable type letter
-				while (isdigit(i[0]))
-					++i;
-
-				// Determine if variable should be signed or unsigned
-				if (i[0] != '+')
-					Signed = true;
-				else
-				{
-					Signed = false;
-					++i;
-				}
-
-				// Count number of expected variables
-				Count = max(atoi(i+1),1);
-				
-				// Char
-				if (i[0] == 'c')
-				{
-					++i;
-					if (ThreadData.ReceivedMsg.Size-Index < Count)
-					{
-						CreateError("Could not dump; message was not large enough to contain variables.");
-						return Runtime.CopyString("");
-					}
-					if (Signed)
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Signed char: " << (int)Msg[j] << "\r\n";
-					}
-					else
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Unsigned char: " << (int)((unsigned char *)Msg)[j] << "\r\n";
-					}
-					Msg += Count;
-					
-					continue;
-				}
-				
-				// Short
-				if (i[0] == 'h')
-				{
-					++i;
-					if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(short))
-					{
-						CreateError("Could not dump; message was not large enough to contain variables.");
-						return Runtime.CopyString("");
-					}
-					if (Signed)
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Signed short: " << (int)((short *)Msg)[j] << "\r\n";
-					}
-					else
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Unsigned short: " << (int)((unsigned short *)Msg)[j] << "\r\n";
-					}
-					Msg += Count*sizeof(short);
-					continue;
-				}
-
-				// String (null-terminated)
-				if (i[0] == 's')
-				{
-					++i;
-					if (Signed == false)
-						CreateError("'+' flag not expected next to 's'; strings cannot be unsigned.");
-					for (unsigned int j = 0; j < Count; ++j)
-					{
-						if (strnlen(Msg, ThreadData.ReceivedMsg.Size-Index+1) == ThreadData.ReceivedMsg.Size-Index+1)
-						{
-							CreateError("Could not dump; message was not large enough to contain variables.");
-							return Runtime.CopyString("");
-						}
-
-						Output << "String: " << Msg << "\r\n";
-						Msg += strlen(Msg)+1;
-					}
-					continue;
-				}
-
-				// Integer
-				if (i[0] == 'i')
-				{
-					++i;
-					if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(int))
-					{
-						CreateError("Could not dump; message was not large enough to contain variables.");
-						return Runtime.CopyString("");
-					}
-					if (Signed)
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Signed integer: " << ((int *)Msg)[j] << "\r\n";
-					}
-					else
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Unsigned integer: " << ((unsigned int *)Msg)[j] << "\r\n";
-					}
-					Msg += Count*sizeof(int);
-					continue;
-				}
-
-				// Floating-point
-				if (i[0] == 'f')
-				{
-					++i;
-					if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(float))
-					{
-						CreateError("Could not dump; message was not large enough to contain variables.");
-						return Runtime.CopyString("");
-					}
-					if (!Signed)
-					{
-						CreateError("'+' flag not expected next to 'f'; floats cannot be unsigned.");
-					}
-					else
-					{
-						for (unsigned int j = 0; j < Count; ++j)
-							Output << "Float: " << ((float *)Msg)[j] << "\r\n";
-					}
-					Msg += Count*sizeof(float);
-					continue;
-				}
-
-				// Did not find identifier; error out
-				std::stringstream Error;
-				Error << "Unrecognised variable in format: '" << i[0] << "'. Valid: c, h, s, i, f; operator +.";
-				CreateError(Error.str().c_str());
-				return Runtime.CopyString("");
+				Signed = false;
+				++i;
 			}
 
-			return Runtime.CopyString(Output.str().c_str());
+			// Count number of expected variables
+			Count = max(atoi(i+1),1);
+				
+			// Char
+			if (i[0] == 'c')
+			{
+				++i;
+				if (ThreadData.ReceivedMsg.Size-Index < Count)
+				{
+					CreateError("Could not dump; message was not large enough to contain variables.");
+					return Runtime.CopyString("");
+				}
+				if (Signed)
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Signed char: " << (int)Msg[j] << "\r\n";
+				}
+				else
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Unsigned char: " << (int)((unsigned char *)Msg)[j] << "\r\n";
+				}
+				Msg += Count;
+					
+				continue;
+			}
+				
+			// Short
+			if (i[0] == 'h')
+			{
+				++i;
+				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(short))
+				{
+					CreateError("Could not dump; message was not large enough to contain variables.");
+					return Runtime.CopyString("");
+				}
+				if (Signed)
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Signed short: " << (int)((short *)Msg)[j] << "\r\n";
+				}
+				else
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Unsigned short: " << (int)((unsigned short *)Msg)[j] << "\r\n";
+				}
+				Msg += Count*sizeof(short);
+				continue;
+			}
+
+			// String (null-terminated)
+			if (i[0] == 's')
+			{
+				++i;
+				if (Signed == false)
+					CreateError("'+' flag not expected next to 's'; strings cannot be unsigned.");
+				for (unsigned int j = 0; j < Count; ++j)
+				{
+					if (strnlen(Msg, ThreadData.ReceivedMsg.Size-Index+1) == ThreadData.ReceivedMsg.Size-Index+1)
+					{
+						CreateError("Could not dump; message was not large enough to contain variables.");
+						return Runtime.CopyString("");
+					}
+
+					Output << "String: " << Msg << "\r\n";
+					Msg += strlen(Msg)+1;
+				}
+				continue;
+			}
+
+			// Integer
+			if (i[0] == 'i')
+			{
+				++i;
+				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(int))
+				{
+					CreateError("Could not dump; message was not large enough to contain variables.");
+					return Runtime.CopyString("");
+				}
+				if (Signed)
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Signed integer: " << ((int *)Msg)[j] << "\r\n";
+				}
+				else
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Unsigned integer: " << ((unsigned int *)Msg)[j] << "\r\n";
+				}
+				Msg += Count*sizeof(int);
+				continue;
+			}
+
+			// Floating-point
+			if (i[0] == 'f')
+			{
+				++i;
+				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(float))
+				{
+					CreateError("Could not dump; message was not large enough to contain variables.");
+					return Runtime.CopyString("");
+				}
+				if (!Signed)
+				{
+					CreateError("'+' flag not expected next to 'f'; floats cannot be unsigned.");
+				}
+				else
+				{
+					for (unsigned int j = 0; j < Count; ++j)
+						Output << "Float: " << ((float *)Msg)[j] << "\r\n";
+				}
+				Msg += Count*sizeof(float);
+				continue;
+			}
+
+			// Did not find identifier; error out
+			std::stringstream Error;
+			Error << "Unrecognised variable in format: '" << i[0] << "'. Valid: c, h, s, i, f; operator +.";
+			CreateError(Error.str().c_str());
+			return Runtime.CopyString("");
 		}
+
+		return Runtime.CopyString(Output.str().c_str());
 	}
 
 	return Runtime.CopyString("");

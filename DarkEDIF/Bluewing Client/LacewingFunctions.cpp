@@ -11,7 +11,7 @@ void OnChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Chan
 					  bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 51 : 48);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
+	S.Channel = &Channel;
 	S.Peer = &Peer;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
 	S.ReceivedMsg.Size = Size;
@@ -96,9 +96,10 @@ void OnError(Lacewing::RelayClient &Client, Lacewing::Error &Error)
 
 void OnJoinChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target)
 {
+	Target.IsClosed = false;
+
 	SaveExtInfo &S = Ext.AddEvent(4);
-	S.Channel = Ext.DuplicateChannel(Target);
-	Target.Tag = S.Channel;
+	S.Channel = &Target;
 }
 
 void OnJoinChannelDenied(Lacewing::RelayClient &Client, const char * ChannelName, const char * DenyReason)
@@ -117,8 +118,10 @@ void OnJoinChannelDenied(Lacewing::RelayClient &Client, const char * ChannelName
 
 void OnLeaveChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target)
 {
+	Target.IsClosed = true;
+
 	SaveExtInfo &S = Ext.AddEvent(43);
-	S.Channel = (Lacewing::RelayClient::Channel *)Target.Tag;
+	S.Channel = &Target;
 	
 	// Clear channel copy after this event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
@@ -128,7 +131,7 @@ void OnLeaveChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channe
 void OnLeaveChannelDenied(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target, const char * DenyReason)
 {
 	SaveExtInfo &S = Ext.AddEvent(44);
-	S.Channel = (Lacewing::RelayClient::Channel *)Target.Tag;
+	S.Channel = &Target;
 	
 	// Old deny reason? Free it.
 	if (Ext.DenyReasonBuffer)
@@ -172,21 +175,22 @@ void OnNameSet(Lacewing::RelayClient &Client)
 
 void OnPeerConnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
 {
-	SaveExtInfo &S = Ext.AddEvent(10);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
+	Peer.IsClosed = false;
 
-	// The Tag is used as char * to a name for the subpeer, and as a pointer to the real peer in the main peer.
-	Peer.Tag = Ext.DuplicatePeer(Peer);
-	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
+	SaveExtInfo &S = Ext.AddEvent(10);
+	S.Channel = &Channel;
+	S.Peer = &Peer;
 }
 
 void OnPeerDisconnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
 {
+	Peer.IsClosed = true;
+
 	SaveExtInfo &S = Ext.AddEvent(11);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
-	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
+	S.Channel = &Channel;
+	S.Peer = &Peer;
 	
-	// Clear peer copy after this event is handled
+	// Remove closed peer entirely after above event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 	C.Peer = S.Peer;
@@ -196,8 +200,8 @@ void OnPeerMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel
 				   bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 52 : 49);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
-	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
+	S.Channel = &Channel;
+	S.Peer = &Peer;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
 	S.ReceivedMsg.Size = Size;
 
@@ -250,8 +254,8 @@ void OnPeerMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel
 void OnPeerNameChanged(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer, const char * OldName)
 {
 	SaveExtInfo &S = Ext.AddEvent(45);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
-	S.Peer = (Lacewing::RelayClient::Channel::Peer *)Peer.Tag;
+	S.Channel = &Channel;
+	S.Peer = &Peer;
 
 	// Old previous name? Free it
 	if (Peer.Tag)
@@ -267,7 +271,7 @@ void OnServerChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient
 							bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 72 : 68);
-	S.Channel = (Lacewing::RelayClient::Channel *)Channel.Tag;
+	S.Channel = &Channel;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
 	S.ReceivedMsg.Size = Size;
 

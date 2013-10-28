@@ -14,7 +14,7 @@ public:
     static const int MinimumBuild = 252;
     static const int Version = 3;
 
-    static const int OEFLAGS = OEFLAG::VALUES;
+    static const int OEFLAGS = OEFLAGS::VALUES;
     static const int OEPREFS = 0;
     
     static const int WindowProcPriority = 100;

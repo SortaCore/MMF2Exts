@@ -233,7 +233,7 @@ json_value * json_parse_ex (json_settings * settings,
 	state.ulong_max -= 8;
 	
 	#pragma warning(disable:4133)
-	if (!json_clean_comments (&json, &state, error, length))
+	if (!json_clean_comments (&json, &state, error, &length))
 		goto e_failed;
 	#pragma warning(default:4133)
 	
@@ -584,7 +584,7 @@ json_value * json_parse_ex (json_settings * settings,
 								}
 
 							default:
-								sprintf (error, "%d:%d: Unexpected `%c` in object", cur_line, e_off, b);
+								sprintf (error, b ? "%d:%d: Unexpected `%c` in object" : "%d:%d: Unexpected `\\0` in object", cur_line, e_off, b);
 								goto e_failed;
 						}
 					};
@@ -860,9 +860,10 @@ void json_value_free (json_value * value)
 }
 
 // The goal of this function is a preprocessor that removes all comments then writes the new array to json_input.
-int json_clean_comments (const char ** json_input, struct json_state * state, char * const error, unsigned int size)
+int json_clean_comments (const json_char ** json_input, struct json_state * state, char * const error, size_t * _size)
 {
 	#pragma warning(disable:4133)
+	unsigned int size = *_size;
 	// Used as an indicator whether i is currently inside a string var.
 	int string = 0;
 	int comment = 0;
@@ -946,11 +947,13 @@ int json_clean_comments (const char ** json_input, struct json_state * state, ch
 		sprintf(error, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, newJSON - cur_line_begin);
 		return 0;
 	}
-	size = j - newJSON;			// After skipping comments the size of the new buffer will be different
+	size = j - newJSON + 1;		// After skipping comments the size of the new buffer will be different
 	newJSON[size - 1] = '\0';	// Ensure new JSON ends with a null terminator (i.e. End Of File)
 
 	free((void *) *json_input);
 	*json_input = (const char *)newJSON;
+	*_size = size;
+
 	return 1;
 	#pragma warning(default:4133)
 }

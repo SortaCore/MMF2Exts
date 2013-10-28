@@ -246,7 +246,7 @@ json_value * json_parse (const json_char * json,
 int json_clean_comments (const json_char ** json_input,
 						 struct json_state * state,
 						 json_char * const error,
-						 unsigned int size);
+						 size_t * size);
 						 
 json_value * json_parse_ex (json_settings * settings,
                             const json_char * json,

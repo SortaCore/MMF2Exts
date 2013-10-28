@@ -204,44 +204,6 @@ struct ChannelInternal
     }
 };
 
-#define UNSIGHTLY_LACEWING_HEADER_HAX
-#include "Extension.h"
-#undef UNSIGHTLY_LACEWING_HEADER_HAX
-Lacewing::RelayClient::Channel * Extension::DuplicateChannel(Lacewing::RelayClient::Channel & Orig)
-{
-	// First, duplicate all data that can be copied automatically by the compiler
-	ChannelInternal * Dup = new ChannelInternal(*(ChannelInternal *)Orig.InternalTag);
-	
-	// Now copy the peer list; set list to ignore current entries as they point to the old list
-	Dup->Peers.First = Dup->Peers.Last = NULL;
-	Dup->Peers.Size = 0;
-
-	for (List <PeerInternal *>::Element * P = ((ChannelInternal *)Orig.InternalTag)->Peers.First; P; P = P->Next)
-	{
-		List<PeerInternal *>::Element * NewPeer = Dup->Peers.Push(new PeerInternal(***P));
-	}
-	
-	// Finally nullify the element, shouldn't be accessed anyway
-	Dup->Element = NULL;
-	
-	Channels.push_back(&Dup->Public);
-	return &Dup->Public;
-}
-
-Lacewing::RelayClient::Channel::Peer * Extension::DuplicatePeer(Lacewing::RelayClient::Channel::Peer & Orig)
-{
-	// First, duplicate all data that can be copied automatically by the compiler
-	PeerInternal * Dup = new PeerInternal(*(PeerInternal *)Orig.InternalTag);
-
-	// Finally nullify the element, shouldn't be accessed anyway
-	Dup->Element = NULL;
-	
-	Peers.push_back(&Dup->Public);
-	return &Dup->Public;
-}
-
-
-
 void RelayClientInternal::Clear()
 {
     ClearChannelList();

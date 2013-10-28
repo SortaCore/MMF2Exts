@@ -52,11 +52,11 @@ int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		Edif::Init(mV, edPtr);
 
 		// Set default object settings from DefaultState.
-		edPtr->AutomaticClear = ::SDK->json[CurLang]["Properties"][1]["DefaultState"];
-		edPtr->Global = ::SDK->json[CurLang]["Properties"][2]["DefaultState"];
-		if (strcpy_s(edPtr->edGlobalID, 255, ::SDK->json[CurLang]["Properties"][3]["DefaultState"]))
+		edPtr->AutomaticClear = CurLang["Properties"][1]["DefaultState"];
+		edPtr->Global = CurLang["Properties"][2]["DefaultState"];
+		if (strcpy_s(edPtr->edGlobalID, 255, CurLang["Properties"][3]["DefaultState"]))
 			MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEDIF - CreateObject() error", MB_OK);
-		edPtr->MultiThreading = ::SDK->json[CurLang]["Properties"][4]["DefaultState"];
+		edPtr->MultiThreading = CurLang["Properties"][4]["DefaultState"];
 		
 		//InitialisePropertiesFromJSON(mV, edPtr);
 
@@ -358,12 +358,12 @@ Prop * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	#ifndef RUN_ONLY
 		unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
-		if ((unsigned int) ::SDK->json[CurLang]["Properties"].u.object.length > ID)
+		if ((unsigned int) CurLang["Properties"].u.object.length > ID)
 		{
 			if (::SDK->EdittimeProperties[ID].Type_ID != Edif::Properties::PROPTYPE_LEFTCHECKBOX)
 			{
 				if (ID == 0)
-					return new Prop_AStr(::SDK->json[CurLang]["Properties"][ID]["DefaultState"]);
+					return new Prop_AStr(CurLang["Properties"][ID]["DefaultState"]);
 				if (ID == 3)
 					return new Prop_AStr(edPtr->edGlobalID);
 			}
@@ -390,7 +390,7 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	#ifndef RUN_ONLY
 		unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 		
-		if ((unsigned int) ::SDK->json[CurLang]["Properties"].u.object.length > ID)
+		if ((unsigned int) CurLang["Properties"].u.object.length > ID)
 		{
 			if (ID == 1)
 				return edPtr->AutomaticClear;
@@ -416,7 +416,7 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	#ifndef RUN_ONLY
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
-	{
+	{ 
 		if (strcpy_s(edPtr->edGlobalID, 255, ((Prop_AStr *)NewParam)->String))
 			MessageBoxA(NULL, "Error setting new property 3; error copying string.", "DarkEDIF - SetPropValue() error", MB_OK);
 	}
@@ -553,7 +553,7 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 #ifndef RUN_ONLY
 		unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
-		if (::SDK->json[CurLang]["Properties"].u.object.length > ID)
+		if (CurLang["Properties"].u.object.length > ID)
 		{
 			if (ID == 1)
 			{
@@ -573,17 +573,7 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 		}
 		
 		MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", "DarkEDIF - Invalid property", MB_OK);
-		//mvRefreshProp(mV, edPtr, PropID, TRUE);
-	// Example
-	// -------
-//		switch (nPropID)
-//		{
-//		case PROPID_CHECK:
-//			edPtr->nCheck = nCheck;
-//			mvInvalidateObject(mV, edPtr);
-//			mvRefreshProp(mV, edPtr, PROPID_COMBO, TRUE);
-//			break;
-//		}
+
 #endif // !defined(RUN_ONLY)
 }
 

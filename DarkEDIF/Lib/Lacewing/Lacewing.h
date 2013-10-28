@@ -1137,6 +1137,7 @@ public:
 
     struct Channel
     {
+		bool IsClosed;  // Is channel no longer valid for writing?
         void * InternalTag, * Tag;
 
         LacewingFunction const char * Name();
@@ -1147,6 +1148,7 @@ public:
 
         struct Peer
         {
+			bool IsClosed; // Is peer no longer valid for writing?
             void * InternalTag, * Tag;
 
             int  ID();

@@ -68,12 +68,12 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			{
 				case Edif::Properties::PROPTYPE_EDIT_STRING:
 				case Edif::Properties::PROPTYPE_STATIC:
-					infoPtr->editDataSize += sizeof(Prop_AStr)+255;
+					infoPtr->EDITDATASize += sizeof(Prop_AStr)+255;
 					break;
 				default:
-					infoPtr->editDataSize += sizeof(Prop);
+					infoPtr->EDITDATASize += sizeof(Prop);
 			}
-			++infoPtr->editDataSize;
+			++infoPtr->EDITDATASize;
 		}
 	}
 #endif //NOPROPS

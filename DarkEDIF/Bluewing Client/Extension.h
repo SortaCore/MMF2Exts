@@ -4,13 +4,11 @@ class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	#ifndef UNSIGHTLY_LACEWING_HEADER_HAX
-		SaveExtInfo ThreadData; // Must be first variable in Extension class
-		std::vector<SaveExtInfo *> Saved;
-		SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
-		void NewEvent(SaveExtInfo *);
-		CRITICAL_SECTION Lock;
-	#endif
+	SaveExtInfo ThreadData; // Must be first variable in Extension class
+	std::vector<SaveExtInfo *> Saved;
+	SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
+	void NewEvent(SaveExtInfo *);
+	CRITICAL_SECTION Lock;
 
     RUNDATA * rdPtr;
     RunHeader * rhPtr;
@@ -82,8 +80,6 @@ public:
 
 	std::vector<Lacewing::RelayClient::Channel *> Channels;
 	std::vector<Lacewing::RelayClient::Channel::Peer *> Peers;
-	Lacewing::RelayClient::Channel * DuplicateChannel(Lacewing::RelayClient::Channel &);
-	Lacewing::RelayClient::Channel::Peer * DuplicatePeer(Lacewing::RelayClient::Channel::Peer &);
 
     // int MyVariable;
 

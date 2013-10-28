@@ -48,7 +48,9 @@ void Extension::SendTextToChannel(int Subchannel, char * TextToSend)
 		CreateError("Error: Send Text to Channel was called with a null parameter.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Send Text to Channel was called without a channel being selected.");
-	else
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Send Text to Channel was called with a closed channel.");
+	else 
 		ThreadData.Channel->Send(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
 }
 void Extension::SendTextToPeer(int Subchannel, char * TextToSend)
@@ -59,6 +61,8 @@ void Extension::SendTextToPeer(int Subchannel, char * TextToSend)
 		CreateError("Error: Send Text to Peer was called with a null parameter.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Send Text to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Send Text to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Send(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
 }
@@ -75,6 +79,8 @@ void Extension::SendNumberToChannel(int Subchannel, int NumToSend)
 		CreateError("Error: Send Number to Channel was called with an invalid subchannel; it must be between 0 and 255.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Send Number to Channel was called without a channel being selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Send Number to Channel was called with a closed channel.");
 	else
 		ThreadData.Channel->Send(Subchannel, (char *)&NumToSend, sizeof(int), 1);
 }
@@ -84,6 +90,8 @@ void Extension::SendNumberToPeer(int Subchannel, int NumToSend)
 		CreateError("Error: Send Number to Peer was called with an invalid subchannel; it must be between 0 and 255.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Send Number to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Send Number to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Send(Subchannel, (char *)&NumToSend, sizeof(int), 1);
 }
@@ -104,6 +112,8 @@ void Extension::BlastTextToChannel(int Subchannel, char * TextToSend)
 		CreateError("Error: Blast Text to Channel was called with a null parameter.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Blast Text to Channel was called without a channel being selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Blast Text to Channel was called with a closed channel.");
 	else
 		ThreadData.Channel->Blast(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
 }
@@ -115,6 +125,8 @@ void Extension::BlastTextToPeer(int Subchannel, char * TextToSend)
 		CreateError("Error: Blast Text to Peer was called with a null parameter.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Blast Text to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Blast Text to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Blast(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
 }
@@ -140,6 +152,8 @@ void Extension::BlastNumberToPeer(int Subchannel, int NumToSend)
 		CreateError("Error: Blast Number to Peer was called with an invalid subchannel; it must be between 0 and 255.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Blast Number to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Blast Number to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Blast(Subchannel, (char *) &NumToSend, 4, 1);
 }
@@ -154,8 +168,8 @@ void Extension::SelectChannelWithName(char * ChannelName)
 	}
 	
 	// Only modify ThreadData.Channel if we found it
-	if (Selected)
-		ThreadData.Channel = (Lacewing::RelayClient::Channel *)Selected->Tag;
+	if (Selected && !Selected->IsClosed)
+		ThreadData.Channel = Selected;
 	else
 	{
 		std::string Error = "Could not selected channel, not found:\r\n";
@@ -174,8 +188,12 @@ void Extension::LoopClientChannels()
 								   * Selected = Cli.FirstChannel();
 	while (Selected)
 	{
-		SaveExtInfo &S = AddEvent(14);
-		S.Channel = (Lacewing::RelayClient::Channel *)Selected->Tag;
+		if (!Selected->IsClosed)
+		{
+			SaveExtInfo &S = AddEvent(14);
+			S.Channel = Selected;
+		}
+
 		Selected = Selected->Next();
 	}
 	AddEvent(18);
@@ -197,7 +215,7 @@ void Extension::SelectPeerOnChannelByName(char * PeerName)
 		}
 
 		// Only modify ThreadData.Peer if we found it
-		if (Selected)
+		if (Selected && !Selected->IsClosed)
 			ThreadData.Peer = Selected;
 		else
 		{
@@ -215,6 +233,8 @@ void Extension::SelectPeerOnChannelByID(int PeerID)
 		CreateError("Could not select peer on channel, ID is below 0.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Select Peer On Channel By ID was called without a channel being selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Select Peer On Channel By ID was called with a closed channel.");
 	else
 	{
 		Lacewing::RelayClient::Channel::Peer * Selected = ThreadData.Channel->FirstPeer();
@@ -226,7 +246,7 @@ void Extension::SelectPeerOnChannelByID(int PeerID)
 		}
 
 		// Only modify ThreadData.Peer if we found it
-		if (Selected)
+		if (Selected && !Selected->IsClosed)
 			ThreadData.Peer = Selected;
 		else
 		{
@@ -253,8 +273,11 @@ void Extension::LoopPeersOnChannel()
 											 * Selected = ThreadData.Channel->FirstPeer();
 		while (Selected)
 		{
-			SaveExtInfo &S = AddEvent(13);
-			S.Peer = (Lacewing::RelayClient::Channel::Peer *)Selected->Tag;
+			if (!Selected->IsClosed)
+			{
+				SaveExtInfo &S = AddEvent(13);
+				S.Peer = Selected;
+			}
 			Selected = Selected->Next();
 		}
 		SaveExtInfo &S = AddEvent(17);
@@ -292,6 +315,8 @@ void Extension::SendBinaryToChannel(int Subchannel)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Send Binary to Channel was called without a channel being selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Send Binary to Channel was called with a closed channel.");
 	else
 		ThreadData.Channel->Send(Subchannel, SendMsg, SendMsgSize, 2);
 
@@ -304,6 +329,8 @@ void Extension::SendBinaryToPeer(int Subchannel)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Send Binary to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Send Binary to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Send(Subchannel, SendMsg, SendMsgSize, 2);
 	
@@ -326,6 +353,8 @@ void Extension::BlastBinaryToChannel(int Subchannel)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
 	else if (!ThreadData.Channel)
 		CreateError("Error: Blast Binary to Channel was called without a channel being selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Error: Blast Binary to Channel was called with a closed channel.");
 	else
 		ThreadData.Channel->Blast(Subchannel, SendMsg, SendMsgSize, 2);
 	
@@ -338,6 +367,8 @@ void Extension::BlastBinaryToPeer(int Subchannel)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
 	else if (!ThreadData.Peer)
 		CreateError("Error: Blast Binary to Peer was called without a peer being selected.");
+	else if (ThreadData.Peer->IsClosed)
+		CreateError("Error: Blast Binary to Peer was called with a closed peer.");
 	else
 		ThreadData.Peer->Blast(Subchannel, SendMsg, SendMsgSize, 2);
 	
@@ -354,7 +385,7 @@ void Extension::AddByteText(char * Byte)
 void Extension::AddByteInt(int Byte)
 {
 	if (Byte > 255 || Byte < -128)
-		CreateError("Error: Byte out of scale.");
+		CreateError("Error: Byte out of bounds.");
 	else
 	{
 		if (Byte < 0)
@@ -417,6 +448,7 @@ void Extension::AddBinary(void * Address, int Size)
 	{
 		if (Size != 0)
 			AddToSend(Address, Size);
+		// else do nothing
 	}
 }
 void Extension::ClearBinaryToSend()
@@ -614,6 +646,8 @@ void Extension::SelectChannelMaster()
 {
 	if (!ThreadData.Channel)
 		CreateError("Could not select channel master: No channel selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Could not select channel master: Channel is closed.");
 	else
 	{
 		Lacewing::RelayClient::Channel::Peer * Stored = ThreadData.Peer;
@@ -623,9 +657,11 @@ void Extension::SelectChannelMaster()
 		{
 			if (ThreadData.Peer->IsChannelMaster())
 			{
-				ThreadData.Peer = (Lacewing::RelayClient::Channel::Peer *)ThreadData.Peer->Tag;
+				if (ThreadData.Peer->IsClosed)
+					ThreadData.Peer = Stored;
 				return; // Selected the correct peer
 			}
+
 			ThreadData.Peer = ThreadData.Peer->Next();
 		}
 
@@ -822,9 +858,12 @@ void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 									   * LoopChannel = Cli.FirstChannel();
 		while (LoopChannel)
 		{
-			SaveExtInfo &S = AddEvent(63);
-			S.Channel = (Lacewing::RelayClient::Channel *)LoopChannel->Tag;
-			S.Loop.Name = _strdup(LoopName);
+			if (!LoopChannel->IsClosed)
+			{
+				SaveExtInfo &S = AddEvent(63);
+				S.Channel = LoopChannel;
+				S.Loop.Name = _strdup(LoopName);
+			}
 			LoopChannel = LoopChannel->Next();
 		}
 		SaveExtInfo &S = AddEvent(64);
@@ -836,15 +875,20 @@ void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 		CreateError("Cannot loop peers on channel: invalid loop name supplied.");
 	else if (!ThreadData.Channel)
 		CreateError("Cannot loop peers on channel: No channel currently selected.");
+	else if (ThreadData.Channel->IsClosed)
+		CreateError("Cannot loop peers on channel: Channel is closed.");
 	else
 	{
 		Lacewing::RelayClient::Channel::Peer * Stored = ThreadData.Peer,
 											 * LoopPeer = ThreadData.Channel->FirstPeer();
 		while (LoopPeer)
 		{
-			SaveExtInfo &S = AddEvent(61);
-			S.Peer = (Lacewing::RelayClient::Channel::Peer *)LoopPeer->Tag;
-			S.Loop.Name = _strdup(LoopName);
+			if (!LoopPeer->IsClosed)
+			{
+				SaveExtInfo &S = AddEvent(61);
+				S.Peer = LoopPeer;
+				S.Loop.Name = _strdup(LoopName);
+			}
 			LoopPeer = LoopPeer->Next();
 		}
 		SaveExtInfo &S = AddEvent(62);

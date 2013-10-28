@@ -45,7 +45,7 @@ class Prop;
  *  Property Value.
  *  This class is the base class of the classes that contain the values of editable properties.
  *  Prop objects allow to communicate values between the property window and the object data.
- *  This is a pure virtual class.
+ *	Modifications are to this class are pointless as the spec was created by Clickteam and class type may be changed.
  */
 class Prop
 {
@@ -58,7 +58,6 @@ public:
 	virtual Prop * CreateCopy() = 0;
 	virtual BOOL IsEqual(Prop * P) = 0;
 	virtual unsigned int GetClassID() = 0;
-	virtual bool CopyToAddr(void * const addr) = 0;
 };
 
 // Integer
@@ -362,8 +361,8 @@ public:
 	}
 
 	// Data
-	void * Address;
 	size_t Size;
+	void * Address;
 };
 
 // String (ANSI)

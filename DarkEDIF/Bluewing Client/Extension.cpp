@@ -495,31 +495,49 @@ short Extension::Handle()
 			// Remove copies if this particular event number is used
 			if (ThreadData.CondTrig[0] == 0xFFFF)
 			{
+				// If channel, it's either a channel leave or peer leave
 				if (ThreadData.Channel)
 				{
-					if (!ThreadData.Channel)
+					// Channel leave
+					if (!ThreadData.Peer)
 					{
 						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
 							if (*u == ThreadData.Channel)
 							{
+								if (!ThreadData.Channel->IsClosed)
+									CreateError("Channel being removed but not marked as closed!");
+
 								Channels.erase(u);
 								break;
 							}
 						}
-						delete ThreadData.Channel;
+
+						// delete ThreadData.Channel;
 					}
-					else
+					else // Peer leave
 					{
-						for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
+						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
-							if (*u == ThreadData.Peer)
+							if (*u == ThreadData.Channel)
 							{
-								Peers.erase(u);
+								for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator v = Peers.begin(); v != Peers.end(); ++v)
+								{
+									if (*v == ThreadData.Peer)
+									{
+										if (!ThreadData.Peer->IsClosed)
+											CreateError("Peer being removed but not marked as closed!");
+
+										Peers.erase(v);
+										break;
+									}
+								}
+
 								break;
 							}
 						}
-						delete ThreadData.Peer;
+
+						// delete ThreadData.Peer;
 					}
 				}
 				else // On disconnect, clear everyting

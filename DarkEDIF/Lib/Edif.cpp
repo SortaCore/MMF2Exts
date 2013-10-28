@@ -420,7 +420,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 						switch (CurrentProperty->Type_ID)
 						{
-																																																																																				/*
+							/*
 					#define PropData_Folder(0,	(LParams)NULL}
 #define PropData_Folder_End() 0,	(LParams)NULL}
 #define PropData_Group(0,	(LParams)NULL}
@@ -516,6 +516,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 										|  ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0)	// Checkbox enabled by property option in JSON
 										|  ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD: 0);
 								SetAllProps(PROPOPT_PARAMREQUIRED, ((long long)Property["MaxLength"] & 0xFFFFFFFF));
+
 					
 							// Edit box for numbers, Parameters = min value, max value
 							case PROPTYPE_EDIT_NUMBER:

@@ -28,7 +28,6 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 	{
 		// DLL is attaching to the address space of the current process.
 		case DLL_PROCESS_ATTACH:
-			
 			hInstLib = hDLL; // Store HINSTANCE
 			//__asm int 3; // Cause debuggers to recognise the MFX - debugger must be attached for object to appear in Create New Object
 			break;

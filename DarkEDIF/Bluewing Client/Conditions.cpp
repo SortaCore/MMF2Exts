@@ -142,11 +142,23 @@ bool Extension::ClientHasAName()
 
 bool Extension::SelectedPeerIsChannelMaster()
 {
+	if (!ThreadData.Peer)
+	{
+		CreateError("Error, Selected Peer Is Channel Master condition called without valid peer being selected.");
+		return false;
+	}
+
 	return ThreadData.Peer->IsChannelMaster();
 }
 
 bool Extension::YouAreChannelMaster()
 {
+	if (!ThreadData.Channel)
+	{
+		CreateError("Error, You Are Channel Master condition called without valid channel being selected.");
+		return false;
+	}
+
 	return ThreadData.Channel->IsChannelMaster();
 }
 
@@ -230,7 +242,7 @@ bool Extension::IsJoinedToChannel(char * ChannelName)
 		while (C)
 		{
 			if (!_stricmp(ChannelName, C->Name()))
-				return true;
+				return !C->IsClosed;
 			C = C->Next();
 		}
 	}
@@ -246,13 +258,13 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
 		while (C)
 		{
-			if (!_stricmp(ChannelName, C->Name()))
+			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
 			{
 				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
 				while (P)
 				{
 					if (!_stricmp(PeerName, P->Name()))
-						return true;
+						return !P->IsClosed;
 					P = P->Next();
 				}
 				return false;
@@ -268,7 +280,7 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 		while (P)
 		{
 			if (!_stricmp(P->Name(), PeerName))
-				return true;
+				return !P->IsClosed;
 			P = P->Next();
 		}
 		return false;
@@ -287,13 +299,13 @@ bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
 		while (C)
 		{
-			if (!_stricmp(ChannelName, C->Name()))
+			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
 			{
 				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
 				while (P)
 				{
 					if (P->ID() == PeerID)
-						return true;
+						return !P->IsClosed;
 					P = P->Next();
 				}
 				return false;
@@ -309,7 +321,7 @@ bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 		while (P)
 		{
 			if (P->ID() == PeerID)
-				return true;
+				return !P->IsClosed;
 			P = P->Next();
 		}
 		return false;

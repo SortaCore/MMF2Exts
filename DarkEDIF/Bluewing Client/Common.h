@@ -4,15 +4,15 @@
    #define MMFEXT       // MMF2, MMF2 Dev
 // #define PROEXT       // MMF2 Dev only
 
-int CurrentLanguage();
 #ifdef RUN_ONLY
-	#define CurLang 2
+	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
 #else
+	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
-	extern int StoredCurrentLanguage;
 #endif
-#define DLLExport   __stdcall
 
+#define DLLExport   __stdcall
+#pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
 #define EnterCriticalSectionDerpy(x) \
 	EnterCriticalSection(x); \
@@ -60,13 +60,9 @@ struct EDITDATA
 	bool Global;
 	char edGlobalID[255];
 
-	// Keep last or risk overwriting by functions accessing this address
-	/*size_t DarkEDIF_Prop_Size;
+	// Keep as last or risk overwriting by functions accessing this address
+	size_t DarkEDIF_Prop_Size;
 	char DarkEDIF_Props[0];
-	
-	//	Properties.reserve(::SDK->json[CurLang]["Properties"].u.object.length);
-	//	PropCheckboxes.reserve(::SDK->json[CurLang]["Properties"].u.object.length);
-	*/
 };
 
 class Extension;
