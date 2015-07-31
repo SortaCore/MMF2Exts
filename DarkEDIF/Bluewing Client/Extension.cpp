@@ -128,7 +128,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(29, AlwaysTrue /* OnChannelListLoopFinished */);
 		LinkCondition(30, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(31, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(32, OnSentBinaryMessageFromServer /* ReplacedCondNoParams */);
+		LinkCondition(32, OnSentBinaryMessageFromServer);
 		LinkCondition(33, OnSentBinaryMessageFromChannel);
 		LinkCondition(34, OnBlastedBinaryMessageFromServer);
 		LinkCondition(35, OnBlastedBinaryMessageFromChannel);
@@ -390,7 +390,7 @@ void Extension::CreateError(const char * Error)
 {
 	SaveExtInfo &event = AddEvent(0, false);
 	event.Error.Text = _strdup(Error);
-	// __asm int 3;
+	__asm int 3;
 }
 
 void Extension::AddToSend(void * Data, size_t Size)
@@ -484,28 +484,35 @@ short Extension::Handle()
 				LeaveCriticalSectionDerpy(&Lock);
 				break;
 			}
-			// Copy from saved list of events to current extension
-			if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
+			SaveExtInfo * S = Saved.front();
+			
+			if (S->ReceivedMsg.Content != nullptr)
 			{
-				LeaveCriticalSectionDerpy(&Lock);
-				break; // Failed; leave until next Extension::Handle()
+				ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
+				ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
+				ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
+				ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
 			}
+			if (S->Channel != nullptr)
+				ThreadData.Channel = S->Channel;
+			if (S->Peer != nullptr)
+				ThreadData.Peer = S->Peer;
 			LeaveCriticalSectionDerpy(&Lock);
 				
 			// Remove copies if this particular event number is used
-			if (ThreadData.CondTrig[0] == 0xFFFF)
+			if (S->CondTrig[0] == 0xFFFF)
 			{
 				// If channel, it's either a channel leave or peer leave
-				if (ThreadData.Channel)
+				if (S->Channel)
 				{
 					// Channel leave
-					if (!ThreadData.Peer)
+					if (!S->Peer)
 					{
 						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
-							if (*u == ThreadData.Channel)
+							if (*u == S->Channel)
 							{
-								if (!ThreadData.Channel->IsClosed)
+								if (!S->Channel->IsClosed)
 									CreateError("Channel being removed but not marked as closed!");
 
 								Channels.erase(u);
@@ -523,9 +530,9 @@ short Extension::Handle()
 							{
 								for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator v = Peers.begin(); v != Peers.end(); ++v)
 								{
-									if (*v == ThreadData.Peer)
+									if (*v == S->Peer)
 									{
-										if (!ThreadData.Peer->IsClosed)
+										if (!S->Peer->IsClosed)
 											CreateError("Peer being removed but not marked as closed!");
 
 										Peers.erase(v);
@@ -566,8 +573,8 @@ short Extension::Handle()
 			else
 			{
 				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-				for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
-					Runtime.GenerateEvent((int) ThreadData.CondTrig[u]);
+				for (unsigned char u = 0; u < S->NumEvents; ++u)
+					Runtime.GenerateEvent((int) S->CondTrig[u]);
 			}
 
 			EnterCriticalSectionDerpy(&Lock);

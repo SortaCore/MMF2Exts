@@ -3253,7 +3253,7 @@ fancyenum(OBSTACLE) {
 	SOLID,
 	PLATFORM,
 	LADDER,
-	TRANSPARENT,		// for Add Backdrop
+	TRANSPARENT_,		// for Add Backdrop
 };}
 
 ////////////////////////////////

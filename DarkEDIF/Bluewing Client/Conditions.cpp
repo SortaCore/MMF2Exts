@@ -14,132 +14,106 @@ bool Extension::OnSentTextMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentTextMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentNumberMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentNumberMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedTextMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedNumberMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedTextMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedNumberMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentBinaryMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentBinaryMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedBinaryMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedBinaryMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentTextMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentNumberMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentBinaryMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedTextMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedNumberMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedBinaryMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::IsConnected()
 {
 	return Cli.Connected();
 }
-
 bool Extension::OnAnySentMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnySentMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnySentMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnyBlastedMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnyBlastedMessageFromChannel(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnyBlastedMessageFromPeer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::ClientHasAName()
 {
 	return (Cli.Name() && Cli.Name()[0] == '\0');
 }
-
 bool Extension::SelectedPeerIsChannelMaster()
 {
 	if (!ThreadData.Peer)
@@ -150,7 +124,6 @@ bool Extension::SelectedPeerIsChannelMaster()
 
 	return ThreadData.Peer->IsChannelMaster();
 }
-
 bool Extension::YouAreChannelMaster()
 {
 	if (!ThreadData.Channel)
@@ -161,77 +134,62 @@ bool Extension::YouAreChannelMaster()
 
 	return ThreadData.Channel->IsChannelMaster();
 }
-
 bool Extension::OnChannelListLoopWithName(char * LoopName)
 {
 	LoopNameMatches("Channel List Loop With Name");
 }
-
 bool Extension::OnChannelListLoopWithNameFinished(char * LoopName)
 {
 	LoopNameMatches("Channel List Loop With Name Finished");
 }
-
 bool Extension::OnPeerLoopWithName(char * LoopName)
 {
 	LoopNameMatches("Peer Loop With Name");
 }
-
 bool Extension::OnPeerLoopWithNameFinished(char * LoopName)
 {
 	LoopNameMatches("Peer Loop With Name Finished");
 }
-
 bool Extension::OnClientChannelLoopWithName(char * LoopName)
 {
 	LoopNameMatches("Client Channel Loop With Name");
 }
-
 bool Extension::OnClientChannelLoopWithNameFinished(char * LoopName)
 {
 	LoopNameMatches("Client Channel Loop With Name Finished");
 }
-
 bool Extension::OnSentTextChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentNumberChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnSentBinaryChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnySentChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedTextChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedNumberChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnBlastedBinaryChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::OnAnyBlastedChannelMessageFromServer(int Subchannel)
 {
 	return MessageMatches();
 }
-
 bool Extension::IsJoinedToChannel(char * ChannelName)
 {
 	if (ChannelName[0] == '\0')
@@ -248,7 +206,6 @@ bool Extension::IsJoinedToChannel(char * ChannelName)
 	}
 	return false;
 }
-
 bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 {
 	if (PeerName[0] == '\0')
@@ -291,7 +248,6 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 	}
 	return false;
 }
-
 bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 {
 	if (ChannelName[0] != '\0')
