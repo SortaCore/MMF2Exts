@@ -283,6 +283,8 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 					free(IconData);
 			}
 		}
+	#else
+		Icon = nullptr;
 	#endif // !RUN_ONLY
 	
 	if (!::SDK)
@@ -666,7 +668,9 @@ Edif::SDK::~SDK()
     delete [] ExpressionJumps;
 	delete [] EdittimeProperties;
 
+#ifndef RUN_ONLY
 	delete Icon;
+#endif
 }
 
 int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, long Params2)

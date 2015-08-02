@@ -38,6 +38,9 @@ void OnChannelListReceived(Lacewing::RelayClient &Client)
 void OnJoinChannel(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target)
 {
 	Target.IsClosed = false;
+	
+	for (Lacewing::RelayClient::Channel::Peer * i = Target.FirstPeer(); i != nullptr; i = i->Next())
+		i->IsClosed = false;
 
 	SaveExtInfo &S = Ext.AddEvent(4);
 	S.Channel = &Target;
