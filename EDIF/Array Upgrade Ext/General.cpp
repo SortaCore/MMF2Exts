@@ -22,7 +22,7 @@ HINSTANCE hInstLib;
 // -----------------
 // Usually you do not need to do any initialization here: you will prefer to 
 // do them in "Initialize" found in Edittime.cpp
-BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
+BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
 	{
@@ -30,8 +30,6 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_ATTACH:
 			
 			hInstLib = hDLL; // Store HINSTANCE
-			// __asm int 3; // Cause debuggers to recognise the MFX - debugger must be attached for object to appear in Create New Object
-			MessageBoxA(NULL, "Bluewing DllMain() call.", "Bluewing Debug", MB_OK);
 			break;
 
 		// A new thread is being created in the current process.
@@ -58,14 +56,13 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 // Where you want to do COLD-START initialization.
 // Called when the extension is loaded into memory.
 //
-extern "C" int DLLExport Initialize(mv *mV, int quiet)
+extern "C" int WINAPI DLLExport Initialize(mv _far *mV, int quiet)
 {
-	MessageBoxA(NULL, "Bluewing Initialize() call.", "Bluewing Debug", MB_OK);
+    return Edif::Init(mV);
 
-	if (!::SDK)
-		return Edif::Init(mV);
-	else // No error
-		return 0;
+
+	// No error
+	return 0;
 }
 
 // -----------------
@@ -74,7 +71,7 @@ extern "C" int DLLExport Initialize(mv *mV, int quiet)
 // Where you want to kill and initialized data opened in the above routine
 // Called just before freeing the DLL.
 // 
-extern "C" int DLLExport Free(mv *mV)
+extern "C" int WINAPI DLLExport Free(mv _far *mV)
 {
     Edif::Free(mV);
 
@@ -96,10 +93,8 @@ extern "C" int DLLExport Free(mv *mV)
 // or from the CCN or EXE file (run time).
 // You can load data here, reserve memory etc...
 //
-int	DLLExport LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
+int	WINAPI DLLExport LoadObject(mv _far *mV, LPCSTR fileName, LPEDATA edPtr, int reserved)
 {
-	MessageBoxA(NULL, "Bluewing LoadObject() call.", "Bluewing Debug", MB_OK);
-
     Edif::Init(mV, edPtr);
 
 
@@ -112,9 +107,8 @@ int	DLLExport LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int r
 // The counterpart of the above routine: called just before the object is
 // deleted from the frame.
 //
-void DLLExport UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
+void WINAPI DLLExport UnloadObject(mv _far *mV, LPEDATA edPtr, int reserved)
 {
-	//Edif::Free(edPtr); // Should this be called here? Seems logical, but eh.
 }
 
 // --------------------
@@ -123,7 +117,7 @@ void DLLExport UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 // For you to update your object structure to newer versions
 // Called at both edit time and run time
 // 
-HGLOBAL DLLExport UpdateEditStructure(mv *mV, void * OldEdPtr)
+HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, void __far * OldEdPtr)
 {
 	// We do nothing here
 	return 0;
@@ -138,7 +132,7 @@ HGLOBAL DLLExport UpdateEditStructure(mv *mV, void * OldEdPtr)
 //
 // Call lpfnUpdate to update your file pathname (refer to the documentation)
 // 
-void DLLExport UpdateFileNames(mv *mV, char * appName, EDITDATA * edPtr, void (WINAPI * lpfnUpdate)(char *, char *))
+void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr, void (WINAPI * lpfnUpdate)(LPSTR, LPSTR))
 {
 }
 
@@ -152,7 +146,7 @@ void DLLExport UpdateFileNames(mv *mV, char * appName, EDITDATA * edPtr, void (W
 // if you remove the comments below.
 //
 /*
-int DLLExport EnumElts (mv *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
+int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
 {  
 	int error = 0;
 

@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Array Upgrade Ext", "Array Upgrade Ext.vcxproj", "{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug Unicode|Win32 = Debug Unicode|Win32
+		Debug|Win32 = Debug|Win32
+		Edittime Unicode|Win32 = Edittime Unicode|Win32
+		Edittime|Win32 = Edittime|Win32
+		Runtime Unicode|Win32 = Runtime Unicode|Win32
+		Runtime|Win32 = Runtime|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Debug Unicode|Win32.ActiveCfg = Debug Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Debug|Win32.Build.0 = Debug|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Edittime|Win32.ActiveCfg = Edittime|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Edittime|Win32.Build.0 = Edittime|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime Unicode|Win32.ActiveCfg = Runtime Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime Unicode|Win32.Build.0 = Runtime Unicode|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime|Win32.ActiveCfg = Runtime|Win32
+		{5E20CA0B-692E-41AB-9CC0-D6CE95B0825B}.Runtime|Win32.Build.0 = Runtime|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

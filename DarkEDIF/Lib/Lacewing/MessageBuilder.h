@@ -26,71 +26,66 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "Lacewing.h"
+#include <vector>
 
 #ifndef LacewingMessageBuilder
 #define LacewingMessageBuilder
 
-class MessageBuilder
+class messagebuilder
 {
     
 protected:
 
-    unsigned int Allocated;
+    unsigned int allocated;
 
 public:
     
-    char * Buffer;
-    unsigned int Size;
+    char * buffer;
+    unsigned int size;
 
-    inline MessageBuilder()
+    messagebuilder()
     {
-        Size   = Allocated = 0;
-        Buffer = 0;
+        size   = allocated = 0;
+        buffer = 0;
     }
 
-    inline ~ MessageBuilder()
+    ~ messagebuilder()
     {
-        free(Buffer);
+        free(buffer);
+		buffer = nullptr;
     }
 
-    inline void Add(const char * Buffer, int Size)
+    void add(const char * buffer, int size)
     {
-        if (Size == -1)
-            Size = strlen(Buffer);
+        if (size == -1)
+            size = strlen(buffer);
 
-        if (this->Size + Size > Allocated)
+        if (this->size + size > allocated)
         {
-            if (!Allocated)
-                Allocated = 1024 * 4;
+            if (!allocated)
+                allocated = 1024 * 4;
             else
-                Allocated *= 3;
+                allocated *= 3;
 
-            if (this->Size + Size > Allocated)
-                Allocated += Size;
+            if (this->size + size > allocated)
+                allocated += size;
 
-            char * Test = (char *) realloc(this->Buffer, Allocated);
-			if (!Test)
-			{
-				MessageBoxA(NULL, "Could not reallocate Buffer.", "?", MB_OK);
-			}
-			else
-				this->Buffer = Test;
+            char * test = (char *) realloc(this->buffer, allocated);
+			if (!test)
+				throw std::exception("could not reallocate buffer for message.");
+			this->buffer = test;
         }
 
-        memcpy_s(this->Buffer + this->Size, Size, Buffer, Size);
-        this->Size += Size;
+        memcpy_s(this->buffer + this->size, size, buffer, size);
+        this->size += size;
     }
 
-    inline void Add(const String &Text)
+    template<class t> inline void add (t value)
     {
-        Add(Text.Buffer, Text.Length);
+        add((const char *) &value, sizeof(t));
     }
-
-    template<class T> inline void Add (T Value)
-    {
-        Add((const char *) &Value, sizeof(T));
-    }
-
+	/*
     inline void AddNetwork16Bit (short Value)
     {
         Value = htons (Value);
@@ -113,29 +108,29 @@ public:
     {
         Value = htonl (Value);
 
-        *(char *) &Value &= 0x7F; /* 0 first bit */
+        *(char *) &Value &= 0x7F; // 0 first bit
         
         Add ((char *) &Value, sizeof(Value));
+    }*/
+
+    void reset()
+    {
+        size = 0;
     }
 
-    inline void Reset()
+    void send(lacewing::client socket, int offset = 0)
     {
-        Size = 0;
+        socket->write(buffer + offset, size - offset);
     }
 
-    inline void Send(Lacewing::Client &Socket, int Offset = 0)
+    void send(lacewing::server_client socket, int offset = 0)
     {
-        Socket.Send(Buffer + Offset, Size - Offset);
+        socket->write(buffer + offset, size - offset);
     }
 
-    inline void Send(Lacewing::Server::Client &Socket, int Offset = 0)
+    void send(lacewing::udp udp, lacewing::address address, int offset = 0)
     {
-        Socket.Send(Buffer + Offset, Size - Offset);
-    }
-
-    inline void Send(Lacewing::UDP &UDP, Lacewing::Address &Address, int Offset = 0)
-    {
-        UDP.Send(Address, Buffer + Offset, Size - Offset);
+        udp->send(address, buffer + offset, size - offset);
     }
 
 };

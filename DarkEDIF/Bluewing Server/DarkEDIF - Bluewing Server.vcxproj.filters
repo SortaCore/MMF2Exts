@@ -49,6 +49,9 @@
     <ClCompile Include="..\Lib\Lacewing\RelayClient.cc">
       <Filter>Header Files\Lacewing</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\RelayServer.cc">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -75,26 +78,20 @@
     <ClInclude Include="LacewingFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Lib\MultiThreading.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\Inc\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\IDPool.h">
+      <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h">
       <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Lib\Lacewing\MessageReader.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Lib\Lacewing\Lacewing.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="MultiThreading.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -128,7 +125,7 @@
       <UniqueIdentifier>{00a9f5d7-fa2d-405e-bb97-fdd3f6e33af2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Lacewing">
-      <UniqueIdentifier>{6004d1d0-36e5-4f2f-a2ec-4e7366cff284}</UniqueIdentifier>
+      <UniqueIdentifier>{46e3f8bb-3d8b-47f2-ac55-993ac72b85fa}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

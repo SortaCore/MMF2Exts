@@ -26,126 +26,127 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <algorithm>
 
-#ifndef LacewingMessageReader
-#define LacewingMessageReader
+#ifndef lacewingmessagereader
+#define lacewingmessagereader
 
-class MessageReader
+class messagereader
 {
 protected:
 
-    char * Buffer;
+    const char * buffer;
     
-    unsigned int Size;
+	size_t size;
 
-    List <char *> ToFree;
+    std::vector<char *> tofree;
 
 public:
 
-    unsigned int Offset;
+    unsigned int offset;
 
-    bool Failed;
+    bool failed;
 
-    inline MessageReader(char * Buffer, unsigned int Size)
+    inline messagereader(const char * buffer, size_t size)
     {
-        Failed = false;
+        failed = false;
 
-        this->Buffer = Buffer;
-        this->Size = Size;
+        this->buffer = buffer;
+        this->size = size;
 
-        this->Offset = 0;
+        this->offset = 0;
     }
 
-    inline ~MessageReader()
+    inline ~messagereader()
     {
-        for (List <char *>::Element * e = ToFree.First; e; e = e->Next)
-            delete [] (** e);
+		std::for_each(tofree.begin(), tofree.end(), [&](char * &c) { delete[]c; });
+		tofree.clear();
     }
 
-    inline bool Check(unsigned int Size)
+    inline bool check(unsigned int size)
     {
-        if (Failed)
+        if (failed)
             return false;
 
-        if (Offset + Size > this->Size)
+        if (offset + size > this->size)
         {
-            Failed = true;
+            failed = true;
             return false;
         }
 
         return true;
     }
 
-    template<class T> inline T Get()
+    template<class t> inline t get()
     {
-        if (!Check(sizeof(T)))
+        if (!check(sizeof(t)))
             return 0;
 
-        T Value = *(T *) (Buffer + Offset);
+        t value = *(t *) (buffer + offset);
 
-        Offset += sizeof(T);
-        return Value;
+        offset += sizeof(t);
+        return value;
     }
 
-    char * Get (unsigned int Size)
+    char * get (unsigned int size)
     {
-        if (!Check(Size))
+        if (!check(size))
             return 0;
 
-        char * Output = (char *) malloc (Size + 1);
+        char * output = (char *) malloc (size + 1);
 
-        if (!Output)
+        if (!output)
         {
-            Failed = true;
+            failed = true;
             return 0;
         }
 
-        ToFree.Push (Output);
+        tofree.push_back (output);
 
-        memcpy(Output, Buffer + Offset, Size);
-        Output[Size] = 0;
+        memcpy(output, buffer + offset, size);
+        output[size] = 0;
 
-        Offset += Size;
+        offset += size;
 
-        return Output;
+        return output;
     }
 
-    inline int BytesLeft ()
+    inline int bytesleft ()
     {
-        return Size - Offset;
+        return size - offset;
     }
 
-    inline char * Cursor ()
+    inline const char * cursor ()
     {
-        return Buffer + Offset;
+        return buffer + offset;
     }
 
-    inline char * GetRemaining(bool AllowEmpty = true)
+    inline const char * getremaining(bool allowempty = true)
     {
-        if (Failed)
-            return this->Buffer;
+        if (failed)
+            return this->buffer;
 
-        char * Remaining = this->Buffer + Offset;
-        Offset += Size;
+        const char * remaining = this->buffer + offset;
+        offset += size;
 
-        if (!AllowEmpty && !*Remaining)
-            Failed = true;
+        if (!allowempty && !*remaining)
+            failed = true;
 
-        return Remaining;
+        return remaining;
     }
 
-    inline void GetRemaining(char * &Buffer, unsigned int &Size, unsigned int MinimumLength = 0, unsigned int MaximumLength = 0xFFFFFFFF)
+    inline void getremaining(const char * &buffer, unsigned int &size, unsigned int minimumlength = 0U, unsigned int maximumlength = 0xffffffff)
     {
-        Buffer = this->Buffer + Offset;
-        Size   = this->Size - Offset;
+        buffer = this->buffer + offset;
+        size   = this->size - offset;
 
-        if (Size > MaximumLength || Size < MinimumLength)
-            Failed = true;
+        if (size > maximumlength || size < minimumlength)
+            failed = true;
 
-        Offset += Size;
+        offset += size;
     }
 
-    inline short Network16Bit ()
+   /* inline short Network16Bit ()
     {
         return ntohs (Get <short> ());
     }
@@ -170,7 +171,7 @@ public:
         *(char *) &value &= 0x7F;
         
         return ntohl (value);
-    }
+    }*/
 };
 
 #endif

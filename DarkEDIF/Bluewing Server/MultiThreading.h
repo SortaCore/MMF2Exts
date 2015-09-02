@@ -23,21 +23,21 @@
 
 			// When an error occurs
 			struct {
-				const char *		Text;
+				char *		Text;
 			} Error;
 
 			// When a selection/loop is called
 			struct  {
-				const char *		Name;
+				char *		Name;
 			} Loop;
 		};
-		union {
-			lacewing::relayclient::channel * Channel;
-			const lacewing::relayclient::channellisting * ChannelListing;
-		};
-		lacewing::relayclient::channel::peer * Peer;
+		Lacewing::RelayServer::Channel * Channel;
+		Lacewing::RelayServer::Client * Client;
+		Lacewing::RelayServer::Client * SenderClient; // By default the same as Client
+		Lacewing::RelayServer::Client * ReceivingClient;
 
-		SaveExtInfo() : NumEvents(0), CondTrig(NULL), Channel(NULL), Peer(NULL)
+		SaveExtInfo() : NumEvents(0), CondTrig(NULL),
+			Channel(NULL), Client(NULL), SenderClient(NULL), ReceivingClient(NULL)
 		{
 			ReceivedMsg.Content = NULL;
 			ReceivedMsg.Cursor = 0;

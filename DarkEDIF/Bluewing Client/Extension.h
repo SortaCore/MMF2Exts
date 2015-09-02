@@ -39,8 +39,8 @@ public:
         a pointer.
     */
 	struct GlobalInfo {
-		Lacewing::EventPump		_ObjEventPump;
-		Lacewing::RelayClient	_Client;
+		lacewing::eventpump		_ObjEventPump;
+		lacewing::relayclient	_Client;
 		char *					_PreviousName,
 			 *					_SendMsg,
 			 *					_DenyReasonBuffer;
@@ -78,8 +78,8 @@ public:
 	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as
 	// Lacewing is concerned they no longer exist.
 
-	std::vector<Lacewing::RelayClient::Channel *> Channels;
-	std::vector<Lacewing::RelayClient::Channel::Peer *> Peers;
+	std::vector<lacewing::relayclient::channel *> Channels;
+	std::vector<lacewing::relayclient::channel::peer *> Peers;
 
     // int MyVariable;
 

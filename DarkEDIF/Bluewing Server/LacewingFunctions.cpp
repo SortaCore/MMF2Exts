@@ -1,12 +1,12 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define Ext (*((Extension *) Client.tag))
+#define Ext (*((Extension *) Client.Tag))
 
-void OnError(lacewing::relayclient &Client, lacewing::error Error)
+void OnError(Lacewing::RelayClient &Client, Lacewing::Error &Error)
 {
 	SaveExtInfo &S = Ext.AddEvent(0);
-	S.Error.Text = _strdup(Error->tostring());
+	S.Error.Text = _strdup(Error.ToString());
 
 	if (!S.Error.Text)
 	{
@@ -14,114 +14,61 @@ void OnError(lacewing::relayclient &Client, lacewing::error Error)
 		Ext.Saved.erase(Ext.Saved.end()); // Remove S from vector
 	}
 }
-void OnConnect(lacewing::relayclient &Client)
+void OnClientConnect(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client)
 {
-	Ext.AddEvent(1);
+	Client.IsClosed = false;
+	SaveExtInfo &S = Ext.AddEvent(1);
+	S.Client = &Client;
 }
-void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
+void OnClientDisconnect(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client)
 {
-	Ext.AddEvent(2);
-}
-void OnDisconnect(lacewing::relayclient &Client)
-{
-	SaveExtInfo &S = Ext.AddEvent(3);
-	S.Channel = NULL;
-	S.Peer = NULL;
+	Client.IsClosed = true;
 
-	// Empty all channels and peers
-	Ext.AddEvent(0xFFFF);
-}
-void OnChannelListReceived(lacewing::relayclient &Client)
-{
-	Ext.AddEvent(26);
-}
-void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
-{
-	Target.isclosed = false;
+	SaveExtInfo &S = Ext.AddEvent(3);
+	S.Client = &Client;
+	S.Channel = NULL;
 	
-	for (auto i = Target.firstpeer(); i != nullptr; i = i->next())
-		i->isclosed = false;
+	// Empty all channels and peers
+	SaveExtInfo &S = Ext.AddEvent(0xFFFF);
+	S.Client = &Client;
+}
+void OnJoinChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Channel &Channel, Lacewing::RelayServer::Client &Client)
+{
+	Channel.IsClosed = false;
+	
+	for (Lacewing::RelayClient::Channel::Peer * i = Target.FirstPeer(); i != nullptr; i = i->Next())
+		i->IsClosed = false;
 
 	SaveExtInfo &S = Ext.AddEvent(4);
-	S.Channel = &Target;
+	S.Channel = &Channel;
 }
-void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
+void OnLeaveChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel)
 {
-	SaveExtInfo &S = Ext.AddEvent(5);
-	S.Loop.Name = _strdup(ChannelName);
-	
-	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
-	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
-}
-void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
-{
-	Target.isclosed = true;
-
-	SaveExtInfo &S = Ext.AddEvent(43);
-	S.Channel = &Target;
+	SaveExtInfo &S = Ext.AddEvent(X);
+	S.Channel = &Channel;
+	S.Client = &Client;
 	
 	// Clear channel copy after this event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 }
-void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
+void OnNameSetRequest(Lacewing::RelayClient &Client)
 {
-	SaveExtInfo &S = Ext.AddEvent(44);
-	S.Channel = &Target;
-	
-	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
-	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
+	SaveExtInfo &S = Ext.AddEvent(6);
+	S.Client = &Client;
+	S.RequestedName = ;
 }
-void OnNameSet(lacewing::relayclient &Client)
+void OnPeerConnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
 {
-	Ext.AddEvent(6);
-}
-void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const char * DenyReason)
-{
-	Ext.AddEvent(7);
-	
-	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
-	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
-}
-void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
-{
-	Ext.AddEvent(53);
-
-	// Old previous name? Free it.
-	if (Ext.PreviousName)
-		free(Ext.PreviousName);
-
-	Ext.PreviousName = _strdup(OldName);
-	if (!Ext.PreviousName)
-		Ext.CreateError("Error copying self previous name from Lacewing to local buffer.");
-}
-void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
-{
-	Peer.isclosed = false;
+	Peer.IsClosed = false;
 
 	SaveExtInfo &S = Ext.AddEvent(10);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 }
-void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer)
+void OnPeerDisconnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
 {
-	Peer.isclosed = true;
+	Peer.IsClosed = true;
 
 	SaveExtInfo &S = Ext.AddEvent(11);
 	S.Channel = &Channel;
@@ -132,25 +79,23 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 	C.Channel = S.Channel;
 	C.Peer = S.Peer;
 }
-void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer, const char * OldName)
+void OnPeerNameChanged(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer, const char * OldName)
 {
 	SaveExtInfo &S = Ext.AddEvent(45);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 
 	// Old previous name? Free it
-	if (Peer.tag)
-		free(Peer.tag);
+	if (Peer.Tag)
+		free(Peer.Tag);
 
 	// Store new previous name in Tag.
-	Peer.tag =_strdup(OldName);
-	if (!Peer.tag)
+	Peer.Tag = _strdup(OldName);
+	if (!Peer.Tag)
 		Ext.CreateError("Error copying old peer name.");
 }
-void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnPeerMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
+				   bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 52 : 49);
 	S.Channel = &Channel;
@@ -203,9 +148,8 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 		}
 	}
 }
-void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
+					  bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 51 : 48);
 	S.Channel = &Channel;
@@ -258,8 +202,8 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 		}
 	}
 }
-void OnServerMessage(lacewing::relayclient &Client,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnServerMessage(Lacewing::RelayClient &Client,
+					 bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 50 : 47);
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
@@ -311,8 +255,8 @@ void OnServerMessage(lacewing::relayclient &Client,
 		}
 	}
 }
-void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnServerChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel,
+							bool Blasted, int Subchannel, char * Data, int Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 72 : 68);
 	S.Channel = &Channel;

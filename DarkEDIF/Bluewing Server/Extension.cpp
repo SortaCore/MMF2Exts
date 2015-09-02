@@ -19,217 +19,167 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
         IDs in the JSON here
     */
 	{
-		LinkAction(0, Replaced_Connect);
-		LinkAction(1, Disconnect);
-		LinkAction(2, SetName);
-		LinkAction(3, Replaced_JoinChannel);
-		LinkAction(4, LeaveChannel);
-		LinkAction(5, SendTextToServer);
-		LinkAction(6, SendTextToChannel);
-		LinkAction(7, SendTextToPeer);
-		LinkAction(8, SendNumberToServer);
-		LinkAction(9, SendNumberToChannel);
-		LinkAction(10, SendNumberToPeer);
-		LinkAction(11, BlastTextToServer);
-		LinkAction(12, BlastTextToChannel);
-		LinkAction(13, BlastTextToPeer);
-		LinkAction(14, BlastNumberToServer);
-		LinkAction(15, BlastNumberToChannel);
-		LinkAction(16, BlastNumberToPeer);
-		LinkAction(17, SelectChannelWithName);
-		LinkAction(18, ReplacedNoParams);
-		LinkAction(19, LoopClientChannels);
-		LinkAction(20, SelectPeerOnChannelByName);
-		LinkAction(21, SelectPeerOnChannelByID);
-		LinkAction(22, LoopPeersOnChannel);
-		LinkAction(23, ReplacedNoParams);
-		LinkAction(24, ReplacedNoParams);
-		LinkAction(25, ReplacedNoParams);
-		LinkAction(26, ReplacedNoParams);
-		LinkAction(27, ReplacedNoParams);
-		LinkAction(28, ReplacedNoParams);
-		LinkAction(29, ReplacedNoParams);
-		LinkAction(30, RequestChannelList);
-		LinkAction(31, LoopListedChannels);
-		LinkAction(32, ReplacedNoParams);
-		LinkAction(33, ReplacedNoParams);
-		LinkAction(34, ReplacedNoParams);
-		LinkAction(35, SendBinaryToServer);
-		LinkAction(36, SendBinaryToChannel);
-		LinkAction(37, SendBinaryToPeer);
-		LinkAction(38, BlastBinaryToServer);
-		LinkAction(39, BlastBinaryToChannel);
-		LinkAction(40, BlastBinaryToPeer);
-		LinkAction(41, AddByteText);
-		LinkAction(42, AddByteInt);
-		LinkAction(43, AddShort);
-		LinkAction(44, AddInt);
-		LinkAction(45, AddFloat);
-		LinkAction(46, AddStringWithoutNull);
-		LinkAction(47, AddString);
-		LinkAction(48, AddBinary);
-		LinkAction(49, ClearBinaryToSend);
-		LinkAction(50, SaveReceivedBinaryToFile);
-		LinkAction(51, AppendReceivedBinaryToFile);
-		LinkAction(52, AddFileToBinary);
-		LinkAction(53, ReplacedNoParams);
-		LinkAction(54, ReplacedNoParams);
-		LinkAction(55, ReplacedNoParams);
-		LinkAction(56, ReplacedNoParams);
-		LinkAction(57, ReplacedNoParams);
-		LinkAction(58, ReplacedNoParams);
-		LinkAction(59, ReplacedNoParams);
-		LinkAction(60, ReplacedNoParams);
-		LinkAction(61, ReplacedNoParams);
-		LinkAction(62, ReplacedNoParams);
-		LinkAction(63, ReplacedNoParams);
-		LinkAction(64, SelectChannelMaster);
-		LinkAction(65, JoinChannel);
-		LinkAction(66, CompressSendBinary);
-		LinkAction(67, DecompressReceivedBinary);
-		LinkAction(68, MoveReceivedBinaryCursor);
-		LinkAction(69, LoopListedChannelsWithLoopName);
-		LinkAction(70, LoopClientChannelsWithLoopName);
-		LinkAction(71, LoopPeersOnChannelWithLoopName);
-		LinkAction(72, ReplacedNoParams);
-		LinkAction(73, Connect);
-		LinkAction(74, ResizeBinaryToSend);
+		LinkAction(0, RelayServer_Host);
+		LinkAction(1, RelayServer_StopHosting);
+		LinkAction(2, SetWelcomeMessage);
+		LinkAction(3, EnableCondition_OnMessageToChannel);
+		LinkAction(4, EnableCondition_OnMessageToPeer);
+		LinkAction(5, OnInteractive_Deny);
+		LinkAction(6, OnInteractive_ChangePeerName);
+		LinkAction(7, OnInteractive_ChangeChannelName);
+		LinkAction(8, Channel_Close);
+		LinkAction(9, Channel_SelectMaster);
+		LinkAction(10, Channel_SelectByName);
+		LinkAction(11, LoopAllChannels);
+		LinkAction(12, Client_Disconnect);
+		LinkAction(13, Client_LoopJoinedChannels);
+		LinkAction(14, Client_SelectByName);
+		LinkAction(15, Client_SelectByID);
+		LinkAction(16, LoopAllClients);
+		LinkAction(17, SendTextToClient);
+		LinkAction(18, SendTextToChannel);
+		LinkAction(19, SendNumberToClient);
+		LinkAction(20, SendNumberToChannel);
+		LinkAction(21, SendBinaryToClient);
+		LinkAction(22, SendBinaryToChannel);
+		LinkAction(23, BlastTextToClient);
+		LinkAction(24, BlastTextToChannel);
+		LinkAction(25, BlastNumberToClient);
+		LinkAction(26, BlastNumberToChannel);
+		LinkAction(27, BlastBinaryToClient);
+		LinkAction(28, BlastBinaryToChannel);
+		LinkAction(29, AddByteText);
+		LinkAction(30, AddByteInt);
+		LinkAction(31, AddShort);
+		LinkAction(32, AddInt);
+		LinkAction(33, AddFloat);
+		LinkAction(34, AddStringWithoutNull);
+		LinkAction(35, AddString);
+		LinkAction(36, AddBinary);
+		LinkAction(37, AddFileToBinary);
+		LinkAction(38, CompressSendBinary);
+		LinkAction(39, ClearBinaryToSend);
+		LinkAction(40, SaveReceivedBinaryToFile);
+		LinkAction(41, AppendReceivedBinaryToFile);
+		LinkAction(42, DecompressReceivedBinary);
+		LinkAction(43, Channel_LoopClients);
+		LinkAction(44, OnInteractive_DropMessage);
+		LinkAction(45, Client_SelectSender);
+		LinkAction(46, Client_SelectReceiver);
+		LinkAction(47, LoopAllChannelsWithName);
+		LinkAction(48, LoopAllClientsWithName);
+		LinkAction(49, Client_LoopJoinedChannelsWithName);
+		LinkAction(50, FlashServer_Host);
+		LinkAction(51, FlashServer_StopHosting);
+		LinkAction(52, Client_SetLocalData);
+		LinkAction(53, Channel_SetLocalData);
+		LinkAction(54, ResizeBinaryToSend);
+		// Added actions:
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
-		LinkCondition(1, AlwaysTrue /* OnConnect */);
-		LinkCondition(2, AlwaysTrue /* OnConnectDenied */);
-		LinkCondition(3, AlwaysTrue /* OnDisconnect */);
-		LinkCondition(4, AlwaysTrue /* OnChannelJoin */);
-		LinkCondition(5, AlwaysTrue /* OnChannelJoinDenied */);
-		LinkCondition(6, AlwaysTrue /* OnNameSet */);
-		LinkCondition(7, AlwaysTrue /* OnNameDenied */);
-		LinkCondition(8, OnSentTextMessageFromServer);
-		LinkCondition(9, OnSentTextMessageFromChannel);
-		LinkCondition(10, AlwaysTrue /* OnPeerConnect */);
-		LinkCondition(11, AlwaysTrue /* OnPeerDisonnect */);
-		LinkCondition(12, AlwaysFalse /* Replaced_OnChannelJoin */);
-		LinkCondition(13, AlwaysTrue /* OnChannelPeerLoop */);
-		LinkCondition(14, AlwaysTrue /* OnClientChannelLoop */);
-		LinkCondition(15, OnSentNumberMessageFromServer);
-		LinkCondition(16, OnSentNumberMessageFromChannel);
-		LinkCondition(17, AlwaysTrue /* OnChannelPeerLoopFinished */);
-		LinkCondition(18, AlwaysTrue /* OnClientChannelLoopFinished */);
-		LinkCondition(19, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(20, OnBlastedTextMessageFromServer);
-		LinkCondition(21, OnBlastedNumberMessageFromServer);
-		LinkCondition(22, OnBlastedTextMessageFromChannel);
-		LinkCondition(23, OnBlastedNumberMessageFromChannel);
-		LinkCondition(24, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(25, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(26, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(27, AlwaysTrue /* OnChannelListReceived */);
-		LinkCondition(28, AlwaysTrue /* OnChannelListLoop */);
-		LinkCondition(29, AlwaysTrue /* OnChannelListLoopFinished */);
-		LinkCondition(30, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(31, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(32, OnSentBinaryMessageFromServer);
-		LinkCondition(33, OnSentBinaryMessageFromChannel);
-		LinkCondition(34, OnBlastedBinaryMessageFromServer);
-		LinkCondition(35, OnBlastedBinaryMessageFromChannel);
-		LinkCondition(36, OnSentTextMessageFromPeer);
-		LinkCondition(37, OnSentNumberMessageFromPeer);
-		LinkCondition(38, OnSentBinaryMessageFromPeer);
-		LinkCondition(39, OnBlastedTextMessageFromPeer);
-		LinkCondition(40, OnBlastedNumberMessageFromPeer);
-		LinkCondition(41, OnBlastedBinaryMessageFromPeer);
-		LinkCondition(42, IsConnected);
-		LinkCondition(43, AlwaysTrue /* OnChannelLeave */);
-		LinkCondition(44, AlwaysTrue /* OnChannelLeaveDenied */);
-		LinkCondition(45, AlwaysTrue /* OnPeerChangedName */);
-		LinkCondition(46, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(47, OnAnySentMessageFromServer);
-		LinkCondition(48, OnAnySentMessageFromChannel);
-		LinkCondition(49, OnAnySentMessageFromPeer);
-		LinkCondition(50, OnAnyBlastedMessageFromServer);
-		LinkCondition(51, OnAnyBlastedMessageFromChannel);
-		LinkCondition(52, OnAnyBlastedMessageFromPeer);
-		LinkCondition(53, AlwaysTrue /* OnNameChanged */);
-		LinkCondition(54, ClientHasAName);
-		LinkCondition(55, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(56, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(57, SelectedPeerIsChannelMaster);
-		LinkCondition(58, YouAreChannelMaster);
-		LinkCondition(59, OnChannelListLoopWithName);
-		LinkCondition(60, OnChannelListLoopWithNameFinished);
-		LinkCondition(61, OnPeerLoopWithName);
-		LinkCondition(62, OnPeerLoopWithNameFinished);
-		LinkCondition(63, OnClientChannelLoopWithName);
-		LinkCondition(64, OnClientChannelLoopWithNameFinished);
-		LinkCondition(65, OnSentTextChannelMessageFromServer);
-		LinkCondition(66, OnSentNumberChannelMessageFromServer);
-		LinkCondition(67, OnSentBinaryChannelMessageFromServer);
-		LinkCondition(68, OnAnySentChannelMessageFromServer);
-		LinkCondition(69, OnBlastedTextChannelMessageFromServer);
-		LinkCondition(70, OnBlastedNumberChannelMessageFromServer);
-		LinkCondition(71, OnBlastedBinaryChannelMessageFromServer);
-		LinkCondition(72, OnAnyBlastedChannelMessageFromServer);
-		LinkCondition(73, IsJoinedToChannel);
-		LinkCondition(74, IsPeerOnChannel_Name);
-		LinkCondition(75, IsPeerOnChannel_ID);
+		LinkCondition(1, AlwaysTrue /* OnConnectRequest */);
+		LinkCondition(2, AlwaysTrue /* OnDisconnect */);
+		LinkCondition(3, AlwaysTrue /* OnChannel_JoinRequest */);
+		LinkCondition(4, AlwaysTrue /* OnChannel_LeaveRequest */);
+		LinkCondition(5, AlwaysTrue /* AllChannelsLoop */);
+		LinkCondition(6, AlwaysTrue /* OnClient_JoinedChannelsLoop */);
+		LinkCondition(7, AlwaysTrue /* AllClientsLoop */);
+		LinkCondition(8, AlwaysTrue /* OnChannel_ClientLoop */);
+		LinkCondition(9, Client_IsChannelMaster);
+		LinkCondition(10, AlwaysTrue /* OnClient_NameSetRequest */);
+		LinkCondition(11, OnSentTextMessageToServer);
+		LinkCondition(12, OnSentNumberMessageToServer);
+		LinkCondition(13, OnSentBinaryMessageToServer);
+		LinkCondition(14, OnAnySentMessageToServer);
+		LinkCondition(15, OnSentTextMessageToChannel);
+		LinkCondition(16, OnSentNumberMessageToChannel);
+		LinkCondition(17, OnSentBinaryMessageToChannel);
+		LinkCondition(18, OnAnySentMessageToChannel);
+		LinkCondition(19, OnSentTextMessageToPeer);
+		LinkCondition(20, OnSentNumberMessageToPeer);
+		LinkCondition(21, OnSentBinaryMessageToPeer);
+		LinkCondition(22, OnAnySentMessageToPeer);
+		LinkCondition(23, OnBlastedTextMessageToPeer);
+		LinkCondition(24, OnBlastedNumberMessageToServer);
+		LinkCondition(25, OnBlastedBinaryMessageToServer);
+		LinkCondition(26, OnAnyBlastedMessageToServer);
+		LinkCondition(27, OnBlastedTextMessageToChannel);
+		LinkCondition(28, OnBlastedNumberMessageToChannel);
+		LinkCondition(29, OnBlastedBinaryMessageToChannel);
+		LinkCondition(30, OnAnyBlastedMessageToChannel);
+		LinkCondition(31, OnBlastedTextMessageToPeer);
+		LinkCondition(32, OnBlastedNumberMessageToPeer);
+		LinkCondition(33, OnBlastedBinaryMessageToPeer);
+		LinkCondition(34, OnAnyBlastedMessageToPeer);
+		LinkCondition(35, OnAllChannelsLoopWithName);
+		LinkCondition(36, OnClientsJoinedChannelLoopWithName);
+		LinkCondition(37, OnAllClientsLoopWithName);
+		LinkCondition(38, OnChannelClientsLoopWithName);
+		LinkCondition(39, OnChannelClientsLoopWithNameFinished);
+		LinkCondition(40, OnAllChannelsLoopWithNameFinished);
+		LinkCondition(41, OnClientsJoinedChannelLoopWithNameFinished);
+		LinkCondition(42, OnChannelsClientLoopFinished);
+		LinkCondition(43, AlwaysTrue /* OnAllChannelsLoopFinished */);
+		LinkCondition(44, AlwaysTrue /* OnAllClientsLoopFinished */);
+		LinkCondition(45, AlwaysTrue /* OnClientJoinedChannelLoopFinished */);
+		LinkCondition(46, IsLacewingServerHosting);
+		LinkCondition(47, IsFlashPolicyServerHosting);
+		LinkCondition(48, ChannelIsHiddenFromChannelList);
+		LinkCondition(49, ChannelIsSetToCloseAutomatically);
+		LinkCondition(50, OnAllClientsLoopWithNameFinished);
+		// Added conditions:
+		LinkCondition(51, IsClientOnChannel_ID);
+		LinkCondition(52, IsClientOnChannel_Name);
+		LinkCondition(53, IsHTML5Hosting);
 	}
 	{
 		LinkExpression(0, Error);
-		LinkExpression(1, ReplacedExprNoParams);
-		LinkExpression(2, Self_Name);
-		LinkExpression(3, Self_ChannelCount);
-		LinkExpression(4, Peer_Name);
-		LinkExpression(5, ReceivedStr);
-		LinkExpression(6, ReceivedInt);
-		LinkExpression(7, Subchannel);
-		LinkExpression(8, Peer_ID);
-		LinkExpression(9, Channel_Name);
-		LinkExpression(10, Channel_PeerCount);
-		LinkExpression(11, ReplacedExprNoParams);
-		LinkExpression(12, ChannelListing_Name);
-		LinkExpression(13, ChannelListing_PeerCount);
-		LinkExpression(14, Self_ID);
-		LinkExpression(15, ReplacedExprNoParams);
-		LinkExpression(16, ReplacedExprNoParams);
-		LinkExpression(17, ReplacedExprNoParams);
-		LinkExpression(18, ReplacedExprNoParams);
-		LinkExpression(19, ReplacedExprNoParams);
-		LinkExpression(20, StrByte);
-		LinkExpression(21, UnsignedByte);
-		LinkExpression(22, SignedByte);
-		LinkExpression(23, UnsignedShort);
-		LinkExpression(24, SignedShort);
-		LinkExpression(25, UnsignedInteger);
-		LinkExpression(26, SignedInteger);
-		LinkExpression(27, Float);
-		LinkExpression(28, StringWithSize);
-		LinkExpression(29, String);
-		LinkExpression(30, ReceivedBinarySize);
-		LinkExpression(31, Lacewing_Version);
-		LinkExpression(32, SendBinarySize);
-		LinkExpression(33, Self_PreviousName);
-		LinkExpression(34, Peer_PreviousName);
-		LinkExpression(35, ReplacedExprNoParams);
-		LinkExpression(36, ReplacedExprNoParams);
-		LinkExpression(37, DenyReason);
-		LinkExpression(38, HostIP);
-		LinkExpression(39, HostPort);
-		LinkExpression(40, ReplacedExprNoParams);
-		LinkExpression(41, WelcomeMessage);
-		LinkExpression(42, ReceivedBinaryAddress);
-		LinkExpression(43, CursorStrByte);
-		LinkExpression(44, CursorUnsignedByte);
-		LinkExpression(45, CursorSignedByte);
-		LinkExpression(46, CursorUnsignedShort);
-		LinkExpression(47, CursorSignedShort);
-		LinkExpression(48, CursorUnsignedInteger);
-		LinkExpression(49, CursorSignedInteger);
-		LinkExpression(50, CursorFloat);
-		LinkExpression(51, CursorStringWithSize);
-		LinkExpression(52, CursorString);
-		LinkExpression(53, ReplacedExprNoParams);
-		LinkExpression(54, SendBinaryAddress);
-		LinkExpression(55, DumpMessage);
+		LinkExpression(1, Lacewing_Version);
+		LinkExpression(2, BinaryToSend_Size);
+		LinkExpression(3, RequestedPeerName);
+		LinkExpression(4, RequestedChannelName);
+		LinkExpression(5, Channel_Name);
+		LinkExpression(6, Channel_ClientCount);
+		LinkExpression(7, Client_Name);
+		LinkExpression(8, Client_ID);
+		LinkExpression(9, Client_IP);
+		LinkExpression(10, Client_ConnectionTime);
+		LinkExpression(11, Client_ChannelCount);
+		LinkExpression(12, ReceivedStr);
+		LinkExpression(13, ReceivedInt);
+		LinkExpression(14, ReceivedBinarySize);
+		LinkExpression(15, ReceivedBinaryAddress);
+		LinkExpression(16, StrByte);
+		LinkExpression(17, UnsignedByte);
+		LinkExpression(18, SignedByte);
+		LinkExpression(19, UnsignedShort);
+		LinkExpression(20, SignedShort);
+		LinkExpression(21, UnsignedInteger);
+		LinkExpression(22, SignedInteger);
+		LinkExpression(23, Float);
+		LinkExpression(24, StringWithSize);
+		LinkExpression(25, String);
+		LinkExpression(26, Subchannel);
+		LinkExpression(27, Channel_Count);
+		LinkExpression(28, Client_GetLocalData);
+		LinkExpression(29, CursorStrByte);
+		LinkExpression(30, CursorUnsignedByte);
+		LinkExpression(31, CursorSignedByte);
+		LinkExpression(32, CursorUnsignedShort);
+		LinkExpression(33, CursorSignedShort);
+		LinkExpression(34, CursorUnsignedInteger);
+		LinkExpression(35, CursorSignedInteger);
+		LinkExpression(36, CursorFloat);
+		LinkExpression(37, CursorStringWithSize);
+		LinkExpression(38, CursorString);
+		LinkExpression(39, Client_ProtocolImplementation);
+		LinkExpression(40, Channel_GetLocalData);
+		LinkExpression(41, Port);
+		LinkExpression(42, BinaryToSend_Address);
+		// Added expressions:
+		LinkExpression(43, DumpMessage);
+		LinkExpression(44, Client_Platform);
 	}
     
 	/*
@@ -252,7 +202,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	Globals = (struct GlobalInfo *)Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str());
 	if (!Globals)
 	{
-		Globals = new struct Extension::GlobalInfo;
+		Globals = new Extension::GlobalInfo();
 		Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str(), Globals);
 	}
 
@@ -265,39 +215,29 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	// Link all callbacks
 	{
-		Cli.onchannellistreceived(::OnChannelListReceived);
-		Cli.onmessage_channel(::OnChannelMessage);
-		Cli.onconnect(::OnConnect);
-		Cli.onconnectiondenied(::OnConnectDenied);
-		Cli.ondisconnect(::OnDisconnect);
-		Cli.onerror(::OnError);
-		Cli.onchannel_join(::OnJoinChannel);
-		Cli.onchannel_joindenied(::OnJoinChannelDenied);
-		Cli.onchannel_leave(::OnLeaveChannel);
-		Cli.onchannel_leavedenied(::OnLeaveChannelDenied);
-		Cli.onname_changed(::OnNameChanged);
-		Cli.onname_denied(::OnNameDenied);
-		Cli.onname_set(::OnNameSet);
-		Cli.onpeer_changename(::OnPeerNameChanged);
-		Cli.onpeer_connect(::OnPeerConnect);
-		Cli.onpeer_disconnect(::OnPeerDisconnect);
-		Cli.onmessage_peer(::OnPeerMessage);
-		Cli.onmessage_serverchannel(::OnServerChannelMessage);
-		Cli.onmessage_server(::OnServerMessage);
+		Srv.onConnect(::OnClientConnectRequest);
+		Srv.onDisconnect(::OnClientDisconnect);
+		Srv.onError(::OnError);
+		Srv.onJoinChannel(::OnJoinChannelRequest);
+		Srv.onLeaveChannel(::OnLeaveChannelRequest);
+		Srv.onSetName(::OnNameSet);
+		Srv.onServerMessage(::OnServerMessage);
+
+		FlashSrv.onError(::OnFlashError);
 	}
 	
-	Cli.tag = this; // Useful so Lacewing callbacks can access Extension
+	Srv.Tag = this; // Useful so Lacewing callbacks can access Extension
 }
 
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
 	// If the loop thread is terminated, only 4 bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
-	lacewing::error Error = ((Extension *)ThisExt)->ObjEventPump->start_eventloop();
+	Lacewing::Error * Error = ((Extension *)ThisExt)->ObjEventPump.StartEventLoop();
 	if (Error)
 	{
 		std::string Text = "Error returned by StartEventLoop(): ";
-					Text += Error->tostring();
+					Text += Error->ToString();
 		((Extension *)ThisExt)->CreateError(Text.c_str());
 	}
 	((Extension *)ThisExt)->Globals->_Thread = NULL;
@@ -386,6 +326,11 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 #endif // MULTI_THREADING
 
 
+void Extension::ClearThreadData()
+{
+	memset(&ThreadData, 0, sizeof(SaveExtInfo);
+}
+
 void Extension::CreateError(const char * Error)
 {
 	SaveExtInfo &event = AddEvent(0, false);
@@ -460,7 +405,7 @@ short Extension::Handle()
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
 	if (!Globals->_Thread)
 	{
-		ObjEventPump->tick();
+		ObjEventPump.Tick();
 		return 0;
 	}
 
@@ -508,11 +453,11 @@ short Extension::Handle()
 					// Channel leave
 					if (!S->Peer)
 					{
-						for (auto u = Channels.begin(); u != Channels.end(); ++u)
+						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
 							if (*u == S->Channel)
 							{
-								if (!S->Channel->isclosed)
+								if (!S->Channel->IsClosed)
 									CreateError("Channel being removed but not marked as closed!");
 
 								Channels.erase(u);
@@ -520,19 +465,19 @@ short Extension::Handle()
 							}
 						}
 
-						delete S->Channel;
+						// delete ThreadData.Channel;
 					}
 					else // Peer leave
 					{
-						for (auto u = Channels.begin(); u != Channels.end(); ++u)
+						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
 							if (*u == ThreadData.Channel)
 							{
-								for (auto v = Peers.begin(); v != Peers.end(); ++v)
+								for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator v = Peers.begin(); v != Peers.end(); ++v)
 								{
 									if (*v == S->Peer)
 									{
-										if (!S->Peer->isclosed)
+										if (!S->Peer->IsClosed)
 											CreateError("Peer being removed but not marked as closed!");
 
 										Peers.erase(v);
@@ -544,7 +489,6 @@ short Extension::Handle()
 							}
 						}
 
-						delete S->Peer;
 						// delete ThreadData.Peer;
 					}
 				}
@@ -554,25 +498,20 @@ short Extension::Handle()
 					// and thus we have a small, but reoccuring, memory leak.
 					// This should be fixed when this extension is updated to the more recent liblacewing version.
 
-					// for (std::vector<lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+					// for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 					//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
 
 					// Old username is stored in the tag and must be deleted separately from clear()
-					for (auto u = Peers.begin(); u != Peers.end(); ++u)
+					for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
 					{
-						if ((*u)->internaltag)
-							free((*u)->internaltag);
+						if ((*u)->InternalTag)
+							free((*u)->InternalTag);
 
 						//	delete (struct ::PeerInternal *)((*u)->InternalTag);
 					}
 
 					// Delete main data of each struct (note larger Internal classes are not deleted, see above)
-					for each (auto i in Channels)
-						delete i;
 					Channels.clear();
-					
-					for each (auto i in Peers)
-						delete i;
 					Peers.clear();
 				}
 			}

@@ -4,22 +4,21 @@
 	"UK English":
 	{
 		"About": {
-			"Name": "Lacewing Blue Client",
+			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2013 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client.\r\n The Relay library was discontinued by developer James McLaughlin.",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Server.\r\n The Relay library was discontinued by developer James McLaughlin.",
 			// Use a file without path if your help file can be loaded by the MMF help file.
 			// "MyExt.chm";
 			// Or return the path of your file (relative to the MMF directory)
 			// if your file is not loaded by the MMF help file.
-			"Help": "Help/BluewingClient.chm",
-			"URL": "http://www.lacewing-project.org"
+			"Help": "Help/BluewingServer.chm",
+			"URL": "http://dark-wire.com/relay/"
 		},
 
 		"ActionMenu":
 		[
-			[73, "Connect"],
-			[1, "Disconnect"],
+			
 	
 			"Separator",
 			
@@ -145,7 +144,7 @@
 				[28, "On loop finished"],
 				"Separator",
 				[59, "[With loop name] On loop"],
-				[60, "[With loop name] On loop finished"]
+				[60, "[With loop name] On loop finished"],
 			],
 
 			["Channel",
@@ -1553,7 +1552,7 @@
 				"Info": "Check this box to enable multithreading. This makes Lacewing ultra-responsive, and retains the connection when popup messages occur.",
 				"Type": "Checkbox",
 				"DefaultState": true
-			}
+			},
 		]
 	}
 	/*,

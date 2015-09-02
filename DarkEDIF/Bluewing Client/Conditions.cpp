@@ -84,7 +84,7 @@ bool Extension::OnBlastedBinaryMessageFromPeer(int Subchannel)
 }
 bool Extension::IsConnected()
 {
-	return Cli.Connected();
+	return Cli.connected();
 }
 bool Extension::OnAnySentMessageFromServer(int Subchannel)
 {
@@ -112,7 +112,7 @@ bool Extension::OnAnyBlastedMessageFromPeer(int Subchannel)
 }
 bool Extension::ClientHasAName()
 {
-	return (Cli.Name() && Cli.Name()[0] == '\0');
+	return (Cli.name() && Cli.name()[0] == '\0');
 }
 bool Extension::SelectedPeerIsChannelMaster()
 {
@@ -122,7 +122,7 @@ bool Extension::SelectedPeerIsChannelMaster()
 		return false;
 	}
 
-	return ThreadData.Peer->IsChannelMaster();
+	return ThreadData.Peer->ischannelmaster();
 }
 bool Extension::YouAreChannelMaster()
 {
@@ -132,7 +132,7 @@ bool Extension::YouAreChannelMaster()
 		return false;
 	}
 
-	return ThreadData.Channel->IsChannelMaster();
+	return ThreadData.Channel->ischannelmaster();
 }
 bool Extension::OnChannelListLoopWithName(char * LoopName)
 {
@@ -196,12 +196,12 @@ bool Extension::IsJoinedToChannel(char * ChannelName)
 		CreateError("Error checking if joined to a channel, channel name supplied was blank.");
 	else
 	{
-		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
+		lacewing::relayclient::channel * C = Cli.firstchannel();
 		while (C)
 		{
-			if (!_stricmp(ChannelName, C->Name()))
-				return !C->IsClosed;
-			C = C->Next();
+			if (!_stricmp(ChannelName, C->name()))
+				return !C->isclosed;
+			C = C->next();
 		}
 	}
 	return false;
@@ -212,33 +212,33 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
 	else if (ChannelName[0] != '\0')
 	{
-		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
+		lacewing::relayclient::channel * C = Cli.firstchannel();
 		while (C)
 		{
-			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
+			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
 			{
-				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
+				lacewing::relayclient::channel::peer * P = C->firstpeer();
 				while (P)
 				{
-					if (!_stricmp(PeerName, P->Name()))
-						return !P->IsClosed;
-					P = P->Next();
+					if (!_stricmp(PeerName, P->name()))
+						return !P->isclosed;
+					P = P->next();
 				}
 				return false;
 			}
-			C = C->Next();
+			C = C->next();
 		}
 		
 		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
 	}
 	else if (ThreadData.Channel) // Use currently selected channel
 	{
-		Lacewing::RelayClient::Channel::Peer * P = ThreadData.Channel->FirstPeer();
+		lacewing::relayclient::channel::peer * P = ThreadData.Channel->firstpeer();
 		while (P)
 		{
-			if (!_stricmp(P->Name(), PeerName))
-				return !P->IsClosed;
-			P = P->Next();
+			if (!_stricmp(P->name(), PeerName))
+				return !P->isclosed;
+			P = P->next();
 		}
 		return false;
 	}
@@ -252,33 +252,33 @@ bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 {
 	if (ChannelName[0] != '\0')
 	{
-		Lacewing::RelayClient::Channel * C = Cli.FirstChannel();
+		lacewing::relayclient::channel * C = Cli.firstchannel();
 		while (C)
 		{
-			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
+			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
 			{
-				Lacewing::RelayClient::Channel::Peer * P = C->FirstPeer();
+				lacewing::relayclient::channel::peer * P = C->firstpeer();
 				while (P)
 				{
-					if (P->ID() == PeerID)
-						return !P->IsClosed;
-					P = P->Next();
+					if (P->id() == PeerID)
+						return !P->isclosed;
+					P = P->next();
 				}
 				return false;
 			}
-			C = C->Next();
+			C = C->next();
 		}
 		
 		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
 	}
 	else if (ThreadData.Channel)// Use currently selected channel
 	{
-		Lacewing::RelayClient::Channel::Peer * P = ThreadData.Channel->FirstPeer();
+		lacewing::relayclient::channel::peer * P = ThreadData.Channel->firstpeer();
 		while (P)
 		{
-			if (P->ID() == PeerID)
-				return !P->IsClosed;
-			P = P->Next();
+			if (P->id() == PeerID)
+				return !P->isclosed;
+			P = P->next();
 		}
 		return false;
 	}

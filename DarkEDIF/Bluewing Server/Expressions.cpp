@@ -5,21 +5,13 @@ const char * Extension::Error()
 {
 	return Runtime.CopyString(ThreadData.Error.Text);
 }
-const char * Extension::ReplacedExprNoParams()
+int Extension::NumChannelsOnServer()
 {
-	return Runtime.CopyString("");
+	return Srv.ChannelCount();
 }
-const char * Extension::Self_Name()
+const char * Extension::Client_Name()
 {
-	return Runtime.CopyString(Cli.name() ? Cli.name() : "");
-}
-int Extension::Self_ChannelCount()
-{
-	return Cli.channelcount();
-}
-const char * Extension::Peer_Name()
-{
-	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->isclosed || !ThreadData.Peer->name()) ? "" : ThreadData.Peer->name());
+	return Runtime.CopyString((!ThreadData.Client || ThreadData.Client->IsClosed || !ThreadData.Client->Name()) ? "" : ThreadData.Client->Name());
 }
 const char * Extension::ReceivedStr()
 {
@@ -45,29 +37,17 @@ int Extension::Subchannel()
 {
 	return (int)ThreadData.ReceivedMsg.Subchannel;
 }
-int Extension::Peer_ID()
+int Extension::Client_ID()
 {
-	return ThreadData.Peer ? ThreadData.Peer->id() : -1;
+	return ThreadData.Client ? ThreadData.Client->ID() : -1;
 }
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->isclosed ? "" : ThreadData.Channel->name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
+	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->IsClosed ? "" : ThreadData.Channel->Name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
 }
-int Extension::Channel_PeerCount()
+int Extension::Channel_ClientCount()
 {
-	return ThreadData.Channel ? ThreadData.Channel->peercount() : -1;
-}
-const char * Extension::ChannelListing_Name()
-{
-	return Runtime.CopyString(ThreadData.ChannelListing ? ThreadData.Channel->name() : "");
-}
-int Extension::ChannelListing_PeerCount()
-{
-	return (!ThreadData.Channel || ThreadData.Channel->isclosed) ? -1 : ThreadData.Channel->peercount();
-}
-int Extension::Self_ID()
-{
-	return Cli.id();
+	return ThreadData.Channel ? ThreadData.Channel->ClientCount() : -1;
 }
 const char * Extension::StrByte(int Index)
 {
@@ -224,41 +204,29 @@ const char * Extension::String(int Index)
 	else
 		return Runtime.CopyString(&ThreadData.ReceivedMsg.Content[Index]);
 }
-int Extension::ReceivedBinarySize()
+unsigned int Extension::ReceivedBinarySize()
 {
 	return ThreadData.ReceivedMsg.Size;
 }
 const char * Extension::Lacewing_Version()
 {
-	return Runtime.CopyString("liblacewing 0.5.4 / Bluewing reimpl");
+	return Runtime.CopyString(Lacewing::Version());
 }
-int Extension::SendBinarySize()
+unsigned int Extension::BinaryToSend_Size()
 {
 	return SendMsgSize;
 }
-const char * Extension::Self_PreviousName()
+const char * Extension::Client_IP()
 {
-	return Runtime.CopyString(Cli.tag ? (char *)Cli.tag : "");
+	return Runtime.CopyString(ThreadData.Client->GetAddress().ToString());
 }
-const char * Extension::Peer_PreviousName()
+int Extension::Port()
 {
-	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->isclosed || !ThreadData.Peer->tag) ? "" : (char *)ThreadData.Peer->tag);
+	return Srv.Port();
 }
-const char * Extension::DenyReason()
+const char * Extension::Welcome_Message()
 {
-	return Runtime.CopyString(DenyReasonBuffer ? DenyReasonBuffer : "No reason specified.");
-}
-const char * Extension::HostIP()
-{
-	return Runtime.CopyString(Cli.serveraddress()->tostring());
-}
-int Extension::HostPort()
-{
-	return Cli.serveraddress()->port();
-}
-const char * Extension::WelcomeMessage()
-{
-	return  Runtime.CopyString(Cli.welcomemessage()); 
+	return Runtime.CopyString(Srv.WelcomeMessage()); 
 }
 long Extension::ReceivedBinaryAddress()
 {
@@ -397,7 +365,7 @@ const char * Extension::CursorString()
 		return Runtime.CopyString(ThreadData.ReceivedMsg.Content+s);
 	}
 }
-long Extension::SendBinaryAddress()
+long Extension::BinaryToSend_Address()
 {
 	return (long)SendMsg;
 }

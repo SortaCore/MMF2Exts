@@ -11,10 +11,8 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-
 #define DLLExport   __stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
-
 
 #define EnterCriticalSectionDerpy(x) \
 	EnterCriticalSection(x); \
@@ -32,14 +30,10 @@
 #pragma comment(lib, "..\\Lib\\zlib.lib")
 #include <sstream>
 #include "zlib.h"
+#include <algorithm>
 
-// LacewingFunction for a .lib file format; use custom path
-#define lw_import
-//#define _lacewing_static
-
-//#define LacewingFunction __declspec(dllimport)
-#pragma comment(lib, "../Lib/Lacewing/liblacewing.lib")
-
+// Blank LacewingFunction to stop Lacewing header thinking we want a .lib file
+//#define LacewingFunction
 #include "Lacewing.h"
 #include "LacewingFunctions.h"
 

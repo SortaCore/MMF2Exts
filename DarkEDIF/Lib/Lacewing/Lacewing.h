@@ -1,1382 +1,1696 @@
 
-/* vim: set et ts=4 sw=4 ft=cpp:
- *
- * Copyright (C) 2011 James McLaughlin.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+/* vim: set et ts=3 sw=3 ft=cpp:
+*
+* Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions
+* are met:
+*
+* 1. Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the distribution.
+*
+* THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+* OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+* SUCH DAMAGE.
+*/
 
-#ifndef LacewingIncluded
-#define LacewingIncluded
-
-// Usual Variant settings
-#define LACEWING_TEXT 0
-#define LACEWING_NUMBER 1
-#define LACEWING_BINARY 2
-
-#define LACEWING_STRING LACEWING_TEXT
-#define LACEWING_RAW LACEWING_BINARY
-
-// Modified due to issue 8 on GitHub
-//See https://github.com/udp/lacewing/issues/8#issuecomment-3322726 for more information
-#pragma comment (lib, "ws2_32.lib")
-#pragma comment (lib, "mswsock.lib")
-#pragma comment (lib, "crypt32.lib")
-#pragma comment (lib, "secur32.lib")
-
-
-#ifdef Yield
-    #undef Yield
-#endif
+#ifndef _lacewing_h
+#define _lacewing_h
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #ifndef _MSC_VER
 
-    #include <inttypes.h>
-    
-    #define lw_i64   int64_t
-    #define lw_iptr  intptr_t
-    #define lw_i32   int32_t
-    #define lw_i16   int16_t
-    #define lw_i8    int8_t
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 
-    
+#include <inttypes.h>
+
+typedef int64_t    lw_i64;
+typedef uint64_t   lw_ui64;
+typedef intptr_t   lw_iptr;
+typedef uintptr_t  lw_uiptr;
+typedef int32_t    lw_i32;
+typedef uint32_t   lw_ui32;
+typedef int16_t    lw_i16;
+typedef uint16_t   lw_ui16;
+typedef int8_t     lw_i8;
+typedef uint8_t    lw_ui8;
+
+#define lw_PRId64 PRId64
+#define lw_PRIu64 PRIu64
+
 #else
 
-    #ifdef _WIN64
-        #define lw_iptr __int64
-    #else
-        #define lw_iptr __int32
-    #endif
+#ifdef _WIN64
+typedef __int64 lw_iptr;
+typedef unsigned __int64 lw_uiptr;
+#else
+typedef __int32 lw_iptr;
+typedef unsigned __int32 lw_uiptr;
+#endif
 
-    #define lw_i64  __int64
-    #define lw_i32  __int32
-    #define lw_i16  __int16
-    #define lw_i8   __int8
-    
+typedef __int64 lw_i64;
+typedef unsigned __int64 lw_ui64;
+typedef __int32 lw_i32;
+typedef unsigned __int32 lw_ui32;
+typedef __int16 lw_i16;
+typedef unsigned __int16 lw_ui16;
+typedef __int8 lw_i8;
+typedef unsigned __int8 lw_ui8;
+
+#define lw_PRId64 "I64d"
+#define lw_PRIu64 "I64u"
+
 #endif
 
 #ifndef _WIN32
-    #ifndef LacewingHandler
-        #define LacewingHandler
-    #endif
-
-    #ifndef LacewingFunction
-        #define LacewingFunction
-    #endif
-#else
-    #define LacewingHandler __cdecl
+#ifndef lw_callback
+#define lw_callback
 #endif
 
-#ifndef LacewingFunction
+#ifndef lw_import
+#define lw_import
+#endif
+#else
 
-    #define LacewingFunction __declspec(dllimport)
+/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
 
-    #ifndef Lacewing_NoAutoLink
-        #pragma comment(lib, "Lacewing.lib")
-    #endif
+#ifndef _INC_WINDOWS
+#include <winsock2.h>
+#include <windows.h>
+#endif
 
+#define lw_callback __cdecl
+
+#endif
+
+#ifndef lw_import
+#ifdef _lacewing_static
+#define lw_import
+#else
+#define lw_import __declspec (dllimport)
+#endif
 #endif
 
 typedef lw_i8 lw_bool;
 
-const lw_bool lw_true  = (lw_bool) 1;
-const lw_bool lw_false = (lw_bool) 0;
+#define lw_true   ((lw_bool) 1)
+#define lw_false  ((lw_bool) 0)
+
+#ifdef _WIN32
+typedef HANDLE lw_fd;
+#else
+typedef int lw_fd;
+#endif
+
+#if (!defined(_lacewing_internal))
+
+/* The ugly underscore prefixes are only necessary because we have to
+* compile the library as C++ for MSVC compatibility.  Maybe one day MSVC
+* will support C99 (or everyone will stop using Windows - I'm happy either
+* way.)
+*/
+
+typedef struct _lw_thread            * lw_thread;
+typedef struct _lw_addr              * lw_addr;
+typedef struct _lw_filter            * lw_filter;
+typedef struct _lw_pump              * lw_pump;
+typedef struct _lw_pump_watch        * lw_pump_watch;
+typedef struct _lw_pump              * lw_eventpump;
+typedef struct _lw_stream            * lw_stream;
+typedef struct _lw_stream            * lw_fdstream;
+typedef struct _lw_stream            * lw_file;
+typedef struct _lw_timer             * lw_timer;
+typedef struct _lw_sync              * lw_sync;
+typedef struct _lw_event             * lw_event;
+typedef struct _lw_error             * lw_error;
+typedef struct _lw_stream            * lw_client;
+typedef struct _lw_server            * lw_server;
+typedef struct _lw_stream            * lw_server_client;
+typedef struct _lw_udp               * lw_udp;
+typedef struct _lw_flashpolicy       * lw_flashpolicy;
+typedef struct _lw_ws                * lw_ws;
+typedef struct _lw_stream            * lw_ws_req;
+typedef struct _lw_ws_req_hdr        * lw_ws_req_hdr;
+typedef struct _lw_ws_req_param      * lw_ws_req_param;
+typedef struct _lw_ws_req_cookie     * lw_ws_req_cookie;
+typedef struct _lw_ws_upload         * lw_ws_upload;
+typedef struct _lw_ws_upload_hdr     * lw_ws_upload_hdr;
+typedef struct _lw_ws_session        * lw_ws_session;
+typedef struct _lw_ws_sessionitem    * lw_ws_sessionitem;
+
+#endif
 
 #ifdef __cplusplus
 extern "C"
 {
-#endif /* __cplusplus */
+#endif
 
-#define LacewingFlat(c) \
-    typedef struct { void * reserved; void * tag; } c;
+	lw_import    const char* lw_version();
+	lw_import        lw_i64  lw_file_last_modified(const char * filename);
+	lw_import       lw_bool  lw_file_exists(const char * filename);
+	lw_import        size_t  lw_file_size(const char * filename);
+	lw_import       lw_bool  lw_path_exists(const char * filename);
+	lw_import          void  lw_temp_path(char * buffer);
+	lw_import    const char* lw_guess_mimetype(const char * filename);
+	lw_import          void  lw_md5(char * output, const char * input, size_t length);
+	lw_import          void  lw_md5_hex(char * output, const char * input, size_t length);
+	lw_import          void  lw_sha1(char * output, const char * input, size_t length);
+	lw_import          void  lw_sha1_hex(char * output, const char * input, size_t length);
+	lw_import          void  lw_trace(const char * format, ...);
+	lw_import          void  lw_dump(const char * buffer, size_t size);
+	lw_import       lw_bool  lw_random(char * buffer, size_t size);
 
-LacewingFunction    const char* lw_version                  ();
-LacewingFunction        lw_i64  lw_current_thread_id        ();
-LacewingFunction        lw_i64  lw_file_last_modified       (const char * filename);
-LacewingFunction       lw_bool  lw_file_exists              (const char * filename);
-LacewingFunction        lw_i64  lw_file_size                (const char * filename);
-LacewingFunction       lw_bool  lw_path_exists              (const char * filename);
-LacewingFunction          void  lw_int64_to_string          (lw_i64, char *);
-LacewingFunction          void  lw_temp_path                (char * buffer);
-LacewingFunction          void  lw_new_temp_file            (char * buffer);
-LacewingFunction    const char* lw_guess_mime_type          (const char * filename);
-LacewingFunction          void  lw_md5                      (char * output, const char * input, long length);
-LacewingFunction          void  lw_md5_hex                  (char * output, const char * input, long length);
-LacewingFunction          void  lw_sha1                     (char * output, const char * input, long length);
-LacewingFunction          void  lw_sha1_hex                 (char * output, const char * input, long length);
+	/* Thread */
 
-/* Thread */
+	lw_import      lw_thread  lw_thread_new(const char * name, void * proc);
+	lw_import           void  lw_thread_delete(lw_thread);
+	lw_import           void  lw_thread_start(lw_thread, void * parameter);
+	lw_import        lw_bool  lw_thread_started(lw_thread);
+	lw_import           void* lw_thread_join(lw_thread);
+	lw_import           void* lw_thread_tag(lw_thread);
+	lw_import           void  lw_thread_set_tag(lw_thread, void *);
 
-  LacewingFlat (lw_thread);
+	/* Address */
 
-  LacewingFunction      lw_thread* lw_thread_new      (const char * name, void * function);
-  LacewingFunction           void  lw_thread_delete   (lw_thread *);
-  LacewingFunction           void  lw_thread_start    (lw_thread *, void * parameter);
-  LacewingFunction        lw_bool  lw_thread_started  (lw_thread *);
-  LacewingFunction           long  lw_thread_join     (lw_thread *);
+	lw_import        lw_addr  lw_addr_new(const char * hostname, const char * service);
+	lw_import        lw_addr  lw_addr_new_port(const char * hostname, long port);
+	lw_import        lw_addr  lw_addr_new_hint(const char * hostname, const char * service, long hints);
+	lw_import        lw_addr  lw_addr_new_port_hint(const char * hostname, long port, long hints);
+	lw_import        lw_addr  lw_addr_clone(lw_addr);
+	lw_import           void  lw_addr_delete(lw_addr);
+	lw_import           long  lw_addr_port(lw_addr);
+	lw_import           void  lw_addr_set_port(lw_addr, long port);
+	lw_import            int  lw_addr_type(lw_addr);
+	lw_import           void  lw_addr_set_type(lw_addr, int);
+	lw_import        lw_bool  lw_addr_ready(lw_addr);
+	lw_import       lw_error  lw_addr_resolve(lw_addr);
+	lw_import        lw_bool  lw_addr_ipv6(lw_addr);
+	lw_import        lw_bool  lw_addr_equal(lw_addr, lw_addr);
+	lw_import     const char* lw_addr_tostring(lw_addr);
+	lw_import           void* lw_addr_tag(lw_addr);
+	lw_import           void  lw_addr_set_tag(lw_addr, void *);
 
-/* Address */
+#define lw_addr_type_tcp        1
+#define lw_addr_type_udp        2
+#define lw_addr_hint_ipv6       4
 
-  LacewingFlat (lw_addr);
+	/* Filter */
 
-  LacewingFunction        lw_addr* lw_addr_new       ();
-  LacewingFunction        lw_addr* lw_addr_new_ip    (long ip, long port);
-  LacewingFunction        lw_addr* lw_addr_new_name  (const char * hostname, long port, lw_bool blocking);
-  LacewingFunction        lw_addr* lw_addr_copy      (lw_addr *);
-  LacewingFunction           void  lw_addr_delete    (lw_addr *);
-  LacewingFunction           long  lw_addr_port      (lw_addr *);
-  LacewingFunction           void  lw_addr_set_port  (lw_addr *, long port);
-  LacewingFunction        lw_bool  lw_addr_is_ready  (lw_addr *);
-  LacewingFunction           long  lw_addr_ip        (lw_addr *);
-  LacewingFunction  unsigned char  lw_addr_ip_byte   (lw_addr *, long index);
-  LacewingFunction     const char* lw_addr_tostring  (lw_addr *);
+	lw_import      lw_filter  lw_filter_new();
+	lw_import           void  lw_filter_delete(lw_filter);
+	lw_import      lw_filter  lw_filter_clone(lw_filter);
+	lw_import        lw_addr  lw_filter_remote(lw_filter);
+	lw_import           void  lw_filter_set_remote(lw_filter, lw_addr);
+	lw_import        lw_addr  lw_filter_local(lw_filter);
+	lw_import           void  lw_filter_set_local(lw_filter, lw_addr);
+	lw_import           long  lw_filter_local_port(lw_filter);
+	lw_import           void  lw_filter_set_local_port(lw_filter, long port);
+	lw_import           long  lw_filter_remote_port(lw_filter);
+	lw_import           void  lw_filter_set_remote_port(lw_filter, long port);
+	lw_import        lw_bool  lw_filter_reuse(lw_filter);
+	lw_import           void  lw_filter_set_reuse(lw_filter, lw_bool);
+	lw_import        lw_bool  lw_filter_ipv6(lw_filter);
+	lw_import           void  lw_filter_set_ipv6(lw_filter, lw_bool);
+	lw_import           void* lw_filter_tag(lw_filter);
+	lw_import           void  lw_filter_set_tag(lw_filter, void *);
 
-/* EventPump */
+	/* Pump */
 
-  LacewingFlat (lw_eventpump);
+	lw_import           void  lw_pump_delete(lw_pump);
+	lw_import           void  lw_pump_add_user(lw_pump);
+	lw_import           void  lw_pump_remove_user(lw_pump);
+	lw_import        lw_bool  lw_pump_in_use(lw_pump);
+	lw_import           void  lw_pump_remove(lw_pump, lw_pump_watch);
+	lw_import           void  lw_pump_post_remove(lw_pump, lw_pump_watch);
+	lw_import           void  lw_pump_post(lw_pump, void * fn, void * param);
+	lw_import           void* lw_pump_tag(lw_pump);
+	lw_import           void  lw_pump_set_tag(lw_pump, void *);
 
-  LacewingFunction   lw_eventpump* lw_eventpump_new                  ();
-  LacewingFunction           void  lw_eventpump_delete               (lw_eventpump *);
-  LacewingFunction           void  lw_eventpump_tick                 (lw_eventpump *);
-  LacewingFunction           void  lw_eventpump_start_event_loop     (lw_eventpump *);
-  LacewingFunction           void  lw_eventpump_start_sleepy_ticking (lw_eventpump *, void (LacewingHandler * on_tick_needed) (lw_eventpump *));
-  LacewingFunction           void  lw_eventpump_post_eventloop_exit  (lw_eventpump *);
-  LacewingFunction        lw_bool  lw_eventpump_in_use               (lw_eventpump *);
-  LacewingFunction           void  lw_eventpump_set_in_use           (lw_eventpump *, lw_bool);
+#ifdef _WIN32
 
-/* Timer */
+	typedef void (lw_callback * lw_pump_callback)
+		(void * tag, OVERLAPPED *, unsigned long bytes, int error);
 
-  LacewingFlat (lw_timer);
-  
-  LacewingFunction       lw_timer* lw_timer_new                  ();
-  LacewingFunction           void  lw_timer_delete               (lw_timer *);
-  LacewingFunction           void  lw_timer_start                (lw_timer *, long milliseconds);
-  LacewingFunction        lw_bool  lw_timer_started              (lw_timer *);
-  LacewingFunction           void  lw_timer_stop                 (lw_timer *);
-  LacewingFunction           void  lw_timer_force_tick           (lw_timer *);
+	lw_import lw_pump_watch lw_pump_add(lw_pump, HANDLE, void * tag,
+		lw_pump_callback);
 
-  typedef void (LacewingHandler * lw_timer_handler_tick) (lw_timer *);
-  LacewingFunction void lw_timer_ontick (lw_timer *, lw_timer_handler_tick);
+	lw_import void lw_pump_update_callbacks(lw_pump, lw_pump_watch,
+		void * tag, lw_pump_callback);
+#else
 
-/* Sync */
+	typedef void (lw_callback * lw_pump_callback) (void * tag);
 
-  LacewingFlat (lw_sync);
-  LacewingFlat (lw_sync_lock);
-  
-  LacewingFunction        lw_sync* lw_sync_new                  ();
-  LacewingFunction           void  lw_sync_delete               (lw_sync *);
-  LacewingFunction   lw_sync_lock* lw_sync_lock_new             (lw_sync *);
-  LacewingFunction           void  lw_sync_lock_delete          (lw_sync_lock *);
-  LacewingFunction           void  lw_sync_lock_release         (lw_sync_lock *);
+	lw_import lw_pump_watch lw_pump_add(lw_pump, int fd, void * tag,
+		lw_pump_callback on_read_ready,
+		lw_pump_callback on_write_ready,
+		lw_bool edge_triggered);
 
-/* SpinSync */
+	lw_import void lw_pump_update_callbacks(lw_pump, lw_pump_watch, void * tag,
+		lw_pump_callback on_read_ready,
+		lw_pump_callback on_write_ready,
+		lw_bool edge_triggered);
+#endif
 
-  LacewingFlat (lw_ssync);
-  LacewingFlat (lw_ssync_wlock);
-  LacewingFlat (lw_ssync_rlock);
-  
-  LacewingFunction       lw_ssync* lw_ssync_new                 ();
-  LacewingFunction           void  lw_ssync_delete              (lw_ssync *);
-  LacewingFunction lw_ssync_wlock* lw_ssync_wlock_new           (lw_ssync *);
-  LacewingFunction           void  lw_ssync_wlock_delete        (lw_ssync_wlock *);
-  LacewingFunction           void  lw_ssync_wlock_release       (lw_ssync_wlock *);
-  LacewingFunction lw_ssync_rlock* lw_ssync_rlock_new           (lw_ssync *);
-  LacewingFunction           void  lw_ssync_rlock_delete        (lw_ssync_rlock *);
-  LacewingFunction           void  lw_ssync_rlock_release       (lw_ssync_rlock *);
+	/* For pump implementors */
 
-/* Event */
+	typedef struct lw_pumpdef
+	{
+#ifdef _WIN32
 
-  LacewingFlat (lw_event);
+		lw_pump_watch(*add) (lw_pump, HANDLE, void * tag, lw_pump_callback);
 
-  LacewingFunction       lw_event* lw_event_new                 ();
-  LacewingFunction           void  lw_event_delete              (lw_event *);
-  LacewingFunction           void  lw_event_signal              (lw_event *);
-  LacewingFunction           void  lw_event_unsignal            (lw_event *);
-  LacewingFunction        lw_bool  lw_event_signalled           (lw_event *);
-  LacewingFunction           void  lw_event_wait                (lw_event *, long milliseconds);
+		void(*update_callbacks) (lw_pump, lw_pump_watch,
+			void * tag, lw_pump_callback);
+#else
 
-/* Filter */
+		lw_pump_watch(*add) (lw_pump, int FD, void * tag,
+			lw_pump_callback on_read_ready,
+			lw_pump_callback on_write_ready,
+			lw_bool edge_triggered);
 
-  LacewingFlat (lw_filter);
+		void(*update_callbacks) (lw_pump, lw_pump_watch, void * tag,
+			lw_pump_callback on_read_ready,
+			lw_pump_callback on_write_ready,
+			lw_bool edge_triggered);
+#endif
 
-  LacewingFunction      lw_filter* lw_filter_new                ();
-  LacewingFunction           void  lw_filter_delete             (lw_filter *);
-  LacewingFunction           void  lw_filter_set_local_ip       (lw_filter *, long ip);
-  LacewingFunction           long  lw_filter_get_local_ip       (lw_filter *);
-  LacewingFunction           void  lw_filter_set_local          (lw_filter *, const char * name);
-  LacewingFunction           void  lw_filter_set_remote_addr    (lw_filter *, lw_addr *);
-  LacewingFunction        lw_addr* lw_filter_get_remote_addr    (lw_filter *);
-  LacewingFunction           void  lw_filter_set_remote         (lw_filter *, const char * name);
-  LacewingFunction           void  lw_filter_set_local_port     (lw_filter *, long port);
-  LacewingFunction           long  lw_filter_get_local_port     (lw_filter *);
-  LacewingFunction           void  lw_filter_set_reuse          (lw_filter *);
-  LacewingFunction        lw_bool  lw_filter_is_reuse_set       (lw_filter *);
+		void(*remove) (lw_pump, lw_pump_watch);
+		void(*post) (lw_pump, void * fn, void * param);
+		void(*cleanup) (lw_pump);
 
-/* Error */
+		size_t tail_size;
 
-  LacewingFlat (lw_error);
+	} lw_pumpdef;
 
-  LacewingFunction       lw_error* lw_error_new                 ();
-  LacewingFunction           void  lw_error_delete              (lw_error *);
-  LacewingFunction           void  lw_error_add                 (lw_error *, long);
-  LacewingFunction           void  lw_error_addf                (lw_error *, const char * format, ...);
-  LacewingFunction     const char* lw_error_tostring            (lw_error *);
-  LacewingFunction       lw_error* lw_error_clone               (lw_error *);
+	lw_import lw_pump lw_pump_new(const lw_pumpdef *);
+	lw_import const lw_pumpdef * lw_pump_get_def(lw_pump);
 
-/* Client */
+	lw_import void * lw_pump_tail(lw_pump);
+	lw_import lw_pump lw_pump_from_tail(void *);
 
-  LacewingFlat (lw_client);
+	/* EventPump */
 
-  LacewingFunction      lw_client* lw_client_new                (lw_eventpump *);
-  LacewingFunction           void  lw_client_delete             (lw_client *);
-  LacewingFunction           void  lw_client_connect            (lw_client *, const char * host, long port);
-  LacewingFunction           void  lw_client_connect_addr       (lw_client *, lw_addr *);
-  LacewingFunction           void  lw_client_disconnect         (lw_client *);
-  LacewingFunction        lw_bool  lw_client_connected          (lw_client *);
-  LacewingFunction        lw_bool  lw_client_connecting         (lw_client *);
-  LacewingFunction        lw_addr* lw_client_server_addr        (lw_client *);
-  LacewingFunction           void  lw_client_send               (lw_client *, const char * data, long size);
-  LacewingFunction           void  lw_client_send_text          (lw_client *, const char * text);
-  LacewingFunction           void  lw_client_sendf              (lw_client *, const char * format, ...);
-  LacewingFunction           void  lw_client_disable_nagling    (lw_client *);
-  LacewingFunction        lw_bool  lw_client_cheap_buffering    (lw_client *);
-  LacewingFunction           void  lw_client_start_buffering    (lw_client *);
-  LacewingFunction           void  lw_client_flush              (lw_client *);
-  
-  typedef void (LacewingHandler * lw_client_handler_connect) (lw_client *);
-  LacewingFunction void lw_client_onconnect (lw_client *, lw_client_handler_connect);
+	lw_import   lw_eventpump  lw_eventpump_new();
+	lw_import       lw_error  lw_eventpump_tick(lw_eventpump);
+	lw_import       lw_error  lw_eventpump_start_eventloop(lw_eventpump);
+	lw_import       lw_error  lw_eventpump_start_sleepy_ticking(lw_eventpump, void (lw_callback * on_tick_needed) (lw_eventpump));
+	lw_import           void  lw_eventpump_post_eventloop_exit(lw_eventpump);
 
-  typedef void (LacewingHandler * lw_client_handler_disconnect) (lw_client *);
-  LacewingFunction void lw_client_ondisconnect (lw_client *, lw_client_handler_disconnect);
+	/* Stream */
 
-  typedef void (LacewingHandler * lw_client_handler_receive) (lw_client *, char * data, long size);
-  LacewingFunction void lw_client_onreceive (lw_client *, lw_client_handler_receive);
+	lw_import      void  lw_stream_delete(lw_stream);
+	lw_import    size_t  lw_stream_bytes_left(lw_stream);
+	lw_import      void  lw_stream_read(lw_stream, size_t bytes);
+	lw_import      void  lw_stream_begin_queue(lw_stream);
+	lw_import    size_t  lw_stream_queued(lw_stream);
+	lw_import      void  lw_stream_end_queue(lw_stream);
+	lw_import      void  lw_stream_end_queue_hb(lw_stream, int num_head_buffers, const char ** buffers, size_t * lengths);
+	lw_import      void  lw_stream_write(lw_stream, const char * buffer, size_t length);
+	lw_import      void  lw_stream_write_text(lw_stream, const char * buffer);
+	lw_import      void  lw_stream_writef(lw_stream, const char * format, ...);
+	lw_import      void  lw_stream_writev(lw_stream, const char * format, va_list);
+	lw_import      void  lw_stream_write_stream(lw_stream, lw_stream src, size_t size, lw_bool delete_when_finished);
+	lw_import      void  lw_stream_write_file(lw_stream, const char * filename);
+	lw_import      void  lw_stream_retry(lw_stream, int when);
+	lw_import      void  lw_stream_add_filter_upstream(lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
+	lw_import      void  lw_stream_add_filter_downstream(lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
+	lw_import   lw_bool  lw_stream_close(lw_stream, lw_bool immediate);
+	lw_import      void* lw_stream_tag(lw_stream);
+	lw_import      void  lw_stream_set_tag(lw_stream, void *);
+	lw_import   lw_pump  lw_stream_pump(lw_stream);
 
-  typedef void (LacewingHandler * lw_client_handler_error) (lw_client *, lw_error *);
-  LacewingFunction void lw_client_onerror (lw_client *, lw_client_handler_error);
+#define lw_stream_retry_now  1
+#define lw_stream_retry_never  2
+#define lw_stream_retry_more_data  3
 
-/* Server */
+	typedef void (lw_callback * lw_stream_hook_data)
+		(lw_stream, void * tag, const char * buffer, size_t length);
 
-  LacewingFlat (lw_server);
-  LacewingFlat (lw_server_client);
+	lw_import void lw_stream_add_hook_data(lw_stream, lw_stream_hook_data, void * tag);
+	lw_import void lw_stream_remove_hook_data(lw_stream, lw_stream_hook_data, void * tag);
 
-  LacewingFunction        lw_server* lw_server_new                      (lw_eventpump *);
-  LacewingFunction             void  lw_server_delete                   (lw_server *);
-  LacewingFunction             void  lw_server_host                     (lw_server *, long port);
-  LacewingFunction             void  lw_server_host_ex                  (lw_server *, long port, lw_bool client_speaks_first);
-  LacewingFunction             void  lw_server_host_filter              (lw_server *, lw_filter * filter);
-  LacewingFunction             void  lw_server_host_filter_ex           (lw_server *, lw_filter * filter, lw_bool client_speaks_first);
-  LacewingFunction             void  lw_server_unhost                   (lw_server *);
-  LacewingFunction          lw_bool  lw_server_hosting                  (lw_server *);
-  LacewingFunction             long  lw_server_port                     (lw_server *);
-  LacewingFunction          lw_bool  lw_server_load_cert_file           (lw_server *, const char * filename, const char * passphrase);
-  LacewingFunction          lw_bool  lw_server_load_sys_cert            (lw_server *, const char * store_name, const char * common_name, const char * location);
-  LacewingFunction          lw_bool  lw_server_cert_loaded              (lw_server *);
-  LacewingFunction           lw_i64  lw_server_bytes_sent               (lw_server *);
-  LacewingFunction           lw_i64  lw_server_bytes_received           (lw_server *);
-  LacewingFunction             void  lw_server_disable_nagling          (lw_server *);
-  LacewingFunction          lw_addr* lw_server_client_address           (lw_server_client *);
-  LacewingFunction             void  lw_server_client_send              (lw_server_client *, const char * data, long size);
-  LacewingFunction             void  lw_server_client_send_writable     (lw_server_client *, char * data, long size);
-  LacewingFunction             void  lw_server_client_send_text         (lw_server_client *, const char * text);
-  LacewingFunction             void  lw_server_client_sendf             (lw_server_client *, const char * format, ...);
-  LacewingFunction          lw_bool  lw_server_client_cheap_buffering   (lw_server_client *);
-  LacewingFunction             void  lw_server_client_start_buffering   (lw_server_client *);
-  LacewingFunction             void  lw_server_client_flush             (lw_server_client *);
-  LacewingFunction             void  lw_server_client_disconnect        (lw_server_client *);
-  LacewingFunction lw_server_client* lw_server_client_next              (lw_server_client *);
+	typedef void (lw_callback * lw_stream_hook_close) (lw_stream, void * tag);
 
-  typedef void (LacewingHandler * lw_server_handler_connect) (lw_server *, lw_server_client *);
-  LacewingFunction void lw_server_onconnect (lw_server *, lw_server_handler_connect);
+	lw_import void lw_stream_add_hook_close(lw_stream, lw_stream_hook_close, void * tag);
+	lw_import void lw_stream_remove_hook_close(lw_stream, lw_stream_hook_close, void * tag);
 
-  typedef void (LacewingHandler * lw_server_handler_disconnect) (lw_server *, lw_server_client *);
-  LacewingFunction void lw_server_ondisconnect (lw_server *, lw_server_handler_disconnect);
+	/* For stream implementors */
 
-  typedef void (LacewingHandler * lw_server_handler_receive) (lw_server *, lw_server_client *, char * data, long size);
-  LacewingFunction void lw_server_onreceive (lw_server *, lw_server_handler_receive);
-  
-  typedef void (LacewingHandler * lw_server_handler_error) (lw_server *, lw_error *);
-  LacewingFunction void lw_server_onerror (lw_server *, lw_server_handler_error);
+	typedef struct lw_streamdef
+	{
+		size_t(*sink_data) (lw_stream, const char * buffer, size_t size);
+		size_t(*sink_stream) (lw_stream, lw_stream source, size_t size);
 
-/* UDP */
+		void(*retry) (lw_stream, int when);
 
-  LacewingFlat (lw_udp);
+		lw_bool(*is_transparent) (lw_stream);
+		lw_bool(*close) (lw_stream, lw_bool immediate);
 
-  LacewingFunction         lw_udp* lw_udp_new                   (lw_eventpump *);
-  LacewingFunction           void  lw_udp_delete                (lw_udp *);
-  LacewingFunction           void  lw_udp_host                  (lw_udp *, long port);
-  LacewingFunction           void  lw_udp_host_filter           (lw_udp *, lw_filter *);
-  LacewingFunction           void  lw_udp_host_addr             (lw_udp *, lw_addr *);
-  LacewingFunction        lw_bool  lw_udp_hosting               (lw_udp *);
-  LacewingFunction           void  lw_udp_unhost                (lw_udp *);
-  LacewingFunction           long  lw_udp_port                  (lw_udp *);
-  LacewingFunction         lw_i64  lw_udp_bytes_sent            (lw_udp *);
-  LacewingFunction         lw_i64  lw_udp_bytes_received        (lw_udp *);
-  LacewingFunction           void  lw_udp_send                  (lw_udp *, lw_addr *, const char * data, long size);
+		size_t(*bytes_left) (lw_stream);
+		void(*read) (lw_stream, size_t bytes);
 
-  typedef void (LacewingHandler * lw_udp_handler_receive) (lw_udp *, lw_addr *, char * data, long size);
-  LacewingFunction void lw_udp_onreceive (lw_udp *, lw_udp_handler_receive);
+		void(*cleanup) (lw_stream);
 
-  typedef void (LacewingHandler * lw_udp_handler_error) (lw_udp *, lw_error *);
-  LacewingFunction void lw_udp_onerror (lw_udp *, lw_udp_handler_error);
+		size_t tail_size;
 
-/* Webserver */
+	} lw_streamdef;
 
-  LacewingFlat (lw_ws);
-  LacewingFlat (lw_ws_req);
-  LacewingFlat (lw_ws_req_hdr);
-  LacewingFlat (lw_ws_req_param);
-  LacewingFlat (lw_ws_req_cookie);
-  LacewingFlat (lw_ws_req_ssnitem);
-  LacewingFlat (lw_ws_upload);
-  LacewingFlat (lw_ws_upload_hdr);
+	lw_import lw_stream lw_stream_new(const lw_streamdef *, lw_pump);
+	lw_import const lw_streamdef * lw_stream_get_def(lw_stream);
 
-  LacewingFunction              lw_ws* lw_ws_new                    (lw_eventpump *);
-  LacewingFunction               void  lw_ws_delete                 (lw_ws *);
-  LacewingFunction               void  lw_ws_host                   (lw_ws *, long port);
-  LacewingFunction               void  lw_ws_host_secure            (lw_ws *, long port);
-  LacewingFunction               void  lw_ws_host_filter            (lw_ws *, lw_filter *);
-  LacewingFunction               void  lw_ws_host_secure_filter     (lw_ws *, lw_filter *);
-  LacewingFunction               void  lw_ws_unhost                 (lw_ws *);
-  LacewingFunction               void  lw_ws_unhost_secure          (lw_ws *);
-  LacewingFunction            lw_bool  lw_ws_hosting                (lw_ws *);
-  LacewingFunction            lw_bool  lw_ws_hosting_secure         (lw_ws *);
-  LacewingFunction               long  lw_ws_port                   (lw_ws *);
-  LacewingFunction               long  lw_ws_port_secure            (lw_ws *);
-  LacewingFunction            lw_bool  lw_ws_load_cert_file         (lw_ws *, const char * filename, const char * passphrase);
-  LacewingFunction            lw_bool  lw_ws_load_sys_cert          (lw_ws *, const char * store_name, const char * common_name, const char * location);
-  LacewingFunction            lw_bool  lw_ws_cert_loaded            (lw_ws *);
-  LacewingFunction             lw_i64  lw_ws_bytes_sent             (lw_ws *);
-  LacewingFunction             lw_i64  lw_ws_bytes_received         (lw_ws *);
-  LacewingFunction               void  lw_ws_close_session          (lw_ws *, const char * id);
-  LacewingFunction               void  lw_ws_enable_manual_finish   (lw_ws *);
-  LacewingFunction               long  lw_ws_idle_timeout           (lw_ws *);
-  LacewingFunction               void  lw_ws_set_idle_timeout       (lw_ws *, long seconds);  
-  LacewingFunction            lw_addr* lw_ws_req_addr               (lw_ws_req *);
-  LacewingFunction            lw_bool  lw_ws_req_secure             (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_url                (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_hostname           (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_disconnect         (lw_ws_req *); 
-  LacewingFunction               void  lw_ws_req_set_redirect       (lw_ws_req *, const char * url);
-  LacewingFunction               void  lw_ws_req_set_status         (lw_ws_req *, long code, const char * message);
-  LacewingFunction               void  lw_ws_req_set_mime_type      (lw_ws_req *, const char * mime_type);
-  LacewingFunction               void  lw_ws_req_set_mime_type_ex   (lw_ws_req *, const char * mime_type, const char * charset);
-  LacewingFunction               void  lw_ws_req_guess_mime_type    (lw_ws_req *, const char * filename);
-  LacewingFunction               void  lw_ws_req_send_text          (lw_ws_req *, const char * data);
-  LacewingFunction               void  lw_ws_req_send_text_const    (lw_ws_req *, const char * data);
-  LacewingFunction               void  lw_ws_req_send               (lw_ws_req *, const char * data, long size);
-  LacewingFunction               void  lw_ws_req_send_const         (lw_ws_req *, const char * data, long size);
-  LacewingFunction               void  lw_ws_req_sendfile           (lw_ws_req *, const char * filename);
-  LacewingFunction               void  lw_ws_req_sendfile_ex        (lw_ws_req *, const char * filename, lw_i64 offset, lw_i64 size);
-  LacewingFunction               void  lw_ws_req_sendf              (lw_ws_req *, const char * format, ...);
-  LacewingFunction               void  lw_ws_req_reset              (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_finish             (lw_ws_req *);
-  LacewingFunction             lw_i64  lw_ws_req_last_modified      (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_set_last_modified  (lw_ws_req *, lw_i64);
-  LacewingFunction               void  lw_ws_req_set_unmodified     (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_set_header         (lw_ws_req *, const char * name, const char * value);
-  LacewingFunction         const char* lw_ws_req_header             (lw_ws_req *, const char * name);
-  LacewingFunction      lw_ws_req_hdr* lw_ws_req_first_header       (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_hdr_name           (lw_ws_req_hdr *);
-  LacewingFunction         const char* lw_ws_req_hdr_value          (lw_ws_req_hdr *);
-  LacewingFunction      lw_ws_req_hdr* lw_ws_req_hdr_next           (lw_ws_req_hdr *);
-  LacewingFunction    lw_ws_req_param* lw_ws_req_first_GET          (lw_ws_req *);
-  LacewingFunction    lw_ws_req_param* lw_ws_req_first_POST         (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_param_name         (lw_ws_req_param *);
-  LacewingFunction         const char* lw_ws_req_param_value        (lw_ws_req_param *);
-  LacewingFunction    lw_ws_req_param* lw_ws_req_param_next         (lw_ws_req_param *);
-  LacewingFunction   lw_ws_req_cookie* lw_ws_req_first_cookie       (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_cookie_name        (lw_ws_req_cookie *);
-  LacewingFunction         const char* lw_ws_req_cookie_value       (lw_ws_req_cookie *);
-  LacewingFunction   lw_ws_req_cookie* lw_ws_req_cookie_next        (lw_ws_req_cookie *);
-  LacewingFunction               void  lw_ws_req_set_cookie         (lw_ws_req *, const char * name, const char * value);
-  LacewingFunction               void  lw_ws_req_set_cookie_ex      (lw_ws_req *, const char * name, const char * value, const char * attributes);
-  LacewingFunction         const char* lw_ws_req_get_cookie         (lw_ws_req *, const char * name);
-  LacewingFunction         const char* lw_ws_req_session_id         (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_session_write      (lw_ws_req *, const char * name, const char * value);
-  LacewingFunction         const char* lw_ws_req_session_read       (lw_ws_req *, const char * name);
-  LacewingFunction               void  lw_ws_req_session_close      (lw_ws_req *);
-  LacewingFunction  lw_ws_req_ssnitem* lw_ws_req_first_session_item (lw_ws_req *);
-  LacewingFunction         const char* lw_ws_req_ssnitem_name       (lw_ws_req_ssnitem *);
-  LacewingFunction         const char* lw_ws_req_ssnitem_value      (lw_ws_req_ssnitem *);
-  LacewingFunction  lw_ws_req_ssnitem* lw_ws_req_ssnitem_next       (lw_ws_req_ssnitem *);
-  LacewingFunction         const char* lw_ws_req_GET                (lw_ws_req *, const char * name);
-  LacewingFunction         const char* lw_ws_req_POST               (lw_ws_req *, const char * name);
-  LacewingFunction               void  lw_ws_req_disable_cache      (lw_ws_req *);
-  LacewingFunction               long  lw_ws_req_idle_timeout       (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_set_idle_timeout   (lw_ws_req *, long seconds);  
-/*LacewingFunction               void  lw_ws_req_enable_dl_resuming (lw_ws_req *);
-  LacewingFunction             lw_i64  lw_ws_req_reqrange_begin     (lw_ws_req *);
-  LacewingFunction             lw_i64  lw_ws_req_reqrange_end       (lw_ws_req *);
-  LacewingFunction               void  lw_ws_req_set_outgoing_range (lw_ws_req *, lw_i64 begin, lw_i64 end);*/
-  LacewingFunction         const char* lw_ws_upload_form_el_name    (lw_ws_upload *);
-  LacewingFunction         const char* lw_ws_upload_filename        (lw_ws_upload *);
-  LacewingFunction         const char* lw_ws_upload_header          (lw_ws_upload *, const char * name);
-  LacewingFunction               void  lw_ws_upload_set_autosave    (lw_ws_upload *);
-  LacewingFunction         const char* lw_ws_upload_autosave_fname  (lw_ws_upload *);
-  LacewingFunction   lw_ws_upload_hdr* lw_ws_upload_first_header    (lw_ws_upload *);
-  LacewingFunction         const char* lw_ws_upload_hdr_name        (lw_ws_upload_hdr *);
-  LacewingFunction         const char* lw_ws_upload_hdr_value       (lw_ws_upload_hdr *);
-  LacewingFunction   lw_ws_upload_hdr* lw_ws_upload_hdr_next        (lw_ws_upload_hdr *);
+	lw_import void * lw_stream_tail(lw_stream);
+	lw_import lw_stream lw_stream_from_tail(void *);
 
-  typedef void (LacewingHandler * lw_ws_handler_get) (lw_ws *, lw_ws_req *);
-  LacewingFunction void lw_ws_onget (lw_ws *, lw_ws_handler_get);
+	lw_import void lw_stream_data(lw_stream, const char * buffer, size_t size);
 
-  typedef void (LacewingHandler * lw_ws_handler_post) (lw_ws *, lw_ws_req *);
-  LacewingFunction void lw_ws_onpost (lw_ws *, lw_ws_handler_post);
+	/* FDStream */
 
-  typedef void (LacewingHandler * lw_ws_handler_head) (lw_ws *, lw_ws_req *);
-  LacewingFunction void lw_ws_onhead (lw_ws *, lw_ws_handler_head);
+	lw_import  lw_fdstream  lw_fdstream_new(lw_pump);
+	lw_import         void  lw_fdstream_set_fd(lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close);
+	lw_import         void  lw_fdstream_cork(lw_fdstream);
+	lw_import         void  lw_fdstream_uncork(lw_fdstream);
+	lw_import         void  lw_fdstream_nagle(lw_fdstream, lw_bool nagle);
+	lw_import      lw_bool  lw_fdstream_valid(lw_fdstream);
 
-  typedef void (LacewingHandler * lw_ws_handler_error) (lw_ws *, lw_error *);
-  LacewingFunction void lw_ws_onerror (lw_ws *, lw_ws_handler_error);
+	/* File */
 
-  typedef void (LacewingHandler * lw_ws_handler_connect) (lw_ws *, lw_ws_req *);
-  LacewingFunction void lw_ws_onconnect (lw_ws *, lw_ws_handler_connect);
+	lw_import lw_file lw_file_new(lw_pump);
 
-  typedef void (LacewingHandler * lw_ws_handler_disconnect) (lw_ws *, lw_ws_req *);
-  LacewingFunction void lw_ws_ondisconnect (lw_ws *, lw_ws_handler_disconnect);
+	lw_import lw_file lw_file_new_open
+		(lw_pump, const char * filename, const char * mode);
 
-  typedef void (LacewingHandler * lw_ws_handler_upload_start) (lw_ws *, lw_ws_req *, lw_ws_upload *);
-  LacewingFunction void lw_ws_onuploadstart (lw_ws *, lw_ws_handler_upload_start);
+	lw_import lw_bool lw_file_open
+		(lw_file, const char * filename, const char * mode);
 
-  typedef void (LacewingHandler * lw_ws_handler_upload_chunk) (lw_ws *, lw_ws_req *, lw_ws_upload *, const char * data, long size);
-  LacewingFunction void lw_ws_onuploadchunk (lw_ws *, lw_ws_handler_upload_chunk);
+	lw_import lw_bool lw_file_open_temp(lw_file);
 
-  typedef void (LacewingHandler * lw_ws_handler_upload_done) (lw_ws *, lw_ws_req *, lw_ws_upload *);
-  LacewingFunction void lw_ws_onuploaddone (lw_ws *, lw_ws_handler_upload_done);
+	lw_import const char * lw_file_name(lw_file);
 
-  typedef void (LacewingHandler * lw_ws_handler_upload_post) (lw_ws *, lw_ws_req *, lw_ws_upload * uploads[], long upload_count);
-  LacewingFunction void lw_ws_onuploadpost (lw_ws *, lw_ws_handler_upload_post);
+	/* Pipe */
 
+	lw_import  lw_stream  lw_pipe_new(lw_pump);
+
+	/* Timer */
+
+	lw_import       lw_timer  lw_timer_new(lw_pump);
+	lw_import           void  lw_timer_delete(lw_timer);
+	lw_import           void  lw_timer_start(lw_timer, long milliseconds);
+	lw_import        lw_bool  lw_timer_started(lw_timer);
+	lw_import           void  lw_timer_stop(lw_timer);
+	lw_import           void  lw_timer_force_tick(lw_timer);
+	lw_import           void* lw_timer_tag(lw_timer);
+	lw_import           void  lw_timer_set_tag(lw_timer, void *);
+
+	typedef void (lw_callback * lw_timer_hook_tick) (lw_timer);
+	lw_import void lw_timer_on_tick(lw_timer, lw_timer_hook_tick);
+
+	/* Sync */
+
+	lw_import        lw_sync  lw_sync_new();
+	lw_import           void  lw_sync_delete(lw_sync);
+	lw_import           void  lw_sync_lock(lw_sync);
+	lw_import           void  lw_sync_release(lw_sync);
+
+	/* Event */
+
+	lw_import       lw_event  lw_event_new();
+	lw_import           void  lw_event_delete(lw_event);
+	lw_import           void  lw_event_signal(lw_event);
+	lw_import           void  lw_event_unsignal(lw_event);
+	lw_import        lw_bool  lw_event_signalled(lw_event);
+	lw_import        lw_bool  lw_event_wait(lw_event, long milliseconds);
+	lw_import           void* lw_event_tag(lw_event);
+	lw_import           void  lw_event_set_tag(lw_event, void *);
+
+	/* Error */
+
+	lw_import       lw_error  lw_error_new();
+	lw_import           void  lw_error_delete(lw_error);
+	lw_import           void  lw_error_add(lw_error, long);
+	lw_import           void  lw_error_addf(lw_error, const char * format, ...);
+	lw_import           void  lw_error_addv(lw_error, const char * format, va_list);
+	lw_import         size_t  lw_error_size(lw_error);
+	lw_import     const char* lw_error_tostring(lw_error);
+	lw_import       lw_error  lw_error_clone(lw_error);
+	lw_import           void* lw_error_tag(lw_error);
+	lw_import           void  lw_error_set_tag(lw_error, void *);
+
+	/* Client
+	*
+	* Note: lw_client derives from lw_stream, so all of the stream functions are
+	* applicable.  To delete a lw_client, use lw_stream_delete.
+	*/
+
+	lw_import      lw_client  lw_client_new(lw_pump);
+	lw_import           void  lw_client_connect(lw_client, const char * host, long port);
+	lw_import           void  lw_client_connect_addr(lw_client, lw_addr);
+	lw_import           void  lw_client_connect_secure(lw_client, const char * host, long port);
+	lw_import           void  lw_client_connect_addr_secure(lw_client, lw_addr);
+	lw_import           void  lw_client_disconnect(lw_client);
+	lw_import        lw_bool  lw_client_connected(lw_client);
+	lw_import        lw_bool  lw_client_connecting(lw_client);
+	lw_import        lw_addr  lw_client_server_addr(lw_client);
+
+	typedef void (lw_callback * lw_client_hook_connect) (lw_client);
+	lw_import void lw_client_on_connect(lw_client, lw_client_hook_connect);
+
+	typedef void (lw_callback * lw_client_hook_disconnect) (lw_client);
+	lw_import void lw_client_on_disconnect(lw_client, lw_client_hook_disconnect);
+
+	typedef void (lw_callback * lw_client_hook_data) (lw_client, const char * buffer, long size);
+	lw_import void lw_client_on_data(lw_client, lw_client_hook_data);
+
+	typedef void (lw_callback * lw_client_hook_error) (lw_client, lw_error);
+	lw_import void lw_client_on_error(lw_client, lw_client_hook_error);
+
+	/* Server */
+
+	lw_import          lw_server  lw_server_new(lw_pump);
+	lw_import               void  lw_server_delete(lw_server);
+	lw_import               void  lw_server_host(lw_server, long port);
+	lw_import               void  lw_server_host_filter(lw_server, lw_filter);
+	lw_import               void  lw_server_unhost(lw_server);
+	lw_import            lw_bool  lw_server_hosting(lw_server);
+	lw_import               long  lw_server_port(lw_server);
+	lw_import            lw_bool  lw_server_load_cert_file(lw_server, const char * filename, const char * passphrase);
+	lw_import            lw_bool  lw_server_load_sys_cert(lw_server, const char * store_name, const char * common_name, const char * location);
+	lw_import            lw_bool  lw_server_cert_loaded(lw_server);
+	lw_import            lw_bool  lw_server_can_npn(lw_server);
+	lw_import               void  lw_server_add_npn(lw_server, const char * protocol);
+	lw_import         const char* lw_server_client_npn(lw_server_client);
+	lw_import            lw_addr  lw_server_client_addr(lw_server_client);
+	lw_import             size_t  lw_server_num_clients(lw_server);
+	lw_import   lw_server_client  lw_server_client_first(lw_server);
+	lw_import   lw_server_client  lw_server_client_next(lw_server_client);
+	lw_import               void* lw_server_tag(lw_server);
+	lw_import               void  lw_server_set_tag(lw_server, void *);
+
+	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
+	lw_import void lw_server_on_connect(lw_server, lw_server_hook_connect);
+
+	typedef void (lw_callback * lw_server_hook_disconnect) (lw_server, lw_server_client);
+	lw_import void lw_server_on_disconnect(lw_server, lw_server_hook_disconnect);
+
+	typedef void (lw_callback * lw_server_hook_data) (lw_server, lw_server_client, const char * buffer, size_t size);
+	lw_import void lw_server_on_data(lw_server, lw_server_hook_data);
+
+	typedef void (lw_callback * lw_server_hook_error) (lw_server, lw_error);
+	lw_import void lw_server_on_error(lw_server, lw_server_hook_error);
+
+	/* UDP */
+
+	lw_import         lw_udp  lw_udp_new(lw_pump);
+	lw_import           void  lw_udp_delete(lw_udp);
+	lw_import           void  lw_udp_host(lw_udp, long port);
+	lw_import           void  lw_udp_host_filter(lw_udp, lw_filter);
+	lw_import           void  lw_udp_host_addr(lw_udp, lw_addr);
+	lw_import        lw_bool  lw_udp_hosting(lw_udp);
+	lw_import           void  lw_udp_unhost(lw_udp);
+	lw_import           long  lw_udp_port(lw_udp);
+	lw_import           void  lw_udp_send(lw_udp, lw_addr, const char * buffer, size_t size);
+	lw_import           void* lw_udp_tag(lw_udp);
+	lw_import           void  lw_udp_set_tag(lw_udp, void *);
+
+	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, const char * buffer, size_t size);
+	lw_import void lw_udp_on_data(lw_udp, lw_udp_hook_data);
+
+	typedef void (lw_callback * lw_udp_hook_error) (lw_udp, lw_error);
+	lw_import void lw_udp_on_error(lw_udp, lw_udp_hook_error);
+
+	/* FlashPolicy */
+
+	lw_import  lw_flashpolicy  lw_flashpolicy_new(lw_pump);
+	lw_import            void  lw_flashpolicy_delete(lw_flashpolicy);
+	lw_import            void  lw_flashpolicy_host(lw_flashpolicy, const char * filename);
+	lw_import            void  lw_flashpolicy_host_filter(lw_flashpolicy, const char * filename, lw_filter);
+	lw_import            void  lw_flashpolicy_unhost(lw_flashpolicy);
+	lw_import         lw_bool  lw_flashpolicy_hosting(lw_flashpolicy);
+	lw_import           void*  lw_flashpolicy_tag(lw_flashpolicy);
+	lw_import           void   lw_flashpolicy_set_tag(lw_flashpolicy, void *);
+
+	typedef void (lw_callback * lw_flashpolicy_hook_error) (lw_flashpolicy, lw_error);
+	lw_import void lw_flashpolicy_on_error(lw_flashpolicy, lw_flashpolicy_hook_error);
+
+	/* Webserver */
+
+	lw_import              lw_ws  lw_ws_new(lw_pump);
+	lw_import               void  lw_ws_delete(lw_ws);
+	lw_import               void  lw_ws_host(lw_ws, long port);
+	lw_import               void  lw_ws_host_secure(lw_ws, long port);
+	lw_import               void  lw_ws_host_filter(lw_ws, lw_filter);
+	lw_import               void  lw_ws_host_secure_filter(lw_ws, lw_filter);
+	lw_import               void  lw_ws_unhost(lw_ws);
+	lw_import               void  lw_ws_unhost_secure(lw_ws);
+	lw_import            lw_bool  lw_ws_hosting(lw_ws);
+	lw_import            lw_bool  lw_ws_hosting_secure(lw_ws);
+	lw_import               long  lw_ws_port(lw_ws);
+	lw_import               long  lw_ws_port_secure(lw_ws);
+	lw_import            lw_bool  lw_ws_load_cert_file(lw_ws, const char * filename, const char * passphrase);
+	lw_import            lw_bool  lw_ws_load_sys_cert(lw_ws, const char * store_name, const char * common_name, const char * location);
+	lw_import            lw_bool  lw_ws_cert_loaded(lw_ws);
+	lw_import               void  lw_ws_session_close(lw_ws, const char * id);
+	lw_import               void  lw_ws_enable_manual_finish(lw_ws);
+	lw_import               long  lw_ws_idle_timeout(lw_ws);
+	lw_import               void  lw_ws_set_idle_timeout(lw_ws, long seconds);
+	lw_import               void* lw_ws_tag(lw_ws);
+	lw_import               void  lw_ws_set_tag(lw_ws, void * tag);
+	lw_import            lw_addr  lw_ws_req_addr(lw_ws_req);
+	lw_import            lw_bool  lw_ws_req_secure(lw_ws_req);
+	lw_import         const char* lw_ws_req_url(lw_ws_req);
+	lw_import         const char* lw_ws_req_hostname(lw_ws_req);
+	lw_import               void  lw_ws_req_disconnect(lw_ws_req);
+	lw_import               void  lw_ws_req_set_redirect(lw_ws_req, const char * url);
+	lw_import               void  lw_ws_req_status(lw_ws_req, long code, const char * message);
+	lw_import               void  lw_ws_req_set_mimetype(lw_ws_req, const char * mimetype);
+	lw_import               void  lw_ws_req_set_mimetype_ex(lw_ws_req, const char * mimetype, const char * charset);
+	lw_import               void  lw_ws_req_guess_mimetype(lw_ws_req, const char * filename);
+	lw_import               void  lw_ws_req_finish(lw_ws_req);
+	lw_import             lw_i64  lw_ws_req_last_modified(lw_ws_req);
+	lw_import               void  lw_ws_req_set_last_modified(lw_ws_req, lw_i64);
+	lw_import               void  lw_ws_req_set_unmodified(lw_ws_req);
+	lw_import               void  lw_ws_req_set_header(lw_ws_req, const char * name, const char * value);
+	lw_import               void  lw_ws_req_add_header(lw_ws_req, const char * name, const char * value);
+	lw_import         const char* lw_ws_req_header(lw_ws_req, const char * name);
+	lw_import      lw_ws_req_hdr  lw_ws_req_hdr_first(lw_ws_req);
+	lw_import         const char* lw_ws_req_hdr_name(lw_ws_req_hdr);
+	lw_import         const char* lw_ws_req_hdr_value(lw_ws_req_hdr);
+	lw_import      lw_ws_req_hdr  lw_ws_req_hdr_next(lw_ws_req_hdr);
+	lw_import    lw_ws_req_param  lw_ws_req_GET_first(lw_ws_req);
+	lw_import    lw_ws_req_param  lw_ws_req_POST_first(lw_ws_req);
+	lw_import         const char* lw_ws_req_param_name(lw_ws_req_param);
+	lw_import         const char* lw_ws_req_param_value(lw_ws_req_param);
+	lw_import    lw_ws_req_param  lw_ws_req_param_next(lw_ws_req_param);
+	lw_import   lw_ws_req_cookie  lw_ws_req_cookie_first(lw_ws_req);
+	lw_import         const char* lw_ws_req_cookie_name(lw_ws_req_cookie);
+	lw_import         const char* lw_ws_req_cookie_value(lw_ws_req_cookie);
+	lw_import   lw_ws_req_cookie  lw_ws_req_cookie_next(lw_ws_req_cookie);
+	lw_import               void  lw_ws_req_set_cookie(lw_ws_req, const char * name, const char * value);
+	lw_import               void  lw_ws_req_set_cookie_attr(lw_ws_req, const char * name, const char * value, const char * attributes);
+	lw_import         const char* lw_ws_req_get_cookie(lw_ws_req, const char * name);
+	lw_import         const char* lw_ws_req_session_id(lw_ws_req);
+	lw_import               void  lw_ws_req_session_write(lw_ws_req, const char * name, const char * value);
+	lw_import         const char* lw_ws_req_session_read(lw_ws_req, const char * name);
+	lw_import               void  lw_ws_req_session_close(lw_ws_req);
+	lw_import  lw_ws_sessionitem  lw_ws_req_session_first(lw_ws_req);
+	lw_import         const char* lw_ws_sessionitem_name(lw_ws_sessionitem);
+	lw_import         const char* lw_ws_sessionitem_value(lw_ws_sessionitem);
+	lw_import  lw_ws_sessionitem  lw_ws_sessionitem_next(lw_ws_sessionitem);
+	lw_import         const char* lw_ws_req_GET(lw_ws_req, const char * name);
+	lw_import         const char* lw_ws_req_POST(lw_ws_req, const char * name);
+	lw_import         const char* lw_ws_req_body(lw_ws_req);
+	lw_import               void  lw_ws_req_disable_cache(lw_ws_req);
+	lw_import               long  lw_ws_req_idle_timeout(lw_ws_req);
+	lw_import               void  lw_ws_req_set_idle_timeout(lw_ws_req, long seconds);
+	/*lw_import               void  lw_ws_req_enable_dl_resuming (lw_ws_req);
+	lw_import             lw_i64  lw_ws_req_reqrange_begin     (lw_ws_req);
+	lw_import             lw_i64  lw_ws_req_reqrange_end       (lw_ws_req);
+	lw_import               void  lw_ws_req_set_outgoing_range (lw_ws_req, lw_i64 begin, lw_i64 end);*/
+	lw_import         const char* lw_ws_upload_form_el_name(lw_ws_upload);
+	lw_import         const char* lw_ws_upload_filename(lw_ws_upload);
+	lw_import         const char* lw_ws_upload_header(lw_ws_upload, const char * name);
+	lw_import               void  lw_ws_upload_set_autosave(lw_ws_upload);
+	lw_import         const char* lw_ws_upload_autosave_fname(lw_ws_upload);
+	lw_import   lw_ws_upload_hdr  lw_ws_upload_hdr_first(lw_ws_upload);
+	lw_import         const char* lw_ws_upload_hdr_name(lw_ws_upload_hdr);
+	lw_import         const char* lw_ws_upload_hdr_value(lw_ws_upload_hdr);
+	lw_import   lw_ws_upload_hdr  lw_ws_upload_hdr_next(lw_ws_upload_hdr);
+
+	typedef void (lw_callback * lw_ws_hook_get) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_get(lw_ws, lw_ws_hook_get);
+
+	typedef void (lw_callback * lw_ws_hook_post) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_post(lw_ws, lw_ws_hook_post);
+
+	typedef void (lw_callback * lw_ws_hook_head) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_head(lw_ws, lw_ws_hook_head);
+
+	typedef void (lw_callback * lw_ws_hook_error) (lw_ws, lw_error);
+	lw_import void lw_ws_on_error(lw_ws, lw_ws_hook_error);
+
+	typedef void (lw_callback * lw_ws_hook_disconnect) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_disconnect(lw_ws, lw_ws_hook_disconnect);
+
+	typedef void (lw_callback * lw_ws_hook_upload_start) (lw_ws, lw_ws_req, lw_ws_upload);
+	lw_import void lw_ws_on_upload_start(lw_ws, lw_ws_hook_upload_start);
+
+	typedef void (lw_callback * lw_ws_hook_upload_chunk) (lw_ws, lw_ws_req, lw_ws_upload, const char * buffer, size_t size);
+	lw_import void lw_ws_on_upload_chunk(lw_ws, lw_ws_hook_upload_chunk);
+
+	typedef void (lw_callback * lw_ws_hook_upload_done) (lw_ws, lw_ws_req, lw_ws_upload);
+	lw_import void lw_ws_on_upload_done(lw_ws, lw_ws_hook_upload_done);
+
+	typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads[], size_t num_uploads);
+	lw_import void lw_ws_on_upload_post(lw_ws, lw_ws_hook_upload_post);
 
 #ifdef __cplusplus
-}
 
-/* TODO : Other types? */
+} /* extern "C" */
 
-#define LacewingStream(C, F)                                \
-        inline C & operator << (lw_i64 V)                   \
-        {   char Buffer[64];                                \
-            Int64ToString(V, Buffer);                       \
-            (*this) << Buffer;                              \
-            return *this;                                   \
-        }                                                   \
-        inline C & operator << (const char * V)             \
-        {   F (V, -1);                                      \
-            return *this;                                   \
-        }                                                   \
-        inline C & operator << (char * V)                   \
-        {   F (V, -1);                                      \
-            return *this;                                   \
-        }                                                   \
- 
-namespace Lacewing
+#ifdef _lacewing_wrap_cxx
+#define lw_class_wraps(c) struct _lw_##c _inst
+#else
+#define lw_class_wraps(c)
+#endif
+
+namespace lacewing
 {
 
-LacewingFunction   const char* Version                 ();
-LacewingFunction       lw_i64  CurrentThreadID         ();
-LacewingFunction       lw_i64  LastModified            (const char * Filename);
-LacewingFunction         bool  FileExists              (const char * Filename);
-LacewingFunction       lw_i64  FileSize                (const char * Filename);
-LacewingFunction         bool  PathExists              (const char * Filename);
-LacewingFunction         void  Int64ToString           (lw_i64, char *);
-LacewingFunction         void  TempPath                (char * Buffer);
-LacewingFunction         void  NewTempFile             (char * Buffer);
-LacewingFunction   const char* GuessMimeType           (const char * Filename);
-LacewingFunction         void  MD5                     (char * Output, const char * Input, int Length = -1);
-LacewingFunction         void  MD5_Hex                 (char * Output, const char * Input, int Length = -1);
-LacewingFunction         void  SHA1                    (char * Output, const char * Input, int Length = -1);
-LacewingFunction         void  SHA1_Hex                (char * Output, const char * Input, int Length = -1);
+	/** error **/
 
-struct Error
-{
-    void * InternalTag, * Tag;
+	typedef struct _error * error;
 
-    LacewingFunction  Error();
-    LacewingFunction ~Error();
-    
-    LacewingFunction void Add (const char * Format, ...);
-    LacewingFunction void Add (int);
-    LacewingFunction void Add (const char * Format, va_list);
+	struct _error
+	{
+		lw_class_wraps(error);
 
-    LacewingFunction const char * ToString ();
-    LacewingFunction operator const char * ();
+		lw_import void add(const char * format, ...);
+		lw_import void add(int);
+		lw_import void add(const char * format, va_list);
 
-    LacewingFunction Lacewing::Error * Clone();
-};
+		lw_import size_t size();
 
-/* On Windows, there's only Lacewing::EventPump, of which Lacewing::Pump is a typedef.
+		lw_import const char * tostring();
+		lw_import operator const char * ();
 
-   On *nix, Lacewing::EventPump derives from Lacewing::Pump, which is a virtual class for
-   watching FDs.  It is therefore possible to bypass Lacewing::EventPump entirely and use a custom
-   class deriving from Lacewing::Pump, allowing Lacewing to be used in situations where
-   EventPump is not practical (ie. when some form of event watcher already exists). */
+		lw_import error clone();
 
-#ifndef _WIN32
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-    struct Pump
-    {
-        void * InternalTag, * Tag;
+	lw_import error error_new();
+	void error_delete(error);
 
-        LacewingFunction  Pump ();
-        LacewingFunction ~Pump ();
-    
-        LacewingFunction void Post (void * Function, void * Parameter);
-        LacewingFunction virtual bool IsEventPump ();
-        LacewingFunction void PostEventLoopExit ();
-        LacewingFunction bool InUse ();
-        LacewingFunction void InUse (bool);
+	/** event **/
 
-        #ifdef LacewingInternal
-            friend struct ::PumpInternal;
-        #endif
+	typedef struct _event * event;
 
-    protected:
+	struct _event
+	{
+		lw_class_wraps(event);
 
-        LacewingFunction bool Ready (void * Tag, bool CanRead, bool CanWrite);
+		lw_import void signal();
+		lw_import void unsignal();
 
-        virtual void * AddRead (int FD, void * Tag) = 0;
-        virtual void * AddReadWrite (int FD, void * Tag) = 0;
+		lw_import bool signalled();
 
-        /* AddRead/AddReadWrite may return a pointer-sized key, which will be passed
-           to Gone() when the FD is dead.  EventPump doesn't use this mechanism, but
-           it may be useful for a custom Pump. */
+		lw_import bool wait(long timeout = -1);
 
-        LacewingFunction virtual void Gone (void *);
-    };
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-    struct EventPump : public Pump
-    {
-        void * EPInternalTag, * EPTag;
+	lw_import event event_new();
+	void event_delete(event);
 
-        LacewingFunction  EventPump (int MaxHint = 1024);
-        LacewingFunction ~EventPump ();
 
-        LacewingFunction Lacewing::Error * Tick();
-        LacewingFunction Lacewing::Error * StartEventLoop();
-        LacewingFunction Lacewing::Error * StartSleepyTicking(void (LacewingHandler * onTickNeeded) (Lacewing::EventPump &EventPump));
-    
-        LacewingFunction bool IsEventPump ();
+	/** pump **/
 
-    private:
+	typedef struct _pump * pump;
 
-        LacewingFunction void * AddRead (int FD, void * Tag);
-        LacewingFunction void * AddReadWrite (int FD, void * Tag);
-    };
+	struct _pump
+	{
+		lw_class_wraps(pump);
+
+		lw_import void add_user();
+		lw_import void remove_user();
+
+		lw_import bool in_use();
+
+#ifdef _WIN32
+
+		lw_import lw_pump_watch add(HANDLE, void * tag, lw_pump_callback);
+		lw_import void update_callbacks(lw_pump_watch, void * tag, lw_pump_callback);
 
 #else
 
-    struct EventPump
-    {
-        void * InternalTag, * Tag;
+		lw_import lw_pump_watch add(int fd, void * tag,
+			lw_pump_callback on_read_ready,
+			lw_pump_callback on_write_ready = 0,
+			bool edge_triggered = true);
 
-        LacewingFunction  EventPump (int MaxHint = 1024);
-        LacewingFunction ~EventPump ();
-
-        LacewingFunction Lacewing::Error * Tick();
-        LacewingFunction Lacewing::Error * StartEventLoop();
-        LacewingFunction Lacewing::Error * StartSleepyTicking(void (LacewingHandler * onTickNeeded) (Lacewing::EventPump &EventPump));
-    
-        LacewingFunction void Post (void * Function, void * Parameter);
-        LacewingFunction void PostEventLoopExit ();
-        LacewingFunction bool InUse ();
-        LacewingFunction void InUse (bool);
-    };
-
-    typedef EventPump Pump;
+		lw_import void update_callbacks(lw_pump_watch, void * tag,
+			lw_pump_callback on_read_ready,
+			lw_pump_callback on_write_ready = 0,
+			bool edge_triggered = true);
 
 #endif
 
-struct Thread
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction   Thread (const char * Name, void * Function);
-    LacewingFunction ~ Thread ();
-
-    LacewingFunction void Start (void * Parameter = 0);
-    LacewingFunction bool Started ();
-
-    LacewingFunction int Join ();
-};
-
-struct Timer
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  Timer (Pump &);
-    LacewingFunction ~Timer ();
-
-    LacewingFunction void Start    (int Milliseconds);
-    LacewingFunction void Stop     ();
-    LacewingFunction bool Started  ();
-    
-    LacewingFunction void ForceTick ();
-    
-    typedef void (LacewingHandler * HandlerTick) (Lacewing::Timer &Timer);
-    LacewingFunction void onTick (HandlerTick);
-};
-
-struct Sync
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  Sync ();
-    LacewingFunction ~Sync ();
-
-    struct Lock
-    {
-        void * InternalTag;
-
-        LacewingFunction  Lock(Lacewing::Sync &);
-        LacewingFunction ~Lock();
-        
-        LacewingFunction void Release();
-    };
-};
-
-struct SpinSync
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  SpinSync ();
-    LacewingFunction ~SpinSync ();
-
-    struct WriteLock
-    {
-        void * InternalTag;
-
-        LacewingFunction  WriteLock(Lacewing::SpinSync &);
-        LacewingFunction ~WriteLock();
-        
-        LacewingFunction void Release();
-    };
-
-    struct ReadLock
-    {
-        void * InternalTag;
-
-        LacewingFunction  ReadLock(Lacewing::SpinSync &);
-        LacewingFunction ~ReadLock();
-
-        LacewingFunction void Release();
-    };
-};
-
-struct Event
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction Event();
-    LacewingFunction ~Event();
-
-    LacewingFunction void Signal();
-    LacewingFunction void Unsignal();
-    
-    LacewingFunction bool Signalled();
-
-    LacewingFunction void Wait(int Timeout = -1);
-};
-
-struct Address
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction Address(const Address &);
-    LacewingFunction ~Address();
-
-    LacewingFunction Address();
-    LacewingFunction Address(unsigned int IP, int Port = 0);
-    LacewingFunction Address(unsigned char, unsigned char, unsigned char, unsigned char, int Port = 0);
-
-    /* Hostname accepts formats:
-
-          lacewing-project.org
-          127.0.0.1
-          lacewing-project.org:6121
-          127.0.0.1:6121
-          http://lacewing-project.org
-          http://127.0.0.1
-
-       Port used (in order of precedence):
-     
-          The port after the ":"
-          The port of the service (eg 80 for http://)
-          The "Port" argument
-    */
-
-    LacewingFunction Address(const char * Hostname, int Port = 0, bool Blocking = false);
- 
-    LacewingFunction  int Port () const;  
-    LacewingFunction void Port (int Port);
-
-    LacewingFunction         bool   Ready   () const;
-    LacewingFunction unsigned int   IP      () const;
-    LacewingFunction unsigned char  IP_Byte (int Index) const;
-
-    LacewingFunction const char * ToString  () const;
-    LacewingFunction operator const char *  () const;
-};
-
-struct Filter
-{
-    void * InternalTag, * Tag;
+		void remove(lw_pump_watch);
+		void post_remove(lw_pump_watch);
 
-    LacewingFunction Filter ();
-    LacewingFunction Filter (const Filter &);
+		void post(void * proc, void * parameter = 0);
 
-    LacewingFunction ~Filter ();
-    
-    LacewingFunction void LocalIP(int IP);
-    LacewingFunction  int LocalIP() const;
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-    LacewingFunction void LocalPort(int Port);
-    LacewingFunction  int LocalPort() const;
-
-    LacewingFunction void Local (const char *);
-    
-    LacewingFunction void Remote (const char *);
-    LacewingFunction void Remote (const Address &);
-    LacewingFunction Address &Remote () const;
-
-    LacewingFunction void Reuse(bool Enabled);
-    LacewingFunction bool Reuse() const;
-};
-
-struct Client
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  Client(Pump &);
-    LacewingFunction ~Client();
-
-    LacewingFunction void Connect(const char * Host, int Port);
-    LacewingFunction void Connect(Address &);
-
-    LacewingFunction void Disconnect();
+	lw_import pump pump_new();
+	lw_import void pump_delete(pump);
 
-    LacewingFunction bool Connected();
-    LacewingFunction bool Connecting();
-    
-    LacewingFunction Lacewing::Address &ServerAddress();
 
-    LacewingFunction void Send (const char * Data, int Size = -1);
-    LacewingStream             (Client, Send);
+	/** eventpump **/
 
-    LacewingFunction void DisableNagling();
-    
-    LacewingFunction bool CheapBuffering ();
-    LacewingFunction void StartBuffering();
-    LacewingFunction void Flush();    
-
-    typedef void (LacewingHandler * HandlerConnect)         (Lacewing::Client &Client);
-    typedef void (LacewingHandler * HandlerDisconnect)      (Lacewing::Client &Client);
-    typedef void (LacewingHandler * HandlerReceive)         (Lacewing::Client &Client, char * Data, int Size);
-    typedef void (LacewingHandler * HandlerError)           (Lacewing::Client &Client, Lacewing::Error &);
+	typedef struct _eventpump * eventpump;
 
-    LacewingFunction void onConnect    (HandlerConnect);
-    LacewingFunction void onDisconnect (HandlerDisconnect);
-    LacewingFunction void onReceive    (HandlerReceive);
-    LacewingFunction void onError      (HandlerError);
-};
-
-struct Server
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  Server(Pump &);
-    LacewingFunction ~Server();
-
-    LacewingFunction void Host    (int Port, bool ClientSpeaksFirst = false);
-    LacewingFunction void Host    (Lacewing::Filter &Filter, bool ClientSpeaksFirst = false);
-
-    LacewingFunction void Unhost  ();
-    LacewingFunction bool Hosting ();
-    LacewingFunction int  Port    ();
-
-    LacewingFunction bool LoadCertificateFile   (const char * Filename,  const char * Passphrase = "");
-    LacewingFunction bool LoadSystemCertificate (const char * StoreName, const char * CommonName, const char * Location = "CurrentUser");
-    LacewingFunction bool CertificateLoaded     ();
+	struct _eventpump : public _pump
+	{
+		lw_class_wraps(eventpump);
 
-    LacewingFunction lw_i64 BytesSent();
-    LacewingFunction lw_i64 BytesReceived();
-    
-    LacewingFunction void DisableNagling ();
+		lw_import error start_eventloop();
+		lw_import error tick();
 
-    struct Client
-    {
-        void * InternalTag, * Tag;
+		lw_import error start_sleepy_ticking
+			(void (lw_callback * on_tick_needed) (eventpump));
 
-        LacewingFunction Lacewing::Address &GetAddress();
+		lw_import void post_eventloop_exit();
+	};
 
-        LacewingFunction void Send          (const char * Data, int Size = -1);
-        LacewingFunction void SendFile      (const char * Filename, lw_i64 Offset = 0, lw_i64 Size = -1);
-        LacewingFunction void SendWritable  (char * Data, int Size = -1);
+	lw_import eventpump eventpump_new();
 
-        LacewingFunction bool CheapBuffering ();
-        LacewingFunction void StartBuffering ();
-        LacewingFunction void Flush ();
 
-        LacewingStream (Client, Send);
+	/** thread **/
 
-        LacewingFunction void Disconnect();
+	typedef struct _thread * thread;
 
-        LacewingFunction Client * Next ();
-    };
+	struct _thread
+	{
+		lw_class_wraps(_thread);
 
-    LacewingFunction int ClientCount();
-    LacewingFunction Client * FirstClient ();
+		lw_import void start(void * param = 0);
+		lw_import bool started();
 
-    typedef void (LacewingHandler * HandlerConnect)     (Lacewing::Server &Server, Lacewing::Server::Client &Client);
-    typedef void (LacewingHandler * HandlerDisconnect)  (Lacewing::Server &Server, Lacewing::Server::Client &Client);
-    typedef void (LacewingHandler * HandlerReceive)     (Lacewing::Server &Server, Lacewing::Server::Client &Client, char * Data, int Size);
-    typedef void (LacewingHandler * HandlerError)       (Lacewing::Server &Server, Lacewing::Error &);
-    
-    LacewingFunction void onConnect     (HandlerConnect);
-    LacewingFunction void onDisconnect  (HandlerDisconnect);
-    LacewingFunction void onReceive     (HandlerReceive);
-    LacewingFunction void onError       (HandlerError);
-};
+		lw_import void * join();
 
-struct UDP
-{
-    void * InternalTag, * Tag;
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-    LacewingFunction  UDP (Pump &);
-    LacewingFunction ~UDP ();
+	lw_import thread thread_new(const char * name, void * proc);
+	lw_import void thread_delete(thread);
 
-    LacewingFunction void Host (int Port);
-    LacewingFunction void Host (Lacewing::Filter &Filter);
-    LacewingFunction void Host (Address &); /* Use Port() afterwards to get the port number */
 
-    LacewingFunction bool Hosting ();
-    LacewingFunction void Unhost ();
+	/** timer **/
 
-    LacewingFunction int Port ();
+	typedef struct _timer * timer;
 
-    LacewingFunction lw_i64 BytesSent();
-    LacewingFunction lw_i64 BytesReceived();
+	struct _timer
+	{
+		lw_class_wraps(timer);
 
-    LacewingFunction void Send(Lacewing::Address &Address, const char * Data, int Size = -1);
+		lw_import void start(long msec);
+		lw_import void stop();
+		lw_import bool started();
 
-    typedef void (LacewingHandler * HandlerReceive)          (Lacewing::UDP &UDP, Lacewing::Address &From, char * Data, int Size);
-    typedef void (LacewingHandler * HandlerError)            (Lacewing::UDP &UDP, Lacewing::Error &);
-    
-    LacewingFunction void onReceive(HandlerReceive);
-    LacewingFunction void onError  (HandlerError);
-};
+		lw_import void force_tick();
 
-struct Webserver
-{
-    void * InternalTag, * Tag;
+		typedef void (lw_callback * hook_tick) (timer);
+		lw_import void on_tick(hook_tick);
 
-    LacewingFunction  Webserver(Pump &);
-    LacewingFunction ~Webserver();
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-    LacewingFunction void Host         (int Port = 80);
-    LacewingFunction void HostSecure   (int Port = 443);
-    
-    LacewingFunction void Host         (Lacewing::Filter &Filter);
-    LacewingFunction void HostSecure   (Lacewing::Filter &Filter);
-    
-    LacewingFunction void Unhost        ();
-    LacewingFunction void UnhostSecure  ();
+	lw_import timer timer_new(pump);
+	lw_import void timer_delete(timer);
 
-    LacewingFunction bool Hosting       ();
-    LacewingFunction bool HostingSecure ();
 
-    LacewingFunction int  Port          ();
-    LacewingFunction int  SecurePort    ();
+	/** sync **/
 
-    LacewingFunction bool LoadCertificateFile   (const char * Filename, const char * Passphrase = "");
-    LacewingFunction bool LoadSystemCertificate (const char * StoreName, const char * CommonName, const char * Location = "CurrentUser");
-    LacewingFunction bool CertificateLoaded     ();
+	typedef struct _sync * sync;
+	typedef struct _sync_lock * sync_lock;
 
-    LacewingFunction lw_i64 BytesSent();
-    LacewingFunction lw_i64 BytesReceived();
+	struct _sync
+	{
+		lw_class_wraps(sync);
+	};
 
-    LacewingFunction void EnableManualRequestFinish ();
+	struct _sync_lock
+	{
+		lw_import _sync_lock(lacewing::sync);
+		lw_import ~_sync_lock();
 
-    LacewingFunction int  IdleTimeout ();
-    LacewingFunction void IdleTimeout (int Seconds);
+	protected:
 
-    struct Request
-    {
-        void * InternalTag, * Tag;
+		lacewing::sync sync;
+	};
 
-        LacewingFunction Lacewing::Address &GetAddress();
+	lw_import sync sync_new();
+	lw_import void sync_delete(sync);
 
-        LacewingFunction bool Secure ();
 
-        LacewingFunction const char * URL();
-        LacewingFunction const char * Hostname();
-        
-        LacewingFunction void Disconnect();
+	/** stream **/
 
-        LacewingFunction void SetRedirect (const char * URL);
-        LacewingFunction void Status (int Code, const char * Message);
+	typedef struct _stream * stream;
 
-        LacewingFunction void SetMimeType(const char * MimeType, const char * Charset = "UTF-8");
-        LacewingFunction void GuessMimeType(const char * Filename);
+	struct _stream
+	{
+		lw_class_wraps(stream);
 
-        LacewingFunction void Send          (const char * Data, int Size = -1);
-        LacewingFunction void SendFile      (const char * Filename, lw_i64 Offset = 0, lw_i64 Size = -1);
-        LacewingFunction void SendConstant  (const char * Data, int Size = -1);
+		typedef void (lw_callback * hook_data)
+			(stream, void * tag, const char * buffer, size_t size);
 
-        LacewingStream(Request, Send);
+		lw_import void add_hook_data(hook_data, void * tag = 0);
+		lw_import void remove_hook_data(hook_data, void * tag = 0);
 
-        LacewingFunction void Reset ();
-        LacewingFunction void Finish ();
+		typedef void (lw_callback * hook_close) (stream, void * tag);
 
-        LacewingFunction int  IdleTimeout ();
-        LacewingFunction void IdleTimeout (int Seconds);
+		lw_import void add_hook_close(hook_close, void * tag);
+		lw_import void remove_hook_close(hook_close, void * tag);
 
-        LacewingFunction lw_i64 LastModified  ();
-        LacewingFunction void   LastModified  (lw_i64 Time);
-        LacewingFunction void   SetUnmodified ();
-    
-        LacewingFunction void DisableCache();
+		lw_import size_t bytes_left(); /* if -1, read() does nothing */
+		lw_import void read(size_t bytes = -1); /* -1 = until EOF */
 
-        LacewingFunction void   EnableDownloadResuming();
-        LacewingFunction lw_i64 RequestedRangeBegin();
-        LacewingFunction lw_i64 RequestedRangeEnd();
-        LacewingFunction void   SetOutgoingRange(lw_i64 Begin, lw_i64 End);
-        
+		lw_import void begin_queue();
+		lw_import size_t queued();
 
-        /** Headers **/
+		/* When end_queue is called, one or more head buffers may optionally be
+		* written _before_ the queued data.  This is used for e.g. including HTTP
+		* headers before the (already buffered) response body.
+		*/
 
-        struct Header
-        {
-            LacewingFunction const char * Name ();
-            LacewingFunction const char * Value ();
+		lw_import void end_queue();
 
-            LacewingFunction Header * Next ();
-        };
+		lw_import void end_queue
+			(int head_buffers, const char ** buffers, size_t * lengths);
 
-        LacewingFunction struct Header * FirstHeader ();
+		lw_import void write(const char * buffer, size_t size = -1);
 
-        LacewingFunction const char * Header (const char * Name);
-        LacewingFunction void Header (const char * Name, const char * Value);
+		lw_import void writef(const char * format, ...);
 
-    
-        /** Cookies **/
+		lw_import void write
+			(stream, size_t size = -1, bool delete_when_finished = false);
 
-        struct Cookie
-        {
-            LacewingFunction const char * Name ();
-            LacewingFunction const char * Value ();
+		lw_import void write_file(const char * filename);
 
-            LacewingFunction Cookie * Next ();
-        };
+		lw_import void add_filter_upstream
+			(stream, bool delete_with_stream = false, bool close_together = false);
 
-        LacewingFunction struct Cookie * FirstCookie ();
+		lw_import void add_filter_downstream
+			(stream, bool delete_with_stream = false, bool close_together = false);
 
-        LacewingFunction const char * Cookie (const char * Name);
-        LacewingFunction void         Cookie (const char * Name, const char * Value);
-        LacewingFunction void         Cookie (const char * Name, const char * Value, const char * Attributes);
+		lw_import bool close(bool immediate = false);
 
-    
-        /** Sessions **/
+		lw_import lacewing::pump pump();
 
-        struct SessionItem
-        {
-            LacewingFunction const char * Name ();
-            LacewingFunction const char * Value ();
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
 
-            LacewingFunction SessionItem * Next ();
-        };
+	lw_import stream stream_new(const lw_streamdef *, pump);
+	lw_import void stream_delete(stream);
 
-        LacewingFunction SessionItem * FirstSessionItem ();
 
-        LacewingFunction const char * Session ();
-        LacewingFunction const char * Session (const char * Key);
-        LacewingFunction void         Session (const char * Key, const char * Value);
+	/** pipe **/
 
-        LacewingFunction void  CloseSession();
+	typedef struct _pipe * pipe;
 
-            
-        /** GET/POST data **/
+	struct _pipe : public _stream
+	{
+		lw_class_wraps(pipe);
+	};
 
-        struct Parameter
-        {
-            LacewingFunction const char * Name ();
-            LacewingFunction const char * Value ();
+	lw_import pipe pipe_new();
+	lw_import pipe pipe_new(pump);
 
-            LacewingFunction Parameter * Next ();
-        };
 
-        LacewingFunction Parameter * GET ();
-        LacewingFunction Parameter * POST ();
+	/** fdstream **/
 
-        LacewingFunction const char * GET  (const char * Name);
-        LacewingFunction const char * POST (const char * Name);
-    };
+	typedef struct _fdstream * fdstream;
 
-    LacewingFunction void CloseSession(const char * ID);
+	struct _fdstream : public _stream
+	{
+		lw_class_wraps(fdstream);
 
-    struct Upload
-    {
-        void * InternalTag, * Tag;
+		lw_import void set_fd
+			(lw_fd, lw_pump_watch watch = 0, bool auto_close = false);
 
-        LacewingFunction const char * FormElementName();
-        LacewingFunction const char * Filename();
-        LacewingFunction void         SetAutoSave();
-        LacewingFunction const char * GetAutoSaveFilename();
+		lw_import bool valid();
 
-        LacewingFunction const char * Header (const char * Name);
-        
-        struct Header
-        {
-            LacewingFunction const char * Name ();
-            LacewingFunction const char * Value ();
+		lw_import void cork();
+		lw_import void uncork();
 
-            LacewingFunction Header * Next ();
-        };
+		lw_import void nagle(bool);
 
-        LacewingFunction struct Header * FirstHeader ();
-    };
+	};
 
-    typedef void (LacewingHandler * HandlerGet)                    (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request);
-    typedef void (LacewingHandler * HandlerPost)                   (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request);
-    typedef void (LacewingHandler * HandlerHead)                   (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request);  
-    typedef void (LacewingHandler * HandlerDisconnect)             (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request);
-    typedef void (LacewingHandler * HandlerError)                  (Lacewing::Webserver &Webserver, Lacewing::Error &);
+	lw_import fdstream fdstream_new(pump);
 
-    typedef void (LacewingHandler * HandlerUploadStart)            (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request,
-                                                                    Lacewing::Webserver::Upload &Upload);
 
-    typedef void (LacewingHandler * HandlerUploadChunk)            (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request,
-                                                                    Lacewing::Webserver::Upload &Upload, const char * Data, int Size);
-     
-    typedef void (LacewingHandler * HandlerUploadDone)             (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request,
-                                                                    Lacewing::Webserver::Upload &Upload);
+	/** file **/
 
-    typedef void (LacewingHandler * HandlerUploadPost)             (Lacewing::Webserver &Webserver, Lacewing::Webserver::Request &Request,
-                                                                    Lacewing::Webserver::Upload * Uploads[], int UploadCount);
+	typedef struct _file * file;
 
-    LacewingFunction void onGet              (HandlerGet);
-    LacewingFunction void onUploadStart      (HandlerUploadStart);
-    LacewingFunction void onUploadChunk      (HandlerUploadChunk);
-    LacewingFunction void onUploadDone       (HandlerUploadDone);
-    LacewingFunction void onUploadPost       (HandlerUploadPost);
-    LacewingFunction void onPost             (HandlerPost);
-    LacewingFunction void onHead             (HandlerHead);
-    LacewingFunction void onDisconnect       (HandlerDisconnect);
-    LacewingFunction void onError            (HandlerError);
-};
-    
-struct RelayClient
+	struct _file : public _fdstream
+	{
+		lw_class_wraps(file);
+
+		lw_import bool open(const char * filename, const char * mode = "rb");
+		lw_import bool open_temp();
+
+		lw_import const char * name();
+	};
+
+	lw_import file file_new(pump);
+	lw_import file file_new(pump, const char * filename, const char * mode = "rb");
+
+
+	/** address **/
+
+	typedef struct _address * address;
+
+	struct _address
+	{
+		lw_class_wraps(address);
+
+		lw_import long port();
+		lw_import void port(long);
+
+		lw_import int type();
+		lw_import void type(int);
+
+		lw_import bool ipv6();
+
+		lw_import bool ready();
+		lw_import error resolve();
+
+		lw_import const char * tostring();
+		lw_import operator const char *  ();
+
+		lw_import bool operator == (address);
+		lw_import bool operator != (address);
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import address address_new(address);
+	lw_import address address_new(const char * hostname, const char * service);
+	lw_import address address_new(const char * hostname, long port);
+	lw_import address address_new(const char * hostname, const char * service, long hints);
+	lw_import address address_new(const char * hostname, long port, long hints);
+
+	lw_import void address_delete(address);
+
+
+	/** filter **/
+
+	typedef struct _filter * filter;
+
+	struct _filter
+	{
+		lw_class_wraps(filter);
+
+		lw_import void local(address);
+		lw_import void remote(address);
+
+		lw_import address local();
+		lw_import address remote();
+
+		lw_import void local_port(long port);
+		lw_import long local_port();
+
+		lw_import void remote_port(long port);
+		lw_import long remote_port();
+
+		lw_import void reuse(bool enabled);
+		lw_import bool reuse();
+
+		lw_import void ipv6(bool enabled);
+		lw_import bool ipv6();
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import filter filter_new();
+	lw_import void filter_delete(filter);
+
+
+	/** client **/
+
+	typedef struct _client * client;
+
+	struct _client : public _fdstream
+	{
+		lw_class_wraps(client);
+
+		lw_import void connect(const char * host, long port);
+		lw_import void connect(address);
+
+		lw_import bool connected();
+		lw_import bool connecting();
+
+		lw_import address server_address();
+
+		typedef void (lw_callback * hook_connect) (client);
+		typedef void (lw_callback * hook_disconnect) (client);
+
+		typedef void (lw_callback * hook_data)
+			(client, const char * buffer, size_t size);
+
+		typedef void (lw_callback * hook_error) (client, error);
+
+		lw_import void on_connect(hook_connect);
+		lw_import void on_disconnect(hook_disconnect);
+		lw_import void on_data(hook_data);
+		lw_import void on_error(hook_error);
+	};
+
+	lw_import client client_new(pump);
+
+
+	/** server **/
+
+	typedef struct _server * server;
+	typedef struct _server_client * server_client;
+
+	struct _server
+	{
+		lw_class_wraps(server);
+
+		lw_import void host(long port);
+		lw_import void host(filter);
+
+		lw_import void unhost();
+		lw_import bool hosting();
+		lw_import long port();
+
+		lw_import bool load_cert_file
+			(const char * filename, const char * passphrase = "");
+
+		lw_import bool load_sys_cert
+			(const char * storename, const char * common_name,
+			const char * location = "CurrentUser");
+
+		lw_import bool cert_loaded();
+
+		lw_import bool can_npn();
+		lw_import void add_npn(const char *);
+
+		lw_import size_t num_clients();
+		lw_import server_client client_first();
+
+		typedef void (lw_callback * hook_connect) (server, server_client);
+		typedef void (lw_callback * hook_disconnect) (server, server_client);
+
+		typedef void (lw_callback * hook_data)
+			(server, server_client, const char * buffer, size_t size);
+
+		typedef void (lw_callback * hook_error) (server, error);
+
+		lw_import void on_connect(hook_connect);
+		lw_import void on_disconnect(hook_disconnect);
+		lw_import void on_data(hook_data);
+		lw_import void on_error(hook_error);
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import server server_new(pump);
+	lw_import void server_delete(server);
+
+	struct _server_client : public _fdstream
+	{
+		lw_class_wraps(server_client);
+
+		lw_import lacewing::address address();
+
+		lw_import server_client next();
+
+		lw_import const char * npn();
+	};
+
+
+	/** udp **/
+
+	typedef struct _udp * udp;
+
+	struct _udp
+	{
+		lw_class_wraps(udp);
+
+		lw_import void host(long port);
+		lw_import void host(filter);
+		lw_import void host(address);
+
+		lw_import bool hosting();
+		lw_import void unhost();
+
+		lw_import long port();
+
+		lw_import void send(address, const char * data, size_t size = -1);
+
+		typedef void (lw_callback * hook_data)
+			(udp, address, char * buffer, size_t size);
+
+		typedef void (lw_callback * hook_error) (udp, error);
+
+		lw_import void on_data(hook_data);
+		lw_import void on_error(hook_error);
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import udp udp_new(pump);
+	lw_import void udp_delete(udp);
+
+
+	/** webserver **/
+
+	typedef struct _webserver                       * webserver;
+	typedef struct _webserver_request               * webserver_request;
+	typedef struct _webserver_request_header        * webserver_request_header;
+	typedef struct _webserver_request_cookie        * webserver_request_cookie;
+	typedef struct _webserver_request_param         * webserver_request_param;
+	typedef struct _webserver_sessionitem           * webserver_sessionitem;
+	typedef struct _webserver_upload                * webserver_upload;
+	typedef struct _webserver_upload_header         * webserver_upload_header;
+
+	struct _webserver
+	{
+		lw_class_wraps(webserver);
+
+		lw_import void host(long port = 80);
+		lw_import void host_secure(long port = 443);
+
+		lw_import void host(filter);
+		lw_import void host_secure(filter);
+
+		lw_import void unhost();
+		lw_import void unhost_secure();
+
+		lw_import bool hosting();
+		lw_import bool hosting_secure();
+
+		lw_import long port();
+		lw_import long port_secure();
+
+		lw_import bool load_cert_file
+			(const char * filename, const char * passphrase = "");
+
+		lw_import bool load_sys_cert
+			(const char * store_name, const char * common_name,
+			const char * location = "CurrentUser");
+
+		lw_import bool cert_loaded();
+
+		lw_import void enable_manual_finish();
+
+		lw_import long idle_timeout();
+		lw_import void idle_timeout(long sec);
+
+		lw_import void session_close(const char * id);
+
+		typedef void (lw_callback * hook_get) (webserver, webserver_request);
+		typedef void (lw_callback * hook_post) (webserver, webserver_request);
+		typedef void (lw_callback * hook_head) (webserver, webserver_request);
+		typedef void (lw_callback * hook_disconnect) (webserver, webserver_request);
+		typedef void (lw_callback * hook_error) (webserver, error);
+
+		typedef void (lw_callback * hook_upload_start)
+			(webserver, webserver_request, webserver_upload);
+
+		typedef void (lw_callback * hook_upload_chunk)
+			(webserver, webserver_request, webserver_upload, const char * buffer, size_t size);
+
+		typedef void (lw_callback * hook_upload_done)
+			(webserver, webserver_request, webserver_upload);
+
+		typedef void (lw_callback * hook_upload_post)
+			(webserver, webserver_request, webserver_upload uploads[], size_t num_uploads);
+
+		lw_import void on_get(hook_get);
+		lw_import void on_upload_start(hook_upload_start);
+		lw_import void on_upload_chunk(hook_upload_chunk);
+		lw_import void on_upload_done(hook_upload_done);
+		lw_import void on_upload_post(hook_upload_post);
+		lw_import void on_post(hook_post);
+		lw_import void on_head(hook_head);
+		lw_import void on_disconnect(hook_disconnect);
+		lw_import void on_error(hook_error);
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import webserver webserver_new(pump);
+	lw_import void webserver_delete(webserver);
+
+	struct _webserver_request : public _stream
+	{
+		lw_class_wraps(ws_req);
+		lw_import ~_webserver_request();
+
+		lw_import lacewing::address address();
+
+		lw_import bool secure();
+
+		lw_import const char * url();
+		lw_import const char * hostname();
+
+		lw_import void disconnect();
+
+		lw_import void redirect(const char * url);
+		lw_import void status(long code, const char * message);
+
+		lw_import void set_mimetype(const char * mimetype,
+			const char * charset = "UTF-8");
+
+		lw_import void guess_mimetype(const char * filename);
+
+		lw_import void finish();
+
+		lw_import long idle_timeout();
+		lw_import void idle_timeout(long sec);
+
+		lw_import lw_i64 last_modified();
+		lw_import void   last_modified(lw_i64 time);
+		lw_import void   set_unmodified();
+
+		lw_import void disable_cache();
+
+		lw_import void enable_download_resuming();
+
+
+		/** Headers **/
+
+		lw_import webserver_request_header header_first();
+
+		lw_import const char * header(const char * name);
+		lw_import void header(const char * name, const char * value);
+
+		lw_import void add_header(const char * name, const char * value);
+
+
+		/** Cookies **/
+
+		lw_import webserver_request_cookie cookie_first();
+
+		lw_import const char * cookie(const char * name);
+
+		lw_import void cookie
+			(const char * name, const char * value);
+
+		lw_import void cookie
+			(const char * name, const char * value, const char * attr);
+
+
+		/** Sessions **/
+
+		lw_import webserver_sessionitem session_first();
+
+		lw_import const char * session();
+		lw_import const char * session(const char * key);
+		lw_import void         session(const char * key, const char * value);
+
+		lw_import void  session_close();
+
+
+		/** GET/POST data **/
+
+		lw_import webserver_request_param GET();
+		lw_import webserver_request_param POST();
+
+		lw_import const char * GET(const char * name);
+		lw_import const char * POST(const char * name);
+
+		lw_import const char * body();
+	};
+
+	struct _webserver_request_header
+	{
+		lw_class_wraps(ws_req_hdr);
+
+		lw_import const char * name();
+		lw_import const char * value();
+
+		lw_import webserver_request_header next();
+	};
+
+	struct _webserver_request_cookie
+	{
+		lw_class_wraps(ws_req_cookie);
+
+		lw_import const char * name();
+		lw_import const char * value();
+
+		lw_import webserver_request_cookie next();
+	};
+
+	struct _webserver_sessionitem
+	{
+		lw_class_wraps(ws_sessionitem);
+
+		lw_import const char * name();
+		lw_import const char * value();
+
+		lw_import webserver_sessionitem next();
+	};
+
+	struct _webserver_request_param
+	{
+		lw_class_wraps(ws_req_param);
+
+		lw_import const char * name();
+		lw_import const char * value();
+		lw_import const char * content_type();
+
+		lw_import webserver_request_param next();
+	};
+
+	struct _webserver_upload
+	{
+		lw_class_wraps(ws_upload);
+
+		lw_import const char * form_element_name();
+		lw_import const char * filename();
+		lw_import void         set_autosave();
+		lw_import const char * autosave_filename();
+
+		lw_import const char * header(const char * name);
+
+		lw_import webserver_upload_header header_first();
+	};
+
+	struct _webserver_upload_header
+	{
+		lw_class_wraps(ws_upload_hdr);
+
+		lw_import const char * name();
+		lw_import const char * value();
+
+		lw_import webserver_upload_header next();
+	};
+
+
+	/** flashpolicy **/
+
+	typedef struct _flashpolicy * flashpolicy;
+
+	struct _flashpolicy
+	{
+		lw_class_wraps(flashpolicy);
+
+		lw_import void host(const char * filename);
+		lw_import void host(const char * filename, filter);
+
+		lw_import void unhost();
+
+		lw_import bool hosting();
+
+		typedef void (lw_callback * hook_error) (flashpolicy, error);
+		lw_import void on_error(hook_error);
+
+		lw_import void tag(void *);
+		lw_import void * tag();
+	};
+
+	lw_import flashpolicy flashpolicy_new(pump);
+	lw_import void flashpolicy_delete(flashpolicy);
+
+struct relayclient
 {
 public:
 
-    void * InternalTag, * Tag;
+	void * internaltag, * tag;
 
-    LacewingFunction  RelayClient (Pump &);
-    LacewingFunction ~RelayClient ();
+	relayclient(pump);
+	~relayclient();
 
-    LacewingFunction void Connect    (const char * Host, int Port = 6121);
-    LacewingFunction void Connect    (Lacewing::Address &);
+	void connect    (const char * host, int port = 6121);
+	void connect    (lacewing::address);
 
-    LacewingFunction bool Connecting ();
-    LacewingFunction bool Connected  ();
+	bool connecting ();
+	bool connected  ();
 
-    LacewingFunction void Disconnect ();
+	void disconnect ();
 
-    LacewingFunction Lacewing::Address &ServerAddress();
+	lacewing::address serveraddress();
 
-    LacewingFunction int ID ();
+	int id () const;
 
-    LacewingFunction void Name (const char * Name);
-    LacewingFunction const char * Name ();
+	void name (const char * name);
+	const char * name () const;
 
-    LacewingFunction const char * WelcomeMessage ();
+	const char * welcomemessage () const;
 
-    LacewingFunction void ListChannels();
+	void listchannels ();
 
-    struct ChannelListing
+	struct channellisting
+	{
+		void * internaltag, * tag;
+
+		short peercount;
+		const char * name;
+		const channellisting * next() const;
+	};
+
+	int channellistingcount () const;
+	const channellisting * firstchannellisting() const;
+
+	void join(const char * channel, bool hidden = false, bool autoclose = false);
+
+	void sendserver(int subchannel, const char * data, int size = -1, int type = 0) const;
+	void blastserver(int subchannel, const char * data, int size = -1, int type = 0) const;
+
+    struct channel
     {
-        void * InternalTag, * Tag;
+		bool isclosed;  // is channel no longer valid for writing?
+		void * internaltag, * tag;
 
-        short PeerCount;
-        const char * Name;
+		const char * name() const;
+		bool ischannelmaster() const;
 
-        LacewingFunction ChannelListing * Next ();
+		void send(int subchannel, const char * data, int size = -1, int type = 0) const;
+		void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
+
+		struct peer
+		{
+			bool isclosed; // is peer no longer valid for writing?
+			void * internaltag, * tag;
+
+			unsigned short  id() const;
+			bool ischannelmaster() const;
+
+			void send(int subchannel, const char * data, int size = -1, int type = 0) const;
+			void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
+
+			const char * name() const;
+			relayclient::channel::peer * next() const;
+		};
+
+		int peercount() const;
+		relayclient::channel::peer * firstpeer() const;
+		relayclient::channel * next() const;
+
+		void leave() const;
     };
 
-    LacewingFunction int ChannelListingCount ();
-    LacewingFunction ChannelListing * FirstChannelListing ();
+	int channelcount() const;
+	relayclient::channel * firstchannel() const;
 
-    LacewingFunction void Join(const char * Channel, bool Hidden = false, bool AutoClose = false);
-
-    LacewingFunction void SendServer(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-    LacewingFunction void BlastServer(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-
-    struct Channel
-    {
-		bool IsClosed;  // Is channel no longer valid for writing?
-        void * InternalTag, * Tag;
-
-        LacewingFunction const char * Name();
-        LacewingFunction bool IsChannelMaster();
-
-        LacewingFunction void Send(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-        LacewingFunction void Blast(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-
-        struct Peer
-        {
-			bool IsClosed; // Is peer no longer valid for writing?
-            void * InternalTag, * Tag;
-
-            int  ID();
-            bool IsChannelMaster();
-
-            LacewingFunction void Send(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-            LacewingFunction void Blast(int Subchannel, const char * Data, int Size = -1, int Type = 0);
-
-            LacewingFunction const char * Name();
-
-            LacewingFunction Peer * Next ();
-        };
-
-        LacewingFunction int PeerCount();
-        LacewingFunction Peer * FirstPeer ();
-
-        LacewingFunction void Leave();
-
-        LacewingFunction Channel * Next ();
-    };
-
-    LacewingFunction int ChannelCount();
-    LacewingFunction Channel * FirstChannel ();
-
-    typedef void (LacewingHandler * HandlerConnect)                  (Lacewing::RelayClient &Client);
-    typedef void (LacewingHandler * HandlerConnectionDenied)         (Lacewing::RelayClient &Client, const char * DenyReason);
-    typedef void (LacewingHandler * HandlerDisconnect)               (Lacewing::RelayClient &Client);
+    typedef void (* handler_connect)                  (lacewing::relayclient &client);
+    typedef void (* handler_connectiondenied)         (lacewing::relayclient &client, const char * denyreason);
+    typedef void (* handler_disconnect)               (lacewing::relayclient &client);
     
-    typedef void (LacewingHandler * HandlerServerMessage)
-            (Lacewing::RelayClient &Client, bool Blasted, int Subchannel, char * Data, int Size, int Variant);
+	typedef void (* handler_message_server)
+		(lacewing::relayclient &client, bool blasted, int subchannel, const char * data, size_t size, int variant);
    
-    typedef void (LacewingHandler * HandlerChannelMessage)
-        (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
-            bool Blasted, int Subchannel, char * Data, int Size, int Variant);
+    typedef void (* handler_message_channel)
+        (lacewing::relayclient &client, lacewing::relayclient::channel &channel,
+			lacewing::relayclient::channel::peer &peer,
+			bool blasted, int subchannel, const char * data, size_t size, int variant);
   
-    typedef void (LacewingHandler * HandlerPeerMessage)
-        (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
-            bool Blasted, int Subchannel, char * Data, int Size, int Variant);
+    typedef void (* handler_message_peer)
+        (lacewing::relayclient &client, lacewing::relayclient::channel &channel,
+			lacewing::relayclient::channel::peer &peer,
+			bool blasted, int subchannel, const char * data, size_t size, int variant);
 
-    typedef void (LacewingHandler * HandlerServerChannelMessage)
-        (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, bool Blasted,
-            int Subchannel, char * Data, int Size, int Variant);
+    typedef void (* handler_message_serverchannel)
+        (lacewing::relayclient &client, lacewing::relayclient::channel &channel, bool blasted,
+			int subchannel, const char * data, size_t size, int variant);
 
-    typedef void (LacewingHandler * HandlerError)                    (Lacewing::RelayClient &Client, Lacewing::Error &);
-    typedef void (LacewingHandler * HandlerJoin)                     (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target);
-    typedef void (LacewingHandler * HandlerJoinDenied)               (Lacewing::RelayClient &Client, const char * ChannelName, const char * DenyReason);
-    typedef void (LacewingHandler * HandlerLeave)                    (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target);
-    typedef void (LacewingHandler * HandlerLeaveDenied)              (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Target,const char * DenyReason);
-    typedef void (LacewingHandler * HandlerNameSet)                  (Lacewing::RelayClient &Client);
-    typedef void (LacewingHandler * HandlerNameChanged)              (Lacewing::RelayClient &Client, const char * OldName);
-    typedef void (LacewingHandler * HandlerNameDenied)               (Lacewing::RelayClient &Client, const char * Name, const char * DenyReason);
-    typedef void (LacewingHandler * HandlerPeerConnect)              (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel,Lacewing::RelayClient::Channel::Peer &Peer);
-    typedef void (LacewingHandler * HandlerPeerDisconnect)           (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel,Lacewing::RelayClient::Channel::Peer &Peer);
-    typedef void (LacewingHandler * HandlerPeerChangeName)           (Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel,Lacewing::RelayClient::Channel::Peer &Peer,const char * OldName);
-    typedef void (LacewingHandler * HandlerChannelListReceived)      (Lacewing::RelayClient &Client);
+    typedef void (* handler_error)                    (lacewing::relayclient &client, lacewing::error);
+    typedef void (* handler_channel_join)             (lacewing::relayclient &client, lacewing::relayclient::channel &target);
+	typedef void (* handler_channel_joindenied)       (lacewing::relayclient &client, const char * channelname, const char * denyreason);
+	typedef void (* handler_channel_leave)            (lacewing::relayclient &client, lacewing::relayclient::channel &target);
+	typedef void (* handler_channel_leavedenied)      (lacewing::relayclient &client, lacewing::relayclient::channel &target, const char * denyreason);
+    typedef void (* handler_name_set)                 (lacewing::relayclient &client);
+    typedef void (* handler_name_changed)             (lacewing::relayclient &client, const char * oldname);
+    typedef void (* handler_name_denied)              (lacewing::relayclient &client, const char * name, const char * denyreason);
+    typedef void (* handler_peer_connect)             (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer);
+    typedef void (* handler_peer_disconnect)          (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer);
+    typedef void (* handler_peer_changename)          (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer, const char * oldname);
+    typedef void (* handler_channellistreceived)      (lacewing::relayclient &client);
 
-    LacewingFunction void onConnect               (HandlerConnect);
-    LacewingFunction void onConnectionDenied      (HandlerConnectionDenied);
-    LacewingFunction void onDisconnect            (HandlerDisconnect);
-    LacewingFunction void onServerMessage         (HandlerServerMessage);
-    LacewingFunction void onChannelMessage        (HandlerChannelMessage);
-    LacewingFunction void onPeerMessage           (HandlerPeerMessage);
-    LacewingFunction void onServerChannelMessage  (HandlerServerChannelMessage);
-    LacewingFunction void onError                 (HandlerError);
-    LacewingFunction void onJoin                  (HandlerJoin);
-    LacewingFunction void onJoinDenied            (HandlerJoinDenied);
-    LacewingFunction void onLeave                 (HandlerLeave);
-    LacewingFunction void onLeaveDenied           (HandlerLeaveDenied);    
-    LacewingFunction void onNameSet               (HandlerNameSet);
-    LacewingFunction void onNameChanged           (HandlerNameChanged);
-    LacewingFunction void onNameDenied            (HandlerNameDenied);
-    LacewingFunction void onPeerConnect           (HandlerPeerConnect);
-    LacewingFunction void onPeerDisconnect        (HandlerPeerDisconnect);
-    LacewingFunction void onPeerChangeName        (HandlerPeerChangeName);
-    LacewingFunction void onChannelListReceived   (HandlerChannelListReceived);
+     void onconnect               (handler_connect);
+     void onconnectiondenied      (handler_connectiondenied);
+     void ondisconnect            (handler_disconnect);
+	 void onmessage_server		  (handler_message_server);
+     void onmessage_channel       (handler_message_channel);
+	 void onmessage_peer		  (handler_message_peer);
+	 void onmessage_serverchannel (handler_message_serverchannel);
+     void onerror                 (handler_error);
+     void onchannel_join          (handler_channel_join);
+	 void onchannel_joindenied	  (handler_channel_joindenied);
+	 void onchannel_leave		  (handler_channel_leave);
+	 void onchannel_leavedenied	  (handler_channel_leavedenied);
+     void onname_set              (handler_name_set);
+     void onname_changed          (handler_name_changed);
+     void onname_denied           (handler_name_denied);
+	 void onpeer_connect		  (handler_peer_connect);
+     void onpeer_disconnect       (handler_peer_disconnect);
+     void onpeer_changename       (handler_peer_changename);
+     void onchannellistreceived   (handler_channellistreceived);
 
 private:
 
-    Lacewing::Client Socket;
-    Lacewing::UDP    UDP;
+    lacewing::client socket;
+    lacewing::udp    udp;
 };
 
-struct RelayServer
+struct relayserver
 {
-    void * InternalTag, * Tag;
+    void * internaltag, * tag;
 
-    Lacewing::Server Socket;
-    Lacewing::UDP UDP;
+    lacewing::server socket;
+    lacewing::udp udp;
 
-    LacewingFunction  RelayServer(Pump &);
-    LacewingFunction ~RelayServer();
+    relayserver(pump &);
+    ~relayserver();
 
-    LacewingFunction void Host (int Port = 6121);
-    LacewingFunction void Host (Lacewing::Filter &Filter);
-    LacewingFunction void Unhost ();
+    void host (int port = 6121);
+    void host (lacewing::filter &filter);
+    void unhost ();
 
-    LacewingFunction bool Hosting ();
-    LacewingFunction int Port ();
+    bool hosting ();
+    int port ();
 
-    LacewingFunction void SetWelcomeMessage(const char * Message);
-    LacewingFunction void SetChannelListing(bool Enabled);
+    void setchannellisting(bool enabled);
+	void setwelcomemessage(const char * message);
+	const char * getwelcomemessage();
 
-    struct Client;
+    struct client;
 
-    struct Channel
+    struct channel
     {
-        void * InternalTag, * Tag;
+        void * internaltag, * tag;
+		bool isclosed;
 
-        LacewingFunction int ID();
+        int id ();
 
-        LacewingFunction Client * ChannelMaster();
+        client * channelmaster();
 
-        LacewingFunction const char * Name ();
-        LacewingFunction void Name (const char *);
+        const char * name ();
+        void name (const char *);
 
-        LacewingFunction bool Hidden();
-        LacewingFunction bool AutoCloseEnabled();
-        LacewingFunction void Close();
+        bool hidden();
+        bool autocloseenabled();
+        void close();
         
-        LacewingFunction void Send (int Subchannel, const char * Data, int Size = -1, int Variant = 0);
-        LacewingFunction void Blast (int Subchannel, const char * Data, int Size = -1, int Variant = 0);
+        void send (int subchannel, const char * data, int size = -1, int variant = 0);
+        void blast (int subchannel, const char * data, int size = -1, int variant = 0);
 
-        LacewingFunction int ClientCount ();
-
-        struct ClientIterator
-        {
-            void * InternalTag;
-        
-            LacewingFunction ClientIterator (Channel &);
-            LacewingFunction Client * Next ();
-        };
-        
-        LacewingFunction Channel * Next ();
+        int clientcount ();
+		client * firstclient();
     };
 
-    LacewingFunction int ChannelCount();
-    LacewingFunction Channel * FirstChannel ();
+    int channelcount();
+	channel * firstchannel();
     
-    struct Client
+    struct client
     {
-        void * InternalTag, * Tag;
+        void * internaltag, * tag;
+		bool isclosed;
 
-        LacewingFunction int ID();
+        int id();
 
-        LacewingFunction Lacewing::Address &GetAddress();
+        lacewing::address &getaddress();
 
-        LacewingFunction void Disconnect();
+        void disconnect();
 
-        LacewingFunction void Send(int Subchannel, const char * Data, int Size = -1, int Variant = 0);
-        LacewingFunction void Blast(int Subchannel, const char * Data, int Size = -1, int Variant = 0);
+        void send(int subchannel, const char * data, int size = -1, int variant = 0);
+        void blast(int subchannel, const char * data, int size = -1, int variant = 0);
 
-        LacewingFunction const char * Name ();
-        LacewingFunction void Name (const char *);
+        const char * name ();
+        void name (const char *);
         
-        LacewingFunction int ChannelCount();
+        int channelcount();
         
-        struct ChannelIterator
+        struct channeliterator
         {
-            void * InternalTag;
+            void * internaltag;
 
-            LacewingFunction ChannelIterator (Client &);
-            LacewingFunction Channel * Next ();
+            channeliterator (client &);
+            channel * next ();
         };
         
-        LacewingFunction Client * Next ();
+        client * next ();
     };
 
-    LacewingFunction int ClientCount ();
-    LacewingFunction Client * FirstClient ();
+    int clientcount ();
+    client * firstclient ();
 
-    typedef bool (LacewingHandler * HandlerConnect)     (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client);
-    typedef void (LacewingHandler * HandlerDisconnect)  (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client);
-    typedef void (LacewingHandler * HandlerError)       (Lacewing::RelayServer &Server, Lacewing::Error &);
+    typedef void (* handler_connect)     (lacewing::relayserver &server, lacewing::relayserver::client &client);
+	typedef void (* handler_disconnect)  (lacewing::relayserver &server, lacewing::relayserver::client &client);
+	typedef void (* handler_error)       (lacewing::relayserver &server, lacewing::error);
    
-    typedef void (LacewingHandler * HandlerServerMessage)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, bool Blasted, int Subchannel,
-            char * Data, int Size, int Variant);
+	typedef void (* handler_message_server)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, bool blasted, int subchannel,
+            char * data, int size, int variant);
     
-    typedef bool (LacewingHandler * HandlerChannelMessage)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel,
-            bool Blasted, int Subchannel, char * Data, int Size, int Variant);
+	typedef void (* handler_message_channel)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
+            bool blasted, int subchannel, char * data, int size, int variant);
     
-    typedef bool (LacewingHandler * HandlerPeerMessage)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel,
-            Lacewing::RelayServer::Client &TargetClient,bool Blasted,
-            int Subchannel, char * Packet, int Size, int Variant);
+	typedef void (* handler_message_peer)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
+            lacewing::relayserver::client &targetclient,bool blasted,
+            int subchannel, char * packet, int size, int variant);
 
-    typedef bool (LacewingHandler * HandlerJoinChannel)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel);
+	typedef void (* handler_channel_join)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
 
-    typedef bool (LacewingHandler * HandlerLeaveChannel)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel);
+	typedef void (* handler_channel_leave)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
 
-    typedef bool (LacewingHandler * HandlerSetName)
-        (Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, const char * Name);
+	typedef void (* handler_nameset)
+        (lacewing::relayserver &server, lacewing::relayserver::client &client, const char * name);
 
-    LacewingFunction void onConnect        (HandlerConnect);
-    LacewingFunction void onDisconnect     (HandlerDisconnect);
-    LacewingFunction void onError          (HandlerError);
-    LacewingFunction void onServerMessage  (HandlerServerMessage);
-    LacewingFunction void onChannelMessage (HandlerChannelMessage);
-    LacewingFunction void onPeerMessage    (HandlerPeerMessage);
-    LacewingFunction void onJoinChannel    (HandlerJoinChannel);
-    LacewingFunction void onLeaveChannel   (HandlerLeaveChannel);
-    LacewingFunction void onSetName        (HandlerSetName);
-};
-
-struct FlashPolicy
-{
-    void * InternalTag, * Tag;
-
-    LacewingFunction  FlashPolicy (Pump &);
-    LacewingFunction ~FlashPolicy ();
-
-    LacewingFunction void Host (const char * Filename, int Port = 843);
-    LacewingFunction void Host (const char * Filename, Lacewing::Filter &Filter);
-    LacewingFunction void Unhost ();
-
-    LacewingFunction bool Hosting ();
-
-    typedef void (LacewingHandler * HandlerError)
-        (Lacewing::FlashPolicy &FlashPolicy, Lacewing::Error &);
-
-    LacewingFunction void onError (HandlerError);
+    void onconnect        (handler_connect);
+    void ondisconnect     (handler_disconnect);
+    void onerror          (handler_error);
+    void onservermessage  (handler_message_server);
+    void onchannelmessage (handler_message_channel);
+    void onpeermessage    (handler_message_peer);
+    void onjoinchannel    (handler_channel_join);
+    void onleavechannel   (handler_channel_leave);
+    void onsetname        (handler_nameset);
+	void approveconnection(lacewing::relayserver::client &client);
 };
 
 }
+#endif /* defined (__cplusplus) */
+#endif /* _lacewing_h */
 
-#endif /* __cplusplus */
-#endif /* LacewingIncluded */
 

@@ -1,0 +1,83 @@
+{
+    "About": {
+        "Name": "Array Format",
+        "Author": "Darkwire Software",
+        "Copyright": "Copyright © 2015 Darkwire Software",
+        "Comment": "An Fusion array converter.",
+        "URL": "https://www.dark-wire.com",
+        "Help": "",
+        "Identifier": "ARCR"
+    },
+    "ActionMenu": [
+        [0, "Convert File to MFU" ],
+		[1, "Convert File to CNC" ]
+    ],
+    "ConditionMenu": [
+		[0, "On Error"],
+		[1, "On Successful Conversion"]
+    ],
+    "ExpressionMenu": [
+        [
+            0,
+            "Get array format"
+        ],
+		[
+            1,
+            "Get last converted file"
+        ],
+		[
+            2,
+            "Get last error"
+        ]
+    ],
+    "Actions": [
+        {
+            "Title": "Convert file %0 to MFU format",
+            "Parameters": [
+                [
+                    "String",
+                    "File path to convert"
+                ]
+            ]
+        },
+		{
+            "Title": "Convert file %0 to CNC format",
+            "Parameters": [
+                [
+                    "String",
+                    "File path to convert"
+                ]
+            ]
+        },
+    ],
+    "Conditions": [
+        {
+            "Title": "%o : Error occurred",
+            "Triggered": true
+        },
+        {
+            "Title": "%o : Conversion succeeded",
+            "Triggered": true
+        }
+    ],
+    "Expressions": [
+        {
+            "Title": "GetFileArrayFormat$(",
+            "Returns": "Text",
+			"Parameters": [
+                [
+                    "Text",
+                    "<File path>"
+                ]
+            ]
+        },
+        {
+            "Title": "GetLastConvertedFilePath$(",
+            "Returns": "Text"
+        },
+        {
+            "Title": "GetLastError$(",
+            "Returns": "Text"
+        }
+    ]
+}
