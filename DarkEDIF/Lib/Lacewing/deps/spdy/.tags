@@ -1,0 +1,140 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CREDENTIAL	src/spdy_control.h	/^  CREDENTIAL = 10$/;"	e	enum:spdy_control_frame
+FLAG_FIN	src/spdy_control.h	35;"	d
+FLAG_SETTINGS_CLEAR_SETTINGS	src/spdy_settings.c	34;"	d	file:
+FLAG_SETTINGS_PERSISTED	src/spdy_settings.c	37;"	d	file:
+FLAG_SETTINGS_PERSIST_VALUE	src/spdy_settings.c	36;"	d	file:
+FLAG_UNIDIRECTIONAL	src/spdy_control.h	36;"	d
+GOAWAY	src/spdy_control.h	/^  NOOP = 5, PING = 6, GOAWAY = 7, HEADERS = 8, WINDOW_UPDATE = 9,$/;"	e	enum:spdy_control_frame
+HEADERS	src/spdy_control.h	/^  NOOP = 5, PING = 6, GOAWAY = 7, HEADERS = 8, WINDOW_UPDATE = 9,$/;"	e	enum:spdy_control_frame
+NOOP	src/spdy_control.h	/^  NOOP = 5, PING = 6, GOAWAY = 7, HEADERS = 8, WINDOW_UPDATE = 9,$/;"	e	enum:spdy_control_frame
+PING	src/spdy_control.h	/^  NOOP = 5, PING = 6, GOAWAY = 7, HEADERS = 8, WINDOW_UPDATE = 9,$/;"	e	enum:spdy_control_frame
+RST_STREAM	src/spdy_control.h	/^  SYN_STREAM = 1, SYN_REPLY = 2, RST_STREAM = 3, SETTINGS = 4,$/;"	e	enum:spdy_control_frame
+SETTINGS	src/spdy_control.h	/^  SYN_STREAM = 1, SYN_REPLY = 2, RST_STREAM = 3, SETTINGS = 4,$/;"	e	enum:spdy_control_frame
+SPDY_BUFFER_H	src/spdy_bytes.h	31;"	d
+SPDY_CONN_H	src/spdy_ctx.h	31;"	d
+SPDY_CONTROL_FRAME_H	src/spdy_control.h	31;"	d
+SPDY_CTRL_HEADER_SIZE	src/spdy_control.h	33;"	d
+SPDY_DATA_FRAME	src/spdy_ctx.h	/^   SPDY_DATA_FRAME       = 2,$/;"	v
+SPDY_GOT_HEADER	src/spdy_ctx.h	/^   SPDY_GOT_HEADER       = 1,$/;"	v
+SPDY_GOT_VERSION	src/spdy_ctx.h	/^   SPDY_GOT_VERSION      = 4,$/;"	v
+SPDY_INT24_MAX	src/spdy_bytes.h	/^const size_t SPDY_INT24_MAX = 0xFFFFFF;$/;"	v
+SPDY_NV_BLOCK_H	src/spdy_nv_block.h	31;"	d
+SPDY_SESSION_CLOSED	src/spdy_ctx.h	/^   SPDY_SESSION_CLOSED   = 8;$/;"	v
+SPDY_STREAM_CLOSED_HERE	src/spdy_stream.h	/^   SPDY_STREAM_CLOSED_HERE = 4,    \/* half-closed on our end? *\/$/;"	v
+SPDY_STREAM_CLOSED_REMOTE	src/spdy_stream.h	/^   SPDY_STREAM_CLOSED_REMOTE = 8,  \/* half-closed on the remote end? *\/$/;"	v
+SPDY_STREAM_GONE	src/spdy_stream.h	/^   SPDY_STREAM_GONE = 16;          \/* closed but not yet freed *\/$/;"	v
+SPDY_STREAM_GOT_ACK	src/spdy_stream.h	/^   SPDY_STREAM_GOT_ACK = 2,        \/* received a SYN_REPLY? *\/$/;"	v
+SPDY_STREAM_H	src/spdy_stream.h	31;"	d
+SPDY_STREAM_SENT_ACK	src/spdy_stream.h	/^   SPDY_STREAM_SENT_ACK = 1,       \/* sent a SYN_REPLY? *\/$/;"	v
+SPDY_ZLIB_H	src/spdy_zlib.h	31;"	d
+SYN_REPLY	src/spdy_control.h	/^  SYN_STREAM = 1, SYN_REPLY = 2, RST_STREAM = 3, SETTINGS = 4,$/;"	e	enum:spdy_control_frame
+SYN_STREAM	src/spdy_control.h	/^  SYN_STREAM = 1, SYN_REPLY = 2, RST_STREAM = 3, SETTINGS = 4,$/;"	e	enum:spdy_control_frame
+WINDOW_UPDATE	src/spdy_control.h	/^  NOOP = 5, PING = 6, GOAWAY = 7, HEADERS = 8, WINDOW_UPDATE = 9,$/;"	e	enum:spdy_control_frame
+_spdy_buffer	src/spdy_bytes.h	/^typedef struct _spdy_buffer$/;"	s
+_spdy_ctx	src/spdy_ctx.h	/^struct _spdy_ctx$/;"	s
+_spdy_stream	src/spdy_stream.h	/^struct _spdy_stream$/;"	s
+assoc	src/spdy_stream.h	/^   struct _spdy_stream * assoc;$/;"	m	struct:_spdy_stream	typeref:struct:_spdy_stream::_spdy_stream
+config	src/spdy_ctx.h	/^   const spdy_config * config;$/;"	m	struct:_spdy_ctx
+control	src/spdy_ctx.h	/^      } control;$/;"	m	union:_spdy_ctx::__anon1	typeref:struct:_spdy_ctx::__anon1::__anon2
+cred_slot	src/spdy_stream.h	/^   char cred_slot;$/;"	m	struct:_spdy_stream
+ctx	src/spdy_stream.h	/^   spdy_ctx * ctx;$/;"	m	struct:_spdy_stream
+data	src/spdy_ctx.h	/^      } data;$/;"	m	union:_spdy_ctx::__anon1	typeref:struct:_spdy_ctx::__anon1::__anon3
+dict_draft2	src/spdy_zlib.c	/^const static unsigned char dict_draft2 [] =$/;"	v	file:
+dict_draft3	src/spdy_zlib.c	/^const static unsigned char dict_draft3 [] =$/;"	v	file:
+error_threshold	src/spdy_ctx.h	/^   int error_threshold;$/;"	m	struct:_spdy_ctx
+flags	src/spdy_ctx.h	/^   char flags;$/;"	m	struct:_spdy_ctx
+flags	src/spdy_stream.h	/^   char flags;$/;"	m	struct:_spdy_stream
+frame	src/spdy_ctx.h	/^   } frame;$/;"	m	struct:_spdy_ctx	typeref:union:_spdy_ctx::__anon1
+frame_flags	src/spdy_ctx.h	/^   int8_t frame_flags;$/;"	m	struct:_spdy_ctx
+frame_length	src/spdy_ctx.h	/^   size_t frame_length;$/;"	m	struct:_spdy_ctx
+id	src/spdy_stream.h	/^   int32_t id;$/;"	m	struct:_spdy_stream
+inflate_all	src/spdy_nv_block.c	/^static int inflate_all (z_stream * stream, Bytef * dest, size_t size)$/;"	f	file:
+int16_t	src/spdy_ctx.h	/^    typedef __int16 int16_t;$/;"	t
+int32_t	src/spdy_ctx.h	/^    typedef __int32 int32_t;$/;"	t
+int8_t	src/spdy_ctx.h	/^    typedef __int8 int8_t;$/;"	t
+last_remote_stream_id	src/spdy_ctx.h	/^   int32_t last_remote_stream_id;$/;"	m	struct:_spdy_ctx
+next	src/spdy_stream.h	/^   struct _spdy_stream * next;$/;"	m	struct:_spdy_stream	typeref:struct:_spdy_stream::_spdy_stream
+next_stream_id	src/spdy_ctx.h	/^   int32_t next_stream_id;$/;"	m	struct:_spdy_ctx
+priority	src/spdy_stream.h	/^   char priority;$/;"	m	struct:_spdy_stream
+ptr	src/spdy_bytes.h	/^   const char * ptr;$/;"	m	struct:_spdy_buffer
+ref_count	src/spdy_stream.h	/^   int ref_count;$/;"	m	struct:_spdy_stream
+size	src/spdy_bytes.h	/^   size_t size;$/;"	m	struct:_spdy_buffer
+spdy_active_version	src/spdy_ctx.c	/^int spdy_active_version (spdy_ctx * ctx)$/;"	f
+spdy_buffer	src/spdy_bytes.h	/^} spdy_buffer;$/;"	t	typeref:struct:_spdy_buffer
+spdy_build_control_header	src/spdy_control.c	/^void spdy_build_control_header$/;"	f
+spdy_control_frame	src/spdy_control.h	/^enum spdy_control_frame$/;"	g
+spdy_ctx_delete	src/spdy_ctx.c	/^void spdy_ctx_delete (spdy_ctx * ctx)$/;"	f
+spdy_ctx_new	src/spdy_ctx.c	/^spdy_ctx * spdy_ctx_new (const spdy_config * config, int num_persisted_settings,$/;"	f
+spdy_data	src/spdy_ctx.c	/^int spdy_data (spdy_ctx * ctx, char * buffer, size_t * bytes)$/;"	f
+spdy_emit_goaway	src/spdy_goaway.c	/^void spdy_emit_goaway$/;"	f
+spdy_emit_headers	src/spdy_headers.c	/^int spdy_emit_headers (spdy_ctx * ctx, int8_t flags, int32_t stream_id,$/;"	f
+spdy_emit_headers_draft2	src/spdy_headers.c	/^static int spdy_emit_headers_draft2 (spdy_ctx * ctx, int8_t flags,$/;"	f	file:
+spdy_emit_headers_draft3	src/spdy_headers.c	/^static int spdy_emit_headers_draft3 (spdy_ctx * ctx, int8_t flags,$/;"	f	file:
+spdy_emit_int15	src/spdy_bytes.c	/^void spdy_emit_int15 (spdy_ctx * ctx, int16_t value)$/;"	f
+spdy_emit_int16	src/spdy_bytes.c	/^void spdy_emit_int16 (spdy_ctx * ctx, int16_t value)$/;"	f
+spdy_emit_int24	src/spdy_bytes.c	/^void spdy_emit_int24 (spdy_ctx * ctx, int32_t value)$/;"	f
+spdy_emit_int24_le	src/spdy_bytes.c	/^void spdy_emit_int24_le (spdy_ctx * ctx, int32_t value)$/;"	f
+spdy_emit_int31	src/spdy_bytes.c	/^void spdy_emit_int31 (spdy_ctx * ctx, int32_t value)$/;"	f
+spdy_emit_int32	src/spdy_bytes.c	/^void spdy_emit_int32 (spdy_ctx * ctx, int32_t value)$/;"	f
+spdy_emit_ping	src/spdy_ping.c	/^void spdy_emit_ping (spdy_ctx * ctx, int8_t flags, int32_t id)$/;"	f
+spdy_emit_rst_stream	src/spdy_rst_stream.c	/^void spdy_emit_rst_stream (spdy_ctx * ctx, int8_t flags,$/;"	f
+spdy_emit_settings	src/spdy_settings.c	/^void spdy_emit_settings (spdy_ctx * ctx, int8_t flags, int returning_persisted,$/;"	f
+spdy_emit_syn_reply	src/spdy_syn_reply.c	/^int spdy_emit_syn_reply (spdy_ctx * ctx, int8_t flags, int32_t stream_id,$/;"	f
+spdy_emit_syn_reply_draft2	src/spdy_syn_reply.c	/^static int spdy_emit_syn_reply_draft2 (spdy_ctx * ctx, int8_t flags,$/;"	f	file:
+spdy_emit_syn_reply_draft3	src/spdy_syn_reply.c	/^static int spdy_emit_syn_reply_draft3 (spdy_ctx * ctx, int8_t flags,$/;"	f	file:
+spdy_emit_syn_stream	src/spdy_syn_stream.c	/^int spdy_emit_syn_stream (spdy_ctx * ctx, int8_t flags, int32_t stream_id,$/;"	f
+spdy_error_string	src/spdy_strings.c	/^const char * spdy_error_string (int code)$/;"	f
+spdy_find_stream	src/spdy_stream.c	/^spdy_stream * spdy_find_stream (spdy_ctx * ctx, int32_t stream_id)$/;"	f
+spdy_goaway_status_string	src/spdy_strings.c	/^const char * spdy_goaway_status_string (int status_code)$/;"	f
+spdy_link_stream	src/spdy_stream.c	/^void spdy_link_stream (spdy_ctx * ctx, spdy_stream * stream)$/;"	f
+spdy_nv_free	src/spdy_nv_block.c	/^void spdy_nv_free (size_t count, spdy_nv_pair * pairs)$/;"	f
+spdy_pack_nv_block	src/spdy_nv_block.c	/^int spdy_pack_nv_block (spdy_ctx * ctx, char ** buffer, size_t * deflate_size,$/;"	f
+spdy_proc_credential	src/spdy_credential.c	/^int spdy_proc_credential (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_data	src/spdy_ctx.c	/^static int spdy_proc_data (spdy_ctx * ctx, spdy_buffer * buffer)$/;"	f	file:
+spdy_proc_goaway	src/spdy_goaway.c	/^int spdy_proc_goaway (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_headers	src/spdy_headers.c	/^int spdy_proc_headers (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_ping	src/spdy_ping.c	/^int spdy_proc_ping (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_rst_stream	src/spdy_rst_stream.c	/^int spdy_proc_rst_stream (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_settings	src/spdy_settings.c	/^int spdy_proc_settings (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_syn_reply	src/spdy_syn_reply.c	/^int spdy_proc_syn_reply (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_proc_syn_stream	src/spdy_syn_stream.c	/^int spdy_proc_syn_stream (spdy_ctx * ctx, int8_t flags, spdy_buffer * buffer)$/;"	f
+spdy_read_int15	src/spdy_bytes.c	/^int16_t spdy_read_int15 (spdy_buffer * buffer)$/;"	f
+spdy_read_int16	src/spdy_bytes.c	/^int16_t spdy_read_int16 (spdy_buffer * buffer)$/;"	f
+spdy_read_int24	src/spdy_bytes.c	/^int32_t spdy_read_int24 (spdy_buffer * buffer)$/;"	f
+spdy_read_int24_le	src/spdy_bytes.c	/^int32_t spdy_read_int24_le (spdy_buffer * buffer)$/;"	f
+spdy_read_int31	src/spdy_bytes.c	/^int32_t spdy_read_int31 (spdy_buffer * buffer)$/;"	f
+spdy_read_int32	src/spdy_bytes.c	/^int32_t spdy_read_int32 (spdy_buffer * buffer)$/;"	f
+spdy_read_int8	src/spdy_bytes.c	/^int8_t spdy_read_int8 (spdy_buffer * buffer)$/;"	f
+spdy_read_nv_block	src/spdy_nv_block.c	/^int spdy_read_nv_block (spdy_ctx * ctx, spdy_buffer * buffer,$/;"	f
+spdy_set_version	src/spdy_ctx.c	/^void spdy_set_version (spdy_ctx * ctx, int version)$/;"	f
+spdy_soft_error	src/spdy_ctx.c	/^int spdy_soft_error (spdy_ctx * ctx)$/;"	f
+spdy_status_string	src/spdy_strings.c	/^const char * spdy_status_string (int status_code)$/;"	f
+spdy_stream_close	src/spdy_stream.c	/^void spdy_stream_close (spdy_stream * stream, int status_code)$/;"	f
+spdy_stream_delete	src/spdy_stream.c	/^void spdy_stream_delete (spdy_ctx * ctx, spdy_stream * stream)$/;"	f
+spdy_stream_is_ours	src/spdy_stream.c	/^spdy_bool spdy_stream_is_ours (spdy_stream * stream)$/;"	f
+spdy_stream_open	src/spdy_stream.c	/^int spdy_stream_open (spdy_ctx * ctx, spdy_stream ** stream_out,$/;"	f
+spdy_stream_open_here	src/spdy_stream.c	/^spdy_bool spdy_stream_open_here (spdy_stream * stream)$/;"	f
+spdy_stream_open_remote	src/spdy_stream.c	/^spdy_bool spdy_stream_open_remote (spdy_stream * stream)$/;"	f
+spdy_stream_write_data	src/spdy_stream.c	/^void spdy_stream_write_data$/;"	f
+spdy_stream_write_headers	src/spdy_stream.c	/^int spdy_stream_write_headers (spdy_stream * stream, size_t num_headers,$/;"	f
+spdy_update_settings	src/spdy_settings.c	/^void spdy_update_settings (spdy_ctx * ctx, int should_clear, int num_changed,$/;"	f
+spdy_write_int15	src/spdy_bytes.c	/^void spdy_write_int15 (char * ptr, int16_t value)$/;"	f
+spdy_write_int16	src/spdy_bytes.c	/^void spdy_write_int16 (char * ptr, int16_t value)$/;"	f
+spdy_write_int24	src/spdy_bytes.c	/^void spdy_write_int24 (char * ptr, int32_t value)$/;"	f
+spdy_write_int24_le	src/spdy_bytes.c	/^void spdy_write_int24_le (char * ptr, int32_t value)$/;"	f
+spdy_write_int31	src/spdy_bytes.c	/^void spdy_write_int31 (char * ptr, int32_t value)$/;"	f
+spdy_write_int32	src/spdy_bytes.c	/^void spdy_write_int32 (char * ptr, int32_t value)$/;"	f
+spdy_zlib_init_deflate	src/spdy_zlib.c	/^int spdy_zlib_init_deflate (spdy_ctx * ctx, z_stream * stream)$/;"	f
+spdy_zlib_init_inflate	src/spdy_zlib.c	/^int spdy_zlib_init_inflate (spdy_ctx * ctx, z_stream * stream)$/;"	f
+stream	src/spdy_ctx.h	/^         spdy_stream * stream;$/;"	m	struct:_spdy_ctx::__anon1::__anon3
+stream_list	src/spdy_ctx.h	/^   spdy_stream * stream_list;$/;"	m	struct:_spdy_ctx
+type	src/spdy_ctx.h	/^         int16_t type;$/;"	m	struct:_spdy_ctx::__anon1::__anon2
+version	src/spdy_ctx.h	/^   int version;$/;"	m	struct:_spdy_ctx
+zlib_deflate	src/spdy_ctx.h	/^   z_stream zlib_deflate;$/;"	m	struct:_spdy_ctx
+zlib_inflate	src/spdy_ctx.h	/^   z_stream zlib_inflate;$/;"	m	struct:_spdy_ctx

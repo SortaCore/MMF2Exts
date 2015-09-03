@@ -52,6 +52,135 @@
     <ClCompile Include="..\Lib\Lacewing\RelayServer.cc">
       <Filter>Header Files\Lacewing</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\list.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\address.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\error.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\filter.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\flashpolicy.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\global.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\heapbuffer.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\nvhash.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\pipe.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\pump.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\refcount-dbg.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\stream.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\streamgraph.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\util.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lacewing\src\cxx\address2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\client.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\error2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\event.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\eventpump.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\fdstream.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\file.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\filter2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\flashpolicy2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\pipe2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\pump2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\server.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\stream2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\sync.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\thread.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\timer.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\cxx\udp.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\client2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\compat.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\event2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\eventpump2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\fdstream2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\file2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\global2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\server2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\sync2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\thread2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\timer2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\windows\udp2.c">
+      <Filter>Source Files\Lacewing\src\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -93,6 +222,51 @@
     <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\address.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\common.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\heapbuffer-cxx.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\heapbuffer.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\nvhash.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\pump.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\refcount-dbg.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\refcount.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\stream.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\streamgraph.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\windows\common.h">
+      <Filter>Header Files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\windows\compat.h">
+      <Filter>Header Files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\windows\fdstream.h">
+      <Filter>Header Files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\lacewing\src\windows\typeof.h">
+      <Filter>Header Files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\Lacewing.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">
@@ -126,6 +300,24 @@
     </Filter>
     <Filter Include="Header Files\Lacewing">
       <UniqueIdentifier>{46e3f8bb-3d8b-47f2-ac55-993ac72b85fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src">
+      <UniqueIdentifier>{2bc951e3-7114-4c26-aeca-a39d8bc48285}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\windows">
+      <UniqueIdentifier>{e2c09c01-80b3-42c3-af4c-7367ab6235a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing">
+      <UniqueIdentifier>{427af282-ac13-4b6e-93ff-7596d8a013c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src">
+      <UniqueIdentifier>{0bfc682e-5b64-41b6-985b-7e9461ad3db8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\cxx">
+      <UniqueIdentifier>{822c7659-b85b-4fa7-b8ad-0991fa1f7b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\windows">
+      <UniqueIdentifier>{304e6139-fab6-4366-bcac-5f79d8c4dc0b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

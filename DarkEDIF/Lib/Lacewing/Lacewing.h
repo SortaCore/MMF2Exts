@@ -101,6 +101,7 @@ typedef unsigned __int8 lw_ui8;
 #endif
 
 #ifndef lw_import
+#error lw_import misdefined
 #ifdef _lacewing_static
 #define lw_import
 #else
@@ -671,7 +672,6 @@ extern "C"
 
 namespace lacewing
 {
-
 	/** error **/
 
 	typedef struct _error * error;

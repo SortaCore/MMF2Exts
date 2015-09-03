@@ -30,8 +30,9 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_ATTACH:
 			
 			hInstLib = hDLL; // Store HINSTANCE
-			// __asm int 3; // Cause debuggers to recognise the MFX - debugger must be attached for object to appear in Create New Object
-			MessageBoxA(NULL, "Bluewing DllMain() call.", "Bluewing Debug", MB_OK);
+			// For ultimate debug attach, uncomment the __asm line.
+			// This will invoke a debugger when the MFX is looped through.
+			// __asm int 3;
 			break;
 
 		// A new thread is being created in the current process.
@@ -60,8 +61,6 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, unsigned int dwReason, LPVOID lpReserved)
 //
 extern "C" int DLLExport Initialize(mv *mV, int quiet)
 {
-	MessageBoxA(NULL, "Bluewing Initialize() call.", "Bluewing Debug", MB_OK);
-
 	if (!::SDK)
 		return Edif::Init(mV);
 	else // No error
@@ -98,8 +97,6 @@ extern "C" int DLLExport Free(mv *mV)
 //
 int	DLLExport LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
 {
-	MessageBoxA(NULL, "Bluewing LoadObject() call.", "Bluewing Debug", MB_OK);
-
     Edif::Init(mV, edPtr);
 
 

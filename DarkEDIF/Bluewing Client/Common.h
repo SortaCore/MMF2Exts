@@ -27,20 +27,28 @@
 	::CriticalSection = ::Buffer + ::CriticalSection; \
 	LeaveCriticalSection(x)
 
+// Lacewing-required lines.==
+
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "mswsock.lib")
+#pragma comment(lib, "mpr.lib")
+#pragma comment(lib, "secur32.lib")
+#pragma comment(lib, "crypt32.lib")
+
+// #define lw_import
+// #define _lacewing_static
+// Now in project settings; absolutely required.
+
+// ==end lacewing
 
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 #pragma comment(lib, "..\\Lib\\zlib.lib")
+
 #include <sstream>
 #include "zlib.h"
 
-// LacewingFunction for a .lib file format; use custom path
-#define lw_import
-//#define _lacewing_static
-
-//#define LacewingFunction __declspec(dllimport)
-#pragma comment(lib, "../Lib/Lacewing/liblacewing.lib")
-
 #include "Lacewing.h"
+
 #include "LacewingFunctions.h"
 
 #include "Edif.h"
