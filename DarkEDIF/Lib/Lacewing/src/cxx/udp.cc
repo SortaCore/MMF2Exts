@@ -51,7 +51,7 @@ void _udp::host (lacewing::filter filter)
 
 void _udp::host (lacewing::address address)
 {
-   lw_udp_host_addr ((lw_udp) this, (lw_addr) address);
+	lw_udp_host_addr((lw_udp) this, (lw_addr)address);
 }
 
 bool _udp::hosting ()

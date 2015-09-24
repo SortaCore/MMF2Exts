@@ -1,4 +1,5 @@
 #include "Common.h"
+#include <assert.h>
 
 
 ///
@@ -248,45 +249,44 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		PropChkbox.push_back(*GetPropertyChbx(edPtr, i));
 	}
 	*/
-	char * GlobalIDCopy = _strdup(edPtr->Global ? edPtr->edGlobalID : "");
-	Globals = (struct GlobalInfo *)Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str());
-	if (!Globals)
+
+	IsGlobal = edPtr->Global;
+	if (IsGlobal)
 	{
-		Globals = new struct Extension::GlobalInfo;
-		Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str(), Globals);
+		char * GlobalIDCopy = _strdup(edPtr->edGlobalID);
+		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str());
+		if (!v)
+		{
+			Globals = new GlobalInfo(this);
+			InitializeCriticalSection(&Lock);
+			Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str(), Globals);
+		}
+		else
+		{
+			// Add this Extension to Refs
+			Globals = (GlobalInfo *)v;
+			Globals->Refs.push_back(this);
+		}
+
+		GlobalID = GlobalIDCopy;
+	}
+	else
+	{
+		Globals = new GlobalInfo(this);
+		InitializeCriticalSection(&Lock);
+		Globals->_ObjEventPump->tick();
 	}
 
 	AutomaticallyClearBinary = edPtr->AutomaticClear;
-	GlobalID = GlobalIDCopy;
 
 	// Try to boot the Lacewing thread if multithreading and not already running
 	if (edPtr->MultiThreading && !Globals->_Thread && !(Globals->_Thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
-		MessageBoxA(NULL, "Error: failed to boot thread. Falling back to single-threaded interface.", "DarkEDIF - runtime error", MB_OK);
-
-	// Link all callbacks
 	{
-		Cli.onchannellistreceived(::OnChannelListReceived);
-		Cli.onmessage_channel(::OnChannelMessage);
-		Cli.onconnect(::OnConnect);
-		Cli.onconnectiondenied(::OnConnectDenied);
-		Cli.ondisconnect(::OnDisconnect);
-		Cli.onerror(::OnError);
-		Cli.onchannel_join(::OnJoinChannel);
-		Cli.onchannel_joindenied(::OnJoinChannelDenied);
-		Cli.onchannel_leave(::OnLeaveChannel);
-		Cli.onchannel_leavedenied(::OnLeaveChannelDenied);
-		Cli.onname_changed(::OnNameChanged);
-		Cli.onname_denied(::OnNameDenied);
-		Cli.onname_set(::OnNameSet);
-		Cli.onpeer_changename(::OnPeerNameChanged);
-		Cli.onpeer_connect(::OnPeerConnect);
-		Cli.onpeer_disconnect(::OnPeerDisconnect);
-		Cli.onmessage_peer(::OnPeerMessage);
-		Cli.onmessage_serverchannel(::OnServerChannelMessage);
-		Cli.onmessage_server(::OnServerMessage);
+		MessageBoxA(NULL, "Error: failed to boot thread. Falling back to single-threaded interface.", "DarkEDIF - runtime error", MB_OK);
+		Runtime.Rehandle();
 	}
-	
-	Cli.tag = this; // Useful so Lacewing callbacks can access Extension
+	else if (!edPtr->MultiThreading)
+		Runtime.Rehandle();
 }
 
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
@@ -304,8 +304,6 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 	return 0;
 }
 
-
-#ifdef MULTI_THREADING
 SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 {
 	/*
@@ -331,9 +329,16 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	{
 		SaveExtInfo * NewEvent = new SaveExtInfo;
 		
+		Extension * E = (Extension *)Globals->_Client.tag;
+		Extension * F = this;
+
+		bool eq = E == F;
+		assert(eq);
+			
+
 		// Initialise with one condition to be triggered
 		NewEvent->NumEvents = 1;
-		NewEvent->CondTrig = (unsigned short *)malloc(sizeof(unsigned short));
+		NewEvent->CondTrig = (unsigned short *)calloc(sizeof(unsigned short), 1);
 		
 		// Failed to allocate memory
 		if (!NewEvent->CondTrig)
@@ -354,7 +359,7 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		}
 
 		Saved.push_back(NewEvent);
-
+		
 		LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
 	}
 	else // New event is part of the last saved data (good for optimisation)
@@ -383,8 +388,6 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	Runtime.Rehandle();
 	return *Saved.back();
 }
-#endif // MULTI_THREADING
-
 
 void Extension::CreateError(const char * Error)
 {
@@ -452,6 +455,29 @@ void Extension::AddToSend(void * Data, size_t Size)
 
 Extension::~Extension()
 {
+	// Remove this Extension from liblacewing usage.
+	auto i = std::find(Globals->Refs.cbegin(), Globals->Refs.cend(), this);
+	bool wasBegin = i == Globals->Refs.cbegin();
+	Globals->Refs.erase(i);
+
+	// Shift secondary event management to other Extension, if any
+	if (!Globals->Refs.empty())
+	{
+		Extension * j = *Globals->Refs.begin();
+		Globals->_Client.tag = j;
+		
+		// Single-threaded interface - switch Handle ticking over.
+		if (!Globals->_Thread)
+			j->Runtime.Rehandle();
+	}
+	// Last instance of this object; if global, cleanup the liblacewing
+	else if (IsGlobal)
+	{
+		Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + Globals->_GlobalID).c_str(), nullptr);
+		delete Globals;
+		Globals = nullptr;
+	}
+
 	DeleteCriticalSection(&Lock);
 }
 
@@ -460,135 +486,140 @@ short Extension::Handle()
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
 	if (!Globals->_Thread)
 	{
-		ObjEventPump->tick();
-		return 0;
+		lacewing::error e = ObjEventPump->tick();
+		if (e != nullptr)
+		{
+			e->add("(in Extension::Handle -> tick()");
+			CreateError(e->tostring());
+			return 0;
+		}
 	}
 
-	#ifdef MULTI_THREADING
-
-		// AddEvent() was called and not yet handled
-		// (note all code that accesses Saved must have ownership of Lock)
-		bool RunNextLoop = false;
-		while (true)
+	// AddEvent() was called and not yet handled
+	// (note all code that accesses Saved must have ownership of Lock)
+	bool RunNextLoop = !Globals->_Thread;
+	while (true)
+	{
+		if (!TryEnterCriticalSection(&Lock))
 		{
-			if (!TryEnterCriticalSection(&Lock))
-			{
-				RunNextLoop = true;
-				break; // Lock already occupied; leave it and run next event loop
-			}
-			sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__);
-			::CriticalSection = ::Buffer + ::CriticalSection;
-
-			if (Saved.size() == 0)
-			{
-				LeaveCriticalSectionDerpy(&Lock);
-				break;
-			}
-			SaveExtInfo * S = Saved.front();
-			
-			if (S->ReceivedMsg.Content != nullptr)
-			{
-				ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
-				ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
-				ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
-				ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
-			}
-			if (S->Channel != nullptr)
-				ThreadData.Channel = S->Channel;
-			if (S->Peer != nullptr)
-				ThreadData.Peer = S->Peer;
-			LeaveCriticalSectionDerpy(&Lock);
-				
-			// Remove copies if this particular event number is used
-			if (S->CondTrig[0] == 0xFFFF)
-			{
-				// If channel, it's either a channel leave or peer leave
-				if (S->Channel)
-				{
-					// Channel leave
-					if (!S->Peer)
-					{
-						for (auto u = Channels.begin(); u != Channels.end(); ++u)
-						{
-							if (*u == S->Channel)
-							{
-								if (!S->Channel->isclosed)
-									CreateError("Channel being removed but not marked as closed!");
-
-								Channels.erase(u);
-								break;
-							}
-						}
-
-						delete S->Channel;
-					}
-					else // Peer leave
-					{
-						for (auto u = Channels.begin(); u != Channels.end(); ++u)
-						{
-							if (*u == ThreadData.Channel)
-							{
-								for (auto v = Peers.begin(); v != Peers.end(); ++v)
-								{
-									if (*v == S->Peer)
-									{
-										if (!S->Peer->isclosed)
-											CreateError("Peer being removed but not marked as closed!");
-
-										Peers.erase(v);
-										break;
-									}
-								}
-
-								break;
-							}
-						}
-
-						delete S->Peer;
-						// delete ThreadData.Peer;
-					}
-				}
-				else // On disconnect, clear everyting
-				{
-					// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
-					// and thus we have a small, but reoccuring, memory leak.
-					// This should be fixed when this extension is updated to the more recent liblacewing version.
-
-					// for (std::vector<lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
-					//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
-
-					// Old username is stored in the tag and must be deleted separately from clear()
-					for (auto u = Peers.begin(); u != Peers.end(); ++u)
-					{
-						if ((*u)->internaltag)
-							free((*u)->internaltag);
-
-						//	delete (struct ::PeerInternal *)((*u)->InternalTag);
-					}
-
-					// Delete main data of each struct (note larger Internal classes are not deleted, see above)
-					for each (auto i in Channels)
-						delete i;
-					Channels.clear();
-					
-					for each (auto i in Peers)
-						delete i;
-					Peers.clear();
-				}
-			}
-			else
-			{
-				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-				for (unsigned char u = 0; u < S->NumEvents; ++u)
-					Runtime.GenerateEvent((int) S->CondTrig[u]);
-			}
-
-			EnterCriticalSectionDerpy(&Lock);
-			Saved.erase(Saved.begin());
-			LeaveCriticalSectionDerpy(&Lock);
+			RunNextLoop = true;
+			break; // Lock already occupied; leave it and run next event loop
 		}
-	#endif // MULTI_THREADING
-	
+#ifdef _DEBUG
+		sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__);
+		::CriticalSection = ::Buffer + ::CriticalSection;
+#endif
+
+		if (Saved.size() == 0)
+		{
+			LeaveCriticalSectionDerpy(&Lock);
+			break;
+		}
+		SaveExtInfo * S = Saved.front();
+			
+		if (S->ReceivedMsg.Content != nullptr)
+		{
+			ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
+			ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
+			ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
+			ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
+		}
+		if (S->Channel != nullptr)
+			ThreadData.Channel = S->Channel;
+		if (S->Peer != nullptr)
+			ThreadData.Peer = S->Peer;
+		LeaveCriticalSectionDerpy(&Lock);
+				
+		// Remove copies if this particular event number is used
+		if (S->CondTrig[0] == 0xFFFF)
+		{
+			// If channel, it's either a channel leave or peer leave
+			if (S->Channel)
+			{
+				// Channel leave
+				if (!S->Peer)
+				{
+					for (auto u = Channels.begin(); u != Channels.end(); ++u)
+					{
+						if (*u == S->Channel)
+						{
+							if (!S->Channel->isclosed)
+								CreateError("Channel being removed but not marked as closed!");
+
+							Channels.erase(u);
+							break;
+						}
+					}
+
+					delete S->Channel;
+				}
+				else // Peer leave
+				{
+					for (auto u = Channels.begin(); u != Channels.end(); ++u)
+					{
+						if (*u == ThreadData.Channel)
+						{
+							for (auto v = Peers.begin(); v != Peers.end(); ++v)
+							{
+								if (*v == S->Peer)
+								{
+									if (!S->Peer->isclosed)
+										CreateError("Peer being removed but not marked as closed!");
+
+									Peers.erase(v);
+									break;
+								}
+							}
+
+							break;
+						}
+					}
+
+					delete S->Peer;
+					// delete ThreadData.Peer;
+				}
+			}
+			else // On disconnect, clear everyting
+			{
+				// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
+				// and thus we have a small, but reoccuring, memory leak.
+				// This should be fixed when this extension is updated to the more recent liblacewing version.
+
+				// for (std::vector<lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+				//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
+
+				// Old username is stored in the tag and must be deleted separately from clear()
+				for (auto u = Peers.begin(); u != Peers.end(); ++u)
+				{
+					if ((*u)->internaltag)
+						free((*u)->internaltag);
+
+					//	delete (struct ::PeerInternal *)((*u)->InternalTag);
+				}
+
+				// Delete main data of each struct (note larger Internal classes are not deleted, see above)
+				for each (auto i in Channels)
+					delete i;
+				Channels.clear();
+					
+				for each (auto i in Peers)
+					delete i;
+				Peers.clear();
+			}
+		}
+		else
+		{
+			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+			for (unsigned char u = 0; u < S->NumEvents; ++u)
+				// Doesn't call it for some reason.
+				// GenerateEVent is called but Fusion doesn't react.
+				Runtime.GenerateEvent((int)S->CondTrig[u]);
+		}
+
+		EnterCriticalSectionDerpy(&Lock);
+		Saved.erase(Saved.begin());
+		LeaveCriticalSectionDerpy(&Lock);
+	}
 
     /*
        If your extension will draw to the MMF window you should first 

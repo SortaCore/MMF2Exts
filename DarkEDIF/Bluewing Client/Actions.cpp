@@ -908,8 +908,8 @@ void Extension::Connect(char * Hostname)
 		{
 			Port = atoi(strchr(Hostname, ':')+1);
 		
-			if (Port < 0 || Port > 35565)
-				return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 0 to 35565.");
+			if (Port < 0 || Port > 0xFFFF)
+				return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 0 to 65535.");
 		}
 		Cli.connect(Hostname, Port);
 	}

@@ -40,7 +40,7 @@ struct _lw_file
 
 lw_file lw_file_new (lw_pump pump)
 {
-   lw_file ctx = (lw_file) malloc (sizeof (*ctx));
+   lw_file ctx = (lw_file) calloc (sizeof (*ctx), 1);
 
    if (!ctx)
       return 0;

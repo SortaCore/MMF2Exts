@@ -360,7 +360,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
    /* TODO : Pre-allocate a bunch of these and reuse them? */
 
    fdstream_overlapped overlapped = (fdstream_overlapped)
-      malloc (sizeof (*overlapped) + size);
+      calloc (sizeof (*overlapped) + size, 1);
 
    if (!overlapped)
       return size; 
@@ -583,7 +583,7 @@ void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 
 lw_fdstream lw_fdstream_new (lw_pump pump)
 {
-   lw_fdstream ctx = (lw_fdstream) malloc (sizeof (*ctx));
+   lw_fdstream ctx = (lw_fdstream) calloc (sizeof (*ctx), 1);
 
    if (!ctx)
       return 0;

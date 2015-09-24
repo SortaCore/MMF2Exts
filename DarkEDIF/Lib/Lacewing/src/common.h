@@ -36,7 +36,7 @@
    #endif
 
    #if defined(_DEBUG) && !defined(_lacewing_debug)
-      #define _lacewing_debug
+      //#define _lacewing_debug
    #endif
 
    #ifndef _CRT_SECURE_NO_WARNINGS
@@ -114,7 +114,7 @@ void lwp_init();
  typedef struct _lw_ws_session        * lw_ws_session;
  typedef struct _lw_ws_sessionitem    * lw_ws_sessionitem;
 
-#include "../include/lacewing.h"
+#include "../lacewing.h"
 
 #ifdef _MSC_VER
 	#ifndef __cplusplus

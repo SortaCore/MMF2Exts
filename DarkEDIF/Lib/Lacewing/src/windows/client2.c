@@ -64,6 +64,7 @@ lw_client lw_client_new (lw_pump pump)
 
    ctx->socket = INVALID_HANDLE_VALUE;
    ctx->pump = pump;
+   ctx->address = nullptr;
    
    return ctx;
 }
@@ -117,7 +118,7 @@ static void completion (void * tag, OVERLAPPED * overlapped,
       ctx->on_connect (ctx);
 
    if (ctx->on_data)
-      lw_stream_read ((lw_stream) ctx, -1);
+	   lw_stream_read((lw_stream)ctx, -1);
 }
 
 void lw_client_connect_addr (lw_client ctx, lw_addr address)
@@ -213,7 +214,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
    assert (lw_ConnectEx);
 
-   struct sockaddr_storage local_address = {};
+   struct sockaddr_storage local_address = {0};
 
    if (lw_addr_ipv6 (address))
    {
@@ -223,7 +224,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
    else
    {
       ((struct sockaddr_in *) &local_address)->sin_family = AF_INET;
-      ((struct sockaddr_in *) &local_address)->sin_addr.S_un.S_addr = INADDR_ANY;
+	  ((struct sockaddr_in *) &local_address)->sin_addr = in4addr_any;
    }
 
    if (bind ((SOCKET) ctx->socket,
@@ -253,7 +254,11 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
       int code = WSAGetLastError ();
 
       assert (code == WSA_IO_PENDING);
+	  if (code == WSAECONNRESET)
+		  assert(0 == 1);
    }
+
+   free(overlapped);
 }
 
 lw_bool lw_client_connected (lw_client ctx)
@@ -268,7 +273,7 @@ lw_bool lw_client_connecting (lw_client ctx)
 
 lw_addr lw_client_server_addr (lw_client ctx)
 {
-   return ctx->address;
+	return ctx->address;
 }
 
 static void on_stream_data (lw_stream stream, void * tag,

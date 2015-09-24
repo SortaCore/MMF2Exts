@@ -40,7 +40,8 @@ void lwp_init ()
     
     init_called = lw_true;
 
-    WSAStartup (MAKEWORD (2, 2), &winsock_data);
+	int i = WSAStartup(MAKEWORD(2, 2), &winsock_data);
+	assert(i == 0); // WSAStartup fail
 }
 static char version [64] = { 0 };
 

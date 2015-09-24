@@ -44,7 +44,7 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
    ctx->resolver_thread = lw_thread_new ("resolver", (void *) resolver);
    ctx->hints = hints;
 
-   ctx->hostname_to_free = ctx->hostname = strdup (hostname);
+   ctx->hostname_to_free = ctx->hostname = _strdup (hostname);
 
    while (isspace (*ctx->hostname))
       ++ ctx->hostname;
@@ -79,7 +79,7 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 
 lw_addr lw_addr_new (const char * hostname, const char * service)
 {
-   lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
+   lw_addr ctx = (lw_addr) calloc (sizeof (*ctx), 1);
    lwp_addr_init (ctx, hostname, service, 0);
 
    return ctx;
@@ -101,7 +101,7 @@ lw_addr lw_addr_new_port (const char * hostname, long port)
 
    lwp_snprintf (service, sizeof (service), "%d", (int) port);
 
-   lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
+   lw_addr ctx = (lw_addr) calloc (sizeof (*ctx), 1);
    lwp_addr_init (ctx, hostname, service, 0);
 
    return ctx;
@@ -109,7 +109,7 @@ lw_addr lw_addr_new_port (const char * hostname, long port)
 
 lw_addr lw_addr_new_hint (const char * hostname, const char * service, long hints)
 {
-   lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
+   lw_addr ctx = (lw_addr) calloc (sizeof (*ctx), 1);
    lwp_addr_init (ctx, hostname, service, hints);
 
    return ctx;
@@ -121,7 +121,7 @@ lw_addr lw_addr_new_port_hint (const char * hostname, long port, long hints)
 
    lwp_snprintf (service, sizeof (service), "%d", (int) port);
 
-   lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
+   lw_addr ctx = (lw_addr) calloc (sizeof (*ctx), 1);
    lwp_addr_init (ctx, hostname, service, hints);
 
    return ctx;
@@ -150,7 +150,7 @@ void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr * sockaddr)
    ctx->info->ai_family = sockaddr->sa_family;
 
    free (ctx->info->ai_addr);
-   ctx->info->ai_addr = (struct sockaddr *) malloc (sizeof (struct sockaddr_storage));
+   ctx->info->ai_addr = (struct sockaddr *) calloc (sizeof (struct sockaddr_storage), 1);
 
    switch (sockaddr->sa_family)
    {
@@ -183,20 +183,21 @@ lw_addr lw_addr_clone (lw_addr ctx)
    if (!ctx->info)
       return 0;
 
-   addr->info = addr->info_to_free = (struct addrinfo *) malloc (sizeof (*addr->info));
+   addr->info = addr->info_to_free = (struct addrinfo *) calloc (sizeof (*addr->info), 1);
    memcpy (addr->info, ctx->info, sizeof (*addr->info));
 
    addr->info->ai_addrlen = ctx->info->ai_addrlen;
 
    addr->info->ai_next = 0;
-   addr->info->ai_addr = (struct sockaddr *) malloc (addr->info->ai_addrlen);
+   addr->info->ai_addr = (struct sockaddr *) calloc (addr->info->ai_addrlen, 1);
 
    memcpy (addr->info->ai_addr, ctx->info->ai_addr, addr->info->ai_addrlen);
 
    memcpy (addr->service, ctx->service, sizeof (ctx->service));
 
-   addr->hostname = addr->hostname_to_free = ctx->hostname;
+   addr->hostname = addr->hostname_to_free = _strdup(ctx->hostname);
 
+   assert(ctx != addr);
    return addr;
 }
 
@@ -207,10 +208,13 @@ void lwp_addr_cleanup (lw_addr ctx)
       lw_thread_join (ctx->resolver_thread);
       lw_thread_delete (ctx->resolver_thread);
    }
+   ctx->resolver_thread = nullptr;
 
    free (ctx->hostname_to_free);
+   ctx->hostname_to_free = nullptr;
 
    lw_error_delete (ctx->error);
+   ctx->error = nullptr;
 
    if (ctx->info_list)
    {
@@ -219,12 +223,14 @@ void lwp_addr_cleanup (lw_addr ctx)
       #endif
 
       freeaddrinfo (ctx->info_list);
+	  ctx->info_list = nullptr;
    }
 
    if (ctx->info_to_free)
    {
       free (ctx->info_to_free->ai_addr);
       free (ctx->info_to_free);
+	  ctx->info_to_free = nullptr;
    }
 }
 

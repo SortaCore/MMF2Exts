@@ -44,6 +44,7 @@
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 #pragma comment(lib, "..\\Lib\\zlib.lib")
 
+#include <algorithm>
 #include <sstream>
 #include "zlib.h"
 

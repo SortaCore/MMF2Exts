@@ -65,11 +65,11 @@ void lwp_nvhash_set_ex (lwp_nvhash * hash, size_t key_len, const char * key,
 
    if (copy)
    {
-      item->key = (char *) malloc (key_len + 1);
+      item->key = (char *) calloc (key_len + 1, 1);
       memcpy (item->key, key, key_len);
       item->key [key_len] = 0;
 
-      item->value = (char *) malloc (value_len + 1);
+      item->value = (char *) calloc (value_len + 1, 1);
       memcpy (item->value, value, value_len);
       item->value [value_len] = 0;
    }

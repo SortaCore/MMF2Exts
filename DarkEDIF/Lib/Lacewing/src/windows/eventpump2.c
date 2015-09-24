@@ -69,6 +69,13 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
                         unsigned int bytes_transferred, lw_pump_watch watch,
                         int error)
 {
+   if (error != 0U)
+   {
+      lw_trace("udp_socket_completion: error=%i", error);
+      SetLastError(0U);
+	  return lw_true;
+   }
+
    if (bytes_transferred == 0xFFFFFFFF)
    {
       /* See eventpump_post */
@@ -194,7 +201,13 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
             break;
       }
 
-      process (ctx, overlapped, bytes_transferred, watch, error);
+	  if (error == ERROR_OPERATION_ABORTED)
+	  {
+		  lw_trace("Received 995, Operation Aborted, in lw_eventpump_tick thread. Closing thread.");
+		  return 0;
+	  }
+	  if (process(ctx, overlapped, bytes_transferred, watch, error) == lw_false)
+		  return 0;
    }
 
    if (ctx->on_tick_needed)
@@ -205,7 +218,7 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 
 lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
 {
-   OVERLAPPED * overlapped;
+	OVERLAPPED * overlapped;
    DWORD bytes_transferred;
 
    lw_pump_watch watch;
@@ -223,8 +236,10 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
                                       (PULONG_PTR) &watch,
                                       &overlapped, finished ? 0 : INFINITE))
       {
+		  
+		  // TODO: Is this watching just the TCP lw_pump_watch?!
          error = GetLastError();
-
+		  //
          /* Are all pending operations completed?
           */
          if (finished && error == WAIT_TIMEOUT)
@@ -274,10 +289,13 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
                                (ULONG_PTR) watch, 0) != 0)
    {
       /* success */
+	   //ctx->pump.def->update_callbacks(ctx->pump, watch, (void *)0x1L, ctx->watcher)
+//	   __asm int 3;
    }
    else
    {
-      assert (0);
+	   int i = GetLastError();
+	   assert (0);
    }
 
    return watch;

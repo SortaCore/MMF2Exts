@@ -56,3 +56,7 @@ void _eventpump::post_eventloop_exit ()
    lw_eventpump_post_eventloop_exit ((lw_eventpump) this);
 }
 
+_eventpump::~_eventpump()
+{
+	lw_pump_delete((lw_pump)this);
+}

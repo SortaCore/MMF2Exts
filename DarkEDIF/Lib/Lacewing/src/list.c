@@ -73,7 +73,7 @@ void _list_push (list_head ** p_list, size_t value_size, void * value)
    ++ list->length;
 
    list_element * elem = (list_element *)
-       malloc (sizeof (*elem) + value_size);
+       calloc (sizeof (*elem) + value_size, 1);
 
    memset (elem, 0, sizeof (*elem));
    memcpy (get_value_ptr (elem), value, value_size);
@@ -102,7 +102,7 @@ void _list_push_front (list_head ** p_list, size_t value_size, void * value)
    ++ list->length;
 
    list_element * elem = (list_element *)
-       malloc (sizeof (*elem) + value_size);
+       calloc (sizeof (*elem) + value_size, 1);
 
    memset (elem, 0, sizeof (*elem));
    memcpy (get_value_ptr (elem), value, value_size);

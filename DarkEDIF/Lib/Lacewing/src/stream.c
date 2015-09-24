@@ -495,7 +495,7 @@ void lw_stream_add_filter_upstream (lw_stream ctx, lw_stream filter,
                                     lw_bool delete_with_stream,
                                     lw_bool close_together)
 {
-   lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+   lwp_stream_filterspec spec = (lwp_stream_filterspec) calloc (sizeof (*spec), 1);
 
    spec->stream = ctx;
    spec->filter = filter;
@@ -522,7 +522,7 @@ void lw_stream_add_filter_downstream (lw_stream ctx, lw_stream filter,
                                       lw_bool delete_with_stream,
                                       lw_bool close_together)
 {
-   lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+   lwp_stream_filterspec spec = (lwp_stream_filterspec) calloc (sizeof (*spec), 1);
 
    spec->stream = ctx;
    spec->filter = filter;

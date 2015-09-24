@@ -1,6 +1,6 @@
 #include "Common.h"
 
-Edif::SDK * SDK = NULL;
+Edif::SDK * SDK = nullptr;
 
 
 TCHAR Edif::LanguageCode[3];
@@ -159,11 +159,8 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 
 void Edif::Free(mv * mV)
 {   
-	if (::SDK)
-	{
-		delete ::SDK;
-		::SDK = NULL;
-	}
+	// Don't delete SDK. The world dies when you do that.
+	// Why? Because Fusion confuses everyone.
 }
 
 void Edif::Free(EDITDATA * edPtr)

@@ -58,7 +58,7 @@ typedef struct _udp_receive_info
 
 udp_receive_info udp_receive_info_new ()
 {
-   udp_receive_info info = (udp_receive_info) malloc (sizeof (*info));
+   udp_receive_info info = (udp_receive_info) calloc (sizeof (*info), 1);
 
    info->winsock_buffer.buf = info->buffer;
    info->winsock_buffer.len = sizeof (info->buffer);
@@ -84,46 +84,75 @@ struct _lw_udp
    long receives_posted;
 
    void * tag;
+
+   lw_pump_watch watch; // Added by Phi, not used
 };
 
-static void post_receives (lw_udp ctx)
+void post_receives (lw_udp ctx)
 {
+	int error = 0;
    while (ctx->receives_posted < ideal_pending_receive_count)
    {
       udp_receive_info receive_info = udp_receive_info_new ();
 
       if (!receive_info)
          break;
-
+	  
       udp_overlapped overlapped =
          (udp_overlapped) calloc (sizeof (*overlapped), 1);
 
       if (!overlapped)
          break;
-
-      overlapped->type = overlapped_type_receive;
+	  
+	  overlapped->type = overlapped_type_receive;
       overlapped->tag = receive_info;
 
       DWORD flags = 0;
+	  DWORD bytesRecv = 0;
 
       if (WSARecvFrom (ctx->socket,
                        &receive_info->winsock_buffer,
                        1,
-                       0,
+                       &bytesRecv,
                        &flags,
                        (struct sockaddr *) &receive_info->from,
                        &receive_info->from_length,
-                       (OVERLAPPED *) overlapped,
-                       0) == -1)
+                       &overlapped->overlapped,
+                       NULL) == -1)
       {
-         int error = WSAGetLastError();
+         error = WSAGetLastError();
 
-         if (error != WSA_IO_PENDING)
-            break;
+		 if (error != WSA_IO_PENDING)
+		 {
+			 if (error != WSAECONNRESET)
+				 break;
+			 
+			 // Ignore UDP Connection Resets; it's a quirk of Windoze, UDP is connectionless
+			 // so there's no real way a 'UDP connection' can be reset.
+			 lw_trace("Idle note: Received a WSAECONNRESET in post_receives, meaningless for a UDP connection.");
+		 }
       }
 
       ++ ctx->receives_posted;
    }
+
+   // Section added by Phi.
+   if (error == WSAEINVAL)
+   {
+	   // Report nicely before committing seppuku
+	   if (ctx->on_error)
+	   {
+		   lw_error e = lw_error_new();
+		   lw_error_addf(e, "Received error WSAEINVAL in post_receives(). Call bind() or connect() before recvfrom(); the UDP socket has no local port yet.");
+
+		   ctx->on_error(ctx, e);
+
+		   lw_error_delete(e);
+	   }
+
+	   assert(error != WSAEINVAL);
+   }
+   assert(error == 0 || error == WSA_IO_PENDING || error == WSAECONNRESET);
 }
 
 static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
@@ -151,8 +180,24 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
          lw_addr filter_addr = lw_filter_remote (ctx->filter);
 
-         if (filter_addr && !lw_addr_equal (&addr, filter_addr))
-            break;
+		 // Phi: Error here; lw_addr_equals is bugged for UDP, it seems.
+		 // Note ai_flags is meant to differ; filter is 0, recv is 4.
+		 if (filter_addr)
+		 {
+			 int custom = (addr.info->ai_addrlen != filter_addr->info->ai_addrlen ||
+				 memcmp(addr.info->ai_addr, filter_addr->info->ai_addr, addr.info->ai_addrlen));
+			 int old = lw_addr_equal(filter_addr, &addr);
+			 
+			 if (custom != old)
+				 lw_trace("Differential in udp_socket_completion: custom %i, old %i.", custom, old);
+
+			 // Can occur when multiple apps are connected on the same remote port
+			 if (custom)
+			 {
+				 lw_trace("Received a message from a UDP address we didn't expect in udp_socket_completion; ignoring.");
+				 break;
+			 }
+		 }
 
          if (ctx->on_data)
             ctx->on_data (ctx, &addr, info->buffer, bytes_transferred);
@@ -169,7 +214,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
    free (overlapped);
 }
 
-void lw_udp_host (lw_udp ctx, long port)
+void lw_udp_host(lw_udp ctx, long port)
 {
    lw_filter filter = lw_filter_new ();
    lw_filter_set_local_port (filter, port);
@@ -179,7 +224,7 @@ void lw_udp_host (lw_udp ctx, long port)
    lw_filter_delete (filter);
 }
 
-void lw_udp_host_addr (lw_udp ctx, lw_addr addr)
+void lw_udp_host_addr(lw_udp ctx, lw_addr addr)
 {
    lw_filter filter = lw_filter_new ();
    lw_filter_set_remote (filter, addr);
@@ -193,26 +238,87 @@ void lw_udp_host_addr (lw_udp ctx, lw_addr addr)
 
 void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 {
-   lw_udp_unhost (ctx);
+	lw_udp_unhost (ctx);
 
-   lw_error error = lw_error_new ();
+	lw_error error = lw_error_new ();
+	
+	if ((ctx->socket = lwp_create_server_socket
+			(filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
+	{
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-   if ((ctx->socket = lwp_create_server_socket
-            (filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
-   {
-      if (ctx->on_error)
-         ctx->on_error (ctx, error);
+		lw_error_delete(error);
+		return;
+	}
+	   
+	ctx->filter = lw_filter_clone (filter);
+	
+	ctx->watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
 
-      return;
-   }
+	ctx->port = lwp_socket_port (ctx->socket);
 
-   ctx->filter = lw_filter_clone (filter);
+	lw_addr a = lw_filter_remote(filter);
+	
+	// May be needed
+	assert(lw_addr_resolve(a) == nullptr);
 
-   lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
+	// This binds the socket. Should only be used for clients.
+	// You will get WSAEINVAL in post_receives if this section is not included.
+	
+	// UDP bind/connect is discouraged on clients, but normally it's done implicitly with you use sendto().
+	// Since we don't have a message to use sendto() on, we should use connect() or bind().
+	// bind() is more complicated, but connect() means UDP datagrams coming from some IP other than this server
+	// will be silently discarded, and allows use of SendMsg and RecvMsg (as well as UDP default SendTo and RecvFrom).
+	// I'm using connect() because well. Look at the length of the bind version.
+	
+	// This if condition is basically "is the udp set to one address or can anyone connect to it".
+	// If the former, the connect() is used to fixate it.
+	if ((a->info->ai_family == PF_INET && ((sockaddr_in *)a->info->ai_addr)->sin_addr.S_un.S_addr != INADDR_ANY) ||
+		(a->info->ai_family == PF_INET6 && !IN6ADDR_ISANY((sockaddr_in6 *)a->info->ai_addr)))
+	{
+		if (connect(ctx->socket, a->info->ai_addr, a->info->ai_addrlen) != 0)
+		{
+			DWORD lastError = GetLastError();
+			if (ctx->on_error)
+			{
+				lw_error e = lw_error_new();
+				lw_error_add(e, lastError);
+				lw_error_addf(e, "connect() binding of UDP client socket failed.");
+				
+				ctx->on_error(ctx, e);
 
-   ctx->port = lwp_socket_port (ctx->socket);
+				lw_error_delete(e);
+			}
+			assert(false);
+		}
+		
+		/*// Unholy use of bind()
+		sockaddr_storage * i = (sockaddr_storage *)calloc(sizeof(sockaddr_storage), 1);
+		if (a->info->ai_family == PF_INET)
+		{
+			sockaddr_in * j = (sockaddr_in *)i;
+			j->sin_family = AF_INET;
+			j->sin_addr.S_un.S_addr = INADDR_ANY;
+			j->sin_port = htons(0);
+		}
+		else
+		{
+			sockaddr_in6 * j = (sockaddr_in6 *)i;
+			j->sin6_family = AF_INET6;
+			IN6ADDR_SETANY(j);
+			j->sin6_port = htons(0);
+		}
 
-   post_receives (ctx);
+		if (bind(ctx->socket, (sockaddr *)i, a->info->ai_family == PF_INET ? sizeof(sockaddr_in) : sizeof(sockaddr_in6)) != 0)
+		{
+			DWORD lastError = GetLastError();
+			assert(false);
+		}*/
+	}
+	
+	// Not a valid address until the WSASendTo or bind is triggered
+	post_receives(ctx);
 }
 
 lw_bool lw_udp_hosting (lw_udp ctx)
@@ -245,6 +351,7 @@ lw_udp lw_udp_new (lw_pump pump)
 
    ctx->pump = pump;
    ctx->socket = INVALID_SOCKET;
+   ctx->watch = nullptr;
 
    return ctx;
 }
@@ -286,6 +393,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
    if (!overlapped)
    {
       /* TODO: error */
+	  assert(false);
 
       return;
    }

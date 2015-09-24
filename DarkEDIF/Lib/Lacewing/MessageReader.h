@@ -93,7 +93,7 @@ public:
         if (!check(size))
             return 0;
 
-        char * output = (char *) malloc (size + 1);
+        char * output = (char *) calloc (size + 1, 1);
 
         if (!output)
         {

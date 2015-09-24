@@ -46,9 +46,6 @@
     <ClCompile Include="LacewingFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Lacewing\RelayClient.cc">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClCompile>
     <ClCompile Include="..\lib\lacewing\src\cxx\address2.cc">
       <Filter>Source files\Lacewing\src\cxx</Filter>
     </ClCompile>
@@ -177,6 +174,9 @@
     </ClCompile>
     <ClCompile Include="..\Lib\lacewing\src\util.c">
       <Filter>Source files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\RelayClient.cc">
+      <Filter>Source files\Lacewing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

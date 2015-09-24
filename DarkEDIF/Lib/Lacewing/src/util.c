@@ -158,7 +158,7 @@ ssize_t lwp_format (char ** output, const char * format, va_list args)
 
       count = _vscprintf (format, args);
 
-      if (! (*output = (char *) malloc (count + 1)))
+      if (! (*output = (char *) calloc (count + 1, 1)))
          return 0;
 
       if (vsprintf (*output, format, args) < 0)

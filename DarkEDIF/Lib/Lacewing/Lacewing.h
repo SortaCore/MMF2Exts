@@ -161,6 +161,7 @@ typedef struct _lw_ws_sessionitem    * lw_ws_sessionitem;
 #ifdef __cplusplus
 extern "C"
 {
+	void post_receives(lw_udp);
 #endif
 
 	lw_import    const char* lw_version();
@@ -456,10 +457,11 @@ extern "C"
 	/* Client
 	*
 	* Note: lw_client derives from lw_stream, so all of the stream functions are
-	* applicable.  To delete a lw_client, use lw_stream_delete.
+	* applicable.
 	*/
 
 	lw_import      lw_client  lw_client_new(lw_pump);
+	lw_import			void  lw_client_delete(lw_client);
 	lw_import           void  lw_client_connect(lw_client, const char * host, long port);
 	lw_import           void  lw_client_connect_addr(lw_client, lw_addr);
 	lw_import           void  lw_client_connect_secure(lw_client, const char * host, long port);
@@ -781,6 +783,7 @@ namespace lacewing
 			(void (lw_callback * on_tick_needed) (eventpump));
 
 		lw_import void post_eventloop_exit();
+		lw_import ~_eventpump();
 	};
 
 	lw_import eventpump eventpump_new();

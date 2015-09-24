@@ -85,7 +85,8 @@ public:
     framebuilder(bool isudpclient)
     {
         this->isudpclient = isudpclient;
-        tosend = 0;
+        tosend = nullptr;
+		tosendsize = 0;
     }
 
     inline void addheader(unsigned char type, unsigned char variant, bool forudp = false, int udpclientid = -1)

@@ -61,9 +61,6 @@ lw_timer lw_timer_new(lw_pump pump)
 	ctx->shutdown_event = CreateEvent(0, TRUE, FALSE, 0);
 	ctx->timer_handle = CreateWaitableTimer(0, FALSE, 0);
 
-	ctx->timer_thread = lw_thread_new("timer", (void *)timer_thread);
-	lw_thread_start(ctx->timer_thread, ctx);
-
 	return ctx;
 }
 
@@ -71,8 +68,6 @@ void lw_timer_delete(lw_timer ctx)
 {
 	if (!ctx)
 		return;
-
-	SetEvent(ctx->shutdown_event);
 
 	lw_timer_stop(ctx);
 
@@ -111,6 +106,10 @@ void timer_thread(lw_timer ctx)
 void lw_timer_start(lw_timer ctx, long interval)
 {
 	lw_timer_stop(ctx);
+	assert(ResetEvent(ctx->shutdown_event));
+	
+	ctx->timer_thread = lw_thread_new("timer", (void *)timer_thread);
+	lw_thread_start(ctx->timer_thread, ctx);
 
 	LARGE_INTEGER due_time;
 	due_time.QuadPart = 0 - (interval * 1000 * 10);
@@ -129,8 +128,14 @@ void lw_timer_stop(lw_timer ctx)
 	if (!lw_timer_started(ctx))
 		return;
 
-	CancelWaitableTimer(ctx->timer_handle);
-
+	// This will lead to the thread waiting forever, so, yeah.
+	// CancelWaitableTimer(ctx->timer_handle);
+	
+	assert(SetEvent(ctx->shutdown_event));
+	
+	lw_thread_join(ctx->timer_thread);
+	lw_thread_delete(ctx->timer_thread);
+	
 	ctx->started = lw_false;
 
 	lw_pump_remove_user(ctx->pump);

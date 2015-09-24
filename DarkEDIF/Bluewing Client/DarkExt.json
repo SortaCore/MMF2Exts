@@ -6,14 +6,14 @@
 		"About": {
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2013 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2015 by Darkwire Software",
 			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client.\r\n The Relay library was discontinued by developer James McLaughlin.",
 			// Use a file without path if your help file can be loaded by the MMF help file.
 			// "MyExt.chm";
 			// Or return the path of your file (relative to the MMF directory)
 			// if your file is not loaded by the MMF help file.
 			"Help": "Help/BluewingClient.chm",
-			"URL": "http://www.lacewing-project.org"
+			"URL": "http://dark-wire.com/relay/"
 		},
 
 		"ActionMenu":

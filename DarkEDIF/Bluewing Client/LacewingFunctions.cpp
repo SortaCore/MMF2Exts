@@ -20,6 +20,13 @@ void OnConnect(lacewing::relayclient &Client)
 }
 void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 {
+	// Old deny reason? Free it.
+	if (Ext.DenyReasonBuffer)
+		free(Ext.DenyReasonBuffer);
+
+	Ext.DenyReasonBuffer = _strdup(DenyReason);
+	if (!Ext.DenyReasonBuffer)
+		Ext.CreateError("Error copying deny reason from Lacewing to local buffer."); 
 	Ext.AddEvent(2);
 }
 void OnDisconnect(lacewing::relayclient &Client)

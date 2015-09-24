@@ -52,7 +52,7 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
    {
       size_t init_alloc = (length * 3);
 
-      if (! (*ctx = (lwp_heapbuffer) malloc (sizeof (**ctx) + init_alloc)))
+      if (! (*ctx = (lwp_heapbuffer) calloc (sizeof (**ctx) + init_alloc, 1)))
          return lw_false;
 
       memset (*ctx, 0, sizeof (**ctx));

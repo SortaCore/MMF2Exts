@@ -48,11 +48,44 @@ public:
 		bool					_AutomaticallyClearBinary;
 		char *					_GlobalID;
 		HANDLE					_Thread;
+		std::vector<Extension *> Refs;
 		
-		GlobalInfo() : _Client(_ObjEventPump), _PreviousName(NULL),
-		_SendMsg(NULL), _DenyReasonBuffer(NULL), _SendMsgSize(0),
-		_AutomaticallyClearBinary(false), _GlobalID(NULL), _Thread(NULL) {}
-	} * Globals;
+		GlobalInfo(Extension * e) : _ObjEventPump(lacewing::eventpump_new()), _Client(_ObjEventPump), _PreviousName(NULL),
+			_SendMsg(NULL), _DenyReasonBuffer(NULL), _SendMsgSize(0),
+			_AutomaticallyClearBinary(false), _GlobalID(NULL), _Thread(NULL)
+		{
+			Refs.push_back(e);
+
+			_Client.onchannellistreceived(::OnChannelListReceived);
+			_Client.onmessage_channel(::OnChannelMessage);
+			_Client.onconnect(::OnConnect);
+			_Client.onconnectiondenied(::OnConnectDenied);
+			_Client.ondisconnect(::OnDisconnect);
+			_Client.onerror(::OnError);
+			_Client.onchannel_join(::OnJoinChannel);
+			_Client.onchannel_joindenied(::OnJoinChannelDenied);
+			_Client.onchannel_leave(::OnLeaveChannel);
+			_Client.onchannel_leavedenied(::OnLeaveChannelDenied);
+			_Client.onname_changed(::OnNameChanged);
+			_Client.onname_denied(::OnNameDenied);
+			_Client.onname_set(::OnNameSet);
+			_Client.onpeer_changename(::OnPeerNameChanged);
+			_Client.onpeer_connect(::OnPeerConnect);
+			_Client.onpeer_disconnect(::OnPeerDisconnect);
+			_Client.onmessage_peer(::OnPeerMessage);
+			_Client.onmessage_serverchannel(::OnServerChannelMessage);
+			_Client.onmessage_server(::OnServerMessage);
+
+			// Useful so Lacewing callbacks can access Extension
+			_Client.tag = e;
+		}
+		~GlobalInfo()
+		{
+			// Mo.
+		}
+	};
+	bool IsGlobal;
+	GlobalInfo * Globals;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				Globals->_ObjEventPump
@@ -71,8 +104,9 @@ public:
 	void AddToSend(void *, size_t);
 	
 
-	// Because Lacewing is singlethreaded, once we move the variables outside of its functions into DarkEDIF,
-	// the data may be overwritten, causing crashes and other such nasties.
+	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
+	// functions into DarkEDIF, the data may be overwritten, causing crashes and other such nasties.
+	
 	// To work around this, we duplicate all the variables, and provide a special event number which will remove
 	// all the pointers in SaveExtInfo after they should no longer be valid.
 	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as

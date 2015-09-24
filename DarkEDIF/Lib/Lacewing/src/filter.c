@@ -44,7 +44,7 @@ struct _lw_filter
 
 lw_filter lw_filter_new ()
 {
-   lw_filter ctx = (lw_filter) malloc (sizeof (*ctx));
+   lw_filter ctx = (lw_filter) calloc (sizeof (*ctx), 1);
 
    ctx->local_port = 0;
    ctx->remote_port = 0;
@@ -215,19 +215,21 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
       if (ipv6)
       {
-         if ((s = WSASocket
-            (AF_INET6, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
-         {
-            if (WSAGetLastError () != WSAEAFNOSUPPORT)
-            {
-               lw_error_add (error, WSAGetLastError ());
-               lw_error_addf (error, "Error creating socket");
+		  if ((s = WSASocket
+			  (AF_INET6, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
+		  {
+			  if (WSAGetLastError() != WSAEAFNOSUPPORT)
+			  {
+				  lw_error_add(error, WSAGetLastError());
+				  lw_error_addf(error, "Error creating socket");
 
-               return -1;
-            }
+				  return -1;
+			  }
 
-            ipv6 = lw_false;
-         }
+			  ipv6 = lw_false;
+		  }
+		  else
+			  goto ipv6success;
       }
 
       if (!ipv6)
@@ -275,11 +277,13 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
    #endif
 
+	ipv6success:
    if (ipv6)
       lwp_disable_ipv6_only (s);
 
    reuse = lw_filter_reuse (filter) ? 1 : 0;
-   setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof (reuse));
+   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse)) != 0)
+	   assert(0);
 
    memset (&addr, 0, sizeof (addr));
 
@@ -314,22 +318,13 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
          addr_len = sizeof (struct sockaddr_in);
 
          ((struct sockaddr_in *) &addr)->sin_family = AF_INET;
-         ((struct sockaddr_in *) &addr)->sin_addr.s_addr = INADDR_ANY;
+		 // Phi: may have been htonl(INADDR_ANY) applied to sin_addr.
+		 memcpy(&addr, lw_filter_remote(filter)->info->ai_addr, sizeof(sockaddr_in));
 
-         ((struct sockaddr_in *) &addr)->sin_port
+		 ((struct sockaddr_in *) &addr)->sin_port
             = lw_filter_local_port (filter) ?
                htons ((unsigned short) lw_filter_local_port (filter)) : 0;
       }
-   }
-
-   if (bind (s, (struct sockaddr *) &addr, (int) addr_len) == -1)
-   {
-      lw_error_add (error, lwp_last_socket_error);
-      lw_error_addf (error, "Error binding socket");
-
-      lwp_close_socket (s);
-
-      return -1;
    }
 
    return s;

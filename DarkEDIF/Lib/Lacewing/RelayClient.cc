@@ -89,12 +89,18 @@ namespace lacewing
 			handler_peer_changename = 0;
 			handler_channellistreceived = 0;
 			
-			reader.messagehandler = messagehandler;
+			message.framereset();
+			message.reset();
+			
+			socket->tag(this);
+			udp->tag(this);
+			
 			reader.tag = this;
+			reader.messagehandler = messagehandler;
 
-			timer->on_tick(clienttick);
 			timer->tag(this);
-
+			timer->on_tick(clienttick);
+			
 			clear();
 		}
 		framereader reader;
@@ -114,7 +120,7 @@ namespace lacewing
 		/// <summary> Empties the channel list. </summary>
 		void clearchannellist()
 		{
-			std::for_each(channellist.begin(), channellist.end(), [&](relayclient::channellisting *&c) { delete c; c = nullptr; });
+			std::for_each(channellist.begin(), channellist.end(), [&](relayclient::channellisting *&c) { delete c; });
 			channellist.clear();
 		}
 
@@ -166,6 +172,10 @@ namespace lacewing
 		{
 			public_.internaltag = this;
 			public_.tag = 0;
+			
+			id = 0xffff;
+			name = nullptr;
+			ischannelmaster = false;
 		}
 
 		~channelinternal()
@@ -206,12 +216,14 @@ namespace lacewing
 
 	void relayclientinternal::clear()
 	{
-		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { delete c; c = nullptr; });
+		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { delete c; });
 		channels.clear();
+		clearchannellist();
 
 		name = nullptr;
 		id = 0xffff;
 		connected = false;
+		welcomemessage = nullptr;
 	}
 
 	/// <summary> searches for the first channel by id number. </summary>
@@ -229,8 +241,8 @@ namespace lacewing
 
 		/* opening 0 byte */
 		socket->write("", 1);
-
-		internal.udp->host(socket->server_address());
+		
+		// internal.udp->host(socket->server_address(), nullptr, 0U);
 
 		framebuilder &message = internal.message;
 
@@ -239,6 +251,23 @@ namespace lacewing
 		message.add<unsigned char>(0); /* connect */
 		message.add("revision 3", -1);
 
+		// If I have this here, it will start UDP, but throw errors in RecvMsg().
+		// If I don't, TCP doesn't get any Connect Response - somehow.
+		// Something must have screwed up but I have no idea what. It used to work, once I fixed the 
+		// lw_addr_equal problem.
+		// 
+		// Order as meant to happen:
+		// 1) TCP Socket open.
+		// 2) TCP Socket connect
+		// --> 3) TCP Socket send Lacewing connect request message
+		// 4) TCP message (connect request success)
+		// somewhere in 1-4 UDP socket host
+		// 5) --> UDP socket send message
+		// note: udp post_receives doesn't work unless WSASendTo is called first.
+		// But it's called during UDP's host function.
+		// But we can't call it first unless TCP lacewing connect success msg, including client ID, has been received.
+		// But we don't have the client ID unless TCP connect works, but it only works if we activate UDP, it calls post_receives, which ...
+		
 		message.send(internal.socket);
 	}
 
@@ -293,7 +322,8 @@ namespace lacewing
 			internal.handler_error(internal.client, error);
 	}
 
-	relayclient::relayclient(pump eventpump) : socket(client_new(eventpump)), udp(udp_new(eventpump))
+	relayclient::relayclient(pump eventpump) : 
+		socket(client_new(eventpump)), udp(udp_new(eventpump))
 	{
 		// lacewinginitialise no longer needed?
 		
@@ -307,6 +337,7 @@ namespace lacewing
 
 		socket->nagle(false);
 
+
 		lacewing::relayclientinternal * r = new lacewing::relayclientinternal(*this, socket, udp, eventpump);
 		tag = 0;
 
@@ -317,10 +348,26 @@ namespace lacewing
 
 	relayclient::~relayclient()
 	{
-		disconnect();
+		socket->on_connect(nullptr);
+		socket->on_disconnect(nullptr);
+		socket->on_data(nullptr);
+		socket->on_error(nullptr);
+
+		udp->on_data(nullptr);
+		udp->on_error(nullptr);
+		
+		lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
+		
+		while (socket->pump()->in_use())
+			Sleep(0);
+		lw_udp_delete((lw_udp)udp);
+		lw_client_delete((lw_client)socket);
+
 
 		delete ((relayclientinternal *)internaltag);
 		internaltag = nullptr;
+
+		WSACleanup();
 	}
 
 	void relayclient::connect(const char * host, int port)
@@ -609,9 +656,11 @@ namespace lacewing
 
 					if (reader.failed)
 						break;
-
+					
+					udp->host(socket->server_address());
 					clienttick();
-					timer->start(500);
+					
+					timer->start(500); // see clienttick
 
 					/* the connect handler will be called on udp acknowledged */
 				}
@@ -634,7 +683,7 @@ namespace lacewing
 
 				if (succeeded)
 				{
-					if (!this->name[0])
+					if (!this->name)
 					{
 						this->name = name;
 
@@ -999,7 +1048,12 @@ namespace lacewing
 
 	void relayclientinternal::clienttick()
 	{
-		message.addheader(7, 0, 1, id); /* udphello */
+		// clienttick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::timer var.
+		// It starts from the time the Connect Request Success message is sent.
+		if (!udp->hosting())
+			throw std::exception("clienttick() called, but not hosting UDP."); 
+		
+		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
 	}
 
@@ -1045,12 +1099,14 @@ namespace lacewing
 
 	relayclient::channel * relayclient::firstchannel() const
 	{
-		return &(*((lacewing::relayclientinternal *)internaltag)->channels.begin())->public_;
+		std::vector<channelinternal *> &c = ((lacewing::relayclientinternal *)internaltag)->channels;
+		return (c.begin() == c.end()) ? nullptr : &(*c.begin())->public_;
 	}
 	
 	relayclient::channel::peer * relayclient::channel::firstpeer() const
 	{
-		return &(*((lacewing::channelinternal *)internaltag)->peers.begin())->public_;
+		std::vector<peerinternal *> &p = ((lacewing::channelinternal *)internaltag)->peers;
+		return (p.begin() == p.end()) ? nullptr : &(*p.begin())->public_;
 	}
 
 	int relayclient::channellistingcount() const
@@ -1060,7 +1116,8 @@ namespace lacewing
 
 	const relayclient::channellisting * relayclient::firstchannellisting() const
 	{
-		return *((relayclientinternal *)internaltag)->channellist.cbegin();
+		std::vector<channellisting *> &c = ((relayclientinternal *)internaltag)->channellist;
+		return (c.cbegin() == c.cend()) ? nullptr : *c.cbegin();
 	}
 	const relayclient::channellisting * relayclient::channellisting::next() const
 	{

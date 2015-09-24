@@ -53,6 +53,8 @@ public:
     {
         messagehandler = 0;
         state          = 0;
+		messagesize	   = 0;
+		messagetype    = 0;
     }
 
     inline void process(const char * data, unsigned int size)

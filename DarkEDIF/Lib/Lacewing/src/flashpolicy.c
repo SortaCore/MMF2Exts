@@ -124,7 +124,7 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
    fseek (file, 0, SEEK_END);
 
    ctx->size = ftell (file);
-   ctx->buffer = (char *) malloc (ctx->size);
+   ctx->buffer = (char *) calloc (ctx->size, 1);
 
    fseek (file, 0, SEEK_SET);
 

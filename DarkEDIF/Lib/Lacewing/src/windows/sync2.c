@@ -37,7 +37,7 @@ struct _lw_sync
 
 lw_sync lw_sync_new ()
 {
-   lw_sync ctx = (lw_sync) malloc (sizeof (*ctx));
+   lw_sync ctx = (lw_sync) calloc (sizeof (*ctx), 1);
 
    if (!ctx)
       return 0;
