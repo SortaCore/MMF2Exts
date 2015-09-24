@@ -358,8 +358,6 @@ namespace lacewing
 		
 		lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
 		
-		while (socket->pump()->in_use())
-			Sleep(0);
 		lw_udp_delete((lw_udp)udp);
 		lw_client_delete((lw_client)socket);
 

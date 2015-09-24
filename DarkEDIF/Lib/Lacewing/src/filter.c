@@ -318,14 +318,23 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
          addr_len = sizeof (struct sockaddr_in);
 
          ((struct sockaddr_in *) &addr)->sin_family = AF_INET;
-		 // Phi: may have been htonl(INADDR_ANY) applied to sin_addr.
-		 memcpy(&addr, lw_filter_remote(filter)->info->ai_addr, sizeof(sockaddr_in));
-
+		 ((struct sockaddr_in *) &addr)->sin_addr.s_addr = INADDR_ANY;
 		 ((struct sockaddr_in *) &addr)->sin_port
             = lw_filter_local_port (filter) ?
                htons ((unsigned short) lw_filter_local_port (filter)) : 0;
       }
    }
+
+   if (bind(s, (struct sockaddr *) &addr, (int)addr_len) == -1)
+   {
+	   lw_error_add(error, lwp_last_socket_error);
+	   lw_error_addf(error, "Error binding socket");
+
+	   lwp_close_socket(s);
+
+	   return -1;
+   }
+
 
    return s;
 }

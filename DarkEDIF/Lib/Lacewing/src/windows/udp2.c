@@ -262,60 +262,6 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	
 	// May be needed
 	assert(lw_addr_resolve(a) == nullptr);
-
-	// This binds the socket. Should only be used for clients.
-	// You will get WSAEINVAL in post_receives if this section is not included.
-	
-	// UDP bind/connect is discouraged on clients, but normally it's done implicitly with you use sendto().
-	// Since we don't have a message to use sendto() on, we should use connect() or bind().
-	// bind() is more complicated, but connect() means UDP datagrams coming from some IP other than this server
-	// will be silently discarded, and allows use of SendMsg and RecvMsg (as well as UDP default SendTo and RecvFrom).
-	// I'm using connect() because well. Look at the length of the bind version.
-	
-	// This if condition is basically "is the udp set to one address or can anyone connect to it".
-	// If the former, the connect() is used to fixate it.
-	if ((a->info->ai_family == PF_INET && ((sockaddr_in *)a->info->ai_addr)->sin_addr.S_un.S_addr != INADDR_ANY) ||
-		(a->info->ai_family == PF_INET6 && !IN6ADDR_ISANY((sockaddr_in6 *)a->info->ai_addr)))
-	{
-		if (connect(ctx->socket, a->info->ai_addr, a->info->ai_addrlen) != 0)
-		{
-			DWORD lastError = GetLastError();
-			if (ctx->on_error)
-			{
-				lw_error e = lw_error_new();
-				lw_error_add(e, lastError);
-				lw_error_addf(e, "connect() binding of UDP client socket failed.");
-				
-				ctx->on_error(ctx, e);
-
-				lw_error_delete(e);
-			}
-			assert(false);
-		}
-		
-		/*// Unholy use of bind()
-		sockaddr_storage * i = (sockaddr_storage *)calloc(sizeof(sockaddr_storage), 1);
-		if (a->info->ai_family == PF_INET)
-		{
-			sockaddr_in * j = (sockaddr_in *)i;
-			j->sin_family = AF_INET;
-			j->sin_addr.S_un.S_addr = INADDR_ANY;
-			j->sin_port = htons(0);
-		}
-		else
-		{
-			sockaddr_in6 * j = (sockaddr_in6 *)i;
-			j->sin6_family = AF_INET6;
-			IN6ADDR_SETANY(j);
-			j->sin6_port = htons(0);
-		}
-
-		if (bind(ctx->socket, (sockaddr *)i, a->info->ai_family == PF_INET ? sizeof(sockaddr_in) : sizeof(sockaddr_in6)) != 0)
-		{
-			DWORD lastError = GetLastError();
-			assert(false);
-		}*/
-	}
 	
 	// Not a valid address until the WSASendTo or bind is triggered
 	post_receives(ctx);
