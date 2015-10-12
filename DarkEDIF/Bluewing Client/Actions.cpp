@@ -5,6 +5,8 @@ std::string CriticalSection;
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
 									   "This is probably due to parameter changes.", "Lacewing Relay Client - DarkEDIF", MB_OK)
+#define Saved (Globals->_Saved)
+
 void Extension::Replaced_Connect(char * Hostname, int Port)
 {
 	Remake("Connect");
@@ -190,13 +192,13 @@ void Extension::LoopClientChannels()
 	{
 		if (!Selected->isclosed)
 		{
-			SaveExtInfo &S = AddEvent(14);
+			SaveExtInfo &S = Globals->AddEvent(14);
 			S.Channel = Selected;
 		}
 
 		Selected = Selected->next();
 	}
-	AddEvent(18);
+	Globals->AddEvent(18);
 }
 void Extension::SelectPeerOnChannelByName(char * PeerName)
 {
@@ -275,12 +277,12 @@ void Extension::LoopPeersOnChannel()
 		{
 			if (!Selected->isclosed)
 			{
-				SaveExtInfo &S = AddEvent(13);
+				SaveExtInfo &S = Globals->AddEvent(13);
 				S.Peer = Selected;
 			}
 			Selected = Selected->next();
 		}
-		SaveExtInfo &S = AddEvent(17);
+		SaveExtInfo &S = Globals->AddEvent(17);
 		S.Peer = Stored;
 	}
 }
@@ -293,11 +295,11 @@ void Extension::LoopListedChannels()
 	const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
 	while (Selected)
 	{
-		SaveExtInfo &S = AddEvent(27); // Catch first listing by this being first
+		SaveExtInfo &S = Globals->AddEvent(27); // Catch first listing by this being first
 		S.ChannelListing = Selected;
 		Selected = Selected->next();
 	}
-	AddEvent(28);
+	Globals->AddEvent(28);
 }
 void Extension::SendBinaryToServer(int Subchannel)
 {
@@ -476,7 +478,7 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		if (fopen_s(&File, Filename, "wb") || !File)
 		{
 			char errorval [20];
-			SaveExtInfo &S = AddEvent(0);
+			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Cannot save received binary to file, error ";
 			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
 			{
@@ -504,7 +506,7 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
 			char sizeastext [20];
-			SaveExtInfo &S = AddEvent(0);
+			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Couldn't save the received binary to file, ";
 			if (_itoa_s(errno, &sizeastext[0], 20, 10))
 			{
@@ -537,7 +539,7 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		if (!File)
 		{
 			char errorval [20];
-			SaveExtInfo &S = AddEvent(0);
+			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Cannot append received binary to file, error ";
 			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
 			{
@@ -559,7 +561,7 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
 			char sizeastext [20];
-			SaveExtInfo &S = AddEvent(0);
+			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Couldn't append the received binary to file, ";
 			if (_itoa_s(errno, &sizeastext[0], 20, 10))
 			{
@@ -587,7 +589,7 @@ void Extension::AddFileToBinary(char * Filename)
 		if (!(File = _fsopen(Filename, "wb", _SH_DENYWR)))
 		{
 			char errorval [20];
-			SaveExtInfo &S = AddEvent(0);
+			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Cannot save binary to file, error ";
 			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
 			{
@@ -622,7 +624,7 @@ void Extension::AddFileToBinary(char * Filename)
 			if ((s = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
 			{
 				char sizeastext [20];
-				SaveExtInfo &S = AddEvent(0);
+				SaveExtInfo &S = Globals->AddEvent(0);
 				std::string Error = "Couldn't write full buffer to file, ";
 				if (_itoa_s(s, &sizeastext[0], 20, 10))
 				{
@@ -838,13 +840,13 @@ void Extension::LoopListedChannelsWithLoopName(char * LoopName)
 		const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
 		while (Selected)
 		{
-			SaveExtInfo &S = AddEvent(59); // Catch first listing by this being first
+			SaveExtInfo &S = Globals->AddEvent(59); // Catch first listing by this being first
 			S.ChannelListing = Selected;
 			S.Loop.Name = _strdup(LoopName);
 			Selected = Selected->next();
 		}
 		
-		SaveExtInfo &S = AddEvent(60);
+		SaveExtInfo &S = Globals->AddEvent(60);
 		S.Loop.Name = _strdup(LoopName);
 	}
 }
@@ -860,13 +862,13 @@ void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 		{
 			if (!LoopChannel->isclosed)
 			{
-				SaveExtInfo &S = AddEvent(63);
+				SaveExtInfo &S = Globals->AddEvent(63);
 				S.Channel = LoopChannel;
 				S.Loop.Name = _strdup(LoopName);
 			}
 			LoopChannel = LoopChannel->next();
 		}
-		SaveExtInfo &S = AddEvent(64);
+		SaveExtInfo &S = Globals->AddEvent(64);
 		S.Channel = Stored;
 	}
 }
@@ -886,13 +888,13 @@ void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 		{
 			if (!LoopPeer->isclosed)
 			{
-				SaveExtInfo &S = AddEvent(61);
+				SaveExtInfo &S = Globals->AddEvent(61);
 				S.Peer = LoopPeer;
 				S.Loop.Name = _strdup(LoopName);
 			}
 			LoopPeer = LoopPeer->next();
 		}
-		SaveExtInfo &S = AddEvent(62);
+		SaveExtInfo &S = Globals->AddEvent(62);
 		S.Peer = Stored;
 		S.Loop.Name = _strdup(LoopName);
 	}
@@ -932,4 +934,10 @@ void Extension::ResizeBinaryToSend(int NewSize)
 		SendMsg = NewMsg;
 		SendMsgSize = NewSize;
 	}
+}
+void Extension::SetDestroySetting(int enabled)
+{
+	if (enabled > 1 || enabled < 0)
+		return CreateError("Illegal setting passed to SetDestroySetting, expecting 0 or 1.");
+	Globals->FullDeleteEnabled = enabled != 0;
 }

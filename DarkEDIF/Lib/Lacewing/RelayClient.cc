@@ -196,7 +196,8 @@ namespace lacewing
 		/// <returns> null if it fails, else the matching peer. </returns>
 		peerinternal * findpeerbyid(unsigned short id)
 		{
-			auto i = std::find_if(peers.cbegin(), peers.cend(), [=](const peerinternal * const & p) { return p->id == id; });
+			auto i = std::find_if(peers.cbegin(), peers.cend(), 
+				[&](const peerinternal * const & p) { return p->id == id; });
 			return (i == peers.cend() ? nullptr : *i);
 		}
 
@@ -231,7 +232,8 @@ namespace lacewing
 	/// <returns> null if it fails, else the matching channel. </returns>
 	channelinternal * relayclientinternal::findchannelbyid(unsigned short id)
 	{
-		auto i = std::find_if(channels.cbegin(), channels.cend(), [=](const channelinternal * const &c) { return c->id == id; });
+		auto i = std::find_if(channels.cbegin(), channels.cend(), 
+			[&](const channelinternal * const &c) { return c->id == id; });
 		return (i == channels.cend() ? nullptr : *i);
 	}
 
@@ -587,6 +589,23 @@ namespace lacewing
 		message.add <unsigned short>(channel.id);
 
 		message.send(internal.socket);
+	}
+	relayclient::channel::~channel()
+	{
+		delete (channelinternal *)internaltag;
+		internaltag = nullptr;
+
+		if (tag)
+			throw std::exception("Deleted a channel without a null tag: possible memory leak.");
+	}
+
+	relayclient::channel::peer::~peer()
+	{
+		delete (peerinternal *)internaltag;
+		internaltag = nullptr;
+
+		if (tag)
+			throw std::exception("Deleted a peer without a null tag: possible memory leak.");
 	}
 
 	const char * relayclient::channel::name() const
@@ -951,7 +970,7 @@ namespace lacewing
 			
 
 			auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
-				[=](peerinternal *&p){ return p->id == peerid; });
+				[&](peerinternal *&p){ return p->id == peerid; });
 			peerinternal * peer = i == channel2->peers.cend() ? nullptr : *i;
 
 			unsigned char flags = reader.get <unsigned char>();
@@ -1074,7 +1093,7 @@ namespace lacewing
 		peerinternal &internal = *(peerinternal *)internaltag;
 		auto end = internal.channel.peers.end();
 		auto i = std::find_if(internal.channel.peers.begin(), internal.channel.peers.end(),
-			[=](peerinternal * &p) { return p->id == internal.id; });
+			[&](peerinternal * &p) { return p->id == internal.id; });
 		return (i == end || ++i == end) ? nullptr : &(*i)->public_;
 	}
 
@@ -1091,7 +1110,7 @@ namespace lacewing
 		auto end = internal.client.channels.end();
 		
 		auto i = std::find_if(internal.client.channels.begin(), end,
-			[=](channelinternal * &c) { return c->id == internal.id; });
+			[&](channelinternal * &c) { return c->id == internal.id; });
 		return (i == end || ++i == end) ? nullptr : &(*i)->public_;
 	}
 
@@ -1122,7 +1141,7 @@ namespace lacewing
 		relayclientinternal &internal = *(relayclientinternal *)internaltag;
 		auto end = internal.channellist.end();
 		auto i = std::find_if(internal.channellist.begin(), end, 
-			[=](channellisting * &c) { return c->name == name; });
+			[&](channellisting * &c) { return c->name == name; });
 		return (i == end || ++i == end) ? nullptr : *i;
 	}
 

@@ -113,13 +113,16 @@
 				[74, "Resize"]
 			],
 
-			["Received binary",
-				[50, "Save to a file"],
-				[51, "Append to a file"],
-				[67, "Decompress (ZLIB)"],
-				"Separator",
-				[68, "Move cursor"]
-			],
+            ["Received binary",
+                [50, "Save to a file"],
+                [51, "Append to a file"],
+                [67, "Decompress (ZLIB)"],
+                "Separator",
+                [68, "Move cursor"]
+            ],
+
+            "Separator",
+            [75, "Set connection retain setting"],
 
 			"Separator"
 		],
@@ -774,6 +777,13 @@
 				"Parameters":
 				[
 					["Integer", "New size (in bytes)"]
+				]
+			},
+			{
+				"Title": "Kill connection when last instance destroyed: %0",
+				"Parameters":
+				[
+					["Integer", "Disabled=0, Enabled=1"]
 				]
 			}
 		],
@@ -1528,7 +1538,7 @@
 				"Info": "The version of the liblacewing library used to build this extension.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing #20 (Windows/x86)"
+				"DefaultState": "liblacewing 0.5.4 (Windows/x86); / Bluewing reimpl"
 			},
 			{
 				"Title": "Automatically clear binary",
@@ -1553,6 +1563,18 @@
 				"Info": "Check this box to enable multithreading. This makes Lacewing ultra-responsive, and retains the connection when popup messages occur.",
 				"Type": "Checkbox",
 				"DefaultState": true
+			},
+			{
+				"Title": "Enable timeout warning",
+				"Info": "If true, will cause messages to pop up after 10 seconds of a retained connection with no owning objects.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Kill connection when disowned",
+				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Bluewings are destroyed.",
+				"Type": "Checkbox",
+				"DefaultState": false
 			}
 		]
 	}

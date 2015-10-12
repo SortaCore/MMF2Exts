@@ -75,6 +75,8 @@ struct EDITDATA
 		 MultiThreading;
 	bool Global;
 	char edGlobalID[255];
+	bool TimeoutWarningEnabled;
+	bool FullDeleteEnabled;
 
 	// Keep as last or risk overwriting by functions accessing this address
 	size_t DarkEDIF_Prop_Size;
@@ -103,6 +105,7 @@ struct RUNDATA
     */
 };
 DWORD WINAPI LacewingLoopThread(void * ThisExt);
+DWORD WINAPI TimeoutWarningFunc(void * ThisGlobalInfo);
 
 #define COMMON_H
 #include "Extension.h"

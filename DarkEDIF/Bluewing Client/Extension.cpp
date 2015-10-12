@@ -6,12 +6,12 @@
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
 
+#define Ext (*Globals->_Ext)
+#define Saved Globals->_Saved
+
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
 {
-	// Create the thread lock
-	InitializeCriticalSection(&Lock);
-
 	// Nullify the thread-specific data
 	memset(&ThreadData, 0, sizeof(SaveExtInfo));
 
@@ -95,6 +95,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(72, ReplacedNoParams);
 		LinkAction(73, Connect);
 		LinkAction(74, ResizeBinaryToSend);
+		LinkAction(75, SetDestroySetting);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
@@ -251,38 +252,39 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	*/
 
 	IsGlobal = edPtr->Global;
+	lw_trace("Extension create: IsGlobal=%i.", IsGlobal ? 1 : 0);
 	if (IsGlobal)
 	{
 		char * GlobalIDCopy = _strdup(edPtr->edGlobalID);
 		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str());
 		if (!v)
 		{
-			Globals = new GlobalInfo(this);
-			InitializeCriticalSection(&Lock);
+			Globals = new GlobalInfo(this, edPtr);
 			Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str(), Globals);
+			lw_trace("Created new Globals.");
 		}
 		else
 		{
 			// Add this Extension to Refs
 			Globals = (GlobalInfo *)v;
 			Globals->Refs.push_back(this);
+			lw_trace("Globals exists: added to Refs.");
 		}
 
 		GlobalID = GlobalIDCopy;
 	}
 	else
 	{
-		Globals = new GlobalInfo(this);
-		InitializeCriticalSection(&Lock);
+		lw_trace("Non-Global object; creating Globals, not submitting to WriteGlobal.");
+		Globals = new GlobalInfo(this, edPtr);
+		
 		Globals->_ObjEventPump->tick();
 	}
-
-	AutomaticallyClearBinary = edPtr->AutomaticClear;
 
 	// Try to boot the Lacewing thread if multithreading and not already running
 	if (edPtr->MultiThreading && !Globals->_Thread && !(Globals->_Thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 	{
-		MessageBoxA(NULL, "Error: failed to boot thread. Falling back to single-threaded interface.", "DarkEDIF - runtime error", MB_OK);
+		CreateError("Error: failed to boot thread. Falling back to single-threaded interface.");
 		Runtime.Rehandle();
 	}
 	else if (!edPtr->MultiThreading)
@@ -304,7 +306,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 	return 0;
 }
 
-SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
+SaveExtInfo& GlobalInfo::AddEvent(int Event, bool UseLastData /* = false */)
 {
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
@@ -324,17 +326,12 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
 	*/
 
+	
+
 	// Cause a new event
 	if (UseLastData == false)
 	{
 		SaveExtInfo * NewEvent = new SaveExtInfo;
-		
-		Extension * E = (Extension *)Globals->_Client.tag;
-		Extension * F = this;
-
-		bool eq = E == F;
-		assert(eq);
-			
 
 		// Initialise with one condition to be triggered
 		NewEvent->NumEvents = 1;
@@ -342,23 +339,21 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		
 		// Failed to allocate memory
 		if (!NewEvent->CondTrig)
-		{
-			delete NewEvent;
-			return ThreadData;
-		}
+			throw std::exception("Out of memory.");
 		NewEvent->CondTrig[0] = (unsigned short)Event;
 		
 		EnterCriticalSectionDerpy(&Lock); // Needed before we access Extension
 		
 		// Copy Extension's data to vector
-		if (memcpy_s(((char *)NewEvent)+5, sizeof(SaveExtInfo)-5, ((char *)&ThreadData)+5, sizeof(SaveExtInfo)-5))
+		if (memcpy_s(((char *)NewEvent) + 5, sizeof(SaveExtInfo) - 5, ((char *)&_Ext->ThreadData) + 5, sizeof(SaveExtInfo) - 5))
 		{
 			// Failed to copy memory (error in "errno")
+			// delete NewEvent; // Keep it for debugging
 			LeaveCriticalSectionDerpy(&Lock);
-			return ThreadData;
+			throw std::exception("Memory copy failed while doing a lacewing event.");
 		}
 
-		Saved.push_back(NewEvent);
+		_Saved.push_back(NewEvent);
 		
 		LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
 	}
@@ -366,15 +361,16 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	{
 		EnterCriticalSectionDerpy(&Lock);
 
+		if (_Saved.size() == 0)
+			throw std::exception("Tried to append an event, and failed drastically.");
 		// Add current condition to saved expressions
-		SaveExtInfo &S = (Saved.size() == 0) ? ThreadData : *Saved.back();
-		
+		SaveExtInfo &S = *_Saved.back();
 		unsigned short * CurrentCond = (unsigned short *)realloc(&S.CondTrig[0], S.NumEvents+1 * sizeof(short));
 		
 		if (!CurrentCond)
 		{
 			LeaveCriticalSectionDerpy(&Lock);
-			return ThreadData;
+			throw std::exception("Out of memory.");
 		}
 
 		CurrentCond[S.NumEvents++] = (unsigned short)Event;
@@ -385,13 +381,22 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	}
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
-	Runtime.Rehandle();
-	return *Saved.back();
+	
+	if (_Ext != nullptr)
+		_Ext->Runtime.Rehandle();
+	return *_Saved.back();
 }
 
 void Extension::CreateError(const char * Error)
 {
-	SaveExtInfo &event = AddEvent(0, false);
+	SaveExtInfo &event = Globals->AddEvent(0, false);
+	event.Error.Text = _strdup(Error);
+	//__asm int 3;
+}
+
+void GlobalInfo::CreateError(const char * Error)
+{
+	SaveExtInfo &event = this->AddEvent(0, false);
 	event.Error.Text = _strdup(Error);
 	//__asm int 3;
 }
@@ -412,7 +417,7 @@ void Extension::AddToSend(void * Data, size_t Size)
 	if (!newptr)
 	{
 		char errorval [20];
-		SaveExtInfo &S = AddEvent(0);
+		SaveExtInfo &S = Globals->AddEvent(0);
 		std::string Error = "Received error ";
 		if (_itoa_s(*_errno(), &errorval[0], 20, 10))
 		{
@@ -436,7 +441,7 @@ void Extension::AddToSend(void * Data, size_t Size)
 	if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
 	{
 		char errorval [20];
-		SaveExtInfo &S = AddEvent(0);
+		SaveExtInfo &S = Globals->AddEvent(0);
 		std::string Error = "Received error ";
 		if (_itoa_s(errno, &errorval[0], 20, 10))
 		{
@@ -455,6 +460,8 @@ void Extension::AddToSend(void * Data, size_t Size)
 
 Extension::~Extension()
 {
+	lw_trace("~Extension called; Refs count is %u.", Globals->Refs.size());
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	// Remove this Extension from liblacewing usage.
 	auto i = std::find(Globals->Refs.cbegin(), Globals->Refs.cend(), this);
 	bool wasBegin = i == Globals->Refs.cbegin();
@@ -463,24 +470,40 @@ Extension::~Extension()
 	// Shift secondary event management to other Extension, if any
 	if (!Globals->Refs.empty())
 	{
-		Extension * j = *Globals->Refs.begin();
-		Globals->_Client.tag = j;
+		lw_trace("Note: Switched Lacewing instances.");
 		
-		// Single-threaded interface - switch Handle ticking over.
-		if (!Globals->_Thread)
-			j->Runtime.Rehandle();
+		// Switch Handle ticking over to next Extension visible.
+		if (wasBegin)
+		{
+			Globals->_Ext = Globals->Refs.front();
+			Globals->_Ext->Runtime.Rehandle();
+		}
+		LeaveCriticalSectionDerpy(&Globals->Lock);
 	}
-	// Last instance of this object; if global, cleanup the liblacewing
-	else if (IsGlobal)
+	// Last instance of this object; if global, do not cleanup.
+	// In single-threaded instances, this will cause a dirty timeout.
+	// In multi-threaded instances, this will retain the connection indefinitely.
+	else if (!Globals->FullDeleteEnabled && IsGlobal)
 	{
+		lw_trace("Note: Last instance dropped - Globals will be retained until a Disconnect is called.");
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+
+		if (Globals->TimeoutWarningEnabled)
+			CreateThread(NULL, 0, TimeoutWarningFunc, Globals, NULL, NULL);
+	}
+	else // If not global, cleanup the liblacewing; we know it's not used elsewhere
+	{
+		if (!IsGlobal)
+			lw_trace("Note: Not global, closing Globals info.");
+		else
+			lw_trace("Note: Full delete enabled, closing Globals info.");
 		Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + Globals->_GlobalID).c_str(), nullptr);
+		LeaveCriticalSectionDerpy(&Globals->Lock);
 		delete Globals;
 		Globals = nullptr;
 	}
-
-	DeleteCriticalSection(&Lock);
 }
-
+namespace lacewing { struct channelinternal; struct peerinternal; }
 short Extension::Handle()
 {
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
@@ -500,7 +523,7 @@ short Extension::Handle()
 	bool RunNextLoop = !Globals->_Thread;
 	while (true)
 	{
-		if (!TryEnterCriticalSection(&Lock))
+		if (!TryEnterCriticalSection(&Globals->Lock))
 		{
 			RunNextLoop = true;
 			break; // Lock already occupied; leave it and run next event loop
@@ -512,7 +535,7 @@ short Extension::Handle()
 
 		if (Saved.size() == 0)
 		{
-			LeaveCriticalSectionDerpy(&Lock);
+			LeaveCriticalSectionDerpy(&Globals->Lock);
 			break;
 		}
 		SaveExtInfo * S = Saved.front();
@@ -528,7 +551,7 @@ short Extension::Handle()
 			ThreadData.Channel = S->Channel;
 		if (S->Peer != nullptr)
 			ThreadData.Peer = S->Peer;
-		LeaveCriticalSectionDerpy(&Lock);
+		LeaveCriticalSectionDerpy(&Globals->Lock);
 				
 		// Remove copies if this particular event number is used
 		if (S->CondTrig[0] == 0xFFFF)
@@ -546,18 +569,18 @@ short Extension::Handle()
 							if (!S->Channel->isclosed)
 								CreateError("Channel being removed but not marked as closed!");
 
+							delete *u;
 							Channels.erase(u);
 							break;
 						}
 					}
 
-					delete S->Channel;
 				}
 				else // Peer leave
 				{
 					for (auto u = Channels.begin(); u != Channels.end(); ++u)
 					{
-						if (*u == ThreadData.Channel)
+						if (*u == S->Channel)
 						{
 							for (auto v = Peers.begin(); v != Peers.end(); ++v)
 							{
@@ -566,6 +589,7 @@ short Extension::Handle()
 									if (!S->Peer->isclosed)
 										CreateError("Peer being removed but not marked as closed!");
 
+									delete *v;
 									Peers.erase(v);
 									break;
 								}
@@ -574,36 +598,27 @@ short Extension::Handle()
 							break;
 						}
 					}
-
-					delete S->Peer;
-					// delete ThreadData.Peer;
 				}
 			}
 			else // On disconnect, clear everyting
 			{
-				// Thanks to the old liblacewing 2.7's shoddy header design, we cannot call the deconstructor here
-				// and thus we have a small, but reoccuring, memory leak.
-				// This should be fixed when this extension is updated to the more recent liblacewing version.
-
-				// for (std::vector<lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
-				//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
-
-				// Old username is stored in the tag and must be deleted separately from clear()
-				for (auto u = Peers.begin(); u != Peers.end(); ++u)
+				// Old username is stored in the peer tag and must be deleted separately from clear()
+				for each (auto i in Channels)
 				{
-					if ((*u)->internaltag)
-						free((*u)->internaltag);
-
-					//	delete (struct ::PeerInternal *)((*u)->InternalTag);
+					for (auto j = i->firstpeer(); j != nullptr; j = j->next())
+					{
+						if (j->tag)
+						{
+							free(j->tag);
+							j->tag = nullptr;
+						}
+					}
 				}
 
-				// Delete main data of each struct (note larger Internal classes are not deleted, see above)
-				for each (auto i in Channels)
-					delete i;
+				// TODO: Why do we even HAVE channels? If they're dups, is a full clone useable?
+				// what happens to peer's tag, being it's a char * and if duped, will be freed twice?
+
 				Channels.clear();
-					
-				for each (auto i in Peers)
-					delete i;
 				Peers.clear();
 			}
 		}
@@ -616,9 +631,9 @@ short Extension::Handle()
 				Runtime.GenerateEvent((int)S->CondTrig[u]);
 		}
 
-		EnterCriticalSectionDerpy(&Lock);
+		EnterCriticalSectionDerpy(&Globals->Lock);
 		Saved.erase(Saved.begin());
-		LeaveCriticalSectionDerpy(&Lock);
+		LeaveCriticalSectionDerpy(&Globals->Lock);
 	}
 
     /*
@@ -655,6 +670,26 @@ short Extension::Handle()
 	return RunNextLoop ? 0 : REFLAG::ONE_SHOT;
 }
 
+DWORD WINAPI TimeoutWarningFunc(void * ThisGlobalsInfo)
+{
+	// Wait 10 seconds
+	Sleep(10 * 1000);
+	// If the user has created a new object which is receiving events from Bluewing
+	// it's cool, just close silently
+	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
+	if (!G.Refs.empty())
+		return 0U;
+
+	// Otherwise, fuss at them.
+	MessageBoxA(NULL, "Bluewing Warning!\r\n"
+		"All Bluewing objects have been destroyed and some time has passed; but "
+		"the connection has been left open in the background, unused, but still open.\r\n"
+		"If this is intended behaviour, disable the Timeout warning in the object properties.\r\n"
+		"If you want to close the connection if no instances remain open, use the FullCleanup action on the Bluewing object.",
+		"Bluewing Warning",
+		MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
+	return 0U;
+}
 
 short Extension::Display()
 {
@@ -726,4 +761,48 @@ long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
 long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
 {
     return 0;
+}
+
+GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
+	: _ObjEventPump(lacewing::eventpump_new()), _Client(_ObjEventPump), _PreviousName(NULL),
+	_SendMsg(NULL), _DenyReasonBuffer(NULL), _SendMsgSize(0),
+	_AutomaticallyClearBinary(edPtr->AutomaticClear), _GlobalID(NULL), _Thread(NULL)
+{
+	_Ext = e;
+	Refs.push_back(e);
+	if (edPtr->Global)
+		_GlobalID = _strdup(edPtr->edGlobalID);
+	TimeoutWarningEnabled = edPtr->TimeoutWarningEnabled;
+	FullDeleteEnabled = edPtr->FullDeleteEnabled;
+
+	_Client.onchannellistreceived(::OnChannelListReceived);
+	_Client.onmessage_channel(::OnChannelMessage);
+	_Client.onconnect(::OnConnect);
+	_Client.onconnectiondenied(::OnConnectDenied);
+	_Client.ondisconnect(::OnDisconnect);
+	_Client.onerror(::OnError);
+	_Client.onchannel_join(::OnJoinChannel);
+	_Client.onchannel_joindenied(::OnJoinChannelDenied);
+	_Client.onchannel_leave(::OnLeaveChannel);
+	_Client.onchannel_leavedenied(::OnLeaveChannelDenied);
+	_Client.onname_changed(::OnNameChanged);
+	_Client.onname_denied(::OnNameDenied);
+	_Client.onname_set(::OnNameSet);
+	_Client.onpeer_changename(::OnPeerNameChanged);
+	_Client.onpeer_connect(::OnPeerConnect);
+	_Client.onpeer_disconnect(::OnPeerDisconnect);
+	_Client.onmessage_peer(::OnPeerMessage);
+	_Client.onmessage_serverchannel(::OnServerChannelMessage);
+	_Client.onmessage_server(::OnServerMessage);
+
+	InitializeCriticalSection(&Lock);
+
+	// Useful so Lacewing callbacks can access Extension
+	_Client.tag = this;
+}
+GlobalInfo::~GlobalInfo()
+{
+	free(_GlobalID);
+	free(_PreviousName);
+	DeleteCriticalSection(&Lock);
 }

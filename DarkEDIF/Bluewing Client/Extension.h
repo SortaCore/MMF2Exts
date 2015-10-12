@@ -1,14 +1,13 @@
 
 #include "Edif.h"
+void NewEvent(SaveExtInfo *);
+
+struct GlobalInfo;
 class Extension
 {
 public:
 	// Hide stuff requiring other headers
 	SaveExtInfo ThreadData; // Must be first variable in Extension class
-	std::vector<SaveExtInfo *> Saved;
-	SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
-	void NewEvent(SaveExtInfo *);
-	CRITICAL_SECTION Lock;
 
     RUNDATA * rdPtr;
     RunHeader * rhPtr;
@@ -16,10 +15,10 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 50;
+    static const int Version = 51;
 
-    static const int OEFLAGS = 0; // Use OEFLAGS namespace
-    static const int OEPREFS = 0; // Use OEPREFS namespace
+    static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN; // Use OEFLAGS namespace
+    static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
     
     static const int WindowProcPriority = 100;
 
@@ -38,52 +37,7 @@ public:
         and destructors, without having to call them manually or store
         a pointer.
     */
-	struct GlobalInfo {
-		lacewing::eventpump		_ObjEventPump;
-		lacewing::relayclient	_Client;
-		char *					_PreviousName,
-			 *					_SendMsg,
-			 *					_DenyReasonBuffer;
-		size_t					_SendMsgSize;
-		bool					_AutomaticallyClearBinary;
-		char *					_GlobalID;
-		HANDLE					_Thread;
-		std::vector<Extension *> Refs;
-		
-		GlobalInfo(Extension * e) : _ObjEventPump(lacewing::eventpump_new()), _Client(_ObjEventPump), _PreviousName(NULL),
-			_SendMsg(NULL), _DenyReasonBuffer(NULL), _SendMsgSize(0),
-			_AutomaticallyClearBinary(false), _GlobalID(NULL), _Thread(NULL)
-		{
-			Refs.push_back(e);
-
-			_Client.onchannellistreceived(::OnChannelListReceived);
-			_Client.onmessage_channel(::OnChannelMessage);
-			_Client.onconnect(::OnConnect);
-			_Client.onconnectiondenied(::OnConnectDenied);
-			_Client.ondisconnect(::OnDisconnect);
-			_Client.onerror(::OnError);
-			_Client.onchannel_join(::OnJoinChannel);
-			_Client.onchannel_joindenied(::OnJoinChannelDenied);
-			_Client.onchannel_leave(::OnLeaveChannel);
-			_Client.onchannel_leavedenied(::OnLeaveChannelDenied);
-			_Client.onname_changed(::OnNameChanged);
-			_Client.onname_denied(::OnNameDenied);
-			_Client.onname_set(::OnNameSet);
-			_Client.onpeer_changename(::OnPeerNameChanged);
-			_Client.onpeer_connect(::OnPeerConnect);
-			_Client.onpeer_disconnect(::OnPeerDisconnect);
-			_Client.onmessage_peer(::OnPeerMessage);
-			_Client.onmessage_serverchannel(::OnServerChannelMessage);
-			_Client.onmessage_server(::OnServerMessage);
-
-			// Useful so Lacewing callbacks can access Extension
-			_Client.tag = e;
-		}
-		~GlobalInfo()
-		{
-			// Mo.
-		}
-	};
+	
 	bool IsGlobal;
 	GlobalInfo * Globals;
 
@@ -189,6 +143,7 @@ public:
 		// ReplacedNoParams
 		void Connect(char * Hostname);
 		void ResizeBinaryToSend(int NewSize);
+		void SetDestroySetting(int enabled);
     
 	/// Conditions
 
@@ -343,4 +298,29 @@ public:
     bool Save(HANDLE File);
     bool Load(HANDLE File);
 
+};
+
+struct GlobalInfo
+{
+	lacewing::eventpump			_ObjEventPump;
+	lacewing::relayclient		_Client;
+	char *						_PreviousName,
+		*_SendMsg,
+		*_DenyReasonBuffer;
+	size_t						_SendMsgSize;
+	bool						_AutomaticallyClearBinary;
+	char *						_GlobalID;
+	HANDLE						_Thread;
+	Extension *					_Ext;
+	std::vector<SaveExtInfo *>	_Saved;
+	CRITICAL_SECTION			Lock;
+	std::vector<Extension *>	Refs;
+	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
+	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	
+	SaveExtInfo& AddEvent(int Event, bool UseLastData = false);
+	void CreateError(const char * errorText);
+
+	GlobalInfo(Extension * e, EDITDATA * edPtr);
+	~GlobalInfo();
 };

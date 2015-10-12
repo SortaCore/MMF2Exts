@@ -1499,14 +1499,16 @@ public:
 			void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
 
 			const char * name() const;
-			relayclient::channel::peer * next() const;
+			peer * next() const;
+			~peer();
 		};
 
 		int peercount() const;
-		relayclient::channel::peer * firstpeer() const;
-		relayclient::channel * next() const;
+		channel::peer * firstpeer() const;
+		channel * next() const;
 
 		void leave() const;
+		~channel();
     };
 
 	int channelcount() const;
@@ -1579,15 +1581,15 @@ struct relayserver
     lacewing::server socket;
     lacewing::udp udp;
 
-    relayserver(pump &);
+    relayserver(pump);
     ~relayserver();
 
-    void host (int port = 6121);
+    void host (unsigned short port = 6121);
     void host (lacewing::filter &filter);
     void unhost ();
 
     bool hosting ();
-    int port ();
+    unsigned short port ();
 
     void setchannellisting(bool enabled);
 	void setwelcomemessage(const char * message);
@@ -1600,7 +1602,7 @@ struct relayserver
         void * internaltag, * tag;
 		bool isclosed;
 
-        int id ();
+        unsigned short id ();
 
         client * channelmaster();
 
@@ -1611,14 +1613,15 @@ struct relayserver
         bool autocloseenabled();
         void close();
         
-        void send (int subchannel, const char * data, int size = -1, int variant = 0);
-        void blast (int subchannel, const char * data, int size = -1, int variant = 0);
+        void send (int subchannel, const char * data, size_t size = MAXSIZE_T, int variant = 0);
+        void blast (int subchannel, const char * data, size_t size = MAXSIZE_T, int variant = 0);
 
-        int clientcount ();
+        size_t clientcount ();
 		client * firstclient();
+		channel * next();
     };
 
-    int channelcount();
+    size_t channelcount();
 	channel * firstchannel();
     
     struct client
@@ -1626,9 +1629,9 @@ struct relayserver
         void * internaltag, * tag;
 		bool isclosed;
 
-        int id();
+        unsigned short id();
 
-        lacewing::address &getaddress();
+        lacewing::address getaddress();
 
         void disconnect();
 
@@ -1638,47 +1641,40 @@ struct relayserver
         const char * name ();
         void name (const char *);
         
-        int channelcount();
+        size_t channelcount();
         
-        struct channeliterator
-        {
-            void * internaltag;
-
-            channeliterator (client &);
-            channel * next ();
-        };
-        
+		channel * firstchannel();
         client * next ();
     };
 
-    int clientcount ();
+    size_t clientcount ();
     client * firstclient ();
 
-    typedef void (* handler_connect)     (lacewing::relayserver &server, lacewing::relayserver::client &client);
+	typedef void (* handler_connect)     (lacewing::relayserver &server, lacewing::relayserver::client &client);
 	typedef void (* handler_disconnect)  (lacewing::relayserver &server, lacewing::relayserver::client &client);
 	typedef void (* handler_error)       (lacewing::relayserver &server, lacewing::error);
    
 	typedef void (* handler_message_server)
         (lacewing::relayserver &server, lacewing::relayserver::client &client, bool blasted, int subchannel,
-            char * data, int size, int variant);
+			const char * data, size_t size, int variant);
     
 	typedef void (* handler_message_channel)
         (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
-            bool blasted, int subchannel, char * data, int size, int variant);
+			bool blasted, int subchannel, const char * data, size_t size, int variant);
     
 	typedef void (* handler_message_peer)
         (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
             lacewing::relayserver::client &targetclient,bool blasted,
-            int subchannel, char * packet, int size, int variant);
+			int subchannel, const char * data, size_t size, int variant);
 
 	typedef void (* handler_channel_join)
-        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
+		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
 
-	typedef void (* handler_channel_leave)
-        (lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
+	typedef void (*handler_channel_leave)
+		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
 
-	typedef void (* handler_nameset)
-        (lacewing::relayserver &server, lacewing::relayserver::client &client, const char * name);
+	typedef void (*handler_nameset)
+		(lacewing::relayserver &server, lacewing::relayserver::client &client, const char * name);
 
     void onconnect        (handler_connect);
     void ondisconnect     (handler_disconnect);
@@ -1689,7 +1685,15 @@ struct relayserver
     void onjoinchannel    (handler_channel_join);
     void onleavechannel   (handler_channel_leave);
     void onsetname        (handler_nameset);
-	void approveconnection(lacewing::relayserver::client &client);
+
+	void connect_response(lacewing::relayserver::client &client, 
+		const char * denyReason);
+	void joinchannel_response(const char * const channelName,
+		lacewing::relayserver::client & client, const char * denyReason);
+	void leavechannel_response(lacewing::relayserver::channel &channel,
+		lacewing::relayserver::client & client, const char * denyReason);
+	void nameset_response(lacewing::relayserver::client &client,
+		const char * const clientName, const char * denyReason);
 };
 
 }

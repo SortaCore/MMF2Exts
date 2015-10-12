@@ -1,46 +1,48 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define Ext (*((Extension *) Client.tag))
+#define Ext (*((GlobalInfo *) Client.tag)->_Ext)
+#define Saved (((GlobalInfo *) Client.tag)->_Saved)
+#define Globals ((GlobalInfo *) Client.tag)
 
 void OnError(lacewing::relayclient &Client, lacewing::error Error)
 {
-	SaveExtInfo &S = Ext.AddEvent(0);
+	SaveExtInfo &S = Globals->AddEvent(0);
 	S.Error.Text = _strdup(Error->tostring());
 
 	if (!S.Error.Text)
 	{
-		Ext.CreateError("Error copying Lacewing error string to local buffer.");
-		Ext.Saved.erase(Ext.Saved.end()); // Remove S from vector
+		Globals->CreateError("Error copying Lacewing error string to local buffer.");
+		Saved.erase(Saved.end()); // Remove S from vector
 	}
 }
 void OnConnect(lacewing::relayclient &Client)
 {
-	Ext.AddEvent(1);
+	Globals->AddEvent(1);
 }
 void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 {
 	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
+	if (DenyReasonBuffer)
+		free(DenyReasonBuffer);
 
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer."); 
-	Ext.AddEvent(2);
+	DenyReasonBuffer = _strdup(DenyReason);
+	if (!DenyReasonBuffer)
+		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	Globals->AddEvent(2);
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
-	SaveExtInfo &S = Ext.AddEvent(3);
+	SaveExtInfo &S = Globals->AddEvent(3);
 	S.Channel = NULL;
 	S.Peer = NULL;
 
 	// Empty all channels and peers
-	Ext.AddEvent(0xFFFF);
+	Globals->AddEvent(0xFFFF);
 }
 void OnChannelListReceived(lacewing::relayclient &Client)
 {
-	Ext.AddEvent(26);
+	Globals->AddEvent(26);
 }
 void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
@@ -49,79 +51,79 @@ void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel
 	for (auto i = Target.firstpeer(); i != nullptr; i = i->next())
 		i->isclosed = false;
 
-	SaveExtInfo &S = Ext.AddEvent(4);
+	SaveExtInfo &S = Globals->AddEvent(4);
 	S.Channel = &Target;
 }
 void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
 {
-	SaveExtInfo &S = Ext.AddEvent(5);
+	SaveExtInfo &S = Globals->AddEvent(5);
 	S.Loop.Name = _strdup(ChannelName);
 	
 	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
+	if (DenyReasonBuffer)
+		free(DenyReasonBuffer);
 	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
+	DenyReasonBuffer = _strdup(DenyReason);
+	if (!DenyReasonBuffer)
+		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
 }
 void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
 	Target.isclosed = true;
 
-	SaveExtInfo &S = Ext.AddEvent(43);
+	SaveExtInfo &S = Globals->AddEvent(43);
 	S.Channel = &Target;
 	
 	// Clear channel copy after this event is handled
-	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
+	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 }
 void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
 {
-	SaveExtInfo &S = Ext.AddEvent(44);
+	SaveExtInfo &S = Globals->AddEvent(44);
 	S.Channel = &Target;
 	
 	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
+	if (DenyReasonBuffer)
+		free(DenyReasonBuffer);
 	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
+	DenyReasonBuffer = _strdup(DenyReason);
+	if (!DenyReasonBuffer)
+		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
 }
 void OnNameSet(lacewing::relayclient &Client)
 {
-	Ext.AddEvent(6);
+	Globals->AddEvent(6);
 }
 void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const char * DenyReason)
 {
-	Ext.AddEvent(7);
+	Globals->AddEvent(7);
 	
 	// Old deny reason? Free it.
-	if (Ext.DenyReasonBuffer)
-		free(Ext.DenyReasonBuffer);
+	if (DenyReasonBuffer)
+		free(DenyReasonBuffer);
 	
-	Ext.DenyReasonBuffer = _strdup(DenyReason);
-	if (!Ext.DenyReasonBuffer)
-		Ext.CreateError("Error copying deny reason from Lacewing to local buffer.");
+	DenyReasonBuffer = _strdup(DenyReason);
+	if (!DenyReasonBuffer)
+		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
 }
 void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 {
-	Ext.AddEvent(53);
+	Globals->AddEvent(53);
 
 	// Old previous name? Free it.
-	if (Ext.PreviousName)
-		free(Ext.PreviousName);
+	if (PreviousName)
+		free(PreviousName);
 
-	Ext.PreviousName = _strdup(OldName);
-	if (!Ext.PreviousName)
-		Ext.CreateError("Error copying self previous name from Lacewing to local buffer.");
+	PreviousName = _strdup(OldName);
+	if (!PreviousName)
+		Globals->CreateError("Error copying self previous name from Lacewing to local buffer.");
 }
 void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
 {
 	Peer.isclosed = false;
 
-	SaveExtInfo &S = Ext.AddEvent(10);
+	SaveExtInfo &S = Globals->AddEvent(10);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 }
@@ -130,19 +132,19 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 {
 	Peer.isclosed = true;
 
-	SaveExtInfo &S = Ext.AddEvent(11);
+	SaveExtInfo &S = Globals->AddEvent(11);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 	
 	// Remove closed peer entirely after above event is handled
-	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
+	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 	C.Peer = S.Peer;
 }
 void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer, const char * OldName)
 {
-	SaveExtInfo &S = Ext.AddEvent(45);
+	SaveExtInfo &S = Globals->AddEvent(45);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 
@@ -153,13 +155,13 @@ void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::cha
 	// Store new previous name in Tag.
 	Peer.tag =_strdup(OldName);
 	if (!Peer.tag)
-		Ext.CreateError("Error copying old peer name.");
+		Globals->CreateError("Error copying old peer name.");
 }
 void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	SaveExtInfo &S = Ext.AddEvent(Blasted ? 52 : 49);
+	SaveExtInfo &S = Globals->AddEvent(Blasted ? 52 : 49);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
@@ -168,13 +170,13 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 	S.ReceivedMsg.Content = (char *)malloc(Size);
 	if (!S.ReceivedMsg.Content)
 	{
-		Ext.CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 	}
 	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
 	{
-		Ext.Saved.erase(Ext.Saved.end());
+		Saved.erase(Saved.end());
 		free(S.ReceivedMsg.Content);
-		Ext.CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 	}
 	else 
 	{
@@ -182,31 +184,31 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(39, true);
+				Globals->AddEvent(39, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(40, true);
+				Globals->AddEvent(40, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(41, true);
+				Globals->AddEvent(41, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 		else // Sent
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(36, true);
+				Globals->AddEvent(36, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(37, true);
+				Globals->AddEvent(37, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(38, true);
+				Globals->AddEvent(38, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
@@ -214,7 +216,7 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	SaveExtInfo &S = Ext.AddEvent(Blasted ? 51 : 48);
+	SaveExtInfo &S = Globals->AddEvent(Blasted ? 51 : 48);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
@@ -223,13 +225,13 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 	S.ReceivedMsg.Content = (char *)malloc(Size);
 	if (!S.ReceivedMsg.Content)
 	{
-		Ext.CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 	}
 	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
 	{
-		Ext.Saved.erase(Ext.Saved.end());
+		Saved.erase(Saved.end());
 		free(S.ReceivedMsg.Content);
-		Ext.CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 	}
 	else
 	{
@@ -237,38 +239,38 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(22, true);
+				Globals->AddEvent(22, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(23, true);
+				Globals->AddEvent(23, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(35, true);
+				Globals->AddEvent(35, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 		else // Sent
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(9, true);
+				Globals->AddEvent(9, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(16, true);
+				Globals->AddEvent(16, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(33, true);
+				Globals->AddEvent(33, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
 void OnServerMessage(lacewing::relayclient &Client,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	SaveExtInfo &S = Ext.AddEvent(Blasted ? 50 : 47);
+	SaveExtInfo &S = Globals->AddEvent(Blasted ? 50 : 47);
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
 	S.ReceivedMsg.Size = Size; // Do NOT add null. There's error checking for that.
 
@@ -276,13 +278,13 @@ void OnServerMessage(lacewing::relayclient &Client,
 
 	if (!S.ReceivedMsg.Content)
 	{
-		Ext.CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 	}
 	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
 	{
-		Ext.Saved.erase(Ext.Saved.end());
+		Saved.erase(Saved.end());
 		free(S.ReceivedMsg.Content);
-		Ext.CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 	}
 	else
 	{
@@ -290,38 +292,38 @@ void OnServerMessage(lacewing::relayclient &Client,
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(20, true);
+				Globals->AddEvent(20, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(21, true);
+				Globals->AddEvent(21, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(34, true);
+				Globals->AddEvent(34, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 		else // Sent
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(8, true);
+				Globals->AddEvent(8, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(15, true);
+				Globals->AddEvent(15, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(32, true);
+				Globals->AddEvent(32, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
 void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	SaveExtInfo &S = Ext.AddEvent(Blasted ? 72 : 68);
+	SaveExtInfo &S = Globals->AddEvent(Blasted ? 72 : 68);
 	S.Channel = &Channel;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
 	S.ReceivedMsg.Size = Size;
@@ -329,13 +331,13 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 	S.ReceivedMsg.Content = (char *)malloc(Size);
 	if (!S.ReceivedMsg.Content)
 	{
-		Ext.CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 	}
 	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
 	{
-		Ext.Saved.erase(Ext.Saved.end());
+		Saved.erase(Saved.end());
 		free(S.ReceivedMsg.Content);
-		Ext.CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 	}
 	else 
 	{
@@ -343,34 +345,36 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(69, true);
+				Globals->AddEvent(69, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(70, true);
+				Globals->AddEvent(70, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(71, true);
+				Globals->AddEvent(71, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 		else // Sent
 		{
 			// Text
 			if (Variant == 0)
-				Ext.AddEvent(65, true);
+				Globals->AddEvent(65, true);
 			// Number
 			else if (Variant == 1)
-				Ext.AddEvent(66, true);
+				Globals->AddEvent(66, true);
 			// Binary
 			else if (Variant == 2)
-				Ext.AddEvent(67, true);
+				Globals->AddEvent(67, true);
 			// ???
 			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
+				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
 
 
 #undef Ext
+#undef Saved
+#undef Globals

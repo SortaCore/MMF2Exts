@@ -57,6 +57,9 @@ int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		if (strcpy_s(edPtr->edGlobalID, 255, CurLang["Properties"][3]["DefaultState"]))
 			MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEDIF - CreateObject() error", MB_OK);
 		edPtr->MultiThreading = CurLang["Properties"][4]["DefaultState"];
+		edPtr->TimeoutWarningEnabled = CurLang["Properties"][5]["DefaultState"];
+		edPtr->FullDeleteEnabled = CurLang["Properties"][6]["DefaultState"];
+		
 		
 		//InitialisePropertiesFromJSON(mV, edPtr);
 
@@ -398,8 +401,15 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 				return edPtr->Global;
 			if (ID == 4)
 				return edPtr->MultiThreading;
+			if (ID == 5)
+				return edPtr->TimeoutWarningEnabled;
+			if (ID == 6)
+				return edPtr->FullDeleteEnabled;
 		}
-		
+
+		if (ID < 0)
+			return 0; // not actually managed by DarkEDIF
+
 		MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEDIF - Invalid property", MB_OK);
 	#endif // !RUN_ONLY
 
@@ -568,6 +578,16 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			if (ID == 4)
 			{
 				edPtr->MultiThreading = (Check != 0);
+				return;
+			}
+			if (ID == 5)
+			{
+				edPtr->TimeoutWarningEnabled = (Check != 0);
+				return;
+			}
+			if (ID == 6)
+			{
+				edPtr->FullDeleteEnabled = (Check != 0);
 				return;
 			}
 		}

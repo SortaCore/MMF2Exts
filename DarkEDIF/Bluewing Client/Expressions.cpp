@@ -238,7 +238,7 @@ int Extension::SendBinarySize()
 }
 const char * Extension::Self_PreviousName()
 {
-	return Runtime.CopyString(Cli.tag ? (char *)Cli.tag : "");
+	return Runtime.CopyString(PreviousName ? PreviousName : "");
 }
 const char * Extension::Peer_PreviousName()
 {
