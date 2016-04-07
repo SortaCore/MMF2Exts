@@ -61,7 +61,7 @@ namespace Edif
 	namespace Properties
 	{
 		// Synced with Names
-		static const enum IDs {
+		const enum IDs {
 			PROPTYPE_STATIC = 1,		// Simple static text
 			PROPTYPE_FOLDER,			// Folder
 			PROPTYPE_FOLDER_END,		// Folder End
@@ -174,6 +174,8 @@ namespace Edif
 
         void * Allocate(size_t);
         TCHAR * CopyString(const TCHAR *);
+		char * CopyStringEx(const char *);
+		wchar_t * CopyStringEx(const wchar_t *);
 
         void Pause();
         void Resume();
@@ -203,7 +205,7 @@ namespace Edif
         bool IsHWA();
         bool IsUnicode();
 
-        event &CurrentEvent();
+        event2 &CurrentEvent();
 
         Riggs::ObjectSelection ObjectSelection;
 

@@ -89,7 +89,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -148,7 +148,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; EDITOR; %(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;EDITOR; %(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -209,7 +209,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -257,7 +257,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\DarkEdif.cpp" />
-    <ClCompile Include="..\Lib\Lacewing\RelayClient.cc" />
     <ClCompile Include="..\Lib\Lacewing\RelayServer.cc" />
     <ClCompile Include="..\Lib\lacewing\src\address.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
@@ -526,6 +525,8 @@
     <ClInclude Include="..\Inc\MMFMasterHeader.h" />
     <ClInclude Include="..\Lib\Lacewing\IDPool.h" />
     <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
+    <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
+    <ClInclude Include="..\Lib\Lacewing\MessageReader.h" />
     <ClInclude Include="..\Lib\lacewing\src\address.h" />
     <ClInclude Include="..\Lib\lacewing\src\common.h" />
     <ClInclude Include="..\Lib\lacewing\src\heapbuffer-cxx.h" />

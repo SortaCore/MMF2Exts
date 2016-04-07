@@ -151,7 +151,7 @@ inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
 }
-char ReadExpressionReturnType(const char *);
+char ReadExpressionReturnType(const char * Text);
 
 bool CreateNewActionInfo(void)
 {
@@ -184,7 +184,7 @@ bool CreateNewActionInfo(void)
 		return false;
 	}
 
-	ActInfo->ID = SDK->ActionInfos.size();
+	ActInfo->ID = (short)SDK->ActionInfos.size();
 	ActInfo->NumOfParams = Param.u.object.length;
 
 	if (ActInfo->NumOfParams > 0)
@@ -239,9 +239,9 @@ bool CreateNewConditionInfo(void)
 	}
 
 	// If a non-triggered condition, set the correct flags
-	CondInfo->ID = ::SDK->ConditionInfos.size();
+	CondInfo->ID = (short)::SDK->ConditionInfos.size();
 	CondInfo->NumOfParams = Param.u.object.length;
-	CondInfo->Flags = (EVFLAGS::ALWAYS | EVFLAG2_NOTABLE) * (!bool (Condition["Triggered"]));
+	CondInfo->Flags = (EVFLAGS::ALWAYS | EVFLAGS_NOTABLE) * (!bool (Condition["Triggered"]));
 
 	if (CondInfo->NumOfParams > 0)
 	{
@@ -295,10 +295,10 @@ bool CreateNewExpressionInfo(void)
 	}
 
 	// If a non-triggered condition, set the correct flags
-	ExpInfo->ID = ::SDK->ExpressionInfos.size();
+	ExpInfo->ID = (short)::SDK->ExpressionInfos.size();
 	ExpInfo->NumOfParams = Param.u.object.length;
-	ExpInfo->Returns = ReadExpressionReturnType(Expression["Returns"]);
-
+	ExpInfo->Flags = ReadExpressionReturnType(Expression["Returns"]);
+	
 	if (ExpInfo->NumOfParams > 0)
 	{
 		// Set up each parameter
@@ -382,7 +382,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				else
 				{
 					std::string dup(JProp["DefaultState"]);
-					std::transform(dup.begin(), dup.end(), dup.begin(), !_stricmp(JProp["Case"], "Upper") ? toupper : tolower);
+					std::transform(dup.begin(), dup.end(), dup.begin(), !_stricmp(JProp["Case"], "Upper") ? ::toupper : ::tolower);
 					mystr << dup.c_str() << char(0);
 				}
 				
@@ -428,6 +428,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	}
 
 	edPtr->DarkEDIF_Prop_Size = sizeof(EDITDATA) + mystr2.size();
+	
 	memset(edPtr->DarkEDIF_Props, 0, mystr2.size());
 	memcpy(edPtr->DarkEDIF_Props, mystr2.data(), mystr2.size());
 }
@@ -447,7 +448,14 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	const char * curStr = (const char *)CurLang["Properties"][ID]["Type"]; 
 
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
+	{
+#ifndef _UNICODE
 		return new Prop_Str(CurLang["Properties"][ID]["DefaultState"]);
+#else
+		const char * c = (const char *)CurLang["Properties"][ID]["DefaultState"];
+		return new Prop_Str(c);
+#endif
+	}
 
 
 	unsigned int size;
@@ -478,7 +486,6 @@ void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue)
 	else
 		edPtr->DarkEDIF_Props[byteIndex] &= ~(1 << bitIndex);
 }
-
 void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize)
 {
 	unsigned int oldSize; // Set by PropIndex
@@ -520,13 +527,13 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData,
 	char * oldEdPtr = (char *)edPtr;
 	EDITDATA * oldEdPtr_ = edPtr;
 
-	/// Before data
+	// Before data
 	memcpy(newEdPtr, oldEdPtr, oldData - oldEdPtr);
 
-	/// New data
+	// New data
 	memcpy(newEdPtr + (oldData - oldEdPtr), newData, newSize);
 
-	/// After data
+	// After data
 	memcpy(newEdPtr + (oldData - oldEdPtr) + newSize, 
 		oldData + oldSize,
 		oldEdPtr_->DarkEDIF_Prop_Size - ((oldData - oldEdPtr) + oldSize));
@@ -572,17 +579,17 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	unsigned int i = 0;
 	while (i <= ID)
 	{
-		curStr = (const char *)j[i]["Type"]; 
+		curStr = (const char *)j[i]["Type"];
 		
 		if (!_stricmp(curStr, "Editbox String"))
-			Current += (_tcslen(Current) + 1) * sizeof(TCHAR);
+			Current += (_tcslen((TCHAR *)Current) + 1) * sizeof(TCHAR);
 		else if (!_stricmp(curStr, "Editbox Number"))
 			Current += sizeof(unsigned int);
 		else if (!_stricmp(curStr, "Combo Box"))
 		{
 			// Loop null-terminated strings until there's a blank one
 			while (((TCHAR *)Current)[1] != _T('\0'))
-				Current += (_tcslen(Current) + 1) * sizeof(TCHAR);
+				Current += (_tcslen((TCHAR *)Current) + 1) * sizeof(TCHAR);
 				
 			Current += sizeof(TCHAR);
 		}

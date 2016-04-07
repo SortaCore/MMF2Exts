@@ -135,10 +135,10 @@ char ReadExpressionReturnType(const char * Text)
 		return 0;
 
 	if (!_stricmp(Text, "Float"))
-		return 1;
+		return EXPFLAG_DOUBLE;
 	
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
-		return 3;
+		return EXPFLAG_STRING;
 	
 	// More specialised, but not allowed for
 	if (!_stricmp(Text, "Short"))
@@ -628,7 +628,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 								if (temp)
 								{
 									sprintf_s(temp, 256, "The Parameter type specified was unrecognised: [%s]."
-														 "Check your spelling of the \"Type\" Parameter.", Property["Type"]);
+														 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
 									MessageBoxA(NULL, temp, "DarkEdif JSON error", MB_OK);
 									free(temp);
 								}
@@ -675,6 +675,9 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 	bool Condition = (SDK->ConditionFunctions.size() >= (unsigned int)ID+1) && (SDK->ConditionFunctions[ID] == Function);
     int * Parameters;
     int ParameterCount;
+
+	if ((long)Function == 0xCCCCCCCCL)
+		DebugBreak();
 
 	const ACEInfo * Info = Condition ? SDK->ConditionInfos[ID] : SDK->ActionInfos[ID];
 
@@ -857,11 +860,11 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 	void * Extension = rdPtr->pExtension;
 
 	const ACEInfo * Info = ::SDK->ExpressionInfos[ID];
-	int ExpressionRet = Info->Returns;
+	int ExpressionRet = Info->Flags;
 	
-	if (ExpressionRet == ExpParams::Float)
+	if (ExpressionRet == EXPFLAG_DOUBLE)
 		rdPtr->rHo.Flags |= HOF_FLOAT;
-	else if (ExpressionRet == ExpParams::String)
+	else if (ExpressionRet == EXPFLAG_STRING)
 		rdPtr->rHo.Flags |= HOF_STRING;
 	
 	int ParameterCount = Info->NumOfParams;
@@ -879,7 +882,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 				if (!Parameters[i])
 				{
   					MessageBoxA(NULL, "Error calling expression: null pointer given as string parameter.", "DarkEDIF - Expression() error", MB_OK);
-					return (ExpressionRet != ExpParams::String) ? 0L :
+					return (ExpressionRet != EXPFLAG_STRING) ? 0L :
 								(long)rdPtr->pExtension->Runtime.CopyString(_T(""));
 				}
 				break;
@@ -929,7 +932,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 
 		mov ecx, ExpressionRet
 
-		cmp ecx, 1
+		cmp ecx, 2
 		jne NotFloat
 
 		fstp Result

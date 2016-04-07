@@ -31,20 +31,31 @@ void * Edif::Runtime::Allocate(size_t Size)
 TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
 {
 	TCHAR * New = NULL;
-	try {
     New = (TCHAR *) Allocate(_tcslen(String) + 1);
     _tcscpy(New, String);
-	}
-	catch(...)
-	{
-		if (New)
-			free(New);
-		New = (TCHAR *)Allocate(1);
-		New[0] = 0;
-	}
     
     return New;
 }
+
+char * Edif::Runtime::CopyStringEx(const char * String)
+{
+	char * New = NULL;
+	New = (char *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, (strlen(String) + 1) * sizeof(char));
+	strcpy(New, String);
+
+	return New;
+}
+
+
+wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String)
+{
+	wchar_t * New = NULL;
+	New = (wchar_t *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, (wcslen(String) + 1) * sizeof(wchar_t));
+	wcscpy(New, String);
+
+	return New;
+}
+
 
 void Edif::Runtime::Pause()
 {
@@ -136,9 +147,9 @@ bool Edif::Runtime::IsUnicode()
     return rdPtr->rHo.AdRunHeader->rh4.rh4Mv->CallFunction(NULL, EF_ISUNICODE, 0, 0, 0) == 1;
 }
 
-event &Edif::Runtime::CurrentEvent()
+event2 &Edif::Runtime::CurrentEvent()
 {
-    return *(event *) (((char *) param1) - CND_SIZE);
+    return *(event2 *) (((char *) param1) - CND_SIZE);
 }
 
 RunObject * Edif::Runtime::RunObjPtrFromFixed(int fixedvalue)
