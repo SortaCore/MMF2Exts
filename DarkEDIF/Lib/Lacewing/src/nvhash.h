@@ -30,8 +30,6 @@
 #ifndef _lw_nvhash_h
 #define _lw_nvhash_h
 
-extern "C" {
-
 typedef struct _lwp_nvhash
 {
    char * key;
@@ -50,8 +48,6 @@ void lwp_nvhash_set_ex (lwp_nvhash *, size_t key_len, const char * key,
 const char * lwp_nvhash_get (lwp_nvhash *, const char * key, const char * def);
 
 void lwp_nvhash_clear (lwp_nvhash *);
-
-}
 
 #endif
 

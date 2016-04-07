@@ -28,7 +28,7 @@
  */
 
 #include "../common.h"
-extern "C" {
+
 static void * MSVCRT (const char * fn)
 {
    static HINSTANCE DLL = 0;
@@ -87,4 +87,3 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
    return fn ? fn : (fn = (fn_GetFileSizeEx) KERNEL32 ("GetFileSizeEx"));
 }
 
-}

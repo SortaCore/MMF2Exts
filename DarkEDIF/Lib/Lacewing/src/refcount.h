@@ -30,7 +30,6 @@
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
 
-extern "C" {
 struct lwp_refcount
 {
    unsigned short refcount;           
@@ -77,6 +76,5 @@ static inline lw_bool _lwp_release (struct lwp_refcount * refcount)
 #define lwp_set_refcount_name(x, name)
 #define lwp_enable_refcount_logging(x, name)
 
-}
 #endif
 

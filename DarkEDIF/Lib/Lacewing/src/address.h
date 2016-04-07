@@ -27,8 +27,6 @@
  * SUCH DAMAGE.
  */
 
-extern "C" {
-
 struct _lw_addr
 {
    lw_thread resolver_thread;
@@ -54,5 +52,4 @@ void lwp_addr_cleanup (lw_addr ctx);
 
 lw_addr lwp_addr_new_sockaddr (struct sockaddr *);
 void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr *);
-                                                                                                                                                                                                                                  
-}
+

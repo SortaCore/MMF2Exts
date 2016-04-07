@@ -31,8 +31,6 @@
 #include "streamgraph.h"
 #include "stream.h"
 
-extern "C" {
-
 static void graph_dealloc (lwp_streamgraph graph)
 {
    lwp_streamgraph_clear_expanded (graph);
@@ -531,4 +529,3 @@ void lwp_streamgraph_print (lwp_streamgraph graph)
    fprintf (stderr, "\n");
 }
 
-}

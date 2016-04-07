@@ -136,7 +136,7 @@ lw_ws lw_ws_new (lw_pump pump)
    if (!ctx)
       return 0;
 
-  lwp_init ();
+   lwp_init ();
 
    ctx->pump = pump;
    ctx->auto_finish = lw_true;

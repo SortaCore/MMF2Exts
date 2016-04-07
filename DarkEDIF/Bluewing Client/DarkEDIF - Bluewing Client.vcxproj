@@ -105,6 +105,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -166,7 +167,7 @@
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <ExceptionHandling>Async</ExceptionHandling>
-      <CompileAs>Default</CompileAs>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -227,6 +228,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -261,13 +263,55 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Lib\lacewing\src\list.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\address.c" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\address2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\client2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\error2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\event2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\eventpump2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\fdstream2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\file2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\filter2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\flashpolicy2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\pipe2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\pump2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\server2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\stream2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\sync2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\thread2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\timer2.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\cxx\udp2.cc" />
     <ClCompile Include="..\Lib\DarkEdif.cpp" />
     <ClCompile Include="..\Lib\Lacewing\RelayClient.cc" />
+    <ClCompile Include="..\Lib\lacewing\src\error.c" />
+    <ClCompile Include="..\Lib\lacewing\src\filter.c" />
+    <ClCompile Include="..\Lib\lacewing\src\flashpolicy.c" />
+    <ClCompile Include="..\Lib\lacewing\src\global.c" />
+    <ClCompile Include="..\Lib\lacewing\src\heapbuffer.c" />
+    <ClCompile Include="..\Lib\lacewing\src\list.c" />
+    <ClCompile Include="..\Lib\lacewing\src\nvhash.c" />
+    <ClCompile Include="..\Lib\lacewing\src\pipe.c" />
+    <ClCompile Include="..\Lib\lacewing\src\pump.c" />
+    <ClCompile Include="..\Lib\lacewing\src\refcount-dbg.c" />
+    <ClCompile Include="..\Lib\lacewing\src\stream.c" />
+    <ClCompile Include="..\Lib\lacewing\src\streamgraph.c" />
+    <ClCompile Include="..\Lib\lacewing\src\util.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\client.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\compat.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\event.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\eventpump.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\fdstream.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\file.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\global2.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\server.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\sslclient.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\ssl\clientssl.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\ssl\serverssl.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\ssl\ssl.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\sync.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\thread.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\timer.c" />
+    <ClCompile Include="..\Lib\lacewing\src\windows\udp.c" />
     <ClCompile Include="..\Lib\ObjectSelection.cpp" />
     <ClCompile Include="Actions.cpp" />
     <ClCompile Include="Conditions.cpp" />
@@ -312,216 +356,6 @@
     <ClCompile Include="..\Lib\json.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\address.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\error.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\filter.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\flashpolicy.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\global.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\heapbuffer.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\nvhash.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\pipe.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\pump.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\refcount-dbg.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\stream.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\streamgraph.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\util.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\lib\lacewing\src\cxx\address2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\client.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\error2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\event.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\eventpump.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\fdstream.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\file.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\filter2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\flashpolicy2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\pipe2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\pump2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\server.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\stream2.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\sync.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\thread.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\timer.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\cxx\udp.cc">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\client2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\compat.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\event2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\eventpump2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\fdstream2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\file2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\global2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\server2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\sync2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\thread2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\timer2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\windows\udp2.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">CompileAsCpp</CompileAs>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Ext.def" />
@@ -533,6 +367,7 @@
     <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
     <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
     <ClInclude Include="..\Lib\Lacewing\MessageReader.h" />
+    <ClInclude Include="..\Lib\lacewing\src\windows\sslclient.h" />
     <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h" />
     <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h" />
     <ClInclude Include="DarkEDIF.h" />

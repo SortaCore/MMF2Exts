@@ -28,7 +28,7 @@
  */
 
 #include "common.h"
-extern "C" {
+
 void lwp_heapbuffer_free (lwp_heapbuffer * ctx)
 {
    if (!*ctx)
@@ -52,7 +52,7 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
    {
       size_t init_alloc = (length * 3);
 
-      if (! (*ctx = (lwp_heapbuffer) calloc (sizeof (**ctx) + init_alloc, 1)))
+      if (! (*ctx = (lwp_heapbuffer) malloc (sizeof (**ctx) + init_alloc)))
          return lw_false;
 
       memset (*ctx, 0, sizeof (**ctx));
@@ -139,4 +139,3 @@ void lwp_heapbuffer_trim_right (lwp_heapbuffer * ctx, size_t length)
    (*ctx)->length -= length;
 }
 
-}

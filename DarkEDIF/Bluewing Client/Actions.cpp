@@ -191,14 +191,11 @@ void Extension::LoopClientChannels()
 	while (Selected)
 	{
 		if (!Selected->isclosed)
-		{
-			SaveExtInfo &S = Globals->AddEvent(14);
-			S.Channel = Selected;
-		}
+			Globals->AddEvent1(14, Selected);
 
 		Selected = Selected->next();
 	}
-	Globals->AddEvent(18);
+	Globals->AddEvent1(18, Stored);
 }
 void Extension::SelectPeerOnChannelByName(char * PeerName)
 {
@@ -276,14 +273,10 @@ void Extension::LoopPeersOnChannel()
 		while (Selected)
 		{
 			if (!Selected->isclosed)
-			{
-				SaveExtInfo &S = Globals->AddEvent(13);
-				S.Peer = Selected;
-			}
+				Globals->AddEvent1(13, nullptr, Selected);
 			Selected = Selected->next();
 		}
-		SaveExtInfo &S = Globals->AddEvent(17);
-		S.Peer = Stored;
+		Globals->AddEvent1(17, nullptr, Stored);
 	}
 }
 void Extension::RequestChannelList()
@@ -295,11 +288,10 @@ void Extension::LoopListedChannels()
 	const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
 	while (Selected)
 	{
-		SaveExtInfo &S = Globals->AddEvent(27); // Catch first listing by this being first
-		S.ChannelListing = Selected;
+		Globals->AddEvent1(27, (void *)Selected); // Catch first listing by this being first
 		Selected = Selected->next();
 	}
-	Globals->AddEvent(28);
+	Globals->AddEvent1(28);
 }
 void Extension::SendBinaryToServer(int Subchannel)
 {
@@ -478,12 +470,10 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		if (fopen_s(&File, Filename, "wb") || !File)
 		{
 			char errorval [20];
-			SaveExtInfo &S = Globals->AddEvent(0);
+			
 			std::string Error = "Cannot save received binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
+			if (_itoa_s(errno, errorval, 20, 10))
 				Error += " with opening the file, and with converting error number.";
-			}
 			else
 			{
 				Error += "number [";
@@ -491,7 +481,7 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 				Error += "] occured with opening the file.";
 			}
 			Error += "\r\nThe message has not been modified.";
-			S.Error.Text = _strdup(Error.c_str());
+			CreateError(Error.c_str());
 			return;
 		}
 		// Jump to end
@@ -506,18 +496,15 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
 			char sizeastext [20];
-			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Couldn't save the received binary to file, ";
-			if (_itoa_s(errno, &sizeastext[0], 20, 10))
-			{
+			if (_itoa_s(errno, sizeastext, 20, 10))
 				Error += " and error copying size.";
-			}
 			else
 			{
 				Error += &sizeastext[0];
 				Error += " bytes managed to be written.";
 			}
-			S.Error.Text = _strdup(Error.c_str());
+			CreateError(Error.c_str());
 		}
 		fclose(File);
 	}
@@ -539,21 +526,17 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		if (!File)
 		{
 			char errorval [20];
-			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Cannot append received binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
+			if (_itoa_s(errno, errorval, 20, 10))
 				Error += " with opening the file, and with converting error number.";
-			}
 			else
 			{
 				Error += "number [";
-				Error += &errorval[0];
+				Error += errorval;
 				Error += "] occured with opening the file.";
 			}
 			Error += "\r\nThe message has not been modified.";
-
-			S.Error.Text = _strdup(Error.c_str());
+			CreateError(Error.c_str());
 			return;
 		}
 
@@ -561,18 +544,15 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
 			char sizeastext [20];
-			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Couldn't append the received binary to file, ";
-			if (_itoa_s(errno, &sizeastext[0], 20, 10))
-			{
+			if (_itoa_s(errno, sizeastext, 20, 10))
 				Error += " and error copying size.";
-			}
 			else
 			{
-				Error += &sizeastext[0];
-				Error += " bytes managed to be append.";
+				Error += sizeastext;
+				Error += " bytes managed to be appended.";
 			}
-			S.Error.Text = _strdup(Error.c_str());
+			CreateError(Error.c_str());
 		}
 		fclose(File);
 	}
@@ -589,21 +569,18 @@ void Extension::AddFileToBinary(char * Filename)
 		if (!(File = _fsopen(Filename, "wb", _SH_DENYWR)))
 		{
 			char errorval [20];
-			SaveExtInfo &S = Globals->AddEvent(0);
 			std::string Error = "Cannot save binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
+			if (_itoa_s(errno, errorval, 20, 10))
 				Error += " with opening the file, and with converting error number.";
-			}
 			else
 			{
 				Error += "number [";
-				Error += &errorval[0];
+				Error += errorval;
 				Error += "] occured with opening the file.";
 			}
 			Error += "\r\nThe message has not been modified.";
 
-			S.Error.Text = _strdup(Error.c_str());
+			CreateError(Error.c_str());
 			return;
 		}
 		// Jump to end
@@ -624,18 +601,15 @@ void Extension::AddFileToBinary(char * Filename)
 			if ((s = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
 			{
 				char sizeastext [20];
-				SaveExtInfo &S = Globals->AddEvent(0);
 				std::string Error = "Couldn't write full buffer to file, ";
-				if (_itoa_s(s, &sizeastext[0], 20, 10))
-				{
+				if (_itoa_s(s, sizeastext, 20, 10))
 					Error += " and error copying size.";
-				}
 				else
 				{
 					Error += &sizeastext[0];
 					Error += " bytes managed to be written.";
 				}
-				S.Error.Text = _strdup(Error.c_str());
+				CreateError(Error.c_str());
 			}
 			AddToSend(buffer, s);
 
@@ -840,14 +814,12 @@ void Extension::LoopListedChannelsWithLoopName(char * LoopName)
 		const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
 		while (Selected)
 		{
-			SaveExtInfo &S = Globals->AddEvent(59); // Catch first listing by this being first
-			S.ChannelListing = Selected;
-			S.Loop.Name = _strdup(LoopName);
+			// Catch first listing by this being first
+			Globals->AddEvent1(59, (void *)Selected, nullptr, _strdup(LoopName));
 			Selected = Selected->next();
 		}
 		
-		SaveExtInfo &S = Globals->AddEvent(60);
-		S.Loop.Name = _strdup(LoopName);
+		Globals->AddEvent1(60, nullptr, nullptr, _strdup(LoopName));
 	}
 }
 void Extension::LoopClientChannelsWithLoopName(char * LoopName)
@@ -861,15 +833,10 @@ void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 		while (LoopChannel)
 		{
 			if (!LoopChannel->isclosed)
-			{
-				SaveExtInfo &S = Globals->AddEvent(63);
-				S.Channel = LoopChannel;
-				S.Loop.Name = _strdup(LoopName);
-			}
+				Globals->AddEvent1(63, LoopChannel, nullptr, _strdup(LoopName));
 			LoopChannel = LoopChannel->next();
 		}
-		SaveExtInfo &S = Globals->AddEvent(64);
-		S.Channel = Stored;
+		Globals->AddEvent1(64, Stored);
 	}
 }
 void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
@@ -887,16 +854,10 @@ void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 		while (LoopPeer)
 		{
 			if (!LoopPeer->isclosed)
-			{
-				SaveExtInfo &S = Globals->AddEvent(61);
-				S.Peer = LoopPeer;
-				S.Loop.Name = _strdup(LoopName);
-			}
+				Globals->AddEvent1(61, nullptr, LoopPeer, _strdup(LoopName));
 			LoopPeer = LoopPeer->next();
 		}
-		SaveExtInfo &S = Globals->AddEvent(62);
-		S.Peer = Stored;
-		S.Loop.Name = _strdup(LoopName);
+		Globals->AddEvent1(62, nullptr, Stored, _strdup(LoopName));
 	}
 }
 void Extension::Connect(char * Hostname)

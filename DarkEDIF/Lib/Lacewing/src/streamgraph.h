@@ -30,8 +30,6 @@
 #ifndef _lw_streamgraph_h
 #define _lw_streamgraph_h
 
-extern "C" {
-
 typedef struct _lwp_streamgraph_link
 {
    lw_stream to, to_exp;
@@ -92,7 +90,6 @@ void lwp_streamgraph_delete (lwp_streamgraph);
   */
  void lwp_streamgraph_print (lwp_streamgraph);
 
- }
 #endif
 
 

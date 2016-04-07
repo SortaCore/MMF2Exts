@@ -31,7 +31,6 @@
 
 #ifdef _lacewing_debug
 
-extern "C" {
 static void list_refs (char * buf, struct lwp_refcount * refcount)
 {
    *buf = 0;
@@ -121,8 +120,6 @@ lw_bool _lwp_release (struct lwp_refcount * refcount, const char * name)
    }
 
    return lw_false;
-}
-
 }
 
 #endif

@@ -36,7 +36,7 @@
    #endif
 
    #if defined(_DEBUG) && !defined(_lacewing_debug)
-      //#define _lacewing_debug
+      #define _lacewing_debug
    #endif
 
    #ifndef _CRT_SECURE_NO_WARNINGS
@@ -81,10 +81,6 @@
  * so that the fields after the lw_stream ones may be accessed inside the
  * library.
  */
-#ifdef __cplusplus
-	extern "C"
-#endif
-void lwp_init();
 
  typedef struct _lw_thread            * lw_thread;
  typedef struct _lw_addr              * lw_addr;
@@ -114,13 +110,13 @@ void lwp_init();
  typedef struct _lw_ws_session        * lw_ws_session;
  typedef struct _lw_ws_sessionitem    * lw_ws_sessionitem;
 
-#include "../lacewing.h"
+#include "../include/lacewing.h"
 
 #ifdef _MSC_VER
-	#ifndef __cplusplus
-		#error Not CPP?
-	#endif
-	#pragma warning(disable: 4200) /* zero-sized array in struct/union */
+    #ifndef __cplusplus
+        #error "Can only compile as C++ with MSVC"
+    #endif
+    #pragma warning(disable: 4200) /* zero-sized array in struct/union */
     #pragma warning(disable: 4800) /* forcing value to bool 'true' or 'false' */
     #include "windows/typeof.h"
 #endif
@@ -162,7 +158,6 @@ void lwp_init ();
 #ifdef _WIN32
    #include "windows/common.h"
 #else
-	#error Attempted to include Unix.
    #include "unix/common.h"
 #endif
 

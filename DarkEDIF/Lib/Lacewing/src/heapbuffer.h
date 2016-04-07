@@ -30,7 +30,6 @@
 #ifndef _lw_heap_buffer_h
 #define _lw_heap_buffer_h
 
-extern "C" {
 typedef struct _lwp_heapbuffer
 {
     size_t length, allocated, offset;
@@ -51,6 +50,5 @@ char * lwp_heapbuffer_buffer (lwp_heapbuffer *);
 
 void lwp_heapbuffer_free (lwp_heapbuffer *);
 
-}
-
 #endif
+

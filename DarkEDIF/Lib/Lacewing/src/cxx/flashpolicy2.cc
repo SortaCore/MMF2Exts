@@ -70,3 +70,4 @@ void _flashpolicy::tag (void * tag)
 {
    lw_flashpolicy_set_tag ((lw_flashpolicy) this, tag);
 }
+

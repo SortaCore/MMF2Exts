@@ -47,8 +47,6 @@
    #define AI_ADDRCONFIG 0x00000400
 #endif
 
-extern "C" {
-
 typedef INT (WSAAPI * fn_getaddrinfo)
     (PCSTR, PCSTR, const struct addrinfo *, struct addrinfo **);
 
@@ -63,4 +61,6 @@ fn_mkgmtime64 compat_mkgmtime64 ();
 typedef BOOL (WINAPI * fn_GetFileSizeEx) (HANDLE, PLARGE_INTEGER);
 fn_GetFileSizeEx compat_GetFileSizeEx ();
 
-}
+
+
+

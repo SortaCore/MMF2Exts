@@ -29,7 +29,20 @@
 
 #include "../common.h"
 
-extern "C" {
+static lw_bool init_called = lw_false;
+
+void lwp_init ()
+{
+    WSADATA winsock_data;
+
+    if (init_called)
+        return;
+    
+    init_called = lw_true;
+
+    WSAStartup (MAKEWORD (2, 2), &winsock_data);
+}
+
 lw_bool lw_file_exists (const char * filename)
 {
    return (GetFileAttributesA (filename) & FILE_ATTRIBUTE_DIRECTORY) == 0;
@@ -124,4 +137,3 @@ void lw_sha1 (char * output, const char * input, size_t length)
    CryptDestroyHash (hash_prov);
 }
 
-}

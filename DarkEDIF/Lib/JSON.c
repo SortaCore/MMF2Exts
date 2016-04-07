@@ -46,7 +46,6 @@
 #include <ctype.h>
 #include <math.h>
 
-typedef unsigned short json_uchar;
 
 static unsigned char hex_value (json_char c)
 {
@@ -61,18 +60,6 @@ static unsigned char hex_value (json_char c)
 
    return 0xFF;
 }
-
-typedef struct
-{
-   unsigned long used_memory;
-
-   unsigned int uint_max;
-   unsigned long ulong_max;
-
-   json_settings settings;
-   int first_pass;
-
-} json_state;
 
 static void * default_alloc (size_t size, int zero, void * user_data)
 {
@@ -860,7 +847,7 @@ void json_value_free (json_value * value)
 }
 
 // The goal of this function is a preprocessor that removes all comments then writes the new array to json_input.
-int json_clean_comments (const json_char ** json_input, struct json_state * state, char * const error, size_t * _size)
+int json_clean_comments (const json_char ** json_input, json_state * state, char * const error, size_t * _size)
 {
 	#pragma warning(push)
 	#pragma warning(disable: 4133)

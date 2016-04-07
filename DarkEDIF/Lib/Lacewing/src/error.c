@@ -57,7 +57,7 @@ void lw_error_addv (lw_error ctx, const char * format, va_list args)
    if (*ctx->begin)
       lwp_error_add (ctx, " - ");
 
-   char * buffer = (char *) calloc (sizeof (ctx->buffer) + 1, 1);
+   char * buffer = (char *) malloc (sizeof (ctx->buffer) + 1);
 
    vsnprintf (buffer, sizeof (ctx->buffer), format, args);
    lwp_error_add (ctx, buffer);
@@ -67,7 +67,7 @@ void lw_error_addv (lw_error ctx, const char * format, va_list args)
 
 lw_error lw_error_new ()
 {
-   lw_error ctx = (lw_error) calloc (sizeof (*ctx), 1);
+   lw_error ctx = (lw_error) malloc (sizeof (*ctx));
 
    if (!ctx)
       return 0;
@@ -94,7 +94,7 @@ const char * lw_error_tostring (lw_error ctx)
 
 lw_error lw_error_clone (lw_error ctx)
 {
-   lw_error error = (lw_error) calloc (sizeof (*error), 1);
+   lw_error error = (lw_error) malloc (sizeof (*error));
 
    if (!error)
       return 0;
@@ -156,3 +156,4 @@ void * lw_error_tag (lw_error ctx)
 {
    return ctx->tag;
 }
+

@@ -88,3 +88,4 @@ void _error::tag (void * tag)
 {
    lw_error_set_tag ((lw_error) this, tag);
 }
+

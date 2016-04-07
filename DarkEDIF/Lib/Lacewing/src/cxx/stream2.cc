@@ -149,3 +149,4 @@ void _stream::tag (void * tag)
 {
    lw_stream_set_tag ((lw_stream) this, tag);
 }
+

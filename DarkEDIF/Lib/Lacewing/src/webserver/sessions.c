@@ -53,11 +53,10 @@ void lw_ws_req_session_write (lw_ws_req request, const char * key,
    {
       char session_id [lwp_session_id_length];
 
-	  throw std::exception("Use of lw_random, a removed function, attempted.");
-      //if (!lw_random (session_id, sizeof (session_id)))
-      //{
-	  //         assert (0);
-	 //   }
+      if (!lw_random (session_id, sizeof (session_id)))
+      {
+         assert (0);
+      }
 
       session = (lw_ws_session) calloc (sizeof (*session), 1);
 

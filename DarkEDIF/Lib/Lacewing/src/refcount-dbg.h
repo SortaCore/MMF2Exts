@@ -31,7 +31,6 @@
 #define _lw_refcount_h
 
 #define MAX_REFS  32
-extern "C" {
 
 struct lwp_refcount
 {
@@ -66,7 +65,6 @@ struct lwp_refcount refcount;                                              \
    lwp_set_refcount_name (x, name);                                           \
    ((struct lwp_refcount *) (x))->enable_logging = lw_true;                   \
 
-}
 #endif
    
 

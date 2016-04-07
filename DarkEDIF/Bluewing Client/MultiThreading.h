@@ -1,7 +1,8 @@
 // DarkEDIF extension: allows safe multithreading returns.
 #include "Common.h"
 
-#ifdef MULTI_THREADING
+#if defined(MULTI_THREADING) && !defined(ALREADY_DEFINED_MT)
+#define ALREADY_DEFINED_MT
 	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
 	#pragma pack( push, align_to_one_multithreading)
 	#pragma pack(1) 
@@ -9,7 +10,7 @@
 	{
 		// Required for DarkEDIF
 		unsigned char		NumEvents;
-		unsigned short *	CondTrig;
+		unsigned short	CondTrig[2];
 
 		// Lacewing code
 		union {
@@ -37,7 +38,7 @@
 		};
 		lacewing::relayclient::channel::peer * Peer;
 
-		SaveExtInfo() : NumEvents(0), CondTrig(nullptr), Channel(nullptr), Peer(nullptr)
+		SaveExtInfo() : NumEvents(0), CondTrig{ 0 }, Channel(nullptr), Peer(nullptr)
 		{
 			ReceivedMsg.Content = nullptr;
 			ReceivedMsg.Cursor = 0;
@@ -54,12 +55,6 @@
 				ReceivedMsg.Content = nullptr;
 			}
 			
-			// Required for DarkEDIF
-			if (CondTrig)
-			{
-				free(CondTrig);
-				CondTrig = nullptr;
-			}
 			Peer = nullptr;
 			Channel = nullptr;
 		}

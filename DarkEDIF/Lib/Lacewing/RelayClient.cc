@@ -197,15 +197,14 @@ namespace lacewing
 
 		~channelinternal() noexcept(false)
 		{
-			throw std::exception("Channel internal should not be called.");
 			if (!public_.isclosed)
 				throw std::exception("Channel was not set to closed before it was deleted.");
-			if (public_.internaltag)
-				throw std::exception("Internal tag");
+			
 			id = 0xffff;
 			free((char *)name);
 			name = nullptr;
 			ischannelmaster = false;
+			free(public_.tag);
 		}
 
 		/// <summary> searches for the first peer by id number. </summary>
@@ -237,7 +236,7 @@ namespace lacewing
 
 	void relayclientinternal::clear()
 	{
-		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { delete &c->public_; });
+		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { c->public_.isclosed = true; delete c; });
 		channels.clear();
 		clearchannellist();
 
@@ -290,11 +289,19 @@ namespace lacewing
 		internal.clear();
 	}
 
-	void handlerreceive(client socket, char * data, size_t size)
+	void handlerreceive(client socket, const char * data, size_t size)
 	{
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
-		internal.reader.process(data, size);
+		char * dataCpy = (char *)malloc(size);
+		if (!dataCpy)
+			throw std::exception("Out of memory.");
+		
+		memcpy(dataCpy, data, size);
+
+		internal.reader.process(dataCpy, size);
+
+		free(dataCpy);
 	}
 
 	void handlererror(client socket, error error)
@@ -364,7 +371,7 @@ namespace lacewing
 		lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
 		
 		lw_udp_delete((lw_udp)udp);
-		lw_client_delete((lw_client)socket);
+		lw_stream_delete((lw_client)socket);
 
 
 		delete ((relayclientinternal *)internaltag);
@@ -595,8 +602,11 @@ namespace lacewing
 	}
 	relayclient::channel::~channel() noexcept(false)
 	{
-		if (internaltag)
-			throw std::exception("Internal tag was not null as expected.");
+		if (internaltag != nullptr)
+		{
+			delete internaltag;
+			internaltag = nullptr;
+		}
 
 		if (tag)
 			throw std::exception("Deleted a channel without a null tag: possible memory leak.");
@@ -677,6 +687,7 @@ namespace lacewing
 					if (reader.failed)
 						break;
 					
+					socket->server_address()->resolve();
 					udp->host(socket->server_address());
 					clienttick();
 					
@@ -1072,6 +1083,8 @@ namespace lacewing
 		if (!udp->hosting())
 			throw std::exception("clienttick() called, but not hosting UDP."); 
 		
+		static int i = 0;
+		i++;
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
 	}

@@ -54,6 +54,9 @@
 
 #endif
 
+
+typedef unsigned short json_uchar;
+
 typedef struct
 {
    unsigned long max_memory;
@@ -243,8 +246,20 @@ typedef struct _json_value
 json_value * json_parse (const json_char * json,
                          size_t length);
 
+typedef struct
+{
+	unsigned long used_memory;
+
+	unsigned int uint_max;
+	unsigned long ulong_max;
+
+	json_settings settings;
+	int first_pass;
+} json_state;
+typedef json_state json_state;
+
 int json_clean_comments (const json_char ** json_input,
-						 struct json_state * state,
+						 json_state * state,
 						 json_char * const error,
 						 size_t * size);
 						 

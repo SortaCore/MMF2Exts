@@ -28,21 +28,7 @@
  */
 
 #include "common.h"
-extern "C" {
-static lw_bool init_called = lw_false;
 
-void lwp_init ()
-{
-    WSADATA winsock_data;
-
-    if (init_called)
-        return;
-    
-    init_called = lw_true;
-
-	int i = WSAStartup(MAKEWORD(2, 2), &winsock_data);
-	assert(i == 0); // WSAStartup fail
-}
 static char version [64] = { 0 };
 
 const char * lw_version ()
@@ -232,4 +218,3 @@ void lw_trace (const char * format, ...)
 #endif
 
 
-}

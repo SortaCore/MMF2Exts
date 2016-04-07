@@ -30,7 +30,6 @@
 #include "common.h"
 #include "stream.h"
 
-extern "C" {
 void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 {
    lwp_trace ("Stream %p created with def %p", ctx, def);
@@ -495,7 +494,7 @@ void lw_stream_add_filter_upstream (lw_stream ctx, lw_stream filter,
                                     lw_bool delete_with_stream,
                                     lw_bool close_together)
 {
-   lwp_stream_filterspec spec = (lwp_stream_filterspec) calloc (sizeof (*spec), 1);
+   lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
 
    spec->stream = ctx;
    spec->filter = filter;
@@ -522,7 +521,7 @@ void lw_stream_add_filter_downstream (lw_stream ctx, lw_stream filter,
                                       lw_bool delete_with_stream,
                                       lw_bool close_together)
 {
-   lwp_stream_filterspec spec = (lwp_stream_filterspec) calloc (sizeof (*spec), 1);
+   lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
 
    spec->stream = ctx;
    spec->filter = filter;
@@ -1246,4 +1245,3 @@ lw_pump lw_stream_pump (lw_stream ctx)
    return ctx->pump;
 }
 
-}

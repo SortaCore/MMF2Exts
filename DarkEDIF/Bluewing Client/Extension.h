@@ -15,9 +15,9 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 51;
+    static const int Version = 53;
 
-    static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN; // Use OEFLAGS namespace
+    static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
     static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
     
     static const int WindowProcPriority = 100;
@@ -319,7 +319,27 @@ struct GlobalInfo
 	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
 	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 	
-	SaveExtInfo& AddEvent(int Event, bool UseLastData = false);
+	void AddEvent1(int Event1,
+		void * ChannelOrChannelListing = nullptr,
+		lacewing::relayclient::channel::peer * Peer = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255);
+	void AddEvent2(int Event1, int Event2,
+		void * ChannelOrChannelListing = nullptr,
+		lacewing::relayclient::channel::peer * Peer = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255);
+private:
+	void AddEventF(bool twoEvents, int Event1, int Event2,
+		void * ChannelOrChannelListing = nullptr,
+		lacewing::relayclient::channel::peer * Peer = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255
+		);
+public:
 	void CreateError(const char * errorText);
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);

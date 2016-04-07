@@ -1,6 +1,6 @@
 #include "Common.h"
 #include <assert.h>
-
+#include "MultiThreading.h"
 
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
@@ -308,7 +308,30 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 	return 0;
 }
 
-SaveExtInfo& GlobalInfo::AddEvent(int Event, bool UseLastData /* = false */)
+void GlobalInfo::AddEvent1(int Event1,
+	void * ChannelOrChannelListing,
+	lacewing::relayclient::channel::peer * Peer,
+	char * MessageOrErrorText,
+	size_t MessageSize,
+	unsigned char Subchannel)
+{
+	return AddEventF(false, Event1, 35353, ChannelOrChannelListing, Peer, MessageOrErrorText, MessageSize, Subchannel);
+}
+void GlobalInfo::AddEvent2(int Event1, int Event2,
+	void * ChannelOrChannelListing,
+	lacewing::relayclient::channel::peer * Peer,
+	char * MessageOrErrorText,
+	size_t MessageSize,
+	unsigned char Subchannel)
+{
+	return AddEventF(true, Event1, Event2, ChannelOrChannelListing, Peer, MessageOrErrorText, MessageSize, Subchannel);
+}
+void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
+	void * ChannelOrChannelListing /* = nullptr */,
+	lacewing::relayclient::channel::peer * Peer /* = nullptr */,
+	char * MessageOrErrorText /* = nullptr */,
+	size_t MessageSize /* = 0 */,
+	unsigned char Subchannel /* = 255 */)
 {
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
@@ -328,78 +351,51 @@ SaveExtInfo& GlobalInfo::AddEvent(int Event, bool UseLastData /* = false */)
 		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
 	*/
 
-	
+	SaveExtInfo * NewEvent = new SaveExtInfo();
+	SaveExtInfo &NewEvent2 = *NewEvent;
 
-	// Cause a new event
-	if (UseLastData == false)
+	// Initialise
+	NewEvent2.NumEvents = twoEvents ? 2 : 1;
+	NewEvent2.CondTrig[0] = (unsigned short)Event1;
+	NewEvent2.CondTrig[1] = (unsigned short)Event2;
+	// Channel/ChannelListing overlap, as do Message Content and Error Text
+	NewEvent2.Channel = (lacewing::relayclient::channel *) ChannelOrChannelListing;
+	NewEvent2.Peer = Peer;
+	NewEvent2.ReceivedMsg.Content = MessageOrErrorText;
+	NewEvent2.ReceivedMsg.Size = MessageSize;
+	NewEvent2.ReceivedMsg.Subchannel = Subchannel;
+		
+	EnterCriticalSectionDerpy(&Lock); // Needed before we access Extension
+#if 0
+	// Copy Extension's data to vector
+	if (memcpy_s(((char *)NewEvent) + 5, sizeof(SaveExtInfo) - 5, ((char *)&_Ext->ThreadData) + 5, sizeof(SaveExtInfo) - 5))
 	{
-		SaveExtInfo * NewEvent = new SaveExtInfo;
-
-		// Initialise with one condition to be triggered
-		NewEvent->NumEvents = 1;
-		NewEvent->CondTrig = (unsigned short *)calloc(sizeof(unsigned short), 1);
-		
-		// Failed to allocate memory
-		if (!NewEvent->CondTrig)
-			throw std::exception("Out of memory.");
-		NewEvent->CondTrig[0] = (unsigned short)Event;
-		
-		EnterCriticalSectionDerpy(&Lock); // Needed before we access Extension
-		
-		// Copy Extension's data to vector
-		if (memcpy_s(((char *)NewEvent) + 5, sizeof(SaveExtInfo) - 5, ((char *)&_Ext->ThreadData) + 5, sizeof(SaveExtInfo) - 5))
-		{
-			// Failed to copy memory (error in "errno")
-			// delete NewEvent; // Keep it for debugging
-			LeaveCriticalSectionDerpy(&Lock);
-			throw std::exception("Memory copy failed while doing a lacewing event.");
-		}
-
-		_Saved.push_back(NewEvent);
-		
-		LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
-	}
-	else // New event is part of the last saved data (good for optimisation)
-	{
-		EnterCriticalSectionDerpy(&Lock);
-
-		if (_Saved.size() == 0)
-			throw std::exception("Tried to append an event, and failed drastically.");
-		// Add current condition to saved expressions
-		SaveExtInfo &S = *_Saved.back();
-		unsigned short * CurrentCond = (unsigned short *)realloc(&S.CondTrig[0], S.NumEvents+1 * sizeof(short));
-		
-		if (!CurrentCond)
-		{
-			LeaveCriticalSectionDerpy(&Lock);
-			throw std::exception("Out of memory.");
-		}
-
-		CurrentCond[S.NumEvents++] = (unsigned short)Event;
-		
-		S.CondTrig = CurrentCond;
-
+		// Failed to copy memory (error in "errno")
+		// delete NewEvent; // Keep it for debugging
 		LeaveCriticalSectionDerpy(&Lock);
+		throw std::exception("Memory copy failed while doing a lacewing event.");
 	}
+#endif
+
+	_Saved.push_back(NewEvent);
+		
+	LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
 	
 	if (_Ext != nullptr)
 		_Ext->Runtime.Rehandle();
-	return *_Saved.back();
 }
 
 void Extension::CreateError(const char * Error)
 {
-	SaveExtInfo &event = Globals->AddEvent(0, false);
-	event.Error.Text = _strdup(Error);
+	Globals->AddEvent1(0, nullptr, nullptr, _strdup(Error));
 	//__asm int 3;
 }
 
 void GlobalInfo::CreateError(const char * Error)
 {
-	SaveExtInfo &event = this->AddEvent(0, false);
-	event.Error.Text = _strdup(Error);
+	AddEvent1(0, _strdup(Error));
 	//__asm int 3;
 }
 
@@ -419,20 +415,17 @@ void Extension::AddToSend(void * Data, size_t Size)
 	if (!newptr)
 	{
 		char errorval [20];
-		SaveExtInfo &S = Globals->AddEvent(0);
 		std::string Error = "Received error ";
-		if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-		{
+		if (_itoa_s(errno, errorval, 20, 10))
 			Error += "with reallocating memory to append to binary message, and with converting error number.";
-		}
 		else
 		{
 			Error += "number [";
-			Error += &errorval[0];
+			Error += errorval;
 			Error += "] with reallocating memory to append to binary message.";
 		}
 		Error += "\r\nThe message has not been modified.";
-		S.Error.Text = _strdup(Error.c_str());
+		CreateError(Error.c_str());
 		return;
 	}
 	SendMsg = newptr;
@@ -443,20 +436,17 @@ void Extension::AddToSend(void * Data, size_t Size)
 	if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
 	{
 		char errorval [20];
-		SaveExtInfo &S = Globals->AddEvent(0);
 		std::string Error = "Received error ";
-		if (_itoa_s(errno, &errorval[0], 20, 10))
-		{
+		if (_itoa_s(errno, errorval, 20, 10))
 			Error += "with reallocating memory to append to binary message, and with converting error number.";
-		}
 		else
 		{
 			Error += "number [";
-			Error += &errorval[0];
+			Error += errorval;
 			Error += "] with copying memory to binary message.";
 		}
 		Error += "\r\nThe message has been resized but the data left uncopied.";
-		S.Error.Text = _strdup(Error.c_str());
+		CreateError(Error.c_str());
 	}
 }
 
@@ -493,11 +483,11 @@ Extension::~Extension()
 		Globals->_Ext = nullptr;
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 		
-		if (Globals->TimeoutWarningEnabled)
-		{
-			lw_trace("Timeout thread started. If no instance has reclaimed ownership in 10 seconds, an error message will be shown.");
-			CreateThread(NULL, 0, TimeoutWarningFunc, Globals, NULL, NULL);
-		}
+		lw_trace("Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.",
+			Globals->TimeoutWarningEnabled
+			? "a warning message will be shown" 
+			: "the connection will terminate and all messages will be discarded");
+		CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
 	}
 	else // If not global, cleanup the liblacewing; we know it's not used elsewhere
 	{
@@ -564,96 +554,92 @@ short Extension::Handle()
 		if (S->Peer != nullptr)
 			ThreadData.Peer = S->Peer;
 		
-		LastEventInts = (unsigned short *)realloc(LastEventInts, S->NumEvents * 2U);
-		memcpy(LastEventInts, S->CondTrig, S->NumEvents * 2U);
-
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 				
-		// Remove copies if this particular event number is used
-		if (S->CondTrig[0] == 0xFFFF)
+		
+		for each (auto i in Globals->Refs)
 		{
-			// If channel, it's either a channel leave or peer leave
-			if (S->Channel)
+			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+			for (unsigned char u = 0; u < S->NumEvents; ++u)
 			{
-				// Channel leave
-				if (!S->Peer)
+				// Remove copies if this particular event number is used
+				if (S->CondTrig[u] == 0xFFFF)
 				{
-					for (auto u = Channels.begin(); u != Channels.end(); ++u)
+					// If channel, it's either a channel leave or peer leave
+					if (S->Channel)
 					{
-						if (*u == S->Channel)
+						// Channel leave
+						if (!S->Peer)
 						{
-							if (!S->Channel->isclosed)
-								CreateError("Channel being removed but not marked as closed!");
-
-							delete (**u).internaltag;
-							Channels.erase(u);
-							break;
-						}
-					}
-
-				}
-				else // Peer leave
-				{
-					for (auto u = Channels.begin(); u != Channels.end(); ++u)
-					{
-						if (*u == S->Channel)
-						{
-							for (auto v = Peers.begin(); v != Peers.end(); ++v)
+							for (auto u = Channels.begin(); u != Channels.end(); ++u)
 							{
-								if (*v == S->Peer)
+								if (*u == S->Channel)
 								{
-									if (!S->Peer->isclosed)
-										CreateError("Peer being removed but not marked as closed!");
+									if (!S->Channel->isclosed)
+										CreateError("Channel being removed but not marked as closed!");
 
-									delete (**v).internaltag;
-									Peers.erase(v);
+									delete (**u).internaltag;
+									Channels.erase(u);
 									break;
 								}
 							}
 
-							break;
 						}
-					}
-				}
-			}
-			else // On disconnect, clear everyting
-			{
-				// Old username is stored in the peer tag and must be deleted separately from clear()
-				for each (auto i in Channels)
-				{
-					for (auto j = i->firstpeer(); j != nullptr; j = j->next())
-					{
-						if (j->tag)
+						else // Peer leave
 						{
-							free(j->tag);
-							j->tag = nullptr;
+							for (auto u = Channels.begin(); u != Channels.end(); ++u)
+							{
+								if (*u == S->Channel)
+								{
+									for (auto v = Peers.begin(); v != Peers.end(); ++v)
+									{
+										if (*v == S->Peer)
+										{
+											if (!S->Peer->isclosed)
+												CreateError("Peer being removed but not marked as closed!");
+
+											delete (**v).internaltag;
+											Peers.erase(v);
+											break;
+										}
+									}
+
+									break;
+								}
+							}
 						}
 					}
+					else // On disconnect, clear everyting
+					{
+						// Old username is stored in the peer tag and must be deleted separately from clear()
+						for each (auto i in Channels)
+						{
+							for (auto j = i->firstpeer(); j != nullptr; j = j->next())
+							{
+								if (j->tag)
+								{
+									free(j->tag);
+									j->tag = nullptr;
+								}
+							}
+						}
+
+						// TODO: Why do we even HAVE channels? If they're dups, is a full clone useable?
+						// what happens to peer's tag, being it's a char * and if duped, will be freed twice?
+
+						Channels.clear();
+						Peers.clear();
+					}
 				}
-
-				// TODO: Why do we even HAVE channels? If they're dups, is a full clone useable?
-				// what happens to peer's tag, being it's a char * and if duped, will be freed twice?
-
-				Channels.clear();
-				Peers.clear();
-			}
-		}
-		else
-		{
-			for each (auto i in Globals->Refs)
-			{
-				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-				for (unsigned char u = 0; u < S->NumEvents; ++u)
-				{
+				else
 					i->Runtime.PushEvent((int)S->CondTrig[u]);
-				}
 			}
 		}
 
 		EnterCriticalSectionDerpy(&Globals->Lock);
 		Saved.erase(Saved.begin());
 		LeaveCriticalSectionDerpy(&Globals->Lock);
-	}
+	} 
 
     /*
        If your extension will draw to the MMF window you should first 
@@ -689,24 +675,28 @@ short Extension::Handle()
 	return RunNextLoop ? 0 : REFLAG::ONE_SHOT;
 }
 
-DWORD WINAPI TimeoutWarningFunc(void * ThisGlobalsInfo)
+DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	// Wait 10 seconds
-	Sleep(10 * 1000);
+	// Wait 3 seconds
+	Sleep(3 * 1000);
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
 	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
 	if (!G.Refs.empty())
 		return 0U;
 
-	// Otherwise, fuss at them.
-	MessageBoxA(NULL, "Bluewing Warning!\r\n"
-		"All Bluewing objects have been destroyed and some time has passed; but "
-		"the connection has been left open in the background, unused, but still open.\r\n"
-		"If this is intended behaviour, disable the Timeout warning in the object properties.\r\n"
-		"If you want to close the connection if no instances remain open, use the FullCleanup action on the Bluewing object.",
-		"Bluewing Warning",
-		MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
+	if (G.TimeoutWarningEnabled)
+	{
+		// Otherwise, fuss at them.
+		MessageBoxA(NULL, "Bluewing Warning!\r\n"
+			"All Bluewing objects have been destroyed and some time has passed; but "
+			"the connection has been left open in the background, unused, but still open.\r\n"
+			"If this is intended behaviour, disable the Timeout warning in the object properties.\r\n"
+			"If you want to close the connection if no instances remain open, use the FullCleanup action on the Bluewing object.",
+			"Bluewing Warning",
+			MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
+	}
+	delete ThisGlobalsInfo; // Cleanup!
 	return 0U;
 }
 

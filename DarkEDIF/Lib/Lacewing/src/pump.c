@@ -32,7 +32,7 @@
 
 lw_pump lw_pump_new (const lw_pumpdef * def)
 {
-   lw_pump ctx = (lw_pump) calloc (sizeof (*ctx) + def->tail_size, 1);
+   lw_pump ctx = (lw_pump) malloc (sizeof (*ctx) + def->tail_size);
    
    if (!ctx)
       return 0;
@@ -153,7 +153,7 @@ static void remove_proc (struct remove_proc_data * data)
 void lw_pump_post_remove (lw_pump ctx, lw_pump_watch watch)
 {
    struct remove_proc_data * data =
-      (struct remove_proc_data *) calloc (sizeof (*data), 1);
+      (struct remove_proc_data *) malloc (sizeof (*data));
 
    data->pump = ctx;
    data->watch = watch;
@@ -170,3 +170,6 @@ void lw_pump_set_tag (lw_pump ctx, void * tag)
 {
    ctx->tag = tag;
 }
+
+
+

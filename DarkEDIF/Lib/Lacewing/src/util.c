@@ -29,7 +29,6 @@
 
 #include "common.h"
 
-extern "C" {
 void lwp_disable_ipv6_only (lwp_socket socket)
 {
    int no = 0;
@@ -158,7 +157,7 @@ ssize_t lwp_format (char ** output, const char * format, va_list args)
 
       count = _vscprintf (format, args);
 
-      if (! (*output = (char *) calloc (count + 1, 1)))
+      if (! (*output = (char *) malloc (count + 1)))
          return 0;
 
       if (vsprintf (*output, format, args) < 0)
@@ -292,4 +291,3 @@ void lwp_to_lowercase (char * str)
       *i = tolower (*i);
 }
 
-}

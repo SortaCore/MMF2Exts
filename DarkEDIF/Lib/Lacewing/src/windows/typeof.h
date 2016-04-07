@@ -1,7 +1,6 @@
 
 /* Source: http://www.nedproductions.biz/blog/implementing-typeof-in-microsofts-c-compiler */
-#ifndef TypeofImpl
-#define TypeofImpl
+
 #if defined(_MSC_VER)
 namespace msvc_typeof_impl {
 	/* This is a fusion of Igor Chesnokov's method (http://rsdn.ru/forum/src/1094305.aspx)
@@ -91,4 +90,3 @@ namespace msvc_typeof_impl {
 #endif
 
 
-#endif

@@ -27,7 +27,6 @@
  * SUCH DAMAGE.
  */
 
-
 #include "list.h"
 
 /* This file contains private helper functions for the macros defined in list.h.
@@ -35,7 +34,7 @@
  * These functions provide the actual linked list logic, keeping it out of the
  * macros (and therefore out of anything but list.o).
  */
-extern "C" {
+
 struct list_head
 {
    list_element * first, * last;
@@ -73,7 +72,7 @@ void _list_push (list_head ** p_list, size_t value_size, void * value)
    ++ list->length;
 
    list_element * elem = (list_element *)
-       calloc (sizeof (*elem) + value_size, 1);
+       malloc (sizeof (*elem) + value_size);
 
    memset (elem, 0, sizeof (*elem));
    memcpy (get_value_ptr (elem), value, value_size);
@@ -102,7 +101,7 @@ void _list_push_front (list_head ** p_list, size_t value_size, void * value)
    ++ list->length;
 
    list_element * elem = (list_element *)
-       calloc (sizeof (*elem) + value_size, 1);
+       malloc (sizeof (*elem) + value_size);
 
    memset (elem, 0, sizeof (*elem));
    memcpy (get_value_ptr (elem), value, value_size);
@@ -191,4 +190,4 @@ void _list_clear (list_head ** list, size_t value_size)
    *list = 0;
 }
 
-}
+

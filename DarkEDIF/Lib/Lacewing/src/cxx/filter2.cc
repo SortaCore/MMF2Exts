@@ -108,3 +108,4 @@ void _filter::tag (void * tag)
 {
    lw_filter_set_tag ((lw_filter) this, tag);
 }
+

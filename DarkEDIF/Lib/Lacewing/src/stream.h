@@ -52,7 +52,6 @@
  */
  #define lwp_stream_flag_draining_queues 16
 
-extern "C" {
 typedef struct _lwp_stream_data_hook
 {
    lw_stream_hook_data proc;
@@ -222,8 +221,6 @@ void lwp_stream_init (lw_stream, const lw_streamdef *, lw_pump);
  */
 
  lw_bool lwp_stream_close (lw_stream, lw_bool immediate);
-
-}
 
 #endif
 

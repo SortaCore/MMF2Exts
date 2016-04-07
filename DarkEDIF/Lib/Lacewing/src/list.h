@@ -168,12 +168,7 @@ typedef struct list_element list_element;
       elem;                                                                   \
    })                                                                           
 #else
-// If you're getting messages about "expecting '{' before '<'",
-// don't forget to go into the file properties for ALL the lacewing .c and .cc files 
-// and go into Advanced > Compile As, and set it to C++. C++, not C.
-// Otherwise this is read as C syntax, sometimes even in C++ projects.
-
-   template<class T> inline T * list_find (T * list, T value)
+   template <class T> inline T * list_find (T * list, T value)
    {
       list_elem (list) elem = list_elem_front (list);
       for (; elem; elem = list_elem_next (elem))    
@@ -181,7 +176,6 @@ typedef struct list_element list_element;
             return elem;
       return 0;
    }
-
 #endif
 
 #define list_remove(list, value)                                              \

@@ -11,7 +11,6 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-
 #define DLLExport   __stdcall
 
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
@@ -109,7 +108,7 @@ struct RUNDATA
     */
 };
 DWORD WINAPI LacewingLoopThread(void * ThisExt);
-DWORD WINAPI TimeoutWarningFunc(void * ThisGlobalInfo);
+DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
 
 #define COMMON_H
 #include "Extension.h"

@@ -29,7 +29,6 @@
 
 #include "common.h"
 
-extern "C" {
 struct _lw_flashpolicy
 {
    lw_server server;
@@ -124,7 +123,7 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
    fseek (file, 0, SEEK_END);
 
    ctx->size = ftell (file);
-   ctx->buffer = (char *) calloc (ctx->size, 1);
+   ctx->buffer = (char *) malloc (ctx->size);
 
    fseek (file, 0, SEEK_SET);
 
@@ -183,4 +182,3 @@ void * lw_flashpolicy_tag (lw_flashpolicy ctx)
 
 lwp_def_hook (flashpolicy, error);
 
-}

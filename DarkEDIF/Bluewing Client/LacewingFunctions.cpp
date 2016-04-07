@@ -9,42 +9,36 @@ void OnError(lacewing::relayclient &Client, lacewing::error Error)
 {
 	EnterCriticalSectionDerpy(&Globals->Lock);
 
-	SaveExtInfo &S = Globals->AddEvent(0);
-	S.Error.Text = _strdup(Error->tostring());
-
-	if (!S.Error.Text)
-	{
-		Globals->CreateError("Error copying Lacewing error string to local buffer.");
-		Saved.erase(Saved.end()); // Remove S from vector
-	}
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	char * c = _strdup(Error->tostring());
+	if (c)
+		Globals->AddEvent1(0, c);
+	else
+		Globals->AddEvent1(0, "Error copying Lacewing error string to local buffer.");
+	
 }
 void OnConnect(lacewing::relayclient &Client)
 {
-	Globals->AddEvent(1);
+	Globals->AddEvent1(1);
 }
 void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 {
 	// Old deny reason? Free it.
-	if (DenyReasonBuffer)
-		free(DenyReasonBuffer);
+	free(DenyReasonBuffer);
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
 		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	Globals->AddEvent(2);
+	Globals->AddEvent1(2);
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
-	// Pass disconnect event
-	Globals->AddEvent(3);
-
-	// Empty all channels and peers
-	Globals->AddEvent(0xFFFF);
+	// Pass disconnect event,
+	// 0xFFFF: Empty all channels and peers
+	Globals->AddEvent2(3, 0xFFFF);
 }
 void OnChannelListReceived(lacewing::relayclient &Client)
 {
-	Globals->AddEvent(26);
+	Globals->AddEvent1(26);
 }
 void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
@@ -53,355 +47,295 @@ void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel
 	for (auto i = Target.firstpeer(); i != nullptr; i = i->next())
 		i->isclosed = false;
 
-	EnterCriticalSectionDerpy(&Globals->Lock);
-
-	SaveExtInfo &S = Globals->AddEvent(4);
-	S.Channel = &Target;
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	Globals->AddEvent1(4, &Target);
 }
 void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-
-	SaveExtInfo &S = Globals->AddEvent(5);
-	S.Loop.Name = _strdup(ChannelName);
-	LeaveCriticalSectionDerpy(&Globals->Lock);
-	
 	// Old deny reason? Free it.
-	if (DenyReasonBuffer)
-		free(DenyReasonBuffer);
-	
+	free(DenyReasonBuffer);
+
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
 		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	Globals->AddEvent1(5, nullptr, nullptr, _strdup(ChannelName));
 }
 void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
 	Target.isclosed = true;
 
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(43);
-	S.Channel = &Target;
-	
-	// Clear channel copy after this event is handled
-	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
-	C.Channel = S.Channel;
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	// 0xFFFF: Clear channel copy after this event is handled
+	Globals->AddEvent2(43, 0xFFFF, &Target);
 }
 void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(44);
-	S.Channel = &Target;
-	LeaveCriticalSectionDerpy(&Globals->Lock);
-	
 	// Old deny reason? Free it.
-	if (DenyReasonBuffer)
-		free(DenyReasonBuffer);
-	
+	free(DenyReasonBuffer);
+
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
 		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	Globals->AddEvent1(44, &Target);
 }
 void OnNameSet(lacewing::relayclient &Client)
 {
-	Globals->AddEvent(6);
+	Globals->AddEvent1(6);
 }
 void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const char * DenyReason)
 {
-	Globals->AddEvent(7);
-	
 	// Old deny reason? Free it.
-	if (DenyReasonBuffer)
-		free(DenyReasonBuffer);
-	
+	free(DenyReasonBuffer);
+
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
 		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	Globals->AddEvent1(7);
 }
 void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 {
-
-	Globals->AddEvent(53);
-
-	// Old previous name? Free it.
-	if (PreviousName)
-		free(PreviousName);
+	// Old name? Free it.
+	free(PreviousName);
 
 	PreviousName = _strdup(OldName);
 	if (!PreviousName)
 		Globals->CreateError("Error copying self previous name from Lacewing to local buffer.");
+	Globals->AddEvent1(53);
 }
 void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
 {
 	Peer.isclosed = false;
 
-	EnterCriticalSectionDerpy(&Globals->Lock);
-
-	SaveExtInfo &S = Globals->AddEvent(10);
-	S.Channel = &Channel;
-	S.Peer = &Peer;
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	Globals->AddEvent1(10, &Channel, &Peer);
 }
 void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer)
 {
 	Peer.isclosed = true;
 
-	EnterCriticalSectionDerpy(&Globals->Lock);
-
-	SaveExtInfo &S = Globals->AddEvent(11);
-	S.Channel = &Channel;
-	S.Peer = &Peer;
-	
-	// Remove closed peer entirely after above event is handled
-	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
-	C.Channel = S.Channel;
-	C.Peer = S.Peer;
-	LeaveCriticalSectionDerpy(&Globals->Lock);
-
+	// 0xFFFF: Remove closed peer entirely after regular event handled
+	Globals->AddEvent2(11, 0xFFFF, &Channel, &Peer);
 }
 void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer, const char * OldName)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(45);
-	S.Channel = &Channel;
-	S.Peer = &Peer;
+	Globals->AddEvent1(45, &Channel, &Peer);
 
 	// Old previous name? Free it
-	if (Peer.tag)
-		free(Peer.tag);
+	free(Peer.tag);
 
 	// Store new previous name in Tag.
 	Peer.tag =_strdup(OldName);
 	if (!Peer.tag)
 		Globals->CreateError("Error copying old peer name.");
-	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(Blasted ? 52 : 49);
-	S.Channel = &Channel;
-	S.Peer = &Peer;
-	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
-	S.ReceivedMsg.Size = Size;
-
-	S.ReceivedMsg.Content = (char *)malloc(Size);
-	if (!S.ReceivedMsg.Content)
+	char * Dup = (char *)malloc(Size);
+	if (!Dup)
 	{
 		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		return;
 	}
-	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
+	if (memcpy_s(Dup, Size, Data, Size))
 	{
-		Saved.erase(Saved.end());
-		free(S.ReceivedMsg.Content);
+		free(Dup);
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		return;
 	}
-	else 
+	if (Blasted)
 	{
-		if (Blasted)
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(52, 39, &Channel, &Peer, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(52, 40, &Channel, &Peer, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(52, 41, &Channel, &Peer, Dup, Size, Subchannel);
+		// ???
+		else
 		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(39, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(40, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(41, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
-		}
-		else // Sent
-		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(36, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(37, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(38, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	else // Sent
+	{
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(49, 36, &Channel, &Peer, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(49, 37, &Channel, &Peer, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(49, 38, &Channel, &Peer, Dup, Size, Subchannel);
+		// ???
+		else
+		{
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+		}
+	}
 }
 void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(Blasted ? 51 : 48);
-	S.Channel = &Channel;
-	S.Peer = &Peer;
-	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
-	S.ReceivedMsg.Size = Size;
-
-	S.ReceivedMsg.Content = (char *)malloc(Size);
-	if (!S.ReceivedMsg.Content)
+	char * Dup = (char *)malloc(Size);
+	if (!Dup)
 	{
 		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		return;
 	}
-	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
+	if (memcpy_s(Dup, Size, Data, Size))
 	{
-		Saved.erase(Saved.end());
-		free(S.ReceivedMsg.Content);
+		free(Dup);
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		return;
 	}
-	else
+	if (Blasted)
 	{
-		if (Blasted)
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(51, 22, &Channel, &Peer, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(51, 23, &Channel, &Peer, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(51, 35, &Channel, &Peer, Dup, Size, Subchannel);
+		// ???
+		else
 		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(22, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(23, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(35, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
-		}
-		else // Sent
-		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(9, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(16, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(33, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	else // Sent
+	{
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(48, 9, &Channel, &Peer, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(48, 16, &Channel, &Peer, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(48, 33, &Channel, &Peer, Dup, Size, Subchannel);
+		// ???
+		else
+		{
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+		}
+	}
 }
 void OnServerMessage(lacewing::relayclient &Client,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(Blasted ? 50 : 47);
-	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
-	S.ReceivedMsg.Size = Size; // Do NOT add null. There's error checking for that.
-
-	S.ReceivedMsg.Content = (char *)malloc(Size);
-
-	if (!S.ReceivedMsg.Content)
+	char * Dup = (char *)malloc(Size);
+	if (!Dup)
 	{
 		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		return;
 	}
-	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
+	if (memcpy_s(Dup, Size, Data, Size))
 	{
-		Saved.erase(Saved.end());
-		free(S.ReceivedMsg.Content);
+		free(Dup);
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		return;
 	}
-	else
+	if (Blasted)
 	{
-		if (Blasted)
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(50, 20, nullptr, nullptr, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(50, 21, nullptr, nullptr, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(50, 34, nullptr, nullptr, Dup, Size, Subchannel);
+		// ???
+		else
 		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(20, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(21, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(34, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
-		}
-		else // Sent
-		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(8, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(15, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(32, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	else // Sent
+	{
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(47, 8, nullptr, nullptr, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(47, 15, nullptr, nullptr, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(47, 32, nullptr, nullptr, Dup, Size, Subchannel);
+		// ???
+		else
+		{
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+		}
+	}
 }
 void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
-	SaveExtInfo &S = Globals->AddEvent(Blasted ? 72 : 68);
-	S.Channel = &Channel;
-	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
-	S.ReceivedMsg.Size = Size;
-
-	S.ReceivedMsg.Content = (char *)malloc(Size);
-	if (!S.ReceivedMsg.Content)
+	char * Dup = (char *)malloc(Size);
+	if (!Dup)
 	{
 		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		return;
 	}
-	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
+	if (memcpy_s(Dup, Size, Data, Size))
 	{
-		Saved.erase(Saved.end());
-		free(S.ReceivedMsg.Content);
+		free(Dup);
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		return;
 	}
-	else 
+	if (Blasted)
 	{
-		if (Blasted)
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(72, 69, &Channel, nullptr, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(72, 70, &Channel, nullptr, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(72, 71, &Channel, nullptr, Dup, Size, Subchannel);
+		// ???
+		else
 		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(69, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(70, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(71, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
-		}
-		else // Sent
-		{
-			// Text
-			if (Variant == 0)
-				Globals->AddEvent(65, true);
-			// Number
-			else if (Variant == 1)
-				Globals->AddEvent(66, true);
-			// Binary
-			else if (Variant == 2)
-				Globals->AddEvent(67, true);
-			// ???
-			else
-				Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
-	LeaveCriticalSectionDerpy(&Globals->Lock);
+	else // Sent
+	{
+		// Text
+		if (Variant == 0)
+			Globals->AddEvent2(68, 65, &Channel, nullptr, Dup, Size, Subchannel);
+		// Number
+		else if (Variant == 1)
+			Globals->AddEvent2(68, 66, &Channel, nullptr, Dup, Size, Subchannel);
+		// Binary
+		else if (Variant == 2)
+			Globals->AddEvent2(68, 67, &Channel, nullptr, Dup, Size, Subchannel);
+		// ???
+		else
+		{
+			free(Dup);
+			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+		}
+	}
 }
 
 

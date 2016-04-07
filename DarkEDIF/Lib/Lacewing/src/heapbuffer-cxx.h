@@ -35,7 +35,7 @@ extern "C"
     #include "heapbuffer.h"
 }
 
-namespace lacewing
+namespace Lacewing
 {
     class HeapBuffer
     {
