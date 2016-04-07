@@ -54,7 +54,7 @@ public:
 
     /// <summary> Gets the next ID available from the pool. </summary>
     /// <returns> New ID to use. </returns>
-    unsigned short Borrow()
+    unsigned short borrow()
     {
 		++borrowedCount;
 
@@ -74,7 +74,7 @@ public:
 
     /// <summary> Returns the given identifier. </summary>
     /// <param name="ID"> The identifier to return. </param>
-    void Return(unsigned short ID)
+    void returnID(unsigned short ID)
     {
 		// No IDs in use at all: empty list
         if ((-- borrowedCount) == 0)

@@ -68,7 +68,8 @@ namespace lacewing
 			lacewing::udp _udp, pump _eventpump) : client(_client),
 			socket(_socket), udp(_udp), message(true), timer(lacewing::timer_new(_eventpump))
 		{
-			
+			if ((long)_eventpump == 0xDDDDDDDD || _eventpump == nullptr)
+				throw std::exception("0xDD detected, 3");
 			handler_connect = 0;
 			handler_connectiondenied = 0;
 			handler_disconnect = 0;
@@ -139,6 +140,11 @@ namespace lacewing
 		relayclient::channel::peer public_;
 		channelinternal &channel;
 
+		unsigned short id;
+		const char * name, *prevname;
+
+		bool ischannelmaster;
+
 		peerinternal(channelinternal &_channel, unsigned short id, unsigned char flags, const char * name)
 			: channel(_channel), prevname(nullptr)
 		{
@@ -152,15 +158,19 @@ namespace lacewing
 			if (!name || !name[0] || strnlen(name, 256) == 256)
 				throw std::exception("peerinternal ctor error: null, blank, or too-long name used.");
 
-			id = id;
-			name = _strdup(name);
-			ischannelmaster = ((flags & 0x1) == 0x1);
+			this->id = id;
+			this->name = _strdup(name);
+			this->ischannelmaster = ((flags & 0x1) == 0x1);
+			this->public_.isclosed = false;
 		}
-
-		unsigned short id;
-		const char * name, * prevname;
-
-		bool ischannelmaster;
+		~peerinternal() noexcept(false)
+		{
+			if (!public_.isclosed)
+				throw std::exception("Channel was not set to closed before it was deleted.");
+			free((char *)name);
+			free((char *)prevname);
+			public_.internaltag = nullptr;
+		}
 	};
 
 	struct channelinternal
@@ -168,34 +178,44 @@ namespace lacewing
 		relayclient::channel public_;
 		relayclientinternal &client;
 
-		channelinternal(relayclientinternal &_client) : client(_client)
-		{
-			public_.internaltag = this;
-			public_.tag = 0;
-			
-			id = 0xffff;
-			name = nullptr;
-			ischannelmaster = false;
-		}
-
-		~channelinternal()
-		{
-			id = 0xffff;
-			name = nullptr;
-			ischannelmaster = false;
-		}
-
 		unsigned short id;
 		const char * name;
 		bool ischannelmaster;
 
 		std::vector<peerinternal *> peers;
 
+		channelinternal(relayclientinternal &_client) : client(_client)
+		{
+			public_.internaltag = this;
+			public_.tag = 0;
+			public_.isclosed = false;
+			
+			id = 0xffff;
+			name = nullptr;
+			ischannelmaster = false;
+		}
+
+		~channelinternal() noexcept(false)
+		{
+			throw std::exception("Channel internal should not be called.");
+			if (!public_.isclosed)
+				throw std::exception("Channel was not set to closed before it was deleted.");
+			if (public_.internaltag)
+				throw std::exception("Internal tag");
+			id = 0xffff;
+			free((char *)name);
+			name = nullptr;
+			ischannelmaster = false;
+		}
+
 		/// <summary> searches for the first peer by id number. </summary>
 		/// <param name="id"> id to look up. </param>
 		/// <returns> null if it fails, else the matching peer. </returns>
 		peerinternal * findpeerbyid(unsigned short id)
 		{
+			// findchannelbyid() is false, thus channel->findpeerbyid() is false too
+			if (this == nullptr)
+				return nullptr;
 			auto i = std::find_if(peers.cbegin(), peers.cend(), 
 				[&](const peerinternal * const & p) { return p->id == id; });
 			return (i == peers.cend() ? nullptr : *i);
@@ -217,7 +237,7 @@ namespace lacewing
 
 	void relayclientinternal::clear()
 	{
-		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { delete c; });
+		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { delete &c->public_; });
 		channels.clear();
 		clearchannellist();
 
@@ -253,23 +273,6 @@ namespace lacewing
 		message.add<unsigned char>(0); /* connect */
 		message.add("revision 3", -1);
 
-		// If I have this here, it will start UDP, but throw errors in RecvMsg().
-		// If I don't, TCP doesn't get any Connect Response - somehow.
-		// Something must have screwed up but I have no idea what. It used to work, once I fixed the 
-		// lw_addr_equal problem.
-		// 
-		// Order as meant to happen:
-		// 1) TCP Socket open.
-		// 2) TCP Socket connect
-		// --> 3) TCP Socket send Lacewing connect request message
-		// 4) TCP message (connect request success)
-		// somewhere in 1-4 UDP socket host
-		// 5) --> UDP socket send message
-		// note: udp post_receives doesn't work unless WSASendTo is called first.
-		// But it's called during UDP's host function.
-		// But we can't call it first unless TCP lacewing connect success msg, including client ID, has been received.
-		// But we don't have the client ID unless TCP connect works, but it only works if we activate UDP, it calls post_receives, which ...
-		
 		message.send(internal.socket);
 	}
 
@@ -287,7 +290,7 @@ namespace lacewing
 		internal.clear();
 	}
 
-	void handlerreceive(client socket, const char * data, size_t size)
+	void handlerreceive(client socket, char * data, size_t size)
 	{
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
@@ -590,19 +593,19 @@ namespace lacewing
 
 		message.send(internal.socket);
 	}
-	relayclient::channel::~channel()
+	relayclient::channel::~channel() noexcept(false)
 	{
-		delete (channelinternal *)internaltag;
-		internaltag = nullptr;
+		if (internaltag)
+			throw std::exception("Internal tag was not null as expected.");
 
 		if (tag)
 			throw std::exception("Deleted a channel without a null tag: possible memory leak.");
 	}
 
-	relayclient::channel::peer::~peer()
+	relayclient::channel::peer::~peer() noexcept(false)
 	{
-		delete (peerinternal *)internaltag;
-		internaltag = nullptr;
+		if (internaltag)
+			throw std::exception("Internal tag was not null as expected.");
 
 		if (tag)
 			throw std::exception("Deleted a peer without a null tag: possible memory leak.");
@@ -710,11 +713,11 @@ namespace lacewing
 					else
 					{
 						const char * oldname = this->name;
-						free((char *)this->name);
 						this->name = name;
 
 						if (handler_name_changed)
 							handler_name_changed(client, oldname);
+						free((char *)oldname);
 					}
 				}
 				else
@@ -747,7 +750,7 @@ namespace lacewing
 					channelinternal * channel = new channelinternal(*this);
 
 					channel->id = channelid;
-					channel->name = name;
+					channel->name = _strdup(name);
 					channel->ischannelmaster = (flags & 1) != 0;
 
 					for (;;)
@@ -803,7 +806,6 @@ namespace lacewing
 
 					if (handler_channel_leave)
 						handler_channel_leave(client, channel->public_);
-					delete channel;
 				}
 				else
 				{
@@ -989,7 +991,6 @@ namespace lacewing
 				if (handler_peer_disconnect)
 					handler_peer_disconnect(client, channel2->public_, peer->public_);
 
-				delete peer;
 				break;
 			}
 
@@ -1011,8 +1012,9 @@ namespace lacewing
 			{
 				/* peer is changing their name */
 
+				free((char *)peer->prevname);
 				peer->prevname = peer->name;
-				peer->name = name;
+				peer->name = _strdup(name);
 
 				if (handler_peer_changename)
 					handler_peer_changename(client, channel2->public_, peer->public_, peer->prevname);

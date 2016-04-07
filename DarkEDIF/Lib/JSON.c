@@ -862,7 +862,9 @@ void json_value_free (json_value * value)
 // The goal of this function is a preprocessor that removes all comments then writes the new array to json_input.
 int json_clean_comments (const json_char ** json_input, struct json_state * state, char * const error, size_t * _size)
 {
-	#pragma warning(disable:4133)
+	#pragma warning(push)
+	#pragma warning(disable: 4133)
+	#pragma warning(disable: 4018)
 	unsigned int size = *_size;
 	// Used as an indicator whether i is currently inside a string var.
 	int string = 0;
@@ -955,6 +957,6 @@ int json_clean_comments (const json_char ** json_input, struct json_state * stat
 	*_size = size;
 
 	return 1;
-	#pragma warning(default:4133)
+	#pragma warning(pop)
 }
 

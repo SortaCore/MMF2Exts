@@ -138,6 +138,7 @@ public:
     {
         reset();
         tosend = 0;
+		tosendsize = 0;
     }
 
 };

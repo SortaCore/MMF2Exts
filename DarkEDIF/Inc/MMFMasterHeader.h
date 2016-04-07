@@ -931,7 +931,7 @@ struct eventV1 {
 
 
 // Differs from eventV1 by union variable types
-struct event {
+struct event2 {
 	short	evtSize;				// 0 Size of the event
 	union
 	{
@@ -955,8 +955,8 @@ struct event {
 //typedef	event	*	PEVT;
 //typedef	event	*	LPEVT;
 
-#define	CND_SIZE					sizeof(event)
-#define	ACT_SIZE					(sizeof(event)-2) // Ignore Identifier
+#define	CND_SIZE					sizeof(event2)
+#define	ACT_SIZE					(sizeof(event2)-2) // Ignore Identifier
 
 // Definition of conditions / actions flags
 fancyenum(EVFLAGS) {
@@ -1899,7 +1899,7 @@ struct runHeader4 {
 	BOOL (* rh4ColMaskTestPoint)(HeaderObject *, int x, int y, int nLayer, int plan);
 
 	unsigned long		rh4SaveVersion;
-	event *				rh4ActionStart;			// Save the current action
+	event2 *			rh4ActionStart;			// Save the current action
 	int					rh4PauseKey;
 	TCHAR *				rh4CurrentFastLoop;
 	int					rh4EndOfPause;
@@ -2724,9 +2724,9 @@ struct kpj {
 // Condition/action jumps
 struct CallTables
 {
-	BOOL (** pConditions1)(event* pe, HeaderObject * pHo);
-	BOOL (** pConditions2)(event* pe);
-	void (** pActions)(event* pe);
+	BOOL (** pConditions1)(event2* pe, HeaderObject * pHo);
+	BOOL (** pConditions2)(event2* pe);
+	void (** pActions)(event2* pe);
 	void (** pExpressions)();
 };
 

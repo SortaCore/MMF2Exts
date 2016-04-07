@@ -40,6 +40,7 @@ public:
 	
 	bool IsGlobal;
 	GlobalInfo * Globals;
+	unsigned short * LastEventInts;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				Globals->_ObjEventPump
@@ -322,5 +323,5 @@ struct GlobalInfo
 	void CreateError(const char * errorText);
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
-	~GlobalInfo();
+	~GlobalInfo() noexcept(false);
 };

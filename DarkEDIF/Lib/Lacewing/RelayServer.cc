@@ -1,513 +1,491 @@
-
-/* vim: set et ts=4 sw=4 ft=cpp:
- *
- * Copyright (C) 2011 James McLaughlin.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-#include "Lacewing.h"
+#include "lacewing.h"
 #include "IDPool.h"
+#include "FrameReader.h"
+#include "FrameBuilder.h"
 #include "MessageReader.h"
 #include "MessageBuilder.h"
 #include <vector>
 
-namespace Lacewing
+namespace lacewing
 {
-struct RelayServerInternal;
+struct relayserverinternal;
 
-void ServerMessageHandler (void * Tag, unsigned char Type, char * Message, int Size);
-void ServerTimerTick      (Lacewing::Timer &Timer);
+void servermessagehandler (void * tag, unsigned char type, char * message, size_t size, bool blasted);
+void servertimertick      (lacewing::timer timer);
 
-struct RelayServerInternal
+struct relayserverinternal
 {
-    Lacewing::RelayServer &Server;
-    Lacewing::Timer Timer;
+    lacewing::relayserver &server;
+    lacewing::timer timer;
 
-    Lacewing::RelayServer::HandlerConnect           HandlerConnect;
-    Lacewing::RelayServer::HandlerDisconnect        HandlerDisconnect;
-    Lacewing::RelayServer::HandlerError             HandlerError;
-    Lacewing::RelayServer::HandlerServerMessage     HandlerServerMessage;
-    Lacewing::RelayServer::HandlerChannelMessage    HandlerChannelMessage;
-    Lacewing::RelayServer::HandlerPeerMessage       HandlerPeerMessage;
-    Lacewing::RelayServer::HandlerJoinChannel       HandlerJoinChannel;
-    Lacewing::RelayServer::HandlerLeaveChannel      HandlerLeaveChannel;
-    Lacewing::RelayServer::HandlerSetName           HandlerSetName;
+    lacewing::relayserver::handler_connect          handlerconnect;
+    lacewing::relayserver::handler_disconnect       handlerdisconnect;
+    lacewing::relayserver::handler_error            handlererror;
+    lacewing::relayserver::handler_message_server	handlerservermessage;
+    lacewing::relayserver::handler_message_channel  handlerchannelmessage;
+    lacewing::relayserver::handler_message_peer     handlerpeermessage;
+    lacewing::relayserver::handler_channel_join     handlerjoinchannel;
+    lacewing::relayserver::handler_channel_leave    handlerleavechannel;
+    lacewing::relayserver::handler_nameset          handlersetname;
 
-    RelayServerInternal(Lacewing::RelayServer &_Server, Lacewing::Pump &Pump)
-            : Server(_Server), Timer(Pump)
+    relayserverinternal(lacewing::relayserver &_server, pump pump)
+		: server(_server), timer((lacewing::timer)lw_timer_new((lw_pump)pump)), builder(false)
     {
-        HandlerConnect          = 0;
-        HandlerDisconnect       = 0;
-        HandlerError            = 0;
-        HandlerServerMessage    = 0;
-        HandlerChannelMessage   = 0;
-        HandlerPeerMessage      = 0;
-        HandlerJoinChannel      = 0;
-        HandlerLeaveChannel     = 0;
-        HandlerSetName          = 0;
+        handlerconnect          = 0;
+        handlerdisconnect       = 0;
+        handlererror            = 0;
+        handlerservermessage    = 0;
+        handlerchannelmessage   = 0;
+        handlerpeermessage      = 0;
+        handlerjoinchannel      = 0;
+        handlerleavechannel     = 0;
+        handlersetname          = 0;
 
-        WelcomeMessage = Lacewing::Version();
+        welcomemessage = "";
     
-        Timer.Tag = this;
-        Timer.onTick (ServerTimerTick);
+        timer->tag(this);
+        timer->on_tick(servertimertick);
 
-        ChannelListingEnabled = true;
+        channellistingenabled = true;
     }
 
-    IDPool ClientIDs;
-    IDPool ChannelIDs;
+    IDPool clientids;
+	IDPool channelids;
+	framebuilder builder;
 
-    struct Channel;
+    struct channel;
 
-    struct Client
+    struct client
     {
-        Lacewing::RelayServer::Client Public;
-        Lacewing::Server::Client &Socket;
-        RelayServerInternal &Server;
+        lacewing::relayserver::client public_;
+        lacewing::server_client socket;
+        relayserverinternal &server;
         
-        Client(Lacewing::Server::Client &_Socket)
-                : Server(*(RelayServerInternal *) Socket.Tag), Socket(_Socket),
-                    UDPAddress(Socket.GetAddress())
+        client(lacewing::server_client _socket)
+                : server(*(relayserverinternal *) socket->tag()), socket(_socket),
+                    udpaddress(socket->address())
         {
-            Public.InternalTag    = this;
-            Public.Tag            = 0;
+            public_.internaltag    = this;
+            public_.tag            = 0;
 
-            ID = Server.ClientIDs.Borrow();
+            id = server.clientids.borrow();
 
-            Handshook      = false;
-            Ponged         = true;
-            GotFirstByte   = false;
+            handshook      = false;
+            ponged         = true;
+            gotfirstbyte   = false;
         }
 
-        ~Client()
+        ~client()
         {
-            Server.ClientIDs.Return(ID);  
+            server.clientids.returnID(id);  
         }
 
-        //FrameReader Reader;
+        framereader reader;
         
-        void MessageHandler (unsigned char Type, char * Message, int Size, bool Blasted);
+		// UDP only
+        void messagehandler (unsigned char type, const char * message, size_t size, bool blasted);
 
-        std::vector<Channel *> Channels;
+        std::vector<channel *> channels;
 
-		const char * Name, * PrevName;
-        bool NameAltered;
+		const char * name, * prevname;
+        bool namealtered;
 
-        bool CheckName (const char * Name);
+        bool checkname (const char * name);
 
-        unsigned short ID;
+        unsigned short id;
     
-        Channel * ReadChannel(MessageReader &Reader);
+        channel * readchannel(messagereader &reader);
     
-        bool Handshook;
-        bool GotFirstByte;
-        bool Ponged;
+        bool handshook;
+        bool gotfirstbyte;
+        bool ponged;
 
-        Lacewing::Address UDPAddress;
-
+        lacewing::address udpaddress;
+		void PeerToPeer(relayserver &server, relayserver::client &client,
+			bool blasted, int subchannel, int variant, const char * message, size_t size);
     };
 
-    struct Channel
+    struct channel
     {
-        Lacewing::RelayServer::Channel Public;
+        lacewing::relayserver::channel public_;
         
-        RelayServerInternal &Server;
+        relayserverinternal &server;
 
-        Channel(RelayServerInternal &_Server) : Server(_Server)
+        channel(relayserverinternal &_server) : server(_server)
         {
-            Public.InternalTag    = this;
-            Public.Tag            = 0;
+            public_.internaltag    = this;
+            public_.tag            = 0;
 
-            ID = Server.ChannelIDs.Borrow();
+            id = server.channelids.borrow();
         }
 
-        ~Channel()
+        ~channel()
         {
-			Public.InternalTag = NULL;
-            Server.ChannelIDs.Return(ID);
+			public_.internaltag = nullptr;
+            server.channelids.returnID(id);
         }
 
-        std::vector<RelayServerInternal::Client *> Clients;
+        std::vector<relayserverinternal::client *> clients;
 
-        const char * Name;
-        unsigned short ID;
-        bool Hidden;
-        bool AutoClose;
-		bool IsClosed;
-		Client * ChannelMaster;
+        const char * name;
+        unsigned short id;
+        bool hidden;
+        bool autoclose;
+		bool isclosed;
+		client * channelmaster;
 
-		bool ReadPeer(unsigned short ID, Client *& ReadTo);
-        void RemoveClient(Client &);
-        void Close();
+		bool readpeer(unsigned short id, client *& readto);
+		relayserverinternal::client * readpeer(messagereader &r);
+        void removeclient(client &);
+        void close();
+		client * firstclient;
+		channel * next;
+
+		void PeerToChannel(relayserver &server, relayserver::client &client,
+			bool blasted, int subchannel, int variant, const char * message, size_t size);
     };
     
-  //  Backlog<Lacewing::Server::Client, Client>
-  //      ClientBacklog;
+  //  backlog<lacewing::server_client, client>
+  //      clientbacklog;
 
-  //  Backlog<RelayServerInternal, Channel>
-  //      ChannelBacklog;
+  //  backlog<relayserverinternal, channel>
+  //      channelbacklog;
 
-    const char * WelcomeMessage;
+    const char * welcomemessage;
 
-    std::vector<Channel *> Channels;
+	std::vector<client *> clients;
+    std::vector<channel *> channels;
 
-    bool ChannelListingEnabled;
+    bool channellistingenabled;
 
-    void TimerTick()
+    void timertick()
     {
-        Lacewing::Server &Socket = Server.Socket;
-		std::vector<RelayServerInternal::Client *> ToDisconnect;
+        lacewing::server &socket = server.socket;
+		std::vector<relayserverinternal::client *> todisconnect;
 
-        Builder.AddHeader(11, 0); /* Ping */
+        builder.addheader(11, 0); /* ping */
         
-        for (Lacewing::Server::Client * ClientSocket = Socket.FirstClient (); ClientSocket; ClientSocket = ClientSocket->Next ())
+        for each (auto clientsocket in clients)
         {
-            RelayServerInternal::Client &Client = *(RelayServerInternal::Client *) ClientSocket->Tag;
+			relayserverinternal::client &client = *(relayserverinternal::client *) clientsocket->public_.internaltag;
             
-            if (!Client.Ponged)
+            if (!client.ponged)
             {
-                ToDisconnect.push_back(&Client);
+                todisconnect.push_back(&client);
                 continue;
             }
 
-            Client.Ponged = false;
-            Builder.Send (Client.Socket, false);
+            client.ponged = false;
+            builder.send (client.socket, false);
         }
 
-        Builder.FrameReset();
+        builder.framereset();
 
-        for(List <RelayServerInternal::Client *>::Element * E = ToDisconnect.First; E; E = E->Next)
-            (** E)->Socket.Disconnect();
+		for each (auto clientsocket in todisconnect)
+			clientsocket->socket->close();
     }
 };
 
-void ServerMessageHandler (void * Tag, unsigned char Type, char * Message, int Size)
-{   ((RelayServerInternal::Client *) Tag)->MessageHandler(Type, Message, Size, false);
+void servermessagehandler (void * tag, unsigned char type, char * message, int size)
+{   ((relayserverinternal::client *) tag)->messagehandler(type, message, size, false);
 }
 
-void ServerTimerTick (Lacewing::Timer &Timer)
-{   ((RelayServerInternal *) Timer.Tag)->TimerTick();
+void servertimertick (lacewing::timer &timer)
+{   ((relayserverinternal *) timer->tag())->timertick();
 }
 
-RelayServerInternal::Channel * RelayServerInternal::Client::ReadChannel(MessageReader &Reader)
+relayserverinternal::channel * relayserverinternal::client::readchannel(messagereader &reader)
 {
-    int ChannelID = Reader.Get <unsigned short> ();
+    int channelid = reader.get <unsigned short> ();
 
-    if (Reader.Failed)
+    if (reader.failed)
         return 0;
 
-    for(List <RelayServerInternal::Channel *>::Element * E = Channels.First; E; E = E->Next)
-        if ((** E)->ID == ChannelID)
-            return ** E;
+	for each (auto e in channels)
+        if (e->id == channelid)
+            return e;
      
-    Reader.Failed = true;
+    reader.failed = true;
     return 0;
 }
 
-RelayServerInternal::Client * RelayServerInternal::Channel::ReadPeer(MessageReader &Reader)
+relayserverinternal::client * relayserverinternal::channel::readpeer(messagereader &reader)
 {
-    int PeerID = Reader.Get <unsigned short> ();
+    int peerid = reader.get <unsigned short> ();
 
-    if (Reader.Failed)
+    if (reader.failed)
         return 0;
 
-    for(List <RelayServerInternal::Client *>::Element * E = Clients.First; E; E = E->Next)
-        if ((** E)->ID == PeerID)
-            return ** E;
+	for each (auto e in clients)
+        if (e->id == peerid)
+            return e;
      
-    Reader.Failed = true;
+    reader.failed = true;
     return 0;
 }
 
-void HandlerConnect(Lacewing::Server &Server, Lacewing::Server::Client &ClientSocket)
+void handlerconnect(lacewing::server server, lacewing::server_client clientsocket)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) Server.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) server->tag();
      
-    ClientSocket.Tag = &Internal;
-    ClientSocket.Tag = &Internal.ClientBacklog.Borrow (ClientSocket);   
+	auto c = new lacewing::relayserverinternal::client(clientsocket);
+	internal.clients.push_back(c);
+    clientsocket->tag(c);
 }
 
-void HandlerDisconnect(Lacewing::Server &Server, Lacewing::Server::Client &ClientSocket)
+void handlerdisconnect(lacewing::server server, lacewing::server_client clientsocket)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) Server.Tag;
-    RelayServerInternal::Client &Client  = *(RelayServerInternal::Client *) ClientSocket.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) server->tag();
+    relayserverinternal::client * client  = (relayserverinternal::client *) clientsocket->tag();
 
-    for(List <RelayServerInternal::Channel *>::Element * E = Client.Channels.First; E; E = E->Next)
-        (** E)->RemoveClient (Client);
+	for each (auto e in client->channels)
+        e->removeclient (*client);
     
-    if (Client.Handshook && Internal.HandlerDisconnect)
-        Internal.HandlerDisconnect(Internal.Server, Client.Public);
+    if (client->handshook && internal.handlerdisconnect)
+        internal.handlerdisconnect(internal.server, client->public_);
 
-    Internal.ClientBacklog.Return(Client);
+	internal.clients.erase(
+		std::find(internal.clients.cbegin(), internal.clients.cend(), client));
+	delete client;
 }
 
-void HandlerReceive(Lacewing::Server &Server, Lacewing::Server::Client &ClientSocket, char * Data, int Size)
+void handlerreceive(lacewing::server server, lacewing::server_client clientsocket, const char * data, size_t size)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) Server.Tag;
-    RelayServerInternal::Client &Client = *(RelayServerInternal::Client *) ClientSocket.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) server->tag();
+    relayserverinternal::client &client = *(relayserverinternal::client *) clientsocket->tag();
     
-    if (!Client.GotFirstByte)
+    if (!client.gotfirstbyte)
     {
-        Client.GotFirstByte = true;
+        client.gotfirstbyte = true;
 
-        ++ Data;
+        ++ data;
 
-        if (!-- Size)
+        if (!-- size)
             return;
     }
 
-    Client.Reader.Process (Data, Size);
+    client.reader.process (data, size);
 }
 
-void HandlerError(Lacewing::Server &Server, Lacewing::Error &Error)
+void handlererror(lacewing::server server, lacewing::error error)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) Server.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) server->tag();
 
-    Error.Add("Socket error");
+    error->add("TCP socket error");
 
-    if (Internal.HandlerError)
-        Internal.HandlerError(Internal.Server, Error);
+    if (internal.handlererror)
+        internal.handlererror(internal.server, error);
 }
 
-void HandlerUDPReceive(Lacewing::UDP &UDP, Lacewing::Address &Address, char * Data, int Size)
+void handlerudpreceive(lacewing::udp udp, lacewing::address address, char * data, size_t size)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) UDP.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) udp->tag();
 
-    if (Size < (sizeof(unsigned short) + 1))
+    if (size < (sizeof(unsigned short) + 1))
         return;
 
-    unsigned char Type = *(unsigned char  *) Data;
-    unsigned short ID  = *(unsigned short *) (Data + 1);
+    unsigned char type = *(unsigned char  *) data;
+    unsigned short id  = *(unsigned short *) (data + 1);
 
-    Data += sizeof(unsigned short) + 1;
-    Size -= sizeof(unsigned short) + 1;
+    data += sizeof(unsigned short) + 1;
+    size -= sizeof(unsigned short) + 1;
 
-    Lacewing::Server &Socket = Internal.Server.Socket;
+    lacewing::server &socket = internal.server.socket;
 
-    for (Lacewing::Server::Client * ClientSocket = Socket.FirstClient (); ClientSocket; ClientSocket = ClientSocket->Next ())
+	for each (auto clientsocket in internal.clients)
     {
-        RelayServerInternal::Client &Client = *(RelayServerInternal::Client *) ClientSocket->Tag;
-        
-        if (Client.ID == ID)
+		if (clientsocket->id == id)
         {
-            if (Client.Socket.GetAddress().IP() != Address.IP())
+			if (clientsocket->socket->address() != address)
+				// TODO: A client ID was used by the wrong IP... hack attempt?
                 return;
 
-            Client.UDPAddress.Port(Address.Port());
-            Client.MessageHandler(Type, Data, Size, true);
+			clientsocket->udpaddress->port(address->port());
+			clientsocket->messagehandler(type, data, size, true);
 
             break;
         }
     }
 }
 
-void HandlerUDPError(Lacewing::UDP &UDP, Lacewing::Error &Error)
+void handlerudperror(lacewing::udp udp, lacewing::error error)
 {
-    RelayServerInternal &Internal = *(RelayServerInternal *) UDP.Tag;
+    relayserverinternal &internal = *(relayserverinternal *) udp->tag();
 
-    Error.Add("UDP socket error");
+    error->add("UDP socket error");
 
-    if (Internal.HandlerError)
-        Internal.HandlerError(Internal.Server, Error);
+    if (internal.handlererror)
+        internal.handlererror(internal.server, error);
 }
 
-Lacewing::RelayServer::RelayServer(Lacewing::Pump &Pump) : Socket(Pump), UDP(Pump)
+lacewing::relayserver::relayserver(lacewing::pump pump) : 
+	socket((lacewing::server)lw_server_new((lw_pump)pump)),
+	udp((lacewing::udp)lw_udp_new((lw_pump)pump))
 {
-    LacewingInitialise();
+    // lacewinginitialise();
 
-    Socket.onConnect     (::HandlerConnect);
-    Socket.onDisconnect  (::HandlerDisconnect);
-    Socket.onReceive     (::HandlerReceive);
-    Socket.onError       (::HandlerError);
+	socket->on_connect		(lacewing::handlerconnect);
+	socket->on_disconnect	(lacewing::handlerdisconnect);
+    socket->on_data			(lacewing::handlerreceive);
+	socket->on_error		(lacewing::handlererror);
 
-    UDP.onReceive  (::HandlerUDPReceive);
-    UDP.onError    (::HandlerUDPError);
+    udp->on_data	(lacewing::handlerudpreceive);
+	udp->on_error	(lacewing::handlerudperror);
 
-    Socket.Tag = UDP.Tag = InternalTag = new RelayServerInternal(*this, Pump);
-    
-    Socket.DisableNagling ();
+	auto s = new relayserverinternal(*this, pump);
+	internaltag = s;
+	socket->tag(s);
+	udp->tag(s);
+	
+	// TODO: Disable Nagle here, but nothing in 0.5.4 to match?
+ //   socket->nagle ();
 }
 
-Lacewing::RelayServer::~RelayServer()
+lacewing::relayserver::~relayserver()
 {
-    Unhost();
+    unhost();
 
-    delete ((RelayServerInternal *) InternalTag);
+    delete ((relayserverinternal *) internaltag);
 }
 
-void Lacewing::RelayServer::Host(int Port)
+void lacewing::relayserver::host(unsigned short port)
 {
-    Lacewing::Filter Filter;
-    Filter.LocalPort(Port);
+    lacewing::filter filter;
+    filter->local_port(port);
 
-    Host(Filter);
+    host(filter);
 }
 
-void Lacewing::RelayServer::Host(Lacewing::Filter &_Filter)
+void lacewing::relayserver::host(lacewing::filter &_filter)
 {
-    Lacewing::Filter Filter(_Filter);
+    lacewing::filter filter(_filter);
 
-    if (!Filter.LocalPort())
-        Filter.LocalPort(6121);
+    if (!filter->local_port())
+        filter->local_port(6121);
 
-    Socket.Host (Filter, true);
-    UDP.Host    (Filter);
+    socket->host (filter);
+    udp->host    (filter);
 
-    ((RelayServerInternal *) InternalTag)->Timer.Start(5000);
+    ((relayserverinternal *) internaltag)->timer->start(5000L);
 }
 
-void Lacewing::RelayServer::Unhost()
+void lacewing::relayserver::unhost()
 {
-    Socket.Unhost();
-    UDP.Unhost();
+    socket->unhost();
+    udp->unhost();
 
-    ((RelayServerInternal *) InternalTag)->Timer.Stop();
+    ((relayserverinternal *) internaltag)->timer->stop();
 }
 
-bool Lacewing::RelayServer::Hosting()
+bool lacewing::relayserver::hosting()
 {
-    return Socket.Hosting();
+    return socket->hosting();
 }
 
-int Lacewing::RelayServer::Port()
+unsigned short lacewing::relayserver::port()
 {
-    return Socket.Port();
+    return socket->port();
 }
 
-void RelayServerInternal::Channel::Close()
+void relayserverinternal::channel::close()
 {
-    FrameBuilder &Builder = Server.Builder;
+    framebuilder &builder = server.builder;
 
-    /* Tell all the clients that they've left, and remove this channel from their channel lists. */
+    /* tell all the clients that they've left, and remove this channel from their channel lists. */
 
-    Builder.AddHeader   (0, 0, false); /* Response */
-    Builder.Add <unsigned char>   (3); /* LeaveChannel */
-    Builder.Add <unsigned char>   (1); /* Success */
-    Builder.Add <unsigned short> (ID);
+    builder.addheader   (0, 0, false); /* response */
+    builder.add <unsigned char>   (3); /* leavechannel */
+    builder.add <unsigned char>   (1); /* success */
+    builder.add <unsigned short> (id);
 
-    for(List <RelayServerInternal::Client *>::Element * E = Clients.First;
-            E; E = E->Next)
+	for each (auto e in clients)
     {
-        RelayServerInternal::Client &Client = *** E;
-        Builder.Send(Client.Socket, false);
+        builder.send(e->socket, false);
 
-        for(List <RelayServerInternal::Channel *>::Element * E2 = Client.Channels.First;
-                E2; E2 = E2->Next)
+		for (auto e2 = e->channels.begin(); e2 != e->channels.end(); e2++)
         {
-            if (** E2 == this)
+            if (*e2 == this)
             {
-                Client.Channels.Erase (E2);
+                e->channels.erase (e2);
                 break;
             }
         }
     }
 
-    Builder.FrameReset();
+    builder.framereset();
 
     
-    /* Remove this channel from the channel list and return it to the backlog. */
+    /* remove this channel from the channel list and return it to the backlog. */
 
-    for(List <RelayServerInternal::Channel *>::Element * E = Server.Channels.First;
-            E; E = E->Next)
-    {
-        if (** E == this)
-        {
-            Server.Channels.Erase(E);
-            break;
-        }
-    }
-    
-    Server.ChannelBacklog.Return(*this);
+	for (auto e = server.channels.begin(); e != server.channels.end(); e++)
+	{
+		if (*e == this)
+		{
+			server.channels.erase(e);
+			break;
+		}
+	}
 }
 
-void RelayServerInternal::Channel::RemoveClient(RelayServerInternal::Client &Client)
+void relayserverinternal::channel::removeclient(relayserverinternal::client &client)
 {
-    for(List <RelayServerInternal::Client *>::Element * E = Clients.First;
-            E; E = E->Next)
+	for (auto e = server.clients.begin(); e != server.clients.end(); e++)
     {
-        if (** E == &Client)
+        if (*e == &client)
         {
-            Clients.Erase (E);
+            clients.erase (e);
             break;
         }
     }
 
-    if ((!Clients.Size) || (ChannelMaster == &Client && AutoClose))
+    if ((!clients.size()) || (channelmaster == &client && autoclose))
     {   
-        Close ();
+        close ();
         return;
     }
 
-    if (ChannelMaster == &Client)
-        ChannelMaster = 0;
+    if (channelmaster == &client)
+        channelmaster = 0;
 
 
-    FrameBuilder &Builder = Server.Builder;
+    framebuilder &builder = server.builder;
 
-    /* Notify all the other peers that this client has left the channel */
+    /* notify all the other peers that this client has left the channel */
 
-    Builder.AddHeader (9, 0); /* Peer */
+    builder.addheader (9, 0); /* peer */
     
-    Builder.Add <unsigned short> (ID);
-    Builder.Add <unsigned short> (Client.ID);
+    builder.add <unsigned short> (id);
+    builder.add <unsigned short> (client.id);
 
-    for(List <RelayServerInternal::Client *>::Element * E = Clients.First;
-            E; E = E->Next)
-    {
-        Builder.Send((** E)->Socket, false);
-    }
+    for each(auto e in clients)
+        builder.send(e->socket, false);
 
-    Builder.FrameReset();
+    builder.framereset();
 }
 
-bool RelayServerInternal::Client::CheckName (const char * Name)
+bool relayserverinternal::client::checkname (const char * name)
 {
-    for(List <RelayServerInternal::Channel *>::Element * E = Channels.First;
-            E; E = E->Next)
+	for each (auto e in channels)
     {
-        RelayServerInternal::Channel * Channel = ** E;
-
-        for(List <RelayServerInternal::Client *>::Element * E2 = Channel->Clients.First;
-                E2; E2 = E2->Next)
+		for each (auto e2 in e->clients)
         {
-            if ((** E2) == this)
+            if (e2 == this)
                 continue;
 
-            if (!strcasecmp((** E2)->Name, Name))
+            if (!_stricmp(e2->name, name))
             {
-                FrameBuilder &Builder = Server.Builder;
+                framebuilder &builder = server.builder;
 
-                Builder.AddHeader        (0, 0);  /* Response */
-                Builder.Add <unsigned char> (1);  /* SetName */
-                Builder.Add <unsigned char> (0);  /* Failed */
+                builder.addheader        (0, 0);  /* response */
+                builder.add <unsigned char> (1);  /* setname */
+                builder.add <unsigned char> (0);  /* failed */
 
-                Builder.Add <unsigned char> (strlen(Name));
-                Builder.Add (Name, -1);
+                builder.add <unsigned char> (strlen(name));
+                builder.add (name, -1);
 
-                Builder.Add ("Name already taken", -1);
+                builder.add ("name already taken", -1);
 
-                Builder.Send(Socket);
+                builder.send(socket);
 
                 return false;
             }
@@ -517,816 +495,832 @@ bool RelayServerInternal::Client::CheckName (const char * Name)
     return true;
 }
 
-void RelayServerInternal::Client::MessageHandler(unsigned char Type, char * Message, int Size, bool Blasted)
+void relayserverinternal::client::messagehandler(unsigned char type, const char * message, size_t size, bool blasted)
 {
-    unsigned char MessageTypeID  = (Type >> 4);
-    unsigned char Variant        = (Type << 4);
+    unsigned char messagetypeid  = (type >> 4);
+    unsigned char variant        = (type << 4);
 
-    Variant >>= 4;
+    variant >>= 4;
 
-    MessageReader Reader (Message, Size);
-    FrameBuilder &Builder = Server.Builder;
+    messagereader reader (message, size);
+    framebuilder &builder = server.builder;
+	const char * denyReason;
 
-    if (MessageTypeID != 0 && !Handshook)
+    if (messagetypeid != 0 && !handshook)
     {
-        Socket.Disconnect();
+		// Haven't got a Connect Request message approved first.
+        socket->close();
         return;
     }
 
-    switch(MessageTypeID)
+    switch(messagetypeid)
     {
-        case 0: /* Request */
+        case 0: /* request */
         {
-            unsigned char RequestType = Reader.Get <unsigned char> ();
+            unsigned char requesttype = reader.get <unsigned char> ();
 
-            if (Reader.Failed)
+            if (reader.failed)
                 break;
 
-            if (RequestType != 0 && !Handshook)
+            if (requesttype != 0 && !handshook)
             {
-                Reader.Failed = true;
+                reader.failed = true;
                 break;
             }
 
-            switch(RequestType)
+            switch(requesttype)
             {
-                case 0: /* Connect */
+                case 0: /* connect */
                 {
-                    const char * Version = Reader.GetRemaining ();
+                    const char * version = reader.getremaining ();
 
-                    if (Reader.Failed)
+                    if (reader.failed)
                         break;
 
-                    if (Handshook)
+                    if (handshook)
                     {
-                        Reader.Failed = true;
+                        reader.failed = true;
                         break;
                     }
 
-                    if (strcmp(Version, "revision 3"))
+                    if (strcmp(version, "revision 3"))
                     {
-                        Builder.AddHeader        (0, 0);  /* Response */
-                        Builder.Add <unsigned char> (0);  /* Connect */
-                        Builder.Add <unsigned char> (0);  /* Failed */
-                        Builder.Add ("Version mismatch", -1);
+                        builder.addheader        (0, 0);  /* response */
+                        builder.add <unsigned char> (0);  /* connect */
+                        builder.add <unsigned char> (0);  /* failed */
+                        builder.add ("version mismatch", -1);
 
-                        Builder.Send(Socket);
+                        builder.send(socket);
 
-                        Reader.Failed = true;
+                        reader.failed = true;
                         break;
                     }
 
-					if (Server.HandlerConnect)
-						Server.HandlerConnect(Server.Server, Public);
+					if (server.handlerconnect)
+						server.handlerconnect(server.server, public_);
 					else
-						ApproveConnection(Socket);
-					
+						server.server.connect_response(public_, nullptr);
+
                     break;
                 }
 
-                case 1: /* SetName */
+                case 1: /* setname */
                 {
-                    const char * Name = Reader.GetRemaining (false);
+                    const char * name = reader.getremaining (false);
 
-                    if (Reader.Failed)
+                    if (reader.failed)
                         break;
 
-                    if (!CheckName (Name))
+                    if (!checkname (name))
                         break;
 
-                    String NameCopy = this->Name;
+					std::string namecopy = this->name;
 
-                    /* The .Name() setter will also set NameAltered to true.  This means that if the
+                    /* the .name() setter will also set namealtered to true.  this means that if the
                        handler sets the name explicitly, the default behaviour of setting the name to
                        the requested one will be skipped. */
 
-                    NameAltered = false;
+                    namealtered = false;
 
-                    if (Server.HandlerSetName && !Server.HandlerSetName(Server.Server, Public, Name))
-                    {
-                        Builder.AddHeader        (0, 0);  /* Response */
-                        Builder.Add <unsigned char> (1);  /* SetName */
-                        Builder.Add <unsigned char> (0);  /* Failed */
-                        
-                        Builder.Add <unsigned char> (strlen(Name));
-                        Builder.Add (Name, -1);
-
-                        Builder.Add ("Name refused by server", -1);
-
-                        Builder.Send(Socket);
-
-                        break;
-                    }
-
-                    if (!NameAltered)
-                    {
-                        this->Name = Name;
-                    }
-                    else
-                    {
-                        /* Check the new name provided by the handler */
-
-                        if (!CheckName (this->Name))
-                        {
-                            this->Name = NameCopy;
-                            break;
-                        }
-                    }
-
-                    Builder.AddHeader        (0, 0);  /* Response */
-                    Builder.Add <unsigned char> (1);  /* SetName */
-                    Builder.Add <unsigned char> (1);  /* Success */
-                
-                    Builder.Add <unsigned char> (this->Name.Length);
-                    Builder.Add (this->Name);
-
-                    Builder.Send(Socket);
-
-                    for(List <RelayServerInternal::Channel *>::Element * E = Channels.First;
-                            E; E = E->Next)
-                    {
-                        RelayServerInternal::Channel * Channel = ** E;
-
-                        Builder.AddHeader (9, 0); /* Peer */
-                        
-                        Builder.Add <unsigned short> (Channel->ID);
-                        Builder.Add <unsigned short> (ID);
-                        Builder.Add <unsigned char>  (this == Channel->ChannelMaster ? 1 : 0);
-                        Builder.Add (this->Name);
-
-                        for(List <RelayServerInternal::Client *>::Element * E2 = Channel->Clients.First;
-                                E2; E2 = E2->Next)
-                        {
-                            if (** E2 == this)
-                                continue;
-
-                            Builder.Send((** E2)->Socket, false);
-                        }
-
-                        Builder.FrameReset ();
-                    }
+					if (server.handlersetname)
+						server.handlersetname(server.server, public_, name);
+					else
+						server.server.nameset_response(public_, name, nullptr);
 
                     break;
                 }
 
-                case 2: /* JoinChannel */
-                {            
-                    if (!this->Name.Length)
-                        Reader.Failed = true;
+                case 2: /* joinchannel */
+                {        
+					size_t namelength = strnlen(this->name, 257);
+					if (!namelength || namelength == 257)
+					{
+						reader.failed = true;
+						break;
+					}
 
-                    unsigned char Flags = Reader.Get <unsigned char> ();
-                    char *        Name  = Reader.GetRemaining(false);
+                    unsigned char flags = reader.get <unsigned char> ();
+					size_t channelnamelength = reader.bytesleft();
+					if (channelnamelength > 255)
+					{
+						reader.failed = true;
+						break;
+					}
+                    const char *        name  = reader.getremaining(false);
                     
-                    if (Reader.Failed)
+                    if (reader.failed)
                         break;
 
-                    RelayServerInternal::Channel * Channel = 0;
+                    relayserverinternal::channel * channel = nullptr;
 
-                    for(List <RelayServerInternal::Channel *>::Element * E = Server.Channels.First;
-                            E; E = E->Next)
+					for each (auto e in server.channels)
                     {
-                        if (!strcasecmp ((** E)->Name, Name))
+                        if (!_stricmp (e->name, name))
                         {
-                            Channel = ** E;
+                            channel = e;
                             break;
                         }
                     }
                     
-                    if (Channel)
+                    if (channel)
                     {
-                        /* Joining an existing channel */
+                        /* joining an existing channel */
 
-                        bool NameTaken = false;
+                        bool nametaken = false;
 
-                        for(List <RelayServerInternal::Client *>::Element * E = Channel->Clients.First;
-                                E; E = E->Next)
+                        for each (auto e in channel->clients)
                         {
-                            RelayServerInternal::Client * Client = ** E;
-    
-                            if (!strcasecmp (Client->Name, this->Name))
+                            if (!_stricmp (e->name, this->name))
                             {
-                                NameTaken = true;
+                                nametaken = true;
                                 break;
                             }
                         }
 
-                        if (NameTaken)
+                        if (nametaken)
                         {
-                            Builder.AddHeader        (0, 0);  /* Response */
-                            Builder.Add <unsigned char> (2);  /* JoinChannel */
-                            Builder.Add <unsigned char> (0);  /* Failed */
+                            builder.addheader        (0, 0);  /* response */
+                            builder.add <unsigned char> (2);  /* joinchannel */
+                            builder.add <unsigned char> (0);  /* failed */
 
-                            Builder.Add <unsigned char> (strlen(Name));
-                            Builder.Add (Name, -1);
+                            builder.add <unsigned char> (namelength);
+                            builder.add (name, -1);
 
-                            Builder.Add ("Name already taken", -1);
+                            builder.add ("Channel name used by client.", -1);
 
-                            Builder.Send(Socket);
+                            builder.send(socket);
 
                             break;
                         }
 
-                        if (Server.HandlerJoinChannel && !Server.HandlerJoinChannel(Server.Server, Public, Channel->Public))
-                        {
-                            Builder.AddHeader        (0, 0);  /* Response */
-                            Builder.Add <unsigned char> (2);  /* JoinChannel */
-                            Builder.Add <unsigned char> (0);  /* Failed */
-
-                            Builder.Add <unsigned char> (Channel->Name.Length);
-                            Builder.Add (Channel->Name);
-
-                            Builder.Add ("Join refused by server", -1);
-
-                            Builder.Send(Socket);
-                            
-                            break;
-                        }
+						if (server.handlerjoinchannel)
+							server.handlerjoinchannel(server.server, public_, channel->public_);
+						else
+							server.server.joinchannel_response(name, public_, nullptr);
                     
-                        Builder.AddHeader        (0, 0);  /* Response */
-                        Builder.Add <unsigned char> (2);  /* JoinChannel */
-                        Builder.Add <unsigned char> (1);  /* Success */
-                        Builder.Add <unsigned char> (0);  /* Not the channel master */
-
-                        Builder.Add <unsigned char> (Channel->Name.Length);
-                        Builder.Add (Channel->Name);
-
-                        Builder.Add <unsigned short> (Channel->ID);
-                        
-                        for(List <RelayServerInternal::Client *>::Element * E = Channel->Clients.First;
-                                E; E = E->Next)
-                        {
-                            RelayServerInternal::Client * Client = ** E;
-
-                            Builder.Add <unsigned short> (Client->ID);
-                            Builder.Add <unsigned char>  (Channel->ChannelMaster == Client ? 1 : 0);
-                            Builder.Add <unsigned char>  (Client->Name.Length);
-                            Builder.Add (Client->Name);
-                        }
-
-                        Builder.Send(Socket);
-
-
-                        Builder.AddHeader (9, 0); /* Peer */
-                        
-                        Builder.Add <unsigned short> (Channel->ID);
-                        Builder.Add <unsigned short> (ID);
-                        Builder.Add <unsigned char>  (0);
-                        Builder.Add (this->Name);
-
-                        /* Notify the other clients on the channel that this client has joined */
-
-                        for(List <RelayServerInternal::Client *>::Element * E = Channel->Clients.First;
-                                E; E = E->Next)
-                        {
-                            Builder.Send((** E)->Socket, false);
-                        }
-
-                        Builder.FrameReset();
-
-
-                        /* Add this client to the channel */
-
-                        Channels.Push (Channel);
-                        Channel->Clients.Push (this);
+						
 
                         break;
                     }
 
-                    /* Creating a new channel */
+                    /* creating a new channel */
 
-                    Channel = &Server.ChannelBacklog.Borrow(Server);
+                    channel = new relayserverinternal::channel(server);
 
-                    Channel->Name          =  Name;
-                    Channel->ChannelMaster =  this;
-                    Channel->Hidden        =  (Flags & 1) != 0;
-                    Channel->AutoClose     =  (Flags & 2) != 0;
+                    channel->name          =  name;
+                    channel->channelmaster =  this;
+                    channel->hidden        =  (flags & 1) != 0;
+                    channel->autoclose     =  (flags & 2) != 0;
 
-                    if (Server.HandlerJoinChannel && !Server.HandlerJoinChannel(Server.Server, Public, Channel->Public))
-                    {
-                        Builder.AddHeader        (0, 0);  /* Response */
-                        Builder.Add <unsigned char> (2);  /* JoinChannel */
-                        Builder.Add <unsigned char> (0);  /* Failed */
-
-                        Builder.Add <unsigned char> (Channel->Name.Length);
-                        Builder.Add (Channel->Name);
-
-                        Builder.Add ("Join refused by server", -1);
-
-                        Builder.Send(Socket);
-                        
-                        Server.ChannelBacklog.Return(*Channel);
-                        break;
-                    }
-
-                    Channel->Element = Server.Channels.Push (Channel);
-
-                    Channel->Clients.Push (this);
-                    Channels.Push (Channel);
-
-                    Builder.AddHeader        (0, 0);  /* Response */
-                    Builder.Add <unsigned char> (2);  /* JoinChannel */
-                    Builder.Add <unsigned char> (1);  /* Success */
-                    Builder.Add <unsigned char> (1);  /* Channel master */
-
-                    Builder.Add <unsigned char> (Channel->Name.Length);
-                    Builder.Add (Channel->Name);
-
-                    Builder.Add <unsigned short> (Channel->ID);
-
-                    Builder.Send(Socket);
+					if (server.handlerjoinchannel)
+						server.handlerjoinchannel(server.server, public_, channel->public_);
+					else
+						server.server.joinchannel_response(name, public_, nullptr);
 
                     break;
                 }
 
-                case 3: /* LeaveChannel */
+                case 3: /* leavechannel */
                 {
-                    RelayServerInternal::Channel * Channel = ReadChannel(Reader);
+                    relayserverinternal::channel * channel = readchannel(reader);
 
-                    if (Reader.Failed)
+                    if (reader.failed)
                         break;
 
-                    if (Server.HandlerLeaveChannel && !Server.HandlerLeaveChannel(Server.Server, Public, Channel->Public))
+					if (server.handlerleavechannel)
+						server.handlerleavechannel(server.server, public_, channel->public_);
+					else
                     {
-                        Builder.AddHeader         (0, 0);  /* Response */
-                        Builder.Add <unsigned char>  (3);  /* LeaveChannel */
-                        Builder.Add <unsigned char>  (0);  /* Failed */
-                        Builder.Add <unsigned short> (Channel->ID);
+                        builder.addheader         (0, 0);  /* response */
+                        builder.add <unsigned char>  (3);  /* leavechannel */
+                        builder.add <unsigned char>  (0);  /* failed */
+                        builder.add <unsigned short> (channel->id);
 
-                        Builder.Add ("Leave refused by server", -1);
+                        builder.add ("leave refused by server", -1);
 
-                        Builder.Send(Socket);
+                        builder.send(socket);
 
                         break;
                     }
 
-                    for(List <RelayServerInternal::Channel *>::Element * E = Channels.First; E; E = E->Next)
+					for (auto e = channels.begin(); e != channels.end(); e++)
                     {
-                        if (** E == Channel)
+                        if (*e == channel)
                         {
-                            Channels.Erase(E);
+                            channels.erase(e);
                             break;
                         }
                     } 
 
-                    Builder.AddHeader         (0, 0);  /* Response */
-                    Builder.Add <unsigned char>  (3);  /* LeaveChannel */
-                    Builder.Add <unsigned char>  (1);  /* Success */
-                    Builder.Add <unsigned short> (Channel->ID);
+                    builder.addheader         (0, 0);  /* response */
+                    builder.add <unsigned char>  (3);  /* leavechannel */
+                    builder.add <unsigned char>  (1);  /* success */
+                    builder.add <unsigned short> (channel->id);
 
-                    Builder.Send(Socket);
+                    builder.send(socket);
 
-                    /* Do this last, because it might delete the channel */
+                    /* do this last, because it might delete the channel */
 
-                    Channel->RemoveClient(*this);
+                    channel->removeclient(*this);
 
                     break;
                 }
 
-                case 4: /* ChannelList */
+                case 4: /* channellist */
 
-                    if (!Server.ChannelListingEnabled)
+                    if (!server.channellistingenabled)
                     {
-                        Builder.AddHeader        (0, 0);  /* Response */
-                        Builder.Add <unsigned char> (4);  /* ChannelList */
-                        Builder.Add <unsigned char> (0);  /* Failed */
+                        builder.addheader        (0, 0);  /* response */
+                        builder.add <unsigned char> (4);  /* channellist */
+                        builder.add <unsigned char> (0);  /* failed */
                         
-                        Builder.Add ("Channel listing is not enabled on this server");
+                        builder.add ("channel listing is not enabled on this server");
 
-                        Builder.Send (Socket);
+                        builder.send (socket);
 
                         break;
                     }
 
-                    Builder.AddHeader        (0, 0);  /* Response */
-                    Builder.Add <unsigned char> (4);  /* ChannelList */
-                    Builder.Add <unsigned char> (1);  /* Success */
+                    builder.addheader        (0, 0);  /* response */
+                    builder.add <unsigned char> (4);  /* channellist */
+                    builder.add <unsigned char> (1);  /* success */
 
-                    for(List <RelayServerInternal::Channel *>::Element * E = Server.Channels.First;
-                            E; E = E->Next)
+                    for each (auto e in server.channels)
                     {
-                        RelayServerInternal::Channel * Channel = ** E;
-
-                        if (Channel->Hidden)
+                        if (e->hidden)
                             continue;
 
-                        Builder.Add <unsigned short> (Channel->Clients.Size);
-                        Builder.Add <unsigned char>  (Channel->Name.Length);
-                        Builder.Add (Channel->Name);
+                        builder.add <unsigned short> (e->clients.size());
+                        builder.add <unsigned char>  (strlen(e->name));
+                        builder.add (e->name);
                     }
 
-                    Builder.Send(Socket);
+                    builder.send(socket);
 
                     break;
 
                 default:
                     
-                    Reader.Failed = true;
+                    reader.failed = true;
                     break;
             }
 
             break;
         }
 
-        case 1: /* BinaryServerMessage */
+        case 1: /* binaryservermessage */
         {
-            unsigned char Subchannel = Reader.Get <unsigned char> ();
+            unsigned char subchannel = reader.get <unsigned char> ();
             
-            char * Message2;
-            unsigned int Size2;
+			const char * message2;
+            unsigned int size2;
 
-            Reader.GetRemaining(Message2, Size2);
+            reader.getremaining(message2, size2);
             
-            if (Reader.Failed)
+            if (reader.failed)
                 break;
 
-            if (Server.HandlerServerMessage)
-                Server.HandlerServerMessage(Server.Server, Public, Blasted, Subchannel, Message2, Size2, Variant);
+            if (server.handlerservermessage)
+                server.handlerservermessage(server.server, public_, blasted, subchannel, message2, size2, variant);
 
             break;
         }
 
-        case 2: /* BinaryChannelMessage */
+        case 2: /* binarychannelmessage */
         {
-            unsigned char Subchannel = Reader.Get <unsigned char> ();
-            RelayServerInternal::Channel * Channel = ReadChannel (Reader);
+            unsigned char subchannel = reader.get <unsigned char> ();
+            relayserverinternal::channel * channel = readchannel (reader);
             
-            char * Message2;
-            unsigned int Size2;
+            const char * message2;
+            unsigned int size2;
 
-            Reader.GetRemaining(Message2, Size2);
+            reader.getremaining(message2, size2);
             
-            if (Reader.Failed)
+            if (reader.failed)
                 break;
 
-            if (Server.HandlerChannelMessage && !Server.HandlerChannelMessage(Server.Server, Public, Channel->Public,
-                        Blasted, Subchannel, Message2, Size2, Variant))
-            {
-                break;
-            }
+			if (server.handlerchannelmessage)
+				server.handlerchannelmessage(server.server, public_, channel->public_,
+					blasted, subchannel, message2, size2, variant);
+			else
+				channel->PeerToChannel(server.server, public_, blasted, subchannel, variant, message2, size2);
+			
 
-            Builder.AddHeader (2, Variant, Blasted); /* BinaryChannelMessage */
-            
-            Builder.Add <unsigned char>  (Subchannel);
-            Builder.Add <unsigned short> (Channel->ID);
-            Builder.Add <unsigned short> (ID);
-            Builder.Add (Message2, Size2);
-
-            for(List <RelayServerInternal::Client *>::Element * E = Channel->Clients.First; E; E = E->Next)
-            {
-                if (** E == this)
-                    continue;
-
-                if (Blasted)
-                    Builder.Send(Server.Server.UDP, (** E)->UDPAddress, false);
-                else
-                    Builder.Send((** E)->Socket, false);
-            }
-
-            Builder.FrameReset();
 
             break;
         }
 
-        case 3: /* BinaryPeerMessage */
+        case 3: /* binarypeermessage */
         {
-            unsigned char Subchannel          = Reader.Get <unsigned char> ();
-            RelayServerInternal::Channel * Channel = ReadChannel      (Reader);
-            RelayServerInternal::Client  * Peer    = Channel->ReadPeer(Reader);
+            unsigned char subchannel			   = reader.get <unsigned char> ();
+            relayserverinternal::channel * channel = readchannel      (reader);
+            relayserverinternal::client  * peer    = channel->readpeer(reader);
 
-            if (Peer == this)
+            if (peer == this)
             {
-                Reader.Failed = true;
+                reader.failed = true;
                 break;
             }
 
-            char * Message2;
-            unsigned int Size2;
+            const char * message2;
+            unsigned int size2;
 
-            Reader.GetRemaining(Message2, Size2);
+            reader.getremaining(message2, size2);
             
-            if (Reader.Failed)
+            if (reader.failed)
                 break;
 
-            if (Server.HandlerPeerMessage && !Server.HandlerPeerMessage(Server.Server, Public, Channel->Public,
-                Peer->Public, Blasted, Subchannel, Message2, Size2, Variant))
-            {
-                break;
-            }
-
-            Builder.AddHeader (3, Variant, Blasted); /* BinaryPeerMessage */
-            
-            Builder.Add <unsigned char>  (Subchannel);
-            Builder.Add <unsigned short> (Channel->ID);
-            Builder.Add <unsigned short> (ID);
-            Builder.Add (Message2, Size2);
-
-            if (Blasted)
-                Builder.Send(Server.Server.UDP, Peer->UDPAddress);
-            else
-                Builder.Send(Peer->Socket);
+			if (server.handlerpeermessage)
+				server.handlerpeermessage(server.server, public_, channel->public_,
+					peer->public_, blasted, subchannel, message2, size2, variant);
+			else
+				peer->public_.send(subchannel, message2, size2, variant);
 
             break;
         }
             
-        case 4: /* ObjectServerMessage */
+        case 4: /* objectservermessage */
 
             break;
             
-        case 5: /* ObjectChannelMessage */
+        case 5: /* objectchannelmessage */
 
             break;
             
-        case 6: /* ObjectPeerMessage */
+        case 6: /* objectpeermessage */
 
             break;
             
-        case 7: /* UDPHello */
+        case 7: /* udphello */
 
-            if (!Blasted)
+            if (!blasted)
             {
-                Reader.Failed = true;
+                reader.failed = true;
                 break;
             }
 
-            Builder.AddHeader (10, 0); /* UDPWelcome */
-            Builder.Send      (Server.Server.UDP, UDPAddress);
+            builder.addheader (10, 0); /* udpwelcome */
+            builder.send      (server.server.udp, udpaddress);
 
             break;
             
-        case 8: /* ChannelMaster */
+        case 8: /* channelmaster */
 
             break;
 
-        case 9: /* Ping */
+        case 9: /* ping */
 
-            Ponged = true;
+            ponged = true;
             break;
 
         default:
 
-            Reader.Failed = true;
+            reader.failed = true;
             break;
     };
 
-    if (Reader.Failed)
+    if (reader.failed)
     {
-        /* Socket.Disconnect(); */
+        /* socket.disconnect(); */
     }
 }
 
-void Lacewing::RelayServer::ApproveConnection(Lacewing::RelayServer::Client &Client)
+void lacewing::relayserver::client::send(int subchannel, const char * message, int size, int variant)
 {
-	RelayServerInternal & Server = *(RelayServerInternal *)InternalTag;
-	Server::Client &Socket = *(Server::Client *)Client.InternalTag;
-	FrameBuilder &Builder = Server.Builder;
-	Builder.AddHeader(0, 0);  /* Response */
-	Builder.Add <unsigned char>(0);  /* Connect */
-	Builder.Add <unsigned char>(1);  /* Success */
+    relayserverinternal::client &internal = *(relayserverinternal::client *) internaltag;
+    framebuilder &builder = internal.server.builder;
+
+    builder.addheader (1, variant); /* binaryservermessage */
+    
+    builder.add <unsigned char> (subchannel);
+    builder.add (message, size);
+
+    builder.send (internal.socket);
+}
+
+void lacewing::relayserver::client::blast(int subchannel, const char * message, int size, int variant)
+{
+    relayserverinternal::client &internal = *(relayserverinternal::client *) internaltag;
+    framebuilder &builder = internal.server.builder;
+
+    builder.addheader (1, variant, true); /* binaryservermessage */
+    
+    builder.add <unsigned char> (subchannel);
+    builder.add (message, size);
+
+    builder.send (internal.server.server.udp, internal.udpaddress);
+}
+
+void lacewing::relayserver::channel::send(int subchannel, const char * message, size_t size, int variant)
+{
+    relayserverinternal::channel &internal = *(relayserverinternal::channel *) internaltag;
+    framebuilder &builder = internal.server.builder;
+
+    builder.addheader (4, variant); /* binaryserverchannelmessage */
+    
+    builder.add <unsigned char> (subchannel);
+    builder.add <unsigned short> (internal.id);
+    builder.add (message, size);
+
+	for each (auto e in internal.clients)
+        builder.send (e->socket, false);
+
+    builder.framereset ();
+}
+
+void lacewing::relayserver::channel::blast(int subchannel, const char * message, size_t size, int variant)
+{
+    relayserverinternal::channel &internal = *(relayserverinternal::channel *) internaltag;
+    framebuilder &builder = internal.server.builder;
+
+    builder.addheader (4, variant, true); /* binaryserverchannelmessage */
+    
+    builder.add <unsigned char> (subchannel);
+    builder.add <unsigned short> (internal.id);
+    builder.add (message, size);
+
+	for each (auto e in internal.clients)
+        builder.send (internal.server.server.udp, e->udpaddress, false);
+
+    builder.framereset ();
+}
+
+unsigned short lacewing::relayserver::client::id()
+{
+    return ((relayserverinternal::client *) internaltag)->id;
+}
+
+const char * lacewing::relayserver::channel::name()
+{
+    return ((relayserverinternal::channel *) internaltag)->name;
+}
+
+void lacewing::relayserver::channel::name(const char * name)
+{
+    ((relayserverinternal::channel *) internaltag)->name = name;
+}
+
+bool lacewing::relayserver::channel::hidden()
+{
+    return ((relayserverinternal::channel *) internaltag)->hidden;
+}
+
+bool lacewing::relayserver::channel::autocloseenabled()
+{
+    return ((relayserverinternal::channel *) internaltag)->autoclose;
+}
+
+void lacewing::relayserver::setwelcomemessage(const char * message)
+{
+    ((relayserverinternal *) internaltag)->welcomemessage = message;
+}
+
+void lacewing::relayserver::setchannellisting (bool enabled)
+{
+    ((relayserverinternal *) internaltag)->channellistingenabled = enabled;
+}
+
+lacewing::relayserver::client * lacewing::relayserver::channel::channelmaster()
+{
+    relayserverinternal::client * client = ((relayserverinternal::channel *) internaltag)->channelmaster;
+
+    return client ? &client->public_ : 0;
+}
+
+void lacewing::relayserver::channel::close()
+{
+    ((relayserverinternal::channel *) internaltag)->close();
+}
+
+void lacewing::relayserver::client::disconnect()
+{
+    ((relayserverinternal::client *) internaltag)->socket->close();
+}
+
+lacewing::address lacewing::relayserver::client::getaddress()
+{
+    return ((relayserverinternal::client *) internaltag)->socket->address();
+}
+
+const char * lacewing::relayserver::client::name()
+{
+    return ((relayserverinternal::client *) internaltag)->name;
+}
+
+void lacewing::relayserver::client::name(const char * name)
+{
+    relayserverinternal::client &internal = *(relayserverinternal::client *) internaltag;
+
+    internal.name = name;
+    internal.namealtered = true;
+}
+
+size_t lacewing::relayserver::channelcount()
+{
+    return ((relayserverinternal *) internaltag)->channels.size();
+}
+
+size_t lacewing::relayserver::channel::clientcount()
+{
+    return ((relayserverinternal::channel *) internaltag)->clients.size();
+}
+
+size_t lacewing::relayserver::client::channelcount()
+{
+    return ((relayserverinternal::client *) internaltag)->channels.size();
+}
+
+size_t lacewing::relayserver::clientcount()
+{
+    return socket->num_clients ();
+}
+
+lacewing::relayserver::client * lacewing::relayserver::firstclient ()
+{
+	return socket->client_first() ?
+		&((lacewing::relayserverinternal::client *) socket->client_first()->tag())->public_ : 0;
+}
+
+lacewing::relayserver::client * lacewing::relayserver::client::next ()
+{
+    server_client nextsocket =
+        ((relayserverinternal::client *) internaltag)->socket->next ();
+
+    return nextsocket ? ((relayserver::client *) nextsocket->tag()) : 0;
+}
+
+lacewing::relayserver::channel * lacewing::relayserver::channel::next ()
+{
+    return ((relayserverinternal::channel *) internaltag)->next ?
+        &((relayserverinternal::channel *) internaltag)->next->public_ : 0;
+}
+
+lacewing::relayserver::channel * lacewing::relayserver::firstchannel ()
+{
+    return ((relayserverinternal *) internaltag)->channels.empty() ? 0 :
+			&((relayserverinternal *)internaltag)->channels.begin()->public_;
+}
+
+lacewing::relayserver::client * lacewing::relayserver::channel::firstclient()
+{
+	return ((relayserverinternal *) internaltag)->channels.empty() ? 0 :
+		&((relayserverinternal *) internaltag)->channels.begin()->public_;
+}
+
+lacewing::relayserver::client * lacewing::relayserver::channel::next ()
+{
+	for each (auto e in server.((relayserverinternal *)internaltag)->channels)
+	{
+
+	}
+		if (e == this)
+
+    if (!e)
+        return 0;
+
+    internaltag = e->next;
+    return ** e;
+}
+
+lacewing::relayserver::client::channeliterator::channeliterator
+    (lacewing::relayserver::client &client)
+{
+    internaltag = *((relayserverinternal::client *) client.internaltag)->channels.begin();
+}
+
+lacewing::relayserver::channel * lacewing::relayserver::client::channeliterator::next ()
+{
+	lacewing::relayserverinternal::channel * e =
+        (lacewing::relayserverinternal::channel *) internaltag;
 	
-	Builder.Add <unsigned short>(Socket C.ID());
-	Builder.Add(Server.WelcomeMessage);
-
-	Builder.Send(Socket);
-	Handshook = true;
+	throw std::exception("TOCODE");
+    return 0;
 }
-void Lacewing::RelayServer::DisapproveConnection(Lacewing::RelayServer::Client &C, const char * DenyReason)
+
+void lacewing::relayserver::connect_response(lacewing::relayserver &server,
+	lacewing::server_client client, const char * denyReason)
 {
-	FrameBuilder &Builder = Server.Builder;
-	Builder.AddHeader(0, 0);  /* Response */
-	Builder.Add <unsigned char>(0);  /* Connect */
-	Builder.Add <unsigned char>(0);  /* Failed */
-	Builder.Add(DenyReason ? DenyReason : "Connection refused by server", -1);
+	auto &server = *(lacewing::relayserverinternal *)server.internaltag;
+	auto &builder = 
+	builder.addheader(0, 0);  /* response */
+	builder.add <unsigned char>(0);  /* connect */
+	builder.add <unsigned char>(1);  /* success */
 
-	Builder.Send(Socket);
-	Socket.
+	builder.add <unsigned short>(client->id);
+	builder.add(welcomemessage);
+
+	builder.send(client->socket);
+	client->handshook = true;
+	builder.addheader(0, 0);  /* response */
+	builder.add <unsigned char>(0);  /* connect */
+	builder.add <unsigned char>(0);  /* failed */
+	builder.add(denyreason ? denyreason : "Connection refused by server, no specified reason", -1);
+
+	builder.send(client.socket);
+
+	client.socket->close();
 }
 
-void Lacewing::RelayServer::Client::Send(int Subchannel, const char * Message, int Size, int Variant)
+void lacewing::relayserver::channeljoin_response(lacewing::relayserver::client &client, 
+	const char * const channelName, const char * denyReason)
 {
-    RelayServerInternal::Client &Internal = *(RelayServerInternal::Client *) InternalTag;
-    FrameBuilder &Builder = Internal.Server.Builder;
+	if (!channelName || !channelName[0])
+		throw std::exception("Don't screw around with the channel name.");
 
-    Builder.AddHeader (1, Variant); /* BinaryServerMessage */
-    
-    Builder.Add <unsigned char> (Subchannel);
-    Builder.Add (Message, Size);
+	relayserverinternal * serverinternal = (relayserverinternal *)internaltag;
+	relayserverinternal::client * clientinternal = (relayserverinternal::client *)client.internaltag;
+	framebuilder &builder = serverinternal->builder;
+	
+	
+	if (denyReason)
+	{
+		builder.addheader(0, 0);  /* response */
+		builder.add <unsigned char>(2);  /* joinchannel */
+		builder.add <unsigned char>(!denyReason);  /* failed */
 
-    Builder.Send (Internal.Socket);
+		builder.add <unsigned char>(strlen(nameApproved));
+		builder.add(nameApproved);
+
+		builder.add(denyReason[0] ? denyReason : "join refused by server", -1);
+
+		builder.send(clientinternal->socket);
+		return;
+	}
+
+	relayserverinternal::channel * channel = nullptr;
+	for each (auto e in serverinternal->channels)
+	{
+		if (!_stricmp(e->name, channelName))
+		{
+			channel = e; break;
+		}
+	}
+
+	// DENYED REQUEST ONLY ABOVE
+	// CREATED CHANNEL ONLY BELOW
+	// OUT OF THIS FUNC IS NONCREATED CHANNEL
+
+	/* loop peers on channel currently and concat them with Join Channel Message */
+	builder.addheader(0, 0);  /* response */
+	builder.add <unsigned char>(2);  /* joinchannel */
+	builder.add <unsigned char>(1);  /* success */
+	builder.add <unsigned char>(!channel);  /* not the channel master */
+
+	builder.add <unsigned char>(strlen(channel->name));
+	builder.add(channel->name);
+
+	builder.add <unsigned short>(channel->id);
+
+	for each (auto e in channel->clients)
+	{
+		builder.add <unsigned short>(e->id);
+		builder.add <unsigned char>(channel->channelmaster == e ? 1 : 0);
+		builder.add <unsigned char>(strlen(e->name));
+		builder.add(e->name);
+	}
+
+	builder.send(socket);
+
+
+	builder.addheader(9, 0); /* peer */
+
+	builder.add <unsigned short>(channel->id);
+	builder.add <unsigned short>(id);
+	builder.add <unsigned char>(0);
+	builder.add(this->name);
+
+	/* notify the other clients on the channel that this client has joined */
+
+	for each (auto e in channel->clients)
+		builder.send(e->socket, false);
+
+	builder.framereset();
+
+
+	/* add this client to the channel */
+
+	channels.push_back(channel);
+	channel->clients.push_back(this);
 }
-
-void Lacewing::RelayServer::Client::Blast(int Subchannel, const char * Message, int Size, int Variant)
+void lacewing::relayserver::nameset_response(lacewing::relayserver::client &client,
+	const char * oldClientName, const char * clientName, const char * denyReason)
 {
-    RelayServerInternal::Client &Internal = *(RelayServerInternal::Client *) InternalTag;
-    FrameBuilder &Builder = Internal.Server.Builder;
+	if (!clientName || !clientName[0])
+		throw std::exception("Altered client name is null or empty. Name refused.");
 
-    Builder.AddHeader (1, Variant, true); /* BinaryServerMessage */
-    
-    Builder.Add <unsigned char> (Subchannel);
-    Builder.Add (Message, Size);
+	auto &serverinternal = *(lacewing::relayserverinternal *)internaltag;
+	framebuilder &builder = ((lacewing::relayserverinternal *)internaltag)->builder;
+	auto clientinternal = ((lacewing::relayserverinternal::client *) client.internaltag);
+	
+	if (denyReason)
+	{
+		builder.addheader(0, 0);  /* response */
+		builder.add <unsigned char>(1);  /* setname */
+		builder.add <unsigned char>(0);  /* failed */
 
-    Builder.Send (Internal.Server.Server.UDP, Internal.UDPAddress);
+		builder.add <unsigned char>(strlen(oldClientName));
+		builder.add(oldClientName, -1);
+
+		builder.add(denyReason ? denyReason : "Name refused by server, no reason given.", -1);
+
+		builder.send(clientinternal ->socket);
+		return;
+	}
+
+	bool nameAltered = _stricmp(clientName, oldClientName);
+	if (!nameAltered)
+		client.name(_strdup(oldClientName));
+	// check the new name provided by the handler
+	else if (!clientinternal->checkname(clientName))
+	{
+		builder.addheader(0, 0);  /* response */
+		builder.add <unsigned char>(1);  /* setname */
+		builder.add <unsigned char>(0);  /* failed */
+
+		builder.add <unsigned char>(strlen(oldClientName));
+		builder.add(oldClientName, -1);
+
+		builder.add("Name refused by server; the server customised your name "
+			"and got an error doing so on its end.", -1);
+
+		builder.send(clientinternal->socket);
+		auto e = lacewing::error_new();
+		e->add("Cannot assign the name you altered the Set Name request to.");
+		serverinternal.handlererror(serverinternal.server, e);
+		return;
+	}
+
+	builder.addheader(0, 0);  /* response */
+	builder.add <unsigned char>(1);  /* setname */
+	builder.add <unsigned char>(1);  /* success */
+
+	builder.add <unsigned char>(strlen(clientName));
+	builder.add (clientName);
+
+	builder.send(clientinternal->socket);
+
+	for each (auto e in clientinternal->channels)
+	{
+		builder.addheader(9, 0); /* peer */
+
+		builder.add <unsigned short>(e->id);
+		builder.add <unsigned short>(clientinternal->id);
+		builder.add <unsigned char>(clientinternal == e->channelmaster ? 1 : 0);
+		builder.add (clientName);
+
+		for each (auto e2 in e->clients)
+		{
+			if (e2 == clientinternal)
+				continue;
+
+			builder.send(e2->socket, false);
+		}
+
+		builder.framereset();
+	}
 }
 
-void Lacewing::RelayServer::Channel::Send(int Subchannel, const char * Message, int Size, int Variant)
+void relayserverinternal::channel::PeerToChannel(relayserver &server_, relayserver::client &client_,
+	bool blasted, int subchannel, const char * message, size_t size, int variant)
 {
-    RelayServerInternal::Channel &Internal = *(RelayServerInternal::Channel *) InternalTag;
-    FrameBuilder &Builder = Internal.Server.Builder;
+	auto server = (relayserverinternal *)server_.internaltag;
+	auto client = (relayserverinternal::client *)client_.internaltag;
+	auto &builder = server->builder;
+	builder.addheader(2, variant, blasted); /* binarychannelmessage */
 
-    Builder.AddHeader (4, Variant); /* BinaryServerChannelMessage */
-    
-    Builder.Add <unsigned char> (Subchannel);
-    Builder.Add <unsigned short> (Internal.ID);
-    Builder.Add (Message, Size);
+	builder.add <unsigned char>(subchannel);
+	builder.add <unsigned short>(id);
+	builder.add <unsigned short>(client->id);
+	builder.add(message, size);
 
-    for (List <RelayServerInternal::Client *>::Element *
-                E = Internal.Clients.First; E; E = E->Next)
-    {
-        Builder.Send ((** E)->Socket, false);
-    }
+	for each (auto e in clients)
+	{
+		if (e == client)
+			continue;
 
-    Builder.FrameReset ();
+		if (blasted)
+			builder.send(server.server.udp, e->udpaddress, false);
+		else
+			builder.send(e->socket, false);
+	}
+
+	builder.framereset();
 }
 
-void Lacewing::RelayServer::Channel::Blast(int Subchannel, const char * Message, int Size, int Variant)
-{
-    RelayServerInternal::Channel &Internal = *(RelayServerInternal::Channel *) InternalTag;
-    FrameBuilder &Builder = Internal.Server.Builder;
 
-    Builder.AddHeader (4, Variant, true); /* BinaryServerChannelMessage */
-    
-    Builder.Add <unsigned char> (Subchannel);
-    Builder.Add <unsigned short> (Internal.ID);
-    Builder.Add (Message, Size);
 
-    for (List <RelayServerInternal::Client *>::Element *
-                E = Internal.Clients.First; E; E = E->Next)
-    {
-        Builder.Send (Internal.Server.Server.UDP, (** E)->UDPAddress, false);
-    }
-
-    Builder.FrameReset ();
-}
-
-int Lacewing::RelayServer::Client::ID()
-{
-    return ((RelayServerInternal::Client *) InternalTag)->ID;
-}
-
-const char * Lacewing::RelayServer::Channel::Name()
-{
-    return ((RelayServerInternal::Channel *) InternalTag)->Name;
-}
-
-void Lacewing::RelayServer::Channel::Name(const char * Name)
-{
-    ((RelayServerInternal::Channel *) InternalTag)->Name = Name;
-}
-
-bool Lacewing::RelayServer::Channel::Hidden()
-{
-    return ((RelayServerInternal::Channel *) InternalTag)->Hidden;
-}
-
-bool Lacewing::RelayServer::Channel::AutoCloseEnabled()
-{
-    return ((RelayServerInternal::Channel *) InternalTag)->AutoClose;
-}
-
-void Lacewing::RelayServer::SetWelcomeMessage(const char * Message)
-{
-    ((RelayServerInternal *) InternalTag)->WelcomeMessage = Message;
-}
-
-void Lacewing::RelayServer::SetChannelListing (bool Enabled)
-{
-    ((RelayServerInternal *) InternalTag)->ChannelListingEnabled = Enabled;
-}
-
-Lacewing::RelayServer::Client * Lacewing::RelayServer::Channel::ChannelMaster()
-{
-    RelayServerInternal::Client * Client = ((RelayServerInternal::Channel *) InternalTag)->ChannelMaster;
-
-    return Client ? &Client->Public : 0;
-}
-
-void Lacewing::RelayServer::Channel::Close()
-{
-    ((RelayServerInternal::Channel *) InternalTag)->Close();
-}
-
-void Lacewing::RelayServer::Client::Disconnect()
-{
-    ((RelayServerInternal::Client *) InternalTag)->Socket.Disconnect();
-}
-
-Lacewing::Address &Lacewing::RelayServer::Client::GetAddress()
-{
-    return ((RelayServerInternal::Client *) InternalTag)->Socket.GetAddress();
-}
-
-const char * Lacewing::RelayServer::Client::Name()
-{
-    return ((RelayServerInternal::Client *) InternalTag)->Name;
-}
-
-void Lacewing::RelayServer::Client::Name(const char * Name)
-{
-    RelayServerInternal::Client &Internal = *(RelayServerInternal::Client *) InternalTag;
-
-    Internal.Name = Name;
-    Internal.NameAltered = true;
-}
-
-int Lacewing::RelayServer::ChannelCount()
-{
-    return ((RelayServerInternal *) InternalTag)->Channels.Size;
-}
-
-int Lacewing::RelayServer::Channel::ClientCount()
-{
-    return ((RelayServerInternal::Channel *) InternalTag)->Clients.Size;
-}
-
-int Lacewing::RelayServer::Client::ChannelCount()
-{
-    return ((RelayServerInternal::Client *) InternalTag)->Channels.Size;
-}
-
-int Lacewing::RelayServer::ClientCount()
-{
-    return Socket.ClientCount ();
-}
-
-Lacewing::RelayServer::Client * Lacewing::RelayServer::FirstClient ()
-{
-    return Socket.FirstClient () ?
-        (Lacewing::RelayServer::Client *) Socket.FirstClient ()->Tag : 0;
-}
-
-Lacewing::RelayServer::Client * Lacewing::RelayServer::Client::Next ()
-{
-    Lacewing::Server::Client * NextSocket =
-        ((RelayServerInternal::Client *) InternalTag)->Socket.Next ();
-
-    return NextSocket ? (Lacewing::RelayServer::Client *) NextSocket->Tag : 0;
-}
-
-Lacewing::RelayServer::Channel * Lacewing::RelayServer::Channel::Next ()
-{
-    return ((RelayServerInternal::Channel *) InternalTag)->Element->Next ?
-        &(** ((RelayServerInternal::Channel *) InternalTag)->Element->Next)->Public : 0;
-}
-
-Lacewing::RelayServer::Channel * Lacewing::RelayServer::FirstChannel ()
-{
-    return ((RelayServerInternal *) InternalTag)->Channels.First ?
-            &(** ((RelayServerInternal *) InternalTag)->Channels.First)->Public : 0;
-}
-
-Lacewing::RelayServer::Channel::ClientIterator::ClientIterator
-    (Lacewing::RelayServer::Channel &Channel)
-{
-    InternalTag = ((RelayServerInternal::Channel *) Channel.InternalTag)->Clients.First;
-}
-
-Lacewing::RelayServer::Client * Lacewing::RelayServer::Channel::ClientIterator::Next ()
-{
-    List <Lacewing::RelayServer::Client *>::Element * E =
-        (List <Lacewing::RelayServer::Client *>::Element *) InternalTag;
-
-    if (!E)
-        return 0;
-
-    InternalTag = E->Next;
-    return ** E;
-}
-
-Lacewing::RelayServer::Client::ChannelIterator::ChannelIterator
-    (Lacewing::RelayServer::Client &Client)
-{
-    InternalTag = ((RelayServerInternal::Client *) Client.InternalTag)->Channels.First;
-}
-
-Lacewing::RelayServer::Channel * Lacewing::RelayServer::Client::ChannelIterator::Next ()
-{
-    List <Lacewing::RelayServer::Channel *>::Element * E =
-        (List <Lacewing::RelayServer::Channel *>::Element *) InternalTag;
-
-    if (!E)
-        return 0;
-
-    InternalTag = E->Next;
-    return ** E;
-}
-
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, Connect)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, Disconnect)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, Error)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, ServerMessage)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, ChannelMessage)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, PeerMessage)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, JoinChannel)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, LeaveChannel)
-AutoHandlerFunctions(Lacewing::RelayServer, RelayServerInternal, SetName)
+#define autohandlerfunctions(pub, intern, handlername)              \
+    void pub::on##handlername(pub::handler_##handlername handler)   \
+	    {   ((intern *) internaltag)->handler_##handlername = handler;      \
+	    }      
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, connect)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, disconnect)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, error)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, message_server)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, message_channel)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, rmessage_peer)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, channel_join)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, channel_leave)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, setname)
 
 }

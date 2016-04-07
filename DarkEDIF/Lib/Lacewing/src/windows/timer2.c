@@ -56,6 +56,11 @@ lw_timer lw_timer_new(lw_pump pump)
 	if (!ctx)
 		return 0;
 
+	if (pump == nullptr || (long)pump == 0xDDDDDDDD)
+		throw std::exception("0xDD detected, 4");
+	if (ctx == nullptr || (long)ctx == 0xDDDDDDDD)
+		throw std::exception("0xDD detected, 5");
+
 	ctx->pump = pump;
 
 	ctx->shutdown_event = CreateEvent(0, TRUE, FALSE, 0);
@@ -69,6 +74,11 @@ void lw_timer_delete(lw_timer ctx)
 	if (!ctx)
 		return;
 
+	if (ctx == nullptr || (long)ctx == 0xDDDDDDDD)
+		throw std::exception("0xDD detected, 6");
+
+	if (ctx->pump == nullptr || (long)ctx->pump == 0xDDDDDDDD)
+		throw std::exception("0xDD detected, 7");
 	lw_timer_stop(ctx);
 
 	lw_thread_join(ctx->timer_thread);
@@ -99,6 +109,8 @@ void timer_thread(lw_timer ctx)
 			break;
 		}
 
+		if (ctx->pump == nullptr)
+			throw std::exception("Pump nullified itself.");
 		lw_pump_post(ctx->pump, (void *)timer_completion, ctx);
 	}
 }

@@ -21,7 +21,7 @@
 			
 			[1, "Set output file"],
 			[2, "Set output time format"],
-			[3, "Set output enabled/disabled"],
+			[3, "Set debug enabled/disabled"],
 			[11, "Set console enabled/disabled"],
 			//[13, "Set process to boot on crash"],
 			
@@ -98,7 +98,7 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "Time format to output to (Default %%X - Google strftime() function):"]
+				["Text", "Time format to output to (Default %%X, just Google strftime() function):"]
 			  ]
 			},
 			

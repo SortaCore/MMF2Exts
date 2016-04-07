@@ -251,6 +251,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	}
 	*/
 
+	LastEventInts = (unsigned short *)calloc(32U, 1U);
+	LastEventInts = (unsigned short *)realloc(LastEventInts, 0U);
 	IsGlobal = edPtr->Global;
 	lw_trace("Extension create: IsGlobal=%i.", IsGlobal ? 1 : 0);
 	if (IsGlobal)
@@ -480,16 +482,22 @@ Extension::~Extension()
 		}
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 	}
-	// Last instance of this object; if global, do not cleanup.
-	// In single-threaded instances, this will cause a dirty timeout.
-	// In multi-threaded instances, this will retain the connection indefinitely.
-	else if (!Globals->FullDeleteEnabled && IsGlobal)
+	// Last instance of this object; if global and not full-delete-enabled, do not cleanup.
+	// In single-threaded instances, this will cause a dirty timeout; the lower-level protocols,
+	// e.g. TCP, will close the connection after a certain amount of not-responding.
+	// In multi-threaded instances, messages will continue to be queued, and this will retain
+	// the connection indefinitely.
+	else if (IsGlobal && !Globals->FullDeleteEnabled)
 	{
 		lw_trace("Note: Last instance dropped - Globals will be retained until a Disconnect is called.");
+		Globals->_Ext = nullptr;
 		LeaveCriticalSectionDerpy(&Globals->Lock);
-
+		
 		if (Globals->TimeoutWarningEnabled)
+		{
+			lw_trace("Timeout thread started. If no instance has reclaimed ownership in 10 seconds, an error message will be shown.");
 			CreateThread(NULL, 0, TimeoutWarningFunc, Globals, NULL, NULL);
+		}
 	}
 	else // If not global, cleanup the liblacewing; we know it's not used elsewhere
 	{
@@ -497,10 +505,12 @@ Extension::~Extension()
 			lw_trace("Note: Not global, closing Globals info.");
 		else
 			lw_trace("Note: Full delete enabled, closing Globals info.");
-		Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + Globals->_GlobalID).c_str(), nullptr);
+		
+		std::string id = std::string(std::string("LacewingRelayClient") + (Globals->_GlobalID ? Globals->_GlobalID : ""));
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 		delete Globals;
 		Globals = nullptr;
+		Runtime.WriteGlobal(id.c_str(), nullptr);
 	}
 }
 namespace lacewing { struct channelinternal; struct peerinternal; }
@@ -514,7 +524,7 @@ short Extension::Handle()
 		{
 			e->add("(in Extension::Handle -> tick()");
 			CreateError(e->tostring());
-			return 0;
+			return 0; // Run next loop
 		}
 	}
 
@@ -523,11 +533,13 @@ short Extension::Handle()
 	bool RunNextLoop = !Globals->_Thread;
 	while (true)
 	{
+		// Attempt to Enter, break if we can't get it instantly
 		if (!TryEnterCriticalSection(&Globals->Lock))
 		{
 			RunNextLoop = true;
 			break; // Lock already occupied; leave it and run next event loop
 		}
+		// At this point we have effectively run EnterCriticalSection
 #ifdef _DEBUG
 		sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__);
 		::CriticalSection = ::Buffer + ::CriticalSection;
@@ -551,6 +563,10 @@ short Extension::Handle()
 			ThreadData.Channel = S->Channel;
 		if (S->Peer != nullptr)
 			ThreadData.Peer = S->Peer;
+		
+		LastEventInts = (unsigned short *)realloc(LastEventInts, S->NumEvents * 2U);
+		memcpy(LastEventInts, S->CondTrig, S->NumEvents * 2U);
+
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 				
 		// Remove copies if this particular event number is used
@@ -569,7 +585,7 @@ short Extension::Handle()
 							if (!S->Channel->isclosed)
 								CreateError("Channel being removed but not marked as closed!");
 
-							delete *u;
+							delete (**u).internaltag;
 							Channels.erase(u);
 							break;
 						}
@@ -589,7 +605,7 @@ short Extension::Handle()
 									if (!S->Peer->isclosed)
 										CreateError("Peer being removed but not marked as closed!");
 
-									delete *v;
+									delete (**v).internaltag;
 									Peers.erase(v);
 									break;
 								}
@@ -624,11 +640,14 @@ short Extension::Handle()
 		}
 		else
 		{
-			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-			for (unsigned char u = 0; u < S->NumEvents; ++u)
-				// Doesn't call it for some reason.
-				// GenerateEVent is called but Fusion doesn't react.
-				Runtime.GenerateEvent((int)S->CondTrig[u]);
+			for each (auto i in Globals->Refs)
+			{
+				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+				for (unsigned char u = 0; u < S->NumEvents; ++u)
+				{
+					i->Runtime.PushEvent((int)S->CondTrig[u]);
+				}
+			}
 		}
 
 		EnterCriticalSectionDerpy(&Globals->Lock);
@@ -800,8 +819,10 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	// Useful so Lacewing callbacks can access Extension
 	_Client.tag = this;
 }
-GlobalInfo::~GlobalInfo()
+GlobalInfo::~GlobalInfo() noexcept(false)
 {
+	if (!Refs.empty())
+		throw std::exception("GlobalInfo dtor called prematurely.");
 	free(_GlobalID);
 	free(_PreviousName);
 	DeleteCriticalSection(&Lock);

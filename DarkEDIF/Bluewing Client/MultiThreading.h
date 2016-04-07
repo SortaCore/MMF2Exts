@@ -37,9 +37,9 @@
 		};
 		lacewing::relayclient::channel::peer * Peer;
 
-		SaveExtInfo() : NumEvents(0), CondTrig(NULL), Channel(NULL), Peer(NULL)
+		SaveExtInfo() : NumEvents(0), CondTrig(nullptr), Channel(nullptr), Peer(nullptr)
 		{
-			ReceivedMsg.Content = NULL;
+			ReceivedMsg.Content = nullptr;
 			ReceivedMsg.Cursor = 0;
 			ReceivedMsg.Size = 0;
 			ReceivedMsg.Subchannel = 0;
@@ -51,15 +51,17 @@
 			if (ReceivedMsg.Content)
 			{
 				free(ReceivedMsg.Content);
-				ReceivedMsg.Content = NULL;
+				ReceivedMsg.Content = nullptr;
 			}
 			
 			// Required for DarkEDIF
 			if (CondTrig)
 			{
 				free(CondTrig);
-				CondTrig = NULL;
+				CondTrig = nullptr;
 			}
+			Peer = nullptr;
+			Channel = nullptr;
 		}
 	};
 #pragma pack (pop, align_to_one_multithreading)

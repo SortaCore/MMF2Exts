@@ -13,9 +13,10 @@
 
 
 #define DLLExport   __stdcall
+
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
-
+#ifdef _DEBUG
 #define EnterCriticalSectionDerpy(x) \
 	EnterCriticalSection(x); \
 	sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
@@ -26,7 +27,10 @@
 	sprintf_s(::Buffer, "Thread %u : Left on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
 	::CriticalSection = ::Buffer + ::CriticalSection; \
 	LeaveCriticalSection(x)
-
+#else
+	#define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
+	#define LeaveCriticalSectionDerpy(x)  LeaveCriticalSection(x)
+#endif
 // Lacewing-required lines.==
 
 #pragma comment(lib, "ws2_32.lib")

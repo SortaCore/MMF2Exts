@@ -1,21 +1,21 @@
 // Handles all Lacewing functions.
 #include "Lacewing.h"
 
-void OnClientConnectRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer &Client);
-void OnClientDisconnect(Lacewing::RelayServer &Server, Lacewing::RelayServer &Client);
-void OnError(Lacewing::RelayServer &Server, Lacewing::Error &Error);
-void OnServerMessage(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client,
+void OnClientConnectRequest(lacewing::relayserver &Server, lacewing::relayserver &Client, const char * DenyReason);
+void OnClientDisconnect(lacewing::relayserver &Server, lacewing::relayserver &Client);
+void OnError(lacewing::relayserver &Server, lacewing::error &Error);
+void OnServerMessage(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
 	bool Blasted, int Subchannel, char * Data, int Size, int Variant);
-void OnChannelMessage(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client,
-	Lacewing::RelayServer::Channel &Channel,
+void OnChannelMessage(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver::channel &Channel,
 	bool Blasted, int Subchannel, char * Data, int Size, int Variant);
-void OnPeerMessage(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client,
-	Lacewing::RelayServer::Channel &Channel, Lacewing::RelayServer::Client &TargetClient,
+void OnPeerMessage(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver::channel &Channel, lacewing::relayserver::client &TargetClient,
 	bool Blasted, int Subchannel, char * Packet, int Size, int Variant);
-void OnJoinChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client,
-	Lacewing::RelayServer::Channel &Channel);
-void OnLeaveChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client,
-	Lacewing::RelayServer::Channel &Channel);
-void OnNameSet(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, const char * Name);
+void OnJoinChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver::channel &Channel);
+void OnLeaveChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver::channel &Channel);
+void OnNameSet(lacewing::relayserver &Server, lacewing::relayserver::client &Client, const char * Name);
 
-void OnFlashError(Lacewing::FlashPolicy &FlashPolicy, Lacewing::Error &Error);
+void OnFlashError(lacewing::flashpolicy &FlashPolicy, lacewing::error &Error);

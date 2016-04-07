@@ -6,11 +6,10 @@
 // Struct contains information about a/c/e
 struct ACEInfo {
 	short	FloatFlags,		// Float flags (if bit n is true, parameter n returns a float)
-			ID;				// ID, non-EDIFified
-	union {  
-	short	Flags,			// Flags
-			Returns;		// Expression only; see ExpParams namespace
-	};
+			ID;				// ID, non-EDIFified; used to be called 'code'
+	short	Flags;			// For conds: EVFLAGS_ALWAYS, etc; whether condition is negatable
+							// For exps: EXPFLAG_DOUBLE, etc; return type
+							// For acts: unused, always 0
 	short	NumOfParams,	// Number of parameters this A/C/E is called with (Parameters[n])
 			Parameter [0];	// Parameter information (max sizeof(FloatFlags)*8 params)
 

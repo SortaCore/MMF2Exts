@@ -57,7 +57,7 @@ public:
 		messagetype    = 0;
     }
 
-    inline void process(const char * data, unsigned int size)
+    inline void process(char * data, unsigned int size)
     {
         while(state < 3 && size -- > 0)
         {
@@ -142,6 +142,7 @@ public:
 
                 messagehandler(tag, messagetype, data, messagesize);
                 state = 0;
+				
 
                 return;
             }
@@ -151,15 +152,15 @@ public:
                 /* there message isn't fragmented, but there are more messages than
                    this one.  lovely hack to give it a null terminator without copying
                    the message..!  */
-				char * data2 = const_cast<char *>(data);
-                char nextbyte = data2[messagesize];
-                data2[messagesize] = 0;
 
-                messagehandler(tag, messagetype, data2, messagesize); 
-                data2[messagesize] = nextbyte;
+				char nextbyte = data[messagesize];
+				data[messagesize] = 0;
 
-                state = 0;
-                process(data2 + messagesize, size - messagesize);
+				messagehandler(tag, messagetype, data, messagesize);
+				data[messagesize] = nextbyte;
+
+				state = 0;
+				process(data + messagesize, size - messagesize);
 
                 return;
             }

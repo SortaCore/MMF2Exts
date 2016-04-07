@@ -31,10 +31,10 @@
 				char *		Name;
 			} Loop;
 		};
-		Lacewing::RelayServer::Channel * Channel;
-		Lacewing::RelayServer::Client * Client;
-		Lacewing::RelayServer::Client * SenderClient; // By default the same as Client
-		Lacewing::RelayServer::Client * ReceivingClient;
+		lacewing::relayserver::channel * Channel;
+		lacewing::relayserver::client * Client;
+		lacewing::relayserver::client * SenderClient; // By default the same as Client
+		lacewing::relayserver::client * ReceivingClient;
 
 		SaveExtInfo() : NumEvents(0), CondTrig(NULL),
 			Channel(NULL), Client(NULL), SenderClient(NULL), ReceivingClient(NULL)

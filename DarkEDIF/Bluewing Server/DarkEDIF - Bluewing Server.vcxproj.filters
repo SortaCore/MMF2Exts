@@ -46,13 +46,10 @@
     <ClCompile Include="LacewingFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Lacewing\RelayClient.cc">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lib\Lacewing\RelayServer.cc">
-      <Filter>Header Files\Lacewing</Filter>
+      <Filter>Source Files\Lacewing</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\list.c">
+    <ClCompile Include="..\Lib\lacewing\src\util.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
     <ClCompile Include="..\Lib\lacewing\src\address.c">
@@ -73,6 +70,9 @@
     <ClCompile Include="..\Lib\lacewing\src\heapbuffer.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\lacewing\src\list.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
     <ClCompile Include="..\Lib\lacewing\src\nvhash.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
@@ -89,9 +89,6 @@
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
     <ClCompile Include="..\Lib\lacewing\src\streamgraph.c">
-      <Filter>Source Files\Lacewing\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Lib\lacewing\src\util.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
     <ClCompile Include="..\lib\lacewing\src\cxx\address2.cc">
@@ -265,6 +262,12 @@
       <Filter>Header Files\Lacewing\src\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\Lacewing.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\MessageReader.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
   </ItemGroup>

@@ -88,6 +88,8 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
    if (overlapped == sig_exit_event_loop)
       return lw_false;
 
+   if ((long)watch->on_completion == 0xDDDDDDDD)
+	   throw std::exception("0xDD detected, 9");
    if (watch->on_completion)
       watch->on_completion (watch->tag, overlapped, bytes_transferred, error);
 
@@ -230,6 +232,8 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
       /* TODO : Use GetQueuedCompletionStatusEx where available */
 
       int error = 0;
+	  watch = nullptr;
+	  overlapped = nullptr;
 
       if (!GetQueuedCompletionStatus (ctx->completion_port,
                                       &bytes_transferred,
@@ -246,8 +250,14 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
             break;
 
          if (!overlapped)
-            continue;
+			 continue;
+
+		 if ((long)(void *)watch == 0xDDDDDDDD || (long)watch->on_completion == 0xDDDDDDDD)
+			 throw std::exception("0xDD found, 1");
       }
+
+	  if ((long)(void *)watch == 0xDDDDDDDD || (long)watch->on_completion == 0xDDDDDDDD)
+		  throw std::exception("0xDD found, 2");
 
       if (!process (ctx, overlapped, bytes_transferred, watch, error))
          finished = lw_true;

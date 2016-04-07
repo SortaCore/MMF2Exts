@@ -1067,7 +1067,7 @@ namespace lacewing
 		typedef void (lw_callback * hook_disconnect) (client);
 
 		typedef void (lw_callback * hook_data)
-			(client, const char * buffer, size_t size);
+			(client, char * buffer, size_t size);
 
 		typedef void (lw_callback * hook_error) (client, error);
 
@@ -1500,7 +1500,7 @@ public:
 
 			const char * name() const;
 			peer * next() const;
-			~peer();
+			~peer() noexcept(false);
 		};
 
 		int peercount() const;
@@ -1508,7 +1508,7 @@ public:
 		channel * next() const;
 
 		void leave() const;
-		~channel();
+		~channel() noexcept(false);
     };
 
 	int channelcount() const;

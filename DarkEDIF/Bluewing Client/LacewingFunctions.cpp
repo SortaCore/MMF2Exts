@@ -7,6 +7,8 @@
 
 void OnError(lacewing::relayclient &Client, lacewing::error Error)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
+
 	SaveExtInfo &S = Globals->AddEvent(0);
 	S.Error.Text = _strdup(Error->tostring());
 
@@ -15,6 +17,7 @@ void OnError(lacewing::relayclient &Client, lacewing::error Error)
 		Globals->CreateError("Error copying Lacewing error string to local buffer.");
 		Saved.erase(Saved.end()); // Remove S from vector
 	}
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnConnect(lacewing::relayclient &Client)
 {
@@ -33,9 +36,8 @@ void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
-	SaveExtInfo &S = Globals->AddEvent(3);
-	S.Channel = NULL;
-	S.Peer = NULL;
+	// Pass disconnect event
+	Globals->AddEvent(3);
 
 	// Empty all channels and peers
 	Globals->AddEvent(0xFFFF);
@@ -51,13 +53,19 @@ void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel
 	for (auto i = Target.firstpeer(); i != nullptr; i = i->next())
 		i->isclosed = false;
 
+	EnterCriticalSectionDerpy(&Globals->Lock);
+
 	SaveExtInfo &S = Globals->AddEvent(4);
 	S.Channel = &Target;
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
+
 	SaveExtInfo &S = Globals->AddEvent(5);
 	S.Loop.Name = _strdup(ChannelName);
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 	
 	// Old deny reason? Free it.
 	if (DenyReasonBuffer)
@@ -71,17 +79,21 @@ void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channe
 {
 	Target.isclosed = true;
 
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(43);
 	S.Channel = &Target;
 	
 	// Clear channel copy after this event is handled
 	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
 	C.Channel = S.Channel;
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(44);
 	S.Channel = &Target;
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 	
 	// Old deny reason? Free it.
 	if (DenyReasonBuffer)
@@ -109,6 +121,7 @@ void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const 
 }
 void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 {
+
 	Globals->AddEvent(53);
 
 	// Old previous name? Free it.
@@ -123,14 +136,19 @@ void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel
 {
 	Peer.isclosed = false;
 
+	EnterCriticalSectionDerpy(&Globals->Lock);
+
 	SaveExtInfo &S = Globals->AddEvent(10);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer)
 {
 	Peer.isclosed = true;
+
+	EnterCriticalSectionDerpy(&Globals->Lock);
 
 	SaveExtInfo &S = Globals->AddEvent(11);
 	S.Channel = &Channel;
@@ -140,10 +158,13 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 	SaveExtInfo &C = Globals->AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 	C.Peer = S.Peer;
+	LeaveCriticalSectionDerpy(&Globals->Lock);
+
 }
 void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer, const char * OldName)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(45);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
@@ -156,11 +177,13 @@ void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::cha
 	Peer.tag =_strdup(OldName);
 	if (!Peer.tag)
 		Globals->CreateError("Error copying old peer name.");
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(Blasted ? 52 : 49);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
@@ -211,11 +234,13 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(Blasted ? 51 : 48);
 	S.Channel = &Channel;
 	S.Peer = &Peer;
@@ -266,10 +291,12 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnServerMessage(lacewing::relayclient &Client,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(Blasted ? 50 : 47);
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
 	S.ReceivedMsg.Size = Size; // Do NOT add null. There's error checking for that.
@@ -319,10 +346,12 @@ void OnServerMessage(lacewing::relayclient &Client,
 				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	EnterCriticalSectionDerpy(&Globals->Lock);
 	SaveExtInfo &S = Globals->AddEvent(Blasted ? 72 : 68);
 	S.Channel = &Channel;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
@@ -372,6 +401,7 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 				Globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
+	LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 
 

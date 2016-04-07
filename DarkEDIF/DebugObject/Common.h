@@ -41,7 +41,8 @@ struct EDITDATA
 	bool ConsoleEnabled;
 	bool PauseForDebugger;
 	// TODO: Extend properties to default handling type?
-
+	int				DarkEDIF_Prop_Size;
+	char			DarkEDIF_Props[0];
 };
 
 class Extension;
