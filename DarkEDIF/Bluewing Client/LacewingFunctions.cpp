@@ -11,9 +11,9 @@ void OnError(lacewing::relayclient &Client, lacewing::error Error)
 
 	char * c = _strdup(Error->tostring());
 	if (c)
-		Globals->AddEvent1(0, c);
+		Globals->AddEvent1(0, nullptr, nullptr, c);
 	else
-		Globals->AddEvent1(0, "Error copying Lacewing error string to local buffer.");
+		Globals->AddEvent1(0, nullptr, nullptr, "Error copying Lacewing error string to local buffer.");
 	
 }
 void OnConnect(lacewing::relayclient &Client)

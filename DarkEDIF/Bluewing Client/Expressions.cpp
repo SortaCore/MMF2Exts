@@ -3,7 +3,7 @@
 
 const char * Extension::Error()
 {
-	return Runtime.CopyString(ThreadData.Error.Text);
+	return Runtime.CopyString(ThreadData.Error.Text ? ThreadData.Error.Text : "");
 }
 const char * Extension::ReplacedExprNoParams()
 {

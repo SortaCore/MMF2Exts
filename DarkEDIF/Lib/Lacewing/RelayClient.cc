@@ -66,7 +66,7 @@ namespace lacewing
 
 		relayclientinternal(relayclient &_client, lacewing::client _socket,
 			lacewing::udp _udp, pump _eventpump) : client(_client),
-			socket(_socket), udp(_udp), message(true), timer(lacewing::timer_new(_eventpump))
+			socket(_socket), udp(_udp), message(true), messageMF(false), timer(lacewing::timer_new(_eventpump))
 		{
 			if ((long)_eventpump == 0xDDDDDDDD || _eventpump == nullptr)
 				throw std::exception("0xDD detected, 3");
@@ -92,6 +92,9 @@ namespace lacewing
 			
 			message.framereset();
 			message.reset();
+
+			messageMF.framereset();
+			messageMF.reset();
 			
 			socket->tag(this);
 			udp->tag(this);
@@ -114,7 +117,7 @@ namespace lacewing
 
 		channelinternal * findchannelbyid(unsigned short id);
 
-		framebuilder message;
+		framebuilder message, messageMF;
 
 		std::vector<relayclient::channellisting *> channellist;
 
@@ -428,7 +431,7 @@ namespace lacewing
 	void relayclient::name(const char * name)
 	{
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		framebuilder   &message = internal.message;
+		framebuilder   &message = internal.messageMF;
 
 		if (!*name)
 		{
@@ -451,7 +454,7 @@ namespace lacewing
 	void relayclient::join(const char * channel, bool hidden, bool autoclose)
 	{
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		framebuilder   &message = internal.message;
+		framebuilder   &message = internal.messageMF;
 
 		if (!*name())
 		{
@@ -491,7 +494,7 @@ namespace lacewing
 			size = strlen(data);
 
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(1, variant); /* binaryservermessage */
 		message.add <unsigned char>(subchannel);
@@ -506,7 +509,7 @@ namespace lacewing
 			size = strlen(data);
 
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(1, variant, 1, internal.id); /* binaryservermessage */
 		message.add <unsigned char>(subchannel);
@@ -522,7 +525,7 @@ namespace lacewing
 
 		channelinternal &channel = *((channelinternal *)internaltag);
 		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(2, variant); /* binarychannelmessage */
 		message.add <unsigned char>(subchannel);
@@ -539,7 +542,7 @@ namespace lacewing
 
 		channelinternal &channel = *((channelinternal *)internaltag);
 		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(2, variant, 1, internal.id); /* binarychannelmessage */
 		message.add <unsigned char>(subchannel);
@@ -557,7 +560,7 @@ namespace lacewing
 		peerinternal &peer = *((peerinternal *)internaltag);
 		channelinternal &channel = peer.channel;
 		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(3, variant); /* binarypeermessage */
 		message.add <unsigned char>(subchannel);
@@ -576,7 +579,7 @@ namespace lacewing
 		peerinternal &peer = *((peerinternal *)internaltag);
 		channelinternal &channel = peer.channel;
 		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.message;
+		framebuilder &message = internal.messageMF;
 
 		message.addheader(3, variant, 1, internal.id); /* binarypeermessage */
 		message.add <unsigned char>(subchannel);
@@ -591,7 +594,7 @@ namespace lacewing
 	{
 		channelinternal &channel = *((channelinternal *)internaltag);
 		relayclientinternal  &internal = channel.client;
-		framebuilder    &message = internal.message;
+		framebuilder    &message = internal.messageMF;
 
 		internal.message.addheader(0, 0); /* request */
 
@@ -716,7 +719,7 @@ namespace lacewing
 				{
 					if (!this->name)
 					{
-						this->name = name;
+						this->name = _strdup(name);
 
 						if (handler_name_set)
 							handler_name_set(client);
@@ -724,7 +727,7 @@ namespace lacewing
 					else
 					{
 						const char * oldname = this->name;
-						this->name = name;
+						this->name = _strdup(name);
 
 						if (handler_name_changed)
 							handler_name_changed(client, oldname);
