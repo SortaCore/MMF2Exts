@@ -159,6 +159,7 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 
 void Edif::Free(mv * mV)
 {   
+	// Workaround for subapp bug (see end of Init below)
 	// Don't delete SDK. The world dies when you do that.
 	// Why? Because Fusion confuses everyone.
 }
@@ -170,8 +171,6 @@ void Edif::Free(EDITDATA * edPtr)
 
 int Edif::Init(mv * mV)
 {
-	if (::SDK)
-		return -1;
     _tcscpy (LanguageCode, _T ("EN"));
 
 	// Get pathname of MMF2
@@ -244,7 +243,11 @@ int Edif::Init(mv * mV)
 		return -1;
     }
 
-    ::SDK = new Edif::SDK(mV, *json);
+	// Workaround for subapp bug (cheers LB), where Init/Free is called more than once,
+	// even if object is not in subapp and thus doesn't apply
+	// http://community.clickteam.com/threads/97219-MFX-not-found-when-in-subapp?p=693431#post693431
+	static Edif::SDK gSDK (mV, *json);
+	::SDK = &gSDK;
 	
     return 0;	// no error
 }
