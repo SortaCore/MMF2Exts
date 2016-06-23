@@ -186,3 +186,4 @@ pip-log.txt
 # Oh
 DarkEDIF*.sln
 *.sdf
+*.db

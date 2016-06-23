@@ -816,4 +816,14 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	free(_GlobalID);
 	free(_PreviousName);
 	DeleteCriticalSection(&Lock);
+	_ObjEventPump->post_eventloop_exit();
+
+	if (_Thread)
+	{
+		Sleep(0U);
+		if (_Thread)
+			Sleep(10U);
+		if (_Thread)
+			TerminateThread(_Thread, 0U);
+	}
 }

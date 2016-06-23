@@ -22,7 +22,11 @@
 #include	<sstream>
 #include	<iostream>
 #include	<iomanip>
+
+#pragma warning (push)
+#pragma warning (disable: 4091) // random crud about typedef before enum ignored
 #include	<dbghelp.h>
+#pragma warning (pop)
 
 // If your extension will be using multithreading, remove the #if and #endif lines here.
 #define MULTI_THREADING

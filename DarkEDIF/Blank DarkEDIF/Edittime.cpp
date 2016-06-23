@@ -27,7 +27,7 @@
 
 // Use var args to fix warning 4001
 #ifdef RUN_ONLY
-	#define NoOpInRuntime(...) return __VAR_ARGS__
+	#define NoOpInRuntime(...) return __VA_ARGS__
 #else
 	#define NoOpInRuntime(...)
 #endif
@@ -341,10 +341,16 @@ void DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 //
 using namespace Edif::Properties;
 Prop * GetProperty(EDITDATA * edPtr, size_t ID);
-void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 	NoOpInRuntime(NULL);
-	return GetProperty(edPtr, PropID - 0x80000);
+
+	unsigned int PropID = PropID_ - 0x80000;
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID - 1)
+		return NULL;
+
+	return GetProperty(edPtr, PropID);
 }
 
 // --------------------
@@ -357,9 +363,10 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 	NoOpInRuntime(FALSE);
 	unsigned int PropID = PropID_ - 0x80000;
 
-	if (PropID_ == 0x80000)
-		MessageBoxA(NULL, "PropID == 0x80000", "DarkEDIF msg.", MB_OK);
-
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID - 1)
+		return FALSE;
+	
 	return (edPtr->DarkEDIF_Props[PropID >> 3] >> (PropID % 8) & 1);
 }
 
@@ -375,6 +382,10 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 	Prop * prop = (Prop *)Param;
 
 	unsigned int i = prop->GetClassID(), PropID = PropID_ - 0x80000;
+
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID - 1)
+		return;
 
 	const json_value & propjson = CurLang["Properties"][PropID];
 
@@ -461,7 +472,12 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOOL checked)
 {
 	NoOpInRuntime();
+
 	unsigned int PropID = PropID_ - 0x80000;
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID - 1)
+		return;
+
 	PropChangeChkbox(edPtr, PropID, checked != FALSE);
 }
 

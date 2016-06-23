@@ -66,7 +66,7 @@ namespace lacewing
 
 		relayclientinternal(relayclient &_client, lacewing::client _socket,
 			lacewing::udp _udp, pump _eventpump) : client(_client),
-			socket(_socket), udp(_udp), message(true), messageMF(false), timer(lacewing::timer_new(_eventpump))
+			socket(_socket), udp(_udp), message(true), messageMF(true), timer(lacewing::timer_new(_eventpump))
 		{
 			if ((long)_eventpump == 0xDDDDDDDD || _eventpump == nullptr)
 				throw std::exception("0xDD detected, 3");
@@ -511,7 +511,7 @@ namespace lacewing
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		framebuilder &message = internal.messageMF;
 
-		message.addheader(1, variant, 1, internal.id); /* binaryservermessage */
+		message.addheader(1, variant, true, internal.id); /* binaryservermessage */
 		message.add <unsigned char>(subchannel);
 		message.add(data, size);
 
@@ -544,7 +544,7 @@ namespace lacewing
 		relayclientinternal &internal = channel.client;
 		framebuilder &message = internal.messageMF;
 
-		message.addheader(2, variant, 1, internal.id); /* binarychannelmessage */
+		message.addheader(2, variant, true, internal.id); /* binarychannelmessage */
 		message.add <unsigned char>(subchannel);
 		message.add <unsigned short>(channel.id);
 		message.add(data, size);
@@ -581,7 +581,7 @@ namespace lacewing
 		relayclientinternal &internal = channel.client;
 		framebuilder &message = internal.messageMF;
 
-		message.addheader(3, variant, 1, internal.id); /* binarypeermessage */
+		message.addheader(3, variant, true, internal.id); /* binarypeermessage */
 		message.add <unsigned char>(subchannel);
 		message.add <unsigned short>(channel.id);
 		message.add <unsigned short>(peer.id);
