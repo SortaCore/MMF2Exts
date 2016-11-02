@@ -1,0 +1,97 @@
+{
+	"Identifier": "UF16",
+	"UK English":
+	{
+		"About": {
+			"Name": "UTF-16 object",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2016 by Your Name",
+			"Comment": "Converts between UTF16 text and numeric representation, and UTF8/ANSI. (v1.4)",
+			"Help": "Help/Example.chm",
+			"URL": "http://www.dark-wire.com"
+		},
+    "ActionMenu": [
+      [ 0, "Store UTF16 string at memory address" ]
+    ],
+		"ConditionMenu": [
+		],
+    "ExpressionMenu": [
+      [ 0, "Convert UTF16 Char to UTF16 Int" ],
+      [ 1, "Convert UTF16 Int to UTF16 Char" ],
+      "Separator",
+      [ 2, "Read UTF16 String from UTF16 Memory" ],
+      [ 3, "Convert UTF8 Memory to UTF16 String"]
+    ],
+    "Actions": [
+      {
+        "Title": "%o : Store UTF-16 string %0 at memory address %1 (with null excluded = %2)",
+        "Parameters": [
+          [
+            "String",
+            "UTF-16 string"
+          ],
+          [
+            "Integer",
+            "Memory address"
+          ],
+          [
+            "Integer",
+            "Exclude null terminator? (0 or 1, you probably want 0)"
+          ]
+        ]
+      }
+    ],
+		"Conditions": [
+		],
+    "Expressions": [
+      {
+        "Title": "UTF16CharToUTF16Int(",
+        "Returns": "Integer",
+        "Parameters": [
+          [
+            "Text",
+            "UTF-16 character"
+          ]
+        ]
+      },
+      {
+        "Title": "UTF16IntToUTF16Char$(",
+        "Returns": "Text",
+        "Parameters": [
+          [
+            "Integer",
+            "UTF-16 integer"
+          ]
+        ]
+      },
+      {
+        "Title": "UTF16StringFromUTF16Memory$(",
+        "Returns": "Text",
+        "Parameters": [
+          [
+            "Integer",
+            "Memory address"
+          ],
+          [
+            "Integer",
+            "Num of UTF16 chars (or -1 if null-terminated)"
+          ]
+        ]
+      },
+      {
+        "Title": "UTF16StringFromUTF8Memory$(",
+        "Returns": "Text",
+        "Parameters": [
+          [
+            "Integer",
+            "Memory address"
+          ],
+          [
+            "Integer",
+            "Num of UTF8 chars (or -1 if null-terminated)"
+          ]
+        ]
+      }
+    ]
+	}
+}

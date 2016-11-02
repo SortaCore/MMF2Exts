@@ -10,7 +10,8 @@ public:
 
 	GlobalData * Data;
     static const int MinimumBuild = 256;
-    static const int Version = 6;
+    static const int Version = 7;
+	// v7: Fixed subapp "MFX Not Found" issue in DarkEDIF
 	// v6: Release for edittime property fix, added runtime property, new minidump events
 	// v5: Release for bug fixes and global settings, and unhandled exception event
 	// v4: First release with console
