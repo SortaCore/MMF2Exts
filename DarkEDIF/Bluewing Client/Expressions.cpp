@@ -230,7 +230,7 @@ int Extension::ReceivedBinarySize()
 }
 const char * Extension::Lacewing_Version()
 {
-	return Runtime.CopyString("liblacewing 0.5.4 / Bluewing reimpl");
+	return Runtime.CopyString("liblacewing 0.5.4 / Bluewing reimpl b55");
 }
 int Extension::SendBinarySize()
 {

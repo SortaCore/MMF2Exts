@@ -104,7 +104,7 @@ void Extension::BlastTextToServer(int Subchannel, char * TextToSend)
 	else if (!TextToSend)
 		CreateError("Error: Blast Text to Server was called with a null parameter.");
 	else
-		ThreadData.Peer->blast(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		Cli.blastserver(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
 }
 void Extension::BlastTextToChannel(int Subchannel, char * TextToSend)
 {

@@ -8,6 +8,7 @@
 // ============================================================================
 
 #include "common.h"
+#include "Props.h"
 
 // --------------------
 // Properties
@@ -39,23 +40,23 @@ int iconSizes[] = {
 	24,24,
 	32,32
 };
-char* buttonStyle[] = {0,"Tabs","Buttons","Flat",0};
-char* tabDir[] = {0,"Top","Bottom","Left","Right",0};
-char* lineMode[] = {0,"Single-line","Multi-line",0};
-char* tabMode[] = {0,"Normal","Fixed width",0};
+TCHAR* buttonStyle[] = {0,_T("Tabs"),_T("Buttons"),_T("Flat"),0};
+TCHAR* tabDir[] = {0,_T("Top"),_T("Bottom"),_T("Left"),_T("Right"),0};
+TCHAR* lineMode[] = {0,_T("Single-line"),_T("Multi-line"),0};
+TCHAR* tabMode[] = {0,_T("Normal"),_T("Fixed width"),0};
 
 
 PROPS_DATA_START()
-PropData_EditMultiLine(PROPID_TEXT,	PSTR("Default tabs"),PSTR("Icon and name separated by a semicolon (optional), separated by line breaks.")),
-PropData_ImageList(PROPID_ICONS,PSTR("Default icons"),PSTR("")),
-PropData_Button(PROPID_DELICONS,PSTR(""),PSTR("This will delete all icons. They cannot be restored."),PSTR("Delete all icons")),
-PropData_Size(PROPID_ICONSIZE,PSTR("Icon size"),PSTR(""),iconSizes),
-PropData_EditNumber(PROPID_MAXICONS,PSTR("Max icon count"),PSTR("The maximum number of icons - At both edittime and runtime.")),
-PropData_Group(PROPID_GRP,PSTR("Style"),PSTR("")),
-PropData_ComboBox(PROPID_BUTTONSTYLE,PSTR("Tab style"),PSTR(""),buttonStyle),
-PropData_ComboBox(PROPID_TABDIR,PSTR("Tab alignment"),PSTR(""),tabDir),
-PropData_ComboBox(PROPID_LINEMODE,PSTR("Line mode"),PSTR(""),lineMode),
-PropData_ComboBox(PROPID_TABMODE,PSTR("Tab behaviour"),PSTR(""),tabMode),
+PropData_EditMultiLine(PROPID_TEXT,	PSTR(_T("Default tabs")), PSTR(_T("Icon and name separated by a semicolon (optional), separated by line breaks."))),
+PropData_ImageList(PROPID_ICONS,PSTR(_T("Default icons")),PSTR(_T(""))),
+PropData_Button(PROPID_DELICONS,PSTR(_T("")),PSTR(_T("This will delete all icons. They cannot be restored.")),PSTR(_T("Delete all icons"))),
+PropData_Size(PROPID_ICONSIZE,PSTR(_T("Icon size")),PSTR(_T("")),iconSizes),
+PropData_EditNumber(PROPID_MAXICONS,PSTR(_T("Max icon count")),PSTR(_T("The maximum number of icons - At both edittime and runtime."))),
+PropData_Group(PROPID_GRP,PSTR(_T("Style")),PSTR(_T(""))),
+PropData_ComboBox(PROPID_BUTTONSTYLE,PSTR(_T("Tab style")),PSTR(_T("")),buttonStyle),
+PropData_ComboBox(PROPID_TABDIR,PSTR(_T("Tab alignment")),PSTR(_T("")),tabDir),
+PropData_ComboBox(PROPID_LINEMODE,PSTR(_T("Line mode")),PSTR(_T("")),lineMode),
+PropData_ComboBox(PROPID_TABMODE,PSTR(_T("Tab behaviour")),PSTR(_T("")),tabMode),
 PROPS_DATA_END()
 
 // --------------------
@@ -174,7 +175,7 @@ LPVOID WINAPI DLLExport GetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID)
 			return new CPropSizeValue(edPtr->iconW,edPtr->iconH);
 			break;
 		case PROPID_TEXT:
-			return new CPropDataValue(edPtr->sText);
+			return new CPropStringValue(edPtr->sText);
 			break;
 		case PROPID_ICONS:
             CPropDataValue* pv = new CPropDataValue((edPtr->nImages + 1) * sizeof(WORD), NULL);
@@ -277,7 +278,7 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 		break;
 	case PROPID_TEXT:
 		{
-			LPTSTR pStr = (LPTSTR)((CPropDataValue*)pValue)->m_pData;
+			LPCTSTR pStr = ((CPropStringValue*)pValue)->GetString();
 			if ( (_tcslen(pStr)*sizeof(TCHAR)) != (_tcslen(edPtr->sText)*sizeof(TCHAR)) ) {
 				LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, sizeof(EDITDATA)+(_tcslen(pStr)*sizeof(TCHAR)));
 				if (pNewPtr) {
@@ -628,7 +629,7 @@ int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
 		{
 			edPtr->textFont.lfWidth = 0;
 			edPtr->textFont.lfHeight = 8;
-			strcpy((LPSTR)edPtr->textFont.lfFaceName, "Arial");
+			_tcscpy(edPtr->textFont.lfFaceName, _T("Arial"));
 		}
 
 		// Re-allocate EDITDATA structure according to the size of the default text

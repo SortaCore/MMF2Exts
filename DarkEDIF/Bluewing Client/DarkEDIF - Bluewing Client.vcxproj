@@ -17,7 +17,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7BC7F91B-80E1-4F73-8A95-480962EB4E06}</ProjectGuid>
     <RootNamespace>DarkEDIF - Blank</RootNamespace>
-    <ProjectName>Bluewing Client</ProjectName>
+    <ProjectName>DarkEDIF - Bluewing Client</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="Configuration">

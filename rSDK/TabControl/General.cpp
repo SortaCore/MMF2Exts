@@ -162,7 +162,6 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 //
 
 LPCSTR szDep[] = {
-	"MyDll.dll",
 	NULL
 };
 LPCSTR* WINAPI DLLExport GetDependencies()

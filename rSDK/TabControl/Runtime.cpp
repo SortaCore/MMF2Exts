@@ -108,7 +108,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 				}
 				else if (j==1)
 				{
-					tie.pszText = token;
+					tie.pszText = _tcsdup(token);
 					TabCtrl_InsertItem(rdPtr->hWnd,i,&tie);
 				}
 				token = _tcstok_s(NULL,_T(";"),&nexttoken);
@@ -119,7 +119,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 		else
 		{
 			tie.iImage = -1;
-			tie.pszText = line;
+			tie.pszText = _tcsdup(line);
 			TabCtrl_InsertItem(rdPtr->hWnd,i,&tie);
 		}
 		line = _tcstok_s(NULL,_T("\r\n"),&nextline);
