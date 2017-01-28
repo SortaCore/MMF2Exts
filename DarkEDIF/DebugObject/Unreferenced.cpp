@@ -262,26 +262,34 @@ BOOL WINAPI HandlerRoutine(DWORD ControlType)
 // Receives input text from console
 DWORD WINAPI ReceiveConsoleInput(void *)
 {
-	char InputText[256];
+	INPUT_RECORD record = { 0 };
+	DWORD numRecords = 0U;
+	char InputText[256] = { 0 };
+
+	HANDLE ConsoleHandle = GetStdHandle(STD_INPUT_HANDLE);
 	
 	// Continue until shutdown is enabled
 	while (GlobalExt && GlobalExt->Data && GlobalExt->Data->ConsoleEnabled)
 	{
-		// memset() infinite-loops if > 255 characters
-		for (unsigned char c = 0; c < 255; ++c)
-			InputText[c] = 0;
-		
-		// Read console
-		if (std::cin.good()) 
-			std::cin.getline(InputText, 255);
-		else // Jump to next loop
+		Sleep(100);
+
+		// Check number of possible inputs (non-blocking, yay!)
+		if (GetNumberOfConsoleInputEvents(ConsoleHandle, &numRecords) == FALSE ||
+			numRecords <= 0)
 		{
-			std::cin.clear();
-			std::cin.getline(InputText, 255); // Remove current buffer of ctrl command
 			continue;
 		}
 
-		// On restart of app or other weirdness, std::cin.getline()
+		// Input available, try to read
+		ReadConsole(ConsoleHandle, &InputText, sizeof(InputText) - 1, &numRecords, NULL);
+
+		// Note ReadConsole silently discards InputEvents that aren't keyboard-related.
+		// This includes mouse events, window focus events, etc.
+		if (numRecords == 0)
+			continue;
+		InputText[numRecords] = '\0';
+
+		// On restart of app or other weirdness
 		if (!GlobalExt || !GlobalExt->Data || !GlobalExt->Data->ConsoleEnabled)
 			break;
 

@@ -306,11 +306,14 @@ void Extension::SetConsoleOnOff(int OnOff)
 		}
 		else // Close down a console
 		{
+			SetConsoleCtrlHandler(HandlerRoutine, FALSE);
+
+			Data->ReleaseConsoleInput = true;
+
 			if (FreeConsole())
 			{
 				Data->ConsoleOut = NULL;
 				Data->ConsoleIn = NULL;
-				SetConsoleCtrlHandler(HandlerRoutine, FALSE);
 				CloseLock();
 			}
 			else
