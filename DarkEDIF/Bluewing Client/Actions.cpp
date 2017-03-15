@@ -462,7 +462,7 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		CreateError("Cannot save received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot save received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size-Size <= 0)
+	else if (ThreadData.ReceivedMsg.Size < Position + Size)
 		CreateError("Cannot save received binary; Message is too small.");
 	else
 	{
@@ -517,7 +517,7 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		CreateError("Cannot append received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot append received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size-Size <= 0)
+	else if (Position + Size > ThreadData.ReceivedMsg.Size)
 		CreateError("Cannot append received binary; Message is too small.");
 	else
 	{
