@@ -450,6 +450,7 @@ void Extension::AddToSend(void * Data, size_t Size)
 	}
 }
 
+bool AppWasClosed = false;
 Extension::~Extension()
 {
 	lw_trace("~Extension called; Refs count is %u.", Globals->Refs.size());
@@ -477,28 +478,34 @@ Extension::~Extension()
 	// e.g. TCP, will close the connection after a certain amount of not-responding.
 	// In multi-threaded instances, messages will continue to be queued, and this will retain
 	// the connection indefinitely.
-	else if (IsGlobal && !Globals->FullDeleteEnabled)
+	else
 	{
-		lw_trace("Note: Last instance dropped - Globals will be retained until a Disconnect is called.");
-		Globals->_Ext = nullptr;
-		LeaveCriticalSectionDerpy(&Globals->Lock);
-		
-		lw_trace("Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.",
-			Globals->TimeoutWarningEnabled
-			? "a warning message will be shown" 
-			: "the connection will terminate and all messages will be discarded");
-		CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
-	}
-	else // If not global, cleanup the liblacewing; we know it's not used elsewhere
-	{
-		if (!IsGlobal)
+		if (!Globals->_Client.connected())
+			lw_trace("Note: Not connected, nothing important to retain, closing Globals info.");
+		else if (!IsGlobal)
 			lw_trace("Note: Not global, closing Globals info.");
-		else
+		else if (Globals->FullDeleteEnabled)
 			lw_trace("Note: Full delete enabled, closing Globals info.");
-		
+		else if (AppWasClosed)
+			lw_trace("Note: App was closed, closing Globals info.");
+		else // !Globals->FullDeleteEnabled
+		{
+			lw_trace("Note: Last instance dropped, and currently connected - "
+				"Globals will be retained until a Disconnect is called.");
+			Globals->_Ext = nullptr;
+			LeaveCriticalSectionDerpy(&Globals->Lock);
+
+			lw_trace("Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.",
+				Globals->TimeoutWarningEnabled
+				? "a warning message will be shown"
+				: "the connection will terminate and all pending messages will be discarded");
+			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
+			return;
+		}
+
 		std::string id = std::string(std::string("LacewingRelayClient") + (Globals->_GlobalID ? Globals->_GlobalID : ""));
 		LeaveCriticalSectionDerpy(&Globals->Lock);
-		delete Globals;
+		delete Globals; // Disconnects and closes event pump
 		Globals = nullptr;
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 	}
@@ -677,12 +684,28 @@ short Extension::Handle()
 
 DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	// Wait 3 seconds
-	Sleep(3 * 1000);
+	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
+
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
-	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
 	if (!G.Refs.empty())
+		return 0U;
+
+	// If disconnected, no connection to worry about
+	if (!G._Client.connected())
+		return 0U;
+
+	// App closed, close connection by default
+	if (AppWasClosed)
+		return 0U;
+
+	// Wait 3 seconds and recheck
+	Sleep(3 * 1000);
+
+	if (!G.Refs.empty())
+		return 0U;
+
+	if (!G._Client.connected())
 		return 0U;
 
 	if (G.TimeoutWarningEnabled)
@@ -816,14 +839,29 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	free(_GlobalID);
 	free(_PreviousName);
 	DeleteCriticalSection(&Lock);
+	if (_Client.connected() || _Client.connecting())
+	{
+		_Client.disconnect();
+
+		if (!_Thread)
+		_ObjEventPump->tick();
+		Sleep(0U);
+	}
 	_ObjEventPump->post_eventloop_exit();
 
 	if (_Thread)
 	{
 		Sleep(0U);
 		if (_Thread)
-			Sleep(10U);
-		if (_Thread)
+			Sleep(50U);
+		if (_Thread) {
 			TerminateThread(_Thread, 0U);
+			_Thread = NULL;
+		}
+	}
+	else
+	{
+		_ObjEventPump->tick();
+		Sleep(0U);
 	}
 }

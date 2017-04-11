@@ -1063,7 +1063,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 
 void lw_stream_begin_queue (lw_stream stream)
 {
-   if (list_length (stream->back_queue)
+   if (list_length (stream->front_queue)
          || list_length (stream->back_queue))
    {
       /* Although we're going to start queueing any new data, whatever is

@@ -40,6 +40,10 @@ struct _lw_pump_watch
    lw_pump_callback on_completion;
 
    void * tag;
+   _lw_pump_watch() {
+	   on_completion = nullptr;
+	   tag = nullptr;
+   }
 };
 
 struct _lw_eventpump
@@ -81,7 +85,14 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
       return lw_false;
 
    if (watch->on_completion)
-      watch->on_completion (watch->tag, overlapped, bytes_transferred, error);
+   {
+	   try {
+		   watch->on_completion(watch->tag, overlapped, bytes_transferred, error);
+	   }
+	   catch (...) {
+		   return lw_false;
+	   }
+   }
 
    return lw_true;
 }
@@ -126,6 +137,7 @@ lw_eventpump lw_eventpump_new ()
    if (!ctx)
       return 0;
 
+   ctx->watcher.event = nullptr;
    ctx->watcher.thread = lw_thread_new ("watcher", (void *) watcher);
    ctx->watcher.resume_event = lw_event_new ();
 
@@ -153,6 +165,7 @@ static void def_cleanup (lw_pump _ctx)
 
    lw_event_delete (ctx->watcher.resume_event);
    ctx->watcher.resume_event = NULL;
+   ctx->watcher.event = NULL;
 
    CloseHandle (ctx->completion_port);
 }
@@ -266,6 +279,8 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
    if (!watch)
       return 0;
 
+   assert((long)callback != 0xDDDDDDDDL);
+
    watch->on_completion = callback;
    watch->tag = tag;
 
@@ -291,7 +306,11 @@ static void def_remove (lw_pump _ctx, lw_pump_watch watch)
 {
    lw_eventpump ctx = (lw_eventpump) _ctx;
 
+   watch->on_completion = nullptr;
+   watch->tag = nullptr;
+   
    free (watch);
+   watch = nullptr;
 }
 
 static void def_post (lw_pump _ctx, void * function, void * parameter)
@@ -310,6 +329,10 @@ static void def_update_callbacks (lw_pump ctx,
 {
    watch->tag = tag;
    watch->on_completion = on_completion;
+
+#ifdef _DEBUG
+   assert(((long)watch) != 0xDDDDDDDL);
+#endif
 }
 
 const lw_pumpdef def_eventpump =

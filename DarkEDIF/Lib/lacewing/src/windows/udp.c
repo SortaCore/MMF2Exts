@@ -70,6 +70,7 @@ udp_receive_info udp_receive_info_new ()
 struct _lw_udp
 {
    lw_pump pump;
+   lw_pump_watch pump_watch;
 
    lw_udp_hook_data on_data;
    lw_udp_hook_error on_error;
@@ -207,7 +208,7 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
    ctx->filter = lw_filter_clone (filter);
 
-   lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
+   ctx->pump_watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
 
    ctx->port = lwp_socket_port (ctx->socket);
 
@@ -223,6 +224,8 @@ void lw_udp_unhost (lw_udp ctx)
 {
    lwp_close_socket (ctx->socket);
    ctx->socket = INVALID_SOCKET;
+
+   lw_pump_remove (ctx->pump, ctx->pump_watch);
 
    lw_filter_delete (ctx->filter);
    ctx->filter = 0;

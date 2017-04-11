@@ -108,7 +108,7 @@ void lw_filter_set_remote (lw_filter ctx, lw_addr addr)
 
 lw_addr lw_filter_remote (lw_filter ctx)
 {
-   return ctx->remote;
+   return ctx ? ctx->remote : nullptr;
 }
 
 void lw_filter_set_local (lw_filter ctx, lw_addr addr)

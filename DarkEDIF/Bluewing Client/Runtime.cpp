@@ -128,8 +128,10 @@ void DLLExport StartApp(mv *mV, CRunApp* pApp)
 // -------------------
 // Called when the application ends.
 // 
+extern bool AppWasClosed;
 void DLLExport EndApp(mv *mV, CRunApp* pApp)
 {
+	AppWasClosed = true;
 	// Example
 	// -------
 	// Delete global data
