@@ -168,6 +168,7 @@ static void def_cleanup (lw_pump _ctx)
    ctx->watcher.event = NULL;
 
    CloseHandle (ctx->completion_port);
+   ctx->completion_port = NULL;
 }
 
 lw_error lw_eventpump_tick (lw_eventpump ctx)

@@ -132,6 +132,8 @@ void lw_pump_post (lw_pump ctx, void * proc, void * param)
 
 void lw_pump_remove (lw_pump ctx, lw_pump_watch watch)
 {
+   if (watch == nullptr)
+	   return;
    ctx->def->remove (ctx, watch);
 
    lw_pump_remove_user (ctx);

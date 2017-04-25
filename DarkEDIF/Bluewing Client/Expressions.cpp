@@ -230,7 +230,15 @@ int Extension::ReceivedBinarySize()
 }
 const char * Extension::Lacewing_Version()
 {
-	return Runtime.CopyString("liblacewing 0.5.4 / Bluewing reimpl b55");
+	// Why #define something stringifying when you can be lazy
+	static const char * version = nullptr;
+	if (version == nullptr)
+	{
+		std::stringstream str;
+		str << "liblacewing 0.5.4 / Bluewing reimpl b" << Extension::Version;
+		version = _strdup(str.str().c_str());
+	}
+	return Runtime.CopyString(version);
 }
 int Extension::SendBinarySize()
 {

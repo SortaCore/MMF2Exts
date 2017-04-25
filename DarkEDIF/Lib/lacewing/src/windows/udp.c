@@ -225,7 +225,8 @@ void lw_udp_unhost (lw_udp ctx)
    lwp_close_socket (ctx->socket);
    ctx->socket = INVALID_SOCKET;
 
-   lw_pump_remove (ctx->pump, ctx->pump_watch);
+//   lw_pump_remove (ctx->pump, ctx->pump_watch);
+//   ctx->pump_watch = 0;
 
    lw_filter_delete (ctx->filter);
    ctx->filter = 0;
@@ -257,6 +258,10 @@ void lw_udp_delete (lw_udp ctx)
       return;
 
    lw_udp_unhost (ctx);
+   lw_pump_remove(ctx->pump, ctx->pump_watch);
+   ctx->pump_watch = 0;
+
+   ZeroMemory(ctx, sizeof(_lw_udp));
 
    free (ctx);
 }
