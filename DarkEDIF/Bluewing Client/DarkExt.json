@@ -7,7 +7,7 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2017 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b58)",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b60)",
 			// Use a file without path if your help file can be loaded by the MMF help file.
 			// "MyExt.chm";
 			// Or return the path of your file (relative to the MMF directory)

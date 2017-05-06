@@ -839,12 +839,40 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	free(_GlobalID);
 	free(_PreviousName);
 	DeleteCriticalSection(&Lock);
+
+	// We're no longer responding to these events
+	_Client.onchannellistreceived(nullptr);
+	_Client.onmessage_channel(nullptr);
+	_Client.onconnect(nullptr);
+	_Client.onconnectiondenied(nullptr);
+	_Client.ondisconnect(nullptr);
+	_Client.onerror(nullptr);
+	_Client.onchannel_join(nullptr);
+	_Client.onchannel_joindenied(nullptr);
+	_Client.onchannel_leave(nullptr);
+	_Client.onchannel_leavedenied(nullptr);
+	_Client.onname_changed(nullptr);
+	_Client.onname_denied(nullptr);
+	_Client.onname_set(nullptr);
+	_Client.onpeer_changename(nullptr);
+	_Client.onpeer_connect(nullptr);
+	_Client.onpeer_disconnect(nullptr);
+	_Client.onmessage_peer(nullptr);
+	_Client.onmessage_serverchannel(nullptr);
+	_Client.onmessage_server(nullptr);
+
+	// Cleanup all usages of GlobalInfo
+	if (!_Thread)
+		_ObjEventPump->tick();
+
+	_Client.tag = nullptr; // was == this, now this is not usable
+
 	if (_Client.connected() || _Client.connecting())
 	{
 		_Client.disconnect();
 
 		if (!_Thread)
-		_ObjEventPump->tick();
+			_ObjEventPump->tick();
 		Sleep(0U);
 	}
 	_ObjEventPump->post_eventloop_exit();

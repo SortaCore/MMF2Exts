@@ -280,7 +280,10 @@ const char * Extension::CursorStrByte()
 		return Runtime.CopyString("");
 	}
 	else
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content+ThreadData.ReceivedMsg.Cursor, 1).c_str());
+	{
+		++ThreadData.ReceivedMsg.Cursor;
+		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content+ThreadData.ReceivedMsg.Cursor - 1, 1).c_str());
+	}
 }
 unsigned int Extension::CursorUnsignedByte()
 {
