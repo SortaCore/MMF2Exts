@@ -1,12 +1,12 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define Ext (*((Extension *) Client.Tag))
+#define Ext (*((Extension *) Server.tag))
 
-void OnError(Lacewing::RelayClient &Client, Lacewing::Error &Error)
+void OnError(lacewing::relayserver &Server, lacewing::error Error)
 {
 	SaveExtInfo &S = Ext.AddEvent(0);
-	S.Error.Text = _strdup(Error.ToString());
+	S.Error.Text = _strdup(Error->tostring());
 
 	if (!S.Error.Text)
 	{
@@ -14,37 +14,35 @@ void OnError(Lacewing::RelayClient &Client, Lacewing::Error &Error)
 		Ext.Saved.erase(Ext.Saved.end()); // Remove S from vector
 	}
 }
-void OnClientConnect(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client)
+void OnClientConnectRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client)
 {
-	Client.IsClosed = false;
+	Client.isclosed = false;
 	SaveExtInfo &S = Ext.AddEvent(1);
 	S.Client = &Client;
 }
-void OnClientDisconnect(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client)
+void OnClientDisconnect(lacewing::relayserver &Server, lacewing::relayserver::client &Client)
 {
-	Client.IsClosed = true;
+	Client.isclosed = true;
 
 	SaveExtInfo &S = Ext.AddEvent(3);
 	S.Client = &Client;
 	S.Channel = NULL;
-	
-	// Empty all channels and peers
-	SaveExtInfo &S = Ext.AddEvent(0xFFFF);
-	S.Client = &Client;
 }
-void OnJoinChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Channel &Channel, Lacewing::RelayServer::Client &Client)
+void OnJoinChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::channel &Channel, lacewing::relayserver::client &Client)
 {
-	Channel.IsClosed = false;
-	
-	for (Lacewing::RelayClient::Channel::Peer * i = Target.FirstPeer(); i != nullptr; i = i->Next())
-		i->IsClosed = false;
+	Channel.isclosed = false;
+	// TODO: this is pointless.
+	for (lacewing::relayserver::client * i = Channel.firstclient(); i != nullptr; i = i->next())
+		i->isclosed = false;
 
 	SaveExtInfo &S = Ext.AddEvent(4);
 	S.Channel = &Channel;
 }
-void OnLeaveChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer::Client &Client, Lacewing::RelayServer::Channel &Channel)
+void OnLeaveChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client, lacewing::relayserver::channel &Channel)
 {
-	SaveExtInfo &S = Ext.AddEvent(X);
+	// why doubled
+	// Clear channel copy after this event is handled
+	SaveExtInfo &S = Ext.AddEvent(0x0);
 	S.Channel = &Channel;
 	S.Client = &Client;
 	
@@ -52,54 +50,55 @@ void OnLeaveChannelRequest(Lacewing::RelayServer &Server, Lacewing::RelayServer:
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
 	C.Channel = S.Channel;
 }
-void OnNameSetRequest(Lacewing::RelayClient &Client)
+void OnNameSetRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client, const char * nameRequested)
 {
 	SaveExtInfo &S = Ext.AddEvent(6);
 	S.Client = &Client;
-	S.RequestedName = ;
+	S.Requested.Name = nameRequested;
 }
-void OnPeerConnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
+void OnPeerConnect(lacewing::relayserver &Server, lacewing::relayserver::channel &Channel, lacewing::relayserver::client &Client)
 {
-	Peer.IsClosed = false;
+	Client.isclosed = false;
 
 	SaveExtInfo &S = Ext.AddEvent(10);
 	S.Channel = &Channel;
-	S.Peer = &Peer;
+	S.Client = &Client;
 }
-void OnPeerDisconnect(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer)
+void OnPeerDisconnect(lacewing::relayserver &Server, lacewing::relayserver::channel &Channel, lacewing::relayserver::client &Client)
 {
-	Peer.IsClosed = true;
+	Client.isclosed = true;
 
 	SaveExtInfo &S = Ext.AddEvent(11);
 	S.Channel = &Channel;
-	S.Peer = &Peer;
+	S.Client = &Client;
 	
 	// Remove closed peer entirely after above event is handled
 	SaveExtInfo &C = Ext.AddEvent(0xFFFF);
 	C.Channel = S.Channel;
-	C.Peer = S.Peer;
+	C.Client = S.Client;
 }
-void OnPeerNameChanged(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer, const char * OldName)
+void OnPeerNameChanged(lacewing::relayserver &Server, lacewing::relayserver::channel &Channel, lacewing::relayserver::client &Client, const char * OldName)
 {
 	SaveExtInfo &S = Ext.AddEvent(45);
 	S.Channel = &Channel;
-	S.Peer = &Peer;
+	S.Client = &Client;
 
 	// Old previous name? Free it
-	if (Peer.Tag)
-		free(Peer.Tag);
+	if (Client.tag)
+		free(Client.tag);
 
 	// Store new previous name in Tag.
-	Peer.Tag = _strdup(OldName);
-	if (!Peer.Tag)
+	Client.tag = _strdup(OldName);
+	if (!Client.tag)
 		Ext.CreateError("Error copying old peer name.");
 }
-void OnPeerMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
-				   bool Blasted, int Subchannel, char * Data, int Size, int Variant)
+void OnPeerMessage(lacewing::relayserver &Server, lacewing::relayserver::client &SenderClient, lacewing::relayserver::channel &Channel, 
+	lacewing::relayserver::client &ReceivingClient, bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 52 : 49);
 	S.Channel = &Channel;
-	S.Peer = &Peer;
+	S.SenderClient = &SenderClient;
+	S.ReceivingClient = &ReceivingClient;
 	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
 	S.ReceivedMsg.Size = Size;
 
@@ -148,12 +147,14 @@ void OnPeerMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel
 		}
 	}
 }
-void OnChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel, Lacewing::RelayClient::Channel::Peer &Peer,
-					  bool Blasted, int Subchannel, char * Data, int Size, int Variant)
+void OnChannelMessage(
+	lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver::channel &Channel,
+	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 51 : 48);
 	S.Channel = &Channel;
-	S.Peer = &Peer;
+	S.Client = &Client;
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
 	S.ReceivedMsg.Size = Size;
 
@@ -202,10 +203,11 @@ void OnChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Chan
 		}
 	}
 }
-void OnServerMessage(Lacewing::RelayClient &Client,
-					 bool Blasted, int Subchannel, char * Data, int Size, int Variant)
+void OnServerMessage(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+					 bool Blasted, int Subchannel, const  char * Data, size_t Size, int Variant)
 {
 	SaveExtInfo &S = Ext.AddEvent(Blasted ? 50 : 47);
+	S.Client = &Client;
 	S.ReceivedMsg.Subchannel = (unsigned char)Subchannel;
 	S.ReceivedMsg.Size = Size; // Do NOT add null. There's error checking for that.
 
@@ -255,59 +257,5 @@ void OnServerMessage(Lacewing::RelayClient &Client,
 		}
 	}
 }
-void OnServerChannelMessage(Lacewing::RelayClient &Client, Lacewing::RelayClient::Channel &Channel,
-							bool Blasted, int Subchannel, char * Data, int Size, int Variant)
-{
-	SaveExtInfo &S = Ext.AddEvent(Blasted ? 72 : 68);
-	S.Channel = &Channel;
-	S.ReceivedMsg.Subchannel = (unsigned char) Subchannel;
-	S.ReceivedMsg.Size = Size;
-
-	S.ReceivedMsg.Content = (char *)malloc(Size);
-	if (!S.ReceivedMsg.Content)
-	{
-		Ext.CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
-	}
-	else if (memcpy_s(S.ReceivedMsg.Content, Size, Data, Size))
-	{
-		Ext.Saved.erase(Ext.Saved.end());
-		free(S.ReceivedMsg.Content);
-		Ext.CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
-	}
-	else 
-	{
-		if (Blasted)
-		{
-			// Text
-			if (Variant == 0)
-				Ext.AddEvent(69, true);
-			// Number
-			else if (Variant == 1)
-				Ext.AddEvent(70, true);
-			// Binary
-			else if (Variant == 2)
-				Ext.AddEvent(71, true);
-			// ???
-			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
-		}
-		else // Sent
-		{
-			// Text
-			if (Variant == 0)
-				Ext.AddEvent(65, true);
-			// Number
-			else if (Variant == 1)
-				Ext.AddEvent(66, true);
-			// Binary
-			else if (Variant == 2)
-				Ext.AddEvent(67, true);
-			// ???
-			else
-				Ext.CreateError("Warning: message type is neither binary, number nor text.");
-		}
-	}
-}
-
 
 #undef Ext

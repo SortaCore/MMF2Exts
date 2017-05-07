@@ -28,6 +28,7 @@
  */
 
 #include "../common.h"
+#include "../flashpolicy.h"
 
 flashpolicy lacewing::flashpolicy_new (lacewing::pump pump)
 {
@@ -71,3 +72,8 @@ void _flashpolicy::tag (void * tag)
    lw_flashpolicy_set_tag ((lw_flashpolicy) this, tag);
 }
 
+void _flashpolicy::on_error(_flashpolicy::hook_error func)
+{
+	// WARNING: this function requires a definition of lw_flashpolicy which requires liblacewing source code to be edited.
+	((lw_flashpolicy) this)->on_error = (lw_flashpolicy_hook_error)func;
+}

@@ -1,6 +1,5 @@
 
 #include "Common.h"
-#define MessageMatches() (ThreadData.ReceivedMsg.Subchannel == Subchannel || Subchannel == -1)
 
 #define LoopNameMatches(cond) \
 	if (!LoopName || LoopName[0] == '\0') \
@@ -12,75 +11,12 @@
 
 bool Extension::IsLacewingServerHosting()
 {
-	return Srv.Hosting();
+	return Srv.hosting();
 }
-bool Extension::OnSentTextMessageToChannel(int Subchannel)
+
+bool Extension::SubchannelMatches(int Subchannel)
 {
-	return MessageMatches();
-}
-bool Extension::OnSentNumberMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentTextMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentNumberMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnySentMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnySentMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageToServer(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageToChannel(int Subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageToPeer(int Subchannel)
-{
-	return MessageMatches();
+	return (ThreadData.ReceivedMsg.Subchannel == Subchannel || Subchannel == -1);
 }
 bool Extension::Client_IsChannelMaster()
 {
@@ -90,7 +26,7 @@ bool Extension::Client_IsChannelMaster()
 		return false;
 	}
 
-	return ThreadData.Channel->ChannelMaster() == ThreadData.Client ;
+	return ThreadData.Channel->channelmaster() == ThreadData.Client;
 }
 bool Extension::OnAllClientsLoopWithName(char * LoopName)
 {
@@ -114,33 +50,33 @@ bool Extension::IsClientOnChannel_Name(char * PeerName, char * ChannelName)
 		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
 	else if (ChannelName[0] != '\0')
 	{
-		Lacewing::RelayServer::Channel * C = Srv.FirstChannel();
+		lacewing::relayserver::channel * C = Srv.firstchannel();
 		while (C)
 		{
-			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
+			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
 			{
-				Lacewing::RelayServer::Client * P = C->FirstClient();
+				lacewing::relayserver::client * P = C->firstclient();
 				while (P)
 				{
-					if (!_stricmp(PeerName, P->Name()))
-						return !P->IsClosed;
-					P = P->Next();
+					if (!_stricmp(PeerName, P->name()))
+						return !P->isclosed;
+					P = P->next();
 				}
 				return false;
 			}
-			C = C->Next();
+			C = C->next();
 		}
 		
 		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
 	}
 	else if (ThreadData.Channel) // Use currently selected channel
 	{
-		Lacewing::RelayServer::Client * P = ThreadData.Channel->FirstClient();
+		lacewing::relayserver::client * P = ThreadData.Channel->firstclient();
 		while (P)
 		{
-			if (!_stricmp(P->Name(), PeerName))
-				return !P->IsClosed;
-			P = P->Next();
+			if (!_stricmp(P->name(), PeerName))
+				return !P->isclosed;
+			P = P->next();
 		}
 		return false;
 	}
@@ -154,33 +90,33 @@ bool Extension::IsClientOnChannel_ID(int ClientID, char * ChannelName)
 {
 	if (ChannelName[0] != '\0')
 	{
-		Lacewing::RelayServer::Channel * C = Srv.FirstChannel();
+		lacewing::relayserver::channel * C = Srv.firstchannel();
 		while (C)
 		{
-			if (!C->IsClosed && !_stricmp(ChannelName, C->Name()))
+			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
 			{
-				Lacewing::RelayServer::Client * P = C->FirstClient();
+				lacewing::relayserver::client * P = C->firstclient();
 				while (P)
 				{
-					if (P->ID() == ClientID)
-						return !P->IsClosed;
-					P = P->Next();
+					if (P->id() == ClientID)
+						return !P->isclosed;
+					P = P->next();
 				}
 				return false;
 			}
-			C = C->Next();
+			C = C->next();
 		}
 		
 		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
 	}
 	else if (ThreadData.Channel)// Use currently selected channel
 	{
-		Lacewing::RelayServer::Client * P = ThreadData.Channel->FirstClient();
+		lacewing::relayserver::client * P = ThreadData.Channel->firstclient();
 		while (P)
 		{
-			if (P->ID() == ClientID)
-				return !P->IsClosed;
-			P = P->Next();
+			if (P->id() == ClientID)
+				return !P->isclosed;
+			P = P->next();
 		}
 		return false;
 	}

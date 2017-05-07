@@ -5,13 +5,13 @@ const char * Extension::Error()
 {
 	return Runtime.CopyString(ThreadData.Error.Text);
 }
-int Extension::NumChannelsOnServer()
+int Extension::Channel_Count()
 {
-	return Srv.ChannelCount();
+	return Srv.channelcount();
 }
 const char * Extension::Client_Name()
 {
-	return Runtime.CopyString((!ThreadData.Client || ThreadData.Client->IsClosed || !ThreadData.Client->Name()) ? "" : ThreadData.Client->Name());
+	return Runtime.CopyString((!ThreadData.Client || ThreadData.Client->isclosed || !ThreadData.Client->name()) ? "" : ThreadData.Client->name());
 }
 const char * Extension::ReceivedStr()
 {
@@ -39,15 +39,15 @@ int Extension::Subchannel()
 }
 int Extension::Client_ID()
 {
-	return ThreadData.Client ? ThreadData.Client->ID() : -1;
+	return ThreadData.Client ? ThreadData.Client->id() : -1;
 }
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->IsClosed ? "" : ThreadData.Channel->Name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
+	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->isclosed ? "" : ThreadData.Channel->name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
 }
 int Extension::Channel_ClientCount()
 {
-	return ThreadData.Channel ? ThreadData.Channel->ClientCount() : -1;
+	return ThreadData.Channel ? ThreadData.Channel->clientcount() : -1;
 }
 const char * Extension::StrByte(int Index)
 {
@@ -210,7 +210,7 @@ unsigned int Extension::ReceivedBinarySize()
 }
 const char * Extension::Lacewing_Version()
 {
-	return Runtime.CopyString(Lacewing::Version());
+	return Runtime.CopyString(":acewing");
 }
 unsigned int Extension::BinaryToSend_Size()
 {
@@ -218,15 +218,15 @@ unsigned int Extension::BinaryToSend_Size()
 }
 const char * Extension::Client_IP()
 {
-	return Runtime.CopyString(ThreadData.Client->GetAddress().ToString());
+	return Runtime.CopyString(ThreadData.Client->getaddress()->tostring());
 }
 int Extension::Port()
 {
-	return Srv.Port();
+	return Srv.port();
 }
 const char * Extension::Welcome_Message()
 {
-	return Runtime.CopyString(Srv.WelcomeMessage()); 
+	return Runtime.CopyString(Srv.getwelcomemessage()); 
 }
 long Extension::ReceivedBinaryAddress()
 {

@@ -1,4 +1,8 @@
-#include "lacewing.h"
+
+#ifndef _lacewing_h
+#include "Lacewing.h"
+#endif
+
 #include "IDPool.h"
 #include "FrameReader.h"
 #include "FrameBuilder.h"
@@ -10,7 +14,7 @@ namespace lacewing
 {
 struct relayserverinternal;
 
-void servermessagehandler (void * tag, unsigned char type, char * message, size_t size, bool blasted);
+void servermessagehandler(void * tag, unsigned char type, char * message, size_t size, bool blasted);
 void servertimertick      (lacewing::timer timer);
 
 struct relayserverinternal
@@ -21,12 +25,12 @@ struct relayserverinternal
     lacewing::relayserver::handler_connect          handlerconnect;
     lacewing::relayserver::handler_disconnect       handlerdisconnect;
     lacewing::relayserver::handler_error            handlererror;
-    lacewing::relayserver::handler_message_server	handlerservermessage;
-    lacewing::relayserver::handler_message_channel  handlerchannelmessage;
-    lacewing::relayserver::handler_message_peer     handlerpeermessage;
-    lacewing::relayserver::handler_channel_join     handlerjoinchannel;
-    lacewing::relayserver::handler_channel_leave    handlerleavechannel;
-    lacewing::relayserver::handler_nameset          handlersetname;
+    lacewing::relayserver::handler_message_server	handlermessage_server;
+    lacewing::relayserver::handler_message_channel  handlermessage_channel;
+    lacewing::relayserver::handler_message_peer     handlermessage_peer;
+    lacewing::relayserver::handler_channel_join     handlerchannel_join;
+    lacewing::relayserver::handler_channel_leave    handlerchannel_leave;
+    lacewing::relayserver::handler_nameset          handlernameset;
 
     relayserverinternal(lacewing::relayserver &_server, pump pump)
 		: server(_server), timer((lacewing::timer)lw_timer_new((lw_pump)pump)), builder(false)
@@ -34,12 +38,12 @@ struct relayserverinternal
         handlerconnect          = 0;
         handlerdisconnect       = 0;
         handlererror            = 0;
-        handlerservermessage    = 0;
-        handlerchannelmessage   = 0;
-        handlerpeermessage      = 0;
-        handlerjoinchannel      = 0;
-        handlerleavechannel     = 0;
-        handlersetname          = 0;
+        handlermessage_server    = 0;
+        handlermessage_channel   = 0;
+        handlermessage_peer      = 0;
+        handlerchannel_join      = 0;
+        handlerchannel_leave     = 0;
+        handlernameset          = 0;
 
         welcomemessage = "";
     
@@ -99,6 +103,14 @@ struct relayserverinternal
         bool handshook;
         bool gotfirstbyte;
         bool ponged;
+
+		enum ClientImpl
+		{
+			Unknown,
+			Windows,
+			Flash,
+			HTML5
+		} clientType;
 
         lacewing::address udpaddress;
 		void PeerToPeer(relayserver &server, relayserver::client &client,
@@ -186,11 +198,11 @@ struct relayserverinternal
     }
 };
 
-void servermessagehandler (void * tag, unsigned char type, char * message, int size)
+void servermessagehandler (void * tag, unsigned char type, char * message, size_t size, bool blasted)
 {   ((relayserverinternal::client *) tag)->messagehandler(type, message, size, false);
 }
 
-void servertimertick (lacewing::timer &timer)
+void servertimertick (lacewing::timer timer)
 {   ((relayserverinternal *) timer->tag())->timertick();
 }
 
@@ -263,8 +275,13 @@ void handlerreceive(lacewing::server server, lacewing::server_client clientsocke
         if (!-- size)
             return;
     }
+	char * swerve = (char *)malloc(size + 1);
+	if (!swerve || memcpy_s(swerve, size + 1, data, size))
+		throw std::exception("Sempai why");
+	swerve[size] = '\0'; // null terminator because why not
 
-    client.reader.process (data, size);
+    client.reader.process (swerve, size);
+	free(swerve);
 }
 
 void handlererror(lacewing::server server, lacewing::error error)
@@ -318,9 +335,19 @@ void handlerudperror(lacewing::udp udp, lacewing::error error)
         internal.handlererror(internal.server, error);
 }
 
+void handlerflasherror(lacewing::flashpolicy flash, lacewing::error error)
+{
+	relayserverinternal &internal = *(relayserverinternal *) flash->tag();
+
+    error->add("Flash policy error");
+
+    if (internal.handlererror)
+        internal.handlererror(internal.server, error);
+}
 lacewing::relayserver::relayserver(lacewing::pump pump) : 
 	socket((lacewing::server)lw_server_new((lw_pump)pump)),
-	udp((lacewing::udp)lw_udp_new((lw_pump)pump))
+	udp((lacewing::udp)lw_udp_new((lw_pump)pump)),
+	flash((lacewing::flashpolicy)lw_flashpolicy_new((lw_pump)pump))
 {
     // lacewinginitialise();
 
@@ -332,10 +359,13 @@ lacewing::relayserver::relayserver(lacewing::pump pump) :
     udp->on_data	(lacewing::handlerudpreceive);
 	udp->on_error	(lacewing::handlerudperror);
 
+	flash->on_error	(lacewing::handlerflasherror);
+
 	auto s = new relayserverinternal(*this, pump);
 	internaltag = s;
 	socket->tag(s);
 	udp->tag(s);
+	flash->tag(s);
 	
 	// TODO: Disable Nagle here, but nothing in 0.5.4 to match?
  //   socket->nagle ();
@@ -350,10 +380,11 @@ lacewing::relayserver::~relayserver()
 
 void lacewing::relayserver::host(unsigned short port)
 {
-    lacewing::filter filter;
+	lacewing::filter filter = lacewing::filter_new();
     filter->local_port(port);
 
     host(filter);
+	filter_delete(filter);
 }
 
 void lacewing::relayserver::host(lacewing::filter &_filter)
@@ -384,7 +415,7 @@ bool lacewing::relayserver::hosting()
 
 unsigned short lacewing::relayserver::port()
 {
-    return socket->port();
+    return (unsigned short) socket->port();
 }
 
 void relayserverinternal::channel::close()
@@ -582,8 +613,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
 
                     namealtered = false;
 
-					if (server.handlersetname)
-						server.handlersetname(server.server, public_, name);
+					if (server.handlernameset)
+						server.handlernameset(server.server, public_, name);
 					else
 						server.server.nameset_response(public_, name, nullptr);
 
@@ -653,8 +684,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
                             break;
                         }
 
-						if (server.handlerjoinchannel)
-							server.handlerjoinchannel(server.server, public_, channel->public_);
+						if (server.handlerchannel_join)
+							server.handlerchannel_join(server.server, public_, channel->public_);
 						else
 							server.server.joinchannel_response(name, public_, nullptr);
                     
@@ -672,8 +703,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
                     channel->hidden        =  (flags & 1) != 0;
                     channel->autoclose     =  (flags & 2) != 0;
 
-					if (server.handlerjoinchannel)
-						server.handlerjoinchannel(server.server, public_, channel->public_);
+					if (server.handlerchannel_join)
+						server.handlerchannel_join(server.server, public_, channel->public_);
 					else
 						server.server.joinchannel_response(name, public_, nullptr);
 
@@ -687,8 +718,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
                     if (reader.failed)
                         break;
 
-					if (server.handlerleavechannel)
-						server.handlerleavechannel(server.server, public_, channel->public_);
+					if (server.handlerchannel_leave)
+						server.handlerchannel_leave(server.server, public_, channel->public_);
 					else
                     {
                         builder.addheader         (0, 0);  /* response */
@@ -780,8 +811,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
             if (reader.failed)
                 break;
 
-            if (server.handlerservermessage)
-                server.handlerservermessage(server.server, public_, blasted, subchannel, message2, size2, variant);
+            if (server.handlermessage_server)
+                server.handlermessage_server(server.server, public_, blasted, subchannel, message2, size2, variant);
 
             break;
         }
@@ -799,8 +830,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
             if (reader.failed)
                 break;
 
-			if (server.handlerchannelmessage)
-				server.handlerchannelmessage(server.server, public_, channel->public_,
+			if (server.handlermessage_channel)
+				server.handlermessage_channel(server.server, public_, channel->public_,
 					blasted, subchannel, message2, size2, variant);
 			else
 				channel->PeerToChannel(server.server, public_, blasted, subchannel, variant, message2, size2);
@@ -830,8 +861,8 @@ void relayserverinternal::client::messagehandler(unsigned char type, const char 
             if (reader.failed)
                 break;
 
-			if (server.handlerpeermessage)
-				server.handlerpeermessage(server.server, public_, channel->public_,
+			if (server.handlermessage_peer)
+				server.handlermessage_peer(server.server, public_, channel->public_,
 					peer->public_, blasted, subchannel, message2, size2, variant);
 			else
 				peer->public_.send(subchannel, message2, size2, variant);
@@ -975,6 +1006,12 @@ void lacewing::relayserver::setwelcomemessage(const char * message)
     ((relayserverinternal *) internaltag)->welcomemessage = message;
 }
 
+const char * lacewing::relayserver::getwelcomemessage()
+{
+	return ((relayserverinternal *)internaltag)->welcomemessage;
+}
+
+
 void lacewing::relayserver::setchannellisting (bool enabled)
 {
     ((relayserverinternal *) internaltag)->channellistingenabled = enabled;
@@ -1052,82 +1089,63 @@ lacewing::relayserver::client * lacewing::relayserver::client::next ()
 lacewing::relayserver::channel * lacewing::relayserver::channel::next ()
 {
     return ((relayserverinternal::channel *) internaltag)->next ?
-        &((relayserverinternal::channel *) internaltag)->next->public_ : 0;
+        &((relayserverinternal::channel *) internaltag)->next->public_ : nullptr;
 }
 
 lacewing::relayserver::channel * lacewing::relayserver::firstchannel ()
 {
-    return ((relayserverinternal *) internaltag)->channels.empty() ? 0 :
-			&((relayserverinternal *)internaltag)->channels.begin()->public_;
+    return ((relayserverinternal *) internaltag)->channels.empty() ? nullptr :
+			&((relayserverinternal *)internaltag)->channels.front()->public_;
 }
 
 lacewing::relayserver::client * lacewing::relayserver::channel::firstclient()
 {
-	return ((relayserverinternal *) internaltag)->channels.empty() ? 0 :
-		&((relayserverinternal *) internaltag)->channels.begin()->public_;
+	return ((lacewing::relayserverinternal::channel *)this->internaltag)->clients.empty() ? nullptr :
+		&((lacewing::relayserverinternal::channel *)this->internaltag)->clients.front()->public_;
 }
 
-lacewing::relayserver::client * lacewing::relayserver::channel::next ()
+lacewing::relayserver::channel * lacewing::relayserver::client::firstchannel()
 {
-	for each (auto e in server.((relayserverinternal *)internaltag)->channels)
-	{
-
-	}
-		if (e == this)
-
-    if (!e)
-        return 0;
-
-    internaltag = e->next;
-    return ** e;
+	return ((relayserverinternal::client *)internaltag)->channels.empty() ? nullptr :
+		&((relayserverinternal::client *)internaltag)->channels.front()->public_;
 }
 
-lacewing::relayserver::client::channeliterator::channeliterator
-    (lacewing::relayserver::client &client)
-{
-    internaltag = *((relayserverinternal::client *) client.internaltag)->channels.begin();
-}
 
-lacewing::relayserver::channel * lacewing::relayserver::client::channeliterator::next ()
+void lacewing::relayserver::connect_response(
+	lacewing::relayserver::client &client, const char * denyReason)
 {
-	lacewing::relayserverinternal::channel * e =
-        (lacewing::relayserverinternal::channel *) internaltag;
-	
-	throw std::exception("TOCODE");
-    return 0;
-}
+	auto &serverI = *(relayserverinternal *)this->internaltag;
+	auto &builder = serverI.builder;
+	auto &clientI = *(relayserverinternal::client *)client.internaltag;
 
-void lacewing::relayserver::connect_response(lacewing::relayserver &server,
-	lacewing::server_client client, const char * denyReason)
-{
-	auto &server = *(lacewing::relayserverinternal *)server.internaltag;
-	auto &builder = 
 	builder.addheader(0, 0);  /* response */
 	builder.add <unsigned char>(0);  /* connect */
 	builder.add <unsigned char>(1);  /* success */
 
-	builder.add <unsigned short>(client->id);
-	builder.add(welcomemessage);
+	builder.add <unsigned short>(clientI.id);
+	builder.add(serverI.welcomemessage);
 
-	builder.send(client->socket);
-	client->handshook = true;
+	builder.send(clientI.socket);
+	clientI.handshook = true;
+
+	// Switch it up and disconnect
 	builder.addheader(0, 0);  /* response */
 	builder.add <unsigned char>(0);  /* connect */
 	builder.add <unsigned char>(0);  /* failed */
-	builder.add(denyreason ? denyreason : "Connection refused by server, no specified reason", -1);
+	builder.add(denyReason ? denyReason : "Connection refused by server, no specified reason", -1);
 
-	builder.send(client.socket);
+	builder.send(clientI.socket);
 
-	client.socket->close();
+	clientI.socket->close();
 }
 
-void lacewing::relayserver::channeljoin_response(lacewing::relayserver::client &client, 
-	const char * const channelName, const char * denyReason)
+void lacewing::relayserver::joinchannel_response(const char * const channelName, 
+	lacewing::relayserver::client &client, const char * denyReason)
 {
 	if (!channelName || !channelName[0])
 		throw std::exception("Don't screw around with the channel name.");
 
-	relayserverinternal * serverinternal = (relayserverinternal *)internaltag;
+	relayserverinternal * serverinternal = (relayserverinternal *)this->internaltag;
 	relayserverinternal::client * clientinternal = (relayserverinternal::client *)client.internaltag;
 	framebuilder &builder = serverinternal->builder;
 	
@@ -1138,8 +1156,8 @@ void lacewing::relayserver::channeljoin_response(lacewing::relayserver::client &
 		builder.add <unsigned char>(2);  /* joinchannel */
 		builder.add <unsigned char>(!denyReason);  /* failed */
 
-		builder.add <unsigned char>(strlen(nameApproved));
-		builder.add(nameApproved);
+		builder.add <unsigned char>(strlen(channelName));
+		builder.add(channelName);
 
 		builder.add(denyReason[0] ? denyReason : "join refused by server", -1);
 
@@ -1179,15 +1197,15 @@ void lacewing::relayserver::channeljoin_response(lacewing::relayserver::client &
 		builder.add(e->name);
 	}
 
-	builder.send(socket);
+	builder.send(clientinternal->socket);
 
 
 	builder.addheader(9, 0); /* peer */
 
 	builder.add <unsigned short>(channel->id);
-	builder.add <unsigned short>(id);
+	builder.add <unsigned short>(clientinternal->id);
 	builder.add <unsigned char>(0);
-	builder.add(this->name);
+	builder.add(clientinternal->name);
 
 	/* notify the other clients on the channel that this client has joined */
 
@@ -1199,18 +1217,19 @@ void lacewing::relayserver::channeljoin_response(lacewing::relayserver::client &
 
 	/* add this client to the channel */
 
-	channels.push_back(channel);
-	channel->clients.push_back(this);
+	serverinternal->channels.push_back(channel);
+	channel->clients.push_back(clientinternal);
 }
 void lacewing::relayserver::nameset_response(lacewing::relayserver::client &client,
-	const char * oldClientName, const char * clientName, const char * denyReason)
+	const char * newClientName, const char * denyReason)
 {
-	if (!clientName || !clientName[0])
+	if (!newClientName || !newClientName[0])
 		throw std::exception("Altered client name is null or empty. Name refused.");
 
 	auto &serverinternal = *(lacewing::relayserverinternal *)internaltag;
 	framebuilder &builder = ((lacewing::relayserverinternal *)internaltag)->builder;
 	auto clientinternal = ((lacewing::relayserverinternal::client *) client.internaltag);
+	const char * const oldClientName = clientinternal->name;
 	
 	if (denyReason)
 	{
@@ -1227,11 +1246,11 @@ void lacewing::relayserver::nameset_response(lacewing::relayserver::client &clie
 		return;
 	}
 
-	bool nameAltered = _stricmp(clientName, oldClientName);
+	bool nameAltered = _stricmp(newClientName, oldClientName) != 0;
 	if (!nameAltered)
 		client.name(_strdup(oldClientName));
 	// check the new name provided by the handler
-	else if (!clientinternal->checkname(clientName))
+	else if (!clientinternal->checkname(newClientName))
 	{
 		builder.addheader(0, 0);  /* response */
 		builder.add <unsigned char>(1);  /* setname */
@@ -1254,8 +1273,8 @@ void lacewing::relayserver::nameset_response(lacewing::relayserver::client &clie
 	builder.add <unsigned char>(1);  /* setname */
 	builder.add <unsigned char>(1);  /* success */
 
-	builder.add <unsigned char>(strlen(clientName));
-	builder.add (clientName);
+	builder.add <unsigned char>(strlen(newClientName));
+	builder.add (newClientName);
 
 	builder.send(clientinternal->socket);
 
@@ -1266,7 +1285,7 @@ void lacewing::relayserver::nameset_response(lacewing::relayserver::client &clie
 		builder.add <unsigned short>(e->id);
 		builder.add <unsigned short>(clientinternal->id);
 		builder.add <unsigned char>(clientinternal == e->channelmaster ? 1 : 0);
-		builder.add (clientName);
+		builder.add (newClientName);
 
 		for each (auto e2 in e->clients)
 		{
@@ -1281,7 +1300,7 @@ void lacewing::relayserver::nameset_response(lacewing::relayserver::client &clie
 }
 
 void relayserverinternal::channel::PeerToChannel(relayserver &server_, relayserver::client &client_,
-	bool blasted, int subchannel, const char * message, size_t size, int variant)
+	bool blasted, int subchannel, int variant, const char * message, size_t size)
 {
 	auto server = (relayserverinternal *)server_.internaltag;
 	auto client = (relayserverinternal::client *)client_.internaltag;
@@ -1289,17 +1308,18 @@ void relayserverinternal::channel::PeerToChannel(relayserver &server_, relayserv
 	builder.addheader(2, variant, blasted); /* binarychannelmessage */
 
 	builder.add <unsigned char>(subchannel);
-	builder.add <unsigned short>(id);
+	builder.add <unsigned short>(this->id);
 	builder.add <unsigned short>(client->id);
 	builder.add(message, size);
 
+	// Loop through and send message to all clients that aren't this one
 	for each (auto e in clients)
 	{
 		if (e == client)
 			continue;
 
 		if (blasted)
-			builder.send(server.server.udp, e->udpaddress, false);
+			builder.send(server->server.udp, e->udpaddress, false);
 		else
 			builder.send(e->socket, false);
 	}
@@ -1308,19 +1328,18 @@ void relayserverinternal::channel::PeerToChannel(relayserver &server_, relayserv
 }
 
 
-
 #define autohandlerfunctions(pub, intern, handlername)              \
     void pub::on##handlername(pub::handler_##handlername handler)   \
-	    {   ((intern *) internaltag)->handler_##handlername = handler;      \
+	    {   ((intern *) internaltag)->handler##handlername = handler;      \
 	    }      
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, connect)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, disconnect)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, error)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, message_server)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, message_channel)
-autohandlerfunctions(lacewing::relayserver, relayserverinternal, rmessage_peer)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, message_peer)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, channel_join)
 autohandlerfunctions(lacewing::relayserver, relayserverinternal, channel_leave)
-autohandlerfunctions(lacewing::relayserver, relayserverinternal, setname)
+autohandlerfunctions(lacewing::relayserver, relayserverinternal, nameset)
 
 }

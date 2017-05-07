@@ -88,30 +88,30 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(8, AlwaysTrue /* OnChannel_ClientLoop */);
 		LinkCondition(9, Client_IsChannelMaster);
 		LinkCondition(10, AlwaysTrue /* OnClient_NameSetRequest */);
-		LinkCondition(11, OnSentTextMessageToServer);
-		LinkCondition(12, OnSentNumberMessageToServer);
-		LinkCondition(13, OnSentBinaryMessageToServer);
-		LinkCondition(14, OnAnySentMessageToServer);
-		LinkCondition(15, OnSentTextMessageToChannel);
-		LinkCondition(16, OnSentNumberMessageToChannel);
-		LinkCondition(17, OnSentBinaryMessageToChannel);
-		LinkCondition(18, OnAnySentMessageToChannel);
-		LinkCondition(19, OnSentTextMessageToPeer);
-		LinkCondition(20, OnSentNumberMessageToPeer);
-		LinkCondition(21, OnSentBinaryMessageToPeer);
-		LinkCondition(22, OnAnySentMessageToPeer);
-		LinkCondition(23, OnBlastedTextMessageToPeer);
-		LinkCondition(24, OnBlastedNumberMessageToServer);
-		LinkCondition(25, OnBlastedBinaryMessageToServer);
-		LinkCondition(26, OnAnyBlastedMessageToServer);
-		LinkCondition(27, OnBlastedTextMessageToChannel);
-		LinkCondition(28, OnBlastedNumberMessageToChannel);
-		LinkCondition(29, OnBlastedBinaryMessageToChannel);
-		LinkCondition(30, OnAnyBlastedMessageToChannel);
-		LinkCondition(31, OnBlastedTextMessageToPeer);
-		LinkCondition(32, OnBlastedNumberMessageToPeer);
-		LinkCondition(33, OnBlastedBinaryMessageToPeer);
-		LinkCondition(34, OnAnyBlastedMessageToPeer);
+		LinkCondition(11, SubchannelMatches /* OnSentTextMessageToServer */);
+		LinkCondition(12, SubchannelMatches /* OnSentNumberMessageToServer */);
+		LinkCondition(13, SubchannelMatches /* OnSentBinaryMessageToServer */);
+		LinkCondition(14, SubchannelMatches /* OnAnySentMessageToServer */);
+		LinkCondition(15, SubchannelMatches /* OnSentTextMessageToChannel */);
+		LinkCondition(16, SubchannelMatches /* OnSentNumberMessageToChannel */);
+		LinkCondition(17, SubchannelMatches /* OnSentBinaryMessageToChannel */);
+		LinkCondition(18, SubchannelMatches /* OnAnySentMessageToChannel */);
+		LinkCondition(19, SubchannelMatches /* OnSentTextMessageToPeer */);
+		LinkCondition(20, SubchannelMatches /* OnSentNumberMessageToPeer */);
+		LinkCondition(21, SubchannelMatches /* OnSentBinaryMessageToPeer */);
+		LinkCondition(22, SubchannelMatches /* OnAnySentMessageToPeer */);
+		LinkCondition(23, SubchannelMatches /* OnBlastedTextMessageToPeer */);
+		LinkCondition(24, SubchannelMatches /* OnBlastedNumberMessageToServer */);
+		LinkCondition(25, SubchannelMatches /* OnBlastedBinaryMessageToServer */);
+		LinkCondition(26, SubchannelMatches /* OnAnyBlastedMessageToServer */);
+		LinkCondition(27, SubchannelMatches /* OnBlastedTextMessageToChannel */);
+		LinkCondition(28, SubchannelMatches /* OnBlastedNumberMessageToChannel */);
+		LinkCondition(29, SubchannelMatches /* OnBlastedBinaryMessageToChannel */);
+		LinkCondition(30, SubchannelMatches /* OnAnyBlastedMessageToChannel */);
+		LinkCondition(31, SubchannelMatches /* OnBlastedTextMessageToPeer */);
+		LinkCondition(32, SubchannelMatches /* OnBlastedNumberMessageToPeer */);
+		LinkCondition(33, SubchannelMatches /* OnBlastedBinaryMessageToPeer */);
+		LinkCondition(34, SubchannelMatches /* OnAnyBlastedMessageToPeer */);
 		LinkCondition(35, OnAllChannelsLoopWithName);
 		LinkCondition(36, OnClientsJoinedChannelLoopWithName);
 		LinkCondition(37, OnAllClientsLoopWithName);
@@ -215,29 +215,31 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	// Link all callbacks
 	{
-		Srv.onConnect(::OnClientConnectRequest);
-		Srv.onDisconnect(::OnClientDisconnect);
-		Srv.onError(::OnError);
-		Srv.onJoinChannel(::OnJoinChannelRequest);
-		Srv.onLeaveChannel(::OnLeaveChannelRequest);
-		Srv.onSetName(::OnNameSet);
-		Srv.onServerMessage(::OnServerMessage);
+		Srv.onconnect(::OnClientConnectRequest);
+		Srv.ondisconnect(::OnClientDisconnect);
+		Srv.onerror(::OnError);
+		Srv.onchannel_join(::OnJoinChannelRequest);
+		Srv.onchannel_leave(::OnLeaveChannelRequest);
+		Srv.onnameset(::OnNameSet);
+		Srv.onmessage_server(::OnServerMessage);
+		// Don't link message_peer/channel by default.
 
-		FlashSrv.onError(::OnFlashError);
+		// Handled by Srv.onerror
+		//FlashSrv->on_error(::OnFlashError);
 	}
 	
-	Srv.Tag = this; // Useful so Lacewing callbacks can access Extension
+	Srv.tag = this; // Useful so Lacewing callbacks can access Extension
 }
 
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
 	// If the loop thread is terminated, only 4 bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
-	Lacewing::Error * Error = ((Extension *)ThisExt)->ObjEventPump.StartEventLoop();
+	lacewing::error Error = ((Extension *)ThisExt)->ObjEventPump->start_eventloop();
 	if (Error)
 	{
 		std::string Text = "Error returned by StartEventLoop(): ";
-					Text += Error->ToString();
+					Text += Error->tostring();
 		((Extension *)ThisExt)->CreateError(Text.c_str());
 	}
 	((Extension *)ThisExt)->Globals->_Thread = NULL;
@@ -328,7 +330,7 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 
 void Extension::ClearThreadData()
 {
-	memset(&ThreadData, 0, sizeof(SaveExtInfo);
+	memset(&ThreadData, 0, sizeof(SaveExtInfo));
 }
 
 void Extension::CreateError(const char * Error)
@@ -405,7 +407,7 @@ short Extension::Handle()
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
 	if (!Globals->_Thread)
 	{
-		ObjEventPump.Tick();
+		ObjEventPump->tick();
 		return 0;
 	}
 
@@ -440,8 +442,8 @@ short Extension::Handle()
 			}
 			if (S->Channel != nullptr)
 				ThreadData.Channel = S->Channel;
-			if (S->Peer != nullptr)
-				ThreadData.Peer = S->Peer;
+			if (S->Client != nullptr)
+				ThreadData.Client = S->Client;
 			LeaveCriticalSectionDerpy(&Lock);
 				
 			// Remove copies if this particular event number is used
@@ -451,13 +453,13 @@ short Extension::Handle()
 				if (S->Channel)
 				{
 					// Channel leave
-					if (!S->Peer)
+					if (!S->Client)
 					{
-						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+						for (std::vector<lacewing::relayserver::channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
 							if (*u == S->Channel)
 							{
-								if (!S->Channel->IsClosed)
+								if (!S->Channel->isclosed)
 									CreateError("Channel being removed but not marked as closed!");
 
 								Channels.erase(u);
@@ -469,18 +471,18 @@ short Extension::Handle()
 					}
 					else // Peer leave
 					{
-						for (std::vector<Lacewing::RelayClient::Channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
+						for (std::vector<lacewing::relayserver::channel *>::const_iterator u = Channels.begin(); u != Channels.end(); ++u)
 						{
 							if (*u == ThreadData.Channel)
 							{
-								for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator v = Peers.begin(); v != Peers.end(); ++v)
+								for (std::vector<lacewing::relayserver::client *>::const_iterator v = Clients.begin(); v != Clients.end(); ++v)
 								{
-									if (*v == S->Peer)
+									if (*v == S->Client)
 									{
-										if (!S->Peer->IsClosed)
+										if (!S->Client->isclosed)
 											CreateError("Peer being removed but not marked as closed!");
 
-										Peers.erase(v);
+										Clients.erase(v);
 										break;
 									}
 								}
@@ -502,17 +504,17 @@ short Extension::Handle()
 					//		delete (struct ::ChannelInternal *)((*u)->InternalTag);
 
 					// Old username is stored in the tag and must be deleted separately from clear()
-					for (std::vector<Lacewing::RelayClient::Channel::Peer *>::const_iterator u = Peers.begin(); u != Peers.end(); ++u)
+					for (std::vector<lacewing::relayserver::client *>::const_iterator u = Clients.begin(); u != Clients.end(); ++u)
 					{
-						if ((*u)->InternalTag)
-							free((*u)->InternalTag);
+						if ((*u)->internaltag)
+							free((*u)->internaltag);
 
 						//	delete (struct ::PeerInternal *)((*u)->InternalTag);
 					}
 
 					// Delete main data of each struct (note larger Internal classes are not deleted, see above)
 					Channels.clear();
-					Peers.clear();
+					Clients.clear();
 				}
 			}
 			else

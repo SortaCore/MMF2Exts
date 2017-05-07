@@ -28,18 +28,7 @@
  */
 
 #include "common.h"
-
-struct _lw_flashpolicy
-{
-   lw_server server;
-
-   char * buffer;
-   size_t size;
-
-   lw_flashpolicy_hook_error on_error;
-
-   void * tag;
-};
+#include "flashpolicy.h"
 
 static void on_data (lw_server server, lw_server_client client,
                      const char * buffer, size_t size)

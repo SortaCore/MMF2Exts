@@ -43,7 +43,8 @@ public:
 		{
 			free(Key);
 			free(Value);
-			KeyAddr = Value = Key = nullptr;
+			KeyAddr = nullptr;
+			Value = Key = nullptr;
 		}
 	};
 
@@ -69,9 +70,9 @@ public:
         a pointer.
     */
 	struct GlobalInfo {
-		Lacewing::EventPump		_ObjEventPump;
-		Lacewing::RelayServer	_Server;
-		Lacewing::FlashPolicy	_Policy;
+		lacewing::eventpump		_ObjEventPump;
+		lacewing::relayserver	_Server;
+		lacewing::flashpolicy	_Policy;
 		char *					_SendMsg,
 			 *					_DenyReason,
 			 *					_NewChannelName,
@@ -84,10 +85,10 @@ public:
 		char *					_GlobalID;
 		HANDLE					_Thread;
 
-		std::list<LocalData<Lacewing::RelayServer::Channel>> channelsLocalData;
-		std::list<LocalData<Lacewing::RelayServer::Client>> clientsLocalData;
+		std::list<LocalData<lacewing::relayserver::channel>> channelsLocalData;
+		std::list<LocalData<lacewing::relayserver::client>> clientsLocalData;
 		
-		GlobalInfo() : _Server(_ObjEventPump), _Policy(_ObjEventPump),
+		GlobalInfo() : _Server(_ObjEventPump), _Policy((lacewing::flashpolicy)flashpolicy_new(_ObjEventPump)),
 			_SendMsg(NULL), _DenyReason(NULL), _NewChannelName(NULL),
 			_NewPeerName(NULL), _InteractivePending(InteractiveType::None),
 			_SendMsgSize(0), _AutomaticallyClearBinary(false), _GlobalID(NULL), _Thread(NULL) {}
@@ -122,8 +123,8 @@ public:
 	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as
 	// Lacewing is concerned they no longer exist.
 
-	std::vector<Lacewing::RelayServer::Channel *> Channels;
-	std::vector<Lacewing::RelayServer::Client *> Clients;
+	std::vector<lacewing::relayserver::channel *> Channels;
+	std::vector<lacewing::relayserver::client *> Clients;
 
     // int MyVariable;
 
@@ -213,6 +214,7 @@ public:
 
 		const bool AlwaysTrue() { return true; }
 		const bool AlwaysFalse() { return false; }
+		bool SubchannelMatches(int Subchannel);
         // AlwaysTrue:	bool OnError();
 		// AlwaysTrue:	bool OnConnectRequest();
 		// AlwaysTrue:	bool OnDisconnect();
@@ -224,30 +226,30 @@ public:
 		// AlwaysTrue:	bool OnChannel_ClientLoop();
 		bool Client_IsChannelMaster();
 		// AlwaysTrue:	bool OnClient_NameSetRequest();
-		bool OnSentTextMessageToServer(int Subchannel);
-		bool OnSentNumberMessageToServer(int Subchannel);
-		bool OnSentBinaryMessageToServer(int Subchannel);
-		bool OnAnySentMessageToServer(int Subchannel);
-		bool OnSentTextMessageToChannel(int Subchannel);
-		bool OnSentNumberMessageToChannel(int Subchannel);
-		bool OnSentBinaryMessageToChannel(int Subchannel);
-		bool OnAnySentMessageToChannel(int Subchannel);
-		bool OnSentTextMessageToPeer(int Subchannel);
-		bool OnSentNumberMessageToPeer(int Subchannel);
-		bool OnSentBinaryMessageToPeer(int Subchannel);
-		bool OnAnySentMessageToPeer(int Subchannel);
-		bool OnBlastedTextMessageToServer(int Subchannel);
-		bool OnBlastedNumberMessageToServer(int Subchannel);
-		bool OnBlastedBinaryMessageToServer(int Subchannel);
-		bool OnAnyBlastedMessageToServer(int Subchannel);
-		bool OnBlastedTextMessageToChannel(int Subchannel);
-		bool OnBlastedNumberMessageToChannel(int Subchannel);
-		bool OnBlastedBinaryMessageToChannel(int Subchannel);
-		bool OnAnyBlastedMessageToChannel(int Subchannel);
-		bool OnBlastedTextMessageToPeer(int Subchannel);
-		bool OnBlastedNumberMessageToPeer(int Subchannel);
-		bool OnBlastedBinaryMessageToPeer(int Subchannel);
-		bool OnAnyBlastedMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnSentTextMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnAnySentMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnSentTextMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnAnySentMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnSentTextMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnAnySentMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToServer(int Subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToChannel(int Subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToPeer(int Subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToPeer(int Subchannel);
 		bool OnAllChannelsLoopWithName(char * LoopName);
 		bool OnClientsJoinedChannelLoopWithName(char * LoopName);
 		bool OnAllClientsLoopWithName(char * LoopName);
@@ -285,7 +287,7 @@ public:
 		int Client_ChannelCount();
 		const char * ReceivedStr();
 		int ReceivedInt();
-		unsigned int ReceivedBinarySize(int Index);
+		unsigned int ReceivedBinarySize();
 		long ReceivedBinaryAddress();
 		const char * StrByte(int Index);
 		unsigned int UnsignedByte(int Index);

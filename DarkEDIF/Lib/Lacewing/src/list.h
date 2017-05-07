@@ -168,7 +168,7 @@ typedef struct list_element list_element;
       elem;                                                                   \
    })                                                                           
 #else
-   template <class T> inline T * list_find (T * list, T value)
+   template<class T> inline T * list_find (T * list, T value)
    {
       list_elem (list) elem = list_elem_front (list);
       for (; elem; elem = list_elem_next (elem))    

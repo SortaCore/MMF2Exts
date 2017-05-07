@@ -30,6 +30,11 @@
 			struct  {
 				char *		Name;
 			} Loop;
+
+			// On name set request
+			struct {
+				const char *	Name;
+			} Requested;
 		};
 		lacewing::relayserver::channel * Channel;
 		lacewing::relayserver::client * Client;

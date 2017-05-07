@@ -1429,6 +1429,9 @@ lw_import flashpolicy flashpolicy_new (pump);
 lw_import void flashpolicy_delete (flashpolicy);
 
 #pragma region Phi stuff
+// NOTE: if you edit this due to new liblacewing release, note _flashpolicy::on_error requires flash policy definition to be extracted.
+// Otherwise the flashpolicy can't be accessed for the C++ Flash Policy extension covered in flaspolicy2.cc.
+
 struct relayclient
 {
 public:
@@ -1578,6 +1581,7 @@ struct relayserver
 
 	lacewing::server socket;
 	lacewing::udp udp;
+	lacewing::flashpolicy flash;
 
 	relayserver(pump);
 	~relayserver();
@@ -1677,12 +1681,12 @@ struct relayserver
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);
 	void onerror(handler_error);
-	void onservermessage(handler_message_server);
-	void onchannelmessage(handler_message_channel);
-	void onpeermessage(handler_message_peer);
-	void onjoinchannel(handler_channel_join);
-	void onleavechannel(handler_channel_leave);
-	void onsetname(handler_nameset);
+	void onmessage_server(handler_message_server);
+	void onmessage_channel(handler_message_channel);
+	void onmessage_peer(handler_message_peer);
+	void onchannel_join(handler_channel_join);
+	void onchannel_leave(handler_channel_leave);
+	void onnameset(handler_nameset);
 
 	void connect_response(lacewing::relayserver::client &client,
 		const char * denyReason);
@@ -1691,7 +1695,7 @@ struct relayserver
 	void leavechannel_response(lacewing::relayserver::channel &channel,
 		lacewing::relayserver::client & client, const char * denyReason);
 	void nameset_response(lacewing::relayserver::client &client,
-		const char * const clientName, const char * denyReason);
+		const char * const newClientName, const char * denyReason);
 };
 #pragma endregion
 
