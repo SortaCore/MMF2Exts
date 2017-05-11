@@ -206,6 +206,9 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
       return;
    }
 
+   lw_error_delete (error);
+   error = NULL;
+
    ctx->filter = lw_filter_clone (filter);
 
    ctx->pump_watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);

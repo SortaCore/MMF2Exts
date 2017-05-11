@@ -1633,7 +1633,8 @@ struct relayserver
 
 		unsigned short id();
 
-		lacewing::address getaddress();
+		const char * getaddress();
+		const char * getimplementation();
 
 		void disconnect();
 
@@ -1644,6 +1645,7 @@ struct relayserver
 		void name(const char *);
 
 		size_t channelcount();
+		size_t getconnecttime();
 
 		channel * firstchannel();
 		client * next();
@@ -1690,12 +1692,19 @@ struct relayserver
 
 	void connect_response(lacewing::relayserver::client &client,
 		const char * denyReason);
-	void joinchannel_response(const char * const channelName,
-		lacewing::relayserver::client & client, const char * denyReason);
+	void joinchannel_response(lacewing::relayserver::channel &channel,
+		const char * newChannelName, lacewing::relayserver::client &client, const char * denyReason);
+	void channelmessage_permit(lacewing::relayserver::channel &channel, lacewing::relayserver::client &client,
+		const char * data, size_t size, unsigned char subchannel, bool blasted, unsigned char variant, bool accept);
+	void clientmessage_permit(lacewing::relayserver::client &sendingclient, lacewing::relayserver::channel &channel,
+		lacewing::relayserver::client &receivingclient,
+		const char * data, size_t size, unsigned char subchannel, bool blasted, unsigned char variant, bool accept);
+	// Note: as this is unimplemented in Fusion, I've not implemented it here either.
+	// The ability to prevent a client from leaving a channel seems pointless; they can always pull the plug.
 	void leavechannel_response(lacewing::relayserver::channel &channel,
 		lacewing::relayserver::client & client, const char * denyReason);
 	void nameset_response(lacewing::relayserver::client &client,
-		const char * const newClientName, const char * denyReason);
+		const char * const newClientName, const char * const denyReason);
 };
 #pragma endregion
 

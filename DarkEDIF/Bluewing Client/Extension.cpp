@@ -240,19 +240,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
         It's the only place you'll get access to edPtr at runtime, so you should transfer
         anything from edPtr to the extension class here.
     */
-	/*
-	std::vector<Prop *> Prop;
-	std::vector<char> PropChkbox;
-	char * Current =  &edPtr->DarkEDIF_Props[0];
-	for(unsigned int i = 0; i < ::SDK->json[CurLang]["Properties"].u.object.length; ++i)
-	{
-		Prop.push_back(GetProperty(edPtr, i));
-		PropChkbox.push_back(*GetPropertyChbx(edPtr, i));
-	}
-	*/
-
-	LastEventInts = (unsigned short *)calloc(32U, 1U);
-	LastEventInts = (unsigned short *)realloc(LastEventInts, 0U);
+	
 	IsGlobal = edPtr->Global;
 	lw_trace("Extension create: IsGlobal=%i.", IsGlobal ? 1 : 0);
 	if (IsGlobal)
@@ -510,6 +498,7 @@ Extension::~Extension()
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 	}
 }
+
 namespace lacewing { struct channelinternal; struct peerinternal; }
 short Extension::Handle()
 {

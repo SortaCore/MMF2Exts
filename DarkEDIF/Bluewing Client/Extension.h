@@ -15,7 +15,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 60;
+    static const int Version = 61;
 
     static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
     static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
@@ -40,7 +40,6 @@ public:
 	
 	bool IsGlobal;
 	GlobalInfo * Globals;
-	unsigned short * LastEventInts;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				Globals->_ObjEventPump

@@ -462,7 +462,7 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		CreateError("Cannot save received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot save received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size < Position + Size)
+	else if (ThreadData.ReceivedMsg.Size < ((unsigned int)Position) + Size)
 		CreateError("Cannot save received binary; Message is too small.");
 	else
 	{
@@ -517,7 +517,7 @@ void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filena
 		CreateError("Cannot append received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot append received binary; filename is invalid.");
-	else if (Position + Size > ThreadData.ReceivedMsg.Size)
+	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
 		CreateError("Cannot append received binary; Message is too small.");
 	else
 	{
@@ -649,6 +649,8 @@ void Extension::JoinChannel(char * ChannelName, int Hidden, int CloseAutomatical
 {
 	if (!ChannelName || ChannelName[0] == '\0')
 		CreateError("Cannot join channel: invalid channel name supplied.");
+	else if (!Cli.name())
+		CreateError("Cannot join channel: client name not set.");
 	else
 		Cli.join(ChannelName, Hidden != 0, CloseAutomatically != 0);
 }

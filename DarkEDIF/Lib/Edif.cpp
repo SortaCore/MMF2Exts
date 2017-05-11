@@ -107,7 +107,9 @@ short ReadParameterType(const char * Text, bool &IsFloat)
 	if (!_strnicmp(Text, "Custom", 6))
 		return Params::Custom_Base + atoi(Text+6);
 
-	MessageBoxA(NULL, "Error reading Parameter type; text did not match anything.", "DarkEDIF - Error", MB_OK);
+	std::stringstream str;
+	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
+	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK);
     return 0;
 }
 

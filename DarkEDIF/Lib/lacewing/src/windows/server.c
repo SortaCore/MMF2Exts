@@ -76,6 +76,8 @@ struct _lw_server_client
 
    lw_bool on_connect_called;
 
+   /* IPv4 and IPv6 both accepted, but IPv4 is mapped to IPv6. 
+      When looking up string representation make sure to check. */
    lw_addr addr;
 
    HANDLE socket;
@@ -242,7 +244,7 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
    }
 
    client->addr = lwp_addr_new_sockaddr ((struct sockaddr *) remote_addr);
-
+   
    list_elem_remove (overlapped);
    overlapped = NULL;
 

@@ -7,7 +7,7 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2017 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b60)",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b61)",
 			// Use a file without path if your help file can be loaded by the MMF help file.
 			// "MyExt.chm";
 			// Or return the path of your file (relative to the MMF directory)
@@ -1538,7 +1538,7 @@
 				"Info": "The version of the liblacewing library used to build this extension.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing 0.5.4 (Windows/x86); / Bluewing reimpl"
+				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
 			},
 			{
 				"Title": "Automatically clear binary",

@@ -84,6 +84,9 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
    if (overlapped == sig_exit_event_loop)
       return lw_false;
 
+   if (error == 995)
+	   return lw_true;
+
    if (watch->on_completion)
    {
 	   try {

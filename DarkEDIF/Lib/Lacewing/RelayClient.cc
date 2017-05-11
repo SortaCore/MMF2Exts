@@ -66,10 +66,10 @@ namespace lacewing
 
 		relayclientinternal(relayclient &_client, lacewing::client _socket,
 			lacewing::udp _udp, pump _eventpump) : client(_client),
-			socket(_socket), udp(_udp), message(true), messageMF(true), timer(lacewing::timer_new(_eventpump))
+			socket(_socket), udp(_udp), message(true), messageMF(true),
+			timer(lacewing::timer_new(_eventpump)),
+			name(nullptr), welcomemessage(nullptr)
 		{
-			if ((long)_eventpump == 0xDDDDDDDD || _eventpump == nullptr)
-				throw std::exception("0xDD detected, 3");
 			handler_connect = 0;
 			handler_connectiondenied = 0;
 			handler_disconnect = 0;
@@ -136,6 +136,11 @@ namespace lacewing
 		bool connected;
 
 		std::vector<channelinternal *> channels;
+		~relayclientinternal()
+		{
+			free((void *)name);
+			free((void *)welcomemessage);
+		}
 	};
 
 	struct peerinternal
@@ -243,9 +248,13 @@ namespace lacewing
 		channels.clear();
 		clearchannellist();
 
+		free((char *)name);
 		name = nullptr;
+
 		id = 0xffff;
 		connected = false;
+
+		free((char *)welcomemessage);
 		welcomemessage = nullptr;
 	}
 
@@ -352,7 +361,6 @@ namespace lacewing
 
 		socket->nagle(false);
 
-
 		lacewing::relayclientinternal * r = new lacewing::relayclientinternal(*this, socket, udp, eventpump);
 		tag = 0;
 
@@ -375,7 +383,6 @@ namespace lacewing
 		
 		lw_udp_delete((lw_udp)udp);
 		lw_stream_delete((lw_client)socket);
-
 
 		delete ((relayclientinternal *)internaltag);
 		internaltag = nullptr;
@@ -420,7 +427,7 @@ namespace lacewing
 	void relayclient::listchannels()
 	{
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		framebuilder   &message = internal.message;
+		framebuilder   &message = internal.messageMF;
 
 		message.addheader(0, 0);  /* request */
 		message.add <unsigned char>(4);  /* channellist */
@@ -596,7 +603,7 @@ namespace lacewing
 		relayclientinternal  &internal = channel.client;
 		framebuilder    &message = internal.messageMF;
 
-		internal.message.addheader(0, 0); /* request */
+		message.addheader(0, 0); /* request */
 
 		message.add <unsigned char>(3);  /* leavechannel */
 		message.add <unsigned short>(channel.id);
@@ -685,15 +692,16 @@ namespace lacewing
 				if (succeeded)
 				{
 					id = reader.get <unsigned short>();
-					welcomemessage = reader.getremaining();
+					const char * welcomemessageDup = reader.getremaining();
 
 					if (reader.failed)
 						break;
-					
+					welcomemessage = _strdup(welcomemessageDup);
+
 					socket->server_address()->resolve();
 					udp->host(socket->server_address());
 					clienttick();
-					
+
 					timer->start(500); // see clienttick
 
 					/* the connect handler will be called on udp acknowledged */
@@ -864,7 +872,11 @@ namespace lacewing
 
 			default:
 			{
-				throw std::exception("message encoding failure.");
+				lacewing::error error = error_new();
+				error->add("Unrecognised response message received. Response type ID was %i, but expected response type IDs 0-4. Discarding message.");
+				this->handler_error(client, error);
+				error_delete(error);
+				return;
 			}
 			}
 
@@ -966,10 +978,14 @@ namespace lacewing
 		case 6: /* objectchannelmessage */
 		case 7: /* objectpeermessage */
 		case 8: /* objectserverchannelmessage */
-
+		{
 			// todo: replace every lacewingassert() with a real error.
-			throw std::exception("object message received, but implementation does not support it.");
-			break;
+			lacewing::error error = error_new();
+			error->add("'Object' message type received, but Bluewing Client implementation does not support it.");
+			this->handler_error(client, error);
+			error_delete(error);
+			return;
+		}
 
 		case 9: /* peer */
 		{
@@ -983,10 +999,10 @@ namespace lacewing
 				break;
 
 			int peerid = reader.get <unsigned short>();
-			
+
 
 			auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
-				[&](peerinternal *&p){ return p->id == peerid; });
+				[&](peerinternal *&p) { return p->id == peerid; });
 			peerinternal * peer = i == channel2->peers.cend() ? nullptr : *i;
 
 			unsigned char flags = reader.get <unsigned char>();
@@ -997,7 +1013,7 @@ namespace lacewing
 				/* no flags/name - the peer must have left the channel */
 
 				if (!peer)
-					break;
+					return;
 
 				channel2->peers.erase(i);
 				peer->public_.isclosed = true;
@@ -1005,7 +1021,7 @@ namespace lacewing
 				if (handler_peer_disconnect)
 					handler_peer_disconnect(client, channel2->public_, peer->public_);
 
-				break;
+				return;
 			}
 
 			if (!peer)
@@ -1036,7 +1052,12 @@ namespace lacewing
 
 			peer->ischannelmaster = (flags & 1) != 0;
 			if (flags & ~0x1)
-				throw std::exception("unrecognised peer flags.");
+			{
+				lacewing::error error = error_new();
+				error->add("Malformed message received (server error?). Unrecognised peer flags in peer message, expected 0 or 1, got %i. Ignoring unrecognised flags.", flags);
+				this->handler_error(client, error);
+				error_delete(error);
+			}
 
 			break;
 		}
@@ -1063,11 +1084,22 @@ namespace lacewing
 
 		default:
 		{
-			throw std::exception("unrecognised message type.");
+			lacewing::error error = error_new();
+			error->add("Malformed message received (server error?). Unrecognised message type ID %i, expected type IDs 0-11. Discarding message.");
+			this->handler_error(client, error);
+			error_delete(error);
+			return;
 		}
 		};
-	}
 
+		if (reader.failed)
+		{
+			lacewing::error error = error_new();
+			error->add("Malformed message received (server error?). Message type recognised but expected data was not found. Discarding message.");
+			this->handler_error(client, error);
+			error_delete(error);
+		}
+	}
 
 	void relayclientinternal::messagehandler(void * tag, unsigned char type, const char * message, size_t size)
 	{
@@ -1086,8 +1118,6 @@ namespace lacewing
 		if (!udp->hosting())
 			throw std::exception("clienttick() called, but not hosting UDP."); 
 		
-		static int i = 0;
-		i++;
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
 	}

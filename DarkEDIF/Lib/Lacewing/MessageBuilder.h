@@ -56,7 +56,7 @@ public:
 		buffer = nullptr;
     }
 
-    void add(const char * buffer, int size)
+    void add(const char * const buffer, int size)
     {
         if (size == -1)
             size = strlen(buffer);
@@ -83,6 +83,15 @@ public:
 
     template<class t> inline void add (t value)
     {
+		// If this second assertion triggers, you're passing a pointer value to be embedded in the message.
+		// This will append the address the pointer points to, NOT the content of the pointer.
+		// Since this is unlikely to be expected behaviour, you should check your code.
+		// You probably want the add(data, sizeof(data))
+		// If adding a string, pass add(data, -1)
+		// If adding a single byte, pass add(&data, 1)
+		static_assert(!std::is_pointer<decltype(value)>::value,
+			"Check you meant to pass a pointer address. That doesn't make a lot of sense.");
+
         add((const char *) &value, sizeof(t));
     }
 	/*

@@ -49,6 +49,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <chrono>
 #include "zlib.h"
 
 #include "Lacewing.h"
