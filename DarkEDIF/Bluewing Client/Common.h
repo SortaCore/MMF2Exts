@@ -15,21 +15,6 @@
 
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
-#ifdef _DEBUG
-#define EnterCriticalSectionDerpy(x) \
-	EnterCriticalSection(x); \
-	sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
-	::CriticalSection = ::Buffer + ::CriticalSection
-	
-
-#define LeaveCriticalSectionDerpy(x) \
-	sprintf_s(::Buffer, "Thread %u : Left on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__); \
-	::CriticalSection = ::Buffer + ::CriticalSection; \
-	LeaveCriticalSection(x)
-#else
-	#define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
-	#define LeaveCriticalSectionDerpy(x)  LeaveCriticalSection(x)
-#endif
 // Lacewing-required lines.==
 
 #pragma comment(lib, "ws2_32.lib")
@@ -52,8 +37,26 @@
 #include <chrono>
 #include "zlib.h"
 
-#include "Lacewing.h"
+#include "PeerCopy.h"
+#include "ChannelCopy.h"
 
+#ifdef _DEBUG
+	extern std::stringstream CriticalSection;
+#define EnterCriticalSectionDerpy(x) \
+		EnterCriticalSection(x); \
+		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " \
+			<< __FILE__ << ", line " << __LINE__ << ".\r\n"
+
+#define LeaveCriticalSectionDerpy(x) \
+		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Left on " \
+			<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
+		LeaveCriticalSection(x)
+#else
+#define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
+#define LeaveCriticalSectionDerpy(x)  LeaveCriticalSection(x)
+#endif
+
+#include "Lacewing.h"
 #include "LacewingFunctions.h"
 
 #include "Edif.h"
@@ -65,8 +68,6 @@
 
 #include "DarkEDIF.h"
 
-extern char Buffer [200];
-extern std::string CriticalSection;
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {

@@ -63,6 +63,7 @@ lw_client lw_client_new (lw_pump pump)
 
    ctx->socket = INVALID_HANDLE_VALUE;
    ctx->pump = pump;
+   ctx->watch = 0;
    
    return ctx;
 }
@@ -73,6 +74,9 @@ void lw_client_delete (lw_client ctx)
       return;
 
    lw_stream_close ((lw_stream) ctx, lw_true);
+
+   lw_bool isValid = lw_fdstream_valid(&ctx->fdstream);
+   lw_bool canClose = lwp_stream_may_close((lw_stream)ctx);
 
    lw_addr_delete (ctx->address);
 
@@ -108,7 +112,8 @@ static void completion (void * tag, OVERLAPPED * overlapped,
       return;
    }
 
-   lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true);
+   lw_fdstream_set_fd(&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
+//   ctx->watch = ctx->fdstream.watch; // PHI: does an update with no return.
 
    ctx->connecting = lw_false;
 

@@ -87,7 +87,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 
          if (error || !bytes_transferred)
          {
-            lw_stream_close ((lw_stream) ctx, lw_true);
+            lw_stream_close ((lw_stream) ctx, lw_false);
             break;
          }
 
@@ -151,14 +151,16 @@ static void close_fd (lw_fdstream ctx)
       ctx->transmit_file_to = 0;
    }
 
-   if (!CancelIo (ctx->fd))
+   if (!CancelIoEx (ctx->fd, NULL))
    {
-      assert (0);
+	  // Error not found is no IO ops to cancel, so not a problem.
+	   DWORD lastError = GetLastError();
+	   assert (lastError == ERROR_NOT_FOUND || lastError == 0);
    }
 
    list_each (ctx->pending_writes, overlapped)
    {
-      free (overlapped);
+	   free(overlapped);
    }
 
    list_clear (ctx->pending_writes);
@@ -177,12 +179,13 @@ static void close_fd (lw_fdstream ctx)
    {
       if (ctx->flags & lwp_fdstream_flag_is_socket)
       {
-         shutdown ((SOCKET) ctx->fd, SD_BOTH);
-
+		 shutdown((SOCKET)ctx->fd, SD_BOTH);
+		 
          if (closesocket ((SOCKET) ctx->fd) == SOCKET_ERROR)
          {
              assert (lw_false);
          }
+		 ctx->fd = INVALID_HANDLE_VALUE;
       }
       else
          CloseHandle (ctx->fd);
@@ -269,9 +272,9 @@ static void def_cleanup (lw_stream _ctx)
 }
 
 void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
-                         lw_pump_watch watch, lw_bool auto_close)
+                         lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket)
 {
-   lwp_trace ("FDStream %p : set FD to %d, auto_close %d", ctx, fd, (int) auto_close);
+   lwp_trace ("FDStream %p : set FD to %d, auto_close %d, is_socket %d", ctx, fd, (int) auto_close, (int) is_socket);
 
    if (ctx->watch)
    {
@@ -284,13 +287,20 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
    if (fd == INVALID_HANDLE_VALUE)
       return;
 
-   WSAPROTOCOL_INFO info;
-
-   ctx->flags |= lwp_fdstream_flag_is_socket;
+   if (is_socket)
+	  ctx->flags |= lwp_fdstream_flag_is_socket;
 
    if (auto_close)
       ctx->flags |= lwp_fdstream_flag_auto_close;
 
+   /*
+    // PHI: Use this and your socket will remain open in CLOSE_WAIT for several minutes after
+    // disconnect, expecting this duplicated socket info to be used in a second socket.
+    // See Lacewing.h.
+    // I've modified function to pass whether it's a socket instead.
+    // Alternatively, https://stackoverflow.com/a/6574906 (NtQueryObject) could be used.
+    
+    WSAPROTOCOL_INFO info;
     if (WSADuplicateSocket ((SOCKET) ctx->fd,
                             GetCurrentProcessId (),
                             &info) == SOCKET_ERROR)
@@ -299,7 +309,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 
         if (error == WSAENOTSOCK || error == WSAEINVAL)
             ctx->flags &= ~ lwp_fdstream_flag_is_socket;
-    }
+    }*/
  
     if (ctx->flags & lwp_fdstream_flag_is_socket)
     {

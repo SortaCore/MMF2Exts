@@ -122,7 +122,7 @@ bool Extension::SelectedPeerIsChannelMaster()
 		return false;
 	}
 
-	return ThreadData.Peer->ischannelmaster();
+	return ThreadData.Channel->channelmaster() == ThreadData.Peer;
 }
 bool Extension::YouAreChannelMaster()
 {
@@ -132,7 +132,9 @@ bool Extension::YouAreChannelMaster()
 		return false;
 	}
 
-	return ThreadData.Channel->ischannelmaster();
+	bool isitme = false;
+	ThreadData.Channel->channelmaster(&isitme);
+	return isitme;
 }
 bool Extension::OnChannelListLoopWithName(char * LoopName)
 {
@@ -196,13 +198,10 @@ bool Extension::IsJoinedToChannel(char * ChannelName)
 		CreateError("Error checking if joined to a channel, channel name supplied was blank.");
 	else
 	{
-		lacewing::relayclient::channel * C = Cli.firstchannel();
-		while (C)
-		{
-			if (!_stricmp(ChannelName, C->name()))
-				return !C->isclosed;
-			C = C->next();
-		}
+		auto &channels = Channels;
+		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
+			return !_stricmp(c->name(), ChannelName); });
+		return C != Channels.cend() && !(**C).isclosed;
 	}
 	return false;
 }
@@ -212,35 +211,28 @@ bool Extension::IsPeerOnChannel_Name(char * PeerName, char * ChannelName)
 		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
 	else if (ChannelName[0] != '\0')
 	{
-		lacewing::relayclient::channel * C = Cli.firstchannel();
-		while (C)
+		auto &channels = Channels;
+		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
+			return !_stricmp(c->name(), ChannelName); });
+		if (C == Channels.cend())
 		{
-			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
-			{
-				lacewing::relayclient::channel::peer * P = C->firstpeer();
-				while (P)
-				{
-					if (!_stricmp(PeerName, P->name()))
-						return !P->isclosed;
-					P = P->next();
-				}
-				return false;
-			}
-			C = C->next();
+			CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
+			return false;
 		}
-		
-		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
+		if ((**C).isclosed)
+			return false;
+
+		auto &peers = (**C).getpeers();
+		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
+			return !_stricmp(p->name(), PeerName); });
+		return P != peers.cend() && !(**P).isclosed;
 	}
 	else if (ThreadData.Channel) // Use currently selected channel
 	{
-		lacewing::relayclient::channel::peer * P = ThreadData.Channel->firstpeer();
-		while (P)
-		{
-			if (!_stricmp(P->name(), PeerName))
-				return !P->isclosed;
-			P = P->next();
-		}
-		return false;
+		auto &peers = ThreadData.Channel->getpeers();
+		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
+			return !_stricmp(p->name(), PeerName); });
+		return P != peers.cend() && !(**P).isclosed;
 	}
 	else // No currently selected channel!
 	{
@@ -252,35 +244,28 @@ bool Extension::IsPeerOnChannel_ID(int PeerID, char * ChannelName)
 {
 	if (ChannelName[0] != '\0')
 	{
-		lacewing::relayclient::channel * C = Cli.firstchannel();
-		while (C)
+		auto &channels = Channels;
+		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
+			return !_stricmp(c->name(), ChannelName); });
+		if (C == Channels.cend())
 		{
-			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
-			{
-				lacewing::relayclient::channel::peer * P = C->firstpeer();
-				while (P)
-				{
-					if (P->id() == PeerID)
-						return !P->isclosed;
-					P = P->next();
-				}
-				return false;
-			}
-			C = C->next();
+			CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
+			return false;
 		}
-		
-		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
+		if ((**C).isclosed)
+			return false;
+
+		auto &peers = (**C).getpeers();
+		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
+			return p->id() == PeerID; });
+		return P != peers.cend() && !(**P).isclosed;
 	}
 	else if (ThreadData.Channel)// Use currently selected channel
 	{
-		lacewing::relayclient::channel::peer * P = ThreadData.Channel->firstpeer();
-		while (P)
-		{
-			if (P->id() == PeerID)
-				return !P->isclosed;
-			P = P->next();
-		}
-		return false;
+		auto &peers = ThreadData.Channel->getpeers();
+		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
+			return p->id() == PeerID; });
+		return P != peers.cend() && !(**P).isclosed;
 	}
 	else // No currently selected channel!
 	{

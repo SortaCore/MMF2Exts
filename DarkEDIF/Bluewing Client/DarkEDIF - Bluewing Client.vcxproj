@@ -16,26 +16,28 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7BC7F91B-80E1-4F73-8A95-480962EB4E06}</ProjectGuid>
-    <RootNamespace>DarkEDIF - Blank</RootNamespace>
+    <RootNamespace>DarkEDIF</RootNamespace>
     <ProjectName>DarkEDIF - Bluewing Client</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -129,6 +131,7 @@
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
       <AssemblyDebug>false</AssemblyDebug>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -191,6 +194,7 @@
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Extensions\$(ProjectName).pdb</StripPrivateSymbols>
       <AssemblyDebug>false</AssemblyDebug>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -252,6 +256,7 @@
       <GenerateDebugInformation>Debug</GenerateDebugInformation>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName).pdb</StripPrivateSymbols>
       <AssemblyDebug>false</AssemblyDebug>
+      <SubSystem>Windows</SubSystem>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -263,6 +268,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc" />
     <ClCompile Include="..\Lib\lacewing\src\address.c" />
     <ClCompile Include="..\Lib\lacewing\src\cxx\address2.cc" />
     <ClCompile Include="..\Lib\lacewing\src\cxx\client2.cc" />
@@ -314,7 +320,9 @@
     <ClCompile Include="..\Lib\lacewing\src\windows\udp.c" />
     <ClCompile Include="..\Lib\ObjectSelection.cpp" />
     <ClCompile Include="Actions.cpp" />
+    <ClCompile Include="ChannelCopy.cpp" />
     <ClCompile Include="Conditions.cpp" />
+    <ClCompile Include="PeerCopy.cpp" />
     <ClCompile Include="Edittime.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -364,12 +372,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\MMFMasterHeader.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
     <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
     <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
     <ClInclude Include="..\Lib\Lacewing\MessageReader.h" />
     <ClInclude Include="..\Lib\lacewing\src\windows\sslclient.h" />
-    <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h" />
-    <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h" />
+    <ClInclude Include="ChannelCopy.h" />
+    <ClInclude Include="PeerCopy.h" />
     <ClInclude Include="DarkEDIF.h" />
     <ClInclude Include="LacewingFunctions.h" />
     <ClInclude Include="..\Inc\ObjectSelection.h" />

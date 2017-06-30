@@ -146,22 +146,25 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
          info->buffer [bytes_transferred] = 0;
 
-         struct _lw_addr addr = {};
+         struct _lw_addr addr = {0};
          lwp_addr_set_sockaddr (&addr, (struct sockaddr *) &info->from);
 
          lw_addr filter_addr = lw_filter_remote (ctx->filter);
 
-         if (filter_addr && !lw_addr_equal (&addr, filter_addr))
-            break;
+		 if (filter_addr && !lw_addr_equal(&addr, filter_addr))
+		 {
+			 lwp_addr_cleanup(&addr);
+			 break;
+		 }
 
          if (ctx->on_data)
             ctx->on_data (ctx, &addr, info->buffer, bytes_transferred);
 
+		 lwp_addr_cleanup(&addr);
          free (info);
 
          -- ctx->receives_posted;
          post_receives (ctx);
-
          break;
       }
    };

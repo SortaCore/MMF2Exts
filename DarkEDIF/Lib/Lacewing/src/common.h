@@ -36,7 +36,7 @@
    #endif
 
    #if defined(_DEBUG) && !defined(_lacewing_debug)
-      #define _lacewing_debug
+      // #define _lacewing_debug
    #endif
 
    #ifndef _CRT_SECURE_NO_WARNINGS
@@ -115,7 +115,7 @@
 #ifdef _MSC_VER
     #ifndef __cplusplus
         #error "Can only compile as C++ with MSVC"
-		#error "Try enabling /TP, using Compile As property in C/C++ > Advanced page.""
+		#error "Try enabling /TP, using Compile As property in C/C++ > Advanced page."
     #endif
     #pragma warning(disable: 4200) /* zero-sized array in struct/union */
     #pragma warning(disable: 4800) /* forcing value to bool 'true' or 'false' */

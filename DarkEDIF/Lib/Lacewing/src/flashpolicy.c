@@ -61,6 +61,7 @@ lw_flashpolicy lw_flashpolicy_new (lw_pump pump)
    lw_flashpolicy ctx = (lw_flashpolicy) calloc (sizeof (*ctx), 1);
 
    ctx->server = lw_server_new (pump);
+   lw_server_set_tag(ctx->server, ctx);
 
    lw_server_on_error (ctx->server, on_error);
    lw_server_on_data (ctx->server, on_data);

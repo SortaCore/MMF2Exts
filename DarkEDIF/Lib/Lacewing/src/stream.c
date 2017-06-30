@@ -43,6 +43,7 @@ void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 
    ctx->def = def;
    ctx->pump = pump;
+   ctx->tag = nullptr;
 
    ctx->retry = lw_stream_retry_never;
 
@@ -954,7 +955,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
     * later (meaning we don't have to bother)
     */
 
-   lw_bool already_cleared = list_length (ctx->graph->roots_expanded) == 0;
+   lw_bool already_cleared = ctx->graph == nullptr || list_length (ctx->graph->roots_expanded) == 0;
 
    if (!already_cleared)
       lwp_streamgraph_clear_expanded (ctx->graph);

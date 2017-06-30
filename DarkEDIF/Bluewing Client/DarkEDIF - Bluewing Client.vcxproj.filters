@@ -190,6 +190,15 @@
     <ClCompile Include="..\Lib\lacewing\src\windows\ssl\ssl.c">
       <Filter>Source files\Lacewing\src\windows</Filter>
     </ClCompile>
+    <ClCompile Include="PeerCopy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChannelCopy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc">
+      <Filter>Source files\Lacewing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -218,12 +227,6 @@
     </ClInclude>
     <ClInclude Include="..\Inc\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\Phi\Documents\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h">
-      <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h">
       <Filter>Header Files\Lacewing</Filter>
@@ -281,6 +284,18 @@
     </ClInclude>
     <ClInclude Include="..\Lib\lacewing\src\windows\sslclient.h">
       <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="PeerCopy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChannelCopy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\FrameReader.h">
+      <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

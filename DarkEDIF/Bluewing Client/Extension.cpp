@@ -13,7 +13,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
 {
 	// Nullify the thread-specific data
-	memset(&ThreadData, 0, sizeof(SaveExtInfo));
+	ClearThreadData();
 
 	/*
         Link all your action/condition/expression functions to their IDs to match the
@@ -124,10 +124,10 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(23, OnBlastedNumberMessageFromChannel);
 		LinkCondition(24, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(25, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(26, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(27, AlwaysTrue /* OnChannelListReceived */);
-		LinkCondition(28, AlwaysTrue /* OnChannelListLoop */);
-		LinkCondition(29, AlwaysTrue /* OnChannelListLoopFinished */);
+		LinkCondition(26, AlwaysTrue /* OnChannelListReceived */);
+		LinkCondition(27, AlwaysTrue /* OnChannelListLoop */);
+		LinkCondition(28, AlwaysTrue /* OnChannelListLoopFinished */);
+		LinkCondition(29, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(30, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(31, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(32, OnSentBinaryMessageFromServer);
@@ -232,6 +232,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(53, ReplacedExprNoParams);
 		LinkExpression(54, SendBinaryAddress);
 		LinkExpression(55, DumpMessage);
+		LinkExpression(56, ChannelListing_ChannelCount);
 	}
     
 	/*
@@ -283,22 +284,42 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
-	// If the loop thread is terminated, only 4 bytes of memory will be leaked.
+	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
-	lacewing::error Error = ((Extension *)ThisExt)->ObjEventPump->start_eventloop();
-	if (Error)
-	{
-		std::string Text = "Error returned by StartEventLoop(): ";
-					Text += Error->tostring();
-		((Extension *)ThisExt)->CreateError(Text.c_str());
+	
+	GlobalInfo * G = ((Extension *)ThisExt)->Globals;
+	try {
+		lacewing::error Error = G->_ObjEventPump->start_eventloop();
+
+		// Can't error report if there's no extension to error-report to.
+		// Worst case scenario CreateError calls Runtime.Rehandle which breaks because ext is gone.
+		if (!Error)
+			lw_trace("LacewingLoopThread closing gracefully.");
+		else if (G->_Ext)
+		{
+			std::string Text = "Error returned by StartEventLoop(): ";
+			Text += Error->tostring();
+			G->CreateError(Text.c_str());
+		}
+			
 	}
-	((Extension *)ThisExt)->Globals->_Thread = NULL;
+	catch (...)
+	{
+		lw_trace("LacewingLoopThread got an exception.");
+		if (G->_Ext)
+		{
+			std::string Text = "StartEventLoop() killed by exception. Switching to single-threaded.";
+			G->CreateError(Text.c_str());
+		}
+	}
+	G->_Thread = NULL;
+	lw_trace("LacewingLoopThread has exited.");
 	return 0;
 }
 
 void GlobalInfo::AddEvent1(int Event1,
 	void * ChannelOrChannelListing,
-	lacewing::relayclient::channel::peer * Peer,
+	PeerCopy * Peer,
 	char * MessageOrErrorText,
 	size_t MessageSize,
 	unsigned char Subchannel)
@@ -307,7 +328,7 @@ void GlobalInfo::AddEvent1(int Event1,
 }
 void GlobalInfo::AddEvent2(int Event1, int Event2,
 	void * ChannelOrChannelListing,
-	lacewing::relayclient::channel::peer * Peer,
+	PeerCopy * Peer,
 	char * MessageOrErrorText,
 	size_t MessageSize,
 	unsigned char Subchannel)
@@ -316,7 +337,7 @@ void GlobalInfo::AddEvent2(int Event1, int Event2,
 }
 void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
 	void * ChannelOrChannelListing /* = nullptr */,
-	lacewing::relayclient::channel::peer * Peer /* = nullptr */,
+	PeerCopy * Peer /* = nullptr */,
 	char * MessageOrErrorText /* = nullptr */,
 	size_t MessageSize /* = 0 */,
 	unsigned char Subchannel /* = 255 */)
@@ -347,7 +368,7 @@ void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
 	NewEvent2.CondTrig[0] = (unsigned short)Event1;
 	NewEvent2.CondTrig[1] = (unsigned short)Event2;
 	// Channel/ChannelListing overlap, as do Message Content and Error Text
-	NewEvent2.Channel = (lacewing::relayclient::channel *) ChannelOrChannelListing;
+	NewEvent2.Channel = (ChannelCopy *)ChannelOrChannelListing; 
 	NewEvent2.Peer = Peer;
 	NewEvent2.ReceivedMsg.Content = MessageOrErrorText;
 	NewEvent2.ReceivedMsg.Size = MessageSize;
@@ -391,29 +412,21 @@ void Extension::AddToSend(void * Data, size_t Size)
 {
 	if (!Data)
 	{
-		CreateError("Error adding to send binary: pointer supplied is invalid.\r\n"
+		CreateError("Error adding to send binary: pointer supplied is invalid. "
 					"The message has not been modified.");
 		return;
 	}
 	if (!Size)
 		return;
-	char * newptr = (char *)realloc(SendMsg, SendMsgSize+Size);
+	char * newptr = (char *)realloc(SendMsg, SendMsgSize + Size);
 		
 	// Failed to reallocate memory
 	if (!newptr)
 	{
-		char errorval [20];
-		std::string Error = "Received error ";
-		if (_itoa_s(errno, errorval, 20, 10))
-			Error += "with reallocating memory to append to binary message, and with converting error number.";
-		else
-		{
-			Error += "number [";
-			Error += errorval;
-			Error += "] with reallocating memory to append to binary message.";
-		}
-		Error += "\r\nThe message has not been modified.";
-		CreateError(Error.c_str());
+		std::stringstream Error;
+		Error << "Received error number " << errno << " with reallocating memory to append to binary message. "
+			<< "The message has not been modified.";
+		CreateError(Error.str().c_str());
 		return;
 	}
 	SendMsg = newptr;
@@ -421,27 +434,26 @@ void Extension::AddToSend(void * Data, size_t Size)
 		
 	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
 	// If we failed to copy memory.
-	if (memmove_s(newptr+SendMsgSize-Size, Size, Data, Size))
+	if (memmove_s(newptr + SendMsgSize - Size, Size, Data, Size))
 	{
-		char errorval [20];
-		std::string Error = "Received error ";
-		if (_itoa_s(errno, errorval, 20, 10))
-			Error += "with reallocating memory to append to binary message, and with converting error number.";
-		else
-		{
-			Error += "number [";
-			Error += errorval;
-			Error += "] with copying memory to binary message.";
-		}
-		Error += "\r\nThe message has been resized but the data left uncopied.";
-		CreateError(Error.c_str());
+		std::stringstream Error;
+		Error << "Received error number " << errno << " with reallocating memory to append to binary message. "
+			<< "The message has not been modified.";
+		CreateError(Error.str().c_str());
+		return;
 	}
+}
+
+void Extension::ClearThreadData()
+{
+	memset(&ThreadData, 0, sizeof(SaveExtInfo));
 }
 
 bool AppWasClosed = false;
 Extension::~Extension()
 {
 	lw_trace("~Extension called; Refs count is %u.", Globals->Refs.size());
+
 	EnterCriticalSectionDerpy(&Globals->Lock);
 	// Remove this Extension from liblacewing usage.
 	auto i = std::find(Globals->Refs.cbegin(), Globals->Refs.cend(), this);
@@ -457,9 +469,16 @@ Extension::~Extension()
 		if (wasBegin)
 		{
 			Globals->_Ext = Globals->Refs.front();
+			Globals->_Ext->Channels = Channels;
+			Channels.clear();
+			LeaveCriticalSectionDerpy(&Globals->Lock);
+
 			Globals->_Ext->Runtime.Rehandle();
 		}
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		else // This extension wasn't even the main event handler (for Handle()/Globals).
+		{
+			LeaveCriticalSectionDerpy(&Globals->Lock);
+		}
 	}
 	// Last instance of this object; if global and not full-delete-enabled, do not cleanup.
 	// In single-threaded instances, this will cause a dirty timeout; the lower-level protocols,
@@ -488,18 +507,20 @@ Extension::~Extension()
 				? "a warning message will be shown"
 				: "the connection will terminate and all pending messages will be discarded");
 			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
+			ClearThreadData();
 			return;
 		}
 
 		std::string id = std::string(std::string("LacewingRelayClient") + (Globals->_GlobalID ? Globals->_GlobalID : ""));
-		LeaveCriticalSectionDerpy(&Globals->Lock);
-		delete Globals; // Disconnects and closes event pump
-		Globals = nullptr;
 		Runtime.WriteGlobal(id.c_str(), nullptr);
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+		delete Globals; // Disconnects and closes event pump, deletes Lock
+		Globals = nullptr;
 	}
+
+	ClearThreadData();
 }
 
-namespace lacewing { struct channelinternal; struct peerinternal; }
 short Extension::Handle()
 {
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
@@ -508,7 +529,7 @@ short Extension::Handle()
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
-			e->add("(in Extension::Handle -> tick()");
+			e->add("(in Extension::Handle -> tick())");
 			CreateError(e->tostring());
 			return 0; // Run next loop
 		}
@@ -516,8 +537,13 @@ short Extension::Handle()
 
 	// AddEvent() was called and not yet handled
 	// (note all code that accesses Saved must have ownership of Lock)
+	
+	
+	// If Thread is not available, we have to tick() on Handle(), so
+	// we have to run next loop even if there's no events in Saved() to deal with.
 	bool RunNextLoop = !Globals->_Thread;
-	while (true)
+
+	for (size_t maxTrig = 0; maxTrig < 5; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!TryEnterCriticalSection(&Globals->Lock))
@@ -527,39 +553,45 @@ short Extension::Handle()
 		}
 		// At this point we have effectively run EnterCriticalSection
 #ifdef _DEBUG
-		sprintf_s(::Buffer, "Thread %u : Entered on %s, line %i.\r\n", GetCurrentThreadId(), __FILE__, __LINE__);
-		::CriticalSection = ::Buffer + ::CriticalSection;
+		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " 
+			<< __FILE__ << ", line " << __LINE__ << ".\r\n";
 #endif
 
-		if (Saved.size() == 0)
+		if (Saved.empty())
 		{
 			LeaveCriticalSectionDerpy(&Globals->Lock);
 			break;
 		}
 		SaveExtInfo * S = Saved.front();
-			
-		if (S->ReceivedMsg.Content != nullptr)
-		{
-			ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
-			ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
-			ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
-			ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
-		}
-		if (S->Channel != nullptr)
-			ThreadData.Channel = S->Channel;
-		if (S->Peer != nullptr)
-			ThreadData.Peer = S->Peer;
-		
+
 		LeaveCriticalSectionDerpy(&Globals->Lock);
 				
 		
-		for each (auto i in Globals->Refs)
+		for (auto i : Globals->Refs)
 		{
 			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
 			for (unsigned char u = 0; u < S->NumEvents; ++u)
 			{
+				if (S->CondTrig[u] != 0xFFFF)
+				{
+					if (S->ReceivedMsg.Content != nullptr)
+					{
+						i->ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
+						i->ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
+						i->ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
+						i->ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
+					}
+
+					// Handles channel listing as well
+					if (S->Channel != nullptr)
+						i->ThreadData.Channel = S->Channel;
+					if (S->Peer != nullptr)
+						i->ThreadData.Peer = S->Peer;
+
+					i->Runtime.GenerateEvent((int)S->CondTrig[u]);
+				}
 				// Remove copies if this particular event number is used
-				if (S->CondTrig[u] == 0xFFFF)
+				else
 				{
 					// If channel, it's either a channel leave or peer leave
 					if (S->Channel)
@@ -567,69 +599,48 @@ short Extension::Handle()
 						// Channel leave
 						if (!S->Peer)
 						{
-							for (auto u = Channels.begin(); u != Channels.end(); ++u)
-							{
-								if (*u == S->Channel)
-								{
-									if (!S->Channel->isclosed)
-										CreateError("Channel being removed but not marked as closed!");
-
-									delete (**u).internaltag;
-									Channels.erase(u);
-									break;
-								}
-							}
-
+							assert(S->Channel->isclosed);
+							auto ch = std::find(Channels.begin(), Channels.end(), S->Channel);
+							if (ch != Channels.end())
+								Channels.erase(ch);
+							delete S->Channel;
 						}
 						else // Peer leave
 						{
-							for (auto u = Channels.begin(); u != Channels.end(); ++u)
-							{
-								if (*u == S->Channel)
-								{
-									for (auto v = Peers.begin(); v != Peers.end(); ++v)
-									{
-										if (*v == S->Peer)
-										{
-											if (!S->Peer->isclosed)
-												CreateError("Peer being removed but not marked as closed!");
-
-											delete (**v).internaltag;
-											Peers.erase(v);
-											break;
-										}
-									}
-
-									break;
-								}
-							}
+							assert(S->Peer->isclosed);
+							S->Channel->deletepeer(S->Peer);
 						}
 					}
 					else // On disconnect, clear everyting
 					{
-						// Old username is stored in the peer tag and must be deleted separately from clear()
-						for each (auto i in Channels)
+						for (auto i : Channels)
 						{
-							for (auto j = i->firstpeer(); j != nullptr; j = j->next())
-							{
-								if (j->tag)
-								{
-									free(j->tag);
-									j->tag = nullptr;
-								}
-							}
+							assert(i->isclosed);
+							delete i;
 						}
 
-						// TODO: Why do we even HAVE channels? If they're dups, is a full clone useable?
-						// what happens to peer's tag, being it's a char * and if duped, will be freed twice?
-
 						Channels.clear();
-						Peers.clear();
 					}
+
+					if (!S->Channel || S->Channel && !S->Peer)
+						for (auto dropExt : Globals->Refs)
+							if (dropExt->ThreadData.Channel->isclosed)
+								dropExt->ThreadData.Channel = nullptr;
+
+					if (S->Peer)
+						for (auto dropExt : Globals->Refs)
+							if (dropExt->ThreadData.Peer->isclosed)
+								dropExt->ThreadData.Peer = nullptr;
 				}
-				else
-					i->Runtime.PushEvent((int)S->CondTrig[u]);
 			}
+		}
+
+		// S->ReceivedMsg.Content overlaps Loop.Name
+		if (S->ReceivedMsg.Content != nullptr)
+		{
+			free(S->ReceivedMsg.Content);
+			for (auto i : Globals->Refs)
+				ThreadData.ReceivedMsg.Content = nullptr;
 		}
 
 		EnterCriticalSectionDerpy(&Globals->Lock);
@@ -708,7 +719,7 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			"Bluewing Warning",
 			MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
 	}
-	delete ThisGlobalsInfo; // Cleanup!
+	delete &G; // Cleanup!
 	return 0U;
 }
 
@@ -823,11 +834,11 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
+	lw_trace("~GlobalInfo start");
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
 	free(_GlobalID);
 	free(_PreviousName);
-	DeleteCriticalSection(&Lock);
 
 	// We're no longer responding to these events
 	_Client.onchannellistreceived(nullptr);
@@ -849,12 +860,13 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	_Client.onmessage_peer(nullptr);
 	_Client.onmessage_serverchannel(nullptr);
 	_Client.onmessage_server(nullptr);
+	_Client.tag = nullptr; // was == this, now this is not usable
+
+	_ObjEventPump->post_eventloop_exit();
 
 	// Cleanup all usages of GlobalInfo
 	if (!_Thread)
 		_ObjEventPump->tick();
-
-	_Client.tag = nullptr; // was == this, now this is not usable
 
 	if (_Client.connected() || _Client.connecting())
 	{
@@ -864,7 +876,6 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 			_ObjEventPump->tick();
 		Sleep(0U);
 	}
-	_ObjEventPump->post_eventloop_exit();
 
 	if (_Thread)
 	{
@@ -881,4 +892,7 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 		_ObjEventPump->tick();
 		Sleep(0U);
 	}
+
+	DeleteCriticalSection(&Lock);
+	lw_trace("~GlobalInfo end");
 }

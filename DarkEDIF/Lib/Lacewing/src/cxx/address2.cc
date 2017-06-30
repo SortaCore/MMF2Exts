@@ -96,29 +96,7 @@ error _address::resolve ()
 
 const char * _address::tostring ()
 {
-   const char * str = lw_addr_tostring ((lw_addr) this);
-   // Since str points to lw_addr->buffer we can modify str,
-   // but the const char * makes that iffy.
-   char * str2 = const_cast<char *>(str);
-   // IPv4 wrapped inside IPv6
-   if (!strncmp(str, "[::ffff:", 8))
-   {
-	   // 7 due to "1.2.3.4" -> 7 chars
-	   for (int i = 8+7, len = strnlen(&str[8+7], 64 - (8+7)) + 8+7; i < len; i++)
-	   {
-		   if (str[i] == ']')
-		   {
-			   // Move IPv4 backwards in buffer.
-			   // Apparently the addr's buffer is used for every tostring() call.
-
-			   // actually 64, not len, as lw_addr->buffer is 64 chars
-			   memmove_s(str2, len, &str[8], len - i);
-			   str2[i - 8] = '\0';
-			   break;
-		   }
-	   }
-   }
-   return str;
+   return lw_addr_tostring ((lw_addr) this);
 }
 
 _address::operator const char * ()

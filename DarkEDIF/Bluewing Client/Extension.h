@@ -15,7 +15,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 61;
+    static const int Version = lacewing::relayclient::buildnum;
 
     static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
     static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
@@ -56,6 +56,7 @@ public:
 	void CreateError(const char *);
 
 	void AddToSend(void *, size_t);
+	void ClearThreadData();
 	
 
 	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
@@ -63,11 +64,13 @@ public:
 	
 	// To work around this, we duplicate all the variables, and provide a special event number which will remove
 	// all the pointers in SaveExtInfo after they should no longer be valid.
-	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as
-	// Lacewing is concerned they no longer exist.
+	// In this way, when a peer sends message then leaves channel, on liblacewing's side that happens instantly,
+	// and liblacewing cleans up its peer variable instantly too.
+	// But since these events are queued, the "on peer disconnect" may be called later, after liblacewing has deleted.
+	// So we have to store a copy of the peer so we can look up name when it's disconnected.
 
-	std::vector<lacewing::relayclient::channel *> Channels;
-	std::vector<lacewing::relayclient::channel::peer *> Peers;
+	// Here is our copy of channels, which in turn contain copies of peers.
+	std::vector<ChannelCopy *> Channels;
 
     // int MyVariable;
 
@@ -275,6 +278,7 @@ public:
 		// ReplacedExprNoParams
 		long SendBinaryAddress();
 		const char * DumpMessage(int Index, const char * Format);
+		int ChannelListing_ChannelCount();
 
     /* These are called if there's no function linked to an ID */
 
@@ -305,8 +309,8 @@ struct GlobalInfo
 	lacewing::eventpump			_ObjEventPump;
 	lacewing::relayclient		_Client;
 	char *						_PreviousName,
-		*_SendMsg,
-		*_DenyReasonBuffer;
+		 *						_SendMsg,
+		 *						_DenyReasonBuffer;
 	size_t						_SendMsgSize;
 	bool						_AutomaticallyClearBinary;
 	char *						_GlobalID;
@@ -320,20 +324,20 @@ struct GlobalInfo
 	
 	void AddEvent1(int Event1,
 		void * ChannelOrChannelListing = nullptr,
-		lacewing::relayclient::channel::peer * Peer = nullptr,
+		PeerCopy * Peer = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
 		unsigned char Subchannel = 255);
 	void AddEvent2(int Event1, int Event2,
 		void * ChannelOrChannelListing = nullptr,
-		lacewing::relayclient::channel::peer * Peer = nullptr,
+		PeerCopy * Peer = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
 		unsigned char Subchannel = 255);
 private:
 	void AddEventF(bool twoEvents, int Event1, int Event2,
 		void * ChannelOrChannelListing = nullptr,
-		lacewing::relayclient::channel::peer * Peer = nullptr,
+		PeerCopy * Peer = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
 		unsigned char Subchannel = 255

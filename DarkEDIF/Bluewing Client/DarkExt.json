@@ -7,13 +7,9 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2017 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b61)",
-			// Use a file without path if your help file can be loaded by the MMF help file.
-			// "MyExt.chm";
-			// Or return the path of your file (relative to the MMF directory)
-			// if your file is not loaded by the MMF help file.
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b70)",
 			"Help": "Help/BluewingClient.chm",
-			"URL": "http://dark-wire.com/relay/"
+			"URL": "https://dark-wire.com/relay/"
 		},
 
 		"ActionMenu":
@@ -277,8 +273,10 @@
 			],
 			
 			["Channel listing",
-				[12, "Get name"],
-				[13, "Get peer count"]
+        [12, "Get name [Channel listing loop]"],
+        [13, "Get peer count [Channel listing loop] "],
+        "Separator",
+				[56, "Get number of channels in list"]
 			],
 	
 			["Received",
@@ -1530,6 +1528,10 @@
 					["Integer", "Starting index"],
 					["Text", "Enter format (see help)"]
 				]
+			},
+			{
+				"Title": "ChannelListing_NumChannels(",
+				"Returns": "Integer"
 			}
 		],
 		"Properties": [
@@ -1572,7 +1574,7 @@
 			},
 			{
 				"Title": "Kill connection when disowned",
-				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Bluewings are destroyed.",
+				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Lacewing Blue Clients are destroyed.",
 				"Type": "Checkbox",
 				"DefaultState": false
 			}

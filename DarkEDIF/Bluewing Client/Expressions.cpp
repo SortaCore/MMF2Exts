@@ -15,21 +15,18 @@ const char * Extension::Self_Name()
 }
 int Extension::Self_ChannelCount()
 {
-	return Cli.channelcount();
+	return Channels.size();
 }
 const char * Extension::Peer_Name()
 {
-	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->isclosed || !ThreadData.Peer->name()) ? "" : ThreadData.Peer->name());
+	return Runtime.CopyString(ThreadData.Peer ? ThreadData.Peer->name() : "");
 }
 const char * Extension::ReceivedStr()
 {
-	if (ThreadData.ReceivedMsg.Content[ThreadData.ReceivedMsg.Size-1] != '\0') 
-	{
-		CreateError("Received$() was used on a message that is not null-terminated.");
+	if (ThreadData.ReceivedMsg.Content == nullptr || ThreadData.ReceivedMsg.Size == 0) 
 		return Runtime.CopyString("");
-	}
 	else
-		return Runtime.CopyString(ThreadData.ReceivedMsg.Content);
+		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size).c_str());
 }
 int Extension::ReceivedInt()
 {
@@ -51,7 +48,7 @@ int Extension::Peer_ID()
 }
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->isclosed ? "" : ThreadData.Channel->name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
+	return Runtime.CopyString(ThreadData.Channel ? ThreadData.Channel->name() : "");
 }
 int Extension::Channel_PeerCount()
 {
@@ -59,11 +56,11 @@ int Extension::Channel_PeerCount()
 }
 const char * Extension::ChannelListing_Name()
 {
-	return Runtime.CopyString(ThreadData.ChannelListing ? ThreadData.Channel->name() : "");
+	return Runtime.CopyString(ThreadData.ChannelListing ? ThreadData.ChannelListing->name : "");
 }
 int Extension::ChannelListing_PeerCount()
 {
-	return (!ThreadData.Channel || ThreadData.Channel->isclosed) ? -1 : ThreadData.Channel->peercount();
+	return ThreadData.ChannelListing ? ThreadData.ChannelListing->peercount : -1;
 }
 int Extension::Self_ID()
 {
@@ -235,7 +232,7 @@ const char * Extension::Lacewing_Version()
 	if (version == nullptr)
 	{
 		std::stringstream str;
-		str << "liblacewing 0.5.4 / Bluewing reimpl b" << Extension::Version;
+		str << "liblacewing 0.5.4 / Bluewing reimpl b" << lacewing::relayclient::buildnum;
 		version = _strdup(str.str().c_str());
 	}
 	return Runtime.CopyString(version);
@@ -250,7 +247,7 @@ const char * Extension::Self_PreviousName()
 }
 const char * Extension::Peer_PreviousName()
 {
-	return Runtime.CopyString((!ThreadData.Peer || ThreadData.Peer->isclosed || !ThreadData.Peer->tag) ? "" : (char *)ThreadData.Peer->tag);
+	return Runtime.CopyString((!ThreadData.Peer || !ThreadData.Peer->prevname()) ? "" : ThreadData.Peer->prevname());
 }
 const char * Extension::DenyReason()
 {
@@ -258,7 +255,9 @@ const char * Extension::DenyReason()
 }
 const char * Extension::HostIP()
 {
-	return Runtime.CopyString(Cli.serveraddress()->tostring());
+	char * fusionAddr = (char *)Runtime.Allocate(64);
+	lacewing::lw_addr_prettystring(Cli.serveraddress()->tostring(), fusionAddr, 64U);
+	return fusionAddr; // Allocate is equivalent to CopyString, but doesn't copy initially.
 }
 int Extension::HostPort()
 {
@@ -572,4 +571,8 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 	}
 
 	return Runtime.CopyString("");
+}
+int Extension::ChannelListing_ChannelCount()
+{
+	return Cli.channellistingcount();
 }

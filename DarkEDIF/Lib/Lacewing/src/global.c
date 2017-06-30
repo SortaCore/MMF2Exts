@@ -160,6 +160,8 @@ void lw_dump (const char * buffer, size_t size)
 
 #endif
 
+#ifdef _lacewing_debug
+
 void lw_trace (const char * format, ...)
 {
    va_list args;
@@ -197,24 +199,26 @@ void lw_trace (const char * format, ...)
    va_end (args);
 }
 
-#ifdef _lacewing_debug
 
-   void lwp_refcount_log_retain(struct lwp_refcount * refcount)
-   {
-      lw_trace ("refcount: %p %s count = %d, retain",
-                   refcount,
-                   refcount->name,
-                   (int) refcount->refcount);
-   }
+void lwp_refcount_log_retain(struct lwp_refcount * refcount)
+{
+    lw_trace ("refcount: %p %s count = %d, retain",
+                refcount,
+                refcount->name,
+                (int) refcount->refcount);
+}
 
-   void lwp_refcount_log_release(struct lwp_refcount * refcount)
-   {
-      lw_trace ("refcount: %p %s count = %d, release",
-                   refcount,
-                   refcount->name,
-                   (int) refcount->refcount);
-   }
-
+void lwp_refcount_log_release(struct lwp_refcount * refcount)
+{
+    lw_trace ("refcount: %p %s count = %d, release",
+                refcount,
+                refcount->name,
+                (int) refcount->refcount);
+}
+#else
+ void lw_trace(const char * format, ...)
+ {
+ }
 #endif
 
 

@@ -138,8 +138,9 @@ void lwp_close_socket (lwp_socket socket)
       return;
 
    #ifdef _WIN32
-      CancelIo ((HANDLE) socket);
+      CancelIoEx ((HANDLE) socket, NULL);
       closesocket (socket);
+	  socket = (lwp_socket)INVALID_HANDLE_VALUE;
    #else
       close (socket);
    #endif

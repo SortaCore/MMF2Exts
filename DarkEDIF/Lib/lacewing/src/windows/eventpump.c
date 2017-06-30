@@ -84,7 +84,7 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
    if (overlapped == sig_exit_event_loop)
       return lw_false;
 
-   if (error == 995)
+   if (error == ERROR_OPERATION_ABORTED)
 	   return lw_true;
 
    if (watch->on_completion)
@@ -93,7 +93,7 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
 		   watch->on_completion(watch->tag, overlapped, bytes_transferred, error);
 	   }
 	   catch (...) {
-		   return lw_false;
+		   return lw_true;
 	   }
    }
 
@@ -205,6 +205,9 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 
          if (error == WAIT_TIMEOUT)
             break;
+
+		 if (error == ERROR_OPERATION_ABORTED)
+			 break;
 
          if (!overlapped)
             break;
@@ -321,6 +324,10 @@ static void def_post (lw_pump _ctx, void * function, void * parameter)
 {
    lw_eventpump ctx = (lw_eventpump) _ctx;
 
+#ifdef _DEBUG
+   assert(((long)parameter) != 0xDDDDDDDDL);
+#endif
+
    PostQueuedCompletionStatus (ctx->completion_port, 0xFFFFFFFF,
                                (ULONG_PTR) function,
                                (OVERLAPPED *) parameter);
@@ -335,7 +342,7 @@ static void def_update_callbacks (lw_pump ctx,
    watch->on_completion = on_completion;
 
 #ifdef _DEBUG
-   assert(((long)watch) != 0xDDDDDDDL);
+   assert(((long)watch) != 0xDDDDDDDDL);
 #endif
 }
 

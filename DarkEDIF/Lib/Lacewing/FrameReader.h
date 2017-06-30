@@ -47,7 +47,7 @@ protected:
 public:
 
     void  * tag;
-    void (* messagehandler) (void * tag, unsigned char type, const char * message, size_t size);
+    bool (* messagehandler) (void * tag, unsigned char type, const char * message, size_t size);
 
     framereader()
     {
@@ -140,7 +140,8 @@ public:
             {
                 /* the message isn't fragmented, and it's the only message. */
 
-                messagehandler(tag, messagetype, data, messagesize);
+				if (!messagehandler(tag, messagetype, data, messagesize))
+					return;
                 state = 0;
 				
 
@@ -156,7 +157,8 @@ public:
 				char nextbyte = data[messagesize];
 				data[messagesize] = 0;
 
-				messagehandler(tag, messagetype, data, messagesize);
+				if (!messagehandler(tag, messagetype, data, messagesize))
+					return;
 				data[messagesize] = nextbyte;
 
 				state = 0;
@@ -180,7 +182,8 @@ public:
         {
             buffer.add <char> (0);
 
-            messagehandler(tag, messagetype, buffer.buffer, messagesize);
+			if (!messagehandler(tag, messagetype, buffer.buffer, messagesize))
+				return;
             buffer.reset();
 
             state = 0;

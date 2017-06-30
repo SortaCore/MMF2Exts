@@ -1,7 +1,8 @@
-
 #include "Common.h"
-char Buffer [200];
-std::string CriticalSection;
+
+#ifdef _DEBUG
+std::stringstream CriticalSection;
+#endif
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
 									   "This is probably due to parameter changes.", "Lacewing Relay Client - DarkEDIF", MB_OK)
@@ -30,8 +31,8 @@ void Extension::Replaced_JoinChannel(char * ChannelName, int HideChannel)
 }
 void Extension::LeaveChannel()
 {
-	if (ThreadData.Channel)
-		ThreadData.Channel->leave();
+	if (ThreadData.Channel && ThreadData.Channel->isclosed)
+		ThreadData.Channel->orig().leave(); // don't set isclosed, leave not approved by server yet
 }
 void Extension::SendTextToServer(int Subchannel, char * TextToSend)
 {
@@ -53,7 +54,7 @@ void Extension::SendTextToChannel(int Subchannel, char * TextToSend)
 	else if (ThreadData.Channel->isclosed)
 		CreateError("Error: Send Text to Channel was called with a closed channel.");
 	else 
-		ThreadData.Channel->send(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		ThreadData.Channel->send(Subchannel, TextToSend);
 }
 void Extension::SendTextToPeer(int Subchannel, char * TextToSend)
 {
@@ -66,7 +67,7 @@ void Extension::SendTextToPeer(int Subchannel, char * TextToSend)
 	else if (ThreadData.Peer->isclosed)
 		CreateError("Error: Send Text to Peer was called with a closed peer.");
 	else
-		ThreadData.Peer->send(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		ThreadData.Peer->send(Subchannel, TextToSend);
 }
 void Extension::SendNumberToServer(int Subchannel, int NumToSend)
 {
@@ -104,7 +105,7 @@ void Extension::BlastTextToServer(int Subchannel, char * TextToSend)
 	else if (!TextToSend)
 		CreateError("Error: Blast Text to Server was called with a null parameter.");
 	else
-		Cli.blastserver(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		Cli.blastserver(Subchannel, TextToSend);
 }
 void Extension::BlastTextToChannel(int Subchannel, char * TextToSend)
 {
@@ -117,7 +118,7 @@ void Extension::BlastTextToChannel(int Subchannel, char * TextToSend)
 	else if (ThreadData.Channel->isclosed)
 		CreateError("Error: Blast Text to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->blast(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		ThreadData.Channel->blast(Subchannel, TextToSend);
 }
 void Extension::BlastTextToPeer(int Subchannel, char * TextToSend)
 {
@@ -130,7 +131,7 @@ void Extension::BlastTextToPeer(int Subchannel, char * TextToSend)
 	else if (ThreadData.Peer->isclosed)
 		CreateError("Error: Blast Text to Peer was called with a closed peer.");
 	else
-		ThreadData.Peer->blast(Subchannel, TextToSend, strlen(TextToSend)+1, 0);
+		ThreadData.Peer->blast(Subchannel, TextToSend);
 }
 void Extension::BlastNumberToServer(int Subchannel, int NumToSend)
 {
@@ -161,14 +162,10 @@ void Extension::BlastNumberToPeer(int Subchannel, int NumToSend)
 }
 void Extension::SelectChannelWithName(char * ChannelName)
 {
-	lacewing::relayclient::channel * Selected = Cli.firstchannel();
-	while (Selected)
-	{
-		if (!_stricmp(Selected->name(), ChannelName))
-			break;
-		Selected = Selected->next();
-	}
-	
+	auto SelectedI = std::find_if(Channels.begin(), Channels.end(),
+		[=](ChannelCopy * c) { return !_stricmp(c->name(), ChannelName); });
+	auto Selected = SelectedI == Channels.end() ? nullptr : *SelectedI;
+
 	// Only modify ThreadData.Channel if we found it
 	if (Selected && !Selected->isclosed)
 		ThreadData.Channel = Selected;
@@ -185,17 +182,23 @@ void Extension::ReplacedNoParams()
 }
 void Extension::LoopClientChannels()
 {
-	// Store selected channel
-	lacewing::relayclient::channel * Stored = ThreadData.Channel,
-								   * Selected = Cli.firstchannel();
-	while (Selected)
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+	for (auto Selected : Channels)
 	{
 		if (!Selected->isclosed)
-			Globals->AddEvent1(14, Selected);
-
-		Selected = Selected->next();
+		{
+			ClearThreadData();
+			ThreadData.Channel = Selected;
+			Runtime.GenerateEvent(14);
+		}
 	}
-	Globals->AddEvent1(18, Stored);
+
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
+
+	Runtime.GenerateEvent(18);
 }
 void Extension::SelectPeerOnChannelByName(char * PeerName)
 {
@@ -205,24 +208,20 @@ void Extension::SelectPeerOnChannelByName(char * PeerName)
 		CreateError("Error: Select Peer On Channel By Name was called without a channel being selected.");
 	else
 	{
-		lacewing::relayclient::channel::peer * Selected = ThreadData.Channel->firstpeer();
-		while (Selected)
-		{
-			if (!_stricmp(Selected->name(), PeerName))
-				break;
-			Selected = Selected->next();
-		}
+		auto &peers = ThreadData.Channel->getpeers();
+		auto Selected = std::find_if(peers.begin(), peers.end(), [=](PeerCopy * const P) {
+			return !_stricmp(P->name(), PeerName);
+		});
 
 		// Only modify ThreadData.Peer if we found it
-		if (Selected && !Selected->isclosed)
-			ThreadData.Peer = Selected;
+		if (Selected != peers.cend())
+			ThreadData.Peer = *Selected;
 		else
 		{
-			std::string Error = "Peer not found:\r\n";
-			Error += PeerName;
-			Error += "\r\nOn channel:\r\n";
-			Error += ThreadData.Channel->name();
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Peer with name " << PeerName 
+				<< " not found on channel " << ThreadData.Channel->name() << ".";
+			CreateError(Error.str().c_str());
 		}
 	}
 }
@@ -236,28 +235,20 @@ void Extension::SelectPeerOnChannelByID(int PeerID)
 		CreateError("Error: Select Peer On Channel By ID was called with a closed channel.");
 	else
 	{
-		lacewing::relayclient::channel::peer * Selected = ThreadData.Channel->firstpeer();
-		while (Selected)
-		{
-			if (Selected->id() == PeerID)
-				break;
-			Selected = Selected->next();
-		}
-
+		auto &peers = ThreadData.Channel->getpeers();
+		auto Selected = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &P) {
+			return P->id() == PeerID;
+		});
+		
 		// Only modify ThreadData.Peer if we found it
-		if (Selected && !Selected->isclosed)
-			ThreadData.Peer = Selected;
+		if (Selected != peers.cend())
+			ThreadData.Peer = *Selected;
 		else
 		{
-			char num[20];
-			std::string Error = "Peer ID ";
-			if (_itoa_s(PeerID, num, 20, 10))
-				Error += "> could not be copied <";
-			else
-				Error += &num[0];
-			Error += " not found on channel:";
-			Error += ThreadData.Channel->name();
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Peer with ID " << PeerID
+				<< " not found on channel " << ThreadData.Channel->name() << ".";
+			CreateError(Error.str().c_str());
 		}
 	}
 }
@@ -268,15 +259,25 @@ void Extension::LoopPeersOnChannel()
 		CreateError("Error: Loop Peers On Channel was called without a channel being selected.");
 	else
 	{
-		lacewing::relayclient::channel::peer * Stored = ThreadData.Peer,
-											 * Selected = ThreadData.Channel->firstpeer();
-		while (Selected)
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+		auto StoredChannel = ThreadData.Channel;
+		auto& peers = ThreadData.Channel->getpeers();
+		for (auto Selected : peers)
 		{
 			if (!Selected->isclosed)
-				Globals->AddEvent1(13, nullptr, Selected);
-			Selected = Selected->next();
+			{
+				ClearThreadData();
+				ThreadData.Channel = StoredChannel;
+				ThreadData.Peer = Selected;
+				Runtime.GenerateEvent(13);
+			}
 		}
-		Globals->AddEvent1(17, nullptr, Stored);
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		Runtime.GenerateEvent(17);
 	}
 }
 void Extension::RequestChannelList()
@@ -285,13 +286,20 @@ void Extension::RequestChannelList()
 }
 void Extension::LoopListedChannels()
 {
-	const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
-	while (Selected)
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	
+	for (auto Selected = Cli.firstchannellisting(); Selected; Selected = Selected->next())
 	{
-		Globals->AddEvent1(27, (void *)Selected); // Catch first listing by this being first
-		Selected = Selected->next();
+		ClearThreadData();
+		ThreadData.ChannelListing = Selected;
+		Runtime.GenerateEvent(27);
 	}
-	Globals->AddEvent1(28);
+
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
+
+	Runtime.GenerateEvent(28);
 }
 void Extension::SendBinaryToServer(int Subchannel)
 {
@@ -462,98 +470,81 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		CreateError("Cannot save received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot save received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size < ((unsigned int)Position) + Size)
-		CreateError("Cannot save received binary; Message is too small.");
+	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
+	{
+		std::stringstream Error;
+		Error << "Cannot save received binary to file; message doesn't have " << Size
+			<< " bytes at position " << Position << " onwards.";
+		CreateError(Error.str().c_str());
+		return;
+	}
 	else
 	{
-		FILE * File = NULL;
-		if (fopen_s(&File, Filename, "wb") || !File)
+		FILE * File = _fsopen(Filename, "wb", SH_DENYWR);
+		if (!File)
 		{
-			char errorval [20];
-			
-			std::string Error = "Cannot save received binary to file, error ";
-			if (_itoa_s(errno, errorval, 20, 10))
-				Error += " with opening the file, and with converting error number.";
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot save received binary to file, error number " << errno
+				<< " occured with opening the file. The message has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
-		// Jump to end
-		fseek(File, 0, SEEK_END);
 
-		// Read current position as file size
-		long long filesize = _ftelli64(File);
-
-		// Go back to start
-		fseek(File, 0, SEEK_SET);
-		long l;
-		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
+		size_t amountWritten;
+		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
-			char sizeastext [20];
-			std::string Error = "Couldn't save the received binary to file, ";
-			if (_itoa_s(errno, sizeastext, 20, 10))
-				Error += " and error copying size.";
-			else
-			{
-				Error += &sizeastext[0];
-				Error += " bytes managed to be written.";
-			}
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot save received binary to file, error number " << errno 
+				<< " occured with writing the file. Wrote " << amountWritten
+				<< " bytes total. The message has not been modified.";
+			CreateError(Error.str().c_str());
 		}
+
 		fclose(File);
 	}
 }
 void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filename)
 {
 	if (Position < 0)
-		CreateError("Cannot append received binary; Position less than 0.");
+		CreateError("Cannot append received binary to file; position less than 0.");
 	else if (Size <= 0)
-		CreateError("Cannot append received binary; Size equal or less than 0.");
+		CreateError("Cannot append received binary to file; size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
-		CreateError("Cannot append received binary; filename is invalid.");
+		CreateError("Cannot append received binary to file; filename is invalid.");
 	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
-		CreateError("Cannot append received binary; Message is too small.");
+	{
+		std::stringstream Error;
+		Error << "Cannot append received binary to file; message doesn't have " << Size
+			<< " bytes at position " << Position << " onwards.";
+		CreateError(Error.str().c_str());
+		return;
+	}
 	else
 	{
 		// Open while denying write of other programs
 		FILE * File = _fsopen(Filename, "ab", SH_DENYWR);
 		if (!File)
 		{
-			char errorval [20];
-			std::string Error = "Cannot append received binary to file, error ";
-			if (_itoa_s(errno, errorval, 20, 10))
-				Error += " with opening the file, and with converting error number.";
-			else
-			{
-				Error += "number [";
-				Error += errorval;
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot append received binary to file, error number " << errno
+				<< " occured with opening the file. The binary message has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
 
-		long l;
-		if ((l = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
+		size_t amountWritten;
+		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content+Position, 1, Size, File)) != Size)
 		{
-			char sizeastext [20];
-			std::string Error = "Couldn't append the received binary to file, ";
-			if (_itoa_s(errno, sizeastext, 20, 10))
-				Error += " and error copying size.";
-			else
-			{
-				Error += sizeastext;
-				Error += " bytes managed to be appended.";
-			}
-			CreateError(Error.c_str());
+			fseek(File, 0, SEEK_END);
+			long long filesize = _ftelli64(File);
+
+			std::stringstream Error;
+			Error << "Cannot append received binary to file, error number " << errno
+				<< " occured with writing the file. Wrote " << amountWritten
+				<< " bytes, leaving file at size " << filesize << " total. The binary message has not been modified.";
+			CreateError(Error.str().c_str());
 		}
+
 		fclose(File);
 	}
 }
@@ -563,26 +554,17 @@ void Extension::AddFileToBinary(char * Filename)
 		CreateError("Cannot add file to send binary; filename is invalid.");
 	else
 	{
-		FILE * File = NULL;
-		
 		// Open and deny other programs write priviledges
-		if (!(File = _fsopen(Filename, "wb", _SH_DENYWR)))
+		FILE * File = _fsopen(Filename, "rb", _SH_DENYWR);
+		if (!File)
 		{
-			char errorval [20];
-			std::string Error = "Cannot save binary to file, error ";
-			if (_itoa_s(errno, errorval, 20, 10))
-				Error += " with opening the file, and with converting error number.";
-			else
-			{
-				Error += "number [";
-				Error += errorval;
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot add file to send binary, error number " << errno 
+				<< " occured with opening the file. The send binary has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
+
 		// Jump to end
 		fseek(File, 0, SEEK_END);
 
@@ -594,29 +576,29 @@ void Extension::AddFileToBinary(char * Filename)
 
 		char * buffer = (char *)malloc(filesize);
 		if (!buffer)
-			CreateError("Couldn't reserve enough memory to add file into message.");
+		{
+			std::stringstream Error;
+			Error << "Couldn't read file \"" << Filename << "\" into binary to send; couldn't reserve enough memory "
+				"to add file into message. The send binary has not been modified.";
+			CreateError(Error.str().c_str());
+		}
 		else
 		{
-			size_t s;
-			if ((s = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
+			size_t amountRead;
+			if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
 			{
-				char sizeastext [20];
-				std::string Error = "Couldn't write full buffer to file, ";
-				if (_itoa_s(s, sizeastext, 20, 10))
-					Error += " and error copying size.";
-				else
-				{
-					Error += &sizeastext[0];
-					Error += " bytes managed to be written.";
-				}
-				CreateError(Error.c_str());
+				std::stringstream Error;
+				Error << "Couldn't read file \"" << Filename << "\" into binary to send, error number " << errno
+					<< " occured with opening the file. The send binary has not been modified.";
+				CreateError(Error.str().c_str());
 			}
-			AddToSend(buffer, s);
+			else
+				AddToSend(buffer, amountRead);
 
 			free(buffer);
 		}
 		fclose(File);
-	} 
+	}
 }
 void Extension::SelectChannelMaster()
 {
@@ -626,23 +608,12 @@ void Extension::SelectChannelMaster()
 		CreateError("Could not select channel master: Channel is closed.");
 	else
 	{
-		lacewing::relayclient::channel::peer * Stored = ThreadData.Peer;
-	
-		ThreadData.Peer = ThreadData.Channel->firstpeer();
-		while (ThreadData.Peer)
-		{
-			if (ThreadData.Peer->ischannelmaster())
-			{
-				if (ThreadData.Peer->isclosed)
-					ThreadData.Peer = Stored;
-				return; // Selected the correct peer
-			}
-
-			ThreadData.Peer = ThreadData.Peer->next();
-		}
+		PeerCopy * Stored = ThreadData.Peer;
+		ThreadData.Peer = ThreadData.Channel->channelmaster();
 
 		// Restore if no channel master found
-		ThreadData.Peer = Stored;
+		if (!ThreadData.Peer || ThreadData.Peer->isclosed)
+			ThreadData.Peer = Stored;
 	}
 }
 void Extension::JoinChannel(char * ChannelName, int Hidden, int CloseAutomatically)
@@ -657,17 +628,17 @@ void Extension::JoinChannel(char * ChannelName, int Hidden, int CloseAutomatical
 void Extension::CompressSendBinary()
 {
 	if (SendMsgSize <= 0)
-		CreateError("Cannot compress; Message is too small.");
+		CreateError("Cannot compress send binary; Message is too small.");
 	else
 	{
 		int ret;
 		z_stream strm = {0};
 
-		ret = deflateInit_(&strm, 9, ZLIB_VERSION, sizeof(z_stream));
+		ret = deflateInit(&strm, 9);
 		if (ret)
 		{
 			std::stringstream error;
-			error << "Error " << ret << "occured with initiating compression.";
+			error << "Error " << ret << " occured with initiating compression.";
 			CreateError(error.str().c_str());
 			return;
 		}
@@ -676,7 +647,7 @@ void Extension::CompressSendBinary()
 		if (!output_buffer)
 		{
 			std::stringstream error;
-			error << "Error, could not allocate enough memory. Desired " << SendMsgSize + 256 << "bytes.";
+			error << "Error with compressing send binary, could not allocate enough memory. Desired " << SendMsgSize + 256 << " bytes.";
 			CreateError(error.str().c_str());
 			deflateEnd(&strm);
 			return;
@@ -693,7 +664,7 @@ void Extension::CompressSendBinary()
 		if (ret != Z_STREAM_END)
 		{
 			std::stringstream error;
-			error << "Error with compression, deflate() returned " << ret << "! Text: " << strm.msg ? strm.msg : "";
+			error << "Error with compressing send binary, deflate() returned " << ret << ". Zlib error: " << (strm.msg ? strm.msg : "");
 			free(output_buffer);
 			deflateEnd(&strm);
 			CreateError(error.str().c_str());
@@ -702,96 +673,92 @@ void Extension::CompressSendBinary()
 
 		deflateEnd(&strm);
 
-		void * v = realloc(output_buffer, strm.total_out);
-		if (!v)
+		void * output_bufferResize = realloc(output_buffer, strm.total_out);
+		if (!output_bufferResize)
 		{
-			free(output_buffer);
-			CreateError("Error with compression, reallocating memory failed.");
+			free(output_buffer); // realloc will not free on error
+			CreateError("Error with compressing send binary, reallocating memory to remove excess space after compression failed.");
 			return;
 		}
 		free(SendMsg);
 	
-		SendMsg = (char *)v;
+		SendMsg = (char *)output_bufferResize;
 		SendMsgSize = strm.total_out;
 	}
 }
 void Extension::DecompressReceivedBinary()
 {
 	if (ThreadData.ReceivedMsg.Size <= 0)
-		CreateError("Cannot decompress; Message is too small.");
+		CreateError("Cannot decompress received binary; message is too small.");
 	else
 	{
-		int ret;
-		z_stream strm = {0};
-
-		ret = inflateInit_(&strm, ZLIB_VERSION, sizeof(z_stream));
+		z_stream strm = { 0 };
+		int ret = inflateInit_(&strm, ZLIB_VERSION, sizeof(z_stream));
 		if (ret)
 		{
 			std::stringstream error;
-			error << "Error " << ret << "occured with initiating decompression.";
+			error << "Error " << ret << " occured with initiating decompression.";
 			CreateError(error.str().c_str());
 			return;
 		}
-	
-		unsigned char * output_buffer = NULL, * output_buffer_pointer = NULL;
 
+		unsigned char * output_buffer = NULL, *output_buffer_pointer = NULL;
 		strm.next_in = (unsigned char *)ThreadData.ReceivedMsg.Content;
 		strm.avail_in = ThreadData.ReceivedMsg.Size;
-
 		// run inflate() on input until output buffer not full, finish
 		// compression if all of source has been read in
 		do {
 			// Allocate memory for compression
-			output_buffer_pointer = (unsigned char *)realloc(output_buffer, (output_buffer ? _msize(output_buffer) : 0)+1024);
+			output_buffer_pointer = (unsigned char *)realloc(output_buffer, (output_buffer ? _msize(output_buffer) : 0) + 1024);
 			if (!output_buffer_pointer)
 			{
 				std::stringstream error;
-				error << "Error, could not allocate enough memory. Desired " << (output_buffer ? _msize(output_buffer) : 0)+1024 << "bytes.";
+				error << "Error with decompression, could not allocate enough memory. Desired "
+					<< (output_buffer ? _msize(output_buffer) : 0) + 1024 << " bytes.";
 				if (output_buffer)
 					free(output_buffer);
-				
+
 				CreateError(error.str().c_str());
 				inflateEnd(&strm);
 				return;
 			}
-				
+
 			output_buffer = output_buffer_pointer;
 			output_buffer_pointer += _msize(output_buffer) - 1024;
 			strm.avail_out = 1024;
 			strm.next_out = output_buffer_pointer;
-
 			ret = inflate(&strm, Z_FINISH);
 			if (ret < Z_OK)
 			{
 				std::stringstream error;
-				error << "Error with decompression, inflate() returned " << ret << "! Text: " << strm.msg ? strm.msg : "";
+				error << "Error with decompression, inflate() returned error " << ret
+					<< ". Zlib error: " << (strm.msg ? strm.msg : "");
 				free(output_buffer);
-				CreateError(error.str().c_str());
 				inflateEnd(&strm);
+				CreateError(error.str().c_str());
 				return;
 			}
-			
+
 		} while (strm.avail_in != 0);
-		
+
 		if (ret < 0)
 		{
 			std::stringstream error;
-			error << "Error with decompression: " << ret << "! Text: " << strm.msg ? strm.msg : "";
-			CreateError(error.str().c_str());
+			error << "Error with decompression: " << ret << ". Zlib error: " << (strm.msg ? strm.msg : "");
 			inflateEnd(&strm);
+			CreateError(error.str().c_str());
 			return;
 		}
 		inflateEnd(&strm);
 
+		// Update all extensions with new message content.
 		char * ThisMsg = ThreadData.ReceivedMsg.Content;
 		free(ThreadData.ReceivedMsg.Content);
-		ThreadData.ReceivedMsg.Content = (char *)output_buffer;
-		ThreadData.ReceivedMsg.Cursor = 0;
-		ThreadData.ReceivedMsg.Size = _msize(output_buffer);
+
 		for (std::vector<SaveExtInfo *>::iterator i = Saved.begin(); i != Saved.end(); ++i)
 		{
-			if (ThisMsg != (*i)->ReceivedMsg.Content)
-				break;
+			if ((char *)output_buffer == (*i)->ReceivedMsg.Content)
+				continue;
 			(*i)->ReceivedMsg.Content = (char *)output_buffer;
 			(*i)->ReceivedMsg.Cursor = 0;
 			(*i)->ReceivedMsg.Size = _msize(output_buffer);
@@ -813,32 +780,49 @@ void Extension::LoopListedChannelsWithLoopName(char * LoopName)
 		CreateError("Cannot loop listed channels: invalid loop name supplied.");
 	else
 	{
-		const lacewing::relayclient::channellisting * Selected = Cli.firstchannellisting();
-		while (Selected)
-		{
-			// Catch first listing by this being first
-			Globals->AddEvent1(59, (void *)Selected, nullptr, _strdup(LoopName));
-			Selected = Selected->next();
-		}
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
 		
-		Globals->AddEvent1(60, nullptr, nullptr, _strdup(LoopName));
+		for (auto Selected = Cli.firstchannellisting(); Selected; Selected = Selected->next())
+		{
+			ClearThreadData();
+			ThreadData.ChannelListing = Selected;
+			ThreadData.Loop.Name = _strdup(LoopName);
+			Runtime.GenerateEvent(59);
+		}
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(60);
 	}
 }
 void Extension::LoopClientChannelsWithLoopName(char * LoopName)
 {
 	if (LoopName[0] == '\0')
-		CreateError("Cannot loop listed channels: invalid loop name supplied.");
+		CreateError("Cannot loop client channels: invalid loop name supplied.");
 	else
 	{
-		lacewing::relayclient::channel * Stored = ThreadData.Channel,
-									   * LoopChannel = Cli.firstchannel();
-		while (LoopChannel)
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		
+		for (auto LoopChannel : Channels)
 		{
 			if (!LoopChannel->isclosed)
-				Globals->AddEvent1(63, LoopChannel, nullptr, _strdup(LoopName));
-			LoopChannel = LoopChannel->next();
+			{
+				ClearThreadData();
+				ThreadData.Channel = LoopChannel;
+				ThreadData.Loop.Name = _strdup(LoopName);
+				Runtime.GenerateEvent(63);
+			}
 		}
-		Globals->AddEvent1(64, Stored);
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(64);
 	}
 }
 void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
@@ -851,15 +835,29 @@ void Extension::LoopPeersOnChannelWithLoopName(char * LoopName)
 		CreateError("Cannot loop peers on channel: Channel is closed.");
 	else
 	{
-		lacewing::relayclient::channel::peer * Stored = ThreadData.Peer,
-											 * LoopPeer = ThreadData.Channel->firstpeer();
-		while (LoopPeer)
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+		ChannelCopy * StoredChannel = ThreadData.Channel;
+		auto& peers = ThreadData.Channel->getpeers();
+
+		for (auto LoopPeer : peers)
 		{
 			if (!LoopPeer->isclosed)
-				Globals->AddEvent1(61, nullptr, LoopPeer, _strdup(LoopName));
-			LoopPeer = LoopPeer->next();
+			{
+				ClearThreadData();
+				ThreadData.Channel = StoredChannel;
+				ThreadData.Peer = LoopPeer;
+				ThreadData.Loop.Name = _strdup(LoopName);
+				Runtime.GenerateEvent(61);
+			}
 		}
-		Globals->AddEvent1(62, nullptr, Stored, _strdup(LoopName));
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(62);
 	}
 }
 void Extension::Connect(char * Hostname)
@@ -888,7 +886,7 @@ void Extension::ResizeBinaryToSend(int NewSize)
 		char * NewMsg = (char *)realloc(SendMsg, NewSize);
 		if (!NewMsg)
 		{
-			return CreateError("Cannot change size of binary to send: reallocation of memory failed.\r\n"
+			return CreateError("Cannot change size of binary to send: reallocation of memory failed. "
 							   "Size has not been modified.");
 		}
 		// Clear new bytes to 0

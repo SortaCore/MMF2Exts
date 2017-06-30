@@ -57,6 +57,7 @@ public:
     unsigned short borrow()
     {
 		++borrowedCount;
+		lw_trace("Borrowed Client ID. %i IDs borrowed so far.", borrowedCount);
 
 		// More than can be stored in an ID list are in use. JIC.
 		if (borrowedCount > 0xFFFF)

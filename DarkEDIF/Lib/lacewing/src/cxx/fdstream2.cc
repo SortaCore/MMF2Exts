@@ -34,9 +34,9 @@ fdstream lacewing::fdstream_new (lacewing::pump pump)
    return (fdstream) lw_fdstream_new ((lw_pump) pump);
 }
 
-void _fdstream::set_fd (lw_fd fd, lw_pump_watch watch, bool auto_close)
+void _fdstream::set_fd (lw_fd fd, lw_pump_watch watch, bool auto_close, bool is_socket)
 {
-   lw_fdstream_set_fd ((lw_fdstream) this, fd, watch, auto_close);
+   lw_fdstream_set_fd ((lw_fdstream) this, fd, watch, auto_close, is_socket);
 }
 
 bool _fdstream::valid ()

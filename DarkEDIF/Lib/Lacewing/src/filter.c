@@ -326,6 +326,10 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
    if (bind (s, (struct sockaddr *) &addr, (int) addr_len) == -1)
    {
       lw_error_add (error, lwp_last_socket_error);
+
+	  if (lwp_last_socket_error == 10013 || lwp_last_socket_error == 10048)
+		  lw_error_addf(error, "Socket is in use already?");
+
       lw_error_addf (error, "Error binding socket");
 
       lwp_close_socket (s);

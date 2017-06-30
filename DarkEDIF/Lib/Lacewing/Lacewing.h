@@ -1429,12 +1429,40 @@ lw_import flashpolicy flashpolicy_new (pump);
 lw_import void flashpolicy_delete (flashpolicy);
 
 #pragma region Phi stuff
-// NOTE: if you edit this due to new liblacewing release, note _flashpolicy::on_error requires flash policy definition to be extracted.
-// Otherwise the flashpolicy can't be accessed for the C++ Flash Policy extension covered in flaspolicy2.cc.
+// NOTE: if you edit this due to new liblacewing release, note:
+// _flashpolicy::on_error requires flash policy definition to be extracted.
+// Otherwise the flashpolicy can't be accessed for the C++ Flash Policy extension covered in flashpolicy2.cc.
+// lw_flashpolicy_new needs the server tag to be set to ctx, or on_error fails.
+
+// lacewing::_address has no lacewing::_address comparisons.
+// So if you're checking two lacewing::address == lacewing::address, do * on the first one.
+// This will expose the equality operator in the lacewing::_address class.
+
+// lacewing::fd_stream::set_fd uses WSADuplicateSocket() to check if the handle passed is a socket.
+// Normally, this is used to pass access to a socket to a second process, so this prepares the socket for copying.
+// The duplicated information is not used for a new socket, though. It's just discarded.
+// 
+// The missing second socket causes the client OS to not fully disconnect the socket, so on disconnect,
+// • you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
+// • you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
+// 
+// On process close, the socket is force-closed with a TCP RST (Reset) message.
+// 
+// To avoid this, just modify the function (and C++ mirror) to pass is_socket parameter.
+// That way the "is socket" hack isn't needed.
+
+// You should also run a check on _lw_addr used on stack. This is normally followed by lw_addr_set_sockaddr.
+// That's fine, but that function runs malloc on the _lw_addr, which leads to a memory leak when the stack
+// variable is freed. Run lw_addr_cleanup() on the stack address at the _lw_addr scope exits to compensate for it.
+
+/// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
+/// 		  If the address is IPv4 or unmapped IPv6, returns it as is. </summary>
+void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
 
 struct relayclient
 {
 public:
+	const static int buildnum = 70;
 
 	void * internaltag, *tag;
 
@@ -1464,7 +1492,7 @@ public:
 	{
 		void * internaltag, *tag;
 
-		short peercount;
+		unsigned short peercount;
 		const char * name;
 		const channellisting * next() const;
 	};
@@ -1479,7 +1507,6 @@ public:
 
 	struct channel
 	{
-		bool isclosed;  // is channel no longer valid for writing?
 		void * internaltag, *tag;
 
 		const char * name() const;
@@ -1490,7 +1517,6 @@ public:
 
 		struct peer
 		{
-			bool isclosed; // is peer no longer valid for writing?
 			void * internaltag, *tag;
 
 			unsigned short  id() const;
@@ -1500,16 +1526,16 @@ public:
 			void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
 
 			const char * name() const;
+			const char * prevname() const;
 			peer * next() const;
-			~peer() noexcept(false);
 		};
 
 		int peercount() const;
 		channel::peer * firstpeer() const;
 		channel * next() const;
+		unsigned short id() const;
 
 		void leave() const;
-		~channel() noexcept(false);
 	};
 
 	int channelcount() const;
@@ -1568,15 +1594,12 @@ public:
 	void onpeer_disconnect(handler_peer_disconnect);
 	void onpeer_changename(handler_peer_changename);
 	void onchannellistreceived(handler_channellistreceived);
-
-private:
-
-	lacewing::client socket;
-	lacewing::udp    udp;
 };
 
 struct relayserver
 {
+	static const int buildnum = 4;
+
 	void * internaltag, *tag;
 
 	lacewing::server socket;
@@ -1602,7 +1625,6 @@ struct relayserver
 	struct channel
 	{
 		void * internaltag, *tag;
-		bool isclosed;
 
 		unsigned short id();
 
@@ -1613,6 +1635,9 @@ struct relayserver
 
 		bool hidden();
 		bool autocloseenabled();
+
+		/// <summary> Gracefully closes the channel, including deleting memory, removing channel
+		/// 		  from server list, and messaging clients. </summary>
 		void close();
 
 		void send(int subchannel, const char * data, size_t size = MAXSIZE_T, int variant = 0);
@@ -1621,6 +1646,14 @@ struct relayserver
 		size_t clientcount();
 		client * firstclient();
 		channel * next();
+
+		~channel() noexcept(false);
+
+		// Called when server wants to add one. Also invoked by liblacewing itself.
+		// Sends relevant join/leave response messages.
+
+		void addclient(lacewing::relayserver::client &newClient);
+		void removeclient(lacewing::relayserver::client &newClient);
 	};
 
 	size_t channelcount();
@@ -1629,12 +1662,13 @@ struct relayserver
 	struct client
 	{
 		void * internaltag, *tag;
-		bool isclosed;
 
 		unsigned short id();
 
 		const char * getaddress();
 		const char * getimplementation();
+
+		void close();
 
 		void disconnect();
 
@@ -1645,14 +1679,20 @@ struct relayserver
 		void name(const char *);
 
 		size_t channelcount();
-		size_t getconnecttime();
+		__int64 getconnecttime();
 
 		channel * firstchannel();
 		client * next();
+		channel * nextchannel(channel *);
+		
+		~client() noexcept(false);
 	};
 
 	size_t clientcount();
 	client * firstclient();
+
+	relayserver::channel * createchannel(const char * channelName, lacewing::relayserver::client &master, bool hidden, bool autoclose);
+	relayserver::channel * createchannel(const char * channelName, bool hidden, bool autoclose); // no master
 
 	typedef void(*handler_connect)     (lacewing::relayserver &server, lacewing::relayserver::client &client);
 	typedef void(*handler_disconnect)  (lacewing::relayserver &server, lacewing::relayserver::client &client);
@@ -1672,13 +1712,14 @@ struct relayserver
 			int subchannel, const char * data, size_t size, int variant);
 
 	typedef void(*handler_channel_join)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
+		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
+			bool hidden, bool autoclose);
 
 	typedef void(*handler_channel_leave)
 		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
 
 	typedef void(*handler_nameset)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, const char * name);
+		(lacewing::relayserver &server, lacewing::relayserver::client &client, const char * requestedname);
 
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);
@@ -1691,18 +1732,18 @@ struct relayserver
 	void onnameset(handler_nameset);
 
 	void connect_response(lacewing::relayserver::client &client,
-		const char * denyReason);
+		const char * const denyReason);
 	void joinchannel_response(lacewing::relayserver::channel &channel,
-		const char * newChannelName, lacewing::relayserver::client &client, const char * denyReason);
-	void channelmessage_permit(lacewing::relayserver::channel &channel, lacewing::relayserver::client &client,
-		const char * data, size_t size, unsigned char subchannel, bool blasted, unsigned char variant, bool accept);
+		lacewing::relayserver::client &client, const char * const denyReason);
+	void channelmessage_permit(
+		lacewing::relayserver::client &sendingclient, lacewing::relayserver::channel &channel,
+		bool blasted, unsigned char subchannel, const char * data, size_t size, unsigned char variant, bool accept);
 	void clientmessage_permit(lacewing::relayserver::client &sendingclient, lacewing::relayserver::channel &channel,
 		lacewing::relayserver::client &receivingclient,
-		const char * data, size_t size, unsigned char subchannel, bool blasted, unsigned char variant, bool accept);
-	// Note: as this is unimplemented in Fusion, I've not implemented it here either.
+		bool blasted, unsigned char subchannel, const char * data, size_t size, unsigned char variant, bool accept);
 	// The ability to prevent a client from leaving a channel seems pointless; they can always pull the plug.
 	void leavechannel_response(lacewing::relayserver::channel &channel,
-		lacewing::relayserver::client & client, const char * denyReason);
+		lacewing::relayserver::client & client, const char * const denyReason);
 	void nameset_response(lacewing::relayserver::client &client,
 		const char * const newClientName, const char * const denyReason);
 };

@@ -383,7 +383,7 @@ lw_import       lw_bool  lw_random                   (char * buffer, size_t size
 /* FDStream */
 
   lw_import  lw_fdstream  lw_fdstream_new         (lw_pump);
-  lw_import         void  lw_fdstream_set_fd      (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close);
+  lw_import         void  lw_fdstream_set_fd      (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
   lw_import         void  lw_fdstream_cork        (lw_fdstream);
   lw_import         void  lw_fdstream_uncork      (lw_fdstream);
   lw_import         void  lw_fdstream_nagle       (lw_fdstream, lw_bool nagle);
@@ -940,7 +940,7 @@ struct _fdstream : public _stream
    lw_class_wraps (fdstream);
 
    lw_import void set_fd
-      (lw_fd, lw_pump_watch watch = 0, bool auto_close = false);
+      (lw_fd, lw_pump_watch watch = 0, bool auto_close = false, bool is_socket = true);
 
    lw_import bool valid ();
 

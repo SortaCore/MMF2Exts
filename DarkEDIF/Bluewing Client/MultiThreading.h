@@ -33,10 +33,10 @@
 			} Loop;
 		};
 		union {
-			lacewing::relayclient::channel * Channel;
+			ChannelCopy * Channel;
 			const lacewing::relayclient::channellisting * ChannelListing;
 		};
-		lacewing::relayclient::channel::peer * Peer;
+		PeerCopy * Peer;
 
 		SaveExtInfo() : NumEvents(0), CondTrig{ 0 }, Channel(nullptr), Peer(nullptr)
 		{

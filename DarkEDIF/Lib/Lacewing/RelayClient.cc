@@ -35,14 +35,15 @@
 
 namespace lacewing
 {
-	struct channelinternal;
-
 	struct relayclientinternal
 	{
+		struct channel;
+		struct peer;
+
 		lacewing::relayclient &		client;
 		lacewing::client			socket;
 		lacewing::udp 				udp;
-		lacewing::timer				timer;
+		lacewing::timer				udphellotimer;
 
 		relayclient::handler_connect               handler_connect;
 		relayclient::handler_connectiondenied      handler_connectiondenied;
@@ -64,58 +65,16 @@ namespace lacewing
 		relayclient::handler_peer_changename       handler_peer_changename;
 		relayclient::handler_channellistreceived   handler_channellistreceived;
 
-		relayclientinternal(relayclient &_client, lacewing::client _socket,
-			lacewing::udp _udp, pump _eventpump) : client(_client),
-			socket(_socket), udp(_udp), message(true), messageMF(true),
-			timer(lacewing::timer_new(_eventpump)),
-			name(nullptr), welcomemessage(nullptr)
-		{
-			handler_connect = 0;
-			handler_connectiondenied = 0;
-			handler_disconnect = 0;
-			handler_message_server = 0;
-			handler_message_channel = 0;
-			handler_message_peer = 0;
-			handler_message_serverchannel = 0;
-			handler_error = 0;
-			handler_channel_join = 0;
-			handler_channel_joindenied = 0;
-			handler_channel_leave = 0;
-			handler_channel_leavedenied = 0;
-			handler_name_set = 0;
-			handler_name_changed = 0;
-			handler_name_denied = 0;
-			handler_peer_connect = 0;
-			handler_peer_disconnect = 0;
-			handler_peer_changename = 0;
-			handler_channellistreceived = 0;
-			
-			message.framereset();
-			message.reset();
-
-			messageMF.framereset();
-			messageMF.reset();
-			
-			socket->tag(this);
-			udp->tag(this);
-			
-			reader.tag = this;
-			reader.messagehandler = messagehandler;
-
-			timer->tag(this);
-			timer->on_tick(clienttick);
-			
-			clear();
-		}
+		relayclientinternal(relayclient &_client, pump _eventpump);
 		framereader reader;
 
-		static void messagehandler(void * tag, unsigned char type, const char * message, size_t size);
-		void        messagehandler(unsigned char type, const char * message, size_t size, bool blasted);
+		static bool messagehandler(void * tag, unsigned char type, const char * message, size_t size);
+		bool        messagehandler(unsigned char type, const char * message, size_t size, bool blasted);
 
-		static void clienttick(lacewing::timer timer);
-		void        clienttick();
+		static void udphellotick(lacewing::timer timer);
+		void        udphellotick();
 
-		channelinternal * findchannelbyid(unsigned short id);
+		relayclientinternal::channel * findchannelbyid(unsigned short id);
 
 		framebuilder message, messageMF;
 
@@ -124,7 +83,10 @@ namespace lacewing
 		/// <summary> Empties the channel list. </summary>
 		void clearchannellist()
 		{
-			std::for_each(channellist.begin(), channellist.end(), [&](relayclient::channellisting *&c) { delete c; });
+			std::for_each(channellist.begin(), channellist.end(), [&](relayclient::channellisting *&c) { 
+				free((char *)c->name);
+				delete c;
+			});
 			channellist.clear();
 		}
 
@@ -135,116 +97,141 @@ namespace lacewing
 		const char * welcomemessage;
 		bool connected;
 
-		std::vector<channelinternal *> channels;
+		std::vector<relayclientinternal::channel *> channels;
 		~relayclientinternal()
 		{
+			clear();
+
 			free((void *)name);
+			name = nullptr;
+
 			free((void *)welcomemessage);
+			welcomemessage = nullptr;
+
+			lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
+
+			udphellotimer->on_tick(nullptr);
+			lacewing::timer_delete(udphellotimer);
+			udphellotimer = nullptr;
+
+			socket->on_connect(nullptr);
+			socket->on_disconnect(nullptr);
+			socket->on_data(nullptr);
+			socket->on_error(nullptr);
+			lacewing::stream_delete(socket);
+			socket = nullptr;
+
+			udp->on_data(nullptr);
+			udp->on_error(nullptr);
+			lacewing::udp_delete(udp);
+			udp = nullptr;
 		}
-	};
 
-	struct peerinternal
-	{
-		relayclient::channel::peer public_;
-		channelinternal &channel;
-
-		unsigned short id;
-		const char * name, *prevname;
-
-		bool ischannelmaster;
-
-		peerinternal(channelinternal &_channel, unsigned short id, unsigned char flags, const char * name)
-			: channel(_channel), prevname(nullptr)
+		struct relayclientinternal::channel
 		{
-			public_.internaltag = this;
-			public_.tag = 0;
+			relayclient::channel public_;
+			relayclientinternal &client;
 
-			// only flag available is 0x1: is channel master
-			if (flags & ~0x1)
-				throw std::exception("peerinternal ctor error: unrecognised peer flags.");
-			
-			if (!name || !name[0] || strnlen(name, 256) == 256)
-				throw std::exception("peerinternal ctor error: null, blank, or too-long name used.");
+			unsigned short id;
+			const char * name;
+			bool ischannelmaster;
 
-			this->id = id;
-			this->name = _strdup(name);
-			this->ischannelmaster = ((flags & 0x1) == 0x1);
-			this->public_.isclosed = false;
-		}
-		~peerinternal() noexcept(false)
+			std::vector<relayclientinternal::peer *> peers;
+
+			channel(relayclientinternal &_client) : client(_client)
+			{
+				public_.internaltag = this;
+				public_.tag = 0;
+
+				id = 0xffff;
+				name = nullptr;
+				ischannelmaster = false;
+			}
+
+			~channel() noexcept(false)
+			{
+				public_.internaltag = nullptr;
+
+				id = 0xffff;
+				ischannelmaster = false;
+
+				free((char *)name);
+				name = nullptr;
+			}
+
+			/// <summary> searches for the first peer by id number. </summary>
+			/// <param name="id"> id to look up. </param>
+			/// <returns> null if it fails, else the matching peer. </returns>
+			relayclientinternal::peer * findpeerbyid(unsigned short id)
+			{
+				// findchannelbyid() is false, thus channel->findpeerbyid() is false too
+				if (this == nullptr)
+					return nullptr;
+				auto i = std::find_if(peers.cbegin(), peers.cend(),
+					[&](const relayclientinternal::peer * const & p) { return p->id == id; });
+				return (i == peers.cend() ? nullptr : *i);
+			}
+
+			/// <summary> Adds a new peer. </summary>
+			/// <param name="peerid"> ID number for the peer. </param>
+			/// <param name="flags"> The flags of the peer connect/channel join message.
+			/// 					 0x1 = master. other flags are not accepted. </param>
+			/// <param name="name"> The name. Cannot be null or blank. </param>
+			/// <returns> null if it fails, else a relayclientinternal::peer *. </returns>
+			relayclientinternal::peer * addnewpeer(int peerid, unsigned char flags, const char * name)
+			{
+				relayclientinternal::peer * p = new peer(*this, peerid, flags, name);
+				peers.push_back(p);
+				return p;
+			}
+		};
+
+		struct peer
 		{
-			if (!public_.isclosed)
-				throw std::exception("Channel was not set to closed before it was deleted.");
-			free((char *)name);
-			free((char *)prevname);
-			public_.internaltag = nullptr;
-		}
-	};
+			relayclient::channel::peer public_;
+			relayclientinternal::channel &channel;
 
-	struct channelinternal
-	{
-		relayclient::channel public_;
-		relayclientinternal &client;
+			unsigned short id;
+			const char * name, *prevname;
 
-		unsigned short id;
-		const char * name;
-		bool ischannelmaster;
+			bool ischannelmaster;
 
-		std::vector<peerinternal *> peers;
+			peer(relayclientinternal::channel &_channel, unsigned short id, unsigned char flags, const char * name)
+				: channel(_channel), prevname(nullptr)
+			{
+				public_.internaltag = this;
+				public_.tag = 0;
 
-		channelinternal(relayclientinternal &_client) : client(_client)
-		{
-			public_.internaltag = this;
-			public_.tag = 0;
-			public_.isclosed = false;
-			
-			id = 0xffff;
-			name = nullptr;
-			ischannelmaster = false;
-		}
+				// only flag available is 0x1: is channel master
+				if (flags & ~0x1)
+					throw std::exception("peer [internal] ctor error: unrecognised peer flags.");
 
-		~channelinternal() noexcept(false)
-		{
-			if (!public_.isclosed)
-				throw std::exception("Channel was not set to closed before it was deleted.");
-			
-			id = 0xffff;
-			free((char *)name);
-			name = nullptr;
-			ischannelmaster = false;
-			free(public_.tag);
-		}
+				if (!name || !name[0] || strnlen(name, 256) == 256U)
+					throw std::exception("peer [internal] ctor error: null, blank, or too-long name used.");
 
-		/// <summary> searches for the first peer by id number. </summary>
-		/// <param name="id"> id to look up. </param>
-		/// <returns> null if it fails, else the matching peer. </returns>
-		peerinternal * findpeerbyid(unsigned short id)
-		{
-			// findchannelbyid() is false, thus channel->findpeerbyid() is false too
-			if (this == nullptr)
-				return nullptr;
-			auto i = std::find_if(peers.cbegin(), peers.cend(), 
-				[&](const peerinternal * const & p) { return p->id == id; });
-			return (i == peers.cend() ? nullptr : *i);
-		}
+				this->id = id;
+				this->name = name;
+				this->ischannelmaster = ((flags & 0x1) == 0x1);
+			}
 
-		/// <summary> adds a new peer. </summary>
-		/// <param name="peerid"> id number for the peer. </param>
-		/// <param name="flags"> the flags of the peer connect/channel join message.
-		/// 					 0x1 = master. other flags are not accepted. </param>
-		/// <param name="name"> the name. cannot be null or blank. </param>
-		/// <returns> null if it fails, else a peerinternal*. </returns>
-		peerinternal * addnewpeer(int peerid, unsigned char flags, const char * name)
-		{
-			peerinternal * p = new peerinternal(*this, peerid, flags, name);
-			peers.push_back(p);
-			return p;
-		}
+			~peer()
+			{
+				public_.internaltag = nullptr;
+
+				free((char *)name);
+				name = nullptr;
+				
+				free((char *)prevname);
+				prevname = nullptr;
+			}
+		};
 	};
 
 	void relayclientinternal::clear()
 	{
-		std::for_each(channels.begin(), channels.end(), [&](channelinternal *&c) { c->public_.isclosed = true; delete c; });
+		std::for_each(channels.begin(), channels.end(), [&](relayclientinternal::channel *&c) {
+			delete c;
+		});
 		channels.clear();
 		clearchannellist();
 
@@ -261,10 +248,10 @@ namespace lacewing
 	/// <summary> searches for the first channel by id number. </summary>
 	/// <param name="id"> id to look up. </param>
 	/// <returns> null if it fails, else the matching channel. </returns>
-	channelinternal * relayclientinternal::findchannelbyid(unsigned short id)
+	relayclientinternal::channel * relayclientinternal::findchannelbyid(unsigned short id)
 	{
 		auto i = std::find_if(channels.cbegin(), channels.cend(), 
-			[&](const channelinternal * const &c) { return c->id == id; });
+			[&](const relayclientinternal::channel * const &c) { return c->id == id; });
 		return (i == channels.cend() ? nullptr : *i);
 	}
 
@@ -291,7 +278,7 @@ namespace lacewing
 	{
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
-		internal.timer->stop();
+		internal.udphellotimer->stop();
 
 		internal.connected = false;
 
@@ -346,53 +333,24 @@ namespace lacewing
 			internal.handler_error(internal.client, error);
 	}
 
-	relayclient::relayclient(pump eventpump) : 
-		socket(client_new(eventpump)), udp(udp_new(eventpump))
+	relayclient::relayclient(pump eventpump)
 	{
-		// lacewinginitialise no longer needed?
-		
-		socket->on_connect(lacewing::handlerconnect);
-		socket->on_disconnect(lacewing::handlerdisconnect);
-		socket->on_data(lacewing::handlerreceive);
-		socket->on_error(lacewing::handlererror);
-
-		udp->on_data(lacewing::handlerclientudpreceive);
-		udp->on_error(lacewing::handlerclientudperror);
-
-		socket->nagle(false);
-
-		lacewing::relayclientinternal * r = new lacewing::relayclientinternal(*this, socket, udp, eventpump);
-		tag = 0;
-
+		// relayclient is just an idiot-proof layer hiding relayclientinternal
+		lacewing::relayclientinternal * r = new lacewing::relayclientinternal(*this, eventpump);
+		tag = nullptr;
 		internaltag = r;
-		socket->tag(r);
-		udp->tag(r);
 	}
 
 	relayclient::~relayclient()
 	{
-		socket->on_connect(nullptr);
-		socket->on_disconnect(nullptr);
-		socket->on_data(nullptr);
-		socket->on_error(nullptr);
-
-		udp->on_data(nullptr);
-		udp->on_error(nullptr);
-		
-		lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
-		
-		lw_udp_delete((lw_udp)udp);
-		lw_stream_delete((lw_client)socket);
-
 		delete ((relayclientinternal *)internaltag);
 		internaltag = nullptr;
-
-		WSACleanup();
 	}
 
 	void relayclient::connect(const char * host, int port)
 	{
-		socket->connect(host, port);
+		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+		internal.socket->connect(host, port);
 	}
 
 	void relayclient::connect(address address)
@@ -400,13 +358,20 @@ namespace lacewing
 		if (!address->port())
 			address->port(6121);
 
-		socket->connect(address);
+		// Socket will fuss if we're connecting/connected already, so don't bother checking.
+		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+		internal.socket->connect(address);
 	}
 
 	void relayclient::disconnect()
 	{
-		socket->close();
-		udp->unhost();
+		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+		internal.connected = false;
+		
+		// In future versions we could use a timer to immedate close after a while,
+		// in case server is stalled, but we'd have to watch it on app close.
+		internal.socket->close(lw_false);
+		internal.udp->unhost();
 	}
 
 	bool relayclient::connected()
@@ -416,7 +381,9 @@ namespace lacewing
 
 	bool relayclient::connecting()
 	{
-		return (!connected()) && (socket->connected() || socket->connecting());
+		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+		// RelayClient takes a bit longer than raw socket to make a connection, so we check both.
+		return (!connected()) && (internal.socket->connected() || internal.socket->connecting());
 	}
 
 	const char * relayclient::name() const
@@ -530,16 +497,20 @@ namespace lacewing
 		if (size == -1)
 			size = strlen(data);
 
-		channelinternal &channel = *((channelinternal *)internaltag);
-		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.messageMF;
+		relayclientinternal::channel &channelinternal = *((relayclientinternal::channel *)internaltag);
+		
+		if (channelinternal.peers.empty())
+			return;
+
+		relayclientinternal &clientinternal = channelinternal.client;
+		framebuilder &message = clientinternal.messageMF;
 
 		message.addheader(2, variant); /* binarychannelmessage */
 		message.add <unsigned char>(subchannel);
-		message.add <unsigned short>(channel.id);
+		message.add <unsigned short>(channelinternal.id);
 		message.add(data, size);
 
-		message.send(internal.socket);
+		message.send(clientinternal.socket);
 	}
 
 	void relayclient::channel::blast(int subchannel, const char * data, int size, int variant) const
@@ -547,16 +518,20 @@ namespace lacewing
 		if (size == -1)
 			size = strlen(data);
 
-		channelinternal &channel = *((channelinternal *)internaltag);
-		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.messageMF;
+		relayclientinternal::channel &channelinternal = *((relayclientinternal::channel *)internaltag);
 
-		message.addheader(2, variant, true, internal.id); /* binarychannelmessage */
+		if (channelinternal.peers.empty())
+			return;
+
+		relayclientinternal &clientinternal = channelinternal.client;
+		framebuilder &message = clientinternal.messageMF;
+
+		message.addheader(2, variant, true, clientinternal.id); /* binarychannelmessage */
 		message.add <unsigned char>(subchannel);
-		message.add <unsigned short>(channel.id);
+		message.add <unsigned short>(channelinternal.id);
 		message.add(data, size);
 
-		message.send(internal.udp, internal.socket->server_address());
+		message.send(clientinternal.udp, clientinternal.socket->server_address());
 	}
 
 	void relayclient::channel::peer::send(int subchannel, const char * data, int size, int variant) const
@@ -564,18 +539,18 @@ namespace lacewing
 		if (size == -1)
 			size = strlen(data);
 
-		peerinternal &peer = *((peerinternal *)internaltag);
-		channelinternal &channel = peer.channel;
-		relayclientinternal &internal = channel.client;
-		framebuilder &message = internal.messageMF;
+		relayclientinternal::peer &peerinternal = *((relayclientinternal::peer *)internaltag);
+		relayclientinternal::channel &channelinternal = peerinternal.channel;
+		relayclientinternal &clientinternal = channelinternal.client;
+		framebuilder &message = clientinternal.messageMF;
 
 		message.addheader(3, variant); /* binarypeermessage */
 		message.add <unsigned char>(subchannel);
-		message.add <unsigned short>(channel.id);
-		message.add <unsigned short>(peer.id);
+		message.add <unsigned short>(channelinternal.id);
+		message.add <unsigned short>(peerinternal.id);
 		message.add(data, size);
 
-		message.send(internal.socket);
+		message.send(clientinternal.socket);
 	}
 
 	void relayclient::channel::peer::blast(int subchannel, const char * data, int size, int variant) const
@@ -583,8 +558,8 @@ namespace lacewing
 		if (size == -1)
 			size = strlen(data);
 
-		peerinternal &peer = *((peerinternal *)internaltag);
-		channelinternal &channel = peer.channel;
+		relayclientinternal::peer &peer = *((relayclientinternal::peer *)internaltag);
+		relayclientinternal::channel &channel = peer.channel;
 		relayclientinternal &internal = channel.client;
 		framebuilder &message = internal.messageMF;
 
@@ -599,53 +574,43 @@ namespace lacewing
 
 	void relayclient::channel::leave() const
 	{
-		channelinternal &channel = *((channelinternal *)internaltag);
-		relayclientinternal  &internal = channel.client;
-		framebuilder    &message = internal.messageMF;
+		relayclientinternal::channel &channelinternal = *((relayclientinternal::channel *)internaltag);
+		relayclientinternal &clientinternal = channelinternal.client;
+		framebuilder &message = clientinternal.messageMF;
 
 		message.addheader(0, 0); /* request */
 
 		message.add <unsigned char>(3);  /* leavechannel */
-		message.add <unsigned short>(channel.id);
+		message.add <unsigned short>(channelinternal.id);
 
-		message.send(internal.socket);
-	}
-	relayclient::channel::~channel() noexcept(false)
-	{
-		if (internaltag != nullptr)
-		{
-			delete internaltag;
-			internaltag = nullptr;
-		}
-
-		if (tag)
-			throw std::exception("Deleted a channel without a null tag: possible memory leak.");
-	}
-
-	relayclient::channel::peer::~peer() noexcept(false)
-	{
-		if (internaltag)
-			throw std::exception("Internal tag was not null as expected.");
-
-		if (tag)
-			throw std::exception("Deleted a peer without a null tag: possible memory leak.");
+		message.send(clientinternal.socket);
 	}
 
 	const char * relayclient::channel::name() const
 	{
-		return ((channelinternal *)internaltag)->name;
+		return ((relayclientinternal::channel *)internaltag)->name;
 	}
 
 	int relayclient::channel::peercount() const
 	{
-		return ((channelinternal *)internaltag)->peers.size();
+		return ((relayclientinternal::channel *)internaltag)->peers.size();
 	}
 
+	unsigned short relayclient::channel::id() const
+	{
+		return ((relayclientinternal::channel *)internaltag)->id;
+	}
+	
 	const char * relayclient::channel::peer::name() const
 	{
-		return ((peerinternal *)internaltag)->name;
+		return ((relayclientinternal::peer *)internaltag)->name;
 	}
 
+	const char * relayclient::channel::peer::prevname() const
+	{
+		return ((relayclientinternal::peer *)internaltag)->prevname;
+	}
+	
 	int relayclient::channelcount() const
 	{
 		return ((relayclientinternal *)internaltag)->channels.size();
@@ -658,7 +623,8 @@ namespace lacewing
 
 	address relayclient::serveraddress()
 	{
-		return socket->server_address();
+		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+		return internal.socket->server_address();
 	}
 
 	const char * relayclient::welcomemessage() const
@@ -666,7 +632,7 @@ namespace lacewing
 		return ((relayclientinternal *)internaltag)->welcomemessage;
 	}
 
-	void relayclientinternal::messagehandler(unsigned char type, const char * message, size_t size, bool blasted)
+	bool relayclientinternal::messagehandler(unsigned char type, const char * message, size_t size, bool blasted)
 	{
 		unsigned char messagetypeid = (type >> 4);
 		unsigned char variant = (type << 4);
@@ -692,24 +658,37 @@ namespace lacewing
 				if (succeeded)
 				{
 					id = reader.get <unsigned short>();
-					const char * welcomemessageDup = reader.getremaining();
+
+					// Don't expect welcome message to be null terminated
+					const char * welcomemessage = reader.get(reader.bytesleft());
 
 					if (reader.failed)
 						break;
-					welcomemessage = _strdup(welcomemessageDup);
+				
+					free((char *)this->welcomemessage);
+					this->welcomemessage = _strdup(welcomemessage);
 
 					socket->server_address()->resolve();
 					udp->host(socket->server_address());
-					clienttick();
+					udphellotick();
 
-					timer->start(500); // see clienttick
+					udphellotimer->start(500); // see udphellotick
 
 					/* the connect handler will be called on udp acknowledged */
 				}
 				else
 				{
 					if (handler_connectiondenied)
-						handler_connectiondenied(client, reader.getremaining());
+					{
+						// Not null terminated, can't use getremaining()
+						char * denyReason = reader.get(reader.bytesleft());
+
+						if (reader.failed)
+							break;
+
+						handler_connectiondenied(client, denyReason);
+						free(denyReason);
+					}
 				}
 
 				break;
@@ -744,10 +723,17 @@ namespace lacewing
 				}
 				else
 				{
-					const char * denyreason = reader.getremaining();
-
 					if (handler_name_denied)
-						handler_name_denied(client, name, denyreason);
+					{
+						// Not null terminated, can't use getremaining()
+						char * denyReason = reader.get(reader.bytesleft());
+
+						if (reader.failed)
+							break;
+
+						handler_name_denied(client, name, denyReason);
+						free(denyReason);
+					}
 				}
 
 				break;
@@ -760,30 +746,32 @@ namespace lacewing
 				char *        name = reader.get(namelength);
 
 				if (reader.failed)
+				{
+					lw_trace("Reader failed getting channel name.");
 					break;
+				}
 
 				if (succeeded)
 				{
 					int channelid = reader.get <unsigned short>();
 
 					if (reader.failed)
+					{
+						lw_trace("Reader failed getting channel ID.");
 						break;
+					}
 
-					channelinternal * channel = new channelinternal(*this);
-
+					relayclientinternal::channel * channel = new relayclientinternal::channel(*this);
+					
 					channel->id = channelid;
 					channel->name = _strdup(name);
 					channel->ischannelmaster = (flags & 1) != 0;
 
-					for (;;)
+					for (; reader.bytesleft() > 0;)
 					{
 						int peerid = reader.get <unsigned short>();
 						int flags2 = reader.get <unsigned char>();
 						int namelength2 = reader.get <unsigned char>();
-
-						if (reader.failed)
-							break;
-
 						char * name2 = reader.get(namelength2);
 
 						if (reader.failed)
@@ -799,10 +787,19 @@ namespace lacewing
 				}
 				else
 				{
-					const char * denyreason = reader.getremaining();
 
 					if (handler_channel_joindenied)
-						handler_channel_joindenied(client, name, denyreason);
+					{
+						// Not null terminated, can't use getremaining()
+						char * denyReason = reader.get(reader.bytesleft());
+
+						if (reader.failed)
+							break;
+						denyReason = _strdup(denyReason);
+
+						handler_channel_joindenied(client, name, denyReason);
+						free(denyReason);
+					}
 				}
 
 				break;
@@ -813,28 +810,43 @@ namespace lacewing
 				unsigned short id = reader.get<unsigned short>();
 				if (reader.failed)
 					break;
-				channelinternal * channel = findchannelbyid(id);
+				relayclientinternal::channel * channel = findchannelbyid(id);
 
-				if (reader.failed)
+				if (!channel)
+				{
+					reader.failed = true;
 					break;
+				}
 
 				if (succeeded)
 				{
-					auto i = std::find_if(channels.cbegin(), channels.cend(),
-						[&](const channelinternal * const &c) { return c == channel; });
-					if (i == channels.cend())
-						break;
-					channels.erase(i);
-
 					if (handler_channel_leave)
 						handler_channel_leave(client, channel->public_);
+					
+					// Handler BEFORE finding it in channel list, in case leave handler calls disconnect.
+					if (!connected)
+						break;
+
+					auto i = std::find_if(channels.cbegin(), channels.cend(),
+						[&](const relayclientinternal::channel * const &c) { return c == channel; });
+					if (i == channels.cend())
+						break;
+
+					channels.erase(i);
+					delete channel;
 				}
 				else
 				{
-					const char * denyreason = reader.getremaining();
-
 					if (handler_channel_leavedenied)
-						handler_channel_leavedenied(client, channel->public_, denyreason);
+					{
+						// Not null terminated, can't use getremaining()
+						char * denyReason = reader.get(reader.bytesleft());
+
+						if (reader.failed)
+							break;
+
+						handler_channel_leavedenied(client, channel->public_, denyReason);
+					}
 				}
 
 				break;
@@ -844,23 +856,21 @@ namespace lacewing
 			{
 				clearchannellist();
 
-				for (;;)
+				for (; reader.bytesleft() > 0;)
 				{
 					int peercount = reader.get <unsigned short>();
 					int namelength = reader.get <unsigned char>();
-
-					if (reader.failed)
-						break;
-
 					char * name = reader.get(namelength);
 
 					if (reader.failed)
 						break;
 
-					relayclient::channellisting * listing = new relayclient::channellisting;
-
+					relayclient::channellisting * listing = new relayclient::channellisting();
+					listing->internaltag = this;
+					listing->tag = nullptr;
 					listing->name = _strdup(name);
 					listing->peercount = peercount;
+
 					channellist.push_back(listing);
 				}
 
@@ -876,7 +886,7 @@ namespace lacewing
 				error->add("Unrecognised response message received. Response type ID was %i, but expected response type IDs 0-4. Discarding message.");
 				this->handler_error(client, error);
 				error_delete(error);
-				return;
+				return true;
 			}
 			}
 
@@ -908,8 +918,8 @@ namespace lacewing
 			unsigned short peer = reader.get<unsigned short>();
 			if (reader.failed)
 				break;
-			channelinternal * channel2 = findchannelbyid(channel);
-			peerinternal    * peer2 = channel2->findpeerbyid(peer);
+			relayclientinternal::channel * channel2 = findchannelbyid(channel);
+			relayclientinternal::peer * peer2 = channel2->findpeerbyid(peer);
 
 			const char * message2;
 			unsigned int size2;
@@ -933,8 +943,8 @@ namespace lacewing
 			unsigned short peer = reader.get<unsigned short>();
 			if (reader.failed)
 				break;
-			channelinternal * channel2 = findchannelbyid(channel);
-			peerinternal    * peer2 = channel2->findpeerbyid(peer);
+			relayclientinternal::channel * channel2 = findchannelbyid(channel);
+			relayclientinternal::peer * peer2 = channel2->findpeerbyid(peer);
 
 			const char * message2;
 			unsigned int size2;
@@ -957,7 +967,7 @@ namespace lacewing
 			unsigned short channel = reader.get<unsigned short>();
 			if (reader.failed)
 				break;
-			channelinternal * channel2 = findchannelbyid(channel);
+			relayclientinternal::channel * channel2 = findchannelbyid(channel);
 
 			const char * message2;
 			unsigned int size2;
@@ -984,50 +994,58 @@ namespace lacewing
 			error->add("'Object' message type received, but Bluewing Client implementation does not support it.");
 			this->handler_error(client, error);
 			error_delete(error);
-			return;
+			return true;
 		}
 
 		case 9: /* peer */
 		{
-
 			unsigned short channel = reader.get<unsigned short>();
 			if (reader.failed)
 				break;
-			channelinternal * channel2 = findchannelbyid(channel);
+			relayclientinternal::channel * channel2 = findchannelbyid(channel);
 
 			if (reader.failed)
 				break;
 
 			int peerid = reader.get <unsigned short>();
 
-
-			auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
-				[&](peerinternal *&p) { return p->id == peerid; });
-			peerinternal * peer = i == channel2->peers.cend() ? nullptr : *i;
-
+			relayclientinternal::peer * peer = channel2->findpeerbyid(peerid);
 			unsigned char flags = reader.get <unsigned char>();
-			const char *  name = reader.getremaining();
-
+			const char * name = reader.get(reader.bytesleft()); // name's not null terminated
+			
 			if (reader.failed)
 			{
 				/* no flags/name - the peer must have left the channel */
 
 				if (!peer)
-					return;
-
-				channel2->peers.erase(i);
-				peer->public_.isclosed = true;
+					return true;
 
 				if (handler_peer_disconnect)
 					handler_peer_disconnect(client, channel2->public_, peer->public_);
+				
+				channel2 = findchannelbyid(channel);
 
-				return;
+				// Handler called disconnect, so channel is no longer accessible
+				if (!channel2 || !connected)
+					return true;
+
+				auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
+					[=](relayclientinternal::peer *&p) { return p->id == peerid; });
+				if (i != channel2->peers.end())
+				{
+					delete peer;
+					channel2->peers.erase(i);
+				}
+
+				return true;
 			}
+
 
 			if (!peer)
 			{
 				/* new peer */
 
+				// this does channel2->peers.push_back()
 				peer = channel2->addnewpeer(peerid, flags, name);
 
 				if (handler_peer_connect)
@@ -1054,7 +1072,8 @@ namespace lacewing
 			if (flags & ~0x1)
 			{
 				lacewing::error error = error_new();
-				error->add("Malformed message received (server error?). Unrecognised peer flags in peer message, expected 0 or 1, got %i. Ignoring unrecognised flags.", flags);
+				error->add("Malformed message received (server error?). Unrecognised peer flags in peer message,"
+					" expected 0 or 1, got %i. Ignoring unrecognised flags.", flags);
 				this->handler_error(client, error);
 				error_delete(error);
 			}
@@ -1067,7 +1086,7 @@ namespace lacewing
 			if (!blasted)
 				break;
 
-			timer->stop();
+			udphellotimer->stop();
 			connected = true;
 
 			if (handler_connect)
@@ -1081,6 +1100,18 @@ namespace lacewing
 			this->message.send(socket);
 
 			break;
+		
+		case 12: /* implementation */
+		{
+			static char build[128] = { 0 };
+			if (!build[0])
+				sprintf_s(build, sizeof(build), "Bluewing Windows b%i", relayclient::buildnum);
+
+			this->message.addheader(10, 0);
+			this->message.add(build, -1);
+			this->message.send(socket);
+			break;
+		}
 
 		default:
 		{
@@ -1088,7 +1119,7 @@ namespace lacewing
 			error->add("Malformed message received (server error?). Unrecognised message type ID %i, expected type IDs 0-11. Discarding message.");
 			this->handler_error(client, error);
 			error_delete(error);
-			return;
+			return true;
 		}
 		};
 
@@ -1099,24 +1130,79 @@ namespace lacewing
 			this->handler_error(client, error);
 			error_delete(error);
 		}
+		return true;
 	}
 
-	void relayclientinternal::messagehandler(void * tag, unsigned char type, const char * message, size_t size)
+	relayclientinternal::relayclientinternal(relayclient &_client, pump _eventpump) :
+		client(_client), message(true), messageMF(true),
+		socket(client_new(_eventpump)), udp(udp_new(_eventpump)),
+		udphellotimer(timer_new(_eventpump)),
+		name(nullptr), welcomemessage(nullptr)
 	{
-		((relayclientinternal *)tag)->messagehandler(type, message, size, false);
+		socket->on_connect(lacewing::handlerconnect);
+		socket->on_disconnect(lacewing::handlerdisconnect);
+		socket->on_data(lacewing::handlerreceive);
+		socket->on_error(lacewing::handlererror);
+
+		udp->on_data(lacewing::handlerclientudpreceive);
+		udp->on_error(lacewing::handlerclientudperror);
+
+		socket->nagle(false);
+
+		handler_connect = 0;
+		handler_connectiondenied = 0;
+		handler_disconnect = 0;
+		handler_message_server = 0;
+		handler_message_channel = 0;
+		handler_message_peer = 0;
+		handler_message_serverchannel = 0;
+		handler_error = 0;
+		handler_channel_join = 0;
+		handler_channel_joindenied = 0;
+		handler_channel_leave = 0;
+		handler_channel_leavedenied = 0;
+		handler_name_set = 0;
+		handler_name_changed = 0;
+		handler_name_denied = 0;
+		handler_peer_connect = 0;
+		handler_peer_disconnect = 0;
+		handler_peer_changename = 0;
+		handler_channellistreceived = 0;
+
+		message.framereset();
+		message.reset();
+
+		messageMF.framereset();
+		messageMF.reset();
+
+		socket->tag(this);
+		udp->tag(this);
+
+		reader.tag = this;
+		reader.messagehandler = messagehandler;
+
+		udphellotimer->tag(this);
+		udphellotimer->on_tick(udphellotick);
+
+		clear();
 	}
 
-	void relayclientinternal::clienttick(lacewing::timer timer)
+	bool relayclientinternal::messagehandler(void * tag, unsigned char type, const char * message, size_t size)
 	{
-		((relayclientinternal *)timer->tag())->clienttick();
+		return ((relayclientinternal *)tag)->messagehandler(type, message, size, false);
 	}
 
-	void relayclientinternal::clienttick()
+	void relayclientinternal::udphellotick(lacewing::timer timer)
 	{
-		// clienttick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::timer var.
+		((relayclientinternal *)timer->tag())->udphellotick();
+	}
+
+	void relayclientinternal::udphellotick()
+	{
+		// udphellotick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::udphellotimer var.
 		// It starts from the time the Connect Request Success message is sent.
 		if (!udp->hosting())
-			throw std::exception("clienttick() called, but not hosting UDP."); 
+			throw std::exception("udphellotick() called, but not hosting UDP."); 
 		
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
@@ -1124,53 +1210,53 @@ namespace lacewing
 
 	bool relayclient::channel::peer::ischannelmaster() const
 	{
-		peerinternal &internal = *(peerinternal *)internaltag;
+		relayclientinternal::peer &internal = *(relayclientinternal::peer *)internaltag;
 
 		return internal.ischannelmaster;
 	}
 
 	unsigned short relayclient::channel::peer::id() const
 	{
-		peerinternal &internal = *(peerinternal *)internaltag;
+		relayclientinternal::peer &internal = *(relayclientinternal::peer *)internaltag;
 
 		return internal.id;
 	}
 
 	relayclient::channel::peer * relayclient::channel::peer::next() const
 	{
-		peerinternal &internal = *(peerinternal *)internaltag;
+		relayclientinternal::peer &internal = *(relayclientinternal::peer *)internaltag;
 		auto end = internal.channel.peers.end();
 		auto i = std::find_if(internal.channel.peers.begin(), internal.channel.peers.end(),
-			[&](peerinternal * &p) { return p->id == internal.id; });
+			[&](relayclientinternal::peer * &p) { return p->id == internal.id; });
 		return (i == end || ++i == end) ? nullptr : &(*i)->public_;
 	}
 
 	bool relayclient::channel::ischannelmaster() const
 	{
-		channelinternal &internal = *(channelinternal *)internaltag;
+		relayclientinternal::channel &internal = *(relayclientinternal::channel *)internaltag;
 
 		return internal.ischannelmaster;
 	}
 
 	relayclient::channel * relayclient::channel::next() const
 	{
-		channelinternal &internal = *(channelinternal *)internaltag;
+		relayclientinternal::channel &internal = *(relayclientinternal::channel *)internaltag;
 		auto end = internal.client.channels.end();
 		
 		auto i = std::find_if(internal.client.channels.begin(), end,
-			[&](channelinternal * &c) { return c->id == internal.id; });
+			[&](relayclientinternal::channel * &c) { return c->id == internal.id; });
 		return (i == end || ++i == end) ? nullptr : &(*i)->public_;
 	}
 
 	relayclient::channel * relayclient::firstchannel() const
 	{
-		std::vector<channelinternal *> &c = ((lacewing::relayclientinternal *)internaltag)->channels;
+		std::vector<relayclientinternal::channel *> &c = ((lacewing::relayclientinternal *)internaltag)->channels;
 		return (c.begin() == c.end()) ? nullptr : &(*c.begin())->public_;
 	}
 	
 	relayclient::channel::peer * relayclient::channel::firstpeer() const
 	{
-		std::vector<peerinternal *> &p = ((lacewing::channelinternal *)internaltag)->peers;
+		std::vector<relayclientinternal::peer *> &p = ((lacewing::relayclientinternal::channel *)internaltag)->peers;
 		return (p.begin() == p.end()) ? nullptr : &(*p.begin())->public_;
 	}
 
@@ -1190,9 +1276,11 @@ namespace lacewing
 		auto end = internal.channellist.end();
 		auto i = std::find_if(internal.channellist.begin(), end, 
 			[&](channellisting * &c) { return c->name == name; });
-		return (i == end || ++i == end) ? nullptr : *i;
+		if (i == end)
+			return nullptr;
+		return ++i == end ? nullptr : *i;
 	}
-
+	
 #define autohandlerfunctions(pub, intern, handlername)              \
     void pub::on##handlername(pub::handler_##handlername handler)   \
 	    {   ((intern *) internaltag)->handler_##handlername = handler;      \

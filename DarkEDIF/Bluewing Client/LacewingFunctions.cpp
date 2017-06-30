@@ -2,8 +2,8 @@
 #include "Common.h"
 
 #define Ext (*((GlobalInfo *) Client.tag)->_Ext)
-#define Saved (((GlobalInfo *) Client.tag)->_Saved)
 #define Globals ((GlobalInfo *) Client.tag)
+#define GThread Globals->_Thread
 
 void OnError(lacewing::relayclient &Client, lacewing::error Error)
 {
@@ -14,7 +14,6 @@ void OnError(lacewing::relayclient &Client, lacewing::error Error)
 		Globals->AddEvent1(0, nullptr, nullptr, c);
 	else
 		Globals->AddEvent1(0, nullptr, nullptr, "Error copying Lacewing error string to local buffer.");
-	
 }
 void OnConnect(lacewing::relayclient &Client)
 {
@@ -32,7 +31,19 @@ void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
-	// Pass disconnect event,
+	if (GThread)
+		EnterCriticalSectionDerpy(&Globals->Lock);
+
+	// Close peer in our copy
+	for (auto j : Ext.Channels)
+	{
+		j->close();
+		break;
+	}
+
+	if (GThread)
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+
 	// 0xFFFF: Empty all channels and peers
 	Globals->AddEvent2(3, 0xFFFF);
 }
@@ -42,12 +53,16 @@ void OnChannelListReceived(lacewing::relayclient &Client)
 }
 void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
-	Target.isclosed = false;
-	
-	for (auto i = Target.firstpeer(); i != nullptr; i = i->next())
-		i->isclosed = false;
+	if (GThread)
+		EnterCriticalSectionDerpy(&Globals->Lock);
 
-	Globals->AddEvent1(4, &Target);
+	ChannelCopy * channel = new ChannelCopy(&Target);
+	Ext.Channels.push_back(channel);
+
+	if (GThread)
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+	
+	Globals->AddEvent1(4, channel);
 }
 void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
 {
@@ -61,10 +76,23 @@ void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName
 }
 void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
-	Target.isclosed = true;
+	if (GThread)
+		EnterCriticalSectionDerpy(&Globals->Lock);
 
-	// 0xFFFF: Clear channel copy after this event is handled
-	Globals->AddEvent2(43, 0xFFFF, &Target);
+	// Close client in our copy
+	for (auto j : Ext.Channels)
+	{
+		if (j->id() == Target.id())
+		{
+			j->close();
+			// 0xFFFF: Clear channel copy after this event is handled
+			Globals->AddEvent2(43, 0xFFFF, j);
+			return;
+		}
+	}
+	if (GThread)
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+	Globals->CreateError("Couldn't find channel copy.");
 }
 void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
 {
@@ -102,35 +130,91 @@ void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 }
 void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
 {
-	Peer.isclosed = false;
+	// Add peer to our copy
+	for (auto j : Ext.Channels)
+	{
+		if (j->id() == Channel.id())
+		{
+			PeerCopy * PeerCopy = j->addpeer(&Peer);
+			if (PeerCopy)
+				Globals->AddEvent1(10, j, PeerCopy);
+			return;
+		}
+	}
 
-	Globals->AddEvent1(10, &Channel, &Peer);
+	Globals->CreateError("Couldn't find peer copy.");
 }
 void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer)
 {
-	Peer.isclosed = true;
+	// Disconnect makes write impossible. To prevent Fusion being halfway through writing on another thread,
+	// lock the event loop.
+	if (GThread)
+		EnterCriticalSectionDerpy(&Globals->Lock);
 
-	// 0xFFFF: Remove closed peer entirely after regular event handled
-	Globals->AddEvent2(11, 0xFFFF, &Channel, &Peer);
+	// Close peer in our copy.
+	// Original peer will be deleted after OnPeerDisconnect (this func) ends.
+	// Then once 0xFFFF triggers, copy will be deleted too.
+	for (auto j : Ext.Channels)
+	{
+		if (j->id() == Channel.id())
+		{
+			j->closepeer(Peer);
+
+			if (Globals->_Thread)
+				LeaveCriticalSectionDerpy(&Globals->Lock);
+			return;
+		}
+	}
+
+	if (GThread)
+		LeaveCriticalSectionDerpy(&Globals->Lock);
+
+	Globals->CreateError("Couldn't find copy of channel for peer disconnect.");
 }
 void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer, const char * OldName)
 {
-	Globals->AddEvent1(45, &Channel, &Peer);
+	for (auto j : Ext.Channels)
+	{
+		if (j->id() == Channel.id())
+		{
+			PeerCopy * k = j->updatepeername(Peer);
+			if (k)
+				Globals->AddEvent1(45, j, k);
+			else
+				Globals->CreateError("Couldn't find copy of peer on copy of channel for peer name change.");
+			return;
+		}
+	}
 
-	// Old previous name? Free it
-	free(Peer.tag);
-
-	// Store new previous name in Tag.
-	Peer.tag =_strdup(OldName);
-	if (!Peer.tag)
-		Globals->CreateError("Error copying old peer name.");
+	Globals->CreateError("Couldn't find copy of channel for peer name change.");
+	return;
 }
 void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+		return &c->orig() == &Channel;
+	});
+	if (cc == Ext.Channels.end())
+	{
+		Globals->CreateError("Couldn't find copy of channel for peer message.");
+		return;
+	}
+	ChannelCopy * channelCopy = *cc;
+	auto& peers = channelCopy->getpeers();
+	auto pp = std::find_if(peers.begin(), peers.end(), [&](PeerCopy * p) {
+		return &p->orig() == &Peer;
+	});
+	if (pp == peers.end())
+	{
+		Globals->CreateError("Couldn't find copy of peer on copy of channel for peer message.");
+		return;
+	}
+	PeerCopy * peerCopy = *pp;
+	
 	char * Dup = (char *)malloc(Size);
 	if (!Dup)
 	{
@@ -143,17 +227,18 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
+
 	if (Blasted)
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(52, 39, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(52, 39, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(52, 40, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(52, 40, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(52, 41, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(52, 41, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -165,13 +250,13 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(49, 36, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(49, 36, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(49, 37, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(49, 37, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(49, 38, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(49, 38, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -184,6 +269,26 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+		return &c->orig() == &Channel;
+	});
+	if (cc == Ext.Channels.end())
+	{
+		Globals->CreateError("Couldn't find copy of channel for channel message.");
+		return;
+	}
+	ChannelCopy * channelCopy = *cc;
+	auto& peers = channelCopy->getpeers();
+	auto pp = std::find_if(peers.begin(), peers.end(), [&](PeerCopy * p) {
+		return &p->orig() == &Peer;
+	});
+	if (pp == peers.end())
+	{
+		Globals->CreateError("Couldn't find copy of peer on copy of channel for channel message.");
+		return;
+	}
+	PeerCopy * peerCopy = *pp; 
+	
 	char * Dup = (char *)malloc(Size);
 	if (!Dup)
 	{
@@ -196,17 +301,18 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
+
 	if (Blasted)
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(51, 22, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(51, 22, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(51, 23, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(51, 23, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(51, 35, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(51, 35, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -218,13 +324,13 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(48, 9, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(48, 9, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(48, 16, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(48, 16, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(48, 33, &Channel, &Peer, Dup, Size, Subchannel);
+			Globals->AddEvent2(48, 33, channelCopy, peerCopy, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -288,6 +394,16 @@ void OnServerMessage(lacewing::relayclient &Client,
 void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
+	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+		return &c->orig() == &Channel;
+	});
+	if (cc == Ext.Channels.end())
+	{
+		Globals->CreateError("Couldn't find copy of channel for server-to-channel message.");
+		return;
+	}
+	ChannelCopy * channelCopy = *cc;
+
 	char * Dup = (char *)malloc(Size);
 	if (!Dup)
 	{
@@ -300,17 +416,18 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
+
 	if (Blasted)
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(72, 69, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(72, 69, channelCopy, nullptr, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(72, 70, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(72, 70, channelCopy, nullptr, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(72, 71, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(72, 71, channelCopy, nullptr, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -322,13 +439,13 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 	{
 		// Text
 		if (Variant == 0)
-			Globals->AddEvent2(68, 65, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(68, 65, channelCopy, nullptr, Dup, Size, Subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(68, 66, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(68, 66, channelCopy, nullptr, Dup, Size, Subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(68, 67, &Channel, nullptr, Dup, Size, Subchannel);
+			Globals->AddEvent2(68, 67, channelCopy, nullptr, Dup, Size, Subchannel);
 		// ???
 		else
 		{
@@ -340,5 +457,4 @@ void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient
 
 
 #undef Ext
-#undef Saved
 #undef Globals
