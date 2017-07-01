@@ -241,32 +241,37 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
         It's the only place you'll get access to edPtr at runtime, so you should transfer
         anything from edPtr to the extension class here.
     */
-	
 	IsGlobal = edPtr->Global;
-	lw_trace("Extension create: IsGlobal=%i.", IsGlobal ? 1 : 0);
+	char msgBuff[500];
+	sprintf_s(msgBuff, "Extension create: IsGlobal=%i.\n", IsGlobal ? 1 : 0);
+	OutputDebugStringA(msgBuff);
 	if (IsGlobal)
 	{
-		char * GlobalIDCopy = _strdup(edPtr->edGlobalID);
-		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str());
+		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str());
 		if (!v)
 		{
 			Globals = new GlobalInfo(this, edPtr);
-			Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + GlobalIDCopy).c_str(), Globals);
-			lw_trace("Created new Globals.");
+			Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str(), Globals);
+			OutputDebugStringA("Created new Globals.\n");
 		}
-		else
+		else // Add this Extension to Refs to inherit control later
 		{
-			// Add this Extension to Refs
 			Globals = (GlobalInfo *)v;
-			Globals->Refs.push_back(this);
-			lw_trace("Globals exists: added to Refs.");
-		}
 
-		GlobalID = GlobalIDCopy;
+			// If switching frames, the old ext will store selection here.
+			// We'll keep it across frames for simplicity.
+			ThreadData.Channel = Globals->LastDestroyedExtSelectedChannel;
+			ThreadData.Peer = Globals->LastDestroyedExtSelectedPeer;
+			
+			Globals->Refs.push_back(this);
+			if (!Globals->_Ext)
+				Globals->_Ext = this;
+			OutputDebugStringA("Globals exists: added to Refs.\n");
+		}
 	}
 	else
 	{
-		lw_trace("Non-Global object; creating Globals, not submitting to WriteGlobal.");
+		OutputDebugStringA("Non-Global object; creating Globals, not submitting to WriteGlobal.\n");
 		Globals = new GlobalInfo(this, edPtr);
 		
 		Globals->_ObjEventPump->tick();
@@ -294,7 +299,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 		// Can't error report if there's no extension to error-report to.
 		// Worst case scenario CreateError calls Runtime.Rehandle which breaks because ext is gone.
 		if (!Error)
-			lw_trace("LacewingLoopThread closing gracefully.");
+			OutputDebugStringA("LacewingLoopThread closing gracefully.\n");
 		else if (G->_Ext)
 		{
 			std::string Text = "Error returned by StartEventLoop(): ";
@@ -305,7 +310,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 	}
 	catch (...)
 	{
-		lw_trace("LacewingLoopThread got an exception.");
+		OutputDebugStringA("LacewingLoopThread got an exception.\n");
 		if (G->_Ext)
 		{
 			std::string Text = "StartEventLoop() killed by exception. Switching to single-threaded.";
@@ -313,7 +318,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 		}
 	}
 	G->_Thread = NULL;
-	lw_trace("LacewingLoopThread has exited.");
+	OutputDebugStringA("LacewingLoopThread has exited.");
 	return 0;
 }
 
@@ -452,7 +457,9 @@ void Extension::ClearThreadData()
 bool AppWasClosed = false;
 Extension::~Extension()
 {
-	lw_trace("~Extension called; Refs count is %u.", Globals->Refs.size());
+	char msgBuff[500];
+	sprintf_s(msgBuff, "~Extension called; Refs count is %u.\n", Globals->Refs.size());
+	OutputDebugStringA(msgBuff);
 
 	EnterCriticalSectionDerpy(&Globals->Lock);
 	// Remove this Extension from liblacewing usage.
@@ -463,14 +470,12 @@ Extension::~Extension()
 	// Shift secondary event management to other Extension, if any
 	if (!Globals->Refs.empty())
 	{
-		lw_trace("Note: Switched Lacewing instances.");
+		OutputDebugStringA("Note: Switched Lacewing instances.\n");
 		
 		// Switch Handle ticking over to next Extension visible.
 		if (wasBegin)
 		{
 			Globals->_Ext = Globals->Refs.front();
-			Globals->_Ext->Channels = Channels;
-			Channels.clear();
 			LeaveCriticalSectionDerpy(&Globals->Lock);
 
 			Globals->_Ext->Runtime.Rehandle();
@@ -488,24 +493,28 @@ Extension::~Extension()
 	else
 	{
 		if (!Globals->_Client.connected())
-			lw_trace("Note: Not connected, nothing important to retain, closing Globals info.");
+			OutputDebugStringA("Note: Not connected, nothing important to retain, closing Globals info.\n");
 		else if (!IsGlobal)
-			lw_trace("Note: Not global, closing Globals info.");
+			OutputDebugStringA("Note: Not global, closing Globals info.\n");
 		else if (Globals->FullDeleteEnabled)
-			lw_trace("Note: Full delete enabled, closing Globals info.");
+			OutputDebugStringA("Note: Full delete enabled, closing Globals info.\n");
 		else if (AppWasClosed)
-			lw_trace("Note: App was closed, closing Globals info.");
+			OutputDebugStringA("Note: App was closed, closing Globals info.\n");
 		else // !Globals->FullDeleteEnabled
 		{
-			lw_trace("Note: Last instance dropped, and currently connected - "
-				"Globals will be retained until a Disconnect is called.");
+			OutputDebugStringA("Note: Last instance dropped, and currently connected - "
+				"Globals will be retained until a Disconnect is called.\n");
 			Globals->_Ext = nullptr;
+			Globals->LastDestroyedExtSelectedChannel = ThreadData.Channel;
+			Globals->LastDestroyedExtSelectedPeer = ThreadData.Peer;
 			LeaveCriticalSectionDerpy(&Globals->Lock);
 
-			lw_trace("Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.",
+			sprintf_s(msgBuff, "Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.\n",
 				Globals->TimeoutWarningEnabled
 				? "a warning message will be shown"
 				: "the connection will terminate and all pending messages will be discarded");
+			OutputDebugStringA(msgBuff);
+
 			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
 			ClearThreadData();
 			return;
@@ -713,11 +722,14 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Warning!\r\n"
 			"All Bluewing objects have been destroyed and some time has passed; but "
-			"the connection has been left open in the background, unused, but still open.\r\n"
+			"the connection has been left open in the background, unused, but still connected.\r\n"
 			"If this is intended behaviour, disable the Timeout warning in the object properties.\r\n"
-			"If you want to close the connection if no instances remain open, use the FullCleanup action on the Bluewing object.",
-			"Bluewing Warning",
-			MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
+			"If you want to close the connection if no instances remain open, use the disconnnect or "
+			"disable the \"connection retain setting\" in the Bluewing object.\r\n"
+			"Also consider adding this GLOBAL event:\r\n"
+			"On End of Application > Bluewing Client: Disconnect",
+			"Bluewing Client Warning",
+			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
 	}
 	delete &G; // Cleanup!
 	return 0U;
@@ -796,9 +808,10 @@ long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
-	: _ObjEventPump(lacewing::eventpump_new()), _Client(_ObjEventPump), _PreviousName(NULL),
-	_SendMsg(NULL), _DenyReasonBuffer(NULL), _SendMsgSize(0),
-	_AutomaticallyClearBinary(edPtr->AutomaticClear), _GlobalID(NULL), _Thread(NULL)
+	: _ObjEventPump(lacewing::eventpump_new()), _Client(_ObjEventPump), _PreviousName(nullptr),
+	_SendMsg(nullptr), _DenyReasonBuffer(nullptr), _SendMsgSize(0),
+	_AutomaticallyClearBinary(edPtr->AutomaticClear), _GlobalID(nullptr), _Thread(nullptr),
+	LastDestroyedExtSelectedChannel(nullptr), LastDestroyedExtSelectedPeer(nullptr)
 {
 	_Ext = e;
 	Refs.push_back(e);
@@ -834,7 +847,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
-	lw_trace("~GlobalInfo start");
+	OutputDebugStringA("~GlobalInfo start");
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
 	free(_GlobalID);
@@ -893,6 +906,12 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 		Sleep(0U);
 	}
 
+	for (auto &i : _Channels)
+	{
+		i->close(); // JIC
+		delete i;
+	}
+	_Channels.clear();
 	DeleteCriticalSection(&Lock);
-	lw_trace("~GlobalInfo end");
+	OutputDebugStringA("~GlobalInfo end");
 }

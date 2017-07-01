@@ -50,6 +50,7 @@ public:
 	#define SendMsgSize					Globals->_SendMsgSize
 	#define AutomaticallyClearBinary	Globals->_AutomaticallyClearBinary
 	#define GlobalID					Globals->_GlobalID
+	#define Channels					Globals->_Channels
 
 	
 
@@ -68,9 +69,7 @@ public:
 	// and liblacewing cleans up its peer variable instantly too.
 	// But since these events are queued, the "on peer disconnect" may be called later, after liblacewing has deleted.
 	// So we have to store a copy of the peer so we can look up name when it's disconnected.
-
-	// Here is our copy of channels, which in turn contain copies of peers.
-	std::vector<ChannelCopy *> Channels;
+	// See the _Channels variable in GlobalInfo for our copy.
 
     // int MyVariable;
 
@@ -317,6 +316,10 @@ struct GlobalInfo
 	HANDLE						_Thread;
 	Extension *					_Ext;
 	std::vector<SaveExtInfo *>	_Saved;
+	std::vector<ChannelCopy *>	_Channels; // Referred to by reference for all extensions
+	ChannelCopy *				LastDestroyedExtSelectedChannel;
+	PeerCopy *					LastDestroyedExtSelectedPeer;
+
 	CRITICAL_SECTION			Lock;
 	std::vector<Extension *>	Refs;
 	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period

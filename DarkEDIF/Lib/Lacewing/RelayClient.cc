@@ -210,7 +210,7 @@ namespace lacewing
 					throw std::exception("peer [internal] ctor error: null, blank, or too-long name used.");
 
 				this->id = id;
-				this->name = name;
+				this->name = _strdup(name);
 				this->ischannelmaster = ((flags & 0x1) == 0x1);
 			}
 

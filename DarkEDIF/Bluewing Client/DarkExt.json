@@ -7,7 +7,7 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2017 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b70)",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b71)",
 			"Help": "Help/BluewingClient.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -118,7 +118,7 @@
             ],
 
             "Separator",
-            [75, "Set connection retain setting"],
+            [75, "Set kill connection when disowned"],
 
 			"Separator"
 		],
@@ -778,10 +778,10 @@
 				]
 			},
 			{
-				"Title": "Kill connection when last instance destroyed: %0",
+				"Title": "Kill connection when last Bluewing instance destroyed: %0",
 				"Parameters":
 				[
-					["Integer", "Disabled=0, Enabled=1"]
+					["Integer", "Kill connection when last Bluewing destroyed? (0 or 1)"]
 				]
 			}
 		],

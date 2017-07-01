@@ -34,12 +34,9 @@ void OnDisconnect(lacewing::relayclient &Client)
 	if (GThread)
 		EnterCriticalSectionDerpy(&Globals->Lock);
 
-	// Close peer in our copy
-	for (auto j : Ext.Channels)
-	{
+	// Close all channels/peers in our copy
+	for (auto j : Channels)
 		j->close();
-		break;
-	}
 
 	if (GThread)
 		LeaveCriticalSectionDerpy(&Globals->Lock);
@@ -57,7 +54,7 @@ void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel
 		EnterCriticalSectionDerpy(&Globals->Lock);
 
 	ChannelCopy * channel = new ChannelCopy(&Target);
-	Ext.Channels.push_back(channel);
+	Channels.push_back(channel);
 
 	if (GThread)
 		LeaveCriticalSectionDerpy(&Globals->Lock);
@@ -80,13 +77,17 @@ void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channe
 		EnterCriticalSectionDerpy(&Globals->Lock);
 
 	// Close client in our copy
-	for (auto j : Ext.Channels)
+	for (auto j : Channels)
 	{
 		if (j->id() == Target.id())
 		{
 			j->close();
+
 			// 0xFFFF: Clear channel copy after this event is handled
 			Globals->AddEvent2(43, 0xFFFF, j);
+
+			if (GThread)
+				LeaveCriticalSectionDerpy(&Globals->Lock);
 			return;
 		}
 	}
@@ -131,7 +132,7 @@ void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
 {
 	// Add peer to our copy
-	for (auto j : Ext.Channels)
+	for (auto j : Channels)
 	{
 		if (j->id() == Channel.id())
 		{
@@ -155,7 +156,7 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 	// Close peer in our copy.
 	// Original peer will be deleted after OnPeerDisconnect (this func) ends.
 	// Then once 0xFFFF triggers, copy will be deleted too.
-	for (auto j : Ext.Channels)
+	for (auto j : Channels)
 	{
 		if (j->id() == Channel.id())
 		{
@@ -175,7 +176,7 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	lacewing::relayclient::channel::peer &Peer, const char * OldName)
 {
-	for (auto j : Ext.Channels)
+	for (auto j : Channels)
 	{
 		if (j->id() == Channel.id())
 		{
@@ -195,10 +196,10 @@ void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
 		return &c->orig() == &Channel;
 	});
-	if (cc == Ext.Channels.end())
+	if (cc == Channels.end())
 	{
 		Globals->CreateError("Couldn't find copy of channel for peer message.");
 		return;
@@ -269,10 +270,10 @@ void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::chan
 	lacewing::relayclient::channel::peer &Peer,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
 		return &c->orig() == &Channel;
 	});
-	if (cc == Ext.Channels.end())
+	if (cc == Channels.end())
 	{
 		Globals->CreateError("Couldn't find copy of channel for channel message.");
 		return;
@@ -394,10 +395,10 @@ void OnServerMessage(lacewing::relayclient &Client,
 void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
 {
-	auto cc = std::find_if(Ext.Channels.begin(), Ext.Channels.end(), [&](ChannelCopy *&c) {
+	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
 		return &c->orig() == &Channel;
 	});
-	if (cc == Ext.Channels.end())
+	if (cc == Channels.end())
 	{
 		Globals->CreateError("Couldn't find copy of channel for server-to-channel message.");
 		return;
