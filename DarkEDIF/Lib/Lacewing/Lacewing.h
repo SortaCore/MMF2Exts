@@ -1462,7 +1462,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 struct relayclient
 {
 public:
-	const static int buildnum = 71;
+	const static int buildnum = 72;
 
 	void * internaltag, *tag;
 

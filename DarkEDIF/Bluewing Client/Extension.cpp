@@ -9,6 +9,7 @@
 #define Ext (*Globals->_Ext)
 #define Saved Globals->_Saved
 
+HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
 {
@@ -241,6 +242,13 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
         It's the only place you'll get access to edPtr at runtime, so you should transfer
         anything from edPtr to the extension class here.
     */
+
+	// This is signalled by EndApp in General.cpp. It's used to close the connection
+	// when the application closes, from the timeout thread - assuming events or the
+	// server hasn't done that already.
+	if (!AppWasClosed)
+		AppWasClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	IsGlobal = edPtr->Global;
 	char msgBuff[500];
 	sprintf_s(msgBuff, "Extension create: IsGlobal=%i.\n", IsGlobal ? 1 : 0);
@@ -318,7 +326,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 		}
 	}
 	G->_Thread = NULL;
-	OutputDebugStringA("LacewingLoopThread has exited.");
+	OutputDebugStringA("LacewingLoopThread has exited.\n");
 	return 0;
 }
 
@@ -390,7 +398,6 @@ void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
 		throw std::exception("Memory copy failed while doing a lacewing event.");
 	}
 #endif
-
 	_Saved.push_back(NewEvent);
 		
 	LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
@@ -454,7 +461,6 @@ void Extension::ClearThreadData()
 	memset(&ThreadData, 0, sizeof(SaveExtInfo));
 }
 
-bool AppWasClosed = false;
 Extension::~Extension()
 {
 	char msgBuff[500];
@@ -498,7 +504,8 @@ Extension::~Extension()
 			OutputDebugStringA("Note: Not global, closing Globals info.\n");
 		else if (Globals->FullDeleteEnabled)
 			OutputDebugStringA("Note: Full delete enabled, closing Globals info.\n");
-		else if (AppWasClosed)
+		// Wait for 0ms returns immediately as per spec
+		else if (WaitForSingleObject(AppWasClosed, 0U) == WAIT_OBJECT_0)
 			OutputDebugStringA("Note: App was closed, closing Globals info.\n");
 		else // !Globals->FullDeleteEnabled
 		{
@@ -704,13 +711,11 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G._Client.connected())
 		return 0U;
 
-	// App closed, close connection by default
-	if (AppWasClosed)
+	// App closed within next 3 seconds: close connection by default
+	if (WaitForSingleObject(AppWasClosed, 3000U) == WAIT_OBJECT_0)
 		return 0U;
 
-	// Wait 3 seconds and recheck
-	Sleep(3 * 1000);
-
+	// 3 seconds have passed: if we now have an ext, or client was disconnected, we're good
 	if (!G.Refs.empty())
 		return 0U;
 
@@ -847,7 +852,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
-	OutputDebugStringA("~GlobalInfo start");
+	OutputDebugStringA("~GlobalInfo start\n");
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
 	free(_GlobalID);
@@ -913,5 +918,5 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	}
 	_Channels.clear();
 	DeleteCriticalSection(&Lock);
-	OutputDebugStringA("~GlobalInfo end");
+	OutputDebugStringA("~GlobalInfo end\n");
 }

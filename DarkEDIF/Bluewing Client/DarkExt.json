@@ -7,7 +7,7 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2017 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b71)",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b%i)",
 			"Help": "Help/BluewingClient.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -1562,7 +1562,7 @@
 			},
 			{
 				"Title": "Enable multithreading",
-				"Info": "Check this box to enable multithreading. This makes Lacewing ultra-responsive, and retains the connection when popup messages occur.",
+				"Info": "Check this box to enable multithreading. This makes Lacewing ultra-responsive to the server, and retains the connection when the event loop is paused.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},

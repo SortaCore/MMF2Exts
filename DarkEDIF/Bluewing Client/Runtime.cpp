@@ -113,7 +113,7 @@ LPSMASK DLLExport GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
 void DLLExport StartApp(mv *mV, CRunApp* pApp)
 {
 	// Example
-	// -------
+	// -------d
 	// Delete global data (if restarts application)
 //	CMyData* pData = (CMyData*)mV->mvGetExtUserData(pApp, hInstLib);
 //	if ( pData != NULL )
@@ -128,10 +128,19 @@ void DLLExport StartApp(mv *mV, CRunApp* pApp)
 // -------------------
 // Called when the application ends.
 // 
-extern bool AppWasClosed;
+extern HANDLE AppWasClosed; // Event
 void DLLExport EndApp(mv *mV, CRunApp* pApp)
 {
-	AppWasClosed = true;
+	if (pApp->ParentApp)
+	{
+		OutputDebugStringA("EndApp called, but it's subapp. Ignoring.\n");
+		return;
+	}
+
+	if (AppWasClosed)
+		SetEvent(AppWasClosed);
+	
+	OutputDebugStringA("EndApp called.\n");
 	// Example
 	// -------
 	// Delete global data

@@ -7,13 +7,17 @@
 
 void OnError(lacewing::relayclient &Client, lacewing::error Error)
 {
-	EnterCriticalSectionDerpy(&Globals->Lock);
+	if (GThread)
+		EnterCriticalSectionDerpy(&Globals->Lock);
 
 	char * c = _strdup(Error->tostring());
 	if (c)
 		Globals->AddEvent1(0, nullptr, nullptr, c);
 	else
 		Globals->AddEvent1(0, nullptr, nullptr, "Error copying Lacewing error string to local buffer.");
+
+	if (GThread)
+		LeaveCriticalSectionDerpy(&Globals->Lock);
 }
 void OnConnect(lacewing::relayclient &Client)
 {

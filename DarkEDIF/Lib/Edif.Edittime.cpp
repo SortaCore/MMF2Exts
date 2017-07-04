@@ -1,15 +1,39 @@
 #include "Common.h"
 
-void DLLExport GetObjInfos (mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * ObjAuthor,
-								TCHAR * ObjCopyright, TCHAR * ObjComment, TCHAR * ObjHttp)
+void DLLExport GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * ObjAuthor,
+	TCHAR * ObjCopyright, TCHAR * ObjComment, TCHAR * ObjHttp)
 {
-	#ifndef RUN_ONLY
+#ifndef RUN_ONLY
 
-		Edif::ConvertAndCopyString(ObjAuthor,       CurLang["About"]["Author"],		MAX_PATH);
-		Edif::ConvertAndCopyString(ObjCopyright,    CurLang["About"]["Copyright"],	MAX_PATH);
-		Edif::ConvertAndCopyString(ObjComment,      CurLang["About"]["Comment"],	MAX_PATH);
-		Edif::ConvertAndCopyString(ObjHttp,         CurLang["About"]["URL"],		MAX_PATH);
-		Edif::ConvertAndCopyString(ObjName,         CurLang["About"]["Name"],		MAX_PATH);
+	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"]["Author"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"]["Copyright"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"]["URL"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
+
+	// Allows user to specify a static variable in the object comment.
+	// e.g. build number, liblacewing version, etc.
+	// Use printf macros as depicted by 
+	// https://docs.microsoft.com/en-gb/cpp/c-runtime-library/format-specification-syntax-printf-and-wprintf-functions
+#ifndef JSON_COMMENT_MACRO
+	Edif::ConvertAndCopyString(ObjComment, CurLang["About"]["Comment"], MAX_PATH);
+#else
+	TCHAR buff[MAX_PATH];
+	bool bad = false;
+	// Prevent crashing. It's not nice code, but it'll stop ext devs getting stuck.
+	try {
+		if (_stprintf_s(buff, MAX_PATH, CurLang["About"]["Comment"], JSON_COMMENT_MACRO) == -1)
+			bad = true;
+	}
+	catch (...) { bad = true; }
+
+	if (bad)
+	{
+		MessageBoxA(NULL, "Error in JSON comment macro. Ensure your %s are escaped (%%).", "DarkEDIF error", MB_OK);
+		_tcscpy_s(buff, MAX_PATH, CurLang["About"]["Comment"]);
+	}
+
+	Edif::ConvertAndCopyString(ObjComment, buff, MAX_PATH);
+#endif
 
 	#endif // !defined(RUN_ONLY)
 }

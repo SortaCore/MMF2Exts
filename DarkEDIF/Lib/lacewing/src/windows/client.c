@@ -256,7 +256,20 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
    {
       int code = WSAGetLastError ();
 
-      assert (code == WSA_IO_PENDING);
+	  if (code == WSA_IO_PENDING)
+		  return; // No problem
+
+	  ctx->connecting = false;
+
+	  lw_error error = lw_error_new();
+
+	  lw_error_add(error, code);
+	  lw_error_addf(error, "Error connecting to address");
+
+	  if (ctx->on_error)
+		  ctx->on_error(ctx, error);
+
+	  lw_error_delete(error);
    }
 }
 
