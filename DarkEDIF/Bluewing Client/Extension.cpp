@@ -640,12 +640,12 @@ short Extension::Handle()
 
 					if (!S->Channel || S->Channel && !S->Peer)
 						for (auto dropExt : Globals->Refs)
-							if (dropExt->ThreadData.Channel->isclosed)
+							if (dropExt->ThreadData.Channel && dropExt->ThreadData.Channel->isclosed)
 								dropExt->ThreadData.Channel = nullptr;
 
 					if (S->Peer)
 						for (auto dropExt : Globals->Refs)
-							if (dropExt->ThreadData.Peer->isclosed)
+							if (dropExt->ThreadData.Peer && dropExt->ThreadData.Peer->isclosed)
 								dropExt->ThreadData.Peer = nullptr;
 				}
 			}
