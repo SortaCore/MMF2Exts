@@ -188,6 +188,7 @@ void lw_trace (const char * format, ...)
             OutputDebugStringA ("\n");
          #else
             fprintf (stderr, "[liblacewing] %s\n", data);
+			fflush (stderr);
          #endif
       #endif
 

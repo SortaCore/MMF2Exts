@@ -129,6 +129,7 @@
 #endif
 
 void lwp_init ();
+void lwp_deinit ();
 
 #include <stdio.h>
 #include <stdlib.h>

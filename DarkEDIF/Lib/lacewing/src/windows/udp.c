@@ -81,6 +81,8 @@ struct _lw_udp
 
    SOCKET socket;
 
+   list(udp_overlapped, pending_receives);
+
    long receives_posted;
 
    void * tag;
@@ -98,8 +100,11 @@ static void post_receives (lw_udp ctx)
       udp_overlapped overlapped =
          (udp_overlapped) calloc (sizeof (*overlapped), 1);
 
-      if (!overlapped)
-         break;
+	  if (!overlapped)
+	  {
+		  free(receive_info);
+		  break;
+	  }
 
       overlapped->type = overlapped_type_receive;
       overlapped->tag = receive_info;
@@ -113,15 +118,20 @@ static void post_receives (lw_udp ctx)
                        &flags,
                        (struct sockaddr *) &receive_info->from,
                        &receive_info->from_length,
-                       (OVERLAPPED *) overlapped,
+                       &overlapped->overlapped,
                        0) == -1)
       {
          int error = WSAGetLastError();
 
-         if (error != WSA_IO_PENDING)
-            break;
+		 if (error != WSA_IO_PENDING)
+		 {
+			 free(receive_info);
+			 free(overlapped);
+			 break;
+		 }
       }
 
+	  list_push(ctx->pending_receives, overlapped);
       ++ ctx->receives_posted;
    }
 }
@@ -154,6 +164,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 		 if (filter_addr && !lw_addr_equal(&addr, filter_addr))
 		 {
 			 lwp_addr_cleanup(&addr);
+			 free(info);
 			 break;
 		 }
 
@@ -163,6 +174,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 		 lwp_addr_cleanup(&addr);
          free (info);
 
+		 list_remove(ctx->pending_receives, overlapped);
          -- ctx->receives_posted;
          post_receives (ctx);
          break;
@@ -236,6 +248,21 @@ void lw_udp_unhost (lw_udp ctx)
 
    lw_filter_delete (ctx->filter);
    ctx->filter = 0;
+
+   // Frees memory from postreceives()
+   if (ctx->receives_posted > 0)
+   {
+	   list_each(ctx->pending_receives, overlapped)
+	   {
+		   // Free the udp_receive_info_new
+		   if (overlapped->tag && overlapped->type == overlapped_type_receive)
+		      free((udp_receive_info)overlapped->tag);
+
+		   free(overlapped);
+	   }
+   }
+
+   list_clear(ctx->pending_receives);
 }
 
 long lw_udp_port (lw_udp ctx)
@@ -267,7 +294,9 @@ void lw_udp_delete (lw_udp ctx)
    lw_pump_remove(ctx->pump, ctx->pump_watch);
    ctx->pump_watch = 0;
 
-   ZeroMemory(ctx, sizeof(_lw_udp));
+   memset(ctx, 0, sizeof(_lw_udp));
+
+   lwp_deinit();
 
    free (ctx);
 }

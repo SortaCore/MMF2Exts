@@ -80,6 +80,7 @@ lw_stream lw_stream_from_tail (void * tail)
 
 void lw_stream_delete (lw_stream ctx)
 {
+   lw_trace("In lw_stream_delete for %p", ctx);
    if (!ctx)
       return;
 
@@ -176,6 +177,8 @@ void lw_stream_delete (lw_stream ctx)
    list_clear (ctx->front_queue);
    list_clear (ctx->back_queue);
 
+   if (ctx->watch)
+      lw_pump_post_remove(ctx->pump, ctx->watch);
 
    /* This matches the lwp_retain in lw_stream_new, allowing the refcount to
     * become 0 and the stream to be destroyed.
@@ -219,7 +222,7 @@ static void queue_back (lw_stream ctx, const char * buffer, size_t size)
    if ( (!list_length (ctx->back_queue)) ||
          list_back (ctx->back_queue).type != lwp_stream_queued_data)
    {
-      struct _lwp_stream_queued queued = {};
+      struct _lwp_stream_queued queued = {0};
 
       queued.type = lwp_stream_queued_data;
 
@@ -234,7 +237,7 @@ static void queue_front (lw_stream ctx, const char * buffer, size_t size)
    if ( (!list_length (ctx->front_queue)) ||
          list_back (ctx->front_queue).type != lwp_stream_queued_data)
    {
-      struct _lwp_stream_queued queued = {};
+      struct _lwp_stream_queued queued = {0};
 
       queued.type = lwp_stream_queued_data;
 
@@ -248,6 +251,9 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 {
    if (size == -1)
       size = strlen (buffer);
+   
+   if (ctx->flags & (lwp_stream_flag_dead | lwp_stream_flag_closing | lwp_stream_flag_closeASAP))
+	   return 0U;
 
    lwp_trace ("Writing " lwp_fmt_size " bytes to %p with flags %d", size, ctx, flags);
 
@@ -926,6 +932,7 @@ lw_bool lwp_stream_may_close (lw_stream ctx)
 
 lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 {
+   lw_trace("lw_stream_close called for stream %p", ctx);
    if (ctx->flags & lwp_stream_flag_closing)
       return lw_false;
 
@@ -934,6 +941,9 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
       ctx->flags |= lwp_stream_flag_closeASAP;
       return lw_false;
    }
+
+   if (ctx->flags & lwp_stream_flag_dead)
+	   return lw_true;
 
    if (ctx->def->close && !ctx->def->close (ctx, immediate))
    {

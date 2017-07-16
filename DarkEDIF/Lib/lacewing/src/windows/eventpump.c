@@ -172,6 +172,8 @@ static void def_cleanup (lw_pump _ctx)
 
    CloseHandle (ctx->completion_port);
    ctx->completion_port = NULL;
+
+   lwp_deinit();
 }
 
 lw_error lw_eventpump_tick (lw_eventpump ctx)
@@ -286,7 +288,7 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
    if (!watch)
       return 0;
 
-   assert((long)callback != 0xDDDDDDDDL);
+   assert((long)callback != 0xDDDDDDDDL && (long)tag != 0xDDDDDDDDL && (long)handle != 0xDDDDDDDDL);
 
    watch->on_completion = callback;
    watch->tag = tag;
@@ -325,7 +327,7 @@ static void def_post (lw_pump _ctx, void * function, void * parameter)
    lw_eventpump ctx = (lw_eventpump) _ctx;
 
 #ifdef _DEBUG
-   assert(((long)parameter) != 0xDDDDDDDDL);
+   assert(((long)parameter) != 0xDDDDDDDDL && ((long)function) != 0xDDDDDDDDL);
 #endif
 
    PostQueuedCompletionStatus (ctx->completion_port, 0xFFFFFFFF,
@@ -342,7 +344,7 @@ static void def_update_callbacks (lw_pump ctx,
    watch->on_completion = on_completion;
 
 #ifdef _DEBUG
-   assert(((long)watch) != 0xDDDDDDDDL);
+   assert(((long)watch) != 0xDDDDDDDDL && ((long)tag) != 0xDDDDDDDDL && ((long)on_completion) != 0xDDDDDDDDL);
 #endif
 }
 

@@ -9,7 +9,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 {
 	// It's a pure IPv4 already, or a pure IPv6, not IPv4-mapped-IPv6
 	if (strncmp(input, "[::ffff:", 8))
-		memcpy_s((char *)output, outputSize, input, strnlen(input, 64));
+		memcpy_s((char *)output, outputSize, input, strnlen(input, 64) + 1U);
 	else // IPv4 wrapped inside IPv6
 	{
 		// Start search for "]" at offset of 15
@@ -22,7 +22,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 				// Apparently the lw_addr's buffer is used for every tostring() call.
 
 				// actually 64, not len, as lw_addr->buffer is 64 chars
-				memmove_s((char *)output, outputSize, &input[8], len - i);
+				memmove_s((char *)output, outputSize, &input[8], i - 8);
 				((char *)output)[i - 8] = '\0';
 
 				break;

@@ -123,6 +123,16 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
    };
 
    lwp_release (ctx, "fdstream completion");
+
+   // read lwp_refcount's first member, refcount. If it's now 1, only lwp_stream_init keeps this stream open.
+   // This is the easiest way to close the connection and free the memory invoked.
+   if (*((unsigned short *)ctx) == 1)
+   {
+	   lw_trace("Running stream_delete for stream %p due to fd_stream completion hack.", ctx);
+	   lw_stream_delete((lw_stream)ctx);
+	   // TODO: UDP LEAKED?!
+	   lw_trace("Stream delete completed.");
+   }
 }
 
 static void close_fd (lw_fdstream ctx)
@@ -198,6 +208,8 @@ static void close_fd (lw_fdstream ctx)
    }
 
    ctx->fd = INVALID_HANDLE_VALUE;
+
+   lwp_deinit();
 }
 
 void write_completed (lw_fdstream ctx)

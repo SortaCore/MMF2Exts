@@ -55,6 +55,7 @@ void lw_event_delete (lw_event ctx)
       return;
 
    WSACloseEvent (ctx->event);
+   lwp_deinit();
 
    free (ctx);
 }

@@ -108,6 +108,7 @@ struct _lw_stream
     const lw_streamdef * def;
 
     lw_pump pump;
+	lw_pump_watch watch;
     
     char flags;
 

@@ -29,18 +29,21 @@
 
 #include "../common.h"
 
-static lw_bool init_called = lw_false;
+static int init_called = 0;
 
 void lwp_init ()
 {
     WSADATA winsock_data;
 
-    if (init_called)
+    if (++init_called == 1)
         return;
     
-    init_called = lw_true;
-
     WSAStartup (MAKEWORD (2, 2), &winsock_data);
+}
+void lwp_deinit()
+{
+	if (--init_called == 0)
+		WSACleanup();
 }
 
 lw_bool lw_file_exists (const char * filename)

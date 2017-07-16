@@ -73,6 +73,7 @@ void lw_client_delete (lw_client ctx)
    if (!ctx)
       return;
 
+
    lw_stream_close ((lw_stream) ctx, lw_true);
 
    lw_bool isValid = lw_fdstream_valid(&ctx->fdstream);
@@ -80,6 +81,7 @@ void lw_client_delete (lw_client ctx)
 
    lw_addr_delete (ctx->address);
 
+   lwp_deinit();
    free (ctx);
 }
 
