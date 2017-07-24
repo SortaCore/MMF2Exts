@@ -8,7 +8,11 @@ void DLLExport GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"]["Author"], MAX_PATH);
 	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"]["Copyright"], MAX_PATH);
 	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"]["URL"], MAX_PATH);
-	Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
+	
+	if (mV && mV->IdAppli)
+		Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
+	else
+		Edif::ConvertAndCopyString(ObjName, (*SDK->json.u.object.values[2].value)["About"]["Name"], MAX_PATH);
 
 	// Allows user to specify a static variable in the object comment.
 	// e.g. build number, liblacewing version, etc.

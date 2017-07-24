@@ -395,14 +395,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				
 					if (!CurrentProperty)
 					{
-						char * temp = (char *)calloc(256, sizeof(char));
-						if (temp)
-						{
-							sprintf_s(temp, 256, "The Parameter type specified was unrecognised: [%s]."
-												 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
-							MessageBoxA(NULL, temp, "DarkEDIF error", MB_OK);
-							free(temp);
-						}
+						char temp[256];
+						sprintf_s(temp, 256, "The Parameter type specified was unrecognised: [%s]."
+											 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
+						MessageBoxA(NULL, temp, "DarkEDIF error", MB_OK);
 					}
 					else
 					{
@@ -419,8 +415,8 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						// Find out what opt is.
 						// Two settings may be specified by |=ing the options unsigned int.
 					
-						CurrentProperty->Title = Property["Title"];
-						CurrentProperty->Info = Property["Info"];
+						CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
+						CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
 
 						switch (CurrentProperty->Type_ID)
 						{
@@ -512,7 +508,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 							// Edit button, Params1 = button text, or nullptr if Edit
 							case PROPTYPE_EDITBUTTON:
-								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : (const char *)Property["Text"]);
+								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : Edif::ConvertString((const char *)Property["Text"]));
 					
 							// Edit box for strings, Parameter = max length
 							case PROPTYPE_EDIT_STRING:
@@ -537,7 +533,6 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 								if (Property["Items"].u.object.length == 0)
 									MessageBoxA(NULL, "Warning: no default items detected in list.", "DarkEDIF warning", MB_OK);
 							
-								#pragma message ("Note: Is forced-char incompatible with Unicode?")
 								const char ** Fixed = new const char * [Property["Items"].u.object.length+2];
 
 								// NULL is required at start of array
@@ -546,7 +541,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 								// Use decrementation and copy to fixed list.
 								for (unsigned int index = 1; index < Property["Items"].u.object.length+1; ++ index)
 								{
-									Fixed[index] = Property["Items"][index-1];
+									Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
 								}
 
 								// Pass fixed list as Parameter
@@ -629,14 +624,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 							// Unrecognised
 							default:
 							{
-								char * temp = (char *)calloc(256, sizeof(char));
-								if (temp)
-								{
-									sprintf_s(temp, 256, "The Parameter type specified was unrecognised: [%s]."
-														 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
-									MessageBoxA(NULL, temp, "DarkEdif JSON error", MB_OK);
-									free(temp);
-								}
+								char temp [256];
+								sprintf_s(temp, 256, "The Parameter type specified was unrecognised: [%s]."
+													 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
+								MessageBoxA(NULL, temp, "DarkEdif JSON error", MB_OK);
 								SetAllProps(0, NULL);
 							}
 						}

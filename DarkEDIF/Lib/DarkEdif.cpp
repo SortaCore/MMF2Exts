@@ -40,13 +40,17 @@ const json_value & CurrentLanguage()
 	{
  		GetModuleFileNameA(hInstLib, FileToLookup, sizeof(FileToLookup));
 
+		// This mass of code converts Extensions\Bla.mfx and Extensions\Unicode\Bla.mfx to Extensions\DarkEDIF.ini
 		char * Filename = FileToLookup + strlen(FileToLookup) - 1;
-
 		while (*Filename != '\\' && *Filename != '/')
 			-- Filename;
 
-		strcpy(++ Filename, "DarkEDIF.ini");
+		// Look in Extensions, not Extensions\Unicode
+		if (!_strnicmp("Unicode", Filename - (sizeof("Unicode") - 1), sizeof("Unicode") - 1))
+			Filename -= sizeof("Unicode\\") - 1;
 
+		strcpy(++ Filename, "DarkEDIF.ini");
+		
 		// Is the file in the directory of the MFX? (should be, languages are only needed in edittime)
 		if (GetFileAttributesA(FileToLookup) == INVALID_FILE_ATTRIBUTES)
 		{
