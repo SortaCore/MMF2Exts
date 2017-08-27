@@ -1198,14 +1198,22 @@ void lw_stream_remove_hook_data (lw_stream stream,
                                     lw_stream_hook_data proc,
                                     void * tag)
 {   
+   if (list_length(stream->data_hooks) == 0)
+	   return;
+   lw_bool found = lw_false;
+
    list_each_elem (stream->data_hooks, hook)
    {
       if ((*hook)->proc == proc && (*hook)->tag == tag)
       {
          list_elem_remove (hook);
+		 found = lw_true;
          break;
       }
    }
+
+   if (found == lw_false)
+	   return;
 
    lwp_streamgraph_clear_expanded (stream->graph);
    lwp_streamgraph_expand (stream->graph);
@@ -1226,18 +1234,25 @@ void lw_stream_remove_hook_close (lw_stream stream,
                                   lw_stream_hook_close proc,
                                   void * tag)
 {   
+   if (list_length(stream->close_hooks) == 0)
+	   return;
 
+   lw_bool found = lw_false;
    list_each_elem (stream->close_hooks, hook)
    {
       if (hook->proc == proc && hook->tag == tag)
       {
          list_elem_remove (hook);
+		 found = lw_true;
          break;
       }
    }
 
-   lwp_streamgraph_clear_expanded (stream->graph);
-   lwp_streamgraph_expand (stream->graph);
+   if (found == lw_false)
+	   return;
+
+   lwp_streamgraph_clear_expanded(stream->graph);
+   lwp_streamgraph_expand(stream->graph);
 }
 
 
