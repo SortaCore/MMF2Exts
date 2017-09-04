@@ -12,11 +12,12 @@ void OnChannelMessage(
 	lacewing::relayserver::channel &Channel,
 	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant);
 void OnPeerMessage(	
-	lacewing::relayserver &Server, lacewing::relayserver::client &Client,
+	lacewing::relayserver &Server, lacewing::relayserver::client &SendingClient,
 	lacewing::relayserver::channel &Channel, lacewing::relayserver::client &TargetClient,
-	bool Blasted, int Subchannel, const char * Packet, size_t Size, int Variant);
-void OnJoinChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
-	lacewing::relayserver::channel &Channel);
+	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant);
+void OnJoinChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client, lacewing::relayserver::channel &Channel,
+	// Provided in case Fusion edits channel name, we need the create settings to persist
+	bool hidden, bool autoclose);
 void OnLeaveChannelRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client,
 	lacewing::relayserver::channel &Channel);
-void OnNameSet(lacewing::relayserver &Server, lacewing::relayserver::client &Client, const char * NewName);
+void OnNameSetRequest(lacewing::relayserver &Server, lacewing::relayserver::client &Client, const char * NewName);

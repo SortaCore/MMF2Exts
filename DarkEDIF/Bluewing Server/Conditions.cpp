@@ -32,10 +32,6 @@ bool Extension::OnAllClientsLoopWithName(char * LoopName)
 {
 	LoopNameMatches("Peer Loop With Name");
 }
-bool Extension::OnAllClientsLoopWithNameFinished(char * LoopName)
-{
-	LoopNameMatches("Peer Loop With Name Finished");
-}
 bool Extension::OnClientsJoinedChannelLoopWithName(char * LoopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name");
@@ -44,85 +40,151 @@ bool Extension::OnClientsJoinedChannelLoopWithNameFinished(char * LoopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name Finished");
 }
-bool Extension::IsClientOnChannel_Name(char * PeerName, char * ChannelName)
+bool Extension::IsClientOnChannel_Name(char * ClientName, char * ChannelName)
 {
-	if (PeerName[0] == '\0')
-		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
-	else if (ChannelName[0] != '\0')
+	if (ClientName[0] == '\0' && !ThreadData.Client)
+		CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected.");
+	else if (ChannelName[0] == '\0' && !ThreadData.Channel)
+		CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected.");
+	else
 	{
-		lacewing::relayserver::channel * C = Srv.firstchannel();
-		while (C)
+		auto SelectedClient = ThreadData.Client;
+		if (ClientName[0])
 		{
-			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
+			auto SelectedClient2 =
+				std::find_if(Clients.cbegin(), Clients.cend(), [&](ClientCopy * const & copy) {
+				return !_stricmp(copy->name(), ClientName); });
+			if (SelectedClient2 == Clients.cend())
 			{
-				lacewing::relayserver::client * P = C->firstclient();
-				while (P)
-				{
-					if (!_stricmp(PeerName, P->name()))
-						return !P->isclosed;
-					P = P->next();
-				}
+				std::stringstream Error;
+				Error << "Error checking if client is joined to a channel, client name \"" << ClientName << "\" was not found on server.";
+				CreateError(Error.str().c_str());
 				return false;
 			}
-			C = C->next();
+			SelectedClient = *SelectedClient2;
 		}
-		
-		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
-	}
-	else if (ThreadData.Channel) // Use currently selected channel
-	{
-		lacewing::relayserver::client * P = ThreadData.Channel->firstclient();
-		while (P)
+
+		auto SelectedChannel = ThreadData.Channel;
+		if (ChannelName[0])
 		{
-			if (!_stricmp(P->name(), PeerName))
-				return !P->isclosed;
-			P = P->next();
+			auto SelectedChannel2 =
+				std::find_if(Channels.cbegin(), Channels.cend(), [&](ChannelCopy * const & copy) {
+				return !_stricmp(copy->name(), ChannelName); });
+			if (SelectedChannel2 == Channels.cend())
+			{
+				std::stringstream Error;
+				Error << "Error checking if client is joined to a channel, channel name \"" << ChannelName << "\" was not found on server.";
+				CreateError(Error.str().c_str());
+				return false;
+			}
+			SelectedChannel = *SelectedChannel2;
 		}
-		return false;
-	}
-	else // No currently selected channel!
-	{
-		CreateError("Error checking if peer is joined to a channel; no channel selected, and no channel name supplied.");
+
+		auto& channelClients = SelectedChannel->getclients();
+		auto& clientChannels = SelectedClient->getchannels();
+
+		return std::find(clientChannels.cbegin(), clientChannels.cend(), SelectedChannel) != clientChannels.cend() ||
+			std::find(channelClients.cbegin(), channelClients.cend(), SelectedClient) != channelClients.cend();
 	}
 	return false;
 }
 bool Extension::IsClientOnChannel_ID(int ClientID, char * ChannelName)
 {
-	if (ChannelName[0] != '\0')
+	if (ClientID < 0 || ClientID > 0xFFFF)
 	{
-		lacewing::relayserver::channel * C = Srv.firstchannel();
-		while (C)
-		{
-			if (!C->isclosed && !_stricmp(ChannelName, C->name()))
+		std::stringstream Error;
+		Error << "Error checking if client is joined to a channel, client ID " << ClientID << " is not between total ID range of 0-65535.";
+		CreateError(Error.str().c_str());
+	}
+	else if (ChannelName[0] == '\0' && !ThreadData.Channel)
+		CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected.");
+	else
+	{
+		ClientCopy * SelectedClient = nullptr;
+		{		
+			auto SelectedClient2 =
+				std::find_if(Clients.cbegin(), Clients.cend(), [&](ClientCopy * const & copy) {
+				return copy->id() == ClientID; });
+			if (SelectedClient2 == Clients.cend())
 			{
-				lacewing::relayserver::client * P = C->firstclient();
-				while (P)
-				{
-					if (P->id() == ClientID)
-						return !P->isclosed;
-					P = P->next();
-				}
+				std::stringstream Error;
+				Error << "Error checking if client is joined to a channel, client ID " << ClientID << " was not found on server.";
+				CreateError(Error.str().c_str());
 				return false;
 			}
-			C = C->next();
+			SelectedClient = *SelectedClient2;
 		}
-		
-		CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
-	}
-	else if (ThreadData.Channel)// Use currently selected channel
-	{
-		lacewing::relayserver::client * P = ThreadData.Channel->firstclient();
-		while (P)
+
+		auto SelectedChannel = ThreadData.Channel;
+		if (ChannelName[0])
 		{
-			if (P->id() == ClientID)
-				return !P->isclosed;
-			P = P->next();
+			auto SelectedChannel2 =
+				std::find_if(Channels.cbegin(), Channels.cend(), [&](ChannelCopy * const & copy) {
+				return !_stricmp(copy->name(), ChannelName); });
+			if (SelectedChannel2 == Channels.cend())
+			{
+				std::stringstream Error;
+				Error << "Error checking if client is joined to a channel, channel name \"" << ChannelName << "\" was not found on server.";
+				CreateError(Error.str().c_str());
+				return false;
+			}
+			SelectedChannel = *SelectedChannel2;
 		}
-		return false;
-	}
-	else // No currently selected channel!
-	{
-		CreateError("Error checking if peer is joined to a channel; no channel selected, and no channel name supplied.");
+
+		auto& channelClients = SelectedChannel->getclients();
+		auto& clientChannels = SelectedClient->getchannels();
+
+		return std::find(clientChannels.cbegin(), clientChannels.cend(), SelectedChannel) != clientChannels.cend() ||
+			std::find(channelClients.cbegin(), channelClients.cend(), SelectedClient) != channelClients.cend();
 	}
 	return false;
 }
+
+bool Extension::OnAllChannelsLoopWithName(char * LoopName)
+{
+	LoopNameMatches("All-Channel Loop With Name");
+}
+bool Extension::OnAllChannelsLoopWithNameFinished(char * LoopName)
+{
+	LoopNameMatches("All-Channel Loop With Name Finished");
+}
+
+bool Extension::OnChannelClientsLoopWithName(char * LoopName)
+{
+	LoopNameMatches("Channel's Client Loop With Name");
+}
+bool Extension::OnChannelClientsLoopWithNameFinished(char * LoopName)
+{
+	LoopNameMatches("Channel's Client Loop With Name Finished");
+}
+
+bool Extension::IsFlashPolicyServerHosting()
+{
+	return FlashSrv->hosting();
+}
+
+bool Extension::ChannelIsHiddenFromChannelList()
+{
+	return ThreadData.Channel ? ThreadData.Channel->hidden() : false;
+}
+
+bool Extension::ChannelIsSetToCloseAutomatically()
+{
+	return ThreadData.Channel ? ThreadData.Channel->autocloseenabled() : false;
+}
+bool Extension::OnAllClientsLoopWithNameFinished(char * LoopName)
+{
+	LoopNameMatches("Peer Loop With Name Finished");
+}
+
+bool Extension::IsHTML5Hosting()
+{
+	static bool HTML5Warning = false;
+	if (!HTML5Warning)
+	{
+		HTML5Warning = true;
+		CreateError("HTML5 Hosting condition not usable yet. Returning false.");
+	}
+	return false; // HTML5Srv->hosting();
+}
+

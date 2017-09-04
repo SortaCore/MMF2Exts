@@ -398,6 +398,10 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 				return edPtr->Global;
 			if (ID == 4)
 				return edPtr->MultiThreading;
+			if (ID == 5)
+				return edPtr->TimeoutWarningEnabled;
+			if (ID == 6)
+				return edPtr->FullDeleteEnabled;
 		}
 		
 		MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEDIF - Invalid property", MB_OK);
@@ -568,6 +572,16 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			if (ID == 4)
 			{
 				edPtr->MultiThreading = (Check != 0);
+				return;
+			}
+			if (ID == 5)
+			{
+				edPtr->TimeoutWarningEnabled = (Check != 0);
+				return;
+			}
+			if (ID == 6)
+			{
+				edPtr->FullDeleteEnabled = (Check != 0);
 				return;
 			}
 		}

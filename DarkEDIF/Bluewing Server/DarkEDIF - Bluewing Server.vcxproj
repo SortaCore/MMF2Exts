@@ -16,8 +16,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1B15E55D-4945-41B7-8B4F-DC100B1D326C}</ProjectGuid>
-    <RootNamespace>DarkEDIF - Blank</RootNamespace>
-    <ProjectName>Bluewing Server</ProjectName>
+    <RootNamespace>DarkEDIF</RootNamespace>
+    <ProjectName>DarkEDIF - Bluewing Server</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -30,13 +30,13 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -93,7 +93,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _Lacewing_static=; _Lacewing_no_spdy;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;_WINSOCK_DEPRECATED_NO_WARNINGS;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -153,7 +153,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _Lacewing_static=; _Lacewing_no_spdy;EDITOR; %(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;_WINSOCK_DEPRECATED_NO_WARNINGS;EDITOR; %(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -215,7 +215,7 @@
       <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _Lacewing_static=; _Lacewing_no_spdy;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN; lw_import=; _lacewing_static=; _lacewing_no_spdy;_WINSOCK_DEPRECATED_NO_WARNINGS;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -264,6 +264,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\DarkEdif.cpp" />
+    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc" />
     <ClCompile Include="..\Lib\Lacewing\RelayServer.cc" />
     <ClCompile Include="..\Lib\Lacewing\src\address.c" />
     <ClCompile Include="..\Lib\Lacewing\src\cxx\address2.cc" />
@@ -314,6 +315,8 @@
     <ClCompile Include="..\Lib\Lacewing\src\windows\udp.c" />
     <ClCompile Include="..\Lib\ObjectSelection.cpp" />
     <ClCompile Include="Actions.cpp" />
+    <ClCompile Include="ChannelCopy.cpp" />
+    <ClCompile Include="ClientCopy.cpp" />
     <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -361,9 +364,9 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h" />
-    <ClInclude Include="..\..\..\..\..\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h" />
     <ClInclude Include="..\Inc\MMFMasterHeader.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
     <ClInclude Include="..\Lib\Lacewing\IDPool.h" />
     <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
     <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
@@ -384,9 +387,11 @@
     <ClInclude Include="..\Lib\Lacewing\src\windows\fdstream.h" />
     <ClInclude Include="..\Lib\Lacewing\src\windows\sslclient.h" />
     <ClInclude Include="..\Lib\Lacewing\src\windows\typeof.h" />
+    <ClInclude Include="ChannelCopy.h" />
+    <ClInclude Include="ClientCopy.h" />
     <ClInclude Include="DarkEDIF.h" />
     <ClInclude Include="LacewingFunctions.h" />
-    <ClInclude Include="..\Lib\MultiThreading.h" />
+    <ClInclude Include="MultiThreading.h" />
     <ClInclude Include="..\Inc\ObjectSelection.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Extension.h" />

@@ -1,6 +1,20 @@
 // DarkEDIF extension: allows safe multithreading returns.
 #include "Common.h"
 
+enum InteractiveType : unsigned char
+{
+	None = 0,
+	ConnectRequest = 1,
+	ClientNameSet = 2,
+	ChannelJoin = 3,
+	ChannelLeave = 4,
+	ChannelMessageIntercept = 5,
+	ClientMessageIntercept = 6
+};
+
+struct ChannelCopy;
+struct ClientCopy;
+
 #ifdef MULTI_THREADING
 	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
 	#pragma pack( push, align_to_one_multithreading)
@@ -9,7 +23,7 @@
 	{
 		// Required for DarkEDIF
 		unsigned char		NumEvents;
-		unsigned short *	CondTrig;
+		unsigned short		CondTrig[2];
 
 		// Lacewing code
 		union {
@@ -19,6 +33,8 @@
 			size_t				Size,
 								Cursor;
 			unsigned char		Subchannel;
+			bool				Blasted;
+			unsigned char		Variant;
 			} ReceivedMsg;
 
 			// When an error occurs
@@ -33,23 +49,39 @@
 
 			// On name set request
 			struct {
-				const char *	Name;
+				char *		Name;
 			} Requested;
 		};
-		lacewing::relayserver::channel * Channel;
-		lacewing::relayserver::client * Client;
-		lacewing::relayserver::client * SenderClient; // By default the same as Client
-		lacewing::relayserver::client * ReceivingClient;
+		ChannelCopy * Channel;
+		union {
+			ClientCopy * Client;
+			ClientCopy * SenderClient; // By default the same as Client
+		};
+		ClientCopy * ReceivingClient;
+		InteractiveType InteractiveType;
+		bool ChannelCreate_Hidden;
+		bool ChannelCreate_AutoClose;
 
-		SaveExtInfo() : NumEvents(0), CondTrig(NULL),
-			Channel(NULL), Client(NULL), SenderClient(NULL), ReceivingClient(NULL)
+		SaveExtInfo() : NumEvents(0), CondTrig { 0 },
+			Channel(NULL), Client(NULL), ReceivingClient(NULL), 
+			InteractiveType(InteractiveType::None),
+			ChannelCreate_Hidden(false),
+			ChannelCreate_AutoClose(false)
 		{
 			ReceivedMsg.Content = NULL;
 			ReceivedMsg.Cursor = 0;
 			ReceivedMsg.Size = 0;
 			ReceivedMsg.Subchannel = 0;
+			ReceivedMsg.Blasted = false;
+			ReceivedMsg.Variant = 255;
 		}
 		~SaveExtInfo()
+		{
+			Free();
+		}
+
+		/// <summary> Frees this object. </summary>
+		void Free()
 		{
 			// A char * is always the first member of each struct inside the union.
 			// So they will be at the same memory address. Neat, huh?
@@ -57,14 +89,18 @@
 			{
 				free(ReceivedMsg.Content);
 				ReceivedMsg.Content = NULL;
+				ReceivedMsg.Cursor = 0;
+				ReceivedMsg.Size = 0;
+				ReceivedMsg.Subchannel = 0;
+				ReceivedMsg.Blasted = false;
+				ReceivedMsg.Variant = 255;
 			}
-			
-			// Required for DarkEDIF
-			if (CondTrig)
-			{
-				free(CondTrig);
-				CondTrig = NULL;
-			}
+			NumEvents = 0;
+			CondTrig[0] = 0; CondTrig[1] = 0;
+			Channel = NULL;
+			Client = NULL;
+			ReceivingClient = NULL;
+			InteractiveType = InteractiveType::None;
 		}
 	};
 #pragma pack (pop, align_to_one_multithreading)

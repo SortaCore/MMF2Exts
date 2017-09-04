@@ -129,17 +129,19 @@ void DLLExport StartApp(mv *mV, CRunApp* pApp)
 // -------------------
 // Called when the application ends.
 // 
+extern HANDLE AppWasClosed; // Event
 void DLLExport EndApp(mv *mV, CRunApp* pApp)
 {
-	// Example
-	// -------
-	// Delete global data
-//	CMyData* pData = (CMyData*)mV->mvGetExtUserData(pApp, hInstLib);
-//	if ( pData != NULL )
-//	{
-//		delete pData;
-//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
-//	}
+	if (pApp->ParentApp)
+	{
+		OutputDebugStringA("EndApp called, but it's subapp. Ignoring.\n");
+		return;
+	}
+
+	if (AppWasClosed)
+		SetEvent(AppWasClosed);
+
+	OutputDebugStringA("EndApp called.\n");
 }
 
 // -------------------

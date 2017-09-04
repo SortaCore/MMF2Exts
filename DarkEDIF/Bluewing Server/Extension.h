@@ -1,14 +1,14 @@
-
 #include "Edif.h"
+
+struct GlobalInfo;
+struct ClientCopy;
+struct ChannelCopy;
+
 class Extension
 {
 public:
 	// Hide stuff requiring other headers
 	SaveExtInfo ThreadData; // Must be first variable in Extension class
-	std::vector<SaveExtInfo *> Saved;
-	SaveExtInfo &AddEvent(int Event, bool UseLastData = false);
-	void NewEvent(SaveExtInfo *);
-	CRITICAL_SECTION Lock;
 
     RUNDATA * rdPtr;
     RunHeader * rhPtr;
@@ -16,48 +16,16 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
-    static const int Version = 1;
+    static const int Version = lacewing::relayserver::buildnum;
 
-    static const int OEFLAGS = 0; // Use OEFLAGS namespace
-    static const int OEPREFS = 0; // Use OEPREFS namespace
-    
+	static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
+	static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
+
     static const int WindowProcPriority = 100;
 
     Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
     ~Extension();
-
-	template <typename T>
-	struct LocalData
-	{
-		T * KeyAddr;
-		char * Key;
-		char * Value;
-
-		LocalData(T * KeyAddr, char * Key, char * Value)
-		{
-			this->KeyAddr = KeyAddr;
-			this->Key = Key;
-			this->Value = Value;
-		}
-		~LocalData()
-		{
-			free(Key);
-			free(Value);
-			KeyAddr = nullptr;
-			Value = Key = nullptr;
-		}
-	};
-
-	enum InteractiveType : unsigned char
-	{
-		None = 0x0,
-		DenyPermitted = 0x1,
-		PeerName = 0x2,
-		ChannelName = 0x4,
-		MessageDrop = 0x8,
-	};
-
-
+	
     /*  Add any data you want to store in your extension to this class
         (eg. what you'd normally store in rdPtr).
 		
@@ -69,44 +37,26 @@ public:
         and destructors, without having to call them manually or store
         a pointer.
     */
-	struct GlobalInfo {
-		lacewing::eventpump		_ObjEventPump;
-		lacewing::relayserver	_Server;
-		lacewing::flashpolicy	_Policy;
-		char *					_SendMsg,
-			 *					_DenyReason,
-			 *					_NewChannelName,
-			 *					_NewPeerName;
-		bool					_DropMessage,
-								_AutomaticallyClearBinary;
-		InteractiveType			_InteractivePending;
-		size_t					_SendMsgSize;
-		
-		char *					_GlobalID;
-		HANDLE					_Thread;
 
-		std::list<LocalData<lacewing::relayserver::channel>> channelsLocalData;
-		std::list<LocalData<lacewing::relayserver::client>> clientsLocalData;
-		
-		GlobalInfo() : _Server(_ObjEventPump), _Policy((lacewing::flashpolicy)flashpolicy_new(_ObjEventPump)),
-			_SendMsg(NULL), _DenyReason(NULL), _NewChannelName(NULL),
-			_NewPeerName(NULL), _InteractivePending(InteractiveType::None),
-			_SendMsgSize(0), _AutomaticallyClearBinary(false), _GlobalID(NULL), _Thread(NULL) {}
-	} * Globals;
+	bool IsGlobal;
+	GlobalInfo * Globals;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				Globals->_ObjEventPump
 	#define Srv							Globals->_Server
-	#define FlashSrv					Globals->_Policy
+	#define FlashSrv					Globals->_Server.flash
 	#define SendMsg						Globals->_SendMsg
 	#define DenyReason					Globals->_DenyReason
 	#define SendMsgSize					Globals->_SendMsgSize
 	#define AutomaticallyClearBinary	Globals->_AutomaticallyClearBinary
 	#define GlobalID					Globals->_GlobalID
 	#define NewChannelName				Globals->_NewChannelName
-	#define NewPeerName					Globals->_NewPeerName
+	#define NewClientName				Globals->_NewClientName
 	#define DropMessage					Globals->_DropMessage
 	#define InteractivePending			Globals->_InteractivePending
+	#define GThread						Globals->_Thread
+	#define Channels					Globals->_Channels
+	#define Clients						Globals->_Clients
 	
 	
 
@@ -116,16 +66,21 @@ public:
 	void AddToSend(void *, size_t);
 	
 
-	// Because Lacewing is singlethreaded, once we move the variables outside of its functions into DarkEDIF,
-	// the data may be overwritten, causing crashes and other such nasties.
+
+
+	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
+	// functions into DarkEDIF, the data may be overwritten, causing crashes and other such nasties.
+
 	// To work around this, we duplicate all the variables, and provide a special event number which will remove
 	// all the pointers in SaveExtInfo after they should no longer be valid.
-	// In this way, when a peer is disconnected then a channel left, both can be queried properly while as far as
-	// Lacewing is concerned they no longer exist.
-
-	std::vector<lacewing::relayserver::channel *> Channels;
-	std::vector<lacewing::relayserver::client *> Clients;
-
+	// In this way, when a client sends message then disconnects, on liblacewing's side that happens instantly,
+	// and liblacewing cleans up its client variable instantly too.
+	// We can't "deny" a disconnect, so we must accept it immediately.
+	//
+	// But since these events are queued, the "on client disconnect" may be called later, after liblacewing has deleted.
+	// So we have to store a copy of the client so we can look up name and such when it's disconnected.
+	// See the _Channels and _Clients variables in GlobalInfo for our copies.
+	
     // int MyVariable;
 
 
@@ -142,6 +97,7 @@ public:
 
 
     /// Actions
+		void RemovedActionNoParams();
 
 		void RelayServer_Host(int port);
 		void RelayServer_StopHosting();
@@ -152,17 +108,26 @@ public:
 		void ChannelListing_Enable();
 		void ChannelListing_Disable();
 		void SetWelcomeMessage(char * Message);
-		void EnableCondition_OnMessageToChannel();
-		void EnableCondition_OnMessageToPeer();
+		void EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
+		void EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
+		void EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
+		void EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
+		void EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith);
+		void EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith);
+		void EnableCondition_OnMessageToServer(int informFusion);
 		void OnInteractive_Deny(char * Reason);
-		void OnInteractive_ChangePeerName(char * NewName);
+		void OnInteractive_ChangeClientName(char * NewName);
 		void OnInteractive_ChangeChannelName(char * NewName);
 		void OnInteractive_DropMessage();
+		void OnInteractive_ReplaceMessageWithText(char * NewText);
+		void OnInteractive_ReplaceMessageWithNumber(int NewNumber);
+		void OnInteractive_ReplaceMessageWithSendBinary();
 
 		void Channel_SelectByName(char * Name);
 		void Channel_Close();
 		void Channel_SelectMaster();
 		void Channel_LoopClients();
+		void Channel_LoopClientsWithName(char * LoopName);
 		void Channel_SetLocalData(char * Key, char * Value);
 		void LoopAllChannels();
 		void LoopAllChannelsWithName(char * LoopName);
@@ -257,7 +222,7 @@ public:
 		bool OnChannelClientsLoopWithNameFinished(char * LoopName);
 		bool OnAllChannelsLoopWithNameFinished(char * LoopName);
 		bool OnClientsJoinedChannelLoopWithNameFinished(char * LoopName);
-		bool OnChannelsClientLoopFinished(char * LoopName);
+		// AlwaysTrue	bool OnChannelsClientLoopFinished(char * LoopName);
 		// AlwaysTrue	bool OnAllChannelsLoopFinished();
 		// AlwaysTrue	bool OnAllClientsLoopFinished();
 		// AlwaysTrue	bool OnClientsJoinedChannelLoopFinished();
@@ -276,14 +241,14 @@ public:
 		const char * Error();
 		const char * Lacewing_Version();
 		unsigned int BinaryToSend_Size();
-		const char * RequestedPeerName();
+		const char * RequestedClientName();
 		const char * RequestedChannelName();
 		const char * Channel_Name();
 		int Channel_ClientCount();
 		const char * Client_Name();
 		int Client_ID();
 		const char * Client_IP();
-		int Client_ConnectionTime(); // NB: was removed.
+		int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
 		int Client_ChannelCount();
 		const char * ReceivedStr();
 		int ReceivedInt();
@@ -316,10 +281,11 @@ public:
 		const char * Channel_GetLocalData(char * Key);
 		int Port();
 		long BinaryToSend_Address();
+		const char * Welcome_Message();
 		// Added expressions:
 		const char * DumpMessage(int Index, const char * Format);
-		const char * Welcome_Message();
-		const char * Client_Platform(); 
+		unsigned int AllClientCount();
+		const char * GetDenyReason();
 		
     /* These are called if there's no function linked to an ID */
 
@@ -343,4 +309,116 @@ public:
     bool Save(HANDLE File);
     bool Load(HANDLE File);
 
+};
+
+template <typename T>
+struct LocalData
+{
+	T * KeyAddr;
+	char * Key;
+	char * Value;
+
+	LocalData(T * KeyAddr, char * Key, char * Value)
+	{
+		this->KeyAddr = KeyAddr;
+		this->Key = Key;
+		this->Value = Value;
+	}
+	~LocalData()
+	{
+		free(Key);
+		free(Value);
+		KeyAddr = nullptr;
+		Value = Key = nullptr;
+	}
+};
+
+struct GlobalInfo {
+	lacewing::eventpump			_ObjEventPump;
+	lacewing::relayserver		_Server;
+	char *						_SendMsg,
+		 *						_DenyReason,
+		 *						_NewChannelName,
+		 *						_NewClientName;
+	bool						_DropMessage,
+								_AutomaticallyClearBinary;
+	InteractiveType				_InteractivePending;
+	size_t						_SendMsgSize;
+
+	char *						_GlobalID;
+	HANDLE						_Thread;
+	Extension *					_Ext;
+	std::vector<SaveExtInfo *>	_Saved;
+	std::vector<ChannelCopy *>	_Channels;
+	std::vector<ClientCopy *>	_Clients;
+
+	ChannelCopy *				LastDestroyedExtSelectedChannel;
+	ClientCopy *				LastDestroyedExtSelectedClient;
+
+	CRITICAL_SECTION			Lock;
+	std::vector<Extension *>	Refs;
+	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
+	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+
+	void AddEvent1(int Event1,
+		ChannelCopy * Channel = nullptr,
+		ClientCopy * Client = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255,
+		ClientCopy * ReceivingClient = nullptr,
+		InteractiveType InteractiveType = InteractiveType::None,
+		unsigned char Variant = 255,
+		bool Blasted = false,
+		bool ChannelCreate_Hidden = false, bool ChannelCreate_AutoClose = false);
+	void AddEvent2(int Event1, int Event2,
+		ChannelCopy * Channel = nullptr,
+		ClientCopy *Client = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255,
+		ClientCopy * ReceivingClient = nullptr,
+		InteractiveType InteractiveType = InteractiveType::None,
+		unsigned char Variant = 255,
+		bool Blasted = false,
+		bool ChannelCreate_Hidden = false, bool ChannelCreate_AutoClose = false);
+	void AddEventF(bool twoEvents, int Event1, int Event2,
+		ChannelCopy * Channel = nullptr,
+		ClientCopy * Client = nullptr,
+		char * MessageOrErrorText = nullptr,
+		size_t MessageSize = 0,
+		unsigned char Subchannel = 255,
+		ClientCopy * ReceivingClient = nullptr,
+		InteractiveType InteractiveType = InteractiveType::None,
+		unsigned char Variant = 255,
+		bool Blasted = false,
+		bool ChannelCreate_Hidden = false,
+		bool ChannelCreate_AutoClose = false
+	);
+	void CreateError(const char * errorText);
+
+	enum AutoResponse : char
+	{
+		Invalid = -1,
+		Approve_Quiet = 0,
+		Deny_Quiet,
+		Approve_TellFusion,
+		Deny_TellFusion,
+		WaitForFusion
+	};
+
+	AutoResponse AutoResponse_Connect;
+	const char * AutoResponse_Connect_DenyReason;
+	AutoResponse AutoResponse_NameSet;
+	const char * AutoResponse_NameSet_DenyReason;
+	AutoResponse AutoResponse_ChannelJoin;
+	const char * AutoResponse_ChannelJoin_DenyReason;
+	AutoResponse AutoResponse_ChannelLeave;
+	const char * AutoResponse_ChannelLeave_DenyReason;
+	AutoResponse AutoResponse_MessageClient;
+	AutoResponse AutoResponse_MessageChannel;
+	AutoResponse AutoResponse_MessageServer;
+
+	GlobalInfo(Extension * e, EDITDATA * edPtr);
+	~GlobalInfo() noexcept(false);
 };

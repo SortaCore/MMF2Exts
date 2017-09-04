@@ -3,7 +3,7 @@
 
 const char * Extension::Error()
 {
-	return Runtime.CopyString(ThreadData.Error.Text);
+	return Runtime.CopyString(ThreadData.Error.Text ? ThreadData.Error.Text : "");
 }
 int Extension::Channel_Count()
 {
@@ -11,15 +11,12 @@ int Extension::Channel_Count()
 }
 const char * Extension::Client_Name()
 {
-	return Runtime.CopyString((!ThreadData.Client || ThreadData.Client->isclosed || !ThreadData.Client->name()) ? "" : ThreadData.Client->name());
+	return Runtime.CopyString((!ThreadData.Client || !ThreadData.Client->name()) ? "" : ThreadData.Client->name());
 }
 const char * Extension::ReceivedStr()
 {
-	if (ThreadData.ReceivedMsg.Content[ThreadData.ReceivedMsg.Size-1] != '\0') 
-	{
-		CreateError("Received$() was used on a message that is not null-terminated.");
-		return Runtime.CopyString("");
-	}
+	if (ThreadData.ReceivedMsg.Content[ThreadData.ReceivedMsg.Size - 1] != '\0') 
+		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size).c_str());
 	else
 		return Runtime.CopyString(ThreadData.ReceivedMsg.Content);
 }
@@ -41,9 +38,37 @@ int Extension::Client_ID()
 {
 	return ThreadData.Client ? ThreadData.Client->id() : -1;
 }
+const char * Extension::RequestedClientName()
+{
+	return Runtime.CopyString(ThreadData.Requested.Name ? ThreadData.Requested.Name : "");
+}
+const char * Extension::RequestedChannelName()
+{
+	return Runtime.CopyString(ThreadData.Requested.Name ? ThreadData.Requested.Name : "");
+}
+int Extension::Client_ConnectionTime()
+{
+	return ThreadData.Client ? (int)ThreadData.Client->connecttime() : -1;
+}
+int Extension::Client_ChannelCount()
+{
+	return ThreadData.Client ? ThreadData.Client->channelcount() : -1;
+}
+const char * Extension::Client_GetLocalData(char * key)
+{
+	if (!key || !ThreadData.Client)
+		return Runtime.CopyString("");
+	return Runtime.CopyString(ThreadData.Client->GetLocalData(key).c_str());
+}
+const char * Extension::Channel_GetLocalData(char * key)
+{
+	if (!key || !ThreadData.Channel)
+		return Runtime.CopyString("");
+	return Runtime.CopyString(ThreadData.Channel->GetLocalData(key).c_str());
+}
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? (ThreadData.Channel->isclosed ? "" : ThreadData.Channel->name()) : (ThreadData.Loop.Name ? ThreadData.Loop.Name : ""));
+	return Runtime.CopyString(ThreadData.Channel ? ThreadData.Channel->name() : "");
 }
 int Extension::Channel_ClientCount()
 {
@@ -218,7 +243,15 @@ unsigned int Extension::BinaryToSend_Size()
 }
 const char * Extension::Client_IP()
 {
-	return Runtime.CopyString(ThreadData.Client->getaddress()->tostring());
+	if (ThreadData.Client == nullptr)
+	{
+		CreateError("Could not read client IP, no client selected.");
+		return Runtime.CopyString("");
+	}
+
+	char * addr = (char *)Runtime.Allocate(64);
+	lacewing::lw_addr_prettystring(ThreadData.Client->getaddress(), addr, 64);
+	return addr;
 }
 int Extension::Port()
 {
@@ -364,6 +397,15 @@ const char * Extension::CursorString()
 		ThreadData.ReceivedMsg.Cursor += strlen(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor)+1;
 		return Runtime.CopyString(ThreadData.ReceivedMsg.Content+s);
 	}
+}
+const char * Extension::Client_ProtocolImplementation()
+{
+	if (ThreadData.Client == nullptr)
+	{
+		CreateError("Could not read client protocol implementation, no client selected.");
+		return Runtime.CopyString("");
+	}
+	return Runtime.CopyString(ThreadData.Client->getimplementation());
 }
 long Extension::BinaryToSend_Address()
 {
@@ -529,4 +571,12 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 	}
 
 	return Runtime.CopyString("");
+}
+unsigned int Extension::AllClientCount()
+{
+	return Srv.clientcount();
+}
+const char * Extension::GetDenyReason()
+{
+	return Runtime.CopyString(DenyReason ? DenyReason : "");
 }

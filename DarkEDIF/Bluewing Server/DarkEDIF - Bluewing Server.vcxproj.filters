@@ -190,6 +190,15 @@
     <ClCompile Include="..\Lib\lacewing\src\windows\udp.c">
       <Filter>Source Files\Lacewing\src\windows</Filter>
     </ClCompile>
+    <ClCompile Include="ChannelCopy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientCopy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -216,9 +225,6 @@
     <ClInclude Include="LacewingFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Lib\MultiThreading.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Inc\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
@@ -229,12 +235,6 @@
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\MessageReader.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameBuilder.h">
-      <Filter>Header Files\Lacewing</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Visual Studio 2013\Projects\MMF2Exts\DarkEDIF\Lib\Lacewing\FrameReader.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\lacewing\src\address.h">
@@ -287,6 +287,21 @@
     </ClInclude>
     <ClInclude Include="..\Lib\lacewing\src\flashpolicy.h">
       <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiThreading.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChannelCopy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientCopy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Lacewing\FrameReader.h">
+      <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

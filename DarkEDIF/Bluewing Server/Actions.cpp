@@ -1,10 +1,18 @@
 
 #include "Common.h"
-char Buffer [200];
-std::string CriticalSection;
+#ifdef _DEBUG
+std::stringstream CriticalSection;
+#endif
+
 const static int X = -200; // Mystical placeholder
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
-									   "This is probably due to parameter changes.", "Lacewing Relay Client - DarkEDIF", MB_OK)
+									   "This is probably due to parameter changes.", "Lacewing Blue Client - DarkEDIF", MB_OK)
+#define Saved (Globals->_Saved)
+
+void Extension::RemovedActionNoParams()
+{
+	CreateError("Action needs removing.");
+}
 void Extension::RelayServer_Host(int port)
 {
 	if (Srv.hosting())
@@ -50,93 +58,268 @@ void Extension::SetWelcomeMessage(char * Message)
 	else
 		Srv.setwelcomemessage(Message);
 }
-void Extension::EnableCondition_OnMessageToChannel()
+
+
+static GlobalInfo::AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWith,
+	char *& denyReason, GlobalInfo * Globals, const char * const funcName)
 {
-	Srv.onmessage_channel(::OnChannelMessage);
+	static char err[256];
+
+	// Settings:
+	//	["Integer", "Approve immediately (0), deny immediately (1), or wait for Fusion (2)?"],
+	// Auto approve, later inform Fusion [1, 0]
+	// Auto deny, later inform Fusion [1, 1]
+	// Wait for Fusion to say yay or nay [1, 2]
+	// Auto approve, say nothing to Fusion [0, 0]
+	// Auto deny, say nothing to Fusion [0, 1]
+	// Do nothing, say nothing to Fusion [0, 2] -> not usable!
+	
+	if (informFusion < 0 || informFusion > 1)
+		sprintf_s(err, sizeof(err), "Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: %s\".", funcName);
+	else if (immediateRespondWith < 0 || immediateRespondWith > 2)
+		sprintf_s(err, sizeof(err), "Invalid \"Immediate Respond With\" parameter passed to \"enable/disable condition: %s\".", funcName);
+	else if (informFusion == 0 && immediateRespondWith == 2)
+		sprintf_s(err, sizeof(err), "Invalid parameters passed to \"enable/disable condition: %s\"; with no immediate response"
+			" and Fusion condition triggering off, the server wouldn't know what to do.", funcName);
+	else 
+	{ 
+		// If we're not denying, replace deny parameter with null
+		if (immediateRespondWith != 1)
+			denyReason = nullptr;
+		else if (!denyReason[0])
+			denyReason = "No reason specified.";
+		
+		GlobalInfo::AutoResponse autoResponse = GlobalInfo::AutoResponse::Invalid;
+		if (informFusion == 1)
+		{
+			if (immediateRespondWith == 0)
+				autoResponse = GlobalInfo::AutoResponse::Approve_TellFusion;
+			else if (immediateRespondWith == 1)
+				autoResponse = GlobalInfo::AutoResponse::Deny_TellFusion;
+			else /* immediateRespondWith == 2 */ 
+				autoResponse = GlobalInfo::AutoResponse::WaitForFusion;
+		}
+		else /* informFusion == 0 */
+		{
+			if (immediateRespondWith == 0)
+				autoResponse = GlobalInfo::AutoResponse::Approve_Quiet;
+			else /* if (immediateRespondWith == 1) */
+				autoResponse = GlobalInfo::AutoResponse::Deny_Quiet;
+			/* immediateRespondWith == 2 is invalid with informFusion = 0 */;
+		}
+
+		return autoResponse;
+	}
+
+	Globals->CreateError(err);
+	return GlobalInfo::AutoResponse::Invalid;
 }
-void Extension::EnableCondition_OnMessageToPeer()
+
+
+void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
-	Srv.onmessage_peer(::OnPeerMessage);
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
+		autoDenyReason, Globals, "on connect request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_Connect = resp;
+	free((char *)Globals->AutoResponse_Connect_DenyReason);
+	Globals->AutoResponse_Connect_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	Srv.onconnect(::OnClientConnectRequest);
+}
+void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
+{
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
+		autoDenyReason, Globals, "on name set request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_NameSet = resp;
+	free((char *)Globals->AutoResponse_NameSet_DenyReason);
+	Globals->AutoResponse_NameSet_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	Srv.onnameset(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnNameSetRequest : nullptr);
+}
+void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
+{
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
+		autoDenyReason, Globals, "on join channel request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_ChannelJoin = resp;
+	free((char *)Globals->AutoResponse_ChannelJoin_DenyReason);
+	Globals->AutoResponse_ChannelJoin_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	Srv.onchannel_join(::OnJoinChannelRequest);
+}
+void Extension::EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
+{
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith, 
+		autoDenyReason, Globals, "on join channel request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_ChannelLeave = resp;
+	free((char *)Globals->AutoResponse_ChannelLeave_DenyReason);
+	Globals->AutoResponse_ChannelLeave_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	Srv.onchannel_leave(::OnLeaveChannelRequest);
+}
+void Extension::EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith)
+{
+	char * dummyDenyReason = "X";
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
+		dummyDenyReason, Globals, "on join channel request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_MessageClient = resp;
+	Srv.onmessage_peer(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnPeerMessage : nullptr);
+}
+void Extension::EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith)
+{
+	char * dummyDenyReason = "X";
+	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
+		dummyDenyReason, Globals, "on join channel request");
+	if (resp == GlobalInfo::AutoResponse::Invalid)
+		return;
+	Globals->AutoResponse_MessageChannel = resp;
+	Srv.onmessage_channel(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnChannelMessage : nullptr);
+}
+void Extension::EnableCondition_OnMessageToServer(int informFusion)
+{
+	if (informFusion < 0 || informFusion > 1)
+		Globals->CreateError("Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: on message to server\".");
+	else
+	{
+		// This one's handled a bit differently; there is no auto approve/deny. 
+		// The message is either read by Fusion or discarded immediately.
+		Globals->AutoResponse_MessageServer = informFusion == 1 ? GlobalInfo::WaitForFusion : GlobalInfo::Deny_Quiet;
+		Srv.onmessage_server(informFusion == 1 ? ::OnServerMessage : nullptr);
+	}
 }
 void Extension::OnInteractive_Deny(char * Reason)
 {
 	if (!Reason)
-		CreateError("Can't deny action: Deny was called with a null reason.");
+		CreateError("Can't deny client's action: Deny was called with a null reason.");
 	else if (InteractivePending == InteractiveType::None)
-		CreateError("Cannot change new peer name: No interactive action is pending.");
-	else if ((InteractivePending & InteractiveType::DenyPermitted) != InteractiveType::DenyPermitted)
-		CreateError("Cannot change new peer name: Interactive event is not compatible with this action.");
+		CreateError("Cannot deny client's action: No interactive action is pending.");
+	// All of the interactive events currently allow denying
+	//else if ((InteractivePending & InteractiveType::DenyPermitted) != InteractiveType::DenyPermitted)
+	//	CreateError("Cannot deny client's action: Interactive event is not compatible with this action.");
 	else if (DenyReason)
-		CreateError("Can't deny action: Deny was called more than once. Ignoring additional denies.");
+		CreateError("Can't deny client's action: Set to auto-deny, or Deny was called more than once. Ignoring additional denies.");
 	else
-	{
-		if (NewChannelName)
-			CreateError("Warning: Already edited the name of the join channel request, deny request action has just overridden it.");
-		if (NewPeerName)
-			CreateError("Warning: Already edited the name of the client set name change, deny request action has just overridden it.");
-
-		DenyReason = _strdup(Reason);
-	}
+		DenyReason = _strdup(Reason[0] ? Reason : "No reason specified.");
 }
-void Extension::OnInteractive_ChangePeerName(char * NewName)
+void Extension::OnInteractive_ChangeClientName(char * NewName)
 {
 	if (!NewName || NewName[0] == '\0')
-		CreateError("Cannot change new peer name: Cannot use a null or blank name.");
-	else if (strlen(NewName) > 255)
-		CreateError("Cannot change new peer name: Cannot use a name longer than 255 characters.");
+		CreateError("Cannot change new client name: Cannot use a null or blank name.");
+	else if (strnlen(NewName, 256) == 256)
+		CreateError("Cannot change new client name: Cannot use a name longer than 255 characters.");
 	else if (InteractivePending == InteractiveType::None)
-		CreateError("Cannot change new peer name: No interactive action is pending.");
-	else if ((InteractivePending & InteractiveType::PeerName) != InteractiveType::PeerName)
-		CreateError("Cannot change new peer name: Interactive event is not compatible with this action.");
+		CreateError("Cannot change new client name: No interactive action is pending.");
+	else if (InteractivePending != InteractiveType::ClientNameSet)
+		CreateError("Cannot change new client name: Interactive event is not compatible with this action.");
 	else if (DenyReason)
-		CreateError("Cannot change new peer name: Name change has already been denied by the Deny Request action.");
+		CreateError("Cannot change new client name: Name change has already been denied by the Deny Request action.");
 	else
-		NewPeerName = _strdup(NewName);
+	{
+		free(NewClientName);
+		NewClientName = _strdup(NewName);
+	}
 }
 void Extension::OnInteractive_ChangeChannelName(char * NewName)
 {
 	if (!NewName || NewName[0] == '\0')
 		CreateError("Cannot change joining channel name: Cannot use a null or blank name.");
-	else if (strlen(NewName) > 255)
-		CreateError("Cannot change joining channel name: Cannot use a name exceeding the max length of 255 characters.");
+	else if (strnlen(NewName, 256) == 256)
+		CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters.");
 	else if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot change joining channel name: No interactive action is pending.");
-	else if ((InteractivePending & InteractiveType::ChannelName) != InteractiveType::ChannelName)
+	else if ((InteractivePending & InteractiveType::ChannelJoin) != InteractiveType::ChannelJoin)
 		CreateError("Cannot change joining channel name: Interactive event is not compatible with this action.");
 	else if (DenyReason)
 		CreateError("Cannot change joining channel name: Channel name join has already been denied by the Deny Request action.");
 	else
+	{
+		free(NewChannelName);
 		NewChannelName = _strdup(NewName);
+	}
 }
 void Extension::OnInteractive_DropMessage()
 {
 	if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot deny the action: No interactive action is pending.");
-	else if ((InteractivePending & InteractiveType::ChannelName) != InteractiveType::ChannelName)
+	else if (InteractivePending != InteractiveType::ChannelMessageIntercept &&
+			 InteractivePending != InteractiveType::ClientMessageIntercept)
 		CreateError("Cannot change joining channel name: Interactive event is not compatible with this action.");
 	else if (DropMessage)
 		CreateError("Cannot drop message: Message already being dropped. Ignoring additional actions.");
 	else
 		DropMessage = true;
 }
+void Extension::OnInteractive_ReplaceMessageWithText(char * NewText)
+{
+	if (InteractivePending == InteractiveType::None)
+		CreateError("Cannot deny the action: No interactive action is pending.");
+	else if (InteractivePending != InteractiveType::ChannelMessageIntercept &&
+			 InteractivePending != InteractiveType::ClientMessageIntercept)
+		CreateError("Cannot replace message: Interactive event is not compatible with this action.");
+	else if (DropMessage)
+		CreateError("Cannot replace message: Message was dropped.");
+	else
+	{
+		CreateError("Cannot replace message: Replacing messages not implemented.");
+		return;
+		//ThreadData.ReceivedMsg.Size = strlen(NewText) + 1;
+		//ThreadData.ReceivedMsg.Content = (char *)realloc(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size);
+		//strcpy_s(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size, NewText);
+	}
+
+}
+void Extension::OnInteractive_ReplaceMessageWithNumber(int NewNumber)
+{
+	if (InteractivePending == InteractiveType::None)
+		CreateError("Cannot deny the action: No interactive action is pending.");
+	else if (InteractivePending != InteractiveType::ChannelMessageIntercept &&
+			 InteractivePending != InteractiveType::ClientMessageIntercept)
+		CreateError("Cannot replace message: Interactive event is not compatible with this action.");
+	else if (DropMessage)
+		CreateError("Cannot replace message: Message was dropped.");
+	else
+	{
+		CreateError("Cannot replace message: Replacing messages not implemented.");
+		return;
+	}
+}
+void Extension::OnInteractive_ReplaceMessageWithSendBinary()
+{
+	if (InteractivePending == InteractiveType::None)
+		CreateError("Cannot deny the action: No interactive action is pending.");
+	else if (InteractivePending != InteractiveType::ChannelMessageIntercept &&
+			 InteractivePending != InteractiveType::ClientMessageIntercept)
+		CreateError("Cannot replace message: Interactive event is not compatible with this action.");
+	else if (DropMessage)
+		CreateError("Cannot replace message: Message was dropped.");
+	else
+	{
+		CreateError("Cannot replace message: Replacing messages not implemented.");
+		return;
+	}
+}
+
 void Extension::Channel_SelectByName(char * Name)
 {
 	if (!Name || Name[0] == '\0')
 		CreateError("Channel_SelectByName() was called with a null or blank name.");
-	else if (strlen(Name) > 255)
+	else if (strnlen(Name, 256) == 256)
 		CreateError("Channel_SelectByName() was called with a name exceeding the max length of 255 characters.");
 	else
 	{
 		ThreadData.Channel = nullptr;
-		lacewing::relayserver::channel * i = Srv.firstchannel();
-		while (i)
+		for (auto i = Channels.begin(); i != Channels.end(); i++)
 		{
-			if (_stricmp(i->name(), Name))
+			if (!_stricmp((**i).name(), Name))
 			{
-				ThreadData.Channel = i;
+				ThreadData.Channel = *i;
 				return;
 			}
-			i = i->next();
 		}
 		
 		CreateError("Selecting channel by name failed: A channel with that name doesn't exist.");
@@ -166,19 +349,58 @@ void Extension::Channel_LoopClients()
 		CreateError("Error: Loop Clients On Channel was called without a channel being selected.");
 	else // You can loop a closed channel's clients, but it's read-only.
 	{
-		lacewing::relayserver::client * Stored = ThreadData.Client,
-			*Selected = ThreadData.Channel->firstclient();
-		while (Selected)
+		ChannelCopy * CurrentChannel = ThreadData.Channel;
+
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		
+		auto& clients = CurrentChannel->getclients();
+		for (auto SelectedClient = clients.begin(); SelectedClient != clients.end(); SelectedClient++)
 		{
-			if (!Selected->isclosed)
+			if (!(**SelectedClient).isclosed)
 			{
-				SaveExtInfo &S = AddEvent(8);
-				S.Client = Selected;
+				ClearThreadData();
+				ThreadData.Channel = CurrentChannel;
+				ThreadData.Client = *SelectedClient;
+				Runtime.GenerateEvent(8);
 			}
-			Selected = Selected->next();
 		}
-		SaveExtInfo &S = AddEvent(42);
-		S.Client = Stored;
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		Runtime.GenerateEvent(44);
+	}
+}
+void Extension::Channel_LoopClientsWithName(char * LoopName)
+{
+	if (!ThreadData.Channel)
+		CreateError("Error: Loop Clients On Channel With Name was called without a channel being selected.");
+	else // You can loop a closed channel's clients, but it's read-only.
+	{
+		ChannelCopy * CurrentChannel = ThreadData.Channel;
+
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+		auto clients = CurrentChannel->getclients();
+		for (auto SelectedClient = clients.begin(); SelectedClient != clients.end(); SelectedClient++)
+		{
+			if (!(**SelectedClient).isclosed)
+			{
+				ClearThreadData();
+				ThreadData.Channel = CurrentChannel;
+				ThreadData.Client = *SelectedClient;
+				ThreadData.Loop.Name = _strdup(LoopName);
+				Runtime.GenerateEvent(39);
+			}
+		}
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(40);
 	}
 }
 void Extension::Channel_SetLocalData(char * Key, char * Value)
@@ -190,56 +412,50 @@ void Extension::Channel_SetLocalData(char * Key, char * Value)
 	else if (!Key || !Value)
 		CreateError("Could not set channel local data: null parameter supplied.");
 	else
-	{
-		auto i = std::find_if(Globals->channelsLocalData.begin(), Globals->channelsLocalData.end(),
-			[&](const LocalData<lacewing::relayserver::channel> & s){ 
-			return s.KeyAddr == ThreadData.Channel && !_stricmp(s.Key, Key); });
-
-		// Blank value: Delete
-		if (Value[0] == '\0')
-		{
-			if (i != Globals->channelsLocalData.end())
-				Globals->channelsLocalData.erase(i);
-			return;
-		}
-		free(i->Value);
-		i->Value = _strdup(Value);
-	}
+		ThreadData.Channel->SetLocalData(Key, Value);
 }
 void Extension::LoopAllChannels()
 {
-	lacewing::relayserver::channel * Stored = ThreadData.Channel;
-	for (lacewing::relayserver::channel * i = Srv.firstchannel(); i; i = i->next())
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+	for (auto SelectedChannel = Channels.begin(); SelectedChannel != Channels.end(); SelectedChannel++)
 	{
-		ThreadData.Channel = i;
+		ClearThreadData();
+		ThreadData.Channel = *SelectedChannel;
 		Runtime.GenerateEvent(5);
 	}
 
-	ThreadData.Channel = Stored;
-	Runtime.GenerateEvent(43);
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
+
+	Runtime.GenerateEvent(45);
 }
 void Extension::LoopAllChannelsWithName(char * LoopName)
 {
-	lacewing::relayserver::channel * Stored = ThreadData.Channel;
-	for (lacewing::relayserver::channel * i = Srv.firstchannel(); i; i = i->next())
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+	for (auto SelectedChannel = Channels.begin(); SelectedChannel != Channels.end(); SelectedChannel++)
 	{
 		ClearThreadData();
-		ThreadData.Channel = i;
-		ThreadData.Loop.Name = LoopName;
-		Runtime.GenerateEvent(35);
+		ThreadData.Channel = *SelectedChannel;
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(36);
 	}
 
-	ClearThreadData();
-	ThreadData.Channel = Stored;
-	ThreadData.Loop.Name = LoopName;
-	Runtime.GenerateEvent(40);
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
+
+	ThreadData.Loop.Name = _strdup(LoopName);
+	Runtime.GenerateEvent(41);
 }
 void Extension::Client_Disconnect()
 {
 	if (!ThreadData.Client)
 		CreateError("Could not disconnect client: No client selected.");
 	else if (!ThreadData.Client->isclosed)
-		ThreadData.Client->disconnect();
+		ThreadData.Client->disconnect(true);
 }
 void Extension::Client_SetLocalData(char * Key, char * Value)
 {
@@ -250,21 +466,7 @@ void Extension::Client_SetLocalData(char * Key, char * Value)
 	else if (!Key || !Value)
 		CreateError("Could not set client local data: null parameter supplied.");
 	else
-	{
-		auto i = std::find_if(Globals->clientsLocalData.begin(), Globals->clientsLocalData.end(),
-			[&](const LocalData<lacewing::relayserver::client> & s){
-			return s.KeyAddr == ThreadData.Client && !_stricmp(s.Key, Key); });
-
-		// Blank value: Delete the key's data
-		if (Value[0] == '\0')
-		{
-			if (i != Globals->clientsLocalData.end())
-				Globals->clientsLocalData.erase(i);
-			return;
-		}
-		free(i->Value);
-		i->Value = Value;
-	}
+		ThreadData.Client->SetLocalData(Key, Value);
 }
 void Extension::Client_LoopJoinedChannels()
 {
@@ -272,23 +474,26 @@ void Extension::Client_LoopJoinedChannels()
 		CreateError("Cannot loop client's joined channels: No client selected.");
 	else
 	{
-		// Store selected channel and revert after loop
-		lacewing::relayserver::channel * Stored = ThreadData.Channel,
-			*Selected = Srv.firstchannel();
-		lacewing::relayserver::client * StoredCli = ThreadData.Client;
-		while (Selected)
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		
+		ClientCopy * StoredCli = ThreadData.Client;
+		auto &channels = StoredCli->getchannels();
+		for (auto SelectedChannel = channels.begin(); SelectedChannel != channels.end(); SelectedChannel++)
 		{
-			if (!Selected->isclosed)
+			if (!(**SelectedChannel).isclosed)
 			{
-				ThreadData.Channel = Selected;
+				ClearThreadData();
+				ThreadData.Channel = *SelectedChannel;
 				ThreadData.Client = StoredCli;
 				Runtime.GenerateEvent(6);
 			}
-			Selected = Selected->next();
 		}
-		ThreadData.Channel = Stored;
-		ThreadData.Client = StoredCli;
-		Runtime.GenerateEvent(45);
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		Runtime.GenerateEvent(47);
 	}
 }
 void Extension::Client_LoopJoinedChannelsWithName(char * LoopName)
@@ -297,53 +502,53 @@ void Extension::Client_LoopJoinedChannelsWithName(char * LoopName)
 		CreateError("Cannot loop client's joined channels: No client selected.");
 	else
 	{
-		// Store selected channel and revert after loop
-		lacewing::relayserver::channel * Stored = ThreadData.Channel,
-			*Selected = ThreadData.Client->firstchannel();
-		lacewing::relayserver::client * StoredCli = ThreadData.Client;
-		while (Selected)
+		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+
+		auto& channels = ThreadData.Client->getchannels();
+		ClientCopy * StoredCli = ThreadData.Client;
+		for (auto SelectedChannel = channels.begin(); SelectedChannel != channels.end(); SelectedChannel++)
 		{
-			if (!Selected->isclosed)
+			if (!(**SelectedChannel).isclosed)
 			{
-				ThreadData.Channel = Selected;
+				ClearThreadData();
+				ThreadData.Channel = *SelectedChannel;
 				ThreadData.Client = StoredCli;
-				ThreadData.Loop.Name = LoopName;
-				Runtime.GenerateEvent(36);
+				ThreadData.Loop.Name = _strdup(LoopName);
+				Runtime.GenerateEvent(37);
 			}
-			Selected = Selected->next();
 		}
-		ThreadData.Channel = Stored;
-		ThreadData.Client = StoredCli;
-		ThreadData.Loop.Name = LoopName;
-		Runtime.GenerateEvent(41);
-		ThreadData.Loop.Name = nullptr;
+
+		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+		free(Stored);
+
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(43);
 	}
 }
 void Extension::Client_SelectByName(char * ClientName)
 {
 	if (!ClientName || ClientName[0] == '\0')
-		CreateError("Error: Select Client On Channel By Name was called with a null parameter/blank name.");
-	else if (!ThreadData.Channel)
-		CreateError("Error: Select Client On Channel By Name was called without a channel being selected.");
+		CreateError("Error: Select Client By Name was called with a null parameter/blank name.");
 	else
 	{
-		lacewing::relayserver::client * Selected = ThreadData.Channel->firstclient();
-		while (Selected)
-		{
-			if (!_stricmp(Selected->name(), ClientName))
+		auto Selected = Clients.begin();
+		for (; Selected != Clients.end(); Selected++)
+			if (!_stricmp((**Selected).name(), ClientName))
 				break;
-			Selected = Selected->next();
-		}
 		// Only modify ThreadData.Client if we found it
-		if (Selected && !Selected->isclosed)
-			ThreadData.Client = Selected;
+		if (Selected != Clients.end() && !(**Selected).isclosed)
+		{
+			auto& ch = (**Selected).getchannels();
+			if (std::find(ch.cbegin(), ch.cend(), ThreadData.Channel) == ch.cend())
+				ThreadData.Channel = nullptr;
+			ThreadData.Client = *Selected;
+		}
 		else
 		{
-			std::string Error = "Client not found:\r\n";
-			Error += ClientName;
-			Error += "\r\nOn channel:\r\n";
-			Error += ThreadData.Channel->name();
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Client with name " << ClientName <<" not found on server.";
+			CreateError(Error.str().c_str());
 		}
 	}
 }
@@ -353,27 +558,18 @@ void Extension::Client_SelectByID(int ClientID)
 		CreateError("Could not select Client on channel, ID is below 0 or greater than 65535.");
 	else
 	{
-		lacewing::relayserver::client * Selected = ThreadData.Channel->firstclient();
-		while (Selected)
-		{
-			if (Selected->id() == ClientID)
+		auto Selected = Clients.begin();
+		for (; Selected != Clients.end(); Selected++)
+			if ((**Selected).id() == ClientID)
 				break;
-			Selected = Selected->next();
-		}
 		
-		if (Selected)
-			ThreadData.Client = Selected;
-		else if (Selected->isclosed)
+		if (Selected != Clients.end() && !(**Selected).isclosed)
+			ThreadData.Client = *Selected;
+		else
 		{
-			char num[20];
-			std::string Error = "Client ID ";
-			if (_itoa_s(ClientID, num, 20, 10))
-				Error += "> could not be copied <";
-			else
-				Error += &num[0];
-			Error += " was not found on channel:";
-			Error += ThreadData.Channel->name();
-			CreateError(Error.c_str());
+			std::stringstream Error;
+			Error << "Client ID " << ClientID << " was not found on server.";
+			CreateError(Error.str().c_str());
 		}
 	}
 }
@@ -393,35 +589,37 @@ void Extension::Client_SelectReceiver()
 }
 void Extension::LoopAllClients()
 {
-	SaveExtInfo * Stored = new SaveExtInfo(ThreadData);
-	for (auto i = Srv.firstclient(); i; i = i->next())
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	
+	for (auto SelectedClient = Clients.begin(); SelectedClient != Clients.end(); SelectedClient++)
 	{
 		ClearThreadData();
-		ThreadData.Client = i;
+		ThreadData.Client = *SelectedClient;
 		Runtime.GenerateEvent(7);
 	}
-	ClearThreadData();
-	Runtime.GenerateEvent(44);
 
-	ThreadData = *Stored;
-	delete Stored;
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
+
+	Runtime.GenerateEvent(46);
 }
 void Extension::LoopAllClientsWithName(char * LoopName)
 {
-	SaveExtInfo * Stored = new SaveExtInfo(ThreadData);
-	for (auto i = Srv.firstclient(); i; i = i->next())
+	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	for (auto SelectedClient = Clients.begin(); SelectedClient != Clients.end(); SelectedClient++)
 	{
 		ClearThreadData();
-		ThreadData.Client = i;
-		ThreadData.Loop.Name = LoopName;
-		Runtime.GenerateEvent(37);
+		ThreadData.Client = *SelectedClient;
+		ThreadData.Loop.Name = _strdup(LoopName);
+		Runtime.GenerateEvent(38);
 	}
-	ClearThreadData();
-	ThreadData.Loop.Name = LoopName;
-	Runtime.GenerateEvent(50);
+	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+	free(Stored);
 
-	ThreadData = *Stored;
-	delete Stored;
+	ThreadData.Loop.Name = _strdup(LoopName);
+	Runtime.GenerateEvent(42);
 }
 void Extension::SendTextToChannel(int Subchannel, char * TextToSend)
 {
@@ -641,7 +839,7 @@ void Extension::AddString(char * String)
 void Extension::AddBinary(void * Address, int Size)
 {
 	if (Size < 0)
-		CreateError("Add binary failed: Size < 0.");
+		CreateError("Add binary failed: Size less than 0.");
 	else
 	{
 		if (Size != 0)
@@ -655,57 +853,47 @@ void Extension::AddFileToBinary(char * Filename)
 		CreateError("Cannot add file to send binary; filename is invalid.");
 	else
 	{
-		FILE * File = NULL;
-
 		// Open and deny other programs write priviledges
-		if (!(File = _fsopen(Filename, "wb", _SH_DENYWR)))
+		FILE * File = _fsopen(Filename, "rb", _SH_DENYWR);
+		if (!File)
 		{
-			char errorval[20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Cannot save binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
-				Error += " with opening the file, and with converting error number.";
-			}
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			S.Error.Text = _strdup(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot add file to send binary, error number " << errno
+				<< " occured with opening the file. The send binary has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
+
 		// Jump to end
 		fseek(File, 0, SEEK_END);
+
 		// Read current position as file size
 		long filesize = ftell(File);
+
 		// Go back to start
 		fseek(File, 0, SEEK_SET);
+
 		char * buffer = (char *)malloc(filesize);
 		if (!buffer)
-			CreateError("Couldn't reserve enough memory to add file into message.");
+		{
+			std::stringstream Error;
+			Error << "Couldn't read file \"" << Filename << "\" into binary to send; couldn't reserve enough memory "
+				"to add file into message. The send binary has not been modified.";
+			CreateError(Error.str().c_str());
+		}
 		else
 		{
-			size_t s;
-			if ((s = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
+			size_t amountRead;
+			if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
 			{
-				char sizeastext[20];
-				SaveExtInfo &S = AddEvent(0);
-				std::string Error = "Couldn't write full buffer to file, ";
-				if (_itoa_s(s, &sizeastext[0], 20, 10))
-				{
-					Error += " and error copying size.";
-				}
-				else
-				{
-					Error += &sizeastext[0];
-					Error += " bytes managed to be written.";
-				}
-				S.Error.Text = _strdup(Error.c_str());
+				std::stringstream Error;
+				Error << "Couldn't read file \"" << Filename << "\" into binary to send, error number " << errno
+					<< " occured with opening the file. The send binary has not been modified.";
+				CreateError(Error.str().c_str());
 			}
-			AddToSend(buffer, s);
+			else
+				AddToSend(buffer, amountRead);
+
 			free(buffer);
 		}
 		fclose(File);
@@ -733,16 +921,17 @@ void Extension::ResizeBinaryToSend(int NewSize)
 void Extension::CompressSendBinary()
 {
 	if (SendMsgSize <= 0)
-		CreateError("Cannot compress; Message is too small.");
+		CreateError("Cannot compress send binary; Message is too small.");
 	else
 	{
 		int ret;
 		z_stream strm = { 0 };
-		ret = deflateInit_(&strm, 9, ZLIB_VERSION, sizeof(z_stream));
+
+		ret = deflateInit(&strm, 9);
 		if (ret)
 		{
 			std::stringstream error;
-			error << "Error " << ret << "occured with initiating compression.";
+			error << "Error " << ret << " occured with initiating compression.";
 			CreateError(error.str().c_str());
 			return;
 		}
@@ -751,37 +940,42 @@ void Extension::CompressSendBinary()
 		if (!output_buffer)
 		{
 			std::stringstream error;
-			error << "Error, could not allocate enough memory. Desired " << SendMsgSize + 256 << "bytes.";
+			error << "Error with compressing send binary, could not allocate enough memory. Desired " << SendMsgSize + 256 << " bytes.";
 			CreateError(error.str().c_str());
 			deflateEnd(&strm);
 			return;
 		}
+
 		strm.next_in = (unsigned char *)SendMsg;
 		strm.avail_in = SendMsgSize;
+
 		// Allocate memory for compression
 		strm.avail_out = _msize(output_buffer);
 		strm.next_out = output_buffer;
+
 		ret = deflate(&strm, Z_FINISH);
 		if (ret != Z_STREAM_END)
 		{
 			std::stringstream error;
-			error << "Error with compression, deflate() returned " << ret << "! Text: " << strm.msg ? strm.msg : "";
+			error << "Error with compressing send binary, deflate() returned " << ret << ". Zlib error: " << (strm.msg ? strm.msg : "");
 			free(output_buffer);
 			deflateEnd(&strm);
 			CreateError(error.str().c_str());
 			return;
 		}
+
 		deflateEnd(&strm);
-		void * v = realloc(output_buffer, strm.total_out);
-		if (!v)
+
+		void * output_bufferResize = realloc(output_buffer, strm.total_out);
+		if (!output_bufferResize)
 		{
-			free(output_buffer);
-			CreateError("Error with compression, reallocating memory failed.");
+			free(output_buffer); // realloc will not free on error
+			CreateError("Error with compressing send binary, reallocating memory to remove excess space after compression failed.");
 			return;
 		}
 		free(SendMsg);
 
-		SendMsg = (char *)v;
+		SendMsg = (char *)output_bufferResize;
 		SendMsgSize = strm.total_out;
 	}
 }
@@ -797,16 +991,15 @@ void Extension::ClearBinaryToSend()
 void Extension::DecompressReceivedBinary()
 {
 	if (ThreadData.ReceivedMsg.Size <= 0)
-		CreateError("Cannot decompress; Message is too small.");
+		CreateError("Cannot decompress; message is too small.");
 	else
 	{
-		int ret;
 		z_stream strm = { 0 };
-		ret = inflateInit_(&strm, ZLIB_VERSION, sizeof(z_stream));
+		int ret = inflateInit_(&strm, ZLIB_VERSION, sizeof(z_stream));
 		if (ret)
 		{
 			std::stringstream error;
-			error << "Error " << ret << "occured with initiating decompression.";
+			error << "Error " << ret << " occured with initiating decompression.";
 			CreateError(error.str().c_str());
 			return;
 		}
@@ -822,7 +1015,8 @@ void Extension::DecompressReceivedBinary()
 			if (!output_buffer_pointer)
 			{
 				std::stringstream error;
-				error << "Error, could not allocate enough memory. Desired " << (output_buffer ? _msize(output_buffer) : 0) + 1024 << "bytes.";
+				error << "Error with decompression, could not allocate enough memory. Desired "
+					<< (output_buffer ? _msize(output_buffer) : 0) + 1024 << " bytes.";
 				if (output_buffer)
 					free(output_buffer);
 
@@ -839,10 +1033,11 @@ void Extension::DecompressReceivedBinary()
 			if (ret < Z_OK)
 			{
 				std::stringstream error;
-				error << "Error with decompression, inflate() returned " << ret << "! Text: " << strm.msg ? strm.msg : "";
+				error << "Error with decompression, inflate() returned error " << ret
+					<< ". Zlib error: " << (strm.msg ? strm.msg : "");
 				free(output_buffer);
-				CreateError(error.str().c_str());
 				inflateEnd(&strm);
+				CreateError(error.str().c_str());
 				return;
 			}
 
@@ -852,20 +1047,20 @@ void Extension::DecompressReceivedBinary()
 		{
 			std::stringstream error;
 			error << "Error with decompression: " << ret << "! Text: " << strm.msg ? strm.msg : "";
-			CreateError(error.str().c_str());
 			inflateEnd(&strm);
+			CreateError(error.str().c_str());
 			return;
 		}
 		inflateEnd(&strm);
+
+		// Update all extensions with new message content.
 		char * ThisMsg = ThreadData.ReceivedMsg.Content;
 		free(ThreadData.ReceivedMsg.Content);
-		ThreadData.ReceivedMsg.Content = (char *)output_buffer;
-		ThreadData.ReceivedMsg.Cursor = 0;
-		ThreadData.ReceivedMsg.Size = _msize(output_buffer);
+
 		for (std::vector<SaveExtInfo *>::iterator i = Saved.begin(); i != Saved.end(); ++i)
 		{
-			if (ThisMsg != (*i)->ReceivedMsg.Content)
-				break;
+			if ((char *)output_buffer == (*i)->ReceivedMsg.Content)
+				continue;
 			(*i)->ReceivedMsg.Content = (char *)output_buffer;
 			(*i)->ReceivedMsg.Cursor = 0;
 			(*i)->ReceivedMsg.Size = _msize(output_buffer);
@@ -889,106 +1084,81 @@ void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename
 		CreateError("Cannot save received binary; Size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
 		CreateError("Cannot save received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size - Size <= 0)
-		CreateError("Cannot save received binary; Message is too small.");
+	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
+	{
+		std::stringstream Error;
+		Error << "Cannot save received binary to file; message doesn't have " << Size
+			<< " bytes at position " << Position << " onwards.";
+		CreateError(Error.str().c_str());
+		return;
+	}
 	else
 	{
-		FILE * File = NULL;
-		if (fopen_s(&File, Filename, "wb") || !File)
+		FILE * File = _fsopen(Filename, "wb", SH_DENYWR);
+		if (!File)
 		{
-			char errorval[20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Cannot save received binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
-				Error += " with opening the file, and with converting error number.";
-			}
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			S.Error.Text = _strdup(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot save received binary to file, error number " << errno
+				<< " occured with opening the file. The message has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
-		// Jump to end
-		fseek(File, 0, SEEK_END);
-		// Read current position as file size
-		long long filesize = _ftelli64(File);
-		// Go back to start
-		fseek(File, 0, SEEK_SET);
-		long l;
-		if ((l = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
+
+		size_t amountWritten;
+		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
 		{
-			char sizeastext[20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Couldn't save the received binary to file, ";
-			if (_itoa_s(errno, &sizeastext[0], 20, 10))
-			{
-				Error += " and error copying size.";
-			}
-			else
-			{
-				Error += &sizeastext[0];
-				Error += " bytes managed to be written.";
-			}
-			S.Error.Text = _strdup(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot save received binary to file, error number " << errno
+				<< " occured with writing the file. Wrote " << amountWritten
+				<< " bytes total. The message has not been modified.";
+			CreateError(Error.str().c_str());
 		}
+
 		fclose(File);
 	}
 }
 void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filename)
 {
 	if (Position < 0)
-		CreateError("Cannot append received binary; Position less than 0.");
+		CreateError("Cannot append received binary to file; position less than 0.");
 	else if (Size <= 0)
-		CreateError("Cannot append received binary; Size equal or less than 0.");
+		CreateError("Cannot append received binary to file; size equal or less than 0.");
 	else if (!Filename || Filename[0] == '\0')
-		CreateError("Cannot append received binary; filename is invalid.");
-	else if (ThreadData.ReceivedMsg.Size - Size <= 0)
-		CreateError("Cannot append received binary; Message is too small.");
+		CreateError("Cannot append received binary to file; filename is invalid.");
+	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
+	{
+		std::stringstream Error;
+		Error << "Cannot append received binary to file; message doesn't have " << Size
+			<< " bytes at position " << Position << " onwards.";
+		CreateError(Error.str().c_str());
+		return;
+	}
 	else
 	{
 		// Open while denying write of other programs
 		FILE * File = _fsopen(Filename, "ab", SH_DENYWR);
 		if (!File)
 		{
-			char errorval[20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Cannot append received binary to file, error ";
-			if (_itoa_s(*_errno(), &errorval[0], 20, 10))
-			{
-				Error += " with opening the file, and with converting error number.";
-			}
-			else
-			{
-				Error += "number [";
-				Error += &errorval[0];
-				Error += "] occured with opening the file.";
-			}
-			Error += "\r\nThe message has not been modified.";
-			S.Error.Text = _strdup(Error.c_str());
+			std::stringstream Error;
+			Error << "Cannot append received binary to file, error number " << errno
+				<< " occured with opening the file. The binary message has not been modified.";
+			CreateError(Error.str().c_str());
 			return;
 		}
-		long l;
-		if ((l = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
+
+		size_t amountWritten;
+		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
 		{
-			char sizeastext[20];
-			SaveExtInfo &S = AddEvent(0);
-			std::string Error = "Couldn't append the received binary to file, ";
-			if (_itoa_s(errno, &sizeastext[0], 20, 10))
-			{
-				Error += " and error copying size.";
-			}
-			else
-			{
-				Error += &sizeastext[0];
-				Error += " bytes managed to be append.";
-			}
-			S.Error.Text = _strdup(Error.c_str());
+			fseek(File, 0, SEEK_END);
+			long long filesize = _ftelli64(File);
+
+			std::stringstream Error;
+			Error << "Cannot append received binary to file, error number " << errno
+				<< " occured with writing the file. Wrote " << amountWritten
+				<< " bytes, leaving file at size " << filesize << " total. The binary message has not been modified.";
+			CreateError(Error.str().c_str());
 		}
+
 		fclose(File);
 	}
 }

@@ -108,6 +108,8 @@ void lw_server_delete (lw_server ctx)
 {
    lw_server_unhost (ctx);
 
+   lwp_deinit ();
+
    free (ctx);
 }
 
@@ -143,18 +145,19 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket)
       lwp_serverssl_init (&client->ssl, ctx->ssl_creds, (lw_stream) client);
    }
 
-   lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, 0, lw_true);
+   lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, 0, lw_true, lw_true);
 
    return client;
 }
 
-const int ideal_pending_accept_count = 16;
+const int ideal_pending_accept_count = 64;
 
 static lw_bool issue_accept (lw_server ctx)
 {
-   struct _accept_overlapped _overlapped = {};
-   list_push (ctx->pending_accepts, _overlapped);
+   struct _accept_overlapped _overlapped = { 0 };
+   _overlapped.socket = INVALID_SOCKET;
 
+   list_push (ctx->pending_accepts, _overlapped);
    accept_overlapped overlapped = list_elem_back (ctx->pending_accepts);
 
    if ((overlapped->socket = WSASocket (lwp_socket_addr (ctx->socket).ss_family,
@@ -188,6 +191,7 @@ static lw_bool issue_accept (lw_server ctx)
       if (error != ERROR_IO_PENDING)
       {
          list_elem_remove (overlapped);
+		 closesocket(overlapped->socket);
          return lw_false;
       }
    }
@@ -327,17 +331,31 @@ void lw_server_unhost (lw_server ctx)
 
     list_each (ctx->clients, client)
     {
-       lw_stream_close ((lw_stream) client, lw_true);
+		// Prevent hooks from progressing JIC
+		lw_stream_set_tag((lw_stream)client, nullptr);
+
+		lw_stream_delete((lw_stream)client);
+		//lwp_release(((lw_stream)client, "lwp_stream_init")
     }
 
-    assert (list_length (ctx->clients) == 0);
+	list_clear(ctx->clients);
+
+    // assert (list_length (ctx->clients) == 0);
+
+
+	list_each(ctx->pending_accepts, overlapped)
+	{
+		if (overlapped.socket != INVALID_SOCKET)
+			closesocket(overlapped.socket);
+		overlapped.socket = INVALID_SOCKET;
+	}
 
     list_clear (ctx->pending_accepts);
 
     lw_pump_remove (ctx->pump, ctx->pump_watch);
     ctx->pump_watch = NULL;
 
-    CancelIo ((HANDLE) ctx->socket);
+    CancelIoEx ((HANDLE) ctx->socket, NULL);
 
     closesocket (ctx->socket);
     ctx->socket = -1;
@@ -791,11 +809,14 @@ void on_client_close (lw_stream stream, void * tag)
       lwp_serverssl_cleanup (&client->ssl);
    }
 
+   lw_addr_delete (client->addr);
+   client->addr = nullptr;
+
    lwp_release (client, "on_client_close");
 
-   lw_stream_delete ((lw_stream) client);
-
-   lw_addr_delete (client->addr);
+   lw_stream_close ((lw_stream) client, lw_true);
+   
+   // free(client); will happen when the stream delete handler called
 }
 
 void lw_server_on_data (lw_server ctx, lw_server_hook_data on_data)
