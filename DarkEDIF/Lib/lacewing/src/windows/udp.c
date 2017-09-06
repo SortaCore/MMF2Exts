@@ -243,8 +243,8 @@ void lw_udp_unhost (lw_udp ctx)
    lwp_close_socket (ctx->socket);
    ctx->socket = INVALID_SOCKET;
 
-//   lw_pump_remove (ctx->pump, ctx->pump_watch);
-//   ctx->pump_watch = 0;
+   lw_pump_remove (ctx->pump, ctx->pump_watch);
+   ctx->pump_watch = 0;
 
    lw_filter_delete (ctx->filter);
    ctx->filter = 0;
@@ -260,6 +260,7 @@ void lw_udp_unhost (lw_udp ctx)
 
 		   free(overlapped);
 	   }
+	   ctx->receives_posted = 0;
    }
 
    list_clear(ctx->pending_receives);

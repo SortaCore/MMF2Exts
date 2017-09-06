@@ -51,11 +51,12 @@ size_t ChannelCopy::peercount() const
 }
 
 /// <summary> Sets peer to read-only. </summary>
-void ChannelCopy::closepeer(lacewing::relayclient::channel::peer & peer)
+PeerCopy * ChannelCopy::closepeer(lacewing::relayclient::channel::peer & peer)
 {
 	auto pr = std::find_if(_peers.begin(), _peers.end(), [&](PeerCopy *& p) { return p->peer == &peer; });
 	assert(pr != _peers.end());
 	(**pr).isclosed = true;
+	return *pr;
 }
 
 void ChannelCopy::deletepeer(PeerCopy * peer)

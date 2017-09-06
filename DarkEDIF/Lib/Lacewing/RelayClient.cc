@@ -368,9 +368,10 @@ namespace lacewing
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		internal.connected = false;
 		
-		// In future versions we could use a timer to immedate close after a while,
-		// in case server is stalled, but we'd have to watch it on app close.
-		internal.socket->close(lw_false);
+		// In future versions we could use a timer to immediate close after a while,
+		// in case server is lagging with the polite close response, but we'd have
+		// to watch it on app close.
+		internal.socket->close(lw_true);
 		internal.udp->unhost();
 	}
 

@@ -164,10 +164,13 @@ void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::chan
 	{
 		if (j->id() == Channel.id())
 		{
-			j->closepeer(Peer);
+			PeerCopy * PeerCopy = j->closepeer(Peer);
 
-			if (Globals->_Thread)
+			if (GThread)
 				LeaveCriticalSectionDerpy(&Globals->Lock);
+		
+			if (PeerCopy)
+				Globals->AddEvent2(11, 0xFFFF, j, PeerCopy);
 			return;
 		}
 	}

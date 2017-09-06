@@ -25,7 +25,7 @@ struct ChannelCopy
 	PeerCopy * updatepeername(lacewing::relayclient::channel::peer &Peer);
 
 	/// <summary> Sets peer to read-only. </summary>
-	void closepeer(lacewing::relayclient::channel::peer& peer);
+	PeerCopy * closepeer(lacewing::relayclient::channel::peer& peer);
 
 	/// <summary> Deletes a peer that was set to read-only with closepeer(). </summary>
 	void deletepeer(PeerCopy * peer);

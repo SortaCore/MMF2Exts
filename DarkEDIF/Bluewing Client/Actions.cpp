@@ -14,7 +14,7 @@ void Extension::Replaced_Connect(char * Hostname, int Port)
 }
 void Extension::Disconnect()
 {
-	Cli.disconnect();
+	Cli.disconnect(); // calls OnDisconnect so clear-all 0xFFFF is done there
 }
 void Extension::SetName(char * Name)
 {
@@ -171,6 +171,7 @@ void Extension::SelectChannelWithName(char * ChannelName)
 		ThreadData.Channel = Selected;
 	else
 	{
+		ThreadData.Channel = nullptr;
 		std::string Error = "Could not select channel, name not found:\r\n";
 		Error += ChannelName;
 		CreateError(Error.c_str());
@@ -218,6 +219,7 @@ void Extension::SelectPeerOnChannelByName(char * PeerName)
 			ThreadData.Peer = *Selected;
 		else
 		{
+			ThreadData.Peer = nullptr;
 			std::stringstream Error;
 			Error << "Peer with name " << PeerName 
 				<< " not found on channel " << ThreadData.Channel->name() << ".";
@@ -245,6 +247,7 @@ void Extension::SelectPeerOnChannelByID(int PeerID)
 			ThreadData.Peer = *Selected;
 		else
 		{
+			ThreadData.Peer = nullptr;
 			std::stringstream Error;
 			Error << "Peer with ID " << PeerID
 				<< " not found on channel " << ThreadData.Channel->name() << ".";
