@@ -1598,7 +1598,7 @@ public:
 
 struct relayserver
 {
-	static const int buildnum = 9;
+	static const int buildnum = 10;
 
 	void * internaltag, *tag;
 

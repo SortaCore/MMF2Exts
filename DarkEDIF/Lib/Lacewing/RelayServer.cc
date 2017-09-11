@@ -1110,7 +1110,6 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
 					size_t channelnamelength = reader.bytesleft();
 					if (channelnamelength > 255)
 					{
-						reader.failed = true;
 						builder.addheader(0, 0);  /* response */
 						builder.add <unsigned char>(2);  /* joinchannel */
 						builder.add <unsigned char>(0);  /* failed */
@@ -1121,6 +1120,8 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
 						builder.add("Channel name too long.", -1);
 
 						builder.send(socket);
+
+						reader.failed = true;
 
 						errStr << "Malformed Join Channel request, name too long.";
 						trustedClient = false;
