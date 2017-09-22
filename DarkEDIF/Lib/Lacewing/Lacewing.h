@@ -1443,8 +1443,8 @@ lw_import void flashpolicy_delete (flashpolicy);
 // The duplicated information is not used for a new socket, though. It's just discarded.
 // 
 // The missing second socket causes the client OS to not fully disconnect the socket, so on disconnect,
-// • you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
-// • you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
+// â€¢ you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
+// â€¢ you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
 // 
 // On process close, the socket is force-closed with a TCP RST (Reset) message.
 // 
@@ -1462,7 +1462,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 struct relayclient
 {
 public:
-	const static int buildnum = 76;
+	const static int buildnum = 77;
 
 	void * internaltag, *tag;
 

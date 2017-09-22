@@ -108,7 +108,9 @@ namespace lacewing
 			free((void *)welcomemessage);
 			welcomemessage = nullptr;
 
-			lw_eventpump_post_eventloop_exit((lw_eventpump)socket->pump());
+			lw_eventpump tmpPump = (lw_eventpump)socket->pump();
+			if (tmpPump)
+				lw_eventpump_post_eventloop_exit(tmpPump);
 
 			udphellotimer->on_tick(nullptr);
 			lacewing::timer_delete(udphellotimer);
@@ -1307,5 +1309,4 @@ namespace lacewing
 	autohandlerfunctions(relayclient, relayclientinternal, peer_disconnect)
 	autohandlerfunctions(relayclient, relayclientinternal, peer_changename)
 	autohandlerfunctions(relayclient, relayclientinternal, channellistreceived)
-
 }
