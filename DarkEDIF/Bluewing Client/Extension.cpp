@@ -918,5 +918,10 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	}
 	_Channels.clear();
 	DeleteCriticalSection(&Lock);
+
+	OutputDebugStringA("Dropping event pump\n");
+	lacewing::pump_delete(_ObjEventPump);
+	_ObjEventPump = nullptr;
+
 	OutputDebugStringA("~GlobalInfo end\n");
 }

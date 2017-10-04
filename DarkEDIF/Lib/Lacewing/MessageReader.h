@@ -59,7 +59,7 @@ public:
 
     inline ~messagereader()
     {
-		std::for_each(tofree.begin(), tofree.end(), [&](char * &c) { delete[]c; });
+		std::for_each(tofree.begin(), tofree.end(), [&](char * &c) { free(c); });
 		tofree.clear();
     }
 

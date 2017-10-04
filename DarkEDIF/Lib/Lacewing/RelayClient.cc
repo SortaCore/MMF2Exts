@@ -98,7 +98,10 @@ namespace lacewing
 		bool connected;
 
 		std::vector<relayclientinternal::channel *> channels;
-		~relayclientinternal()
+
+		void initsocket(lacewing::pump pump);
+
+		~relayclientinternal() throw()
 		{
 			clear();
 
@@ -108,21 +111,23 @@ namespace lacewing
 			free((void *)welcomemessage);
 			welcomemessage = nullptr;
 
-			lw_eventpump tmpPump = (lw_eventpump)socket->pump();
-			if (tmpPump)
-				lw_eventpump_post_eventloop_exit(tmpPump);
-
 			udphellotimer->on_tick(nullptr);
 			lacewing::timer_delete(udphellotimer);
 			udphellotimer = nullptr;
 
-			socket->on_connect(nullptr);
-			socket->on_disconnect(nullptr);
-			socket->on_data(nullptr);
-			socket->on_error(nullptr);
-			lacewing::stream_delete(socket);
-			socket = nullptr;
+			// Lacewing will self-delete on disconnect... we replace with a new, blank client
+			if (socket)
+			{
+				socket->on_connect(nullptr);
+				socket->on_disconnect(nullptr);
+				socket->on_data(nullptr);
+				socket->on_error(nullptr);
 
+				lacewing::stream_delete(socket);
+				socket = nullptr;
+			}
+
+			// UDP has no "close" as it's a connectionless protocol, so Lacewing doesn't clean it up automatically
 			udp->on_data(nullptr);
 			udp->on_error(nullptr);
 			lacewing::udp_delete(udp);
@@ -288,6 +293,11 @@ namespace lacewing
 			internal.handler_disconnect(internal.client);
 
 		internal.clear();
+
+		// Lacewing self-deletes streams on socket close - while client variable is valid here,
+		// it won't be after calling function continues. We quietly replace it with something usable.
+		internal.socket = nullptr;
+		internal.initsocket(socket->pump());
 	}
 
 	void handlerreceive(client socket, const char * data, size_t size)
@@ -688,6 +698,7 @@ namespace lacewing
 
 						if (reader.failed)
 							break;
+						denyReason = _strdup(denyReason);
 
 						handler_connectiondenied(client, denyReason);
 						free(denyReason);
@@ -733,6 +744,7 @@ namespace lacewing
 
 						if (reader.failed)
 							break;
+						denyReason = _strdup(denyReason);
 
 						handler_name_denied(client, name, denyReason);
 						free(denyReason);
@@ -847,8 +859,10 @@ namespace lacewing
 
 						if (reader.failed)
 							break;
+						denyReason = _strdup(denyReason);
 
 						handler_channel_leavedenied(client, channel->public_, denyReason);
+						free(denyReason);
 					}
 				}
 
@@ -1138,19 +1152,14 @@ namespace lacewing
 
 	relayclientinternal::relayclientinternal(relayclient &_client, pump _eventpump) :
 		client(_client), message(true), messageMF(true),
-		socket(client_new(_eventpump)), udp(udp_new(_eventpump)),
+		socket(nullptr), udp(udp_new(_eventpump)),
 		udphellotimer(timer_new(_eventpump)),
 		name(nullptr), welcomemessage(nullptr)
 	{
-		socket->on_connect(lacewing::handlerconnect);
-		socket->on_disconnect(lacewing::handlerdisconnect);
-		socket->on_data(lacewing::handlerreceive);
-		socket->on_error(lacewing::handlererror);
+		initsocket(_eventpump);
 
 		udp->on_data(lacewing::handlerclientudpreceive);
 		udp->on_error(lacewing::handlerclientudperror);
-
-		socket->nagle(false);
 
 		handler_connect = 0;
 		handler_connectiondenied = 0;
@@ -1178,7 +1187,6 @@ namespace lacewing
 		messageMF.framereset();
 		messageMF.reset();
 
-		socket->tag(this);
 		udp->tag(this);
 
 		reader.tag = this;
@@ -1209,6 +1217,19 @@ namespace lacewing
 		
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
+	}
+
+	void relayclientinternal::initsocket(lacewing::pump pump)
+	{
+		socket = lacewing::client_new(pump);
+
+		socket->tag(this);
+		socket->on_connect(lacewing::handlerconnect);
+		socket->on_disconnect(lacewing::handlerdisconnect);
+		socket->on_data(lacewing::handlerreceive);
+		socket->on_error(lacewing::handlererror);
+
+		socket->nagle(false);
 	}
 
 	bool relayclient::channel::peer::ischannelmaster() const
