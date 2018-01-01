@@ -88,7 +88,7 @@ BOOL DLLExport EditObject (mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDAT
 //
 // Note: remove the comments if your object can be resized (and remove the comments in the .def file)
 /*
-BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
+BOOL WINAPI SetEditSize(LPMV mv, EDITDATA * edPtr, int cx, int cy)
 {
 	#ifndef RUN_ONLY
 		edPtr->swidth = cx;
@@ -399,24 +399,17 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 				break;
 			}
 		case 'STRA': // ANSI string
-			#ifndef UNICODE
 			{
 				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
 				PropChange(mV, edPtr, PropID, prop2->Address, strlen((char *)prop2->Address) + 1);
 				break;
 			}
-			#endif
 		case 'STRW': // Unicode string
-			#ifdef UNICODE
 			{
 				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
 				PropChange(mV, edPtr, PropID, prop2->Address, (wcslen((wchar_t *)prop2->Address) + 1)*2);
 				break;
 			}
-			#endif
-			// Something screwed up with strings
-			MessageBoxA(NULL, "Unrecognised Class ID returned from Prop in SetValueProp!", "DarkEDIF - Error", MB_OK);
-			break;
 		case 'INT ': // 4-byte signed int
 			{
 				Prop_SInt * prop2 = (Prop_SInt *)prop;

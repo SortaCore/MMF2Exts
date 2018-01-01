@@ -1,27 +1,27 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define Ext (*((GlobalInfo *) Client.tag)->_Ext)
-#define Globals ((GlobalInfo *) Client.tag)
-#define GThread Globals->_Thread
+#define Ext (*((GlobalInfo *) Client.tag)->_ext)
+#define globals ((GlobalInfo *) Client.tag)
+#define GThread globals->_thread
 
-void OnError(lacewing::relayclient &Client, lacewing::error Error)
+void OnError(lacewing::relayclient &Client, lacewing::error error)
 {
 	if (GThread)
-		EnterCriticalSectionDerpy(&Globals->Lock);
+		EnterCriticalSectionDebug(&globals->lock);
 
-	char * c = _strdup(Error->tostring());
+	char * c = _strdup(error->tostring());
 	if (c)
-		Globals->AddEvent1(0, nullptr, nullptr, c);
+		globals->AddEvent1(0, nullptr, nullptr, c);
 	else
-		Globals->AddEvent1(0, nullptr, nullptr, "Error copying Lacewing error string to local buffer.");
+		globals->AddEvent1(0, nullptr, nullptr, "Error copying Lacewing error string to local buffer.");
 
 	if (GThread)
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		LeaveCriticalSectionDebug(&globals->lock);
 }
 void OnConnect(lacewing::relayclient &Client)
 {
-	Globals->AddEvent1(1);
+	globals->AddEvent1(1);
 }
 void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 {
@@ -30,40 +30,40 @@ void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
-		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	Globals->AddEvent1(2);
+		globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	globals->AddEvent1(2);
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
 	if (GThread)
-		EnterCriticalSectionDerpy(&Globals->Lock);
+		EnterCriticalSectionDebug(&globals->lock);
 
 	// Close all channels/peers in our copy
 	for (auto j : Channels)
 		j->close();
 
 	if (GThread)
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		LeaveCriticalSectionDebug(&globals->lock);
 
 	// 0xFFFF: Empty all channels and peers
-	Globals->AddEvent2(3, 0xFFFF);
+	globals->AddEvent2(3, 0xFFFF);
 }
 void OnChannelListReceived(lacewing::relayclient &Client)
 {
-	Globals->AddEvent1(26);
+	globals->AddEvent1(26);
 }
 void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
 	if (GThread)
-		EnterCriticalSectionDerpy(&Globals->Lock);
+		EnterCriticalSectionDebug(&globals->lock);
 
 	ChannelCopy * channel = new ChannelCopy(&Target);
 	Channels.push_back(channel);
 
 	if (GThread)
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		LeaveCriticalSectionDebug(&globals->lock);
 	
-	Globals->AddEvent1(4, channel);
+	globals->AddEvent1(4, channel);
 }
 void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName, const char * DenyReason)
 {
@@ -72,13 +72,13 @@ void OnJoinChannelDenied(lacewing::relayclient &Client, const char * ChannelName
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
-		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	Globals->AddEvent1(5, nullptr, nullptr, _strdup(ChannelName));
+		globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	globals->AddEvent1(5, nullptr, nullptr, _strdup(ChannelName));
 }
 void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channel &Target)
 {
 	if (GThread)
-		EnterCriticalSectionDerpy(&Globals->Lock);
+		EnterCriticalSectionDebug(&globals->lock);
 
 	// Close client in our copy
 	for (auto j : Channels)
@@ -88,16 +88,16 @@ void OnLeaveChannel(lacewing::relayclient &Client, lacewing::relayclient::channe
 			j->close();
 
 			// 0xFFFF: Clear channel copy after this event is handled
-			Globals->AddEvent2(43, 0xFFFF, j);
+			globals->AddEvent2(43, 0xFFFF, j);
 
 			if (GThread)
-				LeaveCriticalSectionDerpy(&Globals->Lock);
+				LeaveCriticalSectionDebug(&globals->lock);
 			return;
 		}
 	}
 	if (GThread)
-		LeaveCriticalSectionDerpy(&Globals->Lock);
-	Globals->CreateError("Couldn't find channel copy.");
+		LeaveCriticalSectionDebug(&globals->lock);
+	globals->CreateError("Couldn't find channel copy.");
 }
 void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::channel &Target, const char * DenyReason)
 {
@@ -106,12 +106,12 @@ void OnLeaveChannelDenied(lacewing::relayclient &Client, lacewing::relayclient::
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
-		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	Globals->AddEvent1(44, &Target);
+		globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	globals->AddEvent1(44, &Target);
 }
 void OnNameSet(lacewing::relayclient &Client)
 {
-	Globals->AddEvent1(6);
+	globals->AddEvent1(6);
 }
 void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const char * DenyReason)
 {
@@ -120,8 +120,8 @@ void OnNameDenied(lacewing::relayclient &Client, const char * DeniedName, const 
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
-		Globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	Globals->AddEvent1(7);
+		globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
+	globals->AddEvent1(7);
 }
 void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 {
@@ -130,339 +130,339 @@ void OnNameChanged(lacewing::relayclient &Client, const char * OldName)
 
 	PreviousName = _strdup(OldName);
 	if (!PreviousName)
-		Globals->CreateError("Error copying self previous name from Lacewing to local buffer.");
-	Globals->AddEvent1(53);
+		globals->CreateError("Error copying self previous name from Lacewing to local buffer.");
+	globals->AddEvent1(53);
 }
-void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel, lacewing::relayclient::channel::peer &Peer)
+void OnPeerConnect(lacewing::relayclient &Client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer)
 {
 	// Add peer to our copy
 	for (auto j : Channels)
 	{
-		if (j->id() == Channel.id())
+		if (j->id() == channel.id())
 		{
-			PeerCopy * PeerCopy = j->addpeer(&Peer);
+			PeerCopy * PeerCopy = j->addpeer(&peer);
 			if (PeerCopy)
-				Globals->AddEvent1(10, j, PeerCopy);
+				globals->AddEvent1(10, j, PeerCopy);
 			return;
 		}
 	}
 
-	Globals->CreateError("Couldn't find peer copy.");
+	globals->CreateError("Couldn't find peer copy.");
 }
-void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer)
+void OnPeerDisconnect(lacewing::relayclient &Client, lacewing::relayclient::channel &channel,
+	lacewing::relayclient::channel::peer &peer)
 {
 	// Disconnect makes write impossible. To prevent Fusion being halfway through writing on another thread,
 	// lock the event loop.
 	if (GThread)
-		EnterCriticalSectionDerpy(&Globals->Lock);
+		EnterCriticalSectionDebug(&globals->lock);
 
 	// Close peer in our copy.
 	// Original peer will be deleted after OnPeerDisconnect (this func) ends.
 	// Then once 0xFFFF triggers, copy will be deleted too.
 	for (auto j : Channels)
 	{
-		if (j->id() == Channel.id())
+		if (j->id() == channel.id())
 		{
-			PeerCopy * PeerCopy = j->closepeer(Peer);
+			PeerCopy * PeerCopy = j->closepeer(peer);
 
 			if (GThread)
-				LeaveCriticalSectionDerpy(&Globals->Lock);
+				LeaveCriticalSectionDebug(&globals->lock);
 		
 			if (PeerCopy)
-				Globals->AddEvent2(11, 0xFFFF, j, PeerCopy);
+				globals->AddEvent2(11, 0xFFFF, j, PeerCopy);
 			return;
 		}
 	}
 
 	if (GThread)
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		LeaveCriticalSectionDebug(&globals->lock);
 
-	Globals->CreateError("Couldn't find copy of channel for peer disconnect.");
+	globals->CreateError("Couldn't find copy of channel for peer disconnect.");
 }
-void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer, const char * OldName)
+void OnPeerNameChanged(lacewing::relayclient &Client, lacewing::relayclient::channel &channel,
+	lacewing::relayclient::channel::peer &peer, const char * OldName)
 {
 	for (auto j : Channels)
 	{
-		if (j->id() == Channel.id())
+		if (j->id() == channel.id())
 		{
-			PeerCopy * k = j->updatepeername(Peer);
+			PeerCopy * k = j->updatepeername(peer);
 			if (k)
-				Globals->AddEvent1(45, j, k);
+				globals->AddEvent1(45, j, k);
 			else
-				Globals->CreateError("Couldn't find copy of peer on copy of channel for peer name change.");
+				globals->CreateError("Couldn't find copy of peer on copy of channel for peer name change.");
 			return;
 		}
 	}
 
-	Globals->CreateError("Couldn't find copy of channel for peer name change.");
+	globals->CreateError("Couldn't find copy of channel for peer name change.");
 	return;
 }
-void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnPeerMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &channel,
+	lacewing::relayclient::channel::peer &peer,
+	bool Blasted, int subchannel, const char * Data, size_t size, int Variant)
 {
 	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
-		return &c->orig() == &Channel;
+		return &c->orig() == &channel;
 	});
 	if (cc == Channels.end())
 	{
-		Globals->CreateError("Couldn't find copy of channel for peer message.");
+		globals->CreateError("Couldn't find copy of channel for peer message.");
 		return;
 	}
 	ChannelCopy * channelCopy = *cc;
 	auto& peers = channelCopy->getpeers();
 	auto pp = std::find_if(peers.begin(), peers.end(), [&](PeerCopy * p) {
-		return &p->orig() == &Peer;
+		return &p->orig() == &peer;
 	});
 	if (pp == peers.end())
 	{
-		Globals->CreateError("Couldn't find copy of peer on copy of channel for peer message.");
+		globals->CreateError("Couldn't find copy of peer on copy of channel for peer message.");
 		return;
 	}
 	PeerCopy * peerCopy = *pp;
 	
-	char * Dup = (char *)malloc(Size);
+	char * Dup = (char *)malloc(size);
 	if (!Dup)
 	{
-		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 		return;
 	}
-	if (memcpy_s(Dup, Size, Data, Size))
+	if (memcpy_s(Dup, size, Data, size))
 	{
 		free(Dup);
-		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
 
 	if (Blasted)
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(52, 39, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(52, 39, channelCopy, peerCopy, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(52, 40, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(52, 40, channelCopy, peerCopy, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(52, 41, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(52, 41, channelCopy, peerCopy, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 	else // Sent
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(49, 36, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(49, 36, channelCopy, peerCopy, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(49, 37, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(49, 37, channelCopy, peerCopy, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(49, 38, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(49, 38, channelCopy, peerCopy, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
-void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	lacewing::relayclient::channel::peer &Peer,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &channel,
+	lacewing::relayclient::channel::peer &peer,
+	bool Blasted, int subchannel, const char * Data, size_t size, int Variant)
 {
 	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
-		return &c->orig() == &Channel;
+		return &c->orig() == &channel;
 	});
 	if (cc == Channels.end())
 	{
-		Globals->CreateError("Couldn't find copy of channel for channel message.");
+		globals->CreateError("Couldn't find copy of channel for channel message.");
 		return;
 	}
 	ChannelCopy * channelCopy = *cc;
 	auto& peers = channelCopy->getpeers();
 	auto pp = std::find_if(peers.begin(), peers.end(), [&](PeerCopy * p) {
-		return &p->orig() == &Peer;
+		return &p->orig() == &peer;
 	});
 	if (pp == peers.end())
 	{
-		Globals->CreateError("Couldn't find copy of peer on copy of channel for channel message.");
+		globals->CreateError("Couldn't find copy of peer on copy of channel for channel message.");
 		return;
 	}
 	PeerCopy * peerCopy = *pp; 
 	
-	char * Dup = (char *)malloc(Size);
+	char * Dup = (char *)malloc(size);
 	if (!Dup)
 	{
-		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 		return;
 	}
-	if (memcpy_s(Dup, Size, Data, Size))
+	if (memcpy_s(Dup, size, Data, size))
 	{
 		free(Dup);
-		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
 
 	if (Blasted)
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(51, 22, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(51, 22, channelCopy, peerCopy, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(51, 23, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(51, 23, channelCopy, peerCopy, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(51, 35, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(51, 35, channelCopy, peerCopy, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 	else // Sent
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(48, 9, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(48, 9, channelCopy, peerCopy, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(48, 16, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(48, 16, channelCopy, peerCopy, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(48, 33, channelCopy, peerCopy, Dup, Size, Subchannel);
+			globals->AddEvent2(48, 33, channelCopy, peerCopy, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
 void OnServerMessage(lacewing::relayclient &Client,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+	bool Blasted, int subchannel, const char * Data, size_t size, int Variant)
 {
-	char * Dup = (char *)malloc(Size);
+	char * Dup = (char *)malloc(size);
 	if (!Dup)
 	{
-		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 		return;
 	}
-	if (memcpy_s(Dup, Size, Data, Size))
+	if (memcpy_s(Dup, size, Data, size))
 	{
 		free(Dup);
-		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
 	if (Blasted)
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(50, 20, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(50, 20, nullptr, nullptr, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(50, 21, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(50, 21, nullptr, nullptr, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(50, 34, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(50, 34, nullptr, nullptr, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 	else // Sent
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(47, 8, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(47, 8, nullptr, nullptr, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(47, 15, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(47, 15, nullptr, nullptr, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(47, 32, nullptr, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(47, 32, nullptr, nullptr, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
-void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &Channel,
-	bool Blasted, int Subchannel, const char * Data, size_t Size, int Variant)
+void OnServerChannelMessage(lacewing::relayclient &Client, lacewing::relayclient::channel &channel,
+	bool Blasted, int subchannel, const char * Data, size_t size, int Variant)
 {
 	auto cc = std::find_if(Channels.begin(), Channels.end(), [&](ChannelCopy *&c) {
-		return &c->orig() == &Channel;
+		return &c->orig() == &channel;
 	});
 	if (cc == Channels.end())
 	{
-		Globals->CreateError("Couldn't find copy of channel for server-to-channel message.");
+		globals->CreateError("Couldn't find copy of channel for server-to-channel message.");
 		return;
 	}
 	ChannelCopy * channelCopy = *cc;
 
-	char * Dup = (char *)malloc(Size);
+	char * Dup = (char *)malloc(size);
 	if (!Dup)
 	{
-		Globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
+		globals->CreateError("Failed to create local buffer for copying received message from Lacewing. Message discarded.");
 		return;
 	}
-	if (memcpy_s(Dup, Size, Data, Size))
+	if (memcpy_s(Dup, size, Data, size))
 	{
 		free(Dup);
-		Globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
+		globals->CreateError("Failed to copy message from Lacewing to local buffer. Message discarded.");
 		return;
 	}
 
 	if (Blasted)
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(72, 69, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(72, 69, channelCopy, nullptr, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(72, 70, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(72, 70, channelCopy, nullptr, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(72, 71, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(72, 71, channelCopy, nullptr, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 	else // Sent
 	{
-		// Text
+		// text
 		if (Variant == 0)
-			Globals->AddEvent2(68, 65, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(68, 65, channelCopy, nullptr, Dup, size, subchannel);
 		// Number
 		else if (Variant == 1)
-			Globals->AddEvent2(68, 66, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(68, 66, channelCopy, nullptr, Dup, size, subchannel);
 		// Binary
 		else if (Variant == 2)
-			Globals->AddEvent2(68, 67, channelCopy, nullptr, Dup, Size, Subchannel);
+			globals->AddEvent2(68, 67, channelCopy, nullptr, Dup, size, subchannel);
 		// ???
 		else
 		{
 			free(Dup);
-			Globals->CreateError("Warning: message type is neither binary, number nor text.");
+			globals->CreateError("Warning: message type is neither binary, number nor text.");
 		}
 	}
 }
 
 
 #undef Ext
-#undef Globals
+#undef globals

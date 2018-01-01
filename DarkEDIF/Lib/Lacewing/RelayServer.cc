@@ -825,14 +825,14 @@ void relayserverinternal::channel::addclient(relayserverinternal::client &client
 		if (*e == &clientinternal)
 			return; // Nothing to do, client is on channel already
 
-	// Join Channel is OK
+	// Join channel is OK
 	framebuilder builder(true);
 	builder.addheader(0, 0);         /* response */
 	builder.add <unsigned char>(2);  /* joinchannel */
 	builder.add <unsigned char>(1);  /* success */
 	builder.add <unsigned char>(channelmaster != &clientinternal);  /* not the channel master */
 
-	builder.add <unsigned char>(strlen(name));
+	builder.add <unsigned char>((unsigned char)strlen(name));
 	builder.add(name, -1);
 
 	builder.add <unsigned short>(id);
@@ -841,7 +841,7 @@ void relayserverinternal::channel::addclient(relayserverinternal::client &client
 	{
 		builder.add <unsigned short>(i->id);
 		builder.add <unsigned char>(i == channelmaster ? 1 : 0);
-		builder.add <unsigned char>(strlen(i->name));
+		builder.add <unsigned char>((unsigned char)strlen(i->name));
 		builder.add(i->name, -1);
 	}
 
@@ -932,7 +932,9 @@ bool relayserverinternal::client::checkname (const char * name)
 	if (name == nullptr)
 		throw std::exception("Null name passed to checkname().");
 
-	if (strnlen(name, 256U) == 256U)
+	size_t nameLenFull = strnlen(name, 256U);
+	unsigned char nameLen = (unsigned char)nameLenFull;
+	if (nameLenFull == 256U)
 	{
 		framebuilder builder(true);
 
@@ -955,7 +957,7 @@ bool relayserverinternal::client::checkname (const char * name)
         if (e2 == this || !e2->name)
             continue;
 
-        if (!_stricmp(e2->name, name))
+        if (!_strnicmp(e2->name, name, nameLen))
         {
 			framebuilder builder(true);
 
@@ -963,8 +965,8 @@ bool relayserverinternal::client::checkname (const char * name)
             builder.add <unsigned char> (1);  /* setname */
             builder.add <unsigned char> (0);  /* failed */
 
-            builder.add <unsigned char> (strlen(name));
-            builder.add (name, -1);
+            builder.add <unsigned char> (nameLen);
+            builder.add (name, nameLen);
 
             builder.add ("name already taken", -1);
 
@@ -1170,7 +1172,7 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
                             builder.add <unsigned char> (2);  /* joinchannel */
                             builder.add <unsigned char> (0);  /* failed */
 
-                            builder.add <unsigned char> (channelnamelength);
+                            builder.add <unsigned char> ((unsigned char)channelnamelength);
                             builder.add (channelname, -1);
 
                             builder.add ("Channel already contains a client with your client name.", -1);
@@ -1246,9 +1248,10 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
                         if (e->hidden)
                             continue;
 
-                        builder.add <unsigned short> (e->clients.size());
-                        builder.add <unsigned char>  (strlen(e->name));
-                        builder.add (e->name, -1);
+						unsigned char nameLen = (unsigned char)strlen(e->name);
+                        builder.add <unsigned short> ((unsigned short)e->clients.size());
+                        builder.add <unsigned char>  (nameLen);
+                        builder.add (e->name, nameLen);
                     }
 
                     builder.send(socket);
@@ -1861,7 +1864,8 @@ void relayserver::joinchannel_response(relayserver::channel &channel,
 		builder.add <unsigned char>(2);  /* joinchannel */
 		builder.add <unsigned char>(0);  /* failed */
 
-		builder.add <unsigned char>(strlen(channelinternal->name));
+		// actual length 1-255, checked by channel ctor
+		builder.add <unsigned char>((unsigned char)strlen(channelinternal->name));
 		builder.add(channelinternal->name, -1);
 
 		// Blank reason replaced with "it was unspecified" message
@@ -1945,6 +1949,7 @@ void relayserver::nameset_response(relayserver::client &client,
 {
 	// We use an altered denyReason if there's newClientName problems.
 	const char * denyReason = denyReason_;
+	unsigned char newClientNameSize = 0;
 	if (!newClientName || !newClientName[0])
 	{
 		char * newDenyReason = (char *)malloc(150);
@@ -1958,14 +1963,20 @@ void relayserver::nameset_response(relayserver::client &client,
 			sprintf_s(newDenyReason, 150, "A%s", end);
 		denyReason = newDenyReason;
 	}
-	else if (strnlen(newClientName, 256) == 256)
+	else
 	{
-		char * newDenyReason2 = (char *)malloc(300);
-		if (!newDenyReason2)
-			throw std::exception("Out of memory.");
+		size_t newClientNameSizeFull = strnlen(newClientName, 256);
+		if (newClientNameSizeFull == 256U)
+		{
+			char * newDenyReason2 = (char *)malloc(300);
+			if (!newDenyReason2)
+				throw std::exception("Out of memory.");
 
-		sprintf_s(newDenyReason2, 300, "New client name \"%.256s...\" is too long. Name must be 255 chars maximum.", newClientName);
-		denyReason = newDenyReason2;
+			sprintf_s(newDenyReason2, 300, "New client name \"%.256s...\" is too long. Name must be 255 chars maximum.", newClientName);
+			denyReason = newDenyReason2;
+		}
+
+		newClientNameSize = (unsigned char)newClientNameSizeFull;
 	}
 
 	auto &serverinternal = *(relayserverinternal *)internaltag;
@@ -1979,8 +1990,8 @@ void relayserver::nameset_response(relayserver::client &client,
 		builder.add <unsigned char>(1);  /* setname */
 		builder.add <unsigned char>(0);  /* failed */
 
-		builder.add <unsigned char>(strlen(newClientName));
-		builder.add(newClientName, -1);
+		builder.add <unsigned char>(newClientNameSize);
+		builder.add(newClientName, newClientNameSize);
 
 		builder.add(denyReason ? denyReason : "Name refused by server, no reason given.", -1);
 
@@ -2004,8 +2015,8 @@ void relayserver::nameset_response(relayserver::client &client,
 		builder.add <unsigned char>(1);  /* setname */
 		builder.add <unsigned char>(0);  /* failed */
 
-		builder.add <unsigned char>(strlen(newClientName));
-		builder.add(newClientName, -1);
+		builder.add <unsigned char>(newClientNameSize);
+		builder.add(newClientName, newClientNameSize);
 
 		builder.add("Name refused by server; the server customised your name "
 			"and got an error doing so on its end.", -1);
@@ -2022,8 +2033,8 @@ void relayserver::nameset_response(relayserver::client &client,
 	builder.add <unsigned char>(1);  /* setname */
 	builder.add <unsigned char>(1);  /* success */
 
-	builder.add <unsigned char>(strlen(newClientName));
-	builder.add (newClientName, -1);
+	builder.add <unsigned char>(newClientNameSize);
+	builder.add (newClientName, newClientNameSize);
 
 	builder.send(clientinternal->socket);
 
@@ -2034,7 +2045,7 @@ void relayserver::nameset_response(relayserver::client &client,
 		builder.add <unsigned short>(e->id);
 		builder.add <unsigned short>(clientinternal->id);
 		builder.add <unsigned char>(clientinternal == e->channelmaster ? 1 : 0);
-		builder.add (newClientName, -1);
+		builder.add (newClientName, newClientNameSize);
 
 		for (auto e2 : e->clients)
 		{

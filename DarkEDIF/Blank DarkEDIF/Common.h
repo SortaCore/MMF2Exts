@@ -40,6 +40,11 @@ struct EDITDATA
 	// Keep DarkEDIF variables as last. Undefined behaviour otherwise.
 	int				DarkEDIF_Prop_Size;
 	char			DarkEDIF_Props[0];
+
+	// DarkEDIF functions, use within Extension ctor.
+	bool IsPropChecked(int propID);
+	const char * GetPropertyStr(const char * propName);
+	const char * GetPropertyStr(int propID);
 };
 
 class Extension;

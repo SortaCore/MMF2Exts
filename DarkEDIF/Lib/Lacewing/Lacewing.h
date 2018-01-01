@@ -439,7 +439,7 @@ lw_import       lw_bool  lw_random                   (char * buffer, size_t size
   lw_import           void* lw_event_tag                 (lw_event);
   lw_import           void  lw_event_set_tag             (lw_event, void *);
 
-/* Error */
+/* error */
 
   lw_import       lw_error  lw_error_new                 ();
   lw_import           void  lw_error_delete              (lw_error);
@@ -1462,7 +1462,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 struct relayclient
 {
 public:
-	const static int buildnum = 78;
+	const static int buildnum = 79;
 
 	void * internaltag, *tag;
 
@@ -1497,7 +1497,7 @@ public:
 		const channellisting * next() const;
 	};
 
-	int channellistingcount() const;
+	size_t channellistingcount() const;
 	const channellisting * firstchannellisting() const;
 
 	void join(const char * channel, bool hidden = false, bool autoclose = false);
@@ -1598,7 +1598,7 @@ public:
 
 struct relayserver
 {
-	static const int buildnum = 11;
+	static const int buildnum = 12;
 
 	void * internaltag, *tag;
 

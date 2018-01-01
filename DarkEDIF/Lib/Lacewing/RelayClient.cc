@@ -1284,7 +1284,7 @@ namespace lacewing
 		return (p.begin() == p.end()) ? nullptr : &(*p.begin())->public_;
 	}
 
-	int relayclient::channellistingcount() const
+	size_t relayclient::channellistingcount() const
 	{
 		return ((relayclientinternal *)internaltag)->channellist.size();
 	}

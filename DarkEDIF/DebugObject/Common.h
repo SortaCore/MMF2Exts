@@ -44,9 +44,15 @@ struct EDITDATA
 	char InitialPath [MAX_PATH+1];
 	bool ConsoleEnabled;
 	bool PauseForDebugger;
+	
 	// TODO: Extend properties to default handling type?
 	int				DarkEDIF_Prop_Size;
 	char			DarkEDIF_Props[0];
+
+	// DarkEDIF functions, use within Extension ctor.
+	bool IsPropChecked(int propID);
+	const char * GetPropertyStr(const char * propName);
+	const char * GetPropertyStr(int propID);
 };
 
 class Extension;

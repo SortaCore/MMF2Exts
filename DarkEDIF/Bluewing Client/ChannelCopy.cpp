@@ -76,14 +76,14 @@ PeerCopy * ChannelCopy::addpeer(lacewing::relayclient::channel::peer * peer)
 		_channelmaster = pc;
 	return pc;
 }
-PeerCopy * ChannelCopy::updatepeername(lacewing::relayclient::channel::peer &Peer)
+PeerCopy * ChannelCopy::updatepeername(lacewing::relayclient::channel::peer &peer)
 {
 	auto pr = std::find_if(_peers.begin(), _peers.end(), [=](PeerCopy *&p) {
-		return p->peer == &Peer;
+		return p->peer == &peer;
 	});
 	assert(pr != _peers.end());
 	PeerCopy * pr2 = *pr;
-	pr2->name(Peer.name());
+	pr2->name(peer.name());
 	return pr2;
 }
 
@@ -118,34 +118,36 @@ ChannelCopy::~ChannelCopy() noexcept(false)
 		delete p;
 	_peers.clear();
 }
-void ChannelCopy::setlocaldata(const char * Key, const char * Value)
+void ChannelCopy::setlocaldata(const char * key, const char * value)
 {
 	// NB: Nulls checked for by caller
 
 	auto i = std::find_if(localdata.begin(), localdata.end(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+			return !_stricmp(s.first.c_str(), key);
+	});
 
 	// Blank value: Delete
-	if (Value[0] == '\0')
+	if (value[0] == '\0')
 	{
 		if (i != localdata.end())
 			localdata.erase(i);
 		return;
 	}
 	if (i != localdata.end())
-		i->second = Value;
+		i->second = value;
 	else
-		localdata.push_back(std::make_pair(Key, Value));
+		localdata.push_back(std::make_pair(key, value));
 }
-const std::string & ChannelCopy::getlocaldata(const char * Key) const
+const std::string & ChannelCopy::getlocaldata(const char * key) const
 {
 	static std::string blanky = "";
 	// NB: Nulls checked for by caller
 
 	auto i = std::find_if(localdata.cbegin(), localdata.cend(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+			return !_stricmp(s.first.c_str(), key);
+	});
 	return i == localdata.cend() ? blanky : i->second;
 }
 

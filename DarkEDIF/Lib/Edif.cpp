@@ -18,138 +18,147 @@ void Edif::GetExtensionName(char * const writeTo)
 
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
 
-short ReadParameterType(const char * Text, bool &IsFloat)
+Params ReadParameterType(const char * text, bool &IsFloat)
 {
-    if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+    if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
 		return Params::String_Expression;
 
-    if (!_stricmp(Text, "Filename") || !_stricmp(Text, "File"))
+    if (!_stricmp(text, "Filename") || !_stricmp(text, "File"))
 		return Params::Filename;
 
-    if (!_stricmp(Text, "Float"))
+    if (!_stricmp(text, "Float"))
 	{
 		IsFloat = true;
 		return Params::Expression;
 	}
 
-    if (!_stricmp(Text, "Integer"))
+    if (!_stricmp(text, "Integer"))
 		return Params::Expression;
 
-    if (!_stricmp(Text, "Object"))
+	if (!_stricmp(text, "Unsigned Integer"))
+		return Params::Expression;
+
+    if (!_stricmp(text, "Object"))
 		return Params::Object;
 
-	if (!_stricmp(Text, "Position"))
+	if (!_stricmp(text, "Position"))
 		return Params::Position;
 
-	if (!_stricmp(Text, "Create"))
+	if (!_stricmp(text, "Create"))
 		return Params::Create;
 
-	if (!_stricmp(Text, "SysCreate"))
+	if (!_stricmp(text, "SysCreate"))
 		return Params::System_Create;
 
-	if (!_stricmp(Text, "Animation"))
+	if (!_stricmp(text, "Animation"))
 		return Params::Animation;
 
-	if (!_stricmp(Text, "Nop"))
+	if (!_stricmp(text, "Nop"))
 		return Params::NoP;
 
-	if (!_stricmp(Text, "Player"))
+	if (!_stricmp(text, "Player"))
 		return Params::Player;
 
-	if (!_stricmp(Text, "Every"))
+	if (!_stricmp(text, "Every"))
 		return Params::Every;
 
-	if (!_stricmp(Text, "Key"))
+	if (!_stricmp(text, "Key"))
 		return Params::Key;
 
-	if (!_stricmp(Text, "Speed"))
+	if (!_stricmp(text, "Speed"))
 		return Params::Speed;
 
-	if (!_stricmp(Text, "JoyDirection"))
+	if (!_stricmp(text, "JoyDirection"))
 		return Params::Joystick_Direction;
 
-	if (!_stricmp(Text, "Shoot"))
+	if (!_stricmp(text, "Shoot"))
 		return Params::Shoot;
 
-	if (!_stricmp(Text, "Zone"))
+	if (!_stricmp(text, "Zone"))
 		return Params::Playfield_Zone;
 
-	if (!_stricmp(Text, "Comparison"))
+	if (!_stricmp(text, "Comparison"))
 		return Params::Comparison;
 		
-	if (!_stricmp(Text, "StringComparison"))
+	if (!_stricmp(text, "StringComparison"))
 		return Params::String_Comparison;
 
-	if (!_stricmp(Text, "Colour") || !_stricmp(Text, "Color"))
+	if (!_stricmp(text, "Colour") || !_stricmp(text, "Color"))
 		return Params::Colour;
 
-	if (!_stricmp(Text, "Frame"))
+	if (!_stricmp(text, "Frame"))
 		return Params::Frame;
 
-	if (!_stricmp(Text, "SampleLoop"))
+	if (!_stricmp(text, "SampleLoop"))
 		return Params::Sample_Loop;
 
-	if (!_stricmp(Text, "MusicLoop"))
+	if (!_stricmp(text, "MusicLoop"))
 		return Params::Music_Loop;
 
-	if (!_stricmp(Text, "NewDirection"))
+	if (!_stricmp(text, "NewDirection"))
 		return Params::New_Direction;
 
-	if (!_stricmp(Text, "TextNumber"))
+	if (!_stricmp(text, "TextNumber"))
 		return Params::Text_Number;
 
-	if (!_stricmp(Text, "Click"))
+	if (!_stricmp(text, "Click"))
 		return Params::Click;
 
-	if (!_stricmp(Text, "Program"))
+	if (!_stricmp(text, "Program"))
 		return Params::Program;
 
-	if (!_strnicmp(Text, "Custom", 6))
-		return Params::Custom_Base + atoi(Text+6);
+	if (!_strnicmp(text, "Custom", 6))
+		return (Params)short(short(Params::Custom_Base) + atoi(text+6));
 
 	std::stringstream str;
-	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
+	str << "Error reading Parameter type \"" << text << "\"; text did not match anything.";
 	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK);
-    return 0;
+    return (Params)(ushort)0;
 }
 
-short ReadExpressionParameterType(const char * Text, bool &IsFloat)
+ExpParams ReadExpressionParameterType(const char * text, bool &IsFloat)
 {
-    if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+    if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
 		return ExpParams::String;
 
-    if (!_stricmp(Text, "Float"))
+    if (!_stricmp(text, "Float"))
 	{
 		IsFloat = true;
 		return ExpParams::Float;
 	}
 
-    if (!_stricmp(Text, "Integer"))
+    if (!_stricmp(text, "Integer"))
 		return ExpParams::Integer;
 
+	if (!_stricmp(text, "Unsigned Integer"))
+		return ExpParams::UnsignedInteger;
+
 	MessageBoxA(NULL, "Error reading Parameter type; text did not match anything.", "DarkEDIF - Error", MB_OK);
-    return 0;
+    return (ExpParams)(ushort)0;
 }
 
-char ReadExpressionReturnType(const char * Text)
+ExpReturnType ReadExpressionReturnType(const char * text)
 {
-	if (!_stricmp(Text, "Integer"))
-		return 0;
+	if (!_stricmp(text, "Integer"))
+		return ExpReturnType::Integer;
 
-	if (!_stricmp(Text, "Float"))
-		return EXPFLAG_DOUBLE;
+	if (!_stricmp(text, "Float"))
+		return ExpReturnType::Float;
 	
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
-		return EXPFLAG_STRING;
+	if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
+		return ExpReturnType::String;
 	
 	// More specialised, but not allowed for
-	if (!_stricmp(Text, "Short"))
-		return 0;
+	if (!_stricmp(text, "Short"))
+		return ExpReturnType::Integer;
+
+	if (!_stricmp(text, "Unsigned Integer"))
+		return ExpReturnType::UnsignedInteger;
 
 	char error [256];
-	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", Text);
+	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", text);
 	MessageBoxA(NULL, error, "DarkEDIF - Error", MB_OK);
-	return 0;
+	return ExpReturnType::Integer; // default
 }
 
 void Edif::Init(mv * mV, EDITDATA * edPtr)
@@ -356,11 +365,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			// If some muppet attempts to use 'em, throw an error.
 			if ( ((const char *) Property["Type"])[0] == '!')
 			{
-				std::string Error = "You have specified an invalid Parameter type: [" + 
+				std::string error = "You have specified an invalid Parameter type: [" + 
 									std::string((const char *)Property["Type"]) + 
 									"].\r\nPlease ensure you are permitted to use this.";
 			
-				MessageBoxA(NULL, Error.c_str(), "DarkEDIF - JSON Property parser", MB_OK);
+				MessageBoxA(NULL, error.c_str(), "DarkEDIF - JSON Property parser", MB_OK);
 			}
 			else // Property is not reserved
 			{
@@ -380,7 +389,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				else // Regular Parameter
 				{
 
-					// Loop through Parameter names and compareth them.
+					// loop through Parameter names and compareth them.
 					for(unsigned int j = PROPTYPE_FIRST_ITEM;
 						j < (PROPTYPE_LAST_ITEM - PROPTYPE_FIRST_ITEM);
 						++ j)
@@ -388,6 +397,8 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						const char * c = Property["Type"];
 						if (!_stricmp(Property["Type"], Names[j]))
 						{
+							// Unicode Properties have IDs 1000 greater than their
+							// ANSI equivalents. If necessary, you can boost all of them.
 							CurrentProperty = new PropData(VariableProps.size(), j);
 							break;
 						}
@@ -420,85 +431,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 						switch (CurrentProperty->Type_ID)
 						{
-							/*
-					#define PropData_Folder(0,	(LParams)NULL}
-#define PropData_Folder_End() 0,	(LParams)NULL}
-#define PropData_Group(0,	(LParams)NULL}
-#define PropData_StaticString(0,	(LParams)NULL}
-#define PropData_StaticString_Opt(opt,	(LParams)NULL}
-#define PropData_StaticString_List(PROPOPT_LIST,	(LParams)NULL}
-#define PropData_EditString(0,	(LParams)NULL}
-#define PropData_EditString_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_EditString_Opt(opt,	(LParams)NULL}
-#define PropData_EditNumber(0,	(LParams)NULL}
-#define PropData_EditNumber_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_EditNumber_Opt(opt,	(LParams)NULL}
-#define PropData_EditFloat(0,	(LParams)NULL}
-#define PropData_EditFloat_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_EditFloat_Opt(opt,	(LParams)NULL}
-#define PropData_EditMultiLine(0,	(LParams)NULL}
-#define PropData_EditMultiLine_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_EditMultiLine_Opt(opt,	(LParams)NULL}
-#define PropData_SliderEdit(PROPOPT_ParamsREQUIRED,	(LParams)minmax}
-#define PropData_SliderEdit_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)minmax}
-#define PropData_SliderEdit_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)minmax}
-#define PropData_SpinEdit(PROPOPT_ParamsREQUIRED,	(LParams)minmax}
-#define PropData_SpinEdit_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)minmax}
-#define PropData_SpinEdit_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)minmax}
-#define PropData_Button(0,	 (LParams)text}
-#define PropData_Button_Check(PROPOPT_CHECKBOX,	(LParams)text}
-#define PropData_Button_Opt(opt,	(LParams)text}
-#define PropData_EditButton(0,	 (LParams)NULL}
-#define PropData_EditButton_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_EditButton_Opt(opt,	(LParams)NULL}
-#define PropData_Size(	PROPOPT_ParamsREQUIRED,	(LParams)tab}
-#define PropData_Size_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)tab}
-#define PropData_Size_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)tab}
-#define PropData_Color(0,	(LParams)NULL}
-#define PropData_Color_Check(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_Color_Opt(opt,	(LParams)NULL}
-#define PropData_ComboBox(PROPOPT_ParamsREQUIRED,	(LParams)list}
-#define PropData_ComboBox_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)list}
-#define PropData_ComboBox_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)list}
-#define PropData_CheckBox(PROPOPT_CHECKBOX,	(LParams)NULL}
-#define PropData_CheckBox_Opt((PROPOPT_CHECKBOX|opt),	(LParams)NULL}
-#define PropData_DirCtrl(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_DirCtrl_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_DirCtrl_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_Filename(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_Filename_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_Filename_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_PictureFilename(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_PictureFilename_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_PictureFilename_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_Font(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_Font_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_Font_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_Custom(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_Custom_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_Custom_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_ComboBoxBtn(PROPOPT_ParamsREQUIRED,	(LParams)list}
-#define PropData_ComboBoxBtn_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)list}
-#define PropData_ComboBoxBtn_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)list}
-#define PropData_ImageList(0,	NULL}
-#define PropData_ImageList_Check(PROPOPT_CHECKBOX,	NULL}
-#define PropData_ImageList_Opt(opt,	NULL}
-#define PropData_IconComboBox(PROPOPT_ParamsREQUIRED,	(LParams)list}
-#define PropData_IconComboBox_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)list}
-#define PropData_IconComboBox_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)list}
-#define PropData_URLButton(PROPOPT_ParamsREQUIRED,	 (LParams)url}
-#define PropData_URLButton_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)url}
-#define PropData_URLButton_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)url}
-#define PropData_DirectoryName(PROPOPT_ParamsREQUIRED,	(LParams)Params}
-#define PropData_DirectoryName_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)Params}
-#define PropData_DirectoryName_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)Params}
-#define PropData_SpinEditFloat(PROPOPT_ParamsREQUIRED,	(LParams)minmaxdelta}
-#define PropData_SpinEditFloat_Check((PROPOPT_ParamsREQUIRED|PROPOPT_CHECKBOX),	(LParams)minmaxdelta}
-#define PropData_SpinEditFloat_Opt((PROPOPT_ParamsREQUIRED|opt),	(LParams)minmaxdelta}
-#define PropData_End() {0}
-					*/
-					// Simple static text
-						
+							// Simple static text
 							case PROPTYPE_STATIC:
 								SetAllProps(0, NULL);
 					
@@ -531,18 +464,16 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 							case PROPTYPE_COMBOBOX:
 							{
 								if (Property["Items"].u.object.length == 0)
-									MessageBoxA(NULL, "Warning: no default items detected in list.", "DarkEDIF warning", MB_OK);
+									MessageBoxA(NULL, "WArning: no items detected in combobox property.", "DarkEDIF error", MB_OK);
 							
 								const char ** Fixed = new const char * [Property["Items"].u.object.length+2];
 
 								// NULL is required at start of array
 								Fixed[0] = Fixed[Property["Items"].u.object.length+1] = nullptr;
 
-								// Use decrementation and copy to fixed list.
+								// Use incrementation and copy to fixed list.
 								for (unsigned int index = 1; index < Property["Items"].u.object.length+1; ++ index)
-								{
 									Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
-								}
 
 								// Pass fixed list as Parameter
 								SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
@@ -682,7 +613,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 	
 	for (int i = 0; i < ParameterCount; ++ i)
 	{
-		switch (Info->Parameter[i])
+		switch (Info->Parameter[i].p)
 		{
 			case Params::Expression:
 				Parameters[i] = (Info->FloatFlags & (1 << i)) ?
@@ -693,6 +624,12 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 			case Params::String_Expression:
 			case Params::Filename:
 				Parameters[i] = CNC_GetStringParameter(rdPtr);
+				// Catch null string parameters and return default 0
+				if (!Parameters[i])
+				{
+					MessageBoxA(NULL, "Error calling action/condition: null pointer given as string parameter.", "DarkEDIF - ActionOrCondition() error", MB_OK);
+					return 0L;
+				}
 				break;
 
 			default:
@@ -856,12 +793,13 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 	void * Extension = rdPtr->pExtension;
 
 	const ACEInfo * Info = ::SDK->ExpressionInfos[ID];
-	int ExpressionRet = Info->Flags;
+	ExpReturnType ExpressionRet = Info->Flags.ef;
 	
-	if (ExpressionRet == EXPFLAG_DOUBLE)
-		rdPtr->rHo.Flags |= HOF_FLOAT;
-	else if (ExpressionRet == EXPFLAG_STRING)
-		rdPtr->rHo.Flags |= HOF_STRING;
+	if (ExpressionRet == ExpReturnType::Float)
+		rdPtr->rHo.Flags |= HeaderObjectFlags::Float;
+	else if (ExpressionRet == ExpReturnType::String)
+		rdPtr->rHo.Flags |= HeaderObjectFlags::String;
+	int ExpressionRet2 = (int)ExpressionRet;
 	
 	int ParameterCount = Info->NumOfParams;
 	int * Parameters = (int *) _alloca(sizeof(int) * ParameterCount);
@@ -869,7 +807,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 	for (int i = 0; i < ParameterCount; ++ i)
 	{
 		// if i == 0 (first parameter of expression) we call GET_PARAM_1, else we call GET_PARAM_2
-		switch (Info->Parameter[i])
+		switch (Info->Parameter[i].ep)
 		{
 			case ExpParams::String:
 				Parameters[i] = CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1+(i > 0), TYPE_STRING, param);
@@ -878,7 +816,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 				if (!Parameters[i])
 				{
   					MessageBoxA(NULL, "Error calling expression: null pointer given as string parameter.", "DarkEDIF - Expression() error", MB_OK);
-					return (ExpressionRet != EXPFLAG_STRING) ? 0L :
+					return (ExpressionRet != ExpReturnType::String) ? 0L :
 								(long)rdPtr->pExtension->Runtime.CopyString(_T(""));
 				}
 				break;
@@ -926,7 +864,7 @@ long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
 		mov ecx, Extension
 		call Function
 
-		mov ecx, ExpressionRet
+		mov ecx, ExpressionRet2
 
 		cmp ecx, 2
 		jne NotFloat

@@ -17,7 +17,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7BC7F91B-80E1-4F73-8A95-480962EB4E06}</ProjectGuid>
     <RootNamespace>DarkEDIF</RootNamespace>
-    <ProjectName>DarkEDIF - Bluewing Client</ProjectName>
+    <ProjectName>Bluewing Client</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -155,7 +155,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\Inc; .\; ..\Lib\Lacewing; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN;lw_import=; _lacewing_static=; _lacewing_no_spdy;_WINSOCK_DEPRECATED_NO_WARNINGS; EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>COXSDK; IN_EXT_VERSION2; _CRT_SECURE_NO_WARNINGS; _CRT_SECURE_NO_DEPRECATE; _WINDOWS; WIN32_LEAN_AND_MEAN;lw_import=; _lacewing_static=; _lacewing_no_spdy;_WINSOCK_DEPRECATED_NO_WARNINGS; EDITOR;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -371,6 +371,7 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Inc\DarkEdif.h" />
     <ClInclude Include="..\Inc\MMFMasterHeader.h" />
     <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
     <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
@@ -380,7 +381,6 @@
     <ClInclude Include="..\Lib\lacewing\src\windows\sslclient.h" />
     <ClInclude Include="ChannelCopy.h" />
     <ClInclude Include="PeerCopy.h" />
-    <ClInclude Include="DarkEDIF.h" />
     <ClInclude Include="LacewingFunctions.h" />
     <ClInclude Include="..\Inc\ObjectSelection.h" />
     <ClInclude Include="Common.h" />

@@ -15,9 +15,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}</ProjectGuid>
+    <ProjectGuid>{54B985F0-7598-42E1-9E7F-1D14E888264A}</ProjectGuid>
     <RootNamespace>DarkEDIF - Blank</RootNamespace>
-    <ProjectName>UTF16 Object</ProjectName>
+    <ProjectName>DarkEDIF - UTF16 Object</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime Unicode|Win32'" Label="Configuration">

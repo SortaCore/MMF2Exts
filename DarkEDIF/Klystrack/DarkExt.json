@@ -1,0 +1,208 @@
+{
+	"Identifier": "KLYS",
+	"Dependencies": "",
+	"UK English":
+	{
+		"About": {
+			"Name": "Klystrack",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2018 by Darkwire Software",
+			"Comment": "Enables use of Klystrack audio player. (b%i)",
+			"Help": "",
+			"URL": "https://dark-wire.com/"
+		},
+    "ActionMenu": [
+      [
+        "Song",
+        [ 0, "Load song from path" ],
+        [ 1, "Load song from memory" ],
+        [ 2, "Close song" ]
+      ],
+      [
+        "Player",
+        [ 3, "Create player" ],
+        [ 4, "Select player by name" ],
+        [ 5, "Close player" ],
+        "Separator",
+        [ 6, "Set player quality" ],
+        [ 7, "Set player looping", true ],
+        [ 8, "Set volume" ],
+        "Separator",
+        [ 9, "Play song" ],
+        [ 10, "Pause/resume song" ],
+        [ 11, "Stop song" ]
+      ]
+    ],
+    "ConditionMenu": [
+      [ 0, "On error" ],
+      [ 1, "Does player name exist?" ],
+      [ 2, "Does song name exist?" ],
+      [ 3, "Is player playing?" ],
+      [ 4, "Is player paused?" ]
+    ],
+    "ExpressionMenu": [
+      [ 0, "Get error text"],
+      [ 1, "Get song current position" ],
+      [ 2, "Get song length" ],
+      [ 3, "Get song title" ],
+      [ 4, "Get number of instruments" ],
+      [ 5, "Get number of channels" ],
+      [ 6, "Get an instrument name" ]
+    ],
+    "Actions": [
+      {
+        "Title": "Load song name %0 from file path %1 into current player",
+        "Parameters": [
+          [ "String", "Name of song" ],
+          [ "File", "File path" ]
+        ]
+      },
+      {
+        "Title": "Load song name %0 from memory address %1, size %2 into current player",
+        "Parameters": [
+          [ "String", "Name of song" ],
+          [ "Unsigned Integer", "Address of song" ],
+          [ "Integer", "Size of song in bytes" ]
+        ]
+      },
+      {
+        "Title": "Close song %0",
+        "Parameters": [
+          [ "String", "Name of song" ]
+        ]
+      },
+      {
+        "Title": "Create player with name %0, sample rate %1",
+        "Parameters": [
+          [ "String", "Name of player" ],
+          [ "Integer", "Sample rate (Hz)" ]
+        ]
+      },
+      {
+        "Title": "Select player by name %0",
+        "Parameters": [
+          [ "String", "Name of player" ]
+        ]
+      },
+      {
+        "Title": "Close current player"
+      },
+      {
+        "Title": "Set current player quality to %0",
+        "Parameters": [
+          [ "Integer", "Oversample (0 to 4)" ]
+        ]
+      },
+      {
+        "Title": "Set current player looping to %0",
+        "Parameters": [
+          [ "Integer", "Enable looping? (0 or 1)" ]
+        ]
+      },
+      {
+        "Title": "Set current player volume to %0",
+        "Parameters": [
+          [ "Integer", "Volume (0 - 128)" ]
+        ]
+      },
+      {
+        "Title": "Play song name %0 on current player from position %1",
+        "Parameters": [
+          [ "String", "Song name" ],
+          [ "Integer", "Song position (0+, in pattern rows)" ]
+        ]
+      },
+      {
+        "Title": "Set paused state on current player to %0",
+        "Parameters": [
+          [ "Integer", "Pause it? (0 or 1)" ]
+        ]
+      },
+      {
+        "Title": "Stop current player"
+      }
+    ],
+    "Conditions": [
+      {
+        "Title": "%o : On error",
+        "Triggered": true
+      },
+      {
+        "Title": "%o : Does player name %0 exist?",
+        "Triggered": false,
+        "Parameters": [
+          [ "String", "Player name" ]
+        ]
+      },
+      {
+        "Title": "%o : Does song name %1 exist?",
+        "Triggered": false,
+        "Parameters": [
+          [ "String", "Song name" ]
+        ]
+      },
+      {
+        "Title": "%o : Is player name %0 playing?",
+        "Triggered": false,
+        "Parameters": [
+          [ "String", "Player name" ]
+        ]
+      },
+      {
+        "Title": "%o : Is player name %0 paused?",
+        "Triggered": false,
+        "Parameters": [
+          [ "String", "Player name" ]
+        ]
+      }
+    ],
+    "Expressions": [
+      {
+        "Title": "Error$(",
+        "Returns": "Text"
+      },
+      {
+        "Title": "PlayerCurrentPos(",
+        "Returns": "Integer"
+      },
+      {
+        "Title": "SongLength(",
+        "Returns": "Integer",
+        "Parameters": [
+          [ "Text", "Song name" ]
+        ]
+      },
+      {
+        "Title": "SongTitle$(",
+        "Returns": "Text",
+        "Parameters": [
+          [ "Text", "Song name" ]
+        ]
+      },
+      {
+        "Title": "SongNumOfInstruments(",
+        "Returns": "Integer",
+        "Parameters": [
+          [ "Text", "Song name" ]
+        ]
+      },
+      {
+        "Title": "SongNumOfChannels(",
+        "Returns": "Integer",
+        "Parameters": [
+          [ "Text", "Song name" ]
+        ]
+      },
+      {
+        "Title": "SongInstrumentName$(",
+        "Returns": "Text",
+        "Parameters": [
+          [ "Text", "Song name" ],
+          [ "Integer", "Instrument index (0+)" ]
+        ]
+      }
+    ],
+		"Properties": [
+		]
+	}
+}

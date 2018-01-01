@@ -7,7 +7,7 @@ class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	SaveExtInfo ThreadData; // Must be first variable in Extension class
+	SaveExtInfo threadData; // Must be first variable in Extension class
 
     RUNDATA * rdPtr;
     RunHeader * rhPtr;
@@ -17,8 +17,8 @@ public:
     static const int MinimumBuild = 251;
     static const int Version = lacewing::relayclient::buildnum;
 
-    static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-    static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
+    static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
+    static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
     
     static const int WindowProcPriority = 100;
 
@@ -38,19 +38,19 @@ public:
         a pointer.
     */
 	
-	bool IsGlobal;
-	GlobalInfo * Globals;
+	bool isGlobal;
+	GlobalInfo * globals;
 
 	// This allows prettier and more readable access while maintaining global variables.
-	#define ObjEventPump				Globals->_ObjEventPump
-	#define Cli							Globals->_Client
-	#define PreviousName				Globals->_PreviousName
-	#define SendMsg						Globals->_SendMsg
-	#define DenyReasonBuffer			Globals->_DenyReasonBuffer
-	#define SendMsgSize					Globals->_SendMsgSize
-	#define AutomaticallyClearBinary	Globals->_AutomaticallyClearBinary
-	#define GlobalID					Globals->_GlobalID
-	#define Channels					Globals->_Channels
+	#define ObjEventPump				globals->_objEventPump
+	#define Cli							globals->_client
+	#define PreviousName				globals->_previousName
+	#define SendMsg						globals->_sendMsg
+	#define DenyReasonBuffer			globals->_denyReasonBuffer
+	#define SendMsgSize					globals->_sendMsgSize
+	#define AutomaticallyClearBinary	globals->_automaticallyClearBinary
+	#define GlobalID					globals->_globalID
+	#define Channels					globals->_channels
 
 	
 
@@ -69,7 +69,7 @@ public:
 	// and liblacewing cleans up its peer variable instantly too.
 	// But since these events are queued, the "on peer disconnect" may be called later, after liblacewing has deleted.
 	// So we have to store a copy of the peer so we can look up name when it's disconnected.
-	// See the _Channels variable in GlobalInfo for our copy.
+	// See the _channels variable in GlobalInfo for our copy.
 
     // int MyVariable;
 
@@ -90,21 +90,21 @@ public:
 
         void Replaced_Connect(char * Hostname, int Port);
         void Disconnect();
-		void SetName(char * Name);
+		void SetName(char * name);
 		void Replaced_JoinChannel(char * ChannelName, int HideChannel);
 		void LeaveChannel();
-		void SendTextToServer(int Subchannel, char * TextToSend);
-		void SendTextToChannel(int Subchannel, char * TextToSend);
-		void SendTextToPeer(int Subchannel, char * TextToSend);
-		void SendNumberToServer(int Subchannel, int NumToSend);
-		void SendNumberToChannel(int Subchannel, int NumToSend);
-		void SendNumberToPeer(int Subchannel, int NumToSend);
-		void BlastTextToServer(int Subchannel, char * TextToSend);
-		void BlastTextToChannel(int Subchannel, char * TextToSend);
-		void BlastTextToPeer(int Subchannel, char * TextToSend);
-		void BlastNumberToServer(int Subchannel, int NumToSend);
-		void BlastNumberToChannel(int Subchannel, int NumToSend);
-		void BlastNumberToPeer(int Subchannel, int NumToSend);
+		void SendTextToServer(int subchannel, char * TextToSend);
+		void SendTextToChannel(int subchannel, char * TextToSend);
+		void SendTextToPeer(int subchannel, char * TextToSend);
+		void SendNumberToServer(int subchannel, int NumToSend);
+		void SendNumberToChannel(int subchannel, int NumToSend);
+		void SendNumberToPeer(int subchannel, int NumToSend);
+		void BlastTextToServer(int subchannel, char * TextToSend);
+		void BlastTextToChannel(int subchannel, char * TextToSend);
+		void BlastTextToPeer(int subchannel, char * TextToSend);
+		void BlastNumberToServer(int subchannel, int NumToSend);
+		void BlastNumberToChannel(int subchannel, int NumToSend);
+		void BlastNumberToPeer(int subchannel, int NumToSend);
 		void SelectChannelWithName(char * ChannelName);
 		void ReplacedNoParams();
 		void LoopClientChannels();
@@ -115,12 +115,12 @@ public:
 		void RequestChannelList();
 		void LoopListedChannels();
 		// ReplacedNoParams, x3
-		void SendBinaryToServer(int Subchannel);
-		void SendBinaryToChannel(int Subchannel);
-		void SendBinaryToPeer(int Subchannel);
-		void BlastBinaryToServer(int Subchannel);
-		void BlastBinaryToChannel(int Subchannel);
-		void BlastBinaryToPeer(int Subchannel);
+		void SendBinaryToServer(int subchannel);
+		void SendBinaryToChannel(int subchannel);
+		void SendBinaryToPeer(int subchannel);
+		void BlastBinaryToServer(int subchannel);
+		void BlastBinaryToChannel(int subchannel);
+		void BlastBinaryToPeer(int subchannel);
 		void AddByteText(char * Byte);
 		void AddByteInt(int Byte);
 		void AddShort(int Short);
@@ -128,10 +128,10 @@ public:
 		void AddFloat(float Float);
 		void AddStringWithoutNull(char * String);
 		void AddString(char * String);
-		void AddBinary(void * Address, int Size);
+		void AddBinary(unsigned int Address, int size);
 		void ClearBinaryToSend();
-		void SaveReceivedBinaryToFile(int Position, int Size, char * Filename);
-		void AppendReceivedBinaryToFile(int Position, int Size, char * Filename);
+		void SaveReceivedBinaryToFile(int Position, int size, char * Filename);
+		void AppendReceivedBinaryToFile(int Position, int size, char * Filename);
 		void AddFileToBinary(char * File);
 		// ReplacedNoParams, x11
 		void SelectChannelMaster();
@@ -159,48 +159,48 @@ public:
 		// AlwaysTrue:	bool OnChannelJoinDenied();
 		// AlwaysTrue:	bool OnNameSet();
 		// AlwaysTrue:	bool OnNameDenied();
-		bool OnSentTextMessageFromServer(int Subchannel);
-		bool OnSentTextMessageFromChannel(int Subchannel);
+		bool OnSentTextMessageFromServer(int subchannel);
+		bool OnSentTextMessageFromChannel(int subchannel);
 		// AlwaysTrue:	bool OnPeerConnect();
 		// AlwaysTrue:	bool OnPeerDisonnect();
 		// AlwaysFalse:	bool Replaced_OnChannelJoin();
 		// AlwaysTrue:	bool OnChannelPeerLoop();
 		// AlwaysTrue:	bool OnClientChannelLoop();
-		bool OnSentNumberMessageFromServer(int Subchannel);
-		bool OnSentNumberMessageFromChannel(int Subchannel);
+		bool OnSentNumberMessageFromServer(int subchannel);
+		bool OnSentNumberMessageFromChannel(int subchannel);
 		// AlwaysTrue:	bool OnChannelPeerLoopFinished();
 		// AlwaysTrue:	bool OnClientChannelLoopFinished();
 		// AlwaysFalse:	bool ReplacedCondNoParams();
-		bool OnBlastedTextMessageFromServer(int Subchannel);
-		bool OnBlastedNumberMessageFromServer(int Subchannel);
-		bool OnBlastedTextMessageFromChannel(int Subchannel);
-		bool OnBlastedNumberMessageFromChannel(int Subchannel);
+		bool OnBlastedTextMessageFromServer(int subchannel);
+		bool OnBlastedNumberMessageFromServer(int subchannel);
+		bool OnBlastedTextMessageFromChannel(int subchannel);
+		bool OnBlastedNumberMessageFromChannel(int subchannel);
 		// ReplacedCondNoParams, x3
 		// AlwaysTrue:	bool OnChannelListReceived();
 		// AlwaysTrue:	bool OnChannelListLoop();
 		// AlwaysTrue:	bool OnChannelListLoopFinished();
 		// ReplacedCondNoParams, x3
-		bool OnSentBinaryMessageFromServer(int Subchannel);
-		bool OnSentBinaryMessageFromChannel(int Subchannel);
-		bool OnBlastedBinaryMessageFromServer(int Subchannel);
-		bool OnBlastedBinaryMessageFromChannel(int Subchannel);
-		bool OnSentTextMessageFromPeer(int Subchannel);
-		bool OnSentNumberMessageFromPeer(int Subchannel);
-		bool OnSentBinaryMessageFromPeer(int Subchannel);
-		bool OnBlastedTextMessageFromPeer(int Subchannel);
-		bool OnBlastedNumberMessageFromPeer(int Subchannel);
-		bool OnBlastedBinaryMessageFromPeer(int Subchannel);
+		bool OnSentBinaryMessageFromServer(int subchannel);
+		bool OnSentBinaryMessageFromChannel(int subchannel);
+		bool OnBlastedBinaryMessageFromServer(int subchannel);
+		bool OnBlastedBinaryMessageFromChannel(int subchannel);
+		bool OnSentTextMessageFromPeer(int subchannel);
+		bool OnSentNumberMessageFromPeer(int subchannel);
+		bool OnSentBinaryMessageFromPeer(int subchannel);
+		bool OnBlastedTextMessageFromPeer(int subchannel);
+		bool OnBlastedNumberMessageFromPeer(int subchannel);
+		bool OnBlastedBinaryMessageFromPeer(int subchannel);
 		bool IsConnected();
 		// AlwaysTrue:	bool OnChannelLeave();
 		// AlwaysTrue:	bool OnChannelLeaveDenied();
 		// AlwaysTrue:	bool OnPeerChangedName();
 		// ReplacedCondNoParams
-		bool OnAnySentMessageFromServer(int Subchannel);
-		bool OnAnySentMessageFromChannel(int Subchannel);
-		bool OnAnySentMessageFromPeer(int Subchannel);
-		bool OnAnyBlastedMessageFromServer(int Subchannel);
-		bool OnAnyBlastedMessageFromChannel(int Subchannel);
-		bool OnAnyBlastedMessageFromPeer(int Subchannel);
+		bool OnAnySentMessageFromServer(int subchannel);
+		bool OnAnySentMessageFromChannel(int subchannel);
+		bool OnAnySentMessageFromPeer(int subchannel);
+		bool OnAnyBlastedMessageFromServer(int subchannel);
+		bool OnAnyBlastedMessageFromChannel(int subchannel);
+		bool OnAnyBlastedMessageFromPeer(int subchannel);
 		// AlwaysTrue:	bool OnNameChanged();
 		bool ClientHasAName();
 		// ReplacedCondNoParams, x2
@@ -212,28 +212,28 @@ public:
 		bool OnPeerLoopWithNameFinished(char * LoopName);
 		bool OnClientChannelLoopWithName(char * LoopName);
 		bool OnClientChannelLoopWithNameFinished(char * LoopName);
-		bool OnSentTextChannelMessageFromServer(int Subchannel);
-		bool OnSentNumberChannelMessageFromServer(int Subchannel);
-		bool OnSentBinaryChannelMessageFromServer(int Subchannel);
-		bool OnAnySentChannelMessageFromServer(int Subchannel);
-		bool OnBlastedTextChannelMessageFromServer(int Subchannel);
-		bool OnBlastedNumberChannelMessageFromServer(int Subchannel);
-		bool OnBlastedBinaryChannelMessageFromServer(int Subchannel);
-		bool OnAnyBlastedChannelMessageFromServer(int Subchannel);
+		bool OnSentTextChannelMessageFromServer(int subchannel);
+		bool OnSentNumberChannelMessageFromServer(int subchannel);
+		bool OnSentBinaryChannelMessageFromServer(int subchannel);
+		bool OnAnySentChannelMessageFromServer(int subchannel);
+		bool OnBlastedTextChannelMessageFromServer(int subchannel);
+		bool OnBlastedNumberChannelMessageFromServer(int subchannel);
+		bool OnBlastedBinaryChannelMessageFromServer(int subchannel);
+		bool OnAnyBlastedChannelMessageFromServer(int subchannel);
 		bool IsJoinedToChannel(char * ChannelName);
 		bool IsPeerOnChannel_Name(char * PeerName, char * ChannelName);
 		bool IsPeerOnChannel_ID(int ID, char * ChannelName);
 
     /// Expressions
 
-		const char * Error();
+		const char * error();
 		const char * ReplacedExprNoParams();
 		const char * Self_Name();
-		int Self_ChannelCount();
+		unsigned int Self_ChannelCount();
 		const char * Peer_Name();
 		const char * ReceivedStr();
 		int ReceivedInt();
-		int Subchannel();
+		unsigned int subchannel();
 		int Peer_ID();
 		const char * Channel_Name();
 		int Channel_PeerCount();
@@ -250,20 +250,20 @@ public:
 		unsigned int UnsignedInteger(int Index);
 		int SignedInteger(int Index);
 		float Float(int Index);
-		const char * StringWithSize(int Index, int Size);
+		const char * StringWithSize(int Index, int size);
 		const char * String(int Index);
-		int ReceivedBinarySize();
+		unsigned int ReceivedBinarySize();
 		const char * Lacewing_Version();
-		int SendBinarySize();
+		unsigned int SendBinarySize();
 		const char * Self_PreviousName();
 		const char * Peer_PreviousName();
 		// ReplacedExprNoParams, x2
 		const char * DenyReason();
 		const char * HostIP();
-		int HostPort();
+		unsigned int HostPort();
 		// ReplacedExprNoParams
 		const char * WelcomeMessage();
-		long ReceivedBinaryAddress();
+		unsigned int ReceivedBinaryAddress();
 		const char * CursorStrByte();
 		unsigned int CursorUnsignedByte();
 		int CursorSignedByte();
@@ -272,12 +272,12 @@ public:
 		unsigned int CursorUnsignedInteger();
 		int CursorSignedInteger();
 		float CursorFloat();
-		const char * CursorStringWithSize(int Size);
+		const char * CursorStringWithSize(int size);
 		const char * CursorString();
 		// ReplacedExprNoParams
-		long SendBinaryAddress();
+		unsigned int SendBinaryAddress();
 		const char * DumpMessage(int Index, const char * Format);
-		int ChannelListing_ChannelCount();
+		unsigned int ChannelListing_ChannelCount();
 
     /* These are called if there's no function linked to an ID */
 
@@ -292,7 +292,7 @@ public:
         inside the extension class.
     */
 
-    short Handle();
+    REFLAG Handle();
     short Display();
 
     short Pause();
@@ -305,45 +305,45 @@ public:
 
 struct GlobalInfo
 {
-	lacewing::eventpump			_ObjEventPump;
-	lacewing::relayclient		_Client;
-	char *						_PreviousName,
-		 *						_SendMsg,
-		 *						_DenyReasonBuffer;
-	size_t						_SendMsgSize;
-	bool						_AutomaticallyClearBinary;
-	char *						_GlobalID;
-	HANDLE						_Thread;
-	Extension *					_Ext;
-	std::vector<SaveExtInfo *>	_Saved;
-	std::vector<ChannelCopy *>	_Channels; // Referred to by reference for all extensions
-	ChannelCopy *				LastDestroyedExtSelectedChannel;
-	PeerCopy *					LastDestroyedExtSelectedPeer;
+	lacewing::eventpump			_objEventPump;
+	lacewing::relayclient		_client;
+	char *						_previousName,
+		 *						_sendMsg,
+		 *						_denyReasonBuffer;
+	size_t						_sendMsgSize;
+	bool						_automaticallyClearBinary;
+	char *						_globalID;
+	HANDLE						_thread;
+	Extension *					_ext;
+	std::vector<SaveExtInfo *>	_saved;
+	std::vector<ChannelCopy *>	_channels; // Referred to by reference for all extensions
+	ChannelCopy *				lastDestroyedExtSelectedChannel;
+	PeerCopy *					lastDestroyedExtSelectedPeer;
 
-	CRITICAL_SECTION			Lock;
-	std::vector<Extension *>	Refs;
-	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
-	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	CRITICAL_SECTION			lock;
+	std::vector<Extension *>	refs;
+	bool						timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
+	bool						fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 	
-	void AddEvent1(int Event1,
-		void * ChannelOrChannelListing = nullptr,
-		PeerCopy * Peer = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char Subchannel = 255);
-	void AddEvent2(int Event1, int Event2,
-		void * ChannelOrChannelListing = nullptr,
-		PeerCopy * Peer = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char Subchannel = 255);
+	void AddEvent1(int event1ID,
+		void * channelOrChannelListing = nullptr,
+		PeerCopy * peer = nullptr,
+		char * messageOrErrorText = nullptr,
+		size_t messageSize = 0U,
+		unsigned char subchannel = 255);
+	void AddEvent2(int event1ID, int event2ID,
+		void * channelOrChannelListing = nullptr,
+		PeerCopy * peer = nullptr,
+		char * messageOrErrorText = nullptr,
+		size_t messageSize = 0U,
+		unsigned char subchannel = 255);
 private:
-	void AddEventF(bool twoEvents, int Event1, int Event2,
-		void * ChannelOrChannelListing = nullptr,
-		PeerCopy * Peer = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char Subchannel = 255
+	void AddEventF(bool twoEvents, int event1ID, int event2ID,
+		void * channelOrChannelListing = nullptr,
+		PeerCopy * peer = nullptr,
+		char * messageOrErrorText = nullptr,
+		size_t messageSize = 0U,
+		unsigned char subchannel = 255
 		);
 public:
 	void CreateError(const char * errorText);

@@ -155,7 +155,7 @@ inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
 }
-char ReadExpressionReturnType(const char * Text);
+ExpReturnType ReadExpressionReturnType(const char * Text);
 
 bool CreateNewActionInfo(void)
 {
@@ -198,7 +198,7 @@ bool CreateNewActionInfo(void)
 		for (char c = 0; c < ActInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			ActInfo->Parameter[c] = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
+			ActInfo->Parameter[c].p = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
 			ActInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
@@ -245,7 +245,7 @@ bool CreateNewConditionInfo(void)
 	// If a non-triggered condition, set the correct flags
 	CondInfo->ID = (short)::SDK->ConditionInfos.size();
 	CondInfo->NumOfParams = Param.u.object.length;
-	CondInfo->Flags = (EVFLAGS::ALWAYS | EVFLAGS_NOTABLE) * (!bool (Condition["Triggered"]));
+	CondInfo->Flags.ev = bool (Condition["Triggered"]) ? EVFLAGS::NONE : (EVFLAGS::ALWAYS | EVFLAGS::NOTABLE);
 
 	if (CondInfo->NumOfParams > 0)
 	{
@@ -254,7 +254,7 @@ bool CreateNewConditionInfo(void)
 		for (char c = 0; c < CondInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			CondInfo->Parameter[c] = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
+			CondInfo->Parameter[c].p = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
 			CondInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
@@ -301,7 +301,7 @@ bool CreateNewExpressionInfo(void)
 	// If a non-triggered condition, set the correct flags
 	ExpInfo->ID = (short)::SDK->ExpressionInfos.size();
 	ExpInfo->NumOfParams = Param.u.object.length;
-	ExpInfo->Flags = ReadExpressionReturnType(Expression["Returns"]);
+	ExpInfo->Flags.ef = ReadExpressionReturnType(Expression["Returns"]);
 	
 	if (ExpInfo->NumOfParams > 0)
 	{
@@ -310,7 +310,7 @@ bool CreateNewExpressionInfo(void)
 		for (char c = 0; c < ExpInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			ExpInfo->Parameter[c] = ReadExpressionParameterType(Param[c][0], IsFloat);	// Store parameter type
+			ExpInfo->Parameter[c].ep = ReadExpressionParameterType(Param[c][0], IsFloat);	// Store parameter type
 			ExpInfo->FloatFlags |= (IsFloat << c);										// Store whether it is a float or not with a single bit
 		}
 
@@ -327,7 +327,6 @@ bool CreateNewExpressionInfo(void)
 using namespace Edif::Properties;
 
 #include <sstream>
-#include <algorithm>
 
 void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 {
@@ -387,7 +386,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 				{
 					std::string dup(JProp["DefaultState"]);
 					std::transform(dup.begin(), dup.end(), dup.begin(), !_stricmp(JProp["Case"], "Upper") ? ::toupper : ::tolower);
-					mystr << dup.c_str() << char(0);
+					mystr << dup << char(0);
 				}
 				
 				if (JProp["ChkDefault"])
@@ -399,13 +398,25 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 			case PROPTYPE_COMBOBOX:
 			{
-				if (JProp.type != json_array)
-					MessageBoxA(NULL, "Invalid or no default array specified.", "DarkEDIF - setup warning", MB_OK);
-				
-				for (unsigned int j = 0; j < JProp["DefaultState"].u.object.length; ++j)
-					mystr << (const char *)(JProp["DefaultState"][j]) << char(0);
+				unsigned int i = 0U;
+				if (JProp["DefaultState"].type != json_string)
+					MessageBoxA(NULL, "Invalid or no default string specified.", "DarkEDIF - setup warning", MB_OK);
+				else
+				{
+					for (size_t j = 0; j < JProp["Items"].u.array.length; j++)
+					{
+						if (!_stricmp((const char *)JProp["DefaultState"], JProp["Items"][j]))
+						{
+							i = j;
+							goto ok;
+						}
+					}
 
-				mystr << char(0); // Extra empty string
+					MessageBoxA(NULL, "Specified a default string in a combobox property that does not exist in items list.", "DarkEDIF - setup warning", MB_OK);
+				}
+			ok:
+				mystr.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
+
 				if (JProp["ChkDefault"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
 
@@ -469,10 +480,8 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 
 	if (!_stricmp(curStr, "Editbox String"))
 		ret = new Prop_Str(Current);
-	else if (!_stricmp(curStr, "Editbox Number"))
+	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
-	else if (!_stricmp(curStr, "Combo Box"))
-		ret = new Prop_Buff(size, (void *)Current);
 	else if (_stricmp(curStr, "Checkbox"))
 		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
 
@@ -502,7 +511,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData,
 	else if (!_stricmp(curStr, "Editbox Number"))
 		rearrangementRequired = false; //
 	else if (!_stricmp(curStr, "Combo Box"))
-		rearrangementRequired = newSize != oldSize; // If one string was made longer and the other shorter - we can't test via size
+		rearrangementRequired = false; // Index of combo box item
 	else if (_stricmp(curStr, "Checkbox"))
 		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
 
@@ -574,7 +583,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	
 	const char * curStr = (const char *)j[ID]["Type"];
 	// Read unchangable properties
-	if (!_stricmp(curStr, "Text"))
+	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox"))
 		return nullptr;
 	// if (curStr == "other stuff")
 	//	return new Prop_XXX();
@@ -587,16 +596,8 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 		
 		if (!_stricmp(curStr, "Editbox String"))
 			Current += (_tcslen((TCHAR *)Current) + 1) * sizeof(TCHAR);
-		else if (!_stricmp(curStr, "Editbox Number"))
+		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
-		else if (!_stricmp(curStr, "Combo Box"))
-		{
-			// Loop null-terminated strings until there's a blank one
-			while (((TCHAR *)Current)[1] != _T('\0'))
-				Current += (_tcslen((TCHAR *)Current) + 1) * sizeof(TCHAR);
-				
-			Current += sizeof(TCHAR);
-		}
 
 		if (i == ID - 1)
 			StartPos = Current;
@@ -611,3 +612,31 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 }
 
 
+bool EDITDATA::IsPropChecked(int propID)
+{
+	return (DarkEDIF_Props[propID >> 3] >> (propID % 8) & 1);
+}
+const char * EDITDATA::GetPropertyStr(const char * propName)
+{
+	const json_value &props = CurLang["Properties"];
+	for (size_t i = 0; i < props.u.array.length; i++)
+	{
+		if (!_stricmp(props[i]["Title"], propName))
+			return GetPropertyStr(i);
+	}
+	return "Property name not found.";
+}
+const char * EDITDATA::GetPropertyStr(int propID)
+{
+	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length)
+		return "Property ID not found.";
+
+	const json_value &prop = CurLang["Properties"][propID];
+	unsigned int size;
+	if (!_stricmp(prop["Type"], "Combo Box"))
+		return prop["Items"][*(unsigned int *)PropIndex(this, propID, &size)];
+	else if (!_stricmp(prop["Type"], "Editbox String"))
+		return PropIndex(this, propID, &size);
+	else
+		return "Property not textual.";
+}

@@ -2,158 +2,163 @@
 #include "Common.h"
 
 #define LoopNameMatches(cond) \
-	if (!LoopName || LoopName[0] == '\0') \
+	if (loopName[0] == '\0') \
 	{ \
-		CreateError("Cannot detect condition "#cond": invalid loop name supplied."); \
+		CreateError("Cannot detect condition "#cond": blank loop name supplied."); \
 		return false; \
 	} \
-	return !strcmp(ThreadData.Loop.Name, LoopName)
+	return !strcmp(threadData.loop.name, loopName)
 
 bool Extension::IsLacewingServerHosting()
 {
 	return Srv.hosting();
 }
 
-bool Extension::SubchannelMatches(int Subchannel)
+bool Extension::SubchannelMatches(int subchannel)
 {
-	return (ThreadData.ReceivedMsg.Subchannel == Subchannel || Subchannel == -1);
+	return (threadData.receivedMsg.subchannel == subchannel || subchannel == -1);
 }
 bool Extension::Client_IsChannelMaster()
 {
-	if (!ThreadData.Channel || !ThreadData.Client)
+	if (!threadData.channel || !threadData.client)
 	{
 		CreateError("Error, You Are Channel Master condition called without valid channel being selected.");
 		return false;
 	}
 
-	return ThreadData.Channel->channelmaster() == ThreadData.Client;
+	return threadData.channel->channelmaster() == threadData.client;
 }
-bool Extension::OnAllClientsLoopWithName(char * LoopName)
+bool Extension::OnAllClientsLoopWithName(char * loopName)
 {
 	LoopNameMatches("Peer Loop With Name");
 }
-bool Extension::OnClientsJoinedChannelLoopWithName(char * LoopName)
+bool Extension::OnClientsJoinedChannelLoopWithName(char * loopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name");
 }
-bool Extension::OnClientsJoinedChannelLoopWithNameFinished(char * LoopName)
+bool Extension::OnClientsJoinedChannelLoopWithNameFinished(char * loopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name Finished");
 }
-bool Extension::IsClientOnChannel_Name(char * ClientName, char * ChannelName)
+bool Extension::IsClientOnChannel_Name(char * clientName, char * channelName)
 {
-	if (ClientName[0] == '\0' && !ThreadData.Client)
+	if (clientName[0] == '\0' && !threadData.client)
 		CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected.");
-	else if (ChannelName[0] == '\0' && !ThreadData.Channel)
+	else if (channelName[0] == '\0' && !threadData.channel)
 		CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected.");
 	else
 	{
-		auto SelectedClient = ThreadData.Client;
-		if (ClientName[0])
+		auto selectedClient = threadData.client;
+		if (clientName[0])
 		{
-			auto SelectedClient2 =
-				std::find_if(Clients.cbegin(), Clients.cend(), [&](ClientCopy * const & copy) {
-				return !_stricmp(copy->name(), ClientName); });
-			if (SelectedClient2 == Clients.cend())
+			auto selectedClient2 =
+				std::find_if(Clients.cbegin(), Clients.cend(),
+					[&](ClientCopy * const & copy) {
+						return !_stricmp(copy->name(), clientName);
+			});
+			if (selectedClient2 == Clients.cend())
 			{
-				std::stringstream Error;
-				Error << "Error checking if client is joined to a channel, client name \"" << ClientName << "\" was not found on server.";
-				CreateError(Error.str().c_str());
+				std::stringstream error;
+				error << "Error checking if client is joined to a channel, client name \"" << clientName << "\" was not found on server.";
+				CreateError(error.str().c_str());
 				return false;
 			}
-			SelectedClient = *SelectedClient2;
+			selectedClient = *selectedClient2;
 		}
 
-		auto SelectedChannel = ThreadData.Channel;
-		if (ChannelName[0])
+		auto selectedChannel = threadData.channel;
+		if (channelName[0])
 		{
 			auto SelectedChannel2 =
 				std::find_if(Channels.cbegin(), Channels.cend(), [&](ChannelCopy * const & copy) {
-				return !_stricmp(copy->name(), ChannelName); });
+					return !_stricmp(copy->name(), channelName);
+			});
 			if (SelectedChannel2 == Channels.cend())
 			{
-				std::stringstream Error;
-				Error << "Error checking if client is joined to a channel, channel name \"" << ChannelName << "\" was not found on server.";
-				CreateError(Error.str().c_str());
+				std::stringstream error;
+				error << "Error checking if client is joined to a channel, channel name \"" << channelName << "\" was not found on server.";
+				CreateError(error.str().c_str());
 				return false;
 			}
-			SelectedChannel = *SelectedChannel2;
+			selectedChannel = *SelectedChannel2;
 		}
 
-		auto& channelClients = SelectedChannel->getclients();
-		auto& clientChannels = SelectedClient->getchannels();
+		auto& channelClients = selectedChannel->getclients();
+		auto& clientChannels = selectedClient->getchannels();
 
-		return std::find(clientChannels.cbegin(), clientChannels.cend(), SelectedChannel) != clientChannels.cend() ||
-			std::find(channelClients.cbegin(), channelClients.cend(), SelectedClient) != channelClients.cend();
+		return std::find(clientChannels.cbegin(), clientChannels.cend(), selectedChannel) != clientChannels.cend() ||
+			std::find(channelClients.cbegin(), channelClients.cend(), selectedClient) != channelClients.cend();
 	}
 	return false;
 }
-bool Extension::IsClientOnChannel_ID(int ClientID, char * ChannelName)
+bool Extension::IsClientOnChannel_ID(int clientID, char * channelName)
 {
-	if (ClientID < 0 || ClientID > 0xFFFF)
+	if (clientID > 0xFFFF)
 	{
-		std::stringstream Error;
-		Error << "Error checking if client is joined to a channel, client ID " << ClientID << " is not between total ID range of 0-65535.";
-		CreateError(Error.str().c_str());
+		std::stringstream error;
+		error << "Error checking if client is joined to a channel, client ID " << clientID << " is not between total ID range of 0-65535.";
+		CreateError(error.str().c_str());
 	}
-	else if (ChannelName[0] == '\0' && !ThreadData.Channel)
+	else if (channelName[0] == '\0' && !threadData.channel)
 		CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected.");
 	else
 	{
-		ClientCopy * SelectedClient = nullptr;
+		ClientCopy * selectedClient = nullptr;
 		{		
 			auto SelectedClient2 =
 				std::find_if(Clients.cbegin(), Clients.cend(), [&](ClientCopy * const & copy) {
-				return copy->id() == ClientID; });
+					return copy->id() == clientID;
+			});
 			if (SelectedClient2 == Clients.cend())
 			{
-				std::stringstream Error;
-				Error << "Error checking if client is joined to a channel, client ID " << ClientID << " was not found on server.";
-				CreateError(Error.str().c_str());
+				std::stringstream error;
+				error << "Error checking if client is joined to a channel, client ID " << clientID << " was not found on server.";
+				CreateError(error.str().c_str());
 				return false;
 			}
-			SelectedClient = *SelectedClient2;
+			selectedClient = *SelectedClient2;
 		}
 
-		auto SelectedChannel = ThreadData.Channel;
-		if (ChannelName[0])
+		auto selectedChannel = threadData.channel;
+		if (channelName[0])
 		{
-			auto SelectedChannel2 =
+			auto selectedChannel2 =
 				std::find_if(Channels.cbegin(), Channels.cend(), [&](ChannelCopy * const & copy) {
-				return !_stricmp(copy->name(), ChannelName); });
-			if (SelectedChannel2 == Channels.cend())
+					return !_stricmp(copy->name(), channelName);
+			});
+			if (selectedChannel2 == Channels.cend())
 			{
-				std::stringstream Error;
-				Error << "Error checking if client is joined to a channel, channel name \"" << ChannelName << "\" was not found on server.";
-				CreateError(Error.str().c_str());
+				std::stringstream error;
+				error << "Error checking if client is joined to a channel, channel name \"" << channelName << "\" was not found on server.";
+				CreateError(error.str().c_str());
 				return false;
 			}
-			SelectedChannel = *SelectedChannel2;
+			selectedChannel = *selectedChannel2;
 		}
 
-		auto& channelClients = SelectedChannel->getclients();
-		auto& clientChannels = SelectedClient->getchannels();
+		auto& channelClients = selectedChannel->getclients();
+		auto& clientChannels = selectedClient->getchannels();
 
-		return std::find(clientChannels.cbegin(), clientChannels.cend(), SelectedChannel) != clientChannels.cend() ||
-			std::find(channelClients.cbegin(), channelClients.cend(), SelectedClient) != channelClients.cend();
+		return std::find(clientChannels.cbegin(), clientChannels.cend(), selectedChannel) != clientChannels.cend() ||
+			std::find(channelClients.cbegin(), channelClients.cend(), selectedClient) != channelClients.cend();
 	}
 	return false;
 }
 
-bool Extension::OnAllChannelsLoopWithName(char * LoopName)
+bool Extension::OnAllChannelsLoopWithName(char * loopName)
 {
 	LoopNameMatches("All-Channel Loop With Name");
 }
-bool Extension::OnAllChannelsLoopWithNameFinished(char * LoopName)
+bool Extension::OnAllChannelsLoopWithNameFinished(char * loopName)
 {
 	LoopNameMatches("All-Channel Loop With Name Finished");
 }
 
-bool Extension::OnChannelClientsLoopWithName(char * LoopName)
+bool Extension::OnChannelClientsLoopWithName(char * loopName)
 {
 	LoopNameMatches("Channel's Client Loop With Name");
 }
-bool Extension::OnChannelClientsLoopWithNameFinished(char * LoopName)
+bool Extension::OnChannelClientsLoopWithNameFinished(char * loopName)
 {
 	LoopNameMatches("Channel's Client Loop With Name Finished");
 }
@@ -165,14 +170,14 @@ bool Extension::IsFlashPolicyServerHosting()
 
 bool Extension::ChannelIsHiddenFromChannelList()
 {
-	return ThreadData.Channel ? ThreadData.Channel->hidden() : false;
+	return threadData.channel ? threadData.channel->hidden() : false;
 }
 
 bool Extension::ChannelIsSetToCloseAutomatically()
 {
-	return ThreadData.Channel ? ThreadData.Channel->autocloseenabled() : false;
+	return threadData.channel ? threadData.channel->autocloseenabled() : false;
 }
-bool Extension::OnAllClientsLoopWithNameFinished(char * LoopName)
+bool Extension::OnAllClientsLoopWithNameFinished(char * loopName)
 {
 	LoopNameMatches("Peer Loop With Name Finished");
 }

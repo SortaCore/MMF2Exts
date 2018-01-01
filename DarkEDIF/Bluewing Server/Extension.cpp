@@ -5,8 +5,8 @@
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
 ///
 
-#define Ext (*Globals->_Ext)
-#define Saved Globals->_Saved
+#define Ext (*globals->_ext)
+#define Saved globals->_Saved
 
 HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
@@ -159,14 +159,14 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(49, IsFlashPolicyServerHosting);
 		LinkCondition(50, ChannelIsHiddenFromChannelList);
 		LinkCondition(51, ChannelIsSetToCloseAutomatically);
-		LinkCondition(52, AlwaysFalse /* DUPLICATE IN ORIG, NOT USED IN BLUE: OnAllClientsLoopWithNameFinished */);
+		LinkCondition(52, AlwaysFalseWithTextParam /* DUPLICATE IN ORIG, NOT USED IN BLUE: OnAllClientsLoopWithNameFinished */);
 		// Added conditions:
 		LinkCondition(53, IsClientOnChannel_ID);
 		LinkCondition(54, IsClientOnChannel_Name);
 	//	LinkCondition(55, IsHTML5Hosting);
 	}
 	{
-		LinkExpression(0, Error);
+		LinkExpression(0, error);
 		LinkExpression(1, Lacewing_Version);
 		LinkExpression(2, BinaryToSend_Size);
 		LinkExpression(3, RequestedClientName);
@@ -238,32 +238,32 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayServer") + GlobalIDCopy).c_str());
 		if (!v)
 		{
-			Globals = new GlobalInfo(this, edPtr);
-			Runtime.WriteGlobal(std::string(std::string("LacewingRelayServer") + GlobalIDCopy).c_str(), Globals);
-			OutputDebugStringA("Created new Globals.");
+			globals = new GlobalInfo(this, edPtr);
+			Runtime.WriteGlobal(std::string(std::string("LacewingRelayServer") + GlobalIDCopy).c_str(), globals);
+			OutputDebugStringA("Created new globals.");
 		}
 		else
 		{
 			// Add this Extension to Refs
-			Globals = (GlobalInfo *)v;
+			globals = (GlobalInfo *)v;
 			
 			// If switching frames, the old ext will store selection here.
 			// We'll keep it across frames for simplicity.
-			ThreadData.Channel = Globals->LastDestroyedExtSelectedChannel;
-			ThreadData.Client = Globals->LastDestroyedExtSelectedClient;
+			threadData.channel = globals->LastDestroyedExtSelectedChannel;
+			threadData.client = globals->LastDestroyedExtSelectedClient;
 
-			Globals->Refs.push_back(this);
-			if (!Globals->_Ext)
-				Globals->_Ext = this;
-			OutputDebugStringA("Globals exists: added to Refs.");
+			globals->Refs.push_back(this);
+			if (!globals->_ext)
+				globals->_ext = this;
+			OutputDebugStringA("globals exists: added to Refs.");
 		}
 	}
 	else
 	{
-		OutputDebugStringA("Non-Global object; creating Globals, not submitting to WriteGlobal.");
-		Globals = new GlobalInfo(this, edPtr);
+		OutputDebugStringA("Non-Global object; creating globals, not submitting to WriteGlobal.");
+		globals = new GlobalInfo(this, edPtr);
 
-		Globals->_ObjEventPump->tick();
+		globals->_objEventPump->tick();
 	}
 
 #ifndef _DEBUG
@@ -279,7 +279,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 
 	// Try to boot the Lacewing thread if multithreading and not already running
-	if (edPtr->MultiThreading && !Globals->_Thread && !(Globals->_Thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
+	if (edPtr->MultiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 	{
 		CreateError("Error: failed to boot thread. Falling back to single-threaded interface.");
 		Runtime.Rehandle();
@@ -295,227 +295,231 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
 
-	GlobalInfo * G = ((Extension *)ThisExt)->Globals;
+	GlobalInfo * g = ((Extension *)ThisExt)->globals;
 	try {
-		lacewing::error Error = G->_ObjEventPump->start_eventloop();
+		lacewing::error error = g->_objEventPump->start_eventloop();
 
 		// Can't error report if there's no extension to error-report to.
 		// Worst case scenario CreateError calls Runtime.Rehandle which breaks because ext is gone.
-		if (!Error)
+		if (!error)
 			OutputDebugStringA("LacewingLoopThread closing gracefully.");
-		else if (G->_Ext)
+		else if (g->_ext)
 		{
 			std::string Text = "Error returned by StartEventLoop(): ";
-			Text += Error->tostring();
-			G->CreateError(Text.c_str());
+			Text += error->tostring();
+			g->CreateError(Text.c_str());
 		}
 
 	}
 	catch (...)
 	{
 		OutputDebugStringA("LacewingLoopThread got an exception.");
-		if (G->_Ext)
+		if (g->_ext)
 		{
 			std::string Text = "StartEventLoop() killed by exception. Switching to single-threaded.";
-			G->CreateError(Text.c_str());
+			g->CreateError(Text.c_str());
 		}
 	}
-	G->_Thread = NULL;
+	g->_thread = NULL;
 	OutputDebugStringA("LacewingLoopThread has exited.");
 	return 0;
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
-	: _ObjEventPump((lacewing::eventpump)lacewing::eventpump_new()),
-	_Server(_ObjEventPump),
-	_SendMsg(nullptr), _SendMsgSize(0), _DenyReason(nullptr), _NewChannelName(nullptr),
-	_NewClientName(nullptr), _InteractivePending(InteractiveType::None),
-	_AutomaticallyClearBinary(edPtr->AutomaticClear), _GlobalID(nullptr), _Thread(nullptr),
+	: _objEventPump((lacewing::eventpump)lacewing::eventpump_new()),
+	_server(_objEventPump),
+	_sendMsg(nullptr), _sendMsgSize(0), _denyReason(nullptr), _newChannelName(nullptr),
+	_newClientName(nullptr), _interactivePending(InteractiveType::None),
+	_automaticallyClearBinary(edPtr->AutomaticClear), _globalID(nullptr), _thread(nullptr),
 	LastDestroyedExtSelectedChannel(nullptr), LastDestroyedExtSelectedClient(nullptr),
 	AutoResponse_Connect(Approve_Quiet), AutoResponse_Connect_DenyReason(nullptr),
 	AutoResponse_NameSet(Approve_Quiet), AutoResponse_NameSet_DenyReason(nullptr),
 	AutoResponse_ChannelJoin(Approve_Quiet), AutoResponse_ChannelJoin_DenyReason(nullptr),
-	AutoResponse_ChannelLeave(Approve_Quiet), AutoResponse_ChannelLeave_DenyReason(nullptr),
+	autoResponse_ChannelLeave(Approve_Quiet), AutoResponse_ChannelLeave_DenyReason(nullptr),
 	AutoResponse_MessageServer(WaitForFusion),
 	AutoResponse_MessageChannel(Approve_Quiet), AutoResponse_MessageClient(Approve_Quiet)
 {
-	_Ext = e;
+	_ext = e;
 	Refs.push_back(e);
 	if (edPtr->Global)
-		_GlobalID = _strdup(edPtr->edGlobalID);
+		_globalID = _strdup(edPtr->edGlobalID);
 	TimeoutWarningEnabled = edPtr->TimeoutWarningEnabled;
 	FullDeleteEnabled = edPtr->FullDeleteEnabled;
 
-	_Server.onerror(::OnError);
-	_Server.onconnect(::OnClientConnectRequest);
-	_Server.onnameset(::OnNameSetRequest);
-	_Server.onchannel_join(::OnJoinChannelRequest);
-	_Server.onchannel_leave(::OnLeaveChannelRequest);
-	_Server.onmessage_server(::OnServerMessage);
-	_Server.ondisconnect(::OnClientDisconnect);
+	_server.onerror(::OnError);
+	_server.onconnect(::OnClientConnectRequest);
+	_server.onnameset(::OnNameSetRequest);
+	_server.onchannel_join(::OnJoinChannelRequest);
+	_server.onchannel_leave(::OnLeaveChannelRequest);
+	_server.onmessage_server(::OnServerMessage);
+	_server.ondisconnect(::OnClientDisconnect);
 
 	// Approve quiet needs no handler
-	//_Server.onmessage_channel(::OnChannelMessage);
-	//_Server.onmessage_peer(::OnPeerMessage);
+	//_server.onmessage_channel(::OnChannelMessage);
+	//_server.onmessage_peer(::OnPeerMessage);
 	
 	// RelayServer combines flash policy errors with regular errors.
-	// So this is handled by Srv.onerror
-	//FlashSrv->on_error(::OnFlashError);
+	// So this is handled by srv.onerror
+	//flashSrv->on_error(::OnFlashError);
 
-	InitializeCriticalSection(&Lock);
+	InitializeCriticalSection(&lock);
 
 	// Useful so Lacewing callbacks can access Extension
-	_Server.tag = this;
+	_server.tag = this;
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
-	free(_GlobalID);
-	DeleteCriticalSection(&Lock);
+	free(_globalID);
+	DeleteCriticalSection(&lock);
 
 	// We're no longer responding to these events
-	_Server.onerror(nullptr);
-	_Server.ondisconnect(nullptr);
-	_Server.onconnect(nullptr);
-	_Server.onnameset(nullptr);
-	_Server.onchannel_join(nullptr);
-	_Server.onchannel_leave(nullptr);
-	_Server.onmessage_server(nullptr);
-	_Server.onmessage_channel(nullptr);
-	_Server.onmessage_peer(nullptr);
+	_server.onerror(nullptr);
+	_server.ondisconnect(nullptr);
+	_server.onconnect(nullptr);
+	_server.onnameset(nullptr);
+	_server.onchannel_join(nullptr);
+	_server.onchannel_leave(nullptr);
+	_server.onmessage_server(nullptr);
+	_server.onmessage_channel(nullptr);
+	_server.onmessage_peer(nullptr);
 
 	// Cleanup all usages of GlobalInfo
-	if (!_Thread)
-		_ObjEventPump->tick();
+	if (!_thread)
+		_objEventPump->tick();
 
-	_Server.tag = nullptr; // was == this, now this is not usable
+	_server.tag = nullptr; // was == this, now this is not usable
 
-	if (_Server.hosting())
+	if (_server.hosting())
 	{
-		_Server.unhost();
+		_server.unhost();
 
-		if (!_Thread)
-			_ObjEventPump->tick();
+		if (!_thread)
+			_objEventPump->tick();
 		Sleep(0U);
 	}
-	_ObjEventPump->post_eventloop_exit();
+	_objEventPump->post_eventloop_exit();
 
-	if (_Thread)
+	if (_thread)
 	{
 		Sleep(0U);
-		if (_Thread)
+		if (_thread)
 			Sleep(50U);
-		if (_Thread) {
-			TerminateThread(_Thread, 0U);
-			_Thread = NULL;
+		if (_thread) {
+			TerminateThread(_thread, 0U);
+			_thread = NULL;
 		}
 	}
 	else
 	{
-		_ObjEventPump->tick();
+		_objEventPump->tick();
 		Sleep(0U);
 	}
 }
 
 #ifdef MULTI_THREADING
 
-void GlobalInfo::AddEvent1(int Event1,
-	ChannelCopy * Channel /* = nullptr */,
-	ClientCopy * Client /* = nullptr */,
-	char * MessageOrErrorText /* = nullptr */,
-	size_t MessageSize /* = 0 */,
-	unsigned char Subchannel /* = 255 */,
-	ClientCopy * ReceivingClient /* = nullptr */,
-	InteractiveType InteractiveType  /* = None */,
-	unsigned char Variant /* = 255 */,
-	bool Blasted /* = false */,
-	bool ChannelCreate_Hidden /* = false */,
-	bool ChannelCreate_AutoClose /* = false */
+void GlobalInfo::AddEvent1(int event1ID,
+	ChannelCopy * channel /* = nullptr */,
+	ClientCopy * client /* = nullptr */,
+	char * messageOrErrorText /* = nullptr */,
+	size_t messageSize /* = 0U */,
+	unsigned char subchannel /* = 255 */,
+	ClientCopy * receivingClient /* = nullptr */,
+	InteractiveType interactiveType  /* = None */,
+	unsigned char variant /* = 255 */,
+	bool blasted /* = false */,
+	bool channelCreate_Hidden /* = false */,
+	bool channelCreate_AutoClose /* = false */
 	)
 {
-	return AddEventF(false, Event1, 35353,
-		Channel, Client, MessageOrErrorText, MessageSize, Subchannel,
-		ReceivingClient, InteractiveType, Variant, Blasted, ChannelCreate_Hidden, ChannelCreate_AutoClose);
+	return AddEventF(false, event1ID, 35353,
+		channel, client, messageOrErrorText, messageSize, subchannel,
+		receivingClient, interactiveType, variant, blasted, channelCreate_Hidden, channelCreate_AutoClose);
 }
-void GlobalInfo::AddEvent2(int Event1, int Event2,
-	ChannelCopy * Channel /* = nullptr */,
-	ClientCopy * Client /* = nullptr */,
-	char * MessageOrErrorText /* = nullptr */,
-	size_t MessageSize /* = 0 */,
-	unsigned char Subchannel /* = 255 */,
-	ClientCopy * ReceivingClient /* = nullptr */,
-	InteractiveType InteractiveType  /* = None */,
-	unsigned char Variant /* = 255 */,
-	bool Blasted /* = false */,
-	bool ChannelCreate_Hidden /* = false */,
-	bool ChannelCreate_AutoClose /* = false */)
+void GlobalInfo::AddEvent2(int event1ID, int event2ID,
+	ChannelCopy * channel /* = nullptr */,
+	ClientCopy * client /* = nullptr */,
+	char * messageOrErrorText /* = nullptr */,
+	size_t messageSize /* = 0 */,
+	unsigned char subchannel /* = 255 */,
+	ClientCopy * receivingClient /* = nullptr */,
+	InteractiveType interactiveType  /* = None */,
+	unsigned char variant /* = 255 */,
+	bool blasted /* = false */,
+	bool channelCreate_Hidden /* = false */,
+	bool channelCreate_AutoClose /* = false */)
 {
-	return AddEventF(true, Event1, Event2,
-		Channel, Client, MessageOrErrorText, MessageSize, Subchannel,
-		ReceivingClient, InteractiveType, Variant, Blasted, ChannelCreate_Hidden, ChannelCreate_AutoClose);
+	return AddEventF(true, event1ID, event2ID,
+		channel, client, messageOrErrorText, messageSize, subchannel,
+		receivingClient, interactiveType, variant, blasted, channelCreate_Hidden, channelCreate_AutoClose);
 }
-void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
-	ChannelCopy * Channel /* = nullptr */,
-	ClientCopy * Client /* = nullptr */,
-	char * MessageOrErrorText /* = nullptr */,
-	size_t MessageSize /* = 0 */,
-	unsigned char Subchannel /* = 255 */,
-	ClientCopy * ReceivingClient /* = nullptr */,
-	InteractiveType InteractiveType  /* = None */,
-	unsigned char Variant /* = 255 */,
-	bool Blasted /* = false */,
-	bool ChannelCreate_Hidden /* = false */,
-	bool ChannelCreate_AutoClose /* = false */)
+void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
+	ChannelCopy * channel /* = nullptr */,
+	ClientCopy * client /* = nullptr */,
+	char * messageOrErrorText /* = nullptr */,
+	size_t messageSize /* = 0 */,
+	unsigned char subchannel /* = 255 */,
+	ClientCopy * receivingClient /* = nullptr */,
+	InteractiveType interactiveType  /* = None */,
+	unsigned char variant /* = 255 */,
+	bool blasted /* = false */,
+	bool channelCreate_Hidden /* = false */,
+	bool channelCreate_AutoClose /* = false */)
 {
 	/*
-	Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
-	do not cause reading of only the last condition's output. Only used in multi-threading.
+		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
+		do not cause reading of only the last condition's output. Only used in multi-threading.
 
-	For example, if an error event changes an output variable, and immediately afterward a
-	success event changes the same variable, only the success event's output can be read since it overwrote
-	the last event. However, using MMF2 in single-threaded mode, overwriting is impossible to do
-	provided you use GenerateEvent(). Since PushEvent() is not immediate, you can reproduce this
-	multi-threaded bug in single-thread mode. But PushEvent() isn't recommended for use anyway;
-	it's designed so extensions who don't have focus of MMF2 (gained by MMF2 calling, say, Rehandle)
-	can still create events. With GenerateEvent() + multithreading, this would cause serious issues.
-
-	But in DarkEDIF, you'll note all the GenerateEvents() are handled on a queue, and the queue is
-	iterated through in Rehandle, thus it is quite safe. But we still need to protect potentially several
-	AddEvent() functions running at once and corrupting the memory at some point; so we need the
-	CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
+		For example, if an error event changes an output variable, and immediately afterward a
+		success event changes the same variable, only the success event's output can be read since it overwrote
+		the last event. However, using MMF2 in single-threaded mode, overwriting is impossible to do
+		provided you use GenerateEvent(). Since PushEvent() is not immediate, you can reproduce this
+		multi-threaded bug in single-thread mode. But PushEvent() isn't recommended for use anyway;
+		it's designed so extensions who don't have focus of MMF2 (gained by MMF2 calling, say, Rehandle)
+		can still create events.
+		With GenerateEvent() + multithreading, this would cause crashes as Fusion is forced into the extension
+		at the wrong time.
+		With PushEvent() + multithreading, this would cause overwriting of old events and possibly access
+		violations as variables are simulatenously written to by the ext and read from by Fusion at the same time.
+		
+		But in DarkEDIF, you'll note all the GenerateEvents() are handled on a queue, and the queue is
+		iterated through in Handle(), thus it is quite safe. But we still need to protect potentially several
+		AddEvent() functions running at once and corrupting the memory at some point; so we need the
+		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
 	*/
 
-	SaveExtInfo * NewEvent = new SaveExtInfo();
-	SaveExtInfo &NewEvent2 = *NewEvent;
+	SaveExtInfo * newEvent = new SaveExtInfo();
+	SaveExtInfo &newEvent2 = *newEvent;
 
 	// Initialise
-	NewEvent2.NumEvents = twoEvents ? 2 : 1;
-	NewEvent2.CondTrig[0] = (unsigned short)Event1;
-	NewEvent2.CondTrig[1] = (unsigned short)Event2;
-	NewEvent2.Channel = (ChannelCopy *)Channel;
-	// Client and SenderClient overlap
-	NewEvent2.Client = Client;
-	NewEvent2.ReceivingClient = ReceivingClient;
+	newEvent2.numEvents = twoEvents ? 2 : 1;
+	newEvent2.CondTrig[0] = (unsigned short)event1ID;
+	newEvent2.CondTrig[1] = (unsigned short)event2ID;
+	newEvent2.channel = (ChannelCopy *)channel;
+	// Client and senderClient overlap
+	newEvent2.client = client;
+	newEvent2.ReceivingClient = receivingClient;
 	// Message Content, Error Text, and Loop Name overlap
-	NewEvent2.ReceivedMsg.Content = MessageOrErrorText;
-	NewEvent2.ReceivedMsg.Size = MessageSize;
-	NewEvent2.ReceivedMsg.Subchannel = Subchannel;
-	NewEvent2.ReceivedMsg.Variant = Variant;
-	NewEvent2.ReceivedMsg.Blasted = Blasted;
-	NewEvent2.InteractiveType = InteractiveType;
-	NewEvent2.ChannelCreate_Hidden = ChannelCreate_Hidden;
-	NewEvent2.ChannelCreate_AutoClose = ChannelCreate_AutoClose;
+	newEvent2.receivedMsg.content = messageOrErrorText;
+	newEvent2.receivedMsg.size = messageSize;
+	newEvent2.receivedMsg.subchannel = subchannel;
+	newEvent2.receivedMsg.variant = variant;
+	newEvent2.receivedMsg.blasted = blasted;
+	newEvent2.InteractiveType = interactiveType;
+	newEvent2.channelCreate_Hidden = channelCreate_Hidden;
+	newEvent2.channelCreate_AutoClose = channelCreate_AutoClose;
 
-	EnterCriticalSectionDerpy(&Lock); // Needed before we access Extension
+	EnterCriticalSectionDerpy(&lock); // Needed before we access Extension
 
-	_Saved.push_back(NewEvent);
+	_Saved.push_back(newEvent);
 
-	LeaveCriticalSectionDerpy(&Lock); // We're done accessing Extension
+	LeaveCriticalSectionDebug(&lock); // We're done accessing Extension
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
-	if (_Ext != nullptr)
-		_Ext->Runtime.Rehandle();
+	if (_ext != nullptr)
+		_ext->Runtime.Rehandle();
 }
 
 #endif // MULTI_THREADING
@@ -523,87 +527,87 @@ void GlobalInfo::AddEventF(bool twoEvents, int Event1, int Event2,
 
 void Extension::ClearThreadData()
 {
-	memset(&ThreadData, 0, sizeof(SaveExtInfo));
+	memset(&threadData, 0, sizeof(SaveExtInfo));
 }
 
-void Extension::CreateError(const char * Error)
+void Extension::CreateError(const char * error)
 {
-	OutputDebugStringA(Error);
-	Globals->AddEvent1(0, nullptr, nullptr, _strdup(Error));
+	OutputDebugStringA(error);
+	globals->AddEvent1(0, nullptr, nullptr, _strdup(error));
 	//__asm int 3;
 }
 
-void GlobalInfo::CreateError(const char * Error)
+void GlobalInfo::CreateError(const char * error)
 {
-	OutputDebugStringA(Error);
-	AddEvent1(0, nullptr, nullptr, _strdup(Error));
+	OutputDebugStringA(error);
+	AddEvent1(0, nullptr, nullptr, _strdup(error));
 	//__asm int 3;
 }
 
-void Extension::AddToSend(void * Data, size_t Size)
+void Extension::AddToSend(void * data, size_t size)
 {
-	if (!Data)
+	if (!data)
 	{
 		CreateError("Error adding to send binary: pointer supplied is invalid. "
 			"The message has not been modified.");
 		return;
 	}
-	if (!Size)
+	if (!size)
 		return;
-	char * newptr = (char *)realloc(SendMsg, SendMsgSize + Size);
+	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
 
 	// Failed to reallocate memory
 	if (!newptr)
 	{
-		std::stringstream Error;
-		Error << "Received error number " << errno << " with reallocating memory to append to binary message. "
+		std::stringstream error;
+		error << "Received error number " << errno << " with reallocating memory to append to binary message. "
 			<< "The message has not been modified.";
-		CreateError(Error.str().c_str());
+		CreateError(error.str().c_str());
 		return;
 	}
 	SendMsg = newptr;
-	SendMsgSize += Size;
+	SendMsgSize += size;
 
-	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
+	// memcpy_s does not allow copying from what's already inside sendMsg; memmove_s does.
 	// If we failed to copy memory.
-	if (memmove_s(newptr + SendMsgSize - Size, Size, Data, Size))
+	if (memmove_s(newptr + SendMsgSize - size, size, data, size))
 	{
-		std::stringstream Error;
-		Error << "Received error number " << errno << " with reallocating memory to append to binary message. "
+		std::stringstream error;
+		error << "Received error number " << errno << " with reallocating memory to append to binary message. "
 			<< "The message has not been modified.";
-		CreateError(Error.str().c_str());
+		CreateError(error.str().c_str());
 		return;
 	}
 }
 
 namespace lacewing { struct channelinternal; struct peerinternal; }
-short Extension::Handle()
+REFLAG Extension::Handle()
 {
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
-	if (!Globals->_Thread)
+	if (!globals->_thread)
 	{
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
 			CreateError(e->tostring());
-			return 0; // Run next loop
+			return REFLAG::NONE; // Run next loop
 		}
 	}
 
 	// AddEvent() was called and not yet handled
-	// (note all code that accesses Saved must have ownership of Lock)
+	// (note all code that accesses Saved must have ownership of lock)
 
 	// If Thread is not available, we have to tick() on Handle(), so
 	// we have to run next loop even if there's no events in Saved() to deal with.
-	bool RunNextLoop = !Globals->_Thread;
+	bool RunNextLoop = !globals->_thread;
 
 	for (size_t maxTrig = 0; maxTrig < 5; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
-		if (!TryEnterCriticalSection(&Globals->Lock))
+		if (!TryEnterCriticalSection(&globals->lock))
 		{
 			RunNextLoop = true;
-			break; // Lock already occupied; leave it and run next event loop
+			break; // lock already occupied; leave it and run next event loop
 		}
 		// At this point we have effectively run EnterCriticalSection
 #ifdef _DEBUG
@@ -613,71 +617,71 @@ short Extension::Handle()
 
 		if (Saved.empty())
 		{
-			LeaveCriticalSectionDerpy(&Globals->Lock);
+			LeaveCriticalSectionDebug(&globals->lock);
 			break;
 		}
-		SaveExtInfo * S = Saved.front();
+		SaveExtInfo * s = Saved.front();
 		Saved.erase(Saved.begin());
 
 		#define DenyReasonSwitch(a) { free(DenyReason); DenyReason = a ? _strdup(a) : nullptr; }
 
-		InteractivePending = S->InteractiveType;
-		if (S->InteractiveType == InteractiveType::ConnectRequest)
-			DenyReasonSwitch(Globals->AutoResponse_Connect_DenyReason)
-		else if (S->InteractiveType == InteractiveType::ChannelLeave)
-			DenyReasonSwitch(Globals->AutoResponse_ChannelLeave_DenyReason)
-		else if (S->InteractiveType == InteractiveType::ClientNameSet)
+		InteractivePending = s->InteractiveType;
+		if (s->InteractiveType == InteractiveType::ConnectRequest)
+			DenyReasonSwitch(globals->AutoResponse_Connect_DenyReason)
+		else if (s->InteractiveType == InteractiveType::ChannelLeave)
+			DenyReasonSwitch(globals->AutoResponse_ChannelLeave_DenyReason)
+		else if (s->InteractiveType == InteractiveType::ClientNameSet)
 		{
-			NewClientName = _strdup(S->Requested.Name);
-			DenyReasonSwitch(Globals->AutoResponse_NameSet_DenyReason)
+			NewClientName = _strdup(s->Requested.name);
+			DenyReasonSwitch(globals->AutoResponse_NameSet_DenyReason)
 		}
-		else if (S->InteractiveType == InteractiveType::ChannelJoin)
+		else if (s->InteractiveType == InteractiveType::ChannelJoin)
 		{
-			NewChannelName = _strdup(S->Requested.Name);
-			DenyReasonSwitch(Globals->AutoResponse_ChannelJoin_DenyReason)
+			NewChannelName = _strdup(s->Requested.name);
+			DenyReasonSwitch(globals->AutoResponse_ChannelJoin_DenyReason)
 		}
-		else if (S->InteractiveType == InteractiveType::ChannelMessageIntercept)
+		else if (s->InteractiveType == InteractiveType::ChannelMessageIntercept)
 		{
-			DropMessage = Globals->AutoResponse_MessageChannel == GlobalInfo::Deny_Quiet ||
-				Globals->AutoResponse_MessageChannel == GlobalInfo::Deny_TellFusion;
+			DropMessage = globals->AutoResponse_MessageChannel == GlobalInfo::Deny_Quiet ||
+				globals->AutoResponse_MessageChannel == GlobalInfo::Deny_TellFusion;
 		}
-		else if (S->InteractiveType == InteractiveType::ClientMessageIntercept)
+		else if (s->InteractiveType == InteractiveType::ClientMessageIntercept)
 		{
-			DropMessage = Globals->AutoResponse_MessageClient == GlobalInfo::Deny_Quiet ||
-				Globals->AutoResponse_MessageClient == GlobalInfo::Deny_TellFusion;
+			DropMessage = globals->AutoResponse_MessageClient == GlobalInfo::Deny_Quiet ||
+				globals->AutoResponse_MessageClient == GlobalInfo::Deny_TellFusion;
 		}
 
 		#undef DenyReasonSwitch
 
-		LeaveCriticalSectionDerpy(&Globals->Lock);
+		LeaveCriticalSectionDebug(&globals->lock);
 
 		// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-		for (unsigned char u = 0; u < S->NumEvents; ++u)
+		for (unsigned char u = 0; u < s->numEvents; ++u)
 		{
-			if (S->CondTrig[u] != 0xFFFF)
+			if (s->CondTrig[u] != 0xFFFF)
 			{
-				for (auto i : Globals->Refs)
+				for (auto i : globals->Refs)
 				{
-					if (S->ReceivedMsg.Content != nullptr)
+					if (s->receivedMsg.content != nullptr)
 					{
-						i->ThreadData.ReceivedMsg.Content = S->ReceivedMsg.Content;
-						i->ThreadData.ReceivedMsg.Size = S->ReceivedMsg.Size;
-						i->ThreadData.ReceivedMsg.Cursor = S->ReceivedMsg.Cursor;
-						i->ThreadData.ReceivedMsg.Subchannel = S->ReceivedMsg.Subchannel;
-						// We only need these two for message Intercept ability
-						i->ThreadData.ReceivedMsg.Blasted = S->ReceivedMsg.Blasted;
-						i->ThreadData.ReceivedMsg.Variant = S->ReceivedMsg.Variant;
+						i->threadData.receivedMsg.content = s->receivedMsg.content;
+						i->threadData.receivedMsg.size = s->receivedMsg.size;
+						i->threadData.receivedMsg.cursor = s->receivedMsg.cursor;
+						i->threadData.receivedMsg.subchannel = s->receivedMsg.subchannel;
+						// We only need these two for message intercepting ability
+						i->threadData.receivedMsg.blasted = s->receivedMsg.blasted;
+						i->threadData.receivedMsg.variant = s->receivedMsg.variant;
 					}
-					if (S->Channel != nullptr)
-						i->ThreadData.Channel = S->Channel;
-					if (S->Client != nullptr)
-						i->ThreadData.Client = S->Client;
+					if (s->channel != nullptr)
+						i->threadData.channel = s->channel;
+					if (s->client != nullptr)
+						i->threadData.client = s->client;
 
-					i->ThreadData.ReceivingClient = S->ReceivingClient;
-					i->ThreadData.InteractiveType = S->InteractiveType;
-					i->ThreadData.ChannelCreate_Hidden = S->ChannelCreate_Hidden;
-					i->ThreadData.ChannelCreate_AutoClose = S->ChannelCreate_AutoClose;
-					i->Runtime.GenerateEvent((int)S->CondTrig[u]);
+					i->threadData.ReceivingClient = s->ReceivingClient;
+					i->threadData.InteractiveType = s->InteractiveType;
+					i->threadData.channelCreate_Hidden = s->channelCreate_Hidden;
+					i->threadData.channelCreate_AutoClose = s->channelCreate_AutoClose;
+					i->Runtime.GenerateEvent((int)s->CondTrig[u]);
 				}
 
 				// We need to access these locks in multithreaded in case the user prevents
@@ -685,57 +689,58 @@ short Extension::Handle()
 				// e.g. don't want to allow the user to close midway through a send.
 				// In single threaded the tick runs before this triggers, so it's not a problem.
 				
-				#define EnterSectionIfMultiThread(x) if (GThread) EnterCriticalSectionDerpy(x); Sleep(0);
-				#define LeaveSectionIfMultiThread(x) if (GThread) LeaveCriticalSectionDerpy(x)
+				#define EnterSectionIfMultiThread(x) if (GThread) { EnterCriticalSectionDerpy(x); Sleep(0); }
+				#define LeaveSectionIfMultiThread(x) if (GThread) LeaveCriticalSectionDebug(x)
 
 				// If multiple events are triggering, only do this on the last one
-				if (u == S->NumEvents - 1)
+				if (u == s->numEvents - 1)
 				{
 					// If interactive event, check for responses.
-					if (S->InteractiveType != InteractiveType::None)
+					if (s->InteractiveType != InteractiveType::None)
 					{
-						if (S->InteractiveType == InteractiveType::ConnectRequest)
+						if (s->InteractiveType == InteractiveType::ConnectRequest)
 						{
-							if (Globals->AutoResponse_Connect == GlobalInfo::WaitForFusion
-								&& !S->Client->isclosed)
+							if (globals->AutoResponse_Connect == GlobalInfo::WaitForFusion
+								&& !s->client->isclosed)
 							{
-								EnterSectionIfMultiThread(&Globals->Lock);
-								Srv.connect_response(S->Client->orig(), DenyReason);
+								EnterSectionIfMultiThread(&globals->lock);
+								Srv.connect_response(s->client->orig(), DenyReason);
+
 								// Disconnected by Fusion: reflect in copy
 								if (DenyReason)
 								{
 									// Mark as disconnected
-									S->Client->disconnect(false);
+									s->client->disconnect(false);
 
 									// Trick this for loop into running a second event to cleanup immediately
-									assert(S->NumEvents == 1); // connect req must be one event for this to work
-									S->CondTrig[1] = 0xFFFF;
-									S->NumEvents = 2;
+									assert(s->numEvents == 1); // connect req must be one event for this to work
+									s->CondTrig[1] = 0xFFFF;
+									s->numEvents = 2;
 								}
-								LeaveSectionIfMultiThread(&Globals->Lock);
+								LeaveSectionIfMultiThread(&globals->lock);
 							}
 						}
-						else if (S->InteractiveType == InteractiveType::ClientNameSet)
+						else if (s->InteractiveType == InteractiveType::ClientNameSet)
 						{
-							if (Globals->AutoResponse_NameSet == GlobalInfo::WaitForFusion
-								&& !S->Client->isclosed)
+							if (globals->AutoResponse_NameSet == GlobalInfo::WaitForFusion
+								&& !s->client->isclosed)
 							{
-								EnterSectionIfMultiThread(&Globals->Lock);
-								Srv.nameset_response(S->Client->orig(), NewClientName, DenyReason);
+								EnterSectionIfMultiThread(&globals->lock);
+								Srv.nameset_response(s->client->orig(), NewClientName, DenyReason);
 
 								if (!DenyReason)
-									S->Client->name(NewClientName);
-								LeaveSectionIfMultiThread(&Globals->Lock);
+									s->client->name(NewClientName);
+								LeaveSectionIfMultiThread(&globals->lock);
 							}
 							free(NewClientName);
 							NewClientName = nullptr;
 						}
-						else if (S->InteractiveType == InteractiveType::ChannelJoin)
+						else if (s->InteractiveType == InteractiveType::ChannelJoin)
 						{
-							if (Globals->AutoResponse_ChannelJoin == GlobalInfo::WaitForFusion
-								&& !S->Channel->isclosed && !S->Client->isclosed)
+							if (globals->AutoResponse_ChannelJoin == GlobalInfo::WaitForFusion
+								&& !s->channel->isclosed && !s->client->isclosed)
 							{
-								EnterSectionIfMultiThread(&Globals->Lock);
+								EnterSectionIfMultiThread(&globals->lock);
 								const char * passedNewChannelName = NewChannelName;
 								char * denyReason = DenyReason;
 								bool channelmasterset = false;
@@ -743,12 +748,12 @@ short Extension::Handle()
 								if (!denyReason)
 								{
 									// Server owner ran "Change requested name" and passed the same name.
-									// Reeplace channel name with null.
+									// Replace channel name with null.
 									const char * newChannelName = NewChannelName;
-									if (newChannelName && !strcmp(S->Channel->name(), passedNewChannelName))
+									if (newChannelName && !strcmp(s->channel->name(), passedNewChannelName))
 										newChannelName = nullptr;
 
-									// Channel name was changed in join request
+									// channel name was changed in join request
 									if (newChannelName)
 									{
 										// New name sucks
@@ -767,7 +772,8 @@ short Extension::Handle()
 										else
 										{
 											auto newNameCh = std::find_if(Channels.cbegin(), Channels.cend(),
-												[=](ChannelCopy * const c) { return c != S->Channel && !_stricmp(c->name(), newChannelName);
+												[=](ChannelCopy * const c) {
+													return c != s->channel && !_stricmp(c->name(), newChannelName);
 											});
 
 											// New name exists. Switch channel.
@@ -789,7 +795,7 @@ short Extension::Handle()
 												{
 													for (auto col = Srv.firstchannel(); col; col = col->next())
 													{
-														if (col == &S->Channel->orig())
+														if (col == &s->channel->orig())
 														{
 															foundPreNameChangeChannel = true;
 															break;
@@ -799,19 +805,19 @@ short Extension::Handle()
 
 												if (!foundPreNameChangeChannel)
 												{
-													S->Channel->close();
-													delete S->Channel;
+													s->channel->close();
+													delete s->channel;
 												}
 
-												S->Channel = *newNameCh;
+												s->channel = *newNameCh;
 											}
 											else // new name not found.
 											{
 												// Old channel was being created by this user: rename it to new name
-												if (S->Channel->newlycreated())
-													S->Channel->name(newChannelName);
+												if (s->channel->newlycreated())
+													s->channel->name(newChannelName);
 												else // Old channel was being joined (new name created); so we won't do anything with old channel.
-													S->Channel = new ChannelCopy(Srv.createchannel(NewChannelName, S->Client->orig(), !S->ChannelCreate_Hidden, S->ChannelCreate_AutoClose));
+													s->channel = new ChannelCopy(Srv.createchannel(newChannelName, s->client->orig(), !s->channelCreate_Hidden, s->channelCreate_AutoClose));
 
 												channelmasterset = true;
 											}
@@ -819,111 +825,113 @@ short Extension::Handle()
 									}
 									// Created new channel, now it's approved, add it to Fusion list
 									// It'll be added to Relay Server's list when joinchannel_response is run.
-									else if (S->Channel->newlycreated())
+									else if (s->channel->newlycreated())
 										channelmasterset = true;
 								} // a deny reason was passed by server
 
 								// Deny, create or join channel
 								//  called by joinchannel_response
-								Srv.joinchannel_response(S->Channel->orig(), S->Client->orig(), denyReason);
+								Srv.joinchannel_response(s->channel->orig(), s->client->orig(), denyReason);
 
 								if (denyReason)
 								{
 									// Renamed and then denied a channel; delete it
 									// TODO: This check may not be necessary.
-									if (S->Channel->newlycreated())
+									if (s->channel->newlycreated())
 									{
-										S->Channel->close();
-										delete S->Channel;
+										s->channel->close();
+										delete s->channel;
 									}
 								}
 								else
 								{
-									S->Channel->addclient(S->Client, false);
+									s->channel->addclient(s->client, false);
 									if (channelmasterset)
-										S->Channel->setchannelmaster(S->Client);
+										s->channel->setchannelmaster(s->client);
 								}
-								LeaveSectionIfMultiThread(&Globals->Lock);
+								LeaveSectionIfMultiThread(&globals->lock);
 							} // is any closed
 
 							free(NewChannelName);
 							NewChannelName = nullptr;
 						}
-						else if (S->InteractiveType == InteractiveType::ChannelLeave)
+						else if (s->InteractiveType == InteractiveType::ChannelLeave)
 						{
-							if (Globals->AutoResponse_ChannelLeave == GlobalInfo::WaitForFusion
-								&& !S->Channel->isclosed && !S->Client->isclosed)
+							if (globals->autoResponse_ChannelLeave == GlobalInfo::WaitForFusion
+								&& !s->channel->isclosed && !s->client->isclosed)
 							{
-								EnterSectionIfMultiThread(&Globals->Lock);
-								Srv.leavechannel_response(S->Channel->orig(), S->Client->orig(), DenyReason);
+								EnterSectionIfMultiThread(&globals->lock);
+								Srv.leavechannel_response(s->channel->orig(), s->client->orig(), DenyReason);
 
 								if (!DenyReason)
 								{
 									// Left channel, approved by Fusion: reflect in copy
-									S->Channel->removeclient(S->Client, false);
+									s->channel->removeclient(s->client, false);
 
 									// Trick this for loop into running a second event to cleanup immediately
-									assert(S->NumEvents == 1); // leave channel req must be one event for this to work
-									S->CondTrig[1] = 0xFFFF;
-									S->NumEvents = 2;
+									assert(s->numEvents == 1); // leave channel req must be one event for this to work
+									s->CondTrig[1] = 0xFFFF;
+									s->numEvents = 2;
 
 									// Valid channel + client with 0xFFFF is seen as "client leaving channel".
 									// If the channel closed, we need to do close channel, which is channel + no client with 0xFFFF.
-									if (S->Channel->isclosed)
-										S->Client = nullptr;
+									if (s->channel->isclosed)
+										s->client = nullptr;
 								}
-								LeaveSectionIfMultiThread(&Globals->Lock);
+								LeaveSectionIfMultiThread(&globals->lock);
 							}
 						}
-						else if (S->InteractiveType == InteractiveType::ChannelMessageIntercept)
+						else if (s->InteractiveType == InteractiveType::ChannelMessageIntercept)
 						{
-							if (Globals->AutoResponse_MessageChannel == GlobalInfo::WaitForFusion)
+							if (globals->AutoResponse_MessageChannel == GlobalInfo::WaitForFusion)
 							{
-								if (!DropMessage && (S->Channel->isclosed || S->SenderClient->isclosed))
+								if (!DropMessage && (s->channel->isclosed || s->senderClient->isclosed))
 									DropMessage = true;
 
-								// ThreadData.SenderClient may not be accurate, since user selection will alter Client,
-								// and it overlaps with Client. Refer to original event S.
-								EnterSectionIfMultiThread(&Globals->Lock);
-								Srv.channelmessage_permit(S->SenderClient->orig(), S->Channel->orig(),
-									ThreadData.ReceivedMsg.Blasted, ThreadData.ReceivedMsg.Subchannel,
-									ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size,
-									ThreadData.ReceivedMsg.Variant, !DropMessage);
-								LeaveSectionIfMultiThread(&Globals->Lock);
+								// threadData.senderClient may not be accurate, since user selection will alter Client,
+								// and it overlaps with Client. Refer to original event "s".
+								EnterSectionIfMultiThread(&globals->lock);
+								Srv.channelmessage_permit(s->senderClient->orig(), s->channel->orig(),
+									threadData.receivedMsg.blasted, threadData.receivedMsg.subchannel,
+									threadData.receivedMsg.content, threadData.receivedMsg.size,
+									threadData.receivedMsg.variant, !DropMessage);
+								LeaveSectionIfMultiThread(&globals->lock);
 							}
 
 							// Replace messages not programmed.
 							// Look like Lacewing Relay was going to use Send Binary, though, but if they replace with
 							// text/number the send binary should stay intact.
-							// We may have to use a 3rd message struct as we don't want to use the SendMsg data.
-							//Srv.channelmessage_permit(*ThreadData.Channel, *ThreadData.SenderClient,
-							//	ThreadData.ReceivedMsg.Content, ThreadData.MsgToSend.Size, ThreadData.ReceivedMsg.Subchannel);
+							// We may have to use a 3rd message struct as we don't want to use the sendMsg data.
+							//srv.channelmessage_permit(*threadData.channel, *threadData.senderClient,
+							//	threadData.receivedMsg.content, threadData.MsgToSend.size, threadData.receivedMsg.subchannel);
 						}
-						else if (S->InteractiveType == InteractiveType::ClientMessageIntercept)
+						else if (s->InteractiveType == InteractiveType::ClientMessageIntercept)
 						{
-							if (Globals->AutoResponse_MessageClient == GlobalInfo::WaitForFusion)
+							if (globals->AutoResponse_MessageClient == GlobalInfo::WaitForFusion)
 							{
-								if (!DropMessage && (ThreadData.Channel->isclosed ||
-									ThreadData.SenderClient->isclosed || ThreadData.ReceivingClient->isclosed))
+								if (!DropMessage && (threadData.channel->isclosed ||
+									threadData.senderClient->isclosed || threadData.ReceivingClient->isclosed))
+								{
 									DropMessage = true;
+								}
 
-								EnterSectionIfMultiThread(&Globals->Lock);
+								EnterSectionIfMultiThread(&globals->lock);
 
-								Srv.clientmessage_permit(ThreadData.SenderClient->orig(), ThreadData.Channel->orig(),
-									ThreadData.ReceivingClient->orig(),
-									ThreadData.ReceivedMsg.Blasted, ThreadData.ReceivedMsg.Subchannel,
-									ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size,
-									ThreadData.ReceivedMsg.Variant, !DropMessage);
+								Srv.clientmessage_permit(threadData.senderClient->orig(), threadData.channel->orig(),
+									threadData.ReceivingClient->orig(),
+									threadData.receivedMsg.blasted, threadData.receivedMsg.subchannel,
+									threadData.receivedMsg.content, threadData.receivedMsg.size,
+									threadData.receivedMsg.variant, !DropMessage);
 
-								LeaveSectionIfMultiThread(&Globals->Lock);
+								LeaveSectionIfMultiThread(&globals->lock);
 							}
 						}
 						else
-							Globals->CreateError("Interactive type not recognised!");
+							globals->CreateError("Interactive type not recognised!");
 					}
 
 					// Free memory for received message
-					ThreadData.Free();
+					threadData.Free();
 				}
 
 				#undef EnterSectionIfMultiThread
@@ -933,29 +941,29 @@ short Extension::Handle()
 			else
 			{
 				// If channel, it's a channel leave or peer leaving channel
-				if (S->Channel)
+				if (s->channel)
 				{
-					// Channel, no client: channel closing.
+					// channel, no client: channel closing.
 					// Worth noting this is not called for non-autoclose channels.
-					if (!S->Client)
+					if (!s->client)
 					{
-						assert(S->Channel->isclosed);
+						assert(s->channel->isclosed);
 
 						for (auto u = Channels.begin(); u != Channels.end(); ++u)
 						{
-							if (*u == S->Channel)
+							if (*u == s->channel)
 							{
 								Channels.erase(u);
-								delete S->Channel;
+								delete s->channel;
 								break;
 							}
 						}
 
-						for (auto dropExt : Globals->Refs)
-							if (dropExt->ThreadData.Channel == S->Channel)
-								dropExt->ThreadData.Channel = nullptr;
+						for (auto dropExt : globals->Refs)
+							if (dropExt->threadData.channel == s->channel)
+								dropExt->threadData.channel = nullptr;
 					}
-					// Channel, client: peer leaving channel.
+					// channel, client: peer leaving channel.
 					else
 					{
 						// Client and channel are already fully updated.
@@ -964,35 +972,35 @@ short Extension::Handle()
 						
 						// We just make sure user doesn't have them selected.
 						// At least, not within the channel they just left.
-						for (auto dropExt : Globals->Refs)
+						for (auto dropExt : globals->Refs)
 						{
-							if (dropExt->ThreadData.Channel == S->Channel &&
-								dropExt->ThreadData.Client == S->Client)
-								dropExt->ThreadData.Client = nullptr;
+							if (dropExt->threadData.channel == s->channel &&
+								dropExt->threadData.client == s->client)
+								dropExt->threadData.client = nullptr;
 						}
 					}
 				}
 				// No channel, client: client is disconnecting.
-				else if (S->Client)
+				else if (s->client)
 				{
-					assert(S->Client->isclosed);
+					assert(s->client->isclosed);
 
 					// Drop client
 					for (auto u = Clients.begin(); u != Clients.end(); ++u)
 					{
-						if (*u == S->Client)
+						if (*u == s->client)
 						{
 							Clients.erase(u);
-							delete S->Client;
+							delete s->client;
 							break;
 						}
 					}
 
 					// Make sure user doesn't have them selected.
-					for (auto dropExt : Globals->Refs)
+					for (auto dropExt : globals->Refs)
 					{
-						if (dropExt->ThreadData.Client == S->Client)
-							dropExt->ThreadData.Client = nullptr;
+						if (dropExt->threadData.client == s->client)
+							dropExt->threadData.client = nullptr;
 					}
 				}
 				// No channel, no peer: server has unhosted, clear everything
@@ -1009,11 +1017,11 @@ short Extension::Handle()
 						assert(i->isclosed);
 						delete i;
 					}
-					for (auto dropExt : Globals->Refs)
+					for (auto dropExt : globals->Refs)
 					{
-						dropExt->ThreadData.Channel = nullptr;
-						dropExt->ThreadData.Client = nullptr;
-						dropExt->ThreadData.ReceivingClient = nullptr;
+						dropExt->threadData.channel = nullptr;
+						dropExt->threadData.client = nullptr;
+						dropExt->threadData.ReceivingClient = nullptr;
 					}
 
 					Channels.clear();
@@ -1023,38 +1031,8 @@ short Extension::Handle()
 		}
 	}
 
-	/*
-	If your extension will draw to the MMF window you should first
-	check if anything about its display has changed :
-
-	if (rdPtr->roc.rcChanged)
-		return REFLAG_DISPLAY;
-	else
-		return 0;
-
-	You will also need to make sure you change this flag yourself
-	to 1 whenever you want to redraw your object
-
-	If your extension won't draw to the window, but it still needs
-	to do something every MMF loop use :
-
-	return 0;
-
-	If you don't need to do something every loop, use :
-
-	return REFLAG::ONE_SHOT;
-
-	This doesn't mean this function can never run again. If you want MMF
-	to handle your object again (causing this code to run) use this function:
-
-	Runtime.Rehandle();
-
-	At the end of the loop this code will run
-
-	*/
-
 	// Will not be called next loop if RunNextLoop is false
-	return RunNextLoop ? 0 : REFLAG::ONE_SHOT;
+	return RunNextLoop ? REFLAG::NONE : REFLAG::ONE_SHOT;
 }
 
 
@@ -1068,7 +1046,7 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 		return 0U;
 
 	// If not hosting, no clients to worry about dropping
-	if (!G._Server.hosting())
+	if (!G._server.hosting())
 		return 0U;
 
 	// App closed within next 3 seconds: unhost by default
@@ -1079,7 +1057,7 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G.Refs.empty())
 		return 0U;
 
-	if (!G._Server.hosting())
+	if (!G._server.hosting())
 		return 0U;
 
 	if (G.TimeoutWarningEnabled)
@@ -1100,31 +1078,31 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 Extension::~Extension()
 {
 	char msgBuff[500];
-	sprintf_s(msgBuff, "~Extension called; Refs count is %u.\n", Globals->Refs.size());
+	sprintf_s(msgBuff, "~Extension called; Refs count is %u.\n", globals->Refs.size());
 	OutputDebugStringA(msgBuff);
 
-	EnterCriticalSectionDerpy(&Globals->Lock);
+	EnterCriticalSectionDerpy(&globals->lock);
 	// Remove this Extension from liblacewing usage.
-	auto i = std::find(Globals->Refs.cbegin(), Globals->Refs.cend(), this);
-	bool wasBegin = i == Globals->Refs.cbegin();
-	Globals->Refs.erase(i);
+	auto i = std::find(globals->Refs.cbegin(), globals->Refs.cend(), this);
+	bool wasBegin = i == globals->Refs.cbegin();
+	globals->Refs.erase(i);
 
 	// Shift secondary event management to other Extension, if any
-	if (!Globals->Refs.empty())
+	if (!globals->Refs.empty())
 	{
 		OutputDebugStringA("Note: Switched Lacewing instances.\n");
 
 		// Switch Handle ticking over to next Extension visible.
 		if (wasBegin)
 		{
-			Globals->_Ext = Globals->Refs.front();
-			LeaveCriticalSectionDerpy(&Globals->Lock);
+			globals->_ext = globals->Refs.front();
+			LeaveCriticalSectionDebug(&globals->lock);
 
-			Globals->_Ext->Runtime.Rehandle();
+			globals->_ext->Runtime.Rehandle();
 		}
-		else // This extension wasn't even the main event handler (for Handle()/Globals).
+		else // This extension wasn't even the main event handler (for Handle()/globals).
 		{
-			LeaveCriticalSectionDerpy(&Globals->Lock);
+			LeaveCriticalSectionDebug(&globals->lock);
 		}
 	}
 	// Last instance of this object; if global and not full-delete-enabled, do not cleanup.
@@ -1135,40 +1113,40 @@ Extension::~Extension()
 	// difference is made to the clients, other than the events explicitly handled by Fusion events.
 	else
 	{
-		if (!Globals->_Server.hosting())
-			OutputDebugStringA("Note: Not hosting, nothing important to retain, closing Globals info.\n");
+		if (!globals->_server.hosting())
+			OutputDebugStringA("Note: Not hosting, nothing important to retain, closing globals info.\n");
 		else if (!IsGlobal)
-			OutputDebugStringA("Note: Not global, closing Globals info.\n");
-		else if (Globals->FullDeleteEnabled)
-			OutputDebugStringA("Note: Full delete enabled, closing Globals info.\n");
+			OutputDebugStringA("Note: Not global, closing globals info.\n");
+		else if (globals->FullDeleteEnabled)
+			OutputDebugStringA("Note: Full delete enabled, closing globals info.\n");
 		// Wait for 0ms returns immediately as per spec
 		else if (WaitForSingleObject(AppWasClosed, 0U) == WAIT_OBJECT_0)
-			OutputDebugStringA("Note: App was closed, closing Globals info.\n"); 
-		else // !Globals->FullDeleteEnabled
+			OutputDebugStringA("Note: App was closed, closing globals info.\n"); 
+		else // !globals->FullDeleteEnabled
 		{
 			OutputDebugStringA("Note: Last instance dropped, and currently hosting - "
-				"Globals will be retained until a Unhost is called.\n");
-			Globals->_Ext = nullptr;
-			Globals->LastDestroyedExtSelectedChannel = ThreadData.Channel;
-			Globals->LastDestroyedExtSelectedClient = ThreadData.Client;
-			LeaveCriticalSectionDerpy(&Globals->Lock);
+				"globals will be retained until a Unhost is called.\n");
+			globals->_ext = nullptr;
+			globals->LastDestroyedExtSelectedChannel = threadData.channel;
+			globals->LastDestroyedExtSelectedClient = threadData.client;
+			LeaveCriticalSectionDebug(&globals->lock);
 
 			sprintf_s(msgBuff, "Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.\n",
-				Globals->TimeoutWarningEnabled
+				globals->TimeoutWarningEnabled
 				? "a warning message will be shown"
 				: "the hosting will terminate and all pending messages will be discarded");
 			OutputDebugStringA(msgBuff);
 
-			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, Globals, NULL, NULL);
+			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
 			ClearThreadData();
 			return;
 		}
 
-		std::string id = std::string(std::string("LacewingRelayServer") + (Globals->_GlobalID ? Globals->_GlobalID : ""));
+		std::string id = std::string(std::string("LacewingRelayServer") + (globals->_globalID ? globals->_globalID : ""));
 		Runtime.WriteGlobal(id.c_str(), nullptr);
-		LeaveCriticalSectionDerpy(&Globals->Lock);
-		delete Globals; // Unhosts and closes event pump, deletes Lock
-		Globals = nullptr;
+		LeaveCriticalSectionDebug(&globals->lock);
+		delete globals; // Unhosts and closes event pump, deletes lock
+		globals = nullptr;
 	}
 
 	ClearThreadData();

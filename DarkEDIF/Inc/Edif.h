@@ -7,7 +7,6 @@
 #include <vector>
 #include <list>
 #include <string>
-using namespace std;
 
 #include "MMFMasterHeader.h"
 
@@ -27,25 +26,39 @@ class Extension;
 #include "ObjectSelection.h"
 
 #ifndef RUN_ONLY
-	#if defined(MMFEXT)
-		#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
-	#elif defined(PROEXT)
-		#define IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
-	#else
-		#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
-	#endif
+#if defined(MMFEXT)
+#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
+#elif defined(PROEXT)
+#define IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
 #else
-	#define IS_COMPATIBLE(v) (false)
+#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
+#endif
+#else
+#define IS_COMPATIBLE(v) (false)
 #endif
 
+// DarkEDIF provides C++11 type checking between JSON and C++ definition.
+#if defined(_DEBUG) && !defined(FAST_ACE_LINK)
+
 #define LinkAction(ID, Function) \
-    SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	LinkActionDebug(ID, &Extension::Function);
+
+#define LinkCondition(ID, Function) \
+	LinkConditionDebug(ID, &Extension::Function);
+
+#define LinkExpression(ID, Function) \
+	LinkExpressionDebug(ID, &Extension::Function);
+
+#else
+#define LinkAction(ID, Function) \
+	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 
 #define LinkCondition(ID, Function) \
     SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 
 #define LinkExpression(ID, Function) \
     SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+#endif
 
 extern HINSTANCE hInstLib;
 
@@ -135,17 +148,17 @@ namespace Edif
         SDK (mv * mV, json_value &);
         ~SDK ();
 
-        vector<ACEInfo *>	ActionInfos;
-		vector<ACEInfo *>	ConditionInfos;
-		vector<ACEInfo *>	ExpressionInfos;
+        std::vector<ACEInfo *>	ActionInfos;
+		std::vector<ACEInfo *>	ConditionInfos;
+		std::vector<ACEInfo *>	ExpressionInfos;
 
         void ** ActionJumps;
         void ** ConditionJumps;
         void ** ExpressionJumps;
 
-        vector<void *> ActionFunctions;
-        vector<void *> ConditionFunctions;
-        vector<void *> ExpressionFunctions;
+		std::vector<void *> ActionFunctions;
+		std::vector<void *> ConditionFunctions;
+		std::vector<void *> ExpressionFunctions;
 		PropData * EdittimeProperties;
 
         unsigned char * FunctionMemory;
@@ -209,8 +222,8 @@ namespace Edif
 
         Riggs::ObjectSelection ObjectSelection;
 
-        void WriteGlobal(const TCHAR * Name, void * Value);
-        void * ReadGlobal(const TCHAR * Name);
+        void WriteGlobal(const TCHAR * name, void * Value);
+        void * ReadGlobal(const TCHAR * name);
 
         #ifdef EdifUseJS
         
@@ -228,10 +241,10 @@ namespace Edif
     const int DependencyWasFile      = 1;
     const int DependencyWasResource  = 2;
 
-    int GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtension, int Resource);
+    int GetDependency (char *& Buffer, size_t &size, const TCHAR * FileExtension, int Resource);
 
-	TCHAR * ConvertString(const char* urf8String);
-	TCHAR * ConvertAndCopyString(TCHAR* tstr, const char* urf8String, int maxLength);
+	TCHAR * ConvertString(const char* utf8String);
+	TCHAR * ConvertAndCopyString(TCHAR* tstr, const char* utf8String, int maxLength);
 	inline void FreeString(TCHAR* s)
 	{
 		free(s);

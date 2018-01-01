@@ -14,349 +14,349 @@
 
 		"ActionMenu":
 		[
-			[73, "Connect"],
-			[1, "Disconnect"],
+			[ 73, "Connect" ],
+			[ 1, "Disconnect" ],
 	
 			"Separator",
 			
-			[2, "Set name"],
+			[ 2, "Set name" ],
 
 			"Separator",
 
-			["Channel listing",
-				[30, "Request list"],
+			[ "Channel listing",
+				[ 30, "Request list" ],
 				"Separator",
-				[31, "Loop listed channels"],
-				[69, "Loop listed channels (with loop name)"]
+				[ 31, "Loop listed channels" ],
+				[ 69, "Loop listed channels (with loop name)" ]
 			],
 
-			["Channel",
-				["Select",
-					[17, "By name"],
+			[ "Channel",
+				[ "Select",
+					[ 17, "By name" ],
 					"Separator",
-					[19, "Loop"],
-					[70, "Loop (with loop name)"]
+					[ 19, "Loop" ],
+					[ 70, "Loop (with loop name)" ]
 				],
 				"Separator",
-				[65, "Join"],
-				[4, "Leave"],
+				[ 65, "Join" ],
+				[ 4, "Leave" ],
 				"Separator",
-				["Peer",
-					[20, "Select by name"],
-					[21, "Select by ID"],
-					[64, "Select the channel master"],
+				[ "Peer",
+					[ 20, "Select by name" ],
+					[ 21, "Select by ID" ],
+					[ 64, "Select the channel master" ],
 					"Separator",
-					[22, "Loop"],
-					[71, "Loop (with loop name)"]
+					[ 22, "Loop" ],
+					[ 71, "Loop (with loop name)" ]
 				]
 			],
 
-			["Send",
-				["Text",
-					[5, "To server"],
-					[6, "To channel"],
-					[7, "To peer"]
+			[ "Send",
+				[ "Text",
+					[ 5, "To server" ],
+					[ 6, "To channel" ],
+					[ 7, "To peer" ]
 				],
-				["Number",
-					[8, "To server"],
-					[9, "To channel"],
-					[10, "To peer"]
+				[ "Number",
+					[ 8, "To server" ],
+					[ 9, "To channel" ],
+					[ 10, "To peer" ]
 				],
-				["Binary",
-					[35, "To server"],
-					[36, "To channel"],
-					[37, "To peer"]
+				[ "Binary",
+					[ 35, "To server" ],
+					[ 36, "To channel" ],
+					[ 37, "To peer" ]
 				]
 			],
 
-			["Blast",
-				["Text",
-					[11, "To server"],
-					[12, "To channel"],
-					[13, "To peer"]
+			[ "Blast",
+				[ "Text",
+					[ 11, "To server" ],
+					[ 12, "To channel" ],
+					[ 13, "To peer" ]
 				],
-				["Number",
-					[14, "To server"],
-					[15, "To channel"],
-					[16, "To peer"]
+				[ "Number",
+					[ 14, "To server" ],
+					[ 15, "To channel" ],
+					[ 16, "To peer" ]
 				],
-				["Binary",
-					[38, "To server"],
-					[39, "To channel"],
-					[40, "To peer"]
+				[ "Binary",
+					[ 38, "To server" ],
+					[ 39, "To channel" ],
+					[ 40, "To peer" ]
 				]
 			],
 
-			["Binary to send",
-				["Add byte",
-					[41, "ASCII character"],
-					[42, "Integer value"]
+			[ "Binary to send",
+				[ "Add byte",
+					[ 41, "ASCII character" ],
+					[ 42, "Integer value" ]
 				],
-				[43, "Add short"],
-				[44, "Add integer"],
-				[45, "Add float"],
+				[ 43, "Add short" ],
+				[ 44, "Add integer" ],
+				[ 45, "Add float" ],
 
-				["Add string",
-					[46, "Without null terminator"],
-					[47, "With null terminator"]
+				[ "Add string",
+					[ 46, "Without null terminator" ],
+					[ 47, "With null terminator" ]
 				],
 
-				[48, "Add binary"],
-				[52, "Add file"],
+				[ 48, "Add binary" ],
+				[ 52, "Add file" ],
 				"Separator",
-				[66, "Compress (ZLIB)"],
-				[49, "Clear"],
-				[74, "Resize"]
+				[ 66, "Compress (ZLIB)" ],
+				[ 49, "Clear" ],
+				[ 74, "Resize" ]
 			],
 
-            ["Received binary",
-                [50, "Save to a file"],
-                [51, "Append to a file"],
-                [67, "Decompress (ZLIB)"],
+            [ "Received binary",
+                [ 50, "Save to a file" ],
+                [ 51, "Append to a file" ],
+                [ 67, "Decompress (ZLIB)" ],
                 "Separator",
-                [68, "Move cursor"]
+                [ 68, "Move cursor" ]
             ],
 
             "Separator",
-            [75, "Set kill connection when disowned"],
+            [ 75, "Set kill connection when disowned" ],
 
 			"Separator"
 		],
 
 		"ConditionMenu":
 		[
-			[0, "On error"],
+			[ 0, "On error" ],
 
 			"Separator",
 
-			["Connection",
-				[1, "On connect"],
-				[2, "On connection denied"],
-				[42, "Is connected"],
+			[ "Connection",
+				[ 1, "On connect" ],
+				[ 2, "On connection denied" ],
+				[ 42, "Is connected" ],
 				"Separator",
-				[3, "On disconnect"]
+				[ 3, "On disconnect" ]
 			],
 
-			["Channel listing",
-				[26, "On list received"],
+			[ "Channel listing",
+				[ 26, "On list received" ],
 				"Separator",
-				[27, "On loop"],
-				[28, "On loop finished"],
+				[ 27, "On loop" ],
+				[ 28, "On loop finished" ],
 				"Separator",
-				[59, "[With loop name] On loop"],
-				[60, "[With loop name] On loop finished"]
+				[ 59, "[ With loop name ] On loop" ],
+				[ 60, "[ With loop name ] On loop finished" ]
 			],
 
-			["Channel",
-				[4, "On join"],
-				[5, "On join denied"],
+			[ "Channel",
+				[ 4, "On join" ],
+				[ 5, "On join denied" ],
 				"Separator",
-				[43, "On leave"],
-				[44, "On leave denied"],
+				[ 43, "On leave" ],
+				[ 44, "On leave denied" ],
 				"Separator",
-				[14, "On joined channel loop"],
-				[18, "On joined channel loop finished"],
-				[73, "Is joined to channel"],
+				[ 14, "On joined channel loop" ],
+				[ 18, "On joined channel loop finished" ],
+				[ 73, "Is joined to channel" ],
 				"Separator",
-				[63, "[With loop name] On joined channel loop"],
-				[64, "[With loop name] On joined channel loop finished"],
+				[ 63, "[ With loop name ] On joined channel loop" ],
+				[ 64, "[ With loop name ] On joined channel loop finished" ],
 				"Separator",
-				["Peers",
-					[10, "On peer connect"],
-					[11, "On peer disconnect"],
-					[45, "On peer changed name"],
+				[ "Peers",
+					[ 10, "On peer connect" ],
+					[ 11, "On peer disconnect" ],
+					[ 45, "On peer changed name" ],
 					"Separator",
-					[13, "On loop"],
-					[17, "On loop finished"],
+					[ 13, "On loop" ],
+					[ 17, "On loop finished" ],
 					"Separator",
-					[61, "[With loop name] On loop"],
-					[62, "[With loop name] On loop finished"],
+					[ 61, "[ With loop name ] On loop" ],
+					[ 62, "[ With loop name ] On loop finished" ],
 					"Separator",
-					[57, "Selected peer is the channel master"],
+					[ 57, "Selected peer is the channel master" ],
 					"Separator",
-					[74, "Is peer name connected to channel"],
-					[75, "Is peer ID connected to channel"]
+					[ 74, "Is peer name connected to channel" ],
+					[ 75, "Is peer ID connected to channel" ]
 				],
 				"Separator",
-				[58, "You are the channel master"]
+				[ 58, "You are the channel master" ]
 			],
 
-			["Name",
-				[6, "On name set"],
-				[7, "On name denied"],
-				[53, "On name changed"],
+			[ "Name",
+				[ 6, "On name set" ],
+				[ 7, "On name denied" ],
+				[ 53, "On name changed" ],
 				"Separator",
-				[54, "Client has a name"]
+				[ 54, "Client has a name" ]
 			],
 
-			["Message",
+			[ "Message",
 
-				["Sent",
-					["On text message from server",
-						[8, "To me"],
-						[65, "To channel"]
+				[ "Sent",
+					[ "On text message from server",
+						[ 8, "To me" ],
+						[ 65, "To channel" ]
 					],
-					["On number message from server",
-						[15, "To me"],
-						[66, "To channel"]
+					[ "On number message from server",
+						[ 15, "To me" ],
+						[ 66, "To channel" ]
 					],
-					["On binary message from server",
-						[32, "To me"],
-						[67, "To channel"]
+					[ "On binary message from server",
+						[ 32, "To me" ],
+						[ 67, "To channel" ]
 					],
-					["On any message from server",
-						[47, "To me"],
-						[68, "To channel"]
+					[ "On any message from server",
+						[ 47, "To me" ],
+						[ 68, "To channel" ]
 					],
 					"Separator",
-					[9, "On text message from channel"],
-					[16, "On number message from channel"],
-					[33, "On binary message from channel"],
-					[48, "On any message from channel"],
+					[ 9, "On text message from channel" ],
+					[ 16, "On number message from channel" ],
+					[ 33, "On binary message from channel" ],
+					[ 48, "On any message from channel" ],
 					"Separator",
-					[36, "On text message from peer"],
-					[37, "On number message from peer"],
-					[38, "On binary message from peer"],
-					[49, "On any message from peer"]
+					[ 36, "On text message from peer" ],
+					[ 37, "On number message from peer" ],
+					[ 38, "On binary message from peer" ],
+					[ 49, "On any message from peer" ]
 				],
-				["Blasted",
-					["On text message from server",
-						[20, "To me"],
-						[69, "To channel"]
+				[ "Blasted",
+					[ "On text message from server",
+						[ 20, "To me" ],
+						[ 69, "To channel" ]
 					],
-					["On number message from server",
-						[21, "To me"],
-						[70, "To channel"]
+					[ "On number message from server",
+						[ 21, "To me" ],
+						[ 70, "To channel" ]
 					],
-					["On binary message from server",
-						[34, "To me"],
-						[71, "To channel"]
+					[ "On binary message from server",
+						[ 34, "To me" ],
+						[ 71, "To channel" ]
 					],
-					["On any message from server",
-						[50, "To me"],
-						[72, "To channel"]
+					[ "On any message from server",
+						[ 50, "To me" ],
+						[ 72, "To channel" ]
 					],
 					"Separator",
-					[22, "On text message from channel"],
-					[23, "On number message from channel"],
-					[35, "On binary message from channel"],
-					[51, "On any message from channel"],
+					[ 22, "On text message from channel" ],
+					[ 23, "On number message from channel" ],
+					[ 35, "On binary message from channel" ],
+					[ 51, "On any message from channel" ],
 					"Separator",
-					[39, "On text message from peer"],
-					[40, "On number message from peer"],
-					[41, "On binary message from peer"],
-					[52, "On any message from peer"]
+					[ 39, "On text message from peer" ],
+					[ 40, "On number message from peer" ],
+					[ 41, "On binary message from peer" ],
+					[ 52, "On any message from peer" ]
 				]
 			]
 		],
 
 		"ExpressionMenu":
 		[
-			[0, "Error string (for on error)"],
-			[31, "Lacewing version string"],
+			[ 0, "Error string (for on error)" ],
+			[ 31, "Lacewing version string" ],
 		
 			"Separator",
 
-			[32, "Binary to send size"],
-			[54, "Binary to send address"],
+			[ 32, "Binary to send size" ],
+			[ 54, "Binary to send address" ],
 	
 			"Separator",
 	
-			[37, "Deny reason (for on [...] denied)"],
-			[41, "Get welcome message (for on connect)"],
+			[ 37, "Deny reason (for on [ ... ] denied)" ],
+			[ 41, "Get welcome message (for on connect)" ],
 	
 			"Separator",
 
-			["Connection",
-				[38, "Host IP address"],
-				[39, "Host port"]
+			[ "Connection",
+				[ 38, "Host IP address" ],
+				[ 39, "Host port" ]
 			],
 			
-			["Channel listing",
-        [12, "Get name [Channel listing loop]"],
-        [13, "Get peer count [Channel listing loop] "],
+			[ "Channel listing",
+        [ 12, "Get name [ Channel listing loop ]" ],
+        [ 13, "Get peer count [ Channel listing loop ] " ],
         "Separator",
-				[56, "Get number of channels in list"]
+				[ 56, "Get number of channels in list" ]
 			],
 	
-			["Received",
+			[ "Received",
 
-				[5, "Get text"],
-				[6, "Get number"],
+				[ 5, "Get text" ],
+				[ 6, "Get number" ],
 
 				"Separator",
 
-				[30, "Get binary size"],
-				[42, "Get binary memory address"],
+				[ 30, "Get binary size" ],
+				[ 42, "Get binary memory address" ],
 				
-				[55, "Dump to string"],
+				[ 55, "Dump to string" ],
 
-				["Get binary data",
-					["Byte",
-						[20, "ASCII character"],
-						["Integer value",
-							[21, "Unsigned"],
-							[22, "Signed"]
+				[ "Get binary data",
+					[ "Byte",
+						[ 20, "ASCII character" ],
+						[ "Integer value",
+							[ 21, "Unsigned" ],
+							[ 22, "Signed" ]
 						]
 					],
-					["Short",
-						[23, "Unsigned"],
-						[24, "Signed"]
+					[ "Short",
+						[ 23, "Unsigned" ],
+						[ 24, "Signed" ]
 					],
-					["Integer",
-						[25, "Unsigned"],
-						[26, "Signed"]
+					[ "Integer",
+						[ 25, "Unsigned" ],
+						[ 26, "Signed" ]
 					],
-					[27, "Float"],
-					["Text",
-						[28, "With size"],
-						[29, "Null terminated"]
+					[ 27, "Float" ],
+					[ "Text",
+						[ 28, "With size" ],
+						[ 29, "Null terminated" ]
 					]
 				],
 		
-				["Get binary data (with cursor)",
-					["Byte",
-						[43, "ASCII character"],
-						["Integer value",
-							[44, "Unsigned"],
-							[45, "Signed"]
+				[ "Get binary data (with cursor)",
+					[ "Byte",
+						[ 43, "ASCII character" ],
+						[ "Integer value",
+							[ 44, "Unsigned" ],
+							[ 45, "Signed" ]
 						]
 					],
-					["Short",
-						[46, "Unsigned"],
-						[47, "Signed"]
+					[ "Short",
+						[ 46, "Unsigned" ],
+						[ 47, "Signed" ]
 					],
-					["Integer",
-						[48, "Unsigned"],
-						[49, "Signed"]
+					[ "Integer",
+						[ 48, "Unsigned" ],
+						[ 49, "Signed" ]
 					],
-					[50, "Float"],
-					["Text",
-						[51, "With size"],
-						[52, "Null terminated"]
+					[ 50, "Float" ],
+					[ "Text",
+						[ 51, "With size" ],
+						[ 52, "Null terminated" ]
 					]
 				],
 		
 				"Separator",
-				[7, "Get subchannel"]
+				[ 7, "Get subchannel" ]
 			],
 			"Separator",
-			["Self",
-				[2, "Name"],
-				[14, "ID"],
-				[3, "Number of channels"],
+			[ "Self",
+				[ 2, "Name" ],
+				[ 14, "ID" ],
+				[ 3, "Number of channels" ],
 				"Separator",
-				[33, "Previous name (for on name changed)"]
+				[ 33, "Previous name (for on name changed)" ]
 			],
-			["Selected channel",
-				[9, "Name"],
-				[10, "Number of peers"],
+			[ "Selected channel",
+				[ 9, "Name" ],
+				[ 10, "Number of peers" ],
 				"Separator",
-				["Selected peer",
-					[4, "Name"],
-					[8, "ID"],
+				[ "Selected peer",
+					[ 4, "Name" ],
+					[ 8, "ID" ],
 					"Separator",
-					[34, "Previous name (for on peer name changed)"]
+					[ 34, "Previous name (for on peer name changed)" ]
 				]
 			]
 		],
@@ -367,8 +367,8 @@
 				"Title": "[REPLACE THIS ACTION] Connect to %0 on port %1",
 				"Parameters":
 				[
-					["Text", "Hostname or IP address"],
-					["Integer", "Port (default 6121)"]
+					[ "Text", "Hostname or IP address" ],
+					[ "Integer", "Port (default 6121)" ]
 				]
 			},
 			{
@@ -378,15 +378,15 @@
 				"Title": "Set name to %0",
 				"Parameters":
 				[
-					["Text", "Name"]
+					[ "Text", "Name" ]
 				]
 			},
 			{
-				"Title": "[Replace this action] Join channel %0 (hidden: %1)",
+				"Title": "[REPLACE THIS ACTION] Join channel %0 (hidden: %1)",
 				"Parameters":
 				[
-					["Text", "Channel name"],
-					["Integer", "Hide channel from list if creating? (0 = no, 1 = yes)"]
+					[ "Text", "Channel name" ],
+					[ "Integer", "Hide channel from list if creating? (0 = no, 1 = yes)" ]
 				]
 			},
 			{
@@ -396,103 +396,103 @@
 				"Title": "Send text %1 to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{	
 				"Title": "Send text %1 to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{
 				"Title": "Send text %1 to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{
 				"Title": "Send number %1 to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Send number %1 to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Send number %1 to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Blast text %1 to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{
 				"Title": "Blast text %1 to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{
 				"Title": "Blast text %1 to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Text", "Text to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Text", "Text to send" ]
 				]
 			},
 			{
 				"Title": "Blast number %1 to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Blast number %1 to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Blast number %1 to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"],
-					["Integer", "Number to send"]
+					[ "Integer", "Subchannel (0 - 255)" ],
+					[ "Integer", "Number to send" ]
 				]
 			},
 			{
 				"Title": "Select channel with name %0",
 				"Parameters":
 				[
-					["Text", "Name"]
+					[ "Text", "Name" ]
 				]
 			},
 			{
@@ -505,14 +505,14 @@
 				"Title": "Select peer on channel with name %0",
 				"Parameters":
 				[
-					["Text", "Name"]
+					[ "Text", "Name" ]
 				]
 			},
 			{
 				"Title": "Select peer on channel with ID %0",
 				"Parameters":
 				[
-					["Integer", "ID"]
+					[ "Integer", "ID" ]
 				]
 			},
 			{
@@ -558,99 +558,99 @@
 				"Title": "Send binary to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Send binary to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Send binary to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Blast binary to server on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Blast binary to channel on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Blast binary to peer on subchannel %0",
 				"Parameters":
 				[
-					["Integer", "Subchannel (0 - 255)"]
+					[ "Integer", "Subchannel (0 - 255)" ]
 				]
 			},
 			{
 				"Title": "Add byte %0",
 				"Parameters":
 				[
-					["Text", "Byte (one character)"]
+					[ "Text", "Byte (one character)" ]
 				]
 			},
 			{
 				"Title": "Add byte %0",
 				"Parameters":
 				[
-					["Integer", "Byte"]
+					[ "Integer", "Byte" ]
 				]
 			},
 			{
 				"Title": "Add short %0",
 				"Parameters":
 				[
-					["Integer", "Short"]
+					[ "Integer", "Short" ]
 				]
 			},
 			{
 				"Title": "Add integer %0",
 				"Parameters":
 				[
-					["Integer", "Integer"]
+					[ "Integer", "Integer" ]
 				]
 			},
 			{
 				"Title": "Add float %0",
 				"Parameters":
 				[
-					["Float", "Float"]
+					[ "Float", "Float" ]
 				]
 			},
 			{
 				"Title": "Add string %0 without null terminator",
 				"Parameters":
 				[
-					["Text", "Text"]
+					[ "Text", "Text" ]
 				]
 			},
 			{
 				"Title": "Add string %0 with null terminator",
 				"Parameters":
 				[
-					["Text", "Text"]
+					[ "Text", "Text" ]
 				]
 			},
 			{
 				"Title": "Add binary at address %0 with size %1",
 				"Parameters":
 				[
-					["Integer", "Address"],
-					["Integer", "Size"]
+          [ "Unsigned Integer", "Address" ],
+					[ "Integer", "Size" ]
 				]
 			},
 			{
@@ -660,25 +660,25 @@
 				"Title": "Save received binary (position %0 with size %1) to file %2",
 				"Parameters":
 				[
-					["Integer", "Position"],
-					["Integer", "Size"],
-					["Text", "Filename"]
+					[ "Integer", "Position" ],
+					[ "Integer", "Size" ],
+					[ "Text", "Filename" ]
 				]
 			},
 			{
 				"Title": "Append received binary (position %0 with size %1) to file %2",
 				"Parameters":
 				[
-					["Integer", "Position"],
-					["Integer", "Size"],
-					["Text", "Filename"]
+					[ "Integer", "Position" ],
+					[ "Integer", "Size" ],
+					[ "Text", "Filename" ]
 				]
 			},
 			{
 				"Title": "Add file %0 to the binary to send",
 				"Parameters":
 				[
-					["Filename", "File to add"]
+					[ "Filename", "File to add" ]
 				]
 			},
 			{
@@ -721,9 +721,9 @@
 				"Title": "Join channel %0 (hidden: %1, close automatically: %2)",
 				"Parameters":
 				[
-					["Text", "Channel name"],
-					["Integer", "If creating: Hide channel from list? (0 = no, 1 = yes)"],
-					["Integer", "If creating: Close channel automatically when you leave? (0 = no, 1 = yes)"]
+					[ "Text", "Channel name" ],
+					[ "Integer", "If creating: Hide channel from list? (0 = no, 1 = yes)" ],
+					[ "Integer", "If creating: Close channel automatically when you leave? (0 = no, 1 = yes)" ]
 				]
 			},
 			{
@@ -736,28 +736,28 @@
 				"Title": "Move received binary cursor to %0",
 				"Parameters":
 				[
-					["Integer", "Position"]
+					[ "Integer", "Position" ]
 				]
 			},
 			{
-				"Title": "Loop listed channels [Loop name: %0]",
+				"Title": "Loop listed channels [ Loop name: %0 ]",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				]
 			},
 			{
-				"Title": "Loop channels [Loop name: %0]",
+				"Title": "Loop channels [ Loop name: %0 ]",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				]
 			},
 			{
-				"Title": "Loop peers on channel [Loop name: %0]",
+				"Title": "Loop peers on channel [ Loop name: %0 ]",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				]
 			},
 			{
@@ -767,21 +767,21 @@
 				"Title": "Connect to %0",
 				"Parameters":
 				[
-					["Text", "Hostname or IP address (with optional :port)"]
+					[ "Text", "Hostname or IP address (with optional :port)" ]
 				]
 			},
 			{
 				"Title": "Resize binary to send to %0 bytes",
 				"Parameters":
 				[
-					["Integer", "New size (in bytes)"]
+					[ "Integer", "New size (in bytes)" ]
 				]
 			},
 			{
 				"Title": "Kill connection when last Bluewing instance destroyed: %0",
 				"Parameters":
 				[
-					["Integer", "Kill connection when last Bluewing destroyed? (0 or 1)"]
+					[ "Integer", "Kill connection when last Bluewing destroyed? (0 or 1)" ]
 				]
 			}
 		],
@@ -824,7 +824,7 @@
 				"Title": "%o : On text message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -832,7 +832,7 @@
 				"Title": "%o : On text message from channel on subchannel %0 (sent)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -860,7 +860,7 @@
 				"Title": "%o : On number message from server on subchannel %0 (sent)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -868,7 +868,7 @@
 				"Title": "%o : On number message from channel on subchannel %0 (sent)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -888,7 +888,7 @@
 				"Title": "%o : On text message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -896,7 +896,7 @@
 				"Title": "%o : On number message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -904,7 +904,7 @@
 				"Title": "%o : On text message from channel on subchannel %0 (blasted)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -912,7 +912,7 @@
 				"Title": "%o : On number message from channel on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -952,7 +952,7 @@
 				"Title": "%o : On binary message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -960,7 +960,7 @@
 				"Title": "%o : On binary message from channel on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -968,7 +968,7 @@
 				"Title": "%o : On binary message from server on subchannel %0 (blasted)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -976,7 +976,7 @@
 				"Title": "%o : On binary message from channel on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -984,7 +984,7 @@
 				"Title": "%o : On text message from peer on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -992,7 +992,7 @@
 				"Title": "%o : On number message from peer on subchannel %0 (sent)",
 				"Parameters":
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1000,7 +1000,7 @@
 				"Title": "%o : On binary message from peer on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1008,7 +1008,7 @@
 				"Title": "%o : On text message from peer on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1016,7 +1016,7 @@
 				"Title": "%o : On number message from peer on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1024,7 +1024,7 @@
 				"Title": "%o : On binary message from peer on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1051,7 +1051,7 @@
 				"Title": "%o : On any message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1059,7 +1059,7 @@
 				"Title": "%o : On any message from channel on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1067,7 +1067,7 @@
 				"Title": "%o : On any message from peer on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1075,7 +1075,7 @@
 				"Title": "%o : On any message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1083,7 +1083,7 @@
 				"Title": "%o : On any message from channel on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1091,7 +1091,7 @@
 				"Title": "%o : On any message from peer on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1120,7 +1120,7 @@
 				"Title": "%o : On channel list loop %0",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1128,7 +1128,7 @@
 				"Title": "%o : On channel list loop %0 finished",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1136,7 +1136,7 @@
 				"Title": "%o : On channel peer loop %0",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1144,7 +1144,7 @@
 				"Title": "%o : On channel peer loop %0 finished",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1152,7 +1152,7 @@
 				"Title": "%o : On joined channel loop %0",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1160,7 +1160,7 @@
 				"Title": "%o : On joined channel loop %0 finished",
 				"Parameters":
 				[
-					["Text", "Loop name"]
+					[ "Text", "Loop name" ]
 				],
 				"Triggered": true
 			},
@@ -1168,7 +1168,7 @@
 				"Title": "%o : On text channel message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1176,7 +1176,7 @@
 				"Title": "%o : On number channel message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1184,7 +1184,7 @@
 				"Title": "%o : On binary channel message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1192,7 +1192,7 @@
 				"Title": "%o : On any channel message from server on subchannel %0 (sent)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1200,7 +1200,7 @@
 				"Title": "%o : On text channel message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1208,7 +1208,7 @@
 				"Title": "%o : On number channel message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1216,7 +1216,7 @@
 				"Title": "%o : On binary channel message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1224,7 +1224,7 @@
 				"Title": "%o : On any channel message from server on subchannel %0 (blasted)",
 				"Parameters": 
 				[
-					["Integer", "Subchannel (-1 for any)"]
+					[ "Integer", "Subchannel (-1 for any)" ]
 				],
 				"Triggered": true
 			},
@@ -1232,23 +1232,23 @@
 				"Title": "%o : Is joined to channel %0",
 				"Parameters": 
 				[
-					["Text", "Channel name to test"]
+					[ "Text", "Channel name to test" ]
 				]
 			},
 			{
 				"Title": "%o : Is peer name %0 joined to channel %1",
 				"Parameters": 
 				[
-					["Text", "Peer name to test"],
-					["Text", "Channel name to test (use \"\" for currently selected)"]
+					[ "Text", "Peer name to test" ],
+					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
 			},
 			{
 				"Title": "%o : Is peer ID %0 joined to channel %1",
 				"Parameters": 
 				[
-					["Integer", "Peer ID to test"],
-					["Text", "Channel name to test (use \"\" for currently selected)"]
+					[ "Integer", "Peer ID to test" ],
+					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
 			}
 		],
@@ -1269,7 +1269,7 @@
 			},
 			{
 				"Title": "Self_ChannelCount(",
-				"Returns": "Integer"
+				"Returns": "Unsigned Integer"
 			},
 			{
 				"Title": "Peer_Name$(",
@@ -1283,10 +1283,10 @@
 				"Title": "Received(",
 				"Returns": "Integer"
 			},
-			{
-				"Title": "Subchannel(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "Subchannel(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "Peer_ID(",
 				"Returns": "Integer"
@@ -1338,96 +1338,86 @@
 			{
 				"Title": "Byte$(",
 				"Returns": "Text",
-				"Parameters":
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
-			{
-				"Title": "Byte(",
-				"Returns": "Integer",
-				"Parameters":
-				[
-					["Integer", "Index"]
-				]
-			},
+      {
+        "Title": "Byte(",
+        "Returns": "Unsigned Integer",
+        "Parameters": [
+          [ "Integer", "Index" ]
+        ]
+      },
 			{
 				"Title": "SignedByte(",
 				"Returns": "Integer",
-				"Parameters": 
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
-			{
-				"Title": "Short(",
-				"Returns": "Integer",
-				"Parameters": 
-				[
-					["Integer", "Index"]
-				]
-			},
+      {
+        "Title": "Short(",
+        "Returns": "Unsigned Integer",
+        "Parameters": [
+          [ "Integer", "Index" ]
+        ]
+      },
 			{
 				"Title": "SignedShort(",
 				"Returns": "Integer",
-				"Parameters": 
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
-			{
-				"Title": "Integer(",
-				"Returns": "Integer",
-				"Parameters": 
-				[
-					["Integer", "Index"]
-				]
-			},
+      {
+        "Title": "Integer(",
+        "Returns": "Unsigned Integer",
+        "Parameters": [
+          [ "Integer", "Index" ]
+        ]
+      },
 			{
 				"Title": "SignedInteger(",
 				"Returns": "Integer",
-				"Parameters": 
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
 			{
 				"Title": "Float(",
 				"Returns": "Float",
-				"Parameters": 
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
 			{
 				"Title": "StringWithSize$(",
 				"Returns": "Text",
-				"Parameters":
-				[
-					["Integer", "Index"],
-					["Integer", "Size"]
+				"Parameters": [
+					[ "Integer", "Index" ],
+					[ "Integer", "Size" ]
 				]
 			},
 			{
 				"Title": "String$(",
 				"Returns": "Text",
-				"Parameters": 
-				[
-					["Integer", "Index"]
+				"Parameters": [
+					[ "Integer", "Index" ]
 				]
 			},
-			{
-				"Title": "ReceivedBinarySize(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "ReceivedBinarySize(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "Version$(",
 				"Returns": "Text"
 			},
-			{
-				"Title": "SendBinarySize(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "SendBinarySize(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "Self_PreviousName$(",
 				"Returns": "Text"
@@ -1452,10 +1442,10 @@
 				"Title": "HostIP$(",
 				"Returns": "Text"
 			},
-			{
-				"Title": "HostPort(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "HostPort(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "EXPRESSION_REMOVED_10_$(",
 				"Returns": "Text"
@@ -1464,34 +1454,34 @@
 				"Title": "WelcomeMessage$(",
 				"Returns": "Text"
 			},
-			{
-				"Title": "ReceivedBinaryAddress(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "ReceivedBinaryAddress(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "CursorByte$(",
 				"Returns": "Text"
 			},
-			{
-				"Title": "CursorByte(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "CursorByte(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "CursorSignedByte(",
 				"Returns": "Integer"
 			},
-			{
-				"Title": "CursorShort(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "CursorShort(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "CursorSignedShort(",
 				"Returns": "Integer"
 			},
-			{
-				"Title": "CursorInteger(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "CursorInteger(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "CursorSignedInteger(",
 				"Returns": "Integer"
@@ -1503,9 +1493,8 @@
 			{
 				"Title": "CursorStringWithSize$(",
 				"Returns": "Text",
-				"Parameters":
-				[
-					["Integer", "Size"]
+				"Parameters": [
+					[ "Integer", "Size" ]
 				]
 			},
 			{
@@ -1516,23 +1505,22 @@
 				"Title": "EXPRESSION_REMOVED_11_$(",
 				"Returns": "Text"
 			},
-			{
-				"Title": "SendBinaryAddress(",
-				"Returns": "Integer"
-			},
+      {
+        "Title": "SendBinaryAddress(",
+        "Returns": "Unsigned Integer"
+      },
 			{
 				"Title": "DumpMessage$(",
 				"Returns": "Text",
-				"Parameters":
-				[
-					["Integer", "Starting index"],
-					["Text", "Enter format (see help)"]
+				"Parameters": [
+					[ "Integer", "Starting index" ],
+					[ "Text", "Enter format (see help)" ]
 				]
 			},
-			{
-				"Title": "ChannelListing_NumChannels(",
-				"Returns": "Integer"
-			}
+      {
+        "Title": "ChannelListing_NumChannels(",
+        "Returns": "Unsigned Integer"
+      }
 		],
 		"Properties": [
 			{

@@ -8,7 +8,7 @@ class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	SaveExtInfo ThreadData; // Must be first variable in Extension class
+	SaveExtInfo threadData; // Must be first variable in Extension class
 
     RUNDATA * rdPtr;
     RunHeader * rhPtr;
@@ -18,8 +18,8 @@ public:
     static const int MinimumBuild = 251;
     static const int Version = lacewing::relayserver::buildnum;
 
-	static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-	static const int OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
+	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
+	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
 
     static const int WindowProcPriority = 100;
 
@@ -39,24 +39,24 @@ public:
     */
 
 	bool IsGlobal;
-	GlobalInfo * Globals;
+	GlobalInfo * globals;
 
 	// This allows prettier and more readable access while maintaining global variables.
-	#define ObjEventPump				Globals->_ObjEventPump
-	#define Srv							Globals->_Server
-	#define FlashSrv					Globals->_Server.flash
-	#define SendMsg						Globals->_SendMsg
-	#define DenyReason					Globals->_DenyReason
-	#define SendMsgSize					Globals->_SendMsgSize
-	#define AutomaticallyClearBinary	Globals->_AutomaticallyClearBinary
-	#define GlobalID					Globals->_GlobalID
-	#define NewChannelName				Globals->_NewChannelName
-	#define NewClientName				Globals->_NewClientName
-	#define DropMessage					Globals->_DropMessage
-	#define InteractivePending			Globals->_InteractivePending
-	#define GThread						Globals->_Thread
-	#define Channels					Globals->_Channels
-	#define Clients						Globals->_Clients
+	#define ObjEventPump				globals->_objEventPump
+	#define Srv							globals->_server
+	#define FlashSrv					globals->_server.flash
+	#define SendMsg						globals->_sendMsg
+	#define DenyReason					globals->_denyReason
+	#define SendMsgSize					globals->_sendMsgSize
+	#define AutomaticallyClearBinary	globals->_automaticallyClearBinary
+	#define GlobalID					globals->_globalID
+	#define NewChannelName				globals->_newChannelName
+	#define NewClientName				globals->_newClientName
+	#define DropMessage					globals->_dropMessage
+	#define InteractivePending			globals->_interactivePending
+	#define GThread						globals->_thread
+	#define Channels					globals->_channels
+	#define Clients						globals->_Clients
 	
 	
 
@@ -79,7 +79,7 @@ public:
 	//
 	// But since these events are queued, the "on client disconnect" may be called later, after liblacewing has deleted.
 	// So we have to store a copy of the client so we can look up name and such when it's disconnected.
-	// See the _Channels and _Clients variables in GlobalInfo for our copies.
+	// See the _channels and _Clients variables in GlobalInfo for our copies.
 	
     // int MyVariable;
 
@@ -123,7 +123,7 @@ public:
 		void OnInteractive_ReplaceMessageWithNumber(int NewNumber);
 		void OnInteractive_ReplaceMessageWithSendBinary();
 
-		void Channel_SelectByName(char * Name);
+		void Channel_SelectByName(char * name);
 		void Channel_Close();
 		void Channel_SelectMaster();
 		void Channel_LoopClients();
@@ -142,19 +142,19 @@ public:
 		void LoopAllClients();
 		void LoopAllClientsWithName(char * LoopName);
 
-		void SendTextToChannel(int Subchannel, char * TextToSend);
-		void SendTextToClient(int Subchannel, char * TextToSend);
-		void SendNumberToChannel(int Subchannel, int NumToSend);
-		void SendNumberToClient(int Subchannel, int NumToSend);
-		void SendBinaryToChannel(int Subchannel);
-		void SendBinaryToClient(int Subchannel);
+		void SendTextToChannel(int subchannel, char * TextToSend);
+		void SendTextToClient(int subchannel, char * TextToSend);
+		void SendNumberToChannel(int subchannel, int NumToSend);
+		void SendNumberToClient(int subchannel, int NumToSend);
+		void SendBinaryToChannel(int subchannel);
+		void SendBinaryToClient(int subchannel);
 
-		void BlastTextToChannel(int Subchannel, char * TextToBlast);
-		void BlastTextToClient(int Subchannel, char * TextToBlast);
-		void BlastNumberToChannel(int Subchannel, int NumToBlast);
-		void BlastNumberToClient(int Subchannel, int NumToBlast);
-		void BlastBinaryToChannel(int Subchannel);
-		void BlastBinaryToClient(int Subchannel);
+		void BlastTextToChannel(int subchannel, char * TextToBlast);
+		void BlastTextToClient(int subchannel, char * TextToBlast);
+		void BlastNumberToChannel(int subchannel, int NumToBlast);
+		void BlastNumberToClient(int subchannel, int NumToBlast);
+		void BlastBinaryToChannel(int subchannel);
+		void BlastBinaryToClient(int subchannel);
 
 		void AddByteText(char * Byte);
 		void AddByteInt(int Byte);
@@ -163,7 +163,7 @@ public:
 		void AddFloat(float Float);
 		void AddStringWithoutNull(char * String);
 		void AddString(char * String);
-		void AddBinary(void * Address, int Size);
+		void AddBinary(unsigned int Address, int size);
 		void AddFileToBinary(char * File);
 		void ResizeBinaryToSend(int NewSize);
 		void CompressSendBinary();
@@ -171,15 +171,16 @@ public:
 
 		void DecompressReceivedBinary();
 		void MoveReceivedBinaryCursor(int Position);
-		void SaveReceivedBinaryToFile(int Position, int Size, char * Filename);
-		void AppendReceivedBinaryToFile(int Position, int Size, char * Filename);
+		void SaveReceivedBinaryToFile(int Position, int size, char * Filename);
+		void AppendReceivedBinaryToFile(int Position, int size, char * Filename);
 
     
 	/// Conditions
 
 		const bool AlwaysTrue() { return true; }
 		const bool AlwaysFalse() { return false; }
-		bool SubchannelMatches(int Subchannel);
+		const bool AlwaysFalseWithTextParam(const char *) { return false; }
+		bool SubchannelMatches(int subchannel);
         // AlwaysTrue:	bool OnError();
 		// AlwaysTrue:	bool OnConnectRequest();
 		// AlwaysTrue:	bool OnDisconnect();
@@ -191,38 +192,38 @@ public:
 		// AlwaysTrue:	bool OnChannel_ClientLoop();
 		bool Client_IsChannelMaster();
 		// AlwaysTrue:	bool OnClient_NameSetRequest();
-		// MessageMatches:	bool OnSentTextMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnAnySentMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnSentTextMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnAnySentMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnSentTextMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnAnySentMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToServer(int Subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToChannel(int Subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToPeer(int Subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToPeer(int Subchannel);
-		bool OnAllChannelsLoopWithName(char * LoopName);
-		bool OnClientsJoinedChannelLoopWithName(char * LoopName);
-		bool OnAllClientsLoopWithName(char * LoopName);
-		bool OnChannelClientsLoopWithName(char * LoopName);
-		bool OnChannelClientsLoopWithNameFinished(char * LoopName);
-		bool OnAllChannelsLoopWithNameFinished(char * LoopName);
-		bool OnClientsJoinedChannelLoopWithNameFinished(char * LoopName);
-		// AlwaysTrue	bool OnChannelsClientLoopFinished(char * LoopName);
+		// MessageMatches:	bool OnSentTextMessageToServer(int subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToServer(int subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToServer(int subchannel);
+		// MessageMatches:	bool OnAnySentMessageToServer(int subchannel);
+		// MessageMatches:	bool OnSentTextMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnAnySentMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnSentTextMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnSentNumberMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnSentBinaryMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnAnySentMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToServer(int subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToServer(int subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToServer(int subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToServer(int subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToChannel(int subchannel);
+		// MessageMatches:	bool OnBlastedTextMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnBlastedNumberMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnBlastedBinaryMessageToPeer(int subchannel);
+		// MessageMatches:	bool OnAnyBlastedMessageToPeer(int subchannel);
+		bool OnAllChannelsLoopWithName(char * loopName);
+		bool OnClientsJoinedChannelLoopWithName(char * loopName);
+		bool OnAllClientsLoopWithName(char * loopName);
+		bool OnChannelClientsLoopWithName(char * loopName);
+		bool OnChannelClientsLoopWithNameFinished(char * loopName);
+		bool OnAllChannelsLoopWithNameFinished(char * loopName);
+		bool OnClientsJoinedChannelLoopWithNameFinished(char * loopName);
+		// AlwaysTrue	bool OnChannelsClientLoopFinished(char * loopName);
 		// AlwaysTrue	bool OnAllChannelsLoopFinished();
 		// AlwaysTrue	bool OnAllClientsLoopFinished();
 		// AlwaysTrue	bool OnClientsJoinedChannelLoopFinished();
@@ -230,43 +231,43 @@ public:
 		bool IsFlashPolicyServerHosting();
 		bool ChannelIsHiddenFromChannelList();
 		bool ChannelIsSetToCloseAutomatically();
-		bool OnAllClientsLoopWithNameFinished(char * LoopName);
+		bool OnAllClientsLoopWithNameFinished(char * loopName);
 		// Added conditions:
-		bool IsClientOnChannel_ID(int ClientID, char * ChannelName);
-		bool IsClientOnChannel_Name(char * ClientName, char * ChannelName);
+		bool IsClientOnChannel_ID(int clientID, char * channelName);
+		bool IsClientOnChannel_Name(char * clientName, char * channelName);
 		bool IsHTML5Hosting();
 
     /// Expressions
 
-		const char * Error();
+		const char * error();
 		const char * Lacewing_Version();
 		unsigned int BinaryToSend_Size();
 		const char * RequestedClientName();
 		const char * RequestedChannelName();
 		const char * Channel_Name();
-		int Channel_ClientCount();
+		unsigned int Channel_ClientCount();
 		const char * Client_Name();
-		int Client_ID();
+		unsigned int Client_ID();
 		const char * Client_IP();
-		int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
-		int Client_ChannelCount();
+		unsigned int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
+		unsigned int Client_ChannelCount();
 		const char * ReceivedStr();
 		int ReceivedInt();
 		unsigned int ReceivedBinarySize();
-		long ReceivedBinaryAddress();
-		const char * StrByte(int Index);
-		unsigned int UnsignedByte(int Index);
-		int SignedByte(int Index);
-		unsigned int UnsignedShort(int Index);
-		int SignedShort(int Index);
-		unsigned int UnsignedInteger(int Index);
-		int SignedInteger(int Index);
-		float Float(int Index);
-		const char * StringWithSize(int Index, int Size);
-		const char * String(int Index);
-		int Subchannel();
-		int Channel_Count();
-		const char * Client_GetLocalData(char * Key);
+		unsigned int ReceivedBinaryAddress();
+		const char * StrByte(int index);
+		unsigned int UnsignedByte(int index);
+		int SignedByte(int index);
+		unsigned int UnsignedShort(int index);
+		int SignedShort(int index);
+		unsigned int UnsignedInteger(int index);
+		int SignedInteger(int index);
+		float Float(int index);
+		const char * StringWithSize(int index, int size);
+		const char * String(int index);
+		unsigned int Subchannel();
+		unsigned int Channel_Count();
+		const char * Client_GetLocalData(char * key);
 		const char * CursorStrByte();
 		unsigned int CursorUnsignedByte();
 		int CursorSignedByte();
@@ -275,15 +276,15 @@ public:
 		unsigned int CursorUnsignedInteger();
 		int CursorSignedInteger();
 		float CursorFloat();
-		const char * CursorStringWithSize(int Size);
+		const char * CursorStringWithSize(int size);
 		const char * CursorString();
 		const char * Client_ProtocolImplementation();
-		const char * Channel_GetLocalData(char * Key);
-		int Port();
-		long BinaryToSend_Address();
+		const char * Channel_GetLocalData(char * key);
+		unsigned int Port();
+		unsigned int BinaryToSend_Address();
 		const char * Welcome_Message();
 		// Added expressions:
-		const char * DumpMessage(int Index, const char * Format);
+		const char * DumpMessage(int index, const char * format);
 		unsigned int AllClientCount();
 		const char * GetDenyReason();
 		
@@ -300,7 +301,7 @@ public:
         inside the extension class.
     */
 
-    short Handle();
+    REFLAG Handle();
     short Display();
 
     short Pause();
@@ -334,66 +335,66 @@ struct LocalData
 };
 
 struct GlobalInfo {
-	lacewing::eventpump			_ObjEventPump;
-	lacewing::relayserver		_Server;
-	char *						_SendMsg,
-		 *						_DenyReason,
-		 *						_NewChannelName,
-		 *						_NewClientName;
-	bool						_DropMessage,
-								_AutomaticallyClearBinary;
-	InteractiveType				_InteractivePending;
-	size_t						_SendMsgSize;
+	lacewing::eventpump			_objEventPump;
+	lacewing::relayserver		_server;
+	char *						_sendMsg,
+		 *						_denyReason,
+		 *						_newChannelName,
+		 *						_newClientName;
+	bool						_dropMessage,
+								_automaticallyClearBinary;
+	InteractiveType				_interactivePending;
+	size_t						_sendMsgSize;
 
-	char *						_GlobalID;
-	HANDLE						_Thread;
-	Extension *					_Ext;
+	char *						_globalID;
+	HANDLE						_thread;
+	Extension *					_ext;
 	std::vector<SaveExtInfo *>	_Saved;
-	std::vector<ChannelCopy *>	_Channels;
+	std::vector<ChannelCopy *>	_channels;
 	std::vector<ClientCopy *>	_Clients;
 
 	ChannelCopy *				LastDestroyedExtSelectedChannel;
 	ClientCopy *				LastDestroyedExtSelectedClient;
 
-	CRITICAL_SECTION			Lock;
+	CRITICAL_SECTION			lock;
 	std::vector<Extension *>	Refs;
 	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
 	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 
 	void AddEvent1(int Event1,
-		ChannelCopy * Channel = nullptr,
-		ClientCopy * Client = nullptr,
+		ChannelCopy * channel = nullptr,
+		ClientCopy * client = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
-		unsigned char Subchannel = 255,
+		unsigned char subchannel = 255,
 		ClientCopy * ReceivingClient = nullptr,
 		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char Variant = 255,
-		bool Blasted = false,
-		bool ChannelCreate_Hidden = false, bool ChannelCreate_AutoClose = false);
+		unsigned char variant = 255,
+		bool blasted = false,
+		bool channelCreate_Hidden = false, bool channelCreate_AutoClose = false);
 	void AddEvent2(int Event1, int Event2,
-		ChannelCopy * Channel = nullptr,
-		ClientCopy *Client = nullptr,
+		ChannelCopy * channel = nullptr,
+		ClientCopy *client = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
-		unsigned char Subchannel = 255,
+		unsigned char subchannel = 255,
 		ClientCopy * ReceivingClient = nullptr,
 		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char Variant = 255,
-		bool Blasted = false,
-		bool ChannelCreate_Hidden = false, bool ChannelCreate_AutoClose = false);
+		unsigned char variant = 255,
+		bool blasted = false,
+		bool channelCreate_Hidden = false, bool channelCreate_AutoClose = false);
 	void AddEventF(bool twoEvents, int Event1, int Event2,
-		ChannelCopy * Channel = nullptr,
-		ClientCopy * Client = nullptr,
+		ChannelCopy * channel = nullptr,
+		ClientCopy * client = nullptr,
 		char * MessageOrErrorText = nullptr,
 		size_t MessageSize = 0,
-		unsigned char Subchannel = 255,
+		unsigned char subchannel = 255,
 		ClientCopy * ReceivingClient = nullptr,
 		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char Variant = 255,
-		bool Blasted = false,
-		bool ChannelCreate_Hidden = false,
-		bool ChannelCreate_AutoClose = false
+		unsigned char variant = 255,
+		bool blasted = false,
+		bool channelCreate_Hidden = false,
+		bool channelCreate_AutoClose = false
 	);
 	void CreateError(const char * errorText);
 
@@ -413,7 +414,7 @@ struct GlobalInfo {
 	const char * AutoResponse_NameSet_DenyReason;
 	AutoResponse AutoResponse_ChannelJoin;
 	const char * AutoResponse_ChannelJoin_DenyReason;
-	AutoResponse AutoResponse_ChannelLeave;
+	AutoResponse autoResponse_ChannelLeave;
 	const char * AutoResponse_ChannelLeave_DenyReason;
 	AutoResponse AutoResponse_MessageClient;
 	AutoResponse AutoResponse_MessageChannel;

@@ -11,7 +11,7 @@ struct Prop_Custom;
 struct PropData
 {
 	int				ID;					// Identifier (generated, 1+,)
-	const char *	Title;				// Name = ID of the property name in the resources, or const char *
+	const char *	Title;				// name = ID of the property name in the resources, or const char *
 	const char *	Info;				// Info = ID of the property description in the resources, or const char *
 	union { 
 		unsigned int	Type_ID;		// Property type...
@@ -393,10 +393,10 @@ public:
 			String[length] = 0;	// Force null ending
 		}
 	}
-	Prop_AStr(size_t Size)
+	Prop_AStr(size_t size)
 	{
-		if (Size > 0)
-			String = (char *)calloc(Size, sizeof(char)); // Allocate size specified
+		if (size > 0)
+			String = (char *)calloc(size, sizeof(char)); // Allocate size specified
 		else
 			String = _strdup("");
 	}
@@ -455,21 +455,21 @@ public:
 			String = _wcsdup(L"");
 		else
 		{
-			size_t Size = strlen(Str);
-			String = (wchar_t *)calloc(Size+1, sizeof(wchar_t));
+			size_t size = strlen(Str);
+			String = (wchar_t *)calloc(size+1, sizeof(wchar_t));
 			if (!String)
 				return; // Stops bad-access crashes
 			
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
-			MultiByteToWideChar(CP_ACP, 0, Str, Size, String, Size);
-			String[Size] = 0;
+			MultiByteToWideChar(CP_ACP, 0, Str, size, String, size);
+			String[size] = 0;
 		}
 	}
-	Prop_WStr(size_t Size)
+	Prop_WStr(size_t size)
 	{
-		if (Size > 0)
-			String = (wchar_t *)calloc(Size, sizeof(wchar_t)); // Allocate size specified
+		if (size > 0)
+			String = (wchar_t *)calloc(size, sizeof(wchar_t)); // Allocate size specified
 		else
 			String = _wcsdup(L"");
 	}
@@ -641,7 +641,7 @@ enum {
 ///////////////////
 //
 #define	PROPOPT_CHECKBOX		bit1		// Left check box
-#define PROPOPT_BOLD			bit2		// Name must be displayed in bold characters
+#define PROPOPT_BOLD			bit2		// name must be displayed in bold characters
 #define PROPOPT_PARAMREQUIRED	bit3		// A non-null parameter must be provided or it will be requested immediately
 #define PROPOPT_REMOVABLE		bit4		// The property can be deleted by the user
 #define PROPOPT_RENAMEABLE		bit5		// The property can be renamed by the user

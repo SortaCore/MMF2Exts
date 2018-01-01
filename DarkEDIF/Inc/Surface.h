@@ -255,7 +255,7 @@ public:
 		void Delete();
 
 		// ======================
-		// Error codes
+		// error codes
 		// ======================
 		int		GetLastError(void);
 
@@ -546,7 +546,7 @@ public:
 #endif
 
 		// ======================
-		// Text
+		// text
 		// ======================
 
 #undef TextOut

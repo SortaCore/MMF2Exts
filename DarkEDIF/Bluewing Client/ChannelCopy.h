@@ -22,7 +22,7 @@ struct ChannelCopy
 
 	PeerCopy * addpeer(lacewing::relayclient::channel::peer * peer);
 
-	PeerCopy * updatepeername(lacewing::relayclient::channel::peer &Peer);
+	PeerCopy * updatepeername(lacewing::relayclient::channel::peer &peer);
 
 	/// <summary> Sets peer to read-only. </summary>
 	PeerCopy * closepeer(lacewing::relayclient::channel::peer& peer);

@@ -22,58 +22,58 @@ struct ClientCopy;
 	struct SaveExtInfo
 	{
 		// Required for DarkEDIF
-		unsigned char		NumEvents;
+		unsigned char		numEvents;
 		unsigned short		CondTrig[2];
 
 		// Lacewing code
 		union {
 			// When you receive a message
 			struct {
-			char *				Content;
-			size_t				Size,
-								Cursor;
-			unsigned char		Subchannel;
-			bool				Blasted;
-			unsigned char		Variant;
-			} ReceivedMsg;
+			char *				content;
+			size_t				size,
+								cursor;
+			unsigned char		subchannel;
+			bool				blasted;
+			unsigned char		variant;
+			} receivedMsg;
 
 			// When an error occurs
 			struct {
-				char *		Text;
-			} Error;
+				char *		text;
+			} error;
 
 			// When a selection/loop is called
 			struct  {
-				char *		Name;
-			} Loop;
+				char *		name;
+			} loop;
 
 			// On name set request
 			struct {
-				char *		Name;
+				char *		name;
 			} Requested;
 		};
-		ChannelCopy * Channel;
+		ChannelCopy * channel;
 		union {
-			ClientCopy * Client;
-			ClientCopy * SenderClient; // By default the same as Client
+			ClientCopy * client;
+			ClientCopy * senderClient; // By default the same as Client
 		};
 		ClientCopy * ReceivingClient;
 		InteractiveType InteractiveType;
-		bool ChannelCreate_Hidden;
-		bool ChannelCreate_AutoClose;
+		bool channelCreate_Hidden;
+		bool channelCreate_AutoClose;
 
-		SaveExtInfo() : NumEvents(0), CondTrig { 0 },
-			Channel(NULL), Client(NULL), ReceivingClient(NULL), 
+		SaveExtInfo() : numEvents(0), CondTrig { 0 },
+			channel(NULL), client(NULL), ReceivingClient(NULL), 
 			InteractiveType(InteractiveType::None),
-			ChannelCreate_Hidden(false),
-			ChannelCreate_AutoClose(false)
+			channelCreate_Hidden(false),
+			channelCreate_AutoClose(false)
 		{
-			ReceivedMsg.Content = NULL;
-			ReceivedMsg.Cursor = 0;
-			ReceivedMsg.Size = 0;
-			ReceivedMsg.Subchannel = 0;
-			ReceivedMsg.Blasted = false;
-			ReceivedMsg.Variant = 255;
+			receivedMsg.content = NULL;
+			receivedMsg.cursor = 0;
+			receivedMsg.size = 0;
+			receivedMsg.subchannel = 0;
+			receivedMsg.blasted = false;
+			receivedMsg.variant = 255;
 		}
 		~SaveExtInfo()
 		{
@@ -85,20 +85,20 @@ struct ClientCopy;
 		{
 			// A char * is always the first member of each struct inside the union.
 			// So they will be at the same memory address. Neat, huh?
-			if (ReceivedMsg.Content)
+			if (receivedMsg.content)
 			{
-				free(ReceivedMsg.Content);
-				ReceivedMsg.Content = NULL;
-				ReceivedMsg.Cursor = 0;
-				ReceivedMsg.Size = 0;
-				ReceivedMsg.Subchannel = 0;
-				ReceivedMsg.Blasted = false;
-				ReceivedMsg.Variant = 255;
+				free(receivedMsg.content);
+				receivedMsg.content = NULL;
+				receivedMsg.cursor = 0;
+				receivedMsg.size = 0;
+				receivedMsg.subchannel = 0;
+				receivedMsg.blasted = false;
+				receivedMsg.variant = 255;
 			}
-			NumEvents = 0;
+			numEvents = 0;
 			CondTrig[0] = 0; CondTrig[1] = 0;
-			Channel = NULL;
-			Client = NULL;
+			channel = NULL;
+			client = NULL;
 			ReceivingClient = NULL;
 			InteractiveType = InteractiveType::None;
 		}

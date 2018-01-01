@@ -1,9 +1,9 @@
 
 #include "Common.h"
 
-const char * Extension::Error()
+const char * Extension::error()
 {
-	return Runtime.CopyString(ThreadData.Error.Text ? ThreadData.Error.Text : "");
+	return Runtime.CopyString(threadData.error.text ? threadData.error.text : "");
 }
 const char * Extension::ReplacedExprNoParams()
 {
@@ -13,231 +13,230 @@ const char * Extension::Self_Name()
 {
 	return Runtime.CopyString(Cli.name() ? Cli.name() : "");
 }
-int Extension::Self_ChannelCount()
+unsigned int Extension::Self_ChannelCount()
 {
 	return Channels.size();
 }
 const char * Extension::Peer_Name()
 {
-	return Runtime.CopyString(ThreadData.Peer ? ThreadData.Peer->name() : "");
+	return Runtime.CopyString(threadData.peer ? threadData.peer->name() : "");
 }
 const char * Extension::ReceivedStr()
 {
-	if (ThreadData.ReceivedMsg.Content == nullptr || ThreadData.ReceivedMsg.Size == 0) 
+	if (threadData.receivedMsg.content == nullptr || threadData.receivedMsg.size == 0) 
 		return Runtime.CopyString("");
 	else
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size).c_str());
+		return Runtime.CopyString(std::string(threadData.receivedMsg.content, threadData.receivedMsg.size).c_str());
 }
 int Extension::ReceivedInt()
 {
-	if (ThreadData.ReceivedMsg.Size != 4) 
+	if (threadData.receivedMsg.size != 4) 
 	{
 		CreateError("Received() was used on a message that is not a number message.");
 		return 0;
 	}
 	else
-		return *(int *)ThreadData.ReceivedMsg.Content;
+		return *(int *)threadData.receivedMsg.content;
 }
-int Extension::Subchannel()
+unsigned int Extension::subchannel()
 {
-	return (int)ThreadData.ReceivedMsg.Subchannel;
+	return (unsigned int)threadData.receivedMsg.subchannel;
 }
 int Extension::Peer_ID()
 {
-	return ThreadData.Peer ? ThreadData.Peer->id() : -1;
+	return threadData.peer ? threadData.peer->id() : -1;
 }
 const char * Extension::Channel_Name()
 {
-	return Runtime.CopyString(ThreadData.Channel ? ThreadData.Channel->name() : "");
+	return Runtime.CopyString(threadData.channel ? threadData.channel->name() : "");
 }
 int Extension::Channel_PeerCount()
 {
-	return ThreadData.Channel ? ThreadData.Channel->peercount() : -1;
+	return threadData.channel ? threadData.channel->peercount() : -1;
 }
 const char * Extension::ChannelListing_Name()
 {
-	return Runtime.CopyString(ThreadData.ChannelListing ? ThreadData.ChannelListing->name : "");
+	return Runtime.CopyString(threadData.channelListing ? threadData.channelListing->name : "");
 }
 int Extension::ChannelListing_PeerCount()
 {
-	return ThreadData.ChannelListing ? ThreadData.ChannelListing->peercount : -1;
+	return threadData.channelListing ? threadData.channelListing->peercount : -1;
 }
 int Extension::Self_ID()
 {
 	return Cli.id();
 }
-const char * Extension::StrByte(int Index)
+const char * Extension::StrByte(int index)
 {
-	if (Index < 0)
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return Runtime.CopyString("");
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(char))
+	else if (threadData.receivedMsg.size - index < sizeof(char))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
 	else
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content+Index, 1).c_str());
+		return Runtime.CopyString(std::string(threadData.receivedMsg.content + index, 1U).c_str());
 }
-unsigned int Extension::UnsignedByte(int Index)
+unsigned int Extension::UnsignedByte(int index)
 {
-	if (Index < 0)
+	if (index < 0)
+	{
+		CreateError("Could not read from received binary, index less than 0.");
+		return 0U;
+	}
+	else if (threadData.receivedMsg.size - index < sizeof(unsigned char))
+	{
+		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
+		return 0U;
+	}
+	else
+		return (unsigned int)(*(unsigned char *)(threadData.receivedMsg.content + index));
+}
+int Extension::SignedByte(int index)
+{
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return 0;
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(unsigned char))
+	else if (threadData.receivedMsg.size - index < sizeof(char))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
-		return (unsigned int)(*(unsigned char *)(ThreadData.ReceivedMsg.Content+Index));
+		return (int)(threadData.receivedMsg.content + index);
 }
-int Extension::SignedByte(int Index)
+unsigned int Extension::UnsignedShort(int index)
 {
-	if (Index < 0)
+	if (index < 0)
+	{
+		CreateError("Could not read from received binary, index less than 0.");
+		return 0U;
+	}
+	else if (threadData.receivedMsg.size - index < sizeof(unsigned short))
+	{
+		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
+		return 0U;
+	}
+	else
+		return (unsigned int)(*(unsigned short *)(threadData.receivedMsg.content + index));
+}
+int Extension::SignedShort(int index)
+{
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return 0;
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(char))
+	else if (threadData.receivedMsg.size - index < sizeof(short))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
-		return (int)(ThreadData.ReceivedMsg.Content+Index);
+		return (int)(*(short *)(threadData.receivedMsg.content + index));
 }
-unsigned int Extension::UnsignedShort(int Index)
+unsigned int Extension::UnsignedInteger(int index)
 {
-	if (Index < 0)
+	if (index < 0)
+	{
+		CreateError("Could not read from received binary, index less than 0.");
+		return 0U;
+	}
+	else if (threadData.receivedMsg.size - index < sizeof(unsigned int))
+	{
+		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
+		return 0U;
+	}
+	else
+		return (*(unsigned int *)(threadData.receivedMsg.content + index));
+}
+int Extension::SignedInteger(int index)
+{
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return 0;
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(unsigned short))
+	else if (threadData.receivedMsg.size - index < sizeof(int))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
-		return (unsigned int)(*(unsigned short *)(ThreadData.ReceivedMsg.Content + Index));
+		return (*(int *)(threadData.receivedMsg.content + index));
 }
-int Extension::SignedShort(int Index)
+float Extension::Float(int index)
 {
-	if (Index < 0)
-	{
-		CreateError("Could not read from received binary, index less than 0.");
-		return 0;
-	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(short))
-	{
-		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
-		return 0;
-	}
-	else
-		return (int)(*(short *)(ThreadData.ReceivedMsg.Content + Index));
-}
-unsigned int Extension::UnsignedInteger(int Index)
-{
-	if (Index < 0)
-	{
-		CreateError("Could not read from received binary, index less than 0.");
-		return 0;
-	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(unsigned int))
-	{
-		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
-		return 0;
-	}
-	else
-		return (*(unsigned int *)(ThreadData.ReceivedMsg.Content + Index));
-}
-int Extension::SignedInteger(int Index)
-{
-	if (Index < 0)
-	{
-		CreateError("Could not read from received binary, index less than 0.");
-		return 0;
-	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(int))
-	{
-		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
-		return 0;
-	}
-	else
-		return (*(int *)(ThreadData.ReceivedMsg.Content + Index));
-}
-float Extension::Float(int Index)
-{
-	if (Index < 0)
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return 0.0f;
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < sizeof(float))
+	else if (threadData.receivedMsg.size - index < sizeof(float))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0.0f;
 	}
 	else
-		return (*(float *)(ThreadData.ReceivedMsg.Content + Index));
+		return (*(float *)(threadData.receivedMsg.content + index));
 }
-const char * Extension::StringWithSize(int Index, int Size)
+const char * Extension::StringWithSize(int index, int size)
 {
-	if (Index < 0)
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return Runtime.CopyString("");
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < Size * sizeof(TCHAR))
+	else if (threadData.receivedMsg.size - index < size * sizeof(TCHAR))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
 	else
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content+Index, Size).c_str());
+		return Runtime.CopyString(std::string(threadData.receivedMsg.content+index, size).c_str());
 }
-const char * Extension::String(int Index)
+const char * Extension::String(int index)
 {
-	if (Index < 0)
+	if (index < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return Runtime.CopyString("");
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index < 1)
+	else if (threadData.receivedMsg.size - index < 1)
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
-	else if (strnlen(ThreadData.ReceivedMsg.Content + Index, ThreadData.ReceivedMsg.Size - Index + 1) == ThreadData.ReceivedMsg.Size - Index + 1)
+	else if (strnlen(threadData.receivedMsg.content + index, threadData.receivedMsg.size - index + 1) == threadData.receivedMsg.size - index + 1)
 	{
 		CreateError("Could not read null-terminated string; null terminator not found.");
 		return Runtime.CopyString("");
 	}
 	else
-		return Runtime.CopyString(&ThreadData.ReceivedMsg.Content[Index]);
+		return Runtime.CopyString(&threadData.receivedMsg.content[index]);
 }
-int Extension::ReceivedBinarySize()
+unsigned int Extension::ReceivedBinarySize()
 {
-	return ThreadData.ReceivedMsg.Size;
+	return threadData.receivedMsg.size;
 }
 const char * Extension::Lacewing_Version()
 {
-	// Why #define something stringifying when you can be lazy
 	static const char * version = nullptr;
 	if (version == nullptr)
 	{
 		std::stringstream str;
-		str << "liblacewing 0.5.4 / Bluewing reimpl b" << lacewing::relayclient::buildnum;
+		str << lw_version() << " / Bluewing reimpl b" << lacewing::relayserver::buildnum;
 		version = _strdup(str.str().c_str());
 	}
 	return Runtime.CopyString(version);
 }
-int Extension::SendBinarySize()
+unsigned int Extension::SendBinarySize()
 {
 	return SendMsgSize;
 }
@@ -247,7 +246,7 @@ const char * Extension::Self_PreviousName()
 }
 const char * Extension::Peer_PreviousName()
 {
-	return Runtime.CopyString((!ThreadData.Peer || !ThreadData.Peer->prevname()) ? "" : ThreadData.Peer->prevname());
+	return Runtime.CopyString((!threadData.peer || !threadData.peer->prevname()) ? "" : threadData.peer->prevname());
 }
 const char * Extension::DenyReason()
 {
@@ -259,178 +258,178 @@ const char * Extension::HostIP()
 	lacewing::lw_addr_prettystring(Cli.serveraddress()->tostring(), fusionAddr, 64U);
 	return fusionAddr; // Allocate is equivalent to CopyString, but doesn't copy initially.
 }
-int Extension::HostPort()
+unsigned int Extension::HostPort()
 {
 	return Cli.serveraddress()->port();
 }
 const char * Extension::WelcomeMessage()
 {
-	return  Runtime.CopyString(Cli.welcomemessage()); 
+	return Runtime.CopyString(Cli.welcomemessage()); 
 }
-long Extension::ReceivedBinaryAddress()
+unsigned int Extension::ReceivedBinaryAddress()
 {
-	return (long)ThreadData.ReceivedMsg.Content;
+	return (unsigned int)threadData.receivedMsg.content;
 }
 const char * Extension::CursorStrByte()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(char))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(char))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
 	else
 	{
-		++ThreadData.ReceivedMsg.Cursor;
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content+ThreadData.ReceivedMsg.Cursor - 1, 1).c_str());
+		++threadData.receivedMsg.cursor;
+		return Runtime.CopyString(std::string(threadData.receivedMsg.content+threadData.receivedMsg.cursor - 1, 1).c_str());
 	}
 }
 unsigned int Extension::CursorUnsignedByte()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(unsigned char))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(unsigned char))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read.");
 		return 0;
 	}
 	else
 	{
-		++ThreadData.ReceivedMsg.Cursor;
-		return (unsigned int)(*(unsigned char *)(ThreadData.ReceivedMsg.Content + (ThreadData.ReceivedMsg.Cursor-1)));
+		++threadData.receivedMsg.cursor;
+		return (unsigned int)(*(unsigned char *)(threadData.receivedMsg.content + (threadData.receivedMsg.cursor-1)));
 	}
 }
 int Extension::CursorSignedByte()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(char))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(char))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read.");
 		return 0;
 	}
 	else
 	{
-		++ThreadData.ReceivedMsg.Cursor;
-		return (int)(ThreadData.ReceivedMsg.Content+ThreadData.ReceivedMsg.Cursor-1);
+		++threadData.receivedMsg.cursor;
+		return (int)(threadData.receivedMsg.content+threadData.receivedMsg.cursor-1);
 	}
 }
 unsigned int Extension::CursorUnsignedShort()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(unsigned short))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(unsigned short))
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return 0;
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += 2;
-		return (unsigned int)(*(unsigned short *)(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Size - 2));
+		threadData.receivedMsg.cursor += 2;
+		return (unsigned int)(*(unsigned short *)(threadData.receivedMsg.content + threadData.receivedMsg.size - 2));
 	}
 }
 int Extension::CursorSignedShort()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(short))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(short))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += 2;
-		return (int)(*(short *)(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor - 2));
+		threadData.receivedMsg.cursor += 2;
+		return (int)(*(short *)(threadData.receivedMsg.content + threadData.receivedMsg.cursor - 2));
 	}
 }
 unsigned int Extension::CursorUnsignedInteger()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(unsigned int))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(unsigned int))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += 4;
-		return (*(unsigned int *)(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor - 4));
+		threadData.receivedMsg.cursor += 4;
+		return (*(unsigned int *)(threadData.receivedMsg.content + threadData.receivedMsg.cursor - 4));
 	}
 }
 int Extension::CursorSignedInteger()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(int))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(int))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0;
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += 4;
-		return (*(int *)(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor - 4));
+		threadData.receivedMsg.cursor += 4;
+		return (*(int *)(threadData.receivedMsg.content + threadData.receivedMsg.cursor - 4));
 	}
 }
 float Extension::CursorFloat()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < sizeof(float))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < sizeof(float))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return 0.0f;
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += 4;
-		return (*(float *)(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor - 4));
+		threadData.receivedMsg.cursor += 4;
+		return (*(float *)(threadData.receivedMsg.content + threadData.receivedMsg.cursor - 4));
 	}
 }
-const char * Extension::CursorStringWithSize(int Size)
+const char * Extension::CursorStringWithSize(int size)
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < Size * sizeof(TCHAR))
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < size * sizeof(TCHAR))
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
 	else
 	{
-		ThreadData.ReceivedMsg.Cursor += Size;
-		return Runtime.CopyString(std::string(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor - Size, Size).c_str());
+		threadData.receivedMsg.cursor += size;
+		return Runtime.CopyString(std::string(threadData.receivedMsg.content + threadData.receivedMsg.cursor - size, size).c_str());
 	}
 }
 const char * Extension::CursorString()
 {
-	if (ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor < 1)
+	if (threadData.receivedMsg.size - threadData.receivedMsg.cursor < 1)
 	{
 		CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index.");
 		return Runtime.CopyString("");
 	}
-	else if (strnlen(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor, ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor + 1) == ThreadData.ReceivedMsg.Size - ThreadData.ReceivedMsg.Cursor + 1)
+	else if (strnlen(threadData.receivedMsg.content + threadData.receivedMsg.cursor, threadData.receivedMsg.size - threadData.receivedMsg.cursor + 1) == threadData.receivedMsg.size - threadData.receivedMsg.cursor + 1)
 	{
 		CreateError("Could not read null-terminated string; null terminator not found.");
 		return Runtime.CopyString("");
 	}
 	else
 	{
-		size_t s = ThreadData.ReceivedMsg.Cursor;
-		ThreadData.ReceivedMsg.Cursor += strlen(ThreadData.ReceivedMsg.Content + ThreadData.ReceivedMsg.Cursor)+1;
-		return Runtime.CopyString(ThreadData.ReceivedMsg.Content+s);
+		size_t s = threadData.receivedMsg.cursor;
+		threadData.receivedMsg.cursor += strlen(threadData.receivedMsg.content + threadData.receivedMsg.cursor)+1;
+		return Runtime.CopyString(threadData.receivedMsg.content+s);
 	}
 }
-long Extension::SendBinaryAddress()
+unsigned int Extension::SendBinaryAddress()
 {
-	return (long)SendMsg;
+	return (unsigned int)(long)SendMsg;
 }
-const char * Extension::DumpMessage(int Index, const char * Format)
+const char * Extension::DumpMessage(int index, const char * format)
 {
 	//
-	if (!Format || Format[0] == '\0')
+	if (format[0] == '\0')
 	{
 		CreateError("Dumping message failed; format supplied was null or \"\".");
 	}
-	else if (ThreadData.ReceivedMsg.Size - Index <= 0)
+	else if (threadData.receivedMsg.size - index <= 0)
 	{
 		CreateError("Dumping message failed; index exceeds size of message.");
 	}
 	else
 	{
-		std::stringstream Output;
-		size_t SizeOfFormat = strlen(Format);
-		bool Signed;
-		size_t Count = 0;
-		const char * Msg = &ThreadData.ReceivedMsg.Content[Index];
+		std::stringstream output;
+		size_t sizeOfFormat = strlen(format);
+		bool _signed;
+		size_t count = 0;
+		const char * Msg = &threadData.receivedMsg.content[index];
 		// +c10c20c
- 		for (const char * i = Format; i < Format+SizeOfFormat;)
+ 		for (const char * i = format; i < format + sizeOfFormat;)
 		{
 			// Skip past last loop's numbers to get to variable type letter
 			while (isdigit(i[0]))
@@ -438,36 +437,36 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 
 			// Determine if variable should be signed or unsigned
 			if (i[0] != '+')
-				Signed = true;
+				_signed = true;
 			else
 			{
-				Signed = false;
+				_signed = false;
 				++i;
 			}
 
-			// Count number of expected variables
-			Count = max(atoi(i+1),1);
+			// count number of expected variables
+			count = max(atoi(i+1),1);
 				
 			// Char
 			if (i[0] == 'c')
 			{
 				++i;
-				if (ThreadData.ReceivedMsg.Size-Index < Count)
+				if (threadData.receivedMsg.size-index < count)
 				{
 					CreateError("Could not dump; message was not large enough to contain variables.");
 					return Runtime.CopyString("");
 				}
-				if (Signed)
+				if (_signed)
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Signed char: " << (int)Msg[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Signed char: " << (int)Msg[j] << "\r\n";
 				}
 				else
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Unsigned char: " << (int)((unsigned char *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Unsigned char: " << (int)((unsigned char *)Msg)[j] << "\r\n";
 				}
-				Msg += Count;
+				Msg += count;
 					
 				continue;
 			}
@@ -476,22 +475,22 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 			if (i[0] == 'h')
 			{
 				++i;
-				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(short))
+				if (threadData.receivedMsg.size-index < count*sizeof(short))
 				{
 					CreateError("Could not dump; message was not large enough to contain variables.");
 					return Runtime.CopyString("");
 				}
-				if (Signed)
+				if (_signed)
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Signed short: " << (int)((short *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Signed short: " << (int)((short *)Msg)[j] << "\r\n";
 				}
 				else
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Unsigned short: " << (int)((unsigned short *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Unsigned short: " << (int)((unsigned short *)Msg)[j] << "\r\n";
 				}
-				Msg += Count*sizeof(short);
+				Msg += count*sizeof(short);
 				continue;
 			}
 
@@ -499,17 +498,17 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 			if (i[0] == 's')
 			{
 				++i;
-				if (Signed == false)
+				if (_signed == false)
 					CreateError("'+' flag not expected next to 's'; strings cannot be unsigned.");
-				for (unsigned int j = 0; j < Count; ++j)
+				for (unsigned int j = 0; j < count; ++j)
 				{
-					if (strnlen(Msg, ThreadData.ReceivedMsg.Size-Index+1) == ThreadData.ReceivedMsg.Size-Index+1)
+					if (strnlen(Msg, threadData.receivedMsg.size - index + 1) == threadData.receivedMsg.size - index + 1)
 					{
 						CreateError("Could not dump; message was not large enough to contain variables.");
 						return Runtime.CopyString("");
 					}
 
-					Output << "String: " << Msg << "\r\n";
+					output << "String: " << Msg << "\r\n";
 					Msg += strlen(Msg)+1;
 				}
 				continue;
@@ -519,22 +518,22 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 			if (i[0] == 'i')
 			{
 				++i;
-				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(int))
+				if (threadData.receivedMsg.size-index < count*sizeof(int))
 				{
 					CreateError("Could not dump; message was not large enough to contain variables.");
 					return Runtime.CopyString("");
 				}
-				if (Signed)
+				if (_signed)
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Signed integer: " << ((int *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Signed integer: " << ((int *)Msg)[j] << "\r\n";
 				}
 				else
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Unsigned integer: " << ((unsigned int *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Unsigned integer: " << ((unsigned int *)Msg)[j] << "\r\n";
 				}
-				Msg += Count*sizeof(int);
+				Msg += count*sizeof(int);
 				continue;
 			}
 
@@ -542,37 +541,37 @@ const char * Extension::DumpMessage(int Index, const char * Format)
 			if (i[0] == 'f')
 			{
 				++i;
-				if (ThreadData.ReceivedMsg.Size-Index < Count*sizeof(float))
+				if (threadData.receivedMsg.size-index < count*sizeof(float))
 				{
 					CreateError("Could not dump; message was not large enough to contain variables.");
 					return Runtime.CopyString("");
 				}
-				if (!Signed)
+				if (!_signed)
 				{
 					CreateError("'+' flag not expected next to 'f'; floats cannot be unsigned.");
 				}
 				else
 				{
-					for (unsigned int j = 0; j < Count; ++j)
-						Output << "Float: " << ((float *)Msg)[j] << "\r\n";
+					for (unsigned int j = 0; j < count; ++j)
+						output << "Float: " << ((float *)Msg)[j] << "\r\n";
 				}
-				Msg += Count*sizeof(float);
+				Msg += count*sizeof(float);
 				continue;
 			}
 
 			// Did not find identifier; error out
-			std::stringstream Error;
-			Error << "Unrecognised variable in format: '" << i[0] << "'. Valid: c, h, s, i, f; operator +.";
-			CreateError(Error.str().c_str());
+			std::stringstream error;
+			error << "Unrecognised variable in format: '" << i[0] << "'. Valid: c, h, s, i, f; and operator +.";
+			CreateError(error.str().c_str());
 			return Runtime.CopyString("");
 		}
 
-		return Runtime.CopyString(Output.str().c_str());
+		return Runtime.CopyString(output.str().c_str());
 	}
 
 	return Runtime.CopyString("");
 }
-int Extension::ChannelListing_ChannelCount()
+unsigned int Extension::ChannelListing_ChannelCount()
 {
 	return Cli.channellistingcount();
 }

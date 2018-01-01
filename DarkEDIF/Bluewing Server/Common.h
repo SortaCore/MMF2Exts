@@ -15,9 +15,7 @@
 #define DLLExport   __stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
-
-// Lacewing-required lines.==
-
+// Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 #pragma comment(lib, "mpr.lib")
@@ -26,15 +24,14 @@
 
 // #define lw_import
 // #define _lacewing_static
-// Now in project settings; absolutely required.
+// These two are now defined in project settings; they're absolutely required.
 
-// ==end lacewing
+// == end lacewing
 
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-#pragma comment(lib, "..\\Lib\\zlib.lib")
 #include <sstream>
-#include "zlib.h"
 #include <algorithm>
+#include "zlib.h"
+#pragma comment(lib, "..\\Lib\\zlib.lib")
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
@@ -44,14 +41,14 @@
 		<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
 	}
 
-#define LeaveCriticalSectionDerpy(x) { \
+#define LeaveCriticalSectionDebug(x) { \
 		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Left on " \
 			<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
 		LeaveCriticalSection(x); \
 	}
 #else
 #define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
-#define LeaveCriticalSectionDerpy(x)  LeaveCriticalSection(x)
+#define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
 #endif
 
 #include "Lacewing.h"
@@ -74,6 +71,10 @@ struct EDITDATA
 	// Header - required
 	extHeader			eHeader;
 
+	// Because Lacewing Blue can be interchanged with Lacewing Relay by replacing the MFXes,
+	// we don't use DarkEDIF's automatic property system (except for the menus), instead
+	// matching the Relay's memory layout, and changing Edittime.cpp.
+
 	// Any random edittime stuff? Place here.
 	char pad0[5];				// For matching old extension
 	bool AutomaticClear,
@@ -86,6 +87,11 @@ struct EDITDATA
 	// Keep as last or risk overwriting by functions accessing this address
 	size_t DarkEDIF_Prop_Size;
 	char DarkEDIF_Props[0];
+
+	// DarkEDIF functions, use within Extension ctor.
+	bool IsPropChecked(int propID);
+	const char * GetPropertyStr(const char * propName);
+	const char * GetPropertyStr(int propID);
 };
 
 class Extension;

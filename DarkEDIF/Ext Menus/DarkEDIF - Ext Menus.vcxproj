@@ -27,9 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}</ProjectGuid>
+    <ProjectGuid>{6BF2E39E-64EC-45FA-BD4A-32D9A543F3F8}</ProjectGuid>
     <RootNamespace>DarkEDIF - Blank</RootNamespace>
-    <ProjectName>Ext Menus</ProjectName>
+    <ProjectName>DarkEDIF - Ext Menus</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime Unicode|Win32'" Label="Configuration">

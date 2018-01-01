@@ -13,11 +13,9 @@
 #define JSON_COMMENT_MACRO lacewing::relayclient::buildnum
 
 #define DLLExport   __stdcall
-
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
-// Lacewing-required lines.==
-
+// Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 #pragma comment(lib, "mpr.lib")
@@ -26,35 +24,33 @@
 
 // #define lw_import
 // #define _lacewing_static
-// Now in project settings; absolutely required.
+// These two are now defined in project settings; they're absolutely required.
 
-// ==end lacewing
-
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-#pragma comment(lib, "..\\Lib\\zlib.lib")
+// == end lacewing
 
 #include <algorithm>
 #include <sstream>
 #include <chrono>
 #include "zlib.h"
+#pragma comment(lib, "..\\Lib\\zlib.lib")
 
 #include "PeerCopy.h"
 #include "ChannelCopy.h"
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
-#define EnterCriticalSectionDerpy(x) \
+#define EnterCriticalSectionDebug(x) \
 		EnterCriticalSection(x); \
 		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " \
 			<< __FILE__ << ", line " << __LINE__ << ".\r\n"
 
-#define LeaveCriticalSectionDerpy(x) \
+#define LeaveCriticalSectionDebug(x) \
 		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Left on " \
 			<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
 		LeaveCriticalSection(x)
 #else
-#define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
-#define LeaveCriticalSectionDerpy(x)  LeaveCriticalSection(x)
+#define EnterCriticalSectionDebug(x)  EnterCriticalSection(x)
+#define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
 #endif
 
 #include "Lacewing.h"
@@ -75,18 +71,27 @@ struct EDITDATA
 	// Header - required
 	extHeader			eHeader;
 
+	// Because Lacewing Blue can be interchanged with Lacewing Relay by replacing the MFXes,
+	// we don't use DarkEDIF's automatic property system (except for the menus), instead
+	// matching the Relay's memory layout, and changing Edittime.cpp.
+	
 	// Any random edittime stuff? Place here.
 	char pad0[5];				// For matching old extension
 	bool AutomaticClear,
 		 MultiThreading;
 	bool Global;
 	char edGlobalID[255];
-	bool TimeoutWarningEnabled;
-	bool FullDeleteEnabled;
+	bool timeoutWarningEnabled;
+	bool fullDeleteEnabled;
 
 	// Keep as last or risk overwriting by functions accessing this address
 	size_t DarkEDIF_Prop_Size;
 	char DarkEDIF_Props[0];
+
+	// DarkEDIF functions, use within Extension ctor.
+	bool IsPropChecked(int propID);
+	const char * GetPropertyStr(const char * propName);
+	const char * GetPropertyStr(int propID);
 };
 
 class Extension;

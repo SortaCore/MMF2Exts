@@ -57,15 +57,15 @@ int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		if (strcpy_s(edPtr->edGlobalID, 255, CurLang["Properties"][3]["DefaultState"]))
 			MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEDIF - CreateObject() error", MB_OK);
 		edPtr->MultiThreading = CurLang["Properties"][4]["DefaultState"];
-		edPtr->TimeoutWarningEnabled = CurLang["Properties"][5]["DefaultState"];
-		edPtr->FullDeleteEnabled = CurLang["Properties"][6]["DefaultState"];
+		edPtr->timeoutWarningEnabled = CurLang["Properties"][5]["DefaultState"];
+		edPtr->fullDeleteEnabled = CurLang["Properties"][6]["DefaultState"];
 		
 		
 		//InitialisePropertiesFromJSON(mV, edPtr);
 
 		return 0;
 	}
-	else // Error
+	else // error
 		return -1;
 }
 
@@ -402,9 +402,9 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			if (ID == 4)
 				return edPtr->MultiThreading;
 			if (ID == 5)
-				return edPtr->TimeoutWarningEnabled;
+				return edPtr->timeoutWarningEnabled;
 			if (ID == 6)
-				return edPtr->FullDeleteEnabled;
+				return edPtr->fullDeleteEnabled;
 		}
 
 		if (ID < 0)
@@ -582,12 +582,12 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			}
 			if (ID == 5)
 			{
-				edPtr->TimeoutWarningEnabled = (Check != 0);
+				edPtr->timeoutWarningEnabled = (Check != 0);
 				return;
 			}
 			if (ID == 6)
 			{
-				edPtr->FullDeleteEnabled = (Check != 0);
+				edPtr->fullDeleteEnabled = (Check != 0);
 				return;
 			}
 		}

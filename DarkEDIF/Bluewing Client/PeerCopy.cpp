@@ -26,35 +26,37 @@ const char * PeerCopy::prevname() const
 	return _prevname;
 }
 
-void PeerCopy::setlocaldata(const char * Key, const char * Value)
+void PeerCopy::setlocaldata(const char * key, const char * value)
 {
 	// NB: Nulls checked for by caller
 
 	auto i = std::find_if(localdata.begin(), localdata.end(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+			return !_stricmp(s.first.c_str(), key);
+	});
 
 	// Blank value: Delete
-	if (Value[0] == '\0')
+	if (value[0] == '\0')
 	{
 		if (i != localdata.end())
 			localdata.erase(i);
 		return;
 	}
 	if (i != localdata.end())
-		i->second = Value;
+		i->second = value;
 	else
-		localdata.push_back(std::make_pair(Key, Value));
+		localdata.push_back(std::make_pair(key, value));
 }
 
-const std::string & PeerCopy::getlocaldata(const char * Key) const
+const std::string & PeerCopy::getlocaldata(const char * key) const
 {
 	static std::string blanky = "";
 	// NB: Nulls checked for by caller
 
 	auto i = std::find_if(localdata.cbegin(), localdata.cend(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+			return !_stricmp(s.first.c_str(), key);
+	});
 	return i == localdata.cend() ? blanky : i->second;
 }
 

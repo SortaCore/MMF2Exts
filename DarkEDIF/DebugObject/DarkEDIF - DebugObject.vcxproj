@@ -16,7 +16,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6DD44589-56A5-4DAE-ABA8-E6D4CA42AA4B}</ProjectGuid>
-    <RootNamespace>DarkEDIF - DebugObject</RootNamespace>
+    <RootNamespace>DarkEDIF</RootNamespace>
     <ProjectName>DarkEDIF - DebugObject</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

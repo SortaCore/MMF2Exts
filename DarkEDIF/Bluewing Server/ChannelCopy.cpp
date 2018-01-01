@@ -97,34 +97,37 @@ ChannelCopy::~ChannelCopy() noexcept(false)
 	free((char *)_name);
 	_name = nullptr;
 }
-void ChannelCopy::SetLocalData(const char * Key, const char * Value)
+void ChannelCopy::SetLocalData(const char * key, const char * value)
 {
 	// NB: Nulls checked for by caller
 
+	size_t keyLen = strlen(key);
 	auto i = std::find_if(localdata.begin(), localdata.end(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+		return !_strnicmp(s.first.c_str(), key, keyLen);
+	});
 
 	// Blank value: Delete
-	if (Value[0] == '\0')
+	if (value[0] == '\0')
 	{
 		if (i != localdata.end())
 			localdata.erase(i);
 		return;
 	}
 	if (i != localdata.end())
-		i->second = Value;
+		i->second = value;
 	else
-		localdata.push_back(std::make_pair(Key, Value));
+		localdata.push_back(std::make_pair(key, value));
 }
-const std::string & ChannelCopy::GetLocalData(const char * Key) const
+const std::string & ChannelCopy::GetLocalData(const char * key) const
 {
 	static std::string blanky = "";
 	// NB: Nulls checked for by caller
 
+	size_t keyLen = strlen(key);
 	auto i = std::find_if(localdata.cbegin(), localdata.cend(),
-		[&](const pair<string, string> & s) {
-		return !_stricmp(s.first.c_str(), Key); });
+		[&](const std::pair<std::string, std::string> & s) {
+		return !_strnicmp(s.first.c_str(), key, keyLen); });
 	return i == localdata.cend() ? blanky : i->second;
 }
 
@@ -151,7 +154,7 @@ void ChannelCopy::removeclient(ClientCopy * copy, bool serverInited)
 	if (serverInited)
 		channel->removeclient(*copy->client);
 
-	// Channel has now closed server-side. Reflect it here.
+	// channel has now closed server-side. Reflect it here.
 	if ((_channelmaster == copy && _autoclose) ||
 		(_clients.empty() && _hidden))
 	{
@@ -167,5 +170,4 @@ void ChannelCopy::removeclient(ClientCopy * copy, bool serverInited)
 	auto ch = std::find(copy->_channels.begin(), copy->_channels.end(), this);
 	if (ch != copy->_channels.end())
 		copy->_channels.erase(ch);
-
 }

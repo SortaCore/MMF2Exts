@@ -23,9 +23,9 @@ void Edif::Runtime::PushEvent(int EventID)
     CallRunTimeFunction(rdPtr, RFUNCTION::PUSH_EVENT, EventID, 0);
 }
 
-void * Edif::Runtime::Allocate(size_t Size)
+void * Edif::Runtime::Allocate(size_t size)
 {
-    return (void *) CallRunTimeFunction(rdPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, Size * sizeof(TCHAR));
+    return (void *) CallRunTimeFunction(rdPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, size * sizeof(TCHAR));
 }
 
 TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
@@ -74,27 +74,27 @@ void Edif::Runtime::Redisplay()
 
 void Edif::Runtime::GetApplicationDrive(TCHAR * Buffer)
 {
-    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, FILEINFO::DRIVE, (long) Buffer);
+    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::DRIVE, (long) Buffer);
 }
 
 void Edif::Runtime::GetApplicationDirectory(TCHAR * Buffer)
 {
-    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, FILEINFO::DIR, (long) Buffer);
+    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::DIR, (long) Buffer);
 }
 
 void Edif::Runtime::GetApplicationPath(TCHAR * Buffer)
 {
-    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, FILEINFO::PATH, (long) Buffer);
+    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::PATH, (long) Buffer);
 }
 
 void Edif::Runtime::GetApplicationName(TCHAR * Buffer)
 {
-    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, FILEINFO::APP_NAME, (long) Buffer);
+    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::APP_NAME, (long) Buffer);
 }
 
 void Edif::Runtime::GetApplicationTempPath(TCHAR * Buffer)
 {
-    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, FILEINFO::TEMP_PATH, (long) Buffer);
+    CallRunTimeFunction(rdPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::TEMP_PATH, (long) Buffer);
 }
 
 void Edif::Runtime::Redraw()
@@ -139,12 +139,12 @@ CallTables * Edif::Runtime::GetCallTables()
 
 bool Edif::Runtime::IsHWA()
 {
-    return rdPtr->rHo.AdRunHeader->rh4.rh4Mv->CallFunction(NULL, EF_ISHWA, 0, 0, 0) == 1;
+    return rdPtr->rHo.AdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) == 1;
 }
 
 bool Edif::Runtime::IsUnicode()
 {
-    return rdPtr->rHo.AdRunHeader->rh4.rh4Mv->CallFunction(NULL, EF_ISUNICODE, 0, 0, 0) == 1;
+    return rdPtr->rHo.AdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) == 1;
 }
 
 event2 &Edif::Runtime::CurrentEvent()
@@ -181,13 +181,13 @@ extern HINSTANCE hInstLib;
 
 struct EdifGlobal
 {
-    TCHAR Name[256];
+    TCHAR name[256];
     void * Value;
 
     EdifGlobal * Next;
 };
 
-void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
+void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 {
     RunHeader * rhPtr = rdPtr->rHo.AdRunHeader;
 
@@ -200,7 +200,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
     {
         Global = new EdifGlobal;
 
-        _tcscpy(Global->Name, Name);
+        _tcscpy(Global->name, name);
         Global->Value = Value;
 
         Global->Next = 0;
@@ -212,7 +212,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
 
     while (Global)
     {
-        if (!_tcsicmp(Global->Name, Name))
+        if (!_tcsicmp(Global->name, name))
         {
             Global->Value = Value;
             return;
@@ -227,13 +227,13 @@ void Edif::Runtime::WriteGlobal(const TCHAR * Name, void * Value)
     Global->Next = new EdifGlobal;
     Global = Global->Next;
 
-    _tcscpy(Global->Name, Name);
+    _tcscpy(Global->name, name);
 
     Global->Value = Value;
     Global->Next = 0;
 }
 
-void * Edif::Runtime::ReadGlobal(const TCHAR * Name)
+void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 {
     RunHeader * rhPtr = rdPtr->rHo.AdRunHeader;
 	
@@ -244,7 +244,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * Name)
 
     while (Global)
     {
-        if (!_tcsicmp(Global->Name, Name))
+        if (!_tcsicmp(Global->name, name))
             return Global->Value;
 
         Global = Global->Next;

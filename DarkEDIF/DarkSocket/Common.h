@@ -130,6 +130,11 @@ struct RUNDATA
         You shouldn't add any variables or anything here. Add them as members
         of the Extension class (Extension.h) instead.
     */
+
+	// DarkEDIF functions, use within Extension ctor.
+	bool IsPropChecked(int propID);
+	const char * GetPropertyStr(const char * propName);
+	const char * GetPropertyStr(int propID);
 };
 #pragma once
 

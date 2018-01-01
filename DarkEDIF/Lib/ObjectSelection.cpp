@@ -16,11 +16,11 @@ Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 
 //Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
 	#ifndef UNICODE
-		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, EF_ISUNICODE, 0, 0, 0) )
+		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
 			oiListItemSize += 24;
 	#endif
 	#ifndef HWABETA
-		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, EF_ISHWA, 0, 0, 0) )
+		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
 			oiListItemSize += sizeof(LPVOID);
 	#endif
 }

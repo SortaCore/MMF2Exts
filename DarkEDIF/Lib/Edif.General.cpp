@@ -145,7 +145,7 @@ short DLLExport DestroyRunObject(RUNDATA * rdPtr, long fast)
 	return 0;
 }
 
-short DLLExport HandleRunObject(RUNDATA * rdPtr)
+REFLAG DLLExport HandleRunObject(RUNDATA * rdPtr)
 {
     return rdPtr->pExtension->Handle();
 }

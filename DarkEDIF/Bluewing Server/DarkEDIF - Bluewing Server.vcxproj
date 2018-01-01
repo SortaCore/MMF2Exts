@@ -17,7 +17,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1B15E55D-4945-41B7-8B4F-DC100B1D326C}</ProjectGuid>
     <RootNamespace>DarkEDIF</RootNamespace>
-    <ProjectName>DarkEDIF - Bluewing Server</ProjectName>
+    <ProjectName>Bluewing Server</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -364,6 +364,7 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Inc\DarkEdif.h" />
     <ClInclude Include="..\Inc\MMFMasterHeader.h" />
     <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
     <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
@@ -389,7 +390,6 @@
     <ClInclude Include="..\Lib\Lacewing\src\windows\typeof.h" />
     <ClInclude Include="ChannelCopy.h" />
     <ClInclude Include="ClientCopy.h" />
-    <ClInclude Include="DarkEDIF.h" />
     <ClInclude Include="LacewingFunctions.h" />
     <ClInclude Include="MultiThreading.h" />
     <ClInclude Include="..\Inc\ObjectSelection.h" />

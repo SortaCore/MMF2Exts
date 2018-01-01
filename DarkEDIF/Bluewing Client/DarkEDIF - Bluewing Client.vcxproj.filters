@@ -219,9 +219,6 @@
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DarkEDIF.h">
-      <Filter>Global to all extensions\Edif</Filter>
-    </ClInclude>
     <ClInclude Include="LacewingFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -296,6 +293,9 @@
     </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\FrameReader.h">
       <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\DarkEdif.h">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,7 +7,7 @@ std::stringstream CriticalSection;
 const static int X = -200; // Mystical placeholder
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
 									   "This is probably due to parameter changes.", "Lacewing Blue Client - DarkEDIF", MB_OK)
-#define Saved (Globals->_Saved)
+#define Saved (globals->_Saved)
 
 void Extension::RemovedActionNoParams()
 {
@@ -51,22 +51,18 @@ void Extension::ChannelListing_Disable()
 {
 	Srv.setchannellisting(false);
 }
-void Extension::SetWelcomeMessage(char * Message)
+void Extension::SetWelcomeMessage(char * message)
 {
-	if (!Message)
-		CreateError("SetWelcomeMessage() was called with a null message.");
-	else
-		Srv.setwelcomemessage(Message);
+	Srv.setwelcomemessage(message);
 }
 
 
 static GlobalInfo::AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWith,
-	char *& denyReason, GlobalInfo * Globals, const char * const funcName)
+	char *& denyReason, GlobalInfo * globals, const char * const funcName)
 {
 	static char err[256];
 
 	// Settings:
-	//	["Integer", "Approve immediately (0), deny immediately (1), or wait for Fusion (2)?"],
 	// Auto approve, later inform Fusion [1, 0]
 	// Auto deny, later inform Fusion [1, 1]
 	// Wait for Fusion to say yay or nay [1, 2]
@@ -111,7 +107,7 @@ static GlobalInfo::AutoResponse ConvToAutoResponse(int informFusion, int immedia
 		return autoResponse;
 	}
 
-	Globals->CreateError(err);
+	globals->CreateError(err);
 	return GlobalInfo::AutoResponse::Invalid;
 }
 
@@ -119,84 +115,82 @@ static GlobalInfo::AutoResponse ConvToAutoResponse(int informFusion, int immedia
 void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReason, Globals, "on connect request");
+		autoDenyReason, globals, "on connect request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_Connect = resp;
-	free((char *)Globals->AutoResponse_Connect_DenyReason);
-	Globals->AutoResponse_Connect_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	globals->AutoResponse_Connect = resp;
+	free((char *)globals->AutoResponse_Connect_DenyReason);
+	globals->AutoResponse_Connect_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
 	Srv.onconnect(::OnClientConnectRequest);
 }
 void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReason, Globals, "on name set request");
+		autoDenyReason, globals, "on name set request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_NameSet = resp;
-	free((char *)Globals->AutoResponse_NameSet_DenyReason);
-	Globals->AutoResponse_NameSet_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	globals->AutoResponse_NameSet = resp;
+	free((char *)globals->AutoResponse_NameSet_DenyReason);
+	globals->AutoResponse_NameSet_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
 	Srv.onnameset(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnNameSetRequest : nullptr);
 }
 void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReason, Globals, "on join channel request");
+		autoDenyReason, globals, "on join channel request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_ChannelJoin = resp;
-	free((char *)Globals->AutoResponse_ChannelJoin_DenyReason);
-	Globals->AutoResponse_ChannelJoin_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	globals->AutoResponse_ChannelJoin = resp;
+	free((char *)globals->AutoResponse_ChannelJoin_DenyReason);
+	globals->AutoResponse_ChannelJoin_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
 	Srv.onchannel_join(::OnJoinChannelRequest);
 }
 void Extension::EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith, 
-		autoDenyReason, Globals, "on join channel request");
+		autoDenyReason, globals, "on join channel request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_ChannelLeave = resp;
-	free((char *)Globals->AutoResponse_ChannelLeave_DenyReason);
-	Globals->AutoResponse_ChannelLeave_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
+	globals->autoResponse_ChannelLeave = resp;
+	free((char *)globals->AutoResponse_ChannelLeave_DenyReason);
+	globals->AutoResponse_ChannelLeave_DenyReason = autoDenyReason ? _strdup(autoDenyReason) : nullptr;
 	Srv.onchannel_leave(::OnLeaveChannelRequest);
 }
 void Extension::EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith)
 {
 	char * dummyDenyReason = "X";
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		dummyDenyReason, Globals, "on join channel request");
+		dummyDenyReason, globals, "on join channel request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_MessageClient = resp;
+	globals->AutoResponse_MessageClient = resp;
 	Srv.onmessage_peer(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnPeerMessage : nullptr);
 }
 void Extension::EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith)
 {
 	char * dummyDenyReason = "X";
 	GlobalInfo::AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		dummyDenyReason, Globals, "on join channel request");
+		dummyDenyReason, globals, "on join channel request");
 	if (resp == GlobalInfo::AutoResponse::Invalid)
 		return;
-	Globals->AutoResponse_MessageChannel = resp;
+	globals->AutoResponse_MessageChannel = resp;
 	Srv.onmessage_channel(resp != GlobalInfo::AutoResponse::Approve_Quiet ? ::OnChannelMessage : nullptr);
 }
 void Extension::EnableCondition_OnMessageToServer(int informFusion)
 {
 	if (informFusion < 0 || informFusion > 1)
-		Globals->CreateError("Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: on message to server\".");
+		globals->CreateError("Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: on message to server\".");
 	else
 	{
 		// This one's handled a bit differently; there is no auto approve/deny. 
 		// The message is either read by Fusion or discarded immediately.
-		Globals->AutoResponse_MessageServer = informFusion == 1 ? GlobalInfo::WaitForFusion : GlobalInfo::Deny_Quiet;
+		globals->AutoResponse_MessageServer = informFusion == 1 ? GlobalInfo::WaitForFusion : GlobalInfo::Deny_Quiet;
 		Srv.onmessage_server(informFusion == 1 ? ::OnServerMessage : nullptr);
 	}
 }
-void Extension::OnInteractive_Deny(char * Reason)
+void Extension::OnInteractive_Deny(char * reason)
 {
-	if (!Reason)
-		CreateError("Can't deny client's action: Deny was called with a null reason.");
-	else if (InteractivePending == InteractiveType::None)
+	if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot deny client's action: No interactive action is pending.");
 	// All of the interactive events currently allow denying
 	//else if ((InteractivePending & InteractiveType::DenyPermitted) != InteractiveType::DenyPermitted)
@@ -204,13 +198,13 @@ void Extension::OnInteractive_Deny(char * Reason)
 	else if (DenyReason)
 		CreateError("Can't deny client's action: Set to auto-deny, or Deny was called more than once. Ignoring additional denies.");
 	else
-		DenyReason = _strdup(Reason[0] ? Reason : "No reason specified.");
+		DenyReason = _strdup(reason[0] ? reason : "No reason specified.");
 }
-void Extension::OnInteractive_ChangeClientName(char * NewName)
+void Extension::OnInteractive_ChangeClientName(char * newName)
 {
-	if (!NewName || NewName[0] == '\0')
-		CreateError("Cannot change new client name: Cannot use a null or blank name.");
-	else if (strnlen(NewName, 256) == 256)
+	if (newName[0] == '\0')
+		CreateError("Cannot change new client name: Cannot use a blank name.");
+	else if (strnlen(newName, 256) == 256)
 		CreateError("Cannot change new client name: Cannot use a name longer than 255 characters.");
 	else if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot change new client name: No interactive action is pending.");
@@ -221,14 +215,14 @@ void Extension::OnInteractive_ChangeClientName(char * NewName)
 	else
 	{
 		free(NewClientName);
-		NewClientName = _strdup(NewName);
+		NewClientName = _strdup(newName);
 	}
 }
-void Extension::OnInteractive_ChangeChannelName(char * NewName)
+void Extension::OnInteractive_ChangeChannelName(char * newName)
 {
-	if (!NewName || NewName[0] == '\0')
-		CreateError("Cannot change joining channel name: Cannot use a null or blank name.");
-	else if (strnlen(NewName, 256) == 256)
+	if (newName[0] == '\0')
+		CreateError("Cannot change joining channel name: Cannot use a blank name.");
+	else if (strnlen(newName, 256U) == 256U)
 		CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters.");
 	else if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot change joining channel name: No interactive action is pending.");
@@ -239,7 +233,7 @@ void Extension::OnInteractive_ChangeChannelName(char * NewName)
 	else
 	{
 		free(NewChannelName);
-		NewChannelName = _strdup(NewName);
+		NewChannelName = _strdup(newName);
 	}
 }
 void Extension::OnInteractive_DropMessage()
@@ -267,13 +261,13 @@ void Extension::OnInteractive_ReplaceMessageWithText(char * NewText)
 	{
 		CreateError("Cannot replace message: Replacing messages not implemented.");
 		return;
-		//ThreadData.ReceivedMsg.Size = strlen(NewText) + 1;
-		//ThreadData.ReceivedMsg.Content = (char *)realloc(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size);
-		//strcpy_s(ThreadData.ReceivedMsg.Content, ThreadData.ReceivedMsg.Size, NewText);
+		//threadData.receivedMsg.size = strlen(NewText) + 1;
+		//threadData.receivedMsg.content = (char *)realloc(threadData.receivedMsg.content, threadData.receivedMsg.size);
+		//strcpy_s(threadData.receivedMsg.content, threadData.receivedMsg.size, NewText);
 	}
 
 }
-void Extension::OnInteractive_ReplaceMessageWithNumber(int NewNumber)
+void Extension::OnInteractive_ReplaceMessageWithNumber(int newNumber)
 {
 	if (InteractivePending == InteractiveType::None)
 		CreateError("Cannot deny the action: No interactive action is pending.");
@@ -304,618 +298,612 @@ void Extension::OnInteractive_ReplaceMessageWithSendBinary()
 	}
 }
 
-void Extension::Channel_SelectByName(char * Name)
+void Extension::Channel_SelectByName(char * name)
 {
-	if (!Name || Name[0] == '\0')
-		CreateError("Channel_SelectByName() was called with a null or blank name.");
-	else if (strnlen(Name, 256) == 256)
-		CreateError("Channel_SelectByName() was called with a name exceeding the max length of 255 characters.");
+	if (name[0] == '\0')
+		CreateError("Channel_SelectByName() was called with a blank name.");
 	else
 	{
-		ThreadData.Channel = nullptr;
-		for (auto i = Channels.begin(); i != Channels.end(); i++)
+		size_t nameLen = strnlen(name, 256U);
+		if (nameLen == 256U)
+			CreateError("Channel_SelectByName() was called with a name exceeding the max length of 255 characters.");
+		else
 		{
-			if (!_stricmp((**i).name(), Name))
+			threadData.channel = nullptr;
+			for (auto i = Channels.begin(); i != Channels.end(); i++)
 			{
-				ThreadData.Channel = *i;
-				return;
+				if (!_strnicmp((**i).name(), name, nameLen))
+				{
+					threadData.channel = *i;
+					return;
+				}
 			}
+
+			CreateError("Selecting channel by name failed: A channel with that name doesn't exist.");
 		}
-		
-		CreateError("Selecting channel by name failed: A channel with that name doesn't exist.");
 	}
 }
 void Extension::Channel_Close()
 {
-	if (!ThreadData.Channel)
+	if (!threadData.channel)
 		CreateError("Could not close channel: No channel selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Could not close channel: Already closing.");
 	else
-		ThreadData.Channel->close();
+		threadData.channel->close();
 }
 void Extension::Channel_SelectMaster()
 {
-	if (!ThreadData.Channel)
+	if (!threadData.channel)
 		CreateError("Could not select channel master: No channel selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Could not select channel master: Channel is closed.");
 	else
-		ThreadData.Client = ThreadData.Channel->channelmaster();
+		threadData.client = threadData.channel->channelmaster();
 }
 void Extension::Channel_LoopClients()
 {
-	if (!ThreadData.Channel)
+	if (!threadData.channel)
 		CreateError("Error: Loop Clients On Channel was called without a channel being selected.");
 	else // You can loop a closed channel's clients, but it's read-only.
 	{
-		ChannelCopy * CurrentChannel = ThreadData.Channel;
+		ChannelCopy * currentChannel = threadData.channel;
 
-		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		char * stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 		
-		auto& clients = CurrentChannel->getclients();
-		for (auto SelectedClient = clients.begin(); SelectedClient != clients.end(); SelectedClient++)
+		auto& channelClients = currentChannel->getclients();
+		for (auto selectedClient = channelClients.begin(); selectedClient != channelClients.end(); selectedClient++)
 		{
-			if (!(**SelectedClient).isclosed)
+			if (!(**selectedClient).isclosed)
 			{
 				ClearThreadData();
-				ThreadData.Channel = CurrentChannel;
-				ThreadData.Client = *SelectedClient;
+				threadData.channel = currentChannel;
+				threadData.client = *selectedClient;
 				Runtime.GenerateEvent(8);
 			}
 		}
 
-		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-		free(Stored);
+		memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+		free(stored);
 
 		Runtime.GenerateEvent(44);
 	}
 }
-void Extension::Channel_LoopClientsWithName(char * LoopName)
+void Extension::Channel_LoopClientsWithName(char * loopName)
 {
-	if (!ThreadData.Channel)
+	if (!threadData.channel)
 		CreateError("Error: Loop Clients On Channel With Name was called without a channel being selected.");
 	else // You can loop a closed channel's clients, but it's read-only.
 	{
-		ChannelCopy * CurrentChannel = ThreadData.Channel;
+		ChannelCopy * currentChannel = threadData.channel;
 
-		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		char * stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 
-		auto clients = CurrentChannel->getclients();
-		for (auto SelectedClient = clients.begin(); SelectedClient != clients.end(); SelectedClient++)
+		auto channelClients = currentChannel->getclients();
+		for (auto selectedClient = channelClients.begin(); selectedClient != channelClients.end(); selectedClient++)
 		{
-			if (!(**SelectedClient).isclosed)
+			if (!(**selectedClient).isclosed)
 			{
 				ClearThreadData();
-				ThreadData.Channel = CurrentChannel;
-				ThreadData.Client = *SelectedClient;
-				ThreadData.Loop.Name = _strdup(LoopName);
+				threadData.channel = currentChannel;
+				threadData.client = *selectedClient;
+				threadData.loop.name = _strdup(loopName);
 				Runtime.GenerateEvent(39);
 			}
 		}
 
-		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-		free(Stored);
+		memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+		free(stored);
 
-		ThreadData.Loop.Name = _strdup(LoopName);
+		threadData.loop.name = _strdup(loopName);
 		Runtime.GenerateEvent(40);
 	}
 }
-void Extension::Channel_SetLocalData(char * Key, char * Value)
+void Extension::Channel_SetLocalData(char * key, char * value)
 {
-	if (!ThreadData.Channel)
+	if (!threadData.channel)
 		CreateError("Could not set channel local data: No channel selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Could not set channel local data: Channel is closed.");
-	else if (!Key || !Value)
-		CreateError("Could not set channel local data: null parameter supplied.");
 	else
-		ThreadData.Channel->SetLocalData(Key, Value);
+		threadData.channel->SetLocalData(key, value);
 }
 void Extension::LoopAllChannels()
 {
-	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	char * stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 
-	for (auto SelectedChannel = Channels.begin(); SelectedChannel != Channels.end(); SelectedChannel++)
+	for (auto selectedChannel = Channels.begin(); selectedChannel != Channels.end(); selectedChannel++)
 	{
 		ClearThreadData();
-		ThreadData.Channel = *SelectedChannel;
+		threadData.channel = *selectedChannel;
 		Runtime.GenerateEvent(5);
 	}
 
-	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-	free(Stored);
+	memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+	free(stored);
 
 	Runtime.GenerateEvent(45);
 }
-void Extension::LoopAllChannelsWithName(char * LoopName)
+void Extension::LoopAllChannelsWithName(char * loopName)
 {
-	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	char * stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 
-	for (auto SelectedChannel = Channels.begin(); SelectedChannel != Channels.end(); SelectedChannel++)
+	for (auto selectedChannel = Channels.begin(); selectedChannel != Channels.end(); selectedChannel++)
 	{
 		ClearThreadData();
-		ThreadData.Channel = *SelectedChannel;
-		ThreadData.Loop.Name = _strdup(LoopName);
+		threadData.channel = *selectedChannel;
+		threadData.loop.name = _strdup(loopName);
 		Runtime.GenerateEvent(36);
 	}
 
-	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-	free(Stored);
+	memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+	free(stored);
 
-	ThreadData.Loop.Name = _strdup(LoopName);
+	threadData.loop.name = _strdup(loopName);
 	Runtime.GenerateEvent(41);
 }
 void Extension::Client_Disconnect()
 {
-	if (!ThreadData.Client)
+	if (!threadData.client)
 		CreateError("Could not disconnect client: No client selected.");
-	else if (!ThreadData.Client->isclosed)
-		ThreadData.Client->disconnect(true);
+	else if (!threadData.client->isclosed)
+		threadData.client->disconnect(true);
 }
-void Extension::Client_SetLocalData(char * Key, char * Value)
+void Extension::Client_SetLocalData(char * key, char * value)
 {
-	if (!ThreadData.Client)
+	if (!threadData.client)
 		CreateError("Could not set client local data: No client selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Could not set client local data: Client is closed.");
-	else if (!Key || !Value)
-		CreateError("Could not set client local data: null parameter supplied.");
 	else
-		ThreadData.Client->SetLocalData(Key, Value);
+		threadData.client->SetLocalData(key, value);
 }
 void Extension::Client_LoopJoinedChannels()
 {
-	if (!ThreadData.Client)
+	if (!threadData.client)
 		CreateError("Cannot loop client's joined channels: No client selected.");
 	else
 	{
-		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		char * stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 		
-		ClientCopy * StoredCli = ThreadData.Client;
+		ClientCopy * StoredCli = threadData.client;
 		auto &channels = StoredCli->getchannels();
-		for (auto SelectedChannel = channels.begin(); SelectedChannel != channels.end(); SelectedChannel++)
+		for (auto selectedChannel = channels.begin(); selectedChannel != channels.end(); selectedChannel++)
 		{
-			if (!(**SelectedChannel).isclosed)
+			if (!(**selectedChannel).isclosed)
 			{
 				ClearThreadData();
-				ThreadData.Channel = *SelectedChannel;
-				ThreadData.Client = StoredCli;
+				threadData.channel = *selectedChannel;
+				threadData.client = StoredCli;
 				Runtime.GenerateEvent(6);
 			}
 		}
 
-		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-		free(Stored);
+		memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+		free(stored);
 
 		Runtime.GenerateEvent(47);
 	}
 }
-void Extension::Client_LoopJoinedChannelsWithName(char * LoopName)
+void Extension::Client_LoopJoinedChannelsWithName(char * loopName)
 {
-	if (!ThreadData.Client)
+	if (!threadData.client)
 		CreateError("Cannot loop client's joined channels: No client selected.");
 	else
 	{
-		char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-		memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+		char * stored = (char *)malloc(sizeof(SaveExtInfo));
+		memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 
-		auto& channels = ThreadData.Client->getchannels();
-		ClientCopy * StoredCli = ThreadData.Client;
-		for (auto SelectedChannel = channels.begin(); SelectedChannel != channels.end(); SelectedChannel++)
+		auto& channels = threadData.client->getchannels();
+		ClientCopy * storedCli = threadData.client;
+		for (auto selectedChannel = channels.begin(); selectedChannel != channels.end(); selectedChannel++)
 		{
-			if (!(**SelectedChannel).isclosed)
+			if (!(**selectedChannel).isclosed)
 			{
 				ClearThreadData();
-				ThreadData.Channel = *SelectedChannel;
-				ThreadData.Client = StoredCli;
-				ThreadData.Loop.Name = _strdup(LoopName);
+				threadData.channel = *selectedChannel;
+				threadData.client = storedCli;
+				threadData.loop.name = _strdup(loopName);
 				Runtime.GenerateEvent(37);
 			}
 		}
 
-		memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-		free(Stored);
+		memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+		free(stored);
 
-		ThreadData.Loop.Name = _strdup(LoopName);
+		threadData.loop.name = _strdup(loopName);
 		Runtime.GenerateEvent(43);
 	}
 }
-void Extension::Client_SelectByName(char * ClientName)
+void Extension::Client_SelectByName(char * clientName)
 {
-	if (!ClientName || ClientName[0] == '\0')
+	if (clientName[0] == '\0')
 		CreateError("Error: Select Client By Name was called with a null parameter/blank name.");
 	else
 	{
 		auto Selected = Clients.begin();
 		for (; Selected != Clients.end(); Selected++)
-			if (!_stricmp((**Selected).name(), ClientName))
+			if (!_stricmp((**Selected).name(), clientName))
 				break;
-		// Only modify ThreadData.Client if we found it
+		// Only modify threadData.client if we found it
 		if (Selected != Clients.end() && !(**Selected).isclosed)
 		{
 			auto& ch = (**Selected).getchannels();
-			if (std::find(ch.cbegin(), ch.cend(), ThreadData.Channel) == ch.cend())
-				ThreadData.Channel = nullptr;
-			ThreadData.Client = *Selected;
+			if (std::find(ch.cbegin(), ch.cend(), threadData.channel) == ch.cend())
+				threadData.channel = nullptr;
+			threadData.client = *Selected;
 		}
 		else
 		{
-			std::stringstream Error;
-			Error << "Client with name " << ClientName <<" not found on server.";
-			CreateError(Error.str().c_str());
+			std::stringstream error;
+			error << "Client with name " << clientName <<" not found on server.";
+			CreateError(error.str().c_str());
 		}
 	}
 }
-void Extension::Client_SelectByID(int ClientID)
+void Extension::Client_SelectByID(int clientID)
 {
-	if (ClientID < 0 || ClientID > 0xFFFF)
+	if (clientID < 0 || clientID > 0xFFFF)
 		CreateError("Could not select Client on channel, ID is below 0 or greater than 65535.");
 	else
 	{
 		auto Selected = Clients.begin();
 		for (; Selected != Clients.end(); Selected++)
-			if ((**Selected).id() == ClientID)
+			if ((**Selected).id() == clientID)
 				break;
 		
 		if (Selected != Clients.end() && !(**Selected).isclosed)
-			ThreadData.Client = *Selected;
+			threadData.client = *Selected;
 		else
 		{
-			std::stringstream Error;
-			Error << "Client ID " << ClientID << " was not found on server.";
-			CreateError(Error.str().c_str());
+			std::stringstream error;
+			error << "Client ID " << clientID << " was not found on server.";
+			CreateError(error.str().c_str());
 		}
 	}
 }
 void Extension::Client_SelectSender()
 {
-	if (!ThreadData.SenderClient)
+	if (!threadData.senderClient)
 		CreateError("Cannot select sending client: No sending client variable available.");
 	else
-		ThreadData.Client = ThreadData.SenderClient;
+		threadData.client = threadData.senderClient;
 }
 void Extension::Client_SelectReceiver()
 {
-	if (!ThreadData.ReceivingClient)
+	if (!threadData.ReceivingClient)
 		CreateError("Cannot select receiving client: No receiving client variable available.");
 	else
-		ThreadData.Client = ThreadData.ReceivingClient;
+		threadData.client = threadData.ReceivingClient;
 }
 void Extension::LoopAllClients()
 {
-	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
+	char * stored = (char *)malloc(sizeof(SaveExtInfo));
+	memcpy_s(stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
 	
-	for (auto SelectedClient = Clients.begin(); SelectedClient != Clients.end(); SelectedClient++)
+	for (auto selectedClient = Clients.begin(); selectedClient != Clients.end(); selectedClient++)
 	{
 		ClearThreadData();
-		ThreadData.Client = *SelectedClient;
+		threadData.client = *selectedClient;
 		Runtime.GenerateEvent(7);
 	}
 
-	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
-	free(Stored);
+	memcpy_s(&threadData, sizeof(SaveExtInfo), stored, sizeof(SaveExtInfo));
+	free(stored);
 
 	Runtime.GenerateEvent(46);
 }
-void Extension::LoopAllClientsWithName(char * LoopName)
+void Extension::LoopAllClientsWithName(char * loopName)
 {
 	char * Stored = (char *)malloc(sizeof(SaveExtInfo));
-	memcpy_s(Stored, sizeof(SaveExtInfo), &ThreadData, sizeof(SaveExtInfo));
-	for (auto SelectedClient = Clients.begin(); SelectedClient != Clients.end(); SelectedClient++)
+	memcpy_s(Stored, sizeof(SaveExtInfo), &threadData, sizeof(SaveExtInfo));
+	
+	for (auto selectedClient = Clients.begin(); selectedClient != Clients.end(); selectedClient++)
 	{
 		ClearThreadData();
-		ThreadData.Client = *SelectedClient;
-		ThreadData.Loop.Name = _strdup(LoopName);
+		threadData.client = *selectedClient;
+		threadData.loop.name = _strdup(loopName);
 		Runtime.GenerateEvent(38);
 	}
-	memcpy_s(&ThreadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
+
+	memcpy_s(&threadData, sizeof(SaveExtInfo), Stored, sizeof(SaveExtInfo));
 	free(Stored);
 
-	ThreadData.Loop.Name = _strdup(LoopName);
+	threadData.loop.name = _strdup(loopName);
 	Runtime.GenerateEvent(42);
 }
-void Extension::SendTextToChannel(int Subchannel, char * TextToSend)
+void Extension::SendTextToChannel(int subchannel, char * textToSend)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Send Text to Channel was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!TextToSend)
-		CreateError("Error: Send Text to Channel was called with a null parameter.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Send Text to Channel was called without a channel being selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Error: Send Text to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->send(Subchannel, TextToSend, strlen(TextToSend) + 1, 0);
+		threadData.channel->send(subchannel, textToSend, strlen(textToSend) + 1U, 0);
 }
-void Extension::SendTextToClient(int Subchannel, char * TextToSend)
+void Extension::SendTextToClient(int subchannel, char * textToSend)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Send Text to Client was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!TextToSend)
-		CreateError("Error: Send Text to Client was called with a null parameter.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Send Text to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Send Text to Client was called with a closed Client.");
 	else
-		ThreadData.Client->send(Subchannel, TextToSend, strlen(TextToSend) + 1, 0);
+		threadData.client->send(subchannel, textToSend, strlen(textToSend) + 1U, 0);
 }
-void Extension::SendNumberToChannel(int Subchannel, int NumToSend)
+void Extension::SendNumberToChannel(int subchannel, int numToSend)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Send Number to Channel was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Send Number to Channel was called without a channel being selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Error: Send Number to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->send(Subchannel, (char *)&NumToSend, sizeof(int), 1);
+		threadData.channel->send(subchannel, (char *)&numToSend, sizeof(int), 1);
 }
-void Extension::SendNumberToClient(int Subchannel, int NumToSend)
+void Extension::SendNumberToClient(int subchannel, int numToSend)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Send Number to Client was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Send Number to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Send Number to Client was called with a closed Client.");
 	else
-		ThreadData.Client->send(Subchannel, (char *)&NumToSend, sizeof(int), 1);
+		threadData.client->send(subchannel, (char *)&numToSend, sizeof(int), 1);
 }
-void Extension::SendBinaryToChannel(int Subchannel)
+void Extension::SendBinaryToChannel(int subchannel)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Send Binary to Channel was called without a channel being selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Error: Send Binary to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->send(Subchannel, SendMsg, SendMsgSize, 2);
+		threadData.channel->send(subchannel, SendMsg, SendMsgSize, 2);
 
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
-void Extension::SendBinaryToClient(int Subchannel)
+void Extension::SendBinaryToClient(int subchannel)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Send Binary to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Send Binary to Client was called with a closed Client.");
 	else
-		ThreadData.Client->send(Subchannel, SendMsg, SendMsgSize, 2);
+		threadData.client->send(subchannel, SendMsg, SendMsgSize, 2);
 
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
-void Extension::BlastTextToChannel(int Subchannel, char * TextToBlast)
+void Extension::BlastTextToChannel(int subchannel, char * textToBlast)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Blast Text to Channel was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!TextToBlast)
-		CreateError("Error: Blast Text to Channel was called with a null parameter.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Blast Text to Channel was called without a channel being selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Error: Blast Text to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->blast(Subchannel, TextToBlast, strlen(TextToBlast) + 1, 0);
+		threadData.channel->blast(subchannel, textToBlast, strlen(textToBlast) + 1U, 0);
 }
-void Extension::BlastTextToClient(int Subchannel, char * TextToBlast)
+void Extension::BlastTextToClient(int subchannel, char * textToBlast)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Blast Text to Client was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!TextToBlast)
-		CreateError("Error: Blast Text to Client was called with a null parameter.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Blast Text to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Blast Text to Client was called with a closed Client.");
 	else
-		ThreadData.Client->blast(Subchannel, TextToBlast, strlen(TextToBlast) + 1, 0);
+		threadData.client->blast(subchannel, textToBlast, strlen(textToBlast) + 1U, 0);
 }
-void Extension::BlastNumberToChannel(int Subchannel, int NumToBlast)
+void Extension::BlastNumberToChannel(int subchannel, int numToBlast)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Blast Number to Channel was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Blast Number to Channel was called without a channel being selected.");
 	else
-		ThreadData.Channel->blast(Subchannel, (char *)&NumToBlast, 4, 1);
+		threadData.channel->blast(subchannel, (char *)&numToBlast, 4U, 1);
 }
-void Extension::BlastNumberToClient(int Subchannel, int NumToBlast)
+void Extension::BlastNumberToClient(int subchannel, int numToBlast)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Blast Number to Client was called with an invalid subchannel; it must be between 0 and 255.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Blast Number to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Blast Number to Client was called with a closed Client.");
 	else
-		ThreadData.Client->blast(Subchannel, (char *)&NumToBlast, 4, 1);
+		threadData.client->blast(subchannel, (char *)&numToBlast, 4U, 1);
 }
-void Extension::BlastBinaryToChannel(int Subchannel)
+void Extension::BlastBinaryToChannel(int subchannel)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
-	else if (!ThreadData.Channel)
+	else if (!threadData.channel)
 		CreateError("Error: Blast Binary to Channel was called without a channel being selected.");
-	else if (ThreadData.Channel->isclosed)
+	else if (threadData.channel->isclosed)
 		CreateError("Error: Blast Binary to Channel was called with a closed channel.");
 	else
-		ThreadData.Channel->blast(Subchannel, SendMsg, SendMsgSize, 2);
+		threadData.channel->blast(subchannel, SendMsg, SendMsgSize, 2);
 
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
-void Extension::BlastBinaryToClient(int Subchannel)
+void Extension::BlastBinaryToClient(int subchannel)
 {
-	if (Subchannel > 255 || Subchannel < 0)
+	if (subchannel > 255 || subchannel < 0)
 		CreateError("Error: Subchannel invalid; it must be between 0 and 255.");
-	else if (!ThreadData.Client)
+	else if (!threadData.client)
 		CreateError("Error: Blast Binary to Client was called without a Client being selected.");
-	else if (ThreadData.Client->isclosed)
+	else if (threadData.client->isclosed)
 		CreateError("Error: Blast Binary to Client was called with a closed Client.");
 	else
-		ThreadData.Client->blast(Subchannel, SendMsg, SendMsgSize, 2);
+		threadData.client->blast(subchannel, SendMsg, SendMsgSize, 2);
 
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
-void Extension::AddByteText(char * Byte)
+void Extension::AddByteText(char * byte)
 {
-	if (!Byte || strnlen(Byte, 2) != 1)
+	if (!byte || strnlen(byte, 2) != 1)
 		CreateError("Adding byte to stack failed: byte supplied was part of a string, not a single byte.");
 	else
-		AddToSend(Byte, 1);
+		AddToSend(byte, 1);
 }
-void Extension::AddByteInt(int Byte)
+void Extension::AddByteInt(int byte)
 {
-	if (Byte > 255 || Byte < -128)
+	if (byte > MAXUINT8 || byte < MININT8)
 		CreateError("Error: Byte out of bounds.");
 	else
 	{
-		if (Byte < 0)
+		if (byte < 0)
 		{
-			char RealByte = (char)Byte;
-			AddToSend(&RealByte, 1);
+			char realByte = (char)byte;
+			AddToSend(&realByte, 1);
 		}
 		else
 		{
-			unsigned char RealByte = (unsigned char)Byte;
-			AddToSend(&RealByte, 1);
+			unsigned char realByte = (unsigned char)byte;
+			AddToSend(&realByte, 1);
 		}
 	}
 }
-void Extension::AddShort(int Short)
+void Extension::AddShort(int _short)
 {
-	if (Short > 65535 || Short < -32768)
+	if (_short > MAXUINT16 || _short < MININT16)
 		CreateError("Error: Short out of bounds.");
 	else
 	{
-		if (Short < 0)
+		if (_short < 0)
 		{
-			short RealShort = (short)Short;
-			AddToSend(&RealShort, 2);
+			short realShort = (short)_short;
+			AddToSend(&realShort, 2);
 		}
 		else
 		{
-			unsigned short RealShort = (unsigned short)Short;
-			AddToSend(&RealShort, 2);
+			unsigned short realShort = (unsigned short)_short;
+			AddToSend(&realShort, 2);
 		}
 	}
 }
-void Extension::AddInt(int Int)
+void Extension::AddInt(int _int)
 {
-	AddToSend(&Int, 4);
+	AddToSend(&_int, 4);
 }
-void Extension::AddFloat(float Float)
+void Extension::AddFloat(float _float)
 {
-	AddToSend(&Float, 4);
+	AddToSend(&_float, 4);
 }
-void Extension::AddStringWithoutNull(char * String)
+void Extension::AddStringWithoutNull(char * string)
 {
-	if (String)
-		AddToSend(String, strlen(String));
+	if (string)
+		AddToSend(string, strlen(string));
 	else
 		CreateError("Adding string without null failed: pointer was null.");
 }
-void Extension::AddString(char * String)
+void Extension::AddString(char * string)
 {
-	if (String)
-		AddToSend(String, strlen(String) + 1);
+	if (string)
+		AddToSend(string, strlen(string) + 1);
 	else
 		CreateError("Adding string failed: pointer was null.");
 }
-void Extension::AddBinary(void * Address, int Size)
+void Extension::AddBinary(unsigned int address, int size)
 {
-	if (Size < 0)
+	if (size < 0)
 		CreateError("Add binary failed: Size less than 0.");
 	else
 	{
-		if (Size != 0)
-			AddToSend(Address, Size);
+		if (size != 0)
+			AddToSend((void *)(long)address, size);
 		// else do nothing
 	}
 }
-void Extension::AddFileToBinary(char * Filename)
+void Extension::AddFileToBinary(char * filename)
 {
-	if (!Filename || Filename[0] == '\0')
+	if (filename[0] == '\0')
 		CreateError("Cannot add file to send binary; filename is invalid.");
 	else
 	{
 		// Open and deny other programs write priviledges
-		FILE * File = _fsopen(Filename, "rb", _SH_DENYWR);
-		if (!File)
+		FILE * file = _fsopen(filename, "rb", _SH_DENYWR);
+		if (!file)
 		{
-			std::stringstream Error;
-			Error << "Cannot add file to send binary, error number " << errno
+			std::stringstream error;
+			error << "Cannot add file to send binary, error number " << errno
 				<< " occured with opening the file. The send binary has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 			return;
 		}
 
 		// Jump to end
-		fseek(File, 0, SEEK_END);
+		fseek(file, 0, SEEK_END);
 
 		// Read current position as file size
-		long filesize = ftell(File);
+		long filesize = ftell(file);
 
 		// Go back to start
-		fseek(File, 0, SEEK_SET);
+		fseek(file, 0, SEEK_SET);
 
 		char * buffer = (char *)malloc(filesize);
 		if (!buffer)
 		{
-			std::stringstream Error;
-			Error << "Couldn't read file \"" << Filename << "\" into binary to send; couldn't reserve enough memory "
+			std::stringstream error;
+			error << "Couldn't read file \"" << filename << "\" into binary to send; couldn't reserve enough memory "
 				"to add file into message. The send binary has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 		}
 		else
 		{
 			size_t amountRead;
-			if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
+			if ((amountRead = fread_s(buffer, filesize, 1U, filesize, file)) != filesize)
 			{
-				std::stringstream Error;
-				Error << "Couldn't read file \"" << Filename << "\" into binary to send, error number " << errno
+				std::stringstream error;
+				error << "Couldn't read file \"" << filename << "\" into binary to send, error number " << errno
 					<< " occured with opening the file. The send binary has not been modified.";
-				CreateError(Error.str().c_str());
+				CreateError(error.str().c_str());
 			}
 			else
 				AddToSend(buffer, amountRead);
 
 			free(buffer);
 		}
-		fclose(File);
+		fclose(file);
 	}
 }
-void Extension::ResizeBinaryToSend(int NewSize)
+void Extension::ResizeBinaryToSend(int newSize)
 {
-	if (NewSize < 0)
+	if (newSize < 0)
 		CreateError("Cannot change size of binary to send: new size is under 0 bytes.");
 	else
 	{
-		char * NewMsg = (char *)realloc(SendMsg, NewSize);
+		char * NewMsg = (char *)realloc(SendMsg, newSize);
 		if (!NewMsg)
 		{
 			return CreateError("Cannot change size of binary to send: reallocation of memory failed.\r\n"
 				"Size has not been modified.");
 		}
 		// Clear new bytes to 0
-		memset(NewMsg + SendMsgSize, 0, NewSize - SendMsgSize);
+		memset(NewMsg + SendMsgSize, 0, newSize - SendMsgSize);
 
 		SendMsg = NewMsg;
-		SendMsgSize = NewSize;
+		SendMsgSize = newSize;
 	}
 }
 void Extension::CompressSendBinary()
@@ -924,10 +912,8 @@ void Extension::CompressSendBinary()
 		CreateError("Cannot compress send binary; Message is too small.");
 	else
 	{
-		int ret;
 		z_stream strm = { 0 };
-
-		ret = deflateInit(&strm, 9);
+		int ret = deflateInit(&strm, 9); // 9 = best compression ratio
 		if (ret)
 		{
 			std::stringstream error;
@@ -936,11 +922,11 @@ void Extension::CompressSendBinary()
 			return;
 		}
 
-		unsigned char * output_buffer = (unsigned char *)malloc(SendMsgSize + 256);
+		unsigned char * output_buffer = (unsigned char *)malloc(SendMsgSize + 256U);
 		if (!output_buffer)
 		{
 			std::stringstream error;
-			error << "Error with compressing send binary, could not allocate enough memory. Desired " << SendMsgSize + 256 << " bytes.";
+			error << "Error with compressing send binary, could not allocate enough memory. Desired " << (SendMsgSize + 256U) << " bytes.";
 			CreateError(error.str().c_str());
 			deflateEnd(&strm);
 			return;
@@ -990,7 +976,7 @@ void Extension::ClearBinaryToSend()
 }
 void Extension::DecompressReceivedBinary()
 {
-	if (ThreadData.ReceivedMsg.Size <= 0)
+	if (threadData.receivedMsg.size <= 0)
 		CreateError("Cannot decompress; message is too small.");
 	else
 	{
@@ -1005,8 +991,8 @@ void Extension::DecompressReceivedBinary()
 		}
 
 		unsigned char * output_buffer = NULL, *output_buffer_pointer = NULL;
-		strm.next_in = (unsigned char *)ThreadData.ReceivedMsg.Content;
-		strm.avail_in = ThreadData.ReceivedMsg.Size;
+		strm.next_in = (unsigned char *)threadData.receivedMsg.content;
+		strm.avail_in = threadData.receivedMsg.size;
 		// run inflate() on input until output buffer not full, finish
 		// compression if all of source has been read in
 		do {
@@ -1054,109 +1040,109 @@ void Extension::DecompressReceivedBinary()
 		inflateEnd(&strm);
 
 		// Update all extensions with new message content.
-		char * ThisMsg = ThreadData.ReceivedMsg.Content;
-		free(ThreadData.ReceivedMsg.Content);
+		char * ThisMsg = threadData.receivedMsg.content;
+		free(threadData.receivedMsg.content);
 
 		for (std::vector<SaveExtInfo *>::iterator i = Saved.begin(); i != Saved.end(); ++i)
 		{
-			if ((char *)output_buffer == (*i)->ReceivedMsg.Content)
+			if ((char *)output_buffer == (*i)->receivedMsg.content)
 				continue;
-			(*i)->ReceivedMsg.Content = (char *)output_buffer;
-			(*i)->ReceivedMsg.Cursor = 0;
-			(*i)->ReceivedMsg.Size = _msize(output_buffer);
+			(*i)->receivedMsg.content = (char *)output_buffer;
+			(*i)->receivedMsg.cursor = 0;
+			(*i)->receivedMsg.size = _msize(output_buffer);
 		}
 	}
 }
-void Extension::MoveReceivedBinaryCursor(int Position)
+void Extension::MoveReceivedBinaryCursor(int position)
 {
-	if (Position < 0)
+	if (position < 0)
 		CreateError("Cannot move cursor; Position less than 0.");
-	else if (ThreadData.ReceivedMsg.Size - Position <= 0)
+	else if (threadData.receivedMsg.size - position <= 0)
 		CreateError("Cannot move cursor; Message is too small.");
 	else
-		ThreadData.ReceivedMsg.Cursor = Position;
+		threadData.receivedMsg.cursor = position;
 }
-void Extension::SaveReceivedBinaryToFile(int Position, int Size, char * Filename)
+void Extension::SaveReceivedBinaryToFile(int position, int size, char * filename)
 {
-	if (Position < 0)
+	if (position < 0)
 		CreateError("Cannot save received binary; Position less than 0.");
-	else if (Size <= 0)
+	else if (size <= 0)
 		CreateError("Cannot save received binary; Size equal or less than 0.");
-	else if (!Filename || Filename[0] == '\0')
+	else if (filename[0] == '\0')
 		CreateError("Cannot save received binary; filename is invalid.");
-	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
+	else if (((unsigned int)position) + size > threadData.receivedMsg.size)
 	{
-		std::stringstream Error;
-		Error << "Cannot save received binary to file; message doesn't have " << Size
-			<< " bytes at position " << Position << " onwards.";
-		CreateError(Error.str().c_str());
+		std::stringstream error;
+		error << "Cannot save received binary to file; message doesn't have " << size
+			<< " bytes at position " << position << " onwards.";
+		CreateError(error.str().c_str());
 		return;
 	}
 	else
 	{
-		FILE * File = _fsopen(Filename, "wb", SH_DENYWR);
+		FILE * File = _fsopen(filename, "wb", SH_DENYWR);
 		if (!File)
 		{
-			std::stringstream Error;
-			Error << "Cannot save received binary to file, error number " << errno
+			std::stringstream error;
+			error << "Cannot save received binary to file, error number " << errno
 				<< " occured with opening the file. The message has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 			return;
 		}
 
 		size_t amountWritten;
-		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
+		if ((amountWritten = fwrite(threadData.receivedMsg.content + position, 1, size, File)) != size)
 		{
-			std::stringstream Error;
-			Error << "Cannot save received binary to file, error number " << errno
+			std::stringstream error;
+			error << "Cannot save received binary to file, error number " << errno
 				<< " occured with writing the file. Wrote " << amountWritten
 				<< " bytes total. The message has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 		}
 
 		fclose(File);
 	}
 }
-void Extension::AppendReceivedBinaryToFile(int Position, int Size, char * Filename)
+void Extension::AppendReceivedBinaryToFile(int position, int size, char * filename)
 {
-	if (Position < 0)
+	if (position < 0)
 		CreateError("Cannot append received binary to file; position less than 0.");
-	else if (Size <= 0)
+	else if (size <= 0)
 		CreateError("Cannot append received binary to file; size equal or less than 0.");
-	else if (!Filename || Filename[0] == '\0')
+	else if (filename[0] == '\0')
 		CreateError("Cannot append received binary to file; filename is invalid.");
-	else if (((unsigned int)Position) + Size > ThreadData.ReceivedMsg.Size)
+	else if (((unsigned int)position) + size > threadData.receivedMsg.size)
 	{
-		std::stringstream Error;
-		Error << "Cannot append received binary to file; message doesn't have " << Size
-			<< " bytes at position " << Position << " onwards.";
-		CreateError(Error.str().c_str());
+		std::stringstream error;
+		error << "Cannot append received binary to file; message doesn't have " << size
+			<< " bytes at position " << position << " onwards.";
+		CreateError(error.str().c_str());
 		return;
 	}
 	else
 	{
 		// Open while denying write of other programs
-		FILE * File = _fsopen(Filename, "ab", SH_DENYWR);
+		FILE * File = _fsopen(filename, "ab", SH_DENYWR);
 		if (!File)
 		{
-			std::stringstream Error;
-			Error << "Cannot append received binary to file, error number " << errno
+			std::stringstream error;
+			error << "Cannot append received binary to file, error number " << errno
 				<< " occured with opening the file. The binary message has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 			return;
 		}
 
 		size_t amountWritten;
-		if ((amountWritten = fwrite(ThreadData.ReceivedMsg.Content + Position, 1, Size, File)) != Size)
+		if ((amountWritten = fwrite(threadData.receivedMsg.content + position, 1U, size, File)) != size)
 		{
 			fseek(File, 0, SEEK_END);
 			long long filesize = _ftelli64(File);
 
-			std::stringstream Error;
-			Error << "Cannot append received binary to file, error number " << errno
+			std::stringstream error;
+			error << "Cannot append received binary to file, error number " << errno
 				<< " occured with writing the file. Wrote " << amountWritten
 				<< " bytes, leaving file at size " << filesize << " total. The binary message has not been modified.";
-			CreateError(Error.str().c_str());
+			CreateError(error.str().c_str());
 		}
 
 		fclose(File);
