@@ -1,6 +1,7 @@
 
 #include "Common.h"
 
+// This is used in KSND, seems to be a GCC x64 -> x86 *nix weirdness.
 extern "C" {
 	__declspec (dllexport) unsigned long __udivdi3(unsigned long long int x, unsigned long int y)
 	{
@@ -33,6 +34,8 @@ void Extension::LoadSongFromFile(const char * songName, const char * filePath)
 	}
 	catch (...)
 	{
+		// This is used in KSND, but you'll get the KSND library unable to find it unless we use it ourselves.
+		printf("yay");
 		return CreateError("LoadSongFromFile: Failed to load song.");
 	}
 	if (!newSong)
@@ -157,7 +160,7 @@ void Extension::SetCurrentPlayerLooping(int looping)
 
 	try
 	{
-		// KSND_SetLooping(curPlayer->player, looping);
+		KSND_SetLooping(curPlayer->player, looping);
 		curPlayer->looping = looping == 1;
 	}
 	catch (...)
@@ -192,8 +195,8 @@ void Extension::PlaySongOnCurrentPlayer(const char * songUserName, int position)
 		return CreateError("PlaySongOnCurrentPlayer: Song with name %s not found.", songUserName);
 	if (position < 0)
 		return CreateError("PlaySongOnCurrentPlayer: The position must be 0 or greater.");
-	if ((**song).length > position)
-		return CreateError("PlaySongOnCurrentPlayer: Position %i is beyond length %i of song %i.", position, (**song).length, songUserName);
+	if (position > (**song).length)
+		return CreateError("PlaySongOnCurrentPlayer: Position %i is beyond length %i of song %s.", position, (**song).length, songUserName);
 
 	try
 	{

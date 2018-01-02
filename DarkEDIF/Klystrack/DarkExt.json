@@ -25,7 +25,7 @@
         [ 5, "Close player" ],
         "Separator",
         [ 6, "Set player quality" ],
-        [ 7, "Set player looping", true ],
+        [ 7, "Set player looping" ],
         [ 8, "Set volume" ],
         "Separator",
         [ 9, "Play song" ],
