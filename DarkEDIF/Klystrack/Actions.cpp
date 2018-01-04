@@ -34,13 +34,14 @@ void Extension::LoadSongFromFile(const char * songName, const char * filePath)
 	}
 	catch (...)
 	{
-		// This is used in KSND, but you'll get the KSND library unable to find it unless we use it ourselves.
-		printf("yay");
 		return CreateError("LoadSongFromFile: Failed to load song.");
 	}
 	if (!newSong)
 		return CreateError("LoadSongFromFile: Failed to load song.");
-	
+
+	// This is used in KSND, but you'll get the KSND library unable to find it unless we use it ourselves.
+	printf("yay");
+
 	ExtKSong * newExtSong = new ExtKSong();
 	newExtSong->filePath = filePath;
 	newExtSong->songName = songName;
