@@ -17,8 +17,8 @@ public:
     static const int MinimumBuild = 254;
     static const int Version = 1;
 
-    static const int OEFLAGS = 0; // See OEFLAG structure
-    static const int OEPREFS = 0;
+    static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
+    static const OEPREFS OEPREFS = OEPREFS::NONE;
     
     static const int WindowProcPriority = 100;
 
@@ -84,7 +84,7 @@ public:
         inside the extension class.
     */
 
-    short Handle();
+    REFLAG Handle();
     short Display();
 
     short Pause();

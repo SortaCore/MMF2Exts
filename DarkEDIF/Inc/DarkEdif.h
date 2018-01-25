@@ -64,6 +64,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 // we'll only do the slow check in Debug Mode.
 
 #include <algorithm>
+#include <sstream>
 
 #ifdef _DEBUG
 

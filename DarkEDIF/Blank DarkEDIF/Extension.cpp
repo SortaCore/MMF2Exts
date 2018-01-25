@@ -104,7 +104,7 @@ Extension::~Extension()
 }
 
 
-short Extension::Handle()
+REFLAG Extension::Handle()
 {
 	#ifdef MULTI_THREADING
 		// AddEvent() was called and not yet handled
