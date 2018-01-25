@@ -468,7 +468,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 		return new Prop_Str(CurLang["Properties"][ID]["DefaultState"]);
 #else
 		const char * c = (const char *)CurLang["Properties"][ID]["DefaultState"];
-		return new Prop_Str(c);
+		return new Prop_Str((char *)c);
 #endif
 	}
 
@@ -511,7 +511,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData,
 	else if (!_stricmp(curStr, "Editbox Number"))
 		rearrangementRequired = false; //
 	else if (!_stricmp(curStr, "Combo Box"))
-		rearrangementRequired = false; // Index of combo box item
+		rearrangementRequired = false; // Index of combo box Item
 	else if (_stricmp(curStr, "Checkbox"))
 		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
 

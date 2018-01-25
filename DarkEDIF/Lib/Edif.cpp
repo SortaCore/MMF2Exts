@@ -18,145 +18,145 @@ void Edif::GetExtensionName(char * const writeTo)
 
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
 
-Params ReadParameterType(const char * text, bool &IsFloat)
+Params ReadParameterType(const char * Text, bool &IsFloat)
 {
-    if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
+    if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return Params::String_Expression;
 
-    if (!_stricmp(text, "Filename") || !_stricmp(text, "File"))
+    if (!_stricmp(Text, "Filename") || !_stricmp(Text, "File"))
 		return Params::Filename;
 
-    if (!_stricmp(text, "Float"))
+    if (!_stricmp(Text, "Float"))
 	{
 		IsFloat = true;
 		return Params::Expression;
 	}
 
-    if (!_stricmp(text, "Integer"))
+    if (!_stricmp(Text, "Integer"))
 		return Params::Expression;
 
-	if (!_stricmp(text, "Unsigned Integer"))
+	if (!_stricmp(Text, "Unsigned Integer"))
 		return Params::Expression;
 
-    if (!_stricmp(text, "Object"))
+    if (!_stricmp(Text, "Object"))
 		return Params::Object;
 
-	if (!_stricmp(text, "Position"))
+	if (!_stricmp(Text, "Position"))
 		return Params::Position;
 
-	if (!_stricmp(text, "Create"))
+	if (!_stricmp(Text, "Create"))
 		return Params::Create;
 
-	if (!_stricmp(text, "SysCreate"))
+	if (!_stricmp(Text, "SysCreate"))
 		return Params::System_Create;
 
-	if (!_stricmp(text, "Animation"))
+	if (!_stricmp(Text, "Animation"))
 		return Params::Animation;
 
-	if (!_stricmp(text, "Nop"))
+	if (!_stricmp(Text, "Nop"))
 		return Params::NoP;
 
-	if (!_stricmp(text, "Player"))
+	if (!_stricmp(Text, "Player"))
 		return Params::Player;
 
-	if (!_stricmp(text, "Every"))
+	if (!_stricmp(Text, "Every"))
 		return Params::Every;
 
-	if (!_stricmp(text, "Key"))
+	if (!_stricmp(Text, "Key"))
 		return Params::Key;
 
-	if (!_stricmp(text, "Speed"))
+	if (!_stricmp(Text, "Speed"))
 		return Params::Speed;
 
-	if (!_stricmp(text, "JoyDirection"))
+	if (!_stricmp(Text, "JoyDirection"))
 		return Params::Joystick_Direction;
 
-	if (!_stricmp(text, "Shoot"))
+	if (!_stricmp(Text, "Shoot"))
 		return Params::Shoot;
 
-	if (!_stricmp(text, "Zone"))
+	if (!_stricmp(Text, "Zone"))
 		return Params::Playfield_Zone;
 
-	if (!_stricmp(text, "Comparison"))
+	if (!_stricmp(Text, "Comparison"))
 		return Params::Comparison;
 		
-	if (!_stricmp(text, "StringComparison"))
+	if (!_stricmp(Text, "StringComparison"))
 		return Params::String_Comparison;
 
-	if (!_stricmp(text, "Colour") || !_stricmp(text, "Color"))
+	if (!_stricmp(Text, "Colour") || !_stricmp(Text, "Color"))
 		return Params::Colour;
 
-	if (!_stricmp(text, "Frame"))
+	if (!_stricmp(Text, "Frame"))
 		return Params::Frame;
 
-	if (!_stricmp(text, "SampleLoop"))
+	if (!_stricmp(Text, "SampleLoop"))
 		return Params::Sample_Loop;
 
-	if (!_stricmp(text, "MusicLoop"))
+	if (!_stricmp(Text, "MusicLoop"))
 		return Params::Music_Loop;
 
-	if (!_stricmp(text, "NewDirection"))
+	if (!_stricmp(Text, "NewDirection"))
 		return Params::New_Direction;
 
-	if (!_stricmp(text, "TextNumber"))
+	if (!_stricmp(Text, "TextNumber"))
 		return Params::Text_Number;
 
-	if (!_stricmp(text, "Click"))
+	if (!_stricmp(Text, "Click"))
 		return Params::Click;
 
-	if (!_stricmp(text, "Program"))
+	if (!_stricmp(Text, "Program"))
 		return Params::Program;
 
-	if (!_strnicmp(text, "Custom", 6))
-		return (Params)short(short(Params::Custom_Base) + atoi(text+6));
+	if (!_strnicmp(Text, "Custom", 6))
+		return (Params)short(short(Params::Custom_Base) + atoi(Text+6));
 
 	std::stringstream str;
-	str << "Error reading Parameter type \"" << text << "\"; text did not match anything.";
+	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
 	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK);
     return (Params)(ushort)0;
 }
 
-ExpParams ReadExpressionParameterType(const char * text, bool &IsFloat)
+ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
 {
-    if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
+    if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return ExpParams::String;
 
-    if (!_stricmp(text, "Float"))
+    if (!_stricmp(Text, "Float"))
 	{
 		IsFloat = true;
 		return ExpParams::Float;
 	}
 
-    if (!_stricmp(text, "Integer"))
+    if (!_stricmp(Text, "Integer"))
 		return ExpParams::Integer;
 
-	if (!_stricmp(text, "Unsigned Integer"))
+	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpParams::UnsignedInteger;
 
 	MessageBoxA(NULL, "Error reading Parameter type; text did not match anything.", "DarkEDIF - Error", MB_OK);
     return (ExpParams)(ushort)0;
 }
 
-ExpReturnType ReadExpressionReturnType(const char * text)
+ExpReturnType ReadExpressionReturnType(const char * Text)
 {
-	if (!_stricmp(text, "Integer"))
+	if (!_stricmp(Text, "Integer"))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(text, "Float"))
+	if (!_stricmp(Text, "Float"))
 		return ExpReturnType::Float;
 	
-	if (!_stricmp(text, "Text") || !_stricmp(text, "String"))
+	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return ExpReturnType::String;
 	
 	// More specialised, but not allowed for
-	if (!_stricmp(text, "Short"))
+	if (!_stricmp(Text, "Short"))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(text, "Unsigned Integer"))
+	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpReturnType::UnsignedInteger;
 
 	char error [256];
-	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", text);
+	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", Text);
 	MessageBoxA(NULL, error, "DarkEDIF - Error", MB_OK);
 	return ExpReturnType::Integer; // default
 }
@@ -327,7 +327,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 		ActionFunctions.push_back(0);
 
-		// The function cleverly determines how to create itself based on already existing instances.
+		// Determines how to create itself based on already existing instances.
 		CreateNewActionInfo();
     }
 
@@ -337,7 +337,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 		ConditionFunctions.push_back(0);
 
-		// The function cleverly determines how to create itself based on already existing instances.
+		// Determines how to create itself based on already existing instances.
 		CreateNewConditionInfo();
     }
 
@@ -347,7 +347,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 		ExpressionFunctions.push_back(0);
 
-		// The function cleverly determines how to create itself based on already existing instances.
+		// Determines how to create itself based on already existing instances.
 		CreateNewExpressionInfo();
     }
 
@@ -389,7 +389,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				else // Regular Parameter
 				{
 
-					// loop through Parameter names and compareth them.
+					// Loop through Parameter names and compareth them.
 					for(unsigned int j = PROPTYPE_FIRST_ITEM;
 						j < (PROPTYPE_LAST_ITEM - PROPTYPE_FIRST_ITEM);
 						++ j)
@@ -426,8 +426,8 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						// Find out what opt is.
 						// Two settings may be specified by |=ing the options unsigned int.
 					
-						CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
-						CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
+						CurrentProperty->Title = Property["Title"];
+						CurrentProperty->Info = Property["Info"];
 
 						switch (CurrentProperty->Type_ID)
 						{
@@ -441,7 +441,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 							// Edit button, Params1 = button text, or nullptr if Edit
 							case PROPTYPE_EDITBUTTON:
-								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : Edif::ConvertString((const char *)Property["Text"]));
+								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : (const char *)Property["Text"]);
 					
 							// Edit box for strings, Parameter = max length
 							case PROPTYPE_EDIT_STRING:
@@ -464,7 +464,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 							case PROPTYPE_COMBOBOX:
 							{
 								if (Property["Items"].u.object.length == 0)
-									MessageBoxA(NULL, "WArning: no items detected in combobox property.", "DarkEDIF error", MB_OK);
+									MessageBoxA(NULL, "Warning: no items detected in combobox property.", "DarkEDIF error", MB_OK);
 							
 								const char ** Fixed = new const char * [Property["Items"].u.object.length+2];
 
@@ -473,7 +473,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 								// Use incrementation and copy to fixed list.
 								for (unsigned int index = 1; index < Property["Items"].u.object.length+1; ++ index)
-									Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
+									Fixed[index] = Property["Items"][index-1];
 
 								// Pass fixed list as Parameter
 								SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
