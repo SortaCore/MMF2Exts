@@ -29,7 +29,7 @@ void Extension::Replaced_JoinChannel(char * channelName, int hideChannel)
 }
 void Extension::LeaveChannel()
 {
-	if (threadData.channel && threadData.channel->isclosed)
+	if (threadData.channel && !threadData.channel->isclosed)
 		threadData.channel->orig().leave(); // don't set isclosed, leave not approved by server yet
 }
 void Extension::SendTextToServer(int subchannel, char * textToSend)

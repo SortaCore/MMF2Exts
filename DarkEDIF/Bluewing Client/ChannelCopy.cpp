@@ -81,7 +81,11 @@ PeerCopy * ChannelCopy::updatepeername(lacewing::relayclient::channel::peer &pee
 	auto pr = std::find_if(_peers.begin(), _peers.end(), [=](PeerCopy *&p) {
 		return p->peer == &peer;
 	});
+#ifdef _DEBUG
 	assert(pr != _peers.end());
+#endif
+	if (pr == _peers.end())
+		return nullptr;
 	PeerCopy * pr2 = *pr;
 	pr2->name(peer.name());
 	return pr2;

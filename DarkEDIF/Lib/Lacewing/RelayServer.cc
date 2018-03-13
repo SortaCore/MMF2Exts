@@ -830,7 +830,7 @@ void relayserverinternal::channel::addclient(relayserverinternal::client &client
 	builder.addheader(0, 0);         /* response */
 	builder.add <unsigned char>(2);  /* joinchannel */
 	builder.add <unsigned char>(1);  /* success */
-	builder.add <unsigned char>(channelmaster != &clientinternal);  /* not the channel master */
+	builder.add <unsigned char>(channelmaster == &clientinternal);  /* whether they are the channel master */
 
 	builder.add <unsigned char>((unsigned char)strlen(name));
 	builder.add(name, -1);

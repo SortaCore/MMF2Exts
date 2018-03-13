@@ -2,7 +2,7 @@
 #include "Common.h"
 #define MessageMatches() (threadData.receivedMsg.subchannel == subchannel || subchannel == -1)
 
-#define loopNameMatches(cond) \
+#define LoopNameMatches(cond) \
 	if (loopName[0] == '\0') \
 	{ \
 		CreateError("Cannot detect condition "#cond": loop name is blank."); \
@@ -138,27 +138,27 @@ bool Extension::YouAreChannelMaster()
 }
 bool Extension::OnChannelListLoopWithName(char * loopName)
 {
-	loopNameMatches("Channel List Loop With Name");
+	LoopNameMatches("Channel List Loop With Name");
 }
 bool Extension::OnChannelListLoopWithNameFinished(char * loopName)
 {
-	loopNameMatches("Channel List Loop With Name Finished");
+	LoopNameMatches("Channel List Loop With Name Finished");
 }
 bool Extension::OnPeerLoopWithName(char * loopName)
 {
-	loopNameMatches("Peer Loop With Name");
+	LoopNameMatches("Peer Loop With Name");
 }
 bool Extension::OnPeerLoopWithNameFinished(char * loopName)
 {
-	loopNameMatches("Peer Loop With Name Finished");
+	LoopNameMatches("Peer Loop With Name Finished");
 }
 bool Extension::OnClientChannelLoopWithName(char * loopName)
 {
-	loopNameMatches("Client Channel Loop With Name");
+	LoopNameMatches("Client Channel Loop With Name");
 }
 bool Extension::OnClientChannelLoopWithNameFinished(char * loopName)
 {
-	loopNameMatches("Client Channel Loop With Name Finished");
+	LoopNameMatches("Client Channel Loop With Name Finished");
 }
 bool Extension::OnSentTextChannelMessageFromServer(int subchannel)
 {

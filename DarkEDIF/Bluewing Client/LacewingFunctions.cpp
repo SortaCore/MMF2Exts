@@ -59,6 +59,11 @@ void OnJoinChannel(lacewing::relayclient &Client, lacewing::relayclient::channel
 
 	ChannelCopy * channel = new ChannelCopy(&Target);
 	Channels.push_back(channel);
+#if 0
+	// Autoselect the first channel?
+	if (Channels.size() == 1U)
+		Ext.threadData.channel = channel;
+#endif
 
 	if (GThread)
 		LeaveCriticalSectionDebug(&globals->lock);
