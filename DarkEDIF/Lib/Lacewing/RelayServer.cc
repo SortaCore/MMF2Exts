@@ -94,6 +94,7 @@ struct relayserverinternal
 		// Can't use socket->address, as when server_client is free'd it is no longer valid
 		// Since there's a logical use for looking up address during closing, we'll keep a copy.
 		const char * address;
+		in6_addr addressInt;
 		::std::chrono::high_resolution_clock::time_point connectTime;
 		::std::chrono::steady_clock::time_point lastmessagetime;
 
@@ -104,6 +105,7 @@ struct relayserverinternal
             public_.internaltag    = this;
             public_.tag            = 0;
 			address = _strdup(socket->address()->tostring());
+			addressInt = socket->address()->toin6_addr();
 
 			id = internal.clientids.borrow();
 
@@ -468,8 +470,10 @@ void handlerreceive(lacewing::server server, lacewing::server_client clientsocke
     relayserverinternal &internal = *(relayserverinternal *) server->tag();
     relayserverinternal::client &client = *(relayserverinternal::client *) clientsocket->tag();
     
+#ifdef _DEBUG
 	if ((long)clientsocket->tag() == 0xFEEEFEEEL || (long)clientsocket->tag() == 0x0L || (long)clientsocket->tag() == 0xDDDDDDDDL)
-		__asm int 3;
+		DebugBreak();
+#endif
 
     if (!client.gotfirstbyte)
     {
@@ -1003,7 +1007,7 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
 		
 		char * addr = (char *)malloc(64U);
 		if (addr)
-			lacewing::lw_addr_prettystring(address, addr, 64U);
+			lw_addr_prettystring(address, addr, 64U);
 		error->add("Dropping connecting client from IP %s for sending messages before connection was approved", addr ? addr : address);
 		free(addr);
 		
@@ -1323,10 +1327,10 @@ bool relayserverinternal::client::messagehandler(unsigned char type, const char 
             relayserverinternal::channel * channel = readchannel      (reader);
             relayserverinternal::client  * peer    = channel->readpeer(reader);
 
-			// Message from yourself? Witchcraft!
+			// Message to yourself? Witchcraft!
             if (peer == this || peer == nullptr)
             {
-				errStr << "Malformed peer message content, discarding";
+				errStr << "Malformed peer message (invalid peer targeted), discarding";
                 reader.failed = true;
                 break;
             }
@@ -1593,6 +1597,11 @@ void relayserver::channel::removeclient(lacewing::relayserver::client &clientToD
 const char * relayserver::client::getaddress()
 {
 	return ((relayserverinternal::client *) internaltag)->address;
+}
+
+in6_addr relayserver::client::getaddressasint()
+{
+	return ((relayserverinternal::client *) internaltag)->addressInt;
 }
 
 const char * relayserver::client::getimplementation()

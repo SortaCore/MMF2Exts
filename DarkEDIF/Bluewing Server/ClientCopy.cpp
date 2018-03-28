@@ -147,9 +147,10 @@ ClientCopy::ClientCopy(lacewing::relayserver::client * cli)
 	client = cli;
 
 	char * addr = (char *)malloc(64);
-	lacewing::lw_addr_prettystring(cli->getaddress(), addr, 64U);
+	lw_addr_prettystring(cli->getaddress(), addr, 64U);
 
 	this->_address = addr;
+	this->_addressint = cli->getaddressasint();
 	this->_id = cli->id();
 	this->_implementation = _strdup(cli->getimplementation());
 	this->_connecttime = std::chrono::high_resolution_clock::now();

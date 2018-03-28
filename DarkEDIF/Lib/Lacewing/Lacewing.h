@@ -108,6 +108,8 @@
    #endif
 #endif
 
+#include <in6addr.h>
+
 typedef lw_i8 lw_bool;
 
 #define lw_true   ((lw_bool) 1)
@@ -204,6 +206,7 @@ lw_import       lw_bool  lw_random                   (char * buffer, size_t size
   lw_import        lw_bool  lw_addr_ipv6            (lw_addr);
   lw_import        lw_bool  lw_addr_equal           (lw_addr, lw_addr);
   lw_import     const char* lw_addr_tostring        (lw_addr);
+  lw_import        in6_addr lw_addr_toin6_addr      (lw_addr);
   lw_import           void* lw_addr_tag             (lw_addr);
   lw_import           void  lw_addr_set_tag         (lw_addr, void *);
 
@@ -669,6 +672,15 @@ lw_import       lw_bool  lw_random                   (char * buffer, size_t size
     #define lw_class_wraps(c)
 #endif
 
+#pragma region Phi stuff
+
+/// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
+/// 		  If the address is IPv4 or unmapped IPv6, copies it as is. </summary>
+void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
+
+// to preserve namespace
+#pragma endregion
+
 namespace lacewing
 {
 
@@ -991,6 +1003,7 @@ struct _address
    lw_import bool ready ();
    lw_import error resolve ();
 
+   lw_import in6_addr toin6_addr ();
    lw_import const char * tostring ();
    lw_import operator const char *  ();
 
@@ -1455,14 +1468,10 @@ lw_import void flashpolicy_delete (flashpolicy);
 // That's fine, but that function runs malloc on the _lw_addr, which leads to a memory leak when the stack
 // variable is freed. Run lw_addr_cleanup() on the stack address at the _lw_addr scope exits to compensate for it.
 
-/// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
-/// 		  If the address is IPv4 or unmapped IPv6, returns it as is. </summary>
-void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
-
 struct relayclient
 {
 public:
-	const static int buildnum = 80;
+	const static int buildnum = 81;
 
 	void * internaltag, *tag;
 
@@ -1598,7 +1607,7 @@ public:
 
 struct relayserver
 {
-	static const int buildnum = 12;
+	static const int buildnum = 13;
 
 	void * internaltag, *tag;
 
@@ -1666,6 +1675,7 @@ struct relayserver
 		unsigned short id();
 
 		const char * getaddress();
+		in6_addr getaddressasint();
 		const char * getimplementation();
 
 		void close();

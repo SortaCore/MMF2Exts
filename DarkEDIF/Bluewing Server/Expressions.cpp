@@ -257,7 +257,7 @@ const char * Extension::Client_IP()
 	}
 
 	char * addr = (char *)Runtime.Allocate(64U);
-	lacewing::lw_addr_prettystring(threadData.client->getaddress(), addr, 64);
+	lw_addr_prettystring(threadData.client->getaddress(), addr, 64);
 	return addr;
 }
 unsigned int Extension::Port()

@@ -42,6 +42,7 @@ protected:
 	const char * _address;
 	const char * _name;
 	const char * _implementation;
+	in6_addr _addressint;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> _connecttime;
 };

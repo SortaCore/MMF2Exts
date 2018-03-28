@@ -128,6 +128,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
    // This is the easiest way to close the connection and free the memory invoked.
    if (*((unsigned short *)ctx) == 1)
    {
+	   Sleep(10);
 	   lw_trace("Running stream_delete for stream %p due to fd_stream completion hack.", ctx);
 	   lw_stream_delete((lw_stream)ctx);
 	   // TODO: UDP LEAKED?!

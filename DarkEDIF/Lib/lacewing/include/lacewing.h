@@ -107,6 +107,7 @@
       #define lw_import __declspec (dllimport)
    #endif
 #endif
+#include <in6addr.h>
 
 typedef lw_i8 lw_bool;
 
@@ -204,6 +205,7 @@ lw_import       lw_bool  lw_random                   (char * buffer, size_t size
   lw_import        lw_bool  lw_addr_ipv6            (lw_addr);
   lw_import        lw_bool  lw_addr_equal           (lw_addr, lw_addr);
   lw_import     const char* lw_addr_tostring        (lw_addr);
+  lw_import        in6_addr lw_addr_toin6_addr      (lw_addr);
   lw_import           void* lw_addr_tag             (lw_addr);
   lw_import           void  lw_addr_set_tag         (lw_addr, void *);
 
@@ -991,6 +993,7 @@ struct _address
    lw_import bool ready ();
    lw_import error resolve ();
 
+   lw_import in6_addr toin6_addr ();
    lw_import const char * tostring ();
    lw_import operator const char *  ();
 

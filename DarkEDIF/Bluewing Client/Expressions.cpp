@@ -1,7 +1,7 @@
 
 #include "Common.h"
 
-const char * Extension::error()
+const char * Extension::Error()
 {
 	return Runtime.CopyString(threadData.error.text ? threadData.error.text : "");
 }
@@ -252,11 +252,9 @@ const char * Extension::DenyReason()
 {
 	return Runtime.CopyString(DenyReasonBuffer ? DenyReasonBuffer : "No reason specified.");
 }
-const char * Extension::HostIP()
+const char * Extension::Host_IP()
 {
-	char * fusionAddr = (char *)Runtime.Allocate(64);
-	lacewing::lw_addr_prettystring(Cli.serveraddress()->tostring(), fusionAddr, 64U);
-	return fusionAddr; // Allocate is equivalent to CopyString, but doesn't copy initially.
+	return Runtime.CopyString(HostIP.c_str());
 }
 unsigned int Extension::HostPort()
 {

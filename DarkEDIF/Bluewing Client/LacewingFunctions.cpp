@@ -21,17 +21,28 @@ void OnError(lacewing::relayclient &Client, lacewing::error error)
 }
 void OnConnect(lacewing::relayclient &Client)
 {
+	lacewing::address addr = Client.serveraddress();
+	char ipAddr[64];
+	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
+	HostIP = ipAddr;
 	globals->AddEvent1(1);
 }
 void OnConnectDenied(lacewing::relayclient &Client, const char * DenyReason)
 {
+	// On Connect is not called during TCP Connect but Connect Response message.
+	// Ditto for Connect Denied. The serveraddress() is set during TCP Connect, so it should be valid here.
+	lacewing::address addr = Client.serveraddress();
+	char ipAddr[64];
+	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
+	HostIP = ipAddr;
+
 	// Old deny reason? Free it.
 	free(DenyReasonBuffer);
 
 	DenyReasonBuffer = _strdup(DenyReason);
 	if (!DenyReasonBuffer)
 		globals->CreateError("Error copying deny reason from Lacewing to local buffer.");
-	globals->AddEvent1(2);
+	globals->AddEvent1(2); // no 0xFFFF; Disconnect should be called separately
 }
 void OnDisconnect(lacewing::relayclient &Client)
 {
@@ -45,7 +56,7 @@ void OnDisconnect(lacewing::relayclient &Client)
 	if (GThread)
 		LeaveCriticalSectionDebug(&globals->lock);
 
-	// 0xFFFF: Empty all channels and peers
+	// 0xFFFF: Empty all channels and peers, and reset HostIP
 	globals->AddEvent2(3, 0xFFFF);
 }
 void OnChannelListReceived(lacewing::relayclient &Client)

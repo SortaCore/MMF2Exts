@@ -286,6 +286,22 @@ const char * lw_addr_tostring (lw_addr ctx)
    return ctx->buffer ? ctx->buffer: "";
 }
 
+in6_addr lw_addr_toin6_addr (lw_addr ctx)
+{
+	static in6_addr empty = { 0 };
+	if ((!ctx->info) || (!ctx->info->ai_addr))
+		return empty;
+
+	if (((struct sockaddr_storage *) ctx->info->ai_addr)->ss_family == AF_INET6)
+		return ((struct sockaddr_in6 *) ctx->info->ai_addr)->sin6_addr;
+
+	in6_addr v4 = { 0 };
+	v4.u.Byte[10] = 0xff;
+	v4.u.Byte[11] = 0xff;
+	*(lw_ui32 *)(&(((char *)&v4)[12])) = *(lw_ui32 *)&((struct sockaddr_in *) ctx->info->ai_addr)->sin_addr;
+	return v4;
+}
+
 void resolver (lw_addr ctx)
 {
    struct addrinfo hints;

@@ -28,6 +28,8 @@
 
 // == end lacewing
 
+#include <stdlib.h>
+#include <crtdbg.h>
 #include <algorithm>
 #include <sstream>
 #include <chrono>

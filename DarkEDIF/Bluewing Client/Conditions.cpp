@@ -112,7 +112,7 @@ bool Extension::OnAnyBlastedMessageFromPeer(int subchannel)
 }
 bool Extension::ClientHasAName()
 {
-	return (Cli.name() && Cli.name()[0] == '\0');
+	return (Cli.name() && Cli.name()[0] != '\0');
 }
 bool Extension::SelectedPeerIsChannelMaster()
 {

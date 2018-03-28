@@ -99,6 +99,11 @@ const char * _address::tostring ()
    return lw_addr_tostring ((lw_addr) this);
 }
 
+in6_addr _address::toin6_addr()
+{
+   return lw_addr_toin6_addr ((lw_addr) this);
+}
+
 _address::operator const char * ()
 {
    return tostring ();

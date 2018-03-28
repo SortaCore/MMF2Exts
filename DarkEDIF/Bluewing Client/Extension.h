@@ -51,6 +51,7 @@ public:
 	#define AutomaticallyClearBinary	globals->_automaticallyClearBinary
 	#define GlobalID					globals->_globalID
 	#define Channels					globals->_channels
+	#define HostIP						globals->_hostIP
 
 	
 
@@ -226,7 +227,7 @@ public:
 
     /// Expressions
 
-		const char * error();
+		const char * Error();
 		const char * ReplacedExprNoParams();
 		const char * Self_Name();
 		unsigned int Self_ChannelCount();
@@ -259,7 +260,7 @@ public:
 		const char * Peer_PreviousName();
 		// ReplacedExprNoParams, x2
 		const char * DenyReason();
-		const char * HostIP();
+		const char * Host_IP();
 		unsigned int HostPort();
 		// ReplacedExprNoParams
 		const char * WelcomeMessage();
@@ -317,6 +318,7 @@ struct GlobalInfo
 	Extension *					_ext;
 	std::vector<SaveExtInfo *>	_saved;
 	std::vector<ChannelCopy *>	_channels; // Referred to by reference for all extensions
+	std::string					_hostIP;
 	ChannelCopy *				lastDestroyedExtSelectedChannel;
 	PeerCopy *					lastDestroyedExtSelectedPeer;
 

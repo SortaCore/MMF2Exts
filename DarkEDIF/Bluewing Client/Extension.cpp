@@ -177,7 +177,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(75, IsPeerOnChannel_ID);
 	}
 	{
-		LinkExpression(0, error);
+		LinkExpression(0, Error);
 		LinkExpression(1, ReplacedExprNoParams);
 		LinkExpression(2, Self_Name);
 		LinkExpression(3, Self_ChannelCount);
@@ -215,7 +215,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(35, ReplacedExprNoParams);
 		LinkExpression(36, ReplacedExprNoParams);
 		LinkExpression(37, DenyReason);
-		LinkExpression(38, HostIP);
+		LinkExpression(38, Host_IP);
 		LinkExpression(39, HostPort);
 		LinkExpression(40, ReplacedExprNoParams);
 		LinkExpression(41, WelcomeMessage);
@@ -564,7 +564,7 @@ REFLAG Extension::Handle()
 	// we have to run next loop even if there's no events in Saved() to deal with.
 	bool runNextLoop = !globals->_thread;
 
-	for (size_t maxTrig = 0; maxTrig < 5; maxTrig++)
+	for (size_t maxTrig = 0; maxTrig < 500; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!TryEnterCriticalSection(&globals->lock))
@@ -641,6 +641,10 @@ REFLAG Extension::Handle()
 						}
 
 						Channels.clear();
+
+						// After On Disconnect is triggered (cond ID 3), 0xFFFF is triggered.
+						// Invalidate the cached server's host IP.
+						HostIP = "";
 					}
 
 					if (!s->channel || (s->channel && !s->peer))

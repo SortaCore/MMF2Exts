@@ -1,8 +1,6 @@
 #pragma once
 #include "Lacewing.h"
 
-namespace lacewing {
-
 /// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
 /// 		  If the address is IPv4 or unmapped IPv6, returns it as is. </summary>
 void lw_addr_prettystring(const char * input, const char * output, size_t outputSize)
@@ -29,6 +27,4 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 			}
 		}
 	}
-}
-
 }
