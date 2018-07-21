@@ -339,7 +339,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 		const json_value & JProp = CurLang["Properties"][i];
 		
 		// TODO: If default state is missing, say the name of the property for easy repair by dev
-		switch (::SDK->EdittimeProperties[i].Type_ID)
+		switch (::SDK->EdittimeProperties[i].Type_ID % 1000)
 		{
 			case PROPTYPE_LEFTCHECKBOX:
 			{
@@ -380,8 +380,9 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEDIF - setup warning", MB_OK);
 				
 				// No casing change necessary				
-				if (_stricmp(JProp["Case"], "Upper") && _stricmp(JProp["Case"], "Lower"))
+				if (_stricmp(JProp["Case"], "Upper") && _stricmp(JProp["Case"], "Lower")) {
 					mystr << (const char *)(JProp["DefaultState"]) << char(0);
+				}
 				else
 				{
 					std::string dup(JProp["DefaultState"]);
@@ -460,17 +461,10 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 		return nullptr;
 	}
 
-	const char * curStr = (const char *)CurLang["Properties"][ID]["Type"]; 
-
+	const json_value &jsonItem = CurLang["Properties"][ID];
+	const char * curStr = jsonItem["Type"];
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
-	{
-#ifndef _UNICODE
-		return new Prop_Str(CurLang["Properties"][ID]["DefaultState"]);
-#else
-		const char * c = (const char *)CurLang["Properties"][ID]["DefaultState"];
-		return new Prop_Str((char *)c);
-#endif
-	}
+		return new Prop_Str((const char *)jsonItem["DefaultState"]);
 
 
 	unsigned int size;
@@ -479,7 +473,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	Prop * ret = nullptr;
 
 	if (!_stricmp(curStr, "Editbox String"))
-		ret = new Prop_Str(Current);
+		ret = new Prop_Str((const char *)Current);
 	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
 	else if (_stricmp(curStr, "Checkbox"))
@@ -502,18 +496,20 @@ void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue)
 void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize)
 {
 	unsigned int oldSize; // Set by PropIndex
-	const char * curStr = CurLang["Properties"][PropID]["Type"];
+	const char * curTypeStr = CurLang["Properties"][PropID]["Type"];
 	char * oldData = PropIndex(edPtr, PropID, &oldSize);
 	bool rearrangementRequired = false;
 
-	if (!_stricmp(curStr, "Editbox String"))
+	if (!_stricmp(curTypeStr, "Editbox String"))
 		rearrangementRequired = newSize != oldSize; // May need resizing
-	else if (!_stricmp(curStr, "Editbox Number"))
-		rearrangementRequired = false; //
-	else if (!_stricmp(curStr, "Combo Box"))
-		rearrangementRequired = false; // Index of combo box Item
-	else if (_stricmp(curStr, "Checkbox"))
-		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
+	else if (!_stricmp(curTypeStr, "Editbox Number"))
+		rearrangementRequired = false; // Number of editbox, always same data size
+	else if (!_stricmp(curTypeStr, "Combo Box"))
+		rearrangementRequired = false; // Index of combo box Item, always same data size
+	else if (_stricmp(curTypeStr, "Checkbox")) //
+		return; // Checkbox is handled by PropChangeChkbox()
+	else
+		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Error", MB_OK);
 
 	if (!rearrangementRequired)
 	{
@@ -585,7 +581,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	// Read unchangable properties
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox"))
 		return nullptr;
-	// if (curStr == "other stuff")
+	// if (curTypeStr == "other stuff")
 	//	return new Prop_XXX();
 
 	// Read changable properties
@@ -595,7 +591,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 		curStr = (const char *)j[i]["Type"];
 		
 		if (!_stricmp(curStr, "Editbox String"))
-			Current += (_tcslen((TCHAR *)Current) + 1) * sizeof(TCHAR);
+			Current += strlen(Current) + 1;
 		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
 

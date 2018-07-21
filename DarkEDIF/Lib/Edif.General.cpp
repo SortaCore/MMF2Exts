@@ -59,16 +59,16 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->NumOfExpressions = CurLang["Expressions"].u.object.length;
 	
 	infoPtr->EDITDATASize = sizeof(EDITDATA);
-#ifndef NOPROPS
+#if 0 // was #ifndef NOPROPS
 	{
 		const json_value JSON = CurLang["Properties"];
 		for(unsigned int i = 0; i < JSON.u.object.length; ++i)
 		{
-			switch (::SDK->EdittimeProperties[i].Type_ID)
+			switch (::SDK->EdittimeProperties[i].Type_ID % 1000)
 			{
 				case Edif::Properties::PROPTYPE_EDIT_STRING:
 				case Edif::Properties::PROPTYPE_STATIC:
-					infoPtr->EDITDATASize += sizeof(Prop_AStr)+255;
+					infoPtr->EDITDATASize += sizeof(Prop_Str) + (255 * sizeof(wchar_t));
 					break;
 				default:
 					infoPtr->EDITDATASize += sizeof(Prop);

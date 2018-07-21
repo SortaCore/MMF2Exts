@@ -9,34 +9,7 @@
 // ============================================================================
 
 #include "Common.h"
-
-#ifndef RUN_ONLY
-
-// PROPERTIES /////////////////////////////////////////////////////////////////
-
-
-// Property definitions
-//
-// Type, ID, Text, Text of Info box [, Options, Init Param]
-//
-/*PropData Properties[] = {
-
-// Example
-// -------
-//	PropData_Group		(PROPID_TEXTTITLE,	IDS_PROP_TEXTTITLE,		IDS_PROP_TEXTTITLE),
-//	PropData_EditString	(PROPID_TEXT,		IDS_PROP_TEXT,			IDS_PROP_TEXT_INFO),
-//	PropData_CheckBox	(PROPID_CHECK,		IDS_PROP_CHECK,			IDS_PROP_CHECK_INFO),
-//	PropData_ComboBox	(PROPID_COMBO,		IDS_PROP_COMBO,			IDS_PROP_COMBO,	ComboList),
-//	PropData_Color		(PROPID_COLOR,		IDS_PROP_COLOR,			IDS_PROP_COLOR_INFO),
-
-
-	// End of table (required)
-	PropData_End()
-};*/
-
-
-#endif // !defined(RUN_ONLY)
-
+#include "DarkEdif.h"
 
 // ============================================================================
 //
@@ -52,17 +25,21 @@
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
 
+// Use var args to fix warning 4001
+#ifdef RUN_ONLY
+	#define NoOpInRuntime(...) return __VA_ARGS__
+#else
+	#define NoOpInRuntime(...)
+#endif
+
 int DLLExport MakeIconEx ( mv *mV, cSurface* pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr )
 {
-	#ifndef RUN_ONLY
+	NoOpInRuntime(0);
+	pIconSf->Delete();
+	pIconSf->Clone(*SDK->Icon);
 
-		pIconSf->Delete();
-		pIconSf->Clone(*SDK->Icon);
-
-		pIconSf->SetTransparentColor(RGB(255, 0, 255));
-
-	#endif // !defined(RUN_ONLY)
-   return 0;
+	pIconSf->SetTransparentColor(RGB(255, 0, 255));
+	return 0;
 }
 
 
@@ -74,23 +51,18 @@ int DLLExport MakeIconEx ( mv *mV, cSurface* pIconSf, TCHAR * lpName, ObjInfo * 
 
 int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
+	NoOpInRuntime(-1);
 
-		// Check compatibility
-		if ( IS_COMPATIBLE(mV) )
-		{
-			Edif::Init(mV, edPtr);
+	if (!IS_COMPATIBLE(mV))
+		return -1;
 
-			// Set default object settings
+	Edif::Init(mV, edPtr);
+
+	// Set default object settings
 	//		edPtr->swidth = 48;
 	//		edPtr->sheight = 48;
 
-			return 0;
-		}
-	#endif // !defined(RUN_ONLY)
-
-	// Error
-	return -1;
+	return 0;
 }
 
 // --------------------
@@ -100,14 +72,13 @@ int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 //
 BOOL DLLExport EditObject (mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
-		// Check compatibility
-		if ( IS_COMPATIBLE(mV) )
-		{
-	
-		}
-	#endif // !defined(RUN_ONLY)
-	return FALSE;
+	NoOpInRuntime(FALSE);
+
+	// Check compatibility
+	if (!IS_COMPATIBLE(mV) )
+		return FALSE;
+
+	return TRUE;
 }
 
 // --------------------
@@ -117,7 +88,7 @@ BOOL DLLExport EditObject (mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDAT
 //
 // Note: remove the comments if your object can be resized (and remove the comments in the .def file)
 /*
-BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
+BOOL WINAPI SetEditSize(LPMV mv, EDITDATA * edPtr, int cx, int cy)
 {
 	#ifndef RUN_ONLY
 		edPtr->swidth = cx;
@@ -134,8 +105,7 @@ BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
 //
 void WINAPI	DLLExport PutObject(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, unsigned short count)
 {
-	#ifndef RUN_ONLY
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
 }
 
 // --------------------
@@ -145,15 +115,15 @@ void WINAPI	DLLExport PutObject(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, u
 //
 void WINAPI	DLLExport RemoveObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr, unsigned short count)
 {
-	#ifndef RUN_ONLY
-		// Is the last object removed?
-		if (0 == count)
-		{
-			Edif::Free(edPtr);
+	NoOpInRuntime();
 
-			// Do whatever necessary to remove our data
-		}
-	#endif // !defined(RUN_ONLY)
+	// Is the last object removed?
+	if (0 == count)
+	{
+		Edif::Free(edPtr);
+
+		// Do whatever necessary to remove our data
+	}
 }
 
 // --------------------
@@ -163,8 +133,7 @@ void WINAPI	DLLExport RemoveObject(mv * mV, LevelObject * loPtr, EDITDATA * edPt
 //
 void DLLExport DuplicateObject(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
 }
 
 // --------------------
@@ -174,35 +143,30 @@ void DLLExport DuplicateObject(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 //
 void DLLExport GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
-		if(!mV || !rc || !edPtr)
-			return;
-		rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
-		rc->bottom = rc->top + SDK->Icon->GetHeight();	// edPtr->sheight;
-	#endif // !defined(RUN_ONLY)
-	return;
+	NoOpInRuntime();
+	if (!mV || !rc || !edPtr)
+		return;
+	
+	rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
+	rc->bottom = rc->top + SDK->Icon->GetHeight();	// edPtr->sheight;
 }
 
 
+cSurface * DLLExport WinGetSurface (int idWin, int surfID = 0);
 // --------------------
 // EditorDisplay
 // --------------------
 // Displays the object under the frame editor
 //
-
-cSurface * DLLExport WinGetSurface (int idWin, int surfID = 0);
 void DLLExport EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
 {
-#ifndef RUN_ONLY
+	NoOpInRuntime();
 
 	cSurface * Surface = WinGetSurface((int) mV->IdEditWin);
-
-	if(!Surface)
+	if (!Surface)
         return;
 
     SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
-
-#endif // !defined(RUN_ONLY)
 }
 
 
@@ -214,9 +178,7 @@ void DLLExport EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 
 extern "C" BOOL DLLExport IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
 {
-	#ifndef RUN_ONLY
-		// Write your code here
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime(FALSE);
 	return FALSE;
 }
 
@@ -227,10 +189,7 @@ extern "C" BOOL DLLExport IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * 
 // 
 void DLLExport PrepareToWriteObject(mv * mV, EDITDATA * edPtr, ObjectInfo * adoi)
 {
-#ifndef RUN_ONLY
-
-	// Write your code here
-#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
 }
 
 // --------------------
@@ -239,15 +198,14 @@ void DLLExport PrepareToWriteObject(mv * mV, EDITDATA * edPtr, ObjectInfo * adoi
 
 BOOL WINAPI GetFilters(mv * mV, EDITDATA * edPtr, unsigned int Flags, void * Reserved)
 {
-#ifndef RUN_ONLY
+	NoOpInRuntime(FALSE);
 	// If your extension uses image filters
-//	if ( (dwFlags & GETFILTERS_IMAGES) != 0 )
+//	if ( (Flags & GETFILTERS_IMAGES) != 0 )
 //		return TRUE;
 
 	// If your extension uses sound filters
-//	if ( (dwFlags & GETFILTERS_SOUNDS) != 0 )
+//	if ( (Flags & GETFILTERS_SOUNDS) != 0 )
 //		return TRUE;
-#endif // RUN_ONLY
 	return FALSE;
 }
 
@@ -259,11 +217,10 @@ BOOL WINAPI GetFilters(mv * mV, EDITDATA * edPtr, unsigned int Flags, void * Res
 //
 BOOL DLLExport UsesFile(mv * mV, TCHAR * fileName)
 {
+	NoOpInRuntime(FALSE);
+	
 	BOOL r = FALSE;
-	#ifndef RUN_ONLY
-
-		// Example: return TRUE if file extension is ".txt"
-	/*	
+	/*	Example: return TRUE if file extension is ".txt"
 		char *	ext, npath;
 
 		if ( fileName != NULL )
@@ -280,8 +237,8 @@ BOOL DLLExport UsesFile(mv * mV, TCHAR * fileName)
 				}
 				free(ext);
 			}
-		} */
-	#endif // !defined(RUN_ONLY)
+		}
+	*/
 	return r;
 }
 
@@ -293,14 +250,13 @@ BOOL DLLExport UsesFile(mv * mV, TCHAR * fileName)
 //
 void WINAPI	DLLExport CreateFromFile (mv * mV, TCHAR * fileName, EDITDATA * edPtr)
 {
-	#ifndef RUN_ONLY
-		// Initialize your extension data from the given file
+	NoOpInRuntime();
+	// Initialize your extension data from the given file
 	//	edPtr->swidth = 48;
 	//	edPtr->sheight = 48;
 
-		// Example: store the filename
-		// strcpy(edPtr->myFileName, fileName);
-	#endif // !defined(RUN_ONLY)
+	// Example: store the filename
+	// strcpy(edPtr->myFileName, fileName);
 }
 
 // ============================================================================
@@ -314,11 +270,18 @@ void WINAPI	DLLExport CreateFromFile (mv * mV, TCHAR * fileName, EDITDATA * edPt
 // --------------------
 // Inserts properties into the properties of the object.
 //
+void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr);
 BOOL DLLExport GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
-	#ifndef RUN_ONLY
+	NoOpInRuntime(FALSE);
+
 	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
-	#endif // !defined(RUN_ONLY)
+
+	if (edPtr->DarkEDIF_Prop_Size == 0)
+	{
+		InitialisePropertiesFromJSON(mV, edPtr);
+		mvInvalidateObject(mV, edPtr);
+	}
 
 	// OK
 	return TRUE;
@@ -331,9 +294,7 @@ BOOL DLLExport GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 //
 void DLLExport ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
-	#ifndef RUN_ONLY
-		// Write your code here
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
 }
 
 // --------------------
@@ -344,9 +305,9 @@ void DLLExport ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 //
 LPARAM DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
-	#ifndef RUN_ONLY
-		// Example
-		// -------
+	NoOpInRuntime(NULL);
+	// Example
+	// -------
 	//	if ( PropID == PROPID_COMBO )
 	//	{
 	//		switch (edPtr->sType)
@@ -357,7 +318,6 @@ LPARAM DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Prop
 	//			return (LPARAM)ComboList2;
 	//		}
 	//	}
-	#endif // !defined(RUN_ONLY)
 
 	return NULL;
 }
@@ -370,8 +330,7 @@ LPARAM DLLExport GetPropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Prop
 //
 void DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int PropID, LPARAM lParam)
 {
-	#ifndef RUN_ONLY
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
 }
 
 // --------------------
@@ -380,29 +339,18 @@ void DLLExport ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
 //
-void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+using namespace Edif::Properties;
+Prop * GetProperty(EDITDATA * edPtr, size_t ID);
+void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
-	#ifndef RUN_ONLY
-		// Example
-		// -------
-	//	switch (PropID) {
-	//
-	//	// Returns a color.
-	//	case PROPID_COLOR:
-	//		return new CPropDWordValue(edPtr->dwColor);
-	//
-	//	// Returns a string
-	//	case PROPID_TEXT:
-	//		return new CPropDataValue(&edPtr->szText[0]);
-	//
-	//	// Returns the value of the combo box
-	//	case PROPID_COMBO:
-	//		return new CPropDWordValue(edPtr->nComboIndex);
-	//	}
+	NoOpInRuntime(NULL);
 
-	#endif // !defined(RUN_ONLY)
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return NULL;
 
-	return NULL;
+	return GetProperty(edPtr, PropID);
 }
 
 // --------------------
@@ -410,24 +358,16 @@ void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 // --------------------
 // Returns the checked state of properties that have a check box.
 //
-BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
-	#ifndef RUN_ONLY
-		// Example
-		// -------
-	if(PropID == 0x80000)
-		MessageBoxA(NULL, "PropID == 0x80000", "DarkEDIF msg.", MB_OK);
-	/*SDK->EdittimeProperties[PropID-0x80000].
-		switch (PropID) {
+	NoOpInRuntime(FALSE);
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
+
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return FALSE;
 	
-		// Return 0 (unchecked) or 1 (checked)
-		case PROPID_CHECK:
-			return edPtr->nCheck;
-		}*/
-
-	#endif // !defined(RUN_ONLY)
-
-	return 0;		// Unchecked
+	return (edPtr->DarkEDIF_Props[PropID >> 3] >> (PropID % 8) & 1);
 }
 
 // --------------------
@@ -435,62 +375,158 @@ BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 // --------------------
 // This routine is called by MMF after a property has been modified.
 //
-void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param)
+void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, void * Param)
 {
-	#ifndef RUN_ONLY
-		// Gets the pointer to the EditProp structure
-		Prop * pValue = (Prop *)Param;
+	NoOpInRuntime();
 
-		// Example
-		// -------
-//		switch (nPropID) {
-//	
-//		case PROPID_COMBO:
-//			// Simply grab the value
-//			edPtr->nComboIndex = ((CPropDWordValue*)pValue)->m_dwValue;
-//			break;
-//
-//		case PROPID_COLOR:
-//			// Here too, gets the value
-//			edPtr->dwColor = ((CPropDWordValue*)pValue)->m_dwValue;
-//			break;
-//
-//		case PROPID_TEXT:
-//			{
-//				// Gets the string
-//				char * pStr = (char *)((CPropDataValue*)pValue)->m_pData;
-//	
-//				// You can simply poke the string if your EDITDATA structure has a fixed size,
-//				// or have an adaptive size of structure like below
-//	
-//				// If the length is different
-//				if (strlen(pStr)!=strlen(edPtr->text))
-//				{
-//					// Asks MMF to reallocate the structure with the new size
-//					LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, sizeof(EDITDATA)+strlen(pStr));
-//					
-//					// If reallocation worked
-//					if (pNewPtr!=NULL)
-//					{
-//						// Copy the string
-//						edPtr=pNewPtr;
-//						strcpy(edPtr->text, pStr);
-//					}
-//				}
-//				else
-//				{	
-//					// Same size : simply copy
-//					strcpy(edPtr->text, pStr);
-//				}
-//			}
-//			break;
-//		}
+	Prop * prop = (Prop *)Param;
 
-		// You may want to have your object redrawn in the frame editor after the modifications,
-		// in this case, just call this function
-		// mvInvalidateObject(mV, edPtr);
+	unsigned int i = prop->GetClassID(), PropID = (PropID_ - 0x80000) % 1000;
 
-	#endif // !defined(RUN_ONLY)
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return;
+
+	const json_value & propjson = CurLang["Properties"][PropID];
+
+	switch (i)
+	{
+		case 'DATA': // Buffer or string
+			if (strcmp(propjson["Type"], "Editbox String"))
+			{
+				Prop_Buff * prop2 = (Prop_Buff *)prop;
+				PropChange(mV, edPtr, PropID, prop2->Address, prop2->Size);
+				break;
+			}
+			else
+				MessageBoxA(NULL, "ERROR: Got Buff type instead of string-based for string property.", "DarkEDIF - Property error", MB_OK);
+			break;
+		case 'STRA': // ANSI string
+			{
+				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
+
+				// Serialise string to UTF-8
+				const char * fromStr = static_cast<const char *>(prop2->Address);
+
+				std::string utf8Str(1, '\0');
+				size_t numBytes = 1;
+				// String is blank?
+				if (fromStr[0] != '\0')
+				{
+					std::stringstream str;
+					// First convert to Unicode UCS-2
+					size_t numCharsInclNull = MultiByteToWideChar(CP_ACP, 0, fromStr, -1, 0, 0);
+					if (numCharsInclNull == 0)
+					{
+						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					std::wstring wideStr(numCharsInclNull, L'\0');
+					if (MultiByteToWideChar(CP_ACP, 0, fromStr, -1, &wideStr.front(), wideStr.size()) == 0)
+					{
+						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+
+					// Then back to Unicode UTF-8
+					numBytes = WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, 0, 0, NULL, NULL);
+					if (numBytes == 0)
+					{
+						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					utf8Str.resize(numBytes + 1);
+					if (WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
+					{
+						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+				}
+
+				PropChange(mV, edPtr, PropID, &utf8Str.front(), numBytes);
+				break;
+			}
+		case 'STRW': // Unicode string
+			{
+				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
+
+				// Serialise string to UTF-8
+				const wchar_t * fromStr = static_cast<const wchar_t *>(prop2->Address);
+
+				std::string utf8Str(1, '\0');
+				size_t numBytes = 1;
+				// String is blank?
+				if (fromStr[0] != L'\0')
+				{
+					std::stringstream str;
+					numBytes = WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, 0, 0, NULL, NULL);
+					if (numBytes == 0)
+					{
+						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					utf8Str.resize(numBytes + 1);
+					if (WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
+					{
+						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+				}
+
+				PropChange(mV, edPtr, PropID, &utf8Str.front(), utf8Str.size());
+				break;
+			}
+		case 'INT ': // 4-byte signed int
+			{
+				Prop_SInt * prop2 = (Prop_SInt *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
+				break;
+			}
+		case 'DWRD': // 4-byte unsigned int
+			{
+				Prop_UInt * prop2 = (Prop_UInt *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
+				break;
+			}
+		case 'INT2': // 8-byte signed int
+			{
+				Prop_Int64 * prop2 = (Prop_Int64 *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(__int64));
+				break;
+			}
+
+		case 'DBLE': // 8-byte floating point var
+			{
+				Prop_Double * prop2 = (Prop_Double *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
+				break;
+			}
+		case 'FLOT': // 4-byte floating point var
+			{
+				Prop_Float * prop2 = (Prop_Float *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
+				break;
+			}
+		case 'SIZE': // Two ints depicting a size
+			{
+				Prop_Size * prop2 = (Prop_Size *)prop;
+				PropChange(mV, edPtr, PropID, &prop2->X, sizeof(int)*2);
+				break;
+			}
+		default: // Custom property
+			{
+				Prop_Custom * prop2 = (Prop_Custom *)prop;
+				//PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
+			}
+			MessageBoxA(NULL, "Assuming class ID is custom - but no custom code yet written.", "DarkEDIF - Error", MB_OK);
+			break;
+	}
 }
 
 // --------------------
@@ -498,20 +534,16 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void
 // --------------------
 // This routine is called by MMF when the user modifies a checkbox in the properties.
 //
-void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOOL nCheck)
+void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOOL checked)
 {
-#ifndef RUN_ONLY
-	// Example
-	// -------
-//		switch (nPropID)
-//		{
-//		case PROPID_CHECK:
-//			edPtr->nCheck = nCheck;
-//			mvInvalidateObject(mV, edPtr);
-//			mvRefreshProp(mV, edPtr, PROPID_COMBO, TRUE);
-//			break;
-//		}
-#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
+
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return;
+
+	PropChangeChkbox(edPtr, PropID, checked != FALSE);
 }
 
 // --------------------
@@ -521,8 +553,7 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOO
 //
 BOOL DLLExport EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
-#ifndef RUN_ONLY
-
+	NoOpInRuntime(FALSE);
 	// Example
 	// -------
 /*
@@ -533,7 +564,6 @@ BOOL DLLExport EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	}
 */
 
-#endif // !defined(RUN_ONLY)
 	return FALSE;
 }
 
@@ -544,7 +574,7 @@ BOOL DLLExport EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 //
 BOOL WINAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
-#ifndef RUN_ONLY
+	NoOpInRuntime(FALSE);
 	// Example
 	// -------
 /*
@@ -554,7 +584,6 @@ BOOL WINAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		return (edPtr->nComboIndex != 0);
 	}
 */
-#endif // !defined(RUN_ONLY)
 	return TRUE;
 }
 
@@ -583,10 +612,9 @@ unsigned int DLLExport GetTextCaps(mv * mV, EDITDATA * edPtr)
 //
 BOOL DLLExport GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
 {
-	#ifndef RUN_ONLY
-		// Example: copy LOGFONT structure from EDITDATA
-		// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime(FALSE);
+	// Example: copy LOGFONT structure from EDITDATA
+	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
 
 	return TRUE;
 }
@@ -599,10 +627,9 @@ BOOL DLLExport GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pS
 //
 BOOL DLLExport SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, const char * pStyle)
 {
-	#ifndef RUN_ONLY
-		// Example: copy LOGFONT structure to EDITDATA
-		// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime(FALSE);
+	// Example: copy LOGFONT structure to EDITDATA
+	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
 
 	return TRUE;
 }
@@ -614,7 +641,6 @@ BOOL DLLExport SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, const char
 //
 COLORREF DLLExport GetTextClr(mv * mV, EDITDATA * edPtr)
 {
-	// Example
 	return 0;	// edPtr->fontColor;
 }
 
@@ -636,10 +662,10 @@ void DLLExport SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
 //
 unsigned int DLLExport GetTextAlignment(mv *mV, EDITDATA * edPtr)
 {
+	NoOpInRuntime(0);
 	unsigned int dw = 0;
-	#ifndef RUN_ONLY
-		// Example
-		// -------
+	// Example
+	// -------
 	/*	if ( (edPtr->eData.dwFlags & ALIGN_LEFT) != 0 )
 			dw |= TEXT_ALIGN_LEFT;
 		if ( (edPtr->eData.dwFlags & ALIGN_HCENTER) != 0 )
@@ -653,7 +679,6 @@ unsigned int DLLExport GetTextAlignment(mv *mV, EDITDATA * edPtr)
 		if ( (edPtr->eData.dwFlags & ALIGN_BOTTOM) != 0 )
 			dw |= TEXT_ALIGN_BOTTOM;
 	*/
-	#endif // !defined(RUN_ONLY)
 	return dw;
 }
 
@@ -664,9 +689,9 @@ unsigned int DLLExport GetTextAlignment(mv *mV, EDITDATA * edPtr)
 //
 void DLLExport SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
 {
-	#ifndef RUN_ONLY
-		// Example
-		// -------
+	NoOpInRuntime();
+	// Example
+	// -------
 	/*	unsigned int dw = edPtr->eData.dwFlags;
 
 		if ( (dwAlignFlags & TEXT_ALIGN_LEFT) != 0 )
@@ -685,7 +710,6 @@ void DLLExport SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlag
 
 		edPtr->eData.dwFlags = dw;
 	*/
-	#endif // !defined(RUN_ONLY)
 }
 
 
@@ -700,12 +724,11 @@ void DLLExport SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlag
 //
 void WINAPI InitParameter(mv * mV, short code, ParamExtension * pExt)
 {
-	#ifndef RUN_ONLY
-		// Example
-		// -------
-		// strcpy(&pExt->pextData[0], "Parameter Test");
-		// pExt->pextSize = sizeof(paramExt) + strlen(pExt->pextData)+1;
-	#endif // !defined(RUN_ONLY)
+	NoOpInRuntime();
+	// Example
+	// -------
+	// strcpy(&pExt->pextData[0], "Parameter Test");
+	// pExt->pextSize = sizeof(paramExt) + strlen(pExt->pextData)+1;
 }
 
 // Example of custom parameter setup proc
@@ -760,13 +783,11 @@ BOOL CALLBACK DLLExport SetupProc(HWND hDlg, UINT msgType, WPARAM wParam, LPARAM
 //
 void WINAPI EditParameter(mv *mV, short code, ParamExtension * pExt)
 {
-#if !defined(RUN_ONLY)
+	NoOpInRuntime();
 
 	// Example
 	// -------
 	// DialogBoxParam(hInstLib, MAKEINTRESOURCE(DB_TRYPARAM), mV->mvHEditWin, SetupProc, (LPARAM)(LPBYTE)pExt);
-
-#endif // !defined(RUN_ONLY)
 }
 
 // --------------------
@@ -776,11 +797,10 @@ void WINAPI EditParameter(mv *mV, short code, ParamExtension * pExt)
 //
 void WINAPI GetParameterString(mv *mV, short code, ParamExtension * pExt, char * pDest, short size)
 {
-#if !defined(RUN_ONLY)
-
+	NoOpInRuntime();
 	// Example
 	// -------
 	// wsprintf(pDest, "Super parameter %s", pExt->pextData);
-
-#endif // !defined(RUN_ONLY)
+	return;
 }
+

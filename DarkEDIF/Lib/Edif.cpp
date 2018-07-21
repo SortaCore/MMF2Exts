@@ -399,7 +399,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						{
 							// Unicode Properties have IDs 1000 greater than their
 							// ANSI equivalents. If necessary, you can boost all of them.
+#ifndef _UNICODE
 							CurrentProperty = new PropData(VariableProps.size(), j);
+#else
+							CurrentProperty = new PropData(VariableProps.size(), j + 1000);
+#endif
 							break;
 						}
 					}
@@ -426,10 +430,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						// Find out what opt is.
 						// Two settings may be specified by |=ing the options unsigned int.
 					
-						CurrentProperty->Title = Property["Title"];
-						CurrentProperty->Info = Property["Info"];
+						CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
+						CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
 
-						switch (CurrentProperty->Type_ID)
+						switch (CurrentProperty->Type_ID % 1000)
 						{
 							// Simple static text
 							case PROPTYPE_STATIC:
@@ -441,7 +445,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 							// Edit button, Params1 = button text, or nullptr if Edit
 							case PROPTYPE_EDITBUTTON:
-								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : (const char *)Property["Text"]);
+								SetAllProps(PROPOPT_PARAMREQUIRED, (Property["Text"] == "") ? 0 : Edif::ConvertString((const char *)Property["Text"]));
 					
 							// Edit box for strings, Parameter = max length
 							case PROPTYPE_EDIT_STRING:
@@ -466,14 +470,14 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 								if (Property["Items"].u.object.length == 0)
 									MessageBoxA(NULL, "Warning: no items detected in combobox property.", "DarkEDIF error", MB_OK);
 							
-								const char ** Fixed = new const char * [Property["Items"].u.object.length+2];
+								const TCHAR ** Fixed = new const TCHAR * [Property["Items"].u.object.length + 2];
 
 								// NULL is required at start of array
 								Fixed[0] = Fixed[Property["Items"].u.object.length+1] = nullptr;
 
 								// Use incrementation and copy to fixed list.
-								for (unsigned int index = 1; index < Property["Items"].u.object.length+1; ++ index)
-									Fixed[index] = Property["Items"][index-1];
+								for (unsigned int index = 1; index < Property["Items"].u.object.length + 1; ++index)
+									Fixed[index] = Edif::ConvertString(Property["Items"][index - 1]);
 
 								// Pass fixed list as Parameter
 								SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);

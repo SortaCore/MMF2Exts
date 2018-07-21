@@ -88,7 +88,7 @@ BOOL DLLExport EditObject (mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDAT
 //
 // Note: remove the comments if your object can be resized (and remove the comments in the .def file)
 /*
-BOOL WINAPI SetEditSize(LPMV mv, LPEDATA edPtr, int cx, int cy)
+BOOL WINAPI SetEditSize(LPMV mv, EDITDATA * edPtr, int cx, int cy)
 {
 	#ifndef RUN_ONLY
 		edPtr->swidth = cx;
@@ -345,7 +345,7 @@ void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 	NoOpInRuntime(NULL);
 
-	unsigned int PropID = PropID_ - 0x80000;
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
 		return NULL;
@@ -361,7 +361,7 @@ void * DLLExport GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 BOOL DLLExport GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 	NoOpInRuntime(FALSE);
-	unsigned int PropID = PropID_ - 0x80000;
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
 
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
@@ -381,7 +381,7 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 
 	Prop * prop = (Prop *)Param;
 
-	unsigned int i = prop->GetClassID(), PropID = PropID_ - 0x80000;
+	unsigned int i = prop->GetClassID(), PropID = (PropID_ - 0x80000) % 1000;
 
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
@@ -398,25 +398,90 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 				PropChange(mV, edPtr, PropID, prop2->Address, prop2->Size);
 				break;
 			}
-		case 'STRA': // ANSI string
-			#ifndef UNICODE
-			{
-				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
-				PropChange(mV, edPtr, PropID, prop2->Address, strlen((char *)prop2->Address) + 1);
-				break;
-			}
-			#endif
-		case 'STRW': // Unicode string
-			#ifdef UNICODE
-			{
-				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
-				PropChange(mV, edPtr, PropID, prop2->Address, (wcslen((wchar_t *)prop2->Address) + 1)*2);
-				break;
-			}
-			#endif
-			// Something screwed up with strings
-			MessageBoxA(NULL, "Unrecognised Class ID returned from Prop in SetValueProp!", "DarkEDIF - Error", MB_OK);
+			else
+				MessageBoxA(NULL, "ERROR: Got Buff type instead of string-based for string property.", "DarkEDIF - Property error", MB_OK);
 			break;
+		case 'STRA': // ANSI string
+			{
+				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
+
+				// Serialise string to UTF-8
+				const char * fromStr = static_cast<const char *>(prop2->Address);
+
+				std::string utf8Str(1, '\0');
+				size_t numBytes = 1;
+				// String is blank?
+				if (fromStr[0] != '\0')
+				{
+					std::stringstream str;
+					// First convert to Unicode UCS-2
+					size_t numCharsInclNull = MultiByteToWideChar(CP_ACP, 0, fromStr, -1, 0, 0);
+					if (numCharsInclNull == 0)
+					{
+						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					std::wstring wideStr(numCharsInclNull, L'\0');
+					if (MultiByteToWideChar(CP_ACP, 0, fromStr, -1, &wideStr.front(), wideStr.size()) == 0)
+					{
+						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+
+					// Then back to Unicode UTF-8
+					numBytes = WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, 0, 0, NULL, NULL);
+					if (numBytes == 0)
+					{
+						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					utf8Str.resize(numBytes + 1);
+					if (WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
+					{
+						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+				}
+
+				PropChange(mV, edPtr, PropID, &utf8Str.front(), numBytes);
+				break;
+			}
+		case 'STRW': // Unicode string
+			{
+				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
+
+				// Serialise string to UTF-8
+				const wchar_t * fromStr = static_cast<const wchar_t *>(prop2->Address);
+
+				std::string utf8Str(1, '\0');
+				size_t numBytes = 1;
+				// String is blank?
+				if (fromStr[0] != L'\0')
+				{
+					std::stringstream str;
+					numBytes = WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, 0, 0, NULL, NULL);
+					if (numBytes == 0)
+					{
+						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+					utf8Str.resize(numBytes + 1);
+					if (WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
+					{
+						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
+						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
+						break;
+					}
+				}
+
+				PropChange(mV, edPtr, PropID, &utf8Str.front(), utf8Str.size());
+				break;
+			}
 		case 'INT ': // 4-byte signed int
 			{
 				Prop_SInt * prop2 = (Prop_SInt *)prop;
@@ -473,7 +538,7 @@ void DLLExport SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 {
 	NoOpInRuntime();
 
-	unsigned int PropID = PropID_ - 0x80000;
+	unsigned int PropID = (PropID_ - 0x80000) % 1000;
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
 		return;

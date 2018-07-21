@@ -11,8 +11,8 @@ struct Prop_Custom;
 struct PropData
 {
 	int				ID;					// Identifier (generated, 1+,)
-	const char *	Title;				// name = ID of the property name in the resources, or const char *
-	const char *	Info;				// Info = ID of the property description in the resources, or const char *
+	const TCHAR *	Title;				// Name = ID of the property name in the resources, or const char *
+	const TCHAR *	Info;				// Info = ID of the property description in the resources, or const char *
 	union { 
 		unsigned int	Type_ID;		// Property type...
 		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
@@ -382,21 +382,21 @@ public:
 		else
 		{
 			size_t length = wcslen(Str);
-			String = (char *)calloc(length+1, sizeof(char));
+			String = (char *)calloc(length + 1, sizeof(char));
 			
 			if (!String)
 				return; // Stops bad-access crashes
 			
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
-			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
+			WideCharToMultiByte(CP_ACP, 0, Str, -1, String, length, NULL, NULL);
 			String[length] = 0;	// Force null ending
 		}
 	}
-	Prop_AStr(size_t size)
+	Prop_AStr(size_t Size)
 	{
-		if (size > 0)
-			String = (char *)calloc(size, sizeof(char)); // Allocate size specified
+		if (Size > 0)
+			String = (char *)calloc(Size, sizeof(char)); // Allocate size specified
 		else
 			String = _strdup("");
 	}
@@ -447,29 +447,34 @@ protected:
 public:
 	Prop_WStr(wchar_t * Str = NULL)
 	{
-		String = _wcsdup(Str ? Str : L""); // Allocate size specified
+		String = _wcsdup(Str ? Str : L"");
 	}
 	Prop_WStr(char * Str)
+		: Prop_WStr((const char *)Str)
 	{
-		if (!Str)
+
+	}
+	Prop_WStr(const char * utf8String)
+	{
+		if (utf8String == NULL || utf8String[0] == '\0')
 			String = _wcsdup(L"");
 		else
 		{
-			size_t size = strlen(Str);
-			String = (wchar_t *)calloc(size+1, sizeof(wchar_t));
-			if (!String)
-				return; // Stops bad-access crashes
-			
-			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
-			// Use mvGetAppCodePage?
-			MultiByteToWideChar(CP_ACP, 0, Str, size, String, size);
-			String[size] = 0;
+			// Convert string to Unicode
+			size_t length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
+			if (length == 0)
+				MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
+			else {
+				String = (WCHAR*)calloc(length, sizeof(WCHAR));
+				if (!String || MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, String, length) == 0)
+					MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
+			}
 		}
 	}
-	Prop_WStr(size_t size)
+	Prop_WStr(size_t Size)
 	{
-		if (size > 0)
-			String = (wchar_t *)calloc(size, sizeof(wchar_t)); // Allocate size specified
+		if (Size > 0)
+			String = (wchar_t *)calloc(Size, sizeof(wchar_t)); // Allocate size specified
 		else
 			String = _wcsdup(L"");
 	}
@@ -565,8 +570,8 @@ struct CustomPropCreateStruct {
 // Notification Codes for custom properties
 #define PWN_FIRST					(0U-2000U)
 
-// Tells property window to validate the property item
-// => the property window gets the property value from the property item 
+// Tells property window to validate the property Item
+// => the property window gets the property value from the property Item 
 //    and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
@@ -641,7 +646,7 @@ enum {
 ///////////////////
 //
 #define	PROPOPT_CHECKBOX		bit1		// Left check box
-#define PROPOPT_BOLD			bit2		// name must be displayed in bold characters
+#define PROPOPT_BOLD			bit2		// Name must be displayed in bold characters
 #define PROPOPT_PARAMREQUIRED	bit3		// A non-null parameter must be provided or it will be requested immediately
 #define PROPOPT_REMOVABLE		bit4		// The property can be deleted by the user
 #define PROPOPT_RENAMEABLE		bit5		// The property can be renamed by the user

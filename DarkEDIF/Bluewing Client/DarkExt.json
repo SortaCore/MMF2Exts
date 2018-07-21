@@ -649,7 +649,7 @@
 				"Title": "Add binary at address %0 with size %1",
 				"Parameters":
 				[
-          [ "Unsigned Integer", "Address" ],
+					[ "Unsigned Integer", "Address" ],
 					[ "Integer", "Size" ]
 				]
 			},
@@ -1283,10 +1283,10 @@
 				"Title": "Received(",
 				"Returns": "Integer"
 			},
-      {
-        "Title": "Subchannel(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "Subchannel(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "Peer_ID(",
 				"Returns": "Integer"
@@ -1342,13 +1342,13 @@
 					[ "Integer", "Index" ]
 				]
 			},
-      {
-        "Title": "Byte(",
-        "Returns": "Unsigned Integer",
-        "Parameters": [
-          [ "Integer", "Index" ]
-        ]
-      },
+			{
+				"Title": "Byte(",
+				"Returns": "Unsigned Integer",
+				"Parameters": [
+					[ "Integer", "Index" ]
+				]
+			},
 			{
 				"Title": "SignedByte(",
 				"Returns": "Integer",
@@ -1356,13 +1356,13 @@
 					[ "Integer", "Index" ]
 				]
 			},
-      {
-        "Title": "Short(",
-        "Returns": "Unsigned Integer",
-        "Parameters": [
-          [ "Integer", "Index" ]
-        ]
-      },
+			{
+				"Title": "Short(",
+				"Returns": "Unsigned Integer",
+				"Parameters": [
+					[ "Integer", "Index" ]
+				]
+			},
 			{
 				"Title": "SignedShort(",
 				"Returns": "Integer",
@@ -1370,13 +1370,13 @@
 					[ "Integer", "Index" ]
 				]
 			},
-      {
-        "Title": "Integer(",
-        "Returns": "Unsigned Integer",
-        "Parameters": [
-          [ "Integer", "Index" ]
-        ]
-      },
+			{
+				"Title": "Integer(",
+				"Returns": "Unsigned Integer",
+				"Parameters": [
+					[ "Integer", "Index" ]
+				]
+			},
 			{
 				"Title": "SignedInteger(",
 				"Returns": "Integer",
@@ -1406,18 +1406,18 @@
 					[ "Integer", "Index" ]
 				]
 			},
-      {
-        "Title": "ReceivedBinarySize(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "ReceivedBinarySize(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "Version$(",
 				"Returns": "Text"
 			},
-      {
-        "Title": "SendBinarySize(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "SendBinarySize(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "Self_PreviousName$(",
 				"Returns": "Text"
@@ -1442,10 +1442,10 @@
 				"Title": "HostIP$(",
 				"Returns": "Text"
 			},
-      {
-        "Title": "HostPort(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "HostPort(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "EXPRESSION_REMOVED_10_$(",
 				"Returns": "Text"
@@ -1454,34 +1454,34 @@
 				"Title": "WelcomeMessage$(",
 				"Returns": "Text"
 			},
-      {
-        "Title": "ReceivedBinaryAddress(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "ReceivedBinaryAddress(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "CursorByte$(",
 				"Returns": "Text"
 			},
-      {
-        "Title": "CursorByte(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "CursorByte(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "CursorSignedByte(",
 				"Returns": "Integer"
 			},
-      {
-        "Title": "CursorShort(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "CursorShort(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "CursorSignedShort(",
 				"Returns": "Integer"
 			},
-      {
-        "Title": "CursorInteger(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "CursorInteger(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "CursorSignedInteger(",
 				"Returns": "Integer"
@@ -1505,10 +1505,10 @@
 				"Title": "EXPRESSION_REMOVED_11_$(",
 				"Returns": "Text"
 			},
-      {
-        "Title": "SendBinaryAddress(",
-        "Returns": "Unsigned Integer"
-      },
+			{
+				"Title": "SendBinaryAddress(",
+				"Returns": "Unsigned Integer"
+			},
 			{
 				"Title": "DumpMessage$(",
 				"Returns": "Text",
@@ -1517,10 +1517,10 @@
 					[ "Text", "Enter format (see help)" ]
 				]
 			},
-      {
-        "Title": "ChannelListing_NumChannels(",
-        "Returns": "Unsigned Integer"
-      }
+			{
+				"Title": "ChannelListing_NumChannels(",
+				"Returns": "Unsigned Integer"
+			}
 		],
 		"Properties": [
 			{
