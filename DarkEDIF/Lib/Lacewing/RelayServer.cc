@@ -364,18 +364,19 @@ void relayserverinternal::client::PeerToPeer(relayserver &server, relayserver::c
 	bool blasted, int subchannel, int variant, const char * message, size_t size)
 {
 	relayserverinternal::client &receivingclientinternal = *(relayserverinternal::client *)receivingClient.internaltag;
+	relayserverinternal & serverinternal = *(relayserverinternal *)server.internaltag;
 
 	if (id == receivingclientinternal.id)
 	{
 		lacewing::error error = error_new();
 		error->add("Client ID %i attempted to send peer message to ID %i, e.g. themselves. Message dropped.");
-		((relayserverinternal *)server.internaltag)->handlererror(server, error);
+		serverinternal.handlererror(server, error);
 		error_delete(error);
 		return;
 	}
 
-	framebuilder builder(true);
-	builder.addheader(3, variant, blasted, id); /* binarypeermessage */
+	auto &builder = serverinternal.builder;
+	builder.addheader(3, variant, blasted); /* binarypeermessage */
 
 	builder.add <unsigned char>(subchannel);
 	builder.add <unsigned short>(channel.id());
