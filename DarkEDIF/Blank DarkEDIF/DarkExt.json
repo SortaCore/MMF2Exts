@@ -136,8 +136,9 @@
 			{
 				"Title": "Editable 5",
 				"Info": "yeah, it are very bold.",
-				"DefaultState": "Verah Boldz Edit Strng..",
-				"Type": "Editbox String"
+				"DefaultState": "Verah Boldz Edit Strng.",
+				"Type": "Editbox String",
+				"Bold": true
 			},
 			{
 				"Title": "Editable 6",

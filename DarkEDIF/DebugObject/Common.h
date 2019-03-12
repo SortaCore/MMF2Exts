@@ -10,6 +10,7 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
+#define JSON_COMMENT_MACRO Extension::Version
 
 #define DLLExport   __stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")

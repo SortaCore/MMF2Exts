@@ -7,8 +7,8 @@
 		{
 			"Name": "DebugObject",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2017 Darkwire Software",
-			"Comment": "An easy debugging extension. (v8)",
+			"Copyright": "Copyright \u00A9 2019 Darkwire Software",
+			"Comment": "An easy debugging extension. (b%i)",
 			"URL": "http://dark-wire.com/",
 			"Help": "Help/DebugObject.chm"
 		},

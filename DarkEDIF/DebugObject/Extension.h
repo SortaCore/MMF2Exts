@@ -10,17 +10,18 @@ public:
 
 	GlobalData * Data;
     static const int MinimumBuild = 256;
-    static const int Version = 8;
-	// v8: Fixed non-closing console when console was disabled.
-	// v7: Fixed subapp "MFX Not Found" issue in DarkEDIF
-	// v6: Release for edittime property fix, added runtime property, new minidump events
-	// v5: Release for bug fixes and global settings, and unhandled exception event
-	// v4: First release with console
-	// v3: Release due to bug fixes
-	// v2: Release due to new features
-	// v1: First release
-	static const int OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
-	static const int OEPREFS = OEPREFS::GLOBAL;
+    static const int Version = 9;
+	// b9: Fixed lockup when disabling console and debug was already disabled
+	// b8: Fixed non-closing console when console was disabled.
+	// b7: Fixed subapp "MFX Not Found" issue in DarkEDIF
+	// b6: Release for edittime property fix, added runtime property, new minidump events
+	// b5: Release for bug fixes and global settings, and unhandled exception event
+	// b4: First release with console
+	// b3: Release due to bug fixes
+	// b2: Release due to new features
+	// b1: First release
+	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
+	static const OEPREFS OEPREFS = OEPREFS::GLOBAL;
     
     static const int WindowProcPriority = 100;
 
@@ -91,7 +92,7 @@ public:
         inside the extension class.
     */
 
-    short Handle();
+    REFLAG Handle();
     short Display();
 
     short Pause();

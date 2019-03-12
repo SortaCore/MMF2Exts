@@ -121,7 +121,7 @@ Extension::~Extension()
 }
 
 
-short Extension::Handle()
+REFLAG Extension::Handle()
 {
 	// If console not enabled, this Handle event is not useful.
 	if (!Data->ConsoleEnabled)

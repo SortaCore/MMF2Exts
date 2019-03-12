@@ -273,9 +273,9 @@ void Extension::SetConsoleOnOff(int OnOff)
 
 				// Invoke the system to move the standard console streams
 				// to the new allocated console
-				freopen("CONOUT$", "w", stderr); 
-				freopen("CONIN$",  "r", stdin); 
-				freopen("CONOUT$", "w", stdout); 
+				freopen("CONOUT$", "w", stderr);
+				freopen("CONIN$", "r", stdin);
+				freopen("CONOUT$", "w", stdout);
 
 				// Handle all console events (Ctrl+C pressed, etc)
 				SetConsoleCtrlHandler(HandlerRoutine, TRUE);
@@ -292,7 +292,7 @@ void Extension::SetConsoleOnOff(int OnOff)
 				Data->ReleaseConsoleInput = true;
 				Data->ConsoleReceived = "";
 				Data->ConsoleBreakType = 0;
-				
+
 				CreateThread(NULL, NULL, ReceiveConsoleInput, NULL, NULL, NULL);
 
 				CloseLock();
@@ -301,7 +301,7 @@ void Extension::SetConsoleOnOff(int OnOff)
 			{
 				CloseLock();
 				OutputNow(5, -1, "Console opening function AllocConsole() failed.\r\n"
-								 "This generally occurs when a console has already been allocated.");
+					"This generally occurs when a console has already been allocated.");
 			}
 		}
 		else // Close down a console
@@ -320,12 +320,14 @@ void Extension::SetConsoleOnOff(int OnOff)
 			{
 				CloseLock();
 				OutputNow(5, -1, "Console closing function FreeConsole() failed."
-								 "This generally occurs when a console has already been allocated.");
+					"This generally occurs when a console has already been allocated.");
 			}
 
 		}
-		
+
 	}
+	else
+		CloseLock();
 }
 
 #pragma optimize( "", off )
