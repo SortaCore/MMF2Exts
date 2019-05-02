@@ -259,6 +259,9 @@ int Edif::Init(mv * mV)
 	// http://community.clickteam.com/threads/97219-MFX-not-found-when-in-subapp?p=693431#post693431
 	static Edif::SDK gSDK (mV, *json);
 	::SDK = &gSDK;
+#ifdef INTENSE_FUNCTIONS_EXTENSION
+	Extension::AutoGenerateExpressions(&gSDK);
+#endif
 	
     return 0;	// no error
 }

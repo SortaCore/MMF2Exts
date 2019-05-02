@@ -332,11 +332,8 @@ public:
 
 	virtual void Delete()
 	{
-		if (Address) 
-		{
-			free(Address);
-			Address = NULL;
-		}
+		free(Address);
+		Address = NULL;
 		Size = 0;
 		delete this;
 	}
@@ -403,11 +400,8 @@ public:
 	
 	virtual void Delete()
 	{
-		if (String) 
-		{
-			free(String);
-			String = NULL;
-		}
+		free(String);
+		String = NULL;
 		delete this;
 	}
 	virtual Prop * CreateCopy()
@@ -445,7 +439,7 @@ class Prop_WStr : public Prop
 protected:
 	virtual ~Prop_WStr() {}
 public:
-	Prop_WStr(wchar_t * Str = NULL)
+	Prop_WStr(const wchar_t * Str = NULL)
 	{
 		String = _wcsdup(Str ? Str : L"");
 	}
@@ -481,11 +475,8 @@ public:
 
 	virtual void Delete()
 	{
-		if (String) 
-		{
-			free(String);
-			String = NULL;
-		}
+		free(String);
+		String = NULL;
 		delete this;
 	}
 	virtual Prop * CreateCopy()
@@ -527,6 +518,8 @@ public:
 	#define Prop_Str	Prop_AStr
 #endif
 
+/// <summary> Creates a Prop_Str from UTF-8 char *. Allocated by new. </summary>
+Prop_Str * Prop_Str_FromUTF8(const char * u8);
 
 //////////////////
 // Custom property

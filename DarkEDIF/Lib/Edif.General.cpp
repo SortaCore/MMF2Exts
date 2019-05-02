@@ -48,6 +48,8 @@ const TCHAR ** DLLExport GetDependencies()
     return Dependencies;
 }
 
+/// <summary> Called every time the extension is being created from nothing.
+///           Default property contents should be loaded from JSON. </summary>
 short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 {
 	infoPtr->Conditions = &::SDK->ConditionJumps[0];
@@ -57,24 +59,41 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->NumOfConditions = CurLang["Conditions"].u.object.length;
 	infoPtr->NumOfActions = CurLang["Actions"].u.object.length;
 	infoPtr->NumOfExpressions = CurLang["Expressions"].u.object.length;
-	
-	infoPtr->EDITDATASize = sizeof(EDITDATA);
-#if 0 // was #ifndef NOPROPS
+
+	static unsigned short EDITDATASize = 0;
+	if (EDITDATASize == 0)
 	{
-		const json_value JSON = CurLang["Properties"];
-		for(unsigned int i = 0; i < JSON.u.object.length; ++i)
+		infoPtr->EDITDATASize = sizeof(EDITDATA);
+#ifndef NOPROPS
+		const json_value& JSON = CurLang["Properties"];
+		size_t fullSize = sizeof(EDITDATA);
+		// Store one bit per property, for any checkboxes
+		fullSize += (int)ceil(JSON.u.array.length / 8.0);
+
+		for (unsigned int i = 0; i < JSON.u.array.length; ++i)
 		{
-			switch (::SDK->EdittimeProperties[i].Type_ID % 1000)
+			const json_value& propjson = *JSON.u.array.values[i];
+			const char * curPropType = propjson["Type"];
+
+			if (!_stricmp(curPropType, "Editbox String"))
 			{
-				case Edif::Properties::PROPTYPE_EDIT_STRING:
-				case Edif::Properties::PROPTYPE_STATIC:
-					infoPtr->EDITDATASize += sizeof(Prop_Str) + (255 * sizeof(wchar_t));
-					break;
-				default:
-					infoPtr->EDITDATASize += sizeof(Prop);
+				const char * defaultText = CurLang["Properties"]["DefaultState"];
+				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
 			}
-			++infoPtr->EDITDATASize;
+			// Stores a number (in combo box, an index)
+			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Combo Box"))
+				fullSize += sizeof(int);
+			// No content, or already stored in checkbox part before this for loop
+			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox"))
+				;
+			else // Unknown
+				MessageBoxA(NULL, "Can't handle this property.", "DarkEDIF - Error", MB_OK | MB_ICONERROR);
 		}
+		// Too large for EDITDATASize
+		if (fullSize > MAXUINT16)
+			MessageBoxA(NULL, "Property default sizes are too large.", "DarkEDIF - Error", MB_OK | MB_ICONERROR);
+		else
+			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
 	}
 #endif //NOPROPS
 	

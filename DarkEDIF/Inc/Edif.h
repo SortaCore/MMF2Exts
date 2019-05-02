@@ -165,6 +165,7 @@ namespace Edif
 
 		mv* mV;
         cSurface * Icon;
+		HGLOBAL UpdateProperties(mv * mV, void * OldEdPtr);
     };
     
     class Runtime

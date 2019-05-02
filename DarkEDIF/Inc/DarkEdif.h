@@ -52,12 +52,31 @@ void InitialisePropertiesFromJSON(mv *, EDITDATA *);
 
 Prop * GetProperty(EDITDATA *, size_t);
 
-void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue);
-void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize);
+void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
+void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
 char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 
 #endif // NOPROPS
 
+// Not part of std, but honestly, it should be, on Windows at least.
+namespace std
+{
+	using tstring = basic_string<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
+	using tstringstream = basic_stringstream<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
+}
+
+std::tstring ANSIToTString(const std::string);
+std::string ANSIToUTF8(const std::string);
+std::wstring ANSIToWide(const std::string);
+std::string UTF8ToANSI(const std::string, bool * const allValidChars = nullptr);
+std::tstring UTF8ToTString(const std::string, bool * const allValidChars = nullptr);
+std::wstring UTF8ToWide(const std::string);
+std::string WideToANSI(const std::wstring, bool * const allValidChars = nullptr);
+std::tstring WideToTString(const std::wstring, bool * const allCharsValid = nullptr);
+std::string WideToUTF8(const std::wstring);
+std::string TStringToANSI(const std::tstring, bool * const allValidChars = nullptr);
+std::string TStringToUTF8(const std::tstring);
+std::wstring TStringToWide(const std::tstring);
 
 // This region does type checking on LinkXXX functions.
 // Since the JSON should never change between Debug and Edittime/Runtime versions,

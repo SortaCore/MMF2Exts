@@ -21,11 +21,11 @@ void DLLExport GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 #ifndef JSON_COMMENT_MACRO
 	Edif::ConvertAndCopyString(ObjComment, CurLang["About"]["Comment"], MAX_PATH);
 #else
-	TCHAR buff[MAX_PATH];
+	char buff[MAX_PATH];
 	bool bad = false;
 	// Prevent crashing. It's not nice code, but it'll stop ext devs getting stuck.
 	try {
-		if (_stprintf_s(buff, MAX_PATH, CurLang["About"]["Comment"], JSON_COMMENT_MACRO) == -1)
+		if (sprintf_s(buff, MAX_PATH, CurLang["About"]["Comment"], JSON_COMMENT_MACRO) == -1)
 			bad = true;
 	}
 	catch (...) { bad = true; }
@@ -33,7 +33,7 @@ void DLLExport GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	if (bad)
 	{
 		MessageBoxA(NULL, "Error in JSON comment macro. Ensure your %s are escaped (%%).", "DarkEDIF error", MB_OK);
-		_tcscpy_s(buff, MAX_PATH, CurLang["About"]["Comment"]);
+		strcpy_s(buff, MAX_PATH, CurLang["About"]["Comment"]);
 	}
 
 	Edif::ConvertAndCopyString(ObjComment, buff, MAX_PATH);
@@ -221,12 +221,12 @@ HMENU DLLExport GetExpressionMenu(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr)
 
 void AddDirectory(std::_tstring &From, std::_tstring &To)
 {
-	HANDLE FileHandle;
+	HANDLE fileHandle;
 	WIN32_FIND_DATA Filejson;
 
-	FileHandle = FindFirstFile(std::_tstring(From + _T("*.*")).c_str(), &Filejson);
+	fileHandle = FindFirstFile(std::_tstring(From + _T("*.*")).c_str(), &Filejson);
 
-	if (FileHandle == INVALID_HANDLE_VALUE)
+	if (fileHandle == INVALID_HANDLE_VALUE)
 	    return;
 
 	do
@@ -252,9 +252,9 @@ void AddDirectory(std::_tstring &From, std::_tstring &To)
 
 		CopyFile((From + Filejson.cFileName).c_str(), (To + Filejson.cFileName).c_str(), FALSE);
 
-	} while (FindNextFile(FileHandle, &Filejson));
+	} while (FindNextFile(fileHandle, &Filejson));
 
-	FindClose(FileHandle);
+	FindClose(fileHandle);
 }
 
 void WINAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTempFolder)

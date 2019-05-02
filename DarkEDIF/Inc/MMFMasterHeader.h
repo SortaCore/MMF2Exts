@@ -329,7 +329,7 @@ class __declspec(dllimport) COutputMemFile : public COutputFile
 		int						Create(unsigned char * buffer, unsigned int nBufferSize = 0x7FFFFFF);
 		unsigned char *			GetBuffer();
 		unsigned char *			DetachBuffer();
-		static void				FreeBuffer(unsigned char * pBuffer);	// car il faut libérer à l'interieur de la DLL
+		static void				FreeBuffer(unsigned char * pBuffer);	// car il faut libÃ©rer Ã  l'interieur de la DLL
 
 		virtual int				Write(unsigned char * pb, UINT sz);
 		virtual int				Flush();
@@ -648,7 +648,7 @@ public:
 					Animations, 	// Offset of the animations
 					Version,		// For version versions > MOULI 
 					Counter,		// Pointer to COUNTER structure
-					Data,			// Pointer to DATA structure
+					data,			// Pointer to DATA structure
 					Free;			// IGNORE: Padding the shorts to 4 bytes
 	unsigned long	OEFlags;		// New flags
 
@@ -1618,7 +1618,7 @@ struct ParamExtension
 	short	size,
 			Type,
 			Code;
-	char	Data[2];	// MaxSize = 512, Size = 12, not sure if those are related
+	char	data[2];	// MaxSize = 512, Size = 12, not sure if those are related
 };
 #define		PARAM_EXTBASE			1000
 struct Param8Dirs {
@@ -1897,19 +1897,19 @@ enum class RFUNCTION {
 	PUSH_EVENT_STOP,		// Removes event created by Push Event. Cannot do this with Generate Event as it happens immediately.
 	PAUSE,
 	CONTINUE,
-	REDISPLAY,
+	REDISPLAY,				// Causes the entire frame to redraw
 	GET_FILE_INFOS,			// Retrieve information about the current app (see FILEINFOS namespace and Edif.Runtime.cpp)
 	SUB_CLASS_WINDOW,
-	REDRAW,					// Causes the object to redraw [a certain part or 100%?].
+	REDRAW,					// Causes the object to redraw this extension
 	DESTROY,
-	GET_STRING_SPACE,		// Deprecated GET_STRING_SPACE_EX
+	GET_STRING_SPACE,		// Deprecated GET_STRING_SPACE_EX; affords less memory
 	EXECUTE_PROGRAM,
 	GET_OBJECT_ADDRESS,
 	GET_PARAM,
 	GET_EXP_PARAM,
 	GET_PARAM_FLOAT,
-	EDIT_INT,
-	EDIT_TEXT,
+	EDIT_INT,				// Edittime only: Opens a dialog box to edit an integer
+	EDIT_TEXT,				// Edittime only: Opens a dialog box to edit text.
 	CALL_MOVEMENT,
 	SET_POSITION,
 	GET_CALL_TABLES
@@ -4569,7 +4569,7 @@ struct CRunFrame {
 	#endif
 
 };
-typedef CRunFrame *fpRunFrame;
+// typedef CRunFrame *fpRunFrame;
 
 ////////////////////////
 //

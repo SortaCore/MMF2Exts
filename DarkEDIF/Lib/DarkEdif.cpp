@@ -416,7 +416,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					MessageBoxA(NULL, "Specified a default string in a combobox property that does not exist in items list.", "DarkEDIF - setup warning", MB_OK);
 				}
 			ok:
-				mystr.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
+				mystr << i;
 
 				if (JProp["ChkDefault"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
@@ -464,7 +464,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	const json_value &jsonItem = CurLang["Properties"][ID];
 	const char * curStr = jsonItem["Type"];
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
-		return new Prop_Str((const char *)jsonItem["DefaultState"]);
+		return Prop_Str_FromUTF8((const char *)jsonItem["DefaultState"]);
 
 
 	unsigned int size;
@@ -473,7 +473,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	Prop * ret = nullptr;
 
 	if (!_stricmp(curStr, "Editbox String"))
-		ret = new Prop_Str((const char *)Current);
+		ret = Prop_Str_FromUTF8((const char *)Current);
 	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
 	else if (_stricmp(curStr, "Checkbox"))
@@ -481,8 +481,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 
 	return ret;
 }
-
-void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue)
+void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue)
 {
 	// The DarkEDIF_Props consists of a set of chars, whereby each bit in the char is the "checked"
 	// value for the Prop ID specified. Thus each char supports 8 properties.
@@ -493,15 +492,15 @@ void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, bool newValue)
 	else
 		edPtr->DarkEDIF_Props[byteIndex] &= ~(1 << bitIndex);
 }
-void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData, size_t newSize)
+void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newPropValue, size_t newPropValueSize)
 {
-	unsigned int oldSize; // Set by PropIndex
+	unsigned int oldPropValueSize; // Set by PropIndex
 	const char * curTypeStr = CurLang["Properties"][PropID]["Type"];
-	char * oldData = PropIndex(edPtr, PropID, &oldSize);
+	char * oldPropValue = PropIndex(edPtr, PropID, &oldPropValueSize);
 	bool rearrangementRequired = false;
 
 	if (!_stricmp(curTypeStr, "Editbox String"))
-		rearrangementRequired = newSize != oldSize; // May need resizing
+		rearrangementRequired = newPropValueSize != oldPropValueSize; // May need resizing
 	else if (!_stricmp(curTypeStr, "Editbox Number"))
 		rearrangementRequired = false; // Number of editbox, always same data size
 	else if (!_stricmp(curTypeStr, "Combo Box"))
@@ -513,53 +512,58 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, void * newData,
 
 	if (!rearrangementRequired)
 	{
-		memcpy(oldData, newData, newSize);
+		memcpy(oldPropValue, newPropValue, newPropValueSize);
 		return;
 	}
 
-
-	if (oldSize == 0)
-		MessageBoxA(NULL, "Editbox String size is 0!", "DarkEDIF - Debug info", MB_OK);
-
-	size_t beforeOldSize = oldData - edPtr->DarkEDIF_Props; // Pointer to O|<P|O
-	size_t afterOldSize = beforeOldSize + oldSize;			// Pointer to O|P>|O
+	// Even an empty string should be 1 (null char). Warn if not.
+	if (oldPropValueSize == 0)
+		MessageBoxA(NULL, "Property size is 0!", "DarkEDIF - Debug info", MB_OK | MB_ICONERROR);
+	
+	size_t beforeOldSize = sizeof(EDITDATA) +
+		(oldPropValue - edPtr->DarkEDIF_Props); // Pointer to O|<P|O
+	size_t afterOldSize = edPtr->DarkEDIF_Prop_Size - oldPropValueSize - beforeOldSize;			// Pointer to O|P>|O
+	size_t odps = edPtr->DarkEDIF_Prop_Size;
 
 	// Duplicate memory to another buffer (if new arragement is smaller - we can't just copy from old buffer after realloc)
-	char * newEdPtr = (char *)malloc(edPtr->DarkEDIF_Prop_Size + (newSize - oldSize));
+	char * newEdPtr = (char *)malloc(edPtr->DarkEDIF_Prop_Size + (newPropValueSize - oldPropValueSize));
 
 	if (!newEdPtr)
 	{
 		MessageBoxA(NULL, "Out of memory attempting to rewrite properties!", "DarkEDIF - Property Error", MB_OK);
 		return;
 	}
+	((EDITDATA *)newEdPtr)->DarkEDIF_Prop_Size = _msize(newEdPtr);
 
-	char * oldEdPtr = (char *)edPtr;
-	EDITDATA * oldEdPtr_ = edPtr;
+	// Copy the part before new data into new address
+	memcpy(newEdPtr, edPtr, beforeOldSize);
 
-	// Before data
-	memcpy(newEdPtr, oldEdPtr, oldData - oldEdPtr);
+	// Copy the new data into new address
+	memcpy(newEdPtr + beforeOldSize, newPropValue, newPropValueSize);
 
-	// New data
-	memcpy(newEdPtr + (oldData - oldEdPtr), newData, newSize);
+	// Copy the part after new data into new address
+	memcpy(newEdPtr + beforeOldSize + newPropValueSize,
+		oldPropValue + oldPropValueSize,
+		afterOldSize);
 
-	// After data
-	memcpy(newEdPtr + (oldData - oldEdPtr) + newSize, 
-		oldData + oldSize,
-		oldEdPtr_->DarkEDIF_Prop_Size - ((oldData - oldEdPtr) + oldSize));
-	
 	// Reallocate edPtr
-	EDITDATA * v = (EDITDATA *)mvReAllocEditData(mV, edPtr, _msize(newEdPtr));
-	if (!v)
+	EDITDATA * fusionNewEdPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, _msize(newEdPtr));
+	if (!fusionNewEdPtr)
 	{
 		MessageBoxA(NULL, "NULL returned from EDITDATA reallocation. Property changed cancelled.", "DarkEDIF - Propery Error", MB_OK);
 		free(newEdPtr);
 		return;
 	}
 
-	// Copy into edPtr
-	memcpy(v, newEdPtr, _msize(newEdPtr));
-	v->DarkEDIF_Prop_Size = _msize(newEdPtr);
+	// Copy into edPtr (copy everything after eHeader, leave eHeader alone)
+	// eHeader::extSize and such will be changed by Fusion by mvReAllocEditData,
+	// so should not be considered ours to interact with
+	memcpy(((char *)fusionNewEdPtr) + sizeof(EDITDATA::eHeader),
+		newEdPtr + sizeof(EDITDATA::eHeader),
+		_msize(newEdPtr) - sizeof(EDITDATA::eHeader));
 	free(newEdPtr);
+
+	edPtr = fusionNewEdPtr; // Inform caller of new address
 }	
 
 char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
@@ -603,10 +607,261 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	
 	EndPos = Current;
 
-	*size = EndPos - StartPos;
+	if (size)
+		*size = EndPos - StartPos;
 	return StartPos;
 }
 
+
+#include <assert.h>
+
+#ifdef _WIN32
+// For Windows, TString can be Wide or ANSI.
+// ANSI function calls are internally converted to Wide by Windows.
+// ANSI is not UTF-8, the earliest OS version that *can* use UTF-8 for OS function calls is
+// Windows 10 Insider Preview Build 17035, and even that is non-default and in beta.
+
+std::tstring ANSIToTString(const std::string input) {
+	return WideToTString(ANSIToWide(input));
+}
+std::string ANSIToUTF8(const std::string input) {
+	return WideToUTF8(ANSIToWide(input));
+}
+std::wstring ANSIToWide(const std::string input) {
+	if (input.empty())
+		return std::wstring();
+
+	// First call WideCharToMultiByte() to get output size to reserve
+	size_t length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), NULL, 0);
+	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
+#if _HAS_CXX17
+	std::wstring outputStr(length, L'\0');
+
+	// Actually convert
+	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
+	assert(length > 0 && "Failed to convert between string encodings.");
+#else
+	char * outputBuf = (char *)_malloca(length + 1);
+	// Actually convert
+	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputBuf, length + 1);
+	assert(length > 0 && "Failed to convert between string encodings.");
+	std::wstring outputStr(outputBuf, length);
+	_freea(outputBuf);
+#endif
+	OutputDebugStringW(L"Converted ANSI To Wide: [");
+	OutputDebugStringA(input.c_str());
+	OutputDebugStringW(L"] to [");
+	OutputDebugStringW(outputStr.c_str());
+	OutputDebugStringW(L"]\n");
+	assert(input.back() != '\0' && "Input ends with null.");
+	assert(outputStr.back() != L'\0' && "Output ends with null.");
+
+	return outputStr;
+}
+std::string UTF8ToANSI(const std::string input, bool * const allValidChars /* = nullptr */) {
+	return WideToANSI(UTF8ToWide(input), allValidChars);
+}
+std::tstring UTF8ToTString(const std::string input, bool * const allValidChars /* = nullptr */) {
+#ifdef _UNICODE
+	if (allValidChars)
+		*allValidChars = true; // UTF-8 and UTF-16 share all chars
+	return UTF8ToWide(input);
+#else
+	return UTF8ToANSI(input, allValidChars);
+#endif
+}
+std::wstring UTF8ToWide(const std::string input)
+{
+	if (input.empty())
+		return std::wstring();
+
+	// First call WideCharToMultiByte() to get output size to reserve
+	size_t length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), NULL, 0);
+	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
+#if _HAS_CXX17
+	std::wstring outputStr(length, L'\0');
+
+	// Actually convert
+	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
+	assert(length > 0 && "Failed to convert between string encodings.");
+#else
+	char * outputBuf = (char *)_malloca(length + 1);
+	// Actually convert
+	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size() + 1, outputBuf, length + 1);
+	assert(length > 0 && "Failed to convert between string encodings.");
+	std::wstring outputStr(outputBuf, length);
+	_freea(outputBuf);
+#endif
+	OutputDebugStringW(L"Converted UTF8 To Wide: [");
+	OutputDebugStringA(input.c_str());
+	OutputDebugStringW(L"] to [");
+	OutputDebugStringW(outputStr.c_str());
+	OutputDebugStringW(L"]\n");
+	assert(input.back() != '\0' && "Input ends with null.");
+	assert(outputStr.back() != L'\0' && "Output ends with null.");
+	return outputStr;
+}
+std::string WideToANSI(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+	if (input.empty())
+		return std::string();
+
+	BOOL someFailed;
+
+	// First call WideCharToMultiByte() to get output size to reserve
+	size_t length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), NULL, 0, 0, allValidChars ? &someFailed : NULL);
+	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
+
+	if (allValidChars)
+		*allValidChars = (someFailed == FALSE);
+
+#if _HAS_CXX17
+	std::string outputStr(length, '\0');
+
+	// Actually convert
+	length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size(), 0, NULL);
+	assert(length > 0 && "Failed to convert between string encodings.");
+#else
+	char * outputBuf = (char *)_malloca(length + 1);
+	// Actually convert
+	length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), outputBuf, length, 0, 0);
+	assert(length > 0 && "Failed to convert between string encodings.");
+	std::string outputStr(outputBuf, length);
+	_freea(outputBuf);
+#endif
+	OutputDebugStringW(L"Converted Wide To ANSI: [");
+	OutputDebugStringW(input.c_str());
+	OutputDebugStringW(L"] to [");
+	OutputDebugStringA(outputStr.c_str());
+	OutputDebugStringW(L"]\n");
+	assert(input.back() != L'\0' && "Input ends with null.");
+	assert(outputStr.back() != '\0' && "Output ends with null.");
+	return outputStr;
+}
+std::tstring WideToTString(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+#ifdef _UNICODE
+	if (allValidChars)
+		*allValidChars = true;
+	return input;
+#else
+	return WideToANSI(input, allValidChars);
+#endif
+}
+std::string WideToUTF8(const std::wstring input)
+{
+	if (input.empty())
+		return std::string();
+
+	// First call WideCharToMultiByte() to get output size to reserve
+	size_t length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), NULL, 0, 0, 0);
+	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
+#if _HAS_CXX17
+	std::string outputStr(length, '\0');
+
+	// Actually convert
+	length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size(), 0, 0);
+	assert(length > 0 && "Failed to convert between string encodings.");
+#else
+	char * outputBuf = (char *)_malloca(length + 1);
+	// Actually convert
+	length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), outputBuf, length, 0, 0);
+	assert(length > 0 && "Failed to convert between string encodings.");
+	std::string outputStr(outputBuf, length);
+	_freea(outputBuf);
+#endif
+	OutputDebugStringW(L"Converted Wide To UTF8: [");
+	OutputDebugStringW(input.c_str());
+	OutputDebugStringW(L"] to [");
+	OutputDebugStringA(outputStr.c_str());
+	OutputDebugStringW(L"]\n");
+	assert(input.back() != L'\0' && "Input ends with null.");
+	assert(outputStr.back() != '\0' && "Output ends with null.");
+	return outputStr;
+}
+std::string TStringToANSI(const std::tstring input, bool * const allValidChars /* = nullptr */) {
+#ifdef _UNICODE
+	return WideToANSI(input, allValidChars);
+#else
+	if (allValidChars)
+		*allValidChars = true;
+	return input;
+#endif
+}
+std::string TStringToUTF8(const std::tstring input) {
+#ifdef _UNICODE
+	return WideToUTF8(input);
+#else
+	return ANSIToUTF8(input);
+#endif
+}
+std::wstring TStringToWide(const std::tstring input) {
+#ifdef _UNICODE
+	return input;
+#else
+	return ANSIToWide(input);
+#endif
+}
+
+#else // !_WIN32
+
+// Linux-based OSes including Android uses UTF-8 by default.
+// ANSI and UTF-8 can be considered equivalent.
+// Wide-char is barely used at all in Linux, but when it is, it's UTF-32.
+// iconv() would be needed, and it's beyond the scope of a regular extension.
+// Instead, this code merely returns back.
+
+std::tstring ANSIToTString(const std::string input) {
+	return UTF8ToTString(input);
+}
+std::string ANSIToUTF8(const std::string input) {
+	return input;
+}
+std::wstring ANSIToWide(const std::string input) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+std::string UTF8ToANSI(const std::string input, bool * const allValidChars /* = nullptr */) {
+	return input;
+}
+std::tstring UTF8ToTString(const std::string input, bool * const allValidChars /* = nullptr */) {
+	return input;
+}
+std::wstring UTF8ToWide(const std::string input) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+std::string WideToANSI(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+std::tstring WideToTString(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+std::string WideToUTF8(const std::wstring input) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+std::string TStringToANSI(const std::tstring input, bool * const allValidChars /* = nullptr */) {
+	return TStringToUTF8(input);
+}
+std::string TStringToUTF8(const std::tstring input) {
+	return input;
+}
+std::wstring TStringToWide(const std::tstring input) {
+	assert(false && "Linux-based Wide not programmed yet.");
+}
+
+#endif
+
+/// <summary> Creates a Prop_Str from UTF-8 char *. Allocated by new. </summary>
+Prop_Str * Prop_Str_FromUTF8(const char * u8)
+{
+#ifdef _UNICODE
+	return new Prop_WStr(u8); // has its own ctor for u8
+#else
+	// Due to Prop_AStr ctor assumes char * is ANSI, we need a separate function.
+	std::tstring tStr = UTF8ToTString(std::string(u8));
+	Prop_AStr * ret2 = new Prop_AStr();
+	free(ret2->String); // free the ctor-allocated ""
+	ret2->String = _strdup(tStr.c_str());
+	return ret2;
+#endif
+}
 
 bool EDITDATA::IsPropChecked(int propID)
 {
@@ -628,11 +883,10 @@ const char * EDITDATA::GetPropertyStr(int propID)
 		return "Property ID not found.";
 
 	const json_value &prop = CurLang["Properties"][propID];
-	unsigned int size;
 	if (!_stricmp(prop["Type"], "Combo Box"))
-		return prop["Items"][*(unsigned int *)PropIndex(this, propID, &size)];
+		return prop["Items"][*(unsigned int *)PropIndex(this, propID, nullptr)];
 	else if (!_stricmp(prop["Type"], "Editbox String"))
-		return PropIndex(this, propID, &size);
+		return PropIndex(this, propID, nullptr);
 	else
 		return "Property not textual.";
 }
