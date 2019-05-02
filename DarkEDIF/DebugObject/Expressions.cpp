@@ -1,12 +1,12 @@
 #include "Common.h"
 
-const char * Extension::FullCommand(void)
+const TCHAR * Extension::FullCommand(void)
 {
-	return _strdup(Data->ConsoleReceived.c_str());
+	return _tcsdup(data->consoleReceived.c_str());
 }
 
-const char * Extension::CommandMinusName(void)
+const TCHAR * Extension::CommandMinusName(void)
 {
-	return _strdup((Data->ConsoleReceived.find(' ') == std::string::npos ? "" : 
-				Data->ConsoleReceived.c_str() + Data->ConsoleReceived.find(' ') + 1));
+	return _tcsdup((data->consoleReceived.find(_T(' ')) == std::tstring::npos ? _T("") : 
+				data->consoleReceived.c_str() + data->consoleReceived.find(_T(' ')) + 1));
 }

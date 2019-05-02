@@ -8,9 +8,10 @@ public:
 
     Edif::Runtime Runtime;
 
-	GlobalData * Data;
+	GlobalData * data;
     static const int MinimumBuild = 256;
-    static const int Version = 9;
+    static const int Version = 10;
+	// b10: Use of DarkEDIF SDK properties, formatting changes
 	// b9: Fixed lockup when disabling console and debug was already disabled
 	// b8: Fixed non-closing console when console was disabled.
 	// b7: Fixed subapp "MFX Not Found" issue in DarkEDIF
@@ -47,34 +48,30 @@ public:
         numeric IDs in the class constructor (Extension.cpp)
     */
 	/// Hidden
-		void OutputNow(int Intensity, int Line, const char * TextToOutput);
+		void OutputNow(int intensity, int line, std::string textToOutputU8);
 
     /// Actions
-        void SetOutputFile(char * FileP, int DescribeAppI);
-        void Output(int Intensity, int Line, const char * TextToOutput);
-		void SetOutputTimeFormat(char * Format);
-		void SetOutputOnOff(int OnOff);
-		void SetHandler(int Reaction, int ContinuesCount);
+        void SetOutputFile(const TCHAR * fileP, int describeAppI);
+        void Output(int intensity, int line, const TCHAR * textToOutput);
+		void SetOutputTimeFormat(TCHAR * format);
+		void SetOutputOnOff(int onOff);
+		void SetHandler(int reaction, int continuesRemaining);
 		void CauseCrash_ZeroDivisionInt();
 		void CauseCrash_ZeroDivisionFloat();
 		void CauseCrash_WriteAccessViolation();
 		void CauseCrash_ReadAccessViolation();
 		void CauseCrash_ArrayOutOfBoundsRead();
 		void CauseCrash_ArrayOutOfBoundsWrite();
-		void SetConsoleOnOff(int OnOff);
-		void SetDumpFile(const char * path, int flags);
+		void SetConsoleOnOff(int onOff);
+		void SetDumpFile(const TCHAR * path, int flags);
 
 	/// Conditions
-		bool OnSpecificConsoleInput(char * Command);
-		bool OnAnyConsoleInput();
-		bool OnUnhandledException();
-		bool OnCtrlCEvent();
-		bool OnCtrlBreakEvent();
-		bool OnConsoleCloseEvent();
+		const bool AlwaysTrue() const;
+		bool OnSpecificConsoleInput(TCHAR * command);
 
 	/// Expressions
-		const char * FullCommand();
-		const char * CommandMinusName();
+		const TCHAR * FullCommand();
+		const TCHAR * CommandMinusName();
 
 		void LoadDataVariable();
 

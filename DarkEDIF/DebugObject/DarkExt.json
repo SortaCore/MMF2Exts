@@ -9,7 +9,7 @@
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2019 Darkwire Software",
 			"Comment": "An easy debugging extension. (b%i)",
-			"URL": "http://dark-wire.com/",
+			"URL": "https://dark-wire.com/",
 			"Help": "Help/DebugObject.chm"
 		},
 
@@ -50,7 +50,7 @@
 
 		"ConditionMenu":
 		[
-			[2, "Unhandled exception trigger"],
+			[2, "On program crash"],
 
 			["Console",
 				[0, "On any console command"],
@@ -79,9 +79,9 @@
 			  
 			  "Parameters":
 			  [
-				["Integer", "Intensity of log (e.g. 0 = error, 1 = warning, 2 = notice ... you decide the meaning):"],
-				["Integer", "Line of log (event number, occurance number, etc):"],
-				["Text", "Text to output:"]
+				  ["Integer", "Intensity of log (e.g. 0 = error, 1 = warning, 2 = notice ... you decide the meaning):"],
+				  ["Integer", "Line of log (event number, occurance number, etc):"],
+				  ["Text", "Text to output:"]
 			  ]
 			},
 			
@@ -89,8 +89,8 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "File to output to:"],
-				["Integer", "Enable application description (output path & details):"]
+				  ["Text", "File to output to:"],
+				  ["Integer", "Enable application description (output path & details):"]
 			  ]
 			},
 			
@@ -98,7 +98,7 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "Time format to output to (Default %%X, just Google strftime() function):"]
+		  		["Text", "Time format to output to (Default %%X, just Google strftime() function):"]
 			  ]
 			},
 			
@@ -106,7 +106,7 @@
 			  
 			  "Parameters":
 			  [
-				["Integer", "Use non-zero for enable, zero for disabling:"]
+			  	["Integer", "Use non-zero for enable, zero for disabling:"]
 			  ]
 			},
 			
@@ -114,8 +114,8 @@
 			
 			  "Parameters":
 			  [
-				["Integer", "How to handle this? (see object help):"],
-				["Integer", "If you specified continuing, how many times before giving up? (1-10):"]
+				  ["Integer", "How to handle this? (see object help):"],
+				  ["Integer", "If you specified continuing, how many times before giving up? (1-10):"]
 			  ]
 			},
 
@@ -141,7 +141,7 @@
 			  
 			  "Parameters":
 			  [
-				["Integer", "Use non-zero for enable, zero for disabling:"]
+		  		["Integer", "Use non-zero for enable, zero for disabling:"]
 			  ]
 			},
 			
@@ -149,8 +149,8 @@
 			
 			  "Parameters":
 			  [
-				["Text", "Minidump file path (*.dmp, use \"\" for no minidump generation):"],
-				["Integer", "Minidump flags (see object help):"]
+				  ["Text", "Minidump file path (*.dmp, use \"\" for no minidump generation):"],
+				  ["Integer", "Minidump flags (see object help):"]
 			  ]
 			}
 		],
@@ -166,11 +166,11 @@
 			  
 			  "Parameters":
 			  [
-				["Text", "Enter what will be before the first space:"]
+				  ["Text", "Enter what will be before the first space:"]
 			  ]
 			},
 
-			{ "Title": "%o: Unhandled exception trigger",
+			{ "Title": "%o: On program crash",
 			  "Triggered": true
 			},
 
@@ -201,30 +201,35 @@
 
 		"Properties":
 		[
-			{
-				"Title": "Enable at start",
-				"Info": "Default to output enabled at start",
-				"Type": "Checkbox"
-			},
-			{
-				"Title": "Show message if path invalid",
-				"Info": "If encountered a crash with an invalid log path, show message box instead?",
-				"Type": "Checkbox"
-			},
-			{
-				"Title": "Initial path",
-				"Info": "Output to this path if debug is enabled.",
-				"Type": "Editbox String"
-			},
-			{
-				"Title": "Enable console",
-				"Info": "If debug output is enabled, show all outputs in console, at start?",
-				"Type": "Checkbox"
-			},
+      {
+        "Title": "Enable at start",
+        "Info": "Default to output enabled at start",
+        "Type": "Checkbox",
+        "DefaultState": true
+      },
+      {
+        "Title": "Show message if path invalid",
+        "Info": "If encountered a crash with an invalid log path, show message box instead?",
+        "Type": "Checkbox",
+        "DefaultState": true
+      },
+      {
+        "Title": "Initial path",
+        "Info": "Output to this path if debug is enabled.",
+        "Type": "Editbox String",
+        "DefaultState": ""
+      },
+      {
+        "Title": "Enable console",
+        "Info": "If debug output is enabled, show all outputs in console, at start?",
+        "Type": "Checkbox",
+        "DefaultState": false
+      },
 			{
 				"Title": "Pause for debugger",
-				"Info": "When the extension initialises, it will pause and create a message box, allowing a debugger to be attached.",
-				"Type": "Checkbox"
+				"Info": "C++ EXT DEVS ONLY: When the extension initialises, it will pause and create a message box, allowing a debugger to be attached.",
+        "Type": "Checkbox",
+        "DefaultState": false
 			}
 		]
 	}

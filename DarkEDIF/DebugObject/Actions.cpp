@@ -2,30 +2,24 @@
 #include "Common.h"
 
 // Called by action only
-void Extension::Output(int Intensity, int Line, const char * TextP)
+void Extension::Output(int intensity, int line, const TCHAR * textP)
 {
-	// Duplicate variables
-	char * Text = _strdup(TextP);
-
 	// Output (OutputNow will acquire lock)
-	OutputNow(Intensity, Line, Text);
-
-	// Cleanup
-	free(Text);
+	OutputNow(intensity, line, TStringToUTF8(std::tstring(textP)).c_str());
 }
 
 
-void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
+void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 {
 	// Can't continue if Data failed to initialise
-	if (!Data)
+	if (!data)
 		return;
 
 	// Duplicate variables
-	char * File = _strdup(FileP);
+	std::tstring file(fileP);
 
 	// If file handle is valid, output closing message
-	if (Data->FileHandle)
+	if (data->fileHandle)
 	{
 		// No grab of file handle - OutputNow() will need it
 		OutputNow(1, -1, "*** Log closed. ***");
@@ -34,8 +28,8 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 		OpenLock();
 
 		// Close file
-		fclose(Data->FileHandle);
-		Data->FileHandle = NULL;
+		fclose(data->fileHandle);
+		data->fileHandle = NULL;
 	}
 	else // File handle invalid
 	{
@@ -47,79 +41,74 @@ void Extension::SetOutputFile(char * FileP, int DescribeAppI = 0)
 	while (true)
 	{
 		// Returns false on success
-		if ((Data->FileHandle = _fsopen(File, "wb", _SH_DENYNO)) != NULL)
+		if ((data->fileHandle = _tfsopen(file.c_str(), _T("wb"), _SH_DENYNO)) != NULL)
 			break;
 
-		if (!Data->DoMsgBoxIfPathNotSet)
+		if (!data->doMsgBoxIfPathNotSet)
 		{
 			CloseLock();
-			free(File);
 			return;
 		}
 
-		std::stringstream s;
-		s << "Failed to open log file: \r\n"
-			<< File << "\r\n"
-			<< "Returned error: [" << errno << "] :\r\n"
-			<< "[" << strerror(errno) << "]\r\n"
-			<< "Look for \"errno errors\" on Google for more information."; 
+		std::tstringstream err;
+		err << _T("Failed to open log file: \n")
+			<< file << _T("\n")
+			<< _T("Returned error: ") << errno << _T(": ") << _tcserror(errno) << _T("\n")
+			<< _T("Look for \"errno errors\" on Google for more information.");
 		
-		if (MessageBoxA(NULL, s.str().c_str(), "DebugObject - Error", MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
+		if (MessageBox(NULL, err.str().c_str(), _T("DebugObject - Error"), MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
 		{
 			CloseLock();
-			free(File);
 			return;
 		}
 	}
 	
 	// If file already exists, add blank line
-	fseek(Data->FileHandle, 0, SEEK_END);
-	if (ftell(Data->FileHandle) > 0)
-		fputs("\r\n", Data->FileHandle);
+	fseek(data->fileHandle, 0, SEEK_END);
+	if (ftell(data->fileHandle) > 0)
+		fputs("\r\n", data->fileHandle);
 	
-	fflush(Data->FileHandle);
+	fflush(data->fileHandle);
 
 	// Close lock
 	CloseLock();
 	
 	// Report success
 	OutputNow(1, -1, "*** Log opened. ***");
-	bool DescribeApp = (DescribeAppI != 0);
-	if (DescribeApp)
+	bool describeApp = (describeAppI != 0);
+	if (describeApp)
 	{
 		// Re-acquire lock
 		OpenLock();
 
 		// Print application description
-		fprintf_s(Data->FileHandle,"\"%s\" executing from \"%s\"\r\n"
-				  "Original MFA path: [%s]\r\n"
-				  "File first opened from frame #%i [%s]\r\n",
-					rhPtr->App->name,
-					rhPtr->App->appFileName,
-					rhPtr->App->editorFileName,
-					rhPtr->App->nCurrentFrame, rhPtr->Frame->name);
+		std::tstringstream str;
+		str << _T("\"") << rhPtr->App->name
+			<< _T("\" executing from \"") << rhPtr->App->appFileName << _T("\"\r\n")
+			<< _T("Original MFA path: \"") << rhPtr->App->editorFileName << _T("\"\r\n")
+			<< _T("File first opened from frame #") << rhPtr->App->nCurrentFrame
+			<< _T("(") << rhPtr->Frame->name << _T(")\r\n");
+		std::string str2 = TStringToUTF8(str.str());
+		fputs(str2.c_str(), data->fileHandle);
 
 		// Close lock
 		CloseLock();
 	}
-
-	// Cleanup
-	free(File);
 }
 
-void Extension::SetHandler(int Reaction, int Continues)
+void Extension::SetHandler(int reaction, int continues)
 {
-	// Check Reaction is a valid value (enum starts at 0, ends with HANDLE_VIA_MAX)
-	if (Reaction < GlobalData::HANDLE_VIA_MAX && Reaction >= 0)
+	// Check reaction is a valid value (enum starts at 0, ends with HANDLE_VIA_MAX)
+	if (reaction < GlobalData::HandleType::HANDLE_VIA_MAX && reaction >= 0)
 	{
-		// If Reaction is Continue, check Continues is valid, and set Continues
-		if (Reaction == GlobalData::HANDLE_VIA_CONTINUE && (Continues <= 100 && Continues != 0))
+		// If reaction is Continue, check continues is valid, and set continues
+		if (reaction == GlobalData::HandleType::HANDLE_VIA_CONTINUE && (continues <= 100 && continues != 0))
 		{
 			OpenLock();
 
-			Data->HandleExceptionVia = GlobalData::HANDLE_VIA_CONTINUE;
-			Data->ContinuesMax = Continues;
-			Data->ContinuesCount = Continues;
+			data->handleExceptionVia = GlobalData::HandleType::HANDLE_VIA_CONTINUE;
+			data->continuesMax = continues;
+			data->continuesRemaining = continues;
 
 			CloseLock();
 		}
@@ -127,9 +116,9 @@ void Extension::SetHandler(int Reaction, int Continues)
 		{
 			OpenLock();
 
-			Data->HandleExceptionVia = Reaction;
-			Data->ContinuesMax = -1;
-			Data->ContinuesCount = -1;
+			data->handleExceptionVia = (GlobalData::HandleType)reaction;
+			data->continuesMax = -1;
+			data->continuesRemaining = -1;
 
 			CloseLock();
 		}
@@ -138,12 +127,12 @@ void Extension::SetHandler(int Reaction, int Continues)
 }
 
 // Called by non-action only
-void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
+void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 {
 	// Can't output if Data failed to initialise
-	if (!Data)
+	if (!data)
 	{
-		__asm int 3;
+		DebugBreak();
 		return;
 	}
 
@@ -151,87 +140,86 @@ void Extension::OutputNow(int Intensity, int Line, const char * TextToOutput)
 	OpenLock();
 
 	// Can't output if debug is off or no debug method is enabled
-	if (!Data->DebugEnabled || (!Data->ConsoleEnabled && !Data->FileHandle))
+	if (!data->debugEnabled || (!data->consoleEnabled && !data->fileHandle))
 	{
 		CloseLock();
 		return;
 	}
 	
 	// Get time (if blank, remove tab for time also)
-	if (Data->TimeFormat[0] != '\0')
+	if (data->timeFormat[0] != _T('\0'))
 	{
-		time(&Data->rawtime);
-		Data->timeinfo = localtime(&Data->rawtime);
-		strftime(Data->RealTime, 255, Data->TimeFormat, Data->timeinfo);
+		time(&data->rawtime);
+		data->timeinfo = localtime(&data->rawtime);
+		_tcsftime(data->realTime, std::size(data->realTime), data->timeFormat, data->timeinfo);
+		std::string realTimeU8 = TStringToUTF8(data->realTime);
+
 		// Output
-		if (Data->FileHandle)
-			fprintf_s(Data->FileHandle, "%i\t%i\t%s\t%s\r\n", Intensity, Line, Data->RealTime, TextToOutput);
+		if (data->fileHandle)
+			fprintf_s(data->fileHandle, "%i\t%i\t%s\t%s\r\n", intensity, line, realTimeU8.c_str(), textToOutputU8.c_str());
 		
 		// Console wants colourisin'
-		if (Data->ConsoleEnabled)
+		if (data->consoleEnabled)
 		{
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x0A);
-			printf_s("%i\t%i\t%s\t", Intensity, Line, Data->RealTime);
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x0B);
-			printf_s("%s\r\n", TextToOutput);
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x07);
+			SetConsoleTextAttribute(data->consoleOut, 0x0A);
+			wprintf_s(L"%i\t%i\t%s\t", intensity, line, TStringToWide(data->realTime).c_str());
+			SetConsoleTextAttribute(data->consoleOut, 0x0B);
+			wprintf_s(L"%s\r\n", UTF8ToWide(textToOutputU8).c_str());
+			SetConsoleTextAttribute(data->consoleOut, 0x07);
 		}
 	}
 	else
 	{
-		if (Data->FileHandle)
-			fprintf_s(Data->FileHandle, "%i\t%i\t%s\r\n", Intensity, Line, TextToOutput);
+		if (data->fileHandle)
+			fprintf_s(data->fileHandle, "%i\t%i\t%s\r\n", intensity, line, textToOutputU8.c_str());
 		
 		// Console wants colourisin'
-		if (Data->ConsoleEnabled)
+		if (data->consoleEnabled)
 		{
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x0A);
-			printf_s("%i\t%i\t", Intensity, Line);
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x0B);
-			printf_s("%s\r\n", TextToOutput);
-			SetConsoleTextAttribute(Data->ConsoleOut, 0x07);
+			SetConsoleTextAttribute(data->consoleOut, 0x0A);
+			wprintf_s(L"%i\t%i\t", intensity, line);
+			SetConsoleTextAttribute(data->consoleOut, 0x0B);
+			wprintf_s(L"%s\r\n", UTF8ToWide(textToOutputU8).c_str());
+			SetConsoleTextAttribute(data->consoleOut, 0x07);
 		}
 	}
 	
 	// Cleanup
-	if(Data->FileHandle)
-		fflush(Data->FileHandle);
-	if(Data->ConsoleEnabled)
-		std::cout.flush();
+	if (data->fileHandle)
+		fflush(data->fileHandle);
+	if (data->consoleEnabled)
+		std::wcout.flush();
 	CloseLock();
 }
-void Extension::SetOutputTimeFormat(char * FormatP)
+void Extension::SetOutputTimeFormat(TCHAR * format)
 {
-	// Duplicate variables
-	char * Format = _strdup(FormatP);
+	// Check size
+	if (_tcslen(format) > 100)
+	{
+		MessageBoxA(NULL, "Could not change time format: too large (100 chars is the maximum).", "DebugObject - Error setting time format", MB_OK | MB_ICONERROR);
+		return;
+	}
 	
 	// Acquire lock, so we don't get fights over TimeFormat
 	OpenLock();
 
-	// Check size
-	if (strlen(Format) < 100)
-		strcpy_s(Data->TimeFormat, 255, Format);
-	else
-		MessageBoxA(NULL, "Could not change time format: too large (100 is the maximum).", "DebugObject - Error setting time format", MB_OK|MB_ICONERROR);
+	_tcscpy_s(data->timeFormat, 255, format);
 	
 	// Close lock	
 	CloseLock();
-
-	// Cleanup
-	free(Format);
 }
 
 void Extension::SetOutputOnOff(int OnOff)
 {
 	// Can't continue if Data failed to initialise
-	if (!Data)
+	if (!data)
 		return;
 
 	// Acquire lock
 	OpenLock();
 
 	// Set debug to boolean equivalent
-	Data->DebugEnabled = (OnOff != 0);
+	data->debugEnabled = (OnOff != 0);
 
 	// Close lock
 	CloseLock();
@@ -240,36 +228,36 @@ void Extension::SetOutputOnOff(int OnOff)
 void Extension::SetConsoleOnOff(int OnOff)
 {
 	// Can't continue if Data failed to initialise
-	if (!Data)
+	if (!data)
 		return;
 
 	// Acquire lock
 	OpenLock();
 
 	// AllocConsole() will fail if called >1 times.
-	if (Data->ConsoleEnabled == (OnOff != 0))
+	if (data->consoleEnabled == (OnOff != 0))
 	{
 		// Nothing to do!
 		CloseLock();
 		return;
 	}
 	// Set debug to boolean equivalent
-	Data->ConsoleEnabled = (OnOff != 0);
-	if (Data->DebugEnabled)
+	data->consoleEnabled = (OnOff != 0);
+	if (data->debugEnabled)
 	{
 		// Start up a console
-		if (Data->ConsoleEnabled)
+		if (data->consoleEnabled)
 		{
 			// success
 			if (AllocConsole())
 			{
 				// Get console handle for log output
-				Data->ConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
-				Data->ConsoleIn = GetStdHandle(STD_INPUT_HANDLE);
+				data->consoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				data->consoleIn = GetStdHandle(STD_INPUT_HANDLE);
 				// Default to shutdown off
 				// Shutdown = false;
-				std::setfill(' ');		// Set fill character to spaces
-				std::right(std::cout);	// Set padding to right
+				std::wcout << std::setfill(L' ');	// Set fill character to spaces
+				std::right(std::wcout);				// Set padding to right
 
 				// Invoke the system to move the standard console streams
 				// to the new allocated console
@@ -289,9 +277,9 @@ void Extension::SetConsoleOnOff(int OnOff)
 						DeleteMenu(hMenu, SC_CLOSE, MF_BYCOMMAND);
 				}
 
-				Data->ReleaseConsoleInput = true;
-				Data->ConsoleReceived = "";
-				Data->ConsoleBreakType = 0;
+				data->releaseConsoleInput = true;
+				data->consoleReceived = std::tstring();
+				data->consoleBreakType = 0;
 
 				CreateThread(NULL, NULL, ReceiveConsoleInput, NULL, NULL, NULL);
 
@@ -308,12 +296,12 @@ void Extension::SetConsoleOnOff(int OnOff)
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, FALSE);
 
-			Data->ReleaseConsoleInput = true;
+			data->releaseConsoleInput = true;
 
 			if (FreeConsole())
 			{
-				Data->ConsoleOut = NULL;
-				Data->ConsoleIn = NULL;
+				data->consoleOut = NULL;
+				data->consoleIn = NULL;
 				CloseLock();
 			}
 			else
@@ -375,18 +363,15 @@ void Extension::CauseCrash_ArrayOutOfBoundsWrite(void)
 }
 #pragma optimize( "", on )
 
-void Extension::SetDumpFile(const char * path, int flags)
+void Extension::SetDumpFile(const TCHAR * path, int flags)
 {
-	char * path2 = _strdup(path);
-
 	if ((flags & MiniDumpValidTypeFlags) != flags)
 		OutputNow(5, -1, "Invalid minidump flags specified.");
 	else
 	{
 		OpenLock();
-		Data->MiniDumpPath = path2;
-		Data->MiniDumpType = flags;
+		data->miniDumpPath = path;
+		data->miniDumpType = flags;
 		CloseLock();
 	}
-	free(path2);
 }

@@ -23,9 +23,9 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	std::stringstream str;
 
 	// Create minidump
-	if (GlobalExt->Data->MiniDumpPath.size() > 0)
+	if (GlobalExt->data->miniDumpPath.size() > 0)
 	{
-		HANDLE dumpFile = CreateFileA(GlobalExt->Data->MiniDumpPath.c_str(), GENERIC_READ | GENERIC_WRITE, 
+		HANDLE dumpFile = CreateFile(GlobalExt->data->miniDumpPath.c_str(), GENERIC_READ | GENERIC_WRITE, 
 			NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
 		
 		// Opened the minidump file
@@ -36,7 +36,9 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			mdei.ExceptionPointers  = pExceptionPtrs; 
 			mdei.ThreadId           = GetCurrentThreadId(); 
 			
-			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), NULL, (MINIDUMP_TYPE)GlobalExt->Data->MiniDumpType, (pExceptionPtrs != 0) ? &mdei : 0, NULL, NULL))
+			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), NULL,
+				(MINIDUMP_TYPE)GlobalExt->data->miniDumpType,
+				(pExceptionPtrs != 0) ? &mdei : 0, NULL, NULL))
 			{
 				str << "MiniDumpWriteDump() function failed. Error [" << GetLastError() << "] occured.";
 				GlobalExt->OutputNow(5, -1, str.str().c_str());
@@ -45,7 +47,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			}
 			else // Minidump write successful
 			{
-				str << "Minidump created at path [" << GlobalExt->Data->MiniDumpPath << "].";
+				str << "Minidump created at path [" << TStringToUTF8(GlobalExt->data->miniDumpPath) << "].";
 				GlobalExt->OutputNow(5, -1, str.str().c_str());
 				str.str("");
 			}
@@ -65,7 +67,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			   << (void *)pExceptionPtrs->ExceptionRecord->ExceptionAddress
 			   << " ***";
 	GlobalExt->OutputNow(5, -1, str.str().c_str());
-	if (GlobalExt->Data->FileHandle)
+	if (GlobalExt->data->fileHandle)
 		str.str("");
 	else
 		str << "\r\n";
@@ -160,60 +162,60 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			break;
 	}
 
-	if (!GlobalExt->Data->FileHandle)
+	if (!GlobalExt->data->fileHandle)
 	{
-		if (GlobalExt->Data->DoMsgBoxIfPathNotSet)
+		if (GlobalExt->data->doMsgBoxIfPathNotSet)
 			MessageBoxA(NULL, str.str().c_str(), "DebugObject - caught exception.", MB_OK | MB_ICONERROR);
 	}
 	else
 		GlobalExt->OutputNow(5, -2, str.str().c_str());
 
 	// Not set to ignore
-	if (NoHandling || !GlobalExt->Data)
+	if (NoHandling || !GlobalExt->data)
 		return EXCEPTION_CONTINUE_SEARCH;
 
-	switch (GlobalExt->Data->HandleExceptionVia)
+	switch (GlobalExt->data->handleExceptionVia)
 	{
-		case GlobalData::HANDLE_VIA_QUIT:
+		case GlobalData::HandleType::HANDLE_VIA_QUIT:
 			GlobalExt->OutputNow(5, -1, "Handling via quit.");
 			ExitProcess(-1);
 			return EXCEPTION_CONTINUE_SEARCH;
 
-		case GlobalData::HANDLE_VIA_INFINITE_WAIT:
+		case GlobalData::HandleType::HANDLE_VIA_INFINITE_WAIT:
 			GlobalExt->OutputNow(5, -1, "Handling via infinite sleep.");
 			Sleep(INFINITE);
 			GlobalExt->OutputNow(5, -1, "Passed infinite sleep.");
 			return EXCEPTION_CONTINUE_SEARCH;
 
-		case GlobalData::HANDLE_VIA_IGNORE:
+		case GlobalData::HandleType::HANDLE_VIA_IGNORE:
 			GlobalExt->OutputNow(5, -1, "Handling via passing on.");
 			return EXCEPTION_CONTINUE_SEARCH;
 
-		case GlobalData::HANDLE_VIA_EMAIL:
+		case GlobalData::HandleType::HANDLE_VIA_EMAIL:
 			GlobalExt->OutputNow(5, -1, "Handling via email.");
 			GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
 			return EXCEPTION_CONTINUE_SEARCH;
 
-		case GlobalData::HANDLE_VIA_BOOT_PROCESS:
+		case GlobalData::HandleType::HANDLE_VIA_BOOT_PROCESS:
 			GlobalExt->OutputNow(5, -1, "Booting crash process...");
 			GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
 			return EXCEPTION_CONTINUE_SEARCH;
 			
-		case GlobalData::HANDLE_VIA_FORCE_DEBUG_BREAK:
-			__asm int 3;
+		case GlobalData::HandleType::HANDLE_VIA_FORCE_DEBUG_BREAK:
+			AttachDebugger();
 			return EXCEPTION_CONTINUE_SEARCH;
 
-		case GlobalData::HANDLE_VIA_CONTINUE:
-			if (GlobalExt->Data->ContinuesCount > 0)
+		case GlobalData::HandleType::HANDLE_VIA_CONTINUE:
+			if (GlobalExt->data->continuesRemaining > 0)
 			{
-				--(GlobalExt->Data->ContinuesCount);
+				--(GlobalExt->data->continuesRemaining);
 			}
 			else
 			{
-				if (GlobalExt->Data->ContinuesCount == 0)
+				if (GlobalExt->data->continuesRemaining == 0)
 				{
 					GlobalExt->OutputNow(5, -1, "Max continues expired; passing exception to debugger.");
-					GlobalExt->Data->ContinuesCount = GlobalExt->Data->ContinuesMax;
+					GlobalExt->data->continuesRemaining = GlobalExt->data->continuesMax;
 					return EXCEPTION_CONTINUE_SEARCH;
 				}
 			}
@@ -254,7 +256,7 @@ BOOL WINAPI HandlerRoutine(DWORD ControlType)
 			return TRUE;
 	}
 
-	GlobalExt->Data->ConsoleBreakType = (ControlType & 0xFF) + 3; // Event 3+ for the correct condition events
+	GlobalExt->data->consoleBreakType = (ControlType & 0xFF) + 3; // Event 3+ for the correct condition events
 	GlobalExt->Runtime.Rehandle();
 	return TRUE;
 }
@@ -264,12 +266,12 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 {
 	INPUT_RECORD record = { 0 };
 	DWORD numRecords = 0U;
-	char InputText[256] = { 0 };
+	TCHAR InputText[256] = { 0 };
 
 	HANDLE ConsoleHandle = GetStdHandle(STD_INPUT_HANDLE);
 	
 	// Continue until shutdown is enabled
-	while (GlobalExt && GlobalExt->Data && GlobalExt->Data->ConsoleEnabled)
+	while (GlobalExt && GlobalExt->data && GlobalExt->data->consoleEnabled)
 	{
 		Sleep(100);
 
@@ -287,33 +289,77 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 		// This includes mouse events, window focus events, etc.
 		if (numRecords == 0)
 			continue;
-		InputText[numRecords] = '\0';
+		InputText[numRecords] = _T('\0');
 
 		// On restart of app or other weirdness
-		if (!GlobalExt || !GlobalExt->Data || !GlobalExt->Data->ConsoleEnabled)
+		if (!GlobalExt || !GlobalExt->data || !GlobalExt->data->consoleEnabled)
 			break;
 
 		// Open lock
-		while (GlobalExt->Data->ReadingThis)
+		while (GlobalExt->data->readingThis)
 			Sleep(0);
 
-		GlobalExt->Data->ReadingThis = true; 
+		GlobalExt->data->readingThis = true; 
 		#ifdef _DEBUG
-			GlobalExt->Data->LastLockFile = __FILE__;
-			GlobalExt->Data->LastLockLine = __LINE__;
+			GlobalExt->data->lastLockFile = __FILE__;
+			GlobalExt->data->lastLockLine = __LINE__;
 		#endif
-		GlobalExt->Data->ReleaseConsoleInput = false;
-		GlobalExt->Data->ConsoleReceived = InputText;
+		GlobalExt->data->releaseConsoleInput = false;
+		GlobalExt->data->consoleReceived = InputText;
 
 		// Close lock
-		GlobalExt->Data->ReadingThis = false;
+		GlobalExt->data->readingThis = false;
 
 		// Boot events (since this is not the usual thread, multi-threadify it)
 		GlobalExt->Runtime.Rehandle();
 		
-		while (!GlobalExt->Data->ReleaseConsoleInput)
+		while (!GlobalExt->data->releaseConsoleInput)
 			Sleep(10);
 	}
 
 	return 0;
+}
+
+// Spawns VS debugger
+bool AttachDebugger()
+{
+	if (IsDebuggerPresent())
+		return true;
+
+	// Get System directory, typically c:\windows\system32
+	std::wstring systemDir(MAX_PATH + 1, '\0');
+	UINT nChars = GetSystemDirectoryW(&systemDir[0], systemDir.length());
+	if (nChars == 0)
+		return false; // failed to get system directory
+	systemDir.resize(nChars);
+
+	// Get process ID and create the command line
+	DWORD pid = GetCurrentProcessId();
+	std::wostringstream s;
+	s << systemDir << L"\\vsjitdebugger.exe -p " << pid;
+	std::wstring cmdLine = s.str();
+
+	// Start debugger process
+	STARTUPINFOW si;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&pi, sizeof(pi));
+
+	// Couldn't start debugger
+	if (!CreateProcessW(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		return false;
+
+	// Close debugger process handles to eliminate resource leak
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+
+	// Wait for the debugger to attach
+	while (!IsDebuggerPresent())
+		Sleep(100);
+
+	// Stop execution so the debugger can take over
+	DebugBreak();
+	return true;
 }

@@ -11,7 +11,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 {
 	if (!GlobalExt)
 		GlobalExt = this;
-	Data = NULL;
+	data = NULL;
 	
 	LoadDataVariable();
 
@@ -35,27 +35,27 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(11, SetConsoleOnOff);
 	LinkAction(12, SetDumpFile);
 
-	LinkCondition(0, OnAnyConsoleInput);
+	LinkCondition(0, AlwaysTrue /* OnAnyConsoleInput */);
 	LinkCondition(1, OnSpecificConsoleInput);
-	LinkCondition(2, OnUnhandledException);
-	LinkCondition(3, OnCtrlCEvent);
-	LinkCondition(4, OnCtrlBreakEvent);
-	LinkCondition(5, OnConsoleCloseEvent);
+	LinkCondition(2, AlwaysTrue /* OnUnhandledException */);
+	LinkCondition(3, AlwaysTrue /* OnCtrlCEvent */);
+	LinkCondition(4, AlwaysTrue /* OnCtrlBreakEvent */);
+	LinkCondition(5, AlwaysTrue /* OnConsoleCloseEvent */);
 
 	LinkExpression(0, FullCommand);
 	LinkExpression(1, CommandMinusName);
 
-	if (false) //edPtr->PauseForDebugger)
+	if (edPtr->IsPropChecked(4))
 		MessageBoxA(NULL, "Pause for debugger property is enabled; attach your debugger now then continue the process.", "DebugObject - Information", MB_OK | MB_ICONASTERISK);
 	
 	// Initialise from edittime
-	SetOutputOnOff(edPtr->EnableAtStart);
-	Data->DoMsgBoxIfPathNotSet = edPtr->DoMsgBoxIfPathNotSet;
-	SetConsoleOnOff(edPtr->ConsoleEnabled);
+	SetOutputOnOff(edPtr->IsPropChecked(0));
+	data->doMsgBoxIfPathNotSet = edPtr->IsPropChecked(1);
+	SetConsoleOnOff(edPtr->IsPropChecked(3));
 
-	if (edPtr->InitialPath[0] != '\0') // ""
-		SetOutputFile(edPtr->InitialPath, 0);
-	
+	std::tstring outputFile = UTF8ToTString(std::string(edPtr->GetPropertyStr(2)));
+	if (outputFile[0] != '\0') // if not blank
+		SetOutputFile(outputFile.c_str(), 0);
 }
 
 
@@ -63,7 +63,7 @@ Extension::~Extension()
 {
 	// Nothing to do if we don't have stored information
 	// We can't output log closure or free resources, y'see.
-	if (!Data)
+	if (!data)
 		return;
 	
 	// Output closure message and stop any other access to this Extension instance
@@ -77,18 +77,18 @@ Extension::~Extension()
 	OpenLock();
 
 	// Are we the last using this Data?
-	if ((--Data->NumUsages) == 0)
+	if ((--data->numUsages) == 0)
 	{
 		// Close resources
-		if (Data->FileHandle)
-			fclose(Data->FileHandle);
-		Data->FileHandle = NULL;
+		if (data->fileHandle)
+			fclose(data->fileHandle);
+		data->fileHandle = NULL;
 
 		// Close MMF pointer to Data
 		Runtime.WriteGlobal(GlobalID, NULL);
 		
 		// Disable console
-		if (Data->ConsoleOut)
+		if (data->consoleOut)
 		{
 			if (FreeConsole())
 			{
@@ -100,16 +100,16 @@ Extension::~Extension()
 								 "This generally occurs when a console has already been allocated.");
 			}
 
-			Data->ConsoleOut = NULL;
-			Data->ConsoleIn = NULL;
+			data->consoleOut = NULL;
+			data->consoleIn = NULL;
 		}
 		
 		// Close lock
 		CloseLock();
 
 		// Close container
-		delete Data;
-		Data = NULL;
+		delete data;
+		data = NULL;
 		
 		// Exception handling - invalidate
 		SetUnhandledExceptionFilter(NULL);
@@ -124,23 +124,23 @@ Extension::~Extension()
 REFLAG Extension::Handle()
 {
 	// If console not enabled, this Handle event is not useful.
-	if (!Data->ConsoleEnabled)
+	if (!data->consoleEnabled)
 		return REFLAG::ONE_SHOT;
 	
 	// If releasing console input is currently set to false, there is a console input message.
-	if (!Data->ReleaseConsoleInput)
+	if (!data->releaseConsoleInput)
 	{
 		Runtime.GenerateEvent(0);
 		Runtime.GenerateEvent(1);
-		Data->ConsoleReceived = "";
-		Data->ReleaseConsoleInput = true;
+		data->consoleReceived = std::tstring();
+		data->releaseConsoleInput = true;
 	}
 
 	// If console break type is greater than 0, someone's pressed Ctrl+C/Break.
-	if (Data->ConsoleBreakType > 0)
+	if (data->consoleBreakType > 0)
 	{
-		Runtime.GenerateEvent(Data->ConsoleBreakType);
-		Data->ConsoleBreakType = 0;
+		Runtime.GenerateEvent(data->consoleBreakType);
+		data->consoleBreakType = 0;
 	}
 
 	return REFLAG::ONE_SHOT;

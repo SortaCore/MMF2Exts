@@ -125,40 +125,40 @@ void WINAPI DLLExport StartApp(mv * mV, CRunApp* pApp)
 
 void Extension::LoadDataVariable()
 {
-	Data = (GlobalData *)Runtime.ReadGlobal(_T("DebugObject"));
+	data = (GlobalData *)Runtime.ReadGlobal(_T("DebugObject"));
 	
 	// Not initialised
-	if (!Data)
+	if (!data)
 	{
 		// Create new container
-		Data = new GlobalData;
+		data = new GlobalData;
 		
 		// Open lock
-		Data->ReadingThis = true; // Open lock without checking if the handle is valid first
+		data->readingThis = true; // Open lock without checking if the handle is valid first
 		
 		// Mark data position
-		Runtime.WriteGlobal(GlobalID, Data);
+		Runtime.WriteGlobal(GlobalID, data);
 		
 		// Initialise data
-		Data->FileHandle = NULL;
-		Data->DebugEnabled = false;
-		Data->TimeFormat = (char *)calloc(255, sizeof(char));
-		Data->RealTime = (char *)calloc(255, sizeof(char));
-		strcpy_s(Data->TimeFormat, 255, "%X");
-		Data->NumUsages = 1;
-		Data->DoMsgBoxIfPathNotSet = false;
-		Data->ConsoleIn = NULL;
-		Data->ConsoleOut = NULL;
-		Data->ConsoleEnabled = false;
-		Data->ConsoleReceived = "";
-		Data->ReleaseConsoleInput = true;
-		Data->ConsoleBreakType = 0;
-		Data->MiniDumpPath = "";
-		Data->MiniDumpType = 0;
+		data->fileHandle = NULL;
+		data->debugEnabled = false;
+		memset(data->timeFormat, 0, sizeof(data->timeFormat));
+		memset(data->realTime, 0, sizeof(data->realTime));
+		_tcscpy_s(data->timeFormat, std::size(data->timeFormat), _T("%X"));
+		data->numUsages = 1;
+		data->doMsgBoxIfPathNotSet = false;
+		data->consoleIn = NULL;
+		data->consoleOut = NULL;
+		data->consoleEnabled = false;
+		data->consoleReceived = std::tstring();
+		data->releaseConsoleInput = true;
+		data->consoleBreakType = 0;
+		data->miniDumpPath = std::tstring();
+		data->miniDumpType = MiniDumpNormal;
 		
 		// Exception handling (container)
-		Data->ContinuesCount = -1;
-		Data->ContinuesMax = -1;
+		data->continuesRemaining = -1;
+		data->continuesMax = -1;
 		CloseLock();
 
 		// Exception handling (WinAPI call)
@@ -167,7 +167,7 @@ void Extension::LoadDataVariable()
 	else // Already initialised
 	{
 		OpenLock();
-		++Data->NumUsages;
+		++data->numUsages;
 		CloseLock();
 	}
 }

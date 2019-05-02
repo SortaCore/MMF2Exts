@@ -117,8 +117,19 @@ void WINAPI DLLExport UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 // 
 HGLOBAL WINAPI DLLExport UpdateEditStructure(mv * mV, void * OldEdPtr)
 {
-	// We do nothing here
-	return 0;
+	/*
+	// If you put your own data in EDITDATA, it's recommended you update them here.
+	if (((EDITDATA *)OldEdPtr)->eHeader.extVersion != ::SDK->EdittimePropertiesVersion)
+	{
+		mvGetPropValue(mV, OldEdPtr, 0);
+		const json_value & js = CurrentLanguage()["Properties"]["Name"];
+		MessageBoxA(NULL, "Note: an extension has been updated. Reset properties to default?\n"
+			"Yes to attempt ", " - Warning", MB_YESNO)
+			InitialisePropertiesFromJSON(mV, OldEdPtr);
+	}
+	*/
+
+	return NULL;// ::SDK->UpdateProperties(mV, OldEdPtr);
 }
 
 // --------------------

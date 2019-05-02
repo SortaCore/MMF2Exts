@@ -32,6 +32,7 @@
 // If your extension will be using multithreading, remove the #if and #endif lines here.
 #define MULTI_THREADING
 #include "MultiThreading.h"
+#include <atomic>
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -39,14 +40,7 @@ struct EDITDATA
 	// Header - required
 	extHeader		eHeader;
 
-	// Object's data
-	bool EnableAtStart;
-	bool DoMsgBoxIfPathNotSet;
-	char InitialPath [MAX_PATH+1];
-	bool ConsoleEnabled;
-	bool PauseForDebugger;
-	
-	// TODO: Extend properties to default handling type?
+	// DarkEDIF properties (were manual in build 
 	int				DarkEDIF_Prop_Size;
 	char			DarkEDIF_Props[0];
 
@@ -78,42 +72,41 @@ struct RUNDATA
     */
 };
 struct GlobalData {
-	FILE * FileHandle;
-	volatile bool ReadingThis, ReleaseConsoleInput;
-	bool DebugEnabled, DoMsgBoxIfPathNotSet, ConsoleEnabled;
+	FILE * fileHandle;
+	std::atomic<bool> readingThis, releaseConsoleInput;
+	bool debugEnabled, doMsgBoxIfPathNotSet, consoleEnabled;
 	time_t rawtime;
 	struct tm * timeinfo;
-	char * TimeFormat;
-	char * RealTime;
-	unsigned char NumUsages;
-	HANDLE ConsoleIn, ConsoleOut;
-	std::string ConsoleReceived;
-	unsigned char ConsoleBreakType;
-	std::string MiniDumpPath;
-	int MiniDumpType; // See MINIDUMP_TYPE enum
+	TCHAR timeFormat[128];
+	TCHAR realTime[128];
+	unsigned char numUsages;
+	HANDLE consoleIn, consoleOut;
+	std::tstring consoleReceived;
+	unsigned char consoleBreakType;
+	std::tstring miniDumpPath;
+	int miniDumpType; // See MINIDUMP_TYPE enum
 
 	// Allows debugging of what had the last lock
 	#ifdef _DEBUG
-		std::string LastLockFile;
-		int LastLockLine;
+		std::string lastLockFile;
+		int lastLockLine;
 		#define OpenLock() \
-			while (Data->ReadingThis) \
+			while (data->readingThis) \
 				Sleep(0); \
-			Data->ReadingThis = true; \
-			Data->LastLockFile = __FILE__; \
-			Data->LastLockLine = __LINE__
-		#define CloseLock() Data->ReadingThis = false
+			data->readingThis = true; \
+			data->lastLockFile = __FILE__; \
+			data->lastLockLine = __LINE__
+		#define CloseLock() data->readingThis = false
 	#else
 		#define OpenLock() \
-			while (Data->ReadingThis) \
+			while (data->readingThis) \
 				Sleep(0); \
-			Data->ReadingThis = true
-		#define CloseLock() Data->ReadingThis = false
+			data->readingThis = true
+		#define CloseLock() data->readingThis = false
 	#endif
 
 	// Handle exceptions
-	char HandleExceptionVia, ContinuesCount, ContinuesMax;
-	const enum {
+	enum HandleType : char {
 		HANDLE_VIA_QUIT,
 		HANDLE_VIA_INFINITE_WAIT,
 		HANDLE_VIA_IGNORE,
@@ -124,6 +117,9 @@ struct GlobalData {
 
 		HANDLE_VIA_MAX
 	};
+	HandleType handleExceptionVia;
+	char continuesRemaining, continuesMax;
+	
 };
 
 #define GlobalID _T("DebugObject")
@@ -132,6 +128,7 @@ extern class Extension * GlobalExt;
 extern BOOL WINAPI HandlerRoutine(DWORD ControlType);
 extern DWORD WINAPI ReceiveConsoleInput(void *);
 extern LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs);
+extern bool AttachDebugger();
 
 #include "Extension.h"
 

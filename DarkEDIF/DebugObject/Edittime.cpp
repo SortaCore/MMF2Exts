@@ -385,147 +385,88 @@ void DLLExport SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+	{
+#ifdef DEBUG
+		std::stringstream str;
+		str << "Accessed property ID " << PropID << ", outside of custom extension range; ignoring it.\n";
+		OutputDebugStringA(str.str().c_str());
+#endif
 		return;
-
-	const json_value & propjson = CurLang["Properties"][PropID];
+	}
+	
 
 	switch (i)
 	{
 		case 'DATA': // Buffer or string
-			if (strcmp(propjson["Type"], "Editbox String"))
+		{
+			const json_value & propjson = CurLang["Properties"][PropID];
+			// Buff can be used for a string property
+			if (!_stricmp(propjson["Type"], "Editbox String"))
 			{
-				Prop_Buff * prop2 = (Prop_Buff *)prop;
-				PropChange(mV, edPtr, PropID, prop2->Address, prop2->Size);
-				break;
+				std::string utf8Str = TStringToUTF8(((Prop_Str *)prop)->String);
+				PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
 			}
+			// If we get a Buff and it's not a string property, DarkEDIF doesn't know how to handle it.
 			else
-				MessageBoxA(NULL, "ERROR: Got Buff type instead of string-based for string property.", "DarkEDIF - Property error", MB_OK);
+				MessageBoxA(NULL, "ERROR: Got Buff type for non-string property.", "DarkEDIF - Property error", MB_OK);
 			break;
+		}
 		case 'STRA': // ANSI string
-			{
-				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
-
-				// Serialise string to UTF-8
-				const char * fromStr = static_cast<const char *>(prop2->Address);
-
-				std::string utf8Str(1, '\0');
-				size_t numBytes = 1;
-				// String is blank?
-				if (fromStr[0] != '\0')
-				{
-					std::stringstream str;
-					// First convert to Unicode UCS-2
-					size_t numCharsInclNull = MultiByteToWideChar(CP_ACP, 0, fromStr, -1, 0, 0);
-					if (numCharsInclNull == 0)
-					{
-						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-					std::wstring wideStr(numCharsInclNull, L'\0');
-					if (MultiByteToWideChar(CP_ACP, 0, fromStr, -1, &wideStr.front(), wideStr.size()) == 0)
-					{
-						str << "Failed to convert new property text to UCS-2 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-
-					// Then back to Unicode UTF-8
-					numBytes = WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, 0, 0, NULL, NULL);
-					if (numBytes == 0)
-					{
-						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-					utf8Str.resize(numBytes + 1);
-					if (WideCharToMultiByte(CP_UTF8, 0, &wideStr.front(), -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
-					{
-						str << "Failed to convert new UCS-2 property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-				}
-
-				PropChange(mV, edPtr, PropID, &utf8Str.front(), numBytes);
-				break;
-			}
+		{
+			std::string utf8Str = ANSIToUTF8(((Prop_AStr *)prop)->String);
+			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
+			break;
+		}
 		case 'STRW': // Unicode string
-			{
-				Prop_Buff * prop2 = (Prop_Buff *)prop; // see note
-
-				// Serialise string to UTF-8
-				const wchar_t * fromStr = static_cast<const wchar_t *>(prop2->Address);
-
-				std::string utf8Str(1, '\0');
-				size_t numBytes = 1;
-				// String is blank?
-				if (fromStr[0] != L'\0')
-				{
-					std::stringstream str;
-					numBytes = WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, 0, 0, NULL, NULL);
-					if (numBytes == 0)
-					{
-						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-					utf8Str.resize(numBytes + 1);
-					if (WideCharToMultiByte(CP_UTF8, 0, fromStr, -1, &utf8Str.front(), utf8Str.size(), NULL, NULL) == 0)
-					{
-						str << "Failed to convert new property text to UTF-8 (error " << GetLastError() << "). Change will be ignored.";
-						MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Property Error", MB_OK);
-						break;
-					}
-				}
-
-				PropChange(mV, edPtr, PropID, &utf8Str.front(), utf8Str.size());
-				break;
-			}
+		{
+			std::string utf8Str = WideToUTF8(((Prop_WStr *)prop)->String);
+			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
+			break;
+		}
 		case 'INT ': // 4-byte signed int
-			{
-				Prop_SInt * prop2 = (Prop_SInt *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
-				break;
-			}
+		{
+			Prop_SInt * prop2 = (Prop_SInt *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
+			break;
+		}
 		case 'DWRD': // 4-byte unsigned int
-			{
-				Prop_UInt * prop2 = (Prop_UInt *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
-				break;
-			}
+		{
+			Prop_UInt * prop2 = (Prop_UInt *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
+			break;
+		}
 		case 'INT2': // 8-byte signed int
-			{
-				Prop_Int64 * prop2 = (Prop_Int64 *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(__int64));
-				break;
-			}
-
+		{
+			Prop_Int64 * prop2 = (Prop_Int64 *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(__int64));
+			break;
+		}
 		case 'DBLE': // 8-byte floating point var
-			{
-				Prop_Double * prop2 = (Prop_Double *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
-				break;
-			}
+		{
+			Prop_Double * prop2 = (Prop_Double *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
+			break;
+		}
 		case 'FLOT': // 4-byte floating point var
-			{
-				Prop_Float * prop2 = (Prop_Float *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
-				break;
-			}
+		{
+			Prop_Float * prop2 = (Prop_Float *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
+			break;
+		}
 		case 'SIZE': // Two ints depicting a size
-			{
-				Prop_Size * prop2 = (Prop_Size *)prop;
-				PropChange(mV, edPtr, PropID, &prop2->X, sizeof(int)*2);
-				break;
-			}
+		{
+			Prop_Size * prop2 = (Prop_Size *)prop;
+			PropChange(mV, edPtr, PropID, &prop2->X, sizeof(int)*2);
+			break;
+		}
 		default: // Custom property
-			{
-				Prop_Custom * prop2 = (Prop_Custom *)prop;
-				//PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
-			}
+		{
+			Prop_Custom * prop2 = (Prop_Custom *)prop;
+			//PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
+
 			MessageBoxA(NULL, "Assuming class ID is custom - but no custom code yet written.", "DarkEDIF - Error", MB_OK);
 			break;
+		}
 	}
 }
 
