@@ -48,7 +48,7 @@ struct EDITDATA
 	// Returns property checked or unchecked.
 	bool IsPropChecked(int propID);
 	// Returns std::tstring property setting from property name.
-	std::tstring EDITDATA::GetPropertyStr(int propID);
+	std::tstring GetPropertyStr(const char * propName);
 	// Returns std::tstring property string from property ID.
 	std::tstring GetPropertyStr(int propID);
 };
