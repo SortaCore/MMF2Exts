@@ -112,7 +112,7 @@ Params ReadParameterType(const char * Text, bool &IsFloat)
 
 	std::stringstream str;
 	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
-	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK);
+	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK | MB_ICONERROR);
     return (Params)(ushort)0;
 }
 
@@ -133,7 +133,9 @@ ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
 	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpParams::UnsignedInteger;
 
-	MessageBoxA(NULL, "Error reading Parameter type; text did not match anything.", "DarkEDIF - Error", MB_OK);
+	std::stringstream str;
+	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
+	MessageBoxA(NULL, str.str().c_str(), "DarkEDIF - Error", MB_OK | MB_ICONERROR);
     return (ExpParams)(ushort)0;
 }
 
@@ -157,7 +159,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 
 	char error [256];
 	sprintf_s(error, "Error reading expression return; returns '%s', which is unrecognised.", Text);
-	MessageBoxA(NULL, error, "DarkEDIF - Error", MB_OK);
+	MessageBoxA(NULL, error, "DarkEDIF - Error", MB_OK | MB_ICONERROR);
 	return ExpReturnType::Integer; // default
 }
 

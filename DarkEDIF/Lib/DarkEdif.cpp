@@ -463,21 +463,31 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 
 	const json_value &jsonItem = CurLang["Properties"][ID];
 	const char * curStr = jsonItem["Type"];
+	Prop * ret = nullptr;
+	bool allConv;
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
-		return Prop_Str_FromUTF8((const char *)jsonItem["DefaultState"]);
-
+	{
+		ret = new Prop_Str(UTF8ToTString((const char *)jsonItem["DefaultState"], &allConv).c_str());
+		if (!allConv)
+			MessageBoxA(NULL, "Warning: The property's Unicode string couldn't be converted to ANSI. "
+				"Characters will be replaced with filler.", "DarkEDIF Property Error", MB_OK | MB_ICONWARNING);
+		return ret;
+	}
 
 	unsigned int size;
 	char * Current = PropIndex(edPtr, ID, &size);
-	
-	Prop * ret = nullptr;
 
 	if (!_stricmp(curStr, "Editbox String"))
-		ret = Prop_Str_FromUTF8((const char *)Current);
+	{
+		ret = new Prop_Str(UTF8ToTString(Current, &allConv).c_str());
+		if (!allConv)
+			MessageBoxA(NULL, "Warning: The property's Unicode string couldn't be converted to ANSI. "
+				"Characters will be replaced with filler.", "DarkEDIF Property Error", MB_OK | MB_ICONWARNING);
+	}
 	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
 	else if (_stricmp(curStr, "Checkbox"))
-		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Erroz", MB_OK);
+		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Property Error", MB_OK | MB_ICONERROR);
 
 	return ret;
 }
@@ -571,7 +581,6 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	char * Current = &edPtr->DarkEDIF_Props[(size_t)ceil(CurLang["Properties"].u.array.length / 8.0f)], * StartPos, * EndPos;
 	
 	json_value j = CurLang["Properties"];
-
 	if (j.type != json_array)
 	{
 		char msgTitle [128] = {0};
@@ -612,6 +621,35 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	return StartPos;
 }
 
+// =====
+// Get event number (CF2.5+ feature)
+// =====
+
+
+/// <summary> If error, -1 is returned. Frame index is 1+. </summary>
+int GetFusionEventLocation(Extension *ext, int& frameNum)
+{
+	// Can we read current event?
+	if (!ext->rhPtr->EventGroup)
+		return -1;
+
+	int eventNum = ext->rhPtr->EventGroup->evgIdentifier;
+	if (eventNum == 0)
+		return -1;
+
+	frameNum = ext->rhPtr->App ? ext->rhPtr->App->nCurrentFrame : -1;
+	return eventNum;
+}
+
+
+
+
+
+
+// =====
+// Text conversion - definitions
+// =====
+
 
 #include <assert.h>
 
@@ -641,7 +679,7 @@ std::wstring ANSIToWide(const std::string input) {
 	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
 	assert(length > 0 && "Failed to convert between string encodings.");
 #else
-	char * outputBuf = (char *)_malloca(length + 1);
+	wchar_t * outputBuf = (wchar_t *)_malloca((length + 1) * sizeof(wchar_t));
 	// Actually convert
 	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputBuf, length + 1);
 	assert(length > 0 && "Failed to convert between string encodings.");
@@ -685,9 +723,9 @@ std::wstring UTF8ToWide(const std::string input)
 	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
 	assert(length > 0 && "Failed to convert between string encodings.");
 #else
-	char * outputBuf = (char *)_malloca(length + 1);
+	wchar_t * outputBuf = (wchar_t*)_malloca((length + 1) * sizeof(wchar_t));
 	// Actually convert
-	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size() + 1, outputBuf, length + 1);
+	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), outputBuf, length + 1);
 	assert(length > 0 && "Failed to convert between string encodings.");
 	std::wstring outputStr(outputBuf, length);
 	_freea(outputBuf);
@@ -851,23 +889,20 @@ std::wstring TStringToWide(const std::tstring input) {
 /// <summary> Creates a Prop_Str from UTF-8 char *. Allocated by new. </summary>
 Prop_Str * Prop_Str_FromUTF8(const char * u8)
 {
-#ifdef _UNICODE
-	return new Prop_WStr(u8); // has its own ctor for u8
-#else
-	// Due to Prop_AStr ctor assumes char * is ANSI, we need a separate function.
-	std::tstring tStr = UTF8ToTString(std::string(u8));
-	Prop_AStr * ret2 = new Prop_AStr();
-	free(ret2->String); // free the ctor-allocated ""
-	ret2->String = _strdup(tStr.c_str());
-	return ret2;
-#endif
+	return new Prop_Str(UTF8ToTString(u8).c_str());
 }
 
+// =====
+// Object properties; read user values from properties in Extension ctor
+// =====
+
+// Returns property checked or unchecked.
 bool EDITDATA::IsPropChecked(int propID)
 {
 	return (DarkEDIF_Props[propID >> 3] >> (propID % 8) & 1);
 }
-const char * EDITDATA::GetPropertyStr(const char * propName)
+// Returns std::tstring property setting from property name.
+std::tstring EDITDATA::GetPropertyStr(const char * propName)
 {
 	const json_value &props = CurLang["Properties"];
 	for (size_t i = 0; i < props.u.array.length; i++)
@@ -875,18 +910,24 @@ const char * EDITDATA::GetPropertyStr(const char * propName)
 		if (!_stricmp(props[i]["Title"], propName))
 			return GetPropertyStr(i);
 	}
-	return "Property name not found.";
+	return _T("Property name not found.");
 }
-const char * EDITDATA::GetPropertyStr(int propID)
+// Returns std::tstring property string from property ID.
+std::tstring EDITDATA::GetPropertyStr(int propID)
 {
 	if (propID < 0 || (size_t)propID > CurLang["Properties"].u.array.length)
-		return "Property ID not found.";
+		return _T("Property ID not found.");
 
 	const json_value &prop = CurLang["Properties"][propID];
 	if (!_stricmp(prop["Type"], "Combo Box"))
-		return prop["Items"][*(unsigned int *)PropIndex(this, propID, nullptr)];
+		return UTF8ToTString((const char  *)prop["Items"][*(unsigned int *)PropIndex(this, propID, nullptr)]);
 	else if (!_stricmp(prop["Type"], "Editbox String"))
-		return PropIndex(this, propID, nullptr);
+	{
+		unsigned int propDataSize = 0;
+		char * propDataStart = PropIndex(this, propID, &propDataSize);
+		// Size - 1 to remove null
+		return UTF8ToTString(std::string(propDataStart, propDataSize - 1));
+	}
 	else
-		return "Property not textual.";
+		return _T("Property not textual.");
 }

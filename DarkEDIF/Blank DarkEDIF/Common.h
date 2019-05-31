@@ -41,10 +41,16 @@ struct EDITDATA
 	int				DarkEDIF_Prop_Size;
 	char			DarkEDIF_Props[0];
 
+	// =====
 	// DarkEDIF functions, use within Extension ctor.
+	// =====
+
+	// Returns property checked or unchecked.
 	bool IsPropChecked(int propID);
-	const char * GetPropertyStr(const char * propName);
-	const char * GetPropertyStr(int propID);
+	// Returns std::tstring property setting from property name.
+	std::tstring EDITDATA::GetPropertyStr(int propID);
+	// Returns std::tstring property string from property ID.
+	std::tstring GetPropertyStr(int propID);
 };
 
 class Extension;
