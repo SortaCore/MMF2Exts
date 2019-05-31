@@ -102,6 +102,7 @@
 					"Info": "yeah, it should be bold.",
 					"Type": "Checkbox",
 					"DefaultState": true, // or false
+				  "Bold": true,
 				},
 			{
 				"Type": "FolderEnd"
@@ -267,6 +268,7 @@
 					"Title": "Case à cocher dans le dossier",
 					"Info": "oui, il faut faire preuve d'audace.",
 					"Type": "Checkbox",
+				  "Bold": true,
 					"DefaultState": true
 				},
 			{
@@ -275,7 +277,7 @@
 			{
 				"Title": "Texte statique 1",
 				"Info": "Texte vide",
-				"Type": "Text",
+				"Type": "Text"
 			},
 			{
 				"Title": "Texte statique 2",

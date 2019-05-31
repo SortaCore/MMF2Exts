@@ -13,7 +13,7 @@ static const _json_value * DefaultLanguageIndex()
 		char msgTitle[128] = {0};
 		Edif::GetExtensionName(msgTitle);
 		strcat_s(msgTitle, "- DarkEDIF error");
-		MessageBoxA(NULL, "Premature function call!\n  Called DefaultLanguageIndex() before ::SDK was a valid pointer.", msgTitle, MB_OK);
+		MessageBoxA(NULL, "Premature function call!\n  Called DefaultLanguageIndex() before ::SDK was a valid pointer.", msgTitle, MB_OK | MB_ICONERROR);
 
 		return &json_value_none;
 	}
@@ -56,7 +56,7 @@ const json_value & CurrentLanguage()
 		{
 			// DarkEDIF.ini non-existent
 			if (GetLastError() != ERROR_FILE_NOT_FOUND)
-				MessageBoxA(NULL, "Error opening DarkEDIF.ini.", "DarkEDIF SDK - Error", MB_OK);
+				MessageBoxA(NULL, "Error opening DarkEDIF.ini.", "DarkEDIF SDK - Error", MB_OK | MB_ICONERROR);
 			
 			return *DefaultLanguageIndex();
 		}
@@ -106,7 +106,7 @@ const json_value & CurrentLanguage()
 			Reading = FullFile.find("Languages =")+sizeof("Languages =")-1;
 		else
 		{
-			MessageBoxA(NULL, "Languages not found in .ini file.", "DarkEDIF Debug CurrentLanguage()", MB_OK);
+			MessageBoxA(NULL, "Languages not found in .ini file. Using default.", "DarkEDIF Debug CurrentLanguage()", MB_OK | MB_ICONERROR);
 			return *DefaultLanguageIndex();
 		}
 	}
@@ -165,7 +165,7 @@ bool CreateNewActionInfo(void)
 	// Invalid JSON reference
 	if (Action.type != json_object)
 	{
-		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading action", MB_OK);
+		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading action", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -174,7 +174,7 @@ bool CreateNewActionInfo(void)
 	// Num of parameters is beyond number of bits in FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
-		MessageBoxA(NULL, "Too many parameters in action.", "DarkEDIF - Error reading action", MB_OK);
+		MessageBoxA(NULL, "Too many parameters in action.", "DarkEDIF - Error reading action", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -184,7 +184,7 @@ bool CreateNewActionInfo(void)
 	// Could not allocate memory
 	if (!ActInfo)
 	{
-		MessageBoxA(NULL, "Could not allocate memory for action return.", "DarkEDIF - Error creating action info", MB_OK);
+		MessageBoxA(NULL, "Could not allocate memory for action return.", "DarkEDIF - Error creating action info", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -219,7 +219,7 @@ bool CreateNewConditionInfo(void)
 	// Invalid JSON reference
 	if (Condition.type != json_object)
 	{
-		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading condition", MB_OK);
+		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading condition", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -228,7 +228,7 @@ bool CreateNewConditionInfo(void)
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
-		MessageBoxA(NULL, "Too many parameters in condition.", "DarkEDIF - Error reading condition", MB_OK);
+		MessageBoxA(NULL, "Too many parameters in condition.", "DarkEDIF - Error reading condition", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -238,7 +238,7 @@ bool CreateNewConditionInfo(void)
 	// Could not allocate memory
 	if (!CondInfo)
 	{
-		MessageBoxA(NULL, "Could not allocate memory for condition return.", "DarkEDIF - Error creating condition info", MB_OK);
+		MessageBoxA(NULL, "Could not allocate memory for condition return.", "DarkEDIF - Error creating condition info", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -275,7 +275,7 @@ bool CreateNewExpressionInfo(void)
 	// Invalid JSON reference
 	if (Expression.type != json_object)
 	{
-		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading expression", MB_OK);
+		MessageBoxA(NULL, "Invalid JSON reference, expected object.", "DarkEDIF - Error reading expression", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -284,7 +284,7 @@ bool CreateNewExpressionInfo(void)
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
-		MessageBoxA(NULL, "Too many parameters in expression.", "DarkEDIF - Error reading expression", MB_OK);
+		MessageBoxA(NULL, "Too many parameters in expression.", "DarkEDIF - Error reading expression", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -294,7 +294,7 @@ bool CreateNewExpressionInfo(void)
 	// Could not allocate memory
 	if (!ExpInfo)
 	{
-		MessageBoxA(NULL, "Could not allocate memory for expression return.", "DarkEDIF - Error creating expression info", MB_OK);
+		MessageBoxA(NULL, "Could not allocate memory for expression return.", "DarkEDIF - Error creating expression info", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
@@ -344,7 +344,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			case PROPTYPE_LEFTCHECKBOX:
 			{
 				if (JProp["DefaultState"].type != json_boolean)
-					MessageBoxA(NULL, "Invalid or no default checkbox value specified.", "DarkEDIF setup warning", MB_OK);
+					MessageBoxA(NULL, "Invalid or no default checkbox value specified.", "DarkEDIF setup warning", MB_OK | MB_ICONWARNING);
 
 				if (JProp["DefaultState"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
@@ -356,7 +356,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			case PROPTYPE_EDIT_NUMBER:
 			{
 				if (JProp["DefaultState"].type != json_integer)
-					MessageBoxA(NULL, "Invalid or no default integer value specified.", "DarkEDIF setup warning", MB_OK);
+					MessageBoxA(NULL, "Invalid or no default integer value specified.", "DarkEDIF setup warning", MB_OK | MB_ICONWARNING);
 				
 				unsigned int i = unsigned int(long long(JProp["DefaultState"]) & 0xFFFFFFFF);
 				mystr.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
@@ -377,7 +377,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			case PROPTYPE_EDIT_STRING:
 			{
 				if (JProp["DefaultState"].type != json_string)
-					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEDIF - setup warning", MB_OK);
+					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEDIF - setup warning", MB_OK | MB_ICONWARNING);
 				
 				// No casing change necessary				
 				if (_stricmp(JProp["Case"], "Upper") && _stricmp(JProp["Case"], "Lower")) {
@@ -401,7 +401,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			{
 				unsigned int i = 0U;
 				if (JProp["DefaultState"].type != json_string)
-					MessageBoxA(NULL, "Invalid or no default string specified.", "DarkEDIF - setup warning", MB_OK);
+					MessageBoxA(NULL, "Invalid or no default string specified.", "DarkEDIF - setup warning", MB_OK | MB_ICONWARNING);
 				else
 				{
 					for (size_t j = 0; j < JProp["Items"].u.array.length; j++)
@@ -413,7 +413,8 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 						}
 					}
 
-					MessageBoxA(NULL, "Specified a default string in a combobox property that does not exist in items list.", "DarkEDIF - setup warning", MB_OK);
+					MessageBoxA(NULL, "Specified a default string in a combobox property that does not exist in items list.",
+						"DarkEDIF - setup warning", MB_OK | MB_ICONWARNING);
 				}
 			ok:
 				mystr << i;
@@ -439,7 +440,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	edPtr = (EDITDATA *) mvReAllocEditData(mV, edPtr, sizeof(EDITDATA) + mystr2.size());
 	if (!edPtr)
 	{
-		MessageBoxA(NULL, "Could not reallocate EDITDATA.\n\n*cough* MMF2's fault.", "DarkEDIF - setup warning", MB_OK);
+		MessageBoxA(NULL, "Could not reallocate EDITDATA.\n\n*cough* MMF2's fault.", "DarkEDIF - setup warning", MB_OK | MB_ICONWARNING);
 		return;
 	}
 
@@ -457,7 +458,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 		char msgTitle [128] = {0};
 		Edif::GetExtensionName(msgTitle);
 		strcat_s(msgTitle, " - DarkEDIF error");
-		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK);
+		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK | MB_ICONERROR);
 		return nullptr;
 	}
 
@@ -469,8 +470,10 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	{
 		ret = new Prop_Str(UTF8ToTString((const char *)jsonItem["DefaultState"], &allConv).c_str());
 		if (!allConv)
+		{
 			MessageBoxA(NULL, "Warning: The property's Unicode string couldn't be converted to ANSI. "
 				"Characters will be replaced with filler.", "DarkEDIF Property Error", MB_OK | MB_ICONWARNING);
+		}
 		return ret;
 	}
 
@@ -481,12 +484,14 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	{
 		ret = new Prop_Str(UTF8ToTString(Current, &allConv).c_str());
 		if (!allConv)
+		{
 			MessageBoxA(NULL, "Warning: The property's Unicode string couldn't be converted to ANSI. "
 				"Characters will be replaced with filler.", "DarkEDIF Property Error", MB_OK | MB_ICONWARNING);
+		}
 	}
 	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 		ret = new Prop_UInt(*(unsigned int *)Current);
-	else if (_stricmp(curStr, "Checkbox"))
+	else if (_stricmp(curStr, "Checkbox") && _strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Property Error", MB_OK | MB_ICONERROR);
 
 	return ret;
@@ -515,10 +520,10 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 		rearrangementRequired = false; // Number of editbox, always same data size
 	else if (!_stricmp(curTypeStr, "Combo Box"))
 		rearrangementRequired = false; // Index of combo box Item, always same data size
-	else if (_stricmp(curTypeStr, "Checkbox")) //
-		return; // Checkbox is handled by PropChangeChkbox()
+	else if (!_stricmp(curTypeStr, "Checkbox") || !_strnicmp(curTypeStr, "Folder", sizeof("Folder") - 1))
+		return; // Checkbox is handled by PropChangeChkbox(), folder has no possible changes
 	else
-		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Error", MB_OK);
+		MessageBoxA(NULL, "Don't understand JSON property type, can't return Prop.", "DarkEDIF Fatal Error", MB_OK | MB_ICONERROR);
 
 	if (!rearrangementRequired)
 	{
@@ -540,7 +545,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 
 	if (!newEdPtr)
 	{
-		MessageBoxA(NULL, "Out of memory attempting to rewrite properties!", "DarkEDIF - Property Error", MB_OK);
+		MessageBoxA(NULL, "Out of memory attempting to rewrite properties!", "DarkEDIF - Property Error", MB_OK | MB_ICONERROR);
 		return;
 	}
 	((EDITDATA *)newEdPtr)->DarkEDIF_Prop_Size = _msize(newEdPtr);
@@ -560,7 +565,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	EDITDATA * fusionNewEdPtr = (EDITDATA *)mvReAllocEditData(mV, edPtr, _msize(newEdPtr));
 	if (!fusionNewEdPtr)
 	{
-		MessageBoxA(NULL, "NULL returned from EDITDATA reallocation. Property changed cancelled.", "DarkEDIF - Propery Error", MB_OK);
+		MessageBoxA(NULL, "NULL returned from EDITDATA reallocation. Property changed cancelled.", "DarkEDIF - Propery Error", MB_OK | MB_ICONERROR);
 		free(newEdPtr);
 		return;
 	}
@@ -586,13 +591,13 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 		char msgTitle [128] = {0};
 		Edif::GetExtensionName(msgTitle);
 		strcat_s(msgTitle, " - DarkEDIF error");
-		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK);
+		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEDIF_Props being valid.", msgTitle, MB_OK | MB_ICONERROR);
 		return nullptr;
 	}
 	
 	const char * curStr = (const char *)j[ID]["Type"];
 	// Read unchangable properties
-	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox"))
+	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 		return nullptr;
 	// if (curTypeStr == "other stuff")
 	//	return new Prop_XXX();
@@ -626,19 +631,19 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 // =====
 
 
-/// <summary> If error, -1 is returned. Frame index is 1+. </summary>
-int GetFusionEventLocation(Extension *ext, int& frameNum)
+/// <summary> If error, -1 is returned. </summary>
+std::pair<int, int> GetFusionEventLocation(const Extension * const ext)
 {
+	int frameNum = ext->rhPtr->App ? ext->rhPtr->App->nCurrentFrame : -1;
+
 	// Can we read current event?
 	if (!ext->rhPtr->EventGroup)
-		return -1;
+		return std::make_pair(-1, frameNum);
 
 	int eventNum = ext->rhPtr->EventGroup->evgIdentifier;
 	if (eventNum == 0)
-		return -1;
-
-	frameNum = ext->rhPtr->App ? ext->rhPtr->App->nCurrentFrame : -1;
-	return eventNum;
+		return std::make_pair(-1, frameNum);
+	return std::make_pair(eventNum, frameNum);
 }
 
 

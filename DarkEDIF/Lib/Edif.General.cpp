@@ -84,10 +84,20 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Combo Box"))
 				fullSize += sizeof(int);
 			// No content, or already stored in checkbox part before this for loop
-			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox"))
-				;
-			else // Unknown
-				MessageBoxA(NULL, "Can't handle this property.", "DarkEDIF - Error", MB_OK | MB_ICONERROR);
+			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox") ||
+				// Folder or FolderEnd - no data, folders are cosmetic
+				!_strnicmp(curPropType, "Folder", sizeof("Folder") - 1) ||
+				// Buttons - no data, they're just clickable
+				!_stricmp(curPropType, "Edit button"))
+			{
+				// skip 'em, no changeable data
+			}
+			else
+			{
+				std::stringstream err;
+				err << "Can't handle property type \"" << curPropType << "\".";
+				MessageBoxA(NULL, err.str().c_str(), "DarkEDIF - Error", MB_OK | MB_ICONERROR);
+			}
 		}
 		// Too large for EDITDATASize
 		if (fullSize > MAXUINT16)
