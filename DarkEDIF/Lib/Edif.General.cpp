@@ -123,7 +123,7 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 
 extern "C" unsigned int DLLExport GetInfos(int info)
 {
-	switch (info)
+	switch ((KGI)info)
 	{
 		case KGI::VERSION:
 			return 0x300; // I'm a MMF2 extension!
