@@ -36,7 +36,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			mdei.ExceptionPointers  = pExceptionPtrs; 
 			mdei.ThreadId           = GetCurrentThreadId(); 
 			
-			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), NULL,
+			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile,
 				(MINIDUMP_TYPE)GlobalExt->data->miniDumpType,
 				(pExceptionPtrs != 0) ? &mdei : 0, NULL, NULL))
 			{

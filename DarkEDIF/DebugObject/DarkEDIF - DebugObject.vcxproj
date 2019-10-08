@@ -488,7 +488,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Data\Runtime\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(ProjectDir)..\..\MFX\Data\Runtime\Unicode\$(ProjectName)_Full.pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(ProjectDir)..\..\MFX\Data\Runtime\Unicode\$(ProjectName).pdb</StripPrivateSymbols>
       <SubSystem>Windows</SubSystem>
       <LargeAddressAware>true</LargeAddressAware>

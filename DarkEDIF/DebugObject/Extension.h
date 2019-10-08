@@ -10,10 +10,11 @@ public:
 
 	GlobalData * data;
     static const int MinimumBuild = 256;
-    static const int Version = 10;
+    static const int Version = 11;
+	// b11: Fixed minidump handle not being passed
 	// b10: Use of DarkEDIF SDK properties, formatting changes
 	// b9: Fixed lockup when disabling console and debug was already disabled
-	// b8: Fixed non-closing console when console was disabled.
+	// b8: Fixed non-closing console when console was disabled
 	// b7: Fixed subapp "MFX Not Found" issue in DarkEDIF
 	// b6: Release for edittime property fix, added runtime property, new minidump events
 	// b5: Release for bug fixes and global settings, and unhandled exception event

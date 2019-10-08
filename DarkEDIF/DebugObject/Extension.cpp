@@ -53,8 +53,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	data->doMsgBoxIfPathNotSet = edPtr->IsPropChecked(1);
 	SetConsoleOnOff(edPtr->IsPropChecked(3));
 
-	std::tstring outputFile = UTF8ToTString(std::string(edPtr->GetPropertyStr(2)));
-	if (outputFile[0] != '\0') // if not blank
+	std::tstring outputFile = edPtr->GetPropertyStr(2);
+	if (!outputFile.empty()) // if not blank
 		SetOutputFile(outputFile.c_str(), 0);
 }
 
