@@ -440,13 +440,13 @@ typedef struct CustomPropCreateStruct {
 
 // Tells property window to validate the property item
 // => the property window gets the property value from the property item 
-//    and applies it to the other selected items
+//	and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
 // Parameter structure for the PWN_VALIDATECUSTOMITEM notification message
 typedef struct _NMPROPWND
 {
-    NMHDR			hdr;
+	NMHDR			hdr;
 	CCustomProp*	pCP;
 } NMPROPWND, *PNMPROPWND, FAR *LPNMPROPWND;
 

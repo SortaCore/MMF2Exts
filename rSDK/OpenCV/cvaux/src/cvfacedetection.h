@@ -11,14 +11,14 @@
 
 typedef struct CvContourRect
 {
-	int		iNumber;  //порядковый номер атрибута
-	int		iType;    //тип объекта
-	int		iFlags;   //свободное поле
-	CvSeq	*seqContour; //адрес начала записи объекта 
-	int		iContourLength;  //длина записи векторов
-	CvRect	r;    //описаный прямоугольник
+	int		iNumber;  // порядковый номер атрибута
+	int		iType;	//тип объекта
+	int		iFlags;	//свободное поле
+	CvSeq	*seqContour; // адрес начала записи объекта 
+	int		iContourLength;  // длина записи векторов
+	CvRect	r;	//описаный прямоугольник
 	CvPoint pCenter; // center of rect
-	int		iColor;//    цвет заполнения контура
+	int		iColor;//	цвет заполнения контура
 } CvContourRect;
 
 //class Face;
@@ -32,7 +32,7 @@ public:
 	ListElem * m_pNext;
 	ListElem * m_pPrev;
 	Face * m_pFace;
-};//class ListElem
+};// class ListElem
 
 class List
 {
@@ -41,11 +41,11 @@ public:
 	int AddElem(Face * pFace);
 	virtual ~List();
 	Face* GetData();
-        long m_FacesCount;
+		long m_FacesCount;
 private:
 	ListElem * m_pHead;
 	ListElem * m_pCurElem;
-};//class List
+};// class List
 
 
 class FaceDetection  
@@ -81,18 +81,18 @@ protected:
 
 inline void ReallocImage(IplImage** ppImage, CvSize sz, long lChNum)
 {
-    IplImage* pImage;
-    if( ppImage == NULL ) 
+	IplImage* pImage;
+	if( ppImage == NULL ) 
 		return;
-    pImage = *ppImage;
-    if( pImage != NULL )
-    {
-        if (pImage->width != sz.width || pImage->height != sz.height || pImage->nChannels != lChNum)
-            cvReleaseImage( &pImage );
-    }
-    if( pImage == NULL )
-        pImage = cvCreateImage( sz, IPL_DEPTH_8U, lChNum);
-    *ppImage = pImage;
+	pImage = *ppImage;
+	if( pImage != NULL )
+	{
+		if (pImage->width != sz.width || pImage->height != sz.height || pImage->nChannels != lChNum)
+			cvReleaseImage( &pImage );
+	}
+	if( pImage == NULL )
+		pImage = cvCreateImage( sz, IPL_DEPTH_8U, lChNum);
+	*ppImage = pImage;
 };
 
 

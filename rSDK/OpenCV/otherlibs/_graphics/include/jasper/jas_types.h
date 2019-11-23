@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999-2000 Image Power, Inc. and the University of
- *   British Columbia.
+ *	British Columbia.
  * Copyright (c) 2001-2003 Michael David Adams.
  * All rights reserved.
  */
@@ -76,12 +76,12 @@
 
 #if defined(WIN32) || defined(HAVE_WINDOWS_H)
 /*
-   We are dealing with Microsoft Windows and most likely Microsoft
-   Visual C (MSVC).  (Heaven help us.)  Sadly, MSVC does not correctly
-   define some of the standard types specified in ISO/IEC 9899:1999.
-   In particular, it does not define the "long long" and "unsigned long
-   long" types.  So, we work around this problem by using the "INT64"
-   and "UINT64" types that are defined in the header file "windows.h".
+	We are dealing with Microsoft Windows and most likely Microsoft
+	Visual C (MSVC).  (Heaven help us.)  Sadly, MSVC does not correctly
+	define some of the standard types specified in ISO/IEC 9899:1999.
+	In particular, it does not define the "long long" and "unsigned long
+	long" types.  So, we work around this problem by using the "INT64"
+	and "UINT64" types that are defined in the header file "windows.h".
  */
 #include <windows.h>
 #undef longlong

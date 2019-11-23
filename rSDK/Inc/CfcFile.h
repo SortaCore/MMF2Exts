@@ -10,20 +10,23 @@ typedef LPVOID FAR *LPLPVOID;
 #include "StdDefs.h"
 
 #ifndef OF_READ
-#define OF_READ             0x00000000
-#define OF_WRITE            0x00000001
-#define OF_READWRITE        0x00000002
-#define OF_SHARE_COMPAT     0x00000000
+#define OF_READ			 0x00000000
+#define OF_WRITE			0x00000001
+#define OF_READWRITE		0x00000002
+#define OF_SHARE_COMPAT	 0x00000000
 #define OF_SHARE_EXCLUSIVE  0x00000010
 #define OF_SHARE_DENY_WRITE 0x00000020
 #define OF_SHARE_DENY_READ  0x00000030
 #define OF_SHARE_DENY_NONE  0x00000040
 #endif
 
-STDDLL_API HFILE WINAPI	File_Open(LPCSTR fname, int mode);
-STDDLL_API HFILE WINAPI	File_Create(LPCSTR fname);
+STDDLL_API HFILE WINAPI	File_OpenA(LPCSTR fname, int mode);
+STDDLL_API HFILE WINAPI	File_CreateA(LPCSTR fname);
 STDDLL_API int WINAPI	File_Read (HFILE hf, LPVOID buf, DWORD len);
 STDDLL_API int WINAPI	File_ReadAndCount (HFILE hf, LPVOID buf, DWORD len);
+STDDLL_API int WINAPI	File_ReadShortIntelData (HFILE hf, LPLPVOID pBuf);
+STDDLL_API int WINAPI	File_ReadShortIntelString (HFILE hf, LPLPVOID pBuf);
+STDDLL_API int WINAPI	File_ReadLongIntelData (HFILE hf, LPLPVOID pBuf);
 STDDLL_API int WINAPI	File_Write (HFILE hf, LPVOID buf, DWORD len);
 STDDLL_API DWORD WINAPI	File_GetPosition (HFILE hf);
 STDDLL_API DWORD WINAPI	File_SeekBegin (HFILE hf, long pos);
@@ -31,7 +34,21 @@ STDDLL_API DWORD WINAPI	File_SeekCurrent (HFILE hf, long pos);
 STDDLL_API DWORD WINAPI	File_SeekEnd (HFILE hf, long pos);
 STDDLL_API long WINAPI	File_GetLength ( HFILE hf );
 STDDLL_API void WINAPI	File_Close(HFILE hf);
-STDDLL_API BOOL WINAPI	File_Exist(LPCSTR pName);
+STDDLL_API BOOL WINAPI	File_ExistA(LPCSTR pName);
+
+STDDLL_API HFILE WINAPI	File_OpenW(LPCWSTR fname, int mode);
+STDDLL_API HFILE WINAPI	File_CreateW(LPCWSTR fname);
+STDDLL_API BOOL WINAPI	File_ExistW(LPCWSTR pName);
+
+#ifdef _UNICODE
+#define File_Open File_OpenW
+#define File_Create File_CreateW
+#define File_Exist File_ExistW
+#else
+#define File_Open File_OpenA
+#define File_Create File_CreateA
+#define File_Exist File_ExistA
+#endif
 
 #ifndef _MAC
 #define	File_ReadIntelWord(h,p,l)	File_Read(h,p,l)
@@ -75,7 +92,16 @@ class FAR STDDLL_API CInputFile
 		virtual LPBYTE	GetBuffer(UINT nSize);
 		virtual void	FreeBuffer(LPBYTE buf);
 
-		virtual	LPSTR	GetFileName() = 0;
+		virtual	LPSTR	GetFileNameA() = 0;
+		virtual	LPWSTR	GetFileNameW() = 0;
+
+		#ifdef _CFCFILE_UNICODE_DEFS
+			#if defined(_UNICODE)
+				#define GetFileName GetFileNameW
+			#else
+				#define GetFileName GetFileNameA
+			#endif
+		#endif
 };
 typedef CInputFile FAR * LPINPUTFILE;
 
@@ -92,6 +118,8 @@ class FAR STDDLL_API CInputBufFile : public CInputFile
 				int		Create(HFILE hf, DWORD dwOffset, DWORD dwSize);
 				int		Create(LPCSTR filename);
 				int		Create(LPCSTR filename, DWORD dwOffset, DWORD dwSize);
+				int		Create(LPCWSTR filename);
+				int		Create(LPCWSTR filename, DWORD dwOffset, DWORD dwSize);
 
 		virtual	int		Read(LPBYTE dest, DWORD lsize);
 		virtual	int		Read (LPBYTE dest, DWORD lsize, LPDWORD pRead);
@@ -108,7 +136,8 @@ class FAR STDDLL_API CInputBufFile : public CInputFile
 //		virtual LPBYTE	GetBuffer(UINT nSize);
 //		virtual void	FreeBuffer(LPBYTE buf);
 
-		virtual	LPSTR	GetFileName() { return m_fname; }
+		virtual	LPSTR	GetFileNameA();
+		virtual	LPWSTR	GetFileNameW();
 
 	protected:
 				int		Attach(HANDLE hnd, DWORD dwOffset, DWORD dwSize);
@@ -118,8 +147,8 @@ class FAR STDDLL_API CInputBufFile : public CInputFile
 		LPBYTE	m_buffer;
 		LPBYTE	m_bufcurr;
 		DWORD	m_remains;
-		BOOL	m_bToClose;
-		LPSTR	m_fname;
+		LPWSTR	m_fnameW;
+		LPSTR	m_fnameA;
 
 		DWORD	m_startOffset;
 		DWORD	m_length;
@@ -156,7 +185,8 @@ class FAR STDDLL_API CInputMemFile : public CInputFile
 		virtual LPBYTE	GetBuffer(UINT nSize);
 		virtual void	FreeBuffer(LPBYTE buf);
 
-		virtual	LPSTR	GetFileName() { return NULL; }
+		virtual	LPSTR	GetFileNameA() { return NULL; }
+		virtual	LPWSTR	GetFileNameW() { return NULL; }
 
 	private:
 		LPBYTE	m_buffer;
@@ -190,7 +220,8 @@ class STDDLL_API COutputFile
 		virtual long	GetPosition() = 0;
 		virtual long	Seek(long pos, int method) = 0;
 
-		virtual	LPSTR	GetFileName() = 0;
+		virtual	LPSTR	GetFileNameA() = 0;
+		virtual	LPWSTR	GetFileNameW() = 0;
 };
 typedef COutputFile FAR * LPOUTPUTFILE;
 
@@ -214,7 +245,8 @@ class STDDLL_API COutputMemFile : public COutputFile
 		virtual long	GetPosition();
 		virtual long	Seek(long pos, int method);
 
-		virtual	LPSTR	GetFileName() { return NULL; }
+		virtual	LPSTR	GetFileNameA() { return NULL; }
+		virtual	LPWSTR	GetFileNameW() { return NULL; }
 
 	private:
 		LPBYTE	m_buffer;
@@ -234,6 +266,7 @@ class STDDLL_API COutputBufFile : public COutputFile
 
 		int Create(HFILE hf, UINT nBufferSize = 4096);
 		int Create(LPCSTR fname, UINT nBufferSize = 4096);
+		int Create(LPCWSTR fname, UINT nBufferSize = 4096);
 
 		virtual int		Write(LPBYTE pb, UINT sz);
 		virtual int		Flush();
@@ -242,17 +275,18 @@ class STDDLL_API COutputBufFile : public COutputFile
 		virtual long	GetPosition();
 		virtual long	Seek(long pos, int method);
 
-		virtual	LPSTR	GetFileName() { return m_fname; }
+		virtual	LPSTR	GetFileNameA();
+		virtual	LPWSTR	GetFileNameW();
 
 	private:
 		HFILE	m_hf;
-		BOOL	m_bAutoClose;
+		LPWSTR	m_fnameW;
 		LPBYTE	m_buffer;
 		LPBYTE	m_curptr;
 		DWORD	m_cursize;
 		DWORD	m_buffersize;
 		BOOL	m_bBuffered;
-		LPSTR	m_fname;
+		LPSTR	m_fnameA;
 };
 
 #endif	// _BFile_h

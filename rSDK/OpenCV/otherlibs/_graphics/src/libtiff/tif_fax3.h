@@ -33,7 +33,7 @@
  *
  * Decoder support is derived, with permission, from the code
  * in Frank Cringle's viewfax program;
- *      Copyright (C) 1990, 1995  Frank D. Cringle.
+ *	  Copyright (C) 1990, 1995  Frank D. Cringle.
  */
 #include "tiff.h"
 
@@ -104,7 +104,7 @@ extern	const TIFFFaxTabEnt TIFFFaxBlackTable[];
  * need to define and setup to make use of these definitions.
  *
  * NB: to enable a debugging version of these macros define FAX3_DEBUG
- *     before including this file.  Trace output goes to stdout.
+ *	 before including this file.  Trace output goes to stdout.
  */
 
 #ifndef EndOfData
@@ -135,104 +135,104 @@ extern	const TIFFFaxTabEnt TIFFFaxBlackTable[];
  */
 #ifndef NeedBits8
 #define NeedBits8(n,eoflab) do {					\
-    if (BitsAvail < (n)) {						\
+	if (BitsAvail < (n)) {						\
 	if (EndOfData()) {						\
-	    if (BitsAvail == 0)			/* no valid bits */	\
+		if (BitsAvail == 0)			/* no valid bits */	\
 		goto eoflab;						\
-	    BitsAvail = (n);			/* pad with zeros */	\
+		BitsAvail = (n);			/* pad with zeros */	\
 	} else {							\
-	    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
-	    BitsAvail += 8;						\
+		BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
+		BitsAvail += 8;						\
 	}								\
-    }									\
+	}									\
 } while (0)
 #endif
 #ifndef NeedBits16
 #define NeedBits16(n,eoflab) do {					\
-    if (BitsAvail < (n)) {						\
+	if (BitsAvail < (n)) {						\
 	if (EndOfData()) {						\
-	    if (BitsAvail == 0)			/* no valid bits */	\
+		if (BitsAvail == 0)			/* no valid bits */	\
 		goto eoflab;						\
-	    BitsAvail = (n);			/* pad with zeros */	\
+		BitsAvail = (n);			/* pad with zeros */	\
 	} else {							\
-	    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
-	    if ((BitsAvail += 8) < (n)) {				\
+		BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
+		if ((BitsAvail += 8) < (n)) {				\
 		if (EndOfData()) {					\
-		    /* NB: we know BitsAvail is non-zero here */	\
-		    BitsAvail = (n);		/* pad with zeros */	\
+			/* NB: we know BitsAvail is non-zero here */	\
+			BitsAvail = (n);		/* pad with zeros */	\
 		} else {						\
-		    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;	\
-		    BitsAvail += 8;					\
+			BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;	\
+			BitsAvail += 8;					\
 		}							\
-	    }								\
+		}								\
 	}								\
-    }									\
+	}									\
 } while (0)
 #endif
 #define GetBits(n)	(BitAcc & ((1<<(n))-1))
 #define ClrBits(n) do {							\
-    BitsAvail -= (n);							\
-    BitAcc >>= (n);							\
+	BitsAvail -= (n);							\
+	BitAcc >>= (n);							\
 } while (0)
 
 #ifdef FAX3_DEBUG
 static const char* StateNames[] = {
-    "Null   ",
-    "Pass   ",
-    "Horiz  ",
-    "V0     ",
-    "VR     ",
-    "VL     ",
-    "Ext    ",
-    "TermW  ",
-    "TermB  ",
-    "MakeUpW",
-    "MakeUpB",
-    "MakeUp ",
-    "EOL    ",
+	"Null	",
+	"Pass	",
+	"Horiz  ",
+	"V0	 ",
+	"VR	 ",
+	"VL	 ",
+	"Ext	",
+	"TermW  ",
+	"TermB  ",
+	"MakeUpW",
+	"MakeUpB",
+	"MakeUp ",
+	"EOL	",
 };
 #define DEBUG_SHOW putchar(BitAcc & (1 << t) ? '1' : '0')
 #define LOOKUP8(wid,tab,eoflab) do {					\
-    int t;								\
-    NeedBits8(wid,eoflab);						\
-    TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
-	   StateNames[TabEnt->State], TabEnt->Param);			\
-    for (t = 0; t < TabEnt->Width; t++)					\
+	int t;								\
+	NeedBits8(wid,eoflab);						\
+	TabEnt = tab + GetBits(wid);					\
+	printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+		StateNames[TabEnt->State], TabEnt->Param);			\
+	for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
-    putchar('\n');							\
-    fflush(stdout);							\
-    ClrBits(TabEnt->Width);						\
+	putchar('\n');							\
+	fflush(stdout);							\
+	ClrBits(TabEnt->Width);						\
 } while (0)
 #define LOOKUP16(wid,tab,eoflab) do {					\
-    int t;								\
-    NeedBits16(wid,eoflab);						\
-    TabEnt = tab + GetBits(wid);					\
-    printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
-	   StateNames[TabEnt->State], TabEnt->Param);			\
-    for (t = 0; t < TabEnt->Width; t++)					\
+	int t;								\
+	NeedBits16(wid,eoflab);						\
+	TabEnt = tab + GetBits(wid);					\
+	printf("%08lX/%d: %s%5d\t", (long) BitAcc, BitsAvail,		\
+		StateNames[TabEnt->State], TabEnt->Param);			\
+	for (t = 0; t < TabEnt->Width; t++)					\
 	DEBUG_SHOW;							\
-    putchar('\n');							\
-    fflush(stdout);							\
-    ClrBits(TabEnt->Width);						\
+	putchar('\n');							\
+	fflush(stdout);							\
+	ClrBits(TabEnt->Width);						\
 } while (0)
 
 #define SETVAL(x) do {							\
-    *pa++ = RunLength + (x);						\
-    printf("SETVAL: %d\t%d\n", RunLength + (x), a0);			\
-    a0 += x;								\
-    RunLength = 0;							\
+	*pa++ = RunLength + (x);						\
+	printf("SETVAL: %d\t%d\n", RunLength + (x), a0);			\
+	a0 += x;								\
+	RunLength = 0;							\
 } while (0)
 #else
 #define LOOKUP8(wid,tab,eoflab) do {					\
-    NeedBits8(wid,eoflab);						\
-    TabEnt = tab + GetBits(wid);					\
-    ClrBits(TabEnt->Width);						\
+	NeedBits8(wid,eoflab);						\
+	TabEnt = tab + GetBits(wid);					\
+	ClrBits(TabEnt->Width);						\
 } while (0)
 #define LOOKUP16(wid,tab,eoflab) do {					\
-    NeedBits16(wid,eoflab);						\
-    TabEnt = tab + GetBits(wid);					\
-    ClrBits(TabEnt->Width);						\
+	NeedBits16(wid,eoflab);						\
+	TabEnt = tab + GetBits(wid);					\
+	ClrBits(TabEnt->Width);						\
 } while (0)
 
 /*
@@ -240,9 +240,9 @@ static const char* StateNames[] = {
  * current row and reset decoding state.
  */
 #define SETVAL(x) do {							\
-    *pa++ = RunLength + (x);						\
-    a0 += (x);								\
-    RunLength = 0;							\
+	*pa++ = RunLength + (x);						\
+	a0 += (x);								\
+	RunLength = 0;							\
 } while (0)
 #endif
 
@@ -257,24 +257,24 @@ static const char* StateNames[] = {
  * bit that is part of the EOL code.
  */
 #define	SYNC_EOL(eoflab) do {						\
-    if (EOLcnt == 0) {							\
+	if (EOLcnt == 0) {							\
 	for (;;) {							\
-	    NeedBits16(11,eoflab);					\
-	    if (GetBits(11) == 0)					\
+		NeedBits16(11,eoflab);					\
+		if (GetBits(11) == 0)					\
 		break;							\
-	    ClrBits(1);							\
+		ClrBits(1);							\
 	}								\
-    }									\
-    for (;;) {								\
+	}									\
+	for (;;) {								\
 	NeedBits8(8,eoflab);						\
 	if (GetBits(8))							\
-	    break;							\
+		break;							\
 	ClrBits(8);							\
-    }									\
-    while (GetBits(1) == 0)						\
+	}									\
+	while (GetBits(1) == 0)						\
 	ClrBits(1);							\
-    ClrBits(1);				/* EOL bit */			\
-    EOLcnt = 0;				/* reset EOL counter/flag */	\
+	ClrBits(1);				/* EOL bit */			\
+	EOLcnt = 0;				/* reset EOL counter/flag */	\
 } while (0)
 
 /*
@@ -283,23 +283,23 @@ static const char* StateNames[] = {
  * overwritten and/or undecoded area is white filled.
  */
 #define	CLEANUP_RUNS() do {						\
-    if (RunLength)							\
+	if (RunLength)							\
 	SETVAL(0);							\
-    if (a0 != lastx) {							\
+	if (a0 != lastx) {							\
 	badlength(a0, lastx);						\
 	while (a0 > lastx && pa > thisrun)				\
-	    a0 -= *--pa;						\
+		a0 -= *--pa;						\
 	if (a0 < lastx) {						\
-	    if (a0 < 0)							\
+		if (a0 < 0)							\
 		a0 = 0;							\
-	    if ((pa-thisrun)&1)						\
+		if ((pa-thisrun)&1)						\
 		SETVAL(0);						\
-	    SETVAL(lastx - a0);						\
+		SETVAL(lastx - a0);						\
 	} else if (a0 > lastx) {					\
-	    SETVAL(lastx);						\
-	    SETVAL(0);							\
+		SETVAL(lastx);						\
+		SETVAL(0);							\
 	}								\
-    }									\
+	}									\
 } while (0)
 
 /*
@@ -315,60 +315,60 @@ static const char* StateNames[] = {
  * insure the decoder recognized an EOL before running out of data.
  */
 #define EXPAND1D(eoflab) do {						\
-    for (;;) {								\
+	for (;;) {								\
 	for (;;) {							\
-	    LOOKUP16(12, TIFFFaxWhiteTable, eof1d);			\
-	    switch (TabEnt->State) {					\
-	    case S_EOL:							\
+		LOOKUP16(12, TIFFFaxWhiteTable, eof1d);			\
+		switch (TabEnt->State) {					\
+		case S_EOL:							\
 		EOLcnt = 1;						\
 		goto done1d;						\
-	    case S_TermW:						\
+		case S_TermW:						\
 		SETVAL(TabEnt->Param);					\
 		goto doneWhite1d;					\
-	    case S_MakeUpW:						\
-	    case S_MakeUp:						\
+		case S_MakeUpW:						\
+		case S_MakeUp:						\
 		a0 += TabEnt->Param;					\
 		RunLength += TabEnt->Param;				\
 		break;							\
-	    default:							\
+		default:							\
 		unexpected("WhiteTable", a0);				\
 		goto done1d;						\
-	    }								\
+		}								\
 	}								\
-    doneWhite1d:							\
+	doneWhite1d:							\
 	if (a0 >= lastx)						\
-	    goto done1d;						\
+		goto done1d;						\
 	for (;;) {							\
-	    LOOKUP16(13, TIFFFaxBlackTable, eof1d);			\
-	    switch (TabEnt->State) {					\
-	    case S_EOL:							\
+		LOOKUP16(13, TIFFFaxBlackTable, eof1d);			\
+		switch (TabEnt->State) {					\
+		case S_EOL:							\
 		EOLcnt = 1;						\
 		goto done1d;						\
-	    case S_TermB:						\
+		case S_TermB:						\
 		SETVAL(TabEnt->Param);					\
 		goto doneBlack1d;					\
-	    case S_MakeUpB:						\
-	    case S_MakeUp:						\
+		case S_MakeUpB:						\
+		case S_MakeUp:						\
 		a0 += TabEnt->Param;					\
 		RunLength += TabEnt->Param;				\
 		break;							\
-	    default:							\
+		default:							\
 		unexpected("BlackTable", a0);				\
 		goto done1d;						\
-	    }								\
+		}								\
 	}								\
-    doneBlack1d:							\
+	doneBlack1d:							\
 	if (a0 >= lastx)						\
-	    goto done1d;						\
-        if( *(pa-1) == 0 && *(pa-2) == 0 )				\
-            pa -= 2;                                                    \
-    }									\
+		goto done1d;						\
+		if( *(pa-1) == 0 && *(pa-2) == 0 )				\
+			pa -= 2;													\
+	}									\
 eof1d:									\
-    prematureEOF(a0);							\
-    CLEANUP_RUNS();							\
-    goto eoflab;							\
+	prematureEOF(a0);							\
+	CLEANUP_RUNS();							\
+	goto eoflab;							\
 done1d:									\
-    CLEANUP_RUNS();							\
+	CLEANUP_RUNS();							\
 } while (0)
 
 /*
@@ -376,150 +376,150 @@ done1d:									\
  * of runs for the reference line.
  */
 #define CHECK_b1 do {							\
-    if (pa != thisrun) while (b1 <= a0 && b1 < lastx) {			\
+	if (pa != thisrun) while (b1 <= a0 && b1 < lastx) {			\
 	b1 += pb[0] + pb[1];						\
 	pb += 2;							\
-    }									\
+	}									\
 } while (0)
 
 /*
  * Expand a row of 2D-encoded data.
  */
 #define EXPAND2D(eoflab) do {						\
-    while (a0 < lastx) {						\
+	while (a0 < lastx) {						\
 	LOOKUP8(7, TIFFFaxMainTable, eof2d);				\
 	switch (TabEnt->State) {					\
 	case S_Pass:							\
-	    CHECK_b1;							\
-	    b1 += *pb++;						\
-	    RunLength += b1 - a0;					\
-	    a0 = b1;							\
-	    b1 += *pb++;						\
-	    break;							\
+		CHECK_b1;							\
+		b1 += *pb++;						\
+		RunLength += b1 - a0;					\
+		a0 = b1;							\
+		b1 += *pb++;						\
+		break;							\
 	case S_Horiz:							\
-	    if ((pa-thisrun)&1) {					\
+		if ((pa-thisrun)&1) {					\
 		for (;;) {	/* black first */			\
-		    LOOKUP16(13, TIFFFaxBlackTable, eof2d);		\
-		    switch (TabEnt->State) {				\
-		    case S_TermB:					\
+			LOOKUP16(13, TIFFFaxBlackTable, eof2d);		\
+			switch (TabEnt->State) {				\
+			case S_TermB:					\
 			SETVAL(TabEnt->Param);				\
 			goto doneWhite2da;				\
-		    case S_MakeUpB:					\
-		    case S_MakeUp:					\
+			case S_MakeUpB:					\
+			case S_MakeUp:					\
 			a0 += TabEnt->Param;				\
 			RunLength += TabEnt->Param;			\
 			break;						\
-		    default:						\
+			default:						\
 			goto badBlack2d;				\
-		    }							\
+			}							\
 		}							\
-	    doneWhite2da:;						\
+		doneWhite2da:;						\
 		for (;;) {	/* then white */			\
-		    LOOKUP16(12, TIFFFaxWhiteTable, eof2d);		\
-		    switch (TabEnt->State) {				\
-		    case S_TermW:					\
+			LOOKUP16(12, TIFFFaxWhiteTable, eof2d);		\
+			switch (TabEnt->State) {				\
+			case S_TermW:					\
 			SETVAL(TabEnt->Param);				\
 			goto doneBlack2da;				\
-		    case S_MakeUpW:					\
-		    case S_MakeUp:					\
+			case S_MakeUpW:					\
+			case S_MakeUp:					\
 			a0 += TabEnt->Param;				\
 			RunLength += TabEnt->Param;			\
 			break;						\
-		    default:						\
+			default:						\
 			goto badWhite2d;				\
-		    }							\
+			}							\
 		}							\
-	    doneBlack2da:;						\
-	    } else {							\
+		doneBlack2da:;						\
+		} else {							\
 		for (;;) {	/* white first */			\
-		    LOOKUP16(12, TIFFFaxWhiteTable, eof2d);		\
-		    switch (TabEnt->State) {				\
-		    case S_TermW:					\
+			LOOKUP16(12, TIFFFaxWhiteTable, eof2d);		\
+			switch (TabEnt->State) {				\
+			case S_TermW:					\
 			SETVAL(TabEnt->Param);				\
 			goto doneWhite2db;				\
-		    case S_MakeUpW:					\
-		    case S_MakeUp:					\
+			case S_MakeUpW:					\
+			case S_MakeUp:					\
 			a0 += TabEnt->Param;				\
 			RunLength += TabEnt->Param;			\
 			break;						\
-		    default:						\
+			default:						\
 			goto badWhite2d;				\
-		    }							\
+			}							\
 		}							\
-	    doneWhite2db:;						\
+		doneWhite2db:;						\
 		for (;;) {	/* then black */			\
-		    LOOKUP16(13, TIFFFaxBlackTable, eof2d);		\
-		    switch (TabEnt->State) {				\
-		    case S_TermB:					\
+			LOOKUP16(13, TIFFFaxBlackTable, eof2d);		\
+			switch (TabEnt->State) {				\
+			case S_TermB:					\
 			SETVAL(TabEnt->Param);				\
 			goto doneBlack2db;				\
-		    case S_MakeUpB:					\
-		    case S_MakeUp:					\
+			case S_MakeUpB:					\
+			case S_MakeUp:					\
 			a0 += TabEnt->Param;				\
 			RunLength += TabEnt->Param;			\
 			break;						\
-		    default:						\
+			default:						\
 			goto badBlack2d;				\
-		    }							\
+			}							\
 		}							\
-	    doneBlack2db:;						\
-	    }								\
-	    CHECK_b1;							\
-	    break;							\
+		doneBlack2db:;						\
+		}								\
+		CHECK_b1;							\
+		break;							\
 	case S_V0:							\
-	    CHECK_b1;							\
-	    SETVAL(b1 - a0);						\
-	    b1 += *pb++;						\
-	    break;							\
+		CHECK_b1;							\
+		SETVAL(b1 - a0);						\
+		b1 += *pb++;						\
+		break;							\
 	case S_VR:							\
-	    CHECK_b1;							\
-	    SETVAL(b1 - a0 + TabEnt->Param);				\
-	    b1 += *pb++;						\
-	    break;							\
+		CHECK_b1;							\
+		SETVAL(b1 - a0 + TabEnt->Param);				\
+		b1 += *pb++;						\
+		break;							\
 	case S_VL:							\
-	    CHECK_b1;							\
-	    SETVAL(b1 - a0 - TabEnt->Param);				\
-	    b1 -= *--pb;						\
-	    break;							\
+		CHECK_b1;							\
+		SETVAL(b1 - a0 - TabEnt->Param);				\
+		b1 -= *--pb;						\
+		break;							\
 	case S_Ext:							\
-	    *pa++ = lastx - a0;						\
-	    extension(a0);						\
-	    goto eol2d;							\
+		*pa++ = lastx - a0;						\
+		extension(a0);						\
+		goto eol2d;							\
 	case S_EOL:							\
-	    *pa++ = lastx - a0;						\
-	    NeedBits8(4,eof2d);						\
-	    if (GetBits(4))						\
+		*pa++ = lastx - a0;						\
+		NeedBits8(4,eof2d);						\
+		if (GetBits(4))						\
 		unexpected("EOL", a0);					\
-            ClrBits(4);                                                 \
-	    EOLcnt = 1;							\
-	    goto eol2d;							\
+			ClrBits(4);												 \
+		EOLcnt = 1;							\
+		goto eol2d;							\
 	default:							\
 	badMain2d:							\
-	    unexpected("MainTable", a0);				\
-	    goto eol2d;							\
+		unexpected("MainTable", a0);				\
+		goto eol2d;							\
 	badBlack2d:							\
-	    unexpected("BlackTable", a0);				\
-	    goto eol2d;							\
+		unexpected("BlackTable", a0);				\
+		goto eol2d;							\
 	badWhite2d:							\
-	    unexpected("WhiteTable", a0);				\
-	    goto eol2d;							\
+		unexpected("WhiteTable", a0);				\
+		goto eol2d;							\
 	eof2d:								\
-	    prematureEOF(a0);						\
-	    CLEANUP_RUNS();						\
-	    goto eoflab;						\
+		prematureEOF(a0);						\
+		CLEANUP_RUNS();						\
+		goto eoflab;						\
 	}								\
-    }									\
-    if (RunLength) {							\
+	}									\
+	if (RunLength) {							\
 	if (RunLength + a0 < lastx) {					\
-	    /* expect a final V0 */					\
-	    NeedBits8(1,eof2d);						\
-	    if (!GetBits(1))						\
+		/* expect a final V0 */					\
+		NeedBits8(1,eof2d);						\
+		if (!GetBits(1))						\
 		goto badMain2d;						\
-	    ClrBits(1);							\
+		ClrBits(1);							\
 	}								\
 	SETVAL(0);							\
-    }									\
+	}									\
 eol2d:									\
-    CLEANUP_RUNS();							\
+	CLEANUP_RUNS();							\
 } while (0)
 #endif /* _FAX3_ */

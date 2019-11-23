@@ -1,0 +1,66 @@
+{
+	"About": {
+		"Name": "PortAudio",
+		"Author": "Darkwire Software",
+		"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
+		"Comment": "Records samples using the PortAudio open-source library, utilizing DirectSound.",
+		"Help": "Help/PortAudio.chm",
+		"Identifier": "PTAD",
+		"URL": "https://dark-wire.com/"
+	},
+	"ActionMenu": [
+		[ 0, "Start recording from memory" ],
+		[ 1, "Test Report() and Explode()" ],
+		"Separator",
+	],
+	"ConditionMenu": [
+		[ 0, "On error" ],
+		[ 1, "On report" ],
+		"Separator",
+		[ 2, "Darkwire Software", true ]
+	],
+	"ExpressionMenu": [
+		[ 0, "Get errors" ],
+		[ 1, "Get reports" ]
+	],
+	"Actions": [
+		// ID = 0
+		{
+			"Title": "Start recording from memory"
+		},
+		// ID = 1
+		{
+			"Title": "Test Report() and Explode()"
+		}
+	],
+	"Conditions": [
+		// ID = 0
+		{
+			"Title": "%o : On error",
+			"Triggered": true
+		},
+		// ID = 1
+		{
+			"Title": "%o : On report",
+			"Triggered": true
+		}
+	]
+	"Expressions": [
+		// ID = 0
+		{
+			"Title": "GetError$(",
+			"Returns": "String",
+			"Parameters": [
+				[ "Integer", "Clear the current error?" ]
+			]
+		},
+		// ID = 1
+		{
+			"Title": "GetReport$(",
+			"Returns": "String",
+			"Parameters": [
+				[ "Integer", "Clear the current reports?" ]
+			]
+		}
+	]
+}

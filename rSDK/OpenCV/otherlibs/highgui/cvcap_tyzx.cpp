@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -48,39 +48,39 @@
 
 
 /****************** Capturing video from TYZX stereo camera  *******************/
-/** Initially developed by Roman Stanchak rstanchak@yahoo.com                  */
+/** Initially developed by Roman Stanchak rstanchak@yahoo.com				  */
 
 class CvCaptureCAM_TYZX : public CvCapture
 {
 public:
-    CvCaptureCAM_TYZX() { index = -1; image = 0; }
-    virtual ~CvCaptureCAM_TYZX() { close(); }
-    
-    virtual bool open( int _index );
-    virtual void close();
-    bool isOpened() { return index >= 0; }
+	CvCaptureCAM_TYZX() { index = -1; image = 0; }
+	virtual ~CvCaptureCAM_TYZX() { close(); }
+	
+	virtual bool open( int _index );
+	virtual void close();
+	bool isOpened() { return index >= 0; }
 
-    virtual double getProperty(int);
-    virtual bool setProperty(int, double) { return false; }
-    virtual bool grabFrame();
-    virtual IplImage* retrieveFrame();
+	virtual double getProperty(int);
+	virtual bool setProperty(int, double) { return false; }
+	virtual bool grabFrame();
+	virtual IplImage* retrieveFrame();
 
 protected:
-    virtual bool allocateImage();
+	virtual bool allocateImage();
 
 	int index;
-    IplImage* image;
+	IplImage* image;
 }
 CvCaptureCAM_TYZX;
 
-DeepSeaIF * g_tyzx_camera   = 0;
-int         g_tyzx_refcount = 0;
+DeepSeaIF * g_tyzx_camera	= 0;
+int		 g_tyzx_refcount = 0;
 
 bool CvCaptureCAM_TYZX::open( int _index )
 {
 	close();
-    
-    if(!g_tyzx_camera){
+	
+	if(!g_tyzx_camera){
 		g_tyzx_camera = new DeepSeaIF;
 		if(!g_tyzx_camera) return false;
 	
@@ -96,7 +96,7 @@ bool CvCaptureCAM_TYZX::open( int _index )
 		// mm's
 		g_tyzx_camera->setZUnits((int) 1000);
 		
-	    g_tyzx_camera->enableLeftColor(true);
+		g_tyzx_camera->enableLeftColor(true);
 		g_tyzx_camera->setColorMode(DeepSeaIF::BGRcolor);
 		g_tyzx_camera->setDoIntensityCrop(true);
 		g_tyzx_camera->enable8bitImages(true);
@@ -132,7 +132,7 @@ bool CvCaptureCAM_TYZX::allocateImage()
 	CvSize size;
 
 	// assume we want to resize
-    cvReleaseImage(&image);
+	cvReleaseImage(&image);
 
 	// figure out size depending on index provided
 	switch(index){
@@ -154,7 +154,7 @@ bool CvCaptureCAM_TYZX::allocateImage()
 			break;
 	}
 	image = cvCreateImage(size, depth, nch);
-    return image != 0;
+	return image != 0;
 }
 
 /// Copy 'grabbed' image into capture buffer and return it.
@@ -163,7 +163,7 @@ IplImage * CvCaptureCAM_TYZX::retrieveFrame()
 	if(!isOpened() || !g_tyzx_camera) return 0;
 
 	if(!image && !alocateImage())
-        return 0;
+		return 0;
 
 	// copy camera image into buffer.
 	// tempting to reference TYZX memory directly to avoid copying.
@@ -221,9 +221,9 @@ bool CvCaptureCAM_TYZX::setProperty( int, double )
 CvCapture * cvCreateCameraCapture_TYZX (int index)
 {
 	CvCaptureCAM_TYZX * capture = new CvCaptureCAM_TYZX;
-    if( capture->open(index) )
-        return capture;
+	if( capture->open(index) )
+		return capture;
 
-    delete capture;
-    return 0;
+	delete capture;
+	return 0;
 }

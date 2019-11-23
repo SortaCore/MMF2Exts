@@ -55,6 +55,6 @@
 #ifdef EXPRESSION_MENU
 /*
 	ITEM(0,"Moo")
-    SEPARATOR
+	SEPARATOR
 	*/
 #endif

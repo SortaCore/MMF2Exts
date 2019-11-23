@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -48,22 +48,22 @@
 ///class FaceFeature
 FaceFeature::FaceFeature(double dWeight,void * lpContour,bool bIsFeature)
 {
-    m_lpContour = lpContour;
-    m_dWeight = dWeight;
-    m_bIsFaceFeature = bIsFeature;
-}//FaceFeature::FaceFeature(long lWeight,void * lpContour)
+	m_lpContour = lpContour;
+	m_dWeight = dWeight;
+	m_bIsFaceFeature = bIsFeature;
+}// FaceFeature::FaceFeature(long lWeight,void * lpContour)
 
 FaceFeature::~FaceFeature()
 {
-    if (m_lpContour)
-        delete (char*)m_lpContour;
-}//FaceFeature::~FaceFeature()
+	if (m_lpContour)
+		delete (char*)m_lpContour;
+}// FaceFeature::~FaceFeature()
 
 FaceFeature::FaceFeature()
 {
-    m_lpContour = NULL;
-    m_dWeight = 0;
-    m_bIsFaceFeature = false;
+	m_lpContour = NULL;
+	m_dWeight = 0;
+	m_bIsFaceFeature = false;
 }
 
 
@@ -71,8 +71,8 @@ FaceFeature::FaceFeature()
 
 FaceTemplate::~FaceTemplate()
 {
-    delete [] m_lpFeaturesList;
-}//FaceTemplate::~FaceTemplate()
+	delete [] m_lpFeaturesList;
+}// FaceTemplate::~FaceTemplate()
 
 
 /////
@@ -82,5 +82,5 @@ FaceTemplate::~FaceTemplate()
 
 MouthFaceTemplate::~MouthFaceTemplate()
 {
-    
-}//RFaceTemplate::~RFaceTemplate()
+	
+}// RFaceTemplate::~RFaceTemplate()

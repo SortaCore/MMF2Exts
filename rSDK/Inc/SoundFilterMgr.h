@@ -24,6 +24,7 @@ public:
 
 	// List APIs and Filters
 			void		Initialize(LPCSTR pFilterPath, DWORD dwFlags);	// non virtual function
+			void		Initialize(LPCWSTR pFilterPath, DWORD dwFlags);	// non virtual function
 	virtual void		Free();
 
 	// Create sound manager

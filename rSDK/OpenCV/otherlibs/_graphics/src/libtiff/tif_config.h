@@ -5,7 +5,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define as 0 or 1 according to the floating point format suported by the
-   machine */
+	machine */
 #define HAVE_IEEEFP 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
@@ -24,11 +24,11 @@
 #define HOST_FILLORDER FILLORDER_LSB2MSB
 
 /* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
+	first (like Motorola and SPARC, unlike Intel and VAX). */
 /* #undef WORDS_BIGENDIAN */
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
+	calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
 #define inline __inline
 #endif

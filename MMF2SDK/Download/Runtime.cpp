@@ -377,9 +377,9 @@ void WINAPI DLLExport GetDebugItem(LPSTR pBuffer, LPRDATA rdPtr, int id)
 {
 #if !defined(RUN_ONLY)
 
-	char temp[DB_BUFFERSIZE];//check the tooltip on this buffer - hover your mouse over it
+	char temp[DB_BUFFERSIZE];// check the tooltip on this buffer - hover your mouse over it
 	int slot=0;
-	switch(id)//there
+	switch(id)// there
 	{
 	case DB_SLOT0:
 	case DB_URL0:

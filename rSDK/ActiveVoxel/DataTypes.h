@@ -65,45 +65,45 @@ typedef struct vxl_runtime_part {
 	char normals;
 	float offset[3];
 	float scale[3];
-    float minbounds[3];
-    float maxbounds[3];    /* Scaling vector for the image */
+	float minbounds[3];
+	float maxbounds[3];	/* Scaling vector for the image */
 
 }vxl_runtime_part;
 
 typedef struct vxl_header {
-	char filetype[16];    /* ASCIIZ string - "Voxel Animation" */
-	long unknown;         /* Always 1 - number of animation frames? */
-	long n_limbs;         /* Number of limb headers/bodies/tailers */
-	long n_limbs2;        /* Always the same as n_limbs */
-	long bodysize;        /* Total size in bytes of all limb bodies */
+	char filetype[16];	/* ASCIIZ string - "Voxel Animation" */
+	long unknown;		 /* Always 1 - number of animation frames? */
+	long n_limbs;		 /* Number of limb headers/bodies/tailers */
+	long n_limbs2;		/* Always the same as n_limbs */
+	long bodysize;		/* Total size in bytes of all limb bodies */
 	char unknown2;		  /* Always 0x1f10 - ID or end of header code? */
 	char palette[256*3];  /* 256 colour palette for the voxel in RGB format */
 }vxl_header;
 
 typedef struct vxl_limb_header {
 	char limb_name[16]; /* ASCIIZ string - name of section */
-	long limb_number;   /* Limb number */
-	long unknown;       /* Always 1 */
-	long unknown2;      /* Always 0 */
+	long limb_number;	/* Limb number */
+	long unknown;		/* Always 1 */
+	long unknown2;	  /* Always 0 */
 }vxl_limb_header;
 
 typedef struct vxl_limb_body{
 	long * span_start; /* List of span start addresses or -1 */
-    long * span_end;   /* List of span end addresses  or -1 */
+	long * span_end;	/* List of span end addresses  or -1 */
 }vxl_limb_body;
 
 typedef struct vxl_limb_tailer {
-    long  span_start_off;  /* Offset into body section to span start list */
-    long  span_end_off;    /* Offset into body section to span end list */
-    long  span_data_off;   /* Offset into body section to span data */
+	long  span_start_off;  /* Offset into body section to span start list */
+	long  span_end_off;	/* Offset into body section to span end list */
+	long  span_data_off;	/* Offset into body section to span data */
 	float det;
 	float transform[3][4];
-    float minbounds[3];
-    float maxbounds[3];    /* Scaling vector for the image */
-    char  xsize;           /* Width of the voxel limb */
-    char  ysize;           /* Breadth of the voxel limb */
-    char  zsize;           /* Height of the voxel limb */
-    char  unknown;         /* Always 2 - unknown */ /* NORMALS MODE for model*/
+	float minbounds[3];
+	float maxbounds[3];	/* Scaling vector for the image */
+	char  xsize;			/* Width of the voxel limb */
+	char  ysize;			/* Breadth of the voxel limb */
+	char  zsize;			/* Height of the voxel limb */
+	char  unknown;		 /* Always 2 - unknown */ /* NORMALS MODE for model*/
 }vxl_limb_tailer;
 
 #endif

@@ -53,10 +53,10 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 {
 	DWORD dwMoveMethod, dwMoveHigh;
 
-        /* we use this as a special code, so avoid accepting it */
-        if( off == 0xFFFFFFFF )
-            return 0xFFFFFFFF;
-        
+		/* we use this as a special code, so avoid accepting it */
+		if( off == 0xFFFFFFFF )
+			return 0xFFFFFFFF;
+		
 	switch(whence)
 	{
 	case SEEK_SET:
@@ -72,9 +72,9 @@ _tiffSeekProc(thandle_t fd, toff_t off, int whence)
 		dwMoveMethod = FILE_BEGIN;
 		break;
 	}
-        dwMoveHigh = 0;
+		dwMoveHigh = 0;
 	return ((toff_t)SetFilePointer(fd, (LONG) off, (PLONG)&dwMoveHigh,
-                                       dwMoveMethod));
+										dwMoveMethod));
 }
 
 static int
@@ -231,8 +231,8 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 
 	switch(m) {
 		case O_RDONLY:			dwMode = OPEN_EXISTING; break;
-		case O_RDWR:			dwMode = OPEN_ALWAYS;   break;
-		case O_RDWR|O_CREAT:		dwMode = OPEN_ALWAYS;   break;
+		case O_RDWR:			dwMode = OPEN_ALWAYS;	break;
+		case O_RDWR|O_CREAT:		dwMode = OPEN_ALWAYS;	break;
 		case O_RDWR|O_TRUNC:		dwMode = CREATE_ALWAYS; break;
 		case O_RDWR|O_CREAT|O_TRUNC:	dwMode = CREATE_ALWAYS; break;
 		default:			return ((TIFF*)0);
@@ -259,7 +259,7 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 		}
 
 		WideCharToMultiByte(CP_ACP, 0, name, -1, mbname, mbsize,
-				    NULL, NULL);
+					NULL, NULL);
 	}
 
 	tif = TIFFFdOpen((int)fd,
@@ -286,26 +286,26 @@ _TIFFfree(tdata_t p)
 tdata_t
 _TIFFrealloc(tdata_t p, tsize_t s)
 {
-        void* pvTmp;
-        tsize_t old;
+		void* pvTmp;
+		tsize_t old;
 
-        if(p == NULL)
-                return ((tdata_t)GlobalAlloc(GMEM_FIXED, s));
+		if(p == NULL)
+				return ((tdata_t)GlobalAlloc(GMEM_FIXED, s));
 
-        old = GlobalSize(p);
+		old = GlobalSize(p);
 
-        if (old>=s) {
-                if ((pvTmp = GlobalAlloc(GMEM_FIXED, s)) != NULL) {
-	                CopyMemory(pvTmp, p, s);
-	                GlobalFree(p);
-                }
-        } else {
-                if ((pvTmp = GlobalAlloc(GMEM_FIXED, s)) != NULL) {
-	                CopyMemory(pvTmp, p, old);
-	                GlobalFree(p);
-                }
-        }
-        return ((tdata_t)pvTmp);
+		if (old>=s) {
+				if ((pvTmp = GlobalAlloc(GMEM_FIXED, s)) != NULL) {
+					CopyMemory(pvTmp, p, s);
+					GlobalFree(p);
+				}
+		} else {
+				if ((pvTmp = GlobalAlloc(GMEM_FIXED, s)) != NULL) {
+					CopyMemory(pvTmp, p, old);
+					GlobalFree(p);
+				}
+		}
+		return ((tdata_t)pvTmp);
 }
 
 void
@@ -356,7 +356,7 @@ Win32WarningHandler(const char* module, const char* fmt, va_list ap)
 	fprintf(stderr, "Warning, ");
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, ".\n");
-#endif        
+#endif		
 }
 TIFFErrorHandler _TIFFwarningHandler = Win32WarningHandler;
 
@@ -383,7 +383,7 @@ Win32ErrorHandler(const char* module, const char* fmt, va_list ap)
 		fprintf(stderr, "%s: ", module);
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, ".\n");
-#endif        
+#endif		
 }
 TIFFErrorHandler _TIFFerrorHandler = Win32ErrorHandler;
 

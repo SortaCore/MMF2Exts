@@ -13,6 +13,10 @@ struct PropData;
 // Property Helper class
 //
 
+/**
+ *  Movement Property Manager.
+ *  This class is passed to property functions of the CMvt class to allow is to handle properties.
+ */
 class CMvtPropMgr
 {
 public:
@@ -43,7 +47,16 @@ public:
 //
 
 #define MVT_VERSION_1	0x0001
+#define MVT_VERSION_2	0x0002		// resizable movements
 
+/**
+ *  Movement Data.
+ *  This class is the interface class for movement extensions.
+ *  CMvt objects are created with the CreateMvtProc function of the movement extension DLLs.
+ *  A CMvt object contains the movement data. At edit time it allows to edit the properties of the movement,
+ *  load and save the movement data. At runtime, it allows to load the movement data and create a CRunMvt object,
+ *  that handles the movement.
+ */
 class CMvt {
 
 	// Protected destructor
@@ -56,18 +69,18 @@ protected:
 public:
 		// Construction / Destruction
 	virtual void		Initialize() {}
-    virtual void		Delete(void) { delete this; }
+	virtual void		Delete(void) { delete this; }
 
 	// Info
 	virtual HINSTANCE	GetModuleHandle() { return NULL; }
-    virtual int			GetModuleName(LPSTR pBuf, int bufSize) { return 0; }
+	virtual int			GetModuleName(LPTSTR pBuf, int bufSize) { return 0; }
 
 	// Operators
 	virtual CMvt*		Clone() { return NULL; }
 	virtual BOOL		IsEqual(CMvt* pMvt) { return FALSE; }
 
 	// Version
-	virtual int			GetVersion() { return MVT_VERSION_1; }
+	virtual int			GetVersion() { return MVT_VERSION_2; }
 
 	// Properties
 	virtual void		GetProperties(CMvtPropMgr* pMvtPropMgr, BOOL bMasterItem) {}
@@ -89,11 +102,14 @@ public:
 	virtual int			DirAtStart()	{ return 0; }
 
 	// Load / Save
-	virtual BOOL		Load(LPBYTE pBuf, DWORD dwSize, BOOL bRuntime) { return 0; }
-	virtual BOOL		Save(LPBYTE pBuf, LPDWORD pDWSize, BOOL bRuntime) { return 0; }
+	virtual BOOL		Load(LPBYTE pBuf, DWORD dwSize, DWORD dwFlags) { return 0; }
+	virtual BOOL		Save(LPBYTE pBuf, LPDWORD pDWSize, DWORD dwFlags) { return 0; }
 
 	// Run-time
 	virtual CRunMvt*	CreateRunMvt() { return NULL; }
+
+	// Version 2
+	virtual void		ChangeScale(double dScaleX, double dScaleY) {}
 
 // End of public interface
 //////////////////////////
@@ -113,6 +129,11 @@ typedef	CMvt * LPMVT;
 
 #define RUNMVT_VERSION_1	0x0001
 
+/**
+ *  Movement Data at runtime.
+ *  This class is the interface class to handle movements at runtime.
+ *  CRunMvt objects are created with the CreateRunMvt function of the CMvt object.
+ */
 class CRunMvt {
 
 	// Protected destructor
@@ -125,7 +146,7 @@ protected:
 public:
 	// Construction / Destruction
 	virtual void		Initialize(CMvt* pMvt, LPHO hoPtr) {}
-    virtual void		Delete(void) { delete this; }
+	virtual void		Delete(void) { delete this; }
 
 	// Version
 	virtual int			GetVersion() { return RUNMVT_VERSION_1; }
@@ -163,5 +184,9 @@ public:
 	CRunMvt() {}
 };
 typedef	CRunMvt * LPRUNMVT;
+
+// Load/Save Flags
+#define MVT_LF_RUNTIME	0x0001		// The routine is called by the runtime
+#define MVT_LF_UNICODE	0x0002		// The input/output data is in Unicode format
 
 #endif // _Mvt_h

@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"UnzipMe"
 #define	ObjectAuthor		"Darkwire Software"
-#define	ObjectCopyright		"Copyright © 2011 Darkwire Software"
+#define	ObjectCopyright		"Copyright Â© 2019 Darkwire Software"
 #define	ObjectComment		"A quick extension to extract a zip archive."
 #define	ObjectURL			"http://www.dark-wire.com"
 #define	ObjectHelp			""

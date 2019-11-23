@@ -2,25 +2,37 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
+#include <tchar.h>
+#include <string>
 
-#include	<tchar.h>
+namespace std
+{
+	using tstring = basic_string<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
+	using tstringstream = basic_stringstream<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
+}
 
 // General includes
-#include	"TemplateInc.h"
+#include "..\Inc\TemplateInc.h"
 
 // Specific to this extension
-#include	<string>
-using namespace std;
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
-#include	"CkCrypt2.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
+#include "..\Lib\Chilkat\CkCrypt2.h"
+
+// https://www.chilkatsoft.com/downloads_vcpp.asp
+#pragma comment (lib, "crypt32.lib")
+#pragma comment (lib, "ws2_32.lib")
+#pragma comment (lib, "dnsapi.lib")
+#ifdef _DEBUG
+#pragma comment (lib, "..\\Lib\\Chilkat\\ChilkatDbg.lib")
+#else
+#pragma comment (lib, "..\\Lib\\Chilkat\\ChilkatRel.lib")
+#endif
 
 // rTemplate include
-#include	"rTemplate.h"
+#include "..\Inc\rTemplate.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

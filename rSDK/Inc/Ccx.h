@@ -65,5 +65,10 @@ enum {
 
 #define	EXTAPI	WINAPI __declspec(dllexport)
 
+// Return codes
+#define	CREATE_OBJECT_OK	0
+#define	CREATE_OBJECT_ERROR	(-1)
+
+
 #endif // ccx_h
 

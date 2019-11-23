@@ -130,22 +130,22 @@ ZIPDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 			break;
 		if (state == Z_DATA_ERROR) {
 			TIFFError(module,
-			    "%s: Decoding error at scanline %d, %s",
-			    tif->tif_name, tif->tif_row, sp->stream.msg);
+				"%s: Decoding error at scanline %d, %s",
+				tif->tif_name, tif->tif_row, sp->stream.msg);
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
 			continue;
 		}
 		if (state != Z_OK) {
 			TIFFError(module, "%s: zlib error: %s",
-			    tif->tif_name, sp->stream.msg);
+				tif->tif_name, sp->stream.msg);
 			return (0);
 		}
 	} while (sp->stream.avail_out > 0);
 	if (sp->stream.avail_out != 0) {
 		TIFFError(module,
-		    "%s: Not enough data at scanline %d (short %d bytes)",
-		    tif->tif_name, tif->tif_row, sp->stream.avail_out);
+			"%s: Not enough data at scanline %d (short %d bytes)",
+			tif->tif_name, tif->tif_row, sp->stream.avail_out);
 		return (0);
 	}
 	return (1);
@@ -197,7 +197,7 @@ ZIPEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	do {
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFError(module, "%s: Encoder error: %s",
-			    tif->tif_name, sp->stream.msg);
+				tif->tif_name, sp->stream.msg);
 			return (0);
 		}
 		if (sp->stream.avail_out == 0) {
@@ -227,19 +227,19 @@ ZIPPostEncode(TIFF* tif)
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
-		    if ((int)sp->stream.avail_out != (int)tif->tif_rawdatasize)
-                    {
-			    tif->tif_rawcc =
+			if ((int)sp->stream.avail_out != (int)tif->tif_rawdatasize)
+					{
+				tif->tif_rawcc =
 				tif->tif_rawdatasize - sp->stream.avail_out;
-			    TIFFFlushData1(tif);
-			    sp->stream.next_out = tif->tif_rawdata;
-			    sp->stream.avail_out = tif->tif_rawdatasize;
-		    }
-		    break;
+				TIFFFlushData1(tif);
+				sp->stream.next_out = tif->tif_rawdata;
+				sp->stream.avail_out = tif->tif_rawdatasize;
+			}
+			break;
 		default:
-		    TIFFError(module, "%s: zlib error: %s",
+			TIFFError(module, "%s: zlib error: %s",
 			tif->tif_name, sp->stream.msg);
-		    return (0);
+			return (0);
 		}
 	} while (state != Z_STREAM_END);
 	return (1);
@@ -273,9 +273,9 @@ ZIPVSetField(TIFF* tif, ttag_t tag, va_list ap)
 		sp->zipquality = va_arg(ap, int);
 		if (tif->tif_mode != O_RDONLY && (sp->state&ZSTATE_INIT)) {
 			if (deflateParams(&sp->stream,
-			    sp->zipquality, Z_DEFAULT_STRATEGY) != Z_OK) {
+				sp->zipquality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFError(module, "%s: zlib error: %s",
-				    tif->tif_name, sp->stream.msg);
+					tif->tif_name, sp->stream.msg);
 				return (0);
 			}
 		}
@@ -302,8 +302,8 @@ ZIPVGetField(TIFF* tif, ttag_t tag, va_list ap)
 }
 
 static const TIFFFieldInfo zipFieldInfo[] = {
-    { TIFFTAG_ZIPQUALITY,	 0, 0,	TIFF_ANY,	FIELD_PSEUDO,
-      TRUE,	FALSE,	"" },
+	{ TIFFTAG_ZIPQUALITY,	 0, 0,	TIFF_ANY,	FIELD_PSEUDO,
+	  TRUE,	FALSE,	"" },
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 

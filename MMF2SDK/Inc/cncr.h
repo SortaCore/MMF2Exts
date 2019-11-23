@@ -382,7 +382,7 @@ typedef struct CRunApp {
 	// Extensions
 	int				m_nbKpx;					// Number of extensions
 	fpKpxFunc		m_kpxTab;					// Function table 1
-	fpkpdt          m_kpxDataTable;				// Function table 2
+	fpkpdt		  m_kpxDataTable;				// Function table 2
 
 	// Movement Extensions
 	int				m_nbMvx;					// Number of extensions

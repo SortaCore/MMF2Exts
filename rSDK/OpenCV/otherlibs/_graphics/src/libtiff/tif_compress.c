@@ -37,12 +37,12 @@ TIFFNoEncode(TIFF* tif, char* method)
 	const TIFFCodec* c = TIFFFindCODEC(tif->tif_dir.td_compression);
 
 	if (c) { 
-	        TIFFError(tif->tif_name, "%s %s encoding is not implemented",
-                          c->name, method);
+			TIFFError(tif->tif_name, "%s %s encoding is not implemented",
+						  c->name, method);
 	} else { 
 		TIFFError(tif->tif_name,
 			  "Compression scheme %u %s encoding is not implemented",
-		    tif->tif_dir.td_compression, method);
+			tif->tif_dir.td_compression, method);
 	}
 	return (-1);
 }
@@ -75,11 +75,11 @@ TIFFNoDecode(TIFF* tif, char* method)
 
 	if (c)
 		TIFFError(tif->tif_name, "%s %s decoding is not implemented",
-		    c->name, method);
+			c->name, method);
 	else
 		TIFFError(tif->tif_name,
-		    "Compression scheme %u %s decoding is not implemented",
-		    tif->tif_dir.td_compression, method);
+			"Compression scheme %u %s decoding is not implemented",
+			tif->tif_dir.td_compression, method);
 	return (-1);
 }
 
@@ -109,7 +109,7 @@ _TIFFNoSeek(TIFF* tif, uint32 off)
 {
 	(void) off;
 	TIFFError(tif->tif_name,
-	    "Compression algorithm does not support random access");
+		"Compression algorithm does not support random access");
 	return (0);
 }
 
@@ -192,12 +192,12 @@ TIFFCodec*
 TIFFRegisterCODEC(uint16 scheme, const char* name, TIFFInitMethod init)
 {
 	codec_t* cd = (codec_t*)
-	    _TIFFmalloc(sizeof (codec_t) + sizeof (TIFFCodec) + strlen(name)+1);
+		_TIFFmalloc(sizeof (codec_t) + sizeof (TIFFCodec) + strlen(name)+1);
 
 	if (cd != NULL) {
 		cd->info = (TIFFCodec*) ((tidata_t) cd + sizeof (codec_t));
 		cd->info->name = (char*)
-		    ((tidata_t) cd->info + sizeof (TIFFCodec));
+			((tidata_t) cd->info + sizeof (TIFFCodec));
 		strcpy(cd->info->name, name);
 		cd->info->scheme = scheme;
 		cd->info->init = init;
@@ -205,7 +205,7 @@ TIFFRegisterCODEC(uint16 scheme, const char* name, TIFFInitMethod init)
 		registeredCODECS = cd;
 	} else {
 		TIFFError("TIFFRegisterCODEC",
-		    "No space to register compression scheme %s", name);
+			"No space to register compression scheme %s", name);
 		return NULL;
 	}
 	return (cd->info);
@@ -224,11 +224,11 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 			return;
 		}
 	TIFFError("TIFFUnRegisterCODEC",
-	    "Cannot remove compression scheme %s; not registered", c->name);
+		"Cannot remove compression scheme %s; not registered", c->name);
 }
 
 /************************************************************************/
-/*                       TIFFGetConfisuredCODECs()                      */
+/*						TIFFGetConfisuredCODECs()					  */
 /************************************************************************/
 
 /**
@@ -243,12 +243,12 @@ TIFFCodec*
 TIFFGetConfiguredCODECs()
 {
 	int		i = 1;
-        codec_t		*cd;
-        const TIFFCodec	*c;
+		codec_t		*cd;
+		const TIFFCodec	*c;
 	TIFFCodec	*codecs = NULL, *new_codecs;
 
-        for (cd = registeredCODECS; cd; cd = cd->next) {
-                new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+		for (cd = registeredCODECS; cd; cd = cd->next) {
+				new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
 		if (!new_codecs) {
 			_TIFFfree (codecs);
 			return NULL;
@@ -257,9 +257,9 @@ TIFFGetConfiguredCODECs()
 		_TIFFmemcpy(codecs + i - 1, cd, sizeof(TIFFCodec));
 		i++;
 	}
-        for (c = _TIFFBuiltinCODECS; c->name; c++) {
-                if (TIFFIsCODECConfigured(c->scheme)) {
-                        new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
+		for (c = _TIFFBuiltinCODECS; c->name; c++) {
+				if (TIFFIsCODECConfigured(c->scheme)) {
+						new_codecs = _TIFFrealloc(codecs, i * sizeof(TIFFCodec));
 			if (!new_codecs) {
 				_TIFFfree (codecs);
 				return NULL;
@@ -278,7 +278,7 @@ TIFFGetConfiguredCODECs()
 	codecs = new_codecs;
 	_TIFFmemset(codecs + i - 1, 0, sizeof(TIFFCodec));
 
-        return codecs;
+		return codecs;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

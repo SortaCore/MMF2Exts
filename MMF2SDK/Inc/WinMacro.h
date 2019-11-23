@@ -1,12 +1,12 @@
 
-	// Definitions differentes si WIN32
+	// Definitions differentes si _WIN32
 #ifndef _WinMacro_h
 #define _WinMacro_h
 
 // ==================
 //		Win 32
 // ==================
-#ifdef	WIN32
+#ifdef	_WIN32
 
 	// Fonctions C
 #ifndef _fmalloc

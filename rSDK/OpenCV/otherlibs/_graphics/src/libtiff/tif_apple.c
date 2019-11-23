@@ -59,14 +59,14 @@ static tsize_t
 _tiffReadProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
 	return (FSRead((short) fd, (long*) &size, (char*) buf) == noErr ?
-	    size : (tsize_t) -1);
+		size : (tsize_t) -1);
 }
 
 static tsize_t
 _tiffWriteProc(thandle_t fd, tdata_t buf, tsize_t size)
 {
 	return (FSWrite((short) fd, (long*) &size, (char*) buf) == noErr ?
-	    size : (tsize_t) -1);
+		size : (tsize_t) -1);
 }
 
 static toff_t
@@ -140,8 +140,8 @@ TIFFFdOpen(int fd, const char* name, const char* mode)
 	TIFF* tif;
 
 	tif = TIFFClientOpen(name, mode, (thandle_t) fd,
-	    _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
-	    _tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
+		_tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
+		_tiffSizeProc, _tiffMapProc, _tiffUnmapProc);
 	if (tif)
 		tif->tif_fd = fd;
 	return (tif);
@@ -181,7 +181,7 @@ TIFFOpen(const char* name, const char* mode)
 		/* fall through */
 	case O_RDWR | O_CREAT:
 		if ((err = FSpGetFInfo(&fSpec, &finfo)) == fnfErr) {
-			if (FSpCreate(&fSpec, '    ', 'TIFF', smSystemScript) != noErr)
+			if (FSpCreate(&fSpec, '	', 'TIFF', smSystemScript) != noErr)
 				goto badCreate;
 			if (FSpOpenDF(&fSpec, fsRdWrPerm, &fref) != noErr)
 				goto badOpen;

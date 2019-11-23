@@ -56,11 +56,11 @@ protected:
 public:
 		// Construction / Destruction
 	virtual void		Initialize() {}
-    virtual void		Delete(void) { delete this; }
+	virtual void		Delete(void) { delete this; }
 
 	// Info
 	virtual HINSTANCE	GetModuleHandle() { return NULL; }
-    virtual int			GetModuleName(LPSTR pBuf, int bufSize) { return 0; }
+	virtual int			GetModuleName(LPSTR pBuf, int bufSize) { return 0; }
 
 	// Operators
 	virtual CMvt*		Clone() { return NULL; }
@@ -125,7 +125,7 @@ protected:
 public:
 	// Construction / Destruction
 	virtual void		Initialize(CMvt* pMvt, LPHO hoPtr) {}
-    virtual void		Delete(void) { delete this; }
+	virtual void		Delete(void) { delete this; }
 
 	// Version
 	virtual int			GetVersion() { return RUNMVT_VERSION_1; }

@@ -54,17 +54,17 @@ PredictorSetup(TIFF* tif)
 		return (1);
 	if (sp->predictor != 2) {
 		TIFFError(tif->tif_name, "\"Predictor\" value %d not supported",
-		    sp->predictor);
+			sp->predictor);
 		return (0);
 	}
 	if (td->td_bitspersample != 8 && td->td_bitspersample != 16) {
 		TIFFError(tif->tif_name,
-    "Horizontal differencing \"Predictor\" not supported with %d-bit samples",
-		    td->td_bitspersample);
+	"Horizontal differencing \"Predictor\" not supported with %d-bit samples",
+			td->td_bitspersample);
 		return (0);
 	}
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
-	    td->td_samplesperpixel : 1);
+		td->td_samplesperpixel : 1);
 	/*
 	 * Calculate the scanline/tile-width size in bytes.
 	 */
@@ -145,14 +145,14 @@ PredictorSetupEncode(TIFF* tif)
 }
 
 #define REPEAT4(n, op)		\
-    switch (n) {		\
-    default: { int i; for (i = n-4; i > 0; i--) { op; } } \
-    case 4:  op;		\
-    case 3:  op;		\
-    case 2:  op;		\
-    case 1:  op;		\
-    case 0:  ;			\
-    }
+	switch (n) {		\
+	default: { int i; for (i = n-4; i > 0; i--) { op; } } \
+	case 4:  op;		\
+	case 3:  op;		\
+	case 2:  op;		\
+	case 1:  op;		\
+	case 0:  ;			\
+	}
 
 static void
 horAcc8(TIFF* tif, tidata_t cp0, tsize_t cc)
@@ -376,8 +376,8 @@ PredictorEncodeTile(TIFF* tif, tidata_t bp0, tsize_t cc0, tsample_t s)
 #define	FIELD_PREDICTOR	(FIELD_CODEC+0)		/* XXX */
 
 static const TIFFFieldInfo predictFieldInfo[] = {
-    { TIFFTAG_PREDICTOR,	 1, 1, TIFF_SHORT,	FIELD_PREDICTOR,
-      FALSE,	FALSE,	"Predictor" },
+	{ TIFFTAG_PREDICTOR,	 1, 1, TIFF_SHORT,	FIELD_PREDICTOR,
+	  FALSE,	FALSE,	"Predictor" },
 };
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
@@ -443,13 +443,13 @@ TIFFPredictorInit(TIFF* tif)
 	_TIFFMergeFieldInfo(tif, predictFieldInfo, N(predictFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
 	tif->tif_tagmethods.vgetfield =
-            PredictorVGetField;/* hook for predictor tag */
+			PredictorVGetField;/* hook for predictor tag */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
 	tif->tif_tagmethods.vsetfield =
-            PredictorVSetField;/* hook for predictor tag */
+			PredictorVSetField;/* hook for predictor tag */
 	sp->printdir = tif->tif_tagmethods.printdir;
 	tif->tif_tagmethods.printdir =
-            PredictorPrintDir;	/* hook for predictor tag */
+			PredictorPrintDir;	/* hook for predictor tag */
 
 	sp->setupdecode = tif->tif_setupdecode;
 	tif->tif_setupdecode = PredictorSetupDecode;

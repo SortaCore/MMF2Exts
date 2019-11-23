@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -40,10 +40,10 @@
 //M*/
 
 // Authors: Konstantin Dols <dols@ient.rwth-aachen.de>
-//          Mark Asbach <asbach@ient.rwth-aachen.de>
+//		  Mark Asbach <asbach@ient.rwth-aachen.de>
 //
-//          Institute of Communications Engineering
-//          RWTH Aachen University
+//		  Institute of Communications Engineering
+//		  RWTH Aachen University
 
 
 #include "_highgui.h"
@@ -197,11 +197,11 @@ static void icvCloseAVI_XINE( CvCaptureAVI_XINE* capture )
 **/
 static void icvCheckSeekAVI_XINE( CvCaptureAVI_XINE * capture )
 {
-	OPENCV_ASSERT ( capture,                        "icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture");
+	OPENCV_ASSERT ( capture,						"icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture->stream");
+						"icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture->vo_port");
+						"icvCheckSeekAVI_XINE( CvCaptureAVI_XINE* )", "illegal capture->vo_port");
 
 #ifndef NDEBUG
 	fprintf( stderr, "(DEBUG) icvCheckSeekAVI_XINE ... start\n" );
@@ -292,10 +292,10 @@ static int icvOpenAVI_XINE( CvCaptureAVI_XINE* capture, const char* filename )
 #endif
 	
 	OPENCV_ASSERT ( capture->yuv_frame,
-                        "icvOpenAVI_XINE( CvCaptureAVI_XINE *, const char *)", "couldn't create yuv frame");
+						"icvOpenAVI_XINE( CvCaptureAVI_XINE *, const char *)", "couldn't create yuv frame");
 			
 	OPENCV_ASSERT ( capture->bgr_frame,
-                        "icvOpenAVI_XINE( CvCaptureAVI_XINE *, const char *)", "couldn't create bgr frame");
+						"icvOpenAVI_XINE( CvCaptureAVI_XINE *, const char *)", "couldn't create bgr frame");
 			
 #ifndef NDEBUG
 	fprintf( stderr, "(DEBUG) icvOpenAVI_XINE ... end\n" );
@@ -311,9 +311,9 @@ static int icvGrabFrameAVI_XINE( CvCaptureAVI_XINE* capture )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvGrabFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture");
+						"icvGrabFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvGrabFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->vo_port");
+						"icvGrabFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->vo_port");
 
 	int res = xine_get_next_video_frame( capture->vo_port, &capture->xine_frame );
 
@@ -334,11 +334,11 @@ static const IplImage* icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE* capture )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture");
+						"icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->stream");
+						"icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->vo_port");
+						"icvRetrieveFrameAVI_XINE( CvCaptureAVI_XINE * )", "illegal capture->vo_port");
 
 	/* no frame grabbed yet? so let's do it now! */
 	int res = 0;
@@ -404,11 +404,11 @@ static int icvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE* capture, int f )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvRetricvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
+						"icvRetricvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
+						"icvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
+						"icvOldSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
 
 // not needed tnx to asserts...				
 	// we need a valid capture context and it's stream to seek through
@@ -473,11 +473,11 @@ static int icvSeekFrameAVI_XINE( CvCaptureAVI_XINE* capture, int f )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
+						"icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
+						"icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
+						"icvSeekFrameAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
 
 // not needed tnx to asserts...				
 	// we need a valid capture context and it's stream to seek through
@@ -527,11 +527,11 @@ static int icvSeekTimeAVI_XINE( CvCaptureAVI_XINE* capture, int t )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
+						"icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
+						"icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
+						"icvSeekTimeAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
 			
 #ifndef NDEBUG
 	fprintf( stderr, "(DEBUG) icvSeekTimeAVI_XINE ... start\n" );
@@ -578,11 +578,11 @@ static int icvSeekRatioAVI_XINE( CvCaptureAVI_XINE* capture, double ratio )
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture");
+						"icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture->stream");
+						"icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture->vo_port");
+						"icvSeekRatioAVI_XINE( CvCaptureAVI_XINE *, double )", "illegal capture->vo_port");
 
 // not needed tnx to asserts...				
 	// we need a valid capture context and it's stream to seek through
@@ -636,15 +636,15 @@ static double icvGetPropertyAVI_XINE( CvCaptureAVI_XINE* capture, int property_i
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
+						"icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
+						"icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
+						"icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->vo_port");
 	OPENCV_ASSERT ( capture->xine,
-                        "icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->xine");
+						"icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->xine");
 	OPENCV_ASSERT ( capture->bgr_frame,
-                        "icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->bgr_frame");
+						"icvGetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->bgr_frame");
 
 // not needed tnx to asserts...				
 	// we need a valid capture context and it's stream to seek through
@@ -713,18 +713,18 @@ static double icvGetPropertyAVI_XINE( CvCaptureAVI_XINE* capture, int property_i
 
 
 static int icvSetPropertyAVI_XINE( CvCaptureAVI_XINE* capture,
-                                   int property_id, double value )
+									int property_id, double value )
 {
 #ifndef NDEBUG
 	fprintf( stderr, "(DEBUG) icvSetPropertyAVI_XINE ... start\n" );
 #endif
 
 	OPENCV_ASSERT ( capture,
-                        "icvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int, double )", "illegal capture");
+						"icvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int, double )", "illegal capture");
 	OPENCV_ASSERT ( capture->stream,
-                        "icvGetPropericvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
+						"icvGetPropericvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int )", "illegal capture->stream");
 	OPENCV_ASSERT ( capture->vo_port,
-                        "icvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int, double )", "illegal capture->vo_port");
+						"icvSetPropertyAVI_XINE( CvCaptureAVI_XINE *, int, double )", "illegal capture->vo_port");
 
 // not needed tnx to asserts...				
 	// we need a valid capture context and it's stream to seek through
@@ -770,7 +770,7 @@ static CvCaptureAVI_XINE* icvCaptureFromFile_XINE( const char* filename )
 		return 0;
 
 	OPENCV_ASSERT ( capture,
-                        "cvCaptureFromFile_XINE( const char * )", "couldn't create capture");
+						"cvCaptureFromFile_XINE( const char * )", "couldn't create capture");
 		
 	return capture;
 
@@ -781,66 +781,66 @@ static CvCaptureAVI_XINE* icvCaptureFromFile_XINE( const char* filename )
 class CvCaptureAVI_XINE_CPP : public CvCapture
 {
 public:
-    CvCaptureAVI_XINE_CPP() { captureXINE = 0; }
-    virtual ~CvCaptureAVI_XINE_CPP() { close(); }
+	CvCaptureAVI_XINE_CPP() { captureXINE = 0; }
+	virtual ~CvCaptureAVI_XINE_CPP() { close(); }
 
-    virtual bool open( int index );
-    virtual void close();
+	virtual bool open( int index );
+	virtual void close();
 
-    virtual double getProperty(int);
-    virtual bool setProperty(int, double);
-    virtual bool grabFrame();
-    virtual IplImage* retrieveFrame();
+	virtual double getProperty(int);
+	virtual bool setProperty(int, double);
+	virtual bool grabFrame();
+	virtual IplImage* retrieveFrame();
 protected:
 
-    CvCaptureAVI_XINE* captureXINE;
+	CvCaptureAVI_XINE* captureXINE;
 };
 
 bool CvCaptureAVI_XINE_CPP::open( int index )
 {
-    close();
-    captureXINE = icvCaptureFromFile_XINE(index);
-    return captureXINE != 0;
+	close();
+	captureXINE = icvCaptureFromFile_XINE(index);
+	return captureXINE != 0;
 }
 
 void CvCaptureAVI_XINE_CPP::close()
 {
-    if( captureXINE )
-    {
-        icvCloseAVI_XINE( captureXINE );
-        cvFree( &captureXINE );
-    }
+	if( captureXINE )
+	{
+		icvCloseAVI_XINE( captureXINE );
+		cvFree( &captureXINE );
+	}
 }
 
 bool CvCaptureAVI_XINE_CPP::grabFrame()
 {
-    return captureXINE ? icvGrabFrameAVI_XINE( captureXINE ) != 0 : false;
+	return captureXINE ? icvGrabFrameAVI_XINE( captureXINE ) != 0 : false;
 }
 
 IplImage* CvCaptureAVI_XINE_CPP::retrieveFrame()
 {
-    return captureXINE ? (IplImage*)icvRetrieveFrameAVI_XINE( captureXINE ) : 0;
+	return captureXINE ? (IplImage*)icvRetrieveFrameAVI_XINE( captureXINE ) : 0;
 }
 
 double CvCaptureAVI_XINE_CPP::getProperty( int propId )
 {
-    return captureXINE ? icvGetPropertyAVI_XINE( captureXINE, propId ) : 0;
+	return captureXINE ? icvGetPropertyAVI_XINE( captureXINE, propId ) : 0;
 }
 
 bool CvCaptureAVI_XINE_CPP::setProperty( int propId, double value )
 {
-    return captureXINE ? icvSetPropertyAVI_XINE( captureXINE, propId, value ) != 0 : false;
+	return captureXINE ? icvSetPropertyAVI_XINE( captureXINE, propId, value ) != 0 : false;
 }
 
 CvCapture* cvCreateCameraCapture_XINE( int index )
 {
-    CvCaptureAVI_XINE_CPP* capture = new CvCaptureAVI_XINE_CPP;
+	CvCaptureAVI_XINE_CPP* capture = new CvCaptureAVI_XINE_CPP;
 
-    if( capture->open( index ))
-        return capture;
+	if( capture->open( index ))
+		return capture;
 
-    delete capture;
-    return 0;
+	delete capture;
+	return 0;
 }
 
 

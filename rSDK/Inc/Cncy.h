@@ -37,12 +37,12 @@ struct PropData;
 struct RunHeader;
 
 // Force structure alignement
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #pragma pack( push, _pack_cncy_ )
 #pragma pack(2)
 #endif
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Object instance parent types
 enum {
@@ -53,7 +53,9 @@ enum {
 };
 
 // Proc definition
-typedef void (WINAPI * UPDATEFILENAMEPROC)(LPCSTR, LPSTR);
+typedef void (WINAPI * UPDATEFILENAMEPROCA)(LPCSTR, LPSTR);
+typedef void (WINAPI * UPDATEFILENAMEPROCW)(LPCWSTR, LPWSTR);
+typedef void (WINAPI * UPDATEFILENAMEPROC)(LPCTSTR, LPTSTR);
 
 // Old object name size, still used in events
 #ifndef OINAME_SIZE
@@ -118,7 +120,18 @@ typedef struct AppMiniHeader {
 
 } AppMiniHeader;
 
-#define	RUNTIME_DWTYPE	'EMAP'
+#define	RUNTIME_DWTYPEA				'EMAP'
+#define	RUNTIME_DWTYPEW				'UMAP'
+#define RUNTIME_DWTYPE_VTZA			' ZTV'
+#define RUNTIME_DWTYPE_VTZW			'UZTV'
+
+#ifdef _UNICODE
+#define	RUNTIME_DWTYPE				RUNTIME_DWTYPEW
+#define RUNTIME_DWTYPE_VTZ			RUNTIME_DWTYPE_VTZW
+#else
+#define	RUNTIME_DWTYPE				RUNTIME_DWTYPEA
+#define RUNTIME_DWTYPE_VTZ			RUNTIME_DWTYPE_VTZA
+#endif
 #define	RUNTIME_VERSION_MMF1		0x0300
 #define	RUNTIME_VERSION_MMF15		0x0301
 #define	RUNTIME_VERSION_MMF2		0x0302
@@ -176,8 +189,8 @@ typedef struct AppHeader {
 #define		GA_PANIC			0x0004
 #define		GA_SPEEDINDEPENDANT	0x0008
 #define		GA_STRETCH			0x0010
-//#define		GA_SOUND_ON			0x0020
-//#define		GA_MUSIC_ON			0x0040
+#define		GA_LOADALLIMAGESATSTART	0x0020
+#define		GA_LOADALLSOUNDSATSTART	0x0040
 #define		GA_MENUHIDDEN		0x0080
 #define		GA_MENUBAR			0x0100
 #define		GA_MAXIMISE			0x0200
@@ -227,11 +240,91 @@ typedef struct AppHeader {
 #define		GAOF_SHOWDEBUGGER			0x0080
 #define		GAOF_RESERVED_1				0x0100
 #define		GAOF_RESERVED_2				0x0200
+#define		GAOF_RESERVED_3				0x0400
+#define		GAOF_RESERVED_4				0x0800
+#define		GAOF_JAVASWING				0x1000
+#define		GAOF_JAVAAPPLET				0x2000
+#define		GAOF_D3D9					0x4000
+#define		GAOF_D3D8					0x8000
+
+// Optional header
+typedef struct AppHeader2 {
+
+	DWORD	dwOptions;
+	DWORD	dwBuildType;
+	DWORD	dwBuildFlags;
+	WORD	wScreenRatioTolerance;
+	WORD	wScreenAngle;			// 0 (no rotation), 1 (90 clockwise), 2 (90 anticlockwise)
+	DWORD	dwUnused2;
+
+} AppHeader2;
+
+#define	AH2OPT_KEEPSCREENRATIO	0x0001
+#define	AH2OPT_FRAMETRANSITION	0x0002		// (HWA only) a frame has a transition 
+#define	AH2OPT_RESAMPLESTRETCH	0x0004		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
+#define	AH2OPT_GLOBALREFRESH	0x0008		// (Mobile) force global refresh
+
+#ifndef	  _H2INC
+
+// Build type values
+enum {
+	BUILDTYPE_STANDALONE,
+	BUILDTYPE_SCREENSAVER,
+	BUILDTYPE_INTERNETAPP,
+	BUILDTYPE_JAVA,
+	BUILDTYPE_JAVASTANDALONE,
+	BUILDTYPE_JAVAAPPLET,
+	BUILDTYPE_JAVAWEBSTART,
+	BUILDTYPE_JAVAMOBILE,
+	BUILDTYPE_JAVABLURAY,
+	BUILDTYPE_JAVAMAC,
+	BUILDTYPE_FLASH,
+	BUILDTYPE_JAVABLACKBERRY,
+	BUILDTYPE_ANDROID,
+	BUILDTYPE_MAX
+};
+
+// Build flag values
+#define	BUILDFLAG_MAXCOMP			0x0001	// editor only
+#define BUILDFLAG_COMPSND			0x0002	// editor only
+#define BUILDFLAG_INCLUDEEXTFILES	0x0004	// editor only
+#define BUILDFLAG_MANUALIMGFILTERS	0x0008	// editor only
+#define BUILDFLAG_MANUALSNDFILTERS	0x0010	// editor only
+#define	BUILDFLAG_NOAUTOEXTRACT		0x0020	// editor only
+#define	BUILDFLAG_NOAPPLETCHECK		0x0040	// editor only
+
+// Bluray options
+#define	BRFLAGS_DISPLAYLOADANIM		0x0001
+#define BRFLAGS_GRAPHICSNOTINJAR	0x0002
+#define BRFLAGS_BACKSURFACE			0x0004
+#define BRFLAGS_EXTERNALSOUNDS		0x0008
+
+#define	BRLOADANIM_NIMAGES_DEFAULT	4
+
+typedef struct BlurayAppOptions {
+
+	DWORD	dwOpacity;
+	DWORD	dwFlags;
+	DWORD	dwLoadAnimNImages;
+	WORD	wLoadAnimImage;
+	WORD	wReserved;
+
+} BlurayAppOptions;
+typedef BlurayAppOptions *LPPLURAYAPPOPTIONS;
+
+typedef struct BlurayFrameOptions {
+
+	DWORD	dwOpacity;
+	DWORD	dwKeyReleaseTimeOut;
+
+} BlurayFrameOptions;
+typedef BlurayFrameOptions *LPPLURAYFRAMEOPTIONS;
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Element of chunk Extensions
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct ExtDesc {
 	WORD		extSize;
 	WORD		extIndex;
@@ -289,19 +382,21 @@ typedef struct FrameHeader
 #define		LEF_NOSURFACE			0x0800
 #define		LEF_RESERVED_1			0x1000
 #define		LEF_RESERVED_2			0x2000
-#define		LEF_RECORDDEMO			0x4000	
+#define		LEF_RECORDDEMO			0x4000
+#define		LEF_TIMEDMVTS			0x8000
 
 //////////////////////////////////////////////////////////////////////////////
 // Layers
 //
 
-#define FLOPT_XCOEF			0x0001
-#define FLOPT_YCOEF			0x0002
-#define FLOPT_NOSAVEBKD		0x0004
-#define FLOPT_WRAP_OBSOLETE	0x0008
-#define FLOPT_VISIBLE		0x0010
-#define FLOPT_WRAP_HORZ		0x0020
-#define FLOPT_WRAP_VERT		0x0040
+#define FLOPT_XCOEF				0x0001
+#define FLOPT_YCOEF				0x0002
+#define FLOPT_NOSAVEBKD			0x0004
+#define FLOPT_WRAP_OBSOLETE		0x0008
+#define FLOPT_VISIBLE			0x0010
+#define FLOPT_WRAP_HORZ			0x0020
+#define FLOPT_WRAP_VERT			0x0040
+#define FLOPT_PREVIOUSEFFECT	0x0080
 #define FLOPT_REDRAW		0x000010000
 #define FLOPT_TOHIDE		0x000020000
 #define FLOPT_TOSHOW		0x000040000
@@ -315,6 +410,16 @@ typedef struct EditFrameLayer
 	DWORD		nFirstLOIndex;
 
 } EditFrameLayer;
+
+typedef struct EditFrameLayerEffect {
+
+	DWORD	dwInkFx;
+	DWORD	dwRGBA;
+	DWORD	dwExtInkFxIdx;
+	DWORD	nParams;
+	LPARAM	paramData;		// offset
+
+} EditFrameLayerEffect;
 
 //////////////////////////////////////////////////////////////////////////////
 // ObjInfo/FrameItem Header
@@ -340,7 +445,7 @@ typedef struct ObjInfoHeader
 // LevObj/FrameItemInstance
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #ifdef __cplusplus
 class diskLO {
 public:
@@ -380,7 +485,7 @@ enum {
 ////////////////////////////////
 // Static object - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct Static_OC {
 
 	// Size
@@ -401,7 +506,7 @@ typedef Static_OC * LPStatic_OC;
 // Fill Type & shapes - Definitions
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 // Gradient
 typedef struct GradientData {
 	COLORREF		color1;
@@ -434,7 +539,7 @@ enum {
 ///////////////////////////////////////////////////////////////
 // Fill Type - Part of FilledShape
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FillType_Data {
@@ -470,7 +575,7 @@ typedef struct FillType_Data {
 ///////////////////////////////////////////////////////////////
 // Filled Shape - Part of QuickBackdrop / Counter ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FilledShape_Data {
@@ -494,7 +599,7 @@ typedef FilledShape_Data * LPFilledShape_Data;
 /////////////////////////////////
 // Quick backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct QuickBackdrop_OC {
 
@@ -516,7 +621,7 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 /////////////////////////////////
 // Backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct Backdrop_OC {
 
@@ -578,7 +683,7 @@ typedef	struct	txString {
 	WORD		tsFont;					// Font
 	WORD		tsFlags;				// Flags
 	COLORREF	tsColor;				// Color
-	char		tsChar[1];
+	TCHAR		tsChar[1];
 } txString;
 typedef	txString	*	fpts;
 #define	sizeof_ts	8					// (sizeof(txString)-1)
@@ -625,7 +730,15 @@ enum	{
 };
 
 // Display flags
-#define	BARFLAG_INVERSE		0x0100
+#define	CPTDISPFLAG_INTNDIGITS				0x000F		// 0 = normal display, other value = pad with zeros or truncate
+#define	CPTDISPFLAG_FLOATNDIGITS			0x00F0		// add 1 to get the number of significant digits to display
+#define	CPTDISPFLAG_FLOATNDIGITS_SHIFT		4
+#define	CPTDISPFLAG_FLOATNDECIMALS			0xF000		// number of digits to display after the decimal point
+#define	CPTDISPFLAG_FLOATNDECIMALS_SHIFT	12
+#define	BARFLAG_INVERSE						0x0100
+#define	CPTDISPFLAG_FLOAT_FORMAT			0x0200		// 1 to use the specified numbers of digits, 0 to use standard display (%g)
+#define	CPTDISPFLAG_FLOAT_USENDECIMALS		0x0400		// 1 to use the specified numbers of digits after the decimal point
+#define	CPTDISPFLAG_FLOAT_PADD				0x0800		// 1 to left padd with zeros
 
 // Counters images
 enum {
@@ -651,7 +764,7 @@ enum {
 //
 // Objet RTF - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocRTF {
 
@@ -675,7 +788,7 @@ typedef ocRTF * LPOCRTF;
 //
 // Objet CCA - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocCCA {
 
@@ -721,6 +834,7 @@ typedef ocCCA * LPOCCCA;
 #define	CCAF_DOCKED_BOTTOM			0x00C00000
 #define	CCAF_REOPEN					0x01000000
 #define CCAF_MDIRUNEVENIFNOTACTIVE	0x02000000
+#define CCAF_DISPLAYASSPRITE		0x04000000
 
 #endif
 
@@ -729,7 +843,7 @@ typedef ocCCA * LPOCCCA;
 // Transition
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Transition header
 typedef struct TransitionHdr {
@@ -760,6 +874,7 @@ typedef struct Transition_Data {
 typedef Transition_Data * LPTRANSITIONDATA;
 
 #define	TRFLAG_COLOR	0x0001
+#define TRFLAG_UNICODE	0x0002
 
 #endif
 
@@ -922,17 +1037,21 @@ enum	{
 #define	MMF_BUILD_244_SP4			244
 #define	MMF_BUILD_245_SP5			245
 #define	MMF_BUILD_246_SP6			246
-#define	MMF_CURRENTBUILD			MMF_BUILD_246_SP6
+#define	MMF_BUILD_247_SP7			247
+#define	MMF_BUILD_248_JAVA			248
+#define	MMF_BUILD_249_MOBILE		249
+#define	MMF_CURRENTBUILD			MMF_BUILD_249_MOBILE
 
 // MFA file format versions
 #define MFA_BUILD_ALTSTR			1						// Alterable strings
 #define MFA_BUILD_COUNTERTEXT		2						// Text mode in counters
 #define MFA_BUILD_LASTFRAMEOFFSET	3						// Additional frame offset
 #define MFA_BUILD_FIXQUALIF			4						// Fix in qualifiers + prd version
-#define MFA_CURRENTBUILD			MFA_BUILD_FIXQUALIF
+#define MFA_BUILD_LANGID			5						// Language ID
+#define MFA_CURRENTBUILD			MFA_BUILD_LANGID
 
 // Structures for picture editor
-typedef struct EditSurfaceParams {
+typedef struct EditSurfaceParamsA {
 
 	DWORD		m_dwSize;		// sizeof(EditSurfaceParams)
 	LPSTR		m_pWindowTitle;	// Picture Editor title (NULL = default title)
@@ -943,10 +1062,32 @@ typedef struct EditSurfaceParams {
 	POINT		m_hotSpot;		// Hot spot coordinates
 	POINT		m_actionPoint;	// Action point coordinates
 
-} EditSurfaceParams;
-typedef EditSurfaceParams* LPEDITSURFACEPARAMS;
+} EditSurfaceParamsA;
+typedef EditSurfaceParamsA* LPEDITSURFACEPARAMSA;
 
-typedef struct EditImageParams {
+typedef struct EditSurfaceParamsW {
+
+	DWORD		m_dwSize;		// sizeof(EditSurfaceParams)
+	LPWSTR		m_pWindowTitle;	// Picture Editor title (NULL = default title)
+	cSurface*	m_pSf;			// Surface to edit
+	DWORD		m_dwOptions;	// Options, see PictEdDefs.h
+	DWORD		m_dwFixedWidth;	// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
+	DWORD		m_dwFixedHeight;// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
+	POINT		m_hotSpot;		// Hot spot coordinates
+	POINT		m_actionPoint;	// Action point coordinates
+
+} EditSurfaceParamsW;
+typedef EditSurfaceParamsW* LPEDITSURFACEPARAMSW;
+
+#ifdef _UNICODE
+#define EditSurfaceParams	EditSurfaceParamsW
+typedef EditSurfaceParamsW* LPEDITSURFACEPARAMS;
+#else
+#define EditSurfaceParams	EditSurfaceParamsA
+typedef EditSurfaceParamsA* LPEDITSURFACEPARAMS;
+#endif
+
+typedef struct EditImageParamsA {
 
 	DWORD	m_dwSize;			// sizeof(EditImageParams)
 	LPSTR	m_pWindowTitle;		// Picture Editor title (NULL = default title)
@@ -955,11 +1096,31 @@ typedef struct EditImageParams {
 	DWORD	m_dwFixedWidth;		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
 	DWORD	m_dwFixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
 
-} EditImageParams;
-typedef EditImageParams* LPEDITIMAGEPARAMS;
+} EditImageParamsA;
+typedef EditImageParamsA* LPEDITIMAGEPARAMSA;
+
+typedef struct EditImageParamsW {
+
+	DWORD	m_dwSize;			// sizeof(EditImageParams)
+	LPWSTR	m_pWindowTitle;		// Picture Editor title (NULL = default title)
+	DWORD	m_dwImage;			// Image to edit - note: only the LOWORD is used in this version
+	DWORD	m_dwOptions;		// Options, see PictEdDefs.h
+	DWORD	m_dwFixedWidth;		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
+	DWORD	m_dwFixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
+
+} EditImageParamsW;
+typedef EditImageParamsW* LPEDITIMAGEPARAMSW;
+
+#ifdef _UNICODE
+#define EditImageParams	EditImageParamsW
+typedef EditImageParamsW* LPEDITIMAGEPARAMS;
+#else
+#define EditImageParams	EditImageParamsA
+typedef EditImageParamsA* LPEDITIMAGEPARAMS;
+#endif
 
 // Structure for image list editor
-typedef struct EditAnimationParams {
+typedef struct EditAnimationParamsA {
 
 	DWORD	m_dwSize;			// sizeof(EditAnimationParams)
 	LPSTR	m_pWindowTitle;		// Picture Editor title (NULL = default title)
@@ -972,8 +1133,32 @@ typedef struct EditAnimationParams {
 	DWORD	m_dwFixedWidth;		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
 	DWORD	m_dwFixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
 
-} EditAnimationParams;
-typedef EditAnimationParams* LPEDITANIMATIONPARAMS;
+} EditAnimationParamsA;
+typedef EditAnimationParamsA* LPEDITANIMATIONPARAMSA;
+
+typedef struct EditAnimationParamsW {
+
+	DWORD	m_dwSize;			// sizeof(EditAnimationParams)
+	LPWSTR	m_pWindowTitle;		// Picture Editor title (NULL = default title)
+	int		m_nImages;			// Number of images in the list
+	int		m_nMaxImages;		// Maximum number of images in the list
+	int		m_nStartIndex;		// Index of first image to edit in the editor
+	LPWORD	m_pImages;			// Image list (one WORD per image)
+	LPWSTR*	m_pImageTitles;		// Image titles (can be NULL)
+	DWORD	m_dwOptions;		// Options, see PictEdDefs.h
+	DWORD	m_dwFixedWidth;		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
+	DWORD	m_dwFixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
+
+} EditAnimationParamsW;
+typedef EditAnimationParamsW* LPEDITANIMATIONPARAMSW;
+
+#ifdef _UNICODE
+#define EditAnimationParams	EditAnimationParamsW
+typedef EditAnimationParamsW* LPEDITANIMATIONPARAMS;
+#else
+#define EditAnimationParams	EditAnimationParamsA
+typedef EditAnimationParamsA* LPEDITANIMATIONPARAMS;
+#endif
 
 // Global variables structure
 #ifdef __cplusplus
@@ -1015,15 +1200,15 @@ typedef	struct	mv {
 		LPVOID			mvRunHdr;
 	#endif
 	DWORD				mvPrefs;				// Preferences (sound on/off)
-	LPSTR				subType;
+	LPTSTR				subType;
 	BOOL				mvFullScreen;			// Full screen mode
-	LPSTR				mvMainAppFileName;		// App filename
+	LPTSTR				mvMainAppFileName;		// App filename
 	int					mvAppListCount;
 	int					mvAppListSize;
 	CRunApp**			mvAppList;
 	int					mvExtListCount;
 	int					mvExtListSize;
-	LPSTR *				mvExtList;
+	LPTSTR *			mvExtList;
 	int					mvNbDllTrans;
 	dllTrans*			mvDllTransList;
 	DWORD				mvJoyCaps[32];
@@ -1036,15 +1221,15 @@ typedef	struct	mv {
 	////////////
 
 	// Editor: Open Help file
-	void				(CALLBACK * mvHelp) (LPCSTR pHelpFile, UINT nID, LPARAM lParam);
+	void				(CALLBACK * mvHelpA) (LPCSTR pHelpFile, UINT nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation
-	BOOL				(CALLBACK * mvGetDefaultFont) (LPLOGFONT plf, LPSTR pStyle, int cbSize);
+	BOOL				(CALLBACK * mvGetDefaultFontA) (LPLOGFONTA plf, LPSTR pStyle, int cbSize);
 
 	// Editor: Edit images and animations
-	BOOL				(CALLBACK * mvEditSurface) (LPVOID edPtr, LPEDITSURFACEPARAMS pParams, HWND hParent);
-	BOOL				(CALLBACK * mvEditImage) (LPVOID edPtr, LPEDITIMAGEPARAMS pParams, HWND hParent);
-	BOOL				(CALLBACK * mvEditAnimation) (LPVOID edPtr, LPEDITANIMATIONPARAMS pParams, HWND hParent);
+	BOOL				(CALLBACK * mvEditSurfaceA) (LPVOID edPtr, LPEDITSURFACEPARAMSA pParams, HWND hParent);
+	BOOL				(CALLBACK * mvEditImageA) (LPVOID edPtr, LPEDITIMAGEPARAMSA pParams, HWND hParent);
+	BOOL				(CALLBACK * mvEditAnimationA) (LPVOID edPtr, LPEDITANIMATIONPARAMSA pParams, HWND hParent);
 
 	// Runtime: Extension User data
 	LPVOID				(CALLBACK * mvGetExtUserData) (CRunApp* pApp, HINSTANCE hInst);
@@ -1058,16 +1243,16 @@ typedef	struct	mv {
 	void				(CALLBACK * mvAddBackdrop) (cSurface* pSf, int x, int y, DWORD dwInkEffect, DWORD dwInkEffectParam, int nObstacleType, int nLayer);
 
 	// Runtime: Binary files
-	BOOL				(CALLBACK * mvGetFile)(LPCSTR pPath, LPSTR pFilePath, DWORD dwFlags);
-	void				(CALLBACK * mvReleaseFile)(LPCSTR pPath);
-	HANDLE				(CALLBACK * mvOpenHFile)(LPCSTR pPath, LPDWORD pDwSize, DWORD dwFlags);
+	BOOL				(CALLBACK * mvGetFileA)(LPCSTR pPath, LPSTR pFilePath, DWORD dwFlags);
+	void				(CALLBACK * mvReleaseFileA)(LPCSTR pPath);
+	HANDLE				(CALLBACK * mvOpenHFileA)(LPCSTR pPath, LPDWORD pDwSize, DWORD dwFlags);
 	void				(CALLBACK * mvCloseHFile)(HANDLE hf);
 
 	// Plugin: download file
-	int					(CALLBACK * mvLoadNetFile) (LPSTR pFilename);
+	int					(CALLBACK * mvLoadNetFileA) (LPSTR pFilename);
 
 	// Plugin: send command to Vitalize
-	int					(CALLBACK * mvNetCommand) (int, LPVOID, DWORD, LPVOID, DWORD);
+	int					(CALLBACK * mvNetCommandA) (int, LPVOID, DWORD, LPVOID, DWORD);
 
 	// Editor & Runtime: Returns the version of MMF or of the runtime
 	DWORD				(CALLBACK * mvGetVersion) ();
@@ -1079,8 +1264,30 @@ typedef	struct	mv {
 		LRESULT			(CALLBACK * mvCallFunction) (LPVOID edPtr, int nFnc, LPARAM lParam1, LPARAM lParam2, LPARAM lParam3);
 	#endif
 
+	// Editor: Open Help file (UNICODE)
+	void				(CALLBACK * mvHelpW) (LPCWSTR pHelpFile, UINT nID, LPARAM lParam);
+
+	// Editor: Get default font for object creation (UNICODE)
+	BOOL				(CALLBACK * mvGetDefaultFontW) (LPLOGFONTW plf, LPWSTR pStyle, int cbSize);
+
+	// Editor: Edit images and animations (UNICODE)
+	BOOL				(CALLBACK * mvEditSurfaceW) (LPVOID edPtr, LPEDITSURFACEPARAMSW pParams, HWND hParent);
+	BOOL				(CALLBACK * mvEditImageW) (LPVOID edPtr, LPEDITIMAGEPARAMSW pParams, HWND hParent);
+	BOOL				(CALLBACK * mvEditAnimationW) (LPVOID edPtr, LPEDITANIMATIONPARAMSW pParams, HWND hParent);
+
+	// Runtime: Binary files (UNICODE)
+	BOOL				(CALLBACK * mvGetFileW)(LPCWSTR pPath, LPWSTR pFilePath, DWORD dwFlags);
+	void				(CALLBACK * mvReleaseFileW)(LPCWSTR pPath);
+	HANDLE				(CALLBACK * mvOpenHFileW)(LPCWSTR pPath, LPDWORD pDwSize, DWORD dwFlags);
+
+	// Plugin: download file
+	int					(CALLBACK * mvLoadNetFileW) (LPWSTR pFilename);
+
+	// Plugin: send command to Vitalize
+	int					(CALLBACK * mvNetCommandW) (int, LPVOID, DWORD, LPVOID, DWORD);
+
 	// Place-holder for next versions
-	LPVOID				mvAdditionalFncs[16];
+	LPVOID				mvAdditionalFncs[6];
 
 #ifdef __cplusplus
 };
@@ -1088,6 +1295,34 @@ typedef	struct	mv {
 } mv;
 #endif
 typedef mv *LPMV;
+
+#ifdef _UNICODE
+#define mvHelp	mvHelpW
+#define mvGetDefaultFont	mvGetDefaultFontW
+#define mvEditSurface	mvEditSurfaceW
+#define mvEditImage	mvEditImageW
+#define mvEditAnimation	mvEditAnimationW
+#define mvGetFile	mvGetFileW
+#define mvReleaseFile	mvReleaseFileW
+#define mvLoadNetFile	mvLoadNetFileW
+#define mvNetCommand	mvNetCommandW
+#define	mvGetFile		mvGetFileW
+#define	mvReleaseFile	mvReleaseFileW
+#define mvOpenHFile		mvOpenHFileW
+#else
+#define mvHelp	mvHelpA
+#define mvGetDefaultFont	mvGetDefaultFontA
+#define mvEditSurface	mvEditSurfaceA
+#define mvEditImage	mvEditImageA
+#define mvEditAnimation	mvEditAnimationA
+#define mvGetFile	mvGetFileA
+#define mvReleaseFile	mvReleaseFileA
+#define mvLoadNetFile	mvLoadNetFileA
+#define mvNetCommand	mvNetCommandA
+#define	mvGetFile		mvGetFileA
+#define	mvReleaseFile	mvReleaseFileA
+#define mvOpenHFile		mvOpenHFileA
+#endif
 
 // Callback function identifiers for mvCallFunction
 enum {
@@ -1111,17 +1346,41 @@ enum {
 	EF_SETFRAMEPROPCHECK,	// Set frame's property check state
 	EF_INVALIDATEOBJECT,	// Refresh object in frame editor
 	EF_RECALCLAYOUT,		// Recalc runtime layout (docking)
+	EF_GETNITEMS,			// Get number of items - not yet implemented
+	EF_GETNEXTITEM,			// Get next item - not yet implemented
+	EF_GETNINSTANCES,		// Get number of item instances - not yet implemented
+	EF_GETNEXTINSTANCE,		// Get next item instance - not yet implemented
 
 	// Editor & runtime
-	EF_MALLOC=100,				// Allocate memory
-	EF_CALLOC,					// Allocate memory & set it to 0
-	EF_REALLOC,					// Re-allocate memory
-	EF_FREE,					// Free memory
-	EF_GETSOUNDMGR,				// Get sound manager
-	EF_CLOSESOUNDMGR,			// Close sound manager
-	EF_ENTERMODALLOOP,			// Reserved
-	EF_EXITMODALLOOP,			// Reserved
+	EF_MALLOC=100,			// Allocate memory
+	EF_CALLOC,				// Allocate memory & set it to 0
+	EF_REALLOC,				// Re-allocate memory
+	EF_FREE,				// Free memory
+	EF_GETSOUNDMGR,			// Get sound manager
+	EF_CLOSESOUNDMGR,		// Close sound manager
+	EF_ENTERMODALLOOP,		// Reserved
+	EF_EXITMODALLOOP,		// Reserved
+	EF_CREATEEFFECT,		// Create effect (runtime only)
+	EF_DELETEEFFECT,		// Delete effect (runtime only)
+	EF_CREATEIMAGEFROMFILEA,// Create image from file (runtime only)
+	EF_NEEDBACKGROUNDACCESS,// HWA : tell the frame the frame surface can be read (runtime only)
+	EF_ISHWA,				// Returns TRUE if HWA version (editor and runtime)
+	EF_ISUNICODE,			// Returns TRUE if the editor or runtime is in Unicode mode
+	EF_ISUNICODEAPP,		// Returns TRUE if the application being loaded is a Unicode application
+	EF_GETAPPCODEPAGE,		// Returns the code page of the application
+	EF_CREATEIMAGEFROMFILEW,// Create image from file (runtime only)
 };
+
+// 3rd parameter of EF_CREATEIMAGEFROMFILE
+typedef struct CreateImageFromFileInfo {
+	int			nSize;
+	int			xHS;
+	int			yHS;
+	int			xAP;
+	int			yAP;
+	COLORREF	trspColor;
+} CreateImageFromFileInfo;
+
 
 // Callback function macros for mvCallFunction
 #ifdef __cplusplus
@@ -1200,6 +1459,52 @@ __inline CSoundManager* mvGetSoundMgr(LPMV mV) \
 __inline void mvCloseSoundMgr(LPMV mV) \
 	{ mV->mvCallFunction(NULL, EF_CLOSESOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
+__inline int mvGetNItems(LPMV mV, LPVOID edPtr, LPCSTR extName) \
+	{ return mV->mvCallFunction(edPtr, EF_GETNITEMS, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
+
+__inline LPVOID mvGetFirstItem(LPMV mV, LPVOID edPtr, LPCSTR extName) \
+	{ return (LPVOID)mV->mvCallFunction(edPtr, EF_GETNEXTITEM, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
+
+__inline LPVOID mvGetNextItem(LPMV mV, LPVOID edPtr, LPVOID edPtr1, LPCSTR extName) \
+	{ return (LPVOID)mV->mvCallFunction(edPtr, EF_GETNEXTITEM, (LPARAM)edPtr1, (LPARAM)extName, (LPARAM)0); }
+
+#ifdef HWABETA
+
+__inline BOOL mvCreateEffect(LPMV mV, LPCSTR pEffectName, LPINT pEffect, LPARAM* pEffectParam) \
+	{ return (BOOL)mV->mvCallFunction(NULL, EF_CREATEEFFECT, (LPARAM)pEffectName, (LPARAM)pEffect, (LPARAM)pEffectParam); }
+
+__inline void mvDeleteEffect(LPMV mV, int nEffect, LPARAM lEffectParam) \
+	{ mV->mvCallFunction(NULL, EF_DELETEEFFECT, (LPARAM)nEffect, (LPARAM)lEffectParam, (LPARAM)0); }
+
+#endif // HWABETA
+
+__inline BOOL mvCreateImageFromFileA(LPMV mV, LPWORD pwImg, LPCSTR pFilename, CreateImageFromFileInfo* pInfo) \
+	{ return (BOOL)mV->mvCallFunction(NULL, EF_CREATEIMAGEFROMFILEA, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
+
+__inline BOOL mvCreateImageFromFileW(LPMV mV, LPWORD pwImg, LPCWSTR pFilename, CreateImageFromFileInfo* pInfo) \
+	{ return (BOOL)mV->mvCallFunction(NULL, EF_CREATEIMAGEFROMFILEW, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
+
+__inline LPVOID mvNeebBackgroundAccess(LPMV mV, CRunFrame* pFrame, BOOL bNeedAccess) \
+	{ return (LPVOID)mV->mvCallFunction(NULL, EF_NEEDBACKGROUNDACCESS, (LPARAM)pFrame, (LPARAM)bNeedAccess, (LPARAM)0); }
+
+__inline BOOL mvIsHWAVersion(LPMV mV) \
+	{ return mV->mvCallFunction(NULL, EF_ISHWA, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+
+__inline BOOL mvIsUnicodeVersion(LPMV mV) \
+	{ return mV->mvCallFunction(NULL, EF_ISUNICODE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
+
+__inline BOOL mvIsUnicodeApp(LPMV mV, LPVOID pApp) \
+	{ return mV->mvCallFunction(NULL, EF_ISUNICODEAPP, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
+
+__inline int mvGetAppCodePage(LPMV mV, LPVOID pApp) \
+	{ return mV->mvCallFunction(NULL, EF_GETAPPCODEPAGE, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
+
+#ifdef _UNICODE
+#define mvCreateImageFromFile	mvCreateImageFromFileW
+#else
+#define mvCreateImageFromFile	mvCreateImageFromFileA
+#endif
+
 #endif // __cplusplus
 
 // Options for OpenHFile
@@ -1213,13 +1518,13 @@ typedef	int (CALLBACK* ENUMELTPROC)(LPWORD, int, LPARAM, LPARAM);
 // Extension function table
 typedef	struct	tagKpxFunc {
 	HINSTANCE			kpxHInst;
-	LPSTR				kpxName;
-	LPSTR				kpxSubType;
+	LPTSTR				kpxName;
+	LPTSTR				kpxSubType;
 	LPVOID				kpxUserData;
 	DWORD ( WINAPI		* kpxGetInfos) (int);
 	int  ( WINAPI		* kpxLoadObject) (mv *, OI*, LPBYTE, int);
 	void ( WINAPI		* kpxUnloadObject) (mv *, LPBYTE, int);
-	void ( WINAPI		* kpxUpdateFileNames) (mv *, LPSTR, LPBYTE, void (WINAPI * )(LPSTR, LPSTR));
+	void ( WINAPI		* kpxUpdateFileNames) (mv *, LPTSTR, LPBYTE, void (WINAPI * )(LPCTSTR, LPTSTR));
 	short( WINAPI		* kpxGetRunObjectInfos) (mv *, LPBYTE);
 	short( WINAPI		* kpxWindowProc) (LPBYTE, HWND, UINT, WPARAM, LPARAM);
 	int	 ( WINAPI		* kpxEnumElts) (mv *, LPBYTE, ENUMELTPROC, ENUMELTPROC, LPARAM, LPARAM);
@@ -1233,13 +1538,14 @@ typedef	struct	tagKpxFunc {
 #if defined(VITALIZE)
 	BOOL				bValidated;
 #endif
+	BOOL				bUnicode;
 } kpxFunc;
 typedef kpxFunc * fpKpxFunc;
 
 // Movement Extension
 typedef	struct	MvxFnc {
 	HINSTANCE			mvxHInst;
-	LPSTR				mvxFileTitle;
+	LPTSTR				mvxFileTitle;
 
 	CMvt* ( CALLBACK	* mvxCreateMvt) (DWORD);
 
@@ -1256,7 +1562,7 @@ typedef	struct	MvxFnc {
 #endif	// RUN_TIME
 
 // Restore structure alignement
-#ifndef      _H2INC 
+#ifndef	  _H2INC 
 #pragma pack( pop, _pack_cncy_ )
 #endif
 

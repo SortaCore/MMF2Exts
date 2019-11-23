@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -59,28 +59,28 @@ class GrFmtExrReader : public GrFmtReader
 {
 public:
 
-    GrFmtExrReader( const char* filename );
-    ~GrFmtExrReader();
+	GrFmtExrReader( const char* filename );
+	~GrFmtExrReader();
 
-    bool  ReadData( uchar* data, int step, int color );
-    bool  ReadHeader();
-    void  Close();
+	bool  ReadData( uchar* data, int step, int color );
+	bool  ReadHeader();
+	void  Close();
 
 protected:
-    void  UpSample( uchar *data, int xstep, int ystep, int xsample, int ysample );
-    void  UpSampleX( float *data, int xstep, int xsample );
-    void  UpSampleY( uchar *data, int xstep, int ystep, int ysample );
-    void  ChromaToBGR( float *data, int numlines, int step );
-    void  RGBToGray( float *in, float *out );
+	void  UpSample( uchar *data, int xstep, int ystep, int xsample, int ysample );
+	void  UpSampleX( float *data, int xstep, int xsample );
+	void  UpSampleY( uchar *data, int xstep, int ystep, int ysample );
+	void  ChromaToBGR( float *data, int numlines, int step );
+	void  RGBToGray( float *in, float *out );
 
-    InputFile      *m_file;
-    PixelType       m_type;
-    Box2i           m_datawindow;
-    bool            m_ischroma;
-    const Channel  *m_red;
-    const Channel  *m_green;
-    const Channel  *m_blue;
-    Chromaticities  m_chroma;
+	InputFile	  *m_file;
+	PixelType		m_type;
+	Box2i			m_datawindow;
+	bool			m_ischroma;
+	const Channel  *m_red;
+	const Channel  *m_green;
+	const Channel  *m_blue;
+	Chromaticities  m_chroma;
 };
 
 
@@ -88,12 +88,12 @@ class GrFmtExrWriter : public GrFmtWriter
 {
 public:
 
-    GrFmtExrWriter( const char* filename );
-    ~GrFmtExrWriter();
+	GrFmtExrWriter( const char* filename );
+	~GrFmtExrWriter();
 
-    bool  IsFormatSupported( int depth );
-    bool  WriteImage( const uchar* data, int step,
-                      int width, int height, int depth, int channels );
+	bool  IsFormatSupported( int depth );
+	bool  WriteImage( const uchar* data, int step,
+					  int width, int height, int depth, int channels );
 protected:
 };
 
@@ -103,12 +103,12 @@ class GrFmtExr : public GrFmtFilterFactory
 {
 public:
 
-    GrFmtExr();
-    ~GrFmtExr();
+	GrFmtExr();
+	~GrFmtExr();
 
-    GrFmtReader* NewReader( const char* filename );
-    GrFmtWriter* NewWriter( const char* filename );
-//    bool CheckSignature( const char* signature );
+	GrFmtReader* NewReader( const char* filename );
+	GrFmtWriter* NewWriter( const char* filename );
+//	bool CheckSignature( const char* signature );
 };
 
 #endif

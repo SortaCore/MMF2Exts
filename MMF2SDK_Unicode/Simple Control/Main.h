@@ -30,7 +30,7 @@
 #define	EXP_GETTEXT					0
 #define	EXP_GETINT					1
 #define	EXP_GETFLOAT				2
-#define	EXP_LAST                    3
+#define	EXP_LAST					3
 
 // ---------------------
 // FLAGS
@@ -39,7 +39,7 @@
 #define	SCTRL_BORDER				2
 
 // ---------------------
-// OBJECT DATA STRUCTURE 
+// OBJECT DATA STRUCTURE
 // ---------------------
 // Used at edit time and saved in the MFA/CCN/EXE files
 
@@ -96,7 +96,7 @@ typedef EDITDATAW *			LPEDATAW;
 // Used at runtime. Initialize it in the CreateRunObject function.
 // Free any allocated memory or object in the DestroyRunObject function.
 //
-// Note: if you store C++ objects in this structure and do not store 
+// Note: if you store C++ objects in this structure and do not store
 // them as pointers, you must call yourself their constructor in the
 // CreateRunObject function and their destructor in the DestroyRunObject
 // function. As the RUNDATA structure is a simple C structure and not a C++ object.
@@ -143,6 +143,6 @@ typedef	RUNDATA	*			LPRDATA;
 
 
 // If to handle message, specify the priority of the handling procedure
-// 0= low, 255= very high. You should use 100 as normal.                                                
+// 0= low, 255= very high. You should use 100 as normal.
 // --------------------------------------------------------------------
 #define	WINDOWPROC_PRIORITY		100

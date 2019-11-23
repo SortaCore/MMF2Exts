@@ -10,23 +10,19 @@
 #pragma optimize("gsy",on)
 #endif // _OPT_MAX_
 
-#pragma comment(linker,"/RELEASE")
+#if _MSC_VER < 1900
 
-#ifdef _MERGE_DATA_					// Not set by default
-#ifdef _MERGE_RDATA_
-#pragma comment(linker,"/merge:.rdata=.data")
-#endif // _MERGE_RDATA_
-#pragma comment(linker,"/merge:.text=.data")
-#pragma comment(linker,"/merge:.reloc=.data")
-#pragma comment(linker,"/ignore:4078")
-#endif // _MERGE_DATA_
+#pragma comment(linker,"/RELEASE")
 
 #if _MSC_VER >= 1000				// Slightly slower loading time under Windows 9x, but may save some Kb
 #pragma comment(linker,"/opt:nowin98")
 #endif // _MSC_VER >= 1000
 
+#endif
+
 #endif // NDEBUG
 #endif // COMPILE_SMALL
+
 // end of z33z stuff
 
 // MAIN INCLUDES
@@ -38,7 +34,7 @@
 #include	<windows.h>
 #include	<mmsystem.h>
 #include	<stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include	<io.h>
 #else
 #include	<dos.h>
@@ -47,6 +43,7 @@
 #include	<stdlib.h>
 #include	<stddef.h>
 #include	<ctype.h>
+#include	<tchar.h>
 #include	<math.h>
 #include	<limits.h>
 #ifndef _LINUX
@@ -67,7 +64,7 @@
 	#if defined(_ASSERTON) && !defined(_68K_)
 		#define DEBUG_NEW	new
 
-		#ifdef WIN32
+		#ifdef _WIN32
 				#define	ASSERT(exp)	\
 					do { if (!(exp) && \
 							(1 == _CrtDbgReport(_CRT_ASSERT, THIS_FILE, __LINE__, NULL, NULL))) \
@@ -106,10 +103,10 @@
 #include	"evtccx.h"
 #include	"Props.h"
 #else
-// #include	"..\..\dll\cnpdll.h"
-// #include	"..\..\runtime\cncr.h"
-// #include	"..\..\events\evtccx.h"
-// #include	"..\inc\props.h"
+#include	"..\..\dll\cnpdll.h"
+#include	"..\..\runtime\cncr.h"
+#include	"..\..\events\evtccx.h"
+#include	"..\inc\props.h"
 #endif
 
 // Other definitions

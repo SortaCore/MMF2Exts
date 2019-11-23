@@ -34,12 +34,12 @@ public:
 
 	// Filter info
 	virtual int			GetFilterCount();
-	virtual LPCSTR		GetFilterName(int nIndex);
-	virtual LPCSTR		GetFilterFileName(int nIndex);
+	virtual LPCSTR		GetFilterNameA(int nIndex);
+	virtual LPCSTR		GetFilterFileNameA(int nIndex);
 	virtual DWORD		GetFilterID(int nIndex);
 	virtual int			GetFilterIndex(DWORD dwID);
-	virtual LPCSTR*		GetFilterExts(int nIndex);
-	virtual LPCSTR*		GetFilterDependencies(int nIndex);
+	virtual LPCSTR*		GetFilterExtsA(int nIndex);
+	virtual LPCSTR*		GetFilterDependenciesA(int nIndex);
 	virtual BOOL		CanReadFile(int nIndex, CInputFile* pif);
 
 	// Filter object creation
@@ -49,6 +49,27 @@ public:
 
 	// Update
 	virtual void		RemoveFilter(int nIndex);
+
+	// Unicode
+	virtual void		Initialize(LPCWSTR pFilterPath, LPCWSTR pFileType, DWORD dwFlags);
+	virtual LPCWSTR		GetFilterNameW(int nIndex);
+	virtual LPCWSTR		GetFilterFileNameW(int nIndex);
+	virtual LPCWSTR*	GetFilterExtsW(int nIndex);
+	virtual LPCWSTR*	GetFilterDependenciesW(int nIndex);
+
+	#ifdef _CFCFILTERMGR_UNICODE_DEFS
+		#ifdef _UNICODE
+			#define GetFilterName GetFilterNameW
+			#define GetFilterFileName GetFilterFileNameW
+			#define GetFilterExts GetFilterExtsW
+			#define GetFilterDependencies GetFilterDependenciesW
+		#else
+			#define GetFilterName GetFilterNameA
+			#define GetFilterFileName GetFilterFileNameA
+			#define GetFilterExts GetFilterExtsA
+			#define GetFilterDependencies GetFilterDependenciesA
+		#endif
+	#endif
 
 	// Data
 public:

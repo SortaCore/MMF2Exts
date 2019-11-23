@@ -1,0 +1,70 @@
+{
+	"Identifier": "UF16",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "UTF-16 object",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
+			"Comment": "Converts between UTF-16 text and numeric representation, and UTF-8/ANSI. (v1.4)",
+			"Help": "",
+			"URL": "https://dark-wire.com/"
+		},
+		"ActionMenu": [
+			[ 0, "Store UTF-16 string at memory address" ]
+		],
+		"ConditionMenu": [
+		],
+		"ExpressionMenu": [
+			[ 0, "Convert UTF-16 Char to UTF-16 Int" ],
+			[ 1, "Convert UTF-16 Int to UTF-16 Char" ],
+			"---",
+			[ 2, "Read UTF-16 String from UTF-16 Memory" ],
+			[ 3, "Convert UTF-8 Memory to UTF-16 String" ]
+		],
+		"Actions": [
+			{
+				"Title": "%o : Store UTF-16 string %0 at memory address %1 (with null excluded = %2)",
+				"Parameters": [
+					[ "String", "UTF-16 string" ],
+					[ "Integer", "Memory address" ],
+					[ "Integer", "Exclude null terminator? (0 or 1, you probably want 0)" ]
+				]
+			}
+		],
+		"Conditions": [
+		],
+		"Expressions": [
+			{
+				"Title": "UTF16CharToUTF16Int(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "UTF-16 character" ]
+				]
+			},
+			{
+				"Title": "UTF16IntToUTF16Char$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "UTF-16 integer" ]
+				]
+			},
+			{
+				"Title": "UTF16StringFromUTF16Memory$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Memory address" ],
+					[ "Integer", "Num of UTF16 chars (or -1 if null-terminated)" ]
+				]
+			},
+			{
+				"Title": "UTF16StringFromUTF8Memory$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Memory address" ],
+					[ "Integer", "Num of UTF8 chars (or -1 if null-terminated)" ]
+				]
+			}
+		]
+	}
+}

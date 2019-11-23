@@ -594,7 +594,7 @@ void WINAPI	DLLExport RemoveObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, u
 {
 #ifndef RUN_ONLY
 	// Is the last object removed?
-    if (0 == cpt)
+	if (0 == cpt)
 	{
 		// Do whatever necessary to remove our data
 	}
@@ -1189,11 +1189,11 @@ void WINAPI GetParameterString(mv _far *mV, short code, paramExt* pExt, LPSTR pD
 void WINAPI	DLLExport GetObjInfos (mv _far *mV, LPEDATA edPtr, LPSTR ObjName, LPSTR ObjAuthor, LPSTR ObjCopyright, LPSTR ObjComment, LPSTR ObjHttp)
 {
 #ifndef RUN_ONLY
-	strcpy(ObjName,ObjectName);
-	strcpy(ObjAuthor,ObjectAuthor);
-	strcpy(ObjCopyright,ObjectCopyright);
-	strcpy(ObjComment,ObjectComment);
-	strcpy(ObjHttp,ObjectURL);
+	strcpy_s(ObjName, 255, ObjectName);
+	strcpy_s(ObjAuthor, 255, ObjectAuthor);
+	strcpy_s(ObjCopyright, 255, ObjectCopyright);
+	strcpy_s(ObjComment, 1023, ObjectComment);
+	strcpy_s(ObjHttp, 255, ObjectURL);
 #endif
 }
 

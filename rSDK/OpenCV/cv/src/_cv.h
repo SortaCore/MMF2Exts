@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -43,8 +43,8 @@
 #define _CV_INTERNAL_H_
 
 #if defined _MSC_VER && _MSC_VER >= 1200
-    /* disable warnings related to inline functions */
-    #pragma warning( disable: 4711 4710 4514 )
+	/* disable warnings related to inline functions */
+	#pragma warning( disable: 4711 4710 4514 )
 #endif
 
 #include "cv.h"
@@ -61,10 +61,10 @@ typedef unsigned char uchar;
 typedef unsigned short ushort;
 
 #ifdef __BORLANDC__
-    #define     WIN32
-    #define     CV_DLL
-    #undef      _CV_ALWAYS_PROFILE_
-    #define     _CV_ALWAYS_NO_PROFILE_
+	#define	 WIN32
+	#define	 CV_DLL
+	#undef	  _CV_ALWAYS_PROFILE_
+	#define	 _CV_ALWAYS_NO_PROFILE_
 #endif
 
 /* helper tables */
@@ -84,10 +84,10 @@ extern const float icv8x32fSqrTab[];
 CV_INLINE  CvDataType icvDepthToDataType( int type );
 CV_INLINE  CvDataType icvDepthToDataType( int type )
 {
-    return (CvDataType)(
-            ((((int)cv8u)|((int)cv8s << 4)|((int)cv16u << 8)|
-              ((int)cv16s << 12)|((int)cv32s << 16)|((int)cv32f << 20)|
-              ((int)cv64f << 24)) >> CV_MAT_DEPTH(type)*4) & 15);
+	return (CvDataType)(
+			((((int)cv8u)|((int)cv8s << 4)|((int)cv16u << 8)|
+			  ((int)cv16s << 12)|((int)cv32s << 16)|((int)cv32f << 20)|
+			  ((int)cv64f << 24)) >> CV_MAT_DEPTH(type)*4) & 15);
 }
 
 #define CV_HIST_DEFAULT_TYPE CV_32F
@@ -98,12 +98,12 @@ CV_EXTERN_C_FUNCPTR( void (CV_CDECL * CvWriteNodeFunction)(void* seq,void* node)
 
 typedef struct CvPyramid
 {
-    uchar **ptr;
-    CvSize *sz;
-    double *rate;
-    int *step;
-    uchar *state;
-    int level;
+	uchar **ptr;
+	CvSize *sz;
+	double *rate;
+	int *step;
+	uchar *state;
+	int level;
 }
 CvPyramid;
 

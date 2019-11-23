@@ -48,15 +48,15 @@ typedef	struct tiff TIFF;
  * tiff.h directly.
  *
  * NB: ttag_t is unsigned int and not unsigned short because
- *     ANSI C requires that the type before the ellipsis be a
- *     promoted type (i.e. one of int, unsigned int, pointer,
- *     or double) and because we defined pseudo-tags that are
- *     outside the range of legal Aldus-assigned tags.
+ *	 ANSI C requires that the type before the ellipsis be a
+ *	 promoted type (i.e. one of int, unsigned int, pointer,
+ *	 or double) and because we defined pseudo-tags that are
+ *	 outside the range of legal Aldus-assigned tags.
  * NB: tsize_t is int32 and not uint32 because some functions
- *     return -1.
+ *	 return -1.
  * NB: toff_t is not off_t for many reasons; TIFFs max out at
- *     32-bit file offsets being the most important, and to ensure
- *     that it is unsigned, rather than signed.
+ *	 32-bit file offsets being the most important, and to ensure
+ *	 that it is unsigned, rather than signed.
  */
 typedef	uint32 ttag_t;		/* directory tag */
 typedef	uint16 tdir_t;		/* directory index */
@@ -81,7 +81,7 @@ typedef	uint32 toff_t;		/* file offset */
 
 #if defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)
 #  if !defined(__CYGWIN) && !defined(AVOID_WIN32_FILEIO) && !defined(USE_WIN32_FILIO)
-#    define USE_WIN32_FILEIO
+#	define USE_WIN32_FILEIO
 #  endif
 #endif
 
@@ -103,7 +103,7 @@ typedef	void* thandle_t;	/* client data handle */
 /*
  * Flags to pass to TIFFPrintDirectory to control
  * printing of data structures that are potentially
- * very large.   Bit-or these flags to enable printing
+ * very large.	Bit-or these flags to enable printing
  * multiple items.
  */
 #define	TIFFPRINT_NONE		0x0		/* no extra info */
@@ -153,7 +153,7 @@ typedef struct {				/* YCbCr->RGB support */
 	int*	Cb_b_tab;
 	int32*	Cr_g_tab;
 	int32*	Cb_g_tab;
-        int32*  Y_tab;
+		int32*  Y_tab;
 } TIFFYCbCrToRGB;
 
 typedef struct {				/* CIE Lab 1976->RGB support */
@@ -182,10 +182,10 @@ typedef struct _TIFFRGBAImage TIFFRGBAImage;
  * and draw the unpacked raster on the display.
  */
 typedef void (*tileContigRoutine)
-    (TIFFRGBAImage*, uint32*, uint32, uint32, uint32, uint32, int32, int32,
+	(TIFFRGBAImage*, uint32*, uint32, uint32, uint32, uint32, int32, int32,
 	unsigned char*);
 typedef void (*tileSeparateRoutine)
-    (TIFFRGBAImage*, uint32*, uint32, uint32, uint32, uint32, int32, int32,
+	(TIFFRGBAImage*, uint32*, uint32, uint32, uint32, uint32, int32, int32,
 	unsigned char*, unsigned char*, unsigned char*, unsigned char*);
 /*
  * RGBA-reader state.
@@ -208,18 +208,18 @@ struct _TIFFRGBAImage {
 						/* get image data routine */
 	int	(*get)(TIFFRGBAImage*, uint32*, uint32, uint32);
 	union {
-	    void (*any)(TIFFRGBAImage*);
-	    tileContigRoutine	contig;
-	    tileSeparateRoutine	separate;
+		void (*any)(TIFFRGBAImage*);
+		tileContigRoutine	contig;
+		tileSeparateRoutine	separate;
 	} put;					/* put decoded strip/tile */
 	TIFFRGBValue* Map;			/* sample mapping array */
 	uint32** BWmap;				/* black&white map */
 	uint32** PALmap;			/* palette image map */
 	TIFFYCbCrToRGB* ycbcr;			/* YCbCr conversion state */
-        TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
+		TIFFCIELabToRGB* cielab;		/* CIE L*a*b conversion state */
 
-        int	row_offset;
-        int     col_offset;
+		int	row_offset;
+		int	 col_offset;
 };
 
 /*
@@ -345,7 +345,7 @@ extern	int TIFFReadScanline(TIFF*, tdata_t, uint32, tsample_t = 0);
 extern	int TIFFWriteScanline(TIFF*, tdata_t, uint32, tsample_t = 0);
 extern	int TIFFReadRGBAImage(TIFF*, uint32, uint32, uint32*, int = 0);
 extern	int TIFFReadRGBAImageOriented(TIFF*, uint32, uint32, uint32*,
-				      int = ORIENTATION_BOTLEFT, int = 0);
+					  int = ORIENTATION_BOTLEFT, int = 0);
 #else
 extern	void TIFFPrintDirectory(TIFF*, FILE*, long);
 extern	int TIFFReadScanline(TIFF*, tdata_t, uint32, tsample_t);
@@ -366,11 +366,11 @@ extern	TIFF* TIFFOpenW(const wchar_t*, const char*);
 # endif /* __WIN32__ */
 extern	TIFF* TIFFFdOpen(int, const char*, const char*);
 extern	TIFF* TIFFClientOpen(const char*, const char*,
-	    thandle_t,
-	    TIFFReadWriteProc, TIFFReadWriteProc,
-	    TIFFSeekProc, TIFFCloseProc,
-	    TIFFSizeProc,
-	    TIFFMapFileProc, TIFFUnmapFileProc);
+		thandle_t,
+		TIFFReadWriteProc, TIFFReadWriteProc,
+		TIFFSeekProc, TIFFCloseProc,
+		TIFFSizeProc,
+		TIFFMapFileProc, TIFFUnmapFileProc);
 extern	const char* TIFFFileName(TIFF*);
 extern const char* TIFFSetFileName(TIFF*, const char *);
 extern	void TIFFError(const char*, const char*, ...);
@@ -382,9 +382,9 @@ extern	ttile_t TIFFComputeTile(TIFF*, uint32, uint32, uint32, tsample_t);
 extern	int TIFFCheckTile(TIFF*, uint32, uint32, uint32, tsample_t);
 extern	ttile_t TIFFNumberOfTiles(TIFF*);
 extern	tsize_t TIFFReadTile(TIFF*,
-	    tdata_t, uint32, uint32, uint32, tsample_t);
+		tdata_t, uint32, uint32, uint32, tsample_t);
 extern	tsize_t TIFFWriteTile(TIFF*,
-	    tdata_t, uint32, uint32, uint32, tsample_t);
+		tdata_t, uint32, uint32, uint32, tsample_t);
 extern	tstrip_t TIFFComputeStrip(TIFF*, uint32, tsample_t);
 extern	tstrip_t TIFFNumberOfStrips(TIFF*);
 extern	tsize_t TIFFReadEncodedStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
@@ -395,7 +395,7 @@ extern	tsize_t TIFFWriteEncodedStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawStrip(TIFF*, tstrip_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteEncodedTile(TIFF*, ttile_t, tdata_t, tsize_t);
 extern	tsize_t TIFFWriteRawTile(TIFF*, ttile_t, tdata_t, tsize_t);
-extern	int TIFFDataWidth(TIFFDataType);    /* table of tag datatype widths */
+extern	int TIFFDataWidth(TIFFDataType);	/* table of tag datatype widths */
 extern	void TIFFSetWriteOffset(TIFF*, toff_t);
 extern	void TIFFSwabShort(uint16*);
 extern	void TIFFSwabLong(uint32*);
@@ -436,61 +436,61 @@ extern	uint32 LogLuv32fromXYZ(float*, int);
 */
 extern  int  TIFFGetTagListCount( TIFF * );
 extern  ttag_t TIFFGetTagListEntry( TIFF *, int tag_index );
-    
+	
 #define	TIFF_ANY	TIFF_NOTYPE	/* for field descriptor searching */
 #define	TIFF_VARIABLE	-1		/* marker for variable length tags */
 #define	TIFF_SPP	-2		/* marker for SamplesPerPixel tags */
 #define	TIFF_VARIABLE2	-3		/* marker for uint32 var-length tags */
 
-#define FIELD_CUSTOM    65    
+#define FIELD_CUSTOM	65	
 
 typedef	struct {
 	ttag_t	field_tag;		/* field's tag */
 	short	field_readcount;	/* read count/TIFF_VARIABLE/TIFF_SPP */
 	short	field_writecount;	/* write count/TIFF_VARIABLE */
 	TIFFDataType field_type;	/* type of associated data */
-        unsigned short field_bit;	/* bit in fieldsset bit vector */
+		unsigned short field_bit;	/* bit in fieldsset bit vector */
 	unsigned char field_oktochange;	/* if true, can change while writing */
 	unsigned char field_passcount;	/* if true, pass dir count on set */
 	char	*field_name;		/* ASCII name */
 } TIFFFieldInfo;
 
 typedef struct _TIFFTagValue {
-    const TIFFFieldInfo  *info;
-    int             count;
-    void           *value;
+	const TIFFFieldInfo  *info;
+	int			 count;
+	void			*value;
 } TIFFTagValue;
 
 extern	void TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
 extern	const TIFFFieldInfo* TIFFFindFieldInfo(TIFF*, ttag_t, TIFFDataType);
 extern  const TIFFFieldInfo* TIFFFindFieldInfoByName(TIFF* , const char *,
-						     TIFFDataType);
+							 TIFFDataType);
 extern	const TIFFFieldInfo* TIFFFieldWithTag(TIFF*, ttag_t);
 extern	const TIFFFieldInfo* TIFFFieldWithName(TIFF*, const char *);
 
 typedef	int (*TIFFVSetMethod)(TIFF*, ttag_t, va_list);
 typedef	int (*TIFFVGetMethod)(TIFF*, ttag_t, va_list);
 typedef	void (*TIFFPrintMethod)(TIFF*, FILE*, long);
-    
+	
 typedef struct {
-    TIFFVSetMethod	vsetfield;	/* tag set routine */
-    TIFFVGetMethod	vgetfield;	/* tag get routine */
-    TIFFPrintMethod	printdir;	/* directory print routine */
+	TIFFVSetMethod	vsetfield;	/* tag set routine */
+	TIFFVGetMethod	vgetfield;	/* tag get routine */
+	TIFFPrintMethod	printdir;	/* directory print routine */
 } TIFFTagMethods;
-        
+		
 extern  TIFFTagMethods *TIFFAccessTagMethods( TIFF * );
 extern  void *TIFFGetClientInfo( TIFF *, const char * );
 extern  void TIFFSetClientInfo( TIFF *, void *, const char * );
-    
+	
 extern int TIFFCIELabToRGBInit(TIFFCIELabToRGB*, TIFFDisplay *, float*);
 extern void TIFFCIELabToXYZ(TIFFCIELabToRGB *, uint32, int32, int32,
-			    float *, float *, float *);
+				float *, float *, float *);
 extern void TIFFXYZToRGB(TIFFCIELabToRGB *, float, float, float,
 			 uint32 *, uint32 *, uint32 *);
 
 extern int TIFFYCbCrToRGBInit(TIFFYCbCrToRGB*, float*, float*);
 extern void TIFFYCbCrtoRGB(TIFFYCbCrToRGB *, uint32, int32, int32,
-			   uint32 *, uint32 *, uint32 *);
+				uint32 *, uint32 *, uint32 *);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

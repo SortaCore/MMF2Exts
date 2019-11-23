@@ -612,7 +612,7 @@ void WINAPI	DLLExport RemoveObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, u
 {
 #ifndef RUN_ONLY
 	// Is the last object removed?
-    if (0 == cpt)
+	if (0 == cpt)
 	{
 		// Do whatever necessary to remove our data
 	}

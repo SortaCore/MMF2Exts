@@ -14,28 +14,28 @@
 //
 //void  FillBitmapInfo( BITMAPINFO* bmi, int width, int height, int bpp, int origin )
 //{
-//    assert( bmi && width >= 0 && height >= 0 && (bpp == 8 || bpp == 24 || bpp == 32));
+//	assert( bmi && width >= 0 && height >= 0 && (bpp == 8 || bpp == 24 || bpp == 32));
 //
-//    BITMAPINFOHEADER* bmih = &(bmi->bmiHeader);
+//	BITMAPINFOHEADER* bmih = &(bmi->bmiHeader);
 //
-//    memset( bmih, 0, sizeof(*bmih));
-//    bmih->biSize = sizeof(BITMAPINFOHEADER);
-//    bmih->biWidth = width;
-//    bmih->biHeight = origin ? abs(height) : -abs(height);
-//    bmih->biPlanes = 1;
-//    bmih->biBitCount = (unsigned short)bpp;
-//    bmih->biCompression = BI_RGB;
+//	memset( bmih, 0, sizeof(*bmih));
+//	bmih->biSize = sizeof(BITMAPINFOHEADER);
+//	bmih->biWidth = width;
+//	bmih->biHeight = origin ? abs(height) : -abs(height);
+//	bmih->biPlanes = 1;
+//	bmih->biBitCount = (unsigned short)bpp;
+//	bmih->biCompression = BI_RGB;
 //
-//    if ( bpp == 8 )
-//    {
-//        RGBQUAD* palette = bmi->bmiColors;
-//        int i;
-//        for ( i = 0; i < 256; i++ )
-//        {
-//            palette[i].rgbBlue = palette[i].rgbGreen = palette[i].rgbRed = (BYTE)i;
-//            palette[i].rgbReserved = 0;
-//        }
-//    }
+//	if ( bpp == 8 )
+//	{
+//		RGBQUAD* palette = bmi->bmiColors;
+//		int i;
+//		for ( i = 0; i < 256; i++ )
+//		{
+//			palette[i].rgbBlue = palette[i].rgbGreen = palette[i].rgbRed = (BYTE)i;
+//			palette[i].rgbReserved = 0;
+//		}
+//	}
 //}
 
 short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr) { return(sizeof(RUNDATA)); }
@@ -67,7 +67,7 @@ short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr) { return(
 // CreateRunObject
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr) {
 	// Do some rSDK stuff
-	#include "rCreateRunObject.h"
+	#include "..\..\..\Inc\rCreateRunObject.h"
 
 	LPRH	rhPtr  = rdPtr->rHo.hoAdRunHeader;
 	// List of object offsets
@@ -148,12 +148,12 @@ short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr) {
 //
 //	rdPtr->pSf->Blit(*ps,
 //		rdPtr->rHo.hoX, rdPtr->rHo.hoY,	//Dest XY
-//		0, 0, //Src XY
+//		0, 0, // Src XY
 //		rdPtr->rHo.hoImgWidth, rdPtr->rHo.hoImgHeight, // Width/height
-//		(BlitMode)(rdPtr->rHo.hoOiList->oilInkEffect>>28), //BMODE_TRANSP,
-//		(BlitOp)((rdPtr->rHo.hoOiList->oilInkEffect<<16)>>16), //BOP_COPY,
+//		(BlitMode)(rdPtr->rHo.hoOiList->oilInkEffect>>28), // BMODE_TRANSP,
+//		(BlitOp)((rdPtr->rHo.hoOiList->oilInkEffect<<16)>>16), // BOP_COPY,
 //		rdPtr->rHo.hoOiList->oilEffectParam,
-//		0); //BLTF_COPYALPHA
+//		0); // BLTF_COPYALPHA
 //
 //	WinAddZone(rhPtr->rhIdEditWin, &rdPtr->rHo.hoRect);
 

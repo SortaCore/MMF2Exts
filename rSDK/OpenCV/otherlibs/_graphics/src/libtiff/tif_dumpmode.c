@@ -45,8 +45,8 @@ DumpModeEncode(TIFF* tif, tidata_t pp, tsize_t cc, tsample_t s)
 		if (tif->tif_rawcc + n > tif->tif_rawdatasize)
 			n = tif->tif_rawdatasize - tif->tif_rawcc;
 
-                assert( n > 0 );
-                
+				assert( n > 0 );
+				
 		/*
 		 * Avoid copy if client has setup raw
 		 * data buffer to avoid extra copy.
@@ -58,7 +58,7 @@ DumpModeEncode(TIFF* tif, tidata_t pp, tsize_t cc, tsample_t s)
 		pp += n;
 		cc -= n;
 		if (tif->tif_rawcc >= tif->tif_rawdatasize &&
-		    !TIFFFlushData1(tif))
+			!TIFFFlushData1(tif))
 			return (-1);
 	}
 	return (1);
@@ -73,8 +73,8 @@ DumpModeDecode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 	(void) s;
 	if (tif->tif_rawcc < cc) {
 		TIFFError(tif->tif_name,
-		    "DumpModeDecode: Not enough data for scanline %d",
-		    tif->tif_row);
+			"DumpModeDecode: Not enough data for scanline %d",
+			tif->tif_row);
 		return (0);
 	}
 	/*

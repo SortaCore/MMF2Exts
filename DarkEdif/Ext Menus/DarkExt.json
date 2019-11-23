@@ -1,0 +1,71 @@
+{
+	"Identifier": "EXMN",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "Ext Menus",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
+			"Comment": "Pulls out action, condition, expression menus from extensions.",
+			"Help": "",
+			"URL": "https://dark-wire.com/"
+		},
+		"ActionMenu": [
+			[ 0, "Set MFX File" ],
+			"---"
+		],
+		"ConditionMenu": [
+		],
+		"ExpressionMenu": [
+			[ 0, "Get Error" ],
+			[ 1, "Get Action Menu" ],
+			[ 2, "Get Condition Menu" ],
+			[ 3, "Get Expression Menu" ],
+			[ 4, "Get Action Infos" ],
+			[ 5, "Get Condition Infos" ],
+			[ 6, "Get Expression Infos" ]
+		],
+		"Actions": [
+			{
+				"Title": "Set MFX File to %0",
+				"Parameters": [
+					[ "File", "Filename" ]
+				]
+			}
+		],
+		"Conditions": [
+		],
+		"Expressions": [
+			{
+				"Title": "GetError$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetActionMenu$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetConditionMenu$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetExpressionMenu$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetActionInfos$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetConditionInfos$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetExpressionInfos$(",
+				"Returns": "Text"
+			}
+		],
+		"Properties": [
+		]
+	}
+}

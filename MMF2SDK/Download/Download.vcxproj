@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Edittime French|Win32">
+      <Configuration>Edittime French</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Edittime|Win32">
+      <Configuration>Edittime</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime French|Win32">
+      <Configuration>Runtime French</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|Win32">
+      <Configuration>Runtime</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Vitalize|Win32">
+      <Configuration>Vitalize</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2017F4A1-BFBB-49C5-A071-4DD42ECC95C5}</ProjectGuid>
+    <ProjectName>Download</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
+   <Error Condition="!exists('..\Lib\FusionSDK.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK.props&quot;." />
+   <Error Condition="!exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK_AfterMSPropSheets.props&quot;." />
+  </Target>
+  <Import Project="..\Lib\FusionSDK.props" Condition="exists('..\Lib\FusionSDK.props')" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <Import Project="..\Lib\FusionSDK_AfterMSPropSheets.props" Condition="exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="Edittime.cpp" />
+    <ClCompile Include="General.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Runtime.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\Ccx.h" />
+    <ClInclude Include="..\Inc\Ccxhdr.h" />
+    <ClInclude Include="..\Inc\CfcError.h" />
+    <ClInclude Include="..\Inc\CfcFile.h" />
+    <ClInclude Include="..\Inc\Cncf.h" />
+    <ClInclude Include="..\Inc\cncr.h" />
+    <ClInclude Include="..\Inc\Cncy.h" />
+    <ClInclude Include="..\Inc\Cnpdll.h" />
+    <ClInclude Include="..\Inc\colors.h" />
+    <ClInclude Include="..\Inc\EVTCCX.H" />
+    <ClInclude Include="..\Inc\Fill.h" />
+    <ClInclude Include="..\Inc\FilterMgr.h" />
+    <ClInclude Include="..\Inc\ImageFlt.h" />
+    <ClInclude Include="..\Inc\ImgFlt.h" />
+    <ClInclude Include="..\Inc\Palet.h" />
+    <ClInclude Include="..\Inc\PictEdDefs.h" />
+    <ClInclude Include="..\Inc\Props.h" />
+    <ClInclude Include="..\Inc\PTYPE.H" />
+    <ClInclude Include="..\Inc\SoundFilter.h" />
+    <ClInclude Include="..\Inc\SoundFilterMgr.h" />
+    <ClInclude Include="..\Inc\Surface.h" />
+    <ClInclude Include="..\Inc\TigsExt.hpp" />
+    <ClInclude Include="..\Inc\WinMacro.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Main.h" />
+    <ClInclude Include="Resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Ext.def" />
+    <None Include="EXTICON.BMP" />
+    <CustomBuildStep Include="res\EXTICON.BMP">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+    <None Include="EXTIMG.BMP" />
+    <CustomBuildStep Include="res\Extimg.bmp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">true</ExcludedFromBuild>
+    </CustomBuildStep>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ext.rc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'">true</ExcludedFromBuild>
+      <Culture Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'">0x040c</Culture>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">true</ExcludedFromBuild>
+      <Culture Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">0x040c</Culture>
+    </ResourceCompile>
+    <ResourceCompile Include="Ext_fr.rc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <Culture Condition="'$(Configuration)|$(Platform)'=='Edittime French|Win32'">0x040c</Culture>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">true</ExcludedFromBuild>
+      <Culture Condition="'$(Configuration)|$(Platform)'=='Runtime French|Win32'">0x040c</Culture>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Vitalize|Win32'">true</ExcludedFromBuild>
+    </ResourceCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

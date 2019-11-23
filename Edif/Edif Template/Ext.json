@@ -1,0 +1,60 @@
+{
+	"About": {
+		"Name": "Edif Template",
+		"Author": "Your Name",
+		"Copyright": "Copyright \u00A9 2019 Your Name",
+		"Comment": "A sentence or two to describe your extension",
+		"Help": "Help/Example.chm",
+		"Identifier": "EXMP",
+		"URL": "https://www.example.com/"
+	},
+	"ActionMenu": [
+		[ 0, "Action Example" ],
+		"---",
+		[ "Sub Menu",
+			[ 1, "Second Action Example" ]
+		]
+	],
+	"ConditionMenu": [
+		[ 0, "Are two numbers equal?" ]
+	],
+	"ExpressionMenu": [
+		[ 0, "Add two numbers" ],
+		[ 1, "Hello world" ]
+	],
+	"Actions": [
+		{
+			"Title": "Action Example with parameter %0",
+			"Parameters": [
+				[ "String", "Example Parameter" ]
+			]
+		},
+		{
+			"Title": "Second Action Example"
+		}
+	],
+	"Conditions": [
+		{
+			"Title": "%o : Are %0 and %1 equal?",
+			"Triggered": false,
+			"Parameters": [
+				[ "Integer", "First number" ],
+				[ "Integer", "Second number" ]
+			]
+		}
+	],
+	"Expressions": [
+		{
+			"Title": "Add(",
+			"Returns": "Integer",
+			"Parameters": [
+				[ "Integer", "First number" ],
+				[ "Integer", "Second number" ]
+			]
+		},
+		{
+			"Title": "HelloWorld$(",
+			"Returns": "Text"
+		}
+	]
+}

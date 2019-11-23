@@ -1,7 +1,7 @@
 //#include "DataTypes.h"
 
-#include <cv.h>
-#include <highgui.h>
+#include "cv.h"
+#include "highgui.h"
 
 class rRundata;
 typedef rRundata * LPRRDATA;

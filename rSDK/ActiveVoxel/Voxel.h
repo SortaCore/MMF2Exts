@@ -5,6 +5,7 @@
 #include "DataTypes.h"
 #include "Pallette.h"
 #include "Normals.h"
+#include <cmath>
 
 
 
@@ -80,7 +81,7 @@ void VectorCopy( const vec3_t in, vec3_t out ) {
 void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 	vec3_t		point,destpoint;
 	int			x,y;
-	char			colorindex;
+	// char			colorindex;
 	voxelDot_t *	Dot;
 	matrix_t		out, *in, *positioningMatrix;
 
@@ -123,9 +124,9 @@ void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 		fflush(debug);
 
 		fprintf(debug, "%5i%5i\n", vpart, frame);
-		fprintf(debug, "point: %8.2f%8.2f%8.2f   surfaceDepthGrid: %i\n", point[0], point[1], point[2], -1);//rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]);
+		fprintf(debug, "point: %8.2f%8.2f%8.2f	surfaceDepthGrid: %i\n", point[0], point[1], point[2], -1);// rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]);
 		fflush(debug);
-		fprintf(debug, "DESTpoint: %8.2f%8.2f%8.2f   surfaceDepthGrid: %i\n", destpoint[0], destpoint[1], destpoint[2], -1);//rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]);
+		fprintf(debug, "DESTpoint: %8.2f%8.2f%8.2f	surfaceDepthGrid: %i\n", destpoint[0], destpoint[1], destpoint[2], -1);// rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]);
 		fflush(debug);
 
 		fprintf(debug, "pass(dotcount: %i):\n\n", rdPtr->voxelParts[vpart]->n_dots);
@@ -162,8 +163,8 @@ void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 		fflush(debug);
 		#endif
 	
-		x = rdPtr->rHo.hoImgWidth / 2 + point[0];
-		y = rdPtr->rHo.hoImgHeight / 2 + point[1];
+		x = (int)(rdPtr->rHo.hoImgWidth / 2.0f + point[0]);
+		y = (int)(rdPtr->rHo.hoImgHeight / 2.0f + point[1]);
 
 		#ifdef VOXEL_DEBUG
 		fprintf(debug, "resulting x/y: %d, %d\n", x, y);
@@ -173,7 +174,7 @@ void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 		rdPtr->screenRender[x * rdPtr->rHo.hoImgHeight + y] = x==max(0,min(rdPtr->rHo.hoImgWidth-1,x)) && y==max(0,min(rdPtr->rHo.hoImgHeight-1,y));
 		
 		if(-point[2] <= rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]){
-			rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y] = -point[2];
+			rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y] = (short)-point[2];
 			rdPtr->screenDot[x * 3 * rdPtr->rHo.hoImgHeight + y * 3 + 0] = Dot->color;
 			rdPtr->screenDot[x * 3 * rdPtr->rHo.hoImgHeight + y * 3 + 1] = Dot->normal;
 		}
@@ -255,21 +256,21 @@ void voxel_Render_unit(LPRDATA rdPtr){
 		//lightvec[1] = rdPtr->yLight;
 		//lightvec[2] = rdPtr->zLight;
 
-		lightvec[0] = -1.0;
-		lightvec[1] = 1.0;
-		lightvec[2] = -1.0;
+		lightvec[0] = -1.0f;
+		lightvec[1] = 1.0f;
+		lightvec[2] = -1.0f;
 
-		specvec[0] = -0.4;
-		specvec[1] = 1.0;
-		specvec[2] = -0.2;
+		specvec[0] = -0.4f;
+		specvec[1] = 1.0f;
+		specvec[2] = -0.2f;
 
-		//halfvec[0] = -68;//rdPtr->xLight;
-		//halfvec[1] = 35;//rdPtr->yLight;
-		//halfvec[2] = -300;//rdPtr->zLight;
+		//halfvec[0] = -68f;// rdPtr->xLight;
+		//halfvec[1] = 35f;// rdPtr->yLight;
+		//halfvec[2] = -300f;// rdPtr->zLight;
 
-		halfvec[0] = 33.33;
-		halfvec[1] = 0.0;
-		halfvec[2] = 66.66;
+		halfvec[0] = 33.33f;
+		halfvec[1] = 0.0f;
+		halfvec[2] = 66.66f;
 
 		VectorNormalize(lightvec);
 		VectorNormalize(halfvec);
@@ -362,9 +363,9 @@ void renderVoxel(LPRDATA rdPtr){
 	do{
 		vec3_t	cam;
 		
-		cam[0] = rdPtr->xAngle;
-		cam[1] = rdPtr->yAngle;
-		cam[2] = rdPtr->zAngle;
+		cam[0] = (vec_t)rdPtr->xAngle;
+		cam[1] = (vec_t)rdPtr->yAngle;
+		cam[2] = (vec_t)rdPtr->zAngle;
 
 		GenerateMatrix(cam, &rdPtr->lMatrix, rdPtr );
 
@@ -564,7 +565,7 @@ char * loadVoxelPart(int partNumber, char * fileContents, vxl_header * voxelHead
 	memset (part, 255, 2 * xyElementCount * voxelLimbTailer->zsize);
 
 	#ifdef VOXEL_DEBUG
-	fprintf(debug, "Allocated memory for part (middlelayer): %d bytes (pointing to %ld)\n", 2 * xyElementCount * voxelLimbTailer->zsize, part);
+	fprintf(debug, "Allocated memory for part (middlelayer): %d bytes (pointing to %p)\n", 2 * xyElementCount * voxelLimbTailer->zsize, part);
 	fflush(debug);
 	#endif
 
@@ -631,7 +632,7 @@ char * loadVoxelPart(int partNumber, char * fileContents, vxl_header * voxelHead
 				}
 
 				#ifdef VOXEL_DEBUG
-				fprintf(debug, "\n", voxelCount, voxelCount2);
+				fprintf(debug, "Voxel count: %d.\n", voxelCount);
 				fflush(debug);
 				#endif
 			}
@@ -680,9 +681,9 @@ vxl_runtime_part ** loadVoxelParts(char * fileContents, vxl_header * voxelHeader
 
 		resultingParts[i]->normals = voxelLimbTailers[i].unknown;
 
-		resultingParts[i]->scale[0] = 1;//voxelLimbTailers[i].xsize / ( resultingParts[i]->maxbounds[2] - resultingParts[i]->minbounds[2] );
-		resultingParts[i]->scale[1] = 1;//voxelLimbTailers[i].ysize / ( resultingParts[i]->maxbounds[0] - resultingParts[i]->minbounds[0] );
-		resultingParts[i]->scale[2] = 1;//voxelLimbTailers[i].zsize / ( resultingParts[i]->maxbounds[1] - resultingParts[i]->minbounds[1] );
+		resultingParts[i]->scale[0] = 1;// voxelLimbTailers[i].xsize / ( resultingParts[i]->maxbounds[2] - resultingParts[i]->minbounds[2] );
+		resultingParts[i]->scale[1] = 1;// voxelLimbTailers[i].ysize / ( resultingParts[i]->maxbounds[0] - resultingParts[i]->minbounds[0] );
+		resultingParts[i]->scale[2] = 1;// voxelLimbTailers[i].zsize / ( resultingParts[i]->maxbounds[1] - resultingParts[i]->minbounds[1] );
 
 		#ifdef VOXEL_DEBUG
 			fprintf(debug, "scale[%d] (%fd) = %d / (%fd - %fd)\n\n", 0, resultingParts[i]->scale[0], voxelLimbTailers[i].xsize, resultingParts[i]->maxbounds[2], resultingParts[i]->minbounds[2]);
@@ -700,7 +701,7 @@ vxl_runtime_part ** loadVoxelParts(char * fileContents, vxl_header * voxelHeader
 		char * source = loadedVoxelParts[i];
 
 		#ifdef VOXEL_DEBUG
-		fprintf(debug, "Source: %ld\n", source);
+		fprintf(debug, "Source: %p\n", source);
 		fflush(debug);
 		#endif
 
@@ -802,7 +803,7 @@ void loadVoxel(LPRDATA rdPtr, char * filepath){
 
 	vxl_header * voxelHeader = loadVoxelHeader(fileContents);
 
-	rdPtr->n_parts = voxelHeader->n_limbs;
+	rdPtr->n_parts = (char)voxelHeader->n_limbs;
 
 	vxl_limb_header * voxelLimbHeaders = loadVoxelLimbHeaders(fileContents, voxelHeader);
 	

@@ -1,14 +1,14 @@
 // --------------------
 // Object information
 // --------------------
-#include <tchar.h>
+
 // Basic object details
-#define	ObjectName			_T("Tab Control")
-#define	ObjectAuthor		_T("AquadaSoft/Looki")
-#define	ObjectCopyright		_T("Copyright © 2008-2010 AquadaSoft")
-#define	ObjectComment		_T("Add tabbing to your applications, e.g. for file managing. Icon made by Ganryu.")
-#define	ObjectURL			_T("http://www.aquadasoft.com")
-#define	ObjectHelp			_T("")
+#define	ObjectName			"Tab Control"
+#define	ObjectAuthor		"Looki"
+#define	ObjectCopyright		"Copyright Â© 2008-2010 Looki"
+#define	ObjectComment		"Add tabbing to your applications, e.g. for file managing. Icon made by Ganryu."
+#define	ObjectURL			"https://lukasmeller.com/mmf/"
+#define	ObjectHelp			""
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE

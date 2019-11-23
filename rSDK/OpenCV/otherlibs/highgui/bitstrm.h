@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -46,12 +46,12 @@
 #include <setjmp.h>
 
 #if _MSC_VER >= 1200
-    #pragma warning( disable: 4711 4324 )
+	#pragma warning( disable: 4711 4324 )
 #endif
 
-#define  RBS_THROW_EOS    -123  /* <end of stream> exception code */
-#define  RBS_THROW_FORB   -124  /* <forrbidden huffman code> exception code */
-#define  RBS_HUFF_FORB    2047  /* forrbidden huffman code "value" */
+#define  RBS_THROW_EOS	-123  /* <end of stream> exception code */
+#define  RBS_THROW_FORB	-124  /* <forrbidden huffman code> exception code */
+#define  RBS_HUFF_FORB	2047  /* forrbidden huffman code "value" */
 
 typedef unsigned char uchar;
 typedef unsigned long ulong;
@@ -60,35 +60,35 @@ typedef unsigned long ulong;
 class RBaseStream
 {
 public:
-    //methods
-    RBaseStream();
-    virtual ~RBaseStream();
-    
-    virtual bool  Open( const char* filename );
-    virtual void  Close();
-    void          SetBlockSize( int block_size, int unGetsize = 4 );
-    bool          IsOpened();
-    void          SetPos( int pos );
-    int           GetPos();
-    void          Skip( int bytes );
-    jmp_buf&      JmpBuf();
-    
+	//methods
+	RBaseStream();
+	virtual ~RBaseStream();
+	
+	virtual bool  Open( const char* filename );
+	virtual void  Close();
+	void		  SetBlockSize( int block_size, int unGetsize = 4 );
+	bool		  IsOpened();
+	void		  SetPos( int pos );
+	int			GetPos();
+	void		  Skip( int bytes );
+	jmp_buf&	  JmpBuf();
+	
 protected:
-    
-    jmp_buf m_jmp_buf;
-    uchar*  m_start;
-    uchar*  m_end;
-    uchar*  m_current;
-    FILE*   m_file;
-    int     m_unGetsize;
-    int     m_block_size;
-    int     m_block_pos;
-    bool    m_jmp_set;
-    bool    m_is_opened;
+	
+	jmp_buf m_jmp_buf;
+	uchar*  m_start;
+	uchar*  m_end;
+	uchar*  m_current;
+	FILE*	m_file;
+	int	 m_unGetsize;
+	int	 m_block_size;
+	int	 m_block_pos;
+	bool	m_jmp_set;
+	bool	m_is_opened;
 
-    virtual void  ReadBlock();
-    virtual void  Release();
-    virtual void  Allocate();
+	virtual void  ReadBlock();
+	virtual void  Release();
+	virtual void  Allocate();
 };
 
 
@@ -97,12 +97,12 @@ protected:
 class RLByteStream : public RBaseStream
 {
 public:
-    virtual ~RLByteStream();
-    
-    int     GetByte();
-    void    GetBytes( void* buffer, int count, int* readed = 0 );
-    int     GetWord();
-    int     GetDWord(); 
+	virtual ~RLByteStream();
+	
+	int	 GetByte();
+	void	GetBytes( void* buffer, int count, int* readed = 0 );
+	int	 GetWord();
+	int	 GetDWord(); 
 };
 
 // class RMBitStream - uchar-oriented stream.
@@ -110,10 +110,10 @@ public:
 class RMByteStream : public RLByteStream
 {
 public:
-    virtual ~RMByteStream();
+	virtual ~RMByteStream();
 
-    int     GetWord();
-    int     GetDWord(); 
+	int	 GetWord();
+	int	 GetDWord(); 
 };
 
 // class RLBitStream - bit-oriented stream.
@@ -121,19 +121,19 @@ public:
 class RLBitStream : public RBaseStream
 {
 public:
-    virtual ~RLBitStream();
-    
-    void    SetPos( int pos );
-    int     GetPos();
-    int     Get( int bits );
-    int     Show( int bits );
-    int     GetHuff( const short* table );
-    void    Move( int shift );
-    void    Skip( int bytes );
-        
+	virtual ~RLBitStream();
+	
+	void	SetPos( int pos );
+	int	 GetPos();
+	int	 Get( int bits );
+	int	 Show( int bits );
+	int	 GetHuff( const short* table );
+	void	Move( int shift );
+	void	Skip( int bytes );
+		
 protected:
-    int     m_bit_idx;
-    virtual void  ReadBlock();
+	int	 m_bit_idx;
+	virtual void  ReadBlock();
 };
 
 // class RMBitStream - bit-oriented stream.
@@ -141,18 +141,18 @@ protected:
 class RMBitStream : public RLBitStream
 {
 public:
-    virtual ~RMBitStream();
-    
-    void    SetPos( int pos );
-    int     GetPos();
-    int     Get( int bits );
-    int     Show( int bits );
-    int     GetHuff( const short* table );
-    void    Move( int shift );
-    void    Skip( int bytes );
+	virtual ~RMBitStream();
+	
+	void	SetPos( int pos );
+	int	 GetPos();
+	int	 Get( int bits );
+	int	 Show( int bits );
+	int	 GetHuff( const short* table );
+	void	Move( int shift );
+	void	Skip( int bytes );
 
 protected:
-    virtual void  ReadBlock();
+	virtual void  ReadBlock();
 };
 
 
@@ -160,29 +160,29 @@ protected:
 class WBaseStream
 {
 public:
-    //methods
-    WBaseStream();
-    virtual ~WBaseStream();
-    
-    virtual bool  Open( const char* filename );
-    virtual void  Close();
-    void          SetBlockSize( int block_size );
-    bool          IsOpened();
-    int           GetPos();
-    
+	//methods
+	WBaseStream();
+	virtual ~WBaseStream();
+	
+	virtual bool  Open( const char* filename );
+	virtual void  Close();
+	void		  SetBlockSize( int block_size );
+	bool		  IsOpened();
+	int			GetPos();
+	
 protected:
-    
-    uchar*  m_start;
-    uchar*  m_end;
-    uchar*  m_current;
-    int     m_block_size;
-    int     m_block_pos;
-    FILE*   m_file;
-    bool    m_is_opened;
-    
-    virtual void  WriteBlock();
-    virtual void  Release();
-    virtual void  Allocate();
+	
+	uchar*  m_start;
+	uchar*  m_end;
+	uchar*  m_current;
+	int	 m_block_size;
+	int	 m_block_pos;
+	FILE*	m_file;
+	bool	m_is_opened;
+	
+	virtual void  WriteBlock();
+	virtual void  Release();
+	virtual void  Allocate();
 };
 
 
@@ -191,12 +191,12 @@ protected:
 class WLByteStream : public WBaseStream
 {
 public:
-    virtual ~WLByteStream();
+	virtual ~WLByteStream();
 
-    void    PutByte( int val );
-    void    PutBytes( const void* buffer, int count );
-    void    PutWord( int val );
-    void    PutDWord( int val ); 
+	void	PutByte( int val );
+	void	PutBytes( const void* buffer, int count );
+	void	PutWord( int val );
+	void	PutDWord( int val ); 
 };
 
 
@@ -205,10 +205,10 @@ public:
 class WMByteStream : public WLByteStream
 {
 public:
-    virtual ~WMByteStream();
+	virtual ~WMByteStream();
 
-    void    PutWord( int val );
-    void    PutDWord( int val ); 
+	void	PutWord( int val );
+	void	PutDWord( int val ); 
 };
 
 
@@ -217,16 +217,16 @@ public:
 class WLBitStream : public WBaseStream
 {
 public:
-    virtual ~WLBitStream();
-    
-    int     GetPos();
-    void    Put( int val, int bits );
-    void    PutHuff( int val, const int* table );
-        
+	virtual ~WLBitStream();
+	
+	int	 GetPos();
+	void	Put( int val, int bits );
+	void	PutHuff( int val, const int* table );
+		
 protected:
-    int     m_bit_idx;
-    int     m_val;
-    virtual void  WriteBlock();
+	int	 m_bit_idx;
+	int	 m_val;
+	virtual void  WriteBlock();
 };
 
 
@@ -235,32 +235,32 @@ protected:
 class WMBitStream : public WBaseStream
 {
 public:
-    WMBitStream();
-    virtual ~WMBitStream();
-    
-    bool    Open( const char* filename );
-    void    Close();
-    virtual void  Flush();
+	WMBitStream();
+	virtual ~WMBitStream();
+	
+	bool	Open( const char* filename );
+	void	Close();
+	virtual void  Flush();
 
-    int     GetPos();
-    void    Put( int val, int bits );
-    void    PutHuff( int val, const ulong* table );
-        
+	int	 GetPos();
+	void	Put( int val, int bits );
+	void	PutHuff( int val, const ulong* table );
+		
 protected:
-    int     m_bit_idx;
-    ulong   m_pad_val;
-    ulong   m_val;
-    virtual void  WriteBlock();
-    void    ResetBuffer();
+	int	 m_bit_idx;
+	ulong	m_pad_val;
+	ulong	m_val;
+	virtual void  WriteBlock();
+	void	ResetBuffer();
 };
 
 
 
-#define BSWAP(v)    (((v)<<24)|(((v)&0xff00)<<8)| \
-                    (((v)>>8)&0xff00)|((unsigned)(v)>>24))
+#define BSWAP(v)	(((v)<<24)|(((v)&0xff00)<<8)| \
+					(((v)>>8)&0xff00)|((unsigned)(v)>>24))
 
 int* bsCreateSourceHuffmanTable( const uchar* src, int* dst, 
-                                 int max_bits, int first_bits );
+								 int max_bits, int first_bits );
 bool bsCreateDecodeHuffmanTable( const int* src, short* dst, int max_size );
 bool bsCreateEncodeHuffmanTable( const int* src, ulong* dst, int max_size );
 

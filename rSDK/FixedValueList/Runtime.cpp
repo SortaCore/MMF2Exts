@@ -27,15 +27,15 @@ short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
 {
 	// Do some rSDK stuff
-	new (rdPtr) RUNDATA; //Call rdPtr's Constructor
+	new (rdPtr) RUNDATA; // Call rdPtr's Constructor
 	#include "rCreateRunObject.h"
 	/*
-	   This routine runs when your object is created, as you might have guessed.
-	   It is here that you must transfer any data you need in rdPtr from edPtr,
-	   because after this has finished you cannot access it again!
-	   Also, if you have anything to initialise (e.g. dynamic arrays, surface objects)
-	   you should do it here, and free your resources in DestroyRunObject.
-	   See Graphic_Object_Ex.txt for an example of what you may put here.
+		This routine runs when your object is created, as you might have guessed.
+		It is here that you must transfer any data you need in rdPtr from edPtr,
+		because after this has finished you cannot access it again!
+		Also, if you have anything to initialise (e.g. dynamic arrays, surface objects)
+		you should do it here, and free your resources in DestroyRunObject.
+		See Graphic_Object_Ex.txt for an example of what you may put here.
 	*/
 
 	// No errors
@@ -51,13 +51,13 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 {
 	/*
-	   When your object is destroyed (either with a Destroy action or at the end of
-	   the frame) this routine is called. You must free any resources you have allocated!
-	   See Graphic_Object_Ex.txt for an example of what you may put here.
+		When your object is destroyed (either with a Destroy action or at the end of
+		the frame) this routine is called. You must free any resources you have allocated!
+		See Graphic_Object_Ex.txt for an example of what you may put here.
 	*/
 	// No errors
-	delete rdPtr -> rRd;
-	rdPtr -> ~RUNDATA();
+	delete rdPtr->rRd;
+	rdPtr->~RUNDATA();
 	return 0;
 }
 
@@ -72,29 +72,29 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 	
 		//Needs to add fixed value to vector array	
 	/*
-	   If your extension will draw to the MMF window you should first 
-	   check if anything about its display has changed :
+		If your extension will draw to the MMF window you should first 
+		check if anything about its display has changed :
 
-		   return rdPtr -> roc.rcChanged?REFLAG_DISPLAY:0;
+			return rdPtr->roc.rcChanged?REFLAG_DISPLAY:0;
 
-	   You will also need to make sure you change this flag yourself 
-	   to 1 whenever you want to redraw your object
+		You will also need to make sure you change this flag yourself 
+		to 1 whenever you want to redraw your object
 	 
-	   If your extension won't draw to the window, but it still needs 
-	   to do something every MMF loop use :
+		If your extension won't draw to the window, but it still needs 
+		to do something every MMF loop use :
 
 			return 0;
 
-	   If you don't need to do something every loop, use :
+		If you don't need to do something every loop, use :
 
 			return REFLAG_ONESHOT;
 
-	   This doesn't mean this function can never run again. If you want MMF
-	   to handle your object again (causing this code to run) use this function:
+		This doesn't mean this function can never run again. If you want MMF
+		to handle your object again (causing this code to run) use this function:
 
-			rdPtr -> rRd->Rehandle();
+			rdPtr->rRd->Rehandle();
 
-	   At the end of the loop this code will run
+		At the end of the loop this code will run
 	*/
 	return 0;
 }
@@ -107,8 +107,8 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 /*
-   If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
-   See Graphic_Object_Ex.txt for an example of what you may put here.
+	If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
+	See Graphic_Object_Ex.txt for an example of what you may put here.
 */
 	// Ok
 	return 0;
@@ -148,23 +148,23 @@ cSurface* WINAPI DLLExport GetRunObjectCollisionMask(LPRDATA rdPtr, LPARAM lPara
 	// Typical example for active objects
 	// ----------------------------------
 	// Opaque? collide with box
-	if ( (rdPtr -> rs.rsEffect & EFFECTFLAG_TRANSPARENT) == 0 )	// Note: only if your object has the OEPREFS_INKEFFECTS option
+	if ( (rdPtr->rs.rsEffect & EFFECTFLAG_TRANSPARENT) == 0 )	// Note: only if your object has the OEPREFS_INKEFFECTS option
 		return NULL;
 
 	// Transparent? Create mask
-	LPSMASK pMask = rdPtr -> m_pColMask;
+	LPSMASK pMask = rdPtr->m_pColMask;
 	if ( pMask == NULL )
 	{
-		if ( rdPtr -> m_pSurface != NULL )
+		if ( rdPtr->m_pSurface != NULL )
 		{
-			DWORD dwMaskSize = rdPtr -> m_pSurface->CreateMask(NULL, lParam);
+			DWORD dwMaskSize = rdPtr->m_pSurface->CreateMask(NULL, lParam);
 			if ( dwMaskSize != 0 )
 			{
 				pMask = (LPSMASK)calloc(dwMaskSize, 1);
 				if ( pMask != NULL )
 				{
-					rdPtr -> m_pSurface->CreateMask(pMask, lParam);
-					rdPtr -> m_pColMask = pMask;
+					rdPtr->m_pSurface->CreateMask(pMask, lParam);
+					rdPtr->m_pColMask = pMask;
 				}
 			}
 		}
@@ -286,7 +286,7 @@ void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
 {
 	// Example
 	// -------
-	// GetObject(rdPtr -> m_hFont, sizeof(LOGFONT), pLf);
+	// GetObject(rdPtr->m_hFont, sizeof(LOGFONT), pLf);
 }
 
 // -------------------
@@ -301,10 +301,10 @@ void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 //	HFONT hFont = CreateFontIndirect(pLf);
 //	if ( hFont != NULL )
 //	{
-//		if (rdPtr -> m_hFont!=0)
-//			DeleteObject(rdPtr -> m_hFont);
-//		rdPtr -> m_hFont = hFont;
-//		SendMessage(rdPtr -> m_hWnd, WM_SETFONT, (WPARAM)rdPtr -> m_hFont, FALSE);
+//		if (rdPtr->m_hFont!=0)
+//			DeleteObject(rdPtr->m_hFont);
+//		rdPtr->m_hFont = hFont;
+//		SendMessage(rdPtr->m_hWnd, WM_SETFONT, (WPARAM)rdPtr->m_hFont, FALSE);
 //	}
 
 }
@@ -318,7 +318,7 @@ COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 {
 	// Example
 	// -------
-	return 0;	// rdPtr -> m_dwColor;
+	return 0;	// rdPtr->m_dwColor;
 }
 
 // ---------------------
@@ -330,8 +330,8 @@ void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 {
 	// Example
 	// -------
-	rdPtr -> m_dwColor = rgb;
-	InvalidateRect(rdPtr -> m_hWnd, NULL, TRUE);
+	rdPtr->m_dwColor = rgb;
+	InvalidateRect(rdPtr->m_hWnd, NULL, TRUE);
 }
 */
 
@@ -374,22 +374,22 @@ void WINAPI DLLExport GetDebugItem(LPSTR pBuffer, LPRDATA rdPtr, int id)
 	{
 	case DB_CURRENTSTRING:
 		LoadString(hInstLib, IDS_CURRENTSTRING, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr -> text);
+		wsprintf(pBuffer, temp, rdPtr->text);
 		break;
 	case DB_CURRENTVALUE:
 		LoadString(hInstLib, IDS_CURRENTVALUE, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr -> value);
+		wsprintf(pBuffer, temp, rdPtr->value);
 		break;
 	case DB_CURRENTCHECK:
 		LoadString(hInstLib, IDS_CURRENTCHECK, temp, DB_BUFFERSIZE);
-		if (rdPtr -> check)
+		if (rdPtr->check)
 			wsprintf(pBuffer, temp, "TRUE");
 		else
 			wsprintf(pBuffer, temp, "FALSE");
 		break;
 	case DB_CURRENTCOMBO:
 		LoadString(hInstLib, IDS_CURRENTCOMBO, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr -> combo);
+		wsprintf(pBuffer, temp, rdPtr->combo);
 		break;
 	}
 */
@@ -420,22 +420,22 @@ void WINAPI DLLExport EditDebugItem(LPRDATA rdPtr, int id)
 			dbi.lText=TEXT_MAX;
 			dbi.pTitle=NULL;
 
-			strcpy(buffer, rdPtr -> text);
+			strcpy(buffer, rdPtr->text);
 			long ret=callRunTimeFunction(rdPtr, RFUNCTION_EDITTEXT, 0, (LPARAM)&dbi);
 			if (ret)
-				strcpy(rdPtr -> text, dbi.pText);
+				strcpy(rdPtr->text, dbi.pText);
 		}
 		break;
 	case DB_CURRENTVALUE:
 		{
 			EditDebugInfo dbi;
 
-			dbi.value=rdPtr -> value;
+			dbi.value=rdPtr->value;
 			dbi.pTitle=NULL;
 
 			long ret=callRunTimeFunction(rdPtr, RFUNCTION_EDITINT, 0, (LPARAM)&dbi);
 			if (ret)
-				rdPtr -> value=dbi.value;
+				rdPtr->value=dbi.value;
 		}
 		break;
 	}

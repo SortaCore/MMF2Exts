@@ -18,8 +18,8 @@ int NumberOfFilesExtracted = 0;
 HANDLE MainThread;
 //Define struct used to export data from actions to threads
 typedef struct Parameters {
-    char *para_infilename;		//Input file name
-    char *para_outfilename;		//Output file name
+	char *para_infilename;		//Input file name
+	char *para_outfilename;		//Output file name
 	char *para_password;		//Password
 	LPRDATA para_rdPtr;			//rdPtr (must be given or threads cannot access rdPtr)
 } MYDATA, *PMYDATA;
@@ -40,10 +40,10 @@ DWORD WINAPI decompress(LPVOID lpParam)
 	LPRDATA rdPtr = pDataArray -> para_rdPtr;			//Get rdPtr
 	
 	//Set non-struct variables & begin extraction
-	HZIP hz = OpenZip(infilename,0); //0 = no password
-	SetUnzipBaseDir(hz,outfilename); //Set the extract-to folder
+	HZIP hz = OpenZip(infilename,0); // 0 = no password
+	SetUnzipBaseDir(hz,outfilename); // Set the extract-to folder
 	ZIPENTRY baseze;
-	ZRESULT zr = GetZipItem(hz,-1,&baseze); //ZRESULT zr contains error number.
+	ZRESULT zr = GetZipItem(hz,-1,&baseze); // ZRESULT zr contains error number.
 
 	//This part may get complicated.
 	//No error with no password, so just extract
@@ -61,9 +61,9 @@ DWORD WINAPI decompress(LPVOID lpParam)
 		PasswordBeingUsed=false;
 	}
 	else
-	{ //Error occured when extracting with no password
+	{ // Error occured when extracting with no password
 		if (zr==ZR_PASSWORD&&password!="0")
-		{ //ZR_PASSWORD -> invalid password. So try with password, if one is provided.
+		{ // ZR_PASSWORD -> invalid password. So try with password, if one is provided.
 			zr = ZR_OK;
 			CloseZip(hz);
 			hz = OpenZip(infilename,password);
@@ -89,13 +89,13 @@ DWORD WINAPI decompress(LPVOID lpParam)
 			else
 			{
 				if (zr==ZR_PASSWORD)
-				{ //The password provided was wrong, so report it.
+				{ // The password provided was wrong, so report it.
 					returnstring="Password incorrect or required.";
 					MessageBox(NULL,"zr==ZR_PASSWORD&&password!=\"0\" > zr==ZR_PASSWORD", "Debug", NULL);
 					rdPtr->rRd->PushEvent(1);
 				}
 				else
-				{ //Password was correct but error occured anyway
+				{ // Password was correct but error occured anyway
 					MessageBox(NULL,"zr==ZR_PASSWORD&&password!=\"0\" > zr!=ZR_PASSWORD", "Debug", NULL);
 					stringstream temp; 
 					temp<<"An error occured, but the provided password was correct. Error number "<<zr<<".";
@@ -106,7 +106,7 @@ DWORD WINAPI decompress(LPVOID lpParam)
 			}
 		}
 		else
-		{ //Not a password error when we tried to open without a password...
+		{ // Not a password error when we tried to open without a password...
 			stringstream temp; 
 			temp<<"An error occured - not a password error. Error number "<<zr<<".";
 			returnstring=temp.str();

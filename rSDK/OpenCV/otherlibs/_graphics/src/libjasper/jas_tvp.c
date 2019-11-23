@@ -226,7 +226,7 @@ jas_taginfo_t *jas_taginfos_lookup(jas_taginfo_t *taginfos, const char *name)
 
 /* This function is simply for convenience. */
 /* One can avoid testing for the special case of a null pointer, by
-  using this function.   This function never returns a null pointer.  */
+  using this function.	This function never returns a null pointer.  */
 jas_taginfo_t *jas_taginfo_nonull(jas_taginfo_t *taginfo)
 {
 	static jas_taginfo_t invalidtaginfo = {

@@ -69,7 +69,7 @@ typedef	struct {
 	char*	td_imagedescription;
 	char*	td_make;
 	char*	td_model;
-        char*   td_copyright;
+		char*	td_copyright;
 	char*	td_pagename;
 	tstrip_t td_stripsperimage;
 	tstrip_t td_nstrips;		/* size of offset & bytecount arrays */
@@ -103,8 +103,8 @@ typedef	struct {
 	/* IPTC parameters */
 	uint32	td_richtiffiptcLength;
 	void	*td_richtiffiptcData;
-        /* Begin Pixar Tag values. */
-        uint32	td_imagefullwidth, td_imagefulllength;
+		/* Begin Pixar Tag values. */
+		uint32	td_imagefullwidth, td_imagefulllength;
  	char*	td_textureformat;
  	char*	td_wrapmodes;
  	float	td_fovcot;
@@ -113,8 +113,8 @@ typedef	struct {
  	/* End Pixar Tag Values. */
 	uint32	td_xmlpacketLength;
 	void	*td_xmlpacketData;
-	int     td_customValueCount;
-        TIFFTagValue *td_customValues;
+	int	 td_customValueCount;
+		TIFFTagValue *td_customValues;
 } TIFFDirectory;
 
 /*
@@ -165,7 +165,7 @@ typedef	struct {
 #define FIELD_ARTIST			27
 #define FIELD_DATETIME			28
 #define FIELD_HOSTCOMPUTER		29
-/* unused - was FIELD_SOFTWARE          30 */
+/* unused - was FIELD_SOFTWARE		  30 */
 #define	FIELD_EXTRASAMPLES		31
 #define FIELD_SAMPLEFORMAT		32
 #define	FIELD_SMINSAMPLEVALUE		33
@@ -200,7 +200,7 @@ typedef	struct {
 #define FIELD_MATRIX_WORLDTOCAMERA	61
 #define FIELD_COPYRIGHT			62
 #define FIELD_XMLPACKET			63
-/*      FIELD_CUSTOM (see tiffio.h)     65 */
+/*	  FIELD_CUSTOM (see tiffio.h)	 65 */
 /* end of support for well-known tags; codec-private tags follow */
 #define	FIELD_CODEC			66	/* base of codec-private tags */
 
@@ -210,7 +210,7 @@ typedef	struct {
  * are not written to an output file (by definition).
  * The library also has express logic to always query a
  * codec for a pseudo-tag so allocating a field bit for
- * one is a waste.   If codec wants to promote the notion
+ * one is a waste.	If codec wants to promote the notion
  * of a pseudo-tag being ``set'' or ``unset'' then it can
  * do using internal state flags without polluting the
  * field bit space defined for real tags.
@@ -220,12 +220,12 @@ typedef	struct {
 #define	FIELD_LAST			(32*FIELD_SETLONGS-1)
 
 #define	TIFFExtractData(tif, type, v) \
-    ((uint32) ((tif)->tif_header.tiff_magic == TIFF_BIGENDIAN ? \
-        ((v) >> (tif)->tif_typeshift[type]) & (tif)->tif_typemask[type] : \
+	((uint32) ((tif)->tif_header.tiff_magic == TIFF_BIGENDIAN ? \
+		((v) >> (tif)->tif_typeshift[type]) & (tif)->tif_typemask[type] : \
 	(v) & (tif)->tif_typemask[type]))
 #define	TIFFInsertData(tif, type, v) \
-    ((uint32) ((tif)->tif_header.tiff_magic == TIFF_BIGENDIAN ? \
-        ((v) & (tif)->tif_typemask[type]) << (tif)->tif_typeshift[type] : \
+	((uint32) ((tif)->tif_header.tiff_magic == TIFF_BIGENDIAN ? \
+		((v) & (tif)->tif_typemask[type]) << (tif)->tif_typeshift[type] : \
 	(v) & (tif)->tif_typemask[type]))
 
 
@@ -245,16 +245,16 @@ extern	void _TIFFSetupFieldInfo(TIFF*);
 extern	void _TIFFPrintFieldInfo(TIFF*, FILE*);
 extern	TIFFDataType _TIFFSampleToTagType(TIFF*);
 extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
-							   ttag_t tag,
-							   TIFFDataType dt );
+								ttag_t tag,
+								TIFFDataType dt );
 extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
-                                                 TIFFDataType dt );
+												 TIFFDataType dt );
 
-#define _TIFFMergeFieldInfo	    TIFFMergeFieldInfo
-#define _TIFFFindFieldInfo	    TIFFFindFieldInfo
-#define _TIFFFindFieldInfoByName    TIFFFindFieldInfoByName
-#define _TIFFFieldWithTag	    TIFFFieldWithTag
-#define _TIFFFieldWithName	    TIFFFieldWithName
+#define _TIFFMergeFieldInfo		TIFFMergeFieldInfo
+#define _TIFFFindFieldInfo		TIFFFindFieldInfo
+#define _TIFFFindFieldInfoByName	TIFFFindFieldInfoByName
+#define _TIFFFieldWithTag		TIFFFieldWithTag
+#define _TIFFFieldWithName		TIFFFieldWithName
 
 #if defined(__cplusplus)
 }

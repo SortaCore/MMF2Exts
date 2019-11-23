@@ -132,4 +132,4 @@ public:
 	virtual BOOL Fill(cSurface FAR * pSf, int l, int t, int r, int b, BOOL bForceOpaqueBlack=FALSE);
 };
 
-#endif  //__FILL__
+#endif  // __FILL__

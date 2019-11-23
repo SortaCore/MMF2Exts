@@ -1,8 +1,6 @@
 
 LIBRARY   KCCDA
 
-DESCRIPTION "CD-Audio object"
-
 EXPORTS
 	GetInfos				@2
 ;	DefaultOI				@3

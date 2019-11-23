@@ -125,8 +125,8 @@ typedef struct {
   boolean crop;			/* if TRUE, crop source image */
 
   /* Crop parameters: application need not set these unless crop is TRUE.
-   * These can be filled in by jtransform_parse_crop_spec().
-   */
+	* These can be filled in by jtransform_parse_crop_spec().
+	*/
   JDIMENSION crop_width;	/* Width of selected region */
   JCROP_CODE crop_width_set;
   JDIMENSION crop_height;	/* Height of selected region */
@@ -159,20 +159,20 @@ EXTERN(void) jtransform_request_workspace
 /* Adjust output image parameters */
 EXTERN(jvirt_barray_ptr *) jtransform_adjust_parameters
 	JPP((j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-	     jvirt_barray_ptr *src_coef_arrays,
-	     jpeg_transform_info *info));
+		 jvirt_barray_ptr *src_coef_arrays,
+		 jpeg_transform_info *info));
 /* Execute the actual transformation, if any */
 EXTERN(void) jtransform_execute_transform
 	JPP((j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-	     jvirt_barray_ptr *src_coef_arrays,
-	     jpeg_transform_info *info));
+		 jvirt_barray_ptr *src_coef_arrays,
+		 jpeg_transform_info *info));
 /* Determine whether lossless transformation is perfectly
  * possible for a specified image and transformation.
  */
 EXTERN(boolean) jtransform_perfect_transform
 	JPP((JDIMENSION image_width, JDIMENSION image_height,
-	     int MCU_width, int MCU_height,
-	     JXFORM_CODE transform));
+		 int MCU_width, int MCU_height,
+		 JXFORM_CODE transform));
 
 /* jtransform_execute_transform used to be called
  * jtransform_execute_transformation, but some compilers complain about
@@ -202,4 +202,4 @@ EXTERN(void) jcopy_markers_setup
 /* Copy markers saved in the given source object to the destination object */
 EXTERN(void) jcopy_markers_execute
 	JPP((j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-	     JCOPY_OPTION option));
+		 JCOPY_OPTION option));

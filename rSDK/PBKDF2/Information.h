@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"PBKDF2 object"
 #define	ObjectAuthor		"Darkwire Software"
-#define	ObjectCopyright		"Copyright © 2011 Darkwire Software"
+#define	ObjectCopyright		"Copyright Â© 2019 Darkwire Software"
 #define	ObjectComment		"Hashes using the PBKDF2 algorithm."
 #define	ObjectURL			"http://www.dark-wire.com/"
 #define	ObjectHelp			""

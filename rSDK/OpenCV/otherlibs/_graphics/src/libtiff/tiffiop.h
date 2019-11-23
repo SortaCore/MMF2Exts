@@ -57,7 +57,7 @@ typedef double dblparam_t;
 
 #define GLOBALDATA(TYPE,NAME)	extern TYPE NAME
 
-#define    streq(a,b)      (strcmp(a,b) == 0)
+#define	streq(a,b)	  (strcmp(a,b) == 0)
 
 #ifndef TRUE
 #define	TRUE	1
@@ -65,9 +65,9 @@ typedef double dblparam_t;
 #endif
 
 typedef struct client_info {
-    struct client_info *next;
-    void      *data;
-    char      *name;
+	struct client_info *next;
+	void	  *data;
+	char	  *name;
 } TIFFClientInfoLink;
 
 /*
@@ -171,8 +171,8 @@ struct tiff {
 	TIFFFieldInfo**	tif_fieldinfo;	/* sorted table of registered tags */
 	int		tif_nfields;	/* # entries in registered tag table */
 	const TIFFFieldInfo *tif_foundfield;/* cached pointer to already found tag */
-        TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
-        TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
+		TIFFTagMethods  tif_tagmethods; /* tag get/set/print routines */
+		TIFFClientInfoLink *tif_clientinfo; /* extra client information. */
 };
 
 #define	isPseudoTag(t)	(t > 0xffff)	/* is tag value normal or pseudo */

@@ -24,8 +24,8 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	rdPtr->surfaceDepthGrid = new short[rdPtr->rHo.hoImgWidth * rdPtr->rHo.hoImgHeight];
 	rdPtr->screenDot = new char[rdPtr->rHo.hoImgWidth * rdPtr->rHo.hoImgHeight * 3];
 	rdPtr->screenRender = new bool[rdPtr->rHo.hoImgWidth * rdPtr->rHo.hoImgHeight];
-	rdPtr->specular = 0.70;
-	rdPtr->ambient = 1.0;
+	rdPtr->specular = 0.70f;
+	rdPtr->ambient = 1.0f;
 
 	//rdPtr->xLight = 33.33;
 	//rdPtr->yLight = 0;
@@ -104,12 +104,12 @@ short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr) {
 
 	rdPtr->pSf->Blit(*ps,
 		rdPtr->rHo.hoX, rdPtr->rHo.hoY,	//Dest XY
-		0, 0, //Src XY
+		0, 0, // Src XY
 		rdPtr->rHo.hoImgWidth, rdPtr->rHo.hoImgHeight, // Width/height
-		(BlitMode)(rdPtr->rHo.hoOiList->oilInkEffect>>28), //BMODE_TRANSP,
-		(BlitOp)((rdPtr->rHo.hoOiList->oilInkEffect<<16)>>16), //BOP_COPY,
+		(BlitMode)(rdPtr->rHo.hoOiList->oilInkEffect>>28), // BMODE_TRANSP,
+		(BlitOp)((rdPtr->rHo.hoOiList->oilInkEffect<<16)>>16), // BOP_COPY,
 		rdPtr->rHo.hoOiList->oilEffectParam,
-		0); //BLTF_COPYALPHA
+		0); // BLTF_COPYALPHA
 
 	WinAddZone(rhPtr->rhIdEditWin, &rdPtr->rHo.hoRect);
 

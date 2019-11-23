@@ -1,0 +1,266 @@
+{
+	"Identifier": "EXMP",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "DarkEdif Template",
+			"Author": "Your Name",
+			"Copyright": "Copyright \u00A9 2019 by Your Name",
+			"Comment": "A sentence or two to describe your extension",
+			"Help": "Help/Example.chm",
+			"URL": "https://www.example.com/"
+		},
+		"ActionMenu": [
+			[ 0, "Action Example" ],
+			"---",
+			[ "Sub Menu",
+				[ 1, "Second Action Example" ]
+			]
+		],
+		"ConditionMenu": [
+			[ 0, "Are two numbers equal?" ]
+		],
+		"ExpressionMenu": [
+			[ 0, "Add two numbers" ],
+			[ 1, "Hello world" ]
+		],
+		"Actions": [
+			{
+				"Title": "Action Example with parameter %0",
+				"Parameters": [
+					[ "Integer", "Example Parameter" ]
+				]
+			},
+			{
+				"Title": "Second Action Example"
+			}
+		],
+		"Conditions": [
+			{
+				"Title": "%o : Are %0 and %1 equal?",
+				"Triggered": false,
+				"Parameters": [
+					[ "Integer", "First number" ],
+					[ "Integer", "Second number" ]
+				]
+			}
+		],
+		"Expressions": [
+			{
+				"Title": "Add(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Integer", "First number" ],
+					[ "Integer", "Second number" ]
+				]
+			},
+			{
+				"Title": "HelloWorld$(",
+				"Returns": "Text"
+			}
+		],
+		"Properties": [
+			{
+				"Title": "Folder of props",
+				"Info": "Folder information",
+				"Type": "Folder"
+			},
+				{
+					"Title": "Checkbox within folder",
+					"Info": "yeah, it should be bold.",
+					"Type": "Checkbox",
+					"DefaultState": true, // or false
+					"Bold": true
+				},
+			{
+				"Type": "FolderEnd"
+			},
+			{
+				"Title": "Static text 1",
+				"Info": "Blank text",
+				"Type": "Text",
+				"DefaultState": "Static text, default state. Or default text."
+			},
+			{
+				"Title": "Static text 2",
+				"Info": "Blank text, bold'd",
+				"Type": "Text",
+				"DefaultState": "Bolded static text.",
+				"Bold": true
+			},
+			{	
+				"Title": "Editable 3",
+				"Info": "yeah, it shouldn't be bold.",
+				"Type": "Edit button",
+				"DefaultState": "Bolded static text.",
+				"Text": "Button"
+			},
+			{
+				"Title": "Editable 4",
+				"Info": "yeah, it are very bold.",
+				"Type": "Edit button",
+				"DefaultState": "Verah Boldz Edit Butt.",
+				"Bold": true
+			},
+			{
+				"Title": "Editable 5",
+				"Info": "yeah, it are very bold.",
+				"DefaultState": "Verah Boldz Edit Strng.",
+				"Type": "Editbox String",
+				"Bold": true
+			},
+			{
+				"Title": "Editable 6",
+				"Info": "This one should force uppercase.",
+				"Type": "Editbox String",
+				"DefaultState": "Non Bolz Edit Strng Upperz!",
+				"Case": "Upper"
+			},
+			{
+				"Title": "Editable 7",
+				"Info": "This one should be limited to 25 characters.",
+				"Type": "Editbox String",
+				"DefaultState": "Non Bolz Edit Strng Loalwas!",
+				"Case": "Lower",
+				"MaxLength": 25
+			},
+			{
+				"Title": "Editable 8",
+				"Info": "yeah, limited between 25 and 20",
+				"Type": "Editbox Number",
+				"DefaultState": 21,
+				"Maximum": 25,
+				"Minimum": 20
+			}
+		]
+	},	
+	"French": {
+		"About": {
+			"Name": "Exemple objet",
+			"Author": "Votre Nom",
+			"Copyright": "Copyright \u00A9 2019 par Votre Nom",
+			"Comment": "Une ou deux phrases pour décrire votre poste",
+			"Help": "Help/Example.chm",
+			"URL": "http://www.example.com/"
+		},
+		"ActionMenu": [
+			[ 0, "Exemple d'action" ],
+			"---",
+			[ "Sub Menu",
+				[ 1, "Exemple deuxième action" ]
+			]
+		],
+		"ConditionMenu": [
+			[ 0, "Sont deux nombres égaux?" ]
+		],
+		"ExpressionMenu": [
+			[ 0, "Ajouter deux nombres" ],
+			[ 1, "Bonjour monde" ]
+		],
+		"Actions": [
+			{
+				"Title": "Exemple d'action avec le paramètre %0",
+				"Parameters": [
+					[ "Integer", "Paramètre exemple" ]
+				]
+			},
+			{
+				"Title": "Exemple deuxième action"
+			}
+		],
+		"Conditions": [
+			{
+				"Title": "%o : Sont de %0 et %1 égale?",
+				"Triggered": false,
+				"Parameters": [
+					[ "Integer", "Premier numéro" ],
+					[ "Integer", "Deuxième numéro" ]
+				]
+			}
+		],
+		"Expressions": [
+			{
+				"Title": "Adherer(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Integer", "Premier numéro" ],
+					[ "Integer", "Deuxième numéro" ]
+				]
+			},
+			{
+				"Title": "BonjourMonde$(",
+				"Returns": "Text"
+			}
+		],
+		"Properties": [
+			{
+				"Title": "Folder",
+				"Info": "Folder d'information",
+				"Type": "Folder"
+			},
+				{
+					"Title": "Case à cocher dans le dossier",
+					"Info": "oui, il faut faire preuve d'audace.",
+					"Type": "Checkbox",
+					"Bold": true,
+					"DefaultState": true
+				},
+			{
+				"Type": "FolderEnd"
+			},
+			{
+				"Title": "Texte statique 1",
+				"Info": "Texte vide",
+				"Type": "Text"
+			},
+			{
+				"Title": "Texte statique 2",
+				"Info": "Texte vide, en caractères gras",
+				"Type": "Text",
+				"Bold": true
+			},
+			{
+				"Title": "Éditable 3",
+				"Info": "Ouais, il ne devrait pas faire preuve d'audace.",
+				"Type": "Edit button",
+				"Text": "Bouton"
+			},
+			{
+				"Title": "Éditable 4",
+				"Info": "Ouais, il est très gras.",
+				"Type": "Edit button",
+				"Bold": true
+			},
+			{
+				"Title": "Éditable 5",
+				"Info": "Régulière chaîne de boîte d'édition.",
+				"Type": "Editbox String"
+			},
+			{
+				"Title": "Éditable 6",
+				"Info": "Celui-ci devrait obliger les majuscules.",
+				"Type": "Editbox String",
+				"Case": "Upper"
+			},
+			{
+				"Title": "Éditable 7",
+				"Info": "Celui-ci devrait être limité à 25 caractères.",
+				"Type": "Editbox String",
+				"Case": "Lower",
+				"MaxLength": 25
+			},
+			{
+				"Title": "Éditable 8",
+				"Info": "Celui-ci devrait être limité entre 20 et 25.",
+				"Type": "Editbox Number",
+				"Maximum": 25,
+				"Minimum": 20
+			}
+		]
+	}
+	/*
+	"German":
+	{},
+	"Japanese":
+	{}*/
+}

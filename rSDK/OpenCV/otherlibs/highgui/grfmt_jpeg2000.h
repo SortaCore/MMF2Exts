@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -61,22 +61,22 @@ class GrFmtJpeg2000Reader : public GrFmtReader
 {
 public:
 
-    GrFmtJpeg2000Reader( const char* filename );
-    ~GrFmtJpeg2000Reader();
+	GrFmtJpeg2000Reader( const char* filename );
+	~GrFmtJpeg2000Reader();
 
-    bool  CheckFormat( const char* signature );
-    bool  ReadData( uchar* data, int step, int color );
-    bool  ReadHeader();
-    void  Close();
+	bool  CheckFormat( const char* signature );
+	bool  ReadData( uchar* data, int step, int color );
+	bool  ReadHeader();
+	void  Close();
 
 protected:
-    bool  ReadComponent8u( uchar *data, jas_matrix_t *buffer, int step, int cmpt,
-                           int maxval, int offset, int ncmpts );
-    bool  ReadComponent16u( unsigned short *data, jas_matrix_t *buffer, int step, int cmpt,
-                            int maxval, int offset, int ncmpts );
+	bool  ReadComponent8u( uchar *data, jas_matrix_t *buffer, int step, int cmpt,
+							int maxval, int offset, int ncmpts );
+	bool  ReadComponent16u( unsigned short *data, jas_matrix_t *buffer, int step, int cmpt,
+							int maxval, int offset, int ncmpts );
 
-    jas_stream_t *m_stream;
-    jas_image_t  *m_image;
+	jas_stream_t *m_stream;
+	jas_image_t  *m_image;
 };
 
 
@@ -84,17 +84,17 @@ class GrFmtJpeg2000Writer : public GrFmtWriter
 {
 public:
 
-    GrFmtJpeg2000Writer( const char* filename );
-    ~GrFmtJpeg2000Writer();
+	GrFmtJpeg2000Writer( const char* filename );
+	~GrFmtJpeg2000Writer();
 
-    bool  IsFormatSupported( int depth );
-    bool  WriteImage( const uchar* data, int step,
-                      int width, int height, int depth, int channels );
+	bool  IsFormatSupported( int depth );
+	bool  WriteImage( const uchar* data, int step,
+					  int width, int height, int depth, int channels );
 protected:
-    bool  WriteComponent8u( jas_image_t *img, const uchar *data,
-                            int step, int ncmpts, int w, int h );
-    bool  WriteComponent16u( jas_image_t *img, const unsigned short *data,
-                             int step, int ncmpts, int w, int h );
+	bool  WriteComponent8u( jas_image_t *img, const uchar *data,
+							int step, int ncmpts, int w, int h );
+	bool  WriteComponent16u( jas_image_t *img, const unsigned short *data,
+							 int step, int ncmpts, int w, int h );
 };
 
 
@@ -103,11 +103,11 @@ class GrFmtJpeg2000 : public GrFmtFilterFactory
 {
 public:
 
-    GrFmtJpeg2000();
-    ~GrFmtJpeg2000();
+	GrFmtJpeg2000();
+	~GrFmtJpeg2000();
 
-    GrFmtReader* NewReader( const char* filename );
-    GrFmtWriter* NewWriter( const char* filename );
+	GrFmtReader* NewReader( const char* filename );
+	GrFmtWriter* NewWriter( const char* filename );
 };
 
 #endif

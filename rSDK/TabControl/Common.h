@@ -2,9 +2,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
-
 #define __ID_TIMES_TEN__
 
 //This defines tchar functions, which will evaluate
@@ -12,20 +9,21 @@
 #include	<tchar.h>
 
 // General includes
-#include	"TemplateInc.h"
-#include	<commctrl.h>
+#include "TemplateInc.h"
+#include <commctrl.h>
+#pragma comment (lib, "comctl32.lib")
 
 // Specific to this extension
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
 
 // rTemplate include
-#include	"rTemplate.h"
-#include	"ImageFlt.h"
-#include	"ImgFlt.h"
-#include	"CfcFile.h"
+#include "rTemplate.h"
+#include "ImageFlt.h"
+#include "ImgFlt.h"
+#include "CfcFile.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

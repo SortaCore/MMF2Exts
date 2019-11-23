@@ -1,0 +1,13 @@
+﻿Get the PortAudio ZIP download.
+Under ZIP\build\msvc, open the SLN. Upgrade it.
+There's a long README about getting set up with everything.
+But ignore it; you don't want ASIO support.
+
+In VCXProj that's opened, switch to static library on all configs.
+Switch to XP-targeting compiler.
+You'll have to remove the ASIO headers and CPP from the project workspace.
+You might also have to remove the preprocessor ASIO macros.
+
+For debug, you'll have to rename the project itself to append _dbg. PDB filename cannot be changed via project properties or by Additional Options. Even renaming the Output File doesn't work.
+
+Headers are available under ZIP\include\.

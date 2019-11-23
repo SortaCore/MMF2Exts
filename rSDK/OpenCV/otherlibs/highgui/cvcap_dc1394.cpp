@@ -17,12 +17,12 @@ INSTALLATION
 Install OpenCV
 Install v4l
 Install dc1394 raw1394 - coriander should work with your camera
-    Backup highgui folder
-    Copy new files
-    cd into highgui folder
-    make clean  (cvcap.cpp must be rebuilt)
-    make
-    make install
+	Backup highgui folder
+	Copy new files
+	cd into highgui folder
+	make clean  (cvcap.cpp must be rebuilt)
+	make
+	make install
 
 
 The build is controlled by the following entries in the highgui Makefile:
@@ -63,8 +63,8 @@ Tested with 2.6.12 with libdc1394-1.0.0, libraw1394-0.10.1 using a Point Grey Fl
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -72,15 +72,15 @@ Tested with 2.6.12 with libdc1394-1.0.0, libraw1394-0.10.1 using a Point Grey Fl
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -110,12 +110,12 @@ Tested with 2.6.12 with libdc1394-1.0.0, libraw1394-0.10.1 using a Point Grey Fl
 #define CV_WARN(message) fprintf(stderr, "warning: %s (%s:%d)\n", message, __FILE__, __LINE__)
 #endif
 
-#define CV_DC1394_CALL(expr)                                                  \
-if((expr)<0){                                                                 \
+#define CV_DC1394_CALL(expr)												  \
+if((expr)<0){																 \
 	OPENCV_ERROR(CV_StsInternal, "", "libdc1394 function call returned < 0"); \
 }
 
-#define  DELAY              50000
+#define  DELAY			  50000
 
 // bpp for 16-bits cameras... this value works for PtGrey DragonFly...
 #define MONO16_BPP 8
@@ -137,15 +137,15 @@ static char * videodev[4]={
 
 typedef struct CvCaptureCAM_DC1394
 {
-    raw1394handle_t handle;
-    nodeid_t  camera_node;
-    dc1394_cameracapture* camera;
-    int format;
-    int mode;
-    int color_mode;
-    int frame_rate;
-    char * device_name;
-    IplImage frame;
+	raw1394handle_t handle;
+	nodeid_t  camera_node;
+	dc1394_cameracapture* camera;
+	int format;
+	int mode;
+	int color_mode;
+	int frame_rate;
+	char * device_name;
+	IplImage frame;
 	int convert;
 	int buffer_is_writeable;  // indicates whether frame.imageData is allocated by OpenCV or DC1394
 }
@@ -157,16 +157,16 @@ static int icvGrabFrameCAM_DC1394( CvCaptureCAM_DC1394* capture );
 static IplImage* icvRetrieveFrameCAM_DC1394( CvCaptureCAM_DC1394* capture );
 
 static double icvGetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id );
-static int    icvSetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id, double value );
+static int	icvSetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id, double value );
 
 // utility functions
-static int    icvFormatSupportedCAM_DC1394(int format, quadlet_t formats);
-static int    icvModeSupportedCAM_DC1394(int format, int mode, quadlet_t modes);
-static int    icvColorMode( int mode );
+static int	icvFormatSupportedCAM_DC1394(int format, quadlet_t formats);
+static int	icvModeSupportedCAM_DC1394(int format, int mode, quadlet_t modes);
+static int	icvColorMode( int mode );
 static unsigned int icvGetBestFrameRate( CvCaptureCAM_DC1394 * capture, int format, int mode);
-static int    icvResizeFrame(CvCaptureCAM_DC1394 * capture);
+static int	icvResizeFrame(CvCaptureCAM_DC1394 * capture);
 
-/***********************   Implementations  ***************************************/
+/***********************	Implementations  ***************************************/
 #define MAX_PORTS 3 
 #define MAX_CAMERAS 8
 #define NUM_BUFFERS 8
@@ -180,20 +180,20 @@ struct camnode {dc1394_cameracapture cam;int portnum;} cameras[MAX_CAMERAS];
 
 static const int preferred_modes[]
 = {
-    // uncomment the following line to test a particular mode:
-    //FORMAT_VGA_NONCOMPRESSED, MODE_640x480_MONO16, 0,
-    FORMAT_SVGA_NONCOMPRESSED_2,
-    MODE_1600x1200_RGB, MODE_1600x1200_YUV422, MODE_1280x960_RGB, MODE_1280x960_YUV422,
-    MODE_1600x1200_MONO, MODE_1280x960_MONO, MODE_1600x1200_MONO16, MODE_1280x960_MONO16,
-    FORMAT_SVGA_NONCOMPRESSED_1,
-    MODE_1024x768_RGB, MODE_1024x768_YUV422, MODE_800x600_RGB, MODE_800x600_YUV422,
-    MODE_1024x768_MONO, MODE_800x600_MONO, MODE_1024x768_MONO16, MODE_800x600_MONO16, 
-    FORMAT_VGA_NONCOMPRESSED,
-   MODE_640x480_RGB, MODE_640x480_YUV422, MODE_640x480_YUV411, MODE_320x240_YUV422,
-    MODE_160x120_YUV444, MODE_640x480_MONO, MODE_640x480_MONO16,
-    FORMAT_SCALABLE_IMAGE_SIZE,
-    MODE_FORMAT7_0, MODE_FORMAT7_1, MODE_FORMAT7_2, MODE_FORMAT7_3,
-    MODE_FORMAT7_4, MODE_FORMAT7_5, MODE_FORMAT7_6, MODE_FORMAT7_7,
+	// uncomment the following line to test a particular mode:
+	//FORMAT_VGA_NONCOMPRESSED, MODE_640x480_MONO16, 0,
+	FORMAT_SVGA_NONCOMPRESSED_2,
+	MODE_1600x1200_RGB, MODE_1600x1200_YUV422, MODE_1280x960_RGB, MODE_1280x960_YUV422,
+	MODE_1600x1200_MONO, MODE_1280x960_MONO, MODE_1600x1200_MONO16, MODE_1280x960_MONO16,
+	FORMAT_SVGA_NONCOMPRESSED_1,
+	MODE_1024x768_RGB, MODE_1024x768_YUV422, MODE_800x600_RGB, MODE_800x600_YUV422,
+	MODE_1024x768_MONO, MODE_800x600_MONO, MODE_1024x768_MONO16, MODE_800x600_MONO16, 
+	FORMAT_VGA_NONCOMPRESSED,
+	MODE_640x480_RGB, MODE_640x480_YUV422, MODE_640x480_YUV411, MODE_320x240_YUV422,
+	MODE_160x120_YUV444, MODE_640x480_MONO, MODE_640x480_MONO16,
+	FORMAT_SCALABLE_IMAGE_SIZE,
+	MODE_FORMAT7_0, MODE_FORMAT7_1, MODE_FORMAT7_2, MODE_FORMAT7_3,
+	MODE_FORMAT7_4, MODE_FORMAT7_5, MODE_FORMAT7_6, MODE_FORMAT7_7,
 	0
 };
 
@@ -209,7 +209,7 @@ void icvInitCapture_DC1394(){
 	raw1394_destroy_handle(raw_handle);
 	for (p = 0; p < numPorts; p++) {
 		handles[p] = dc1394_create_handle(p);
-		if (handles[p]==NULL) {  numPorts=-1; return; /*ERROR_CLEANUP_EXIT*/   }
+		if (handles[p]==NULL) {  numPorts=-1; return; /*ERROR_CLEANUP_EXIT*/	}
 
 		/* get the camera nodes and describe them as we find them */
 		camera_nodes = dc1394_get_camera_nodes(handles[p], &camCount[p], 0);
@@ -229,7 +229,7 @@ static CvCaptureCAM_DC1394 * icvCaptureFromCAM_DC1394 (int index)
 
 	if (numPorts<0) icvInitCapture_DC1394();
 	if (numPorts==0)
-		return 0;     /* No i1394 ports found */
+		return 0;	 /* No i1394 ports found */
 	if (numCameras<1)
 		return 0;
 	if (index>=numCameras)
@@ -372,7 +372,7 @@ static int icvGrabFrameCAM_DC1394( CvCaptureCAM_DC1394* capture ){
 			return 1;
 		}
 		else if(result==DC1394_NO_FRAME){
-			usleep(1000000/120);  //sleep for at least a 1/2 of the frame rate
+			usleep(1000000/120);  // sleep for at least a 1/2 of the frame rate
 			waiting += 1.0/120.0;
 		}
 		else{
@@ -396,7 +396,7 @@ static IplImage* icvRetrieveFrameCAM_DC1394( CvCaptureCAM_DC1394* capture ){
 					//printf("icvRetrieveFrame convert RGB to BGR\n");
 					/* Convert RGB to BGR */
 					for (int i=0;i<capture->frame.imageSize;i+=6) {
-						dst[i]   = src[i+2];
+						dst[i]	= src[i+2];
 						dst[i+1] = src[i+1];
 						dst[i+2] = src[i];
 						dst[i+3] = src[i+5];
@@ -494,14 +494,14 @@ static double icvGetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int proper
 					return 240;
 #endif
 			}
-        default:    
+		default:	
 			index = property_id;  // did they pass in a LIBDC1394 feature flag?
 			break;
 	}
 	if(index>=FEATURE_MIN && index<=FEATURE_MAX){
 		dc1394bool_t has_feature;
 		CV_DC1394_CALL( dc1394_is_feature_present(capture->handle, capture->camera->node, 
-					                              index, &has_feature));
+												  index, &has_feature));
 		if(!has_feature){
 			CV_WARN("Feature is not supported by this camera");
 		}
@@ -521,17 +521,17 @@ static int icvResizeFrame(CvCaptureCAM_DC1394 * capture){
 		// resize if sizes are different, formats are different
 		// or conversion option has changed
 		if(capture->camera->frame_width != capture->frame.width ||
-		   capture->camera->frame_height != capture->frame.height ||
-		   capture->frame.depth != 8 ||
-		   capture->frame.nChannels != 3 ||
-		   capture->frame.imageData == NULL ||
-		   capture->buffer_is_writeable == 0) 
+			capture->camera->frame_height != capture->frame.height ||
+			capture->frame.depth != 8 ||
+			capture->frame.nChannels != 3 ||
+			capture->frame.imageData == NULL ||
+			capture->buffer_is_writeable == 0) 
 		{
 			if(capture->frame.imageData && capture->buffer_is_writeable){ 
 				cvReleaseData( &(capture->frame));
 			}
 			cvInitImageHeader( &capture->frame, cvSize( capture->camera->frame_width,
-						                                capture->camera->frame_height ),
+														capture->camera->frame_height ),
 								IPL_DEPTH_8U, 3, IPL_ORIGIN_TL, 4 );
 			cvCreateData( &(capture->frame) );
 			capture->buffer_is_writeable = 1;
@@ -562,7 +562,7 @@ static int icvResizeFrame(CvCaptureCAM_DC1394 * capture){
 		case COLOR_FORMAT7_YUV411:
 			code = CV_FOURCC('Y','4','1','1');
 			width *= 2;
-			nch = 3;  //yy[u/v]
+			nch = 3;  // yy[u/v]
 			break;
 		case COLOR_FORMAT7_YUV444:
 			code = CV_FOURCC('Y','U','V',0);
@@ -787,7 +787,7 @@ icvColorMode( int mode ){
 // val == -1 indicates to set this property to 'auto'
 static int
 icvSetFeatureCAM_DC1394( CvCaptureCAM_DC1394* capture, int feature_id, int val){
-        dc1394bool_t isOn = DC1394_FALSE;
+		dc1394bool_t isOn = DC1394_FALSE;
 		dc1394bool_t hasAutoCapability = DC1394_FALSE;
 		dc1394bool_t isAutoOn = DC1394_FALSE;
 		unsigned int nval;
@@ -799,11 +799,11 @@ icvSetFeatureCAM_DC1394( CvCaptureCAM_DC1394* capture, int feature_id, int val){
 			return 0;
 		}
 		if( isOn == DC1394_FALSE ) {
-                // try to turn it on.
-                if( dc1394_feature_on_off(capture->handle, capture->camera->node, feature_id, 1) == DC1394_FAILURE ) {
-                    fprintf(stderr, "error turning feature %d on!\n", feature_id);
-                    return 0;
-                }
+				// try to turn it on.
+				if( dc1394_feature_on_off(capture->handle, capture->camera->node, feature_id, 1) == DC1394_FAILURE ) {
+					fprintf(stderr, "error turning feature %d on!\n", feature_id);
+					return 0;
+				}
 		}
 
 		// Check if the feature supports auto mode 
@@ -818,20 +818,20 @@ icvSetFeatureCAM_DC1394( CvCaptureCAM_DC1394* capture, int feature_id, int val){
 		}
 		// Caller requested auto mode, but cannot support it
 		else if(val==-1){
-            fprintf(stderr, "feature %d does not support auto mode\n", feature_id);
-            return 0;
+			fprintf(stderr, "feature %d does not support auto mode\n", feature_id);
+			return 0;
 		}
 
 		if(val==-1){
-            // if the auto mode isn't enabled, enable it
-            if( isAutoOn == DC1394_FALSE ) {
-                if(dc1394_auto_on_off(capture->handle, capture->camera->node, feature_id, 1) == DC1394_FAILURE ) {
-                    fprintf(stderr, "error turning feature %d auto ON!\n", feature_id);
-                    return 0;
-                }
-            }
+			// if the auto mode isn't enabled, enable it
+			if( isAutoOn == DC1394_FALSE ) {
+				if(dc1394_auto_on_off(capture->handle, capture->camera->node, feature_id, 1) == DC1394_FAILURE ) {
+					fprintf(stderr, "error turning feature %d auto ON!\n", feature_id);
+					return 0;
+				}
+			}
 			return 1;
-        }
+		}
 
 		// ELSE turn OFF auto and adjust feature manually
 		if( isAutoOn == DC1394_TRUE ) {
@@ -862,7 +862,7 @@ icvSetFeatureCAM_DC1394( CvCaptureCAM_DC1394* capture, int feature_id, int val){
 }
 
 // cvSetCaptureProperty callback function implementation
-static int   
+static int	
 icvSetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id, double value ){
 	int index=-1;
 	switch ( property_id ) {
@@ -881,10 +881,10 @@ icvSetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id, double 
 		case CV_CAP_PROP_SATURATION: 
 			index = FEATURE_SATURATION;
 			break;
-		case CV_CAP_PROP_HUE:       
+		case CV_CAP_PROP_HUE:		
 			index = FEATURE_HUE;
 			break;
-		case CV_CAP_PROP_GAIN:     
+		case CV_CAP_PROP_GAIN:	 
 			index = FEATURE_GAIN;
 			break;
 		default:
@@ -903,7 +903,7 @@ icvSetPropertyCAM_DC1394( CvCaptureCAM_DC1394* capture, int property_id, double 
  *
  **********************************************************************/
 
-/* color conversion functions from Bart Nabbe. *//* corrected by Damien: bad coeficients in YUV2RGB */
+/* color conversion functions from Bart Nabbe. *// * corrected by Damien: bad coeficients in YUV2RGB */
 #define YUV2RGB(y, u, v, r, g, b)\
 	r = y + ((v*1436) >> 10);\
 g = y - ((u*352 + v*731) >> 10);\
@@ -1055,66 +1055,66 @@ rgb482bgr(const unsigned char *src, unsigned char *dest,
 class CvCaptureCAM_DC1394_CPP : public CvCapture
 {
 public:
-    CvCaptureCAM_DC1394_CPP() { captureDC1394 = 0; }
-    virtual ~CvCaptureCAM_DC1394_CPP() { close(); }
+	CvCaptureCAM_DC1394_CPP() { captureDC1394 = 0; }
+	virtual ~CvCaptureCAM_DC1394_CPP() { close(); }
 
-    virtual bool open( int index );
-    virtual void close();
+	virtual bool open( int index );
+	virtual void close();
 
-    virtual double getProperty(int);
-    virtual bool setProperty(int, double);
-    virtual bool grabFrame();
-    virtual IplImage* retrieveFrame();
+	virtual double getProperty(int);
+	virtual bool setProperty(int, double);
+	virtual bool grabFrame();
+	virtual IplImage* retrieveFrame();
 protected:
 
-    CvCaptureCAM_DC1394* captureDC1394;
+	CvCaptureCAM_DC1394* captureDC1394;
 };
 
 bool CvCaptureCAM_DC1394_CPP::open( int index )
 {
-    close();
-    captureDC1394 = icvCaptureFromCAM_DC1394(index);
-    return captureDC1394 != 0;
+	close();
+	captureDC1394 = icvCaptureFromCAM_DC1394(index);
+	return captureDC1394 != 0;
 }
 
 void CvCaptureCAM_DC1394_CPP::close()
 {
-    if( captureDC1394 )
-    {
-        icvCloseCAM_DC1394( captureDC1394 );
-        cvFree( &captureDC1394 );
-    }
+	if( captureDC1394 )
+	{
+		icvCloseCAM_DC1394( captureDC1394 );
+		cvFree( &captureDC1394 );
+	}
 }
 
 bool CvCaptureCAM_DC1394_CPP::grabFrame()
 {
-    return captureDC1394 ? icvGrabFrameCAM_DC1394( captureDC1394 ) != 0 : false;
+	return captureDC1394 ? icvGrabFrameCAM_DC1394( captureDC1394 ) != 0 : false;
 }
 
 IplImage* CvCaptureCAM_DC1394_CPP::retrieveFrame()
 {
-    return captureDC1394 ? (IplImage*)icvRetrieveFrameCAM_DC1394( captureDC1394 ) : 0;
+	return captureDC1394 ? (IplImage*)icvRetrieveFrameCAM_DC1394( captureDC1394 ) : 0;
 }
 
 double CvCaptureCAM_DC1394_CPP::getProperty( int propId )
 {
-    return captureDC1394 ? icvGetPropertyCAM_DC1394( captureDC1394, propId ) : 0;
+	return captureDC1394 ? icvGetPropertyCAM_DC1394( captureDC1394, propId ) : 0;
 }
 
 bool CvCaptureCAM_DC1394_CPP::setProperty( int propId, double value )
 {
-    return captureDC1394 ? icvSetPropertyCAM_DC1394( captureDC1394, propId, value ) != 0 : false;
+	return captureDC1394 ? icvSetPropertyCAM_DC1394( captureDC1394, propId, value ) != 0 : false;
 }
 
 CvCapture* cvCreateCameraCapture_DC1394( int index )
 {
-    CvCaptureCAM_DC1394_CPP* capture = new CvCaptureCAM_DC1394_CPP;
+	CvCaptureCAM_DC1394_CPP* capture = new CvCaptureCAM_DC1394_CPP;
 
-    if( capture->open( index ))
-        return capture;
+	if( capture->open( index ))
+		return capture;
 
-    delete capture;
-    return 0;
+	delete capture;
+	return 0;
 }
 
 #endif

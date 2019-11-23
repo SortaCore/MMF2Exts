@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Edittime|Win32">
+      <Configuration>Edittime</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|Win32">
+      <Configuration>Runtime</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7BC7F91B-80E1-4F73-8A95-480962EB4E06}</ProjectGuid>
+    <ProjectName>Bluewing Client</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
+   <Error Condition="!exists('..\Lib\FusionSDK.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK.props&quot;." />
+   <Error Condition="!exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK_AfterMSPropSheets.props&quot;." />
+  </Target>
+  <Import Project="..\Lib\FusionSDK.props" Condition="exists('..\Lib\FusionSDK.props')" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <Import Project="..\Lib\FusionSDK_AfterMSPropSheets.props" Condition="exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Edittime|Win32'">
+    <ClCompile>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'">
+    <ClCompile>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Lib\json.c" />
+    <ClCompile Include="..\Lib\DarkEdif.cpp" />
+    <ClCompile Include="..\Lib\Edif.cpp" />
+    <ClCompile Include="..\Lib\Edif.Edittime.cpp" />
+    <ClCompile Include="..\Lib\Edif.General.cpp" />
+    <ClCompile Include="..\Lib\Edif.Runtime.cpp" />
+    <ClCompile Include="..\Lib\ObjectSelection.cpp" />
+    <ClCompile Include="..\Lib\Lacewing\src\address.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\address2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\client2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\error2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\event2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\eventpump2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\fdstream2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\file2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\filter2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\flashpolicy2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\pipe2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\pump2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\server2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\stream2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\sync2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\thread2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\timer2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\cxx\udp2.cc" />
+    <ClCompile Include="..\Lib\Lacewing\src\error.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\filter.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\flashpolicy.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\global.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\heapbuffer.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\list.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\nvhash.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\pipe.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\pump.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\refcount-dbg.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\stream.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\streamgraph.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\util.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\client.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\compat.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\event.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\eventpump.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\fdstream.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\file.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\global2.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\server.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\sslclient.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\clientssl.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\serverssl.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\ssl.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\sync.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\thread.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\timer.c" />
+    <ClCompile Include="..\Lib\Lacewing\src\windows\udp.c" />
+    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc" />
+    <ClCompile Include="..\Lib\Lacewing\RelayClient.cc" />
+    <ClCompile Include="Actions.cpp" />
+    <ClCompile Include="ChannelCopy.cpp" />
+    <ClCompile Include="Conditions.cpp" />
+    <ClCompile Include="Edittime.cpp" />
+    <ClCompile Include="Expressions.cpp" />
+    <ClCompile Include="Extension.cpp" />
+    <ClCompile Include="General.cpp" />
+    <ClCompile Include="LacewingFunctions.cpp" />
+    <ClCompile Include="PeerCopy.cpp" />
+    <ClCompile Include="Runtime.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DarkExt.json" />
+    <None Include="Ext.def" />
+    <None Include="Icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\json.h" />
+    <ClInclude Include="..\Inc\DarkEdif.h" />
+    <ClInclude Include="..\Inc\Edif.h" />
+    <ClInclude Include="..\Inc\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\ObjectSelection.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
+    <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
+    <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
+    <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
+    <ClInclude Include="..\Lib\Lacewing\MessageReader.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\address.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\common.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\heapbuffer-cxx.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\heapbuffer.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\nvhash.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\pump.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\refcount-dbg.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\refcount.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\stream.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\streamgraph.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\windows\common.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\windows\compat.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\windows\fdstream.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\windows\sslclient.h" />
+    <ClInclude Include="..\Lib\Lacewing\src\windows\typeof.h" />
+    <ClInclude Include="ChannelCopy.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Extension.h" />
+    <ClInclude Include="LacewingFunctions.h" />
+    <ClInclude Include="MultiThreading.h" />
+    <ClInclude Include="PeerCopy.h" />
+    <ClInclude Include="Resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ext.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

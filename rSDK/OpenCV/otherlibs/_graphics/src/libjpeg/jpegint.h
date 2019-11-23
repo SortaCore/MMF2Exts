@@ -56,27 +56,27 @@ struct jpeg_comp_master {
 struct jpeg_c_main_controller {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo, J_BUF_MODE pass_mode));
   JMETHOD(void, process_data, (j_compress_ptr cinfo,
-			       JSAMPARRAY input_buf, JDIMENSION *in_row_ctr,
-			       JDIMENSION in_rows_avail));
+					JSAMPARRAY input_buf, JDIMENSION *in_row_ctr,
+					JDIMENSION in_rows_avail));
 };
 
 /* Compression preprocessing (downsampling input buffer control) */
 struct jpeg_c_prep_controller {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo, J_BUF_MODE pass_mode));
   JMETHOD(void, pre_process_data, (j_compress_ptr cinfo,
-				   JSAMPARRAY input_buf,
-				   JDIMENSION *in_row_ctr,
-				   JDIMENSION in_rows_avail,
-				   JSAMPIMAGE output_buf,
-				   JDIMENSION *out_row_group_ctr,
-				   JDIMENSION out_row_groups_avail));
+					JSAMPARRAY input_buf,
+					JDIMENSION *in_row_ctr,
+					JDIMENSION in_rows_avail,
+					JSAMPIMAGE output_buf,
+					JDIMENSION *out_row_group_ctr,
+					JDIMENSION out_row_groups_avail));
 };
 
 /* Coefficient buffer control */
 struct jpeg_c_coef_controller {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo, J_BUF_MODE pass_mode));
   JMETHOD(boolean, compress_data, (j_compress_ptr cinfo,
-				   JSAMPIMAGE input_buf));
+					JSAMPIMAGE input_buf));
 };
 
 /* Colorspace conversion */
@@ -91,9 +91,9 @@ struct jpeg_color_converter {
 struct jpeg_downsampler {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo));
   JMETHOD(void, downsample, (j_compress_ptr cinfo,
-			     JSAMPIMAGE input_buf, JDIMENSION in_row_index,
-			     JSAMPIMAGE output_buf,
-			     JDIMENSION out_row_group_index));
+				 JSAMPIMAGE input_buf, JDIMENSION in_row_index,
+				 JSAMPIMAGE output_buf,
+				 JDIMENSION out_row_group_index));
 
   boolean need_context_rows;	/* TRUE if need rows above & below */
 };
@@ -103,10 +103,10 @@ struct jpeg_forward_dct {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo));
   /* perhaps this should be an array??? */
   JMETHOD(void, forward_DCT, (j_compress_ptr cinfo,
-			      jpeg_component_info * compptr,
-			      JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
-			      JDIMENSION start_row, JDIMENSION start_col,
-			      JDIMENSION num_blocks));
+				  jpeg_component_info * compptr,
+				  JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
+				  JDIMENSION start_row, JDIMENSION start_col,
+				  JDIMENSION num_blocks));
 };
 
 /* Entropy encoding */
@@ -126,7 +126,7 @@ struct jpeg_marker_writer {
   /* These routines are exported to allow insertion of extra markers */
   /* Probably only COM and APPn markers should be written this way */
   JMETHOD(void, write_marker_header, (j_compress_ptr cinfo, int marker,
-				      unsigned int datalen));
+					  unsigned int datalen));
   JMETHOD(void, write_marker_byte, (j_compress_ptr cinfo, int val));
 };
 
@@ -158,8 +158,8 @@ struct jpeg_input_controller {
 struct jpeg_d_main_controller {
   JMETHOD(void, start_pass, (j_decompress_ptr cinfo, J_BUF_MODE pass_mode));
   JMETHOD(void, process_data, (j_decompress_ptr cinfo,
-			       JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
-			       JDIMENSION out_rows_avail));
+					JSAMPARRAY output_buf, JDIMENSION *out_row_ctr,
+					JDIMENSION out_rows_avail));
 };
 
 /* Coefficient buffer control */
@@ -177,28 +177,28 @@ struct jpeg_d_coef_controller {
 struct jpeg_d_post_controller {
   JMETHOD(void, start_pass, (j_decompress_ptr cinfo, J_BUF_MODE pass_mode));
   JMETHOD(void, post_process_data, (j_decompress_ptr cinfo,
-				    JSAMPIMAGE input_buf,
-				    JDIMENSION *in_row_group_ctr,
-				    JDIMENSION in_row_groups_avail,
-				    JSAMPARRAY output_buf,
-				    JDIMENSION *out_row_ctr,
-				    JDIMENSION out_rows_avail));
+					JSAMPIMAGE input_buf,
+					JDIMENSION *in_row_group_ctr,
+					JDIMENSION in_row_groups_avail,
+					JSAMPARRAY output_buf,
+					JDIMENSION *out_row_ctr,
+					JDIMENSION out_rows_avail));
 };
 
 /* Marker reading & parsing */
 struct jpeg_marker_reader {
   JMETHOD(void, reset_marker_reader, (j_decompress_ptr cinfo));
   /* Read markers until SOS or EOI.
-   * Returns same codes as are defined for jpeg_consume_input:
-   * JPEG_SUSPENDED, JPEG_REACHED_SOS, or JPEG_REACHED_EOI.
-   */
+	* Returns same codes as are defined for jpeg_consume_input:
+	* JPEG_SUSPENDED, JPEG_REACHED_SOS, or JPEG_REACHED_EOI.
+	*/
   JMETHOD(int, read_markers, (j_decompress_ptr cinfo));
   /* Read a restart marker --- exported for use by entropy decoder only */
   jpeg_marker_parser_method read_restart_marker;
 
   /* State of marker reader --- nominally internal, but applications
-   * supplying COM or APPn handlers might like to know the state.
-   */
+	* supplying COM or APPn handlers might like to know the state.
+	*/
   boolean saw_SOI;		/* found SOI? */
   boolean saw_SOF;		/* found SOF? */
   int next_restart_num;		/* next restart number expected (0-7) */
@@ -232,12 +232,12 @@ struct jpeg_inverse_dct {
 struct jpeg_upsampler {
   JMETHOD(void, start_pass, (j_decompress_ptr cinfo));
   JMETHOD(void, upsample, (j_decompress_ptr cinfo,
-			   JSAMPIMAGE input_buf,
-			   JDIMENSION *in_row_group_ctr,
-			   JDIMENSION in_row_groups_avail,
-			   JSAMPARRAY output_buf,
-			   JDIMENSION *out_row_ctr,
-			   JDIMENSION out_rows_avail));
+				JSAMPIMAGE input_buf,
+				JDIMENSION *in_row_group_ctr,
+				JDIMENSION in_row_groups_avail,
+				JSAMPARRAY output_buf,
+				JDIMENSION *out_row_ctr,
+				JDIMENSION out_rows_avail));
 
   boolean need_context_rows;	/* TRUE if need rows above & below */
 };
@@ -371,8 +371,8 @@ EXTERN(void) jinit_memory_mgr JPP((j_common_ptr cinfo));
 EXTERN(long) jdiv_round_up JPP((long a, long b));
 EXTERN(long) jround_up JPP((long a, long b));
 EXTERN(void) jcopy_sample_rows JPP((JSAMPARRAY input_array, int source_row,
-				    JSAMPARRAY output_array, int dest_row,
-				    int num_rows, JDIMENSION num_cols));
+					JSAMPARRAY output_array, int dest_row,
+					int num_rows, JDIMENSION num_cols));
 EXTERN(void) jcopy_block_row JPP((JBLOCKROW input_row, JBLOCKROW output_row,
 				  JDIMENSION num_blocks));
 EXTERN(void) jzero_far JPP((void FAR * target, size_t bytestozero));

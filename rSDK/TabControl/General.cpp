@@ -5,8 +5,6 @@
 // =====================================================================================
 
 #include "common.h"
-__inline int mvGetAppCodePage(LPMV mV, LPVOID pApp) \
-	{ return mV->mvCallFunction(NULL, 115, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
 
 HINSTANCE hInstLib;
 EXT_INIT()
@@ -51,7 +49,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 			break;
 
 		// The calling process is detaching the DLL from its address space.
-	    case DLL_PROCESS_DETACH:
+		case DLL_PROCESS_DETACH:
 			break;
 	}
 	
@@ -132,9 +130,9 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->actions = (LPBYTE)ActionJumps;
 	infoPtr->expressions = (LPBYTE)ExpressionJumps;
 
-	infoPtr->numOfConditions = Conditions.size();
-	infoPtr->numOfActions = Actions.size();
-	infoPtr->numOfExpressions = Expressions.size();
+	infoPtr->numOfConditions = (short)Conditions.size();
+	infoPtr->numOfActions = (short)Actions.size();
+	infoPtr->numOfExpressions = (short)Expressions.size();
 
 	infoPtr->editDataSize = sizeof(EDITDATA);
 	
@@ -145,9 +143,9 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	MagicPrefs(infoPtr->editPrefs);
 
 	infoPtr->identifier = IDENTIFIER;
-	#ifndef UNICODE //This is used so conversion between ASCII and Unicode EDITDATA is registered
+	#ifndef UNICODE // This is used so conversion between ASCII and Unicode EDITDATA is registered
 		infoPtr->version = 3;
-	#else //ASCII
+	#else // ASCII
 		infoPtr->version = 4;
 	#endif
 	return TRUE;
@@ -210,7 +208,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			OLDEDITDATA* OldEdPtr = AnyEdPtr;
 			NewEdPtr = (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
-			NewEdPtr->eHeader.extSize = sizeof(EDITDATA);    // Update the EDITDATA structure size
+			NewEdPtr->eHeader.extSize = sizeof(EDITDATA);	// Update the EDITDATA structure size
 			NewEdPtr->eHeader.extVersion = 3;
 			p(nWidth); p(nHeight);
 			p(textColor); p(backColor);
@@ -239,7 +237,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			OLDEDITDATA2* OldEdPtr = (OLDEDITDATA2*)AnyEdPtr;
 			NewEdPtr = (EDITDATA*)GlobalAlloc(GPTR,sizeof(EDITDATA));
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
-			NewEdPtr->eHeader.extSize = sizeof(EDITDATA);    // Update the EDITDATA structure size
+			NewEdPtr->eHeader.extSize = sizeof(EDITDATA);	// Update the EDITDATA structure size
 			NewEdPtr->eHeader.extVersion = 3;
 			p(nWidth); p(nHeight);
 			p(textColor); p(backColor);
@@ -260,7 +258,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 
 			return (HGLOBAL)NewEdPtr;
 		}
-#if defined(UNICODE) && !defined(RUN_ONLY) //If data is in ASCII format
+#if defined(UNICODE) && !defined(RUN_ONLY) // If data is in ASCII format
 		//Version 3 -> 4 (ASCII -> Unicode)
 		else if (AnyEdPtr->eHeader.extVersion == 3)
 		{
@@ -270,7 +268,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			
 			// Copy eHeader
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
-			NewEdPtr->eHeader.extSize = sizeof(EDITDATAW);    // Update the EDITDATA structure size
+			NewEdPtr->eHeader.extSize = sizeof(EDITDATAW);	// Update the EDITDATA structure size
 			NewEdPtr->eHeader.extVersion = 4;
 
 			// Copy until the LogFont structure
@@ -308,7 +306,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			// Done
 			return (HGLOBAL)NewEdPtr;
 		}
-#elif !defined(UNICODE) && !defined(RUN_ONLY) //If old data is Unicode, but running ASCII MMF2...
+#elif !defined(UNICODE) && !defined(RUN_ONLY) // If old data is Unicode, but running ASCII MMF2...
 		//Version 4 -> 3 (Unicode -> ASCII)
 		else if (AnyEdPtr->eHeader.extVersion == 4)
 		{
@@ -319,7 +317,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			
 			// Copy eHeader
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
-			NewEdPtr->eHeader.extSize = sizeof(EDITDATAA);    // Update the EDITDATA structure size
+			NewEdPtr->eHeader.extSize = sizeof(EDITDATAA);	// Update the EDITDATA structure size
 			NewEdPtr->eHeader.extVersion = 3;
 
 			// Copy until the LogFont structure

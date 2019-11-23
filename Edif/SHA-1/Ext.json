@@ -1,0 +1,44 @@
+{
+	"About": {
+		"Name": "SHA-1 object",
+		"Author": "Darkwire Software",
+		"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
+		"Comment": "A quick SHA-1 file hasher extension.",
+		"Help": "",
+		"Identifier": "SHA1",
+		"URL": "https://dark-wire.com/"
+	},
+	"ActionMenu": [
+		[ 0, "Hash file" ],
+		
+		"Separator"
+	],
+	"ConditionMenu": [
+		 [ 0, "Darkwire Software", true ]
+	],
+	"ExpressionMenu": [
+		 [ 0, "Get last hash/error" ],
+		 [ 1, "Get last hash/error memory address" ]
+	],
+	"Actions": [
+		{
+			"Title": "SHA-1 hash file: %0",
+			"Parameters": [
+				[ "Text", "File to hash" ],
+				[ "Integer", "Output hexadecimal string (0) or pure binary (1)?" ]
+			]
+		}
+	],
+	"Conditions": [
+	],
+	"Expressions": [
+		{
+			"Title": "GetHash$(",
+			"Returns": "Text"
+		},
+		{
+			"Title": "GetHashAddress(",
+			"Returns": "Integer"
+		}
+	]
+}

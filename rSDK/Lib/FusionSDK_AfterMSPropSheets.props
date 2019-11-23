@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<!-- If displayed in VS -->
+		<_PropertySheetDisplayName>Fusion SDK Properties - Post-MS Override</_PropertySheetDisplayName>
+	</PropertyGroup>
+	<!-- While TargetExt is set to .mfx/.mox, Microsoft's default property sheets override it
+		 back to .dll, which we don't want.
+		 If that happens, only a target warning is generated, it's not a show-stopper,
+		 but for the sake of cleanliness.
+		 So we use this extra sheet to force back to .mfx/.mox. -->
+	<PropertyGroup Condition="'$(Platform)'=='Win32'">
+		<TargetExt Condition="!$(Configuration.Contains('Vitalize'))">.mfx</TargetExt>
+		<TargetExt Condition="$(Configuration.Contains('Vitalize'))">.mox</TargetExt>
+	</PropertyGroup>
+</Project>

@@ -1,0 +1,5 @@
+• Copy and open copy of DarkEdif Template project file
+• Remove any unneeded files (e.g. Actions if there's no actions)
+• Move Identifier in JSON, move ACE and menus into "US English", or "UK English"
+• Rename Ext.json to DarkExt.json
+• Move your properties over

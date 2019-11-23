@@ -17,42 +17,42 @@
 class GrFmtImageIOReader : public GrFmtReader
 {
 public:
-    
-    GrFmtImageIOReader( const char* filename );
-    ~GrFmtImageIOReader();
-    
-    bool  ReadData( uchar* data, int step, int color );
-    bool  ReadHeader();
-    void  Close();
+	
+	GrFmtImageIOReader( const char* filename );
+	~GrFmtImageIOReader();
+	
+	bool  ReadData( uchar* data, int step, int color );
+	bool  ReadHeader();
+	void  Close();
 
 protected:
-    
-    CGImageRef imageRef;
+	
+	CGImageRef imageRef;
 };
 
 class GrFmtImageIOWriter : public GrFmtWriter
 {
 public:
-    
-    GrFmtImageIOWriter( const char* filename );
-    ~GrFmtImageIOWriter();
+	
+	GrFmtImageIOWriter( const char* filename );
+	~GrFmtImageIOWriter();
 
-    bool  WriteImage( const uchar* data, int step,
-                      int width, int height, int depth, int channels );
+	bool  WriteImage( const uchar* data, int step,
+					  int width, int height, int depth, int channels );
 };
 
 // ImageIO filter factory
 class GrFmtImageIO :public GrFmtFilterFactory
 {
 public:
-    
-    GrFmtImageIO();
-    ~GrFmtImageIO();
-    
-    bool CheckFile( const char* filename );
-    
-    GrFmtReader* NewReader( const char* filename );
-    GrFmtWriter* NewWriter( const char* filename );
+	
+	GrFmtImageIO();
+	~GrFmtImageIO();
+	
+	bool CheckFile( const char* filename );
+	
+	GrFmtReader* NewReader( const char* filename );
+	GrFmtWriter* NewWriter( const char* filename );
 };
 
 #endif/*HAVE_IMAGEIO*/

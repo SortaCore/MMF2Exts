@@ -23,7 +23,6 @@ EXT_INIT()
 
 BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 {
-
 	conditionsInfos = getConditionInfos();
 	actionsInfos = getActionInfos();
 	expressionsInfos = getExpressionInfos();
@@ -36,7 +35,6 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 	{
 		// DLL is attaching to the address space of the current process.
 		case DLL_PROCESS_ATTACH:
-			
 			hInstLib = hDLL; // Store HINSTANCE
 			break;
 
@@ -49,7 +47,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 			break;
 
 		// The calling process is detaching the DLL from its address space.
-	    case DLL_PROCESS_DETACH:
+		case DLL_PROCESS_DETACH:
 			break;
 	}
 	
@@ -94,7 +92,6 @@ extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
-		
 		switch (info)
 		{
 			case KGI_VERSION:
@@ -124,9 +121,9 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->actions = (LPBYTE)ActionJumps;
 	infoPtr->expressions = (LPBYTE)ExpressionJumps;
 
-	infoPtr->numOfConditions = Conditions.size();
-	infoPtr->numOfActions = Actions.size();
-	infoPtr->numOfExpressions = Expressions.size();
+	infoPtr->numOfConditions = (short)Conditions.size();
+	infoPtr->numOfActions = (short)Actions.size();
+	infoPtr->numOfExpressions = (short)Expressions.size();
 
 	infoPtr->editDataSize = sizeof(EDITDATA);
 	
@@ -229,8 +226,8 @@ int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc
 	// Enum images  
 	if ( (error = enumProc(&edPtr->wImgIdx, IMG_TAB, lp1, lp2)) != 0 )
 	{
-		// Undo enum images      
-		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);    
+		// Undo enum images	  
+		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);	
 	}  
 
 	return error;

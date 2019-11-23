@@ -2,23 +2,22 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
-
 // make debug outputs
-#define VOXEL_DEBUG
+// Phi note: Since this throws log files into C:\ and random other places, I keep it off for the repo.
+// #define VOXEL_DEBUG
 
 // General includes
-#include	"TemplateInc.h"
+#include "TemplateInc.h"
 
 // Specific to this extension
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
+#include <cmath>
 
 // rTemplate include
-#include	"rTemplate.h"
+#include "rTemplate.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

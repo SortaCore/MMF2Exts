@@ -49,7 +49,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 			break;
 
 		// The calling process is detaching the DLL from its address space.
-	    case DLL_PROCESS_DETACH:
+		case DLL_PROCESS_DETACH:
 			break;
 	}
 	
@@ -130,9 +130,9 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->actions = (LPBYTE)ActionJumps;
 	infoPtr->expressions = (LPBYTE)ExpressionJumps;
 
-	infoPtr->numOfConditions = Conditions.size();
-	infoPtr->numOfActions = Actions.size();
-	infoPtr->numOfExpressions = Expressions.size();
+	infoPtr->numOfConditions = (short)Conditions.size();
+	infoPtr->numOfActions = (short)Actions.size();
+	infoPtr->numOfExpressions = (short)Expressions.size();
 
 	infoPtr->editDataSize = sizeof(EDITDATA);
 	
@@ -235,8 +235,8 @@ int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc
 	// Enum images  
 	if ( (error = enumProc(&edPtr->wImgIdx, IMG_TAB, lp1, lp2)) != 0 )
 	{
-		// Undo enum images      
-		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);    
+		// Undo enum images	  
+		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);	
 	}  
 
 	return error;

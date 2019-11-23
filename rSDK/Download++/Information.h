@@ -1,13 +1,17 @@
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
+
 // --------------------
 // Object information
 // --------------------
 
 // Basic object details
 #define	ObjectName			"Download++ object"
-#define	ObjectAuthor		"Darkwire Software & Clickteam"
-#define	ObjectCopyright		"Copyright © 2011 Darkwire Software & Clickteam"
-#define	ObjectComment		"Allows you download files  from the Internet with HTTP or HTTPS."
-#define	ObjectURL			"http://www.dark-wire.com/"
+#define	ObjectAuthor		"Clickteam & Darkwire Software"
+#define	ObjectCopyright		"Copyright Â© " asStr(YEAR) " Clickteam & Darkwire Software"
+#define	ObjectComment		"Allows you to download files from the Internet with HTTP or HTTPS."
+#define	ObjectURL			"https://dark-wire.com/"
 #define	ObjectHelp			""
 
 // If you register your object with Clickteam, change this to the ID you were given

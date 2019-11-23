@@ -37,12 +37,12 @@ struct PropData;
 struct RunHeader;
 
 // Force structure alignement
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #pragma pack( push, _pack_cncy_ )
 #pragma pack(2)
 #endif
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Object instance parent types
 enum {
@@ -231,7 +231,7 @@ typedef struct AppHeader {
 //////////////////////////////////////////////////////////////////////////////
 // Element of chunk Extensions
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct ExtDesc {
 	WORD		extSize;
 	WORD		extIndex;
@@ -340,7 +340,7 @@ typedef struct ObjInfoHeader
 // LevObj/FrameItemInstance
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #ifdef __cplusplus
 class diskLO {
 public:
@@ -380,7 +380,7 @@ enum {
 ////////////////////////////////
 // Static object - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct Static_OC {
 
 	// Size
@@ -401,7 +401,7 @@ typedef Static_OC * LPStatic_OC;
 // Fill Type & shapes - Definitions
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 // Gradient
 typedef struct GradientData {
 	COLORREF		color1;
@@ -434,7 +434,7 @@ enum {
 ///////////////////////////////////////////////////////////////
 // Fill Type - Part of FilledShape
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FillType_Data {
@@ -470,7 +470,7 @@ typedef struct FillType_Data {
 ///////////////////////////////////////////////////////////////
 // Filled Shape - Part of QuickBackdrop / Counter ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FilledShape_Data {
@@ -494,7 +494,7 @@ typedef FilledShape_Data * LPFilledShape_Data;
 /////////////////////////////////
 // Quick backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct QuickBackdrop_OC {
 
@@ -516,7 +516,7 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 /////////////////////////////////
 // Backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct Backdrop_OC {
 
@@ -651,7 +651,7 @@ enum {
 //
 // Objet RTF - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocRTF {
 
@@ -675,7 +675,7 @@ typedef ocRTF * LPOCRTF;
 //
 // Objet CCA - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocCCA {
 
@@ -729,7 +729,7 @@ typedef ocCCA * LPOCCCA;
 // Transition
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Transition header
 typedef struct TransitionHdr {
@@ -1256,7 +1256,7 @@ typedef	struct	MvxFnc {
 #endif	// RUN_TIME
 
 // Restore structure alignement
-#ifndef      _H2INC 
+#ifndef	  _H2INC 
 #pragma pack( pop, _pack_cncy_ )
 #endif
 

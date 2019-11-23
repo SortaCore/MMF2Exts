@@ -2,25 +2,22 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
-
 // make debug outputs
 //#define VOXEL_DEBUG
 
 #include	<tchar.h>
 
 // General includes
-#include	"..\..\..\Inc\TemplateInc.h"
+#include "..\..\..\Inc\TemplateInc.h"
 
 // Specific to this extension
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
 
 // rTemplate include
-#include	"rTemplate.h"
+#include "rTemplate.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

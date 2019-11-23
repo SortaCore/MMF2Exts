@@ -32,8 +32,8 @@ typedef struct tagRDATA
 	//voxel_t			voxel;
 	//int				frame;
 	matrix_t		lMatrix;
-	double			sinus[3];
-	double			cosine[3];
+	float			sinus[3];
+	float			cosine[3];
 	short *			surfaceDepthGrid;
 	char *			screenDot;
 	bool*			screenRender;

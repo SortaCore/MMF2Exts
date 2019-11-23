@@ -6,7 +6,7 @@
 
 #define	CND_LAST	1
 #define	ACT_LAST	1
-#define	EXP_LAST        4
+#define	EXP_LAST		4
 
 
 // --------------------------------
@@ -46,11 +46,11 @@ typedef	RUNDATA	_far *			LPRDATA;
 
 // Default flags
 // -------------
-#define	OEFLAGS      			0
-#define	OEPREFS      			0
+#define	OEFLAGS	  			0
+#define	OEPREFS	  			0
 
 // If to handle message, specify the priority of the handling procedure
-// 0= low, 255= very high. You should use 100 as normal.                                                
+// 0= low, 255= very high. You should use 100 as normal.												
 // --------------------------------------------------------------------
 #define	WINDOWPROC_PRIORITY		100
 

@@ -86,20 +86,20 @@
  * or COMPRESSION_SGILOG24.  For COMPRESSION_SGILOG, greyscale data is
  * stored as:
  *
- *	 1       15
+ *	 1		15
  *	|-+---------------|
  *
  * COMPRESSION_SGILOG color data is stored as:
  *
- *	 1       15           8        8
+ *	 1		15			8		8
  *	|-+---------------|--------+--------|
- *	 S       Le           ue       ve
+ *	 S		Le			ue		ve
  *
  * For the 24-bit COMPRESSION_SGILOG24 color format, the data is stored as:
  *
- *	     10           14
+ *		 10			14
  *	|----------|--------------|
- *	     Le'          Ce
+ *		 Le'		  Ce
  *
  * There is no sign bit in the 24-bit case, and the (u,v) chromaticity is
  * encoded as an index for optimal color resolution.  The 10 log bits are
@@ -118,17 +118,17 @@
  *
  * The desired user format is controlled by the setting the internal
  * pseudo tag TIFFTAG_SGILOGDATAFMT to one of:
- *  SGILOGDATAFMT_FLOAT       = IEEE 32-bit float XYZ values
- *  SGILOGDATAFMT_16BIT	      = 16-bit integer encodings of logL, u and v
+ *  SGILOGDATAFMT_FLOAT		= IEEE 32-bit float XYZ values
+ *  SGILOGDATAFMT_16BIT		  = 16-bit integer encodings of logL, u and v
  * Raw data i/o is also possible using:
- *  SGILOGDATAFMT_RAW         = 32-bit unsigned integer with encoded pixel
+ *  SGILOGDATAFMT_RAW		 = 32-bit unsigned integer with encoded pixel
  * In addition, the following decoding is provided for ease of display:
- *  SGILOGDATAFMT_8BIT        = 8-bit default RGB gamma-corrected values
+ *  SGILOGDATAFMT_8BIT		= 8-bit default RGB gamma-corrected values
  *
  * For grayscale images, we provide the following data formats:
- *  SGILOGDATAFMT_FLOAT       = IEEE 32-bit float Y values
- *  SGILOGDATAFMT_16BIT       = 16-bit integer w/ encoded luminance
- *  SGILOGDATAFMT_8BIT        = 8-bit gray monitor values
+ *  SGILOGDATAFMT_FLOAT		= IEEE 32-bit float Y values
+ *  SGILOGDATAFMT_16BIT		= 16-bit integer w/ encoded luminance
+ *  SGILOGDATAFMT_8BIT		= 8-bit gray monitor values
  *
  * Note that the COMPRESSION_SGILOG applies a simple run-length encoding
  * scheme by separating the logL, u and v bytes for each row and applying
@@ -138,8 +138,8 @@
  * Further control is provided over the conversion from higher-resolution
  * formats to final encoded values through the pseudo tag
  * TIFFTAG_SGILOGENCODE:
- *  SGILOGENCODE_NODITHER     = do not dither encoded values
- *  SGILOGENCODE_RANDITHER    = apply random dithering during encoding
+ *  SGILOGENCODE_NODITHER	 = do not dither encoded values
+ *  SGILOGENCODE_RANDITHER	= apply random dithering during encoding
  *
  * The default value of this tag is SGILOGENCODE_NODITHER for
  * COMPRESSION_SGILOG to maximize run-length encoding and
@@ -173,7 +173,7 @@ struct logLuvState {
 #define	DecoderState(tif)	((LogLuvState*) (tif)->tif_data)
 #define	EncoderState(tif)	((LogLuvState*) (tif)->tif_data)
 
-#define N(a)   (sizeof(a)/sizeof(a[0]))
+#define N(a)	(sizeof(a)/sizeof(a[0]))
 #define SGILOGDATAFMT_UNKNOWN	-1
 
 #define MINRUN		4	/* minimum run length */
@@ -223,7 +223,7 @@ LogL16Decode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		if (i != npixels) {
 			TIFFError(tif->tif_name,
 		"LogL16Decode: Not enough data at row %d (short %d pixels)",
-			    tif->tif_row, npixels - i);
+				tif->tif_row, npixels - i);
 			tif->tif_rawcp = (tidata_t) bp;
 			tif->tif_rawcc = cc;
 			return (0);
@@ -269,8 +269,8 @@ LogLuvDecode24(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	tif->tif_rawcc = cc;
 	if (i != npixels) {
 		TIFFError(tif->tif_name,
-	    "LogLuvDecode24: Not enough data at row %d (short %d pixels)",
-		    tif->tif_row, npixels - i);
+		"LogLuvDecode24: Not enough data at row %d (short %d pixels)",
+			tif->tif_row, npixels - i);
 		return (0);
 	}
 	(*sp->tfunc)(sp, op, npixels);
@@ -323,7 +323,7 @@ LogLuvDecode32(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		if (i != npixels) {
 			TIFFError(tif->tif_name,
 		"LogLuvDecode32: Not enough data at row %d (short %d pixels)",
-			    tif->tif_row, npixels - i);
+				tif->tif_row, npixels - i);
 			tif->tif_rawcp = (tidata_t) bp;
 			tif->tif_rawcc = cc;
 			return (0);
@@ -418,23 +418,23 @@ LogL16Encode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 				b = (int16) (tp[i] & mask);/*check short run */
 				j = i+1;
 				while ((tp[j++] & mask) == b)
-                                    if (j == beg) {
-                                        *op++ = (tidataval_t)(128-2+j-i);
-                                        *op++ = (tidataval_t) (b >> shft);
-                                        occ -= 2;
-                                        i = beg;
-                                        break;
-                                    }
+									if (j == beg) {
+										*op++ = (tidataval_t)(128-2+j-i);
+										*op++ = (tidataval_t) (b >> shft);
+										occ -= 2;
+										i = beg;
+										break;
+									}
 			}
 			while (i < beg) {		/* write out non-run */
 				if ((j = beg-i) > 127) j = 127;
 				if (occ < j+3) {
-                                    tif->tif_rawcp = op;
-                                    tif->tif_rawcc = tif->tif_rawdatasize - occ;
-                                    if (!TIFFFlushData1(tif))
-                                        return (-1);
-                                    op = tif->tif_rawcp;
-                                    occ = tif->tif_rawdatasize - tif->tif_rawcc;
+									tif->tif_rawcp = op;
+									tif->tif_rawcc = tif->tif_rawdatasize - occ;
+									if (!TIFFFlushData1(tif))
+										return (-1);
+									op = tif->tif_rawcp;
+									occ = tif->tif_rawdatasize - tif->tif_rawcc;
 				}
 				*op++ = (tidataval_t) j; occ--;
 				while (j--) {
@@ -775,7 +775,7 @@ oog_encode(double u, double v)		/* encode out-of-gamut chroma */
 			for (ui = uv_row[vi].nus-1; ui >= 0; ui -= ustep) {
 				ua = uv_row[vi].ustart + (ui+.5)*UV_SQSIZ;
 				ang = uv2ang(ua, va);
-                                i = (int) ang;
+								i = (int) ang;
 				epsa = fabs(ang - (i+.5));
 				if (epsa < eps[i]) {
 					oog_table[i] = uv_row[vi].ncum + ui;
@@ -1198,14 +1198,14 @@ LogL16InitState(TIFF* tif)
 		break;
 	default:
 		TIFFError(tif->tif_name,
-		    "No support for converting user data format to LogL");
+			"No support for converting user data format to LogL");
 		return (0);
 	}
 	sp->tbuflen = multiply(td->td_imagewidth, td->td_rowsperstrip);
 	if (multiply(sp->tbuflen, sizeof (int16)) == 0 ||
-	    (sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16))) == NULL) {
+		(sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (int16))) == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
-		    tif->tif_name);
+			tif->tif_name);
 		return (0);
 	}
 	return (1);
@@ -1276,7 +1276,7 @@ LogLuvInitState(TIFF* tif)
 	/* for some reason, we can't do this in TIFFInitLogLuv */
 	if (td->td_planarconfig != PLANARCONFIG_CONTIG) {
 		TIFFError(module,
-		    "SGILog compression cannot handle non-contiguous data");
+			"SGILog compression cannot handle non-contiguous data");
 		return (0);
 	}
 	if (sp->user_datafmt == SGILOGDATAFMT_UNKNOWN)
@@ -1296,14 +1296,14 @@ LogLuvInitState(TIFF* tif)
 		break;
 	default:
 		TIFFError(tif->tif_name,
-		    "No support for converting user data format to LogLuv");
+			"No support for converting user data format to LogLuv");
 		return (0);
 	}
 	sp->tbuflen = multiply(td->td_imagewidth, td->td_rowsperstrip);
 	if (multiply(sp->tbuflen, sizeof (uint32)) == 0 ||
-	    (sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32))) == NULL) {
+		(sp->tbuf = (tidata_t*) _TIFFmalloc(sp->tbuflen * sizeof (uint32))) == NULL) {
 		TIFFError(module, "%s: No space for SGILog translation buffer",
-		    tif->tif_name);
+			tif->tif_name);
 		return (0);
 	}
 	return (1);
@@ -1363,8 +1363,8 @@ LogLuvSetupDecode(TIFF* tif)
 		return (1);
 	default:
 		TIFFError(tif->tif_name,
-    "Inappropriate photometric interpretation %d for SGILog compression; %s",
-		    td->td_photometric, "must be either LogLUV or LogL");
+	"Inappropriate photometric interpretation %d for SGILog compression; %s",
+			td->td_photometric, "must be either LogLUV or LogL");
 		break;
 	}
 	return (0);
@@ -1426,15 +1426,15 @@ LogLuvSetupEncode(TIFF* tif)
 		break;
 	default:
 		TIFFError(tif->tif_name,
-    "Inappropriate photometric interpretation %d for SGILog compression; %s",
-    		    td->td_photometric, "must be either LogLUV or LogL");
+	"Inappropriate photometric interpretation %d for SGILog compression; %s",
+				td->td_photometric, "must be either LogLUV or LogL");
 		break;
 	}
 	return (1);
 notsupported:
 	TIFFError(tif->tif_name,
-	    "SGILog compression supported only for %s, or raw data",
-	    td->td_photometric == PHOTOMETRIC_LOGL ? "Y, L" : "XYZ, Luv");
+		"SGILog compression supported only for %s, or raw data",
+		td->td_photometric == PHOTOMETRIC_LOGL ? "Y, L" : "XYZ, Luv");
 	return (0);
 }
 
@@ -1451,7 +1451,7 @@ LogLuvClose(TIFF* tif)
 	 * before they have been recorded in the file, we reset them here.
 	 */
 	td->td_samplesperpixel =
-	    (td->td_photometric == PHOTOMETRIC_LOGL) ? 1 : 3;
+		(td->td_photometric == PHOTOMETRIC_LOGL) ? 1 : 3;
 	td->td_bitspersample = 16;
 	td->td_sampleformat = SAMPLEFORMAT_INT;
 }
@@ -1500,8 +1500,8 @@ LogLuvVSetField(TIFF* tif, ttag_t tag, va_list ap)
 			break;
 		default:
 			TIFFError(tif->tif_name,
-			    "Unknown data format %d for LogLuv compression",
-			    sp->user_datafmt);
+				"Unknown data format %d for LogLuv compression",
+				sp->user_datafmt);
 			return (0);
 		}
 		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, bps);
@@ -1542,10 +1542,10 @@ LogLuvVGetField(TIFF* tif, ttag_t tag, va_list ap)
 }
 
 static const TIFFFieldInfo LogLuvFieldInfo[] = {
-    { TIFFTAG_SGILOGDATAFMT,	  0, 0,	TIFF_SHORT,	FIELD_PSEUDO,
-      TRUE,	FALSE,	"SGILogDataFmt"},
-    { TIFFTAG_SGILOGENCODE,	  0, 0, TIFF_SHORT,	FIELD_PSEUDO,
-      TRUE,	FALSE,	"SGILogEncode"}
+	{ TIFFTAG_SGILOGDATAFMT,	  0, 0,	TIFF_SHORT,	FIELD_PSEUDO,
+	  TRUE,	FALSE,	"SGILogDataFmt"},
+	{ TIFFTAG_SGILOGENCODE,	  0, 0, TIFF_SHORT,	FIELD_PSEUDO,
+	  TRUE,	FALSE,	"SGILogEncode"}
 };
 
 int
@@ -1572,7 +1572,7 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	/*
 	 * Install codec methods.
 	 * NB: tif_decoderow & tif_encoderow are filled
-	 *     in at setup time.
+	 *	 in at setup time.
 	 */
 	tif->tif_setupdecode = LogLuvSetupDecode;
 	tif->tif_decodestrip = LogLuvDecodeStrip;
@@ -1586,9 +1586,9 @@ TIFFInitSGILog(TIFF* tif, int scheme)
 	/* override SetField so we can handle our private pseudo-tag */
 	_TIFFMergeFieldInfo(tif, LogLuvFieldInfo, N(LogLuvFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
-	tif->tif_tagmethods.vgetfield = LogLuvVGetField;   /* hook for codec tags */
+	tif->tif_tagmethods.vgetfield = LogLuvVGetField;	/* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
-	tif->tif_tagmethods.vsetfield = LogLuvVSetField;   /* hook for codec tags */
+	tif->tif_tagmethods.vsetfield = LogLuvVSetField;	/* hook for codec tags */
 
 	return (1);
 bad:

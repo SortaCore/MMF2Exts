@@ -27,7 +27,7 @@ struct OverlayStructure
 	short			oldheight;		//For stretching
 	char			rFilename[_MAX_PATH];
 	BOOL			debugmode;		//Is debug mode on? (visibility)
-	BOOL            stretching;		//Is stretching on?
+	BOOL			stretching;		//Is stretching on?
 	BOOL			AbsolutePos;	//drawing position absolute
 	BOOL			Immediate;		//update display immediately
 	BOOL			Automatic;		//update display automatically
@@ -145,8 +145,8 @@ ACTION(
 	index = max(index,0);
 	TCITEM tie; 
 	tie.mask = TCIF_TEXT | TCIF_IMAGE;
-    tie.iImage = img;
-    tie.pszText = text; 
+	tie.iImage = img;
+	tie.pszText = text; 
 	TabCtrl_InsertItem(rdPtr->hWnd,index,&tie);
 }
 
@@ -190,8 +190,8 @@ ACTION(
 	TCHAR* text = (TCHAR*)param2;
 	TCITEM tie; 
 	tie.mask = TCIF_TEXT;
-    tie.iImage = -1; 
-    tie.pszText = text; 
+	tie.iImage = -1; 
+	tie.pszText = text; 
 	TabCtrl_SetItem(rdPtr->hWnd,index,&tie);
 }
 
@@ -334,7 +334,7 @@ ACTION(
 ) {
 		LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 		int index = Param(TYPE_INT);
-		char * file = (char *)Param(TYPE_STRING);
+		TCHAR * file = (TCHAR *)Param(TYPE_STRING);
 		int col = Param(TYPE_GENERIC);
 		// Create a surface to load the image into
 		cSurface* proto = 0, psf;
@@ -422,7 +422,7 @@ ACTION(
 	int icon = Param(TYPE_INT);
 	TCITEM tie; 
 	tie.mask = TCIF_IMAGE; 
-    tie.iImage = icon; 
+	tie.iImage = icon; 
 	TabCtrl_SetItem(rdPtr->hWnd,index,&tie);
 }
 ACTION(
@@ -481,7 +481,7 @@ ACTION(
 ) {
 	TCITEM tie; 
 	tie.mask = TCIF_PARAM; 
-    tie.lParam = (LPARAM)param2;
+	tie.lParam = (LPARAM)param2;
 	TabCtrl_SetItem(rdPtr->hWnd,param1,&tie);
 }
 

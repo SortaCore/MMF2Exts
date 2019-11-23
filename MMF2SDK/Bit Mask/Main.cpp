@@ -54,65 +54,65 @@ short expressionsInfos[]=
 
 unsigned int BitMask( unsigned int first , unsigned int second , char* mask )
 {
-    int out = 0;
-    unsigned int bitMask = 1;
-    
-    int len = strlen(mask);
-    if ( len > 32 ) len = 32;
-    
-    for ( int i = 0 ; i < len ; i++ )
-    {
-        bool bit = 0;
-        bool a_bit = !!(first & bitMask);
-        bool b_bit = !!(second & bitMask);
-        switch (mask[i])
-        {
-               case '0':
-                    bit = 0;
-                    break;
-               case '1':
-                    bit = 1;
-                    break;
-               case '&':
-                    bit = a_bit && b_bit;
-                    break;
-               case '|':
-               case '-':
-                    bit = a_bit || b_bit;
-                    break;
-               case '^':
-                    bit = a_bit ^ b_bit;
-                    break;
-               case 'f':
-			   case 'F':
-                    bit = a_bit;
-                    break;
-               case 'l':
-			   case 'L':
-                    bit = b_bit;
-                    break;
-               case 't':
-			   case 'T':
-                   bit = !a_bit;
-                    break;
-                    default:
-                            bit = 0;
-                            break;
-        }
-        out |= bitMask*bit;
-        bitMask *= 2;
-    }
-    return out;
+	int out = 0;
+	unsigned int bitMask = 1;
+	
+	int len = strlen(mask);
+	if ( len > 32 ) len = 32;
+	
+	for ( int i = 0 ; i < len ; i++ )
+	{
+		bool bit = 0;
+		bool a_bit = !!(first & bitMask);
+		bool b_bit = !!(second & bitMask);
+		switch (mask[i])
+		{
+				case '0':
+					bit = 0;
+					break;
+				case '1':
+					bit = 1;
+					break;
+				case '&':
+					bit = a_bit && b_bit;
+					break;
+				case '|':
+				case '-':
+					bit = a_bit || b_bit;
+					break;
+				case '^':
+					bit = a_bit ^ b_bit;
+					break;
+				case 'f':
+				case 'F':
+					bit = a_bit;
+					break;
+				case 'l':
+				case 'L':
+					bit = b_bit;
+					break;
+				case 't':
+				case 'T':
+					bit = !a_bit;
+					break;
+					default:
+							bit = 0;
+							break;
+		}
+		out |= bitMask*bit;
+		bitMask *= 2;
+	}
+	return out;
 }
 
 unsigned int SingleMask( unsigned int num , char* mask )
 {
-    return BitMask(num,0,mask);  
+	return BitMask(num,0,mask);  
 }
 
 bool GetNthBit( unsigned int num , int bit )
 {
-    return !!(num & (1 << (bit)));
+	return !!(num & (1 << (bit)));
 }
 
 
@@ -175,7 +175,7 @@ short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			};
 
 long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{     
+			{	 
 			Expression,
 			Expression2,
 			Expression3,

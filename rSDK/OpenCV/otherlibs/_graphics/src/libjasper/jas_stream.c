@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999-2000 Image Power, Inc. and the University of
- *   British Columbia.
+ *	British Columbia.
  * Copyright (c) 2001-2003 Michael David Adams.
  * All rights reserved.
  */
@@ -936,7 +936,7 @@ int jas_stream_display(jas_stream_t *stream, FILE *fp, int n)
 			}
 			fputc(' ', fp);
 			for (; j < 16; ++j) {
-				fprintf(fp, "   ");
+				fprintf(fp, "	");
 			}
 			for (j = 0; j < m; ++j) {
 				if (isprint(buf[j])) {

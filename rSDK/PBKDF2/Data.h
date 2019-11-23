@@ -13,7 +13,7 @@ typedef struct tagRDATA
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 
-    // --------------------------------
+	// --------------------------------
 // EDITION OF OBJECT DATA STRUCTURE
 // --------------------------------
 // These values let you store data in your extension that will be saved in the MFA

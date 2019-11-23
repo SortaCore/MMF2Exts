@@ -23,8 +23,9 @@
 *.py text=auto
 *.rb text=auto
 *.java text=auto
-*.html text=auto
-*.htm text=auto
+*.html text=auto eol=crlf
+*.htm text=auto eol=crlf
+*.rc text=auto eol=crlf
 *.css text=auto
 *.scss text=auto
 *.sass text=auto

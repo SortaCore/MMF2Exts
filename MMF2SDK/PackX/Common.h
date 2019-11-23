@@ -23,13 +23,13 @@
 
 
 // General includes
-#include	"..\inc\ccxhdr.h"
-#include	"..\inc\ccx.h"
-#include	"..\inc\surface.h"
+#include "..\inc\ccxhdr.h"
+#include "..\inc\ccx.h"
+#include "..\inc\surface.h"
 
 // Specific to this kcx
-#include	"resource.h"
-#include	"main.h"
+#include "resource.h"
+#include "main.h"
 
 
 //Globals and Prototypes

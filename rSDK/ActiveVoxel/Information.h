@@ -4,11 +4,11 @@
 
 // Basic object details
 #define	ObjectName			"Active Voxel"
-#define	ObjectAuthor		"Bornemix Looki"
-#define	ObjectCopyright		"Copyright © 2008 Extension author"
-#define	ObjectComment		"An empty extension"
-#define	ObjectURL			"http://www.authorswebpage.com"
-#define	ObjectHelp			"Help\\EmptyObject.chm"
+#define	ObjectAuthor		"Bornemix & Looki"
+#define	ObjectCopyright		"Copyright Â© 2008 Bornemix"
+#define	ObjectComment		"An abandoned pre-alpha for loading voxel files"
+#define	ObjectURL			""
+#define	ObjectHelp			""
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE

@@ -46,7 +46,7 @@ init_destination (j_compress_ptr cinfo)
 
   /* Allocate the output buffer --- it will be released when done with image */
   dest->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
+	  (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				  OUTPUT_BUF_SIZE * SIZEOF(JOCTET));
 
   dest->pub.next_output_byte = dest->buffer;
@@ -83,8 +83,8 @@ empty_output_buffer (j_compress_ptr cinfo)
   my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
 
   if (JFWRITE(dest->outfile, dest->buffer, OUTPUT_BUF_SIZE) !=
-      (size_t) OUTPUT_BUF_SIZE)
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+	  (size_t) OUTPUT_BUF_SIZE)
+	ERREXIT(cinfo, JERR_FILE_WRITE);
 
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -110,13 +110,13 @@ term_destination (j_compress_ptr cinfo)
 
   /* Write any data remaining in the buffer */
   if (datacount > 0) {
-    if (JFWRITE(dest->outfile, dest->buffer, datacount) != datacount)
-      ERREXIT(cinfo, JERR_FILE_WRITE);
+	if (JFWRITE(dest->outfile, dest->buffer, datacount) != datacount)
+	  ERREXIT(cinfo, JERR_FILE_WRITE);
   }
   fflush(dest->outfile);
   /* Make sure we wrote the output file OK */
   if (ferror(dest->outfile))
-    ERREXIT(cinfo, JERR_FILE_WRITE);
+	ERREXIT(cinfo, JERR_FILE_WRITE);
 }
 
 
@@ -132,14 +132,14 @@ jpeg_stdio_dest (j_compress_ptr cinfo, FILE * outfile)
   my_dest_ptr dest;
 
   /* The destination object is made permanent so that multiple JPEG images
-   * can be written to the same file without re-executing jpeg_stdio_dest.
-   * This makes it dangerous to use this manager and a different destination
-   * manager serially with the same JPEG object, because their private object
-   * sizes may be different.  Caveat programmer.
-   */
+	* can be written to the same file without re-executing jpeg_stdio_dest.
+	* This makes it dangerous to use this manager and a different destination
+	* manager serially with the same JPEG object, because their private object
+	* sizes may be different.  Caveat programmer.
+	*/
   if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
-    cinfo->dest = (struct jpeg_destination_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+	cinfo->dest = (struct jpeg_destination_mgr *)
+	  (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
 				  SIZEOF(my_destination_mgr));
   }
 

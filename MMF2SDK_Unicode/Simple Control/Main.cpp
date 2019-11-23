@@ -68,7 +68,7 @@ long WINAPI DLLExport CndChanged(LPRDATA rdPtr, long param1, long param2)
 		return TRUE;
 
 	// Otherwise true only if same loop number
-    LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
+	LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 	if ( rhPtr->rh4.rh4EventCount == rdPtr->dwLastChangedLoopNumber )
 		return TRUE;
 
@@ -253,7 +253,7 @@ short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			};
 
 long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{     
+			{	 
 			ExpGetText,
 			ExpGetInt,
 			ExpGetFloat,

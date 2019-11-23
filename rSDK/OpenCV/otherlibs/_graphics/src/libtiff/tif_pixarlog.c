@@ -41,7 +41,7 @@
  * as well as 16-bit or 8-bit unsigned integer values.
  *
  * On writing any of the above are converted into the internal
- * 11-bit log format.   In the case of  8 and 16 bit values, the
+ * 11-bit log format.	In the case of  8 and 16 bit values, the
  * input is assumed to be unsigned linear color values that represent
  * the range 0-1.  In the case of IEEE values, the 0-1 range is assumed to
  * be the normal linear color range, in addition over 1 values are
@@ -58,16 +58,16 @@
  * On reading the internal format is converted to the desired output format.
  * The program can request which format it desires by setting the internal
  * pseudo tag TIFFTAG_PIXARLOGDATAFMT to one of these possible values:
- *  PIXARLOGDATAFMT_FLOAT     = provide IEEE float values.
- *  PIXARLOGDATAFMT_16BIT     = provide unsigned 16-bit integer values
- *  PIXARLOGDATAFMT_8BIT      = provide unsigned 8-bit integer values
+ *  PIXARLOGDATAFMT_FLOAT	 = provide IEEE float values.
+ *  PIXARLOGDATAFMT_16BIT	 = provide unsigned 16-bit integer values
+ *  PIXARLOGDATAFMT_8BIT	  = provide unsigned 8-bit integer values
  *
  * alternately PIXARLOGDATAFMT_8BITABGR provides unsigned 8-bit integer
  * values with the difference that if there are exactly three or four channels
  * (rgb or rgba) it swaps the channel order (bgr or abgr).
  *
  * PIXARLOGDATAFMT_11BITLOG provides the internal encoding directly
- * packed in 16-bit values.   However no tools are supplied for interpreting
+ * packed in 16-bit values.	However no tools are supplied for interpreting
  * these values.
  *
  * "hot" (over 1.0) areas written in floating point get clamped to
@@ -100,31 +100,31 @@
 #define  ONE	 1250		/* token value of 1.0 exactly */
 #define  RATIO	 1.004		/* nominal ratio for log part */
 
-#define CODE_MASK 0x7ff         /* 11 bits. */
+#define CODE_MASK 0x7ff		 /* 11 bits. */
 
 static float  Fltsize;
 static float  LogK1, LogK2;
 
-#define REPEAT(n, op)   { int i; i=n; do { i--; op; } while (i>0); }
+#define REPEAT(n, op)	{ int i; i=n; do { i--; op; } while (i>0); }
 
 static void
 horizontalAccumulateF(uint16 *wp, int n, int stride, float *op, 
 	float *ToLinearF)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
-    register float  t0, t1, t2, t3;
+	register unsigned int  cr, cg, cb, ca, mask;
+	register float  t0, t1, t2, t3;
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    t0 = ToLinearF[cr = wp[0]];
-	    t1 = ToLinearF[cg = wp[1]];
-	    t2 = ToLinearF[cb = wp[2]];
-	    op[0] = t0;
-	    op[1] = t1;
-	    op[2] = t2;
-	    n -= 3;
-	    while (n > 0) {
+		t0 = ToLinearF[cr = wp[0]];
+		t1 = ToLinearF[cg = wp[1]];
+		t2 = ToLinearF[cb = wp[2]];
+		op[0] = t0;
+		op[1] = t1;
+		op[2] = t2;
+		n -= 3;
+		while (n > 0) {
 		wp += 3;
 		op += 3;
 		n -= 3;
@@ -134,18 +134,18 @@ horizontalAccumulateF(uint16 *wp, int n, int stride, float *op,
 		op[0] = t0;
 		op[1] = t1;
 		op[2] = t2;
-	    }
+		}
 	} else if (stride == 4) {
-	    t0 = ToLinearF[cr = wp[0]];
-	    t1 = ToLinearF[cg = wp[1]];
-	    t2 = ToLinearF[cb = wp[2]];
-	    t3 = ToLinearF[ca = wp[3]];
-	    op[0] = t0;
-	    op[1] = t1;
-	    op[2] = t2;
-	    op[3] = t3;
-	    n -= 4;
-	    while (n > 0) {
+		t0 = ToLinearF[cr = wp[0]];
+		t1 = ToLinearF[cg = wp[1]];
+		t2 = ToLinearF[cb = wp[2]];
+		t3 = ToLinearF[ca = wp[3]];
+		op[0] = t0;
+		op[1] = t1;
+		op[2] = t2;
+		op[3] = t3;
+		n -= 4;
+		while (n > 0) {
 		wp += 4;
 		op += 4;
 		n -= 4;
@@ -157,40 +157,40 @@ horizontalAccumulateF(uint16 *wp, int n, int stride, float *op,
 		op[1] = t1;
 		op[2] = t2;
 		op[3] = t3;
-	    }
+		}
 	} else {
-	    REPEAT(stride, *op = ToLinearF[*wp&mask]; wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride,
-		    wp[stride] += *wp; *op = ToLinearF[*wp&mask]; wp++; op++)
+		REPEAT(stride, *op = ToLinearF[*wp&mask]; wp++; op++)
 		n -= stride;
-	    }
+		while (n > 0) {
+		REPEAT(stride,
+			wp[stride] += *wp; *op = ToLinearF[*wp&mask]; wp++; op++)
+		n -= stride;
+		}
 	}
-    }
+	}
 }
 
 static void
 horizontalAccumulate12(uint16 *wp, int n, int stride, int16 *op,
 	float *ToLinearF)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
-    register float  t0, t1, t2, t3;
+	register unsigned int  cr, cg, cb, ca, mask;
+	register float  t0, t1, t2, t3;
 
 #define SCALE12 2048.0F
 #define CLAMP12(t) (((t) < 3071) ? (uint16) (t) : 3071)
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    t0 = ToLinearF[cr = wp[0]] * SCALE12;
-	    t1 = ToLinearF[cg = wp[1]] * SCALE12;
-	    t2 = ToLinearF[cb = wp[2]] * SCALE12;
-	    op[0] = CLAMP12(t0);
-	    op[1] = CLAMP12(t1);
-	    op[2] = CLAMP12(t2);
-	    n -= 3;
-	    while (n > 0) {
+		t0 = ToLinearF[cr = wp[0]] * SCALE12;
+		t1 = ToLinearF[cg = wp[1]] * SCALE12;
+		t2 = ToLinearF[cb = wp[2]] * SCALE12;
+		op[0] = CLAMP12(t0);
+		op[1] = CLAMP12(t1);
+		op[2] = CLAMP12(t2);
+		n -= 3;
+		while (n > 0) {
 		wp += 3;
 		op += 3;
 		n -= 3;
@@ -200,18 +200,18 @@ horizontalAccumulate12(uint16 *wp, int n, int stride, int16 *op,
 		op[0] = CLAMP12(t0);
 		op[1] = CLAMP12(t1);
 		op[2] = CLAMP12(t2);
-	    }
+		}
 	} else if (stride == 4) {
-	    t0 = ToLinearF[cr = wp[0]] * SCALE12;
-	    t1 = ToLinearF[cg = wp[1]] * SCALE12;
-	    t2 = ToLinearF[cb = wp[2]] * SCALE12;
-	    t3 = ToLinearF[ca = wp[3]] * SCALE12;
-	    op[0] = CLAMP12(t0);
-	    op[1] = CLAMP12(t1);
-	    op[2] = CLAMP12(t2);
-	    op[3] = CLAMP12(t3);
-	    n -= 4;
-	    while (n > 0) {
+		t0 = ToLinearF[cr = wp[0]] * SCALE12;
+		t1 = ToLinearF[cg = wp[1]] * SCALE12;
+		t2 = ToLinearF[cb = wp[2]] * SCALE12;
+		t3 = ToLinearF[ca = wp[3]] * SCALE12;
+		op[0] = CLAMP12(t0);
+		op[1] = CLAMP12(t1);
+		op[2] = CLAMP12(t2);
+		op[3] = CLAMP12(t3);
+		n -= 4;
+		while (n > 0) {
 		wp += 4;
 		op += 4;
 		n -= 4;
@@ -223,49 +223,49 @@ horizontalAccumulate12(uint16 *wp, int n, int stride, int16 *op,
 		op[1] = CLAMP12(t1);
 		op[2] = CLAMP12(t2);
 		op[3] = CLAMP12(t3);
-	    }
+		}
 	} else {
-	    REPEAT(stride, t0 = ToLinearF[*wp&mask] * SCALE12;
-                           *op = CLAMP12(t0); wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride,
-		    wp[stride] += *wp; t0 = ToLinearF[wp[stride]&mask]*SCALE12;
-		    *op = CLAMP12(t0);  wp++; op++)
+		REPEAT(stride, t0 = ToLinearF[*wp&mask] * SCALE12;
+							*op = CLAMP12(t0); wp++; op++)
 		n -= stride;
-	    }
+		while (n > 0) {
+		REPEAT(stride,
+			wp[stride] += *wp; t0 = ToLinearF[wp[stride]&mask]*SCALE12;
+			*op = CLAMP12(t0);  wp++; op++)
+		n -= stride;
+		}
 	}
-    }
+	}
 }
 
 static void
 horizontalAccumulate16(uint16 *wp, int n, int stride, uint16 *op,
 	uint16 *ToLinear16)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
+	register unsigned int  cr, cg, cb, ca, mask;
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    op[0] = ToLinear16[cr = wp[0]];
-	    op[1] = ToLinear16[cg = wp[1]];
-	    op[2] = ToLinear16[cb = wp[2]];
-	    n -= 3;
-	    while (n > 0) {
+		op[0] = ToLinear16[cr = wp[0]];
+		op[1] = ToLinear16[cg = wp[1]];
+		op[2] = ToLinear16[cb = wp[2]];
+		n -= 3;
+		while (n > 0) {
 		wp += 3;
 		op += 3;
 		n -= 3;
 		op[0] = ToLinear16[(cr += wp[0]) & mask];
 		op[1] = ToLinear16[(cg += wp[1]) & mask];
 		op[2] = ToLinear16[(cb += wp[2]) & mask];
-	    }
+		}
 	} else if (stride == 4) {
-	    op[0] = ToLinear16[cr = wp[0]];
-	    op[1] = ToLinear16[cg = wp[1]];
-	    op[2] = ToLinear16[cb = wp[2]];
-	    op[3] = ToLinear16[ca = wp[3]];
-	    n -= 4;
-	    while (n > 0) {
+		op[0] = ToLinear16[cr = wp[0]];
+		op[1] = ToLinear16[cg = wp[1]];
+		op[2] = ToLinear16[cb = wp[2]];
+		op[3] = ToLinear16[ca = wp[3]];
+		n -= 4;
+		while (n > 0) {
 		wp += 4;
 		op += 4;
 		n -= 4;
@@ -273,17 +273,17 @@ horizontalAccumulate16(uint16 *wp, int n, int stride, uint16 *op,
 		op[1] = ToLinear16[(cg += wp[1]) & mask];
 		op[2] = ToLinear16[(cb += wp[2]) & mask];
 		op[3] = ToLinear16[(ca += wp[3]) & mask];
-	    }
+		}
 	} else {
-	    REPEAT(stride, *op = ToLinear16[*wp&mask]; wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride,
-		    wp[stride] += *wp; *op = ToLinear16[*wp&mask]; wp++; op++)
+		REPEAT(stride, *op = ToLinear16[*wp&mask]; wp++; op++)
 		n -= stride;
-	    }
+		while (n > 0) {
+		REPEAT(stride,
+			wp[stride] += *wp; *op = ToLinear16[*wp&mask]; wp++; op++)
+		n -= stride;
+		}
 	}
-    }
+	}
 }
 
 /* 
@@ -293,26 +293,26 @@ horizontalAccumulate16(uint16 *wp, int n, int stride, uint16 *op,
 static void
 horizontalAccumulate11(uint16 *wp, int n, int stride, uint16 *op)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
+	register unsigned int  cr, cg, cb, ca, mask;
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    op[0] = cr = wp[0];  op[1] = cg = wp[1];  op[2] = cb = wp[2];
-	    n -= 3;
-	    while (n > 0) {
+		op[0] = cr = wp[0];  op[1] = cg = wp[1];  op[2] = cb = wp[2];
+		n -= 3;
+		while (n > 0) {
 		wp += 3;
 		op += 3;
 		n -= 3;
 		op[0] = (cr += wp[0]) & mask;
 		op[1] = (cg += wp[1]) & mask;
 		op[2] = (cb += wp[2]) & mask;
-	    }
+		}
 	} else if (stride == 4) {
-	    op[0] = cr = wp[0];  op[1] = cg = wp[1];
-	    op[2] = cb = wp[2];  op[3] = ca = wp[3];
-	    n -= 4;
-	    while (n > 0) {
+		op[0] = cr = wp[0];  op[1] = cg = wp[1];
+		op[2] = cb = wp[2];  op[3] = ca = wp[3];
+		n -= 4;
+		while (n > 0) {
 		wp += 4;
 		op += 4;
 		n -= 4;
@@ -320,47 +320,47 @@ horizontalAccumulate11(uint16 *wp, int n, int stride, uint16 *op)
 		op[1] = (cg += wp[1]) & mask;
 		op[2] = (cb += wp[2]) & mask;
 		op[3] = (ca += wp[3]) & mask;
-	    } 
+		} 
 	} else {
-	    REPEAT(stride, *op = *wp&mask; wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
+		REPEAT(stride, *op = *wp&mask; wp++; op++)
+		n -= stride;
+		while (n > 0) {
 		REPEAT(stride,
-		    wp[stride] += *wp; *op = *wp&mask; wp++; op++)
-	    	n -= stride;
-	    }
+			wp[stride] += *wp; *op = *wp&mask; wp++; op++)
+			n -= stride;
+		}
 	}
-    }
+	}
 }
 
 static void
 horizontalAccumulate8(uint16 *wp, int n, int stride, unsigned char *op,
 	unsigned char *ToLinear8)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
+	register unsigned int  cr, cg, cb, ca, mask;
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    op[0] = ToLinear8[cr = wp[0]];
-	    op[1] = ToLinear8[cg = wp[1]];
-	    op[2] = ToLinear8[cb = wp[2]];
-	    n -= 3;
-	    while (n > 0) {
+		op[0] = ToLinear8[cr = wp[0]];
+		op[1] = ToLinear8[cg = wp[1]];
+		op[2] = ToLinear8[cb = wp[2]];
+		n -= 3;
+		while (n > 0) {
 		n -= 3;
 		wp += 3;
 		op += 3;
 		op[0] = ToLinear8[(cr += wp[0]) & mask];
 		op[1] = ToLinear8[(cg += wp[1]) & mask];
 		op[2] = ToLinear8[(cb += wp[2]) & mask];
-	    }
+		}
 	} else if (stride == 4) {
-	    op[0] = ToLinear8[cr = wp[0]];
-	    op[1] = ToLinear8[cg = wp[1]];
-	    op[2] = ToLinear8[cb = wp[2]];
-	    op[3] = ToLinear8[ca = wp[3]];
-	    n -= 4;
-	    while (n > 0) {
+		op[0] = ToLinear8[cr = wp[0]];
+		op[1] = ToLinear8[cg = wp[1]];
+		op[2] = ToLinear8[cb = wp[2]];
+		op[3] = ToLinear8[ca = wp[3]];
+		n -= 4;
+		while (n > 0) {
 		n -= 4;
 		wp += 4;
 		op += 4;
@@ -368,17 +368,17 @@ horizontalAccumulate8(uint16 *wp, int n, int stride, unsigned char *op,
 		op[1] = ToLinear8[(cg += wp[1]) & mask];
 		op[2] = ToLinear8[(cb += wp[2]) & mask];
 		op[3] = ToLinear8[(ca += wp[3]) & mask];
-	    }
+		}
 	} else {
-	    REPEAT(stride, *op = ToLinear8[*wp&mask]; wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride,
-		    wp[stride] += *wp; *op = ToLinear8[*wp&mask]; wp++; op++)
+		REPEAT(stride, *op = ToLinear8[*wp&mask]; wp++; op++)
 		n -= stride;
-	    }
+		while (n > 0) {
+		REPEAT(stride,
+			wp[stride] += *wp; *op = ToLinear8[*wp&mask]; wp++; op++)
+		n -= stride;
+		}
 	}
-    }
+	}
 }
 
 
@@ -386,21 +386,21 @@ static void
 horizontalAccumulate8abgr(uint16 *wp, int n, int stride, unsigned char *op,
 	unsigned char *ToLinear8)
 {
-    register unsigned int  cr, cg, cb, ca, mask;
-    register unsigned char  t0, t1, t2, t3;
+	register unsigned int  cr, cg, cb, ca, mask;
+	register unsigned char  t0, t1, t2, t3;
 
-    if (n >= stride) {
+	if (n >= stride) {
 	mask = CODE_MASK;
 	if (stride == 3) {
-	    op[0] = 0;
-	    t1 = ToLinear8[cb = wp[2]];
-	    t2 = ToLinear8[cg = wp[1]];
-	    t3 = ToLinear8[cr = wp[0]];
-	    op[1] = t1;
-	    op[2] = t2;
-	    op[3] = t3;
-	    n -= 3;
-	    while (n > 0) {
+		op[0] = 0;
+		t1 = ToLinear8[cb = wp[2]];
+		t2 = ToLinear8[cg = wp[1]];
+		t3 = ToLinear8[cr = wp[0]];
+		op[1] = t1;
+		op[2] = t2;
+		op[3] = t3;
+		n -= 3;
+		while (n > 0) {
 		n -= 3;
 		wp += 3;
 		op += 4;
@@ -411,18 +411,18 @@ horizontalAccumulate8abgr(uint16 *wp, int n, int stride, unsigned char *op,
 		op[1] = t1;
 		op[2] = t2;
 		op[3] = t3;
-	    }
+		}
 	} else if (stride == 4) {
-	    t0 = ToLinear8[ca = wp[3]];
-	    t1 = ToLinear8[cb = wp[2]];
-	    t2 = ToLinear8[cg = wp[1]];
-	    t3 = ToLinear8[cr = wp[0]];
-	    op[0] = t0;
-	    op[1] = t1;
-	    op[2] = t2;
-	    op[3] = t3;
-	    n -= 4;
-	    while (n > 0) {
+		t0 = ToLinear8[ca = wp[3]];
+		t1 = ToLinear8[cb = wp[2]];
+		t2 = ToLinear8[cg = wp[1]];
+		t3 = ToLinear8[cr = wp[0]];
+		op[0] = t0;
+		op[1] = t1;
+		op[2] = t2;
+		op[3] = t3;
+		n -= 4;
+		while (n > 0) {
 		n -= 4;
 		wp += 4;
 		op += 4;
@@ -434,17 +434,17 @@ horizontalAccumulate8abgr(uint16 *wp, int n, int stride, unsigned char *op,
 		op[1] = t1;
 		op[2] = t2;
 		op[3] = t3;
-	    }
+		}
 	} else {
-	    REPEAT(stride, *op = ToLinear8[*wp&mask]; wp++; op++)
-	    n -= stride;
-	    while (n > 0) {
-		REPEAT(stride,
-		    wp[stride] += *wp; *op = ToLinear8[*wp&mask]; wp++; op++)
+		REPEAT(stride, *op = ToLinear8[*wp&mask]; wp++; op++)
 		n -= stride;
-	    }
+		while (n > 0) {
+		REPEAT(stride,
+			wp[stride] += *wp; *op = ToLinear8[*wp&mask]; wp++; op++)
+		n -= stride;
+		}
 	}
-    }
+	}
 }
 
 /*
@@ -478,42 +478,42 @@ PixarLogMakeTables(PixarLogState *sp)
 {
 
 /*
- *    We make several tables here to convert between various external
- *    representations (float, 16-bit, and 8-bit) and the internal
- *    11-bit companded representation.  The 11-bit representation has two
- *    distinct regions.  A linear bottom end up through .018316 in steps
- *    of about .000073, and a region of constant ratio up to about 25.
- *    These floating point numbers are stored in the main table ToLinearF. 
- *    All other tables are derived from this one.  The tables (and the
- *    ratios) are continuous at the internal seam.
+ *	We make several tables here to convert between various external
+ *	representations (float, 16-bit, and 8-bit) and the internal
+ *	11-bit companded representation.  The 11-bit representation has two
+ *	distinct regions.  A linear bottom end up through .018316 in steps
+ *	of about .000073, and a region of constant ratio up to about 25.
+ *	These floating point numbers are stored in the main table ToLinearF. 
+ *	All other tables are derived from this one.  The tables (and the
+ *	ratios) are continuous at the internal seam.
  */
 
-    int  nlin, lt2size;
-    int  i, j;
-    double  b, c, linstep, v;
-    float *ToLinearF;
-    uint16 *ToLinear16;
-    unsigned char *ToLinear8;
-    uint16  *FromLT2;
-    uint16  *From14; /* Really for 16-bit data, but we shift down 2 */
-    uint16  *From8;
+	int  nlin, lt2size;
+	int  i, j;
+	double  b, c, linstep, v;
+	float *ToLinearF;
+	uint16 *ToLinear16;
+	unsigned char *ToLinear8;
+	uint16  *FromLT2;
+	uint16  *From14; /* Really for 16-bit data, but we shift down 2 */
+	uint16  *From8;
 
-    c = log(RATIO);	
-    nlin = (int)(1./c);	/* nlin must be an integer */
-    c = 1./nlin;
-    b = exp(-c*ONE);	/* multiplicative scale factor [b*exp(c*ONE) = 1] */
-    linstep = b*c*exp(1.);
+	c = log(RATIO);	
+	nlin = (int)(1./c);	/* nlin must be an integer */
+	c = 1./nlin;
+	b = exp(-c*ONE);	/* multiplicative scale factor [b*exp(c*ONE) = 1] */
+	linstep = b*c*exp(1.);
 
-    LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
-    LogK2 = (float)(1./b);
-    lt2size = (int)(2./linstep) + 1;
-    FromLT2 = (uint16 *)_TIFFmalloc(lt2size*sizeof(uint16));
-    From14 = (uint16 *)_TIFFmalloc(16384*sizeof(uint16));
-    From8 = (uint16 *)_TIFFmalloc(256*sizeof(uint16));
-    ToLinearF = (float *)_TIFFmalloc(TSIZEP1 * sizeof(float));
-    ToLinear16 = (uint16 *)_TIFFmalloc(TSIZEP1 * sizeof(uint16));
-    ToLinear8 = (unsigned char *)_TIFFmalloc(TSIZEP1 * sizeof(unsigned char));
-    if (FromLT2 == NULL || From14  == NULL || From8   == NULL ||
+	LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
+	LogK2 = (float)(1./b);
+	lt2size = (int)(2./linstep) + 1;
+	FromLT2 = (uint16 *)_TIFFmalloc(lt2size*sizeof(uint16));
+	From14 = (uint16 *)_TIFFmalloc(16384*sizeof(uint16));
+	From8 = (uint16 *)_TIFFmalloc(256*sizeof(uint16));
+	ToLinearF = (float *)_TIFFmalloc(TSIZEP1 * sizeof(float));
+	ToLinear16 = (uint16 *)_TIFFmalloc(TSIZEP1 * sizeof(uint16));
+	ToLinear8 = (unsigned char *)_TIFFmalloc(TSIZEP1 * sizeof(unsigned char));
+	if (FromLT2 == NULL || From14  == NULL || From8	== NULL ||
 	 ToLinearF == NULL || ToLinear16 == NULL || ToLinear8 == NULL) {
 	if (FromLT2) _TIFFfree(FromLT2);
 	if (From14) _TIFFfree(From14);
@@ -528,63 +528,63 @@ PixarLogMakeTables(PixarLogState *sp)
 	sp->ToLinear16 = NULL;
 	sp->ToLinear8 = NULL;
 	return 0;
-    }
+	}
 
-    j = 0;
+	j = 0;
 
-    for (i = 0; i < nlin; i++)  {
+	for (i = 0; i < nlin; i++)  {
 	v = i * linstep;
 	ToLinearF[j++] = (float)v;
-    }
+	}
 
-    for (i = nlin; i < TSIZE; i++)
+	for (i = nlin; i < TSIZE; i++)
 	ToLinearF[j++] = (float)(b*exp(c*i));
 
-    ToLinearF[2048] = ToLinearF[2047];
+	ToLinearF[2048] = ToLinearF[2047];
 
-    for (i = 0; i < TSIZEP1; i++)  {
+	for (i = 0; i < TSIZEP1; i++)  {
 	v = ToLinearF[i]*65535.0 + 0.5;
 	ToLinear16[i] = (v > 65535.0) ? 65535 : (uint16)v;
 	v = ToLinearF[i]*255.0  + 0.5;
 	ToLinear8[i]  = (v > 255.0) ? 255 : (unsigned char)v;
-    }
+	}
 
-    j = 0;
-    for (i = 0; i < lt2size; i++)  {
+	j = 0;
+	for (i = 0; i < lt2size; i++)  {
 	if ((i*linstep)*(i*linstep) > ToLinearF[j]*ToLinearF[j+1])
-	    j++;
+		j++;
 	FromLT2[i] = j;
-    }
+	}
 
-    /*
-     * Since we lose info anyway on 16-bit data, we set up a 14-bit
-     * table and shift 16-bit values down two bits on input.
-     * saves a little table space.
-     */
-    j = 0;
-    for (i = 0; i < 16384; i++)  {
+	/*
+	 * Since we lose info anyway on 16-bit data, we set up a 14-bit
+	 * table and shift 16-bit values down two bits on input.
+	 * saves a little table space.
+	 */
+	j = 0;
+	for (i = 0; i < 16384; i++)  {
 	while ((i/16383.)*(i/16383.) > ToLinearF[j]*ToLinearF[j+1])
-	    j++;
+		j++;
 	From14[i] = j;
-    }
+	}
 
-    j = 0;
-    for (i = 0; i < 256; i++)  {
+	j = 0;
+	for (i = 0; i < 256; i++)  {
 	while ((i/255.)*(i/255.) > ToLinearF[j]*ToLinearF[j+1])
-	    j++;
+		j++;
 	From8[i] = j;
-    }
+	}
 
-    Fltsize = (float)(lt2size/2);
+	Fltsize = (float)(lt2size/2);
 
-    sp->ToLinearF = ToLinearF;
-    sp->ToLinear16 = ToLinear16;
-    sp->ToLinear8 = ToLinear8;
-    sp->FromLT2 = FromLT2;
-    sp->From14 = From14;
-    sp->From8 = From8;
+	sp->ToLinearF = ToLinearF;
+	sp->ToLinear16 = ToLinear16;
+	sp->ToLinear8 = ToLinear8;
+	sp->FromLT2 = FromLT2;
+	sp->From14 = From14;
+	sp->From8 = From8;
 
-    return 1;
+	return 1;
 }
 
 #define	DecoderState(tif)	((PixarLogState*) (tif)->tif_data)
@@ -593,7 +593,7 @@ PixarLogMakeTables(PixarLogState *sp)
 static	int PixarLogEncode(TIFF*, tidata_t, tsize_t, tsample_t);
 static	int PixarLogDecode(TIFF*, tidata_t, tsize_t, tsample_t);
 
-#define N(a)   (sizeof(a)/sizeof(a[0]))
+#define N(a)	(sizeof(a)/sizeof(a[0]))
 #define PIXARLOGDATAFMT_UNKNOWN	-1
 
 static int
@@ -659,9 +659,9 @@ PixarLogSetupDecode(TIFF* tif)
 	/* for some reason, we can't do this in TIFFInitPixarLog */
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
-	    td->td_samplesperpixel : 1);
+		td->td_samplesperpixel : 1);
 	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
-				      td->td_rowsperstrip), sizeof(uint16));
+					  td->td_rowsperstrip), sizeof(uint16));
 	if (tbuf_size == 0)
 		return (0);
 	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
@@ -742,15 +742,15 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		}
 		if (state == Z_DATA_ERROR) {
 			TIFFError(module,
-			    "%s: Decoding error at scanline %d, %s",
-			    tif->tif_name, tif->tif_row, sp->stream.msg);
+				"%s: Decoding error at scanline %d, %s",
+				tif->tif_name, tif->tif_row, sp->stream.msg);
 			if (inflateSync(&sp->stream) != Z_OK)
 				return (0);
 			continue;
 		}
 		if (state != Z_OK) {
 			TIFFError(module, "%s: zlib error: %s",
-			    tif->tif_name, sp->stream.msg);
+				tif->tif_name, sp->stream.msg);
 			return (0);
 		}
 	} while (sp->stream.avail_out > 0);
@@ -758,8 +758,8 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	/* hopefully, we got all the bytes we needed */
 	if (sp->stream.avail_out != 0) {
 		TIFFError(module,
-		    "%s: Not enough data at scanline %d (short %d bytes)",
-		    tif->tif_name, tif->tif_row, sp->stream.avail_out);
+			"%s: Not enough data at scanline %d (short %d bytes)",
+			tif->tif_name, tif->tif_row, sp->stream.avail_out);
 		return (0);
 	}
 
@@ -824,9 +824,9 @@ PixarLogSetupEncode(TIFF* tif)
 	/* for some reason, we can't do this in TIFFInitPixarLog */
 
 	sp->stride = (td->td_planarconfig == PLANARCONFIG_CONTIG ?
-	    td->td_samplesperpixel : 1);
+		td->td_samplesperpixel : 1);
 	tbuf_size = multiply(multiply(multiply(sp->stride, td->td_imagewidth),
-				      td->td_rowsperstrip), sizeof(uint16));
+					  td->td_rowsperstrip), sizeof(uint16));
 	if (tbuf_size == 0)
 		return (0);
 	sp->tbuf = (uint16 *) _TIFFmalloc(tbuf_size);
@@ -867,36 +867,36 @@ static void
 horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 {
 
-    int32 r1, g1, b1, a1, r2, g2, b2, a2, mask;
-    float fltsize = Fltsize;
+	int32 r1, g1, b1, a1, r2, g2, b2, a2, mask;
+	float fltsize = Fltsize;
 
-#define  CLAMP(v) ( (v<(float)0.)   ? 0				\
-		  : (v<(float)2.)   ? FromLT2[(int)(v*fltsize)]	\
+#define  CLAMP(v) ( (v<(float)0.)	? 0				\
+		  : (v<(float)2.)	? FromLT2[(int)(v*fltsize)]	\
 		  : (v>(float)24.2) ? 2047			\
 		  : LogK1*log(v*LogK2) + 0.5 )
 
-    mask = CODE_MASK;
-    if (n >= stride) {
+	mask = CODE_MASK;
+	if (n >= stride) {
 	if (stride == 3) {
-	    r2 = wp[0] = (uint16) CLAMP(ip[0]);
-	    g2 = wp[1] = (uint16) CLAMP(ip[1]);
-	    b2 = wp[2] = (uint16) CLAMP(ip[2]);
-	    n -= 3;
-	    while (n > 0) {
+		r2 = wp[0] = (uint16) CLAMP(ip[0]);
+		g2 = wp[1] = (uint16) CLAMP(ip[1]);
+		b2 = wp[2] = (uint16) CLAMP(ip[2]);
+		n -= 3;
+		while (n > 0) {
 		n -= 3;
 		wp += 3;
 		ip += 3;
 		r1 = (int32) CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
 		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
 		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
-	    }
+		}
 	} else if (stride == 4) {
-	    r2 = wp[0] = (uint16) CLAMP(ip[0]);
-	    g2 = wp[1] = (uint16) CLAMP(ip[1]);
-	    b2 = wp[2] = (uint16) CLAMP(ip[2]);
-	    a2 = wp[3] = (uint16) CLAMP(ip[3]);
-	    n -= 4;
-	    while (n > 0) {
+		r2 = wp[0] = (uint16) CLAMP(ip[0]);
+		g2 = wp[1] = (uint16) CLAMP(ip[1]);
+		b2 = wp[2] = (uint16) CLAMP(ip[2]);
+		a2 = wp[3] = (uint16) CLAMP(ip[3]);
+		n -= 4;
+		while (n > 0) {
 		n -= 4;
 		wp += 4;
 		ip += 4;
@@ -904,52 +904,52 @@ horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 		g1 = (int32) CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
 		b1 = (int32) CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
 		a1 = (int32) CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
-	    }
+		}
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
+		ip += n - 1;	/* point to last one */
+		wp += n - 1;	/* point to last one */
+		n -= stride;
+		while (n > 0) {
 		REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]);
 				wp[stride] -= wp[0];
 				wp[stride] &= mask;
 				wp--; ip--)
 		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp--; ip--)
+		}
+		REPEAT(stride, wp[0] = (uint16) CLAMP(ip[0]); wp--; ip--)
 	}
-    }
+	}
 }
 
 static void
 horizontalDifference16(unsigned short *ip, int n, int stride, 
 	unsigned short *wp, uint16 *From14)
 {
-    register int  r1, g1, b1, a1, r2, g2, b2, a2, mask;
+	register int  r1, g1, b1, a1, r2, g2, b2, a2, mask;
 
 /* assumption is unsigned pixel values */
-#undef   CLAMP
+#undef	CLAMP
 #define  CLAMP(v) From14[(v) >> 2]
 
-    mask = CODE_MASK;
-    if (n >= stride) {
+	mask = CODE_MASK;
+	if (n >= stride) {
 	if (stride == 3) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);
-	    n -= 3;
-	    while (n > 0) {
+		r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
+		b2 = wp[2] = CLAMP(ip[2]);
+		n -= 3;
+		while (n > 0) {
 		n -= 3;
 		wp += 3;
 		ip += 3;
 		r1 = CLAMP(ip[0]); wp[0] = (r1-r2) & mask; r2 = r1;
 		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
 		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
-	    }
+		}
 	} else if (stride == 4) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);  a2 = wp[3] = CLAMP(ip[3]);
-	    n -= 4;
-	    while (n > 0) {
+		r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
+		b2 = wp[2] = CLAMP(ip[2]);  a2 = wp[3] = CLAMP(ip[3]);
+		n -= 4;
+		while (n > 0) {
 		n -= 4;
 		wp += 4;
 		ip += 4;
@@ -957,21 +957,21 @@ horizontalDifference16(unsigned short *ip, int n, int stride,
 		g1 = CLAMP(ip[1]); wp[1] = (g1-g2) & mask; g2 = g1;
 		b1 = CLAMP(ip[2]); wp[2] = (b1-b2) & mask; b2 = b1;
 		a1 = CLAMP(ip[3]); wp[3] = (a1-a2) & mask; a2 = a1;
-	    }
+		}
 	} else {
-	    ip += n - 1;	/* point to last one */
-	    wp += n - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
+		ip += n - 1;	/* point to last one */
+		wp += n - 1;	/* point to last one */
+		n -= stride;
+		while (n > 0) {
 		REPEAT(stride, wp[0] = CLAMP(ip[0]);
 				wp[stride] -= wp[0];
 				wp[stride] &= mask;
 				wp--; ip--)
 		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
+		}
+		REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
 	}
-    }
+	}
 }
 
 
@@ -979,30 +979,30 @@ static void
 horizontalDifference8(unsigned char *ip, int n, int stride, 
 	unsigned short *wp, uint16 *From8)
 {
-    register int  r1, g1, b1, a1, r2, g2, b2, a2, mask;
+	register int  r1, g1, b1, a1, r2, g2, b2, a2, mask;
 
 #undef	 CLAMP
 #define  CLAMP(v) (From8[(v)])
 
-    mask = CODE_MASK;
-    if (n >= stride) {
+	mask = CODE_MASK;
+	if (n >= stride) {
 	if (stride == 3) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);
-	    n -= 3;
-	    while (n > 0) {
+		r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
+		b2 = wp[2] = CLAMP(ip[2]);
+		n -= 3;
+		while (n > 0) {
 		n -= 3;
 		r1 = CLAMP(ip[3]); wp[3] = (r1-r2) & mask; r2 = r1;
 		g1 = CLAMP(ip[4]); wp[4] = (g1-g2) & mask; g2 = g1;
 		b1 = CLAMP(ip[5]); wp[5] = (b1-b2) & mask; b2 = b1;
 		wp += 3;
 		ip += 3;
-	    }
+		}
 	} else if (stride == 4) {
-	    r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
-	    b2 = wp[2] = CLAMP(ip[2]);  a2 = wp[3] = CLAMP(ip[3]);
-	    n -= 4;
-	    while (n > 0) {
+		r2 = wp[0] = CLAMP(ip[0]);  g2 = wp[1] = CLAMP(ip[1]);
+		b2 = wp[2] = CLAMP(ip[2]);  a2 = wp[3] = CLAMP(ip[3]);
+		n -= 4;
+		while (n > 0) {
 		n -= 4;
 		r1 = CLAMP(ip[4]); wp[4] = (r1-r2) & mask; r2 = r1;
 		g1 = CLAMP(ip[5]); wp[5] = (g1-g2) & mask; g2 = g1;
@@ -1010,21 +1010,21 @@ horizontalDifference8(unsigned char *ip, int n, int stride,
 		a1 = CLAMP(ip[7]); wp[7] = (a1-a2) & mask; a2 = a1;
 		wp += 4;
 		ip += 4;
-	    }
+		}
 	} else {
-	    wp += n + stride - 1;	/* point to last one */
-	    ip += n + stride - 1;	/* point to last one */
-	    n -= stride;
-	    while (n > 0) {
+		wp += n + stride - 1;	/* point to last one */
+		ip += n + stride - 1;	/* point to last one */
+		n -= stride;
+		while (n > 0) {
 		REPEAT(stride, wp[0] = CLAMP(ip[0]);
 				wp[stride] -= wp[0];
 				wp[stride] &= mask;
 				wp--; ip--)
 		n -= stride;
-	    }
-	    REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
+		}
+		REPEAT(stride, wp[0] = CLAMP(ip[0]); wp--; ip--)
 	}
-    }
+	}
 }
 
 /*
@@ -1094,7 +1094,7 @@ PixarLogEncode(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 	do {
 		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFError(module, "%s: Encoder error: %s",
-			    tif->tif_name, sp->stream.msg);
+				tif->tif_name, sp->stream.msg);
 			return (0);
 		}
 		if (sp->stream.avail_out == 0) {
@@ -1126,18 +1126,18 @@ PixarLogPostEncode(TIFF* tif)
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
-		    if (sp->stream.avail_out != tif->tif_rawdatasize) {
-			    tif->tif_rawcc =
+			if (sp->stream.avail_out != tif->tif_rawdatasize) {
+				tif->tif_rawcc =
 				tif->tif_rawdatasize - sp->stream.avail_out;
-			    TIFFFlushData1(tif);
-			    sp->stream.next_out = tif->tif_rawdata;
-			    sp->stream.avail_out = tif->tif_rawdatasize;
-		    }
-		    break;
+				TIFFFlushData1(tif);
+				sp->stream.next_out = tif->tif_rawdata;
+				sp->stream.avail_out = tif->tif_rawdatasize;
+			}
+			break;
 		default:
-		    TIFFError(module, "%s: zlib error: %s",
+			TIFFError(module, "%s: zlib error: %s",
 			tif->tif_name, sp->stream.msg);
-		    return (0);
+			return (0);
 		}
 	} while (state != Z_STREAM_END);
 	return (1);
@@ -1186,23 +1186,23 @@ PixarLogCleanup(TIFF* tif)
 static int
 PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 {
-    PixarLogState *sp = (PixarLogState *)tif->tif_data;
-    int result;
-    static const char module[] = "PixarLogVSetField";
+	PixarLogState *sp = (PixarLogState *)tif->tif_data;
+	int result;
+	static const char module[] = "PixarLogVSetField";
 
-    switch (tag) {
-     case TIFFTAG_PIXARLOGQUALITY:
+	switch (tag) {
+	 case TIFFTAG_PIXARLOGQUALITY:
 		sp->quality = va_arg(ap, int);
 		if (tif->tif_mode != O_RDONLY && (sp->state&PLSTATE_INIT)) {
 			if (deflateParams(&sp->stream,
-			    sp->quality, Z_DEFAULT_STRATEGY) != Z_OK) {
+				sp->quality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFError(module, "%s: zlib error: %s",
 					tif->tif_name, sp->stream.msg);
 				return (0);
 			}
 		}
 		return (1);
-     case TIFFTAG_PIXARLOGDATAFMT:
+	 case TIFFTAG_PIXARLOGDATAFMT:
 	sp->user_datafmt = va_arg(ap, int);
 	/* Tweak the TIFF header so that the rest of libtiff knows what
 	 * size of data will be passed between app and library, and
@@ -1212,25 +1212,25 @@ PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	switch (sp->user_datafmt) {
 	 case PIXARLOGDATAFMT_8BIT:
 	 case PIXARLOGDATAFMT_8BITABGR:
-	    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
-	    TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-	    break;
+		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+		TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+		break;
 	 case PIXARLOGDATAFMT_11BITLOG:
-	    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
-	    TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-	    break;
+		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
+		TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+		break;
 	 case PIXARLOGDATAFMT_12BITPICIO:
-	    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
-	    TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
-	    break;
+		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
+		TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_INT);
+		break;
 	 case PIXARLOGDATAFMT_16BIT:
-	    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
-	    TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-	    break;
+		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
+		TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+		break;
 	 case PIXARLOGDATAFMT_FLOAT:
-	    TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 32);
-	    TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
-	    break;
+		TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 32);
+		TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+		break;
 	}
 	/*
 	 * Must recalculate sizes should bits/sample change.
@@ -1239,33 +1239,33 @@ PixarLogVSetField(TIFF* tif, ttag_t tag, va_list ap)
 	tif->tif_scanlinesize = TIFFScanlineSize(tif);
 	result = 1;		/* NB: pseudo tag */
 	break;
-     default:
+	 default:
 	result = (*sp->vsetparent)(tif, tag, ap);
-    }
-    return (result);
+	}
+	return (result);
 }
 
 static int
 PixarLogVGetField(TIFF* tif, ttag_t tag, va_list ap)
 {
-    PixarLogState *sp = (PixarLogState *)tif->tif_data;
+	PixarLogState *sp = (PixarLogState *)tif->tif_data;
 
-    switch (tag) {
-     case TIFFTAG_PIXARLOGQUALITY:
+	switch (tag) {
+	 case TIFFTAG_PIXARLOGQUALITY:
 	*va_arg(ap, int*) = sp->quality;
 	break;
-     case TIFFTAG_PIXARLOGDATAFMT:
+	 case TIFFTAG_PIXARLOGDATAFMT:
 	*va_arg(ap, int*) = sp->user_datafmt;
 	break;
-     default:
+	 default:
 	return (*sp->vgetparent)(tif, tag, ap);
-    }
-    return (1);
+	}
+	return (1);
 }
 
 static const TIFFFieldInfo pixarlogFieldInfo[] = {
-    {TIFFTAG_PIXARLOGDATAFMT,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""},
-    {TIFFTAG_PIXARLOGQUALITY,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""}
+	{TIFFTAG_PIXARLOGDATAFMT,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""},
+	{TIFFTAG_PIXARLOGQUALITY,0,0,TIFF_ANY,  FIELD_PSEUDO,FALSE,FALSE,""}
 };
 
 int
@@ -1306,9 +1306,9 @@ TIFFInitPixarLog(TIFF* tif, int scheme)
 	/* Override SetField so we can handle our private pseudo-tag */
 	_TIFFMergeFieldInfo(tif, pixarlogFieldInfo, N(pixarlogFieldInfo));
 	sp->vgetparent = tif->tif_tagmethods.vgetfield;
-	tif->tif_tagmethods.vgetfield = PixarLogVGetField;   /* hook for codec tags */
+	tif->tif_tagmethods.vgetfield = PixarLogVGetField;	/* hook for codec tags */
 	sp->vsetparent = tif->tif_tagmethods.vsetfield;
-	tif->tif_tagmethods.vsetfield = PixarLogVSetField;   /* hook for codec tags */
+	tif->tif_tagmethods.vsetfield = PixarLogVSetField;	/* hook for codec tags */
 
 	/* Default values for codec-specific fields */
 	sp->quality = Z_DEFAULT_COMPRESSION; /* default comp. level */

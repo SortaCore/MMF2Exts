@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -54,37 +54,37 @@
 
 CV_IMPL void cvReleaseCapture( CvCapture** pcapture )
 {
-    if( pcapture && *pcapture )
-    {
-        delete *pcapture;
-        *pcapture = 0;
-    }
+	if( pcapture && *pcapture )
+	{
+		delete *pcapture;
+		*pcapture = 0;
+	}
 }
 
 CV_IMPL IplImage* cvQueryFrame( CvCapture* capture )
 {
-    return capture ? capture->queryFrame() : 0;
+	return capture ? capture->queryFrame() : 0;
 }
 
 
 CV_IMPL int cvGrabFrame( CvCapture* capture )
 {
-    return capture ? capture->grabFrame() : 0;
+	return capture ? capture->grabFrame() : 0;
 }
 
 CV_IMPL IplImage* cvRetrieveFrame( CvCapture* capture )
 {
-    return capture ? capture->retrieveFrame() : 0;
+	return capture ? capture->retrieveFrame() : 0;
 }
 
 CV_IMPL double cvGetCaptureProperty( CvCapture* capture, int id )
 {
-    return capture ? capture->getProperty(id) : 0;
+	return capture ? capture->getProperty(id) : 0;
 }
 
 CV_IMPL int cvSetCaptureProperty( CvCapture* capture, int id, double value )
 {
-    return capture ? capture->setProperty(id, value) : 0;
+	return capture ? capture->setProperty(id, value) : 0;
 }
 
 
@@ -99,11 +99,11 @@ CV_IMPL CvCapture * cvCreateCameraCapture (int index)
 	int  domains[] =
 	{
 #ifdef HAVE_VIDEOINPUT
-        CV_CAP_DSHOW,
+		CV_CAP_DSHOW,
 #endif
-		CV_CAP_IEEE1394,   // identical to CV_CAP_DC1394
+		CV_CAP_IEEE1394,	// identical to CV_CAP_DC1394
 		CV_CAP_STEREO,
-		CV_CAP_VFW,        // identical to CV_CAP_V4L
+		CV_CAP_VFW,		// identical to CV_CAP_V4L
 		CV_CAP_MIL,
 		CV_CAP_QT,
 		CV_CAP_UNICAP,
@@ -127,13 +127,13 @@ CV_IMPL CvCapture * cvCreateCameraCapture (int index)
 
 		switch (domains[i])
 		{
-        #ifdef HAVE_VIDEOINPUT
-        case CV_CAP_DSHOW:
-            capture = cvCreateCameraCapture_DShow (index);
-            if (capture)
-                return capture;
-            break;
-        #endif
+		#ifdef HAVE_VIDEOINPUT
+		case CV_CAP_DSHOW:
+			capture = cvCreateCameraCapture_DShow (index);
+			if (capture)
+				return capture;
+			break;
+		#endif
 
 		#ifdef HAVE_TYZX
 		case CV_CAP_STEREO:
@@ -202,7 +202,7 @@ CV_IMPL CvCapture * cvCreateCameraCapture (int index)
 		case CV_CAP_UNICAP:
 		  capture = cvCreateCameraCapture_Unicap (index);
 		  if (capture)
-		    return capture;
+			return capture;
 		  break;
 		#endif
 
@@ -219,37 +219,37 @@ CV_IMPL CvCapture * cvCreateCameraCapture (int index)
  */
 CV_IMPL CvCapture * cvCreateFileCapture (const char * filename)
 {
-    CvCapture * result = 0;
+	CvCapture * result = 0;
 
-    if (! result)
-        result = cvCreateFileCapture_Images (filename);
+	if (! result)
+		result = cvCreateFileCapture_Images (filename);
 
-    #ifdef WIN32
-    if (! result)
-        result = cvCreateFileCapture_Win32 (filename);
-    #endif
+	#ifdef WIN32
+	if (! result)
+		result = cvCreateFileCapture_Win32 (filename);
+	#endif
 
-    #ifdef HAVE_XINE
-    if (! result)
-        result = cvCreateFileCapture_XINE (filename);
-    #endif
+	#ifdef HAVE_XINE
+	if (! result)
+		result = cvCreateFileCapture_XINE (filename);
+	#endif
 
-    #ifdef HAVE_GSTREAMER
-    if (! result)
-        result = cvCreateCapture_GStreamer (CV_CAP_GSTREAMER_FILE, filename);
-    #endif
+	#ifdef HAVE_GSTREAMER
+	if (! result)
+		result = cvCreateCapture_GStreamer (CV_CAP_GSTREAMER_FILE, filename);
+	#endif
 
-    #ifdef HAVE_FFMPEG
-    if (! result)
-        result = cvCreateFileCapture_FFMPEG (filename);
-    #endif
+	#ifdef HAVE_FFMPEG
+	if (! result)
+		result = cvCreateFileCapture_FFMPEG (filename);
+	#endif
 
-    #ifdef HAVE_QUICKTIME
-    if (! result)
-        result = cvCreateFileCapture_QT (filename);
-    #endif
+	#ifdef HAVE_QUICKTIME
+	if (! result)
+		result = cvCreateFileCapture_QT (filename);
+	#endif
 
-    return result;
+	return result;
 }
 
 /**
@@ -257,7 +257,7 @@ CV_IMPL CvCapture * cvCreateFileCapture (const char * filename)
  * API that can write a given stream.
  */
 CV_IMPL CvVideoWriter* cvCreateVideoWriter( const char* filename, int fourcc,
-                                            double fps, CvSize frameSize, int is_color )
+											double fps, CvSize frameSize, int is_color )
 {
 	CV_FUNCNAME( "cvCreateVideoWriter" );
 
@@ -294,14 +294,14 @@ CV_IMPL CvVideoWriter* cvCreateVideoWriter( const char* filename, int fourcc,
 
 CV_IMPL int cvWriteFrame( CvVideoWriter* writer, const IplImage* image )
 {
-    return writer ? writer->writeFrame(image) : 0;
+	return writer ? writer->writeFrame(image) : 0;
 }
 
 CV_IMPL void cvReleaseVideoWriter( CvVideoWriter** pwriter )
 {
-    if( pwriter && *pwriter )
-    {
-        delete *pwriter;
-        *pwriter = 0;
-    }
+	if( pwriter && *pwriter )
+	{
+		delete *pwriter;
+		*pwriter = 0;
+	}
 }

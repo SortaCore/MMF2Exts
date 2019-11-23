@@ -17,13 +17,13 @@ short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 	return(sizeof(RUNDATA));
 }
 
-volatile float iii = 0; // Remove this, it's used for the frequency modulation
 unsigned long WINAPI audioThreadProc(void* argument)
 {
 	RUNDATA* rdPtr = (RUNDATA*)argument;
+	double iii = 0; // Remove this, it's used for the frequency modulation
 
 	/* Keep busy */
-	while(!rdPtr->shuttingDown)
+	while (!rdPtr->shuttingDown)
 	{
 		/* Find all buffers that aren't currently queued */
 		for(int i = 0; i < NUM_BUFFERS; ++i)
@@ -37,7 +37,7 @@ unsigned long WINAPI audioThreadProc(void* argument)
 				{
 					/* Simple frequency modulation */
 					/***** This is the part where you would fill in the values *****/
-					((short*)rdPtr->buffers[i].lpData)[j] = sin(iii += 0.3+0.2*sin(iii*0.001))*32000;
+					((short*)rdPtr->buffers[i].lpData)[j] = (short)sin(iii += 0.3+0.2*sin(iii*0.001))*32000;
 				}
 
 				/* Queue the buffer */
@@ -68,9 +68,10 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	/* You can remove this, but if you build your extension as Debug you can printf to a console! */
 	#ifdef _DEBUG
 		AllocConsole();
-		freopen("conin$","r",stdin);
-		freopen("conout$","w",stdout);
-		freopen("conout$","w",stderr);
+		FILE *dummyFile = nullptr;
+		freopen_s(&dummyFile, "CONIN$", "r", stdin);
+		freopen_s(&dummyFile, "CONOUT$", "w", stdout);
+		freopen_s(&dummyFile, "CONOUT$", "w", stderr);
 	#endif
 
 	/* Set up stream format */
@@ -84,11 +85,11 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	format.nAvgBytesPerSec = format.nBlockAlign*format.nSamplesPerSec;
 
 	/* Open device with callback */
-	if(MMSYSERR_NOERROR != waveOutOpen(&rdPtr->device, WAVE_MAPPER, &format, 0, 0, 0))
+	if (MMSYSERR_NOERROR != waveOutOpen(&rdPtr->device, WAVE_MAPPER, &format, 0, 0, 0))
 		return -1;
 
 	/* Prepare audio buffers used for streaming */
-	for(int i = 0; i < NUM_BUFFERS; ++i)
+	for (int i = 0; i < NUM_BUFFERS; ++i)
 	{
 		memset(&rdPtr->buffers[i], 0, sizeof(WAVEHDR));
 		rdPtr->buffers[i].dwBufferLength = format.nBlockAlign*format.nSamplesPerSec; // Exactly one second per buffer since 44100 samples at 44100 khz is one
@@ -97,7 +98,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 		rdPtr->buffers[i].lpData = new char[rdPtr->buffers[i].dwBufferLength];
 
 		/* Prepare for usage */
-		if(MMSYSERR_NOERROR != waveOutPrepareHeader(rdPtr->device, &rdPtr->buffers[i], sizeof(WAVEHDR)))
+		if (MMSYSERR_NOERROR != waveOutPrepareHeader(rdPtr->device, &rdPtr->buffers[i], sizeof(WAVEHDR)))
 			return -1;
 	}
 
@@ -105,7 +106,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	rdPtr->shuttingDown = false;
 
 	/* Run the actual streaming thread */
-	if(NULL == (rdPtr->thread = CreateThread(0, 0, audioThreadProc, rdPtr, 0, 0)))
+	if (NULL == (rdPtr->thread = CreateThread(0, 0, audioThreadProc, rdPtr, 0, 0)))
 		return -1;
 
 	return 0;
@@ -131,7 +132,7 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 	CloseHandle(rdPtr->thread);
 	
 	/* Free all buffers */
-	for(int i = 0; i < NUM_BUFFERS; ++i)
+	for (int i = 0; i < NUM_BUFFERS; ++i)
 	{
 		waveOutUnprepareHeader(rdPtr->device, &rdPtr->buffers[i], sizeof(WAVEHDR));
 		delete[] rdPtr->buffers[i].lpData;
@@ -173,8 +174,8 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 /*
-   If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
-   See Graphic_Object_Ex.txt for an example of what you may put here.
+	If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
+	See Graphic_Object_Ex.txt for an example of what you may put here.
 */
 	// Ok
 	return 0;

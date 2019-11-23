@@ -27,7 +27,7 @@ typedef enum {			/* JPEG marker codes */
   M_SOF6  = 0xc6,
   M_SOF7  = 0xc7,
   
-  M_JPG   = 0xc8,
+  M_JPG	= 0xc8,
   M_SOF9  = 0xc9,
   M_SOF10 = 0xca,
   M_SOF11 = 0xcb,
@@ -36,9 +36,9 @@ typedef enum {			/* JPEG marker codes */
   M_SOF14 = 0xce,
   M_SOF15 = 0xcf,
   
-  M_DHT   = 0xc4,
+  M_DHT	= 0xc4,
   
-  M_DAC   = 0xcc,
+  M_DAC	= 0xcc,
   
   M_RST0  = 0xd0,
   M_RST1  = 0xd1,
@@ -49,14 +49,14 @@ typedef enum {			/* JPEG marker codes */
   M_RST6  = 0xd6,
   M_RST7  = 0xd7,
   
-  M_SOI   = 0xd8,
-  M_EOI   = 0xd9,
-  M_SOS   = 0xda,
-  M_DQT   = 0xdb,
-  M_DNL   = 0xdc,
-  M_DRI   = 0xdd,
-  M_DHP   = 0xde,
-  M_EXP   = 0xdf,
+  M_SOI	= 0xd8,
+  M_EOI	= 0xd9,
+  M_SOS	= 0xda,
+  M_DQT	= 0xdb,
+  M_DNL	= 0xdc,
+  M_DRI	= 0xdd,
+  M_DHP	= 0xde,
+  M_EXP	= 0xdf,
   
   M_APP0  = 0xe0,
   M_APP1  = 0xe1,
@@ -77,9 +77,9 @@ typedef enum {			/* JPEG marker codes */
   
   M_JPG0  = 0xf0,
   M_JPG13 = 0xfd,
-  M_COM   = 0xfe,
+  M_COM	= 0xfe,
   
-  M_TEM   = 0x01,
+  M_TEM	= 0x01,
   
   M_ERROR = 0x100
 } JPEG_MARKER;
@@ -138,7 +138,7 @@ typedef my_marker_reader * my_marker_ptr;
 #define MAKE_BYTE_AVAIL(cinfo,action)  \
 	if (bytes_in_buffer == 0) {  \
 	  if (! (*datasrc->fill_input_buffer) (cinfo))  \
-	    { action; }  \
+		{ action; }  \
 	  INPUT_RELOAD(cinfo);  \
 	}
 
@@ -166,13 +166,13 @@ typedef my_marker_reader * my_marker_ptr;
  * Routines to process JPEG markers.
  *
  * Entry condition: JPEG marker itself has been read and its code saved
- *   in cinfo->unread_marker; input restart point is just after the marker.
+ *	in cinfo->unread_marker; input restart point is just after the marker.
  *
  * Exit: if return TRUE, have read and processed any parameters, and have
- *   updated the restart point to point after the parameters.
- *   If return FALSE, was forced to suspend before reaching end of
- *   marker parameters; restart point has not been moved.  Same routine
- *   will be called again after application supplies more input data.
+ *	updated the restart point to point after the parameters.
+ *	If return FALSE, was forced to suspend before reaching end of
+ *	marker parameters; restart point has not been moved.  Same routine
+ *	will be called again after application supplies more input data.
  *
  * This approach to suspension assumes that all of a marker's parameters
  * can fit into a single input bufferload.  This should hold for "normal"
@@ -202,14 +202,14 @@ get_soi (j_decompress_ptr cinfo)
   TRACEMS(cinfo, 1, JTRC_SOI);
 
   if (cinfo->marker->saw_SOI)
-    ERREXIT(cinfo, JERR_SOI_DUPLICATE);
+	ERREXIT(cinfo, JERR_SOI_DUPLICATE);
 
   /* Reset all parameters that are defined to be reset by SOI */
 
   for (i = 0; i < NUM_ARITH_TBLS; i++) {
-    cinfo->arith_dc_L[i] = 0;
-    cinfo->arith_dc_U[i] = 1;
-    cinfo->arith_ac_K[i] = 5;
+	cinfo->arith_dc_L[i] = 0;
+	cinfo->arith_dc_U[i] = 1;
+	cinfo->arith_ac_K[i] = 5;
   }
   cinfo->restart_interval = 0;
 
@@ -255,39 +255,39 @@ get_sof (j_decompress_ptr cinfo, boolean is_prog, boolean is_arith)
   length -= 8;
 
   TRACEMS4(cinfo, 1, JTRC_SOF, cinfo->unread_marker,
-	   (int) cinfo->image_width, (int) cinfo->image_height,
-	   cinfo->num_components);
+		(int) cinfo->image_width, (int) cinfo->image_height,
+		cinfo->num_components);
 
   if (cinfo->marker->saw_SOF)
-    ERREXIT(cinfo, JERR_SOF_DUPLICATE);
+	ERREXIT(cinfo, JERR_SOF_DUPLICATE);
 
   /* We don't support files in which the image height is initially specified */
   /* as 0 and is later redefined by DNL.  As long as we have to check that,  */
   /* might as well have a general sanity check. */
   if (cinfo->image_height <= 0 || cinfo->image_width <= 0
-      || cinfo->num_components <= 0)
-    ERREXIT(cinfo, JERR_EMPTY_IMAGE);
+	  || cinfo->num_components <= 0)
+	ERREXIT(cinfo, JERR_EMPTY_IMAGE);
 
   if (length != (cinfo->num_components * 3))
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   if (cinfo->comp_info == NULL)	/* do only once, even if suspend */
-    cinfo->comp_info = (jpeg_component_info *) (*cinfo->mem->alloc_small)
+	cinfo->comp_info = (jpeg_component_info *) (*cinfo->mem->alloc_small)
 			((j_common_ptr) cinfo, JPOOL_IMAGE,
 			 cinfo->num_components * SIZEOF(jpeg_component_info));
   
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
-       ci++, compptr++) {
-    compptr->component_index = ci;
-    INPUT_BYTE(cinfo, compptr->component_id, return FALSE);
-    INPUT_BYTE(cinfo, c, return FALSE);
-    compptr->h_samp_factor = (c >> 4) & 15;
-    compptr->v_samp_factor = (c     ) & 15;
-    INPUT_BYTE(cinfo, compptr->quant_tbl_no, return FALSE);
+		ci++, compptr++) {
+	compptr->component_index = ci;
+	INPUT_BYTE(cinfo, compptr->component_id, return FALSE);
+	INPUT_BYTE(cinfo, c, return FALSE);
+	compptr->h_samp_factor = (c >> 4) & 15;
+	compptr->v_samp_factor = (c	 ) & 15;
+	INPUT_BYTE(cinfo, compptr->quant_tbl_no, return FALSE);
 
-    TRACEMS4(cinfo, 1, JTRC_SOF_COMPONENT,
-	     compptr->component_id, compptr->h_samp_factor,
-	     compptr->v_samp_factor, compptr->quant_tbl_no);
+	TRACEMS4(cinfo, 1, JTRC_SOF_COMPONENT,
+		 compptr->component_id, compptr->h_samp_factor,
+		 compptr->v_samp_factor, compptr->quant_tbl_no);
   }
 
   cinfo->marker->saw_SOF = TRUE;
@@ -307,7 +307,7 @@ get_sos (j_decompress_ptr cinfo)
   INPUT_VARS(cinfo);
 
   if (! cinfo->marker->saw_SOF)
-    ERREXIT(cinfo, JERR_SOS_NO_SOF);
+	ERREXIT(cinfo, JERR_SOS_NO_SOF);
 
   INPUT_2BYTES(cinfo, length, return FALSE);
 
@@ -316,32 +316,32 @@ get_sos (j_decompress_ptr cinfo)
   TRACEMS1(cinfo, 1, JTRC_SOS, n);
 
   if (length != (n * 2 + 6) || n < 1 || n > MAX_COMPS_IN_SCAN)
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   cinfo->comps_in_scan = n;
 
   /* Collect the component-spec parameters */
 
   for (i = 0; i < n; i++) {
-    INPUT_BYTE(cinfo, cc, return FALSE);
-    INPUT_BYTE(cinfo, c, return FALSE);
-    
-    for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
+	INPUT_BYTE(cinfo, cc, return FALSE);
+	INPUT_BYTE(cinfo, c, return FALSE);
+	
+	for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
 	 ci++, compptr++) {
-      if (cc == compptr->component_id)
+	  if (cc == compptr->component_id)
 	goto id_found;
-    }
+	}
 
-    ERREXIT1(cinfo, JERR_BAD_COMPONENT_ID, cc);
+	ERREXIT1(cinfo, JERR_BAD_COMPONENT_ID, cc);
 
   id_found:
 
-    cinfo->cur_comp_info[i] = compptr;
-    compptr->dc_tbl_no = (c >> 4) & 15;
-    compptr->ac_tbl_no = (c     ) & 15;
-    
-    TRACEMS3(cinfo, 1, JTRC_SOS_COMPONENT, cc,
-	     compptr->dc_tbl_no, compptr->ac_tbl_no);
+	cinfo->cur_comp_info[i] = compptr;
+	compptr->dc_tbl_no = (c >> 4) & 15;
+	compptr->ac_tbl_no = (c	 ) & 15;
+	
+	TRACEMS3(cinfo, 1, JTRC_SOS_COMPONENT, cc,
+		 compptr->dc_tbl_no, compptr->ac_tbl_no);
   }
 
   /* Collect the additional scan parameters Ss, Se, Ah/Al. */
@@ -351,10 +351,10 @@ get_sos (j_decompress_ptr cinfo)
   cinfo->Se = c;
   INPUT_BYTE(cinfo, c, return FALSE);
   cinfo->Ah = (c >> 4) & 15;
-  cinfo->Al = (c     ) & 15;
+  cinfo->Al = (c	 ) & 15;
 
   TRACEMS4(cinfo, 1, JTRC_SOS_PARAMS, cinfo->Ss, cinfo->Se,
-	   cinfo->Ah, cinfo->Al);
+		cinfo->Ah, cinfo->Al);
 
   /* Prepare to scan data & restart markers */
   cinfo->marker->next_restart_num = 0;
@@ -381,28 +381,28 @@ get_dac (j_decompress_ptr cinfo)
   length -= 2;
   
   while (length > 0) {
-    INPUT_BYTE(cinfo, index, return FALSE);
-    INPUT_BYTE(cinfo, val, return FALSE);
+	INPUT_BYTE(cinfo, index, return FALSE);
+	INPUT_BYTE(cinfo, val, return FALSE);
 
-    length -= 2;
+	length -= 2;
 
-    TRACEMS2(cinfo, 1, JTRC_DAC, index, val);
+	TRACEMS2(cinfo, 1, JTRC_DAC, index, val);
 
-    if (index < 0 || index >= (2*NUM_ARITH_TBLS))
-      ERREXIT1(cinfo, JERR_DAC_INDEX, index);
+	if (index < 0 || index >= (2*NUM_ARITH_TBLS))
+	  ERREXIT1(cinfo, JERR_DAC_INDEX, index);
 
-    if (index >= NUM_ARITH_TBLS) { /* define AC table */
-      cinfo->arith_ac_K[index-NUM_ARITH_TBLS] = (UINT8) val;
-    } else {			/* define DC table */
-      cinfo->arith_dc_L[index] = (UINT8) (val & 0x0F);
-      cinfo->arith_dc_U[index] = (UINT8) (val >> 4);
-      if (cinfo->arith_dc_L[index] > cinfo->arith_dc_U[index])
+	if (index >= NUM_ARITH_TBLS) { /* define AC table */
+	  cinfo->arith_ac_K[index-NUM_ARITH_TBLS] = (UINT8) val;
+	} else {			/* define DC table */
+	  cinfo->arith_dc_L[index] = (UINT8) (val & 0x0F);
+	  cinfo->arith_dc_U[index] = (UINT8) (val >> 4);
+	  if (cinfo->arith_dc_L[index] > cinfo->arith_dc_U[index])
 	ERREXIT1(cinfo, JERR_DAC_VALUE, val);
-    }
+	}
   }
 
   if (length != 0)
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   INPUT_SYNC(cinfo);
   return TRUE;
@@ -430,56 +430,56 @@ get_dht (j_decompress_ptr cinfo)
   length -= 2;
   
   while (length > 16) {
-    INPUT_BYTE(cinfo, index, return FALSE);
+	INPUT_BYTE(cinfo, index, return FALSE);
 
-    TRACEMS1(cinfo, 1, JTRC_DHT, index);
-      
-    bits[0] = 0;
-    count = 0;
-    for (i = 1; i <= 16; i++) {
-      INPUT_BYTE(cinfo, bits[i], return FALSE);
-      count += bits[i];
-    }
+	TRACEMS1(cinfo, 1, JTRC_DHT, index);
+	  
+	bits[0] = 0;
+	count = 0;
+	for (i = 1; i <= 16; i++) {
+	  INPUT_BYTE(cinfo, bits[i], return FALSE);
+	  count += bits[i];
+	}
 
-    length -= 1 + 16;
+	length -= 1 + 16;
 
-    TRACEMS8(cinfo, 2, JTRC_HUFFBITS,
-	     bits[1], bits[2], bits[3], bits[4],
-	     bits[5], bits[6], bits[7], bits[8]);
-    TRACEMS8(cinfo, 2, JTRC_HUFFBITS,
-	     bits[9], bits[10], bits[11], bits[12],
-	     bits[13], bits[14], bits[15], bits[16]);
+	TRACEMS8(cinfo, 2, JTRC_HUFFBITS,
+		 bits[1], bits[2], bits[3], bits[4],
+		 bits[5], bits[6], bits[7], bits[8]);
+	TRACEMS8(cinfo, 2, JTRC_HUFFBITS,
+		 bits[9], bits[10], bits[11], bits[12],
+		 bits[13], bits[14], bits[15], bits[16]);
 
-    /* Here we just do minimal validation of the counts to avoid walking
-     * off the end of our table space.  jdhuff.c will check more carefully.
-     */
-    if (count > 256 || ((INT32) count) > length)
-      ERREXIT(cinfo, JERR_BAD_HUFF_TABLE);
+	/* Here we just do minimal validation of the counts to avoid walking
+	 * off the end of our table space.  jdhuff.c will check more carefully.
+	 */
+	if (count > 256 || ((INT32) count) > length)
+	  ERREXIT(cinfo, JERR_BAD_HUFF_TABLE);
 
-    for (i = 0; i < count; i++)
-      INPUT_BYTE(cinfo, huffval[i], return FALSE);
+	for (i = 0; i < count; i++)
+	  INPUT_BYTE(cinfo, huffval[i], return FALSE);
 
-    length -= count;
+	length -= count;
 
-    if (index & 0x10) {		/* AC table definition */
-      index -= 0x10;
-      htblptr = &cinfo->ac_huff_tbl_ptrs[index];
-    } else {			/* DC table definition */
-      htblptr = &cinfo->dc_huff_tbl_ptrs[index];
-    }
+	if (index & 0x10) {		/* AC table definition */
+	  index -= 0x10;
+	  htblptr = &cinfo->ac_huff_tbl_ptrs[index];
+	} else {			/* DC table definition */
+	  htblptr = &cinfo->dc_huff_tbl_ptrs[index];
+	}
 
-    if (index < 0 || index >= NUM_HUFF_TBLS)
-      ERREXIT1(cinfo, JERR_DHT_INDEX, index);
+	if (index < 0 || index >= NUM_HUFF_TBLS)
+	  ERREXIT1(cinfo, JERR_DHT_INDEX, index);
 
-    if (*htblptr == NULL)
-      *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
+	if (*htblptr == NULL)
+	  *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
   
-    MEMCOPY((*htblptr)->bits, bits, SIZEOF((*htblptr)->bits));
-    MEMCOPY((*htblptr)->huffval, huffval, SIZEOF((*htblptr)->huffval));
+	MEMCOPY((*htblptr)->bits, bits, SIZEOF((*htblptr)->bits));
+	MEMCOPY((*htblptr)->huffval, huffval, SIZEOF((*htblptr)->huffval));
   }
 
   if (length != 0)
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   INPUT_SYNC(cinfo);
   return TRUE;
@@ -500,44 +500,44 @@ get_dqt (j_decompress_ptr cinfo)
   length -= 2;
 
   while (length > 0) {
-    INPUT_BYTE(cinfo, n, return FALSE);
-    prec = n >> 4;
-    n &= 0x0F;
+	INPUT_BYTE(cinfo, n, return FALSE);
+	prec = n >> 4;
+	n &= 0x0F;
 
-    TRACEMS2(cinfo, 1, JTRC_DQT, n, prec);
+	TRACEMS2(cinfo, 1, JTRC_DQT, n, prec);
 
-    if (n >= NUM_QUANT_TBLS)
-      ERREXIT1(cinfo, JERR_DQT_INDEX, n);
-      
-    if (cinfo->quant_tbl_ptrs[n] == NULL)
-      cinfo->quant_tbl_ptrs[n] = jpeg_alloc_quant_table((j_common_ptr) cinfo);
-    quant_ptr = cinfo->quant_tbl_ptrs[n];
+	if (n >= NUM_QUANT_TBLS)
+	  ERREXIT1(cinfo, JERR_DQT_INDEX, n);
+	  
+	if (cinfo->quant_tbl_ptrs[n] == NULL)
+	  cinfo->quant_tbl_ptrs[n] = jpeg_alloc_quant_table((j_common_ptr) cinfo);
+	quant_ptr = cinfo->quant_tbl_ptrs[n];
 
-    for (i = 0; i < DCTSIZE2; i++) {
-      if (prec)
+	for (i = 0; i < DCTSIZE2; i++) {
+	  if (prec)
 	INPUT_2BYTES(cinfo, tmp, return FALSE);
-      else
+	  else
 	INPUT_BYTE(cinfo, tmp, return FALSE);
-      /* We convert the zigzag-order table to natural array order. */
-      quant_ptr->quantval[jpeg_natural_order[i]] = (UINT16) tmp;
-    }
+	  /* We convert the zigzag-order table to natural array order. */
+	  quant_ptr->quantval[jpeg_natural_order[i]] = (UINT16) tmp;
+	}
 
-    if (cinfo->err->trace_level >= 2) {
-      for (i = 0; i < DCTSIZE2; i += 8) {
+	if (cinfo->err->trace_level >= 2) {
+	  for (i = 0; i < DCTSIZE2; i += 8) {
 	TRACEMS8(cinfo, 2, JTRC_QUANTVALS,
-		 quant_ptr->quantval[i],   quant_ptr->quantval[i+1],
+		 quant_ptr->quantval[i],	quant_ptr->quantval[i+1],
 		 quant_ptr->quantval[i+2], quant_ptr->quantval[i+3],
 		 quant_ptr->quantval[i+4], quant_ptr->quantval[i+5],
 		 quant_ptr->quantval[i+6], quant_ptr->quantval[i+7]);
-      }
-    }
+	  }
+	}
 
-    length -= DCTSIZE2+1;
-    if (prec) length -= DCTSIZE2;
+	length -= DCTSIZE2+1;
+	if (prec) length -= DCTSIZE2;
   }
 
   if (length != 0)
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   INPUT_SYNC(cinfo);
   return TRUE;
@@ -555,7 +555,7 @@ get_dri (j_decompress_ptr cinfo)
   INPUT_2BYTES(cinfo, length, return FALSE);
   
   if (length != 4)
-    ERREXIT(cinfo, JERR_BAD_LENGTH);
+	ERREXIT(cinfo, JERR_BAD_LENGTH);
 
   INPUT_2BYTES(cinfo, tmp, return FALSE);
 
@@ -582,7 +582,7 @@ get_dri (j_decompress_ptr cinfo)
 
 LOCAL(void)
 examine_app0 (j_decompress_ptr cinfo, JOCTET FAR * data,
-	      unsigned int datalen, INT32 remaining)
+		  unsigned int datalen, INT32 remaining)
 /* Examine first few bytes from an APP0.
  * Take appropriate action if it is a JFIF marker.
  * datalen is # of bytes at data[], remaining is length of rest of marker data.
@@ -591,74 +591,74 @@ examine_app0 (j_decompress_ptr cinfo, JOCTET FAR * data,
   INT32 totallen = (INT32) datalen + remaining;
 
   if (datalen >= APP0_DATA_LEN &&
-      GETJOCTET(data[0]) == 0x4A &&
-      GETJOCTET(data[1]) == 0x46 &&
-      GETJOCTET(data[2]) == 0x49 &&
-      GETJOCTET(data[3]) == 0x46 &&
-      GETJOCTET(data[4]) == 0) {
-    /* Found JFIF APP0 marker: save info */
-    cinfo->saw_JFIF_marker = TRUE;
-    cinfo->JFIF_major_version = GETJOCTET(data[5]);
-    cinfo->JFIF_minor_version = GETJOCTET(data[6]);
-    cinfo->density_unit = GETJOCTET(data[7]);
-    cinfo->X_density = (GETJOCTET(data[8]) << 8) + GETJOCTET(data[9]);
-    cinfo->Y_density = (GETJOCTET(data[10]) << 8) + GETJOCTET(data[11]);
-    /* Check version.
-     * Major version must be 1, anything else signals an incompatible change.
-     * (We used to treat this as an error, but now it's a nonfatal warning,
-     * because some bozo at Hijaak couldn't read the spec.)
-     * Minor version should be 0..2, but process anyway if newer.
-     */
-    if (cinfo->JFIF_major_version != 1)
-      WARNMS2(cinfo, JWRN_JFIF_MAJOR,
-	      cinfo->JFIF_major_version, cinfo->JFIF_minor_version);
-    /* Generate trace messages */
-    TRACEMS5(cinfo, 1, JTRC_JFIF,
-	     cinfo->JFIF_major_version, cinfo->JFIF_minor_version,
-	     cinfo->X_density, cinfo->Y_density, cinfo->density_unit);
-    /* Validate thumbnail dimensions and issue appropriate messages */
-    if (GETJOCTET(data[12]) | GETJOCTET(data[13]))
-      TRACEMS2(cinfo, 1, JTRC_JFIF_THUMBNAIL,
-	       GETJOCTET(data[12]), GETJOCTET(data[13]));
-    totallen -= APP0_DATA_LEN;
-    if (totallen !=
+	  GETJOCTET(data[0]) == 0x4A &&
+	  GETJOCTET(data[1]) == 0x46 &&
+	  GETJOCTET(data[2]) == 0x49 &&
+	  GETJOCTET(data[3]) == 0x46 &&
+	  GETJOCTET(data[4]) == 0) {
+	/* Found JFIF APP0 marker: save info */
+	cinfo->saw_JFIF_marker = TRUE;
+	cinfo->JFIF_major_version = GETJOCTET(data[5]);
+	cinfo->JFIF_minor_version = GETJOCTET(data[6]);
+	cinfo->density_unit = GETJOCTET(data[7]);
+	cinfo->X_density = (GETJOCTET(data[8]) << 8) + GETJOCTET(data[9]);
+	cinfo->Y_density = (GETJOCTET(data[10]) << 8) + GETJOCTET(data[11]);
+	/* Check version.
+	 * Major version must be 1, anything else signals an incompatible change.
+	 * (We used to treat this as an error, but now it's a nonfatal warning,
+	 * because some bozo at Hijaak couldn't read the spec.)
+	 * Minor version should be 0..2, but process anyway if newer.
+	 */
+	if (cinfo->JFIF_major_version != 1)
+	  WARNMS2(cinfo, JWRN_JFIF_MAJOR,
+		  cinfo->JFIF_major_version, cinfo->JFIF_minor_version);
+	/* Generate trace messages */
+	TRACEMS5(cinfo, 1, JTRC_JFIF,
+		 cinfo->JFIF_major_version, cinfo->JFIF_minor_version,
+		 cinfo->X_density, cinfo->Y_density, cinfo->density_unit);
+	/* Validate thumbnail dimensions and issue appropriate messages */
+	if (GETJOCTET(data[12]) | GETJOCTET(data[13]))
+	  TRACEMS2(cinfo, 1, JTRC_JFIF_THUMBNAIL,
+			GETJOCTET(data[12]), GETJOCTET(data[13]));
+	totallen -= APP0_DATA_LEN;
+	if (totallen !=
 	((INT32)GETJOCTET(data[12]) * (INT32)GETJOCTET(data[13]) * (INT32) 3))
-      TRACEMS1(cinfo, 1, JTRC_JFIF_BADTHUMBNAILSIZE, (int) totallen);
+	  TRACEMS1(cinfo, 1, JTRC_JFIF_BADTHUMBNAILSIZE, (int) totallen);
   } else if (datalen >= 6 &&
-      GETJOCTET(data[0]) == 0x4A &&
-      GETJOCTET(data[1]) == 0x46 &&
-      GETJOCTET(data[2]) == 0x58 &&
-      GETJOCTET(data[3]) == 0x58 &&
-      GETJOCTET(data[4]) == 0) {
-    /* Found JFIF "JFXX" extension APP0 marker */
-    /* The library doesn't actually do anything with these,
-     * but we try to produce a helpful trace message.
-     */
-    switch (GETJOCTET(data[5])) {
-    case 0x10:
-      TRACEMS1(cinfo, 1, JTRC_THUMB_JPEG, (int) totallen);
-      break;
-    case 0x11:
-      TRACEMS1(cinfo, 1, JTRC_THUMB_PALETTE, (int) totallen);
-      break;
-    case 0x13:
-      TRACEMS1(cinfo, 1, JTRC_THUMB_RGB, (int) totallen);
-      break;
-    default:
-      TRACEMS2(cinfo, 1, JTRC_JFIF_EXTENSION,
-	       GETJOCTET(data[5]), (int) totallen);
-      break;
-    }
+	  GETJOCTET(data[0]) == 0x4A &&
+	  GETJOCTET(data[1]) == 0x46 &&
+	  GETJOCTET(data[2]) == 0x58 &&
+	  GETJOCTET(data[3]) == 0x58 &&
+	  GETJOCTET(data[4]) == 0) {
+	/* Found JFIF "JFXX" extension APP0 marker */
+	/* The library doesn't actually do anything with these,
+	 * but we try to produce a helpful trace message.
+	 */
+	switch (GETJOCTET(data[5])) {
+	case 0x10:
+	  TRACEMS1(cinfo, 1, JTRC_THUMB_JPEG, (int) totallen);
+	  break;
+	case 0x11:
+	  TRACEMS1(cinfo, 1, JTRC_THUMB_PALETTE, (int) totallen);
+	  break;
+	case 0x13:
+	  TRACEMS1(cinfo, 1, JTRC_THUMB_RGB, (int) totallen);
+	  break;
+	default:
+	  TRACEMS2(cinfo, 1, JTRC_JFIF_EXTENSION,
+			GETJOCTET(data[5]), (int) totallen);
+	  break;
+	}
   } else {
-    /* Start of APP0 does not match "JFIF" or "JFXX", or too short */
-    TRACEMS1(cinfo, 1, JTRC_APP0, (int) totallen);
+	/* Start of APP0 does not match "JFIF" or "JFXX", or too short */
+	TRACEMS1(cinfo, 1, JTRC_APP0, (int) totallen);
   }
 }
 
 
 LOCAL(void)
 examine_app14 (j_decompress_ptr cinfo, JOCTET FAR * data,
-	       unsigned int datalen, INT32 remaining)
+			unsigned int datalen, INT32 remaining)
 /* Examine first few bytes from an APP14.
  * Take appropriate action if it is an Adobe marker.
  * datalen is # of bytes at data[], remaining is length of rest of marker data.
@@ -667,22 +667,22 @@ examine_app14 (j_decompress_ptr cinfo, JOCTET FAR * data,
   unsigned int version, flags0, flags1, transform;
 
   if (datalen >= APP14_DATA_LEN &&
-      GETJOCTET(data[0]) == 0x41 &&
-      GETJOCTET(data[1]) == 0x64 &&
-      GETJOCTET(data[2]) == 0x6F &&
-      GETJOCTET(data[3]) == 0x62 &&
-      GETJOCTET(data[4]) == 0x65) {
-    /* Found Adobe APP14 marker */
-    version = (GETJOCTET(data[5]) << 8) + GETJOCTET(data[6]);
-    flags0 = (GETJOCTET(data[7]) << 8) + GETJOCTET(data[8]);
-    flags1 = (GETJOCTET(data[9]) << 8) + GETJOCTET(data[10]);
-    transform = GETJOCTET(data[11]);
-    TRACEMS4(cinfo, 1, JTRC_ADOBE, version, flags0, flags1, transform);
-    cinfo->saw_Adobe_marker = TRUE;
-    cinfo->Adobe_transform = (UINT8) transform;
+	  GETJOCTET(data[0]) == 0x41 &&
+	  GETJOCTET(data[1]) == 0x64 &&
+	  GETJOCTET(data[2]) == 0x6F &&
+	  GETJOCTET(data[3]) == 0x62 &&
+	  GETJOCTET(data[4]) == 0x65) {
+	/* Found Adobe APP14 marker */
+	version = (GETJOCTET(data[5]) << 8) + GETJOCTET(data[6]);
+	flags0 = (GETJOCTET(data[7]) << 8) + GETJOCTET(data[8]);
+	flags1 = (GETJOCTET(data[9]) << 8) + GETJOCTET(data[10]);
+	transform = GETJOCTET(data[11]);
+	TRACEMS4(cinfo, 1, JTRC_ADOBE, version, flags0, flags1, transform);
+	cinfo->saw_Adobe_marker = TRUE;
+	cinfo->Adobe_transform = (UINT8) transform;
   } else {
-    /* Start of APP14 does not match "Adobe", or too short */
-    TRACEMS1(cinfo, 1, JTRC_APP14, (int) (datalen + remaining));
+	/* Start of APP14 does not match "Adobe", or too short */
+	TRACEMS1(cinfo, 1, JTRC_APP14, (int) (datalen + remaining));
   }
 }
 
@@ -701,33 +701,33 @@ get_interesting_appn (j_decompress_ptr cinfo)
 
   /* get the interesting part of the marker data */
   if (length >= APPN_DATA_LEN)
-    numtoread = APPN_DATA_LEN;
+	numtoread = APPN_DATA_LEN;
   else if (length > 0)
-    numtoread = (unsigned int) length;
+	numtoread = (unsigned int) length;
   else
-    numtoread = 0;
+	numtoread = 0;
   for (i = 0; i < numtoread; i++)
-    INPUT_BYTE(cinfo, b[i], return FALSE);
+	INPUT_BYTE(cinfo, b[i], return FALSE);
   length -= numtoread;
 
   /* process it */
   switch (cinfo->unread_marker) {
   case M_APP0:
-    examine_app0(cinfo, (JOCTET FAR *) b, numtoread, length);
-    break;
+	examine_app0(cinfo, (JOCTET FAR *) b, numtoread, length);
+	break;
   case M_APP14:
-    examine_app14(cinfo, (JOCTET FAR *) b, numtoread, length);
-    break;
+	examine_app14(cinfo, (JOCTET FAR *) b, numtoread, length);
+	break;
   default:
-    /* can't get here unless jpeg_save_markers chooses wrong processor */
-    ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, cinfo->unread_marker);
-    break;
+	/* can't get here unless jpeg_save_markers chooses wrong processor */
+	ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, cinfo->unread_marker);
+	break;
   }
 
   /* skip any remaining data -- could be lots */
   INPUT_SYNC(cinfo);
   if (length > 0)
-    (*cinfo->src->skip_input_data) (cinfo, (long) length);
+	(*cinfo->src->skip_input_data) (cinfo, (long) length);
 
   return TRUE;
 }
@@ -747,71 +747,71 @@ save_marker (j_decompress_ptr cinfo)
   INPUT_VARS(cinfo);
 
   if (cur_marker == NULL) {
-    /* begin reading a marker */
-    INPUT_2BYTES(cinfo, length, return FALSE);
-    length -= 2;
-    if (length >= 0) {		/* watch out for bogus length word */
-      /* figure out how much we want to save */
-      unsigned int limit;
-      if (cinfo->unread_marker == (int) M_COM)
+	/* begin reading a marker */
+	INPUT_2BYTES(cinfo, length, return FALSE);
+	length -= 2;
+	if (length >= 0) {		/* watch out for bogus length word */
+	  /* figure out how much we want to save */
+	  unsigned int limit;
+	  if (cinfo->unread_marker == (int) M_COM)
 	limit = marker->length_limit_COM;
-      else
+	  else
 	limit = marker->length_limit_APPn[cinfo->unread_marker - (int) M_APP0];
-      if ((unsigned int) length < limit)
+	  if ((unsigned int) length < limit)
 	limit = (unsigned int) length;
-      /* allocate and initialize the marker item */
-      cur_marker = (jpeg_saved_marker_ptr)
+	  /* allocate and initialize the marker item */
+	  cur_marker = (jpeg_saved_marker_ptr)
 	(*cinfo->mem->alloc_large) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				    SIZEOF(struct jpeg_marker_struct) + limit);
-      cur_marker->next = NULL;
-      cur_marker->marker = (UINT8) cinfo->unread_marker;
-      cur_marker->original_length = (unsigned int) length;
-      cur_marker->data_length = limit;
-      /* data area is just beyond the jpeg_marker_struct */
-      data = cur_marker->data = (JOCTET FAR *) (cur_marker + 1);
-      marker->cur_marker = cur_marker;
-      marker->bytes_read = 0;
-      bytes_read = 0;
-      data_length = limit;
-    } else {
-      /* deal with bogus length word */
-      bytes_read = data_length = 0;
-      data = NULL;
-    }
+					SIZEOF(struct jpeg_marker_struct) + limit);
+	  cur_marker->next = NULL;
+	  cur_marker->marker = (UINT8) cinfo->unread_marker;
+	  cur_marker->original_length = (unsigned int) length;
+	  cur_marker->data_length = limit;
+	  /* data area is just beyond the jpeg_marker_struct */
+	  data = cur_marker->data = (JOCTET FAR *) (cur_marker + 1);
+	  marker->cur_marker = cur_marker;
+	  marker->bytes_read = 0;
+	  bytes_read = 0;
+	  data_length = limit;
+	} else {
+	  /* deal with bogus length word */
+	  bytes_read = data_length = 0;
+	  data = NULL;
+	}
   } else {
-    /* resume reading a marker */
-    bytes_read = marker->bytes_read;
-    data_length = cur_marker->data_length;
-    data = cur_marker->data + bytes_read;
+	/* resume reading a marker */
+	bytes_read = marker->bytes_read;
+	data_length = cur_marker->data_length;
+	data = cur_marker->data + bytes_read;
   }
 
   while (bytes_read < data_length) {
-    INPUT_SYNC(cinfo);		/* move the restart point to here */
-    marker->bytes_read = bytes_read;
-    /* If there's not at least one byte in buffer, suspend */
-    MAKE_BYTE_AVAIL(cinfo, return FALSE);
-    /* Copy bytes with reasonable rapidity */
-    while (bytes_read < data_length && bytes_in_buffer > 0) {
-      *data++ = *next_input_byte++;
-      bytes_in_buffer--;
-      bytes_read++;
-    }
+	INPUT_SYNC(cinfo);		/* move the restart point to here */
+	marker->bytes_read = bytes_read;
+	/* If there's not at least one byte in buffer, suspend */
+	MAKE_BYTE_AVAIL(cinfo, return FALSE);
+	/* Copy bytes with reasonable rapidity */
+	while (bytes_read < data_length && bytes_in_buffer > 0) {
+	  *data++ = *next_input_byte++;
+	  bytes_in_buffer--;
+	  bytes_read++;
+	}
   }
 
   /* Done reading what we want to read */
   if (cur_marker != NULL) {	/* will be NULL if bogus length word */
-    /* Add new marker to end of list */
-    if (cinfo->marker_list == NULL) {
-      cinfo->marker_list = cur_marker;
-    } else {
-      jpeg_saved_marker_ptr prev = cinfo->marker_list;
-      while (prev->next != NULL)
+	/* Add new marker to end of list */
+	if (cinfo->marker_list == NULL) {
+	  cinfo->marker_list = cur_marker;
+	} else {
+	  jpeg_saved_marker_ptr prev = cinfo->marker_list;
+	  while (prev->next != NULL)
 	prev = prev->next;
-      prev->next = cur_marker;
-    }
-    /* Reset pointer & calc remaining data length */
-    data = cur_marker->data;
-    length = cur_marker->original_length - data_length;
+	  prev->next = cur_marker;
+	}
+	/* Reset pointer & calc remaining data length */
+	data = cur_marker->data;
+	length = cur_marker->original_length - data_length;
   }
   /* Reset to initial state for next marker */
   marker->cur_marker = NULL;
@@ -819,21 +819,21 @@ save_marker (j_decompress_ptr cinfo)
   /* Process the marker if interesting; else just make a generic trace msg */
   switch (cinfo->unread_marker) {
   case M_APP0:
-    examine_app0(cinfo, data, data_length, length);
-    break;
+	examine_app0(cinfo, data, data_length, length);
+	break;
   case M_APP14:
-    examine_app14(cinfo, data, data_length, length);
-    break;
+	examine_app14(cinfo, data, data_length, length);
+	break;
   default:
-    TRACEMS2(cinfo, 1, JTRC_MISC_MARKER, cinfo->unread_marker,
-	     (int) (data_length + length));
-    break;
+	TRACEMS2(cinfo, 1, JTRC_MISC_MARKER, cinfo->unread_marker,
+		 (int) (data_length + length));
+	break;
   }
 
   /* skip any remaining data -- could be lots */
   INPUT_SYNC(cinfo);		/* do before skip_input_data */
   if (length > 0)
-    (*cinfo->src->skip_input_data) (cinfo, (long) length);
+	(*cinfo->src->skip_input_data) (cinfo, (long) length);
 
   return TRUE;
 }
@@ -855,7 +855,7 @@ skip_variable (j_decompress_ptr cinfo)
 
   INPUT_SYNC(cinfo);		/* do before skip_input_data */
   if (length > 0)
-    (*cinfo->src->skip_input_data) (cinfo, (long) length);
+	(*cinfo->src->skip_input_data) (cinfo, (long) length);
 
   return TRUE;
 }
@@ -877,37 +877,37 @@ next_marker (j_decompress_ptr cinfo)
   INPUT_VARS(cinfo);
 
   for (;;) {
-    INPUT_BYTE(cinfo, c, return FALSE);
-    /* Skip any non-FF bytes.
-     * This may look a bit inefficient, but it will not occur in a valid file.
-     * We sync after each discarded byte so that a suspending data source
-     * can discard the byte from its buffer.
-     */
-    while (c != 0xFF) {
-      cinfo->marker->discarded_bytes++;
-      INPUT_SYNC(cinfo);
-      INPUT_BYTE(cinfo, c, return FALSE);
-    }
-    /* This loop swallows any duplicate FF bytes.  Extra FFs are legal as
-     * pad bytes, so don't count them in discarded_bytes.  We assume there
-     * will not be so many consecutive FF bytes as to overflow a suspending
-     * data source's input buffer.
-     */
-    do {
-      INPUT_BYTE(cinfo, c, return FALSE);
-    } while (c == 0xFF);
-    if (c != 0)
-      break;			/* found a valid marker, exit loop */
-    /* Reach here if we found a stuffed-zero data sequence (FF/00).
-     * Discard it and loop back to try again.
-     */
-    cinfo->marker->discarded_bytes += 2;
-    INPUT_SYNC(cinfo);
+	INPUT_BYTE(cinfo, c, return FALSE);
+	/* Skip any non-FF bytes.
+	 * This may look a bit inefficient, but it will not occur in a valid file.
+	 * We sync after each discarded byte so that a suspending data source
+	 * can discard the byte from its buffer.
+	 */
+	while (c != 0xFF) {
+	  cinfo->marker->discarded_bytes++;
+	  INPUT_SYNC(cinfo);
+	  INPUT_BYTE(cinfo, c, return FALSE);
+	}
+	/* This loop swallows any duplicate FF bytes.  Extra FFs are legal as
+	 * pad bytes, so don't count them in discarded_bytes.  We assume there
+	 * will not be so many consecutive FF bytes as to overflow a suspending
+	 * data source's input buffer.
+	 */
+	do {
+	  INPUT_BYTE(cinfo, c, return FALSE);
+	} while (c == 0xFF);
+	if (c != 0)
+	  break;			/* found a valid marker, exit loop */
+	/* Reach here if we found a stuffed-zero data sequence (FF/00).
+	 * Discard it and loop back to try again.
+	 */
+	cinfo->marker->discarded_bytes += 2;
+	INPUT_SYNC(cinfo);
   }
 
   if (cinfo->marker->discarded_bytes != 0) {
-    WARNMS2(cinfo, JWRN_EXTRANEOUS_DATA, cinfo->marker->discarded_bytes, c);
-    cinfo->marker->discarded_bytes = 0;
+	WARNMS2(cinfo, JWRN_EXTRANEOUS_DATA, cinfo->marker->discarded_bytes, c);
+	cinfo->marker->discarded_bytes = 0;
   }
 
   cinfo->unread_marker = c;
@@ -932,7 +932,7 @@ first_marker (j_decompress_ptr cinfo)
   INPUT_BYTE(cinfo, c, return FALSE);
   INPUT_BYTE(cinfo, c2, return FALSE);
   if (c != 0xFF || c2 != (int) M_SOI)
-    ERREXIT2(cinfo, JERR_NO_SOI, c, c2);
+	ERREXIT2(cinfo, JERR_NO_SOI, c, c2);
 
   cinfo->unread_marker = c2;
 
@@ -953,146 +953,146 @@ read_markers (j_decompress_ptr cinfo)
 {
   /* Outer loop repeats once for each marker. */
   for (;;) {
-    /* Collect the marker proper, unless we already did. */
-    /* NB: first_marker() enforces the requirement that SOI appear first. */
-    if (cinfo->unread_marker == 0) {
-      if (! cinfo->marker->saw_SOI) {
+	/* Collect the marker proper, unless we already did. */
+	/* NB: first_marker() enforces the requirement that SOI appear first. */
+	if (cinfo->unread_marker == 0) {
+	  if (! cinfo->marker->saw_SOI) {
 	if (! first_marker(cinfo))
 	  return JPEG_SUSPENDED;
-      } else {
+	  } else {
 	if (! next_marker(cinfo))
 	  return JPEG_SUSPENDED;
-      }
-    }
-    /* At this point cinfo->unread_marker contains the marker code and the
-     * input point is just past the marker proper, but before any parameters.
-     * A suspension will cause us to return with this state still true.
-     */
-    switch (cinfo->unread_marker) {
-    case M_SOI:
-      if (! get_soi(cinfo))
+	  }
+	}
+	/* At this point cinfo->unread_marker contains the marker code and the
+	 * input point is just past the marker proper, but before any parameters.
+	 * A suspension will cause us to return with this state still true.
+	 */
+	switch (cinfo->unread_marker) {
+	case M_SOI:
+	  if (! get_soi(cinfo))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    case M_SOF0:		/* Baseline */
-    case M_SOF1:		/* Extended sequential, Huffman */
-      if (! get_sof(cinfo, FALSE, FALSE))
+	case M_SOF0:		/* Baseline */
+	case M_SOF1:		/* Extended sequential, Huffman */
+	  if (! get_sof(cinfo, FALSE, FALSE))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    case M_SOF2:		/* Progressive, Huffman */
-      if (! get_sof(cinfo, TRUE, FALSE))
+	case M_SOF2:		/* Progressive, Huffman */
+	  if (! get_sof(cinfo, TRUE, FALSE))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    case M_SOF9:		/* Extended sequential, arithmetic */
-      if (! get_sof(cinfo, FALSE, TRUE))
+	case M_SOF9:		/* Extended sequential, arithmetic */
+	  if (! get_sof(cinfo, FALSE, TRUE))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    case M_SOF10:		/* Progressive, arithmetic */
-      if (! get_sof(cinfo, TRUE, TRUE))
+	case M_SOF10:		/* Progressive, arithmetic */
+	  if (! get_sof(cinfo, TRUE, TRUE))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    /* Currently unsupported SOFn types */
-    case M_SOF3:		/* Lossless, Huffman */
-    case M_SOF5:		/* Differential sequential, Huffman */
-    case M_SOF6:		/* Differential progressive, Huffman */
-    case M_SOF7:		/* Differential lossless, Huffman */
-    case M_JPG:			/* Reserved for JPEG extensions */
-    case M_SOF11:		/* Lossless, arithmetic */
-    case M_SOF13:		/* Differential sequential, arithmetic */
-    case M_SOF14:		/* Differential progressive, arithmetic */
-    case M_SOF15:		/* Differential lossless, arithmetic */
-      ERREXIT1(cinfo, JERR_SOF_UNSUPPORTED, cinfo->unread_marker);
-      break;
+	/* Currently unsupported SOFn types */
+	case M_SOF3:		/* Lossless, Huffman */
+	case M_SOF5:		/* Differential sequential, Huffman */
+	case M_SOF6:		/* Differential progressive, Huffman */
+	case M_SOF7:		/* Differential lossless, Huffman */
+	case M_JPG:			/* Reserved for JPEG extensions */
+	case M_SOF11:		/* Lossless, arithmetic */
+	case M_SOF13:		/* Differential sequential, arithmetic */
+	case M_SOF14:		/* Differential progressive, arithmetic */
+	case M_SOF15:		/* Differential lossless, arithmetic */
+	  ERREXIT1(cinfo, JERR_SOF_UNSUPPORTED, cinfo->unread_marker);
+	  break;
 
-    case M_SOS:
-      if (! get_sos(cinfo))
+	case M_SOS:
+	  if (! get_sos(cinfo))
 	return JPEG_SUSPENDED;
-      cinfo->unread_marker = 0;	/* processed the marker */
-      return JPEG_REACHED_SOS;
-    
-    case M_EOI:
-      TRACEMS(cinfo, 1, JTRC_EOI);
-      cinfo->unread_marker = 0;	/* processed the marker */
-      return JPEG_REACHED_EOI;
-      
-    case M_DAC:
-      if (! get_dac(cinfo))
+	  cinfo->unread_marker = 0;	/* processed the marker */
+	  return JPEG_REACHED_SOS;
+	
+	case M_EOI:
+	  TRACEMS(cinfo, 1, JTRC_EOI);
+	  cinfo->unread_marker = 0;	/* processed the marker */
+	  return JPEG_REACHED_EOI;
+	  
+	case M_DAC:
+	  if (! get_dac(cinfo))
 	return JPEG_SUSPENDED;
-      break;
-      
-    case M_DHT:
-      if (! get_dht(cinfo))
+	  break;
+	  
+	case M_DHT:
+	  if (! get_dht(cinfo))
 	return JPEG_SUSPENDED;
-      break;
-      
-    case M_DQT:
-      if (! get_dqt(cinfo))
+	  break;
+	  
+	case M_DQT:
+	  if (! get_dqt(cinfo))
 	return JPEG_SUSPENDED;
-      break;
-      
-    case M_DRI:
-      if (! get_dri(cinfo))
+	  break;
+	  
+	case M_DRI:
+	  if (! get_dri(cinfo))
 	return JPEG_SUSPENDED;
-      break;
-      
-    case M_APP0:
-    case M_APP1:
-    case M_APP2:
-    case M_APP3:
-    case M_APP4:
-    case M_APP5:
-    case M_APP6:
-    case M_APP7:
-    case M_APP8:
-    case M_APP9:
-    case M_APP10:
-    case M_APP11:
-    case M_APP12:
-    case M_APP13:
-    case M_APP14:
-    case M_APP15:
-      if (! (*((my_marker_ptr) cinfo->marker)->process_APPn[
+	  break;
+	  
+	case M_APP0:
+	case M_APP1:
+	case M_APP2:
+	case M_APP3:
+	case M_APP4:
+	case M_APP5:
+	case M_APP6:
+	case M_APP7:
+	case M_APP8:
+	case M_APP9:
+	case M_APP10:
+	case M_APP11:
+	case M_APP12:
+	case M_APP13:
+	case M_APP14:
+	case M_APP15:
+	  if (! (*((my_marker_ptr) cinfo->marker)->process_APPn[
 		cinfo->unread_marker - (int) M_APP0]) (cinfo))
 	return JPEG_SUSPENDED;
-      break;
-      
-    case M_COM:
-      if (! (*((my_marker_ptr) cinfo->marker)->process_COM) (cinfo))
+	  break;
+	  
+	case M_COM:
+	  if (! (*((my_marker_ptr) cinfo->marker)->process_COM) (cinfo))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    case M_RST0:		/* these are all parameterless */
-    case M_RST1:
-    case M_RST2:
-    case M_RST3:
-    case M_RST4:
-    case M_RST5:
-    case M_RST6:
-    case M_RST7:
-    case M_TEM:
-      TRACEMS1(cinfo, 1, JTRC_PARMLESS_MARKER, cinfo->unread_marker);
-      break;
+	case M_RST0:		/* these are all parameterless */
+	case M_RST1:
+	case M_RST2:
+	case M_RST3:
+	case M_RST4:
+	case M_RST5:
+	case M_RST6:
+	case M_RST7:
+	case M_TEM:
+	  TRACEMS1(cinfo, 1, JTRC_PARMLESS_MARKER, cinfo->unread_marker);
+	  break;
 
-    case M_DNL:			/* Ignore DNL ... perhaps the wrong thing */
-      if (! skip_variable(cinfo))
+	case M_DNL:			/* Ignore DNL ... perhaps the wrong thing */
+	  if (! skip_variable(cinfo))
 	return JPEG_SUSPENDED;
-      break;
+	  break;
 
-    default:			/* must be DHP, EXP, JPGn, or RESn */
-      /* For now, we treat the reserved markers as fatal errors since they are
-       * likely to be used to signal incompatible JPEG Part 3 extensions.
-       * Once the JPEG 3 version-number marker is well defined, this code
-       * ought to change!
-       */
-      ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, cinfo->unread_marker);
-      break;
-    }
-    /* Successfully processed marker, so reset state variable */
-    cinfo->unread_marker = 0;
+	default:			/* must be DHP, EXP, JPGn, or RESn */
+	  /* For now, we treat the reserved markers as fatal errors since they are
+		* likely to be used to signal incompatible JPEG Part 3 extensions.
+		* Once the JPEG 3 version-number marker is well defined, this code
+		* ought to change!
+		*/
+	  ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, cinfo->unread_marker);
+	  break;
+	}
+	/* Successfully processed marker, so reset state variable */
+	cinfo->unread_marker = 0;
   } /* end loop */
 }
 
@@ -1115,21 +1115,21 @@ read_restart_marker (j_decompress_ptr cinfo)
   /* Obtain a marker unless we already did. */
   /* Note that next_marker will complain if it skips any data. */
   if (cinfo->unread_marker == 0) {
-    if (! next_marker(cinfo))
-      return FALSE;
+	if (! next_marker(cinfo))
+	  return FALSE;
   }
 
   if (cinfo->unread_marker ==
-      ((int) M_RST0 + cinfo->marker->next_restart_num)) {
-    /* Normal case --- swallow the marker and let entropy decoder continue */
-    TRACEMS1(cinfo, 3, JTRC_RST, cinfo->marker->next_restart_num);
-    cinfo->unread_marker = 0;
+	  ((int) M_RST0 + cinfo->marker->next_restart_num)) {
+	/* Normal case --- swallow the marker and let entropy decoder continue */
+	TRACEMS1(cinfo, 3, JTRC_RST, cinfo->marker->next_restart_num);
+	cinfo->unread_marker = 0;
   } else {
-    /* Uh-oh, the restart markers have been messed up. */
-    /* Let the data source manager determine how to resync. */
-    if (! (*cinfo->src->resync_to_restart) (cinfo,
-					    cinfo->marker->next_restart_num))
-      return FALSE;
+	/* Uh-oh, the restart markers have been messed up. */
+	/* Let the data source manager determine how to resync. */
+	if (! (*cinfo->src->resync_to_restart) (cinfo,
+						cinfo->marker->next_restart_num))
+	  return FALSE;
   }
 
   /* Update next-restart state */
@@ -1161,16 +1161,16 @@ read_restart_marker (j_decompress_ptr cinfo)
  * This implementation is substantially constrained by wanting to treat the
  * input as a data stream; this means we can't back up.  Therefore, we have
  * only the following actions to work with:
- *   1. Simply discard the marker and let the entropy decoder resume at next
- *      byte of file.
- *   2. Read forward until we find another marker, discarding intervening
- *      data.  (In theory we could look ahead within the current bufferload,
- *      without having to discard data if we don't find the desired marker.
- *      This idea is not implemented here, in part because it makes behavior
- *      dependent on buffer size and chance buffer-boundary positions.)
- *   3. Leave the marker unread (by failing to zero cinfo->unread_marker).
- *      This will cause the entropy decoder to process an empty data segment,
- *      inserting dummy zeroes, and then we will reprocess the marker.
+ *	1. Simply discard the marker and let the entropy decoder resume at next
+ *	  byte of file.
+ *	2. Read forward until we find another marker, discarding intervening
+ *	  data.  (In theory we could look ahead within the current bufferload,
+ *	  without having to discard data if we don't find the desired marker.
+ *	  This idea is not implemented here, in part because it makes behavior
+ *	  dependent on buffer size and chance buffer-boundary positions.)
+ *	3. Leave the marker unread (by failing to zero cinfo->unread_marker).
+ *	  This will cause the entropy decoder to process an empty data segment,
+ *	  inserting dummy zeroes, and then we will reprocess the marker.
  *
  * #2 is appropriate if we think the desired marker lies ahead, while #3 is
  * appropriate if the found marker is a future restart marker (indicating
@@ -1199,37 +1199,37 @@ jpeg_resync_to_restart (j_decompress_ptr cinfo, int desired)
   
   /* Outer loop handles repeated decision after scanning forward. */
   for (;;) {
-    if (marker < (int) M_SOF0)
-      action = 2;		/* invalid marker */
-    else if (marker < (int) M_RST0 || marker > (int) M_RST7)
-      action = 3;		/* valid non-restart marker */
-    else {
-      if (marker == ((int) M_RST0 + ((desired+1) & 7)) ||
+	if (marker < (int) M_SOF0)
+	  action = 2;		/* invalid marker */
+	else if (marker < (int) M_RST0 || marker > (int) M_RST7)
+	  action = 3;		/* valid non-restart marker */
+	else {
+	  if (marker == ((int) M_RST0 + ((desired+1) & 7)) ||
 	  marker == ((int) M_RST0 + ((desired+2) & 7)))
 	action = 3;		/* one of the next two expected restarts */
-      else if (marker == ((int) M_RST0 + ((desired-1) & 7)) ||
-	       marker == ((int) M_RST0 + ((desired-2) & 7)))
+	  else if (marker == ((int) M_RST0 + ((desired-1) & 7)) ||
+			marker == ((int) M_RST0 + ((desired-2) & 7)))
 	action = 2;		/* a prior restart, so advance */
-      else
+	  else
 	action = 1;		/* desired restart or too far away */
-    }
-    TRACEMS2(cinfo, 4, JTRC_RECOVERY_ACTION, marker, action);
-    switch (action) {
-    case 1:
-      /* Discard marker and let entropy decoder resume processing. */
-      cinfo->unread_marker = 0;
-      return TRUE;
-    case 2:
-      /* Scan to the next marker, and repeat the decision loop. */
-      if (! next_marker(cinfo))
+	}
+	TRACEMS2(cinfo, 4, JTRC_RECOVERY_ACTION, marker, action);
+	switch (action) {
+	case 1:
+	  /* Discard marker and let entropy decoder resume processing. */
+	  cinfo->unread_marker = 0;
+	  return TRUE;
+	case 2:
+	  /* Scan to the next marker, and repeat the decision loop. */
+	  if (! next_marker(cinfo))
 	return FALSE;
-      marker = cinfo->unread_marker;
-      break;
-    case 3:
-      /* Return without advancing past this marker. */
-      /* Entropy decoder will be forced to process an empty segment. */
-      return TRUE;
-    }
+	  marker = cinfo->unread_marker;
+	  break;
+	case 3:
+	  /* Return without advancing past this marker. */
+	  /* Entropy decoder will be forced to process an empty segment. */
+	  return TRUE;
+	}
   } /* end loop */
 }
 
@@ -1266,7 +1266,7 @@ jinit_marker_reader (j_decompress_ptr cinfo)
 
   /* Create subobject in permanent pool */
   marker = (my_marker_ptr)
-    (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+	(*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
 				SIZEOF(my_marker_reader));
   cinfo->marker = (struct jpeg_marker_reader *) marker;
   /* Initialize public method pointers */
@@ -1274,14 +1274,14 @@ jinit_marker_reader (j_decompress_ptr cinfo)
   marker->pub.read_markers = read_markers;
   marker->pub.read_restart_marker = read_restart_marker;
   /* Initialize COM/APPn processing.
-   * By default, we examine and then discard APP0 and APP14,
-   * but simply discard COM and all other APPn.
-   */
+	* By default, we examine and then discard APP0 and APP14,
+	* but simply discard COM and all other APPn.
+	*/
   marker->process_COM = skip_variable;
   marker->length_limit_COM = 0;
   for (i = 0; i < 16; i++) {
-    marker->process_APPn[i] = skip_variable;
-    marker->length_limit_APPn[i] = 0;
+	marker->process_APPn[i] = skip_variable;
+	marker->length_limit_APPn[i] = 0;
   }
   marker->process_APPn[0] = get_interesting_appn;
   marker->process_APPn[14] = get_interesting_appn;
@@ -1298,44 +1298,44 @@ jinit_marker_reader (j_decompress_ptr cinfo)
 
 GLOBAL(void)
 jpeg_save_markers (j_decompress_ptr cinfo, int marker_code,
-		   unsigned int length_limit)
+			unsigned int length_limit)
 {
   my_marker_ptr marker = (my_marker_ptr) cinfo->marker;
   long maxlength;
   jpeg_marker_parser_method processor;
 
   /* Length limit mustn't be larger than what we can allocate
-   * (should only be a concern in a 16-bit environment).
-   */
+	* (should only be a concern in a 16-bit environment).
+	*/
   maxlength = cinfo->mem->max_alloc_chunk - SIZEOF(struct jpeg_marker_struct);
   if (((long) length_limit) > maxlength)
-    length_limit = (unsigned int) maxlength;
+	length_limit = (unsigned int) maxlength;
 
   /* Choose processor routine to use.
-   * APP0/APP14 have special requirements.
-   */
+	* APP0/APP14 have special requirements.
+	*/
   if (length_limit) {
-    processor = save_marker;
-    /* If saving APP0/APP14, save at least enough for our internal use. */
-    if (marker_code == (int) M_APP0 && length_limit < APP0_DATA_LEN)
-      length_limit = APP0_DATA_LEN;
-    else if (marker_code == (int) M_APP14 && length_limit < APP14_DATA_LEN)
-      length_limit = APP14_DATA_LEN;
+	processor = save_marker;
+	/* If saving APP0/APP14, save at least enough for our internal use. */
+	if (marker_code == (int) M_APP0 && length_limit < APP0_DATA_LEN)
+	  length_limit = APP0_DATA_LEN;
+	else if (marker_code == (int) M_APP14 && length_limit < APP14_DATA_LEN)
+	  length_limit = APP14_DATA_LEN;
   } else {
-    processor = skip_variable;
-    /* If discarding APP0/APP14, use our regular on-the-fly processor. */
-    if (marker_code == (int) M_APP0 || marker_code == (int) M_APP14)
-      processor = get_interesting_appn;
+	processor = skip_variable;
+	/* If discarding APP0/APP14, use our regular on-the-fly processor. */
+	if (marker_code == (int) M_APP0 || marker_code == (int) M_APP14)
+	  processor = get_interesting_appn;
   }
 
   if (marker_code == (int) M_COM) {
-    marker->process_COM = processor;
-    marker->length_limit_COM = length_limit;
+	marker->process_COM = processor;
+	marker->length_limit_COM = length_limit;
   } else if (marker_code >= (int) M_APP0 && marker_code <= (int) M_APP15) {
-    marker->process_APPn[marker_code - (int) M_APP0] = processor;
-    marker->length_limit_APPn[marker_code - (int) M_APP0] = length_limit;
+	marker->process_APPn[marker_code - (int) M_APP0] = processor;
+	marker->length_limit_APPn[marker_code - (int) M_APP0] = length_limit;
   } else
-    ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, marker_code);
+	ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, marker_code);
 }
 
 #endif /* SAVE_MARKERS_SUPPORTED */
@@ -1347,14 +1347,14 @@ jpeg_save_markers (j_decompress_ptr cinfo, int marker_code,
 
 GLOBAL(void)
 jpeg_set_marker_processor (j_decompress_ptr cinfo, int marker_code,
-			   jpeg_marker_parser_method routine)
+				jpeg_marker_parser_method routine)
 {
   my_marker_ptr marker = (my_marker_ptr) cinfo->marker;
 
   if (marker_code == (int) M_COM)
-    marker->process_COM = routine;
+	marker->process_COM = routine;
   else if (marker_code >= (int) M_APP0 && marker_code <= (int) M_APP15)
-    marker->process_APPn[marker_code - (int) M_APP0] = routine;
+	marker->process_APPn[marker_code - (int) M_APP0] = routine;
   else
-    ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, marker_code);
+	ERREXIT1(cinfo, JERR_UNKNOWN_MARKER, marker_code);
 }

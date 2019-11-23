@@ -9,7 +9,7 @@ typedef rRundata * LPRRDATA;
 
 struct InternetSlot
 {
-	string pURL;
+	std::string pURL;
 	HANDLE hFile;
 	HINTERNET hOpenedURL;
 	unsigned long long FileSize, TotalRead;

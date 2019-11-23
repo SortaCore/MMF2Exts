@@ -31,7 +31,7 @@
 #define EXP_TOTALTIME				4
 #define EXP_CURRENTURL				5
 #define EXP_SIZE					6
-#define	EXP_LAST                    7
+#define	EXP_LAST					7
 
 // --------------------------------
 // EDITION OF OBJECT DATA STRUCTURE
@@ -102,13 +102,13 @@ typedef	RUNDATA	_far *			LPRDATA;
 
 // Default flags
 // -------------
-#define	OEFLAGS      			0
-#define	OEPREFS      			0
+#define	OEFLAGS	  			0
+#define	OEPREFS	  			0
 
 /* See OEFLAGS.txt for more info on these useful things! */
 
 
 // If to handle message, specify the priority of the handling procedure
-// 0= low, 255= very high. You should use 100 as normal.                                                
+// 0= low, 255= very high. You should use 100 as normal.												
 // --------------------------------------------------------------------
 #define	WINDOWPROC_PRIORITY		100

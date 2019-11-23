@@ -10,7 +10,7 @@
 #ifdef _AFXDLL
 #include "afxres.h"
 #else
-#include "windows.h"
+#include <windows.h>
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@
 #ifdef _WIN32
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 #pragma code_page(1251)
-#endif //_WIN32
+#endif // _WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -31,21 +31,21 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE
 BEGIN
-    "resource.h\0"
+	"resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE
 BEGIN
-    "#include ""afxres.h""\r\n"
-    "\0"
+	"#include ""afxres.h""\r\n"
+	"\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE
 BEGIN
-    "\r\n"
-    "\0"
+	"\r\n"
+	"\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -61,7 +61,7 @@ END
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
+#endif // _WIN32
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -82,28 +82,28 @@ VS_VERSION_INFO VERSIONINFO
  FILETYPE 0x2L
  FILESUBTYPE 0x0L
 BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "Comments", "Open Source Computer Vision Library: The core part.\0"
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "The core component of OpenCV\0"
-            VALUE "FileVersion", "1, 1, 0, 1\0"
-            VALUE "InternalName", "cxcore110.dll\0"
-            VALUE "LegalCopyright", "\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "cxcore110.dll\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Open Source Computer Vision Library\0"
-            VALUE "ProductVersion", "1, 1, 0, 1\0"
-            VALUE "SpecialBuild", "\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "Comments", "Open Source Computer Vision Library: The core part.\0"
+			VALUE "CompanyName", "\0"
+			VALUE "FileDescription", "The core component of OpenCV\0"
+			VALUE "FileVersion", "1, 1, 0, 1\0"
+			VALUE "InternalName", "cxcore110.dll\0"
+			VALUE "LegalCopyright", "\0"
+			VALUE "LegalTrademarks", "\0"
+			VALUE "OriginalFilename", "cxcore110.dll\0"
+			VALUE "PrivateBuild", "\0"
+			VALUE "ProductName", "Open Source Computer Vision Library\0"
+			VALUE "ProductVersion", "1, 1, 0, 1\0"
+			VALUE "SpecialBuild", "\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1200
+	END
 END
 
 #endif    // !_MAC

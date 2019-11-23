@@ -37,7 +37,7 @@ TIFFFlush(TIFF* tif)
 		if (!TIFFFlushData(tif))
 			return (0);
 		if ((tif->tif_flags & TIFF_DIRTYDIRECT) &&
-		    !TIFFWriteDirectory(tif))
+			!TIFFWriteDirectory(tif))
 			return (0);
 	}
 	return (1);

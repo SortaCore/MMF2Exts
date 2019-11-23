@@ -1,8 +1,0 @@
-• Open with project file
-• Edit Ext.rc via View Code for Darkwire Software.
-• Remove any unneeded files (e.g. Actions if there's no actions)
-• Rename the project in the solution
-• Save solution (ovewrite old)
-• Sort out JSON
-• Edit icon
-• Change mfx name in all builds

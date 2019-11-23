@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -47,46 +47,46 @@
 
 GrFmtReader::GrFmtReader( const char* filename )
 {
-    strncpy( m_filename, filename, sizeof(m_filename) - 1 );
-    m_filename[sizeof(m_filename)-1] = '\0';
-    m_width = m_height = 0;
-    m_iscolor = false;
-    m_bit_depth = 8;
-    m_native_depth = false;
-    m_isfloat = false;
+	strncpy( m_filename, filename, sizeof(m_filename) - 1 );
+	m_filename[sizeof(m_filename)-1] = '\0';
+	m_width = m_height = 0;
+	m_iscolor = false;
+	m_bit_depth = 8;
+	m_native_depth = false;
+	m_isfloat = false;
 }
 
 
 GrFmtReader::~GrFmtReader()
 {
-    Close();
+	Close();
 }
 
 
 void GrFmtReader::Close()
 {
-    m_width = m_height = 0;
-    m_iscolor = false;
+	m_width = m_height = 0;
+	m_iscolor = false;
 }
 
 
 GrFmtWriter::GrFmtWriter( const char* filename )
 {
-    strncpy( m_filename, filename, sizeof(m_filename) - 1 );
-    m_filename[sizeof(m_filename)-1] = '\0';
+	strncpy( m_filename, filename, sizeof(m_filename) - 1 );
+	m_filename[sizeof(m_filename)-1] = '\0';
 }
 
 
 bool  GrFmtWriter::IsFormatSupported( int depth )
 {
-    return depth == IPL_DEPTH_8U;
+	return depth == IPL_DEPTH_8U;
 }
 
 
 GrFmtFilterFactory::GrFmtFilterFactory()
 {
-    m_description = m_signature = 0;
-    m_sign_len = 0;
+	m_description = m_signature = 0;
+	m_sign_len = 0;
 }
 
 
@@ -108,7 +108,7 @@ bool  GrFmtFilterFactory::CheckFile( const char* filename )
 		fclose( f );
 		
 		if( cur_sign_len <= sign_len && CheckSignature( signature ) )
-            return true;
+			return true;
 	}
 	
 	return false;
@@ -117,74 +117,74 @@ bool  GrFmtFilterFactory::CheckFile( const char* filename )
 
 bool GrFmtFilterFactory::CheckSignature( const char* signature )
 {
-    return m_sign_len > 0 && signature != 0 &&
-           memcmp( signature, m_signature, m_sign_len ) == 0;
+	return m_sign_len > 0 && signature != 0 &&
+			memcmp( signature, m_signature, m_sign_len ) == 0;
 }
 
 
 static int GetExtensionLength( const char* buffer )
 {
-    int len = 0;
+	int len = 0;
 
-    if( buffer )
-    {
-        const char* ext = strchr( buffer, '.');
-        if( ext++ )
-            while( isalnum(ext[len]) && len < _MAX_PATH )
-                len++;
-    }
+	if( buffer )
+	{
+		const char* ext = strchr( buffer, '.');
+		if( ext++ )
+			while( isalnum(ext[len]) && len < _MAX_PATH )
+				len++;
+	}
 
-    return len;
+	return len;
 }
 
 
 bool GrFmtFilterFactory::CheckExtension( const char* format )
 {
-    const char* descr = 0;
-    int len = 0;
-        
-    if( !format || !m_description )
-        return false;
+	const char* descr = 0;
+	int len = 0;
+		
+	if( !format || !m_description )
+		return false;
 
-    // find the right-most extension of the passed format string
-    for(;;)
-    {
-        const char* ext = strchr( format + 1, '.' );
-        if( !ext ) break;
-        format = ext;
-    }
+	// find the right-most extension of the passed format string
+	for(;;)
+	{
+		const char* ext = strchr( format + 1, '.' );
+		if( !ext ) break;
+		format = ext;
+	}
 
-    len = GetExtensionLength( format );
+	len = GetExtensionLength( format );
 
-    if( format[0] != '.' || len == 0 )
-        return false;
+	if( format[0] != '.' || len == 0 )
+		return false;
 
-    descr = strchr( m_description, '(' );
+	descr = strchr( m_description, '(' );
 
-    while( descr )
-    {
-        descr = strchr( descr + 1, '.' );
-        int i, len2 = GetExtensionLength( descr ); 
+	while( descr )
+	{
+		descr = strchr( descr + 1, '.' );
+		int i, len2 = GetExtensionLength( descr ); 
 
-        if( len2 == 0 )
-            break;
+		if( len2 == 0 )
+			break;
 
-        if( len2 == len )
-        {
-            for( i = 0; i < len; i++ )
-            {
-                int c1 = tolower(format[i+1]);
-                int c2 = tolower(descr[i+1]);
+		if( len2 == len )
+		{
+			for( i = 0; i < len; i++ )
+			{
+				int c1 = tolower(format[i+1]);
+				int c2 = tolower(descr[i+1]);
 
-                if( c1 != c2 )
-                    break;
-            }
-            if( i == len )
-                return true;
-        }
-    }
+				if( c1 != c2 )
+					break;
+			}
+			if( i == len )
+				return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 
@@ -193,70 +193,70 @@ bool GrFmtFilterFactory::CheckExtension( const char* format )
 
 GrFmtFactoriesList::GrFmtFactoriesList()
 {
-    m_factories = 0;
-    RemoveAll();
+	m_factories = 0;
+	RemoveAll();
 }
 
 
 GrFmtFactoriesList::~GrFmtFactoriesList()
 {
-    RemoveAll();
+	RemoveAll();
 }
 
 
 void  GrFmtFactoriesList::RemoveAll()
 {
-    if( m_factories )
-    {
-        for( int i = 0; i < m_curFactories; i++ ) delete m_factories[i];
-        delete[] m_factories;
-    }
-    m_factories = 0;
-    m_maxFactories = m_curFactories = 0;
+	if( m_factories )
+	{
+		for( int i = 0; i < m_curFactories; i++ ) delete m_factories[i];
+		delete[] m_factories;
+	}
+	m_factories = 0;
+	m_maxFactories = m_curFactories = 0;
 }
 
 
 bool  GrFmtFactoriesList::AddFactory( GrFmtFilterFactory* factory )
 {
-    assert( factory != 0 );
-    if( m_curFactories == m_maxFactories )
-    {
-        // reallocate the factorys pointers storage
-        int newMaxFactories = 2*m_maxFactories;
-        if( newMaxFactories < 16 ) newMaxFactories = 16;
+	assert( factory != 0 );
+	if( m_curFactories == m_maxFactories )
+	{
+		// reallocate the factorys pointers storage
+		int newMaxFactories = 2*m_maxFactories;
+		if( newMaxFactories < 16 ) newMaxFactories = 16;
 
-        GrFmtFilterFactory** newFactories = new GrFmtFilterFactory*[newMaxFactories];
+		GrFmtFilterFactory** newFactories = new GrFmtFilterFactory*[newMaxFactories];
 
-        for( int i = 0; i < m_curFactories; i++ ) newFactories[i] = m_factories[i];
+		for( int i = 0; i < m_curFactories; i++ ) newFactories[i] = m_factories[i];
 
-        delete[] m_factories;
-        m_factories = newFactories;
-        m_maxFactories = newMaxFactories;
-    }
+		delete[] m_factories;
+		m_factories = newFactories;
+		m_maxFactories = newMaxFactories;
+	}
 
-    m_factories[m_curFactories++] = factory;
-    return true;
+	m_factories[m_curFactories++] = factory;
+	return true;
 }
 
 
 ListPosition  GrFmtFactoriesList::GetFirstFactoryPos()
 {
-    return (ListPosition)m_factories;
+	return (ListPosition)m_factories;
 }
 
 
 GrFmtFilterFactory* GrFmtFactoriesList::GetNextFactory( ListPosition& pos )
 {
-    GrFmtFilterFactory* factory = 0;
-    GrFmtFilterFactory** temp = (GrFmtFilterFactory**)pos;
+	GrFmtFilterFactory* factory = 0;
+	GrFmtFilterFactory** temp = (GrFmtFilterFactory**)pos;
 
-    assert( temp == 0 || (m_factories <= temp && temp < m_factories + m_curFactories));
-    if( temp )
-    {
-        factory = *temp++;
-        pos = (ListPosition)(temp < m_factories + m_curFactories ? temp : 0);
-    }
-    return factory;
+	assert( temp == 0 || (m_factories <= temp && temp < m_factories + m_curFactories));
+	if( temp )
+	{
+		factory = *temp++;
+		pos = (ListPosition)(temp < m_factories + m_curFactories ? temp : 0);
+	}
+	return factory;
 }
 
 
@@ -277,28 +277,28 @@ GrFmtReader* GrFmtFactoriesList::FindReader( const char* filename )
 		}
 	}
 	
-    return reader;
+	return reader;
 }
 
 
 GrFmtWriter* GrFmtFactoriesList::FindWriter( const char* filename )
 {
-    GrFmtWriter* writer = 0;
-    ListPosition pos = GetFirstFactoryPos();
+	GrFmtWriter* writer = 0;
+	ListPosition pos = GetFirstFactoryPos();
 
-    if( !filename ) return 0;
+	if( !filename ) return 0;
 
-    while( pos )
-    {
-        GrFmtFilterFactory* tempFactory = GetNextFactory(pos);
-        if( tempFactory->CheckExtension( filename ))
-        {
-            writer = tempFactory->NewWriter( filename );
-            break;
-        }
-    }
+	while( pos )
+	{
+		GrFmtFilterFactory* tempFactory = GetNextFactory(pos);
+		if( tempFactory->CheckExtension( filename ))
+		{
+			writer = tempFactory->NewWriter( filename );
+			break;
+		}
+	}
 
-    return writer;
+	return writer;
 }
 
 /* End of file. */

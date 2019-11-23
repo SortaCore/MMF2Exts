@@ -5,10 +5,10 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Collection of 2D points"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009"
+#define	ObjectCopyright		"Copyright Â© 2009 Bornemix"
 #define	ObjectComment		"Collection of 2D points for use as parameter and return value"
-#define	ObjectURL			"http://www.authorswebpage.com"
-#define	ObjectHelp			"Help\\EmptyObject.chm"
+#define	ObjectURL			""
+#define	ObjectHelp			""
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE

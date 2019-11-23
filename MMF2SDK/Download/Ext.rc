@@ -2,6 +2,10 @@
 //
 #include "resource.h"
 
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
+
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -9,7 +13,7 @@
 //
 #include "ccx.h"
 #define APSTUDIO_HIDDEN_SYMBOLS
-#include "windows.h"
+#include <windows.h>
 #undef APSTUDIO_HIDDEN_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
@@ -22,7 +26,7 @@
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
+#endif // _WIN32
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -31,40 +35,36 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 1 VERSIONINFO
- FILEVERSION 1,1,0,0
- PRODUCTVERSION 1,1,0,0
- FILEFLAGSMASK 0x0L
+ FILEVERSION 1,0,0,EXTENSION_VERSION
+ PRODUCTVERSION 1,0,0,EXTENSION_VERSION
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
- FILEFLAGS 0x21L
+ FILEFLAGS VS_FF_DEBUG
 #else
- FILEFLAGS 0x20L
+ FILEFLAGS 0
 #endif
- FILEOS 0x10001L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "Clickteam & Darkwire Software\0"
-            VALUE "FileDescription", "Download Object\0"
-            VALUE "FileVersion", "1, 1, 0, 0\0"
-            VALUE "InternalName", "Download\0"
-            VALUE "LegalCopyright", "Copyright © 2011 Clickteam &  Darkwire Software\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "Download.mfx\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "1, 1, 0, 0\0"
-            VALUE "SpecialBuild", "00000002\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1252
-    END
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904e4"
+		BEGIN
+			VALUE "ProductName", PROJECT_NAME "\0"
+			VALUE "CompanyName", COMPANY_NAME "\0"
+			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
+			VALUE "FileVersion", "2.00" "\0"
+			VALUE "InternalName", PROJECT_NAME ".mfx\0"
+			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
+			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1252
+	END
 END
 
 #endif    // !_MAC
@@ -75,9 +75,9 @@ END
 // Data
 //
 
-KPX_MAGICNUMBER RCDATA MOVEABLE PURE 
+KPX_MAGICNUMBER RCDATA
 BEGIN
-    0x2516, 0x5908
+	0x2516, 0x5908
 END
 
 
@@ -88,16 +88,16 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_ICON$(EDITOR)       BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+EXO_ICON$(EDITOR)       BITMAP    "RES\\EXTICON.BMP"
 #else
-EXO_ICON                BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+EXO_ICON                BITMAP    "RES\\EXTICON.BMP"
 #endif
 #endif
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_IMAGE$(EDITOR)      BITMAP  MOVEABLE PURE   "RES\\EXTIMG.BMP"
+EXO_IMAGE$(EDITOR)      BITMAP    "RES\\EXTIMG.BMP"
 #else
-EXO_IMAGE               BITMAP  MOVEABLE PURE   "RES\\EXTIMG.BMP"
+EXO_IMAGE               BITMAP    "RES\\EXTIMG.BMP"
 #endif
 #endif
 
@@ -108,57 +108,57 @@ EXO_IMAGE               BITMAP  MOVEABLE PURE   "RES\\EXTIMG.BMP"
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_CONDITIONS$(EDITOR) MENU DISCARDABLE 
+MN_CONDITIONS$(EDITOR) MENU 
 #else
-MN_CONDITIONS MENU DISCARDABLE 
+MN_CONDITIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Download in progress?",       IDMN_CONDITION_DOWNLOADING
-        MENUITEM "Download successfully completed?", 
-                                                IDMN_CONDITION_COMPLETED
-        MENUITEM "Connection error?",           IDMN_CONDITION_ERROR
-        MENUITEM "Download aborted?",           IDMN_CONDITION_ABORTED
-    END
+	POPUP ""
+	BEGIN
+		MENUITEM "Download in progress?",       IDMN_CONDITION_DOWNLOADING
+		MENUITEM "Download successfully completed?", 
+				                                IDMN_CONDITION_COMPLETED
+		MENUITEM "Connection error?",           IDMN_CONDITION_ERROR
+		MENUITEM "Download aborted?",           IDMN_CONDITION_ABORTED
+	END
 END
 #endif
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_ACTIONS$(EDITOR) MENU DISCARDABLE 
+MN_ACTIONS$(EDITOR) MENU 
 #else
-MN_ACTIONS MENU DISCARDABLE 
+MN_ACTIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Download file",               IDMN_ACTION_DOWNLOAD
-        MENUITEM "Abort download",              IDMN_ACTION_ABORT
-        MENUITEM "Pause download",              IDMN_ACTION_PAUSE
-        MENUITEM "Resume download",             IDMN_ACTION_RESUME
-    END
+	POPUP ""
+	BEGIN
+		MENUITEM "Download file",               IDMN_ACTION_DOWNLOAD
+		MENUITEM "Abort download",              IDMN_ACTION_ABORT
+		MENUITEM "Pause download",              IDMN_ACTION_PAUSE
+		MENUITEM "Resume download",             IDMN_ACTION_RESUME
+	END
 END
 #endif
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_EXPRESSIONS$(EDITOR) MENU DISCARDABLE 
+MN_EXPRESSIONS$(EDITOR) MENU 
 #else
-MN_EXPRESSIONS MENU DISCARDABLE 
+MN_EXPRESSIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Get file size (without download)", IDMN_EXP_SIZE
-        MENUITEM SEPARATOR
-        MENUITEM "Current URL",                 IDMN_EXP_CURRENTURL
-        MENUITEM "Total file size",             IDMN_EXP_TOTALSIZE
-        MENUITEM "Current download position",   IDMN_EXP_CURRENTPOS
-        MENUITEM "Current download percentage", IDMN_EXP_CURRENTPERCENT
-        MENUITEM "Current speed (bytes per second)", IDMN_EXP_CURRENTSPEED
-        MENUITEM "Estimated download time",     IDMN_EXP_TOTALTIME
-    END
+	POPUP ""
+	BEGIN
+		MENUITEM "Get file size (without download)", IDMN_EXP_SIZE
+		MENUITEM SEPARATOR
+		MENUITEM "Current URL",                 IDMN_EXP_CURRENTURL
+		MENUITEM "Total file size",             IDMN_EXP_TOTALSIZE
+		MENUITEM "Current download position",   IDMN_EXP_CURRENTPOS
+		MENUITEM "Current download percentage", IDMN_EXP_CURRENTPERCENT
+		MENUITEM "Current speed (bytes per second)", IDMN_EXP_CURRENTSPEED
+		MENUITEM "Estimated download time",     IDMN_EXP_TOTALTIME
+	END
 END
 #endif
 
@@ -169,24 +169,24 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE
 BEGIN
-    "resource.h\0"
+	"resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE
 BEGIN
-    "#include ""ccx.h""\r\n"
-    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "#include ""windows.h""\r\n"
-    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "\0"
+	"#include ""ccx.h""\r\n"
+	"#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"#include <windows.h>\r\n"
+	"#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE
 BEGIN
-    "\r\n"
-    "\0"
+	"\r\n"
+	"\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -197,66 +197,66 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    KPX_MARK                "MF2"
-    KPX_NAME                "Download object"
+	KPX_MARK                "MF2"
+	KPX_NAME                "Download object"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_CONDITION_COMPLETED   "%o: Download successfully completed slot %0"
+	M_CONDITION_COMPLETED   "%o: Download successfully completed slot %0"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_CONDITION_DOWNLOADING "%o: Download in progress slot %0"
-    M_CONDITION_ERROR       "%o: Connection error in slot %0"
+	M_CONDITION_DOWNLOADING "%o: Download in progress slot %0"
+	M_CONDITION_ERROR       "%o: Connection error in slot %0"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_CONDITION_ABORTED     "%o: Download aborted in slot %0"
+	M_CONDITION_ABORTED     "%o: Download aborted in slot %0"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_EXP_TOTALSIZE         "TotalFileSize("
-    M_EXP_CURRENTPOS        "CurrentPos("
-    M_ACTION_DOWNLOAD       "Download file, Url=%0, destination=%1, slot %2"
-    M_URL                   "Enter the URL of the file. It must begin with HTTP:// or HTTPS://"
-    M_FILE                  "#Title#Enter the name of the destination file..."
-    M_SLOT                  "Enter the slot number (1-4)"
-    M_EXP_CURRENTPERCENT    "CurrentPercent("
+	M_EXP_TOTALSIZE         "TotalFileSize("
+	M_EXP_CURRENTPOS        "CurrentPos("
+	M_ACTION_DOWNLOAD       "Download file, Url=%0, destination=%1, slot %2"
+	M_URL                   "Enter the URL of the file. It must begin with HTTP:// or HTTPS://"
+	M_FILE                  "#Title#Enter the name of the destination file..."
+	M_SLOT                  "Enter the slot number (1-4)"
+	M_EXP_CURRENTPERCENT    "CurrentPercent("
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    IDST_OBJNAME            "Download Object"
-    IDST_AUTHOR             "François Lionet"
-    IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
-    IDST_COMMENT            "Allows you to download file from the Internet."
-    IDST_HTTP               "http://www.clickteam.com"
+	IDST_OBJNAME            "Download Object"
+	IDST_AUTHOR             "François Lionet"
+	IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
+	IDST_COMMENT            "Allows you to download file from the Internet."
+	IDST_HTTP               "http://www.clickteam.com"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_EXP_CURRENTSPEED      "CurrentSpeed("
-    M_ACTION_ABORT          "Abort download slot %0"
-    M_EXP_TOTALTIME         "TotalTime("
-    IDS_SLOT0               "Slot 1"
-    IDS_SLOT1               "Slot 2"
-    IDS_SLOT2               "Slot 3"
-    IDS_SLOT3               "Slot 4"
-    IDS_TOTALSIZE           "Size of the file to download : %i"
-    IDS_TOTALREAD           "Number of bytes read : %i"
-    IDS_SPEED               "Average speed : %i bytes per second"
-    IDS_URL                 "Current URL : %s"
-    M_EXP_CURRENTURL        "CurrentUrl$("
-    M_EXP_SIZE              "InstantFileSize("
-    M_EXPURL                "Enter file URL"
-    M_ACTION_PAUSE          "Pause download slot %0"
-    M_ACTION_RESUME         "Resume download slot %0"
+	M_EXP_CURRENTSPEED      "CurrentSpeed("
+	M_ACTION_ABORT          "Abort download slot %0"
+	M_EXP_TOTALTIME         "TotalTime("
+	IDS_SLOT0               "Slot 1"
+	IDS_SLOT1               "Slot 2"
+	IDS_SLOT2               "Slot 3"
+	IDS_SLOT3               "Slot 4"
+	IDS_TOTALSIZE           "Size of the file to download : %i"
+	IDS_TOTALREAD           "Number of bytes read : %i"
+	IDS_SPEED               "Average speed : %i bytes per second"
+	IDS_URL                 "Current URL : %s"
+	M_EXP_CURRENTURL        "CurrentUrl$("
+	M_EXP_SIZE              "InstantFileSize("
+	M_EXPURL                "Enter file URL"
+	M_ACTION_PAUSE          "Pause download slot %0"
+	M_ACTION_RESUME         "Resume download slot %0"
 END
 
 #endif    // English (U.S.) resources

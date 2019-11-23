@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999-2000 Image Power, Inc. and the University of
- *   British Columbia.
+ *	British Columbia.
  * Copyright (c) 2001-2002 Michael David Adams.
  * All rights reserved.
  */
@@ -171,7 +171,7 @@ void jpc_mqenc_init(jpc_mqenc_t *enc);
 
 /* Set the current context. */
 #define	jpc_mqenc_setcurctx(enc, ctxno) \
-        ((enc)->curctx = &(enc)->ctxs[ctxno]);
+		((enc)->curctx = &(enc)->ctxs[ctxno]);
 
 /* Set the state information for a particular context. */
 void jpc_mqenc_setctx(jpc_mqenc_t *enc, int ctxno, jpc_mqctx_t *ctx);

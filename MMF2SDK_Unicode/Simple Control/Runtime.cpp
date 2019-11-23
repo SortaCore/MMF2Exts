@@ -59,11 +59,11 @@ ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
 {
 /*
-   This routine runs when your object is created, as you might have guessed.
-   It is here that you must transfer any data you need in rdPtr from edPtr,
-   because after this has finished you cannot access it again!
-   Also, if you have anything to initialise (e.g. dynamic arrays, surface objects)
-   you should do it here, and free your resources in DestroyRunObject.
+	This routine runs when your object is created, as you might have guessed.
+	It is here that you must transfer any data you need in rdPtr from edPtr,
+	because after this has finished you cannot access it again!
+	Also, if you have anything to initialise (e.g. dynamic arrays, surface objects)
+	you should do it here, and free your resources in DestroyRunObject.
 */
 	LPRH rhPtr = rdPtr->rHo.hoAdRunHeader;
 
@@ -123,8 +123,8 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 {
 /*
-   When your object is destroyed (either with a Destroy action or at the end of
-   the frame) this routine is called. You must free any resources you have allocated!
+	When your object is destroyed (either with a Destroy action or at the end of
+	the frame) this routine is called. You must free any resources you have allocated!
 */
 	// Destroy
 	if (rdPtr->hWnd != NULL)

@@ -9,12 +9,16 @@
 //
 #include "..\Inc\ccx.h"
 #define APSTUDIO_HIDDEN_SYMBOLS
-#include "windows.h"
+#include <windows.h>
 #undef APSTUDIO_HIDDEN_SYMBOLS
 #include "Information.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
+
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
@@ -23,52 +27,45 @@
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
+#endif // _WIN32
 
-#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 1 VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
- FILEFLAGSMASK 0x0L
+ FILEVERSION 1,0,0,EXTENSION_VERSION
+ PRODUCTVERSION 1,0,0,EXTENSION_VERSION
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
- FILEFLAGS 0x1L
+ FILEFLAGS VS_FF_DEBUG
 #else
- FILEFLAGS 0x0L
+ FILEFLAGS 0
 #endif
- FILEOS 0x10001L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "\0"
-            VALUE "FileVersion", "\0"
-            VALUE "InternalName", "\0"
-            VALUE "LegalCopyright", "\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "\0"
-            VALUE "SpecialBuild", "\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1252
-    END
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904e4"
+		BEGIN
+			VALUE "ProductName", PROJECT_NAME "\0"
+			VALUE "CompanyName", COMPANY_NAME "\0"
+			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
+			VALUE "FileVersion", "2.00" "\0"
+			VALUE "InternalName", PROJECT_NAME ".mfx\0"
+			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
+			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1252
+	END
 END
-
-#endif    // !_MAC
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -76,9 +73,9 @@ END
 // Data
 //
 
-KPX_MAGICNUMBER RCDATA MOVEABLE PURE 
+KPX_MAGICNUMBER RCDATA
 BEGIN
-    0x2516, 0x5908
+	0x2516, 0x5908
 END
 
 
@@ -89,16 +86,16 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_ICON$(EDITOR)       BITMAP  MOVEABLE PURE   "EXTICON.BMP"
+EXO_ICON$(EDITOR)       BITMAP    "EXTICON.BMP"
 #else
-EXO_ICON                BITMAP  MOVEABLE PURE   "EXTICON.BMP"
+EXO_ICON                BITMAP    "EXTICON.BMP"
 #endif
 #endif
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_IMAGE$(EDITOR)      BITMAP  MOVEABLE PURE   "EXTIMG.BMP"
+EXO_IMAGE$(EDITOR)      BITMAP    "EXTIMG.BMP"
 #else
-EXO_IMAGE               BITMAP  MOVEABLE PURE   "EXTIMG.BMP"
+EXO_IMAGE               BITMAP    "EXTIMG.BMP"
 #endif
 #endif
 
@@ -108,25 +105,25 @@ EXO_IMAGE               BITMAP  MOVEABLE PURE   "EXTIMG.BMP"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE
 BEGIN
-    "resource.h\0"
+	"resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE
 BEGIN
-    "#include ""..\\..\\Inc\\ccx.h""\r\n"
-    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "#include ""windows.h""\r\n"
-    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "#include ""ver.h""\r\n"
-    "\0"
+	"#include ""..\\..\\Inc\\ccx.h""\r\n"
+	"#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"#include <windows.h>\r\n"
+	"#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"#include ""Information.h""\r\n"
+	"\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE
 BEGIN
-    "\r\n"
-    "\0"
+	"\r\n"
+	"\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -137,10 +134,10 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    KPX_MARK                "MF2"
-    KPX_NAME                ObjectName
+	KPX_MARK                "MF2"
+	KPX_NAME                ObjectName
 END
 
 #endif    // English (U.S.) resources

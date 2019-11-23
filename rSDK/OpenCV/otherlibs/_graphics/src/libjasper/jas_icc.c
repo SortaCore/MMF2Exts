@@ -1493,8 +1493,8 @@ static int jas_icclut16_input(jas_iccattrval_t *attrval, jas_stream_t *in,
 			goto error;
 	}
 	if (JAS_CAST(int, 44 + 2 * (lut16->numinchans * lut16->numintabents +
-          lut16->numoutchans * lut16->numouttabents +
-          jas_iccpowi(lut16->clutlen, lut16->numinchans) *
+		  lut16->numoutchans * lut16->numouttabents +
+		  jas_iccpowi(lut16->clutlen, lut16->numinchans) *
 	  lut16->numoutchans)) != cnt)
 		goto error;
 	return 0;

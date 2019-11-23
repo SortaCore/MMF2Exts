@@ -83,6 +83,7 @@ public:
 
 	// Initialize
 	void	Initialize(LPCSTR pFilterPath, DWORD dwFlags);
+	void	Initialize(LPCWSTR pFilterPath, DWORD dwFlags);
 	virtual void		Free();
 
 	// Filter infos
@@ -103,7 +104,7 @@ class IMGFLTMGR_API CImageFilter
 public:
 	// Constructeur / destructeur
 	CImageFilter(CImageFilterMgr* pMgr);
-    ~CImageFilter();
+	~CImageFilter();
 
 	// Customisation
 	BOOL			UseSpecificFilterIndex(int index);
@@ -114,10 +115,12 @@ public:
 
 	// Picture
 	int				Open(LPCSTR fileName);
+	int				Open(LPCWSTR fileName);
 	int				Open(CInputFile* pf);
 	int				PrepareLoading(int width, int height, int depth, LPLOGPALETTE pPal);
 	int				Load(LPBYTE pData, int width, int height, int pitch, int depth=0, LPLOGPALETTE pPal=NULL, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
 	int				Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
+	int				Save(LPCWSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
 	void			Close();
 	int				GetWidth(); 
 	int				GetHeight(); 
@@ -148,6 +151,10 @@ public:
 								int nFrames, int msFrameDuration, 
 								int nLoopCount = 1, int nLoopFrame = 0,
 								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
+	int				CreateAnimation(LPCWSTR fname, int width, int height, int depth, 
+								int nFrames, int msFrameDuration, 
+								int nLoopCount = 1, int nLoopFrame = 0,
+								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
 	int				CreateAnimation(COutputFile* pfout, int width, int height, int depth, 
 								int nFrames, int msFrameDuration, 
 								int nLoopCount = 1, int nLoopFrame = 0,
@@ -162,11 +169,12 @@ public:
 
 	// Filter info
 	DWORD			GetFilterID();
-	LPCSTR			GetFilterName();
+	LPCSTR			GetFilterNameA();
 	int				GetFilterIndex();
 	DWORD			GetFilterColorCaps();
 	BOOL			CanSave();
 	BOOL			CanSaveAnim();
+	LPCWSTR			GetFilterNameW();
 
 protected:
 	int				ReadHeader();

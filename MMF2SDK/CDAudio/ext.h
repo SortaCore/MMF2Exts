@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		KLIK & CREATE : external object																						//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -25,14 +25,14 @@
 // DEFINITION OF ACTIONS CODES
 // ---------------------------
 #define	ACT_PLAY					0
-#define	ACT_STOP                    1
-#define	ACT_PAUSE                   2
-#define	ACT_RESUME                  3
-#define	ACT_PREVIOUS                4
-#define	ACT_NEXT                    5
-#define	ACT_TIMEPLAY                6
-#define	ACT_OPENDOOR                7
-#define	ACT_CLOSEDOOR               8
+#define	ACT_STOP					1
+#define	ACT_PAUSE					2
+#define	ACT_RESUME				  3
+#define	ACT_PREVIOUS				4
+#define	ACT_NEXT					5
+#define	ACT_TIMEPLAY				6
+#define	ACT_OPENDOOR				7
+#define	ACT_CLOSEDOOR				8
 #define	ACT_PLAYTRACK				9
 #define	ACT_LAST					10
 
@@ -43,14 +43,14 @@
 // -------------------------------
 // DEFINITION OF EXPRESSIONS CODES
 // -------------------------------
-#define	EXP_TRACK    				0
-#define	EXP_MAXTRACK                1
-#define	EXP_TRACKPOS                2
-#define	EXP_TRACKLEN                3
-#define	EXP_POS                     4
-#define	EXP_LEN                     5
-#define	EXP_LASTERROR               6
-#define	EXP_LAST                    7
+#define	EXP_TRACK					0
+#define	EXP_MAXTRACK				1
+#define	EXP_TRACKPOS				2
+#define	EXP_TRACKLEN				3
+#define	EXP_POS					 4
+#define	EXP_LEN					 5
+#define	EXP_LASTERROR				6
+#define	EXP_LAST					7
 
 
 
@@ -103,7 +103,7 @@ typedef struct tagRDATA {
 	short			rcdStatus;
 	short			rcdStopAtTrackEnd;
 	long			rcdLastPosition;
-	short			rcdError;
+	MCIERROR		rcdError; // Phi note: it was short, but since MCIERROR is DWORD, that's not usable.
 	
 	} runData;
 
@@ -117,6 +117,6 @@ typedef	runData		_far *		fprdata;
 
 
 // Default flags
-#define	OEFLAGS      			(OEFLAG_DISPLAYINFRONT)
-#define	OEPREFS      			0
+#define	OEFLAGS	  			(OEFLAG_DISPLAYINFRONT)
+#define	OEPREFS	  			0
 

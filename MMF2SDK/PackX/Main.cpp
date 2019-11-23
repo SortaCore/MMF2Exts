@@ -30,6 +30,10 @@
 
 // Common Include
 #include	"common.h"
+// Stop complaints about doubles <-> long
+#pragma warning (push)
+#pragma warning (disable: 4244)
+
 
 // Quick memo: content of the eventInformations arrays
 // ---------------------------------------------------
@@ -42,25 +46,28 @@
 // Parameter_TitleString [Number_of_parameters]
 
 
-short conditionsInfos[]=
-	{ 
+short conditionsInfos[] =
+{ 
 	CID_IsInRange,	CID_IsInRange,	0,	EVFLAGS_ALWAYS | EVFLAGS_NOTABLE,	1,	PARAM_EXPSTRING,	CP0ID_IsInRange,
-	0 };
+	0
+};
 
-short actionsInfos[]=
-	{ 
+short actionsInfos[] =
+{ 
 	AID_SetKey,	AID_SetKey,	0,	0,	1,	PARAM_EXPSTRING,	AP0ID_SetKey,
-	0 };
+	0
+};
 
-short expressionsInfos[]=
-	{ 
+short expressionsInfos[] =
+{
 	EID_PackX,	EID_PackX,	0,	0,	1,	EXPPARAM_STRING,	0,
 	EID_UnPackX,	EID_UnPackX,	1,	EXPFLAG_STRING,	1,	EXPPARAM_LONG,	0,
 	EID_StringMaxLength,	EID_StringMaxLength,	2,	0,	0,
 	EID_KeyCharCount,	EID_KeyCharCount,	3,	0,	0,
-	0 };
+	0
+};
 
-int KeyCharCountInternal(char*);
+int KeyCharCountInternal(const char *);
 
 //============================================================================
 //
@@ -71,18 +78,14 @@ int KeyCharCountInternal(char*);
 
 long WINAPI DLLExport IsInRange(LPRDATA rdPtr, long param1, long param2)
 {
-	char * string=(LPSTR)param1;
-	char * key= rdPtr->key;
+	const char * string = (const char *)param1;
+	const char * key = rdPtr->key;
 
 	//Find the max
 	int chars = KeyCharCountInternal(key) + 1;
-	long max = (long)(double)log( (double)pow(2,(double)(sizeof (long))*8) ) / log ((double) chars ) ;
+	unsigned long max = (unsigned long)log(((double)pow(2, (double)(sizeof(long)) * 8)) / log((double)chars));
 
-
-	if ((strlen(string)-1) < max)
-		return TRUE;
-
-	return FALSE;
+	return ((strlen(string) - 1) < max) ? TRUE : FALSE;
 }
 
 
@@ -97,8 +100,8 @@ long WINAPI DLLExport IsInRange(LPRDATA rdPtr, long param1, long param2)
 
 short WINAPI DLLExport SetKey(LPRDATA rdPtr, long param1, long param2)
 {
-	char * p1=(LPSTR)param1;
-	strcpy_s(rdPtr->key, 100, p1);
+	char * p1 = (LPSTR)param1;
+	strcpy_s(rdPtr->key, p1);
 	return 0;
 }
 
@@ -113,37 +116,34 @@ short WINAPI DLLExport SetKey(LPRDATA rdPtr, long param1, long param2)
 
 long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 {
-	char * string=(LPSTR)CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_STRING);
-	char * key= rdPtr->key;
+	char * string = (char *)CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_STRING);
+	const char * key = rdPtr->key;
 	
-	//Find the max
+	// Find the max
 	int chars = KeyCharCountInternal(key) + 1;
-	long max = (long)(double)log( (double)pow(2,(double)(sizeof (long))*8) ) / log ((double) chars ) ;
+	unsigned long max = (unsigned long)logf(pow(2.0, sizeof(long) * 8.0)) / log((double)chars);
 
-	if (strnlen(string, max+1) > max)
-	{
+	if (strnlen(string, max + 1) > max)
 		string[max] = '\0';
-	}
 
-
-	//first, find the values of the keys
+	// first, find the values of the keys
 	int codes[256];
-	for(unsigned int i = 0; i < 256; ++i)
+	for (unsigned int i = 0; i < 256; ++i)
 		codes[i] = 0;
 
-	//look though the string
-		//States:
-			//0		=		okay
-			//1		=		enter [
-			//2		=		hypthan -
-			//3		=		dash \ [ignore next charecor as control charector
-			//99	=		done
+	// look though the string
+	// States:
+	// 0	= okay
+	// 1	= enter [
+	// 2	= hyphen -
+	// 3	= dash \ [ignore next charecor as control charactor
+	// 99	= done
 	int state = 0;
 	int pos = 0;
 	int num = 0;
 	char from = '\0';
 	char to = '\0';
-	int len = 	strlen(key);
+	int len = strlen(key);
 	while (pos <= len && state != 99)
 	{
 		if (key[pos] == '\0')
@@ -153,10 +153,10 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 		else if (state != 3)
 		{
 			// [ , ] , - , \;
-			if (key[pos] == '[' )
+			if (key[pos] == '[')
 				state = 1;
-			//This tells the program to itemate on from-to charectors
-			else if (key[pos] == ']' && state==2)
+			// This tells the program to iterate on from-to characters
+			else if (key[pos] == ']' && state == 2)
 			{
 				state = 0;
 				if ((int)from > (int)to)
@@ -175,7 +175,7 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 			}
 			else if (key[pos] == '-' && state == 1)
 				state = 2;
-			//getting them item letters
+			// getting them item letters
 			else if (state == 1)
 				from = key[pos];
 			else if (state == 2)
@@ -186,36 +186,35 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 		else
 		{
 			// \n , \q (quote)
-			if			(key[pos] == 'n')
-						codes[(int)'\n'] = num++;
-			else	if (key[pos] == 'q')
-						codes[(int)'"'] = num++;
-			else	if (key[pos] == '[')
-						codes[(int)'['] = num++;
-			else	if (key[pos] == ']')
-						codes[(int)']'] = num++;
-			else	if (key[pos] == '\\')
-						codes[(int)'\\'] = num++;
+			if (key[pos] == 'n')
+				codes[(int)'\n'] = num++;
+			else if (key[pos] == 'q')
+				codes[(int)'"'] = num++;
+			else if (key[pos] == '[')
+				codes[(int)'['] = num++;
+			else if (key[pos] == ']')
+				codes[(int)']'] = num++;
+			else if (key[pos] == '\\')
+				codes[(int)'\\'] = num++;
 			state = 0;
-
 		}
 	pos++;
 	}
 
-	//================
-	//The Conversion
-	//================
+	// ================
+	// The Conversion
+	// ================
 	num++;
 	
 	long size =strlen(string)-1;
 	int val = 0;
 	int pown = 0;
-	for (int n=0;n<=size;n++)
+	for (int n = 0; n <= size; n++)
 	{
 		if (codes[string[n]] > 0 && codes[string[n]] <= num)
 		{
-				val +=   (int)(pow((double)num,pown))*(codes[string[n]]);
-				pown++;
+			val += (int)(pow((double)num, pown)) * (codes[string[n]]);
+			pown++;
 		}
 	}
 	return val;
@@ -223,18 +222,17 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 
 
 
-//=========================================================
-//UN PACK X
-//=========================================================
-
+// =========================================================
+// UN PACK X
+// =========================================================
 
 long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 {
-	long code=CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_INT);
-	char* key=rdPtr->key;
+	long code = CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_INT);
+	char * key = rdPtr->key;
 	rdPtr->rHo.hoFlags |= HOF_STRING;
 
-		char codes[256];
+	char codes[256];
 	codes[0] = '\0';
 	memset(codes,'\0',256);
 	int state = 0;
@@ -242,7 +240,7 @@ long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 	int num = 0;
 	char from = '\0';
 	char to = '\0';
-	int len = 	strlen(key);
+	int len = strlen(key);
 	while (pos <= len && state != 99)
 	{
 		if (key[pos] == '\0')
@@ -252,27 +250,27 @@ long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 		else if (state != 3)
 		{
 			// [ , ] , - , \;
-			if (key[pos] == '[' )
+			if (key[pos] == '[')
 				state = 1;
-			//This tells the program to itemate on from-to charectors
-			else if (key[pos] == ']' && state==2)
+			// This tells the program to itemate on from-to charectors
+			else if (key[pos] == ']' && state == 2)
 			{
 				state = 0;
-				//Swap them around if we need to
+				// Swap them around if we need to
 				if ((int)from > (int)to)
 				{
 					char store = from;
 					from = to;
 					to = store;
 				}
-				//How many charecters are there in this range?
+				// How many charecters are there in this range?
 				int todo = (int)to - (int)from;
-				//..And which one am i currently on
+				// ...And which one am i currently on
 				int on = 0;
-				//For each charecter
+				// For each charecter
 				while (on <= todo)
 				{
-					//Codes is a Values-->Char lookup table.
+					// Codes is a Values-->Char lookup table.
 					codes[++num] = (char)((int)from + (on++));
 				}
 			}
@@ -291,35 +289,34 @@ long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 		else
 		{
 			// \n , \q (quote)
-			if			(key[pos] == 'n')
-						codes[num++] = '\n';
-			else	if (key[pos] == 'q')
-						codes[num++] = '"';
-			else	if (key[pos] == '[')
-						codes[num++] = '[';
-			else	if (key[pos] == ']')
-						codes[num++] = ']';
-			else	if (key[pos] == '\\')
-						codes[num++] = '\\';
+			if (key[pos] == 'n')
+				codes[num++] = '\n';
+			else if (key[pos] == 'q')
+				codes[num++] = '"';
+			else if (key[pos] == '[')
+				codes[num++] = '[';
+			else if (key[pos] == ']')
+				codes[num++] = ']';
+			else if (key[pos] == '\\')
+				codes[num++] = '\\';
 			state = 0;
-
 		}
-	pos++;
+		pos++;
 	}
 	num++;
-	//==============
-	//The Conversion
-	//==============
+	// ==============
+	// The Conversion
+	// ==============
 	LPSTR string = (LPSTR)callRunTimeFunction(rdPtr, RFUNCTION_GETSTRINGSPACE, 33 , 0); 
 	int n = 0;
 	int dif = 0;
-	//While the code is not 0.
+	// While the code is not 0.
 	while (code != 0)
 	{
 		dif = code % (num);
-		//Divide
+		// Divide
 		code /= num;
-		//Set the string position n to the value. And increase n.
+		// Set the string position n to the value. And increase n.
 		string[n++] = codes[dif];
 	}
 	string[n] = '\0';
@@ -327,44 +324,44 @@ long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 	return (long)string;
 }
 
-//=========================================================
-//STRING MAX LENGTH
-//=========================================================
+// =========================================================
+// STRING MAX LENGTH
+// =========================================================
 
 long WINAPI DLLExport StringMaxLength(LPRDATA rdPtr, long param1)
 {
-	char * key=rdPtr->key;
-		int chars = KeyCharCountInternal(key) + 1;
-	return  (long)(double)log( (double)pow(2,(double)(sizeof (long))*8) ) / log ((double) chars ) ;
+	char * key = rdPtr->key;
+	int chars = KeyCharCountInternal(key) + 1;
+	return (long)logf(pow(2.0, sizeof(long) * 8.0)) / log((double)chars);
 }
-//=========================================================
-//KEY CHAR COUNT (INTERFACE)
-//=========================================================
+// =========================================================
+// KEY CHAR COUNT (INTERFACE)
+// =========================================================
 long WINAPI DLLExport KeyCharCount(LPRDATA rdPtr, long param1)
 {
 	char * key = rdPtr->key;
-	return KeyCharCountInternal( key );
+	return KeyCharCountInternal(key);
 }
 
 //=========================================================
 //INTERNAL USE: KEY CHAR COUNT
 //=========================================================
-int KeyCharCountInternal( char* key )
+int KeyCharCountInternal(const char * key)
 {
 	int codes[256];
-	//look though the string
-		//States:
-			//0		=		okay
-			//1		=		enter [
-			//2		=		hypthan -
-			//3		=		dash \ [ignore next charecor as control charector
-			//99	=		done
+	// look though the string
+	// States:
+	// 0	= okay
+	// 1	= enter [
+	// 2	= hyphen -
+	// 3	= dash \ [ignore next character as control character
+	// 99	= done
 	int state = 0;
 	int pos = 0;
 	int num = 0;
 	char from = '\0';
 	char to = '\0';
-	int len = 	strlen(key);
+	int len = strlen(key);
 	while (pos <= len && state != 99)
 	{
 		if (key[pos] == '\0')
@@ -376,7 +373,7 @@ int KeyCharCountInternal( char* key )
 			// [ , ] , - , \;
 			if (key[pos] == '[' )
 				state = 1;
-			//This tells the program to itemate on from-to charectors
+			// This tells the program to itemate on from-to charectors
 			else if (key[pos] == ']' && state==2)
 			{
 				state = 0;
@@ -395,7 +392,7 @@ int KeyCharCountInternal( char* key )
 			}
 			else if (key[pos] == '-' && state == 1)
 				state = 2;
-			//getting them item letters
+			// getting them item letters
 			else if (state == 1)
 				from = key[pos];
 			else if (state == 2)
@@ -406,20 +403,19 @@ int KeyCharCountInternal( char* key )
 		else
 		{
 			// \n , \q (quote)
-			if			(key[pos] == 'n')
-						num++;
-			else	if (key[pos] == 'q')
-						num++;
-			else	if (key[pos] == '[')
-						num++;
-			else	if (key[pos] == ']')
-						num++;
-			else	if (key[pos] == '\\')
-						num++;
+			if (key[pos] == 'n')
+				num++;
+			else if (key[pos] == 'q')
+				num++;
+			else if (key[pos] == '[')
+				num++;
+			else if (key[pos] == ']')
+				num++;
+			else if (key[pos] == '\\')
+				num++;
 			state = 0;
-
 		}
-	pos++;
+		pos++;
 	}
 	return num;
 }
@@ -438,25 +434,24 @@ int KeyCharCountInternal( char* key )
 
 
 long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
-	{
+{
 	IsInRange,
 	0
-	};
+};
 
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
-	{
+{
 	SetKey,
 	0
-	};
+};
 
 long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
-	{
+{
 	PackX,
 	UnPackX,
 	StringMaxLength,
 	KeyCharCount,
 	0
-	};
+};
 
-
- 
+#pragma warning (pop)

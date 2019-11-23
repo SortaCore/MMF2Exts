@@ -12,18 +12,18 @@ typedef struct tagRDATA
 	#include "MagicRDATA.h"
 
 	//bool is volatile so it can be changed instantly by threads
-	unsigned short inbuffersize;  //Default size of memory buffer
-	double PercentageDifference;  //Percentage difference input->output
-	string LastOutput;			  //Last finished file name
-	string returnstring;		  //String to return with statistics or errors
-	volatile bool threadsafe;	  //Ensure only one thread accesses rdPtr's variables
+	unsigned short inbuffersize;  // Default size of memory buffer
+	double PercentageDifference;  // Percentage difference input->output
+	string LastOutput;			  // Last finished file name
+	string returnstring;		  // String to return with statistics or errors
+	volatile bool threadsafe;	  // Ensure only one thread accesses rdPtr's variables
 
-	tagRDATA() : inbuffersize(8192), PercentageDifference(0.0), LastOutput(""), returnstring(""), threadsafe(false) //Constructor
+	tagRDATA() : inbuffersize(8192), PercentageDifference(0.0), LastOutput(""), returnstring(""), threadsafe(false) // Constructor
 	{
 		//vars initialized above in the initializer list
 	}
 	//functions
-	~tagRDATA(){} //Destructor
+	~tagRDATA(){} // Destructor
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

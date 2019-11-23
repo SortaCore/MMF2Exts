@@ -9,11 +9,15 @@
 //
 #include "..\Inc\ccx.h"
 #define APSTUDIO_HIDDEN_SYMBOLS
-#include "windows.h"
+#include <windows.h>
 #undef APSTUDIO_HIDDEN_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
+
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
@@ -22,7 +26,7 @@
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
+#endif // _WIN32
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -31,40 +35,36 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 1 VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
- FILEFLAGSMASK 0x0L
+ FILEVERSION 1,0,0,EXTENSION_VERSION
+ PRODUCTVERSION 1,0,0,EXTENSION_VERSION
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
- FILEFLAGS 0x21L
+ FILEFLAGS VS_FF_DEBUG
 #else
- FILEFLAGS 0x20L
+ FILEFLAGS 0
 #endif
- FILEOS 0x10001L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "Clickteam\0"
-            VALUE "FileDescription", "SDK Example - Simple Control\0"
-            VALUE "FileVersion", "2.00\0"
-            VALUE "InternalName", "SCtrl.mfx\0"
-            VALUE "LegalCopyright", "Copyright © 2006 Clickteam\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "SCtrl.mfx\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "\0"
-            VALUE "ProductVersion", "1, 0, 0, 0\0"
-            VALUE "SpecialBuild", "00000001\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1252
-    END
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904e4"
+		BEGIN
+			VALUE "ProductName", PROJECT_NAME "\0"
+			VALUE "CompanyName", COMPANY_NAME "\0"
+			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
+			VALUE "FileVersion", "2.00" "\0"
+			VALUE "InternalName", PROJECT_NAME ".mfx\0"
+			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
+			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1252
+	END
 END
 
 #endif    // !_MAC
@@ -75,9 +75,9 @@ END
 // Data
 //
 
-KPX_MAGICNUMBER RCDATA MOVEABLE PURE 
+KPX_MAGICNUMBER RCDATA
 BEGIN
-    0x2516, 0x5908
+	0x2516, 0x5908
 END
 
 
@@ -88,9 +88,9 @@ END
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-EXO_ICON$(EDITOR)       BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+EXO_ICON$(EDITOR)       BITMAP    "RES\\EXTICON.BMP"
 #else
-EXO_ICON                BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
+EXO_ICON                BITMAP    "RES\\EXTICON.BMP"
 #endif
 #endif
 
@@ -101,48 +101,48 @@ EXO_ICON                BITMAP  MOVEABLE PURE   "RES\\EXTICON.BMP"
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_CONDITIONS$(EDITOR) MENU DISCARDABLE 
+MN_CONDITIONS$(EDITOR) MENU 
 #else
-MN_CONDITIONS MENU DISCARDABLE 
+MN_CONDITIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
+	POPUP ""
+	BEGIN
 		MENUITEM "Is text empty ?",             IDMN_CND_ISEMPTY
 		MENUITEM "Has text been changed ?",     IDMN_CND_CHANGED
-    END
+	END
 END
 #endif
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_ACTIONS$(EDITOR) MENU DISCARDABLE 
+MN_ACTIONS$(EDITOR) MENU 
 #else
-MN_ACTIONS MENU DISCARDABLE 
+MN_ACTIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Set Text",                    IDMN_ACT_SETTEXT
-        MENUITEM "Set Integer Value",           IDMN_ACT_SETINT
-        MENUITEM "Set Float Value",             IDMN_ACT_SETFLOAT
-    END
+	POPUP ""
+	BEGIN
+		MENUITEM "Set Text",                    IDMN_ACT_SETTEXT
+		MENUITEM "Set Integer Value",           IDMN_ACT_SETINT
+		MENUITEM "Set Float Value",             IDMN_ACT_SETFLOAT
+	END
 END
 #endif
 
 #if defined(APSTUDIO_INVOKED) || defined(EDITOR)
 #if defined(APSTUDIO_INVOKED)
-MN_EXPRESSIONS$(EDITOR) MENU DISCARDABLE 
+MN_EXPRESSIONS$(EDITOR) MENU 
 #else
-MN_EXPRESSIONS MENU DISCARDABLE 
+MN_EXPRESSIONS MENU 
 #endif
 BEGIN
-    POPUP ""
-    BEGIN
-        MENUITEM "Get Text",                    IDMN_EXP_GETTEXT
-        MENUITEM "Get Integer Value",           IDMN_EXP_GETINT
-        MENUITEM "Get Float Value",             IDMN_EXP_GETFLOAT
-    END
+	POPUP ""
+	BEGIN
+		MENUITEM "Get Text",                    IDMN_EXP_GETTEXT
+		MENUITEM "Get Integer Value",           IDMN_EXP_GETINT
+		MENUITEM "Get Float Value",             IDMN_EXP_GETFLOAT
+	END
 END
 #endif
 
@@ -153,24 +153,24 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE
 BEGIN
-    "resource.h\0"
+	"resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE
 BEGIN
-    "#include ""..\\Inc\\ccx.h""\r\n"
-    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "#include ""windows.h""\r\n"
-    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
-    "\0"
+	"#include ""..\\Inc\\ccx.h""\r\n"
+	"#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"#include <windows.h>\r\n"
+	"#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE
 BEGIN
-    "\r\n"
-    "\0"
+	"\r\n"
+	"\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -181,46 +181,46 @@ END
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    KPX_MARK                "MF2"
-    KPX_NAME                "Simple Control"
+	KPX_MARK                "MF2"
+	KPX_NAME                "Simple Control"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    IDST_OBJNAME            "Simple Control"
-    IDST_AUTHOR             "Clickteam"
-    IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
-    IDST_COMMENT            "Simple example of edit box control."
-    IDST_HTTP               "http://www.clickteam.com"
-    IDS_SETTEXT_TITLE       "Please enter text"
-    IDS_SETINT_TITLE        "Please enter an integer value"
-    IDS_SETFLOAT_TITLE      "Please enter a floating point value"
+	IDST_OBJNAME            "Simple Control"
+	IDST_AUTHOR             "Clickteam"
+	IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
+	IDST_COMMENT            "Simple example of edit box control."
+	IDST_HTTP               "http://www.clickteam.com"
+	IDS_SETTEXT_TITLE       "Please enter text"
+	IDS_SETINT_TITLE        "Please enter an integer value"
+	IDS_SETFLOAT_TITLE      "Please enter a floating point value"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    M_ACT_SETTEXT           "Set Text to %0"
-    M_EXP_GETTEXT           "SCGetText$("
-    M_ACT_SETINT            "Set integer value to %0"
-    M_ACT_SETFLOAT          "Set float value to %0"
-    M_EXP_GETINT            "SCGetInt("
-    M_EXP_GETFLOAT          "SCGetFloat("
-    M_CND_ISEMPTY           "%o: is text empty ?"
-    M_CND_CHANGED           "%o: has text been changed ?"
+	M_ACT_SETTEXT           "Set Text to %0"
+	M_EXP_GETTEXT           "SCGetText$("
+	M_ACT_SETINT            "Set integer value to %0"
+	M_ACT_SETFLOAT          "Set float value to %0"
+	M_EXP_GETINT            "SCGetInt("
+	M_EXP_GETFLOAT          "SCGetFloat("
+	M_CND_ISEMPTY           "%o: is text empty ?"
+	M_CND_CHANGED           "%o: has text been changed ?"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
-    IDS_PROP_TEXT           "Text"
-    IDS_PROP_TEXT_INFO      "Enter the text to display."
-    IDS_PROP_BACKCOLOR      "Background color"
-    IDS_PROP_BACKCOLOR_INFO "Select the background color (system colors must be disabled)"
-    IDS_PROP_SYSTEMCOLORS   "System Colors"
-    IDS_PROP_SYSTEMCOLORS_INFO "Select to use the user's desktop colors."
-    IDS_PROP_BORDER         "Border"
-    IDS_PROP_BORDER_INFO    "Select to display a black border around the object."
+	IDS_PROP_TEXT           "Text"
+	IDS_PROP_TEXT_INFO      "Enter the text to display."
+	IDS_PROP_BACKCOLOR      "Background color"
+	IDS_PROP_BACKCOLOR_INFO "Select the background color (system colors must be disabled)"
+	IDS_PROP_SYSTEMCOLORS   "System Colors"
+	IDS_PROP_SYSTEMCOLORS_INFO "Select to use the user's desktop colors."
+	IDS_PROP_BORDER         "Border"
+	IDS_PROP_BORDER_INFO    "Select to display a black border around the object."
 END
 
 #endif    // English (U.S.) resources

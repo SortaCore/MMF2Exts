@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -46,16 +46,16 @@
 
 enum SunRasType
 {
-    RAS_OLD = 0,
-    RAS_STANDARD = 1,
-    RAS_BYTE_ENCODED = 2, /* RLE encoded */
-    RAS_FORMAT_RGB = 3    /* RGB instead of BGR */
+	RAS_OLD = 0,
+	RAS_STANDARD = 1,
+	RAS_BYTE_ENCODED = 2, /* RLE encoded */
+	RAS_FORMAT_RGB = 3	/* RGB instead of BGR */
 };
 
 enum SunRasMapType
 {
-    RMT_NONE = 0,       /* direct color encoding */
-    RMT_EQUAL_RGB = 1   /* paletted image */
+	RMT_NONE = 0,		/* direct color encoding */
+	RMT_EQUAL_RGB = 1	/* paletted image */
 };
 
 
@@ -64,37 +64,37 @@ class GrFmtSunRasterReader : public GrFmtReader
 {
 public:
 
-    GrFmtSunRasterReader( const char* filename );
-    ~GrFmtSunRasterReader();
+	GrFmtSunRasterReader( const char* filename );
+	~GrFmtSunRasterReader();
 
-    bool  ReadData( uchar* data, int step, int color );
-    bool  ReadHeader();
-    void  Close();
+	bool  ReadData( uchar* data, int step, int color );
+	bool  ReadHeader();
+	void  Close();
 
 protected:
-    
-    RMByteStream    m_strm;
-    PaletteEntry    m_palette[256];
-    int             m_bpp;
-    int             m_offset;
-    SunRasType      m_type;
-    SunRasMapType   m_maptype;
-    int             m_maplength;
+	
+	RMByteStream	m_strm;
+	PaletteEntry	m_palette[256];
+	int			 m_bpp;
+	int			 m_offset;
+	SunRasType	  m_type;
+	SunRasMapType	m_maptype;
+	int			 m_maplength;
 };
 
 
 class GrFmtSunRasterWriter : public GrFmtWriter
 {
 public:
-    
-    GrFmtSunRasterWriter( const char* filename );
-    ~GrFmtSunRasterWriter();
+	
+	GrFmtSunRasterWriter( const char* filename );
+	~GrFmtSunRasterWriter();
 
-    bool  WriteImage( const uchar* data, int step,
-                      int width, int height, int depth, int channels );
+	bool  WriteImage( const uchar* data, int step,
+					  int width, int height, int depth, int channels );
 protected:
 
-    WMByteStream  m_strm;
+	WMByteStream  m_strm;
 };
 
 
@@ -102,12 +102,12 @@ protected:
 class GrFmtSunRaster : public GrFmtFilterFactory
 {
 public:
-    
-    GrFmtSunRaster();
-    ~GrFmtSunRaster();
+	
+	GrFmtSunRaster();
+	~GrFmtSunRaster();
 
-    GrFmtReader* NewReader( const char* filename );
-    GrFmtWriter* NewWriter( const char* filename );
+	GrFmtReader* NewReader( const char* filename );
+	GrFmtWriter* NewWriter( const char* filename );
 };
 
 #endif/*_GRFMT_SUNRAS_H_*/

@@ -1,10 +1,10 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		Multimedia Fusion: cd-audio object																						//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,6 +18,11 @@
 #else
 #define	IS_COMPATIBLE(v) (v->mvGetVersion != NULL && (v->mvGetVersion() & MMFBUILD_MASK) >= MinimumBuild && (v->mvGetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
 #endif
+
+// Version 1 of language, don't use 2
+#undef IN_EXT_VERSION2
+// We're using this library
+#pragma comment (lib, "winmm.lib")
 
 // General CCX includes
 #include	"ccxhdr.h"
@@ -55,34 +60,34 @@ short WINAPI DLLExport Stop(fprdata rdPtr, long param1, long param2);
 infosEvents	conditionsInfos[]=
 		{
 		{CND_CMPOSINTRACK, 	EVFLAGS_ALWAYS+EVFLAGS_NOTABLE, PARAM_CMPTIME, 		0,  	0, 0},
-		{CND_CMPOSITION,	EVFLAGS_ALWAYS+EVFLAGS_NOTABLE, PARAM_CMPTIME,		0,      0, 0}
+		{CND_CMPOSITION,	EVFLAGS_ALWAYS+EVFLAGS_NOTABLE, PARAM_CMPTIME,		0,	  0, 0}
 		};
 
 // Definitions of parameters for each action
 infosEvents	actionsInfos[]=
 		{
-		{ACT_PLAY,     		0,				PARAM_EXPRESSION,   0,		0, 0},
-		{ACT_STOP,          0,              0,					0,		0, 0},
-		{ACT_PAUSE,         0,              0,					0,		0, 0},
-		{ACT_RESUME,        0,				0,					0,		0, 0},
-		{ACT_PREVIOUS,      0,              0,					0,		0, 0},
-		{ACT_NEXT,          0,              0,					0,		0, 0},
-		{ACT_TIMEPLAY,      0,				PARAM_TIME,			0,		0, 0},
-		{ACT_OPENDOOR,      0,				0,					0,		0, 0},
-		{ACT_CLOSEDOOR,     0,              0,					0,		0, 0},
-		{ACT_PLAYTRACK, 	0,				PARAM_EXPRESSION,   0,		0, 0},
+		{ACT_PLAY,	 		0,				PARAM_EXPRESSION,	0,		0, 0},
+		{ACT_STOP,		  0,			  0,					0,		0, 0},
+		{ACT_PAUSE,		 0,			  0,					0,		0, 0},
+		{ACT_RESUME,		0,				0,					0,		0, 0},
+		{ACT_PREVIOUS,	  0,			  0,					0,		0, 0},
+		{ACT_NEXT,		  0,			  0,					0,		0, 0},
+		{ACT_TIMEPLAY,	  0,				PARAM_TIME,			0,		0, 0},
+		{ACT_OPENDOOR,	  0,				0,					0,		0, 0},
+		{ACT_CLOSEDOOR,	 0,			  0,					0,		0, 0},
+		{ACT_PLAYTRACK, 	0,				PARAM_EXPRESSION,	0,		0, 0},
 		};
 
 // Definitions of parameters for each expression
 infosEvents	expressionsInfos[]=
 		{
-		{EXP_TRACK,			0,              0,					0,		0, 0},
-		{EXP_MAXTRACK,		0,              0,					0,		0, 0},
-		{EXP_TRACKPOS,		0,              0,					0,		0, 0},
-		{EXP_TRACKLEN,		0,              0,					0,		0, 0},
-		{EXP_POS,			0,              0,					0,		0, 0},
-		{EXP_LEN,			0,              0,					0,		0, 0},
-		{EXP_LASTERROR,		0,              0,					0,		0, 0}
+		{EXP_TRACK,			0,			  0,					0,		0, 0},
+		{EXP_MAXTRACK,		0,			  0,					0,		0, 0},
+		{EXP_TRACKPOS,		0,			  0,					0,		0, 0},
+		{EXP_TRACKLEN,		0,			  0,					0,		0, 0},
+		{EXP_POS,			0,			  0,					0,		0, 0},
+		{EXP_LEN,			0,			  0,					0,		0, 0},
+		{EXP_LASTERROR,		0,			  0,					0,		0, 0}
 		};
 
 #ifndef RUN_ONLY
@@ -137,11 +142,11 @@ WORD DebugTree[]=
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		OBJECT HANDLING ROUTINES WHEN GAME IS RUNNED																		//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -150,16 +155,16 @@ WORD DebugTree[]=
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetRunObjectDataSize																	//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, fpedata edPtr)
 {
 	// Debug assertion
-    assert(rhPtr != NULL);
-    assert(edPtr != NULL);
+	assert(rhPtr != NULL);
+	assert(edPtr != NULL);
 
 	// Return the size of the run data structure
 	return (sizeof(runData));
@@ -170,28 +175,28 @@ ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, fpedata edPtr)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		CreateRunObject									    									//
-// 																							    //
+// 																								//
+//		CreateRunObject																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport CreateRunObject(fprdata rdPtr, fpedata edPtr, fpcob cobPtr)
-{            
+{			
 
 	MCI_OPEN_PARMS		MCIOpenParms;
-    MCI_STATUS_PARMS	MCIStatusParms;
+	MCI_STATUS_PARMS	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
-    assert(edPtr != NULL);
-    assert(cobPtr != NULL);
+	assert(rdPtr != NULL);
+	assert(edPtr != NULL);
+	assert(cobPtr != NULL);
 
 	// Get flags
 	rdPtr->rcdFlags = edPtr->ecdaFlags;
 
 	// Open cd
-    MCIOpenParms.lpstrDeviceType = achCDAudio;
-    rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
+	MCIOpenParms.lpstrDeviceType = achCDAudio;
+	rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
 
 	// Store device number if open on start
 	if ((rdPtr->rcdFlags & CD_OPENONSTART) != 0)
@@ -203,12 +208,12 @@ short WINAPI DLLExport CreateRunObject(fprdata rdPtr, fpedata edPtr, fpcob cobPt
 
 	// Process play on start flag
 	MCIStatusParms.dwItem = MCI_STATUS_MODE;
-	rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
+	rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
 	if ((rdPtr->rcdFlags & CD_PLAYONSTART) != 0)
 	{
 		if ((MCI_MODE_STOP == MCIStatusParms.dwReturn) || (MCI_MODE_PAUSE == MCIStatusParms.dwReturn))
 		{
-    		MCI_PLAY_PARMS		MCIPlayParms;
+			MCI_PLAY_PARMS		MCIPlayParms;
 			MCI_SET_PARMS		MCISetParms;
 
 			// Set time format
@@ -221,20 +226,20 @@ short WINAPI DLLExport CreateRunObject(fprdata rdPtr, fpedata edPtr, fpcob cobPt
 
 			// Play start track
 			MCIPlayParms.dwFrom = edPtr->ecdaTrackOnStart;
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms);
 		}
 	}
 	else
 	{
 		if ((MCI_MODE_PLAY == MCIStatusParms.dwReturn) || (MCI_MODE_SEEK == MCIStatusParms.dwReturn) || (MCI_MODE_PAUSE == MCIStatusParms.dwReturn))
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, 0);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, 0);
 	}
 
 	rdPtr->rcdStopAtTrackEnd = FALSE;
 
 	// Close if not open on start
 	if (0 == (rdPtr->rcdFlags & CD_OPENONSTART))
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -244,46 +249,46 @@ short WINAPI DLLExport CreateRunObject(fprdata rdPtr, fpedata edPtr, fpcob cobPt
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		DestroyRunObject								    									//
-// 																							    //
+// 																								//
+//		DestroyRunObject																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport DestroyRunObject(fprdata rdPtr, long fast)
 {
 
 	MCI_OPEN_PARMS				MCIOpenParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Process stop on close flag
 	MCIStatusParms.dwItem = MCI_STATUS_MODE;
-	rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
+	rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
 	if ((rdPtr->rcdFlags & CD_STOPONCLOSE) != 0)
 	{
 		if ((MCI_MODE_PLAY == MCIStatusParms.dwReturn) || (MCI_MODE_SEEK == MCIStatusParms.dwReturn) || (MCI_MODE_PAUSE == MCIStatusParms.dwReturn))
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, 0);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, 0);
 	}
 
 	// Close cd
-    if (0 == (rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, 0)))
-    {
-    	rdPtr->rcdDevice = 0;
-    	return 0;
-    }
-    else
-    	return -1;
+	if (0 == (rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, 0)))
+	{
+		rdPtr->rcdDevice = 0;
+		return 0;
+	}
+	else
+		return -1;
 }
 
 
@@ -296,16 +301,16 @@ short WINAPI DLLExport DestroyRunObject(fprdata rdPtr, long fast)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		HandleRunObject									    									//
-// 																							    //
+// 																								//
+//		HandleRunObject																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport HandleRunObject(fprdata rdPtr)
-{      
+{	  
 	// Debug assertion
-    assert(rdPtr != NULL);
-    
+	assert(rdPtr != NULL);
+	
 	return REFLAG_ONESHOT;
 }
 
@@ -314,15 +319,15 @@ short WINAPI DLLExport HandleRunObject(fprdata rdPtr)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		DisplayRunObject								    									//
-// 																							    //
+// 																								//
+//		DisplayRunObject																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport DisplayRunObject(fprdata rdPtr)
 {
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	return 0;
 }
@@ -332,33 +337,33 @@ short WINAPI DLLExport DisplayRunObject(fprdata rdPtr)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		ReInitRunObject									   				 						//
-// 																							    //
+// 																								//
+//		ReInitRunObject														 						//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport ReInitRunObject(fprdata rdPtr)
 {
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	return 0;
 }
-                   
+					
 
 
 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		PauseRunObject									  				  						//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport PauseRunObject(fprdata rdPtr)
 {
-    MCI_STATUS_PARMS	MCIStatusParms;
+	MCI_STATUS_PARMS	MCIStatusParms;
 	MCI_OPEN_PARMS		MCIOpenParms;
 
 	fprh rhPtr = rdPtr->rHo.hoAdRunHeader;
@@ -372,13 +377,13 @@ short WINAPI DLLExport PauseRunObject(fprdata rdPtr)
 	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if (mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms))
-	    {
-    		rdPtr->rcdLastPosition = 0;
-    		rdPtr->rcdStatus = MCI_MODE_STOP;
-	    	return -1;
-	    }
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if (mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms))
+		{
+			rdPtr->rcdLastPosition = 0;
+			rdPtr->rcdStatus = MCI_MODE_STOP;
+			return -1;
+		}
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
@@ -390,7 +395,7 @@ short WINAPI DLLExport PauseRunObject(fprdata rdPtr)
 		mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
 	}
 	while (MCI_MODE_SEEK == MCIStatusParms.dwReturn);
-    rdPtr->rcdStatus = (short)MCIStatusParms.dwReturn;
+	rdPtr->rcdStatus = (short)MCIStatusParms.dwReturn;
 	if (rdPtr->rcdStatus!=MCI_MODE_PAUSE)
 		Pause(rdPtr,0,0);
 	// ok
@@ -402,9 +407,9 @@ short WINAPI DLLExport PauseRunObject(fprdata rdPtr)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		ContinueRunObject											    						//
-// 																							    //
+// 																								//
+//		ContinueRunObject																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport ContinueRunObject(fprdata rdPtr)
@@ -415,13 +420,13 @@ short WINAPI DLLExport ContinueRunObject(fprdata rdPtr)
 	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if (mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms))
-	    {
-    		rdPtr->rcdLastPosition = 0;
-    		rdPtr->rcdStatus = MCI_MODE_STOP;
-	    	return -1;
-	    }
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if (mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms))
+		{
+			rdPtr->rcdLastPosition = 0;
+			rdPtr->rcdStatus = MCI_MODE_STOP;
+			return -1;
+		}
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
@@ -436,14 +441,14 @@ short WINAPI DLLExport ContinueRunObject(fprdata rdPtr)
 		mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms);
 	}
 	while (MCI_MODE_SEEK == MCIStatusParms.dwReturn);
-    rdPtr->rcdStatus = (short)MCIStatusParms.dwReturn;
+	rdPtr->rcdStatus = (short)MCIStatusParms.dwReturn;
 	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		SaveRunObject	     										    						//
-// 																							    //
+// 																								//
+//		SaveRunObject		 																	//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef struct tabSaveCD
@@ -471,13 +476,13 @@ BOOL WINAPI DLLExport SaveRunObject(fprdata rdPtr, HANDLE hf)
 		save.rcdStopAtTrackEnd=rdPtr->rcdStopAtTrackEnd;
 
 		MCI_OPEN_PARMS				MCIOpenParms;
-	    MCI_STATUS_PARMS          	MCIStatusParms;
+		MCI_STATUS_PARMS		  	MCIStatusParms;
 
 		// Open cd
 		if (0 == rdPtr->rcdDevice)
 		{
 			MCIOpenParms.lpstrDeviceType = achCDAudio;
-			rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
+			rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms);
 		}
 		else
 		{
@@ -491,7 +496,7 @@ BOOL WINAPI DLLExport SaveRunObject(fprdata rdPtr, HANDLE hf)
 		
 		// Close cd
 		if (0 == rdPtr->rcdDevice)
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 		save.position=GetPosition(rdPtr, 0);
 		if (WriteFile(hf, &save, sizeof(SaveCD), &written, NULL)==0)
@@ -541,11 +546,11 @@ BOOL WINAPI DLLExport LoadRunObject(fprdata rdPtr, HANDLE hf)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		CONDITION ROUTINES																									//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -554,9 +559,9 @@ BOOL WINAPI DLLExport LoadRunObject(fprdata rdPtr, HANDLE hf)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		CmpPosition										    									//
-// 																							    //
+// 																								//
+//		CmpPosition																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport CmpPosition(fprdata rdPtr, long param1, long param2)
@@ -564,42 +569,42 @@ long WINAPI DLLExport CmpPosition(fprdata rdPtr, long param1, long param2)
 
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
-    
+	MCI_STATUS_PARMS		  	MCIStatusParms;
+	
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	
 	// Get postion
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return position
 	return MCIStatusParms.dwReturn;
@@ -610,74 +615,74 @@ long WINAPI DLLExport CmpPosition(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		CmpPositionInTrack								    									//
-// 																							    //
+// 																								//
+//		CmpPositionInTrack																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport CmpPositionInTrack(fprdata rdPtr, long param1, long param2)
 {
 	MCI_OPEN_PARMS		MCIOpenParms;
 	MCI_SET_PARMS		MCISetParms;
-    MCI_STATUS_PARMS	MCIStatusParms;
-    ulong				TrackPosition;
-    ulong				Position;
-    
+	MCI_STATUS_PARMS	MCIStatusParms;
+	ulong				TrackPosition;
+	ulong				Position;
+	
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// get current track number
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Get current track position
 	MCIStatusParms.dwTrack = MCIStatusParms.dwReturn;
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	TrackPosition = MCIStatusParms.dwReturn;
 
 	// Get position in current track
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms. wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms. wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	Position = MCIStatusParms.dwReturn - TrackPosition;
 		
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return position in current track
 	return Position;
@@ -694,11 +699,11 @@ long WINAPI DLLExport CmpPositionInTrack(fprdata rdPtr, long param1, long param2
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		ACTION ROUTINES																										//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -707,9 +712,9 @@ long WINAPI DLLExport CmpPositionInTrack(fprdata rdPtr, long param1, long param2
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Play										    										//
-// 																							    //
+// 																								//
+//		Play																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Play(fprdata rdPtr, long param1, long param2)
@@ -717,40 +722,40 @@ short WINAPI DLLExport Play(fprdata rdPtr, long param1, long param2)
 
 	MCI_OPEN_PARMS			MCIOpenParms;
 	MCI_SET_PARMS			MCISetParms;
-    MCI_PLAY_PARMS			MCIPlayParms;
-    MCI_STATUS_PARMS		MCIStatusParms;
+	MCI_PLAY_PARMS			MCIPlayParms;
+	MCI_STATUS_PARMS		MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	if (param1 < 1)
 		param1 = 1;
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Test track number validity
 	MCIStatusParms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	if (param1 < 1)
@@ -760,10 +765,10 @@ short WINAPI DLLExport Play(fprdata rdPtr, long param1, long param2)
 
 	// Play track
 	MCIPlayParms.dwFrom = param1;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
@@ -771,7 +776,7 @@ short WINAPI DLLExport Play(fprdata rdPtr, long param1, long param2)
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -781,49 +786,49 @@ short WINAPI DLLExport Play(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		PlayTrack										    									//
-// 																							    //
+// 																								//
+//		PlayTrack																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport PlayTrack(fprdata rdPtr, long param1, long param2)
 {
 	MCI_OPEN_PARMS			MCIOpenParms;
 	MCI_SET_PARMS			MCISetParms;
-    MCI_PLAY_PARMS			MCIPlayParms;
-    MCI_STATUS_PARMS		MCIStatusParms;
+	MCI_PLAY_PARMS			MCIPlayParms;
+	MCI_STATUS_PARMS		MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	if (param1 < 1)
 		param1 = 1;
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Test track number validity
 	MCIStatusParms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	if (param1 < 1)
@@ -833,20 +838,20 @@ short WINAPI DLLExport PlayTrack(fprdata rdPtr, long param1, long param2)
 
 	// Play track
 	MCIPlayParms.dwFrom = param1;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	MCIPlayParms.dwTo = param1 + 1;
-	rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
+	rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
 
 	rdPtr->rcdStopAtTrackEnd = TRUE;
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -856,49 +861,49 @@ short WINAPI DLLExport PlayTrack(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		TimePlay										    									//
-// 																							    //
+// 																								//
+//		TimePlay																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport TimePlay(fprdata rdPtr, long param1, long param2)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_PLAY_PARMS 				MCIPlayParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_PLAY_PARMS 				MCIPlayParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	if (param1 < 0)
 		param1 = 0;
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Test track number validity
 	MCIStatusParms.dwItem = MCI_STATUS_LENGTH;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	if (param1 < 1)
@@ -908,10 +913,10 @@ short WINAPI DLLExport TimePlay(fprdata rdPtr, long param1, long param2)
 
 	// Play track
 	MCIPlayParms.dwFrom = param1;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
@@ -919,7 +924,7 @@ short WINAPI DLLExport TimePlay(fprdata rdPtr, long param1, long param2)
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -929,9 +934,9 @@ short WINAPI DLLExport TimePlay(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Pause											    									//
-// 																							    //
+// 																								//
+//		Pause																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Pause(fprdata rdPtr, long param1, long param2)
@@ -939,29 +944,29 @@ short WINAPI DLLExport Pause(fprdata rdPtr, long param1, long param2)
 	MCI_OPEN_PARMS				MCIOpenParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Pause
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PAUSE, 0, (DWORD)(LPVOID)NULL)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PAUSE, 0, (DWORD)(LPVOID)NULL)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -971,9 +976,9 @@ short WINAPI DLLExport Pause(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Resume											    									//
-// 																							    //
+// 																								//
+//		Resume																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Resume(fprdata rdPtr, long param1, long param2)
@@ -984,54 +989,54 @@ short WINAPI DLLExport Resume(fprdata rdPtr, long param1, long param2)
 	MCI_PLAY_PARMS			MCIPlayParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Resume if supported
-	if (MCIERR_UNSUPPORTED_FUNCTION == (rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_RESUME, 0, (DWORD)(LPVOID)NULL)))
+	if (MCIERR_UNSUPPORTED_FUNCTION == (rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_RESUME, 0, (DWORD)(LPVOID)NULL)))
 	{
 		// Else, play
-		if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, 0, (DWORD)(LPVOID)NULL)) != 0)
+		if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, 0, (DWORD)(LPVOID)NULL)) != 0)
 		{
 			if (0 == rdPtr->rcdDevice)
-				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 			return 0;
 		}
 		if (TRUE == rdPtr->rcdStopAtTrackEnd)
 		{
 			// Set time format
 			MCISetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-			if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+			if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 			{
 				if (0 == rdPtr->rcdDevice)
-					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 				return 0;
 			}
 	
 			// Get current track number
 			MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-			if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+			if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 			{
 				if (0 == rdPtr->rcdDevice)
-					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 				return 0;
 			}
 	
 			// To next track
 			MCIPlayParms.dwTo = MCIStatusParms.dwReturn + 1;
-			if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+			if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 			{
 				if (0 == rdPtr->rcdDevice)
-					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+					mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 				return 0;
 			}
 		}
@@ -1040,13 +1045,13 @@ short WINAPI DLLExport Resume(fprdata rdPtr, long param1, long param2)
 	else
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1056,9 +1061,9 @@ short WINAPI DLLExport Resume(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Stop											    									//
-// 																							    //
+// 																								//
+//		Stop																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Stop(fprdata rdPtr, long param1, long param2)
@@ -1066,29 +1071,29 @@ short WINAPI DLLExport Stop(fprdata rdPtr, long param1, long param2)
 	MCI_OPEN_PARMS		MCIOpenParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Stop
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, (DWORD)(LPVOID)NULL)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STOP, 0, NULL)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd 
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1098,37 +1103,37 @@ short WINAPI DLLExport Stop(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Previous										    									//
-// 																							    //
+// 																								//
+//		Previous																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Previous(fprdata rdPtr, long param1, long param2)
 {
 	MCI_OPEN_PARMS			MCIOpenParms;
 	MCI_SET_PARMS			MCISetParms;
-    MCI_PLAY_PARMS			MCIPlayParms;
-    MCI_STATUS_PARMS		MCIStatusParms;
+	MCI_PLAY_PARMS			MCIPlayParms;
+	MCI_STATUS_PARMS		MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get current track
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
@@ -1137,31 +1142,31 @@ short WINAPI DLLExport Previous(fprdata rdPtr, long param1, long param2)
 	{
 		// Set time format
 		MCISetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-		if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+		if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 		{
 			if (0 == rdPtr->rcdDevice)
-				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 			return 0;
 		}
 
 		// Play previous track
 		MCIPlayParms.dwFrom = MCIStatusParms.dwReturn - 1;
-		if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+		if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 		{
 			if (0 == rdPtr->rcdDevice)
-				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 			return 0;
 		}
 		if (TRUE == rdPtr->rcdStopAtTrackEnd)
 		{
 			MCIPlayParms.dwTo = MCIStatusParms.dwReturn;
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
 		}
 	}
 		
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1171,48 +1176,48 @@ short WINAPI DLLExport Previous(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		Next											    									//
-// 																							    //
+// 																								//
+//		Next																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport Next(fprdata rdPtr, long param1, long param2)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_PLAY_PARMS 				MCIPlayParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
-	DWORD 					   	Nombre_Pistes;
+	MCI_PLAY_PARMS 				MCIPlayParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
+	DWORD 							Nombre_Pistes;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get number of track
 	MCIStatusParms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	Nombre_Pistes = MCIStatusParms.dwReturn;
 		
 	// Get current track number
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 		
@@ -1221,31 +1226,31 @@ short WINAPI DLLExport Next(fprdata rdPtr, long param1, long param2)
 	{
 		// Set time format
 		MCISetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-		if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+		if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 		{
 			if (0 == rdPtr->rcdDevice)
-				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 			return 0;
 		}
 
 		// Play next track
 		MCIPlayParms.dwFrom = MCIStatusParms.dwReturn + 1;
-		if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
+		if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_FROM, (DWORD)(LPVOID)&MCIPlayParms)) != 0)
 		{
 			if (0 == rdPtr->rcdDevice)
-				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+				mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 			return 0;
 		}
 		if (TRUE == rdPtr->rcdStopAtTrackEnd)
 		{
 			MCIPlayParms.dwTo = MCIStatusParms.dwReturn+2;
-			rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
+			rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_PLAY, MCI_TO, (DWORD)(LPVOID)&MCIPlayParms);
 		}
 	}
 		
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1255,9 +1260,9 @@ short WINAPI DLLExport Next(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		OpenDoor										    									//
-// 																							    //
+// 																								//
+//		OpenDoor																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport OpenDoor(fprdata rdPtr, long param1, long param2)
@@ -1265,29 +1270,29 @@ short WINAPI DLLExport OpenDoor(fprdata rdPtr, long param1, long param2)
 	MCI_OPEN_PARMS				MCIOpenParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Open door (Sesame, ouvre toi)
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, (WORD)(LPVOID)NULL)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, NULL)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1297,9 +1302,9 @@ short WINAPI DLLExport OpenDoor(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-//		CloseDoor										    									//
-// 																							    //
+// 																								//
+//		CloseDoor																				//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport CloseDoor(fprdata rdPtr, long param1, long param2)
@@ -1307,29 +1312,29 @@ short WINAPI DLLExport CloseDoor(fprdata rdPtr, long param1, long param2)
 	MCI_OPEN_PARMS				MCIOpenParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Close door (Sesame, ferme toi)
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, (WORD)(LPVOID)NULL)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, NULL)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	return 0;
 }
@@ -1345,11 +1350,11 @@ short WINAPI DLLExport CloseDoor(fprdata rdPtr, long param1, long param2)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		EXPRESSION ROUTINES																									//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1358,41 +1363,41 @@ short WINAPI DLLExport CloseDoor(fprdata rdPtr, long param1, long param2)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetNumberOfTracks					 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetNumberOfTracks(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get number of track
 	MCIStatusParms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return number of track
 	return MCIStatusParms.dwReturn;
@@ -1403,41 +1408,41 @@ long WINAPI DLLExport GetNumberOfTracks(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetCurrentTrack						 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetCurrentTrack(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get current track number
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		
 	// Return current track number
 	return MCIStatusParms.dwReturn;
@@ -1448,74 +1453,74 @@ long WINAPI DLLExport GetCurrentTrack(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetPositionInTrack					 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetPositionInTrack(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
-    ulong						TrackPosition;
-    ulong						Position;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
+	ulong						TrackPosition;
+	ulong						Position;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get current track number
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Get current current track position
 	MCIStatusParms.dwTrack = MCIStatusParms.dwReturn;
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	TrackPosition = MCIStatusParms.dwReturn;
 
 	// Get position in track
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	Position = MCIStatusParms.dwReturn - TrackPosition;
 		
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return position in track
 	return Position;
@@ -1526,61 +1531,61 @@ long WINAPI DLLExport GetPositionInTrack(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetTrackLength						 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetTrackLength(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
-    // Open cd
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Get current track number
 	MCIStatusParms.dwItem = MCI_STATUS_CURRENT_TRACK;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	
 	// Get current track position
 	MCIStatusParms.dwTrack = MCIStatusParms.dwReturn;
 	MCIStatusParms.dwItem = MCI_STATUS_LENGTH;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
-    
-    // Close cd
+	
+	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return current track length
 	return MCIStatusParms.dwReturn;
@@ -1591,51 +1596,51 @@ long WINAPI DLLExport GetTrackLength(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetPosition							 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long  WINAPI DLLExport GetPosition(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
-    
-    // Open cd
+	assert(rdPtr != NULL);
+	
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	
 	// Get position
 	MCIStatusParms.dwItem = MCI_STATUS_POSITION;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return position
 	return MCIStatusParms.dwReturn;
@@ -1646,51 +1651,51 @@ long  WINAPI DLLExport GetPosition(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetLength							 													//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetLength(fprdata rdPtr, long param1)
 {
 	MCI_OPEN_PARMS				MCIOpenParms;
 	MCI_SET_PARMS 				MCISetParms;
-    MCI_STATUS_PARMS          	MCIStatusParms;
+	MCI_STATUS_PARMS		  	MCIStatusParms;
 
 	// Debug assertion
-    assert(rdPtr != NULL);
-    
-    // Open cd
+	assert(rdPtr != NULL);
+	
+	// Open cd
 	if (0 == rdPtr->rcdDevice)
 	{
-	    MCIOpenParms.lpstrDeviceType = achCDAudio;
-	    if ((rdPtr->rcdError = (short)mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
-	    	return 0;
+		MCIOpenParms.lpstrDeviceType = achCDAudio;
+		if ((rdPtr->rcdError = mciSendCommand(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD)(LPVOID)&MCIOpenParms)) != 0)
+			return 0;
 	}
 	else
 		MCIOpenParms.wDeviceID = rdPtr->rcdDevice;
 
 	// Set time format
 	MCISetParms.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)(LPVOID)&MCISetParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 	
 	// Get length
 	MCIStatusParms.dwItem = MCI_STATUS_LENGTH;
-	if ((rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
+	if ((rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)(LPVOID)&MCIStatusParms)) != 0)
 	{
 		if (0 == rdPtr->rcdDevice)
-			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+			mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 		return 0;
 	}
 		
 	// Close cd
 	if (0 == rdPtr->rcdDevice)
-		rdPtr->rcdError = (short)mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, (WORD)(LPVOID)NULL);
+		rdPtr->rcdError = mciSendCommand(MCIOpenParms.wDeviceID, MCI_CLOSE, 0, NULL);
 
 	// Return length
 	return MCIStatusParms.dwReturn;
@@ -1701,15 +1706,15 @@ long WINAPI DLLExport GetLength(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		GetLastError2							 												//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long WINAPI DLLExport GetLastError2(fprdata rdPtr, long param1)
 {
 	// Debug assertion
-    assert(rdPtr != NULL);
+	assert(rdPtr != NULL);
 
 	return (rdPtr->rcdError);
 }
@@ -1725,11 +1730,11 @@ long WINAPI DLLExport GetLastError2(fprdata rdPtr, long param1)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		RETURN THE POPUP MENUS TO OPEN UNDER EVENT EDITOR																	//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1738,9 +1743,9 @@ long WINAPI DLLExport GetLastError2(fprdata rdPtr, long param1)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		menucpy																				    //
-// 																							    //
+// 																								//
+// 		menucpy																					//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
@@ -1777,9 +1782,9 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetPopupMenu																		    //
-// 																							    //
+// 																								//
+// 		GetPopupMenu																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 HMENU GetPopupMenu(short mn)
@@ -1803,16 +1808,16 @@ HMENU GetPopupMenu(short mn)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetConditionMenu																	    //
-// 																							    //
+// 																								//
+// 		GetConditionMenu																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 HMENU WINAPI DLLExport GetConditionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata edPtr)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(oiPtr != NULL);
+	assert(knpV != NULL);
+	assert(oiPtr != NULL);
 
 	return GetPopupMenu(MN_CONDITIONS);
 }
@@ -1821,16 +1826,16 @@ HMENU WINAPI DLLExport GetConditionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetActionMenu																		    //
-// 																							    //
+// 																								//
+// 		GetActionMenu																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 HMENU WINAPI DLLExport GetActionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata edPtr)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(oiPtr != NULL);
+	assert(knpV != NULL);
+	assert(oiPtr != NULL);
 	return GetPopupMenu(MN_ACTIONS);
 }
 
@@ -1839,16 +1844,16 @@ HMENU WINAPI DLLExport GetActionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata edP
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetExpressionMenu																	    //
-// 																							    //
+// 																								//
+// 		GetExpressionMenu																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 HMENU WINAPI DLLExport GetExpressionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata edPtr)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(oiPtr != NULL);
+	assert(knpV != NULL);
+	assert(oiPtr != NULL);
 	return GetPopupMenu(MN_EXPRESSIONS);
 }
 
@@ -1863,11 +1868,11 @@ HMENU WINAPI DLLExport GetExpressionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		RETURN THE TEXT TO BE DISPLAYED AS TITLE FOR PARAMETERS INPUT														//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1876,9 +1881,9 @@ HMENU WINAPI DLLExport GetExpressionMenu(mv _far *knpV, fpObjInfo oiPtr, fpedata
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetCodeTitle																		    //
-// 																							    //
+// 																								//
+// 		GetCodeTitle																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GetCodeTitle(WORD s, short mn, short entryId, LPSTR strBuf, WORD maxLen)
@@ -1886,7 +1891,7 @@ void GetCodeTitle(WORD s, short mn, short entryId, LPSTR strBuf, WORD maxLen)
 	HMENU		hMn;
 
 	// Debug assertion
-    assert(strBuf != NULL);
+	assert(strBuf != NULL);
 
 	// If a special string is to be returned
 	if (s != 0)
@@ -1908,16 +1913,16 @@ void GetCodeTitle(WORD s, short mn, short entryId, LPSTR strBuf, WORD maxLen)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetConditionTitle																	    //
-// 																							    //
+// 																								//
+// 		GetConditionTitle																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetConditionTitle(mv _far *knpV, short code, short param, fpchar strBuf, short maxLen)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strBuf != NULL);
+	assert(knpV != NULL);
+	assert(strBuf != NULL);
 
 	GetCodeTitle(conditionsInfos[code].paramTitle[param], MN_CONDITIONS, (short)(ID_MENUCONDITIONS + code), strBuf, maxLen);
 }
@@ -1927,16 +1932,16 @@ void WINAPI DLLExport GetConditionTitle(mv _far *knpV, short code, short param, 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetActionTitle																		    //
-// 																							    //
+// 																								//
+// 		GetActionTitle																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetActionTitle(mv _far *knpV, short code, short param, fpchar strBuf, short maxLen)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strBuf != NULL);
+	assert(knpV != NULL);
+	assert(strBuf != NULL);
 
 	GetCodeTitle(actionsInfos[code].paramTitle[param], MN_ACTIONS, (short)(ID_MENUACTIONS + code), strBuf, maxLen);
 }
@@ -1946,16 +1951,16 @@ void WINAPI DLLExport GetActionTitle(mv _far *knpV, short code, short param, fpc
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetExpressionTitle																	    //
-// 																							    //
+// 																								//
+// 		GetExpressionTitle																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetExpressionTitle(mv _far *knpV, short code, fpchar strBuf, short maxLen)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strBuf != NULL);
+	assert(knpV != NULL);
+	assert(strBuf != NULL);
 
 	GetCodeTitle(expressionsInfos[code].paramTitle[0], MN_EXPRESSIONS, (short)(ID_MENUEXPRESSIONS + code), strBuf, maxLen);
 }
@@ -1971,11 +1976,11 @@ void WINAPI DLLExport GetExpressionTitle(mv _far *knpV, short code, fpchar strBu
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		CONVERTS A MENU ID TO INTERNAL EVENT CODE																			//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1984,15 +1989,15 @@ void WINAPI DLLExport GetExpressionTitle(mv _far *knpV, short code, fpchar strBu
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetConditionCodeFromMenu															    //
-// 																							    //
+// 																								//
+// 		GetConditionCodeFromMenu																//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport GetConditionCodeFromMenu(mv _far *knpV, short menuId)
 {
 	// Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	if (menuId >= ID_MENUCONDITIONS && menuId < ID_MENUCONDITIONS + CND_LAST)
 	{
@@ -2006,15 +2011,15 @@ short WINAPI DLLExport GetConditionCodeFromMenu(mv _far *knpV, short menuId)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetActionCodeFromMenu																    //
-// 																							    //
+// 																								//
+// 		GetActionCodeFromMenu																	//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport GetActionCodeFromMenu(mv _far *knpV, short menuId)
 {
 	 // Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	if (menuId >= ID_MENUACTIONS && menuId < ID_MENUACTIONS + ACT_LAST)
 	{
@@ -2028,15 +2033,15 @@ short WINAPI DLLExport GetActionCodeFromMenu(mv _far *knpV, short menuId)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetExpressionCodeFromMenu															    //
-// 																							    //
+// 																								//
+// 		GetExpressionCodeFromMenu																//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *knpV, short menuId)
 {
 	// Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	if (menuId >= ID_MENUEXPRESSIONS && menuId < ID_MENUEXPRESSIONS + EXP_LAST)
 	{
@@ -2056,11 +2061,11 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *knpV, short menuId)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		RETURNS INFORMATIONS ABOUT ONE EVENT																				//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2069,15 +2074,15 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *knpV, short menuId)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetConditionInfos																	    //
-// 																							    //
+// 																								//
+// 		GetConditionInfos																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 infosEvents _far * WINAPI DLLExport GetConditionInfos(mv _far *knpV, short code)
 {
 	// Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	return &conditionsInfos[code];
 }
@@ -2087,15 +2092,15 @@ infosEvents _far * WINAPI DLLExport GetConditionInfos(mv _far *knpV, short code)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetActionInfos																		    //
-// 																							    //
+// 																								//
+// 		GetActionInfos																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 infosEvents _far * WINAPI DLLExport GetActionInfos(mv _far *knpV, short code)
 {
 	// Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	return &actionsInfos[code];
 }
@@ -2105,15 +2110,15 @@ infosEvents _far * WINAPI DLLExport GetActionInfos(mv _far *knpV, short code)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetExpressionInfos																	    //
-// 																							    //
+// 																								//
+// 		GetExpressionInfos																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 infosEvents _far * WINAPI DLLExport GetExpressionInfos(mv _far *knpV, short code)
 {
 	// Debug assertion
-    assert(knpV != NULL);
+	assert(knpV != NULL);
 
 	return &expressionsInfos[code];
 }
@@ -2129,11 +2134,11 @@ infosEvents _far * WINAPI DLLExport GetExpressionInfos(mv _far *knpV, short code
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		RETURN THE DISPLAY STRING OF AN EVENT																				//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2142,16 +2147,16 @@ infosEvents _far * WINAPI DLLExport GetExpressionInfos(mv _far *knpV, short code
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetConditionString																	    //
-// 																							    //
+// 																								//
+// 		GetConditionString																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetConditionString(mv _far *knpV, short code, fpchar strPtr, short maxLen)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strPtr != NULL);
+	assert(knpV != NULL);
+	assert(strPtr != NULL);
 
 	// Check compatibility
 	if ( !IS_COMPATIBLE(knpV) )
@@ -2168,16 +2173,16 @@ void WINAPI DLLExport GetConditionString(mv _far *knpV, short code, fpchar strPt
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetActionString																		    //
-// 																							    //
+// 																								//
+// 		GetActionString																			//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetActionString(mv _far *knpV, short code, fpchar strPtr, short maxLen)
-{            
+{			
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strPtr != NULL);
+	assert(knpV != NULL);
+	assert(strPtr != NULL);
 
 	// Check compatibility
 	if ( !IS_COMPATIBLE(knpV) )
@@ -2194,16 +2199,16 @@ void WINAPI DLLExport GetActionString(mv _far *knpV, short code, fpchar strPtr, 
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
-// 		GetExpressionString																	    //
-// 																							    //
+// 																								//
+// 		GetExpressionString																		//
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetExpressionString(mv _far *knpV, short code, fpchar strPtr, short maxLen)
-{            
+{			
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(strPtr != NULL);
+	assert(knpV != NULL);
+	assert(strPtr != NULL);
 
 	// Check compatibility
 	if ( !IS_COMPATIBLE(knpV) )
@@ -2223,11 +2228,11 @@ void WINAPI DLLExport GetExpressionString(mv _far *knpV, short code, fpchar strP
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		SUB-ROUTINES																										//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2235,9 +2240,9 @@ void WINAPI DLLExport GetExpressionString(mv _far *knpV, short code, fpchar strP
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		Create object																			//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 int WINAPI DLLExport CreateObject(mv _far *knpV, fpLevObj loPtr, fpedata edPtr)
@@ -2256,18 +2261,18 @@ int WINAPI DLLExport CreateObject(mv _far *knpV, fpLevObj loPtr, fpedata edPtr)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		Get object rectangle																	//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void WINAPI DLLExport GetObjectRect(mv _far *knpV, RECT FAR *rc, fpLevObj loPtr, fpedata edPtr)
 {
 	// Debug assertion
-    assert(knpV != NULL);
-    assert(rc != NULL);
-    assert(loPtr != NULL);
-    assert(edPtr != NULL);
+	assert(knpV != NULL);
+	assert(rc != NULL);
+	assert(loPtr != NULL);
+	assert(edPtr != NULL);
 
 	// Returns size of the icon
 	rc->right = rc->left + 32;
@@ -2291,9 +2296,9 @@ LPCSTR WINAPI DLLExport GetHelpFileName()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		PROPERTIES  																			//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 BOOL WINAPI DLLExport GetProperties(LPMV mV, fpedata edPtr, BOOL bMasterItem)
@@ -2370,9 +2375,9 @@ void WINAPI DLLExport SetPropCheck (LPMV mV, fpedata edPtr, UINT nPropID, int nC
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		DEBUGGER	  																			//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 LPWORD WINAPI DLLExport GetDebugTree(fprdata rdPtr)
@@ -2572,9 +2577,9 @@ void WINAPI DLLExport GetDebugItem(LPSTR pBuffer, fprdata rdPtr, int id)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		Library entry point																		//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
@@ -2595,8 +2600,8 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 			break;
 
 		// The calling process is detaching the DLL from its address space.
-	    case DLL_PROCESS_DETACH:
-	    	// Virer les objets??
+		case DLL_PROCESS_DETACH:
+			// Virer les objets??
 			break;
 	}
 
@@ -2606,9 +2611,9 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		Demande d'infos a propos de l'objet														//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern "C" DWORD WINAPI DLLExport GetInfos(int info)
@@ -2634,9 +2639,9 @@ extern "C" DWORD WINAPI DLLExport GetInfos(int info)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 //		Update Object's Version																	//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 	
 HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *knpV, void __far * OldEdPtr)
@@ -2651,11 +2656,11 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *knpV, void __far * OldEdP
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		RETURNS ADRESSES OF JUMP TABLES AND INFORMATIONS ABOUT THE RUN-OBJECT												//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2664,9 +2669,9 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *knpV, void __far * OldEdP
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 // 		Jump table to conditions																//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long ( WINAPI * ConditionJumps[] ) (fprdata rdPtr,long param1,long param2) = 
@@ -2681,9 +2686,9 @@ long ( WINAPI * ConditionJumps[] ) (fprdata rdPtr,long param1,long param2) =
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 // 		Jump table to actions																	//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short ( WINAPI * ActionJumps[] ) (fprdata rdPtr,long param1,long param2) =
@@ -2706,13 +2711,13 @@ short ( WINAPI * ActionJumps[] ) (fprdata rdPtr,long param1,long param2) =
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 // 		Jump table to expressions																//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 long ( WINAPI * ExpressionJumps[] ) (fprdata rdPtr,long param) = 
-				{     
+				{	 
 				GetCurrentTrack,
 				GetNumberOfTracks,
 				GetPositionInTrack,
@@ -2728,15 +2733,15 @@ long ( WINAPI * ExpressionJumps[] ) (fprdata rdPtr,long param) =
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// 																							    //
+// 																								//
 // 		get infos on object																		//
-// 																							    //
+// 																								//
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 short WINAPI DLLExport GetRunObjectInfos(mv _far *knpV, fpKpxRunInfos infoPtr)
-{            
+{			
 	// Debug assertion
-    assert(infoPtr != NULL);
+	assert(infoPtr != NULL);
 
 	infoPtr->conditions = (LPBYTE)ConditionJumps;
 	infoPtr->actions = (LPBYTE)ActionJumps;

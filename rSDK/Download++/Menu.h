@@ -57,13 +57,13 @@
 
 #ifdef EXPRESSION_MENU
 	ITEM(0,"Get file size (without download)")
-    SEPARATOR
-    ITEM(1,"Current URL")
-    ITEM(2,"Total file size")
-    ITEM(3,"Current download position")
-    ITEM(4,"Current download percentage")
-    ITEM(5,"Current speed (bytes per second)")
-    ITEM(6,"Estimated download time")
+	SEPARATOR
+	ITEM(1,"Current URL")
+	ITEM(2,"Total file size")
+	ITEM(3,"Current download position")
+	ITEM(4,"Current download percentage")
+	ITEM(5,"Current speed (bytes per second)")
+	ITEM(6,"Estimated download time")
 	SEPARATOR
 	ITEM(7,"Last error text")
 #endif

@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2008, Nils Hasler, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -41,7 +41,7 @@
 
 // Author: Nils Hasler <hasler@mpi-inf.mpg.de>
 //
-//         Max-Planck-Institut Informatik
+//		 Max-Planck-Institut Informatik
 //
 // this implementation was inspired by gnash's gstreamer interface
 
@@ -68,17 +68,17 @@ typedef struct CvCapture_GStreamer
 	/// method call table
 	int			type;	// one of [1394, v4l2, v4l, file]
 
-	GstElement	       *pipeline;
-	GstElement	       *source;
-	GstElement	       *decodebin;
-	GstElement	       *colour;
-	GstElement	       *appsink;
+	GstElement			*pipeline;
+	GstElement			*source;
+	GstElement			*decodebin;
+	GstElement			*colour;
+	GstElement			*appsink;
 
-	GstBuffer	       *buffer;
+	GstBuffer			*buffer;
 
-	GstCaps		       *caps;	// filter caps inserted right after the source
+	GstCaps				*caps;	// filter caps inserted right after the source
 
-	IplImage	       *frame;
+	IplImage			*frame;
 } CvCapture_GStreamer;
 
 static void icvClose_GStreamer(CvCapture_GStreamer *cap)
@@ -203,7 +203,7 @@ static int icvGrabFrame_GStreamer(CvCapture_GStreamer *cap)
 //		printf("pipeline paused\n");
 	} else {
 //		printf("peeking buffer, %d buffers in queue\n",
-//		       gst_app_sink_get_queue_length(GST_APP_SINK(cap->appsink)));
+//				gst_app_sink_get_queue_length(GST_APP_SINK(cap->appsink)));
 		cap->buffer = gst_app_sink_peek_buffer(GST_APP_SINK(cap->appsink));
 	}
 
@@ -234,10 +234,10 @@ static IplImage *icvRetrieveFrame_GStreamer(CvCapture_GStreamer *cap)
 	gint bpp, endianness, redmask, greenmask, bluemask;
 
 	if(!gst_structure_get_int(structure, "bpp", &bpp) ||
-	   !gst_structure_get_int(structure, "endianness", &endianness) ||
-	   !gst_structure_get_int(structure, "red_mask", &redmask) ||
-	   !gst_structure_get_int(structure, "green_mask", &greenmask) ||
-	   !gst_structure_get_int(structure, "blue_mask", &bluemask)) {
+		!gst_structure_get_int(structure, "endianness", &endianness) ||
+		!gst_structure_get_int(structure, "red_mask", &redmask) ||
+		!gst_structure_get_int(structure, "green_mask", &greenmask) ||
+		!gst_structure_get_int(structure, "blue_mask", &bluemask)) {
 		printf("missing essential information in buffer caps, %s\n", gst_caps_to_string(caps));
 		return 0;
 	}
@@ -251,7 +251,7 @@ static IplImage *icvRetrieveFrame_GStreamer(CvCapture_GStreamer *cap)
 		gint height, width;
 
 		if(!gst_structure_get_int(structure, "width", &width) ||
-		   !gst_structure_get_int(structure, "height", &height))
+			!gst_structure_get_int(structure, "height", &height))
 			return 0;
 
 //		printf("creating frame %dx%d\n", width, height);
@@ -366,7 +366,7 @@ static void icvRestartPipeline(CvCapture_GStreamer *cap)
 	printf("restarting pipeline, going to ready\n");
 
 	if(gst_element_set_state(GST_ELEMENT(cap->pipeline), GST_STATE_READY) ==
-	   GST_STATE_CHANGE_FAILURE) {
+		GST_STATE_CHANGE_FAILURE) {
 		CV_ERROR(CV_StsError, "GStreamer: unable to start pipeline\n");
 		return;
 	}
@@ -380,7 +380,7 @@ static void icvRestartPipeline(CvCapture_GStreamer *cap)
 	printf("relinked, pausing\n");
 
 	if(gst_element_set_state(GST_ELEMENT(cap->pipeline), GST_STATE_PAUSED) ==
-	   GST_STATE_CHANGE_FAILURE) {
+		GST_STATE_CHANGE_FAILURE) {
 		CV_ERROR(CV_StsError, "GStreamer: unable to start pipeline\n");
 		return;
 	}
@@ -436,7 +436,7 @@ static int icvSetProperty_GStreamer(CvCapture_GStreamer *cap, int id, double val
 		format = GST_FORMAT_TIME;
 		flags = (GstSeekFlags) (GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE);
 		if(!gst_element_seek_simple(GST_ELEMENT(cap->pipeline), format,
-					    flags, (gint64) (value * GST_MSECOND))) {
+						flags, (gint64) (value * GST_MSECOND))) {
 			CV_WARN("GStreamer: unable to seek");
 		}
 		break;
@@ -444,7 +444,7 @@ static int icvSetProperty_GStreamer(CvCapture_GStreamer *cap, int id, double val
 		format = GST_FORMAT_BUFFERS;
 		flags = (GstSeekFlags) (GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE);
 		if(!gst_element_seek_simple(GST_ELEMENT(cap->pipeline), format,
-					    flags, (gint64) value)) {
+						flags, (gint64) value)) {
 			CV_WARN("GStreamer: unable to seek");
 		}
 		break;
@@ -452,7 +452,7 @@ static int icvSetProperty_GStreamer(CvCapture_GStreamer *cap, int id, double val
 		format = GST_FORMAT_PERCENT;
 		flags = (GstSeekFlags) (GST_SEEK_FLAG_FLUSH|GST_SEEK_FLAG_ACCURATE);
 		if(!gst_element_seek_simple(GST_ELEMENT(cap->pipeline), format,
-					    flags, (gint64) (value * GST_FORMAT_PERCENT_MAX))) {
+						flags, (gint64) (value * GST_FORMAT_PERCENT_MAX))) {
 			CV_WARN("GStreamer: unable to seek");
 		}
 		break;
@@ -593,10 +593,10 @@ static CvCapture_GStreamer * icvCreateCapture_GStreamer(int type, const char *fi
 	switch(type) {
 	case CV_CAP_GSTREAMER_V4L2: // default to 640x480, 30 fps
 		caps = gst_caps_new_simple("video/x-raw-rgb",
-					   "width", G_TYPE_INT, 640,
-					   "height", G_TYPE_INT, 480,
-					   "framerate", GST_TYPE_FRACTION, 30, 1,
-					   NULL);
+						"width", G_TYPE_INT, 640,
+						"height", G_TYPE_INT, 480,
+						"framerate", GST_TYPE_FRACTION, 30, 1,
+						NULL);
 		if(!gst_element_link_filtered(source, decodebin, caps)) {
 			CV_ERROR(CV_StsError, "GStreamer: cannot link v4l2src -> decodebin\n");
 			gst_object_unref(pipeline);
@@ -624,7 +624,7 @@ static CvCapture_GStreamer * icvCreateCapture_GStreamer(int type, const char *fi
 //	printf("linked, pausing\n");
 
 	if(gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_PAUSED) ==
-	   GST_STATE_CHANGE_FAILURE) {
+		GST_STATE_CHANGE_FAILURE) {
 		CV_WARN("GStreamer: unable to set pipeline to paused\n");
 //		icvHandleMessage(capture);
 //		cvReleaseCapture((CvCapture **)(void *)&capture);
@@ -647,7 +647,7 @@ static CvCapture_GStreamer * icvCreateCapture_GStreamer(int type, const char *fi
 	icvHandleMessage(capture);
 
 	OPENCV_ASSERT(capture,
-                      "cvCaptureFromFile_GStreamer( const char * )", "couldn't create capture");
+					  "cvCaptureFromFile_GStreamer( const char * )", "couldn't create capture");
 
 //	GstClock *clock = gst_pipeline_get_clock(GST_PIPELINE(pipeline));
 //	printf("clock %s\n", gst_object_get_name(GST_OBJECT(clock)));
@@ -664,7 +664,7 @@ static CvCapture_GStreamer * icvCreateCapture_GStreamer(int type, const char *fi
 //
 //
 typedef struct CvVideoWriter_GStreamer {
-	char		       *filename;
+	char				*filename;
 	unsigned		currentframe;
 };
 
@@ -740,64 +740,64 @@ CvVideoWriter* cvCreateVideoWriter_GStreamer( const char* filename )
 class CvCapture_GStreamer_CPP : public CvCapture
 {
 public:
-    CvCapture_GStreamer_CPP() { captureGS = 0; }
-    virtual ~CvCapture_GStreamer_CPP() { close(); }
+	CvCapture_GStreamer_CPP() { captureGS = 0; }
+	virtual ~CvCapture_GStreamer_CPP() { close(); }
 
-    virtual bool open( int type, const char* filename );
-    virtual void close();
+	virtual bool open( int type, const char* filename );
+	virtual void close();
 
-    virtual double getProperty(int);
-    virtual bool setProperty(int, double);
-    virtual bool grabFrame();
-    virtual IplImage* retrieveFrame();
+	virtual double getProperty(int);
+	virtual bool setProperty(int, double);
+	virtual bool grabFrame();
+	virtual IplImage* retrieveFrame();
 protected:
 
-    CvCapture_GStreamer* captureGS;
+	CvCapture_GStreamer* captureGS;
 };
 
 bool CvCapture_GStreamer_CPP::open( int type, const char* filename )
 {
-    close();
-    captureGS = icvCreateCapture_GStreamer( type, filename );
-    return captureGS != 0;
+	close();
+	captureGS = icvCreateCapture_GStreamer( type, filename );
+	return captureGS != 0;
 }
 
 void CvCapture_GStreamer_CPP::close()
 {
-    if( captureGS )
-    {
-        icvClose_GStreamer( captureGS );
-        cvFree( &captureGS );
-    }
+	if( captureGS )
+	{
+		icvClose_GStreamer( captureGS );
+		cvFree( &captureGS );
+	}
 }
 
 bool CvCapture_GStreamer_CPP::grabFrame()
 {
-    return captureGS ? icvGrabFrame_GStreamer( captureGS ) != 0 : false;
+	return captureGS ? icvGrabFrame_GStreamer( captureGS ) != 0 : false;
 }
 
 IplImage* CvCapture_GStreamer_CPP::retrieveFrame()
 {
-    return captureGS ? (IplImage*)icvRetrieveFrame_GStreamer( captureGS ) : 0;
+	return captureGS ? (IplImage*)icvRetrieveFrame_GStreamer( captureGS ) : 0;
 }
 
 double CvCapture_GStreamer_CPP::getProperty( int propId )
 {
-    return captureGS ? icvGetProperty_GStreamer( captureGS, propId ) : 0;
+	return captureGS ? icvGetProperty_GStreamer( captureGS, propId ) : 0;
 }
 
 bool CvCapture_GStreamer_CPP::setProperty( int propId, double value )
 {
-    return captureGS ? icvSetProperty_GStreamer( captureGS, propId, value ) != 0 : false;
+	return captureGS ? icvSetProperty_GStreamer( captureGS, propId, value ) != 0 : false;
 }
 
 CvCapture* cvCreateCapture_GStreamer( int type, const char* filename )
 {
-    CvCapture_GStreamer_CPP* capture = new CvCapture_GStreamer_CPP;
+	CvCapture_GStreamer_CPP* capture = new CvCapture_GStreamer_CPP;
 
-    if( capture->open( type, filename ))
-        return capture;
+	if( capture->open( type, filename ))
+		return capture;
 
-    delete capture;
-    return 0;
+	delete capture;
+	return 0;
 }

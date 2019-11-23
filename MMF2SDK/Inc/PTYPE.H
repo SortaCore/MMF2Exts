@@ -14,7 +14,7 @@
 #define	ushort	unsigned short
 #define	ulong	unsigned long
 
-#ifdef	WIN32
+#ifdef	_WIN32
 #define	_near
 #define	_far
 #endif

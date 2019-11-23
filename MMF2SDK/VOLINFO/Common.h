@@ -6,26 +6,24 @@
 	#define	_CRTDBG_MAP_ALLOC	1
 #endif
 
-#define	IN_EXT_VERSION2
-
 // ----------------------------------------------
 // VERSION AND BUILD YOUR EXTENSION CAN WORK WITH
 // ----------------------------------------------
-//#define TGFEXT		// TGF, MMF Standard and MMF Pro
+//#define TGFEXT	// TGF, MMF Standard and MMF Pro
 #define	MMFEXT			// MMF Standard and MMF Pro
-//#define PROEXT		// MMF Pro only
+//#define PROEXT	// MMF Pro only
 
 // Build number of the minimum required version of MMF
 #define	MINBUILD	228
 
 // General includes
-#include	"ccxhdr.h"
-#include	"Surface.h"
+#include "ccxhdr.h"
+#include "Surface.h"
 
 // Specific to this cox
-#include	"resource.h"
-#include	"main.h"
-#include	"TigsExt.hpp"
+#include "resource.h"
+#include "main.h"
+#include "TigsExt.hpp"
 
 // Globals and Prototypes
 extern HINSTANCE hInstLib;

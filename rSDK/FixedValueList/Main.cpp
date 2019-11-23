@@ -11,25 +11,26 @@
 // 
 // ============================================================================
 
-void RefreshList (LPRDATA rdPtr, bool GEvent = false)
+void RefreshList(LPRDATA rdPtr, bool GEvent = false)
 {
 	// Obtain object list
-	LPRH	rhPtr  = rdPtr -> rHo.hoAdRunHeader;
-	LPOBL   oblPtr = (LPOBL)rhPtr->rhObjectList;
+	LPRH	rhPtr  = rdPtr->rHo.hoAdRunHeader;
+	LPOBL	oblPtr = (LPOBL)rhPtr->rhObjectList;
 	
 	// Clear current list
-	rdPtr -> FixedVector.clear();
+	rdPtr->FixedVector.clear();
 
 	// Loop through object list and add to vector list
 	for (int i = 0; i < rhPtr->rhNObjects; oblPtr++, i++)
 	{
 		LPRO roPtr = (LPRO)(oblPtr->oblOffset);
-		if (roPtr == NULL) continue;
-		rdPtr -> FixedVector.push_back((roPtr->roHo.hoCreationId << 16) + roPtr->roHo.hoNumber);
-		if (GEvent) //If iterating action, generate an event.
+		if (roPtr == NULL)
+			continue;
+		rdPtr->FixedVector.push_back((roPtr->roHo.hoCreationId << 16) + roPtr->roHo.hoNumber);
+		if (GEvent) // If iterating action, generate an event.
 		{
-			rdPtr -> FValue = (roPtr->roHo.hoCreationId << 16) + roPtr->roHo.hoNumber;
-			rdPtr -> rRd-> GenerateEvent(0);
+			rdPtr->FValue = (roPtr->roHo.hoCreationId << 16) + roPtr->roHo.hoNumber;
+			rdPtr->rRd->GenerateEvent(0);
 		}
 	}
 }
@@ -80,7 +81,9 @@ EXPRESSION(
 	/* Params */		(0)
 ) {
 	// Deprecated expression: Notify user
-	MessageBox(NULL, _T("Sorry to interrupt your programming, but you have\nan old \"LastFixedValue\" expression in FixedValueList which needs replacing.\nClick the FixedValueList icon in your event editor to see all the events\nZlibStream is in."), _T("Darkwire Software - Old Expression Notice"), MB_OK);
+	MessageBox(NULL, _T("An old \"LastFixedValue\" expression in FixedValueList needs replacing.\n")
+		_T("Click the FixedValueList icon in your event editor to see all the events\nFixedValueList is in."),
+		_T("FixedValueList - Old Expression Notice"), MB_OK);
 	return 0;
 }
 
@@ -90,7 +93,7 @@ EXPRESSION(
 	/* Flags */			0,
 	/* Params */		(0)
 ) {
-	return rdPtr -> FValue;
+	return rdPtr->FValue;
 }
 
 EXPRESSION(
@@ -99,16 +102,20 @@ EXPRESSION(
 	/* Flags */			0,
 	/* Params */		(1, EXPPARAM_NUMBER, _T("Index"))
 ) {
-	int p1 = ExParam(TYPE_INT);
+	size_t p1 = (size_t)ExParam(TYPE_INT);
 	RefreshList(rdPtr);
-	if (p1 >= 0 && p1 < rdPtr -> FixedVector.size()) //Remember vectors are 0-based.
-		return rdPtr -> FixedVector[p1];
+	if (p1 >= 0 && p1 < rdPtr->FixedVector.size()) // remember vectors are 0-based.
+		return rdPtr->FixedVector[p1];
 	else
 	{
-		rdPtr -> LastError = _T("GetFixedFromIndex failed: index out of range.");
+		rdPtr->LastError = _T("GetFixedFromIndex failed: index out of range.");
 		return 0;
 	}
-	
+}
+
+namespace std {
+	using tstring = basic_string<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
+	using tstringstream = basic_stringstream<TCHAR, char_traits<TCHAR>, allocator<TCHAR>>;
 }
 
 EXPRESSION(
@@ -117,25 +124,25 @@ EXPRESSION(
 	/* Flags */			EXPFLAG_STRING,
 	/* Params */		(1, EXPPARAM_STRING, _T("Delimiter"))
 ) {
-	tchar * p1 = (tchar *) ExParam(TYPE_STRING);
-	if (p1 = _T(""))
+	const TCHAR * p1 = (const TCHAR *) ExParam(TYPE_STRING);
+	if (p1[0] == _T('\0'))
 	{
-		rdPtr -> LastError = _T("Blank delimiter given.");
+		rdPtr->LastError = _T("Blank delimiter given.");
 		ReturnStringSafe(_T("0"));
 	}
-	stringstream ss;
-	string temp, temp2;
+	std::tstringstream ss;
+	std::tstring temp, temp2;
 	RefreshList(rdPtr);
-	for (int i = 0; i < rdPtr -> FixedVector.size(); i++)
+	for (size_t i = 0; i < rdPtr->FixedVector.size(); i++)
 	{
 		//Add to stringstream
-		ss << rdPtr -> FixedVector[i] << p1;
+		ss << rdPtr->FixedVector[i] << p1;
 	}
 	// Set temp to the stream
 	temp = ss.str(); ss.flush();
 	// This removes the ending delimiter. For example, "F1|F2|" goes to "F1|F2".
 	// 0 is the offset of the first character to read: here it is 0, read from start.
-	temp2 = temp.substr(0, temp.length()-(_tcslen(p1)*sizeof(tchar))); temp = "";
+	temp2 = temp.substr(0, temp.size() - _tcslen(p1));
 #ifndef UNICODE
 	ReturnStringSafe(temp2.c_str());
 #else
@@ -152,5 +159,5 @@ EXPRESSION(
 	/* Flags */			EXPFLAG_STRING,
 	/* Params */		(0)
 ) {
-	ReturnStringSafe(rdPtr -> LastError);
+	ReturnStringSafe(rdPtr->LastError);
 }

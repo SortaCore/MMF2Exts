@@ -13,8 +13,8 @@
 
 /*
  * Define BITS_IN_JSAMPLE as either
- *   8   for 8-bit sample values (the usual setting)
- *   12  for 12-bit sample values
+ *	8	for 8-bit sample values (the usual setting)
+ *	12  for 12-bit sample values
  * Only 8 and 12 are legal data precisions for lossy JPEG according to the
  * JPEG standard, and the IJG code does not support anything else!
  * We do not support run-time selection of data precision, sorry.
@@ -266,10 +266,10 @@ typedef int boolean;
 
 /* Encoder capability options: */
 
-#undef  C_ARITH_CODING_SUPPORTED    /* Arithmetic coding back end? */
+#undef  C_ARITH_CODING_SUPPORTED	/* Arithmetic coding back end? */
 #define C_MULTISCAN_FILES_SUPPORTED /* Multiple-scan JPEG files? */
-#define C_PROGRESSIVE_SUPPORTED	    /* Progressive JPEG? (Requires MULTISCAN)*/
-#define ENTROPY_OPT_SUPPORTED	    /* Optimization of entropy coding parms? */
+#define C_PROGRESSIVE_SUPPORTED		/* Progressive JPEG? (Requires MULTISCAN)*/
+#define ENTROPY_OPT_SUPPORTED		/* Optimization of entropy coding parms? */
 /* Note: if you selected 12-bit data precision, it is dangerous to turn off
  * ENTROPY_OPT_SUPPORTED.  The standard Huffman tables are only good for 8-bit
  * precision, so jchuff.c normally uses entropy optimization to compute
@@ -278,20 +278,20 @@ typedef int boolean;
  * The exact same statements apply for progressive JPEG: the default tables
  * don't work for progressive mode.  (This may get fixed, however.)
  */
-#define INPUT_SMOOTHING_SUPPORTED   /* Input image smoothing option? */
+#define INPUT_SMOOTHING_SUPPORTED	/* Input image smoothing option? */
 
 /* Decoder capability options: */
 
-#undef  D_ARITH_CODING_SUPPORTED    /* Arithmetic coding back end? */
+#undef  D_ARITH_CODING_SUPPORTED	/* Arithmetic coding back end? */
 #define D_MULTISCAN_FILES_SUPPORTED /* Multiple-scan JPEG files? */
-#define D_PROGRESSIVE_SUPPORTED	    /* Progressive JPEG? (Requires MULTISCAN)*/
-#define SAVE_MARKERS_SUPPORTED	    /* jpeg_save_markers() needed? */
-#define BLOCK_SMOOTHING_SUPPORTED   /* Block smoothing? (Progressive only) */
-#define IDCT_SCALING_SUPPORTED	    /* Output rescaling via IDCT? */
+#define D_PROGRESSIVE_SUPPORTED		/* Progressive JPEG? (Requires MULTISCAN)*/
+#define SAVE_MARKERS_SUPPORTED		/* jpeg_save_markers() needed? */
+#define BLOCK_SMOOTHING_SUPPORTED	/* Block smoothing? (Progressive only) */
+#define IDCT_SCALING_SUPPORTED		/* Output rescaling via IDCT? */
 #undef  UPSAMPLE_SCALING_SUPPORTED  /* Output rescaling at upsample stage? */
 #define UPSAMPLE_MERGING_SUPPORTED  /* Fast path for sloppy upsampling? */
-#define QUANT_1PASS_SUPPORTED	    /* 1-pass color quantization? */
-#define QUANT_2PASS_SUPPORTED	    /* 2-pass color quantization? */
+#define QUANT_1PASS_SUPPORTED		/* 1-pass color quantization? */
+#define QUANT_2PASS_SUPPORTED		/* 2-pass color quantization? */
 
 /* more capability options later, no doubt */
 
@@ -305,10 +305,10 @@ typedef int boolean;
  * RESTRICTIONS:
  * 1. The sample applications cjpeg,djpeg do NOT support modified RGB formats.
  * 2. These macros only affect RGB<=>YCbCr color conversion, so they are not
- *    useful if you are using JPEG color spaces other than YCbCr or grayscale.
+ *	useful if you are using JPEG color spaces other than YCbCr or grayscale.
  * 3. The color quantizer modules will not behave desirably if RGB_PIXELSIZE
- *    is not 3 (they don't understand about dummy color components!).  So you
- *    can't use color quantization if you change that value.
+ *	is not 3 (they don't understand about dummy color components!).  So you
+ *	can't use color quantization if you change that value.
  */
 
 #define RGB_RED		0	/* Offset of Red in an RGB scanline element */

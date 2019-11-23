@@ -10,30 +10,30 @@
 //THE SOFTWARE.
 
 //////////////////////////////////////////////////////////
-//Written by Theodore Watson - theo.watson@gmail.com    //
-//Do whatever you want with this code but if you find   //
-//a bug or make an improvement I would love to know!    //
+//Written by Theodore Watson - theo.watson@gmail.com	//
+//Do whatever you want with this code but if you find	//
+//a bug or make an improvement I would love to know!	//
 //														//
 //Warning This code is experimental 					//
 //use at your own risk :)								//
 //////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
-/*                     Shoutouts 
+/*					 Shoutouts 
 
 Thanks to: 
 			
-		   Dillip Kumar Kara for crossbar code.
-		   Zachary Lieberman for getting me into this stuff
-		   and for being so generous with time and code.
-		   The guys at Potion Design for helping me with VC++
-		   Josh Fisher for being a serious C++ nerd :)
-		   Golan Levin for helping me debug the strangest 
-		   and slowest bug in the world!
-		   
-		   And all the people using this library who send in 
-		   bugs, suggestions and improvements who keep me working on 
-		   the next version - yeah thanks a lot ;)
-		   
+			Dillip Kumar Kara for crossbar code.
+			Zachary Lieberman for getting me into this stuff
+			and for being so generous with time and code.
+			The guys at Potion Design for helping me with VC++
+			Josh Fisher for being a serious C++ nerd :)
+			Golan Levin for helping me debug the strangest 
+			and slowest bug in the world!
+			
+			And all the people using this library who send in 
+			bugs, suggestions and improvements who keep me working on 
+			the next version - yeah thanks a lot ;)
+			
 */
 /////////////////////////////////////////////////////////
 
@@ -46,7 +46,7 @@ Thanks to:
 
 //this is for TryEnterCriticalSection
 #ifndef _WIN32_WINNT
-	#   define _WIN32_WINNT 0x400
+	#	define _WIN32_WINNT 0x400
 #endif
 #include <windows.h>
 
@@ -59,15 +59,15 @@ Thanks to:
 	//Prints out a list of available devices and returns num of devices found
 	int numDevices = VI.listDevices();	
 	
-	int device1 = 0;  //this could be any deviceID that shows up in listDevices
-	int device2 = 1;  //this could be any deviceID that shows up in listDevices
+	int device1 = 0;  // this could be any deviceID that shows up in listDevices
+	int device2 = 1;  // this could be any deviceID that shows up in listDevices
 	
 	//setup the first device - there are a number of options:
 	
-	VI.setupDevice(device1); 						  //setup the first device with the default settings
-	//VI.setupDevice(device1, VI_COMPOSITE); 			  //or setup device with specific connection type
-	//VI.setupDevice(device1, 320, 240);				  //or setup device with specified video size
-	//VI.setupDevice(device1, 320, 240, VI_COMPOSITE);  //or setup device with video size and connection type
+	VI.setupDevice(device1); 						  // setup the first device with the default settings
+	//VI.setupDevice(device1, VI_COMPOSITE); 			  // or setup device with specific connection type
+	//VI.setupDevice(device1, 320, 240);				  // or setup device with specified video size
+	//VI.setupDevice(device1, 320, 240, VI_COMPOSITE);  // or setup device with video size and connection type
 
 	//VI.setFormat(device1, VI_NTSC_M);					//if your card doesn't remember what format it should be
 														//call this with the appropriate format listed above
@@ -104,7 +104,7 @@ Thanks to:
 */
 
 
-//////////////////////////////////////   VARS AND DEFS   //////////////////////////////////
+//////////////////////////////////////	VARS AND DEFS	//////////////////////////////////
 
 
 //STUFF YOU CAN CHANGE
@@ -118,14 +118,14 @@ static bool verbose = true;
 //videoInput defines
 #define VI_VERSION	 0.1991
 #define VI_MAX_CAMERAS  20
-#define VI_NUM_TYPES    18 //DON'T TOUCH
-#define VI_NUM_FORMATS  18 //DON'T TOUCH
+#define VI_NUM_TYPES	18 // DON'T TOUCH
+#define VI_NUM_FORMATS  18 // DON'T TOUCH
 
 //defines for setPhyCon
 #define VI_COMPOSITE 0
-#define VI_S_VIDEO   1
-#define VI_TUNER     2
-#define VI_USB       3
+#define VI_S_VIDEO	1
+#define VI_TUNER	 2
+#define VI_USB		3
 
 //defines for formats
 #define VI_NTSC_M	0
@@ -166,7 +166,7 @@ typedef _AMMediaType AM_MEDIA_TYPE;
 static int comInitCount = 0;
 
 
-////////////////////////////////////////   VIDEO DEVICE   ///////////////////////////////////
+////////////////////////////////////////	VIDEO DEVICE	///////////////////////////////////
 
 class videoDevice{
 
@@ -187,12 +187,12 @@ class videoDevice{
 		
 		ICaptureGraphBuilder2 *pCaptureGraph;	// Capture graph builder object
 		IGraphBuilder *pGraph;					// Graph builder object
-	    IMediaControl *pControl;				// Media control object
+		IMediaControl *pControl;				// Media control object
 		IBaseFilter *pVideoInputFilter;  		// Video Capture filter
 		IBaseFilter *pGrabberF;
 		IBaseFilter * pDestFilter;
 		IAMStreamConfig *streamConf;
-		ISampleGrabber * pGrabber;    			// Grabs frame
+		ISampleGrabber * pGrabber;				// Grabs frame
 		AM_MEDIA_TYPE * pAmMediaType;
 		
 		IMediaEventEx * pMediaEvent;
@@ -223,7 +223,7 @@ class videoDevice{
 
 
 
-//////////////////////////////////////   VIDEO INPUT   /////////////////////////////////////
+//////////////////////////////////////	VIDEO INPUT	/////////////////////////////////////
 
 
 
@@ -262,7 +262,7 @@ class videoInput{
 		bool isFrameNew(int deviceID); 
 		
 		bool isDeviceSetup(int deviceID);
-		    
+			
 		//Returns the pixels - flipRedAndBlue toggles RGB/BGR flipping - and you can flip the image too
 		unsigned char * getPixels(int deviceID, bool flipRedAndBlue = true, bool flipImage = false);
 		
@@ -289,11 +289,11 @@ class videoInput{
 
 		
 	private:		
-		void setPhyCon(int deviceID, int conn);                   
-		void setAttemptCaptureSize(int deviceID, int w, int h);   
+		void setPhyCon(int deviceID, int conn);					
+		void setAttemptCaptureSize(int deviceID, int w, int h);	
 		bool setup(int deviceID);
 		void processPixels(unsigned char * src, unsigned char * dst, int width, int height, bool bRGB, bool bFlip);
-		int  start(int deviceID, videoDevice * VD);                   
+		int  start(int deviceID, videoDevice * VD);					
 		int  getDeviceCount();
 		
 		HRESULT getDevice(IBaseFilter **pSrcFilter, int deviceID, WCHAR * wDeviceName, char * nDeviceName);

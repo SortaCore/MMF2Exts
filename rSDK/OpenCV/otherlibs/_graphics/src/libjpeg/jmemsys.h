@@ -58,7 +58,7 @@ EXTERN(void) jpeg_free_small JPP((j_common_ptr cinfo, void * object,
  */
 
 EXTERN(void FAR *) jpeg_get_large JPP((j_common_ptr cinfo,
-				       size_t sizeofobject));
+						size_t sizeofobject));
 EXTERN(void) jpeg_free_large JPP((j_common_ptr cinfo, void FAR * object,
 				  size_t sizeofobject));
 
@@ -101,9 +101,9 @@ EXTERN(void) jpeg_free_large JPP((j_common_ptr cinfo, void FAR * object,
  */
 
 EXTERN(long) jpeg_mem_available JPP((j_common_ptr cinfo,
-				     long min_bytes_needed,
-				     long max_bytes_needed,
-				     long already_allocated));
+					 long min_bytes_needed,
+					 long max_bytes_needed,
+					 long already_allocated));
 
 
 /*
@@ -113,7 +113,7 @@ EXTERN(long) jpeg_mem_available JPP((j_common_ptr cinfo,
  * are private to the system-dependent backing store routines.
  */
 
-#define TEMP_NAME_LENGTH   64	/* max length of a temporary file's name */
+#define TEMP_NAME_LENGTH	64	/* max length of a temporary file's name */
 
 
 #ifdef USE_MSDOS_MEMMGR		/* DOS-specific junk */
@@ -139,15 +139,15 @@ typedef struct backing_store_struct * backing_store_ptr;
 typedef struct backing_store_struct {
   /* Methods for reading/writing/closing this backing-store object */
   JMETHOD(void, read_backing_store, (j_common_ptr cinfo,
-				     backing_store_ptr info,
-				     void FAR * buffer_address,
-				     long file_offset, long byte_count));
+					 backing_store_ptr info,
+					 void FAR * buffer_address,
+					 long file_offset, long byte_count));
   JMETHOD(void, write_backing_store, (j_common_ptr cinfo,
-				      backing_store_ptr info,
-				      void FAR * buffer_address,
-				      long file_offset, long byte_count));
+					  backing_store_ptr info,
+					  void FAR * buffer_address,
+					  long file_offset, long byte_count));
   JMETHOD(void, close_backing_store, (j_common_ptr cinfo,
-				      backing_store_ptr info));
+					  backing_store_ptr info));
 
   /* Private fields for system-dependent backing-store management */
 #ifdef USE_MSDOS_MEMMGR

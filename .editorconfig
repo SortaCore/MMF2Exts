@@ -1,9 +1,25 @@
 root = true
 
-[*.{c,cc,cpp,h,hh,hpp}]
+[*.{c,cc,cpp,h,hh,hpp,txt}]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{json}]
+end_of_line = lf
+insert_final_newline = true
+charset = latin1
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{rc,htm,html}]
+end_of_line = crlf
+insert_final_newline = true
+charset = latin1
 indent_style = tab
 indent_size = 4
 trim_trailing_whitespace = true

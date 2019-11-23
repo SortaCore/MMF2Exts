@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -47,127 +47,127 @@
 class CvBlobTrackAnalysisIOR : public CvBlobTrackAnalysis
 {
 protected:
-    struct  DefAn
-    {
-        char*                   pName;
-        CvBlobTrackAnalysis*    pAn;
-    } m_Ans[MAX_ANS];
-    int m_AnNum;
-    char m_Desc[MAX_DESC];
+	struct  DefAn
+	{
+		char*					pName;
+		CvBlobTrackAnalysis*	pAn;
+	} m_Ans[MAX_ANS];
+	int m_AnNum;
+	char m_Desc[MAX_DESC];
 
 public:
-    CvBlobTrackAnalysisIOR()
-    {
-        m_AnNum = 0;
-    }
+	CvBlobTrackAnalysisIOR()
+	{
+		m_AnNum = 0;
+	}
 
-    ~CvBlobTrackAnalysisIOR()
-    {
-    };
+	~CvBlobTrackAnalysisIOR()
+	{
+	};
 
-    virtual void    AddBlob(CvBlob* pBlob)
-    {
-        int i;
-        for(i=0; i<m_AnNum; ++i)
-        {
-            m_Ans[i].pAn->AddBlob(pBlob);
-        } /* Next analyzer. */
-    };
+	virtual void	AddBlob(CvBlob* pBlob)
+	{
+		int i;
+		for(i=0; i<m_AnNum; ++i)
+		{
+			m_Ans[i].pAn->AddBlob(pBlob);
+		} /* Next analyzer. */
+	};
 
-    virtual void    Process(IplImage* pImg, IplImage* pFG)
-    {
-        int i;
+	virtual void	Process(IplImage* pImg, IplImage* pFG)
+	{
+		int i;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for(i=0; i<m_AnNum; ++i)
-        {
-            m_Ans[i].pAn->Process(pImg, pFG);
-        } /* Next analyzer. */
-    };
+		for(i=0; i<m_AnNum; ++i)
+		{
+			m_Ans[i].pAn->Process(pImg, pFG);
+		} /* Next analyzer. */
+	};
 
-    float GetState(int BlobID)
-    {
-        int state = 0;
-        int i;
-        for(i=0; i<m_AnNum; ++i)
-        {
-            state |= (m_Ans[i].pAn->GetState(BlobID) > 0.5);
-        } /* Next analyzer. */
+	float GetState(int BlobID)
+	{
+		int state = 0;
+		int i;
+		for(i=0; i<m_AnNum; ++i)
+		{
+			state |= (m_Ans[i].pAn->GetState(BlobID) > 0.5);
+		} /* Next analyzer. */
 
-        return (float)state;
-    };
+		return (float)state;
+	};
 
-    virtual char*   GetStateDesc(int BlobID)
-    {
-        int     rest = MAX_DESC-1;
-        int     i;
-        m_Desc[0] = 0;
+	virtual char*	GetStateDesc(int BlobID)
+	{
+		int	 rest = MAX_DESC-1;
+		int	 i;
+		m_Desc[0] = 0;
 
-        for(i=0; i<m_AnNum; ++i)
-        {
-            char* str = m_Ans[i].pAn->GetStateDesc(BlobID);
+		for(i=0; i<m_AnNum; ++i)
+		{
+			char* str = m_Ans[i].pAn->GetStateDesc(BlobID);
 
-            if(str && strlen(m_Ans[i].pName) + strlen(str)+4 < (size_t)rest)
-            {
-                strcat(m_Desc,m_Ans[i].pName);
-                strcat(m_Desc,": ");
-                strcat(m_Desc,str);
-                strcat(m_Desc,"\n");
-                rest = MAX_DESC - (int)strlen(m_Desc) - 1;
-            }
-        } /* Next analyzer. */
+			if(str && strlen(m_Ans[i].pName) + strlen(str)+4 < (size_t)rest)
+			{
+				strcat(m_Desc,m_Ans[i].pName);
+				strcat(m_Desc,": ");
+				strcat(m_Desc,str);
+				strcat(m_Desc,"\n");
+				rest = MAX_DESC - (int)strlen(m_Desc) - 1;
+			}
+		} /* Next analyzer. */
 
-        if(m_Desc[0]!=0)return m_Desc;
+		if(m_Desc[0]!=0)return m_Desc;
 
-        return NULL;
-    };
+		return NULL;
+	};
 
-    virtual void SetFileName(char* /*DataBaseName*/)
-    {
-    };
+	virtual void SetFileName(char* /*DataBaseName*/)
+	{
+	};
 
-    int AddAnalyzer(CvBlobTrackAnalysis* pA, char* pName)
-    {
-        if(m_AnNum<MAX_ANS)
-        {
-            //int i;
-            m_Ans[m_AnNum].pName = pName;
-            m_Ans[m_AnNum].pAn = pA;
-            TransferParamsFromChild(m_Ans[m_AnNum].pAn, pName);
-            m_AnNum++;
-            return 1;
-        }
-        else
-        {
-            printf("Can not add track analyzer %s! (not more that %d analyzers)\n",pName,MAX_ANS);
-            return 0;
-        }
-    }
-    void    Release()
-    {
-        int i;
-        for(i=0; i<m_AnNum; ++i)
-        {
-            m_Ans[i].pAn->Release();
-        } /* Next analyzer. */
+	int AddAnalyzer(CvBlobTrackAnalysis* pA, char* pName)
+	{
+		if(m_AnNum<MAX_ANS)
+		{
+			//int i;
+			m_Ans[m_AnNum].pName = pName;
+			m_Ans[m_AnNum].pAn = pA;
+			TransferParamsFromChild(m_Ans[m_AnNum].pAn, pName);
+			m_AnNum++;
+			return 1;
+		}
+		else
+		{
+			printf("Can not add track analyzer %s! (not more that %d analyzers)\n",pName,MAX_ANS);
+			return 0;
+		}
+	}
+	void	Release()
+	{
+		int i;
+		for(i=0; i<m_AnNum; ++i)
+		{
+			m_Ans[i].pAn->Release();
+		} /* Next analyzer. */
 
-        delete this;
-    };
+		delete this;
+	};
 }; /* CvBlobTrackAnalysisIOR. */
 
 CvBlobTrackAnalysis* cvCreateModuleBlobTrackAnalysisIOR()
 {
-    CvBlobTrackAnalysisIOR* pIOR = new CvBlobTrackAnalysisIOR();
-    CvBlobTrackAnalysis* pA = NULL;
+	CvBlobTrackAnalysisIOR* pIOR = new CvBlobTrackAnalysisIOR();
+	CvBlobTrackAnalysis* pA = NULL;
 
-    pA = cvCreateModuleBlobTrackAnalysisHistPVS();
-    pIOR->AddAnalyzer(pA, "HIST");
+	pA = cvCreateModuleBlobTrackAnalysisHistPVS();
+	pIOR->AddAnalyzer(pA, "HIST");
 
-    //pA = (CvBlobTrackAnalysis*)cvCreateModuleBlobTrackAnalysisHeightScale();
-    //pIOR->AddAnalyzer(pA, "SCALE");
+	//pA = (CvBlobTrackAnalysis*)cvCreateModuleBlobTrackAnalysisHeightScale();
+	//pIOR->AddAnalyzer(pA, "SCALE");
 
-    return (CvBlobTrackAnalysis*)pIOR;
+	return (CvBlobTrackAnalysis*)pIOR;
 }/* cvCreateCvBlobTrackAnalysisIOR */
 /* ======================== Analyser modules ============================= */
 

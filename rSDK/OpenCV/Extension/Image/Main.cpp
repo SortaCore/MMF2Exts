@@ -5,8 +5,8 @@
 // ============================================================================
 
 #include "common.h"
-#include <cv.hpp>
-#include <highgui.h>
+#include "cv.hpp"
+#include "highgui.h"
 #include "../Camera/Camera-Data.h"
 #include "../Collection of 2D points/Collection-of-2D-points-Data.h"
 
@@ -142,7 +142,7 @@ CvScalar fontColor = CV_RGB(fontColorParameter & 0xFF,fontColorParameter & 0xFF0
 CvFont font;
 double hScale=0.5;
 double vScale=0.5;
-int    lineWidth=1;
+int	lineWidth=1;
 cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX /*|CV_FONT_ITALIC*/, hScale,vScale,0,lineWidth);
 
 cvPutText (rdPtr->myImage,myString,cvPoint(x,y), &font, fontColor);
@@ -181,13 +181,13 @@ char* myString = (char *)Param(TYPE_STRING);
 
 	LPRH	rhPtr  = rdPtr->rHo.hoAdRunHeader;
 	// List of object offsets
-	LPOBL   oblPtr = (LPOBL)rhPtr->rhObjectList;
+	LPOBL	oblPtr = (LPOBL)rhPtr->rhObjectList;
 	for (int i=0; i<rhPtr->rhNObjects; oblPtr++) {
 		if (!oblPtr->oblOffset) continue;
 
 		CameraData* roPtr = (CameraData*)(oblPtr->oblOffset);
 
-		if (roPtr->rHo.hoIdentifier == MAKEID(O,C,V,C)){ //BLMP MAKEID(B,L,M,P)
+		if (roPtr->rHo.hoIdentifier == MAKEID(O,C,V,C)){ // BLMP MAKEID(B,L,M,P)
 			if (roPtr->myCapture){
 				IplImage * myImage = cvQueryFrame(roPtr->myCapture);
 
@@ -255,13 +255,13 @@ ACTION(
 
 	LPRH	rhPtr  = rdPtr->rHo.hoAdRunHeader;
 	// List of object offsets
-	LPOBL   oblPtr = (LPOBL)rhPtr->rhObjectList;
+	LPOBL	oblPtr = (LPOBL)rhPtr->rhObjectList;
 	for (int i=0; i<rhPtr->rhNObjects; oblPtr++) {
 		if (!oblPtr->oblOffset) continue;
 
 		CollectionOf2DPointsData* roPtr = (CollectionOf2DPointsData*)(oblPtr->oblOffset);
 
-		if (roPtr->rHo.hoIdentifier == MAKEID(O,C,V,P)){ //BLMP MAKEID(B,L,M,P)
+		if (roPtr->rHo.hoIdentifier == MAKEID(O,C,V,P)){ // BLMP MAKEID(B,L,M,P)
 			if (roPtr->firstPoint){
 				int ptsIndex = 0;
 
@@ -298,8 +298,8 @@ ACTION(
 
 
 //cvPolyLine( void *img, CvPoint **pts, int *npts,
-//            int contours, int closed, CvScalar color,
-//            int thickness, int line_type, int shift )
+//			int contours, int closed, CvScalar color,
+//			int thickness, int line_type, int shift )
 //				cvDrawPolyLine(rdPtr->myImage, pts, npts, 0, 1, CV_RGB(color & 0xFF, color & 0xFF00, color & 0xFF0000), thickness);
 			}
 		}

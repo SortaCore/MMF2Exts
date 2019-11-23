@@ -81,7 +81,7 @@ public:
 };
 
 #else
-#define rVector vector
+#define rVector std::vector
 #endif
 
 // Property macros
@@ -97,9 +97,9 @@ public:
 #define DEBUGGER_ITEMS_END()		DB_END};
 
 // ID macros
-#define CONDITION_ID(id)			(26000+(id)*10)
-#define ACTION_ID(id)				(25000+(id)*10)
-#define EXPRESSION_ID(id)			(27000+(id)*10)
+#define CONDITION_ID(id)			((short)(26000+(id)*10))
+#define ACTION_ID(id)				((short)(25000+(id)*10))
+#define EXPRESSION_ID(id)			((short)(27000+(id)*10))
 
 // Some of the menu macros (the rest are specific to actions/conditions/expressions)
 #define SUB_START(string)			m.AddMenu(SubMenu,_T(string));
@@ -164,7 +164,7 @@ public:
 #define REGID_RUNTIME				-2
 
 // Property strings are just cast to an int
-#define PSTR(s)						((int)s)
+#define PSTR(s)						((unsigned int)s)
 
 // To generate an identifier
 #define MAKEID(a,b,c,d)				((#@a<<24)|(#@b<<16)|(#@c<<8)|(#@d)) 

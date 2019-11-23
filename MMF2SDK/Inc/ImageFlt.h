@@ -103,7 +103,7 @@ class IMGFLTMGR_API CImageFilter
 public:
 	// Constructeur / destructeur
 	CImageFilter(CImageFilterMgr* pMgr);
-    ~CImageFilter();
+	~CImageFilter();
 
 	// Customisation
 	BOOL			UseSpecificFilterIndex(int index);

@@ -8,14 +8,14 @@
 #define _TIFFCONF_
 
 /* Define as 0 or 1 according to the floating point format suported by the
-   machine */
+	machine */
 #define HAVE_IEEEFP 1
 
 /* Set the native cpu bit order (FILLORDER_LSB2MSB or FILLORDER_MSB2LSB) */
 #define HOST_FILLORDER FILLORDER_LSB2MSB
 
 /* Native cpu byte order: 1 if big-endian (Motorola) or 0 if little-endian
-   (Intel) */
+	(Intel) */
 #define HOST_BIGENDIAN 0
 
 /* Support CCITT Group 3 & 4 algorithms */
@@ -34,7 +34,7 @@
 #define NEXT_SUPPORT 1
 
 /* Support Old JPEG compresson (read contrib/ojpeg/README first! Compilation
-   fails with unpatched IJG JPEG library) */
+	fails with unpatched IJG JPEG library) */
 /* #undef OJPEG_SUPPORT */
 
 /* Support Macintosh PackBits algorithm */
@@ -50,19 +50,19 @@
 #define ZIP_SUPPORT 1
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
-   images to mutiple strips of ~8Kb to reduce memory usage) */
+	images to mutiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
 /* Enable SubIFD tag (330) support */
 #define SUBIFD_SUPPORT 1
 
 /* Treat extra sample as alpha (default enabled). The RGBA interface will
-   treat a fourth sample with no EXTRASAMPLE_ value as being ASSOCALPHA. Many
-   packages produce RGBA files but don't mark the alpha properly. */
+	treat a fourth sample with no EXTRASAMPLE_ value as being ASSOCALPHA. Many
+	packages produce RGBA files but don't mark the alpha properly. */
 #define DEFAULT_EXTRASAMPLE_AS_ALPHA 1
 
 /* Pick up YCbCr subsampling info from the JPEG data stream to support files
-   lacking the tag (default enabled). */
+	lacking the tag (default enabled). */
 #define CHECK_JPEG_YCBCR_SUBSAMPLING 1
 
 /*

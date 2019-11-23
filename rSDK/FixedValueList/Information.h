@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"FixedValueList object"
 #define	ObjectAuthor		"Darkwire Software"
-#define	ObjectCopyright		"Copyright © 2011 Darkwire Software"
+#define	ObjectCopyright		"Copyright Â© 2019 Darkwire Software"
 #define	ObjectComment		"Iterates the fixed values of all the objects in the current frame, excluding the objects in subapplications."
 #define	ObjectURL			"http://www.dark-wire.com/"
 #define	ObjectHelp			"Help\\FixedValueList.chm"

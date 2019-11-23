@@ -2,30 +2,27 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#if defined(_DEBUG) && defined(WIN32)
+#if defined(_DEBUG) && defined(_WIN32)
 	#define	_CRTDBG_MAP_ALLOC	1
 #endif
-
-#define	IN_EXT_VERSION2
-//#define	COXSDK
 
 // ----------------------------------------------
 // VERSION AND BUILD YOUR EXTENSION CAN WORK WITH
 // ----------------------------------------------
-//#define TGFEXT		// TGF, MMF Standard and MMF Pro
-#define	MMFEXT			// MMF Standard and MMF Pro
-//#define PROEXT		// MMF Pro only
+//#define TGFEXT	// TGF, MMF Standard and MMF Pro
+#define	MMFEXT		// MMF Standard and MMF Pro
+//#define PROEXT	// MMF Pro only
 
 // Build number of the minimum required version of MMF
 #define	MINBUILD	228
 
 // General includes
-#include	"ccxhdr.h"
-#include	"Surface.h"
+#include "..\Inc\ccxhdr.h"
+#include "Surface.h"
 
 // Specific to this cox
-#include	"resource.h"
-#include	"main.h"
+#include "resource.h"
+#include "main.h"
 
 // Globals and Prototypes
 extern HINSTANCE hInstLib;

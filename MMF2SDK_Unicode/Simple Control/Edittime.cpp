@@ -143,18 +143,18 @@ int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
 		{
 			edPtr->textFont.lfWidth = 0;
 			edPtr->textFont.lfHeight = 8;
-			_tcscpy(edPtr->textFont.lfFaceName, _T("Arial"));
+			_tcscpy_s(edPtr->textFont.lfFaceName, _T("Arial"));
 		}
 
 		// Re-allocate EDITDATA structure according to the size of the default text
-		DWORD dwNewSize = sizeof(EDITDATA) + _tcslen(szDefaultText) * sizeof(TCHAR);
+		DWORD dwNewSize = sizeof(EDITDATA) + (_tcslen(szDefaultText) * sizeof(TCHAR));
 		LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, dwNewSize);
 		if ( pNewPtr != NULL )
 		{
 			edPtr = pNewPtr;
 
 			// Initialize default text
-			_tcscpy(edPtr->sText, szDefaultText);
+			_tcscpy_s(edPtr->sText, _tcslen(szDefaultText) + 1, szDefaultText);
 		}
 
 		// No error
@@ -220,7 +220,7 @@ void WINAPI	DLLExport RemoveObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, u
 {
 #ifndef RUN_ONLY
 	// Is the last object removed?
-    if (0 == cpt)
+	if (0 == cpt)
 	{
 		// Do whatever necessary to remove our data
 	}
@@ -265,6 +265,7 @@ void WINAPI DLLExport GetObjectRect(mv _far *mV, RECT FAR *rc, fpLevObj loPtr, L
 //
 // If you need to draw the icon manually, remove the comments around this function and in the .def file.
 //
+#define SURF(x) ((unsigned short *)x)
 
 void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr, LPEDATA edPtr, RECT FAR *rc)
 {
@@ -290,7 +291,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 		if ( (edPtr->dwFlags & SCTRL_SYSTEMCOLORS) != 0 )
 			dwTextColor = GetSysColor(COLOR_WINDOWTEXT);
 		DWORD dwDTFlags = edPtr->dwAlignFlags | DT_NOPREFIX | DT_SINGLELINE | DT_EDITCONTROL;
-		ps->DrawText(edPtr->sText, _tcslen(edPtr->sText), rc, dwDTFlags, dwTextColor, hFnt);
+		ps->DrawText((SURF_PCTSTR)edPtr->sText, _tcslen(edPtr->sText), rc, dwDTFlags, dwTextColor, hFnt);
 
 		// Draw border
 		if ( (edPtr->dwFlags & SCTRL_BORDER) != 0 )
@@ -542,20 +543,20 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 			if ( _tcslen(pStr) != _tcslen(edPtr->sText) )
 			{
 				// Asks MMF to reallocate the structure with the new size
-				LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, sizeof(EDITDATA)+_tcslen(pStr) * sizeof(TCHAR));
+				LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, sizeof(EDITDATA) + _tcslen(pStr) * sizeof(TCHAR));
 				
 				// If reallocation worked
 				if ( pNewPtr != NULL)
 				{
 					// Copy the string
 					edPtr = pNewPtr;
-					_tcscpy(edPtr->sText, pStr);
+					_tcscpy_s(edPtr->sText, _tcslen(pStr) + 1, pStr);
 				}
 			}
 			else
 			{	
 				// Same size : simply copy
-				_tcscpy_s(edPtr->sText, _tcslen(pStr)+1, pStr);
+				_tcscpy_s(edPtr->sText, _tcslen(pStr) + 1, pStr);
 			}
 
 			// Redraw object in frame editor

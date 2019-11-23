@@ -10,11 +10,15 @@
 #pragma optimize("gsy",on)
 #endif // _OPT_MAX_
 
+#if _MSC_VER < 1900
+
 #pragma comment(linker,"/RELEASE")
 
 #if _MSC_VER >= 1000				// Slightly slower loading time under Windows 9x, but may save some Kb
 #pragma comment(linker,"/opt:nowin98")
 #endif // _MSC_VER >= 1000
+
+#endif
 
 #endif // NDEBUG
 #endif // COMPILE_SMALL
@@ -30,7 +34,7 @@
 #include	<windows.h>
 #include	<mmsystem.h>
 #include	<stdio.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include	<io.h>
 #else
 #include	<dos.h>
@@ -60,7 +64,7 @@
 	#if defined(_ASSERTON) && !defined(_68K_)
 		#define DEBUG_NEW	new
 
-		#ifdef WIN32
+		#ifdef _WIN32
 				#define	ASSERT(exp)	\
 					do { if (!(exp) && \
 							(1 == _CrtDbgReport(_CRT_ASSERT, THIS_FILE, __LINE__, NULL, NULL))) \

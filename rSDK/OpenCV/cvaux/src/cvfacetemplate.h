@@ -7,8 +7,8 @@
 //  copy or use the software.
 //
 //
-//                        Intel License Agreement
-//                For Open Source Computer Vision Library
+//						Intel License Agreement
+//				For Open Source Computer Vision Library
 //
 // Copyright (C) 2000, Intel Corporation, all rights reserved.
 // Third party copyrights are property of their respective owners.
@@ -16,15 +16,15 @@
 // Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-//   * Redistribution's of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
+//	* Redistribution's of source code must retain the above copyright notice,
+//	 this list of conditions and the following disclaimer.
 //
-//   * Redistribution's in binary form must reproduce the above copyright notice,
-//     this list of conditions and the following disclaimer in the documentation
-//     and/or other materials provided with the distribution.
+//	* Redistribution's in binary form must reproduce the above copyright notice,
+//	 this list of conditions and the following disclaimer in the documentation
+//	 and/or other materials provided with the distribution.
 //
-//   * The name of Intel Corporation may not be used to endorse or promote products
-//     derived from this software without specific prior written permission.
+//	* The name of Intel Corporation may not be used to endorse or promote products
+//	 derived from this software without specific prior written permission.
 //
 // This software is provided by the copyright holders and contributors "as is" and
 // any express or implied warranties, including, but not limited to, the implied
@@ -61,7 +61,7 @@ private:
 	double m_dWeight;
 	void * m_lpContour;
 	bool m_bIsFaceFeature;
-};//class FaceFeature
+};// class FaceFeature
 
 inline void FaceFeature::SetFeature(bool bIsFeature)
 {
@@ -71,27 +71,27 @@ inline void FaceFeature::SetFeature(bool bIsFeature)
 inline bool FaceFeature::isFaceFeature()
 {
 	return m_bIsFaceFeature;
-}//inline bool FaceFeature::isFaceFeature()
+}// inline bool FaceFeature::isFaceFeature()
 
 inline void * FaceFeature::GetContour()
 {
 	return m_lpContour;	
-}//inline void * FaceFeature::GetContour()
+}// inline void * FaceFeature::GetContour()
 
 inline double FaceFeature::GetWeight()
 {
 	return m_dWeight;
-}//inline long FaceFeature::GetWeight()
+}// inline long FaceFeature::GetWeight()
 
 inline void FaceFeature::SetContour(void * lpContour)
 {
 	m_lpContour = lpContour;
-}//inline void FaceFeature::SetContour(void * lpContour)
+}// inline void FaceFeature::SetContour(void * lpContour)
 
 inline void FaceFeature::SetWeight(double  dWeight)
 {
 	m_dWeight = dWeight;
-}//inline void FaceFeature::SetWeight(double * dWeight)
+}// inline void FaceFeature::SetWeight(double * dWeight)
 
 
 
@@ -108,19 +108,19 @@ protected:
 	FaceFeature * m_lpFeaturesList;	
 private:
 	long m_lFeturesCount;
-};//class FaceTemplate
+};// class FaceTemplate
 
 
 inline long FaceTemplate::GetCount()
 {
 	return m_lFeturesCount;
-}//inline long FaceTemplate::GetCount()
+}// inline long FaceTemplate::GetCount()
 
 
 inline FaceFeature * FaceTemplate::GetFeatures()
 {
 	return m_lpFeaturesList;
-}//inline FaceFeature * FaceTemplate::GetFeatures()
+}// inline FaceFeature * FaceTemplate::GetFeatures()
 
 ////////////
 //class RFaceTemplate
@@ -131,7 +131,7 @@ class MouthFaceTemplate:public FaceTemplate
 public:
 	inline MouthFaceTemplate(long lNumber,CvRect rect,double dEyeWidth,double dEyeHeight,double dDistanceBetweenEye,double dDistanceEyeAboveMouth);
 	~MouthFaceTemplate();
-};//class MouthFaceTemplate:public FaceTemplate
+};// class MouthFaceTemplate:public FaceTemplate
 
 
 inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEyeWidth,double dEyeHeight,
@@ -142,14 +142,14 @@ inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEye
 	
 	
 	CvRect LeftEyeRect = cvRect(cvRound(rect.x - (dEyeWidth + dDistanceBetweenEye/(double)2 - (double)rect.width/(double)2)),
-						        cvRound(rect.y - dDistanceEyeAboveMouth - dEyeHeight),
-						        cvRound(dEyeWidth),
-						        cvRound(dEyeHeight) );
+								cvRound(rect.y - dDistanceEyeAboveMouth - dEyeHeight),
+								cvRound(dEyeWidth),
+								cvRound(dEyeHeight) );
 
 	CvRect RightEyeRect = cvRect(cvRound(rect.x + (double)rect.width/(double)2 + dDistanceBetweenEye/(double)2),
-							     cvRound(rect.y - dDistanceEyeAboveMouth - dEyeHeight),
-							     cvRound(dEyeWidth),
-							     cvRound(dEyeHeight) );
+								 cvRound(rect.y - dDistanceEyeAboveMouth - dEyeHeight),
+								 cvRound(dEyeWidth),
+								 cvRound(dEyeHeight) );
 
 //	CvRect NoseRect = cvRect(cvRound(rect.x + (double)rect.width/(double)4),
 //							 cvRound(rect.y - (double)rect.width/(double)2 - (double)rect.height/(double)4),
@@ -194,9 +194,9 @@ inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEye
 
 */
 
-};//constructor MouthFaceTemplate(long lNumFeatures,CvRect rect,double dEyeWidth,double dEyeHeight,double dDistanceBetweenEye,double dDistanceEyeAboveMouth);
+};// constructor MouthFaceTemplate(long lNumFeatures,CvRect rect,double dEyeWidth,double dEyeHeight,double dDistanceBetweenEye,double dDistanceEyeAboveMouth);
 
 
 
-#endif//__FACETEMPLATE_H__
+#endif// __FACETEMPLATE_H__
 

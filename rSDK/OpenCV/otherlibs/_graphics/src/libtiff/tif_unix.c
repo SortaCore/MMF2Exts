@@ -97,7 +97,7 @@ _tiffMapProc(thandle_t fd, tdata_t* pbase, toff_t* psize)
 	toff_t size = _tiffSizeProc(fd);
 	if (size != (toff_t) -1) {
 		*pbase = (tdata_t)
-		    mmap(0, size, PROT_READ, MAP_SHARED, (int) fd, 0);
+			mmap(0, size, PROT_READ, MAP_SHARED, (int) fd, 0);
 		if (*pbase != (tdata_t) -1) {
 			*psize = size;
 			return (1);
@@ -136,10 +136,10 @@ TIFFFdOpen(int fd, const char* name, const char* mode)
 	TIFF* tif;
 
 	tif = TIFFClientOpen(name, mode,
-	    (thandle_t) fd,
-	    _tiffReadProc, _tiffWriteProc,
-	    _tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
-	    _tiffMapProc, _tiffUnmapProc);
+		(thandle_t) fd,
+		_tiffReadProc, _tiffWriteProc,
+		_tiffSeekProc, _tiffCloseProc, _tiffSizeProc,
+		_tiffMapProc, _tiffUnmapProc);
 	if (tif)
 		tif->tif_fd = fd;
 	return (tif);
@@ -153,17 +153,17 @@ TIFFOpen(const char* name, const char* mode)
 {
 	static const char module[] = "TIFFOpen";
 	int m, fd;
-        TIFF* tif;
+		TIFF* tif;
 
 	m = _TIFFgetMode(mode, module);
 	if (m == -1)
 		return ((TIFF*)0);
 
-/* for cygwin and mingw */        
+/* for cygwin and mingw */		
 #ifdef O_BINARY
-        m |= O_BINARY;
-#endif        
-        
+		m |= O_BINARY;
+#endif		
+		
 #ifdef _AM29K
 	fd = open(name, m);
 #else
@@ -197,11 +197,11 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 	if (m == -1)
 		return ((TIFF*)0);
 
-/* for cygwin and mingw */        
+/* for cygwin and mingw */		
 #ifdef O_BINARY
-        m |= O_BINARY;
-#endif        
-        
+		m |= O_BINARY;
+#endif		
+		
 	fd = _wopen(name, m, 0666);
 	if (fd < 0) {
 		TIFFError(module, "%s: Cannot open", name);
@@ -219,7 +219,7 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 		}
 
 		WideCharToMultiByte(CP_ACP, 0, name, -1, mbname, mbsize,
-				    NULL, NULL);
+					NULL, NULL);
 	}
 
 	tif = TIFFFdOpen((int)fd, (mbname != NULL) ? mbname : "<unknown>",

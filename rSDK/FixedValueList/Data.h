@@ -11,15 +11,15 @@ typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
 	int FValue;		//Last fixed value
-	tchar * LastError;
-	vector<int> FixedVector;
+	TCHAR * LastError;
+	std::vector<int> FixedVector;
 
-	tagRDATA() : FValue(0), LastError(_T("No error.")) //Constructor
+	tagRDATA() : FValue(0), LastError(_tcsdup(_T("No error."))) // Constructor
 	{
 		//vars initialized above in the initializer list
 	}
 	//functions
-	~tagRDATA(){} //Destructor
+	~tagRDATA(){} // Destructor
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

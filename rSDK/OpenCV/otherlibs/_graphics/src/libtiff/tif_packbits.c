@@ -38,7 +38,7 @@ PackBitsPreEncode(TIFF* tif, tsample_t s)
 {
 	(void) s;
 
-        if (!(tif->tif_data = _TIFFmalloc(sizeof(tsize_t))))
+		if (!(tif->tif_data = _TIFFmalloc(sizeof(tsize_t))))
 		return (0);
 	/*
 	 * Calculate the scanline/tile-width size in bytes.
@@ -53,15 +53,15 @@ PackBitsPreEncode(TIFF* tif, tsample_t s)
 static int
 PackBitsPostEncode(TIFF* tif)
 {
-        if (tif->tif_data)
-            _TIFFfree(tif->tif_data);
+		if (tif->tif_data)
+			_TIFFfree(tif->tif_data);
 	return (1);
 }
 
 /*
  * NB: tidata is the type representing *(tidata_t);
- *     if tidata_t is made signed then this type must
- *     be adjusted accordingly.
+ *	 if tidata_t is made signed then this type must
+ *	 be adjusted accordingly.
  */
 typedef unsigned char tidata;
 
@@ -174,9 +174,9 @@ PackBitsEncode(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 			 * to a single literal.
 			 */
 			if (n == 1 && op[-2] == (tidata) -1 &&
-			    *lastliteral < 126) {
+				*lastliteral < 126) {
 				state = (((*lastliteral) += 2) == 127 ?
-				    BASE : LITERAL);
+					BASE : LITERAL);
 				op[-2] = op[-1];	/* replicate */
 			} else
 				state = RUN;
@@ -204,10 +204,10 @@ PackBitsEncodeChunk(TIFF* tif, tidata_t bp, tsize_t cc, tsample_t s)
 		int	chunk = rowsize;
 		
 		if( cc < chunk )
-		    chunk = cc;
+			chunk = cc;
 
 		if (PackBitsEncode(tif, bp, chunk, s) < 0)
-		    return (-1);
+			return (-1);
 		bp += chunk;
 		cc -= chunk;
 	}
@@ -236,29 +236,29 @@ PackBitsDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 		if (n < 0) {		/* replicate next byte -n+1 times */
 			if (n == -128)	/* nop */
 				continue;
-                        n = -n + 1;
-                        if( occ < n )
-                        {
-                            TIFFWarning(tif->tif_name,
-                                        "PackBitsDecode: discarding %d bytes "
-                                        "to avoid buffer overrun",
-                                        n - occ);
-                            n = occ;
-                        }
+						n = -n + 1;
+						if( occ < n )
+						{
+							TIFFWarning(tif->tif_name,
+										"PackBitsDecode: discarding %d bytes "
+										"to avoid buffer overrun",
+										n - occ);
+							n = occ;
+						}
 			occ -= n;
 			b = *bp++, cc--;
 			while (n-- > 0)
 				*op++ = (tidataval_t) b;
 		} else {		/* copy next n+1 bytes literally */
 			if (occ < n + 1)
-                        {
-                            TIFFWarning(tif->tif_name,
-                                        "PackBitsDecode: discarding %d bytes "
-                                        "to avoid buffer overrun",
-                                        n - occ + 1);
-                            n = occ - 1;
-                        }
-                        _TIFFmemcpy(op, bp, ++n);
+						{
+							TIFFWarning(tif->tif_name,
+										"PackBitsDecode: discarding %d bytes "
+										"to avoid buffer overrun",
+										n - occ + 1);
+							n = occ - 1;
+						}
+						_TIFFmemcpy(op, bp, ++n);
 			op += n; occ -= n;
 			bp += n; cc -= n;
 		}
@@ -267,8 +267,8 @@ PackBitsDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	tif->tif_rawcc = cc;
 	if (occ > 0) {
 		TIFFError(tif->tif_name,
-		    "PackBitsDecode: Not enough data for scanline %ld",
-		    (long) tif->tif_row);
+			"PackBitsDecode: Not enough data for scanline %ld",
+			(long) tif->tif_row);
 		return (0);
 	}
 	return (1);
@@ -282,7 +282,7 @@ TIFFInitPackBits(TIFF* tif, int scheme)
 	tif->tif_decodestrip = PackBitsDecode;
 	tif->tif_decodetile = PackBitsDecode;
 	tif->tif_preencode = PackBitsPreEncode;
-        tif->tif_postencode = PackBitsPostEncode;
+		tif->tif_postencode = PackBitsPostEncode;
 	tif->tif_encoderow = PackBitsEncode;
 	tif->tif_encodestrip = PackBitsEncodeChunk;
 	tif->tif_encodetile = PackBitsEncodeChunk;

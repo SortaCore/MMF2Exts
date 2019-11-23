@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1999-2000 Image Power, Inc. and the University of
- *   British Columbia.
+ *	British Columbia.
  * Copyright (c) 2001-2003 Michael David Adams.
  * All rights reserved.
  */
@@ -93,16 +93,16 @@ extern "C" {
 #define	JAS_NOTES \
 	"For more information about this software, please visit the following\n" \
 	"web sites/pages:\n" \
-	"    http://www.ece.uvic.ca/~mdadams/jasper\n" \
-	"    http://www.jpeg.org/software\n" \
+	"	http://www.ece.uvic.ca/~mdadams/jasper\n" \
+	"	http://www.jpeg.org/software\n" \
 	"To be added to the (moderated) JasPer software announcements\n" \
 	"mailing list, send an email to:\n" \
-	"    jasper-announce-subscribe@yahoogroups.com\n" \
+	"	jasper-announce-subscribe@yahoogroups.com\n" \
 	"To be added to the (unmoderated) JasPer software discussion\n" \
 	"mailing list, send an email to:\n" \
-	"    jasper-discussion-subscribe@yahoogroups.com\n" \
+	"	jasper-discussion-subscribe@yahoogroups.com\n" \
 	"Please send any bug reports to:\n" \
-	"    mdadams@ieee.org\n"
+	"	mdadams@ieee.org\n"
 
 /******************************************************************************\
 * Functions.

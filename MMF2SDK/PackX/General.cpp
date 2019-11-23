@@ -42,7 +42,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 			break;
 
 		// The calling process is detaching the DLL from its address space.
-	    case DLL_PROCESS_DETACH:
+		case DLL_PROCESS_DETACH:
 			break;
 	}
 	
@@ -93,7 +93,7 @@ extern "C"
 // 
 
 short WINAPI DLLExport GetRunObjectInfos(mv _far *knpV, fpKpxRunInfos infoPtr)
-{            
+{			
 
 	infoPtr->conditions = (LPBYTE)ConditionJumps;
 	infoPtr->actions = (LPBYTE)ActionJumps;
@@ -383,4 +383,4 @@ void WINAPI	DLLExport GetObjInfos (mv _far *knpV, LPEDATA edPtr, LPSTR ObjName, 
 	// Internet address
 	LoadString(hInstLib, IDST_HTTP,ObjHttp,255);
 }
-#endif //Not RUN_ONLY
+#endif // Not RUN_ONLY

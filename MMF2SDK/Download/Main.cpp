@@ -10,6 +10,9 @@
 #include	"common.h"
 #include	"mmsystem.h"
 
+// We're using this library
+#pragma comment (lib, "winmm.lib")
+
 extern void CloseSlot(LPRDATA rdPtr, int slot);
 
 // Quick memo: content of the eventInformations arrays
@@ -366,7 +369,7 @@ short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			};
 
 long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{     
+			{	 
 			Exp_TotalSize,
 			Exp_CurrentPos,
 			Exp_CurrentPercent,

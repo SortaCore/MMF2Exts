@@ -2,15 +2,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
-
 // General includes
-#include	"TemplateInc.h"
-//Other includes :)
+#include "..\Inc\TemplateInc.h"
+
+// Other includes
 #define MAX_SLOTS 32
 #include	<string>
-using namespace std;
 #include	<tchar.h>
 
 #include <mmsystem.h> // For time functions
@@ -18,13 +15,13 @@ using namespace std;
 #include	<wininet.h>
 
 // Specific to this extension
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
 
 // rTemplate include
-#include	"rTemplate.h"
+#include "..\Inc\rTemplate.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

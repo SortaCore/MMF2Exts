@@ -138,9 +138,9 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 {
 /*
-   When your object is destroyed (either with a Destroy action or at the end of
-   the frame) this routine is called. You must free any resources you have allocated!
-   See Graphic_Object_Ex.txt for an example of what you may put here.
+	When your object is destroyed (either with a Destroy action or at the end of
+	the frame) this routine is called. You must free any resources you have allocated!
+	See Graphic_Object_Ex.txt for an example of what you may put here.
 */
 	if (rdPtr->imgl != NULL)
 		ImageList_Destroy(rdPtr->imgl);
@@ -191,8 +191,8 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 /*
-   If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
-   See Graphic_Object_Ex.txt for an example of what you may put here.
+	If you return REFLAG_DISPLAY in HandleRunObject this routine will run.
+	See Graphic_Object_Ex.txt for an example of what you may put here.
 */
 	// Ok
 	return 0; 

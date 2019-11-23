@@ -80,7 +80,7 @@ public:
 typedef struct OI {
 #endif
 	ObjInfoHeader	oiHdr;			// Header
-	LPSTR			oiName;			// Name
+	LPTSTR			oiName;			// Name
 	LPOC			oiOC;			// ObjectsCommon
 
 	DWORD			oiFileOffset;
@@ -129,7 +129,7 @@ typedef bkd2 *LPBKD2;
 typedef struct RunFrameLayer
 {
 	// Name
-	LPSTR		pName;			// Name
+	LPTSTR		pName;			// Name
 
 	// Offset
 	int			x;				// Current offset
@@ -203,7 +203,7 @@ typedef struct CRunFrame {
 	FrameHeader		m_hdr;
 
 	// Name
-	LPSTR			m_name;
+	LPTSTR			m_name;
 
 	// Palette
 	LPLOGPALETTE	m_palette;
@@ -286,16 +286,17 @@ typedef struct CRunFrame {
 	DWORD			m_pasteMask;
 
 	int				m_nCurTempString;
-	LPSTR			m_pTempString[MAX_TEMPSTRING];
+	LPTSTR			m_pTempString[MAX_TEMPSTRING];	// not used
 
 	// Other
 	cSurface*		m_pSaveSurface;
 	int				m_leEditWinWidth;
 	int				m_leEditWinHeight;
 	DWORD			m_dwColMaskBits;
-	LPSTR			m_demoFilePath;
+	LPTSTR			m_demoFilePath;
 	WORD			m_wRandomSeed;
 	WORD			m_wFree;
+	DWORD			m_dwMvtTimerBase;
 
 #ifdef __cplusplus
 };
@@ -312,17 +313,16 @@ typedef CRunFrame *fpRunFrame;
 class CBinaryFile {
 public:
 	CBinaryFile()	{ m_path[0] = 0; m_pTempPath = NULL; m_fileSize = m_fileOffset = 0; m_tempCount = 0; }
-	~CBinaryFile()	{ if ( m_pTempPath != NULL ) { remove(m_pTempPath); free(m_pTempPath); m_pTempPath = NULL; m_tempCount = 0; } }
+	~CBinaryFile()	{ if ( m_pTempPath != NULL ) { _tremove(m_pTempPath); free(m_pTempPath); m_pTempPath = NULL; m_tempCount = 0; } }
 
 public:
-	char	m_path[_MAX_PATH];		// path stored in ccn file
-	LPSTR	m_pTempPath;			// path in temporary folder, if any
+	TCHAR	m_path[_MAX_PATH];		// path stored in ccn file
+	LPTSTR	m_pTempPath;			// path in temporary folder, if any
 	DWORD	m_fileSize;				// file size
 	DWORD	m_fileOffset;			// file offset in EXE/CCN file
 	long	m_tempCount;			// usage count
 };
 #endif // __cplusplus
-
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -344,20 +344,20 @@ typedef struct CRunApp {
 	// Application info
 	AppMiniHeader	m_miniHdr;			// Version
 	AppHeader		m_hdr;				// General info
-	LPSTR			m_name;				// Name of the application
-	LPSTR			m_appFileName;		// filename (temporary file in editor mode)
-	LPSTR			m_editorFileName;	// filename of original .mfa file
-	LPSTR			m_copyright;		// copyright
-	LPSTR			m_aboutText;		// text to display in the About box
+	LPTSTR			m_name;				// Name of the application
+	LPTSTR			m_appFileName;		// filename (temporary file in editor mode)
+	LPTSTR			m_editorFileName;	// filename of original .mfa file
+	LPTSTR			m_copyright;		// copyright
+	LPTSTR			m_aboutText;		// text to display in the About box
 
 	// File infos
-	LPSTR			m_targetFileName;	// filename of original CCN/EXE file
-	LPSTR			m_tempPath;			// Temporary directory for external files
+	LPTSTR			m_targetFileName;	// filename of original CCN/EXE file
+	LPTSTR			m_tempPath;			// Temporary directory for external files
 	HFILE			m_file;				// File handle
 	DWORD			m_startOffset;
 
 	// Help file
-	LPSTR			m_doc;				// Help file pathname
+	LPTSTR			m_doc;				// Help file pathname
 
 	// Icon
 	LPBYTE			m_icon16x16x8;		// = LPBITMAPINFOHEADER
@@ -366,7 +366,7 @@ typedef struct CRunApp {
 	// Menu
 	HMENU			m_hRunMenu;			// Menu
 	LPBYTE			m_accels;			// Accelerators
-	LPSTR			m_pMenuTexts;		// Menu texts (for ownerdraw menu)
+	LPTSTR			m_pMenuTexts;		// Menu texts (for ownerdraw menu)
 	LPBYTE			m_pMenuImages;		// Images index used in the menu
 	MenuHdr*		m_pMenu;
 
@@ -377,19 +377,19 @@ typedef struct CRunApp {
 	LPDWORD			m_frameOffset;				// Frame offsets in the file
 
 	// Frame passwords
-	LPSTR *			m_framePasswords;			// Table of frame passwords
+	LPTSTR *			m_framePasswords;			// Table of frame passwords
 
 	// Extensions
 	int				m_nbKpx;					// Number of extensions
 	fpKpxFunc		m_kpxTab;					// Function table 1
-	fpkpdt          m_kpxDataTable;				// Function table 2
+	fpkpdt		  m_kpxDataTable;				// Function table 2
 
 	// Movement Extensions
 	int				m_nbMvx;					// Number of extensions
 	MvxFnc*			m_mvxTable;					// DLL info
 
 	// Elements
-	LPSTR			m_eltFileName[MAX_TABREF];	// Element banks
+	LPTSTR			m_eltFileName[MAX_TABREF];	// Element banks
 	HFILE			m_hfElt[MAX_TABREF];
 
 	DWORD			m_eltBaseOff;
@@ -493,7 +493,7 @@ typedef struct CRunApp {
 	// Global strings (warning: not valid if sub-app and global values are shared)
 	LPBYTE			m_pGlobalStringInit;	// Default global string values
 	int				m_nGlobalStrings;		// Number of global strings
-	LPSTR*			m_pGlobalString;		// Pointers to global strings
+	LPTSTR*			m_pGlobalString;		// Pointers to global strings
 	LPBYTE			m_pGlobalStringNames;
 
 	// Global objects
@@ -503,22 +503,32 @@ typedef struct CRunApp {
 	short			m_NConditions[NUMBEROF_SYSTEMTYPES+KPX_BASE-1];
 
 	// External sound files
-	LPSTR			m_pExtMusicFile;
-	LPSTR			m_pExtSampleFile[32];		// External sample file per channel
+	LPTSTR			m_pExtMusicFile;
+	LPTSTR			m_pExtSampleFile[32];		// External sample file per channel
 
 	// New Build 243
 	int				m_nInModalLoopCount;
-	LPSTR			m_pPlayerNames;
+	LPTSTR			m_pPlayerNames;
 	DWORD			m_dwColorCache;
 
 	// New Build 245
-	LPBYTE			m_pVtz4Opt;
-	DWORD			m_dwVtz4Chk;
+	LPBYTE			m_pVtz4Opt;			// not used
+	DWORD			m_dwFree;			// not used
 
 	// Application load
-	LPSTR			m_pLoadFilename;
+	LPTSTR			m_pLoadFilename;
 	DWORD			m_saveVersion;
 	BOOL			m_bLoading;
+
+	// Bluray
+	LPPLURAYAPPOPTIONS	m_pBROpt;
+
+	// Build info
+	AppHeader2*		m_pHdr2;
+
+	// Code page
+	DWORD			m_dwCodePage;
+	bool			m_bUnicodeAppFile;
 
 #ifdef __cplusplus
 };

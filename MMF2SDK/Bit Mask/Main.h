@@ -18,7 +18,7 @@
 // -------------------------------
 // DEFINITION OF EXPRESSIONS CODES
 // -------------------------------
-#define	EXP_LAST                    3
+#define	EXP_LAST					3
 
 // ---------------------
 // OBJECT DATA STRUCTURE 
@@ -73,11 +73,11 @@ typedef	RUNDATA	*			LPRDATA;
 
 // Default flags - see documentation for more info
 // -------------
-#define	OEFLAGS      			0
-#define	OEPREFS      			0
+#define	OEFLAGS	  			0
+#define	OEPREFS	  			0
 
 
 // If to handle message, specify the priority of the handling procedure
-// 0= low, 255= very high. You should use 100 as normal.                                                
+// 0= low, 255= very high. You should use 100 as normal.												
 // --------------------------------------------------------------------
 #define	WINDOWPROC_PRIORITY		100

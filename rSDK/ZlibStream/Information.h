@@ -5,7 +5,7 @@
 // Basic object details
 #define	ObjectName			"ZlibStream object"
 #define	ObjectAuthor		"Darkwire Software"
-#define	ObjectCopyright		"Copyright © 2011 Darkwire Software"
+#define	ObjectCopyright		"Copyright Â© 2019 Darkwire Software"
 #define	ObjectComment		"Compress and decompress files with Zlib without loading them into the memory. Allows several actions at once."
 #define	ObjectURL			"http://www.dark-wire.com/"
 #define	ObjectHelp			"Help\\ZlibStream.chm"

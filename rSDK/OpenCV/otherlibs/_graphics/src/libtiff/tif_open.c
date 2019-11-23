@@ -180,7 +180,7 @@ TIFFClientOpen(
 	tif->tif_seekproc = seekproc;
 	tif->tif_closeproc = closeproc;
 	tif->tif_sizeproc = sizeproc;
-        if (mapproc)
+		if (mapproc)
 		tif->tif_mapproc = mapproc;
 	else
 		tif->tif_mapproc = _tiffDummyMapProc;
@@ -196,7 +196,7 @@ TIFFClientOpen(
 	 */
 	tif->tif_flags = FILLORDER_MSB2LSB;
 	if (m == O_RDONLY )
-            tif->tif_flags |= TIFF_MAPPED;
+			tif->tif_flags |= TIFF_MAPPED;
 
 #ifdef STRIPCHOP_DEFAULT
 	if (m == O_RDONLY || m == O_RDWR)
@@ -265,15 +265,15 @@ TIFFClientOpen(
 			break;
 		case 'B':
 			tif->tif_flags = (tif->tif_flags &~ TIFF_FILLORDER) |
-			    FILLORDER_MSB2LSB;
+				FILLORDER_MSB2LSB;
 			break;
 		case 'L':
 			tif->tif_flags = (tif->tif_flags &~ TIFF_FILLORDER) |
-			    FILLORDER_LSB2MSB;
+				FILLORDER_LSB2MSB;
 			break;
 		case 'H':
 			tif->tif_flags = (tif->tif_flags &~ TIFF_FILLORDER) |
-			    HOST_FILLORDER;
+				HOST_FILLORDER;
 			break;
 		case 'M':
 			if (m == O_RDONLY)
@@ -304,8 +304,8 @@ TIFFClientOpen(
 		 * Setup header and write.
 		 */
 		tif->tif_header.tiff_magic = tif->tif_flags & TIFF_SWAB
-		    ? (bigendian ? TIFF_LITTLEENDIAN : TIFF_BIGENDIAN)
-		    : (bigendian ? TIFF_BIGENDIAN : TIFF_LITTLEENDIAN);
+			? (bigendian ? TIFF_LITTLEENDIAN : TIFF_BIGENDIAN)
+			: (bigendian ? TIFF_BIGENDIAN : TIFF_LITTLEENDIAN);
 		tif->tif_header.tiff_version = TIFF_VERSION;
 		if (tif->tif_flags & TIFF_SWAB)
 			TIFFSwabShort(&tif->tif_header.tiff_version);
@@ -333,10 +333,10 @@ TIFFClientOpen(
 	 * Setup the byte order handling.
 	 */
 	if (tif->tif_header.tiff_magic != TIFF_BIGENDIAN &&
-	    tif->tif_header.tiff_magic != TIFF_LITTLEENDIAN) {
+		tif->tif_header.tiff_magic != TIFF_LITTLEENDIAN) {
 		TIFFError(name,  "Not a TIFF file, bad magic number %d (0x%x)",
-		    tif->tif_header.tiff_magic,
-		    tif->tif_header.tiff_magic);
+			tif->tif_header.tiff_magic,
+			tif->tif_header.tiff_magic);
 		goto bad;
 	}
 	TIFFInitOrder(tif, tif->tif_header.tiff_magic, bigendian);
@@ -354,15 +354,15 @@ TIFFClientOpen(
 	 */
 	if (tif->tif_header.tiff_version == TIFF_BIGTIFF_VERSION) {
 		TIFFError(name,
-                          "This is a BigTIFF file.  This format not supported\n"
-                          "by this version of libtiff." );
+						  "This is a BigTIFF file.  This format not supported\n"
+						  "by this version of libtiff." );
 		goto bad;
 	}
 	if (tif->tif_header.tiff_version != TIFF_VERSION) {
 		TIFFError(name,
-		    "Not a TIFF file, bad version number %d (0x%x)",
-		    tif->tif_header.tiff_version,
-		    tif->tif_header.tiff_version); 
+			"Not a TIFF file, bad version number %d (0x%x)",
+			tif->tif_header.tiff_version,
+			tif->tif_header.tiff_version); 
 		goto bad;
 	}
 	tif->tif_flags |= TIFF_MYBUFFER;
@@ -400,7 +400,7 @@ TIFFClientOpen(
 	}
 bad:
 	tif->tif_mode = O_RDONLY;	/* XXX avoid flush */
-        TIFFCleanup(tif);
+		TIFFCleanup(tif);
 bad2:
 	return ((TIFF*)0);
 }
@@ -444,7 +444,7 @@ TIFFFileno(TIFF* tif)
 int
 TIFFSetFileno(TIFF* tif, int fd)
 {
-        int old_fd = tif->tif_fd;
+		int old_fd = tif->tif_fd;
 	tif->tif_fd = fd;
 	return old_fd;
 }

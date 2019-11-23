@@ -7,23 +7,20 @@
 
 #include <tchar.h>
 
-// Suppress the deprecated warnings for VC2005
-#define _CRT_SECURE_NO_WARNINGS
-
 /* 3 buffers should be enough: One current buffer, one queued buffer, and a back-up queue. */
 #define NUM_BUFFERS 3
 
 // General includes
-#include	"TemplateInc.h"
+#include "TemplateInc.h"
 
 // Specific to this extension
-#include	"Resource.h"
-#include	"FlagsPrefs.h"
-#include	"Information.h"
-#include	"Data.h"
+#include "Resource.h"
+#include "FlagsPrefs.h"
+#include "Information.h"
+#include "Data.h"
 
 // rTemplate include
-#include	"rTemplate.h"
+#include "rTemplate.h"
 
 // Globals and prototypes
 extern HINSTANCE hInstLib;

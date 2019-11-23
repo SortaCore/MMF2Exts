@@ -1,9 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //		KLIK & CREATE : external object								Please keep all number above 20000						//
-// 																														    //
-// 																														    //
+// 																															//
+// 																															//
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -28,7 +28,7 @@
 // ----------------
 #define ID_EDITCDOPENONSTART		20100
 #define ID_EDITCDPLAYONSTART		20101
-#define ID_EDITCDSTOPONCLOSE    	20102
+#define ID_EDITCDSTOPONCLOSE		20102
 #define ID_EDITCDTRACKONSTART		20103
 #define ID_HELP						20104
 #define ID_CHECK_PAUSE_MINIMIZE		20105
@@ -62,7 +62,7 @@
 // DO NOT CHANGE!
 // --------------
 #define ID_MENUACTIONS				25000				// DO NOT CHANGE!
-#define ID_MENUCONDITIONS			26000               // DO NOT CHANGE!
+#define ID_MENUCONDITIONS			26000				// DO NOT CHANGE!
 #define ID_MENUEXPRESSIONS			27000				// DO NOT CHANGE!
 #define M_DISPCONDITIONS			28000				// DO NOT CHANGE!
 #define M_DISPACTIONS				28200				// DO NOT CHANGE!

@@ -1,4 +1,7 @@
 
+# Fusion SDK configuration file
+FusionSDKConfig.ini
+
 #################
 ## Eclipse
 #################
@@ -184,6 +187,6 @@ pip-log.txt
 .DS_Store
 
 # Oh
-DarkEDIF*.sln
+DarkEdif*.sln
 *.sdf
 *.db

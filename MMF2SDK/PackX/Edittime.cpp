@@ -139,7 +139,7 @@ void WINAPI	DLLExport PutObject(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr, us
 void WINAPI	DLLExport RemoveObject(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr, ushort cpt)
 {
 	// Is the last object removed?
-    if (0 == cpt)
+	if (0 == cpt)
 	{
 		// Do whatever necessary to remove our data
 
@@ -460,7 +460,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *knpV, fpObjInfo oiPtr, fpLevObj loP
 {
 
 	/* This is a simple case of drawing an image onto MMF's frame editor window
-	   First, we must get a pointer to the surface used by the frame editor
+		First, we must get a pointer to the surface used by the frame editor
 	*/
 
 	LPSURFACE ps = WinGetSurface((int)knpV->mvIdEditWin);
@@ -567,11 +567,11 @@ int WINAPI DLLExport EnumElts (mv __far *knpV, LPEDATA edPtr, ENUMELTPROC enumPr
 	// Enum images  
 	if ( (error = enumProc(&edPtr->imgidx, IMG_TAB, lp1, lp2)) != 0 )
 	{
-		// Undo enum images      
-		undoProc (&edPtr->imgidx, IMG_TAB, lp1, lp2);    
+		// Undo enum images	  
+		undoProc (&edPtr->imgidx, IMG_TAB, lp1, lp2);	
 	}  
 */
 	return error;
 }
 
-#endif //Not RUN_ONLY
+#endif // Not RUN_ONLY

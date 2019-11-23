@@ -5,10 +5,10 @@
 // Basic object details
 #define	ObjectName			"OpenCV-Image"
 #define	ObjectAuthor		"Bjorn Goransson aka Bornemix"
-#define	ObjectCopyright		"Copyright © 2009"
+#define	ObjectCopyright		"Copyright Â© 2009 Bornemix"
 #define	ObjectComment		"General-purpose image data type. Often used to show a live camera feed."
-#define	ObjectURL			"http://www.authorswebpage.com"
-#define	ObjectHelp			"Help\\EmptyObject.chm"
+#define	ObjectURL			""
+#define	ObjectHelp			""
 
 // If you register your object with Clickteam, change this to the ID you were given
 #define ObjectRegID			REGID_PRIVATE

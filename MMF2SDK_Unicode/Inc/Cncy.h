@@ -37,12 +37,12 @@ struct PropData;
 struct RunHeader;
 
 // Force structure alignement
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #pragma pack( push, _pack_cncy_ )
 #pragma pack(2)
 #endif
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Object instance parent types
 enum {
@@ -264,7 +264,7 @@ typedef struct AppHeader2 {
 #define	AH2OPT_RESAMPLESTRETCH	0x0004		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
 #define	AH2OPT_GLOBALREFRESH	0x0008		// (Mobile) force global refresh
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Build type values
 enum {
@@ -324,7 +324,7 @@ typedef BlurayFrameOptions *LPPLURAYFRAMEOPTIONS;
 //////////////////////////////////////////////////////////////////////////////
 // Element of chunk Extensions
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct ExtDesc {
 	WORD		extSize;
 	WORD		extIndex;
@@ -445,7 +445,7 @@ typedef struct ObjInfoHeader
 // LevObj/FrameItemInstance
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 #ifdef __cplusplus
 class diskLO {
 public:
@@ -485,7 +485,7 @@ enum {
 ////////////////////////////////
 // Static object - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 typedef struct Static_OC {
 
 	// Size
@@ -506,7 +506,7 @@ typedef Static_OC * LPStatic_OC;
 // Fill Type & shapes - Definitions
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 // Gradient
 typedef struct GradientData {
 	COLORREF		color1;
@@ -539,7 +539,7 @@ enum {
 ///////////////////////////////////////////////////////////////
 // Fill Type - Part of FilledShape
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FillType_Data {
@@ -575,7 +575,7 @@ typedef struct FillType_Data {
 ///////////////////////////////////////////////////////////////
 // Filled Shape - Part of QuickBackdrop / Counter ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 #ifdef __cplusplus
 class FilledShape_Data {
@@ -599,7 +599,7 @@ typedef FilledShape_Data * LPFilledShape_Data;
 /////////////////////////////////
 // Quick backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct QuickBackdrop_OC {
 
@@ -621,7 +621,7 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 /////////////////////////////////
 // Backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct Backdrop_OC {
 
@@ -764,7 +764,7 @@ enum {
 //
 // Objet RTF - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocRTF {
 
@@ -788,7 +788,7 @@ typedef ocRTF * LPOCRTF;
 //
 // Objet CCA - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct ocCCA {
 
@@ -843,7 +843,7 @@ typedef ocCCA * LPOCCCA;
 // Transition
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Transition header
 typedef struct TransitionHdr {
@@ -1275,7 +1275,7 @@ typedef	struct	mv {
 	BOOL				(CALLBACK * mvEditImageW) (LPVOID edPtr, LPEDITIMAGEPARAMSW pParams, HWND hParent);
 	BOOL				(CALLBACK * mvEditAnimationW) (LPVOID edPtr, LPEDITANIMATIONPARAMSW pParams, HWND hParent);
 
-	// Runtime: Binary files (UNICODE
+	// Runtime: Binary files (UNICODE)
 	BOOL				(CALLBACK * mvGetFileW)(LPCWSTR pPath, LPWSTR pFilePath, DWORD dwFlags);
 	void				(CALLBACK * mvReleaseFileW)(LPCWSTR pPath);
 	HANDLE				(CALLBACK * mvOpenHFileW)(LPCWSTR pPath, LPDWORD pDwSize, DWORD dwFlags);
@@ -1562,7 +1562,7 @@ typedef	struct	MvxFnc {
 #endif	// RUN_TIME
 
 // Restore structure alignement
-#ifndef      _H2INC 
+#ifndef	  _H2INC 
 #pragma pack( pop, _pack_cncy_ )
 #endif
 
