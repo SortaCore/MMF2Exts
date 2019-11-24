@@ -168,7 +168,7 @@ int Edif::Init(mv _far * mV)
 	char * JSON;
 	size_t JSON_Size;
 
-	int result = Edif::GetDependency (JSON, JSON_Size, _T("json"), IDR_Edif_JSON);
+	int result = Edif::GetDependency (JSON, JSON_Size, _T("json"), IDR_EDIF_JSON);
 	
 	if (result == Edif::DependencyNotFound)
 	{
@@ -221,7 +221,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			char * IconData;
 			size_t IconSize;
 
-			int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_Edif_ICON);
+			int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
 			if (result != Edif::DependencyNotFound)
 			{
 				CInputMemFile * File = CInputMemFile::NewInstance ();
@@ -748,7 +748,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	if (!Resource)
 		return DependencyNotFound;
 
-	HRSRC res = FindResource (hInstLib, MAKEINTRESOURCE (Resource), _T("Edif"));
+	HRSRC res = FindResource (hInstLib, MAKEINTRESOURCE (Resource), _T("EDIF"));
 
 	if (!res)
 		return DependencyNotFound;

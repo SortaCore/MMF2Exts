@@ -2,8 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by Ext.rc
 //
-#define IDR_Edif_ICON					101
-#define IDR_Edif_JSON					102
+#define IDR_EDIF_ICON					101
+#define IDR_EDIF_JSON					102
 
 // Next default values for new objects
 // 

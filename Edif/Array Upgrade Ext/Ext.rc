@@ -122,9 +122,9 @@ END
 //
 
 #if EditorBuild
-IDR_Edif_ICON	Edif	"Icon.png"
+IDR_EDIF_ICON	Edif	"Icon.png"
 #endif
-IDR_Edif_JSON	Edif	"Ext.json"
+IDR_EDIF_JSON	Edif	"Ext.json"
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

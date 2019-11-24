@@ -604,6 +604,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	//	return new Prop_XXX();
 
 	// Read changable properties
+	StartPos = Current; // For ID 0
 	unsigned int i = 0;
 	while (i <= ID)
 	{
