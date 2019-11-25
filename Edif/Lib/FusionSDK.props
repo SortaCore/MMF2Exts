@@ -115,8 +115,9 @@
 			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
 			/D "EXTENSION_VERSION=$(ExtVersion)"
 			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""</_FusionSDKAdds>
-		<!-- #if EditorBuild needs to evaluate to true. -->
-		<_FusionSDKAdds Condition="'$(EditorBuild)'=='Y'">/D "EditorBuild=true" $(_FusionSDKAdds)</_FusionSDKAdds>
+		<!-- #if EditorBuild needs to evaluate to true.
+			 Worth noting "true" is not true. 1 is apparently true though. -->
+		<_FusionSDKAdds Condition="'$(EditorBuild)'=='Y'">/D "EditorBuild=1" $(_FusionSDKAdds)</_FusionSDKAdds>
 		<!-- RC requires extra escaping... for some reason. -->
 		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\','\\\')))</_FusionSDKAddsRC>
 	</PropertyGroup>
