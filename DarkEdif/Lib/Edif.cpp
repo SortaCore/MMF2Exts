@@ -146,6 +146,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 
 	if (!_stricmp(Text, "Float"))
 		return ExpReturnType::Float;
+
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return ExpReturnType::String;
 
@@ -976,7 +977,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	if (!res)
 	{
 		TCHAR msgText[128];
-		_tprintf_s(msgText, _T("Missing a resource! Type %s, number %i."), FileExtension, Resource);
+		_stprintf_s(msgText, _T("Missing a resource! Type %s, number %i."), FileExtension, Resource);
 		MessageBox(NULL, msgText, _T(PROJECT_NAME " - Error"), MB_ICONERROR);
 		return DependencyNotFound;
 	}
