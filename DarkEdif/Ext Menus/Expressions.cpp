@@ -71,18 +71,22 @@ const TCHAR * Extension::GetAllActionInfos()
 
 	if (!getActionStringFunc) {
 		error << _T("Could not locate function GetActionString, error ") << GetLastError();
+		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
 	if (!getActionInfosFunc) {
 		error << _T("Could not locate function GetActionInfos, error ") << GetLastError();
+		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
 	if (!getActionTitleFunc) {
 		error << _T("Could not locate function GetActionTitle, error ") << GetLastError();
+		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
 	if (!getRunObjectInfosFunc) {
 		error << _T("Could not locate function GetActionTitle, error ") << GetLastError();
+		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -131,7 +135,7 @@ const TCHAR * Extension::GetAllActionInfos()
 			break;
 		}
 	}
-
+	FreeLibrary(hGetProcIDDLL);
 	return Runtime.CopyString(output.str().c_str());
 }
 
