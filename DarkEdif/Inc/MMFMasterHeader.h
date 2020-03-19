@@ -1,5 +1,5 @@
 
-#include <stdio.h> 
+#include <stdio.h>
 #include <TCHAR.h>
 #include <windows.h>
 
@@ -111,7 +111,7 @@ enum class CFCERROR {
 // Surface errors
 #define	SURFACEERROR_MIN	0x40010000
 #define	SURFACEERROR_MAX	0x40020000
-enum 
+enum
 {
 	SURFACEERROR_NOERR = 0,
 	SURFACEERROR_NOT_SUPPORTED = SURFACEERROR_MIN,
@@ -272,7 +272,7 @@ class __declspec(dllimport) CInputMemFile : public CInputFile
 		virtual long			GetPosition();
 		virtual long			GetLength();
 		virtual	long			Seek(long pos, int method);
-	
+
 		virtual	int				Attach(HANDLE hnd);
 		virtual	HANDLE			Detach();
 
@@ -395,9 +395,9 @@ enum class GAMEON {
 
 // Changes the structure alignment
 // See http://stupefydeveloper.blogspot.co.uk/2009/01/c-alignment-of-structure.html
-#ifndef	_H2INC  
+#ifndef	_H2INC
 	#pragma pack(push, mmf_master_header)
-	#pragma pack(2) 
+	#pragma pack(2)
 #endif
 
 // This declaration list cannot be cut down
@@ -552,7 +552,7 @@ struct Spr
 #define EVI_MAXPARAMS				16
 
 // Structure de definition des conditions / actions POUR LES EXTENSIONS V1
-struct infosEvents { 
+struct infosEvents {
 	short 	code;					// Le numero de type + code event
 	short	flags;					// Les flags a mettre dans l'event
 	short	param[2];				// Le type des parametres
@@ -647,24 +647,24 @@ public:
 
 	unsigned short	Movements,		// Offset of the movements
 					Animations, 	// Offset of the animations
-					Version,		// For version versions > MOULI 
+					Version,		// For version versions > MOULI
 					Counter,		// Pointer to COUNTER structure
 					data,			// Pointer to DATA structure
 					Free;			// IGNORE: Padding the shorts to 4 bytes
 	unsigned long	OEFlags;		// New flags
 
 	unsigned short	Qualifiers[8],	// Qualifier list (Max 8 qualifiers)
-					Extension,		// Extension structure 
+					Extension,		// Extension structure
 					Values,			// Values structure
 					Strings,		// String structure
-					
+
 					Flags2,			// New news flags, before it was ocEvents
 					OEPrefs;		// Automatically modifiable flags
 	unsigned long	Identifier;		// Identifier d'objet
 
 	COLORREF		BackColor;		// Background color
-	unsigned long	FadeIn,			// Offset fade in 
-					FadeOut,		// Offset fade out 
+	unsigned long	FadeIn,			// Offset fade in
+					FadeOut,		// Offset fade out
 					ValueNames,		// For the debugger
 					StringNames;
 
@@ -917,7 +917,7 @@ struct eventGroup {
 	short	evgSize;				// 0 Size of the group (<=0)
 	unsigned char	evgNCond;		// 2 Number of conditions
 	unsigned char	evgNAct;		// 3 Number of actions
-	unsigned short	evgFlags;		// 4 Flags 
+	unsigned short	evgFlags;		// 4 Flags
 	short	evgInhibit;				// 6 If the group is inhibited
 	unsigned short	evgInhibitCpt;	// 8 Counter
 	unsigned short	evgIdentifier;	// 10 Unique identifier
@@ -956,7 +956,7 @@ typedef		eventGroup	*		LPEVG;
 #define		EVGFLAGS_LIMITED		(EVGFLAGS_SHUFFLE+EVGFLAGS_NOTALWAYS+EVGFLAGS_REPEAT+EVGFLAGS_NOMORE)
 #define		EVGFLAGS_DEFAULTMASK	(EVGFLAGS_BREAKPOINT+EVGFLAGS_GROUPED)
 //#define		EVGFLAGS_FADE			(EVGFLAGS_FADEIN|EVGFLAGS_FADEOUT)
-	
+
 
 // Condition and action structures
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1012,7 +1012,7 @@ struct event2 {
 	// Conditions
 	short	evtIdentifier;	  		// 14 Event identifier
 									// 16
-};						
+};
 //typedef	event	*	PEVT;
 //typedef	event	*	LPEVT;
 
@@ -1040,7 +1040,7 @@ fancyenumop(EVFLAGS);
 
 
 // For flags II
-// -------------					
+// -------------
 #define		EVFLAG2_NOT			bit1
 #define		EVFLAG2_NOTABLE		bit2
 #define		EVFLAGS_NOTABLE		(bit2 << 8)
@@ -1050,12 +1050,12 @@ fancyenumop(EVFLAGS);
 #define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
 
 // MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)			
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
-class EventParam { 
+class EventParam {
 public:
 	short			size,
 					Code;
@@ -1099,11 +1099,11 @@ enum class ExpReturns {
 
 #define		EXP_STOP				-1
 #define		OPERATOR_START			0x00000000
-#define		EXPL_END				0x00000000	
+#define		EXPL_END				0x00000000
 #define		EXPL_PLUS				0x00020000
 #define		EXPL_MOINS				0x00040000
 #define		EXPL_MULT				0x00060000
-#define		EXPL_DIV				0x00080000										 
+#define		EXPL_DIV				0x00080000
 #define		EXPL_MOD				0x000A0000
 #define		EXPL_POW				0x000C0000
 #define		EXPL_AND				0x000E0000
@@ -1121,7 +1121,7 @@ struct expression {
 		};
 	};
 	short	size;
-	union	
+	union
 	{
 		struct {
 			short	Oi;
@@ -1178,7 +1178,7 @@ struct expressionV1 {
 		};
 		struct {
 			char	Type,
-					Num;	
+					Num;
 		};
 	};
 	short	size;
@@ -1233,7 +1233,7 @@ struct expressionV1 {
 
 // Information structure
 // ----------------------------------------------
-typedef struct tagEVO {								  
+typedef struct tagEVO {
 	short		evoConditions;	  	// Conditions
 	short		evoActions;			// Actions
 	short		evoExpressions;		// Expressions
@@ -1282,7 +1282,7 @@ enum class OBJ {
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-// Flags 
+// Flags
 typedef unsigned int uint;
 enum class OEFLAGS : uint {
 	NONE					= 0,
@@ -1375,7 +1375,7 @@ enum class Params : short {
 	Comparison,						// ParamComparison
 	Colour,							// ParamColour
 	Buffer,							// ParamBuffer
-	Frame,							// ParamFrame - Storyboard frame number 
+	Frame,							// ParamFrame - Storyboard frame number
 	Sample_Loop,					// ParamSoundLoop
 	Music_Loop,						// ParamSoundLoop also
 	New_Direction,					// ParamNewDir
@@ -1537,7 +1537,7 @@ struct ParamProgram {
 	short	Flags;				// Default flags
 	TCHAR	Path[MAX_PATH],		// name of the program
 			Command[108];		// Command line
-	
+
 	enum Masks {
 		Wait = bit1,
 		Hide = bit2,
@@ -1550,7 +1550,7 @@ struct ParamCondSound {
 	TCHAR *			name;
 };
 struct ParamEditorComment {
-	LOGFONTV1		LogFont;			// Font 
+	LOGFONTV1		LogFont;			// Font
 	COLORREF		ColourFont,			// text color
 					ColourBack;			// Background color
 	short			Align;				// Alignement flags
@@ -1796,29 +1796,29 @@ struct runHeader2 {
 				 	ActionOn,		// Flag: are we in actions?
 					EnablePick;  	// Flag: Are we in pick for actions?
 
-	int		  		EventCount;			// Number of the event 
+	int		  		EventCount;			// Number of the event
 	qualToOi *		EventQualPos;		// Position in event objects
 	HeaderObject  *	EventPos;			// Position in event objects
-	objInfoList *	EventPosOiList, 	// Position in oilist for TYPE exploration 
+	objInfoList *	EventPosOiList, 	// Position in oilist for TYPE exploration
 				*	EventPrev;			// Previous object address
 
-	pev *			PushedEvents;		// 
-	unsigned char *	PushedEventsTop,	// 
-				  *	PushedEventsMax;	// 
-	int	  			NewPushedEvents;	// 
+	pev *			PushedEvents;		//
+	unsigned char *	PushedEventsTop,	//
+				  *	PushedEventsMax;	//
+	int	  			NewPushedEvents;	//
 
 	int		  		ActionCount;		// Action counter
 	int		  		ActionLoopCount;	// Action loops counter
 	void	(*ActionEndRoutine)();		// End of action routine
 	unsigned short	CreationCount;		// Number of objects created since beginning of frame
-	short			EventType;					
+	short			EventType;
 	POINT 			Mouse;				// Mouse coordinate
 	POINT 			MouseClient;		// Mouse coordinates in the window
 	short	  		CurrentClick,		// For click events II
 					Free2;				// Ignore - Padding
 	HeaderObject **	ShuffleBuffer,
 				 ** ShufflePos;
-	int		  		ShuffleNumber;			
+	int		  		ShuffleNumber;
 
 	POINT			MouseSave;			// Mouse saving when pause
 	int		  		PauseCompteur;
@@ -1852,7 +1852,7 @@ struct runHeader3 {
 	int 			WindowSx,		// Window size
 					WindowSy;
 
-	short			CollisionCount;	// Collision counter 
+	short			CollisionCount;	// Collision counter
 	char			DoStop,			// Force the test of stop actions
 					Scrolling;		// Flag: we need to scroll
 
@@ -1872,7 +1872,7 @@ struct runHeader3 {
 					YMaximumKill;
 };
 
-// Extensions 
+// Extensions
 // ~~~~~~~~~~~~~~~~~~~~
 #define		KPX_MAXNUMBER					96
 typedef struct tagKPXMSG {
@@ -1965,7 +1965,7 @@ struct runHeader4 {
 	// ?
 	void (* Animations)(HeaderObject  *, int);
 	// Get direction at start
-	unsigned int (* DirAtStart)(HeaderObject  *, unsigned int);						
+	unsigned int (* DirAtStart)(HeaderObject  *, unsigned int);
 	// Move object
 	BOOL (* MoveIt)(HeaderObject  *);
 	// Approach object
@@ -2003,7 +2003,7 @@ struct runHeader4 {
 	CIPhoneJoystick *	rh4IPhoneJoystick;
 	CIPhoneAd *			rh4IPhoneAd;
 	char				rh4QuitString[32];		// Free, unknown usage
-	
+
 	unsigned long		rh4PickFlags0,			// 00-31
 						rh4PickFlags1,			// 31-63
 						rh4PickFlags2,			// 64-95
@@ -2018,7 +2018,7 @@ struct runHeader4 {
 	CValue				rh4ExpValue1,				// New V2
 						rh4ExpValue2;
 
-	long				rh4KpxReturn;				// WindowProc return 
+	long				rh4KpxReturn;				// WindowProc return
 	objectsList *		rh4ObjectCurCreate;
 	short				rh4ObjectAddCreate;
 	unsigned short		rh4Free10;					// For step through : fake key pressed
@@ -2047,23 +2047,23 @@ struct runHeader4 {
 	short 				rh4_2ndObjectNumber,		// Number for collisions
 						rh4FirstQuickDisplay;		// Quick-display object list
 	int					rh4WindowDeltaX,			// For scrolling
-						rh4WindowDeltaY;				
+						rh4WindowDeltaY;
 	unsigned int		rh4TimeOut;					// For time-out
 	int					rh4MouseXCenter,			// To correct CROSOFT bugs
 						rh4MouseYCenter,			// To correct CROSOFT bugs
 						rh4TabCounter;				// Objects with tabulation
-	
+
 	unsigned long		rh4AtomNum,					// For child window handling
 						rh4AtomRd,
 						rh4AtomProc;
 	short				rh4SubProcCounter,			// To accelerate the windows
 						rh4Free3;
-	
+
 	int					rh4PosPile;								// Expression evaluation pile position
 	expression *		rh4ExpToken;							// Current position in expressions
 	CValue *			rh4Results[MAX_INTERMEDIATERESULTS];	// Result pile
 	long				rh4Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
-	
+
 	TCHAR **			rh4PTempStrings;		// Debut zone 256 long
 	int					rh4MaxTempStrings;
 	long				rh4Free4[256-2];		// Free buffer
@@ -2071,7 +2071,7 @@ struct runHeader4 {
 	int					rh4NCurTempString;					// Pointer on the current string
 	unsigned long		rh4FrameRateArray[MAX_FRAMERATE];	// Framerate calculation buffer
 	int					rh4FrameRatePos;					// Position in buffer
-	unsigned long		rh4FrameRatePrevious;				// Previous time 
+	unsigned long		rh4FrameRatePrevious;				// Previous time
 };
 
 enum class GAMEFLAGS {
@@ -2117,7 +2117,7 @@ struct RunHeader {
 	// Buffers
 	int					NObjects,
 						MaxObjects;
-	
+
 	unsigned int		Free2[4];			// !No description in original SDK
 
 	int 				NumberOi;			// Number of OI in the list
@@ -2131,7 +2131,7 @@ struct RunHeader {
 	short *				LimitLists;			// Movement limitation list
 	qualToOi *			QualToOiList;		// Conversion qualifier->oilist
 
-	unsigned int		SBuffers;			// Buffer size /1024	
+	unsigned int		SBuffers;			// Buffer size /1024
 	unsigned char * 	Buffer,				// Position in current buffer
 				  * 	FBuffer,			// End of current buffer
 				  * 	Buffer1,			// First buffer
@@ -2146,7 +2146,7 @@ struct RunHeader {
 						VBLObjet,			// For the objects
 						VBLOld;				// For the counter
 
-	int					EventsSize;						
+	int					EventsSize;
 	unsigned short		MT_VBLStep,			// Path movement variables
 						MT_VBLCount;
 	unsigned int		MT_MoveStep;
@@ -2168,7 +2168,7 @@ struct RunHeader {
 	short 				ObListNext,			// Branch label
 
 						DestroyPos;
-	long				Free5,				
+	long				Free5,
 						Free6;
 
 	runHeader2			rh2;				// Sub-structure #1
@@ -2181,7 +2181,7 @@ struct RunHeader {
 	char				Free13[DB_BUFFERSIZE];		// Buffer libre!
 	void *				DbOldHO;
 	unsigned short		DbOldId,
-						Free7;					
+						Free7;
 
 	objectsList *		ObjectList;			// Object list address
 
@@ -2218,7 +2218,7 @@ struct HeaderObject {
 
 	int					size;			// Structure size
 	RunHeader *			AdRunHeader;	// Run-header address
-	HeaderObject *		Address;			
+	HeaderObject *		Address;
 	short				HFII,			// Number of LevObj
 		  				Oi,				// Number of ObjInfo
 						NumPrev,		// Same ObjInfo previous object
@@ -2240,7 +2240,7 @@ struct HeaderObject {
 	union {
 		struct {
 			int CalculX,	// Low weight value
-				X,		  // X coordinate
+				X,			// X coordinate
 				CalculY,	// Low weight value
 				Y;			// Y coordinate
 		};
@@ -2252,7 +2252,7 @@ struct HeaderObject {
 	int					ImgXSpot, ImgYSpot,		// Hot spot of the current image
 						ImgWidth, ImgHeight;	// Width/Height of the current picture
 	RECT				Rect;					// Display rectangle
-	
+
 	unsigned int		OEFlags;		// Objects flags
 	HeaderObjectFlags	Flags;			// HeaderObjectFlags (originally HOF_)
 	unsigned char		SelectedInOR,	// Selection lors d'un evenement OR
@@ -2267,7 +2267,7 @@ struct HeaderObject {
 	short				LimitFlags,			// Collision limitation flags
 						NextQuickDisplay;	// Quickdraw list
 	saveRect			BackSave;			// Background
-	
+
 	EventParam *		CurrentParam;		// Address of the current parameter
 
 	int					OffsetToWindows;	// Offset to windows
@@ -2282,16 +2282,16 @@ struct HeaderObject {
 struct rMvt {
 
 	int  	rmAcc;						// Current acceleration
-	int  	rmDec;						// Current Decelaration 
+	int  	rmDec;						// Current Decelaration
 	int		rmCollisionCount;			// Collision counter
 	int		rmFree2;
 	int  	rmStopSpeed;				// If stopped: speed to take again
-	int  	rmFree0;					
-	int  	rmFree1;					
+	int  	rmFree0;
+	int  	rmFree1;
 	int  	rmAccValue;					// Acceleration calculation
 	int  	rmDecValue;					// Deceleration calculation
 	short	rmEventFlags;				// To accelerate events
-	int  	rmFree3;	
+	int  	rmFree3;
 	int  	rmFree4;
 	BOOL	rmFree5;
 	BOOL	rmFree6;
@@ -2305,13 +2305,13 @@ struct rMvt {
 	BOOL  	rmBouncing;					// Bouncing?
 	int		rmMvtNum;					// Number of the current movement
 
-	union	
+	union
 	{
 		struct
 		{
 			unsigned char 	rmMvData[80];			// Space for data
 		};
-		struct	
+		struct
 		{
 			int		MT_Speed;
 			int	 	MT_Sinus;
@@ -2340,7 +2340,7 @@ struct rMvt {
 			int	 	MM_Stopped;
 			int	 	MM_OldSpeed;
 			unsigned char	MM_MvOpt;
-		};	
+		};
 		struct
 		{
 			int	 	MG_Bounce;
@@ -2438,7 +2438,7 @@ struct rAni {
 		 			RepeatLoop,		// Looping picture
 		 			Frame,			// Current frame
 		 			NumberOfFrame,	// Number of frames
-	
+
 		 			FrameForced;
 
 };
@@ -2460,7 +2460,7 @@ fancyenumop(RSFLAG);
 struct Sprite {
 	int	 			Flash,				// When flashing objects
 		 			FlashCount,
-						Layer,				// Layer
+					Layer,				// Layer
 					ZOrder,				// Z-order value
 		 			CreationFlags;		// Creation flags
 	COLORREF		BackColor;			// background saving color
@@ -2474,21 +2474,22 @@ struct Sprite {
 
 
 
-// ----------------------------------------
 // Objects's internal variables (build # >= 243)
 // ----------------------------------------
 struct AltVals {
-	CValue *		Values;
-	long			Free1[26-1];	// 26 = number of alterable values
-	long			ValueFlags;
-	unsigned char	Free2[26];		// 26 = number of alterable values
-	TCHAR *			Strings[10];	// 10 = number of alterable strings
+	CValue *				Values;
+	int						NumAltValues;
+	long					Free1[25-1];	// 26 = number of alterable values
+	long					InternalFlags;	// Bitmask of all internal flags; flag 0 is accessed via (InternalFlags & 1). Previously named ValueFlags.
+	unsigned char			Free2[26];		// 26 = number of alterable values
+	const TCHAR * const *	Strings;		// Alterable strings (will be null if never used, including if blank in obj properties)
+	int						NumAltStrings;
 };
 //typedef AltVals *	LPRVAL;
-	
+
 /*
 	Obsolete (build 242 or below) - Note: don't remove this (for the SDK)
-  
+
 typedef struct tagRV {
 	long	rvValues[VALUES_NUMBEROF_ALTERABLE];
 	long	rvValueFlags;
@@ -2524,7 +2525,7 @@ struct rCom {
 	Spr  	rcSprite;					// Sprite ID if defined
 	int	 	rcAnim;						// Wanted animation
 	int			rcImage;					// Current frame
-	float	rcScaleX;					
+	float	rcScaleX;
 	float	rcScaleY;
 	AngleVar	rcAngle;
 	int			rcDir;						// Current direction
@@ -2548,18 +2549,18 @@ struct rCom {
 	long	rcFadeOut;
 
 };
-	
-	
+
+
 // ------------------------------------------------------------
 // ACTIVE OBJECTS DATAZONE
 // ------------------------------------------------------------
 struct RunObject {
 
-	HeaderObject  	roHo;		  		// Common structure 
+	HeaderObject  	roHo;		  		// Common structure
 
 	rCom			roc;				// Anim/movement structure
-	rMvt			rom;				// Movement structure 
-	rAni			roa;				// Animation structure 
+	rMvt			rom;				// Movement structure
+	rAni			roa;				// Animation structure
 	Sprite			ros;				// Sprite handling structure
 	AltVals			rov;				// Values structure
 
@@ -2603,7 +2604,7 @@ struct rs {
 	rCom			Common;				// Anims / movements / sprites structures
 	rMvt			Movement;				// Mouvement structure
 	Sprite			Sprite;				// Sprite handling
-	
+
 	short			Player;			// Number of the player if score or lives
 	short			Flags;			// Type + flags
 
@@ -2617,15 +2618,15 @@ struct rs {
 	};
 	union
 	{
-		long		Maxi;				// 
+		long		Maxi;				//
 		long		Level;
 	};
 	CValue			Value;
 	LONG			BoxCx;			// Dimensions box (for lives, counters, texts)
-	LONG			BoxCy;			
-	double			MiniDouble;		
+	LONG			BoxCy;
+	double			MiniDouble;
 	double			MaxiDouble;
-	short			OldFrame;			// Counter only 
+	short			OldFrame;			// Counter only
 	unsigned char	Hidden;
 	unsigned char	Free;
 	TCHAR *			TextBuffer;		// text buffer
@@ -2657,10 +2658,10 @@ struct objInfoList {
 	int				NObjects,		 // Current number
 					ActionCount,	 // Action loop counter
 					ActionLoopCount; // Action loop counter
-	
+
 	// Current routine for the actions
 	HeaderObject * (*CurrentRoutine)(objInfoList*, BOOL*);
-	
+
 	int				CurrentOi,		// Current object
 					Next,			// Pointer on the next
 					EventCount,		// When the event list is done
@@ -2675,7 +2676,7 @@ struct objInfoList {
 	short			HFII;			// First available frameitem
 	COLORREF 		BackColor;		// Background erasing color
 	short			Qualifiers[MAX_QUALIFIERS];		// Qualifiers for this object
-	TCHAR			name[24];	 	// name	
+	TCHAR			name[24];	 	// name
 	int				EventCountOR;	// Selection in a list of events with OR
 	#ifdef HWABETA
 		short *		lColList;		// Liste de collisions sprites
@@ -2747,7 +2748,7 @@ struct kpxRunInfos {
 	unsigned short	EDITDATASize;		// 12 Size of the data zone when exploded
 	OEFLAGS			EditFlags;			// 14 Object flags
 	char			WindowProcPriority;	// 16 Priority of the routine 0-255
-	char			Free;						
+	char			Free;
 	OEPREFS			EditPrefs;			// 18 Editing Preferences
 	long			Identifier;			// 1A Identification string
 	short			Version;			// 1E current version
@@ -2786,7 +2787,7 @@ struct kpj {
 	BOOL				(__stdcall * LoadRunObject)				(HeaderObject *, HANDLE);
 	void				(__stdcall * GetRunObjectMemoryUsage)	(HeaderObject *, int *, int *, int *);
 
-	kpxRunInfos	infos;	
+	kpxRunInfos	infos;
 };
 
 #define	KPJ_SHIFT				7
@@ -2827,7 +2828,7 @@ struct CallTables
 
 // Macro, converts 4 unsigned chars to one unsigned int
 #define B2L(a,b,c,d)	((unsigned int)(((unsigned int)((unsigned char)(d))<<24)|((unsigned int)((unsigned char)(c))<<16)|((unsigned int)((unsigned char)(b))<<8)|(unsigned int)((unsigned char)(a))))
-	
+
 // For GetFileInfos
 enum class FILEINFO {
 	DRIVE = 1,
@@ -2955,7 +2956,7 @@ struct MenuHdr {
 					MenuOffset,		// From start of MenuHdr
 					MenuSize,
 					AccelOffset,	// From start of MenuHdr
-					AccelSize;		// Total data size = mhHdrSize + mhMenuSize + mhAccelSize 
+					AccelSize;		// Total data size = mhHdrSize + mhMenuSize + mhAccelSize
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3089,7 +3090,7 @@ struct AppHeader2 {
 
 enum class AH2OPT {
 	KEEPSCREENRATIO = bit1,
-	FRAMETRANSITION = bit2,		// (HWA only) a frame has a transition 
+	FRAMETRANSITION = bit2,		// (HWA only) a frame has a transition
 	RESAMPLESTRETCH = bit3,		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
 	GLOBALREFRESH = bit4,		// (Mobile) force global refresh
 	MULTITASK = bit5,			// (iPhone) Multitask
@@ -3410,15 +3411,15 @@ public:
 		struct {
 			unsigned int LineFlags;		// Only for lines in non filled mode
 		};
-		
+
 		// Solid colour
 		struct {
 			COLORREF Color;			// Solid
 		};
-		
+
 		// Gradient
 		struct {
-			COLORREF	 Color1,		
+			COLORREF	 Color1,
 						 Color2;
 			unsigned int GradientFlags;
 		};
@@ -3603,7 +3604,7 @@ struct ocRTF {
 	unsigned int	size;
 	unsigned int	Version;	// 0
 	unsigned int	Options;	// Options
-	COLORREF		BackColor;	// Background color	
+	COLORREF		BackColor;	// Background color
 	LONG			XSize;		// Size
 	LONG			YSize;
 };
@@ -3732,7 +3733,7 @@ typedef Transition_Data * LPTRANSITIONDATA;
 // Internet Versions
 #define	FIRST_NETVERSION		bit1		// First vitalize version
 #define	CCN_NETVERSION			bit2		// CCN applications
-#define	MORECOMP_NETVERSION		0x003		// Short OIs, compression of levObjs, adpcm sounds, 
+#define	MORECOMP_NETVERSION		0x003		// Short OIs, compression of levObjs, adpcm sounds,
 #define	CNC_NETVERSION			0x003		// Current Internet Version
 
 // Collision mask margins
@@ -4342,8 +4343,8 @@ struct ObjInfo {
 //
 struct bkd2 {
 
-	unsigned short	loHnd,			// 0 
-					oiHnd;			// 0 
+	unsigned short	loHnd,			// 0
+					oiHnd;			// 0
 	int				x,
 					y;
 	unsigned short	img,
@@ -4583,7 +4584,7 @@ struct CBinaryFile {
 					FileOffset;		// file offset in EXE/CCN file
 	long			TempCount;		// usage count
 
-	CBinaryFile() : 
+	CBinaryFile() :
 		TempPath(NULL), FileSize(0), FileOffset(0), TempCount(0)
 	{
 		memset(Path, 0, MAX_PATH);
