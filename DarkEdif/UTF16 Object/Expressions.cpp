@@ -29,12 +29,12 @@ const wchar_t * Extension::UTF16IntToUTF16Char(unsigned int utf16int)
 	return wc;
 }
 
-const wchar_t * Extension::UTF16StrFromUTF16Mem(long addr, int numChars)
+const wchar_t * Extension::UTF16StrFromUTF16Mem(int addr, int numChars)
 {
 	// obvious bad pointer is obvious
-	if (addr == 0xDDDDDDDL || addr == 0x0000000L || addr == 0xFFFFFFFL)
+	if (IsBadMemoryAddress((void*)addr))
 		return Runtime.CopyString(L"<err, bad pointer>");
-	// numChars cannot be below -1. Bad juju.
+	// numChars cannot be below -1.
 	if (numChars < -1)
 		return Runtime.CopyString(L"<err, numChars is below -1>");
 	// 0-char string is easy.
@@ -47,12 +47,12 @@ const wchar_t * Extension::UTF16StrFromUTF16Mem(long addr, int numChars)
 	// NB: wstring ctor copies the memory.
 	return Runtime.CopyString(std::wstring((wchar_t *)addr, (size_t)numChars).c_str());
 }
-const wchar_t * Extension::UTF16StrFromUTF8Mem(long addr, int numChars)
+const wchar_t * Extension::UTF16StrFromUTF8Mem(int addr, int numChars)
 {
 	// obvious bad pointer is obvious
-	if (addr == 0xDDDDDDDL || addr == 0x0000000L || addr == 0xFFFFFFFL)
+	if (IsBadMemoryAddress((void *)addr))
 		return Runtime.CopyString(L"<err, bad pointer>");
-	// numChars cannot be below -1. Bad juju.
+	// numChars cannot be below -1.
 	if (numChars < -1)
 		return Runtime.CopyString(L"<err, numChars is below -1>");
 	// 0-char string is easy.
@@ -69,7 +69,7 @@ const wchar_t * Extension::UTF16StrFromUTF8Mem(long addr, int numChars)
 	// NB: wstring ctor copies the memory.
 	return Runtime.CopyString(str2.c_str());
 }
-#if 0==1
+#if false
 int Extension::UTF16CharToUTF8Int(const wchar_t * utf16Char)
 {
 	unsigned short byte1 = *((unsigned short *)utf16Char);

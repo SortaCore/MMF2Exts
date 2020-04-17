@@ -23,8 +23,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkExpression(3, UTF8IntToUTF16Char);
 #endif
 
-	LinkAction(0, UTF16StrToUTF8Mem);
-
+	LinkAction(0, UTF16StrToUTF16Mem);
 
 	/*
 		This is where you'd do anything you'd do in CreateRunObject in the original SDK
@@ -33,9 +32,13 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		anything from edPtr to the extension class here.
 	
 	*/
-
-
 	
+}
+
+bool Extension::IsBadMemoryAddress(const void* const addrP)
+{
+	long addr = (long)addrP;
+	return (addr == 0xDDDDDDDL || addr == 0xCCCCCCCL || addr == 0xCDCDCDCDL || addr == 0x0000000L || addr == 0xFFFFFFFL);
 }
 
 Extension::~Extension()

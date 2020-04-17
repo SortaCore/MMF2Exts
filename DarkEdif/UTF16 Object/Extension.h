@@ -15,7 +15,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 4;
+	static const int Version = 5;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -50,8 +50,10 @@ public:
 		numeric IDs in the class constructor (Extension.cpp)
 	*/
 
+		bool IsBadMemoryAddress(const void * const address);
+
 	/// Actions
-		void UTF16StrToUTF8Mem(const wchar_t * utf16Str, int addr, int excludeNull);
+		void UTF16StrToUTF16Mem(const wchar_t * utf16Str, int addr, int excludeNull);
 
 	/// Conditions
 
@@ -59,8 +61,8 @@ public:
 		
 		int UTF16CharToUTF16Int(const wchar_t * utf16Char);
 		const wchar_t * UTF16IntToUTF16Char(unsigned int utf16ints);
-		const wchar_t * UTF16StrFromUTF16Mem(long addr, int numChars);
-		const wchar_t * UTF16StrFromUTF8Mem(long addr, int numChars);
+		const wchar_t * UTF16StrFromUTF16Mem(int addr, int numChars);
+		const wchar_t * UTF16StrFromUTF8Mem(int addr, int numChars);
 
 
 

@@ -6,7 +6,7 @@
 			"Name": "UTF-16 object",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
-			"Comment": "Converts between UTF-16 text and numeric representation, and UTF-8/ANSI. (v1.4)",
+			"Comment": "Converts between UTF-16 text and numeric representation, and UTF-8/ANSI. (b%i)",
 			"Help": "",
 			"URL": "https://dark-wire.com/"
 		},
@@ -24,11 +24,11 @@
 		],
 		"Actions": [
 			{
-				"Title": "%o : Store UTF-16 string %0 at memory address %1 (with null excluded = %2)",
+				"Title": "%o : Store UTF-16 string %0 at memory address %1 (with null terminator removed = %2)",
 				"Parameters": [
 					[ "String", "UTF-16 string" ],
 					[ "Integer", "Memory address" ],
-					[ "Integer", "Exclude null terminator? (0 or 1, you probably want 0)" ]
+					[ "Integer", "Remove null terminator? (0 or 1, you probably want 0)" ]
 				]
 			}
 		],
@@ -37,7 +37,7 @@
 		"Expressions": [
 			{
 				"Title": "UTF16CharToUTF16Int(",
-				"Returns": "Integer",
+				"Returns": "Unsigned Integer",
 				"Parameters": [
 					[ "Text", "UTF-16 character" ]
 				]
