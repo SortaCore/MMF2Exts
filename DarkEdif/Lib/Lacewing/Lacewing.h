@@ -40,17 +40,17 @@
 	#endif
 
 	#include <inttypes.h>
-	
-	typedef int64_t	lw_i64; 
-	typedef uint64_t	lw_ui64; 
-	typedef intptr_t	lw_iptr; 
-	typedef uintptr_t  lw_uiptr; 
-	typedef int32_t	lw_i32; 
-	typedef uint32_t	lw_ui32; 
-	typedef int16_t	lw_i16; 
-	typedef uint16_t	lw_ui16; 
-	typedef int8_t	 lw_i8; 
-	typedef uint8_t	lw_ui8; 
+
+	typedef int64_t	lw_i64;
+	typedef uint64_t	lw_ui64;
+	typedef intptr_t	lw_iptr;
+	typedef uintptr_t  lw_uiptr;
+	typedef int32_t	lw_i32;
+	typedef uint32_t	lw_ui32;
+	typedef int16_t	lw_i16;
+	typedef uint16_t	lw_ui16;
+	typedef int8_t	 lw_i8;
+	typedef uint8_t	lw_ui8;
 
 	#define lw_PRId64 PRId64
 	#define lw_PRIu64 PRIu64
@@ -64,19 +64,19 @@
 	  typedef __int32 lw_iptr;
 	  typedef unsigned __int32 lw_uiptr;
 	#endif
-	
-	typedef __int64 lw_i64; 
-	typedef unsigned __int64 lw_ui64; 
-	typedef __int32 lw_i32; 
-	typedef unsigned __int32 lw_ui32; 
-	typedef __int16 lw_i16; 
-	typedef unsigned __int16 lw_ui16; 
-	typedef __int8 lw_i8; 
-	typedef unsigned __int8 lw_ui8; 
+
+	typedef __int64 lw_i64;
+	typedef unsigned __int64 lw_ui64;
+	typedef __int32 lw_i32;
+	typedef unsigned __int32 lw_ui32;
+	typedef __int16 lw_i16;
+	typedef unsigned __int16 lw_ui16;
+	typedef __int8 lw_i8;
+	typedef unsigned __int8 lw_ui8;
 
 	#define lw_PRId64 "I64d"
 	#define lw_PRIu64 "I64u"
-	
+
 #endif
 
 #ifndef _WIN32
@@ -365,7 +365,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 	  lw_bool (* is_transparent) (lw_stream);
 	  lw_bool (* close) (lw_stream, lw_bool immediate);
- 
+
 	  size_t (* bytes_left) (lw_stream);
 	  void (* read) (lw_stream, size_t bytes);
 
@@ -377,7 +377,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 	lw_import lw_stream lw_stream_new (const lw_streamdef *, lw_pump);
 	lw_import const lw_streamdef * lw_stream_get_def (lw_stream);
-	
+
 	lw_import void * lw_stream_tail (lw_stream);
 	lw_import lw_stream lw_stream_from_tail (void *);
 
@@ -407,11 +407,11 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import const char * lw_file_name (lw_file);
 
 /* Pipe */
-  
+
   lw_import  lw_stream  lw_pipe_new  (lw_pump);
 
 /* Timer */
-  
+
   lw_import		lw_timer  lw_timer_new				  (lw_pump);
   lw_import			void  lw_timer_delete				(lw_timer);
   lw_import			void  lw_timer_start				(lw_timer, long milliseconds);
@@ -470,7 +470,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import		lw_bool  lw_client_connected			 (lw_client);
   lw_import		lw_bool  lw_client_connecting			(lw_client);
   lw_import		lw_addr  lw_client_server_addr			(lw_client);
-  
+
   typedef void (lw_callback * lw_client_hook_connect) (lw_client);
   lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
 
@@ -513,7 +513,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
   typedef void (lw_callback * lw_server_hook_data) (lw_server, lw_server_client, const char * buffer, size_t size);
   lw_import void lw_server_on_data (lw_server, lw_server_hook_data);
-  
+
   typedef void (lw_callback * lw_server_hook_error) (lw_server, lw_error);
   lw_import void lw_server_on_error (lw_server, lw_server_hook_error);
 
@@ -571,14 +571,14 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import				void  lw_ws_session_close		  (lw_ws, const char * id);
   lw_import				void  lw_ws_enable_manual_finish	(lw_ws);
   lw_import				long  lw_ws_idle_timeout			(lw_ws);
-  lw_import				void  lw_ws_set_idle_timeout		(lw_ws, long seconds);  
+  lw_import				void  lw_ws_set_idle_timeout		(lw_ws, long seconds);
   lw_import				void* lw_ws_tag					(lw_ws);
   lw_import				void  lw_ws_set_tag				(lw_ws, void * tag);
   lw_import			lw_addr  lw_ws_req_addr				(lw_ws_req);
   lw_import			lw_bool  lw_ws_req_secure			 (lw_ws_req);
   lw_import		 const char* lw_ws_req_url				(lw_ws_req);
   lw_import		 const char* lw_ws_req_hostname			(lw_ws_req);
-  lw_import				void  lw_ws_req_disconnect		 (lw_ws_req); 
+  lw_import				void  lw_ws_req_disconnect		 (lw_ws_req);
   lw_import				void  lw_ws_req_set_redirect		(lw_ws_req, const char * url);
   lw_import				void  lw_ws_req_status			 (lw_ws_req, long code, const char * message);
   lw_import				void  lw_ws_req_set_mimetype		(lw_ws_req, const char * mimetype);
@@ -620,7 +620,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import		 const char* lw_ws_req_body				(lw_ws_req);
   lw_import				void  lw_ws_req_disable_cache	  (lw_ws_req);
   lw_import				long  lw_ws_req_idle_timeout		(lw_ws_req);
-  lw_import				void  lw_ws_req_set_idle_timeout	(lw_ws_req, long seconds);  
+  lw_import				void  lw_ws_req_set_idle_timeout	(lw_ws_req, long seconds);
 /*lw_import				void  lw_ws_req_enable_dl_resuming (lw_ws_req);
   lw_import			 lw_i64  lw_ws_req_reqrange_begin	 (lw_ws_req);
   lw_import			 lw_i64  lw_ws_req_reqrange_end		(lw_ws_req);
@@ -691,7 +691,7 @@ typedef struct _error * error;
 struct _error
 {
 	lw_class_wraps (error);
-	
+
 	lw_import void add (const char * format, ...);
 	lw_import void add (int);
 	lw_import void add (const char * format, va_list);
@@ -724,7 +724,7 @@ struct _event
 	lw_import bool signalled ();
 
 	lw_import bool wait (long timeout = -1);
-	
+
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
@@ -764,7 +764,7 @@ struct _pump
 										bool edge_triggered = true);
 
 	#endif
- 
+
 	void remove (lw_pump_watch);
 	void post_remove (lw_pump_watch);
 
@@ -898,7 +898,7 @@ struct _stream
 	* headers before the (already buffered) response body.
 	*/
 
-	lw_import void end_queue ();	
+	lw_import void end_queue ();
 
 	lw_import void end_queue
 		(int head_buffers, const char ** buffers, size_t * lengths);
@@ -931,7 +931,7 @@ lw_import void stream_delete (stream);
 
 
 /** pipe **/
-			  
+
 typedef struct _pipe * pipe;
 
 struct _pipe : public _stream
@@ -943,7 +943,7 @@ lw_import pipe pipe_new ();
 lw_import pipe pipe_new (pump);
 
 
-/** fdstream **/ 
+/** fdstream **/
 
 typedef struct _fdstream * fdstream;
 
@@ -957,7 +957,7 @@ struct _fdstream : public _stream
 	lw_import bool valid ();
 
 	lw_import void cork ();
-	lw_import void uncork ();	
+	lw_import void uncork ();
 
 	lw_import void nagle (bool);
 
@@ -989,7 +989,7 @@ lw_import file file_new (pump, const char * filename, const char * mode = "rb");
 typedef struct _address * address;
 
 struct _address
-{  
+{
 	lw_class_wraps (address);
 
 	lw_import long port ();
@@ -1031,17 +1031,17 @@ struct _filter
 {
 	lw_class_wraps (filter);
 
-	lw_import void local (address);	
+	lw_import void local (address);
 	lw_import void remote (address);
 
-	lw_import address local ();	
-	lw_import address remote (); 
+	lw_import address local ();
+	lw_import address remote ();
 
-	lw_import void local_port (long port);	
-	lw_import long local_port ();	
+	lw_import void local_port (long port);
+	lw_import long local_port ();
 
-	lw_import void remote_port (long port);	
-	lw_import long remote_port ();	
+	lw_import void remote_port (long port);
+	lw_import long remote_port ();
 
 	lw_import void reuse (bool enabled);
 	lw_import bool reuse ();
@@ -1074,7 +1074,7 @@ struct _client : public _fdstream
 	lw_import address server_address ();
 
 	typedef void (lw_callback * hook_connect) (client);
-	typedef void (lw_callback * hook_disconnect) (client); 
+	typedef void (lw_callback * hook_disconnect) (client);
 
 	typedef void (lw_callback * hook_data)
 	  (client, const char * buffer, size_t size);
@@ -1236,7 +1236,7 @@ struct _webserver
 
 	typedef void (lw_callback * hook_get) (webserver, webserver_request);
 	typedef void (lw_callback * hook_post) (webserver, webserver_request);
-	typedef void (lw_callback * hook_head) (webserver, webserver_request);  
+	typedef void (lw_callback * hook_head) (webserver, webserver_request);
 	typedef void (lw_callback * hook_disconnect) (webserver, webserver_request);
 	typedef void (lw_callback * hook_error) (webserver, error);
 
@@ -1265,7 +1265,7 @@ struct _webserver
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
-	
+
 lw_import webserver webserver_new (pump);
 lw_import void webserver_delete (webserver);
 
@@ -1454,13 +1454,13 @@ lw_import void flashpolicy_delete (flashpolicy);
 // lacewing::fd_stream::set_fd uses WSADuplicateSocket() to check if the handle passed is a socket.
 // Normally, this is used to pass access to a socket to a second process, so this prepares the socket for copying.
 // The duplicated information is not used for a new socket, though. It's just discarded.
-// 
+//
 // The missing second socket causes the client OS to not fully disconnect the socket, so on disconnect,
 // • you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
 // • you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
-// 
+//
 // On process close, the socket is force-closed with a TCP RST (Reset) message.
-// 
+//
 // To avoid this, just modify the function (and C++ mirror) to pass is_socket parameter.
 // That way the "is socket" hack isn't needed.
 
@@ -1471,7 +1471,7 @@ lw_import void flashpolicy_delete (flashpolicy);
 struct relayclient
 {
 public:
-	const static int buildnum = 82;
+	const static int buildnum = 83;
 
 	void * internaltag, *tag;
 
@@ -1607,7 +1607,7 @@ public:
 
 struct relayserver
 {
-	static const int buildnum = 14;
+	static const int buildnum = 15;
 
 	void * internaltag, *tag;
 
@@ -1694,7 +1694,7 @@ struct relayserver
 		channel * firstchannel();
 		client * next();
 		channel * nextchannel(channel *);
-		
+
 		~client() noexcept(false);
 	};
 

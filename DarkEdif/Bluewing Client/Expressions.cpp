@@ -23,14 +23,14 @@ const char * Extension::Peer_Name()
 }
 const char * Extension::ReceivedStr()
 {
-	if (threadData.receivedMsg.content == nullptr || threadData.receivedMsg.size == 0) 
+	if (threadData.receivedMsg.content == nullptr || threadData.receivedMsg.size == 0)
 		return Runtime.CopyString("");
 	else
 		return Runtime.CopyString(std::string(threadData.receivedMsg.content, threadData.receivedMsg.size).c_str());
 }
 int Extension::ReceivedInt()
 {
-	if (threadData.receivedMsg.size != 4) 
+	if (threadData.receivedMsg.size != 4)
 	{
 		CreateError("Received() was used on a message that is not a number message.");
 		return 0;
@@ -109,7 +109,7 @@ int Extension::SignedByte(int index)
 		return 0;
 	}
 	else
-		return (int)(threadData.receivedMsg.content + index);
+		return (int)(*(threadData.receivedMsg.content + index));
 }
 unsigned int Extension::UnsignedShort(int index)
 {
@@ -262,7 +262,7 @@ unsigned int Extension::HostPort()
 }
 const char * Extension::WelcomeMessage()
 {
-	return Runtime.CopyString(Cli.welcomemessage()); 
+	return Runtime.CopyString(Cli.welcomemessage());
 }
 unsigned int Extension::ReceivedBinaryAddress()
 {
@@ -304,7 +304,7 @@ int Extension::CursorSignedByte()
 	else
 	{
 		++threadData.receivedMsg.cursor;
-		return (int)(threadData.receivedMsg.content+threadData.receivedMsg.cursor-1);
+		return (int)(*(threadData.receivedMsg.content+threadData.receivedMsg.cursor-1));
 	}
 }
 unsigned int Extension::CursorUnsignedShort()
@@ -444,7 +444,7 @@ const char * Extension::DumpMessage(int index, const char * format)
 
 			// count number of expected variables
 			count = max(atoi(i+1),1);
-				
+
 			// Char
 			if (i[0] == 'c')
 			{
@@ -465,10 +465,10 @@ const char * Extension::DumpMessage(int index, const char * format)
 						output << "Unsigned char: " << (int)((unsigned char *)Msg)[j] << "\r\n";
 				}
 				Msg += count;
-					
+
 				continue;
 			}
-				
+
 			// Short
 			if (i[0] == 'h')
 			{
