@@ -16,45 +16,29 @@
 		union {
 			// When you receive a message
 			struct {
-			char *				content;
-			size_t				size,
-								cursor;
-			unsigned char		subchannel;
+				std::string			content;
+				size_t				cursor;
+				unsigned char		subchannel;
 			} receivedMsg;
 
 			// When an error occurs
 			struct {
-				const char *	text;
+				std::string	text;
 			} error;
-
-			// When a selection/loop is called
-			struct  {
-				const char *	name;
-			} loop;
 		};
-		union {
-			ChannelCopy * channel;
-			const lacewing::relayclient::channellisting * channelListing;
-		};
-		PeerCopy * peer;
+		std::shared_ptr<lacewing::relayclient::channel> channel;
+		std::shared_ptr<lacewing::relayclient::channellisting> channelListing;
+		std::shared_ptr<lacewing::relayclient::channel::peer> peer;
 
-		SaveExtInfo() : numEvents(0), condTrig{ 0, 0 }, channel(nullptr), peer(nullptr)
+		SaveExtInfo() : numEvents(0), condTrig{ 35353, 35353 }
 		{
-			receivedMsg.content = nullptr;
+			new(&receivedMsg.content)std::string();
 			receivedMsg.cursor = 0;
-			receivedMsg.size = 0;
 			receivedMsg.subchannel = 0;
 		}
 		~SaveExtInfo()
 		{
-			// A char * is always the first member of each struct inside the union.
-			// So they will be at the same memory address. Neat, huh?
-			if (receivedMsg.content)
-			{
-				free(receivedMsg.content);
-				receivedMsg.content = nullptr;
-			}
-			
+			receivedMsg.content.~basic_string();
 			peer = nullptr;
 			channel = nullptr;
 		}

@@ -1,6 +1,6 @@
 
 #include "Common.h"
-#define MessageMatches() (threadData.receivedMsg.subchannel == subchannel || subchannel == -1)
+#define MessageMatches() (threadData->receivedMsg.subchannel == subchannel || subchannel == -1)
 
 #define LoopNameMatches(cond) \
 	if (loopName[0] == '\0') \
@@ -8,7 +8,7 @@
 		CreateError("Cannot detect condition "#cond": loop name is blank."); \
 		return false; \
 	} \
-	return !strcmp(threadData.loop.name, loopName)
+	return !strcmp(loopName.data(), passedLoopName)
 
 bool Extension::OnSentTextMessageFromServer(int subchannel)
 {
@@ -112,51 +112,49 @@ bool Extension::OnAnyBlastedMessageFromPeer(int subchannel)
 }
 bool Extension::ClientHasAName()
 {
-	return (Cli.name() && Cli.name()[0] != '\0');
+	return !Cli.name().empty();
 }
 bool Extension::SelectedPeerIsChannelMaster()
 {
-	if (!threadData.peer)
+	if (!selPeer)
 	{
 		CreateError("Error, Selected Peer Is Channel Master condition called without valid peer being selected.");
 		return false;
 	}
 
-	return threadData.channel->channelmaster() == threadData.peer;
+	return selPeer->ischannelmaster();
 }
 bool Extension::YouAreChannelMaster()
 {
-	if (!threadData.channel)
+	if (!selChannel)
 	{
 		CreateError("Error, You Are Channel Master condition called without valid channel being selected.");
 		return false;
 	}
 
-	bool isitme = false;
-	threadData.channel->channelmaster(&isitme);
-	return isitme;
+	return selChannel->ischannelmaster();
 }
-bool Extension::OnChannelListLoopWithName(char * loopName)
+bool Extension::OnChannelListLoopWithName(char * passedLoopName)
 {
 	LoopNameMatches("Channel List Loop With Name");
 }
-bool Extension::OnChannelListLoopWithNameFinished(char * loopName)
+bool Extension::OnChannelListLoopWithNameFinished(char * passedLoopName)
 {
 	LoopNameMatches("Channel List Loop With Name Finished");
 }
-bool Extension::OnPeerLoopWithName(char * loopName)
+bool Extension::OnPeerLoopWithName(char * passedLoopName)
 {
 	LoopNameMatches("Peer Loop With Name");
 }
-bool Extension::OnPeerLoopWithNameFinished(char * loopName)
+bool Extension::OnPeerLoopWithNameFinished(char * passedLoopName)
 {
 	LoopNameMatches("Peer Loop With Name Finished");
 }
-bool Extension::OnClientChannelLoopWithName(char * loopName)
+bool Extension::OnClientChannelLoopWithName(char * passedLoopName)
 {
 	LoopNameMatches("Client Channel Loop With Name");
 }
-bool Extension::OnClientChannelLoopWithNameFinished(char * loopName)
+bool Extension::OnClientChannelLoopWithNameFinished(char * passedLoopName)
 {
 	LoopNameMatches("Client Channel Loop With Name Finished");
 }
@@ -192,87 +190,119 @@ bool Extension::OnAnyBlastedChannelMessageFromServer(int subchannel)
 {
 	return MessageMatches();
 }
-bool Extension::IsJoinedToChannel(char * channelName)
+bool Extension::IsJoinedToChannel(char * channelNamePtr)
 {
-	if (channelName[0] == '\0')
-		CreateError("Error checking if joined to a channel, channel name supplied was blank.");
+	if (channelNamePtr[0] == '\0')
+		return CreateError("Error checking if joined to a channel, channel name supplied was blank."), false;
+
+	std::string_view channelName(channelNamePtr);
+
+	auto cliReadLock = Cli.lock.createReadLock();
+	const auto &channels = Cli.getchannels();
+	auto chIt = std::find_if(channels.cbegin(), channels.cend(),
+		[=](const auto &c) { return lw_sv_icmp(c->name(), channelName); });
+	return chIt != channels.cend() && !(*chIt)->readonly();
+}
+bool Extension::IsPeerOnChannel_Name(char * peerNamePtr, char * channelNamePtr)
+{
+	if (peerNamePtr[0] == '\0' && !selPeer)
+		return CreateError("Error checking if peer is joined to a channel, peer name supplied was blank and no peer pre-selected."), false;
+	if (channelNamePtr[0] == '\0' && !selChannel)
+		return CreateError("Error checking if peer is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
+	if (channelNamePtr[0] == '\0' && peerNamePtr[0] == '\0')
+		return selPeer->readonly();
+
+	std::string_view channelName(channelNamePtr);
+	std::string_view peerName(peerNamePtr);
+
+	decltype(selChannel) foundCh;
+	decltype(selPeer) foundPeer;
+
+	// If blank channel name, use currently selected
+	if (channelNamePtr[0] == '\0')
+		foundCh = selChannel;
 	else
 	{
-		auto &channels = Channels;
-		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
-			return !_stricmp(c->name(), channelName); });
-		return C != Channels.cend() && !(**C).isclosed;
+		auto serverReadLock = Cli.lock.createReadLock();
+		const auto & channels = Cli.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[&](const auto & ch) {
+					return lw_sv_icmp(ch->name(), channelName);
+				});
+		if (foundChIt == channels.cend())
+		{
+			std::stringstream error;
+			error << "Error checking if peer is joined to a channel, channel name \"" << channelName << "\" was not found on server.";
+			return CreateError(error.str().c_str()), false;
+		}
+		foundCh = *foundChIt;
 	}
-	return false;
-}
-bool Extension::IsPeerOnChannel_Name(char * peerName, char * channelName)
-{
+
+	auto channelReadLock = foundCh->lock.createReadLock();
+	const auto & peers = foundCh->getpeers();
+
+	// If blank peer name, use currently selected peer; it might be in found channel
 	if (peerName[0] == '\0')
-		CreateError("Error checking if peer is joined to a channel, peer name supplied was blank.");
-	else if (channelName[0] != '\0')
 	{
-		auto &channels = Channels;
-		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
-			return !_stricmp(c->name(), channelName); });
-		if (C == Channels.cend())
-		{
-			CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
-			return false;
-		}
-		if ((**C).isclosed)
-			return false;
+		// selChannel + selPeer = obviously the currently selected peer is on current channel
+		if (foundCh == selChannel)
+			return selPeer->readonly();
 
-		auto &peers = (**C).getpeers();
-		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
-			return !_stricmp(p->name(), peerName); });
-		return P != peers.cend() && !(**P).isclosed;
+		lw_ui16 peerID = selPeer->id();
+		auto foundPeerIt =
+			std::find_if(peers.cbegin(), peers.cend(),
+				[=](const auto & peer) {
+					return peer->id() == peerID;
+				});
+		return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
 	}
-	else if (threadData.channel) // Use currently selected channel
-	{
-		auto &peers = threadData.channel->getpeers();
-		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
-			return !_stricmp(p->name(), peerName); });
-		return P != peers.cend() && !(**P).isclosed;
-	}
-	else // No currently selected channel!
-	{
-		CreateError("Error checking if peer is joined to a channel; no channel selected, and no channel name supplied.");
-	}
-	return false;
+
+	auto foundPeerIt =
+		std::find_if(peers.cbegin(), peers.cend(),
+			[=](const auto & peer) {
+				return lw_sv_icmp(peer->name(), peerName);
+			});
+	return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
 }
-bool Extension::IsPeerOnChannel_ID(int peerID, char * channelName)
+bool Extension::IsPeerOnChannel_ID(int peerID, char * channelNamePtr)
 {
-	if (channelName[0] != '\0')
-	{
-		auto &channels = Channels;
-		auto C = std::find_if(Channels.cbegin(), Channels.cend(), [=](ChannelCopy * const &c) {
-			return !_stricmp(c->name(), channelName);
-		});
-		if (C == Channels.cend())
-		{
-			CreateError("Error checking if peer is joined to a channel; not connected to channel supplied.");
-			return false;
-		}
-		if ((**C).isclosed)
-			return false;
+	if (peerID <= 0 || peerID >= 0xFFFF)
+		return CreateError("Error checking if peer is joined to a channel, peer ID was invalid."), false;
+	if (channelNamePtr[0] == '\0' && !selChannel)
+		return CreateError("Error checking if peer is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
 
-		auto &peers = (**C).getpeers();
-		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
-			return p->id() == peerID;
-		});
-		return P != peers.cend() && !(**P).isclosed;
-	}
-	else if (threadData.channel)// Use currently selected channel
+	decltype(selChannel) foundCh;
+	std::string_view channelName(channelNamePtr);
+
+	// If blank channel name, use currently selected
+	if (channelNamePtr[0] == '\0')
+		foundCh = selChannel;
+	else
 	{
-		auto &peers = threadData.channel->getpeers();
-		auto P = std::find_if(peers.cbegin(), peers.cend(), [=](PeerCopy * const &p) {
-			return p->id() == peerID;
-		});
-		return P != peers.cend() && !(**P).isclosed;
+		auto serverReadLock = Cli.lock.createReadLock();
+		const auto & channels = Cli.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[&](const auto & ch) {
+					return lw_sv_icmp(ch->name(), channelName);
+				});
+		if (foundChIt == channels.cend())
+		{
+			std::stringstream error;
+			error << "Error checking if peer is joined to a channel, channel name \"" << channelName << "\" was not found on server.";
+			return CreateError(error.str().c_str()), false;
+		}
+		foundCh = *foundChIt;
 	}
-	else // No currently selected channel!
-	{
-		CreateError("Error checking if peer is joined to a channel; no channel selected, and no channel name supplied.");
-	}
-	return false;
+
+	auto channelReadLock = foundCh->lock.createReadLock();
+	const auto & peers = foundCh->getpeers();
+
+	auto foundPeerIt =
+		std::find_if(peers.cbegin(), peers.cend(),
+			[=](const auto & peer) {
+				return peer->id() == peerID;
+			});
+	return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
 }

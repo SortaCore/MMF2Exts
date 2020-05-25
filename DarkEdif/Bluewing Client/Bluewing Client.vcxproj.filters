@@ -190,13 +190,10 @@
     <ClCompile Include="..\Lib\lacewing\src\windows\ssl\ssl.c">
       <Filter>Source files\Lacewing\src\windows</Filter>
     </ClCompile>
-    <ClCompile Include="PeerCopy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ChannelCopy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc">
+      <Filter>Source files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\ReadWriteLock.cc">
       <Filter>Source files\Lacewing</Filter>
     </ClCompile>
   </ItemGroup>
@@ -279,12 +276,6 @@
     <ClInclude Include="..\Lib\lacewing\src\windows\sslclient.h">
       <Filter>Header files\Lacewing\src\windows</Filter>
     </ClInclude>
-    <ClInclude Include="PeerCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ChannelCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
@@ -363,9 +354,6 @@
     </Filter>
     <Filter Include="Header files\Lacewing\src\windows">
       <UniqueIdentifier>{a7ff7726-93b4-4d9b-9d59-40a9177993fd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\Lacewing\src\openssl">
-      <UniqueIdentifier>{a353f9f1-9b4f-45b0-9d2f-633aa971c1b3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

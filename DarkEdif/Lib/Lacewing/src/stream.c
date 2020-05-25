@@ -1270,4 +1270,3 @@ lw_pump lw_stream_pump (lw_stream ctx)
 {
 	return ctx->pump;
 }
-

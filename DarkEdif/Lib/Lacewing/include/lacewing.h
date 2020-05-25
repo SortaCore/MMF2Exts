@@ -384,12 +384,12 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 /* FDStream */
 
-  lw_import  lw_fdstream  lw_fdstream_new		 (lw_pump);
+  lw_import  lw_fdstream  lw_fdstream_new	  (lw_pump);
   lw_import		 void  lw_fdstream_set_fd	  (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
-  lw_import		 void  lw_fdstream_cork		(lw_fdstream);
+  lw_import		 void  lw_fdstream_cork		  (lw_fdstream);
   lw_import		 void  lw_fdstream_uncork	  (lw_fdstream);
-  lw_import		 void  lw_fdstream_nagle		(lw_fdstream, lw_bool nagle);
-  lw_import	  lw_bool  lw_fdstream_valid		(lw_fdstream);
+  lw_import		 void  lw_fdstream_nagle	  (lw_fdstream, lw_bool nagle);
+  lw_import	  lw_bool  lw_fdstream_valid	  (lw_fdstream);
 
 /* File */
 

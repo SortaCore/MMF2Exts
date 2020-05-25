@@ -451,6 +451,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	memcpy(edPtr->DarkEdif_Props, mystr2.data(), mystr2.size());
 }
 
+#ifndef NOPROPS
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 {
 	// Premature call
@@ -628,6 +629,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	return StartPos;
 }
 
+#endif // NOPROPS
 // =====
 // Get event number (CF2.5+ feature)
 // =====
@@ -903,6 +905,7 @@ Prop_Str * Prop_Str_FromUTF8(const char * u8)
 // Object properties; read user values from properties in Extension ctor
 // =====
 
+#ifndef NOPROPS
 // Returns property checked or unchecked.
 bool EDITDATA::IsPropChecked(int propID)
 {
@@ -938,3 +941,4 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 	else
 		return _T("Property not textual.");
 }
+#endif // NOPROPS

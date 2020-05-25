@@ -190,13 +190,10 @@
     <ClCompile Include="..\Lib\lacewing\src\windows\udp.c">
       <Filter>Source Files\Lacewing\src\windows</Filter>
     </ClCompile>
-    <ClCompile Include="ChannelCopy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ClientCopy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Lacewing\ReadWriteLock.cc">
       <Filter>Source Files\Lacewing</Filter>
     </ClCompile>
   </ItemGroup>
@@ -282,12 +279,6 @@
     <ClInclude Include="..\Lib\lacewing\src\flashpolicy.h">
       <Filter>Header Files\Lacewing\src</Filter>
     </ClInclude>
-    <ClInclude Include="ChannelCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ClientCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h">
       <Filter>Header Files\Lacewing</Filter>
     </ClInclude>
@@ -297,21 +288,21 @@
     <ClInclude Include="..\Inc\DarkEdif.h">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="MultiThreading.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiThreading.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="DarkExt.json">
+    <None Include="Ext.def">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Ext.def">
+    <None Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -319,17 +310,8 @@
     <Filter Include="Header Files">
       <UniqueIdentifier>{00ffa75c-e383-4351-97c4-6bc0941e8a35}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Global to all extensions">
-      <UniqueIdentifier>{fac537de-dd1c-477e-95c3-33dade7ec05a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{6e804729-2eba-4680-afdd-6e3820b39f2e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Global to all extensions\Edif">
-      <UniqueIdentifier>{bcad2bc1-a5a5-43ef-af50-f4f85f2ac96d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Global to all extensions\Edif\JSON">
-      <UniqueIdentifier>{02e6e218-4a41-4a0c-b940-e05e798934bb}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{00a9f5d7-fa2d-405e-bb97-fdd3f6e33af2}</UniqueIdentifier>
@@ -346,9 +328,6 @@
     <Filter Include="Source Files\Lacewing\src\windows">
       <UniqueIdentifier>{a0ea22f6-40bd-4c1e-bb73-302f74e1f1c9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Lacewing\src\openssl">
-      <UniqueIdentifier>{94f74825-0ee1-4f0b-9a17-5b3cc111234f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Lacewing">
       <UniqueIdentifier>{b666de49-268f-4ad0-9b1b-e19595358159}</UniqueIdentifier>
     </Filter>
@@ -357,6 +336,15 @@
     </Filter>
     <Filter Include="Header Files\Lacewing\src\windows">
       <UniqueIdentifier>{1a97532e-57a0-4dae-b978-641d5be8acdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{fac537de-dd1c-477e-95c3-33dade7ec05a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif">
+      <UniqueIdentifier>{bcad2bc1-a5a5-43ef-af50-f4f85f2ac96d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif\JSON">
+      <UniqueIdentifier>{02e6e218-4a41-4a0c-b940-e05e798934bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -51,12 +51,24 @@ int DLLExport CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	{
 		Edif::Init(mV, edPtr);
 
+		if (edPtr->eHeader.extSize < sizeof(EDITDATA))
+		{
+			void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
+			if (!newEd) {
+				MessageBoxA(NULL, "Failed to allocate enough size for properites.", PROJECT_NAME " error", MB_ICONERROR);
+				return -1;
+			}
+			edPtr = (EDITDATA*)newEd;
+		}
+
 		// Set default object settings from DefaultState.
 		edPtr->AutomaticClear = CurLang["Properties"][1]["DefaultState"];
 		edPtr->Global = CurLang["Properties"][2]["DefaultState"];
 		if (strcpy_s(edPtr->edGlobalID, 255, CurLang["Properties"][3]["DefaultState"]))
 			MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEdif - CreateObject() error", MB_OK);
 		edPtr->MultiThreading = CurLang["Properties"][4]["DefaultState"];
+		edPtr->TimeoutWarningEnabled = CurLang["Properties"][5]["DefaultState"];
+		edPtr->FullDeleteEnabled = CurLang["Properties"][6]["DefaultState"];
 		
 		//InitialisePropertiesFromJSON(mV, edPtr);
 

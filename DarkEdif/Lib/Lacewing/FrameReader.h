@@ -39,25 +39,20 @@ protected:
 
 	messagebuilder buffer;
 		
-	int			state;
-	int			sizebytesleft;
-	size_t			messagesize;
-	unsigned char  messagetype; 
+	lw_i32	state = 0;
+	lw_i32	sizebytesleft = 0;
+	lw_ui32	messagesize = 0;
+	lw_ui8  messagetype = 0; 
 
 public:
 
-	void  * tag;
-	bool (* messagehandler) (void * tag, unsigned char type, const char * message, size_t size);
+	void  * tag = nullptr;
+	bool (* messagehandler) (void * tag, unsigned char type, const char * message, size_t size) = nullptr;
 
-	framereader()
-	{
-		messagehandler = 0;
-		state		  = 0;
-		messagesize		= 0;
-		messagetype	= 0;
+	framereader() {
 	}
 
-	inline void process(char * data, unsigned int size)
+	inline void process(const char * data, unsigned int size)
 	{
 		while(state < 3 && size -- > 0)
 		{
@@ -150,20 +145,20 @@ public:
 
 			if (size > messagesize)
 			{
-				/* there message isn't fragmented, but there are more messages than
+				/* their message isn't fragmented, but there are more messages than
 					this one.  lovely hack to give it a null terminator without copying
 					the message..!  */
 
 				char nextbyte = data[messagesize];
-				data[messagesize] = 0;
+				*(char *)&data[messagesize] = 0;
 
 				if (!messagehandler(tag, messagetype, data, messagesize))
 					return;
-				data[messagesize] = nextbyte;
+				*(char *)&data[messagesize] = nextbyte;
 
 				state = 0;
 				process(data + messagesize, size - messagesize);
-
+				
 				return;
 			}
 		}

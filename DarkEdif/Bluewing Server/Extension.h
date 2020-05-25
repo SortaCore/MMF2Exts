@@ -1,14 +1,13 @@
 #include "Edif.h"
+#include <functional>
 
 struct GlobalInfo;
-struct ClientCopy;
-struct ChannelCopy;
 
 class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	SaveExtInfo threadData; // Must be first variable in Extension class
+	std::shared_ptr<SaveExtInfo> threadData;
 
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
@@ -25,6 +24,7 @@ public:
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
 	~Extension();
+	std::thread::id mainThreadID;
 	
 	/*  Add any data you want to store in your extension to this class
 		(eg. what you'd normally store in rdPtr).
@@ -55,17 +55,24 @@ public:
 	#define DropMessage					globals->_dropMessage
 	#define InteractivePending			globals->_interactivePending
 	#define GThread						globals->_thread
-	#define Channels					globals->_channels
-	#define Clients						globals->_Clients
-	
-	
+	std::string_view loopName;
+
+	// Selections local to this extension. When outside of events, these are used.
+	// When events are run by Handle(), this selection is copied out, then altered to match event.
+	// Following the event, the selection is restored.
+
+	std::shared_ptr<lacewing::relayserver::channel> selChannel;
+	std::shared_ptr<lacewing::relayserver::client> selClient;
 
 	void ClearThreadData();
-	void CreateError(const char *);
+	void CreateError(_Printf_format_string_ const char *, ...);
 
 	void AddToSend(void *, size_t);
-	
 
+	// called from Handle() when a Lacewing object is being destroyed (e.g. client disconnect, channel leave)
+	void DeselectIfDestroyed(std::shared_ptr<SaveExtInfo> s);
+	// called from Handle() when an interactive event needs to be responded to
+	void HandleInteractiveEvent(std::shared_ptr<SaveExtInfo> s);
 
 
 	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
@@ -107,7 +114,7 @@ public:
 		void HTML5Server_DisableHosting();
 		void ChannelListing_Enable();
 		void ChannelListing_Disable();
-		void SetWelcomeMessage(char * Message);
+		void SetWelcomeMessage(char * message);
 		void EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
 		void EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
 		void EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, char * autoDenyReason);
@@ -115,37 +122,37 @@ public:
 		void EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith);
 		void EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith);
 		void EnableCondition_OnMessageToServer(int informFusion);
-		void OnInteractive_Deny(char * Reason);
-		void OnInteractive_ChangeClientName(char * NewName);
-		void OnInteractive_ChangeChannelName(char * NewName);
+		void OnInteractive_Deny(char * reason);
+		void OnInteractive_ChangeClientName(char * newName);
+		void OnInteractive_ChangeChannelName(char * newName);
 		void OnInteractive_DropMessage();
-		void OnInteractive_ReplaceMessageWithText(char * NewText);
-		void OnInteractive_ReplaceMessageWithNumber(int NewNumber);
+		void OnInteractive_ReplaceMessageWithText(char * newText);
+		void OnInteractive_ReplaceMessageWithNumber(int newNumber);
 		void OnInteractive_ReplaceMessageWithSendBinary();
 
 		void Channel_SelectByName(char * name);
 		void Channel_Close();
 		void Channel_SelectMaster();
 		void Channel_LoopClients();
-		void Channel_LoopClientsWithName(char * LoopName);
-		void Channel_SetLocalData(char * Key, char * Value);
+		void Channel_LoopClientsWithName(char * loopName);
+		void Channel_SetLocalData(char * key, char * value);
 		void LoopAllChannels();
-		void LoopAllChannelsWithName(char * LoopName);
+		void LoopAllChannelsWithName(char * loopName);
 		void Client_Disconnect();
-		void Client_SetLocalData(char * Key, char * Value);
+		void Client_SetLocalData(char * key, char * value);
 		void Client_LoopJoinedChannels();
-		void Client_LoopJoinedChannelsWithName(char * LoopName);
-		void Client_SelectByName(char * ClientName);
-		void Client_SelectByID(int ClientID);
+		void Client_LoopJoinedChannelsWithName(char * loopName);
+		void Client_SelectByName(char * clientName);
+		void Client_SelectByID(int clientID);
 		void Client_SelectSender();
 		void Client_SelectReceiver();
 		void LoopAllClients();
-		void LoopAllClientsWithName(char * LoopName);
+		void LoopAllClientsWithName(char * loopName);
 
-		void SendTextToChannel(int subchannel, char * TextToSend);
-		void SendTextToClient(int subchannel, char * TextToSend);
-		void SendNumberToChannel(int subchannel, int NumToSend);
-		void SendNumberToClient(int subchannel, int NumToSend);
+		void SendTextToChannel(int subchannel, char * textToSend);
+		void SendTextToClient(int subchannel, char * textToSend);
+		void SendNumberToChannel(int subchannel, int numToSend);
+		void SendNumberToClient(int subchannel, int numToSend);
 		void SendBinaryToChannel(int subchannel);
 		void SendBinaryToClient(int subchannel);
 
@@ -161,11 +168,11 @@ public:
 		void AddShort(int Short);
 		void AddInt(int Int);
 		void AddFloat(float Float);
-		void AddStringWithoutNull(char * String);
-		void AddString(char * String);
-		void AddBinary(unsigned int Address, int size);
-		void AddFileToBinary(char * File);
-		void ResizeBinaryToSend(int NewSize);
+		void AddStringWithoutNull(char * string);
+		void AddString(char * string);
+		void AddBinary(unsigned int address, int size);
+		void AddFileToBinary(char * file);
+		void ResizeBinaryToSend(int newSize);
 		void CompressSendBinary();
 		void ClearBinaryToSend();
 
@@ -235,6 +242,10 @@ public:
 		// Added conditions:
 		bool IsClientOnChannel_ID(int clientID, char * channelName);
 		bool IsClientOnChannel_Name(char * clientName, char * channelName);
+		bool DoesChannelNameExist(char * channelName);
+		bool DoesChannelIDExist(int channelID);
+		bool DoesClientNameExist(char * clientName);
+		bool DoesClientIDExist(int clientID);
 		bool IsHTML5Hosting();
 
 	/// Expressions
@@ -312,113 +323,114 @@ public:
 
 };
 
-template <typename T>
-struct LocalData
-{
-	T * KeyAddr;
-	char * Key;
-	char * Value;
+void eventpumpdeleter(lacewing::eventpump);
 
-	LocalData(T * KeyAddr, char * Key, char * Value)
-	{
-		this->KeyAddr = KeyAddr;
-		this->Key = Key;
-		this->Value = Value;
-	}
-	~LocalData()
-	{
-		free(Key);
-		free(Value);
-		KeyAddr = nullptr;
-		Value = Key = nullptr;
-	}
+enum class AutoResponse : char
+{
+	Invalid = -1,
+	Approve_Quiet = 0,
+	Deny_Quiet,
+	Approve_TellFusion,
+	Deny_TellFusion,
+	WaitForFusion
 };
 
-struct GlobalInfo {
-	lacewing::eventpump			_objEventPump;
+struct GlobalInfo
+{
+	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
 	lacewing::relayserver		_server;
-	char *						_sendMsg,
-		 *						_denyReason,
-		 *						_newChannelName,
-		 *						_newClientName;
-	bool						_dropMessage,
-								_automaticallyClearBinary;
-	InteractiveType				_interactivePending;
-	size_t						_sendMsgSize;
+	char *						_sendMsg = nullptr;
+	std::string					_denyReason,
+		 						_newChannelName,
+		 						_newClientName;
+	bool						_dropMessage = false,
+								_automaticallyClearBinary = true;
+	InteractiveType				_interactivePending = InteractiveType::None;
+	size_t						_sendMsgSize = 0U;
 
-	char *						_globalID;
-	HANDLE						_thread;
-	Extension *					_ext;
-	std::vector<SaveExtInfo *>	_Saved;
-	std::vector<ChannelCopy *>	_channels;
-	std::vector<ClientCopy *>	_Clients;
+	char *						_globalID = nullptr;
+	HANDLE						_thread = NULL;
+	Extension *					_ext = nullptr;
+	std::string_view			_loopName;
+	HANDLE						timeoutThread = NULL;
+	std::weak_ptr<lacewing::relayserver::channel>		lastDestroyedExtSelectedChannel;
+	std::weak_ptr<lacewing::relayserver::client>		lastDestroyedExtSelectedClient;
 
-	ChannelCopy *				LastDestroyedExtSelectedChannel;
-	ClientCopy *				LastDestroyedExtSelectedClient;
+	std::vector<std::shared_ptr<SaveExtInfo>>	_saved;
 
-	CRITICAL_SECTION			lock;
+	template<typename T> struct LocalData
+	{
+		std::shared_ptr<T> ptr;
+		std::string key;
+		std::string val;
+
+		LocalData(std::shared_ptr<T> ptr, std::string key, std::string val)
+			: ptr(ptr), key(key), val(val) { }
+	};
+	std::vector<LocalData<lacewing::relayserver::client>> clientLocal;
+	std::vector<LocalData<lacewing::relayserver::channel>> channelLocal;
+
+	const std::string& GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::string key);
+	const std::string& GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::string key);
+	void SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::string key, std::string value);
+	void SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::string key, std::string value);
+	void ClearLocalData(std::shared_ptr<lacewing::relayserver::client> client);
+	void ClearLocalData(std::shared_ptr<lacewing::relayserver::channel> channel);
+
+	std::shared_ptr<lacewing::relayserver::channel>				selChannel = nullptr;
+	std::shared_ptr<lacewing::relayserver::client>				selClient = nullptr;
+
+	CRITICAL_SECTION			lock = {};
 	std::vector<Extension *>	Refs;
-	bool						TimeoutWarningEnabled; // If no Lacewing exists, fuss after set time period
-	bool						FullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	bool						TimeoutWarningEnabled = true; // If no Lacewing exists, fuss after set time period
+	bool						FullDeleteEnabled = true; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 
-	void AddEvent1(int Event1,
-		ChannelCopy * channel = nullptr,
-		ClientCopy * client = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char subchannel = 255,
-		ClientCopy * ReceivingClient = nullptr,
-		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char variant = 255,
+	void AddEvent1(int event1,
+		std::shared_ptr<lacewing::relayserver::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayserver::client> senderClient = nullptr,
+		std::string_view messageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255,
+		std::shared_ptr<lacewing::relayserver::client> receivingClient = nullptr,
+		InteractiveType interactiveType = InteractiveType::None,
+		lw_ui8 variant = 255,
 		bool blasted = false,
 		bool channelCreate_Hidden = false, bool channelCreate_AutoClose = false);
-	void AddEvent2(int Event1, int Event2,
-		ChannelCopy * channel = nullptr,
-		ClientCopy *client = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char subchannel = 255,
-		ClientCopy * ReceivingClient = nullptr,
-		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char variant = 255,
+	void AddEvent2(int event1, int event2,
+		std::shared_ptr<lacewing::relayserver::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayserver::client> senderClient = nullptr,
+		std::string_view messageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255,
+		std::shared_ptr<lacewing::relayserver::client> receivingClient = nullptr,
+		InteractiveType interactiveType = InteractiveType::None,
+		lw_ui8 variant = 255,
 		bool blasted = false,
 		bool channelCreate_Hidden = false, bool channelCreate_AutoClose = false);
 	void AddEventF(bool twoEvents, int Event1, int Event2,
-		ChannelCopy * channel = nullptr,
-		ClientCopy * client = nullptr,
-		char * MessageOrErrorText = nullptr,
-		size_t MessageSize = 0,
-		unsigned char subchannel = 255,
-		ClientCopy * ReceivingClient = nullptr,
-		InteractiveType InteractiveType = InteractiveType::None,
-		unsigned char variant = 255,
+		std::shared_ptr<lacewing::relayserver::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayserver::client> senderClient = nullptr,
+		std::string_view MessageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255,
+		std::shared_ptr<lacewing::relayserver::client> receivingClient = nullptr,
+		InteractiveType interactiveType = InteractiveType::None,
+		lw_ui8 variant = 255,
 		bool blasted = false,
 		bool channelCreate_Hidden = false,
 		bool channelCreate_AutoClose = false
 	);
-	void CreateError(const char * errorText);
+	void CreateError(_Printf_format_string_ const char * errorText, ...);
+	void CreateError(_Printf_format_string_ const char * errorText, va_list);
 
-	enum AutoResponse : char
-	{
-		Invalid = -1,
-		Approve_Quiet = 0,
-		Deny_Quiet,
-		Approve_TellFusion,
-		Deny_TellFusion,
-		WaitForFusion
-	};
-
-	AutoResponse AutoResponse_Connect;
-	const char * AutoResponse_Connect_DenyReason;
-	AutoResponse AutoResponse_NameSet;
-	const char * AutoResponse_NameSet_DenyReason;
-	AutoResponse AutoResponse_ChannelJoin;
-	const char * AutoResponse_ChannelJoin_DenyReason;
-	AutoResponse autoResponse_ChannelLeave;
-	const char * AutoResponse_ChannelLeave_DenyReason;
-	AutoResponse AutoResponse_MessageClient;
-	AutoResponse AutoResponse_MessageChannel;
-	AutoResponse AutoResponse_MessageServer;
+	AutoResponse autoResponse_Connect = AutoResponse::Approve_Quiet;
+	std::string autoResponse_Connect_DenyReason;
+	AutoResponse autoResponse_NameSet = AutoResponse::Approve_Quiet;
+	std::string autoResponse_NameSet_DenyReason;
+	AutoResponse autoResponse_ChannelJoin = AutoResponse::Approve_Quiet;
+	std::string autoResponse_ChannelJoin_DenyReason;
+	AutoResponse autoResponse_ChannelLeave = AutoResponse::Approve_Quiet;
+	std::string autoResponse_ChannelLeave_DenyReason;
+	AutoResponse autoResponse_MessageClient = AutoResponse::Approve_Quiet;
+	AutoResponse autoResponse_MessageChannel = AutoResponse::Approve_Quiet;
+	AutoResponse autoResponse_MessageServer = AutoResponse::WaitForFusion;
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
 	~GlobalInfo() noexcept(false);

@@ -5,8 +5,8 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Server. (b%i)",
+			"Copyright": "Copyright \u00A9 2020 by Darkwire Software",
+			"Comment": "\"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingHelp.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -140,7 +140,7 @@
 			"---",
 			[ 48, "Lacewing server is hosting" ],
 			[ 49, "Flash Player policy server is hosting" ],
-			// [ 55, "HTML5 server is hosting" ],
+			// [ X, "HTML5 server is hosting" ],
 			"---",
 			[ "Connection",
 				[ 1, "On connect request" ],
@@ -162,8 +162,12 @@
 				[ 37, "[With loop name] On client's joined channels loop" ],
 				[ 43, "[With loop name] On client's joined channels loop finished" ],
 				"---",
-				[ 50, "Channel is hidden from the channel list" ],
-				[ 51, "Channel is set to close automatically" ]
+				[ 50, "Is channel hidden from the channel list?" ],
+				[ 51, "Is channel set to close automatically?" ],
+				"---",
+				[ 55, "Does channel name exist?" ],
+			//	[ 56, "Does channel ID exist?" ]
+				[ 59, "On channel close" ]
 			],
 			[ "Client",
 				[ 9, "Client is the channel master" ],
@@ -181,8 +185,11 @@
 				[ 39, "[With loop name] On channel's clients loop" ],
 				[ 40, "[With loop name] On channel's clients loop finished" ],
 				"---",
-				[ 53, "Is selected client joined to certain channel ID" ],
-				[ 54, "Is selected client joined to certain channel name" ]
+				[ 53, "Is selected client joined to certain channel ID?" ],
+				[ 54, "Is selected client joined to certain channel name?" ],
+				"---",
+				[ 57, "Does client name exist?" ],
+				[ 58, "Does client ID exist?" ]
 			],
 			[ "Message",
 				[ "Sent",
@@ -967,6 +974,7 @@
 			},
 			{
 				"Title": "%o : On client's joined-channels loop %0",
+				"Triggered": true,
 				"Parameters": [
 					[ "Text", "Loop name" ]
 				]
@@ -983,7 +991,7 @@
 				"Triggered": true,
 				"Parameters": [
 					[ "Text", "Loop name" ]
-				],
+				]
 			},
 			{
 				"Title": "%o : On channel's clients loop finished %0",
@@ -1007,7 +1015,7 @@
 				]
 			},
 			{
-				"Title": "%o : On client's joined-channels loop finished",
+				"Title": "%o : On client's joined-channels loop finished %0",
 				"Triggered": true,
 				"Parameters": [
 					[ "Text", "Loop name" ]
@@ -1066,6 +1074,36 @@
 					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
 			},
+			{
+				"Title": "%o : Does channel name %0 exist",
+				"Parameters": [
+					[ "Text", "Channel name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does channel ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client name %0 exist",
+				"Parameters": [
+					[ "Text", "Client name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : On channel close",
+				"Triggered": true
+			},
+
+			// 60+
 			{
 				"Title": "%o : HTML5 is hosting"
 			}
@@ -1329,10 +1367,9 @@
 			},
 			{
 				"Title": "Enable multithreading",
-				"Info": "!!NOT IMPLEMENTED!! Check this box to enable multithreading. This makes Lacewing ultra-responsive, and retains the connection when popup messages occur.",
+				"Info": "Check this box to enable multithreading. This makes Lacewing ultra-responsive, and retains the connection when popup messages occur.",
 				"Type": "Checkbox",
-				"DefaultState": false,
-				"Enabled":	false
+				"DefaultState": false
 			},
 			{
 				"Title": "Enable timeout warning",
@@ -1482,7 +1519,7 @@
 			"---",
 			[ 48, "O servidor de Lacewing está ligado" ],
 			[ 49, "O servidor de Políticas de Flash Player está ligado" ],
-			// [ 55, "O servidor de HTML5 está ligado" ],
+			// [ 59, "O servidor de HTML5 está ligado" ],
 			"---",
 			[ "Conexão",
 				[ 1, "Quando for pedida a ligação" ],
@@ -1505,7 +1542,10 @@
 				[ 43, "[Com nome a reciclar] Quando a reciclagem dos canais que o cliente entrou finalizar" ],
 				"---",
 				[ 50, "Canal está escondido da lista de canais" ],
-				[ 51, "Canal está definido para fechar automaticamente" ]
+				[ 51, "Canal está definido para fechar automaticamente" ],
+				"---",
+				[ 55, "Does channel name exist?" ]
+			//	[ 56, "Does channel ID exist?" ]
 			],
 			[ "Cliente",
 				[ 9, "Cliente é o mestre do canal" ],
@@ -1524,7 +1564,10 @@
 				[ 40, "[Com nome a reciclar] Quando a reciclagem dos clientes do canal finalizar" ],
 				"---",
 				[ 53, "O cliente seleccionado está em certo canal com ID de canal" ],
-				[ 54, "O cliente seleccionado está em canal com certo nome de canal" ]
+				[ 54, "O cliente seleccionado está em canal com certo nome de canal" ],
+				"---",
+				[ 57, "Does client name exist?" ],
+				[ 58, "Does client ID exist?" ]
 			],
 			[ "Messagem",
 				[ "Enviada",
@@ -2414,6 +2457,32 @@
 				]
 			},
 			{
+				"Title": "%o : Does channel name %0 exist",
+				"Parameters": [
+					[ "Text", "Channel name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does channel ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client name %0 exist",
+				"Parameters": [
+					[ "Text", "Client name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ]
+				]
+			},
+
+			// 59+
+			{
 				"Title": "%o : HTML5 está ligado"
 			}
 		],
@@ -2829,7 +2898,7 @@
 			"---",
 			[ 48, "Serveur Lacewing est hébergé" ],
 			[ 49, "Serveur Flash Player policy est hébergé" ],
-			// [ 55, "Serveur HTML5 est hébergé" ],
+			// [ 59, "Serveur HTML5 est hébergé" ],
 			"---",
 			[ "Connexion",
 				[ 1, "En cas de requête de connexion" ],
@@ -2852,7 +2921,10 @@
 				[ 43, "[Avec nom de boucle] Boucle les canaux rejoins par un client finie" ],
 				"---",
 				[ 50, "Canal caché de la liste des canaux" ],
-				[ 51, "Canal parametré pour se fermer automatiquement" ]
+				[ 51, "Canal parametré pour se fermer automatiquement" ],
+				"---",
+				[ 55, "Does channel name exist?" ]
+			//	[ 56, "Does channel ID exist?" ]
 			],
 			[ "Client",
 				[ 9, "Client est le maître du canal" ],
@@ -2871,7 +2943,10 @@
 				[ 40, "[Avec nom de boucle] Boucle clients d'un canal finie" ],
 				"---",
 				[ 53, "Est-ce que le client selectionné a rejoins un canal (par id)" ],
-				[ 54, "Est-ce que le client selectionné a rejoins un canal (par nom)" ]
+				[ 54, "Est-ce que le client selectionné a rejoins un canal (par nom)" ],
+				"---",
+				[ 57, "Does client name exist?" ],
+				[ 58, "Does client ID exist?" ]
 			],
 			[ "Message",
 				[ "Envoyé",
@@ -3756,6 +3831,32 @@
 				]
 			},
 			{
+				"Title": "%o : Does channel name %0 exist",
+				"Parameters": [
+					[ "Text", "Channel name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does channel ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client name %0 exist",
+				"Parameters": [
+					[ "Text", "Client name to test" ]
+				]
+			},
+			{
+				"Title": "%o : Does client ID %0 exist",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ]
+				]
+			},
+
+			// 59+
+			{
 				"Title": "%o : Serveur HTML5 est hébergé"
 			}
 		],
@@ -4018,10 +4119,9 @@
 			},
 			{
 				"Title": "Activer le multithreading",
-				"Info": "!!NOT IMPLEMENTED!! Cocher pour activer le multithreading. Cela rend Lacewing ultra-rapide et garde la connexion en cas de message popup.",
+				"Info": "Cocher pour activer le multithreading. Cela rend Lacewing ultra-rapide et garde la connexion en cas de message popup.",
 				"Type": "Checkbox",
-				"DefaultState": false,
-				"Enabled":	false
+				"DefaultState": false
 			},
 			{
 				"Title": "Activer alerte timeout",

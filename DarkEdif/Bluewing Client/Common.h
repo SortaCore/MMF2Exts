@@ -10,7 +10,10 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
-#define JSON_COMMENT_MACRO lacewing::relayclient::buildnum
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
+#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, asStr(CONFIG)
 
 #define DLLExport	__stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
@@ -35,9 +38,6 @@
 #include <chrono>
 #include "..\Inc\zlib.h"
 #pragma comment(lib, "..\\Lib\\zlib.lib")
-
-#include "PeerCopy.h"
-#include "ChannelCopy.h"
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
@@ -91,10 +91,12 @@ struct EDITDATA
 	size_t DarkEdif_Prop_Size;
 	char DarkEdif_Props[];
 
+#ifndef NOPROPS
 	// DarkEdif functions, use within Extension ctor.
 	bool IsPropChecked(int propID);
 	std::tstring GetPropertyStr(const char * propName);
 	std::tstring GetPropertyStr(int propID);
+#endif
 };
 
 class Extension;

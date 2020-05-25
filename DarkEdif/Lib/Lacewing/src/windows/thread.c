@@ -119,6 +119,8 @@ void * lw_thread_join (lw_thread ctx)
 
 	if (WaitForSingleObject (ctx->thread, INFINITE) == WAIT_OBJECT_0)
 	  GetExitCodeThread (ctx->thread, &exit_code);
+	CloseHandle(ctx->thread);
+	ctx->thread = INVALID_HANDLE_VALUE;
 
 	return (void *) exit_code;
 }

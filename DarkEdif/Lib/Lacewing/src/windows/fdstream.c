@@ -204,7 +204,9 @@ static void close_fd (lw_fdstream ctx)
 
 	if (ctx->watch)
 	{
-	  lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
+		lw_pump pump = lw_stream_pump((lw_stream)ctx);
+		lw_pump_update_callbacks(pump, ctx->watch, nullptr, nullptr);
+		lw_pump_remove(pump, ctx->watch);
 	  ctx->watch = NULL;
 	}
 
@@ -291,7 +293,9 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 
 	if (ctx->watch)
 	{
-	  lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
+		lw_pump pump = lw_stream_pump((lw_stream)ctx);
+		lw_pump_update_callbacks(pump, ctx->watch, nullptr, nullptr);
+		lw_pump_remove(pump, ctx->watch);
 	  ctx->watch = NULL;
 	}
 
@@ -617,5 +621,3 @@ lw_fdstream lw_fdstream_new (lw_pump pump)
 
 	return ctx;
 }
-
-

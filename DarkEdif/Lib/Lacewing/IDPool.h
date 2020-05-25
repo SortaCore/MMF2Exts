@@ -39,9 +39,10 @@ class IDPool
 	
 protected:
 
-	std::set<unsigned short> usedIDs;	// A sorted list of all released IDs.
-	unsigned short nextID;				// The next ID to use, not within usedIDs.
+	std::set<unsigned short> releasedIDs;	// A sorted list of all released IDs.
+	unsigned short nextID;				// The next ID to use, not within releasedIDs.
 	int borrowedCount;					// The number of IDs currently in use.
+	lacewing::readwritelock lock;
 
 public:
 
@@ -56,17 +57,19 @@ public:
 	/// <returns> New ID to use. </returns>
 	unsigned short borrow()
 	{
+		lacewing::writelock writeLock = lock.createWriteLock();
+
 		++borrowedCount;
 		lw_trace("Borrowed Client ID. %i IDs borrowed so far.", borrowedCount);
 
 		// More than can be stored in an ID list are in use. JIC.
-		if (borrowedCount > 0xFFFF)
+		if (borrowedCount > 0xFFFE)
 			throw std::exception("Exceeded limit of ID pool. Please contact the developer.");
 
-		if (!usedIDs.empty())
+		if (!releasedIDs.empty())
 		{
-			unsigned short s = *usedIDs.cbegin(); // .front() not in std::set
-			usedIDs.erase(usedIDs.cbegin());
+			unsigned short s = *releasedIDs.cbegin(); // .front() not in std::set
+			releasedIDs.erase(releasedIDs.cbegin());
 			return s;
 		}
 
@@ -77,14 +80,21 @@ public:
 	/// <param name="ID"> The identifier to return. </param>
 	void returnID(unsigned short ID)
 	{
+		lacewing::writelock writeLock = lock.createWriteLock();
 		// No IDs in use at all: empty list
 		if ((-- borrowedCount) == 0)
 		{
-			usedIDs.clear();
+			releasedIDs.clear();
 			nextID = 0;
 		}
-		else // Add ID back for re-using
-			usedIDs.emplace(ID);
+		else
+		{
+			// Was the last one, just roll back the next ID to this one
+			if (nextID == ID + 1)
+				--nextID;
+			else // Add ID back for re-using
+				releasedIDs.emplace(ID);
+		}
 	}
 };
 

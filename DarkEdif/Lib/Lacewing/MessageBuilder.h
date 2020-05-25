@@ -37,17 +37,15 @@ class messagebuilder
 	
 protected:
 
-	unsigned int allocated;
+	lw_ui32 allocated = 0;
 
 public:
 	
-	char * buffer;
-	unsigned int size;
+	char * buffer = nullptr;
+	lw_ui32 size = 0U;
 
 	messagebuilder()
 	{
-		size	= allocated = 0;
-		buffer = 0;
 	}
 
 	~ messagebuilder()
@@ -77,11 +75,15 @@ public:
 			this->buffer = test;
 		}
 
-		memcpy_s(this->buffer + this->size, size, buffer, size);
+		if (memcpy_s(this->buffer + this->size, size, buffer, size))
+			throw std::exception("could not copy data into message");
 		this->size += size;
 	}
+	
 
-	template<class t> inline void add (t value)
+	
+	template<typename t>
+	inline void add (t value)
 	{
 		// If this second assertion triggers, you're passing a pointer value to be embedded in the message.
 		// This will append the address the pointer points to, NOT the content of the pointer.
@@ -89,10 +91,21 @@ public:
 		// You probably want the add(data, sizeof(data))
 		// If adding a string, pass add(data, -1)
 		// If adding a single byte, pass add(&data, 1)
-		static_assert(!std::is_pointer<decltype(value)>::value,
+		static_assert(!std::is_pointer<t>::value,
 			"Check you meant to pass a pointer address. That doesn't make a lot of sense.");
+		// std::string is nasty
+		static_assert(!std::is_same<t, std::string>::value,
+			"std::string data type being added.");
+		static_assert(std::is_integral<t>::value,
+			"Advanced data type being added.");
 
 		add((const char *) &value, sizeof(t));
+	}
+
+	template<> inline
+		void add(std::string_view value)
+	{
+		add(value.data(), value.size());
 	}
 	/*
 	inline void AddNetwork16Bit (short Value)

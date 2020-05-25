@@ -638,7 +638,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 	int ParameterCount;
 
 	// Reset by CNC_GetParam(). CurrentParam being correct only matters if you have object parameters, though.
-	EventParam* saveCurParam = ext->rdPtr->rHo.CurrentParam;
+	EventParam* saveCurParam = rdPtr->rHo.CurrentParam;
 
 	const ACEInfo * Info = Condition ? SDK->ConditionInfos[ID] : SDK->ActionInfos[ID];
 
@@ -686,7 +686,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 	}
 
 	void * Extension = rdPtr->pExtension;
-	ext->rdPtr->rHo.CurrentParam = saveCurParam;
+	rdPtr->rHo.CurrentParam = saveCurParam;
 
 	int Result;
 

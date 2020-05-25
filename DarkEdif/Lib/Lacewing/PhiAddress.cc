@@ -28,3 +28,29 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 		}
 	}
 }
+
+/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
+bool lw_sv_icmp(std::string_view first, std::string_view second)
+{
+	if (first.size() != second.size())
+		return false;
+
+	return !_strnicmp(first.data(), second.data(), first.size());
+}
+
+/// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
+bool lw_sv_cmp(std::string_view first, std::string_view second)
+{
+	if (first.size() != second.size())
+		return false;
+
+	return !strncmp(first.data(), second.data(), first.size());
+}
+
+#include <sstream>
+void MsgBoxDeath2(char * func, char * file, int line)
+{
+	std::stringstream err;
+	err << "Msg box death:\nFile: " << file << "\nFunction: " << func << "\nLine: " << line;
+	MessageBoxA(NULL, err.str().c_str(), PROJECT_NAME " Msg Box Death", MB_ICONERROR);
+}

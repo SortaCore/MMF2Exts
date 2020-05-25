@@ -208,7 +208,8 @@ void lw_udp_host_addr (lw_udp ctx, lw_addr addr)
 
 void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 {
-	lw_udp_unhost (ctx);
+	if (ctx->socket != INVALID_SOCKET)
+		lw_udp_unhost(ctx);
 
 	lw_error error = lw_error_new ();
 
@@ -291,9 +292,14 @@ void lw_udp_delete (lw_udp ctx)
 	if (!ctx)
 	  return;
 
-	lw_udp_unhost (ctx);
-	lw_pump_remove(ctx->pump, ctx->pump_watch);
-	ctx->pump_watch = 0;
+	if (ctx->socket != INVALID_SOCKET)
+		lw_udp_unhost (ctx);
+
+	if (ctx->pump_watch)
+	{
+		lw_pump_remove(ctx->pump, ctx->pump_watch);
+		ctx->pump_watch = 0;
+	}
 
 	memset(ctx, 0, sizeof(_lw_udp));
 

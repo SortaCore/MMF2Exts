@@ -12,9 +12,6 @@ enum InteractiveType : unsigned char
 	ClientMessageIntercept = 6
 };
 
-struct ChannelCopy;
-struct ClientCopy;
-
 #ifdef MULTI_THREADING
 	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
 	#pragma pack( push, align_to_one_multithreading)
@@ -29,77 +26,59 @@ struct ClientCopy;
 		union {
 			// When you receive a message
 			struct {
-			char *				content;
-			size_t				size,
-								cursor;
-			unsigned char		subchannel;
-			bool				blasted;
-			unsigned char		variant;
+				std::string		content;
+				size_t			cursor;
+				unsigned char	subchannel;
+				bool			blasted;
+				unsigned char	variant;
 			} receivedMsg;
 
 			// When an error occurs
 			struct {
-				char *		text;
+				std::string text;
 			} error;
 
 			// When a selection/loop is called
 			struct  {
-				char *		name;
+				std::string name;
 			} loop;
 
 			// On name set request
 			struct {
-				char *		name;
-			} Requested;
+				std::string name;
+			} requested;
 		};
-		ChannelCopy * channel;
-		union {
-			ClientCopy * client;
-			ClientCopy * senderClient; // By default the same as Client
-		};
-		ClientCopy * ReceivingClient;
+		std::shared_ptr<lacewing::relayserver::channel> channel;
+		std::shared_ptr<lacewing::relayserver::client> senderClient; // By default the same as Client
+		std::shared_ptr<lacewing::relayserver::client> receivingClient;
 		InteractiveType InteractiveType;
 		bool channelCreate_Hidden;
 		bool channelCreate_AutoClose;
 
-		SaveExtInfo() : numEvents(0), CondTrig { 0 },
-			channel(NULL), client(NULL), ReceivingClient(NULL), 
+		SaveExtInfo() : numEvents(0), CondTrig { 0, 0 },
 			InteractiveType(InteractiveType::None),
 			channelCreate_Hidden(false),
 			channelCreate_AutoClose(false)
 		{
-			receivedMsg.content = NULL;
+			new (&receivedMsg.content)std::string();
 			receivedMsg.cursor = 0;
-			receivedMsg.size = 0;
 			receivedMsg.subchannel = 0;
 			receivedMsg.blasted = false;
 			receivedMsg.variant = 255;
 		}
 		~SaveExtInfo()
 		{
-			Free();
-		}
+			receivedMsg.content.~basic_string();
+			receivedMsg.cursor = 0;
+			receivedMsg.subchannel = 0;
+			receivedMsg.blasted = false;
+			receivedMsg.variant = 255;
 
-		/// <summary> Frees this object. </summary>
-		void Free()
-		{
-			// A char * is always the first member of each struct inside the union.
-			// So they will be at the same memory address. Neat, huh?
-			if (receivedMsg.content)
-			{
-				free(receivedMsg.content);
-				receivedMsg.content = NULL;
-				receivedMsg.cursor = 0;
-				receivedMsg.size = 0;
-				receivedMsg.subchannel = 0;
-				receivedMsg.blasted = false;
-				receivedMsg.variant = 255;
-			}
 			numEvents = 0;
 			CondTrig[0] = 0; CondTrig[1] = 0;
-			channel = NULL;
-			client = NULL;
-			ReceivingClient = NULL;
+			channel.reset();
+			senderClient.reset();
+			receivingClient.reset();
 			InteractiveType = InteractiveType::None;
 		}
 	};

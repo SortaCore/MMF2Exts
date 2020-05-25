@@ -88,26 +88,13 @@ public:
 		return value;
 	}
 
-	char * get (unsigned int size)
+	std::string_view get (unsigned int size)
 	{
 		if (!check(size))
-			return 0;
+			return std::string_view();
 
-		char * output = (char *) calloc (size + 1, 1);
-
-		if (!output)
-		{
-			failed = true;
-			return 0;
-		}
-
-		tofree.push_back (output);
-
-		memcpy(output, buffer + offset, size);
-		output[size] = 0;
-
+		std::string_view output (buffer + offset, size);
 		offset += size;
-
 		return output;
 	}
 
@@ -121,15 +108,15 @@ public:
 		return buffer + offset;
 	}
 
-	inline const char * getremaining(bool allowempty = true)
+	inline std::string_view getremaining(bool allowempty = true)
 	{
 		if (failed)
 			return this->buffer;
 
-		const char * remaining = this->buffer + offset;
+		std::string_view remaining(this->buffer + offset, bytesleft());
 		offset += size;
 
-		if (!allowempty && !*remaining)
+		if (!allowempty && (remaining.empty() || !remaining.front()))
 			failed = true;
 
 		return remaining;

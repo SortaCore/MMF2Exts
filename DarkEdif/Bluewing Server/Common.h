@@ -10,7 +10,10 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
-#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
+#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, asStr(CONFIG)
 
 #define DLLExport	__stdcall
 #pragma comment(lib, "..\\Lib\\mmfs2.lib")
@@ -35,7 +38,7 @@
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
-#define EnterCriticalSectionDerpy(x) { \
+#define EnterCriticalSectionDebug(x) { \
 		EnterCriticalSection(x); \
 		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " \
 		<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
@@ -47,14 +50,12 @@
 		LeaveCriticalSection(x); \
 	}
 #else
-#define EnterCriticalSectionDerpy(x)  EnterCriticalSection(x)
+#define EnterCriticalSectionDebug(x)  EnterCriticalSection(x)
 #define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
 #endif
 
 #include "Lacewing.h"
 #include "LacewingFunctions.h"
-#include "ChannelCopy.h"
-#include "ClientCopy.h"
 
 #include "..\Inc\Edif.h"
 #include "Resource.h"
@@ -89,10 +90,12 @@ struct EDITDATA
 	size_t DarkEdif_Prop_Size;
 	char DarkEdif_Props[];
 
+#ifndef NOPROPS
 	// DarkEdif functions, use within Extension ctor.
 	bool IsPropChecked(int propID);
 	std::tstring GetPropertyStr(const char * propName);
 	std::tstring GetPropertyStr(int propID);
+#endif
 };
 
 class Extension;

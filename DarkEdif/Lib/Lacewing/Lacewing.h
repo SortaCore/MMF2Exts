@@ -40,17 +40,17 @@
 	#endif
 
 	#include <inttypes.h>
-
-	typedef int64_t	lw_i64;
-	typedef uint64_t	lw_ui64;
-	typedef intptr_t	lw_iptr;
-	typedef uintptr_t  lw_uiptr;
-	typedef int32_t	lw_i32;
-	typedef uint32_t	lw_ui32;
-	typedef int16_t	lw_i16;
-	typedef uint16_t	lw_ui16;
-	typedef int8_t	 lw_i8;
-	typedef uint8_t	lw_ui8;
+	
+	typedef int64_t	lw_i64; 
+	typedef uint64_t	lw_ui64; 
+	typedef intptr_t	lw_iptr; 
+	typedef uintptr_t  lw_uiptr; 
+	typedef int32_t	lw_i32; 
+	typedef uint32_t	lw_ui32; 
+	typedef int16_t	lw_i16; 
+	typedef uint16_t	lw_ui16; 
+	typedef int8_t	 lw_i8; 
+	typedef uint8_t	lw_ui8; 
 
 	#define lw_PRId64 PRId64
 	#define lw_PRIu64 PRIu64
@@ -64,19 +64,19 @@
 	  typedef __int32 lw_iptr;
 	  typedef unsigned __int32 lw_uiptr;
 	#endif
-
-	typedef __int64 lw_i64;
-	typedef unsigned __int64 lw_ui64;
-	typedef __int32 lw_i32;
-	typedef unsigned __int32 lw_ui32;
-	typedef __int16 lw_i16;
-	typedef unsigned __int16 lw_ui16;
-	typedef __int8 lw_i8;
-	typedef unsigned __int8 lw_ui8;
+	
+	typedef __int64 lw_i64; 
+	typedef unsigned __int64 lw_ui64; 
+	typedef __int32 lw_i32; 
+	typedef unsigned __int32 lw_ui32; 
+	typedef __int16 lw_i16; 
+	typedef unsigned __int16 lw_ui16; 
+	typedef __int8 lw_i8; 
+	typedef unsigned __int8 lw_ui8; 
 
 	#define lw_PRId64 "I64d"
 	#define lw_PRIu64 "I64u"
-
+	
 #endif
 
 #ifndef _WIN32
@@ -109,6 +109,17 @@
 #endif
 
 #include <in6addr.h>
+#include <atomic>
+#include <vector>
+#include <memory>
+#include <string>
+#include <condition_variable>
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
+
+#define MsgBoxDeath() MsgBoxDeath2(__FUNCTION__, __FILE__, __LINE__)
+void MsgBoxDeath2(char * func, char * file, int line);
 
 typedef lw_i8 lw_bool;
 
@@ -365,7 +376,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 	  lw_bool (* is_transparent) (lw_stream);
 	  lw_bool (* close) (lw_stream, lw_bool immediate);
-
+ 
 	  size_t (* bytes_left) (lw_stream);
 	  void (* read) (lw_stream, size_t bytes);
 
@@ -377,7 +388,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 	lw_import lw_stream lw_stream_new (const lw_streamdef *, lw_pump);
 	lw_import const lw_streamdef * lw_stream_get_def (lw_stream);
-
+	
 	lw_import void * lw_stream_tail (lw_stream);
 	lw_import lw_stream lw_stream_from_tail (void *);
 
@@ -385,12 +396,12 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 /* FDStream */
 
-  lw_import  lw_fdstream  lw_fdstream_new		 (lw_pump);
-  lw_import		 void  lw_fdstream_set_fd	  (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close);
-  lw_import		 void  lw_fdstream_cork		(lw_fdstream);
+  lw_import  lw_fdstream  lw_fdstream_new	  (lw_pump);
+  lw_import		 void  lw_fdstream_set_fd	  (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
+  lw_import		 void  lw_fdstream_cork		  (lw_fdstream);
   lw_import		 void  lw_fdstream_uncork	  (lw_fdstream);
-  lw_import		 void  lw_fdstream_nagle		(lw_fdstream, lw_bool nagle);
-  lw_import	  lw_bool  lw_fdstream_valid		(lw_fdstream);
+  lw_import		 void  lw_fdstream_nagle	  (lw_fdstream, lw_bool nagle);
+  lw_import	  lw_bool  lw_fdstream_valid	  (lw_fdstream);
 
 /* File */
 
@@ -407,11 +418,11 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import const char * lw_file_name (lw_file);
 
 /* Pipe */
-
+  
   lw_import  lw_stream  lw_pipe_new  (lw_pump);
 
 /* Timer */
-
+  
   lw_import		lw_timer  lw_timer_new				  (lw_pump);
   lw_import			void  lw_timer_delete				(lw_timer);
   lw_import			void  lw_timer_start				(lw_timer, long milliseconds);
@@ -470,7 +481,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import		lw_bool  lw_client_connected			 (lw_client);
   lw_import		lw_bool  lw_client_connecting			(lw_client);
   lw_import		lw_addr  lw_client_server_addr			(lw_client);
-
+  
   typedef void (lw_callback * lw_client_hook_connect) (lw_client);
   lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
 
@@ -513,7 +524,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
   typedef void (lw_callback * lw_server_hook_data) (lw_server, lw_server_client, const char * buffer, size_t size);
   lw_import void lw_server_on_data (lw_server, lw_server_hook_data);
-
+  
   typedef void (lw_callback * lw_server_hook_error) (lw_server, lw_error);
   lw_import void lw_server_on_error (lw_server, lw_server_hook_error);
 
@@ -571,14 +582,14 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import				void  lw_ws_session_close		  (lw_ws, const char * id);
   lw_import				void  lw_ws_enable_manual_finish	(lw_ws);
   lw_import				long  lw_ws_idle_timeout			(lw_ws);
-  lw_import				void  lw_ws_set_idle_timeout		(lw_ws, long seconds);
+  lw_import				void  lw_ws_set_idle_timeout		(lw_ws, long seconds);  
   lw_import				void* lw_ws_tag					(lw_ws);
   lw_import				void  lw_ws_set_tag				(lw_ws, void * tag);
   lw_import			lw_addr  lw_ws_req_addr				(lw_ws_req);
   lw_import			lw_bool  lw_ws_req_secure			 (lw_ws_req);
   lw_import		 const char* lw_ws_req_url				(lw_ws_req);
   lw_import		 const char* lw_ws_req_hostname			(lw_ws_req);
-  lw_import				void  lw_ws_req_disconnect		 (lw_ws_req);
+  lw_import				void  lw_ws_req_disconnect		 (lw_ws_req); 
   lw_import				void  lw_ws_req_set_redirect		(lw_ws_req, const char * url);
   lw_import				void  lw_ws_req_status			 (lw_ws_req, long code, const char * message);
   lw_import				void  lw_ws_req_set_mimetype		(lw_ws_req, const char * mimetype);
@@ -620,7 +631,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
   lw_import		 const char* lw_ws_req_body				(lw_ws_req);
   lw_import				void  lw_ws_req_disable_cache	  (lw_ws_req);
   lw_import				long  lw_ws_req_idle_timeout		(lw_ws_req);
-  lw_import				void  lw_ws_req_set_idle_timeout	(lw_ws_req, long seconds);
+  lw_import				void  lw_ws_req_set_idle_timeout	(lw_ws_req, long seconds);  
 /*lw_import				void  lw_ws_req_enable_dl_resuming (lw_ws_req);
   lw_import			 lw_i64  lw_ws_req_reqrange_begin	 (lw_ws_req);
   lw_import			 lw_i64  lw_ws_req_reqrange_end		(lw_ws_req);
@@ -678,6 +689,12 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 /// 		  If the address is IPv4 or unmapped IPv6, copies it as is. </summary>
 void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
 
+/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
+bool lw_sv_icmp(std::string_view first, std::string_view second);
+
+/// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
+bool lw_sv_cmp(std::string_view first, std::string_view second);
+
 // to preserve namespace
 #pragma endregion
 
@@ -691,7 +708,7 @@ typedef struct _error * error;
 struct _error
 {
 	lw_class_wraps (error);
-
+	
 	lw_import void add (const char * format, ...);
 	lw_import void add (int);
 	lw_import void add (const char * format, va_list);
@@ -724,7 +741,7 @@ struct _event
 	lw_import bool signalled ();
 
 	lw_import bool wait (long timeout = -1);
-
+	
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
@@ -764,7 +781,7 @@ struct _pump
 										bool edge_triggered = true);
 
 	#endif
-
+ 
 	void remove (lw_pump_watch);
 	void post_remove (lw_pump_watch);
 
@@ -898,7 +915,7 @@ struct _stream
 	* headers before the (already buffered) response body.
 	*/
 
-	lw_import void end_queue ();
+	lw_import void end_queue ();	
 
 	lw_import void end_queue
 		(int head_buffers, const char ** buffers, size_t * lengths);
@@ -931,7 +948,7 @@ lw_import void stream_delete (stream);
 
 
 /** pipe **/
-
+			  
 typedef struct _pipe * pipe;
 
 struct _pipe : public _stream
@@ -943,7 +960,7 @@ lw_import pipe pipe_new ();
 lw_import pipe pipe_new (pump);
 
 
-/** fdstream **/
+/** fdstream **/ 
 
 typedef struct _fdstream * fdstream;
 
@@ -957,7 +974,7 @@ struct _fdstream : public _stream
 	lw_import bool valid ();
 
 	lw_import void cork ();
-	lw_import void uncork ();
+	lw_import void uncork ();	
 
 	lw_import void nagle (bool);
 
@@ -989,7 +1006,7 @@ lw_import file file_new (pump, const char * filename, const char * mode = "rb");
 typedef struct _address * address;
 
 struct _address
-{
+{  
 	lw_class_wraps (address);
 
 	lw_import long port ();
@@ -1031,17 +1048,17 @@ struct _filter
 {
 	lw_class_wraps (filter);
 
-	lw_import void local (address);
+	lw_import void local (address);	
 	lw_import void remote (address);
 
-	lw_import address local ();
-	lw_import address remote ();
+	lw_import address local ();	
+	lw_import address remote (); 
 
-	lw_import void local_port (long port);
-	lw_import long local_port ();
+	lw_import void local_port (long port);	
+	lw_import long local_port ();	
 
-	lw_import void remote_port (long port);
-	lw_import long remote_port ();
+	lw_import void remote_port (long port);	
+	lw_import long remote_port ();	
 
 	lw_import void reuse (bool enabled);
 	lw_import bool reuse ();
@@ -1074,7 +1091,7 @@ struct _client : public _fdstream
 	lw_import address server_address ();
 
 	typedef void (lw_callback * hook_connect) (client);
-	typedef void (lw_callback * hook_disconnect) (client);
+	typedef void (lw_callback * hook_disconnect) (client); 
 
 	typedef void (lw_callback * hook_data)
 	  (client, const char * buffer, size_t size);
@@ -1236,7 +1253,7 @@ struct _webserver
 
 	typedef void (lw_callback * hook_get) (webserver, webserver_request);
 	typedef void (lw_callback * hook_post) (webserver, webserver_request);
-	typedef void (lw_callback * hook_head) (webserver, webserver_request);
+	typedef void (lw_callback * hook_head) (webserver, webserver_request);  
 	typedef void (lw_callback * hook_disconnect) (webserver, webserver_request);
 	typedef void (lw_callback * hook_error) (webserver, error);
 
@@ -1265,7 +1282,7 @@ struct _webserver
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
-
+	
 lw_import webserver webserver_new (pump);
 lw_import void webserver_delete (webserver);
 
@@ -1454,13 +1471,13 @@ lw_import void flashpolicy_delete (flashpolicy);
 // lacewing::fd_stream::set_fd uses WSADuplicateSocket() to check if the handle passed is a socket.
 // Normally, this is used to pass access to a socket to a second process, so this prepares the socket for copying.
 // The duplicated information is not used for a new socket, though. It's just discarded.
-//
+// 
 // The missing second socket causes the client OS to not fully disconnect the socket, so on disconnect,
 // • you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
 // • you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
-//
+// 
 // On process close, the socket is force-closed with a TCP RST (Reset) message.
-//
+// 
 // To avoid this, just modify the function (and C++ mirror) to pass is_socket parameter.
 // That way the "is socket" hack isn't needed.
 
@@ -1468,17 +1485,176 @@ lw_import void flashpolicy_delete (flashpolicy);
 // That's fine, but that function runs malloc on the _lw_addr, which leads to a memory leak when the stack
 // variable is freed. Run lw_addr_cleanup() on the stack address at the _lw_addr scope exits to compensate for it.
 
+struct readlock;
+struct writelock;
+struct readwritelock
+{
+	friend readlock;
+	friend writelock;
+	readwritelock();
+	~readwritelock() noexcept(false);
+
+
+	// Debug breakpoint if writelock is not held by current thread.
+	bool checkHoldsWrite(bool excIfNot = true) const;
+	// Debug breakpoint if readlock is not held by current thread.
+	bool checkHoldsRead(bool excIfNot = true) const;
+
+#ifdef _DEBUG
+#define lw_rwlock_debugParamNames const char * file, const char * func, int line
+#define lw_rwlock_debugParamDefs __FILE__, __FUNCTION__, __LINE__
+
+	[[nodiscard]]
+	lacewing::readlock createReadLock(const char * file, const char * func, int line);
+	[[nodiscard]]
+	lacewing::writelock createWriteLock(const char * file, const char * func, int line);
+
+protected:
+	void openReadLock(readlock &rl, lw_rwlock_debugParamNames);
+	void openWriteLock(writelock &wl, lw_rwlock_debugParamNames);
+	void closeReadLock(readlock & rl, lw_rwlock_debugParamNames);
+	void closeWriteLock(writelock & wl, lw_rwlock_debugParamNames);
+
+	[[nodiscard]]
+	lacewing::writelock upgradeReadLock(readlock &rl, lw_rwlock_debugParamNames);
+	[[nodiscard]]
+	lacewing::readlock downgradeWriteLock(writelock &wl, lw_rwlock_debugParamNames);
+	void upgradeReadLock(readlock &rl, writelock &wl, lw_rwlock_debugParamNames);
+	void downgradeWriteLock(writelock &wl, readlock &rl, lw_rwlock_debugParamNames);
+
+#else
+	lacewing::readlock createReadLock();
+	lacewing::writelock createWriteLock();
+
+protected:
+	void openReadLock(readlock & rl);
+	void openWriteLock(writelock & wl);
+	void closeReadLock(readlock & rl);
+	void closeWriteLock(writelock & wl);
+	lacewing::writelock upgradeReadLock(readlock &rl);
+	lacewing::readlock downgradeWriteLock(writelock &wl);
+	void upgradeReadLock(readlock &rl, writelock &wl);
+	void downgradeWriteLock(writelock &wl, readlock &rl);
+
+#endif
+
+private:
+
+	std::shared_timed_mutex lock;
+	//std::condition_variable read, write;
+	::std::atomic<size_t> readers, writers, read_waiters, write_waiters;
+	mutable ::std::atomic<bool> metaLock = false;
+
+	struct holder {
+#ifdef _DEBUG
+		const char * file = "";
+		const char * func = "";
+		int line = -1;
+#endif
+		bool isWrite = false;
+		std::thread::id threadID;
+	};
+	std::vector<holder> holders;
+};
+struct readlock {
+	friend readwritelock;
+	friend writelock;
+	bool isEnabled() const;
+
+#ifdef _DEBUG
+	readlock(readwritelock &lock, lw_rwlock_debugParamNames);
+	void unlockDebug(lw_rwlock_debugParamNames);
+	void relockDebug(lw_rwlock_debugParamNames);
+#if LW_ESCALATION
+	lacewing::writelock upgrade(lw_rwlock_debugParamNames);
+	void upgrade(lw_rwlock_debugParamNames, lacewing::writelock &wl);
+#endif
+	// If writelock is previously opened on this thread, make sure it's not closed when this read lock is closed.
+	bool supercededByWriter = false;
+	const char * writerOpenFile = nullptr;
+	int writerOpenLine = 0;
+
+#else // !_DEBUG
+	readlock(readwritelock &lock);
+	void unlock();
+	void relock();
+#if LW_ESCALATION
+	lacewing::writelock upgrade();
+	void upgrade(lacewing::writelock &wl);
+#endif // LW_ESCALATION
+
+#endif // !_DEBUG
+	~readlock();
+	readlock(readlock&) = delete;
+protected:
+	readwritelock & lock;
+	std::shared_lock<decltype(readwritelock::lock)> locker;
+	bool locked = true;
+
+};
+struct writelock {
+	friend readwritelock;
+	friend readlock;
+	bool isEnabled() const;
+
+#ifdef _DEBUG
+	writelock(readwritelock &lock, const char * file, const char * func, int line);
+	void unlockDebug(lw_rwlock_debugParamNames);
+	void relockDebug(lw_rwlock_debugParamNames);
+#if LW_ESCALATION
+	lacewing::readlock downgrade(lw_rwlock_debugParamNames);
+	void downgrade(lw_rwlock_debugParamNames, lacewing::readlock &wl);
+#endif // LW_ESCALATION
+#else // !_DEBUG
+	writelock(readwritelock &lock);
+	void unlock();
+	void relock();
+#if LW_ESCALATION
+	lacewing::readlock downgrade();
+	void downgrade(lacewing::readlock &rl);
+#endif
+#endif
+	~writelock();
+	writelock(writelock&) = delete;
+protected:
+	readwritelock & lock;
+	std::unique_lock<decltype(readwritelock::lock)> locker;
+	bool locked = true;
+};
+
+#ifdef _DEBUG
+#define lw_unlock() unlockDebug(lw_rwlock_debugParamDefs)
+#define lw_relock() relockDebug(lw_rwlock_debugParamDefs)
+#define createReadLock() createReadLock(lw_rwlock_debugParamDefs)
+#define createWriteLock() createWriteLock(lw_rwlock_debugParamDefs)
+#define lw_upgrade() upgrade(lw_rwlock_debugParamDefs)
+#define lw_downgrade() downgrade(lw_rwlock_debugParamDefs)
+#define lw_upgrade_to(x) upgrade(lw_rwlock_debugParamDefs, x)
+#define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
+#else
+#define lw_unlock() unlock()
+#define lw_relock() relock()
+#define lw_upgrade() upgrade()
+#define lw_downgrade() downgrade()
+#define lw_upgrade_to(x) upgrade(x)
+#define lw_downgrade_to(x) downgrade(x)
+#endif
+
+
+
+
+struct relayclientinternal;
 struct relayclient
 {
 public:
 	const static int buildnum = 83;
 
-	void * internaltag, *tag;
+	void * internaltag = nullptr, *tag = nullptr;
 
 	relayclient(pump);
 	~relayclient();
 
-	void connect(const char * host, int port = 6121);
+	void connect(const char * host, lw_ui16 port = 6121);
 	void connect(lacewing::address);
 
 	bool connecting();
@@ -1490,99 +1666,175 @@ public:
 
 	int id() const;
 
-	void name(const char * name);
-	const char * name() const;
+	void name(std::string_view name);
+	std::string name() const;
 
-	const char * welcomemessage() const;
+	std::string welcomemessage() const;
 
 	void listchannels();
+	size_t channelcount() const;
 
 	struct channellisting
 	{
-		void * internaltag, *tag;
+		friend relayclient;
+		friend relayclientinternal;
+	private:
+		// internaltag contains relayclientinternal
+		void * internaltag = nullptr, *tag = nullptr;
 
-		unsigned short peercount;
-		const char * name;
-		const channellisting * next() const;
+		lw_ui16 _peercount = 0xFFFF;
+		std::string _name;
+
+	public:
+		unsigned short peercount() const;
+		std::string name() const;
 	};
 
 	size_t channellistingcount() const;
-	const channellisting * firstchannellisting() const;
+	const std::vector<std::shared_ptr<channellisting>> & getchannellisting() const;
 
-	void join(const char * channel, bool hidden = false, bool autoclose = false);
+	void join(std::string_view channelName, bool hidden = false, bool autoclose = false);
 
-	void sendserver(int subchannel, const char * data, int size = -1, int type = 0) const;
-	void blastserver(int subchannel, const char * data, int size = -1, int type = 0) const;
+	void sendserver(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
+	void blastserver(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
+
+	struct channel;
+	const std::vector<std::shared_ptr<channel>> & getchannels() const;
+
+	mutable lacewing::readwritelock lock;
 
 	struct channel
 	{
-		void * internaltag, *tag;
+		struct peer;
 
-		const char * name() const;
+		friend relayclient;
+		friend relayclientinternal;
+		friend peer;
+		mutable readwritelock lock;
+	protected:
+		relayclientinternal &client;
+
+		lw_ui16 _id = 0xFFFF;
+		std::string _name;
+		bool _ischannelmaster = false;
+		std::atomic<bool> _readonly = false;
+		std::vector<std::shared_ptr<relayclient::channel::peer>> peers;
+
+
+		/// <summary> searches for the first peer by id number. </summary>
+		/// <param name="id"> id to look up. </param>
+		/// <returns> null if it fails, else the matching peer. </returns>
+		std::shared_ptr<relayclient::channel::peer> findpeerbyid(lw_ui16 id);
+
+		/// <summary> Adds a new peer. </summary>
+		/// <param name="peerid"> ID number for the peer. </param>
+		/// <param name="flags"> The flags of the peer connect/channel join message.
+		/// 					 0x1 = master. other flags are not accepted. </param>
+		/// <param name="name"> The name. Cannot be null or blank. </param>
+		/// <returns> null if it fails, else a relayclientinternal::peer *. </returns>
+		std::shared_ptr<relayclient::channel::peer> addnewpeer(lw_ui16 peerid, lw_ui8 flags, std::string_view name);
+
+	public:
+		channel(relayclientinternal &_client);
+		~channel() noexcept(false);
+
+		void * internaltag = nullptr, *tag = nullptr;
+
+		std::string name() const;
 		bool ischannelmaster() const;
 
-		void send(int subchannel, const char * data, int size = -1, int type = 0) const;
-		void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
+		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
+		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
 
 		struct peer
 		{
-			void * internaltag, *tag;
+			friend relayclient;
+			friend relayclientinternal;
+			friend relayclient::channel;
+			mutable readwritelock lock;
+		protected:
+			relayclient::channel &channel;
 
-			unsigned short  id() const;
+			lw_ui16 _id = 0xFFFF;
+			std::string _name, _prevname;
+
+			bool _ischannelmaster = false;
+			bool _readonly = false;
+
+		public:
+			peer(relayclient::channel &_channel, lw_ui16 id, lw_ui8 flags, std::string_view name);
+			~peer();
+
+			lw_ui16 id() const;
 			bool ischannelmaster() const;
 
-			void send(int subchannel, const char * data, int size = -1, int type = 0) const;
-			void blast(int subchannel, const char * data, int size = -1, int type = 0) const;
+			void send(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
+			void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
 
-			const char * name() const;
-			const char * prevname() const;
-			peer * next() const;
+			std::string name() const;
+			std::string prevname() const;
+		//	peer * next() const;
+
+			bool readonly() const;
+#if 0
+#ifdef _DEBUG
+		readlock getReadLockDebug(const char * file, const char * func, int line);
+		writelock getWriteLockDebug(const char * file, const char * func, int line);
+#else
+		readlock getReadLock();
+		writelock getWriteLock();
+#endif
+#endif
 		};
 
 		int peercount() const;
-		channel::peer * firstpeer() const;
-		channel * next() const;
-		unsigned short id() const;
+		//channel::peer * firstpeer() const;
+		//channel * next() const;
+		lw_ui16 id() const;
 
 		void leave() const;
+		// Indicates (but does not say for definite!) whether a writelock allows changes.
+		// Another thread may obtain writelock between the same thread reading this and getting its own writelock
+		bool readonly() const;
+		const std::vector<std::shared_ptr<lacewing::relayclient::channel::peer>> & getpeers() const;
 	};
 
-	int channelcount() const;
-	relayclient::channel * firstchannel() const;
+	// int channelcount() const;
+	// relayclient::channel * firstchannel() const;
 
-	typedef void(*handler_connect)				  (lacewing::relayclient &client);
-	typedef void(*handler_connectiondenied)		 (lacewing::relayclient &client, const char * denyreason);
-	typedef void(*handler_disconnect)				(lacewing::relayclient &client);
+	typedef void(*handler_connect)				(lacewing::relayclient &client);
+	typedef void(*handler_connectiondenied)		(lacewing::relayclient &client, std::string_view denyreason);
+	typedef void(*handler_disconnect)			(lacewing::relayclient &client);
 
 	typedef void(*handler_message_server)
-		(lacewing::relayclient &client, bool blasted, int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayclient &client, bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant);
 
 	typedef void(*handler_message_channel)
-		(lacewing::relayclient &client, lacewing::relayclient::channel &channel,
-			lacewing::relayclient::channel::peer &peer,
-			bool blasted, int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
+			std::shared_ptr<lacewing::relayclient::channel::peer> peer,
+			bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant);
 
 	typedef void(*handler_message_peer)
-		(lacewing::relayclient &client, lacewing::relayclient::channel &channel,
-			lacewing::relayclient::channel::peer &peer,
-			bool blasted, int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
+			std::shared_ptr<lacewing::relayclient::channel::peer> peer,
+			bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant);
 
 	typedef void(*handler_message_serverchannel)
-		(lacewing::relayclient &client, lacewing::relayclient::channel &channel, bool blasted,
-			int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, bool blasted,
+			 lw_ui8 subchannel, std::string_view message, lw_ui8 variant);
 
-	typedef void(*handler_error)					(lacewing::relayclient &client, lacewing::error);
-	typedef void(*handler_channel_join)			 (lacewing::relayclient &client, lacewing::relayclient::channel &target);
-	typedef void(*handler_channel_joindenied)		(lacewing::relayclient &client, const char * channelname, const char * denyreason);
-	typedef void(*handler_channel_leave)			(lacewing::relayclient &client, lacewing::relayclient::channel &target);
-	typedef void(*handler_channel_leavedenied)	  (lacewing::relayclient &client, lacewing::relayclient::channel &target, const char * denyreason);
-	typedef void(*handler_name_set)				 (lacewing::relayclient &client);
-	typedef void(*handler_name_changed)			 (lacewing::relayclient &client, const char * oldname);
-	typedef void(*handler_name_denied)			  (lacewing::relayclient &client, const char * name, const char * denyreason);
-	typedef void(*handler_peer_connect)			 (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer);
-	typedef void(*handler_peer_disconnect)		  (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer);
-	typedef void(*handler_peer_changename)		  (lacewing::relayclient &client, lacewing::relayclient::channel &channel, lacewing::relayclient::channel::peer &peer, const char * oldname);
-	typedef void(*handler_channellistreceived)	  (lacewing::relayclient &client);
+	typedef void(*handler_error)				(lacewing::relayclient &client, lacewing::error);
+	typedef void(*handler_channel_join)			(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target);
+	typedef void(*handler_channel_joindenied)	(lacewing::relayclient &client, std::string_view channelname, std::string_view denyreason);
+	typedef void(*handler_channel_leave)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target);
+	typedef void(*handler_channel_leavedenied)	(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target, std::string_view denyreason);
+	typedef void(*handler_name_set)				(lacewing::relayclient &client);
+	typedef void(*handler_name_changed)			(lacewing::relayclient &client, std::string_view oldname);
+	typedef void(*handler_name_denied)			(lacewing::relayclient &client, std::string_view name, std::string_view denyreason);
+	typedef void(*handler_peer_connect)			(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer);
+	typedef void(*handler_peer_disconnect)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer);
+	typedef void(*handler_peer_changename)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer, std::string oldname);
+	typedef void(*handler_channellistreceived)	(lacewing::relayclient &client);
 
 	void onconnect(handler_connect);
 	void onconnectiondenied(handler_connectiondenied);
@@ -1605,11 +1857,17 @@ public:
 	void onchannellistreceived(handler_channellistreceived);
 };
 
+} // ~namespace lacewing
+#include "FrameReader.h"
+#include "MessageReader.h"
+namespace lacewing {
+
+struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 15;
+	static const int buildnum = 16;
 
-	void * internaltag, *tag;
+	void * internaltag, * tag = nullptr;
 
 	lacewing::server socket;
 	lacewing::udp udp;
@@ -1618,7 +1876,7 @@ struct relayserver
 	relayserver(pump);
 	~relayserver();
 
-	void host(unsigned short port = 6121);
+	void host(lw_ui16 port = 6121);
 	void host(lacewing::filter &filter);
 	void unhost();
 
@@ -1626,110 +1884,192 @@ struct relayserver
 	unsigned short port();
 
 	void setchannellisting(bool enabled);
-	void setwelcomemessage(const char * message);
-	const char * getwelcomemessage();
+	void setwelcomemessage(std::string_view message);
+	std::string getwelcomemessage();
 
 	struct client;
 
 	struct channel
 	{
-		void * internaltag, *tag;
+		friend relayserverinternal;
+		friend relayserver;
+		friend relayserver::client;
 
-		unsigned short id();
+		void * tag = nullptr;
 
-		client * channelmaster();
+		lw_ui16 id();
 
-		const char * name();
-		void name(const char *);
+		std::shared_ptr<client> channelmaster() const;
 
-		bool hidden();
-		bool autocloseenabled();
+		std::string name() const;
+		void name(std::string_view str);
 
-		/// <summary> Gracefully closes the channel, including deleting memory, removing channel
-		/// 		  from server list, and messaging clients. </summary>
+		bool hidden() const;
+		bool autocloseenabled() const;
+		bool readonly() const;
+
+		/// <summary> Throw all clients off this channel, sending Leave Request Success. </summary>
 		void close();
 
-		void send(int subchannel, const char * data, size_t size = MAXSIZE_T, int variant = 0);
-		void blast(int subchannel, const char * data, size_t size = MAXSIZE_T, int variant = 0);
+		void send(lw_ui8 subchannel, std::string_view message, lw_ui8 variant = 0);
+		void blast(lw_ui8 subchannel, std::string_view message, lw_ui8 variant = 0);
 
-		size_t clientcount();
-		client * firstclient();
-		channel * next();
+		size_t clientcount() const;
 
 		~channel() noexcept(false);
 
 		// Called when server wants to add one. Also invoked by liblacewing itself.
 		// Sends relevant join/leave response messages.
 
-		void addclient(lacewing::relayserver::client &newClient);
-		void removeclient(lacewing::relayserver::client &newClient);
+		//void addclient(std::shared_ptr<relayserver::client> newClient);
+		//void removeclient(std::shared_ptr<relayserver::client> newClient);
+
+		std::vector<std::shared_ptr<lacewing::relayserver::client>> & getclients();
+
+		// Sets channel master, will notify users if ok.
+		void setchannelmaster(std::shared_ptr<client> client);
+
+		mutable lacewing::readwritelock lock;
+
+		// Internal use only. Must be public for std::make_shared.
+		channel(relayserverinternal &_server, std::string_view _name);
+
+	protected:
+		std::atomic<bool> _readonly = false;
+		relayserverinternal &server;
+
+        std::vector<std::shared_ptr<relayserver::client>> clients;
+
+        std::string _name;
+        lw_ui16 _id = 0xFFFF;
+        bool _hidden = true;
+        bool _autoclose = false;
+		// TODO: should be weak_ptr?
+		std::shared_ptr<client> _channelmaster;
+
+		std::shared_ptr<client> readpeer(messagereader &r);
+
+		void PeerToChannel(relayserver &server_, std::shared_ptr<relayserver::client> client,
+			bool blasted, lw_ui8 subchannel, lw_ui8 variant, std::string_view message);
 	};
 
-	size_t channelcount();
-	channel * firstchannel();
+	size_t channelcount() const;
+	std::vector<std::shared_ptr<lacewing::relayserver::client>> & getclients();
+	std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
+	void channel_addclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
+	void channel_removeclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
+
 
 	struct client
 	{
-		void * internaltag, *tag;
+		friend relayserverinternal;
+		friend relayserver;
+		friend relayserver::channel;
 
-		unsigned short id();
+		mutable lacewing::readwritelock lock;
 
-		const char * getaddress();
-		in6_addr getaddressasint();
-		const char * getimplementation();
+		void * tag = nullptr;
 
-		void close();
+		lw_ui16 id();
+
+		std::string_view getaddress() const;
+		in6_addr getaddressasint() const;
+		const char * getimplementation() const;
+		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
 
 		void disconnect();
 
-		void send(int subchannel, const char * data, int size = -1, int variant = 0);
-		void blast(int subchannel, const char * data, int size = -1, int variant = 0);
+		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
+		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
 
-		const char * name();
-		void name(const char *);
+		std::string name() const;
+		void name(std::string_view);
 
-		size_t channelcount();
-		__int64 getconnecttime();
+		size_t channelcount() const;
+		lw_i64 getconnecttime() const;
 
-		channel * firstchannel();
-		client * next();
-		channel * nextchannel(channel *);
+		bool readonly() const;
 
+		// Internal use only!
+		client(relayserverinternal &server, lacewing::server_client socket);
 		~client() noexcept(false);
+	protected:
+		lacewing::server_client socket = nullptr;
+		relayserverinternal &server;
+		// Can't use socket->address, as when server_client is free'd it is no longer valid
+		// Since there's a logical use for looking up address during closing, we'll keep a copy.
+		std::string address;
+		in6_addr addressInt = {};
+		::std::chrono::high_resolution_clock::time_point connectTime;
+		::std::chrono::steady_clock::time_point lastmessagetime;
+		framereader reader;
+        std::vector<std::shared_ptr<channel>> channels;
+		std::string _name, _prevname;
+		// Indicates if this socket has closed, or is expected to close.
+		std::atomic<bool> _readonly = false;
+
+		enum class clientimpl
+		{
+			// Can be Relay or old versions of Blue
+			Unknown,
+			// Bluewing, Windows.
+			Windows,
+			Flash,
+			HTML5
+			// Edit relayserverinternal::client::getimplementation if you add more lines
+		} clientImpl = clientimpl::Unknown;
+
+		std::string clientImplStr;
+
+		bool pseudoUDP = true; // Is UDP not supported (e.g. Flash) so "faked" by receiver
+
+        bool connectRequestApproved = false;
+        bool gotfirstbyte = false;
+        bool ponged = true;
+
+        lacewing::address udpaddress;
+		void PeerToPeer(relayserver &server, std::shared_ptr<relayserver::channel> viachannel, std::shared_ptr<relayserver::client> receivingclient,
+			bool blasted, lw_ui8 subchannel, lw_ui8 variant, std::string_view message);
+
+        bool checkname(std::string_view name);
+				
+        lw_ui16 _id = 0xFFFF;
+    
+        std::shared_ptr<relayserver::channel> readchannel(messagereader &reader);
 	};
 
-	size_t clientcount();
-	client * firstclient();
+	size_t clientcount() const;
+	//client * firstclient();
+	std::shared_ptr<relayserver::channel> createchannel(std::string_view channelName, std::shared_ptr<lacewing::relayserver::client> master, bool hidden, bool autoclose);
 
-	relayserver::channel * createchannel(const char * channelName, lacewing::relayserver::client &master, bool hidden, bool autoclose);
-	relayserver::channel * createchannel(const char * channelName, bool hidden, bool autoclose); // no master
+	mutable lacewing::readwritelock lock;
 
-	typedef void(*handler_connect)	 (lacewing::relayserver &server, lacewing::relayserver::client &client);
-	typedef void(*handler_disconnect)  (lacewing::relayserver &server, lacewing::relayserver::client &client);
+	typedef void(*handler_connect)		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client);
+	typedef void(*handler_disconnect)	(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client);
 	typedef void(*handler_error)		(lacewing::relayserver &server, lacewing::error);
 
 	typedef void(*handler_message_server)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, bool blasted, int subchannel,
-			const char * data, size_t size, int variant);
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, bool blasted, lw_ui8 subchannel,
+			std::string_view data, lw_ui8 variant);
 
 	typedef void(*handler_message_channel)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
-			bool blasted, int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel,
+			bool blasted, lw_ui8 subchannel, std::string_view data, lw_ui8 variant);
 
 	typedef void(*handler_message_peer)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
-			lacewing::relayserver::client &targetclient, bool blasted,
-			int subchannel, const char * data, size_t size, int variant);
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel,
+			std::shared_ptr<lacewing::relayserver::client> targetclient, bool blasted,
+			lw_ui8 subchannel, std::string_view data, lw_ui8 variant);
 
 	typedef void(*handler_channel_join)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel,
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel,
 			bool hidden, bool autoclose);
 
 	typedef void(*handler_channel_leave)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, lacewing::relayserver::channel &channel);
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel);
 
 	typedef void(*handler_nameset)
-		(lacewing::relayserver &server, lacewing::relayserver::client &client, const char * requestedname);
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view requestedname);
 
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);
@@ -1741,21 +2081,21 @@ struct relayserver
 	void onchannel_leave(handler_channel_leave);
 	void onnameset(handler_nameset);
 
-	void connect_response(lacewing::relayserver::client &client,
-		const char * const denyReason);
-	void joinchannel_response(lacewing::relayserver::channel &channel,
-		lacewing::relayserver::client &client, const char * const denyReason);
+	void connect_response(std::shared_ptr<lacewing::relayserver::client> client,
+		std::string_view denyReason);
+	void joinchannel_response(std::shared_ptr<lacewing::relayserver::channel> channel,
+		std::shared_ptr<lacewing::relayserver::client> client, std::string_view denyReason);
 	void channelmessage_permit(
-		lacewing::relayserver::client &sendingclient, lacewing::relayserver::channel &channel,
-		bool blasted, unsigned char subchannel, const char * data, size_t size, unsigned char variant, bool accept);
-	void clientmessage_permit(lacewing::relayserver::client &sendingclient, lacewing::relayserver::channel &channel,
-		lacewing::relayserver::client &receivingclient,
-		bool blasted, unsigned char subchannel, const char * data, size_t size, unsigned char variant, bool accept);
+		std::shared_ptr<lacewing::relayserver::client> sendingclient, std::shared_ptr<lacewing::relayserver::channel> channel,
+		bool blasted, lw_ui8 subchannel, std::string_view data, lw_ui8 variant, bool accept);
+	void clientmessage_permit(std::shared_ptr<lacewing::relayserver::client> sendingclient, std::shared_ptr<lacewing::relayserver::channel> channel,
+		std::shared_ptr<lacewing::relayserver::client> receivingclient,
+		bool blasted, lw_ui8 subchannel, std::string_view data, lw_ui8 variant, bool accept);
 	// The ability to prevent a client from leaving a channel seems pointless; they can always pull the plug.
-	void leavechannel_response(lacewing::relayserver::channel &channel,
-		lacewing::relayserver::client & client, const char * const denyReason);
-	void nameset_response(lacewing::relayserver::client &client,
-		const char * const newClientName, const char * const denyReason);
+	void leavechannel_response(std::shared_ptr<lacewing::relayserver::channel> channel,
+		std::shared_ptr<lacewing::relayserver::client> client, std::string_view denyReason);
+	void nameset_response(std::shared_ptr<lacewing::relayserver::client> client,
+		std::string_view newClientName, std::string_view denyReason);
 };
 #pragma endregion
 

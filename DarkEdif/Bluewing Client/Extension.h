@@ -1,5 +1,6 @@
 
 #include "Edif.h"
+#include <functional>
 void NewEvent(SaveExtInfo *);
 
 struct GlobalInfo;
@@ -7,7 +8,8 @@ class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	SaveExtInfo threadData; // Must be first variable in Extension class
+	std::shared_ptr<SaveExtInfo> threadData; // Must be first variable in Extension class
+	std::string_view loopName;
 
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
@@ -50,16 +52,17 @@ public:
 	#define SendMsgSize					globals->_sendMsgSize
 	#define AutomaticallyClearBinary	globals->_automaticallyClearBinary
 	#define GlobalID					globals->_globalID
-	#define Channels					globals->_channels
 	#define HostIP						globals->_hostIP
 
-	
+	std::shared_ptr<lacewing::relayclient::channel> selChannel;
+	std::shared_ptr<lacewing::relayclient::channel::peer> selPeer; // make sure it's one inside selChannel!
+	bool isOverloadWarningQueued = false;
 
 	void CreateError(const char *);
 
 	void AddToSend(void *, size_t);
 	void ClearThreadData();
-	
+
 
 	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
 	// functions into DarkEdif, the data may be overwritten, causing crashes and other such nasties.
@@ -234,7 +237,7 @@ public:
 		const char * Peer_Name();
 		const char * ReceivedStr();
 		int ReceivedInt();
-		unsigned int subchannel();
+		unsigned int Subchannel();
 		int Peer_ID();
 		const char * Channel_Name();
 		int Channel_PeerCount();
@@ -304,48 +307,50 @@ public:
 
 };
 
+void eventpumpdeleter(lacewing::eventpump);
+
 struct GlobalInfo
 {
-	lacewing::eventpump			_objEventPump;
-	lacewing::relayclient		_client;
-	char *						_previousName,
-		 *						_sendMsg,
-		 *						_denyReasonBuffer;
-	size_t						_sendMsgSize;
-	bool						_automaticallyClearBinary;
-	char *						_globalID;
-	HANDLE						_thread;
-	Extension *					_ext;
-	std::vector<SaveExtInfo *>	_saved;
-	std::vector<ChannelCopy *>	_channels; // Referred to by reference for all extensions
-	std::string					_hostIP;
-	ChannelCopy *				lastDestroyedExtSelectedChannel;
-	PeerCopy *					lastDestroyedExtSelectedPeer;
+	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
+	lacewing::relayclient						_client;
+	std::string									_previousName;
+	char *										_sendMsg;
+	std::string									_denyReasonBuffer;
+	size_t										_sendMsgSize;
+	bool										_automaticallyClearBinary;
+	std::string									_globalID;
+	HANDLE										_thread;
+	Extension *									_ext;
+	std::vector<std::shared_ptr<SaveExtInfo>>	_saved;
+	std::string									_hostIP;
+	HANDLE										timeoutThread = NULL;
+	std::weak_ptr<lacewing::relayclient::channel>				lastDestroyedExtSelectedChannel;
+	std::weak_ptr<lacewing::relayclient::channel::peer>		lastDestroyedExtSelectedPeer;
 
-	CRITICAL_SECTION			lock;
-	std::vector<Extension *>	refs;
-	bool						timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
-	bool						fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	CRITICAL_SECTION							lock;
+	std::vector<Extension *>					refs;
+	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
+	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 	
-	void AddEvent1(int event1ID,
-		void * channelOrChannelListing = nullptr,
-		PeerCopy * peer = nullptr,
-		char * messageOrErrorText = nullptr,
-		size_t messageSize = 0U,
-		unsigned char subchannel = 255);
-	void AddEvent2(int event1ID, int event2ID,
-		void * channelOrChannelListing = nullptr,
-		PeerCopy * peer = nullptr,
-		char * messageOrErrorText = nullptr,
-		size_t messageSize = 0U,
-		unsigned char subchannel = 255);
+	void AddEvent1(std::uint16_t event1ID,
+		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
+		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
+		std::string_view messageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255);
+	void AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
+		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
+		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
+		std::string_view messageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255);
 private:
-	void AddEventF(bool twoEvents, int event1ID, int event2ID,
-		void * channelOrChannelListing = nullptr,
-		PeerCopy * peer = nullptr,
-		char * messageOrErrorText = nullptr,
-		size_t messageSize = 0U,
-		unsigned char subchannel = 255
+	void AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
+		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
+		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
+		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
+		std::string_view messageOrErrorText = std::string_view(),
+		lw_ui8 subchannel = 255
 		);
 public:
 	void CreateError(const char * errorText);

@@ -70,6 +70,8 @@ protected:
 
 			headersize = 6;
 		}
+		else
+			return;
 
 		tosend	 = (buffer + 8) - headersize;
 		tosendsize =  messagesize + headersize;

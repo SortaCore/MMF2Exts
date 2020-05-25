@@ -73,11 +73,11 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 		for (unsigned int i = 0; i < JSON.u.array.length; ++i)
 		{
 			const json_value& propjson = *JSON.u.array.values[i];
-			const char * curPropType = propjson["Type"];
+			const char* curPropType = propjson["Type"];
 
 			if (!_stricmp(curPropType, "Editbox String"))
 			{
-				const char * defaultText = CurLang["Properties"]["DefaultState"];
+				const char* defaultText = CurLang["Properties"]["DefaultState"];
 				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
 			}
 			// Stores a number (in combo box, an index)
@@ -104,8 +104,10 @@ short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			MessageBoxA(NULL, "Property default sizes are too large.", "DarkEdif - Error", MB_OK | MB_ICONERROR);
 		else
 			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
-	}
+#else // NOPROPS
+		EDITDATASize = infoPtr->EDITDATASize;
 #endif // NOPROPS
+	}
 	
 	//+(GetPropertyChbx(edPtr, CurLang["Properties"].u.object.length+1)-&edPtr);
 

@@ -184,7 +184,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(4, Peer_Name);
 		LinkExpression(5, ReceivedStr);
 		LinkExpression(6, ReceivedInt);
-		LinkExpression(7, subchannel);
+		LinkExpression(7, Subchannel);
 		LinkExpression(8, Peer_ID);
 		LinkExpression(9, Channel_Name);
 		LinkExpression(10, Channel_PeerCount);
@@ -235,7 +235,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(55, DumpMessage);
 		LinkExpression(56, ChannelListing_ChannelCount);
 	}
-	
+
 	/*
 		This is where you'd do anything you'd do in CreateRunObject in the original SDK
 
@@ -248,6 +248,14 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	// server hasn't done that already.
 	if (!AppWasClosed)
 		AppWasClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+#ifndef RUN_ONLY
+	if (edPtr->eHeader.extSize != sizeof(EDITDATA))
+	{
+		MessageBoxA(NULL, "Properties are the wrong size. Please re-create the Lacewing Blue Client object in frame, "
+			"and use \"Replace by another object\" in Event Editor.", "Lacewing Blue Client error", MB_OK | MB_ICONERROR);
+	}
+#endif
 
 	isGlobal = edPtr->Global;
 	char msgBuff[500];
@@ -268,13 +276,32 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 			// If switching frames, the old ext will store selection here.
 			// We'll keep it across frames for simplicity.
-			threadData.channel = globals->lastDestroyedExtSelectedChannel;
-			threadData.peer = globals->lastDestroyedExtSelectedPeer;
+			if (!globals->lastDestroyedExtSelectedChannel.expired())
+			{
+				selChannel = globals->lastDestroyedExtSelectedChannel.lock();
+				globals->lastDestroyedExtSelectedChannel.reset();
+			}
+			if (!globals->lastDestroyedExtSelectedPeer.expired())
+			{
+				selPeer = globals->lastDestroyedExtSelectedPeer.lock();
+				globals->lastDestroyedExtSelectedPeer.reset();
+			}
 			
 			globals->refs.push_back(this);
 			if (!globals->_ext)
 				globals->_ext = this;
 			OutputDebugStringA("Globals exists: added to refs.\n");
+
+			if (globals->timeoutThread)
+			{
+				OutputDebugStringA("Timeout thread is active: waiting for it to close.\n");
+				SetEvent(AppWasClosed);
+				WaitForSingleObject(globals->timeoutThread, 200);
+				CloseHandle(globals->timeoutThread);
+				globals->timeoutThread = NULL;
+				ResetEvent(AppWasClosed);
+				OutputDebugStringA("Timeout thread has closed.\n");
+			}
 		}
 	}
 	else
@@ -330,30 +357,30 @@ DWORD WINAPI LacewingLoopThread(void * thisExt)
 	return 0;
 }
 
-void GlobalInfo::AddEvent1(int event1ID,
-	void * channelOrChannelListing,
-	PeerCopy * peer,
-	char * messageOrErrorText,
-	size_t messageSize,
-	unsigned char subchannel)
+void GlobalInfo::AddEvent1(std::uint16_t event1ID,
+	std::shared_ptr<lacewing::relayclient::channel> channel,
+	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
+	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
+	std::string_view messageOrErrorText,
+	lw_ui8 subchannel)
 {
-	return AddEventF(false, event1ID, 35353, channelOrChannelListing, peer, messageOrErrorText, messageSize, subchannel);
+	return AddEventF(false, event1ID, 35353, channel, channelListing, peer, messageOrErrorText, subchannel);
 }
-void GlobalInfo::AddEvent2(int event1ID, int event2ID,
-	void * channelOrChannelListing,
-	PeerCopy * peer,
-	char * messageOrErrorText,
-	size_t messageSize,
-	unsigned char subchannel)
+void GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
+	std::shared_ptr<lacewing::relayclient::channel> channel,
+	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
+	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
+	std::string_view messageOrErrorText,
+	lw_ui8 subchannel)
 {
-	return AddEventF(true, event1ID, event2ID, channelOrChannelListing, peer, messageOrErrorText, messageSize, subchannel);
+	return AddEventF(true, event1ID, event2ID, channel, channelListing, peer, messageOrErrorText, subchannel);
 }
-void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
-	void * channelOrChannelListing /* = nullptr */,
-	PeerCopy * peer /* = nullptr */,
-	char * messageOrErrorText /* = nullptr */,
-	size_t messageSize /* = 0U */,
-	unsigned char subchannel /* = 255 */)
+void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
+	std::shared_ptr<lacewing::relayclient::channel> channel /* = nullptr */,
+	std::shared_ptr<lacewing::relayclient::channellisting> channelListing /* = nullptr */,
+	std::shared_ptr<lacewing::relayclient::channel::peer> peer /* = nullptr */,
+	std::string_view messageOrErrorText /* = std::string_view() */,
+	lw_ui8 subchannel /* = 255 */)
 {
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
@@ -369,7 +396,7 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 		With GenerateEvent() + multithreading, this would cause crashes as Fusion is forced into the extension
 		at the wrong time.
 		With PushEvent() + multithreading, this would cause overwriting of old events and possibly access
-		violations as variables are simulatenously written to by the ext and read from by Fusion at the same time.
+		violations as variables are simultaneously written to by the ext and read from by Fusion at the same time.
 		
 		But in DarkEdif, you'll note all the GenerateEvents() are handled on a queue, and the queue is
 		iterated through in Handle(), thus it is quite safe. But we still need to protect potentially several
@@ -377,7 +404,7 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
 	*/
 
-	SaveExtInfo * newEvent = new SaveExtInfo();
+	std::shared_ptr<SaveExtInfo> newEvent = std::make_shared<SaveExtInfo>();
 	SaveExtInfo &newEvent2 = *newEvent;
 
 	// Initialise
@@ -385,12 +412,12 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 	newEvent2.condTrig[0] = (unsigned short)event1ID;
 	newEvent2.condTrig[1] = (unsigned short)event2ID;
 	// channel/channelListing overlap, as do message content and error text
-	newEvent2.channel = (ChannelCopy *)channelOrChannelListing; 
+	newEvent2.channel = channel;
+	newEvent2.channelListing = channelListing;
 	newEvent2.peer = peer;
 	newEvent2.receivedMsg.content = messageOrErrorText;
-	newEvent2.receivedMsg.size = messageSize;
 	newEvent2.receivedMsg.subchannel = subchannel;
-		
+	
 	EnterCriticalSectionDebug(&lock); // Needed before we access Extension
 #if 0
 	// Copy Extension's data to vector
@@ -414,26 +441,26 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 
 void Extension::CreateError(const char * error)
 {
-	globals->AddEvent1(0, nullptr, nullptr, _strdup(error));
-	//__asm int 3;
+	globals->AddEvent1(0, nullptr, nullptr, nullptr, error);
+	// DebugBreak();
 }
 
 void GlobalInfo::CreateError(const char * error)
 {
-	AddEvent1(0, _strdup(error));
-	//__asm int 3;
+	AddEvent1(0, nullptr, nullptr, nullptr, error);
+	// DebugBreak();
 }
 
 void Extension::AddToSend(void * Data, size_t size)
 {
 	if (!Data)
 	{
-		CreateError("Error adding to send binary: pointer supplied is invalid. "
+		return CreateError("Error adding to send binary: pointer supplied is invalid. "
 					"The message has not been modified.");
-		return;
 	}
 	if (!size)
 		return;
+
 	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
 		
 	// Failed to reallocate memory
@@ -442,28 +469,28 @@ void Extension::AddToSend(void * Data, size_t size)
 		std::stringstream error;
 		error << "Received error number " << errno << " with reallocating memory to append to binary message. "
 			<< "The message has not been modified.";
-		CreateError(error.str().c_str());
-		return;
+		return CreateError(error.str().c_str());
 	}
-	SendMsg = newptr;
-	SendMsgSize += size;
 		
 	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
 	
 	// If we failed to copy memory.
-	if (memmove_s(newptr + SendMsgSize - size, size, Data, size))
+	if (memmove_s(newptr + SendMsgSize, size, Data, size))
 	{
 		std::stringstream error;
 		error << "Received error number " << errno << " with reallocating memory to append to binary message. "
 			<< "The message has not been modified.";
-		CreateError(error.str().c_str());
+		return CreateError(error.str().c_str());
 		return;
 	}
+
+	SendMsg = newptr;
+	SendMsgSize += size;
 }
 
 void Extension::ClearThreadData()
 {
-	memset(&threadData, 0, sizeof(SaveExtInfo));
+	threadData = std::make_shared<SaveExtInfo>();
 }
 
 Extension::~Extension()
@@ -477,6 +504,8 @@ Extension::~Extension()
 	auto i = std::find(globals->refs.cbegin(), globals->refs.cend(), this);
 	bool wasBegin = i == globals->refs.cbegin();
 	globals->refs.erase(i);
+
+	ClearThreadData();
 
 	// Shift secondary event management to other Extension, if any
 	if (!globals->refs.empty())
@@ -517,8 +546,8 @@ Extension::~Extension()
 			OutputDebugStringA("Note: Last instance dropped, and currently connected - "
 				"Globals will be retained until a Disconnect is called.\n");
 			globals->_ext = nullptr;
-			globals->lastDestroyedExtSelectedChannel = threadData.channel;
-			globals->lastDestroyedExtSelectedPeer = threadData.peer;
+			globals->lastDestroyedExtSelectedChannel = selChannel;
+			globals->lastDestroyedExtSelectedPeer = selPeer;
 			LeaveCriticalSectionDebug(&globals->lock);
 
 			sprintf_s(msgBuff, "Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.\n",
@@ -527,19 +556,22 @@ Extension::~Extension()
 				: "the connection will terminate and all pending messages will be discarded");
 			OutputDebugStringA(msgBuff);
 
-			CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
+			globals->timeoutThread = CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
 			ClearThreadData();
+			selPeer = nullptr;
+			selChannel = nullptr;
 			return;
 		}
 
-		std::string id = std::string(std::string("LacewingRelayClient") + (globals->_globalID ? globals->_globalID : ""));
+		std::string id = "LacewingRelayClient" + globals->_globalID;
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		LeaveCriticalSectionDebug(&globals->lock);
 		delete globals; // Disconnects and closes event pump, deletes lock
 		globals = nullptr;
 	}
 
-	ClearThreadData();
+	selPeer = nullptr;
+	selChannel = nullptr;
 }
 
 REFLAG Extension::Handle()
@@ -563,8 +595,10 @@ REFLAG Extension::Handle()
 	// If Thread is not available, we have to tick() on Handle(), so
 	// we have to run next loop even if there's no events in Saved() to deal with.
 	bool runNextLoop = !globals->_thread;
+	size_t remainingCount = 0;
+	const size_t maxNumEventsPerEventLoop = 10;
 
-	for (size_t maxTrig = 0; maxTrig < 500; maxTrig++)
+	for (size_t maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!TryEnterCriticalSection(&globals->lock))
@@ -581,9 +615,12 @@ REFLAG Extension::Handle()
 		if (Saved.empty())
 		{
 			LeaveCriticalSectionDebug(&globals->lock);
+			isOverloadWarningQueued = false;
 			break;
 		}
-		SaveExtInfo * s = Saved.front();
+		std::shared_ptr<SaveExtInfo> s = Saved.front();
+		Saved.erase(Saved.begin());
+		remainingCount = Saved.size();
 
 		LeaveCriticalSectionDebug(&globals->lock);
 				
@@ -595,83 +632,78 @@ REFLAG Extension::Handle()
 			{
 				if (s->condTrig[u] != 0xFFFF)
 				{
-					if (s->receivedMsg.content != nullptr)
-					{
-						i->threadData.receivedMsg.content = s->receivedMsg.content;
-						i->threadData.receivedMsg.size = s->receivedMsg.size;
-						i->threadData.receivedMsg.cursor = s->receivedMsg.cursor;
-						i->threadData.receivedMsg.subchannel = s->receivedMsg.subchannel;
-					}
+					auto origSelChannel = selChannel;
+					auto origSelPeer = selPeer;
+					auto origTData = i->threadData; // may not be needed
 
-					// Handles channel listing as well
-					if (s->channel != nullptr)
-						i->threadData.channel = s->channel;
-					if (s->peer != nullptr)
-						i->threadData.peer = s->peer;
+					i->threadData = s;
+					i->selChannel = s->channel;
+					i->selPeer = s->peer;
 
 					i->Runtime.GenerateEvent((int)s->condTrig[u]);
+
+					// Restore old selection - if there was a selection
+					i->threadData = origTData;
+					if (origSelChannel)
+						selChannel = origSelChannel;
+					if (origSelPeer)
+						selPeer = origSelPeer;
 				}
 				// Remove copies if this particular event number is used
 				else
 				{
-					// If channel, it's either a channel leave or peer leave
-					if (s->channel)
+					// On disconnect, clear everyting
+					if (!s->channel)
 					{
-						// channel leave
-						if (!s->peer)
-						{
-							assert(s->channel->isclosed);
-							auto ch = std::find(Channels.begin(), Channels.end(), s->channel);
-							if (ch != Channels.end())
-								Channels.erase(ch);
-							delete s->channel;
-						}
-						else // peer leave
-						{
-							assert(s->peer->isclosed);
-							s->channel->deletepeer(s->peer);
-						}
-					}
-					else // On disconnect, clear everyting
-					{
-						for (auto i : Channels)
-						{
-							assert(i->isclosed);
-							delete i;
-						}
-
-						Channels.clear();
-
 						// After On Disconnect is triggered (cond ID 3), 0xFFFF is triggered.
-						// Invalidate the cached server's host IP.
-						HostIP = "";
+						// Invalidate the cached server's host IP, old prev name, and old deny reason.
+						HostIP.clear();
+						PreviousName.clear();
+						DenyReasonBuffer.clear();
 					}
 
+					// No channel: full clear of all channels/peers
+					// Channel and no peer: this client leaving channel
 					if (!s->channel || (s->channel && !s->peer))
-						for (auto dropExt : globals->refs)
-							if (dropExt->threadData.channel && dropExt->threadData.channel->isclosed)
-								dropExt->threadData.channel = nullptr;
+					{
+						for (auto& dropExt : globals->refs)
+						{
+							if (!s->channel || dropExt->selChannel == s->channel)
+							{
+								dropExt->selChannel = nullptr;
+								dropExt->selPeer = nullptr;
+							}
+						}
+					}
 
+					// No channel: full clear of all channels/peers
+					// Channel and peer: this peer leaving channel
 					if (!s->channel || (s->channel && s->peer))
-						for (auto dropExt : globals->refs)
-							if (dropExt->threadData.peer && dropExt->threadData.peer->isclosed)
-								dropExt->threadData.peer = nullptr;
+						for (auto& dropExt : globals->refs)
+							if (!s->channel || dropExt->selPeer == s->peer)
+								dropExt->selPeer = nullptr;
 				}
 			}
 		}
-
-		// s->receivedMsg.content overlaps loop.name
-		if (s->receivedMsg.content != nullptr)
-		{
-			free(s->receivedMsg.content);
-			for (auto i : globals->refs)
-				threadData.receivedMsg.content = nullptr;
-		}
-
-		EnterCriticalSectionDebug(&globals->lock);
-		Saved.erase(Saved.begin());
-		LeaveCriticalSectionDebug(&globals->lock);
 	} 
+
+	if (!isOverloadWarningQueued && remainingCount > maxNumEventsPerEventLoop * 3)
+	{
+		EnterCriticalSectionDebug(&globals->lock);
+		char error[300];
+		sprintf_s(error, "You're receiving too many messages for the application to process. Max of %u events per event loop, currently %u messages in queue.",
+			maxNumEventsPerEventLoop, Saved.size());
+
+		// Create an error and move it to the front of the queue
+		CreateError(error);
+		auto s = Saved.back();
+		Saved.erase(--Saved.cend());
+		Saved.insert(Saved.cbegin(), s);
+		isOverloadWarningQueued = true;
+		int i = 0;
+
+		LeaveCriticalSectionDebug(&globals->lock);
+	}
 
 	// Will not be called next loop if runNextLoop is false
 	return runNextLoop ? REFLAG::NONE : REFLAG::ONE_SHOT;
@@ -679,30 +711,35 @@ REFLAG Extension::Handle()
 
 DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
+	OutputDebugStringA("Timeout thread: startup.\n");
 	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
 
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
 	if (!G.refs.empty())
-		return 0U;
+		return OutputDebugStringA("Timeout thread: pre timeout refs not empty, exiting.\n"), 0U;
 
 	// If disconnected, no connection to worry about
 	if (!G._client.connected())
-		return 0U;
+		return OutputDebugStringA("Timeout thread: pre timeout client not connected, exiting.\n"), 0U;
 
 	// App closed within next 3 seconds: close connection by default
 	if (WaitForSingleObject(AppWasClosed, 3000U) == WAIT_OBJECT_0)
-		return 0U;
+	{
+		ResetEvent(AppWasClosed);
+		return OutputDebugStringA("Timeout thread: waitforsingleobject triggered, exiting.\n"), 0U;
+	}
 
 	// 3 seconds have passed: if we now have an ext, or client was disconnected, we're good
 	if (!G.refs.empty())
-		return 0U;
+		return OutputDebugStringA("Timeout thread: post timeout refs not empty, exiting.\n"), 0U;
 
 	if (!G._client.connected())
-		return 0U;
+		return OutputDebugStringA("Timeout thread: post timeout client not connected, exiting.\n"), 0U;
 
 	if (G.timeoutWarningEnabled)
 	{
+		OutputDebugStringA("Timeout thread: timeout warning message.\n");
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Warning!\r\n"
 			"All Bluewing objects have been destroyed and some time has passed; but "
@@ -715,6 +752,8 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			"Bluewing Client Warning",
 			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
 	}
+
+	OutputDebugStringA("Timeout thread: Deleting globals.\n");
 	delete &G; // Cleanup!
 	return 0U;
 }
@@ -792,15 +831,16 @@ long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
-	: _objEventPump(lacewing::eventpump_new()), _client(_objEventPump), _previousName(nullptr),
-	_sendMsg(nullptr), _denyReasonBuffer(nullptr), _sendMsgSize(0),
-	_automaticallyClearBinary(edPtr->AutomaticClear), _globalID(nullptr), _thread(nullptr),
-	lastDestroyedExtSelectedChannel(nullptr), lastDestroyedExtSelectedPeer(nullptr)
+	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
+	_client(_objEventPump.get()),
+	_sendMsg(nullptr), _sendMsgSize(0),
+	_automaticallyClearBinary(edPtr->AutomaticClear), _thread(nullptr),
+	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer()
 {
 	_ext = e;
 	refs.push_back(e);
 	if (edPtr->Global)
-		_globalID = _strdup(edPtr->edGlobalID);
+		_globalID = edPtr->edGlobalID;
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
 	fullDeleteEnabled = edPtr->fullDeleteEnabled;
 
@@ -834,8 +874,8 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	OutputDebugStringA("~GlobalInfo start\n");
 	if (!refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
-	free(_globalID);
-	free(_previousName);
+
+	auto clientWriteLock = _client.lock.createWriteLock();
 
 	// We're no longer responding to these events
 	_client.onchannellistreceived(nullptr);
@@ -890,17 +930,16 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 		Sleep(0U);
 	}
 
-	for (auto &i : _channels)
-	{
-		i->close(); // JIC
-		delete i;
-	}
-	_channels.clear();
 	DeleteCriticalSection(&lock);
-
-	OutputDebugStringA("Dropping event pump\n");
-	lacewing::pump_delete(_objEventPump);
-	_objEventPump = nullptr;
+	_CrtCheckMemory();
 
 	OutputDebugStringA("~GlobalInfo end\n");
+}
+
+void eventpumpdeleter(lacewing::eventpump pump)
+{
+	OutputDebugStringA("Pump deleting...\n");
+	lacewing::pump_delete(pump);
+	OutputDebugStringA("Pump deleted.\n");
+	_CrtCheckMemory();
 }
