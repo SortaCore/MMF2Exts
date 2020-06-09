@@ -15,16 +15,19 @@
 
 *.cs text=auto diff=csharp 
 *.vb text=auto
-*.c text=auto
-*.cpp text=auto
-*.cxx text=auto
-*.h text=auto
-*.hxx text=auto
+*.c text=auto eol=lf
+*.cc text=auto eol=lf
+*.cpp text=auto eol=lf
+*.cxx text=auto eol=lf
+*.h text=auto eol=lf
+*.hh text=auto eol=lf
+*.hpp text=auto eol=lf
+*.hxx text=auto eol=lf
 *.py text=auto
 *.rb text=auto
 *.java text=auto
-*.html text=auto eol=crlf
-*.htm text=auto eol=crlf
+*.html text=auto eol=lf
+*.htm text=auto eol=lf
 *.rc text=auto eol=crlf
 *.css text=auto
 *.scss text=auto
