@@ -20,7 +20,7 @@ All projects in this repository use a shared Visual Studio props file, found in 
 MMF2SDK is the original MMF2SDK provided by Clickteam, programmed in C, with use of some preprocessor macros. It's a lot of manual work, and IntelliSense doesn't like it much (IntelliSense isn't great with preprocessor macros that start/end functions/sections).
 
 ###MMF2SDK_Unicode
-MMF2SDK_Unicode is the MMF2SDK provided by Clickteam, with both ANSI (non-Unicode) and Unicode builds possible. Ease of use is about equal with MMF2SDK, as long as you understand [how to convert an ANSI project to ANSI & Unicode](#markdown-anchor-how-to-convert-ansi-functions-to-ansi-&-unicode).
+MMF2SDK_Unicode is the MMF2SDK provided by Clickteam, with both ANSI (non-Unicode) and Unicode builds possible. Ease of use is about equal with MMF2SDK, as long as you understand [how to convert an ANSI project to ANSI & Unicode](#markdown-anchor-how-to-convert-ansi-functions-to-ansi--unicode).
 
 ### rSDK
 rSDK is a change up with even heavier use of preprocessor macros, written by James with contribution from other users. [CT forum thread](https://community.clickteam.com/threads/42183-rSDK).  It was introduced with extra macros that did away quite a bit of work of MMF2SDK, but still a lot of manual work and IntelliSense doesn't like it either.
