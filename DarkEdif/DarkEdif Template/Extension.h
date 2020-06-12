@@ -1,3 +1,5 @@
+#include <DarkEdif.h>
+
 class Extension
 {
 public:
@@ -18,6 +20,11 @@ public:
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
 	~Extension();
 
+	// To add items to the Fusion Debugger, just uncomment this line.
+	DarkEdif::FusionDebugger FusionDebugger;
+	// After enabling it, you run FusionDebugger.AddItemToDebugger() inside Extension's constructor
+	// As an example:
+	std::tstring exampleDebuggerTextItem;
 
 	/*  Add any data you want to store in your extension to this class
 		(eg. what you'd normally store in rdPtr in old SDKs).
@@ -27,7 +34,8 @@ public:
 		a pointer.
 	*/
 
-	
+
+
 	
 
 	// int MyVariable;
@@ -78,8 +86,4 @@ public:
 
 	short Pause();
 	short Continue();
-
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
-
 };

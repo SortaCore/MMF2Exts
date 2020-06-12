@@ -21,11 +21,11 @@ const TCHAR * Extension::GetExpressionMenu2()
 	return Runtime.CopyString(menuStr[2].c_str());
 }
 
-typedef void (DLLExport * GetXXXStringFunc)(mv *mV, short actionID, TCHAR * strBuf, short maxLen);
-typedef void * (DLLExport * GetXXXInfosFunc)(mv * mV, short actionID);// Actually ACEInfo *, ID param
-typedef void (DLLExport * GetXXXTitleFunc)(mv *mV, short actionID, short paramID, TCHAR * strBuf, short maxLen);
-typedef void (DLLExport * GetExpressionParamFunc)(mv *mV, short actionID, short paramID, TCHAR * strBuf, short maxLen);
-typedef short (DLLExport * GetRunObjectInfosFunc)(mv * mV, kpxRunInfos * infoPtr);
+typedef void (FusionAPI * GetXXXStringFunc)(mv *mV, short actionID, TCHAR * strBuf, short maxLen);
+typedef void * (FusionAPI * GetXXXInfosFunc)(mv * mV, short actionID);// Actually ACEInfo *, ID param
+typedef void (FusionAPI * GetXXXTitleFunc)(mv *mV, short actionID, short paramID, TCHAR * strBuf, short maxLen);
+typedef void (FusionAPI * GetExpressionParamFunc)(mv *mV, short actionID, short paramID, TCHAR * strBuf, short maxLen);
+typedef short (FusionAPI * GetRunObjectInfosFunc)(mv * mV, kpxRunInfos * infoPtr);
 
 #include <unordered_map>
 static std::unordered_map<Params, std::tstring> actionAndConditionParamTypes
@@ -102,7 +102,7 @@ const TCHAR * Extension::GetAllActionInfos()
 		return Runtime.CopyString(_T(""));
 	}
 
-	//	short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
+	//	short FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	//	returns in infoPtr the number of actions
 	for (short i = 0; ; i++)
 	{
@@ -181,7 +181,7 @@ const TCHAR * Extension::GetAllConditionInfos()
 		return Runtime.CopyString(_T(""));
 	}
 
-	//	short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
+	//	short FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	//	returns in infoPtr the number of conditions
 	for (short i = 0; ; i++)
 	{
@@ -238,7 +238,7 @@ const TCHAR * Extension::GetAllExpressionInfos()
 	GetXXXInfosFunc getExpressionInfosFunc = (GetXXXInfosFunc)GetProcAddress(hGetProcIDDLL, "GetExpressionInfos");
 	GetXXXTitleFunc getExpressionTitleFunc = (GetXXXTitleFunc)GetProcAddress(hGetProcIDDLL, "GetExpressionTitle");
 	GetExpressionParamFunc getExpressionParamFunc = (GetExpressionParamFunc)GetProcAddress(hGetProcIDDLL, "GetExpressionParam");
-	
+
 	if (!getExpressionStringFunc) {
 		error << _T("Could not locate function GetExpressionString, error ") << GetLastError();
 		return Runtime.CopyString(_T(""));

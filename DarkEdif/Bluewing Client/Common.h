@@ -10,13 +10,7 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
-// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
-#define sub_asStr(str) #str
-#define asStr(str) sub_asStr(str)
-#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, asStr(CONFIG)
-
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
+#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, STRIFY(CONFIG)
 
 // Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")
@@ -36,8 +30,8 @@
 #include <algorithm>
 #include <sstream>
 #include <chrono>
-#include "..\Inc\zlib.h"
-#pragma comment(lib, "..\\Lib\\zlib.lib")
+#include "zlib.h"
+#pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
@@ -58,14 +52,14 @@
 #include "Lacewing.h"
 #include "LacewingFunctions.h"
 
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
 
 // Enable DarkEdif's utility
 #define MULTI_THREADING
 #include "MultiThreading.h"
 
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -76,12 +70,12 @@ struct EDITDATA
 	// Because Lacewing Blue can be interchanged with Lacewing Relay by replacing the MFXes,
 	// we don't use DarkEdif's automatic property system (except for the menus), instead
 	// matching the Relay's memory layout, and changing Edittime.cpp.
-	
+
 	// Any random edittime stuff? Place here.
-	char pad0[5];				// For matching old extension
-	bool AutomaticClear,
-		 MultiThreading;
-	bool Global;
+	char pad0[5];				// For matching Relay Client extension
+	bool automaticClear,
+		 multiThreading;
+	bool isGlobal;
 	char edGlobalID[255];
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;

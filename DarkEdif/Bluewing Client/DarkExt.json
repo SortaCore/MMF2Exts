@@ -1398,7 +1398,7 @@
 				"Info": "The version of the liblacewing library used to build this extension.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
+				"DefaultState": "Bluewing (b%i, %s) using liblacewing 0.5.4 (Windows/x86)"
 			},
 			{
 				"Title": "Automatically clear binary",

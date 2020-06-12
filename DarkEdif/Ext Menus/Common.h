@@ -11,12 +11,9 @@
 	#define CurLang (CurrentLanguage())
 #endif
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 
@@ -26,7 +23,7 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-	
+
 //	short			swidth;
 //	short			sheight;
 

@@ -122,8 +122,10 @@ END
 
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
-#endif
 IDR_EDIF_JSON	Edif	"DarkExt.json"
+#else
+IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
+#endif
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

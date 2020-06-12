@@ -17,6 +17,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1B15E55D-4945-41B7-8B4F-DC100B1D326C}</ProjectGuid>
     <ProjectName>Bluewing Server</ProjectName>
+    <RootNamespace>$(SDKType)</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
@@ -45,7 +46,7 @@
     <ClCompile>
       <ExceptionHandling>Async</ExceptionHandling>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;NOPROPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -53,7 +54,7 @@
     <ClCompile>
       <ExceptionHandling>Async</ExceptionHandling>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;NOPROPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild />
     </ClCompile>
@@ -62,68 +63,68 @@
     <ClCompile>
       <ExceptionHandling>Async</ExceptionHandling>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>..\Lib\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;lw_import=;_lacewing_static=;_lacewing_no_spdy;NOPROPS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Lib\json.c" />
-    <ClCompile Include="..\Lib\DarkEdif.cpp" />
-    <ClCompile Include="..\Lib\Edif.cpp" />
-    <ClCompile Include="..\Lib\Edif.Edittime.cpp" />
-    <ClCompile Include="..\Lib\Edif.General.cpp" />
-    <ClCompile Include="..\Lib\Edif.Runtime.cpp" />
-    <ClCompile Include="..\Lib\Lacewing\PhiAddress.cc" />
-    <ClCompile Include="..\Lib\Lacewing\ReadWriteLock.cc" />
-    <ClCompile Include="..\Lib\Lacewing\RelayServer.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\address.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\address2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\client2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\error2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\event2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\eventpump2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\fdstream2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\file2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\filter2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\flashpolicy2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\pipe2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\pump2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\server2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\stream2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\sync2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\thread2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\timer2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\cxx\udp2.cc" />
-    <ClCompile Include="..\Lib\Lacewing\src\error.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\filter.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\flashpolicy.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\global.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\heapbuffer.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\list.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\nvhash.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\pipe.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\pump.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\refcount-dbg.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\stream.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\streamgraph.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\util.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\client.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\compat.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\event.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\eventpump.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\fdstream.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\file.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\global2.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\server.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\sslclient.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\clientssl.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\serverssl.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\ssl\ssl.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\sync.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\thread.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\timer.c" />
-    <ClCompile Include="..\Lib\Lacewing\src\windows\udp.c" />
-    <ClCompile Include="..\Lib\ObjectSelection.cpp" />
+    <ClCompile Include="..\Lib\Shared\json.cpp" />
+    <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.General.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\PhiAddress.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\ReadWriteLock.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\RelayServer.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\address.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\address2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\client2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\error2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\event2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\eventpump2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\fdstream2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\file2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\filter2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\flashpolicy2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\pipe2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\pump2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\server2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\stream2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\sync2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\thread2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\timer2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\cxx\udp2.cc" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\error.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\filter.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\flashpolicy.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\global.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\heapbuffer.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\list.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\nvhash.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\pipe.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\pump.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\refcount-dbg.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\stream.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\streamgraph.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\util.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\client.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\compat.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\event.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\eventpump.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\fdstream.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\file.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\global2.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\server.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\sslclient.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\clientssl.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\sync.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\thread.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\timer.c" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\udp.c" />
+    <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp" />
     <ClCompile Include="Actions.cpp" />
     <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp" />
@@ -135,37 +136,36 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DarkExt.json" />
-    <None Include="Ext.def" />
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\json.h" />
-    <ClInclude Include="..\Inc\DarkEdif.h" />
-    <ClInclude Include="..\Inc\Edif.h" />
-    <ClInclude Include="..\Inc\MMFMasterHeader.h" />
-    <ClInclude Include="..\Inc\ObjectSelection.h" />
-    <ClInclude Include="..\Lib\Lacewing\FrameBuilder.h" />
-    <ClInclude Include="..\Lib\Lacewing\FrameReader.h" />
-    <ClInclude Include="..\Lib\Lacewing\IDPool.h" />
-    <ClInclude Include="..\Lib\Lacewing\Lacewing.h" />
-    <ClInclude Include="..\Lib\Lacewing\MessageBuilder.h" />
-    <ClInclude Include="..\Lib\Lacewing\MessageReader.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\address.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\common.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\flashpolicy.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\heapbuffer-cxx.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\heapbuffer.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\nvhash.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\pump.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\refcount-dbg.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\refcount.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\stream.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\streamgraph.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\windows\common.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\windows\compat.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\windows\fdstream.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\windows\sslclient.h" />
-    <ClInclude Include="..\Lib\Lacewing\src\windows\typeof.h" />
+    <ClInclude Include="..\Inc\Shared\json.h" />
+    <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
+    <ClInclude Include="..\Inc\Shared\Edif.h" />
+    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\FrameBuilder.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\FrameReader.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\IDPool.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\Lacewing.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\MessageBuilder.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\MessageReader.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\address.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\common.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\heapbuffer-cxx.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\heapbuffer.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\nvhash.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\pump.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\refcount-dbg.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\refcount.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\stream.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\streamgraph.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\common.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\compat.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\fdstream.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\sslclient.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\typeof.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Extension.h" />
     <ClInclude Include="LacewingFunctions.h" />

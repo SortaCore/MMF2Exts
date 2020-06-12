@@ -42,35 +42,32 @@
     <ClCompile Include="General.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Runtime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Threads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Unreferenced.cpp">
+    <ClCompile Include="InternalFuncs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\ObjectSelection.cpp">
+    <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp">
       <Filter>Global to all extensions</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Edif.cpp">
+    <ClCompile Include="..\Lib\Shared\DarkEdif.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Edif.Edittime.cpp">
+    <ClCompile Include="..\Lib\Shared\Edif.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Edif.General.cpp">
+    <ClCompile Include="..\Lib\Shared\Edif.General.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Edif.Runtime.cpp">
+    <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\json.c">
+    <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\json.cpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Lib\DarkEdif.cpp">
-      <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -78,9 +75,6 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="DarkExt.json">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="Ext.def">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
@@ -94,23 +88,23 @@
     <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\ObjectSelection.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\Edif.h">
-      <Filter>Global to all extensions\Edif</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\json.h">
-      <Filter>Global to all extensions\Edif\JSON</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\MMFMasterHeader.h">
-      <Filter>Global to all extensions</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Inc\DarkEdif.h">
-      <Filter>Global to all extensions\Edif</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\DarkEdif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\Edif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\json.h">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

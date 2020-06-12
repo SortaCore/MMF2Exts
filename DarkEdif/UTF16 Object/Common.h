@@ -12,16 +12,13 @@
 #endif
 #define JSON_COMMENT_MACRO Extension::Version
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-
 #ifndef _UNICODE
 	#error UTF-16 Object requires Unicode runtime, or the text expressions will be downgraded by Fusion to non-Unicode, which means they can never be displayed.
 #endif
 
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 extern Edif::SDK * SDK;
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
@@ -32,7 +29,7 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-	
+
 //	short			swidth;
 //	short			sheight;
 

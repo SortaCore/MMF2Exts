@@ -2,7 +2,7 @@
 #include "Common.h"
 #include <sstream>
 
-typedef HMENU (DLLExport * funcFormat)(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr);
+typedef HMENU (FusionAPI * funcFormat)(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr);
 
 struct DarkMenuItem
 {

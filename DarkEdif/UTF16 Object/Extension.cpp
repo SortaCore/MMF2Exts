@@ -18,10 +18,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkExpression(1, UTF16IntToUTF16Char);
 	LinkExpression(2, UTF16StrFromUTF16Mem);
 	LinkExpression(3, UTF16StrFromUTF8Mem);
-#if 0==1
-	LinkExpression(2, UTF16CharToUTF8Int );
-	LinkExpression(3, UTF8IntToUTF16Char);
-#endif
 
 	LinkAction(0, UTF16StrToUTF16Mem);
 

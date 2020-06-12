@@ -1,83 +1,54 @@
-
+// ============================================================================
+// This file contains routines that are handled during runtime; during both
+// Run Application and in built EXEs.
+// It includes various Fusion-triggered events, such as StartApp and EndApp,
+// window message processing, and runtime display of your object.
+//
+// If your object does not use any of those, a simple non-displaying object,
+// you can safely exclude this file.
+// ============================================================================
 #include "Common.h"
 
-// DEBUGGER /////////////////////////////////////////////////////////////////
 
-#if !defined(RUN_ONLY)
-// Identifiers of items displayed in the debugger
-enum
-{
-// Example
-// -------
-//	DB_CURRENTSTRING,
-//	DB_CURRENTVALUE,
-//	DB_CURRENTCHECK,
-//	DB_CURRENTCOMBO
-};
+// ============================================================================
+// RUNTIME DISPLAY: EFFECTS, TRANSISTIONS, COLLISION MASKS
+// ============================================================================
 
-// Items displayed in the debugger
-WORD DebugTree[]=
-{
-// Example
-// -------
-//	DB_CURRENTSTRING|DB_EDITABLE,
-//	DB_CURRENTVALUE|DB_EDITABLE,
-//	DB_CURRENTCHECK,
-//	DB_CURRENTCOMBO,
-
-	// End of table (required)
-	DB_END
-};
-
-#endif // !defined(RUN_ONLY)
-
-
-
-// -------------------
-// GetRunObjectSurface
-// -------------------
 // Implement this function instead of DisplayRunObject if your extension
 // supports ink effects and transitions. Note: you can support ink effects
 // in DisplayRunObject too, but this is automatically done if you implement
 // GetRunObjectSurface (MMF applies the ink effect to the surface).
-//
-// Note: do not forget to enable the function in the .def file 
-// if you remove the comments below.
 /*
-cSurface* DLLExport GetRunObjectSurface(RUNDATA * rdPtr)
+cSurface * FusionAPI GetRunObjectSurface(RUNDATA * rdPtr)
 {
+	#pragma DllExportHint
 	return NULL;
 }
 */
 
-// -------------------------
-// GetRunObjectCollisionMask
-// -------------------------
 // Implement this function if your extension supports fine collision mode (OEPREFS_FINECOLLISIONS),
 // Or if it's a background object and you want Obstacle properties for this object.
 //
-// Should return NULL if the object is not transparent.
-//
-// Note: do not forget to enable the function in the .def file 
-// if you remove the comments below.
+// Just return NULL if the object is opaque.
 //
 /*
-LPSMASK DLLExport GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
+LPSMASK FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
 {
+	#pragma DllExportHint
 	// Typical example for active objects
 	// ----------------------------------
 	// Opaque? collide with box
-	if ( (rdPtr->rs.rsEffect & EFFECTFLAG_TRANSPARENT) == 0 )	// Note: only if your object has the OEPREFS_INKEFFECTS option
+	if ((rdPtr->rs.rsEffect & EFFECTFLAG_TRANSPARENT) == 0)	// Note: only if your object has the OEPREFS_INKEFFECTS option
 		return NULL;
 
 	// Transparent? Create mask
 	LPSMASK pMask = rdPtr->m_pColMask;
-	if ( pMask == NULL )
+	if (pMask == NULL)
 	{
-		if ( rdPtr->m_pSurface != NULL )
+		if (rdPtr->m_pSurface != NULL )
 		{
 			unsigned int dwMaskSize = rdPtr->m_pSurface->CreateMask(NULL, lParam);
-			if ( dwMaskSize != 0 )
+			if(dwMaskSize != 0 )
 			{
 				pMask = (LPSMASK)calloc(dwMaskSize, 1);
 				if ( pMask != NULL )
@@ -100,19 +71,15 @@ LPSMASK DLLExport GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
 
 
 // ============================================================================
-//
 // START APP / END APP / START FRAME / END FRAME routines
-// 
 // ============================================================================
 
-// -------------------
-// StartApp
-// -------------------
-// Called when the application starts or restarts.
-// Useful for storing global data
-// 
-void DLLExport StartApp(mv *mV, CRunApp* pApp)
+/*
+// Called when the application starts or restarts. Also called for subapps.
+void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 {
+	#pragma DllExportHint
+	// Whether this is a subapp can be checked by pApp->ParentApp != NULL
 	// Example
 	// -------
 	// Delete global data (if restarts application)
@@ -122,15 +89,13 @@ void DLLExport StartApp(mv *mV, CRunApp* pApp)
 //		delete pData;
 //		mV->mvSetExtUserData(pApp, hInstLib, NULL);
 //	}
-}
+}*/
 
-// -------------------
-// EndApp
-// -------------------
-// Called when the application ends.
-// 
-void DLLExport EndApp(mv *mV, CRunApp* pApp)
+/*
+// Called when the application ends or restarts. Also called for subapps.
+void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 {
+	#pragma DllExportHint
 	// Example
 	// -------
 	// Delete global data
@@ -140,56 +105,41 @@ void DLLExport EndApp(mv *mV, CRunApp* pApp)
 //		delete pData;
 //		mV->mvSetExtUserData(pApp, hInstLib, NULL);
 //	}
-}
+}*/
 
-// -------------------
-// StartFrame
-// -------------------
-// Called when the frame starts or restarts.
-// 
-void DLLExport StartFrame(mv *mV, unsigned int dwReserved, int nFrameIndex)
-{
-}
-
-// -------------------
-// EndFrame
-// -------------------
-// Called when the frame ends.
-// 
-void DLLExport EndFrame(mv *mV, unsigned int dwReserved, int nFrameIndex)
-{
-}
-
-// ============================================================================
-//
-// TEXT ROUTINES (if OEFLAG_TEXT)
-// 
-// ============================================================================
-
-// -------------------
-// GetRunObjectFont
-// -------------------
-// Return the font used by the object.
-// 
 /*
-
-  // Note: do not forget to enable the functions in the .def file 
-  // if you remove the comments below.
-
-void WINAPI GetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf)
+// Called when the frame starts or restarts.
+void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {
+	#pragma DllExportHint
+}*/
+
+/*
+// Called when the frame ends.
+void FusionAPI EndFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
+{
+	#pragma DllExportHint
+}*/
+
+
+// ============================================================================
+// TEXT ROUTINES (if OEFLAG_TEXT)
+// ============================================================================
+
+// Return the font used by the object.
+/*
+void FusionAPI GetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf)
+{
+	#pragma DllExportHint
 	// Example
 	// -------
 	// GetObject(rdPtr->m_hFont, sizeof(LOGFONT), pLf);
 }
 
-// -------------------
-// SetRunObjectFont
-// -------------------
 // Change the font used by the object.
-// 
-void WINAPI SetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf, RECT* pRc)
+void FusionAPI SetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf, RECT* pRc)
 {
+	#pragma DllExportHint
 	// Example
 	// -------
 //	HFONT hFont = CreateFontIndirect(pLf);
@@ -200,28 +150,21 @@ void WINAPI SetRunObjectFont(RUNDATA * rdPtr, LOGFONT* pLf, RECT* pRc)
 //		rdPtr->m_hFont = hFont;
 //		SendMessage(rdPtr->m_hWnd, WM_SETFONT, (WPARAM)rdPtr->m_hFont, FALSE);
 //	}
-
 }
 
-// ---------------------
-// GetRunObjectTextColor
-// ---------------------
 // Return the text color of the object.
-// 
-COLORREF WINAPI GetRunObjectTextColor(RUNDATA * rdPtr)
+COLORREF FusionAPI GetRunObjectTextColor(RUNDATA * rdPtr)
 {
+	#pragma DllExportHint
 	// Example
 	// -------
-	return 0;	// rdPtr->m_dwColor;
+	return 0;	// e.g. RGB()
 }
 
-// ---------------------
-// SetRunObjectTextColor
-// ---------------------
 // Change the text color of the object.
-// 
-void WINAPI SetRunObjectTextColor(RUNDATA * rdPtr, COLORREF rgb)
+void FusionAPI SetRunObjectTextColor(RUNDATA * rdPtr, COLORREF rgb)
 {
+	#pragma DllExportHint
 	// Example
 	// -------
 	rdPtr->m_dwColor = rgb;
@@ -231,28 +174,25 @@ void WINAPI SetRunObjectTextColor(RUNDATA * rdPtr, COLORREF rgb)
 
 
 // ============================================================================
-//
 // WINDOWPROC (interception of messages sent to hMainWin and hEditWin)
-//
-// Do not forget to enable the WindowProc function in the .def file if you implement it
-// 
 // ============================================================================
+
 /*
 // Get the pointer to the object's data from its window handle
 // Note: the object's window must have been subclassed with a
 // callRunTimeFunction(rdPtr, RFUNCTION_SUBCLASSWINDOW, 0, 0);
 // See the documentation and the Simple Control example for more info.
-//
-RUNDATA * GetRdPtr(HWND hwnd, RunHeader * rhPtr)
+RUNDATA * FusionAPI GetRdPtr(HWND hwnd, RunHeader * rhPtr)
 {
+	#pragma DllExportHint
 	return (RUNDATA *)GetProp(hwnd, (const char *)rhPtr->rh4.rh4AtomRd);
 }
 
 // Called from the window proc of hMainWin and hEditWin.
 // You can intercept the messages and/or tell the main proc to ignore them.
-//
-LRESULT CALLBACK DLLExport WindowProc(RunHeader * rhPtr, HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
+LRESULT FusionAPI WindowProc(RunHeader * rhPtr, HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
+	#pragma DllExportHint
 	RUNDATA * rdPtr = NULL;
 
 	switch (nMsg) {
@@ -283,112 +223,3 @@ LRESULT CALLBACK DLLExport WindowProc(RunHeader * rhPtr, HWND hWnd, UINT nMsg, W
 	return 0;
 }
 */
-
-// ============================================================================
-//
-// DEBUGGER ROUTINES
-// 
-// ============================================================================
-
-// -----------------
-// GetDebugTree
-// -----------------
-// This routine returns the address of the debugger tree
-//
-LPWORD DLLExport GetDebugTree(RUNDATA * rdPtr)
-{
-#if !defined(RUN_ONLY)
-	return DebugTree;
-#else
-	return NULL;
-#endif // !defined(RUN_ONLY)
-}
-
-// -----------------
-// GetDebugItem
-// -----------------
-// This routine returns the text of a given item.
-//
-void DLLExport GetDebugItem(char * pBuffer, RUNDATA * rdPtr, int id)
-{
-#if !defined(RUN_ONLY)
-
-	// Example
-	// -------
-/*
-	char temp[DB_BUFFERSIZE];
-
-	switch (id)
-	{
-	case DB_CURRENTSTRING:
-		LoadString(hInstLib, IDS_CURRENTSTRING, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr->text);
-		break;
-	case DB_CURRENTVALUE:
-		LoadString(hInstLib, IDS_CURRENTVALUE, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr->value);
-		break;
-	case DB_CURRENTCHECK:
-		LoadString(hInstLib, IDS_CURRENTCHECK, temp, DB_BUFFERSIZE);
-		if (rdPtr->check)
-			wsprintf(pBuffer, temp, "TRUE");
-		else
-			wsprintf(pBuffer, temp, "FALSE");
-		break;
-	case DB_CURRENTCOMBO:
-		LoadString(hInstLib, IDS_CURRENTCOMBO, temp, DB_BUFFERSIZE);
-		wsprintf(pBuffer, temp, rdPtr->combo);
-		break;
-	}
-*/
-
-#endif // !defined(RUN_ONLY)
-}
-
-// -----------------
-// EditDebugItem
-// -----------------
-// This routine allows to edit editable items.
-//
-void DLLExport EditDebugItem(RUNDATA * rdPtr, int id)
-{
-#if !defined(RUN_ONLY)
-
-	// Example
-	// -------
-/*
-	switch (id)
-	{
-	case DB_CURRENTSTRING:
-		{
-			EditDebugInfo dbi;
-			char buffer[256];
-
-			dbi.pText=buffer;
-			dbi.lText=TEXT_MAX;
-			dbi.pTitle=NULL;
-
-			strcpy(buffer, rdPtr->text);
-			long ret=callRunTimeFunction(rdPtr, RFUNCTION_EDITTEXT, 0, (LPARAM)&dbi);
-			if (ret)
-				strcpy(rdPtr->text, dbi.pText);
-		}
-		break;
-	case DB_CURRENTVALUE:
-		{
-			EditDebugInfo dbi;
-
-			dbi.value=rdPtr->value;
-			dbi.pTitle=NULL;
-
-			long ret=callRunTimeFunction(rdPtr, RFUNCTION_EDITINT, 0, (LPARAM)&dbi);
-			if (ret)
-				rdPtr->value=dbi.value;
-		}
-		break;
-	}
-*/
-#endif // !defined(RUN_ONLY)
-}
-
-

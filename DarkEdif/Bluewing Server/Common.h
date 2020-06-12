@@ -10,13 +10,8 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
-// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
-#define sub_asStr(str) #str
-#define asStr(str) sub_asStr(str)
-#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, asStr(CONFIG)
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
+#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, STRIFY(CONFIG)
 
 // Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")
@@ -34,7 +29,7 @@
 #include <sstream>
 #include <algorithm>
 #include "zlib.h"
-#pragma comment(lib, "..\\Lib\\zlib.lib")
+#pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
@@ -57,14 +52,14 @@
 #include "Lacewing.h"
 #include "LacewingFunctions.h"
 
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
 
 // Enable DarkEdif's utility
 #define MULTI_THREADING
 #include "MultiThreading.h"
 
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -78,12 +73,12 @@ struct EDITDATA
 
 	// Any random edittime stuff? Place here.
 	char pad0[5];				// For matching old extension
-	bool AutomaticClear,
-		 MultiThreading;
-	bool Global;
+	bool automaticClear,
+		 multiThreading;
+	bool isGlobal;
 	char edGlobalID[255];
-	bool TimeoutWarningEnabled,
-		 FullDeleteEnabled;
+	bool timeoutWarningEnabled,
+		 fullDeleteEnabled;
 	char pad1[244];
 
 	// Keep as last or risk overwriting by functions accessing this address

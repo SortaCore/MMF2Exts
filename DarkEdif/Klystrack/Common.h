@@ -11,18 +11,16 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
 #define JSON_COMMENT_MACRO Extension::Version
 
 #include <sstream>
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
-#include "..\Inc\ksnd.h"
+#include "..\Inc\Windows\ksnd.h"
 // Static linking of KSND
-#pragma comment(lib, "..\\Lib\\ksndstatic.lib")
+#pragma comment(lib, "..\\Lib\\Windows\\ksndstatic.lib")
 #pragma comment(lib, "winmm.lib")
 
 #define CheckForPlayer(makeError, funcName, ...) \
@@ -47,7 +45,7 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-	
+
 //	short			swidth;
 //	short			sheight;
 

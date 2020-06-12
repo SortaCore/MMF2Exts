@@ -57,20 +57,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Lib\json.c" />
-    <ClCompile Include="..\Lib\DarkEdif.cpp" />
-    <ClCompile Include="..\Lib\Edif.cpp" />
-    <ClCompile Include="..\Lib\Edif.Edittime.cpp" />
-    <ClCompile Include="..\Lib\Edif.General.cpp" />
-    <ClCompile Include="..\Lib\Edif.Runtime.cpp" />
-    <ClCompile Include="..\Lib\ObjectSelection.cpp" />
+    <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.General.cpp" />
+    <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
+    <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp" />
+    <ClCompile Include="..\Lib\Shared\json.cpp" />
     <ClCompile Include="Actions.cpp" />
     <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp" />
     <ClCompile Include="Expressions.cpp" />
     <ClCompile Include="Extension.cpp" />
     <ClCompile Include="General.cpp" />
-    <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DarkExt.json" />
@@ -78,11 +77,11 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\json.h" />
-    <ClInclude Include="..\Inc\Edif.h" />
-    <ClInclude Include="..\Inc\DarkEdif.h" />
-    <ClInclude Include="..\Inc\MMFMasterHeader.h" />
-    <ClInclude Include="..\Inc\ObjectSelection.h" />
+    <ClInclude Include="..\Inc\Shared\json.h" />
+    <ClInclude Include="..\Inc\Shared\Edif.h" />
+    <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
+    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Extension.h" />
     <ClInclude Include="Resource.h" />

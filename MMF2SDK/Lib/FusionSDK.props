@@ -5,15 +5,31 @@
 		<_PropertySheetDisplayName>Fusion SDK Properties</_PropertySheetDisplayName>
 	</PropertyGroup>
 	<PropertyGroup Label="UserMacros">
-		<DbgBuild Condition="$(Configuration.StartsWith('Debug'))">Y</DbgBuild>
-		<RelBuild Condition="!$(Configuration.StartsWith('Debug'))">Y</RelBuild>
-		<EditorBuild Condition="$(DbgBuild)!='' OR $(Configuration.StartsWith('Edittime'))">Y</EditorBuild>
-		<UniBuild Condition="$(Configuration.EndsWith('Unicode'))">Y</UniBuild>
-		<RuntimeBuild Condition="$(Configuration.StartsWith('Runtime'))">Y</RuntimeBuild>
+		<!-- MultiPlatform targeting -->
+		<_TargetPlat>$(TargetPlatformIdentifier)</_TargetPlat>
+		<_TargetPlat Condition="$(_TargetPlat)==''">Windows</_TargetPlat>
+		<ExtName>$(ProjectName.Split('.')[0])</ExtName>
+		<TargetArch>x86</TargetArch>
+		<TargetArch Condition="'$(TargetArchAbi)'!=''">$(TargetArchAbi)</TargetArch>
 	
+		<DbgBuild>0</DbgBuild>
+		<RelBuild>0</RelBuild>
+		<EditorBuild>0</EditorBuild>
+		<RuntimeBuild>0</RuntimeBuild>
+		<UniBuild>0</UniBuild>
+		
+		<DbgBuild Condition="$(Configuration.StartsWith('Debug'))">1</DbgBuild>
+		<RelBuild Condition="$(DbgBuild)==1">1</RelBuild>
+		<!-- Editor build only possible on Windows.
+			 It's an editor build if Edittime or Debug build, on Windows. -->
+		<EditorBuild Condition="$(_TargetPlat)=='Windows' AND ($(DbgBuild)==1 OR $(Configuration.StartsWith('Edittime')))">1</EditorBuild>
+		<RuntimeBuild Condition="$(Configuration.StartsWith('Runtime')) OR $(_TargetPlat)!='Windows'">1</RuntimeBuild>
+		<UniBuild Condition="$(Configuration.EndsWith('Unicode'))">1</UniBuild>
+		
+		
 		<!-- Unicode path feature -->
-		<UnicodeOrBlank Condition="$(UniBuild)=='Y'">\Unicode</UnicodeOrBlank>
-		<UnicodeOrBlank Condition="$(UniBuild)!='Y'"></UnicodeOrBlank>
+		<UnicodeOrBlank></UnicodeOrBlank>
+		<UnicodeOrBlank Condition="$(UniBuild)==1">\Unicode</UnicodeOrBlank>
 		
 		<!-- Not really needed for DarkEdif, it puts all languages in one MFX. -->
 		<LangSuffix Condition="$(Configuration.Contains('French'))">_FR</LangSuffix>
@@ -26,18 +42,25 @@
 		
 		<!-- For ..\Inc and ..\Lib; OpenCV is in two levels of subfolders. -->
 		<SDKRootFolder>..</SDKRootFolder>
-		<SDKRootFolder Condition="$(ProjectDir.Contains('OpenCV'))">..\..\..</SDKRootFolder>
+		<SDKRootFolder Condition="$(ProjectDir.Contains('OpenCV'))">../../..</SDKRootFolder>
+		<!--<SDKRootFolder>$([System.IO.Path]::GetFullPath('$(SDKRootFolder)'))</SDKRootFolder>-->
 		
 		<SDKType Condition="exists('$(ProjectDir)\DarkExt.json')">DarkEdif</SDKType>
 		<SDKType Condition="$(SDKType)=='' AND exists('$(ProjectDir)\Ext.json')">Edif</SDKType>
 		<SDKType Condition="$(SDKType)=='' AND exists('$(ProjectDir)\$(SDKRootFolder)\Inc\MagicRData.h')">RSDK</SDKType>
 		<SDKType Condition="$(SDKType)==''">MMF2SDK</SDKType>
 		
-		<MakePDB>N</MakePDB>
-		<MakePDB Condition="$(DbgBuild)!=''">Y</MakePDB>
+		<MakePDB>0</MakePDB>
+		<MakePDB Condition="$(DbgBuild)==1">1</MakePDB>
 		
 		<!-- For use to make sure the user set up their template metadata properly. -->
 		<IsTemplate Condition="$(ProjectDir.ToLower().Contains('\$(SDKType.ToLower()) template\'))">1</IsTemplate>
+		
+		<!-- Write intermediate and output files to an easily deleted/git-ignored folder. -->
+		<_FusionSDKTempDir>$(SolutionDir)Temp\\$(ExtName)\\$(_TargetPlat)\\$(Configuration)\\$(TargetArch)</_FusionSDKTempDir>
+		
+		<!-- If user has enabled DarkEdif FusionDebugger class inside their Extension. -->
+		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">
@@ -49,15 +72,23 @@
 			 If set to true, will generate _Full and stripped PDB during Edittime and Runtime compilations.
 			 Starting "(?im)" sets regex matching to case-insensitive, multiline. -->
 		<_MakePDBRegex><![CDATA[(?im)^MakePDBDuringReleaseBuild\s*=\s*true\s*?$]]></_MakePDBRegex>
-		<MakePDB Condition="$(MakePDB)=='N' AND 
-			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_MakePDBRegex)).Success)">Y</MakePDB>
+		<MakePDB Condition="$(MakePDB)==0 AND 
+			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_MakePDBRegex)).Success)">1</MakePDB>
 			
 		<!-- EchoAllDefinesFromPropsFileDuringBuild = true
 			 If set to true, will write all /D preprocessor to output window when you compile.
 			 Used for debugging FusionSDK.props only. -->
 		<_EchoAllDefinesFromPropsFileDuringBuildRegex><![CDATA[(?im)^EchoAllDefinesFromPropsFileDuringBuild\s*=\s*true\s*?$]]></_EchoAllDefinesFromPropsFileDuringBuildRegex>
 		<EchoAllDefinesFromPropsFileDuringBuild Condition=
-		"$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_EchoAllDefinesFromPropsFileDuringBuildRegex)).Success)">Y</EchoAllDefinesFromPropsFileDuringBuild>
+			"$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_EchoAllDefinesFromPropsFileDuringBuildRegex)).Success)">1</EchoAllDefinesFromPropsFileDuringBuild>
+		
+		<!-- UseMultiProcessorCompilationInDebug = true
+			 If set to true, will use multi-processor compilation, disabling incremental rebuild,
+			 editing while debugging, etc. See config file.
+			 Using multiple processors is enabled by default in non-Debug builds. -->
+		<_UseMultiProcessorRegex><![CDATA[(?im)^UseMultiProcessorCompilationInDebug\s*=\s*true\s*?$]]></_UseMultiProcessorRegex>
+		<_UseMultiProcessor Condition=
+			"$(RelBuild)==1 OR $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_UseMultiProcessorRegex)).Success)">1</_UseMultiProcessor>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('Edif'))" Label="UserMacros">
 		<_JSON Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\DarkExt.json'))</_JSON>
@@ -68,19 +99,24 @@
 		<ExtVersion Condition="!$(ProjectDir.Contains('Bluewing'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)Extension.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
 		
 		<_ExtVersionRegex><![CDATA[relayclient[^}]*?buildnum\s*=\s*(\d*);]]></_ExtVersionRegex>
-		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Client'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
+		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Client'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Shared\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
 		<_ExtVersionRegex><![CDATA[relayserver[^}]*?buildnum\s*=\s*(\d*);]]></_ExtVersionRegex>
-		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Server'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
+		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Server'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Shared\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
 		
 		<!-- Find the first Author line in JSON, read its value.
 			 Starting "(?im)" sets regex matching to case-insensitive, multiline. -->
 		<_AuthorNameRegex><![CDATA[(?im)"Author"\s*:\s*"(.*)"\s*?,\s*$]]></_AuthorNameRegex>
 		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_JSON), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
-		
+		 
 		<!-- Use Author Name if company isn't found -->
 		<_CompanyNameRegex><![CDATA[(?im)"Company"\s*:\s*"(.*)"\s*?,\s*$]]></_CompanyNameRegex>
-		<CompanyName Condition="$(_JSON.Contains('CompanyName'))">$([System.Text.RegularExpressions.Regex]::Match($(_JSON), $(_CompanyNameRegex)).Result('$1').Replace('\'', '\u0027'))</CompanyName>
+		<_ExtH>$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
+		<CompanyName Condition="$(_JSON.Contains('CompanyName'))">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_CompanyNameRegex)).Result('$1').Replace('\'', '\u0027'))</CompanyName>
 		<CompanyName Condition="$(CompanyName)==''">$(AuthorName)</CompanyName>
+		
+		<!-- This define is true if FusionDebugger item is detected in Extension.h, it's true at runtime. -->
+		<_DarkEdif_DetectFusionDebuggerRegex><![CDATA[(?m)^\s*DarkEdif::FusionDebugger\s+FusionDebugger\s*;\s*$]]></_DarkEdif_DetectFusionDebuggerRegex>
+		<DarkEdif_FusionDebugger Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::IsMatch($(_ExtH), $(_DarkEdif_DetectFusionDebuggerRegex)))">1</DarkEdif_FusionDebugger>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
@@ -110,25 +146,43 @@
 		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_InfoFile), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
 		<CompanyName>$(AuthorName)</CompanyName>
 	</PropertyGroup>
-	<PropertyGroup Label="UserMacros">
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ProjectName)\""
+	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
+		<!-- Broken in latest MS
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
 			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
 			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""</_FusionSDKAdds>
-		<!-- #if EditorBuild needs to evaluate to true. -->
-		<_FusionSDKAdds Condition="'$(EditorBuild)'=='Y'">/D "EditorBuild=true" $(_FusionSDKAdds)</_FusionSDKAdds>
-		<!-- RC requires extra escaping... for some reason. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\','\\\')))</_FusionSDKAddsRC>
+			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\"" /D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=STRIFY($(ExtName))"
+			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
+			/D "EXTENSION_VERSION=$(ExtVersion)"
+			/D "BUILD_DATE=STRIFY($(BuildDate))" /D "YEAR=STRIFY($(Year))"
+			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
+			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"</_FusionSDKAdds>
+		<!-- ResourceCompiler doesn't like newlines. -->
+		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
+		<!-- #if EditorBuild needs to evaluate to true.
+			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr('))</_FusionSDKAddsRC>
+	</PropertyGroup>
+	<PropertyGroup Condition="$(_TargetPlat)=='Android'">
+		<!-- Android uses Clang, a different format of commandline items
+			-D PROJECT_NAME=\"$(ExtName)\"
+			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
+			-D EXTENSION_VERSION=$(ExtVersion)
+			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
+		<!-- Doesn't work due to MS bug.
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);BUILD_DATE="$(BuildDate)";YEAR="$(Year)"</_FusionSDKAdds> -->
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);BUILD_DATE=STRIFY($(BuildDate));YEAR=STRIFY($(Year))</_FusionSDKAdds>
 	</PropertyGroup>
 	<Choose>
-		<When Condition="'$(Platform)'=='Win32'">
+		<When Condition="$(_TargetPlat)=='Windows'">
 			<PropertyGroup Label="UserMacros"> 
-				<MFXDir Condition="$(EditorBuild)!=''">$(SolutionDir)MFX\Extensions$(UnicodeOrBlank)</MFXDir>
-				<MFXDir Condition="$(RuntimeBuild)!=''">$(SolutionDir)MFX\Data\Runtime$(UnicodeOrBlank)</MFXDir>
+				<MFXDir Condition="$(EditorBuild)==1">$(SolutionDir)MFX\Extensions$(UnicodeOrBlank)</MFXDir>
+				<MFXDir Condition="$(RuntimeBuild)==1">$(SolutionDir)MFX\Data\Runtime$(UnicodeOrBlank)</MFXDir>
 				<MFXDir Condition="$(Configuration.StartsWith('Vitalize'))">$(SolutionDir)MOX</MFXDir>
 			</PropertyGroup>
 		</When>
-		<When Condition="'$(Platform)'=='Android'">
+		<When Condition="$(_TargetPlat)=='Android'">
 			<PropertyGroup Label="UserMacros">
 				<MFXDir>$(SolutionDir)MFX\Data\Runtime\Android</MFXDir>
 			</PropertyGroup>
@@ -141,14 +195,18 @@
 		<!-- MFX files are internally DLLs -->
 		<ConfigurationType>DynamicLibrary</ConfigurationType>
 		
-		<!-- In case LangSuffix was specified, append it. -->
-		<TargetName Condition="$(LangSuffix)!=''">$(ProjectName)$(LangSuffix)</TargetName>
+		<!-- TargetName is incorrect on MultiTargetSDK, due to project name containing '.' -->
+		<TargetName>$(ExtName)$(LangSuffix)</TargetName>
 		
-		<!-- Write all output files here. Includes Fusion stuff
-			(MFX, ZIP), debugging (PDB), and incremental linking (ILK). -->
-		<OutDir>$(MFXDir)\</OutDir>
+		<!-- Unfortunately, VS pushes all its runtime DLLs here, even in static library build.
+			 May be a bug, but until it's fixed, we're gonna use the override of tags for MFX
+			 and PDB below: namely, tags OutputFile, ProgramDatabaseFile, and StripPrivateSymbols. -->
+		<OutDir>$(_FusionSDKTempDir)\</OutDir>
 		<!-- Write all intermediate files here. -->
-		<IntDir>$(ProjectDir)$(Configuration)\</IntDir>
+		<IntDir>$(_FusionSDKTempDir)\</IntDir>
+		
+		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
+		<DarkEdifPreBuildToolParams>/ProjName="$(TargetName)" /TargetPlat="$(_TargetPlat)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)/Lib/Shared/ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)/Temp/$(ExtName)/Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup>
@@ -161,51 +219,20 @@
 			<PreprocessorDefinitions>COXSDK;HWABETA;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			
 			<!-- Indicates this is the SDK template. -->
-			<PreprocessorDefinitions Condition="$(IsTemplate)!=''">IS_$(SDKType.ToUpper())_TEMPLATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(IsTemplate)==1">IS_$(SDKType.ToUpper())_TEMPLATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			
 			<!-- Debug or Edittime configs have EDITOR #defined -->
-			<PreprocessorDefinitions Condition="$(EditorBuild)!=''">EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(EditorBuild)==1">EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Runtime configs have RUN_ONLY #defined -->
-			<PreprocessorDefinitions Condition="$(RuntimeBuild)!=''">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(RuntimeBuild)==1">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- non-Debug needs NDEBUG -->
-			<PreprocessorDefinitions Condition="$(RelBuild)!=''">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(RelBuild)==1">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android'">$(_FusionSDKAdds);$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
 			
 			<!-- Not including .\ causes includes of "Common.h" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
-			<AdditionalIncludeDirectories>.\;$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-			<!-- Max number of warnings without being asinine -->
-			<WarningLevel>Level3</WarningLevel>
-			<!-- Use C++ 2017 Standard (C++17) -->
-			<LanguageStandard>stdcpp17</LanguageStandard>
-			<!-- Use all processors during compilation. Not noticeable during multi-project building,
-				 but matters when it's one project. -->
-			<MultiProcessorCompilation>true</MultiProcessorCompilation>
-			<!-- Allow user to edit their code mid-debug -->
-			<DebugInformationFormat Condition="$(DbgBuild)!=''">EditAndContinue</DebugInformationFormat>
-			<!-- Turn on all checks for simple mistakes -->
-			<BasicRuntimeChecks Condition="$(DbgBuild)!=''">EnableFastChecks</BasicRuntimeChecks>
-			
-			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
-				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
-				 name. -->
-			<AdditionalOptions>$(_FusionSDKAdds) %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalIncludeDirectories>./;$(SDKRootFolder)/Inc/$(_TargetPlat);$(SDKRootFolder)/Inc/Shared;$(SolutionDir)Temp/$(ExtName);$(SDKRootFolder)/Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 		</ClCompile>
-		<ResourceCompile>
-			<!-- Important. Used to be defined by CCX.h -->
-			<PreprocessorDefinitions>KPX_MAGICNUMBER=200;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Debug or Edittime configs have EDITOR #defined -->
-			<PreprocessorDefinitions Condition="$(EditorBuild)!=''">EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Runtime configs have RUN_ONLY #defined -->
-			<PreprocessorDefinitions Condition="$(RuntimeBuild)!=''">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Edittime or Runtime needs NDEBUG -->
-			<PreprocessorDefinitions Condition="$(RelBuild)!=''">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
-				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
-				 name. -->
-			<AdditionalOptions>$(_FusionSDKAddsRC) %(AdditionalOptions)</AdditionalOptions>
-			
-			<AdditionalIncludeDirectories>$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-		</ResourceCompile>
 	</ItemDefinitionGroup>
 
 	
@@ -214,8 +241,8 @@
 	################################# -->
 	<!-- Wish I could merge all these into a Choose,
 		 but ItemDefinitionGroup can't be in a Choose. -->
-		 
-	<PropertyGroup Condition="'$(Platform)'=='Win32'">
+	
+	<PropertyGroup Condition="$(_TargetPlat)=='Windows'">
 		<!-- Latest XP-compatible compiler.
 			 While pre-XP may still run on XP compiler, it's dubious. 
 			 In a similar vein, the XP compiler may work on pre-XP, but also dubious. -->
@@ -231,13 +258,11 @@
 		<!-- UAC priviledges are based on app, not Fusion MFX aka DLLs. -->
 		<GenerateManifest>false</GenerateManifest>
 		
-		<!-- Since we generate two PDB files, we override the deletion extensions. -->
-		<ExtensionsToDeleteOnClean Condition="false AND $(MakePDB)=='Y'">$(MFXDir)\$(TargetName)_Full.pdb;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
-		
 		<!-- Causes auto-defines of _UNICODE and so forth -->
-		<CharacterSet Condition="$(UniBuild)!=''">Unicode</CharacterSet>
+		<CharacterSet Condition="$(UniBuild)==0">NotSet</CharacterSet>
+		<CharacterSet Condition="$(UniBuild)==1">Unicode</CharacterSet>
 	</PropertyGroup>
-	<ItemDefinitionGroup Condition="'$(Platform)'=='Win32'">
+	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows'">
 		<ClCompile>
 			<!-- UTF-8 everywhere! -->
 			<UseUnicodeForAssemblerListing>true</UseUnicodeForAssemblerListing>
@@ -245,22 +270,38 @@
 			<!-- Old SDKs need this defined.
 				 STRICT is also defined, but not seemingly used. -->
 			<PreprocessorDefinitions Condition="$(SDKType)!='DarkEdif'">_WINDOWS;IN_EXT_VERSION2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			
+			<!-- Max number of warnings without being asinine -->
+			<WarningLevel>Level3</WarningLevel>
+			<!-- Use C++ 2017 Standard (C++17) -->
+			<LanguageStandard>stdcpp17</LanguageStandard>
+			<!-- Use all processors during compilation. Not noticeable during multi-project building,
+				 but matters when it's one project. -->
+			<MultiProcessorCompilation Condition="$(_UseMultiProcessor)==1">true</MultiProcessorCompilation>
+			
+			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
+				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
+				 name. -->
+			<AdditionalOptions>$(_FusionSDKAdds) %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
-			<!-- Windows subsystem -->
-			<ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile>
+			<!-- Windows subsystem
+			<ModuleDefinitionFile>.\Ext.def</ModuleDefinitionFile> -->
 			<!-- Required to prevent a warning message -->
 			<SubSystem>Windows</SubSystem>
 			
+			<!-- MFX file needs redirecting. -->
+			<OutputFile>$(MFXDir)\$(TargetName)$(TargetExt)</OutputFile>
 			<!-- Debug symbols: first, the full debug symbols with all code. -->
-			<ProgramDatabaseFile Condition="$(MakePDB)=='Y'">$(MFXDir)\$(TargetName)_Full.pdb</ProgramDatabaseFile>
+			<ProgramDatabaseFile Condition="$(MakePDB)==1">$(MFXDir)\$(TargetName)_Full.pdb</ProgramDatabaseFile>
 			<!-- Stripped debug symbols with just function names/addresses.
 				 Good for releasing to developers. -->
-			<StripPrivateSymbols Condition="$(MakePDB)=='Y'">$(MFXDir)\$(TargetName).pdb</StripPrivateSymbols>
+			<StripPrivateSymbols Condition="$(MakePDB)==1">$(MFXDir)\$(TargetName).pdb</StripPrivateSymbols>
 			<!-- Full debug is for sharing/publishing -->
-			<GenerateDebugInformation Condition="$(MakePDB)=='Y' AND $(DbgBuild)==''">DebugFull</GenerateDebugInformation>
+
+			<GenerateDebugInformation Condition="$(MakePDB)==1 AND $(DbgBuild)==0">DebugFull</GenerateDebugInformation>
 			<!-- Better for local debug -->
-			<GenerateDebugInformation Condition="$(MakePDB)=='Y' AND $(DbgBuild)!=''">true</GenerateDebugInformation>
+			<GenerateDebugInformation Condition="$(MakePDB)==1 AND $(DbgBuild)==1">true</GenerateDebugInformation>
 			
 			<!-- Support up to 4GB RAM addresses, not 2GB -->
 			<LargeAddressAware>true</LargeAddressAware>
@@ -271,7 +312,8 @@
 				 Worth noting wchar_t it uses is type unsigned short, not __wchar_t.
 				 VS allows use of ushort via /Zc:wchar_t, but it causes failure to link with
 				 correct wchar_t linking libraries. -->
-			<AdditionalDependencies>$(SDKRootFolder)\Lib\mmfs2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+			<AdditionalDependencies Condition="$(SDKType)=='DarkEdif'">$(SDKRootFolder)\Lib\Windows\mmfs2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+			<AdditionalDependencies Condition="$(SDKType)!='DarkEdif'">$(SDKRootFolder)\Lib\mmfs2.lib;%(AdditionalDependencies)</AdditionalDependencies>
 			
 			<!-- Move the .lib and .exp outside the MFX folder. We don't need these
 				 files at all, but .exp can't be turned off. -->
@@ -279,29 +321,50 @@
 			<!-- We can turn off the .lib though. -->
 			<AdditionalOptions>/NOIMPLIB %(AdditionalOptions)</AdditionalOptions>
 		</Link>
+		<ResourceCompile>
+			<!-- Important. Used to be defined by CCX.h -->
+			<PreprocessorDefinitions>KPX_MAGICNUMBER=200;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Debug or Edittime configs have EDITOR #defined -->
+			<PreprocessorDefinitions Condition="$(EditorBuild)==1">EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Runtime configs have RUN_ONLY #defined -->
+			<PreprocessorDefinitions Condition="$(RuntimeBuild)==1">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Edittime or Runtime needs NDEBUG -->
+			<PreprocessorDefinitions Condition="$(RelBuild)==1">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
+				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
+				 name. -->
+			<AdditionalOptions>$(_FusionSDKAddsRC) %(AdditionalOptions)</AdditionalOptions>
+			
+			<AdditionalIncludeDirectories>$(SDKRootFolder)/$(_TargetPlat)/Inc;$(SDKRootFolder)/Shared/Inc;$(SDKRootFolder)/Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+		</ResourceCompile>
 	</ItemDefinitionGroup>
 
 	<!-- Windows: configuration type -->
 		
 	<!-- ## Debug, Debug Unicode -->
-	<PropertyGroup Condition="'$(Platform)'=='Win32' AND $(DbgBuild)!=''">
+	<PropertyGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
 		<!-- Enables EditAndContinue, devs can modify functions mid-debug session -->
-		<LinkIncremental>true</LinkIncremental>
+		<LinkIncremental Condition="$(_UseMultiProcessor)==0">true</LinkIncremental>
 	</PropertyGroup>
-	<ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND '$(DbgBuild)'!=''">
+	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
 		<ClCompile>
 			<!-- Make debugging more accurate -->
 			<RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
 			<RuntimeTypeInfo>true</RuntimeTypeInfo>
 			<Optimization>Disabled</Optimization>
+			<!-- Turn on all checks for simple mistakes -->
+			<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+			<!-- Allow user to edit their code mid-debug, only possible if not multiprocessor -->
+			<DebugInformationFormat Condition="$(_UseMultiProcessor)==0">EditAndContinue</DebugInformationFormat>
+			<DebugInformationFormat Condition="$(_UseMultiProcessor)==1">ProgramDatabase</DebugInformationFormat>
 		</ClCompile>
 		<Link>
 			<!-- Required for incremental linking to work. -->
-			<AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(_UseMultiProcessor)==0">/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
 		</Link>
 	</ItemDefinitionGroup>
 	<!-- ## Edittime, Edittime Unicode, Runtime, Runtime Unicode -->
-	<ItemDefinitionGroup Condition="'$(Platform)'=='Win32' AND !$(Configuration.StartsWith('Debug'))">
+	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows' AND !$(Configuration.StartsWith('Debug'))">
 		<ClCompile>
 			<RuntimeLibrary>MultiThreaded</RuntimeLibrary>
 		</ClCompile>
@@ -313,8 +376,57 @@
 	
 <!--#################################
 		END Windows
+		BEGIN Android
 	################################# -->
-	<!-- TODO: Android -->
+	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
+		<!-- Debug libraries on Debug config -->
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
+		<!-- Clang 5.0 is latest VS can use. 9.0 is the most recent. -->
+		<PlatformToolset>Clang_5_0</PlatformToolset>
+		<!-- Use GNU STL Static C Runtime library. -->
+		<UseOfStl>gnustl_static</UseOfStl>
+		<!-- Generate ARM style code for Thumb archs. -->
+		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
+		<!-- API that's readily accessible. Note 21 is minimum 64-bit API.
+			 Note that this does not really affect app compatibility; but
+			 if you do modify the API, you should probably add checks and
+			 warnings, maybe before dlopen() in the Java file. -->
+		<AndroidAPILevel>android-19</AndroidAPILevel>
+		<AndroidAPILevel Condition="'$(Platform)'=='ARM64'">android-21</AndroidAPILevel>
+		<!-- To move the compiled SO file into the Data\Runtime\Android zip file. -->
+		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir)" /OutputDir="$(MFXDir)"</DarkEdifPostBuildToolParams>
+	</PropertyGroup>
+	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
+		<ClCompile>
+			<!-- Don't need it. -->
+			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<!-- C++ is king. -->
+			<CompileAs>CompileAsCpp</CompileAs>
+			<!-- Use C++17, and C11, latest finalised standards. -->
+			<CppLanguageStandard>c++1z</CppLanguageStandard>
+			<CLanguageStandard>c11</CLanguageStandard>
+			<!-- Allows debugging. -->
+			<ExceptionHandling>UnwindTables</ExceptionHandling>
+			<!-- RTTI is requested by Fusion. -->
+			<RuntimeTypeInfo>true</RuntimeTypeInfo>
+			<!-- -->
+			<FunctionLevelLinking>true</FunctionLevelLinking>
+			<!-- Data sections -->
+			<DataLevelLinking>true</DataLevelLinking>
+			<!-- Don't export the functions, as Java doesn't need to see them. -->
+			<AdditionalOptions>-fvisibility=hidden %(AdditionalOptions)</AdditionalOptions>
+		</ClCompile>
+		<Link>
+			<VerboseOutput>false</VerboseOutput>
+			<!-- Include math library (libm.so). -->
+			<LibraryDependencies>$(StlLibraryName);m;%(LibraryDependencies)</LibraryDependencies>
+			<OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool. -->
+			<IncrementalLink>false</IncrementalLink>
+		</Link>
+	</ItemDefinitionGroup>
+
 
 	<!-- All runtimes -->
 	<ItemGroup>
@@ -328,8 +440,8 @@
 		<BuildMacro Include="UniBuild">
 			<Value>$(UniBuild)</Value>
 		</BuildMacro>
-		<BuildMacro Include="ProjectName">
-			<Value>$(ProjectName)</Value>
+		<BuildMacro Include="ExtName">
+			<Value>$(ExtName)</Value>
 		</BuildMacro>
 		<BuildMacro Include="CompanyName">
 			<Value>$(CompanyName)</Value>
@@ -343,16 +455,41 @@
 		<BuildMacro Include="_FusionSDKAdds">
 			<Value>$(_FusionSDKAdds)</Value>
 		</BuildMacro>
+		<BuildMacro Include="_TargetPlat">
+			<Value>$(_TargetPlat)</Value>
+		</BuildMacro>
 		<BuildMacro Include="IsTemplate">
 			<Value>$(IsTemplate)</Value>
 		</BuildMacro>
-		<BuildMacro Include="SDKType">
+		<BuildMacro Include="SDKType"> 
 			<Value>$(SDKType)</Value>
 		</BuildMacro>
 	</ItemGroup>
+
+	<!-- Pre build tool for non-Windows. Minifies JSON, and generates a jump function list based on ACE in the Extension. -->
+	<Target Name="Generate jump table" Condition="$(SDKType)=='DarkEdif' AND $(RuntimeBuild)==1" BeforeTargets="ClCompile">
+		<Message Text="Minifying JSON and checking that ASM/jump table exists for this platform..." Importance="High" />
+		<Exec Command="&quot;$(SDKRootFolder)\DarkEdifPreBuildTool.exe&quot; $(DarkEdifPreBuildToolParams)" />
+		<Message Text="=========================" Importance="High" />
+	</Target>
+	
+	<!-- Delete output PDB files; they'll either be regenerated by the current build,
+		 or they're leftover from the last build config and invalid; e.g. if user does a 
+		 Debug build then Edittime build, that will result in PDBs that are not applicable
+		 to the Edittime build but still in the MFX\Extensions folder. -->
+	<Target Name="Delete old PDBs" Condition="$(_TargetPlat)=='Windows'" BeforeTargets="ResourceCompile">
+		<Delete Files="$(MFXDir)\$(TargetName).pdb" />
+		<Delete Files="$(MFXDir)\$(TargetName)_Full.pdb" />
+	</Target>
+	
+	<!-- Post build tool for non-Windows. Copies built SO into ZIP in MFX\Data\Runtime. -->
+	<Target Name="Copy SO files into ZIP" Condition="$(SDKType)=='DarkEdif' AND $(_TargetPlat)=='Android'" AfterTargets="Build"> 
+      <Message Text="Copying the built SO into a ZIP file inside MFX\Data\Runtime..." Importance="High" />
+	  <Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
+    </Target>
 	
 	<!-- Writes FusionSDK.props debugging info, usually ext devs should not need this. -->
-	<Target Name="For debugging" Condition="'$(EchoAllDefinesFromPropsFileDuringBuild)'=='Y'" BeforeTargets="ResourceCompile">
+	<Target Name="For debugging" Condition="$(EchoAllDefinesFromPropsFileDuringBuild)==1" BeforeTargets="ResourceCompile;Compile;Build;BeforeBuild">
 		<Message Text="=========================" Importance="High" />
 		<Message Text="Echoing #defines from FusionSDK.props:" Importance="High" />
 		<Message Text="_FusionSDKAdds = [$(_FusionSDKAdds)]" Importance="High" />
@@ -360,3 +497,4 @@
 		<Message Text="=========================" Importance="High" />
 	</Target>
 </Project>
+

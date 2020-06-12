@@ -11,9 +11,6 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-
 // Must be before windows.h, or WinSock v1 is added by windows.h and WinSock v2 conflicts with it
 #include <winsock2.h>
 #ifndef _WINDOWS_
@@ -21,15 +18,15 @@
 #endif
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-//#include <Af_irda.h>
+//#include <af_irda.h>
 #include <atomic>
 
-#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
 
-#include "..\Inc\Edif.h"
-#include "..\Inc\JSON.h"
+#include "Edif.h"
+#include "json.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 

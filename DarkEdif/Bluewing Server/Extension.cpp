@@ -10,7 +10,7 @@
 
 HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
+	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
 	// Nullify the thread-specific data
 	ClearThreadData();
@@ -221,15 +221,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(45, GetDenyReason);
 	}
 	
-	/*
-		This is where you'd do anything you'd do in CreateRunObject in the original SDK
-
-		It's the only place you'll get access to edPtr at runtime, so you should transfer
-		anything from edPtr to the extension class here.
-	*/
-
-#ifndef RUN_ONLY
-	if (edPtr->eHeader.extSize != sizeof(EDITDATA))
+#if EditorBuild
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		MessageBoxA(NULL, "Properties are the wrong size. Please re-create the Lacewing Blue Server object in frame, "
 			"and use \"Replace by another object\" in Event Editor.", "Lacewing Blue Server error", MB_OK | MB_ICONERROR);
@@ -247,11 +240,11 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 			throw std::runtime_error("Couldn't create an AppWasClosed event.");
 	}
 
-	IsGlobal = edPtr->Global;
+	isGlobal = edPtr->isGlobal;
 	char msgBuff[500];
-	sprintf_s(msgBuff, "Extension create: IsGlobal=%i.\n", IsGlobal ? 1 : 0);
+	sprintf_s(msgBuff, "Extension create: IsGlobal=%i.\n", isGlobal ? 1 : 0);
 	OutputDebugStringA(msgBuff);
-	if (IsGlobal)
+	if (isGlobal)
 	{
 		std::string GlobalIDCopy = "LacewingRelayServer";
 		GlobalIDCopy += edPtr->edGlobalID;
@@ -309,26 +302,75 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		globals->_objEventPump->tick();
 	}
 
-#if 0
-	if (edPtr->MultiThreading)
-	{
-		MessageBoxA(NULL, "For stability reasons, Bluewing Server does not support multithreading. "
-			"Please use the \"Enable conditions\" menu appropriately for optimum speed. See the help file.",
-			"Lacewing Blue Server - Startup warning", MB_OK | MB_ICONWARNING);
-		edPtr->MultiThreading = false;
-		Runtime.Rehandle();
-	}
-#endif
-
-
 	// Try to boot the Lacewing thread if multithreading and not already running
-	if (edPtr->MultiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
+	if (edPtr->multiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 	{
 		CreateError("failed to boot thread. Falling back to single-threaded interface.");
 		Runtime.Rehandle();
 	}
-	else if (!edPtr->MultiThreading)
+	else if (!edPtr->multiThreading)
 		Runtime.Rehandle();
+
+
+	// Set up Fusion debugger (it uses globals, so we have to do it after)
+	// The server could be hosting already if this Extension() is being run after a Fusion frame switch.
+	const auto hostingDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->Srv.hosting())
+			writeTo = _T("Hosting: Port ") + std::to_tstring(ext->Srv.port());
+		else
+			writeTo = _T("Hosting: Not hosting.");
+	};
+	FusionDebugger.AddItemToDebugger(hostingDebugItemReader, NULL, 500, NULL);
+
+	const auto clientCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->Srv.hosting())
+			writeTo = _T("All client count: ") + std::to_tstring(ext->Srv.clientcount());
+		else
+			writeTo = _T("All client count: N/A");
+	};
+	FusionDebugger.AddItemToDebugger(clientCountDebugItemReader, NULL, 500, NULL);
+
+	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->Srv.hosting())
+			writeTo = _T("All channel count: ") + std::to_tstring(ext->Srv.channelcount());
+		else
+			writeTo = _T("All channel count: N/A");
+		
+	};
+	FusionDebugger.AddItemToDebugger(channelCountDebugItemReader, NULL, 500, NULL);
+
+	const auto selChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selChannel)
+			writeTo = _T("Selected channel: ") + ext->selChannel->name();
+		else
+			writeTo = _T("Selected channel: (none)");
+	};
+	FusionDebugger.AddItemToDebugger(selChannelDebugItemReader, NULL, 100, NULL);
+
+	const auto selChannelNumClientsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selChannel)
+			writeTo = _T("> Client count: ") + std::to_tstring(ext->selChannel->clientcount());
+		else
+			writeTo = _T("> Client count: (no selected channel)");
+	};
+	FusionDebugger.AddItemToDebugger(selChannelNumClientsDebugItemReader, NULL, 100, NULL);
+
+
+	const auto selClientDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selClient)
+			writeTo = _T("Selected client: ") + ext->selChannel->name();
+		else
+			writeTo = _T("Selected client: (none)");
+	};
+	FusionDebugger.AddItemToDebugger(selClientDebugItemReader, NULL, 100, NULL);
+
+	const auto selClientNumChannelsDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selClient)
+			writeTo = _T("> Channel count: ") + std::to_tstring(ext->selClient->channelcount());
+		else
+			writeTo = _T("> Channel count: (no selected client)");
+	};
+	FusionDebugger.AddItemToDebugger(selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
 
 
@@ -376,10 +418,10 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 {
 	_ext = e;
 	Refs.push_back(e);
-	if (edPtr->Global)
+	if (edPtr->isGlobal)
 		_globalID = _strdup(edPtr->edGlobalID);
-	TimeoutWarningEnabled = edPtr->TimeoutWarningEnabled;
-	FullDeleteEnabled = edPtr->FullDeleteEnabled;
+	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
+	fullDeleteEnabled = edPtr->fullDeleteEnabled;
 
 	_server.onerror(::OnError);
 	_server.onconnect(::OnClientConnectRequest);
@@ -1079,7 +1121,7 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G._server.hosting())
 		return 0U;
 
-	if (G.TimeoutWarningEnabled)
+	if (G.timeoutWarningEnabled)
 	{
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Server Warning!\r\n"
@@ -1137,14 +1179,14 @@ Extension::~Extension()
 	{
 		if (!globals->_server.hosting())
 			OutputDebugStringA("Note: Not hosting, nothing important to retain, closing globals info.\n");
-		else if (!IsGlobal)
+		else if (!isGlobal)
 			OutputDebugStringA("Note: Not global, closing globals info.\n");
-		else if (globals->FullDeleteEnabled)
+		else if (globals->fullDeleteEnabled)
 			OutputDebugStringA("Note: Full delete enabled, closing globals info.\n");
 		// Wait for 0ms returns immediately as per spec
 		else if (WaitForSingleObject(AppWasClosed, 0U) == WAIT_OBJECT_0)
 			OutputDebugStringA("Note: App was closed, closing globals info.\n");
-		else // !globals->FullDeleteEnabled
+		else // !globals->fullDeleteEnabled
 		{
 			OutputDebugStringA("Note: Last instance dropped, and currently hosting - "
 				"globals will be retained until a Unhost is called.\n");
@@ -1154,7 +1196,7 @@ Extension::~Extension()
 			LeaveCriticalSectionDebug(&globals->lock);
 
 			sprintf_s(msgBuff, "Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
-				globals->TimeoutWarningEnabled
+				globals->timeoutWarningEnabled
 				? "a warning message will be shown"
 				: "the hosting will terminate and all pending messages will be discarded");
 			OutputDebugStringA(msgBuff);

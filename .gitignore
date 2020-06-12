@@ -1,6 +1,10 @@
 
-# Fusion SDK configuration file
+# Fusion SDK configuration file (since it's personalised per user)
 FusionSDKConfig.ini
+# DarkEdif PreBuildTool's minified JSON files (kept in project folder for Ext.rc)
+DarkExt.PostMinify.json
+# Intermediate files from build, and generated ACE callback table
+Temp/
 
 #################
 ## Eclipse

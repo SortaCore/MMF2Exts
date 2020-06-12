@@ -12,13 +12,11 @@
 #endif
 #define JSON_COMMENT_MACRO Extension::Version
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
-#pragma comment(lib, "..\\Lib\\dbghelp.lib")
+#pragma comment(lib, "..\\Lib\\Windows\\dbghelp.lib")
 
-#include "..\Inc\Edif.h"
+#include "Edif.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 #include <time.h>
 #include <sstream>
 #include <iostream>
@@ -119,7 +117,6 @@ struct GlobalData {
 	};
 	HandleType handleExceptionVia;
 	char continuesRemaining, continuesMax;
-	
 };
 
 #define GlobalID _T("DebugObject")

@@ -18,7 +18,7 @@
 
 // General includes
 #include "..\Inc\ccxhdr.h"
-#include "Surface.h"
+#include "..\Inc\Surface.h"
 
 // Specific to this cox
 #include "resource.h"

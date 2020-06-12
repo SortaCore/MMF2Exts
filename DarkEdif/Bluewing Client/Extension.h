@@ -63,32 +63,12 @@ public:
 	void AddToSend(void *, size_t);
 	void ClearThreadData();
 
+	DarkEdif::FusionDebugger FusionDebugger;
 
 	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
 	// functions into DarkEdif, the data may be overwritten, causing crashes and other such nasties.
-	
-	// To work around this, we duplicate all the variables, and provide a special event number which will remove
-	// all the pointers in SaveExtInfo after they should no longer be valid.
-	// In this way, when a peer sends message then leaves channel, on liblacewing's side that happens instantly,
-	// and liblacewing cleans up its peer variable instantly too.
-	// But since these events are queued, the "on peer disconnect" may be called later, after liblacewing has deleted.
-	// So we have to store a copy of the peer so we can look up name when it's disconnected.
-	// See the _channels variable in GlobalInfo for our copy.
-
-	// int MyVariable;
-
-
-
-
-	/*  Add your actions, conditions and expressions as real class member
-		functions here. The arguments (and return type for expressions) must
-		match EXACTLY what you defined in the JSON.
-
-		Remember to link the actions, conditions and expressions to their
-		numeric IDs in the class constructor (Extension.cpp)
-	*/
-
-
+	// All read-write changes to clients, channel, and the main client are protected by read/write locks,
+	// even in scenarios like disconnects are handled with lock safety.
 
 	/// Actions
 

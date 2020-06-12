@@ -6,7 +6,7 @@
 ///
 
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
-	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
+	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
 	/*
 		Link all your action/condition/expression functions to their IDs to match the
@@ -21,17 +21,30 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkExpression(0, Add);
 	LinkExpression(1, HelloWorld);
 
-
-
 	/*
 		This is where you'd do anything you'd do in CreateRunObject in the original SDK
 
 		It's the only place you'll get access to edPtr at runtime, so you should transfer
 		anything from edPtr to the extension class here.
-	
+
 	*/
 
-
+	// Don't use "this" inside these lambda functions, always ext.
+	// There can be nothing in the [] section of the lambda.
+	// If you're not sure about lambdas, you can remove this debugger stuff without any side effects;
+	// it's just an example of how to use the debugger. You can view it in Fusion itself to see.
+	FusionDebugger.AddItemToDebugger(
+		// reader function for your debug item
+		[](Extension *ext, std::tstring &writeTo) {
+			writeTo = _T("My text is: ") + ext->exampleDebuggerTextItem;
+		},
+		// writer function (can be null if you don't want user to be able to edit it in debugger)
+		[](Extension *ext, std::tstring &newText)
+		{
+			ext->exampleDebuggerTextItem = newText;
+			return true; // accept the changes
+		}, 500, NULL
+	);
 	
 }
 
@@ -100,36 +113,6 @@ short Extension::Continue()
 
 	// Ok
 	return 0;
-}
-
-bool Extension::Save(HANDLE File)
-{
-	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Save the object's data here
-
-		OK = true;
-
-	#endif
-
-	return OK;
-}
-
-bool Extension::Load(HANDLE File)
-{
-	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Load the object's data here
-
-		OK = true;
-
-	#endif
-
-	return OK;
 }
 
 

@@ -11,14 +11,11 @@
 	#define CurLang CurrentLanguage()
 #endif
 
-#define DLLExport	__stdcall
-#pragma comment(lib, "..\\Lib\\mmfs2.lib")
 
-
-#include "..\Inc\Edif.h"
-#include "..\Inc\JSON.h"
+#include "Edif.h"
+#include "json.h"
 #include "Resource.h"
-#include "..\Inc\DarkEdif.h"
+#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 
@@ -28,7 +25,7 @@ struct EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
-	
+
 //	short			swidth;
 //	short			sheight;
 
@@ -69,7 +66,5 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-
-
 
 #include "Extension.h"

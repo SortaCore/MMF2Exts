@@ -11,7 +11,7 @@
 
 HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
+	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
 	// Nullify the thread-specific data
 	ClearThreadData();
@@ -236,28 +236,21 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(56, ChannelListing_ChannelCount);
 	}
 
-	/*
-		This is where you'd do anything you'd do in CreateRunObject in the original SDK
-
-		It's the only place you'll get access to edPtr at runtime, so you should transfer
-		anything from edPtr to the extension class here.
-	*/
-
 	// This is signalled by EndApp in General.cpp. It's used to close the connection
 	// when the application closes, from the timeout thread - assuming events or the
 	// server hasn't done that already.
 	if (!AppWasClosed)
 		AppWasClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-#ifndef RUN_ONLY
-	if (edPtr->eHeader.extSize != sizeof(EDITDATA))
+#if EditorBuild
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		MessageBoxA(NULL, "Properties are the wrong size. Please re-create the Lacewing Blue Client object in frame, "
 			"and use \"Replace by another object\" in Event Editor.", "Lacewing Blue Client error", MB_OK | MB_ICONERROR);
 	}
 #endif
 
-	isGlobal = edPtr->Global;
+	isGlobal = edPtr->isGlobal;
 	char msgBuff[500];
 	sprintf_s(msgBuff, "Extension create: isGlobal=%i.\n", isGlobal ? 1 : 0);
 	OutputDebugStringA(msgBuff);
@@ -313,13 +306,62 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	}
 
 	// Try to boot the Lacewing thread if multithreading and not already running
-	if (edPtr->MultiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
+	if (edPtr->multiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 	{
 		CreateError("Error: failed to boot thread. Falling back to single-threaded interface.");
 		Runtime.Rehandle();
 	}
-	else if (!edPtr->MultiThreading)
+	else if (!edPtr->multiThreading)
 		Runtime.Rehandle();
+
+	// Set up Fusion debugger (it uses globals, so we have to do it after)
+	// The client could be connected if this Extension() is being run after a Fusion frame switch.
+	const auto connectedDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->Cli.connecting())
+			writeTo = _T("Connected: Connecting...");
+		else if (ext->Cli.connected())
+			writeTo = _T("Connected: ") + ANSIToTString(ext->HostIP);
+		else
+			writeTo = _T("Connected: No connection");
+	};
+	FusionDebugger.AddItemToDebugger(connectedDebugItemReader, NULL, 500, NULL);
+
+	const auto clientNameDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		auto cliName = ext->Cli.name();
+		if (cliName.empty())
+			cliName = _T("(unset)");
+		writeTo = _T("Name: ") + cliName;
+	};
+	FusionDebugger.AddItemToDebugger(clientNameDebugItemReader, NULL, 500, NULL);
+
+	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		writeTo = _T("Channel count: ") + std::to_tstring(ext->Cli.channelcount());
+	};
+	FusionDebugger.AddItemToDebugger(channelCountDebugItemReader, NULL, 500, NULL);
+
+	const auto selectedChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selChannel)
+			writeTo = _T("Selected channel: ") + ext->selChannel->name();
+		else
+			writeTo = _T("Selected channel: (none)");
+	};
+	FusionDebugger.AddItemToDebugger(selectedChannelDebugItemReader, NULL, 100, NULL);
+
+	const auto numPeersDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selChannel)
+			writeTo = _T("Peer count: ") + std::to_tstring(ext->selChannel->peercount());
+		else
+			writeTo = _T("Peer count: (no channel)");
+	};
+	FusionDebugger.AddItemToDebugger(numPeersDebugItemReader, NULL, 100, NULL);
+
+	const auto selectedPeerDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
+		if (ext->selPeer && ext->selChannel)
+			writeTo = _T("Selected peer: ") + ext->selPeer->name();
+		else
+			writeTo = _T("Selected peer: (none)");
+	};
+	FusionDebugger.AddItemToDebugger(selectedPeerDebugItemReader, NULL, 100, NULL);
 }
 
 DWORD WINAPI LacewingLoopThread(void * thisExt)
@@ -395,7 +437,7 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		can still create events.
 		With GenerateEvent() + multithreading, this would cause crashes as Fusion is forced into the extension
 		at the wrong time.
-		With PushEvent() + multithreading, this would cause overwriting of old events and possibly access
+		With PushEvent() + multithreading, this  would cause overwriting of old events and possibly access
 		violations as variables are simultaneously written to by the ext and read from by Fusion at the same time.
 		
 		But in DarkEdif, you'll note all the GenerateEvents() are handled on a queue, and the queue is
@@ -834,12 +876,12 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
 	_client(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
-	_automaticallyClearBinary(edPtr->AutomaticClear), _thread(nullptr),
+	_automaticallyClearBinary(edPtr->automaticClear), _thread(nullptr),
 	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer()
 {
 	_ext = e;
 	refs.push_back(e);
-	if (edPtr->Global)
+	if (edPtr->isGlobal)
 		_globalID = edPtr->edGlobalID;
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
 	fullDeleteEnabled = edPtr->fullDeleteEnabled;

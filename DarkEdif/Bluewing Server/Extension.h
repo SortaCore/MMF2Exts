@@ -25,20 +25,10 @@ public:
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
 	~Extension();
 	std::thread::id mainThreadID;
-	
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr).
-		
-		For those using multi-threading, any variables that are modified
-		by the threads should be in SaveExtInfo.
-		See MultiThreading.h.
 
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
+	DarkEdif::FusionDebugger FusionDebugger;
 
-	bool IsGlobal;
+	bool isGlobal;
 	GlobalInfo * globals;
 
 	// This allows prettier and more readable access while maintaining global variables.
@@ -75,34 +65,12 @@ public:
 	void HandleInteractiveEvent(std::shared_ptr<SaveExtInfo> s);
 
 
-	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
-	// functions into DarkEdif, the data may be overwritten, causing crashes and other such nasties.
-
-	// To work around this, we duplicate all the variables, and provide a special event number which will remove
+	// To work around this, we use a special event number which will deselect
 	// all the pointers in SaveExtInfo after they should no longer be valid.
 	// In this way, when a client sends message then disconnects, on liblacewing's side that happens instantly,
 	// and liblacewing cleans up its client variable instantly too.
 	// We can't "deny" a disconnect, so we must accept it immediately.
-	//
-	// But since these events are queued, the "on client disconnect" may be called later, after liblacewing has deleted.
-	// So we have to store a copy of the client so we can look up name and such when it's disconnected.
-	// See the _channels and _Clients variables in GlobalInfo for our copies.
 	
-	// int MyVariable;
-
-
-
-
-	/*  Add your actions, conditions and expressions as real class member
-		functions here. The arguments (and return type for expressions) must
-		match EXACTLY what you defined in the JSON.
-
-		Remember to link the actions, conditions and expressions to their
-		numeric IDs in the class constructor (Extension.cpp)
-	*/
-
-
-
 	/// Actions
 		void RemovedActionNoParams();
 
@@ -382,8 +350,8 @@ struct GlobalInfo
 
 	CRITICAL_SECTION			lock = {};
 	std::vector<Extension *>	Refs;
-	bool						TimeoutWarningEnabled = true; // If no Lacewing exists, fuss after set time period
-	bool						FullDeleteEnabled = true; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	bool						timeoutWarningEnabled = true; // If no Lacewing exists, fuss after set time period
+	bool						fullDeleteEnabled = true; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 
 	void AddEvent1(int event1,
 		std::shared_ptr<lacewing::relayserver::channel> channel = nullptr,
