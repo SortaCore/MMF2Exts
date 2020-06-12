@@ -250,7 +250,7 @@ void AddDirectory(std::tstring &From, std::tstring &To)
 	FindClose(fileHandle);
 }
 
-void __stdcall PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTempFolder)
+void FusionAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTempFolder)
 {
 #pragma DllExportHint
 	TCHAR FlashFolderPath[MAX_PATH];

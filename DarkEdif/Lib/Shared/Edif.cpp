@@ -764,7 +764,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 	return Parent;
 }
 
-long __stdcall Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
+long FusionAPI Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
 {
 	int ID = rdPtr->rHo.EventNumber;
 
@@ -784,7 +784,7 @@ long __stdcall Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
 	return *(char *) &Result;
 }
 
-short __stdcall Edif::Action(RUNDATA * rdPtr, long param1, long param2)
+short FusionAPI Edif::Action(RUNDATA * rdPtr, long param1, long param2)
 {
 	/* int ID = rdPtr->rHo.hoAdRunHeader->rh4.rh4ActionStart->evtNum; */
 	int ID = rdPtr->rHo.EventNumber;
@@ -810,7 +810,7 @@ short __stdcall Edif::Action(RUNDATA * rdPtr, long param1, long param2)
 	return 0;
 }
 
-long __stdcall Edif::Expression(RUNDATA * rdPtr, long param)
+long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
 {
 	int ID = rdPtr->rHo.EventNumber;
 
