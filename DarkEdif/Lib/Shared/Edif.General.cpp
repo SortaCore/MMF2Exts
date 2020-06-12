@@ -2,7 +2,7 @@
 
 const TCHAR ** Dependencies = 0;
 
-const TCHAR ** __stdcall GetDependencies()
+const TCHAR ** FusionAPI GetDependencies()
 {
 #pragma DllExportHint
 	if (!Dependencies)

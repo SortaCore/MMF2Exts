@@ -261,9 +261,9 @@ namespace Edif
 	int Init(mv * mV);
 	void Init(mv * mV, EDITDATA * edPtr);
 
-	long __stdcall Condition (RUNDATA * rdPtr, long param1, long param2);
-	short __stdcall Action (RUNDATA * rdPtr, long param1, long param2);
-	long __stdcall Expression (RUNDATA * rdPtr, long param);
+	long FusionAPI Condition (RUNDATA * rdPtr, long param1, long param2);
+	short FusionAPI Action (RUNDATA * rdPtr, long param1, long param2);
+	long FusionAPI Expression (RUNDATA * rdPtr, long param);
 	
 	inline int ActionID(int ID)
 	{

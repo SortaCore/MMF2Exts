@@ -9,7 +9,6 @@
 // All you need to expose this function outside the DLL with undecorated name.
 // Hat tip to https://stackoverflow.com/a/41910450
 #define DllExportHint comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-// #define DLLExport __stdcall
 #define PATH_MAX MAX_PATH
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #define SUB_STRIFY(X) #X
@@ -2874,33 +2873,33 @@ struct kpxRunInfos {
 // --------------------
 
 struct kpj {
-	short				(__stdcall * CreateRunObject)			(HeaderObject *, extHeader *, CreateObjectInfo *);
-	short				(__stdcall * DestroyRunObject)			(HeaderObject *, long);
-	short				(__stdcall * HandleRunObject)			(HeaderObject *);
-	short				(__stdcall * DisplayRunObject)			(HeaderObject *);
-	cSurface *			(__stdcall * GetRunObjectSurface)		(HeaderObject *);
-	short				(__stdcall * ReInitRunObject)			(HeaderObject *);
-	short				(__stdcall * PauseRunObject)			(HeaderObject *);
-	short				(__stdcall * ContinueRunObject)			(HeaderObject *);
-	short				(__stdcall * PrepareToSave)				(HeaderObject *);
-	short				(__stdcall * PrepareToSave2)			(HeaderObject *);
-	short				(__stdcall * SaveBackground)			(HeaderObject *);
-	short				(__stdcall * RestoreBackground)			(HeaderObject *);
-	short				(__stdcall * ChangeRunData)				(HeaderObject *, HeaderObject *);
-	short				(__stdcall * KillBackground)			(HeaderObject *);
-	short				(__stdcall * GetZoneInfo)				(HeaderObject *);
-	unsigned short *	(__stdcall * GetDebugTree)				(HeaderObject *);
-	void 				(__stdcall * GetDebugItem)				(TCHAR *, HeaderObject *, int);
-	void 				(__stdcall * EditDebugItem)				(HeaderObject *, int);
-	void 				(__stdcall * GetRunObjectFont)			(HeaderObject *, LOGFONT *);
-	void 				(__stdcall * SetRunObjectFont)			(HeaderObject *, LOGFONT *, RECT *);
-	COLORREF 			(__stdcall * GetRunObjectTextColor)		(HeaderObject *);
-	void				(__stdcall * SetRunObjectTextColor)		(HeaderObject *, COLORREF);
-	short				(__stdcall * GetRunObjectWindow)		(HeaderObject *);
-	sMask *				(__stdcall * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
-	BOOL				(__stdcall * SaveRunObject)				(HeaderObject *, HANDLE);
-	BOOL				(__stdcall * LoadRunObject)				(HeaderObject *, HANDLE);
-	void				(__stdcall * GetRunObjectMemoryUsage)	(HeaderObject *, int *, int *, int *);
+	short				(FusionAPI * CreateRunObject)			(HeaderObject *, extHeader *, CreateObjectInfo *);
+	short				(FusionAPI * DestroyRunObject)			(HeaderObject *, long);
+	short				(FusionAPI * HandleRunObject)			(HeaderObject *);
+	short				(FusionAPI * DisplayRunObject)			(HeaderObject *);
+	cSurface *			(FusionAPI * GetRunObjectSurface)		(HeaderObject *);
+	short				(FusionAPI * ReInitRunObject)			(HeaderObject *);
+	short				(FusionAPI * PauseRunObject)			(HeaderObject *);
+	short				(FusionAPI * ContinueRunObject)			(HeaderObject *);
+	short				(FusionAPI * PrepareToSave)				(HeaderObject *);
+	short				(FusionAPI * PrepareToSave2)			(HeaderObject *);
+	short				(FusionAPI * SaveBackground)			(HeaderObject *);
+	short				(FusionAPI * RestoreBackground)			(HeaderObject *);
+	short				(FusionAPI * ChangeRunData)				(HeaderObject *, HeaderObject *);
+	short				(FusionAPI * KillBackground)			(HeaderObject *);
+	short				(FusionAPI * GetZoneInfo)				(HeaderObject *);
+	unsigned short *	(FusionAPI * GetDebugTree)				(HeaderObject *);
+	void 				(FusionAPI * GetDebugItem)				(TCHAR *, HeaderObject *, int);
+	void 				(FusionAPI * EditDebugItem)				(HeaderObject *, int);
+	void 				(FusionAPI * GetRunObjectFont)			(HeaderObject *, LOGFONT *);
+	void 				(FusionAPI * SetRunObjectFont)			(HeaderObject *, LOGFONT *, RECT *);
+	COLORREF 			(FusionAPI * GetRunObjectTextColor)		(HeaderObject *);
+	void				(FusionAPI * SetRunObjectTextColor)		(HeaderObject *, COLORREF);
+	short				(FusionAPI * GetRunObjectWindow)		(HeaderObject *);
+	sMask *				(FusionAPI * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
+	BOOL				(FusionAPI * SaveRunObject)				(HeaderObject *, HANDLE);
+	BOOL				(FusionAPI * LoadRunObject)				(HeaderObject *, HANDLE);
+	void				(FusionAPI * GetRunObjectMemoryUsage)	(HeaderObject *, int *, int *, int *);
 
 	kpxRunInfos	infos;
 };
@@ -3037,9 +3036,9 @@ enum {
 };
 
 // Proc definition
-typedef void (__stdcall * UPDATEFILENAMEPROCA)(const char *, char *);
-typedef void (__stdcall * UPDATEFILENAMEPROCW)(const wchar_t *, wchar_t *);
-typedef void (__stdcall * UPDATEFILENAMEPROC)(const TCHAR *, TCHAR *);
+typedef void (FusionAPI * UPDATEFILENAMEPROCA)(const char *, char *);
+typedef void (FusionAPI * UPDATEFILENAMEPROCW)(const wchar_t *, wchar_t *);
+typedef void (FusionAPI * UPDATEFILENAMEPROC)(const TCHAR *, TCHAR *);
 
 // Old object name size, still used in events
 #ifndef OINAME_SIZE
@@ -4348,20 +4347,20 @@ struct kpxFunc {
 	void *		kpxUserData;
 
 	// See KGI:: above for int
-	unsigned int (__stdcall * kpxGetInfos) (int);
-	int  (__stdcall	* kpxLoadObject) (mv *, ObjectInfo *, unsigned char * , int);
-	void (__stdcall	* kpxUnloadObject) (mv *, unsigned char * , int);
-	void (__stdcall	* kpxUpdateFileNames) (mv *, TCHAR *, unsigned char * , void (__stdcall *)(LPCTSTR, TCHAR *));
-	short(__stdcall	* kpxGetRunObjectInfos) (mv *, unsigned char * );
-	short(__stdcall	* kpxWindowProc) (unsigned char * , HWND, unsigned int, WPARAM, LPARAM);
-	int	 (__stdcall	* kpxEnumElts) (mv *, unsigned char * , ENUMELTPROC, ENUMELTPROC, LPARAM, LPARAM);
-	int  (__stdcall	* kpxLoadData) (mv *, ObjectInfo *, unsigned char * , HFILE, unsigned int);		// Not used
-	int  (__stdcall	* kpxUnloadData) (mv *, ObjectInfo *, unsigned char *);					// Not used
-	void (__stdcall	* kpxStartApp) (mv *, CRunApp *);
-	void (__stdcall	* kpxEndApp) (mv *, CRunApp *);
-	void (__stdcall	* kpxStartFrame) (mv *, CRunApp *, int);
-	void (__stdcall	* kpxEndFrame) (mv *, CRunApp *, int);
-	HGLOBAL (__stdcall	* kpxUpdateEditStructure) (mv *, void *);
+	unsigned int (FusionAPI * kpxGetInfos) (int);
+	int  (FusionAPI * kpxLoadObject) (mv *, ObjectInfo *, unsigned char * , int);
+	void (FusionAPI * kpxUnloadObject) (mv *, unsigned char * , int);
+	void (FusionAPI * kpxUpdateFileNames) (mv *, TCHAR *, unsigned char * , void (FusionAPI *)(LPCTSTR, TCHAR *));
+	short(FusionAPI * kpxGetRunObjectInfos) (mv *, unsigned char * );
+	short(FusionAPI * kpxWindowProc) (unsigned char * , HWND, unsigned int, WPARAM, LPARAM);
+	int	 (FusionAPI * kpxEnumElts) (mv *, unsigned char * , ENUMELTPROC, ENUMELTPROC, LPARAM, LPARAM);
+	int  (FusionAPI * kpxLoadData) (mv *, ObjectInfo *, unsigned char * , HFILE, unsigned int);		// Not used
+	int  (FusionAPI * kpxUnloadData) (mv *, ObjectInfo *, unsigned char *);					// Not used
+	void (FusionAPI * kpxStartApp) (mv *, CRunApp *);
+	void (FusionAPI * kpxEndApp) (mv *, CRunApp *);
+	void (FusionAPI * kpxStartFrame) (mv *, CRunApp *, int);
+	void (FusionAPI * kpxEndFrame) (mv *, CRunApp *, int);
+	HGLOBAL (FusionAPI * kpxUpdateEditStructure) (mv *, void *);
 
 	// Vitalise function
 	#ifdef VITALIZE
@@ -4911,10 +4910,10 @@ struct CRunApp {
 // Dibs
 // ----
 typedef Appli void;
-unsigned long __stdcall InitDibHeader(Appli *, int, int, int, BITMAPINFO *);
-void	__stdcall FillDib(BITMAPINFO *, COLORREF);
-unsigned long	__stdcall ImageToDib(Appli *, DWORD, DWORD, LPBYTE);
-unsigned long	__stdcall DibToImage(Appli *, Image *, BITMAPINFOHEADER *);
-unsigned long	__stdcall DibToImageEx(Appli *, Image *, BITMAPINFOHEADER *, COLORREF, DWORD);
-void	__stdcall RemapDib(BITMAPINFO *, Appli *, LPBYTE);
+unsigned long FusionAPI InitDibHeader(Appli *, int, int, int, BITMAPINFO *);
+void	FusionAPI FillDib(BITMAPINFO *, COLORREF);
+unsigned long	FusionAPI ImageToDib(Appli *, DWORD, DWORD, LPBYTE);
+unsigned long	FusionAPI DibToImage(Appli *, Image *, BITMAPINFOHEADER *);
+unsigned long	FusionAPI DibToImageEx(Appli *, Image *, BITMAPINFOHEADER *, COLORREF, DWORD);
+void	FusionAPI RemapDib(BITMAPINFO *, Appli *, LPBYTE);
 #endif
