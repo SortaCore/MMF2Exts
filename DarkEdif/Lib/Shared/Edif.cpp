@@ -1,4 +1,5 @@
 #include "Common.h"
+#include <cctype>
 
 Edif::SDK * SDK = nullptr;
 

@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <time.h>
 #include <ctime>
+#include <string_view>
 
 namespace lacewing
 {

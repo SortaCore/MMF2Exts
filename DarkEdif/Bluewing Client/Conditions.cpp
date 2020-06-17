@@ -1,5 +1,7 @@
 
 #include "Common.h"
+#include <string_view>
+
 #define MessageMatches() (threadData->receivedMsg.subchannel == subchannel || subchannel == -1)
 
 #define LoopNameMatches(cond) \
