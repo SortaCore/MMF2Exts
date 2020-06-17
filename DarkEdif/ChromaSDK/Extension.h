@@ -58,7 +58,7 @@ public:
 		void ActionExample(int ExampleParameter);
 		void SecondActionExample();
 
-		void PlayAnimationName(TCHAR* path, int loop);
+		void PlayAnimationName(const TCHAR* path, int loop);
 
 	/// Conditions
 

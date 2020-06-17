@@ -518,9 +518,11 @@ int ChromaAnimationAPI::InitAPI()
 	if (library == NULL)
 	{
 		fprintf(stderr, "Failed to load Chroma Editor Library!\r\n");
+		/*
 		OutputDebugStringA("Failed to load Chroma Editor Library! ");
 		OutputDebugStringA(CHROMA_EDITOR_DLL);
 		OutputDebugStringA("\r\n");
+		*/
 		return -1;
 	}
 
