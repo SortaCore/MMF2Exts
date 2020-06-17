@@ -1,4 +1,7 @@
 #include "Common.h"
+#include	"Public/ChromaAnimationAPI.h"
+
+using namespace ChromaSDK;
 
 
 ///
@@ -8,6 +11,20 @@
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
 	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
+	_mInitResult = -1;
+	if (!ChromaAnimationAPI::IsInitializedAPI())
+	{
+		_mInitResult = ChromaAnimationAPI::InitAPI();
+		if (_mInitResult == 0)
+		{
+			fprintf(stderr, "Loaded Chroma SDK Plugin!\r\n");
+		}
+		else
+		{
+			fprintf(stderr, "Failed to loaded Chroma SDK Plugin!\r\n");
+		}
+	}
+
 	/*
 		Link all your action/condition/expression functions to their IDs to match the
 		IDs in the JSON here
@@ -16,10 +33,16 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(0, ActionExample);
 	LinkAction(1, SecondActionExample);
 
-	LinkCondition(0, AreTwoNumbersEqual);
+	unsigned int conditionIndex = 0;
+	LinkCondition(conditionIndex++, AreTwoNumbersEqual);
+	LinkCondition(conditionIndex++, CondIsInitialized);
+	LinkCondition(conditionIndex++, CondInit);
 
-	LinkExpression(0, Add);
-	LinkExpression(1, HelloWorld);
+	unsigned int expressionIndex = 0;
+	LinkExpression(expressionIndex++, Add);
+	LinkExpression(expressionIndex++, HelloWorld);
+	LinkExpression(expressionIndex++, ExpIsInitialized);
+	LinkExpression(expressionIndex++, ExpInit);
 
 	/*
 		This is where you'd do anything you'd do in CreateRunObject in the original SDK

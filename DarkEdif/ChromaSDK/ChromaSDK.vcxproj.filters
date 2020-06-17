@@ -43,6 +43,12 @@
     <ClCompile Include="..\Lib\Shared\json.cpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>
+    <ClCompile Include="Private\ChromaAnimationAPI.cpp">
+      <Filter>Razer\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ChromaSDKPluginTypes.cpp">
+      <Filter>Razer\Private</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -68,6 +74,21 @@
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\json.h">
       <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\ChromaAnimationAPI.h">
+      <Filter>Razer\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\ChromaSDKPluginTypes.h">
+      <Filter>Razer\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\RzChromaSDKDefines.h">
+      <Filter>Razer\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\RzChromaSDKTypes.h">
+      <Filter>Razer\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\RzErrors.h">
+      <Filter>Razer\Public</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -96,6 +117,15 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{00a9f5d7-fa2d-405e-bb97-fdd3f6e33af2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Razer">
+      <UniqueIdentifier>{ee0d847b-68b4-4f1c-9091-85e67c2fe334}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Razer\Private">
+      <UniqueIdentifier>{7f745532-8c58-4cc0-bbfd-311757748dc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Razer\Public">
+      <UniqueIdentifier>{b49b88d9-7878-474a-b913-cee98f0f4768}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

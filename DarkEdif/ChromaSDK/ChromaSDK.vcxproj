@@ -76,6 +76,8 @@
     <ClCompile Include="Expressions.cpp" />
     <ClCompile Include="Extension.cpp" />
     <ClCompile Include="General.cpp" />
+    <ClCompile Include="Private\ChromaAnimationAPI.cpp" />
+    <ClCompile Include="Private\ChromaSDKPluginTypes.cpp" />
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +92,11 @@
     <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Extension.h" />
+    <ClInclude Include="Public\ChromaAnimationAPI.h" />
+    <ClInclude Include="Public\ChromaSDKPluginTypes.h" />
+    <ClInclude Include="Public\RzChromaSDKDefines.h" />
+    <ClInclude Include="Public\RzChromaSDKTypes.h" />
+    <ClInclude Include="Public\RzErrors.h" />
     <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>

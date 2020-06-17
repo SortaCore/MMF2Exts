@@ -1,4 +1,6 @@
 #include <DarkEdif.h>
+#include "Public/RzChromaSDKTypes.h"
+#include "Public/RzErrors.h"
 
 class Extension
 {
@@ -60,10 +62,16 @@ public:
 
 		bool AreTwoNumbersEqual(int FirstNumber, int SecondNumber);
 
+		bool CondIsInitialized();
+		bool CondInit();
+
 	/// Expressions
 		
 		int Add(int FirstNumber, int SecondNumber);
 		const TCHAR * HelloWorld();
+
+		int ExpIsInitialized();
+		int ExpInit();
 
 
 
@@ -86,4 +94,6 @@ public:
 
 	short Pause();
 	short Continue();
+protected:
+	RZRESULT _mInitResult;
 };
