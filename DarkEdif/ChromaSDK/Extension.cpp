@@ -1,5 +1,5 @@
 #include "Common.h"
-#include	"Public/ChromaAnimationAPI.h"
+#include "Public/ChromaAnimationAPI.h"
 
 using namespace ChromaSDK;
 
@@ -17,11 +17,11 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		_mInitResult = ChromaAnimationAPI::InitAPI();
 		if (_mInitResult == 0)
 		{
-			fprintf(stderr, "Loaded Chroma SDK Plugin!\r\n");
+			OutputDebugStringA("Loaded Chroma SDK Plugin!\r\n");
 		}
 		else
 		{
-			fprintf(stderr, "Failed to loaded Chroma SDK Plugin!\r\n");
+			OutputDebugStringA("Failed to loaded Chroma SDK Plugin!\r\n");
 		}
 	}
 
@@ -30,8 +30,10 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		IDs in the JSON here
 	*/
 
-	LinkAction(0, ActionExample);
-	LinkAction(1, SecondActionExample);
+	unsigned int actionIndex = 0;
+	LinkAction(actionIndex++, ActionExample);
+	LinkAction(actionIndex++, SecondActionExample);
+	LinkAction(actionIndex++, PlayAnimationName);
 
 	unsigned int conditionIndex = 0;
 	LinkCondition(conditionIndex++, AreTwoNumbersEqual);

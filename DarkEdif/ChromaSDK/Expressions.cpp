@@ -16,17 +16,10 @@ const TCHAR * Extension::HelloWorld()
 
 int Extension::ExpIsInitialized()
 {
-	return _mInitResult == RZRESULT_SUCCESS;
+	return CondIsInitialized();
 }
 
 int Extension::ExpInit()
 {
-	if (ChromaAnimationAPI::IsInitializedAPI())
-	{
-		return ChromaAnimationAPI::Init();
-	}
-	else
-	{
-		return false;
-	}
+	return CondInit();
 }

@@ -13,13 +13,16 @@
 		"ActionMenu": [
 			[ 0, "Action Example" ],
 			"---",
-			[ "Sub Menu",
+			[
+				"Sub Menu",
 				[ 1, "Second Action Example" ]
-			]
+			],
+			[ 2, "PlayAnimationName" ]
 		],
 		"ConditionMenu": [
 			[ 0, "Are two numbers equal?" ],
-			[ 1, "Is Initialized?" ]
+			[ 1, "Is Initialized?" ],
+			[ 2, "Initialize ChromaSDK?" ]
 		],
 		"ExpressionMenu": [
 			[ 0, "Add two numbers" ],
@@ -36,7 +39,14 @@
 			},
 			{
 				"Title": "Second Action Example"
-			}
+			},
+			{
+				"Title": "Play Animation Name",
+				"Parameters": [
+					[ "Text", "Path" ],
+					[ "Integer", "Loop" ]
+				]
+			}			
 		],
 		"Conditions": [
 			{

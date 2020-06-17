@@ -58,6 +58,8 @@ public:
 		void ActionExample(int ExampleParameter);
 		void SecondActionExample();
 
+		void PlayAnimationName(TCHAR* path, int loop);
+
 	/// Conditions
 
 		bool AreTwoNumbersEqual(int FirstNumber, int SecondNumber);

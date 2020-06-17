@@ -10,6 +10,9 @@ bool Extension::AreTwoNumbersEqual(int First, int Second)
 
 bool Extension::CondIsInitialized()
 {
+	OutputDebugStringA("CondIsInitialized: Result=");
+	OutputDebugStringA(_mInitResult == RZRESULT_SUCCESS ? "SUCCESS" : "FAILED");
+	OutputDebugStringA("\r\n");
 	return _mInitResult == RZRESULT_SUCCESS;
 }
 
@@ -23,5 +26,5 @@ bool Extension::CondInit()
 	{
 		_mInitResult = ChromaAnimationAPI::Init();
 	}
-	return _mInitResult == RZRESULT_SUCCESS;
+	return CondIsInitialized();
 }

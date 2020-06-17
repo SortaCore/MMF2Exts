@@ -1,7 +1,4 @@
 #include "../Public/ChromaAnimationAPI.h"
-#if false
-#include "../Public/VerifyLibrarySignature.h"
-#endif
 #include <tchar.h>
 
 using namespace ChromaSDK;
@@ -521,22 +518,11 @@ int ChromaAnimationAPI::InitAPI()
 	if (library == NULL)
 	{
 		fprintf(stderr, "Failed to load Chroma Editor Library!\r\n");
+		OutputDebugStringA("Failed to load Chroma Editor Library! ");
+		OutputDebugStringA(CHROMA_EDITOR_DLL);
+		OutputDebugStringA("\r\n");
 		return -1;
 	}
-
-#if false
-	// when editor DLL is digitally signed
-	if (!VerifyLibrarySignature::VerifyModule(library))
-	{
-		fprintf(stderr, "Failed to load Chroma Editor Library reason: invalid signature!\r\n");
-
-		// unload the library
-		FreeLibrary(library);
-		library = NULL;
-
-		return -1;
-	}
-#endif
 
 	//fprintf(stderr, "Loaded Chroma Editor DLL!\r\n");
 
