@@ -554,6 +554,10 @@ typedef RZRESULT	(*PLUGIN_CORE_INIT)();
 /*
 	Direct access to low level API.
 */
+typedef RZRESULT	(*PLUGIN_CORE_INIT_SDK)(ChromaSDK::APPINFOTYPE* AppInfo);
+/*
+	Direct access to low level API.
+*/
 typedef RZRESULT	(*PLUGIN_CORE_QUERY_DEVICE)(RZDEVICEID DeviceId, ChromaSDK::DEVICE_INFO_TYPE& DeviceInfo);
 /*
 	Direct access to low level API.
@@ -1228,6 +1232,12 @@ typedef RZRESULT	(*PLUGIN_INIT)();
 	D suffix for limited data types.
 */
 typedef double		(*PLUGIN_INIT_D)();
+/*
+	Initialize the ChromaSDK. AppInfo populates the details in Synapse. Zero 
+	indicates  success, otherwise failure. Many API methods auto initialize 
+	the ChromaSDK if not already initialized.
+*/
+typedef RZRESULT	(*PLUGIN_INIT_SDK)(ChromaSDK::APPINFOTYPE* AppInfo);
 /*
 	Insert an animation delay by duplicating the frame by the delay number of 
 	times. Animation is referenced by id.
@@ -2997,6 +3007,10 @@ namespace ChromaSDK
 		/*
 			Direct access to low level API.
 		*/
+		CHROMASDK_DECLARE_METHOD(PLUGIN_CORE_INIT_SDK, CoreInitSDK);
+		/*
+			Direct access to low level API.
+		*/
 		CHROMASDK_DECLARE_METHOD(PLUGIN_CORE_QUERY_DEVICE, CoreQueryDevice);
 		/*
 			Direct access to low level API.
@@ -3671,6 +3685,12 @@ namespace ChromaSDK
 			D suffix for limited data types.
 		*/
 		CHROMASDK_DECLARE_METHOD(PLUGIN_INIT_D, InitD);
+		/*
+			Initialize the ChromaSDK. AppInfo populates the details in Synapse. Zero 
+			indicates  success, otherwise failure. Many API methods auto initialize 
+			the ChromaSDK if not already initialized.
+		*/
+		CHROMASDK_DECLARE_METHOD(PLUGIN_INIT_SDK, InitSDK);
 		/*
 			Insert an animation delay by duplicating the frame by the delay number of 
 			times. Animation is referenced by id.

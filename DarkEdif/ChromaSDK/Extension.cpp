@@ -14,8 +14,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	_mInitResult = -1;
 	if (!ChromaAnimationAPI::IsInitializedAPI())
 	{
-		_mInitResult = ChromaAnimationAPI::InitAPI();
-		if (_mInitResult == 0)
+		RZRESULT result = ChromaAnimationAPI::InitAPI();
+		if (result == 0)
 		{
 			OutputDebugStringA("Loaded Chroma SDK Plugin!\r\n");
 		}
