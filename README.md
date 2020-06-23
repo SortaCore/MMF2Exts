@@ -45,12 +45,12 @@ DarkEdif uses a pre-build standalone tool (and in non-Windows platforms, also a 
 
 ## How to convert ANSI functions to ANSI & Unicode
 Make sure you're aware of what any text-related function you call expects. Does it ask for number of elements in array, or number of bytes in array?
-Note TCHAR is a preprocessor thing provided by Microsoft, which will be replaced with char in ANSI builds, and wchar_t in Unicode builds.
+Note TCHAR is a preprocessor definition provided by Microsoft, which will be replaced with char in ANSI builds, and wchar_t in Unicode builds.
 
-Note that CF2.5 is Unicode by default, so if you don't want to provide Fusion 2.0 compatible, you can remove the non-Unicode project configurations from your project. CF2.5 can still use ANSI extensions, but don't just produce those.
+If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the non-Unicode project configurations from your project. Both CF2.5 and Fusion 2.0 Unicode can still use ANSI-only extensions, but both use Unicode by default if both variants of an extension are available.
 
 * `char` -> `TCHAR`
-* `strcpy()` -> `_tcscpy`; any `strXX()` becomes `_tcsXX()`, for things like `sprintf()` you may have to google to make sure you're using the right one. If in doubt, MSDN normally provides the TCHAR equivalent.
-* `sizeof(char[])` -> `sizeof(TCHAR[])/sizeof(TCHAR)` (for functions expecting array sizes in elements)
-* `sizeof(char[])` -> `sizeof(TCHAR[])*sizeof(TCHAR)` (for functions expecting array sizes in bytes)
-* `std::string` -> `std::tstring`; a feature of DarkEdif, evil as far as code standards are concerned, since tstring as a name isn't standardised anywhere.
+* `strcpy()` -> `_tcscpy()`; any `strXX()` becomes `_tcsXX()`, for things like `sprintf()` you may have to google to make sure you're using the right one. If in doubt, MSDN normally provides the TCHAR equivalent.
+* `sizeof(char[] variable)` -> `sizeof(TCHAR[] variable) / sizeof(TCHAR)` (for functions expecting array sizes in elements)
+* `sizeof(char[] variable)` -> `sizeof(TCHAR[] variable) * sizeof(TCHAR)` (for functions expecting array sizes in bytes)
+* `std::string` -> `std::tstring`, likewise for `std::stringstream` and `std::string_view`; a feature of DarkEdif, evil as it's not part of std, but a readability feature.
