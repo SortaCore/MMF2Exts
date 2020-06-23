@@ -51,6 +51,6 @@ Note that CF2.5 is Unicode by default, so if you don't want to provide Fusion 2.
 
 * `char` -> `TCHAR`
 * `strcpy()` -> `_tcscpy`; any `strXX()` becomes `_tcsXX()`, for things like `sprintf()` you may have to google to make sure you're using the right one. If in doubt, MSDN normally provides the TCHAR equivalent.
-* `sizeof(char[])` -> `sizeof(TCHAR[])/sizeof(TCHAR)` (for functions expecting array size in elements)
-* `sizeof(char[])` -> `sizeof(TCHAR[])*sizeof(TCHAR)` (for functions expecting arrays sizes in bytes)
+* `sizeof(char[])` -> `sizeof(TCHAR[])/sizeof(TCHAR)` (for functions expecting array sizes in elements)
+* `sizeof(char[])` -> `sizeof(TCHAR[])*sizeof(TCHAR)` (for functions expecting array sizes in bytes)
 * `std::string` -> `std::tstring`; a feature of DarkEdif, evil as far as code standards are concerned, since tstring as a name isn't standardised anywhere.
