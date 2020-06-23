@@ -5,8 +5,7 @@ These extensions are collated for examples and for upgrading; these are subject 
 If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.  
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
-##Using a single project
-
+## Using a single project
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.  
 For example, DarkEdif Template can be extracted by downloading DarkEdif\DarkEdif Template, DarkEdif\Inc, and DarkEdif\Lib.  
 All projects in this repository use a shared Visual Studio props file, found in Lib, which will set all general vcxproj settings, automatically checking what SDK is in use. This has several effects:
@@ -15,11 +14,11 @@ All projects in this repository use a shared Visual Studio props file, found in 
 2. If you are converting from one SDK to another, most of the work will be done for you.
 3. Adding a new project configuration (example, you have Edittime, and you add Edittime Unicode), the props file will read the project configuration name and apply the settings for Edittime and Unicode; making it non-debug, adding the `_UNICODE` defines, etc.
 
-##SDK variants
-###MMF2SDK
+## SDK variants
+### MMF2SDK
 MMF2SDK is the original MMF2SDK provided by Clickteam, programmed in C, with use of some preprocessor macros. It's a lot of manual work, and IntelliSense doesn't like it much (IntelliSense isn't great with preprocessor macros that start/end functions/sections).
 
-###MMF2SDK_Unicode
+### MMF2SDK_Unicode
 MMF2SDK_Unicode is the MMF2SDK provided by Clickteam, with both ANSI (non-Unicode) and Unicode builds possible. Ease of use is about equal with MMF2SDK, as long as you understand [how to convert an ANSI project to ANSI & Unicode](#markdown-anchor-how-to-convert-ansi-functions-to-ansi--unicode).
 
 ### rSDK
