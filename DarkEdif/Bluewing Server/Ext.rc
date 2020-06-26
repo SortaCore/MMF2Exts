@@ -117,11 +117,13 @@ END
 
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
+#if defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.json"
-#else
+#endif
+#elif /* RuntimeBuild and */ defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
 #endif
 
+
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
-

@@ -74,9 +74,6 @@
     <None Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Ext.def">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

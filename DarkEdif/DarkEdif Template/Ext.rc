@@ -139,15 +139,18 @@ END
 // Edif
 //
 
+// External JSON file (DARKEXT_JSON_FILE_EXTERNAL) means not embedded in ext
+// If editor, DarkExt.json is used, otherwise DarkExt.PostMinify.json,
+// which is created by DarkEdifPreBuildTool minifying DarkExt.json.
+
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
-#ifndef DARKEXT_JSON_FILE_EXTERNAL
+#if defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.json"
-#else
+#endif
+#elif /* RuntimeBuild and */ defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
-#endif // DARKEXT_JSON_FILE_EXTERNAL
-#endif // EditorBuild
+#endif
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
-
