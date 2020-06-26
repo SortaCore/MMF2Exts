@@ -145,10 +145,10 @@ END
 
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
-#if defined(DARKEXT_JSON_FILE_EXTERNAL)
+#if !defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.json"
 #endif
-#elif /* RuntimeBuild and */ defined(DARKEXT_JSON_FILE_EXTERNAL)
+#elif /* RuntimeBuild and */ !defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
 #endif
 
