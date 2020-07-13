@@ -55,7 +55,7 @@ size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size)
 
 	  in [0].BufferType = SECBUFFER_TOKEN;
 	  in [0].pvBuffer = (BYTE *) buffer;
-	  in [0].cbBuffer = size;
+	  in [0].cbBuffer = (unsigned long)size;
 
 	  in [1].BufferType = SECBUFFER_EMPTY;
 	  in [1].pvBuffer = 0;

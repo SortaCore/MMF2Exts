@@ -13,7 +13,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 		// Start search for "]" at offset of 15
 		// 8 due to "[::ffff:" -> 8 chars
 		// 7 due to "1.2.3.4" -> 7 chars
-		for (int i = 15, len = strnlen(&input[15], 64 - 15) + 15; i < len; i++)
+		for (size_t i = 15, len = strnlen(&input[15], 64 - 15) + 15; i < len; i++)
 		{
 			if (input[i] == ']')
 			{
@@ -29,15 +29,6 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 	}
 }
 
-/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
-bool lw_sv_icmp(std::string_view first, std::string_view second)
-{
-	if (first.size() != second.size())
-		return false;
-
-	return !_strnicmp(first.data(), second.data(), first.size());
-}
-
 /// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
 bool lw_sv_cmp(std::string_view first, std::string_view second)
 {
@@ -47,14 +38,23 @@ bool lw_sv_cmp(std::string_view first, std::string_view second)
 	return !strncmp(first.data(), second.data(), first.size());
 }
 
+/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
+bool lw_sv_icmp(std::string_view first, std::string_view second)
+{
+	if (first.size() != second.size())
+		return false;
+
+#ifdef _WIN32
+	return !_strnicmp(first.data(), second.data(), first.size());
+#else
+	return !strncasecmp(first.data(), second.data(), first.size());
+#endif
+}
+
 #include <sstream>
 void LacewingFatalErrorMsgBox2(char * func, char * file, int line)
 {
 	std::stringstream err;
 	err << "Lacewing fatal error detected.\nFile: " << file << "\nFunction: " << func << "\nLine: " << line;
-#ifndef STRIFY
-#define sub_STRIFY(x) #x
-#define STRIFY(x) sub_STRIFY(x)
-#endif
-	MessageBoxA(NULL, err.str().c_str(), PROJECT_NAME " Msg Box Death", MB_ICONERROR);
+	MessageBoxA(NULL, err.str().c_str(), "bluewing-cpp-server Msg Box Death", MB_ICONERROR);
 }

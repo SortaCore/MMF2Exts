@@ -6,7 +6,7 @@
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2020 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
+			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingHelp.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -46,17 +46,25 @@
 			"---",
 			
 			[ "Channel",
-				[ 25, "Close channel" ],
-				[ 26, "Select the channel master" ],
-				[ 60, "Loop clients on channel" ],
-				[ 67, "Loop clients on channel (with loop name)" ],
-				"---",
 				[ 27, "Select by name" ],
 				"---",
 				[ 28, "Loop all channels" ],
 				[ 64, "Loop all channels (with loop name)" ],
 				"---",
-				[ 72, "Set local channel data" ]
+				[ 72, "Set local channel data" ],
+				"---",
+				[ 82, "Create channel with master selected by name" ],
+				[ 83, "Create channel with master selected by ID" ],
+				[ 25, "Close channel" ],
+				"---",
+				[ 26, "Select the channel master" ],
+				[ 60, "Loop clients on channel" ],
+				[ 67, "Loop clients on channel (with loop name)" ],
+				"---",
+				[ 84, "Join client to channel by client name" ],
+				[ 85, "Join client to channel by client ID" ],
+				[ 86, "Kick client by client name" ],
+				[ 87, "Kick client by client ID" ]
 			],
 			[ "Client",
 				[ 29, "Disconnect" ],
@@ -736,8 +744,50 @@
 					[ "Integer", "Approve name set immediately (0), deny immediately (1), or wait for Fusion (2)?" ],
 					[ "Text", "Deny reason (if denying immediately)?" ]
 				]
+			},
+			{
+				"Title": "Create channel with name %0, hidden %1, autoclose %2, with master client selected by name %3 (\"\" = no master)",
+				"Parameters": [
+					[ "Text", "Channel name" ],
+					[ "Integer", "Hide channel from public listing? Yes (1) or no (0)" ],
+					[ "Integer", "Auto-close channel when master leaves? Yes (1) or no (0)" ],
+					[ "Text", "Master client name (or \"\" for no master client)" ]
+				]
+			},
+			{
+				"Title": "Create channel with name %0, hidden %1, autoclose %2, with master client selected by ID %3 (-1 = no master)",
+				"Parameters": [
+					[ "Text", "Channel name" ],
+					[ "Integer", "Hide channel from public listing? Yes (1) or no (0)" ],
+					[ "Integer", "Auto-close channel when master leaves? Yes (1) or no (0)" ],
+					[ "Text", "Master client ID (or -1 for no master client)" ]
+				]
+			},
+			{
+				"Title": "Join client with name %0 to selected channel",
+				"Parameters": [
+					[ "Text", "Client name (or \"\" for currently selected)" ]
+				]
+			},
+			{
+				"Title": "Join client with ID %0 to selected channel",
+				"Parameters": [
+					[ "Text", "Client ID (or -1 for currently selected)" ]
+				]
+			},
+			{
+				"Title": "Kick client with name %0 from selected channel",
+				"Parameters": [
+					[ "Text", "Client name (or \"\" for currently selected)" ]
+				]
+			},
+			{
+				"Title": "Kick client with ID %0 from selected channel",
+				"Parameters": [
+					[ "Text", "Client ID (or -1 for currently selected)" ]
+				]
 			} /*,
-			// ID 82+
+			// ID 88+
 			{
 				"Title": "Host HTML5 WebSocket server on port %0",
 				"Parameters": [
@@ -1389,8 +1439,8 @@
 		"About": {
 			"Name": "Servidor Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2019 por Darkwire Software",
-			"Comment": "\"Bluewing\" recriação do Servidor Lacewing Relay (b%i).",
+			"Copyright": "Copyright \u00A9 2020 por Darkwire Software",
+			"Comment": "\"Bluewing\" recriação do Servidor Lacewing Relay. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -2767,8 +2817,8 @@
 		"About": {
 			"Name": "Serveur Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2019 par Darkwire Software",
-			"Comment": "\"Bluewing\", une refonte de Lacewing Relay Server. (b%i)",
+			"Copyright": "Copyright \u00A9 2020 par Darkwire Software",
+			"Comment": "Serveur multijoueur, pour une utilisation sur LAN ou Internet. \"Bluewing\", une refonte de Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -2786,7 +2836,7 @@
 				[ 83, "Arrêter d'héberger" ]
 			], */
 			"---",
-			[ 2, "Changer le message d'accueil" ],
+			[ 2, "Définir le message d'accueil" ],
 			"---",
 			[ "Conditions activer/désactiver",
 				// [ 9, "On message from client to channel" ],
@@ -2799,92 +2849,100 @@
 				[ 78, "Lors d'un message d'un client à un pair" ],
 				[ 79, "Lors d'un message d'un client à un serveur" ]
 			],
-			[ "Conditions interactives",
-				[ 80, "Rejeter (les requêtes for on [...])" ],
-				[ 20, "Changer le nom du client (requête for name set)" ],
-				[ 21, "Changer le nom du canal (requête for channel join)" ],
-				[ 61, "Abandonner message (for message à un canal/pair)" ]
+			[ "Lors de Conditions interactives",
+				[ 80, "Refuser (pour requête \"lors de [...]\")" ],
+				[ 20, "Changer le nom (pour requête \"définir/changer nom\")" ],
+				[ 21, "Changer le nom du canal (pour requête \"joindre canal\")" ],
+				[ 61, "Abandonner message (pour message à un canal/pair)" ]
 			],
 			"---",
 			[ "Canal",
-				[ 25, "Fermer canal" ],
+				[ 27, "Sélectionner un canal par nom" ],
+				"---",
+				[ 28, "Pour chaque canaux" ],
+				[ 64, "Pour chaque canaux (avec nom de boucle)" ],
+				"---",
+				[ 72, "Définir les données locales du canal" ],
+				"---",
+				[ 82, "Créer un canal avec sélection du maître par nom" ],
+				[ 83, "Créer un canal avec sélection du maître par ID" ],
+				[ 25, "Fermer le canal" ],
+				"---",
 				[ 26, "Choisir le maître du canal" ],
-				[ 60, "Boucle clients dans canal" ],
-				[ 67, "Boucle clients dans canal (avec nom de boucle)" ],
+				[ 60, "Pour chaque clients dans un canal" ],
+				[ 67, "Pour chaque clients dans un canal (avec nom de boucle)" ],
 				"---",
-				[ 27, "Choisir par nom" ],
-				"---",
-				[ 28, "Boucle tout les canaux" ],
-				[ 64, "Boucle tout les canaux (avec nom de boucle)" ],
-				"---",
-				[ 72, "Changer données locales du canal" ]
+				[ 84, "Joindre le client au canal par nom" ],
+				[ 85, "Joindre le client au canal par ID" ],
+				[ 86, "Expulser le client par nom" ],
+				[ 87, "Expulser le client par ID" ]
 			],
 			[ "Client",
-				[ 29, "Déconnexion" ],
+				[ 29, "Déconnecter" ],
 				"---",
-				[ 30, "Boucle des canaux rejoins par un client" ],
-				[ 66, "Boucle des canaux rejoins par un client (avec nom de boucle)" ],
+				[ 30, "Pour chaque canaux rejoints par le client" ],
+				[ 66, "Pour chaque canaux rejoints par le client (avec nom de boucle)" ],
 				"---",
-				[ 31, "Choisir par nom" ],
-				[ 32, "Choisir par ID" ],
+				[ 31, "Sélectionner par nom" ],
+				[ 32, "Sélectionner par ID" ],
 				"---",
-				[ 62, "Choisir expéditeur (pour \"quand message à pair\")" ],
-				[ 63, "Choisir receveur (pour \"quand message à pair\")" ],
+				[ 62, "Sélectionner l'expéditeur (pour \"lors de message à un pair\")" ],
+				[ 63, "Sélectionner le destinataire (pour \"lors de message à un pair\")" ],
 				"---",
-				[ 33, "Boucle tout les clients" ],
-				[ 65, "Boucle tout les clients (avec nom de boucle)" ],
+				[ 33, "Pour chaque clients" ],
+				[ 65, "Pour chaque clients (avec nom de boucle)" ],
 				"---",
-				[ 70, "Changer données locales du canal" ]
+				[ 70, "Définir les données locales du canal" ]
 			],
 			[ "Envoyer",
 				[ "Texte",
-					[ 34, "Vers client" ],
-					[ 35, "Vers canal" ]
+					[ 34, "À un client" ],
+					[ 35, "À un canal" ]
 				],
-				[ "Nombre",
-					[ 36, "Vers client" ],
-					[ 37, "Vers canal" ]
+				[ "Valeur",
+					[ 36, "À un client" ],
+					[ 37, "À un canal" ]
 				],
-				[ "Binary",
-					[ 38, "Vers client" ],
-					[ 39, "Vers canal" ]
+				[ "Binaire",
+					[ 38, "À un client" ],
+					[ 39, "À un canal" ]
 				]
 			],
-			[ "Expédié UDP",
+			[ "Envoi UDP",
 				[ "Texte",
-					[ 40, "Vers client" ],
-					[ 41, "Vers canal" ]
+					[ 40, "À un client" ],
+					[ 41, "À un canal" ]
 				],
-				[ "Nombre",
-					[ 42, "Vers client" ],
-					[ 43, "Vers canal" ]
+				[ "Valeur",
+					[ 42, "À un client" ],
+					[ 43, "À un canal" ]
 				],
-				[ "Binary",
-					[ 44, "Vers client" ],
-					[ 45, "Vers canal" ]
+				[ "Binaire",
+					[ 44, "À un client" ],
+					[ 45, "À un canal" ]
 				]
 			],
-			[ "Binary à envoyer",
-				[ "Ajouter un octet",
+			[ "Binaire à envoyer",
+				[ "Ajouter un Octet",
 					[ 46, "Caractère ASCII" ],
 					[ 47, "Integer" ]
 				],
-				[ 48, "Ajouter short" ],
-				[ 49, "Ajouter integer" ],
-				[ 50, "Ajouter float" ],
-				[ "Ajouter une chaîne",
-					[ 51, "Sans null terminator" ],
-					[ 52, "Avec null terminator" ]
+				[ 48, "Ajouter un Short" ],
+				[ 49, "Ajouter un Integer" ],
+				[ 50, "Ajouter un Float" ],
+				[ "Ajouter un Texte",
+					[ 51, "Sans terminateur null" ],
+					[ 52, "Avec terminateur null" ]
 				],
-				[ 53, "Ajouter binary" ],
-				[ 54, "Ajouter un fichier" ],
+				[ 53, "Ajouter un Binaire" ],
+				[ 54, "Ajouter un Fichier" ],
 				"---",
 				[ 73, "Redimensionner" ],
 				[ 55, "Compresser (ZLIB)" ],
-				[ 56, "Clear" ]
+				[ 56, "Effacer" ]
 			],
 			"---",
-			[ "Binary reçu",
+			[ "Binaire reçu",
 				[ 57, "Sauvegarder dans un fichier" ],
 				[ 58, "Ajouter à un fichier" ],
 				[ 59, "Décompresser (ZLIB)" ],
@@ -2894,181 +2952,181 @@
 			"---"
 		],
 		"ConditionMenu": [
-			[ 0, "En cas d'erreur" ],
+			[ 0, "Lors d'une erreur" ],
 			"---",
-			[ 48, "Serveur Lacewing est hébergé" ],
-			[ 49, "Serveur Flash Player policy est hébergé" ],
+			[ 48, "Le Serveur Lacewing héberge" ],
+			[ 49, "Serveur de politique Flash Player héberge" ],
 			// [ 59, "Serveur HTML5 est hébergé" ],
 			"---",
 			[ "Connexion",
-				[ 1, "En cas de requête de connexion" ],
-				[ 2, "En cas de requête de déconnexion" ]
+				[ 1, "Lors d'une requête de connexion" ],
+				[ 2, "Lors d'une requête de déconnexion" ]
 			],
 			[ "Canal",
-				[ 3, "En cas de requête pour rejoindre" ],
-				[ 4, "En cas de requête pour quitter" ],
+				[ 3, "Lors d'une requête \"rejoindre\"" ],
+				[ 4, "Lors d'une requête \"quitter\"" ],
 				"---",
-				[ 5, "Boucle pour tout les canaux" ],
-				[ 45, "Boucle pour tout les canaux finie" ],
+				[ 5, "Pour chaque canaux" ],
+				[ 45, "Lorsque la boucle sur tous les canaux est terminée" ],
 				"---",
-				[ 6, "Boucle les canaux rejoins par un client" ],
-				[ 47, "Boucle les canaux rejoins par un client finie" ],
+				[ 6, "Pour chaque canaux rejoins par le client" ],
+				[ 47, "Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
 				"---",
-				[ 36, "[Avec nom de boucle] Boucle pour tout les canaux" ],
-				[ 41, "[Avec nom de boucle] Boucle pour tout les canaux finie" ],
+				[ 36, "[Avec nom de boucle] Pour chaque canaux" ],
+				[ 41, "[Avec nom de boucle] Lorsque la boucle sur tous les canaux est terminée" ],
 				"---",
-				[ 37, "[Avec nom de boucle] Boucle les canaux rejoins par un client" ],
-				[ 43, "[Avec nom de boucle] Boucle les canaux rejoins par un client finie" ],
+				[ 37, "[Avec nom de boucle] Pour chaque canaux rejoins par le client" ],
+				[ 43, "[Avec nom de boucle] Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
 				"---",
-				[ 50, "Canal caché de la liste des canaux" ],
-				[ 51, "Canal parametré pour se fermer automatiquement" ],
+				[ 50, "Le canal est-il caché de la liste des canaux ?" ],
+				[ 51, "Le canal est-il définit pour se fermer automatiquement ?" ],
 				"---",
-				[ 55, "Does channel name exist?" ]
-			//	[ 56, "Does channel ID exist?" ]
+				[ 55, "Le nom du canal existe-t-il ?" ]
+			//  [ 56, "L'ID du canal existe-t-il ?" ]
 			],
 			[ "Client",
-				[ 9, "Client est le maître du canal" ],
-				[ 10, "Lors d'une requête de changement de nom" ],
+				[ 9, "Le client est le maître du canal" ],
+				[ 10, "Lors d'une requête de définition du nom" ],
 				"---",
-				[ 7, "Boucle tout les clients" ],
-				[ 46, "Boucle tout les clients finie" ],
+				[ 7, "Pour chaque clients" ],
+				[ 46, "Lorsque la boucle pour chaque clients est terminée" ],
 				"---",
-				[ 8, "Boucle clients d'un canal" ],
-				[ 44, "Boucle clients d'un canal finie" ],
+				[ 8, "Pour chaque clients dans le canal" ],
+				[ 44, "Lorsque la boucle pour chaque clients dans le canal est terminée" ],
 				"---",
-				[ 38, "[Avec nom de boucle] Boucle tout les clients" ],
-				[ 52, "[Avec nom de boucle] Boucle tout les clients finie" ],
+				[ 38, "[Avec nom de boucle] Pour chaque clients" ],
+				[ 52, "[Avec nom de boucle] Lorsque la boucle pour chaque clients est terminée" ],
 				"---",
-				[ 39, "[Avec nom de boucle] Boucle clients d'un canal" ],
-				[ 40, "[Avec nom de boucle] Boucle clients d'un canal finie" ],
+				[ 39, "[Avec nom de boucle] Pour chaque clients dans le canal" ],
+				[ 40, "[Avec nom de boucle] Lorsque la boucle pour chaque clients dans le canal est terminée" ],
 				"---",
-				[ 53, "Est-ce que le client selectionné a rejoins un canal (par id)" ],
-				[ 54, "Est-ce que le client selectionné a rejoins un canal (par nom)" ],
+				[ 53, "Le client sélectionné a-t-il rejoint un canal (par id) ?" ],
+				[ 54, "Le client sélectionné a-t-il rejoint un canal (par nom) ?" ],
 				"---",
-				[ 57, "Does client name exist?" ],
-				[ 58, "Does client ID exist?" ]
+				[ 57, "Le nom du client existe-t-il ?" ],
+				[ 58, "L'ID du client existe-t-il ?" ]
 			],
 			[ "Message",
 				[ "Envoyé",
-					[ 12, "Message texte envoyé au serveur" ],
-					[ 13, "Message numérique envoyé au serveur" ],
-					[ 14, "Message binary envoyé au serveur" ],
-					[ 15, "N'importe quel message envoyé au serveur" ],
+					[ 12, "Lors d'un message Texte au serveur" ],
+					[ 13, "Lors d'un message Valeur au serveur" ],
+					[ 14, "Lors d'un message Binaire au serveur" ],
+					[ 15, "Lors de n'importe quel message au serveur" ],
 					"---",
-					[ 16, "Message texte envoyé au canal" ],
-					[ 17, "Message numérique envoyé au canal" ],
-					[ 18, "Message binary envoyé au canal" ],
-					[ 19, "N'importe quel message envoyé au canal" ],
+					[ 16, "Lors d'un message Texte au canal" ],
+					[ 17, "Lors d'un message Valeur au canal" ],
+					[ 18, "Lors d'un message Binaire au canal" ],
+					[ 19, "Lors de n'importe quel message au canal" ],
 					"---",
-					[ 20, "Message texte envoyé à un pair" ],
-					[ 21, "Message numérique envoyé à un pair" ],
-					[ 22, "Message binary envoyé à un pair" ],
-					[ 23, "N'importe quel message envoyé à un pair" ]
+					[ 20, "Lors d'un message Texte à un pair" ],
+					[ 21, "Lors d'un message Valeur à un pair" ],
+					[ 22, "Lors d'un message Binaire à un pair" ],
+					[ 23, "Lors de n'importe quel message à un pair" ]
 				],
 				[ "Expédié UDP",
-					[ 24, "Message texte expédié au serveur" ],
-					[ 25, "Message numérique expédié au serveur" ],
-					[ 26, "Message binary expédié au serveur" ],
-					[ 27, "N'importe quel message expédié au serveur" ],
+					[ 24, "Lors d'un message Texte au serveur" ],
+					[ 25, "Lors d'un message Valeur au serveur" ],
+					[ 26, "Lors d'un message Binaire au serveur" ],
+					[ 27, "Lors de n'importe quel message au serveur" ],
 					"---",
-					[ 28, "Message texte expédié au canal" ],
-					[ 29, "Message numérique expédié au canal" ],
-					[ 30, "Message binary expédié au canal" ],
-					[ 31, "N'importe quel message expédié au canal" ],
+					[ 28, "Lors d'un message Texte au canal" ],
+					[ 29, "Lors d'un message Valeur au canal" ],
+					[ 30, "Lors d'un message Binaire au canal" ],
+					[ 31, "Lors de n'importe quel message au canal" ],
 					"---",
-					[ 32, "Message texte expédié à un pair" ],
-					[ 33, "Message numérique expédié à un pair" ],
-					[ 34, "Message binary expédié à un pair" ],
-					[ 35, "N'importe quel message expédié à un pair" ]
+					[ 32, "Lors d'un message Texte à un pair" ],
+					[ 33, "Lors d'un message Valeur à un pair" ],
+					[ 34, "Lors d'un message Binaire à un pair" ],
+					[ 35, "Lors de n'importe quel message à un pair" ]
 				]
 			],
 			"---"
 		],
 		"ExpressionMenu": [
-			[ 0, "Erreur (string) (en cas d'erreur)" ],
+			[ 0, "Texte de l'erreur (en cas d'erreur)" ],
 			[ 1, "Version de Lacewing (string)" ],
 			[ 41, "Port" ],
 			"---",
-			[ 2, "Taille de binary à envoyer" ],
-			[ 42, "Adresse de binary à envoyer" ],
+			[ 2, "Taille du Binaire à envoyer" ],
+			[ 42, "Adresse du Binaire à envoyer" ],
 			"---",
-			[ 3, "Nom de client demandé (en cas de requête pour changer le nom)" ],
-			[ 4, "Nom de canal demandé (en cas de requête pour rejoindre un canal)" ],
-			[ 45, "Raison de refus"],
+			[ 3, "Nom du client exigé (Lors d'une requête pour définir le nom)" ],
+			[ 4, "Nom du canal exigé (Lors d'une requête pour joindre un canal)" ],
+			[ 45, "Raison actuelle de refus"],
 			"---",
 			[ "Canal",
 				[ 5, "Nom" ],
 				[ 6, "Nombre de clients" ],
-				[ 40, "Récupérer données locales du canal" ],
+				[ 40, "Données locales du canal" ],
 				"---",
-				[ 27, "Nombre de canal dans le serveur" ]
+				[ 27, "Nombre de canaux dans le serveur" ]
 			],
 			[ "Client",
 				[ 7, "Nom" ],
 				[ 8, "ID" ],
 				"---",
 				[ 9, "Adresse IP" ],
-				[ 39, "Récupérer l'implémentation du protocole utilisée" ],
-				[ 10, "Uptime (en secondes)" ],
+				[ 39, "Récupérer l'implémentation du protocole du client" ],
+				[ 10, "Durée de la connection (en secondes)" ],
 				"---",
 				[ 11, "Nombre de canaux rejoins" ],
-				[ 28, "Récupérer les données locales du client" ],
+				[ 28, "Données locales du client" ],
 				"---",
-				[ 44, "Nombre de clients dans le serveur" ]
+				[ 44, "Nombre de clients sur le serveur" ]
 			],
 			[ "Reçu",
-				[ 12, "Récuperer texte" ],
-				[ 13, "Récuperer nombre" ],
+				[ 12, "Extraire le Texte" ],
+				[ 13, "Extraire la Valeur" ],
 				"---",
-				[ 14, "Récuperer taille binary" ],
-				[ 15, "Récuperer addresse mémoire binary" ],
-				[ 43, "Dump vers string" ],
-				[ "Récupérer données binary",
+				[ 14, "Extraire la taille du Binaire" ],
+				[ 15, "Extraire l'adresse mémoire du Binaire" ],
+				[ 43, "Vidage du Binaire dans une String" ],
+				[ "Extraire les données du Binaire",
 					[ "Octet",
 						[ 16, "Caractère ASCII" ],
 						[ "Integer",
-							[ 17, "Unsigned" ],
-							[ 18, "Signed" ]
+							[ 17, "Non signé" ],
+							[ 18, "Signé" ]
 						]
 					],
 					[ "Short",
-						[ 19, "Unsigned" ],
-						[ 20, "Signed" ]
+						[ 19, "Non signé" ],
+						[ 20, "Signé" ]
 					],
 					[ "Integer",
-						[ 21, "Unsigned" ],
-						[ 22, "Signed" ]
+						[ 21, "Non signé" ],
+						[ 22, "Signé" ]
 					],
 					[ 23, "Float" ],
 					[ "Texte",
 						[ 24, "Avec taille" ],
-						[ 25, "Avec null terminator" ]
+						[ 25, "Avec terminateur null" ]
 					]
 				],
-				[ "Récupérer données binary (avec curseur)",
+				[ "Extraire données binary (avec curseur)",
 					[ "Octet",
 						[ 29, "Caractère ASCII" ],
-						[ "Valeur Integer",
-							[ 30, "Unsigned" ],
-							[ 31, "Signed" ]
+						[ "Integer",
+							[ 30, "Non signé" ],
+							[ 31, "Signé" ]
 						]
 					],
 					[ "Short",
-						[ 32, "Unsigned" ],
-						[ 33, "Signed" ]
+						[ 32, "Non signé" ],
+						[ 33, "Signé" ]
 					],
 					[ "Integer",
-						[ 34, "Unsigned" ],
-						[ 35, "Signed" ]
+						[ 34, "Non signé" ],
+						[ 35, "Signé" ]
 					],
 					[ 36, "Float" ],
 					[ "Text",
 						[ 37, "Avec taille" ],
-						[ 38, "Avec null terminator" ]
+						[ 38, "Avec terminateur null" ]
 					]
 				],
 				"---",
-				[ 26, "Récupérer sous-canal" ]
+				[ 26, "Sous-canal" ]
 			],
 			"---"
 		],
@@ -3140,211 +3198,211 @@
 				"Title": "Refuser requête !!! REFAIRE CETTE ACTION !!!"
 			},
 			{
-				"Title": "Changer le nom d'un client vers %0",
+				"Title": "Changer le nom du client demandé par %0",
 				"Parameters": [
-					[ "Text", "Nouveau nom" ]
+					[ "Text", "Nouveau nom du client" ]
 				]
 			},
 			{
-				"Title": "Changer le nom d'un canal vers %0",
+				"Title": "Changer le nom d'un canal demandé par %0",
 				"Parameters": [
-					[ "Text", "Nouveau nom" ]
+					[ "Text", "Nouveau nom du canal" ]
 				]
 			},
 			{
-				"Title": "Remplacer un message texte par %0",
+				"Title": "Remplacer le message par le Texte %0",
 				"Parameters": [
-					[ "Text", "Nouveau message texte" ]
+					[ "Text", "Nouveau message Texte" ]
 				]
 			},
 			{
-				"Title": "Remplacer un message numérique par %0",
+				"Title": "Remplacer le message Valeur par %0",
 				"Parameters": [
-					[ "Integer", "Nouveau message numérique" ]
+					[ "Integer", "Nouveau message Valeur" ]
 				]
 			},
 			{
-				"Title": "Remplacer un message par un envoi de binary"
+				"Title": "Remplacer le message par un envoi de Binaire"
 			},
 			{
-				"Title": "Fermer canal"
+				"Title": "Fermer le canal"
 			},
 			{
 				"Title": "Sélectionner le maître du canal"
 			},
 			{
-				"Title": "Sélectionner canal par nom %0",
+				"Title": "Sélectionner le canal de nom %0",
 				"Parameters": [
 					[ "Text", "Nom" ]
 				]
 			},
 			{
-				"Title": "Boucle tout les canaux"
+				"Title": "Pour chaque canaux"
 			},
 			{
 				"Title": "Déconnecter un client"
 			},
 			{
-				"Title": "Boucle canaux rejoins par un client"
+				"Title": "Pour chaque canaux rejoints par un client"
 			},
 			{
-				"Title": "Sélectionner client par nom %0",
+				"Title": "Sélectionner le client de nom %0",
 				"Parameters": [
 					[ "Text", "Nom" ]
 				]
 			},
 			{
-				"Title": "Sélectionner client par ID %0",
+				"Title": "Sélectionner le client d'ID %0",
 				"Parameters": [
 					[ "Integer", "ID" ]
 				]
 			},
 			{
-				"Title": "Boucle tout les clients"
+				"Title": "Pour chaque clients"
 			},
 			{
-				"Title": "Envoyer le texte %1 à un client dans le sous-canal %0",
+				"Title": "Envoyer le Texte %1 à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
 					[ "Text", "Texte à envoyer" ]
 				]
 			},
 			{
-				"Title": "Envoyer le texte %1 à un canal, dans le sous-canal %0",
+				"Title": "Envoyer le Texte %1 à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
 					[ "Text", "Texte à envoyer" ]
 				]
 			},
 			{
-				"Title": "Envoyer le nombre %1 à un client dans le sous-canal %0",
+				"Title": "Envoyer la Valeur %1 à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
-					[ "Integer", "Nombre à envoyer" ]
+					[ "Integer", "Valeur à envoyer" ]
 				]
 			},
 			{
-				"Title": "Envoyer le nombre %1 à un canal, dans le sous-canal %0",
+				"Title": "Envoyer la Valeur %1 à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
-					[ "Integer", "Nombre à envoyer" ]
+					[ "Integer", "Valeur à envoyer" ]
 				]
 			},
 			{
-				"Title": "Envoyer binary à un client dans le sous-canal %0",
+				"Title": "Envoyer un Binaire à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ]
 				]
 			},
 			{
-				"Title": "Envoyer binary à un canal, dans le sous-canal %0",
+				"Title": "Envoyer un Binaire à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ]
 				]
 			},
 			{
-				"Title": "Blast texte %1 à un client dans le sous-canal %0",
+				"Title": "Envoyer en UDP le Texte %1 à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
 					[ "Text", "Texte à envoyer" ]
 				]
 			},
 			{
-				"Title": "Blast texte %1 à un canal, dans le sous-canal %0",
+				"Title": "Envoyer en UDP le Texte %1 à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
 					[ "Text", "Texte à envoyer" ]
 				]
 			},
 			{
-				"Title": "Blast nombre %1 à un client dans le sous-canal %0",
+				"Title": "Envoyer en UDP la Valeur %1 à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
-					[ "Integer", "Nombre à envoyer" ]
+					[ "Integer", "Valeur à envoyer" ]
 				]
 			},
 			{
-				"Title": "Blast nombre %1 à un canal, dans le sous-canal %0",
+				"Title": "Envoyer en UDP la Valeur %1 à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ],
-					[ "Integer", "Nombre à envoyer" ]
+					[ "Integer", "Valeur à envoyer" ]
 				]
 			},
 			{
-				"Title": "Blast binary %1 à un client dans le sous-canal %0",
+				"Title": "Envoyer en UDP le Binaire %1 à un client dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ]
 				]
 			},
 			{
-				"Title": "Blast binary %1 à un canal, dans le sous-canal %0",
+				"Title": "Envoyer en UDP le Binaire %1 à un canal, dans le sous-canal %0",
 				"Parameters": [
 					[ "Integer", "Sous-canal (0 - 255)" ]
 				]
 			},
 			{
-				"Title": "Ajouter octet %0",
+				"Title": "Ajouter le Octet %0",
 				"Parameters": [
 					[ "Text", "Octet (un caractère)" ]
 				]
 			},
 			{
-				"Title": "Ajouter octet %0",
+				"Title": "Ajouter le Octet %0",
 				"Parameters": [
 					[ "Integer", "Octet" ]
 				]
 			},
 			{
-				"Title": "Ajouter short %0",
+				"Title": "Ajouter le Short %0",
 				"Parameters": [
 					[ "Integer", "Short" ]
 				]
 			},
 			{
-				"Title": "Ajouter integer %0",
+				"Title": "Ajouter le Integer %0",
 				"Parameters": [
 					[ "Integer", "Integer" ]
 				]
 			},
 			{
-				"Title": "Ajouter float %0",
+				"Title": "Ajouter le Float %0",
 				"Parameters": [
 					[ "Float", "Float" ]
 				]
 			},
 			{
-				"Title": "Ajouter string %0 sans null terminator",
+				"Title": "Ajouter le Texte %0 sans terminateur null",
 				"Parameters": [
 					[ "Text", "Texte" ]
 				]
 			},
 			{
-				"Title": "Ajouter string %0 avec null terminator",
+				"Title": "Ajouter le Texte %0 avec terminateur null",
 				"Parameters": [
 					[ "Text", "Texte" ]
 				]
 			},
 			{
-				"Title": "Ajouter binary à l'adresse %0 avec la taille %1",
+				"Title": "Ajouter un Binaire à l'adresse %0 de taille %1",
 				"Parameters": [
 					[ "Unsigned Integer", "Adresse" ],
 					[ "Integer", "Taille" ]
 				]
 			},
 			{
-				"Title": "Ajouter fichier %0 au binary à envoyer",
+				"Title": "Ajouter le fichier %0 au Binaire à envoyer",
 				"Parameters": [
 					[ "Filename", "Fichier à ajouter" ]
 				]
 			},
 			{
-				"Title": "Compresser binary à envoyer (ZLIB)"
+				"Title": "Compresser le Binaire à envoyer (ZLIB)"
 			},
 			{
-				"Title": "Effacer binary à envoyer"
+				"Title": "Effacer le Binaire à envoyer"
 			},
 			{
-				"Title": "Enregistrer binary reçu (position %0 avec la taille %1) vers le fichier %2",
+				"Title": "Enregistrer le Binaire reçu (position %0 de taille %1) sous le fichier %2",
 				"Parameters": [
 					[ "Integer", "Position" ],
 					[ "Integer", "Taille" ],
@@ -3352,7 +3410,7 @@
 				]
 			},
 			{
-				"Title": "Ajouter binary reçu (position %0 avec la taille %1) au fichier %2",
+				"Title": "Ajouter au Binaire reçu (position %0 de taille %1) sous le fichier %2",
 				"Parameters": [
 					[ "Integer", "Position" ],
 					[ "Integer", "Taille" ],
@@ -3360,450 +3418,492 @@
 				]
 			},
 			{
-				"Title": "Decompresser binary reçu (ZLIB)"
+				"Title": "Decompresser le Binaire reçu (ZLIB)"
 			},
 			{
-				"Title": "Boucle clients dans le canal"
+				"Title": "Pour chaque clients dans le canal"
 			},
 			{
-				"Title": "Abandonner message"
+				"Title": "Abandonner le message"
 			},
 			{
-				"Title": "Choisir expéditeur"
+				"Title": "Choisir l'expéditeur"
 			},
 			{
-				"Title": "Choisir destinataire"
+				"Title": "Choisir le destinataire"
 			},
 			{
-				"Title": "Boucle tout les canaux [Nom de boucle: %0]",
+				"Title": "Pour chaque canaux [Nom de boucle: %0]",
 				"Parameters": [
 					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "Boucle tout les canaux [Nom de boucle: %0]",
+				"Title": "Pour chaque clients [Nom de boucle: %0]",
 				"Parameters": [
 					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "Boucle tout les canaux rejoint par un client [Nom de boucle: %0]",
+				"Title": "Pour chaque canaux rejoins par le client sélectionné [Nom de boucle: %0]",
 				"Parameters": [
 					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "Boucle tout les clients dans le canal sélectionné [Nom de boucle: %0]",
+				"Title": "Pour chaque clients dans le canal sélectionné [Nom de boucle: %0]",
 				"Parameters": [
 					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "Héberger Flash Player policy server depuis le fichier XML %0 sur le port 843",
+				"Title": "Héberger le serveur Flash Player policy depuis le fichier XML %0 sur le port 843",
 				"Parameters": [
-					[ "File", "Fichier XML policy" ]
+					[ "File", "Fichier XML de politique " ]
 				]
 			},
 			{
-				"Title": "Arrêter d'héberger un serveur Flash Player policy"
+				"Title": "Arrêter d'héberger le serveur Flash Player policy"
 			},
 			{
-				"Title": "Changer les données locales du client sélectionné de %0 à %1",
+				"Title": "Définir les données locales du client sélectionné de %0 à %1",
 				"Parameters": [
 					[ "Text", "Clé" ],
 					[ "Text", "Valeur" ]
 				]
 			},
 			{
-				"Title": "Déplacer le curseur binary reçu vers %0",
+				"Title": "Déplacer le curseur du Binaire reçu à %0",
 				"Parameters": [
 					[ "Integer", "Position (≥0)" ]
 				]
 			},
 			{
-				"Title": "Changer les données locales du canal sélectionné de %0 à %1",
+				"Title": "Définir les données locales du canal sélectionné de %0 à %1",
 				"Parameters": [
 					[ "Text", "Clé" ],
 					[ "Text", "Valeur" ]
 				]
 			},
 			{
-				"Title": "Redimensionner le binary à envoyer à %0 octets",
+				"Title": "Redimensionner le Binaire à envoyer à %0 octets",
 				"Parameters": [
 					[ "Integer", "Nouvelle taille (en octets)" ]
 				]
 			},
 			// New actions ID 74+
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de requête de connexion\" à %0, %1, %2",
+				"Title": "Définir de déclenchement de la condition \"Lors d'une requête de connexion\" à %0, %1, %2",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter la connexion immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ],
 					[ "Text", "Raison de refus (en cas de refus immédiat)?" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de requête pour rejoindre un canal\" à %0, %1, %2",
+				"Title": "Définir le déclenchement de la condition \"Lors d'une requête rejoindre le canal\" à %0, %1, %2",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter la requête immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ],
 					[ "Text", "Raison de refus (en cas de refus immédiat)?" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de requête pour quitter un canal\" à %0, %1, %2",
+				"Title": "Définir le déclenchement de la condition \"Lors d'une requête pour quitter un canal\" à %0, %1, %2",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter la requête immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ],
 					[ "Text", "Raison de refus (en cas de refus immédiat)?" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de message client->canal\" à %0, %1",
+				"Title": "Définir le déclenchement de la condition \"Lors de message client->canal\" à %0, %1",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter le message immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de message client->client\" à %0, %1",
+				"Title": "Définir le déclenchement de la condition \"Lors de message client->client\" à %0, %1",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter le message immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de message client->serveur\" à %0",
+				"Title": "Définir le déclenchement de la condition \"Lors de message client->serveur\" à %0",
 				"Parameters": [
-					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ]
+					[ "Integer", "La condition devrait-elle être déclenchée ? Oui (1) ou non (0)" ]
 				]
 			},
 			{
 				"Title": "Refuser la requête avec la raison: %0",
 				"Parameters": [
-					[ "Text", "Raison de refus (si vide, remplacé par \"not specified\")" ]
+					[ "Text", "Raison de refus (si vide, remplacer par \"not specified\")" ]
 				]
 			},
 			{
-				"Title": "Paramétrer le déclencheur de la condition \"en cas de requête de changement de nom\" à %0, %1, %2",
+				"Title": "Définir le déclenchement de la condition \"Lors d'une requête de définition du nom\" à %0, %1, %2",
 				"Parameters": [
 					[ "Integer", "La condition doit-elle être déclenchable? Oui (1) ou non (0)" ],
 					[ "Integer", "Accepter le changement de nom immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ],
 					[ "Text", "Raison de refus (en cas de refus immédiat)?" ]
 				]
-			} /*,
-			// ID 82+
+			},
 			{
-				"Title": "Héberger un serveur HTML5 WebSocket sur le port %0",
+				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné de nom %3 (\"\" = aucun maître)",
 				"Parameters": [
-					[ "Integer", "Port (par défaut: 80 ou 443)" ],
-					[ "Integer", "Utiliser Secure Web Sockets? (par défaut: 80 ou 443)" ]
+					[ "Text", "Nom du canal" ],
+					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
+					[ "Integer", "Fermer automatiquement le canal quand le  maître quitte ? Oui (1) ou Non (0)" ],
+					[ "Text", "Le nom du client maître (ou \"\" si aucun client maître)" ]
 				]
 			},
 			{
-				"Title": "Arrêter d'héberger un serveur HTML5 WebSocket"
+				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné d'ID %3 (-1 = aucun maître)",
+				"Parameters": [
+					[ "Text", "Nom du canal" ],
+					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
+					[ "Integer", "Fermer automatiquement le canal quand le  maître quitte ? Oui (1) ou Non (0)" ],
+					[ "Text", "ID du client maître (ou -1 si aucun client maître)" ]
+				]
+			},
+			{
+				"Title": "Joindre le client de nom %0 dans le canal sélectionné",
+				"Parameters": [
+					[ "Text", "Le nom du client maître (ou \"\" si aucun client maître)" ]
+				]
+			},
+			{
+				"Title": "Joindre le client d'ID %0 dans le canal sélectionné",
+				"Parameters": [
+					[ "Text", "l'ID du client (ou -1 pour le client sélectionné)" ]
+				]
+			},
+			{
+				"Title": "Expulser le client de nom %0 du le canal sélectionné",
+				"Parameters": [
+					[ "Text", "Nom du client (ou \"\" pour le client actuellement sélectionné )" ]
+				]
+			},
+			{
+				"Title": "Expulser le client d'ID %0 du canal sélectionné",
+				"Parameters": [
+					[ "Text", "ID du client (ou -1 pour l'ID actuellement sélectionné)" ]
+				]
+			} /*,
+			// ID 88+
+			{
+				"Title": "Héberger le serveur HTML5 WebSocket sur le port %0",
+				"Parameters": [
+					[ "Integer", "Port (80 par défaut, ou 443)" ],
+					[ "Integer", "Utiliser Web Sockets sécurisé ? (80 par défaut, ou 443)" ]
+				]
+			},
+			{
+				"Title": "Stopper l'hébergement du serveur HTML5 WebSocket"
 			}*/
 		],
 		"Conditions": [
 			{
-				"Title": "%o : En cas d'erreur",
+				"Title": "%o : Lors d'une erreur",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de requête de connexion",
+				"Title": "%o : Lors d'une requête de connexion",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de déconnexion",
+				"Title": "%o : Lors d'une déconnexion",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de requête de connexion",
+				"Title": "%o : Lors d'une requête \"rejoindre\"",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de requête pour quitter",
+				"Title": "%o : Lors d'une requête \"quitter\"",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux",
+				"Title": "%o : Pour chaque canaux",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle canaux rejoints par un client",
+				"Title": "%o : Pour chaque canaux rejoints par un client",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients",
+				"Title": "%o : Pour chaque clients",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients dans un canal",
+				"Title": "%o : Pour chaque clients dans un canal",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : Client sélectionner est le maître du canal"
+				"Title": "%o : Le client sélectionné est maître du canal sélectionné"
 			},
 			{
-				"Title": "%o : En cas de requête de changement de nom",
+				"Title": "%o : Lors d'une requête de définition de nom",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de requête de changement de nom [inutilisé]",
+				"Title": "%o : Lors d'une requête de changement de nom [inutilisé]",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de message texte vers le serveur dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Texte vers le serveur dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre vers le serveur dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Valeur vers le serveur dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary vers le serveur dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Binaire vers le serveur dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message vers le serveur dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors de n'importe quel message vers le serveur dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message texte vers le canal dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Texte vers le canal dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre vers le canal dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Valeur vers le canal dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary vers le canal dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Binaire vers le canal dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message vers le canal dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors de n'importe quel message vers le canal dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message texte entre clients dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Texte entre clients dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre entre clients dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Valeur entre clients dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary entre clients dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors d'un message Binaire entre clients dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message entre clients dans le sous-canal %0 (envoyé)",
+				"Title": "%o : Lors de n'importe quel message entre clients dans le sous-canal %0 (envoyé)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message texte vers le serveur dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Texte vers le serveur dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre vers le serveur dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Valeur vers le serveur dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary vers le serveur dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Binaire vers le serveur dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message vers le serveur dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors de n'importe quel message vers le serveur dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message texte vers le canal dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Texte vers le canal dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre vers le canal dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Valeur vers le canal dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary vers le canal dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Binaire vers le canal dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message vers le canal dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors de n'importe quel message vers le canal dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message texte entre clients dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Texte entre clients dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message nombre entre clients dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Valeur entre clients dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message binary entre clients dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors d'un message Binaire entre clients dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de message entre clients dans le sous-canal %0 (expédié UDP)",
+				"Title": "%o : Lors de n'importe quel message entre clients dans le sous-canal %0 (expédié UDP)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Sous-canal (-1 pour tous)" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux %0",
+				"Title": "%o : Pour chaque canaux %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle canaux rejoints par un client %0",
+				"Title": "%o : Pour chaque canaux rejoints par un client %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients %0",
+				"Title": "%o : Pour chaque clients %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients d'un canal %0",
+				"Title": "%o : Pour chaque clients du canal %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients d'un canal finie %0",
+				"Title": "%o : La boucle pour chaque clients d'un canal est terminée %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux finie %0",
+				"Title": "%o : la boucle pour chaque canaux est terminée %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients finie %0",
+				"Title": "%o : La boucle pour chaque clients est terminée %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux rejoint par un client finie %0",
+				"Title": "%o : La boucle pour chaque canaux rejoints par un client est terminée %0",
 				"Triggered": true,
 				"Parameters": [
-					[ "Text", "Nom de boucle" ]
+					[ "Text", "Nom de la boucle" ]
 				]
 			},
 
 			{
-				"Title": "%o : En cas de boucle tout les clients d'un canal finie",
+				"Title": "%o : La boucle pour chaque clients d'un canal est terminée",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux finie",
+				"Title": "%o : La boucle pour chaque canaux est terminée",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les clients finie",
+				"Title": "%o : La boucle pour chaque clients est terminée",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : En cas de boucle tout les canaux rejoint par un client finie",
+				"Title": "%o : La boucle pour chaque canaux rejoint par un client est terminée",
 				"Triggered": true
 			},
 			{
-				"Title": "%o : Serveur est hébergé"
+				"Title": "%o : Le serveur est hébergé"
 			},
 			{
-				"Title": "%o : Serveur Flash Player policy est hébergé"
+				"Title": "%o : Le serveur Flash Player policy est hébergé"
 			},
 			{
-				"Title": "%o : Canal sélectionné est caché de la liste des canaux"
+				"Title": "%o : Le canal sélectionné est caché de la liste des canaux"
 			},
 			{
-				"Title": "%o : Canal sélectionné se ferme automatiquement"
+				"Title": "%o : Le Canal sélectionné est définit pour se fermer automatiquement"
 			},
 			// This condition (ID 52) is a duplicate of condition ID 42.
 			// Lacewing Relay menu links to 52, but not sure what backend GenerateEvent uses.
@@ -3817,41 +3917,41 @@
 			},
 			// New conditions, ID 53+
 			{
-				"Title": "%o : Est-ce que le client avec l'ID %0 a rejoint le canal %1",
+				"Title": "%o : Le client d'ID %0 a-t-il rejoint le canal %1 ?",
 				"Parameters": [
 					[ "Integer", "ID Client" ],
-					[ "Text", "Nom du canal (utiliser \"\" pour celui qui est actuellement sélectionné)" ]
+					[ "Text", "Nom du canal à tester (\"\" pour celui qui est actuellement sélectionné)" ]
 				]
 			},
 			{
-				"Title": "%o : Est-ce que le client avec le nom %0 a rejoint le canal %1",
+				"Title": "%o : Le client de nom %0 a-t-il rejoint le canal %1",
 				"Parameters": [
 					[ "Text", "Nom du client Client" ],
-					[ "Text", "Nom du canal (utiliser \"\" pour celui qui est actuellement sélectionné)" ]
+					[ "Text", "Nom du canal à tester (\"\" pour celui qui est actuellement sélectionné)" ]
 				]
 			},
 			{
-				"Title": "%o : Does channel name %0 exist",
+				"Title": "%o : Le canal de nom %0 existe-t-il ?",
 				"Parameters": [
-					[ "Text", "Channel name to test" ]
+					[ "Text", "Nom de canal à tester" ]
 				]
 			},
 			{
-				"Title": "%o : Does channel ID %0 exist",
+				"Title": "%o : le canal d'ID %0 existe-t-il ?",
 				"Parameters": [
-					[ "Integer", "Channel ID to test" ]
+					[ "Integer", "ID du canal à tester" ]
 				]
 			},
 			{
-				"Title": "%o : Does client name %0 exist",
+				"Title": "%o : Le client de nom %0 existe-t-il ?",
 				"Parameters": [
-					[ "Text", "Client name to test" ]
+					[ "Text", "Nom du client à tester" ]
 				]
 			},
 			{
-				"Title": "%o : Does client ID %0 exist",
+				"Title": "%o : Le client d'ID %0 existe-t-il ?",
 				"Parameters": [
-					[ "Integer", "Client ID to test" ]
+					[ "Integer", "ID du client à tester" ]
 				]
 			},
 
@@ -4100,20 +4200,20 @@
 				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
 			},
 			{
-				"Title": "Automatiquement nettoyer les binary",
-				"Info": "Après envoi/blast d'un message binary, nettoyer le binary à envoyer.",
+				"Title": "Effacer automatiquement les Binaires",
+				"Info": "Après envoi/envoi-UDP d'un message Binaire, effacer le Binaire à envoyer.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},
 			{
 				"Title": "Global",
-				"Info": "Cocher pour rendre Lacewing global entre les frames et les sous-applications.",
+				"Info": "Cocher pour rendre Lacewing global entre les scènes et les sous-applications.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},
 			{
-				"Title": "ID Global",
-				"Info": "Utiliser le même ID Global avec plusieurs objets pour faire en sorte qu'ils utilisent la même instance global.",
+				"Title": "Identifieur Global",
+				"Info": "Utilise le même ID Global avec plusieurs objets pour faire en sorte qu'ils utilisent la même instance global.",
 				"Type": "Editbox String",
 				"DefaultState": ""
 			},
@@ -4124,14 +4224,14 @@
 				"DefaultState": false
 			},
 			{
-				"Title": "Activer alerte timeout",
-				"Info": "Si activé, cela enverra un message popup après 10 secondes de connexion sans aucun objet qui l'utilise.",
+				"Title": "Activer l'alerte d'expiration",
+				"Info": "Si activé, entraînera l'apparition de messages après 10 secondes d'une connexion conservée sans objet propriétaire.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},
 			{
-				"Title": "Arrête la connection quand tous les objets sont détruits",
-				"Info": "PEUT INTERFERER AVEC DES PARAMÈTRES GLOBAUX. Par défaut, arrête est hébergé si tout les objets Bluewings sont déttruits.",
+				"Title": "Arrêter d'héberger si renié",
+				"Info": "PEUT INTERFERER AVEC DES PARAMÈTRES GLOBAUX. Par défaut, arrête la connection si tous les Bluewings propriétaires sont détruites.",
 				"Type": "Checkbox",
 				"DefaultState": false
 			}

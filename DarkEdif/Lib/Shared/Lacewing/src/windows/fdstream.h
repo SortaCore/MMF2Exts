@@ -56,8 +56,6 @@ struct _lw_fdstream
 
 	HANDLE fd;
 
-	lw_pump_watch watch;
-
 	size_t size;
 	size_t reading_size;
 
@@ -85,5 +83,3 @@ struct _lw_fdstream
 void lwp_fdstream_init (lw_fdstream, lw_pump);
 
 #endif
-
-

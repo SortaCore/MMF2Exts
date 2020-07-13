@@ -43,7 +43,7 @@ protected:
 
 public:
 
-	unsigned int offset;
+	size_t offset;
 
 	bool failed;
 
@@ -63,7 +63,7 @@ public:
 		tofree.clear();
 	}
 
-	inline bool check(unsigned int size)
+	inline bool check(size_t size)
 	{
 		if (failed)
 			return false;
@@ -88,17 +88,18 @@ public:
 		return value;
 	}
 
-	std::string_view get (unsigned int size)
+	std::string_view get (size_t size)
 	{
 		if (!check(size))
 			return std::string_view();
 
 		std::string_view output (buffer + offset, size);
 		offset += size;
+
 		return output;
 	}
 
-	inline int bytesleft ()
+	inline size_t bytesleft ()
 	{
 		return size - offset;
 	}
@@ -122,7 +123,7 @@ public:
 		return remaining;
 	}
 
-	inline void getremaining(const char * &buffer, unsigned int &size, unsigned int minimumlength = 0U, unsigned int maximumlength = 0xffffffff)
+	inline void getremaining(const char * &buffer, size_t &size, unsigned int minimumlength = 0U, unsigned int maximumlength = 0xffffffff)
 	{
 		buffer = this->buffer + offset;
 		size	= this->size - offset;

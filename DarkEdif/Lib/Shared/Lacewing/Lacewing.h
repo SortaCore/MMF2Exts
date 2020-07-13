@@ -40,17 +40,17 @@
 	#endif
 
 	#include <inttypes.h>
-	
-	typedef int64_t	lw_i64; 
-	typedef uint64_t	lw_ui64; 
-	typedef intptr_t	lw_iptr; 
-	typedef uintptr_t  lw_uiptr; 
-	typedef int32_t	lw_i32; 
-	typedef uint32_t	lw_ui32; 
-	typedef int16_t	lw_i16; 
-	typedef uint16_t	lw_ui16; 
-	typedef int8_t	 lw_i8; 
-	typedef uint8_t	lw_ui8; 
+
+	typedef   int64_t	lw_i64;
+	typedef  uint64_t	lw_ui64;
+	typedef  intptr_t	lw_iptr;
+	typedef uintptr_t	lw_uiptr;
+	typedef   int32_t	lw_i32;
+	typedef  uint32_t	lw_ui32;
+	typedef   int16_t	lw_i16;
+	typedef  uint16_t	lw_ui16;
+	typedef	   int8_t	lw_i8;
+	typedef	  uint8_t	lw_ui8;
 
 	#define lw_PRId64 PRId64
 	#define lw_PRIu64 PRIu64
@@ -58,25 +58,25 @@
 #else
 
 	#ifdef _WIN64
-	  typedef __int64 lw_iptr;
-	  typedef unsigned __int64 lw_uiptr;
+		typedef 		 __int64  lw_iptr;
+		typedef unsigned __int64  lw_uiptr;
 	#else
-	  typedef __int32 lw_iptr;
-	  typedef unsigned __int32 lw_uiptr;
+		typedef 		 __int32  lw_iptr;
+		typedef unsigned __int32  lw_uiptr;
 	#endif
-	
-	typedef __int64 lw_i64; 
-	typedef unsigned __int64 lw_ui64; 
-	typedef __int32 lw_i32; 
-	typedef unsigned __int32 lw_ui32; 
-	typedef __int16 lw_i16; 
-	typedef unsigned __int16 lw_ui16; 
-	typedef __int8 lw_i8; 
-	typedef unsigned __int8 lw_ui8; 
+
+	typedef 		 __int64  lw_i64;
+	typedef unsigned __int64  lw_ui64;
+	typedef 		 __int32  lw_i32;
+	typedef unsigned __int32  lw_ui32;
+	typedef 		 __int16  lw_i16;
+	typedef unsigned __int16  lw_ui16;
+	typedef 		  __int8  lw_i8;
+	typedef unsigned  __int8  lw_ui8;
 
 	#define lw_PRId64 "I64d"
 	#define lw_PRIu64 "I64u"
-	
+
 #endif
 
 #ifndef _WIN32
@@ -90,7 +90,6 @@
 #else
 
 	/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
-
 	#ifndef _INC_WINDOWS
 	  #include <winsock2.h>
 	  #include <windows.h>
@@ -118,13 +117,19 @@
 #include <shared_mutex>
 #include <thread>
 
+// std::string_view requires C++17
+#if __cplusplus < 201703L && _MSVC_LANG < 201703L
+	#error C++17 std::string_view not available, check what C++ standard your project is using
+#endif
+#include <string_view>
+
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
 void LacewingFatalErrorMsgBox2(char * func, char * file, int line);
 
 typedef lw_i8 lw_bool;
 
-#define lw_true	((lw_bool) 1)
-#define lw_false  ((lw_bool) 0)
+#define  lw_true ((lw_bool) 1)
+#define lw_false ((lw_bool) 0)
 
 #ifdef _WIN32
 	typedef HANDLE lw_fd;
@@ -140,33 +145,33 @@ typedef lw_i8 lw_bool;
 	 * way.)
 	 */
 
-	typedef struct _lw_thread			* lw_thread;
-	typedef struct _lw_addr			  * lw_addr;
-	typedef struct _lw_filter			* lw_filter;
-	typedef struct _lw_pump			  * lw_pump;
-	typedef struct _lw_pump_watch		* lw_pump_watch;
-	typedef struct _lw_pump			  * lw_eventpump;
-	typedef struct _lw_stream			* lw_stream;
-	typedef struct _lw_stream			* lw_fdstream;
-	typedef struct _lw_stream			* lw_file;
-	typedef struct _lw_timer			 * lw_timer;
-	typedef struct _lw_sync			  * lw_sync;
-	typedef struct _lw_event			 * lw_event;
-	typedef struct _lw_error			 * lw_error;
-	typedef struct _lw_stream			* lw_client;
-	typedef struct _lw_server			* lw_server;
-	typedef struct _lw_stream			* lw_server_client;
-	typedef struct _lw_udp				* lw_udp;
-	typedef struct _lw_flashpolicy		* lw_flashpolicy;
-	typedef struct _lw_ws				* lw_ws;
-	typedef struct _lw_stream			* lw_ws_req;
-	typedef struct _lw_ws_req_hdr		* lw_ws_req_hdr;
-	typedef struct _lw_ws_req_param	  * lw_ws_req_param;
-	typedef struct _lw_ws_req_cookie	 * lw_ws_req_cookie;
-	typedef struct _lw_ws_upload		 * lw_ws_upload;
-	typedef struct _lw_ws_upload_hdr	 * lw_ws_upload_hdr;
-	typedef struct _lw_ws_session		* lw_ws_session;
-	typedef struct _lw_ws_sessionitem	* lw_ws_sessionitem;
+	typedef struct _lw_thread			*  lw_thread;
+	typedef struct _lw_addr				*  lw_addr;
+	typedef struct _lw_filter			*  lw_filter;
+	typedef struct _lw_pump				*  lw_pump;
+	typedef struct _lw_pump_watch		*  lw_pump_watch;
+	typedef struct _lw_pump				*  lw_eventpump;
+	typedef struct _lw_stream			*  lw_stream;
+	typedef struct _lw_stream			*  lw_fdstream;
+	typedef struct _lw_stream			*  lw_file;
+	typedef struct _lw_timer			*  lw_timer;
+	typedef struct _lw_sync				*  lw_sync;
+	typedef struct _lw_event			*  lw_event;
+	typedef struct _lw_error			*  lw_error;
+	typedef struct _lw_stream			*  lw_client;
+	typedef struct _lw_server			*  lw_server;
+	typedef struct _lw_stream			*  lw_server_client;
+	typedef struct _lw_udp				*  lw_udp;
+	typedef struct _lw_flashpolicy		*  lw_flashpolicy;
+	typedef struct _lw_ws				*  lw_ws;
+	typedef struct _lw_stream			*  lw_ws_req;
+	typedef struct _lw_ws_req_hdr		*  lw_ws_req_hdr;
+	typedef struct _lw_ws_req_param		*  lw_ws_req_param;
+	typedef struct _lw_ws_req_cookie	*  lw_ws_req_cookie;
+	typedef struct _lw_ws_upload		*  lw_ws_upload;
+	typedef struct _lw_ws_upload_hdr	*  lw_ws_upload_hdr;
+	typedef struct _lw_ws_session		*  lw_ws_session;
+	typedef struct _lw_ws_sessionitem	*  lw_ws_sessionitem;
 
 #endif
 
@@ -175,89 +180,89 @@ typedef lw_i8 lw_bool;
  {
 #endif
 
-lw_import	const char* lw_version				  ();
-lw_import		lw_i64  lw_file_last_modified		(const char * filename);
-lw_import		lw_bool  lw_file_exists			  (const char * filename);
-lw_import		size_t  lw_file_size				(const char * filename);
-lw_import		lw_bool  lw_path_exists			  (const char * filename);
-lw_import		  void  lw_temp_path				(char * buffer);
-lw_import	const char* lw_guess_mimetype			(const char * filename);
-lw_import		  void  lw_md5					  (char * output, const char * input, size_t length);
-lw_import		  void  lw_md5_hex				  (char * output, const char * input, size_t length);
-lw_import		  void  lw_sha1					 (char * output, const char * input, size_t length);
-lw_import		  void  lw_sha1_hex				 (char * output, const char * input, size_t length);
-lw_import		  void  lw_trace					(const char * format, ...);
-lw_import		  void  lw_dump					 (const char * buffer, size_t size);
-lw_import		lw_bool  lw_random					(char * buffer, size_t size);
+	lw_import	const char *  lw_version			();
+	lw_import		  lw_i64  lw_file_last_modified	(const char * filename);
+	lw_import		 lw_bool  lw_file_exists		(const char * filename);
+	lw_import		  size_t  lw_file_size			(const char * filename);
+	lw_import		 lw_bool  lw_path_exists		(const char * filename);
+	lw_import			void  lw_temp_path			(char * buffer);
+	lw_import	const char *  lw_guess_mimetype		(const char * filename);
+	lw_import			void  lw_md5				(char * output, const char * input, size_t length);
+	lw_import			void  lw_md5_hex			(char * output, const char * input, size_t length);
+	lw_import			void  lw_sha1				(char * output, const char * input, size_t length);
+	lw_import			void  lw_sha1_hex			(char * output, const char * input, size_t length);
+	lw_import			void  lw_trace				(const char * format, ...);
+	lw_import			void  lw_dump				(const char * buffer, size_t size);
+	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
 
 /* Thread */
 
-  lw_import	  lw_thread  lw_thread_new	  (const char * name, void * proc);
-  lw_import			void  lw_thread_delete	(lw_thread);
-  lw_import			void  lw_thread_start	(lw_thread, void * parameter);
-  lw_import		lw_bool  lw_thread_started  (lw_thread);
-  lw_import			void* lw_thread_join	 (lw_thread);
-  lw_import			void* lw_thread_tag	  (lw_thread);
-  lw_import			void  lw_thread_set_tag  (lw_thread, void *);
+	lw_import	   lw_thread  lw_thread_new		(const char * name, void * proc);
+	lw_import			void  lw_thread_delete	(lw_thread);
+	lw_import			void  lw_thread_start	(lw_thread, void * parameter);
+	lw_import		 lw_bool  lw_thread_started	(lw_thread);
+	lw_import		  void *  lw_thread_join	(lw_thread);
+	lw_import		  void *  lw_thread_tag		(lw_thread);
+	lw_import			void  lw_thread_set_tag	(lw_thread, void *);
 
 /* Address */
 
-  lw_import		lw_addr  lw_addr_new			 (const char * hostname, const char * service);
-  lw_import		lw_addr  lw_addr_new_port		(const char * hostname, long port);
-  lw_import		lw_addr  lw_addr_new_hint		(const char * hostname, const char * service, long hints);
-  lw_import		lw_addr  lw_addr_new_port_hint	(const char * hostname, long port, long hints);
-  lw_import		lw_addr  lw_addr_clone			(lw_addr);
-  lw_import			void  lw_addr_delete		  (lw_addr);
-  lw_import			long  lw_addr_port			(lw_addr);
-  lw_import			void  lw_addr_set_port		(lw_addr, long port);
-  lw_import			int  lw_addr_type			(lw_addr);
-  lw_import			void  lw_addr_set_type		(lw_addr, int);
-  lw_import		lw_bool  lw_addr_ready			(lw_addr);
-  lw_import		lw_error  lw_addr_resolve		 (lw_addr);
-  lw_import		lw_bool  lw_addr_ipv6			(lw_addr);
-  lw_import		lw_bool  lw_addr_equal			(lw_addr, lw_addr);
-  lw_import	 const char* lw_addr_tostring		(lw_addr);
-  lw_import		in6_addr lw_addr_toin6_addr	  (lw_addr);
-  lw_import			void* lw_addr_tag			 (lw_addr);
-  lw_import			void  lw_addr_set_tag		 (lw_addr, void *);
+	lw_import			lw_addr  lw_addr_new			(const char * hostname, const char * service);
+	lw_import			lw_addr  lw_addr_new_port		(const char * hostname, long port);
+	lw_import			lw_addr  lw_addr_new_hint		(const char * hostname, const char * service, long hints);
+	lw_import			lw_addr  lw_addr_new_port_hint	(const char * hostname, long port, long hints);
+	lw_import			lw_addr  lw_addr_clone			(lw_addr);
+	lw_import			   void  lw_addr_delete			(lw_addr);
+	lw_import			   long  lw_addr_port			(lw_addr);
+	lw_import			   void  lw_addr_set_port		(lw_addr, long port);
+	lw_import				int  lw_addr_type			(lw_addr);
+	lw_import			   void  lw_addr_set_type		(lw_addr, int);
+	lw_import			lw_bool  lw_addr_ready			(lw_addr);
+	lw_import		   lw_error  lw_addr_resolve		(lw_addr);
+	lw_import			lw_bool  lw_addr_ipv6			(lw_addr);
+	lw_import			lw_bool  lw_addr_equal			(lw_addr, lw_addr);
+	lw_import	   const char *  lw_addr_tostring		(lw_addr);
+	lw_import   struct in6_addr  lw_addr_toin6_addr		(lw_addr);
+	lw_import			 void *  lw_addr_tag			(lw_addr);
+	lw_import			   void  lw_addr_set_tag		(lw_addr, void *);
 
-  #define lw_addr_type_tcp		1
-  #define lw_addr_type_udp		2
-  #define lw_addr_hint_ipv6		4
+	#define lw_addr_type_tcp		1
+	#define lw_addr_type_udp		2
+	#define lw_addr_hint_ipv6		4
 
 /* Filter */
 
-  lw_import	  lw_filter  lw_filter_new				();
-  lw_import			void  lw_filter_delete			 (lw_filter);
-  lw_import	  lw_filter  lw_filter_clone			  (lw_filter);
-  lw_import		lw_addr  lw_filter_remote			 (lw_filter);
-  lw_import			void  lw_filter_set_remote		 (lw_filter, lw_addr);
-  lw_import		lw_addr  lw_filter_local			  (lw_filter);
-  lw_import			void  lw_filter_set_local		  (lw_filter, lw_addr);
-  lw_import			long  lw_filter_local_port		 (lw_filter);
-  lw_import			void  lw_filter_set_local_port	 (lw_filter, long port);
-  lw_import			long  lw_filter_remote_port		(lw_filter);
-  lw_import			void  lw_filter_set_remote_port	(lw_filter, long port);
-  lw_import		lw_bool  lw_filter_reuse			  (lw_filter);
-  lw_import			void  lw_filter_set_reuse		  (lw_filter, lw_bool);
-  lw_import		lw_bool  lw_filter_ipv6				(lw_filter);
-  lw_import			void  lw_filter_set_ipv6			(lw_filter, lw_bool);
-  lw_import			void* lw_filter_tag				(lw_filter);
-  lw_import			void  lw_filter_set_tag			(lw_filter, void *);
+	lw_import	lw_filter  lw_filter_new			 ();
+	lw_import		 void  lw_filter_delete			 (lw_filter);
+	lw_import	lw_filter  lw_filter_clone			 (lw_filter);
+	lw_import	  lw_addr  lw_filter_remote			 (lw_filter);
+	lw_import		 void  lw_filter_set_remote		 (lw_filter, lw_addr);
+	lw_import	  lw_addr  lw_filter_local			 (lw_filter);
+	lw_import		 void  lw_filter_set_local		 (lw_filter, lw_addr);
+	lw_import		 long  lw_filter_local_port		 (lw_filter);
+	lw_import		 void  lw_filter_set_local_port	 (lw_filter, long port);
+	lw_import		 long  lw_filter_remote_port	 (lw_filter);
+	lw_import		 void  lw_filter_set_remote_port (lw_filter, long port);
+	lw_import	  lw_bool  lw_filter_reuse			 (lw_filter);
+	lw_import		 void  lw_filter_set_reuse		 (lw_filter, lw_bool);
+	lw_import	  lw_bool  lw_filter_ipv6			 (lw_filter);
+	lw_import		 void  lw_filter_set_ipv6		 (lw_filter, lw_bool);
+	lw_import	   void *  lw_filter_tag			 (lw_filter);
+	lw_import		 void  lw_filter_set_tag		 (lw_filter, void *);
 
 /* Pump */
 
-  lw_import			void  lw_pump_delete				(lw_pump);
-  lw_import			void  lw_pump_add_user			 (lw_pump);
-  lw_import			void  lw_pump_remove_user		  (lw_pump);
-  lw_import		lw_bool  lw_pump_in_use				(lw_pump);
-  lw_import			void  lw_pump_remove				(lw_pump, lw_pump_watch);
-  lw_import			void  lw_pump_post_remove		  (lw_pump, lw_pump_watch);
-  lw_import			void  lw_pump_post				 (lw_pump, void * fn, void * param);
-  lw_import			void* lw_pump_tag				  (lw_pump);
-  lw_import			void  lw_pump_set_tag			  (lw_pump, void *);
+	lw_import		void  lw_pump_delete		(lw_pump);
+	lw_import		void  lw_pump_add_user		(lw_pump);
+	lw_import		void  lw_pump_remove_user	(lw_pump);
+	lw_import	 lw_bool  lw_pump_in_use		(lw_pump);
+	lw_import		void  lw_pump_remove		(lw_pump, lw_pump_watch);
+	lw_import		void  lw_pump_post_remove	(lw_pump, lw_pump_watch);
+	lw_import		void  lw_pump_post			(lw_pump, void * fn, void * param);
+	lw_import	  void *  lw_pump_tag			(lw_pump);
+	lw_import		void  lw_pump_set_tag		(lw_pump, void *);
 
-  #ifdef _WIN32
+	#ifdef _WIN32
 
 	typedef void (lw_callback * lw_pump_callback)
 		(void * tag, OVERLAPPED *, unsigned long bytes, int error);
@@ -267,7 +272,7 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 
 	lw_import void lw_pump_update_callbacks (lw_pump, lw_pump_watch,
 											 void * tag, lw_pump_callback);
-  #else
+	#else
 
 	typedef void (lw_callback * lw_pump_callback) (void * tag);
 
@@ -280,398 +285,387 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 											 lw_pump_callback on_read_ready,
 											 lw_pump_callback on_write_ready,
 											 lw_bool edge_triggered);
-  #endif
+	#endif
 
-  /* For pump implementors */
+	/* For pump implementors */
 
 	typedef struct lw_pumpdef
 	{
-	  #ifdef _WIN32
+		#ifdef _WIN32
 
-		 lw_pump_watch (* add) (lw_pump, HANDLE, void * tag, lw_pump_callback);
-
-		 void (* update_callbacks) (lw_pump, lw_pump_watch,
-									void * tag, lw_pump_callback);
-	  #else
+		lw_pump_watch (* add)	  (lw_pump, HANDLE, void * tag, lw_pump_callback);
+		void (* update_callbacks) (lw_pump, lw_pump_watch,
+								   void * tag, lw_pump_callback);
+		#else // !_WIN32
 
 		lw_pump_watch (* add) (lw_pump, int FD, void * tag,
-								lw_pump_callback on_read_ready,
-								lw_pump_callback on_write_ready,
-								lw_bool edge_triggered);
-
+							   lw_pump_callback on_read_ready,
+							   lw_pump_callback on_write_ready,
+							   lw_bool edge_triggered);
 		void (* update_callbacks) (lw_pump, lw_pump_watch, void * tag,
-									lw_pump_callback on_read_ready,
-									lw_pump_callback on_write_ready,
-									lw_bool edge_triggered);
-	  #endif
+								   lw_pump_callback on_read_ready,
+								   lw_pump_callback on_write_ready,
+								   lw_bool edge_triggered);
 
-	  void (* remove) (lw_pump, lw_pump_watch);
-	  void (* post) (lw_pump, void * fn, void * param);
-	  void (* cleanup) (lw_pump);
+		#endif // _WIN32
+
+		void (* remove)	 (lw_pump, lw_pump_watch);
+		void (* post)	 (lw_pump, void * fn, void * param);
+		void (* cleanup) (lw_pump);
 
 	  size_t tail_size;
 
 	} lw_pumpdef;
 
-	lw_import lw_pump lw_pump_new (const lw_pumpdef *);
-	lw_import const lw_pumpdef * lw_pump_get_def (lw_pump);
+	lw_import 			 lw_pump  lw_pump_new (const lw_pumpdef *);
+	lw_import const lw_pumpdef *  lw_pump_get_def (lw_pump);
 
-	lw_import void * lw_pump_tail (lw_pump);
-	lw_import lw_pump lw_pump_from_tail (void *);
+	lw_import 		void * lw_pump_tail  (lw_pump);
+	lw_import lw_pump lw_pump_from_tail  (void *);
 
-/* EventPump */
+	/* EventPump */
 
-  lw_import	lw_eventpump  lw_eventpump_new				  ();
-  lw_import		lw_error  lw_eventpump_tick				 (lw_eventpump);
-  lw_import		lw_error  lw_eventpump_start_eventloop	  (lw_eventpump);
-  lw_import		lw_error  lw_eventpump_start_sleepy_ticking (lw_eventpump, void (lw_callback * on_tick_needed) (lw_eventpump));
-  lw_import			void  lw_eventpump_post_eventloop_exit  (lw_eventpump);
+	lw_import	lw_eventpump  lw_eventpump_new					();
+	lw_import		lw_error  lw_eventpump_tick					(lw_eventpump);
+	lw_import		lw_error  lw_eventpump_start_eventloop		(lw_eventpump);
+	lw_import		lw_error  lw_eventpump_start_sleepy_ticking	(lw_eventpump, void (lw_callback * on_tick_needed) (lw_eventpump));
+	lw_import			void  lw_eventpump_post_eventloop_exit	(lw_eventpump);
 
-/* Stream */
+	/* Stream */
 
-  lw_import	  void  lw_stream_delete				(lw_stream);
-  lw_import	size_t  lw_stream_bytes_left			(lw_stream);
-  lw_import	  void  lw_stream_read				  (lw_stream, size_t bytes);
-  lw_import	  void  lw_stream_begin_queue			(lw_stream);
-  lw_import	size_t  lw_stream_queued				(lw_stream);
-  lw_import	  void  lw_stream_end_queue			 (lw_stream);
-  lw_import	  void  lw_stream_end_queue_hb		  (lw_stream, int num_head_buffers, const char ** buffers, size_t * lengths);
-  lw_import	  void  lw_stream_write				 (lw_stream, const char * buffer, size_t length);
-  lw_import	  void  lw_stream_write_text			(lw_stream, const char * buffer);
-  lw_import	  void  lw_stream_writef				(lw_stream, const char * format, ...);
-  lw_import	  void  lw_stream_writev				(lw_stream, const char * format, va_list);
-  lw_import	  void  lw_stream_write_stream		  (lw_stream, lw_stream src, size_t size, lw_bool delete_when_finished);
-  lw_import	  void  lw_stream_write_file			(lw_stream, const char * filename);
-  lw_import	  void  lw_stream_retry				 (lw_stream, int when);
-  lw_import	  void  lw_stream_add_filter_upstream	(lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
-  lw_import	  void  lw_stream_add_filter_downstream (lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
-  lw_import	lw_bool  lw_stream_close				 (lw_stream, lw_bool immediate);
-  lw_import	  void* lw_stream_tag					(lw_stream);
-  lw_import	  void  lw_stream_set_tag				(lw_stream, void *);
-  lw_import	lw_pump  lw_stream_pump				  (lw_stream);
+	lw_import		void  lw_stream_delete					(lw_stream);
+	lw_import	  size_t  lw_stream_bytes_left				(lw_stream);
+	lw_import		void  lw_stream_read					(lw_stream, size_t bytes);
+	lw_import		void  lw_stream_begin_queue				(lw_stream);
+	lw_import	  size_t  lw_stream_queued					(lw_stream);
+	lw_import		void  lw_stream_end_queue				(lw_stream);
+	lw_import		void  lw_stream_end_queue_hb			(lw_stream, int num_head_buffers, const char ** buffers, size_t * lengths);
+	lw_import		void  lw_stream_write					(lw_stream, const char * buffer, size_t length);
+	lw_import		void  lw_stream_write_text				(lw_stream, const char * buffer);
+	lw_import		void  lw_stream_writef					(lw_stream, const char * format, ...);
+	lw_import		void  lw_stream_writev					(lw_stream, const char * format, va_list);
+	lw_import		void  lw_stream_write_stream			(lw_stream, lw_stream src, size_t size, lw_bool delete_when_finished);
+	lw_import		void  lw_stream_write_file				(lw_stream, const char * filename);
+	lw_import		void  lw_stream_retry					(lw_stream, int when);
+	lw_import		void  lw_stream_add_filter_upstream		(lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
+	lw_import		void  lw_stream_add_filter_downstream	(lw_stream, lw_stream filter, lw_bool delete_with_stream, lw_bool close_together);
+	lw_import	 lw_bool  lw_stream_close					(lw_stream, lw_bool immediate);
+	lw_import	  void *  lw_stream_tag						(lw_stream);
+	lw_import		void  lw_stream_set_tag					(lw_stream, void *);
+	lw_import	 lw_pump  lw_stream_pump					(lw_stream);
 
-  #define lw_stream_retry_now  1
-  #define lw_stream_retry_never  2
-  #define lw_stream_retry_more_data  3
+	#define lw_stream_retry_now  1
+	#define lw_stream_retry_never  2
+	#define lw_stream_retry_more_data  3
 
-  typedef void (lw_callback * lw_stream_hook_data)
-	  (lw_stream, void * tag, const char * buffer, size_t length);
+	typedef void (lw_callback * lw_stream_hook_data)
+		(lw_stream, void * tag, const char * buffer, size_t length);
 
-  lw_import void lw_stream_add_hook_data (lw_stream, lw_stream_hook_data, void * tag);
-  lw_import void lw_stream_remove_hook_data (lw_stream, lw_stream_hook_data, void * tag);
+	lw_import void lw_stream_add_hook_data (lw_stream, lw_stream_hook_data, void * tag);
+	lw_import void lw_stream_remove_hook_data (lw_stream, lw_stream_hook_data, void * tag);
 
-  typedef void (lw_callback * lw_stream_hook_close) (lw_stream, void * tag);
+	typedef void (lw_callback * lw_stream_hook_close) (lw_stream, void * tag);
 
-  lw_import void lw_stream_add_hook_close (lw_stream, lw_stream_hook_close, void * tag);
-  lw_import void lw_stream_remove_hook_close (lw_stream, lw_stream_hook_close, void * tag);
+	lw_import void lw_stream_add_hook_close (lw_stream, lw_stream_hook_close, void * tag);
+	lw_import void lw_stream_remove_hook_close (lw_stream, lw_stream_hook_close, void * tag);
 
-  /* For stream implementors */
+	/* For stream implementors */
 
 	typedef struct lw_streamdef
 	{
-	  size_t (* sink_data) (lw_stream, const char * buffer, size_t size);
-	  size_t (* sink_stream) (lw_stream, lw_stream source, size_t size);
-
-	  void (* retry) (lw_stream, int when);
-
-	  lw_bool (* is_transparent) (lw_stream);
-	  lw_bool (* close) (lw_stream, lw_bool immediate);
- 
-	  size_t (* bytes_left) (lw_stream);
-	  void (* read) (lw_stream, size_t bytes);
-
-	  void (* cleanup) (lw_stream);
-
-	  size_t tail_size;
-
+		  size_t  (* sink_data)		 (lw_stream, const char * buffer, size_t size);
+		  size_t  (* sink_stream)	 (lw_stream, lw_stream source, size_t size);
+			void  (* retry)			 (lw_stream, int when);
+		 lw_bool  (* is_transparent) (lw_stream);
+		 lw_bool  (* close) 		 (lw_stream, lw_bool immediate);
+		  size_t  (* bytes_left)	 (lw_stream);
+			void  (* read)			 (lw_stream, size_t bytes);
+			void  (* cleanup)		 (lw_stream);
+		  size_t  tail_size;
 	} lw_streamdef;
 
-	lw_import lw_stream lw_stream_new (const lw_streamdef *, lw_pump);
-	lw_import const lw_streamdef * lw_stream_get_def (lw_stream);
-	
-	lw_import void * lw_stream_tail (lw_stream);
-	lw_import lw_stream lw_stream_from_tail (void *);
+	lw_import			lw_stream	 lw_stream_new		 (const lw_streamdef *, lw_pump);
+	lw_import  const lw_streamdef *  lw_stream_get_def	 (lw_stream);
+	lw_import	  void *			 lw_stream_tail		 (lw_stream);
+	lw_import  lw_stream			 lw_stream_from_tail (void *);
+	lw_import		void			 lw_stream_data		 (lw_stream, const char * buffer, size_t size);
 
-	lw_import void lw_stream_data (lw_stream, const char * buffer, size_t size);
+	/* FDStream */
 
-/* FDStream */
+	lw_import  lw_fdstream  lw_fdstream_new		(lw_pump);
+	lw_import		  void  lw_fdstream_set_fd	(lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
+	lw_import		  void  lw_fdstream_cork	(lw_fdstream);
+	lw_import		  void  lw_fdstream_uncork	(lw_fdstream);
+	lw_import		  void  lw_fdstream_nagle	(lw_fdstream, lw_bool nagle);
+	lw_import	   lw_bool  lw_fdstream_valid	(lw_fdstream);
 
-  lw_import  lw_fdstream  lw_fdstream_new	  (lw_pump);
-  lw_import		 void  lw_fdstream_set_fd	  (lw_fdstream, lw_fd fd, lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket);
-  lw_import		 void  lw_fdstream_cork		  (lw_fdstream);
-  lw_import		 void  lw_fdstream_uncork	  (lw_fdstream);
-  lw_import		 void  lw_fdstream_nagle	  (lw_fdstream, lw_bool nagle);
-  lw_import	  lw_bool  lw_fdstream_valid	  (lw_fdstream);
+	/* File */
 
-/* File */
+	lw_import lw_file lw_file_new (lw_pump);
+	lw_import lw_file lw_file_new_open
+		(lw_pump, const char * filename, const char * mode);
 
-  lw_import lw_file lw_file_new (lw_pump);
+	lw_import lw_bool lw_file_open
+		(lw_file, const char * filename, const char * mode);
 
-  lw_import lw_file lw_file_new_open
-	  (lw_pump, const char * filename, const char * mode);
+	lw_import		 lw_bool  lw_file_open_temp		(lw_file);
+	lw_import   const char *  lw_file_name	   		(lw_file);
 
-  lw_import lw_bool lw_file_open
-	  (lw_file, const char * filename, const char * mode);
+	/* Pipe */
 
-  lw_import lw_bool lw_file_open_temp (lw_file);
+	lw_import	   lw_stream  lw_pipe_new			(lw_pump);
 
-  lw_import const char * lw_file_name (lw_file);
+	/* Timer */
 
-/* Pipe */
-  
-  lw_import  lw_stream  lw_pipe_new  (lw_pump);
+	lw_import		lw_timer  lw_timer_new			(lw_pump);
+	lw_import			void  lw_timer_delete		(lw_timer);
+	lw_import			void  lw_timer_start		(lw_timer, long milliseconds);
+	lw_import		 lw_bool  lw_timer_started		(lw_timer);
+	lw_import			void  lw_timer_stop			(lw_timer);
+	lw_import			void  lw_timer_force_tick	(lw_timer);
+	lw_import		  void *  lw_timer_tag			(lw_timer);
+	lw_import			void  lw_timer_set_tag		(lw_timer, void *);
 
-/* Timer */
-  
-  lw_import		lw_timer  lw_timer_new				  (lw_pump);
-  lw_import			void  lw_timer_delete				(lw_timer);
-  lw_import			void  lw_timer_start				(lw_timer, long milliseconds);
-  lw_import		lw_bool  lw_timer_started			  (lw_timer);
-  lw_import			void  lw_timer_stop				 (lw_timer);
-  lw_import			void  lw_timer_force_tick			(lw_timer);
-  lw_import			void* lw_timer_tag				  (lw_timer);
-  lw_import			void  lw_timer_set_tag			  (lw_timer, void *);
+	typedef void (lw_callback * lw_timer_hook_tick) (lw_timer);
+	lw_import void lw_timer_on_tick (lw_timer, lw_timer_hook_tick);
 
-  typedef void (lw_callback * lw_timer_hook_tick) (lw_timer);
-  lw_import void lw_timer_on_tick (lw_timer, lw_timer_hook_tick);
+	/* Sync */
 
-/* Sync */
+	lw_import	lw_sync  lw_sync_new		();
+	lw_import	   void  lw_sync_delete		(lw_sync);
+	lw_import	   void  lw_sync_lock		(lw_sync);
+	lw_import	   void  lw_sync_release	(lw_sync);
 
-  lw_import		lw_sync  lw_sync_new				  ();
-  lw_import			void  lw_sync_delete				(lw_sync);
-  lw_import			void  lw_sync_lock				 (lw_sync);
-  lw_import			void  lw_sync_release			  (lw_sync);
+	/* Event */
 
-/* Event */
+	lw_import	lw_event  lw_event_new		 ();
+	lw_import		void  lw_event_delete	 (lw_event);
+	lw_import		void  lw_event_signal	 (lw_event);
+	lw_import		void  lw_event_unsignal	 (lw_event);
+	lw_import	 lw_bool  lw_event_signalled (lw_event);
+	lw_import	 lw_bool  lw_event_wait		 (lw_event, long milliseconds);
+	lw_import	  void *  lw_event_tag		 (lw_event);
+	lw_import		void  lw_event_set_tag	 (lw_event, void *);
 
-  lw_import		lw_event  lw_event_new				 ();
-  lw_import			void  lw_event_delete			  (lw_event);
-  lw_import			void  lw_event_signal			  (lw_event);
-  lw_import			void  lw_event_unsignal			(lw_event);
-  lw_import		lw_bool  lw_event_signalled			(lw_event);
-  lw_import		lw_bool  lw_event_wait				(lw_event, long milliseconds);
-  lw_import			void* lw_event_tag				 (lw_event);
-  lw_import			void  lw_event_set_tag			 (lw_event, void *);
+	/* Error */
 
-/* error */
+	lw_import		lw_error  lw_error_new		();
+	lw_import			void  lw_error_delete	(lw_error);
+	lw_import			void  lw_error_add		(lw_error, long);
+	lw_import			void  lw_error_addf		(lw_error, const char * format, ...);
+	lw_import			void  lw_error_addv		(lw_error, const char * format, va_list);
+	lw_import		  size_t  lw_error_size		(lw_error);
+	lw_import	const char *  lw_error_tostring	(lw_error);
+	lw_import		lw_error  lw_error_clone	(lw_error);
+	lw_import		  void *  lw_error_tag		(lw_error);
+	lw_import			void  lw_error_set_tag	(lw_error, void *);
 
-  lw_import		lw_error  lw_error_new				 ();
-  lw_import			void  lw_error_delete			  (lw_error);
-  lw_import			void  lw_error_add				 (lw_error, long);
-  lw_import			void  lw_error_addf				(lw_error, const char * format, ...);
-  lw_import			void  lw_error_addv				(lw_error, const char * format, va_list);
-  lw_import		 size_t  lw_error_size				(lw_error);
-  lw_import	 const char* lw_error_tostring			(lw_error);
-  lw_import		lw_error  lw_error_clone				(lw_error);
-  lw_import			void* lw_error_tag				 (lw_error);
-  lw_import			void  lw_error_set_tag			 (lw_error, void *);
+	/* Client
+	 *
+	 * Note: lw_client derives from lw_stream, so all of the stream functions are
+	 * applicable. To delete a lw_client, use lw_stream_delete.
+	 */
 
-/* Client
- *
- * Note: lw_client derives from lw_stream, so all of the stream functions are
- * applicable.  To delete a lw_client, use lw_stream_delete.
- */
+	lw_import	   lw_client  lw_client_new					(lw_pump);
+	lw_import			void  lw_client_connect				(lw_client, const char * host, long port);
+	lw_import			void  lw_client_connect_addr		(lw_client, lw_addr);
+	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, long port);
+	lw_import			void  lw_client_connect_addr_secure	(lw_client, lw_addr);
+	lw_import			void  lw_client_disconnect			(lw_client);
+	lw_import		 lw_bool  lw_client_connected			(lw_client);
+	lw_import		 lw_bool  lw_client_connecting			(lw_client);
+	lw_import		 lw_addr  lw_client_server_addr			(lw_client);
 
-  lw_import	  lw_client  lw_client_new					(lw_pump);
-  lw_import			void  lw_client_connect				(lw_client, const char * host, long port);
-  lw_import			void  lw_client_connect_addr		  (lw_client, lw_addr);
-  lw_import			void  lw_client_connect_secure		(lw_client, const char * host, long port);
-  lw_import			void  lw_client_connect_addr_secure	(lw_client, lw_addr);
-  lw_import			void  lw_client_disconnect			(lw_client);
-  lw_import		lw_bool  lw_client_connected			 (lw_client);
-  lw_import		lw_bool  lw_client_connecting			(lw_client);
-  lw_import		lw_addr  lw_client_server_addr			(lw_client);
-  
-  typedef void (lw_callback * lw_client_hook_connect) (lw_client);
-  lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
+	typedef void (lw_callback * lw_client_hook_connect) (lw_client);
+	lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
 
-  typedef void (lw_callback * lw_client_hook_disconnect) (lw_client);
-  lw_import void lw_client_on_disconnect (lw_client, lw_client_hook_disconnect);
+	typedef void (lw_callback * lw_client_hook_disconnect) (lw_client);
+	lw_import void lw_client_on_disconnect (lw_client, lw_client_hook_disconnect);
 
-  typedef void (lw_callback * lw_client_hook_data) (lw_client, const char * buffer, long size);
-  lw_import void lw_client_on_data (lw_client, lw_client_hook_data);
+	typedef void (lw_callback * lw_client_hook_data) (lw_client, const char * buffer, long size);
+	lw_import void lw_client_on_data (lw_client, lw_client_hook_data);
 
-  typedef void (lw_callback * lw_client_hook_error) (lw_client, lw_error);
-  lw_import void lw_client_on_error (lw_client, lw_client_hook_error);
+	typedef void (lw_callback * lw_client_hook_error) (lw_client, lw_error);
+	lw_import void lw_client_on_error (lw_client, lw_client_hook_error);
 
-/* Server */
+	/* Server */
 
-  lw_import		  lw_server  lw_server_new					  (lw_pump);
-  lw_import				void  lw_server_delete					(lw_server);
-  lw_import				void  lw_server_host					 (lw_server, long port);
-  lw_import				void  lw_server_host_filter			  (lw_server, lw_filter);
-  lw_import				void  lw_server_unhost					(lw_server);
-  lw_import			lw_bool  lw_server_hosting				  (lw_server);
-  lw_import				long  lw_server_port					 (lw_server);
-  lw_import			lw_bool  lw_server_load_cert_file			(lw_server, const char * filename, const char * passphrase);
-  lw_import			lw_bool  lw_server_load_sys_cert			(lw_server, const char * store_name, const char * common_name, const char * location);
-  lw_import			lw_bool  lw_server_cert_loaded			  (lw_server);
-  lw_import			lw_bool  lw_server_can_npn				  (lw_server);
-  lw_import				void  lw_server_add_npn				  (lw_server, const char * protocol);
-  lw_import		 const char* lw_server_client_npn				(lw_server_client);
-  lw_import			lw_addr  lw_server_client_addr			  (lw_server_client);
-  lw_import			 size_t  lw_server_num_clients			  (lw_server);
-  lw_import	lw_server_client  lw_server_client_first			 (lw_server);
-  lw_import	lw_server_client  lw_server_client_next			  (lw_server_client);
-  lw_import				void* lw_server_tag					  (lw_server);
-  lw_import				void  lw_server_set_tag				  (lw_server, void *);
+	lw_import		   lw_server  lw_server_new				(lw_pump);
+	lw_import				void  lw_server_delete			(lw_server);
+	lw_import				void  lw_server_host			(lw_server, long port);
+	lw_import				void  lw_server_host_filter		(lw_server, lw_filter);
+	lw_import				void  lw_server_unhost			(lw_server);
+	lw_import			 lw_bool  lw_server_hosting			(lw_server);
+	lw_import				long  lw_server_port			(lw_server);
+	lw_import			 lw_bool  lw_server_load_cert_file	(lw_server, const char * filename, const char * passphrase);
+	lw_import			 lw_bool  lw_server_load_sys_cert	(lw_server, const char * store_name, const char * common_name, const char * location);
+	lw_import			 lw_bool  lw_server_cert_loaded		(lw_server);
+	lw_import			 lw_bool  lw_server_can_npn			(lw_server);
+	lw_import				void  lw_server_add_npn			(lw_server, const char * protocol);
+	lw_import		const char *  lw_server_client_npn		(lw_server_client);
+	lw_import			 lw_addr  lw_server_client_addr		(lw_server_client);
+	lw_import			  size_t  lw_server_num_clients		(lw_server);
+	lw_import	lw_server_client  lw_server_client_first	(lw_server);
+	lw_import	lw_server_client  lw_server_client_next		(lw_server_client);
+	lw_import			  void *  lw_server_tag				(lw_server);
+	lw_import				void  lw_server_set_tag			(lw_server, void *);
 
-  typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
-  lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
+	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
+	lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
 
-  typedef void (lw_callback * lw_server_hook_disconnect) (lw_server, lw_server_client);
-  lw_import void lw_server_on_disconnect (lw_server, lw_server_hook_disconnect);
+	typedef void (lw_callback * lw_server_hook_disconnect) (lw_server, lw_server_client);
+	lw_import void lw_server_on_disconnect (lw_server, lw_server_hook_disconnect);
 
-  typedef void (lw_callback * lw_server_hook_data) (lw_server, lw_server_client, const char * buffer, size_t size);
-  lw_import void lw_server_on_data (lw_server, lw_server_hook_data);
-  
-  typedef void (lw_callback * lw_server_hook_error) (lw_server, lw_error);
-  lw_import void lw_server_on_error (lw_server, lw_server_hook_error);
+	typedef void (lw_callback * lw_server_hook_data) (lw_server, lw_server_client, const char * buffer, size_t size);
+	lw_import void lw_server_on_data (lw_server, lw_server_hook_data);
 
-/* UDP */
+	typedef void (lw_callback * lw_server_hook_error) (lw_server, lw_error);
+	lw_import void lw_server_on_error (lw_server, lw_server_hook_error);
 
-  lw_import		 lw_udp  lw_udp_new					(lw_pump);
-  lw_import			void  lw_udp_delete				(lw_udp);
-  lw_import			void  lw_udp_host				  (lw_udp, long port);
-  lw_import			void  lw_udp_host_filter			(lw_udp, lw_filter);
-  lw_import			void  lw_udp_host_addr			 (lw_udp, lw_addr);
-  lw_import		lw_bool  lw_udp_hosting				(lw_udp);
-  lw_import			void  lw_udp_unhost				(lw_udp);
-  lw_import			long  lw_udp_port				  (lw_udp);
-  lw_import			void  lw_udp_send				  (lw_udp, lw_addr, const char * buffer, size_t size);
-  lw_import			void* lw_udp_tag					(lw_udp);
-  lw_import			void  lw_udp_set_tag				(lw_udp, void *);
+	/* UDP */
 
-  typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, const char * buffer, size_t size);
-  lw_import void lw_udp_on_data (lw_udp, lw_udp_hook_data);
+	lw_import	  lw_udp  lw_udp_new		 (lw_pump);
+	lw_import		void  lw_udp_delete		 (lw_udp);
+	lw_import		void  lw_udp_host		 (lw_udp, long port);
+	lw_import		void  lw_udp_host_filter (lw_udp, lw_filter);
+	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr);
+	lw_import	 lw_bool  lw_udp_hosting	 (lw_udp);
+	lw_import		void  lw_udp_unhost		 (lw_udp);
+	lw_import		long  lw_udp_port		 (lw_udp);
+	lw_import		void  lw_udp_send		 (lw_udp, lw_addr, const char * buffer, size_t size);
+	lw_import	  void *  lw_udp_tag		 (lw_udp);
+	lw_import		void  lw_udp_set_tag	 (lw_udp, void *);
 
-  typedef void (lw_callback * lw_udp_hook_error) (lw_udp, lw_error);
-  lw_import void lw_udp_on_error (lw_udp, lw_udp_hook_error);
+	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, const char * buffer, size_t size);
+	lw_import void lw_udp_on_data (lw_udp, lw_udp_hook_data);
 
-/* FlashPolicy */
+	typedef void (lw_callback * lw_udp_hook_error) (lw_udp, lw_error);
+	lw_import void lw_udp_on_error (lw_udp, lw_udp_hook_error);
 
-  lw_import  lw_flashpolicy  lw_flashpolicy_new			(lw_pump);
-  lw_import			void  lw_flashpolicy_delete		(lw_flashpolicy);
-  lw_import			void  lw_flashpolicy_host		  (lw_flashpolicy, const char * filename);
-  lw_import			void  lw_flashpolicy_host_filter	(lw_flashpolicy, const char * filename, lw_filter);
-  lw_import			void  lw_flashpolicy_unhost		(lw_flashpolicy);
-  lw_import		 lw_bool  lw_flashpolicy_hosting		(lw_flashpolicy);
-  lw_import			void*  lw_flashpolicy_tag			(lw_flashpolicy);
-  lw_import			void	lw_flashpolicy_set_tag		(lw_flashpolicy, void *);
+	/* FlashPolicy */
 
-  typedef void (lw_callback * lw_flashpolicy_hook_error) (lw_flashpolicy, lw_error);
-  lw_import void lw_flashpolicy_on_error (lw_flashpolicy, lw_flashpolicy_hook_error);
+	lw_import  lw_flashpolicy  lw_flashpolicy_new			(lw_pump);
+	lw_import			 void  lw_flashpolicy_delete		(lw_flashpolicy);
+	lw_import			 void  lw_flashpolicy_host			(lw_flashpolicy, const char * filename);
+	lw_import			 void  lw_flashpolicy_host_filter	(lw_flashpolicy, const char * filename, lw_filter);
+	lw_import			 void  lw_flashpolicy_unhost		(lw_flashpolicy);
+	lw_import		  lw_bool  lw_flashpolicy_hosting		(lw_flashpolicy);
+	lw_import		   void *  lw_flashpolicy_tag			(lw_flashpolicy);
+	lw_import			 void  lw_flashpolicy_set_tag		(lw_flashpolicy, void *);
 
-/* Webserver */
+	typedef void (lw_callback * lw_flashpolicy_hook_error) (lw_flashpolicy, lw_error);
+	lw_import void lw_flashpolicy_on_error (lw_flashpolicy, lw_flashpolicy_hook_error);
 
-  lw_import			  lw_ws  lw_ws_new					(lw_pump);
-  lw_import				void  lw_ws_delete				 (lw_ws);
-  lw_import				void  lw_ws_host					(lw_ws, long port);
-  lw_import				void  lw_ws_host_secure			(lw_ws, long port);
-  lw_import				void  lw_ws_host_filter			(lw_ws, lw_filter);
-  lw_import				void  lw_ws_host_secure_filter	 (lw_ws, lw_filter);
-  lw_import				void  lw_ws_unhost				 (lw_ws);
-  lw_import				void  lw_ws_unhost_secure		  (lw_ws);
-  lw_import			lw_bool  lw_ws_hosting				(lw_ws);
-  lw_import			lw_bool  lw_ws_hosting_secure		 (lw_ws);
-  lw_import				long  lw_ws_port					(lw_ws);
-  lw_import				long  lw_ws_port_secure			(lw_ws);
-  lw_import			lw_bool  lw_ws_load_cert_file		 (lw_ws, const char * filename, const char * passphrase);
-  lw_import			lw_bool  lw_ws_load_sys_cert		  (lw_ws, const char * store_name, const char * common_name, const char * location);
-  lw_import			lw_bool  lw_ws_cert_loaded			(lw_ws);
-  lw_import				void  lw_ws_session_close		  (lw_ws, const char * id);
-  lw_import				void  lw_ws_enable_manual_finish	(lw_ws);
-  lw_import				long  lw_ws_idle_timeout			(lw_ws);
-  lw_import				void  lw_ws_set_idle_timeout		(lw_ws, long seconds);  
-  lw_import				void* lw_ws_tag					(lw_ws);
-  lw_import				void  lw_ws_set_tag				(lw_ws, void * tag);
-  lw_import			lw_addr  lw_ws_req_addr				(lw_ws_req);
-  lw_import			lw_bool  lw_ws_req_secure			 (lw_ws_req);
-  lw_import		 const char* lw_ws_req_url				(lw_ws_req);
-  lw_import		 const char* lw_ws_req_hostname			(lw_ws_req);
-  lw_import				void  lw_ws_req_disconnect		 (lw_ws_req); 
-  lw_import				void  lw_ws_req_set_redirect		(lw_ws_req, const char * url);
-  lw_import				void  lw_ws_req_status			 (lw_ws_req, long code, const char * message);
-  lw_import				void  lw_ws_req_set_mimetype		(lw_ws_req, const char * mimetype);
-  lw_import				void  lw_ws_req_set_mimetype_ex	(lw_ws_req, const char * mimetype, const char * charset);
-  lw_import				void  lw_ws_req_guess_mimetype	 (lw_ws_req, const char * filename);
-  lw_import				void  lw_ws_req_finish			 (lw_ws_req);
-  lw_import			 lw_i64  lw_ws_req_last_modified	  (lw_ws_req);
-  lw_import				void  lw_ws_req_set_last_modified  (lw_ws_req, lw_i64);
-  lw_import				void  lw_ws_req_set_unmodified	 (lw_ws_req);
-  lw_import				void  lw_ws_req_set_header		 (lw_ws_req, const char * name, const char * value);
-  lw_import				void  lw_ws_req_add_header		 (lw_ws_req, const char * name, const char * value);
-  lw_import		 const char* lw_ws_req_header			 (lw_ws_req, const char * name);
-  lw_import	  lw_ws_req_hdr  lw_ws_req_hdr_first		  (lw_ws_req);
-  lw_import		 const char* lw_ws_req_hdr_name			(lw_ws_req_hdr);
-  lw_import		 const char* lw_ws_req_hdr_value		  (lw_ws_req_hdr);
-  lw_import	  lw_ws_req_hdr  lw_ws_req_hdr_next			(lw_ws_req_hdr);
-  lw_import	lw_ws_req_param  lw_ws_req_GET_first		  (lw_ws_req);
-  lw_import	lw_ws_req_param  lw_ws_req_POST_first		 (lw_ws_req);
-  lw_import		 const char* lw_ws_req_param_name		 (lw_ws_req_param);
-  lw_import		 const char* lw_ws_req_param_value		(lw_ws_req_param);
-  lw_import	lw_ws_req_param  lw_ws_req_param_next		 (lw_ws_req_param);
-  lw_import	lw_ws_req_cookie  lw_ws_req_cookie_first		(lw_ws_req);
-  lw_import		 const char* lw_ws_req_cookie_name		(lw_ws_req_cookie);
-  lw_import		 const char* lw_ws_req_cookie_value		(lw_ws_req_cookie);
-  lw_import	lw_ws_req_cookie  lw_ws_req_cookie_next		(lw_ws_req_cookie);
-  lw_import				void  lw_ws_req_set_cookie		 (lw_ws_req, const char * name, const char * value);
-  lw_import				void  lw_ws_req_set_cookie_attr	(lw_ws_req, const char * name, const char * value, const char * attributes);
-  lw_import		 const char* lw_ws_req_get_cookie		 (lw_ws_req, const char * name);
-  lw_import		 const char* lw_ws_req_session_id		 (lw_ws_req);
-  lw_import				void  lw_ws_req_session_write	  (lw_ws_req, const char * name, const char * value);
-  lw_import		 const char* lw_ws_req_session_read		(lw_ws_req, const char * name);
-  lw_import				void  lw_ws_req_session_close	  (lw_ws_req);
-  lw_import  lw_ws_sessionitem  lw_ws_req_session_first	  (lw_ws_req);
-  lw_import		 const char* lw_ws_sessionitem_name		(lw_ws_sessionitem);
-  lw_import		 const char* lw_ws_sessionitem_value	  (lw_ws_sessionitem);
-  lw_import  lw_ws_sessionitem  lw_ws_sessionitem_next		(lw_ws_sessionitem);
-  lw_import		 const char* lw_ws_req_GET				(lw_ws_req, const char * name);
-  lw_import		 const char* lw_ws_req_POST				(lw_ws_req, const char * name);
-  lw_import		 const char* lw_ws_req_body				(lw_ws_req);
-  lw_import				void  lw_ws_req_disable_cache	  (lw_ws_req);
-  lw_import				long  lw_ws_req_idle_timeout		(lw_ws_req);
-  lw_import				void  lw_ws_req_set_idle_timeout	(lw_ws_req, long seconds);  
-/*lw_import				void  lw_ws_req_enable_dl_resuming (lw_ws_req);
-  lw_import			 lw_i64  lw_ws_req_reqrange_begin	 (lw_ws_req);
-  lw_import			 lw_i64  lw_ws_req_reqrange_end		(lw_ws_req);
-  lw_import				void  lw_ws_req_set_outgoing_range (lw_ws_req, lw_i64 begin, lw_i64 end);*/
-  lw_import		 const char* lw_ws_upload_form_el_name	(lw_ws_upload);
-  lw_import		 const char* lw_ws_upload_filename		(lw_ws_upload);
-  lw_import		 const char* lw_ws_upload_header		  (lw_ws_upload, const char * name);
-  lw_import				void  lw_ws_upload_set_autosave	(lw_ws_upload);
-  lw_import		 const char* lw_ws_upload_autosave_fname  (lw_ws_upload);
-  lw_import	lw_ws_upload_hdr  lw_ws_upload_hdr_first		(lw_ws_upload);
-  lw_import		 const char* lw_ws_upload_hdr_name		(lw_ws_upload_hdr);
-  lw_import		 const char* lw_ws_upload_hdr_value		(lw_ws_upload_hdr);
-  lw_import	lw_ws_upload_hdr  lw_ws_upload_hdr_next		(lw_ws_upload_hdr);
+	/* Webserver */
 
-  typedef void (lw_callback * lw_ws_hook_get) (lw_ws, lw_ws_req);
-  lw_import void lw_ws_on_get (lw_ws, lw_ws_hook_get);
+	lw_import			   lw_ws  lw_ws_new					  (lw_pump);
+	lw_import				void  lw_ws_delete				  (lw_ws);
+	lw_import				void  lw_ws_host				  (lw_ws, long port);
+	lw_import				void  lw_ws_host_secure			  (lw_ws, long port);
+	lw_import				void  lw_ws_host_filter			  (lw_ws, lw_filter);
+	lw_import				void  lw_ws_host_secure_filter	  (lw_ws, lw_filter);
+	lw_import				void  lw_ws_unhost				  (lw_ws);
+	lw_import				void  lw_ws_unhost_secure		  (lw_ws);
+	lw_import			 lw_bool  lw_ws_hosting				  (lw_ws);
+	lw_import			 lw_bool  lw_ws_hosting_secure		  (lw_ws);
+	lw_import				long  lw_ws_port				  (lw_ws);
+	lw_import				long  lw_ws_port_secure			  (lw_ws);
+	lw_import			 lw_bool  lw_ws_load_cert_file		  (lw_ws, const char * filename, const char * passphrase);
+	lw_import			 lw_bool  lw_ws_load_sys_cert		  (lw_ws, const char * store_name, const char * common_name, const char * location);
+	lw_import			 lw_bool  lw_ws_cert_loaded			  (lw_ws);
+	lw_import				void  lw_ws_session_close		  (lw_ws, const char * id);
+	lw_import				void  lw_ws_enable_manual_finish  (lw_ws);
+	lw_import				long  lw_ws_idle_timeout		  (lw_ws);
+	lw_import				void  lw_ws_set_idle_timeout	  (lw_ws, long seconds);
+	lw_import			  void *  lw_ws_tag					  (lw_ws);
+	lw_import				void  lw_ws_set_tag				  (lw_ws, void * tag);
+	lw_import			 lw_addr  lw_ws_req_addr			  (lw_ws_req);
+	lw_import			 lw_bool  lw_ws_req_secure			  (lw_ws_req);
+	lw_import		const char *  lw_ws_req_url				  (lw_ws_req);
+	lw_import		const char *  lw_ws_req_hostname		  (lw_ws_req);
+	lw_import				void  lw_ws_req_disconnect		  (lw_ws_req);
+	lw_import				void  lw_ws_req_set_redirect	  (lw_ws_req, const char * url);
+	lw_import				void  lw_ws_req_status			  (lw_ws_req, long code, const char * message);
+	lw_import				void  lw_ws_req_set_mimetype	  (lw_ws_req, const char * mimetype);
+	lw_import				void  lw_ws_req_set_mimetype_ex	  (lw_ws_req, const char * mimetype, const char * charset);
+	lw_import				void  lw_ws_req_guess_mimetype	  (lw_ws_req, const char * filename);
+	lw_import				void  lw_ws_req_finish			  (lw_ws_req);
+	lw_import			  lw_i64  lw_ws_req_last_modified	  (lw_ws_req);
+	lw_import				void  lw_ws_req_set_last_modified (lw_ws_req, lw_i64);
+	lw_import				void  lw_ws_req_set_unmodified	  (lw_ws_req);
+	lw_import				void  lw_ws_req_set_header		  (lw_ws_req, const char * name, const char * value);
+	lw_import				void  lw_ws_req_add_header		  (lw_ws_req, const char * name, const char * value);
+	lw_import		const char *  lw_ws_req_header			  (lw_ws_req, const char * name);
+	lw_import	   lw_ws_req_hdr  lw_ws_req_hdr_first		  (lw_ws_req);
+	lw_import		const char *  lw_ws_req_hdr_name		  (lw_ws_req_hdr);
+	lw_import		const char *  lw_ws_req_hdr_value		  (lw_ws_req_hdr);
+	lw_import	   lw_ws_req_hdr  lw_ws_req_hdr_next		  (lw_ws_req_hdr);
+	lw_import	 lw_ws_req_param  lw_ws_req_GET_first		  (lw_ws_req);
+	lw_import	 lw_ws_req_param  lw_ws_req_POST_first		  (lw_ws_req);
+	lw_import		const char *  lw_ws_req_param_name		  (lw_ws_req_param);
+	lw_import		const char *  lw_ws_req_param_value		  (lw_ws_req_param);
+	lw_import	 lw_ws_req_param  lw_ws_req_param_next		  (lw_ws_req_param);
+	lw_import	lw_ws_req_cookie  lw_ws_req_cookie_first	  (lw_ws_req);
+	lw_import		const char *  lw_ws_req_cookie_name		  (lw_ws_req_cookie);
+	lw_import		const char *  lw_ws_req_cookie_value	  (lw_ws_req_cookie);
+	lw_import	lw_ws_req_cookie  lw_ws_req_cookie_next		  (lw_ws_req_cookie);
+	lw_import				void  lw_ws_req_set_cookie		  (lw_ws_req, const char * name, const char * value);
+	lw_import				void  lw_ws_req_set_cookie_attr	  (lw_ws_req, const char * name, const char * value, const char * attributes);
+	lw_import		const char *  lw_ws_req_get_cookie		  (lw_ws_req, const char * name);
+	lw_import		const char *  lw_ws_req_session_id		  (lw_ws_req);
+	lw_import				void  lw_ws_req_session_write	  (lw_ws_req, const char * name, const char * value);
+	lw_import		const char *  lw_ws_req_session_read	  (lw_ws_req, const char * name);
+	lw_import				void  lw_ws_req_session_close	  (lw_ws_req);
+	lw_import  lw_ws_sessionitem  lw_ws_req_session_first	  (lw_ws_req);
+	lw_import		const char *  lw_ws_sessionitem_name	  (lw_ws_sessionitem);
+	lw_import		const char *  lw_ws_sessionitem_value	  (lw_ws_sessionitem);
+	lw_import  lw_ws_sessionitem  lw_ws_sessionitem_next	  (lw_ws_sessionitem);
+	lw_import		const char *  lw_ws_req_GET				  (lw_ws_req, const char * name);
+	lw_import		const char *  lw_ws_req_POST			  (lw_ws_req, const char * name);
+	lw_import		const char *  lw_ws_req_body			  (lw_ws_req);
+	lw_import				void  lw_ws_req_disable_cache	  (lw_ws_req);
+	lw_import				long  lw_ws_req_idle_timeout	  (lw_ws_req);
+	lw_import				void  lw_ws_req_set_idle_timeout  (lw_ws_req, long seconds);
+/*  lw_import				void  lw_ws_req_enable_dl_resuming (lw_ws_req);
+	lw_import			  lw_i64  lw_ws_req_reqrange_begin	   (lw_ws_req);
+	lw_import			  lw_i64  lw_ws_req_reqrange_end	   (lw_ws_req);
+	lw_import			    void  lw_ws_req_set_outgoing_range (lw_ws_req, lw_i64 begin, lw_i64 end);*/
+	lw_import		const char *  lw_ws_upload_form_el_name	  (lw_ws_upload);
+	lw_import	    const char *  lw_ws_upload_filename		  (lw_ws_upload);
+	lw_import		const char *  lw_ws_upload_header		  (lw_ws_upload, const char * name);
+	lw_import				void  lw_ws_upload_set_autosave	  (lw_ws_upload);
+	lw_import		const char *  lw_ws_upload_autosave_fname (lw_ws_upload);
+	lw_import	lw_ws_upload_hdr  lw_ws_upload_hdr_first	  (lw_ws_upload);
+	lw_import		const char *  lw_ws_upload_hdr_name		  (lw_ws_upload_hdr);
+	lw_import		const char *  lw_ws_upload_hdr_value	  (lw_ws_upload_hdr);
+	lw_import	lw_ws_upload_hdr  lw_ws_upload_hdr_next		  (lw_ws_upload_hdr);
 
-  typedef void (lw_callback * lw_ws_hook_post) (lw_ws, lw_ws_req);
-  lw_import void lw_ws_on_post (lw_ws, lw_ws_hook_post);
+	typedef void (lw_callback * lw_ws_hook_get) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_get (lw_ws, lw_ws_hook_get);
 
-  typedef void (lw_callback * lw_ws_hook_head) (lw_ws, lw_ws_req);
-  lw_import void lw_ws_on_head (lw_ws, lw_ws_hook_head);
+	typedef void (lw_callback * lw_ws_hook_post) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_post (lw_ws, lw_ws_hook_post);
 
-  typedef void (lw_callback * lw_ws_hook_error) (lw_ws, lw_error);
-  lw_import void lw_ws_on_error (lw_ws, lw_ws_hook_error);
+	typedef void (lw_callback * lw_ws_hook_head) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_head (lw_ws, lw_ws_hook_head);
 
-  typedef void (lw_callback * lw_ws_hook_disconnect) (lw_ws, lw_ws_req);
-  lw_import void lw_ws_on_disconnect (lw_ws, lw_ws_hook_disconnect);
+	typedef void (lw_callback * lw_ws_hook_error) (lw_ws, lw_error);
+	lw_import void lw_ws_on_error (lw_ws, lw_ws_hook_error);
 
-  typedef void (lw_callback * lw_ws_hook_upload_start) (lw_ws, lw_ws_req, lw_ws_upload);
-  lw_import void lw_ws_on_upload_start (lw_ws, lw_ws_hook_upload_start);
+	typedef void (lw_callback * lw_ws_hook_disconnect) (lw_ws, lw_ws_req);
+	lw_import void lw_ws_on_disconnect (lw_ws, lw_ws_hook_disconnect);
 
-  typedef void (lw_callback * lw_ws_hook_upload_chunk) (lw_ws, lw_ws_req, lw_ws_upload, const char * buffer, size_t size);
-  lw_import void lw_ws_on_upload_chunk (lw_ws, lw_ws_hook_upload_chunk);
+	typedef void (lw_callback * lw_ws_hook_upload_start) (lw_ws, lw_ws_req, lw_ws_upload);
+	lw_import void lw_ws_on_upload_start (lw_ws, lw_ws_hook_upload_start);
 
-  typedef void (lw_callback * lw_ws_hook_upload_done) (lw_ws, lw_ws_req, lw_ws_upload);
-  lw_import void lw_ws_on_upload_done (lw_ws, lw_ws_hook_upload_done);
+	typedef void (lw_callback * lw_ws_hook_upload_chunk) (lw_ws, lw_ws_req, lw_ws_upload, const char * buffer, size_t size);
+	lw_import void lw_ws_on_upload_chunk (lw_ws, lw_ws_hook_upload_chunk);
 
-  typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads [], size_t num_uploads);
-  lw_import void lw_ws_on_upload_post (lw_ws, lw_ws_hook_upload_post);
+	typedef void (lw_callback * lw_ws_hook_upload_done) (lw_ws, lw_ws_req, lw_ws_upload);
+	lw_import void lw_ws_on_upload_done (lw_ws, lw_ws_hook_upload_done);
+
+	typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads [], size_t num_uploads);
+	lw_import void lw_ws_on_upload_post (lw_ws, lw_ws_hook_upload_post);
 
 #ifdef __cplusplus
 
@@ -689,11 +683,11 @@ lw_import		lw_bool  lw_random					(char * buffer, size_t size);
 /// 		  If the address is IPv4 or unmapped IPv6, copies it as is. </summary>
 void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
 
-/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
-bool lw_sv_icmp(std::string_view first, std::string_view second);
-
 /// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
 bool lw_sv_cmp(std::string_view first, std::string_view second);
+
+/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
+bool lw_sv_icmp(std::string_view first, std::string_view second);
 
 // to preserve namespace
 #pragma endregion
@@ -708,7 +702,7 @@ typedef struct _error * error;
 struct _error
 {
 	lw_class_wraps (error);
-	
+
 	lw_import void add (const char * format, ...);
 	lw_import void add (int);
 	lw_import void add (const char * format, va_list);
@@ -741,7 +735,7 @@ struct _event
 	lw_import bool signalled ();
 
 	lw_import bool wait (long timeout = -1);
-	
+
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
@@ -781,7 +775,7 @@ struct _pump
 										bool edge_triggered = true);
 
 	#endif
- 
+
 	void remove (lw_pump_watch);
 	void post_remove (lw_pump_watch);
 
@@ -915,7 +909,7 @@ struct _stream
 	* headers before the (already buffered) response body.
 	*/
 
-	lw_import void end_queue ();	
+	lw_import void end_queue ();
 
 	lw_import void end_queue
 		(int head_buffers, const char ** buffers, size_t * lengths);
@@ -948,7 +942,7 @@ lw_import void stream_delete (stream);
 
 
 /** pipe **/
-			  
+
 typedef struct _pipe * pipe;
 
 struct _pipe : public _stream
@@ -960,7 +954,7 @@ lw_import pipe pipe_new ();
 lw_import pipe pipe_new (pump);
 
 
-/** fdstream **/ 
+/** fdstream **/
 
 typedef struct _fdstream * fdstream;
 
@@ -974,7 +968,7 @@ struct _fdstream : public _stream
 	lw_import bool valid ();
 
 	lw_import void cork ();
-	lw_import void uncork ();	
+	lw_import void uncork ();
 
 	lw_import void nagle (bool);
 
@@ -1006,7 +1000,7 @@ lw_import file file_new (pump, const char * filename, const char * mode = "rb");
 typedef struct _address * address;
 
 struct _address
-{  
+{
 	lw_class_wraps (address);
 
 	lw_import long port ();
@@ -1048,17 +1042,17 @@ struct _filter
 {
 	lw_class_wraps (filter);
 
-	lw_import void local (address);	
+	lw_import void local (address);
 	lw_import void remote (address);
 
-	lw_import address local ();	
-	lw_import address remote (); 
+	lw_import address local ();
+	lw_import address remote ();
 
-	lw_import void local_port (long port);	
-	lw_import long local_port ();	
+	lw_import void local_port (long port);
+	lw_import long local_port ();
 
-	lw_import void remote_port (long port);	
-	lw_import long remote_port ();	
+	lw_import void remote_port (long port);
+	lw_import long remote_port ();
 
 	lw_import void reuse (bool enabled);
 	lw_import bool reuse ();
@@ -1091,7 +1085,7 @@ struct _client : public _fdstream
 	lw_import address server_address ();
 
 	typedef void (lw_callback * hook_connect) (client);
-	typedef void (lw_callback * hook_disconnect) (client); 
+	typedef void (lw_callback * hook_disconnect) (client);
 
 	typedef void (lw_callback * hook_data)
 	  (client, const char * buffer, size_t size);
@@ -1253,7 +1247,7 @@ struct _webserver
 
 	typedef void (lw_callback * hook_get) (webserver, webserver_request);
 	typedef void (lw_callback * hook_post) (webserver, webserver_request);
-	typedef void (lw_callback * hook_head) (webserver, webserver_request);  
+	typedef void (lw_callback * hook_head) (webserver, webserver_request);
 	typedef void (lw_callback * hook_disconnect) (webserver, webserver_request);
 	typedef void (lw_callback * hook_error) (webserver, error);
 
@@ -1282,7 +1276,7 @@ struct _webserver
 	lw_import void tag (void *);
 	lw_import void * tag ();
 };
-	
+
 lw_import webserver webserver_new (pump);
 lw_import void webserver_delete (webserver);
 
@@ -1471,13 +1465,13 @@ lw_import void flashpolicy_delete (flashpolicy);
 // lacewing::fd_stream::set_fd uses WSADuplicateSocket() to check if the handle passed is a socket.
 // Normally, this is used to pass access to a socket to a second process, so this prepares the socket for copying.
 // The duplicated information is not used for a new socket, though. It's just discarded.
-// 
+//
 // The missing second socket causes the client OS to not fully disconnect the socket, so on disconnect,
 // • you will normally get four FIN/ACK exchanges. If you encounter this bug, you will get two FIN/ACK.
 // • you get CLOSE_WAIT state until something OS-side does a timeout, or on process close.
-// 
+//
 // On process close, the socket is force-closed with a TCP RST (Reset) message.
-// 
+//
 // To avoid this, just modify the function (and C++ mirror) to pass is_socket parameter.
 // That way the "is socket" hack isn't needed.
 
@@ -1647,7 +1641,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 83;
+	const static int buildnum = 84;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1686,7 +1680,7 @@ public:
 		std::string _name;
 
 	public:
-		unsigned short peercount() const;
+		lw_ui16 peercount() const;
 		std::string name() const;
 	};
 
@@ -1740,8 +1734,8 @@ public:
 
 		void * internaltag = nullptr, *tag = nullptr;
 
-		std::string name() const;
 		bool ischannelmaster() const;
+		std::string name() const;
 
 		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
 		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
@@ -1773,23 +1767,11 @@ public:
 
 			std::string name() const;
 			std::string prevname() const;
-		//	peer * next() const;
 
 			bool readonly() const;
-#if 0
-#ifdef _DEBUG
-		readlock getReadLockDebug(const char * file, const char * func, int line);
-		writelock getWriteLockDebug(const char * file, const char * func, int line);
-#else
-		readlock getReadLock();
-		writelock getWriteLock();
-#endif
-#endif
 		};
 
 		int peercount() const;
-		//channel::peer * firstpeer() const;
-		//channel * next() const;
 		lw_ui16 id() const;
 
 		void leave() const;
@@ -1865,7 +1847,7 @@ namespace lacewing {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 16;
+	static const int buildnum = 17;
 
 	void * internaltag, * tag = nullptr;
 
@@ -2013,9 +1995,14 @@ struct relayserver
 		{
 			// Can be Relay or old versions of Blue
 			Unknown,
-			// Bluewing, Windows.
+			// Bluewing, Windows. Assume ANSI.
 			Windows,
 			Flash,
+			// Bluewing, Windows UTF-8 aware.
+			Windows_Unicode,
+			Android,
+			iOS,
+			Macintosh,
 			HTML5
 			// Edit relayserverinternal::client::getimplementation if you add more lines
 		} clientImpl = clientimpl::Unknown;
@@ -2033,9 +2020,9 @@ struct relayserver
 			bool blasted, lw_ui8 subchannel, lw_ui8 variant, std::string_view message);
 
         bool checkname(std::string_view name);
-				
+
         lw_ui16 _id = 0xFFFF;
-    
+
         std::shared_ptr<relayserver::channel> readchannel(messagereader &reader);
 	};
 

@@ -73,7 +73,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	  buffers [0].BufferType = SECBUFFER_STREAM_HEADER;
 
 	  buffers [1].pvBuffer = (BYTE *) buffer;
-	  buffers [1].cbBuffer = size;
+	  buffers [1].cbBuffer = (unsigned long)size;
 	  buffers [1].BufferType = SECBUFFER_DATA;
 
 	  buffers [2].pvBuffer = ctx->trailer;
@@ -139,7 +139,7 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 
 	  in [0].BufferType = SECBUFFER_TOKEN;
 	  in [0].pvBuffer = (BYTE *) buffer;
-	  in [0].cbBuffer = size;
+	  in [0].cbBuffer = (unsigned long)size;
 
 	  in [1].BufferType = SECBUFFER_EMPTY;
 	  in [1].pvBuffer = 0;
@@ -261,7 +261,7 @@ size_t proc_message_data (lwp_winsslclient ctx, const char * buffer, size_t size
 	SecBuffer buffers [4];
 
 	  buffers [0].pvBuffer = (BYTE *) buffer;
-	  buffers [0].cbBuffer = size;
+	  buffers [0].cbBuffer = (unsigned long)size;
 	  buffers [0].BufferType = SECBUFFER_DATA;
 
 	  buffers [1].BufferType = SECBUFFER_EMPTY;

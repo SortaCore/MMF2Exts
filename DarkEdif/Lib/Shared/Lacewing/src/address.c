@@ -175,11 +175,17 @@ lw_addr lw_addr_clone (lw_addr ctx)
 
 	addr->resolver_thread = lw_thread_new ("resolver", (void *) resolver);
 
-	if (lw_addr_resolve (ctx))
-	  return 0;
+	if (lw_addr_resolve(ctx))
+	{
+		lw_addr_delete(addr); // deletes thread too
+		return 0;
+	}
 
 	if (!ctx->info)
-	  return 0;
+	{
+		lw_addr_delete(addr); // deletes thread too
+		return 0;
+	}
 
 	addr->info = addr->info_to_free = (struct addrinfo *) malloc (sizeof (*addr->info));
 	memcpy (addr->info, ctx->info, sizeof (*addr->info));

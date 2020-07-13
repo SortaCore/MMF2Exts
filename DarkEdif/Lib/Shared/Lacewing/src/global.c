@@ -74,11 +74,11 @@ void lw_dump (const char * buffer, size_t size)
 	const int text_offset = bytes_per_row * 3 + 8;
 
 	unsigned char b;
-	lw_i64 i;
+	size_t i;
 	int row_offset = 0, row_offset_c = 0, row = 0;
 
 	if (size == -1)
-	  size = strlen (buffer);
+	  size = (lw_ui32) strlen (buffer);
 
 	fprintf (stderr, "=== " lwp_fmt_size " bytes @ %p ===\n", size, buffer);
 
@@ -132,13 +132,13 @@ void lw_dump (const char * buffer, size_t size)
 	 int i = 0;
 
 	 lw_md5 (output, input, length);
-	 
+
 	 while (i < 16)
 	 {
 		 sprintf (hex + (i * 2), "%02x", ((unsigned char *) output) [i]);
 		 ++ i;
 	 }
- 
+
 	 strcpy (output, hex);
  }
 
@@ -146,15 +146,15 @@ void lw_dump (const char * buffer, size_t size)
  {
 	 char hex [48];
 	 int i = 0;
- 
+
 	 lw_sha1 (output, input, length);
-	 
+
 	 while (i < 20)
 	 {
 		 sprintf (hex + (i * 2), "%02x", ((unsigned char *) output) [i]);
 		 ++ i;
 	 }
- 
+
 	 strcpy (output, hex);
  }
 
@@ -162,23 +162,23 @@ void lw_dump (const char * buffer, size_t size)
 
 #ifdef _lacewing_debug
 
+lw_sync lw_trace_sync = 0;
 void lw_trace (const char * format, ...)
 {
 	va_list args;
 	char * data;
 	size_t size;
-	static lw_sync sync = 0;
 
 	va_start (args, format);
-	
+
 	size = lwp_format (&data, format, args);
-	
+
 	if(size > 0)
 	{
-	  if (!sync)
-		 sync = lw_sync_new ();
+	  if (!lw_trace_sync)
+		  lw_trace_sync = lw_sync_new ();
 
-	  lw_sync_lock (sync);
+	  lw_sync_lock (lw_trace_sync);
 
 	  #ifdef ANDROID
 		 __android_log_write (ANDROID_LOG_INFO, "liblacewing", data);
@@ -194,7 +194,7 @@ void lw_trace (const char * format, ...)
 
 	  free (data);
 
-	  lw_sync_release (sync);
+	  lw_sync_release (lw_trace_sync);
 	}
 
 	va_end (args);

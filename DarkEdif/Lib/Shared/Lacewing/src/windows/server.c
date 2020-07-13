@@ -48,6 +48,8 @@ static void on_client_data (lw_stream, void * tag, const char * buffer, size_t s
 
 struct _lw_server
 {
+	lwp_refcounted;
+
 	SOCKET socket;
 
 	lw_pump pump;
@@ -67,7 +69,7 @@ struct _lw_server
 
 	void * tag;
 };
-	
+
 struct _lw_server_client
 {
 	struct _lw_fdstream fdstream;
@@ -76,7 +78,7 @@ struct _lw_server_client
 
 	lw_bool on_connect_called;
 
-	/* IPv4 and IPv6 both accepted, but IPv4 is mapped to IPv6. 
+	/* IPv4 and IPv6 both accepted, but IPv4 is mapped to IPv6.
 	  When looking up string representation make sure to check. */
 	lw_addr addr;
 
@@ -89,6 +91,16 @@ struct _lw_server_client
 	struct _lwp_serverssl ssl;
 };
 
+// Called by refcounter when it reaches zero
+static void lw_server_dealloc(lw_server ctx)
+{
+	// No refs, so there should be no pending accepts
+	assert(list_length(ctx->pending_accepts) == 0);
+	list_clear(ctx->pending_accepts);
+
+	free(ctx);
+}
+
 lw_server lw_server_new (lw_pump pump)
 {
 	lw_server ctx = (lw_server) calloc (sizeof (*ctx), 1);
@@ -96,10 +108,13 @@ lw_server lw_server_new (lw_pump pump)
 	if (!ctx)
 	  return 0;
 
+	lwp_enable_refcount_logging(ctx, "server");
+	lwp_set_dealloc_proc(ctx, lw_server_dealloc);
 	lwp_init ();
 
 	ctx->socket = -1;
 	ctx->pump = pump;
+	lwp_retain(ctx, "server_new");
 
 	return ctx;
 }
@@ -107,10 +122,11 @@ lw_server lw_server_new (lw_pump pump)
 void lw_server_delete (lw_server ctx)
 {
 	lw_server_unhost (ctx);
+	lwp_release(ctx, "server_new");
 
 	lwp_deinit ();
 
-	free (ctx);
+	//free (ctx);
 }
 
 void lw_server_set_tag (lw_server ctx, void * tag)
@@ -150,7 +166,15 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket)
 	return client;
 }
 
-const int ideal_pending_accept_count = 64;
+const int ideal_pending_accept_count = 32;
+
+bool accept_completed(lw_server ctx, accept_overlapped overlapped, bool release = true, bool deleteSocket = true)
+{
+	if (deleteSocket)
+		closesocket(overlapped->socket);
+	list_elem_remove(overlapped); // frees overlapped
+	return release && lwp_release(ctx, "pending accept");
+}
 
 static lw_bool issue_accept (lw_server ctx)
 {
@@ -173,10 +197,11 @@ static lw_bool issue_accept (lw_server ctx)
 
 	lwp_disable_ipv6_only ((lwp_socket) overlapped->socket);
 
-	DWORD bytes_received; 
+	DWORD bytes_received;
 
 	/* TODO : Use AcceptEx to receive the first data? */
 
+	lwp_retain(ctx, "pending accept");
 	if (!AcceptEx (ctx->socket,
 				  overlapped->socket,
 				  overlapped->addr_buffer,
@@ -190,11 +215,11 @@ static lw_bool issue_accept (lw_server ctx)
 
 	  if (error != ERROR_IO_PENDING)
 	  {
-		 list_elem_remove (overlapped);
-		 closesocket(overlapped->socket);
+		 accept_completed(ctx, overlapped);
 		 return lw_false;
 	  }
 	}
+	// else completed in sync (still queued in IOCP)
 
 	return lw_true;
 }
@@ -207,8 +232,8 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
 	if (error)
 	{
-	  list_elem_remove (overlapped);
-	  return;
+		accept_completed(ctx, overlapped);
+		return;
 	}
 
 	while (list_length (ctx->pending_accepts) < ideal_pending_accept_count)
@@ -238,19 +263,17 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	);
 
 	lw_server_client client = lwp_server_client_new (ctx, overlapped->socket);
+	lwp_release(ctx, "pending accept");
 
 	if (!client)
 	{
-	  closesocket ((SOCKET) overlapped->socket);
-	  list_elem_remove (overlapped);
-
-	  return;
+		accept_completed(ctx, overlapped, false);
+		return;
 	}
 
 	client->addr = lwp_addr_new_sockaddr ((struct sockaddr *) remote_addr);
-	
-	list_elem_remove (overlapped);
-	overlapped = NULL;
+
+	accept_completed(ctx, overlapped, false, false);
 
 	lwp_retain (client, "on_connect");
 
@@ -259,8 +282,12 @@ static void listen_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	if (ctx->on_connect)
 	  ctx->on_connect (ctx, client);
 
-	if (lwp_release (client, "on_connect"))
-	  return;  /* client was deleted by connect hook */
+	if (lwp_release(client, "on_connect"))
+	{
+		if (ctx->on_disconnect)
+			ctx->on_disconnect(ctx, client);
+		return;  /* client was deleted by connect hook; client->addr will be too */
+	}
 
 	list_push (ctx->clients, client);
 	client->elem = list_elem_back (ctx->clients);
@@ -329,19 +356,19 @@ void lw_server_unhost (lw_server ctx)
 	if (!lw_server_hosting (ctx))
 		return;
 
+	closesocket (ctx->socket);
+	ctx->socket = -1;
+
+	// We keep on_disconnect while unhosting so user data can be freed; Relay servers will check
+	// if they're hosting before running their user handler.
+	//ctx->on_disconnect = nullptr;
 	list_each (ctx->clients, client)
 	{
-		// Prevent hooks from progressing JIC
-		lw_stream_set_tag((lw_stream)client, nullptr);
-
-		lw_stream_delete((lw_stream)client);
-		//lwp_release(((lw_stream)client, "lwp_stream_init")
+		// If you call just lw_stream_delete, on_client_close close hook is never called, so memory is leaked.
+		// on_client_close will call lw_stream_delete.
+		lw_stream_close((lw_stream)client, lw_true);
 	}
-
 	list_clear(ctx->clients);
-
-	// assert (list_length (ctx->clients) == 0);
-
 
 	list_each(ctx->pending_accepts, overlapped)
 	{
@@ -350,15 +377,10 @@ void lw_server_unhost (lw_server ctx)
 		overlapped.socket = INVALID_SOCKET;
 	}
 
-	list_clear (ctx->pending_accepts);
+//	list_clear (ctx->pending_accepts);
 
-	lw_pump_remove (ctx->pump, ctx->pump_watch);
+	lw_pump_post_remove (ctx->pump, ctx->pump_watch);
 	ctx->pump_watch = NULL;
-
-	CancelIoEx ((HANDLE) ctx->socket, NULL);
-
-	closesocket (ctx->socket);
-	ctx->socket = -1;
 }
 
 lw_bool lw_server_hosting (lw_server ctx)
@@ -455,7 +477,7 @@ lw_bool lw_server_load_sys_cert (lw_server ctx,
 	  }
 
 	} while(0);
-	
+
 	if (location_id == -1)
 	{
 	  lw_error error = lw_error_new ();
@@ -691,7 +713,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 	creds.paCred = &context;
 	creds.grbitEnabledProtocols = 0xF0; /* SP_PROT_SSL3TLS1 */
 
-	TimeStamp expiry_time; 
+	TimeStamp expiry_time;
 
 	int result = AcquireCredentialsHandleA
 	(
@@ -728,7 +750,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 
 lw_bool lw_server_cert_loaded (lw_server ctx)
 {
-	return ctx->cert_loaded;	
+	return ctx->cert_loaded;
 }
 
 lw_bool lw_server_can_npn (lw_server ctx)
@@ -790,8 +812,6 @@ void on_client_close (lw_stream stream, void * tag)
 
 	lwp_retain (client, "on_client_close");
 
-	client->socket = INVALID_HANDLE_VALUE;
-
 	if (client->on_connect_called)
 	{
 	  if (ctx->on_disconnect)
@@ -812,11 +832,13 @@ void on_client_close (lw_stream stream, void * tag)
 	lw_addr_delete (client->addr);
 	client->addr = nullptr;
 
+	lw_stream_delete ((lw_stream) client);
+
 	lwp_release (client, "on_client_close");
 
-	lw_stream_close ((lw_stream) client, lw_true);
-	
-	// free(client); will happen when the stream delete handler called
+	// lw_pump_remove happens in close_fd(), which happens in lw_stream_close()
+
+	// free(client); will happen when the stream delete handler is called
 }
 
 void lw_server_on_data (lw_server ctx, lw_server_hook_data on_data)

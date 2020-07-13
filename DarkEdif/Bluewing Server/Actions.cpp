@@ -67,7 +67,6 @@ void Extension::SetWelcomeMessage(char * message)
 	Srv.setwelcomemessage(message);
 }
 
-
 static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWith,
 	char *& denyReason, GlobalInfo * globals, const char * const funcName)
 {
@@ -119,7 +118,6 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 	globals->CreateError(err);
 	return AutoResponse::Invalid;
 }
-
 
 void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, char * autoDenyReason)
 {
@@ -489,6 +487,323 @@ void Extension::Client_SetLocalData(char * key, char * value)
 	//	return CreateError("Could not set client local data: Client is read-only.");
 
 	globals->SetLocalData(selClient, key, value);
+}
+void Extension::Client_JoinToChannel(char * channelNamePtr)
+{
+	CreateError("Not implemented.");
+}
+void Extension::Channel_CreateChannelWithMasterByName(char * channelNamePtr, int hiddenInt, int autocloseInt, char * masterClientName)
+{
+	if (channelNamePtr[0] == '\0')
+		return CreateError("Cannot create new channel; blank channel name supplied.");
+	if (strlen(channelNamePtr) > 254)
+		return CreateError("Cannot create new channel; channel name \"%s\" is too long.", channelNamePtr);
+	if (hiddenInt < 0 || hiddenInt > 1)
+		return CreateError("Cannot create new channel; hidden channel setting is %i, should be 0 or 1.", hiddenInt);
+	if (autocloseInt < 0 || autocloseInt > 1)
+		return CreateError("Cannot create new channel; autoclose channel setting is %i, should be 0 or 1.", autocloseInt);
+
+	bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
+	std::string_view channelName(channelNamePtr);
+
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & channels = Srv.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[=](const auto & cli) {
+					return lw_sv_icmp(cli->name(), channelName);
+				});
+		if (foundChIt != channels.cend())
+			return CreateError("Error creating channel with name \"%s\"; channel already exists.", channelNamePtr);
+	}
+
+	// Blank master client
+	decltype(selClient) masterClientToUse;
+	if (masterClientName == '\0')
+	{
+		// Autoclose means when master leaves, you leave. Since there's no "set master" action yet... this makes no sense.
+		if (autoclose)
+			return CreateError("Error creating channel; no master specified, and autoclose \"leave when master leaves\" setting cannot be enabled when there is no master to leave.");
+	}
+	else // Pick master client
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[&](const auto & cli) { return lw_sv_icmp(cli->name(), masterClientName); });
+		if (foundCliIt == clients.cend())
+			return CreateError("Error creating channel; specified master client name \"%s\" not found on server.", masterClientName);
+		selClient = *foundCliIt;
+	}
+
+	// Will submit joinchannel_response if needed; also adds to server channel list
+	Srv.createchannel(channelName, masterClientToUse, hidden, autoclose);
+}
+void Extension::Channel_CreateChannelWithMasterByID(char * channelNamePtr, int hiddenInt, int autocloseInt, int masterClientID)
+{
+	if (channelNamePtr[0] == '\0')
+		return CreateError("Cannot create new channel; blank channel name supplied.");
+	if (strlen(channelNamePtr) > 254)
+		return CreateError("Cannot create new channel; channel name \"%s\" is too long.", channelNamePtr);
+	if (hiddenInt < 0 || hiddenInt > 1)
+		return CreateError("Cannot create new channel; hidden channel setting is %i, should be 0 or 1.", hiddenInt);
+	if (autocloseInt < 0 || autocloseInt > 1)
+		return CreateError("Cannot create new channel; autoclose channel setting is %i, should be 0 or 1.", autocloseInt);
+	if (masterClientID < -1 || masterClientID >= 65535)
+		return CreateError("Cannot create new channel; master client ID %i is invalid. Use -1 for no master.", masterClientID);
+
+	bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
+	std::string_view channelName(channelNamePtr);
+
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & channels = Srv.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[=](const auto & cli) {
+					return lw_sv_icmp(cli->name(), channelName);
+				});
+		if (foundChIt != channels.cend())
+			return CreateError("Error creating channel with name \"%s\"; channel already exists.", channelNamePtr);
+	}
+
+	// Blank master client
+	decltype(selClient) masterClientToUse;
+	if (masterClientID == -1)
+	{
+		// Autoclose means when master leaves, you leave. Since there's no "set master" action yet... this makes no sense.
+		if (autoclose)
+			return CreateError("Error creating channel; no master specified, and autoclose \"leave when master leaves\" setting cannot be enabled when there is no master to leave.");
+	}
+	else // Pick master client
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[&](const auto & cli) { return cli->id() == masterClientID; });
+		if (foundCliIt == clients.cend())
+			return CreateError("Error creating channel; specified master client ID %i not found on server.", masterClientID);
+		selClient = *foundCliIt;
+	}
+
+	// Will submit joinchannel_response if needed; also adds to server channel list
+	Srv.createchannel(channelName, masterClientToUse, hidden, autoclose);
+}
+void Extension::Channel_JoinClientByID(int clientID)
+{
+	if (!selChannel)
+		return CreateError("Cannot force client to join channel; no channel selected.");
+
+	if (!selChannel->readonly())
+		return CreateError("Error forcing client to join channel; channel is read-only.");
+
+	if (clientID < -1 || clientID >= 65535)
+		return CreateError("Cannot join client to channel; supplied client ID %i is invalid. Use -1 for currently selected client.", clientID);
+
+	// Note: if user attempts to connect to "abc", and Fusion dev decides, while handling the event,
+	// to join the user to "abc", on server end, this will be auto-denied by sanity checks in second run of joinchannel_response.
+	// On client end, this will cause a join channel success, followed by a "error joining channel, you're already on the channel"
+	// join channel denied message.
+
+	decltype(selClient) clientToUse = nullptr;
+
+	if (clientID == -1)
+	{
+		if (!selClient)
+			return CreateError("Error joining client to selected channel; ID -1 was supplied and no client currently selected.");
+		clientToUse = selClient;
+	}
+	else
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[=](const auto & cli) {
+					return cli->id() == clientID;
+				});
+		if (foundCliIt == clients.cend())
+			return CreateError("Error joining client with ID %i from channel; client with that ID not found on server.", clientID);
+		clientToUse = *foundCliIt;
+	}
+
+	if (clientToUse->readonly())
+		return CreateError("Error joining client \"%s\" (ID %i) to channel \"%s\"; client is read-only.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+
+	// Check that channel does not contain client, and client does not contain channel; there may be inconsistency if client is currently leaving.
+	{
+		auto chCliReadLock = selChannel->lock.createReadLock();
+		const auto & clientsOnChannel = selChannel->getclients();
+		if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) != clientsOnChannel.cend())
+			return CreateError("Error joining client \"%s\" (ID %i) to channel \"%s\"; client is already on the channel.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+	}
+	{
+		auto cliChReadLock = clientToUse->lock.createReadLock();
+		const auto & channelsOnClient = clientToUse->getchannels();
+		if (std::find(channelsOnClient.cbegin(), channelsOnClient.cend(), selChannel) != channelsOnClient.cend())
+			return CreateError("Error joining client \"%s\" (ID %i) to channel \"%s\"; client is already on the channel.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+	}
+
+	// All checks passed; make it happen
+	Srv.joinchannel_response(selChannel, clientToUse, std::string_view());
+}
+void Extension::Channel_JoinClientByName(char * clientNamePtr)
+{
+	if (!selChannel)
+		return CreateError("Cannot join client to channel; no channel selected.");
+
+	if (!selChannel->readonly())
+		return CreateError("Error joining client to selected channel; channel is read-only.");
+
+	decltype(selClient) clientToUse = nullptr;
+
+	if (clientNamePtr[0] == '\0')
+	{
+		if (!selClient)
+			return CreateError("Error joining client to selected channel; blank client name was supplied and no client currently selected.");
+		clientToUse = selClient;
+	}
+	else
+	{
+		std::string_view clientName(clientNamePtr);
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[=](const auto & cli) {
+					return lw_sv_icmp(cli->name(), clientName);
+				});
+		if (foundCliIt == clients.cend())
+			return CreateError("Error joining client with name \"%s\" to channel; client with that name not found on server.", clientNamePtr);
+		clientToUse = *foundCliIt;
+	}
+
+	if (clientToUse->readonly())
+		return CreateError("Error joining client \"%s\" (ID %hu) to channel \"%s\"; client is read-only.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+
+	// Check that channel contains client, and client contains channel; there may be inconsistency if client is currently leaving.
+	{
+		auto chCliReadLock = selChannel->lock.createReadLock();
+		const auto & clientsOnChannel = selChannel->getclients();
+		if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) != clientsOnChannel.cend())
+			return CreateError("Error joining client \"%s\" (ID %hu) to channel \"%s\"; client is already on the channel.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+	}
+	{
+		auto cliChReadLock = clientToUse->lock.createReadLock();
+		const auto & channelsOnClient = clientToUse->getchannels();
+		if (std::find(channelsOnClient.cbegin(), channelsOnClient.cend(), selChannel) != channelsOnClient.cend())
+			return CreateError("Error joining client \"%s\" (ID %hu) to channel \"%s\"; client is already on the channel.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+	}
+
+	// All checks passed; make it happen
+	Srv.joinchannel_response(selChannel, clientToUse, std::string_view());
+}
+void Extension::Channel_KickClientByID(int clientID)
+{
+	if (!selChannel)
+		return CreateError("Cannot force client to leave channel; no channel selected.");
+
+	if (!selChannel->readonly())
+		return CreateError("Error forcing client to leave channel; channel is read-only.");
+
+	if (clientID < -1 || clientID >= 65535)
+		return CreateError("Cannot kick client from channel; supplied client ID %i is invalid. Use -1 for currently selected client.", clientID);
+
+	decltype(selClient) clientToUse = nullptr;
+
+	if (clientID == -1)
+	{
+		if (!selClient)
+			return CreateError("Error kicking client from selected channel; ID -1 was supplied but no client currently selected.");
+		clientToUse = selClient;
+	}
+	else
+	{
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[=](const auto & cli) {
+					return cli->id() == clientID;
+				});
+		if (foundCliIt == clients.cend())
+			return CreateError("Error kicking client with ID %i from channel; client with that ID not found on server.", clientID);
+		clientToUse = *foundCliIt;
+	}
+
+	if (clientToUse->readonly())
+		return CreateError("Error kicking client \"%s\" (ID %i) from channel \"%s\"; client is read-only.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+
+	// Check that channel contains client, and client contains channel; there may be inconsistency if client is currently leaving.
+	{
+		auto chCliReadLock = selChannel->lock.createReadLock();
+		const auto & clientsOnChannel = selChannel->getclients();
+		if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) == clientsOnChannel.cend())
+			return CreateError("Error kicking client \"%s\" (ID %i) from channel \"%s\"; client is not on the channel.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+	}
+	{
+		auto cliChReadLock = clientToUse->lock.createReadLock();
+		const auto & channelsOnClient = clientToUse->getchannels();
+		if (std::find(channelsOnClient.cbegin(), channelsOnClient.cend(), selChannel) == channelsOnClient.cend())
+			return CreateError("Error kicking client \"%s\" (ID %i) from channel \"%s\"; client is not on the channel.", clientToUse->name().c_str(), clientID, selChannel->name().c_str());
+	}
+
+	// All checks passed; make it happen
+	Srv.leavechannel_response(selChannel, clientToUse, std::string_view());
+}
+void Extension::Channel_KickClientByName(char * clientNamePtr)
+{
+	if (!selChannel)
+		return CreateError("Cannot force client to leave channel; no channel selected.");
+
+	if (!selChannel->readonly())
+		return CreateError("Error forcing client to leave channel; channel is read-only.");
+
+	decltype(selClient) clientToUse = nullptr;
+
+	if (clientNamePtr[0] == '\0')
+	{
+		if (!selClient)
+			return CreateError("Error kicking client from selected channel; blank name was supplied but no client currently selected.");
+		clientToUse = selClient;
+	}
+	else
+	{
+		std::string_view clientName(clientNamePtr);
+		auto serverReadLock = Srv.lock.createReadLock();
+		const auto & clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[=](const auto & cli) {
+					return lw_sv_icmp(cli->name(), clientName);
+				});
+		if (foundCliIt == clients.cend())
+			return CreateError("Error kicking client with name \"%s\" from channel; client with that name not found on server.", clientNamePtr);
+		clientToUse = *foundCliIt;
+	}
+
+	if (clientToUse->readonly())
+		return CreateError("Error kicking client \"%s\" (ID %hu) from channel \"%s\"; client is read-only.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+
+	// Check that channel contains client, and client contains channel; there may be inconsistency if client is currently leaving.
+	{
+		auto chCliReadLock = selChannel->lock.createReadLock();
+		const auto & clientsOnChannel = selChannel->getclients();
+		if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) == clientsOnChannel.cend())
+			return CreateError("Error kicking client \"%s\" (ID %hu) from channel \"%s\"; client is not on the channel.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+	}
+	{
+		auto cliChReadLock = clientToUse->lock.createReadLock();
+		const auto & channelsOnClient = clientToUse->getchannels();
+		if (std::find(channelsOnClient.cbegin(), channelsOnClient.cend(), selChannel) == channelsOnClient.cend())
+			return CreateError("Error kicking client \"%s\" (ID %hu) from channel \"%s\"; client is not on the channel.", clientToUse->name().c_str(), clientToUse->id(), selChannel->name().c_str());
+	}
+
+	// All checks passed; make it happen
+	Srv.leavechannel_response(selChannel, clientToUse, std::string_view());
 }
 void Extension::Client_LoopJoinedChannels()
 {
@@ -885,7 +1200,6 @@ void Extension::AddString(char * string)
 
 	AddToSend(string, strlen(string) + 1);
 }
-
 void Extension::AddBinary(unsigned int address, int size)
 {
 	if (size < 0)

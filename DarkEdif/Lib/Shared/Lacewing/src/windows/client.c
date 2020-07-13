@@ -295,7 +295,7 @@ static void on_stream_data (lw_stream stream, void * tag,
 {
 	lw_client ctx = (lw_client) tag;
 
-	ctx->on_data (ctx, buffer, length);
+	ctx->on_data (ctx, buffer, (long)length);
 }
 
 void lw_client_on_data (lw_client ctx, lw_client_hook_data on_data)

@@ -146,6 +146,8 @@ list_element * _list_prev (list_element * elem)
 	return (list_element *) get_value_ptr (elem);
 }
 
+// Worth noting this does not free list_head, mostly because list_each and such
+// complain if the list is edited during a loop. list_clear() does free list_head.
 void _list_remove (list_element * elem)
 {
 	if (!elem)

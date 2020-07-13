@@ -38,16 +38,11 @@ extern const lw_pumpdef def_eventpump;
 struct _lw_pump_watch
 {
 	lw_pump_callback on_completion;
-
 	void * tag;
-	_lw_pump_watch() {
-		on_completion = nullptr;
-		tag = nullptr;
-	}
 };
 
 struct _lw_eventpump
-{  
+{
 	struct _lw_pump pump;
 
 	HANDLE completion_port;
@@ -72,6 +67,8 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
 						unsigned int bytes_transferred, lw_pump_watch watch,
 						int error)
 {
+	// when bytes_transferred is 0xFF, it indicates that watch points to a timer completion function,
+	// and that overlapped is a lw_timer address.
 	if (bytes_transferred == 0xFFFFFFFF)
 	{
 	  /* See eventpump_post */
@@ -84,18 +81,8 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
 	if (overlapped == sig_exit_event_loop)
 	  return lw_false;
 
-	if (error == ERROR_OPERATION_ABORTED)
-		return lw_true;
-
 	if (watch->on_completion)
-	{
-		try {
-			watch->on_completion(watch->tag, overlapped, bytes_transferred, error);
-		}
-		catch (...) {
-			return lw_true;
-		}
-	}
+		watch->on_completion(watch->tag, overlapped, bytes_transferred, error);
 
 	return lw_true;
 }
@@ -185,7 +172,7 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 	  process (ctx, ctx->watcher.overlapped,
 					ctx->watcher.bytes_transferred,
 					ctx->watcher.event,
-					ctx->watcher.error); 
+					ctx->watcher.error);
 	}
 
 	OVERLAPPED * overlapped;
@@ -207,9 +194,6 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 
 		 if (error == WAIT_TIMEOUT)
 			break;
-
-		 if (error == ERROR_OPERATION_ABORTED)
-			 break;
 
 		 if (!overlapped)
 			break;
@@ -249,7 +233,7 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
 		 /* Are all pending operations completed?
 		  */
 		 if (finished && error == WAIT_TIMEOUT)
-			break;
+			 break;
 
 		 if (!overlapped)
 			continue;
@@ -270,7 +254,7 @@ void lw_eventpump_post_eventloop_exit (lw_eventpump ctx)
 lw_error lw_eventpump_start_sleepy_ticking
 	(lw_eventpump ctx, void (lw_callback * on_tick_needed) (lw_eventpump))
 {
-	ctx->on_tick_needed = on_tick_needed;	
+	ctx->on_tick_needed = on_tick_needed;
 	lw_thread_start (ctx->watcher.thread, ctx);
 
 	return 0;
@@ -288,19 +272,15 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
 	if (!watch)
 	  return 0;
 
-	assert((long)callback != 0xDDDDDDDDL && (long)tag != 0xDDDDDDDDL && (long)handle != 0xDDDDDDDDL);
-
 	watch->on_completion = callback;
 	watch->tag = tag;
 
+	// If this fails; it does rarely happen as a race condition during a server shutdown
 	if (CreateIoCompletionPort (handle, ctx->completion_port,
-								(ULONG_PTR) watch, 0) != 0)
+								(ULONG_PTR) watch, 0) == NULL)
 	{
-	  /* success */
-	}
-	else
-	{
-	  assert (0);
+		free(watch);
+		return 0;
 	}
 
 	return watch;
@@ -317,35 +297,26 @@ static void def_remove (lw_pump _ctx, lw_pump_watch watch)
 
 	watch->on_completion = nullptr;
 	watch->tag = nullptr;
-	
+
 	free (watch);
-	watch = nullptr;
 }
 
 static void def_post (lw_pump _ctx, void * function, void * parameter)
 {
 	lw_eventpump ctx = (lw_eventpump) _ctx;
 
-#ifdef _DEBUG
-	assert(((long)parameter) != 0xDDDDDDDDL && ((long)function) != 0xDDDDDDDDL);
-#endif
-
 	PostQueuedCompletionStatus (ctx->completion_port, 0xFFFFFFFF,
 								(ULONG_PTR) function,
 								(OVERLAPPED *) parameter);
 }
 
-static void def_update_callbacks (lw_pump ctx, 
+static void def_update_callbacks (lw_pump ctx,
 								  lw_pump_watch watch,
 								  void * tag,
 								  lw_pump_callback on_completion)
 {
 	watch->tag = tag;
 	watch->on_completion = on_completion;
-
-#ifdef _DEBUG
-	assert(((long)watch) != 0xDDDDDDDDL && ((long)tag) != 0xDDDDDDDDL && ((long)on_completion) != 0xDDDDDDDDL);
-#endif
 }
 
 const lw_pumpdef def_eventpump =

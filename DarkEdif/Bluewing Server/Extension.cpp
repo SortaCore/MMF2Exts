@@ -104,8 +104,14 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(79, EnableCondition_OnMessageToServer);
 		LinkAction(80, OnInteractive_Deny);
 		LinkAction(81, EnableCondition_OnNameSetRequest);
-		//LinkAction(82, HTML5Server_EnableHosting);
-		//LinkAction(83, HTML5Server_DisableHosting);
+		LinkAction(82, Channel_CreateChannelWithMasterByName);
+		LinkAction(83, Channel_CreateChannelWithMasterByID);
+		LinkAction(84, Channel_JoinClientByName);
+		LinkAction(85, Channel_JoinClientByID);
+		LinkAction(86, Channel_KickClientByName);
+		LinkAction(87, Channel_KickClientByID);
+		//LinkAction(88, HTML5Server_EnableHosting);
+		//LinkAction(89, HTML5Server_DisableHosting);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
@@ -413,8 +419,8 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
-	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
-	_server(_objEventPump.get())
+	: _objEventPump(lacewing::eventpump_new()),
+	_server(_objEventPump)
 {
 	_ext = e;
 	Refs.push_back(e);
@@ -463,19 +469,16 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	_server.onmessage_peer(nullptr);
 
 	// Cleanup all usages of GlobalInfo
-	if (!_thread)
-		_objEventPump->tick();
-
 	_server.tag = nullptr; // was == this, now this is not usable
 
-	if (_server.hosting())
-	{
-		_server.unhost();
+	lastDestroyedExtSelectedClient.reset();
+	lastDestroyedExtSelectedChannel.reset();
 
-		if (!_thread)
-			_objEventPump->tick();
-		Sleep(0U);
-	}
+	if (_server.hosting())
+		_server.unhost();
+	if (_server.flash->hosting())
+		_server.flash->unhost();
+
 	_objEventPump->post_eventloop_exit();
 
 	if (_thread)
@@ -491,16 +494,11 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	}
 	else
 	{
-		_objEventPump->tick();
-		Sleep(0U);
+		// Loop until end
+		_objEventPump->start_eventloop();
 	}
-}
-void eventpumpdeleter(lacewing::eventpump pump)
-{
-	OutputDebugStringA("Pump deleting...\n");
-	lacewing::pump_delete(pump);
-	OutputDebugStringA("Pump deleted.\n");
-	_CrtCheckMemory();
+
+	lacewing::pump_delete(_objEventPump);
 }
 
 

@@ -189,7 +189,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 									 int protocol, lw_error error)
 {
 	lwp_socket s;
-	int addr_len;
+	size_t addr_len;
 	struct sockaddr_storage addr;
 	lw_bool ipv6;
 	int reuse;

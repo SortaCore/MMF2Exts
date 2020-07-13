@@ -87,7 +87,32 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 
 		 if (error || !bytes_transferred)
 		 {
-			lw_stream_close ((lw_stream) ctx, lw_false);
+
+			// First, establish if connection has died, or temporarily had an error.
+			// If it's died, we'll do an immediate shutdown, otherwise a graceful.
+
+			bool otherEndUnreachable =
+				// Connection closed on other end nicely
+				(error == NO_ERROR && bytes_transferred == 0) ||
+				// Connection closed on other end
+				error == ERROR_NETNAME_DELETED ||
+				// Local network went down (something providing connectivity failed)
+				error == WSAENETDOWN ||
+				// Local network unreachable (no route to other side)
+				error == WSAENETUNREACH ||
+				// Local network was reset, and this connection was closed forcibly; e.g. network adapter reset
+				error == WSAENETRESET ||
+				// Remote end reset their connection
+				error == WSAECONNABORTED ||
+				// Remote end reset their connection
+				error == WSAECONNRESET ||
+				// Local socket was shut down via shutdown()/closesocket() call
+				error == WSAESHUTDOWN ||
+				// Local socket not connected
+				error == WSAENOTCONN;
+			lwp_trace("Closing stream %p, due to error %i. Unreachable: %s.\n", ctx, error, otherEndUnreachable ? "YES" : "NO");
+
+			lw_stream_close ((lw_stream) ctx, otherEndUnreachable);
 			break;
 		 }
 
@@ -109,7 +134,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 	  {
 		 assert (overlapped == &ctx->transmitfile_overlapped);
 
-		 ctx->transmit_file_from->transmit_file_to = 0;							
+		 ctx->transmit_file_from->transmit_file_to = 0;
 		 write_completed (ctx->transmit_file_from);
 		 ctx->transmit_file_from = 0;
 
@@ -123,17 +148,6 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 	};
 
 	lwp_release (ctx, "fdstream completion");
-
-	// read lwp_refcount's first member, refcount. If it's now 1, only lwp_stream_init keeps this stream open.
-	// This is the easiest way to close the connection and free the memory invoked.
-	if (*((unsigned short *)ctx) == 1)
-	{
-		Sleep(10);
-		lw_trace("Running stream_delete for stream %p due to fd_stream completion hack.", ctx);
-		lw_stream_delete((lw_stream)ctx);
-		// TODO: UDP LEAKED?!
-		lw_trace("Stream delete completed.");
-	}
 }
 
 static void close_fd (lw_fdstream ctx)
@@ -162,55 +176,49 @@ static void close_fd (lw_fdstream ctx)
 	  ctx->transmit_file_to = 0;
 	}
 
-	if (!CancelIoEx (ctx->fd, NULL))
-	{
-	  // Error not found is no IO ops to cancel, so not a problem.
-		DWORD lastError = GetLastError();
-		assert (lastError == ERROR_NOT_FOUND || lastError == 0);
-	}
-
-	list_each (ctx->pending_writes, overlapped)
-	{
-		free(overlapped);
-	}
-
-	list_clear (ctx->pending_writes);
-	
-	while (ctx->num_pending_writes > 0)
-	{
-	  remove_pending_write (ctx);
-	}
-	
-	if (ctx->flags & lwp_fdstream_flag_read_pending)
-	{
-	  read_completed (ctx);
-	}
+	// No need to run CancelIoEx(), closesocket() will run it internally
 
 	if (ctx->flags & lwp_fdstream_flag_auto_close)
 	{
 	  if (ctx->flags & lwp_fdstream_flag_is_socket)
 	  {
 		 shutdown((SOCKET)ctx->fd, SD_BOTH);
-		 
+
 		 if (closesocket ((SOCKET) ctx->fd) == SOCKET_ERROR)
 		 {
-			 assert (lw_false);
+			 // There's no error reporting function here, and it's not worth killing the app over.
+			 #ifdef _lacewing_debug
+
+			 lw_error err = lw_error_new();
+			 lw_error_add(err, WSAGetLastError());
+			 lwp_trace("closesocket() returned %s", lw_error_tostring(err));
+			 lw_error_delete(err);
+
+			 #endif
 		 }
-		 ctx->fd = INVALID_HANDLE_VALUE;
+		 else
+			 ctx->fd = INVALID_HANDLE_VALUE;
 	  }
 	  else
-		 CloseHandle (ctx->fd);
+	  {
+		  if (CloseHandle(ctx->fd) == FALSE)
+		  {
+			  // There's no error reporting function here, and it's not worth killing the app over.
+			  #ifdef _lacewing_debug
+
+			  lw_error err = lw_error_new();
+			  lw_error_add(err, GetLastError());
+			  lwp_trace("CloseHandle() returned %s", lw_error_tostring(err));
+			  lw_error_delete(err);
+
+			  #endif
+		  }
+		  else
+			ctx->fd = INVALID_HANDLE_VALUE;
+	  }
 	}
 
-	if (ctx->watch)
-	{
-		lw_pump pump = lw_stream_pump((lw_stream)ctx);
-		lw_pump_update_callbacks(pump, ctx->watch, nullptr, nullptr);
-		lw_pump_remove(pump, ctx->watch);
-	  ctx->watch = NULL;
-	}
-
-	ctx->fd = INVALID_HANDLE_VALUE;
+	list_clear(ctx->pending_writes);
 
 	lwp_deinit();
 }
@@ -223,7 +231,7 @@ void write_completed (lw_fdstream ctx)
 	{
 	  /* Were we trying to close? */
 
-	  if ( (ctx->flags & lwp_fdstream_flag_close_asap) && ctx->num_pending_writes == 0)
+	  if ( (ctx->flags & lwp_fdstream_flag_close_asap) && !(ctx->flags & lwp_fdstream_flag_read_pending))
 	  {
 		 close_fd (ctx);
 
@@ -240,7 +248,10 @@ void issue_read (lw_fdstream ctx)
 	  return;
 
 	if (ctx->flags & lwp_fdstream_flag_read_pending)
-	  return;
+	  return; // Only one read pending on a stream at once
+
+	ctx->flags |= lwp_fdstream_flag_read_pending;
+	lwp_retain(ctx, "fdstream read");  /* retain the stream for the duration of the read op */
 
 	memset (&ctx->read_overlapped, 0, sizeof (ctx->read_overlapped));
 
@@ -249,34 +260,52 @@ void issue_read (lw_fdstream ctx)
 	ctx->read_overlapped.overlapped.Offset = ctx->offset.LowPart;
 	ctx->read_overlapped.overlapped.OffsetHigh = ctx->offset.HighPart;
 
-	size_t to_read = sizeof (ctx->buffer);
+	DWORD to_read = sizeof (ctx->buffer);
 
 	if (ctx->reading_size != -1 && to_read > ctx->reading_size)
-	  to_read = ctx->reading_size;
-
-	if (ReadFile (ctx->fd, ctx->buffer, to_read,
-				 0, &ctx->read_overlapped.overlapped) == -1)
 	{
-	  int error = GetLastError();
-
-	  if (error != ERROR_IO_PENDING)
-		{
-		 lw_stream_close ((lw_stream) ctx, lw_true);
-		 return;
-	  }
+		to_read = (DWORD)ctx->reading_size;
+		if constexpr (sizeof(ctx->reading_size) > 4)
+			assert(ctx->reading_size < 0xFFFFFFFF);
 	}
 
-	if (ctx->size != -1)
-	  ctx->offset.QuadPart += to_read;
+	// On error or running async, 0 will be returned.
+	if (ReadFile (ctx->fd, ctx->buffer, to_read,
+				 0, &ctx->read_overlapped.overlapped) == FALSE)
+	{
+		int error = GetLastError();
+		// IO Pending is a non-error indicating ReadFile() is running asynchronously
+		if (error == ERROR_IO_PENDING)
+		{
+			if (ctx->size != -1)
+				ctx->offset.QuadPart += to_read;
+			lw_trace("FDStream %p; ReadFile returned async with no error", ctx);
+			return;
+		}
 
-	ctx->flags |= lwp_fdstream_flag_read_pending;
-	lwp_retain (ctx, "fdstream read");  /* retain the stream for the duration of the read op */
+		// Otherwise, real error; this read op has been cancelled so run it as completed
+		lw_trace("FDStream %p; ReadFile returned error %d", ctx, error);
+		read_completed(ctx);
+		return;
+	}
+	// else ran synchronously with no error.
+
+	if (ctx->size != -1)
+		ctx->offset.QuadPart += to_read;
+	lwp_trace("FDStream %p; ReadFile returned sync with no error", ctx);
 }
 
 void read_completed (lw_fdstream ctx)
 {
 	ctx->flags &= ~ lwp_fdstream_flag_read_pending;
 	lwp_release (ctx, "fdstream read");  /* matches retain in issue_read */
+
+	// A graceful close is scheduled, and no read/writes remaining; close now
+	if ((ctx->flags & lwp_fdstream_flag_close_asap) && ctx->num_pending_writes == 0)
+	{
+		lw_stream_close((lw_stream)ctx, lw_true);
+		return;
+	}
 }
 
 static void def_cleanup (lw_stream _ctx)
@@ -291,12 +320,13 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 {
 	lwp_trace ("FDStream %p : set FD to %d, auto_close %d, is_socket %d", ctx, fd, (int) auto_close, (int) is_socket);
 
-	if (ctx->watch)
+	if (ctx->stream.watch)
 	{
+		assert(false);
 		lw_pump pump = lw_stream_pump((lw_stream)ctx);
-		lw_pump_update_callbacks(pump, ctx->watch, nullptr, nullptr);
-		lw_pump_remove(pump, ctx->watch);
-	  ctx->watch = NULL;
+	//	lw_pump_update_callbacks(pump, ctx->watch, nullptr, nullptr);
+		lw_pump_post_remove(pump, ctx->stream.watch);
+		ctx->stream.watch = NULL;
 	}
 
 	ctx->fd = fd;
@@ -316,7 +346,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 	// See Lacewing.h.
 	// I've modified function to pass whether it's a socket instead.
 	// Alternatively, https://stackoverflow.com/a/6574906 (NtQueryObject) could be used.
-	
+
 	WSAPROTOCOL_INFO info;
 	if (WSADuplicateSocket ((SOCKET) ctx->fd,
 							GetCurrentProcessId (),
@@ -327,7 +357,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		if (error == WSAENOTSOCK || error == WSAEINVAL)
 			ctx->flags &= ~ lwp_fdstream_flag_is_socket;
 	}*/
- 
+
 	if (ctx->flags & lwp_fdstream_flag_is_socket)
 	{
 		ctx->size = -1;
@@ -351,14 +381,14 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 
 	if (watch)
 	{
-		ctx->watch = watch;
+		ctx->stream.watch = watch;
 
 		lw_pump_update_callbacks (lw_stream_pump ((lw_stream) ctx),
 								  watch, ctx, completion);
 	}
 	else
 	{
-		ctx->watch = lw_pump_add (lw_stream_pump ((lw_stream) ctx),
+		ctx->stream.watch = lw_pump_add (lw_stream_pump ((lw_stream) ctx),
 								 fd, ctx, completion);
 	}
 
@@ -368,7 +398,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 
 lw_bool lw_fdstream_valid (lw_fdstream ctx)
 {
-	return ctx->fd != INVALID_HANDLE_VALUE;
+	return ctx->fd != INVALID_HANDLE_VALUE && !(ctx->flags & lwp_fdstream_flag_close_asap);
 }
 
 /* Note that this always swallows all of the data (unlike on *nix where it
@@ -384,14 +414,21 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	if (!size)
 	  return size; /* nothing to do */
 
+	// Size must be storable in 32-bit
+	if constexpr (sizeof(size) > 4)
+		assert(size < 0xFFFFFFFF);
+
+	if (_ctx->flags & lwp_fdstream_flag_close_asap)
+		return size; /* stream closing, cancel the write */
+
 	/* TODO : Pre-allocate a bunch of these and reuse them? */
 
 	fdstream_overlapped overlapped = (fdstream_overlapped)
 	  malloc (sizeof (*overlapped) + size);
 
 	if (!overlapped)
-	  return size; 
-	
+	  return size;
+
 	memset (overlapped, 0, sizeof (*overlapped));
 	overlapped->type = overlapped_type_write;
 
@@ -408,15 +445,23 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 
 	if (WriteFile (ctx->fd,
 				  overlapped->data,
-				  size,
+				  (DWORD)size,
 				  0,
-				  (OVERLAPPED *) overlapped) == -1)
+				  (OVERLAPPED *) overlapped) == FALSE)
 	{
 	  int error = GetLastError ();
 
 	  if (error != ERROR_IO_PENDING)
 	  {
-		 /* TODO : send failed - anything to do here? */
+		 free(overlapped);
+
+		 // There's no error reporting function here, and not worth killing the app over
+#ifdef _lacewing_debug
+		 lw_error err = lw_error_new();
+		 lw_error_add(err, error);
+		 lwp_trace("Failed to write to socket %p, got error %s", lw_error_tostring(err));
+		 lw_error_delete(err);
+#endif
 
 		 return size;
 	  }
@@ -448,7 +493,7 @@ static size_t def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
 	lw_fdstream dest = (lw_fdstream) _dest;
 
 	if (size >= (((size_t) 1024) * 1024 * 1024 * 2))
-	  return -1; 
+	  return -1;
 
 	/* TransmitFile can only send from a file to a socket */
 
@@ -535,27 +580,30 @@ static size_t def_bytes_left (lw_stream _ctx)
 }
 
 /* Unlike with *nix, there's the possibility that data might actually be
- * pending in the FDStream, rather than just the Stream.  
+ * pending in the FDStream, rather than just the Stream.
  */
 
 static lw_bool def_close (lw_stream _ctx, lw_bool immediate)
 {
 	lw_fdstream ctx = (lw_fdstream) _ctx;
 
+	// If ordered to close immediately, or we can anyway, do so.
 	if (immediate || ctx->num_pending_writes == 0)
 	{
-	  lwp_retain (ctx, "fdstream close");
+		lwp_retain (ctx, "fdstream close");
 
-	  close_fd (ctx);
+		close_fd (ctx);
 
-	  lwp_release (ctx, "fdstream close");
+		lwp_release (ctx, "fdstream close");
 
-	  return lw_true;
+		return lw_true;
 	}
 	else
 	{
-	  ctx->flags |= lwp_fdstream_flag_close_asap;
-	  return lw_false;
+		ctx->flags |= lwp_fdstream_flag_close_asap;
+		shutdown((SOCKET)ctx->fd, SD_RECEIVE);
+		CancelIoEx(ctx->fd, (OVERLAPPED *)&ctx->read_overlapped);
+		return lw_false;
 	}
 }
 

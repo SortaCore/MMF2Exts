@@ -1,4 +1,4 @@
-###Edif to DarkEdif conversion###
+### Edif to DarkEdif conversion ###
 
 1. Copy and open copy of DarkEdif Template project file
 2. Remove any unneeded files (e.g. Actions if there's no actions)
@@ -10,7 +10,7 @@
  * Use of NOPROPS means DarkEdif will still provide a list of properties to Fusion from the JSON; however, it will not save or read any of them from EDITDATA itself, so you'll have to implement that part in GetPropValue and related functions. There's examples of this in Bluewing Client and Server, as their EDITDATAs are set to replicate the Relay counterpart's memory layout.
 
 
-###Notes about DarkEdif properties###
+### Notes about DarkEdif properties ###
 
 In the current DarkEdif system, which is a static uneditable block of memory, changes to properties will result in existing EDITDATAs becoming invalid, and only a recreation of the object will result in correct EDITDATA size.
 This is consistent with older SDKs, so it's not exactly a regression; in older SDKs, you'd have to write your own upgrade function via UpdateEditStructure. The Tab Control object has an example of this.

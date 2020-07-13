@@ -39,7 +39,7 @@ void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 	lwp_enable_refcount_logging (ctx, "stream");
 
 	/* This means that the refcount can never become 0 until lw_stream_delete */
-	lwp_retain (ctx, "lwp_stream_init"); 
+	lwp_retain (ctx, "lwp_stream_init");
 
 	ctx->def = def;
 	ctx->pump = pump;
@@ -80,12 +80,17 @@ lw_stream lw_stream_from_tail (void * tail)
 
 void lw_stream_delete (lw_stream ctx)
 {
-	lw_trace("In lw_stream_delete for %p", ctx);
+	// WARNING: Does not call close hooks consistently. Instead of using lw_stream_delete to kill
+	// the connection, use lw_stream_close(x, lw_true) instead.
+	// If the socket is closing, whether it's client disconnecting on their end, or you closing the socket to
+	// disconnect the client, then that will invoke the close hooks.
+	// lw_stream_delete won't properly clean up if directly used (i.e. outside of a close hook triggering it).
+
 	if (!ctx)
 	  return;
 
 	if (ctx->flags & lwp_stream_flag_dead)
-	  return;
+		return;
 
 	ctx->flags |= lwp_stream_flag_dead;
 
@@ -98,7 +103,7 @@ void lw_stream_delete (lw_stream ctx)
 	/* Prevent any entry to lw_stream_close now */
 
 	ctx->flags |= lwp_stream_flag_closing;
-	
+
 	list_clear (ctx->close_hooks);
 
 	/* If this stream is a root in the graph, remove it */
@@ -178,7 +183,10 @@ void lw_stream_delete (lw_stream ctx)
 	list_clear (ctx->back_queue);
 
 	if (ctx->watch)
-	  lw_pump_post_remove(ctx->pump, ctx->watch);
+	{
+		lw_pump_post_remove(ctx->pump, ctx->watch);
+		ctx->watch = NULL;
+	}
 
 	/* This matches the lwp_retain in lw_stream_new, allowing the refcount to
 	* become 0 and the stream to be destroyed.
@@ -251,7 +259,7 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 {
 	if (size == -1)
 	  size = strlen (buffer);
-	
+
 	if (ctx->flags & (lwp_stream_flag_dead | lwp_stream_flag_closing | lwp_stream_flag_closeASAP))
 		return 0U;
 
@@ -358,7 +366,7 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 
 	  return size;
 	}
-	
+
 	/* If the stream def says the stream should be considered transparent, we
 	* can skip sinking the data and just act as if it's already passed though.
 	*/
@@ -465,7 +473,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 	assert (ctx->graph == source->graph);
 
 	lwp_streamgraph_link link = (lwp_streamgraph_link) calloc (sizeof (*link), 1);
-	
+
 	link->from = source;
 	link->to = ctx;
 	link->bytes_left = size;
@@ -566,24 +574,24 @@ void lw_stream_read (lw_stream ctx, size_t bytes)
 
 void lw_stream_data (lw_stream ctx, const char * buffer, size_t size)
 {
-	int num_data_hooks = list_length (ctx->exp_data_hooks);
+	size_t num_data_hooks = list_length (ctx->exp_data_hooks);
 
 	lwp_retain (ctx, "lw_stream_data");
 
-	/* TODO: The data hook list would be faster to make a copy of if it was	 
+	/* TODO: The data hook list would be faster to make a copy of if it was
 	* a real array.
 	*/
 
 	lwp_stream_data_hook data_hooks = (lwp_stream_data_hook) alloca
 		(sizeof (struct _lwp_stream_data_hook) * num_data_hooks);
 
-	int i = 0;
+	size_t i = 0;
 
 	list_each (ctx->exp_data_hooks, hook)
 	{
-	  data_hooks [i ++] = *hook;
+	  data_hooks [i ++] = hook;
 
-	  lwp_retain (hook->stream, "stream_data hook");
+	  lwp_retain (hook.stream, "stream_data hook");
 	}
 
 	for (i = 0; i < num_data_hooks; ++ i)
@@ -610,7 +618,7 @@ void lw_stream_data (lw_stream ctx, const char * buffer, size_t size)
 
 void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 {
-	int num_links = list_length (ctx->next_expanded);
+	size_t num_links = list_length (ctx->next_expanded);
 
 	if (!num_links)
 	  return;  /* nothing to do */
@@ -637,7 +645,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 
 	int last_expand = ctx->graph->last_expand;
 
-	for (int i = 0; i < num_links; ++ i)
+	for (size_t i = 0; i < num_links; ++ i)
 	{
 	  link = links [i];
 
@@ -688,7 +696,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 		  * (yet to be written to) have disappeared, they must be removed.
 		  */
 
-		 for (int x = i; x < num_links; ++ x)
+		 for (size_t x = i; x < num_links; ++ x)
 		 {
 			if (!list_find (ctx->next_expanded, links [x]))
 			{
@@ -754,7 +762,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 		* intend to write to are still present in the list.
 		*/
 
-	  for (int x = i; x < num_links; ++ x)
+	  for (size_t x = i; x < num_links; ++ x)
 		 if (!list_find (ctx->next_expanded, links [x]))
 			links [x] = 0;
 	}
@@ -848,10 +856,10 @@ void lwp_stream_write_queued (lw_stream ctx)
 
 	lwp_retain (ctx, "write front queue");
 
-	ctx->front_queue = lwp_stream_write_queue (ctx, ctx->front_queue); 
+	ctx->front_queue = lwp_stream_write_queue (ctx, ctx->front_queue);
 
-	if (lwp_release (ctx, "write front queue") || ctx->flags & lwp_stream_flag_dead)
-	  return
+	if (lwp_release(ctx, "write front queue") || ctx->flags & lwp_stream_flag_dead)
+		return;
 
 	lwp_trace ("%p : Front queue size is now %d, %d prev, %d in back queue",
 		 ctx, list_length (ctx->front_queue), list_length (ctx->prev),
@@ -932,7 +940,6 @@ lw_bool lwp_stream_may_close (lw_stream ctx)
 
 lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 {
-	lw_trace("lw_stream_close called for stream %p", ctx);
 	if (ctx->flags & lwp_stream_flag_closing)
 	  return lw_false;
 
@@ -953,7 +960,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 		* lw_stream_close should be called again later with immediate = true
 		*/
 
-	  return lw_false; 
+	  return lw_false;
 	}
 
 	ctx->flags |= lwp_stream_flag_closing;
@@ -1062,7 +1069,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 	  hook.proc (ctx, hook.tag);
 
 	  if (ctx->flags & lwp_stream_flag_dead)
-		 break;  /* close hook destroyed the stream */
+		break;  /* close hook destroyed the stream */
 	}
 
 	ctx->flags &= ~ lwp_stream_flag_closing;
@@ -1177,14 +1184,10 @@ lw_bool lwp_stream_is_transparent (lw_stream ctx)
 void lw_stream_add_hook_data (lw_stream stream,
 							  lw_stream_hook_data proc,
 							  void * tag)
-{	
+{
 	/* TODO : Prevent the same hook being registered twice? */
 
-	lwp_stream_data_hook hook = (lwp_stream_data_hook) calloc (sizeof (*hook), 1);
-
-	hook->proc = proc;
-	hook->stream = stream;
-	hook->tag = tag;
+	_lwp_stream_data_hook hook = { proc, stream, tag };// (lwp_stream_data_hook)calloc(sizeof(*hook), 1);
 
 	list_push (stream->data_hooks, hook);
 
@@ -1192,19 +1195,19 @@ void lw_stream_add_hook_data (lw_stream stream,
 	lwp_streamgraph_expand (stream->graph);
 
 	/* TODO: Do we need to call lwp_streamgraph_read here? */
-} 
+}
 
 void lw_stream_remove_hook_data (lw_stream stream,
 									lw_stream_hook_data proc,
 									void * tag)
-{	
+{
 	if (list_length(stream->data_hooks) == 0)
 		return;
 	lw_bool found = lw_false;
 
 	list_each_elem (stream->data_hooks, hook)
 	{
-	  if ((*hook)->proc == proc && (*hook)->tag == tag)
+	  if ((*hook).proc == proc && (*hook).tag == tag)
 	  {
 		 list_elem_remove (hook);
 		 found = lw_true;
@@ -1219,21 +1222,21 @@ void lw_stream_remove_hook_data (lw_stream stream,
 	lwp_streamgraph_expand (stream->graph);
 }
 
-void lw_stream_add_hook_close (lw_stream stream,
-								lw_stream_hook_close proc,
-								void * tag)
-{	
-	struct _lwp_stream_close_hook hook = { proc, tag };
+void lw_stream_add_hook_close(lw_stream stream,
+	lw_stream_hook_close proc,
+	void *tag)
+{
+	_lwp_stream_close_hook hook = { proc, tag };
 	list_push (stream->close_hooks, hook);
 
 	lwp_streamgraph_clear_expanded (stream->graph);
 	lwp_streamgraph_expand (stream->graph);
-} 
+}
 
 void lw_stream_remove_hook_close (lw_stream stream,
 								  lw_stream_hook_close proc,
 								  void * tag)
-{	
+{
 	if (list_length(stream->close_hooks) == 0)
 		return;
 
@@ -1242,6 +1245,7 @@ void lw_stream_remove_hook_close (lw_stream stream,
 	{
 	  if (hook->proc == proc && hook->tag == tag)
 	  {
+		 free(hook);
 		 list_elem_remove (hook);
 		 found = lw_true;
 		 break;

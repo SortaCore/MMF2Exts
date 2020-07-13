@@ -6,7 +6,7 @@
 			"Name": "Lacewing Blue Client",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2020 by Darkwire Software",
-			"Comment": "\"Bluewing\" recreation of Lacewing Relay Client. (b%i, %s)",
+			"Comment": "Multiplayer client, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Client. (b%i, %s)",
 			"Help": "Help/BluewingHelp.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -1438,12 +1438,4 @@
 			}
 		]
 	}
-	/*,
-	
-	"US English":
-	{},
-	"French":
-	{},
-	"Japanese":
-	{}*/
 }

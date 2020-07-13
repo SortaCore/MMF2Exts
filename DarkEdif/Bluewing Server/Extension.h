@@ -106,8 +106,15 @@ public:
 		void Channel_SetLocalData(char * key, char * value);
 		void LoopAllChannels();
 		void LoopAllChannelsWithName(char * loopName);
+		void Channel_CreateChannelWithMasterByName(char * channelName, int hidden, int autoclose, char * masterClientName);
+		void Channel_CreateChannelWithMasterByID(char * channelName, int hidden, int autoclose, int masterClientID);
+		void Channel_KickClientByName(char * clientName);
+		void Channel_KickClientByID(int id);
+		void Channel_JoinClientByName(char * clientName);
+		void Channel_JoinClientByID(int id);
 		void Client_Disconnect();
 		void Client_SetLocalData(char * key, char * value);
+		void Client_JoinToChannel(char * channelNamePtr);
 		void Client_LoopJoinedChannels();
 		void Client_LoopJoinedChannelsWithName(char * loopName);
 		void Client_SelectByName(char * clientName);
@@ -305,7 +312,7 @@ enum class AutoResponse : char
 
 struct GlobalInfo
 {
-	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
+	lacewing::eventpump			_objEventPump;
 	lacewing::relayserver		_server;
 	char *						_sendMsg = nullptr;
 	std::string					_denyReason,

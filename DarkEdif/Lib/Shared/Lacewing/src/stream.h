@@ -109,12 +109,12 @@ struct _lw_stream
 
 	lw_pump pump;
 	lw_pump_watch watch;
-	
+
 	char flags;
 
 	void * tag;
 
-	list (lwp_stream_data_hook, data_hooks);
+	list (struct _lwp_stream_data_hook, data_hooks);
 	list (struct _lwp_stream_close_hook, close_hooks);
 
 
@@ -138,7 +138,7 @@ struct _lw_stream
 
 	lw_stream head_upstream;
 
-	list (lwp_stream_data_hook, exp_data_hooks);
+	list (struct _lwp_stream_data_hook, exp_data_hooks);
 
 
 	/* The front queue is to be written before any more data from the current
@@ -176,7 +176,7 @@ void lwp_stream_init (lw_stream, const lw_streamdef *, lw_pump);
 
  lw_bool lwp_stream_is_transparent (lw_stream);
 
-	
+
 /* Pushes data forward to any streams next in the graph.  buffer may be
  * 0, in which case this is used to indicate the success of a direct write
  */

@@ -35,12 +35,12 @@ static void list_refs (char * buf, struct lwp_refcount * refcount)
 {
 	*buf = 0;
 
-	for (int i = 0; i < refcount->refcount; ++ i)
+	for (int i = 0, printCount = 0; printCount < refcount->refcount; ++ i)
 	{
 		if (!refcount->refs [i])
 			continue;
 
-		if (*buf)
+		if (++printCount > 1)
 			strcat (buf, ", ");
 
 		strcat (buf, refcount->refs [i]);

@@ -52,7 +52,7 @@ public:
 	framereader() {
 	}
 
-	inline void process(const char * data, unsigned int size)
+	inline void process(const char * data, size_t size)
 	{
 		while(state < 3 && size -- > 0)
 		{
@@ -163,7 +163,7 @@ public:
 			}
 		}
 
-		unsigned int thismessagebytes = messagesize - buffer.size;
+		size_t thismessagebytes = messagesize - buffer.size;
 
 		if (size < thismessagebytes)
 			thismessagebytes = size;

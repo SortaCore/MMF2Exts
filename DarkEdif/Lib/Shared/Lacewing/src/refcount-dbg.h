@@ -30,7 +30,7 @@
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
 
-#define MAX_REFS  32
+#define MAX_REFS  256
 
 struct lwp_refcount
 {

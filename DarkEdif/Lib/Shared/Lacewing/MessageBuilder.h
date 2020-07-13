@@ -28,19 +28,20 @@
  */
 #include "Lacewing.h"
 #include <vector>
+#include <assert.h>
 
 #ifndef LacewingMessageBuilder
 #define LacewingMessageBuilder
 
 class messagebuilder
 {
-	
+
 protected:
 
 	lw_ui32 allocated = 0;
 
 public:
-	
+
 	char * buffer = nullptr;
 	lw_ui32 size = 0U;
 
@@ -54,10 +55,15 @@ public:
 		buffer = nullptr;
 	}
 
-	void add(const char * const buffer, int size)
+	void add(const char * const buffer, size_t sizeP)
 	{
-		if (size == -1)
-			size = strlen(buffer);
+		if (sizeP == -1)
+			sizeP = (lw_i32)strlen(buffer);
+
+		if constexpr (sizeof(sizeP) > 4)
+			assert(sizeP < 0xFFFFFFFF);
+
+		lw_ui32 size = (lw_ui32)sizeP;
 
 		if (this->size + size > allocated)
 		{
@@ -79,9 +85,7 @@ public:
 			throw std::exception("could not copy data into message");
 		this->size += size;
 	}
-	
 
-	
 	template<typename t>
 	inline void add (t value)
 	{
@@ -105,7 +109,7 @@ public:
 	template<> inline
 		void add(std::string_view value)
 	{
-		add(value.data(), value.size());
+		add(value.data(), (lw_i32)value.size());
 	}
 	/*
 	inline void AddNetwork16Bit (short Value)
@@ -131,7 +135,7 @@ public:
 		Value = htonl (Value);
 
 		*(char *) &Value &= 0x7F; // 0 first bit
-		
+
 		Add ((char *) &Value, sizeof(Value));
 	}*/
 

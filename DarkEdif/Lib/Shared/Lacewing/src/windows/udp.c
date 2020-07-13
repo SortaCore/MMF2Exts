@@ -69,6 +69,8 @@ udp_receive_info udp_receive_info_new ()
 
 struct _lw_udp
 {
+	lwp_refcounted;
+
 	lw_pump pump;
 	lw_pump_watch pump_watch;
 
@@ -85,8 +87,25 @@ struct _lw_udp
 
 	long receives_posted;
 
+	int writes_posted;
+
 	void * tag;
 };
+
+// Returns true if lw_udp was freed.
+static bool read_completed(lw_udp ctx)
+{
+	--ctx->receives_posted;
+	return lwp_release(ctx, "udp read");
+}
+
+// Returns true if lw_udp was freed.
+static bool write_completed(lw_udp ctx)
+{
+	--ctx->writes_posted;
+	return lwp_release(ctx, "udp write");
+}
+
 
 static void post_receives (lw_udp ctx)
 {
@@ -110,6 +129,7 @@ static void post_receives (lw_udp ctx)
 	  overlapped->tag = receive_info;
 
 	  DWORD flags = 0;
+	  lwp_retain(ctx, "udp read");
 
 	  if (WSARecvFrom (ctx->socket,
 						&receive_info->winsock_buffer,
@@ -119,7 +139,7 @@ static void post_receives (lw_udp ctx)
 						(struct sockaddr *) &receive_info->from,
 						&receive_info->from_length,
 						&overlapped->overlapped,
-						0) == -1)
+						0) == SOCKET_ERROR)
 	  {
 		 int error = WSAGetLastError();
 
@@ -127,9 +147,15 @@ static void post_receives (lw_udp ctx)
 		 {
 			 free(receive_info);
 			 free(overlapped);
+			 lwp_release(ctx, "udp read");
 			 break;
 		 }
+		 // else no error, running as async
+
+		 // fall through
 	  }
+	  // else no error, running as sync
+
 
 	  list_push(ctx->pending_receives, overlapped);
 	  ++ ctx->receives_posted;
@@ -147,6 +173,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	{
 	  case overlapped_type_send:
 	  {
+		  write_completed(ctx);
 		 break;
 	  }
 
@@ -161,24 +188,25 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
 		 lw_addr filter_addr = lw_filter_remote (ctx->filter);
 
-		 if (filter_addr && !lw_addr_equal(&addr, filter_addr))
-		 {
-			 lwp_addr_cleanup(&addr);
-			 free(info);
-			 break;
-		 }
-
-		 if (ctx->on_data)
+		 // If address doesn't match filter, it's a UDP message from unauthorised source.
+		 // There's no way to block UDP messages like that on Lacewing's side; firewall perhaps,
+		 // but user is unlikely to link up automatic firewall changes to Lacewing's error reports.
+		 // To avoid flooding server with reports, we do nothing.
+		 if (ctx->on_data && (!filter_addr || lw_addr_equal(&addr, filter_addr)))
 			ctx->on_data (ctx, &addr, info->buffer, bytes_transferred);
 
 		 lwp_addr_cleanup(&addr);
 		 free (info);
 
 		 list_remove(ctx->pending_receives, overlapped);
-		 -- ctx->receives_posted;
-		 post_receives (ctx);
+
+		 // read_completed may free ctx (and thus return true); if not, post more receives
+		 if (!read_completed(ctx))
+			 post_receives (ctx);
 		 break;
 	  }
+	  default:
+		  assert(0);
 	};
 
 	free (overlapped);
@@ -216,14 +244,14 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	if ((ctx->socket = lwp_create_server_socket
 			(filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
 	{
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	lw_error_delete (error);
-	error = NULL;
 
 	ctx->filter = lw_filter_clone (filter);
 
@@ -241,35 +269,31 @@ lw_bool lw_udp_hosting (lw_udp ctx)
 
 void lw_udp_unhost (lw_udp ctx)
 {
+	if (!lw_udp_hosting(ctx))
+		return;
+
 	lwp_close_socket (ctx->socket);
 	ctx->socket = INVALID_SOCKET;
 
-	lw_pump_remove (ctx->pump, ctx->pump_watch);
-	ctx->pump_watch = 0;
+	lw_pump_post_remove (ctx->pump, ctx->pump_watch);
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
-
-	// Frees memory from postreceives()
-	if (ctx->receives_posted > 0)
-	{
-		list_each(ctx->pending_receives, overlapped)
-		{
-			// Free the udp_receive_info_new
-			if (overlapped->tag && overlapped->type == overlapped_type_receive)
-			  free((udp_receive_info)overlapped->tag);
-
-			free(overlapped);
-		}
-		ctx->receives_posted = 0;
-	}
-
-	list_clear(ctx->pending_receives);
 }
 
 long lw_udp_port (lw_udp ctx)
 {
 	return ctx->port;
+}
+
+// Called by refcounter when it reaches zero
+static void lw_udp_dealloc(lw_udp ctx)
+{
+	// No refs, so there should be no pending read/writes
+	assert(ctx->receives_posted == 0 && ctx->writes_posted == 0);
+	list_clear(ctx->pending_receives);
+
+	free(ctx);
 }
 
 lw_udp lw_udp_new (lw_pump pump)
@@ -279,7 +303,11 @@ lw_udp lw_udp_new (lw_pump pump)
 	if (!ctx)
 	  return 0;
 
-	lwp_init ();  
+	lwp_enable_refcount_logging(ctx, "udp");
+	lwp_set_dealloc_proc(ctx, lw_udp_dealloc);
+	lwp_retain(ctx, "udp new");
+
+	lwp_init ();
 
 	ctx->pump = pump;
 	ctx->socket = INVALID_SOCKET;
@@ -292,20 +320,18 @@ void lw_udp_delete (lw_udp ctx)
 	if (!ctx)
 	  return;
 
+	// delete succeeded, ctx is now freed
+	if (lwp_release(ctx, "udp new"))
+		return;
+
 	if (ctx->socket != INVALID_SOCKET)
 		lw_udp_unhost (ctx);
 
-	if (ctx->pump_watch)
-	{
-		lw_pump_remove(ctx->pump, ctx->pump_watch);
-		ctx->pump_watch = 0;
-	}
-
-	memset(ctx, 0, sizeof(_lw_udp));
+	// memset(ctx, 0, sizeof(_lw_udp));
 
 	lwp_deinit();
 
-	free (ctx);
+	// free (ctx) called by refcount reaching zero
 }
 
 void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
@@ -328,43 +354,56 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	if (size == -1)
 	  size = strlen (buffer);
 
-	WSABUF winsock_buf = { size, (CHAR *) buffer };
+	if constexpr (sizeof(size) > 4)
+		assert(size < 0xFFFFFFFF);
+
+	WSABUF winsock_buf = { (ULONG)size, (CHAR *) buffer };
 
 	udp_overlapped overlapped = (udp_overlapped) calloc (sizeof (*overlapped), 1);
 
 	if (!overlapped)
 	{
-	  /* TODO: error */
-
-	  return;
+		// no point trying to allocate lw_error
+		exit(ENOMEM);
+		return;
 	}
-	
+
 	overlapped->type = overlapped_type_send;
 	overlapped->tag = 0;
 
 	if (!addr->info)
 	  return;
 
+	++ctx->writes_posted;
+	lwp_retain(ctx, "udp write");
+
 	if (WSASendTo (ctx->socket, &winsock_buf, 1, 0, 0, addr->info->ai_addr,
-				  addr->info->ai_addrlen, (OVERLAPPED *) overlapped, 0) == -1)
+				  (int)addr->info->ai_addrlen, (OVERLAPPED *) overlapped, 0) == SOCKET_ERROR)
 	{
-	  int code = WSAGetLastError();
+		int code = WSAGetLastError();
 
-	  if (code != WSA_IO_PENDING)
-	  {
-		 lw_error error = lw_error_new ();
+		if (code == WSA_IO_PENDING)
+		{
+			// no error, running as async
+			return;
+		}
 
-		 lw_error_add (error, WSAGetLastError ());
-		 lw_error_addf (error, "Error sending datagram");
+		free(overlapped);
 
-		 if (ctx->on_error)
+		// genuine error, whine about it
+		lw_error error = lw_error_new ();
+
+		lw_error_add (error, WSAGetLastError ());
+		lw_error_addf (error, "Error sending datagram");
+
+		if (ctx->on_error)
 			ctx->on_error (ctx, error);
 
-		 lw_error_delete (error);
+		lw_error_delete (error);
 
-		 return;
-	  }
+		// fall through
 	}
+	// else no error, completed as sync already (IOCP still has posted completion status)
 }
 
 void lw_udp_set_tag (lw_udp ctx, void * tag)
@@ -379,4 +418,3 @@ void * lw_udp_tag (lw_udp ctx)
 
 lwp_def_hook (udp, error)
 lwp_def_hook (udp, data)
-

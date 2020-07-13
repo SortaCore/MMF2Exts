@@ -122,7 +122,7 @@ void * lw_thread_join (lw_thread ctx)
 	CloseHandle(ctx->thread);
 	ctx->thread = INVALID_HANDLE_VALUE;
 
-	return (void *) exit_code;
+	return (void *) (size_t)exit_code;
 }
 
 void lw_thread_set_tag (lw_thread ctx, void * tag)

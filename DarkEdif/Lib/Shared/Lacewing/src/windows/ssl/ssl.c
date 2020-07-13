@@ -50,7 +50,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	  buffers [0].BufferType = SECBUFFER_STREAM_HEADER;
 
 	  buffers [1].pvBuffer = (BYTE *) buffer;
-	  buffers [1].cbBuffer = size;
+	  buffers [1].cbBuffer = (unsigned long)size;
 	  buffers [1].BufferType = SECBUFFER_DATA;
 
 	  buffers [2].pvBuffer = ctx->trailer;
@@ -136,7 +136,7 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 	SecBuffer buffers [4];
 
 	  buffers [0].pvBuffer = (BYTE *) buffer;
-	  buffers [0].cbBuffer = size;
+	  buffers [0].cbBuffer = (unsigned long)size;
 	  buffers [0].BufferType = SECBUFFER_DATA;
 
 	  buffers [1].BufferType = SECBUFFER_EMPTY;
