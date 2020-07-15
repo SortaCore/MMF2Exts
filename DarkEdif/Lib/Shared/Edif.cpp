@@ -729,7 +729,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 
 		if (MenuItem.type == json_string)
 		{
-			if (!_stricmp(MenuItem, "Separator"))
+			if (!_stricmp(MenuItem, "Separator") || !strcmp(MenuItem, "---"))
 			{
 				AppendMenu(Parent, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 				continue;

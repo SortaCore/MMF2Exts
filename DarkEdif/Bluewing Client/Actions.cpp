@@ -781,8 +781,8 @@ void Extension::MoveReceivedBinaryCursor(int position)
 }
 void Extension::LoopListedChannelsWithLoopName(char * passedLoopName)
 {
-	if (loopName[0] == '\0')
-		return CreateError("Cannot loop listed channels: invalid loop name supplied.");
+	if (passedLoopName[0] == '\0')
+		return CreateError("Cannot loop listed channels: blank loop name supplied.");
 
 	auto origLoopName = loopName;
 	std::string_view loopNameDup(passedLoopName);
@@ -810,7 +810,7 @@ void Extension::LoopListedChannelsWithLoopName(char * passedLoopName)
 void Extension::LoopClientChannelsWithLoopName(char * passedLoopName)
 {
 	if (passedLoopName[0] == '\0')
-		return CreateError("Cannot loop client channels: invalid loop name supplied.");
+		return CreateError("Cannot loop client channels: blank loop name supplied.");
 
 	auto origLoopName = loopName;
 	std::string_view loopNameDup(passedLoopName);
@@ -834,12 +834,10 @@ void Extension::LoopClientChannelsWithLoopName(char * passedLoopName)
 }
 void Extension::LoopPeersOnChannelWithLoopName(char * passedLoopName)
 {
-	if (loopName[0] == '\0')
-		return CreateError("Cannot loop peers on channel: invalid loop name supplied.");
+	if (passedLoopName[0] == '\0')
+		return CreateError("Cannot loop peers on channel: blank loop name supplied.");
 	if (!selChannel)
 		return CreateError("Cannot loop peers on channel: No channel currently selected.");
-	if (selChannel->readonly())
-		return CreateError("Cannot loop peers on channel: Channel is closed.");
 
 	std::string_view loopNameDup(passedLoopName);
 	auto origSelChannel = selChannel;

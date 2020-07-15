@@ -1245,7 +1245,6 @@ void lw_stream_remove_hook_close (lw_stream stream,
 	{
 	  if (hook->proc == proc && hook->tag == tag)
 	  {
-		 free(hook);
 		 list_elem_remove (hook);
 		 found = lw_true;
 		 break;

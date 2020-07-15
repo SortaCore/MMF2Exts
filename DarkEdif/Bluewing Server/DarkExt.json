@@ -2818,7 +2818,7 @@
 			"Name": "Serveur Lacewing Blue",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2020 par Darkwire Software",
-			"Comment": "Serveur multijoueur, pour une utilisation sur LAN ou Internet. \"Bluewing\", une refonte de Lacewing Relay Server. (b%i, %s)",
+			"Comment": "Serveur multijoueur, pour utilisation par LAN ou internet. \"Bluewing\", une refonte de Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},

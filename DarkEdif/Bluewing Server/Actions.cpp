@@ -382,6 +382,8 @@ void Extension::Channel_LoopClientsWithName(char * passedLoopName)
 {
 	if (!selChannel)
 		return CreateError("Loop Clients On Channel With Name was called without a channel being selected.");
+	if (passedLoopName[0] == '\0')
+		return CreateError("Loop Clients On Channel With Name was called a blank loop name.");
 
 	// You can loop a closed channel's clients, but it's read-only.
 	auto origSelChannel = selChannel;
@@ -446,6 +448,9 @@ void Extension::LoopAllChannels()
 }
 void Extension::LoopAllChannelsWithName(char * passedLoopName)
 {
+	if (passedLoopName[0] == '\0')
+		return CreateError("Loop All Channels With Name was called with a blank loop name.");
+
 	auto origSelChannel = selChannel;
 	auto origSelClient = selClient;
 	auto origLoopName = loopName;
@@ -959,6 +964,9 @@ void Extension::LoopAllClients()
 }
 void Extension::LoopAllClientsWithName(char * passedLoopName)
 {
+	if (passedLoopName[0] == '\0')
+		return CreateError("Loop All Clients With Name was called with a blank loop name.");
+
 	auto origSelClient = selClient;
 	auto origSelChannel = selChannel;
 	auto origLoopName = loopName;
