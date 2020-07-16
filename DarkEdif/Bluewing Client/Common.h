@@ -10,7 +10,7 @@
 	const extern struct _json_value & CurrentLanguage();
 	#define CurLang CurrentLanguage()
 #endif
-#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, STRIFY(CONFIG)
+#define JSON_COMMENT_MACRO lacewing::relayclient::buildnum, STRIFY(CONFIG)
 
 // Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")

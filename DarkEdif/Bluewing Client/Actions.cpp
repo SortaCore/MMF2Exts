@@ -188,7 +188,6 @@ void Extension::LoopClientChannels()
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListDup = Cli.getchannels(); // duplicate list
 	}
-	// size_t peerID = selPeer ? selPeer->id() : MAXSIZE_T;
 
 	for (const auto &ch : channelListDup)
 	{
@@ -297,7 +296,7 @@ void Extension::LoopListedChannels()
 	auto origChannelList = threadData->channelListing;
 	std::vector<decltype(threadData->channelListing)> channelListingDup;
 	{
-		auto channelReadLock = selChannel->lock.createReadLock();
+		auto cliReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
 	}
 	for (const auto &chLst : channelListingDup)
