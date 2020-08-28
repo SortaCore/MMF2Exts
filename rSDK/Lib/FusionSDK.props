@@ -57,7 +57,7 @@
 		<IsTemplate Condition="$(ProjectDir.ToLower().Contains('\$(SDKType.ToLower()) template\'))">1</IsTemplate>
 		
 		<!-- Write intermediate and output files to an easily deleted/git-ignored folder. -->
-		<_FusionSDKTempDir>$(SolutionDir)Temp\\$(ExtName)\\$(_TargetPlat)\\$(Configuration)\\$(TargetArch)</_FusionSDKTempDir>
+		<_FusionSDKTempDir>$(SolutionDir)Temp\$(ExtName)\$(_TargetPlat)\$(Configuration)\$(TargetArch)</_FusionSDKTempDir>
 		
 		<!-- If user has enabled DarkEdif FusionDebugger class inside their Extension. -->
 		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
@@ -152,17 +152,18 @@
 			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
 			/D "EXTENSION_VERSION=$(ExtVersion)"
 			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\"" /D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
+		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
+			 project needs rebuilding on every run. -->
 		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=STRIFY($(ExtName))"
 			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
-			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=STRIFY($(BuildDate))" /D "YEAR=STRIFY($(Year))"
+			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
 			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
 			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr('))</_FusionSDKAddsRC>
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=STRIFY($(BuildDate))"</_FusionSDKAddsRC>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(_TargetPlat)=='Android'">
 		<!-- Android uses Clang, a different format of commandline items
@@ -171,8 +172,8 @@
 			-D EXTENSION_VERSION=$(ExtVersion)
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);BUILD_DATE="$(BuildDate)";YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);BUILD_DATE=STRIFY($(BuildDate));YEAR=STRIFY($(Year))</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year))</_FusionSDKAdds>
 	</PropertyGroup>
 	<Choose>
 		<When Condition="$(_TargetPlat)=='Windows'">
