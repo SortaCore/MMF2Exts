@@ -311,6 +311,7 @@ struct GlobalInfo
 	std::vector<Extension *>					refs;
 	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
 	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	bool										pendingDelete; // If this struct is now effectively deleted by timeout thread
 	
 	void AddEvent1(std::uint16_t event1ID,
 		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
@@ -336,5 +337,6 @@ public:
 	void CreateError(const char * errorText);
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
+	void MarkAsPendingDelete();
 	~GlobalInfo() noexcept(false);
 };

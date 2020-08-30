@@ -1641,7 +1641,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 86;
+	const static int buildnum = 87;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1847,7 +1847,7 @@ namespace lacewing {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 18;
+	static const int buildnum = 19;
 
 	void * internaltag, * tag = nullptr;
 
@@ -1985,6 +1985,7 @@ struct relayserver
 		::std::chrono::high_resolution_clock::time_point connectTime;
 		::std::chrono::steady_clock::time_point lasttcpmessagetime;
 		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
+		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
 		framereader reader;
         std::vector<std::shared_ptr<channel>> channels;
 		std::string _name, _prevname;

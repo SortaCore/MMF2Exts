@@ -263,7 +263,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
 
-	#ifndef RUN_ONLY
+	#if EditorBuild
 		Icon = new cSurface;
 		if (mV->ImgFilterMgr)
 		{
@@ -283,13 +283,15 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				if (!Icon->HasAlpha())
 					Icon->SetTransparentColor(RGB(255, 0, 255));
+
 				if (result != Edif::DependencyWasResource)
 					free(IconData);
 			}
 		}
+		DarkEdif::SDKUpdater::StartUpdateCheck();
 	#else
 		Icon = nullptr;
-	#endif // !RUN_ONLY
+	#endif // EditorBuild
 
 	if (!::SDK)
 		::SDK = this;
@@ -614,7 +616,7 @@ Edif::SDK::~SDK()
 	delete [] ExpressionJumps;
 	delete [] EdittimeProperties;
 
-#ifndef RUN_ONLY
+#if EditorBuild
 	delete Icon;
 #endif
 }

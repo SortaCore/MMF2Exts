@@ -72,6 +72,46 @@ std::string TStringToUTF8(const std::tstring);
 std::wstring TStringToWide(const std::tstring);
 
 namespace DarkEdif {
+	
+	static const int SDKVersion = 1;
+#if EditorBuild
+
+	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
+	///			  Will generate a languages file if absent. </summary>
+	std::string GetIniSetting(const char * key);
+
+	namespace SDKUpdater
+	{
+		/// <summary> Starts an update check in async. Will ignore second runs. </summary>
+		void StartUpdateCheck();
+
+		enum class ExtUpdateType
+		{
+			// Ext update check is in progress in the background
+			CheckInProgress,
+			// Ext update check is disabled
+			CheckDisabled,
+			// Check returned no update
+			None,
+			// Some error occurred in check
+			Error,
+			// Check returned an DarkEdif SDK update, but only the dev can add that;
+			// causes messageboxes in debug builds only, otherwise ignored.
+			SDKUpdate,
+			// Minor ext update, will change ext icon but not cause message box
+			Minor,
+			// Major ext update, will change ext icon, and cause message box once per Fusion session
+			Major
+		};
+		/// <summary> Checks if update is needed. Returns type if so. Optionally returns update log. </summary>
+		ExtUpdateType ReadUpdateStatus(std::string * logData);
+
+		/// <summary> Updates ::SDK->Icon to draw on it; optionally displays a message box. </summary>
+		void RunUpdateNotifs();
+	}
+
+#endif
+
 	struct FusionDebuggerAdmin;
 	struct FusionDebugger
 	{

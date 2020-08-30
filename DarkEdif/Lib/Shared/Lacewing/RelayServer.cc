@@ -58,7 +58,7 @@ struct relayserverinternal
 
 		pingtimer->tag(this);
 		pingtimer->on_tick(serverpingtimertick);
-		pingMS = 5000;
+		tcpPingMS = 5000;
 
 		// Some firewalls/router set to mark UDP connections as over after 30 seconds of inactivity,
 		// but a general consensus is around 60 seconds.
@@ -69,7 +69,11 @@ struct relayserverinternal
 		// It's not perfect, but since the ping timer will keep repeating anyway past the 3 mark, and
 		// activity on either side won't cause the no-new-connections bug to occur, it shouldn't
 		// matter either way.
-		udpKeepAliveMS = 30000 - (pingMS * 3);
+		udpKeepAliveMS = 30000 - (tcpPingMS * 3);
+
+		// Some buggy client versions don't close their connection on end of app, forcing the app to stay
+		// alive. We can't force them to close, but we can disconnect them.
+		maxInactivityMS = 10 * 60 * 1000;
 
 		channellistingenabled = true;
 	}
@@ -113,16 +117,32 @@ struct relayserverinternal
 	std::vector<std::shared_ptr<relayserver::channel>> channels;
 
 	bool channellistingenabled;
-	long pingMS;
+	long tcpPingMS;
 	long udpKeepAliveMS;
+	long maxInactivityMS;
 
+	/// <summary> Lacewing timer function for pinging and inactivity tests. </summary>
+	///	<remarks> There are three things this function does:
+	///			  1) If the client has not sent a TCP message within tcpPingMS milliseconds, send a ping request.
+	///			  -> If client still hasn't responded after another tcpPingMS, notify server via error handler,
+	///				 and disconnect client.
+	///			  2) If the client has not sent a UDP message within udpKeepAliveMS milliseconds, send a ping request.
+	///			  -> UDP ping response is not checked for by this function; one-way UDP activity is enough to keep the
+	///				 UDP psuedo-connection alive in routers.
+	///			     Note using default timing, three UDP messages will be sent before routers are likely to close connection.
+	///			  3) If the client has only replied to pings, and not sent any channel, peer, or server messages besides,
+	///				 within a period of maxInactivityMS, then the client will be messaged and disconnected, and the server notified
+	///				 via error handler.
+	///				 Worth noting channel messages when there is no other peers, and serve messages when there is no server message
+	///				 handler, and channel join/leave requests as well as other messages, do not qualify as activity. </remarks>
 	void pingtimertick()
 	{
-		std::vector<std::shared_ptr<relayserver::client>> todisconnect;
+		std::vector<std::shared_ptr<relayserver::client>> pingUnresponsivesToDisconnect;
+		std::vector<std::shared_ptr<relayserver::client>> inactivesToDisconnects;
 
-		framebuilder builderPingTCP(false), builderPingUDP(true);
-		builderPingTCP.addheader(11, 0);		/* ping */
-		builderPingUDP.addheader(11, 0, true);	/* ping with UDP */
+		framebuilder msgBuilderTCP(false), msgBuilderUDP(true);
+		msgBuilderTCP.addheader(11, 0);			/* ping header */
+		msgBuilderUDP.addheader(11, 0, true);	/* ping header, true for UDP */
 
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		auto serverReadLock = server.lock.createReadLock();
@@ -131,26 +151,42 @@ struct relayserverinternal
 			if (client->_readonly)
 				continue;
 
-			long long msElapsedTCP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lasttcpmessagetime).count();
-			long long msElapsedUDP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastudpmessagetime).count();
+			auto msElapsedTCP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lasttcpmessagetime).count();
+			auto msElapsedNonPing = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastchannelorpeermessagetime).count();
 
-			// less than 5 seconds passed, skip the TCP ping
-			if (msElapsedTCP < pingMS)
+			// Psuedo UDP is true unless a UDPHello packet is received, i.e. the client connect handshake UDP packet.
+			decltype(msElapsedTCP) msElapsedUDP = 0;
+			if (!client->pseudoUDP)
+				msElapsedUDP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastudpmessagetime).count();
+			
+			// detect a buggy version of std::chrono::steady_clock (was in a VS 2019 preview)
+			if (msElapsedTCP < 0 || msElapsedUDP < 0 || msElapsedNonPing < 0)
+				DebugBreak();
+
+			// less than 5 seconds (or tcpPingMS) passed since last TCP message, skip the TCP ping
+			if (msElapsedTCP < tcpPingMS)
 			{
 				client->pongedOnTCP = true;
 
-				// Also no UDP ping needed, skip both pings
+				// No UDP keep-alive message needed either, skip both pings
 				if (msElapsedUDP < udpKeepAliveMS)
 					continue;
 			}
 
+			// More than 10 minutes passed, prep to kick for inactivity
+			if (msElapsedNonPing > maxInactivityMS)
+			{
+				inactivesToDisconnects.push_back(client);
+				continue;
+			}
+
 			// pongedOnTCP is true until client hasn't sent a message within PingMS period.
-			// Then it's set to false and a ping message sent, which happens AFTER this if().
-			// The ping timer ticks again pingMS ms later, and if pongedOnTCP is still false (this if() ),
-			// then client hasn't responded to ping, and so should be disconnected.
+			// Then it's set to false and a ping message sent, which happens AFTER this if block.
+			// The ping timer ticks again tcpPingMS ms later, and if pongedOnTCP is still false
+			// (in this if condition), then client hasn't responded to ping, and so should be disconnected.
 			if (!client->pongedOnTCP)
 			{
-				todisconnect.push_back(client);
+				pingUnresponsivesToDisconnect.push_back(client);
 				continue;
 			}
 
@@ -159,28 +195,39 @@ struct relayserverinternal
 			if (client->_readonly)
 				continue;
 
-			if (msElapsedTCP >= pingMS)
+			if (msElapsedTCP >= tcpPingMS)
 			{
 				client->pongedOnTCP = false;
-				builderPingTCP.send(client->socket, false);
+				msgBuilderTCP.send(client->socket, false);
 			}
+
+			// Keep UDP alive by sending a UDP message.
+			// Worth noting Relay clients and Blue client b82 and below don't have UDP ping responses; they will
+			// ignore the message entirely.
+			// Fortunately, we don't actually *need* a ping responses from the client; one-way activity ought to be
+			// enough to keep the UDP psuedo-connections open in routers... assuming, of course, that the UDP packet
+			// goes all the way to the client and thus through all the routers.
 			if (msElapsedUDP >= udpKeepAliveMS)
-				builderPingUDP.send(server.udp, client->udpaddress, false);
+				msgBuilderUDP.send(server.udp, client->udpaddress, false);
 		}
 
-		builderPingTCP.framereset();
-
-		if (todisconnect.empty())
+		if (pingUnresponsivesToDisconnect.empty() && inactivesToDisconnects.empty())
 			return;
 
 		serverReadLock.lw_unlock();
-		for (auto& client : todisconnect)
+
+		// Loop all pending ping disconnects
+		for (auto& client : pingUnresponsivesToDisconnect)
 		{
+			// One final disconnect check
 			if (client->_readonly)
 				continue;
 
+			// To allow client disconnect handlers to run without clashes, we keep the lock open
+			// as frequently as possible.
 			if (!serverReadLock.isEnabled())
 				serverReadLock.lw_relock();
+
 			if (std::find(clients.begin(), clients.end(), client) != clients.end())
 			{
 				serverReadLock.lw_unlock();
@@ -210,6 +257,36 @@ struct relayserverinternal
 				// decent "has other side closed connection". Since ping timeout may occur for malicious clients,
 				// a decent way might not be good for us anyway.
 				client->socket->close(lw_true);
+			}
+		}
+
+		// Loop all pending inactivity disconnects
+		for (auto& client : inactivesToDisconnects)
+		{
+			if (client->_readonly)
+				continue;
+
+			if (!serverReadLock.isEnabled())
+				serverReadLock.lw_relock();
+			if (std::find(clients.begin(), clients.end(), client) != clients.end())
+			{
+				serverReadLock.lw_unlock();
+				//auto clientWriteLock = clientsocket->lock.createWriteLock();
+				if (client->_readonly)
+					continue;
+
+				std::string impl = client->clientImplStr;
+				if (!impl.empty() && impl.back() == '.')
+					impl.erase(impl.cend());
+
+				auto error = lacewing::error_new();
+				error->add("Disconnecting client ID %i due to inactivity timeout; client impl \"%s\".", client->_id, impl.c_str());
+				handlererror(this->server, error);
+				lacewing::error_delete(error);
+
+				client->send(0, "You're being kicked for inactivity.", 0);
+				// Close nicely
+				client->socket->close(lw_false);
 			}
 		}
 	}
@@ -894,7 +971,7 @@ void relayserver::host(lacewing::filter &_filter)
 	lacewing::filter_delete(filter);
 
 	relayserverinternal * serverInternal = (relayserverinternal *)internaltag;
-	serverInternal->pingtimer->start(serverInternal->pingMS);
+	serverInternal->pingtimer->start(serverInternal->tcpPingMS);
 }
 
 void relayserver::unhost()
@@ -1638,12 +1715,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			cliReadLock.lw_unlock();
 
 			const lw_ui8 subchannel = reader.get <lw_ui8> ();
-
-			const char * message2;
-			size_t size2;
-
-			reader.getremaining(message2, size2);
-			std::string_view message3(message2, size2);
+			std::string_view message3 = reader.getremaining();
 
 			if (reader.failed)
 			{
@@ -1653,7 +1725,12 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			}
 
 			if (handlermessage_server)
+			{
 				handlermessage_server(server, client, blasted, subchannel, message3, variant);
+
+				// Server messages, we'll assume it is activity.
+				client->lastchannelorpeermessagetime = ::std::chrono::steady_clock::now();
+			}
 
 			break;
 		}
@@ -1698,6 +1775,10 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			}
 			cliReadLock.lw_unlock();
 
+			// Channel messages not sent to anyone is not activity.
+			if (channel->clientcount() > 1)
+				client->lastchannelorpeermessagetime = ::std::chrono::steady_clock::now();
+
 			if (handlermessage_channel)
 				handlermessage_channel(server, client, channel,
 					blasted, subchannel, message2, variant);
@@ -1734,6 +1815,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 				errStr << "Couldn't read content of peer message, discarding";
 				break;
 			}
+
+			client->lastchannelorpeermessagetime = ::std::chrono::steady_clock::now();
 
 			if (handlermessage_peer)
 				handlermessage_peer(server, client, channel,
@@ -1800,17 +1883,20 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		case 10: /* implementation response */
 		{
 			std::string_view impl = reader.get(reader.bytesleft());
-			if (reader.failed)
+			if (reader.failed || impl.empty())
 			{
 				errStr << "Failed to read implementation response";
 				trustedClient = false;
 				break;
 			}
 
+			// LW_ESCALATION_NOTE
 			cliReadLock.lw_unlock();
 			auto cliWriteLock = client->lock.createWriteLock();
 			if (client->_readonly)
 				break;
+
+			// Implementation responses were added in Bluewing Client build 70.
 
 			if (impl.find("Windows") != std::string_view::npos)
 			{
@@ -1831,7 +1917,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 				client->clientImpl = relayserver::client::clientimpl::HTML5;
 			else
 			{
-				errStr << "Failed to recognise implementation \"" << impl << "\". Leaving it as Unknown.";
+				errStr << "Failed to recognise platform of implementation \"" << impl << "\". Leaving it as Unknown.";
+				reader.failed = true;
 			}
 
 			client->clientImplStr = impl;
@@ -1861,27 +1948,20 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 		if (!trustedClient)
 		{
-			// LW_ESCALATION_NOTE
-			// auto cliWriteLock = cliReadLock.lw_upgrade();
 			client->_readonly = true;
 
-			// RAOK DEBUG INFO
-		#ifdef _DEBUG
-			std::stringstream err;
-			err << "client_messagehandler: Emergency drop line " << __LINE__ << ". Client ID " << client->_id << ", name " << client->name() << " has been marked as readonly.";
-			makestrstrerror(err);
-		#endif
-
-			cliReadLock.lw_unlock();
+			// LW_ESCALATION_NOTE
+			// auto cliWriteLock = cliReadLock.lw_upgrade();
+			if (cliReadLock.isEnabled())
+				cliReadLock.lw_unlock();
 			auto cliWriteLock = client->lock.createWriteLock();
 
-			client->socket->close(); // TODO: Should be immediate?
+			client->socket->close(true); // immediate disconnect
 		}
 
 		// only return false if socket is emergency closing and
 		// you cannot trust further message content is readable
 		return trustedClient;
-		/* socket.disconnect(); */
 	}
 
 	return true;
@@ -1996,8 +2076,7 @@ relayserver::client::client(relayserverinternal &internal, lacewing::server_clie
 
 	// connectTime not started until handshake is done
 	// last message can be considered the connect time
-	lasttcpmessagetime = ::std::chrono::steady_clock::now();
-	lastudpmessagetime = ::std::chrono::steady_clock::time_point::time_point();
+	lastudpmessagetime = lastchannelorpeermessagetime = lasttcpmessagetime = ::std::chrono::steady_clock::now();
 }
 
 ::lacewing::relayserver::channel::channel(relayserverinternal &_server, std::string_view _name) :
@@ -2117,13 +2196,6 @@ void relayserver::client::disconnect()
 {
 	_readonly = true;
 
-	// RAOK DEBUG INFO
-#ifdef _DEBUG
-	std::stringstream err;
-	err << "relayserver::client::disconnect: Emergency drop line " << __LINE__ << ". Client ID " << _id << ", name " << name() << " has been marked as readonly.";
-	server.makestrstrerror(err);
-#endif
-
 	lacewing::writelock wl = lock.createWriteLock();
 	if (socket && socket->valid())
 		socket->close();
@@ -2188,8 +2260,8 @@ using namespace ::std::chrono;
 lw_i64 relayserver::client::getconnecttime() const
 {
 	// No need for read lock: connect time is set in ctor
-	high_resolution_clock::time_point end = high_resolution_clock::now();
-	nanoseconds time = end - connectTime;
+	steady_clock::time_point end = steady_clock::now();
+	auto time = end - connectTime;
 	return duration_cast<seconds>(time).count();
 }
 
@@ -2287,7 +2359,7 @@ void relayserver::connect_response(
 
 	lw_trace("Connect request accepted in relayserver::connectresponse");
 	client->connectRequestApproved = true;
-	client->connectTime = std::chrono::high_resolution_clock::now();
+	client->connectTime = std::chrono::steady_clock::now();
 	client->clientImpl = relayserver::client::clientimpl::Unknown;
 
 	builder.addheader(0, 0);  /* response */
@@ -2307,7 +2379,7 @@ void relayserver::connect_response(
 	// Send request implementation: this is the best time to send it
 
 	builder.addheader(12, 0);  /* request implementation */
-	// response on 10, only responded to by Bluewing, Relay just ignores it
+	// response on 10, only responded to by Bluewing b70+, Relay just ignores it
 
 	builder.send(client->socket);
 }

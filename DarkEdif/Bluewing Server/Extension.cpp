@@ -254,6 +254,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	{
 		std::string GlobalIDCopy = "LacewingRelayServer";
 		GlobalIDCopy += edPtr->edGlobalID;
+
+		GetGlobal:
 		void * v = Runtime.ReadGlobal(GlobalIDCopy.c_str());
 		if (!v)
 		{
@@ -267,6 +269,13 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 			globals = (GlobalInfo *)v;
 
 			EnterCriticalSectionDebug(&globals->lock);
+
+			if (globals->pendingDelete)
+			{
+				LeaveCriticalSectionDebug(&globals->lock);
+				delete globals;
+				goto GetGlobal;
+			}
 
 			// If switching frames, the old ext will store selection here.
 			// We'll keep it across frames for simplicity.
@@ -380,7 +389,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 }
 
 
-
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
@@ -454,8 +462,17 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
-	free(_globalID);
+
+	if (!pendingDelete)
+		MarkAsPendingDelete();
 	DeleteCriticalSection(&lock);
+}
+void GlobalInfo::MarkAsPendingDelete()
+{
+	if (pendingDelete)
+		return;
+
+	free(_globalID);
 
 	// We're no longer responding to these events
 	_server.onerror(nullptr);
@@ -474,28 +491,36 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	lastDestroyedExtSelectedClient.reset();
 	lastDestroyedExtSelectedChannel.reset();
 
-	if (_server.hosting())
-		_server.unhost();
 	if (_server.flash->hosting())
 		_server.flash->unhost();
+	if (_server.hosting())
+		_server.unhost();
 
 	_objEventPump->post_eventloop_exit();
 
+	// Multithreading mode; wait for thread to end
+	auto threadHandle = _thread;
 	if (_thread)
 	{
 		Sleep(0U);
-		if (_thread)
-			Sleep(50U);
-		if (_thread) {
+		if (WaitForSingleObject(threadHandle, 5000U) != WAIT_OBJECT_0 && _thread)
+		{
 			TerminateThread(_thread, 0U);
-			CloseHandle(_thread);
 			_thread = NULL;
 		}
 	}
-	else
+	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
 	{
-		// Loop until end
-		_objEventPump->start_eventloop();
+		lacewing::error err = _objEventPump->tick();
+		if (err != NULL)
+		{
+			// No way to report it; the last ext is being destroyed.
+			std::stringstream errStr;
+			errStr << "Pump closed with error \"" << err->tostring() << "\".\n";
+			OutputDebugStringA(errStr.str().c_str());
+		}
+		OutputDebugStringA("Pump should be closed.\n");
+		Sleep(0U);
 	}
 
 	lacewing::pump_delete(_objEventPump);
@@ -1097,29 +1122,34 @@ void Extension::DeselectIfDestroyed(std::shared_ptr<SaveExtInfo> s)
 
 DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
+	GlobalInfo * G = (GlobalInfo *)ThisGlobalsInfo;
 
+	EnterCriticalSectionDebug(&G->lock);
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
-	if (!G.Refs.empty())
+	if (!G->Refs.empty())
 		return 0U;
 
 	// If not hosting, no clients to worry about dropping
-	if (!G._server.hosting())
+	if (!G->_server.hosting())
 		return 0U;
+
+	LeaveCriticalSectionDebug(&G->lock);
 
 	// App closed within next 3 seconds: unhost by default
 	if (WaitForSingleObject(AppWasClosed, 3000U) == WAIT_OBJECT_0)
 		return 0U;
 
-	// 3 seconds have passed: if we now have an ext, or server was unhosted, we're good
-	if (!G.Refs.empty())
-		return 0U;
+	EnterCriticalSectionDebug(&G->lock);
 
-	if (!G._server.hosting())
+	// 3 seconds have passed: if we now have an ext, then timeout close is cancelled
+	if (!G->Refs.empty())
+	{
+		LeaveCriticalSectionDebug(&G->lock);
 		return 0U;
+	}
 
-	if (G.timeoutWarningEnabled)
+	if (G->timeoutWarningEnabled)
 	{
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Server Warning!\r\n"
@@ -1130,7 +1160,11 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			"Bluewing Server Warning",
 			MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
 	}
-	delete &G; // Cleanup!
+
+	G->MarkAsPendingDelete();
+
+	LeaveCriticalSectionDebug(&G->lock);
+
 	return 0U;
 }
 

@@ -75,6 +75,8 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	if (!Surface)
 		return;
 
+	// May modify icon
+	DarkEdif::SDKUpdater::RunUpdateNotifs();
 	SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
@@ -127,7 +129,11 @@ Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		if (::SDK->EdittimeProperties[ID].Type_ID != Edif::Properties::PROPTYPE_LEFTCHECKBOX)
 		{
 			if (ID == 0)
-				return new Prop_AStr(CurLang["Properties"][ID]["DefaultState"]);
+			{
+				char extVerBuffer[256];
+				sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayserver::buildnum, STRIFY(CONFIG));
+				return new Prop_AStr(extVerBuffer);
+			}
 			if (ID == 3)
 				return new Prop_AStr(edPtr->edGlobalID);
 		}

@@ -357,8 +357,9 @@ struct GlobalInfo
 
 	CRITICAL_SECTION			lock = {};
 	std::vector<Extension *>	Refs;
-	bool						timeoutWarningEnabled = true; // If no Lacewing exists, fuss after set time period
-	bool						fullDeleteEnabled = true; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	bool						timeoutWarningEnabled = true; // If no Bluewing Server exists, fuss after set time period
+	bool						fullDeleteEnabled = true; // If no Bluewing Server exists after DestroyRunObject, clean up GlobalInfo
+	bool						pendingDelete = false; // Timeout thread has deconstructed this object and is waiting for main thread to finish up
 
 	void AddEvent1(int event1,
 		std::shared_ptr<lacewing::relayserver::channel> channel = nullptr,
@@ -408,5 +409,6 @@ struct GlobalInfo
 	AutoResponse autoResponse_MessageServer = AutoResponse::WaitForFusion;
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
+	void MarkAsPendingDelete();
 	~GlobalInfo() noexcept(false);
 };

@@ -256,16 +256,29 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	OutputDebugStringA(msgBuff);
 	if (isGlobal)
 	{
-		void * v = Runtime.ReadGlobal(std::string(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str());
+		std::string id = std::string("BlueClient") + edPtr->edGlobalID;
+
+	GetGlobal:
+		GlobalInfo * v = (GlobalInfo *)Runtime.ReadGlobal(id.c_str());
 		if (!v)
 		{
 			globals = new GlobalInfo(this, edPtr);
-			Runtime.WriteGlobal(std::string(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str(), globals);
+			Runtime.WriteGlobal(id.c_str(), globals);
 			OutputDebugStringA("Created new Globals.\n");
 		}
 		else // Add this Extension to refs to inherit control later
 		{
 			globals = (GlobalInfo *)v;
+			EnterCriticalSectionDebug(&globals->lock);
+			// Since timeout thread can't safely access Runtime, as it might be in the middle of a frame switch,
+			// we can't delete the memory in timeout thread. Instead, we just mark it as pending delete.
+			if (globals->pendingDelete)
+			{
+				LeaveCriticalSectionDebug(&globals->lock);
+				delete globals;
+				globals = nullptr;
+				goto GetGlobal;
+			}
 
 			// If switching frames, the old ext will store selection here.
 			// We'll keep it across frames for simplicity.
@@ -279,7 +292,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 				selPeer = globals->lastDestroyedExtSelectedPeer.lock();
 				globals->lastDestroyedExtSelectedPeer.reset();
 			}
-			
+
 			globals->refs.push_back(this);
 			if (!globals->_ext)
 				globals->_ext = this;
@@ -590,6 +603,9 @@ Extension::~Extension()
 			globals->_ext = nullptr;
 			globals->lastDestroyedExtSelectedChannel = selChannel;
 			globals->lastDestroyedExtSelectedPeer = selPeer;
+			ClearThreadData();
+			selPeer = nullptr;
+			selChannel = nullptr;
 			LeaveCriticalSectionDebug(&globals->lock);
 
 			sprintf_s(msgBuff, "Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.\n",
@@ -599,13 +615,11 @@ Extension::~Extension()
 			OutputDebugStringA(msgBuff);
 
 			globals->timeoutThread = CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
-			ClearThreadData();
-			selPeer = nullptr;
-			selChannel = nullptr;
 			return;
 		}
 
-		std::string id = "LacewingRelayClient" + globals->_globalID;
+		std::string id(globals->_globalID);
+		id += "BlueClient";
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		LeaveCriticalSectionDebug(&globals->lock);
 		delete globals; // Disconnects and closes event pump, deletes lock
@@ -742,7 +756,6 @@ REFLAG Extension::Handle()
 		Saved.erase(--Saved.cend());
 		Saved.insert(Saved.cbegin(), s);
 		isOverloadWarningQueued = true;
-		int i = 0;
 
 		LeaveCriticalSectionDebug(&globals->lock);
 	}
@@ -751,18 +764,19 @@ REFLAG Extension::Handle()
 	return runNextLoop ? REFLAG::NONE : REFLAG::ONE_SHOT;
 }
 
-DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
+DWORD WINAPI ObjectDestroyTimeoutFunc(void * Infos)
 {
 	OutputDebugStringA("Timeout thread: startup.\n");
-	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
+
+	GlobalInfo* G = (GlobalInfo *)Infos;
 
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
-	if (!G.refs.empty())
+	if (!G->refs.empty())
 		return OutputDebugStringA("Timeout thread: pre timeout refs not empty, exiting.\n"), 0U;
 
 	// If disconnected, no connection to worry about
-	if (!G._client.connected())
+	if (!G->_client.connected())
 		return OutputDebugStringA("Timeout thread: pre timeout client not connected, exiting.\n"), 0U;
 
 	// App closed within next 3 seconds: close connection by default
@@ -771,15 +785,22 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 		ResetEvent(AppWasClosed);
 		return OutputDebugStringA("Timeout thread: waitforsingleobject triggered, exiting.\n"), 0U;
 	}
+	EnterCriticalSection(&G->lock);
 
 	// 3 seconds have passed: if we now have an ext, or client was disconnected, we're good
-	if (!G.refs.empty())
+	if (!G->refs.empty())
+	{
+		LeaveCriticalSectionDebug(&G->lock);
 		return OutputDebugStringA("Timeout thread: post timeout refs not empty, exiting.\n"), 0U;
+	}
 
-	if (!G._client.connected())
+	if (!G->_client.connected())
+	{
+		LeaveCriticalSectionDebug(&G->lock);
 		return OutputDebugStringA("Timeout thread: post timeout client not connected, exiting.\n"), 0U;
+	}
 
-	if (G.timeoutWarningEnabled)
+	if (G->timeoutWarningEnabled)
 	{
 		OutputDebugStringA("Timeout thread: timeout warning message.\n");
 		// Otherwise, fuss at them.
@@ -796,7 +817,14 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	}
 
 	OutputDebugStringA("Timeout thread: Deleting globals.\n");
-	delete &G; // Cleanup!
+	std::string globalID(G->_globalID);
+	globalID += "BlueClient";
+	// don't free the memory, as we don't know what main thread is doing,
+	// and we can't destroy GlobalInfo in case a thread is waiting to use it.
+	G->MarkAsPendingDelete();
+	LeaveCriticalSectionDebug(&G->lock);
+
+	// Run WriteGlobal()
 	return 0U;
 }
 
@@ -877,10 +905,14 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_client(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
 	_automaticallyClearBinary(edPtr->automaticClear), _thread(nullptr),
-	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer()
+	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer(),
+	pendingDelete(false)
 {
 	_ext = e;
 	refs.push_back(e);
+
+	InitializeCriticalSection(&lock);
+
 	if (edPtr->isGlobal)
 		_globalID = edPtr->edGlobalID;
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
@@ -906,17 +938,24 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_client.onmessage_serverchannel(::OnServerChannelMessage);
 	_client.onmessage_server(::OnServerMessage);
 
-	InitializeCriticalSection(&lock);
-
 	// Useful so Lacewing callbacks can access Extension
 	_client.tag = this;
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
-	OutputDebugStringA("~GlobalInfo start\n");
 	if (!refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
 
+	if (!pendingDelete)
+		MarkAsPendingDelete();
+	DeleteCriticalSection(&lock);
+}
+void GlobalInfo::MarkAsPendingDelete()
+{
+	if (pendingDelete)
+		return;
+
+	OutputDebugStringA("MarkAsPendingDelete() start\n");
 	auto clientWriteLock = _client.lock.createWriteLock();
 
 	// We're no longer responding to these events
@@ -941,41 +980,37 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	_client.onmessage_server(nullptr);
 	_client.tag = nullptr; // was == this, now this is not usable
 
-	_objEventPump->post_eventloop_exit();
-
-	// Cleanup all usages of GlobalInfo
-	if (!_thread)
-		_objEventPump->tick();
-
 	if (_client.connected() || _client.connecting())
-	{
 		_client.disconnect();
 
-		if (!_thread)
-			_objEventPump->tick();
-		Sleep(0U);
-	}
+	_objEventPump->post_eventloop_exit();
 
+	// Multithreading mode; wait for thread to end
+	auto threadHandle = _thread;
 	if (_thread)
 	{
 		Sleep(0U);
-		if (_thread)
-			Sleep(50U);
-		if (_thread) {
+		if (WaitForSingleObject(threadHandle, 5000U) != WAIT_OBJECT_0 && _thread)
+		{
 			TerminateThread(_thread, 0U);
 			_thread = NULL;
 		}
 	}
-	else
+	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
 	{
-		_objEventPump->tick();
+		lacewing::error err = _objEventPump->tick();
+		if (err != NULL)
+		{
+			// No way to report it; the last ext is being destroyed.
+			std::stringstream errStr;
+			errStr << "Pump closed with error \"" << err->tostring() << "\".\n";
+			OutputDebugStringA(errStr.str().c_str());
+		}
+		OutputDebugStringA("Pump should be closed.\n");
 		Sleep(0U);
 	}
 
-	DeleteCriticalSection(&lock);
-	_CrtCheckMemory();
-
-	OutputDebugStringA("~GlobalInfo end\n");
+	OutputDebugStringA("MarkAsPendingDelete() end\n");
 }
 
 void eventpumpdeleter(lacewing::eventpump pump)
@@ -983,5 +1018,4 @@ void eventpumpdeleter(lacewing::eventpump pump)
 	OutputDebugStringA("Pump deleting...\n");
 	lacewing::pump_delete(pump);
 	OutputDebugStringA("Pump deleted.\n");
-	_CrtCheckMemory();
 }

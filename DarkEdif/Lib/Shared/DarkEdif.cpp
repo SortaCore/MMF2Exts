@@ -37,113 +37,39 @@ const json_value & CurrentLanguage()
 	if (StoredCurrentLanguage->type != json_none)
 		return *StoredCurrentLanguage;
 
-	char FileToLookup [MAX_PATH];
-	{
- 		GetModuleFileNameA(hInstLib, FileToLookup, sizeof(FileToLookup));
-
-		// This mass of code converts Extensions\Bla.mfx and Extensions\Unicode\Bla.mfx to Extensions\DarkEdif.ini
-		char * Filename = FileToLookup + strlen(FileToLookup) - 1;
-		while (*Filename != '\\' && *Filename != '/')
-			-- Filename;
-
-		// Look in Extensions, not Extensions\Unicode
-		if (!_strnicmp("Unicode", Filename - (sizeof("Unicode") - 1), sizeof("Unicode") - 1))
-			Filename -= sizeof("Unicode\\") - 1;
-
-		strcpy(++ Filename, "DarkEdif.ini");
-		
-		// Is the file in the directory of the MFX? (should be, languages are only needed in edittime)
-		if (GetFileAttributesA(FileToLookup) == INVALID_FILE_ATTRIBUTES)
-		{
-			// DarkEdif.ini non-existent
-			if (GetLastError() != ERROR_FILE_NOT_FOUND)
-				MessageBoxA(NULL, "Error opening DarkEdif.ini.", "DarkEdif SDK - Error", MB_OK | MB_ICONERROR);
-			
-			return *DefaultLanguageIndex();
-		}
-	}
-
-	// TODO: Change to WinAPI?
-	// Open DarkEdif.ini settings file in read binary, and deny other apps writing permissions.
-	FILE * F = _fsopen(FileToLookup, "rb", _SH_DENYWR);
-	
-	// Could not open; abort (should report error)
-	if (!F)
+	std::string langList = DarkEdif::GetIniSetting("Languages");
+	if (langList.empty())
 		return *DefaultLanguageIndex();
 
-	fseek(F, 0, SEEK_END);
-	long S = ftell(F);
-	fseek(F, 0, SEEK_SET);
+	langList.append("\r");
 
-	// Copy file contents into buffer
-	char * temp2 = (char *)malloc(S);
-	// Out of memory, no buffer allocated	
-	if (!temp2)
-	{
-		fclose(F);
-		return *DefaultLanguageIndex();
-	}
-	
-	// Could not read all of the file properly
-	if (S != fread_s(temp2, S, sizeof(char), S, F))
-	{
-		fclose(F);
-		free(temp2);
-		return *DefaultLanguageIndex();
-	}
-
-	// Load entire file into a std::string for searches
-	std::string FullFile(temp2, S);
-	free(temp2);
-	fclose(F);
-	size_t Reading;
-	
-	// Look for two strings (one with space before =)
-	if (FullFile.find("Languages=") != std::string::npos)
-		Reading = FullFile.find("Languages=")+sizeof("Languages=")-1;
-	else
-	{
-		if (FullFile.find("Languages =") != std::string::npos)
-			Reading = FullFile.find("Languages =")+sizeof("Languages =")-1;
-		else
-		{
-			MessageBoxA(NULL, "Languages not found in .ini file. Using default.", "DarkEdif Debug CurrentLanguage()", MB_OK | MB_ICONERROR);
-			return *DefaultLanguageIndex();
-		}
-	}
-
-	// If there's a space after the =
-	if (FullFile[Reading] == ' ')
-		++Reading;
-
-	FullFile.append("\r");
-	
+	size_t readIndex = 0;
 	// Read string until newline. Expect ";" or "; "-delimited list of languages.
-	while (FullFile.find_first_of(";\r", Reading) != std::string::npos) // Is the semi-colon after an end-of-line character?
+	while (langList.find_first_of(";\r", readIndex) != std::string::npos) // Is the semi-colon after an end-of-line character?
 	{
 		// Read individual token
-		std::string Language(FullFile.substr(Reading, FullFile.find_first_of(";\r", Reading)-Reading));
+		std::string langItem(langList.substr(readIndex, langList.find_first_of(";\r", readIndex)-readIndex));
 
 		// If languages are separated by "; " not ";"
-		if (Language.front() == ' ')
+		if (langItem.front() == ' ')
 		{
-			++Reading;
-			Language.erase(Language.begin());
+			++readIndex;
+			langItem.erase(langItem.begin());
 		}
 
-		// Language matched, get index of language in JSON
+		// langItem matched, get index of language in JSON
 		for (unsigned int i = 0; i < ::SDK->json.u.object.length; ++i)
 		{
 			// Return index
 			if ((*::SDK->json.u.object.values[i].value).type == json_object && 
-				!_stricmp(::SDK->json.u.object.values[i].name, Language.c_str()))
+				!_stricmp(::SDK->json.u.object.values[i].name, langItem.c_str()))
 			{
 				StoredCurrentLanguage = SDK->json.u.object.values[i].value;
 				return *StoredCurrentLanguage;
 			}
 		}
-		Reading += Language.size()+1;
-		if (FullFile.at(Reading-1) == '\r')
+		readIndex += langItem.size()+1;
+		if (langList.at(readIndex-1) == '\r')
 			break;
 	}
 
@@ -1184,3 +1110,474 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
 
+#if EditorBuild
+
+// =====
+// Get DarkEdif INIs and lines
+// =====
+
+static std::string sdkSettingsFileContent;
+static std::atomic_bool fileLock;
+static bool fileOpened;
+std::string DarkEdif::GetIniSetting(const char * key)
+{
+	if (!fileOpened)
+	{
+		if (fileLock.exchange(true))
+			return std::string();
+		fileOpened = true;
+
+		char FileToLookup[MAX_PATH];
+		{
+			GetModuleFileNameA(hInstLib, FileToLookup, sizeof(FileToLookup));
+
+			// This mass of code converts Extensions\Bla.mfx and Extensions\Unicode\Bla.mfx to Extensions\DarkEdif.ini
+			char * Filename = FileToLookup + strlen(FileToLookup) - 1;
+			while (*Filename != '\\' && *Filename != '/')
+				--Filename;
+
+			// Look in Extensions, not Extensions\Unicode
+			if (!_strnicmp("Unicode", Filename - (sizeof("Unicode") - 1), sizeof("Unicode") - 1))
+				Filename -= sizeof("Unicode\\") - 1;
+
+			strcpy(++Filename, "DarkEdif.ini");
+
+			// Is the file in the directory of the MFX? (should be, languages are only needed in edittime)
+			if (GetFileAttributesA(FileToLookup) == INVALID_FILE_ATTRIBUTES)
+			{
+				// DarkEdif.ini non-existent
+				if (GetLastError() != ERROR_FILE_NOT_FOUND)
+					MessageBoxA(NULL, "Error opening DarkEdif.ini.", "DarkEdif SDK - Error", MB_OK | MB_ICONERROR);
+
+				fileLock = false;
+				return std::string();
+			}
+		}
+
+		// TODO: Change to WinAPI?
+		// Open DarkEdif.ini settings file in read binary, and deny other apps writing permissions.
+		FILE * fileHandle = _fsopen(FileToLookup, "rb", _SH_DENYWR);
+
+		// Could not open; abort (should report error)
+		if (!fileHandle)
+		{
+			fileLock = false;
+			return std::string();
+		}
+
+		fseek(fileHandle, 0, SEEK_END);
+		long fileSize = ftell(fileHandle);
+		fseek(fileHandle, 0, SEEK_SET);
+
+		sdkSettingsFileContent.resize(fileSize);
+		// Could not read all of the file properly
+		if (fileSize != fread_s(sdkSettingsFileContent.data(), sdkSettingsFileContent.size(), 1, fileSize, fileHandle))
+		{
+			fclose(fileHandle);
+			fileLock = false;
+			sdkSettingsFileContent.clear();
+			return std::string();
+		}
+
+		// Load entire file into a std::string for searches
+		fclose(fileHandle);
+		fileLock = false;
+	}
+
+	// Look for two strings (one with space before =)
+	std::string keyFind1(key), keyFind2(key);
+	keyFind1 += "=";
+	keyFind2 += " =";
+
+	size_t Reading;
+	if (sdkSettingsFileContent.find(keyFind1) != std::string::npos)
+		Reading = sdkSettingsFileContent.find(keyFind1) + keyFind1.size();
+	else
+	{
+		if (sdkSettingsFileContent.find(keyFind2) != std::string::npos)
+			Reading = sdkSettingsFileContent.find(keyFind2) + keyFind2.size();
+		else // key not found in settings file
+			return std::string();
+	}
+
+	// If there's a space after the =
+	if (sdkSettingsFileContent[Reading] == ' ')
+		++Reading;
+
+	size_t lineEnd = sdkSettingsFileContent.find_first_of("\r\n", Reading);
+	// Line hits end of file
+	if (lineEnd == std::string::npos)
+		return sdkSettingsFileContent.substr(Reading);
+
+	return sdkSettingsFileContent.substr(Reading, lineEnd - Reading);
+}
+
+// =====
+// Fusion SDK updater
+// =====
+
+static std::atomic_bool updateLock(false);
+static HANDLE updateThread;
+static std::stringstream updateLog = std::stringstream();
+static DarkEdif::SDKUpdater::ExtUpdateType pendingUpdateType;
+static std::wstring pendingUpdateURL = std::wstring();
+static std::wstring pendingUpdateDetails = std::wstring();
+
+DWORD WINAPI DarkEdifUpdateThread(void * data);
+
+void DarkEdif::SDKUpdater::StartUpdateCheck()
+{
+	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
+	WaitForSingleObject(updateThread, INFINITE);
+}
+
+DarkEdif::SDKUpdater::ExtUpdateType DarkEdif::SDKUpdater::ReadUpdateStatus(std::string * logData)
+{
+	// Lock for safety
+	while (updateLock.exchange(true))
+		/* when holder releases, exchange() will return false */;
+
+	if (logData)
+		*logData = updateLog.str();
+	ExtUpdateType extUpdateType = pendingUpdateType;
+
+	updateLock = false; // unlock
+	return extUpdateType;
+}
+bool handledUpdate;
+void DarkEdif::SDKUpdater::RunUpdateNotifs()
+{
+	if (handledUpdate)
+		return;
+
+	// Lock for safety
+	while (updateLock.exchange(true))
+		/* when holder releases, exchange() will return false */;
+
+	ExtUpdateType extUpdateType = pendingUpdateType;
+	if (extUpdateType == ExtUpdateType::CheckInProgress) {
+		updateLock = false; // unlock
+		return;
+	}
+	// Any other status indicates update thread isn't running, so no reason to watch the lock.
+	updateLock = false; // unlock
+
+	handledUpdate = true;
+	if (extUpdateType == ExtUpdateType::Error) {
+		// Update errors can only be fixed by ext developer.
+#ifdef _DEBUG
+		MessageBoxA(NULL, ("Error occurred while checking for updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " - SDK Update Error", MB_ICONERROR);
+#endif
+		return;
+	}
+	if (extUpdateType == ExtUpdateType::SDKUpdate) {
+		// SDK updates can only be done by ext developer.
+#ifdef _DEBUG
+		RECT rect = { 0, 0, 32, 32 };
+		HFONT font = CreateFontA(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
+		::SDK->Icon->DrawTextA("SDK", 3, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 0, 0));
+		if (font)
+			DeleteObject(font);
+		MessageBoxW(NULL, (L"SDK update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONWARNING);
+#endif
+		return;
+	}
+
+	if (extUpdateType == ExtUpdateType::Major) {
+		RECT rect = { 0, 0, 32, 32 };
+		HFONT font = CreateFontA(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
+		::SDK->Icon->DrawTextA("UPDATE", 6, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 0, 0));
+		if (font)
+			DeleteObject(font);
+		//::SDK->Icon->SaveImage("D:\\IconOut.png");
+
+		// No URL? Open a dialog to report it.
+		if (pendingUpdateURL.empty())
+			MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
+		else // URL? Request to open it. Let user say no.
+		{
+			int ret = MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
+			if (ret == IDYES)
+				ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		}
+		return;
+	}
+	if (extUpdateType == ExtUpdateType::Minor) {
+		RECT rect = { 0, 0, 32, 32 };
+		HFONT font = CreateFontA(6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
+		::SDK->Icon->DrawTextA("UPDATE", 6, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 255, 0));
+
+		if (font)
+			DeleteObject(font);
+		return;
+	}
+}
+
+
+#ifndef _WINSOCK2API_
+#include <winsock2.h>
+#include <windows.h>
+#pragma comment(lib,"ws2_32.lib")
+#endif
+#include <iomanip>
+
+std::string url_encode(const std::string & value) {
+	std::ostringstream escaped;
+	escaped.fill('0');
+	escaped << std::hex;
+
+	for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		std::string::value_type c = (*i);
+
+		// Keep alphanumeric and other accepted characters intact
+		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << std::uppercase;
+		escaped << '%' << std::setw(2) << int((unsigned char)c);
+		escaped << std::nouppercase;
+	}
+
+	return escaped.str();
+}
+
+DWORD WINAPI DarkEdifUpdateThread(void * data)
+{
+	// In order to detect it regardless of whether it as the start or end of the list,
+	// we make sure the line content is wrapped in semicolons
+	std::string ini = ";" + DarkEdif::GetIniSetting("DisableUpdateCheckFor") + ";";
+
+	// Remove spaces around the ';'s. We can't just remove all spaces, as some ext names have them.
+	size_t semiSpace = 0;
+	while ((semiSpace = ini.find("; ", semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";");
+
+	semiSpace = 0;
+	while ((semiSpace = ini.find(" ;", semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";");
+
+	// Acquire the rudimentary lock, do op, and release
+#define GetLockAnd(x) while (updateLock.exchange(true)) /* retry */; x; updateLock = false
+#define GetLockSetErrorAnd(x) while (updateLock.exchange(true)) /* retry */; x; pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Error; updateLock = false
+
+	// If the ext name is found, or the wildcard *
+	if (ini.find(";" PROJECT_NAME ";") != std::string::npos || ini.find(";*;") != std::string::npos)
+	{
+		GetLockAnd(updateLog << "Update check was disabled.";
+			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
+		return 0;
+	}
+
+	std::string projConfig = STRIFY(CONFIG);
+	while ((semiSpace = projConfig.find(' ')) != std::string::npos)
+		projConfig.replace(semiSpace, 1, "%20");
+
+	try {
+		WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+			GetLockSetErrorAnd(
+				updateLog << "WSAStartup failed.\n");
+			return 1;
+		}
+		SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (Socket == INVALID_SOCKET)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "socket() failed. Error " << WSAGetLastError() << ".\n");
+			WSACleanup();
+			return 1;
+		}
+
+		// Used in IP lookup and 
+		const char domain[] = "nossl.dark-wire.com";
+
+		struct hostent * host;
+		OutputDebugStringA("gethostbyname() start for " PROJECT_NAME "\n");
+		host = gethostbyname(domain);
+		OutputDebugStringA("gethostbyname() end for " PROJECT_NAME "\n");
+		if (host == NULL)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "getting host " << domain << " failed, error " << WSAGetLastError() << ".");
+			closesocket(Socket);
+			WSACleanup();
+			return 1;
+		}
+		SOCKADDR_IN SockAddr;
+		SockAddr.sin_port = htons(80);
+		SockAddr.sin_family = AF_INET;
+		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
+		updateLog << "Connecting...\n";
+		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {
+			GetLockSetErrorAnd(
+				updateLog << "Connect failed, error " << WSAGetLastError() << ".");
+			closesocket(Socket);
+			WSACleanup();
+			return 1;
+		}
+		GetLockAnd(
+			updateLog << "Connected to update server.\n");
+		// Host necessary so servers serving multiple domains know what domain is requested.
+		// Connection: close indicates server should close connection after transfer.
+		std::stringstream requestStream;
+		requestStream << "GET /storage/darkedif_vercheck.php?ext=" << url_encode(PROJECT_NAME)
+			<< "&build=" << Extension::Version << "&sdkBuild=" << DarkEdif::SDKVersion
+			<< "&projConfig=" << projConfig << "&sdkPlatform=Windows"
+			<< " HTTP/1.1\r\nHost: " << domain << "\r\nConnection: close\r\n\r\n";
+		std::string request = requestStream.str();
+		
+		GetLockAnd(
+			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \"" << url_encode(PROJECT_NAME)
+			<< "\", build " << Extension::Version << ", config " << projConfig << ".\n" << request.substr(0, request.find(' ', 4)) << "\n"
+		);
+
+		if (send(Socket, request.c_str(), request.size() + 1, 0) == SOCKET_ERROR)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "Send failed, error " << WSAGetLastError() << ".");
+			closesocket(Socket);
+			WSACleanup();
+			return 1;
+		}
+
+		std::string fullPage;
+		{
+			// Used as buffer
+			std::string pagePart(1024, '\0');
+			std::stringstream page;
+			int nDataLength;
+
+			GetLockAnd(
+				updateLog << "Result follows:\n");
+			while ((nDataLength = recv(Socket, pagePart.data(), pagePart.size(), 0)) > 0) {
+				page << std::string_view(pagePart).substr(0, nDataLength);
+				memset(pagePart.data(), 0, nDataLength);
+			}
+			if (nDataLength < 0)
+			{
+				GetLockSetErrorAnd(
+					updateLog << "Error " << WSAGetLastError() << " with recv().");
+				closesocket(Socket);
+				WSACleanup();
+				return 1;
+			}
+			GetLockAnd(
+				updateLog << "\nResult concluded.\n";
+			OutputDebugStringA(updateLog.str().c_str()));
+			closesocket(Socket);
+			WSACleanup();
+
+			// the c_str() ensures no null or beyond in string, by using a different constructor
+			fullPage = page.str().c_str();
+		}
+
+		// In case there's an automatic error page with CRLF, we'll check for CRs after.
+		size_t endIndex = fullPage.find_first_of("\r\n");
+
+		if (endIndex == std::string::npos)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "End of first line not found. Full raw (non-http) response:\n" << fullPage);
+			return 1;
+		}
+
+		const char expHttpHeader[] = "HTTP/1.1", expHttpOKHeader[] = "HTTP/1.1 200";
+		std::string statusLine = endIndex == std::string::npos ? fullPage : fullPage.substr(0, endIndex - 1);
+		// Not a HTTP response
+		if (endIndex == std::string::npos || strncmp(statusLine.c_str(), expHttpHeader, sizeof(expHttpHeader) - 1))
+		{
+			GetLockSetErrorAnd(
+				updateLog << "Unexpected non-http response:\n" << statusLine);
+			return 1;
+		}
+
+		// HTTP response, but it's not an OK
+		if (strncmp(statusLine.c_str(), expHttpOKHeader, sizeof(expHttpOKHeader) - 1))
+		{
+			GetLockSetErrorAnd(
+				updateLog << "HTTP error " << statusLine.substr(sizeof(expHttpHeader) - 1));
+			return 1;
+		}
+
+		// HTTP response has header, two CRLF, then result
+		size_t headerStart = fullPage.find("\r\n\r\n");
+		if ((headerStart = fullPage.find("\r\n\r\n")) == std::string::npos)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "Malformed HTTP response; end of HTTP header not found.");
+			return 1;
+		}
+
+		// result should be LF line breaks only, ideally in UTF-8.
+		std::string pageBody = fullPage.substr(headerStart + 4);
+		if (pageBody.find('\r') != std::string::npos)
+		{
+			GetLockSetErrorAnd(
+				updateLog << "CR not permitted in update page response.");
+			return 1;
+		}
+
+		if (!_strnicmp(pageBody.c_str(), "https://", sizeof("https://") - 1) || !_strnicmp(pageBody.c_str(), "http://", sizeof("http://") - 1))
+		{
+			pendingUpdateURL = UTF8ToWide(pageBody.substr(0, pageBody.find('\n')));
+			pageBody = pageBody.substr(pendingUpdateURL.size() + 1);
+		}
+
+		GetLockAnd(
+			updateLog << "Completed OK. Response:\n" << pageBody;
+		);
+		if (pageBody == "None")
+		{
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::None;
+				pendingUpdateDetails = UTF8ToWide(pageBody));
+			return 0;
+		};
+		const char sdkUpdate[] = "SDK Update:\n";
+		const char majorUpdate[] = "Major Update:\n";
+		const char minorUpdate[] = "Minor Update:\n";
+		if (!_strnicmp(pageBody.c_str(), sdkUpdate, sizeof(sdkUpdate) - 1))
+		{
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::SDKUpdate;
+				pendingUpdateDetails = UTF8ToWide(pageBody.substr(sizeof(sdkUpdate) - 1)));
+			return 0;
+		}
+		if (!_strnicmp(pageBody.c_str(), majorUpdate, sizeof(majorUpdate) - 1))
+		{
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Major;
+				pendingUpdateDetails = UTF8ToWide(pageBody.substr(sizeof(majorUpdate) - 1)));
+			return 0;
+		}
+
+		if (!_strnicmp(pageBody.c_str(), minorUpdate, sizeof(minorUpdate) - 1))
+		{
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Minor;
+				pendingUpdateDetails = UTF8ToWide(pageBody.substr(sizeof(minorUpdate) - 1)));
+			return 0;
+		}
+
+		GetLockAnd(
+			updateLog << "Can't interpret type. Page content is:\n" << pageBody;
+			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Error;
+			pendingUpdateDetails = UTF8ToWide(pageBody));
+		return 0;
+	}
+	catch (...)
+	{
+		GetLockAnd(
+			updateLog << "Caught a crash. Aborting update.");
+		OutputDebugStringA(updateLog.str().c_str());
+		return 0;
+	}
+#undef GetLockAnd
+#undef GetLockSetErrorAnd
+}
+
+
+#endif // EditorBuild

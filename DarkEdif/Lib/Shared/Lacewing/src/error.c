@@ -118,26 +118,26 @@ void lw_error_add (lw_error ctx, long error)
 {
 	#ifdef _WIN32
 
-	  char * message;
+		char message[512];
 
-	  if (FormatMessageA
-			(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-			 0,
-			 error,
-			 MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-			 (char *) &message,
-			 1,
-			 0))
-	  {
-		 lw_error_addf (ctx, error < 0 ? "%s (%08X)" : "%s (%d)",
-				message, error);
-	  }
+		if (FormatMessageA
+			(FORMAT_MESSAGE_FROM_SYSTEM,
+				0,
+				error,
+				MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
+				message,
+				sizeof(message) / sizeof(*message),
+				0))
+		{
+			lw_error_addf (ctx, error < 0 ? "%.*s (%08X)" : "%.*s (%d)",
+				strlen(message) - 3, message, error);
+		}
 
-	  LocalFree (message);
+		LocalFree (message);
 
 	#else
 
-	  lw_error_addf (ctx, "%s", strerror (error));
+		lw_error_addf (ctx, "%s (%ld)", strerror (error), error);
 		
 	#endif
 }
