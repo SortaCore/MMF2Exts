@@ -61,6 +61,8 @@
 		
 		<!-- If user has enabled DarkEdif FusionDebugger class inside their Extension. -->
 		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
+		<!-- If user has enabled DarkEdif Update Checker inside their Extension. -->
+		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">
@@ -107,16 +109,20 @@
 			 Starting "(?im)" sets regex matching to case-insensitive, multiline. -->
 		<_AuthorNameRegex><![CDATA[(?im)"Author"\s*:\s*"(.*)"\s*?,\s*$]]></_AuthorNameRegex>
 		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_JSON), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
-		 
+		
 		<!-- Use Author Name if company isn't found -->
 		<_CompanyNameRegex><![CDATA[(?im)"Company"\s*:\s*"(.*)"\s*?,\s*$]]></_CompanyNameRegex>
 		<_ExtH>$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
 		<CompanyName Condition="$(_JSON.Contains('CompanyName'))">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_CompanyNameRegex)).Result('$1').Replace('\'', '\u0027'))</CompanyName>
 		<CompanyName Condition="$(CompanyName)==''">$(AuthorName)</CompanyName>
 		
-		<!-- This define is true if FusionDebugger item is detected in Extension.h, it's true at runtime. -->
+		<!-- This define is true if FusionDebugger variable is detected in Extension.h, it's true at runtime. -->
 		<_DarkEdif_DetectFusionDebuggerRegex><![CDATA[(?m)^\s*DarkEdif::FusionDebugger\s+FusionDebugger\s*;\s*$]]></_DarkEdif_DetectFusionDebuggerRegex>
 		<DarkEdif_FusionDebugger Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::IsMatch($(_ExtH), $(_DarkEdif_DetectFusionDebuggerRegex)))">1</DarkEdif_FusionDebugger>
+		
+		<!-- This define is true if SDKUpdater::RunUpdateNotifs() function is detected in Edittime.cpp -->
+		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
+		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
@@ -128,7 +134,7 @@
 			 There is a final Replace to make ' turn into its arbitrary Unicode value,
 			 so the preprocessor doesn't get puzzled while stringifying it. -->
 		<_AuthorNameRegex><![CDATA[(?im)IDST_AUTHOR[ \t]+"([^\n]+)"\s*?$]]></_AuthorNameRegex>
-		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_RCFile), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
+		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_RCFile), $(_AuthorNameRegex)).Result('$1'))</AuthorName> 
 		
 		<!-- Use Author Name if company isn't found -->
 		<CompanyName>$(AuthorName)</CompanyName>
@@ -151,19 +157,22 @@
 		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
 			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
 			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\"" /D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
+			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""
+			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
+			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
 		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
 			 project needs rebuilding on every run. -->
 		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=STRIFY($(ExtName))"
 			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
 			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
+			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
 			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
 			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=STRIFY($(BuildDate))"</_FusionSDKAddsRC>
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(_TargetPlat)=='Android'">
 		<!-- Android uses Clang, a different format of commandline items

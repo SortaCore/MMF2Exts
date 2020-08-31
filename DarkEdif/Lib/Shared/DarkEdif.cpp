@@ -695,11 +695,6 @@ std::string WideToANSI(const std::wstring input, bool * const allValidChars /* =
 	std::string outputStr(outputBuf, length);
 	_freea(outputBuf);
 #endif
-	OutputDebugStringW(L"Converted Wide To ANSI: [");
-	OutputDebugStringW(input.c_str());
-	OutputDebugStringW(L"] to [");
-	OutputDebugStringA(outputStr.c_str());
-	OutputDebugStringW(L"]\n");
 	assert(input.back() != L'\0' && "Input ends with null.");
 	assert(outputStr.back() != '\0' && "Output ends with null.");
 	return outputStr;
@@ -735,11 +730,6 @@ std::string WideToUTF8(const std::wstring input)
 	std::string outputStr(outputBuf, length);
 	_freea(outputBuf);
 #endif
-	OutputDebugStringW(L"Converted Wide To UTF8: [");
-	OutputDebugStringW(input.c_str());
-	OutputDebugStringW(L"] to [");
-	OutputDebugStringA(outputStr.c_str());
-	OutputDebugStringW(L"]\n");
 	assert(input.back() != L'\0' && "Input ends with null.");
 	assert(outputStr.back() != '\0' && "Output ends with null.");
 	return outputStr;
@@ -1216,6 +1206,8 @@ std::string DarkEdif::GetIniSetting(const char * key)
 // Fusion SDK updater
 // =====
 
+#if USE_DARKEDIF_UPDATE_CHECKER
+
 static std::atomic_bool updateLock(false);
 static HANDLE updateThread;
 static std::stringstream updateLog = std::stringstream();
@@ -1244,8 +1236,9 @@ DarkEdif::SDKUpdater::ExtUpdateType DarkEdif::SDKUpdater::ReadUpdateStatus(std::
 	updateLock = false; // unlock
 	return extUpdateType;
 }
-bool handledUpdate;
-void DarkEdif::SDKUpdater::RunUpdateNotifs()
+
+static bool handledUpdate;
+void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 {
 	if (handledUpdate)
 		return;
@@ -1262,63 +1255,133 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs()
 	// Any other status indicates update thread isn't running, so no reason to watch the lock.
 	updateLock = false; // unlock
 
+	// Prevent this function running again
 	handledUpdate = true;
+
+	// Update errors can only be fixed by ext developer, we'll use debug build to check for it.
 	if (extUpdateType == ExtUpdateType::Error) {
-		// Update errors can only be fixed by ext developer.
 #ifdef _DEBUG
 		MessageBoxA(NULL, ("Error occurred while checking for updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " - SDK Update Error", MB_ICONERROR);
 #endif
 		return;
 	}
+
+	// SDK updates can only be done by ext developer, we'll use debug build to check for it.
 	if (extUpdateType == ExtUpdateType::SDKUpdate) {
-		// SDK updates can only be done by ext developer.
 #ifdef _DEBUG
-		RECT rect = { 0, 0, 32, 32 };
-		HFONT font = CreateFontA(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
-		::SDK->Icon->DrawTextA("SDK", 3, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 0, 0));
-		if (font)
-			DeleteObject(font);
 		MessageBoxW(NULL, (L"SDK update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONWARNING);
 #endif
 		return;
 	}
 
-	if (extUpdateType == ExtUpdateType::Major) {
-		RECT rect = { 0, 0, 32, 32 };
-		HFONT font = CreateFontA(8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
-		::SDK->Icon->DrawTextA("UPDATE", 6, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 0, 0));
-		if (font)
-			DeleteObject(font);
-		//::SDK->Icon->SaveImage("D:\\IconOut.png");
 
-		// No URL? Open a dialog to report it.
-		if (pendingUpdateURL.empty())
-			MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
-		else // URL? Request to open it. Let user say no.
+	if (extUpdateType != ExtUpdateType::Major && extUpdateType != ExtUpdateType::Minor)
+		return;
+
+	// Lots of magic numbers created by a lot of trial and error. Do not recommend.
+	if (::SDK->Icon->GetWidth() != 32)
+		return (void)MessageBoxA(NULL, "Icon width is not 32. Contact extension developer.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
+
+	// If font creation fails, it's not that important; a null HFONT is replaced with a system default.
+	HFONT font = CreateFontA(
+		8 /* Height: 8px */,
+		0 /* Width: 0; use closest match */,
+		0 /* Escapement: Rotate 0 degrees */,
+		0 /* Orientation:  Rotate 0 degrees */,
+		FW_NORMAL /* Weight: Normal */,
+		FALSE /* Italic */, FALSE /* Underline */, FALSE /* Strikeout */,
+		ANSI_CHARSET /* Charset */,
+		OUT_DEFAULT_PRECIS /* OUT_RASTER_PRECIS /* Out precision: pick raster font */, CLIP_DEFAULT_PRECIS /* Clip precision: default */,
+		ANTIALIASED_QUALITY  /* Quality: Antialiased */,
+		FF_MODERN /* Pitch and family: use fonts with constant stroke width */,
+		"Small Fonts" /* Font face name */);
+
+	auto FillBackground = [](const RECT rect, COLORREF color) {
+		// This is the grey background rectangle, which we'll need to both de-alpha and colour.
+		if (::SDK->Icon->HasAlpha())
 		{
-			int ret = MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
-			if (ret == IDYES)
-				ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			LPBYTE alpha = ::SDK->Icon->LockAlpha();
+			if (alpha != nullptr)
+			{
+				for (int i = rect.top; i < rect.bottom; i++)
+					memset(&alpha[rect.left + (i * 32)], 0xFF, rect.right - rect.left);
+				::SDK->Icon->UnlockAlpha();
+			}
 		}
-		return;
-	}
-	if (extUpdateType == ExtUpdateType::Minor) {
-		RECT rect = { 0, 0, 32, 32 };
-		HFONT font = CreateFontA(6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
-		::SDK->Icon->DrawTextA("UPDATE", 6, &rect, DT_BOTTOM | DT_CENTER | DT_SINGLELINE, RGB(255, 255, 0));
+		::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, color);
+	};
 
-		if (font)
-			DeleteObject(font);
-		return;
+	if (extUpdateType == ExtUpdateType::Major)
+	{
+		const RECT greyBkgdRect { 1, 8, 30, 27 };
+		FillBackground(greyBkgdRect, RGB(80, 80, 80));
+
+		// For some reason there are margins added in by the font drawing technique;
+		// we have to counter it.
+		RECT textDrawRect = { greyBkgdRect.left + 1, greyBkgdRect.top - 1, 32, 32 };
+		COLORREF textColor = RGB(240, 0, 0);
+		::SDK->Icon->DrawTextA("MAJOR", sizeof("MAJOR") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+		
+		textDrawRect.left -= 1;
+		textDrawRect.top += 6;
+		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		textDrawRect.top += 6;
+		textDrawRect.left += 1;
+		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		// It's possible to do this so the icon in the side bar is updated too, but it causes Fusion to register that the properties have changed,
+		// and causes Fusion to save the "update needed" icon into the MFA, which is no good as it'll never be restored to normal.
+		// mvInvalidateObject(mV, edPtr);
+
+		if (DarkEdif::GetIniSetting("MsgBoxForMajorUpdate") != "false")
+		{
+			// No URL? Open a dialog to report it.
+			if (pendingUpdateURL.empty())
+				MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
+			else // URL? Request to open it. Let user say no.
+			{
+				int ret = MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
+				if (ret == IDYES)
+					ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			}
+		}
 	}
+	else if (extUpdateType == ExtUpdateType::Minor)
+	{
+		const RECT greyBkgdRect{ 1, 25, 30, 32 };
+		FillBackground(greyBkgdRect, RGB(60, 60, 60));
+
+		// For some reason there are margins added in by the font drawing technique;
+		// we have to counter it.
+		RECT textDrawRect = { greyBkgdRect.left, greyBkgdRect.top - 1, 32, 32 };
+		COLORREF textColor = RGB(0, 180, 180);
+
+		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		if (DarkEdif::GetIniSetting("MsgBoxForMinorUpdate") == "true")
+		{
+			// No URL? Open a dialog to report it.
+			if (pendingUpdateURL.empty())
+				MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
+			else // URL? Request to open it. Let user say no.
+			{
+				int ret = MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
+				if (ret == IDYES)
+					ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			}
+		}
+	}
+
+	if (font)
+		DeleteObject(font);
 }
 
-
-#ifndef _WINSOCK2API_
-#include <winsock2.h>
-#include <windows.h>
 #pragma comment(lib,"ws2_32.lib")
-#endif
 #include <iomanip>
 
 std::string url_encode(const std::string & value) {
@@ -1425,13 +1488,13 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		std::stringstream requestStream;
 		requestStream << "GET /storage/darkedif_vercheck.php?ext=" << url_encode(PROJECT_NAME)
 			<< "&build=" << Extension::Version << "&sdkBuild=" << DarkEdif::SDKVersion
-			<< "&projConfig=" << projConfig << "&sdkPlatform=Windows"
+			<< "&projConfig=" << projConfig
 			<< " HTTP/1.1\r\nHost: " << domain << "\r\nConnection: close\r\n\r\n";
 		std::string request = requestStream.str();
 		
 		GetLockAnd(
 			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \"" << url_encode(PROJECT_NAME)
-			<< "\", build " << Extension::Version << ", config " << projConfig << ".\n" << request.substr(0, request.find(' ', 4)) << "\n"
+				<< "\", build " << Extension::Version << ", config " << projConfig << ".\n" << request.substr(0, request.find(' ', 4)) << "\n"
 		);
 
 		if (send(Socket, request.c_str(), request.size() + 1, 0) == SOCKET_ERROR)
@@ -1516,7 +1579,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (pageBody.find('\r') != std::string::npos)
 		{
 			GetLockSetErrorAnd(
-				updateLog << "CR not permitted in update page response.");
+				updateLog << "CR not permitted in update page response.\n" << pageBody);
 			return 1;
 		}
 
@@ -1578,6 +1641,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 #undef GetLockAnd
 #undef GetLockSetErrorAnd
 }
+
+#endif // USE_DARKEDIF_UPDATE_CHECKER
 
 
 #endif // EditorBuild

@@ -264,7 +264,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	this->mV = mV;
 
 	#if EditorBuild
-		Icon = new cSurface;
+		cSurface * proto = nullptr;
+		if (GetSurfacePrototype(&proto, 32, ST_MEMORYWITHDC, SD_BITMAP) == FALSE)
+			MessageBoxA(NULL, "Getting surface prototype failed.", "DarkEdif error", MB_ICONERROR);
+
+		Icon = new cSurface();
 		if (mV->ImgFilterMgr)
 		{
 			char * IconData;
@@ -276,19 +280,28 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				CInputMemFile * File = CInputMemFile::NewInstance();
 				File->Create ((LPBYTE)IconData, IconSize);
 
-				unsigned long PNG = 'PNG ';
-				ImportImageFromInputFile(mV->ImgFilterMgr, File, Icon, &PNG, 0);
+				std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
+				DWORD PNG = 'PNG ';
+				ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), &PNG, 0);
 
 				File->Delete();
 
-				if (!Icon->HasAlpha())
-					Icon->SetTransparentColor(RGB(255, 0, 255));
+				if (!tempIcon->HasAlpha())
+					tempIcon->SetTransparentColor(RGB(255, 0, 255));
 
 				if (result != Edif::DependencyWasResource)
 					free(IconData);
+
+				Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
+
+				if (tempIcon->Blit(*Icon) == FALSE)
+					MessageBoxA(NULL, "Blitting to surface failed.", "DarkEdif error", MB_ICONERROR);
 			}
 		}
+
+#if USE_DARKEDIF_UPDATE_CHECKER
 		DarkEdif::SDKUpdater::StartUpdateCheck();
+#endif
 	#else
 		Icon = nullptr;
 	#endif // EditorBuild

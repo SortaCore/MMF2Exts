@@ -1,13 +1,13 @@
 MMF2/CF2.5 Open Source Extension Repository
 ===
 A single repository to contain and/or link to open source extensions for MMF2/CF2.5.
-These extensions are collated for examples and for upgrading; these are subject to individual licenses.   
-If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.  
+These extensions are collated for examples and for upgrading; these are subject to individual licenses.
+If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
-## Using a single project
-For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.  
-For example, DarkEdif Template can be extracted by downloading DarkEdif\DarkEdif Template, DarkEdif\Inc, and DarkEdif\Lib.  
+### Using a single project ###
+For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
+For example, DarkEdif Template can be extracted by downloading DarkEdif\DarkEdif Template, DarkEdif\Inc, and DarkEdif\Lib.
 All projects in this repository use a shared Visual Studio props file, found in Lib, which will set all general vcxproj settings, automatically checking what SDK is in use. This has several effects:
 
 1. You won't find most project settings entered in the vcxproj; you should instead open the Edit dialog for a property and view the "evaluated version".
@@ -34,14 +34,19 @@ It includes all the features of Edif and some extra, including:
 
 * Multi-language JSON file
 * Properties defined in the JSON file
-* In debug build, a runtime check that A/C/E parameters in C++ and JSON are the same  
+* In debug build, a runtime check that A/C/E parameters in C++ and JSON are the same
   (only active in Debug/Debug Unicode builds; disable via defining `FAST_ACE_LINK` in project properties)
 * A JSON minifier for runtime builds
 * Error messages during Edif crash scenarios (e.g. missing actions)
 * Extension description defined at runtime via `JSON_COMMENT_MACRO` (demo: Bluewing Client/Server, Common.h)
 * Fusion debugger access via `DarkEdif::FusionDebugger` (demo: Bluewing Client/Server, Extension.cpp, Extension.h)
+* An opt-in SDK and extension update checker tool
 
 DarkEdif uses a pre-build standalone tool (and in non-Windows platforms, also a post-build standalone tool) programmed in C#. This tool is currently not open-source.
+
+More details on DarkEdif are available in the Wiki, see:
+* [DarkEdif ext dev features](https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features) for a list of features available to a DarkEdif extension developer
+* [DarkEdif Fusion user features](https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-Fusion-user-features) for a list of features available to Fusion users
 
 ## How to convert ANSI functions to ANSI & Unicode
 Make sure you're aware of what any text-related function you call expects. Does it ask for number of elements in array, or number of bytes in array?

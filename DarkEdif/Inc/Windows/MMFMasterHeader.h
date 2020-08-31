@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <tchar.h>
+#include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
 #include <windows.h>
 
 struct ACEParamReader {

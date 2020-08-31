@@ -31,7 +31,7 @@ struct ACEInfo {
 							 // For acts: unused, always 0
 	short		NumOfParams; // Number of parameters this A/C/E is called with (Parameters[n])
 	BothParams	Parameter[]; // Parameter information (max sizeof(FloatFlags)*8 params)
-	
+
 	ACEInfo(short _ID, BothFlags _Flags, short _NumOfParams) :
 			FloatFlags(0), ID(_ID),
 			Flags(_Flags), NumOfParams(_NumOfParams)
@@ -72,8 +72,13 @@ std::string TStringToUTF8(const std::tstring);
 std::wstring TStringToWide(const std::tstring);
 
 namespace DarkEdif {
-	
-	static const int SDKVersion = 1;
+
+	// v1: 30th Aug 2020, commit 08a901341a102af790f1b57b5b9ea6d0150892eb
+	// First SDK with updater (where version was relevant).
+	// v2: 31st Aug 2020, commit (latest)
+	// Fixed the icon display when updater is in use.
+
+	static const int SDKVersion = 2;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -82,6 +87,11 @@ namespace DarkEdif {
 
 	namespace SDKUpdater
 	{
+		// v1: 30th Aug 2020, commit 08a901341a102af790f1b57b5b9ea6d0150892eb
+		// First SDK with updater (where version was relevant).
+		// v2: 31st Aug 2020, commit (latest)
+		// Fixed the icon display when updater is in use. Added USE_DARKEDIF_UPDATE_CHECKER.
+
 		/// <summary> Starts an update check in async. Will ignore second runs. </summary>
 		void StartUpdateCheck();
 
@@ -107,10 +117,10 @@ namespace DarkEdif {
 		ExtUpdateType ReadUpdateStatus(std::string * logData);
 
 		/// <summary> Updates ::SDK->Icon to draw on it; optionally displays a message box. </summary>
-		void RunUpdateNotifs();
+		void RunUpdateNotifs(mv * mV, EDITDATA * edPtr);;
 	}
 
-#endif
+#endif // EditorBuild
 
 	struct FusionDebuggerAdmin;
 	struct FusionDebugger
@@ -173,7 +183,7 @@ namespace DarkEdif {
 		void StartEditForItemID(int debugItemID);
 		std::uint16_t * GetDebugTree();
 		void GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID);
-#endif
+#endif // EditorBuild
 
 	public:
 
@@ -625,7 +635,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		else if (jsonParamCount > 0)
 		{
 			forLoopE<sizeof...(Args), Ret, Struct, Args...>(ID, json, str, Function);
-			
+
 			// remove final \r\n
 			if (str.str().size() > 0)
 			{

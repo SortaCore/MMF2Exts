@@ -49,6 +49,10 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	if (!Surface)
 		return;
 
+	// If you don't have this function run in Edittime.cpp, SDK Updater will be disabled for your ext
+	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
+	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
+
 	::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
