@@ -1260,9 +1260,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 
 	// Update errors can only be fixed by ext developer, we'll use debug build to check for it.
 	if (extUpdateType == ExtUpdateType::Error) {
-#ifdef _DEBUG
-		MessageBoxA(NULL, ("Error occurred while checking for updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " - SDK Update Error", MB_ICONERROR);
-#endif
+		MessageBoxA(NULL, ("Error occurred while checking for extension updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " - SDK Update Error", MB_ICONERROR);
 		return;
 	}
 
@@ -1494,8 +1492,11 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		
 		GetLockAnd(
 			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \"" << url_encode(PROJECT_NAME)
-				<< "\", build " << Extension::Version << ", config " << projConfig << ".\n" << request.substr(0, request.find(' ', 4)) << "\n"
-		);
+				<< "\", build " << Extension::Version << ", SDK build " << DarkEdif::SDKVersion << ", config " << projConfig << ".\n");
+#ifdef _DEBUG
+		GetLockAnd(
+			updateLog << request.substr(0, request.find(' ', 4)) << "\n");
+#endif
 
 		if (send(Socket, request.c_str(), request.size() + 1, 0) == SOCKET_ERROR)
 		{
@@ -1625,9 +1626,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			return 0;
 		}
 
-		GetLockAnd(
+		GetLockSetErrorAnd(
 			updateLog << "Can't interpret type. Page content is:\n" << pageBody;
-			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Error;
 			pendingUpdateDetails = UTF8ToWide(pageBody));
 		return 0;
 	}

@@ -75,10 +75,13 @@ namespace DarkEdif {
 
 	// v1: 30th Aug 2020, commit 08a901341a102af790f1b57b5b9ea6d0150892eb
 	// First SDK with updater (where version was relevant).
-	// v2: 31st Aug 2020, commit (latest)
+	// v2: 31st Aug 2020, commit 31a7d45216095646452f2722c794c033aaf71ea1
 	// Fixed the icon display when updater is in use.
+	// v3: 1st Sept 2020, commit (latest)
+	// Made updater error messages visible to end users. The webserver will be smart
+	// about what errors to show.
 
-	static const int SDKVersion = 2;
+	static const int SDKVersion = 3;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -87,11 +90,6 @@ namespace DarkEdif {
 
 	namespace SDKUpdater
 	{
-		// v1: 30th Aug 2020, commit 08a901341a102af790f1b57b5b9ea6d0150892eb
-		// First SDK with updater (where version was relevant).
-		// v2: 31st Aug 2020, commit (latest)
-		// Fixed the icon display when updater is in use. Added USE_DARKEDIF_UPDATE_CHECKER.
-
 		/// <summary> Starts an update check in async. Will ignore second runs. </summary>
 		void StartUpdateCheck();
 
