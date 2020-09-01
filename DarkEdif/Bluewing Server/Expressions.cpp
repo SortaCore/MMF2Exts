@@ -127,7 +127,7 @@ unsigned int Extension::UnsignedInteger(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read unsigned integer from received binary, index %i is less than 0.", index), 0;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(unsigned int))
 		return CreateError("Could not read unsigned integer from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
 	return (*(unsigned int *)(threadData->receivedMsg.content.data() + index));
@@ -136,7 +136,7 @@ int Extension::SignedInteger(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read signed integer from received binary, index %i is less than 0.", index), 0;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(int))
 		return CreateError("Could not read signed integer from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
 	return (*(int *)(threadData->receivedMsg.content.data() + index));
@@ -145,7 +145,7 @@ float Extension::Float(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read float from received binary, index %i is less than 0.", index), 0.0f;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(float))
 		return CreateError("Could not read float from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0.0f;
 
 	return (*(float *)(threadData->receivedMsg.content.data() + index));

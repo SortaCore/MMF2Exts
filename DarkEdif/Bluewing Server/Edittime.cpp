@@ -75,8 +75,8 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	if (!Surface)
 		return;
 
-	// May modify icon
-	DarkEdif::SDKUpdater::RunUpdateNotifs();
+	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
+
 	SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 

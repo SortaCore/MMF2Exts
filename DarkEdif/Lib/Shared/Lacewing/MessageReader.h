@@ -115,7 +115,7 @@ public:
 			return this->buffer;
 
 		std::string_view remaining(this->buffer + offset, bytesleft());
-		offset += size;
+		offset += remaining.size();
 
 		if (!allowempty && (remaining.empty() || !remaining.front()))
 			failed = true;

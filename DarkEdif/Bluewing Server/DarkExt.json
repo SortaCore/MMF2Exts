@@ -760,7 +760,7 @@
 					[ "Text", "Channel name" ],
 					[ "Integer", "Hide channel from public listing? Yes (1) or no (0)" ],
 					[ "Integer", "Auto-close channel when master leaves? Yes (1) or no (0)" ],
-					[ "Text", "Master client ID (or -1 for no master client)" ]
+					[ "Integer", "Master client ID (or -1 for no master client)" ]
 				]
 			},
 			{
@@ -772,7 +772,7 @@
 			{
 				"Title": "Join client with ID %0 to selected channel",
 				"Parameters": [
-					[ "Text", "Client ID (or -1 for currently selected)" ]
+					[ "Integer", "Client ID (or -1 for currently selected)" ]
 				]
 			},
 			{
@@ -784,7 +784,7 @@
 			{
 				"Title": "Kick client with ID %0 from selected channel",
 				"Parameters": [
-					[ "Text", "Client ID (or -1 for currently selected)" ]
+					[ "Integer", "Client ID (or -1 for currently selected)" ]
 				]
 			} /*,
 			// ID 88+
@@ -1395,7 +1395,7 @@
 				"Info": "The version of the liblacewing library used to build this extension.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
+				"DefaultState": "Bluewing (b%i, %s) using liblacewing 0.5.4 (Windows/x86)"
 			},
 			{
 				"Title": "Automatically clear binary",
@@ -1440,7 +1440,7 @@
 			"Name": "Servidor Lacewing Blue",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2020 por Darkwire Software",
-			"Comment": "\"Bluewing\" recriação do Servidor Lacewing Relay. (b%i, %s)",
+			"Comment": "Servidor multijogador para usar em LAN ou através da internet. \"Bluewing\" recriação do Servidor Lacewing Relay. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
@@ -1477,18 +1477,27 @@
 				[ 61, "Mensagem de queda (para mensagem para o canal/par)" ]
 			],
 			"---",
+
 			[ "Canal",
-				[ 25, "Fechar canal" ],
-				[ 26, "Seleccionar mestre do canal" ],
-				[ 60, "Reciclar clientes no canal" ],
-				[ 67, "Reciclar clientes no canal (com nome a reciclar)" ],
-				"---",
 				[ 27, "Seleccionar por nome" ],
 				"---",
 				[ 28, "Reciclar todos so canais" ],
 				[ 64, "Reciclar todos os canais (com nome a reciclar)" ],
 				"---",
-				[ 72, "Definir dados locais do canal" ]
+				[ 72, "Definir dados locais do canal" ],
+				"---",
+				[ 82, "Criar canal com mestre seleccionado pelo nome" ],
+				[ 83, "Criar canal com mestre seleccionado por ID" ],
+				[ 25, "Fechar canal" ],
+				"---",
+				[ 26, "Seleccionar mestre do canal" ],
+				[ 60, "Reciclar clientes no canal" ],
+				[ 67, "Reciclar clientes no canal (com nome a reciclar)" ],
+				"---",
+				[ 84, "Adicionar cliente ao canal pelo nome do cliente" ],
+				[ 85, "Adicionar cliente ao canal por ID do cliente" ],
+				[ 86, "Expulsar cliente pelo nome do cliente" ],
+				[ 87, "Expulsar cliente por ID do cliente" ]
 			],
 			[ "Cliente",
 				[ 29, "Desligar" ],
@@ -1507,6 +1516,7 @@
 				"---",
 				[ 70, "Definir dados locais do cliente" ]
 			],
+
 			[ "Enviar",
 				[ "Texto",
 					[ 34, "Para ao cliente" ],
@@ -1521,20 +1531,25 @@
 					[ 39, "Para o canal" ]
 				]
 			],
-			[ "Expor",
-				[ "Texto",
+			[
+				"Expor",
+				[
+					"Texto",
 					[ 40, "Para o cliente" ],
 					[ 41, "Para o canal" ]
 				],
-				[ "Número",
+				[
+					"Número",
 					[ 42, "Para o cliente" ],
 					[ 43, "Para o canal" ]
 				],
-				[ "Binário",
+				[
+					"Binário",
 					[ 44, "Para o cliente" ],
 					[ 45, "Para o canal" ]
 				]
 			],
+
 			[ "Binário a enviar",
 				[ "Adicionar byte",
 					[ 46, "Caracter ASCII" ],
@@ -1555,13 +1570,15 @@
 				[ 56, "Limpar" ]
 			],
 			"---",
-			[ "Binário recebido",
+			[
+				"Binário recebido",
 				[ 57, "Guardar como ficheiro" ],
 				[ 58, "Juntar a ficheiro" ],
 				[ 59, "Descomprimir (ZLIB)" ],
 				"---",
 				[ 71, "Mover cursor" ]
 			],
+
 			"---"
 		],
 		"ConditionMenu": [
@@ -1569,7 +1586,7 @@
 			"---",
 			[ 48, "O servidor de Lacewing está ligado" ],
 			[ 49, "O servidor de Políticas de Flash Player está ligado" ],
-			// [ 59, "O servidor de HTML5 está ligado" ],
+			// [ X, "O servidor de HTML5 está ligado" ],
 			"---",
 			[ "Conexão",
 				[ 1, "Quando for pedida a ligação" ],
@@ -1594,8 +1611,9 @@
 				[ 50, "Canal está escondido da lista de canais" ],
 				[ 51, "Canal está definido para fechar automaticamente" ],
 				"---",
-				[ 55, "Does channel name exist?" ]
+				[ 55, "O nome do canal existe?" ],
 			//	[ 56, "Does channel ID exist?" ]
+				[ 59, "Aquando do fecho do canal" ]
 			],
 			[ "Cliente",
 				[ 9, "Cliente é o mestre do canal" ],
@@ -1616,8 +1634,8 @@
 				[ 53, "O cliente seleccionado está em certo canal com ID de canal" ],
 				[ 54, "O cliente seleccionado está em canal com certo nome de canal" ],
 				"---",
-				[ 57, "Does client name exist?" ],
-				[ 58, "Does client ID exist?" ]
+				[ 57, "O nomo cliente existe?" ],
+				[ 58, "O ID do cliente existe?" ]
 			],
 			[ "Messagem",
 				[ "Enviada",
@@ -2106,7 +2124,7 @@
 					[ "Integer", "Novo tamanho (em bytes)" ]
 				]
 			},
-			
+
 			// Novas acções ID 74+
 			{
 				"Title": "Definir condição \"Quando for pedida a ligação\" iniciando 0%, %1, %2",
@@ -2165,8 +2183,50 @@
 					[ "Integer", "Aprovar pedido de mudança de nome imediatamente (0), negar imediatamente (1), ou esperar por Fusion (2)?" ],
 					[ "Text", "Razão da negação (se negar imediatamente)?" ]
 				]
+			},
+			{
+				"Title": "Criar canal com nome %0, escondido %1, fecho automático %2, com cliente mestre seleccionado pelo nome %3 (\"\" = sem mestren)",
+				"Parameters": [
+					[ "Text", "Nome do canal" ],
+					[ "Integer", "Esconder canal da lista pública? Sim (1) ou não (0)" ],
+					[ "Integer", "Fechar o canal automaticamente quando o mestre sair? Sim (1) ou não (0)" ],
+					[ "Text", "Nome do cliente mestre (ou \"\" se não houver cliente mestre)" ]
+				]
+			},
+			{
+				"Title": "Criar canal com nome %0, escondido %1, fecho automático %2, com cliente mestre seleccionado por ID %3 (-1 = sem mestre)",
+				"Parameters": [
+					[ "Text", "Nome do canal" ],
+					[ "Integer", "Esconder canal da lista pública? Sim (1) ou não (0)" ],
+					[ "Integer", "Fechar o canal automaticamente quando o mestre sair? Sim (1) ou não (0)" ],
+					[ "Integer", "ID do cliente mestre (ou -1 se não houver cliente mestre)" ]
+				]
+			},
+			{
+				"Title": "Adicionar cliente com nome %0 ao canal seleccionado",
+				"Parameters": [
+					[ "Text", "Nome do cliente (ou \"\" para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Adicionar cliente com ID %0 ao canal seleccionado",
+				"Parameters": [
+					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Expulsar cliente com nome %0 do canal seleccionado",
+				"Parameters": [
+					[ "Text", "Nome do cliente (ou \"\" para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Expulsar clie com ID %0 do canal seleccionado",
+				"Parameters": [
+					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
+				]
 			} 
-			
+
 			/*,
 			// ID 82+
 			{
@@ -2507,31 +2567,35 @@
 				]
 			},
 			{
-				"Title": "%o : Does channel name %0 exist",
+				"Title": "%o : O canal com o nome %0 existe",
 				"Parameters": [
-					[ "Text", "Channel name to test" ]
+					[ "Text", "Nome do canal a testar" ]
 				]
 			},
 			{
-				"Title": "%o : Does channel ID %0 exist",
+				"Title": "%o : O canal com o ID %0 existe",
 				"Parameters": [
-					[ "Integer", "Channel ID to test" ]
+					[ "Integer", "ID do canal a testar" ]
 				]
 			},
 			{
-				"Title": "%o : Does client name %0 exist",
+				"Title": "%o : O cliente com o nome %0 existe",
 				"Parameters": [
-					[ "Text", "Client name to test" ]
+					[ "Text", "Nome do cliente a testar" ]
 				]
 			},
 			{
-				"Title": "%o : Does client ID %0 exist",
+				"Title": "%o : O cliente com o ID %0 existe",
 				"Parameters": [
-					[ "Integer", "Client ID to test" ]
+					[ "Integer", "ID do canal a testar" ]
 				]
+			},
+			{
+				"Title": "%o : Aquando do fecho do canal",
+				"Triggered": true
 			},
 
-			// 59+
+			// 60+
 			{
 				"Title": "%o : HTML5 está ligado"
 			}
@@ -2773,7 +2837,7 @@
 				"Info": "A versão da biblioteca liblacewing utilizada para construír esta extensão.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
+				"DefaultState": "Bluewing (b%i, %s) utiliza liblacewing 0.5.4 (Windows/x86)"
 			},
 			{
 				"Title": "Limpar binário automaticamente",
@@ -2956,7 +3020,7 @@
 			"---",
 			[ 48, "Le Serveur Lacewing héberge" ],
 			[ 49, "Serveur de politique Flash Player héberge" ],
-			// [ 59, "Serveur HTML5 est hébergé" ],
+			// [ X, "Serveur HTML5 est hébergé" ],
 			"---",
 			[ "Connexion",
 				[ 1, "Lors d'une requête de connexion" ],
@@ -2981,8 +3045,9 @@
 				[ 50, "Le canal est-il caché de la liste des canaux ?" ],
 				[ 51, "Le canal est-il définit pour se fermer automatiquement ?" ],
 				"---",
-				[ 55, "Le nom du canal existe-t-il ?" ]
+				[ 55, "Le nom du canal existe-t-il ?" ],
 			//  [ 56, "L'ID du canal existe-t-il ?" ]
+				[ 59, "Fermeture d'un canal" ]
 			],
 			[ "Client",
 				[ 9, "Le client est le maître du canal" ],
@@ -3565,7 +3630,7 @@
 					[ "Text", "Nom du canal" ],
 					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
 					[ "Integer", "Fermer automatiquement le canal quand le  maître quitte ? Oui (1) ou Non (0)" ],
-					[ "Text", "ID du client maître (ou -1 si aucun client maître)" ]
+					[ "Integer", "ID du client maître (ou -1 si aucun client maître)" ]
 				]
 			},
 			{
@@ -3577,7 +3642,7 @@
 			{
 				"Title": "Joindre le client d'ID %0 dans le canal sélectionné",
 				"Parameters": [
-					[ "Text", "l'ID du client (ou -1 pour le client sélectionné)" ]
+					[ "Integer", "l'ID du client (ou -1 pour le client sélectionné)" ]
 				]
 			},
 			{
@@ -3589,7 +3654,7 @@
 			{
 				"Title": "Expulser le client d'ID %0 du canal sélectionné",
 				"Parameters": [
-					[ "Text", "ID du client (ou -1 pour l'ID actuellement sélectionné)" ]
+					[ "Integer", "ID du client (ou -1 pour l'ID actuellement sélectionné)" ]
 				]
 			} /*,
 			// ID 88+
@@ -3954,8 +4019,12 @@
 					[ "Integer", "ID du client à tester" ]
 				]
 			},
+			{
+				"Title": "%o : Fermeture d'un canal",
+				"Triggered": true
+			},
 
-			// 59+
+			// 60+
 			{
 				"Title": "%o : Serveur HTML5 est hébergé"
 			}
@@ -4197,7 +4266,7 @@
 				"Info": "La version de la librairie liblacewing utilisée pour cette extension.",
 				"Type": "Text",
 				"Bold": true,
-				"DefaultState": "liblacewing 0.5.4 (Windows/x86); Bluewing reimpl"
+				"DefaultState": "Bluewing (b%i, %s) basé sur liblacewing 0.5.4 (Windows/x86)"
 			},
 			{
 				"Title": "Effacer automatiquement les Binaires",
