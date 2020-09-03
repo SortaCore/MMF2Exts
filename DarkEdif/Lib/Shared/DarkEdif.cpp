@@ -1219,8 +1219,9 @@ DWORD WINAPI DarkEdifUpdateThread(void * data);
 
 void DarkEdif::SDKUpdater::StartUpdateCheck()
 {
-	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
-	WaitForSingleObject(updateThread, INFINITE);
+	DarkEdifUpdateThread(::SDK);
+	// updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
+	// WaitForSingleObject(updateThread, INFINITE);
 }
 
 DarkEdif::SDKUpdater::ExtUpdateType DarkEdif::SDKUpdater::ReadUpdateStatus(std::string * logData)
@@ -1258,17 +1259,21 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 	// Prevent this function running again
 	handledUpdate = true;
 
-	// Update errors can only be fixed by ext developer, we'll use debug build to check for it.
-	if (extUpdateType == ExtUpdateType::Error) {
-		MessageBoxA(NULL, ("Error occurred while checking for extension updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " - SDK Update Error", MB_ICONERROR);
+	// Connection errors are relevant to all users
+	if (extUpdateType == ExtUpdateType::ConnectionError) {
+		MessageBoxA(NULL, ("Error occurred while checking for extension updates:\n" + updateLog.str()).c_str(), PROJECT_NAME " update check error", MB_ICONERROR);
 		return;
 	}
 
-	// SDK updates can only be done by ext developer, we'll use debug build to check for it.
+	// Ext dev errors can only be fixed by ext developer.
+	if (extUpdateType == ExtUpdateType::ExtDevError) {
+		MessageBoxW(NULL, (L"Ext dev error occurred while checking for extension updates:\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " ext developer error", MB_ICONERROR);
+		return;
+	}
+
+	// SDK updates can only be done by ext developer.
 	if (extUpdateType == ExtUpdateType::SDKUpdate) {
-#ifdef _DEBUG
-		MessageBoxW(NULL, (L"SDK update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONWARNING);
-#endif
+		MessageBoxW(NULL, (L"SDK update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " SDK update notice", MB_ICONWARNING);
 		return;
 	}
 
@@ -1278,7 +1283,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 
 	// Lots of magic numbers created by a lot of trial and error. Do not recommend.
 	if (::SDK->Icon->GetWidth() != 32)
-		return (void)MessageBoxA(NULL, "Icon width is not 32. Contact extension developer.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
+		return (void)MessageBoxA(NULL, "Icon width is not 32. Contact extension developer.", PROJECT_NAME " DarkEdif error", MB_ICONERROR);
 
 	// If font creation fails, it's not that important; a null HFONT is replaced with a system default.
 	HFONT font = CreateFontA(
@@ -1339,10 +1344,10 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		{
 			// No URL? Open a dialog to report it.
 			if (pendingUpdateURL.empty())
-				MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
+				MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " update notice", MB_ICONINFORMATION);
 			else // URL? Request to open it. Let user say no.
 			{
-				int ret = MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
+				int ret = MessageBoxW(NULL, (L"Major update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " update notice", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
 				if (ret == IDYES)
 					ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
 			}
@@ -1365,10 +1370,10 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		{
 			// No URL? Open a dialog to report it.
 			if (pendingUpdateURL.empty())
-				MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice", MB_ICONINFORMATION);
+				MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " update notice", MB_ICONINFORMATION);
 			else // URL? Request to open it. Let user say no.
 			{
-				int ret = MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " - Update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
+				int ret = MessageBoxW(NULL, (L"Minor update for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " update notice ", MB_ICONINFORMATION | MB_YESNO | MB_DEFBUTTON2);
 				if (ret == IDYES)
 					ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
 			}
@@ -1422,7 +1427,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 
 	// Acquire the rudimentary lock, do op, and release
 #define GetLockAnd(x) while (updateLock.exchange(true)) /* retry */; x; updateLock = false
-#define GetLockSetErrorAnd(x) while (updateLock.exchange(true)) /* retry */; x; pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::Error; updateLock = false
+#define GetLockSetConnectErrorAnd(x) while (updateLock.exchange(true)) /* retry */; x; pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError; updateLock = false
 
 	// If the ext name is found, or the wildcard *
 	if (ini.find(";" PROJECT_NAME ";") != std::string::npos || ini.find(";*;") != std::string::npos)
@@ -1439,14 +1444,14 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 	try {
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "WSAStartup failed.\n");
 			return 1;
 		}
 		SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (Socket == INVALID_SOCKET)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "socket() failed. Error " << WSAGetLastError() << ".\n");
 			WSACleanup();
 			return 1;
@@ -1461,7 +1466,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		OutputDebugStringA("gethostbyname() end for " PROJECT_NAME "\n");
 		if (host == NULL)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "getting host " << domain << " failed, error " << WSAGetLastError() << ".");
 			closesocket(Socket);
 			WSACleanup();
@@ -1473,7 +1478,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
 		updateLog << "Connecting...\n";
 		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "Connect failed, error " << WSAGetLastError() << ".");
 			closesocket(Socket);
 			WSACleanup();
@@ -1500,7 +1505,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 
 		if (send(Socket, request.c_str(), request.size() + 1, 0) == SOCKET_ERROR)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "Send failed, error " << WSAGetLastError() << ".");
 			closesocket(Socket);
 			WSACleanup();
@@ -1522,7 +1527,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			}
 			if (nDataLength < 0)
 			{
-				GetLockSetErrorAnd(
+				GetLockSetConnectErrorAnd(
 					updateLog << "Error " << WSAGetLastError() << " with recv().");
 				closesocket(Socket);
 				WSACleanup();
@@ -1543,7 +1548,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 
 		if (endIndex == std::string::npos)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "End of first line not found. Full raw (non-http) response:\n" << fullPage);
 			return 1;
 		}
@@ -1553,7 +1558,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		// Not a HTTP response
 		if (endIndex == std::string::npos || strncmp(statusLine.c_str(), expHttpHeader, sizeof(expHttpHeader) - 1))
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "Unexpected non-http response:\n" << statusLine);
 			return 1;
 		}
@@ -1561,7 +1566,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		// HTTP response, but it's not an OK
 		if (strncmp(statusLine.c_str(), expHttpOKHeader, sizeof(expHttpOKHeader) - 1))
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "HTTP error " << statusLine.substr(sizeof(expHttpHeader) - 1));
 			return 1;
 		}
@@ -1570,7 +1575,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		size_t headerStart = fullPage.find("\r\n\r\n");
 		if ((headerStart = fullPage.find("\r\n\r\n")) == std::string::npos)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "Malformed HTTP response; end of HTTP header not found.");
 			return 1;
 		}
@@ -1579,7 +1584,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		std::string pageBody = fullPage.substr(headerStart + 4);
 		if (pageBody.find('\r') != std::string::npos)
 		{
-			GetLockSetErrorAnd(
+			GetLockSetConnectErrorAnd(
 				updateLog << "CR not permitted in update page response.\n" << pageBody);
 			return 1;
 		}
@@ -1600,9 +1605,18 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 				pendingUpdateDetails = UTF8ToWide(pageBody));
 			return 0;
 		};
+
+		const char extDevUpdate[] = "Ext Dev Error:\n";
 		const char sdkUpdate[] = "SDK Update:\n";
 		const char majorUpdate[] = "Major Update:\n";
 		const char minorUpdate[] = "Minor Update:\n";
+		if (!_strnicmp(pageBody.c_str(), extDevUpdate, sizeof(extDevUpdate) - 1))
+		{
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ExtDevError;
+				pendingUpdateDetails = UTF8ToWide(pageBody.substr(sizeof(extDevUpdate) - 1)));
+			return 0;
+		}
 		if (!_strnicmp(pageBody.c_str(), sdkUpdate, sizeof(sdkUpdate) - 1))
 		{
 			GetLockAnd(
@@ -1626,7 +1640,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			return 0;
 		}
 
-		GetLockSetErrorAnd(
+		GetLockSetConnectErrorAnd(
 			updateLog << "Can't interpret type. Page content is:\n" << pageBody;
 			pendingUpdateDetails = UTF8ToWide(pageBody));
 		return 0;
@@ -1639,7 +1653,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		return 0;
 	}
 #undef GetLockAnd
-#undef GetLockSetErrorAnd
+#undef GetLockSetConnectErrorAnd
 }
 
 #endif // USE_DARKEDIF_UPDATE_CHECKER

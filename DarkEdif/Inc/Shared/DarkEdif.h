@@ -77,11 +77,15 @@ namespace DarkEdif {
 	// First SDK with updater (where version was relevant).
 	// v2: 31st Aug 2020, commit 31a7d45216095646452f2722c794c033aaf71ea1
 	// Fixed the icon display when updater is in use.
-	// v3: 1st Sept 2020, commit (latest)
+	// v3: 1st Sept 2020, commit 3d4cc2470c6cf0c562608620cc31979b506986a4
 	// Made updater error messages visible to end users. The webserver will be smart
 	// about what errors to show.
+	// v4: 4th Sept 2020, commit (latest)
+	// Added a new type of updater reply for a nice message to ext dev, instead of one
+	// that includes all updater log. Also switched update thread spawn and wait to
+	// directly invoking the updater function.
 
-	static const int SDKVersion = 3;
+	static const int SDKVersion = 4;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -101,10 +105,11 @@ namespace DarkEdif {
 			CheckDisabled,
 			// Check returned no update
 			None,
-			// Some error occurred in check
-			Error,
-			// Check returned an DarkEdif SDK update, but only the dev can add that;
-			// causes messageboxes in debug builds only, otherwise ignored.
+			// Some error occurred in connection or parsing
+			ConnectionError,
+			// The updater page reported an error for the ext dev (usually only returned in Debug/Debug Unicode builds)
+			ExtDevError,
+			// Check returned an DarkEdif SDK update (usually only returned in Debug/Debug Unicode builds)
 			SDKUpdate,
 			// Minor ext update, will change ext icon but not cause message box
 			Minor,
