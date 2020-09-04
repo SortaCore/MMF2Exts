@@ -11,19 +11,23 @@
 #define DllExportHint comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
 #define PATH_MAX MAX_PATH
 #define __PRETTY_FUNCTION__ __FUNCSIG__
+
+// Turns any plain text into "plain text", with the quotes.
 #define SUB_STRIFY(X) #X
 #define STRIFY(X) SUB_STRIFY(X)
 
-#include <stdio.h>
-#include <tchar.h>
+// Used in the ext updater
 #include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
 #include <windows.h>
 
-struct ACEParamReader {
-	virtual float GetFloat(int i) = 0;
-	virtual const TCHAR * GetString(int i) = 0;
-	virtual std::int32_t GetInteger(int i) = 0;
-};
+// If the user hasn't specified a target Windows version via _WIN32_WINNT, and is using an _xp toolset (indicated by _USING_V110_SDK71_),
+// then _WIN32_WINNT will be set to Windows XP (0x0501).
+#if !defined(_WIN32_WINNT) && defined(_USING_V110_SDK71_)
+#define _WIN32_WINNT _WIN32_WINNT_WINXP
+#define WINVER _WIN32_WINNT_WINXP
+#endif
+
+
 #ifndef _UNICODE
 namespace std {
 	typedef std::string tstring;
@@ -66,7 +70,12 @@ typedef unsigned int uint;
 
 #include <stdio.h>
 #include <tchar.h>
-#include <windows.h>
+
+struct ACEParamReader {
+	virtual float GetFloat(int i) = 0;
+	virtual const TCHAR * GetString(int i) = 0;
+	virtual std::int32_t GetInteger(int i) = 0;
+};
 
 #define fancyenumop(enumType) \
 enumType constexpr static operator|(enumType lhs, enumType rhs) { \
@@ -993,7 +1002,7 @@ struct EventBlockType {
 		// 2+ = Behaviour number 1 is 2, 2 is 3, etc.
 		Behaviour = 2,
 		// Indicates end of EventBlockType
-		EndOfBlock = MAXUINT32
+		EndOfBlock = UINT32_MAX
 	} type;
 	DWORD    oi;        // object handle (if behavior)
 
