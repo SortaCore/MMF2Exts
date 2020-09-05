@@ -83,7 +83,7 @@ namespace DarkEdif {
 	// v4: 4th Sept 2020, commit (latest)
 	// Added a new type of updater reply for a nice message to ext dev, instead of one
 	// that includes all updater log. Also switched update thread spawn and wait to
-	// directly invoking the updater function.
+	// directly invoking the updater function. Added GetEventNumber.
 
 	static const int SDKVersion = 4;
 #if EditorBuild
@@ -232,6 +232,12 @@ namespace DarkEdif {
 		//~FusionDebugger() = delete;
 		FusionDebugger(FusionDebugger &&) = delete;
 	};
+
+
+	// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
+	extern bool IsFusion25;
+	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
+	std::uint16_t GetEventNumber(eventGroup *);
 }
 
 

@@ -262,6 +262,7 @@ PhiDLLImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, C
 Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
+	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 
 	#if EditorBuild
 		cSurface * proto = nullptr;

@@ -3,7 +3,7 @@
 extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
 
-#ifndef RUN_ONLY
+#if EditorBuild 
 static const _json_value * StoredCurrentLanguage = &json_value_none;
 
 static const _json_value * DefaultLanguageIndex()
@@ -75,7 +75,7 @@ const json_value & CurrentLanguage()
 
 	return *DefaultLanguageIndex();
 }
-#endif // !RUN_ONLY
+#endif // EditorBuild
 
 inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 {
@@ -574,6 +574,17 @@ std::pair<int, int> GetFusionEventLocation(const Extension * const ext)
 	if (eventNum == 0)
 		return std::make_pair(-1, frameNum);
 	return std::make_pair(eventNum, frameNum);
+}
+
+// Static definition; set during SDK::SDK()
+bool DarkEdif::IsFusion25;
+
+// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
+std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
+	if (DarkEdif::IsFusion25) {
+		return evg->evgInhibit;
+	}
+	return evg->evgIdentifier;
 }
 
 // =====
