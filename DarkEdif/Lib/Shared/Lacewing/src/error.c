@@ -133,8 +133,6 @@ void lw_error_add (lw_error ctx, long error)
 				strlen(message) - 3, message, error);
 		}
 
-		LocalFree (message);
-
 	#else
 
 		lw_error_addf (ctx, "%s (%ld)", strerror (error), error);

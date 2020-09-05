@@ -42,6 +42,7 @@ public:
 	
 	bool isGlobal;
 	GlobalInfo * globals;
+	std::thread::id mainThreadID;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				globals->_objEventPump

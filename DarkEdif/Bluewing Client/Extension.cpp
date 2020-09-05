@@ -13,6 +13,8 @@ HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
+	mainThreadID = std::this_thread::get_id();
+
 	// Nullify the thread-specific data
 	ClearThreadData();
 
@@ -496,13 +498,19 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 
 void Extension::CreateError(const char * error)
 {
-	globals->AddEvent1(0, nullptr, nullptr, nullptr, error);
+	globals->CreateError(error);
 	// DebugBreak();
 }
 
 void GlobalInfo::CreateError(const char * error)
 {
-	AddEvent1(0, nullptr, nullptr, nullptr, error);
+	std::stringstream errorDetailed;
+	if (std::this_thread::get_id() != _ext->mainThreadID)
+		errorDetailed << "[handler] ";
+	else
+		errorDetailed << "[Fusion event #" << DarkEdif::GetEventNumber(_ext->rhPtr->EventGroup) << "] ";
+	errorDetailed << error;
+	AddEvent1(0, nullptr, nullptr, nullptr, errorDetailed.str());
 	// DebugBreak();
 }
 

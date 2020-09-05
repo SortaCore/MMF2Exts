@@ -648,7 +648,7 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * error, va_list 
 	if (std::this_thread::get_id() != Refs[0]->mainThreadID)
 		errorDetailed << "[handler] ";
 	else
-		errorDetailed << "[Fusion event #" << Refs[0]->rhPtr->EventGroup->evgInhibit << "] ";
+		errorDetailed << "[Fusion event #" << DarkEdif::GetEventNumber(Refs[0]->rhPtr->EventGroup) << "] ";
 
 	char output[2048];
 	try {
