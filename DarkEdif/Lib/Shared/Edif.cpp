@@ -833,7 +833,6 @@ long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
 	rdPtr->pExtension->Runtime.param1 = param;
 	rdPtr->pExtension->Runtime.param2 = 0;
 
-
 	if (::SDK->ExpressionFunctions.size() < (unsigned int)ID)
 		return rdPtr->pExtension->Expression(ID, rdPtr, param);
 
@@ -847,10 +846,6 @@ long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
 	const ACEInfo * Info = ::SDK->ExpressionInfos[ID];
 	ExpReturnType ExpressionRet = Info->Flags.ef;
 
-	if (ExpressionRet == ExpReturnType::Float)
-		rdPtr->rHo.Flags |= HeaderObjectFlags::Float;
-	else if (ExpressionRet == ExpReturnType::String)
-		rdPtr->rHo.Flags |= HeaderObjectFlags::String;
 	int ExpressionRet2 = (int)ExpressionRet;
 
 	int ParameterCount = Info->NumOfParams;
@@ -895,8 +890,6 @@ long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
 	}
 
 	int Result;
-
-
 	__asm
 	{
 		pushad
@@ -945,6 +938,13 @@ long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
 
 		popad
 	}
+
+	// Must be after the expression func is evaluated, as sub-expressions inside the
+	// expression func (e.g. from generating events) could change it to something else
+	if (ExpressionRet == ExpReturnType::Float)
+		rdPtr->rHo.Flags |= HeaderObjectFlags::Float;
+	else if (ExpressionRet == ExpReturnType::String)
+		rdPtr->rHo.Flags |= HeaderObjectFlags::String;
 
 	return Result;
 }

@@ -80,12 +80,18 @@ namespace DarkEdif {
 	// v3: 1st Sept 2020, commit 3d4cc2470c6cf0c562608620cc31979b506986a4
 	// Made updater error messages visible to end users. The webserver will be smart
 	// about what errors to show.
-	// v4: 4th Sept 2020, commit (latest)
+	// v4: 4th Sept 2020, commit 918195897fcdc229d535d229972b3ac734c73fb5
 	// Added a new type of updater reply for a nice message to ext dev, instead of one
 	// that includes all updater log. Also switched update thread spawn and wait to
-	// directly invoking the updater function. Added GetEventNumber.
+	// directly invoking the updater function.
+	// v5: 9th Sept 2020, commit (latest)
+	// Added DarkEdif::GetEventNumber. Now sets XP targeting when XP compiler is used.
+	// Pre-build tool now allows multiline-declared ACE functions. Fixed combo box
+	// property's initial value.
+	// Fixed sub-expressions causing wrong expression return type (corrupting float
+	// expression responses).
 
-	static const int SDKVersion = 4;
+	static const int SDKVersion = 5;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
