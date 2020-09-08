@@ -3,7 +3,7 @@
 extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
 
-#if EditorBuild 
+#if EditorBuild
 static const _json_value * StoredCurrentLanguage = &json_value_none;
 
 static const _json_value * DefaultLanguageIndex()
@@ -21,7 +21,7 @@ static const _json_value * DefaultLanguageIndex()
 
 	for (unsigned int i = 0; i < SDK->json.u.object.length; ++i)
 	{
-		if ((*SDK->json.u.object.values[i].value).type == json_object 
+		if ((*SDK->json.u.object.values[i].value).type == json_object
 			&& (*SDK->json.u.object.values[i].value)["About"]["Name"].type == json_string)
 		{
 			return SDK->json.u.object.values[i].value;
@@ -61,7 +61,7 @@ const json_value & CurrentLanguage()
 		for (unsigned int i = 0; i < ::SDK->json.u.object.length; ++i)
 		{
 			// Return index
-			if ((*::SDK->json.u.object.values[i].value).type == json_object && 
+			if ((*::SDK->json.u.object.values[i].value).type == json_object &&
 				!_stricmp(::SDK->json.u.object.values[i].name, langItem.c_str()))
 			{
 				StoredCurrentLanguage = SDK->json.u.object.values[i].value;
@@ -88,7 +88,7 @@ bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
 	const json_value & Action = CurLang["Actions"][::SDK->ActionInfos.size()];
-	
+
 	// Invalid JSON reference
 	if (Action.type != json_object)
 	{
@@ -97,7 +97,7 @@ bool CreateNewActionInfo(void)
 	}
 
 	const json_value & Param = Action["Parameters"];
-	
+
 	// Num of parameters is beyond number of bits in FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
@@ -142,7 +142,7 @@ bool CreateNewConditionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
 	const json_value & Condition = CurLang["Conditions"][::SDK->ConditionInfos.size()];
-	
+
 	// Invalid JSON reference
 	if (Condition.type != json_object)
 	{
@@ -151,7 +151,7 @@ bool CreateNewConditionInfo(void)
 	}
 
 	const json_value & Param = Condition["Parameters"];
-	
+
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
@@ -198,7 +198,7 @@ bool CreateNewExpressionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
 	const json_value & Expression = CurLang["Expressions"][::SDK->ExpressionInfos.size()];
-	
+
 	// Invalid JSON reference
 	if (Expression.type != json_object)
 	{
@@ -207,7 +207,7 @@ bool CreateNewExpressionInfo(void)
 	}
 
 	const json_value & Param = Expression["Parameters"];
-	
+
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(short)*8 < Param.u.object.length)
 	{
@@ -229,7 +229,7 @@ bool CreateNewExpressionInfo(void)
 	ExpInfo->ID = (short)::SDK->ExpressionInfos.size();
 	ExpInfo->NumOfParams = Param.u.object.length;
 	ExpInfo->Flags.ef = ReadExpressionReturnType(Expression["Returns"]);
-	
+
 	if (ExpInfo->NumOfParams > 0)
 	{
 		// Set up each parameter
@@ -259,12 +259,12 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 {
 	std::stringstream mystr;
 	char * chkboxes = (char *)calloc(size_t(ceil(CurLang["Properties"].u.array.length / 8.0f)), 1);
-	
+
 	// Set default object settings from DefaultState.
 	for (unsigned int i = 0; i < CurLang["Properties"].u.array.length; ++i)
 	{
 		const json_value & JProp = CurLang["Properties"][i];
-		
+
 		// TODO: If default state is missing, say the name of the property for easy repair by dev
 		switch (::SDK->EdittimeProperties[i].Type_ID % 1000)
 		{
@@ -284,29 +284,29 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 			{
 				if (JProp["DefaultState"].type != json_integer)
 					MessageBoxA(NULL, "Invalid or no default integer value specified.", "DarkEdif setup warning", MB_OK | MB_ICONWARNING);
-				
+
 				unsigned int i = unsigned int(long long(JProp["DefaultState"]) & 0xFFFFFFFF);
 				mystr.write((char *)&i, sizeof(unsigned int)); // embedded nulls upset the << operator
-				
+
 				if (JProp["ChkDefault"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
 
 				break;
 			}
-				
+
 			case PROPTYPE_STATIC:
 			case PROPTYPE_FOLDER:
 			case PROPTYPE_FOLDER_END:
 			case PROPTYPE_EDITBUTTON:
 				break; // do not store
-			
+
 
 			case PROPTYPE_EDIT_STRING:
 			{
 				if (JProp["DefaultState"].type != json_string)
 					MessageBoxA(NULL, "Invalid or no default string value specified.", "DarkEdif - setup warning", MB_OK | MB_ICONWARNING);
-				
-				// No casing change necessary				
+
+				// No casing change necessary
 				if (_stricmp(JProp["Case"], "Upper") && _stricmp(JProp["Case"], "Lower")) {
 					mystr << (const char *)(JProp["DefaultState"]) << char(0);
 				}
@@ -316,13 +316,13 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 					std::transform(dup.begin(), dup.end(), dup.begin(), !_stricmp(JProp["Case"], "Upper") ? ::toupper : ::tolower);
 					mystr << dup << char(0);
 				}
-				
+
 				if (JProp["ChkDefault"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
 
 				break;
 			}
-				
+
 
 			case PROPTYPE_COMBOBOX:
 			{
@@ -344,7 +344,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 						"DarkEdif - setup warning", MB_OK | MB_ICONWARNING);
 				}
 			ok:
-				mystr << i;
+				mystr.write((char *)&i, sizeof(i));
 
 				if (JProp["ChkDefault"])
 					chkboxes[i >> 3] |= 1 << (i % 8);
@@ -363,7 +363,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 	free(chkboxes);
 	mystr.clear();
-	
+
 	edPtr = (EDITDATA *) mvReAllocEditData(mV, edPtr, sizeof(EDITDATA) + mystr2.size());
 	if (!edPtr)
 	{
@@ -372,7 +372,7 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	}
 
 	edPtr->DarkEdif_Prop_Size = sizeof(EDITDATA) + mystr2.size();
-	
+
 	memset(edPtr->DarkEdif_Props, 0, mystr2.size());
 	memcpy(edPtr->DarkEdif_Props, mystr2.data(), mystr2.size());
 }
@@ -462,7 +462,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	// Even an empty string should be 1 (null char). Warn if not.
 	if (oldPropValueSize == 0)
 		MessageBoxA(NULL, "Property size is 0!", "DarkEdif - Debug info", MB_OK | MB_ICONERROR);
-	
+
 	size_t beforeOldSize = sizeof(EDITDATA) +
 		(oldPropValue - edPtr->DarkEdif_Props); // Pointer to O|<P|O
 	size_t afterOldSize = edPtr->DarkEdif_Prop_Size - oldPropValueSize - beforeOldSize;			// Pointer to O|P>|O
@@ -507,12 +507,12 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	free(newEdPtr);
 
 	edPtr = fusionNewEdPtr; // Inform caller of new address
-}	
+}
 
 char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 {
 	char * Current = &edPtr->DarkEdif_Props[(size_t)ceil(CurLang["Properties"].u.array.length / 8.0f)], * StartPos, * EndPos;
-	
+
 	json_value j = CurLang["Properties"];
 	if (j.type != json_array)
 	{
@@ -522,7 +522,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 		MessageBoxA(NULL, "Premature function call!\n  GetProperty() called without edPtr->DarkEdif_Props being valid.", msgTitle, MB_OK | MB_ICONERROR);
 		return nullptr;
 	}
-	
+
 	const char * curStr = (const char *)j[ID]["Type"];
 	// Read unchangable properties
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1))
@@ -536,7 +536,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	while (i <= ID)
 	{
 		curStr = (const char *)j[i]["Type"];
-		
+
 		if (!_stricmp(curStr, "Editbox String"))
 			Current += strlen(Current) + 1;
 		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
@@ -547,7 +547,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 
 		++i;
 	}
-	
+
 	EndPos = Current;
 
 	if (size)
@@ -1084,7 +1084,7 @@ static DarkEdif::FusionDebuggerAdmin FusionDebugAdmin;
 // ============================================================================
 //
 // DEBUGGER ROUTINES
-// 
+//
 // ============================================================================
 
 // This routine returns the address of the debugger tree
@@ -1336,7 +1336,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		COLORREF textColor = RGB(240, 0, 0);
 		::SDK->Icon->DrawTextA("MAJOR", sizeof("MAJOR") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
-		
+
 		textDrawRect.left -= 1;
 		textDrawRect.top += 6;
 		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
@@ -1468,7 +1468,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			return 1;
 		}
 
-		// Used in IP lookup and 
+		// Used in IP lookup and
 		const char domain[] = "nossl.dark-wire.com";
 
 		struct hostent * host;
@@ -1505,7 +1505,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			<< "&projConfig=" << projConfig
 			<< " HTTP/1.1\r\nHost: " << domain << "\r\nConnection: close\r\n\r\n";
 		std::string request = requestStream.str();
-		
+
 		GetLockAnd(
 			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \"" << url_encode(PROJECT_NAME)
 				<< "\", build " << Extension::Version << ", SDK build " << DarkEdif::SDKVersion << ", config " << projConfig << ".\n");

@@ -102,7 +102,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			}
 		}
 		// Too large for EDITDATASize
-		if (fullSize > MAXUINT16)
+		if (fullSize > UINT16_MAX)
 			MessageBoxA(NULL, "Property default sizes are too large.", "DarkEdif - Error", MB_OK | MB_ICONERROR);
 		else
 			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
