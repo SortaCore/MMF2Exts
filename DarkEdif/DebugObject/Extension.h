@@ -10,7 +10,8 @@ public:
 
 	GlobalData * data;
 	static const int MinimumBuild = 256;
-	static const int Version = 11;
+	static const int Version = 12;
+	// b12: Fixed use of tcsdup in expressions
 	// b11: Fixed minidump handle not being passed
 	// b10: Use of DarkEdif SDK properties, formatting changes
 	// b9: Fixed lockup when disabling console and debug was already disabled
