@@ -1,4 +1,3 @@
-
 #include "Common.h"
 
 const char * Extension::Error()
