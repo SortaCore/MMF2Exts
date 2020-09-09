@@ -1641,7 +1641,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 89;
+	const static int buildnum = 90;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1847,7 +1847,7 @@ namespace lacewing {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 21;
+	static const int buildnum = 22;
 
 	void * internaltag, * tag = nullptr;
 

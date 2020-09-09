@@ -606,7 +606,8 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	if (!unchangedPropsFound)
 	{
 		std::string copy = about["Copyright"];
-		std::transform(copy.begin(), copy.end(), copy.begin(), std::tolower);
+		std::transform(copy.begin(), copy.end(), copy.begin(),
+			[](unsigned char c) { return std::tolower(c); });
 		unchangedPropsFound = copy.rfind("by your name") != std::string::npos;
 	}
 	if (unchangedPropsFound)

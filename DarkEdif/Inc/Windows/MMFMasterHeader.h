@@ -16,10 +16,6 @@
 #define SUB_STRIFY(X) #X
 #define STRIFY(X) SUB_STRIFY(X)
 
-// Used in the ext updater
-#include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
-#include <windows.h>
-
 // If the user hasn't specified a target Windows version via _WIN32_WINNT, and is using an _xp toolset (indicated by _USING_V110_SDK71_),
 // then _WIN32_WINNT will be set to Windows XP (0x0501).
 #if !defined(_WIN32_WINNT) && defined(_USING_V110_SDK71_)
@@ -27,6 +23,9 @@
 #define WINVER _WIN32_WINNT_WINXP
 #endif
 
+// Used in the ext updater
+#include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
+#include <windows.h>
 
 #ifndef _UNICODE
 namespace std {
