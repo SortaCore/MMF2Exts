@@ -7,5 +7,5 @@ int Extension::Add(int First, int Second)
 
 const TCHAR * Extension::HelloWorld()
 {
-	return _T("Hello world!");
+	return Runtime.CopyString(_T("Hello world!"));
 }
