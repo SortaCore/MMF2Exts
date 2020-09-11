@@ -626,11 +626,6 @@ std::wstring ANSIToWide(const std::string input) {
 	std::wstring outputStr(outputBuf, length);
 	_freea(outputBuf);
 #endif
-	OutputDebugStringW(L"Converted ANSI To Wide: [");
-	OutputDebugStringA(input.c_str());
-	OutputDebugStringW(L"] to [");
-	OutputDebugStringW(outputStr.c_str());
-	OutputDebugStringW(L"]\n");
 	assert(input.back() != '\0' && "Input ends with null.");
 	assert(outputStr.back() != L'\0' && "Output ends with null.");
 
@@ -670,18 +665,17 @@ std::wstring UTF8ToWide(const std::string input)
 	std::wstring outputStr(outputBuf, length);
 	_freea(outputBuf);
 #endif
-	OutputDebugStringW(L"Converted UTF8 To Wide: [");
-	OutputDebugStringA(input.c_str());
-	OutputDebugStringW(L"] to [");
-	OutputDebugStringW(outputStr.c_str());
-	OutputDebugStringW(L"]\n");
 	assert(input.back() != '\0' && "Input ends with null.");
 	assert(outputStr.back() != L'\0' && "Output ends with null.");
 	return outputStr;
 }
 std::string WideToANSI(const std::wstring input, bool * const allValidChars /* = nullptr */) {
 	if (input.empty())
+	{
+		if (allValidChars)
+			*allValidChars = true;
 		return std::string();
+	}
 
 	BOOL someFailed;
 
