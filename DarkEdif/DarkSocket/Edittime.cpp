@@ -23,7 +23,7 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 #pragma DllExportHint
 	pIconSf->Delete();
 	pIconSf->Clone(*SDK->Icon);
-		
+
 	pIconSf->SetTransparentColor(RGB(255, 0, 255));
 	return 0;
 }
@@ -57,8 +57,6 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 // PROPERTIES
 // ============================================================================
 
-void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr);
-
 // Inserts properties into the properties of the object.
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
@@ -81,12 +79,9 @@ void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 #pragma DllExportHint
 }
 
-using namespace Edif::Properties;
-Prop * GetProperty(EDITDATA * edPtr, size_t ID);
-
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-void * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
+Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 #pragma DllExportHint
 	std::uint32_t PropID = (PropID_ - 0x80000) % 1000;

@@ -71,6 +71,7 @@ struct ACEInfo;
 namespace Edif
 {
 	// New access properties
+#if EditorBuild
 	namespace Properties
 	{
 		// Synced with Names
@@ -139,6 +140,7 @@ namespace Edif
 			"Edit spin float",
 		};
 	}
+#endif // EditorBuild
 	class SDK
 	{
 	public:
@@ -159,13 +161,13 @@ namespace Edif
 		std::vector<void *> ActionFunctions;
 		std::vector<void *> ConditionFunctions;
 		std::vector<void *> ExpressionFunctions;
+		mv * mV;
+
+#if EditorBuild
 		PropData * EdittimeProperties;
-
-		unsigned char * FunctionMemory;
-
-		mv* mV;
 		cSurface * Icon;
 		HGLOBAL UpdateProperties(mv * mV, void * OldEdPtr);
+#endif
 	};
 	
 	class Runtime

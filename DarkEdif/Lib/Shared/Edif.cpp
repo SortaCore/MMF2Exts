@@ -300,11 +300,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			}
 		}
 
-#if USE_DARKEDIF_UPDATE_CHECKER
-		DarkEdif::SDKUpdater::StartUpdateCheck();
-#endif
-	#else
-		Icon = nullptr;
+		#if USE_DARKEDIF_UPDATE_CHECKER
+			DarkEdif::SDKUpdater::StartUpdateCheck();
+		#endif
 	#endif // EditorBuild
 
 	if (!::SDK)
@@ -361,6 +359,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	}
 
 	// Phi woz 'ere
+	#if EditorBuild
 	{
 		std::vector<PropData> VariableProps;
 		PropData * CurrentProperty;
@@ -590,12 +589,13 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		// End with completely null byte
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
+	#endif // EditorBuild
 
 	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
 	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
 	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
 
-	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
+	#if defined(_DEBUG) && EditorBuild && !defined(IS_DARKEDIF_TEMPLATE)
 	const json_value &about = CurLang["About"];
 	bool unchangedPropsFound =
 		!_stricmp(about["Name"], "DarkEdif Template") ||
@@ -629,9 +629,9 @@ Edif::SDK::~SDK()
 	delete [] ActionJumps;
 	delete [] ConditionJumps;
 	delete [] ExpressionJumps;
-	delete [] EdittimeProperties;
 
 #if EditorBuild
+	delete [] EdittimeProperties;
 	delete Icon;
 #endif
 }

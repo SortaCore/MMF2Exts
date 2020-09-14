@@ -48,9 +48,14 @@ bool CreateNewConditionInfo();
 bool CreateNewExpressionInfo();
 
 #ifndef NOPROPS
+
+#if EditorBuild
+
 void InitialisePropertiesFromJSON(mv *, EDITDATA *);
 
 Prop * GetProperty(EDITDATA *, size_t);
+
+#endif // EditorBuild
 
 void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
 void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
@@ -84,14 +89,17 @@ namespace DarkEdif {
 	// Added a new type of updater reply for a nice message to ext dev, instead of one
 	// that includes all updater log. Also switched update thread spawn and wait to
 	// directly invoking the updater function.
-	// v5: 9th Sept 2020, commit (latest)
+	// v5: 9th Sept 2020, commit e86745c6cdc32af36e8bd6eeb011bb4b04788c43
 	// Added DarkEdif::GetEventNumber. Now sets XP targeting when XP compiler is used.
 	// Pre-build tool now allows multiline-declared ACE functions. Fixed combo box
 	// property's initial value.
 	// Fixed sub-expressions causing wrong expression return type (corrupting float
 	// expression responses).
+	// v6: 14th Sept 2020, commit (latest)
+	// Removed SDK::EdittimeProperties in runtime builds; it's only necessary to read
+	// the property value and type via JSON in runtime.
 
-	static const int SDKVersion = 5;
+	static const int SDKVersion = 6;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.

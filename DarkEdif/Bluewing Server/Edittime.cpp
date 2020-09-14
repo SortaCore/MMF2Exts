@@ -119,7 +119,7 @@ void FusionAPI ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;

@@ -251,8 +251,12 @@ bool CreateNewExpressionInfo(void)
 }
 
 // DarkEdif - automatic property setup
-using namespace Edif::Properties;
 
+#ifndef NOPROPS
+
+#if EditorBuild
+
+using namespace Edif::Properties;
 #include <sstream>
 
 void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
@@ -377,7 +381,6 @@ void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 	memcpy(edPtr->DarkEdif_Props, mystr2.data(), mystr2.size());
 }
 
-#ifndef NOPROPS
 Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 {
 	// Premature call
@@ -424,6 +427,8 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 
 	return ret;
 }
+#endif
+
 void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue)
 {
 	// The DarkEdif_Props consists of a set of chars, whereby each bit in the char is the "checked"
@@ -556,10 +561,10 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 }
 
 #endif // NOPROPS
+
 // =====
 // Get event number (CF2.5+ feature)
 // =====
-
 
 /// <summary> If error, -1 is returned. </summary>
 std::pair<int, int> GetFusionEventLocation(const Extension * const ext)
