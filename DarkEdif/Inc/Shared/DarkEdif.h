@@ -134,7 +134,7 @@ namespace DarkEdif {
 		ExtUpdateType ReadUpdateStatus(std::string * logData);
 
 		/// <summary> Updates ::SDK->Icon to draw on it; optionally displays a message box. </summary>
-		void RunUpdateNotifs(mv * mV, EDITDATA * edPtr);;
+		void RunUpdateNotifs(mv * mV, EDITDATA * edPtr);
 	}
 
 #endif // EditorBuild
