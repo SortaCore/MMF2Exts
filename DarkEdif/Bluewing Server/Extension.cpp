@@ -474,6 +474,8 @@ void GlobalInfo::MarkAsPendingDelete()
 
 	free(_globalID);
 
+	auto srvWriteLock = _server.lock.createWriteLock();
+
 	// We're no longer responding to these events
 	_server.onerror(nullptr);
 	_server.ondisconnect(nullptr);
@@ -497,6 +499,8 @@ void GlobalInfo::MarkAsPendingDelete()
 		_server.unhost();
 
 	_objEventPump->post_eventloop_exit();
+
+	srvWriteLock.lw_unlock();
 
 	// Multithreading mode; wait for thread to end
 	auto threadHandle = _thread;

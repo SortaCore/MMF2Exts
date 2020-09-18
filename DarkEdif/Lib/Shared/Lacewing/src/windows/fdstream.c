@@ -99,17 +99,17 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 				// Local network went down (something providing connectivity failed)
 				error == WSAENETDOWN ||
 				// Local network unreachable (no route to other side)
-				error == WSAENETUNREACH ||
+				error == WSAENETUNREACH || error == ERROR_NETWORK_UNREACHABLE ||
 				// Local network was reset, and this connection was closed forcibly; e.g. network adapter reset
-				error == WSAENETRESET ||
+				error == WSAENETRESET || 
+				// Local or remote end aborted their connection
+				error == WSAECONNABORTED || error == ERROR_CONNECTION_ABORTED ||
 				// Remote end reset their connection
-				error == WSAECONNABORTED ||
-				// Remote end reset their connection
-				error == WSAECONNRESET ||
-				// Local socket was shut down via shutdown()/closesocket() call
+				error == WSAECONNRESET || error == ERROR_CONNECTION_UNAVAIL ||
+				// Local socket was shut down via shutdown()/closesocket() call (can also cause connection aborted)
 				error == WSAESHUTDOWN ||
 				// Local socket not connected
-				error == WSAENOTCONN;
+				error == WSAENOTCONN || error == ERROR_PORT_UNREACHABLE;
 			lwp_trace("Closing stream %p, due to error %i. Unreachable: %s.\n", ctx, error, otherEndUnreachable ? "YES" : "NO");
 
 			lw_stream_close ((lw_stream) ctx, otherEndUnreachable);

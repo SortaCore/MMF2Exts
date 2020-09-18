@@ -992,6 +992,7 @@ void GlobalInfo::MarkAsPendingDelete()
 		_client.disconnect();
 
 	_objEventPump->post_eventloop_exit();
+	clientWriteLock.lw_unlock();
 
 	// Multithreading mode; wait for thread to end
 	auto threadHandle = _thread;
