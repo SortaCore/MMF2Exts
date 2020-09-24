@@ -587,8 +587,8 @@ namespace lacewing
 
 	bool relayclientinternal::messagehandler(unsigned char type, const char * message, size_t size, bool blasted)
 	{
-		unsigned char messagetypeid = (type >> 4);
-		unsigned char variant = (type << 4);
+		lw_ui8 messagetypeid = (type >> 4);
+		lw_ui8 variant = (type << 4);
 
 		variant >>= 4;
 
@@ -598,8 +598,8 @@ namespace lacewing
 		{
 		case 0: /* response */
 		{
-			unsigned char  responsetype = reader.get <unsigned char>();
-			bool			succeeded = reader.get <unsigned char>() != 0;
+			lw_ui8  responsetype = reader.get <lw_ui8>();
+			bool	succeeded    = reader.get <lw_ui8>() != 0;
 
 			if (reader.failed)
 				break;
@@ -610,7 +610,7 @@ namespace lacewing
 			{
 				if (succeeded)
 				{
-					id = reader.get <unsigned short>();
+					id = reader.get <lw_ui16>();
 
 					// Don't expect welcome message to be null terminated
 					std::string_view welcomemessage = reader.get(reader.bytesleft());
@@ -719,9 +719,9 @@ namespace lacewing
 
 					for (; reader.bytesleft() > 0;)
 					{
-						int peerid = reader.get <unsigned short>();
-						int flags2 = reader.get <unsigned char>();
-						int namelength2 = reader.get <unsigned char>();
+						lw_ui16 peerid     = reader.get<lw_ui16>();
+						lw_ui8 flags2      = reader.get <lw_ui8>();
+						lw_ui8 namelength2 = reader.get <lw_ui8>();
 						std::string_view name2 = reader.get(namelength2);
 
 						if (reader.failed)
@@ -953,8 +953,8 @@ namespace lacewing
 
 		case 4: /* binaryserverchannelmessage */
 		{
-			int subchannel = reader.get <unsigned char>();
-			unsigned short channel = reader.get<unsigned short>();
+			lw_ui8 subchannel = reader.get <lw_ui8>();
+			lw_ui16 channel   = reader.get<lw_ui16>();
 			if (reader.failed)
 				break;
 
@@ -1044,6 +1044,9 @@ namespace lacewing
 					return true;
 
 				peer->_readonly = true;
+
+				channelWriteLock.lw_unlock(); // Don't leave it locked while handler is run
+
 				if (handler_peer_disconnect)
 					handler_peer_disconnect(client, channel2, peer);
 				
@@ -1055,6 +1058,7 @@ namespace lacewing
 
 				// LW_ESCALATION_NOTE
 				// auto channelWriteLock = channelReadLock.lw_upgrade();
+				channelWriteLock.lw_relock();
 				auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
 					[=](std::shared_ptr<relayclient::channel::peer> &p) { return p->_id == peerid; });
 				if (i != channel2->peers.end())
@@ -1074,6 +1078,8 @@ namespace lacewing
 
 					// this does channel2->peers.push_back()
 					peer = channel2->addnewpeer(peerid, flags, name);
+
+					channelWriteLock.lw_unlock(); // Don't leave it locked while handler is run (when escalation happens, it will unlock by {}s
 				}
 
 				if (handler_peer_connect)

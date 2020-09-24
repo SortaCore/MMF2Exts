@@ -1641,7 +1641,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 91;
+	const static int buildnum = 92;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1847,7 +1847,7 @@ namespace lacewing {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 23;
+	static const int buildnum = 24;
 
 	void * internaltag, * tag = nullptr;
 
@@ -2029,6 +2029,9 @@ struct relayserver
 
 	size_t clientcount() const;
 	//client * firstclient();
+
+	// Creates channel and adds to server list, accepts no master for the channel.
+	// Expects you have already checked channel with that name does not exist.
 	std::shared_ptr<relayserver::channel> createchannel(std::string_view channelName, std::shared_ptr<lacewing::relayserver::client> master, bool hidden, bool autoclose);
 
 	mutable lacewing::readwritelock lock;

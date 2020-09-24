@@ -2294,15 +2294,25 @@ relayserver::client::~client() noexcept(false)
 
 std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_view channelName, std::shared_ptr<relayserver::client> master, bool hidden, bool autoclose)
 {
-	auto channel = std::make_shared<relayserver::channel>(*(lacewing::relayserverinternal *)internaltag, channelName);
+	auto& serverinternal = *(lacewing::relayserverinternal *)internaltag;
+	auto channel = std::make_shared<relayserver::channel>(serverinternal, channelName);
 	auto channelWriteLock = channel->lock.createWriteLock();
 
 	channel->_channelmaster = master;
 	channel->_hidden = hidden;
 	channel->_autoclose = autoclose;
 
-	joinchannel_response(channel, master, std::string_view());
-	// calls serverinternal.channels.push_back(channel);
+	if (master)
+	{
+		joinchannel_response(channel, master, std::string_view());
+		// calls serverinternal.channels.push_back(channel);
+	}
+	else
+	{
+		lacewing::writelock serverWriteLock = lock.createWriteLock();
+		if (std::find(serverinternal.channels.cbegin(), serverinternal.channels.cend(), channel) == serverinternal.channels.cend())
+			serverinternal.channels.push_back(channel);
+	}
 	channelWriteLock.lw_unlock();
 
 	return channel;
