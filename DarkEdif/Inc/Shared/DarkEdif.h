@@ -461,7 +461,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
 			continue;
 
-		if (curLang["Actions"].u.array.length < ID)
+		if (curLang["Actions"].u.array.length <= ID)
 		{
 			str << "Error in linking action ID " << ID << "; it has no Actions JSON item.";
 			break;
@@ -530,7 +530,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
 			continue;
 
-		if (curLang["Conditions"].u.array.length < ID)
+		if (curLang["Conditions"].u.array.length <= ID)
 		{
 			str << curLangName << ": error in linking condition ID " << ID << "; it has no Conditions JSON item.";
 			break;
@@ -590,7 +590,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
 			continue;
 
-		if (curLang["Expressions"].u.array.length < ID)
+		if (curLang["Expressions"].u.array.length <= ID)
 		{
 			str << curLangName << ": error in linking expression ID " << ID << "; it has no Expressions JSON item.";
 			break;
@@ -639,8 +639,6 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		}
 
 		const int cppParamCount = sizeof...(Args);
-
-
 		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
