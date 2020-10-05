@@ -51,7 +51,7 @@
 		<SDKType Condition="$(SDKType)==''">MMF2SDK</SDKType>
 		
 		<MakePDB>0</MakePDB>
-		<MakePDB Condition="$(DbgBuild)==1">1</MakePDB>
+		<MakePDB Condition="$(DbgBuild)==1 OR $(ProjectDir.Contains('DebugObject'))">1</MakePDB>
 		
 		<!-- For use to make sure the user set up their template metadata properly. -->
 		<IsTemplate Condition="$(ProjectDir.ToLower().Contains('\$(SDKType.ToLower()) template\'))">1</IsTemplate>

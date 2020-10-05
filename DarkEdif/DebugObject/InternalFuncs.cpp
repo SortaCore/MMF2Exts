@@ -63,7 +63,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	}
 
 	// Starting statment
-	str << "*** Unhandled exception occured in the MMF2 program at address 0x"
+	str << "*** Crash occured in the MMF2 program at address 0x"
 				<< (void *)pExceptionPtrs->ExceptionRecord->ExceptionAddress
 				<< " ***";
 	GlobalExt->OutputNow(5, -1, str.str().c_str());
@@ -76,9 +76,32 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	switch (pExceptionPtrs->ExceptionRecord->ExceptionCode)
 	{
 		case EXCEPTION_ACCESS_VIOLATION:
-			str << "The thread tried to read from or write to a virtual address for which "
-						  "it does not have the appropriate access.";
+		{
+			HMODULE moduleHandle;
+			wchar_t moduleName[1024] = {};
+			str << "A thread running code inside ";
+			if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const wchar_t *)pExceptionPtrs->ExceptionRecord->ExceptionAddress, &moduleHandle) &&
+				GetModuleFileNameW(moduleHandle, moduleName, sizeof(moduleName)) > 0)
+			{
+				std::string utf8Ver = WideToUTF8(wcsrchr(moduleName, L'\\') + 1);
+				str << utf8Ver << " ";
+			}
+			else
+				str << "an unknown module ";
+
+			int accessType = pExceptionPtrs->ExceptionRecord->ExceptionInformation[0];
+			void * addressBeingAccessed = (void *)pExceptionPtrs->ExceptionRecord->ExceptionInformation[1];
+			if (accessType == 0)
+				str << "was denied access to read from";
+			else if (accessType == 1)
+				str << "was denied access to write to";
+			else if (accessType == 8)
+				str << "triggered a data execution prevention (DEP) violation at";
+			else
+				str << "(unknown op) with";
+			str << " address 0x" << addressBeingAccessed << ".";
 			break;
+		}
 		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
 			str << "The thread tried to access an array element that is out of bounds (and "
 						  "the underlying hardware supports bounds checking)."; 
@@ -165,7 +188,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	if (!GlobalExt->data->fileHandle)
 	{
 		if (GlobalExt->data->doMsgBoxIfPathNotSet)
-			MessageBoxA(NULL, str.str().c_str(), "DebugObject - caught exception.", MB_OK | MB_ICONERROR);
+			MessageBoxA(NULL, str.str().c_str(), "DebugObject - crash caught", MB_OK | MB_ICONERROR);
 	}
 	else
 		GlobalExt->OutputNow(5, -2, str.str().c_str());

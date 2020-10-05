@@ -10,7 +10,8 @@ public:
 
 	GlobalData * data;
 	static const int MinimumBuild = 256;
-	static const int Version = 13;
+	static const int Version = 14;
+	// b14: Added more details to crash information
 	// b13: Fixed message box about properties failing to convert
 	// b12: Fixed use of tcsdup in expressions, upgrade to SDK v5
 	// b11: Fixed minidump handle not being passed
