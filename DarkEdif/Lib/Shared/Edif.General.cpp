@@ -17,7 +17,7 @@ const TCHAR ** FusionAPI GetDependencies()
 		{
 			TCHAR JSONFilename [MAX_PATH];
 
-			GetModuleFileName (hInstLib, JSONFilename, sizeof (JSONFilename));
+			GetModuleFileName (hInstLib, JSONFilename, sizeof (JSONFilename) / sizeof(*JSONFilename));
 
 			TCHAR * Iterator = JSONFilename + _tcslen(JSONFilename) - 1;
 
