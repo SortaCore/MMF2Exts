@@ -9,7 +9,7 @@
 		 If that happens, only a target warning is generated, it's not a show-stopper,
 		 but for the sake of cleanliness.
 		 So we use this extra sheet to force back to .mfx/.mox. -->
-	<PropertyGroup Condition="'$(Platform)'=='Win32'">
+	<PropertyGroup Condition="'$(Platform)'=='Win32' AND $(RunCodeAnalysis)!='true'">
 		<TargetExt Condition="!$(Configuration.Contains('Vitalize'))">.mfx</TargetExt>
 		<TargetExt Condition="$(Configuration.Contains('Vitalize'))">.mox</TargetExt>
 	</PropertyGroup>

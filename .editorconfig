@@ -1,6 +1,6 @@
 root = true
 
-[*.{c,cc,cpp,h,hh,hpp,txt,md}]
+[*.{c,cc,cpp,h,hh,hpp,txt,md,props}]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8
