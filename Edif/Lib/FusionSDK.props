@@ -64,8 +64,8 @@
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
-	<PropertyGroup Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">
-		<_FusionSDKConfig>$([System.IO.File]::ReadAllText('$(ProjectDir)\..\..\FusionSDKConfig.ini'))</_FusionSDKConfig>
+	<PropertyGroup>
+		<_FusionSDKConfig Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$([System.IO.File]::ReadAllText('$(ProjectDir)\..\..\FusionSDKConfig.ini'))</_FusionSDKConfig>
 
 		<!-- These are Fusion SDK settings that are needed by the build process, not post-build. -->
 
@@ -80,7 +80,9 @@
 			 If set to true, uses Windows XP compatibility if available. -->
 		<_WindowsXPCompatibilityRegex><![CDATA[(?im)^WindowsXPCompatibility\s*=\s*false\s*?$]]></_WindowsXPCompatibilityRegex>
 		<WindowsXPCompatibility>0</WindowsXPCompatibility>
-		<WindowsXPCompatibility Condition="$(v141_xp_Installed)=='true'">1</WindowsXPCompatibility>
+		<!-- Yep, XP compatible pack is installed. If VS accidentally picks VS 2019 compiler, VCTargets will point to "...\v160\", so
+			 we hop up a folder and pick VS 2017 (v150) directly, as the XP compatible pack is VS 2017-based. -->
+		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_WindowsXPCompatibilityRegex)).Success)">0</WindowsXPCompatibility>
 
@@ -96,7 +98,7 @@
 		<!-- Static analysis won't run on the XP-compatible toolset. -->
 		<WindowsXPCompatibility Condition="$(RunCodeAnalysis)=='true'">0</WindowsXPCompatibility>
 
-		<!-- This is the property MSVC will read. -->
+		<!-- RunCodeAnalysis is the property MSVC will read. -->
 		<RunCodeAnalysis Condition="$(RunAnalyzerSetting)=='true' OR ($(RunAnalyzerSetting)=='debugonly' AND $(DbgBuild)==1)">true</RunCodeAnalysis>
 
 		<!-- UseLinkTimeCodeGeneration = true|false
