@@ -414,8 +414,8 @@
 	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
 		<ClCompile>
 			<!-- Make debugging more accurate -->
-			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)!='size_redist'">MultiThreadedDebugDll</RuntimeLibrary>
-			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)=='size_redist'">MultiThreadedDebug</RuntimeLibrary>
+			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)!='size_redist'">MultiThreadedDebug</RuntimeLibrary>
+			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)=='size_redist'">MultiThreadedDebugDll</RuntimeLibrary>
 			<RuntimeTypeInfo>true</RuntimeTypeInfo>
 			<Optimization>Disabled</Optimization>
 			<!-- Turn on all checks for simple mistakes -->
