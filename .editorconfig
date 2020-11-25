@@ -1,12 +1,20 @@
 root = true
 
-[*.{c,cc,cpp,h,hh,hpp,txt,md,props}]
+[*.{c,cc,cpp,h,hh,hpp,txt,props}]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8
 indent_style = tab
 indent_size = 4
 trim_trailing_whitespace = true
+
+[*.{md}]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = false
 
 [*.{json}]
 end_of_line = lf
