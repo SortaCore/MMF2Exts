@@ -27,7 +27,7 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 	if (numItems == 0)
 	{
 		output = _T("(no items in menu)");
-		return false;
+		return true;
 	}
 	std::vector<std::unique_ptr<DarkMenuItem>> menuItems;
 	MENUITEMINFO itemData = { };
