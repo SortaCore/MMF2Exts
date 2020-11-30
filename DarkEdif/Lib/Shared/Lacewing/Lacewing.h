@@ -1658,7 +1658,7 @@ public:
 
 	lacewing::address serveraddress();
 
-	int id() const;
+	lw_ui16 id() const;
 
 	void name(std::string_view name);
 	std::string name() const;
