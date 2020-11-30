@@ -56,7 +56,7 @@ lw_timer lw_timer_new (lw_pump pump)
 	  return 0;
 
 	ctx->pump = pump;
-	
+
 	ctx->shutdown_event = CreateEvent (0, TRUE, FALSE, 0);
 	ctx->timer_handle = CreateWaitableTimer (0, FALSE, 0);
 
@@ -112,7 +112,7 @@ void lw_timer_start (lw_timer ctx, long interval)
 	lw_timer_stop (ctx);
 
 	LARGE_INTEGER due_time;
-	due_time.QuadPart = 0 - (interval * 1000 * 10);
+	due_time.QuadPart = 0LL - (interval * 1000LL * 10LL);
 
 	if (!SetWaitableTimer (ctx->timer_handle, &due_time, interval, 0, 0, 0))
 	{

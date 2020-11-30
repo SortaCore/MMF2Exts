@@ -158,7 +158,7 @@ struct relayserverinternal
 			decltype(msElapsedTCP) msElapsedUDP = 0;
 			if (!client->pseudoUDP)
 				msElapsedUDP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastudpmessagetime).count();
-			
+
 			// detect a buggy version of std::chrono::steady_clock (was in a VS 2019 preview)
 			if (msElapsedTCP < 0 || msElapsedUDP < 0 || msElapsedNonPing < 0)
 				DebugBreak();
@@ -1356,8 +1356,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 {
 	auto cliReadLock = client->lock.createReadLock();
 
-	unsigned char messagetypeid  = (type >> 4);
-	unsigned char variant        = (type << 4);
+	lw_ui8 messagetypeid  = (type >> 4);
+	lw_ui8 variant        = (type << 4);
 
 	variant >>= 4;
 	const char * message = messageP.data();
@@ -1405,7 +1405,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		client->lasttcpmessagetime = ::std::chrono::steady_clock::now();
 
 	std::stringstream errStr;
-	bool trustedClient = true;
+	bool& trustedClient = client->trustedClient;
 
 	switch (messagetypeid)
 	{
@@ -2170,6 +2170,7 @@ std::vector<std::shared_ptr<lacewing::relayserver::client>>& relayserver::channe
 
 void relayserver::setwelcomemessage(std::string_view message)
 {
+	lacewing::writelock wl = lock.createWriteLock();
 	relayserverinternal& serverinternal = *(relayserverinternal *)internaltag;
 	serverinternal.welcomemessage = message;
 }
@@ -2217,6 +2218,10 @@ void relayserver::client::name(std::string_view name)
 bool relayserver::client::readonly() const
 {
 	return _readonly;
+}
+bool relayserver::client::istrusted() const
+{
+	return trustedClient;
 }
 
 std::vector<std::shared_ptr<lacewing::relayserver::channel>> & relayserver::client::getchannels()
@@ -2313,6 +2318,7 @@ std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_vie
 		if (std::find(serverinternal.channels.cbegin(), serverinternal.channels.cend(), channel) == serverinternal.channels.cend())
 			serverinternal.channels.push_back(channel);
 	}
+
 	channelWriteLock.lw_unlock();
 
 	return channel;

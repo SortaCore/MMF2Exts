@@ -87,7 +87,6 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 
 		 if (error || !bytes_transferred)
 		 {
-
 			// First, establish if connection has died, or temporarily had an error.
 			// If it's died, we'll do an immediate shutdown, otherwise a graceful.
 
@@ -101,7 +100,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 				// Local network unreachable (no route to other side)
 				error == WSAENETUNREACH || error == ERROR_NETWORK_UNREACHABLE ||
 				// Local network was reset, and this connection was closed forcibly; e.g. network adapter reset
-				error == WSAENETRESET || 
+				error == WSAENETRESET ||
 				// Local or remote end aborted their connection
 				error == WSAECONNABORTED || error == ERROR_CONNECTION_ABORTED ||
 				// Remote end reset their connection

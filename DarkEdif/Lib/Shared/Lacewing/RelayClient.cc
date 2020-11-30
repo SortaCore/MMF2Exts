@@ -159,7 +159,7 @@ namespace lacewing
 	std::shared_ptr<relayclient::channel> relayclientinternal::findchannelbyid(unsigned short id)
 	{
 		lacewing::readlock rl = this->client.lock.createReadLock();
-		auto i = std::find_if(channels.cbegin(), channels.cend(), 
+		auto i = std::find_if(channels.cbegin(), channels.cend(),
 			[&](const std::shared_ptr<const relayclient::channel> &c) { return c->id() == id; });
 		return i == channels.cend() ? nullptr : *i;
 	}
@@ -170,7 +170,7 @@ namespace lacewing
 
 		/* opening 0 byte */
 		socket->write("", 1);
-		
+
 		// internal.udp->host(socket->server_address(), nullptr, 0U);
 
 		framebuilder &message = internal.message;
@@ -211,7 +211,7 @@ namespace lacewing
 		char * dataCpy = (char *)malloc(size);
 		if (!dataCpy)
 			throw std::exception("Out of memory.");
-		
+
 		memcpy(dataCpy, data, size);
 
 		internal.reader.process(dataCpy, size);
@@ -364,7 +364,7 @@ namespace lacewing
 	void relayclient::join(std::string_view channelName, bool hidden, bool autoclose)
 	{
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		
+
 		if (name().empty())
 		{
 			error error = lacewing::error_new();
@@ -541,7 +541,7 @@ namespace lacewing
 		lacewing::readlock rl = lock.createReadLock();
 		return _id;
 	}
-	
+
 	std::string relayclient::channel::peer::name() const
 	{
 		lacewing::readlock rl = lock.createReadLock();
@@ -559,14 +559,14 @@ namespace lacewing
 		// Atomic, no point changing it
 		return _readonly;
 	}
-	
+
 	size_t relayclient::channelcount() const
 	{
 		lacewing::readlock rl = lock.createReadLock();
 		return ((relayclientinternal *)internaltag)->channels.size();
 	}
 
-	int relayclient::id() const
+	lw_ui16 relayclient::id() const
 	{
 		lacewing::readlock rl = lock.createReadLock();
 		return ((relayclientinternal *)internaltag)->id;
@@ -617,7 +617,7 @@ namespace lacewing
 
 					if (reader.failed)
 						break;
-				
+
 					this->welcomemessage = welcomemessage;
 
 					socket->server_address()->resolve();
@@ -712,14 +712,14 @@ namespace lacewing
 
 					auto channel = std::make_shared<relayclient::channel>(*this);
 					auto channelWriteLock = channel->lock.createWriteLock();
-					
+
 					channel->_id = channelid;
 					channel->_name = name;
 					channel->_ischannelmaster = (flags & 1) != 0;
 
 					for (; reader.bytesleft() > 0;)
 					{
-						lw_ui16 peerid     = reader.get<lw_ui16>();
+						lw_ui16 peerid     = reader.get <lw_ui16>();
 						lw_ui8 flags2      = reader.get <lw_ui8>();
 						lw_ui8 namelength2 = reader.get <lw_ui8>();
 						std::string_view name2 = reader.get(namelength2);
@@ -781,7 +781,7 @@ namespace lacewing
 
 					if (handler_channel_leave)
 						handler_channel_leave(client, channel);
-					
+
 					// Handler BEFORE finding it in channel list, in case leave handler calls disconnect.
 					if (!connected)
 						break;
@@ -1033,7 +1033,7 @@ namespace lacewing
 
 			lw_ui8 flags = reader.get <lw_ui8>();
 			std::string_view name = reader.get(reader.bytesleft()); // name's not null terminated
-			
+
 			if (reader.failed)
 			{
 				/* no flags/name - the peer must have left the channel */
@@ -1049,7 +1049,7 @@ namespace lacewing
 
 				if (handler_peer_disconnect)
 					handler_peer_disconnect(client, channel2, peer);
-				
+
 				channel2 = findchannelbyid(channel);
 
 				// Handler called disconnect, so channel is no longer accessible
@@ -1250,8 +1250,8 @@ namespace lacewing
 		// udphellotick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::udphellotimer var.
 		// It starts from the time the Connect Request Success message is sent.
 		if (!udp->hosting())
-			throw std::exception("udphellotick() called, but not hosting UDP."); 
-		
+			throw std::exception("udphellotick() called, but not hosting UDP.");
+
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
 	}
@@ -1342,7 +1342,7 @@ namespace lacewing
 		return _ischannelmaster;
 	}
 
-	unsigned short relayclient::channel::peer::id() const
+	lw_ui16 relayclient::channel::peer::id() const
 	{
 		// We won't check for read lock, as ID cannot change, so there's no use to threadsafe-ing its access.
 		return _id;
@@ -1380,7 +1380,7 @@ namespace lacewing
 	{
 		relayclientinternal::channel &internal = *(relayclientinternal::channel *)internaltag;
 		auto end = internal.client.channels.end();
-		
+
 		auto i = std::find_if(internal.client.channels.begin(), end,
 			[&](relayclientinternal::channel * &c) { return c->id == internal.id; });
 		return (i == end || ++i == end) ? nullptr : &(*i)->public_;
@@ -1391,7 +1391,7 @@ namespace lacewing
 		std::vector<relayclientinternal::channel *> &c = ((lacewing::relayclientinternal *)internaltag)->channels;
 		return (c.begin() == c.end()) ? nullptr : &(*c.begin())->public_;
 	}
-	
+
 	relayclient::channel::peer * relayclient::channel::firstpeer() const
 	{
 		std::vector<relayclientinternal::peer *> &p = ((lacewing::relayclientinternal::channel *)internaltag)->peers;
@@ -1420,7 +1420,7 @@ namespace lacewing
 		lock.checkHoldsRead();
 		return ((relayclientinternal *)internaltag)->channellist;
 	}
-	
+
 #define autohandlerfunctions(pub, intern, handlername)			  \
 	void pub::on##handlername(pub::handler_##handlername handler)	\
 		{	((intern *) internaltag)->handler_##handlername = handler;	  \

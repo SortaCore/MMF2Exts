@@ -35,7 +35,7 @@ bool lw_sv_cmp(std::string_view first, std::string_view second)
 	if (first.size() != second.size())
 		return false;
 
-	return !strncmp(first.data(), second.data(), first.size());
+	return !memcmp(first.data(), second.data(), first.size());
 }
 
 /// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
