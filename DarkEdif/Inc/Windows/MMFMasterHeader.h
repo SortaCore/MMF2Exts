@@ -27,6 +27,10 @@
 #include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
 #include <windows.h>
 
+// Activate the ""s and ""sv string literals (C++17)
+using namespace std::string_literals;
+using namespace std::string_view_literals;
+
 #ifndef _UNICODE
 namespace std {
 	typedef std::string tstring;

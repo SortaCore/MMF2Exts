@@ -63,18 +63,18 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 
 #endif // NOPROPS
 
-std::tstring ANSIToTString(const std::string);
-std::string ANSIToUTF8(const std::string);
-std::wstring ANSIToWide(const std::string);
-std::string UTF8ToANSI(const std::string, bool * const allValidChars = nullptr);
-std::tstring UTF8ToTString(const std::string, bool * const allValidChars = nullptr);
-std::wstring UTF8ToWide(const std::string);
-std::string WideToANSI(const std::wstring, bool * const allValidChars = nullptr);
-std::tstring WideToTString(const std::wstring, bool * const allCharsValid = nullptr);
-std::string WideToUTF8(const std::wstring);
-std::string TStringToANSI(const std::tstring, bool * const allValidChars = nullptr);
-std::string TStringToUTF8(const std::tstring);
-std::wstring TStringToWide(const std::tstring);
+std::tstring ANSIToTString(const std::string_view);
+std::string ANSIToUTF8(const std::string_view);
+std::wstring ANSIToWide(const std::string_view);
+std::string UTF8ToANSI(const std::string_view, bool * const allValidChars = nullptr);
+std::tstring UTF8ToTString(const std::string_view, bool * const allValidChars = nullptr);
+std::wstring UTF8ToWide(const std::string_view);
+std::string WideToANSI(const std::wstring_view, bool * const allValidChars = nullptr);
+std::tstring WideToTString(const std::wstring_view, bool * const allCharsValid = nullptr);
+std::string WideToUTF8(const std::wstring_view);
+std::string TStringToANSI(const std::tstring_view, bool * const allValidChars = nullptr);
+std::string TStringToUTF8(const std::tstring_view);
+std::wstring TStringToWide(const std::tstring_view);
 
 namespace DarkEdif {
 
@@ -95,11 +95,13 @@ namespace DarkEdif {
 	// property's initial value.
 	// Fixed sub-expressions causing wrong expression return type (corrupting float
 	// expression responses).
-	// v6: 14th Sept 2020, commit (latest)
+	// v6: 14th Sept 2020, commit 7548374fa9400b18196465a9e430e32240ed8912
 	// Removed SDK::EdittimeProperties in runtime builds; it's only necessary to read
 	// the property value and type via JSON in runtime.
+	// v7: 1st December 2020, commit (latest)
+	// Replaced the charset-converting code std::string input parameter with std::string_view.
 
-	static const int SDKVersion = 6;
+	static const int SDKVersion = 7;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -639,6 +641,8 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		}
 
 		const int cppParamCount = sizeof...(Args);
+
+
 		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call

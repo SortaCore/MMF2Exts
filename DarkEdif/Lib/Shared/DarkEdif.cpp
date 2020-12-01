@@ -396,7 +396,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	const json_value &jsonItem = CurLang["Properties"][ID];
 	const char * curStr = jsonItem["Type"];
 	Prop * ret = nullptr;
-	bool allConv;
+	bool allConv = false;
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
 	{
 		ret = new Prop_Str(UTF8ToTString((const char *)jsonItem["DefaultState"], &allConv).c_str());
@@ -604,42 +604,33 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 // ANSI is not UTF-8, the earliest OS version that *can* use UTF-8 for OS function calls is
 // Windows 10 Insider Preview Build 17035, and even that is non-default and in beta.
 
-std::tstring ANSIToTString(const std::string input) {
+std::tstring ANSIToTString(const std::string_view input) {
 	return WideToTString(ANSIToWide(input));
 }
-std::string ANSIToUTF8(const std::string input) {
+std::string ANSIToUTF8(const std::string_view input) {
 	return WideToUTF8(ANSIToWide(input));
 }
-std::wstring ANSIToWide(const std::string input) {
+std::wstring ANSIToWide(const std::string_view input) {
 	if (input.empty())
 		return std::wstring();
 
 	// First call WideCharToMultiByte() to get output size to reserve
-	size_t length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), NULL, 0);
+	size_t length = MultiByteToWideChar(CP_ACP, 0, input.data(), input.size(), NULL, 0);
 	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
-#if _HAS_CXX17
 	std::wstring outputStr(length, L'\0');
 
 	// Actually convert
-	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
+	length = MultiByteToWideChar(CP_ACP, 0, input.data(), input.size(), outputStr.data(), outputStr.size());
 	assert(length > 0 && "Failed to convert between string encodings.");
-#else
-	wchar_t * outputBuf = (wchar_t *)_malloca((length + 1) * sizeof(wchar_t));
-	// Actually convert
-	length = MultiByteToWideChar(CP_ACP, 0, input.c_str(), input.size(), outputBuf, length + 1);
-	assert(length > 0 && "Failed to convert between string encodings.");
-	std::wstring outputStr(outputBuf, length);
-	_freea(outputBuf);
-#endif
 	assert(input.back() != '\0' && "Input ends with null.");
 	assert(outputStr.back() != L'\0' && "Output ends with null.");
 
 	return outputStr;
 }
-std::string UTF8ToANSI(const std::string input, bool * const allValidChars /* = nullptr */) {
+std::string UTF8ToANSI(const std::string_view input, bool * const allValidChars /* = nullptr */) {
 	return WideToANSI(UTF8ToWide(input), allValidChars);
 }
-std::tstring UTF8ToTString(const std::string input, bool * const allValidChars /* = nullptr */) {
+std::tstring UTF8ToTString(const std::string_view input, bool * const allValidChars /* = nullptr */) {
 #ifdef _UNICODE
 	if (allValidChars)
 		*allValidChars = true; // UTF-8 and UTF-16 share all chars
@@ -648,33 +639,24 @@ std::tstring UTF8ToTString(const std::string input, bool * const allValidChars /
 	return UTF8ToANSI(input, allValidChars);
 #endif
 }
-std::wstring UTF8ToWide(const std::string input)
+std::wstring UTF8ToWide(const std::string_view input)
 {
 	if (input.empty())
 		return std::wstring();
 
 	// First call WideCharToMultiByte() to get output size to reserve
-	size_t length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), NULL, 0);
+	size_t length = MultiByteToWideChar(CP_UTF8, 0, input.data(), input.size(), NULL, 0);
 	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
-#if _HAS_CXX17
 	std::wstring outputStr(length, L'\0');
 
 	// Actually convert
-	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size());
+	length = MultiByteToWideChar(CP_UTF8, 0, input.data(), input.size(), outputStr.data(), outputStr.size());
 	assert(length > 0 && "Failed to convert between string encodings.");
-#else
-	wchar_t * outputBuf = (wchar_t*)_malloca((length + 1) * sizeof(wchar_t));
-	// Actually convert
-	length = MultiByteToWideChar(CP_UTF8, 0, input.c_str(), input.size(), outputBuf, length + 1);
-	assert(length > 0 && "Failed to convert between string encodings.");
-	std::wstring outputStr(outputBuf, length);
-	_freea(outputBuf);
-#endif
 	assert(input.back() != '\0' && "Input ends with null.");
 	assert(outputStr.back() != L'\0' && "Output ends with null.");
 	return outputStr;
 }
-std::string WideToANSI(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+std::string WideToANSI(const std::wstring_view input, bool * const allValidChars /* = nullptr */) {
 	if (input.empty())
 	{
 		if (allValidChars)
@@ -682,69 +664,51 @@ std::string WideToANSI(const std::wstring input, bool * const allValidChars /* =
 		return std::string();
 	}
 
-	BOOL someFailed;
+	BOOL someFailed = FALSE;
 
 	// First call WideCharToMultiByte() to get output size to reserve
-	size_t length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), NULL, 0, 0, allValidChars ? &someFailed : NULL);
+	size_t length = WideCharToMultiByte(CP_ACP, 0, input.data(), input.size(), NULL, 0, 0, allValidChars ? &someFailed : NULL);
 	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
 
 	if (allValidChars)
 		*allValidChars = (someFailed == FALSE);
 
-#if _HAS_CXX17
 	std::string outputStr(length, '\0');
 
 	// Actually convert
-	length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size(), 0, NULL);
+	length = WideCharToMultiByte(CP_ACP, 0, input.data(), input.size(), outputStr.data(), outputStr.size(), 0, NULL);
 	assert(length > 0 && "Failed to convert between string encodings.");
-#else
-	char * outputBuf = (char *)_malloca(length + 1);
-	// Actually convert
-	length = WideCharToMultiByte(CP_ACP, 0, input.c_str(), input.size(), outputBuf, length, 0, 0);
-	assert(length > 0 && "Failed to convert between string encodings.");
-	std::string outputStr(outputBuf, length);
-	_freea(outputBuf);
-#endif
 	assert(input.back() != L'\0' && "Input ends with null.");
 	assert(outputStr.back() != '\0' && "Output ends with null.");
 	return outputStr;
 }
-std::tstring WideToTString(const std::wstring input, bool * const allValidChars /* = nullptr */) {
+std::tstring WideToTString(const std::wstring_view input, bool * const allValidChars /* = nullptr */) {
 #ifdef _UNICODE
 	if (allValidChars)
 		*allValidChars = true;
-	return input;
+	return std::wstring(input);
 #else
 	return WideToANSI(input, allValidChars);
 #endif
 }
-std::string WideToUTF8(const std::wstring input)
+std::string WideToUTF8(const std::wstring_view input)
 {
 	if (input.empty())
 		return std::string();
 
 	// First call WideCharToMultiByte() to get output size to reserve
-	size_t length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), NULL, 0, 0, 0);
+	size_t length = WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(), NULL, 0, 0, 0);
 	assert(length > 0 && "Failed to convert between string encodings, input string is broken.");
-#if _HAS_CXX17
 	std::string outputStr(length, '\0');
 
 	// Actually convert
-	length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), outputStr.data(), outputStr.size(), 0, 0);
+	length = WideCharToMultiByte(CP_UTF8, 0, input.data(), input.size(), outputStr.data(), outputStr.size(), 0, 0);
 	assert(length > 0 && "Failed to convert between string encodings.");
-#else
-	char * outputBuf = (char *)_malloca(length + 1);
-	// Actually convert
-	length = WideCharToMultiByte(CP_UTF8, 0, input.c_str(), input.size(), outputBuf, length, 0, 0);
-	assert(length > 0 && "Failed to convert between string encodings.");
-	std::string outputStr(outputBuf, length);
-	_freea(outputBuf);
-#endif
 	assert(input.back() != L'\0' && "Input ends with null.");
 	assert(outputStr.back() != '\0' && "Output ends with null.");
 	return outputStr;
 }
-std::string TStringToANSI(const std::tstring input, bool * const allValidChars /* = nullptr */) {
+std::string TStringToANSI(const std::tstring_view input, bool * const allValidChars /* = nullptr */) {
 #ifdef _UNICODE
 	return WideToANSI(input, allValidChars);
 #else
@@ -753,16 +717,16 @@ std::string TStringToANSI(const std::tstring input, bool * const allValidChars /
 	return input;
 #endif
 }
-std::string TStringToUTF8(const std::tstring input) {
+std::string TStringToUTF8(const std::tstring_view input) {
 #ifdef _UNICODE
 	return WideToUTF8(input);
 #else
 	return ANSIToUTF8(input);
 #endif
 }
-std::wstring TStringToWide(const std::tstring input) {
+std::wstring TStringToWide(const std::tstring_view input) {
 #ifdef _UNICODE
-	return input;
+	return std::wstring(input);
 #else
 	return ANSIToWide(input);
 #endif
@@ -776,22 +740,22 @@ std::wstring TStringToWide(const std::tstring input) {
 // iconv() would be needed, and it's beyond the scope of a regular extension.
 // Instead, this code merely returns back.
 
-std::tstring ANSIToTString(const std::string input) {
+std::tstring ANSIToTString(const std::string_view input) {
 	return UTF8ToTString(input);
 }
-std::string ANSIToUTF8(const std::string input) {
+std::string ANSIToUTF8(const std::string_view input) {
 	return input;
 }
-std::wstring ANSIToWide(const std::string input) {
+std::wstring ANSIToWide(const std::string_view input) {
 	assert(false && "Linux-based Wide not programmed yet.");
 }
-std::string UTF8ToANSI(const std::string input, bool * const allValidChars /* = nullptr */) {
+std::string UTF8ToANSI(const std::string_view input, bool * const allValidChars /* = nullptr */) {
 	return input;
 }
-std::tstring UTF8ToTString(const std::string input, bool * const allValidChars /* = nullptr */) {
+std::tstring UTF8ToTString(const std::string_view input, bool * const allValidChars /* = nullptr */) {
 	return input;
 }
-std::wstring UTF8ToWide(const std::string input) {
+std::wstring UTF8ToWide(const std::string_view input) {
 	assert(false && "Linux-based Wide not programmed yet.");
 }
 std::string WideToANSI(const std::wstring input, bool * const allValidChars /* = nullptr */) {
@@ -1482,7 +1446,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			WSACleanup();
 			return 1;
 		}
-		SOCKADDR_IN SockAddr;
+		SOCKADDR_IN SockAddr = {};
 		SockAddr.sin_port = htons(80);
 		SockAddr.sin_family = AF_INET;
 		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
