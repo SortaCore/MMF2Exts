@@ -1,9 +1,15 @@
 MMF2/CF2.5 Open Source Extension Repository
 ===
-A single repository to contain and/or link to open source extensions for MMF2/CF2.5.
+A single repository to contain and/or link to open source extensions for MMF2/CF2.5. All extensions are compatible with both Fusion 2.0 and implicitly 2.5.
 These extensions are collated for examples and for upgrading; these are subject to individual licenses.
 If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
+
+### Tools to use ###
+It's recommended you use Visual Studio 2019, although Visual Studio 2017 should also be compatible.
+
+You should install Express edition, or register for free with Microsoft to get Community edition, which supports VS addons.  
+The SDKs are compatible with the C++ Windows XP targeting pack. You can find it under Additional Components in the Visual Studio installer. If the XP-targeting compiler is installed it will be auto-detected and used.
 
 ### Using a single project ###
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
