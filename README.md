@@ -8,8 +8,23 @@ Since these source codes are collated by Phi, not by the authors themselves, the
 ### Tools to use ###
 It's recommended you use Visual Studio 2019, although Visual Studio 2017 should also be compatible.
 
-You should install Express edition, or register for free with Microsoft to get Community edition, which supports VS addons.  
-The SDKs are compatible with the C++ Windows XP targeting pack. You can find it under Additional Components in the Visual Studio installer. If the XP-targeting compiler is installed it will be auto-detected and used.
+You should install an [Express edition](https://visualstudio.microsoft.com/vs/express/), or register for free with Microsoft to get
+[Community edition](https://visualstudio.microsoft.com/vs/community/), which supports VS addons.
+
+The SDKs are compatible with the C++ Windows XP targeting pack, for XP+ instead of Vista+ targeting. You can find it under Additional Components tab in the Visual Studio installer.
+
+
+
+### XP targeting ###
+If the XP-targeting compiler is installed it will be auto-detected by all the SDKs and used instead.  
+If XP targeting pack is used, your extensions will be Windows XP and later compatible, and if not, it's Windows Vista and later.  
+DarkEdif will use [WINVER and _WIN32_WINNT](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt) preprocessor
+macros so Windows headers will disable Vista+ functions, making them unavailable to your project.
+
+To confirm if the Windows function is compatible, you can normally find out on MSDN under "minimum client OS",
+for example [GetProcessIdOfThread()](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread) is Vista+.  
+If you want to use later OS functions at cost of compatibility, you can change the targeting by switching the Platform Toolset to non-XP and
+redefining WINVER and \_WIN32\_WINNT to a number from [here](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt).
 
 ### Using a single project ###
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
