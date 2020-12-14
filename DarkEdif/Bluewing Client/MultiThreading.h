@@ -5,20 +5,20 @@
 #define ALREADY_DEFINED_MT
 	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
 	#pragma pack (push, align_to_one_multithreading)
-	#pragma pack (1) 
+	#pragma pack (1)
 	struct SaveExtInfo
 	{
 		// Required for DarkEdif
-		unsigned char	numEvents;
-		unsigned short	condTrig[2];
+		std::uint8_t	numEvents;
+		std::uint16_t	condTrig[2];
 
 		// Lacewing code
 		union {
 			// When you receive a message
 			struct {
-				std::string			content;
-				size_t				cursor;
-				unsigned char		subchannel;
+				std::string		content;
+				std::uint32_t	cursor;
+				lw_ui8			subchannel;
 			} receivedMsg;
 
 			// When an error occurs

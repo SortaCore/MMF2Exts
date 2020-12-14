@@ -37,12 +37,12 @@
 	extern std::stringstream CriticalSection;
 #define EnterCriticalSectionDebug(x) \
 		EnterCriticalSection(x); \
-		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " \
-			<< __FILE__ << ", line " << __LINE__ << ".\r\n"
+		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Entered on "sv \
+			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
 
 #define LeaveCriticalSectionDebug(x) \
-		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Left on " \
-			<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
+		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Left on "sv \
+			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
 		LeaveCriticalSection(x)
 #else
 #define EnterCriticalSectionDebug(x)  EnterCriticalSection(x)

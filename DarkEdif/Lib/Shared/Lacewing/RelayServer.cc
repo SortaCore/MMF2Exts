@@ -28,28 +28,28 @@ struct relayserverinternal
 	relayserver &server;
 	timer pingtimer;
 
-	relayserver::handler_connect          handlerconnect;
-	relayserver::handler_disconnect       handlerdisconnect;
-	relayserver::handler_error            handlererror;
+	relayserver::handler_connect		  handlerconnect;
+	relayserver::handler_disconnect		  handlerdisconnect;
+	relayserver::handler_error			  handlererror;
 	relayserver::handler_message_server   handlermessage_server;
 	relayserver::handler_message_channel  handlermessage_channel;
-	relayserver::handler_message_peer     handlermessage_peer;
-	relayserver::handler_channel_join     handlerchannel_join;
-	relayserver::handler_channel_leave    handlerchannel_leave;
-	relayserver::handler_nameset          handlernameset;
+	relayserver::handler_message_peer	  handlermessage_peer;
+	relayserver::handler_channel_join	  handlerchannel_join;
+	relayserver::handler_channel_leave	  handlerchannel_leave;
+	relayserver::handler_nameset		  handlernameset;
 
-	relayserverinternal(relayserver &_server, pump pump)
+	relayserverinternal(relayserver &_server, pump pump) noexcept
 		: server(_server), pingtimer(lacewing::timer_new(pump))
 	{
-		handlerconnect          = 0;
-		handlerdisconnect       = 0;
-		handlererror            = 0;
-		handlermessage_server    = 0;
-		handlermessage_channel   = 0;
-		handlermessage_peer      = 0;
-		handlerchannel_join      = 0;
-		handlerchannel_leave     = 0;
-		handlernameset          = 0;
+		handlerconnect			= 0;
+		handlerdisconnect		= 0;
+		handlererror			= 0;
+		handlermessage_server	= 0;
+		handlermessage_channel	= 0;
+		handlermessage_peer		= 0;
+		handlerchannel_join		= 0;
+		handlerchannel_leave	= 0;
+		handlernameset			= 0;
 
 		numTotalClientsPerIP = 5;
 		numPendingConnectsPerIP = 2;
@@ -77,7 +77,7 @@ struct relayserverinternal
 
 		channellistingenabled = true;
 	}
-	~relayserverinternal()
+	~relayserverinternal() noexcept
 	{
 		auto serverWriteLock = server.lock.createWriteLock();
 		for (auto& c : clients)
@@ -129,7 +129,7 @@ struct relayserverinternal
 	///			  2) If the client has not sent a UDP message within udpKeepAliveMS milliseconds, send a ping request.
 	///			  -> UDP ping response is not checked for by this function; one-way UDP activity is enough to keep the
 	///				 UDP psuedo-connection alive in routers.
-	///			     Note using default timing, three UDP messages will be sent before routers are likely to close connection.
+	///				 Note that using default timings, three UDP messages will be sent before routers are likely to close connection.
 	///			  3) If the client has only replied to pings, and not sent any channel, peer, or server messages besides,
 	///				 within a period of maxInactivityMS, then the client will be messaged and disconnected, and the server notified
 	///				 via error handler.
@@ -409,22 +409,22 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	if (unreachable)
 	{
 		auto sock = [=]() {
-			SOCKET             sockRaw = INVALID_SOCKET;
-			struct sockaddr_in dest,
-				from;
-			int				bread,
-				fromlen = sizeof(from),
-				timeout = 1000,
-				ret;
-			char            * icmp_data = NULL,
-				* recvbuf = NULL;
-			unsigned int	addr = 0;
-			USHORT          seq_no = 0;
-			struct hostent  * hp = NULL;
-			IpOptionHeader  ipopt;
+			SOCKET				sockRaw = INVALID_SOCKET;
+			struct sockaddr_in  dest,
+								from;
+			int					bread,
+								fromlen = sizeof(from),
+								timeout = 1000,
+								ret;
+			char			  * icmp_data = NULL,
+							  * recvbuf = NULL;
+			unsigned int		addr = 0;
+			unsigned short		seq_no = 0;
+			struct hostent	  * hp = NULL;
+			IpOptionHeader		ipopt;
 
-#define ICMP_DEST_UNREACH       3
-#define ICMP_PORT_UNREACH       3
+#define ICMP_DEST_UNREACH	   3
+#define ICMP_PORT_UNREACH	   3
 
 			//! ICMP packet structure.
 			struct icmp
@@ -487,7 +487,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 			while (1)
 			{
 				static int nCount = 0;
-				int        bwrote;
+				int		bwrote;
 
 				if (nCount++ == 4)
 					break;
@@ -617,7 +617,7 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 	if (_id == receivingClient->_id)
 	{
 		lacewing::error error = error_new();
-		error->add("Client ID %i attempted to send peer message to ID %i, e.g. themselves. Message dropped");
+		error->add("Client ID %hu attempted to send peer message to ID %hu, e.g. themselves. Message dropped", _id, receivingClient->_id);
 		serverinternal.handlererror(server, error);
 		error_delete(error);
 		return;
@@ -689,10 +689,13 @@ const char * relayserver::client::getimplementation() const
 			return "Unknown [error]";
 	}
 }
+relayserver::client::clientimpl relayserver::client::getimplementationvalue() const {
+	return clientImpl;
+}
 
 std::shared_ptr<relayserver::client> relayserver::channel::readpeer(messagereader &reader)
 {
-	int peerid = reader.get <unsigned short> ();
+	lw_ui16 peerid = reader.get <lw_ui16> ();
 
 	if (reader.failed)
 		return nullptr;
@@ -788,7 +791,7 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 	if (!clientsocket->tag())
 	{
 		std::stringstream err;
-		err << "generic_handlerdisconnect: disconnect by client with null tag.";
+		err << "generic_handlerdisconnect: disconnect by client with null tag."sv;
 		makestrstrerror(err);
 		return;
 	}
@@ -806,7 +809,7 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 	if (clientIt == clients.cend())
 	{
 		// The tag is only set as the result of a make_shared stored in server's client list
-		OutputDebugStringA("relayserverinternal::generic_handlerdisconnect(): client not found in server's client list.\n");
+		lw_trace("relayserverinternal::generic_handlerdisconnect(): client not found in server's client list.");
 		return;
 	}
 	std::shared_ptr<lacewing::relayserver::client> clientShd = *clientIt;
@@ -894,7 +897,7 @@ void handlerflasherror(lacewing::flashpolicy flash, lacewing::error error)
 		internal.handlererror(internal.server, error);
 }
 
-relayserver::relayserver(lacewing::pump pump) :
+relayserver::relayserver(lacewing::pump pump) noexcept :
 	socket(lacewing::server_new(pump)),
 	udp(lacewing::udp_new(pump)),
 	flash(lacewing::flashpolicy_new(pump))
@@ -921,7 +924,7 @@ relayserver::relayserver(lacewing::pump pump) :
  //   socket->nagle ();
 }
 
-relayserver::~relayserver()
+relayserver::~relayserver() noexcept
 {
 	socket->on_connect(nullptr);
 	socket->on_disconnect(nullptr);
@@ -965,8 +968,8 @@ void relayserver::host(lacewing::filter &_filter)
 	if (!filter->local_port())
 		filter->local_port(6121);
 
-	socket->host (filter);
-	udp->host    (filter);
+	socket->host(filter);
+	udp->host(filter);
 
 	lacewing::filter_delete(filter);
 
@@ -1227,9 +1230,9 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 
 			// Tell client they were ok to leave
 
-			builder.addheader(0, 0);    /* response */
-			builder.add <lw_ui8>(3);    /* leavechannel */
-			builder.add <lw_ui8>(1);    /* success */
+			builder.addheader(0, 0);			 /* response */
+			builder.add <lw_ui8>(3);			 /* leavechannel */
+			builder.add <lw_ui8>(1);			 /* success */
 			builder.add <lw_ui16>(channel->_id); /* channel ID */
 
 			builder.send(client->socket);
@@ -1301,7 +1304,7 @@ bool relayserver::client::checkname(std::string_view name)
 		builder.add <lw_ui8>(255);
 		builder.add(name.data(), 255);
 
-		builder.add("name too long, 255 chars maximum", -1);
+		builder.add("name too long, 255 chars maximum"sv);
 
 		// LW_ESCALATION_NOTE
 		// auto cliWriteLock = cliReadLock.lw_upgrade();
@@ -1311,6 +1314,7 @@ bool relayserver::client::checkname(std::string_view name)
 	}
 
 	auto serverReadLock = server.server.lock.createReadLock();
+	const std::string nameSimplified = lw_u8str_simplify(name);
 	for (const auto e2 : server.clients)
 	{
 		if (e2->_readonly)
@@ -1328,7 +1332,7 @@ bool relayserver::client::checkname(std::string_view name)
 		// Note: case insensitive.
 		// Due to self being skipped above, a client is still allowed to rename
 		// to a different capitalisation of its current name.
-		if (lw_sv_icmp(e2->_name, name))
+		if (lw_sv_cmp(e2->_namesimplified, nameSimplified))
 		{
 			framebuilder builder(true);
 
@@ -1339,7 +1343,7 @@ bool relayserver::client::checkname(std::string_view name)
 			builder.add <lw_ui8> ((lw_ui8)name.size());
 			builder.add (name);
 
-			builder.add ("name already taken", -1);
+			builder.add ("name already taken"sv);
 
 			// LW_ESCALATION_NOTE
 			// auto srvCliWriteLock = srvCliReadLock.lw_upgrade();
@@ -1356,10 +1360,10 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 {
 	auto cliReadLock = client->lock.createReadLock();
 
-	lw_ui8 messagetypeid  = (type >> 4);
-	lw_ui8 variant        = (type << 4);
-
+	lw_ui8 messagetypeid = (type >> 4);
+	lw_ui8 variant		 = (type << 4);
 	variant >>= 4;
+
 	const char * message = messageP.data();
 	size_t size = messageP.size();
 
@@ -1415,7 +1419,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			if (reader.failed)
 			{
-				errStr << "Incomplete request message.";
+				errStr << "Incomplete request message."sv;
 				trustedClient = false;
 				break;
 			}
@@ -1423,7 +1427,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			// Connect request not approved and user is sending a different type of request...
 			if (requesttype != 0 && !client->connectRequestApproved)
 			{
-				errStr << "Request message of non-Connect type (" << requesttype << ") given when Connect not approved yet.";
+				errStr << "Request message of non-Connect type ("sv << requesttype << ") given when Connect not approved yet."sv;
 				trustedClient = false;
 				reader.failed = true;
 				break;
@@ -1437,23 +1441,23 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 					if (reader.failed)
 					{
-						errStr << "Malformed connect request message received";
+						errStr << "Malformed connect request message received"sv;
 						trustedClient = false;
 						break;
 					}
 
 					if (client->connectRequestApproved)
 					{
-						errStr << "Error: received connect request but already approved connection. Ignoring.";
+						errStr << "Error: received connect request but already approved connection. Ignoring."sv;
 						return true;
 					}
 
-					if (!lw_sv_cmp(version, "revision 3"))
+					if (!lw_sv_cmp(version, "revision 3"sv))
 					{
 						builder.addheader (0, 0);  /* response */
 						builder.add <lw_ui8> (0);  /* connect */
 						builder.add <lw_ui8> (0);  /* failed */
-						builder.add ("version mismatch", -1);
+						builder.add ("version mismatch"sv);
 
 						// LW_ESCALATION_NOTE
 						// lacewing::writelock cliWriteLock = cliReadLock.lw_upgrade();
@@ -1463,7 +1467,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 						builder.send(client->socket);
 
 						reader.failed = true;
-						errStr << "Version mismatch in connect request";
+						errStr << "Version mismatch in connect request"sv;
 						break;
 					}
 
@@ -1488,7 +1492,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 					if (reader.failed || name.find_first_of('\0') != std::string_view::npos)
 					{
-						errStr << "Malformed Set Name request received, name could not be read.";
+						errStr << "Malformed Set Name request received, name could not be read."sv;
 						reader.failed = true;
 						trustedClient = false;
 						break;
@@ -1521,7 +1525,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 						builder.add <lw_ui8>(255);
 						builder.add(reader.get(255));
 
-						builder.add("Channel name too long.", -1);
+						builder.add("Channel name too long."sv);
 
 						cliReadLock.lw_unlock();
 						{
@@ -1532,44 +1536,44 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 						reader.failed = true;
 
-						errStr << "Malformed Join Channel request, name too long.";
+						errStr << "Malformed Join Channel request, name too long."sv;
 						trustedClient = false;
 
 						break;
 					}
-					std::string_view channelname = reader.get(channelnamelength);
 
-					if (reader.failed || channelname.find_first_of('\0') != std::string_view::npos)
+					std::string channelname(reader.getremaining(/* allowempty = */ false));
+
+					if (reader.failed || channelname.find_first_of('\0') != std::string_view::npos || !lw_u8str_validate(channelname) || !lw_u8str_normalise(channelname))
 					{
-						errStr << "Malformed Join Channel request, name could not be read.";
+						errStr << "Malformed Join Channel request, name could not be read."sv;
 						reader.failed = true;
 						trustedClient = false;
 						break;
 					}
 
+					const std::string channelnamesimplified = lw_u8str_simplify(channelname);
 					std::shared_ptr<relayserver::channel> channel;
 
 					//auto cliReadLock = client->lock.createReadLock();
 					for (const auto& e : channels)
 					{
-						if (lw_sv_icmp (e->_name, channelname))
+						if (lw_sv_cmp (e->_namesimplified, channelnamesimplified))
 						{
 							channel = e;
 							break;
 						}
 					}
 					cliReadLock.lw_unlock();
-					std::stringstream dbg;
 
 					/* creating a new channel */
 					if (!channel)
 					{
-						channel = std::make_shared<relayserver::channel>(*this, channelname);
+						channel = std::make_shared<relayserver::channel>(*this, std::string_view(channelname));
 
 						channel->_channelmaster = client;
 						channel->_hidden = (flags & 1) != 0;
 						channel->_autoclose = (flags & 2) != 0;
-						dbg << "Created new channel " << channelname << ", autoclose " << (channel->_autoclose ? "on" : "off") << "";
 					}
 					/* joining an existing channel */
 					else
@@ -1582,8 +1586,6 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 							server.joinchannel_response(channel, client, "You are already on this channel.");
 							break;
 						}
-
-						dbg << "Joining existing channel " << channelname << "";
 					}
 
 					// Until this channel is destroyed by loss of reference, the only resources it uses is a
@@ -1591,7 +1593,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 					if (handlerchannel_join)
 						handlerchannel_join(server, client, channel, channel->_hidden, channel->_autoclose);
-					else // channel var is either deleted here, or added to server channel list.
+					else // channel var is either deleted in joinchannel_response, or added to server channel list
 						server.joinchannel_response(channel, client, std::string_view());
 
 					break;
@@ -1600,31 +1602,13 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 				case 3: /* leavechannel */
 				{
 					std::shared_ptr<lacewing::relayserver::channel> channel;
-					lw_ui16 channelid = *(lw_ui16 *)reader.cursor();
+					// can't use reader.get<lw_ui16> as readchannel() uses current cursor
+					lw_ui16 channelid = reader.bytesleft() >= 2 ? *(lw_ui16 *)reader.cursor() : 0;
 					// auto cliReadLock = client->lock.createReadLock();
 					channel = client->readchannel(reader);
 
 					if (reader.failed)
 					{
-						std::shared_ptr<lacewing::relayserver::channel> channelFromServerList;
-						{
-							auto serverReadLock = server.lock.createReadLock();
-							auto channelFromServerListIt = std::find_if(channels.cbegin(), channels.cend(),
-								[=](const auto &ch) { return ch->_id == channelid; });
-							if (channelFromServerListIt != channels.cend())
-								channelFromServerList = *channelFromServerListIt;
-						}
-						if (channelFromServerList)
-						{
-							errStr << "Malformed Leave Channel request for client ID " << client->_id << ", name \"" << client->_name << "\", channel ID " <<
-								channelid << ", name \""  << channelFromServerList->name() << "\" was not found on client's channel list, but WAS on server channel list. Ignoring";
-						}
-						else
-						{
-							errStr << "Malformed Leave Channel request for client ID " << client->_id << ", name \"" << client->_name << "\", channel ID " <<
-								channelid << " was not found on client's channel list, or server channel list. Ignoring";
-						}
-
 						cliReadLock.lw_unlock();
 
 						// PHI DEBUG NOTE 29TH DEC: Shouldn't send this, if user requests to leave multiple times, it might cause confusion in client.
@@ -1637,7 +1621,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 						builder.add <lw_ui16>(channelid); /* channel ID */
 
 						// Blank reason replaced with "it was unspecified" message
-						builder.add("Channel ID is not in your client's joined channel list.", -1);
+						builder.add("Channel ID is not in your client's joined channel list."sv);
 
 						auto cliWriteLock = client->lock.createWriteLock();
 						builder.send(client->socket);
@@ -1659,11 +1643,11 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 					if (!channellistingenabled)
 					{
-						builder.addheader        (0, 0);  /* response */
+						builder.addheader		(0, 0);  /* response */
 						builder.add <lw_ui8> (4);  /* channellist */
 						builder.add <lw_ui8> (0);  /* failed */
 
-						builder.add ("channel listing is not enabled on this server", -1);
+						builder.add ("channel listing is not enabled on this server"sv);
 
 						cliReadLock.lw_unlock();
 						{
@@ -1701,7 +1685,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 				default:
 
-					errStr << "Malformed Request message type, ID " << requesttype << " not recognised.";
+					errStr << "Malformed Request message type, ID "sv << requesttype << " not recognised."sv;
 					trustedClient = false;
 					reader.failed = true;
 					break;
@@ -1719,7 +1703,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			if (reader.failed)
 			{
-				errStr << "Malformed server message received";
+				errStr << "Malformed server message received"sv;
 				trustedClient = false;
 				break;
 			}
@@ -1747,8 +1731,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			{
 				if (channel)
 				{
-					errStr << "Malformed channel message content, for client ID " << client->_id << ", name \"" << client->_name << "\", channel ID " <<
-						channelid << ", name \"" << channel->name() << "\", discarding";
+					errStr << "Malformed channel message content, for client ID "sv << client->_id << ", name \""sv << client->_name << "\", channel ID "sv <<
+						channelid << ", name \""sv << channel->name() << "\", discarding"sv;
 				}
 				else
 				{
@@ -1762,13 +1746,13 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 					}
 					if (channelFromServerList)
 					{
-						errStr << "Malformed channel message content, for client ID " << client->_id << ", name \"" << client->_name << "\", channel ID " <<
-							channelid << ", name \"" << channelFromServerList->name() << "\" was not found on client's channel list, but WAS on server channel list, discarding";
+						errStr << "Malformed channel message content, for client ID "sv << client->_id << ", name \""sv << client->_name << "\", channel ID "sv <<
+							channelid << ", name \""sv << channelFromServerList->name() << "\" was not found on client's channel list, but WAS on server channel list, discarding"sv;
 					}
 					else
 					{
-						errStr << "Malformed channel message content, for client ID " << client->_id << ", name \"" << client->_name << "\", channel ID " <<
-							channelid << " was not found on client's channel list, or server channel list, discarding";
+						errStr << "Malformed channel message content, for client ID "sv << client->_id << ", name \""sv << client->_name << "\", channel ID "sv <<
+							channelid << " was not found on client's channel list, or server channel list, discarding"sv;
 					}
 				}
 				break;
@@ -1798,7 +1782,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			// Message to yourself? Witchcraft!
 			if (peer == client || peer == nullptr)
 			{
-				errStr << "Malformed peer message (invalid peer targeted), discarding";
+				errStr << "Malformed peer message (invalid peer targeted), discarding"sv;
 				reader.failed = true;
 				break;
 			}
@@ -1812,7 +1796,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			if (reader.failed)
 			{
-				errStr << "Couldn't read content of peer message, discarding";
+				errStr << "Couldn't read content of peer message, discarding"sv;
 				break;
 			}
 
@@ -1830,19 +1814,19 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 		case 4: /* objectservermessage */
 
-			errStr << "ObjectServerMessage not allowed";
+			errStr << "ObjectServerMessage not allowed"sv;
 			trustedClient = false;
 			break;
 
 		case 5: /* objectchannelmessage */
 
-			errStr << "ObjectChannelMessage not allowed";
+			errStr << "ObjectChannelMessage not allowed"sv;
 			trustedClient = false;
 			break;
 
 		case 6: /* objectpeermessage */
 
-			errStr << "ObjectPeerMessage not allowed";
+			errStr << "ObjectPeerMessage not allowed"sv;
 			trustedClient = false;
 			break;
 
@@ -1851,7 +1835,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			// UDPHello on non-UDP port... what
 			if (!blasted)
 			{
-				errStr << "UDPHello message sent on TCP, not allowed";
+				errStr << "UDPHello message sent on TCP, not allowed"sv;
 				trustedClient = false;
 				reader.failed = true;
 				break;
@@ -1865,12 +1849,12 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			client->pseudoUDP = false;
 
 			builder.addheader (10, 0); /* udpwelcome */
-			builder.send      (server.udp, client->udpaddress);
+			builder.send	  (server.udp, client->udpaddress);
 
 			break;
 		}
 		case 8: /* channelmaster */
-			errStr << "Channel master message ID 8 not allowed";
+			errStr << "Channel master message ID 8 not allowed"sv;
 
 
 			break;
@@ -1885,7 +1869,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			std::string_view impl = reader.get(reader.bytesleft());
 			if (reader.failed || impl.empty())
 			{
-				errStr << "Failed to read implementation response";
+				errStr << "Failed to read implementation response"sv;
 				trustedClient = false;
 				break;
 			}
@@ -1898,26 +1882,26 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			// Implementation responses were added in Bluewing Client build 70.
 
-			if (impl.find("Windows") != std::string_view::npos)
+			if (impl.find("Windows"sv) != std::string_view::npos)
 			{
-				if (impl.find("Unicode") != std::string_view::npos)
+				if (impl.find("Unicode"sv) != std::string_view::npos)
 					client->clientImpl = relayserver::client::clientimpl::Windows_Unicode;
 				else
 					client->clientImpl = relayserver::client::clientimpl::Windows;
 			}
-			else if (impl.find("Android") != std::string_view::npos)
+			else if (impl.find("Android"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Android;
-			else if (impl.find("Flash") != std::string_view::npos)
+			else if (impl.find("Flash"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Flash;
-			else if (impl.find("iOS") != std::string_view::npos)
+			else if (impl.find("iOS"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::iOS;
-			else if (impl.find("Macintosh") != std::string_view::npos)
+			else if (impl.find("Macintosh"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Macintosh;
-			else if (impl.find("HTML5") != std::string_view::npos)
+			else if (impl.find("HTML5"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::HTML5;
 			else
 			{
-				errStr << "Failed to recognise platform of implementation \"" << impl << "\". Leaving it as Unknown.";
+				errStr << "Failed to recognise platform of implementation \""sv << impl << "\". Leaving it as Unknown."sv;
 				reader.failed = true;
 			}
 
@@ -1926,8 +1910,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		}
 
 		default:
-
-			errStr << "Unrecognised message type ID " << messagetypeid;
+			errStr << "Unrecognised message type ID "sv << messagetypeid;
 			trustedClient = false;
 			reader.failed = true;
 			break;
@@ -1972,7 +1955,7 @@ void relayserver::client::send(lw_ui8 subchannel, std::string_view message, lw_u
 	framebuilder builder(true);
 
 	builder.addheader (1, variant); /* binaryservermessage */
-	builder.add (subchannel);
+	builder.add<lw_ui8> (subchannel);
 	builder.add (message);
 
 	auto clientWriteLock = lock.createWriteLock();
@@ -1985,7 +1968,7 @@ void relayserver::client::blast(lw_ui8 subchannel, std::string_view message, lw_
 	framebuilder builder(false);
 
 	builder.addheader(1, variant, true); /* binaryservermessage */
-	builder.add (subchannel);
+	builder.add<lw_ui8>(subchannel);
 	builder.add (message);
 
 	auto serverWriteLock = server.server.lock.createWriteLock();
@@ -2020,8 +2003,8 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 	framebuilder builder(false);
 
 	builder.addheader (4, variant, true); /* binaryserverchannelmessage */
-	builder.add (subchannel);
-	builder.add (this->_id);
+	builder.add<lw_ui8>(subchannel);
+	builder.add<lw_ui16>(this->_id);
 	builder.add (message);
 
 	auto channelReadLock = lock.createReadLock();
@@ -2041,8 +2024,7 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 void relayserver::channel::close()
 {
 	auto serverReadLock = server.server.lock.createReadLock();
-	auto ch = std::find_if(server.channels.begin(),
-		server.channels.end(),
+	auto ch = std::find_if(server.channels.begin(), server.channels.end(),
 		[=](const auto &p) { return p.get() == this; });
 
 	// Assume channel is already closed, as it's not on server channel list.
@@ -2053,7 +2035,7 @@ void relayserver::channel::close()
 	server.close_channel(*ch);
 }
 
-relayserver::client::client(relayserverinternal &internal, lacewing::server_client _socket)
+relayserver::client::client(relayserverinternal &internal, lacewing::server_client _socket) noexcept
 	: socket(_socket), server(internal),
 	udpaddress(lacewing::address_new(socket->address()))
 {
@@ -2079,13 +2061,13 @@ relayserver::client::client(relayserverinternal &internal, lacewing::server_clie
 	lastudpmessagetime = lastchannelorpeermessagetime = lasttcpmessagetime = ::std::chrono::steady_clock::now();
 }
 
-::lacewing::relayserver::channel::channel(relayserverinternal &_server, std::string_view _name) :
+::lacewing::relayserver::channel::channel(relayserverinternal &_server, std::string_view _name) noexcept :
 	server(_server), _name(_name)
 {
 	_id = server.channelids.borrow();
 }
 
-relayserver::channel::~channel() noexcept(false)
+relayserver::channel::~channel() noexcept
 {
 	auto channelWriteLock = lock.createWriteLock();
 
@@ -2110,8 +2092,8 @@ relayserver::channel::~channel() noexcept(false)
 	// So we don't delete the clients in the channel dtor.
 	clients.clear();
 
-	if (_id == 0xFFFF)
-		throw std::exception("ID already released");
+	assert(_id != 0xFFFF); // already cleared ID
+
 	server.channelids.returnID(_id);
 	_id = 0xFFFF;
 }
@@ -2134,6 +2116,12 @@ std::string relayserver::channel::name() const
 	return _name;
 }
 
+std::string relayserver::channel::nameSimplified() const
+{
+	lacewing::readlock rl = lock.createReadLock();
+	return _namesimplified;
+}
+
 // Renames channel.
 // WARNING: Does not check if channel name is in use already.
 void relayserver::channel::name(std::string_view name)
@@ -2142,6 +2130,7 @@ void relayserver::channel::name(std::string_view name)
 		return;
 	lacewing::writelock wl = lock.createWriteLock();
 	_name = name;
+	_namesimplified = lw_u8str_simplify(name);
 }
 
 bool relayserver::channel::hidden() const
@@ -2208,11 +2197,18 @@ std::string relayserver::client::name() const
 	return _name;
 }
 
+std::string relayserver::client::nameSimplified() const
+{
+	lacewing::readlock rl = lock.createReadLock();
+	return _namesimplified;
+}
+
 void relayserver::client::name(std::string_view name)
 {
 	lacewing::writelock wl = lock.createWriteLock();
 	_prevname = _name;
 	_name = name;
+	_namesimplified = lw_u8str_simplify(name);
 }
 
 bool relayserver::client::readonly() const
@@ -2276,7 +2272,7 @@ size_t relayserver::clientcount() const
 	return ((relayserverinternal *)internaltag)->clients.size();
 }
 
-relayserver::client::~client() noexcept(false)
+relayserver::client::~client() noexcept
 {
 	writelock wl = lock.createWriteLock();
 	//lw_trace("~relayserver::client called for address %p, name %s, ID %hu\n", this, _name.c_str(), _id);
@@ -2407,14 +2403,16 @@ static void validateorreplacestringview(std::string_view toValidate,
 	std::string_view functionName, std::string_view paramName,
 	relayserverinternal &serverI, std::shared_ptr<relayserver::client> client)
 {
-	if (toValidate.find_first_of('\0') == std::string_view::npos)
-		return;
-
-	// Later, we'll add UTF-8 validation here too.
+	// No embedded nulls, valid UTF-8
+	if (toValidate.find_first_of('\0') == std::string_view::npos &&
+		lw_u8str_validate(toValidate))
+	{
+		return; // no error
+	}
 
 	// Don't let the server get away with it!
 	lacewing::error error = lacewing::error_new();
-	error->add("Error in %s response: Embedded null chars not allowed in param %s", functionName.data(), paramName.data());
+	error->add("Error in %*s response: Embedded null chars not allowed in param %*s", functionName.size(), functionName.data(), paramName.size(), paramName.data());
 	serverI.handlererror(serverI.server, error);
 	lacewing::error_delete(error);
 	writeTo = replaceWith;
@@ -2422,11 +2420,11 @@ static void validateorreplacestringview(std::string_view toValidate,
 /// <summary> Approves or sends a deny response to channel join request. Pass null for deny reason if approving.
 /// 		  Even if you're denying, you still MUST call this event, or you will have a memory leak.
 /// 		  For new channels, this will add them to server's channel list if approved, or delete them. </summary>
-/// <param name="channel">			    [in] The channel. Name is as originally requested. </param>
+/// <param name="channel">				[in] The channel. Name is as originally requested. </param>
 /// <param name="passedNewChannelName"> Name of the passed channel. If null, original request name is approved.
 /// 									If non-null, must be 1-255 chars, or the channel join is denied entirely. </param>
-/// <param name="client">			    [in] The client joining/creating the channel. </param>
-/// <param name="denyReason">		    The deny reason. If null, the channel is approved (if new channel name is legal).
+/// <param name="client">				[in] The client joining/creating the channel. </param>
+/// <param name="denyReason">			The deny reason. If null, the channel is approved (if new channel name is legal).
 /// 									If non-null, channel join deny is sent, and channel is cleaned up as needed. </param>
 void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> channel,
 	std::shared_ptr<relayserver::client> client, std::string_view denyReason)
@@ -2467,8 +2465,8 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 	// If non-empty, request denied.
 	if (!denyReason.empty())
 	{
-		validateorreplacestringview(denyReason, denyReason, "Server specified an invalid reason",
-			"Join Channel", "deny reason", serverinternal, client);
+		validateorreplacestringview(denyReason, denyReason, "Server specified an invalid reason"sv,
+			"Join Channel"sv, "deny reason"sv, serverinternal, client);
 
 		framebuilder builder(true);
 		builder.addheader(0, 0);  /* response */
@@ -2517,14 +2515,14 @@ void relayserver::leavechannel_response(std::shared_ptr<relayserver::channel> ch
 	if (!denyReason.empty())
 	{
 		validateorreplacestringview(denyReason, denyReason,
-			"Channel leave refused by server for unspecified reason",
-			"Leave Channel", "deny reason", serverinternal, client);
+			"Channel leave refused by server for unspecified reason"sv,
+			"Leave Channel"sv, "deny reason"sv, serverinternal, client);
 
 		framebuilder builder(true);
 
-		builder.addheader(0, 0);         /* response */
-		builder.add <lw_ui8>(3);  /* leavechannel */
-		builder.add <lw_ui8>(0);  /* failed */
+		builder.addheader(0, 0);			 /* response */
+		builder.add <lw_ui8>(3);			 /* leavechannel */
+		builder.add <lw_ui8>(0);			 /* failed */
 		builder.add <lw_ui16>(channel->_id); /* channel ID */
 
 		// Blank reason replaced with "it was unspecified" message
@@ -2579,14 +2577,13 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	{
 		static char const * const end = "pproved client name is null or empty. Name refused.";
 		if (denyReason != nullptr)
-			sprintf_s(newDenyReason, "%s\r\nPlus a%s", denyReason.data(), end);
+			sprintf_s(newDenyReason, "%*s\r\nPlus a%s", denyReason.size(), denyReason.data(), end);
 		else
 			sprintf_s(newDenyReason, "A%s", end);
 		denyReason = newDenyReason;
 	}
 	else
 	{
-
 		if (newClientName.size() > 255U)
 		{
 			sprintf_s(newDenyReason, "New client name \"%.10s...\" (%u chars) is too long. Name must be 255 chars maximum.", newClientName.data(), (std::uint32_t)newClientName.size());
@@ -2600,8 +2597,8 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	// If not already denying, check and potentially deny if name is invalid.
 	if (denyReason.empty())
 	{
-		validateorreplacestringview(newClientName, denyReason, "Name is invalid",
-			"Client Name Set", "client name", serverinternal, client);
+		validateorreplacestringview(newClientName, denyReason, "Name is invalid"sv,
+			"Client Name Set"sv, "client name"sv, serverinternal, client);
 
 		// User attempted to name set to what they had already.
 		// Note it's case sensitive, so same name with different caps causes no error.
@@ -2610,9 +2607,9 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 		// but this could potentially be abused.
 
 		if (denyReason.empty() &&
-			!oldClientName.empty() && !strcmp(newClientName.data(), oldClientName.data()))
+			!oldClientName.empty() && lw_sv_cmp(newClientName, oldClientName))
 		{
-			denyReason = "Name set to what it was before";
+			denyReason = "Name set to what it was before"sv;
 		}
 	}
 
@@ -2650,7 +2647,7 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 		builder.add(newClientName);
 
 		builder.add("Name refused by server; the server customised your name "
-			"and got an error doing so on its end.", -1);
+			"and got an error doing so on its end."sv);
 
 		{
 			// LW_ESCALATION_NOTE
@@ -2761,9 +2758,9 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 }
 
 
-#define autohandlerfunctions(pub, intern, handlername)              \
+#define autohandlerfunctions(pub, intern, handlername)			  \
 	void pub::on##handlername(pub::handler_##handlername handler)   \
-		{   ((intern *) internaltag)->handler##handlername = handler;      \
+		{   ((intern *) internaltag)->handler##handlername = handler;	  \
 		}
 autohandlerfunctions(relayserver, relayserverinternal, connect)
 autohandlerfunctions(relayserver, relayserverinternal, disconnect)

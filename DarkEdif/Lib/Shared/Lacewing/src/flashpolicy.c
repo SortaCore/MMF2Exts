@@ -93,8 +93,18 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
 	lw_flashpolicy_unhost (ctx);
 
 	lw_filter_set_local_port (filter, 843);
-	
+
+#if defined(_WIN32) && defined(_UNICODE)
+	FILE * file = NULL;
+	__wchar_t * res = lw_char_to_wchar(filename);
+	if (res != NULL)
+	{
+	  file = _wfopen(res, L"r");
+	  free(res);
+	}
+#else
 	FILE * file = fopen (filename, "r");
+#endif
 
 	if (!file)
 	{

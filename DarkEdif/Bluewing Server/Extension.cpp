@@ -194,7 +194,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(13, ReceivedInt);
 		LinkExpression(14, ReceivedBinarySize);
 		LinkExpression(15, ReceivedBinaryAddress);
-		LinkExpression(16, StrByte);
+		LinkExpression(16, StrANSIByte);
 		LinkExpression(17, UnsignedByte);
 		LinkExpression(18, SignedByte);
 		LinkExpression(19, UnsignedShort);
@@ -225,6 +225,9 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(43, DumpMessage);
 		LinkExpression(44, AllClientCount);
 		LinkExpression(45, GetDenyReason);
+		LinkExpression(46, ConvToUTF8_GetCompleteCharCount);
+		LinkExpression(47, ConvToUTF8_GetVisibleCharCount);
+		LinkExpression(48, ConvToUTF8_GetByteCount);
 	}
 	
 #if EditorBuild
@@ -252,10 +255,8 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	OutputDebugStringA(msgBuff);
 	if (isGlobal)
 	{
-		std::string GlobalIDCopy = "LacewingRelayServer";
-		GlobalIDCopy += edPtr->edGlobalID;
-
-		GetGlobal:
+		std::tstring GlobalIDCopy = _T("LacewingRelayServer");
+		GlobalIDCopy += UTF8ToTString(edPtr->edGlobalID);
 		void * v = Runtime.ReadGlobal(GlobalIDCopy.c_str());
 		if (!v)
 		{
@@ -269,13 +270,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 			globals = (GlobalInfo *)v;
 
 			EnterCriticalSectionDebug(&globals->lock);
-
-			if (globals->pendingDelete)
-			{
-				LeaveCriticalSectionDebug(&globals->lock);
-				delete globals;
-				goto GetGlobal;
-			}
 
 			// If switching frames, the old ext will store selection here.
 			// We'll keep it across frames for simplicity.
@@ -356,7 +350,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	const auto selChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Selected channel: ") + ext->selChannel->name();
+			writeTo = _T("Selected channel: ") + UTF8ToTString(ext->selChannel->name());
 		else
 			writeTo = _T("Selected channel: (none)");
 	};
@@ -373,7 +367,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	const auto selClientDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
-			writeTo = _T("Selected client: ") + ext->selChannel->name();
+			writeTo = _T("Selected client: ") + UTF8ToTString(ext->selChannel->name());
 		else
 			writeTo = _T("Selected client: (none)");
 	};
@@ -387,7 +381,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	};
 	FusionDebugger.AddItemToDebugger(selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
-
 
 DWORD WINAPI LacewingLoopThread(void * ThisExt)
 {
@@ -406,7 +399,7 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 		{
 			std::string Text = "Error returned by StartEventLoop(): ";
 			Text += error->tostring();
-			g->CreateError(Text.c_str());
+			g->CreateError("%hs", Text.c_str());
 		}
 
 	}
@@ -427,8 +420,8 @@ DWORD WINAPI LacewingLoopThread(void * ThisExt)
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
-	: _objEventPump(lacewing::eventpump_new()),
-	_server(_objEventPump)
+	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
+	_server(_objEventPump.get())
 {
 	_ext = e;
 	Refs.push_back(e);
@@ -455,26 +448,149 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 
 	InitializeCriticalSection(&lock);
 
+	// Allow all letters, all numbers, all punctuation, and char 32 i.e. space
+	UpdateAcceptableChars("L*,N*,P*,32"s);
+
 	// Useful so Lacewing callbacks can access Extension
 	_server.tag = this;
+}
+void GlobalInfo::UpdateAcceptableChars(std::string acStr) {
+	// String should be format:
+	// 2 letters, or 1 letter + *, or an integer number that is the UTF32 number of char
+	
+	if (acStr.empty())
+	{
+		acceptableCharCategories.clear();
+		acceptableSpecificChars.clear();
+		return;
+	}
+
+	if (acStr.front() == ',')
+		return CreateError("The acceptable character list \"%hs\" starts with a comma.", std::string(acStr).c_str());
+
+	acStr.erase(std::remove(acStr.begin(), acStr.end(), ' '), acStr.end());
+	if (acStr.empty())
+		return CreateError("The acceptable character list \"%hs\" is all spaces.", std::string(acStr).c_str());
+
+	int isDigit = -1;
+	const char * cur = acStr.data();
+	size_t remaining = acStr.size();
+	while (true)
+	{
+		remaining = acStr.data() - cur;
+		if (remaining == 0)
+			break;
+
+		// Two-letter category, or letter + * for all categories
+		if (remaining >= 2 &&
+			std::isalpha(cur[0]) && (std::isalpha(cur[1]) || cur[1] == '*'))
+		{
+			// more than two letters
+			if (remaining > 2 && cur[2] != ',')
+			{
+				return CreateError("The acceptable character list \"%hs\" has a 3+ letter category \"%hs\". Categories are 2 letters.",
+					acStr.c_str(), cur);
+			}
+
+			// See utf8proc.cpp for these defined under utf8proc_category_t
+			static const char categoryList[][3] = { "Cn","Lu","Ll","Lt","Lm","Lo","Mn","Mc","Me","Nd","Nl","No","Pc","Pd","Ps","Pe","Pi","Pf","Po","Sm","Sc","Sk","So","Zs","Zl","Zp","Cc","Cf","Cs","Co" };
+			static const char wildcardCategory[] = { 'C', 'L', 'M', 'N', 'P','S','Z' };
+
+			bool found = false;
+			// Wildcard
+			if (cur[1] == '*')
+			{
+				char firstCharUpper = std::toupper(cur[0]);
+				for (size_t i = 0; i < sizeof(wildcardCategory); i++)
+				{
+					if (firstCharUpper == wildcardCategory[i])
+					{
+						// Wildcard category found, yay
+						for (size_t j = 0; j < std::size(categoryList); j++) {
+							if (firstCharUpper == categoryList[j][0])
+								acceptableCharCategories.push_back(j);
+						}
+
+						cur += 3;
+						goto nextChar;
+					}
+				}
+
+				return CreateError("Wildcard category \"%.2hs\" not recognised. Check the help file.", cur);
+			}
+
+			for (size_t i = 0; i < std::size(categoryList); i++)
+			{
+				if (std::toupper(cur[0]) == categoryList[i][0] &&
+					std::tolower(cur[1]) == categoryList[i][1])
+				{
+					// Category found, is it already added?
+					if (std::find(acceptableCharCategories.cbegin(), acceptableCharCategories.cend(), i) != acceptableCharCategories.cend())
+						return CreateError("Category \"%.2hs\" was added twice in list \"%hs\".", cur, acStr.c_str());
+
+					acceptableCharCategories.push_back(i);
+					cur += 3;
+					goto nextChar;
+				}
+			}
+
+			return CreateError("Category \"%.2hs\" not recognised. Check the help file.", cur);
+		}
+
+		// Numeric, or numeric range expected
+		if (std::isdigit(cur[0])) {
+			char * endPtr;
+			std::uint32_t charAllowed = std::strtoul(cur, &endPtr, 0);
+			if (charAllowed == 0 || charAllowed > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
+				return CreateError("Specific codepoint %hs not a valid codepoint.", cur, acStr.c_str());
+
+			// Single char point
+			cur = endPtr;
+			if (cur[0] == '\0' || cur[0] == ',')
+			{
+				if (std::find(acceptableSpecificChars.cbegin(), acceptableSpecificChars.cend(), charAllowed) != acceptableSpecificChars.cend())
+					return CreateError("Specific codepoint %ul was added twice in list \"%hs\".", charAllowed, acStr.c_str());
+
+				acceptableSpecificChars.push_back(charAllowed);
+				goto nextChar;
+			}
+
+			// Range of chars
+			if (cur[0] == '-')
+			{
+				std::uint32_t lastCharNum = std::strtoul(cur, &endPtr, 0);
+				if (lastCharNum == 0 || lastCharNum > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
+					return CreateError("Specific codepoint range  %ul - %hs is broken; %hs was not a valid number.", charAllowed, cur, cur);
+				// Range is reversed
+				if (lastCharNum < charAllowed)
+					return CreateError("Range %lu to %lu is backwards.", charAllowed, lastCharNum);
+
+				// Allow range overlaps - we could search by range1 max > range2 min, but we won't.
+				// We will check for an exact match in range, though.
+
+				auto range = std::make_pair((std::int32_t)charAllowed, (std::int32_t)lastCharNum);
+				if (std::find(acceptableCharRanges.cbegin(), acceptableCharRanges.cend(), range) != acceptableCharRanges.cend())
+					return CreateError("Range %lu to %lu is in the list twice.", charAllowed, lastCharNum);
+
+				acceptableCharRanges.push_back(range);
+				goto nextChar;
+			}
+
+			// fall through
+		}
+
+		return CreateError("Unrecognised character list starting at \"%hs\".", cur);
+
+	nextChar:
+		/* go to next char */;
+	}
 }
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!Refs.empty())
 		throw std::exception("GlobalInfo dtor called prematurely.");
-
-	if (!pendingDelete)
-		MarkAsPendingDelete();
-	DeleteCriticalSection(&lock);
-}
-void GlobalInfo::MarkAsPendingDelete()
-{
-	if (pendingDelete)
-		return;
-
 	free(_globalID);
-
-	auto srvWriteLock = _server.lock.createWriteLock();
+	DeleteCriticalSection(&lock);
 
 	// We're no longer responding to these events
 	_server.onerror(nullptr);
@@ -488,46 +604,44 @@ void GlobalInfo::MarkAsPendingDelete()
 	_server.onmessage_peer(nullptr);
 
 	// Cleanup all usages of GlobalInfo
+	if (!_thread)
+		_objEventPump->tick();
+
 	_server.tag = nullptr; // was == this, now this is not usable
 
-	lastDestroyedExtSelectedClient.reset();
-	lastDestroyedExtSelectedChannel.reset();
-
-	if (_server.flash->hosting())
-		_server.flash->unhost();
 	if (_server.hosting())
+	{
 		_server.unhost();
 
+		if (!_thread)
+			_objEventPump->tick();
+		Sleep(0U);
+	}
 	_objEventPump->post_eventloop_exit();
 
-	srvWriteLock.lw_unlock();
-
-	// Multithreading mode; wait for thread to end
-	auto threadHandle = _thread;
 	if (_thread)
 	{
 		Sleep(0U);
-		if (WaitForSingleObject(threadHandle, 5000U) != WAIT_OBJECT_0 && _thread)
-		{
+		if (_thread)
+			Sleep(50U);
+		if (_thread) {
 			TerminateThread(_thread, 0U);
+			CloseHandle(_thread);
 			_thread = NULL;
 		}
 	}
-	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
+	else
 	{
-		lacewing::error err = _objEventPump->tick();
-		if (err != NULL)
-		{
-			// No way to report it; the last ext is being destroyed.
-			std::stringstream errStr;
-			errStr << "Pump closed with error \"" << err->tostring() << "\".\n";
-			OutputDebugStringA(errStr.str().c_str());
-		}
-		OutputDebugStringA("Pump should be closed.\n");
+		_objEventPump->tick();
 		Sleep(0U);
 	}
-
-	lacewing::pump_delete(_objEventPump);
+}
+void eventpumpdeleter(lacewing::eventpump pump)
+{
+	OutputDebugStringA("Pump deleting...\n");
+	lacewing::pump_delete(pump);
+	OutputDebugStringA("Pump deleted.\n");
+	_CrtCheckMemory();
 }
 
 
@@ -637,29 +751,217 @@ void Extension::ClearThreadData()
 {
 	threadData = std::make_shared<SaveExtInfo>();
 }
+std::string Extension::TStringToUTF8Stripped(std::tstring str)
+{
+	return lw_u8str_simplify(TStringToUTF8(str));
+}
 
-void Extension::CreateError(_Printf_format_string_ const char * error, ...)
+int Extension::CheckForUTF8Cutoff(std::string_view sv)
+{
+	// Start char is invalid
+	int res = GetNumBytesInUTF8Char(sv);
+
+	// 0 = empty string; we can't do anything, return it.
+	// -1 = UTF-8 start char, but cut off string; we can't do anything, return it.
+	// -2 = UTF-8 non-start char, so start char is cut off.
+	if (res <= 0)
+		return res;
+
+	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
+	for (int i = 0, j = (sv.size() < 4 ? sv.size() : 4); i < j; ++i)
+	{
+		// Cut off a char; go backwards
+		res = GetNumBytesInUTF8Char(sv.substr(sv.size() - i));
+		if (res == -2)
+			continue;
+
+		// Otherwise, we hit the last start char in the string
+
+		// But it's been cut off; invalid UTF-8
+		// 0 = empty string; we can't do anything, return it.
+		// -1 = UTF-8 start char, but cut off string; we can't do anything, return it.
+		// -2 = UTF-8 non-start char
+		return res == -1 ? 1 : 0;
+	}
+
+	// Never found a start char; 5-byte/6-byte nonstandard UTF-8?
+	return 1;
+}
+int Extension::GetNumBytesInUTF8Char(std::string_view sv)
+{
+	if (sv.empty())
+		return 0;
+
+	std::uint8_t c = *(std::uint8_t *)&sv.front();
+	// ASCII/UTF-8 1-byte char
+	if (c <= 0x7F)
+		return 1;
+
+	// 2-byte indicator
+	if (c >= 0xC2 && c <= 0xDF)
+		return sv.size() >= 2 ? 2 : -1;
+
+	// 3-byte indicator
+	if (c >= 0xE0 && c <= 0xEF)
+		return sv.size() >= 3 ? 3 : -1;
+
+	// 4-byte indicator
+	if (c >= 0xF0)
+		return sv.size() >= 4 ? 4 : -1;
+
+	// Non-first character in multibyte sequence; user is reading too far ahead
+	if (c >= 0x80 && c <= 0xBF)
+		return -2;
+
+	// Note 5-byte and 6-byte variants are theoretically possible but were removed by UTF-8 standard.
+
+	return -1;
+}
+std::tstring Extension::ReadStringFromRecvBinary(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
+{
+	// User requested empty size, let 'em have it
+	if (sizeInCodePoints == 0)
+		return std::tstring();
+
+	if (recvMsgStartIndex < 0)
+	{
+		CreateError("Could not read from received binary, index less than 0.");
+		return Runtime.CopyString(_T(""));
+	}
+	if (recvMsgStartIndex > threadData->receivedMsg.content.size())
+	{
+		CreateError("Could not read from received binary, index %zu is outside range of 0 to %zu.",
+			recvMsgStartIndex, recvMsgStartIndex + threadData->receivedMsg.content.size());
+		return Runtime.CopyString(_T(""));
+	}
+
+	if (sizeInCodePoints < -1)
+	{
+		CreateError("Could not read string with size %d; size is too low.", sizeInCodePoints);
+		return std::tstring();
+	}
+	const bool fixedSize = sizeInCodePoints != -1;
+
+	size_t maxSizePlusOne = threadData->receivedMsg.content.size() - recvMsgStartIndex + 1;
+	size_t actualStringSizeBytes = strnlen(threadData->receivedMsg.content.data() + recvMsgStartIndex, maxSizePlusOne);
+	if (fixedSize)
+	{
+		// Size too small - we assumed every char was 1-byte for this, so it's way under
+		if (sizeInCodePoints != -1 && (unsigned)sizeInCodePoints < maxSizePlusOne - 1)
+		{
+			CreateError("Could not read string with size %d at %hsstart index %zu, only %zu possible characters in message.",
+				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, maxSizePlusOne);
+			return std::tstring();
+		}
+
+		// Null terminator found within string
+		if (actualStringSizeBytes < (unsigned)sizeInCodePoints)
+		{
+			CreateError("Could not read string with size %d at %hsstart index %zu, found null byte within at index %zu.",
+				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, recvMsgStartIndex + actualStringSizeBytes);
+			return std::tstring();
+		}
+	}
+	// Not fixed size; if null terminator not found within remainder of text
+	else if (actualStringSizeBytes == maxSizePlusOne)
+	{
+		CreateError("Could not read null-terminated string from %hsstart index %zu; null terminator not found.",
+			isCursorExpression ? "cursor's " : "", recvMsgStartIndex);
+		return std::tstring();
+	}
+
+	// To make sure user hasn't cut off the start/end UTF-8 char, we'll do a quick check
+	std::string result = threadData->receivedMsg.content.substr(recvMsgStartIndex, actualStringSizeBytes);
+
+	// Start char is invalid
+	if (GetNumBytesInUTF8Char(result) < 0)
+	{
+		CreateError("Could not read text from received binary, UTF-8 char was cut off at %hsstart index %zu.",
+			isCursorExpression ? "the cursor's " : "", threadData->receivedMsg.cursor);
+		return std::tstring();
+	}
+
+	// We have the entire received message in result, we need to trim it to sizeInCodePoints
+
+	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
+	for (int charIndex = 0, numBytesInSize = 0, byteIndex = recvMsgStartIndex; ; ++charIndex)
+	{
+		int numBytes = GetNumBytesInUTF8Char(result.substr(recvMsgStartIndex + byteIndex, 4));
+
+		// We checked for -2 in start char in previous if(), so the string isn't starting too early.
+		// So, a -2 in middle of the string means it's a malformed UTF-8.
+		// We'll catch both -1 and -2 as malformed UTF-8 errors.
+		if (numBytes < 0)
+			goto DeadChar;
+
+		// otherwise, valid char; loop all bytes used by it, validate 'em
+		for (int i = 1; i < numBytes + 1; ++i)
+		{
+			char c = result[++byteIndex];
+			if (c < 0x80 || c > 0xBF)
+			{
+				numBytes = -1;
+				goto DeadChar;
+			}
+		}
+
+		// Okay, we read a character
+		++charIndex;
+
+		// Got all the characters we need
+		if (fixedSize && numBytesInSize == charIndex)
+		{
+			bool allValidChars;
+			// allValidChars will do a more thorough investigation of characters
+			std::tstring toReturn = UTF8ToTString(result.substr(0, numBytesInSize), &allValidChars);
+			if (allValidChars)
+				return toReturn;
+
+			CreateError("Could not read text from received binary, UTF-8 was malformed at index %u (attempted to read %d chars after %hsstart index %zu).",
+				recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
+			return std::tstring();
+		}
+
+		// grab another character
+		continue;
+
+		// Reused error message
+	DeadChar:
+		CreateError("Could not read text from received binary, UTF-8 was malformed at index %u (attempted to read %d chars after %hsstart index %d).",
+			recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
+		return std::tstring();
+	}
+
+	// Either no problems, and numBytesInSize
+
+	CreateError("Could not read text from received binary, UTF-8 char was cut off at the cursor's end index %zu.",
+		threadData->receivedMsg.cursor + actualStringSizeBytes);
+	return std::tstring();
+}
+
+
+void Extension::CreateError(_Printf_format_string_ const char * errorU8, ...)
 {
 	va_list v;
-	va_start(v, error);
-	globals->CreateError(error, v);
+	va_start(v, errorU8);
+	globals->CreateError(errorU8, v);
 	va_end(v);
 }
 
-void GlobalInfo::CreateError(_Printf_format_string_ const char * error, va_list v)
+void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, va_list v)
 {
 	std::stringstream errorDetailed;
 	if (std::this_thread::get_id() != Refs[0]->mainThreadID)
-		errorDetailed << "[handler] ";
+		errorDetailed << "[handler] "sv;
 	else
-		errorDetailed << "[Fusion event #" << DarkEdif::GetEventNumber(Refs[0]->rhPtr->EventGroup) << "] ";
+		errorDetailed << "[Fusion event #"sv << DarkEdif::GetEventNumber(Refs[0]->rhPtr->EventGroup) << "] "sv;
 
 	char output[2048];
 	try {
-		if (vsprintf_s(output, error, v) <= 0)
+		if (vsprintf_s(output, errorU8, v) <= 0)
 		{
 			errorDetailed.str("vsprintf_s failed with errno ");
-			errorDetailed << errno << ", format [" << error << "].";
+			errorDetailed << errno << ", format ["sv << errorU8 << "]."sv;
 		}
 		else
 			errorDetailed << output;
@@ -667,24 +969,25 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * error, va_list 
 	catch (...)
 	{
 		errorDetailed.str("vsprintf_s failed with crash, format [");
-		errorDetailed << error << "].";
+		errorDetailed << errorU8 << "]."sv;
 	}
 
-	const std::string errText = errorDetailed.str();
-	OutputDebugStringA(errText.c_str());
-	OutputDebugStringA("\n");
-	AddEvent1(0, nullptr, nullptr, errText);
+	const std::string errTextU8 = errorDetailed.str();
+	const std::wstring errText = UTF8ToWide(errTextU8);
+	OutputDebugStringW(errText.c_str());
+	OutputDebugStringW(L"\n");
+	AddEvent1(0, nullptr, nullptr, errTextU8);
 }
 
-void GlobalInfo::CreateError(_Printf_format_string_ const char * error, ...)
+void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, ...)
 {
 	va_list v;
-	va_start(v, error);
-	CreateError(error, v);
+	va_start(v, errorU8);
+	CreateError(errorU8, v);
 	va_end(v);
 }
 
-void Extension::AddToSend(void * data, size_t size)
+void Extension::AddToSend(const void * data, size_t size)
 {
 	if (!data)
 	{
@@ -705,7 +1008,7 @@ void Extension::AddToSend(void * data, size_t size)
 	}
 
 	// memcpy_s does not allow copying from what's already inside sendMsg; memmove_s does.
-	// If we failed to copy memory.
+	// If we failed to copy memory...
 	if (memmove_s(newptr + SendMsgSize, size, data, size))
 		CreateError("Received error number %u with copying memory to append to binary message.", errno);
 
@@ -713,36 +1016,36 @@ void Extension::AddToSend(void * data, size_t size)
 	SendMsgSize += size;
 }
 
-static const std::string empty;
-const std::string& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::string key)
+static const std::tstring empty;
+const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key)
 {
 	auto local = std::find_if(clientLocal.cbegin(), clientLocal.cend(),
-		[&](const auto &c) { return c.ptr == client && !_stricmp(c.key.c_str(), key.c_str()); });
+		[&](const auto &c) { return c.ptr == client && !_tcsicmp(c.key.c_str(), key.c_str()); });
 	if (local == clientLocal.cend())
 		return empty;
 	return local->val;
 }
-const std::string& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::string key)
+const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key)
 {
 	auto local = std::find_if(channelLocal.cbegin(), channelLocal.cend(),
-		[&](const auto &c) { return c.ptr == channel && !_stricmp(c.key.c_str(), key.c_str()); });
+		[&](const auto &c) { return c.ptr == channel && !_tcsicmp(c.key.c_str(), key.c_str()); });
 	if (local == channelLocal.cend())
 		return empty;
 	return local->val;
 }
-void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::string key, std::string value)
+void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key, std::tstring value)
 {
 	auto local = std::find_if(clientLocal.begin(), clientLocal.end(),
-		[&](const auto &c) { return c.ptr == client && !_stricmp(c.key.c_str(), key.c_str()); });
+		[&](const auto &c) { return c.ptr == client && !_tcsicmp(c.key.c_str(), key.c_str()); });
 	if (local == clientLocal.end())
 		clientLocal.push_back(LocalData(client, key, value));
 	else
 		local->val = value;
 }
-void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::string key, std::string value)
+void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key, std::tstring value)
 {
 	auto local = std::find_if(channelLocal.begin(), channelLocal.end(),
-		[&](const auto &c) { return c.ptr == channel && !_stricmp(c.key.c_str(), key.c_str()); });
+		[&](const auto &c) { return c.ptr == channel && !_tcsicmp(c.key.c_str(), key.c_str()); });
 	if (local == channelLocal.end())
 		channelLocal.push_back(LocalData(channel, key, value));
 	else
@@ -767,7 +1070,7 @@ REFLAG Extension::Handle()
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
-			CreateError(e->tostring());
+			CreateError("%hs", e->tostring());
 			return REFLAG::NONE; // Run next loop
 		}
 	}
@@ -789,8 +1092,8 @@ REFLAG Extension::Handle()
 		}
 		// At this point we have effectively run EnterCriticalSection
 #ifdef _DEBUG
-		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on "
-			<< __FILE__ << ", line " << __LINE__ << ".\r\n";
+		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Entered on "sv
+			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv;
 #endif
 
 		if (Saved.empty())
@@ -952,12 +1255,13 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<SaveExtInfo> s)
 				// channel name was changed in join request
 				if (!NewChannelName.empty())
 				{
+					const std::string newChannelNameU8Simplified = lw_u8str_simplify(NewChannelName);
 					// New channel name is in use by another channel
 					auto channelWriteLock = s->channel->lock.createWriteLock();
 					auto serverReadLock = Srv.lock.createReadLock();
 					auto channels = Srv.getchannels();
 					auto srvChIt = std::find_if(channels.cbegin(), channels.cend(),
-						[&](auto & otherCh) { return otherCh != s->channel && lw_sv_icmp(NewChannelName, otherCh->name()); });
+						[&](auto & otherCh) { return otherCh != s->channel && lw_sv_cmp(newChannelNameU8Simplified, otherCh->nameSimplified()); });
 
 					if (srvChIt != channels.cend())
 					{
@@ -1030,7 +1334,6 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<SaveExtInfo> s)
 #undef EnterSectionIfMultiThread
 #undef LeaveSectionIfMultiThread
 }
-
 
 // Only called by Handle().
 void Extension::DeselectIfDestroyed(std::shared_ptr<SaveExtInfo> s)
@@ -1123,37 +1426,31 @@ void Extension::DeselectIfDestroyed(std::shared_ptr<SaveExtInfo> s)
 	}
 }
 
-
 DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	GlobalInfo * G = (GlobalInfo *)ThisGlobalsInfo;
+	GlobalInfo& G = *(GlobalInfo *)ThisGlobalsInfo;
 
-	EnterCriticalSectionDebug(&G->lock);
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
-	if (!G->Refs.empty())
+	if (!G.Refs.empty())
 		return 0U;
 
 	// If not hosting, no clients to worry about dropping
-	if (!G->_server.hosting())
+	if (!G._server.hosting())
 		return 0U;
-
-	LeaveCriticalSectionDebug(&G->lock);
 
 	// App closed within next 3 seconds: unhost by default
 	if (WaitForSingleObject(AppWasClosed, 3000U) == WAIT_OBJECT_0)
 		return 0U;
 
-	EnterCriticalSectionDebug(&G->lock);
-
-	// 3 seconds have passed: if we now have an ext, then timeout close is cancelled
-	if (!G->Refs.empty())
-	{
-		LeaveCriticalSectionDebug(&G->lock);
+	// 3 seconds have passed: if we now have an ext, or server was unhosted, we're good
+	if (!G.Refs.empty())
 		return 0U;
-	}
 
-	if (G->timeoutWarningEnabled)
+	if (!G._server.hosting())
+		return 0U;
+
+	if (G.timeoutWarningEnabled)
 	{
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Server Warning!\r\n"
@@ -1164,11 +1461,7 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			"Bluewing Server Warning",
 			MB_OK | MB_DEFBUTTON1 | MB_ICONEXCLAMATION | MB_TOPMOST);
 	}
-
-	G->MarkAsPendingDelete();
-
-	LeaveCriticalSectionDebug(&G->lock);
-
+	delete &G; // Cleanup!
 	return 0U;
 }
 
@@ -1244,8 +1537,8 @@ Extension::~Extension()
 			return;
 		}
 
-		std::string id = "LacewingRelayServer";
-		id += (globals->_globalID ? globals->_globalID : "");
+		std::tstring id = _T("LacewingRelayServer");
+		id += (globals->_globalID ? UTF8ToTString(globals->_globalID) : _T(""));
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		LeaveCriticalSectionDebug(&globals->lock);
 		delete globals; // Unhosts and closes event pump, deletes lock

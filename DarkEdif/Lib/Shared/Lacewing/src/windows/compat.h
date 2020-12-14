@@ -61,6 +61,13 @@ fn_mkgmtime64 compat_mkgmtime64 ();
 typedef BOOL (WINAPI * fn_GetFileSizeEx) (HANDLE, PLARGE_INTEGER);
 fn_GetFileSizeEx compat_GetFileSizeEx ();
 
+#if defined(_WIN32) && defined(_UNICODE)
+// For Unicode support on Windows.
+// Uses __wchar_t due to /Zc:wchar_t flag, which turns wchar_t into unsigned short.
+// 
+// Returns null or a wide-converted version of the U8 string passed. Free it with free().
+lw_import __wchar_t * lw_char_to_wchar(const char * u8str);
+#endif
 
 
 

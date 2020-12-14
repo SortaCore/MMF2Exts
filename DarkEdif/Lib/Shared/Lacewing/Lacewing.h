@@ -122,6 +122,7 @@
 	#error C++17 std::string_view not available, check what C++ standard your project is using
 #endif
 #include <string_view>
+using namespace std::string_view_literals;
 
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
 void LacewingFatalErrorMsgBox2(char * func, char * file, int line);
@@ -409,7 +410,7 @@ typedef lw_i8 lw_bool;
 		(lw_file, const char * filename, const char * mode);
 
 	lw_import		 lw_bool  lw_file_open_temp		(lw_file);
-	lw_import   const char *  lw_file_name		 	(lw_file);
+	lw_import   const char *  lw_file_name			(lw_file);
 
 	/* Pipe */
 
@@ -466,7 +467,7 @@ typedef lw_i8 lw_bool;
 	 * applicable. To delete a lw_client, use lw_stream_delete.
 	 */
 
-	lw_import		 lw_client  lw_client_new					(lw_pump);
+	lw_import	   lw_client  lw_client_new					(lw_pump);
 	lw_import			void  lw_client_connect				(lw_client, const char * host, long port);
 	lw_import			void  lw_client_connect_addr		(lw_client, lw_addr);
 	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, long port);
@@ -686,8 +687,15 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 /// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
 bool lw_sv_cmp(std::string_view first, std::string_view second);
 
-/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
-bool lw_sv_icmp(std::string_view first, std::string_view second);
+/// <summary> Returns a composed, lowercased (with invariant culture), stripped-down version of
+///			  name(). Used for easier searching, and to prevent similar names as an exploit. </summary>
+std::string lw_u8str_simplify(std::string_view first);
+
+/// <summary> Validates a UTF-8 std::string as having readable codepoints. </summary>
+bool lw_u8str_validate(std::string_view first);
+
+/// <summary> Returns a normalised std::string (using NFC). Assumes a valid U8 string. </summary>
+bool lw_u8str_normalise(std::string & input);
 
 // to preserve namespace
 #pragma endregion
@@ -765,14 +773,14 @@ struct _pump
 	#else
 
 		lw_import lw_pump_watch add (int fd, void * tag,
-									lw_pump_callback on_read_ready,
-									lw_pump_callback on_write_ready = 0,
-									bool edge_triggered = true);
+									 lw_pump_callback on_read_ready,
+									 lw_pump_callback on_write_ready = 0,
+									 bool edge_triggered = true);
 
 		lw_import void update_callbacks (lw_pump_watch, void * tag,
-										lw_pump_callback on_read_ready,
-										lw_pump_callback on_write_ready = 0,
-										bool edge_triggered = true);
+										 lw_pump_callback on_read_ready,
+										 lw_pump_callback on_write_ready = 0,
+										 bool edge_triggered = true);
 
 	#endif
 
@@ -924,10 +932,10 @@ struct _stream
 	lw_import void write_file (const char * filename);
 
 	lw_import void add_filter_upstream
-	 (stream, bool delete_with_stream = false, bool close_together = false);
+		(stream, bool delete_with_stream = false, bool close_together = false);
 
 	lw_import void add_filter_downstream
-	 (stream, bool delete_with_stream = false, bool close_together = false);
+		(stream, bool delete_with_stream = false, bool close_together = false);
 
 	lw_import bool close (bool immediate = false);
 
@@ -993,6 +1001,14 @@ struct _file : public _fdstream
 
 lw_import file file_new (pump);
 lw_import file file_new (pump, const char * filename, const char * mode = "rb");
+
+#if defined(_WIN32) && defined(_UNICODE)
+// For Unicode support on Windows.
+// Uses __wchar_t due to /Zc:wchar_t flag, which turns wchar_t into unsigned short.
+// 
+// Returns null or a wide-converted version of the U8 string passed. Free it with free().
+lw_import __wchar_t * lw_char_to_wchar(const char * u8str);
+#endif
 
 
 /** address **/
@@ -1136,7 +1152,7 @@ struct _server
 	typedef void (lw_callback * hook_disconnect) (server, server_client);
 
 	typedef void (lw_callback * hook_data)
-		(server, server_client, const char * buffer, size_t size);
+	  (server, server_client, const char * buffer, size_t size);
 
 	typedef void (lw_callback * hook_error) (server, error);
 
@@ -1234,7 +1250,7 @@ struct _webserver
 
 	lw_import bool load_sys_cert
 		(const char * store_name, const char * common_name,
-		const char * location = "CurrentUser");
+		 const char * location = "CurrentUser");
 
 	lw_import bool cert_loaded ();
 
@@ -1263,14 +1279,14 @@ struct _webserver
 	typedef void (lw_callback * hook_upload_post)
 		(webserver, webserver_request, webserver_upload uploads[], size_t num_uploads);
 
-	lw_import void on_get				(hook_get);
-	lw_import void on_upload_start	 (hook_upload_start);
-	lw_import void on_upload_chunk	 (hook_upload_chunk);
-	lw_import void on_upload_done		(hook_upload_done);
-	lw_import void on_upload_post		(hook_upload_post);
-	lw_import void on_post			 (hook_post);
-	lw_import void on_head			 (hook_head);
-	lw_import void on_disconnect		(hook_disconnect);
+	lw_import void on_get			(hook_get);
+	lw_import void on_upload_start	(hook_upload_start);
+	lw_import void on_upload_chunk	(hook_upload_chunk);
+	lw_import void on_upload_done	(hook_upload_done);
+	lw_import void on_upload_post	(hook_upload_post);
+	lw_import void on_post			(hook_post);
+	lw_import void on_head			(hook_head);
+	lw_import void on_disconnect	(hook_disconnect);
 	lw_import void on_error			(hook_error);
 
 	lw_import void tag (void *);
@@ -1584,8 +1600,8 @@ protected:
 	readwritelock & lock;
 	std::shared_lock<decltype(readwritelock::lock)> locker;
 	bool locked = true;
-
 };
+
 struct writelock {
 	friend readwritelock;
 	friend readlock;
@@ -1641,7 +1657,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 93;
+	const static int buildnum = 94;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1677,11 +1693,12 @@ public:
 		void * internaltag = nullptr, *tag = nullptr;
 
 		lw_ui16 _peercount = 0xFFFF;
-		std::string _name;
+		std::string _name, _namesimplified;
 
 	public:
 		lw_ui16 peercount() const;
 		std::string name() const;
+		std::string namesimplified() const;
 	};
 
 	size_t channellistingcount() const;
@@ -1709,7 +1726,7 @@ public:
 		relayclientinternal &client;
 
 		lw_ui16 _id = 0xFFFF;
-		std::string _name;
+		std::string _name, _namesimplified;
 		bool _ischannelmaster = false;
 		std::atomic<bool> _readonly = false;
 		std::vector<std::shared_ptr<relayclient::channel::peer>> peers;
@@ -1729,13 +1746,14 @@ public:
 		std::shared_ptr<relayclient::channel::peer> addnewpeer(lw_ui16 peerid, lw_ui8 flags, std::string_view name);
 
 	public:
-		channel(relayclientinternal &_client);
-		~channel() noexcept(false);
+		channel(relayclientinternal &_client) noexcept;
+		~channel() noexcept;
 
 		void * internaltag = nullptr, *tag = nullptr;
 
 		bool ischannelmaster() const;
 		std::string name() const;
+		std::string namesimplified() const;
 
 		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
 		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
@@ -1750,14 +1768,14 @@ public:
 			relayclient::channel &channel;
 
 			lw_ui16 _id = 0xFFFF;
-			std::string _name, _prevname;
+			std::string _name, _namesimplified, _prevname;
 
 			bool _ischannelmaster = false;
 			bool _readonly = false;
 
 		public:
-			peer(relayclient::channel &_channel, lw_ui16 id, lw_ui8 flags, std::string_view name);
-			~peer();
+			peer(relayclient::channel &_channel, lw_ui16 id, lw_ui8 flags, std::string_view name) noexcept;
+			~peer() noexcept;
 
 			lw_ui16 id() const;
 			bool ischannelmaster() const;
@@ -1766,7 +1784,9 @@ public:
 			void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 type = 0) const;
 
 			std::string name() const;
+			std::string namesimplified() const;
 			std::string prevname() const;
+			std::string prevnamesimplified() const;
 
 			bool readonly() const;
 		};
@@ -1847,7 +1867,7 @@ namespace lacewing {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 25;
+	static const int buildnum = 26;
 
 	void * internaltag, * tag = nullptr;
 
@@ -1855,8 +1875,8 @@ struct relayserver
 	lacewing::udp udp;
 	lacewing::flashpolicy flash;
 
-	relayserver(pump);
-	~relayserver();
+	relayserver(pump) noexcept;
+	~relayserver() noexcept;
 
 	void host(lw_ui16 port = 6121);
 	void host(lacewing::filter &filter);
@@ -1883,7 +1903,11 @@ struct relayserver
 
 		std::shared_ptr<client> channelmaster() const;
 
+		/// <summary> Reads a copy of the channel name. Automatically read-locks the channel. </summary>
 		std::string name() const;
+		/// <summary> Reads a simplified copy of the channel name. Automatically read-locks the channel. </summary>
+		std::string nameSimplified() const;
+		/// <summary> Sets the channel name. </summary>
 		void name(std::string_view str);
 
 		bool hidden() const;
@@ -1898,7 +1922,7 @@ struct relayserver
 
 		size_t clientcount() const;
 
-		~channel() noexcept(false);
+		~channel() noexcept;
 
 		// Called when server wants to add one. Also invoked by liblacewing itself.
 		// Sends relevant join/leave response messages.
@@ -1914,18 +1938,18 @@ struct relayserver
 		mutable lacewing::readwritelock lock;
 
 		// Internal use only. Must be public for std::make_shared.
-		channel(relayserverinternal &_server, std::string_view _name);
+		channel(relayserverinternal &_server, std::string_view _name) noexcept;
 
 	protected:
 		std::atomic<bool> _readonly = false;
 		relayserverinternal &server;
 
-	      std::vector<std::shared_ptr<relayserver::client>> clients;
+		std::vector<std::shared_ptr<relayserver::client>> clients;
 
-	      std::string _name;
-	      lw_ui16 _id = 0xFFFF;
-	      bool _hidden = true;
-	      bool _autoclose = false;
+		std::string _name, _namesimplified;
+		lw_ui16 _id = 0xFFFF;
+		bool _hidden = true;
+		bool _autoclose = false;
 		// TODO: should be weak_ptr?
 		std::shared_ptr<client> _channelmaster;
 
@@ -1948,51 +1972,6 @@ struct relayserver
 		friend relayserver;
 		friend relayserver::channel;
 
-		mutable lacewing::readwritelock lock;
-
-		void * tag = nullptr;
-
-		lw_ui16 id();
-
-		std::string_view getaddress() const;
-		in6_addr getaddressasint() const;
-		const char * getimplementation() const;
-		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
-
-		void disconnect();
-
-		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
-		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
-
-		std::string name() const;
-		void name(std::string_view);
-
-		size_t channelcount() const;
-		lw_i64 getconnecttime() const;
-
-		bool readonly() const;
-		bool istrusted() const;
-
-		// Internal use only!
-		client(relayserverinternal &server, lacewing::server_client socket);
-		~client() noexcept(false);
-	protected:
-		lacewing::server_client socket = nullptr;
-		relayserverinternal &server;
-		// Can't use socket->address, as when server_client is free'd it is no longer valid
-		// Since there's a logical use for looking up address during closing, we'll keep a copy.
-		std::string address;
-		in6_addr addressInt = {};
-		::std::chrono::high_resolution_clock::time_point connectTime;
-		::std::chrono::steady_clock::time_point lasttcpmessagetime;
-		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
-		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
-		framereader reader;
-	    std::vector<std::shared_ptr<channel>> channels;
-		std::string _name, _prevname;
-		// Indicates if this socket has closed, or is expected to close.
-		std::atomic<bool> _readonly = false;
-
 		enum class clientimpl
 		{
 			// Can be Relay or old versions of Blue
@@ -2007,26 +1986,85 @@ struct relayserver
 			Macintosh,
 			HTML5
 			// Edit relayserverinternal::client::getimplementation if you add more lines
-		} clientImpl = clientimpl::Unknown;
+		};
+
+		mutable lacewing::readwritelock lock;
+
+		void * tag = nullptr;
+
+		lw_ui16 id();
+
+		std::string_view getaddress() const;
+		in6_addr getaddressasint() const;
+		const char * getimplementation() const;
+		clientimpl getimplementationvalue() const;
+		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
+
+		void disconnect();
+
+		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
+		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
+
+		std::string name() const;
+		std::string nameSimplified() const;
+		void name(std::string_view);
+
+		size_t channelcount() const;
+		lw_i64 getconnecttime() const;
+
+		bool readonly() const;
+		bool istrusted() const;
+
+		// Internal use only!
+		client(relayserverinternal &server, lacewing::server_client socket) noexcept;
+		~client() noexcept;
+	protected:
+		lacewing::server_client socket = nullptr;
+		relayserverinternal &server;
+		// Can't use socket->address, as when server_client is free'd it is no longer valid
+		// Since there's a logical use for looking up address during closing, we'll keep a copy.
+		std::string address;
+		in6_addr addressInt = {};
+		::std::chrono::high_resolution_clock::time_point connectTime;
+		::std::chrono::steady_clock::time_point lasttcpmessagetime;
+		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
+		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
+		framereader reader;
+		std::vector<std::shared_ptr<channel>> channels;
+		std::string _name, _namesimplified, _prevname;
+		// Indicates if this socket has closed, or is expected to close.
+		std::atomic<bool> _readonly = false;
+
+		clientimpl clientImpl = clientimpl::Unknown;
 
 		std::string clientImplStr;
 
 		bool pseudoUDP = true; // Is UDP not supported (e.g. Flash) so "faked" by receiver
 
-	    bool connectRequestApproved = false;
-	    bool gotfirstbyte = false;
-	    bool pongedOnTCP = true;
-		bool trustedClient = true;
+		// Got opening null byte, indicating not a HTTP client.
+		bool gotfirstbyte = false;
+		// After TCP connect approval, Lacewing connect message request was received, and server has said OK to it
+		bool connectRequestApproved = false;
+		// Client has only ever used valid Lacewing messages; e.g. valid UTF-8, no missing elements in messages.
+		// Does not indicate all messages succeed. When false, client is kicked very shortly after.
+		bool trustedClient = true; 
+		// Has a TCP ping request been sent by server, and was replied to.
+		// If false, next ping timer tick will consider a failed ping and kick the client, so it is true by default.
+		bool pongedOnTCP = true; 
 
-	    lacewing::address udpaddress;
+		lacewing::address udpaddress;
+
+		lw_ui16 _id = 0xFFFF;
+
 		void PeerToPeer(relayserver &server, std::shared_ptr<relayserver::channel> viachannel, std::shared_ptr<relayserver::client> receivingclient,
-						bool blasted, lw_ui8 subchannel, lw_ui8 variant, std::string_view message);
+			bool blasted, lw_ui8 subchannel, lw_ui8 variant, std::string_view message);
 
-	    bool checkname(std::string_view name);
+		// Checks if name can be set to given name, by this client.
+		// Checks whether name is valid, and whether name is in use already.
+		bool checkname(std::string_view name);
 
-	    lw_ui16 _id = 0xFFFF;
-
-	    std::shared_ptr<relayserver::channel> readchannel(messagereader &reader);
+		// Reads channel from client's channel list; fails if not joined.
+		std::shared_ptr<relayserver::channel> readchannel(messagereader &reader);
 	};
 
 	size_t clientcount() const;

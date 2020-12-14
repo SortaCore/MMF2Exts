@@ -32,7 +32,7 @@
 static void * MSVCRT (const char * fn)
 {
 	static HINSTANCE DLL = 0;
-	
+
 	if (!DLL)
 		DLL = LoadLibraryA ("msvcrt.dll");
 
@@ -42,7 +42,7 @@ static void * MSVCRT (const char * fn)
 static void * WS2_32 (const char * fn)
 {
 	static HINSTANCE DLL = 0;
-	
+
 	if (!DLL)
 		DLL = LoadLibraryA ("ws2_32.dll");
 
@@ -52,7 +52,7 @@ static void * WS2_32 (const char * fn)
 static void * KERNEL32 (const char * fn)
 {
 	static HINSTANCE DLL = 0;
-	
+
 	if (!DLL)
 		DLL = LoadLibraryA ("kernel32.dll");
 
@@ -87,3 +87,23 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
 	return fn ? fn : (fn = (fn_GetFileSizeEx) KERNEL32 ("GetFileSizeEx"));
 }
 
+#if defined(_WIN32) && defined(_UNICODE)
+
+// Returns null or a wide-converted version of the U8 string passed. Free it with free().
+lw_import __wchar_t * lw_char_to_wchar(const char * u8str)
+{
+	int length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, NULL, 0);
+	if (length > 0)
+	{
+		__wchar_t * u8Wide = (__wchar_t *)malloc(length);
+		if (u8Wide)
+		{
+			length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, u8Wide, length);
+			if (length > 0)
+				return u8Wide;
+			free(u8Wide);
+		}
+	}
+	return NULL;
+}
+#endif

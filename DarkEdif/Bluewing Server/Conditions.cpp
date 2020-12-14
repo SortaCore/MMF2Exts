@@ -2,13 +2,13 @@
 #include "Common.h"
 
 #define LoopNameMatches(cond) \
-	if (loopName[0] == '\0') \
+	if (loopName[0] == _T('\0')) \
 	{ \
 		CreateError("Cannot detect condition "#cond": blank loop name supplied."); \
 		return false; \
 	} \
 	/* If tempted to put "is this->loopName.empty()" then you're not copying out the loop name. */ \
-	return !strcmp(this->loopName.data(), loopName)
+	return this->loopName == loopName
 
 bool Extension::IsLacewingServerHosting()
 {
@@ -28,27 +28,24 @@ bool Extension::Client_IsChannelMaster()
 
 	return selChannel->channelmaster() == selClient;
 }
-bool Extension::OnAllClientsLoopWithName(char * loopName)
+bool Extension::OnAllClientsLoopWithName(const TCHAR * loopName)
 {
 	LoopNameMatches("Peer Loop With Name");
 }
-bool Extension::OnClientsJoinedChannelLoopWithName(char * loopName)
+bool Extension::OnClientsJoinedChannelLoopWithName(const TCHAR * loopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name");
 }
-bool Extension::OnClientsJoinedChannelLoopWithNameFinished(char * loopName)
+bool Extension::OnClientsJoinedChannelLoopWithNameFinished(const TCHAR * loopName)
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name Finished");
 }
-bool Extension::IsClientOnChannel_Name(char * clientNamePtr, char * channelNamePtr)
+bool Extension::IsClientOnChannel_Name(const TCHAR * clientNamePtr, const TCHAR * channelNamePtr)
 {
-	if (clientNamePtr[0] == '\0' && !selClient)
+	if (clientNamePtr[0] == _T('\0') && !selClient)
 		return CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected."), false;
-	if (channelNamePtr[0] == '\0' && !selChannel)
+	if (channelNamePtr[0] == _T('\0') && !selChannel)
 		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
-
-	std::string_view clientName(clientNamePtr);
-	std::string_view channelName(channelNamePtr);
 
 	auto origSelClient = selClient;
 	auto origSelChannel = selChannel;
@@ -57,36 +54,34 @@ bool Extension::IsClientOnChannel_Name(char * clientNamePtr, char * channelNameP
 
 	// If blank client name, use currently selected
 	// (check that one is selected is done above)
-	if (clientName[0] == '\0')
+	if (clientNamePtr[0] == _T('\0'))
 		foundCli = selClient;
 	else
 	{
+		const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
-				[&](auto const & copy) {
-					return lw_sv_icmp(copy->name(), clientName);
-				});
+				[&](auto const & copy) { return lw_sv_cmp(copy->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", clientNamePtr), false;
+			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", TStringToUTF8(clientNamePtr).c_str()), false;
 		foundCli = *foundCliIt;
 	}
 
 	// If blank channel name, use currently selected
-	if (channelName[0] == '\0')
+	if (channelNamePtr[0] == _T('\0'))
 		foundCh = selChannel;
 	else
 	{
+		const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
-				[&](auto const & copy) {
-					return lw_sv_icmp(copy->name(), channelName);
-				});
+				[&](auto const & copy) { return lw_sv_cmp(copy->nameSimplified(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", channelNamePtr), false;
+			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 
@@ -109,14 +104,12 @@ bool Extension::IsClientOnChannel_Name(char * clientNamePtr, char * channelNameP
 	auto& channelClients = foundCh->getclients();
 	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
 }
-bool Extension::IsClientOnChannel_ID(int clientID, char * channelNamePtr)
+bool Extension::IsClientOnChannel_ID(int clientID, const TCHAR * channelNamePtr)
 {
 	if (clientID >= 0xFFFF)
 		return CreateError("Error checking if client is joined to a channel, client ID %i is not in valid ID range of 0-65534.", clientID), false;
 	if (channelNamePtr[0] == '\0' && !selChannel)
 		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
-
-	std::string_view channelName(channelNamePtr);
 
 	auto origSelClient = selClient;
 	auto origSelChannel = selChannel;
@@ -130,28 +123,25 @@ bool Extension::IsClientOnChannel_ID(int clientID, char * channelNamePtr)
 		const auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
-				[=](auto const & copy) {
-					return copy->id() == clientID;
-				});
+				[=](auto const & copy) { return copy->id() == clientID; });
 		if (foundCliIt == clients.cend())
 			return CreateError("Error checking if client is joined to a channel, client ID %i was not found on server.", clientID), false;
 		foundCli = *foundCliIt;
 	}
 
 	// If blank channel name, use currently selected
-	if (channelName[0] == '\0')
+	if (channelNamePtr[0] == _T('\0'))
 		foundCh = selChannel;
 	else
 	{
+		const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
-				[&](auto const & copy) {
-					return lw_sv_icmp(copy->name(), channelName);
-				});
+				[&](auto const & copy) { return lw_sv_cmp(copy->name(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", channelNamePtr), false;
+			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 
@@ -175,20 +165,20 @@ bool Extension::IsClientOnChannel_ID(int clientID, char * channelNamePtr)
 	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
 }
 
-bool Extension::OnAllChannelsLoopWithName(char * loopName)
+bool Extension::OnAllChannelsLoopWithName(const TCHAR * loopName)
 {
 	LoopNameMatches("All-Channel Loop With Name");
 }
-bool Extension::OnAllChannelsLoopWithNameFinished(char * loopName)
+bool Extension::OnAllChannelsLoopWithNameFinished(const TCHAR * loopName)
 {
 	LoopNameMatches("All-Channel Loop With Name Finished");
 }
 
-bool Extension::OnChannelClientsLoopWithName(char * loopName)
+bool Extension::OnChannelClientsLoopWithName(const TCHAR * loopName)
 {
 	LoopNameMatches("Channel's Client Loop With Name");
 }
-bool Extension::OnChannelClientsLoopWithNameFinished(char * loopName)
+bool Extension::OnChannelClientsLoopWithNameFinished(const TCHAR * loopName)
 {
 	LoopNameMatches("Channel's Client Loop With Name Finished");
 }
@@ -207,40 +197,40 @@ bool Extension::ChannelIsSetToCloseAutomatically()
 {
 	return selChannel ? selChannel->autocloseenabled() : false;
 }
-bool Extension::OnAllClientsLoopWithNameFinished(char * loopName)
+bool Extension::OnAllClientsLoopWithNameFinished(const TCHAR * loopName)
 {
 	LoopNameMatches("Peer Loop With Name Finished");
 }
 
-bool Extension::DoesChannelNameExist(char * channelNamePtr)
+bool Extension::DoesChannelNameExist(const TCHAR * channelNamePtr)
 {
 	if (channelNamePtr[0] == '\0')
 		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank."), false;
 
-	std::string_view channelName(channelNamePtr);
+	const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
 
 	auto serverReadLock = Srv.lock.createReadLock();
 	const auto &channels = Srv.getchannels();
 	auto foundChIt =
 		std::find_if(channels.cbegin(), channels.cend(),
-			[=](const auto & ch) {
-				return lw_sv_icmp(ch->name(), channelNamePtr);
+			[&](const auto & ch) {
+				return lw_sv_cmp(ch->nameSimplified(), channelNameU8Simplified);
 			});
 	return foundChIt != channels.cend();
 }
-bool Extension::DoesClientNameExist(char * clientNamePtr)
+bool Extension::DoesClientNameExist(const TCHAR * clientNamePtr)
 {
-	if (clientNamePtr[0] == '\0')
+	if (clientNamePtr[0] == _T('\0'))
 		return CreateError("Error checking if client is joined to a channel, client name supplied is blank."), false;
 
-	std::string_view clientName(clientNamePtr);
+	const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
 
 	auto serverReadLock = Srv.lock.createReadLock();
 	const auto &clients = Srv.getclients();
 	auto foundCliIt =
 		std::find_if(clients.cbegin(), clients.cend(),
-			[=](const auto & cli) {
-				return lw_sv_icmp(cli->name(), clientName);
+			[&](const auto & cli) {
+				return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified);
 			});
 	return foundCliIt != clients.cend();
 }
@@ -253,9 +243,7 @@ bool Extension::DoesChannelIDExist(int channelID)
 	const auto &channels = Srv.getchannels();
 	auto foundChIt =
 		std::find_if(channels.cbegin(), channels.cend(),
-			[=](const auto & ch) {
-				return ch->id() == channelID;
-			});
+			[=](const auto & ch) { return ch->id() == channelID; });
 	return foundChIt != channels.cend();
 }
 bool Extension::DoesClientIDExist(int clientID)

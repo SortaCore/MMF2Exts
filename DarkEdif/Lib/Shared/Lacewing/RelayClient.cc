@@ -32,9 +32,6 @@
 #include "MessageReader.h"
 #include <vector>
 #include <algorithm>
-// 16/04/2020
-#include <sstream>
-#include <iomanip>
 
 namespace lacewing
 {
@@ -68,12 +65,15 @@ namespace lacewing
 		relayclientinternal(relayclient &_client, pump _eventpump);
 		framereader reader;
 
-		static bool messagehandler(void * tag, unsigned char type, const char * message, size_t size);
-		bool		messagehandler(unsigned char type, const char * message, size_t size, bool blasted);
+		static bool messagehandler(void * tag, lw_ui8 type, const char * message, size_t size);
+		bool		messagehandler(lw_ui8 type, const char * message, size_t size, bool blasted);
 
 		static void udphellotick(lacewing::timer timer);
 		void		udphellotick();
 
+		/// <summary> searches for the first channel by id number. </summary>
+		/// <param name="id"> id to look up. </param>
+		/// <returns> null if it fails, else the matching channel. </returns>
 		std::shared_ptr<relayclient::channel> findchannelbyid(lw_ui16 id);
 
 		// message: used by lacewing internal (e.g. automatic ping response)
@@ -156,11 +156,11 @@ namespace lacewing
 	/// <summary> searches for the first channel by id number. </summary>
 	/// <param name="id"> id to look up. </param>
 	/// <returns> null if it fails, else the matching channel. </returns>
-	std::shared_ptr<relayclient::channel> relayclientinternal::findchannelbyid(unsigned short id)
+	std::shared_ptr<relayclient::channel> relayclientinternal::findchannelbyid(lw_ui16 id)
 	{
 		lacewing::readlock rl = this->client.lock.createReadLock();
 		auto i = std::find_if(channels.cbegin(), channels.cend(),
-			[&](const std::shared_ptr<const relayclient::channel> &c) { return c->id() == id; });
+			[id](const std::shared_ptr<const relayclient::channel> &c) { return c->id() == id; });
 		return i == channels.cend() ? nullptr : *i;
 	}
 
@@ -177,8 +177,8 @@ namespace lacewing
 
 		message.addheader(0, 0); /* request */
 
-		message.add<unsigned char>(0); /* connect */
-		message.add("revision 3", -1);
+		message.add<lw_ui8>(0); /* connect */
+		message.add("revision 3"sv);
 
 		message.send(internal.socket);
 	}
@@ -529,6 +529,11 @@ namespace lacewing
 		lacewing::readlock rl = lock.createReadLock();
 		return _name;
 	}
+	std::string relayclient::channel::namesimplified() const
+	{
+		lacewing::readlock rl = lock.createReadLock();
+		return _namesimplified;
+	}
 
 	int relayclient::channel::peercount() const
 	{
@@ -546,6 +551,12 @@ namespace lacewing
 	{
 		lacewing::readlock rl = lock.createReadLock();
 		return _name;
+	}
+
+	std::string relayclient::channel::peer::namesimplified() const
+	{
+		lacewing::readlock rl = lock.createReadLock();
+		return _namesimplified;
 	}
 
 	std::string relayclient::channel::peer::prevname() const
@@ -585,7 +596,7 @@ namespace lacewing
 		return ((relayclientinternal *)internaltag)->welcomemessage;
 	}
 
-	bool relayclientinternal::messagehandler(unsigned char type, const char * message, size_t size, bool blasted)
+	bool relayclientinternal::messagehandler(lw_ui8 type, const char * message, size_t size, bool blasted)
 	{
 		lw_ui8 messagetypeid = (type >> 4);
 		lw_ui8 variant = (type << 4);
@@ -999,26 +1010,7 @@ namespace lacewing
 			if (!channel2)
 			{
 				lacewing::error error = error_new();
-				// TODO: PHI DEBUG INVESTIGATION 16/04/2020
-				// REMOVE HEADERS FOR SSTREAM AND IOMANIP WHEN REMOVING
-#ifdef _DEBUG
-				std::string dataRemaining(reader.getremaining());
-				std::stringstream ss;
-				ss << std::hex << std::setfill('0');
-				ss << std::uppercase;
-				auto first = dataRemaining.begin();
-				auto last = dataRemaining.end();
-				while (first != last)
-				{
-					ss << std::setw(2) << static_cast<int>(*first++);
-					if (first != last)
-						ss << " ";
-				}
-				error->add("Peer message received, but channel ID %hu was not found in this client's joined channel list. Discarding. Received on %s. Remaining data: [%s].", channel,
-					blasted ? "UDP" : "TCP", ss.str().c_str());
-#else
 				error->add("Peer message received, but channel ID was not found in this client's joined channel list. Discarding.");
-#endif
 				this->handler_error(client, error);
 				error_delete(error);
 				return true;
@@ -1105,6 +1097,8 @@ namespace lacewing
 
 					peer->_prevname = peer->_name;
 					peer->_name = name;
+					peer->_namesimplified = lw_u8str_simplify(name);
+
 					std::string prevNameLocal = peer->_prevname;
 
 					peerWriteLock.lw_unlock();
@@ -1158,8 +1152,15 @@ namespace lacewing
 		case 12: /* implementation */
 		{
 			static char build[128] = { 0 };
+
 			if (!build[0])
-				sprintf_s(build, sizeof(build), "Bluewing Windows b%i", relayclient::buildnum);
+			{
+				#ifdef _UNICODE
+					sprintf_s(build, sizeof(build), "Bluewing Windows Unicode b%i", relayclient::buildnum);
+				#else
+					sprintf_s(build, sizeof(build), "Bluewing Windows ANSI b%i", relayclient::buildnum);
+				#endif
+			}
 
 			auto relayCliWriteLock = client.lock.createWriteLock();
 			this->message.addheader(10, 0);
@@ -1235,7 +1236,7 @@ namespace lacewing
 		clear();
 	}
 
-	bool relayclientinternal::messagehandler(void * tag, unsigned char type, const char * message, size_t size)
+	bool relayclientinternal::messagehandler(void * tag, lw_ui8 type, const char * message, size_t size)
 	{
 		return ((relayclientinternal *)tag)->messagehandler(type, message, size, false);
 	}
@@ -1270,14 +1271,14 @@ namespace lacewing
 	}
 
 
-	relayclient::channel::channel(relayclientinternal &_client) : client(_client)
+	relayclient::channel::channel(relayclientinternal &_client) noexcept : client(_client)
 	{
 		_id = 0xffff;
 		_name.clear();
 		_ischannelmaster = false;
 	}
 
-	relayclient::channel::~channel() noexcept(false)
+	relayclient::channel::~channel() noexcept
 	{
 		lacewing::writelock wl = lock.createWriteLock();
 		_id = 0xffff;
@@ -1315,22 +1316,17 @@ namespace lacewing
 		return p;
 	}
 
-	relayclient::channel::peer::peer(relayclient::channel &_channel, lw_ui16 id, lw_ui8 flags, std::string_view name)
+	relayclient::channel::peer::peer(relayclient::channel &_channel, lw_ui16 id, lw_ui8 flags, std::string_view name) noexcept
 		: channel(_channel)
 	{
-		// only flag available is 0x1: is channel master
-		if (flags & ~0x1)
-			throw std::exception("peer ctor error: unrecognised peer flags.");
-
-		if (name.empty() || !name[0] || name.size() >= 256U)
-			throw std::exception("peer ctor error: null, blank, or too-long name used.");
-
+		// noexcept enforced, so we can't check params
 		this->_id = id;
 		this->_name = name;
-		this->_ischannelmaster = ((flags & 0x1) == 0x1);
+		this->_ischannelmaster = flags;
+		this->_namesimplified = lw_u8str_simplify(name);
 	}
 
-	relayclient::channel::peer::~peer()
+	relayclient::channel::peer::~peer() noexcept
 	{
 		// Not strictly needed, but causes deadlock if someone else is using this peer
 		lacewing::writelock wl = lock.createWriteLock();
@@ -1406,6 +1402,12 @@ namespace lacewing
 	{
 		lacewing::readlock rl = ((relayclientinternal *)this->internaltag)->client.lock.createReadLock();
 		return this->_name;
+	}
+
+	std::string relayclient::channellisting::namesimplified() const
+	{
+		lacewing::readlock rl = ((relayclientinternal *)this->internaltag)->client.lock.createReadLock();
+		return this->_namesimplified;
 	}
 
 	size_t relayclient::channellistingcount() const

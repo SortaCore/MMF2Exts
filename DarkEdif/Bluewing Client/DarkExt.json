@@ -318,6 +318,11 @@
 					"---",
 					[ 34, "Previous name (for on peer name changed)" ]
 				]
+			],
+			[ "Convert string to UTF-8 and...",
+				[ 57, "Count complete UTF-8 chars" ],
+				[ 58, "Count visible chars (graphemes)" ],
+				[ 59, "Count bytes" ]
 			]
 		],
 		"Actions": [
@@ -1390,6 +1395,27 @@
 			{
 				"Title": "ChannelListing_NumChannels(",
 				"Returns": "Unsigned Integer"
+			},
+			{
+				"Title": "UTF8CharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8VisibleCharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8ByteCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
 			}
 		],
 		"Properties": [

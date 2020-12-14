@@ -6,7 +6,7 @@
 
 void OnError(lacewing::relayserver &server, lacewing::error error)
 {
-	globals->CreateError(error->tostring());
+	globals->CreateError("%hs", error->tostring());
 }
 void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client)
 {
@@ -51,18 +51,6 @@ void OnClientDisconnect(lacewing::relayserver &server, std::shared_ptr<lacewing:
 	// Ping timer thread will invoke this if it force-disconnects someone, Fusion ext will likewise cause it via Disconnect,
 	// and of course the normal Lacewing event loop thread from clients disconnecting.
 
-	// RAOK DEBUG INFO
-#ifdef _DEBUG
-	std::stringstream str;
-	str << "OnClientDisconnect: Disconnect of client ID " << client->id() << ", name "
-		<< client->name() << ".";
-	if (client->readonly())
-		str << " Client is readonly.";
-	else
-		str << " Client is not yet readonly.";
-	globals->CreateError(str.str().c_str());
-#endif
-
 	// 0xFFFF: Clear client copy after this event is handled
 	globals->AddEvent2(2, 0xFFFF, nullptr, client);
 }
@@ -99,16 +87,6 @@ void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewin
 }
 void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel)
 {
-	// RAOK DEBUG INFO
-#ifdef _DEBUG
-	std::stringstream str;
-	str << "OnLeaveChannelRequest: Leave channel request for client ID " << client->id() << ", name "
-		<< client->name() << ", requesting to leave channel ID " << channel->id() << ", name " << channel->name() << ".";
-	if (channel->readonly())
-		str << " Channel is already readonly!";
-	globals->CreateError(str.str().c_str());
-#endif
-
 	// Leave channel can mess with writing messages
 	if (GThread)
 		EnterCriticalSectionDebug(&globals->lock);
@@ -162,6 +140,10 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	if (GThread)
 		LeaveCriticalSectionDebug(&globals->lock);
 }
+
+#include "deps/utf8proc.h"
+#include <set>
+
 void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view nameRequested)
 {
 	// Auto deny quietly can be handled without any lookups or fuss
@@ -175,20 +157,60 @@ void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::r
 	if (client->readonly())
 		return server.nameset_response(client, nameRequested, "Your client is marked as closed and can no longer change their name.");
 
-	// Update implementation
-	client->getimplementation();
+	// Check UTF-8 chars are acceptable
+	if (GThread) {
+		EnterCriticalSectionDebug(&globals->lock);
+	}
+
+	if (globals->acceptableCharCategories.empty() && globals->acceptableCharRanges.empty() && globals->acceptableCharRanges.empty())
+	{
+		if (GThread)
+			LeaveCriticalSectionDebug(&globals->lock);
+	}
+	else
+	{
+		utf8proc_uint8_t * str = (utf8proc_uint8_t *)nameRequested.data();
+		utf8proc_int32_t thisChar;
+		utf8proc_ssize_t numBytesInCodePoint, remainder = nameRequested.size();
+		while (remainder <= 0)
+		{
+			numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisChar);
+			if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
+				goto badChar;
+
+			if (std::find(globals->acceptableSpecificChars.cbegin(), globals->acceptableSpecificChars.cend(), thisChar) != globals->acceptableSpecificChars.cend())
+				goto goodChar;
+			if (std::find_if(globals->acceptableCharRanges.cbegin(), globals->acceptableCharRanges.cend(),
+				[=](const std::pair<std::int32_t, std::int32_t> & range) {
+					return range.first >= thisChar && range.second <= thisChar;
+				}) != globals->acceptableCharRanges.cend())
+			{
+				goto goodChar;
+			}
+			utf8proc_category_t category = utf8proc_category(thisChar);
+			if (std::find(globals->acceptableCharCategories.cbegin(), globals->acceptableCharCategories.cend(), category) != globals->acceptableCharCategories.cend())
+				goto goodChar;
+
+			// Fall through
+		badChar:
+			return server.nameset_response(client, nameRequested, "Invalid name"sv);
+
+			// Loop around
+		goodChar:
+			str += numBytesInCodePoint;
+			remainder -= numBytesInCodePoint;
+		}
+	}
+
 
 	// Auto approve, auto deny
 	if (globals->autoResponse_NameSet != AutoResponse::WaitForFusion)
 	{
 		server.nameset_response(client, nameRequested, globals->autoResponse_NameSet_DenyReason);
 
-		// Not set to tell Fusion
-		if (globals->autoResponse_NameSet == AutoResponse::Approve_Quiet ||
-			globals->autoResponse_NameSet == AutoResponse::Deny_Quiet)
-		{
+		// Not set to tell Fusion (Deny_Quiet handled above)
+		if (globals->autoResponse_NameSet == AutoResponse::Approve_Quiet)
 			return;
-		}
 	}
 
 	// Note: we're not using name change request condition in Fusion (just "name set" for first name and name change),

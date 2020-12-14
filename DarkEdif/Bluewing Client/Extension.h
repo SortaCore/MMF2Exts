@@ -9,7 +9,7 @@ class Extension
 public:
 	// Hide stuff requiring other headers
 	std::shared_ptr<SaveExtInfo> threadData; // Must be first variable in Extension class
-	std::string_view loopName;
+	std::tstring_view loopName;
 
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
@@ -42,7 +42,6 @@ public:
 	
 	bool isGlobal;
 	GlobalInfo * globals;
-	std::thread::id mainThreadID;
 
 	// This allows prettier and more readable access while maintaining global variables.
 	#define ObjEventPump				globals->_objEventPump
@@ -59,41 +58,54 @@ public:
 	std::shared_ptr<lacewing::relayclient::channel::peer> selPeer; // make sure it's one inside selChannel!
 	bool isOverloadWarningQueued = false;
 
-	void CreateError(const char *);
+	void CreateError(_Printf_format_string_ const char * errU8, ...);
 
-	void AddToSend(void *, size_t);
+	void AddToSend(const void *, size_t);
 	void ClearThreadData();
+
+	std::string TStringToUTF8Stripped(std::tstring);
+
+	// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
+	int CheckForUTF8Cutoff(std::string_view sv);
+
+	// UTF-8 uses a bitmask to determine how many bytes are in the item.
+	// Note that this does not verify the ending characters other than a size check; but any TString converter will throw them out
+	int GetNumBytesInUTF8Char(std::string_view sv);
+
+	// Reads string at given position of received binary. If size is -1, will expect a null.
+	// isCursorExpression is used for error messages.
+	std::tstring ReadStringFromRecvBinary(size_t index, int size, bool isCursorExpression);
 
 	DarkEdif::FusionDebugger FusionDebugger;
 
 	// Because Bluewing is multithreaded, and uses a second queue, once we move the variables outside of its
 	// functions into DarkEdif, the data may be overwritten, causing crashes and other such nasties.
 	// All read-write changes to clients, channel, and the main client are protected by read/write locks,
-	// even in scenarios like disconnects are handled with lock safety.
+	// even scenarios like disconnects are handled with lock safety.
 
 	/// Actions
 
-		void Replaced_Connect(char * Hostname, int Port);
+		void Replaced_Connect(const TCHAR * Hostname, int Port);
 		void Disconnect();
-		void SetName(char * name);
-		void Replaced_JoinChannel(char * ChannelName, int HideChannel);
+		void SetName(const TCHAR * name);
+		void Replaced_JoinChannel(const TCHAR * ChannelName, int HideChannel);
 		void LeaveChannel();
-		void SendTextToServer(int subchannel, char * TextToSend);
-		void SendTextToChannel(int subchannel, char * TextToSend);
-		void SendTextToPeer(int subchannel, char * TextToSend);
+		void SendTextToServer(int subchannel, const TCHAR * TextToSend);
+		void SendTextToChannel(int subchannel, const TCHAR * TextToSend);
+		void SendTextToPeer(int subchannel, const TCHAR * TextToSend);
 		void SendNumberToServer(int subchannel, int NumToSend);
 		void SendNumberToChannel(int subchannel, int NumToSend);
 		void SendNumberToPeer(int subchannel, int NumToSend);
-		void BlastTextToServer(int subchannel, char * TextToSend);
-		void BlastTextToChannel(int subchannel, char * TextToSend);
-		void BlastTextToPeer(int subchannel, char * TextToSend);
+		void BlastTextToServer(int subchannel, const TCHAR * TextToSend);
+		void BlastTextToChannel(int subchannel, const TCHAR * TextToSend);
+		void BlastTextToPeer(int subchannel, const TCHAR * TextToSend);
 		void BlastNumberToServer(int subchannel, int NumToSend);
 		void BlastNumberToChannel(int subchannel, int NumToSend);
 		void BlastNumberToPeer(int subchannel, int NumToSend);
-		void SelectChannelWithName(char * ChannelName);
+		void SelectChannelWithName(const TCHAR * ChannelName);
 		void ReplacedNoParams();
 		void LoopClientChannels();
-		void SelectPeerOnChannelByName(char * PeerName);
+		void SelectPeerOnChannelByName(const TCHAR * PeerName);
 		void SelectPeerOnChannelByID(int PeerID);
 		void LoopPeersOnChannel();
 		// ReplacedNoParams, x7
@@ -106,29 +118,29 @@ public:
 		void BlastBinaryToServer(int subchannel);
 		void BlastBinaryToChannel(int subchannel);
 		void BlastBinaryToPeer(int subchannel);
-		void AddByteText(char * Byte);
+		void AddByteText(const TCHAR * Byte);
 		void AddByteInt(int Byte);
 		void AddShort(int Short);
 		void AddInt(int Int);
 		void AddFloat(float Float);
-		void AddStringWithoutNull(char * String);
-		void AddString(char * String);
+		void AddStringWithoutNull(const TCHAR * String);
+		void AddString(const TCHAR * String);
 		void AddBinary(unsigned int Address, int size);
 		void ClearBinaryToSend();
-		void SaveReceivedBinaryToFile(int Position, int size, char * Filename);
-		void AppendReceivedBinaryToFile(int Position, int size, char * Filename);
-		void AddFileToBinary(char * File);
+		void SaveReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
+		void AppendReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
+		void AddFileToBinary(const TCHAR * File);
 		// ReplacedNoParams, x11
 		void SelectChannelMaster();
-		void JoinChannel(char * ChannelName, int Hidden, int CloseAutomatically);
+		void JoinChannel(const TCHAR * ChannelName, int Hidden, int CloseAutomatically);
 		void CompressSendBinary();
 		void DecompressReceivedBinary();
 		void MoveReceivedBinaryCursor(int Position);
-		void LoopListedChannelsWithLoopName(char * LoopName);
-		void LoopClientChannelsWithLoopName(char * LoopName);
-		void LoopPeersOnChannelWithLoopName(char * LoopName);
+		void LoopListedChannelsWithLoopName(const TCHAR * LoopName);
+		void LoopClientChannelsWithLoopName(const TCHAR * LoopName);
+		void LoopPeersOnChannelWithLoopName(const TCHAR * LoopName);
 		// ReplacedNoParams
-		void Connect(char * Hostname);
+		void Connect(const TCHAR * Hostname);
 		void ResizeBinaryToSend(int NewSize);
 		void SetDestroySetting(int enabled);
 	
@@ -191,12 +203,12 @@ public:
 		// ReplacedCondNoParams, x2
 		bool SelectedPeerIsChannelMaster();
 		bool YouAreChannelMaster();
-		bool OnChannelListLoopWithName(char * LoopName);
-		bool OnChannelListLoopWithNameFinished(char * LoopName);
-		bool OnPeerLoopWithName(char * LoopName);
-		bool OnPeerLoopWithNameFinished(char * LoopName);
-		bool OnClientChannelLoopWithName(char * LoopName);
-		bool OnClientChannelLoopWithNameFinished(char * LoopName);
+		bool OnChannelListLoopWithName(const TCHAR * LoopName);
+		bool OnChannelListLoopWithNameFinished(const TCHAR * LoopName);
+		bool OnPeerLoopWithName(const TCHAR * LoopName);
+		bool OnPeerLoopWithNameFinished(const TCHAR * LoopName);
+		bool OnClientChannelLoopWithName(const TCHAR * LoopName);
+		bool OnClientChannelLoopWithNameFinished(const TCHAR * LoopName);
 		bool OnSentTextChannelMessageFromServer(int subchannel);
 		bool OnSentNumberChannelMessageFromServer(int subchannel);
 		bool OnSentBinaryChannelMessageFromServer(int subchannel);
@@ -205,29 +217,29 @@ public:
 		bool OnBlastedNumberChannelMessageFromServer(int subchannel);
 		bool OnBlastedBinaryChannelMessageFromServer(int subchannel);
 		bool OnAnyBlastedChannelMessageFromServer(int subchannel);
-		bool IsJoinedToChannel(char * ChannelName);
-		bool IsPeerOnChannel_Name(char * PeerName, char * ChannelName);
-		bool IsPeerOnChannel_ID(int ID, char * ChannelName);
+		bool IsJoinedToChannel(const TCHAR * ChannelName);
+		bool IsPeerOnChannel_Name(const TCHAR * PeerName, const TCHAR * ChannelName);
+		bool IsPeerOnChannel_ID(int ID, const TCHAR * ChannelName);
 
 	/// Expressions
 
-		const char * Error();
-		const char * ReplacedExprNoParams();
-		const char * Self_Name();
+		const TCHAR * Error();
+		const TCHAR * ReplacedExprNoParams();
+		const TCHAR * Self_Name();
 		unsigned int Self_ChannelCount();
-		const char * Peer_Name();
-		const char * ReceivedStr();
+		const TCHAR * Peer_Name();
+		const TCHAR * ReceivedStr();
 		int ReceivedInt();
 		unsigned int Subchannel();
 		int Peer_ID();
-		const char * Channel_Name();
+		const TCHAR * Channel_Name();
 		int Channel_PeerCount();
 		// ReplacedExprNoParams
-		const char * ChannelListing_Name();
+		const TCHAR * ChannelListing_Name();
 		int ChannelListing_PeerCount();
 		int Self_ID();
 		// ReplacedExprNoParams, x5
-		const char * StrByte(int Index);
+		const TCHAR * StrASCIIByte(int Index);
 		unsigned int UnsignedByte(int Index);
 		int SignedByte(int Index);
 		unsigned int UnsignedShort(int Index);
@@ -235,21 +247,21 @@ public:
 		unsigned int UnsignedInteger(int Index);
 		int SignedInteger(int Index);
 		float Float(int Index);
-		const char * StringWithSize(int Index, int size);
-		const char * String(int Index);
+		const TCHAR * StringWithSize(int Index, int size);
+		const TCHAR * String(int Index);
 		unsigned int ReceivedBinarySize();
-		const char * Lacewing_Version();
+		const TCHAR * Lacewing_Version();
 		unsigned int SendBinarySize();
-		const char * Self_PreviousName();
-		const char * Peer_PreviousName();
+		const TCHAR * Self_PreviousName();
+		const TCHAR * Peer_PreviousName();
 		// ReplacedExprNoParams, x2
-		const char * DenyReason();
-		const char * Host_IP();
+		const TCHAR * DenyReason();
+		const TCHAR * Host_IP();
 		unsigned int HostPort();
 		// ReplacedExprNoParams
-		const char * WelcomeMessage();
+		const TCHAR * WelcomeMessage();
 		unsigned int ReceivedBinaryAddress();
-		const char * CursorStrByte();
+		const TCHAR * CursorStrASCIIByte();
 		unsigned int CursorUnsignedByte();
 		int CursorSignedByte();
 		unsigned int CursorUnsignedShort();
@@ -257,12 +269,15 @@ public:
 		unsigned int CursorUnsignedInteger();
 		int CursorSignedInteger();
 		float CursorFloat();
-		const char * CursorStringWithSize(int size);
-		const char * CursorString();
+		const TCHAR * CursorStringWithSize(int size);
+		const TCHAR * CursorString();
 		// ReplacedExprNoParams
 		unsigned int SendBinaryAddress();
-		const char * DumpMessage(int Index, const char * Format);
+		const TCHAR * DumpMessage(int Index, const TCHAR * Format);
 		unsigned int ChannelListing_ChannelCount();
+		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
+		int ConvToUTF8_GetCompleteCharCount(const TCHAR * tStr);
+		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
 
 	/* These are called if there's no function linked to an ID */
 
@@ -312,7 +327,6 @@ struct GlobalInfo
 	std::vector<Extension *>					refs;
 	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
 	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
-	bool										pendingDelete; // If this struct is now effectively deleted by timeout thread
 	
 	void AddEvent1(std::uint16_t event1ID,
 		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
@@ -335,9 +349,9 @@ private:
 		lw_ui8 subchannel = 255
 		);
 public:
-	void CreateError(const char * errorText);
+	void CreateError(_Printf_format_string_ const char * errorText, ...);
+	void CreateError(_Printf_format_string_ const char *errorText, va_list v);
 
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
-	void MarkAsPendingDelete();
 	~GlobalInfo() noexcept(false);
 };

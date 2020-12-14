@@ -196,6 +196,12 @@
     <ClCompile Include="..\Lib\Shared\json.cpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\deps\utf8proc.c">
+      <Filter>Source files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
+      <Filter>Source files\Lacewing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.h">
@@ -288,6 +294,9 @@
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\deps\utf8proc.h">
+      <Filter>Header Files\Lacewing\deps</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">
@@ -296,6 +305,7 @@
     <None Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -351,6 +361,9 @@
     </Filter>
     <Filter Include="Header files\Lacewing\src\windows">
       <UniqueIdentifier>{a7ff7726-93b4-4d9b-9d59-40a9177993fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\deps">
+      <UniqueIdentifier>{748cc815-0347-4cb1-848e-f27fda68085d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -75,8 +75,6 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	if (!Surface)
 		return;
 
-	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
-
 	SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
@@ -119,7 +117,7 @@ void FusionAPI ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
@@ -129,11 +127,7 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		if (::SDK->EdittimeProperties[ID].Type_ID != Edif::Properties::PROPTYPE_LEFTCHECKBOX)
 		{
 			if (ID == 0)
-			{
-				char extVerBuffer[256];
-				sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayserver::buildnum, STRIFY(CONFIG));
-				return new Prop_AStr(extVerBuffer);
-			}
+				return new Prop_AStr(CurLang["Properties"][ID]["DefaultState"]);
 			if (ID == 3)
 				return new Prop_AStr(edPtr->edGlobalID);
 		}

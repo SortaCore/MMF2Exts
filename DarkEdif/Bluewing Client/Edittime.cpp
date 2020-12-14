@@ -112,10 +112,10 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			{
 				char extVerBuffer[256];
 				sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayclient::buildnum, STRIFY(CONFIG));
-				return new Prop_AStr(extVerBuffer);
+				return new Prop_Str(UTF8ToTString(extVerBuffer).c_str());
 			}
 			if (ID == 3)
-				return new Prop_AStr(edPtr->edGlobalID);
+				return new Prop_Str(UTF8ToTString(edPtr->edGlobalID).c_str());
 		}
 
 		// Override invalid property warning
@@ -151,7 +151,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		return 0; // not actually managed by DarkEdif
 
 	MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
-	return 0;		// Unchecked
+	return 0; // Unchecked
 }
 
 // This routine is called by MMF after a property has been modified.
@@ -161,7 +161,8 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
 	{
-		if (strcpy_s(edPtr->edGlobalID, 255, ((Prop_AStr *)NewParam)->String))
+		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
+		if (strcpy_s(edPtr->edGlobalID, 255, newValAsU8.c_str()))
 			MessageBoxA(NULL, "Error setting new property 3; error copying string.", "DarkEdif - SetPropValue() error", MB_OK);
 	}
 
