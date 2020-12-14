@@ -326,7 +326,7 @@
 				[ 46, "Count complete UTF-8 chars" ],
 				[ 47, "Count visible chars (graphemes)" ],
 				[ 48, "Count bytes" ]
-			]
+			],
 
 			"---"
 		],
