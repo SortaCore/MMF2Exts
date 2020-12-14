@@ -714,7 +714,7 @@ std::string TStringToANSI(const std::tstring_view input, bool * const allValidCh
 #else
 	if (allValidChars)
 		*allValidChars = true;
-	return input;
+	return std::string(input);
 #endif
 }
 std::string TStringToUTF8(const std::tstring_view input) {
@@ -1406,7 +1406,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 	// If the ext name is found, or the wildcard *
 	if (ini.find(";" PROJECT_NAME ";") != std::string::npos || ini.find(";*;") != std::string::npos)
 	{
-		GetLockAnd(updateLog << "Update check was disabled.";
+		GetLockAnd(updateLog << "Update check was disabled."sv;
 			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
 		return 0;
 	}
@@ -1419,14 +1419,14 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 			GetLockSetConnectErrorAnd(
-				updateLog << "WSAStartup failed.\n");
+				updateLog << "WSAStartup failed.\n"sv);
 			return 1;
 		}
 		SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		if (Socket == INVALID_SOCKET)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "socket() failed. Error " << WSAGetLastError() << ".\n");
+				updateLog << "socket() failed. Error "sv << WSAGetLastError() << ".\n"sv);
 			WSACleanup();
 			return 1;
 		}
@@ -1441,7 +1441,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (host == NULL)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "getting host " << domain << " failed, error " << WSAGetLastError() << ".");
+				updateLog << "getting host "sv << domain << " failed, error "sv << WSAGetLastError() << "."sv);
 			closesocket(Socket);
 			WSACleanup();
 			return 1;
@@ -1450,10 +1450,11 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		SockAddr.sin_port = htons(80);
 		SockAddr.sin_family = AF_INET;
 		SockAddr.sin_addr.s_addr = *((unsigned long *)host->h_addr);
-		updateLog << "Connecting...\n";
+		GetLockAnd(
+			updateLog << "Connecting...\n"sv);
 		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {
 			GetLockSetConnectErrorAnd(
-				updateLog << "Connect failed, error " << WSAGetLastError() << ".");
+				updateLog << "Connect failed, error "sv << WSAGetLastError() << "."sv);
 			closesocket(Socket);
 			WSACleanup();
 			return 1;
@@ -1463,24 +1464,24 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		// Host necessary so servers serving multiple domains know what domain is requested.
 		// Connection: close indicates server should close connection after transfer.
 		std::stringstream requestStream;
-		requestStream << "GET /storage/darkedif_vercheck.php?ext=" << url_encode(PROJECT_NAME)
-			<< "&build=" << Extension::Version << "&sdkBuild=" << DarkEdif::SDKVersion
-			<< "&projConfig=" << projConfig
-			<< " HTTP/1.1\r\nHost: " << domain << "\r\nConnection: close\r\n\r\n";
+		requestStream << "GET /storage/darkedif_vercheck.php?ext="sv << url_encode(PROJECT_NAME)
+			<< "&build="sv << Extension::Version << "&sdkBuild="sv << DarkEdif::SDKVersion
+			<< "&projConfig="sv << projConfig
+			<< " HTTP/1.1\r\nHost: "sv << domain << "\r\nConnection: close\r\n\r\n"sv;
 		std::string request = requestStream.str();
 
 		GetLockAnd(
-			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \"" << url_encode(PROJECT_NAME)
-				<< "\", build " << Extension::Version << ", SDK build " << DarkEdif::SDKVersion << ", config " << projConfig << ".\n");
+			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \""sv << url_encode(PROJECT_NAME)
+				<< "\", build "sv << Extension::Version << ", SDK build "sv << DarkEdif::SDKVersion << ", config "sv << projConfig << ".\n"sv);
 #ifdef _DEBUG
 		GetLockAnd(
-			updateLog << request.substr(0, request.find(' ', 4)) << "\n");
+			updateLog << request.substr(0, request.find(' ', 4)) << '\n');
 #endif
 
 		if (send(Socket, request.c_str(), request.size() + 1, 0) == SOCKET_ERROR)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "Send failed, error " << WSAGetLastError() << ".");
+				updateLog << "Send failed, error "sv << WSAGetLastError() << "."sv);
 			closesocket(Socket);
 			WSACleanup();
 			return 1;
@@ -1494,7 +1495,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			int nDataLength;
 
 			GetLockAnd(
-				updateLog << "Result follows:\n");
+				updateLog << "Result follows:\n"sv);
 			while ((nDataLength = recv(Socket, pagePart.data(), pagePart.size(), 0)) > 0) {
 				page << std::string_view(pagePart).substr(0, nDataLength);
 				memset(pagePart.data(), 0, nDataLength);
@@ -1502,13 +1503,13 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			if (nDataLength < 0)
 			{
 				GetLockSetConnectErrorAnd(
-					updateLog << "Error " << WSAGetLastError() << " with recv().");
+					updateLog << "Error "sv << WSAGetLastError() << " with recv()."sv);
 				closesocket(Socket);
 				WSACleanup();
 				return 1;
 			}
 			GetLockAnd(
-				updateLog << "\nResult concluded.\n";
+				updateLog << "\nResult concluded.\n"sv;
 			OutputDebugStringA(updateLog.str().c_str()));
 			closesocket(Socket);
 			WSACleanup();
@@ -1523,7 +1524,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (endIndex == std::string::npos)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "End of first line not found. Full raw (non-http) response:\n" << fullPage);
+				updateLog << "End of first line not found. Full raw (non-http) response:\n"sv << fullPage);
 			return 1;
 		}
 
@@ -1533,7 +1534,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (endIndex == std::string::npos || strncmp(statusLine.c_str(), expHttpHeader, sizeof(expHttpHeader) - 1))
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "Unexpected non-http response:\n" << statusLine);
+				updateLog << "Unexpected non-http response:\n"sv << statusLine);
 			return 1;
 		}
 
@@ -1541,7 +1542,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (strncmp(statusLine.c_str(), expHttpOKHeader, sizeof(expHttpOKHeader) - 1))
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "HTTP error " << statusLine.substr(sizeof(expHttpHeader) - 1));
+				updateLog << "HTTP error "sv << statusLine.substr(sizeof(expHttpHeader) - 1));
 			return 1;
 		}
 
@@ -1559,7 +1560,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if (pageBody.find('\r') != std::string::npos)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "CR not permitted in update page response.\n" << pageBody);
+				updateLog << "CR not permitted in update page response.\n"sv << pageBody);
 			return 1;
 		}
 
@@ -1570,9 +1571,9 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		}
 
 		GetLockAnd(
-			updateLog << "Completed OK. Response:\n" << pageBody;
+			updateLog << "Completed OK. Response:\n"sv << pageBody;
 		);
-		if (pageBody == "None")
+		if (pageBody == "None"sv)
 		{
 			GetLockAnd(
 				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::None;
@@ -1615,14 +1616,14 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		}
 
 		GetLockSetConnectErrorAnd(
-			updateLog << "Can't interpret type. Page content is:\n" << pageBody;
+			updateLog << "Can't interpret type. Page content is:\n"sv << pageBody;
 			pendingUpdateDetails = UTF8ToWide(pageBody));
 		return 0;
 	}
 	catch (...)
 	{
 		GetLockAnd(
-			updateLog << "Caught a crash. Aborting update.");
+			updateLog << "Caught a crash. Aborting update."sv);
 		OutputDebugStringA(updateLog.str().c_str());
 		return 0;
 	}

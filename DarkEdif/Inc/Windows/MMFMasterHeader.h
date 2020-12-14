@@ -594,8 +594,8 @@ struct Spr
 	// Image or owner-draw routine
 	union {
 		struct	{
-			unsigned int Img;             // Numero d'image
-			unsigned int ImgNew;          // Nouvelle image
+			unsigned int Img;			 // Numero d'image
+			unsigned int ImgNew;		  // Nouvelle image
 		};
 	LPARAM Rout;			// Ownerdraw callback routine
 	};
@@ -843,13 +843,13 @@ struct AnimDirection {
 //typedef AnimDirection *	LPAD;
 
 // Chunks de sauvegarde
-#define EVTFILECHUNK_HEAD			B2L('E','R','>','>')
-#define EVTFILECHUNK_EVTHEAD		B2L('E','R','e','s')
-#define EVTFILECHUNK_EVENTS			B2L('E','R','e','v')
-#define EVTFILECHUNK_NEWITEMS		B2L('>','N','I','<')
-#define EVTFILECHUNK_END			B2L('<','<','E','R')
+#define EVTFILECHUNK_HEAD				B2L('E','R','>','>')
+#define EVTFILECHUNK_EVTHEAD			B2L('E','R','e','s')
+#define EVTFILECHUNK_EVENTS				B2L('E','R','e','v')
+#define EVTFILECHUNK_NEWITEMS			B2L('>','N','I','<')
+#define EVTFILECHUNK_END				B2L('<','<','E','R')
 // New to CF2.5+ build 292.6
-#define EVTFILECHUNK_EVENTBLOCKTYPES    B2L('E','R','b','t')
+#define EVTFILECHUNK_EVENTBLOCKTYPES	B2L('E','R','b','t')
 
 // Marquage des OI qualifiers
 #define	OIFLAG_QUALIFIER			bit16
@@ -1007,10 +1007,10 @@ struct EventBlockType {
 		// Indicates end of EventBlockType
 		EndOfBlock = UINT32_MAX
 	} type;
-	DWORD    oi;        // object handle (if behavior)
+	DWORD oi; // object handle (if behavior)
 
 	//  offset of the first event line relative to rhPtr->rhApp->rhFrame->m_eventPrograms
-	DWORD    blockOffset;
+	DWORD blockOffset;
 };
 
 
@@ -1932,7 +1932,7 @@ struct runHeader2 {
 	int		  		PauseCompteur;
 	unsigned long	PauseTimer;
 	unsigned int	PauseVbl;
-	FARPROC	   		LoopTraceProc,      // Debugging routine
+	FARPROC	   		LoopTraceProc,		// Debugging routine
 					EventTraceProc;
 
 };
@@ -2152,7 +2152,7 @@ struct runHeader4 {
 	mv *				rh4Mv;						// Yves' data
 	HCURSOR				rh4OldCursor;				// Old cursor for Show / HideMouse in Vitalize! mode
 	HeaderObject  *		rh4_2ndObject;	 			// Collision object address
-	short 				rh4_2ndObjectNumber,        // Number for collisions
+	short 				rh4_2ndObjectNumber,		// Number for collisions
 						rh4FirstQuickDisplay;		// Quick-display object list
 	int					rh4WindowDeltaX,			// For scrolling
 						rh4WindowDeltaY;
@@ -2325,7 +2325,7 @@ struct HeaderObject {
 		 				NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
 
 	int					size;			// Structure size
-    RunHeader *			AdRunHeader;	// Run-header address
+	RunHeader *			AdRunHeader;	// Run-header address
 	HeaderObject *		Address;
 	short				HFII,			// Number of LevObj
 		  				Oi,				// Number of ObjInfo
@@ -2348,7 +2348,7 @@ struct HeaderObject {
 	union {
 		struct {
 			int CalculX,	// Low weight value
-				X,          // X coordinate
+				X,		  // X coordinate
 				CalculY,	// Low weight value
 				Y;			// Y coordinate
 		};
@@ -2644,7 +2644,7 @@ struct rCom {
 	BOOL	rcChanged;					// Flag: modified object
 	BOOL	rcCheckCollides;			// For static objects
 
-	int	 	rcOldX;            			// Previous coordinates
+	int	 	rcOldX;						// Previous coordinates
 	int	 	rcOldY;
 	int	 	rcOldImage;
 	AngleVar	rcOldAngle;
@@ -2795,7 +2795,7 @@ struct objInfoList {
 					NumOfSelected;	// Number of selected objects
 	unsigned int	OEFlags;		// Object's flags
 	short			LimitFlags,		// Movement limitation flags
-					LimitList;      // Pointer to limitation list
+					LimitList;	  // Pointer to limitation list
 	OILFlags		OIFlags;		// Objects preferences
 	short			OCFlags2;		// Objects preferences II
 	long			InkEffect,		// Ink effect
@@ -2954,7 +2954,7 @@ struct CallTables
 #define OINUM_ERROR				(-1)
 
 // Macro, converts 4 unsigned chars to one unsigned int
-#define B2L(a,b,c,d)    ((unsigned int)(((unsigned int)((unsigned char)(d))<<24)|((unsigned int)((unsigned char)(c))<<16)|((unsigned int)((unsigned char)(b))<<8)|(unsigned int)((unsigned char)(a))))
+#define B2L(a,b,c,d)	((unsigned int)(((unsigned int)((unsigned char)(d))<<24)|((unsigned int)((unsigned char)(c))<<16)|((unsigned int)((unsigned char)(b))<<8)|(unsigned int)((unsigned char)(a))))
 
 // For GetFileInfos
 enum class FILEINFO {
@@ -3038,7 +3038,7 @@ struct qualifierLoad
 // start of alignment
 // last realignment
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Object instance parent types
 enum {
@@ -3241,7 +3241,7 @@ enum class SCREENORIENTATION {
 	PORTRAIT_AUTO,
 };
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Build type values
 enum class BUILDTYPE {
@@ -3287,7 +3287,7 @@ enum class BUILDTYPE {
 //////////////////////////////////////////////////////////////////////////////
 // Element of chunk Extensions
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 struct ExtDesc {
 	unsigned short	extSize,
 					extIndex;
@@ -3444,7 +3444,7 @@ enum class OIFlags : short
 // LevObj/FrameItemInstance
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 struct diskLO {
 	unsigned short	LO_Handle;			// HLO
 	unsigned short	OI_Handle;			// HOI
@@ -3474,7 +3474,7 @@ enum class OBSTACLE {
 ////////////////////////////////
 // Static object - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 struct Static_OC {
 
 	// Size
@@ -3494,7 +3494,7 @@ struct Static_OC {
 // Fill Type & shapes - Definitions
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 // Gradient
 typedef struct GradientData {
 	COLORREF		color1,
@@ -3527,7 +3527,7 @@ enum class FILLTYPE {
 ///////////////////////////////////////////////////////////////
 // Fill Type - Part of FilledShape
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 class FillType_Data {
 public:
@@ -3564,7 +3564,7 @@ public:
 ///////////////////////////////////////////////////////////////
 // Filled Shape - Part of QuickBackdrop / Counter ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 class FilledShape_Data {
 public:
@@ -3580,7 +3580,7 @@ public:
 /////////////////////////////////
 // Quick backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 typedef struct QuickBackdrop_OC {
 
@@ -3601,7 +3601,7 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 /////////////////////////////////
 // Backdrop - ObjectsCommon
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 struct Backdrop_OC {
 
@@ -3726,7 +3726,7 @@ enum class COUNTER_IMAGE {
 //
 // Objet RTF - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 struct ocRTF {
 	unsigned int	size;
@@ -3748,7 +3748,7 @@ struct ocRTF {
 //
 // Objet CCA - ocData
 //
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 struct ocCCA {
 
@@ -3803,7 +3803,7 @@ struct ocCCA {
 // Transition
 //
 
-#ifndef      _H2INC
+#ifndef	  _H2INC
 
 // Transition header
 typedef struct TransitionHdr {

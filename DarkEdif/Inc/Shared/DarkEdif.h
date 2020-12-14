@@ -334,7 +334,7 @@ CONSTEXPR14_TN static_string type_name()
 	return static_string(p.data() + 38, p.size() - 38 - 7);
 }
 
-// static_string to std::string
+// static_string to std::string_view
 #define typestr(type) std::string(type_name<type>().begin(), type_name<type>().end())
 
 template<int j, class Ret, class Struct, class... Args>
@@ -347,19 +347,19 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 		Params p = ReadParameterType(json["Parameters"][i][0], isFloat);
 		using type2 = typename std::tuple_element<i, std::tuple<Args...>>::type;
 		std::string cppType(typestr(type2));
-		std::string expCppType = "?";
+		std::string expCppType = "?"s;
 		if (isFloat)
 		{
 			if (cppType == typestr(float) || cppType == typestr(const float))
 				continue;
-			expCppType = "float";
+			expCppType = "float"sv;
 		}
 		else if (p == Params::String || p == Params::String_Comparison || p == Params::String_Expression ||
 			p == Params::Filename || p == Params::Filename_2)
 		{
 			if (cppType == typestr(const TCHAR *) || cppType == typestr(TCHAR *) || cppType == typestr(const TCHAR * const))
 				continue;
-			expCppType = "const TCHAR *";
+			expCppType = "const TCHAR *"sv;
 		}
 		else if (p == Params::Integer || p == Params::Expression)
 		{
@@ -368,21 +368,21 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				if (cppType == typestr(unsigned int) || cppType == typestr(const unsigned int))
 					break;
 
-				expCppType = "unsigned int";
+				expCppType = "unsigned int"sv;
 			}
 			else
 			{
 				if (cppType == typestr(int) || cppType == typestr(const int))
 					break;
-				expCppType = "int";
+				expCppType = "int"sv;
 			}
 		}
 		else
 			continue;
 
 
-		str << "Has JSON parameter " << (const char *)json["Parameters"][i][1] << ", JSON type " << (const char *)json["Parameters"][i][0]
-			<< "; expected C++ type " << expCppType << ", but actual C++ type is " << cppType << ".\r\n";
+		str << "Has JSON parameter "sv << (const char *)json["Parameters"][i][1] << ", JSON type "sv << (const char *)json["Parameters"][i][0]
+			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppType << ".\r\n"sv;
 	} while (false);
 
 	// Recurse into next iteration
@@ -410,13 +410,13 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		{
 			if (cppType == typestr(float) || cppType == typestr(const float))
 				break;
-			expCppType = "float";
+			expCppType = "float"sv;
 		}
 		else if (p == ExpParams::String)
 		{
 			if (cppType == typestr(const TCHAR *) || cppType == typestr(TCHAR *) || cppType == typestr(const TCHAR * const))
 				break;
-			expCppType = "const TCHAR *";
+			expCppType = "const TCHAR *"sv;
 		}
 		else if (p == ExpParams::Integer)
 		{
@@ -425,20 +425,20 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 				if (cppType == typestr(unsigned int) || cppType == typestr(const unsigned int))
 					break;
 
-				expCppType = "unsigned int";
+				expCppType = "unsigned int"sv;
 			}
 			else
 			{
 				if (cppType == typestr(int) || cppType == typestr(const int))
 					break;
-				expCppType = "int";
+				expCppType = "int"sv;
 			}
 		}
 		else // ?
 			break;
 
-		str << "Has JSON parameter " << (const char *)json["Parameters"][i][1] << ", JSON type " << (const char *)json["Parameters"][i][0]
-			<< "; expected C++ type " << expCppType << ", but actual C++ type is " << cppType << ".\r\n";
+		str << "Has JSON parameter "sv << (const char *)json["Parameters"][i][1] << ", JSON type "sv << (const char *)json["Parameters"][i][0]
+			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppType << ".\r\n"sv;
 	} while (false);
 
 	// Recurse into next iteration
@@ -465,15 +465,15 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Actions"].u.array.length <= ID)
 		{
-			str << "Error in linking action ID " << ID << "; it has no Actions JSON item.";
+			str << "Error in linking action ID "sv << ID << "; it has no Actions JSON item."sv;
 			break;
 		}
 		const json_value &json = curLang["Actions"][ID];
 
 		if (!std::is_same<Ret, void>())
 		{
-			str << curLangName << ": error in linking action ID " << ID << ", " << (const char *)json["Title"] << "; it has return type "
-				<< typestr(Ret) << " instead of void in the C++ function definition.";
+			str << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has return type "sv
+				<< typestr(Ret) << " instead of void in the C++ function definition."sv;
 			break;
 		}
 
@@ -490,8 +490,8 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (cppParamCount != jsonParamCount)
 		{
-			str << curLangName << ": error in linking action ID " << ID << ", " << (const char *)json["Title"] << "; it has "
-				<< jsonParamCount << " parameters in the Actions JSON item, but " << cppParamCount << " parameters in the C++ function definition.";
+			str << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+				<< jsonParamCount << " parameters in the Actions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition."sv;
 		}
 		else if (jsonParamCount > 0)
 		{
@@ -501,7 +501,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (str.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking action ID " << ID << ", " << (const char *)json["Title"] << ":\r\n" << str.str();
+				str2 << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << ":\r\n"sv << str.str();
 				std::string realError = str2.str();
 				str.str(realError.substr(0U, realError.size() - 2U));
 			}
@@ -534,15 +534,15 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Conditions"].u.array.length <= ID)
 		{
-			str << curLangName << ": error in linking condition ID " << ID << "; it has no Conditions JSON item.";
+			str << curLangName << ": error in linking condition ID "sv << ID << "; it has no Conditions JSON item."sv;
 			break;
 		}
 		const json_value &json = curLang["Conditions"][ID];
 
 		if (!std::is_same<Ret, bool>() && !std::is_same<Ret, const bool>())
 		{
-			str << curLangName << ": error in linking condition ID " << ID << ", " << (const char *)json["Title"] << "; it has return type "
-				<< typestr(Ret) << " instead of bool in the C++ function definition.";
+			str << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has return type "sv
+				<< typestr(Ret) << " instead of bool in the C++ function definition."sv;
 			break;
 		}
 
@@ -550,8 +550,8 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		const int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
 		if (cppParamCount != jsonParamCount)
 		{
-			str << curLangName << ": error in linking condition ID " << ID << ", " << (const char *)json["Title"] << "; it has "
-				<< jsonParamCount << " parameters in the Conditions JSON item, but " << cppParamCount << " parameters in the C++ function definition.";
+			str << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+				<< jsonParamCount << " parameters in the Conditions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition."sv;
 		}
 		else if (jsonParamCount > 0)
 		{
@@ -561,7 +561,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (str.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking condition ID " << ID << ", " << (const char *)json["Title"] << "\r\n" << str.str();
+				str2 << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "\r\n"sv << str.str();
 				std::string realError = str2.str();
 				str.str(realError.substr(0U, realError.size() - 2U));
 			}
@@ -594,11 +594,11 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Expressions"].u.array.length <= ID)
 		{
-			str << curLangName << ": error in linking expression ID " << ID << "; it has no Expressions JSON item.";
+			str << curLangName << ": error in linking expression ID "sv << ID << "; it has no Expressions JSON item."sv;
 			break;
 		}
 
-		std::string expCppRetType = "<unknown>";
+		std::string expCppRetType = "<unknown>"s;
 		std::string cppRetType = typestr(Ret);
 		bool retTypeOK = false;
 		const json_value &json = curLang["Expressions"][ID];
@@ -609,23 +609,23 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (!_stricmp(json["Returns"], "Unsigned Integer"))
 			{
 				retTypeOK = cppRetType == typestr(unsigned int) || cppRetType == typestr(const unsigned int);
-				expCppRetType = "unsigned int";
+				expCppRetType = "unsigned int"sv;
 			}
 			else
 			{
 				retTypeOK = cppRetType == typestr(int) || cppRetType == typestr(const int);
-				expCppRetType = "int";
+				expCppRetType = "int"sv;
 			}
 		}
 		else if (jsonRetType == ExpReturnType::Float)
 		{
 			retTypeOK = cppRetType == typestr(float) || cppRetType == typestr(const float);
-			expCppRetType = "float";
+			expCppRetType = "float"sv;
 		}
 		else if (jsonRetType == ExpReturnType::String)
 		{
 			retTypeOK = cppRetType == typestr(TCHAR *) || cppRetType == typestr(const TCHAR *) || cppRetType == typestr(const TCHAR * const);
-			expCppRetType = "const TCHAR *";
+			expCppRetType = "const TCHAR *"sv;
 		}
 		// else failure by default
 
@@ -635,12 +635,12 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (!retTypeOK)
 		{
-			str << curLangName << ": error in linking expression ID " << ID << ", " << exprName << "; it has return type "
-				<< (const char *)json["Returns"] << " in the JSON (C++ type " << expCppRetType << "), but " << typestr(Ret) << " in the C++ function definition.";
+			str << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << "; it has return type "sv
+				<< (const char *)json["Returns"] << " in the JSON (C++ type "sv << expCppRetType << "), but "sv << typestr(Ret) << " in the C++ function definition."sv;
 			break;
 		}
 
-		const int cppParamCount = sizeof...(Args);
+		constexpr int cppParamCount = sizeof...(Args);
 
 
 		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
@@ -654,8 +654,8 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (cppParamCount != jsonParamCount)
 		{
-			str << curLangName << ": error in linking expression ID " << ID << ", " << exprName << "; it has "
-				<< jsonParamCount << " parameters in the Expressions JSON item, but " << cppParamCount << " parameters in the C++ function definition.";
+			str << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << "; it has "sv
+				<< jsonParamCount << " parameters in the Expressions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition."sv;
 		}
 		else if (jsonParamCount > 0)
 		{
@@ -665,7 +665,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (str.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking expression ID " << ID << ", " << exprName << ":\r\n" << str.str();
+				str2 << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << ":\r\n"sv << str.str();
 				std::string realError = str2.str();
 				str.str(realError.substr(0U, realError.size() - 2U));
 			}

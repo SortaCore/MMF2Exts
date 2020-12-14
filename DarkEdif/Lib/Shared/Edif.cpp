@@ -111,7 +111,7 @@ Params ReadParameterType(const char * Text, bool &IsFloat)
 		return (Params)short(short(Params::Custom_Base) + atoi(Text+6));
 
 	std::stringstream str;
-	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
+	str << "Error reading Parameter type \""sv << Text << "\"; text did not match anything."sv;
 	MessageBoxA(NULL, str.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
 	return (Params)(ushort)0;
 }

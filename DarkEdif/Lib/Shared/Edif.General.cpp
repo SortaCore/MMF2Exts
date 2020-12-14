@@ -97,7 +97,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			else
 			{
 				std::stringstream err;
-				err << "Can't handle property type \"" << curPropType << "\".";
+				err << "Can't handle property type \""sv << curPropType << "\"."sv;
 				MessageBoxA(NULL, err.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
 			}
 		}
