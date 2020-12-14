@@ -465,7 +465,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Actions"].u.array.length <= ID)
 		{
-			str << "Error in linking action ID "sv << ID << "; it has no Actions JSON item."sv;
+			str << curLangName << ": error in linking action ID "sv << ID << "; it has no Actions JSON item."sv;
 			break;
 		}
 		const json_value &json = curLang["Actions"][ID];

@@ -2191,6 +2191,48 @@
 					[ "Integer", "Aprovar pedido de mudança de nome imediatamente (0), negar imediatamente (1), ou esperar por Fusion (2)?" ],
 					[ "Text", "Razão da negação (se negar imediatamente)?" ]
 				]
+			},
+			{
+				"Title": "Criar canal com nome %0, escondido %1, fecho automático %2, com cliente mestre seleccionado pelo nome %3 (\"\" = sem mestren)",
+				"Parameters": [
+					[ "Text", "Nome do canal" ],
+					[ "Integer", "Esconder canal da lista pública? Sim (1) ou não (0)" ],
+					[ "Integer", "Fechar o canal automaticamente quando o mestre sair? Sim (1) ou não (0)" ],
+					[ "Text", "Nome do cliente mestre (ou \"\" se não houver cliente mestre)" ]
+				]
+			},
+			{
+				"Title": "Criar canal com nome %0, escondido %1, fecho automático %2, com cliente mestre seleccionado por ID %3 (-1 = sem mestre)",
+				"Parameters": [
+					[ "Text", "Nome do canal" ],
+					[ "Integer", "Esconder canal da lista pública? Sim (1) ou não (0)" ],
+					[ "Integer", "Fechar o canal automaticamente quando o mestre sair? Sim (1) ou não (0)" ],
+					[ "Integer", "ID do cliente mestre (ou -1 se não houver cliente mestre)" ]
+				]
+			},
+			{
+				"Title": "Adicionar cliente com nome %0 ao canal seleccionado",
+				"Parameters": [
+					[ "Text", "Nome do cliente (ou \"\" para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Adicionar cliente com ID %0 ao canal seleccionado",
+				"Parameters": [
+					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Expulsar cliente com nome %0 do canal seleccionado",
+				"Parameters": [
+					[ "Text", "Nome do cliente (ou \"\" para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Expulsar clie com ID %0 do canal seleccionado",
+				"Parameters": [
+					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
+				]
 			} 
 			
 			/*,
@@ -2791,6 +2833,27 @@
 			{
 				"Title": "RazãodaNegação$(",
 				"Returns": "Text"
+			},
+			{
+				"Title": "UTF8CharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8VisibleCharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8ByteCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
 			}
 		],
 		"Properties": [
@@ -3567,17 +3630,59 @@
 					[ "Integer", "Accepter le changement de nom immédiatement (0), refuser immédiatement (1), ou attendre Fusion (2)?" ],
 					[ "Text", "Raison de refus (en cas de refus immédiat)?" ]
 				]
-			} /*,
-			// ID 82+
+			},
 			{
-				"Title": "Héberger un serveur HTML5 WebSocket sur le port %0",
+				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné de nom %3 (\"\" = aucun maître)",
 				"Parameters": [
-					[ "Integer", "Port (par défaut: 80 ou 443)" ],
-					[ "Integer", "Utiliser Secure Web Sockets? (par défaut: 80 ou 443)" ]
+					[ "Text", "Nom du canal" ],
+					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
+					[ "Integer", "Fermer automatiquement le canal quand le  maître quitte ? Oui (1) ou Non (0)" ],
+					[ "Text", "Le nom du client maître (ou \"\" si aucun client maître)" ]
 				]
 			},
 			{
-				"Title": "Arrêter d'héberger un serveur HTML5 WebSocket"
+				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné d'ID %3 (-1 = aucun maître)",
+				"Parameters": [
+					[ "Text", "Nom du canal" ],
+					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
+					[ "Integer", "Fermer automatiquement le canal quand le  maître quitte ? Oui (1) ou Non (0)" ],
+					[ "Integer", "ID du client maître (ou -1 si aucun client maître)" ]
+				]
+			},
+			{
+				"Title": "Joindre le client de nom %0 dans le canal sélectionné",
+				"Parameters": [
+					[ "Text", "Le nom du client maître (ou \"\" si aucun client maître)" ]
+				]
+			},
+			{
+				"Title": "Joindre le client d'ID %0 dans le canal sélectionné",
+				"Parameters": [
+					[ "Integer", "l'ID du client (ou -1 pour le client sélectionné)" ]
+				]
+			},
+			{
+				"Title": "Expulser le client de nom %0 du le canal sélectionné",
+				"Parameters": [
+					[ "Text", "Nom du client (ou \"\" pour le client actuellement sélectionné )" ]
+				]
+			},
+			{
+				"Title": "Expulser le client d'ID %0 du canal sélectionné",
+				"Parameters": [
+					[ "Integer", "ID du client (ou -1 pour l'ID actuellement sélectionné)" ]
+				]
+			} /*,
+			// ID 88+
+			{
+				"Title": "Héberger le serveur HTML5 WebSocket sur le port %0",
+				"Parameters": [
+					[ "Integer", "Port (80 par défaut, ou 443)" ],
+					[ "Integer", "Utiliser Web Sockets sécurisé ? (80 par défaut, ou 443)" ]
+				]
+			},
+			{
+				"Title": "Stopper l'hébergement du serveur HTML5 WebSocket"
 			}*/
 		],
 		"Conditions": [
@@ -4165,6 +4270,27 @@
 			{
 				"Title": "RaisonRefus$(",
 				"Returns": "Text"
+			},
+			{
+				"Title": "UTF8CharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8VisibleCharCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
+			},
+			{
+				"Title": "UTF8ByteCount(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Text to convert to UTF-8" ]
+				]
 			}
 		],
 		"Properties": [

@@ -239,7 +239,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(59, ConvToUTF8_GetByteCount);
 	}
 
-	// This is signalled by EndApp in General.cpp. It's used to close the connection
+	// This is signalled by EndApp in Runtime.cpp. It's used to close the connection
 	// when the application closes, from the timeout thread - assuming events or the
 	// server hasn't done that already.
 	if (!AppWasClosed)
@@ -259,11 +259,11 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	OutputDebugStringA(msgBuff);
 	if (isGlobal)
 	{
-		void * v = Runtime.ReadGlobal(UTF8ToTString(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str());
+		void * v = Runtime.ReadGlobal(UTF8ToTString("LacewingRelayClient"s + edPtr->edGlobalID).c_str());
 		if (!v)
 		{
 			globals = new GlobalInfo(this, edPtr);
-			Runtime.WriteGlobal(UTF8ToTString(std::string("LacewingRelayClient") + edPtr->edGlobalID).c_str(), globals);
+			Runtime.WriteGlobal(UTF8ToTString("LacewingRelayClient"s + edPtr->edGlobalID).c_str(), globals);
 			OutputDebugStringA("Created new Globals.\n");
 		}
 		else // Add this Extension to refs to inherit control later
@@ -811,7 +811,7 @@ Extension::~Extension()
 			return;
 		}
 
-		std::tstring id = _T("LacewingRelayClient") + ANSIToTString(globals->_globalID);
+		std::tstring id = _T( "LacewingRelayClient"s ) + ANSIToTString(globals->_globalID);
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		LeaveCriticalSectionDebug(&globals->lock);
 		delete globals; // Disconnects and closes event pump, deletes lock

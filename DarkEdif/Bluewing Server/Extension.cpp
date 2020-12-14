@@ -239,7 +239,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 #endif
 
 
-	// This is signalled by EndApp in General.cpp. It's used to unhost the server
+	// This is signalled by EndApp in Runtime.cpp. It's used to unhost the server
 	// when the application closes, from the timeout thread - assuming events
 	// haven't done that already.
 	if (!AppWasClosed)

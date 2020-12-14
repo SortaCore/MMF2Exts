@@ -95,7 +95,8 @@ lw_import __wchar_t * lw_char_to_wchar(const char * u8str)
 	int length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, NULL, 0);
 	if (length > 0)
 	{
-		__wchar_t * u8Wide = (__wchar_t *)malloc(length);
+		length += 10;
+		__wchar_t * u8Wide = (__wchar_t *)malloc(length * sizeof(__wchar_t));
 		if (u8Wide)
 		{
 			length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, u8Wide, length);
