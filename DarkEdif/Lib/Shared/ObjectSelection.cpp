@@ -74,10 +74,10 @@ void Riggs::ObjectSelection::SelectObjects(short Oi, RunObject ** objects, int c
 
 	ObjectInfo->NumOfSelected = count;
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-	
+
 	short prevNumber = objects[0]->roHo.Number;
 	ObjectInfo->ListSelected = prevNumber;
-	
+
 	for(int i=1; i<count; i++)
 	{
 		short currentNumber = objects[i]->roHo.Number;

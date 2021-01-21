@@ -4,14 +4,14 @@
 // ============================================================================
 //
 // THREADS
-// 
+//
 // ============================================================================
 
 DWORD WINAPI ClientThread(StructPassThru *Parameters)
 {
 	// Debugging
 	char temp[1024]; // For chucking any variable into and using in Report()/Explode()
-	
+
 	// Open struct and set variables
 	Extension * Extension = Parameters->para_Ext;					// Access for Extension::
 	TCHAR * Hostname = (TCHAR *)malloc(255*sizeof(TCHAR));			// Hostname
@@ -19,13 +19,13 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	int ProtocolType = Parameters->para_ProtocolType;				// ProtocolType eg IPPROTO_TCP
 	int SocketType = Parameters->para_SocketType;					// SocketType eg SOCK_STREAM
 	int AddressFamily = Parameters->para_AddressFamily;			// AddressFamily eg AF_INTERNET
-	
+
 	// Get the current socket ID
 	ThreadSafe_Start();
 	int SocketID = Extension->NewSocketID;	// Get the current available Socket ID
 	Extension->NewSocketID++;					// Increment for further threads
 	ThreadSafe_End();
-	
+
 	if (!Hostname)
 	{
 		Explode("Could not reserve space for hostname!");
@@ -62,11 +62,11 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		else // We're good: remove old string
 			free(Parameters->para_client_hostname);
 	}
-	
+
 	// Get the text to send on initial connection
 	void * InitialSend = NULL;
 	size_t InitialSendSize = 0;
-	
+
 	Report("* Initial send copying BEGIN *");
 	ThreadSafe_Start();
 	// If FormPacket
@@ -108,7 +108,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	delete Parameters;	// Scat!
 	Report("* Parameters retrieval END *");
 	Report("* Struct creation BEGIN *");
-	
+
 	Report("Now declaring addrinfo and sockaddr.");
 #ifndef UNICODE
 	struct addrinfo *result = NULL, *ptr = NULL, hints;
@@ -153,7 +153,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		sockaddr_in6 fun;
 		fun.sin6_family = AddressFamily;
 		fun.sin6_port = Port;
-		
+
 		if (WSAAddressToString((sockaddr *)&fun, sizeof(fun), NULL, Hostname, &d))
 		{
 			sprintf_s(temp, sizeof(temp), "Error with WSAAddressToString(), number %i.", WSAGetLastError());
@@ -167,7 +167,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 			NullStoredHandle(SocketID);
 			return 1;
 		}
-		
+
 	}
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -180,10 +180,10 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	// Cast port to TCHAR *, defaults to 80
 	TCHAR StrPort[6] = _T("80\0\0\0");
 	_itot_s(Port, StrPort, 6, 10); // 6 is the size of StrPort; 10 here signifies decimal - base 10 numbers
-	
+
 	// Resolve the server address and port
 	int error = GetAddrInfo(Hostname, StrPort, &hints, &result);
-	
+
 	if (error)
 	{
 		sprintf_s(temp, 1024, "GetAddrInfo() failed with error %i! Parameters %s, %s, N/A*2. Thread exiting.", WSAGetLastError(), Hostname, StrPort);
@@ -202,13 +202,13 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		NullStoredHandle(SocketID);
 		return 1;
 	}
-	
+
 	SOCKET ConnectSocket = INVALID_SOCKET;
-	
+
 	Report("Past GetAddrInfo(), next using socket() function...");
 	// Attempt to connect to the first address returned by the call to getaddrinfo
 	ptr = result;
-	
+
 	Report("* Main connect BEGIN *");
 	// Create a SOCKET for connecting to server
 	ConnectSocket = socket(AddressFamily, SocketType, ProtocolType);
@@ -232,7 +232,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 			Report("Successful bind!");
 			break;
 		}
-		else 
+		else
 		{
 			if (WSAGetLastError() == WSAENOTSOCK)
 			{
@@ -259,7 +259,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		}
 	}
 	Report("* bind() attempt END *");
-	
+
 	Report("Moving on to connect()");
 	// Connect to server.
 	error = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
@@ -278,7 +278,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		return 1;
 	}
 	FreeAddrInfo(result);
-	
+
 	if (ConnectSocket == INVALID_SOCKET)
 	{
 		Explode("Unable to connect to server!");
@@ -287,7 +287,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		NullStoredHandle(SocketID);
 		return 1;
 	}
-	
+
 	Report("* Main connect END *");
 
 	Report("* Send initial buffer BEGIN *");
@@ -319,7 +319,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 
 	Report("The socket has initialised completely.");
 	Report("The socket will now spend its time looking for commands from MMF2 and receiving messages.");
-	
+
 	Report("* Main loop BEGIN *");
 	// For going independent from MMF2
 	bool Independent = false, MMF2Report = true, run = true, loop = false;
@@ -328,11 +328,11 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	int recvbuflen = sizeof(recvbuf), num_bytes_present = 0;
 	std::string OutputTo = "", totalrec = "";
 	FILE * OutputFile = NULL;
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// MAIN PART
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	while (run)
 	{
 		if (!Independent)
@@ -358,7 +358,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 								Report("Thread terminated by SHUTDOWNTHREAD");
 								run = false;
 								break;
-							
+
 							// Command to send a message.
 							case Commands::SENDMSG:
 								Report("Now using send()...");
@@ -373,7 +373,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 									free(Extension->Senders[i].Message);
 								ThreadSafe_End();
 								break;
-							
+
 							// Command to switch to receiving only.
 							case Commands::RECEIVEONLY:
 								Report("Now using shutdown() so we don't send data. But we can receive.");
@@ -385,7 +385,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 								}
 								Report("Shutdown operation completed.");
 								break;
-							
+
 							// Ignore any further commands from MMF2. This will speed up the thread but make the
 							// thread as unreachable as that aunt you heard of but don't know their phone number.
 							case Commands::GOINDEPENDENT:
@@ -405,14 +405,14 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 								if (!OutputFile)
 
 								break;
-							
+
 							// Command to stop copying the received data to a file
 							case Commands::UNLINKFILEOUTPUT:
 								Report("Received messages unlinked from file.");
 								OutputTo = "";
 								fclose(OutputFile);
 								break;
-							
+
 							// Command to stop reporting messages to MMF2 (disconnection will still be reported)
 							case Commands::MMFREPORTOFF:
 								if (OutputTo != "")
@@ -422,13 +422,13 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 											"You will not receive any received messages from this socket.");
 								MMF2Report = false;
 								break;
-							
+
 							// Command to re-start the reporting of messages to MMF2
 							case Commands::MMFREPORTON:
 								MMF2Report = true;
 								Report("MMF2 report re-enabled.");
 								break;
-							
+
 							// Unrecognised command.
 							default:
 								Explode("Unrecognised command!");
@@ -444,7 +444,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 			}
 			ThreadSafe_End();
 		}
-		
+
 		// Receive data until the server closes the connection
 		do
 		{
@@ -454,7 +454,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 			if (iResult > 0)
 			{
-				// Left-over characters may be appended: use iResult to 
+				// Left-over characters may be appended: use iResult to
 				// get the correct number of bytes from the buffer
 				totalrec.append(recvbuf, iResult);
 			}
@@ -469,7 +469,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 						// Send packet to MMF2
 						if (MMF2Report)
 							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-						
+
 						// Send packet to the file output
 						if (OutputTo != "")
 							fputs(totalrec.c_str(), OutputFile);
@@ -482,16 +482,16 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 					CallEvent(MF2C_CLIENT_ON_DISCONNECT);
 				}
 				// On error (or other stuff)
-				
+
 				else // (iResult < 0)
 				{
 					// If a message is pending
-					if (totalrec != "") 
+					if (totalrec != "")
 					{
 						// Send packet to MMF2
 						if (MMF2Report)
 							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-						
+
 						// Send packet to the file output
 						if (OutputTo != "")
 							fputs(totalrec.c_str(), OutputFile);
@@ -544,7 +544,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 								Explode(temp);
 								break;
 						}
-						
+
 						iResult = SOCKET_ERROR;
 					}
 					else // (iResult < -1)
@@ -609,18 +609,18 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 
 
 	Extension * Extension = Parameters->para_Ext;					// Access for Extension::
-	
+
 	unsigned short Port = htons(Parameters->para_Port);			// Port to connect to (htons() rearranges bits)
 	int ProtocolType = Parameters->para_ProtocolType;				// ProtocolType eg IPPROTO_TCP
 	int SocketType = Parameters->para_SocketType;					// SocketType eg SOCK_STREAM
 	int AddressFamily = Parameters->para_AddressFamily;			// AddressFamily eg AF_INTERNET
 	int WhatEver = Parameters->para_server_InAddr;							// Needed for something
-	
+
 	ThreadSafe_Start();
 	int SocketID = Extension->NewSocketID;	// Get the current available Socket ID
 	Extension->NewSocketID++;					// Increment for further threads
 	ThreadSafe_End();
-	
+
 	Report("Socket ID acquired");
 	delete Parameters;	// Scat!
 	Report("After delete");
@@ -646,9 +646,9 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 	Report("Socket declared, next using bind() function.");
 	// Attempt to connect to the first address returned by the call to getaddrinfo
 	ptr = result;
-	
+
 	SockAddr.ss_family = AddressFamily;
-	
+
 	// Loop until successful... or not
 	while (true)
 	{
@@ -657,7 +657,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 			Report("Successful bind!");
 			break;
 		}
-		else 
+		else
 		{
 			if (WSAGetLastError() == WSAENOTSOCK)
 			{
@@ -695,7 +695,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 	}
 
 	Report("MainSocket not invalid. Now moving on to main loop()");
-	
+
 	unsigned long UL = 1;
 	// Set to non-blocking
 	int error = ioctlsocket(MainSocket, FIONBIO, &UL);
@@ -716,7 +716,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// MAIN PART
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	while (run)
 	{
 		if (!Independent)
@@ -742,7 +742,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 								Report("Thread terminated by SHUTDOWNTHREAD");
 								run = false;
 								break;
-							
+
 							// Command to send a message.
 							case Commands::SENDMSG:
 								Report("Locating client...");
@@ -759,7 +759,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 								}
 								Explode("Send operation couldn't locate the applicable client(s)!");
 							break;
-							
+
 							// Command to switch to receiving only.
 							case Commands::RECEIVEONLY:
 								Report("Now using shutdown() so we don't send data. But we can receive.");
@@ -771,7 +771,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 								}
 								Report("Shutdown operation completed.");
 								break;
-							
+
 							// Ignore any further commands from MMF2. This will speed up the thread but make the
 							// thread as unreachable as that aunt you heard of but don't know their phone number.
 							case Commands::GOINDEPENDENT:
@@ -789,14 +789,14 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 									fclose(OutputFile);
 								OutputFile = fopen(OutputTo.c_str(), "ab");
 								break;
-							
+
 							// Command to stop copying the received data to a file
 							case Commands::UNLINKFILEOUTPUT:
 								Report("Output unlinked from file.");
 								OutputTo = "";
 								fclose(OutputFile);
 								break;
-							
+
 							// Command to stop reporting messages to MMF2
 							case Commands::MMFREPORTOFF:
 								if (OutputTo != "")
@@ -806,13 +806,13 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 											"You will not receive anything from this socket.");
 								MMF2Report = false;
 								break;
-							
+
 							// Command to re-start the reporting of messages to MMF2
 							case Commands::MMFREPORTON:
 								Report("MMF2 report re-enabled.");
 								MMF2Report = true;
 								break;
-							
+
 							// Unrecognised command.
 							default:
 								Explode("Unrecognised command!");
@@ -828,7 +828,7 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 			}
 			ThreadSafe_End();
 		}
-		
+
 		// Loop the main part
 		do
 		{
@@ -863,10 +863,10 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 			}
 			// The call is nonblocking.
 			// If nothing to receive, it would go to the WSAEWOULDBLOCK error code.
-			
+
 			if ((iResult = recv(MainSocket, recvbuf, recvbuflen, 0)) > 0)
 			{
-				// For some odd reason random characters are appended. So cast to std::string and use its' substr command.			
+				// For some odd reason random characters are appended. So cast to std::string and use its' substr command.
 				totalrec.append(recvbuf, iResult);
 				//RtlZeroMemory(&recvbuf, recvbuflen);
 				//memcp
@@ -965,10 +965,10 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 	if (OutputTo != "")
 		fclose(OutputFile);
 	NullStoredHandle(SocketID);
-	
+
 	closesocket(MainSocket);
 	Report("Server thread exit.");
-	
+
 	return 0;
 }
 

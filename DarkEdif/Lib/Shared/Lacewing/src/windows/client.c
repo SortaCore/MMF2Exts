@@ -64,7 +64,7 @@ lw_client lw_client_new (lw_pump pump)
 	ctx->socket = INVALID_HANDLE_VALUE;
 	ctx->pump = pump;
 	ctx->watch = 0;
-	
+
 	return ctx;
 }
 
@@ -198,7 +198,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	/* LPFN_CONNECTEX and WSAID_CONNECTEX aren't defined w/ MinGW */
 
 	static BOOL (PASCAL FAR * lw_ConnectEx)
-	  (	
+	  (
 		SOCKET s,
 		const struct sockaddr FAR *name,
 		int namelen,
@@ -224,7 +224,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	if (lw_addr_ipv6 (address))
 	{
 	  ((struct sockaddr_in6 *) &local_address)->sin6_family = AF_INET6;
-	  ((struct sockaddr_in6 *) &local_address)->sin6_addr = in6addr_any;		
+	  ((struct sockaddr_in6 *) &local_address)->sin6_addr = in6addr_any;
 	}
 	else
 	{

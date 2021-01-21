@@ -44,7 +44,7 @@
 				[ 61, "Drop message (for message to channel/peer)" ]
 			],
 			"---",
-			
+
 			[ "Channel",
 				[ 27, "Select by name" ],
 				"---",
@@ -319,7 +319,7 @@
 					]
 				],
 				"---",
-				
+
 				[ 26, "Get subchannel" ]
 			],
 			[ "Convert string to UTF-8 and...",
@@ -2132,7 +2132,7 @@
 					[ "Integer", "Novo tamanho (em bytes)" ]
 				]
 			},
-			
+
 			// Novas acções ID 74+
 			{
 				"Title": "Definir condição \"Quando for pedida a ligação\" iniciando 0%, %1, %2",
@@ -2233,8 +2233,8 @@
 				"Parameters": [
 					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
 				]
-			} 
-			
+			}
+
 			/*,
 			// ID 82+
 			{

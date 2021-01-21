@@ -329,7 +329,7 @@ static void graph_read (lwp_streamgraph graph, int this_expand,
 
 	  size_t direct_bytes = bytes;
 
-	  /* TODO : Skip to next direct instead of trying to read direct from 
+	  /* TODO : Skip to next direct instead of trying to read direct from
 		* intermediate streams?
 		*/
 

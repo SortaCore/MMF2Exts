@@ -45,7 +45,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 			return true; // accept the changes
 		}, 500, NULL
 	);
-	
+
 }
 
 Extension::~Extension()
@@ -57,7 +57,7 @@ Extension::~Extension()
 REFLAG Extension::Handle()
 {
 	/*
-		If your extension will draw to the MMF window you should first 
+		If your extension will draw to the MMF window you should first
 		check if anything about its display has changed :
 
 			if (rdPtr->roc.rcChanged)
@@ -65,10 +65,10 @@ REFLAG Extension::Handle()
 			else
 			  return REFLAG::NONE;
 
-		You will also need to make sure you change this flag yourself 
+		You will also need to make sure you change this flag yourself
 		to 1 whenever you want to redraw your object
-	 
-		If your extension won't draw to the window, but it still needs 
+
+		If your extension won't draw to the window, but it still needs
 		to do something every MMF loop use :
 
 			return REFLAG::NONE;
@@ -86,7 +86,7 @@ REFLAG Extension::Handle()
 
 	*/
 
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG::ONE_SHOT;
 }
 

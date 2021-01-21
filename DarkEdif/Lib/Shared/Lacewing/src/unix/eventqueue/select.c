@@ -38,7 +38,7 @@ static fd_set fdset_remove (fd_set a, fd_set b)
 
 	for (int i = 0; i < sizeof (fd_set); ++ i)
 	  ((char *) &res) [i] = ((char *) &a) [i] & ~ ((char *) &b) [i];
-	
+
 	return res;
 }
 
@@ -151,8 +151,8 @@ int lwp_eventqueue_drain (lwp_eventqueue queue,
 	*/
 	int result = select (queue->max_fd,
 						&queue->read_ready_set, &queue->write_ready_set, NULL,
-						&zero_timeout); 
-	
+						&zero_timeout);
+
 	if (result == -1)
 	{
 	  lwp_trace ("select() error: %d", errno);

@@ -3,7 +3,7 @@
 // This file contains routines that are handled during the Edittime.
 //
 // Including creating, display, and setting up your object.
-// 
+//
 // ============================================================================
 
 #ifndef RUN_ONLY
@@ -62,7 +62,7 @@ WORD BmpToImg(int bmID, npAppli idApp)
 // Initialize
 // -----------------
 // Where you want to do COLD-START initialization. Only called ONCE per application.
-// 
+//
 int WINAPI DLLExport Initialize(mv _far *knpV, int quiet)
 {
 	// No errors
@@ -74,7 +74,7 @@ int WINAPI DLLExport Initialize(mv _far *knpV, int quiet)
 // -----------------
 // Where you want to kill and initialized data opened in the above routine
 // Called ONCE per application, just before freeing the DLL.
-// 
+//
 int WINAPI DLLExport Free(mv _far *knpV)
 {
 	// No errors
@@ -85,7 +85,7 @@ int WINAPI DLLExport Free(mv _far *knpV)
 // UpdateEditStructure
 // --------------------
 // For you to update your object structure to newer versions
-// 
+//
 HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *knpV, void __far * OldEdPtr)
 {
 	// We do nothing here
@@ -117,7 +117,7 @@ void WINAPI DLLExport UnloadObject(mv _far *knpV, LPEDATA edPtr, int reserved)
 // --------------------
 // If you store file names in your datazone, they have to be relocated when the
 // application is moved: this routine does it.
-// 
+//
 void WINAPI DLLExport UpdateFileNames(mv _far *knpV, LPSTR gameName, LPEDATA edPtr, void (WINAPI * lpfnUpdate)(LPSTR, LPSTR))
 {
 }
@@ -194,7 +194,7 @@ void WINAPI DLLExport AppendPopup(mv _far *knpV, HMENU hPopup, fpLevObj loPtr, L
 // --------------------
 // CreateObject
 // --------------------
-// Called when you choose "Create new object". It should display the setup box 
+// Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
 
 int WINAPI DLLExport CreateObject(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr)
@@ -280,7 +280,7 @@ BOOL CALLBACK DLLExport setupProc(HWND hDlg,uint msgType,WPARAM wParam,LPARAM lP
 
 		txtResource = LoadResource( hInstLib , FindResource( hInstLib , MAKEINTRESOURCE(IDR_EXHELP) , TEXT("TXT")  ));
 		txt = (char*) LockResource( txtResource );
-	
+
 		SetDlgItemText(hDlg, IDC_EXHELP, txt );
 
 		FreeResource( txtResource);
@@ -296,7 +296,7 @@ BOOL CALLBACK DLLExport setupProc(HWND hDlg,uint msgType,WPARAM wParam,LPARAM lP
 
 			CheckDlgButton(hDlg, IDC_YOUR_CHECKBOX_ID,
 				edPtr->YourBooleanValue ? BST_CHECKED : BST_UNCHECKED);
-			
+
 			** If the variable is not of type 'bool' then include a comparison
 			** before the question mark (conditional operator):
 
@@ -315,7 +315,7 @@ BOOL CALLBACK DLLExport setupProc(HWND hDlg,uint msgType,WPARAM wParam,LPARAM lP
 
 			EnableWindow(GetDlgItem(hDlg, IDC_YOUR_CONTROL_ID), FALSE);
 		*/
-		
+
 		return TRUE;
 
 	case WM_COMMAND: // Command
@@ -347,7 +347,7 @@ BOOL CALLBACK DLLExport setupProc(HWND hDlg,uint msgType,WPARAM wParam,LPARAM lP
 				else
 					edPtr->YourLongValue = 50;
 			*/
-			
+
 			//Save the key!
 			GetDlgItemText(hDlg, IDC_INITKEY , edPtr->key , 100 );
 
@@ -400,7 +400,7 @@ BOOL CALLBACK DLLExport setupProc(HWND hDlg,uint msgType,WPARAM wParam,LPARAM lP
 //
 int WINAPI DLLExport ModifyObject(mv _far *knpV, LPEDATA edPtr, fpObjInfo oiPtr, fpLevObj loPtr, int modif, fpushort lpParams)
 {
-	
+
 	// Modification in size?
 	if (MODIF_SIZE == modif)
 	{
@@ -424,7 +424,7 @@ int WINAPI DLLExport RebuildExt(mv _far *knpV, LPEDATA edPtr, LPEDATA oldExtPtr,
 {
 	strcpy_s( oldExtPtr->key, 100, edPtr->key);
 	// No errors
-	return 0;	
+	return 0;
 }
 
 
@@ -489,7 +489,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *knpV, fpObjInfo oiPtr, fpLevObj loP
 // IsTransparent
 // --------------------
 // This routine tells CC&C if the mouse pointer is over a transparent zone of the object.
-// 
+//
 
 extern "C" {
 	BOOL WINAPI DLLExport IsTransparent(mv _far *knpV, fpLevObj loPtr, LPEDATA edPtr, int dx, int dy)
@@ -502,7 +502,7 @@ extern "C" {
 // PrepareToWriteObject
 // --------------------
 // Just before writing the datazone when saving the application, CC&C calls this routine.
-// 
+//
 void WINAPI	DLLExport PrepareToWriteObject(mv _far *knpV, LPEDATA edPtr, fpObjInfo adoi)
 {
 }
@@ -513,7 +513,7 @@ void WINAPI	DLLExport PrepareToWriteObject(mv _far *knpV, LPEDATA edPtr, fpObjIn
 // Triggers when a file is dropped onto the frame
 BOOL WINAPI	DLLExport UsesFile (LPSTR fileName)
 {
-	
+
 	// Return TRUE if you can create an object from the given file
 	return FALSE;
 
@@ -558,18 +558,18 @@ void WINAPI	DLLExport CreateFromFile (LPSTR fileName, LPEDATA edPtr)
 // EnumElts
 // ---------------------
 int WINAPI DLLExport EnumElts (mv __far *knpV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
-{  
+{
 	int error = 0;
 /*
 	//Uncomment this if you need to store an image in the image bank.
 	//Replace imgidx with the variable you create within the edit structure
-  
-	// Enum images  
+
+	// Enum images
 	if ( (error = enumProc(&edPtr->imgidx, IMG_TAB, lp1, lp2)) != 0 )
 	{
-		// Undo enum images	  
-		undoProc (&edPtr->imgidx, IMG_TAB, lp1, lp2);	
-	}  
+		// Undo enum images
+		undoProc (&edPtr->imgidx, IMG_TAB, lp1, lp2);
+	}
 */
 	return error;
 }

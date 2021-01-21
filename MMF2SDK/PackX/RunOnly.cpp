@@ -3,7 +3,7 @@
 // This file is used only when you are build a RUN_ONLY object.
 //
 // There should be no need to modify this file.
-// 
+//
 // ============================================================================
 #ifdef RUN_ONLY
 // Common Include
@@ -163,7 +163,7 @@ BOOL WINAPI	DLLExport UsesFile (LPSTR fileName)
 }
 
 int WINAPI DLLExport EnumElts (mv __far *knpV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
-{ 
+{
 	return 0;
 }
 

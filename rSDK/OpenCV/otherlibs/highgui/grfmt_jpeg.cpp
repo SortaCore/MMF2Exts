@@ -109,7 +109,7 @@ METHODDEF(void)
 error_exit( j_common_ptr cinfo )
 {
 	GrFmtJpegErrorMgr* err_mgr = (GrFmtJpegErrorMgr*)(cinfo->err);
-	
+
 	/* Return control to the setjmp point */
 	longjmp( err_mgr->setjmp_buffer, 1 );
 }
@@ -289,7 +289,7 @@ int my_jpeg_load_dht (struct jpeg_decompress_struct *info, unsigned char *dht,
 
 		if (count > 256 || count > length)
 			return -1;
-	
+
 		for (i = 0; i < count; ++i)
 			huffval[i] = dht[pos++];
 		length -= count;
@@ -301,10 +301,10 @@ int my_jpeg_load_dht (struct jpeg_decompress_struct *info, unsigned char *dht,
 		}
 		else
 			hufftbl = &dc_tables[index];
-	
+
 		if (index < 0 || index >= NUM_HUFF_TBLS)
 			return -1;
-	
+
 		if (*hufftbl == NULL)
 			*hufftbl = jpeg_alloc_huff_table ((j_common_ptr)info);
 		if (*hufftbl == NULL)
@@ -313,10 +313,10 @@ int my_jpeg_load_dht (struct jpeg_decompress_struct *info, unsigned char *dht,
 		memcpy ((*hufftbl)->bits, bits, sizeof (*hufftbl)->bits);
 		memcpy ((*hufftbl)->huffval, huffval, sizeof (*hufftbl)->huffval);
 	}
-	
+
 	if (length != 0)
 		return -1;
-	
+
 	return 0;
 }
 
@@ -330,13 +330,13 @@ bool  GrFmtJpegReader::ReadData( uchar* data, int step, int color )
 	bool result = false;
 
 	color = color > 0 || (m_iscolor && color < 0);
-	
+
 	if( m_cinfo && m_jerr && m_width && m_height )
 	{
 		jpeg_decompress_struct* cinfo = (jpeg_decompress_struct*)m_cinfo;
 		GrFmtJpegErrorMgr* jerr = (GrFmtJpegErrorMgr*)m_jerr;
 		JSAMPARRAY buffer = 0;
-		
+
 		if( setjmp( jerr->setjmp_buffer ) == 0 )
 		{
 			/* check if this is a mjpeg image format */
@@ -438,7 +438,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 	FILE* f = 0;
 	int channels = _channels > 1 ? 3 : 1;
 	uchar* buffer = 0; // temporary buffer for row flipping
-	
+
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = error_exit;
 
@@ -467,7 +467,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 			for( ; height--; data += step )
 			{
 				uchar* ptr = (uchar*)data;
-			
+
 				if( _channels == 3 )
 				{
 					icvCvt_BGR2RGB_8u_C3R( data, 0, buffer, 0, cvSize(width,1) );
@@ -512,7 +512,7 @@ bool  RJpegBitStream::Open( const char* filename )
 {
 	Close();
 	Allocate();
-	
+
 	m_is_opened = m_low_strm.Open( filename );
 	if( m_is_opened ) SetPos(0);
 	return m_is_opened;
@@ -762,7 +762,7 @@ static void aan_idct8x8( int *src, int *dst, int step )
 		x0 = descale(x0 - x1,3);
 		x1 = descale(x3 + x2,3);
 		x3 = descale(x3 - x2,3);
-		
+
 		dst[2] = x4; dst[5] = x0;
 		dst[3] = x3; dst[4] = x1;
 	}
@@ -809,9 +809,9 @@ bool GrFmtJpegReader::ReadHeader()
 {
 	char buffer[16];
 	int  i;
-	bool result = false, is_sof = false, 
+	bool result = false, is_sof = false,
 		 is_qt = false, is_ht = false, is_sos = false;
-	
+
 	assert( strlen(m_filename) != 0 );
 	if( !m_strm.Open( m_filename )) return false;
 
@@ -823,9 +823,9 @@ bool GrFmtJpegReader::ReadHeader()
 	if( setjmp( m_strm.JmpBuf()) == 0 )
 	{
 		RMByteStream& lstrm = m_strm.m_low_strm;
-		
+
 		lstrm.Skip( 2 ); // skip SOI marker
-		
+
 		for(;;)
 		{
 			int marker = m_strm.FindMarker() & 255;
@@ -836,7 +836,7 @@ bool GrFmtJpegReader::ReadHeader()
 			{
 				int pos	= lstrm.GetPos();
 				int length = lstrm.GetWord();
-			
+
 				switch( marker )
 				{
 				case 0xE0: // APP0
@@ -858,7 +858,7 @@ bool GrFmtJpegReader::ReadHeader()
 						(m_planes != 1 && m_planes != 3)) goto parsing_end;
 
 					m_iscolor = m_planes == 3;
-				
+
 					memset( m_ci, -1, sizeof(m_ci));
 
 					for( i = 0; i < m_planes; i++ )
@@ -870,7 +870,7 @@ bool GrFmtJpegReader::ReadHeader()
 							idx = i+1; // hack
 						}
 						cmp_info& ci = m_ci[idx-1];
-						
+
 						if( ci.tq > 0 /* duplicated description */) goto parsing_end;
 
 						ci.h = (char)lstrm.GetByte();
@@ -930,7 +930,7 @@ bool GrFmtJpegReader::LoadQuantTables( int length )
 {
 	uchar buffer[128];
 	int  i, tq_size;
-	
+
 	RMByteStream& lstrm = m_strm.m_low_strm;
 	length -= 2;
 
@@ -940,12 +940,12 @@ bool GrFmtJpegReader::LoadQuantTables( int length )
 		int size = tq >> 4;
 		tq &= 15;
 
-		tq_size = (64<<size) + 1; 
+		tq_size = (64<<size) + 1;
 		if( tq > 3 || size > 1 || length < tq_size ) return false;
 		length -= tq_size;
 
 		lstrm.GetBytes( buffer, tq_size - 1 );
-		
+
 		if( size == 0 ) // 8 bit quant factors
 		{
 			for( i = 0; i < 64; i++ )
@@ -995,11 +995,11 @@ bool GrFmtJpegReader::LoadHuffmanTables( int length )
 		length -= ht_size;
 
 		lstrm.GetBytes( buffer + max_bits, ht_size );
-		
-		if( !::bsCreateDecodeHuffmanTable( 
-				  ::bsCreateSourceHuffmanTable( 
+
+		if( !::bsCreateDecodeHuffmanTable(
+				  ::bsCreateSourceHuffmanTable(
 						buffer, buffer2, max_bits, first_table_bits ),
-						hclass == 0 ? m_td[t] : m_ta[t], 
+						hclass == 0 ? m_td[t] : m_ta[t],
 						max_dec_htable_size )) return false;
 		if( hclass == 0 )
 			m_is_td[t] = true;
@@ -1032,7 +1032,7 @@ bool GrFmtJpegReader::ReadData( uchar* data, int step, int color )
 			{
 				int pos	= lstrm.GetPos();
 				int length = lstrm.GetWord();
-			
+
 				switch( marker )
 				{
 				case 0xC4: // DHT
@@ -1054,13 +1054,13 @@ bool GrFmtJpegReader::ReadData( uchar* data, int step, int color )
 							{
 								c = i; // hack
 							}
-							
+
 							if( idx[c] != -1 ) goto decoding_end;
 							idx[i] = c;
 							td = lstrm.GetByte();
 							ta = td & 15;
 							td >>= 4;
-							if( !(ta <= 3 && m_is_ta[ta] && 
+							if( !(ta <= 3 && m_is_ta[ta] &&
 								  td <= 3 && m_is_td[td] &&
 								  m_is_tq[m_ci[c].tq]) )
 								goto decoding_end;
@@ -1091,7 +1091,7 @@ bool GrFmtJpegReader::ReadData( uchar* data, int step, int color )
 					m_MCUs = lstrm.GetWord();
 					break;
 				}
-				
+
 				if( marker != 0xDA ) lstrm.SetPos( pos + length );
 			}
 		}
@@ -1104,7 +1104,7 @@ decoding_end: ;
 
 void  GrFmtJpegReader::ResetDecoder()
 {
-	m_ci[0].dc_pred = m_ci[1].dc_pred = m_ci[2].dc_pred = 0; 
+	m_ci[0].dc_pred = m_ci[1].dc_pred = m_ci[2].dc_pred = 0;
 }
 
 void  GrFmtJpegReader::ProcessScan( int* idx, int ns, uchar* data, int step, int color )
@@ -1144,7 +1144,7 @@ void  GrFmtJpegReader::ProcessScan( int* idx, int ns, uchar* data, int step, int
 		int  x2, y2, x, y, xc;
 		int* cmp;
 		uchar* data1;
-		
+
 		if( mcu == m_MCUs && m_MCUs != 0 )
 		{
 			ResetDecoder();
@@ -1204,7 +1204,7 @@ void  GrFmtJpegReader::ProcessScan( int* idx, int ns, uchar* data, int step, int
 				if( color )
 				{
 					int  shift = h[1]*(y >> y_shift);
-					int* cmpCb = blocks[pos[1]] + shift; 
+					int* cmpCb = blocks[pos[1]] + shift;
 					int* cmpCr = blocks[pos[2]] + shift;
 					x = 0;
 					if( x_shift == 0 )
@@ -1296,7 +1296,7 @@ void  GrFmtJpegReader::GetBlock( int* block, int c )
 
 	val -= (val*2 <= mask ? mask : 0);
 	m_ci[c].dc_pred = val += m_ci[c].dc_pred;
-	
+
 	block[0] = descale(val * tq[0],16);
 
 	// Get AC coeffs
@@ -1336,7 +1336,7 @@ bool  WJpegBitStream::Open( const char* filename )
 {
 	Close();
 	Allocate();
-	
+
 	m_is_opened = m_low_strm.Open( filename );
 	if( m_is_opened )
 	{
@@ -1382,7 +1382,7 @@ void  WJpegBitStream::WriteBlock()
 			m_low_strm.PutByte( 0 );
 		}
 	}
-	
+
 	m_current = m_start;
 }
 
@@ -1469,7 +1469,7 @@ static const uchar jpegTableK5[] =
 	0xf9, 0xfa
 };
 
-// ... for chroma ACs  
+// ... for chroma ACs
 static const uchar jpegTableK6[] =
 {
 	0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119,
@@ -1497,7 +1497,7 @@ static const uchar jpegTableK6[] =
 };
 
 
-static const char jpegHeader[] = 
+static const char jpegHeader[] =
 	"\xFF\xD8"  // SOI  - start of image
 	"\xFF\xE0"  // APP0 - jfif extention
 	"\x00\x10"  // 2 bytes: length of APP0 segment
@@ -1524,7 +1524,7 @@ static void aan_fdct8x8( int *src, int *dst,
 
 		int x4 = x0 + x1; x0 -= x1;
 		x1 = x2 + x3; x2 -= x3;
-	
+
 		work[7] = x0; work[1] = x2;
 		x2 = x4 + x1; x4 -= x1;
 
@@ -1571,7 +1571,7 @@ static void aan_fdct8x8( int *src, int *dst,
 
 		int  x4 = x0 + x1; x0 -= x1;
 		x1 = x2 + x3; x2 -= x3;
-	
+
 		work[8*7] = x0; work[8*0] = x2;
 		x2 = x4 + x1; x4 -= x1;
 
@@ -1620,7 +1620,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 									int width, int height, int /*depth*/, int _channels )
 {
 	assert( data && width > 0 && height > 0 );
-	
+
 	if( !m_strm.Open( m_filename ) ) return false;
 
 	// encode the header and tables
@@ -1657,13 +1657,13 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 
 	// Encode header
 	lowstrm.PutBytes( jpegHeader, sizeof(jpegHeader) - 1 );
-	
+
 	// Encode quantization tables
 	for( i = 0; i < (channels > 1 ? 2 : 1); i++ )
 	{
 		const uchar* qtable = i == 0 ? jpegTableK1_T : jpegTableK2_T;
 		int chroma_scale = i > 0 ? luma_count : 1;
-		
+
 		lowstrm.PutWord( 0xffdb );	// DQT marker
 		lowstrm.PutWord( 2 + 65*1 ); // put single qtable
 		lowstrm.PutByte( 0*16 + i ); // 8-bit table
@@ -1734,8 +1734,8 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 	lowstrm.PutWord(0*256 + 63);// start and end of spectral selection - for
 								// sequental DCT start is 0 and end is 63
 
-	lowstrm.PutByte( 0 );  // successive approximation bit position 
-							// high & low - (0,0) for sequental DCT  
+	lowstrm.PutByte( 0 );  // successive approximation bit position
+							// high & low - (0,0) for sequental DCT
 
 	// encode data
 	for( y = 0; y < height; y += y_step, data += y_step*step )
@@ -1751,7 +1751,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 			if( y + y_limit > height ) y_limit = height - y;
 
 			memset( block, 0, block_count*64*sizeof(block[0][0]));
-			
+
 			if( channels > 1 )
 			{
 				int* UV_data = block[luma_count];
@@ -1767,7 +1767,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 						int Y = descale( r*y_r + g*y_g + b*y_b, fixc - 2) - 128*4;
 						int U = descale( r*cb_r + g*cb_g + b*cb_b, fixc - 2 );
 						int V = descale( r*cr_r + g*cr_g + b*cr_b, fixc - 2 );
-						int j2 = j >> (x_scale - 1); 
+						int j2 = j >> (x_scale - 1);
 
 						Y_data[j] = Y;
 						UV_data[j2] += U;
@@ -1850,7 +1850,7 @@ bool  GrFmtJpegWriter::WriteImage( const uchar* data, int step,
 		}
 	}
 
-	// Flush 
+	// Flush
 	m_strm.Flush();
 
 	lowstrm.PutWord( 0xFFD9 ); // EOI marker

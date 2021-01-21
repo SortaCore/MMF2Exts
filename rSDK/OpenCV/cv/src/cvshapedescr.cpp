@@ -53,7 +53,7 @@ cvArcLength( const void *array, CvSlice slice, int is_closed )
 	int i, j = 0, count;
 	const int N = 16;
 	float buf[N];
-	CvMat buffer = cvMat( 1, N, CV_32F, buf ); 
+	CvMat buffer = cvMat( 1, N, CV_32F, buf );
 	CvSeqReader reader;
 	CvContour contour_header;
 	CvSeq* contour = 0;
@@ -78,7 +78,7 @@ cvArcLength( const void *array, CvSlice slice, int is_closed )
 	if( contour->total > 1 )
 	{
 		int is_float = CV_SEQ_ELTYPE( contour ) == CV_32FC2;
-		
+
 		cvStartReadSeq( contour, &reader, 0 );
 		cvSetSeqReaderPos( &reader, slice.start_index );
 		count = cvSliceLength( slice, contour );
@@ -382,7 +382,7 @@ cvMinEnclosingCircle( const void* array, CvPoint2D32f * _center, float *_radius 
 	{
 		double min_delta = 0, delta;
 		CvPoint2D32f ptfl;
-		
+
 		icvFindEnslosingCicle4pts_32f( pts, &center, &radius );
 		cvStartReadSeq( sequence, &reader, 0 );
 
@@ -475,7 +475,7 @@ icvContourArea( const CvSeq* contour, double *area )
 			yi_1 = ((CvPoint2D32f*)(reader.ptr))->y;
 		}
 		CV_NEXT_SEQ_ELEM( contour->elem_size, reader );
-		
+
 		while( lpt-- > 0 )
 		{
 			double dxy, xi, yi;
@@ -509,7 +509,7 @@ icvContourArea( const CvSeq* contour, double *area )
 
 /****************************************************************************************\
 
- copy data from one buffer to other buffer 
+ copy data from one buffer to other buffer
 
 \****************************************************************************************/
 
@@ -777,7 +777,7 @@ static void
 icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 {
 	CvMat* D = 0;
-	
+
 	CV_FUNCNAME( "icvFitEllipse_F" );
 
 	__BEGIN__;
@@ -798,7 +798,7 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 
 	/* create matrix D of  input points */
 	CV_CALL( D = cvCreateMat( n, 6, CV_64F ));
-	
+
 	cvStartReadSeq( points, &reader );
 
 	/* shift all points to zero */
@@ -825,7 +825,7 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 	{
 		double x, y;
 		double* Dptr = D->data.db + i*6;
-		
+
 		if( !is_float )
 		{
 			x = ((CvPoint*)reader.ptr)->x - offx;
@@ -837,7 +837,7 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 			y = ((CvPoint2D32f*)reader.ptr)->y - offy;
 		}
 		CV_NEXT_SEQ_ELEM( points->elem_size, reader );
-		
+
 		Dptr[0] = x * x;
 		Dptr[1] = x * y;
 		Dptr[2] = y * y;
@@ -860,7 +860,7 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 
 	// C = Q^-1 = transp(INVEIGV) * INVEIGV
 	cvMulTransposed( &_EIGVECS, &_C, 1 );
-	
+
 	cvZero( &_S );
 	S[2] = 2.;
 	S[7] = -1.;
@@ -880,8 +880,8 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 
 	if( i >= 3 /*eigenvalues[0] < DBL_EPSILON*/ )
 	{
-		box->center.x = box->center.y = 
-		box->size.width = box->size.height = 
+		box->center.x = box->center.y =
+		box->size.width = box->size.height =
 		box->angle = 0.f;
 		EXIT;
 	}
@@ -891,15 +891,15 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 	_T = cvMat( 6, 1, CV_64F, T );
 	// Q^-1*eigenvecs[0]
 	cvMatMul( &_C, &_EIGVECS, &_T );
-	
+
 	// extract vector components
 	a = T[0]; b = T[1]; c = T[2]; d = T[3]; e = T[4]; f = T[5];
-	
+
 	///////////////// extract ellipse axes from above values ////////////////
 
-	/* 
-		1) find center of ellipse 
-		it satisfy equation  
+	/*
+		1) find center of ellipse
+		it satisfy equation
 		| a	 b/2 | *  | x0 | +  | d/2 | = |0 |
 		| b/2	c  |	| y0 |	| e/2 |	|0 |
 
@@ -910,14 +910,14 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 	// we must normalize (a b c d e f ) to fit (4ac-b^2=1)
 	scale = sqrt( 0.25 * idet );
 
-	if( scale < DBL_EPSILON ) 
+	if( scale < DBL_EPSILON )
 	{
 		box->center.x = (float)offx;
 		box->center.y = (float)offy;
 		box->size.width = box->size.height = box->angle = 0.f;
 		EXIT;
 	}
-		
+
 	a *= scale;
 	b *= scale;
 	c *= scale;
@@ -936,7 +936,7 @@ icvFitEllipse_F( CvSeq* points, CvBox2D* box )
 	// new f == F(x0,y0)
 	f += a * x0 * x0 + b * x0 * y0 + c * y0 * y0 + d * x0 + e * y0;
 
-	if( fabs(f) < DBL_EPSILON ) 
+	if( fabs(f) < DBL_EPSILON )
 	{
 		box->size.width = box->size.height = box->angle = 0.f;
 		EXIT;
@@ -1047,7 +1047,7 @@ cvFitEllipse2( const CvArr* array )
 		Ad[i*5 + 3] = p.x;
 		Ad[i*5 + 4] = p.y;
 	}
-	
+
 	cvSolve( &A, &b, &x, CV_SVD );
 
 	// now use general-form parameters A - E to find the ellipse center:
@@ -1271,7 +1271,7 @@ cvBoundingRect( CvArr* array, int update )
 			xmin = ymin = 0;
 	}
 	else if( ptseq->total )
-	{	
+	{
 		int  is_float = CV_SEQ_ELTYPE(ptseq) == CV_32FC2;
 		cvStartReadSeq( ptseq, &reader, 0 );
 
@@ -1284,12 +1284,12 @@ cvBoundingRect( CvArr* array, int update )
 			ymin = ymax = pt.y;
 
 			for( i = 1; i < ptseq->total; i++ )
-			{			
+			{
 				CV_READ_SEQ_ELEM( pt, reader );
-		
+
 				if( xmin > pt.x )
 					xmin = pt.x;
-		
+
 				if( xmax < pt.x )
 					xmax = pt.x;
 
@@ -1310,14 +1310,14 @@ cvBoundingRect( CvArr* array, int update )
 			ymin = ymax = CV_TOGGLE_FLT(pt.y);
 
 			for( i = 1; i < ptseq->total; i++ )
-			{			
+			{
 				CV_READ_SEQ_ELEM( pt, reader );
 				pt.x = CV_TOGGLE_FLT(pt.x);
 				pt.y = CV_TOGGLE_FLT(pt.y);
-		
+
 				if( xmin > pt.x )
 					xmin = pt.x;
-		
+
 				if( xmax < pt.x )
 					xmax = pt.x;
 

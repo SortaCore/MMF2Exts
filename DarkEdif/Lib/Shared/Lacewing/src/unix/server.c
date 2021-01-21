@@ -48,10 +48,10 @@ static void on_client_data (lw_stream, void * tag, const char * buffer,
 
 struct _lw_server
 {
-	int socket; 
+	int socket;
 
 	lw_pump pump;
-	
+
 	lw_server_hook_connect on_connect;
 	lw_server_hook_disconnect on_disconnect;
 	lw_server_hook_data on_data;
@@ -70,7 +70,7 @@ struct _lw_server
 
 	list (lw_server_client, clients);
 };
-	
+
 struct _lw_server_client
 {
 	struct _lw_fdstream fdstream;
@@ -138,7 +138,7 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 		lwp_trace ("on_ssl_handshook for %p, NPN is %s",
 			 client, lwp_sslclient_npn (ssl));
 	#endif
-	
+
 	client->on_connect_called = lw_true;
 
 	lwp_retain (client, "on_ssl_handshook");
@@ -176,7 +176,7 @@ lw_server lw_server_new (lw_pump pump)
 	#else
 	  lwp_trace ("NPN is NOT available\n");
 	#endif
-	
+
 	ctx->socket = -1;
 
 	return ctx;
@@ -208,7 +208,7 @@ static void listen_socket_read_ready (void * tag)
 
 	struct sockaddr_storage address;
 	socklen_t address_length = sizeof (address);
-	
+
 	for (;;)
 	{
 	  int fd;
@@ -241,7 +241,7 @@ static void listen_socket_read_ready (void * tag)
 		 lw_stream_add_hook_data ((lw_stream) client, on_client_data, client);
 		 should_read = lw_true;
 	  }
-	  
+
 	  #ifdef ENABLE_SSL
 	  if (!client->ssl)
 	  {
@@ -331,7 +331,7 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	}
 
 	lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
-	
+
 	lw_error_delete (error);
 }
 

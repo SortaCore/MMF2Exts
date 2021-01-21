@@ -21,7 +21,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
 	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -30,7 +30,7 @@ public:
 
 	/*  Add any data you want to store in your extension to this class
 		(eg. what you'd normally store in rdPtr).
-		
+
 		For those using multi-threading, any variables that are modified
 		by the threads should be in SaveExtInfo.
 		See MultiThreading.h.
@@ -39,7 +39,7 @@ public:
 		and destructors, without having to call them manually or store
 		a pointer.
 	*/
-	
+
 	bool isGlobal;
 	GlobalInfo * globals;
 
@@ -143,7 +143,7 @@ public:
 		void Connect(const TCHAR * Hostname);
 		void ResizeBinaryToSend(int NewSize);
 		void SetDestroySetting(int enabled);
-	
+
 	/// Conditions
 
 		const bool AlwaysTrue() { return true; }
@@ -285,7 +285,7 @@ public:
 	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
 	long Expression(int ID, RUNDATA * rdPtr, long param);
 
-	
+
 
 	/*  These replace the functions like HandleRunObject that used to be
 		implemented in Runtime.cpp. They work exactly the same, but they're
@@ -327,7 +327,7 @@ struct GlobalInfo
 	std::vector<Extension *>					refs;
 	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
 	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
-	
+
 	void AddEvent1(std::uint16_t event1ID,
 		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,

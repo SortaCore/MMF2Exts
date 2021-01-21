@@ -109,6 +109,6 @@ typedef	RUNDATA	_far *			LPRDATA;
 
 
 // If to handle message, specify the priority of the handling procedure
-// 0= low, 255= very high. You should use 100 as normal.												
+// 0= low, 255= very high. You should use 100 as normal.
 // --------------------------------------------------------------------
 #define	WINDOWPROC_PRIORITY		100

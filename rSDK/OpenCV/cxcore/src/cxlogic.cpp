@@ -181,9 +181,9 @@ icvLogicS( const void* srcarr, CvScalar* scalar, void* dstarr,
 {
 	uchar* buffer = 0;
 	int local_alloc = 1;
-	
+
 	CV_FUNCNAME( "icvLogicS" );
-	
+
 	__BEGIN__;
 
 	CvMat srcstub, *src = (CvMat*)srcarr;
@@ -191,7 +191,7 @@ icvLogicS( const void* srcarr, CvScalar* scalar, void* dstarr,
 	CvMat maskstub, *mask = (CvMat*)maskarr;
 	CvMat dstbuf, *tdst;
 	CvCopyMaskFunc copym_func = 0;
-	
+
 	int y, dy;
 	int coi1 = 0, coi2 = 0;
 	int is_nd = 0, cont_flag = 0;
@@ -269,7 +269,7 @@ icvLogicS( const void* srcarr, CvScalar* scalar, void* dstarr,
 	else
 	{
 		int buf_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -296,7 +296,7 @@ icvLogicS( const void* srcarr, CvScalar* scalar, void* dstarr,
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -342,7 +342,7 @@ icvLogic( const void* srcarr1, const void* srcarr2, void* dstarr,
 	int local_alloc = 1;
 
 	CV_FUNCNAME( "icvLogic" );
-	
+
 	__BEGIN__;
 
 	int y, dy;
@@ -419,7 +419,7 @@ icvLogic( const void* srcarr1, const void* srcarr2, void* dstarr,
 
 	if( !CV_ARE_TYPES_EQ( src1, dst ) )
 		CV_ERROR_FROM_CODE( CV_StsUnmatchedFormats );
-	
+
 	if( !CV_ARE_SIZES_EQ( src1, dst ) )
 		CV_ERROR_FROM_CODE( CV_StsUnmatchedSizes );
 
@@ -436,7 +436,7 @@ icvLogic( const void* srcarr1, const void* srcarr2, void* dstarr,
 	else
 	{
 		int buf_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -463,7 +463,7 @@ icvLogic( const void* srcarr1, const void* srcarr2, void* dstarr,
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -617,12 +617,12 @@ CV_IMPL void
 cvNot( const void* srcarr, void* dstarr )
 {
 	CV_FUNCNAME( "cvNot" );
-	
+
 	__BEGIN__;
 
 	CvMat srcstub, *src = (CvMat*)srcarr;
 	CvMat dststub, *dst = (CvMat*)dstarr;
-	
+
 	int coi1 = 0, coi2 = 0;
 	int type, is_nd = 0;
 	CvSize size;

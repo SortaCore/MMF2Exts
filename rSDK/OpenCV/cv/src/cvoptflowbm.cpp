@@ -41,7 +41,7 @@
 
 #include "_cv.h"
 
-/* 
+/*
 	Finds L1 norm between two blocks.
 */
 static int
@@ -192,12 +192,12 @@ icvCalcOpticalFlowBM_8u32fR( uchar * imgA, uchar * imgB,
 		int min_count = MIN( X_shift_count, Y_shift_count );
 
 		/* cycle by neighborhood rings */
-		/* scanning scheme is 
+		/* scanning scheme is
 
 			. 9  10 11 12
 			. 8  1  2  13
 			. 7  *  3  14
-			. 6  5  4  15	  
+			. 6  5  4  15
 			20 19 18 17 16
 		 */
 
@@ -542,7 +542,7 @@ icvCalcOpticalFlowBM_8u32fR( uchar * imgA, uchar * imgB,
 
 	cvFree( &ss );
 	cvFree( &blockA );
-	
+
 	return CV_OK;
 }								/*cvCalcOpticalFlowBM_8u */
 
@@ -550,7 +550,7 @@ icvCalcOpticalFlowBM_8u32fR( uchar * imgA, uchar * imgB,
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name:	cvCalcOpticalFlowBM
 //	Purpose: Optical flow implementation
-//	Context: 
+//	Context:
 //	Parameters:
 //			 srcA, srcB - source image
 //			 velx, vely - destination image

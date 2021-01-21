@@ -451,7 +451,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 	if (channelNameU8.size() > 254)
 		return CreateError("Cannot create new channel; channel name \"%s\" is too long (after UTF-8 conversion).", TStringToUTF8(channelNamePtr).c_str());
 	const std::string channelNameU8Simplified = lw_u8str_simplify(channelNameU8);
-	
+
 	const bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
 
 	{
@@ -1192,7 +1192,7 @@ void Extension::AddByteText(const TCHAR * byte)
 	std::string ansi = TStringToANSI(std::tstring(byte, 1), &convOK);
 	if (!convOK)
 		return CreateError("Adding byte to binary failed: char \"%s\" could not convert to ANSI.", TStringToUTF8(byte).c_str());
-	
+
 	AddToSend(ansi.data(), 1);
 }
 void Extension::AddByteInt(int byte)

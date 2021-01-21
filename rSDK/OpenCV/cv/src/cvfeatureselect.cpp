@@ -53,7 +53,7 @@ cvGoodFeaturesToTrack( const void* image, void* eigImage, void* tempImage,
 {
 	CvMat* _eigImg = 0;
 	CvMat* _tmpImg = 0;
-	
+
 	CV_FUNCNAME( "cvGoodFeaturesToTrack" );
 
 	__BEGIN__;
@@ -212,7 +212,7 @@ cvGoodFeaturesToTrack( const void* image, void* eigImage, void* tempImage,
 				break;
 		}
 	}
-	
+
 	/* convert points to floating-point format */
 	for( i = 0; i < count; i++ )
 	{

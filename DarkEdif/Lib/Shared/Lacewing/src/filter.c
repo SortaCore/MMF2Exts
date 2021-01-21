@@ -73,7 +73,7 @@ lw_filter lw_filter_clone (lw_filter filter)
 }
 
 void lw_filter_delete (lw_filter ctx)
-{ 
+{
 	if (!ctx)
 	  return;
 
@@ -193,7 +193,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	struct sockaddr_storage addr;
 	lw_bool ipv6;
 	int reuse;
- 
+
 	ipv6 = lw_filter_ipv6 (filter);
 
 	if (!ipv6)
@@ -236,7 +236,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 			(AF_INET, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
 		 {
 			lw_error_add (error, WSAGetLastError ());
-			lw_error_addf (error, "Error creating socket"); 
+			lw_error_addf (error, "Error creating socket");
 
 			return -1;
 		 }

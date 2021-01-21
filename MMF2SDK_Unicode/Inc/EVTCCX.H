@@ -9,7 +9,7 @@
 
 // Structure de definition des conditions / actions POUR LES EXTENSIONS V1
 #ifdef __cplusplus
-class infosEvents { 
+class infosEvents {
 public:
 #else
 typedef struct infosEvents {

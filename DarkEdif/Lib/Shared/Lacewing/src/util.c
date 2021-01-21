@@ -78,7 +78,7 @@ lw_bool lwp_urldecode (const char * in, size_t in_length,
 		 if ((cur_in + 2) > in_length)
 			return lw_false;
 
-		 n [0] = in [++ cur_in]; 
+		 n [0] = in [++ cur_in];
 		 n [1] = in [++ cur_in];
 
 		 out [cur_out ++] = (char) strtol (n, 0, 16);
@@ -208,7 +208,7 @@ time_t lwp_parse_time (const char * string)
 		copy [ 7] = 0;
 		copy [11] = 0;
 		copy [16] = 0;
-		
+
 		day = atoi (copy + 4);
 		month = copy + 8;
 		year = atoi (copy + 12);
@@ -233,7 +233,7 @@ time_t lwp_parse_time (const char * string)
 	else
 	{
 		/* RFC 850 date (Sunday, 06-Nov-94 08:49:37 GMT) - unsupported */
-		
+
 		return 0;
 	}
 

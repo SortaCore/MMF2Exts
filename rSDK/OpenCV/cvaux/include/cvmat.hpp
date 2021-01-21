@@ -329,7 +329,7 @@ inline CvScalar operator ^ ( const CvScalar& a, const CvScalar& b )
 inline CvScalar operator ~ ( const CvScalar& a )
 {
 	return cvScalar( ~cvRound(a.val[0]), ~cvRound(a.val[1]),
-					 ~cvRound(a.val[2]), ~cvRound(a.val[3])); 
+					 ~cvRound(a.val[2]), ~cvRound(a.val[3]));
 }
 
 
@@ -379,7 +379,7 @@ public:
 	explicit CvMAT( int rows, int type, void* data, int step = CV_AUTOSTEP );
 	explicit CvMAT( int rows, int cols, int type );
 	explicit CvMAT( int rows, int type );
-	
+
 	/* extracting part of an existing matrix */
 	explicit CvMAT( const CvMat& mat, CvRect rect ); /* submatrix */
 	explicit CvMAT( const CvMat& mat, int k, int i ); /* submatrix:
@@ -418,7 +418,7 @@ public:
 	CvMAT& operator = ( const IplImage& img );
 	CvMAT& operator = ( double fillval );
 	CvMAT& operator = ( const CvScalar& fillval );
-	
+
 	/* b = op(a1, a2,...) */
 	CvMAT& operator = ( const _CvMAT_T_& mat_t );
 	CvMAT& operator = ( const _CvMAT_INV_& inv_mat );
@@ -500,7 +500,7 @@ public:
 	double		  max( CvPoint* maxloc = 0 ) const;
 
 	_CvMAT_DOT_OP_  abs() const;
-	
+
 	/* accessing matrix elements */
 	_CvMATElem_ operator ()( int row );
 	_CvMATConstElem_ operator ()( int row ) const;
@@ -553,7 +553,7 @@ public:
 	/* decrease matrix data reference counter and clear data pointer */
 	void  release();
 protected:
-	
+
 	void  create( int rows, int cols, int type );
 };
 
@@ -578,7 +578,7 @@ struct  CV_EXPORTS _CvMATElemCn_
 {
 	explicit _CvMATElemCn_( uchar* ptr, int type, int coi );
 	operator double() const;
-	
+
 	_CvMATElemCn_& operator = ( const _CvMATConstElem_& elem );
 	_CvMATElemCn_& operator = ( const _CvMATElemCn_& elem );
 	_CvMATElemCn_& operator = ( const CvScalar& scalar );
@@ -639,7 +639,7 @@ struct  CV_EXPORTS _CvMAT_BASE_OP_
 	CvMAT	 rect( CvRect rect ) const;
 	CvMAT	 diag( int diag = 0 ) const;
 	_CvMAT_CVT_	 cvt( int newdepth = -1, double scale = 1, double shift = 0 ) const;
-	
+
 	double		  norm( int norm_type = CV_L2 ) const;
 	double		  det() const;
 	double		  trace() const;
@@ -652,7 +652,7 @@ struct  CV_EXPORTS _CvMAT_T_ : public _CvMAT_BASE_OP_
 {
 	explicit _CvMAT_T_( const CvMAT* a );
 	explicit _CvMAT_T_( const CvMAT* a, double alpha );
-	
+
 	double det() const;
 	double norm( int normType = CV_L2 ) const;
 	operator CvMAT() const;
@@ -922,28 +922,28 @@ inline _CvMATElemCn_& _CvMATElemCn_::operator = ( const _CvMATElemCn_& elem )
 
 
 inline _CvMATElemCn_& _CvMATElemCn_::operator = ( const CvScalar& scalar )
-{	
+{
 	CvMAT::set( ptr, type, 0, scalar.val[0] );
 	return *this;
 }
 
 
 inline _CvMATElemCn_& _CvMATElemCn_::operator = ( double d )
-{	
+{
 	CvMAT::set( ptr, type, 0, d );
 	return *this;
 }
 
 
 inline _CvMATElemCn_& _CvMATElemCn_::operator = ( float f )
-{	
+{
 	CvMAT::set( ptr, type, 0, (double)f );
 	return *this;
 }
 
 
 inline _CvMATElemCn_& _CvMATElemCn_::operator = ( int i )
-{	
+{
 	CvMAT::set( ptr, type, 0, i );
 	return *this;
 }
@@ -1188,7 +1188,7 @@ inline CvMAT& CvMAT::operator -= ( const CvScalar& val )
 inline CvMAT& CvMAT::operator *= ( const CvMat& mat )
 {
 	cvMul( this, &mat, this );
-	return *this;	
+	return *this;
 }
 
 
@@ -1274,14 +1274,14 @@ inline double CvMAT::norm( int normType ) const
 
 
 inline double CvMAT::min( CvPoint* minloc ) const
-{	
+{
 	double t;
 	cvMinMaxLoc( this, &t, 0, minloc, 0, 0 );
 	return t;
 }
 
 inline double CvMAT::max( CvPoint* maxloc ) const
-{	
+{
 	double t;
 	cvMinMaxLoc( this, 0, &t, 0, maxloc, 0 );
 	return t;
@@ -1396,7 +1396,7 @@ inline _CvMAT_CVT_ CvMAT::cvt( int newdepth, double scale, double shift ) const
 
 
 inline CvMAT::CvMAT( const CvMat& mat, CvRect rect )
-{	
+{
 	type = 0;
 	cvGetSubArr( &mat, this, rect );
 	cvIncRefData( this );
@@ -1436,13 +1436,13 @@ inline CvMAT CvMAT::rect( CvRect rect ) const
 {	return CvMAT( *this, rect );	}
 
 inline CvMAT CvMAT::rowrange( int row1, int row2 ) const
-{	
+{
 	assert( 0 <= row1 && row1 < row2 && row2 <= height );
 	return CvMAT( *this, cvRect( 0, row1, width, row2 - row1 ));
 }
 
 inline CvMAT CvMAT::colrange( int col1, int col2 ) const
-{	
+{
 	assert( 0 <= col1 && col1 < col2 && col2 <= width );
 	return CvMAT( *this, cvRect( col1, 0, col2 - col1, height ));
 }
@@ -2080,7 +2080,7 @@ inline CvMAT  _CvMAT_BASE_OP_::row( int r ) const
 {	return CvMAT((CvMAT)*this, 0, r ); }
 
 inline CvMAT  _CvMAT_BASE_OP_::rowrange( int row1, int row2 ) const
-{	
+{
 	CvMAT m = (CvMAT)*this;
 	assert( 0 <= row1 && row1 < row2 && row2 <= m.height );
 	return CvMAT( m, cvRect( 0, row1, m.width, row2 - row1 ));
@@ -2090,7 +2090,7 @@ inline CvMAT  _CvMAT_BASE_OP_::col( int c ) const
 {	return CvMAT( (CvMAT)*this, 1, c ); }
 
 inline CvMAT  _CvMAT_BASE_OP_::colrange( int col1, int col2 ) const
-{	
+{
 	CvMAT m = (CvMAT)*this;
 	assert( 0 <= col1 && col1 < col2 && col2 <= m.width );
 	return CvMAT( m, cvRect( col1, 0, col2 - col1, m.height ));

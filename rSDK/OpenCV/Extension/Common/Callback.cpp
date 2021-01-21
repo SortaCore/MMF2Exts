@@ -1,7 +1,7 @@
 #include ""
 
 void initializeMyOpenCvErrorCallback(headerObject rHo){
-	
+
 }
 
 CV_IMPL int

@@ -3,7 +3,7 @@
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 /// DEBUG
@@ -53,7 +53,7 @@ void Extension::ClientInitialise_Basic(TCHAR * Hostname, int Port, TCHAR * Proto
 		{
 			Explode("Protocol unrecognised. Use the help file to see the available protocols.");
 		}
-		else 
+		else
 		{
 			StructPassThru* Parameters = new StructPassThru;
 			Parameters->para_AddressFamily = AF_INET;		// INET = INTERNET = IPv4
@@ -117,7 +117,7 @@ void Extension::ClientInitialise_Advanced(TCHAR * Hostname, int Port, TCHAR * Pr
 			Explode("Address Family unrecognised. Use the help file to see the available families.");
 		if (SocketType2 == -1)
 			Explode("Socket type unrecognised. Use the help file to see the available socket types.");
-		
+
 		// If no errors, go for it. This is a seperate if, rather than
 		// if-else-if, so several errors with the parameters can be reported.
 		if (Protocol2 != -1 && AddressFamily2 != -1 && SocketType2 != -1)
@@ -145,7 +145,7 @@ void Extension::ClientInitialise_Advanced(TCHAR * Hostname, int Port, TCHAR * Pr
 			}
 			else
 				Parameters->para_client_InitialSend = InitialText;
-			
+
 			// IRDA uses different struct to other protocols
 			if (Protocol2 != AF_IRDA)
 			{
@@ -290,19 +290,19 @@ void Extension::ServerInitialise_Advanced(TCHAR * Protocol, TCHAR * AddressFamil
 			Explode("Socket type unrecognised. Use the help file to see the available socket types."); else
 		if (InAddr2 == 12345)
 			Explode("InAddr type unrecognised. Use the help file to see the available InAddr types."); else
-		if (Protocol2 != -1 && 
+		if (Protocol2 != -1 &&
 			AddressFamily2 != -1 &&
 			SocketType2 != -1 &&
 			InAddr2 != 12345)
 		{
 			StructPassThru* Parameters = new StructPassThru;
 			Parameters->para_AddressFamily = AddressFamily2;
-			Parameters->para_Ext = this;	
+			Parameters->para_Ext = this;
 			Parameters->para_Port = Port;
 			Parameters->para_ProtocolType = Protocol2;
 			Parameters->para_SocketType = SocketType2;
 			Parameters->para_server_InAddr = InAddr2;
-			
+
 			// IRDA uses different struct to other protocols
 			if (Protocol2 != AF_IRDA)
 			{
@@ -410,9 +410,9 @@ void Extension::PacketForm_NewPacket(size_t Size)
 		// Allocate new memory
 		PacketFormLocation = calloc(Size, 1);
 		PacketFormSize = Size;
-		
+
 		// Initialise new memory to \0
-		if (PacketFormLocation)	
+		if (PacketFormLocation)
 		{
 			TCHAR temp [255];
 			sprintf_s(temp, 255, "PacketFormLocation is now at %p, size %u.", PacketFormLocation, PacketFormSize);
@@ -581,7 +581,7 @@ void Extension::PacketForm_SetDouble(double Double, size_t WhereTo)
 		else
 			ThreadSafe_End();
 	}
-	
+
 }
 // ID = 28
 void Extension::PacketForm_SetString(size_t WhereFrom, size_t WhereTo, size_t SizeOfString)

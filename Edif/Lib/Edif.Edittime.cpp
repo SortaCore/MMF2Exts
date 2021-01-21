@@ -5,7 +5,7 @@ void WINAPI	DLLExport GetObjInfos (mv _far *mV, void *, LPTSTR ObjName, LPTSTR O
 											LPTSTR ObjCopyright, LPTSTR ObjComment, LPTSTR ObjHttp)
 {
 #ifndef RUN_ONLY
-	
+
 	const json_value &Properties = SDK->json["About"];
 
 	Edif::ConvertAndCopyString(ObjAuthor,		Properties["Author"],	MAX_PATH);
@@ -171,7 +171,7 @@ LPINFOEVENTSV2 WINAPI DLLExport GetExpressionInfos(mv _far *mV, short code)
 short WINAPI DLLExport GetConditionCodeFromMenu(mv _far *mV, short menuId)
 {
 #ifndef RUN_ONLY
-	
+
 	return menuId - Edif::ConditionID(0);
 
 #endif // !defined(RUN_ONLY)
@@ -204,7 +204,7 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 	int			n, id, nMn;
 	LPTSTR		strBuf;
 	HMENU		hSubMenu;
-	
+
 	nMn = GetMenuItemCount(hSourceMenu);
 	strBuf = (LPTSTR)calloc(80, sizeof(TCHAR));
 	for (n = 0; n < nMn; n++)
@@ -303,16 +303,16 @@ void AddDirectory(_tstring &From, _tstring &To)
 			OldPath += From;
 			OldPath += Filejson.cFileName;
 			OldPath += _T("\\");
-			
+
 			_tstring NewPath;
 
 			NewPath += To;
 			NewPath += Filejson.cFileName;
 			NewPath += _T("\\");
-			
+
 			CreateDirectory(NewPath.c_str(), 0);
 			AddDirectory(OldPath, NewPath);
-			
+
 			continue;
 		}
 
@@ -328,7 +328,7 @@ void WINAPI PrepareFlexBuild(LPMV pMV, LPEDATA edPtr, LPCWSTR wTempFolder)
 #if !defined(RUN_ONLY)
 
 	TCHAR FlashFolderPath[MAX_PATH];
-	Edif::GetSiblingPath(FlashFolderPath, _T("Flash")); 
+	Edif::GetSiblingPath(FlashFolderPath, _T("Flash"));
 
 	if (!*FlashFolderPath)
 		return;

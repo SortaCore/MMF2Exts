@@ -136,7 +136,7 @@ void lw_error_add (lw_error ctx, long error)
 	#else
 
 		lw_error_addf (ctx, "%s (%ld)", strerror (error), error);
-		
+
 	#endif
 }
 

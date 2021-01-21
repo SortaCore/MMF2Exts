@@ -34,7 +34,7 @@
 
 struct lwp_refcount
 {
-	unsigned short refcount;			
+	unsigned short refcount;
 	void (* on_dealloc) (void *);
 
 	char name [64];
@@ -66,5 +66,5 @@ struct lwp_refcount refcount;											  \
 	((struct lwp_refcount *) (x))->enable_logging = lw_true;					\
 
 #endif
-	
+
 

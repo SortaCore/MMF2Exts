@@ -51,12 +51,12 @@ CV_IMPL CvSeq* cvPointSeqFromMat( int seq_kind, const CvArr* arr,
 	assert( arr != 0 && contour_header != 0 && block != 0 );
 
 	__BEGIN__;
-	
+
 	int eltype;
 	CvMat* mat = (CvMat*)arr;
-	
+
 	if( !CV_IS_MAT( mat ))
-		CV_ERROR( CV_StsBadArg, "Input array is not a valid matrix" ); 
+		CV_ERROR( CV_StsBadArg, "Input array is not a valid matrix" );
 
 	eltype = CV_MAT_TYPE( mat->type );
 	if( eltype != CV_32SC2 && eltype != CV_32FC2 )
@@ -151,7 +151,7 @@ icvCopyReplicateBorder_8u( const uchar* src, int srcstep, CvSize srcroi,
 	{
 		const int* isrc = (const int*)src;
 		int* idst = (int*)dst;
-		
+
 		cn /= isz;
 		srcstep /= isz;
 		dststep /= isz;
@@ -239,7 +239,7 @@ icvCopyReflect101Border_8u( const uchar* src, int srcstep, CvSize srcroi,
 			if( (unsigned)(j += dj) >= (unsigned)srcroi.width )
 				j -= 2*dj, dj = -dj;
 		}
-		
+
 		j = srcroi.width - cn*2;
 		dj = -cn;
 		for( i = left; i < tab_size; i += cn )
@@ -261,7 +261,7 @@ icvCopyReflect101Border_8u( const uchar* src, int srcstep, CvSize srcroi,
 					idst[j + left] = isrc[j];
 			for( j = 0; j < left; j++ )
 			{
-				k = tab[j]; 
+				k = tab[j];
 				idst[j] = idst[k];
 			}
 			for( ; j < tab_size; j++ )
@@ -283,7 +283,7 @@ icvCopyReflect101Border_8u( const uchar* src, int srcstep, CvSize srcroi,
 					dst[j + left] = src[j];
 			for( j = 0; j < left; j++ )
 			{
-				k = tab[j]; 
+				k = tab[j];
 				dst[j] = dst[k];
 			}
 			for( ; j < tab_size; j++ )
@@ -303,7 +303,7 @@ icvCopyReflect101Border_8u( const uchar* src, int srcstep, CvSize srcroi,
 			i1 = top-1, i2 = 0, di = -1, j = 1, dj = 1;
 		else
 			i1 = top+srcroi.height, i2=dstroi.height, di = 1, j = srcroi.height-2, dj = -1;
-		
+
 		for( i = i1; i != i2; i += di )
 		{
 			if( int_mode )
@@ -343,7 +343,7 @@ icvCopyConstBorder_8u( const uchar* src, int srcstep, CvSize srcroi,
 		int* idst = (int*)dst;
 		const int* ivalue = (const int*)value;
 		int v0 = ivalue[0];
-		
+
 		cn /= isz;
 		srcstep /= isz;
 		dststep /= isz;
@@ -408,7 +408,7 @@ icvCopyConstBorder_8u( const uchar* src, int srcstep, CvSize srcroi,
 	else
 	{
 		uchar v0 = value[0];
-		
+
 		srcroi.width *= cn;
 		dstroi.width *= cn;
 		left *= cn;
@@ -487,8 +487,8 @@ cvCopyMakeBorder( const CvArr* srcarr, CvArr* dstarr, CvPoint offset,
 
 	if( !CV_IS_MAT(src) )
 		CV_CALL( src = cvGetMat( src, &srcstub ));
-	
-	if( !CV_IS_MAT(dst) )	
+
+	if( !CV_IS_MAT(dst) )
 		CV_CALL( dst = cvGetMat( dst, &dststub ));
 
 	if( offset.x < 0 || offset.y < 0 )
@@ -533,7 +533,7 @@ cvCopyMakeBorder( const CvArr* srcarr, CvArr* dstarr, CvPoint offset,
 	}
 	else
 		CV_ERROR( CV_StsBadFlag, "Unknown/unsupported border type" );
-	
+
 	__END__;
 }
 

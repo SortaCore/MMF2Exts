@@ -313,7 +313,7 @@ cvIntegral( const CvArr* image, CvArr* sumImage,
 {
 	static CvFuncTable tab_c1, tab_cn;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvIntegralImage" );
 
 	__BEGIN__;
@@ -337,7 +337,7 @@ cvIntegral( const CvArr* image, CvArr* sumImage,
 
 	CV_CALL( src = cvGetMat( src, &src_stub, &coi0 ));
 	CV_CALL( sum = cvGetMat( sum, &sum_stub, &coi1 ));
-	
+
 	if( sum->width != src->width + 1 ||
 		sum->height != src->height + 1 )
 		CV_ERROR( CV_StsUnmatchedSizes, "" );
@@ -411,7 +411,7 @@ cvIntegral( const CvArr* image, CvArr* sumImage,
 				icvIntegral_8u32s_C1R_p( src->data.ptr, src_step,
 							sum->data.i, sum_step, size, 0 ) >= 0 )
 				EXIT;
-			
+
 			if( sqsum && icvSqrIntegral_8u32s64f_C1R_p &&
 				icvSqrIntegral_8u32s64f_C1R_p( src->data.ptr, src_step, sum->data.i,
 							sum_step, sqsum->data.db, sqsum_step, size, 0, 0 ) >= 0 )

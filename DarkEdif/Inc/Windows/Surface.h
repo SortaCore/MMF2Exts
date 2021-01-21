@@ -31,7 +31,7 @@
 	typedef wchar_t * SURF_PWSTR;
 	typedef const wchar_t * SURF_PCWSTR;
 #endif
-	
+
 #ifdef _UNICODE
 	#define SURF_PTSTR SURF_PWSTR
 	#define SURF_PCTSTR SURF_PCWSTR
@@ -100,7 +100,7 @@ typedef struct {
 
 // Convention : SfSrc.FilterBlit(SfDest, MyCallBack, param)
 // ==========		will call MyCallBack(pixelDest, pixelSrc, param)
- 	
+
 typedef	COLORREF (CALLBACK * FILTERBLITPROC)(COLORREF, COLORREF, unsigned long);
 typedef	COLORREF (CALLBACK * MATRIXFILTERBLITPROC)(COLORREF FAR *, COLORREF FAR *, unsigned long);
 
@@ -170,7 +170,7 @@ typedef unsigned long RGBAREF;
 #define COLORREFATORGBA(c,a) ((c & 0x00FFFFFF) | (a << 24))
 
 // Surface capabilities
-typedef enum 
+typedef enum
 {
 	// Capabilities
 	SC_GETPIXEL,
@@ -225,7 +225,7 @@ typedef enum 			// Warning, bit mask, not enumeration!
 	LI_DONOTNORMALIZEPALETTE = 0x0004	// do not normalize palette
 } LIFlags;
 
-typedef enum 
+typedef enum
 {
 	SI_NONE=0x0000,
 	SI_ONLYHEADER=0x0001,
@@ -459,12 +459,12 @@ public:
 		// Blit surface to surface
 		BOOL	Blit(cSurface FAR & dest) const;
 
-		BOOL	Blit(cSurface FAR & dest, int destX, int destY, 
+		BOOL	Blit(cSurface FAR & dest, int destX, int destY,
 					  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0,
 					  unsigned long dwBlitFlags = 0) const;
 
 		// Blit rectangle to surface
-		BOOL	Blit(cSurface FAR & dest, int destX, int destY, 
+		BOOL	Blit(cSurface FAR & dest, int destX, int destY,
 					  int srcX, int srcY, int srcWidth, int srcHeight,
 					  BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0,
 					  unsigned long dwBlitFlags = 0) const;
@@ -473,7 +473,7 @@ public:
 		// Only implemented in 3D mode
 #ifdef HWABETA
 		BOOL	BlitEx(cSurface FAR & dest, float dX, float dY, float fScaleX, float fScaleY,
-						int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle, 
+						int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle,
 						BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, unsigned long dwFlags = 0) const;
 #endif
 		// Scrolling
@@ -484,7 +484,7 @@ public:
 							int srcX, int srcY, int srcWidth, int srcHeight,
 							BlitMode bm, FILTERBLITPROC fbProc, LPARAM lUserParam) const;
 
-		BOOL	FilterBlit (cSurface FAR & dest, FILTERBLITPROC fbProc, 
+		BOOL	FilterBlit (cSurface FAR & dest, FILTERBLITPROC fbProc,
 							LPARAM lUserParam, BlitMode bm = BMODE_OPAQUE) const;
 
 		// Matrix blit via callback
@@ -531,7 +531,7 @@ public:
 		// ======================
 		// Fill
 		// ======================
-		
+
 		// Fill surface
 		BOOL	Fill(COLORREF c);
 		BOOL	Fill(CFillData FAR * fd);
@@ -556,57 +556,57 @@ public:
 
 		BOOL	Ellipse(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
 
-		BOOL	Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/, 
+		BOOL	Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
 			COLORREF crOutl /*= BLACK*/, BOOL Fill = TRUE);
 
 		BOOL	Rectangle(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
 
-		BOOL	Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/, 
+		BOOL	Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
 			COLORREF crOutl /*= 0*/, BOOL bFill = TRUE);
 
 		BOOL	Polygon(LPPOINT pts, int nPts, int thickness = 1, COLORREF crOutl = 0);
 
-		BOOL	Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0, 
+		BOOL	Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0,
 			COLORREF crOutl = 0, BOOL bFill = TRUE);
 
-		BOOL  Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0); 
+		BOOL  Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0);
 
 		// 2. More complex but slower (variable opacity, anti-alias, custom filling, ...)
 		// ==============================================================================
 
-		BOOL	Ellipse(int left, int top, int right, int bottom, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,  
+		BOOL	Ellipse(int left, int top, int right, int bottom, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,
 								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
-		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData FAR * fdFill,  
+		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData FAR * fdFill,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-		
-		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl, 
+
+		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-		
-		BOOL	Rectangle(int left, int top, int right, int bottom, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,  
+
+		BOOL	Rectangle(int left, int top, int right, int bottom, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,
 								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
-		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData FAR * fdFill,  
+		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData FAR * fdFill,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
-		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl, 
+		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-		
-		BOOL	Polygon(LPPOINT pts, int nPts, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,  
+
+		BOOL	Polygon(LPPOINT pts, int nPts, int thickness, CFillData FAR * fdOutl, BOOL AntiA = FALSE,
 								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
-		BOOL	Polygon(LPPOINT pts, int nPts, CFillData FAR * fdFill,  
+		BOOL	Polygon(LPPOINT pts, int nPts, CFillData FAR * fdFill,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
-		BOOL	Polygon(LPPOINT pts, int nPts, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl, 
+		BOOL	Polygon(LPPOINT pts, int nPts, CFillData FAR * fdFill, int thickness, CFillData FAR * fdOutl,
 			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-		
-		BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData FAR * fdOutl, BOOL AntiA, 
+
+		BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData FAR * fdOutl, BOOL AntiA,
 								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
 		// Filled Primitives
 
-		BOOL	FloodFill(int x, int y, int FAR & left, int FAR & top, int FAR & right, int FAR & bottom, COLORREF crFill, BOOL AntiA = FALSE, 
+		BOOL	FloodFill(int x, int y, int FAR & left, int FAR & top, int FAR & right, int FAR & bottom, COLORREF crFill, BOOL AntiA = FALSE,
 			int tol = 0, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
 
 		BOOL	FloodFill(int x, int y, COLORREF crFill, BOOL AntiA = FALSE,  int tol = 0,
@@ -663,7 +663,7 @@ public:
 		// ======================
 		// Is transparent
 		BOOL	IsTransparent();
-		
+
 		// Replace color
 		BOOL	ReplaceColor (COLORREF newColor, COLORREF oldColor);
 
@@ -749,7 +749,7 @@ public:
 	//----------
 		HRGN SetDrawClip(HDC hDC);
 		void RestoreDrawClip(HDC hDC,HRGN hOldClipRgn);
-	
+
 	// Private functions
 	// -----------------
 	private:
@@ -771,7 +771,7 @@ public:
 };
 
 // maximum opacity
-#define OP_MAX 128			// 100 
+#define OP_MAX 128			// 100
 
 extern "C" SURFACES_API BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE FAR *, LOGPALETTE FAR *, WORD);
 

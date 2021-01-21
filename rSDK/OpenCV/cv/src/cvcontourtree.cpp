@@ -55,13 +55,13 @@ icvCalcTriAttr( const CvSeq * contour, CvPoint t2, CvPoint t1, int n1,
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name: icvCreateContourTree
 //	Purpose:
-//	Create binary tree representation for the contour 
+//	Create binary tree representation for the contour
 //	Context:
 //	Parameters:
 //	  contour - pointer to input contour object.
 //	  storage - pointer to the current storage block
-//	  tree	-  output pointer to the binary tree representation 
-//	  threshold - threshold for the binary tree building 
+//	  tree	-  output pointer to the binary tree representation
+//	  threshold - threshold for the binary tree building
 //
 //F*/
 static CvStatus
@@ -588,7 +588,7 @@ icvCreateContourTree( const CvSeq * contour, CvMemStorage * storage,
 
 /****************************************************************************************\
 
- triangle attributes calculations 
+ triangle attributes calculations
 
 \****************************************************************************************/
 static CvStatus
@@ -635,20 +635,20 @@ icvCalcTriAttr( const CvSeq * contour, CvPoint t2, CvPoint t1, int n1,
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name: cvCreateContourTree
 //	Purpose:
-//	Create binary tree representation for the contour 
+//	Create binary tree representation for the contour
 //	Context:
 //	Parameters:
 //	  contour - pointer to input contour object.
 //	  storage - pointer to the current storage block
-//	  tree	-  output pointer to the binary tree representation 
-//	  threshold - threshold for the binary tree building 
+//	  tree	-  output pointer to the binary tree representation
+//	  threshold - threshold for the binary tree building
 //
 //F*/
 CV_IMPL CvContourTree*
 cvCreateContourTree( const CvSeq* contour, CvMemStorage* storage, double threshold )
 {
 	CvContourTree* tree = 0;
-	
+
 	CV_FUNCNAME( "cvCreateContourTree" );
 	__BEGIN__;
 
@@ -664,10 +664,10 @@ cvCreateContourTree( const CvSeq* contour, CvMemStorage* storage, double thresho
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name: icvContourFromContourTree
 //	Purpose:
-//	reconstracts contour from binary tree representation  
+//	reconstracts contour from binary tree representation
 //	Context:
 //	Parameters:
-//	  tree	-  pointer to the input binary tree representation 
+//	  tree	-  pointer to the input binary tree representation
 //	  storage - pointer to the current storage block
 //	  contour - pointer to output contour object.
 //	  criteria - criteria for the definition threshold value

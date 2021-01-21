@@ -1,6 +1,6 @@
 /*
  *  grfmt_imageio.h
- *  
+ *
  *
  *  Created by Morgan Conbere on 5/17/07.
  *
@@ -17,23 +17,23 @@
 class GrFmtImageIOReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtImageIOReader( const char* filename );
 	~GrFmtImageIOReader();
-	
+
 	bool  ReadData( uchar* data, int step, int color );
 	bool  ReadHeader();
 	void  Close();
 
 protected:
-	
+
 	CGImageRef imageRef;
 };
 
 class GrFmtImageIOWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtImageIOWriter( const char* filename );
 	~GrFmtImageIOWriter();
 
@@ -45,12 +45,12 @@ public:
 class GrFmtImageIO :public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtImageIO();
 	~GrFmtImageIO();
-	
+
 	bool CheckFile( const char* filename );
-	
+
 	GrFmtReader* NewReader( const char* filename );
 	GrFmtWriter* NewWriter( const char* filename );
 };

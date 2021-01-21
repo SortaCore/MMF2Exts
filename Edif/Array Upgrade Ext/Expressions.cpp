@@ -22,7 +22,7 @@ const char * Extension::GetFormat(const char * file)
 		Runtime.PushEvent(1);
 		return Runtime.CopyString("Err");
 	}
-	
+
 	return Runtime.CopyString(format.c_str());
 }
 

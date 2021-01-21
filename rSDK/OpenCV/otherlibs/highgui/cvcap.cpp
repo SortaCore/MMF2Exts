@@ -197,7 +197,7 @@ CV_IMPL CvCapture * cvCreateCameraCapture (int index)
 				return capture;
 			break;
 		#endif
-			
+
 		#ifdef HAVE_UNICAP
 		case CV_CAP_UNICAP:
 		  capture = cvCreateCameraCapture_Unicap (index);

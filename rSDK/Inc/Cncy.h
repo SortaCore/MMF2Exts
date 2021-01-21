@@ -101,7 +101,7 @@ typedef struct MenuHdr {
 	DWORD	mhMenuSize;
 	DWORD	mhAccelOffset;	// From start of MenuHdr
 	DWORD	mhAccelSize;
-							// Total data size = mhHdrSize + mhMenuSize + mhAccelSize 
+							// Total data size = mhHdrSize + mhMenuSize + mhAccelSize
 } MenuHdr;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -260,7 +260,7 @@ typedef struct AppHeader2 {
 } AppHeader2;
 
 #define	AH2OPT_KEEPSCREENRATIO	0x0001
-#define	AH2OPT_FRAMETRANSITION	0x0002		// (HWA only) a frame has a transition 
+#define	AH2OPT_FRAMETRANSITION	0x0002		// (HWA only) a frame has a transition
 #define	AH2OPT_RESAMPLESTRETCH	0x0004		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
 #define	AH2OPT_GLOBALREFRESH	0x0008		// (Mobile) force global refresh
 
@@ -771,7 +771,7 @@ typedef struct ocRTF {
 	DWORD		odDWSize;
 	DWORD		odVersion;				// 0
 	DWORD		odOptions;				// Options
-	COLORREF	odBackColor;			// Background color	
+	COLORREF	odBackColor;			// Background color
 	LONG		odCx;					// Size
 	LONG		odCy;
 
@@ -911,7 +911,7 @@ typedef LPVOID *			LPLPVOID;
 // Internet Versions
 #define	FIRST_NETVERSION		0x001		// First vitalize version
 #define	CCN_NETVERSION			0x002		// CCN applications
-#define	MORECOMP_NETVERSION		0x003		// Short OIs, compression of levObjs, adpcm sounds, 
+#define	MORECOMP_NETVERSION		0x003		// Short OIs, compression of levObjs, adpcm sounds,
 #define	CNC_NETVERSION			0x003		// Current Internet Version
 
 // Collision mask margins
@@ -1562,7 +1562,7 @@ typedef	struct	MvxFnc {
 #endif	// RUN_TIME
 
 // Restore structure alignement
-#ifndef	  _H2INC 
+#ifndef	  _H2INC
 #pragma pack( pop, _pack_cncy_ )
 #endif
 

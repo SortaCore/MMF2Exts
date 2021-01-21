@@ -71,7 +71,7 @@
 				[ 7, "Peer connected to server" ],
 				[ 8, "Peer disconnected from server" ]
 			],
-	
+
 			"---",
 			[ 9, "Darkwire Software", true ]
 		],
@@ -108,9 +108,9 @@
 			"---",
 			[ 20, "aplfes" ]
 		],
-		"Actions": [	
+		"Actions": [
 			/// DEBUG
-	
+
 			// ID = 0
 			{
 				"Title": "Test Report() and Explode()"
@@ -122,9 +122,9 @@
 					[ "Integer", "Use 0 for off and 1 for on:" ]
 				]
 			},
-		
+
 			/// CLIENT
-			
+
 			// ID = 2
 			{
 				"Title": "Initialise client - connect to (%0) on port (%1) with protocol (%2)",
@@ -199,9 +199,9 @@
 					[ "Integer", "Use 0 for off, anything else for on:" ]
 				]
 			},
-		
+
 			/// SERVER
-			
+
 			// ID = 11
 			{
 				"Title": "Initialise basic server (port %1, protocol %0)",
@@ -269,7 +269,7 @@
 			},
 			// ID = 19
 			{
-				"Title": "Set Fusion status reports to %1 for socket %0",	
+				"Title": "Set Fusion status reports to %1 for socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
 					[ "Integer", "Use 0 for off, anything else for on:" ]
@@ -277,7 +277,7 @@
 			},
 
 			/// PACKET FORMING
-			
+
 			// ID = 20
 			{
 				"Title": "Create new packet of size %0",
@@ -700,7 +700,7 @@
 					[ "Integer", "Utiliser 0 pour désactiver et 1 pour activer:" ]
 				]
 			},
-		
+
 			/// CLIENT
 			// ID = 2
 			{
@@ -776,7 +776,7 @@
 					[ "Integer", "Utiliser 0 pour désactiver, ou n'importe quoi pour l'activer:" ]
 				]
 			},
-		
+
 			/// SERVER
 			// ID = 11
 			{

@@ -34,7 +34,7 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
 	TCHAR * New = NULL;
 	New = (TCHAR *) Allocate(_tcslen(String) + 1);
 	_tcscpy(New, String);
-	
+
 	return New;
 }
 
@@ -246,7 +246,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 {
 	RunHeader * rhPtr = rdPtr->rHo.AdRunHeader;
-	
+
 	while (rhPtr->App->ParentApp)
 		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 

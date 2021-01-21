@@ -69,7 +69,7 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 	  }
 	}
 
-	lwp_copy_string (ctx->service, service, sizeof (ctx->service)); 
+	lwp_copy_string (ctx->service, service, sizeof (ctx->service));
 
 	lw_thread_join (ctx->resolver_thread); /* block if the thread is already running */
 	lw_thread_start (ctx->resolver_thread, ctx);
@@ -131,7 +131,7 @@ lw_addr lwp_addr_new_sockaddr (struct sockaddr * sockaddr)
 
 	if (!addr)
 	  return 0;
-	
+
 	lwp_addr_set_sockaddr (addr, sockaddr);
 
 	return addr;
@@ -247,7 +247,7 @@ const char * lw_addr_tostring (lw_addr ctx)
 	{
 	  case AF_INET:
 
-		 lwp_snprintf (ctx->buffer, 
+		 lwp_snprintf (ctx->buffer,
 						sizeof (ctx->buffer),
 						"%s:%d",
 						inet_ntoa (((struct sockaddr_in *)
@@ -258,7 +258,7 @@ const char * lw_addr_tostring (lw_addr ctx)
 		 break;
 
 	  case AF_INET6:
-	  {			 
+	  {
 		 int length = sizeof (ctx->buffer) - 1;
 
 		 #ifdef _WIN32
@@ -336,7 +336,7 @@ void resolver (lw_addr ctx)
 	#ifdef AI_V4MAPPED
 	  hints.ai_flags |= AI_V4MAPPED;
 	#endif
-	 
+
 	#ifdef AI_ADDRCONFIG
 	  hints.ai_flags |= AI_ADDRCONFIG;
 	#endif

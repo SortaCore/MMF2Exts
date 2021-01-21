@@ -16,7 +16,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -51,7 +51,7 @@ public:
 #endif
 	void * PacketFormLocation;			// Contains the packet forming memory location
 	size_t PacketFormSize;				// Contains the packet forming size in bytes
-	
+
 	/*  Add your actions, conditions and expressions as real class member
 		functions here. The arguments (and return type for expressions) must
 		match EXACTLY what you defined in the JSON.
@@ -67,7 +67,7 @@ public:
 		void Unreferenced_Report(TCHAR * report, int SocketID);
 		void Unreferenced_ReturnToMMF(int ReturnAsI, int SocketID, void * Msg, int MsgLength);
 		unsigned long Unreferenced_WorkOutInAddr(TCHAR * t);
-	
+
 	/// Actions
 /* ID = 0 */	void TestReportAndExplode();
 /* ID = 1 */	void UsePopupMessages(int OnOrOff);
@@ -81,7 +81,7 @@ public:
 /* ID = 8 */	void ClientLinkFileOutput(int SocketID, TCHAR * File);
 /* ID = 9 */	void ClientUnlinkFileOutput(int SocketID);
 /* ID = 10 */	void ClientMMF2Report(int SocketID, int OnOrOff);
-		
+
 /* ID = 11 */	void ServerInitialise_Basic(TCHAR * Protocol, int Port);
 /* ID = 12 */	void ServerInitialise_Advanced(TCHAR * Protocol, TCHAR * AddressFamily, TCHAR * SocketType, int Port, TCHAR * InAddr);
 /* ID = 13 */	void ServerShutdownSocket(int SocketID);
@@ -104,7 +104,7 @@ public:
 /* ID = 29 */	void PacketForm_SetWString(size_t WhereFrom, size_t WhereTo, size_t SizeOfStringInChar);
 /* ID = 30 */	void PacketForm_SetBankFromBank(size_t WhereFrom, size_t WhereTo, size_t SizeOfString);
 
-		
+
 	/// Conditions
 
 /* ID = 0 */	bool OnError();
@@ -120,9 +120,9 @@ public:
 /* ID = 7 */	bool ServerPeerDisconnected(int SocketID);
 
 
-	
+
 	/// Expressions
-		
+
 /* ID = 0 */	TCHAR * GetErrors(int clear);
 /* ID = 1 */	TCHAR * GetReports(int clear);
 
@@ -152,7 +152,7 @@ public:
 	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
 	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
 	long Expression(int ID, RUNDATA * rdPtr, long param);
- 
+
 
 	/*  These replace the functions like HandleRunObject that used to be
 		implemented in Runtime.cpp. They work exactly the same, but they're

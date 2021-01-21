@@ -31,10 +31,10 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 	}
 	std::vector<std::unique_ptr<DarkMenuItem>> menuItems;
 	MENUITEMINFO itemData = { };
-	
+
 	for (int i = 0; i < numItems; i++)
 		menuItems.push_back(std::make_unique<DarkMenuItem>(i, GetMenuItemID(menu, i)));
-	
+
 	TCHAR * buffer = (TCHAR *)malloc(1024U * sizeof(TCHAR));
 	bool happy = false;
 	std::tstringstream outputStr;
@@ -55,7 +55,7 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 		if (GetMenuItemInfo(menu, i, true, &itemData) == FALSE)
 		{
 			outputStr.clear(); outputStr.str(std::tstring());
-			outputStr << _T("Failed to read name buffer size for item ID ") << 
+			outputStr << _T("Failed to read name buffer size for item ID ") <<
 				menuItems[i]->id << _T(" (index ") << menuItems[i]->index << _T("). Error ")
 				<< GetLastError() << _T(".\r\n");
 			goto end;
@@ -140,7 +140,7 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 			outputStr << (menuItems[i]->id % 1000) << _T(": ") << prefix << menuItems[i]->name << _T("\r\n");
 		}
 	}
-	
+
 	happy = true;
 end:
 	output = outputStr.str();

@@ -197,7 +197,7 @@ static double
 icvGetThreshVal_Otsu( const CvHistogram* hist )
 {
 	double max_val = 0;
-	
+
 	CV_FUNCNAME( "icvGetThreshVal_Otsu" );
 
 	__BEGIN__;
@@ -246,7 +246,7 @@ icvGetThreshVal_Otsu( const CvHistogram* hist )
 		else
 			mu += (nu_thresh[i*2] + nu_thresh[i*2+1])*0.5*h[i];
 	}
-	
+
 	sum = fabs(sum) > FLT_EPSILON ? 1./sum : 0;
 	mu *= sum;
 
@@ -297,7 +297,7 @@ CV_IMPL double
 cvThreshold( const void* srcarr, void* dstarr, double thresh, double maxval, int type )
 {
 	CvHistogram* hist = 0;
-	
+
 	CV_FUNCNAME( "cvThreshold" );
 
 	__BEGIN__;
@@ -387,7 +387,7 @@ cvThreshold( const void* srcarr, void* dstarr, double thresh, double maxval, int
 	switch( CV_MAT_DEPTH(src->type) )
 	{
 	case CV_8U:
-		
+
 		ithresh = cvFloor(thresh);
 		imaxval = cvRound(maxval);
 		if( type == CV_THRESH_TRUNC )

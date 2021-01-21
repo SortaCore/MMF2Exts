@@ -88,7 +88,7 @@ icvUnDistort_8u_CnR( const uchar* src, int srcstep,
 				for( i = 0; i < cn; i++ )
 					dst[u*cn + i] = 0;
 			}
-			
+
 		}
 	}
 
@@ -183,7 +183,7 @@ cvInitUndistortMap( const CvMat* A, const CvMat* dist_coeffs,
 	CV_FUNCNAME( "cvInitUndistortMap" );
 
 	__BEGIN__;
-	
+
 	float a[9], k[5]={0,0,0,0,0};
 	int coi1 = 0, coi2 = 0;
 	CvMat mapxstub, *_mapx = (CvMat*)mapxarr;
@@ -246,7 +246,7 @@ cvInitUndistortMap( const CvMat* A, const CvMat* dist_coeffs,
 			float x = (u - u0)*ifx, x2 = x*x, r2 = x2 + y2, _2xy = 2*x*y;
 			double kr = 1 + ((k3*r2 + k2)*r2 + k1)*r2;
 			double _x = fx*(x*kr + p1*_2xy + p2*(r2 + 2*x2)) + x0;
-			double _y = fy*(y*kr + p1*(r2 + 2*y2) + p2*_2xy) + y0; 
+			double _y = fy*(y*kr + p1*(r2 + 2*y2) + p2*_2xy) + y0;
 			mapx[u] = (float)_x;
 			mapy[u] = (float)_y;
 		}
@@ -263,7 +263,7 @@ cvInitUndistortRectifyMap( const CvMat* A, const CvMat* distCoeffs,
 	CV_FUNCNAME( "cvInitUndistortMap" );
 
 	__BEGIN__;
-	
+
 	double a[9], ar[9], r[9], ir[9], k[5]={0,0,0,0,0};
 	int coi1 = 0, coi2 = 0;
 	CvMat mapxstub, *_mapx = (CvMat*)mapxarr;
@@ -332,7 +332,7 @@ cvInitUndistortRectifyMap( const CvMat* A, const CvMat* distCoeffs,
 	}
 	else
 		cvZero( &_k );
-	
+
 	cvConvert( R, &_r );	// rectification matrix
 	cvMatMul( &_ar, &_r, &_r ); // Ar*R
 	cvInvert( &_r, &_ir );  // inverse: R^-1*Ar^-1
@@ -357,7 +357,7 @@ cvInitUndistortRectifyMap( const CvMat* A, const CvMat* distCoeffs,
 			double r2 = x2 + y2, _2xy = 2*x*y;
 			double kr = 1 + ((k3*r2 + k2)*r2 + k1)*r2;
 			double u = fx*(x*kr + p1*_2xy + p2*(r2 + 2*x2)) + u0;
-			double v = fy*(y*kr + p1*(r2 + 2*y2) + p2*_2xy) + v0; 
+			double v = fy*(y*kr + p1*(r2 + 2*y2) + p2*_2xy) + v0;
 			mapx[j] = (float)u;
 			mapy[j] = (float)v;
 		}
@@ -420,7 +420,7 @@ cvUndistortPoints( const CvMat* _src, CvMat* _dst, const CvMat* _cameraMatrix,
 		cvConvert( cvGetCols(_P, &_P3x3, 0, 3), &_PP );
 		cvMatMul( &_PP, &_RR, &_RR );
 	}
-	
+
 	srcf = (const CvPoint2D32f*)_src->data.ptr;
 	srcd = (const CvPoint2D64f*)_src->data.ptr;
 	dstf = (CvPoint2D32f*)_dst->data.ptr;
@@ -429,7 +429,7 @@ cvUndistortPoints( const CvMat* _src, CvMat* _dst, const CvMat* _cameraMatrix,
 	dtype = CV_MAT_TYPE(_dst->type);
 	sstep = _src->rows == 1 ? 1 : _src->step/CV_ELEM_SIZE(stype);
 	dstep = _dst->rows == 1 ? 1 : _dst->step/CV_ELEM_SIZE(dtype);
-	
+
 	n = _src->rows + _src->cols - 1;
 
 	fx = A[0][0];
@@ -452,7 +452,7 @@ cvUndistortPoints( const CvMat* _src, CvMat* _dst, const CvMat* _cameraMatrix,
 			x = srcd[i*sstep].x;
 			y = srcd[i*sstep].y;
 		}
-		
+
 		x0 = x = (x - cx)*ifx;
 		y0 = y = (y - cy)*ify;
 
@@ -466,7 +466,7 @@ cvUndistortPoints( const CvMat* _src, CvMat* _dst, const CvMat* _cameraMatrix,
 			x = (x0 - deltaX)*icdist;
 			y = (y0 - deltaY)*icdist;
 		}
-		
+
 		double xx = RR[0][0]*x + RR[0][1]*y + RR[0][2];
 		double yy = RR[1][0]*x + RR[1][1]*y + RR[1][2];
 		double ww = 1./(RR[2][0]*x + RR[2][1]*y + RR[2][2]);

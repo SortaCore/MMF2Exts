@@ -46,7 +46,7 @@ cvFindCornerSubPix( const void* srcarr, CvPoint2D32f* corners,
 					CvTermCriteria criteria )
 {
 	float* buffer = 0;
-	
+
 	CV_FUNCNAME( "cvFindCornerSubPix" );
 
 	__BEGIN__;

@@ -247,13 +247,13 @@ icvSVD_64f( double* a, int lda, int m, int n,
 	int nm, m1, n1;
 	int nv = n;
 	int iters = 0;
-	double* hv0 = (double*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1; 
+	double* hv0 = (double*)cvStackAlloc( (m+2)*sizeof(hv0[0])) + 1;
 
 	e = buffer;
 	w1 = w;
 	e1 = e + 1;
 	nm = n;
-	
+
 	temp = buffer + nm;
 
 	memset( w, 0, nm * sizeof( w[0] ));
@@ -267,7 +267,7 @@ icvSVD_64f( double* a, int lda, int m, int n,
 	{
 		int update_u;
 		int update_v;
-		
+
 		if( m1 == 0 )
 			break;
 
@@ -649,7 +649,7 @@ icvSVD_32f( float* a, int lda, int m, int n,
 	w1 = w;
 	e1 = e + 1;
 	nm = n;
-	
+
 	temp = buffer + nm;
 
 	memset( w, 0, nm * sizeof( w[0] ));
@@ -663,7 +663,7 @@ icvSVD_32f( float* a, int lda, int m, int n,
 	{
 		int update_u;
 		int update_v;
-		
+
 		if( m1 == 0 )
 			break;
 
@@ -707,7 +707,7 @@ icvSVD_32f( float* a, int lda, int m, int n,
 			*w1 = (float)(g*scale);
 		}
 		w1++;
-		
+
 		/* store -2/(hv'*hv) */
 		if( update_u )
 		{
@@ -1137,7 +1137,7 @@ icvSVBkSb_32f( int m, int n, const float* w,
 	for( i = 0; i < nm; i++, uT += lduT, vT += ldvT )
 	{
 		double wi = w[i];
-		
+
 		if( wi > threshold )
 		{
 			wi = 1./wi;
@@ -1294,7 +1294,7 @@ cvSVD( CvArr* aarr, CvArr* warr, CvArr* uarr, CvArr* varr, int flags )
 		if( u_rows != m || (u_cols != m && u_cols != n))
 			CV_ERROR( CV_StsUnmatchedSizes, !t_svd ? "U matrix has unappropriate size" :
 													 "V matrix has unappropriate size" );
-			
+
 		temp_u = (u_rows != u_cols && !(flags & CV_SVD_U_T)) || u->data.ptr==a->data.ptr;
 
 		if( w_is_mat && u_cols != w_rows )
@@ -1371,7 +1371,7 @@ cvSVD( CvArr* aarr, CvArr* warr, CvArr* uarr, CvArr* varr, int flags )
 	{
 		CV_CALL( buffer = (uchar*)cvAlloc( buf_size ));
 	}
-	
+
 	if( !(flags & CV_SVD_MODIFY_A) )
 	{
 		cvInitMatHeader( &tmat, m, n, type,

@@ -17,10 +17,10 @@ class CK_VISIBLE_PUBLIC CkClassWithCallbacks : public CkMultiByteBase
 	int m_callbackObjType;
 
 	public:
-		
+
 	CkClassWithCallbacks(void);
 	virtual ~CkClassWithCallbacks(void);
-	
+
 	// These methods are for internal use only.
 	void _setEventCallbackObj(void *p, int objType);
 	void *_getEventCallbackObj(void);
@@ -34,4 +34,4 @@ class CK_VISIBLE_PUBLIC CkClassWithCallbacks : public CkMultiByteBase
 
 
 #endif
-	
+

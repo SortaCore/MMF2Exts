@@ -2,7 +2,7 @@
 // ============================================================================
 //
 // UNREFENCED FUNCTIONS
-// 
+//
 // ============================================================================
 
 // Another text->number from macro function. Moved out the action for simplicity.
@@ -170,7 +170,7 @@ void Extension::Unreferenced_Report(TCHAR * report = _T("Unknown report..."), in
 		CompleteStatus += report;
 		CompleteStatus += _T("\r\n");
 		ThreadSafe_End();
-		
+
 		if (UsePopups)
 			MessageBox(NULL, report, _T("DarkSocket - Latest Report:"), MB_OK);
 	}
@@ -178,11 +178,11 @@ void Extension::Unreferenced_Report(TCHAR * report = _T("Unknown report..."), in
 	{
 		TCHAR text [512];
 		sprintf_s(text, 512, "Socket ID = %i >> %s\r\n", SocketID, report);
-		
+
 		ThreadSafe_Start(); // cause of last threadsafe_start()
 		CompleteStatus += text;
 		ThreadSafe_End();
-		
+
 		if (UsePopups)
 		{
 			TCHAR title [512];

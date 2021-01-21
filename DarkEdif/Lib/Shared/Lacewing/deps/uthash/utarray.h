@@ -21,7 +21,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* a dynamic array implementation using macros 
+/* a dynamic array implementation using macros
  * see http://uthash.sourceforge.net/utarray
  */
 #ifndef UTARRAY_H
@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UTARRAY_VERSION 1.9.6
 
 #ifdef __GNUC__
-#define _UNUSED_ __attribute__ ((__unused__)) 
+#define _UNUSED_ __attribute__ ((__unused__))
 #else
-#define _UNUSED_ 
+#define _UNUSED_
 #endif
 
 #include <stddef.h>  /* size_t */
@@ -190,7 +190,7 @@ typedef struct {
 #define utarray_renew(a,u) do {												\
   if (a) utarray_clear(a); \
   else utarray_new((a),(u));	\
-} while(0) 
+} while(0)
 
 #define utarray_clear(a) do {												 \
   if ((a)->i > 0) {															\

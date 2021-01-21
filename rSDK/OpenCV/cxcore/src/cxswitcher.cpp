@@ -224,7 +224,7 @@ icvInitProcessorInfo( CvProcessorInfo* cpu_info )
 	cpu_info->model = CV_PROC_GENERIC;
 #else
 	cpu_info->model = CV_PROC_IA32_GENERIC;
-	
+
 	// reading /proc/cpuinfo file (proc file system must be supported)
 	FILE *file = fopen( "/proc/cpuinfo", "r" );
 
@@ -544,7 +544,7 @@ cvUseOptimized( int load_flag )
 	CvModuleInfo* module;
 	const CvProcessorInfo* cpu_info = icvGetProcessorInfo();
 	int arch = CV_GET_PROC_ARCH(cpu_info->model);
-	
+
 	// TODO: implement some more elegant way
 	// to find the latest and the greatest IPP/MKL libraries
 	static const char* opencv_sfx[] = { "100", "099", "097", 0 };
@@ -612,7 +612,7 @@ cvUseOptimized( int load_flag )
 					break;
 				}
 				#ifndef WIN32
-				// temporary workaround for MacOSX 
+				// temporary workaround for MacOSX
 				sprintf( plugins[i].name, DLL_PREFIX "%s%s" DLL_DEBUG_FLAG ".dylib",
 					plugins[i].basename, *suffix );
 

@@ -117,7 +117,7 @@ bool CvCapture_Images::grabFrame()
 	frame = cvLoadImage(str, CV_LOAD_IMAGE_ANYDEPTH | CV_LOAD_IMAGE_ANYCOLOR);
 	if( frame )
 		currentframe++;
-	
+
 	return frame != 0;
 }
 

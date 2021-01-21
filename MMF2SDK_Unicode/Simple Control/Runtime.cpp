@@ -3,7 +3,7 @@
 // This file contains routines that are handled during the Runtime.
 //
 // Including creating, display, and handling your object.
-// 
+//
 // ============================================================================
 
 // Common Include
@@ -44,7 +44,7 @@ WORD DebugTree[]=
 // GetRunObjectDataSize
 // --------------------
 // Returns the size of the runtime datazone of the object
-// 
+//
 ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 {
 	return(sizeof(RUNDATA));
@@ -55,7 +55,7 @@ ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 // CreateRunObject
 // ---------------
 // The routine where the object is actually created
-// 
+//
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
 {
 /*
@@ -85,9 +85,9 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	DWORD dwStyle = WS_CHILDWINDOW | WS_CLIPSIBLINGS | WS_VISIBLE;
 	if ((edPtr->dwFlags & SCTRL_BORDER) != 0)
 		dwStyle |= WS_BORDER;
-	rdPtr->hWnd = CreateWindowEx(0, _T("EDIT"), NULL, dwStyle, 
-									rdPtr->rHo.hoX - rhPtr->rhWindowX, rdPtr->rHo.hoY - rhPtr->rhWindowY, 
-									rdPtr->rHo.hoImgWidth, rdPtr->rHo.hoImgHeight, 
+	rdPtr->hWnd = CreateWindowEx(0, _T("EDIT"), NULL, dwStyle,
+									rdPtr->rHo.hoX - rhPtr->rhWindowX, rdPtr->rHo.hoY - rhPtr->rhWindowY,
+									rdPtr->rHo.hoImgWidth, rdPtr->rHo.hoImgHeight,
 									rhPtr->rhHEditWin, NULL, rhPtr->rh4.rh4Instance, NULL);
 
 	// Set text & font
@@ -119,7 +119,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 // DestroyRunObject
 // ----------------
 // Destroys the run-time object
-// 
+//
 short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 {
 /*
@@ -129,7 +129,7 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 	// Destroy
 	if (rdPtr->hWnd != NULL)
 		DestroyWindow(rdPtr->hWnd);
-	
+
 	// Destroy font
 	if (rdPtr->hFont != NULL)
 		DeleteObject(rdPtr->hFont);
@@ -147,7 +147,7 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 // HandleRunObject
 // ----------------
 // Called (if you want) each loop, this routine makes the object live
-// 
+//
 short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 {
 	// If text has been modified, generate a CND_CHANGED condition
@@ -163,7 +163,7 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 // DisplayRunObject
 // ----------------
 // Draw the object in the application screen.
-// 
+//
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 	return 0;
@@ -177,7 +177,7 @@ short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 // in DisplayRunObject too, but this is automatically done if you implement
 // GetRunObjectSurface (MMF applies the ink effect to the transition).
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 /*
 cSurface* WINAPI DLLExport GetRunObjectSurface(LPRDATA rdPtr)
@@ -194,7 +194,7 @@ cSurface* WINAPI DLLExport GetRunObjectSurface(LPRDATA rdPtr)
 //
 // Should return NULL if the object is not transparent.
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 //
 /*
@@ -238,7 +238,7 @@ cSurface* WINAPI DLLExport GetRunObjectCollisionMask(LPRDATA rdPtr, LPARAM lPara
 // PauseRunObject
 // ----------------
 // Enters the pause mode
-// 
+//
 short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
 {
 	// Ok
@@ -261,7 +261,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // ============================================================================
 //
 // START APP / END APP / START FRAME / END FRAME routines
-// 
+//
 // ============================================================================
 
 // -------------------
@@ -269,7 +269,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // -------------------
 // Called when the application starts or restarts.
 // Useful for storing global data
-// 
+//
 void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 {
 	// Example
@@ -287,7 +287,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 // EndApp
 // -------------------
 // Called when the application ends.
-// 
+//
 void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 {
 	// Example
@@ -305,7 +305,7 @@ void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 // StartFrame
 // -------------------
 // Called when the frame starts or restarts.
-// 
+//
 void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -314,7 +314,7 @@ void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // EndFrame
 // -------------------
 // Called when the frame ends.
-// 
+//
 void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -322,14 +322,14 @@ void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // ============================================================================
 //
 // TEXT ROUTINES (if OEFLAG_TEXT)
-// 
+//
 // ============================================================================
 
 // -------------------
 // GetRunObjectFont
 // -------------------
 // Return the font used by the object.
-// 
+//
 void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
 {
 	GetObject(rdPtr->hFont, sizeof(LOGFONT), pLf);
@@ -339,7 +339,7 @@ void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
 // SetRunObjectFont
 // -------------------
 // Change the font used by the object.
-// 
+//
 void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 {
 	HFONT hFont = CreateFontIndirect(pLf);
@@ -360,7 +360,7 @@ void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 // GetRunObjectTextColor
 // ---------------------
 // Return the text color of the object.
-// 
+//
 COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 {
 	return rdPtr->textColor;
@@ -370,7 +370,7 @@ COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 // SetRunObjectTextColor
 // ---------------------
 // Change the text color of the object.
-// 
+//
 void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 {
 	rdPtr->textColor = rgb;
@@ -386,7 +386,7 @@ void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 // WINDOWPROC (interception of messages sent to hMainWin and hEditWin)
 //
 // Do not forget to enable the WindowProc function in the .def file if you implement it
-// 
+//
 // ============================================================================
 
 // Get the pointer to the object's data from its window handle
@@ -455,7 +455,7 @@ LRESULT CALLBACK DLLExport WindowProc(fprh rhPtr, HWND hWnd, UINT nMsg, WPARAM w
 // ============================================================================
 //
 // DEBUGGER ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------

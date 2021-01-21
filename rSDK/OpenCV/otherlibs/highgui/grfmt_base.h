@@ -63,7 +63,7 @@
 class	GrFmtReader
 {
 public:
-	
+
 	GrFmtReader( const char* filename );
 	virtual ~GrFmtReader();
 

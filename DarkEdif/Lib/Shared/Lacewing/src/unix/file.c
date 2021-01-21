@@ -98,7 +98,7 @@ static int get_flags (const char * mode)
 	  ++ mode;
 
 	if (*mode == '+')
-	{	
+	{
 	  flags |= O_RDWR;
 	  ++ mode;
 	}

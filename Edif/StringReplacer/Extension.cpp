@@ -26,11 +26,11 @@ Extension::Extension(LPRDATA _rdPtr, LPEDATA edPtr, fpcob cobPtr)
 
 		It's the only place you'll get access to edPtr at runtime, so you should transfer
 		anything from edPtr to the extension class here.
-	
+
 	*/
 
 
-	
+
 }
 
 Extension::~Extension()
@@ -48,7 +48,7 @@ Extension::~Extension()
 short Extension::Handle()
 {
 	/*
-		If your extension will draw to the MMF window you should first 
+		If your extension will draw to the MMF window you should first
 		check if anything about its display has changed :
 
 			if (rdPtr->roc.rcChanged)
@@ -56,10 +56,10 @@ short Extension::Handle()
 			else
 			  return 0;
 
-		You will also need to make sure you change this flag yourself 
+		You will also need to make sure you change this flag yourself
 		to 1 whenever you want to redraw your object
-	 
-		If your extension won't draw to the window, but it still needs 
+
+		If your extension won't draw to the window, but it still needs
 		to do something every MMF loop use :
 
 			return 0;
@@ -77,7 +77,7 @@ short Extension::Handle()
 
 	*/
 
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG_ONESHOT;
 }
 

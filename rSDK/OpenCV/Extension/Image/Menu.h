@@ -43,7 +43,7 @@
 	// make it too slow or it could get annoying
 
 	SEPARATOR
-	
+
 	SUB_START("Drawing")
 		ITEM(0,"Draw rectangle")
 		ITEM(2,"Fill rectangle")
@@ -51,7 +51,7 @@
 		ITEM(3,"Draw text")
 		ITEM(7,"Draw polygon")
 	SUB_END
-	
+
 	SUB_START("Saving/Loading")
 		ITEM(4,"Get image from camera (will resize the image)")
 		ITEM(5,"Load image from file")

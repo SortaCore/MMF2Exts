@@ -60,14 +60,14 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // CONDITION ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
 // Sample Condition
 // -----------------
 // Returns TRUE when the two values are equal!
-// 
+//
 
 long WINAPI DLLExport Condition_Downloading(LPRDATA rdPtr, long param1, long param2)
 {
@@ -113,7 +113,7 @@ long WINAPI DLLExport Condition_Aborted(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // ACTIONS ROUTINES
-// 
+//
 // ============================================================================
 
 short WINAPI DLLExport Action_Download(LPRDATA rdPtr, long param1, long param2)
@@ -154,7 +154,7 @@ short WINAPI DLLExport Action_Download(LPRDATA rdPtr, long param1, long param2)
 							{
 								DWORD dwNumberOfBytesAvailable;
 								if ( rdPtr->lpInternetQueryDataAvailable(rdPtr->slots[slot].hOpenedURL, &dwNumberOfBytesAvailable, 0, 0) )
-								{ 
+								{
 									if ( dwNumberOfBytesAvailable != 0 )
 									{
 										// Get file length
@@ -164,7 +164,7 @@ short WINAPI DLLExport Action_Download(LPRDATA rdPtr, long param1, long param2)
 										if (rdPtr->lpHttpQueryInfo(rdPtr->slots[slot].hOpenedURL, HTTP_QUERY_CONTENT_LENGTH, buffer, &dwTaille, &dwHeader))
 										{
 											rdPtr->slots[slot].dwFileSize=atoi(buffer);
-										
+
 											// Create target file
 											rdPtr->slots[slot].hFile = CreateFile(pFile,GENERIC_WRITE,FILE_SHARE_WRITE,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
 											if ( rdPtr->slots[slot].hFile!=INVALID_HANDLE_VALUE )
@@ -233,7 +233,7 @@ short WINAPI DLLExport Action_Resume(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // EXPRESSIONS ROUTINES
-// 
+//
 // ============================================================================
 long WINAPI DLLExport Exp_Size(LPRDATA rdPtr,long param1)
 {
@@ -350,15 +350,15 @@ long WINAPI DLLExport Exp_CurrentURL(LPRDATA rdPtr,long param1)
 // Located at the end of the source for convinience
 // Must finish with a 0
 //
-long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) = 
-			{ 
+long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
+			{
 			Condition_Downloading,
 			Condition_Completed,
 			Condition_Error,
 			Condition_Aborted,
 			0
 			};
-	
+
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			{
 			Action_Download,
@@ -368,8 +368,8 @@ short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			0
 			};
 
-long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{	 
+long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
+			{
 			Exp_TotalSize,
 			Exp_CurrentPos,
 			Exp_CurrentPercent,

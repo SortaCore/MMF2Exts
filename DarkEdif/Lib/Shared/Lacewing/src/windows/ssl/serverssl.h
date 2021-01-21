@@ -32,7 +32,7 @@
 
 #include "ssl.h"
 
-typedef struct _lwp_serverssl 
+typedef struct _lwp_serverssl
 {
 	struct _lwp_ssl ssl;
 

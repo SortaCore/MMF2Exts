@@ -63,7 +63,7 @@ public:
 	//methods
 	RBaseStream();
 	virtual ~RBaseStream();
-	
+
 	virtual bool  Open( const char* filename );
 	virtual void  Close();
 	void		  SetBlockSize( int block_size, int unGetsize = 4 );
@@ -72,9 +72,9 @@ public:
 	int			GetPos();
 	void		  Skip( int bytes );
 	jmp_buf&	  JmpBuf();
-	
+
 protected:
-	
+
 	jmp_buf m_jmp_buf;
 	uchar*  m_start;
 	uchar*  m_end;
@@ -98,11 +98,11 @@ class RLByteStream : public RBaseStream
 {
 public:
 	virtual ~RLByteStream();
-	
+
 	int	 GetByte();
 	void	GetBytes( void* buffer, int count, int* readed = 0 );
 	int	 GetWord();
-	int	 GetDWord(); 
+	int	 GetDWord();
 };
 
 // class RMBitStream - uchar-oriented stream.
@@ -113,7 +113,7 @@ public:
 	virtual ~RMByteStream();
 
 	int	 GetWord();
-	int	 GetDWord(); 
+	int	 GetDWord();
 };
 
 // class RLBitStream - bit-oriented stream.
@@ -122,7 +122,7 @@ class RLBitStream : public RBaseStream
 {
 public:
 	virtual ~RLBitStream();
-	
+
 	void	SetPos( int pos );
 	int	 GetPos();
 	int	 Get( int bits );
@@ -130,7 +130,7 @@ public:
 	int	 GetHuff( const short* table );
 	void	Move( int shift );
 	void	Skip( int bytes );
-		
+
 protected:
 	int	 m_bit_idx;
 	virtual void  ReadBlock();
@@ -142,7 +142,7 @@ class RMBitStream : public RLBitStream
 {
 public:
 	virtual ~RMBitStream();
-	
+
 	void	SetPos( int pos );
 	int	 GetPos();
 	int	 Get( int bits );
@@ -163,15 +163,15 @@ public:
 	//methods
 	WBaseStream();
 	virtual ~WBaseStream();
-	
+
 	virtual bool  Open( const char* filename );
 	virtual void  Close();
 	void		  SetBlockSize( int block_size );
 	bool		  IsOpened();
 	int			GetPos();
-	
+
 protected:
-	
+
 	uchar*  m_start;
 	uchar*  m_end;
 	uchar*  m_current;
@@ -179,7 +179,7 @@ protected:
 	int	 m_block_pos;
 	FILE*	m_file;
 	bool	m_is_opened;
-	
+
 	virtual void  WriteBlock();
 	virtual void  Release();
 	virtual void  Allocate();
@@ -196,7 +196,7 @@ public:
 	void	PutByte( int val );
 	void	PutBytes( const void* buffer, int count );
 	void	PutWord( int val );
-	void	PutDWord( int val ); 
+	void	PutDWord( int val );
 };
 
 
@@ -208,7 +208,7 @@ public:
 	virtual ~WMByteStream();
 
 	void	PutWord( int val );
-	void	PutDWord( int val ); 
+	void	PutDWord( int val );
 };
 
 
@@ -218,11 +218,11 @@ class WLBitStream : public WBaseStream
 {
 public:
 	virtual ~WLBitStream();
-	
+
 	int	 GetPos();
 	void	Put( int val, int bits );
 	void	PutHuff( int val, const int* table );
-		
+
 protected:
 	int	 m_bit_idx;
 	int	 m_val;
@@ -237,7 +237,7 @@ class WMBitStream : public WBaseStream
 public:
 	WMBitStream();
 	virtual ~WMBitStream();
-	
+
 	bool	Open( const char* filename );
 	void	Close();
 	virtual void  Flush();
@@ -245,7 +245,7 @@ public:
 	int	 GetPos();
 	void	Put( int val, int bits );
 	void	PutHuff( int val, const ulong* table );
-		
+
 protected:
 	int	 m_bit_idx;
 	ulong	m_pad_val;
@@ -259,7 +259,7 @@ protected:
 #define BSWAP(v)	(((v)<<24)|(((v)&0xff00)<<8)| \
 					(((v)>>8)&0xff00)|((unsigned)(v)>>24))
 
-int* bsCreateSourceHuffmanTable( const uchar* src, int* dst, 
+int* bsCreateSourceHuffmanTable( const uchar* src, int* dst,
 								 int max_bits, int first_bits );
 bool bsCreateDecodeHuffmanTable( const int* src, short* dst, int max_size );
 bool bsCreateEncodeHuffmanTable( const int* src, ulong* dst, int max_size );

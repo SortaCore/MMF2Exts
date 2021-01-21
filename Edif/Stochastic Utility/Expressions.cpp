@@ -22,7 +22,7 @@ float Extension::Limit(float Value, float Minimum, float Maximum)
 
 float Extension::Nearest(float Value, float Minimum, float Maximum)
 {
-	return ((Minimum > Value) ? (Minimum - Value) : (Value - Minimum)) > 
+	return ((Minimum > Value) ? (Minimum - Value) : (Value - Minimum)) >
 		((Maximum > Value) ? (Maximum - Value) : (Value - Maximum)) ?
 		Maximum : Minimum;
 }
@@ -82,7 +82,7 @@ float Extension::Wave(int Waveform, float Value, float CycleStart, float CycleEn
 		}
 
 		default:
-		{			
+		{
 			// Non-existing waveform
 			return 0;
 		}
@@ -203,7 +203,7 @@ const char * Extension::Substr(const char * String, int Start, int Length)
 	int RealLength = strlen(String);
 
 	char * Return = (char *) Runtime.Allocate(RealLength + 1);
-	
+
 	memcpy(Return, String, RealLength);
 	Return[RealLength + Length] = 0;
 

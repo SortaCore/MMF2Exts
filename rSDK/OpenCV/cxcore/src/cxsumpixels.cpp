@@ -430,7 +430,7 @@ cvSum( const CvArr* arr )
 				CvFunc2D_1A1P func = (CvFunc2D_1A1P)(sum_tab.fn_2d[type]);
 				if( !func )
 					CV_ERROR( CV_StsUnsupportedFormat, "" );
-		
+
 				do
 				{
 					CvScalar temp = {{0,0,0,0}};
@@ -448,7 +448,7 @@ cvSum( const CvArr* arr )
 				CvFunc2D_1A1P1I func = (CvFunc2D_1A1P1I)(sum_tab.fn_2d[type]);
 				if( !func )
 					CV_ERROR( CV_StsUnsupportedFormat, "" );
-		
+
 				do
 				{
 					CvScalar temp = {{0,0,0,0}};
@@ -475,7 +475,7 @@ cvSum( const CvArr* arr )
 	if( CV_IS_MAT_CONT( mat->type ))
 	{
 		size.width *= size.height;
-		
+
 		if( size.width <= CV_MAX_INLINE_MAT_OP_SIZE )
 		{
 			if( type == CV_32FC1 )
@@ -619,7 +619,7 @@ cvCountNonZero( const CvArr* arr )
 			func = (CvFunc2D_1A1P)(nz_tab.fn_2d[CV_MAT_DEPTH(type)]);
 			if( !func )
 				CV_ERROR( CV_StsUnsupportedFormat, "" );
-		
+
 			do
 			{
 				int temp;
@@ -878,7 +878,7 @@ CV_IMPL void
 cvReduce( const CvArr* srcarr, CvArr* dstarr, int dim, int op )
 {
 	CvMat* temp = 0;
-	
+
 	CV_FUNCNAME( "cvReduce" );
 
 	__BEGIN__;
@@ -937,7 +937,7 @@ cvReduce( const CvArr* srcarr, CvArr* dstarr, int dim, int op )
 			 sdepth == CV_16S && ddepth == CV_32F ? (CvReduceToRowFunc)icvSumRows_16s32f_C1R :
 			 sdepth == CV_16S && ddepth == CV_64F ? (CvReduceToRowFunc)icvSumRows_16s64f_C1R :
 			 sdepth == CV_32F && ddepth == CV_32F ? (CvReduceToRowFunc)icvSumRows_32f_C1R :
-			 sdepth == CV_32F && ddepth == CV_64F ? (CvReduceToRowFunc)icvSumRows_32f64f_C1R :		
+			 sdepth == CV_32F && ddepth == CV_64F ? (CvReduceToRowFunc)icvSumRows_32f64f_C1R :
 			 sdepth == CV_64F && ddepth == CV_64F ? (CvReduceToRowFunc)icvSumRows_64f_C1R : 0) :
 			op == CV_REDUCE_MAX ?
 			(sdepth == CV_8U && ddepth == CV_8U ? (CvReduceToRowFunc)icvMaxRows_8u_C1R :

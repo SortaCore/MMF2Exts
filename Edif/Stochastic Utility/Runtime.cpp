@@ -41,7 +41,7 @@ WORD DebugTree[]=
 // in DisplayRunObject too, but this is automatically done if you implement
 // GetRunObjectSurface (MMF applies the ink effect to the surface).
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 /*
 cSurface* WINAPI DLLExport GetRunObjectSurface(LPRDATA rdPtr)
@@ -58,7 +58,7 @@ cSurface* WINAPI DLLExport GetRunObjectSurface(LPRDATA rdPtr)
 //
 // Should return NULL if the object is not transparent.
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 //
 /*
@@ -102,7 +102,7 @@ LPSMASK WINAPI DLLExport GetRunObjectCollisionMask(LPRDATA rdPtr, LPARAM lParam)
 // ============================================================================
 //
 // START APP / END APP / START FRAME / END FRAME routines
-// 
+//
 // ============================================================================
 
 // -------------------
@@ -110,7 +110,7 @@ LPSMASK WINAPI DLLExport GetRunObjectCollisionMask(LPRDATA rdPtr, LPARAM lParam)
 // -------------------
 // Called when the application starts or restarts.
 // Useful for storing global data
-// 
+//
 void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 {
 	// Example
@@ -128,7 +128,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 // EndApp
 // -------------------
 // Called when the application ends.
-// 
+//
 void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 {
 	// Example
@@ -146,7 +146,7 @@ void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 // StartFrame
 // -------------------
 // Called when the frame starts or restarts.
-// 
+//
 void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -155,7 +155,7 @@ void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // EndFrame
 // -------------------
 // Called when the frame ends.
-// 
+//
 void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -163,17 +163,17 @@ void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // ============================================================================
 //
 // TEXT ROUTINES (if OEFLAG_TEXT)
-// 
+//
 // ============================================================================
 
 // -------------------
 // GetRunObjectFont
 // -------------------
 // Return the font used by the object.
-// 
+//
 /*
 
-  // Note: do not forget to enable the functions in the .def file 
+  // Note: do not forget to enable the functions in the .def file
   // if you remove the comments below.
 
 void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
@@ -187,7 +187,7 @@ void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
 // SetRunObjectFont
 // -------------------
 // Change the font used by the object.
-// 
+//
 void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 {
 	// Example
@@ -207,7 +207,7 @@ void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 // GetRunObjectTextColor
 // ---------------------
 // Return the text color of the object.
-// 
+//
 COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 {
 	// Example
@@ -219,7 +219,7 @@ COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 // SetRunObjectTextColor
 // ---------------------
 // Change the text color of the object.
-// 
+//
 void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 {
 	// Example
@@ -235,7 +235,7 @@ void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 // WINDOWPROC (interception of messages sent to hMainWin and hEditWin)
 //
 // Do not forget to enable the WindowProc function in the .def file if you implement it
-// 
+//
 // ============================================================================
 /*
 // Get the pointer to the object's data from its window handle
@@ -287,7 +287,7 @@ LRESULT CALLBACK DLLExport WindowProc(LPRH rhPtr, HWND hWnd, UINT nMsg, WPARAM w
 // ============================================================================
 //
 // DEBUGGER ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------

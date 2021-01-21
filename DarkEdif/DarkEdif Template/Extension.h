@@ -14,7 +14,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -36,7 +36,7 @@ public:
 
 
 
-	
+
 
 	// int MyVariable;
 
@@ -61,7 +61,7 @@ public:
 		bool AreTwoNumbersEqual(int FirstNumber, int SecondNumber);
 
 	/// Expressions
-		
+
 		int Add(int FirstNumber, int SecondNumber);
 		const TCHAR * HelloWorld();
 

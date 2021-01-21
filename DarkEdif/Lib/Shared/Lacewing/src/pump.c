@@ -33,7 +33,7 @@
 lw_pump lw_pump_new (const lw_pumpdef * def)
 {
 	lw_pump ctx = (lw_pump) malloc (sizeof (*ctx) + def->tail_size);
-	
+
 	if (!ctx)
 	  return 0;
 
@@ -83,7 +83,7 @@ void lw_pump_remove_user (lw_pump ctx)
 lw_bool lw_pump_in_use (lw_pump ctx)
 {
 	return ctx->use_count > 0;
-}  
+}
 
 void lw_pump_post (lw_pump ctx, void * proc, void * param)
 {

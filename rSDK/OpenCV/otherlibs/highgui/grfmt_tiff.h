@@ -92,7 +92,7 @@ enum TiffFieldType
 class GrFmtTiffReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtTiffReader( const char* filename );
 	~GrFmtTiffReader();
 
@@ -112,7 +112,7 @@ protected:
 class GrFmtTiffReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtTiffReader( const char* filename );
 	~GrFmtTiffReader();
 
@@ -122,7 +122,7 @@ public:
 	void  Close();
 
 protected:
-	
+
 	RLByteStream	 m_strm;
 	PaletteEntry	 m_palette[256];
 	int			  m_bpp;
@@ -147,7 +147,7 @@ protected:
 class GrFmtTiffWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtTiffWriter( const char* filename );
 	~GrFmtTiffWriter();
 
@@ -166,7 +166,7 @@ protected:
 class GrFmtTiff : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtTiff();
 	~GrFmtTiff();
 

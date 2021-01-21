@@ -23,26 +23,26 @@ class CK_VISIBLE_PUBLIC CkMultiByteBase : public CkObject
 	CkMultiByteBase &operator=(const CkMultiByteBase &);
 
 	protected:
-	void *m_impl;	
+	void *m_impl;
 	void *m_base;
 
 	bool m_utf8;	// If true, all input "const char *" parameters are utf-8, otherwise they are ANSI strings.
-		
+
 	unsigned int m_resultIdx;
 	CkString *m_pResultString[10];
 
 	unsigned int nextIdx(void);
-	
-	const char *rtnMbString(CkString *pStrObj);	
+
+	const char *rtnMbString(CkString *pStrObj);
 
 	public:
 	// Set to 0x81F0CA3B for a valid non-destructed Chilkat object.
 	// Cleared to 0 when the object is destructed.
 	unsigned int m_validCkObject;
-		
+
 	CkMultiByteBase(void);
 	virtual ~CkMultiByteBase(void);
-	
+
 	// Applications should NOT call this method.  It is for internal use only.
 	void clearResultStrings(void);
 
@@ -95,4 +95,4 @@ class CK_VISIBLE_PUBLIC CkMultiByteBase : public CkObject
 
 
 #endif
-	
+

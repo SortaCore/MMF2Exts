@@ -58,8 +58,8 @@ _CvPtInfo;
 CvStatus
 icvApproximateChainTC89( CvChain*				chain,
 						 int					header_size,
-						 CvMemStorage*		  storage, 
-						 CvSeq**				contour, 
+						 CvMemStorage*		  storage,
+						 CvSeq**				contour,
 						 int	method )
 {
 	static const int abs_diff[] = { 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4, 3, 2, 1 };
@@ -76,7 +76,7 @@ icvApproximateChainTC89( CvChain*				chain,
 	CvChainPtReader reader;
 	CvSeqWriter	 writer;
 	CvPoint		 pt = chain->origin;
-	
+
 	assert( chain && contour && buffer );
 
 	buffer_size = (chain->total + 8) * sizeof( _CvPtInfo );
@@ -88,12 +88,12 @@ icvApproximateChainTC89( CvChain*				chain,
 
 	if( header_size < (int)sizeof(CvContour) )
 		return CV_BADSIZE_ERR;
-	
+
 	cvStartWriteSeq( (chain->flags & ~CV_SEQ_ELTYPE_MASK) | CV_SEQ_ELTYPE_POINT,
 					 header_size, sizeof( CvPoint ), storage, &writer );
-	
+
 	if( chain->total == 0 )
-	{		
+	{
 		CV_WRITE_SEQ_ELEM( pt, writer );
 		goto exit_function;
 	}
@@ -413,13 +413,13 @@ CV_IMPL CvSeq*
 cvApproxChains( CvSeq*			  src_seq,
 				CvMemStorage*		storage,
 				int				 method,
-				double			  /*parameter*/, 
-				int				 minimal_perimeter, 
+				double			  /*parameter*/,
+				int				 minimal_perimeter,
 				int				 recursive )
 {
 	CvSeq *prev_contour = 0, *parent = 0;
 	CvSeq *dst_seq = 0;
-	
+
 	CV_FUNCNAME( "cvApproxChains" );
 
 	__BEGIN__;
@@ -436,7 +436,7 @@ cvApproxChains( CvSeq*			  src_seq,
 		if( len >= minimal_perimeter )
 		{
 			CvSeq *contour;
-			
+
 			switch( method )
 			{
 			case CV_CHAIN_APPROX_NONE:
@@ -515,7 +515,7 @@ cvApproxChains( CvSeq*			  src_seq,
 
 /* the version for integer point coordinates */
 static CvStatus
-icvApproxPolyDP_32s( CvSeq* src_contour, int header_size, 
+icvApproxPolyDP_32s( CvSeq* src_contour, int header_size,
 					 CvMemStorage* storage,
 					 CvSeq** dst_contour, float eps )
 {
@@ -529,7 +529,7 @@ icvApproxPolyDP_32s( CvSeq* src_contour, int header_size,
 	int			 le_eps = 0;
 	CvMemStorage*	temp_storage = 0;
 	CvSeq*		  stack = 0;
-	
+
 	assert( CV_SEQ_ELTYPE(src_contour) == CV_32SC2 );
 	cvStartWriteSeq( src_contour->flags, header_size, sizeof(pt), storage, &writer );
 
@@ -564,7 +564,7 @@ icvApproxPolyDP_32s( CvSeq* src_contour, int header_size,
 			init_iters = 1;
 		}
 	}
-	
+
 	if( is_closed )
 	{
 		/* 1. Find approximately two farthest points of the contour */
@@ -675,7 +675,7 @@ icvApproxPolyDP_32s( CvSeq* src_contour, int header_size,
 		CV_WRITE_SEQ_ELEM( end_pt, writer );
 
 	*dst_contour = cvEndWriteSeq( &writer );
-	
+
 	cvStartReadSeq( *dst_contour, &reader, is_closed );
 	CV_READ_SEQ_ELEM( start_pt, reader );
 
@@ -719,7 +719,7 @@ icvApproxPolyDP_32s( CvSeq* src_contour, int header_size,
 
 /* the version for integer point coordinates */
 static CvStatus
-icvApproxPolyDP_32f( CvSeq* src_contour, int header_size, 
+icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 					 CvMemStorage* storage,
 					 CvSeq** dst_contour, float eps )
 {
@@ -733,7 +733,7 @@ icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 	int			 le_eps = 0;
 	CvMemStorage*	temp_storage = 0;
 	CvSeq*		  stack = 0;
-	
+
 	assert( CV_SEQ_ELTYPE(src_contour) == CV_32FC2 );
 	cvStartWriteSeq( src_contour->flags, header_size, sizeof(pt), storage, &writer );
 
@@ -769,7 +769,7 @@ icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 			init_iters = 1;
 		}
 	}
-	
+
 	if( is_closed )
 	{
 		/* 1. Find approximately two farthest points of the contour */
@@ -833,7 +833,7 @@ icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 		if( slice.end_index > slice.start_index + 1 )
 		{
 			double dx, dy, dist, max_dist = 0;
-			
+
 			dx = end_pt.x - start_pt.x;
 			dy = end_pt.y - start_pt.y;
 
@@ -880,7 +880,7 @@ icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 		CV_WRITE_SEQ_ELEM( end_pt, writer );
 
 	*dst_contour = cvEndWriteSeq( &writer );
-	
+
 	cvStartReadSeq( *dst_contour, &reader, is_closed );
 	CV_READ_SEQ_ELEM( start_pt, reader );
 
@@ -924,7 +924,7 @@ icvApproxPolyDP_32f( CvSeq* src_contour, int header_size,
 
 CV_IMPL CvSeq*
 cvApproxPoly( const void*  array, int  header_size,
-			  CvMemStorage*  storage, int  method, 
+			  CvMemStorage*  storage, int  method,
 			  double  parameter, int parameter2 )
 {
 	CvSeq* dst_seq = 0;

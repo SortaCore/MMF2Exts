@@ -51,7 +51,7 @@
 //	  method - method for the matching calculation
 //	  (now CV_IPPI_CONTOURS_MATCH_I1, CV_CONTOURS_MATCH_I2 or
 //	  CV_CONTOURS_MATCH_I3 only  )
-//	  rezult - output calculated measure 
+//	  rezult - output calculated measure
 //
 //F*/
 CV_IMPL  double
@@ -216,8 +216,8 @@ cvMatchShapes( const void* contour1, const void* contour2,
 //	  tree2 - pointer to the second input contour tree object.
 //	  method - method for the matching calculation
 //	  (now CV_CONTOUR_TREES_MATCH_I1 only  )
-//	  threshold - threshold for the contour trees matching 
-//	  result - output calculated measure 
+//	  threshold - threshold for the contour trees matching
+//	  result - output calculated measure
 //F*/
 CV_IMPL  double
 cvMatchContourTrees( const CvContourTree* tree1, const CvContourTree* tree2,

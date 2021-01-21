@@ -38,7 +38,7 @@ void lacewing::error_delete (lacewing::error error)
 {
 	lw_error_delete ((lw_error) error);
 }
-	
+
 void _error::add (const char * format, ...)
 {
 	va_list args;

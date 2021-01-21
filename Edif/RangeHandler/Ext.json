@@ -74,7 +74,7 @@
 			]
 		},
 		// ID = 2
-		{	
+		{
 			"Title": "CurrentValue(",
 			"Returns": "Integer"
 		}

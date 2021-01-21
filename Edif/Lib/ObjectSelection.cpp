@@ -74,10 +74,10 @@ void Riggs::ObjectSelection::SelectObjects(short Oi, LPRO* objects, int count)
 
 	pObjectInfo->oilNumOfSelected = count;
 	pObjectInfo->oilEventCount = rhPtr->rh2.rh2EventCount;
-	
+
 	short prevNumber = objects[0]->roHo.hoNumber;
 	pObjectInfo->oilListSelected = prevNumber;
-	
+
 	for (int i=1; i<count; i++)
 	{
 		short currentNumber = objects[i]->roHo.hoNumber;

@@ -43,7 +43,7 @@ void lwp_init ()
 	  STACK_OF (SSL_COMP) * comp_methods;
 
 	  SSL_library_init ();
- 
+
 	  SSL_load_error_strings ();
 	  ERR_load_crypto_strings ();
 
@@ -146,7 +146,7 @@ lw_bool lw_random (char * buffer, size_t size)
  void lw_sha1 (char * output, const char * input, size_t length)
  {
 	SHA_CTX context;
-  
+
 	SHA1_Init (&context);
 	SHA1_Update (&context, input, length);
 	SHA1_Final ((unsigned char *) output, &context);

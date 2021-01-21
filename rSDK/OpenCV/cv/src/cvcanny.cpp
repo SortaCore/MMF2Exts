@@ -138,15 +138,15 @@ cvCanny( const void* srcarr, void* dstarr,
 	memset( map, 1, mapstep );
 	memset( map + mapstep*(size.height + 1), 1, mapstep );
 
-	/* sector numbers 
+	/* sector numbers
 		(Top-Left Origin)
 
 		1	2	3
-		 *  *  * 
-		  * * *  
+		 *  *  *
+		  * * *
 		0*******0
-		  * * *  
-		 *  *  * 
+		  * * *
+		 *  *  *
 		3	2	1
 	*/
 
@@ -208,11 +208,11 @@ cvCanny( const void* srcarr, void* dstarr,
 
 		_map = map + mapstep*i + 1;
 		_map[-1] = _map[size.width] = 1;
-		
+
 		_mag = mag_buf[1] + 1; // take the central row
 		_dx = (short*)(dx->data.ptr + dx->step*(i-1));
 		_dy = (short*)(dy->data.ptr + dy->step*(i-1));
-		
+
 		magstep1 = (int)(mag_buf[2] - mag_buf[1]);
 		magstep2 = (int)(mag_buf[0] - mag_buf[1]);
 
@@ -317,7 +317,7 @@ cvCanny( const void* srcarr, void* dstarr,
 		}
 
 		CANNY_POP(m);
-	
+
 		if( !m[-1] )
 			CANNY_PUSH( m - 1 );
 		if( !m[1] )
@@ -341,7 +341,7 @@ cvCanny( const void* srcarr, void* dstarr,
 	{
 		const uchar* _map = map + mapstep*(i+1) + 1;
 		uchar* _dst = dst->data.ptr + dst->step*i;
-		
+
 		for( j = 0; j < size.width; j++ )
 			_dst[j] = (uchar)-(_map[j] >> 1);
 	}

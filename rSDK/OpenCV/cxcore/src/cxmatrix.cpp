@@ -130,7 +130,7 @@ CV_IMPL CvScalar
 cvTrace( const CvArr* array )
 {
 	CvScalar sum = {{0,0,0,0}};
-	
+
 	CV_FUNCNAME( "cvTrace" );
 
 	__BEGIN__;
@@ -152,7 +152,7 @@ cvTrace( const CvArr* array )
 				sum.val[0] += *(float*)data;
 			EXIT;
 		}
-		
+
 		if( type == CV_64FC1 )
 		{
 			int step = mat->step + sizeof(double);
@@ -442,7 +442,7 @@ cvTranspose( const CvArr* srcarr, CvArr* dstarr )
 {
 	static CvBtFuncTable tab, inp_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvTranspose" );
 
 	__BEGIN__;
@@ -473,7 +473,7 @@ cvTranspose( const CvArr* srcarr, CvArr* dstarr )
 
 	if( dstarr == srcarr )
 	{
-		dst = src; 
+		dst = src;
 	}
 	else
 	{
@@ -509,7 +509,7 @@ cvTranspose( const CvArr* srcarr, CvArr* dstarr )
 			if( size.width != 1 && size.height != 1 )
 				CV_ERROR( CV_StsBadSize,
 					"Rectangular matrix can not be transposed inplace" );
-			
+
 			if( !CV_IS_MAT_CONT( src->type & dst->type ))
 				CV_ERROR( CV_StsBadFlag, "In case of inplace column/row transposition "
 										"both source and destination must be continuous" );
@@ -547,9 +547,9 @@ cvCompleteSymm( CvMat* matrix, int LtoR )
 	CV_FUNCNAME( "cvCompleteSymm" );
 
 	__BEGIN__;
-	
+
 	int i, j, nrows;
-	
+
 	CV_ASSERT( CV_IS_MAT(matrix) && matrix->rows == matrix->cols );
 
 	nrows = matrix->rows;
@@ -769,7 +769,7 @@ cvDet( const CvArr* arr )
 	double result = 0;
 	uchar* buffer = 0;
 	int local_alloc = 0;
-	
+
 	CV_FUNCNAME( "cvDet" );
 
 	__BEGIN__;
@@ -812,7 +812,7 @@ cvDet( const CvArr* arr )
 	{
 		uchar* m = mat->data.ptr;
 		int step = mat->step;
-		
+
 		if( type == CV_32FC1 )
 		{
 			result = det3(Mf);
@@ -916,7 +916,7 @@ cvInvert( const CvArr* srcarr, CvArr* dstarr, int method )
 	uchar* buffer = 0;
 	int local_alloc = 0;
 	double result = 0;
-	
+
 	CV_FUNCNAME( "cvInvert" );
 
 	__BEGIN__;
@@ -1030,11 +1030,11 @@ cvInvert( const CvArr* srcarr, CvArr* dstarr, int method )
 					t[0] = (float)((Sf(1,1) * Sf(2,2) - Sf(1,2) * Sf(2,1)) * d);
 					t[1] = (float)((Sf(0,2) * Sf(2,1) - Sf(0,1) * Sf(2,2)) * d);
 					t[2] = (float)((Sf(0,1) * Sf(1,2) - Sf(0,2) * Sf(1,1)) * d);
-								  
+
 					t[3] = (float)((Sf(1,2) * Sf(2,0) - Sf(1,0) * Sf(2,2)) * d);
 					t[4] = (float)((Sf(0,0) * Sf(2,2) - Sf(0,2) * Sf(2,0)) * d);
 					t[5] = (float)((Sf(0,2) * Sf(1,0) - Sf(0,0) * Sf(1,2)) * d);
-								  
+
 					t[6] = (float)((Sf(1,0) * Sf(2,1) - Sf(1,1) * Sf(2,0)) * d);
 					t[7] = (float)((Sf(0,1) * Sf(2,0) - Sf(0,0) * Sf(2,1)) * d);
 					t[8] = (float)((Sf(0,0) * Sf(1,1) - Sf(0,1) * Sf(1,0)) * d);
@@ -1056,11 +1056,11 @@ cvInvert( const CvArr* srcarr, CvArr* dstarr, int method )
 					t[0] = (Sd(1,1) * Sd(2,2) - Sd(1,2) * Sd(2,1)) * d;
 					t[1] = (Sd(0,2) * Sd(2,1) - Sd(0,1) * Sd(2,2)) * d;
 					t[2] = (Sd(0,1) * Sd(1,2) - Sd(0,2) * Sd(1,1)) * d;
-							
+
 					t[3] = (Sd(1,2) * Sd(2,0) - Sd(1,0) * Sd(2,2)) * d;
 					t[4] = (Sd(0,0) * Sd(2,2) - Sd(0,2) * Sd(2,0)) * d;
 					t[5] = (Sd(0,2) * Sd(1,0) - Sd(0,0) * Sd(1,2)) * d;
-							
+
 					t[6] = (Sd(1,0) * Sd(2,1) - Sd(1,1) * Sd(2,0)) * d;
 					t[7] = (Sd(0,1) * Sd(2,0) - Sd(0,0) * Sd(2,1)) * d;
 					t[8] = (Sd(0,0) * Sd(1,1) - Sd(0,1) * Sd(1,0)) * d;
@@ -1350,7 +1350,7 @@ cvSolve( const CvArr* A, const CvArr* b, CvArr* x, int method )
 					double t[9];
 
 					d = 1./d;
-					
+
 					t[0] = ((Sd(1,1) * Sd(2,2) - Sd(1,2) * Sd(2,1))*bd(0) +
 							(Sd(0,2) * Sd(2,1) - Sd(0,1) * Sd(2,2))*bd(1) +
 							(Sd(0,1) * Sd(1,2) - Sd(0,2) * Sd(1,1))*bd(2))*d;
@@ -1546,7 +1546,7 @@ cvCrossProduct( const CvArr* srcAarr, const CvArr* srcBarr, CvArr* dstarr )
 		double* dstdata = (double*)(dst->data.ptr);
 		const double* src1data = (double*)(srcA->data.ptr);
 		const double* src2data = (double*)(srcB->data.ptr);
-		
+
 		if( CV_IS_MAT_CONT(srcA->type & srcB->type & dst->type) )
 		{
 			dstdata[2] = src1data[0] * src2data[1] - src1data[1] * src2data[0];
@@ -1583,7 +1583,7 @@ cvCalcPCA( const CvArr* data_arr, CvArr* avg_arr, CvArr* eigenvals, CvArr* eigen
 	CvMat* tmp_evects = 0;
 	CvMat* tmp_evects2 = 0;
 	CvMat* tmp_data = 0;
-	
+
 	CV_FUNCNAME( "cvCalcPCA" );
 
 	__BEGIN__;
@@ -1642,7 +1642,7 @@ cvCalcPCA( const CvArr* data_arr, CvArr* avg_arr, CvArr* eigenvals, CvArr* eigen
 
 	count = MIN(len, in_count);
 	out_count = evals->cols + evals->rows - 1;
-	
+
 	if( (evals->cols != 1 && evals->rows != 1) || out_count > count )
 		CV_ERROR( CV_StsBadSize,
 		"The array of eigenvalues must be 1d vector containing "
@@ -1754,7 +1754,7 @@ cvProjectPCA( const CvArr* data_arr, const CvArr* avg_arr,
 {
 	uchar* buffer = 0;
 	int local_alloc = 0;
-	
+
 	CV_FUNCNAME( "cvProjectPCA" );
 
 	__BEGIN__;
@@ -1852,7 +1852,7 @@ cvProjectPCA( const CvArr* data_arr, const CvArr* avg_arr,
 	for( i = 0; i < in_count; i += block_count )
 	{
 		CvMat data_part, norm_data, avg_part, *src = &data_part, out_part;
-		
+
 		block_count = MIN( block_count0, in_count - i );
 		if( as_cols )
 		{
@@ -1872,7 +1872,7 @@ cvProjectPCA( const CvArr* data_arr, const CvArr* avg_arr,
 			cvConvert( src, &norm_data );
 			src = &norm_data;
 		}
-		
+
 		cvSub( src, &avg_part, &norm_data );
 
 		cvGetRows( result, &out_part, i, i + block_count );
@@ -1892,7 +1892,7 @@ cvBackProjectPCA( const CvArr* proj_arr, const CvArr* avg_arr,
 {
 	uchar* buffer = 0;
 	int local_alloc = 0;
-	
+
 	CV_FUNCNAME( "cvProjectPCA" );
 
 	__BEGIN__;
@@ -1978,7 +1978,7 @@ cvBackProjectPCA( const CvArr* proj_arr, const CvArr* avg_arr,
 	for( i = 0; i < in_count; i += block_count )
 	{
 		CvMat data_part, avg_part, out_part;
-		
+
 		block_count = MIN( block_count0, in_count - i );
 		cvGetRows( data, &data_part, i, i + block_count );
 

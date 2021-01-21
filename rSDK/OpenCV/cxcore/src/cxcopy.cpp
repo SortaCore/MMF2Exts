@@ -71,7 +71,7 @@ icvSet_8u_C1R( uchar* dst, int dst_step, CvSize size,
 {
 	int copy_len = 12*pix_size;
 	uchar* dst_limit = dst + size.width;
-	
+
 	if( size.height-- )
 	{
 		while( dst + copy_len <= dst_limit )
@@ -289,7 +289,7 @@ CV_IMPL void
 cvCopy( const void* srcarr, void* dstarr, const void* maskarr )
 {
 	CV_FUNCNAME( "cvCopy" );
-	
+
 	__BEGIN__;
 
 	int pix_size;
@@ -400,7 +400,7 @@ cvCopy( const void* srcarr, void* dstarr, const void* maskarr )
 			else if( coi2 )
 			{
 				CvArr* planes[] = { 0, 0, 0, 0 };
-			
+
 				if( maskarr )
 					CV_ERROR( CV_StsBadArg, "COI + mask are not supported" );
 
@@ -460,7 +460,7 @@ cvCopy( const void* srcarr, void* dstarr, const void* maskarr )
 			CV_ERROR( CV_StsUnmatchedSizes, "" );
 
 		mask_step = mask->step;
-		
+
 		if( CV_IS_MAT_CONT( src->type & dst->type & mask->type ))
 		{
 			size.width *= size.height;
@@ -485,7 +485,7 @@ cvSet( void* arr, CvScalar value, const void* maskarr )
 {
 	static CvBtFuncTable setm_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvSet" );
 
 	__BEGIN__;
@@ -510,7 +510,7 @@ cvSet( void* arr, CvScalar value, const void* maskarr )
 			CvMatND nstub;
 			CvNArrayIterator iterator;
 			int pix_size1;
-			
+
 			CV_CALL( cvInitNArrayIterator( 1, &arr, maskarr, &nstub, &iterator ));
 
 			type = CV_MAT_TYPE(iterator.hdr[0]->type);
@@ -544,7 +544,7 @@ cvSet( void* arr, CvScalar value, const void* maskarr )
 				while( cvNextNArraySlice( &iterator ));
 			}
 			EXIT;
-		}	
+		}
 		else
 		{
 			int coi = 0;
@@ -565,7 +565,7 @@ cvSet( void* arr, CvScalar value, const void* maskarr )
 		if( CV_IS_MAT_CONT( mat->type ))
 		{
 			size.width *= size.height;
-		
+
 			if( size.width <= (int)(CV_MAX_INLINE_MAT_OP_SIZE*sizeof(double)))
 			{
 				if( type == CV_32FC1 )
@@ -600,7 +600,7 @@ cvSet( void* arr, CvScalar value, const void* maskarr )
 			mat_step = CV_STUB_STEP;
 			size.height = 1;
 		}
-		
+
 		size.width *= pix_size;
 		CV_CALL( cvScalarToRawData( &value, buf, type, 1 ));
 
@@ -672,7 +672,7 @@ CV_IMPL void
 cvSetZero( CvArr* arr )
 {
 	CV_FUNCNAME( "cvSetZero" );
-	
+
 	__BEGIN__;
 
 	CvMat stub, *mat = (CvMat*)arr;
@@ -685,7 +685,7 @@ cvSetZero( CvArr* arr )
 		{
 			CvMatND nstub;
 			CvNArrayIterator iterator;
-			
+
 			CV_CALL( cvInitNArrayIterator( 1, &arr, 0, &nstub, &iterator ));
 			iterator.size.width *= CV_ELEM_SIZE(iterator.hdr[0]->type);
 
@@ -706,7 +706,7 @@ cvSetZero( CvArr* arr )
 				while( cvNextNArraySlice( &iterator ));
 			}
 			EXIT;
-		}	
+		}
 		else if( CV_IS_SPARSE_MAT(mat))
 		{
 			CvSparseMat* mat1 = (CvSparseMat*)mat;
@@ -903,9 +903,9 @@ cvFlip( const CvArr* srcarr, CvArr* dstarr, int flip_mode )
 {
 	static CvBtFuncTable tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvFlip" );
-	
+
 	__BEGIN__;
 
 	CvMat sstub, *src = (CvMat*)srcarr;
@@ -950,7 +950,7 @@ cvFlip( const CvArr* srcarr, CvArr* dstarr, int flip_mode )
 	if( flip_mode == 0 )
 	{
 		size.width *= pix_size;
-		
+
 		IPPI_CALL( icvFlipVert_8u_C1R( src->data.ptr, src->step,
 										dst->data.ptr, dst->step, size ));
 	}
@@ -972,7 +972,7 @@ cvFlip( const CvArr* srcarr, CvArr* dstarr, int flip_mode )
 		}
 
 		IPPI_CALL( func( src->data.ptr, src->step, dst_data, dst_step, size ));
-		
+
 		if( flip_mode < 0 && inplace )
 		{
 			size.width *= pix_size;
@@ -989,7 +989,7 @@ CV_IMPL void
 cvRepeat( const CvArr* srcarr, CvArr* dstarr )
 {
 	CV_FUNCNAME( "cvRepeat" );
-	
+
 	__BEGIN__;
 
 	CvMat sstub, *src = (CvMat*)srcarr;

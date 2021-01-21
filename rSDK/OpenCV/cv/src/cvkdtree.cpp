@@ -48,7 +48,7 @@
 
 // * write up some docs
 
-// * removing __valuetype parameter from CvKDTree and using virtuals instead 
+// * removing __valuetype parameter from CvKDTree and using virtuals instead
 // * of void* data here could simplify things.
 
 struct CvFeatureTree {
@@ -120,8 +120,8 @@ struct CvFeatureTree {
 	int rn = results->rows * results->cols;
 	std::vector<int> inbounds;
 	dispatch_cvtype(mat, ((__treetype*)data)->
-			find_ortho_range((typename __treetype::scalar_type*)bounds_min->data.ptr, 
-					 (typename __treetype::scalar_type*)bounds_max->data.ptr, 
+			find_ortho_range((typename __treetype::scalar_type*)bounds_min->data.ptr,
+					 (typename __treetype::scalar_type*)bounds_max->data.ptr,
 					 inbounds));
 	std::copy(inbounds.begin(),
 		  inbounds.begin() + std::min((int)inbounds.size(), rn),
@@ -134,7 +134,7 @@ struct CvFeatureTree {
 public:
   CvFeatureTree(CvMat* _mat) : mat(_mat) {
 	// * a flag parameter should tell us whether
-	// * (a) user ensures *mat outlives *this and is unchanged, 
+	// * (a) user ensures *mat outlives *this and is unchanged,
 	// * (b) we take reference and user ensures mat is unchanged,
 	// * (c) we copy data, (d) we own and release data.
 
@@ -212,7 +212,7 @@ void cvFindFeatures(CvFeatureTree* tr, CvMat* desc,
 
   __BEGIN__;
   CV_FUNCNAME("cvFindFeatures");
-  
+
   if (desc->cols != dims)
 	CV_ERROR(CV_StsUnmatchedSizes, "desc columns be equal feature dimensions");
   if (results->rows != desc->rows && results->cols != k)

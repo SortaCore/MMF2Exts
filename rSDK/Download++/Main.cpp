@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 #include "common.h"
 std::string EventLastError;
@@ -18,7 +18,7 @@ void ChangeLastError(std::string NewError,LPRDATA rdPtr)
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 CONDITION(
@@ -47,7 +47,7 @@ CONDITION(
 	int n = Param(PARAM_NUMBER) - 1; // n-1 because 0-based.
 	if (n >= 0 && n < MAX_SLOTS)
 		return rdPtr->slots[n].bCompleted;
-	else 
+	else
 	{
 		ChangeLastError("Invalid port number for \"Download Complete\" condition", rdPtr);
 		return 0;
@@ -93,7 +93,7 @@ CONDITION(
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 #include <MMSystem.h>
@@ -195,7 +195,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 

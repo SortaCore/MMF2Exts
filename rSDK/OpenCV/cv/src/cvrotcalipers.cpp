@@ -64,18 +64,18 @@ icvMinAreaState;
 //	Parameters:
 //	  points	  - convex hull vertices ( any orientation )
 //	  n			- number of vertices
-//	  mode		- concrete application of algorithm 
-//					can be  CV_CALIPERS_MAXDIST	or	
-//							CV_CALIPERS_MINAREARECT  
+//	  mode		- concrete application of algorithm
+//					can be  CV_CALIPERS_MAXDIST	or
+//							CV_CALIPERS_MINAREARECT
 //	  left, bottom, right, top - indexes of extremal points
 //	  out		 - output info.
-//					In case CV_CALIPERS_MAXDIST it points to float value - 
+//					In case CV_CALIPERS_MAXDIST it points to float value -
 //					maximal height of polygon.
 //					In case CV_CALIPERS_MINAREARECT
-//					((CvPoint2D32f*)out)[0] - corner 
+//					((CvPoint2D32f*)out)[0] - corner
 //					((CvPoint2D32f*)out)[1] - vector1
 //					((CvPoint2D32f*)out)[0] - corner2
-//					  
+//
 //					  ^
 //					  |
 //			  vector2 |
@@ -101,8 +101,8 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 	int left = 0, bottom = 0, right = 0, top = 0;
 	int seq[4] = { -1, -1, -1, -1 };
 
-	/* rotating calipers sides will always have coordinates	
-		(a,b) (-b,a) (-a,-b) (b, -a)	 
+	/* rotating calipers sides will always have coordinates
+		(a,b) (-b,a) (-a,-b) (b, -a)
 	 */
 	/* this is a first base bector (a,b) initialized by (1,0) */
 	float orientation = 0;
@@ -111,14 +111,14 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 
 	float left_x, right_x, top_y, bottom_y;
 	CvPoint2D32f pt0 = points[0];
-	
+
 	left_x = right_x = pt0.x;
 	top_y = bottom_y = pt0.y;
-	
+
 	for( i = 0; i < n; i++ )
 	{
 		double dx, dy;
-		
+
 		if( pt0.x < left_x )
 			left_x = pt0.x, left = i;
 
@@ -132,7 +132,7 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 			bottom_y = pt0.y, bottom = i;
 
 		CvPoint2D32f pt = points[(i+1) & (i+1 < n ? -1 : 0)];
-		
+
 		dx = pt.x - pt0.x;
 		dy = pt.y - pt0.y;
 
@@ -149,7 +149,7 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 	{
 		double ax = vect[n-1].x;
 		double ay = vect[n-1].y;
-		
+
 		for( i = 0; i < n; i++ )
 		{
 			double bx = vect[i].x;
@@ -218,7 +218,7 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 				base_b = lead_y;
 				break;
 			case 1:
-				base_a = lead_y; 
+				base_a = lead_y;
 				base_b = -lead_x;
 				break;
 			case 2:
@@ -231,12 +231,12 @@ icvRotatingCalipers( CvPoint2D32f* points, int n, int mode, float* out )
 				break;
 			default: assert(0);
 			}
-		}						
+		}
 		/* change base point of main edge */
 		seq[main_element] += 1;
 		seq[main_element] = (seq[main_element] == n) ? 0 : seq[main_element];
 
-		
+
 		switch (mode)
 		{
 		case CV_CALIPERS_MAXHEIGHT:
@@ -350,7 +350,7 @@ cvMinAreaRect2( const CvArr* array, CvMemStorage* storage )
 	CvMemStorage* temp_storage = 0;
 	CvBox2D box;
 	CvPoint2D32f* points = 0;
-	
+
 	CV_FUNCNAME( "cvMinAreaRect2" );
 
 	memset(&box, 0, sizeof(box));
@@ -396,7 +396,7 @@ cvMinAreaRect2( const CvArr* array, CvMemStorage* storage )
 	else if( !CV_IS_SEQ_POINT_SET( ptseq ))
 	{
 		CvSeqWriter writer;
-		
+
 		if( !CV_IS_SEQ(ptseq->v_prev) || !CV_IS_SEQ_POINT_SET(ptseq->v_prev))
 			CV_ERROR( CV_StsBadArg,
 			"Convex hull must have valid pointer to point sequence stored in v_prev" );
@@ -404,7 +404,7 @@ cvMinAreaRect2( const CvArr* array, CvMemStorage* storage )
 		cvStartWriteSeq( CV_SEQ_KIND_CURVE|CV_SEQ_FLAG_CONVEX|CV_SEQ_ELTYPE(ptseq->v_prev),
 						 sizeof(CvContour), CV_ELEM_SIZE(ptseq->v_prev->flags),
 						 temp_storage, &writer );
-			
+
 		for( i = 0; i < ptseq->total; i++ )
 		{
 			CvPoint pt = **(CvPoint**)(reader.ptr);
@@ -436,7 +436,7 @@ cvMinAreaRect2( const CvArr* array, CvMemStorage* storage )
 			CV_READ_SEQ_ELEM( points[i], reader );
 		}
 	}
-	
+
 	if( n > 2 )
 	{
 		icvRotatingCalipers( points, n, CV_CALIPERS_MINAREARECT, (float*)out );
@@ -464,7 +464,7 @@ cvMinAreaRect2( const CvArr* array, CvMemStorage* storage )
 
 	box.angle = (float)(box.angle*180/CV_PI);
 
-	__END__; 
+	__END__;
 
 	cvReleaseMemStorage( &temp_storage );
 	cvFree( &points );

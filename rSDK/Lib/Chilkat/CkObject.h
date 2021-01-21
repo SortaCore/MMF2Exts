@@ -8,16 +8,16 @@
 #if !defined(__sun__) && !defined(__sun)
 #pragma pack (push, 8)
 #endif
- 
 
-class CK_VISIBLE_PUBLIC CkObject  
+
+class CK_VISIBLE_PUBLIC CkObject
 {
 public:
 	CkObject();
 	virtual ~CkObject();
 
 	// Scan sUtf8 and make sure it is a valid utf-8 string
-	// that is assured of being handled correctly by 
+	// that is assured of being handled correctly by
 	// NSString's stringWithUTF8String constructor.
 	const char *objcUtf8(const char *sUtf8);
 	void objcUtf8_free(void);

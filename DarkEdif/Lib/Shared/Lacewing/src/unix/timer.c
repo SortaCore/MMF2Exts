@@ -115,7 +115,7 @@ void lw_timer_start (lw_timer ctx, long interval)
 	lw_pump_add_user (ctx->pump);
 
 	#ifdef USE_KQUEUE
-	
+
 	  if (ctx->pump->def == &def_eventpump)
 	  {
 		 struct kevent event;
@@ -140,7 +140,7 @@ void lw_timer_start (lw_timer ctx, long interval)
 
 	#else
 	  #ifdef _lacewing_use_timerfd
-		
+
 			struct itimerspec spec;
 
 			spec.it_interval.tv_sec  = interval / 1000;
@@ -148,9 +148,9 @@ void lw_timer_start (lw_timer ctx, long interval)
 
 			spec.it_value.tv_sec = 0;
 			spec.it_value.tv_nsec = 1;
- 
+
 			timerfd_settime (ctx->fd, 0, &spec, 0);
-			
+
 	  #else
 			ctx->interval = interval;
 			lw_thread_start (ctx->timer_thread, ctx);

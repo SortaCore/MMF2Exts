@@ -308,7 +308,7 @@ typedef enum CvGraphWeightType
 /*******************************Stereo correspondence*************************************/
 
 typedef struct CvCliqueFinder
-{	
+{
 	CvGraph* graph;
 	int**	adj_matr;
 	int N; // graph size
@@ -317,7 +317,7 @@ typedef struct CvCliqueFinder
 	int k; // stack size
 	int* current_comp;
 	int** All;
-	
+
 	int* ne;
 	int* ce;
 	int* fixp; // node with minimal disconnections
@@ -326,7 +326,7 @@ typedef struct CvCliqueFinder
 	int status;
 	int best_score;
 	int weighted;
-	int weighted_edges;	
+	int weighted_edges;
 	float best_weight;
 	float* edge_weights;
 	float* vertex_weights;
@@ -339,9 +339,9 @@ typedef struct CvCliqueFinder
 #define CLIQUE_FOUND 1
 #define CLIQUE_END	0
 
-/*CVAPI(void) cvStartFindCliques( CvGraph* graph, CvCliqueFinder* finder, int reverse, 
+/*CVAPI(void) cvStartFindCliques( CvGraph* graph, CvCliqueFinder* finder, int reverse,
 									int weighted CV_DEFAULT(0),  int weighted_edges CV_DEFAULT(0));
-CVAPI(int) cvFindNextMaximalClique( CvCliqueFinder* finder, int* clock_rest CV_DEFAULT(0) ); 
+CVAPI(int) cvFindNextMaximalClique( CvCliqueFinder* finder, int* clock_rest CV_DEFAULT(0) );
 CVAPI(void) cvEndFindCliques( CvCliqueFinder* finder );
 
 CVAPI(void) cvBronKerbosch( CvGraph* graph );*/
@@ -443,14 +443,14 @@ CVAPI(void) cvBronKerbosch( CvGraph* graph );*/
 
 #define CV_UNDEF_SC_PARAM		 12345 // default value of parameters
 
-#define CV_IDP_BIRCHFIELD_PARAM1  25	
+#define CV_IDP_BIRCHFIELD_PARAM1  25
 #define CV_IDP_BIRCHFIELD_PARAM2  5
 #define CV_IDP_BIRCHFIELD_PARAM3  12
 #define CV_IDP_BIRCHFIELD_PARAM4  15
 #define CV_IDP_BIRCHFIELD_PARAM5  25
 
 
-#define  CV_DISPARITY_BIRCHFIELD  0	
+#define  CV_DISPARITY_BIRCHFIELD  0
 
 
 /*F///////////////////////////////////////////////////////////////////////////
@@ -463,23 +463,23 @@ CVAPI(void) cvBronKerbosch( CvGraph* graph );*/
 //	  rightImage - right image of stereo-pair (format 8uC1).
 //	mode - mode of correspondence retrieval (now CV_DISPARITY_BIRCHFIELD only)
 //	  dispImage - destination disparity image
-//	  maxDisparity - maximal disparity 
+//	  maxDisparity - maximal disparity
 //	  param1, param2, param3, param4, param5 - parameters of algorithm
 //	Returns:
 //	Notes:
 //	  Images must be rectified.
 //	  All images must have format 8uC1.
 //F*/
-CVAPI(void) 
-cvFindStereoCorrespondence( 
+CVAPI(void)
+cvFindStereoCorrespondence(
 					const  CvArr* leftImage, const  CvArr* rightImage,
 					int	 mode,
 					CvArr*  dispImage,
-					int	 maxDisparity,								
-					double  param1 CV_DEFAULT(CV_UNDEF_SC_PARAM), 
-					double  param2 CV_DEFAULT(CV_UNDEF_SC_PARAM), 
-					double  param3 CV_DEFAULT(CV_UNDEF_SC_PARAM), 
-					double  param4 CV_DEFAULT(CV_UNDEF_SC_PARAM), 
+					int	 maxDisparity,
+					double  param1 CV_DEFAULT(CV_UNDEF_SC_PARAM),
+					double  param2 CV_DEFAULT(CV_UNDEF_SC_PARAM),
+					double  param3 CV_DEFAULT(CV_UNDEF_SC_PARAM),
+					double  param4 CV_DEFAULT(CV_UNDEF_SC_PARAM),
 					double  param5 CV_DEFAULT(CV_UNDEF_SC_PARAM) );
 
 /*****************************************************************************************/
@@ -625,8 +625,8 @@ CVAPI(int) icvComputeStereoLineCoeffs(	CvPoint3D64f pointA,
 									double gamma,
 									CvStereoLineCoeff*	coeffs);
 
-/*CVAPI(int) icvComputeFundMatrEpipoles ( CvMatr64d camMatr1, 
-									CvMatr64d	 rotMatr1, 
+/*CVAPI(int) icvComputeFundMatrEpipoles ( CvMatr64d camMatr1,
+									CvMatr64d	 rotMatr1,
 									CvVect64d	 transVect1,
 									CvMatr64d	 camMatr2,
 									CvMatr64d	 rotMatr2,
@@ -671,7 +671,7 @@ CVAPI(void) icvGetCrossPiecePiece( CvPoint2D64f p1_start,CvPoint2D64f p1_end,
 							CvPoint2D64f p2_start,CvPoint2D64f p2_end,
 							CvPoint2D64f* cross,
 							int* result);
-							
+
 CVAPI(void) icvGetPieceLength(CvPoint2D64f point1,CvPoint2D64f point2,double* dist);
 
 CVAPI(void) icvGetCrossRectDirect(	CvSize imageSize,
@@ -754,7 +754,7 @@ CVAPI(void) cvDeInterlace( const CvArr* frame, CvArr* fieldEven, CvArr* fieldOdd
 
 /* finds correspondence between two contours */
 CvSeq* cvCalcContoursCorrespondence( const CvSeq* contour1,
-									 const CvSeq* contour2, 
+									 const CvSeq* contour2,
 									 CvMemStorage* storage);
 
 /* morphs contours using the pre-calculated correspondence:
@@ -818,7 +818,7 @@ CVAPI(IplImage*) cvCreateGLCMImage( CvGLCM* GLCM, int step );
 
 typedef struct CvFaceTracker CvFaceTracker;
 
-#define CV_NUM_FACE_ELEMENTS	3 
+#define CV_NUM_FACE_ELEMENTS	3
 enum CV_FACE_ELEMENTS
 {
 	CV_FACE_MOUTH = 0,
@@ -937,7 +937,7 @@ typedef enum CvLeeParameters
 #define CV_PREV_VORONOIEDGE2D( EDGE, SITE ) ((EDGE)->next[2 + ((EDGE)->site[0] != (SITE))])
 #define CV_VORONOIEDGE2D_BEGINNODE( EDGE, SITE ) ((EDGE)->node[((EDGE)->site[0] != (SITE))])
 #define CV_VORONOIEDGE2D_ENDNODE( EDGE, SITE ) ((EDGE)->node[((EDGE)->site[0] == (SITE))])
-#define CV_TWIN_VORONOISITE2D( SITE, EDGE ) ( (EDGE)->site[((EDGE)->site[0] == (SITE))]) 
+#define CV_TWIN_VORONOISITE2D( SITE, EDGE ) ( (EDGE)->site[((EDGE)->site[0] == (SITE))])
 
 #define CV_VORONOISITE2D_FIELDS()	\
 	struct CvVoronoiNode2D *node[2]; \
@@ -1005,7 +1005,7 @@ struct CvLCMNode;
 
 typedef struct CvLCMEdge
 {
-	CV_GRAPH_EDGE_FIELDS() 
+	CV_GRAPH_EDGE_FIELDS()
 	CvSeq* chain;
 	float width;
 	int index1;
@@ -1015,7 +1015,7 @@ typedef struct CvLCMEdge
 typedef struct CvLCMNode
 {
 	CV_GRAPH_VERTEX_FIELDS()
-	CvContour* contour; 
+	CvContour* contour;
 } CvLCMNode;
 
 
@@ -1039,7 +1039,7 @@ CVAPI(void) cvInitPerspectiveTransform( CvSize size, const CvPoint2D32f vertex[4
 /*************************** View Morphing Functions ************************/
 
 /* The order of the function corresponds to the order they should appear in
-	the view morphing pipeline */ 
+	the view morphing pipeline */
 
 /* Finds ending points of scanlines on left and right images of stereo-pair */
 CVAPI(void)  cvMakeScanlines( const CvMatrix3* matrix, CvSize  img_size,
@@ -1126,9 +1126,9 @@ CVAPI(void)  cvDeleteMoire( IplImage*  img );
  * one of which has two variations:
  *
  *  o CV_BG_MODEL_FGD: latest and greatest algorithm, described in
- *	
+ *
  *	 Foreground Object Detection from Videos Containing Complex Background.
- *	 Liyuan Li, Weimin Huang, Irene Y.H. Gu, and Qi Tian. 
+ *	 Liyuan Li, Weimin Huang, Irene Y.H. Gu, and Qi Tian.
  *	 ACM MM2003 9p
  *
  *  o CV_BG_MODEL_FGD_SIMPLE:
@@ -1173,7 +1173,7 @@ typedef struct CvBGStatModel
 }
 CvBGStatModel;
 
-// 
+//
 
 // Releases memory used by BGStatModel
 CV_INLINE void cvReleaseBGStatModel( CvBGStatModel** bg_model )
@@ -1312,7 +1312,7 @@ CvFGDStatModel;
 CVAPI(CvBGStatModel*) cvCreateFGDStatModel( IplImage* first_frame,
 					CvFGDStatModelParams* parameters CV_DEFAULT(NULL));
 
-/* 
+/*
 	Interface of Gaussian mixture algorithm
 
 	"An improved adaptive background mixture model for real-time tracking with shadow detection"
@@ -1338,7 +1338,7 @@ CVAPI(CvBGStatModel*) cvCreateFGDStatModel( IplImage* first_frame,
 #define CV_BGFG_MOG_NCOLORS				  3
 
 typedef struct CvGaussBGStatModelParams
-{	
+{
 	int	 win_size;				/* = 1/alpha */
 	int	 n_gauss;
 	double  bg_threshold, std_threshold, minArea;
@@ -1364,8 +1364,8 @@ CvGaussBGPoint;
 typedef struct CvGaussBGModel
 {
 	CV_BG_STAT_MODEL_FIELDS();
-	CvGaussBGStatModelParams	params;	
-	CvGaussBGPoint*			g_point;	
+	CvGaussBGStatModelParams	params;
+	CvGaussBGPoint*			g_point;
 	int						countFrames;
 }
 CvGaussBGModel;
@@ -1471,7 +1471,7 @@ public:
 
 	/* Starts cameras calibration */
 	virtual bool SetFrames( int totalFrames );
-	
+
 	/* Stops cameras calibration */
 	virtual void Stop( bool calibrate = false );
 
@@ -1505,7 +1505,7 @@ public:
 
 	/* Saves all camera parameters to file */
 	virtual bool SaveCameraParams( const char* filename );
-	
+
 	/* Loads all camera parameters from file */
 	virtual bool LoadCameraParams( const char* filename );
 

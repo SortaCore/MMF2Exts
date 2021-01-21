@@ -13,16 +13,16 @@ struct PropData
 	int				ID;					// Identifier (generated, 1+,)
 	const TCHAR *	Title;				// Name = ID of the property name in the resources, or const char *
 	const TCHAR *	Info;				// Info = ID of the property description in the resources, or const char *
-	union { 
+	union {
 		std::uint32_t	Type_ID;		// Property type...
 		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
-	}; 
+	};
 	std::uint32_t	Options;			// Options (check box, bold, etc)
 	LPARAM			CreateParam;		// Parameter
-	
+
 	// Use initialiser list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
 	PropData() { PropData(-1, 0);}
-	PropData(std::int32_t ID_, unsigned int Type_) : 
+	PropData(std::int32_t ID_, unsigned int Type_) :
 		ID(ID_ + 0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) { }
 
 	void SetAllProperties(std::uint32_t Options_ = 0, LPARAM CreateParam_ = 0)
@@ -219,7 +219,7 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return	(this->X == ((Prop_Size *)P)->X) && 
+		return	(this->X == ((Prop_Size *)P)->X) &&
 				(this->Y == ((Prop_Size *)P)->Y);
 	}
 	virtual unsigned int GetClassID()
@@ -380,10 +380,10 @@ public:
 		{
 			size_t length = wcslen(Str);
 			String = (char *)calloc(length + 1, sizeof(char));
-			
+
 			if (!String)
 				return; // Stops bad-access crashes
-			
+
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
 			WideCharToMultiByte(CP_ACP, 0, Str, -1, String, length, NULL, NULL);
@@ -394,7 +394,7 @@ public:
 	{
 		String = (char *)calloc(Size ? Size : 1, sizeof(char));
 	}
-	
+
 	virtual void Delete()
 	{
 		free(String);
@@ -407,7 +407,7 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return (this->String == ((Prop_AStr *)P)->String)	|| 
+		return (this->String == ((Prop_AStr *)P)->String)	||
 				this->String == nullptr						||	// For some reason, default to true if
 				((Prop_AStr *)P)->String == nullptr			||	// NULL for either of params
 				!strcmp(this->String, ((Prop_AStr *)P)->String);
@@ -497,7 +497,7 @@ public:
 	{
 		(*(Prop_WStr *)addr).pad = pad;
 		(*(Prop_WStr *)addr).String = (wchar_t *)((char *)addr + sizeof(Prop_WStr));
-		
+
 		return !wcscpy_s((wchar_t *)((char *)addr + sizeof(Prop_WStr) + sizeof(bool)), wcslen(String) + 1, (*(Prop_WStr *)addr).String);
 	}
 
@@ -548,7 +548,7 @@ struct Prop_Custom
 
 protected:
 	virtual ~Prop_Custom() {
-	
+
 	}
 };
 
@@ -563,7 +563,7 @@ struct CustomPropCreateStruct {
 #define PWN_FIRST					(0U-2000U)
 
 // Tells property window to validate the property Item
-// => the property window gets the property value from the property Item 
+// => the property window gets the property value from the property Item
 //	and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
@@ -754,7 +754,7 @@ typedef struct {
 typedef MinMaxFloatParam* LPMINMAXFLOATPARAM;
 
 // Direction Control Styles
-enum 
+enum
 {
 	DCS_NOBORDER	= 0x0,		// No border
 	DCS_FLAT		= 0x1,		// Flat
@@ -771,7 +771,7 @@ typedef struct {
 	unsigned int	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
 } DirCtrlCreateParam;
 
-// Direction Property Value 
+// Direction Property Value
 typedef struct {
 	int		selDir;		// Direction index, single selection mode
 	unsigned int	selDir32;	// 32-bit direction mask, multi-selection mode
@@ -783,7 +783,7 @@ typedef struct {
 typedef struct {
 	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
 	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
-} FilenameCreateParam;	
+} FilenameCreateParam;
 
 ////////////////////////////////////////////////
 //
@@ -819,7 +819,7 @@ enum {
 // Property IDs
 //////////
 //
-// If you need them, you can retrieve, set or refresh 
+// If you need them, you can retrieve, set or refresh
 // standard properties with the mvSetPropValue, etc. macros
 // and the following identifiers.
 //

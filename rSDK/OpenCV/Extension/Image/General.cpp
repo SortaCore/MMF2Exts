@@ -1,7 +1,7 @@
 /// =====================================================================================
 //
 // The following routines are used internally by MMF, and should not need to be modified
-// 
+//
 // =====================================================================================
 
 #include "common.h"
@@ -12,7 +12,7 @@ EXT_INIT()
 // ============================================================================
 //
 // LIBRARY ENTRY & QUIT POINTS
-// 
+//
 // ============================================================================
 
 // -----------------
@@ -27,16 +27,16 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 	conditionsInfos = getConditionInfos();
 	actionsInfos = getActionInfos();
 	expressionsInfos = getExpressionInfos();
-	
+
 	ConditionJumps = getConditions();
 	ActionJumps = getActions();
 	ExpressionJumps = getExpressions();
-	
+
 	switch (dwReason)
 	{
 		// DLL is attaching to the address space of the current process.
 		case DLL_PROCESS_ATTACH:
-			
+
 			hInstLib = hDLL; // Store HINSTANCE
 			break;
 
@@ -52,7 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_DETACH:
 			break;
 	}
-	
+
 	return TRUE;
 }
 
@@ -73,7 +73,7 @@ extern "C" int WINAPI DLLExport Initialize(mv _far *mV, int quiet)
 // -----------------
 // Where you want to kill and initialized data opened in the above routine
 // Called just before freeing the DLL.
-// 
+//
 extern "C" int WINAPI DLLExport Free(mv _far *mV)
 {
 	// No error
@@ -83,18 +83,18 @@ extern "C" int WINAPI DLLExport Free(mv _far *mV)
 // ============================================================================
 //
 // GENERAL INFO
-// 
+//
 // ============================================================================
 
 // -----------------
 // Get Infos
 // -----------------
-// 
-extern "C" 
+//
+extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
-		
+
 		switch (info)
 		{
 			case KGI_VERSION:
@@ -116,7 +116,7 @@ extern "C"
 // ----------------------------------------------------------
 // Fills an information structure that tells MMF2 everything
 // about the object, its actions, conditions and expressions
-// 
+//
 
 short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 {
@@ -129,7 +129,7 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->numOfExpressions = (short)Expressions.size();
 
 	infoPtr->editDataSize = sizeof(EDITDATA);
-	
+
 	MagicFlags(infoPtr->editFlags);
 
 	infoPtr->windowProcPriority = WINDOWPROC_PRIORITY;
@@ -138,7 +138,7 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 
 	infoPtr->identifier = IDENTIFIER;
 	infoPtr->version = 1;
-	
+
 	return TRUE;
 }
 
@@ -154,7 +154,7 @@ LPCSTR* WINAPI DLLExport GetDependencies()
 {
 	// Do some rSDK stuff
 	#include "..\..\..\Inc\rGetDependencies.h"
-	
+
 	//LPCSTR szDep[] = {
 	//	"MyDll.dll",
 	//	NULL
@@ -190,7 +190,7 @@ void WINAPI DLLExport UnloadObject(mv _far *mV, LPEDATA edPtr, int reserved)
 // --------------------
 // For you to update your object structure to newer versions
 // Called at both edit time and run time
-// 
+//
 HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, void __far * OldEdPtr)
 {
 	// We do nothing here
@@ -205,7 +205,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, void __far * OldEdPtr
 // Called at edit time and run time.
 //
 // Call lpfnUpdate to update your file pathname (refer to the documentation)
-// 
+//
 void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr, void (WINAPI * lpfnUpdate)(LPSTR, LPSTR))
 {
 }
@@ -216,22 +216,22 @@ void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr,
 //
 // Uncomment this function if you need to store an image in the image bank.
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 //
 /*
 int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
-{  
+{
 	int error = 0;
 
 	// Replace wImgIdx with the name of the WORD variable you create within the edit structure
-  
-	// Enum images  
+
+	// Enum images
 	if ( (error = enumProc(&edPtr->wImgIdx, IMG_TAB, lp1, lp2)) != 0 )
 	{
-		// Undo enum images	  
-		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);	
-	}  
+		// Undo enum images
+		undoProc (&edPtr->wImgIdx, IMG_TAB, lp1, lp2);
+	}
 
 	return error;
 }

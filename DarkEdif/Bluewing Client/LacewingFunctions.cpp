@@ -25,7 +25,7 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 	lacewing::address addr = client.serveraddress();
 	char ipAddr[64];
 	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
-	
+
 	if (GThread)
 		EnterCriticalSectionDebug(&globals->lock);
 
@@ -61,7 +61,7 @@ void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 	if (GThread)
 		LeaveCriticalSectionDebug(&globals->lock);
 #endif
-	
+
 	globals->AddEvent1(4, target);
 }
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason)

@@ -116,7 +116,7 @@ public:
 	CvColumnFilterFunc get_y_filter_func() const { return y_func; }
 
 protected:
-	/* initializes work_type, buf_size and max_rows */ 
+	/* initializes work_type, buf_size and max_rows */
 	virtual void get_work_params();
 	/* it is called (not always) from process when _phase=CV_START or CV_WHOLE.
 		the method initializes ring buffer (buf_end, buf_head, buf_tail, buf_count, rows),
@@ -130,7 +130,7 @@ protected:
 									int y, int y1, int y2 );
 
 	enum { ALIGN=32 };
-	
+
 	int max_width;
 	/* currently, work_type must be the same as src_type in case of non-separable filters */
 	int min_depth, src_type, dst_type, work_type;

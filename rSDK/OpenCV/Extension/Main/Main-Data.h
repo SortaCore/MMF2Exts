@@ -15,7 +15,7 @@ struct MainData
 	rSpr rs;
 	LPRRDATA rRd;
 	CvCapture * myCapture;
-	
+
 	int errorCallbackMode;
 
 	void errorReportCallback(int code, const char *func_name, const char *err_msg, const char *file, int line, void*)
@@ -36,7 +36,7 @@ struct MainData
 				break;
 		}
 	}
-	
+
 };
 
 #endif

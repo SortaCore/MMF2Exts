@@ -27,7 +27,7 @@ public:
 	// b1: First release
 	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
 	static const OEPREFS OEPREFS = OEPREFS::GLOBAL;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);

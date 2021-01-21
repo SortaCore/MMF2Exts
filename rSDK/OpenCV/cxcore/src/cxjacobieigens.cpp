@@ -45,16 +45,16 @@
 //	Names:	  icvJacobiEigens_32f, icvJacobiEigens_64d
 //	Purpose:	Eigenvalues & eigenvectors calculation of a symmetric matrix:
 //				A Vi  =  Ei Vi
-//	Context:	
+//	Context:
 //	Parameters: A(n, n) - source symmetric matrix (n - rows & columns number),
-//				V(n, n) - matrix of its eigenvectors 
+//				V(n, n) - matrix of its eigenvectors
 //						  (i-th row is an eigenvector Vi),
 //				E(n)	- vector of its eigenvalues
 //						  (i-th element is an eigenvalue Ei),
 //				eps	 - accuracy of diagonalization.
-//				
+//
 //	Returns:
-//	CV_NO_ERROR or error code	 
+//	CV_NO_ERROR or error code
 //	Notes:
 //		1. The functions destroy source matrix A, so if you need it further, you
 //			have to copy it before the processing.

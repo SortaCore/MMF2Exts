@@ -117,7 +117,7 @@ IplImage* CvCaptureCAM_DShow::retrieveFrame()
 		int w = VI.getWidth(index), h = VI.getHeight(index);
 		frame = cvCreateImage( cvSize(w,h), 8, 3 );
 	}
-	
+
 	VI.getPixels( index, (uchar*)frame->imageData, false, true );
 	return frame;
 }
@@ -139,7 +139,7 @@ double CvCaptureCAM_DShow::getProperty( int property_id )
 bool CvCaptureCAM_DShow::setProperty( int property_id, double value )
 {
 	int width = 0, height = 0;
-	
+
 	switch( property_id )
 	{
 	case CV_CAP_PROP_FRAME_WIDTH:

@@ -23,7 +23,7 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 	{
 		// No grab of file handle - OutputNow() will need it
 		OutputNow(1, -1, "*** Log closed. ***");
-		
+
 		// Acquire lock
 		OpenLock();
 
@@ -36,7 +36,7 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 		// Just acquire lock
 		OpenLock();
 	}
-	
+
 	// Get handle to file
 	while (true)
 	{
@@ -55,24 +55,24 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 			<< file << _T("\n")
 			<< _T("Returned error: ") << errno << _T(": ") << _tcserror(errno) << _T("\n")
 			<< _T("Look for \"errno errors\" on Google for more information.");
-		
+
 		if (MessageBox(NULL, err.str().c_str(), _T("DebugObject - Error"), MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
 		{
 			CloseLock();
 			return;
 		}
 	}
-	
+
 	// If file already exists, add blank line
 	fseek(data->fileHandle, 0, SEEK_END);
 	if (ftell(data->fileHandle) > 0)
 		fputs("\r\n", data->fileHandle);
-	
+
 	fflush(data->fileHandle);
 
 	// Close lock
 	CloseLock();
-	
+
 	// Report success
 	OutputNow(1, -1, "*** Log opened. ***");
 	bool describeApp = (describeAppI != 0);
@@ -123,7 +123,7 @@ void Extension::SetHandler(int reaction, int continues)
 			CloseLock();
 		}
 	}
-	
+
 }
 
 // Called by non-action only
@@ -145,7 +145,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 		CloseLock();
 		return;
 	}
-	
+
 	// Get time (if blank, remove tab for time also)
 	if (data->timeFormat[0] != _T('\0'))
 	{
@@ -157,7 +157,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 		// Output
 		if (data->fileHandle)
 			fprintf_s(data->fileHandle, "%i\t%i\t%s\t%s\r\n", intensity, line, realTimeU8.c_str(), textToOutputU8.c_str());
-		
+
 		// Console wants colourisin'
 		if (data->consoleEnabled)
 		{
@@ -172,7 +172,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 	{
 		if (data->fileHandle)
 			fprintf_s(data->fileHandle, "%i\t%i\t%s\r\n", intensity, line, textToOutputU8.c_str());
-		
+
 		// Console wants colourisin'
 		if (data->consoleEnabled)
 		{
@@ -183,7 +183,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 			SetConsoleTextAttribute(data->consoleOut, 0x07);
 		}
 	}
-	
+
 	// Cleanup
 	if (data->fileHandle)
 		fflush(data->fileHandle);
@@ -199,13 +199,13 @@ void Extension::SetOutputTimeFormat(TCHAR * format)
 		MessageBoxA(NULL, "Could not change time format: too large (100 chars is the maximum).", "DebugObject - Error setting time format", MB_OK | MB_ICONERROR);
 		return;
 	}
-	
+
 	// Acquire lock, so we don't get fights over TimeFormat
 	OpenLock();
 
 	_tcscpy_s(data->timeFormat, 255, format);
-	
-	// Close lock	
+
+	// Close lock
 	CloseLock();
 }
 
@@ -345,7 +345,7 @@ void Extension::CauseCrash_ReadAccessViolation(void)
 
 void Extension::CauseCrash_ArrayOutOfBoundsRead(void)
 {
-	// This warning is correct; a crash will occur since i[2] is not 
+	// This warning is correct; a crash will occur since i[2] is not
 	// initialised - in fact, i[2] doesn't even exist.
 	#pragma warning (push)
 	#pragma warning (disable:4700)

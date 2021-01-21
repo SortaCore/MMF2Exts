@@ -39,7 +39,7 @@
 
 
 
-	
+
 // -------------------------------
 // DEFINITION OF EXPRESSIONS CODES
 // -------------------------------
@@ -58,7 +58,7 @@
 // EDITION OF OBJECT DATA STRUCTURE
 // --------------------------------
 
-#pragma pack(push,_PACK_CNCS_EXT)  
+#pragma pack(push,_PACK_CNCS_EXT)
 #pragma pack(2)
 
 typedef struct tagEDATA
@@ -96,15 +96,15 @@ typedef editData	_far *			fpedata;
 // -----------------------------
 typedef struct tagRDATA {
 
-	headerObject 	rHo;		  		
-	
+	headerObject 	rHo;
+
 	short			rcdDevice;
 	short			rcdFlags;
 	short			rcdStatus;
 	short			rcdStopAtTrackEnd;
 	long			rcdLastPosition;
 	MCIERROR		rcdError; // Phi note: it was short, but since MCIERROR is DWORD, that's not usable.
-	
+
 	} runData;
 
 typedef	runData		_far *		fprdata;

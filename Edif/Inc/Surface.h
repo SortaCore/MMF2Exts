@@ -29,7 +29,7 @@
 	typedef wchar_t * SURF_PWSTR;
 	typedef const wchar_t * SURF_PCWSTR;
 #endif
-	
+
 #ifdef _UNICODE
 	#define SURF_PTSTR SURF_PWSTR
 	#define SURF_PCTSTR SURF_PCWSTR

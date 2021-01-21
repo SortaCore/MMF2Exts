@@ -282,7 +282,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 				selPeer = globals->lastDestroyedExtSelectedPeer.lock();
 				globals->lastDestroyedExtSelectedPeer.reset();
 			}
-			
+
 			globals->refs.push_back(this);
 			if (!globals->_ext)
 				globals->_ext = this;
@@ -304,7 +304,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	{
 		OutputDebugStringA("Non-Global object; creating Globals, not submitting to WriteGlobal.\n");
 		globals = new GlobalInfo(this, edPtr);
-		
+
 		globals->_objEventPump->tick();
 	}
 
@@ -371,7 +371,7 @@ DWORD WINAPI LacewingLoopThread(void * thisExt)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
-	
+
 	GlobalInfo * G = ((Extension *)thisExt)->globals;
 	try {
 		lacewing::error error = G->_objEventPump->start_eventloop();
@@ -386,7 +386,7 @@ DWORD WINAPI LacewingLoopThread(void * thisExt)
 			text += error->tostring();
 			G->CreateError(text.c_str());
 		}
-			
+
 	}
 	catch (...)
 	{
@@ -430,8 +430,8 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
 		do not cause reading of only the last condition's output. Only used in multi-threading.
-		
-		For example, if an error event changes an output variable, and immediately afterward a 
+
+		For example, if an error event changes an output variable, and immediately afterward a
 		success event changes the same variable, only the success event's output can be read since it overwrote
 		the last event. However, using MMF2 in single-threaded mode, overwriting is impossible to do
 		provided you use GenerateEvent(). Since PushEvent() is not immediate, you can reproduce this
@@ -442,7 +442,7 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		at the wrong time.
 		With PushEvent() + multithreading, this  would cause overwriting of old events and possibly access
 		violations as variables are simultaneously written to by the ext and read from by Fusion at the same time.
-		
+
 		But in DarkEdif, you'll note all the GenerateEvents() are handled on a queue, and the queue is
 		iterated through in Handle(), thus it is quite safe. But we still need to protect potentially several
 		AddEvent() functions running at once and corrupting the memory at some point; so we need the
@@ -462,7 +462,7 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 	newEvent2.peer = peer;
 	newEvent2.receivedMsg.content = messageOrErrorText;
 	newEvent2.receivedMsg.subchannel = subchannel;
-	
+
 	EnterCriticalSectionDebug(&lock); // Needed before we access Extension
 #if 0
 	// Copy Extension's data to vector
@@ -475,11 +475,11 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 	}
 #endif
 	_saved.push_back(newEvent);
-		
+
 	LeaveCriticalSectionDebug(&lock); // We're done accessing Extension
 
 	// Cause Handle() to be triggered, allowing Saved to be parsed
-	
+
 	if (_ext != nullptr)
 		_ext->Runtime.Rehandle();
 }
@@ -533,13 +533,13 @@ void Extension::AddToSend(const void * data, size_t size)
 		return;
 
 	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
-		
+
 	// Failed to reallocate memory
 	if (!newptr)
 		return CreateError("Received error number %u with reallocating memory to append to binary message. The message has not been modified.", errno);
-		
+
 	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
-	
+
 	// If we failed to copy memory.
 	if (memmove_s(newptr + SendMsgSize, size, data, size))
 		return CreateError("Received error number %u with copying memory into newly allocated binary message. The message has not been modified.", errno);
@@ -684,7 +684,7 @@ std::tstring Extension::ReadStringFromRecvBinary(size_t recvMsgStartIndex, int s
 	}
 
 	// We have the entire received message in result, we need to trim it to sizeInCodePoints
-	
+
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
 	for (int charIndex = 0, numBytesInSize = 0, byteIndex = recvMsgStartIndex; ; ++charIndex)
 	{
@@ -759,7 +759,7 @@ Extension::~Extension()
 	if (!globals->refs.empty())
 	{
 		OutputDebugStringA("Note: Switched Lacewing instances.\n");
-		
+
 		// Switch Handle ticking over to next Extension visible.
 		if (wasBegin)
 		{
@@ -838,8 +838,8 @@ REFLAG Extension::Handle()
 
 	// AddEvent() was called and not yet handled
 	// (note all code that accesses Saved must have ownership of lock)
-	
-	
+
+
 	// If Thread is not available, we have to tick() on Handle(), so
 	// we have to run next loop even if there's no events in Saved() to deal with.
 	bool runNextLoop = !globals->_thread;
@@ -871,8 +871,8 @@ REFLAG Extension::Handle()
 		remainingCount = Saved.size();
 
 		LeaveCriticalSectionDebug(&globals->lock);
-				
-		
+
+
 		for (auto i : globals->refs)
 		{
 			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
@@ -933,7 +933,7 @@ REFLAG Extension::Handle()
 				}
 			}
 		}
-	} 
+	}
 
 	if (!isOverloadWarningQueued && remainingCount > maxNumEventsPerEventLoop * 3)
 	{

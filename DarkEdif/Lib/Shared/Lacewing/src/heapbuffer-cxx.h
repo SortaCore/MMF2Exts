@@ -55,7 +55,7 @@ namespace Lacewing
 
 		inline char * Buffer ()
 		{
-			return lwp_heapbuffer_buffer (&buffer); 
+			return lwp_heapbuffer_buffer (&buffer);
 		}
 
 		inline size_t Length ()
@@ -78,25 +78,25 @@ namespace Lacewing
 			lwp_heapbuffer_add (&this->buffer, (char *) &v, sizeof (v));
 		}
 
-		inline HeapBuffer &operator << (char * s)					
-		{	
-			Add (s, -1);									  
-			return *this;									
-		}													
+		inline HeapBuffer &operator << (char * s)
+		{
+			Add (s, -1);
+			return *this;
+		}
 
-		inline HeapBuffer &operator << (const char * s)			 
-		{	
-			Add (s, -1);									  
-			return *this;									
-		}													
+		inline HeapBuffer &operator << (const char * s)
+		{
+			Add (s, -1);
+			return *this;
+		}
 
-		inline HeapBuffer &operator << (lw_i64 v)					
-		{	
+		inline HeapBuffer &operator << (lw_i64 v)
+		{
 			char buffer [128];
 			sprintf (buffer, lwp_fmt_size, (size_t) v);
 			Add (buffer, -1);
-			return *this;									
-		}													
+			return *this;
+		}
 
 		inline void Reset()
 		{

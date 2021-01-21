@@ -676,7 +676,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 // IsTransparent
 // --------------------
 // This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
-// 
+//
 
 extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far * mV, fpLevObj loPtr, LPEDATA edPtr, int dx, int dy)
 {
@@ -690,7 +690,7 @@ extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far * mV, fpLevObj loPtr, LPE
 // PrepareToWriteObject
 // --------------------
 // Just before writing the datazone when saving the application, MMF2 calls this routine.
-// 
+//
 
 void WINAPI	DLLExport PrepareToWriteObject(mv _far *mV, LPEDATA edPtr, fpObjInfo adoi)
 {
@@ -778,14 +778,14 @@ void WINAPI	DLLExport CreateFromFile(LPMV mV, LPSTR fileName, LPEDATA edPtr)
 //
 // ROUTINES USED UNDER EVENT / TIME / STEP-THROUGH EDITOR
 // You should not need to change these routines
-// 
+//
 // ============================================================================
 
 // -----------------
 // menucpy
 // -----------------
 // Internal routine used later, copy one menu onto another
-// 
+//
 #ifndef RUN_ONLY
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 {
@@ -819,7 +819,7 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 // GetPopupMenu
 // -----------------
 // Internal routine used later. Returns the first popup from a menu
-// 
+//
 HMENU GetPopupMenu(LPEDATA edPtr, short mn)
 {
 	HMENU hPopup = CreatePopupMenu();
@@ -1003,8 +1003,8 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *mV, short menuId)
 // -------------------------------------------------------
 // GetConditionInfos / GetActionInfos / GetExpressionInfos
 // -------------------------------------------------------
-// From a action / condition / expression code, returns 
-// an infosEvents structure. 
+// From a action / condition / expression code, returns
+// an infosEvents structure.
 //
 
 LPINFOEVENTSV2 WINAPI DLLExport GetConditionInfos(mv _far *mV, short code)
@@ -1038,7 +1038,7 @@ LPINFOEVENTSV2 WINAPI DLLExport GetExpressionInfos(mv _far *mV, short code)
 // ----------------------------------------------------------
 // GetConditionString / GetActionString / GetExpressionString
 // ----------------------------------------------------------
-// From a action / condition / expression code, returns 
+// From a action / condition / expression code, returns
 // the string to use for displaying it under the event editor
 //
 

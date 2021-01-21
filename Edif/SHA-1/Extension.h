@@ -13,7 +13,7 @@ public:
 
 	static const int OEFLAGS = 0;
 	static const int OEPREFS = 0;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
@@ -42,7 +42,7 @@ public:
 		void SelectFile(TCHAR *, int);
 
 	/// Expressions
-		
+
 		const TCHAR * GetLastHash();
 		unsigned int GetLastHashAddress();
 

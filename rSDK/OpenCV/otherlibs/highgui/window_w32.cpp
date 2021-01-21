@@ -313,7 +313,7 @@ icvSaveWindowPos( const char* name, CvRect rect )
 	char rootKey[1024];
 	strcpy( szKey, icvWindowPosRootKey );
 	strcat( szKey, name );
-	
+
 	if( RegOpenKeyEx( HKEY_CURRENT_USER,szKey,0,KEY_READ,&hkey) != ERROR_SUCCESS )
 	{
 		HKEY hroot;
@@ -358,7 +358,7 @@ icvSaveWindowPos( const char* name, CvRect rect )
 		if( RegOpenKeyEx( HKEY_CURRENT_USER,szKey,0,KEY_WRITE,&hkey) != ERROR_SUCCESS )
 			return;
 	}
-	
+
 	RegSetValueEx(hkey, "Left", 0, REG_DWORD, (BYTE*)&rect.x, sizeof(rect.x));
 	RegSetValueEx(hkey, "Top", 0, REG_DWORD, (BYTE*)&rect.y, sizeof(rect.y));
 	RegSetValueEx(hkey, "Width", 0, REG_DWORD, (BYTE*)&rect.width, sizeof(rect.width));

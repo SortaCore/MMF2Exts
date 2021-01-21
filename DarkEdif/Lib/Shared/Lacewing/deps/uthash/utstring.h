@@ -21,7 +21,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* a dynamic string implementation using macros 
+/* a dynamic string implementation using macros
  * see http://uthash.sourceforge.net/utstring
  */
 #ifndef UTSTRING_H
@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UTSTRING_VERSION 1.9.6
 
 #ifdef __GNUC__
-#define _UNUSED_ __attribute__ ((__unused__)) 
+#define _UNUSED_ __attribute__ ((__unused__))
 #else
-#define _UNUSED_ 
+#define _UNUSED_
 #endif
 
 #include <stdlib.h>

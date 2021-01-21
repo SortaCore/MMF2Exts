@@ -100,7 +100,7 @@ static int ReadNumber( RLByteStream& strm, int maxdigits )
 				}
 				while( code != '\n' && code != '\r' );
 			}
-			
+
 			code = strm.GetByte();
 
 			while( isspace(code))
@@ -141,7 +141,7 @@ void  GrFmtPxMReader::Close()
 bool  GrFmtPxMReader::ReadHeader()
 {
 	bool result = false;
-	
+
 	assert( strlen(m_filename) != 0 );
 	if( !m_strm.Open( m_filename )) return false;
 
@@ -159,13 +159,13 @@ bool  GrFmtPxMReader::ReadHeader()
 		case '3': case '6': m_bpp = 24; break;
 		default: BAD_HEADER_ERR();
 		}
-		
+
 		m_binary = code >= '4';
 		m_iscolor = m_bpp > 8;
 
 		m_width = ReadNumber( m_strm, INT_MAX );
 		m_height = ReadNumber( m_strm, INT_MAX );
-		
+
 		m_maxval = m_bpp == 1 ? 1 : ReadNumber( m_strm, INT_MAX );
 		if( m_maxval > 65535 )
 			BAD_HEADER_ERR();
@@ -174,7 +174,7 @@ bool  GrFmtPxMReader::ReadHeader()
 		if( m_maxval > 255 )
 			m_bit_depth = 16;
 
-		if( m_width > 0 && m_height > 0 && m_maxval > 0 && m_maxval < (1 << 16)) 
+		if( m_width > 0 && m_height > 0 && m_maxval > 0 && m_maxval < (1 << 16))
 		{
 			m_offset = m_strm.GetPos();
 			result = true;
@@ -209,7 +209,7 @@ bool  GrFmtPxMReader::ReadData( uchar* data, int step, int color )
 
 	if( m_offset < 0 || !m_strm.IsOpened())
 		return false;
-	
+
 	if( src_pitch+32 > buffer_size )
 		src = new uchar[width3*m_bit_depth/8 + 32];
 
@@ -230,7 +230,7 @@ bool  GrFmtPxMReader::ReadData( uchar* data, int step, int color )
 	if( setjmp( m_strm.JmpBuf()) == 0 )
 	{
 		m_strm.SetPos( m_offset );
-		
+
 		switch( m_bpp )
 		{
 		////////////////////////// 1 BPP /////////////////////////
@@ -253,7 +253,7 @@ bool  GrFmtPxMReader::ReadData( uchar* data, int step, int color )
 				for( y = 0; y < m_height; y++, data += step )
 				{
 					m_strm.GetBytes( src, src_pitch );
-					
+
 					if( color )
 						FillColorRow1( data, src, m_width, palette );
 					else
@@ -345,7 +345,7 @@ bool  GrFmtPxMReader::ReadData( uchar* data, int step, int color )
 	}
 
 	if( src != buffer )
-		delete[] src; 
+		delete[] src;
 
 	if( gray_palette != pal_buffer )
 		delete[] gray_palette;
@@ -383,7 +383,7 @@ bool  GrFmtPxMWriter::WriteImage( const uchar* data, int step,
 	int  x, y;
 
 	assert( data && width > 0 && height > 0 && step >= fileStep );
-	
+
 	if( m_strm.Open( m_filename ) )
 	{
 		int  lineLength;
@@ -504,7 +504,7 @@ bool  GrFmtPxMWriter::WriteImage( const uchar* data, int step,
 		m_strm.Close();
 		result = true;
 	}
-	
+
 	return result;
 }
 

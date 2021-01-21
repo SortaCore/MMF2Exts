@@ -76,12 +76,12 @@ typedef struct list_element list_element;
  *	list_elem_remove(elem)			Remove element elem
  *
  * Loops:
- * 
+ *
  *	list_each(list, elem) { ... }
  *
  *	 Loops through each list element, front to back.  elem will be declared
  *	 and set to the actual value of each element (not an elemator)
- *					  
+ *
  *	list_each_r(list, elem) { ... }
  *
  *	 Loops through each list element, back to front.  elem will be declared
@@ -90,8 +90,8 @@ typedef struct list_element list_element;
  *	list_each_elem(list, elem) { ... }
  *
  *	 Loops through each list element, front to back.  elem will be declared
- *	 and set to an elemator pointing to each element. 
- *					  
+ *	 and set to an elemator pointing to each element.
+ *
  *	list_each_r_elem(list, elem) { ... }
  *
  *	 Loops through each list element, back to front.  elem will be declared
@@ -102,7 +102,7 @@ typedef struct list_element list_element;
 	type *
 
 #define list(type, name) \
-	list_type (type) name 
+	list_type (type) name
 
 #define list_push(list, value) do {											\
 	typeof (*list) _v_copy = (typeof (*list)) value;							\
@@ -166,13 +166,13 @@ typedef struct list_element list_element;
 		 if (*elem == value)												  \
 			break;															\
 	  elem;																	\
-	})																			
+	})
 #else
 	template<class T> inline T * list_find (T * list, T value)
 	{
 	  list_elem (list) elem = list_elem_front (list);
-	  for (; elem; elem = list_elem_next (elem))	
-		 if (*elem == value)						
+	  for (; elem; elem = list_elem_next (elem))
+		 if (*elem == value)
 			return elem;
 	  return 0;
 	}

@@ -4,7 +4,7 @@
 // The following routines are used internally by MMF, and should not need to
 // be modified.
 //
-// 
+//
 // ============================================================================
 
 // Common Include
@@ -15,13 +15,13 @@ HINSTANCE hInstLib;
 // ============================================================================
 //
 // LIBRARY ENTRY & QUIT POINTS
-// 
+//
 // ============================================================================
 
 // -----------------
 // Entry points
 // -----------------
-// Usually you do not need to do any initialization here: you will prefer to 
+// Usually you do not need to do any initialization here: you will prefer to
 // do them in "Initialize" found in Edittime.cpp
 BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 {
@@ -29,7 +29,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 	{
 		// DLL is attaching to the address space of the current process.
 		case DLL_PROCESS_ATTACH:
-			
+
 			hInstLib = hDLL; // Store HINSTANCE
 			break;
 
@@ -45,7 +45,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_DETACH:
 			break;
 	}
-	
+
 	return TRUE;
 }
 
@@ -53,19 +53,19 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 // ============================================================================
 //
 // ROUTINES USED UNDER FRAME EDITOR
-// 
+//
 // ============================================================================
 
 // -----------------
 // Get Infos
 // -----------------
 // You should not change this routine.
-// 
-extern "C" 
+//
+extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
-		
+
 		switch (info)
 		{
 			case KGI_VERSION:
@@ -82,7 +82,7 @@ extern "C"
 //
 // ROUTINES USED UNDER EVENT / TIME / STEP-THROUGH EDITOR
 // You should not need to change these routines
-// 
+//
 // ============================================================================
 
 // ----------------------------------------------------------
@@ -90,10 +90,10 @@ extern "C"
 // ----------------------------------------------------------
 // Fills an information structure that tells CC&C everything
 // about the object, its actions, conditions and expressions
-// 
+//
 
 short WINAPI DLLExport GetRunObjectInfos(mv _far *knpV, fpKpxRunInfos infoPtr)
-{			
+{
 
 	infoPtr->conditions = (LPBYTE)ConditionJumps;
 	infoPtr->actions = (LPBYTE)ActionJumps;
@@ -113,10 +113,10 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *knpV, fpKpxRunInfos infoPtr)
 
 	// Identifier, for run-time identification
 	infoPtr->identifier = IDENTIFIER;
-	
+
 	// Current version
 	infoPtr->version = KCX_CURRENT_VERSION;
-	
+
 	return TRUE;
 }
 
@@ -125,7 +125,7 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *knpV, fpKpxRunInfos infoPtr)
 // menucpy
 // -----------------
 // Internal routine used later, copy one menu onto another
-// 
+//
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 {
 	int			n, id, nMn;
@@ -158,7 +158,7 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 // GetPopupMenu
 // -----------------
 // Internal routine used later. Returns the first popup from a menu
-// 
+//
 HMENU GetPopupMenu(short mn)
 {
 	HMENU	hMn, hSubMenu, hPopup = NULL;
@@ -180,13 +180,13 @@ HMENU GetPopupMenu(short mn)
 // --------------------
 // Internal routine used later. Look for one event in one of the eventInfos array...
 // No protection to go faster: you must properly enter the conditions/actions!
-// 
+//
 static LPEVENTINFOS2 GetEventInformations(LPEVENTINFOS2 eiPtr, short code)
 
 {
 	while(eiPtr->infos.code != code)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	
+
 	return eiPtr;
 }
 
@@ -245,7 +245,7 @@ void GetCodeTitle(LPEVENTINFOS2 eiPtr, short code, short param, short mn, LPSTR 
 		LoadString(hInstLib, strID, strBuf, maxLen);
 	else
 	{
-		// Otherwise, returns the menu option 
+		// Otherwise, returns the menu option
 		if ((hMn = LoadMenu(hInstLib, MAKEINTRESOURCE(mn))) != NULL )
 		{
 			GetMenuString(hMn, eiPtr->menu, strBuf, maxLen, MF_BYCOMMAND);
@@ -281,7 +281,7 @@ short WINAPI DLLExport GetConditionCodeFromMenu(mv _far *knpV, short menuId)
 
 	for (n=CND_LAST, eiPtr=(LPEVENTINFOS2)conditionsInfos; n>0 && eiPtr->menu!=menuId; n--)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	if (n>0) 
+	if (n>0)
 		return eiPtr->infos.code;
 	return -1;
 }
@@ -293,7 +293,7 @@ short WINAPI DLLExport GetActionCodeFromMenu(mv _far *knpV, short menuId)
 
 	for (n=ACT_LAST, eiPtr=(LPEVENTINFOS2)actionsInfos; n>0 && eiPtr->menu!=menuId; n--)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	if (n>0) 
+	if (n>0)
 		return eiPtr->infos.code;
 	return -1;
 }
@@ -305,7 +305,7 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *knpV, short menuId)
 
 	for (n=EXP_LAST, eiPtr=(LPEVENTINFOS2)expressionsInfos; n>0 && eiPtr->menu!=menuId; n--)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	if (n>0) 
+	if (n>0)
 		return eiPtr->infos.code;
 	return -1;
 }
@@ -314,8 +314,8 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *knpV, short menuId)
 // -------------------------------------------------------
 // GetConditionInfos / GetActionInfos / GetExpressionInfos
 // -------------------------------------------------------
-// From a action / condition / expression code, returns 
-// an infosEvents structure. 
+// From a action / condition / expression code, returns
+// an infosEvents structure.
 //
 
 LPINFOEVENTSV2 WINAPI DLLExport GetConditionInfos(mv _far *knpV, short code)
@@ -337,7 +337,7 @@ LPINFOEVENTSV2 WINAPI DLLExport GetExpressionInfos(mv _far *knpV, short code)
 // ----------------------------------------------------------
 // GetConditionString / GetActionString / GetExpressionString
 // ----------------------------------------------------------
-// From a action / condition / expression code, returns 
+// From a action / condition / expression code, returns
 // the string to use for displaying it under the event editor
 //
 

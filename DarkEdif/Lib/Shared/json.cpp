@@ -178,7 +178,7 @@ const static long
 	flag_next			 = 1 << 0,
 	flag_reproc			= 1 << 1,
 	flag_need_comma		= 1 << 2,
-	flag_seek_value		= 1 << 3, 
+	flag_seek_value		= 1 << 3,
 	flag_escaped		  = 1 << 4,
 	flag_string			= 1 << 5,
 	flag_need_colon		= 1 << 6,
@@ -219,15 +219,15 @@ json_value * json_parse_ex (json_settings * settings,
 
 	state.uint_max -= 8; /* limit of how much can be added before next check */
 	state.ulong_max -= 8;
-	
+
 //	#pragma warning(disable:4133)
 
 	if (!json_clean_comments (&json, &state, error, sizeof(error), &length))
 		goto e_failed;
 //	#pragma warning(default:4133)
-	
+
 	end = (json + length); // json_clean_comments changes length
-	
+
 	for (state.first_pass = 1; state.first_pass >= 0; -- state.first_pass)
 	{
 		json_uchar uchar;
@@ -244,7 +244,7 @@ json_value * json_parse_ex (json_settings * settings,
 		for (i = json ;; ++ i)
 		{
 			json_char b = (i == end ? 0 : *i);
-			
+
 			if (flags & flag_done)
 			{
 				if (!b)
@@ -359,7 +359,7 @@ json_value * json_parse_ex (json_settings * settings,
 							if (state.first_pass)
 								(*(json_char **) &top->u.object.values) += string_length + 1;
 							else
-							{  
+							{
 								top->u.object.values [top->u.object.length].name
 									= (json_char *) top->_reserved.object_mem;
 
@@ -560,7 +560,7 @@ json_value * json_parse_ex (json_settings * settings,
 								string_length = 0;
 
 								break;
-						
+
 							case '}':
 								flags = (flags & ~ flag_need_comma) | flag_next;
 								break;
@@ -712,7 +712,7 @@ json_value * json_parse_ex (json_settings * settings,
 
 				if (top->parent->type == json_array)
 					flags |= flag_seek_value;
-					
+
 				if (!state.first_pass)
 				{
 					json_value * parent = top->parent;
@@ -861,7 +861,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	int string = 0;
 	int comment = 0;
 	const char * json = *json_input, * i = json;
-	
+
 	char * newJSON = (char *)json_alloc(state, size, 1);
 	char * j = newJSON;
 
@@ -879,7 +879,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 				cur_line_begin = i + 1;
 			continue;
 		}
-		
+
 		// Inside /* */ comment
 		if (comment == 1)
 		{
@@ -902,7 +902,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 			string = 1 - string;
 			continue;
 		}
-		
+
 		// Skip comment check if inside string or not a '/' character.
 		if (string || *i != '/')
 			continue;
@@ -921,7 +921,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 			++cur_line;
 			*(j-1)	= '\r';	// Note j++ earlier
 			*(j++)	= '\n';
-				
+
 			continue;
 		}
 
@@ -956,7 +956,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	// indicating the latest change time of Extension.h, Extension.cpp, or DarkExt.json; whichever is latest.
 	const char* json = *json_input;
 	size_t size = *_size;
-	
+
 	// Max Int64 is 20 digits
 	const char* newlineAt = size < 2 + 20 + 1 ? NULL : (const char*)memchr(&json[2], '\n', size);
 

@@ -24,7 +24,7 @@ Extension::Extension(LPRDATA _rdPtr, LPEDATA edPtr, fpcob cobPtr)
 
 		It's the only place you'll get access to edPtr at runtime, so you should transfer
 		anything from edPtr to the extension class here.
-	
+
 	*/
 }
 

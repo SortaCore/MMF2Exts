@@ -206,7 +206,7 @@ icvJacobiEigens_32f(float *A, float *V, float *E, int n, float eps)
 //
 //	Returns: CV_NO_ERR or error code
 //
-//	Notes:	
+//	Notes:
 //F*/
 static CvStatus  CV_STDCALL
 icvCalcCovarMatrixEx_8u32fR( int nObjects, void *input, int objStep1,
@@ -1313,7 +1313,7 @@ cvCalcEigenObjects( int		nObjects,
 					int		ioBufSize,
 					void*	 userData,
 					CvTermCriteria* calcLimit,
-					IplImage* avg, 
+					IplImage* avg,
 					float*	eigVals )
 {
 	float *avg_data;
@@ -1570,7 +1570,7 @@ cvCalcDecompCoeff( IplImage * obj, IplImage * eigObj, IplImage * avg )
 										avg_data, avg_step, obj_size );
 
 	__END__;
-	
+
 	return coeff;
 }
 
@@ -1598,9 +1598,9 @@ CV_IMPL void
 cvEigenDecomposite( IplImage* obj,
 					int		nEigObjs,
 					void*	 eigInput,
-					int		ioFlags, 
-					void*	 userData, 
-					IplImage* avg, 
+					int		ioFlags,
+					void*	 userData,
+					IplImage* avg,
 					float*	coeffs )
 {
 	float *avg_data;
@@ -1716,7 +1716,7 @@ cvEigenProjection( void*	 eigInput,
 					int		nEigObjs,
 					int		ioFlags,
 					void*	 userData,
-					float*	coeffs, 
+					float*	coeffs,
 					IplImage* avg,
 					IplImage* proj )
 {

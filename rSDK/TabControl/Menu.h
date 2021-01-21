@@ -8,7 +8,7 @@
 	ITEM(0,"Tab changed ?")
 	ITEM(6,"Tab changed to (by caption) ?")
 	ITEM(7,"Tab changed to (by index) ?")
-	SEPARATOR	
+	SEPARATOR
 	ITEM(5,"Tab changed by user ?")
 	SEPARATOR
 	ITEM(1,"LMB clicked ?")

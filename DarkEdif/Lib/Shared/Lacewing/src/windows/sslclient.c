@@ -84,7 +84,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	  buffers [3].cbBuffer = 0;
 
 	SecBufferDesc buffers_desc = {};
-	
+
 	buffers_desc.cBuffers = 4;
 	buffers_desc.pBuffers = buffers;
 	buffers_desc.ulVersion = SECBUFFER_VERSION;
@@ -195,10 +195,10 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 		 return 0; /* need more data */
 
 		/* Lacewing::Error Error;
-		
+
 		Error.Add(WSAGetLastError ());
 		Error.Add("Secure handshake failure");
-		
+
 		if (ctx->Server.Handlers.Error)
 			ctx->Server.Handlers.Error(ctx->Server.Public, Error);
 

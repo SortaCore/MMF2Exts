@@ -5,7 +5,7 @@
 
 // _WINBASE_H is defined by MinGW's winbase.h
 #if !defined(_WINBASE_) && !defined(_MINWINBASE_) && !defined(_WINBASE_H)
-	
+
 typedef struct _FILETIME
 	{
 	unsigned long dwLowDateTime;
@@ -13,7 +13,7 @@ typedef struct _FILETIME
 	} 	FILETIME;
 
 #endif
-	
+
 
 #endif
 

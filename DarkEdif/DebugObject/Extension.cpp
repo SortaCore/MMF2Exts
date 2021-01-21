@@ -12,7 +12,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	if (!GlobalExt)
 		GlobalExt = this;
 	data = NULL;
-	
+
 	LoadDataVariable();
 
 	/*
@@ -47,7 +47,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	if (edPtr->IsPropChecked(4))
 		MessageBoxA(NULL, "Pause for debugger property is enabled; attach your debugger now then continue the process.", "DebugObject - Information", MB_OK | MB_ICONASTERISK);
-	
+
 	// Initialise from edittime
 	SetOutputOnOff(edPtr->IsPropChecked(0));
 	data->doMsgBoxIfPathNotSet = edPtr->IsPropChecked(1);
@@ -65,14 +65,14 @@ Extension::~Extension()
 	// We can't output log closure or free resources, y'see.
 	if (!data)
 		return;
-	
+
 	// Output closure message and stop any other access to this Extension instance
 	if (GlobalExt == this)
 	{
 		GlobalExt->OutputNow(1, -1, "*** Log closed. ***");
 		GlobalExt = NULL;
 	}
-	
+
 	// Open lock
 	OpenLock();
 
@@ -86,7 +86,7 @@ Extension::~Extension()
 
 		// Close MMF pointer to Data
 		Runtime.WriteGlobal(GlobalID, NULL);
-		
+
 		// Disable console
 		if (data->consoleOut)
 		{
@@ -103,14 +103,14 @@ Extension::~Extension()
 			data->consoleOut = NULL;
 			data->consoleIn = NULL;
 		}
-		
+
 		// Close lock
 		CloseLock();
 
 		// Close container
 		delete data;
 		data = NULL;
-		
+
 		// Exception handling - invalidate
 		SetUnhandledExceptionFilter(NULL);
 	}
@@ -126,7 +126,7 @@ REFLAG Extension::Handle()
 	// If console not enabled, this Handle event is not useful.
 	if (!data->consoleEnabled)
 		return REFLAG::ONE_SHOT;
-	
+
 	// If releasing console input is currently set to false, there is a console input message.
 	if (!data->releaseConsoleInput)
 	{

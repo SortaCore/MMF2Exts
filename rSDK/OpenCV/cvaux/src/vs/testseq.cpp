@@ -565,7 +565,7 @@ static CvTestSeqElem* icvTestSeqReadElemOne(CvTestSeq_* pTS, CvFileStorage* fs, 
 			if(v!=-1)p->BG = v;
 			v = cvReadIntByName( fs, node, "Mask", -1 );
 			if(v!=-1)p->Mask = v;
-			
+
 			p->FrameBegin += cvReadIntByName( fs, node, "FrameBegin", 0 );
 			p->FrameNum = cvReadIntByName( fs, node, "FrameNum", p->FrameNum );
 			p->FrameNum = cvReadIntByName( fs, node, "Dur", p->FrameNum );

@@ -41,7 +41,7 @@ void lw_ws_req_session_write (lw_ws_req request, const char * key,
 	lw_ws_session session;
 
 	if (*cookie)
-	{	
+	{
 	  HASH_FIND (hh, request->ws->sessions, cookie, strlen (cookie), session);
 	}
 	else
@@ -65,7 +65,7 @@ void lw_ws_req_session_write (lw_ws_req request, const char * key,
 		 session->id [i * 2] = hex [session_id [i] & 0x0F];
 		 session->id [i * 2 + 1] = hex [(session_id [i] & 0xF0) >> 4];
 	  }
-	  
+
 	  HASH_ADD_KEYPTR (hh, request->ws->sessions, session->id,
 							strlen (session->id), session);
 

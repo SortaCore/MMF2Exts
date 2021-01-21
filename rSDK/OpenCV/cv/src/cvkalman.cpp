@@ -47,7 +47,7 @@ cvCreateKalman( int DP, int MP, int CP )
 	CvKalman *kalman = 0;
 
 	CV_FUNCNAME( "cvCreateKalman" );
-	
+
 	__BEGIN__;
 
 	if( DP <= 0 || MP <= 0 )
@@ -56,27 +56,27 @@ cvCreateKalman( int DP, int MP, int CP )
 
 	if( CP < 0 )
 		CP = DP;
-	
+
 	/* allocating memory for the structure */
 	CV_CALL( kalman = (CvKalman *)cvAlloc( sizeof( CvKalman )));
 	memset( kalman, 0, sizeof(*kalman));
-	
+
 	kalman->DP = DP;
 	kalman->MP = MP;
 	kalman->CP = CP;
 
 	CV_CALL( kalman->state_pre = cvCreateMat( DP, 1, CV_32FC1 ));
 	cvZero( kalman->state_pre );
-	
+
 	CV_CALL( kalman->state_post = cvCreateMat( DP, 1, CV_32FC1 ));
 	cvZero( kalman->state_post );
-	
+
 	CV_CALL( kalman->transition_matrix = cvCreateMat( DP, DP, CV_32FC1 ));
 	cvSetIdentity( kalman->transition_matrix );
 
 	CV_CALL( kalman->process_noise_cov = cvCreateMat( DP, DP, CV_32FC1 ));
 	cvSetIdentity( kalman->process_noise_cov );
-	
+
 	CV_CALL( kalman->measurement_matrix = cvCreateMat( MP, DP, CV_32FC1 ));
 	cvZero( kalman->measurement_matrix );
 
@@ -84,7 +84,7 @@ cvCreateKalman( int DP, int MP, int CP )
 	cvSetIdentity( kalman->measurement_noise_cov );
 
 	CV_CALL( kalman->error_cov_pre = cvCreateMat( DP, DP, CV_32FC1 ));
-	
+
 	CV_CALL( kalman->error_cov_post = cvCreateMat( DP, DP, CV_32FC1 ));
 	cvZero( kalman->error_cov_post );
 
@@ -112,7 +112,7 @@ cvCreateKalman( int DP, int MP, int CP )
 	kalman->KalmGainMatr = kalman->gain->data.fl;
 	kalman->PriorErrorCovariance = kalman->error_cov_pre->data.fl;
 	kalman->PosterErrorCovariance = kalman->error_cov_post->data.fl;
-#endif	
+#endif
 
 	__END__;
 
@@ -130,12 +130,12 @@ cvReleaseKalman( CvKalman** _kalman )
 
 	CV_FUNCNAME( "cvReleaseKalman" );
 	__BEGIN__;
-	
+
 	if( !_kalman )
 		CV_ERROR( CV_StsNullPtr, "" );
-	
+
 	kalman = *_kalman;
-	
+
 	/* freeing the memory */
 	cvReleaseMat( &kalman->state_pre );
 	cvReleaseMat( &kalman->state_post );
@@ -166,11 +166,11 @@ CV_IMPL const CvMat*
 cvKalmanPredict( CvKalman* kalman, const CvMat* control )
 {
 	CvMat* result = 0;
-	
+
 	CV_FUNCNAME( "cvKalmanPredict" );
 
 	__BEGIN__;
-	
+
 	if( !kalman )
 		CV_ERROR( CV_StsNullPtr, "" );
 
@@ -181,11 +181,11 @@ cvKalmanPredict( CvKalman* kalman, const CvMat* control )
 	if( control && kalman->CP > 0 )
 		/* x'(k) = x'(k) + B*u(k) */
 		CV_CALL( cvMatMulAdd( kalman->control_matrix, control, kalman->state_pre, kalman->state_pre ));
-	
+
 	/* update error covariance matrices */
 	/* temp1 = A*P(k) */
 	CV_CALL( cvMatMulAdd( kalman->transition_matrix, kalman->error_cov_post, 0, kalman->temp1 ));
-	
+
 	/* P'(k) = temp1*At + Q */
 	CV_CALL( cvGEMM( kalman->temp1, kalman->transition_matrix, 1, kalman->process_noise_cov, 1,
 					 kalman->error_cov_pre, CV_GEMM_B_T ));
@@ -206,7 +206,7 @@ cvKalmanCorrect( CvKalman* kalman, const CvMat* measurement )
 	CV_FUNCNAME( "cvKalmanCorrect" );
 
 	__BEGIN__;
-	
+
 	if( !kalman || !measurement )
 		CV_ERROR( CV_StsNullPtr, "" );
 
@@ -222,7 +222,7 @@ cvKalmanCorrect( CvKalman* kalman, const CvMat* measurement )
 
 	/* K(k) */
 	CV_CALL( cvTranspose( kalman->temp4, kalman->gain ));
-	
+
 	/* temp5 = z(k) - H*x'(k) */
 	CV_CALL( cvGEMM( kalman->measurement_matrix, kalman->state_pre, -1, measurement, 1, kalman->temp5 ));
 

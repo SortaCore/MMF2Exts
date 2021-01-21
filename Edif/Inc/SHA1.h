@@ -230,7 +230,7 @@ public:
 
 	// Finalize hash, call before using ReportHash(Stl)
 	void Final();
-	
+
 #ifdef SHA1_UTILITY_FUNCTIONS
 	bool ReportHash(TCHAR* tszReport, REPORT_TYPE rtReportType = REPORT_HEX) const;
 #endif

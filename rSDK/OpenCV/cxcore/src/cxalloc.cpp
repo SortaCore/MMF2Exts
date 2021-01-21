@@ -82,7 +82,7 @@ CV_IMPL void cvSetMemoryManager( CvAllocFunc alloc_func, CvFreeFunc free_func, v
 	CV_FUNCNAME( "cvSetMemoryManager" );
 
 	__BEGIN__;
-	
+
 	if( (alloc_func == 0) ^ (free_func == 0) )
 		CV_ERROR( CV_StsNullPtr, "Either both pointers should be NULL or none of them");
 
@@ -97,7 +97,7 @@ CV_IMPL void cvSetMemoryManager( CvAllocFunc alloc_func, CvFreeFunc free_func, v
 CV_IMPL  void*  cvAlloc( size_t size )
 {
 	void* ptr = 0;
-	
+
 	CV_FUNCNAME( "cvAlloc" );
 
 	__BEGIN__;

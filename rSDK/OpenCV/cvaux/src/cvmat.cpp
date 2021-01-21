@@ -400,7 +400,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_ADD_& mat_add )
 		cvSub( a, b, this );
 		return *this;
 	}
-	
+
 	if( CV_MAT_DEPTH(a->type) >= CV_32F && CV_MAT_CN(a->type) <= 2 )
 		cvScaleAdd( b, cvScalar(mat_add.beta), a, this );
 	else
@@ -441,7 +441,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_SCALE_& scale_mat )
 CvMAT& CvMAT::operator = ( const _CvMAT_SCALE_SHIFT_& scale_shift_mat )
 {
 	CvMAT* src = scale_shift_mat.a;
-	
+
 	if( !data.ptr )
 	{
 		create( src->height, src->width, src->type );
@@ -474,7 +474,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_MUL_& mmul )
 			cvMatMulAdd( a, b, 0, this );
 			return *this;
 		}
-		
+
 		if( a->data.ptr == b->data.ptr && mmul.t_ab < 3 &&
 			a->rows == b->rows && a->cols == b->cols &&
 			a->data.ptr != data.ptr )
@@ -516,7 +516,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_MUL_ADD_& mmuladd )
 CvMAT& CvMAT::operator = ( const _CvMAT_INV_& inv_mat )
 {
 	CvMAT* src = (CvMAT*)&inv_mat.a;
-	
+
 	if( !data.ptr )
 	{
 		create( src->height, src->width, src->type );
@@ -533,7 +533,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_INV_& inv_mat )
 CvMAT& CvMAT::operator = ( const _CvMAT_NOT_& not_mat )
 {
 	CvMAT* src = not_mat.a;
-	
+
 	if( !data.ptr )
 	{
 		create( src->height, src->width, src->type );
@@ -716,7 +716,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_COPY_& mat_copy )
 CvMAT& CvMAT::operator = ( const _CvMAT_CVT_& mat_cvt )
 {
 	CvMAT* src = (CvMAT*)&mat_cvt.a;
-	
+
 	if( !data.ptr )
 	{
 		int depth = mat_cvt.newdepth;
@@ -733,7 +733,7 @@ CvMAT& CvMAT::operator = ( const _CvMAT_DOT_OP_& dot_op )
 {
 	CvMAT* a = (CvMAT*)&(dot_op.a);
 	CvMAT* b = dot_op.b;
-	
+
 	if( !data.ptr )
 	{
 		create( a->height, a->width, a->type );
@@ -831,7 +831,7 @@ void  CvMAT::write( const char* name, FILE* f, const char* fmt )
 
 	if( name )
 		fprintf( stdout, "%s(%d x %d) =\n\t", name, rows, cols );
-	
+
 	for( i = 0; i < rows; i++ )
 	{
 		switch( CV_MAT_DEPTH(type))

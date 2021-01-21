@@ -2,7 +2,7 @@
 
 void Extension::SetBOMMarkASC(const char * FileToAddTo, int TypeOfBOM, int IgnoreCurrentBOM)
 {
-	// Check parameters	
+	// Check parameters
 	if (!FileToAddTo ||									// Invalid file name supplied
 		TypeOfBOM > 2 || TypeOfBOM < 0 ||				// Invalid BOM choice (0 = none (ANSI), 1 = UTF-8, 2 = UTF-16)
 		IgnoreCurrentBOM < 0 || IgnoreCurrentBOM > 1)	// Invalid RemoveCurrentBOM choice (yes, no)
@@ -25,13 +25,13 @@ DWORD WINAPI SetBOMMarkASCThread(void * Param)
 		return 1;
 
 	BOMThreadData * Data = (BOMThreadData *)Param;
-	std::string ReadFromFilePath = Data->FileToAddTo, 
+	std::string ReadFromFilePath = Data->FileToAddTo,
 				WriteToFilePath = Data->FileToAddTo;
 	WriteToFilePath += ".tmp";
 	bool IgnoreCurrentBOM = Data->IgnoreCurrentBOM;
 	delete Param;
 	Param = nullptr;
-	
+
 	// Open file
 	FILE * ReadFromFile = NULL, * WriteToFile = NULL;
 	if (fopen_s(&ReadFromFile, ReadFromFilePath.c_str(), "rb") || !ReadFromFile)
@@ -46,7 +46,7 @@ DWORD WINAPI SetBOMMarkASCThread(void * Param)
 	{
 		fseek(ReadFromFile, 0, SEEK_SET);
 		char Front [3];
-		
+
 		// Read 3 bytes (UTF-8 BOM is 3 bytes)
 		size_t s = fread(Front, sizeof(char), 3, ReadFromFile);
 		if (s != 3 && s != 2)
@@ -63,7 +63,7 @@ DWORD WINAPI SetBOMMarkASCThread(void * Param)
 		{
 			fseek(ReadFromFile, 2, SEEK_SET); // UTF-16 BOM is 2 bytes, not 3
 		}
-		else // !UTF-8 (0xEF, 0xBB, 0xBF), so ANSI file 
+		else // !UTF-8 (0xEF, 0xBB, 0xBF), so ANSI file
 		{
 			if (!(s >= 3 && Data->TypeOfBOM != 1 &&
 				Front[0] == 0xEF &&	Front[1] == 0xBB && Front[2] == 0xBF))

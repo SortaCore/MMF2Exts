@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 
 #include "common.h"
@@ -13,7 +13,7 @@
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 //CONDITION(
@@ -33,7 +33,7 @@
 ////) {
 ////	int p1=Param(TYPE_INT);
 ////	int p2=Param(TYPE_INT);
-////	
+////
 ////	return p1==p2;
 ////}
 ////
@@ -50,7 +50,7 @@ CONDITION(
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 //rdPtr->rRd->GenerateEvent(1);
@@ -69,7 +69,7 @@ ACTION(
 		if (currentPoint == NULL){
 			break;
 		}
-		
+
 		rdPtr->firstPoint = currentPoint->nextPoint;
 
 		delete currentPoint;
@@ -90,7 +90,7 @@ ACTION(
 	/*int p3 = Param(TYPE_INT);
 	int p4 = Param(TYPE_INT);
 	int p5 = Param(TYPE_INT);
-	
+
 	cvRectangle(rdPtr->myImage, cvPoint(p1,p2), cvPoint(p1 + p3,p2 + p4), CV_RGB(p5 & 0xFF,p5 & 0xFF00,p5 & 0xFF0000), CV_FILLED);
 	*/
 
@@ -125,7 +125,7 @@ ACTION(
 		if (currentPoint == NULL){
 			break;
 		}
-		
+
 		rdPtr->currentPointOnLoop = currentPoint;
 
 		rdPtr->rRd->GenerateEvent(0);
@@ -140,7 +140,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 EXPRESSION(

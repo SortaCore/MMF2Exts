@@ -58,7 +58,7 @@
 			[ 3, "Substring" ],
 			[ 23, "Compare two numbers" ]
 		]
-	],		
+	],
 	"Actions": [
 		{
 			"Title": "Set random seed to %0",
@@ -77,8 +77,8 @@
 			"Parameters": [
 				[ "Float", "First number" ],
 				[ "Float", "Second number" ],
-				[ "Integer", "Comparison type (0 = Equal 1 = Different 2 = Higher 3 = Lower 4 = Equal or higher 5 = Equal or lower)" ] 
-			] 
+				[ "Integer", "Comparison type (0 = Equal 1 = Different 2 = Higher 3 = Lower 4 = Equal or higher 5 = Equal or lower)" ]
+			]
 		}
 	],
 	"Expressions": [
@@ -88,7 +88,7 @@
 			"Parameters": [
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "GenerateRandom(",
@@ -105,27 +105,27 @@
 				[ "Float", "Value" ],
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "Substring$(",
 			"Returns": "Text",
-			"Parameters": 
+			"Parameters":
 			[
 				[ "Text", "String" ],
 				[ "Integer", "Start" ],
 				[ "Integer", "Length" ]
-			] 
+			]
 		},
 		{
 			"Title": "Nearest(",
 			"Returns": "Float",
-			"Parameters": 
+			"Parameters":
 			[
 				[ "Float", "Value" ],
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "Normalise(",
@@ -135,7 +135,7 @@
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "ModifyRange(",
@@ -147,7 +147,7 @@
 				[ "Float", "New minimum" ],
 				[ "Float", "New maximum" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "Wave(",
@@ -159,7 +159,7 @@
 				[ "Float", "Cycle end" ],
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "EuclideanMod(",
@@ -167,16 +167,16 @@
 			"Parameters":  [
 				[ "Float", "Dividend" ],
 				[ "Float", "Divisor" ]
-			] 
+			]
 		},
 		{
 			"Title": "UberMod(",
-			"Returns": "Float",	
+			"Returns": "Float",
 			"Parameters": [
 				[ "Float", "Dividend" ],
 				[ "Float", "Lower wrap value" ],
 				[ "Float", "Upper wrap value" ]
-			] 
+			]
 		},
 		{
 			"Title": "Interpolate(",
@@ -186,7 +186,7 @@
 				[ "Float", "From" ],
 				[ "Float", "To" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "Mirror(",
@@ -195,7 +195,7 @@
 				[ "Float", "Value" ],
 				[ "Float", "From" ],
 				[ "Float", "To" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntLimit(",
@@ -204,7 +204,7 @@
 				["Float", "Value"],
 				["Float", "Minimum"],
 				["Float", "Maximum"]
-			] 
+			]
 		},
 		{
 			"Title": "IntNearest(",
@@ -213,7 +213,7 @@
 				[ "Float", "Value" ],
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntNormalise(",
@@ -223,7 +223,7 @@
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntModifyRange(",
@@ -235,7 +235,7 @@
 				[ "Float", "New minimum" ],
 				[ "Float", "New maximum" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntWave(",
@@ -247,7 +247,7 @@
 				[ "Float", "Cycle end" ],
 				[ "Float", "Minimum" ],
 				[ "Float", "Maximum" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntEuclideanMod(",
@@ -255,7 +255,7 @@
 			"Parameters": [
 				[ "Float", "Dividend" ],
 				[ "Float", "Divisor" ]
-			] 
+			]
 		}
 		{
 			"Title": "IntUberMod(",
@@ -264,7 +264,7 @@
 				[ "Float", "Dividend" ],
 				[ "Float", "Lower wrap value" ],
 				[ "Float", "Upper wrap value" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntInterpolate(",
@@ -274,7 +274,7 @@
 				[ "Float", "From" ],
 				[ "Float", "To" ],
 				[ "Integer", "Limit" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntMirror(",
@@ -283,7 +283,7 @@
 				[ "Float", "Value" ],
 				[ "Float", "From" ],
 				[ "Float", "To" ]
-			] 
+			]
 		},
 		{
 			"Title": "Compare(",
@@ -294,7 +294,7 @@
 				[ "Integer", "Comparison type" ],
 				[ "Float", "Return if True" ],
 				[ "Float", "Return if False" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntCompare(",
@@ -305,7 +305,7 @@
 				[ "Integer", "Comparison type" ],
 				[ "Float", "Return if true" ],
 				[ "Float", "Return if false" ]
-			] 
+			]
 		},
 		{
 			"Title": "Compare$(",
@@ -316,17 +316,17 @@
 				[ "Integer", "Comparison type" ],
 				[ "Text", "Return if true" ],
 				[ "Text", "Return if false" ]
-			] 
+			]
 		},
 		{
 			"Title": "Approach(",
 			"Returns": "Float",
-			"Parameters": 
+			"Parameters":
 			[
 				[ "Float", "Value" ],
 				[ "Float", "Amount" ],
 				[ "Float", "Target" ]
-			] 
+			]
 		},
 		{
 			"Title": "IntApproach(",
@@ -335,7 +335,7 @@
 				[ "Float", "Value" ],
 				[ "Float", "Amount" ],
 				[ "Float", "Target" ]
-			] 
+			]
 		}
 	]
 }

@@ -46,7 +46,7 @@ static lw_i64 lwp_sendfile (int source, int dest, lw_i64 size)
 
 	 if ((sent = sendfile (dest, source, 0, size)) == -1)
 		 return errno == EAGAIN ? 0 : -1;
-  
+
 	 return sent;
 
 	#elif defined (__FreeBSD__)
@@ -297,7 +297,7 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 
 	lwp_trace ("fdstream sank " lwp_fmt_size " of " lwp_fmt_size " bytes",
 			  written, size);
-	
+
 	return written;
 }
 

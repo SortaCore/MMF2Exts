@@ -31,7 +31,7 @@ void Extension::SetName(const TCHAR * name)
 {
 	if (name[0] == _T('\0'))
 		return CreateError("Error: Set Name was called with name \"\".");
-	
+
 	std::string nameU8(TStringToUTF8(name));
 	if (!lw_u8str_normalise(nameU8))
 		return CreateError("Error: Set Name was called with malformed name \"%s\".", nameU8.c_str());
@@ -328,7 +328,7 @@ void Extension::SendBinaryToServer(int subchannel)
 		CreateError("Error: Send Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.sendserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
-	
+
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
@@ -356,7 +356,7 @@ void Extension::SendBinaryToPeer(int subchannel)
 		CreateError("Error: Send Binary to Peer was called with a read-only peer.");
 	else
 		selPeer->send(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
-	
+
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
@@ -366,7 +366,7 @@ void Extension::BlastBinaryToServer(int subchannel)
 		CreateError("Error: Blast Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.blastserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
-	
+
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
@@ -380,7 +380,7 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		CreateError("Error: Blast Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
-	
+
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
@@ -394,7 +394,7 @@ void Extension::BlastBinaryToPeer(int subchannel)
 		CreateError("Error: Blast Binary to Peer was called with a read-only peer.");
 	else
 		selPeer->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
-	
+
 	if (AutomaticallyClearBinary)
 		ClearBinaryToSend();
 }
@@ -663,7 +663,7 @@ void Extension::CompressSendBinary()
 	}
 
 	free(SendMsg);
-	
+
 	SendMsg = output_bufferResize;
 	SendMsgSize = 4 + strm.total_out;
 }
@@ -826,7 +826,7 @@ void Extension::Connect(const TCHAR * hostname)
 	if (portPtr)
 	{
 		Port = _ttoi(portPtr + 1);
-		
+
 		if (Port <= 0 || Port > 0xFFFF)
 			return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 1 to 65535.");
 	}
@@ -846,7 +846,7 @@ void Extension::ResizeBinaryToSend(int newSize)
 	// Clear new bytes to 0
 	if ((size_t)newSize > SendMsgSize)
 		memset(NewMsg + SendMsgSize, 0, newSize - SendMsgSize);
-			
+
 	SendMsg = NewMsg;
 	SendMsgSize = newSize;
 }

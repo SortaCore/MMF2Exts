@@ -48,10 +48,10 @@
 //	  Kalman	 - double pointer to CvConDensation structure
 //	  DP		 - dimension of the dynamical vector
 //	  MP		 - dimension of the measurement vector
-//	  SamplesNum - number of samples in sample set used in algorithm 
+//	  SamplesNum - number of samples in sample set used in algorithm
 //	Returns:
 //	Notes:
-//	  
+//
 //F*/
 
 CV_IMPL CvConDensation* cvCreateConDensation( int DP, int MP, int SamplesNum )
@@ -61,10 +61,10 @@ CV_IMPL CvConDensation* cvCreateConDensation( int DP, int MP, int SamplesNum )
 
 	CV_FUNCNAME( "cvCreateConDensation" );
 	__BEGIN__;
-	
+
 	if( DP < 0 || MP < 0 || SamplesNum < 0 )
 		CV_ERROR( CV_StsOutOfRange, "" );
-	
+
 	/* allocating memory for the structure */
 	CV_CALL( CD = (CvConDensation *) cvAlloc( sizeof( CvConDensation )));
 	/* setting structure params */
@@ -107,19 +107,19 @@ CV_IMPL CvConDensation* cvCreateConDensation( int DP, int MP, int SamplesNum )
 //	  Kalman	 - double pointer to CvConDensation structure
 //	  DP		 - dimension of the dynamical vector
 //	  MP		 - dimension of the measurement vector
-//	  SamplesNum - number of samples in sample set used in algorithm 
+//	  SamplesNum - number of samples in sample set used in algorithm
 //	Returns:
 //	Notes:
-//	  
+//
 //F*/
 CV_IMPL void
 cvReleaseConDensation( CvConDensation ** ConDensation )
 {
 	CV_FUNCNAME( "cvReleaseConDensation" );
 	__BEGIN__;
-	
+
 	CvConDensation *CD = *ConDensation;
-	
+
 	if( !ConDensation )
 		CV_ERROR( CV_StsNullPtr, "" );
 
@@ -140,7 +140,7 @@ cvReleaseConDensation( CvConDensation ** ConDensation )
 	cvFree( &CD->RandomSample );
 	/* release structure */
 	cvFree( ConDensation );
-	
+
 	__END__;
 
 }
@@ -153,7 +153,7 @@ cvReleaseConDensation( CvConDensation ** ConDensation )
 //	  Kalman	 - pointer to CvConDensation structure
 //	Returns:
 //	Notes:
-//	  
+//
 //F*/
 CV_IMPL void
 cvConDensUpdateByTime( CvConDensation * ConDens )
@@ -163,7 +163,7 @@ cvConDensUpdateByTime( CvConDensation * ConDens )
 
 	CV_FUNCNAME( "cvConDensUpdateByTime" );
 	__BEGIN__;
-	
+
 	if( !ConDens )
 		CV_ERROR( CV_StsNullPtr, "" );
 
@@ -225,7 +225,7 @@ cvConDensUpdateByTime( CvConDensation * ConDens )
 //	lowerBound  - vector of upper bounds used to random update of sample set
 //	Returns:
 //	Notes:
-//	  
+//
 //F*/
 
 CV_IMPL void
@@ -238,7 +238,7 @@ cvConDensInitSampleSet( CvConDensation * conDens, CvMat * lowerBound, CvMat * up
 
 	CV_FUNCNAME( "cvConDensInitSampleSet" );
 	__BEGIN__;
-	
+
 	if( !conDens || !lowerBound || !upperBound )
 		CV_ERROR( CV_StsNullPtr, "" );
 

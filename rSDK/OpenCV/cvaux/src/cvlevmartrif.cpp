@@ -103,7 +103,7 @@ void icvJacobianFunction_ProjTrifocal(const CvMat *vectX,CvMat *Jacobian)
 	/* Fill Jacobian matrix */
 	int currProjPoint;
 	int currMatr;
-	
+
 	cvZero(Jacobian);
 	for( currMatr = 0; currMatr < 3; currMatr++ )
 	{
@@ -139,7 +139,7 @@ void icvJacobianFunction_ProjTrifocal(const CvMat *vectX,CvMat *Jacobian)
 			{
 				for( i = 0; i < 4; i++ )// for X,Y,Z,W
 				{
-					cvmSet( Jacobian, 
+					cvmSet( Jacobian,
 							currMatr*numPoints*2+currProjPoint*2+j, 36+currProjPoint*4+i,
 							(p[j*4+i]*piX[2]-p[8+i]*piX[j]) * tmp3  );
 				}
@@ -314,7 +314,7 @@ void icvOptimizeProjectionTrifocal(CvMat **projMatrs,CvMat **projPoints,
 		{
 			CV_ERROR( CV_StsNullPtr, "Some of projPoints is a NULL pointer" );
 		}
-	
+
 		if( resultProjMatrs[i] == 0 )
 		{
 			CV_ERROR( CV_StsNullPtr, "Some of resultProjMatrs is a NULL pointer" );
@@ -404,7 +404,7 @@ void icvOptimizeProjectionTrifocal(CvMat **projMatrs,CvMat **projPoints,
 		cvmSet(vectorX0,36 + currPoint*4 + 3,0,cvmGet(points4D,3,currPoint));
 	}
 
-	
+
 	/* Allocate memory for result */
 	cvLevenbergMarquardtOptimization( icvJacobianFunction_ProjTrifocal, icvFunc_ProjTrifocal,
 									  vectorX0,observRes,optimX,100,1e-6);

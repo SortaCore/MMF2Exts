@@ -155,14 +155,14 @@ void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 		fprintf(debug, "destpoint: %8.2f %8.2f %8.2f\tDot->position: %8.2f %8.2f %8.2f\n", destpoint[0], destpoint[1], destpoint[2], Dot->position[0], Dot->position[1], Dot->position[2]);
 		fflush(debug);
 		#endif
-		
+
 		MatrixRotate(point, positioningMatrix, destpoint);
 
 		#ifdef VOXEL_DEBUG
 		fprintf(debug, "resulting point: %8.2f %8.2f %8.2f\n", point[0], point[1], point[2]);
 		fflush(debug);
 		#endif
-	
+
 		x = (int)(rdPtr->rHo.hoImgWidth / 2.0f + point[0]);
 		y = (int)(rdPtr->rHo.hoImgHeight / 2.0f + point[1]);
 
@@ -170,9 +170,9 @@ void voxel_Set_part(int vpart, int frame, LPRDATA rdPtr){
 		fprintf(debug, "resulting x/y: %d, %d\n", x, y);
 		fflush(debug);
 		#endif
-		
+
 		rdPtr->screenRender[x * rdPtr->rHo.hoImgHeight + y] = x==max(0,min(rdPtr->rHo.hoImgWidth-1,x)) && y==max(0,min(rdPtr->rHo.hoImgHeight-1,y));
-		
+
 		if(-point[2] <= rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y]){
 			rdPtr->surfaceDepthGrid[x * rdPtr->rHo.hoImgHeight + y] = (short)-point[2];
 			rdPtr->screenDot[x * 3 * rdPtr->rHo.hoImgHeight + y * 3 + 0] = Dot->color;
@@ -243,7 +243,7 @@ void voxel_Render_unit(LPRDATA rdPtr){
 	unsigned char	colorindex;
 	char	normalindex;
 	vec3_t	destpoint;
-	
+
 	#ifdef VOXEL_DEBUG
 	FILE* debug = fopen("debug-render-unit.txt", "w");
 	#endif
@@ -276,13 +276,13 @@ void voxel_Render_unit(LPRDATA rdPtr){
 		VectorNormalize(halfvec);
 		VectorNormalize(specvec);
 	}
-	
+
 	for( i = 0; i < rdPtr->rHo.hoImgWidth; i++ ){
 		for( j = 0; j < rdPtr->rHo.hoImgHeight; j++ ){
 			#ifdef VOXEL_DEBUG
 			fprintf(debug, "surfaceDepthGrid[%d][%d] = %d\n", i, j, rdPtr->surfaceDepthGrid[i * rdPtr->rHo.hoImgHeight + j]);
 			#endif
-			
+
 			int iHeight = i * rdPtr->rHo.hoImgHeight;
 
 			if(rdPtr->surfaceDepthGrid[iHeight + j] < 1000 ){
@@ -348,7 +348,7 @@ void voxel_Render_unit(LPRDATA rdPtr){
 					r=max(1,min(250,r));
 					g=max(1,min(250,g));
 					b=max(1,min(250,b));
-					
+
 					targetSurface->SetPixel(j, i, RGB(r, g, b));
 				}
 			}
@@ -362,7 +362,7 @@ void voxel_Render_unit(LPRDATA rdPtr){
 void renderVoxel(LPRDATA rdPtr){
 	do{
 		vec3_t	cam;
-		
+
 		cam[0] = (vec_t)rdPtr->xAngle;
 		cam[1] = (vec_t)rdPtr->yAngle;
 		cam[2] = (vec_t)rdPtr->zAngle;
@@ -377,7 +377,7 @@ void renderVoxel(LPRDATA rdPtr){
 			}
 
 			rdPtr->pSf->Fill(RGB(0,0,0));
-			
+
 			voxel_Render_unit(rdPtr);
 		}
 	}while(FALSE);
@@ -497,7 +497,7 @@ long * loadLimbBodySpanStartOffsets(char * fileContents, vxl_header * voxelHeade
 	fprintf(debug, "\n\n");
 	fclose(debug);
 	#endif
-	
+
 	return limbBody;
 }
 
@@ -533,7 +533,7 @@ long * loadLimbBodySpanEndOffsets(char * fileContents, vxl_header * voxelHeader,
 	fprintf(debug, "\n\n");
 	fclose(debug);
 	#endif
-	
+
 	return limbBody;
 }
 
@@ -560,7 +560,7 @@ char * loadVoxelPart(int partNumber, char * fileContents, vxl_header * voxelHead
 	#endif
 
 	long * limbBodySpanEndOffsets = loadLimbBodySpanEndOffsets(fileContents, voxelHeader, voxelLimbTailer);
-	
+
 	char * part = new char[2 * xyElementCount * voxelLimbTailer->zsize];
 	memset (part, 255, 2 * xyElementCount * voxelLimbTailer->zsize);
 
@@ -569,7 +569,7 @@ char * loadVoxelPart(int partNumber, char * fileContents, vxl_header * voxelHead
 	fflush(debug);
 	#endif
 
-	
+
 
 	for(int i = 0 ; i < xyElementCount; i++ ){
 		//int x = i % voxelLimbTailer->xsize;
@@ -615,13 +615,13 @@ char * loadVoxelPart(int partNumber, char * fileContents, vxl_header * voxelHead
 					fprintf(debug, "v%d: color: %5i %02X, resulting color: %08X, storing address: %d\n", voxelNumber + skipVoxels, colorIndex, colorIndex, color, 2 * (i * voxelLimbTailer->zsize + voxelNumber + skipVoxels));
 					fflush(debug);
 					#endif
-					
+
 					part[2 * (i * voxelLimbTailer->zsize + z_position)] = colorIndex;
 					part[2 * (i * voxelLimbTailer->zsize + z_position) + 1] = normal;
 
 					z_position++;
 				}
-				
+
 				char voxelCount2 = fileContents[readingPosition++];
 
 				if(voxelCount != voxelCount2){
@@ -806,7 +806,7 @@ void loadVoxel(LPRDATA rdPtr, char * filepath){
 	rdPtr->n_parts = (char)voxelHeader->n_limbs;
 
 	vxl_limb_header * voxelLimbHeaders = loadVoxelLimbHeaders(fileContents, voxelHeader);
-	
+
 	vxl_limb_tailer * voxelLimbTailers = loadVoxelLimbTailers(fileContents, voxelHeader);
 
 	#ifdef VOXEL_DEBUG

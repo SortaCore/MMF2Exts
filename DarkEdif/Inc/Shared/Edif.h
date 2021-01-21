@@ -169,7 +169,7 @@ namespace Edif
 		HGLOBAL UpdateProperties(mv * mV, void * OldEdPtr);
 #endif
 	};
-	
+
 	class Runtime
 	{
 	protected:
@@ -229,17 +229,17 @@ namespace Edif
 		void * ReadGlobal(const TCHAR * name);
 
 		#ifdef EdifUseJS
-		
+
 			JSContext * GetJSContext();
 
 		#endif
-			
+
 	};
 
 	extern bool ExternalJSON;
 
 	void GetSiblingPath (TCHAR * Buffer, const TCHAR * Extension);
-	
+
 	const int DependencyNotFound	 = 0;
 	const int DependencyWasFile	  = 1;
 	const int DependencyWasResource  = 2;
@@ -266,7 +266,7 @@ namespace Edif
 	long FusionAPI Condition (RUNDATA * rdPtr, long param1, long param2);
 	short FusionAPI Action (RUNDATA * rdPtr, long param1, long param2);
 	long FusionAPI Expression (RUNDATA * rdPtr, long param);
-	
+
 	inline int ActionID(int ID)
 	{
 		return 25000 + ID;

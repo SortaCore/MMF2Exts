@@ -50,11 +50,11 @@ cvSampleLine( const void* img, CvPoint pt1, CvPoint pt2,
 			  void* _buffer, int connectivity )
 {
 	int count = -1;
-	
+
 	CV_FUNCNAME( "cvSampleLine" );
 
 	__BEGIN__;
-	
+
 	int i, coi = 0, pix_size;
 	CvMat stub, *mat = (CvMat*)img;
 	CvLineIterator iterator;

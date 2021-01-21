@@ -18,7 +18,7 @@ typedef rRundata * LPRRDATA;
 typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
-	
+
 	// Object's runtime data
 	COLORREF		textColor;		// text color
 	COLORREF		backColor;		// background color
@@ -34,7 +34,7 @@ typedef struct tagRDATA
 	// True events
 	DWORD			dwLastChangedLoopNumber;	// Application loop number when the last change occured
 	DWORD			dwEvtFlags;					// Flags that indicate if we should trigger a true event condition
-	
+
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

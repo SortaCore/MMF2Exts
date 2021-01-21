@@ -53,7 +53,7 @@
 #include "assert.h"
 #include "math.h"
 
-// J.S. Beis and D.G. Lowe. Shape indexing using approximate nearest-neighbor search in highdimensional spaces. In Proc. IEEE Conf. Comp. Vision Patt. Recog., pages 1000--1006, 1997. http://citeseer.ist.psu.edu/beis97shape.html 
+// J.S. Beis and D.G. Lowe. Shape indexing using approximate nearest-neighbor search in highdimensional spaces. In Proc. IEEE Conf. Comp. Vision Patt. Recog., pages 1000--1006, 1997. http://citeseer.ist.psu.edu/beis97shape.html
 #undef __deref
 #undef __valuetype
 
@@ -110,7 +110,7 @@ private:
 	return maxj;
   }
 
-  // given point indices and dimension, find index of median; (almost) modifies [first,last) 
+  // given point indices and dimension, find index of median; (almost) modifies [first,last)
   // such that points_in[first,median]<=point[median], points_in(median,last)>point[median].
   // implemented as partial quicksort; expected linear perf.
   template < class __instype, class __valuector >
@@ -137,13 +137,13 @@ private:
   };
 
   template < class __instype, class __valuector >
-  void median_partition(__instype * first, __instype * last, 
+  void median_partition(__instype * first, __instype * last,
 			__instype * k, int dim, __valuector ctor) {
 	int pivot = (last - first) / 2;
 
 	std::swap(first[pivot], last[-1]);
 	__instype *middle = std::partition(first, last - 1,
-						median_pr < __instype, __valuector > 
+						median_pr < __instype, __valuector >
 						(last[-1], dim, deref, ctor));
 	std::swap(*middle, last[-1]);
 
@@ -164,7 +164,7 @@ private:
 	  __instype *median = median_partition(first, last, dim, ctor);
 
 	  __instype *split = median;
-	  for (; split != last && deref(ctor(*split), dim) == 
+	  for (; split != last && deref(ctor(*split), dim) ==
 		 deref(ctor(*median), dim); ++split);
 
 	  if (split == last) { // leaf
@@ -286,8 +286,8 @@ public:
 	  std::cout << " ";
 	const node & n = nodes[i];
 	if (n.dim >= 0) {
-	  std::cout << "node " << i << ", left " << nodes[i].left << ", right " << 
-	nodes[i].right << ", dim " << nodes[i].dim << ", boundary " << 
+	  std::cout << "node " << i << ", left " << nodes[i].left << ", right " <<
+	nodes[i].right << ", dim " << nodes[i].dim << ", boundary " <<
 	nodes[i].boundary << std::endl;
 	  print(n.left, indent + 3);
 	  print(n.right, indent + 3);
@@ -360,10 +360,10 @@ private:
   }
 
   // called per candidate nearest neighbor; constructs new bbf_nn for
-  // candidate and adds it to priority queue of all candidates; if 
+  // candidate and adds it to priority queue of all candidates; if
   // queue len exceeds k, drops the point furthest from query point d.
   template < class __desctype >
-  void bbf_new_nn(bbf_nn_pqueue & nn_pq, int k, 
+  void bbf_new_nn(bbf_nn_pqueue & nn_pq, int k,
 		  const __desctype * d, const __valuetype & p) const {
 	bbf_nn nn(p, distance(d, p));
 	if ((int) nn_pq.size() < k) {
@@ -378,13 +378,13 @@ private:
   }
 
 public:
-  // finds (with high probability) the k nearest neighbors of d, 
+  // finds (with high probability) the k nearest neighbors of d,
   // searching at most emax leaves/bins.
-  // ret_nn_pq is an array containing the (at most) k nearest neighbors 
+  // ret_nn_pq is an array containing the (at most) k nearest neighbors
   // (see bbf_nn structure def above).
   template < class __desctype >
-  int find_nn_bbf(const __desctype * d, 
-		  int k, int emax, 
+  int find_nn_bbf(const __desctype * d,
+		  int k, int emax,
 		  bbf_nn_pqueue & ret_nn_pq) const {
 	assert(k > 0);
 	ret_nn_pq.clear();
@@ -405,7 +405,7 @@ public:
 
 	  int i;
 	  for (i = bbf.node;
-		i != -1 && nodes[i].dim >= 0; 
+		i != -1 && nodes[i].dim >= 0;
 		i = bbf_branch(i, d, tmp_pq));
 
 	  if (i != -1) {

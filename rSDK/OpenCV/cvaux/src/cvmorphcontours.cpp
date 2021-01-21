@@ -87,7 +87,7 @@ double _cvStretchingWork(CvPoint2D32f* P1,
 
 	L1 = sqrt( (double)P1->x*P1->x + P1->y*P1->y);
 	L2 = sqrt( (double)P2->x*P2->x + P2->y*P2->y);
-	
+
 	L_min = MIN(L1, L2);
 	dL = fabs( L1 - L2 );
 
@@ -140,7 +140,7 @@ double _cvBendingWork(  CvPoint2D32f* B0,
 		d_angle = d_angle - CV_PI*0.5;
 		d_angle = fabs(d_angle);
 
-		
+
 		K->x = -K->x;
 		K->y = -K->y;
 		B1->x = -B1->x;
@@ -427,7 +427,7 @@ void _cvWorkSouthEast(int i, int j, _CvWork** W, CvPoint2D32f* edges1, CvPoint2D
 	small_edge.y = NULL_EDGE*edges1[i-2].y;
 
 	w1 = W[i-1][j-1].w_east + _cvBendingWork(&edges1[i-2],
-											&edges1[i-1],											
+											&edges1[i-1],
 											/*&null_edge*/&small_edge,
 											&edges2[j-1]/*,
 											&edges2[j-2]*/);
@@ -442,7 +442,7 @@ void _cvWorkSouthEast(int i, int j, _CvWork** W, CvPoint2D32f* edges1, CvPoint2D
 	small_edge.y = NULL_EDGE*edges2[j-2].y;
 
 	w3 = W[i-1][j-1].w_south + _cvBendingWork(  /*&null_edge*/&small_edge,
-												&edges1[i-1],											
+												&edges1[i-1],
 												&edges2[j-2],
 												&edges2[j-1]/*,
 												&edges1[i-2]*/);
@@ -519,7 +519,7 @@ CvPoint2D32f Q(CvPoint2D32f q0,CvPoint2D32f q1,CvPoint2D32f q2,double t)
 	q.x = (float)(q0.x*(1-t)*(1-t) + 2*q1.x*t*(1-t) + q2.x*t*t);
 	q.y = (float)(q0.y*(1-t)*(1-t) + 2*q1.y*t*(1-t) + q2.y*t*t);
 
-	return q;		
+	return q;
 }
 
 double angle(CvPoint2D32f A, CvPoint2D32f B)
@@ -536,14 +536,14 @@ double angle(CvPoint2D32f A, CvPoint2D32f B)
 *	param = [0,1];  0 correspondence to contour1, 1 - contour2
 *
 \***************************************************************************************/
-CvSeq* icvBlendContours(CvSeq* contour1, 
+CvSeq* icvBlendContours(CvSeq* contour1,
 						CvSeq* contour2,
 						CvSeq* corr,
 						double param,
 						CvMemStorage* storage)
 {
 	int j;
-	
+
 	CvSeqWriter writer01;
 	CvSeqReader reader01;
 
@@ -558,7 +558,7 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 	int corr_point;
 
 	// Create output sequence.
-	CvSeq* output = cvCreateSeq(0,					  
+	CvSeq* output = cvCreateSeq(0,
 								sizeof(CvSeq),
 								sizeof(CvPoint),
 								storage );
@@ -570,7 +570,7 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 	point1 = (CvPoint* )malloc( Ni*sizeof(CvPoint) );
 	point2 = (CvPoint* )malloc( Nj*sizeof(CvPoint) );
 
-	// Initialize arrays of point 
+	// Initialize arrays of point
 	cvCvtSeqToArray( contour1, point1, CV_WHOLE_SEQ );
 	cvCvtSeqToArray( contour2, point2, CV_WHOLE_SEQ );
 
@@ -583,7 +583,7 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 
 	i = Ni-1; // correspondence to points of contour1
 	for( ; corr; corr = corr->h_next )
-	{		
+	{
 		//Initializes process of sequential reading from sequence
 		cvStartReadSeq( corr, &reader01, 0 );
 
@@ -595,7 +595,7 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 			// Compute point of intermediate polygon.
 			point_output.x = cvRound(point1[i].x + param*( point2[corr_point].x - point1[i].x ));
 			point_output.y = cvRound(point1[i].y + param*( point2[corr_point].y - point1[i].y ));
-			
+
 			// Write element to sequence.
 			CV_WRITE_SEQ_ELEM( point_output, writer01 );
 		}
@@ -603,7 +603,7 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 	}
 	// Updates sequence header.
 	cvFlushSeqWriter( &writer01 );
-	
+
 	return output;
 }
 
@@ -621,9 +621,9 @@ CvSeq* icvBlendContours(CvSeq* contour1,
 **************************************************************************************************/
 
 
-void icvCalcContoursCorrespondence(CvSeq* contour1, 
-									CvSeq* contour2, 
-									CvSeq** corr, 
+void icvCalcContoursCorrespondence(CvSeq* contour1,
+									CvSeq* contour2,
+									CvSeq** corr,
 									CvMemStorage* storage)
 {
 	int i,j;					// counter of cycles
@@ -660,7 +660,7 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 	edges1 = (CvPoint2D32f* )malloc( (Ni-1)*sizeof(CvPoint2D32f) );
 	edges2 = (CvPoint2D32f* )malloc( (Nj-1)*sizeof(CvPoint2D32f) );
 
-	// Initialize arrays of point 
+	// Initialize arrays of point
 	cvCvtSeqToArray( contour1, point1, CV_WHOLE_SEQ );
 	cvCvtSeqToArray( contour2, point2, CV_WHOLE_SEQ );
 
@@ -679,7 +679,7 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 		edges2[i].y = (float)( point2[i+1].y - point2[i].y );
 	};
 
-	// Find infinity constant 
+	// Find infinity constant
 	//inf=1;
 /////////////
 
@@ -716,11 +716,11 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 	{
 		j=0;/////////
 		W[i][j].w_east = W[i-1][j].w_east;
-		W[i][j].w_east = W[i][j].w_east /*+ 
+		W[i][j].w_east = W[i][j].w_east /*+
 			_cvBendingWork( &edges1[i-2], &edges1[i-1], &null_edge, &null_edge, NULL )*/;
 		W[i][j].w_east = W[i][j].w_east + _cvStretchingWork( &edges2[i-1], &null_edge );
 		W[i][j].path_e = PATH_TO_E;
-		
+
 		j=1;//////////
 		W[i][j].w_south = inf;
 
@@ -732,18 +732,18 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 		small_edge.x = NULL_EDGE*edges1[i-2].x;
 		small_edge.y = NULL_EDGE*edges1[i-2].y;
 
-		W[i][j].w_southeast = W[i][j].w_southeast + 
+		W[i][j].w_southeast = W[i][j].w_southeast +
 			_cvBendingWork( &edges1[i-2], &edges1[i-1], /*&null_edge*/&small_edge, &edges2[j-1]/*, &edges2[Nj-2]*/);
 
 		W[i][j].path_se = PATH_TO_E;
 	}
 
 	for(j=2; j<Nj; j++)
-	{		
+	{
 		i=0;//////////
 		W[i][j].w_south = W[i][j-1].w_south;
 		W[i][j].w_south = W[i][j].w_south + _cvStretchingWork( &null_edge, &edges2[j-1] );
-		W[i][j].w_south = W[i][j].w_south /*+ 
+		W[i][j].w_south = W[i][j].w_south /*+
 			_cvBendingWork( &null_edge, &null_edge, &edges2[j-2], &edges2[j-1], NULL )*/;
 		W[i][j].path_s = 3;
 
@@ -758,7 +758,7 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 		small_edge.x = NULL_EDGE*edges2[j-2].x;
 		small_edge.y = NULL_EDGE*edges2[j-2].y;
 
-		W[i][j].w_southeast = W[i][j].w_southeast + 
+		W[i][j].w_southeast = W[i][j].w_southeast +
 			_cvBendingWork( /*&null_edge*/&small_edge, &edges1[i-1], &edges2[j-2], &edges2[j-1]/*, &edges1[Ni-2]*/);
 		W[i][j].path_se = 3;
 	}
@@ -773,8 +773,8 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 
 	i=Ni-1;j=Nj-1;
 
-	*corr = cvCreateSeq(0,					
-						sizeof(CvSeq),		
+	*corr = cvCreateSeq(0,
+						sizeof(CvSeq),
 						sizeof(int),
 						storage );
 
@@ -806,26 +806,26 @@ void icvCalcContoursCorrespondence(CvSeq* contour1,
 	{
 		CV_WRITE_SEQ_ELEM( j, writer );
 
-		switch( path ) 
+		switch( path )
 		{
 		case PATH_TO_E:
 			path = W[i][j].path_e;
 			i--;
 			cvFlushSeqWriter( &writer );
-			corr01->h_next = cvCreateSeq(	0,					
-											sizeof(CvSeq),		
+			corr01->h_next = cvCreateSeq(	0,
+											sizeof(CvSeq),
 											sizeof(int),
 											storage );
 			corr01 = corr01->h_next;
 			cvStartAppendToSeq( corr01, &writer );
 			break;
-		
+
 		case PATH_TO_SE:
 			path = W[i][j].path_se;
 			j--; i--;
 			cvFlushSeqWriter( &writer );
-			corr01->h_next = cvCreateSeq(	0,					
-											sizeof(CvSeq),		
+			corr01->h_next = cvCreateSeq(	0,
+											sizeof(CvSeq),
 											sizeof(int),
 											storage );
 			corr01 = corr01->h_next;

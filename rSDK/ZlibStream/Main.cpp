@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 #include "Common.h"
 
@@ -95,7 +95,7 @@ bool HandleCheck(FILE *file, gzFile gzfile, LPRDATA rdPtr)
 
 //Compress a file
 DWORD WINAPI compress_one_file(Params *pDataArray)
-{	
+{
 	//Open struct and set variables
 	char *infilename = new char [MAX_PATH];			 // Get input file name
 	strcpy_s(infilename, MAX_PATH, pDataArray -> para_infilename);
@@ -103,18 +103,18 @@ DWORD WINAPI compress_one_file(Params *pDataArray)
 	strcpy_s(outfilename, MAX_PATH, pDataArray -> para_outfilename);
 	bool UseAppend = pDataArray -> para_UseAppend;	  // G et whether to append or write
 	LPRDATA rdPtr = pDataArray -> para_rdPtr;			//Get rdPtr
-	delete pDataArray;								  // Container is expendable 
-	
+	delete pDataArray;								  // Container is expendable
+
 	char * WriteType = "wb9";		//User is using write (overwriting)
 	if (UseAppend) WriteType = "ab9"; // User is using append
-					
+
 	//Check input file size - no handles to close
 	if (FileSizeCheck(infilename, rdPtr)) {Terminate();}
 
 	//Open handles to both files
 	FILE *infile = fopen(infilename, "rb");	  // r = read, b = binary
 	gzFile outfile = gzopen(outfilename, WriteType); // a = append (or w=write), b = binary, 9 = max compression
-	
+
 	//Check handles - HandleCheck() automatically closes handles if invalid
 	if (HandleCheck(infile, outfile, rdPtr)) {Terminate();}
 
@@ -127,12 +127,12 @@ DWORD WINAPI compress_one_file(Params *pDataArray)
 	ThreadSafe_End();
 
 	//If using Write, output size should not be included in the calculation later. Otherwise:
-	if (UseAppend) PreviousOutputSize = file_size(outfilename); 
+	if (UseAppend) PreviousOutputSize = file_size(outfilename);
 
 	//This makes sure that the buffer is the right size - if too large, set buffer smaller
 	if ( file_size(infilename) < tempinbuffersize)
 		tempinbuffersize = (unsigned short)file_size(infilename);
-	
+
 	//Then declare final variable, the buffer
 	char *inbuffer = new char[tempinbuffersize];
 
@@ -142,7 +142,7 @@ DWORD WINAPI compress_one_file(Params *pDataArray)
 		total_read += num_read;
 		gzwrite(outfile, inbuffer, num_read);
 	}
-				
+
 	//Close thread
 	fclose(infile);
 	gzclose(outfile);
@@ -153,7 +153,7 @@ DWORD WINAPI compress_one_file(Params *pDataArray)
 	unsigned long saveoutfilesize = file_size(outfilename);
 	unsigned long saveinfilesize = file_size(infilename);
 	rdPtr -> PercentageDifference = ((file_size(outfilename)-PreviousOutputSize)*(1.0/file_size(infilename)))*100.0;
-	
+
 	stringstream temp;
 	temp <<"Buffer used: "
 		 << tempinbuffersize
@@ -167,14 +167,14 @@ DWORD WINAPI compress_one_file(Params *pDataArray)
 	rdPtr -> returnstring = temp.str();
 	temp.flush();
 	rdPtr -> LastOutput = outfilename;
-	rdPtr -> rRd -> PushEvent(0); 
+	rdPtr -> rRd -> PushEvent(0);
 	ThreadSafe_End();
 	return 0;
 }
 
 //Decompress a file
 DWORD WINAPI decompress_one_file(Params *pDataArray)
-{	
+{
 	//Open struct and set variables
 	char *infilename = new char [MAX_PATH];			 // Get input file name
 	strcpy_s(infilename, MAX_PATH, pDataArray -> para_infilename);
@@ -182,8 +182,8 @@ DWORD WINAPI decompress_one_file(Params *pDataArray)
 	strcpy_s(outfilename, MAX_PATH, pDataArray -> para_outfilename);
 	bool UseAppend = pDataArray -> para_UseAppend;	  // Get whether to append or write
 	LPRDATA rdPtr = pDataArray -> para_rdPtr;			//Get rdPtr
-	delete pDataArray;								  // Container is expendable 
-	
+	delete pDataArray;								  // Container is expendable
+
 	char * WriteType = "wb";		//User is using write (overwriting)
 	if (UseAppend) WriteType = "ab"; // User is using append
 
@@ -191,26 +191,26 @@ DWORD WINAPI decompress_one_file(Params *pDataArray)
 	//Open handles to both files
 	gzFile infile = gzopen(infilename, "rb"); // r = read, b = binary
 	FILE *outfile = fopen(outfilename, WriteType); // a = append or w = write, b = binary
-	
+
 	if (HandleCheck(outfile, infile, rdPtr)) {Terminate();}
 	//Declare variables
 	unsigned long PreviousOutputSize = 0; // For calculation purposes
 	int num_read = 0;
 	unsigned long total_read = 0;
 	ThreadSafe_Start();
-	unsigned short tempinbuffersize = rdPtr -> inbuffersize;			
+	unsigned short tempinbuffersize = rdPtr -> inbuffersize;
 	ThreadSafe_End();
-	
+
 	//If using Write, output size should not be included in the calculation later. Otherwise:
-	if (UseAppend) PreviousOutputSize = file_size(outfilename); 
-	
+	if (UseAppend) PreviousOutputSize = file_size(outfilename);
+
 	//This makes sure that the buffer is the right size - if too large, set buffer smaller
 	if ( file_size(infilename) < tempinbuffersize)
 		tempinbuffersize = (unsigned short)file_size(infilename);
-	
+
 	//Then declare final variable, the buffer
 	char *inbuffer = new char[tempinbuffersize];
-	
+
 	//Iteration through the files
 	while ((num_read = gzread(infile, inbuffer, tempinbuffersize)) > 0)
 	{
@@ -248,7 +248,7 @@ DWORD WINAPI decompress_one_file(Params *pDataArray)
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 CONDITION(
@@ -272,7 +272,7 @@ CONDITION(
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 ACTION( // Old compress function
@@ -323,7 +323,7 @@ ACTION(
 	char *p1 = (char *) Param(TYPE_STRING);
 	char *p2 = (char *) Param(TYPE_STRING);
 	int p3 = Param(TYPE_INT);
-	
+
 	//Set bool for simplicity
 	bool temp = false;
 	if (p3 != 0)
@@ -335,7 +335,7 @@ ACTION(
 	strcpy_s(Parameters -> para_outfilename, MAX_PATH, p2); // Pass the output file name
 	Parameters -> para_UseAppend = temp;					  // Pass the append command
 	Parameters -> para_rdPtr = rdPtr;						 // Pass rdPtr
-	
+
 	//Create thread
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&compress_one_file, Parameters, 0, NULL);
 }
@@ -350,7 +350,7 @@ ACTION(
 	char *p1 = (char *) Param(TYPE_STRING);
 	char *p2 = (char *) Param(TYPE_STRING);
 	int p3 = Param(TYPE_INT);
-	
+
 	//Set bool for simplicity
 	bool temp = false;
 	if (p3 != 0)
@@ -362,7 +362,7 @@ ACTION(
 	strcpy_s(Parameters -> para_outfilename, MAX_PATH, p2); // Pass the output file name
 	Parameters -> para_UseAppend = temp;					  // Pass the append command
 	Parameters -> para_rdPtr = rdPtr;						 // Pass rdPtr
-	
+
 	//Create thread
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&decompress_one_file, Parameters, 0, NULL);
 }
@@ -370,7 +370,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 EXPRESSION(

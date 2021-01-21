@@ -24,7 +24,7 @@ protected:
 	size_t C;
 	size_t M;
 public:
-	
+
 	// Constructor and destructor
 	inline rVector() { M=3; C=0; A=(T *)malloc(sizeof(T)*M); }
 	~rVector() { free(A); }
@@ -85,12 +85,12 @@ public:
 #endif
 
 // Property macros
-#define PROPS_IDS_START()			enum { PROPID_SETTINGS=PROPID_EXTITEM_CUSTOM_FIRST,	
+#define PROPS_IDS_START()			enum { PROPID_SETTINGS=PROPID_EXTITEM_CUSTOM_FIRST,
 #define PROPS_IDS_END()				};
 #define PROPS_DATA_START()			PropData Properties[]={
 #define PROPS_DATA_END()			PropData_End()};
 
-// Debugger macros 
+// Debugger macros
 #define DEBUGGER_IDS_START()		enum {
 #define DEBUGGER_IDS_END()			};
 #define DEBUGGER_ITEMS_START()		WORD DebugTree[]={
@@ -167,7 +167,7 @@ public:
 #define PSTR(s)						((unsigned int)s)
 
 // To generate an identifier
-#define MAKEID(a,b,c,d)				((#@a<<24)|(#@b<<16)|(#@c<<8)|(#@d)) 
+#define MAKEID(a,b,c,d)				((#@a<<24)|(#@b<<16)|(#@c<<8)|(#@d))
 
 // The build of MMF
 #define MMF_BUILD (mV->mvGetVersion()&MMFBUILD_MASK)
@@ -277,7 +277,7 @@ public:
 
 		// Set the action pointer
 		mAction=act;
-		
+
 		// Store the param types/names and function name
 		ParamTypes=params.Type;
 		ParamStrings=params.Name;
@@ -367,7 +367,7 @@ const int Separator=-3;
 			RootMenu=CreateMenu();
 			SubMenus.push_back(RootMenu);
 		}
-		
+
 		void AddMenu(int id,const TCHAR * str,bool disabled=false) {
 			if (id>0) {
 				AppendMenu(SubMenus.back(),MF_BYPOSITION|MF_STRING,id,str);
@@ -377,11 +377,11 @@ const int Separator=-3;
 				SubMenuNames.push_back(str);
 			} else if (id==MenuItem&&!disabled) {
 				AppendMenu(SubMenus[SubMenus.size()-2],MF_BYPOSITION|MF_STRING|MF_POPUP,(UINT)SubMenus.back(), SubMenuNames.back());
-				SubMenus.pop_back();	
+				SubMenus.pop_back();
 				SubMenuNames.pop_back();
 			} else if (id==MenuItem&&disabled) {
 				AppendMenu(SubMenus[SubMenus.size()-2],MF_BYPOSITION|MF_STRING|MF_POPUP|MF_GRAYED,(UINT)SubMenus.back(),SubMenuNames.back());
-				SubMenus.pop_back();	
+				SubMenus.pop_back();
 				SubMenuNames.pop_back();
 			} else if (id==Separator) {
 				AppendMenu(SubMenus.back(),MF_BYPOSITION|MF_SEPARATOR,0,NULL);
@@ -391,10 +391,10 @@ const int Separator=-3;
 		inline HMENU GetMenu() { return RootMenu; }
 	};
 
-	inline HMENU ConditionMenu(LPEDATA edPtr) {	
+	inline HMENU ConditionMenu(LPEDATA edPtr) {
 		#define	CONDITION_MENU
 		#define	ITEM(id,string)	m.AddMenu(CONDITION_ID(id),_T(string));
-		#define	DISABLED(id,string)	m.AddMenu(CONDITION_ID(id),_T(string),true);	
+		#define	DISABLED(id,string)	m.AddMenu(CONDITION_ID(id),_T(string),true);
 		Menu m;
 		#include "menu.h"
 		return m.GetMenu();
@@ -444,7 +444,7 @@ protected:
 	LPRDATA rdPtr;
 
 public:
-	
+
 	// Class constructor
 	inline rRundata(LPRDATA _rdPtr) {
 		rdPtr=_rdPtr;
@@ -511,12 +511,12 @@ public:
 
 	// Pause the application before a lengthy task, without messing up timers etc.
 	inline void Pause() {
-		CallFunction(RFUNCTION_PAUSE,0,0);	
+		CallFunction(RFUNCTION_PAUSE,0,0);
 	}
 
 	// Continue the application after pausing
 	inline void Continue() {
-		CallFunction(RFUNCTION_CONTINUE,0,0);	
+		CallFunction(RFUNCTION_CONTINUE,0,0);
 	}
 
 	// Force a complete redraw of the frame
@@ -571,7 +571,7 @@ public:
 
 	// Call a movement's ActionEntry function
 	inline void CallMovement(short id,long param) {
-		CallFunction(RFUNCTION_CALLMOVEMENT,id,param);	
+		CallFunction(RFUNCTION_CALLMOVEMENT,id,param);
 	}
 
 	// Change the position of the object

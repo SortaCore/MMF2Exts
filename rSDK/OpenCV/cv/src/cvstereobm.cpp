@@ -162,7 +162,7 @@ static void icvPrefilter( const CvMat* src, CvMat* dst, int winsize, int ftzero,
 			val = ((curr[x]*4 + curr[x-1] + curr[x+1] + prev[x] + next[x])*scale_g - sum*scale_s) >> 10;
 			dptr[x] = tab[val + OFS];
 		}
-		
+
 		sum += vsum[x+wsz2] - vsum[x-wsz2-1];
 		val = ((curr[x]*5 + curr[x-1] + prev[x] + next[x])*scale_g - sum*scale_s) >> 10;
 		dptr[x] = tab[val + OFS];
@@ -289,7 +289,7 @@ icvFindStereoCorrespondenceBM_SSE2( const CvMat* left, const CvMat* right,
 		// initialize sums
 		for( d = 0; d < ndisp; d++ )
 			sad[d] = (ushort)(hsad0[d-ndisp*dy0]*(wsz2 + 2 - dy0));
-		
+
 		hsad = hsad0 + (1 - dy0)*ndisp;
 		for( y = 1 - dy0; y < wsz2; y++, hsad += ndisp )
 			for( d = 0; d < ndisp; d++ )
@@ -369,7 +369,7 @@ icvFindStereoCorrespondenceBM_SSE2( const CvMat* left, const CvMat* right,
 					continue;
 				}
 			}
-			
+
 			{
 			sad[-1] = sad[1];
 			sad[ndisp] = sad[ndisp-2];
@@ -485,7 +485,7 @@ icvFindStereoCorrespondenceBM( const CvMat* left, const CvMat* right,
 		// initialize sums
 		for( d = 0; d < ndisp; d++ )
 			sad[d] = (int)(hsad0[d-ndisp*dy0]*(wsz2 + 2 - dy0));
-		
+
 		hsad = hsad0 + (1 - dy0)*ndisp;
 		for( y = 1 - dy0; y < wsz2; y++, hsad += ndisp )
 			for( d = 0; d < ndisp; d++ )
@@ -532,7 +532,7 @@ icvFindStereoCorrespondenceBM( const CvMat* left, const CvMat* right,
 					continue;
 				}
 			}
-			
+
 			{
 			sad[-1] = sad[1];
 			sad[ndisp] = sad[ndisp-2];
@@ -605,7 +605,7 @@ cvFindStereoCorrespondenceBM( const CvArr* leftarr, const CvArr* rightarr,
 	}
 	left = cvMat(left0->rows, left0->cols, CV_8U, state->preFilteredImg0->data.ptr);
 	right = cvMat(right0->rows, right0->cols, CV_8U, state->preFilteredImg1->data.ptr);
-	
+
 	mindisp = state->minDisparity;
 	ndisp = state->numberOfDisparities;
 

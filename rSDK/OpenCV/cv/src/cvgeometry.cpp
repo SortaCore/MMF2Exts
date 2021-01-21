@@ -89,7 +89,7 @@ cvBoxPoints( CvBox2D box, CvPoint2D32f pt[4] )
 	CV_FUNCNAME( "cvBoxPoints" );
 
 	__BEGIN__;
-	
+
 	double angle = box.angle*CV_PI/180.;
 	float a = (float)cos(angle)*0.5f;
 	float b = (float)sin(angle)*0.5f;
@@ -168,7 +168,7 @@ cvPointPolygonTest( const CvArr* _contour, CvPoint2D32f pt, int measure_dist )
 	CV_FUNCNAME( "cvCheckPointPolygon" );
 
 	__BEGIN__;
-	
+
 	CvSeqBlock block;
 	CvContour header;
 	CvSeq* contour = (CvSeq*)_contour;
@@ -293,7 +293,7 @@ cvPointPolygonTest( const CvArr* _contour, CvPoint2D32f pt, int measure_dist )
 			for( i = 0; i < total; i++ )
 			{
 				double dx, dy, dx1, dy1, dx2, dy2, dist_num, dist_denom = 1;
-		
+
 				v0 = v;
 				if( is_float )
 				{
@@ -304,11 +304,11 @@ cvPointPolygonTest( const CvArr* _contour, CvPoint2D32f pt, int measure_dist )
 					CV_READ_SEQ_ELEM( iv, reader );
 					v = cvPointTo32f( iv );
 				}
-		
+
 				dx = v.x - v0.x; dy = v.y - v0.y;
 				dx1 = pt.x - v0.x; dy1 = pt.y - v0.y;
 				dx2 = pt.x - v.x; dy2 = pt.y - v.y;
-		
+
 				if( dx1*dx + dy1*dy <= 0 )
 					dist_num = dx1*dx1 + dy1*dy1;
 				else if( dx2*dx + dy2*dy >= 0 )

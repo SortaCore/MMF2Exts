@@ -69,11 +69,11 @@ static void SaveTrack(DefBlobTrack* pTrack, char* pFileName, int norm = 0)
 	}
 
 	fprintf(out,"%d",pTrack->FrameBegin);
-	
+
 	if(pS) for(j=0; j<pS->GetBlobNum(); ++j)
 	{
 		CvBlob* pB = pS->GetBlob(j);
-		
+
 		fprintf(out,", %.1f, %.1f", CV_BLOB_X(pB),CV_BLOB_Y(pB));
 
 		if(CV_BLOB_WX(pB0)>0)

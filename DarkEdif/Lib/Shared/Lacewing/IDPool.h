@@ -36,7 +36,7 @@
 /// 		  available ID numbers used first, etc. </summary>
 class IDPool
 {
-	
+
 protected:
 
 	std::set<unsigned short> releasedIDs;	// A sorted list of all released IDs.

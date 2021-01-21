@@ -113,7 +113,7 @@ void CvBoxFilter::init( int _max_width, int _src_type, int _dst_type,
 	CV_FUNCNAME( "CvBoxFilter::init" );
 
 	__BEGIN__;
-	
+
 	sum = 0;
 	normalized = _normalized;
 
@@ -127,7 +127,7 @@ void CvBoxFilter::init( int _max_width, int _src_type, int _dst_type,
 
 	CvBaseImageFilter::init( _max_width, _src_type, _dst_type, 1, _ksize,
 							 _anchor, _border_mode, _border_value );
-	
+
 	scale = normalized ? 1./(ksize.width*ksize.height) : 1;
 
 	if( CV_MAT_DEPTH(src_type) == CV_8U )
@@ -1150,9 +1150,9 @@ static void icvBilateralFiltering_32f( const CvMat* src, CvMat* dst, int d,
 	float* space_weight = 0;
 	int* space_ofs = 0;
 	float *expLUT = 0;
- 
+
 	CV_FUNCNAME( "icvBilateralFiltering_32f" );
-	
+
 	__BEGIN__;
 
 	double gauss_color_coeff = -0.5/(sigma_color*sigma_color);
@@ -1187,10 +1187,10 @@ static void icvBilateralFiltering_32f( const CvMat* src, CvMat* dst, int d,
 	radius = MAX(radius, 1);
 	d = radius*2 + 1;
 	// compute the min/max range for the input image (even if multichannel)
-	
-	CV_CALL( cvReshape( src, &src_reshaped, 1 ) );	
-	CV_CALL( cvMinMaxLoc(&src_reshaped, &minValSrc, &maxValSrc) ); 
-	
+
+	CV_CALL( cvReshape( src, &src_reshaped, 1 ) );
+	CV_CALL( cvMinMaxLoc(&src_reshaped, &minValSrc, &maxValSrc) );
+
 	// temporary copy of the image with borders for easy processing
 	CV_CALL( temp = cvCreateMat( src->rows + radius*2,
 		src->cols + radius*2, src->type ));
@@ -1199,13 +1199,13 @@ static void icvBilateralFiltering_32f( const CvMat* src, CvMat* dst, int d,
 	// allocate lookup tables
 	CV_CALL( space_weight = (float*)cvAlloc(d*d*sizeof(space_weight[0])));
 	CV_CALL( space_ofs = (int*)cvAlloc(d*d*sizeof(space_ofs[0])));
-	
+
 	// assign a length which is slightly more than needed
 	len = (float)(maxValSrc - minValSrc) * cn;
 	kExpNumBins = kExpNumBinsPerChannel * cn;
 	CV_CALL( expLUT = (float*)cvAlloc((kExpNumBins+2) * sizeof(expLUT[0])));
 	scale_index = kExpNumBins/len;
-	
+
 	// initialize the exp LUT
 	for( i = 0; i < kExpNumBins+2; i++ )
 	{
@@ -1218,7 +1218,7 @@ static void icvBilateralFiltering_32f( const CvMat* src, CvMat* dst, int d,
 		else
 			expLUT[i] = 0.f;
 	}
-	
+
 	// initialize space-related bilateral filter coefficients
 	for( i = -radius, maxk = 0; i <= radius; i++ )
 		for( j = -radius; j <= radius; j++ )
@@ -1280,7 +1280,7 @@ static void icvBilateralFiltering_32f( const CvMat* src, CvMat* dst, int d,
 			}
 		}
 	}
-	
+
 	__END__;
 
 	cvReleaseMat( &temp );
@@ -1481,13 +1481,13 @@ cvSmooth( const void* srcarr, void* dstarr, int smooth_type,
 		float* ky = (float*)cvStackAlloc( ksize.height*sizeof(ky[0]) );
 		CvMat KX = cvMat( 1, ksize.width, CV_32F, kx );
 		CvMat KY = cvMat( 1, ksize.height, CV_32F, ky );
-		
+
 		CvSepFilter::init_gaussian_kernel( &KX, sigma1 );
 		if( ksize.width != ksize.height || fabs(sigma1 - sigma2) > FLT_EPSILON )
 			CvSepFilter::init_gaussian_kernel( &KY, sigma2 );
 		else
 			KY.data.fl = kx;
-		
+
 		if( have_ipp && size.width >= param1*3 &&
 			size.height >= param2 && param1 > 1 && param2 > 1 )
 		{
@@ -1505,7 +1505,7 @@ cvSmooth( const void* srcarr, void* dstarr, int smooth_type,
 	{
 		if( param2 != 0 && (param2 != param1 || param1 % 2 == 0) )
 			CV_ERROR( CV_StsBadSize, "Bilateral filter only supports square windows of odd size" );
-		
+
 		switch( src_type )
 		{
 		case CV_32FC1:

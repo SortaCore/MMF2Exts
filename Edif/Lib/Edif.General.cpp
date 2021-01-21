@@ -68,13 +68,13 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->editPrefs = Extension::OEPREFS;
 
 	memcpy(&infoPtr->identifier, SDK->json["About"]["Identifier"], 4);
-	
+
 	infoPtr->version = Extension::Version;
-	
+
 	return TRUE;
 }
 
-extern "C" 
+extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
@@ -161,12 +161,12 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 }
 
 BOOL WINAPI SaveRunObject(LPRDATA rdPtr, HANDLE hf)
-{			
+{
 	return rdPtr->pExtension->Save(hf) ? TRUE : FALSE;
 }
 
 BOOL WINAPI LoadRunObject(LPRDATA rdPtr, HANDLE hf)
-{			
+{
 	return rdPtr->pExtension->Load(hf) ? TRUE : FALSE;
 }
 
@@ -174,6 +174,6 @@ LPEVENTINFOS2 GetEventInformations(LPEVENTINFOS2 eiPtr, short code)
 {
 	while (eiPtr->infos.code != code)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	
+
 	return eiPtr;
 }

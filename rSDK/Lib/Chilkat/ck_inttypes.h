@@ -2,7 +2,7 @@
 
 #ifndef CK_INT_TYPES_H
 #define CK_INT_TYPES_H
-	
+
 #if defined(__MINGW32__)
 #include <inttypes.h>
 
@@ -31,17 +31,17 @@ typedef unsigned __int64 uint64_t;
 
 #if defined(CHILKATSWIG) && (defined(CK_LINUX) || defined(MACOSX) || defined(CK_SOLARIS))
 
-#define _INT64_TYPEDEF_DEFINED	
-typedef int64_t __int64;	
-typedef uint64_t ulong64;	
+#define _INT64_TYPEDEF_DEFINED
+typedef int64_t __int64;
+typedef uint64_t ulong64;
 
 
 #elif !defined(CHILKATSWIG)
-		
+
 #ifndef _INT64_TYPEDEF_DEFINED
-#define _INT64_TYPEDEF_DEFINED	
-typedef int64_t __int64;	
-typedef uint64_t ulong64;	
+#define _INT64_TYPEDEF_DEFINED
+typedef int64_t __int64;
+typedef uint64_t ulong64;
 #endif
 
 #endif // CHILKATSWIG

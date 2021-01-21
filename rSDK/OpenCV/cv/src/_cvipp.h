@@ -273,7 +273,7 @@ IPCVAPI_EX( CvStatus, icvRemap_##flavor##_C##cn##R,					 \
 	"ippiRemap_" #flavor "_C" #cn "R", CV_PLUGINS1(CV_PLUGIN_IPPI),	 \
 	( const void* src, CvSize srcsize, int srcstep, CvRect srcroi,	  \
 	  const float* xmap, int xmapstep, const float* ymap, int ymapstep, \
-	  void* dst, int dststep, CvSize dstsize, int interpolation )) 
+	  void* dst, int dststep, CvSize dstsize, int interpolation ))
 
 IPCV_REMAP( 8u, 1 )
 IPCV_REMAP( 8u, 3 )

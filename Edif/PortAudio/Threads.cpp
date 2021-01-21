@@ -3,7 +3,7 @@
 // ============================================================================
 //
 // THREADS
-// 
+//
 // ============================================================================
 DWORD WINAPI Record(StructPassThru *pDataArray)
 {
@@ -12,8 +12,8 @@ DWORD WINAPI Record(StructPassThru *pDataArray)
 	int numSamples = pDataArray->para_numSamples;			// Number of samples
 	int numBytes = pDataArray->para_numBytes;				// Number of bytes
 	Extension * Extension = pDataArray->para_Extension;	// Get Extension
-	delete pDataArray; // Scat! 
-	
+	delete pDataArray; // Scat!
+
 ThreadSafe_Start();
 	uchar ThreadID = Extension->NewThreadID;
 	Extension->NewThreadID++;
@@ -25,7 +25,7 @@ ThreadSafe_End();
 	SAMPLE *recordedSamples;
 	int i;
 	SAMPLE max, average, val;
-	
+
 	Report("patest_read_record.c");
 
 	totalFrames = NUM_SECONDS * SAMPLE_RATE; /* Record for a few seconds. */

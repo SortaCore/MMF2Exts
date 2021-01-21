@@ -127,7 +127,7 @@ void lwp_sslclient_delete (lwp_sslclient ctx)
 
 	SSL_free (ctx->ssl);
 	BIO_free (ctx->bio_external);
- 
+
 	lw_stream_delete (&ctx->upstream);
 	lw_stream_delete (&ctx->downstream);
 

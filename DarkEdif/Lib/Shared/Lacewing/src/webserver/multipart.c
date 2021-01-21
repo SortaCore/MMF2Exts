@@ -407,7 +407,7 @@ void lwp_ws_multipart_call_hook (lwp_ws_multipart ctx)
 
 	lwp_ws_req_after_handler (ctx->request);
 }
-	
+
 const multipart_parser_settings settings =
 {
 	on_header_field,

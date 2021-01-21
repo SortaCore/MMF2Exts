@@ -91,7 +91,7 @@
 				[ 48, "Add binary" ],
 				[ 52, "Add file" ],
 				"---",
-				
+
 				[ 66, "Compress (ZLIB)" ],
 				[ 49, "Clear" ],
 				[ 74, "Resize" ]
@@ -351,7 +351,7 @@
 			},
 			{
 				"Title": "Leave channel"
-			},	
+			},
 			{
 				"Title": "Send text %1 to server on subchannel %0",
 				"Parameters": [
@@ -359,7 +359,7 @@
 					[ "Text", "Text to send" ]
 				]
 			},
-			{	
+			{
 				"Title": "Send text %1 to channel on subchannel %0",
 				"Parameters": [
 					[ "Integer", "Subchannel (0 - 255)" ],

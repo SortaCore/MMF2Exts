@@ -10,7 +10,7 @@
 		By setting it to 1 until the "pop" command, we tell the compiler not to round up in that manner.
 	*/
 	#pragma pack (push, align_to_one_multithreading)
-	#pragma pack (1) 
+	#pragma pack (1)
 	struct SaveExtInfo
 	{
 		// Required for DarkEdif

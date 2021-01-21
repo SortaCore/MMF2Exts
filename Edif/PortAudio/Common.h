@@ -96,7 +96,7 @@ typedef unsigned char SAMPLE;
 #define NUM_SECONDS	 (5)
 #define NUM_CHANNELS	(2)
 /* #define DITHER_FLAG	 (paDitherOff)  */
-#define DITHER_FLAG	 (0) 
+#define DITHER_FLAG	 (0)
 
 #ifndef NoExt // FOR NORMAL FUNCTIONS
 //Macros for Thread Safety

@@ -104,7 +104,7 @@ static int on_headers_complete (http_parser * parser)
 	ctx->parsing_headers = lw_false;
 
 	const char * method = http_method_str ((enum http_method) parser->method);
-	
+
 	if (!lwp_ws_req_in_method (ctx->request, strlen (method), method))
 	{
 	  lwp_trace ("HTTP: Bad method");

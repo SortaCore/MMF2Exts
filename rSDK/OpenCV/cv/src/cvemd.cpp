@@ -48,7 +48,7 @@
 
 	An implementation of the Earth Movers Distance.
 	Based of the solution for the Transportation problem as described in
-	"Introduction to Mathematical Programming" by F. S. Hillier and 
+	"Introduction to Mathematical Programming" by F. S. Hillier and
 	G. J. Lieberman, McGraw-Hill, 1990.
 
 	Copyright (C) 1998 Yossi Rubner
@@ -358,7 +358,7 @@ icvInitEMD( const float* signature1, int size1,
 							sizeof( CvNode2D * ) +  /* cols_x & rows_x */
 							sizeof( CvNode1D ) + /* u & v */
 							sizeof( float ) + /* s & d */
-							sizeof( int ) + sizeof(CvNode2D*)) +  /* idx1 & idx2 */ 
+							sizeof( int ) + sizeof(CvNode2D*)) +  /* idx1 & idx2 */
 		(size1+1) * (sizeof( float * ) + sizeof( char * ) + /* rows pointers for */
 				 sizeof( float * )) + 256;	  /*  cost, is_x and delta */
 
@@ -404,7 +404,7 @@ icvInitEMD( const float* signature1, int size1,
 			s_sum += weight;
 			state->s[ssize] = weight;
 			state->idx1[ssize++] = i;
-			
+
 		}
 		else if( weight < 0 )
 			return CV_BADRANGE_ERR;
@@ -436,7 +436,7 @@ icvInitEMD( const float* signature1, int size1,
 		{
 			state->s[ssize] = -diff;
 			state->idx1[ssize++] = -1;
-		}	
+		}
 		else
 		{
 			state->d[dsize] = diff;
@@ -545,7 +545,7 @@ icvInitEMD( const float* signature1, int size1,
 	}
 
 	state->max_cost = max_cost;
-	
+
 	memset( buffer, 0, buffer_end - buffer );
 
 	state->rows_x = (CvNode2D **) buffer;

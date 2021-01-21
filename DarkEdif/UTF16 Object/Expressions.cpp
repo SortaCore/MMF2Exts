@@ -99,7 +99,7 @@ const wchar_t * Extension::UTF8IntToUTF16Char(unsigned int byte1)
 	// In November 2003, UTF-8 was restricted by RFC 3629 to end at U+10FFFF, in order to match the
 	// constraints of the UTF-16 character encoding. This removed all five- and six-byte sequences,
 	// and 983,040 four-byte sequences.
-	
+
 	// Code point bits 5 bytes
 	else if ((byte1 & 0b11111000) == 0b11111000 && (byte1 & 0b00000100) == 0)
 		//cp = ((byte1 & 0b00000111001111110011111100111111) << 32) | (byte2 & 0b00000000000000000011111100111111);

@@ -101,7 +101,7 @@ class FAR STDDLL_API CInputBufFile : public CInputFile
 		virtual long	GetPosition();
 		virtual long	GetLength();
 		virtual	long	Seek(long pos, int method);
-	
+
 		virtual	int		Attach(HANDLE hnd);
 		virtual	HANDLE	Detach();
 
@@ -149,7 +149,7 @@ class FAR STDDLL_API CInputMemFile : public CInputFile
 		virtual long	GetPosition();
 		virtual long	GetLength();
 		virtual	long	Seek(long pos, int method);
-	
+
 		virtual	int		Attach(HANDLE hnd);
 		virtual	HANDLE	Detach();
 

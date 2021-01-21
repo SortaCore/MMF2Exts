@@ -12,7 +12,7 @@ void Extension::IterateString(tchar * StringP, tchar * InputDelimiterP)
 	// Sort ascendingly
 	for (unsigned long i = 0; i < Ranges.size()-1; i++)
 	{
-		// If next in list is less in value than 
+		// If next in list is less in value than
 		if (_tstoi(Ranges[i].c_str()) > _tstoi(Ranges[i+1].c_str()))
 		{
 			tstring temp = Ranges[i+1];
@@ -25,14 +25,14 @@ void Extension::IterateString(tchar * StringP, tchar * InputDelimiterP)
 		if (_tstoi(Ranges[i].c_str()) == _tstoi(Ranges[i+1].c_str()))
 			Ranges.erase(Ranges.begin()+i);
 	}
-	
+
 	// Iterate over variables
 	for (unsigned long i = 0; i < Ranges.size(); i++)
 	{
 		CurrentVal = _tstoi(Ranges[i].c_str());
 		Runtime.GenerateEvent(0);
 	}
-	
+
 }
 
 // ID = 1

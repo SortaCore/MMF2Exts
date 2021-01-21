@@ -32,7 +32,7 @@
 
 struct lwp_refcount
 {
-	unsigned short refcount;			
+	unsigned short refcount;
 	void (* on_dealloc) (void *);
 };
 

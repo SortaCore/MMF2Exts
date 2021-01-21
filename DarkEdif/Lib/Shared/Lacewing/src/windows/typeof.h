@@ -36,21 +36,21 @@ namespace msvc_typeof_impl {
 
 	template<int ID> struct msvc_extract_type<ID, msvc_extract_type_default_param>
 	{
-		template<bool> struct id2type_impl; 
+		template<bool> struct id2type_impl;
 
-		typedef id2type_impl<true> id2type; 
+		typedef id2type_impl<true> id2type;
 	};
 
-	template<int ID, typename T> struct msvc_extract_type : msvc_extract_type<ID, msvc_extract_type_default_param> 
-	{ 
-		template<> struct id2type_impl<true> // VC8.0 specific bugfeature 
-		{ 
-			typedef T type; 
-		}; 
-		template<bool> struct id2type_impl; 
+	template<int ID, typename T> struct msvc_extract_type : msvc_extract_type<ID, msvc_extract_type_default_param>
+	{
+		template<> struct id2type_impl<true> // VC8.0 specific bugfeature
+		{
+			typedef T type;
+		};
+		template<bool> struct id2type_impl;
 
-		typedef id2type_impl<true> id2type; 
-	}; 
+		typedef id2type_impl<true> id2type;
+	};
 
 
 	template<int N> class CCounter;

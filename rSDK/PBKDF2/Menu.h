@@ -42,7 +42,7 @@
 	ITEM(0,"Iterate the fixed values")
 	SEPARATOR
 #endif
-	
+
 
 // --------------------------------
 // Expression menu

@@ -60,7 +60,7 @@ icvCalcMinEigenVal( const float* cov, int cov_step, float* dst,
 			double a = cov[j*3]*0.5;
 			double b = cov[j*3+1];
 			double c = cov[j*3+2]*0.5;
-			
+
 			buf[j + size.width] = (float)(a + c);
 			buf[j] = (float)((a - c)*(a - c) + b*b);
 		}
@@ -99,7 +99,7 @@ icvCalcEigenValsVecs( const float* cov, int cov_step, float* dst,
 					  int dst_step, CvSize size, CvMat* buffer )
 {
 	static int y0 = 0;
-	
+
 	int j;
 	float* buf = buffer->data.fl;
 	cov_step /= sizeof(cov[0]);
@@ -125,7 +125,7 @@ icvCalcEigenValsVecs( const float* cov, int cov_step, float* dst,
 			double a = cov[j*3];
 			double b = cov[j*3+1];
 			double c = cov[j*3+2];
-			
+
 			double l1 = buf[j + size.width] + buf[j];
 			double l2 = buf[j + size.width] - buf[j];
 
@@ -210,7 +210,7 @@ icvCornerEigenValsVecs( const CvMat* src, CvMat* eigenv, int block_size,
 	CvMat *sqrt_buf = 0;
 
 	int buf_size = 1 << 12;
-	
+
 	CV_FUNCNAME( "icvCornerEigenValsVecs" );
 
 	__BEGIN__;
@@ -269,7 +269,7 @@ icvCornerEigenValsVecs( const CvMat* src, CvMat* eigenv, int block_size,
 			ipp_sobel_horiz = icvFilterSobelHoriz_32f_C1R_p;
 		}
 	}
-	
+
 	if( (ipp_sobel_vert && ipp_sobel_horiz) ||
 		(ipp_scharr_vert && ipp_scharr_horiz) )
 	{
@@ -505,7 +505,7 @@ cvPreCornerDetect( const void* srcarr, void* dstarr, int aperture_size )
 	CvSepFilter dx_filter, dy_filter, d2x_filter, d2y_filter, dxy_filter;
 	CvMat *Dx = 0, *Dy = 0, *D2x = 0, *D2y = 0, *Dxy = 0;
 	CvMat *tempsrc = 0;
-	
+
 	int buf_size = 1 << 12;
 
 	CV_FUNCNAME( "cvPreCornerDetect" );
@@ -627,7 +627,7 @@ cvPreCornerDetect( const void* srcarr, void* dstarr, int aperture_size )
 
 			if( y + delta == size.height )
 				stage = stage & CV_START ? CV_START + CV_END : CV_END;
-			
+
 			dx_filter.process(src,Dx,roi,origin,stage);
 			dy_filter.process(src,Dy,roi,origin,stage);
 			d2x_filter.process(src,D2x,roi,origin,stage);
@@ -654,7 +654,7 @@ cvPreCornerDetect( const void* srcarr, void* dstarr, int aperture_size )
 		for( i = 0; i < stripe_size.height; i++, dst_y++ )
 		{
 			float* dstdata = (float*)(dst->data.ptr + dst_y*dst->step);
-			
+
 			if( d_depth == CV_16S )
 			{
 				const short* dxdata = (const short*)(Dx->data.ptr + i*Dx->step);
@@ -662,7 +662,7 @@ cvPreCornerDetect( const void* srcarr, void* dstarr, int aperture_size )
 				const short* d2xdata = (const short*)(D2x->data.ptr + i*D2x->step);
 				const short* d2ydata = (const short*)(D2y->data.ptr + i*D2y->step);
 				const short* dxydata = (const short*)(Dxy->data.ptr + i*Dxy->step);
-				
+
 				for( j = 0; j < stripe_size.width; j++ )
 				{
 					double dx = dxdata[j];
@@ -680,7 +680,7 @@ cvPreCornerDetect( const void* srcarr, void* dstarr, int aperture_size )
 				const float* d2xdata = (const float*)(D2x->data.ptr + i*D2x->step);
 				const float* d2ydata = (const float*)(D2y->data.ptr + i*D2y->step);
 				const float* dxydata = (const float*)(Dxy->data.ptr + i*Dxy->step);
-				
+
 				for( j = 0; j < stripe_size.width; j++ )
 				{
 					double dx = dxdata[j];

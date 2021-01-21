@@ -83,7 +83,7 @@ public:
 	// In this way, when a client sends message then disconnects, on liblacewing's side that happens instantly,
 	// and liblacewing cleans up its client variable instantly too.
 	// We can't "deny" a disconnect, so we must accept it immediately.
-	
+
 	/// Actions
 		void RemovedActionNoParams();
 
@@ -169,7 +169,7 @@ public:
 		void SaveReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
 		void AppendReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
 
-	
+
 	/// Conditions
 
 		const bool AlwaysTrue() { return true; }
@@ -289,14 +289,14 @@ public:
 		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
 		int ConvToUTF8_GetCompleteCharCount(const TCHAR * tStr);
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
-		
+
 	/* These are called if there's no function linked to an ID */
 
 	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
 	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
 	long Expression(int ID, RUNDATA * rdPtr, long param);
 
-	
+
 
 	/*  These replace the functions like HandleRunObject that used to be
 		implemented in Runtime.cpp. They work exactly the same, but they're

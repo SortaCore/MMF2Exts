@@ -9,7 +9,7 @@
 #define CK_LIBWINPHONE
 #endif
 #endif
-	
+
 #if !defined(CK_LIBWINSTORE)
 #if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PC_APP
 #define CK_LIBWINSTORE
@@ -23,17 +23,17 @@
 #define CK_WINDOWS
 #endif
 #endif
-	
+
 
 #include "ck_inttypes.h"
 
-#if defined(CK_WINDOWS) 
+#if defined(CK_WINDOWS)
 typedef unsigned long ckUInt32;
 #else
 typedef uint32_t ckUInt32;
 #define CK_USE_UINT_T
 #endif
-	
+
 
 // Determine if Mailman SMTPQ related methods are included.
 // SMTPQ is included for Windows-based builds that are not CE or Windows Phone
@@ -82,7 +82,7 @@ typedef uint32_t ckUInt32;
 	// Solaris Studio compiler.
 	#define CK_VISIBLE_PUBLIC __global
 	#define CK_VISIBLE_PRIVATE  __hidden
-#elif defined(CK_WINDOWS) || defined(CK_SOLARIS) 
+#elif defined(CK_WINDOWS) || defined(CK_SOLARIS)
 	#define CK_VISIBLE_PUBLIC
 	#define CK_VISIBLE_PRIVATE
 #else

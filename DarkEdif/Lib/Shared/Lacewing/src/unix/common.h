@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
@@ -48,7 +48,7 @@
 
 #ifdef HAVE_SYS_TIMERFD_H
 	#include <sys/timerfd.h>
-	
+
 	#ifndef USE_KQUEUE
 	  #define _lacewing_use_timerfd
 	#endif
@@ -67,7 +67,7 @@
 	  #define lw_cork TCP_CORK
 	#else
 	  #ifdef TCP_NOPUSH
-		 #define lw_cork TCP_NOPUSH 
+		 #define lw_cork TCP_NOPUSH
 	  #endif
 	#endif
 #endif

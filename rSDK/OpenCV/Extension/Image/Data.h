@@ -28,12 +28,12 @@ LPRRDATA rRd;
 IplImage* myImage;
 
 
-	//int				xAngle;	
-	//int				yAngle;	
+	//int				xAngle;
+	//int				yAngle;
 	//int				zAngle;
 
 	////int				xLight;
-	////int				yLight;	
+	////int				yLight;
 	////int				zLight;
 
 	////float			specular;
@@ -57,7 +57,7 @@ IplImage* myImage;
 
 	//cSurface *		lamp;
 	cSurface *		pSf;
-	
+
 } RUNDATA;
 
 typedef	RUNDATA	* LPRDATA;
@@ -74,9 +74,9 @@ typedef struct tagEDATA_V1
 	short			swidth;
 	short			sheight;
 
-	int				xAngle;	
-	int				yAngle;	
-	int				zAngle;	
+	int				xAngle;
+	int				yAngle;
+	int				zAngle;
 
 } EDITDATA;
 

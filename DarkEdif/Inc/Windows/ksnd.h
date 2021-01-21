@@ -28,7 +28,7 @@ typedef struct KPlayer_t KPlayer;
 /**
  * Song information returned by KSND_GetSongInfo()
  */
-typedef struct 
+typedef struct
 {
 	char *song_title; 			/**< Song title as a null-terminated string */
 	char *instrument_name[128]; /**< Instrument names as an array */
@@ -37,14 +37,14 @@ typedef struct
 } KSongInfo;
 
 
-#ifdef WIN32 
+#ifdef WIN32
 #ifdef DLLEXPORT
 #define KLYSAPI _cdecl __declspec(dllexport)
 #else
-#define KLYSAPI 
+#define KLYSAPI
 #endif
 #else
-#define KLYSAPI 
+#define KLYSAPI
 #endif
 
 /**
@@ -82,11 +82,11 @@ KLYSAPI extern int KSND_GetSongLength(const KSong *song);
  * Get song information from a @c KSong.
  *
  * If @c NULL is passed as the @a data pointer, an internal, thread-unsafe buffer will
- * be used to store the data. This internal buffer will also change every time this 
- * function is called, thus it is preferable to supply your own @c KSongInfo or 
+ * be used to store the data. This internal buffer will also change every time this
+ * function is called, thus it is preferable to supply your own @c KSongInfo or
  * otherwise copy the returned data before a new call.
  *
- * If @c song is freed using KSND_FreeSong(), the corresponding @c KSongInfo may be 
+ * If @c song is freed using KSND_FreeSong(), the corresponding @c KSongInfo may be
  * invalidated and point to unallocated memory.
  *
  * @param song @c KSong whose information is queried
@@ -97,13 +97,13 @@ KLYSAPI extern const KSongInfo * KSND_GetSongInfo(KSong *song, KSongInfo *data);
 
 /**
  * Returns the amount of milliseconds that would need to elapse if the song was played
- * from the beginning to pattern row @a position. 
+ * from the beginning to pattern row @a position.
  *
- * Use this in conjunction with KSND_GetPlayPosition() to find out the current playback 
+ * Use this in conjunction with KSND_GetPlayPosition() to find out the current playback
  * time. Or, use with KSND_GetSongLength() to get the song duration.
  *
  * @param song song whose play time is polled
- * @param position 
+ * @param position
  * @return @c position measured in milliseconds
  */
 KLYSAPI extern int KSND_GetPlayTime(KSong *song, int position);
@@ -171,7 +171,7 @@ KLYSAPI extern int KSND_FillBuffer(KPlayer *player, short int *buffer, int buffe
  * Set player oversampling quality.
  *
  * Oversample range is [0..4]. 0 implies no oversampling and 4 implies 16-fold oversampling.
- * The less oversampling the less CPU intensive the playback is but the sound quality will suffer 
+ * The less oversampling the less CPU intensive the playback is but the sound quality will suffer
  * for very high frequencies. Can be adjusted realtime.
  *
  * @param player @c KPlayer context
@@ -191,8 +191,8 @@ KLYSAPI extern void KSND_SetVolume(KPlayer *player, int volume);
  * Enable or disable song looping.
  *
  * If a non-zero value is passed via @c looping, the playback routine will exit KSND_FillBuffer()
- * if it encounters the song end. This is useful if you want to detect song end and avoid extra 
- * audio data in the buffer after the song end. 
+ * if it encounters the song end. This is useful if you want to detect song end and avoid extra
+ * audio data in the buffer after the song end.
  *
  * @param player player context
  * @param looping looping enabled

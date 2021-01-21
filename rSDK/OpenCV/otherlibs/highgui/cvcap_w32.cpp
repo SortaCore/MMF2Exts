@@ -194,6 +194,6 @@ CvVideoWriter* cvCreateVideoWriter_Win32( const char* filename, int fourcc,
 	if( result->open( filename, fourcc, fps, frameSize, isColor != 0 ))
 		return result;
 	delete result;
-	
+
 	return cvCreateVideoWriter_VFW(filename, fourcc, fps, frameSize, isColor);
 }

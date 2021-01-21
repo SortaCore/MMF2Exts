@@ -227,7 +227,7 @@ int cvBGCodeBookDiff( const CvBGCodeBookModel* model, const CvArr* _image,
 					  CvArr* _fgmask, CvRect roi )
 {
 	int maskCount = -1;
-	
+
 	CV_FUNCNAME( "cvBGCodeBookDiff" );
 
 	__BEGIN__;
@@ -271,7 +271,7 @@ int cvBGCodeBookDiff( const CvBGCodeBookModel* model, const CvArr* _image,
 			int l0 = p0 + m0, l1 = p1 + m1, l2 = p2 + m2;
 			int h0 = p0 - M0, h1 = p1 - M1, h2 = p2 - M2;
 			m[x] = (uchar)255;
-			
+
 			for( e = *cb; e != 0; e = e->next )
 			{
 				if( e->boxMin[0] <= l0 && h0 <= e->boxMax[0] &&

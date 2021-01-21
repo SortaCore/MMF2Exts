@@ -313,7 +313,7 @@ cvSobel( const void* srcarr, void* dstarr, int dx, int dy, int aperture_size )
 				}
 				else
 					CV_CALL( buffer = cvAlloc( bufsize ));
-			
+
 				status =
 					ipp_sobel_func_8u ? ipp_sobel_func_8u( src_ptr, src_step, dst_ptr, dst_step,
 															size, masksize, bordertype, 0, buffer ) :
@@ -322,7 +322,7 @@ cvSobel( const void* srcarr, void* dstarr, int dx, int dy, int aperture_size )
 					ipp_scharr_func_8u ? ipp_scharr_func_8u( src_ptr, src_step, dst_ptr, dst_step,
 															 size, bordertype, 0, buffer ) :
 					ipp_scharr_func_32f ? ipp_scharr_func_32f( src_ptr, src_step, dst_ptr, dst_step,
-																size, bordertype, 0, buffer ) : 
+																size, bordertype, 0, buffer ) :
 						CV_NOTDEFINED_ERR;
 			}
 
@@ -555,7 +555,7 @@ icvLaplaceCol_32s16s( const int** src, short* dst,
 	bool basic_laplacian = state->is_basic_laplacian();
 	bool normalized = state->is_normalized();
 	int shift = ksize - 1, delta = (1 << shift) >> 1;
-	
+
 	width *= cn;
 	src += ksize2;
 	kx += ksize2;
@@ -697,7 +697,7 @@ icvLaplaceCol_32f( const float** src, float* dst,
 	bool basic_laplacian = state->is_basic_laplacian();
 	bool normalized = state->is_normalized();
 	float scale = 1.f/(1 << (ksize - 1));
-	
+
 	width *= cn;
 	src += ksize2;
 	kx += ksize2;
@@ -800,7 +800,7 @@ cvLaplace( const void* srcarr, void* dstarr, int aperture_size )
 	CvLaplaceFilter laplacian;
 	void* buffer = 0;
 	int local_alloc = 0;
-	
+
 	CV_FUNCNAME( "cvLaplace" );
 
 	__BEGIN__;
@@ -852,7 +852,7 @@ cvLaplace( const void* srcarr, void* dstarr, int aperture_size )
 				}
 				else
 					CV_CALL( buffer = cvAlloc( bufsize ));
-			
+
 				status =
 					ipp_laplace_func_8u ? ipp_laplace_func_8u( src_ptr, src_step, dst_ptr, dst_step,
 																size, masksize, bordertype, 0, buffer ) :

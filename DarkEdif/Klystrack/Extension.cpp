@@ -33,7 +33,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkExpression(4, GetSongNumInstruments);
 	LinkExpression(5, GetSongNumChannels);
 	LinkExpression(6, GetSongInstrumentName);
-	
+
 	curPlayer = nullptr;
 }
 
@@ -84,7 +84,7 @@ Extension::ExtKSong::~ExtKSong()
 
 REFLAG Extension::Handle()
 {
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG::ONE_SHOT;
 }
 

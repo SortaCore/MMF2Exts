@@ -47,7 +47,7 @@ lw_file lw_file_new (lw_pump pump)
 	*ctx->name = 0;
 
 	lwp_fdstream_init ((lw_fdstream) ctx, pump);
-	
+
 	return ctx;
 }
 
@@ -99,7 +99,7 @@ lw_bool lw_file_open (lw_file ctx, const char * filename, const char * mode)
 	  ++ mode;
 
 	if (*mode == '+')
-	{	
+	{
 	  dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
 	  ++ mode;
 	}

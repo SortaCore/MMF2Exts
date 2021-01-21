@@ -22,7 +22,7 @@ typedef rRundata * LPRRDATA;
 //LPRRDATA rRd;
 //
 //CvCapture * myCapture;
-//	
+//
 //} RUNDATA;
 
 
@@ -46,9 +46,9 @@ typedef struct tagEDATA_V1
 	short			swidth;
 	short			sheight;
 
-	int				xAngle;	
-	int				yAngle;	
-	int				zAngle;	
+	int				xAngle;
+	int				yAngle;
+	int				zAngle;
 
 } EDITDATA;
 

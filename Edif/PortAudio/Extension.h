@@ -7,28 +7,28 @@ public:
 {
 	vector <tstring> v;
 	tstring s = _T("");
- 
+
 	for (unsigned int i=0; i<source.length(); i++)
 	{
 		tstring charat = _T("");
 		charat.push_back(source[i]);
- 
+
 		if (charat.find_first_of(delimiters) != -1)
 		{
 			if (s.length() > 0)
 				v.push_back(s);
 			s.clear();
 		}
- 
+
 		else
 		{
 			s.push_back(charat[0]);
 		}
 	}
- 
+
 	if (s.length() > 0)
 		v.push_back(s);
- 
+
 	return v;
 }
 
@@ -36,7 +36,7 @@ public:
 */
 	#define MsgBox(text) MessageBoxA(NULL, text, "RangeHandler Object - Debug information", MB_OK|MB_ICONINFORMATION)
 	#define FatalBox()	MessageBoxA(NULL, "Fatal error has not been repaired; bypassing erroneous code.", "RangeHandler Object - Bypass notification", MB_OK|MB_ICONERROR);
-	
+
 	LPRDATA rdPtr;
 	LPRH	rhPtr;
 
@@ -47,7 +47,7 @@ public:
 
 	static const int OEFLAGS = OEFLAG_VALUES;
 	static const int OEPREFS = 0;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
@@ -78,14 +78,14 @@ public:
 
 		void InitialiseRecordingToMemory();
 		void TestReportAndExplode();
-		
+
 	/// Conditions
 
 		const bool OnError();
 		const bool OnReport();
 
 	/// Expressions
-		
+
 		tchar * GetError(int clear);
 		tchar * GetReport(int clear);
 
@@ -93,7 +93,7 @@ public:
 
 		void Unreferenced_Report(TCHAR * report, int ThreadID);
 		void Unreferenced_Error(TCHAR * error, int ThreadID);
-		
+
 		string LastLockFile;
 		int LastLockLine;
 		std::atomic<bool> threadsafe;

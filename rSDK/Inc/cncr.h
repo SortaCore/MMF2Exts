@@ -105,8 +105,8 @@ typedef	OI* fpObjInfo;
 //
 typedef struct bkd2 {
 
-	WORD	loHnd;			// 0 
-	WORD	oiHnd;			// 0 
+	WORD	loHnd;			// 0
+	WORD	oiHnd;			// 0
 	int		x;
 	int		y;
 	WORD	img;

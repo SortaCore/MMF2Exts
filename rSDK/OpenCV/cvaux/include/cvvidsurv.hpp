@@ -428,12 +428,12 @@ struct CvBlob
 {
 	float	x,y; /* blob position	*/
 	float	w,h; /* blob sizes	  */
-	int	 ID;  /* blob ID		 */	 
+	int	 ID;  /* blob ID		 */
 };
 
 inline CvBlob cvBlob(float x,float y, float w, float h)
 {
-	CvBlob B = {x,y,w,h,0}; 
+	CvBlob B = {x,y,w,h,0};
 	return B;
 }
 #define CV_BLOB_MINW 5
@@ -461,7 +461,7 @@ public:
 		strcpy(m_pElemFormat,"ffffi");
 	}
 	virtual ~CvBlobSeq()
-	{ 
+	{
 		cvReleaseMemStorage(&m_pMem);
 	};
 	virtual CvBlob* GetBlob(int BlobIndex)
@@ -553,7 +553,7 @@ public:
 		m_pSeq = cvCreateSeq(0,sizeof(CvSeq),TrackSize,m_pMem);
 	}
 	virtual ~CvBlobTrackSeq()
-	{ 
+	{
 		Clear();
 		cvReleaseMemStorage(&m_pMem);
 	};
@@ -662,7 +662,7 @@ class CV_EXPORTS CvObjectDetector
 {
 public:
 	CvObjectDetector( const char* /*detector_file_name*/ = 0 ) {};
-	
+
 	~CvObjectDetector() {};
 
 	/*
@@ -674,7 +674,7 @@ public:
 
 	/* Return min detector window size: */
 	CvSize GetMinWindowSize() const { return cvSize(0,0); }
-	
+
 	/* Return max border: */
 	int GetMaxBorderSize() const { return 0; }
 
@@ -735,7 +735,7 @@ public:
 protected:
 	//static const int MAX_SHAPES = sizeof(icv_shape) / sizeof(icv_shape[0]);;
 
-	IplImage* m_image;	
+	IplImage* m_image;
 	CvDrawShape m_shape[16];
 };
 
@@ -781,7 +781,7 @@ public:
 
 	/* Return pointer to specified by index blob: */
 	virtual CvBlob* GetBlob(int BlobIndex) = 0;
-	
+
 	/* Delete blob by its index: */
 	virtual void	DelBlob(int BlobIndex) = 0;
 
@@ -1130,7 +1130,7 @@ class CV_EXPORTS CvBlobTrackAnalysisHeight: public CvBlobTrackAnalysis
 {
 public:
 	virtual double  GetHeight(CvBlob* pB) = 0;
-}; 
+};
 //CV_EXPORTS CvBlobTrackAnalysisHeight* cvCreateModuleBlobTrackAnalysisHeightScale();
 
 
@@ -1170,7 +1170,7 @@ struct CvBlobTrackerAutoParam1
 	CvBlobDetector*		 pBD;			/* Selected blob detector module. 						*/
 											/* If this field is NULL default blobdetector module will be created.	*/
 
-	CvBlobTracker*		  pBT;			/* Selected blob tracking module.						*/	
+	CvBlobTracker*		  pBT;			/* Selected blob tracking module.						*/
 											/* If this field is NULL default blobtracker module will be created.	 */
 
 	CvBlobTrackGen*		 pBTGen;		/* Selected blob trajectory generator.					*/
@@ -1224,7 +1224,7 @@ class CV_EXPORTS CvProb
 public:
 	virtual ~CvProb() {};
 
-	/* Calculate probability value: */ 
+	/* Calculate probability value: */
 	virtual double Value(int* /*comp*/, int /*x*/ = 0, int /*y*/ = 0){return -1;};
 
 	/* Update histograpp Pnew = (1-W)*Pold + W*Padd*/
@@ -1272,9 +1272,9 @@ inline CvProb* cvCreateProb(int type, int dim, CvSize size = cvSize(1,1), void* 
 /*  CV_NOISE_GAUSSIAN - pImg += n , n - is gaussian noise with Ampl standart deviation */
 /*  CV_NOISE_UNIFORM - pImg += n , n - is uniform noise with Ampl standart deviation */
 /*  CV_NOISE_SPECKLE - pImg += n*pImg , n - is gaussian noise with Ampl standart deviation */
-/*  CV_NOISE_SALT_AND_PAPPER - pImg = pImg with blacked and whited pixels, 
+/*  CV_NOISE_SALT_AND_PAPPER - pImg = pImg with blacked and whited pixels,
 			Ampl is density of brocken pixels (0-there are not broken pixels, 1 - all pixels are broken)*/
-/* Ampl - "amplitude" of noise */								
+/* Ampl - "amplitude" of noise */
 CV_EXPORTS void cvAddNoise(IplImage* pImg, int noise_type, double Ampl, CvRandState* rnd_state = NULL);
 
 /*================== GENERATOR OF TEST VIDEO SEQUENCE ===================== */
@@ -1301,8 +1301,8 @@ CV_EXPORTS CvSize cvTestSeqGetImageSize(CvTestSeq* pTestSeq);
 /* Return number of frames result test video: */
 CV_EXPORTS int cvTestSeqFrameNum(CvTestSeq* pTestSeq);
 
-/* Return number of existing objects. 
- * This is general number of any objects. 
+/* Return number of existing objects.
+ * This is general number of any objects.
  * For example number of trajectories may be equal or less than returned value:
  */
 CV_EXPORTS int cvTestSeqGetObjectNum(CvTestSeq* pTestSeq);

@@ -33,7 +33,7 @@ char * Edif::Runtime::CopyString(const char * String)
 {
 	char * New = (char *) Allocate(strlen(String) + 1);
 	strcpy(New, String);
-	
+
 	return New;
 }
 
@@ -41,7 +41,7 @@ wchar_t * Edif::Runtime::CopyString(const wchar_t * String)
 {
 	wchar_t * New = (wchar_t *) Allocate(wcslen(String) + 1);
 	wcscpy(New, String);
-	
+
 	return New;
 }
 
@@ -259,7 +259,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * Name)
 
 			JS_SetOptions(Context, JSOPTION_VAROBJFIX | JSOPTION_JIT | JSOPTION_METHODJIT | JSOPTION_NO_SCRIPT_RVAL);
 			JS_SetVersion(Context, JSVERSION_LATEST);
-			
+
 			JSObject * Global = JS_NewGlobalObject(context, &GlobalClass);
 
 			JS_SetGlobalObject	(Context, Global);

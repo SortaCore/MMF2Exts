@@ -47,13 +47,13 @@
 
 
 short conditionsInfos[] =
-{ 
+{
 	CID_IsInRange,	CID_IsInRange,	0,	EVFLAGS_ALWAYS | EVFLAGS_NOTABLE,	1,	PARAM_EXPSTRING,	CP0ID_IsInRange,
 	0
 };
 
 short actionsInfos[] =
-{ 
+{
 	AID_SetKey,	AID_SetKey,	0,	0,	1,	PARAM_EXPSTRING,	AP0ID_SetKey,
 	0
 };
@@ -72,7 +72,7 @@ int KeyCharCountInternal(const char *);
 //============================================================================
 //
 // CONDITION ROUTINES
-// 
+//
 // ============================================================================
 
 
@@ -93,7 +93,7 @@ long WINAPI DLLExport IsInRange(LPRDATA rdPtr, long param1, long param2)
 //============================================================================
 //
 // ACTIONS ROUTINES
-// 
+//
 // ============================================================================
 
 
@@ -110,7 +110,7 @@ short WINAPI DLLExport SetKey(LPRDATA rdPtr, long param1, long param2)
 //============================================================================
 //
 // EXPRESSIONS ROUTINES
-// 
+//
 // ============================================================================
 
 
@@ -118,7 +118,7 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 {
 	char * string = (char *)CNC_GetFirstExpressionParameter(rdPtr, param1, TYPE_STRING);
 	const char * key = rdPtr->key;
-	
+
 	// Find the max
 	int chars = KeyCharCountInternal(key) + 1;
 	unsigned long max = (unsigned long)logf(pow(2.0, sizeof(long) * 8.0)) / log((double)chars);
@@ -205,7 +205,7 @@ long WINAPI DLLExport PackX(LPRDATA rdPtr, long param1)
 	// The Conversion
 	// ================
 	num++;
-	
+
 	long size =strlen(string)-1;
 	int val = 0;
 	int pown = 0;
@@ -307,7 +307,7 @@ long WINAPI DLLExport UnPackX(LPRDATA rdPtr, long param1)
 	// ==============
 	// The Conversion
 	// ==============
-	LPSTR string = (LPSTR)callRunTimeFunction(rdPtr, RFUNCTION_GETSTRINGSPACE, 33 , 0); 
+	LPSTR string = (LPSTR)callRunTimeFunction(rdPtr, RFUNCTION_GETSTRINGSPACE, 33 , 0);
 	int n = 0;
 	int dif = 0;
 	// While the code is not 0.

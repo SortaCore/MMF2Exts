@@ -57,16 +57,16 @@ enum BmpCompression
 class GrFmtBmpReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtBmpReader( const char* filename );
 	~GrFmtBmpReader();
-	
+
 	bool  ReadData( uchar* data, int step, int color );
 	bool  ReadHeader();
 	void  Close();
 
 protected:
-	
+
 	RLByteStream	m_strm;
 	PaletteEntry	m_palette[256];
 	int			 m_bpp;
@@ -79,10 +79,10 @@ protected:
 class GrFmtBmpWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtBmpWriter( const char* filename );
 	~GrFmtBmpWriter();
-	
+
 	bool  WriteImage( const uchar* data, int step,
 					  int width, int height, int depth, int channels );
 protected:
@@ -95,7 +95,7 @@ protected:
 class GrFmtBmp : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtBmp();
 	~GrFmtBmp();
 

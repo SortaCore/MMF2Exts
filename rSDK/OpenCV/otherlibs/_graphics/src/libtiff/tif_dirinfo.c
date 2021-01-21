@@ -4,23 +4,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -41,12 +41,12 @@
  *
  * NOTE: The second field (field_readcount) and third field (field_writecount)
  *		sometimes use the values TIFF_VARIABLE (-1), TIFF_VARIABLE2 (-3)
- *		and TIFFTAG_SPP (-2). The macros should be used but would throw off 
- *		the formatting of the code, so please interprete the -1, -2 and -3 
+ *		and TIFFTAG_SPP (-2). The macros should be used but would throw off
+ *		the formatting of the code, so please interprete the -1, -2 and -3
  *		values accordingly.
  */
 #ifndef VMS
-static 
+static
 #endif
 const TIFFFieldInfo tiffFieldInfo[] = {
 	{ TIFFTAG_SUBFILETYPE,	 1, 1, TIFF_LONG,	FIELD_SUBFILETYPE,
@@ -245,9 +245,9 @@ const TIFFFieldInfo tiffFieldInfo[] = {
 	{ TIFFTAG_COPYRIGHT,	-1,-1, TIFF_ASCII,	FIELD_COPYRIGHT,
 	  TRUE,	FALSE,	"Copyright" },
 /* end Pixar tags */
-	{ TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_LONG,	FIELD_RICHTIFFIPTC, 
+	{ TIFFTAG_RICHTIFFIPTC, -1,-3, TIFF_LONG,	FIELD_RICHTIFFIPTC,
 	  FALSE,	TRUE,	"RichTIFFIPTC" },
-	{ TIFFTAG_PHOTOSHOP,	-1,-3, TIFF_BYTE,	FIELD_PHOTOSHOP, 
+	{ TIFFTAG_PHOTOSHOP,	-1,-3, TIFF_BYTE,	FIELD_PHOTOSHOP,
 	  FALSE,	TRUE,	"Photoshop" },
 	{ TIFFTAG_ICCPROFILE,	-1,-3, TIFF_UNDEFINED,	FIELD_ICCPROFILE,
 	  FALSE,	TRUE,	"ICC Profile" },
@@ -262,17 +262,17 @@ _TIFFSetupFieldInfo(TIFF* tif)
 	if (tif->tif_fieldinfo) {
 		int  i;
 
-		for (i = 0; i < tif->tif_nfields; i++) 
+		for (i = 0; i < tif->tif_nfields; i++)
 		{
 			TIFFFieldInfo *fld = tif->tif_fieldinfo[i];
-			if (fld->field_bit == FIELD_CUSTOM && 
-				strncmp("Tag ", fld->field_name, 4) == 0) 
+			if (fld->field_bit == FIELD_CUSTOM &&
+				strncmp("Tag ", fld->field_name, 4) == 0)
 				{
 				_TIFFfree(fld->field_name);
 				_TIFFfree(fld);
 				}
-		}	
-	  
+		}
+
 		_TIFFfree(tif->tif_fieldinfo);
 		tif->tif_nfields = 0;
 	}
@@ -415,10 +415,10 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 			TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
 			key.field_tag = tag;
 			key.field_type = dt;
-			return((const TIFFFieldInfo *) bsearch(&key, 
-							tif->tif_fieldinfo, 
+			return((const TIFFFieldInfo *) bsearch(&key,
+							tif->tif_fieldinfo,
 							tif->tif_nfields,
-							sizeof(TIFFFieldInfo), 
+							sizeof(TIFFFieldInfo),
 							tagCompare));
 		} else for (i = 0, n = tif->tif_nfields; i < n; i++) {
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
@@ -443,10 +443,10 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 			TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
 			key.field_name = (char *)field_name;
 			key.field_type = dt;
-			return((const TIFFFieldInfo *) bsearch(&key, 
-							tif->tif_fieldinfo, 
+			return((const TIFFFieldInfo *) bsearch(&key,
+							tif->tif_fieldinfo,
 							tif->tif_nfields,
-							sizeof(TIFFFieldInfo), 
+							sizeof(TIFFFieldInfo),
 							tagNameCompare));
 		} else for (i = 0, n = tif->tif_nfields; i < n; i++) {
 		const TIFFFieldInfo* fip = tif->tif_fieldinfo[i];
@@ -529,7 +529,7 @@ _TIFFCreateAnonFieldInfo(TIFF *tif, ttag_t tag, TIFFDataType field_type)
 	 */
 	sprintf(fld->field_name, "Tag %d", (int) tag);
 
-	return fld;	
+	return fld;
 }
 
 /* vim: set ts=8 sts=8 sw=8 noet: */

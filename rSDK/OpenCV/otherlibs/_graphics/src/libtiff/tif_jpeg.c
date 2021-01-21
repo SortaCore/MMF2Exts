@@ -4,23 +4,23 @@
  * Copyright (c) 1994-1997 Sam Leffler
  * Copyright (c) 1994-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -710,11 +710,11 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 	}
 	if (sp->cinfo.d.image_width != segment_width ||
 		sp->cinfo.d.image_height != segment_height) {
-		TIFFWarning(module, 
+		TIFFWarning(module,
 				 "Improper JPEG strip/tile size, expected %dx%d, got %dx%d",
-						  segment_width, 
+						  segment_width,
 						  segment_height,
-						  sp->cinfo.d.image_width, 
+						  sp->cinfo.d.image_width,
 						  sp->cinfo.d.image_height);
 	}
 	if (sp->cinfo.d.num_components !=
@@ -731,7 +731,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 		/* Component 0 should have expected sampling factors */
 		if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
 			sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
-				TIFFWarning(module, 
+				TIFFWarning(module,
 									"Improper JPEG sampling factors %d,%d\n"
 									"Apparently should be %d,%d.",
 									sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -746,7 +746,7 @@ JPEGPreDecode(TIFF* tif, tsample_t s)
 				 * of the tag 33918.
 				 */
 				if (!_TIFFFindFieldInfo(tif, 33918, TIFF_ANY)) {
-					TIFFWarning(module, 
+					TIFFWarning(module,
 					"Decompressor will try reading with "
 					"sampling %d,%d.",
 					sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -866,7 +866,7 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 		/* Cb,Cr both have sampling factors 1, so this is correct */
 		JDIMENSION clumps_per_line = sp->cinfo.d.comp_info[1].downsampled_width;
 		int samples_per_clump = sp->samplesperclump;
-	
+
 		do {
 			jpeg_component_info *compptr;
 			int ci, clumpoffset;
@@ -1043,7 +1043,7 @@ JPEGSetupEncode(TIFF* tif)
 		sp->v_sampling = 1;
 		break;
 	}
-	
+
 	/* Verify miscellaneous parameters */
 
 	/*
@@ -1462,18 +1462,18 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
  * order to get the sampling values from the jpeg data stream.  Various
  * hacks are various places are done to ensure this function gets called
  * before the td_ycbcrsubsampling values are used from the directory structure,
- * including calling TIFFGetField() for the YCBCRSUBSAMPLING field from 
- * TIFFStripSize(), and the printing code in tif_print.c. 
+ * including calling TIFFGetField() for the YCBCRSUBSAMPLING field from
+ * TIFFStripSize(), and the printing code in tif_print.c.
  *
  * Note that JPEGPreDeocode() will produce a fairly loud warning when the
  * discovered sampling does not match the default sampling (2,2) or whatever
- * was actually in the tiff tags. 
+ * was actually in the tiff tags.
  *
  * Problems:
  *  o This code will cause one whole strip/tile of compressed data to be
  *	loaded just to get the tags right, even if the imagery is never read.
  *	It would be more efficient to just load a bit of the header, and
- *	initialize things from that. 
+ *	initialize things from that.
  *
  * See the bug in bugzilla for details:
  *
@@ -1482,7 +1482,7 @@ JPEGVSetField(TIFF* tif, ttag_t tag, va_list ap)
  * Frank Warmerdam, July 2002
  */
 
-static void 
+static void
 JPEGFixupTestSubsampling( TIFF * tif )
 {
 #ifdef CHECK_JPEG_YCBCR_SUBSAMPLING
@@ -1492,13 +1492,13 @@ JPEGFixupTestSubsampling( TIFF * tif )
 	JPEGInitializeLibJPEG( tif );
 
 	/*
-	 * Some JPEG-in-TIFF files don't provide the ycbcrsampling tags, 
+	 * Some JPEG-in-TIFF files don't provide the ycbcrsampling tags,
 	 * and use a sampling schema other than the default 2,2.  To handle
 	 * this we actually have to scan the header of a strip or tile of
-	 * jpeg data to get the sampling.  
+	 * jpeg data to get the sampling.
 	 */
-	if( !sp->cinfo.comm.is_decompressor 
-		|| sp->ycbcrsampling_fetched  
+	if( !sp->cinfo.comm.is_decompressor
+		|| sp->ycbcrsampling_fetched
 		|| td->td_photometric != PHOTOMETRIC_YCBCR )
 		return;
 
@@ -1514,7 +1514,7 @@ JPEGFixupTestSubsampling( TIFF * tif )
 			return;
 	}
 
-	TIFFSetField( tif, TIFFTAG_YCBCRSUBSAMPLING, 
+	TIFFSetField( tif, TIFFTAG_YCBCRSUBSAMPLING,
 				  (uint16) sp->h_sampling, (uint16) sp->v_sampling );
 #endif /* CHECK_JPEG_YCBCR_SUBSAMPLING */
 }
@@ -1608,15 +1608,15 @@ JPEGDefaultTileSize(TIFF* tif, uint32* tw, uint32* th)
  * The JPEG library initialized used to be done in TIFFInitJPEG(), but
  * now that we allow a TIFF file to be opened in update mode it is necessary
  * to have some way of deciding whether compression or decompression is
- * desired other than looking at tif->tif_mode.  We accomplish this by 
+ * desired other than looking at tif->tif_mode.  We accomplish this by
  * examining {TILE/STRIP}BYTECOUNTS to see if there is a non-zero entry.
- * If so, we assume decompression is desired. 
+ * If so, we assume decompression is desired.
  *
  * This is tricky, because TIFFInitJPEG() is called while the directory is
  * being read, and generally speaking the BYTECOUNTS tag won't have been read
  * at that point.  So we try to defer jpeg library initialization till we
  * do have that tag ... basically any access that might require the compressor
- * or decompressor that occurs after the reading of the directory. 
+ * or decompressor that occurs after the reading of the directory.
  *
  * In an ideal world compressors or decompressors would be setup
  * at the point where a single tile or strip was accessed (for read or write)
@@ -1638,16 +1638,16 @@ static int JPEGInitializeLibJPEG( TIFF * tif )
 	/*
 	 * Do we have tile data already?  Make sure we initialize the
 	 * the state in decompressor mode if we have tile data, even if we
-	 * are not in read-only file access mode. 
+	 * are not in read-only file access mode.
 	 */
-	if( TIFFIsTiled( tif ) 
-		&& TIFFGetField( tif, TIFFTAG_TILEBYTECOUNTS, &byte_counts ) 
+	if( TIFFIsTiled( tif )
+		&& TIFFGetField( tif, TIFFTAG_TILEBYTECOUNTS, &byte_counts )
 		&& byte_counts != NULL )
 	{
 		data_is_empty = byte_counts[0] == 0;
 	}
-	if( !TIFFIsTiled( tif ) 
-		&& TIFFGetField( tif, TIFFTAG_STRIPBYTECOUNTS, &byte_counts) 
+	if( !TIFFIsTiled( tif )
+		&& TIFFGetField( tif, TIFFTAG_STRIPBYTECOUNTS, &byte_counts)
 		&& byte_counts != NULL )
 	{
 		data_is_empty = byte_counts[0] == 0;

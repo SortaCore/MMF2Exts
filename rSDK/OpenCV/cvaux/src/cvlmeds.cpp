@@ -846,7 +846,7 @@ CvStatus
 icvRank2Constraint( double *F )
 {
 	double U[9], V[9], W[3];
-	double aW[3]; 
+	double aW[3];
 	int i, i3, j, j3, t;
 
 	if( F == 0 )
@@ -1638,17 +1638,17 @@ icvGetCoof( double *f1, double *f2, double *a2, double *a1, double *a0 )
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name:	icvLMedS7
 //	Purpose:
-//	  
-//	  
+//
+//
 //	Context:
 //	Parameters:
-//	 
-//	  
-//	  
-//	 
-//	  
-//	
-//	 
+//
+//
+//
+//
+//
+//
+//
 //	Returns:
 //	  CV_NO_ERR if all Ok or error code
 //	Notes:
@@ -1675,17 +1675,17 @@ icvLMedS7( int *points1, int *points2, CvMatrix3 * matrix )
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name:	icvPoint7
 //	Purpose:
-//	  
-//	  
+//
+//
 //	Context:
 //	Parameters:
-//	 
-//	  
-//	  
-//	 
-//	  
-//	
-//	 
+//
+//
+//
+//
+//
+//
+//
 //	Returns:
 //	  CV_NO_ERR if all Ok or error code
 //	Notes:

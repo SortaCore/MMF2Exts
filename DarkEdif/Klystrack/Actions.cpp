@@ -76,7 +76,7 @@ CheckForPlayer(true, "LoadSongFromMemory");
 	}
 	if (!newSong)
 		return CreateError("LoadSongFromMemory: Failed to load song.");
-	
+
 	ExtKSong * newExtSong = new ExtKSong();
 	newExtSong->songName = songName;
 	newExtSong->song = newSong;
@@ -86,7 +86,7 @@ CheckForPlayer(true, "LoadSongFromMemory");
 	newExtSong->songInfo.song_title = _strdup(newExtSong->songInfo.song_title);
 	for (int i = 0; i < newExtSong->songInfo.n_instruments; i++)
 		newExtSong->songInfo.instrument_name[i] = _strdup(newExtSong->songInfo.instrument_name[i]);
-	
+
 	curPlayer->songs.push_back(newExtSong);
 }
 void Extension::CloseSong(const char * songName)

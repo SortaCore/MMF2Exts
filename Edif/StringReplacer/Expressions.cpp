@@ -14,10 +14,10 @@ char * Extension::ReplaceThisCall(char * SearchIn, char * SearchFor, char * Repl
 char * Extension::AutoReplace(char * SearchIn)
 {
 	std::string search_in(SearchIn), search_for, replace_with;
-	
+
 	for (unsigned int i = 0; i < Macros.size(); ++i)
 	{
-		unsigned char RecursionLimit = 0;	
+		unsigned char RecursionLimit = 0;
 		search_for = Macros[i].FindThis;
 		replace_with = Macros[i].ReplaceWithThis;
 		while (search_in.find(search_for) != search_in.npos && RecursionLimit++ != 255)

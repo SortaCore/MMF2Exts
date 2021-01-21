@@ -151,7 +151,7 @@ cvKMeans2( const CvArr* samples_arr, int cluster_count,
 				for( j = 0; j < dims; j++ )
 					c[j] = s[j];
 			}
-			
+
 			if( iter > 0 )
 			{
 				double dist = 0;
@@ -177,7 +177,7 @@ cvKMeans2( const CvArr* samples_arr, int cluster_count,
 			{
 				double* c = (double*)(centers->data.ptr + k*centers->step);
 				double dist = 0;
-				
+
 				j = 0;
 				for( ; j <= dims - 4; j += 4 )
 				{
@@ -247,9 +247,9 @@ cvKMeans2( const CvArr* samples_arr, int cluster_count,
 
   -----------------------------------------------------------------------
   Copyright (C) 1978-1999 Ken Turkowski. <turk@computer.org>
- 
+
 	All rights reserved.
- 
+
 	Warranty Information
 	  Even though I have reviewed this software, I make no warranty
 	  or representation, either express or implied, with respect to this
@@ -257,7 +257,7 @@ cvKMeans2( const CvArr* samples_arr, int cluster_count,
 	  particular purpose.  As a result, this software is provided "as is,"
 	  and you, its user, are assuming the entire risk as to its quality
 	  and accuracy.
- 
+
 	This code may be used and freely distributed as long as it includes
 	this copyright notice and the above warranty information.
   -----------------------------------------------------------------------
@@ -266,7 +266,7 @@ CV_IMPL int
 cvSolveCubic( const CvMat* coeffs, CvMat* roots )
 {
 	int n = 0;
-	
+
 	CV_FUNCNAME( "cvSolveCubic" );
 
 	__BEGIN__;
@@ -358,7 +358,7 @@ cvSolveCubic( const CvMat* coeffs, CvMat* roots )
 		double R = (2 * a1 * a1 * a1 - 9 * a1 * a2 + 27 * a3) * (1./54);
 		double Qcubed = Q * Q * Q;
 		double d = Qcubed - R * R;
-	
+
 		if( d >= 0 )
 		{
 			double theta = acos(R / sqrt(Qcubed));
@@ -411,8 +411,8 @@ cvSolveCubic( const CvMat* coeffs, CvMat* roots )
 
 
 /*
-  Finds real and complex roots of polynomials of any degree with real 
-  coefficients. The original code has been taken from Ken Turkowski's web 
+  Finds real and complex roots of polynomials of any degree with real
+  coefficients. The original code has been taken from Ken Turkowski's web
   page (http://www.worldserver.com/turk/opensource/) and adopted for OpenCV.
   Here is the copyright notice.
 
@@ -648,10 +648,10 @@ void cvSolvePoly(const CvMat* a, CvMat *r, int maxiter, int fig)
 
 	CV_FUNCNAME("cvSolvePoly");
 
-	if (CV_MAT_TYPE(a->type) != CV_32FC1 && 
+	if (CV_MAT_TYPE(a->type) != CV_32FC1 &&
 		CV_MAT_TYPE(a->type) != CV_64FC1)
 		CV_ERROR(CV_StsUnsupportedFormat, "coeffs must be either CV_32FC1 or CV_64FC1");
-	if (CV_MAT_TYPE(r->type) != CV_32FC2 && 
+	if (CV_MAT_TYPE(r->type) != CV_32FC2 &&
 		CV_MAT_TYPE(r->type) != CV_64FC2)
 		CV_ERROR(CV_StsUnsupportedFormat, "roots must be either CV_32FC2 or CV_64FC2");
 	m = a->rows * a->cols;
@@ -695,7 +695,7 @@ CV_IMPL void cvNormalize( const CvArr* src, CvArr* dst,
 	__BEGIN__;
 
 	double scale, shift;
-	
+
 	if( norm_type == CV_MINMAX )
 	{
 		double smin = 0, smax = 0;
@@ -707,7 +707,7 @@ CV_IMPL void cvNormalize( const CvArr* src, CvArr* dst,
 	else if( norm_type == CV_L2 || norm_type == CV_L1 || norm_type == CV_C )
 	{
 		CvMat *s = (CvMat*)src, *d = (CvMat*)dst;
-		
+
 		if( CV_IS_MAT(s) && CV_IS_MAT(d) && CV_IS_MAT_CONT(s->type & d->type) &&
 			CV_ARE_TYPES_EQ(s,d) && CV_ARE_SIZES_EQ(s,d) && !mask &&
 			s->cols*s->rows <= CV_MAX_INLINE_MAT_OP_SIZE*CV_MAX_INLINE_MAT_OP_SIZE )
@@ -719,7 +719,7 @@ CV_IMPL void cvNormalize( const CvArr* src, CvArr* dst,
 			{
 				const float* sptr = s->data.fl;
 				float* dptr = d->data.fl;
-				
+
 				if( norm_type == CV_L2 )
 				{
 					for( i = 0; i < len; i++ )
@@ -752,7 +752,7 @@ CV_IMPL void cvNormalize( const CvArr* src, CvArr* dst,
 			{
 				const double* sptr = s->data.db;
 				double* dptr = d->data.db;
-				
+
 				if( norm_type == CV_L2 )
 				{
 					for( i = 0; i < len; i++ )
@@ -781,14 +781,14 @@ CV_IMPL void cvNormalize( const CvArr* src, CvArr* dst,
 				EXIT;
 			}
 		}
-		
+
 		scale = cvNorm( src, 0, norm_type, mask );
 		scale = scale > DBL_EPSILON ? 1./scale : 0.;
 		shift = 0;
 	}
 	else
 		CV_ERROR( CV_StsBadArg, "Unknown/unsupported norm type" );
-	
+
 	if( !mask )
 		cvConvertScale( src, dst, scale, shift );
 	else
@@ -823,7 +823,7 @@ CV_IMPL void cvRandShuffle( CvArr* arr, CvRNG* rng, double iter_factor )
 	CvRNG _rng = cvRNG(-1);
 	uchar* data = 0;
 	int* idata = 0;
-	
+
 	if( !CV_IS_MAT(mat) )
 		CV_CALL( mat = cvGetMat( mat, &stub ));
 
@@ -850,7 +850,7 @@ CV_IMPL void cvRandShuffle( CvArr* arr, CvRNG* rng, double iter_factor )
 		delta = MIN( iters - i, pair_buf_sz*2 );
 		_pair_buf.cols = delta;
 		cvRandArr( rng, &_pair_buf, CV_RAND_UNI, cvRealScalar(0), cvRealScalar(arr_size) );
-		
+
 		if( cont_flag )
 		{
 			if( idata )
@@ -878,7 +878,7 @@ CV_IMPL void cvRandShuffle( CvArr* arr, CvRNG* rng, double iter_factor )
 					row1 = idx1/step; row2 = idx2/step;
 					p = idata + row1*step + (idx1 - row1*cols)*elem_size;
 					q = idata + row2*step + (idx2 - row2*cols)*elem_size;
-					
+
 					for( k = 0; k < elem_size; k++ )
 						CV_SWAP( p[k], q[k], t );
 				}
@@ -890,7 +890,7 @@ CV_IMPL void cvRandShuffle( CvArr* arr, CvRNG* rng, double iter_factor )
 					row1 = idx1/step; row2 = idx2/step;
 					p = data + row1*step + (idx1 - row1*cols)*elem_size;
 					q = data + row2*step + (idx2 - row2*cols)*elem_size;
-					
+
 					for( k = 0; k < elem_size; k++ )
 						CV_SWAP( p[k], q[k], t );
 				}
@@ -905,18 +905,18 @@ CV_IMPL CvArr*
 cvRange( CvArr* arr, double start, double end )
 {
 	int ok = 0;
-	
+
 	CV_FUNCNAME( "cvRange" );
 
 	__BEGIN__;
-	
+
 	CvMat stub, *mat = (CvMat*)arr;
 	double delta;
 	int type, step;
 	double val = start;
 	int i, j;
 	int rows, cols;
-	
+
 	if( !CV_IS_MAT(mat) )
 		CV_CALL( mat = cvGetMat( mat, &stub) );
 
@@ -1052,7 +1052,7 @@ cvSort( const CvArr* _src, CvArr* _dst, CvArr* _idx, int flags )
 {
 	uchar *tsrc = 0;
 	int* tidx = 0;
-	
+
 	CV_FUNCNAME("cvSort");
 
 	__BEGIN__;

@@ -51,7 +51,7 @@ icvInitTopBottom( int* temp, int tempstep, CvSize size, int border )
 	{
 		int* ttop = (int*)(temp + i*tempstep);
 		int* tbottom = (int*)(temp + (size.height + border*2 - i - 1)*tempstep);
-		
+
 		for( j = 0; j < size.width + border*2; j++ )
 		{
 			ttop[j] = ICV_INIT_DIST0;
@@ -87,7 +87,7 @@ icvDistanceTransform_3x3_C1R( const uchar* src, int srcstep, int* temp,
 
 		for( j = 0; j < BORDER; j++ )
 			tmp[-j-1] = tmp[size.width + j] = ICV_INIT_DIST0;
-		
+
 		for( j = 0; j < size.width; j++ )
 		{
 			if( !s[j] )
@@ -111,7 +111,7 @@ icvDistanceTransform_3x3_C1R( const uchar* src, int srcstep, int* temp,
 	{
 		float* d = (float*)(dist + i*dststep);
 		int* tmp = (int*)(temp + (i+BORDER)*step) + BORDER;
-		
+
 		for( j = size.width - 1; j >= 0; j-- )
 		{
 			int t0 = tmp[j];
@@ -160,7 +160,7 @@ icvDistanceTransform_5x5_C1R( const uchar* src, int srcstep, int* temp,
 
 		for( j = 0; j < BORDER; j++ )
 			tmp[-j-1] = tmp[size.width + j] = ICV_INIT_DIST0;
-		
+
 		for( j = 0; j < size.width; j++ )
 		{
 			if( !s[j] )
@@ -192,7 +192,7 @@ icvDistanceTransform_5x5_C1R( const uchar* src, int srcstep, int* temp,
 	{
 		float* d = (float*)(dist + i*dststep);
 		int* tmp = (int*)(temp + (i+BORDER)*step) + BORDER;
-		
+
 		for( j = size.width - 1; j >= 0; j-- )
 		{
 			int t0 = tmp[j];
@@ -230,7 +230,7 @@ icvDistanceTransformEx_5x5_C1R( const uchar* src, int srcstep, int* temp,
 				CvSize size, const float* metrics )
 {
 	const int BORDER = 2;
-	
+
 	int i, j;
 	const int HV_DIST = CV_FLT_TO_FIX( metrics[0], ICV_DIST_SHIFT );
 	const int DIAG_DIST = CV_FLT_TO_FIX( metrics[1], ICV_DIST_SHIFT );
@@ -253,7 +253,7 @@ icvDistanceTransformEx_5x5_C1R( const uchar* src, int srcstep, int* temp,
 
 		for( j = 0; j < BORDER; j++ )
 			tmp[-j-1] = tmp[size.width + j] = ICV_INIT_DIST0;
-		
+
 		for( j = 0; j < size.width; j++ )
 		{
 			if( !s[j] )
@@ -327,7 +327,7 @@ icvDistanceTransformEx_5x5_C1R( const uchar* src, int srcstep, int* temp,
 		float* d = (float*)(dist + i*dststep);
 		int* tmp = (int*)(temp + (i+BORDER)*step) + BORDER;
 		int* lls = (int*)(labels + i*lstep);
-		
+
 		for( j = size.width - 1; j >= 0; j-- )
 		{
 			int t0 = tmp[j];
@@ -628,7 +628,7 @@ icvDistanceATS_L1_8u( const CvMat* src, CvMat* dst )
 	int a;
 	uchar lut[256];
 	int x, y;
-	
+
 	const uchar *sbase = src->data.ptr;
 	uchar *dbase = dst->data.ptr;
 	int srcstep = src->step;
@@ -707,7 +707,7 @@ cvDistTransform( const void* srcarr, void* dstarr,
 	CvMat* temp = 0;
 	CvMat* src_copy = 0;
 	CvMemStorage* st = 0;
-	
+
 	CV_FUNCNAME( "cvDistTransform" );
 
 	__BEGIN__;
@@ -746,7 +746,7 @@ cvDistTransform( const void* srcarr, void* dstarr,
 		CV_CALL( icvTrueDistTrans( src, dst ));
 		EXIT;
 	}
-	
+
 	if( labels )
 	{
 		CV_CALL( labels = cvGetMat( labels, &lstub ));

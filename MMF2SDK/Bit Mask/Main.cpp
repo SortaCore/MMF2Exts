@@ -35,12 +35,12 @@ short actionsInfos[]=
 short expressionsInfos[]=
 		{
 		IDMN_EXPRESSION, M_EXPRESSION, 0, 0, 3, EXPPARAM_LONG, EXPPARAM_LONG, EXPPARAM_STRING, 0, 0, 0,
-		
-		//Note in the following.  If you are returning a string, you set the EXPFLAG_STRING.	
+
+		//Note in the following.  If you are returning a string, you set the EXPFLAG_STRING.
 		IDMN_EXPRESSION2, M_EXPRESSION2, 1, 0 ,2, EXPPARAM_LONG, EXPPARAM_STRING, 0,0,
 
 		ID__GETNTHBIT, IDS_STRING7002, 2, 0, 2, EXPPARAM_LONG,EXPPARAM_LONG,0,0,
-		
+
 
 		};
 
@@ -49,17 +49,17 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // The main code
-// 
+//
 // ============================================================================
 
 unsigned int BitMask( unsigned int first , unsigned int second , char* mask )
 {
 	int out = 0;
 	unsigned int bitMask = 1;
-	
+
 	int len = strlen(mask);
 	if ( len > 32 ) len = 32;
-	
+
 	for ( int i = 0 ; i < len ; i++ )
 	{
 		bool bit = 0;
@@ -107,7 +107,7 @@ unsigned int BitMask( unsigned int first , unsigned int second , char* mask )
 
 unsigned int SingleMask( unsigned int num , char* mask )
 {
-	return BitMask(num,0,mask);  
+	return BitMask(num,0,mask);
 }
 
 bool GetNthBit( unsigned int num , int bit )
@@ -119,7 +119,7 @@ bool GetNthBit( unsigned int num , int bit )
 // ============================================================================
 //
 // EXPRESSIONS ROUTINES
-// 
+//
 // ============================================================================
 
 long WINAPI DLLExport Expression(LPRDATA rdPtr,long param1)
@@ -164,18 +164,18 @@ long WINAPI DLLExport Expression3(LPRDATA rdPtr,long param1)
 // Located at the end of the source for convinience
 // Must finish with a 0
 //
-long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) = 
-			{ 
+long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
+			{
 			0
 			};
-	
+
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			{
 			0
 			};
 
-long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{	 
+long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
+			{
 			Expression,
 			Expression2,
 			Expression3,

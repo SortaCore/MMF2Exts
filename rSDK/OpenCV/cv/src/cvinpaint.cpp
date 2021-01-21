@@ -213,7 +213,7 @@ float FastMarching_solve(int i1,int j1,int i2,int j2, const CvMat* f, const CvMa
 	a11=CV_MAT_ELEM(*t,float,i1,j1);
 	a22=CV_MAT_ELEM(*t,float,i2,j2);
 	m12=MIN(a11,a22);
-	
+
 	if( CV_MAT_ELEM(*f,uchar,i1,j1) != INSIDE )
 		if( CV_MAT_ELEM(*f,uchar,i2,j2) != INSIDE )
 			if( fabs(a11-a22) >= 1.0 )
@@ -226,7 +226,7 @@ float FastMarching_solve(int i1,int j1,int i2,int j2, const CvMat* f, const CvMa
 		sol = 1+a22;
 	else
 		sol = 1+m12;
-			
+
 	return (float)sol;
 }
 
@@ -731,23 +731,23 @@ cvInpaint( const CvArr* _input_img, const CvArr* _inpaint_mask, CvArr* _output_i
 	CvMat *mask = 0, *band = 0, *f = 0, *t = 0, *out = 0;
 	CvPriorityQueueFloat *Heap = 0, *Out = 0;
 	IplConvKernel *el_cross = 0, *el_range = 0;
-	
+
 	CV_FUNCNAME( "cvInpaint" );
-	
+
 	__BEGIN__;
 
 	CvMat input_hdr, mask_hdr, output_hdr;
 	CvMat* input_img, *inpaint_mask, *output_img;
-	int range=cvRound(inpaintRange);	
+	int range=cvRound(inpaintRange);
 	int erows, ecols;
 
 	CV_CALL( input_img = cvGetMat( _input_img, &input_hdr ));
 	CV_CALL( inpaint_mask = cvGetMat( _inpaint_mask, &mask_hdr ));
 	CV_CALL( output_img = cvGetMat( _output_img, &output_hdr ));
-	
+
 	if( !CV_ARE_SIZES_EQ(input_img,output_img) || !CV_ARE_SIZES_EQ(input_img,inpaint_mask))
 		CV_ERROR( CV_StsUnmatchedSizes, "All the input and output images must have the same size" );
-	
+
 	if( (CV_MAT_TYPE(input_img->type) != CV_8UC1 &&
 		CV_MAT_TYPE(input_img->type) != CV_8UC3) ||
 		!CV_ARE_TYPES_EQ(input_img,output_img) )
@@ -768,7 +768,7 @@ cvInpaint( const CvArr* _input_img, const CvArr* _inpaint_mask, CvArr* _output_i
 	CV_CALL( band = cvCreateMat(erows, ecols, CV_8UC1));
 	CV_CALL( mask = cvCreateMat(erows, ecols, CV_8UC1));
 	CV_CALL( el_cross = cvCreateStructuringElementEx(3,3,1,1,CV_SHAPE_CROSS,NULL));
-	
+
 	cvCopy( input_img, output_img );
 	cvSet(mask,cvScalar(KNOWN,0,0,0));
 	COPY_MASK_BORDER1_C1(inpaint_mask,mask,uchar);
@@ -786,7 +786,7 @@ cvInpaint( const CvArr* _input_img, const CvArr* _inpaint_mask, CvArr* _output_i
 	cvSet(f,cvScalar(BAND,0,0,0),band);
 	cvSet(f,cvScalar(INSIDE,0,0,0),mask);
 	cvSet(t,cvScalar(0,0,0,0),band);
-	
+
 	if( flags == CV_INPAINT_TELEA )
 	{
 		CV_CALL( out = cvCreateMat(erows, ecols, CV_8UC1));
@@ -806,9 +806,9 @@ cvInpaint( const CvArr* _input_img, const CvArr* _inpaint_mask, CvArr* _output_i
 	}
 	else
 		icvNSInpaintFMM(mask,t,output_img,range,Heap);
-	
+
 	__END__;
-	
+
 	delete Out;
 	delete Heap;
 	cvReleaseStructuringElement(&el_cross);

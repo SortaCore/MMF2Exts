@@ -111,10 +111,10 @@ size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size)
 		 return 0; /* need more data */
 
 		/* Lacewing::Error Error;
-		
+
 		Error.Add(WSAGetLastError ());
 		Error.Add("Secure handshake failure");
-		
+
 		if (ctx->Server.Handlers.Error)
 			ctx->Server.Handlers.Error(ctx->Server.Public, Error);
 

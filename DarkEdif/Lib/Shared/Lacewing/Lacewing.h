@@ -1005,7 +1005,7 @@ lw_import file file_new (pump, const char * filename, const char * mode = "rb");
 #if defined(_WIN32) && defined(_UNICODE)
 // For Unicode support on Windows.
 // Uses __wchar_t due to /Zc:wchar_t flag, which turns wchar_t into unsigned short.
-// 
+//
 // Returns null or a wide-converted version of the U8 string passed. Free it with free().
 lw_import __wchar_t * lw_char_to_wchar(const char * u8str);
 #endif
@@ -2047,10 +2047,10 @@ struct relayserver
 		bool connectRequestApproved = false;
 		// Client has only ever used valid Lacewing messages; e.g. valid UTF-8, no missing elements in messages.
 		// Does not indicate all messages succeed. When false, client is kicked very shortly after.
-		bool trustedClient = true; 
+		bool trustedClient = true;
 		// Has a TCP ping request been sent by server, and was replied to.
 		// If false, next ping timer tick will consider a failed ping and kick the client, so it is true by default.
-		bool pongedOnTCP = true; 
+		bool pongedOnTCP = true;
 
 		lacewing::address udpaddress;
 

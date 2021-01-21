@@ -27,7 +27,7 @@ const TCHAR * Extension::ReceivedStr()
 }
 int Extension::ReceivedInt()
 {
-	if (threadData->receivedMsg.content.size() != 4) 
+	if (threadData->receivedMsg.content.size() != 4)
 	{
 		CreateError("Received() was used on a message that is not a number message.");
 		return 0;
@@ -398,7 +398,7 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 
 		// count number of expected variables
 		count = max(atoi(i+1),1);
-				
+
 		// Char
 		if (i[0] == 'c')
 		{
@@ -419,10 +419,10 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 					output << "Unsigned ANSI char: "sv << (int)((unsigned char *)Msg)[j] << "\r\n"sv;
 			}
 			Msg += count;
-					
+
 			continue;
 		}
-				
+
 		// Short
 		if (i[0] == 'h')
 		{

@@ -40,7 +40,7 @@ typedef struct _lwp_ws_httpclient
 	http_parser parser;
 
 	lw_bool parsing_headers, signal_eof;
-	
+
 	char * cur_header_name;
 	size_t cur_header_name_length;
 

@@ -258,7 +258,7 @@ cvCalcMotionGradient( const CvArr* mhiimg, CvArr* maskimg,
 		dY_max_row.data.ptr = dY_max->data.ptr + y*dY_max->step;
 		mask_row.data.ptr = mask->data.ptr + y*mask->step;
 		orient_row.data.ptr = orient->data.ptr + y*orient->step;
-		
+
 		for( x = 0; x < size.width; x++ )
 		{
 			float d0 = dY_max_row.data.fl[x] - dX_min_row.data.fl[x];
@@ -444,7 +444,7 @@ cvSegmentMotion( const CvArr* mhiimg, CvArr* segmask, CvMemStorage* storage,
 	cvZero( mask );
 	CV_CALL( components = cvCreateSeq( CV_SEQ_KIND_GENERIC, sizeof(CvSeq),
 										sizeof(CvConnectedComp), storage ));
-	
+
 	v.f = (float)timestamp; ts = v.i;
 	v.f = FLT_MAX*0.1f; stub_val = v.i;
 	comp_idx.f = 1;

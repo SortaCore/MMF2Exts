@@ -19,7 +19,7 @@ class CkStringArrayW;
 #if !defined(__sun__) && !defined(__sun)
 #pragma pack (push, 8)
 #endif
- 
+
 
 
 // CLASS: CkString
@@ -44,9 +44,9 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	CkString &operator=(bool b);
 	CkString &operator=(char c);
 
-		// 
+		//
 		// operator to cast to a const char *
-		// 
+		//
 		operator const char *();
 		operator const wchar_t *();
 
@@ -139,9 +139,9 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 
 	void entityDecode(void);
 	void entityEncode(void);
-	void appendUtf8(const char *s);		
-	void appendAnsi(const char *s);		
-	
+	void appendUtf8(const char *s);
+	void appendAnsi(const char *s);
+
 	bool isEmpty(void);
 
 	// Appends the current local date/time.
@@ -158,7 +158,7 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	// not deallocated.  Deallocation happens when the CkString object is destructed.
 	void clear(void);
 
-	void prepend(const char *s);		
+	void prepend(const char *s);
 	void prependW(const wchar_t *s);
 
 	// Causes the internal buffers to always be securely cleared by zeroing out the memory prior to deallocation or clearing.
@@ -167,11 +167,11 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 
 
 	void appendInt(int n);
-	void append(const char *s);		
-	void append(const CkString &str);		
+	void append(const char *s);
+	void append(const CkString &str);
 		void appendChar(char c);
 		void appendCharU(wchar_t c);
-	void appendN(const char *pByteData, unsigned long szByteData);	
+	void appendN(const char *pByteData, unsigned long szByteData);
 		void appendStr(const CkString &str);
 	void appendEnc(const char *s, const char *charEncoding);	// such as "utf-8", "windows-1252", "shift_JIS", etc.
 	void appendRandom(int numBytes, const char *encoding);	// such as "base64", "hex", "qp", "url", etc.
@@ -233,7 +233,7 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 		bool replaceFirstOccurance(const char *pattern, const char *replacement);
 	bool replaceFirstOccuranceW(const wchar_t *pattern, const wchar_t *replacement);
 
-	// Searches the string for the 1st occurance of startStr.  Then 
+	// Searches the string for the 1st occurance of startStr.  Then
 	// searches for the first occurance of endStr after startStr.
 	// If both startStr and endStr are found, then replaces all occurances
 	// of  pattern with replacement.
@@ -246,14 +246,14 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	// and the next within each pair can be search/replaced.
 
 	// Return the number of occurances replaced.
-	int replaceAllOccurancesBetween(const char *startStr, 
+	int replaceAllOccurancesBetween(const char *startStr,
 		const char *endStr,
-		const char *pattern, 
+		const char *pattern,
 		const char *replacement);
 
-	int replaceAllOccurancesBetweenW(const wchar_t *startStr, 
+	int replaceAllOccurancesBetweenW(const wchar_t *startStr,
 		const wchar_t *endStr,
-		const wchar_t *pattern, 
+		const wchar_t *pattern,
 		const wchar_t *replacement);
 
 
@@ -271,7 +271,7 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	int countCharOccurances(char ch);
 
 		// Remove the last N chars from the string.
-		void shorten(int n);	
+		void shorten(int n);
 
 		// Convert to lower or upper case
 		void toLowerCase(void);
@@ -285,10 +285,10 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	// Return true if any char in s is contained in this CkString.
 	bool containsAnyOf(const char *s) const;
 
-		bool containsSubstring(const char *substr) const;	
-		bool containsSubstringNoCase(const char *substr) const;	
-		bool containsSubstringW(const wchar_t *substr) const;	
-		bool containsSubstringNoCaseW(const wchar_t *substr) const;	
+		bool containsSubstring(const char *substr) const;
+		bool containsSubstringNoCase(const char *substr) const;
+		bool containsSubstringW(const wchar_t *substr) const;
+		bool containsSubstringNoCaseW(const wchar_t *substr) const;
 
 	// For many Win32 SDK functions, such as CreateFile, error information
 	// must be retrieved by using the Win32 functions GetLastError and FormatMessage.
@@ -297,16 +297,16 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 #ifdef WIN32
 		void appendLastWindowsError(void);
 #endif
-	// Returns true if the strings are equal, or false.  (Not the same as 
+	// Returns true if the strings are equal, or false.  (Not the same as
 	// "compare", which returns 0 if equal, and 1 or -1 if the strings are lexicographically
 	// less than or greater than)
-		bool equals(const char *s) const;	
+		bool equals(const char *s) const;
 		bool equalsIgnoreCase(const char *s) const;
 
 		bool equalsStr(CkString &s) const;
 		bool equalsIgnoreCaseStr(CkString &s) const;
 
-		bool equalsW(const wchar_t *s) const;	
+		bool equalsW(const wchar_t *s) const;
 		bool equalsIgnoreCaseW(const wchar_t *s) const;
 
 		// Remove a chunk from the string.
@@ -351,9 +351,9 @@ class CK_VISIBLE_PUBLIC CkString : public CkObject
 	bool beginsWith(const char *sSubstr) const;
 	bool beginsWithW(const wchar_t *s) const;
 
-	CkString *getDelimited(const char *beginSearchAfter, 
+	CkString *getDelimited(const char *beginSearchAfter,
 			const char *startDelim, const char *endDelim);
-	CkString *getDelimitedW(const wchar_t *beginSearchAfter, 
+	CkString *getDelimitedW(const wchar_t *beginSearchAfter,
 			const wchar_t *startDelim, const wchar_t *endDelim);
 
 	void minimizeMemory(void);

@@ -67,7 +67,7 @@ void icvIntersectLines3( double* a0, double* b0, double* c0,
 #define _CV_BINTREE_LIST()										  \
 	struct _CvTrianAttr* prev_v;	/* pointer to the parent  element on the previous level of the tree  */	\
 	struct _CvTrianAttr* next_v1;	/* pointer to the child  element on the next level of the tree  */		\
-	struct _CvTrianAttr* next_v2;	/* pointer to the child  element on the next level of the tree  */		
+	struct _CvTrianAttr* next_v2;	/* pointer to the child  element on the next level of the tree  */
 
 typedef struct _CvTrianAttr
 {

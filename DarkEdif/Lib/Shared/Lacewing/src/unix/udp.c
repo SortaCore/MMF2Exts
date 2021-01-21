@@ -33,7 +33,7 @@
 struct _lw_udp
 {
 	lw_pump pump;
-	
+
 	lw_udp_hook_data on_data;
 	lw_udp_hook_error on_error;
 
@@ -112,7 +112,7 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 		 ctx->on_error (ctx, error);
 
 	  lw_error_delete (error);
-	  return;	
+	  return;
 	}
 
 	lw_error_delete (error);
@@ -148,7 +148,7 @@ lw_udp lw_udp_new (lw_pump pump)
 	if (!ctx)
 	  return 0;
 
-	lwp_init ();  
+	lwp_init ();
 
 	ctx->pump = pump;
 	ctx->fd = -1;

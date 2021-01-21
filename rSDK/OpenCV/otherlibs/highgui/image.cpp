@@ -78,12 +78,12 @@ bool  CvvImage::Create( int w, int h, int bpp, int origin )
 		assert(0); // most probably, it is a programming error
 		return false;
 	}
-	
+
 	if( !m_img || Bpp() != bpp || m_img->width != w || m_img->height != h )
 	{
 		if( m_img && m_img->nSize == sizeof(IplImage))
 			Destroy();
-	
+
 		/* prepare IPL header */
 		m_img = cvCreateImage( cvSize( w, h ), IPL_DEPTH_8U, bpp/8 );
 	}
@@ -114,7 +114,7 @@ void  CvvImage::CopyOf( IplImage* img, int desired_color )
 	if( HG_IS_IMAGE(img) )
 	{
 		int color = desired_color;
-		CvSize size = cvGetSize( img ); 
+		CvSize size = cvGetSize( img );
 
 		if( color < 0 )
 			color = img->nChannels > 1;
@@ -182,7 +182,7 @@ bool  CvvImage::LoadRect( const char* filename,
 
 	if( r.y + r.height > img->height )
 		r.height = img->height - r.y;
-	
+
 	cvSetImageROI( img, r );
 	CopyOf( img, desired_color );
 
@@ -233,7 +233,7 @@ void  CvvImage::Show( HDC dc, int x, int y, int w, int h, int from_x, int from_y
 }
 
 
-void  CImage::DrawToHDC( HDC hDCDst, RECT* pDstRect ) 
+void  CImage::DrawToHDC( HDC hDCDst, RECT* pDstRect )
 {
 	if( pDstRect && m_img && m_img->depth == IPL_DEPTH_8U && m_img->imageData )
 	{
@@ -249,7 +249,7 @@ void  CImage::DrawToHDC( HDC hDCDst, RECT* pDstRect )
 			Show( hDCDst, dst.x, dst.y, dst.width, dst.height, roi.x, roi.y );
 			return;
 		}
-	
+
 		if( roi.width > dst.width )
 		{
 			SetStretchBltMode(

@@ -14,7 +14,7 @@ typedef struct CvContourRect
 	int		iNumber;  // порядковый номер атрибута
 	int		iType;	//тип объекта
 	int		iFlags;	//свободное поле
-	CvSeq	*seqContour; // адрес начала записи объекта 
+	CvSeq	*seqContour; // адрес начала записи объекта
 	int		iContourLength;  // длина записи векторов
 	CvRect	r;	//описаный прямоугольник
 	CvPoint pCenter; // center of rect
@@ -48,7 +48,7 @@ private:
 };// class List
 
 
-class FaceDetection  
+class FaceDetection
 {
 public:
 	void FindFace(IplImage* img);
@@ -66,7 +66,7 @@ protected:
 	CvSeq* m_seqContours[MAX_LAYERS];
 	CvMemStorage* m_mstgRects;
 	CvSeq* m_seqRects;
-	
+
 	bool m_bBoosting;
 	List * m_pFaceList;
 
@@ -82,7 +82,7 @@ protected:
 inline void ReallocImage(IplImage** ppImage, CvSize sz, long lChNum)
 {
 	IplImage* pImage;
-	if( ppImage == NULL ) 
+	if( ppImage == NULL )
 		return;
 	pImage = *ppImage;
 	if( pImage != NULL )

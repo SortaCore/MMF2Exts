@@ -73,7 +73,7 @@
 #define	M_EXP_P2				 7501
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 

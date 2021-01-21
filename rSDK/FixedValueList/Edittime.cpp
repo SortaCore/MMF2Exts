@@ -4,7 +4,7 @@
 // under the Frame and Event editors.
 //
 // Including creating, display, and setting up your object.
-// 
+//
 // ============================================================================
 
 #include "common.h"
@@ -155,7 +155,7 @@ LPVOID WINAPI DLLExport GetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID)
 #ifndef RUN_ONLY
 
 	//case PROPID_ICONS:
-	//		
+	//
 	//	CPropDataValue* pv = new CPropDataValue((edPtr->nImages + 1) * sizeof(WORD), NULL);
 	//	if ( pv != NULL )
 	//	{
@@ -275,7 +275,7 @@ BOOL WINAPI IsPropEnabled(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // ============================================================================
 //
 // TEXT PROPERTIES
-// 
+//
 // ============================================================================
 
 // --------------------
@@ -414,7 +414,7 @@ WORD BmpToImg(int bmID, npAppli idApp, short HotX = 0, short HotY = 0, short Act
 // ============================================================================
 //
 // ROUTINES USED UNDER FRAME EDITOR
-// 
+//
 // ============================================================================
 
 // --------------------
@@ -444,7 +444,7 @@ int WINAPI DLLExport MakeIconEx ( mv _far *mV, cSurface* pIconSf, LPTSTR lpName,
 // --------------------
 // CreateObject
 // --------------------
-// Called when you choose "Create new object". It should display the setup box 
+// Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
 
 int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
@@ -453,7 +453,7 @@ int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
 
 	// Do some rSDK stuff
 	#include "rCreateObject.h"
-	
+
 	return 0;	// No error
 
 #endif // !RUN_ONLY
@@ -574,7 +574,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 // IsTransparent
 // --------------------
 // This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
-// 
+//
 
 extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, int dx, int dy)
 {
@@ -588,7 +588,7 @@ extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far *mV, fpLevObj loPtr, LPED
 // PrepareToWriteObject
 // --------------------
 // Just before writing the datazone when saving the application, MMF2 calls this routine.
-// 
+//
 
 void WINAPI	DLLExport PrepareToWriteObject(mv _far *mV, LPEDATA edPtr, fpObjInfo adoi)
 {
@@ -629,7 +629,7 @@ BOOL WINAPI	DLLExport UsesFile (LPMV mV, LPTSTR fileName)
 #ifndef RUN_ONLY
 
 	// Example: return TRUE if file extension is ".txt"
-/*	
+/*
 	LPSTR	ext, npath;
 
 	if ( fileName != NULL )
@@ -676,14 +676,14 @@ void WINAPI	DLLExport CreateFromFile (LPMV mV, LPTSTR fileName, LPEDATA edPtr)
 //
 // ROUTINES USED UNDER EVENT / TIME / STEP-THROUGH EDITOR
 // You should not need to change these routines
-// 
+//
 // ============================================================================
 
 // -----------------
 // menucpy
 // -----------------
 // Internal routine used later, copy one menu onto another
-// 
+//
 
 void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 {
@@ -691,7 +691,7 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 	int			n, id, nMn;
 	LPTSTR		strBuf;
 	HMENU		hSubMenu;
-	
+
 	nMn = GetMenuItemCount(hSourceMenu);
 	strBuf = (LPTSTR)calloc(80, sizeof(TCHAR));
 	for (n = 0; n < nMn; n++)
@@ -718,12 +718,12 @@ void menucpy(HMENU hTargetMenu, HMENU hSourceMenu)
 // GetPopupMenu
 // -----------------
 // Internal routine used later. Returns the first popup from a menu
-// 
+//
 HMENU GetPopupMenu(LPEDATA edPtr,short mn)
 {
 #ifndef RUN_ONLY
 	HMENU hPopup=CreatePopupMenu();
-	
+
 	if (mn == MN_CONDITIONS)
 		menucpy(hPopup,ConditionMenu(edPtr));
 	else if (mn == MN_ACTIONS)
@@ -748,7 +748,7 @@ static LPEVENTINFOS2 GetEventInformations(LPEVENTINFOS2 eiPtr, short code)
 #ifndef RUN_ONLY
 	while (eiPtr->infos.code != code)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	
+
 	return eiPtr;
 #endif // !RUN_ONLY
 	return NULL;
@@ -880,7 +880,7 @@ short WINAPI DLLExport GetActionCodeFromMenu(mv _far *mV, short menuId)
 
 	for (n=Actions.size(),eiPtr=(LPEVENTINFOS2)actionsInfos;n>0&&eiPtr->menu!=menuId;n--)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	if (n>0) 
+	if (n>0)
 		return eiPtr->infos.code;
 #endif // !RUN_ONLY
 	return -1;
@@ -893,7 +893,7 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *mV, short menuId)
 	int	n;
 	for (n=Expressions.size(),eiPtr=(LPEVENTINFOS2)expressionsInfos;n>0&&eiPtr->menu!=menuId;n--)
 		eiPtr = EVINFO2_NEXT(eiPtr);
-	if (n>0) 
+	if (n>0)
 		return eiPtr->infos.code;
 #endif // !RUN_ONLY
 	return -1;
@@ -903,8 +903,8 @@ short WINAPI DLLExport GetExpressionCodeFromMenu(mv _far *mV, short menuId)
 // -------------------------------------------------------
 // GetConditionInfos / GetActionInfos / GetExpressionInfos
 // -------------------------------------------------------
-// From a action / condition / expression code, returns 
-// an infosEvents structure. 
+// From a action / condition / expression code, returns
+// an infosEvents structure.
 //
 
 LPINFOEVENTSV2 WINAPI DLLExport GetConditionInfos(mv _far *mV, short code)
@@ -935,7 +935,7 @@ LPINFOEVENTSV2 WINAPI DLLExport GetExpressionInfos(mv _far *mV, short code)
 // ----------------------------------------------------------
 // GetConditionString / GetActionString / GetExpressionString
 // ----------------------------------------------------------
-// From a action / condition / expression code, returns 
+// From a action / condition / expression code, returns
 // the string to use for displaying it under the event editor
 //
 

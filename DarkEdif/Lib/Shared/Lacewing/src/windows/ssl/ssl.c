@@ -61,7 +61,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	  buffers [3].cbBuffer = 0;
 
 	SecBufferDesc buffers_desc = {};
-	
+
 	buffers_desc.cBuffers = 4;
 	buffers_desc.pBuffers = buffers;
 	buffers_desc.ulVersion = SECBUFFER_VERSION;

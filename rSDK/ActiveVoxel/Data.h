@@ -13,12 +13,12 @@ typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
 
-	int				xAngle;	
-	int				yAngle;	
+	int				xAngle;
+	int				yAngle;
 	int				zAngle;
 
 	//int				xLight;
-	//int				yLight;	
+	//int				yLight;
 	//int				zLight;
 
 	float			specular;
@@ -55,9 +55,9 @@ typedef struct tagEDATA_V1
 	short			swidth;
 	short			sheight;
 
-	int				xAngle;	
-	int				yAngle;	
-	int				zAngle;	
+	int				xAngle;
+	int				yAngle;
+	int				zAngle;
 
 } EDITDATA;
 

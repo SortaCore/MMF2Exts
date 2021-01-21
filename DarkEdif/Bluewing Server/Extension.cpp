@@ -229,7 +229,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(47, ConvToUTF8_GetVisibleCharCount);
 		LinkExpression(48, ConvToUTF8_GetByteCount);
 	}
-	
+
 #if EditorBuild
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
@@ -344,7 +344,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 			writeTo = _T("All channel count: ") + std::to_tstring(ext->Srv.channelcount());
 		else
 			writeTo = _T("All channel count: N/A");
-		
+
 	};
 	FusionDebugger.AddItemToDebugger(channelCountDebugItemReader, NULL, 500, NULL);
 
@@ -441,7 +441,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	// Approve quiet needs no handler
 	//_server.onmessage_channel(::OnChannelMessage);
 	//_server.onmessage_peer(::OnPeerMessage);
-	
+
 	// RelayServer combines flash policy errors with regular errors.
 	// So this is handled by srv.onerror
 	//flashSrv->on_error(::OnFlashError);
@@ -457,7 +457,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 void GlobalInfo::UpdateAcceptableChars(std::string acStr) {
 	// String should be format:
 	// 2 letters, or 1 letter + *, or an integer number that is the UTF32 number of char
-	
+
 	if (acStr.empty())
 	{
 		acceptableCharCategories.clear();
@@ -707,7 +707,7 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 		at the wrong time.
 		With PushEvent() + multithreading, this would cause overwriting of old events and possibly access
 		violations as variables are simultaneously written to by the ext and read from by Fusion at the same time.
-		
+
 		But in DarkEdif, you'll note all the GenerateEvents() are handled on a queue, and the queue is
 		iterated through in Handle(), thus it is quite safe. But we still need to protect potentially several
 		AddEvent() functions running at once and corrupting the memory at some point; so we need the
@@ -1156,7 +1156,7 @@ REFLAG Extension::Handle()
 				// us from handling the interactive event properly by their actions,
 				// e.g. don't want to allow the user to close midway through a send.
 				// In single threaded the tick runs before this triggers, so it's not a problem.
-				
+
 
 				// If multiple events are triggering, only do this on the last one
 				if (u == s->numEvents - 1)
@@ -1189,7 +1189,7 @@ REFLAG Extension::Handle()
 					// Free memory for received message
 					ClearThreadData();
 				}
-				
+
 			}
 			// Deselect after 0xFFFF
 			else

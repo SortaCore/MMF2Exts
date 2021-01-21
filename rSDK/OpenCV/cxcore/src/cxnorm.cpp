@@ -1034,7 +1034,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 				{
 					const float* src1data = mat1->data.fl;
 					int size0 = size.width *= cn;
-				
+
 					if( !mat2 || is_relative )
 					{
 						do
@@ -1114,7 +1114,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 	else if( !CV_IS_MATND(mat1) && !CV_IS_MATND(mat2) )
 	{
 		CV_CALL( mat1 = cvGetMat( mat1, &stub1, &coi ));
-		
+
 		if( mat2 )
 		{
 			CV_CALL( mat2 = cvGetMat( mat2, &stub2, &coi2 ));
@@ -1168,14 +1168,14 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 		depth = CV_MAT_DEPTH(type);
 		iterator.size.width *= CV_MAT_CN(type);
 
-		pass_hint = normType != 0 && (depth == CV_32F); 
+		pass_hint = normType != 0 && (depth == CV_32F);
 
 		if( !mat2 || is_relative )
 		{
 			if( !pass_hint )
 			{
 				CvFunc2D_1A1P func;
-		
+
 				CV_GET_FUNC_PTR( func, (CvFunc2D_1A1P)norm_tab[normType].fn_2d[depth]);
 
 				do
@@ -1275,7 +1275,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 					IPPI_CALL( func( mat1->data.ptr, mat1_step, size, &norm, cvAlgHintAccurate ));
 				}
 			}
-		
+
 			if( mat2 )
 			{
 				if( !pass_hint )
@@ -1310,7 +1310,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 
 				IPPI_CALL( func( mat1->data.ptr, mat1_step, size, cn, coi, &norm ));
 			}
-		
+
 			if( mat2 )
 			{
 				CvFunc2DnC_2A1P func;
@@ -1340,7 +1340,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 
 		if( !CV_ARE_SIZES_EQ( mat1, matmask ))
 			CV_ERROR( CV_StsUnmatchedSizes, "" );
-		
+
 		mask_step = matmask->step;
 
 		if( CV_IS_MAT_CONT( mat1->type & mat2_flag & matmask->type ))
@@ -1361,7 +1361,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 				IPPI_CALL( func( mat1->data.ptr, mat1_step,
 								 matmask->data.ptr, mask_step, size, &norm ));
 			}
-		
+
 			if( mat2 )
 			{
 				CvFunc2D_3A1P func;
@@ -1389,7 +1389,7 @@ cvNorm( const void* imgA, const void* imgB, int normType, const void* mask )
 								 matmask->data.ptr, mask_step,
 								 size, cn, coi, &norm ));
 			}
-		
+
 			if( mat2 )
 			{
 				CvFunc2DnC_3A1P func;

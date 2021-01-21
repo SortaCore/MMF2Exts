@@ -60,7 +60,7 @@ const float H8[] = { 1, 0, 0, 0, 0, 0, 0, 0,
 					 0, 0, 1, 0, 0, 0, 0, 0,
 					 0, 0, 0, 1, 0, 0, 0, 0};
 
-/* Matices for zero size velocity: */ 
+/* Matices for zero size velocity: */
 /* Dynamic matrix A: */
 const float A6[] = { 1, 0, 0, 0, 1, 0,
 					 0, 1, 0, 0, 0, 1,

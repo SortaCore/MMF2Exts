@@ -211,7 +211,7 @@ CvCalibFilter::GetEtalon( int* paramCount, const double** params,
 void CvCalibFilter::SetCameraCount( int count )
 {
 	Stop();
-	
+
 	if( count != cameraCount )
 	{
 		for( int i = 0; i < cameraCount; i++ )
@@ -230,7 +230,7 @@ void CvCalibFilter::SetCameraCount( int count )
 	}
 }
 
-	
+
 bool CvCalibFilter::SetFrames( int frames )
 {
 	if( frames < 5 )
@@ -238,7 +238,7 @@ bool CvCalibFilter::SetFrames( int frames )
 		assert(0);
 		return false;
 	}
-	
+
 	framesTotal = frames;
 	return true;
 }
@@ -289,7 +289,7 @@ void CvCalibFilter::Stop( bool calibrate )
 
 			cameraParams[i].imgSize[0] = (float)imgSize.width;
 			cameraParams[i].imgSize[1] = (float)imgSize.height;
-			
+
 //			cameraParams[i].focalLength[0] = cameraParams[i].matrix[0];
 //			cameraParams[i].focalLength[1] = cameraParams[i].matrix[4];
 
@@ -300,7 +300,7 @@ void CvCalibFilter::Stop( bool calibrate )
 			memcpy( cameraParams[i].transVect, transVect, 3 * sizeof(transVect[0]));
 
 			mat.data.ptr = (uchar*)(cameraParams + i);
-			
+
 			/* check resultant camera parameters: if there are some INF's or NAN's,
 				stop and reset results */
 			if( !cvCheckArr( &mat, CV_CHECK_RANGE | CV_CHECK_QUIET, -10000, 10000 ))
@@ -327,7 +327,7 @@ void CvCalibFilter::Stop( bool calibrate )
 				{
 					stereo.fundMatr[i] = stereo.fundMatr[i];
 				}
-				
+
 			}
 
 		}
@@ -484,16 +484,16 @@ bool CvCalibFilter::GetLatestPoints( int idx, CvPoint2D32f** pts,
 									 int* count, bool* found )
 {
 	int n;
-	
+
 	if( (unsigned)idx >= (unsigned)cameraCount ||
 		!pts || !count || !found )
 	{
 		assert(0);
 		return false;
 	}
-	
+
 	n = latestCounts[idx];
-	
+
 	*found = n > 0;
 	*count = abs(n);
 	*pts = latestPoints[idx];
@@ -601,7 +601,7 @@ const CvCamera* CvCalibFilter::GetCameraParams( int idx ) const
 		assert(0);
 		return 0;
 	}
-	
+
 	return isCalibrated ? cameraParams + idx : 0;
 }
 
@@ -615,7 +615,7 @@ const CvStereoCamera* CvCalibFilter::GetStereoParams() const
 		assert(0);
 		return 0;
 	}
-	
+
 	return &stereo;
 }
 
@@ -625,9 +625,9 @@ bool CvCalibFilter::SetCameraParams( CvCamera* params )
 {
 	CvMat mat;
 	int arrSize;
-	
+
 	Stop();
-	
+
 	if( !params )
 	{
 		assert(0);
@@ -652,7 +652,7 @@ bool CvCalibFilter::SaveCameraParams( const char* filename )
 	if( isCalibrated )
 	{
 		int i, j;
-		
+
 		FILE* f = fopen( filename, "w" );
 
 		if( !f ) return false;
@@ -714,7 +714,7 @@ bool CvCalibFilter::LoadCameraParams( const char* filename )
 		return false;
 
 	SetCameraCount( d );
-	
+
 	for( i = 0; i < cameraCount; i++ )
 	{
 		for( j = 0; j < (int)(sizeof(cameraParams[i])/sizeof(float)); j++ )
@@ -744,16 +744,16 @@ bool CvCalibFilter::LoadCameraParams( const char* filename )
 			fscanf(f, "%lf ", &(stereo.coeffs[i][j/3][j%3]) );
 		}
 	}
-	
-	
-	
-	
+
+
+
+
 	fclose(f);
 
 	stereo.warpSize = cvSize( cvRound(cameraParams[0].imgSize[0]), cvRound(cameraParams[0].imgSize[1]));
 
 	isCalibrated = true;
-	
+
 	return true;
 }
 

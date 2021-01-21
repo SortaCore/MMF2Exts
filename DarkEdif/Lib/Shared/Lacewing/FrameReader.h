@@ -34,15 +34,15 @@
 
 class framereader
 {
-	
+
 protected:
 
 	messagebuilder buffer;
-		
+
 	lw_i32	state = 0;
 	lw_i32	sizebytesleft = 0;
 	lw_ui32	messagesize = 0;
-	lw_ui8  messagetype = 0; 
+	lw_ui8  messagetype = 0;
 
 public:
 
@@ -61,19 +61,19 @@ public:
 			switch(state)
 			{
 				case 0: /* haven't yet got type */
-					
+
 					messagetype = byte;
 					state = 1;
 					sizebytesleft = 0;
 
 					break;
-			
+
 				case 1: /* have type, but no size */
 				{
 					if (sizebytesleft > 0)
 					{
 						buffer.add <char> (byte);
-						
+
 						if ((-- sizebytesleft) == 0)
 						{
 							switch(buffer.size)
@@ -138,7 +138,7 @@ public:
 				if (!messagehandler(tag, messagetype, data, messagesize))
 					return;
 				state = 0;
-				
+
 
 				return;
 			}
@@ -158,7 +158,7 @@ public:
 
 				state = 0;
 				process(data + messagesize, size - messagesize);
-				
+
 				return;
 			}
 		}
@@ -169,7 +169,7 @@ public:
 			thismessagebytes = size;
 
 		buffer.add(data, thismessagebytes);
-		
+
 		size -= thismessagebytes;
 		data += thismessagebytes;
 

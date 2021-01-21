@@ -43,7 +43,7 @@ lwp_ws_client lwp_ws_httpclient_new (lw_ws ws, lw_server_client socket,
 
 	ctx->client.ws = ws;
 	ctx->client.socket = socket;
-	
+
 	ctx->client.respond  = client_respond;
 	ctx->client.tick	 = client_tick;
 	ctx->client.cleanup  = client_cleanup;
@@ -68,7 +68,7 @@ lwp_ws_client lwp_ws_httpclient_new (lw_ws ws, lw_server_client socket,
 	*/
 
 	lw_stream_retry ((lw_stream) ctx, lw_stream_retry_more_data);
-	
+
 	return (lwp_ws_client) ctx;
 }
 
@@ -100,7 +100,7 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 	lwp_ws_httpclient ctx = (lwp_ws_httpclient) stream;
 
 	lwp_trace ("HTTP got " lwp_fmt_size " bytes", size);
-	
+
 	size_t processed = 0;
 
 	/* TODO: A naughty client could keep the connection open by sending 1 byte
@@ -261,7 +261,7 @@ const lw_streamdef def_httprequest =
 };
 
 void client_respond (lwp_ws_client client, lw_ws_req request)
-{ 
+{
 	lwp_ws_httpclient ctx = (lwp_ws_httpclient) client;
 
 	/* The request parameter is redundant here, because HTTP only ever has one

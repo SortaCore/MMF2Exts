@@ -8,7 +8,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"]["Author"], MAX_PATH);
 	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"]["Copyright"], MAX_PATH);
 	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"]["URL"], MAX_PATH);
-	
+
 	if (mV && mV->IdAppli)
 		Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
 	else
@@ -16,7 +16,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 
 	// Allows user to specify a static variable in the object comment.
 	// e.g. build number, liblacewing version, etc.
-	// Use printf macros as depicted by 
+	// Use printf macros as depicted by
 	// https://docs.microsoft.com/en-gb/cpp/c-runtime-library/format-specification-syntax-printf-and-wprintf-functions
 #ifndef JSON_COMMENT_MACRO
 	Edif::ConvertAndCopyString(ObjComment, CurLang["About"]["Comment"], MAX_PATH);
@@ -232,14 +232,14 @@ void AddDirectory(std::tstring &From, std::tstring &To)
 			std::tstring OldPath = From;
 			OldPath += Filejson.cFileName;
 			OldPath += _T("\\");
-			
+
 			std::tstring NewPath = To;
 			NewPath += Filejson.cFileName;
 			NewPath += _T("\\");
-			
+
 			CreateDirectory(NewPath.c_str(), 0);
 			AddDirectory(OldPath, NewPath);
-			
+
 			continue;
 		}
 
@@ -254,7 +254,7 @@ void FusionAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTem
 {
 #pragma DllExportHint
 	TCHAR FlashFolderPath[MAX_PATH];
-	Edif::GetSiblingPath(FlashFolderPath, _T("Flash")); 
+	Edif::GetSiblingPath(FlashFolderPath, _T("Flash"));
 
 	if (!*FlashFolderPath)
 		return;

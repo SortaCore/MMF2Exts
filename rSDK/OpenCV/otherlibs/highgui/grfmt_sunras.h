@@ -72,7 +72,7 @@ public:
 	void  Close();
 
 protected:
-	
+
 	RMByteStream	m_strm;
 	PaletteEntry	m_palette[256];
 	int			 m_bpp;
@@ -86,7 +86,7 @@ protected:
 class GrFmtSunRasterWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtSunRasterWriter( const char* filename );
 	~GrFmtSunRasterWriter();
 
@@ -102,7 +102,7 @@ protected:
 class GrFmtSunRaster : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtSunRaster();
 	~GrFmtSunRaster();
 

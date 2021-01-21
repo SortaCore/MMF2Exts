@@ -65,16 +65,16 @@ void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewin
 	// Unlikely, but if client is closed by server a couple milliseconds before a join channel request is sent...
 	if (client->readonly())
 		return server.joinchannel_response(channel, client, "Your client is marked as closed and can no longer make write actions.");
-	
+
 	// Unlikely, but if channel is closed by server a couple milliseconds before a join channel request is sent...
 	if (channel->readonly())
 		return server.joinchannel_response(channel, client, "Busy closing that channel. Try again in a couple of seconds.");
-	
+
 	// Auto approve, auto deny
 	if (globals->autoResponse_ChannelJoin != AutoResponse::WaitForFusion)
 	{
 		server.joinchannel_response(channel, client, globals->autoResponse_ChannelJoin_DenyReason);
-		
+
 		// Not set to tell Fusion
 		if (globals->autoResponse_ChannelJoin == AutoResponse::Approve_Quiet ||
 			globals->autoResponse_ChannelJoin == AutoResponse::Deny_Quiet)
@@ -130,7 +130,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 			return;
 		}
 	}
-		
+
 	// 0xFFFF = Clear channel copy after this event is handled.
 	// the two Quiets are handled already (see last return)
 	// Approve_TellFusion has already made change in copy (ch->removeclient() )
@@ -217,7 +217,7 @@ void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::r
 	// but you can do Client.name() for old name, if you want to see if the client even has one.
 	globals->AddEvent1(10, nullptr, client, nameRequested, 255, nullptr, InteractiveType::ClientNameSet);
 }
-void OnPeerMessage(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> senderClient, std::shared_ptr<lacewing::relayserver::channel> channel, 
+void OnPeerMessage(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> senderClient, std::shared_ptr<lacewing::relayserver::channel> channel,
 	std::shared_ptr<lacewing::relayserver::client> receivingClient, bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
 {
 	if (variant > 2)
@@ -225,7 +225,7 @@ void OnPeerMessage(lacewing::relayserver &server, std::shared_ptr<lacewing::rela
 
 	if (variant > 2 || receivingClient->readonly() || channel->readonly())
 		return server.clientmessage_permit(senderClient, channel, receivingClient, blasted, subchannel, message, variant, false);
-	
+
 	// Auto approve, auto deny (handle before message cloning)
 	if (globals->autoResponse_MessageClient != AutoResponse::WaitForFusion)
 	{

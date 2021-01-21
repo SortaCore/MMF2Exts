@@ -46,25 +46,25 @@
 
 
 /*F///////////////////////////////////////////////////////////////////////////////////////
-//	Name:	  icvSnake8uC1R	 
-//	Purpose:	
-//	Context:	
+//	Name:	  icvSnake8uC1R
+//	Purpose:
+//	Context:
 //	Parameters:
 //				src - source image,
 //				srcStep - its step in bytes,
 //				roi - size of ROI,
 //				pt - pointer to snake points array
-//				n - size of points array, 
-//				alpha - pointer to coefficient of continuity energy, 
-//				beta - pointer to coefficient of curvature energy,  
-//				gamma - pointer to coefficient of image energy,  
+//				n - size of points array,
+//				alpha - pointer to coefficient of continuity energy,
+//				beta - pointer to coefficient of curvature energy,
+//				gamma - pointer to coefficient of image energy,
 //				coeffUsage - if CV_VALUE - alpha, beta, gamma point to single value
 //							if CV_MATAY - point to arrays
 //				criteria - termination criteria.
 //				scheme - image energy scheme
 //						 if _CV_SNAKE_IMAGE - image intensity is energy
 //						 if _CV_SNAKE_GRAD  - magnitude of gradient is energy
-//	Returns:	
+//	Returns:
 //F*/
 
 static CvStatus
@@ -87,7 +87,7 @@ icvSnake8uC1R( unsigned char *src,
 	float invn;
 	int iteration = 0;
 	int converged = 0;
-	
+
 
 	float *Econt;
 	float *Ecurv;
@@ -103,7 +103,7 @@ icvSnake8uC1R( unsigned char *src,
 	int map_height = ((roi.height - 1) >> 3) + 1;
 	CvSepFilter pX, pY;
 	#define WTILE_SIZE 8
-	#define TILE_SIZE (WTILE_SIZE + 2)		
+	#define TILE_SIZE (WTILE_SIZE + 2)
 	short dx[TILE_SIZE*TILE_SIZE], dy[TILE_SIZE*TILE_SIZE];
 	CvMat _dx = cvMat( TILE_SIZE, TILE_SIZE, CV_16SC1, dx );
 	CvMat _dy = cvMat( TILE_SIZE, TILE_SIZE, CV_16SC1, dy );
@@ -293,7 +293,7 @@ icvSnake8uC1R( unsigned char *src,
 
 						if( map[y * map_width + x] == 0 )
 						{
-							int l, m;							
+							int l, m;
 
 							/* evaluate block location */
 							int upshift = y ? 1 : 0;
@@ -351,7 +351,7 @@ icvSnake8uC1R( unsigned char *src,
 				_gamma = *gamma;
 			}
 			else
-			{					
+			{
 				_alpha = alpha[i];
 				_beta = beta[i];
 				_gamma = gamma[i];

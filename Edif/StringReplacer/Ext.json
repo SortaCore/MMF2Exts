@@ -11,7 +11,7 @@
 	"ActionMenu": [
 		[ 0, "Clear all macros" ],
 		[ 1, "Add new auto-replace macro" ],
-		
+
 		"Separator"
 	],
 	"ConditionMenu": [

@@ -7,7 +7,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 		GlobalExt->OutputNow(5, -1, "Failed to catch crash, invalid pointers supplied.");
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
-	
+
 
 	// Run On Unhandled Exception event.
 	// It may encounter issues if the MMF2 runtime has crashed. In which case do the best we can.
@@ -25,17 +25,17 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	// Create minidump
 	if (GlobalExt->data->miniDumpPath.size() > 0)
 	{
-		HANDLE dumpFile = CreateFile(GlobalExt->data->miniDumpPath.c_str(), GENERIC_READ | GENERIC_WRITE, 
-			NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
-		
+		HANDLE dumpFile = CreateFile(GlobalExt->data->miniDumpPath.c_str(), GENERIC_READ | GENERIC_WRITE,
+			NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
 		// Opened the minidump file
 		if (dumpFile != NULL && dumpFile != INVALID_HANDLE_VALUE)
 		{
-			MINIDUMP_EXCEPTION_INFORMATION mdei; 
-			mdei.ClientPointers	 = FALSE; 
-			mdei.ExceptionPointers  = pExceptionPtrs; 
-			mdei.ThreadId			= GetCurrentThreadId(); 
-			
+			MINIDUMP_EXCEPTION_INFORMATION mdei;
+			mdei.ClientPointers	 = FALSE;
+			mdei.ExceptionPointers  = pExceptionPtrs;
+			mdei.ThreadId			= GetCurrentThreadId();
+
 			if (!MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), dumpFile,
 				(MINIDUMP_TYPE)GlobalExt->data->miniDumpType,
 				(pExceptionPtrs != 0) ? &mdei : 0, NULL, NULL))
@@ -71,7 +71,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 		str.str("");
 	else
 		str << "\r\n";
-	
+
 	bool NoHandling = false;
 	switch (pExceptionPtrs->ExceptionRecord->ExceptionCode)
 	{
@@ -104,7 +104,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 		}
 		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
 			str << "The thread tried to access an array element that is out of bounds (and "
-						  "the underlying hardware supports bounds checking)."; 
+						  "the underlying hardware supports bounds checking).";
 			break;
 		case EXCEPTION_BREAKPOINT:
 			str << "A breakpoint exception was encountered - the object will pass the "
@@ -162,7 +162,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			break;
 		case EXCEPTION_INVALID_DISPOSITION:
 			str << "An exception handler returned an invalid disposition to the exception dispatcher. "
-						  "This is incredibly rare for C/C++ programs."; 
+						  "This is incredibly rare for C/C++ programs.";
 			break;
 		case EXCEPTION_NONCONTINUABLE_EXCEPTION:
 			str << "The thread tried to continue after an exception, but this exception type makes it "
@@ -223,7 +223,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			GlobalExt->OutputNow(5, -1, "Booting crash process...");
 			GlobalExt->OutputNow(5, -1, "Not programmed; ignoring exception.");
 			return EXCEPTION_CONTINUE_SEARCH;
-			
+
 		case GlobalData::HandleType::HANDLE_VIA_FORCE_DEBUG_BREAK:
 			AttachDebugger();
 			return EXCEPTION_CONTINUE_SEARCH;
@@ -256,7 +256,7 @@ BOOL WINAPI HandlerRoutine(DWORD ControlType)
 	// Note: always return true, to indicate this function has handled it.
 	if (!GlobalExt)
 		return TRUE;
-	
+
 	// Normally, we would handle everything here. But the system will terminate the MMF2
 	// program if we don't return quickly enough, so we delegate it to Extension::Handle().
 
@@ -292,7 +292,7 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 	TCHAR InputText[256] = { 0 };
 
 	HANDLE ConsoleHandle = GetStdHandle(STD_INPUT_HANDLE);
-	
+
 	// Continue until shutdown is enabled
 	while (GlobalExt && GlobalExt->data && GlobalExt->data->consoleEnabled)
 	{
@@ -322,7 +322,7 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 		while (GlobalExt->data->readingThis)
 			Sleep(0);
 
-		GlobalExt->data->readingThis = true; 
+		GlobalExt->data->readingThis = true;
 		#ifdef _DEBUG
 			GlobalExt->data->lastLockFile = __FILE__;
 			GlobalExt->data->lastLockLine = __LINE__;
@@ -335,7 +335,7 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 
 		// Boot events (since this is not the usual thread, multi-threadify it)
 		GlobalExt->Runtime.Rehandle();
-		
+
 		while (!GlobalExt->data->releaseConsoleInput)
 			Sleep(10);
 	}

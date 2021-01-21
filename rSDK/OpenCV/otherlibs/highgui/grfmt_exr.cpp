@@ -184,7 +184,7 @@ bool  GrFmtExrReader::ReadHeader()
 			uintcnt += ( m_blue->type == UINT );
 		}
 		m_type = (chcnt == uintcnt) ? UINT : FLOAT;
-	
+
 		m_isfloat = (m_type == FLOAT);
 	}
 
@@ -467,7 +467,7 @@ void  GrFmtExrReader::UpSampleY( uchar *data, int xstep, int ystep, int ysample 
 void  GrFmtExrReader::ChromaToBGR( float *data, int numlines, int step )
 {
 	int x, y, t;
-	
+
 	for( y = 0; y < numlines; y++ )
 	{
 		for( x = 0; x < m_width; x++ )

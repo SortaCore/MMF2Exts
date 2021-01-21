@@ -300,7 +300,7 @@ icvRandn_0_1_32f_C1R( float* arr, int len, uint64* state )
 
 			bx = x;
 			x = bx > 0 ? 0.8857913*(2.506628 - ax) : -0.8857913*(2.506628 - ax);
-			
+
 			if( y > v + 0.0506 )
 				break;
 
@@ -524,7 +524,7 @@ cvRandArr( CvRNG* rng, CvArr* arr, int disttype, CvScalar param1, CvScalar param
 		{
 			for( i = 0; i < channels; i++ )
 				iparam[1][i]--;
-		
+
 			for( ; i < 12; i++ )
 			{
 				int t0 = iparam[0][i - channels];

@@ -36,9 +36,9 @@ typedef struct CValue {
 #endif // STAND_ALONE
 
 // Changes the structure alignment
-#ifndef	_H2INC  
+#ifndef	_H2INC
 #pragma pack( push, _pack_cncf_ )
-#pragma pack(2) 
+#pragma pack(2)
 #endif
 typedef short *				LPSHORT;
 
@@ -143,14 +143,14 @@ typedef struct OC {
 
 	WORD		ocMovements;			// Offset of the movements
 	WORD		ocAnimations; 			// Offset of the animations
-	WORD		ocVersion;				// For version versions > MOULI 
+	WORD		ocVersion;				// For version versions > MOULI
 	WORD		ocCounter;				// Pointer to COUNTER structure
 	WORD		ocData;					// Pointer to DATA structure
 	WORD		ocFree;
 	DWORD		ocOEFlags;				// New flags
 
 	WORD		ocQualifiers[OC_MAX_QUALIFIERS];	// Qualifier list
-	WORD		ocExtension;						// Extension structure 
+	WORD		ocExtension;						// Extension structure
 	WORD		ocValues;							// Values structure
 	WORD		ocStrings;							// String structure
 
@@ -159,8 +159,8 @@ typedef struct OC {
 	DWORD		ocIdentifier;			// Identifier d'objet
 
 	COLORREF	ocBackColor;			// Background color
-	DWORD		ocFadeIn;				// Offset fade in 
-	DWORD		ocFadeOut;				// Offset fade out 
+	DWORD		ocFadeIn;				// Offset fade in
+	DWORD		ocFadeOut;				// Offset fade out
 	DWORD		ocValueNames;			// For the debugger
 	DWORD		ocStringNames;
 
@@ -441,7 +441,7 @@ typedef struct tagEVG {
 	short	evgSize;				// 0 Size of the group (<=0)
 	BYTE	evgNCond;				// 2 Number of conditions
 	BYTE	evgNAct;				// 3 Number of actions
-	WORD	evgFlags;				// 4 Flags 
+	WORD	evgFlags;				// 4 Flags
 	short	evgInhibit;				// 6 If the group is inhibited
 	WORD	evgInhibitCpt;			// 8 Counter
 	WORD	evgIdentifier;			// 10 Unique identifier
@@ -480,32 +480,32 @@ typedef		eventGroup	*		LPEVG;
 #define		EVGFLAGS_LIMITED		(EVGFLAGS_SHUFFLE+EVGFLAGS_NOTALWAYS+EVGFLAGS_REPEAT+EVGFLAGS_NOMORE)
 #define		EVGFLAGS_DEFAULTMASK	(EVGFLAGS_BREAKPOINT+EVGFLAGS_GROUPED)
 //#define		EVGFLAGS_FADE			(EVGFLAGS_FADEIN|EVGFLAGS_FADEOUT)
-	
+
 
 // Condition ou action structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagEVTV1 {
-	short	evtSize;				
+	short	evtSize;
 	union
 	{
 		struct
 		{
-			short	evtCode;		
+			short	evtCode;
 		};
 		struct
 		{
-			char	evtType;		
-			char	evtNum;			
+			char	evtType;
+			char	evtNum;
 		};
 	};
-	OINUM	evtOi;					
-	short	evtOiList;				
-	char	evtFlags;				
-	char	evtFlags2;				
-	char	evtNParams;				
-	char		evtDefType;				
+	OINUM	evtOi;
+	short	evtOiList;
+	char	evtFlags;
+	char	evtFlags2;
+	char	evtNParams;
+	char		evtDefType;
 // For the conditions
-	short	evtIdentifier;	  		
+	short	evtIdentifier;
 	} eventV1;
 typedef	eventV1	*	LPEVTV1;
 
@@ -560,7 +560,7 @@ typedef	event	*	LPEVT;
 
 
 // For flags II
-// -------------					
+// -------------
 #define		EVFLAG2_NOT			0x0001
 #define		EVFLAG2_NOTABLE		0x0002
 #define		EVFLAGS_NOTABLE		(EVFLAG2_NOTABLE<<8)
@@ -570,13 +570,13 @@ typedef	event	*	LPEVT;
 #define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
 
 // MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)			
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
 #ifdef __cplusplus
-class eventParam { 
+class eventParam {
 public:
 #else
 typedef struct eventParam {
@@ -625,11 +625,11 @@ typedef	eventParam	*			fpevp;
 #define		EXPPARAM_FLAG			5
 #define		EXP_STOP				-1
 #define		OPERATOR_START			0x00000000
-#define		EXPL_END				0x00000000	
+#define		EXPL_END				0x00000000
 #define		EXPL_PLUS				0x00020000
 #define		EXPL_MOINS				0x00040000
 #define		EXPL_MULT				0x00060000
-#define		EXPL_DIV				0x00080000										 
+#define		EXPL_DIV				0x00080000
 #define		EXPL_MOD				0x000A0000
 #define		EXPL_POW				0x000C0000
 #define		EXPL_AND				0x000E0000
@@ -650,7 +650,7 @@ typedef struct tagEXP {
 		};
 	};
 	short	expSize;
-	union	
+	union
 	{
 		struct {
 			short	expOi;
@@ -702,11 +702,11 @@ typedef struct tagEXPV1 {
 		struct
 		{
 			char	expType;
-			char	expNum;	
+			char	expNum;
 		};
 	};
 	short	expSize;
-	union	
+	union
 	{
 		struct {
 			short	expOi;
@@ -758,7 +758,7 @@ typedef	expressionV1 *			LPEXPV1;
 
 // Information structure
 // ----------------------------------------------
-typedef struct tagEVO {								  
+typedef struct tagEVO {
 	short		evoConditions;	  	// Conditions
 	short		evoActions;			// Actions
 	short		evoExpressions;		// Expressions
@@ -797,7 +797,7 @@ typedef	eventInfosOffsets *		LPEVO;
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-// Flags 
+// Flags
 #define		OEFLAG_DISPLAYINFRONT		0x0001
 #define		OEFLAG_BACKGROUND			0x0002
 #define		OEFLAG_BACKSAVE				0x0004
@@ -1066,7 +1066,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	EXP_VIRGULE			((-3<<8)|255)
 #define	EXPL_VIRGULE		((-3<<16)|65535)
 
-// SPEAKER Conditions / Actions 
+// SPEAKER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #define		TYPE_SPEAKER	  		-2
 //(TYPE_SPEAKER&255)=254
@@ -1134,7 +1134,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	EXP_GETCHANNELFREQ		((11<<8)|254)
 
 
-// GAME Conditions / Actions 
+// GAME Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#define		TYPE_GAME		  		-3
 //(TYPE_GAME&255)=253
@@ -1218,7 +1218,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define EXP_FRAMEEFFECTPARAM	((18<<8)|253)
 
 
-// TIMER Conditions / Actions 
+// TIMER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_TIMEOUT			((-5<<8)|(OBJ_TIMER&255))
 #define	CND_EVERY			((-4<<8)|(OBJ_TIMER&255))
@@ -1269,7 +1269,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	EXP_MOUSEWHEELDELTA	((2<<8)|(OBJ_KEYBOARD&255))
 
 
-// PLAYERS Conditions / Actions 
+// PLAYERS Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_JOYPUSHED		((-6<<8)|(OBJ_PLAYER&255))
 #define	CND_NOMORELIVE		((-5<<8)|(OBJ_PLAYER&255))
@@ -1299,7 +1299,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	EXP_GETPLAYERNAME	((4<<8)|(OBJ_PLAYER&255))
 #define	NUM_JOYPRESSED		-4
 
-// CREATE Conditions / Actions 
+// CREATE Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_CHOOSEALLINLINE	((-23<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGRESET	((-22<<8)|(OBJ_CREATE&255))
@@ -1329,7 +1329,7 @@ typedef	eventInfosOffsets *		LPEVO;
 #define	NUM_START			-1
 
 #endif
-			
+
 // BALL Movements
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct	tagMB {
@@ -1345,7 +1345,7 @@ typedef	MoveBall * LPMOVEBALL;
 // MOUSE movement
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct	tagMM {
-	short		mmDx;	  				
+	short		mmDx;
 	short		mmFx;
 	short		mmDy;
 	short		mmFy;
@@ -1433,8 +1433,8 @@ typedef struct tagMA {
 typedef	MoveArray * LPMOVEARRAY;
 
 typedef struct tagMT {
-	WORD	mtNumber;				// Number of movement 
-	WORD	mtMinSpeed; 			// maxs and min speed in the movements 
+	WORD	mtNumber;				// Number of movement
+	WORD	mtMinSpeed; 			// maxs and min speed in the movements
 	WORD	mtMaxSpeed;
 	BYTE	mtLoop;					// Loop at end
 	BYTE	mtRepos;				// Reposition at end
@@ -1444,7 +1444,7 @@ typedef struct tagMT {
 	} MoveTaped;
 typedef	MoveTaped	* LPMOVETAPED;
 
-// PLATFORM mouvement 
+// PLATFORM mouvement
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct	tagMP {
 	WORD	mpSpeed;				// Max speed
@@ -1488,7 +1488,7 @@ typedef struct 	tagMV {
 	WORD	mvControl;				// Who controls the object
 	WORD	mvType;					// Type of movement
 	BYTE	mvMove;					// Move at start?
-	BYTE	mvFree0;		
+	BYTE	mvFree0;
 	BYTE	mvFree1;
 	BYTE	mvFree2;
 	DWORD	mvDirAtStart;
@@ -1505,7 +1505,7 @@ typedef struct 	tagMV {
 typedef	Movement	*	LPMOVEMENT;
 
 #ifndef IN_KPX
-			
+
 // COMMON CONDITIONS FOR NORMAL OBJECTS
 //////////////////////////////////////////
 #define	EVENTS_EXTBASE				80
@@ -1588,7 +1588,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define	ACT_EXTFORCEDIR				(18<<8)
 #define	ACT_EXTFORCESPEED			(19<<8)
 #define	ACTL_EXTFORCESPEED			(19<<16)
-#define	ACT_EXTRESTANIM				(20<<8)		 
+#define	ACT_EXTRESTANIM				(20<<8)
 #define	ACT_EXTRESTDIR				(21<<8)
 #define	ACT_EXTRESTSPEED			(22<<8)
 #define	ACT_EXTSETDIR				(23<<8)
@@ -1679,7 +1679,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define EXP_EXTVARBYINDEX			(30<<8)
 #define EXP_EXTVARSTRINGBYINDEX		(31<<8)
 
-// TEXT Conditions / Actions 
+// TEXT Conditions / Actions
 ////////////////////////////////////////////
 #define	ACT_STRDESTROY	  	 (( (EVENTS_EXTBASE+0)<<8)|3)
 #define	ACT_STRDISPLAY		 (( (EVENTS_EXTBASE+1)<<8)|3)
@@ -1696,7 +1696,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define	EXP_STRGETNUMERIC	 (( (EVENTS_EXTBASE+3)<<8)|3)
 #define EXP_STRGETNPARA		 (( (EVENTS_EXTBASE+4)<<8)|3)
 
-// SPRITES Conditions / Actions 
+// SPRITES Conditions / Actions
 /////////////////////////////////////////////
 #define	CND_SPRCLICK			(((-EVENTS_EXTBASE-1)<<8)|2)
 #define	ACT_SPRPASTE		(((EVENTS_EXTBASE+0)<<8)|2)
@@ -1715,7 +1715,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define EXP_GETSCALEY		(((EVENTS_EXTBASE+2)<<8)|2)
 #define EXP_GETANGLE		(((EVENTS_EXTBASE+3)<<8)|2)
 
-// COUNTERS Conditions / Actions 
+// COUNTERS Conditions / Actions
 //////////////////////////////////////////////
 #define	CND_CCOUNTER			(((-EVENTS_EXTBASE-1)<<8)|7)
 #define	ACT_CSETVALUE		(( (EVENTS_EXTBASE+0)<<8)|7)
@@ -1731,7 +1731,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define	EXP_CGETCOLOR1		(( (EVENTS_EXTBASE+3)<<8)|7)
 #define	EXP_CGETCOLOR2		(( (EVENTS_EXTBASE+4)<<8)|7)
 
-// QUESTIONS Conditions / Actions 
+// QUESTIONS Conditions / Actions
 ///////////////////////////////////////////////
 #define	CND_QEQUAL			(((-EVENTS_EXTBASE-3)<<8)|4)
 #define	CNDL_QEQUAL			(((-EVENTS_EXTBASE-3)<<16)|4)
@@ -1742,7 +1742,7 @@ typedef	Movement	*	LPMOVEMENT;
 #define	ACT_QASK			(( (EVENTS_EXTBASE+0)<<8)|4)
 
 
-// Formatted text Conditions / actions / expressions 
+// Formatted text Conditions / actions / expressions
 //////////////////////////////////////////////////////////////////
 #define	ACT_RTFSETXPOS					(((EVENTS_EXTBASE+0)<<8)|(OBJ_RTF&0x00FF))
 #define	ACT_RTFSETYPOS					(((EVENTS_EXTBASE+1)<<8)|(OBJ_RTF&0x00FF))
@@ -1847,7 +1847,7 @@ typedef	Movement	*	LPMOVEMENT;
 
 // -------------------------------- Objects
 // W-Offset list OI
-// W-Number 
+// W-Number
 // W-TYPE *** Version > FVERSION_NEWOBJECTS
 #define		PARAM_OBJECT			1
 #define		PS_OBJ					6
@@ -1915,7 +1915,7 @@ typedef		SoundParamW *		LPSNDW;
 #endif
 
 
-// POSITION PARAM Structure 
+// POSITION PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagPPA {
 	short		posOINUMParent;			//0
@@ -1931,13 +1931,13 @@ typedef struct tagPPA {
 	} PositionParam;
 typedef	PositionParam *			 	LPPOS;
 
-// CREATE PARAM Structure 
+// CREATE PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagCDP {
 	PositionParam	cdpPos;			// Position structure
 	HFII			cdpHFII;		// FrameItemInstance number
 	OINUM			cdpOi;			// OI of the object to create
-//	DWORD  			cdpFII;			
+//	DWORD  			cdpFII;
 	DWORD			cdpFree;
 	} CreateDuplicateParam;
 typedef	CreateDuplicateParam * 		LPCDP;
@@ -1996,7 +1996,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_POSITION	  		16
 #define		PS_POS						sizeof(PositionParam)
 
-// -------------------------------- Joystick Direcion 
+// -------------------------------- Joystick Direcion
 // W- Direction
 #define		PARAM_JOYDIRECTION 		17
 #define		PS_JOY						2
@@ -2006,10 +2006,10 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_SHOOT				18
 #define		PS_SHT						sizeof(ShootParam)
 
-// -------------------------------- Playfield Zone 
+// -------------------------------- Playfield Zone
 #define		PARAM_ZONE				19
 #define		PS_ZNE					8
-					 
+
 // -------------------------------- System object position
 // W- Direction
 #define		PARAM_SYSCREATE				21
@@ -2026,7 +2026,7 @@ typedef	ShootParam 	* 					LPSHT;
 // W1- 0 (au moins!)
 #define		PARAM_COMPARAISON			23
 
-// -------------------------------- Text color 
+// -------------------------------- Text color
 // L0- RGB
 // L0- Identificateur!
 #define		PARAM_COLOUR				24
@@ -2037,7 +2037,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_BUFFER4				25
 #define		PS_BU4  					4
 
-// -------------------------------- Storyboard frame number 
+// -------------------------------- Storyboard frame number
 // W0-
 #define		PARAM_FRAME					26
 #define		PS_FRA  					2
@@ -2045,7 +2045,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- Number of loops for a sample
 #define		PARAM_SAMLOOP				27
 #define		PS_SLOOP				2
-// -------------------------------- Number of loops for a music 
+// -------------------------------- Number of loops for a music
 #define		PARAM_MUSLOOP				28
 #define		PS_MLOOP				2
 // -------------------------------- Direction
@@ -2069,13 +2069,13 @@ typedef struct tagPRGA {
 	char	prgPath[_MAX_PATH];		// Name of the program
 	char	prgCommand[108];		// Command line
 	} prgParamA;
-typedef		prgParamA *			LPPRGA;	
+typedef		prgParamA *			LPPRGA;
 typedef struct tagPRGW {
 	short	prgFlags;				// Default flags
 	WCHAR	prgPath[_MAX_PATH];		// Name of the program
 	WCHAR	prgCommand[108];		// Command line
 	} prgParamW;
-typedef		prgParamW *			LPPRGW;	
+typedef		prgParamW *			LPPRGW;
 #define PS_PRGA sizeof(prgParamA)
 #define PS_PRGW sizeof(prgParamW)
 #ifdef _UNICODE
@@ -2088,10 +2088,10 @@ typedef		prgParamW *			LPPRGW;
 #define LPPRG LPPRGA
 #endif
 
-#define		PRGFLAGS_WAIT			0x0001													
+#define		PRGFLAGS_WAIT			0x0001
 #define		PRGFLAGS_HIDE			0x0002
 
-// -------------------------------- Global variable number 
+// -------------------------------- Global variable number
 #define		OLDPARAM_VARGLO			34
 //#define		PS_VGLO					4
 
@@ -2110,23 +2110,23 @@ typedef		prgParamW *			LPPRGW;
 // -------------------------------- Event editor remark
 #define		PARAM_REMARK			37
 typedef struct tagREMA {
-	LOGFONTV1A	remLogFont;				// Font 
+	LOGFONTV1A	remLogFont;				// Font
 	COLORREF	remColorFont;			// Text color
 	COLORREF	remColorBack;			// Background color
 	short		remAlign;				// Alignement flags
 	WORD		remTextId;				// Text number in the buffer
 	char		remStyle[40];			// Style
 	} paramRemarkA;
-typedef		paramRemarkA*		LPRMKA;	
+typedef		paramRemarkA*		LPRMKA;
 typedef struct tagREMW {
-	LOGFONTV1W	remLogFont;				// Font 
+	LOGFONTV1W	remLogFont;				// Font
 	COLORREF	remColorFont;			// Text color
 	COLORREF	remColorBack;			// Background color
 	short		remAlign;				// Alignement flags
 	WORD		remTextId;				// Text number in the buffer
 	WCHAR		remStyle[40];			// Style
 	} paramRemarkW;
-typedef		paramRemarkW*		LPRMKW;	
+typedef		paramRemarkW*		LPRMKW;
 #ifdef _UNICODE
 #define PS_REM sizeof(paramRemarkW)
 #define LPRMK LPRMKW
@@ -2143,7 +2143,7 @@ typedef struct tagGRPW {
 	short		grpFlags;					// Active / Unactive?
 	short		grpId;						// Group identifier
 	WCHAR		grpTitle[GROUP_MAXTITLE];	// Title
-	WCHAR		grpPassword[GROUP_MAXPASSWORD];		// Protection 
+	WCHAR		grpPassword[GROUP_MAXPASSWORD];		// Protection
 	DWORD		grpChecksum;				// Checksum
 	} paramGroupW;
 typedef paramGroupW* LPGRPW;
@@ -2151,13 +2151,13 @@ typedef struct tagGRPA {
 	short		grpFlags;					// Active / Unactive?
 	short		grpId;						// Group identifier
 	char		grpTitle[GROUP_MAXTITLE];	// Title
-	char		grpPassword[GROUP_MAXPASSWORD];		// Protection 
+	char		grpPassword[GROUP_MAXPASSWORD];		// Protection
 	DWORD		grpChecksum;				// Checksum
 	} paramGroupA;
 typedef paramGroupA* LPGRPA;
 typedef struct tagOLDGRP {
-	short		grpFlags;					
-	short		grpId;					
+	short		grpFlags;
+	short		grpId;
 	char		grpTitle[GROUP_MAXTITLE];
 	} paramGroupV0;
 #define PS_GRPA sizeof(paramGroupA)
@@ -2185,7 +2185,7 @@ typedef struct tagGRPLIST {
 	DWORD		glEvg;
 	short		glId;
 	} groupList;
-typedef		groupList *		LPGL;	
+typedef		groupList *		LPGL;
 
 // -------------------------------- A pointer to a group
 #define		PARAM_GROUPOINTER		39
@@ -2263,7 +2263,7 @@ typedef		groupList *		LPGL;
 // -------------------------------- Extensions parameters
 #define		PARAM_EXTENSION			55
 #define		PARAM_EXTMAXSIZE		512
-typedef struct 
+typedef struct
 {
 	short pextSize;
 	short pextType;
@@ -2310,7 +2310,7 @@ typedef		MvtParamW *			LPMVTPW;
 typedef struct tagPRG2 {
 	short	prgFlags;				// Default flags
 	} prgParam2;
-typedef		prgParam2 *			LPPRG2;	
+typedef		prgParam2 *			LPPRG2;
 #define		PS_PRG2					sizeof(prgParam2)
 
 // -------------------------------- Alterable strings
@@ -2498,24 +2498,24 @@ enum
 	DB_FLAG30,
 	DB_FLAG31
 };
-enum 
+enum
 {
 	DB_COUNTERVALUE,
 	DB_COUNTERMIN,
 	DB_COUNTERMAX
-};	
-enum 
+};
+enum
 {
 	DB_SCOREVALUE
-};	
-enum 
+};
+enum
 {
 	DB_LIVESVALUE
-};	
-enum 
+};
+enum
 {
 	DB_TEXTVALUE
-};	
+};
 
 #define GETDBPARAMTYPE(a)		((a&0xFF000000)>>24)
 #define GETDBPARAMID(a)			((a&0x00FFFF00)>>8)
@@ -2585,29 +2585,29 @@ typedef struct tagRH2 {
 	BYTE 		rh2ActionOn;				// Flag are we in actions?
 	BYTE		rh2EnablePick;  			// Are we in pick for actions?
 
-	int		  	rh2EventCount;				// Number of the event 
+	int		  	rh2EventCount;				// Number of the event
 	qualToOi*	rh2EventQualPos;			// ***Position in event objects
 	headerObject* rh2EventPos;				// ***Position in event objects
-	objInfoList* rh2EventPosOiList; 		// ***Position in oilist for TYPE exploration 
+	objInfoList* rh2EventPosOiList; 		// ***Position in oilist for TYPE exploration
 	objInfoList* rh2EventPrev;				// ***Previous object address
 
 	pev*		rh2PushedEvents;			// ***
 	LPBYTE		rh2PushedEventsTop;			// ***
 	LPBYTE		rh2PushedEventsMax;			// ***
-	int	  		rh2NewPushedEvents;			// 
+	int	  		rh2NewPushedEvents;			//
 
 	int		  	rh2ActionCount;				// Action counter
 	int		  	rh2ActionLoopCount;	  		// Action loops counter
 	ACTIONENDROUTINE rh2ActionEndRoutine;	// End of action routine
 	WORD	  	rh2CreationCount;			// Number of objects created since beginning of frame
-	short		rh2EventType;					
+	short		rh2EventType;
 	POINT 		rh2Mouse;					// Mouse coordinate
 	POINT 		rh2MouseClient;				// Mouse coordinates in the window
 	short	  	rh2CurrentClick;			// For click events II
-	short		rh2Free2;					
+	short		rh2Free2;
 	headerObject** rh2ShuffleBuffer;		// ***
 	headerObject** rh2ShufflePos;			// ***
-	int		  	rh2ShuffleNumber;			
+	int		  	rh2ShuffleNumber;
 
 	POINT		rh2MouseSave;				// Mouse saving when pause
 	int		  	rh2PauseCompteur;
@@ -2641,7 +2641,7 @@ typedef struct tagRH3 {
 	int 		rh3WindowSx;					// Window size
 	int 		rh3WindowSy;
 
-	short	  	rh3CollisionCount;			// Collision counter 
+	short	  	rh3CollisionCount;			// Collision counter
 	char		rh3DoStop;					// Force the test of stop actions
 	char		rh3Scrolling;				// Flag: we need to scroll
 
@@ -2663,7 +2663,7 @@ typedef struct tagRH3 {
 
 	} runHeader3;
 
-// Extensions 
+// Extensions
 // ~~~~~~~~~~~~~~~~~~~~
 #define		KPX_MAXNUMBER					96
 typedef struct tagKPXMSG {
@@ -2752,8 +2752,8 @@ typedef struct tagRH4 {
 	short		rh4Free;
 	kpxMsg		rh4KpxWindowProc[KPX_MAXNUMBER];		// Message handle routines
 	kpxLib		rh4KpxFunctions[KPX_MAXFUNCTIONS];		// Available internal routines
-	CALLANIMATIONS	rh4Animations;						
-	CALLDIRATSTART	rh4DirAtStart;						
+	CALLANIMATIONS	rh4Animations;
+	CALLDIRATSTART	rh4DirAtStart;
 	CALLMOVEIT		rh4MoveIt;
 	CALLAPPROACHOBJECT rh4ApproachObject;
 	CALLCOLLISIONS rh4Collisions;
@@ -2798,7 +2798,7 @@ typedef struct tagRH4 {
 	CValue		rh4ExpValue1;							// New V2
 	CValue		rh4ExpValue2;
 
-	long		rh4KpxReturn;				// WindowProc return 
+	long		rh4KpxReturn;				// WindowProc return
 	LPOBL		rh4ObjectCurCreate;
 	short		rh4ObjectAddCreate;
 	WORD		rh4Free10;					// For step through : fake key pressed
@@ -2827,23 +2827,23 @@ typedef struct tagRH4 {
 	short 		rh4_2ndObjectNumber;		// Number for collisions
 	short		rh4FirstQuickDisplay;		// Quick-display object list
 	int			rh4WindowDeltaX;			// For scrolling
-	int			rh4WindowDeltaY;				
+	int			rh4WindowDeltaY;
 	UINT		rh4TimeOut;					// For time-out!
 	int			rh4MouseXCenter;			// To correct CROSOFT bugs!
 	int			rh4MouseYCenter;			// To correct CROSOFT bugs!
 	int			rh4TabCounter;				// Objects with tabulation
-	
+
 	DWORD		rh4AtomNum;					// For child window handling
 	DWORD		rh4AtomRd;
 	DWORD		rh4AtomProc;
 	short		rh4SubProcCounter;			// To accelerate the windows
 	short		rh4Free3;
-	
+
 	int			rh4PosPile;								// Expression evaluation pile position
 	expression*	rh4ExpToken;							// Current position in expressions
 	CValue*		rh4Results[MAX_INTERMEDIATERESULTS];	// Result pile
 	long		rh4Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
-	
+
 	LPTSTR*		rh4PTempStrings;						// Debut zone 256 long
 	int			rh4MaxTempStrings;
 	long		rh4Free4[256-2];						// Free buffer
@@ -2851,7 +2851,7 @@ typedef struct tagRH4 {
 	int			rh4NCurTempString;						// Pointer on the current string
 	DWORD		rh4FrameRateArray[MAX_FRAMERATE];		// Framerate calculation buffer
 	int			rh4FrameRatePos;						// Position in buffer
-	DWORD		rh4FrameRatePrevious;					// Previous time 
+	DWORD		rh4FrameRatePrevious;					// Previous time
 
 	} runHeader4;
 
@@ -2896,10 +2896,10 @@ typedef struct RunHeader {
 // Buffers
 	int			rhNObjects;
 	int			rhMaxObjects;
-	
-	DWORD		rhFree0;				
-	DWORD		rhFree1;				
-	DWORD		rhFree2;					
+
+	DWORD		rhFree0;
+	DWORD		rhFree1;
+	DWORD		rhFree2;
 	DWORD		rhFree3;
 
 	int 		rhNumberOi;					// Number of OI in the list
@@ -2913,7 +2913,7 @@ typedef struct RunHeader {
 	OINUM*		rhLimitLists;				// Movement limitation list
 	qualToOi*	rhQualToOiList;				// Conversion qualifier->oilist
 
-	DWORD		rhSBuffers;					// Buffer size /1024	
+	DWORD		rhSBuffers;					// Buffer size /1024
 	LPBYTE		rhBuffer;					// Position in current buffer
 	LPBYTE		rhFBuffer;					// End of current buffer
 	LPBYTE		rhBuffer1;					// First buffer
@@ -2928,7 +2928,7 @@ typedef struct RunHeader {
 	UINT		rhVBLObjet;					// For the objects
 	UINT		rhVBLOld;					// For the counter
 
-	int			rhEventsSize;						
+	int			rhEventsSize;
 	WORD		rhMT_VBLStep;				// Path movement variables
 	WORD 		rhMT_VBLCount;
 	DWORD		rhMT_MoveStep;
@@ -2950,7 +2950,7 @@ typedef struct RunHeader {
 	short 		rhObListNext;				// Branch label
 
 	short		rhDestroyPos;
-	long		rhFree5;				
+	long		rhFree5;
 	long		rhFree6;
 
 	runHeader2	rh2;						// Sub-structure #1
@@ -2963,7 +2963,7 @@ typedef struct RunHeader {
 	char		rhFree13[DB_BUFFERSIZE];		// Buffer libre!
 	LPVOID		rhDbOldHO;
 	WORD		rhDbOldId;
-	WORD		rhFree7;					
+	WORD		rhFree7;
 
 	objectsList*	rhObjectList;			// Object list address
 
@@ -2996,7 +2996,7 @@ typedef struct headerObject {
 	int		hoSize;						// Structure size
 	LPRH	hoAdRunHeader;				// Run-header address
 #ifdef __cplusplus
-	headerObject* hoAddress;			
+	headerObject* hoAddress;
 #else
 	LPVOID	hoAddress;
 #endif
@@ -3029,7 +3029,7 @@ typedef struct headerObject {
 			int  	hoCalculY;					// Low weight value
 			int  	hoY;						// Y coordinate
 		};
-	struct	
+	struct
 		{
 			__int64 hoCalculXLong;
 			__int64 hoCalculYLong;
@@ -3040,11 +3040,11 @@ typedef struct headerObject {
 	int		hoImgWidth;					// Width of the current picture
 	int		hoImgHeight;
 	RECT	hoRect;						// Display rectangle
-	
+
 	DWORD	hoOEFlags;					// Objects flags
 	short	hoFlags;					// Flags
 	BYTE	hoSelectedInOR;				// Selection lors d'un evenement OR
-	BYTE	hoFree;						// Alignement 
+	BYTE	hoFree;						// Alignement
 	int		hoOffsetValue;				// Values structure offset
 	UINT	hoLayer;					// Layer
 
@@ -3055,7 +3055,7 @@ typedef struct headerObject {
 	short	hoLimitFlags;				// Collision limitation flags
 	short	hoNextQuickDisplay;			// Quickdraw list
 	saveRect hoBackSave;				// Background
-	
+
 	LPEVP	hoCurrentParam;				// Address of the current parameter
 
 	int		hoOffsetToWindows;			// Offset to windows
@@ -3085,16 +3085,16 @@ typedef	headerObject*	LPHO;
 typedef struct tagRM {
 
 	int  	rmAcc;						// Current acceleration
-	int  	rmDec;						// Current Decelaration 
+	int  	rmDec;						// Current Decelaration
 	int		rmCollisionCount;			// Collision counter
 	int		rmFree2;
 	int  	rmStopSpeed;				// If stopped: speed to take again
-	int  	rmFree0;					
-	int  	rmFree1;					
+	int  	rmFree0;
+	int  	rmFree1;
 	int  	rmAccValue;					// Acceleration calculation
 	int  	rmDecValue;					// Deceleration calculation
 	short	rmEventFlags;				// To accelerate events
-	int  	rmFree3;	
+	int  	rmFree3;
 	int  	rmFree4;
 	BOOL	rmFree5;
 	BOOL	rmFree6;
@@ -3108,13 +3108,13 @@ typedef struct tagRM {
 	BOOL  	rmBouncing;					// Bouncing?
 	int		rmMvtNum;					// Number of the current movement
 
-	union	
+	union
 	{
 	struct
 		{
 		BYTE 	rmMvData[80];			// Space for data
 		};
-	struct	
+	struct
 		{
 		int		MT_Speed;
 		int	 	MT_Sinus;
@@ -3142,7 +3142,7 @@ typedef struct tagRM {
 		int	 	MM_FYMouse;
 		int	 	MM_Stopped;
 		int	 	MM_OldSpeed;
-		};	
+		};
 	struct
 		{
 		int	 	MG_Bounce;
@@ -3265,7 +3265,7 @@ typedef rSpr *	LPRSP;
 #define			RSFLAG_HIDDEN			0x0001
 #define			RSFLAG_INACTIVE			0x0002
 #define			RSFLAG_SLEEPING			0x0004
-#define			RSFLAG_SCALE_RESAMPLE	0x0008	
+#define			RSFLAG_SCALE_RESAMPLE	0x0008
 #define			RSFLAG_ROTATE_ANTIA		0x0010
 #define			RSFLAG_VISIBLE			0x0020
 #define			RSFLAG_CREATEDEFFECT	0x0040
@@ -3282,10 +3282,10 @@ typedef struct tagRV {
 	LPTSTR	rvStrings[STRINGS_NUMBEROF_ALTERABLE];
 	} rVal;
 typedef rVal *	LPRVAL;
-	
+
 /*
 	Obsolete (build 242 or below) - Note: don't remove this (for the SDK)
-  
+
 typedef struct tagRV {
 	long	rvValues[VALUES_NUMBEROF_ALTERABLE];
 	long	rvValueFlags;
@@ -3314,7 +3314,7 @@ typedef struct tagRCOM {
 	fpSpr  	rcSprite;					// Sprite ID if defined
 	int	 	rcAnim;						// Wanted animation
 	int			rcImage;					// Current frame
-	float	rcScaleX;					
+	float	rcScaleX;
 	float	rcScaleY;
 	int		rcAngle;
 	int			rcDir;						// Current direction
@@ -3338,18 +3338,18 @@ typedef struct tagRCOM {
 	long	rcFadeOut;
 
 	} rCom;
-	
-	
+
+
 // ------------------------------------------------------------
 // ACTIVE OBJECTS DATAZONE
 // ------------------------------------------------------------
 typedef struct tagRO {
 
-	headerObject 	roHo;		  		// Common structure 
+	headerObject 	roHo;		  		// Common structure
 
 	rCom			roc;				// Anim/movement structure
-	rMvt			rom;				// Movement structure 
-	rAni			roa;				// Animation structure 
+	rMvt			rom;				// Movement structure
+	rAni			roa;				// Animation structure
 	rSpr			ros;				// Sprite handling structure
 	rVal			rov;				// Values structure
 
@@ -3394,7 +3394,7 @@ typedef	struct	tagRs {
 	rCom			rsc;				// Anims / movements / sprites structures
 	rMvt			rom;				// Mouvement structure
 	rSpr			rss;				// Sprite handling
-	
+
 	short			rsPlayer;			// Number of the player if score or lives
 	short			rsFlags;			// Type + flags
 
@@ -3408,15 +3408,15 @@ typedef	struct	tagRs {
 	};
 	union
 	{
-		long			rsMaxi;				// 
+		long			rsMaxi;				//
 		long			rsLevel;
 	};
 	CValue			rsValue;
 	LONG			rsBoxCx;			// Dimensions box (for lives, counters, texts)
-	LONG			rsBoxCy;			
-	double			rsMiniDouble;		
+	LONG			rsBoxCy;
+	double			rsMiniDouble;
 	double			rsMaxiDouble;
-	short			rsOldFrame;			// Counter only 
+	short			rsOldFrame;			// Counter only
 	BYTE			rsHidden;
 	BYTE			rsFree;
 	LPTSTR			rsTextBuffer;		// Text buffer
@@ -3469,7 +3469,7 @@ typedef struct objInfoList {
 	HFII		oilHFII;				 // First available frameitem
 	COLORREF 	oilBackColor;			 // Background erasing color
 	short		oilQualifiers[MAX_QUALIFIERS];		// Qualifiers for this object
-	TCHAR		oilName[24];	 		 // Name	
+	TCHAR		oilName[24];	 		 // Name
 	int			oilEventCountOR;		 // Selection in a list of events with OR
 #ifdef HWABETA
 	OINUM*		oilColList;				// Liste de collisions sprites
@@ -3572,7 +3572,7 @@ typedef struct kpxRunInfos {
 	WORD	editDataSize;				// 12 Size of the data zone when exploded
 	DWORD	editFlags;					// 14 Object flags
 	char	windowProcPriority;			// 16 Priority of the routine 0-255
-	char	free;						
+	char	free;
 	short	editPrefs;					// 18 Preferences d'edition
 	long	identifier;					// 1A Chaine d'identification
 	short	version;					// 1E Version courante
@@ -3622,24 +3622,24 @@ public:
 #undef kpj
 typedef struct kpj {
 #endif
-	CREATERUNOBJECT_PROC			CreateRunObject;	
-	DESTROYRUNOBJECT_PROC			DestroyRunObject;	
-	HANDLERUNOBJECT_PROC			HandleRunObject;	
-	DISPLAYRUNOBJECT_PROC			DisplayRunObject;	
-	GETRUNOBJECTSURFACE_PROC		GetRunObjectSurface;	
-	REINITRUNOBJECT_PROC			ReInitRunObject;	
-	PAUSERUNOBJECT_PROC				PauseRunObject;	 
-	CONTINUERUNOBJECT_PROC			ContinueRunObject;  
-	PREPARETOSAVE_PROC				PrepareToSave;	  
-	PREPARETOSAVE_PROC				PrepareToSave2; 	
+	CREATERUNOBJECT_PROC			CreateRunObject;
+	DESTROYRUNOBJECT_PROC			DestroyRunObject;
+	HANDLERUNOBJECT_PROC			HandleRunObject;
+	DISPLAYRUNOBJECT_PROC			DisplayRunObject;
+	GETRUNOBJECTSURFACE_PROC		GetRunObjectSurface;
+	REINITRUNOBJECT_PROC			ReInitRunObject;
+	PAUSERUNOBJECT_PROC				PauseRunObject;
+	CONTINUERUNOBJECT_PROC			ContinueRunObject;
+	PREPARETOSAVE_PROC				PrepareToSave;
+	PREPARETOSAVE_PROC				PrepareToSave2;
 	GETRUNDATASIZE_PROC				GetRunObjectDataSize;
-	SAVEBACKGROUND_PROC				SaveBackground;		
-	RESTOREBACKGROUND_PROC			RestoreBackground;	
-	CHANGERUNDATA_PROC				ChangeRunData;		
-	KILLBACKGROUND_PROC				KillBackground;		
-	GETZONEINFO_PROC				GetZoneInfo;		
-	GETDEBUGTREE_PROC				GetDebugTree;		
-	GETDEBUGITEM_PROC				GetDebugItem;		
+	SAVEBACKGROUND_PROC				SaveBackground;
+	RESTOREBACKGROUND_PROC			RestoreBackground;
+	CHANGERUNDATA_PROC				ChangeRunData;
+	KILLBACKGROUND_PROC				KillBackground;
+	GETZONEINFO_PROC				GetZoneInfo;
+	GETDEBUGTREE_PROC				GetDebugTree;
+	GETDEBUGITEM_PROC				GetDebugItem;
 	EDITDEBUGITEM_PROC				EditDebugItem;
 	GETRUNOBJECTFONT_PROC			GetRunObjectFont;
 	SETRUNOBJECTFONT_PROC			SetRunObjectFont;
@@ -3651,8 +3651,8 @@ typedef struct kpj {
 	LOADRUNOBJECT_PROC				LoadRunObject;
 	GETRUNOBJECTMEMORYUSAGE_PROC	GetRunObjectMemoryUsage;
 
-	kpxRunInfos	infos;	
-	
+	kpxRunInfos	infos;
+
 #ifdef __cplusplus
 };
 #else
@@ -3723,7 +3723,7 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 
 	#define OINUM_ERROR				-1
 	#define B2L(a,b,c,d)	((DWORD)(((DWORD)((unsigned char)(d))<<24)|((DWORD)((unsigned char)(c))<<16)|((DWORD)((unsigned char)(b))<<8)|(DWORD)((unsigned char)(a))))
-	
+
 	// Pour la routine GetFileInfos
 	#define	FILEINFO_DRIVE			1
 	#define	FILEINFO_DIR			2
@@ -3736,7 +3736,7 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 	// MACRO: returns first param
 	#define		EVTPARAMS(p) 			((LPEVP)(p->evtCode<0 ? (LPBYTE)p+CND_SIZE : (LPBYTE)p+ACT_SIZE ))
 	// MACRO: returns the extension condition code
-	#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)			
+	#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 	#define		EXTACTIONNUM(i)			((short)(i>>16))
 
 	#define			KPXNAME_SIZE				60
@@ -3853,7 +3853,7 @@ typedef void (*CALLOPERATOR_ROUTINE)();
 #endif;
 
 // Restores structure alignment...
-#ifndef	  _H2INC 
+#ifndef	  _H2INC
 #pragma pack( pop, _pack_cncf_ )
 #endif
 

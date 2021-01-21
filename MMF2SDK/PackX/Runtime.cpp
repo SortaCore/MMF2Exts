@@ -3,7 +3,7 @@
 // This file contains routines that are handled during the Runtime.
 //
 // Including creating, display, and handling your object.
-// 
+//
 // ============================================================================
 
 // Common Include
@@ -13,7 +13,7 @@
 // GetRunObjectDataSize
 // --------------------
 // Returns the size of the runtime datazone of the object
-// 
+//
 ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 {
 	return(sizeof(RUNDATA));
@@ -24,7 +24,7 @@ ushort WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 // CreateRunObject
 // ---------------
 // The routine where the object is actually created
-// 
+//
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
 {
 /*
@@ -45,7 +45,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 // DestroyRunObject
 // ----------------
 // Destroys the run-time object
-// 
+//
 short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 {
 /*
@@ -62,11 +62,11 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 // HandleRunObject
 // ----------------
 // Called (if you want) each loop, this routine makes the object live
-// 
+//
 short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 {
 /*
-	If your extension will draw to the MMF window you should first 
+	If your extension will draw to the MMF window you should first
 	check if anything about its display has changed :
 
 		if (rdPtr->roc.rcChanged)
@@ -74,10 +74,10 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 		else
 		  return 0;
 
-	You will also need to make sure you change this flag yourself 
+	You will also need to make sure you change this flag yourself
 	to 1 whenever you want to redraw your object
- 
-	If your extension won't draw to the window, but it still needs 
+
+	If your extension won't draw to the window, but it still needs
 	to do something every MMF loop use :
 
 		return 0;
@@ -93,7 +93,7 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 
 	At the end of the loop this code will run
 */
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG_ONESHOT;
 }
 
@@ -101,7 +101,7 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 // DisplayRunObject
 // ----------------
 // Draw the object in the application screen.
-// 
+//
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 /*
@@ -116,7 +116,7 @@ short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 // PauseRunObject
 // ----------------
 // Enters the pause mode
-// 
+//
 short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
 {
 	// Ok
@@ -128,7 +128,7 @@ short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
 // ContinueRunObject
 // -----------------
 // Quits the pause mode
-// 
+//
 short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 {
 	// Ok
@@ -140,7 +140,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // Start/End App/Frame
 // -------------------
 // Useful for storing global data
-// 
+//
 #ifdef MMF15EXT
 
 void WINAPI DLLExport StartApp(mv _far *knpV, DWORD dwReserved)

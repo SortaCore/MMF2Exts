@@ -110,7 +110,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 		EDITDATASize = infoPtr->EDITDATASize;
 #endif // NOPROPS
 	}
-	
+
 	//+(GetPropertyChbx(edPtr, CurLang["Properties"].u.object.length+1)-&edPtr);
 
 	infoPtr->WindowProcPriority = Extension::WindowProcPriority;
@@ -119,9 +119,9 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->EditPrefs = Extension::OEPREFS;
 
 	memcpy(&infoPtr->Identifier, ::SDK->json["Identifier"], 4);
-	
+
 	infoPtr->Version = Extension::Version;
-	
+
 	return TRUE;
 }
 
@@ -165,7 +165,7 @@ std::int16_t FusionAPI CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, Create
 
 	rdPtr->pExtension = new Extension(rdPtr, edPtr, cobPtr);
 	rdPtr->pExtension->Runtime.ObjectSelection.pExtension = rdPtr->pExtension;
-	
+
 	return 0;
 }
 

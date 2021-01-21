@@ -46,7 +46,7 @@
 
 typedef int CVStatus;
 
-/* this part of CVStatus is compatible with IPLStatus 
+/* this part of CVStatus is compatible with IPLStatus
   Some of below symbols are not [yet] used in OpenCV
 */
 #define CV_StsOk					0  /* everithing is ok				*/
@@ -91,8 +91,8 @@ typedef int CVStatus;
 #define CV_StsInplaceNotSupported	-203 /* in-place operation is not supported */
 #define CV_StsObjectNotFound		 -204 /* request can't be completed */
 #define CV_StsUnmatchedFormats		-205 /* formats of input/output arrays differ */
-#define CV_StsBadFlag				-206 /* flag is wrong or not supported */  
-#define CV_StsBadPoint				-207 /* bad CvPoint */ 
+#define CV_StsBadFlag				-206 /* flag is wrong or not supported */
+#define CV_StsBadPoint				-207 /* bad CvPoint */
 #define CV_StsBadMask				-208 /* bad format of mask (neither 8uC1 nor 8sC1)*/
 #define CV_StsUnmatchedSizes		 -209 /* sizes of input/output structures do not match */
 #define CV_StsUnsupportedFormat	  -210 /* the data format/type is not supported by the function*/
@@ -119,7 +119,7 @@ typedef int CVStatus;
 #define OPENCV_CALL( Func )										 \
 {																	\
 	Func;															\
-} 
+}
 
 
 /**************************** OpenCV-style error handling *******************************/
@@ -128,7 +128,7 @@ typedef int CVStatus;
 #ifdef CV_NO_FUNC_NAMES
 	#define CV_FUNCNAME( Name )
 	#define cvFuncName ""
-#else	
+#else
 	#define CV_FUNCNAME( Name )  \
 	static char cvFuncName[] = Name
 #endif

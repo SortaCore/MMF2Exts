@@ -152,7 +152,7 @@ cvClipLine( CvSize img_size, CvPoint* pt1, CvPoint* pt2 )
 }
 
 
-/* 
+/*
 	Initializes line iterator.
 	Returns number of points on the line or negative number if error.
 */
@@ -162,11 +162,11 @@ cvInitLineIterator( const CvArr* img, CvPoint pt1, CvPoint pt2,
 					int left_to_right )
 {
 	int count = -1;
-	
+
 	CV_FUNCNAME( "cvInitLineIterator" );
 
 	__BEGIN__;
-	
+
 	CvMat stub, *mat = (CvMat*)img;
 	int dx, dy, s;
 	int bt_pix, bt_pix0, step;
@@ -214,7 +214,7 @@ cvInitLineIterator( const CvArr* img, CvPoint pt1, CvPoint pt2,
 	step = (step ^ s) - s;
 
 	s = dy > dx ? -1 : 0;
-	
+
 	/* conditional swaps */
 	dx ^= dy & s;
 	dy ^= dx & s;
@@ -227,7 +227,7 @@ cvInitLineIterator( const CvArr* img, CvPoint pt1, CvPoint pt2,
 	if( connectivity == 8 )
 	{
 		assert( dx >= 0 && dy >= 0 );
-		
+
 		iterator->err = dx - (dy + dy);
 		iterator->plus_delta = dx + dx;
 		iterator->minus_delta = -(dy + dy);
@@ -238,7 +238,7 @@ cvInitLineIterator( const CvArr* img, CvPoint pt1, CvPoint pt2,
 	else /* connectivity == 4 */
 	{
 		assert( dx >= 0 && dy >= 0 );
-		
+
 		iterator->err = 0;
 		iterator->plus_delta = (dx + dx) + (dy + dy);
 		iterator->minus_delta = -(dy + dy);
@@ -261,12 +261,12 @@ icvLine( CvMat* mat, CvPoint pt1, CvPoint pt2,
 		CvLineIterator iterator;
 		int pix_size = CV_ELEM_SIZE(mat->type);
 		int i, count;
-		
+
 		if( connectivity == 0 )
 			connectivity = 8;
 		if( connectivity == 1 )
 			connectivity = 4;
-		
+
 		count = cvInitLineIterator( mat, pt1, pt2, &iterator, connectivity, 1 );
 
 		for( i = 0; i < count; i++ )
@@ -637,11 +637,11 @@ icvLine2( CvMat* img, CvPoint pt1, CvPoint pt2, const void* color )
 			tptr[1] = (uchar)cg;	\
 			tptr[2] = (uchar)cr;	\
 		}
-		
+
 		tptr = ptr + ((pt2.x + (XY_ONE >> 1))>> XY_SHIFT)*3 +
 			((pt2.y + (XY_ONE >> 1)) >> XY_SHIFT)*step;
 		ICV_PUT_POINT();
-		
+
 		if( ax > ay )
 		{
 			ptr += (pt1.x >> XY_SHIFT) * 3;
@@ -719,7 +719,7 @@ icvLine2( CvMat* img, CvPoint pt1, CvPoint pt2, const void* color )
 		tptr = ptr + ((pt2.x + (XY_ONE >> 1))>> XY_SHIFT)*pix_size +
 			((pt2.y + (XY_ONE >> 1)) >> XY_SHIFT)*step;
 		ICV_PUT_POINT();
-		
+
 		if( ax > ay )
 		{
 			ptr += (pt1.x >> XY_SHIFT) * pix_size;
@@ -844,7 +844,7 @@ icvSinCos( int angle, float *cosval, float *sinval )
 	*cosval = icvSinTable[450 - angle];
 }
 
-/* 
+/*
 	constructs polygon that represents elliptic arc.
 */
 CV_IMPL int
@@ -893,7 +893,7 @@ cvEllipse2Poly( CvPoint center, CvSize axes, int angle,
 			angle = arc_end;
 		if( angle < 0 )
 			angle += 360;
-		
+
 		x = size_a * icvSinTable[450-angle];
 		y = size_b * icvSinTable[angle];
 		pts->x = cvRound( cx + x * alpha - y * beta );
@@ -916,7 +916,7 @@ icvEllipseEx( CvMat* img, CvPoint center, CvSize axes,
 	CvMemStorage* st = 0;
 
 	CV_FUNCNAME( "icvEllipseEx" );
-	
+
 	__BEGIN__;
 
 	CvPoint v[1 << 8];
@@ -943,7 +943,7 @@ icvEllipseEx( CvMat* img, CvPoint center, CvSize axes,
 		CvContour* edges;
 		CvSeq vtx;
 		CvSeqBlock block;
-		
+
 		CV_CALL( st = cvCreateMemStorage( CV_DRAWING_STORAGE_BLOCK ));
 		CV_CALL( edges = (CvContour*)cvCreateSeq( 0, sizeof(CvContour), sizeof(CvPolyEdge), st ));
 		v[count++] = center;
@@ -963,7 +963,7 @@ icvEllipseEx( CvMat* img, CvPoint center, CvSize axes,
 
 
 /****************************************************************************************\
-*								Polygons filling										* 
+*								Polygons filling										*
 \****************************************************************************************/
 
 /* helper macros: filling horizontal row */
@@ -1166,7 +1166,7 @@ icvCollectPolyEdges( CvMat* img, CvSeq* v, CvContour* edges,
 		CvPoint pt0, pt1, t0, t1;
 		CvPolyEdge edge;
 		CV_READ_EDGE( pt0, pt1, reader );
-		
+
 		if( elem_type == CV_32SC2 )
 		{
 			pt0.x = (pt0.x + offset.x) << (XY_SHIFT - shift);
@@ -1257,9 +1257,9 @@ icvFillEdgeCollection( CvMat* img, CvContour* edges, const void* color )
 	int pix_size = CV_ELEM_SIZE(img->type);
 
 	__BEGIN__;
-	
+
 	memset( &tmp, 0, sizeof(tmp));
-	
+
 	/* check parameters */
 	if( edges->total < 2 || edges->rect.height < 0 || edges->rect.y >= size.height ||
 		edges->rect.width < 0 || edges->rect.x >= size.width )
@@ -1431,7 +1431,7 @@ icvCircle( CvMat* img, CvPoint center, int radius, const void* color, int fill )
 		{
 			uchar *tptr0 = ptr + y11 * step;
 			uchar *tptr1 = ptr + y12 * step;
-			
+
 			if( !fill )
 			{
 				ICV_PUT_POINT( tptr0, x11 );
@@ -1468,7 +1468,7 @@ icvCircle( CvMat* img, CvPoint center, int radius, const void* color, int fill )
 				x11 = MAX( x11, 0 );
 				x12 = MIN( x12, size.width - 1 );
 			}
-			
+
 			if( (unsigned)y11 < (unsigned)size.height )
 			{
 				uchar *tptr = ptr + y11 * step;
@@ -1617,7 +1617,7 @@ icvThickLine( CvMat* img, CvPoint p0, CvPoint p1, const void* color,
 					CvPoint center;
 					center.x = (p0.x + (XY_ONE>>1)) >> XY_SHIFT;
 					center.y = (p0.y + (XY_ONE>>1)) >> XY_SHIFT;
-					icvCircle( img, center, thickness >> XY_SHIFT, color, 1 ); 
+					icvCircle( img, center, thickness >> XY_SHIFT, color, 1 );
 				}
 				else
 				{
@@ -1639,14 +1639,14 @@ icvPolyLine( CvMat* img, CvPoint *v, int count, int is_closed,
 	CV_FUNCNAME("icvPolyLine");
 
 	__BEGIN__;
-	
+
 	if( count > 0 )
 	{
 		int i = is_closed ? count - 1 : 0;
 		int flags = 2 + !is_closed;
 		CvPoint p0;
 		assert( 0 <= shift && shift <= XY_SHIFT );
-		assert( img && thickness >= 0 ); 
+		assert( img && thickness >= 0 );
 		assert( v && count >= 0 );
 
 		if( !v )
@@ -1672,7 +1672,7 @@ icvPolyLine( CvMat* img, CvPoint *v, int count, int is_closed,
 CV_IMPL CvScalar cvColorToScalar( double packed_color, int type )
 {
 	CvScalar scalar;
-	
+
 	if( CV_MAT_DEPTH( type ) == CV_8U )
 	{
 		int icolor = cvRound( packed_color );
@@ -1760,7 +1760,7 @@ cvLine( void* img, CvPoint pt1, CvPoint pt2, CvScalar color,
 		CV_ERROR( CV_StsOutOfRange, "shift must be between 0 and 16" );
 
 	CV_CALL( cvScalarToRawData( &color, buf, mat->type, 0 ));
-	icvThickLine( mat, pt1, pt2, buf, thickness, line_type, 3, shift ); 
+	icvThickLine( mat, pt1, pt2, buf, thickness, line_type, 3, shift );
 
 	__END__;
 }
@@ -1950,7 +1950,7 @@ cvFillPoly( void *img, CvPoint **pts, int *npts, int contours,
 			CvScalar color, int line_type, int shift )
 {
 	CvMemStorage* st = 0;
-	
+
 	CV_FUNCNAME( "cvFillPoly" );
 
 	__BEGIN__;
@@ -1997,7 +1997,7 @@ cvFillPoly( void *img, CvPoint **pts, int *npts, int contours,
 
 			if( npts[i] < 0 )
 				CV_ERROR( CV_StsOutOfRange, "" );
-			
+
 			cvMakeSeqHeaderForArray( CV_32SC2, sizeof(CvSeq), sizeof(CvPoint),
 									 pts[i], npts[i], &vtx, &block );
 
@@ -2284,7 +2284,7 @@ cvPutText( void *img, const char *text, CvPoint org, const CvFont *font, CvScala
 			if( *ptr == ' ' || !*ptr )
 			{
 				if( count > 1 )
-					icvPolyLine( mat, pt, count, 0, buf, thickness, line_type, XY_SHIFT ); 
+					icvPolyLine( mat, pt, count, 0, buf, thickness, line_type, XY_SHIFT );
 				if( !*ptr++ )
 					break;
 				count = 0;
@@ -2368,7 +2368,7 @@ cvGetTextSize( const char *text, const CvFont *font, CvSize *size, int *_base_li
 	CV_FUNCNAME( "cvGetTextSize" );
 
 	__BEGIN__;
-	
+
 	float view_x = 0;
 	int base_line, cap_line;
 
@@ -2413,7 +2413,7 @@ static const CvPoint icvCodeDeltas[8] =
 
 CV_IMPL void
 cvDrawContours( void*  img,  CvSeq*  contour,
-				CvScalar externalColor, CvScalar holeColor, 
+				CvScalar externalColor, CvScalar holeColor,
 				int  maxLevel, int thickness,
 				int line_type, CvPoint offset )
 {
@@ -2469,7 +2469,7 @@ cvDrawContours( void*  img,  CvSeq*  contour,
 	memset( &writer, 0, sizeof(writer));
 
 	cvInitTreeNodeIterator( &iterator, contour, maxLevel );
-	
+
 	while( (contour = (CvSeq*)cvNextTreeNode( &iterator )) != 0 )
 	{
 		CvSeqReader reader;
@@ -2515,7 +2515,7 @@ cvDrawContours( void*  img,  CvSeq*  contour,
 					}
 					prev_pt = pt;
 				}
-			
+
 				pt.x += icvCodeDeltas[(int)code].x;
 				pt.y += icvCodeDeltas[(int)code].y;
 			}
@@ -2538,7 +2538,7 @@ cvDrawContours( void*  img,  CvSeq*  contour,
 			{
 				CvPoint pt1, pt2;
 				int shift = 0;
-				
+
 				count -= !CV_IS_SEQ_CLOSED(contour);
 				if( elem_type == CV_32SC2 )
 				{

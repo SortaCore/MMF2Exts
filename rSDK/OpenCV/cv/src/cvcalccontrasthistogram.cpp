@@ -45,7 +45,7 @@
 IPCVAPI(CvStatus, icvCalcContrastHist8uC1R, ( uchar** img, int step, CvSize size,
 											  CvHistogram* hist, int dont_clear ))
 
-IPCVAPI(CvStatus, icvCalcContrastHistMask8uC1R, ( uchar** img, int step, 
+IPCVAPI(CvStatus, icvCalcContrastHistMask8uC1R, ( uchar** img, int step,
 												  uchar*  mask, int mask_step, CvSize size,
 												  CvHistogram* hist, int dont_clear ))
 
@@ -117,7 +117,7 @@ icvCalcContrastHist8uC1R( uchar** img, int step, CvSize size,
 						int v1_r = MIN( data0[x], data0[x + 1] );
 						int v2_r = MAX( data0[x], data0[x + 1] );
 
-//	calculate contrast for the right-left pair 
+//	calculate contrast for the right-left pair
 						for( t = v1_r; t < v2_r; t++ )
 						{
 							int val0 = chdims[t + 128];
@@ -131,7 +131,7 @@ icvCalcContrastHist8uC1R( uchar** img, int step, CvSize size,
 							int v1_d = MIN( data0[x], data0[x + step] );
 							int v2_d = MAX( data0[x], data0[x + step] );
 
-//	calculate contrast for the top-down pair 
+//	calculate contrast for the top-down pair
 							for( t = v1_d; t < v2_d; t++ )
 							{
 								int val0 = chdims[t + 128];
@@ -143,7 +143,7 @@ icvCalcContrastHist8uC1R( uchar** img, int step, CvSize size,
 					}
 				}
 
-//  convert int to float 
+//  convert int to float
 				for( i = 0; i < j; i++ )
 				{
 					if( n[i] != 0 )
@@ -237,7 +237,7 @@ icvCalcContrastHistMask8uC1R( uchar** img, int step, uchar* mask, int mask_step,
 								int v2_r = MAX( data0[x], data0[x + 1] );
 
 
-								//	calculate contrast for the right-left pair 
+								//	calculate contrast for the right-left pair
 								for( t = v1_r; t < v2_r; t++ )
 								{
 									int val0 = chdims[t + 128];
@@ -255,7 +255,7 @@ icvCalcContrastHistMask8uC1R( uchar** img, int step, uchar* mask, int mask_step,
 									int v1_d = MIN( data0[x], data0[x + step] );
 									int v2_d = MAX( data0[x], data0[x + step] );
 
-									//	calculate contrast for the top-down pair 
+									//	calculate contrast for the top-down pair
 									for( t = v1_d; t < v2_d; t++ )
 									{
 										int val0 = chdims[t + 128];
@@ -270,7 +270,7 @@ icvCalcContrastHistMask8uC1R( uchar** img, int step, uchar* mask, int mask_step,
 					}
 				}
 
-//  convert int to float 
+//  convert int to float
 				for( i = 0; i < j; i++ )
 				{
 					if( n[i] != 0 )
@@ -305,10 +305,10 @@ CV_IMPL void cvCalcContrastHist( IplImage** img, CvHistogram* hist, int dont_cle
 	{for( int i = 0; i < hist->c_dims; i++ )
 		cvGetImageRawData( img[i], &data[i], &step, &roi );}
 
-	if(img[0]->nChannels != 1) 
+	if(img[0]->nChannels != 1)
 		CV_ERROR( IPL_BadNumChannels, "bad channels numbers" );
 
-	if(img[0]->depth != IPL_DEPTH_8U) 
+	if(img[0]->depth != IPL_DEPTH_8U)
 		CV_ERROR( IPL_BadDepth, "bad image depth" );
 
 	switch(img[0]->depth)

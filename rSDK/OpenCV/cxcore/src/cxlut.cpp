@@ -310,7 +310,7 @@ cvLUT( const void* srcarr, void* dstarr, const void* lutarr )
 	{
 		CvLUT_TransformCnFunc func =
 			(CvLUT_TransformCnFunc)(lut_cn_tab.fn_2d[depth]);
-	
+
 		if( !func )
 			CV_ERROR( CV_StsUnsupportedFormat, "" );
 

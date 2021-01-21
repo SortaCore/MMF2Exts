@@ -439,7 +439,7 @@ typedef struct CustomPropCreateStruct {
 #define PWN_FIRST					(0U-2000U)
 
 // Tells property window to validate the property item
-// => the property window gets the property value from the property item 
+// => the property window gets the property value from the property item
 //	and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
@@ -956,7 +956,7 @@ typedef struct {
 typedef MinMaxFloatParam* LPMINMAXFLOATPARAM;
 
 // Direction Control Styles
-enum 
+enum
 {
 	DCS_NOBORDER	= 0,		// No border
 	DCS_FLAT		= 1,		// Flat
@@ -973,7 +973,7 @@ typedef struct {
 	DWORD	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
 } DirCtrlCreateParam;
 
-// Direction Property Value 
+// Direction Property Value
 typedef struct {
 	int		selDir;		// Direction index, single selection mode
 	DWORD	selDir32;	// 32-bit direction mask, multi-selection mode
@@ -1031,7 +1031,7 @@ enum {
 // Property IDs
 //////////
 //
-// If you need them, you can retrieve, set or refresh 
+// If you need them, you can retrieve, set or refresh
 // standard properties with the mvSetPropValue, etc. macros
 // and the following identifiers.
 //

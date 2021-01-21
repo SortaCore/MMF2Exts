@@ -77,7 +77,7 @@ void cvLevenbergMarquardtOptimization(pointer_LMJac JacobianFunction,
 	CvMat *matrJtJN = 0;
 	CvMat *matrJt = 0;
 	CvMat *vectB = 0;
-	
+
 	CV_FUNCNAME( "cvLevenbegrMarquardtOptimization" );
 	__BEGIN__;
 
@@ -106,7 +106,7 @@ void cvLevenbergMarquardtOptimization(pointer_LMJac JacobianFunction,
 	{
 		CV_ERROR( CV_StsUnmatchedSizes, "Number of colomn of vector X0 must be 1" );
 	}
-	
+
 	if( observRes->cols != 1 )
 	{
 		CV_ERROR( CV_StsUnmatchedSizes, "Number of colomn of vector observed rusult must be 1" );
@@ -159,8 +159,8 @@ void cvLevenbergMarquardtOptimization(pointer_LMJac JacobianFunction,
 		/* Print result of function to file */
 
 		/* Compute error */
-		cvSub(observRes,resFunc,error);		
-		
+		cvSub(observRes,resFunc,error);
+
 		//valError = error_function(observRes,resFunc);
 		/* Need to use new version of computing error (norm) */
 		valError = cvNorm(observRes,resFunc);
@@ -171,7 +171,7 @@ void cvLevenbergMarquardtOptimization(pointer_LMJac JacobianFunction,
 		/* Define optimal delta for J'*J*delta=J'*error */
 		/* compute J'J */
 		cvMulTransposed(Jac,matrJtJ,1);
-		
+
 		cvCopy(matrJtJ,matrJtJN);
 
 		/* compute J'*error */

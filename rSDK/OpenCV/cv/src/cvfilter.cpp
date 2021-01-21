@@ -150,7 +150,7 @@ void CvBaseImageFilter::init( int _max_width, int _src_type, int _dst_type,
 	if( anchor.y == -1 )
 		anchor.y = ksize.height / 2;
 
-	max_ky = MAX( anchor.y, ksize.height - anchor.y - 1 ); 
+	max_ky = MAX( anchor.y, ksize.height - anchor.y - 1 );
 	border_mode = _border_mode;
 	border_value = _border_value;
 
@@ -180,7 +180,7 @@ void CvBaseImageFilter::init( int _max_width, int _src_type, int _dst_type,
 	total_buf_sz = buf_size + row_tab_sz + bsz;
 
 	CV_CALL( ptr = buffer = (uchar*)cvAlloc( total_buf_sz ));
-	
+
 	rows = (uchar**)ptr;
 	ptr += row_tab_sz;
 	border_tab = (int*)ptr;
@@ -203,7 +203,7 @@ void CvBaseImageFilter::start_process( CvSlice x_range, int width )
 	int bsz = buf_size, bw = x_range.end_index - x_range.start_index, bw1 = bw + ksize.width - 1;
 	int tr_step = cvAlign(bw1*pix_sz, ALIGN );
 	int i, j, k, ofs;
-	
+
 	if( x_range.start_index == prev_x_range.start_index &&
 		x_range.end_index == prev_x_range.end_index &&
 		width == prev_width )
@@ -300,12 +300,12 @@ void CvBaseImageFilter::start_process( CvSlice x_range, int width )
 void CvBaseImageFilter::make_y_border( int row_count, int top_rows, int bottom_rows )
 {
 	int i;
-	
+
 	if( border_mode == IPL_BORDER_CONSTANT ||
 		border_mode == IPL_BORDER_REPLICATE )
 	{
 		uchar* row1 = border_mode == IPL_BORDER_CONSTANT ? const_row : rows[max_ky];
-		
+
 		for( i = 0; i < top_rows && rows[i] == 0; i++ )
 			rows[i] = row1;
 
@@ -380,7 +380,7 @@ int CvBaseImageFilter::fill_cyclic_buffer( const uchar* src, int src_step,
 		}
 		else
 		{
-			const uchar *bt = (uchar*)border_tab; 
+			const uchar *bt = (uchar*)border_tab;
 			for( i = 0; i < bsz1; i++ )
 				bptr[i] = bt[i];
 
@@ -416,7 +416,7 @@ int CvBaseImageFilter::process( const CvMat* src, CvMat* dst,
 	/*
 		check_parameters
 		initialize_horizontal_border_reloc_tab_if_not_initialized_yet
-		
+
 		for_each_source_row: src starts from src_roi.y, buf starts with the first available row
 			1) if separable,
 					1a.1) copy source row to temporary buffer, form a border using border reloc tab.
@@ -509,7 +509,7 @@ int CvBaseImageFilter::process( const CvMat* src, CvMat* dst,
 	{
 		for( i = 0; i <= max_ky*2; i++ )
 			rows[i] = 0;
-		
+
 		src_y1 -= max_ky;
 		top_rows = bottom_rows = 0;
 
@@ -533,10 +533,10 @@ int CvBaseImageFilter::process( const CvMat* src, CvMat* dst,
 			src_y2 = _src_y2;
 		}
 	}
-	
+
 	dptr = dst->data.ptr + dst_origin.y*dst->step + dst_origin.x*CV_ELEM_SIZE(dst_type);
 	sptr = src->data.ptr + src_y1*src->step + src_x*pix_size;
-		
+
 	for( src_y = src_y1; src_y < src_y2; )
 	{
 		uchar* bptr;
@@ -558,7 +558,7 @@ int CvBaseImageFilter::process( const CvMat* src, CvMat* dst,
 		}
 
 		row_count = top_rows + buf_count;
-		
+
 		if( !rows[0] || ((phase & CV_END) && src_y == src_y2) )
 		{
 			int br = (phase & CV_END) && src_y == src_y2 ? bottom_rows : 0;
@@ -718,7 +718,7 @@ void CvSepFilter::init( int _max_width, int _src_type, int _dst_type,
 	xsz = kx->rows + kx->cols - 1;
 	ysz = ky->rows + ky->cols - 1;
 	kx_flags = ky_flags = ASYMMETRICAL + SYMMETRICAL + POSITIVE + SUM_TO_1 + INTEGER;
-	
+
 	if( !(xsz & 1) )
 		kx_flags &= ~(ASYMMETRICAL + SYMMETRICAL);
 	if( !(ysz & 1) )
@@ -740,7 +740,7 @@ void CvSepFilter::init( int _max_width, int _src_type, int _dst_type,
 
 	if( fabs(xsum - 1.) > eps )
 		kx_flags &= ~SUM_TO_1;
-	
+
 	for( i = 0; i < ysz; i++ )
 	{
 		float v = ky->data.fl[i];
@@ -862,7 +862,7 @@ void CvSepFilter::init( int _max_width, int _src_type, int _dst_type,
 	{
 		int scale = kx_flags & ky_flags & INTEGER ? 1 : (1 << FILTER_BITS);
 		int sum;
-		
+
 		for( i = sum = 0; i < xsz; i++ )
 		{
 			int t = cvRound(kx->data.fl[i]*scale);
@@ -1805,7 +1805,7 @@ void CvSepFilter::init_gaussian_kernel( CvMat* kernel, double sigma )
 		CV_ERROR( CV_StsBadArg, "kernel is not a valid matrix" );
 
 	type = CV_MAT_TYPE(kernel->type);
-	
+
 	if( (kernel->cols != 1 && kernel->rows != 1) ||
 		(kernel->cols + kernel->rows - 1) % 2 == 0 ||
 		(type != CV_32FC1 && type != CV_64FC1) )
@@ -2060,7 +2060,7 @@ void CvSepFilter::init_gaussian( int _max_width, int _src_type, int _dst_type,
 								 int gaussian_size, double sigma )
 {
 	float* kdata = 0;
-	
+
 	CV_FUNCNAME( "CvSepFilter::init_gaussian" );
 
 	__BEGIN__;
@@ -2074,7 +2074,7 @@ void CvSepFilter::init_gaussian( int _max_width, int _src_type, int _dst_type,
 	_kernel = cvMat( 1, gaussian_size, CV_32F, kdata );
 
 	CV_CALL( init_gaussian_kernel( &_kernel, sigma ));
-	CV_CALL( init( _max_width, _src_type, _dst_type, &_kernel, &_kernel )); 
+	CV_CALL( init( _max_width, _src_type, _dst_type, &_kernel, &_kernel ));
 
 	__END__;
 }
@@ -2159,9 +2159,9 @@ void CvLinearFilter::init( int _max_width, int _src_type, int _dst_type,
 		CV_CALL( k_sparse = (uchar*)cvAlloc(
 			ksize.width*ksize.height*(2*sizeof(int) + sizeof(uchar*) + sizeof(float))));
 	}
-	
+
 	CV_CALL( cvConvert( _kernel, kernel ));
-	
+
 	nz_loc = (CvPoint*)k_sparse;
 	for( i = 0; i < ksize.height; i++ )
 	{
@@ -2313,7 +2313,7 @@ int icvIPPFilterNextStripe( const CvMat* src, CvMat* temp, int y,
 	if( y > 0 )
 	{
 		int temp_ready = ksize.height - 1;
-		
+
 		for( i = 0; i < temp_ready; i++ )
 			memcpy( temp_ptr + temp_step*i, temp_ptr +
 					temp_step*(temp->rows - temp_ready + i), temp_step );
@@ -2377,11 +2377,11 @@ int icvIPPSepFilter( const CvMat* src, CvMat* dst, const CvMat* kernelX,
 					 const CvMat* kernelY, CvPoint anchor )
 {
 	int result = 0;
-	
+
 	CvMat* top_bottom = 0;
 	CvMat* vout_hin = 0;
 	CvMat* dst_buf = 0;
-	
+
 	CV_FUNCNAME( "icvIPPSepFilter" );
 
 	__BEGIN__;
@@ -2454,14 +2454,14 @@ int icvIPPSepFilter( const CvMat* src, CvMat* dst, const CvMat* kernelX,
 	stripe_size = src->data.ptr == dst->data.ptr ? 1 << 15 : 1 << 16;
 	max_dy = MAX( ksize.height - 1, stripe_size/(size.width + ksize.width - 1));
 	max_dy = MIN( max_dy, size.height + ksize.height - 1 );
-	
+
 	align = 8/CV_ELEM_SIZE(depth);
 
 	CV_CALL( top_bottom = cvCreateMat( ksize.height*2, cvAlign(size.width,align), type ));
 
 	CV_CALL( vout_hin = cvCreateMat( max_dy + ksize.height,
 		cvAlign(size.width + ksize.width - 1, align), type ));
-	
+
 	if( src->data.ptr == dst->data.ptr && size.height )
 		CV_CALL( dst_buf = cvCreateMat( max_dy + ksize.height,
 			cvAlign(size.width, align), type ));
@@ -2494,7 +2494,7 @@ int icvIPPSepFilter( const CvMat* src, CvMat* dst, const CvMat* kernelX,
 		{
 			int ay = anchor.y;
 			CvSize src_stripe_size = size;
-			
+
 			if( y < anchor.y )
 			{
 				src_y = 0;
@@ -2513,7 +2513,7 @@ int icvIPPSepFilter( const CvMat* src, CvMat* dst, const CvMat* kernelX,
 				src_stripe_size, top_bottom->data.ptr, top_bottom_step,
 				cvSize(size.width, dy + ksize.height - 1), ay, 0, pix_size );
 			vin = top_bottom;
-			src_y = anchor.y;			
+			src_y = anchor.y;
 		}
 
 		// do vertical convolution
@@ -2588,7 +2588,7 @@ cvFilter2D( const CvArr* _src, CvArr* _dst, const CvMat* kernel, CvPoint anchor 
 
 	CvLinearFilter filter;
 	CvMat* ipp_kernel = 0;
-	
+
 	// below that approximate size OpenCV is faster
 	const int ipp_lower_limit = 20;
 	CvMat* temp = 0;
@@ -2633,7 +2633,7 @@ cvFilter2D( const CvArr* _src, CvArr* _dst, const CvMat* kernel, CvPoint anchor 
 
 	if( icvFilter_8u_C1R_p && (src->rows >= ipp_lower_limit || src->cols >= ipp_lower_limit) )
 	{
-		CvFilterIPPFunc ipp_func = 
+		CvFilterIPPFunc ipp_func =
 				type == CV_8UC1 ? (CvFilterIPPFunc)icvFilter_8u_C1R_p :
 				type == CV_8UC3 ? (CvFilterIPPFunc)icvFilter_8u_C3R_p :
 				type == CV_8UC4 ? (CvFilterIPPFunc)icvFilter_8u_C4R_p :
@@ -2643,7 +2643,7 @@ cvFilter2D( const CvArr* _src, CvArr* _dst, const CvMat* kernel, CvPoint anchor 
 				type == CV_32FC1 ? (CvFilterIPPFunc)icvFilter_32f_C1R_p :
 				type == CV_32FC3 ? (CvFilterIPPFunc)icvFilter_32f_C3R_p :
 				type == CV_32FC4 ? (CvFilterIPPFunc)icvFilter_32f_C4R_p : 0;
-		
+
 		if( ipp_func )
 		{
 			CvSize el_size = { kernel->cols, kernel->rows };
@@ -2681,7 +2681,7 @@ cvFilter2D( const CvArr* _src, CvArr* _dst, const CvMat* kernel, CvPoint anchor 
 			}
 
 			CV_CALL( temp = icvIPPFilterInit( src, stripe_size, el_size ));
-			
+
 			shifted_ptr = temp->data.ptr +
 				anchor.y*temp->step + anchor.x*CV_ELEM_SIZE(type);
 			temp_step = temp->step ? temp->step : CV_STUB_STEP;

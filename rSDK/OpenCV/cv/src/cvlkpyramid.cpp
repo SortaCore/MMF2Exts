@@ -275,7 +275,7 @@ cvCalcOpticalFlowPyrLK( const void* arrA, const void* arrB,
 	char* _status = 0;
 
 	void* ipp_optflow_state = 0;
-	
+
 	CV_FUNCNAME( "cvCalcOpticalFlowPyrLK" );
 
 	__BEGIN__;
@@ -288,7 +288,7 @@ cvCalcOpticalFlowPyrLK( const void* arrA, const void* arrB,
 	CvMat pstubB, *pyrB = (CvMat*)pyrarrB;
 	CvSize imgSize;
 	static const float smoothKernel[] = { 0.09375, 0.3125, 0.09375 };  /* 3/32, 10/32, 3/32 */
-	
+
 	int bufferBytes = 0;
 	uchar **imgI = 0;
 	uchar **imgJ = 0;
@@ -441,7 +441,7 @@ cvCalcOpticalFlowPyrLK( const void* arrA, const void* arrB,
 
 		{
 #ifdef _OPENMP
-		#pragma omp parallel for num_threads(threadCount) schedule(dynamic) 
+		#pragma omp parallel for num_threads(threadCount) schedule(dynamic)
 #endif // _OPENMP
 		/* find flow for each given point */
 		for( i = 0; i < count; i++ )
@@ -997,7 +997,7 @@ cvCalcAffineFlowPyrLK( const void* arrA, const void* arrB,
 				status[i] = (char)pt_status;
 				featuresB[i].x = Av[2];
 				featuresB[i].y = Av[5];
-			
+
 				matrices[i*4] = Av[0];
 				matrices[i*4+1] = Av[1];
 				matrices[i*4+2] = Av[3];
@@ -1134,7 +1134,7 @@ CV_IMPL int
 cvEstimateRigidTransform( const CvArr* _A, const CvArr* _B, CvMat* _M, int full_affine )
 {
 	int result = 0;
-	
+
 	const int COUNT = 15;
 	const int WIDTH = 160, HEIGHT = 120;
 	const int RANSAC_MAX_ITERS = 100;
@@ -1302,7 +1302,7 @@ cvEstimateRigidTransform( const CvArr* _A, const CvArr* _B, CvMat* _M, int full_
 			for( k1 = 0; k1 < RANSAC_MAX_ITERS; k1++ )
 			{
 				idx[i] = cvRandInt(&rng) % count;
-				
+
 				for( j = 0; j < i; j++ )
 				{
 					if( idx[j] == idx[i] )

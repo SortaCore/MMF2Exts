@@ -20,7 +20,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -29,7 +29,7 @@ public:
 
 	/*  Add any data you want to store in your extension to this class
 		(eg. what you'd normally store in rdPtr).
-		
+
 		For those using multi-threading, any variables that are modified
 		by the threads should be set in ExtVariables.
 		See MultiThreading.h.
@@ -39,7 +39,7 @@ public:
 		a pointer.
 	*/
 
-	
+
 	std::tstring filename;
 	std::tstringstream error;
 	std::tstring menuStr[3];
@@ -57,9 +57,9 @@ public:
 	/// Actions
 
 		void SetMFXFile(const TCHAR * filename);
-		
+
 	/// Expressions
-		
+
 		const TCHAR * GetError();
 		const TCHAR * GetActionMenu2();
 		const TCHAR * GetConditionMenu2();

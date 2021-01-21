@@ -43,7 +43,7 @@
  * OF SUCH DAMAGE.
  */
 
-/* 
+/*
 	The following changes have been made, comparing to the original contribution:
 	1. A lot of small optimizations, less memory allocations, got rid of global buffers
 	2. Reversed order of cvGetQuadrangleSubPix and cvResize calls; probably less accurate, but much faster
@@ -99,7 +99,7 @@ static CvSeq* icvFastHessianDetector( const CvMat* sum, const CvMat* mask_sum,
 	CvMemStorage* storage, const CvSURFParams* params )
 {
 	CvSeq* points = cvCreateSeq( 0, sizeof(CvSeq), sizeof(CvSURFPoint), storage );
-	
+
 	int totalLayers = params->nOctaves*(params->nOctaveLayers+2);
 	CvMat** hessians = (CvMat**)cvStackAlloc(totalLayers*sizeof(hessians[0]));
 	CvMat** traces = (CvMat**)cvStackAlloc(totalLayers*sizeof(traces[0]));
@@ -114,7 +114,7 @@ static CvSeq* icvFastHessianDetector( const CvMat* sum, const CvMat* mask_sum,
 	CvSurfHF Dx[NX], Dy[NY], Dxy[NXY], Dm;
 	double dx = 0, dy = 0, dxy = 0;
 	int hessian_rows, hessian_cols;
-	
+
 	int octave, sc;
 	int i, j, k, z;
 	int* xofs = (int*)cvStackAlloc(sum->cols*sizeof(xofs[0]));
@@ -268,7 +268,7 @@ cvExtractSURF( const CvArr* _img, const CvArr* _mask,
 	CvSeq *keypoints, *descriptors = 0;
 	CvMat imghdr, *img = cvGetMat(_img, &imghdr);
 	CvMat maskhdr, *mask = _mask ? cvGetMat(_mask, &maskhdr) : 0;
-	
+
 	int descriptor_size = params.extended ? 128 : 64;
 	const int descriptor_data_type = CV_32F;
 	const int NX=2, NY=2;
@@ -353,7 +353,7 @@ cvExtractSURF( const CvArr* _img, const CvArr* _mask,
 		CvMat _patch = cvMat(PATCH_SZ+1, PATCH_SZ+1, CV_8U, PATCH);
 		CvMat _rs_patch = cvMat(RS_PATCH_SZ, RS_PATCH_SZ, CV_8U, RS_PATCH);
 		CvMat _src, *src = img;
-		
+
 		CvSURFPoint* kp = (CvSURFPoint*)cvGetSeqElem( keypoints, k );
 		CvPoint2D32f center = kp->pt;
 		int size = kp->size;
@@ -404,14 +404,14 @@ cvExtractSURF( const CvArr* _img, const CvArr* _mask,
 				besty = sumy;
 			}
 		}
-		
+
 		float descriptor_dir = cvFastArctan( besty, bestx );
 		kp->dir = descriptor_dir;
 
 		if( !_descriptors )
 			continue;
 		descriptor_dir *= (float)(CV_PI/180);
-		
+
 		alpha0 = (float)cos(descriptor_dir);
 		beta0 = (float)sin(descriptor_dir);
 		sz0 = (float)((PATCH_SZ+1)*size*1.2/9.);
@@ -459,7 +459,7 @@ cvExtractSURF( const CvArr* _img, const CvArr* _mask,
 			center.y = RS_PATCH_SZ*0.5f - (patch_rect.y - patch_rect0.y)*scale;
 			scale0 *= scale;
 		}
-		
+
 		{
 		float w[] =
 		{

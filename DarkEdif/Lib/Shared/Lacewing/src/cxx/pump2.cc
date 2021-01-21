@@ -84,7 +84,7 @@ bool _pump::in_use ()
  }
 
 #endif
- 
+
 void _pump::remove (lw_pump_watch watch)
 {
 	lw_pump_remove ((lw_pump) this, watch);

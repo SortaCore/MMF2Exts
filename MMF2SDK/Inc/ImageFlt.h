@@ -119,8 +119,8 @@ public:
 	int				Load(LPBYTE pData, int width, int height, int pitch, int depth=0, LPLOGPALETTE pPal=NULL, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
 	int				Save(LPCSTR fileName, LPBYTE pData, int nWidth, int nHeight, int nDepth, int nPitch, LPLOGPALETTE pPal, LPBYTE pAlpha=NULL, int nAlphaPitch=0);
 	void			Close();
-	int				GetWidth(); 
-	int				GetHeight(); 
+	int				GetWidth();
+	int				GetHeight();
 	int				GetPitch();
 	int				GetDepth();
 	DWORD			GetDataSize();
@@ -144,12 +144,12 @@ public:
 	int				GetLoopFrame();
 
 	// Save animation
-	int				CreateAnimation(LPCSTR fname, int width, int height, int depth, 
-								int nFrames, int msFrameDuration, 
+	int				CreateAnimation(LPCSTR fname, int width, int height, int depth,
+								int nFrames, int msFrameDuration,
 								int nLoopCount = 1, int nLoopFrame = 0,
 								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
-	int				CreateAnimation(COutputFile* pfout, int width, int height, int depth, 
-								int nFrames, int msFrameDuration, 
+	int				CreateAnimation(COutputFile* pfout, int width, int height, int depth,
+								int nFrames, int msFrameDuration,
 								int nLoopCount = 1, int nLoopFrame = 0,
 								LPBYTE pUserInfo = NULL, DWORD dwUserInfoSize = 0);
 	int				SaveAnimationFrame(LPBYTE pData, int width, int height, int pitch, int depth, LPLOGPALETTE pPal, LPBYTE pAlpha, int nAlphaPitch, int msFrameDuration, DWORD dwFlags);
@@ -170,7 +170,7 @@ public:
 
 protected:
 	int				ReadHeader();
-	
+
 	// Data
 protected:
 

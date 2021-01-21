@@ -78,6 +78,6 @@ struct BOMThreadData {
 	std::string FileToAddTo;
 	const int TypeOfBOM;
 	const bool IgnoreCurrentBOM;
-	
+
 	BOMThreadData(std::string FTAT, const int TOB, const bool ICB) : FileToAddTo(FTAT), TypeOfBOM(TOB), IgnoreCurrentBOM(ICB) {}
 };

@@ -37,7 +37,7 @@ void Extension::ConvertToMFU(const char * file)
 
 	const static int FLAG_INT = 0x1;
 	const static int FLAG_STRING = 0x2;
-	
+
 	// If couldn't rewrite the header, die
 	if (!RewriteHeader(fil, "CNC"))
 	{
@@ -46,7 +46,7 @@ void Extension::ConvertToMFU(const char * file)
 	}
 
 	// Invalid flag check done by GetFileFormat
-	
+
 	// Integer array; only change needed is rewriting CNC to MFU, which we just did
 	if ((flags & FLAG_INT) == FLAG_INT)
 	{
@@ -137,7 +137,7 @@ void Extension::ConvertToCNC(const char * file)
 
 	const static int FLAG_INT = 0x1;
 	const static int FLAG_STRING = 0x2;
-	
+
 	// If couldn't rewrite the header, die
 	if (!RewriteHeader(fil, "MFU"))
 	{
@@ -146,7 +146,7 @@ void Extension::ConvertToCNC(const char * file)
 	}
 
 	// Invalid flag check done by GetFileFormat
-	
+
 	// Integer array; only change needed is rewriting MFU to CNC, which we just did
 	if ((flags & FLAG_INT) == FLAG_INT)
 	{
@@ -174,13 +174,13 @@ void Extension::ConvertToCNC(const char * file)
 			{
 				if (fread_s(&t, 1U, 4U, 4U, fil) != 4U)
 					goto LoopAbort;
-				
+
 				for (r = 0U; t > 0U; ++r)
 				{
 					if ((fgetc(fil) & 0xC0) != 0x80)
 						--t; // We've read one full Unicode char
 				}
-				
+
 				if (fseek(fil, 0L-(r + 4U), SEEK_CUR) ||
 					fwrite(&r, 1U, 4U, fil) != 4U)
 					goto LoopAbort;
@@ -218,7 +218,7 @@ std::string Extension::GetFileFormat(FILE *& fil, unsigned * xdimP, unsigned * y
 	unsigned short major, minor;
 	unsigned int xdim, ydim, zdim, flags;
 	int expSize = fscanf_s(fil, "%10s%hu%hu%u%u%u%u", version, _countof(version), &major, &minor, &xdim, &ydim, &zdim, &flags);
-	
+
 	if (10 + (2 * sizeof(short)) + (4 * sizeof(int)) == expSize)
 	{
 		lastError << "File header read ran out of space. Minimum array size is 34 bytes, read "
@@ -227,7 +227,7 @@ std::string Extension::GetFileFormat(FILE *& fil, unsigned * xdimP, unsigned * y
 		Runtime.PushEvent(1);
 		return "Err";
 	}
-	
+
 	if (major != 2 || minor != 0)
 	{
 		lastError << "Major/minor version number should be 2.0, but read " << major << "." << minor << ".";
@@ -239,7 +239,7 @@ std::string Extension::GetFileFormat(FILE *& fil, unsigned * xdimP, unsigned * y
 
 	const static int FLAG_INT = 0x1;
 	const static int FLAG_STRING = 0x2;
-	
+
 	if ((flags & (FLAG_INT | FLAG_STRING)) == (FLAG_INT | FLAG_STRING))
 	{
 		lastError << "Array flags are invalid; both numeric and textual array indicated. ";
@@ -247,8 +247,8 @@ std::string Extension::GetFileFormat(FILE *& fil, unsigned * xdimP, unsigned * y
 		Runtime.PushEvent(1);
 		return "Err";
 	}
-	
-	std::string ret = !strncmp(version, "MFU ARRAY", 9U) ? "MFU" : 
+
+	std::string ret = !strncmp(version, "MFU ARRAY", 9U) ? "MFU" :
 		!strncmp(version, "CNC ARRAY", 9U) ? "CNC" : "Err";
 	if (ret == "Err")
 	{

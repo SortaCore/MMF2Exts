@@ -54,7 +54,7 @@ public:
 	inline bool isFaceFeature();
 	inline void * GetContour();
 	inline double GetWeight();
-	inline void SetContour(void * lpContour); 
+	inline void SetContour(void * lpContour);
 	inline void SetWeight(double dWeight);
 	inline void SetFeature(bool bIsFeature);
 private:
@@ -75,7 +75,7 @@ inline bool FaceFeature::isFaceFeature()
 
 inline void * FaceFeature::GetContour()
 {
-	return m_lpContour;	
+	return m_lpContour;
 }// inline void * FaceFeature::GetContour()
 
 inline double FaceFeature::GetWeight()
@@ -100,12 +100,12 @@ class FaceTemplate
 public:
 	FaceTemplate(long lFeatureCount) {m_lFeturesCount = lFeatureCount;	m_lpFeaturesList = new FaceFeature[lFeatureCount];};
 	virtual ~FaceTemplate();
-	
+
 	inline long GetCount();
 	inline FaceFeature * GetFeatures();
 
 protected:
-	FaceFeature * m_lpFeaturesList;	
+	FaceFeature * m_lpFeaturesList;
 private:
 	long m_lFeturesCount;
 };// class FaceTemplate
@@ -137,10 +137,10 @@ public:
 inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEyeWidth,double dEyeHeight,
 							 double dDistanceBetweenEye,double dDistanceEyeAboveMouth):FaceTemplate(lNumber)
 {
-	
+
 	CvRect MouthRect = rect;
-	
-	
+
+
 	CvRect LeftEyeRect = cvRect(cvRound(rect.x - (dEyeWidth + dDistanceBetweenEye/(double)2 - (double)rect.width/(double)2)),
 								cvRound(rect.y - dDistanceEyeAboveMouth - dEyeHeight),
 								cvRound(dEyeWidth),
@@ -155,11 +155,11 @@ inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEye
 //							 cvRound(rect.y - (double)rect.width/(double)2 - (double)rect.height/(double)4),
 //							 cvRound((double)rect.width/(double)2),
 //							 cvRound((double)rect.width/(double)2) );
-/*	
+/*
 	CvRect CheenRect = cvRect(rect.x,rect.y + 3*rect.height/2,rect.width,rect.height);
-		
-*/	
-	
+
+*/
+
 	CvRect * lpMouthRect = new CvRect();
 	*lpMouthRect = MouthRect;
 	m_lpFeaturesList[0].SetContour(lpMouthRect);
@@ -179,7 +179,7 @@ inline MouthFaceTemplate::MouthFaceTemplate(long lNumber,CvRect rect,double dEye
 	m_lpFeaturesList[2].SetWeight(1);
 	m_lpFeaturesList[2].SetFeature(true);
 
-	
+
 //	CvRect * lpNoseRect = new CvRect();
 //	*lpNoseRect = NoseRect;
 //	m_lpFeaturesList[3].SetContour(lpNoseRect);

@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains routines that are handled during the Runtime
-// 
+//
 // ============================================================================
 
 // Common Include
@@ -52,10 +52,10 @@ cSurface * createSurface(int width, int height, LPRDATA rdPtr){
 		return NULL;
 
 	psf->Create(width, height, proto);
-	
+
 	psf->Fill(RGB(1,0,0));
 	psf->SetTransparentColor(RGB(0, 0, 0));
-	
+
 	if ( psf->GetDepth() == 8 )
 		psf->SetPalette (*wSurf);
 
@@ -75,7 +75,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 	rdPtr->rHo.hoY = cobPtr->cobY;
 	rdPtr->rHo.hoImgWidth = edPtr->swidth;
 	rdPtr->rHo.hoImgHeight = edPtr->sheight;
-	
+
 	int width = rdPtr->rHo.hoImgWidth;
 	int height = rdPtr->rHo.hoImgHeight;
 
@@ -108,8 +108,8 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast) {
 short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr) {
 	rdPtr->rc.rcChanged = TRUE;
 
-	return rdPtr->rc.rcChanged?REFLAG_DISPLAY:0; 
-//	return REFLAG_DISPLAY; 
+	return rdPtr->rc.rcChanged?REFLAG_DISPLAY:0;
+//	return REFLAG_DISPLAY;
 
 }
 
@@ -130,7 +130,7 @@ destRect.bottom=rdPtr->rHo.hoImgHeight;
 
 	rdPtr->pSf->ReleaseDC(myImageDC);
 
-	
+
 
 	fprh rhPtr = rdPtr->rHo.hoAdRunHeader;
 	LPSURFACE ps = WinGetSurface((int)rhPtr->rhIdEditWin);
@@ -157,7 +157,7 @@ destRect.bottom=rdPtr->rHo.hoImgHeight;
 // in DisplayRunObject too, but this is automatically done if you implement
 // GetRunObjectSurface (MMF applies the ink effect to the transition).
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 
 //cSurface* WINAPI DLLExport GetRunObjectSurface(LPRDATA rdPtr)
@@ -165,9 +165,9 @@ destRect.bottom=rdPtr->rHo.hoImgHeight;
 //	//do{
 //	//	int		i;
 //	//	vec3_t	cam;
-//	//	
+//	//
 //	//	rdPtr->frame++;
-//	//	
+//	//
 //	//	cam[0] = rdPtr->xAngle;
 //	//	cam[1] = rdPtr->yAngle;
 //	//	cam[2] = rdPtr->zAngle + 90;
@@ -180,9 +180,9 @@ destRect.bottom=rdPtr->rHo.hoImgHeight;
 //
 //	//		for (i = 0 ; i < rdPtr->voxel.partCount ; i ++ )
 //	//			voxel_Set_part(i,rdPtr->frame % rdPtr->voxel.numFrames, rdPtr);
-//	//		
+//	//
 //	//		rdPtr->pSf->Fill(RGB(0,0,0));
-//	//		
+//	//
 //	//		voxel_Render_unit(rdPtr->pSf, rdPtr);
 //	//	}
 //	//}while (FALSE);
@@ -215,7 +215,7 @@ destRect.bottom=rdPtr->rHo.hoImgHeight;
 //
 // Should return NULL if the object is not transparent.
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 //
 /*
@@ -259,7 +259,7 @@ cSurface* WINAPI DLLExport GetRunObjectCollisionMask(LPRDATA rdPtr, LPARAM lPara
 // PauseRunObject
 // ----------------
 // Enters the pause mode
-// 
+//
 short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
 {
 	// Ok
@@ -282,7 +282,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // ============================================================================
 //
 // START APP / END APP / START FRAME / END FRAME routines
-// 
+//
 // ============================================================================
 
 // -------------------
@@ -290,10 +290,10 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // -------------------
 // Called when the application starts or restarts.
 // Useful for storing global data
-// 
+//
 void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 {
-	
+
 
 	// Example
 	// -------
@@ -310,7 +310,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 // EndApp
 // -------------------
 // Called when the application ends.
-// 
+//
 void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 {
 	// Example
@@ -328,7 +328,7 @@ void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 // StartFrame
 // -------------------
 // Called when the frame starts or restarts.
-// 
+//
 void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 
@@ -338,7 +338,7 @@ void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // EndFrame
 // -------------------
 // Called when the frame ends.
-// 
+//
 void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 
@@ -347,17 +347,17 @@ void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // ============================================================================
 //
 // TEXT ROUTINES (if OEFLAG_TEXT)
-// 
+//
 // ============================================================================
 
 // -------------------
 // GetRunObjectFont
 // -------------------
 // Return the font used by the object.
-// 
+//
 /*
 
-  // Note: do not forget to enable the functions in the .def file 
+  // Note: do not forget to enable the functions in the .def file
   // if you remove the comments below.
 
 void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
@@ -371,7 +371,7 @@ void WINAPI GetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf)
 // SetRunObjectFont
 // -------------------
 // Change the font used by the object.
-// 
+//
 void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 {
 	// Example
@@ -391,7 +391,7 @@ void WINAPI SetRunObjectFont(LPRDATA rdPtr, LOGFONT* pLf, RECT* pRc)
 // GetRunObjectTextColor
 // ---------------------
 // Return the text color of the object.
-// 
+//
 COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 {
 	// Example
@@ -403,7 +403,7 @@ COLORREF WINAPI GetRunObjectTextColor(LPRDATA rdPtr)
 // SetRunObjectTextColor
 // ---------------------
 // Change the text color of the object.
-// 
+//
 void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 {
 	// Example
@@ -417,7 +417,7 @@ void WINAPI SetRunObjectTextColor(LPRDATA rdPtr, COLORREF rgb)
 // ============================================================================
 //
 // DEBUGGER ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------

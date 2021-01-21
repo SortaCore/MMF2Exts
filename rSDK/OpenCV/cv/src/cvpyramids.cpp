@@ -897,15 +897,15 @@ typedef CvStatus (CV_STDCALL * CvPyrDownBorderFunc)( const void* src, int srcste
 
 ////////////////////////////// IPP pyramid functions /////////////////////////////////////
 
-icvPyrDown_Gauss5x5_8u_C1R_t icvPyrDown_Gauss5x5_8u_C1R_p = 0; 
-icvPyrDown_Gauss5x5_8u_C3R_t icvPyrDown_Gauss5x5_8u_C3R_p = 0; 
-icvPyrDown_Gauss5x5_32f_C1R_t icvPyrDown_Gauss5x5_32f_C1R_p = 0; 
-icvPyrDown_Gauss5x5_32f_C3R_t icvPyrDown_Gauss5x5_32f_C3R_p = 0; 
+icvPyrDown_Gauss5x5_8u_C1R_t icvPyrDown_Gauss5x5_8u_C1R_p = 0;
+icvPyrDown_Gauss5x5_8u_C3R_t icvPyrDown_Gauss5x5_8u_C3R_p = 0;
+icvPyrDown_Gauss5x5_32f_C1R_t icvPyrDown_Gauss5x5_32f_C1R_p = 0;
+icvPyrDown_Gauss5x5_32f_C3R_t icvPyrDown_Gauss5x5_32f_C3R_p = 0;
 
-icvPyrUp_Gauss5x5_8u_C1R_t icvPyrUp_Gauss5x5_8u_C1R_p = 0; 
-icvPyrUp_Gauss5x5_8u_C3R_t icvPyrUp_Gauss5x5_8u_C3R_p = 0; 
-icvPyrUp_Gauss5x5_32f_C1R_t icvPyrUp_Gauss5x5_32f_C1R_p = 0; 
-icvPyrUp_Gauss5x5_32f_C3R_t icvPyrUp_Gauss5x5_32f_C3R_p = 0; 
+icvPyrUp_Gauss5x5_8u_C1R_t icvPyrUp_Gauss5x5_8u_C1R_p = 0;
+icvPyrUp_Gauss5x5_8u_C3R_t icvPyrUp_Gauss5x5_8u_C3R_p = 0;
+icvPyrUp_Gauss5x5_32f_C1R_t icvPyrUp_Gauss5x5_32f_C1R_p = 0;
+icvPyrUp_Gauss5x5_32f_C3R_t icvPyrUp_Gauss5x5_32f_C3R_p = 0;
 
 icvPyrUpGetBufSize_Gauss5x5_t icvPyrUpGetBufSize_Gauss5x5_p = 0;
 icvPyrDownGetBufSize_Gauss5x5_t icvPyrDownGetBufSize_Gauss5x5_p = 0;
@@ -928,7 +928,7 @@ cvPyrUp( const void* srcarr, void* dstarr, int _filter )
 {
 	static CvFuncTable pyrup_tab;
 	static int inittab = 0;
-	
+
 	void *buffer = 0;
 	int local_alloc = 0;
 
@@ -1021,7 +1021,7 @@ cvPyrDown( const void* srcarr, void* dstarr, int _filter )
 	static CvFuncTable pyrdown_tab;
 	static CvFuncTable pyrdownborder_tab;
 	static int inittab = 0;
-	
+
 	void *buffer = 0;
 	int local_alloc = 0;
 
@@ -1068,7 +1068,7 @@ cvPyrDown( const void* srcarr, void* dstarr, int _filter )
 		(unsigned)(dst_size.height - src_size.height/2) > 1 )
 		CV_ERROR( CV_StsUnmatchedSizes, "" );
 
-	// current restriction of PyrDownBorder* 
+	// current restriction of PyrDownBorder*
 	if( (src_size.width <= 2 && dst_size.width != 1) ||
 		(src_size.height <= 2 && dst_size.height != 1) )
 		CV_ERROR( CV_StsUnmatchedSizes, "" );
@@ -1151,13 +1151,13 @@ cvReleasePyramid( CvMat*** _pyramid, int extra_layers )
 		CV_ERROR( CV_StsNullPtr, "" );
 
 	pyramid = *_pyramid;
-	
+
 	if( pyramid )
 	{
 		for( i = 0; i <= extra_layers; i++ )
 			cvReleaseMat( &pyramid[i] );
 	}
-	
+
 	cvFree( _pyramid );
 
 	__END__;
@@ -1175,7 +1175,7 @@ cvCreatePyramid( const CvArr* srcarr, int extra_layers, double rate,
 	CV_FUNCNAME( "cvCreatePyramid" );
 
 	__BEGIN__;
-	
+
 	int i, elem_size, layer_step;
 	CvMat stub, *src;
 	CvSize size, layer_size;
@@ -1246,7 +1246,7 @@ cvCreatePyramid( const CvArr* srcarr, int extra_layers, double rate,
 			cvPyrDown( pyramid[i-1], pyramid[i], filter );
 			//cvResize( pyramid[i-1], pyramid[i], CV_INTER_LINEAR );
 	}
-	
+
 	__END__;
 
 	if( cvGetErrStatus() < 0 )

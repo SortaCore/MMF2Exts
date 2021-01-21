@@ -35,7 +35,7 @@ public:
 		VirtualProtectEx(GetCurrentProcess(), Address, Size, OldProtect, &Unused);
 	}
 
-	
+
 };
 
 class Patch

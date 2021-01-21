@@ -80,7 +80,7 @@ static void def_cleanup (lw_pump pump)
 	lw_eventpump ctx = (lw_eventpump) pump;
 
 	lwp_eventqueue_delete (ctx->queue);
-	
+
 	#ifdef ENABLE_THREADS
 
 	  if (lw_thread_started (ctx->watcher.thread))
@@ -192,9 +192,9 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 		  */
 		 for (int i = 0; i < ctx->watcher.num_events; ++ i)
 			process_event (ctx, ctx->watcher.events [i]);
-	
+
 		 ctx->watcher.num_events = 0;
-		
+
 		 need_watcher_resume = lw_true;
 	  }
 
@@ -206,7 +206,7 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 
 	for (int i = 0; i < count; ++ i)
 	  process_event (ctx, events [i]);
-	
+
 	#ifdef ENABLE_THREADS
 	  if (need_watcher_resume)
 		 lw_event_signal (ctx->watcher.resume_event);
@@ -261,7 +261,7 @@ lw_error lw_eventpump_start_sleepy_ticking
 	(lw_eventpump ctx, void (lw_callback * on_tick_needed) (lw_eventpump))
 {
 	#ifdef ENABLE_THREADS
-	  ctx->on_tick_needed = on_tick_needed;	
+	  ctx->on_tick_needed = on_tick_needed;
 	  lw_thread_start (ctx->watcher.thread, ctx);
 	#else
 	  /* TODO error */
@@ -291,7 +291,7 @@ static void watcher (lw_eventpump ctx)
 		 lwp_trace ("drain error: %d", errno);
 		 break;
 	  }
-		 
+
 	  if (count == 0)
 		 continue;
 

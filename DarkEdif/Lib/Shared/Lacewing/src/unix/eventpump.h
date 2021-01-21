@@ -42,7 +42,7 @@ struct _lw_pump_watch
 };
 
 struct _lw_eventpump
-{  
+{
 	struct _lw_pump pump;
 
 	lwp_eventqueue queue;
@@ -59,12 +59,12 @@ struct _lw_eventpump
 	  struct
 	  {
 		 lw_thread thread;
-	
+
 		 int num_events;
 		 lwp_eventqueue_event events [max_events];
-	
+
 		 lw_event resume_event;
-	
+
 	  } watcher;
 
 	  void (lw_callback * on_tick_needed) (lw_eventpump);

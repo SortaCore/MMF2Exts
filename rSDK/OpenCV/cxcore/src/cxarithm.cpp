@@ -355,7 +355,7 @@ cvSub( const void* srcarr1, const void* srcarr2,
 		else
 		{
 			int coi1 = 0, coi2 = 0, coi3 = 0;
-			
+
 			CV_CALL( src1 = cvGetMat( src1, &srcstub1, &coi1 ));
 			CV_CALL( src2 = cvGetMat( src2, &srcstub2, &coi2 ));
 			CV_CALL( dst = cvGetMat( dst, &dststub, &coi3 ));
@@ -423,7 +423,7 @@ cvSub( const void* srcarr1, const void* srcarr2,
 	else
 	{
 		int buf_size, elem_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -452,7 +452,7 @@ cvSub( const void* srcarr1, const void* srcarr2,
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -542,7 +542,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 	CvCopyMaskFunc copym_func;
 	double buf[12];
 	int is_nd = 0;
-	CvSize size, tsize; 
+	CvSize size, tsize;
 
 	if( !inittab )
 	{
@@ -594,7 +594,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 		func = (CvFunc2D_2A1P)(subr_tab.fn_2d[CV_MAT_DEPTH(type)]);
 		if( !func )
 			CV_ERROR( CV_StsUnsupportedFormat, "" );
-		
+
 		CV_CALL( cvScalarToRawData( &scalar, buf, sctype, 1 ));
 
 		do
@@ -633,7 +633,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 				{
 					const float* srcdata = (const float*)(src->data.ptr);
 					float* dstdata = (float*)(dst->data.ptr);
-				
+
 					do
 					{
 						dstdata[len-1] = (float)(scalar.val[0] - srcdata[len-1]);
@@ -647,7 +647,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 				{
 					const double* srcdata = (const double*)(src->data.ptr);
 					double* dstdata = (double*)(dst->data.ptr);
-				
+
 					do
 					{
 						dstdata[len-1] = scalar.val[0] - srcdata[len-1];
@@ -659,7 +659,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 			}
 			cont_flag = 1;
 		}
-		
+
 		dy = size.height;
 		copym_func = 0;
 		tdst = dst;
@@ -667,7 +667,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 	else
 	{
 		int buf_size, elem_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -696,7 +696,7 @@ cvSubRS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr 
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -827,7 +827,7 @@ cvAdd( const void* srcarr1, const void* srcarr2,
 		else
 		{
 			int coi1 = 0, coi2 = 0, coi3 = 0;
-			
+
 			CV_CALL( src1 = cvGetMat( src1, &srcstub1, &coi1 ));
 			CV_CALL( src2 = cvGetMat( src2, &srcstub2, &coi2 ));
 			CV_CALL( dst = cvGetMat( dst, &dststub, &coi3 ));
@@ -895,7 +895,7 @@ cvAdd( const void* srcarr1, const void* srcarr2,
 	else
 	{
 		int buf_size, elem_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -924,7 +924,7 @@ cvAdd( const void* srcarr1, const void* srcarr2,
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -1014,7 +1014,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 	CvCopyMaskFunc copym_func;
 	double buf[12];
 	int is_nd = 0;
-	CvSize size, tsize; 
+	CvSize size, tsize;
 
 	if( !inittab )
 	{
@@ -1066,7 +1066,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 		func = (CvFunc2D_2A1P)(add_tab.fn_2d[CV_MAT_DEPTH(type)]);
 		if( !func )
 			CV_ERROR( CV_StsUnsupportedFormat, "" );
-		
+
 		CV_CALL( cvScalarToRawData( &scalar, buf, sctype, 1 ));
 
 		do
@@ -1105,7 +1105,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 				{
 					const float* srcdata = (const float*)(src->data.ptr);
 					float* dstdata = (float*)(dst->data.ptr);
-				
+
 					do
 					{
 						dstdata[len-1] = (float)(scalar.val[0] + srcdata[len-1]);
@@ -1119,7 +1119,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 				{
 					const double* srcdata = (const double*)(src->data.ptr);
 					double* dstdata = (double*)(dst->data.ptr);
-				
+
 					do
 					{
 						dstdata[len-1] = scalar.val[0] + srcdata[len-1];
@@ -1131,7 +1131,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 			}
 			cont_flag = 1;
 		}
-		
+
 		dy = size.height;
 		copym_func = 0;
 		tdst = dst;
@@ -1139,7 +1139,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 	else
 	{
 		int buf_size, elem_size;
-		
+
 		if( !CV_IS_MAT(mask) )
 			CV_CALL( mask = cvGetMat( mask, &maskstub ));
 
@@ -1168,7 +1168,7 @@ cvAddS( const void* srcarr, CvScalar scalar, void* dstarr, const void* maskarr )
 			buffer = (uchar*)cvStackAlloc( buf_size );
 		dstbuf.data.ptr = buffer;
 		tdst = &dstbuf;
-		
+
 		copym_func = icvGetCopyMaskFunc( elem_size );
 	}
 
@@ -1415,7 +1415,7 @@ cvMul( const void* srcarr1, const void* srcarr2, void* dstarr, double scale )
 				const float* src1data = (const float*)(src1->data.ptr);
 				const float* src2data = (const float*)(src2->data.ptr);
 				float* dstdata = (float*)(dst->data.ptr);
-			
+
 				do
 				{
 					dstdata[size.width-1] = (float)
@@ -1431,7 +1431,7 @@ cvMul( const void* srcarr1, const void* srcarr2, void* dstarr, double scale )
 				const double* src1data = (const double*)(src1->data.ptr);
 				const double* src2data = (const double*)(src2->data.ptr);
 				double* dstdata = (double*)(dst->data.ptr);
-			
+
 				do
 				{
 					dstdata[size.width-1] =
@@ -1927,7 +1927,7 @@ icvAddWeighted_8u_fast_C1R( const uchar* src1, int step1, double alpha,
 		for( ; size.height--; src1 += step1, src2 += step2, dst += step )
 		{
 			int i;
-			
+
 			for( i = 0; i <= size.width - 4; i += 4 )
 			{
 				t0 = (tab1[src1[i]] + tab2[src2[i]]) >> shift;
@@ -1977,7 +1977,7 @@ cvAddWeighted( const CvArr* srcAarr, double alpha,
 {
 	static CvFuncTable addw_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvAddWeighted" );
 
 	__BEGIN__;

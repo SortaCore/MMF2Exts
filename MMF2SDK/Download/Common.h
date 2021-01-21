@@ -34,7 +34,7 @@ long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2);
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2);
 long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param);
 
-#define MAKEID(a,b,c,d) ((#@a << 24)|(#@b << 16)|(#@c << 8)|(#@d)) 
+#define MAKEID(a,b,c,d) ((#@a << 24)|(#@b << 16)|(#@c << 8)|(#@d))
 
 // Used to ensure the MMF version is 1.5, you can safely ignore this
 /*

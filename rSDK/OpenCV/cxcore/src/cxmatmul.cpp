@@ -612,7 +612,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 	static int inittab = 0;
 	static double zero[] = {0,0,0,0};
 	static float zerof[] = {0,0,0,0};
-	
+
 	uchar* buffer = 0;
 	int local_alloc = 0;
 	uchar* block_buffer = 0;
@@ -626,7 +626,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 	CvMat *C = (CvMat*)Carr;
 	CvMat *D = (CvMat*)Darr;
 	int len = 0;
-	
+
 	CvMat stub, stub1, stub2, stub3;
 	CvSize a_size, d_size;
 	int type;
@@ -990,7 +990,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 			}
 		}
 	}
- 
+
 	{
 		int b_step = B->step;
 		CvGEMMSingleMulFunc single_mul_func;
@@ -1041,7 +1041,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 			const char* transa = flags & CV_GEMM_A_T ? "t" : "n";
 			const char* transb = flags & CV_GEMM_B_T ? "t" : "n";
 			int lda, ldb, ldd;
-			
+
 			if( C->data.ptr )
 			{
 				if( C->data.ptr != D->data.ptr )
@@ -1056,7 +1056,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 			if( CV_MAT_DEPTH(type) == CV_32F )
 			{
 				CvComplex32f _alpha, _beta;
-				
+
 				lda = A->step/sizeof(float);
 				ldb = b_step/sizeof(float);
 				ldd = D->step/sizeof(float);
@@ -1074,7 +1074,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 			else
 			{
 				CvComplex64f _alpha, _beta;
-				
+
 				lda = A->step/sizeof(double);
 				ldb = b_step/sizeof(double);
 				ldd = D->step/sizeof(double);
@@ -1151,7 +1151,7 @@ cvGEMM( const CvArr* Aarr, const CvArr* Barr, double alpha,
 			dk0_1 = (dn0+dn0/8+2) & -2;
 			b_buf_size = (dk0+dk0/8+1)*dk0_1*elem_size;
 			d_buf_size = (dk0+dk0/8+1)*dk0_1*work_elem_size;
-		
+
 			if( is_a_t )
 			{
 				a_buf_size = (dm0+dm0/8+1)*((dk0+dk0/8+2)&-2)*elem_size;
@@ -1596,7 +1596,7 @@ cvTransform( const CvArr* srcarr, CvArr* dstarr,
 	static CvBigFuncTable transform_tab, diag_transform_tab;
 	static int inittab = 0;
 	CvMat* lut = 0;
-	
+
 	CV_FUNCNAME( "cvTransform" );
 
 	__BEGIN__;
@@ -1802,7 +1802,7 @@ cvTransform( const CvArr* srcarr, CvArr* dstarr,
 						break;
 					}
 				}
-			
+
 			if( diag_transform )
 			{
 				if( CV_MAT_DEPTH(type) == CV_8U )
@@ -1851,14 +1851,14 @@ cvTransform( const CvArr* srcarr, CvArr* dstarr,
 			int srcstep = src->step;
 			int dststep = dst->step;
 			size = cvGetMatSize( src );
-			
+
 			if( CV_IS_MAT_CONT( src->type & dst->type ))
 			{
 				size.width *= size.height;
 				size.height = 1;
 				srcstep = dststep = CV_STUB_STEP;
 			}
-			
+
 			if( lut_func )
 				lut_func( src->data.ptr, src->step, dst->data.ptr,
 						  dst->step, size, lut->data.ptr );
@@ -2216,7 +2216,7 @@ cvScaleAdd( const CvArr* srcarr1, CvScalar scale,
 {
 	static CvBigFuncTable muladds_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvScaleAdd" );
 
 	__BEGIN__;
@@ -2458,7 +2458,7 @@ cvCalcCovarMatrix( const CvArr** vecarr, int count,
 	static int inittab = 0;
 	vec_data* vecdata = 0;
 	CvMat *tempvec = 0;
-	
+
 	CV_FUNCNAME( "cvCalcCovarMatrix" );
 
 	__BEGIN__;
@@ -2525,7 +2525,7 @@ cvCalcCovarMatrix( const CvArr** vecarr, int count,
 			vec_delta = vecmat->step;
 			vec_step = CV_STUB_STEP;
 		}
-		
+
 		if( !(flags & CV_COVAR_USE_AVG) )
 			CV_CALL( cvReduce( vecmat, avg, -1, CV_REDUCE_AVG ));
 
@@ -2558,7 +2558,7 @@ cvCalcCovarMatrix( const CvArr** vecarr, int count,
 			cvZero( avg );
 
 		CV_CALL( vecdata = (vec_data*)cvAlloc( count*sizeof(vecdata[0])));
-	
+
 		for( i = 0; i < count; i++ )
 		{
 			CvMat vecstub, *vec = (CvMat*)vecarr[i];
@@ -2610,7 +2610,7 @@ cvCalcCovarMatrix( const CvArr** vecarr, int count,
 	{
 		CvFunc2D_3A1P dot_func =
 			(CvFunc2D_3A1P)dot_tab[dsttype == CV_64FC1].fn_2d[CV_MAT_DEPTH(srctype)];
-		
+
 		if( !dot_func )
 			CV_ERROR( CV_StsUnsupportedFormat,
 			"The format of input vectors is not supported" );
@@ -2668,9 +2668,9 @@ cvCalcCovarMatrix( const CvArr** vecarr, int count,
 		if( !ext_func )
 			CV_ERROR( CV_StsUnsupportedFormat,
 			"The format of input vectors is not supported" );
-		
+
 		cvZero( cov );
-		
+
 		for( i = 0; i < count; i++ )
 		{
 			void* v;
@@ -2804,7 +2804,7 @@ cvMahalanobis( const CvArr* srcAarr, const CvArr* srcBarr, CvArr* matarr )
 
 	if( !CV_ARE_SIZES_EQ(srcA,srcB) )
 		CV_ERROR( CV_StsUnmatchedSizes, "Input vectors have different sizes" );
-	
+
 	if( mat->rows != len || mat->cols != len )
 		CV_ERROR( CV_StsUnmatchedSizes, "Input vectors and covariation matrix have different sizes" );
 
@@ -2819,7 +2819,7 @@ cvMahalanobis( const CvArr* srcAarr, const CvArr* srcBarr, CvArr* matarr )
 
 	elem_size = CV_ELEM_SIZE(srcA->type);
 	buf_size = len*elem_size;
-	
+
 	if( buf_size <= CV_MAX_LOCAL_SIZE )
 	{
 		buffer = (uchar*)cvStackAlloc( buf_size );
@@ -3275,7 +3275,7 @@ cvDotProduct( const CvArr* srcAarr, const CvArr* srcBarr )
 
 	Cv64suf result;
 	result.f = 0;
-	
+
 	CV_FUNCNAME( "cvDotProduct" );
 
 	__BEGIN__;
@@ -3301,7 +3301,7 @@ cvDotProduct( const CvArr* srcAarr, const CvArr* srcBarr )
 	}
 
 	if( srcBarr == srcAarr )
-		srcB = srcA; 
+		srcB = srcA;
 	else
 	{
 		if( !CV_IS_MAT( srcB ))
@@ -3343,7 +3343,7 @@ cvDotProduct( const CvArr* srcAarr, const CvArr* srcBarr )
 				result.f = sum;
 				EXIT;
 			}
-			
+
 			if( depth == CV_64F )
 			{
 				double* mA = srcA->data.db;

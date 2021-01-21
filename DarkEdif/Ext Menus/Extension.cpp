@@ -32,11 +32,11 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 		It's the only place you'll get access to edPtr at runtime, so you should transfer
 		anything from edPtr to the extension class here.
-	
+
 	*/
 
 
-	
+
 }
 
 #ifdef MULTI_THREADING
@@ -45,8 +45,8 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
 		do not cause reading of only the last condition's output. Useful for multi-threading.
-		
-		For example, if an error event changes an output variable, and immediately afterward a 
+
+		For example, if an error event changes an output variable, and immediately afterward a
 		success event changes the same variable, only the success event's output can be read.
 	*/
 
@@ -54,17 +54,17 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 	if (UseLastData == false)
 	{
 		SaveExtInfo * NewEvent = new SaveExtInfo;
-		
+
 		// Initialise with one condition to be triggered
 		NewEvent->NumEvents = 1;
 		NewEvent->CondTrig = (unsigned short *)malloc(sizeof(unsigned short));
-		
+
 		// Failed to allocate memory
 		if (!NewEvent->CondTrig)
 			return ThreadData;
-		
+
 		NewEvent->CondTrig[0] = (unsigned short)Event;
-		
+
 		// Copy Extension's data to vector
 		if (memcpy_s(((char *)NewEvent)+5, sizeof(SaveExtInfo)-5, ((char *)&ThreadData)+5, sizeof(SaveExtInfo)-5))
 		{
@@ -79,12 +79,12 @@ SaveExtInfo &Extension::AddEvent(int Event, bool UseLastData /* = false */)
 		SaveExtInfo & S = Saved.size() == 0 ? ThreadData : *Saved.back();
 		++S.NumEvents;
 		unsigned short * CurrentCond = (unsigned short *)realloc(&S.CondTrig[0], S.NumEvents * sizeof(short));
-		
+
 		if (!CurrentCond)
 			return ThreadData;
 
 		CurrentCond[S.NumEvents-1] = (unsigned short)Event;
-		
+
 		S.CondTrig = CurrentCond;
 	}
 
@@ -117,7 +117,7 @@ REFLAG Extension::Handle()
 			try {
 				if (memcpy_s(&ThreadData, sizeof(SaveExtInfo), Saved.front(), sizeof(SaveExtInfo)))
 					break; // Failed; leave until next Extension::Handle()
-			
+
 
 				// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
 				for (unsigned char u = 0; u < ThreadData.NumEvents; ++u)
@@ -133,7 +133,7 @@ REFLAG Extension::Handle()
 	#endif // MULTI_THREADING
 
 	/*
-		If your extension will draw to the MMF window you should first 
+		If your extension will draw to the MMF window you should first
 		check if anything about its display has changed :
 
 			if (rdPtr->roc.rcChanged)
@@ -141,10 +141,10 @@ REFLAG Extension::Handle()
 			else
 			  return 0;
 
-		You will also need to make sure you change this flag yourself 
+		You will also need to make sure you change this flag yourself
 		to 1 whenever you want to redraw your object
-	 
-		If your extension won't draw to the window, but it still needs 
+
+		If your extension won't draw to the window, but it still needs
 		to do something every MMF loop use :
 
 			return 0;
@@ -162,7 +162,7 @@ REFLAG Extension::Handle()
 
 	*/
 
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG::ONE_SHOT;
 }
 

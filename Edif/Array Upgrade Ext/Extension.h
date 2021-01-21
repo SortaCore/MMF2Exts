@@ -11,9 +11,9 @@ public:
 	static const int MinimumBuild = 255;
 	static const int Version = 1;
 
-	static const int OEFLAGS = OEFLAG_VALUES; 
+	static const int OEFLAGS = OEFLAG_VALUES;
 	static const int OEPREFS = 0;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
@@ -52,7 +52,7 @@ public:
 		bool AlwaysTrue();
 
 	/// Expressions
-		
+
 		const char * GetFormat(const char * file);
 		const char * GetLastConverted();
 		const char * GetLastError();

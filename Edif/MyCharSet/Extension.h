@@ -15,7 +15,7 @@ public:
 
 	static const int OEFLAGS = 0;
 	static const int OEPREFS = 0;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
@@ -32,7 +32,7 @@ public:
 		std::wstring WideString;	// Unicode string
 		std::string  ThinString;	// ASCII string
 		long long locale;			// Current locale?
-		
+
 	/*  Add your actions, conditions and expressions as real class member
 		functions here. The arguments (and return type for expressions) must
 		match EXACTLY what you defined in the JSON.
@@ -43,13 +43,13 @@ public:
 
 		/// Actions
 		void SetBOMMarkASC(const char * FileToAddTo, int TypeOfBOM, int IgnoreCurrentBOM);
-		
+
 	/// Conditions
 
 		bool IsUnicode();
 
 	/// Expressions
-		
+
 	char * GetASCIIStringFromUnicodeString(wchar_t * Unicode, int Size, int ASCIIOrUTF8);
 	wchar_t * GetUnicodeStringFromASCIIString(char * ASCII, int Size, int ASCIIOrUTF8);
 	char * GetASCIIStringFromUnicodeMemory(int Address, int Size, int ASCIIOrUTF8);
@@ -59,7 +59,7 @@ public:
 	size_t GetUnicodeMemoryFromASCIIString(char * ASCII, int Size, int ASCIIOrUTF8);
 	size_t GetASCIIMemoryFromUnicodeMemory(int Address, int Size, int ASCIIOrUTF8);
 	size_t GetUnicodeMemoryFromASCIIMemory(int Address, int Size, int ASCIIOrUTF8);
-	
+
 	/* These are called if there's no function linked to an ID */
 
 	void Action(int ID, LPRDATA rdPtr, long param1, long param2);

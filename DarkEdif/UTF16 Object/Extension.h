@@ -19,7 +19,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -28,14 +28,14 @@ public:
 
 	/*  Add any data you want to store in your extension to this class
 		(eg. what you'd normally store in rdPtr).
-		
+
 		Unlike rdPtr, you can store real C++ objects with constructors
 		and destructors, without having to call them manually or store
 		a pointer.
 	*/
 
-	
-	
+
+
 
 	// int MyVariable;
 
@@ -58,7 +58,7 @@ public:
 	/// Conditions
 
 	/// Expressions
-		
+
 		int UTF16CharToUTF16Int(const wchar_t * utf16Char);
 		const wchar_t * UTF16IntToUTF16Char(unsigned int utf16ints);
 		const wchar_t * UTF16StrFromUTF16Mem(int addr, int numChars);

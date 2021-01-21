@@ -127,13 +127,13 @@ cvRANSACUpdateNumIters( double p, double ep,
 						int model_points, int max_iters )
 {
 	int result = 0;
-	
+
 	CV_FUNCNAME( "cvRANSACUpdateNumIters" );
 
 	__BEGIN__;
-	
+
 	double num, denom;
-	
+
 	if( model_points <= 0 )
 		CV_ERROR( CV_StsOutOfRange, "the number of model points should be positive" );
 
@@ -150,7 +150,7 @@ cvRANSACUpdateNumIters( double p, double ep,
 
 	num = log(num);
 	denom = log(denom);
-	
+
 	result = denom >= 0 || -num >= max_iters*(-denom) ?
 		max_iters : cvRound(num/denom);
 
@@ -182,7 +182,7 @@ bool CvModelEstimator2::runRANSAC( const CvMat* m1, const CvMat* m2, CvMat* mode
 	models = cvCreateMat( modelSize.height*maxBasicSolutions, modelSize.width, CV_64FC1 );
 	err = cvCreateMat( 1, count, CV_32FC1 );
 	tmask = cvCreateMat( 1, count, CV_8UC1 );
-	
+
 	if( count > modelPoints )
 	{
 		ms1 = cvCreateMat( 1, modelPoints, m1->type );
@@ -278,7 +278,7 @@ bool CvModelEstimator2::runLMeDS( const CvMat* m1, const CvMat* m2, CvMat* model
 
 	models = cvCreateMat( modelSize.height*maxBasicSolutions, modelSize.width, CV_64FC1 );
 	err = cvCreateMat( 1, count, CV_32FC1 );
-	
+
 	if( count > modelPoints )
 	{
 		ms1 = cvCreateMat( 1, modelPoints, m1->type );
@@ -399,7 +399,7 @@ bool CvModelEstimator2::checkSubset( const CvMat* m, int count )
 	CvPoint2D64f* ptr = (CvPoint2D64f*)m->data.ptr;
 
 	assert( CV_MAT_TYPE(m->type) == CV_64FC2 );
-	
+
 	// check that the i-th selected point does not belong
 	// to a line connecting some previously selected points
 	for( j = 0; j < i; j++ )
@@ -838,12 +838,12 @@ int CvFMEstimator::run8Point( const CvMat* _m1, const CvMat* _m2, CvMat* _fmatri
 
 	scale0 = sqrt(2.)/scale0;
 	scale1 = sqrt(2.)/scale1;
-	
+
 	cvZero( &A );
 
 	// form a linear system Ax=0: for each selected pair of points m1 & m2,
 	// the row of A(=a) represents the coefficients of equation: (m2, 1)'*F*(m1, 1) = 0
-	// to save computation time, we compute (At*A) instead of A and then solve (At*A)x=0. 
+	// to save computation time, we compute (At*A) instead of A and then solve (At*A)x=0.
 	for( i = 0; i < count; i++ )
 	{
 		double x0 = (m1[i].x - m0c.x)*scale0;
@@ -918,7 +918,7 @@ void CvFMEstimator::computeReprojError( const CvMat* _m1, const CvMat* _m2,
 	const CvPoint2D64f* m2 = (const CvPoint2D64f*)_m2->data.ptr;
 	const double* F = model->data.db;
 	float* err = _err->data.fl;
-	
+
 	for( i = 0; i < count; i++ )
 	{
 		double a, b, c, d1, d2, s1, s2;
@@ -996,7 +996,7 @@ cvFindFundamentalMat( const CvMat* points1, const CvMat* points2,
 			param1 = 3;
 		if( param2 < DBL_EPSILON || param2 > 1 - DBL_EPSILON )
 			param2 = 0.99;
-		
+
 		if( (method & ~3) == CV_RANSAC )
 			result = estimator.runRANSAC(m1, m2, &_F3x3, tempMask, param1, param2 );
 		else

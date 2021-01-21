@@ -497,7 +497,7 @@ static int
 icvCheckBoardMonotony( CvPoint2D32f* corners, CvSize pattern_size )
 {
 	int i, j, k;
-	
+
 	for( k = 0; k < 2; k++ )
 	{
 		for( i = 0; i < (k == 0 ? pattern_size.height : pattern_size.width); i++ )

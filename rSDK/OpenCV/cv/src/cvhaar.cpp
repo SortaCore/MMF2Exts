@@ -1025,7 +1025,7 @@ cvHaarDetectObjects( const CvArr* _img,
 
 					positive = (ssz.width/ystep)*((ssz.height + ystep-1)/ystep);
 					memset( mask1.data.ptr + y1*mask1.step, ystep == 1, mask1.height*mask1.step);
-					
+
 					if( ystep > 1 )
 					{
 						for( y = y1, positive = 0; y < y2; y += ystep )
@@ -1261,7 +1261,7 @@ cvHaarDetectObjects( const CvArr* _img,
 			if( find_biggest_object )
 			{
 				CvSeq* bseq = min_neighbors > 0 ? big_seq : seq;
-				
+
 				if( min_neighbors > 0 && !scan_roi )
 				{
 					// group retrieved rectangles in order to filter out noise
@@ -1419,9 +1419,9 @@ cvHaarDetectObjects( const CvArr* _img,
 	}
 
 	if( min_neighbors != 0
-#if VERY_ROUGH_SEARCH		
+#if VERY_ROUGH_SEARCH
 		&& (!find_biggest_object || !rough_search)
-#endif		
+#endif
 		)
 	{
 		// group retrieved rectangles in order to filter out noise
@@ -1501,7 +1501,7 @@ cvHaarDetectObjects( const CvArr* _img,
 				{
 					max_area = area;
 					result_comp = *comp;
-				}				
+				}
 			}
 		}
 	}

@@ -21,6 +21,6 @@ struct CollectionOf2DPointsData
 	Linked2DPoint* lastPoint;
 	Linked2DPoint* currentPointOnLoop;
 	int count;
-	
+
 };
 #endif

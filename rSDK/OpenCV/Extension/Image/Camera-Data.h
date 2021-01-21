@@ -9,6 +9,6 @@ struct CameraData
 //	rSpr rs;
 	LPRRDATA rRd;
 	CvCapture * myCapture;
-	
+
 };
 #endif

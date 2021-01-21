@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 
 #include "common.h"
@@ -9,7 +9,7 @@
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 struct OverlayStructure
@@ -99,7 +99,7 @@ CONDITION(
 	/* Name */			"%o: On tab changed to %0",
 	/* Flags */			0,
 	/* Params */		(1,PARAM_STRING,"Caption")
-) {	
+) {
 	TCHAR* caption = (TCHAR*)param1;
 	TCHAR buff[64];
 	TC_ITEM tie;
@@ -124,14 +124,14 @@ CONDITION(
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 
 // -----------------
 // Set Text
 // -----------------
-// 
+//
 ACTION(
 	/* ID */			0,
 	/* Name */			"Insert tab with caption %0, icon %1 at %2",
@@ -143,10 +143,10 @@ ACTION(
 	int index = Param(TYPE_INT);
 	if (index == -1) index = TabCtrl_GetItemCount(rdPtr->hWnd);
 	index = max(index,0);
-	TCITEM tie; 
+	TCITEM tie;
 	tie.mask = TCIF_TEXT | TCIF_IMAGE;
 	tie.iImage = img;
-	tie.pszText = text; 
+	tie.pszText = text;
 	TabCtrl_InsertItem(rdPtr->hWnd,index,&tie);
 }
 
@@ -188,10 +188,10 @@ ACTION(
 ) {
 	int index = param1;
 	TCHAR* text = (TCHAR*)param2;
-	TCITEM tie; 
+	TCITEM tie;
 	tie.mask = TCIF_TEXT;
-	tie.iImage = -1; 
-	tie.pszText = text; 
+	tie.iImage = -1;
+	tie.pszText = text;
 	TabCtrl_SetItem(rdPtr->hWnd,index,&tie);
 }
 
@@ -283,21 +283,21 @@ ACTION(
 	/* Flags */			0,
 	/* Params */		(2,PARAM_STRING,"Semicolon-separated list",PARAM_NUMBER,"Index (-1: Add to the end)")
 ) {
-	TCITEM tie; 
-	tie.mask = TCIF_TEXT | TCIF_IMAGE; 
-	tie.iImage = -1; 
+	TCITEM tie;
+	tie.mask = TCIF_TEXT | TCIF_IMAGE;
+	tie.iImage = -1;
 	int i = 0;
 	TCHAR* text = (TCHAR*)Param(TYPE_STRING);
 	int in = Param(TYPE_INT);
 	if (in == -1) in = TabCtrl_GetItemCount(rdPtr->hWnd);
 	TCHAR* t = _tcstok(text,_T(";"));
 	while (t != NULL) {
-		tie.pszText = t; 
+		tie.pszText = t;
 		TabCtrl_InsertItem(rdPtr->hWnd,in+i,&tie);
 		t = _tcstok(NULL,_T(";"));
 		i++;
 	}
-}	
+}
 
 ACTION(
 	/* ID */			15,
@@ -368,7 +368,7 @@ ACTION(
 		HICON hicon = surface.CreateIcon(rdPtr->iconwidth,rdPtr->iconheight,surface.GetTransparentColor(),NULL);
 		ImageList_ReplaceIcon(rdPtr->imgl,index,hicon);
 		DestroyIcon(hicon);
-}		
+}
 
 ACTION(
 	/* ID */			20,
@@ -420,9 +420,9 @@ ACTION(
 ) {
 	int index = Param(TYPE_INT);
 	int icon = Param(TYPE_INT);
-	TCITEM tie; 
-	tie.mask = TCIF_IMAGE; 
-	tie.iImage = icon; 
+	TCITEM tie;
+	tie.mask = TCIF_IMAGE;
+	tie.iImage = icon;
 	TabCtrl_SetItem(rdPtr->hWnd,index,&tie);
 }
 ACTION(
@@ -455,9 +455,9 @@ ACTION(
 	/* Flags */			0,
 	/* Params */		(2,PARAM_STRING,"List (icon1;text1;icon2;...)",PARAM_NUMBER,"Index (-1: Add to the end)")
 ) {
-	TCITEM tie; 
-	tie.mask = TCIF_TEXT|TCIF_IMAGE; 
-	tie.iImage = -1; 
+	TCITEM tie;
+	tie.mask = TCIF_TEXT|TCIF_IMAGE;
+	tie.iImage = -1;
 	int i=0;
 	TCHAR* text = (TCHAR*)param1;
 	int in = param2;
@@ -465,13 +465,13 @@ ACTION(
 	TCHAR* t = _tcstok((TCHAR*)text,_T(";"));
 	while (t != NULL) {
 		if (i%2) {
-			tie.pszText = t; 
+			tie.pszText = t;
 			TabCtrl_InsertItem(rdPtr->hWnd,in+i,&tie);
 		} else tie.iImage = _tstoi(t);
 		t = _tcstok(NULL,_T(";"));
 		i++;
 	}
-}	
+}
 
 ACTION(
 	/* ID */			27,
@@ -479,8 +479,8 @@ ACTION(
 	/* Flags */			0,
 	/* Params */		(2,PARAM_NUMBER,"Index",PARAM_NUMBER,"Parameter")
 ) {
-	TCITEM tie; 
-	tie.mask = TCIF_PARAM; 
+	TCITEM tie;
+	tie.mask = TCIF_PARAM;
 	tie.lParam = (LPARAM)param2;
 	TabCtrl_SetItem(rdPtr->hWnd,param1,&tie);
 }
@@ -488,7 +488,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 
@@ -516,7 +516,7 @@ EXPRESSION(
 	/* Name */			"TabCaption$(",
 	/* Flags */			EXPFLAG_STRING,
 	/* Params */		(1,EXPPARAM_NUMBER,"Index")
-) {	
+) {
 	int index = ExParam(TYPE_INT);
 	TCHAR buff[64] = {0};
 	TC_ITEM tie;
@@ -604,7 +604,7 @@ EXPRESSION(
 	/* Name */			"FindTab(",
 	/* Flags */			0,
 	/* Params */		(1,EXPPARAM_STRING,"Caption")
-) {	
+) {
 	TCHAR* capt = (TCHAR*)ExParam(TYPE_STRING);
 	TCHAR buff[64];
 	int count = TabCtrl_GetItemCount(rdPtr->hWnd);
@@ -625,7 +625,7 @@ EXPRESSION(
 	/* Name */			"TabX(",
 	/* Flags */			0,
 	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
-) {	
+) {
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
 	RECT r;
@@ -638,7 +638,7 @@ EXPRESSION(
 	/* Name */			"TabY(",
 	/* Flags */			0,
 	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
-) {	
+) {
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
 	RECT r;
@@ -651,7 +651,7 @@ EXPRESSION(
 	/* Name */			"TabW(",
 	/* Flags */			0,
 	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
-) {	
+) {
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
 	RECT r;
@@ -664,7 +664,7 @@ EXPRESSION(
 	/* Name */			"TabH(",
 	/* Flags */			0,
 	/* Params */		(1,EXPPARAM_NUMBER,"Index (-1: Last)")
-) {	
+) {
 	int i = ExParam(TYPE_INT);
 	if (i == -1) i = TabCtrl_GetItemCount(rdPtr->hWnd)-1;
 	RECT r;

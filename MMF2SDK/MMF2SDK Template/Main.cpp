@@ -35,10 +35,10 @@ short actionsInfos[]=
 short expressionsInfos[]=
 {
 	IDMN_EXPRESSION, M_EXPRESSION, EXP_EXPRESSION, 0, 3, EXPPARAM_LONG, EXPPARAM_LONG, EXPPARAM_LONG, 0, 0, 0,
-		
-	// Note in the following.  If you are returning a string, you set the EXPFLAG_STRING.	
+
+	// Note in the following.  If you are returning a string, you set the EXPFLAG_STRING.
 	IDMN_EXPRESSION2, M_EXPRESSION2, EXP_EXPRESSION2, EXPFLAG_STRING, 1, EXPPARAM_STRING, 0,
-		
+
 	// Note in the following.  If you are returning a float, you set the EXPFLAG_DOUBLE
 	IDMN_EXPRESSION3, M_EXPRESSION3, EXP_EXPRESSION3, EXPFLAG_DOUBLE, 1, EXPPARAM_LONG, 0,
 };
@@ -48,20 +48,20 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // CONDITION ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
 // Sample Condition
 // -----------------
 // Returns TRUE when the two values are equal!
-// 
+//
 
 long WINAPI DLLExport Condition(LPRDATA rdPtr, long param1, long param2)
 {
 
-//  **** Still use this method for 1 or 2 parameters ****	
-//	if (param1==param2)	
+//  **** Still use this method for 1 or 2 parameters ****
+//	if (param1==param2)
 //		return TRUE;
 
 	long p1 = CNC_GetParameter(rdPtr);
@@ -70,7 +70,7 @@ long WINAPI DLLExport Condition(LPRDATA rdPtr, long param1, long param2)
 
 	if ((p1 + p2)==p3)
 		return TRUE;
-		 
+
 	return FALSE;
 }
 
@@ -78,14 +78,14 @@ long WINAPI DLLExport Condition(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // ACTIONS ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
 // Sample Action
 // -----------------
 // Does nothing!
-// 
+//
 short WINAPI DLLExport Action(LPRDATA rdPtr, long param1, long param2)
 {
 	// Actions work just like Conditions
@@ -105,14 +105,14 @@ short WINAPI DLLExport Action(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // EXPRESSIONS ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
 // Sample expression
 // -----------------
 // Add three values
-// 
+//
 long WINAPI DLLExport Expression(LPRDATA rdPtr,long param1)
 {
 
@@ -137,10 +137,10 @@ long WINAPI DLLExport Expression2(LPRDATA rdPtr,long param1)
 
 	//Reversing the string.
 	_strrev(temp);
-	
+
 	//Setting the HOF_STRING flag lets MMF know that you are a string.
 	rdPtr->rHo.hoFlags |= HOF_STRING;
-	
+
 	//This returns a pointer to the string for MMF.
 	return (long)temp;
 }
@@ -175,20 +175,20 @@ long WINAPI DLLExport Expression3(LPRDATA rdPtr,long param1)
 // Located at the end of the source for convinience
 // Must finish with a 0
 //
-long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) = 
-			{ 
+long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
+			{
 			Condition,
 			0
 			};
-	
+
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			{
 			Action,
 			0
 			};
 
-long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{	 
+long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
+			{
 			Expression,
 			Expression2,
 			Expression3,

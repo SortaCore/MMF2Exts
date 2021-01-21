@@ -45,7 +45,7 @@
 	// make it too slow or it could get annoying
 
 	//SEPARATOR
-	
+
 	SUB_START("Upon error")
 		ITEM(0,"Do nothing")
 		ITEM(1,"Log to file")

@@ -48,7 +48,7 @@ short expressionsInfos[]=
 // ============================================================================
 //
 // CONDITION ROUTINES
-// 
+//
 // ============================================================================
 
 
@@ -80,13 +80,13 @@ long WINAPI DLLExport CndChanged(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // ACTIONS ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
 // Set Text
 // -----------------
-// 
+//
 short WINAPI DLLExport ActSetText(LPRDATA rdPtr, long param1, long param2)
 {
 	// Parameter
@@ -101,7 +101,7 @@ short WINAPI DLLExport ActSetText(LPRDATA rdPtr, long param1, long param2)
 // -----------------
 // Set Integer Value
 // -----------------
-// 
+//
 short WINAPI DLLExport ActSetInt(LPRDATA rdPtr, long param1, long param2)
 {
 	if ( rdPtr->hWnd != NULL )
@@ -117,7 +117,7 @@ short WINAPI DLLExport ActSetInt(LPRDATA rdPtr, long param1, long param2)
 // -----------------
 // Set Float Value
 // -----------------
-// 
+//
 short WINAPI DLLExport ActSetFloat(LPRDATA rdPtr, long param1, long param2)
 {
 	if ( rdPtr->hWnd != NULL )
@@ -138,7 +138,7 @@ short WINAPI DLLExport ActSetFloat(LPRDATA rdPtr, long param1, long param2)
 // ============================================================================
 //
 // EXPRESSIONS ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------
@@ -221,12 +221,12 @@ long WINAPI DLLExport ExpGetFloat(LPRDATA rdPtr,long param1)
 	}
 
 	// Setting the HOF_FLOAT flag lets MMF know that you return a float.
-	rdPtr->rHo.hoFlags |= HOF_FLOAT; 
+	rdPtr->rHo.hoFlags |= HOF_FLOAT;
 
 	// Return float as integer to avoid C automatic conversion from float to long
 	long FloatAsInt;
 	*((float*)&FloatAsInt) = fValue;
-	return FloatAsInt;	
+	return FloatAsInt;
 }
 
 
@@ -238,12 +238,12 @@ long WINAPI DLLExport ExpGetFloat(LPRDATA rdPtr,long param1)
 // Located at the end of the source for convinience
 // Must finish with a 0
 //
-long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) = 
-			{ 
+long (WINAPI * ConditionJumps[])(LPRDATA rdPtr, long param1, long param2) =
+			{
 			CndIsEmpty,
 			CndChanged,
 			};
-	
+
 short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			{
 			ActSetText,
@@ -252,8 +252,8 @@ short (WINAPI * ActionJumps[])(LPRDATA rdPtr, long param1, long param2) =
 			0
 			};
 
-long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) = 
-			{	 
+long (WINAPI * ExpressionJumps[])(LPRDATA rdPtr, long param) =
+			{
 			ExpGetText,
 			ExpGetInt,
 			ExpGetFloat,

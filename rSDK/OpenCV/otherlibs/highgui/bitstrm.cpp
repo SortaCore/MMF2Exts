@@ -77,7 +77,7 @@ bool  bsIsBigEndian( void )
 /////////////////////////  RBaseStream ////////////////////////////
 
 bool  RBaseStream::IsOpened()
-{ 
+{
 	return m_is_opened;
 }
 
@@ -142,9 +142,9 @@ bool  RBaseStream::Open( const char* filename )
 {
 	Close();
 	Allocate();
-	
+
 	m_file = fopen( filename, "rb" );
-	
+
 	if( m_file )
 	{
 		m_is_opened = true;
@@ -191,9 +191,9 @@ void  RBaseStream::SetPos( int pos )
 {
 	int offset = pos & (m_block_size - 1);
 	int block_pos = pos - offset;
-	
+
 	assert( IsOpened() && pos >= 0 );
-	
+
 	if( m_current < m_end && block_pos == m_block_pos - m_block_size )
 	{
 		m_current = m_start + offset;
@@ -219,7 +219,7 @@ void  RBaseStream::Skip( int bytes )
 }
 
 jmp_buf& RBaseStream::JmpBuf()
-{ 
+{
 	m_jmp_set = true;
 	return m_jmp_buf;
 }
@@ -251,7 +251,7 @@ void  RLByteStream::GetBytes( void* buffer, int count, int* readed )
 {
 	uchar*  data = (uchar*)buffer;
 	assert( count >= 0 );
-	
+
 	if( readed) *readed = 0;
 
 	while( count > 0 )
@@ -587,7 +587,7 @@ void  RMBitStream::Skip( int bytes )
 static const int huff_val_shift = 20, huff_code_mask = (1 << huff_val_shift) - 1;
 
 bool bsCreateDecodeHuffmanTable( const int* src, short* table, int max_size )
-{	
+{
 	const int forbidden_entry = (RBS_HUFF_FORB << 4)|1;
 	int		first_bits = src[0];
 	struct
@@ -598,14 +598,14 @@ bool bsCreateDecodeHuffmanTable( const int* src, short* table, int max_size )
 	sub_tables[1 << 11];
 	int  size = (1 << first_bits) + 1;
 	int  i, k;
-	
+
 	/* calc bit depths of sub tables */
 	memset( sub_tables, 0, ((size_t)1 << first_bits)*sizeof(sub_tables[0]) );
 	for( i = 1, k = 1; src[k] >= 0; i++ )
 	{
 		int code_count = src[k++];
 		int sb = i - first_bits;
-		
+
 		if( sb <= 0 )
 			k += code_count;
 		else
@@ -643,7 +643,7 @@ bool bsCreateDecodeHuffmanTable( const int* src, short* table, int max_size )
 	/* write header of first table */
 	table[0] = (short)first_bits;
 
-	/* fill first table and sub tables */ 
+	/* fill first table and sub tables */
 	for( i = 1, k = 1; src[k] >= 0; i++ )
 	{
 		int code_count = src[k++];
@@ -666,12 +666,12 @@ bool bsCreateDecodeHuffmanTable( const int* src, short* table, int max_size )
 				/* write jump to subtable */
 				table[idx + 1]= (short)(offset << 4);
 			}
-		
+
 			table_bits -= code_bits;
 			assert( table_bits >= 0 );
 			val = (val << 4) | code_bits;
 			offset += (code << table_bits) + 1;
-		
+
 			for( j = 0; j < (1 << table_bits); j++ )
 			{
 				assert( table[offset + j] == forbidden_entry );
@@ -727,7 +727,7 @@ WBaseStream::~WBaseStream()
 
 
 bool  WBaseStream::IsOpened()
-{ 
+{
 	return m_is_opened;
 }
 
@@ -752,7 +752,7 @@ void  WBaseStream::WriteBlock()
 	m_current = m_start;
 
 	/*if( written < size ) throw RBS_THROW_EOS;*/
-	
+
 	m_block_pos += size;
 }
 
@@ -761,9 +761,9 @@ bool  WBaseStream::Open( const char* filename )
 {
 	Close();
 	Allocate();
-	
+
 	m_file = fopen( filename, "wb" );
-	
+
 	if( m_file )
 	{
 		m_is_opened = true;
@@ -814,7 +814,7 @@ int  WBaseStream::GetPos()
 }
 
 
-///////////////////////////// WLByteStream /////////////////////////////////// 
+///////////////////////////// WLByteStream ///////////////////////////////////
 
 WLByteStream::~WLByteStream()
 {
@@ -831,16 +831,16 @@ void WLByteStream::PutByte( int val )
 void WLByteStream::PutBytes( const void* buffer, int count )
 {
 	uchar* data = (uchar*)buffer;
-	
+
 	assert( data && m_current && count >= 0 );
 
 	while( count )
 	{
 		int l = (int)(m_end - m_current);
-		
+
 		if( l > count )
 			l = count;
-		
+
 		if( l > 0 )
 		{
 			memcpy( m_current, data, l );
@@ -898,7 +898,7 @@ void WLByteStream::PutDWord( int val )
 }
 
 
-///////////////////////////// WMByteStream /////////////////////////////////// 
+///////////////////////////// WMByteStream ///////////////////////////////////
 
 WMByteStream::~WMByteStream()
 {
@@ -949,7 +949,7 @@ void WMByteStream::PutDWord( int val )
 }
 
 
-///////////////////////////// WMBitStream /////////////////////////////////// 
+///////////////////////////// WMBitStream ///////////////////////////////////
 
 WMBitStream::WMBitStream()
 {
@@ -1044,22 +1044,22 @@ void  WMBitStream::PutHuff( int val, const ulong* table )
 {
 	int min_val = (int)table[0];
 	val -= min_val;
-	
+
 	assert( (unsigned)val < table[1] );
 
 	ulong code = table[val + 2];
 	assert( code != 0 );
-	
+
 	Put( code >> 8, code & 255 );
 }
 
 
 bool bsCreateEncodeHuffmanTable( const int* src, ulong* table, int max_size )
-{	
+{
 	int  i, k;
 	int  min_val = INT_MAX, max_val = INT_MIN;
 	int  size;
-	
+
 	/* calc min and max values in the table */
 	for( i = 1, k = 1; src[k] >= 0; i++ )
 	{

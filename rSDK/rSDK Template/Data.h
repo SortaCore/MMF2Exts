@@ -10,9 +10,9 @@ typedef rRundata * LPRRDATA;
 typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
-	
-	
-	
+
+
+
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

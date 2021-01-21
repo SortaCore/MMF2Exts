@@ -47,7 +47,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(28, PacketForm_SetString);
 	LinkAction(29, PacketForm_SetWString);
 	LinkAction(30, PacketForm_SetBankFromBank);
-	
+
 /// CONDITIONS
 	LinkCondition(0, OnError);
 	LinkCondition(1, OnNewStatus);
@@ -55,12 +55,12 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
  	LinkCondition(2, ClientSocketConnected);
 	LinkCondition(3, ClientSocketDisconnected);
 	LinkCondition(4, ClientReturnedMessage);
-	
+
 	LinkCondition(5, ServerReturnedMessage);
 	LinkCondition(6, ServerSocketDone);
 	LinkCondition(7, ServerPeerConnected);
 	LinkCondition(8, ServerPeerDisconnected);
-	
+
 /// EXPRESSIONS
 	LinkExpression(0, GetErrors);
 	LinkExpression(1, GetReports);
@@ -90,7 +90,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 		It's the only place you'll get access to edPtr at runtime, so you should transfer
 		anything from edPtr to the extension class here.
-	
+
 	*/
 	threadsafe = false;
 	nogevent = false;
@@ -110,7 +110,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
 	{
 		MsgBox("WSAStartup() failed! There is something seriously off with your computer.");
-		
+
 	}
 	else if (wsaData.wVersion != MAKEWORD(2,2))
 	{
@@ -148,7 +148,7 @@ Extension::~Extension()
 
 REFLAG Extension::Handle()
 {
-	// Will not be called next loop	
+	// Will not be called next loop
 	return REFLAG::ONE_SHOT;
 }
 

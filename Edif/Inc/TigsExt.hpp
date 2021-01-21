@@ -73,7 +73,7 @@ _inline bool IsDestroyed(LPRO Object);
 #define GetMMFbuild(v) (v->mvGetVersion != NULL ? (v->mvGetVersion() & MMFBUILD_MASK) : 0)
 
 // Make identifier
-#define MAKEID(a,b,c,d) ((#@a << 24)|(#@b << 16)|(#@c << 8)|(#@d)) 
+#define MAKEID(a,b,c,d) ((#@a << 24)|(#@b << 16)|(#@c << 8)|(#@d))
 
 
 
@@ -400,7 +400,7 @@ _inline int AngToDir(LONG Angle)
 	double Dir = (Ang + 95.625) / 11.25;
 
 	LONG NewDir = (LONG)(32 + Dir);
-	
+
 	return NewDir % 32;
 }
 

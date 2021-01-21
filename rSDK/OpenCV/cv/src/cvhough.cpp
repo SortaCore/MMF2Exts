@@ -93,7 +93,7 @@ icvHoughLinesStandard( const CvMat* img, float rho, float theta,
 	CV_FUNCNAME( "icvHoughLinesStandard" );
 
 	__BEGIN__;
-	
+
 	const uchar* image;
 	int step, width, height;
 	int numangle, numrho;
@@ -139,7 +139,7 @@ icvHoughLinesStandard( const CvMat* img, float rho, float theta,
 				}
 		}
 
-	// stage 2. find local maximums 
+	// stage 2. find local maximums
 	for( r = 0; r < numrho; r++ )
 		for( n = 0; n < numangle; n++ )
 		{
@@ -152,7 +152,7 @@ icvHoughLinesStandard( const CvMat* img, float rho, float theta,
 
 	// stage 3. sort the detected lines by accumulator value
 	icvHoughSortDescent32s( sort_buf, total, accum );
-	
+
 	// stage 4. store the first min(total,linesMax) lines to the output buffer
 	linesMax = MIN(linesMax, total);
 	scale = 1./(numrho+2);
@@ -229,14 +229,14 @@ icvHoughLinesSDiv( const CvMat* img,
 	int fi;
 	int count;
 	int cmax = 0;
-	
+
 	CVPOS pos;
 	_index *pindex;
 	_index vi;
 
 	CV_ASSERT( CV_IS_MAT(img) && CV_MAT_TYPE(img->type) == CV_8UC1 );
 	CV_ASSERT( linesMax > 0 && rho > 0 && theta > 0 );
-	
+
 	threshold = MIN( threshold, 255 );
 
 	image_src = img->data.ptr;
@@ -493,7 +493,7 @@ icvHoughLinesProbabalistic( CvMat* image,
 	CV_FUNCNAME( "icvHoughLinesProbalistic" );
 
 	__BEGIN__;
-	
+
 	CvSeq* seq;
 	CvSeqWriter writer;
 	int width, height;
@@ -518,9 +518,9 @@ icvHoughLinesProbabalistic( CvMat* image,
 	CV_CALL( mask = cvCreateMat( height, width, CV_8UC1 ));
 	CV_CALL( trigtab = cvCreateMat( 1, numangle, CV_32FC2 ));
 	cvZero( accum );
-	
+
 	CV_CALL( storage = cvCreateMemStorage(0) );
-	
+
 	for( ang = 0, n = 0; n < numangle; ang += theta, n++ )
 	{
 		trigtab->data.fl[n*2] = (float)(cos(ang) * irho);
@@ -529,7 +529,7 @@ icvHoughLinesProbabalistic( CvMat* image,
 	ttab = trigtab->data.fl;
 	mdata0 = mask->data.ptr;
 
-	CV_CALL( cvStartWriteSeq( CV_32SC2, sizeof(CvSeq), sizeof(CvPoint), storage, &writer )); 
+	CV_CALL( cvStartWriteSeq( CV_32SC2, sizeof(CvSeq), sizeof(CvPoint), storage, &writer ));
 
 	// stage 1. collect non-zero image points
 	for( pt.y = 0, count = 0; pt.y < height; pt.y++ )
@@ -616,7 +616,7 @@ icvHoughLinesProbabalistic( CvMat* image,
 		for( k = 0; k < 2; k++ )
 		{
 			int gap = 0, x = x0, y = y0, dx = dx0, dy = dy0;
-			
+
 			if( k > 0 )
 				dx = -dx, dy = -dy;
 
@@ -664,7 +664,7 @@ icvHoughLinesProbabalistic( CvMat* image,
 		for( k = 0; k < 2; k++ )
 		{
 			int x = x0, y = y0, dx = dx0, dy = dy0;
-			
+
 			if( k > 0 )
 				dx = -dx, dy = -dy;
 
@@ -746,7 +746,7 @@ cvHoughLines2( CvArr* src_image, void* lineStorage, int method,
 	CV_FUNCNAME( "cvHoughLines" );
 
 	__BEGIN__;
-	
+
 	CvMat stub, *img = (CvMat*)src_image;
 	CvMat* mat = 0;
 	CvSeq* lines = 0;
@@ -838,8 +838,8 @@ cvHoughLines2( CvArr* src_image, void* lineStorage, int method,
 	}
 
 	__END__;
-	
-	return result;	
+
+	return result;
 }
 
 
@@ -860,7 +860,7 @@ icvHoughCirclesGradient( CvMat* img, float dp, float min_dist,
 	int* sort_buf = 0;
 	CvMat* dist_buf = 0;
 	CvMemStorage* storage = 0;
-	
+
 	CV_FUNCNAME( "icvHoughCirclesGradient" );
 
 	__BEGIN__;
@@ -1023,7 +1023,7 @@ icvHoughCirclesGradient( CvMat* img, float dp, float min_dist,
 
 		cvPow( dist_buf, dist_buf, 0.5 );
 		icvHoughSortDescent32s( sort_buf, nz_count, (int*)ddata );
-		
+
 		dist_sum = start_dist = ddata[sort_buf[nz_count-1]];
 		for( j = nz_count - 2; j >= 0; j-- )
 		{
@@ -1081,7 +1081,7 @@ cvHoughCircles( CvArr* src_image, void* circle_storage,
 	CV_FUNCNAME( "cvHoughCircles" );
 
 	__BEGIN__;
-	
+
 	CvMat stub, *img = (CvMat*)src_image;
 	CvMat* mat = 0;
 	CvSeq* circles = 0;
@@ -1154,8 +1154,8 @@ cvHoughCircles( CvArr* src_image, void* circle_storage,
 		result = circles;
 
 	__END__;
-	
-	return result;	
+
+	return result;
 }
 
 /* End of file. */

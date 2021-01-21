@@ -97,7 +97,7 @@ cvMeanShift( const void* imgProb, CvRect windowIn,
 		int dx, dy, nx, ny;
 		double inv_m00;
 
-		CV_CALL( cvGetSubRect( mat, &cur_win, cur_rect )); 
+		CV_CALL( cvGetSubRect( mat, &cur_win, cur_rect ));
 		CV_CALL( cvMoments( &cur_win, &moments ));
 
 		/* Calculating center of mass */
@@ -247,7 +247,7 @@ cvCamShift( const void* imgProb, CvRect windowIn,
 	if( length < width )
 	{
 		double t;
-		
+
 		CV_SWAP( length, width, t );
 		CV_SWAP( cs, sn, t );
 		theta = CV_PI*0.5 - theta;
@@ -284,7 +284,7 @@ cvCamShift( const void* imgProb, CvRect windowIn,
 
 	if( _comp )
 		*_comp = comp;
-	
+
 	if( box )
 	{
 		box->size.height = (float)length;

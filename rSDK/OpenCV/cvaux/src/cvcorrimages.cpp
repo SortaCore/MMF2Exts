@@ -177,7 +177,7 @@ int icvCreateFeaturePoints(IplImage *image, CvMat *points, CvMat *status)
 /* Returns number of corresponding points */
 int icvFindCorrForGivenPoints( IplImage *image1,/* Image 1 */
 								IplImage *image2,/* Image 2 */
-								CvMat *points1, 
+								CvMat *points1,
 								CvMat *pntStatus1,
 								CvMat *points2,
 								CvMat *pntStatus2,
@@ -203,7 +203,7 @@ int icvFindCorrForGivenPoints( IplImage *image1,/* Image 1 */
 	/* Test input data for errors */
 
 	/* Test for null pointers */
-	if( image1	 == 0 || image2	 == 0 || 
+	if( image1	 == 0 || image2	 == 0 ||
 		points1	== 0 || points2	== 0 ||
 		pntStatus1 == 0 || pntStatus2 == 0)
 	{
@@ -226,7 +226,7 @@ int icvFindCorrForGivenPoints( IplImage *image1,/* Image 1 */
 	}
 
 	/* Test for matrices */
-	if( !CV_IS_MAT(points1)	|| !CV_IS_MAT(points2) || 
+	if( !CV_IS_MAT(points1)	|| !CV_IS_MAT(points2) ||
 		!CV_IS_MAT(pntStatus1) || !CV_IS_MAT(pntStatus2) )
 	{
 		CV_ERROR( CV_StsUnsupportedFormat, "Input parameters (points and status) must be a matrices" );
@@ -333,11 +333,11 @@ int icvFindCorrForGivenPoints( IplImage *image1,/* Image 1 */
 								pyrImage1, pyrImage2,
 								cornerPoints1, cornerPoints2,
 								numVisPoints, cvSize(10,10), 3,
-								status, errors, 
+								status, errors,
 								cvTermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS,20,0.03),
 								0/*CV_LKFLOW_PYR_A_READY*/ );
 
-		
+
 		memset(stat2,0,sizeof(uchar)*numPoints);
 
 		int currVis = 0;
@@ -393,7 +393,7 @@ int icvFindCorrForGivenPoints( IplImage *image1,/* Image 1 */
 				CvMat fundMatr;
 				double fundMatr_dat[9];
 				fundMatr = cvMat(3,3,CV_64F,fundMatr_dat);
-		
+
 				CV_CALL( pStatus = cvCreateMat(1,totalCorns,CV_32F) );
 
 				int num = cvFindFundamentalMat(tmpPoints1,tmpPoints2,&fundMatr,CV_FM_RANSAC,threshold,0.99,pStatus);
@@ -445,7 +445,7 @@ int icvGrowPointsAndStatus(CvMat **oldPoints,CvMat **oldStatus,CvMat *addPoints,
 
 	CV_FUNCNAME( "icvGrowPointsAndStatus" );
 	__BEGIN__;
-	
+
 	/* Test for errors */
 	if( oldPoints == 0 || oldStatus == 0 )
 	{
@@ -560,7 +560,7 @@ int icvRemoveDoublePoins(	CvMat *oldPoints,/* Points on prev image */
 	CvSeq* seq = 0;
 
 	int originalPoints = 0;
-	
+
 	CV_FUNCNAME( "icvRemoveDoublePoins" );
 	__BEGIN__;
 
@@ -624,7 +624,7 @@ int icvRemoveDoublePoins(	CvMat *oldPoints,/* Points on prev image */
 	{
 		CV_ERROR( CV_StsOutOfRange, "Statuses must have 1 row" );
 	}
-	
+
 	/* we have points on image and wants add new points */
 	/* use subdivision for find nearest points */
 
@@ -732,7 +732,7 @@ int icvRemoveDoublePoins(	CvMat *oldPoints,/* Points on prev image */
 					/* Point is double. Turn it off */
 					/* Set status */
 					//newStatus->data.ptr[i] = 0;
-					
+
 					/* No this is a double point */
 					//originalPoints--;
 					flag = 0;
@@ -746,7 +746,7 @@ int icvRemoveDoublePoins(	CvMat *oldPoints,/* Points on prev image */
 	__END__;
 
 	cvReleaseMemStorage( &storage );
-	
+
 
 	return originalPoints;
 
@@ -760,7 +760,7 @@ void icvComputeProjectMatrixStatus(CvMat *objPoints4D,CvMat *points2,CvMat *stat
 {
 	/* Compute number of good points */
 	int num = cvCountNonZero(status);
-	
+
 	/* Create arrays */
 	CvMat *objPoints = 0;
 	objPoints = cvCreateMat(4,num,CV_64F);
@@ -803,7 +803,7 @@ void icvComputeProjectMatrixStatus(CvMat *objPoints4D,CvMat *points2,CvMat *stat
 
 			currVis++;
 		}
-		
+
 		fprintf(file,"\n");
 	}
 
@@ -821,13 +821,13 @@ void icvComputeProjectMatrixStatus(CvMat *objPoints4D,CvMat *points2,CvMat *stat
 
 
 /*-------------------------------------------------------------------------------------*/
-/* For given N images 
+/* For given N images
  we have corresponding points on N images
  computed projection matrices
  reconstructed 4D points
 
-  we must to compute 
-  
+  we must to compute
+
 
 */
 
@@ -869,7 +869,7 @@ void icvAddNewImageToPrevious____(
 	int corrNum;
 	corrNum = icvFindCorrForGivenPoints(	oldImage,/* Image 1 */
 											newImage,/* Image 2 */
-											oldPoints, 
+											oldPoints,
 											oldPntStatus,
 											points2,
 											status,
@@ -888,10 +888,10 @@ void icvAddNewImageToPrevious____(
 //		icvComputeProjectMatrix(objPoints4D,points2,&projMatr);
 		icvComputeProjectMatrixStatus(objPoints4D,points2,status,&projMatr);
 		cvCopy(&projMatr,newProjMatr);
-		
+
 		/* Create new points and find correspondence */
 		icvCreateFeaturePoints(newImage, newFPoints2D2,newFPointsStatus);
-		
+
 		/* Good if we test new points before find corr points */
 
 		/* Find correspondence for new found points */
@@ -981,7 +981,7 @@ int icvDeleteSparsInPoints(  int numImages,
 
 	int numCoord;
 	numCoord = points[0]->rows;// !!! may be number of coordinates is not correct !!!
-	
+
 	int i;
 	int currExistPoint;
 	currExistPoint = 0;
@@ -1091,7 +1091,7 @@ int AddImageToStruct(  IplImage *newImage,// Image to add
 	cvConvert(pntStatus,status);
 
 	int corrNum = FindCorrForGivenPoints(oldImage,newImage,oldPoints,newPoints,status);
-	
+
 	/* Status has new status of points */
 
 	CvMat projMatr;

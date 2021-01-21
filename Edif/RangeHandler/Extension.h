@@ -7,28 +7,28 @@ inline vector<tstring> ParseStringToVector(tstring source, tstring delimiters)
 {
 	vector <tstring> v;
 	tstring s = _T("");
- 
+
 	for (unsigned int i=0; i<source.length(); i++)
 	{
 		tstring charat = _T("");
 		charat.push_back(source[i]);
- 
+
 		if (charat.find_first_of(delimiters) != -1)
 		{
 			if (s.length() > 0)
 				v.push_back(s);
 			s.clear();
 		}
- 
+
 		else
 		{
 			s.push_back(charat[0]);
 		}
 	}
- 
+
 	if (s.length() > 0)
 		v.push_back(s);
- 
+
 	return v;
 }
 
@@ -36,7 +36,7 @@ inline vector<tstring> ParseStringToVector(tstring source, tstring delimiters)
 
 	#define MsgBox(text) MessageBox(NULL, text, _T("RangeHandler Object - Debug information"), MB_OK|MB_ICONINFORMATION)
 	#define FatalBox()	MessageBoxA(NULL, "Fatal error has not been repaired; bypassing erroneous code.", "RangeHandler Object - Bypass notification", MB_OK|MB_ICONERROR);
-	
+
 	LPRDATA rdPtr;
 	LPRH	rhPtr;
 
@@ -47,7 +47,7 @@ inline vector<tstring> ParseStringToVector(tstring source, tstring delimiters)
 
 	static const int OEFLAGS = OEFLAG_VALUES;
 	static const int OEPREFS = 0;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr);
@@ -79,13 +79,13 @@ inline vector<tstring> ParseStringToVector(tstring source, tstring delimiters)
 
 		void IterateString(tchar * StringP, tchar * InputDelimiterP);
 		void IterateRanges(tchar * StringP, tchar * SingleDelimiter, tchar * MultipleDelimiter);
-		
+
 	/// Conditions
 
 		const bool OnIteration();
 
 	/// Expressions
-		
+
 		tchar * StringToRange(tchar * StringP, tchar * InputDelimiterP, tchar * SingleItemDelimiterP, tchar * MultipleItemDelimiterP);
 		tchar * RangeToString(tchar * StringP, tchar * SingleItemDelimiterP, tchar * MultipleItemDelimiterP, tchar * OutputDelimiterP);
 		int CurrentIteratedValue();

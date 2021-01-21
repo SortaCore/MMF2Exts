@@ -44,7 +44,7 @@
 /****************************************************************************************\
 *									 MinMaxLoc										  *
 \****************************************************************************************/
-																	
+
 #define CV_MINMAXLOC_ENTRY( _toggle_, srctype, temptype, cn ) \
 	temptype min_val, max_val;				  \
 	int min_loc = 0, max_loc = 0;				\
@@ -312,7 +312,7 @@ cvMinMaxLoc( const void* img, double* _minVal, double* _maxVal,
 		icvInitMinMaxIndxCnCMRTable( &minmaxmaskcoi_tab );
 		inittab = 1;
 	}
-	
+
 	if( !CV_IS_MAT(mat) )
 		CV_CALL( mat = cvGetMat( mat, &stub, &coi ));
 
@@ -326,7 +326,7 @@ cvMinMaxLoc( const void* img, double* _minVal, double* _maxVal,
 
 	if( depth == CV_32S || depth == CV_64F )
 		pmin = &minv, pmax = &maxv;
-	
+
 	mat_step = mat->step;
 	cont_flag = mat->type;
 

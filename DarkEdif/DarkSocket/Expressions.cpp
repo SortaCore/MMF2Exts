@@ -3,7 +3,7 @@
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 // ID = 0
@@ -433,7 +433,7 @@ unsigned short Extension::PacketForm_RunOnesComplement(size_t WhereFrom, size_t 
 		addr += _16BITS;					// Read from 16 bits further in the current address
 	}
 
-	//  Add left-over byte, if any 
+	//  Add left-over byte, if any
 	if ( SizeOfBank > 0 )
 		sum += *((unsigned char *)addr);		// If there's an odd number of bytes in the data, add the remainding char to the sum
 

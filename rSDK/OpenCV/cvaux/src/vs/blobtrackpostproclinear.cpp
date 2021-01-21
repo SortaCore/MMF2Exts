@@ -76,7 +76,7 @@ public:
 		int size = MIN((m_Frame+1), TIME_WND);
 		m_pBlobs[index] = pBlob[0];
 		m_Blob.x = m_Blob.y = m_Blob.w = m_Blob.h = 0;
-		
+
 		for(i=0; i<size; ++i)
 		{
 			float	W = m_Weights[i];

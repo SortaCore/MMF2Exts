@@ -45,7 +45,7 @@ lw_event lw_event_new ()
 
 	ctx->pipe_r = p [0];
 	ctx->pipe_w = p [1];
-		
+
 	fcntl (ctx->pipe_r, F_SETFL, fcntl (ctx->pipe_r, F_GETFL, 0) | O_NONBLOCK);
 
 	return ctx;
@@ -87,7 +87,7 @@ void lw_event_unsignal (lw_event ctx)
 }
 
 lw_bool lw_event_wait (lw_event ctx, long timeout)
-{	  
+{
 	fd_set set;
 
 	FD_ZERO (&set);

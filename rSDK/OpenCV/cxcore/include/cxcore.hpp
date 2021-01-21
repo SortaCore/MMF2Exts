@@ -165,7 +165,7 @@ public:
 		assert(!image ?
 				1 : image->roi ?
 				y<image->roi->height : y<image->height);
-		
+
 		return !image ? 0 :
 			!image->roi ?
 				(uchar*)(image->imageData + y*image->widthStep) :
@@ -178,7 +178,7 @@ public:
 		assert(0<=y);
 		assert(!image ?
 				1 : image->roi ?
-				y<image->roi->height : y<image->height); 
+				y<image->roi->height : y<image->height);
 
 		return !image ? 0 :
 			!image->roi ?

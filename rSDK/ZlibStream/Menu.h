@@ -49,7 +49,7 @@
 	ITEM(2,"Set buffer size (bytes)")
 	SEPARATOR
 #endif
-	
+
 
 // --------------------------------
 // Expression menu

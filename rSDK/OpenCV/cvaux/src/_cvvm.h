@@ -176,7 +176,7 @@ CvStatus  icvGetCrossEpilineFrame(	CvSize	 imgSize,
 										int*		y2
 									);
 
-CvStatus  icvBuildScanlineLeftStereo( 
+CvStatus  icvBuildScanlineLeftStereo(
 										CvSize		 imgSize,
 										CvMatrix3*	 matrix,
 										float*		  l_epipole,

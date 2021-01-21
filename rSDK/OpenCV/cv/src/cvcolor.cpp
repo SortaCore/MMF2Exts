@@ -61,18 +61,18 @@
 	  44141 Dortmund
 	  Germany
 	  www.md-it.de
-  
+
 	Redistribution and use in source and binary forms,
 	with or without modification, are permitted provided
-	that the following conditions are met: 
+	that the following conditions are met:
 
 	Redistributions of source code must retain
-	the above copyright notice, this list of conditions and the following disclaimer. 
+	the above copyright notice, this list of conditions and the following disclaimer.
 	Redistributions in binary form must reproduce the above copyright notice,
 	this list of conditions and the following disclaimer in the documentation
-	and/or other materials provided with the distribution. 
+	and/or other materials provided with the distribution.
 	The name of Contributor may not be used to endorse or promote products
-	derived from this software without specific prior written permission. 
+	derived from this software without specific prior written permission.
 
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
@@ -477,7 +477,7 @@ CV_IMPL_ABC2BGRx_IPP( 32f, float )
 
 /* BGR/RGB -> Gray */
 #define csc_shift  14
-#define cscGr  fix(cscGr_32f,csc_shift) 
+#define cscGr  fix(cscGr_32f,csc_shift)
 #define cscGg  fix(cscGg_32f,csc_shift)
 #define cscGb  /*fix(cscGb_32f,csc_shift)*/ ((1 << csc_shift) - cscGr - cscGg)
 
@@ -586,7 +586,7 @@ icvBGRx2Gray_8u_CnC1R( const uchar* src, int srcstep,
 	{
 		int* tab = (int*)cvStackAlloc( 256*3*sizeof(tab[0]) );
 		int r = 0, g = 0, b = (1 << (csc_shift-1));
-	
+
 		for( i = 0; i < 256; i++ )
 		{
 			tab[i] = b;
@@ -982,7 +982,7 @@ icvABC2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 		{
 			const uchar* src1 = src + i*3;
 			di = MIN(block_size, size.width - i);
-			
+
 			for( k = 0; k < di*3; k += 3 )
 			{
 				float a = CV_8TO32F(src1[k])*pre_coeffs[0] + pre_coeffs[1];
@@ -996,7 +996,7 @@ icvABC2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 			status = cvtfunc_32f( buffer, 0, buffer, 0, cvSize(di,1), 3, blue_idx );
 			if( status < 0 )
 				return status;
-			
+
 			if( postscale )
 			{
 				for( k = 0; k < di*3; k += 3, dst += dst_cn )
@@ -1081,7 +1081,7 @@ icvBGRx2ABC_8u_CnC3R( const uchar* src, int srcstep, uchar* dst, int dststep,
 					buffer[k+2] = r;
 				}
 			}
-			
+
 			status = cvtfunc_32f( buffer, 0, buffer, 0, cvSize(di,1), 3, blue_idx );
 			if( status < 0 )
 				return status;
@@ -1335,7 +1335,7 @@ icvHSV2BGRx_32f_C3CnR( const float* src, int srcstep, float* dst,
 				tab[1] = v*(1.f - s);
 				tab[2] = v*(1.f - s*h);
 				tab[3] = v*(1.f - s*(1.f - h));
-				
+
 				b = tab[sector_data[sector][0]];
 				g = tab[sector_data[sector][1]];
 				r = tab[sector_data[sector][2]];
@@ -1542,7 +1542,7 @@ icvHLS2BGRx_32f_C3CnR( const float* src, int srcstep, float* dst, int dststep,
 
 		return CV_OK;
 	}
-	
+
 	dststep -= size.width*dst_cn;
 	size.width *= 3;
 
@@ -1561,7 +1561,7 @@ icvHLS2BGRx_32f_C3CnR( const float* src, int srcstep, float* dst, int dststep,
 					{{1,3,0}, {1,0,2}, {3,0,1}, {0,2,1}, {0,1,3}, {2,1,0}};
 				float tab[4];
 				int sector;
-				
+
 				float p2 = l <= 0.5f ? l*(1 + s) : l + s - l*s;
 				float p1 = 2*l - p2;
 
@@ -1700,8 +1700,8 @@ icvHLS2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 #define  labXb_32f  0.189828f /* = xyzXb_32f / 0.950456 */
 
 #define  labYr_32f  0.212671f /* = xyzYr_32f */
-#define  labYg_32f  0.715160f /* = xyzYg_32f */ 
-#define  labYb_32f  0.072169f /* = xyzYb_32f */ 
+#define  labYg_32f  0.715160f /* = xyzYg_32f */
+#define  labYb_32f  0.072169f /* = xyzYb_32f */
 
 #define  labZr_32f  0.017758f /* = xyzZr_32f / 1.088754 */
 #define  labZg_32f  0.109477f /* = xyzZg_32f / 1.088754 */
@@ -1712,7 +1712,7 @@ icvHLS2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 #define  labRz_32f  (-0.542782f)/* = xyzRz_32f * 1.088754 */
 
 #define  labGx_32f  (-0.921235f)/* = xyzGx_32f * 0.950456 */
-#define  labGy_32f  1.875991f	/* = xyzGy_32f */ 
+#define  labGy_32f  1.875991f	/* = xyzGy_32f */
 #define  labGz_32f  0.04524426f /* = xyzGz_32f * 1.088754 */
 
 #define  labBx_32f  0.0528909755f /* = xyzBx_32f * 0.950456 */
@@ -1728,11 +1728,11 @@ icvHLS2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 #define labXr  fix(labXr_32f,lab_shift)
 #define labXg  fix(labXg_32f,lab_shift)
 #define labXb  fix(labXb_32f,lab_shift)
-							
+
 #define labYr  fix(labYr_32f,lab_shift)
 #define labYg  fix(labYg_32f,lab_shift)
 #define labYb  fix(labYb_32f,lab_shift)
-							
+
 #define labZr  fix(labZr_32f,lab_shift)
 #define labZg  fix(labZg_32f,lab_shift)
 #define labZb  fix(labZb_32f,lab_shift)
@@ -1973,8 +1973,8 @@ icvLab2BGRx_8u_C3CnR( const uchar* src, int srcstep, uchar* dst, int dststep,
 *									 RGB <-> L*u*v*									 *
 \****************************************************************************************/
 
-#define luvUn_32f  0.19793943f 
-#define luvVn_32f  0.46831096f 
+#define luvUn_32f  0.19793943f
+#define luvVn_32f  0.46831096f
 #define luvYmin_32f  0.05882353f /* 15/255 */
 
 static CvStatus CV_STDCALL
@@ -2013,7 +2013,7 @@ icvBGRx2Luv_32f_CnC3R( const float* src, int srcstep, float* dst, int dststep,
 				else
 					L = labLScale2_32f * y;
 
-				t = 1.f / (x + 15 * y + 3 * z);			
+				t = 1.f / (x + 15 * y + 3 * z);
 				u = 4.0f * x * t;
 				v = 9.0f * y * t;
 
@@ -2053,7 +2053,7 @@ icvLuv2BGRx_32f_C3CnR( const float* src, int srcstep, float* dst, int dststep,
 			float L = src[i], u = src[i+1], v = src[i+2];
 			float x, y, z, t, u1, v1, b, g, r;
 
-			if( L >= 8 ) 
+			if( L >= 8 )
 			{
 				t = (L + labLShift_32f) * (1.f/labLScale_32f);
 				y = t*t*t;
@@ -2068,8 +2068,8 @@ icvLuv2BGRx_32f_C3CnR( const float* src, int srcstep, float* dst, int dststep,
 			u1 = u*t + luvUn_32f;
 			v1 = v*t + luvVn_32f;
 			x = 2.25f * u1 * y / v1 ;
-			z = (12 - 3 * u1 - 20 * v1) * y / (4 * v1);				
-						
+			z = (12 - 3 * u1 - 20 * v1) * y / (4 * v1);
+
 			b = xyzBx_32f*x + xyzBy_32f*y + xyzBz_32f*z;
 			g = xyzGx_32f*x + xyzGy_32f*y + xyzGz_32f*z;
 			r = xyzRx_32f*x + xyzRy_32f*y + xyzRz_32f*z;
@@ -2236,7 +2236,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 	CV_FUNCNAME( "cvCvtColor" );
 
 	__BEGIN__;
-	
+
 	CvMat srcstub, *src = (CvMat*)srcarr;
 	CvMat dststub, *dst = (CvMat*)dstarr;
 	CvSize size;
@@ -2247,10 +2247,10 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 	CvColorCvtFunc2 func2 = 0;
 	CvColorCvtFunc3 func3 = 0;
 	int param[] = { 0, 0, 0, 0 };
-	
+
 	CV_CALL( src = cvGetMat( srcarr, &srcstub ));
 	CV_CALL( dst = cvGetMat( dstarr, &dststub ));
-	
+
 	if( !CV_ARE_SIZES_EQ( src, dst ))
 		CV_ERROR( CV_StsUnmatchedSizes, "" );
 
@@ -2269,7 +2269,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 
 	if( CV_IS_MAT_CONT(src->type & dst->type) &&
 		code != CV_BayerBG2BGR && code != CV_BayerGB2BGR &&
-		code != CV_BayerRG2BGR && code != CV_BayerGR2BGR ) 
+		code != CV_BayerRG2BGR && code != CV_BayerGR2BGR )
 	{
 		size.width *= size.height;
 		size.height = 1;
@@ -2375,7 +2375,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 		func2 = depth == CV_8U ? (CvColorCvtFunc2)icvBGRx2Gray_8u_CnC1R :
 				depth == CV_16U ? (CvColorCvtFunc2)icvBGRx2Gray_16u_CnC1R :
 				depth == CV_32F ? (CvColorCvtFunc2)icvBGRx2Gray_32f_CnC1R : 0;
-		
+
 		param[0] = src_cn;
 		param[1] = code == CV_BGR2GRAY || code == CV_BGRA2GRAY ? 0 : 2;
 		break;
@@ -2392,7 +2392,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 			"is only possible for 8-bit images (888 BGR/BGR or 8888 BGRA/BGRA)" );
 
 		func2 = (CvColorCvtFunc2)icvBGR5x52Gray_8u_C2C1R;
-		
+
 		param[0] = code == CV_BGR5652GRAY ? 6 : 5; // green_bits
 		break;
 
@@ -2405,7 +2405,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 		func1 = depth == CV_8U ? (CvColorCvtFunc1)icvGray2BGRx_8u_C1CnR :
 				depth == CV_16U ? (CvColorCvtFunc1)icvGray2BGRx_16u_C1CnR :
 				depth == CV_32F ? (CvColorCvtFunc1)icvGray2BGRx_32f_C1CnR : 0;
-		
+
 		param[0] = dst_cn;
 		break;
 
@@ -2457,7 +2457,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 					code == CV_BGR2Lab || code == CV_RGB2Lab ? (CvColorCvtFunc2)icvBGRx2Lab_32f_CnC3R :
 					code == CV_BGR2Luv || code == CV_RGB2Luv ? (CvColorCvtFunc2)icvBGRx2Luv_32f_CnC3R :
 					code == CV_BGR2HLS || code == CV_RGB2HLS ? (CvColorCvtFunc2)icvBGRx2HLS_32f_CnC3R : 0;
-		
+
 		param[0] = src_cn;
 		param[1] = code == CV_BGR2XYZ || code == CV_BGR2YCrCb || code == CV_BGR2HSV ||
 					code == CV_BGR2Lab || code == CV_BGR2Luv || code == CV_BGR2HLS ? 0 : 2;
@@ -2496,7 +2496,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 					code == CV_HLS2BGR || code == CV_HLS2RGB ? (CvColorCvtFunc2)icvHLS2BGRx_32f_C3CnR :
 					code == CV_Lab2BGR || code == CV_Lab2RGB ? (CvColorCvtFunc2)icvLab2BGRx_32f_C3CnR :
 					code == CV_Luv2BGR || code == CV_Luv2RGB ? (CvColorCvtFunc2)icvLuv2BGRx_32f_C3CnR : 0;
-		
+
 		param[0] = dst_cn;
 		param[1] = code == CV_XYZ2BGR || code == CV_YCrCb2BGR || code == CV_HSV2BGR ||
 					code == CV_Lab2BGR || code == CV_Luv2BGR || code == CV_HLS2BGR ? 0 : 2;
@@ -2509,7 +2509,7 @@ cvCvtColor( const CvArr* srcarr, CvArr* dstarr, int code )
 		if( src_cn != 1 || dst_cn != 3 )
 			CV_ERROR( CV_BadNumChannels,
 			"Incorrect number of channels for this conversion code" );
-		
+
 		if( depth != CV_8U )
 			CV_ERROR( CV_BadDepth,
 			"Bayer pattern can be converted only to 8-bit 3-channel BGR/RGB image" );

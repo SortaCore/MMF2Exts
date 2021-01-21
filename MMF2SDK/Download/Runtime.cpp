@@ -3,7 +3,7 @@
 // This file contains routines that are handled during the Runtime.
 //
 // Including creating, display, and handling your object.
-// 
+//
 // ============================================================================
 
 // Common Include
@@ -72,7 +72,7 @@ WORD DebugTree[]=
 // GetRunObjectDataSize
 // --------------------
 // Returns the size of the runtime datazone of the object
-// 
+//
 short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 {
 	return(sizeof(RUNDATA));
@@ -83,7 +83,7 @@ short WINAPI DLLExport GetRunObjectDataSize(fprh rhPtr, LPEDATA edPtr)
 // CreateRunObject
 // ---------------
 // The routine where the object is actually created
-// 
+//
 short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPtr)
 {	// Initialisation of data
 	rdPtr->hWininet=0;
@@ -147,7 +147,7 @@ short WINAPI DLLExport CreateRunObject(LPRDATA rdPtr, LPEDATA edPtr, fpcob cobPt
 // DestroyRunObject
 // ----------------
 // Destroys the run-time object
-// 
+//
 void CloseSlot(LPRDATA rdPtr, int slot)
 {
 	if (rdPtr->slots[slot].pBuffer!=NULL)
@@ -193,7 +193,7 @@ short WINAPI DLLExport DestroyRunObject(LPRDATA rdPtr, long fast)
 // HandleRunObject
 // ----------------
 // Called (if you want) each loop, this routine makes the object live
-// 
+//
 short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 {
 	int slot;
@@ -212,7 +212,7 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 				{
 					DWORD dwRead, dwReadSize, dwWritten;
 					dwReadSize = min(DOWNLOAD_BUFFER_SIZE, dwNumberOfBytesAvailable);
-							
+
 					if (TRUE==rdPtr->lpInternetReadFile(rdPtr->slots[slot].hOpenedURL, rdPtr->slots[slot].pBuffer, dwReadSize, &dwRead))
 					{
 						if (FALSE==WriteFile(rdPtr->slots[slot].hFile, rdPtr->slots[slot].pBuffer, dwRead, &dwWritten, NULL))
@@ -251,7 +251,7 @@ short WINAPI DLLExport HandleRunObject(LPRDATA rdPtr)
 // DisplayRunObject
 // ----------------
 // Draw the object in the application screen.
-// 
+//
 short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 {
 	return 0;
@@ -262,7 +262,7 @@ short WINAPI DLLExport DisplayRunObject(LPRDATA rdPtr)
 // PauseRunObject
 // ----------------
 // Enters the pause mode
-// 
+//
 short WINAPI DLLExport PauseRunObject(LPRDATA rdPtr)
 {
 	// Ok
@@ -285,7 +285,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // ============================================================================
 //
 // START APP / END APP / START FRAME / END FRAME routines
-// 
+//
 // ============================================================================
 
 // -------------------
@@ -293,7 +293,7 @@ short WINAPI DLLExport ContinueRunObject(LPRDATA rdPtr)
 // -------------------
 // Called when the application starts or restarts.
 // Useful for storing global data
-// 
+//
 void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 {
 	OutputDebugString("Start app\n");
@@ -313,7 +313,7 @@ void WINAPI DLLExport StartApp(mv _far *mV, CRunApp* pApp)
 // EndApp
 // -------------------
 // Called when the application ends.
-// 
+//
 void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 {
 	OutputDebugString("End app\n");
@@ -333,7 +333,7 @@ void WINAPI DLLExport EndApp(mv _far *mV, CRunApp* pApp)
 // StartFrame
 // -------------------
 // Called when the frame starts or restarts.
-// 
+//
 void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -342,7 +342,7 @@ void WINAPI DLLExport StartFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // EndFrame
 // -------------------
 // Called when the frame ends.
-// 
+//
 void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 {
 }
@@ -351,7 +351,7 @@ void WINAPI DLLExport EndFrame(mv _far *mV, DWORD dwReserved, int nFrameIndex)
 // ============================================================================
 //
 // DEBUGGER ROUTINES
-// 
+//
 // ============================================================================
 
 // -----------------

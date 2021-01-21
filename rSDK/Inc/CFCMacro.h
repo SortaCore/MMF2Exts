@@ -37,7 +37,7 @@
 						do { if (!(exp) && \
 								(1 == _CrtDbgReport(_CRT_ASSERT, THIS_FILE, __LINE__, NULL, NULL))) \
 							_CrtDbgBreak(); } while (0)
-			#else	
+			#else
 				#define	ASSERT(exp) assert(exp)
 			#endif
 		#endif
@@ -74,8 +74,8 @@
 #define SWAPDWORD(a) {a=(unsigned long)((((unsigned long)(a))>>24)|(((unsigned long)(a))<<24)|((((unsigned long)(a))&0xFF00)<<8)|((((unsigned long)(a))&0xFF0000)>>8)); }
 #define SWAPWORD(a) {a=(unsigned short) ((((unsigned short)(a))>>8)|(((unsigned short)(a))<<8)); }
 #else
-#define SWAPDWORD(a) 
-#define SWAPWORD(a) 
+#define SWAPDWORD(a)
+#define SWAPWORD(a)
 #endif // _MAC
 
 #define SWAPDWORD_ALWAYS(a) {a=(unsigned long)((((unsigned long)(a))>>24)|(((unsigned long)(a))<<24)|((((unsigned long)(a))&0xFF00)<<8)|((((unsigned long)(a))&0xFF0000)>>8)); }

@@ -265,12 +265,12 @@ wchar_t * Extension::GetUnicodeStringFromASCIIMemory(int Address, int Size, int 
 		FatalBox()
 	else
 	{
-		
+
 	MsgBox("Line 262");
 	//! ||||
 	//! ||||
 	//! \/\/
-	
+
 	MessageBoxW(NULL, s2.c_str(), L"A -> U : Debug information:", MB_OK);
 	}
 	MsgBox("Line 267");
@@ -294,7 +294,7 @@ size_t Extension::GetASCIIMemoryFromUnicodeString(wchar_t * Unicode, int Size, i
 	wchar_t * FromBuffer = new wchar_t [(Length+1)];
 	char * ToBuffer = new char [((Length*2)+1)];
 	wcscpy_s(FromBuffer, Length+1, Unicode);
-	
+
 #ifndef RAW_CONVERSION
 	// Default to ASCII
 	int cp = CP_ACP;
@@ -351,16 +351,16 @@ size_t Extension::GetASCIIMemoryFromUnicodeString(wchar_t * Unicode, int Size, i
 		}
 		wchar_t a = ToBuffer[(i*2)];
 		wchar_t b = ToBuffer[((i*2)+1)];
-		
+
 		ss << "\nIndex [" << i << "] of [" << Length << "], which should be [" << a << "] + [" << b << "], appended for [" << FromBuffer[i] <<"].";
 	}
 
 	MakeNull()
-	
+
 	string ASCIIConv (ToBuffer, Length*2);
 	ss << "\n\nTO:\n[" << ASCIIConv.c_str() << "]";
 	wstring s2 = ss.str();
-	MessageBoxW(NULL, s2.c_str(), L"U -> A : Debug information:", MB_OK);	
+	MessageBoxW(NULL, s2.c_str(), L"U -> A : Debug information:", MB_OK);
 	free(FromBuffer);
 	free(ToBuffer);
 

@@ -44,7 +44,7 @@ static void on_stream_headers (spdy_ctx * spdy, spdy_stream * stream,
 	lwp_trace ("SPDY: Got %d headers for stream @ %p", num_headers, stream);
 
 	for (size_t i = 0; i < num_headers; ++ i)
-	{ 
+	{
 	  spdy_nv_pair * header = &headers [i];
 
 	  if (spdy_active_version (spdy) == 2)

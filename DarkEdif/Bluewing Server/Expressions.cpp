@@ -19,7 +19,7 @@ const TCHAR * Extension::ReceivedStr()
 }
 int Extension::ReceivedInt()
 {
-	if (threadData->receivedMsg.content.size() != 4) 
+	if (threadData->receivedMsg.content.size() != 4)
 		return CreateError("Received() was used on a message that is not a number message."), 0;
 
 	return *(int *)threadData->receivedMsg.content.data();
@@ -227,7 +227,7 @@ unsigned int Extension::Port()
 }
 const TCHAR * Extension::Welcome_Message()
 {
-	return Runtime.CopyString(UTF8ToTString(Srv.getwelcomemessage()).c_str()); 
+	return Runtime.CopyString(UTF8ToTString(Srv.getwelcomemessage()).c_str());
 }
 unsigned int Extension::ReceivedBinaryAddress()
 {
@@ -383,7 +383,7 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 
 		// Count number of expected variables
 		Count = max(atoi(i+1),1);
-				
+
 		// Char
 		if (i[0] == 'c')
 		{
@@ -404,10 +404,10 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 					Output << "Unsigned char: "sv << (int)((unsigned char *)Msg)[j] << "\r\n"sv;
 			}
 			Msg += Count;
-					
+
 			continue;
 		}
-				
+
 		// Short
 		if (i[0] == 'h')
 		{

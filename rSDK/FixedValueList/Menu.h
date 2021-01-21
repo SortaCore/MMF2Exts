@@ -46,7 +46,7 @@
 	SEPARATOR
 	*/
 #endif
-	
+
 
 // --------------------------------
 // Expression menu

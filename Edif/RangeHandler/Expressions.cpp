@@ -19,7 +19,7 @@ tchar * Extension::StringToRange(tchar * StringP, tchar * InputDelimiterP, tchar
 	tstring InputDelimiter = InputDelimiterP;
 	tstring SingleItemDelimiter = SingleItemDelimiterP;
 	tstring MultipleItemDelimiter = MultipleItemDelimiterP;
-	
+
 	tstring Return = _T("");
 	vector<tstring> Ranges = ParseStringToVector(String, InputDelimiter);
 
@@ -30,7 +30,7 @@ tchar * Extension::StringToRange(tchar * StringP, tchar * InputDelimiterP, tchar
 		// Sort ascendingly
 		for (unsigned long i = 0; i < Ranges.size()-1; i++)
 		{
-			// If next in list is less in value than 
+			// If next in list is less in value than
 			if (_tstoi(Ranges[i].c_str()) > _tstoi(Ranges[i+1].c_str()))
 			{
 				tstring temp = Ranges[i+1];
@@ -89,20 +89,20 @@ tchar * Extension::StringToRange(tchar * StringP, tchar * InputDelimiterP, tchar
 	}
 	// Remove last delimiter:
 	// Return.erase(Return.length()-SingleItemDelimiter.length());
-	
+
 	return Runtime.CopyString(Return.c_str());
 }
 
 
 // ID = 1
 tchar * Extension::RangeToString(tchar * StringP, tchar * SingleItemDelimiterP, tchar * MultipleItemDelimiterP, tchar * OutputDelimiterP)
-{ 
+{
 	tstring String = StringP;
 	// Join the two delimiters for ParseStringToVector()
 	tstring SingleItemDelimiter = SingleItemDelimiterP;
 	tstring MultipleItemDelimiter = MultipleItemDelimiterP;
 	tstring OutputDelimiter = OutputDelimiterP;
-	
+
 	tstring Return = _T("");
 	vector<tstring> Ranges = ParseStringToVector(String, SingleItemDelimiter+MultipleItemDelimiter);
 	//Return.resize(MAXSIZE_T);
@@ -130,7 +130,7 @@ tchar * Extension::RangeToString(tchar * StringP, tchar * SingleItemDelimiterP, 
 			else if (HasFound(String, MultipleItemDelimiter))
 			{
 				unsigned long diff = _tstoi(Ranges[i+1].c_str())-_tstoi(Ranges[i].c_str())+1;
-			
+
 				// Iterate all values and add to list
 				for (unsigned int k = 0; k < diff; k++)
 				{

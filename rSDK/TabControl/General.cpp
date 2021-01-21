@@ -1,7 +1,7 @@
 /// =====================================================================================
 //
 // The following routines are used internally by MMF, and should not need to be modified
-// 
+//
 // =====================================================================================
 
 #include "common.h"
@@ -12,7 +12,7 @@ EXT_INIT()
 // ============================================================================
 //
 // LIBRARY ENTRY & QUIT POINTS
-// 
+//
 // ============================================================================
 
 // -----------------
@@ -27,16 +27,16 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 	conditionsInfos = getConditionInfos();
 	actionsInfos = getActionInfos();
 	expressionsInfos = getExpressionInfos();
-	
+
 	ConditionJumps = getConditions();
 	ActionJumps = getActions();
 	ExpressionJumps = getExpressions();
-	
+
 	switch (dwReason)
 	{
 		// DLL is attaching to the address space of the current process.
 		case DLL_PROCESS_ATTACH:
-			
+
 			hInstLib = hDLL; // Store HINSTANCE
 			break;
 
@@ -52,7 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, DWORD dwReason, LPVOID lpReserved)
 		case DLL_PROCESS_DETACH:
 			break;
 	}
-	
+
 	return TRUE;
 }
 
@@ -73,7 +73,7 @@ extern "C" int WINAPI DLLExport Initialize(mv _far *mV, int quiet)
 // -----------------
 // Where you want to kill and initialized data opened in the above routine
 // Called just before freeing the DLL.
-// 
+//
 extern "C" int WINAPI DLLExport Free(mv _far *mV)
 {
 	// No error
@@ -83,18 +83,18 @@ extern "C" int WINAPI DLLExport Free(mv _far *mV)
 // ============================================================================
 //
 // GENERAL INFO
-// 
+//
 // ============================================================================
 
 // -----------------
 // Get Infos
 // -----------------
-// 
-extern "C" 
+//
+extern "C"
 {
 	DWORD WINAPI DLLExport GetInfos(int info)
 	{
-		
+
 		switch (info)
 		{
 			case KGI_VERSION:
@@ -122,7 +122,7 @@ extern "C"
 // ----------------------------------------------------------
 // Fills an information structure that tells MMF2 everything
 // about the object, its actions, conditions and expressions
-// 
+//
 
 short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 {
@@ -135,7 +135,7 @@ short WINAPI DLLExport GetRunObjectInfos(mv _far *mV, fpKpxRunInfos infoPtr)
 	infoPtr->numOfExpressions = (short)Expressions.size();
 
 	infoPtr->editDataSize = sizeof(EDITDATA);
-	
+
 	MagicFlags(infoPtr->editFlags);
 
 	infoPtr->windowProcPriority = WINDOWPROC_PRIORITY;
@@ -197,7 +197,7 @@ void WINAPI DLLExport UnloadObject(mv _far *mV, LPEDATA edPtr, int reserved)
 // --------------------
 // For you to update your object structure to newer versions
 // Called at both edit time and run time
-// 
+//
 #define p(foo) NewEdPtr->##foo = OldEdPtr->##foo
 HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPtr)
 {
@@ -265,7 +265,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			//Initialise EDITDATAs
 			EDITDATAA* OldEdPtr = (EDITDATAA*)AnyEdPtr;
 			EDITDATAW* NewEdPtr = (EDITDATAW*)GlobalAlloc(GPTR,sizeof(EDITDATAW));
-			
+
 			// Copy eHeader
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
 			NewEdPtr->eHeader.extSize = sizeof(EDITDATAW);	// Update the EDITDATA structure size
@@ -284,10 +284,10 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			p(textFont.lfCharSet); p(textFont.lfOutPrecision);
 			p(textFont.lfClipPrecision); p(textFont.lfQuality);
 			p(textFont.lfPitchAndFamily);
-			
+
 			// LOGFONTA has char [] so
 			MultiByteToWideChar(mvGetAppCodePage(mV, mV->mvEditApp), 0, OldEdPtr->textFont.lfFaceName, LF_FACESIZE, NewEdPtr->textFont.lfFaceName, LF_FACESIZE);
-					
+
 			//Continue with other properties
 			memcpy(&NewEdPtr->opts, &OldEdPtr->opts, sizeof(bool)*4);
 			p(iconH); p(iconW);
@@ -299,10 +299,10 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			for (int i=0;i<16;i++)
 				p(wImages[i]);
 			p(nImages);
-			
+
 			// Copy final char [], sText
 			MultiByteToWideChar(mvGetAppCodePage(mV, mV->mvEditApp), 0, OldEdPtr->sText, sizeof(OldEdPtr->sText), NewEdPtr->sText, sizeof(NewEdPtr->sText));
-			
+
 			// Done
 			return (HGLOBAL)NewEdPtr;
 		}
@@ -314,7 +314,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			//First declare the two pointers.
 			EDITDATAW* OldEdPtr = (EDITDATAW*)AnyEdPtr;
 			EDITDATAA* NewEdPtr = (EDITDATAA*)GlobalAlloc(GPTR,sizeof(EDITDATAA));
-			
+
 			// Copy eHeader
 			memcpy(&NewEdPtr->eHeader, &OldEdPtr->eHeader, sizeof(extHeader));
 			NewEdPtr->eHeader.extSize = sizeof(EDITDATAA);	// Update the EDITDATA structure size
@@ -333,10 +333,10 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			p(textFont.lfCharSet); p(textFont.lfOutPrecision);
 			p(textFont.lfClipPrecision); p(textFont.lfQuality);
 			p(textFont.lfPitchAndFamily);
-			
+
 			// LOGFONTA has char [] so
 			WideCharToMultiByte(mvGetAppCodePage(mV, mV->mvEditApp), 0, OldEdPtr->textFont.lfFaceName, LF_FACESIZE, NewEdPtr->textFont.lfFaceName, LF_FACESIZE,NULL,NULL);
-					
+
 			//Continue with other properties
 			memcpy(&NewEdPtr->opts, &OldEdPtr->opts, sizeof(bool)*4);
 			p(iconH); p(iconW);
@@ -348,10 +348,10 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 			for (int i=0;i<16;i++)
 				p(wImages[i]);
 			p(nImages);
-			
+
 			// Copy final char [], sText
 			WideCharToMultiByte(mvGetAppCodePage(mV, mV->mvEditApp), 0, OldEdPtr->textFont.lfFaceName, LF_FACESIZE, NewEdPtr->textFont.lfFaceName, LF_FACESIZE,NULL,NULL);
-			
+
 			return (HGLOBAL)NewEdPtr;
 		}
 #endif
@@ -366,7 +366,7 @@ HGLOBAL WINAPI DLLExport UpdateEditStructure(mv __far *mV, OLDEDITDATA * AnyEdPt
 // Called at edit time and run time.
 //
 // Call lpfnUpdate to update your file pathname (refer to the documentation)
-// 
+//
 void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr, void (WINAPI * lpfnUpdate)(LPSTR, LPSTR))
 {
 }
@@ -377,12 +377,12 @@ void WINAPI DLLExport UpdateFileNames(mv _far *mV, LPSTR appName, LPEDATA edPtr,
 //
 // Uncomment this function if you need to store an image in the image bank.
 //
-// Note: do not forget to enable the function in the .def file 
+// Note: do not forget to enable the function in the .def file
 // if you remove the comments below.
 //
 
 int WINAPI DLLExport EnumElts (mv __far *mV, LPEDATA edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM lp1, LPARAM lp2)
-{  
+{
 	int error = FALSE;
 
 	// Enum images

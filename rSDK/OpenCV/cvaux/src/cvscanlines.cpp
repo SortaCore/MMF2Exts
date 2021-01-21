@@ -2011,11 +2011,11 @@ cvMakeScanlines( const CvMatrix3* matrix, CvSize imgSize,
 
 /*F///////////////////////////////////////////////////////////////////////////////////////
 //	Name: cvDeleteMoire
-//	Purpose: The functions 
+//	Purpose: The functions
 //	Context:
-//	Parameters:  
+//	Parameters:
 //
-//	Notes:  
+//	Notes:
 //F*/
 CV_IMPL void
 cvMakeAlphaScanlines( int *scanlines_1,

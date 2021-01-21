@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 
 #include "common.h"
@@ -31,14 +31,14 @@ typedef struct Parameters {
 // ============================================================================
 
 DWORD WINAPI decompress(LPVOID lpParam)
-{	
+{
 	//Open struct and set variables
 	PMYDATA pDataArray = (PMYDATA)lpParam;				//Open the struct
 	char *infilename = pDataArray -> para_infilename;	//Get input file name
 	char *outfilename = pDataArray -> para_outfilename;	//Get output file name
 	char *password = pDataArray -> para_password;		//Get password
 	LPRDATA rdPtr = pDataArray -> para_rdPtr;			//Get rdPtr
-	
+
 	//Set non-struct variables & begin extraction
 	HZIP hz = OpenZip(infilename,0); // 0 = no password
 	SetUnzipBaseDir(hz,outfilename); // Set the extract-to folder
@@ -71,7 +71,7 @@ DWORD WINAPI decompress(LPVOID lpParam)
 			NumberOfFilesExtracted=baseze.index;
 			MessageBox(NULL,"zr==ZR_PASSWORD&&password!=\"0\"", "Debug", NULL);
 			PasswordBeingUsed=true;
-			
+
 			//No error when extracting with given password, so just extract.
 			for (int zi=0; zi<baseze.index; zi++)
 			{	//I Can Haz Stallage
@@ -97,7 +97,7 @@ DWORD WINAPI decompress(LPVOID lpParam)
 				else
 				{ // Password was correct but error occured anyway
 					MessageBox(NULL,"zr==ZR_PASSWORD&&password!=\"0\" > zr!=ZR_PASSWORD", "Debug", NULL);
-					stringstream temp; 
+					stringstream temp;
 					temp<<"An error occured, but the provided password was correct. Error number "<<zr<<".";
 					returnstring=temp.str();
 					NoCurrentCompression=true;
@@ -107,7 +107,7 @@ DWORD WINAPI decompress(LPVOID lpParam)
 		}
 		else
 		{ // Not a password error when we tried to open without a password...
-			stringstream temp; 
+			stringstream temp;
 			temp<<"An error occured - not a password error. Error number "<<zr<<".";
 			returnstring=temp.str();
 			NoCurrentCompression=true;
@@ -122,7 +122,7 @@ DWORD WINAPI decompress(LPVOID lpParam)
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 CONDITION(
@@ -146,7 +146,7 @@ CONDITION(
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 ACTION(
@@ -163,12 +163,12 @@ ACTION(
 		char * p1=(char *)Param(TYPE_STRING);
 		char * p2=(char *)Param(TYPE_STRING);
 		char * p3=(char *)Param(TYPE_STRING);
-		
+
 		//Reset old variables
 		returnstring="";
 		PasswordBeingUsed=false;
 		LastFileExtracted="";
-		
+
 		//Declare struct and set variables in struct
 		PMYDATA Parameters = new MYDATA;	//Declaration
 		Parameters->para_infilename=p1;		//Pass the input archive name
@@ -189,7 +189,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 EXPRESSION(

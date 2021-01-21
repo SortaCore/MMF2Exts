@@ -151,8 +151,8 @@ typedef struct _list _CVLIST;
 	}\
 	element->m_next = ((element_type*)l->m_head_free.m_pos);\
 	l->m_head_free.m_pos = element;
-	
-	
+
+
 /*#define GET_FIRST_FREE(l) ((ELEMENT_##type*)(l->m_head_free.m_pos))*/
 
 #define IMPLEMENT_LIST(type, prefix)\

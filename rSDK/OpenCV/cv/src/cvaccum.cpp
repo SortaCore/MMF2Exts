@@ -384,7 +384,7 @@ cvAcc( const void* arr, void* sumarr, const void* maskarr )
 	static CvFuncTable acc_tab;
 	static CvBigFuncTable accmask_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvAcc" );
 
 	__BEGIN__;
@@ -460,7 +460,7 @@ cvAcc( const void* arr, void* sumarr, const void* maskarr )
 			CV_ERROR( CV_StsBadMask, "" );
 
 		if( !CV_ARE_SIZES_EQ( mat, mask ))
-			CV_ERROR( CV_StsUnmatchedSizes, "" );			
+			CV_ERROR( CV_StsUnmatchedSizes, "" );
 
 		mask_step = mask->step;
 
@@ -485,7 +485,7 @@ cvSquareAcc( const void* arr, void* sq_sum, const void* maskarr )
 	static CvFuncTable acc_tab;
 	static CvBigFuncTable accmask_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvSquareAcc" );
 
 	__BEGIN__;
@@ -556,7 +556,7 @@ cvSquareAcc( const void* arr, void* sq_sum, const void* maskarr )
 			CV_ERROR( CV_StsBadMask, "" );
 
 		if( !CV_ARE_SIZES_EQ( mat, mask ))
-			CV_ERROR( CV_StsUnmatchedSizes, "" );			
+			CV_ERROR( CV_StsUnmatchedSizes, "" );
 
 		mask_step = mask->step;
 
@@ -582,7 +582,7 @@ cvMultiplyAcc( const void* arrA, const void* arrB,
 	static CvFuncTable acc_tab;
 	static CvBigFuncTable accmask_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvMultiplyAcc" );
 
 	__BEGIN__;
@@ -693,7 +693,7 @@ cvRunningAvg( const void* arrY, void* arrU,
 	static CvFuncTable acc_tab;
 	static CvBigFuncTable accmask_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvRunningAvg" );
 
 	__BEGIN__;

@@ -1,7 +1,7 @@
 // ============================================================================
 //
 // This file contains the actions, conditions and expressions your object uses
-// 
+//
 // ============================================================================
 
 #include "common.h"
@@ -13,7 +13,7 @@
 // ============================================================================
 //
 // CONDITIONS
-// 
+//
 // ============================================================================
 
 //CONDITION(
@@ -33,7 +33,7 @@
 ////) {
 ////	int p1=Param(TYPE_INT);
 ////	int p2=Param(TYPE_INT);
-////	
+////
 ////	return p1==p2;
 ////}
 ////
@@ -50,7 +50,7 @@
 // ============================================================================
 //
 // ACTIONS
-// 
+//
 // ============================================================================
 
 //rdPtr->rRd->GenerateEvent(1);
@@ -67,16 +67,16 @@ ACTION(
 	int p4 = Param(TYPE_INT);
 	int p5 = Param(TYPE_INT);
 	int p6 = Param(TYPE_INT);
-	
+
 	if (p6 <= 1){
 		p6 = 1;
 	}
 	if (p6 > 255){
 		p6 = 255;
 	}
-	
+
 	cvRectangle(rdPtr->myImage, cvPoint(p1,p2), cvPoint(p1 + p3,p2 + p4), CV_RGB(p5 & 0xFF,p5 & 0xFF00,p5 & 0xFF0000), p6);
-	
+
 	rdPtr->rc.rcChanged = true;
 }
 
@@ -94,16 +94,16 @@ ACTION(
 	int p5 = Param(TYPE_INT);
 	int p6 = Param(TYPE_INT);
 	int p7 = Param(TYPE_INT);
-	
+
 	if (p6 <= 1){
 		p6 = 1;
 	}
 	if (p6 > 255){
 		p6 = 255;
 	}
-	
+
 	cvLine(rdPtr->myImage, cvPoint(p1,p2), cvPoint(p3,p4), CV_RGB(p5 & 0xFF,p5 & 0xFF00,p5 & 0xFF0000), p6, p7 == 1 ? CV_AA : 0);
-	
+
 	rdPtr->rc.rcChanged = true;
 }
 
@@ -118,9 +118,9 @@ ACTION(
 	int p3 = Param(TYPE_INT);
 	int p4 = Param(TYPE_INT);
 	int p5 = Param(TYPE_INT);
-	
+
 	cvRectangle(rdPtr->myImage, cvPoint(p1,p2), cvPoint(p1 + p3,p2 + p4), CV_RGB(p5 & 0xFF,p5 & 0xFF00,p5 & 0xFF0000), CV_FILLED);
-	
+
 	rdPtr->rc.rcChanged = true;
 }
 
@@ -163,7 +163,7 @@ cvPutText (rdPtr->myImage,myString,cvPoint(x,y), &font, fontColor);
 	//int p5 = Param(TYPE_INT);
 	//
 	//cvRectangle(rdPtr->myImage, cvPoint(p1,p2), cvPoint(p1 + p3,p2 + p4), CV_RGB(p5 & 0xFF,p5 & 0xFF00,p5 & 0xFF0000), CV_FILLED);
-	
+
 	rdPtr->rc.rcChanged = true;
 }
 
@@ -198,13 +198,13 @@ char* myString = (char *)Param(TYPE_STRING);
 						cvReleaseImage(&rdPtr->myImage);
 					}
 				}
-				
+
 				if (!rdPtr->myImage){
 					rdPtr->myImage = cvCloneImage(myImage);
 				}
 			}
 		}
-		
+
 		i++;
 	}
 
@@ -303,7 +303,7 @@ ACTION(
 //				cvDrawPolyLine(rdPtr->myImage, pts, npts, 0, 1, CV_RGB(color & 0xFF, color & 0xFF00, color & 0xFF0000), thickness);
 			}
 		}
-		
+
 		i++;
 	}
 
@@ -405,7 +405,7 @@ ACTION(
 // ============================================================================
 //
 // EXPRESSIONS
-// 
+//
 // ============================================================================
 
 EXPRESSION(

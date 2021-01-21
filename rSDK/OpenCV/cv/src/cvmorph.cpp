@@ -165,7 +165,7 @@ void CvMorphology::init( int _operation, int _max_width, int _src_dst_type,
 
 	int depth = CV_MAT_DEPTH(_src_dst_type);
 	int el_type = 0, nz = -1;
-	
+
 	if( _operation != ERODE && _operation != DILATE )
 		CV_ERROR( CV_StsBadArg, "Unknown/unsupported morphological operation" );
 
@@ -263,7 +263,7 @@ void CvMorphology::init( int _operation, int _max_width, int _src_dst_type,
 			else if( depth == CV_32F )
 				y_func = (CvColumnFilterFunc)icvDilateAny_32f;
 		}
-		
+
 		nz_loc = (CvPoint*)el_sparse;
 
 		for( i = 0; i < ksize.height; i++ )
@@ -354,7 +354,7 @@ int CvMorphology::fill_cyclic_buffer( const uchar* src, int src_step,
 		}
 		else
 		{
-			const uchar *bt = (uchar*)border_tab; 
+			const uchar *bt = (uchar*)border_tab;
 			for( i = 0; i < bsz1; i++ )
 				trow[i] = bt[i];
 
@@ -833,7 +833,7 @@ icvMorphOp( const void* srcarr, void* dstarr, IplConvKernel* element,
 
 	if( !CV_IS_MAT(src) )
 		CV_CALL( src = cvGetMat( src, &srcstub, &coi1 ));
-	
+
 	if( src != &srcstub )
 	{
 		srcstub = *src;
@@ -992,7 +992,7 @@ icvMorphOp( const void* srcarr, void* dstarr, IplConvKernel* element,
 				status = rect_func( src->data.ptr, src_step, dst->data.ptr,
 									dst_step, size, el_size, el_anchor, buffer );
 			}
-			
+
 			if( status >= 0 )
 				EXIT;
 		}

@@ -44,7 +44,7 @@
 	// make it too slow or it could get annoying
 
 	//SEPARATOR
-	
+
 	ITEM(0,"Clear")
 	ITEM(1,"Add point")
 	ITEM(2,"Loop through all points")

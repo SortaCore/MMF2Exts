@@ -28,7 +28,7 @@ int FusionAPI MakeIconEx(mv *mV, cSurface *pIconSf, TCHAR *lpName, ObjInfo *oiPt
 }
 
 
-// Called when you choose "Create new object". It should display the setup box 
+// Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
 int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 {
@@ -146,7 +146,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
-		
+
 	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
 	{
 		if (ID == 1)
@@ -171,7 +171,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 #pragma DllExportHint
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
-	{ 
+	{
 		if (strcpy_s(edPtr->edGlobalID, 255, ((Prop_AStr *)NewParam)->String))
 			MessageBoxA(NULL, "Error setting new property 3; error copying string.", "DarkEdif - SetPropValue() error", MB_OK);
 	}
@@ -215,7 +215,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			return;
 		}
 	}
-		
+
 	MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
 }
 

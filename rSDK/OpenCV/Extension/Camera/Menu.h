@@ -43,7 +43,7 @@
 	// make it too slow or it could get annoying
 
 	//SEPARATOR
-	
+
 	ITEM(0,"Initiate recording")
 	ITEM(1,"Initiate \"false\" recording (from file)")
 

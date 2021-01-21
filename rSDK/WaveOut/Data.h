@@ -10,13 +10,13 @@ typedef rRundata * LPRRDATA;
 typedef struct tagRDATA
 {
 	#include "MagicRDATA.h"
-	
+
 	HWAVEOUT	device;
 	WAVEHDR		buffers[NUM_BUFFERS];
 
 	HANDLE		thread;
 	bool		shuttingDown;
-	
+
 } RUNDATA;
 typedef	RUNDATA	* LPRDATA;
 

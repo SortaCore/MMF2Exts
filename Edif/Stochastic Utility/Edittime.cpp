@@ -5,7 +5,7 @@
 // under the Frame and Event editors.
 //
 // Including creating, display, and setting up your object.
-// 
+//
 // ============================================================================
 
 #include "Common.h"
@@ -20,8 +20,8 @@ enum {
 
 // Example
 // -------
-//	PROPID_TEXTTITLE,	
-//	PROPID_TEXT,	
+//	PROPID_TEXTTITLE,
+//	PROPID_TEXT,
 //	PROPID_CHECK,
 //	PROPID_COMBO,
 //	PROPID_COLOR,
@@ -33,9 +33,9 @@ enum {
 // Example of content of the PROPID_COMBO combo box
 //LPCSTR ComboList[] = {
 //	0,	// reserved
-//	MAKEINTRESOURCE(IDS_FIRSTOPTION),	
-//	MAKEINTRESOURCE(IDS_SECONDOPTION),	
-//	MAKEINTRESOURCE(IDS_THIRDOPTION),	
+//	MAKEINTRESOURCE(IDS_FIRSTOPTION),
+//	MAKEINTRESOURCE(IDS_SECONDOPTION),
+//	MAKEINTRESOURCE(IDS_THIRDOPTION),
 //	NULL
 //};
 
@@ -64,7 +64,7 @@ PropData Properties[] = {
 // ============================================================================
 //
 // ROUTINES USED UNDER FRAME EDITOR
-// 
+//
 // ============================================================================
 
 
@@ -93,7 +93,7 @@ int WINAPI DLLExport MakeIconEx ( mv _far *mV, cSurface* pIconSf, LPSTR lpName, 
 // --------------------
 // CreateObject
 // --------------------
-// Called when you choose "Create new object". It should display the setup box 
+// Called when you choose "Create new object". It should display the setup box
 // and initialize everything in the datazone.
 
 int WINAPI DLLExport CreateObject(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr)
@@ -128,7 +128,7 @@ BOOL WINAPI EditObject (mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr, LPEDATA ed
 	// Check compatibility
 	if ( IS_COMPATIBLE(mV) )
 	{
-	
+
 	}
 #endif // !defined(RUN_ONLY)
 	return FALSE;
@@ -231,7 +231,7 @@ void WINAPI DLLExport EditorDisplay(mv _far *mV, fpObjInfo oiPtr, fpLevObj loPtr
 // IsTransparent
 // --------------------
 // This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
-// 
+//
 
 extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far *mV, fpLevObj loPtr, LPEDATA edPtr, int dx, int dy)
 {
@@ -245,7 +245,7 @@ extern "C" BOOL WINAPI DLLExport IsTransparent(mv _far *mV, fpLevObj loPtr, LPED
 // PrepareToWriteObject
 // --------------------
 // Just before writing the datazone when saving the application, MMF2 calls this routine.
-// 
+//
 void WINAPI	DLLExport PrepareToWriteObject(mv _far *mV, LPEDATA edPtr, fpObjInfo adoi)
 {
 #ifndef RUN_ONLY
@@ -284,7 +284,7 @@ BOOL WINAPI	DLLExport UsesFile (LPMV mV, LPSTR fileName)
 #ifndef RUN_ONLY
 
 	// Example: return TRUE if file extension is ".txt"
-/*	
+/*
 	LPSTR	ext, npath;
 
 	if ( fileName != NULL )
@@ -327,7 +327,7 @@ void WINAPI	DLLExport CreateFromFile (LPMV mV, LPSTR fileName, LPEDATA edPtr)
 // ============================================================================
 //
 // PROPERTIES
-// 
+//
 // ============================================================================
 
 // --------------------
@@ -483,7 +483,7 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 //			{
 //				// Asks MMF to reallocate the structure with the new size
 //				LPEDATA pNewPtr = (LPEDATA)mvReAllocEditData(mV, edPtr, sizeof(EDITDATA)+strlen(pStr));
-//				
+//
 //				// If reallocation worked
 //				if (pNewPtr!=NULL)
 //				{
@@ -493,7 +493,7 @@ void WINAPI DLLExport SetPropValue(LPMV mV, LPEDATA edPtr, UINT nPropID, LPVOID 
 //				}
 //			}
 //			else
-//			{	
+//			{
 //				// Same size : simply copy
 //				strcpy(edPtr->text, pStr);
 //			}
@@ -577,7 +577,7 @@ BOOL WINAPI IsPropEnabled(LPMV mV, LPEDATA edPtr, UINT nPropID)
 // ============================================================================
 //
 // TEXT PROPERTIES
-// 
+//
 // ============================================================================
 
 // --------------------

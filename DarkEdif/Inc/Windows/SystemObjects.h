@@ -222,7 +222,7 @@
 #define	EXP_VIRGULE			((-3<<8)|255)
 #define	EXPL_VIRGULE		((-3<<16)|65535)
 
-// SPEAKER Conditions / Actions 
+// SPEAKER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #define		TYPE_SPEAKER	  		-2
 //(TYPE_SPEAKER&255)=254
@@ -321,7 +321,7 @@
 #define	EXP_GETCHANNELFREQ		((11<<8)|254)
 
 
-// GAME Conditions / Actions 
+// GAME Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#define		TYPE_GAME		  		-3
 //(TYPE_GAME&255)=253
@@ -405,7 +405,7 @@
 #define EXP_FRAMEEFFECTPARAM	((18<<8)|253)
 
 
-// TIMER Conditions / Actions 
+// TIMER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_TIMEOUT       	((-5<<8)|(OBJ_TIMER&255))
 #define	CND_EVERY       	((-4<<8)|(OBJ_TIMER&255))
@@ -456,7 +456,7 @@
 #define	EXP_MOUSEWHEELDELTA	((2<<8)|(OBJ_KEYBOARD&255))
 
 
-// PLAYERS Conditions / Actions 
+// PLAYERS Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_JOYPUSHED		((-6<<8)|(OBJ_PLAYER&255))
 #define	CND_NOMORELIVE		((-5<<8)|(OBJ_PLAYER&255))
@@ -486,7 +486,7 @@
 #define	EXP_GETPLAYERNAME	((4<<8)|(OBJ_PLAYER&255))
 #define	NUM_JOYPRESSED		-4
 
-// CREATE Conditions / Actions 
+// CREATE Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_CHOOSEALLINLINE	((-23<<8)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGRESET	((-22<<8)|(OBJ_CREATE&255))

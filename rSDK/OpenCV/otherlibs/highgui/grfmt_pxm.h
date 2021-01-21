@@ -49,17 +49,17 @@
 class GrFmtPxMReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtPxMReader( const char* filename );
 	~GrFmtPxMReader();
-	
+
 	bool  CheckFormat( const char* signature );
 	bool  ReadData( uchar* data, int step, int color );
 	bool  ReadHeader();
 	void  Close();
 
 protected:
-	
+
 	RLByteStream	m_strm;
 	PaletteEntry	m_palette[256];
 	int			 m_bpp;
@@ -72,7 +72,7 @@ protected:
 class GrFmtPxMWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtPxMWriter( const char* filename );
 	~GrFmtPxMWriter();
 
@@ -90,7 +90,7 @@ protected:
 class GrFmtPxM : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtPxM();
 	~GrFmtPxM();
 

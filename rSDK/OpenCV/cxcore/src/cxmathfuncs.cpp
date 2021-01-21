@@ -92,7 +92,7 @@ cvFastArctan( float y, float x )
 
 	/* ix = ix != 0 ? ix : 1.f */
 	_x.i = ((ix ^ CV_1F) & ((ix == 0) - 1)) ^ CV_1F;
-	
+
 	z = _y.f / _x.f;
 	return (float)((_CV_ATAN_CF0*fabs(z) + _CV_ATAN_CF1)*z + icvAtanTab[idx]);
 }
@@ -133,7 +133,7 @@ IPCVAPI_IMPL( CvStatus, icvFastArctan_32f,
 			ix ^= iy & ygx;
 			iy ^= ix & ygx;
 			ix ^= iy & ygx;
-			
+
 			_y.i = iy ^ icvAtanSign[k];
 
 			/* ix = ix != 0 ? ix : 1.f */
@@ -335,7 +335,7 @@ cvCartToPolar( const CvArr* xarr, const CvArr* yarr,
 	CvSize size;
 	int x, y;
 	int cont_flag = CV_MAT_CONT_FLAG;
-	
+
 	if( !CV_IS_MAT(xmat))
 		CV_CALL( xmat = cvGetMat( xmat, &xstub, &coi1 ));
 
@@ -358,7 +358,7 @@ cvCartToPolar( const CvArr* xarr, const CvArr* yarr,
 
 		if( !CV_ARE_TYPES_EQ( mag, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedFormats );
-		
+
 		if( !CV_ARE_SIZES_EQ( mag, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedSizes );
 		cont_flag = mag->type;
@@ -370,7 +370,7 @@ cvCartToPolar( const CvArr* xarr, const CvArr* yarr,
 
 		if( !CV_ARE_TYPES_EQ( angle, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedFormats );
-		
+
 		if( !CV_ARE_SIZES_EQ( angle, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedSizes );
 		cont_flag &= angle->type;
@@ -479,7 +479,7 @@ icvSinCos_32f( const float *angle,float *sinval, float* cosval,
 	const int N = 64;
 
 	static const double sin_table[] =
-	{ 
+	{
 	 0.00000000000000000000,	 0.09801714032956060400,
 	 0.19509032201612825000,	 0.29028467725446233000,
 	 0.38268343236508978000,	 0.47139673682599764000,
@@ -515,7 +515,7 @@ icvSinCos_32f( const float *angle,float *sinval, float* cosval,
 	};
 
 	static const double k2 = (2*CV_PI)/N;
-	
+
 	static const double sin_a0 = -0.166630293345647*k2*k2*k2;
 	static const double sin_a2 = k2;
 
@@ -575,7 +575,7 @@ cvPolarToCart( const CvArr* magarr, const CvArr* anglearr,
 	CvSize size;
 	int x, y;
 	int cont_flag;
-	
+
 	if( !CV_IS_MAT(angle))
 		CV_CALL( angle = cvGetMat( angle, &anglestub, &coi4 ));
 
@@ -605,24 +605,24 @@ cvPolarToCart( const CvArr* magarr, const CvArr* anglearr,
 
 		if( !CV_ARE_TYPES_EQ( angle, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedFormats );
-		
+
 		if( !CV_ARE_SIZES_EQ( angle, xmat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedSizes );
-		
+
 		cont_flag &= xmat->type;
 	}
 
 	if( ymat )
 	{
 		if( !CV_IS_MAT(ymat))
-			CV_CALL( ymat = cvGetMat( ymat, &ystub, &coi2 ));		
+			CV_CALL( ymat = cvGetMat( ymat, &ystub, &coi2 ));
 
 		if( !CV_ARE_TYPES_EQ( angle, ymat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedFormats );
-		
+
 		if( !CV_ARE_SIZES_EQ( angle, ymat ) )
 			CV_ERROR_FROM_CODE( CV_StsUnmatchedSizes );
-		
+
 		cont_flag &= ymat->type;
 	}
 
@@ -868,13 +868,13 @@ IPCVAPI_IMPL( CvStatus, icvExp_32f, ( const float *_x, float *y, int n ), (_x, y
 
 		x0 = buf[0].d * icvExpTab[val0 & EXPTAB_MASK] * EXPPOLY( x0 );
 		x1 = buf[1].d * icvExpTab[val1 & EXPTAB_MASK] * EXPPOLY( x1 );
-		
+
 		y[i] = (float)x0;
 		y[i + 1] = (float)x1;
-		
+
 		x2 = buf[2].d * icvExpTab[val2 & EXPTAB_MASK] * EXPPOLY( x2 );
 		x3 = buf[3].d * icvExpTab[val3 & EXPTAB_MASK] * EXPPOLY( x3 );
-		
+
 		y[i + 2] = (float)x2;
 		y[i + 3] = (float)x3;
 	}
@@ -1028,7 +1028,7 @@ CV_IMPL void cvExp( const CvArr* srcarr, CvArr* dstarr )
 	double* buffer = 0;
 	CvSize size;
 	int x, y, dx = 0;
-	
+
 	if( !CV_IS_MAT(src))
 		CV_CALL( src = cvGetMat( src, &srcstub, &coi1 ));
 
@@ -1383,7 +1383,7 @@ IPCVAPI_IMPL( CvStatus, icvLog_32f, ( const float *_x, float *y, int n ), (_x, y
 		float f;
 	}
 	buf[4];
-	
+
 	const int* x = (const int*)_x;
 
 	if( !x || !y )
@@ -1501,7 +1501,7 @@ IPCVAPI_IMPL( CvStatus, icvLog_64f, ( const double *x, double *y, int n ), (x, y
 		h1 = X[i + 1].i.lo;
 		buf[0].i.lo = h0;
 		buf[1].i.lo = h1;
-		
+
 		h0 = X[i].i.hi;
 		h1 = X[i + 1].i.hi;
 		buf[0].i.hi = (h0 & LOGTAB_MASK2) | (1023 << 20);
@@ -1587,7 +1587,7 @@ CV_IMPL void cvLog( const CvArr* srcarr, CvArr* dstarr )
 	double* buffer = 0;
 	CvSize size;
 	int x, y, dx = 0;
-	
+
 	if( !CV_IS_MAT(src))
 		CV_CALL( src = cvGetMat( src, &srcstub, &coi1 ));
 
@@ -1699,7 +1699,7 @@ CV_IMPL void cvPow( const CvArr* srcarr, CvArr* dstarr, double power )
 {
 	static CvFuncTable ipow_tab;
 	static int inittab = 0;
-	
+
 	CV_FUNCNAME( "cvPow" );
 
 	__BEGIN__;
@@ -1714,7 +1714,7 @@ CV_IMPL void cvPow( const CvArr* srcarr, CvArr* dstarr, double power )
 	int x, y;
 	int ipower = cvRound( power );
 	int is_ipower = 0;
-	
+
 	if( !CV_IS_MAT(src))
 		CV_CALL( src = cvGetMat( src, &srcstub, &coi1 ));
 
@@ -1743,13 +1743,13 @@ CV_IMPL void cvPow( const CvArr* srcarr, CvArr* dstarr, double power )
 		if( ipower < 0 )
 		{
 			CV_CALL( cvDiv( 0, src, dst ));
-			
+
 			if( ipower == -1 )
 				EXIT;
 			ipower = -ipower;
 			src = dst;
 		}
-		
+
 		switch( ipower )
 		{
 		case 0:
@@ -1784,7 +1784,7 @@ CV_IMPL void cvPow( const CvArr* srcarr, CvArr* dstarr, double power )
 		CvIPowFunc pow_func = (CvIPowFunc)ipow_tab.fn_2d[depth];
 		if( !pow_func )
 			CV_ERROR( CV_StsUnsupportedFormat, "The data type is not supported" );
-		
+
 		for( y = 0; y < size.height; y++ )
 		{
 			uchar* src_data = src->data.ptr + src->step*y;
@@ -1795,7 +1795,7 @@ CV_IMPL void cvPow( const CvArr* srcarr, CvArr* dstarr, double power )
 	}
 	else if( fabs(fabs(power) - 0.5) < DBL_EPSILON )
 	{
-		CvSqrtFunc sqrt_func = power < 0 ? 
+		CvSqrtFunc sqrt_func = power < 0 ?
 			(depth == CV_32F ? (CvSqrtFunc)icvInvSqrt_32f : (CvSqrtFunc)icvInvSqrt_64f) :
 			(depth == CV_32F ? (CvSqrtFunc)icvSqrt_32f : (CvSqrtFunc)icvSqrt_64f);
 
@@ -1849,7 +1849,7 @@ IPCVAPI_IMPL( CvStatus, icvCheckArray_32f_C1R,
 	Cv32suf a, b;
 	int ia, ib;
 	const int* isrc = (const int*)src;
-	
+
 	if( !src )
 		return CV_NULLPTR_ERR;
 
@@ -1895,7 +1895,7 @@ IPCVAPI_IMPL( CvStatus,  icvCheckArray_64f_C1R,
 	Cv64suf a, b;
 	int64 ia, ib;
 	const int64* isrc = (const int64*)src;
-	
+
 	if( !src )
 		return CV_NULLPTR_ERR;
 
@@ -1979,7 +1979,7 @@ CV_IMPL  int  cvCheckArr( const CvArr* arr, int flags,
 			CV_ERROR( CV_StsUnsupportedFormat, "" );
 		}
 
-		if( status < 0 )  
+		if( status < 0 )
 		{
 			if( status != CV_BADRANGE_ERR || !(flags & CV_CHECK_QUIET))
 				CV_ERROR( CV_StsOutOfRange, "CheckArray failed" );

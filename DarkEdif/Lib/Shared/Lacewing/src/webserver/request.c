@@ -138,7 +138,7 @@ void lwp_ws_req_before_handler (lw_ws_req ctx)
 		*/
 
 	  lw_ws_req_add_header (ctx, "cache-control", "public");
-	}	
+	}
 
 	assert (ctx->responded);
 
@@ -346,7 +346,7 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	  ctx->hostname [host_len] = 0;
 
 	  return lw_true;
-	}	
+	}
 
 	return lw_true;
 }

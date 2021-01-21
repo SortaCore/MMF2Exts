@@ -131,7 +131,7 @@ public:
 	inline void send(lacewing::udp udp, lacewing::address address, bool clear = true)
 	{
 		udp->send(address, buffer, size);
- 
+
 		if (clear)
 			framereset();
 	}

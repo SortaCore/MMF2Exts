@@ -147,7 +147,7 @@ void lwp_deinit ();
 #ifndef container_of
 	#define container_of(p, type, v) \
 		((type *)  (((char *) p) - offsetof(type, v)) )
-		
+
 #endif
 
 #include "heapbuffer.h"
@@ -211,7 +211,7 @@ lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_error
 	} /* extern "C" */
 
 	using namespace lacewing;
-	#include <new> 
+	#include <new>
 
 #endif
 

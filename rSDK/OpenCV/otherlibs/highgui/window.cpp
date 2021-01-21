@@ -52,7 +52,7 @@
 #else
 
 // No windowing system present at compile time ;-(
-// 
+//
 // We will build place holders that don't break the API but give an error
 // at runtime. This way people can choose to replace an installed HighGUI
 // version with a more capable one without a need to recompile dependent
@@ -70,7 +70,7 @@ CV_IMPL int cvNamedWindow( const char*, int )
 {
 	CV_NO_GUI_ERROR("cvNamedWindow");
 	return -1;
-}	
+}
 
 CV_IMPL void cvDestroyWindow( const char* )
 {
@@ -129,7 +129,7 @@ CV_IMPL void* cvGetWindowHandle( const char* )
 	CV_NO_GUI_ERROR( "cvGetWindowHandle" );
 	return 0;
 }
-	
+
 CV_IMPL const char* cvGetWindowName( void* )
 {
 	CV_NO_GUI_ERROR( "cvGetWindowName" );

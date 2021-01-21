@@ -2218,7 +2218,7 @@ png_handle_unknown(png_structp png_ptr, png_infop info_ptr, png_uint_32 length)
 		}
 #endif
 		png_memcpy((png_charp)png_ptr->unknown_chunk.name,
-				  (png_charp)png_ptr->chunk_name, 
+				  (png_charp)png_ptr->chunk_name,
 				  png_sizeof(png_ptr->unknown_chunk.name));
 		png_ptr->unknown_chunk.name[png_sizeof(png_ptr->unknown_chunk.name)-1] = '\0';
 		png_ptr->unknown_chunk.size = (png_size_t)length;

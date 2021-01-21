@@ -96,21 +96,21 @@ bool  GrFmtFilterFactory::CheckFile( const char* filename )
 	char signature[4096];
 	int sign_len = 0;
 	int cur_sign_len = GetSignatureLength();
-	
+
 	if( !filename ) return false;
-	
+
 	assert( cur_sign_len <= (int)sizeof( signature ) );
 	f = fopen( filename, "rb" );
-	
+
 	if( f )
 	{
 		sign_len = (int)fread( signature, 1, cur_sign_len, f );
 		fclose( f );
-		
+
 		if( cur_sign_len <= sign_len && CheckSignature( signature ) )
 			return true;
 	}
-	
+
 	return false;
 }
 
@@ -142,7 +142,7 @@ bool GrFmtFilterFactory::CheckExtension( const char* format )
 {
 	const char* descr = 0;
 	int len = 0;
-		
+
 	if( !format || !m_description )
 		return false;
 
@@ -164,7 +164,7 @@ bool GrFmtFilterFactory::CheckExtension( const char* format )
 	while( descr )
 	{
 		descr = strchr( descr + 1, '.' );
-		int i, len2 = GetExtensionLength( descr ); 
+		int i, len2 = GetExtensionLength( descr );
 
 		if( len2 == 0 )
 			break;
@@ -263,10 +263,10 @@ GrFmtFilterFactory* GrFmtFactoriesList::GetNextFactory( ListPosition& pos )
 GrFmtReader* GrFmtFactoriesList::FindReader( const char* filename )
 {
 	if( !filename ) return 0;
-	
+
 	GrFmtReader* reader = 0;
 	ListPosition pos = GetFirstFactoryPos();
-	
+
 	while( pos )
 	{
 		GrFmtFilterFactory* tempFactory = GetNextFactory( pos );
@@ -276,7 +276,7 @@ GrFmtReader* GrFmtFactoriesList::FindReader( const char* filename )
 			break;
 		}
 	}
-	
+
 	return reader;
 }
 

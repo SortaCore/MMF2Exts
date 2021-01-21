@@ -152,7 +152,7 @@ public:
 	virtual int			GetVersion() { return RUNMVT_VERSION_1; }
 
 	virtual BOOL		Move(LPHO pHo) { return FALSE; }
-	virtual void		SetPosition(LPHO pHo, int x, int y) {} 
+	virtual void		SetPosition(LPHO pHo, int x, int y) {}
 	virtual void		SetXPosition(LPHO pHo, int x) {}
 	virtual void		SetYPosition(LPHO pHo, int y) {}
 

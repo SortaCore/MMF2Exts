@@ -52,7 +52,7 @@
 class GrFmtPngReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtPngReader( const char* filename );
 	~GrFmtPngReader();
 
@@ -74,7 +74,7 @@ protected:
 class GrFmtPngWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtPngWriter( const char* filename );
 	~GrFmtPngWriter();
 
@@ -89,7 +89,7 @@ protected:
 class GrFmtPng : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtPng();
 	~GrFmtPng();
 

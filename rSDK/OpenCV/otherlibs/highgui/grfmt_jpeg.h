@@ -52,7 +52,7 @@
 class GrFmtJpegReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtJpegReader( const char* filename );
 	~GrFmtJpegReader();
 
@@ -71,7 +71,7 @@ protected:
 class GrFmtJpegWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtJpegWriter( const char* filename );
 	~GrFmtJpegWriter();
 
@@ -87,7 +87,7 @@ class RJpegBitStream : public RMBitStream
 {
 public:
 	RMByteStream  m_low_strm;
-	
+
 	RJpegBitStream();
 	~RJpegBitStream();
 
@@ -108,7 +108,7 @@ protected:
 class GrFmtJpegReader : public GrFmtReader
 {
 public:
-	
+
 	GrFmtJpegReader( const char* filename );
 	~GrFmtJpegReader();
 
@@ -125,7 +125,7 @@ protected:
 	int	m_type; // SOF type
 	int	m_MCUs; // MCUs in restart interval
 	int	m_ss, m_se, m_ah, m_al; // progressive JPEG parameters
-	
+
 	// information about each component
 	struct cmp_info
 	{
@@ -135,18 +135,18 @@ protected:
 		char td, ta; // DC & AC huffman tables
 		int  dc_pred; // DC predictor
 	};
-	
+
 	cmp_info m_ci[3];
 
 	int	 m_tq[4][64];
 	bool	m_is_tq[4];
-	
+
 	short*  m_td[4];
 	bool	m_is_td[4];
-	
+
 	short*  m_ta[4];
 	bool	m_is_ta[4];
-	
+
 	RJpegBitStream  m_strm;
 
 protected:
@@ -165,7 +165,7 @@ class WJpegBitStream : public WMBitStream
 {
 public:
 	WMByteStream  m_low_strm;
-	
+
 	WJpegBitStream();
 	~WJpegBitStream();
 
@@ -183,7 +183,7 @@ protected:
 class GrFmtJpegWriter : public GrFmtWriter
 {
 public:
-	
+
 	GrFmtJpegWriter( const char* filename );
 	~GrFmtJpegWriter();
 
@@ -202,7 +202,7 @@ protected:
 class GrFmtJpeg : public GrFmtFilterFactory
 {
 public:
-	
+
 	GrFmtJpeg();
 	~GrFmtJpeg();
 

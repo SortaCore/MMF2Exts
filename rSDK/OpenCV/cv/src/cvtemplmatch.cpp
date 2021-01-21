@@ -50,9 +50,9 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 	CvMat* dft_templ = 0;
 	void* buf[CV_MAX_THREADS] = {0};
 	int k, num_threads = 0;
-	
+
 	CV_FUNCNAME( "icvCrossCorr" );
-	
+
 	__BEGIN__;
 
 	CvMat istub, *img = (CvMat*)_img;
@@ -76,7 +76,7 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 	if( !CV_ARE_DEPTHS_EQ( img, templ ) && CV_MAT_DEPTH( templ->type ) != CV_32F )
 		CV_ERROR( CV_StsUnsupportedFormat,
 		"Template (kernel) must be of the same depth as the input image, or be 32f" );
-	
+
 	if( !CV_ARE_DEPTHS_EQ( img, corr ) && CV_MAT_DEPTH( corr->type ) != CV_32F &&
 		CV_MAT_DEPTH( corr->type ) != CV_64F )
 		CV_ERROR( CV_StsUnsupportedFormat,
@@ -161,7 +161,7 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 
 		src = templ;
 		dst = cvGetSubRect( dft_templ, &dstub, cvRect(0,yofs,templ->cols,templ->rows));
-	
+
 		if( templ_cn > 1 )
 		{
 			planes[k] = templ_depth == max_depth ? dst :
@@ -212,7 +212,7 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 		isz.height = csz.height + templ->rows - 1;
 		x2 = MIN( img->cols, x0 + isz.width );
 		y2 = MIN( img->rows, y0 + isz.height );
-		
+
 		for( i = 0; i < cn; i++ )
 		{
 			CvMat dstub1, *dst1;
@@ -222,7 +222,7 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 			dst = cvGetSubRect( _dft_img, &dstub,
 				cvRect(0,0,isz.width,isz.height) );
 			dst1 = dst;
-			
+
 			if( x2 - x1 < isz.width || y2 - y1 < isz.height )
 				dst1 = cvGetSubRect( _dft_img, &dstub1,
 					cvRect( x1 - x0, y1 - y0, x2 - x1, y2 - y1 ));
@@ -270,7 +270,7 @@ icvCrossCorr( const CvArr* _img, const CvArr* _templ, CvArr* _corr, CvPoint anch
 					cvConvert( src, planes[i] );
 				}
 				cvMerge( planes[0], planes[1], planes[2], planes[3], dst );
-				planes[i] = 0;					
+				planes[i] = 0;
 			}
 			else
 			{
@@ -325,7 +325,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 {
 	CvMat* sum = 0;
 	CvMat* sqsum = 0;
-	
+
 	CV_FUNCNAME( "cvMatchTemplate" );
 
 	__BEGIN__;
@@ -338,7 +338,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 	CvMat rstub, *result = (CvMat*)_result;
 	CvScalar templ_mean = cvScalarAll(0);
 	double templ_norm = 0, templ_sum2 = 0;
-	
+
 	int idx = 0, idx2 = 0;
 	double *p0, *p1, *p2, *p3;
 	double *q0, *q1, *q2, *q3;
@@ -446,7 +446,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 			cvSet( result, cvScalarAll(1.) );
 			EXIT;
 		}
-		
+
 		templ_sum2 = templ_norm +
 					 CV_SQR(templ_mean.val[0]) + CV_SQR(templ_mean.val[1]) +
 					 CV_SQR(templ_mean.val[2]) + CV_SQR(templ_mean.val[3]);
@@ -456,7 +456,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 			templ_mean = cvScalarAll(0);
 			templ_norm = templ_sum2;
 		}
-		
+
 		templ_sum2 /= inv_area;
 		templ_norm = sqrt(templ_norm);
 		templ_norm /= sqrt(inv_area); // care of accuracy here
@@ -485,7 +485,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 		{
 			double num = rrow[j], t;
 			double wnd_mean2 = 0, wnd_sum2 = 0;
-			
+
 			if( num_type == 1 )
 			{
 				for( k = 0; k < cn; k++ )
@@ -526,7 +526,7 @@ cvMatchTemplate( const CvArr* _img, const CvArr* _templ, CvArr* _result, int met
 			rrow[j] = (float)num;
 		}
 	}
-		
+
 	__END__;
 
 	cvReleaseMat( &sum );

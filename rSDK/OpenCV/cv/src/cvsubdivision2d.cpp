@@ -61,7 +61,7 @@ cvCreateSubdiv2D( int subdiv_type, int header_size,
 	subdiv = (CvSubdiv2D *) cvCreateGraph( subdiv_type, header_size,
 											vtx_size, quadedge_size, storage );
 
-	
+
 	__END__;
 
 	return subdiv;
@@ -98,7 +98,7 @@ cvSubdiv2DMakeEdge( CvSubdiv2D * subdiv )
 
 	subdiv->quad_edges++;
 
-	
+
 	__END__;
 
 	return edgehandle;
@@ -155,7 +155,7 @@ cvSubdiv2DSetEdgePoints( CvSubdiv2DEdge edge,
 	quadedge->pt[edge & 3] = org_pt;
 	quadedge->pt[(edge + 2) & 3] = dst_pt;
 
-	
+
 	__END__;
 }
 
@@ -182,7 +182,7 @@ cvSubdiv2DDeleteEdge( CvSubdiv2D * subdiv, CvSubdiv2DEdge edge )
 	cvSetRemoveByPtr( (CvSet*)(subdiv->edges), quadedge );
 	subdiv->quad_edges--;
 
-	
+
 	__END__;
 }
 
@@ -209,7 +209,7 @@ cvSubdiv2DConnectEdges( CvSubdiv2D * subdiv, CvSubdiv2DEdge edgeA, CvSubdiv2DEdg
 	dstA = cvSubdiv2DEdgeDst( edgeA );
 	orgB = cvSubdiv2DEdgeOrg( edgeB );
 	cvSubdiv2DSetEdgePoints( new_edge, dstA, orgB );
-	
+
 	__END__;
 
 	return new_edge;
@@ -339,7 +339,7 @@ cvSubdiv2DLocate( CvSubdiv2D * subdiv, CvPoint2D32f pt,
 		}
 	}
 
-	
+
 	__END__;
 
 	subdiv->recent_edge = edge;
@@ -504,7 +504,7 @@ cvSubdivDelaunay2DInsert( CvSubdiv2D * subdiv, CvPoint2D32f pt )
 
 	point = curr_point;
 
-	
+
 	__END__;
 
 	//icvSubdiv2DCheck( subdiv );
@@ -562,7 +562,7 @@ cvInitSubdivDelaunay2D( CvSubdiv2D * subdiv, CvRect rect )
 
 	subdiv->recent_edge = edge_AB;
 
-	
+
 	__END__;
 }
 
@@ -615,7 +615,7 @@ cvClearSubdivVoronoi2D( CvSubdiv2D * subdiv )
 
 	subdiv->is_geometry_valid = 0;
 
-	
+
 	__END__;
 }
 
@@ -710,7 +710,7 @@ cvCalcSubdivVoronoi2D( CvSubdiv2D * subdiv )
 
 	subdiv->is_geometry_valid = 1;
 
-	
+
 	__END__;
 }
 
@@ -731,9 +731,9 @@ cvFindNearestPoint2D( CvSubdiv2D* subdiv, CvPoint2D32f pt )
 	CvPoint2D32f start;
 	CvPoint2D32f diff;
 	CvSubdiv2DPointLocation loc;
-	CvSubdiv2DEdge edge; 
+	CvSubdiv2DEdge edge;
 	int i;
-	
+
 	CV_FUNCNAME("cvFindNearestPoint2D");
 
 	__BEGIN__;
@@ -769,11 +769,11 @@ cvFindNearestPoint2D( CvSubdiv2D* subdiv, CvPoint2D32f pt )
 	for( i = 0; i < subdiv->total; i++ )
 	{
 		CvPoint2D32f t;
-		
+
 		for(;;)
 		{
 			assert( cvSubdiv2DEdgeDst( edge ));
-			
+
 			t = cvSubdiv2DEdgeDst( edge )->pt;
 			if( icvIsRightOf2( t, start, diff ) >= 0 )
 				break;

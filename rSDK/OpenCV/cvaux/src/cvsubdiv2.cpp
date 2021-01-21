@@ -46,7 +46,7 @@ icvSubdiv2DCheck( CvSubdiv2D* subdiv )
 {
 	int i, j, total = subdiv->edges->total;
 	int check_result = 0;
-	
+
 	CV_FUNCNAME("icvSubdiv2DCheck");
 
 	__BEGIN__;
@@ -57,7 +57,7 @@ icvSubdiv2DCheck( CvSubdiv2D* subdiv )
 	for( i = 0; i < total; i++ )
 	{
 		CvQuadEdge2D* edge = (CvQuadEdge2D*)cvGetSetElem(subdiv->edges,i);
-		
+
 		if( edge && CV_IS_SET_ELEM( edge ))
 		{
 			for( j = 0; j < 4; j++ )
@@ -111,7 +111,7 @@ draw_subdiv_facet( CvSubdiv2D * subdiv, IplImage * dst, IplImage * src, CvSubdiv
 	CvPoint local_buf[100];
 	CvPoint *buf = local_buf;
 
-	// count number of edges in facet 
+	// count number of edges in facet
 	do
 	{
 		count++;

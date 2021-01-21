@@ -12,7 +12,7 @@ public:
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
-	
+
 	static const int WindowProcPriority = 100;
 
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
@@ -81,7 +81,7 @@ public:
 		bool IsPlayerNamePaused(const char * playerName);
 
 	/// Expressions
-		
+
 		const char * GetError();
 		int GetPlayerCurrentPos();
 		int GetSongLength(const char * songName);

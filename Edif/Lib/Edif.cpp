@@ -66,7 +66,7 @@ short ReadParameterType(const char * Text)
 
 	if (!_stricmp(Text, "Comparison"))
 		return PARAM_COMPARAISON;
-		
+
 	if (!_stricmp(Text, "StringComparison"))
 		return PARAM_CMPSTRING;
 
@@ -115,14 +115,14 @@ short ReadExpressionParameterType(const char * Text)
 }
 
 void Edif::Init(mv * _far mV, LPEDATA edPtr)
-{	
+{
 	IsEdittime = mV->mvHMainWin != 0;
 
 	mvInvalidateObject(mV, edPtr);
 }
 
 void Edif::Free(mv * _far mV)
-{	
+{
 	delete ::SDK;
 	::SDK = NULL;
 }
@@ -169,7 +169,7 @@ int Edif::Init(mv _far * mV)
 	size_t JSON_Size;
 
 	int result = Edif::GetDependency (JSON, JSON_Size, _T("json"), IDR_EDIF_JSON);
-	
+
 	if (result == Edif::DependencyNotFound)
 	{
 		TCHAR temp [MAX_PATH];
@@ -194,7 +194,7 @@ int Edif::Init(mv _far * mV)
 		free(JSON);
 
 	char json_error [256];
-	
+
 	json_settings settings;
 	memset (&settings, 0, sizeof (settings));
 
@@ -229,7 +229,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				DWORD PNG = FILTERID_PNG;
 				ImportImageFromInputFile(mV->mvImgFilterMgr, File, Icon, &PNG, 0);
-				
+
 				File->Delete();
 
 				if (!Icon->HasAlpha())
@@ -251,7 +251,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	ActionJumps [Actions.u.array.length] = 0;
 	ConditionJumps [Conditions.u.array.length] = 0;
 	ExpressionJumps [Expressions.u.array.length] = 0;
-	
+
 	for (unsigned int i = 0; i < Actions.u.array.length; ++ i)
 	{
 		const json_value &Action = Actions[i];
@@ -286,14 +286,14 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 					Type = Parameter[0];
 
 				ActionInfos.push_back(ReadParameterType(Type));
-				
+
 				if (!_stricmp(Type, "Float"))
 					IsFloat |= 1 << i;
 			}
 
 			ActionFloatFlags.push_back(IsFloat);
 		}
-		
+
 		for (unsigned int i = 0; i < Parameters.u.array.length; ++ i)
 			ActionInfos.push_back(0);
 	}
@@ -332,7 +332,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 					Type = Parameter[0];
 
 				ConditionInfos.push_back(ReadParameterType(Type));
-				
+
 				if (!_stricmp(Type, "Float"))
 					IsFloat |= 1 << i;
 			}
@@ -396,7 +396,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 					Type = Parameter[0];
 
 				ExpressionInfos.push_back(ReadExpressionParameterType(Type));
-				
+
 				if (!_stricmp(Type, "Float"))
 					IsFloat |= 1 << i;
 			}
@@ -472,7 +472,7 @@ int ActionOrCondition(vector<short> &FloatFlags, LPEVENTINFOS2 Info, void * Func
 		pushad
 
 		mov ecx, ParameterCount
-		
+
 		cmp ecx, 0
 		je CallNow
 
@@ -498,7 +498,7 @@ int ActionOrCondition(vector<short> &FloatFlags, LPEVENTINFOS2 Info, void * Func
 
 		mov ecx, Extension
 		call Function
-			
+
 		mov Result, eax
 
 		popad
@@ -627,7 +627,7 @@ long __stdcall Edif::Expression(LPRDATA rdPtr, long param)
 				}
 
 				Parameters[i] = CNC_GetNextExpressionParameter(rdPtr, param, TYPE_STRING);
-				break;  
+				break;
 
 			case EXPPARAM_LONG:
 
@@ -649,13 +649,13 @@ long __stdcall Edif::Expression(LPRDATA rdPtr, long param)
 
 	int Result;
 	int ExpressionType = ::SDK->ExpressionTypes[ID];
-	
+
 	__asm
 	{
 		pushad
 
 		mov ecx, ParameterCount
-		
+
 		cmp ecx, 0
 		je CallNow
 
@@ -691,14 +691,14 @@ long __stdcall Edif::Expression(LPRDATA rdPtr, long param)
 		jmp End
 
 	NotFloat:
-		
+
 		mov Result, eax
-		
+
 	End:
 
 		popad
 	}
-	
+
 	switch(ExpressionType)
 	{
 		case 1: // Float
@@ -713,7 +713,7 @@ long __stdcall Edif::Expression(LPRDATA rdPtr, long param)
 			break;
 		}
 	};
-	
+
 	return Result;
 }
 
@@ -739,7 +739,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		Buffer [Size] = 0;
 
 		fread (Buffer, 1, Size, File);
-		
+
 		fclose (File);
 
 		return DependencyWasFile;
