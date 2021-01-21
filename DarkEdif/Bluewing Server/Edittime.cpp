@@ -48,15 +48,22 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		edPtr = (EDITDATA*)newEd;
 	}
 
+	// Zero the padding and all data
+	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
+
 	// Set default object settings from DefaultState.
 	const auto &propsJSON = CurLang["Properties"];
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
-	if (strcpy_s(edPtr->edGlobalID, 255, propsJSON[3]["DefaultState"]))
+	if (strcpy_s(edPtr->edGlobalID, propsJSON[3]["DefaultState"]))
 		MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEdif - CreateObject() error", MB_OK);
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
 	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"];
+	edPtr->enableInactivityTimer = propsJSON[7]["DefaultState"];
+
+	// ext version 1 = before Unicode port, 2 = after. Does not mean the properties are UTF16; they're UTF8.
+	edPtr->eHeader.extVersion = 2;
 
 	// Since we're echoing Relay's property layout, we don't use DarkEdif's property manager.
 	// InitialisePropertiesFromJSON(mV, edPtr);
@@ -120,24 +127,27 @@ void FusionAPI ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int Pr
 Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return NULL; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
 	{
-		if (::SDK->EdittimeProperties[ID].Type_ID != Edif::Properties::PROPTYPE_LEFTCHECKBOX)
+		if (ID == 0)
 		{
-			if (ID == 0)
-				return new Prop_AStr(CurLang["Properties"][ID]["DefaultState"]);
-			if (ID == 3)
-				return new Prop_AStr(edPtr->edGlobalID);
+			char extVerBuffer[256];
+			sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayserver::buildnum, STRIFY(CONFIG));
+			return new Prop_Str(UTF8ToTString(extVerBuffer).c_str());
 		}
+		if (ID == 3)
+			return new Prop_Str(UTF8ToTString(edPtr->edGlobalID).c_str());
 
-		// Override invalid property warning
-		// See request for change: http://community.clickteam.com/showthread.php?t=72152
+		// Note that checkbox-only properties call GetPropValue() too for no reason, so
 		return NULL;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to GetPropValue() call.", "DarkEdif - Invalid property", MB_OK);
+	MessageBoxA(NULL, "Unknown property ID given to GetPropValue() call.", PROJECT_NAME " - property error", MB_OK);
 	return NULL;
 }
 
@@ -145,6 +155,9 @@ Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
@@ -159,21 +172,27 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			return edPtr->timeoutWarningEnabled;
 		if (ID == 6)
 			return edPtr->fullDeleteEnabled;
+		if (ID == 7)
+			return edPtr->enableInactivityTimer;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
-	return 0; // Unchecked
+	MessageBoxA(NULL, "Unknown property ID given to GetPropCheck() call.", PROJECT_NAME " - property error", MB_OK);
+	return FALSE; // Unchecked
 }
 
 // This routine is called by MMF after a property has been modified.
 void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop * NewParam)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
 	{
-		if (strcpy_s(edPtr->edGlobalID, 255, ((Prop_AStr *)NewParam)->String))
-			MessageBoxA(NULL, "Error setting new property 3; error copying string.", "DarkEdif - SetPropValue() error", MB_OK);
+		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
+		if (strcpy_s(edPtr->edGlobalID, newValAsU8.c_str()))
+			MessageBoxA(NULL, "Error setting global ID; too long?", PROJECT_NAME " - SetPropValue() error", MB_OK);
 	}
 
 	// You may want to have your object redrawn in the frame editor after the modifications,
@@ -185,35 +204,26 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL Check)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if (CurLang["Properties"].u.object.length > ID)
 	{
+		// The ending ", (void)0" means that the expression evaluates to void overall
 		if (ID == 1)
-		{
-			edPtr->automaticClear = (Check != 0);
-			return;
-		}
+			return edPtr->automaticClear = (Check != 0), (void)0;
 		if (ID == 2)
-		{
-			edPtr->isGlobal = (Check != 0);
-			return;
-		}
+			return edPtr->isGlobal = (Check != 0), (void)0;
 		if (ID == 4)
-		{
-			edPtr->multiThreading = (Check != 0);
-			return;
-		}
+			return edPtr->multiThreading = (Check != 0), (void)0;
 		if (ID == 5)
-		{
-			edPtr->timeoutWarningEnabled = (Check != 0);
-			return;
-		}
+			return edPtr->timeoutWarningEnabled = (Check != 0), (void)0;
 		if (ID == 6)
-		{
-			edPtr->fullDeleteEnabled = (Check != 0);
-			return;
-		}
+			return edPtr->fullDeleteEnabled = (Check != 0), (void)0;
+		if (ID == 7)
+			return edPtr->enableInactivityTimer = (Check != 0), (void)0;
 	}
 
 	MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);

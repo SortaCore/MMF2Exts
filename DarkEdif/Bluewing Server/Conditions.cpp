@@ -58,12 +58,12 @@ bool Extension::IsClientOnChannel_Name(const TCHAR * clientNamePtr, const TCHAR 
 		foundCli = selClient;
 	else
 	{
-		const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
+		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
-				[&](auto const & copy) { return lw_sv_cmp(copy->nameSimplified(), clientNameU8Simplified); });
+				[&](auto const & cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
 			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", TStringToUTF8(clientNamePtr).c_str()), false;
 		foundCli = *foundCliIt;
@@ -74,12 +74,12 @@ bool Extension::IsClientOnChannel_Name(const TCHAR * clientNamePtr, const TCHAR 
 		foundCh = selChannel;
 	else
 	{
-		const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
+		const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
-				[&](auto const & copy) { return lw_sv_cmp(copy->nameSimplified(), channelNameU8Simplified); });
+				[&](auto const & ch) { return lw_sv_cmp(ch->nameSimplified(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
 			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
@@ -134,12 +134,12 @@ bool Extension::IsClientOnChannel_ID(int clientID, const TCHAR * channelNamePtr)
 		foundCh = selChannel;
 	else
 	{
-		const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
+		const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
-				[&](auto const & copy) { return lw_sv_cmp(copy->name(), channelNameU8Simplified); });
+				[&](auto const & ch) { return lw_sv_cmp(ch->name(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
 			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
@@ -207,7 +207,7 @@ bool Extension::DoesChannelNameExist(const TCHAR * channelNamePtr)
 	if (channelNamePtr[0] == '\0')
 		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank."), false;
 
-	const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
+	const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 
 	auto serverReadLock = Srv.lock.createReadLock();
 	const auto &channels = Srv.getchannels();
@@ -223,7 +223,7 @@ bool Extension::DoesClientNameExist(const TCHAR * clientNamePtr)
 	if (clientNamePtr[0] == _T('\0'))
 		return CreateError("Error checking if client is joined to a channel, client name supplied is blank."), false;
 
-	const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
+	const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
 
 	auto serverReadLock = Srv.lock.createReadLock();
 	const auto &clients = Srv.getclients();

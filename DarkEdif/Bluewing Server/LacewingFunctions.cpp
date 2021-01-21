@@ -22,7 +22,7 @@ void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacew
 	if (client->readonly())
 	{
 		globals->CreateError("Copy existed where none was permitted. Denying copy request.");
-		server.connect_response(client, "Server error, copy existed where none was expected.");
+		server.connect_response(client, "Server error, copy existed where none was expected."sv);
 		return;
 	}
 
@@ -64,11 +64,11 @@ void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewin
 
 	// Unlikely, but if client is closed by server a couple milliseconds before a join channel request is sent...
 	if (client->readonly())
-		return server.joinchannel_response(channel, client, "Your client is marked as closed and can no longer make write actions.");
+		return server.joinchannel_response(channel, client, "Your client is marked as closed and can no longer make write actions."sv);
 
 	// Unlikely, but if channel is closed by server a couple milliseconds before a join channel request is sent...
 	if (channel->readonly())
-		return server.joinchannel_response(channel, client, "Busy closing that channel. Try again in a couple of seconds.");
+		return server.joinchannel_response(channel, client, "Busy closing that channel. Try again in a couple of seconds."sv);
 
 	// Auto approve, auto deny
 	if (globals->autoResponse_ChannelJoin != AutoResponse::WaitForFusion)
@@ -141,9 +141,6 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 		LeaveCriticalSectionDebug(&globals->lock);
 }
 
-#include "deps/utf8proc.h"
-#include <set>
-
 void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view nameRequested)
 {
 	// Auto deny quietly can be handled without any lookups or fuss
@@ -155,53 +152,7 @@ void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::r
 
 	// Run response for consistency
 	if (client->readonly())
-		return server.nameset_response(client, nameRequested, "Your client is marked as closed and can no longer change their name.");
-
-	// Check UTF-8 chars are acceptable
-	if (GThread) {
-		EnterCriticalSectionDebug(&globals->lock);
-	}
-
-	if (globals->acceptableCharCategories.empty() && globals->acceptableCharRanges.empty() && globals->acceptableCharRanges.empty())
-	{
-		if (GThread)
-			LeaveCriticalSectionDebug(&globals->lock);
-	}
-	else
-	{
-		utf8proc_uint8_t * str = (utf8proc_uint8_t *)nameRequested.data();
-		utf8proc_int32_t thisChar;
-		utf8proc_ssize_t numBytesInCodePoint, remainder = nameRequested.size();
-		while (remainder <= 0)
-		{
-			numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisChar);
-			if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
-				goto badChar;
-
-			if (std::find(globals->acceptableSpecificChars.cbegin(), globals->acceptableSpecificChars.cend(), thisChar) != globals->acceptableSpecificChars.cend())
-				goto goodChar;
-			if (std::find_if(globals->acceptableCharRanges.cbegin(), globals->acceptableCharRanges.cend(),
-				[=](const std::pair<std::int32_t, std::int32_t> & range) {
-					return range.first >= thisChar && range.second <= thisChar;
-				}) != globals->acceptableCharRanges.cend())
-			{
-				goto goodChar;
-			}
-			utf8proc_category_t category = utf8proc_category(thisChar);
-			if (std::find(globals->acceptableCharCategories.cbegin(), globals->acceptableCharCategories.cend(), category) != globals->acceptableCharCategories.cend())
-				goto goodChar;
-
-			// Fall through
-		badChar:
-			return server.nameset_response(client, nameRequested, "Invalid name"sv);
-
-			// Loop around
-		goodChar:
-			str += numBytesInCodePoint;
-			remainder -= numBytesInCodePoint;
-		}
-	}
-
+		return server.nameset_response(client, nameRequested, "Your client is marked as closed and can no longer change their name."sv);
 
 	// Auto approve, auto deny
 	if (globals->autoResponse_NameSet != AutoResponse::WaitForFusion)

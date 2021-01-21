@@ -54,6 +54,14 @@ int FusionAPI Free(mv *mV)
 int FusionAPI LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
 {
 #pragma DllExportHint
+	// Old pre-Unicode port ext version, convert the ANSI properties to UTF8
+	if (edPtr->eHeader.extVersion < 2)
+	{
+		const std::string u8 = ANSIToUTF8(edPtr->edGlobalID);
+		strcpy_s(edPtr->edGlobalID, u8.c_str());
+		edPtr->eHeader.extVersion = 2;
+	}
+
 	Edif::Init(mV, edPtr);
 	return 0;
 }

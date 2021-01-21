@@ -6,7 +6,7 @@ std::stringstream CriticalSection;
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\n" \
 										"This is probably due to parameter changes.", "Lacewing Blue Server", MB_OK)
-#define Saved (globals->_saved)
+#define EventsToRun globals->_eventsToRun
 
 static char errtext[1024];
 void ErrNoToErrText()
@@ -65,6 +65,32 @@ void Extension::ChannelListing_Disable()
 void Extension::SetWelcomeMessage(const TCHAR * message)
 {
 	Srv.setwelcomemessage(TStringToUTF8(message));
+}
+void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allowListContents)
+{
+	std::string listToSetStr = TStringToANSI(listToSet);
+	static const std::string_view listNames[]{
+		"clientnames",
+		"channelnames",
+		"receivedbyclient",
+		"receivedbyserver",
+	};
+
+	std::transform(listToSetStr.begin(), listToSetStr.end(), listToSetStr.begin(),
+		[](unsigned char c) { return std::tolower(c); });
+
+	for (size_t i = 0; i < std::size(listNames); i++)
+	{
+		if (listNames[i] == listToSetStr)
+		{
+			std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)i, TStringToANSI(allowListContents));
+			if (!err.empty())
+				CreateError("Couldn't set Unicode %s allow list, %hs.", listToSet, err.c_str());
+			return;
+		}
+	}
+
+	CreateError(R"(Unicode allow list %s does not exist, should be "client names", "channel names", "received by client" or "received by server".)", listToSet);
 }
 
 
@@ -143,8 +169,7 @@ void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediate
 		return;
 	globals->autoResponse_NameSet = resp;
 	globals->autoResponse_NameSet_DenyReason = TStringToUTF8(autoDenyReason);
-	// On name set request is always done so UTF-8 verification can be done
-	// Srv.onnameset(::OnNameSetRequest);
+	Srv.onnameset(resp != AutoResponse::Approve_Quiet ? ::OnNameSetRequest : nullptr);
 }
 void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
@@ -211,7 +236,7 @@ void Extension::OnInteractive_Deny(const TCHAR * reason)
 	if (!DenyReason.empty())
 		return CreateError("Can't deny client's action: Set to auto-deny, or Deny was called more than once. Ignoring additional denies.");
 
-	DenyReason = reason[0] ? TStringToUTF8(reason) : "No reason specified.";
+	DenyReason = reason[0] ? TStringToUTF8(reason) : "No reason specified."s;
 }
 void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 {
@@ -219,8 +244,11 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 		return CreateError("Cannot change new client name: Cannot use a blank name.");
 
 	std::string newNameU8 = TStringToUTF8(newName);
-	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8))
+	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8) ||
+		!Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ClientNames, newNameU8))
+	{
 		return CreateError("Cannot change new client name: Invalid characters in new name.");
+	}
 	if (newNameU8.size() > 255)
 		return CreateError("Cannot change new client name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");
 
@@ -241,7 +269,8 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 		return CreateError("Cannot change joining channel name: Cannot use a blank name.");
 
 	std::string newNameU8 = TStringToUTF8(newName);
-	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8))
+	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8) ||
+		!Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ChannelNames, newNameU8))
 		return CreateError("Cannot change joining channel name: Invalid characters in new name.");
 	if (newNameU8.size() > 255)
 		return CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");
@@ -252,7 +281,7 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 		return CreateError("Cannot change joining channel name: Interactive event is not compatible with this action.");
 	if (!DenyReason.empty())
 		return CreateError("Cannot change joining channel name: Channel name join has already been denied by the Deny Request action.");
-	if (!lw_sv_cmp(NewChannelName, newNameU8))
+	if (lw_sv_cmp(NewChannelName, newNameU8))
 		return CreateError("Cannot change new channel name: New name is same as original name.");
 
 	NewChannelName = newNameU8;
@@ -282,7 +311,8 @@ void Extension::OnInteractive_ReplaceMessageWithText(const TCHAR * NewText)
 	if (DropMessage)
 		return CreateError("Cannot replace message: Message was dropped.");
 
-	// See the Decompress Received Binary for implementation.
+	// See the Decompress Received Binary for implementation. Also, see
+	// !Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::RecvByClientMessages, newNameU8)
 	return CreateError("Cannot replace message: Replacing messages not implemented.");
 }
 void Extension::OnInteractive_ReplaceMessageWithNumber(int newNumber)
@@ -325,14 +355,14 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 	if (channelName.size() > 255U)
 		return CreateError("Channel_SelectByName() was called with a name exceeding the max length of 255 characters.");
 
-	const std::string channelNameStripped = lw_u8str_simplify(channelName.c_str());
+	const std::string channelNameSimplified = lw_u8str_simplify(channelName.c_str());
 	selChannel = nullptr;
 	{
 		lacewing::readlock serverReadLock = Srv.lock.createReadLock();
 		const auto& channels = Srv.getchannels();
 		for (const auto &ch : channels)
 		{
-			if (lw_sv_cmp(ch->nameSimplified(), channelNameStripped))
+			if (lw_sv_cmp(ch->nameSimplified(), channelNameSimplified))
 			{
 				selChannel = ch;
 
@@ -478,7 +508,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 	}
 	else // Pick master client
 	{
-		const std::string masterClientNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
+		const std::string masterClientNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
@@ -621,7 +651,7 @@ void Extension::Channel_JoinClientByName(const TCHAR * clientNamePtr)
 	}
 	else
 	{
-		const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
+		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
@@ -735,7 +765,7 @@ void Extension::Channel_KickClientByName(const TCHAR * clientNamePtr)
 	}
 	else
 	{
-		const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientNamePtr);
+		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
@@ -915,7 +945,7 @@ void Extension::Client_SelectByName(const TCHAR * clientName)
 
 	selClient = nullptr;
 	{
-		const std::string clientNameU8Simplified = TStringToUTF8Stripped(clientName);
+		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientName);
 		auto serverReadLock = Srv.lock.createReadLock();
 		const auto &clients = Srv.getclients();
 		auto foundCliIt =
@@ -1331,7 +1361,7 @@ void Extension::CompressSendBinary()
 	// 4: precursor lw_ui32 with uncompressed size, required by Relay
 	// 256: if compression results in larger message, it shouldn't be *that* much larger.
 
-	unsigned char * output_buffer = (unsigned char *)malloc(4 + SendMsgSize + 256);
+	std::uint8_t * output_buffer = (std::uint8_t *)malloc(4 + SendMsgSize + 256);
 	if (!output_buffer)
 	{
 		CreateError("Compressing send binary failed, couldn't allocate enough memory. Desired %zu bytes.",
@@ -1343,7 +1373,7 @@ void Extension::CompressSendBinary()
 	// Store size as precursor - required by Relay
 	*(lw_ui32 *)output_buffer = SendMsgSize;
 
-	strm.next_in = (unsigned char *)SendMsg;
+	strm.next_in = (std::uint8_t *)SendMsg;
 	strm.avail_in = SendMsgSize;
 
 	// Allocate memory for compression
@@ -1395,7 +1425,7 @@ void Extension::DecompressReceivedBinary()
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
 	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)threadData->receivedMsg.content.data();
-	std::string_view inputData(threadData->receivedMsg.content.data() + 4, threadData->receivedMsg.content.size() - 4);
+	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
 
 	unsigned char * output_buffer = (unsigned char *)malloc(expectedUncompressedSize);
 	if (!output_buffer)
@@ -1420,19 +1450,9 @@ void Extension::DecompressReceivedBinary()
 
 	inflateEnd(&strm);
 
-	// Update all extensions with new message content.
+	// Used to assign all exts in a questionable way, but threadData is now std::shared_ptr, so no need.
 	threadData->receivedMsg.content.assign((char *)output_buffer, expectedUncompressedSize);
 	threadData->receivedMsg.cursor = 0;
-
-	EnterCriticalSectionDebug(&globals->lock);
-	for (auto& i : Saved)
-	{
-		if (threadData == i)
-			continue;
-		(*i).receivedMsg.content.assign((char *)output_buffer, expectedUncompressedSize);
-		(*i).receivedMsg.cursor = 0;
-	}
-	LeaveCriticalSectionDebug(&globals->lock);
 
 	free(output_buffer); // .assign() copies the memory
 }

@@ -387,9 +387,9 @@ typedef lw_i8 lw_bool;
 
 	lw_import			lw_stream	 lw_stream_new		 (const lw_streamdef *, lw_pump);
 	lw_import  const lw_streamdef *  lw_stream_get_def	 (lw_stream);
-	lw_import	  void *			 lw_stream_tail		 (lw_stream);
-	lw_import  lw_stream			 lw_stream_from_tail (void *);
-	lw_import		void			 lw_stream_data		 (lw_stream, const char * buffer, size_t size);
+	lw_import				 void *  lw_stream_tail		 (lw_stream);
+	lw_import			  lw_stream  lw_stream_from_tail (void *);
+	lw_import				   void  lw_stream_data		 (lw_stream, const char * buffer, size_t size);
 
 	/* FDStream */
 
@@ -1657,7 +1657,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 94;
+	const static int buildnum = 95;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1864,6 +1864,21 @@ public:
 #include "MessageReader.h"
 namespace lacewing {
 
+// List of code points, code point ranges, and categories, tied to utf8proc.
+struct codepointsallowlist {
+	// Shorthand for "all three lists are empty", saying there is no filter
+	bool allAllowed = true;
+	std::string list;
+
+	std::vector<std::int32_t> codePointCategories;
+	std::vector<std::int32_t> specificCodePoints;
+	std::vector<std::pair<std::int32_t, std::int32_t>> codePointRanges;
+
+	// Updates the allowlisted Unicode code points in this struct, returns error or blank
+	std::string setcodepointsallowedlist(std::string codePointList);
+	// True if the string passed matches the allow list.
+	int checkcodepointsallowed(std::string_view toTest) const;
+};
 struct relayserverinternal;
 struct relayserver
 {
@@ -1883,7 +1898,7 @@ struct relayserver
 	void unhost();
 
 	bool hosting();
-	unsigned short port();
+	lw_ui16 port();
 
 	void setchannellisting(bool enabled);
 	void setwelcomemessage(std::string_view message);
@@ -2102,6 +2117,26 @@ struct relayserver
 
 	typedef void(*handler_nameset)
 		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view requestedname);
+
+	// Plain MS value. Note that 0 or negatives are not usable values.
+	void setinactivitytimer(long milliSeconds);
+
+	// Used in setcodepointsallowedlist() only.
+	enum class codepointsallowlistindex : int {
+		ClientNames = 0,
+		ChannelNames,
+		// Messages sent to clients includes peer messages, channel messages and server -> client/channel
+		MessagesSentToClients,
+		// Server messages are only checked if server is processing client -> server messages.
+		// Handler will not be called at all if message contains denied characters; the client is
+		// instead marked as untrusted and an error created.
+		MessagesSentToServer,
+	};
+
+	// Updates the allowlisted Unicode code points used in text messages, channel names and peer names.
+	std::string setcodepointsallowedlist(codepointsallowlistindex type, std::string codePointList);
+	// True if the string passed matches the allow list.
+	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest) const;
 
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);

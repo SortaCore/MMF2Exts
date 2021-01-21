@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2020 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2021 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingHelp.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -25,6 +25,7 @@
 			], */
 			"---",
 			[ 2, "Set welcome message" ],
+			[ 88, "Advanced: Set Unicode allowlist" ],
 			"---",
 			[ "Enable/disable conditions",
 				// [ 9, "On message from client to channel" ],
@@ -325,7 +326,8 @@
 			[ "Convert string to UTF-8 and...",
 				[ 46, "Count complete UTF-8 chars" ],
 				[ 47, "Count visible chars (graphemes)" ],
-				[ 48, "Count bytes" ]
+				[ 48, "Count bytes" ],
+				[ 49, "Check against Unicode allowlist" ]
 			],
 
 			"---"
@@ -790,6 +792,13 @@
 				"Title": "Kick client with ID %0 from selected channel",
 				"Parameters": [
 					[ "Integer", "Client ID (or -1 for currently selected)" ]
+				]
+			},
+			{
+				"Title": "Set Unicode allowed codepoint list %0 to %1",
+				"Parameters": [
+					[ "Text", "Codepoint list name (\"client name\", \"channel name\", \"received by client\" or \"received by server\")" ],
+					[ "Text", "Codepoint list (category names, codepoint number ranges, or specific codepoint numbers)" ]
 				]
 			} /*,
 			// ID 88+
@@ -1413,6 +1422,14 @@
 				"Parameters": [
 					[ "Text", "Text to convert to UTF-8" ]
 				]
+			},
+			{
+				"Title": "UTF8TestAllowList$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Text", "Text to test" ],
+					[ "Text", "Codepoint allowlist to test against" ]
+				]
 			}
 		],
 		"Properties": [
@@ -1449,15 +1466,21 @@
 			},
 			{
 				"Title": "Enable timeout warning",
-				"Info": "If true, will cause messages to pop up after 10 seconds of a retained connection with no owning objects.",
+				"Info": "If true, will cause messages to pop up after 10 seconds of a retained server hosting with no owning objects.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},
 			{
 				"Title": "Kill hosting when disowned",
-				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Bluewings are destroyed.",
+				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill server hosting if all owning Bluewings are destroyed.",
 				"Type": "Checkbox",
 				"DefaultState": false
+			},
+			{
+				"Title": "Enable inactivity timer",
+				"Info": "Will disconnect inactive clients after 10 minutes of inactivity; messages them on server -> peer subchannel 0 first.",
+				"Type": "Checkbox",
+				"DefaultState": true
 			}
 		]
 	},
@@ -1485,6 +1508,7 @@
 			], */
 			"---",
 			[ 2, "Definir mensagem de boas vindas" ],
+			[ 88, "Advanced: Set Unicode allowlist" ],
 			"---",
 			[ "Ligar/desligar condições",
 				// [ 9, "Na mensagem de cliente para o canal" ],
@@ -1767,6 +1791,12 @@
 
 				"---",
 				[ 26, "Mostrar subcanal" ]
+			],
+			[ "Convert string to UTF-8 and...",
+				[ 46, "Count complete UTF-8 chars" ],
+				[ 47, "Count visible chars (graphemes)" ],
+				[ 48, "Count bytes" ],
+				[ 49, "Check against Unicode allowlist" ]
 			],
 
 			"---"
@@ -2232,6 +2262,13 @@
 				"Title": "Expulsar clie com ID %0 do canal seleccionado",
 				"Parameters": [
 					[ "Integer", "ID do cliente (ou -1 para o actualmente seleccionado)" ]
+				]
+			},
+			{
+				"Title": "Set Unicode allowed codepoint list %0 to %1",
+				"Parameters": [
+					[ "Text", "Codepoint list name (\"client name\", \"channel name\", \"received by client\" or \"received by server\")" ],
+					[ "Text", "Codepoint list (category names, codepoint number ranges, or specific codepoint numbers)" ]
 				]
 			}
 
@@ -2854,6 +2891,14 @@
 				"Parameters": [
 					[ "Text", "Text to convert to UTF-8" ]
 				]
+			},
+			{
+				"Title": "UTF8TestAllowList$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Text", "Text to test" ],
+					[ "Text", "Codepoint allowlist to test against" ]
+				]
 			}
 		],
 		"Properties": [
@@ -2899,6 +2944,12 @@
 				"Info": "PODE INTERFERIR COM DEFINIÇÕES GLOBAIS. Por defeito, desliga o alojamento se todos os Bluewings empossados forem destruidos.",
 				"Type": "Checkbox",
 				"DefaultState": false
+			},
+			{
+				"Title": "Enable inactivity timer",
+				"Info": "Will disconnect inactive clients after 10 minutes of inactivity; messages them on server -> peer subchannel 0 first.",
+				"Type": "Checkbox",
+				"DefaultState": true
 			}
 		]
 	},
@@ -2926,6 +2977,7 @@
 			], */
 			"---",
 			[ 2, "Changer le message d'accueil" ],
+			[ 88, "Advanced: Set Unicode allowlist" ],
 			"---",
 			[ "Conditions activer/désactiver",
 				// [ 9, "On message from client to channel" ],
@@ -3208,6 +3260,12 @@
 				],
 				"---",
 				[ 26, "Récupérer sous-canal" ]
+			],
+			[ "Convert string to UTF-8 and...",
+				[ 46, "Count complete UTF-8 chars" ],
+				[ 47, "Count visible chars (graphemes)" ],
+				[ 48, "Count bytes" ],
+				[ 49, "Check against Unicode allowlist" ]
 			],
 			"---"
 		],
@@ -3672,7 +3730,14 @@
 				"Parameters": [
 					[ "Integer", "ID du client (ou -1 pour l'ID actuellement sélectionné)" ]
 				]
-			} /*,
+			},
+			{
+				"Title": "Set Unicode allowed codepoint list %0 to %1",
+				"Parameters": [
+					[ "Text", "Codepoint list name (\"client name\", \"channel name\", \"received by client\" or \"received by server\")" ],
+					[ "Text", "Codepoint list (category names, codepoint number ranges, or specific codepoint numbers)" ]
+				]
+			}  /*,
 			// ID 88+
 			{
 				"Title": "Héberger le serveur HTML5 WebSocket sur le port %0",
@@ -4291,6 +4356,14 @@
 				"Parameters": [
 					[ "Text", "Text to convert to UTF-8" ]
 				]
+			},
+			{
+				"Title": "UTF8TestAllowList$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Text", "Text to test" ],
+					[ "Text", "Codepoint allowlist to test against" ]
+				]
 			}
 		],
 		"Properties": [
@@ -4336,6 +4409,12 @@
 				"Info": "PEUT INTERFERER AVEC DES PARAMÈTRES GLOBAUX. Par défaut, arrête est hébergé si tout les objets Bluewings sont déttruits.",
 				"Type": "Checkbox",
 				"DefaultState": false
+			},
+			{
+				"Title": "Enable inactivity timer",
+				"Info": "Will disconnect inactive clients after 10 minutes of inactivity; messages them on server -> peer subchannel 0 first.",
+				"Type": "Checkbox",
+				"DefaultState": true
 			}
 		]
 	}

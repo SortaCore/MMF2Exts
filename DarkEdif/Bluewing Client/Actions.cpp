@@ -17,7 +17,7 @@ void ErrNoToErrText()
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
 										"This is probably due to parameter changes.", "Lacewing Blue Client", MB_OK)
-#define Saved (globals->_saved)
+#define EventsToRun (globals->_eventsToRun)
 
 void Extension::Replaced_Connect(const TCHAR * hostname, int port)
 {
@@ -226,7 +226,7 @@ void Extension::SelectPeerOnChannelByName(const TCHAR * peerName)
 
 	selPeer = nullptr;
 	{
-		const std::string peerNameU8Simplified = TStringToUTF8Stripped(peerName);
+		const std::string peerNameU8Simplified = TStringToUTF8Simplified(peerName);
 		auto chReadLock = selChannel->lock.createReadLock();
 		const auto & peers = selChannel->getpeers();
 
@@ -682,9 +682,10 @@ void Extension::DecompressReceivedBinary()
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
 	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)threadData->receivedMsg.content.data();
-	std::string_view inputData(threadData->receivedMsg.content.data() + 4, threadData->receivedMsg.content.size() - 4);
 	if (expectedUncompressedSize > 0x0F000000U)
 		return CreateError("Decompression failed; message anticipated to be too large. Expected %u byte output.", expectedUncompressedSize);
+
+	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
 
 	std::unique_ptr<unsigned char[]> output_buffer;
 	try {
@@ -710,17 +711,9 @@ void Extension::DecompressReceivedBinary()
 
 	inflateEnd(&strm);
 
-	// Update all extensions with new message content.
+	// Used to assign all exts in a questionable way, but threadData is now std::shared_ptr, so no need.
 	threadData->receivedMsg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
 	threadData->receivedMsg.cursor = 0;
-
-	for (auto& i : Saved)
-	{
-		if (threadData == i)
-			continue;
-		(*i).receivedMsg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
-		(*i).receivedMsg.cursor = 0;
-	}
 }
 void Extension::MoveReceivedBinaryCursor(int position)
 {

@@ -54,7 +54,7 @@ struct relayserverinternal
 		numTotalClientsPerIP = 5;
 		numPendingConnectsPerIP = 2;
 
-		welcomemessage = "";
+		welcomemessage = std::string();
 
 		pingtimer->tag(this);
 		pingtimer->on_tick(serverpingtimertick);
@@ -317,7 +317,13 @@ struct relayserverinternal
 	// Don't ask
 	static bool tcpmessagehandler(void * tag, lw_ui8 type, const char * message, size_t size);
 	// Used to be inside client, but we need the shared ptr
-	bool client_messagehandler(std::shared_ptr<relayserver::client> client, unsigned char type, std::string_view message, bool blasted);
+	bool client_messagehandler(std::shared_ptr<relayserver::client> client, lw_ui8 type, std::string_view message, bool blasted);
+
+	// Limiters applied to names and messages by relayserver
+	codepointsallowlist unicodeLimiters[4];
+
+	std::string setcodepointsallowedlist(relayserver::codepointsallowlistindex type, std::string acStr);
+	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest) const;
 };
 void handlerudperror(lacewing::udp udp, lacewing::error error);
 
@@ -1290,6 +1296,8 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 
 bool relayserver::client::checkname(std::string_view name)
 {
+	// Size check may be skipped if server is meant to change the name
+
 	// LW_ESCALATION_NOTE
 	// auto cliReadLock = lock.createReadLock();
 	auto cliWriteLock = lock.createWriteLock();
@@ -1310,6 +1318,25 @@ bool relayserver::client::checkname(std::string_view name)
 		// auto cliWriteLock = cliReadLock.lw_upgrade();
 		builder.send(socket);
 
+		return false;
+	}
+
+	if (!lw_u8str_validate(name))
+	{
+		framebuilder builder(true);
+
+		builder.addheader(0, 0);  /* response */
+		builder.add <lw_ui8>(1);  /* setname */
+		builder.add <lw_ui8>(0);  /* failed */
+
+		builder.add <lw_ui8>((lw_ui8)name.size());
+		builder.add(name);
+
+		builder.add("name not valid"sv);
+
+		// LW_ESCALATION_NOTE
+		// auto srvCliWriteLock = srvCliReadLock.lw_upgrade();
+		builder.send(socket);
 		return false;
 	}
 
@@ -1437,7 +1464,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			{
 				case 0: /* connect */
 				{
-					std::string_view version = reader.getremaining ();
+					// Not null-terminated
+					std::string_view version = reader.getremaining (1, false, true, 255);
 
 					if (reader.failed)
 					{
@@ -1483,30 +1511,27 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 				case 1: /* setname */
 				{
-					std::string_view name = reader.getremaining (false);
-					if (!reader.failed)
-					{
-						while (!name.empty() && name.back() == '\0')
-							name.remove_suffix(1);
-					}
+					std::string_view name = reader.getremaining (1U, false, true);
 
-					if (reader.failed || name.find_first_of('\0') != std::string_view::npos)
+					if (reader.failed || name.find_first_of('\0') != std::string_view::npos || !lw_u8str_validate(name))
 					{
 						errStr << "Malformed Set Name request received, name could not be read."sv;
 						reader.failed = true;
-						trustedClient = false;
+						trustedClient = name.empty();
 						break;
 					}
 
 					cliReadLock.lw_unlock();
-					// checkname will grab itself a writelock
-					if (!client->checkname (name))
-						break; // checkname will make an error, if any
-
 					if (handlernameset)
 						handlernameset(server, client, name);
 					else
+					{
+						// checkname will grab itself a writelock
+						if (!client->checkname(name))
+							break; // checkname will make an error, if any
+
 						server.nameset_response(client, name, std::string_view());
+					}
 
 					break;
 				}
@@ -1578,12 +1603,12 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 					/* joining an existing channel */
 					else
 					{
-						// If client tries to join channel they've already joined
+						// Check if client trying to join channel they've already joined
 						auto channelReadLock = channel->lock.createReadLock();
 						if (std::find(channel->clients.cbegin(), channel->clients.cend(), client) != channel->clients.cend())
 						{
 							channelReadLock.lw_unlock();
-							server.joinchannel_response(channel, client, "You are already on this channel.");
+							server.joinchannel_response(channel, client, "You are already on this channel."sv);
 							break;
 						}
 					}
@@ -1789,10 +1814,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			cliReadLock.lw_unlock();
 
-			const char * message2;
-			size_t size2;
-			reader.getremaining(message2, size2);
-			std::string_view message3(message2, size2);
+			std::string_view message3 = reader.getremaining(1U, true);
 
 			if (reader.failed)
 			{
@@ -1948,6 +1970,13 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 	}
 
 	return true;
+}
+
+#include "deps/utf8proc.h"
+
+int relayserverinternal::checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest) const
+{
+	return unicodeLimiters[(int)type].checkcodepointsallowed(toTest);
 }
 
 void relayserver::client::send(lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
@@ -2232,6 +2261,32 @@ size_t relayserver::channelcount() const
 	return ((relayserverinternal *) internaltag)->channels.size();
 }
 
+void relayserver::setinactivitytimer(long MS)
+{
+	// Could grab a writelock, but thread misreading will likely not matter.
+	((relayserverinternal *)internaltag)->maxInactivityMS = MS;
+}
+
+// Updates the allowlisted Unicode code point sused in text messages, channel names and peer names.
+std::string relayserver::setcodepointsallowedlist(codepointsallowlistindex type, std::string acStr) {
+	// String should be format:
+	// 2 letters, or 1 letter + *, or an integer number that is the UTF32 number of char
+	lacewing::writelock wl = lock.createWriteLock();
+	return ((relayserverinternal *)internaltag)->setcodepointsallowedlist(type, acStr);
+}
+
+// True if the string passed only has code points within the code point allow list.
+int relayserver::checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest) const
+{
+	lacewing::readlock rl = lock.createReadLock();
+	return ((relayserverinternal *)internaltag)->checkcodepointsallowed(type, toTest);
+}
+
+std::string relayserverinternal::setcodepointsallowedlist(relayserver::codepointsallowlistindex type, std::string acStr)
+{
+	return unicodeLimiters[(int)type].setcodepointsallowedlist(acStr);
+}
+
 std::vector<std::shared_ptr<lacewing::relayserver::client>> & relayserver::getclients()
 {
 	lock.checkHoldsRead();
@@ -2293,6 +2348,8 @@ relayserver::client::~client() noexcept
 	socket = nullptr;
 }
 
+// Creates channel and adds to server list, accepts no master for the channel.
+// Expects you have already checked channel with that name does not exist.
 std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_view channelName, std::shared_ptr<relayserver::client> master, bool hidden, bool autoclose)
 {
 	auto& serverinternal = *(lacewing::relayserverinternal *)internaltag;

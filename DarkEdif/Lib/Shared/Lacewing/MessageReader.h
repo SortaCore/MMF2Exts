@@ -109,57 +109,33 @@ public:
 		return buffer + offset;
 	}
 
-	inline std::string_view getremaining(bool allowempty = true)
+	std::string_view getremaining(lw_ui32 minimumlength = 0U, bool nullTerminator = false, bool stripNull = false, lw_ui32 maximumlength = 0xffffffff)
 	{
 		if (failed)
 			return this->buffer;
 
+		assert(!nullTerminator || minimumlength > 0);
+		assert(maximumlength > minimumlength);
+
 		std::string_view remaining(this->buffer + offset, bytesleft());
 		offset += remaining.size();
 
-		if (!allowempty && (remaining.empty() || !remaining.front()))
+		// Message must be in size limits, and not starting with a null terminator
+		if (remaining.size() > maximumlength || remaining.size() < minimumlength ||
+			(remaining.size() > 1 && remaining.front() == '\0'))
+		{
 			failed = true;
+		}
+		else if (nullTerminator)
+		{
+			if (remaining.empty() || remaining.back() != '\0')
+				failed = true;
+			else if (stripNull)
+				remaining.remove_suffix(1);
+		}
 
 		return remaining;
 	}
-
-	inline void getremaining(const char * &buffer, size_t &size, unsigned int minimumlength = 0U, unsigned int maximumlength = 0xffffffff)
-	{
-		buffer = this->buffer + offset;
-		size	= this->size - offset;
-
-		if (size > maximumlength || size < minimumlength)
-			failed = true;
-
-		offset += size;
-	}
-
-	/* inline short Network16Bit ()
-	{
-		return ntohs (Get <short> ());
-	}
-
-	inline int Network24Bit ()
-	{
-		if (!Check (3))
-			return 0;
-
-		return Read24Bit (Buffer + Offset);
-	}
-
-	inline int Network32Bit ()
-	{
-		return ntohl (Get <int> ());
-	}
-
-	inline int NetworkX31Bit ()
-	{
-		int value = Get <int> ();
-
-		*(char *) &value &= 0x7F;
-
-		return ntohl (value);
-	}*/
 };
 
 #endif

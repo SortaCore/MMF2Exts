@@ -128,6 +128,7 @@
     <ClCompile Include="..\Lib\Shared\json.cpp" />
     <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="..\Lib\Shared\Lacewing\CodePointAllowList.cpp" />
     <ClCompile Include="..\Lib\Shared\Lacewing\deps\utf8proc.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\deps\utf8proc_data.c" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />

@@ -1,14 +1,14 @@
 
 #include "Edif.h"
 #include <functional>
-void NewEvent(SaveExtInfo *);
+void NewEvent(EventToRun *);
 
 struct GlobalInfo;
 class Extension
 {
 public:
 	// Hide stuff requiring other headers
-	std::shared_ptr<SaveExtInfo> threadData; // Must be first variable in Extension class
+	std::shared_ptr<EventToRun> threadData; // Must be first variable in Extension class
 	std::tstring_view loopName;
 
 	RUNDATA * rdPtr;
@@ -32,7 +32,7 @@ public:
 		(eg. what you'd normally store in rdPtr).
 
 		For those using multi-threading, any variables that are modified
-		by the threads should be in SaveExtInfo.
+		by the threads should be in EventToRun.
 		See MultiThreading.h.
 
 		Unlike rdPtr, you can store real C++ objects with constructors
@@ -63,7 +63,7 @@ public:
 	void AddToSend(const void *, size_t);
 	void ClearThreadData();
 
-	std::string TStringToUTF8Stripped(std::tstring);
+	std::string TStringToUTF8Simplified(std::tstring);
 
 	// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
 	int CheckForUTF8Cutoff(std::string_view sv);
@@ -261,7 +261,7 @@ public:
 		// ReplacedExprNoParams
 		const TCHAR * WelcomeMessage();
 		unsigned int ReceivedBinaryAddress();
-		const TCHAR * CursorStrASCIIByte();
+		const TCHAR * CursorASCIIByte();
 		unsigned int CursorUnsignedByte();
 		int CursorSignedByte();
 		unsigned int CursorUnsignedShort();
@@ -278,6 +278,7 @@ public:
 		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
 		int ConvToUTF8_GetCompleteCharCount(const TCHAR * tStr);
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
+		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * tStr, const TCHAR * charset);
 
 	/* These are called if there's no function linked to an ID */
 
@@ -317,14 +318,14 @@ struct GlobalInfo
 	std::string									_globalID;
 	HANDLE										_thread;
 	Extension *									_ext;
-	std::vector<std::shared_ptr<SaveExtInfo>>	_saved;
+	std::vector<std::shared_ptr<EventToRun>>	_eventsToRun;
 	std::string									_hostIP;
 	HANDLE										timeoutThread = NULL;
 	std::weak_ptr<lacewing::relayclient::channel>				lastDestroyedExtSelectedChannel;
 	std::weak_ptr<lacewing::relayclient::channel::peer>		lastDestroyedExtSelectedPeer;
 
 	CRITICAL_SECTION							lock;
-	std::vector<Extension *>					refs;
+	std::vector<Extension *>					extsHoldingGlobals;
 	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
 	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
 
@@ -352,6 +353,15 @@ public:
 	void CreateError(_Printf_format_string_ const char * errorText, ...);
 	void CreateError(_Printf_format_string_ const char *errorText, va_list v);
 
+
+	// Constructor and destructor
+
 	GlobalInfo(Extension * e, EDITDATA * edPtr);
+
+	// Due to Runtime.WriteGlobal() not working if there's no Extension,
+	// or not working mid-frame transition, we'll have to just fake its deletion,
+	// and not free memory until later.
+	bool pendingDelete = false;
+	void MarkAsPendingDelete();
 	~GlobalInfo() noexcept(false);
 };

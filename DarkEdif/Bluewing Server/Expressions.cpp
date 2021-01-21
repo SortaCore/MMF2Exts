@@ -15,11 +15,15 @@ const TCHAR * Extension::Client_Name()
 }
 const TCHAR * Extension::ReceivedStr()
 {
-	return Runtime.CopyString(ReadStringFromRecvBinary(0, -1, false).c_str());
+	// ReadStringFromRecvBinary expects size in code points, not bytes, so we'll just test it's UTF-8 and return as-is.
+	if (!lw_u8str_validate(threadData->receivedMsg.content))
+		return Runtime.CopyString(_T(""));
+
+	return Runtime.CopyString(UTF8ToTString(threadData->receivedMsg.content).c_str());
 }
 int Extension::ReceivedInt()
 {
-	if (threadData->receivedMsg.content.size() != 4)
+	if (threadData->receivedMsg.content.size() != sizeof(int))
 		return CreateError("Received() was used on a message that is not a number message."), 0;
 
 	return *(int *)threadData->receivedMsg.content.data();
@@ -72,11 +76,11 @@ unsigned int Extension::Channel_ClientCount()
 {
 	return selChannel ? selChannel->clientcount() : -1;
 }
-const TCHAR * Extension::StrANSIByte(int index)
+const TCHAR * Extension::StrASCIIByte(int index)
 {
 	if (index < 0)
 	{
-		CreateError("Could not read text byte from received binary, index %i is less than 0.", index);
+		CreateError("Could not read ASCII text byte from received binary, index %i is less than 0.", index);
 		return Runtime.CopyString(_T(""));
 	}
 	if (threadData->receivedMsg.content.size() - index < sizeof(char))
@@ -84,8 +88,17 @@ const TCHAR * Extension::StrANSIByte(int index)
 		CreateError("Could not read ASCII text byte from received binary at position %i, amount of message remaining is smaller than variable to be read.", index);
 		return Runtime.CopyString(_T(""));
 	}
-	std::string ansiStr = threadData->receivedMsg.content.substr(index, 1);
-	return Runtime.CopyString(ANSIToTString(ansiStr).c_str());
+
+	// ASCII goes up to 127, ANSI continues to 255. ANSI is locale-dependent, and if we only
+	// interpret it as a fixed one like "en-us", that may not be the sender's locale, muddying
+	// the water further for a Fusion developer.
+	const std::string_view partial(threadData->receivedMsg.content.data() + index, 1);
+	if (reinterpret_cast<const std::uint8_t &>(partial[0]) > 127)
+	{
+		CreateError("ANSI char read instead of ASCII. Use StringWithSize() with size 1 instead.");
+		return Runtime.CopyString(_T(""));
+	}
+	return Runtime.CopyString(ANSIToTString(partial).c_str());
 }
 unsigned int Extension::UnsignedByte(int index)
 {
@@ -100,7 +113,7 @@ int Extension::SignedByte(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read signed byte from received binary, index %i is less than 0.", index), 0;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed char))
+	if (threadData->receivedMsg.content.size() - index < sizeof(char))
 		return CreateError("Could not read signed byte from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
 	return (int)(*(threadData->receivedMsg.content.data() + index));
@@ -118,7 +131,7 @@ int Extension::SignedShort(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read signed short from received binary, index %i is less than 0.", index), 0;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(short))
 		return CreateError("Could not read signed short from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
 	return (int)(*(short *)(threadData->receivedMsg.content.data() + index));
@@ -136,7 +149,7 @@ int Extension::SignedInteger(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read signed integer from received binary, index %i is less than 0.", index), 0;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(int))
 		return CreateError("Could not read signed integer from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
 	return (*(int *)(threadData->receivedMsg.content.data() + index));
@@ -145,7 +158,7 @@ float Extension::Float(int index)
 {
 	if (index < 0)
 		return CreateError("Could not read float from received binary, index %i is less than 0.", index), 0.0f;
-	if (threadData->receivedMsg.content.size() - index < sizeof(signed short))
+	if (threadData->receivedMsg.content.size() - index < sizeof(float))
 		return CreateError("Could not read float from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0.0f;
 
 	return (*(float *)(threadData->receivedMsg.content.data() + index));
@@ -164,7 +177,7 @@ const TCHAR * Extension::StringWithSize(int index, int size)
 	}
 	if (threadData->receivedMsg.content.size() - index < (size_t)size)
 	{
-		CreateError("Could not read float from received binary at position %i, amount of message remaining is smaller than supplied string size %i.", index, size);
+		CreateError("Could not read string with size from received binary at position %i, amount of message remaining is smaller than supplied string size %i.", index, size);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -182,13 +195,8 @@ const TCHAR * Extension::String(int index)
 		CreateError("Could not read null-terminated string from received binary at position %i, amount of message remaining is smaller than variable to be read.", index);
 		return Runtime.CopyString(_T(""));
 	}
-	if (strnlen(threadData->receivedMsg.content.data() + index, threadData->receivedMsg.content.size() - index + 1) == threadData->receivedMsg.content.size() - index + 1)
-	{
-		CreateError("Could not read null-terminated string from received binary at position %i, null terminator not found.", index);
-		return Runtime.CopyString(_T(""));
-	}
 
-	return Runtime.CopyString(ReadStringFromRecvBinary(index, 1, false).c_str());
+	return Runtime.CopyString(ReadStringFromRecvBinary(index, -1, false).c_str());
 }
 unsigned int Extension::ReceivedBinarySize()
 {
@@ -196,12 +204,16 @@ unsigned int Extension::ReceivedBinarySize()
 }
 const TCHAR * Extension::Lacewing_Version()
 {
-	static const TCHAR * version = nullptr;
-	if (version == nullptr)
+	static TCHAR version[128] = {};
+	if (version[0] == _T('\0'))
 	{
-		std::stringstream str;
-		str << lw_version() << " / Bluewing reimpl b"sv << lacewing::relayserver::buildnum;
-		version = _tcsdup(UTF8ToTString(str.str()).c_str());
+		std::tstringstream str;
+		str << lw_version() << _T(" / Bluewing ");
+#ifdef _UNICODE
+		str << _T("Unicode ");
+#endif
+		str << _T("reimpl b") << lacewing::relayserver::buildnum;
+		_tcscpy_s(version, str.str().c_str());
 	}
 	return Runtime.CopyString(version);
 }
@@ -233,15 +245,27 @@ unsigned int Extension::ReceivedBinaryAddress()
 {
 	return (unsigned int)(long)threadData->receivedMsg.content.data();
 }
-const TCHAR * Extension::CursorStrByte()
+const TCHAR * Extension::CursorASCIIByte()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(char))
 	{
-		CreateError("Could not read text byte from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor);
+		CreateError("Could not read ASCII byte from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor);
 		return Runtime.CopyString(_T(""));
 	}
 
-	return Runtime.CopyString(ReadStringFromRecvBinary(threadData->receivedMsg.cursor, 1, true).c_str());
+	// ASCII goes up to 127, ANSI continues to 255. ANSI is locale-dependent, and if we only
+	// interpret it as a fixed one like "en-us", that may not be the sender's locale, muddying
+	// the water further for a Fusion developer.
+	const std::string_view partial = threadData->receivedMsg.content.substr(threadData->receivedMsg.cursor, 1);
+	++threadData->receivedMsg.cursor;
+
+	// ASCII goes up to 127, ANSI continues to 255
+	if (reinterpret_cast<const std::uint8_t &>(partial[0]) > 127)
+	{
+		CreateError("ANSI char read instead of ASCII. Use CursorStringWithSize() with size 1 to ensure consistency.");
+		return Runtime.CopyString(_T(""));
+	}
+	return Runtime.CopyString(ANSIToTString(partial).c_str());
 }
 unsigned int Extension::CursorUnsignedByte()
 {
@@ -249,7 +273,7 @@ unsigned int Extension::CursorUnsignedByte()
 		return CreateError("Could not read unsigned byte from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0U;
 
 	++threadData->receivedMsg.cursor;
-	return (unsigned int)(*(unsigned char *)(threadData->receivedMsg.content.data() + (threadData->receivedMsg.cursor - 1)));
+	return (unsigned int)(*(unsigned char *)(threadData->receivedMsg.content.data() + (threadData->receivedMsg.cursor - sizeof(unsigned char))));
 }
 int Extension::CursorSignedByte()
 {
@@ -257,47 +281,47 @@ int Extension::CursorSignedByte()
 		return CreateError("Could not read signed byte from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0;
 
 	++threadData->receivedMsg.cursor;
-	return (int)(*(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 1));
+	return (int)(*(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(char)));
 }
 unsigned int Extension::CursorUnsignedShort()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(unsigned short))
 		return CreateError("Could not read unsigned short from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0U;
 
-	threadData->receivedMsg.cursor += 2U;
-	return (unsigned int)(*(unsigned short *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 2));
+	threadData->receivedMsg.cursor += sizeof(unsigned short);
+	return (unsigned int)(*(unsigned short *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(unsigned short)));
 }
 int Extension::CursorSignedShort()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(short))
 		CreateError("Could not read signed short from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0;
 
-	threadData->receivedMsg.cursor += 2;
-	return (int)(*(short *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 2));
+	threadData->receivedMsg.cursor += sizeof(short);
+	return (int)(*(short *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(short)));
 }
 unsigned int Extension::CursorUnsignedInteger()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(unsigned int))
 		return CreateError("Could not read unsigned integer from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0U;
 
-	threadData->receivedMsg.cursor += 4;
-	return (*(unsigned int *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 4));
+	threadData->receivedMsg.cursor += sizeof(unsigned int);
+	return (*(unsigned int *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(unsigned int)));
 }
 int Extension::CursorSignedInteger()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(int))
 		return CreateError("Could not read signed integer from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0;
 
-	threadData->receivedMsg.cursor += 4;
-	return (*(int *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 4));
+	threadData->receivedMsg.cursor += sizeof(int);
+	return (*(int *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(int)));
 }
 float Extension::CursorFloat()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < sizeof(float))
 		return CreateError("Could not read unsigned byte from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor), 0.0f;
 
-	threadData->receivedMsg.cursor += 4;
-	return (*(float *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - 4));
+	threadData->receivedMsg.cursor += sizeof(float);
+	return (*(float *)(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor - sizeof(float)));
 }
 const TCHAR * Extension::CursorStringWithSize(int size)
 {
@@ -346,7 +370,7 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 	}
 	if (threadData->receivedMsg.content.size() - index <= 0)
 	{
-		CreateError("Dumping message failed; passed index %i exceeds end index in message %i.", index, threadData->receivedMsg.content.size() - 1);
+		CreateError("Dumping message failed; index %i is at message end index %i or beyond it.", index, threadData->receivedMsg.content.size() - 1);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -366,7 +390,7 @@ const TCHAR * Extension::DumpMessage(int index, const TCHAR * formatTStr)
 	size_t Count = 0;
 	const char * Msg = &threadData->receivedMsg.content[index];
 	// +c10c20c
- 	for (const char * i = format; i < format+SizeOfFormat;)
+	for (const char * i = format; i < format+SizeOfFormat;)
 	{
 		// Skip past last loop's numbers to get to variable type letter
 		while (isdigit(i[0]))
@@ -596,4 +620,21 @@ int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 	if (u8size <= 0)
 		return -1;
 	return (int)u8size;
+}
+/// <summary> Tests if the UTF-8 equivalent matches the passed allow list, and if allow list is valid.
+///			  If so, blank is returned, otherwise the error or faulty character. </summary>
+const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList)
+{
+	lacewing::codepointsallowlist list;
+	std::string err = list.setcodepointsallowedlist(TStringToUTF8(allowList));
+	if (!err.empty())
+		return Runtime.CopyString(UTF8ToTString(err).c_str());
+
+	int idx = list.checkcodepointsallowed(TStringToUTF8(toTest));
+	if (idx == -1)
+		return Runtime.CopyString(_T(""));
+
+	std::tstringstream tStr;
+	tStr << _T("Code point at index "sv) << idx << _T(" does not match."sv);
+	return Runtime.CopyString(tStr.str().c_str());
 }

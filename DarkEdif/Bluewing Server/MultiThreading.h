@@ -13,10 +13,10 @@ enum InteractiveType : unsigned char
 };
 
 #ifdef MULTI_THREADING
-	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
+	/* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */
 	#pragma pack( push, align_to_one_multithreading)
 	#pragma pack(1)
-	struct SaveExtInfo
+	struct EventToRun
 	{
 		// Required for DarkEdif
 		std::uint8_t		numEvents;
@@ -55,7 +55,7 @@ enum InteractiveType : unsigned char
 		bool channelCreate_Hidden;
 		bool channelCreate_AutoClose;
 
-		SaveExtInfo() : numEvents(0), CondTrig { 0, 0 },
+		EventToRun() : numEvents(0), CondTrig { 0, 0 },
 			InteractiveType(InteractiveType::None),
 			channelCreate_Hidden(false),
 			channelCreate_AutoClose(false)
@@ -66,7 +66,7 @@ enum InteractiveType : unsigned char
 			receivedMsg.blasted = false;
 			receivedMsg.variant = 255;
 		}
-		~SaveExtInfo()
+		~EventToRun()
 		{
 			receivedMsg.content.~basic_string();
 			receivedMsg.cursor = 0;

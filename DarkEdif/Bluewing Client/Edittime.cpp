@@ -49,6 +49,8 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	}
 
 	// Set default object settings from DefaultState.
+	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
+
 	const auto & propsJSON = CurLang["Properties"];
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
@@ -57,6 +59,9 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
 	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"];
+
+	// ext version 1 = before Unicode port, 2 = after. Does not mean the properties are UTF16; they're UTF8.
+	edPtr->eHeader.extVersion = 2;
 
 	// InitialisePropertiesFromJSON(mV, edPtr);
 	return 0;
@@ -102,28 +107,27 @@ void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return NULL; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
 	{
-		if (::SDK->EdittimeProperties[ID].Type_ID != Edif::Properties::PROPTYPE_LEFTCHECKBOX)
+		if (ID == 0)
 		{
-			if (ID == 0)
-			{
-				char extVerBuffer[256];
-				sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayclient::buildnum, STRIFY(CONFIG));
-				return new Prop_Str(UTF8ToTString(extVerBuffer).c_str());
-			}
-			if (ID == 3)
-				return new Prop_Str(UTF8ToTString(edPtr->edGlobalID).c_str());
+			char extVerBuffer[256];
+			sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayclient::buildnum, STRIFY(CONFIG));
+			return new Prop_Str(UTF8ToTString(extVerBuffer).c_str());
 		}
+		if (ID == 3)
+			return new Prop_Str(UTF8ToTString(edPtr->edGlobalID).c_str());
 
-		// Override invalid property warning
-		// See request for change: http://community.clickteam.com/showthread.php?t=72152
+		// Note that checkbox-only properties call GetPropValue() too for no reason, so
 		return NULL;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to GetPropValue() call.", "DarkEdif - Invalid property", MB_OK);
+	MessageBoxA(NULL, "Invalid property ID given to GetPropValue() call.", PROJECT_NAME " - Invalid property", MB_OK);
 	return NULL;
 }
 
@@ -131,6 +135,9 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
@@ -147,23 +154,23 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			return edPtr->fullDeleteEnabled;
 	}
 
-	if (ID < 0)
-		return 0; // not actually managed by DarkEdif
-
 	MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
-	return 0; // Unchecked
+	return FALSE; // Unchecked
 }
 
 // This routine is called by MMF after a property has been modified.
 void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop * NewParam)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
 	{
 		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
-		if (strcpy_s(edPtr->edGlobalID, 255, newValAsU8.c_str()))
-			MessageBoxA(NULL, "Error setting new property 3; error copying string.", "DarkEdif - SetPropValue() error", MB_OK);
+		if (strcpy_s(edPtr->edGlobalID, newValAsU8.c_str()))
+			MessageBoxA(NULL, "Error setting global ID; too long?", PROJECT_NAME " - SetPropValue() error", MB_OK);
 	}
 
 	// You may want to have your object redrawn in the frame editor after the modifications,
@@ -175,35 +182,24 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL Check)
 {
 #pragma DllExportHint
+	if (PropID < PROPID_EXTITEM_CUSTOM_FIRST)
+		return; // built-in properties, not managed by ext
+
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
 	if (CurLang["Properties"].u.object.length > ID)
 	{
+		// The ending ", (void)0" means that the expression evaluates to void overall
 		if (ID == 1)
-		{
-			edPtr->automaticClear = (Check != 0);
-			return;
-		}
+			return edPtr->automaticClear = (Check != 0), (void)0;
 		if (ID == 2)
-		{
-			edPtr->isGlobal = (Check != 0);
-			return;
-		}
+			return edPtr->isGlobal = (Check != 0), (void)0;
 		if (ID == 4)
-		{
-			edPtr->multiThreading = (Check != 0);
-			return;
-		}
+			return edPtr->multiThreading = (Check != 0), (void)0;
 		if (ID == 5)
-		{
-			edPtr->timeoutWarningEnabled = (Check != 0);
-			return;
-		}
+			return edPtr->timeoutWarningEnabled = (Check != 0), (void)0;
 		if (ID == 6)
-		{
-			edPtr->fullDeleteEnabled = (Check != 0);
-			return;
-		}
+			return edPtr->fullDeleteEnabled = (Check != 0), (void)0;
 	}
 
 	MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", PROJECT_NAME " - Invalid property", MB_OK);

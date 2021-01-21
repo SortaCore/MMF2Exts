@@ -195,7 +195,7 @@ bool Extension::IsJoinedToChannel(const TCHAR * channelNamePtr)
 	if (channelNamePtr[0] == _T('\0'))
 		return CreateError("Error checking if joined to a channel, channel name supplied was blank."), false;
 
-	const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNamePtr);
+	const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 	auto cliReadLock = Cli.lock.createReadLock();
 	const auto &channels = Cli.getchannels();
 	auto chIt = std::find_if(channels.cbegin(), channels.cend(),
@@ -219,7 +219,7 @@ bool Extension::IsPeerOnChannel_Name(const TCHAR * peerNameTStr, const TCHAR * c
 		foundCh = selChannel;
 	else
 	{
-		const std::string channelNameU8Simplified = TStringToUTF8Stripped(channelNameTStr);
+		const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNameTStr);
 
 		auto serverReadLock = Cli.lock.createReadLock();
 		const auto & channels = Cli.getchannels();
@@ -248,7 +248,7 @@ bool Extension::IsPeerOnChannel_Name(const TCHAR * peerNameTStr, const TCHAR * c
 		return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
 	}
 
-	const std::string peerNameStripped = TStringToUTF8Stripped(peerNameTStr);
+	const std::string peerNameStripped = TStringToUTF8Simplified(peerNameTStr);
 	auto foundPeerIt =
 		std::find_if(peers.cbegin(), peers.cend(),
 			[&](const auto & peer) { return lw_sv_cmp(peer->namesimplified(), peerNameStripped); });
@@ -268,7 +268,7 @@ bool Extension::IsPeerOnChannel_ID(int peerID, const TCHAR * channelNamePtr)
 		foundCh = selChannel;
 	else
 	{
-		const std::string channelNameStripped = TStringToUTF8Stripped(channelNamePtr);
+		const std::string channelNameStripped = TStringToUTF8Simplified(channelNamePtr);
 		auto serverReadLock = Cli.lock.createReadLock();
 		const auto & channels = Cli.getchannels();
 

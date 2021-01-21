@@ -2,3 +2,21 @@
 // such as names of functions and macros.
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
 #define lw_import
+
+#ifdef _DEBUG
+#define lw_unlock() unlockDebug(lw_rwlock_debugParamDefs)
+#define lw_relock() relockDebug(lw_rwlock_debugParamDefs)
+#define createReadLock() createReadLock(lw_rwlock_debugParamDefs)
+#define createWriteLock() createWriteLock(lw_rwlock_debugParamDefs)
+#define lw_upgrade() upgrade(lw_rwlock_debugParamDefs)
+#define lw_downgrade() downgrade(lw_rwlock_debugParamDefs)
+#define lw_upgrade_to(x) upgrade(lw_rwlock_debugParamDefs, x)
+#define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
+#else
+#define lw_unlock() unlock()
+#define lw_relock() relock()
+#define lw_upgrade() upgrade()
+#define lw_downgrade() downgrade()
+#define lw_upgrade_to(x) upgrade(x)
+#define lw_downgrade_to(x) downgrade(x)
+#endif

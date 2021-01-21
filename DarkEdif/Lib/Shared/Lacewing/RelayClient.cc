@@ -175,10 +175,9 @@ namespace lacewing
 
 		framebuilder &message = internal.message;
 
-		message.addheader(0, 0); /* request */
-
-		message.add<lw_ui8>(0); /* connect */
-		message.add("revision 3"sv);
+		message.addheader(0, 0);	 /* request */
+		message.add<lw_ui8>(0);		 /* connect */
+		message.add("revision 3"sv); /* version, not null terminated */
 
 		message.send(internal.socket);
 	}
@@ -870,16 +869,18 @@ namespace lacewing
 		{
 			lw_ui8 subchannel = reader.get <lw_ui8>();
 
-			const char * message2;
-			unsigned int size2;
-
-			reader.getremaining(message2, size2);
+			// Messages are null-terminated, so must be 1 byte minimum.
+			std::string_view data = reader.getremaining(1, true);
+			if (!reader.failed && data.back() != '\0')
+				reader.failed = true;
 
 			if (reader.failed)
 				break;
 
+			data.remove_suffix(1); // Drop null terminator
+
 			if (handler_message_server)
-				handler_message_server(client, blasted, subchannel, std::string_view(message2, size2), variant);
+				handler_message_server(client, blasted, subchannel, data, variant);
 
 			break;
 		}
@@ -910,7 +911,10 @@ namespace lacewing
 			if (!peer2 || channel2->_readonly || peer2->_readonly)
 				break;
 
-			std::string_view data = reader.getremaining();
+			std::string_view data = reader.getremaining(1, true);
+
+			if (reader.failed)
+				break;
 
 			if (handler_message_channel)
 				handler_message_channel(client, channel2, peer2, blasted,
@@ -953,7 +957,7 @@ namespace lacewing
 				break;
 			}
 
-			std::string_view data = reader.getremaining();
+			std::string_view data = reader.getremaining(1, true);
 
 			if (handler_message_peer)
 				handler_message_peer(client, channel2, peer2, blasted,
@@ -975,7 +979,7 @@ namespace lacewing
 			if (!channel2 || channel2->_readonly)
 				break;
 
-			std::string_view data = reader.getremaining();
+			std::string_view data = reader.getremaining(1, true);
 
 			if (handler_message_serverchannel)
 				handler_message_serverchannel(client, channel2, blasted,
@@ -1091,7 +1095,7 @@ namespace lacewing
 				peer->_ischannelmaster = (flags & 1) != 0;
 				// TODO: Check channel for current master and rewrite?
 
-				if (lw_sv_cmp(name, peer->_name))
+				if (!lw_sv_cmp(name, peer->_name))
 				{
 					/* peer is changing their name */
 

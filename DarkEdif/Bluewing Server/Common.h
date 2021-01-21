@@ -78,8 +78,9 @@ struct EDITDATA
 	bool isGlobal;
 	char edGlobalID[255];
 	bool timeoutWarningEnabled,
-		 fullDeleteEnabled;
-	char pad1[244];
+		 fullDeleteEnabled,
+		 enableInactivityTimer;
+	char pad1[243];
 
 	// Keep as last or risk overwriting by functions accessing this address
 	size_t DarkEdif_Prop_Size;

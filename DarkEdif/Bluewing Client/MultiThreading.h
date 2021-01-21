@@ -3,10 +3,10 @@
 
 #if defined(MULTI_THREADING) && !defined(ALREADY_DEFINED_MT)
 #define ALREADY_DEFINED_MT
-	/* Make sure any pointers in ExtVariables are free'd in ~SaveExtInfo(). */
+	/* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */
 	#pragma pack (push, align_to_one_multithreading)
 	#pragma pack (1)
-	struct SaveExtInfo
+	struct EventToRun
 	{
 		// Required for DarkEdif
 		std::uint8_t	numEvents;
@@ -30,13 +30,13 @@
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing;
 		std::shared_ptr<lacewing::relayclient::channel::peer> peer;
 
-		SaveExtInfo() : numEvents(0), condTrig{ 35353, 35353 }
+		EventToRun() : numEvents(0), condTrig{ 35353, 35353 }
 		{
 			new(&receivedMsg.content)std::string();
 			receivedMsg.cursor = 0;
 			receivedMsg.subchannel = 0;
 		}
-		~SaveExtInfo()
+		~EventToRun()
 		{
 			receivedMsg.content.~basic_string();
 			peer = nullptr;

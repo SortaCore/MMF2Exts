@@ -39,9 +39,9 @@ class IDPool
 
 protected:
 
-	std::set<unsigned short> releasedIDs;	// A sorted list of all released IDs.
-	unsigned short nextID;				// The next ID to use, not within releasedIDs.
-	int borrowedCount;					// The number of IDs currently in use.
+	std::set<lw_ui16> releasedIDs;	// A sorted list of all released IDs.
+	lw_ui16 nextID;					// The next ID to use, not within releasedIDs.
+	lw_i32 borrowedCount;			// The number of IDs currently in use.
 	lacewing::readwritelock lock;
 
 public:
@@ -49,13 +49,13 @@ public:
 	/// <summary> Creates an ID pool. First ID returned is 0. </summary>
 	IDPool()
 	{
-		nextID		= 0;
+		nextID = 0;
 		borrowedCount = 0;
 	}
 
 	/// <summary> Gets the next ID available from the pool. </summary>
 	/// <returns> New ID to use. </returns>
-	unsigned short borrow()
+	lw_ui16 borrow()
 	{
 		lacewing::writelock writeLock = lock.createWriteLock();
 
@@ -68,9 +68,9 @@ public:
 
 		if (!releasedIDs.empty())
 		{
-			unsigned short s = *releasedIDs.cbegin(); // .front() not in std::set
+			lw_ui16 freshID = *releasedIDs.cbegin(); // .front() not in std::set
 			releasedIDs.erase(releasedIDs.cbegin());
-			return s;
+			return freshID;
 		}
 
 		return nextID ++;
@@ -78,7 +78,7 @@ public:
 
 	/// <summary> Returns the given identifier. </summary>
 	/// <param name="ID"> The identifier to return. </param>
-	void returnID(unsigned short ID)
+	void returnID(lw_ui16 ID)
 	{
 		lacewing::writelock writeLock = lock.createWriteLock();
 		// No IDs in use at all: empty list
