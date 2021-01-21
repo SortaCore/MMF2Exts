@@ -1,4 +1,5 @@
 root = true
+# Don't forget to update the gitattributes if you're changing line ending treatment
 
 [*.{c,cc,cpp,h,hh,hpp,txt,props}]
 end_of_line = lf

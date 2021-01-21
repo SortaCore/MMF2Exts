@@ -15,25 +15,15 @@
 
 *.cs text=auto diff=csharp 
 *.vb text=auto
-*.c text=auto eol=lf
-*.cc text=auto eol=lf
-*.cpp text=auto eol=lf
-*.cxx text=auto eol=lf
-*.h text=auto eol=lf
-*.hh text=auto eol=lf
-*.hpp text=auto eol=lf
-*.hxx text=auto eol=lf
+
 *.py text=auto
 *.rb text=auto
 *.java text=auto
-*.html text=auto eol=lf
-*.htm text=auto eol=lf
-*.rc text=auto eol=crlf
+*.js text=auto eol=lf
 *.css text=auto
 *.scss text=auto
 *.sass text=auto
 *.less text=auto
-*.js text=auto
 *.lisp text=auto
 *.clj text=auto
 *.sql text=auto
@@ -51,3 +41,21 @@
 *.fsproj text=auto merge=union 
 *.dbproj text=auto merge=union 
 *.sln text=auto eol=crlf merge=union 
+
+
+# From the editorconfig
+*.c text eol=lf
+*.cc text eol=lf
+*.cpp text eol=lf
+*.cxx text eol=lf
+*.h text eol=lf
+*.hh text eol=lf
+*.hpp text eol=lf
+*.hxx text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.rc text eol=crlf
+*.htm text eol=crlf
+*.html text eol=crlf
