@@ -1,11 +1,13 @@
 {
+	// 4-character identifer that uniquely identifies your extension.
+	// Can be letters, numbers, or punctuation, but must be 4 ASCII characters.
 	"Identifier": "EXMP",
 	"Dependencies": "",
 	"UK English": {
 		"About": {
 			"Name": "DarkEdif Template",
 			"Author": "Your Name",
-			"Copyright": "Copyright \u00A9 2019 by Your Name",
+			"Copyright": "Copyright \u00A9 2021 by Your Name",
 			"Comment": "A sentence or two to describe your extension",
 			"Help": "Help/Example.chm",
 			"URL": "https://www.example.com/"
@@ -13,7 +15,8 @@
 		"ActionMenu": [
 			[ 0, "Action Example" ],
 			"---",
-			[ "Sub Menu",
+			[
+				"Sub Menu",
 				[ 1, "Second Action Example" ]
 			]
 		],
@@ -65,13 +68,13 @@
 				"Info": "Folder information",
 				"Type": "Folder"
 			},
-				{
-					"Title": "Checkbox within folder",
-					"Info": "yeah, it should be bold.",
-					"Type": "Checkbox",
-					"DefaultState": true, // or false
-					"Bold": true
-				},
+			{
+				"Title": "Checkbox within folder",
+				"Info": "yeah, it should be bold.",
+				"Type": "Checkbox",
+				"DefaultState": true, // or false
+				"Bold": true
+			},
 			{
 				"Type": "FolderEnd"
 			},
@@ -138,7 +141,7 @@
 		"About": {
 			"Name": "Exemple objet",
 			"Author": "Votre Nom",
-			"Copyright": "Copyright \u00A9 2019 par Votre Nom",
+			"Copyright": "Copyright \u00A9 2021 par Votre Nom",
 			"Comment": "Une ou deux phrases pour décrire votre poste",
 			"Help": "Help/Example.chm",
 			"URL": "http://www.example.com/"
@@ -146,7 +149,8 @@
 		"ActionMenu": [
 			[ 0, "Exemple d'action" ],
 			"---",
-			[ "Sub Menu",
+			[
+				"Sub Menu",
 				[ 1, "Exemple deuxième action" ]
 			]
 		],
@@ -198,13 +202,13 @@
 				"Info": "Folder d'information",
 				"Type": "Folder"
 			},
-				{
-					"Title": "Case à cocher dans le dossier",
-					"Info": "oui, il faut faire preuve d'audace.",
-					"Type": "Checkbox",
-					"Bold": true,
-					"DefaultState": true
-				},
+			{
+				"Title": "Case à cocher dans le dossier",
+				"Info": "oui, il faut faire preuve d'audace.",
+				"Type": "Checkbox",
+				"Bold": true,
+				"DefaultState": true
+			},
 			{
 				"Type": "FolderEnd"
 			},
