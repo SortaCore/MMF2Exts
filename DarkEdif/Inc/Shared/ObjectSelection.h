@@ -20,7 +20,7 @@ namespace Riggs
 	{
 	public:
 
-		Extension * pExtension;
+		Extension * pExtension = nullptr;
 
 		ObjectSelection(RunHeader * rhPtr);
 
