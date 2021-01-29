@@ -1,4 +1,5 @@
 #include "Common.h"
+#include <atomic>
 
 extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
@@ -1081,7 +1082,7 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 // =====
 
 static std::string sdkSettingsFileContent;
-static std::atomic_bool fileLock;
+static std::atomic<bool> fileLock;
 static bool fileOpened;
 std::string DarkEdif::GetIniSetting(const char * key)
 {
