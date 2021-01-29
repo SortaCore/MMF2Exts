@@ -30,13 +30,13 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 
 	if (pApp->ParentApp)
 	{
-		OutputDebugStringA("EndApp called, but it's subapp. Ignoring.\n");
+		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;
 	}
 
 	if (AppWasClosed)
 		SetEvent(AppWasClosed);
 
-	OutputDebugStringA("EndApp called.\n");
+	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
 

@@ -30,8 +30,10 @@
     <ProjectGuid>{1B15E55D-4945-41B7-8B4F-DC100B1D326C}</ProjectGuid>
     <ProjectName>Bluewing Server</ProjectName>
     <RootNamespace>$(SDKType)</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'" />
   <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
     <Error Condition="!exists('..\Lib\FusionSDK.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK.props&quot;." />
     <Error Condition="!exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" Text="Missing Fusion SDK property sheet &quot;..\Lib\FusionSDK_AfterMSPropSheets.props&quot;." />

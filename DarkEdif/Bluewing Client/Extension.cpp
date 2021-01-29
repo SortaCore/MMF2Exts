@@ -62,18 +62,18 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(38, BlastBinaryToServer);
 		LinkAction(39, BlastBinaryToChannel);
 		LinkAction(40, BlastBinaryToPeer);
-		LinkAction(41, AddByteText);
-		LinkAction(42, AddByteInt);
-		LinkAction(43, AddShort);
-		LinkAction(44, AddInt);
-		LinkAction(45, AddFloat);
-		LinkAction(46, AddStringWithoutNull);
-		LinkAction(47, AddString);
-		LinkAction(48, AddBinary);
-		LinkAction(49, ClearBinaryToSend);
-		LinkAction(50, SaveReceivedBinaryToFile);
-		LinkAction(51, AppendReceivedBinaryToFile);
-		LinkAction(52, AddFileToBinary);
+		LinkAction(41, SendMsg_AddASCIIByte);
+		LinkAction(42, SendMsg_AddByteInt);
+		LinkAction(43, SendMsg_AddShort);
+		LinkAction(44, SendMsg_AddInt);
+		LinkAction(45, SendMsg_AddFloat);
+		LinkAction(46, SendMsg_AddStringWithoutNull);
+		LinkAction(47, SendMsg_AddString);
+		LinkAction(48, SendMsg_AddBinaryFromAddress);
+		LinkAction(49, SendMsg_Clear);
+		LinkAction(50, RecvMsg_SaveToFile);
+		LinkAction(51, RecvMsg_AppendToFile);
+		LinkAction(52, SendMsg_AddFileToBinary);
 		LinkAction(53, ReplacedNoParams);
 		LinkAction(54, ReplacedNoParams);
 		LinkAction(55, ReplacedNoParams);
@@ -87,15 +87,15 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(63, ReplacedNoParams);
 		LinkAction(64, SelectChannelMaster);
 		LinkAction(65, JoinChannel);
-		LinkAction(66, CompressSendBinary);
-		LinkAction(67, DecompressReceivedBinary);
-		LinkAction(68, MoveReceivedBinaryCursor);
+		LinkAction(66, SendMsg_CompressBinary);
+		LinkAction(67, RecvMsg_DecompressBinary);
+		LinkAction(68, RecvMsg_MoveCursor);
 		LinkAction(69, LoopListedChannelsWithLoopName);
 		LinkAction(70, LoopClientChannelsWithLoopName);
 		LinkAction(71, LoopPeersOnChannelWithLoopName);
 		LinkAction(72, ReplacedNoParams);
 		LinkAction(73, Connect);
-		LinkAction(74, ResizeBinaryToSend);
+		LinkAction(74, SendMsg_Resize);
 		LinkAction(75, SetDestroySetting);
 	}
 	{
@@ -182,9 +182,9 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(2, Self_Name);
 		LinkExpression(3, Self_ChannelCount);
 		LinkExpression(4, Peer_Name);
-		LinkExpression(5, ReceivedStr);
-		LinkExpression(6, ReceivedInt);
-		LinkExpression(7, Subchannel);
+		LinkExpression(5, RecvMsg_ReadAsString);
+		LinkExpression(6, RecvMsg_ReadAsInteger);
+		LinkExpression(7, RecvMsg_Subchannel);
 		LinkExpression(8, Peer_ID);
 		LinkExpression(9, Channel_Name);
 		LinkExpression(10, Channel_PeerCount);
@@ -197,19 +197,19 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(17, ReplacedExprNoParams);
 		LinkExpression(18, ReplacedExprNoParams);
 		LinkExpression(19, ReplacedExprNoParams);
-		LinkExpression(20, StrASCIIByte);
-		LinkExpression(21, UnsignedByte);
-		LinkExpression(22, SignedByte);
-		LinkExpression(23, UnsignedShort);
-		LinkExpression(24, SignedShort);
-		LinkExpression(25, UnsignedInteger);
-		LinkExpression(26, SignedInteger);
-		LinkExpression(27, Float);
-		LinkExpression(28, StringWithSize);
-		LinkExpression(29, String);
-		LinkExpression(30, ReceivedBinarySize);
+		LinkExpression(20, RecvMsg_StrASCIIByte);
+		LinkExpression(21, RecvMsg_UnsignedByte);
+		LinkExpression(22, RecvMsg_SignedByte);
+		LinkExpression(23, RecvMsg_UnsignedShort);
+		LinkExpression(24, RecvMsg_SignedShort);
+		LinkExpression(25, RecvMsg_UnsignedInteger);
+		LinkExpression(26, RecvMsg_SignedInteger);
+		LinkExpression(27, RecvMsg_Float);
+		LinkExpression(28, RecvMsg_StringWithSize);
+		LinkExpression(29, RecvMsg_String);
+		LinkExpression(30, RecvMsg_SizeInBytes);
 		LinkExpression(31, Lacewing_Version);
-		LinkExpression(32, SendBinarySize);
+		LinkExpression(32, SendBinaryMsg_Size);
 		LinkExpression(33, Self_PreviousName);
 		LinkExpression(34, Peer_PreviousName);
 		LinkExpression(35, ReplacedExprNoParams);
@@ -219,24 +219,25 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(39, HostPort);
 		LinkExpression(40, ReplacedExprNoParams);
 		LinkExpression(41, WelcomeMessage);
-		LinkExpression(42, ReceivedBinaryAddress);
-		LinkExpression(43, CursorASCIIByte);
-		LinkExpression(44, CursorUnsignedByte);
-		LinkExpression(45, CursorSignedByte);
-		LinkExpression(46, CursorUnsignedShort);
-		LinkExpression(47, CursorSignedShort);
-		LinkExpression(48, CursorUnsignedInteger);
-		LinkExpression(49, CursorSignedInteger);
-		LinkExpression(50, CursorFloat);
-		LinkExpression(51, CursorStringWithSize);
-		LinkExpression(52, CursorString);
+		LinkExpression(42, RecvMsg_MemoryAddress);
+		LinkExpression(43, RecvMsg_Cursor_StrASCIIByte);
+		LinkExpression(44, RecvMsg_Cursor_UnsignedByte);
+		LinkExpression(45, RecvMsg_Cursor_SignedByte);
+		LinkExpression(46, RecvMsg_Cursor_UnsignedShort);
+		LinkExpression(47, RecvMsg_Cursor_SignedShort);
+		LinkExpression(48, RecvMsg_Cursor_UnsignedInteger);
+		LinkExpression(49, RecvMsg_Cursor_SignedInteger);
+		LinkExpression(50, RecvMsg_Cursor_Float);
+		LinkExpression(51, RecvMsg_Cursor_StringWithSize);
+		LinkExpression(52, RecvMsg_Cursor_String);
 		LinkExpression(53, ReplacedExprNoParams);
-		LinkExpression(54, SendBinaryAddress);
-		LinkExpression(55, DumpMessage);
+		LinkExpression(54, SendBinaryMsg_MemoryAddress);
+		LinkExpression(55, RecvMsg_DumpToString);
 		LinkExpression(56, ChannelListing_ChannelCount);
 		LinkExpression(57, ConvToUTF8_GetVisibleCharCount);
-		LinkExpression(58, ConvToUTF8_GetCompleteCharCount);
+		LinkExpression(58, ConvToUTF8_GetCompleteCodePointCount);
 		LinkExpression(59, ConvToUTF8_GetByteCount);
+		LinkExpression(60, ConvToUTF8_TestAllowList);
 	}
 
 	// This is signalled by EndApp in Runtime.cpp. It's used to close the connection
@@ -533,9 +534,9 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * error, va_list 
 	// DebugBreak();
 }
 
-void Extension::AddToSend(const void * data, size_t size)
+void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 {
-	if (data == 0x00000000 || (long)data == 0xCCCCCCCC || (long)data == 0xDDDDDDDD || (long)data == 0xCDCDCDCD)
+	if (!IsValidPtr(data))
 		return CreateError("Error adding to send binary: pointer %p supplied is invalid. The message has not been modified.", data);
 
 	// Nothing to do
@@ -557,6 +558,13 @@ void Extension::AddToSend(const void * data, size_t size)
 	SendMsg = newptr;
 	SendMsgSize += size;
 }
+bool Extension::IsValidPtr(const void * data)
+{
+	// Common error memory addresses; null pointer (0x0), uninitalized filler memory (0xCC/0xCD),
+	// freed filler memory (0xDD). See https://stackoverflow.com/a/370362 .
+	// I'm not expecting Bluewing to have issues with this, but other exts might pass bad memory to Blue.
+	return data != 0x00000000 && (long)data != 0xCCCCCCCC && (long)data != 0xDDDDDDDD && (long)data != 0xCDCDCDCD;
+}
 
 void Extension::ClearThreadData()
 {
@@ -568,6 +576,7 @@ std::string Extension::TStringToUTF8Simplified(std::tstring str)
 	return lw_u8str_simplify(TStringToUTF8(str));
 }
 
+// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
 int Extension::CheckForUTF8Cutoff(std::string_view sv)
 {
 	// Start char is invalid
@@ -599,6 +608,8 @@ int Extension::CheckForUTF8Cutoff(std::string_view sv)
 	// Never found a start char; 5-byte/6-byte nonstandard UTF-8?
 	return 1;
 }
+// UTF-8 uses a bitmask to determine how many bytes are in the item.
+// Note that this does not verify the ending characters other than a size check; but any TString converter will throw them out.
 int Extension::GetNumBytesInUTF8Char(std::string_view sv)
 {
 	if (sv.empty())
@@ -629,9 +640,9 @@ int Extension::GetNumBytesInUTF8Char(std::string_view sv)
 
 	return -1;
 }
-// Reads string at given position of received binary. If sizeInCodePoints is -1, will expect a null byte.
-// isCursorExpression is used for error messages.
-std::tstring Extension::ReadStringFromRecvBinary(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
+// Called as a subfunction to read string at given position of received binary. If sizeInCodePoints is -1, will expect a null
+// terminator. The isCursorExpression is used for error messages.
+std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
 {
 	// User requested empty size, let 'em have it
 	if (sizeInCodePoints == 0)
@@ -984,7 +995,7 @@ REFLAG Extension::Handle()
 
 DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	OutputDebugStringA("Timeout thread: startup.\n");
+	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
 
 	GlobalInfo* G = (GlobalInfo *)ThisGlobalsInfo;
 
@@ -1174,10 +1185,8 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	if (!pendingDelete)
 		MarkAsPendingDelete();
 
-	// Holders trying to use MarkAsPendingDelete, secure themselves with the lock,
-	// so keep it until dtor.
-	if (lock.LockCount != 0)
-		MessageBoxA(NULL, PROJECT_NAME " - LockCount is not 0 when destroying ext data. Please contact extension developer.", PROJECT_NAME " - ~GlobalInfo() warning", MB_ICONERROR);
+	// Holders trying to use MarkAsPendingDelete() secure themselves with this lock,
+	// so we don't delete in the MarkAsPendingDelete() but in dtor only
 	DeleteCriticalSection(&lock);
 }
 void GlobalInfo::MarkAsPendingDelete()

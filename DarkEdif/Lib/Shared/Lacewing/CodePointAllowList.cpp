@@ -21,7 +21,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 		va_start(v, str);
 		va_copy(v2, v);
 
-		size_t numChars = vsprintf(nullptr, str, v);
+		size_t numChars = vsnprintf(nullptr, 0, str, v);
 		std::string error(numChars, ' ');
 		vsprintf(error.data(), str, v2);
 
@@ -40,12 +40,19 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 	if (acStr.empty())
 		return makeError("The acceptable code point list \"%hs\" is all spaces.", acStr.c_str());
 
-	int isDigit = -1;
+	if (acStr.back() == ',')
+		return makeError("The acceptable code point list \"%hs...\" ends with a comma.", acStr.c_str());
+
+	if (acStr.find(",,"sv) != std::string::npos)
+		return makeError("The acceptable code point list \"%hs...\" contains \",,\".", acStr.c_str());
+
+	acStr += ','; // to make sure when cur is +='d and passes end of string, it'll end with remaining = 0
+
 	const char * cur = acStr.data();
 	size_t remaining = acStr.size();
 	while (true)
 	{
-		remaining = acStr.data() - cur;
+		remaining = (acStr.data() + acStr.size()) - cur;
 		if (remaining == 0)
 			break;
 
@@ -156,18 +163,18 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 	return std::string();
 }
 
-int lacewing::codepointsallowlist::checkcodepointsallowed(std::string_view toTest) const
+int lacewing::codepointsallowlist::checkcodepointsallowed(const std::string_view toTest, int * const rejectedUTF32CodePoint /* = NULL */) const
 {
 	if (allAllowed)
 		return -1;
 
-	utf8proc_uint8_t * str = (utf8proc_uint8_t *)toTest.data();
+	const utf8proc_uint8_t * str = (const utf8proc_uint8_t *)toTest.data();
 	utf8proc_int32_t thisChar;
-	utf8proc_ssize_t numBytesInCodePoint, remainder = toTest.size();
+	utf8proc_ssize_t numBytesInCodePoint, remainingBytes = toTest.size();
 	int codePointIndex = 0;
-	while (remainder <= 0)
+	while (remainingBytes >= 0)
 	{
-		numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisChar);
+		numBytesInCodePoint = utf8proc_iterate(str, remainingBytes, &thisChar);
 		if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
 			goto badChar;
 
@@ -186,13 +193,15 @@ int lacewing::codepointsallowlist::checkcodepointsallowed(std::string_view toTes
 
 			// ... fall through from above
 		badChar:
+			if (rejectedUTF32CodePoint != NULL)
+				*rejectedUTF32CodePoint = thisChar;
 			return codePointIndex;
 
 			// Loop around
 		goodChar:
 			++codePointIndex;
 			str += numBytesInCodePoint;
-			remainder -= numBytesInCodePoint;
+			remainingBytes -= numBytesInCodePoint;
 	}
 
 	return -1; // All good

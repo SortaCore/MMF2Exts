@@ -60,7 +60,8 @@ public:
 
 	void CreateError(_Printf_format_string_ const char * errU8, ...);
 
-	void AddToSend(const void *, size_t);
+	void SendMsg_Sub_AddData(const void *, size_t);
+	bool IsValidPtr(const void *);
 	void ClearThreadData();
 
 	std::string TStringToUTF8Simplified(std::tstring);
@@ -74,7 +75,7 @@ public:
 
 	// Reads string at given position of received binary. If size is -1, will expect a null.
 	// isCursorExpression is used for error messages.
-	std::tstring ReadStringFromRecvBinary(size_t index, int size, bool isCursorExpression);
+	std::tstring RecvMsg_Sub_ReadString(size_t index, int size, bool isCursorExpression);
 
 	DarkEdif::FusionDebugger FusionDebugger;
 
@@ -118,30 +119,30 @@ public:
 		void BlastBinaryToServer(int subchannel);
 		void BlastBinaryToChannel(int subchannel);
 		void BlastBinaryToPeer(int subchannel);
-		void AddByteText(const TCHAR * Byte);
-		void AddByteInt(int Byte);
-		void AddShort(int Short);
-		void AddInt(int Int);
-		void AddFloat(float Float);
-		void AddStringWithoutNull(const TCHAR * String);
-		void AddString(const TCHAR * String);
-		void AddBinary(unsigned int Address, int size);
-		void ClearBinaryToSend();
-		void SaveReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
-		void AppendReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
-		void AddFileToBinary(const TCHAR * File);
+		void SendMsg_AddASCIIByte(const TCHAR * Byte);
+		void SendMsg_AddByteInt(int Byte);
+		void SendMsg_AddShort(int Short);
+		void SendMsg_AddInt(int Int);
+		void SendMsg_AddFloat(float Float);
+		void SendMsg_AddStringWithoutNull(const TCHAR * String);
+		void SendMsg_AddString(const TCHAR * String);
+		void SendMsg_AddBinaryFromAddress(unsigned int Address, int size);
+		void SendMsg_Clear();
+		void RecvMsg_SaveToFile(int Position, int size, const TCHAR * Filename);
+		void RecvMsg_AppendToFile(int Position, int size, const TCHAR * Filename);
+		void SendMsg_AddFileToBinary(const TCHAR * File);
 		// ReplacedNoParams, x11
 		void SelectChannelMaster();
 		void JoinChannel(const TCHAR * ChannelName, int Hidden, int CloseAutomatically);
-		void CompressSendBinary();
-		void DecompressReceivedBinary();
-		void MoveReceivedBinaryCursor(int Position);
+		void SendMsg_CompressBinary();
+		void RecvMsg_DecompressBinary();
+		void RecvMsg_MoveCursor(int Position);
 		void LoopListedChannelsWithLoopName(const TCHAR * LoopName);
 		void LoopClientChannelsWithLoopName(const TCHAR * LoopName);
 		void LoopPeersOnChannelWithLoopName(const TCHAR * LoopName);
 		// ReplacedNoParams
 		void Connect(const TCHAR * Hostname);
-		void ResizeBinaryToSend(int NewSize);
+		void SendMsg_Resize(int NewSize);
 		void SetDestroySetting(int enabled);
 
 	/// Conditions
@@ -228,9 +229,9 @@ public:
 		const TCHAR * Self_Name();
 		unsigned int Self_ChannelCount();
 		const TCHAR * Peer_Name();
-		const TCHAR * ReceivedStr();
-		int ReceivedInt();
-		unsigned int Subchannel();
+		const TCHAR * RecvMsg_ReadAsString();
+		int RecvMsg_ReadAsInteger();
+		unsigned int RecvMsg_Subchannel();
 		int Peer_ID();
 		const TCHAR * Channel_Name();
 		int Channel_PeerCount();
@@ -239,19 +240,19 @@ public:
 		int ChannelListing_PeerCount();
 		int Self_ID();
 		// ReplacedExprNoParams, x5
-		const TCHAR * StrASCIIByte(int Index);
-		unsigned int UnsignedByte(int Index);
-		int SignedByte(int Index);
-		unsigned int UnsignedShort(int Index);
-		int SignedShort(int Index);
-		unsigned int UnsignedInteger(int Index);
-		int SignedInteger(int Index);
-		float Float(int Index);
-		const TCHAR * StringWithSize(int Index, int size);
-		const TCHAR * String(int Index);
-		unsigned int ReceivedBinarySize();
+		const TCHAR * RecvMsg_StrASCIIByte(int Index);
+		unsigned int RecvMsg_UnsignedByte(int Index);
+		int RecvMsg_SignedByte(int Index);
+		unsigned int RecvMsg_UnsignedShort(int Index);
+		int RecvMsg_SignedShort(int Index);
+		unsigned int RecvMsg_UnsignedInteger(int Index);
+		int RecvMsg_SignedInteger(int Index);
+		float RecvMsg_Float(int Index);
+		const TCHAR * RecvMsg_StringWithSize(int Index, int size);
+		const TCHAR * RecvMsg_String(int Index);
+		unsigned int RecvMsg_SizeInBytes();
 		const TCHAR * Lacewing_Version();
-		unsigned int SendBinarySize();
+		unsigned int SendBinaryMsg_Size();
 		const TCHAR * Self_PreviousName();
 		const TCHAR * Peer_PreviousName();
 		// ReplacedExprNoParams, x2
@@ -260,23 +261,23 @@ public:
 		unsigned int HostPort();
 		// ReplacedExprNoParams
 		const TCHAR * WelcomeMessage();
-		unsigned int ReceivedBinaryAddress();
-		const TCHAR * CursorASCIIByte();
-		unsigned int CursorUnsignedByte();
-		int CursorSignedByte();
-		unsigned int CursorUnsignedShort();
-		int CursorSignedShort();
-		unsigned int CursorUnsignedInteger();
-		int CursorSignedInteger();
-		float CursorFloat();
-		const TCHAR * CursorStringWithSize(int size);
-		const TCHAR * CursorString();
+		unsigned int RecvMsg_MemoryAddress();
+		const TCHAR * RecvMsg_Cursor_StrASCIIByte();
+		unsigned int RecvMsg_Cursor_UnsignedByte();
+		int RecvMsg_Cursor_SignedByte();
+		unsigned int RecvMsg_Cursor_UnsignedShort();
+		int RecvMsg_Cursor_SignedShort();
+		unsigned int RecvMsg_Cursor_UnsignedInteger();
+		int RecvMsg_Cursor_SignedInteger();
+		float RecvMsg_Cursor_Float();
+		const TCHAR * RecvMsg_Cursor_StringWithSize(int size);
+		const TCHAR * RecvMsg_Cursor_String();
 		// ReplacedExprNoParams
-		unsigned int SendBinaryAddress();
-		const TCHAR * DumpMessage(int Index, const TCHAR * Format);
+		unsigned int SendBinaryMsg_MemoryAddress();
+		const TCHAR * RecvMsg_DumpToString(int Index, const TCHAR * Format);
 		unsigned int ChannelListing_ChannelCount();
 		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
-		int ConvToUTF8_GetCompleteCharCount(const TCHAR * tStr);
+		int ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr);
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
 		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * tStr, const TCHAR * charset);
 

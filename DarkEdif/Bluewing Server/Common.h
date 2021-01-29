@@ -24,7 +24,16 @@
 // #define _lacewing_static
 // These two are now defined in project settings; they're absolutely required.
 
-// == end lacewing
+#include "Edif.h"
+#include "Resource.h"
+#include "DarkEdif.h"
+
+#include "Lacewing.h"
+#include "LacewingFunctions.h"
+
+// Enable DarkEdif's utility
+#define MULTI_THREADING
+#include "MultiThreading.h"
 
 #include <sstream>
 #include <algorithm>
@@ -49,17 +58,6 @@
 #define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
 #endif
 
-#include "Lacewing.h"
-#include "LacewingFunctions.h"
-
-#include "Edif.h"
-#include "Resource.h"
-
-// Enable DarkEdif's utility
-#define MULTI_THREADING
-#include "MultiThreading.h"
-
-#include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA

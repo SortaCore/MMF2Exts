@@ -63,14 +63,18 @@ public:
 	void ClearThreadData();
 	void CreateError(_Printf_format_string_ const char * errU8, ...);
 
-	void AddToSend(const void *, size_t);
+	// Called as a subfunction by actions to add to the message-to-send
+	void SendMsg_Sub_AddData(const void *, size_t);
+	// Checks the pointer against known bad addresses. It's a quick check, not a perfect one.
+	bool IsValidPtr(const void * ptr);
 
 	// called from Handle() when a Lacewing object is being destroyed (e.g. client disconnect, channel leave)
 	void DeselectIfDestroyed(std::shared_ptr<EventToRun> s);
 	// called from Handle() when an interactive event needs to be responded to
 	void HandleInteractiveEvent(std::shared_ptr<EventToRun> s);
 
-	std::string TStringToUTF8Simplified(std::tstring);
+	// Runs TStringToUTF8() then lw_u8str_simplify() on input.
+	std::string TStringToUTF8Simplified(std::tstring_view);
 
 	// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
 	int CheckForUTF8Cutoff(std::string_view sv);
@@ -81,7 +85,7 @@ public:
 
 	// Reads string at given position of received binary. If sizeInCodePoints is -1, will expect a null byte.
 	// isCursorExpression is used for error messages.
-	std::tstring ReadStringFromRecvBinary(size_t index, int sizeInCodePoints, bool isCursorExpression);
+	std::tstring RecvMsg_Sub_ReadString(size_t index, int sizeInCodePoints, bool isCursorExpression);
 
 	// To work around this, we use a special event number which will deselect
 	// all the pointers in EventToRun after they should no longer be valid.
@@ -157,23 +161,23 @@ public:
 		void BlastBinaryToChannel(int subchannel);
 		void BlastBinaryToClient(int subchannel);
 
-		void AddByteText(const TCHAR * Byte);
-		void AddByteInt(int Byte);
-		void AddShort(int Short);
-		void AddInt(int Int);
-		void AddFloat(float Float);
-		void AddStringWithoutNull(const TCHAR * string);
-		void AddString(const TCHAR * string);
-		void AddBinary(unsigned int address, int size);
-		void AddFileToBinary(const TCHAR * file);
-		void ResizeBinaryToSend(int newSize);
-		void CompressSendBinary();
-		void ClearBinaryToSend();
+		void SendMsg_AddASCIIByte(const TCHAR * Byte);
+		void SendMsg_AddByteInt(int Byte);
+		void SendMsg_AddShort(int Short);
+		void SendMsg_AddInt(int Int);
+		void SendMsg_AddFloat(float Float);
+		void SendMsg_AddStringWithoutNull(const TCHAR * string);
+		void SendMsg_AddString(const TCHAR * string);
+		void SendMsg_AddBinaryFromAddress(unsigned int address, int size);
+		void SendMsg_AddFileToBinary(const TCHAR * file);
+		void SendMsg_Resize(int newSize);
+		void SendMsg_CompressBinary();
+		void SendMsg_Clear();
 
-		void DecompressReceivedBinary();
-		void MoveReceivedBinaryCursor(int Position);
-		void SaveReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
-		void AppendReceivedBinaryToFile(int Position, int size, const TCHAR * Filename);
+		void RecvMsg_DecompressBinary();
+		void RecvMsg_MoveCursor(int Position);
+		void RecvMsg_SaveToFile(int Position, int size, const TCHAR * Filename);
+		void RecvMsg_AppendToFile(int Position, int size, const TCHAR * Filename);
 
 
 	/// Conditions
@@ -246,7 +250,7 @@ public:
 
 		const TCHAR * Error();
 		const TCHAR * Lacewing_Version();
-		unsigned int BinaryToSend_Size();
+		unsigned int SendBinaryMsg_Size();
 		const TCHAR * RequestedClientName();
 		const TCHAR * RequestedChannelName();
 		const TCHAR * Channel_Name();
@@ -256,44 +260,44 @@ public:
 		const TCHAR * Client_IP();
 		unsigned int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
 		unsigned int Client_ChannelCount();
-		const TCHAR * ReceivedStr();
-		int ReceivedInt();
-		unsigned int ReceivedBinarySize();
-		unsigned int ReceivedBinaryAddress();
-		const TCHAR * StrASCIIByte(int index);
-		unsigned int UnsignedByte(int index);
-		int SignedByte(int index);
-		unsigned int UnsignedShort(int index);
-		int SignedShort(int index);
-		unsigned int UnsignedInteger(int index);
-		int SignedInteger(int index);
-		float Float(int index);
-		const TCHAR * StringWithSize(int index, int size);
-		const TCHAR * String(int index);
-		unsigned int Subchannel();
+		const TCHAR * RecvMsg_ReadAsString();
+		int RecvMsg_ReadAsInteger();
+		unsigned int RecvMsg_SizeInBytes();
+		unsigned int RecvMsg_MemoryAddress();
+		const TCHAR * RecvMsg_StrASCIIByte(int index);
+		unsigned int RecvMsg_UnsignedByte(int index);
+		int RecvMsg_SignedByte(int index);
+		unsigned int RecvMsg_UnsignedShort(int index);
+		int RecvMsg_SignedShort(int index);
+		unsigned int RecvMsg_UnsignedInteger(int index);
+		int RecvMsg_SignedInteger(int index);
+		float RecvMsg_Float(int index);
+		const TCHAR * RecvMsg_StringWithSize(int index, int size);
+		const TCHAR * RecvMsg_String(int index);
+		unsigned int RecvMsg_Subchannel();
 		unsigned int Channel_Count();
 		const TCHAR * Client_GetLocalData(const TCHAR * key);
-		const TCHAR * CursorASCIIByte();
-		unsigned int CursorUnsignedByte();
-		int CursorSignedByte();
-		unsigned int CursorUnsignedShort();
-		int CursorSignedShort();
-		unsigned int CursorUnsignedInteger();
-		int CursorSignedInteger();
-		float CursorFloat();
-		const TCHAR * CursorStringWithSize(int size);
-		const TCHAR * CursorString();
+		const TCHAR * RecvMsg_Cursor_StrASCIIByte();
+		unsigned int RecvMsg_Cursor_UnsignedByte();
+		int RecvMsg_Cursor_SignedByte();
+		unsigned int RecvMsg_Cursor_UnsignedShort();
+		int RecvMsg_Cursor_SignedShort();
+		unsigned int RecvMsg_Cursor_UnsignedInteger();
+		int RecvMsg_Cursor_SignedInteger();
+		float RecvMsg_Cursor_Float();
+		const TCHAR * RecvMsg_Cursor_StringWithSize(int size);
+		const TCHAR * RecvMsg_Cursor_String();
 		const TCHAR * Client_ProtocolImplementation();
 		const TCHAR * Channel_GetLocalData(const TCHAR * key);
 		unsigned int Port();
-		unsigned int BinaryToSend_Address();
+		unsigned int SendBinaryMsg_MemoryAddress();
 		const TCHAR * Welcome_Message();
 		// Added expressions:
-		const TCHAR * DumpMessage(int index, const TCHAR * format);
+		const TCHAR * RecvMsg_DumpToString(int index, const TCHAR * format);
 		unsigned int AllClientCount();
 		const TCHAR * GetDenyReason();
 		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
-		int ConvToUTF8_GetCompleteCharCount(const TCHAR * tStr);
+		int ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr);
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
 		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList);
 

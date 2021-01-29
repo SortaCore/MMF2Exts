@@ -150,7 +150,7 @@ void Extension::BlastNumberToChannel(int subchannel, int numToSend)
 	else if (selChannel->readonly())
 		CreateError("Error: Blast Number to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->blast(subchannel, std::string_view((char *)&numToSend, 4), 1);
+		selChannel->blast(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::BlastNumberToPeer(int subchannel, int numToSend)
 {
@@ -161,7 +161,7 @@ void Extension::BlastNumberToPeer(int subchannel, int numToSend)
 	else if (selPeer->readonly())
 		CreateError("Error: Blast Number to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->blast(subchannel, std::string_view((char *)&numToSend, 4), 1);
+		selPeer->blast(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::SelectChannelWithName(const TCHAR * channelName)
 {
@@ -330,7 +330,7 @@ void Extension::SendBinaryToServer(int subchannel)
 		Cli.sendserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
 void Extension::SendBinaryToChannel(int subchannel)
 {
@@ -344,7 +344,7 @@ void Extension::SendBinaryToChannel(int subchannel)
 		selChannel->send(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
 void Extension::SendBinaryToPeer(int subchannel)
 {
@@ -358,7 +358,7 @@ void Extension::SendBinaryToPeer(int subchannel)
 		selPeer->send(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
 void Extension::BlastBinaryToServer(int subchannel)
 {
@@ -368,7 +368,7 @@ void Extension::BlastBinaryToServer(int subchannel)
 		Cli.blastserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
 void Extension::BlastBinaryToChannel(int subchannel)
 {
@@ -382,7 +382,7 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
 void Extension::BlastBinaryToPeer(int subchannel)
 {
@@ -396,79 +396,73 @@ void Extension::BlastBinaryToPeer(int subchannel)
 		selPeer->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
 	if (AutomaticallyClearBinary)
-		ClearBinaryToSend();
+		SendMsg_Clear();
 }
-void Extension::AddByteText(const TCHAR * byte)
+void Extension::SendMsg_AddASCIIByte(const TCHAR * byte)
 {
-	if (_tcsnlen(byte, 2) != 1)
-		return CreateError("Adding byte to stack failed: byte \"%s\" supplied was part of a string, not a single byte.", TStringToUTF8(byte).c_str());
-	std::string u8Str(TStringToUTF8(byte));
-	AddToSend(u8Str.c_str(), u8Str.size());
-}
-void Extension::AddByteInt(int byte)
-{
-	if (byte > 255 || byte < -128)
-		return CreateError("Error: Byte out of bounds.");
-	if (byte < 0)
-	{
-		char RealByte = (char)byte;
-		AddToSend(&RealByte, 1);
-	}
-	else
-	{
-		unsigned char RealByte = (unsigned char)byte;
-		AddToSend(&RealByte, 1);
-	}
-}
-void Extension::AddShort(int _short)
-{
-	if (_short > MAXUINT16 || _short < MININT16)
-		return CreateError("Error: Short out of bounds.");
-	if (_short < 0)
-	{
-		short RealShort = (short)_short;
-		AddToSend(&RealShort, 2);
-	}
-	else
-	{
-		unsigned short RealShort = (unsigned short)_short;
-		AddToSend(&RealShort, 2);
-	}
-}
-void Extension::AddInt(int _int)
-{
-	AddToSend(&_int, 4);
-}
-void Extension::AddFloat(float _float)
-{
-	AddToSend(&_float, 4);
-}
-void Extension::AddStringWithoutNull(const TCHAR * string)
-{
-	std::string stringU8(TStringToUTF8(string));
-	if (string)
-		AddToSend(stringU8.c_str(), stringU8.size());
-	else
-		CreateError("Adding string without null failed: pointer was null.");
-}
-void Extension::AddString(const TCHAR *string)
-{
-	std::string stringU8(TStringToUTF8(string));
-	if (string)
-		AddToSend(stringU8.c_str(), stringU8.size() + 1);
-	else
-		CreateError("Adding string failed: pointer was null.");
-}
-void Extension::AddBinary(unsigned int address, int size)
-{
-	if (size < 0)
-		return CreateError("Add binary failed: Size less than 0.");
+	const std::string u8Str(TStringToUTF8(byte));
+	if (u8Str.size() != 1)
+		return CreateError("Adding ASCII character to binary failed: byte \"%s\" supplied was part of a string, not a single byte.", u8Str.c_str());
 
-	if (size != 0)
-		AddToSend((void *)(long)address, size);
-	// else do nothing
+	// ANSI byte, not ASCII; or not displayable, so probably a corrupt string.
+	if (reinterpret_cast<const std::uint8_t &>(u8Str[0]) > 127 || !std::isprint(u8Str[0]))
+		return CreateError("Adding ASCII character to binary failed: byte \"%u\" was not a valid ASCII character.", (unsigned int) reinterpret_cast<const std::uint8_t &>(u8Str[0]));
+
+	SendMsg_Sub_AddData(u8Str.c_str(), sizeof(char));
 }
-void Extension::ClearBinaryToSend()
+void Extension::SendMsg_AddByteInt(int byte)
+{
+	if (byte > UINT8_MAX || byte < INT8_MIN)
+	{
+		return CreateError("Adding byte to binary (as int) failed: the supplied number %i will not fit in range "
+			"%i to %i (signed byte) or range 0 to %i (unsigned byte).", byte, INT8_MIN, INT8_MAX, UINT8_MAX);
+	}
+
+	SendMsg_Sub_AddData(&byte, sizeof(char));
+}
+void Extension::SendMsg_AddShort(int _short)
+{
+	if (_short > UINT16_MAX || _short < INT16_MIN)
+	{
+		return CreateError("Adding short to binary failed: the supplied number %i will not fit in range "
+			"%i to %i (signed short) or range 0 to %i (unsigned short).", _short, INT16_MIN, INT16_MAX, UINT16_MAX);
+	}
+
+	SendMsg_Sub_AddData(&_short, sizeof(short));
+}
+void Extension::SendMsg_AddInt(int _int)
+{
+	SendMsg_Sub_AddData(&_int, sizeof(int));
+}
+void Extension::SendMsg_AddFloat(float _float)
+{
+	SendMsg_Sub_AddData(&_float, sizeof(float));
+}
+void Extension::SendMsg_AddStringWithoutNull(const TCHAR * string)
+{
+	if (!IsValidPtr(string))
+		return CreateError("Adding string without null terminator failed: string address %p supplied was invalid.", string);
+
+	const std::string stringU8(TStringToUTF8(string));
+	SendMsg_Sub_AddData(stringU8.c_str(), stringU8.size());
+}
+void Extension::SendMsg_AddString(const TCHAR *string)
+{
+	if (!IsValidPtr(string))
+		return CreateError("Adding string failed: string address %p supplied was invalid.", string);
+
+	const std::string stringU8(TStringToUTF8(string));
+	SendMsg_Sub_AddData(stringU8.c_str(), stringU8.size() + 1);
+}
+void Extension::SendMsg_AddBinaryFromAddress(unsigned int address, int size)
+{
+	// Address is checked in SendMsg_Sub_AddData()
+	if (size < 0)
+		return CreateError("Add binary failed: Size %i is less than 0.", size);
+
+	SendMsg_Sub_AddData((void *)(long)address, size);
+}
+void Extension::SendMsg_Clear()
 {
 	if (SendMsg)
 	{
@@ -477,7 +471,7 @@ void Extension::ClearBinaryToSend()
 	}
 	SendMsgSize = 0;
 }
-void Extension::SaveReceivedBinaryToFile(int position, int size, const TCHAR * filename)
+void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filename)
 {
 	if (position < 0)
 		return CreateError("Cannot save received binary to file; supplied position %i is less than 0.", position);
@@ -511,7 +505,7 @@ void Extension::SaveReceivedBinaryToFile(int position, int size, const TCHAR * f
 			" The message has not been modified.", errno, errtext);
 	}
 }
-void Extension::AppendReceivedBinaryToFile(int position, int size, const TCHAR * filename)
+void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filename)
 {
 	if (position < 0)
 		return CreateError("Cannot append received binary to file; supplied position %i is less than 0.", position);
@@ -544,7 +538,7 @@ void Extension::AppendReceivedBinaryToFile(int position, int size, const TCHAR *
 	if (fclose(File))
 		CreateError("Cannot append received binary to file \"%s\", error number %i occurred with writing last part of the file.", TStringToUTF8(filename).c_str(), errno);
 }
-void Extension::AddFileToBinary(const TCHAR * filename)
+void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 {
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot add file to send binary; supplied filename \"\" is invalid.");
@@ -578,7 +572,7 @@ void Extension::AddFileToBinary(const TCHAR * filename)
 		if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
 			CreateError("Couldn't read file \"%s\" into binary to send; reading file caused error %i \"%s\".", TStringToUTF8(filename).c_str(), errno, errtext);
 		else
-			AddToSend(buffer, amountRead);
+			SendMsg_Sub_AddData(buffer, amountRead);
 
 		free(buffer);
 	}
@@ -613,7 +607,7 @@ void Extension::JoinChannel(const TCHAR * channelName, int hidden, int closeAuto
 		return CreateError("Cannot join channel: invalid channel name %s supplied.", channelNameU8.c_str());
 	Cli.join(channelNameU8, hidden != 0, closeAutomatically != 0);
 }
-void Extension::CompressSendBinary()
+void Extension::SendMsg_CompressBinary()
 {
 	if (SendMsgSize <= 0)
 		return CreateError("Cannot compress send binary; message is too small.");
@@ -667,7 +661,7 @@ void Extension::CompressSendBinary()
 	SendMsg = output_bufferResize;
 	SendMsgSize = 4 + strm.total_out;
 }
-void Extension::DecompressReceivedBinary()
+void Extension::RecvMsg_DecompressBinary()
 {
 	if (threadData->receivedMsg.content.size() <= 4)
 		return CreateError("Cannot decompress received binary; message is too small.");
@@ -715,7 +709,7 @@ void Extension::DecompressReceivedBinary()
 	threadData->receivedMsg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
 	threadData->receivedMsg.cursor = 0;
 }
-void Extension::MoveReceivedBinaryCursor(int position)
+void Extension::RecvMsg_MoveCursor(int position)
 {
 	if (position < 0)
 		return CreateError("Cannot move cursor; Position less than 0.");
@@ -826,7 +820,7 @@ void Extension::Connect(const TCHAR * hostname)
 	std::string hostnameU8(TStringToUTF8(hostname));
 	Cli.connect(hostnameU8.c_str(), Port);
 }
-void Extension::ResizeBinaryToSend(int newSize)
+void Extension::SendMsg_Resize(int newSize)
 {
 	if (newSize < 0)
 		return CreateError("Cannot change size of binary to send: new size is under 0 bytes.");

@@ -124,8 +124,8 @@
 				[ 27, "On loop" ],
 				[ 28, "On loop finished" ],
 				"---",
-				[ 59, "[ With loop name ] On loop" ],
-				[ 60, "[ With loop name ] On loop finished" ]
+				[ 59, "[With loop name] On loop" ],
+				[ 60, "[With loop name] On loop finished" ]
 			],
 			[ "Channel",
 				[ 4, "On join" ],
@@ -138,8 +138,8 @@
 				[ 18, "On joined channel loop finished" ],
 				[ 73, "Is joined to channel" ],
 				"---",
-				[ 63, "[ With loop name ] On joined channel loop" ],
-				[ 64, "[ With loop name ] On joined channel loop finished" ],
+				[ 63, "[With loop name] On joined channel loop" ],
+				[ 64, "[With loop name] On joined channel loop finished" ],
 				"---",
 				[ "Peers",
 					[ 10, "On peer connect" ],
@@ -149,8 +149,8 @@
 					[ 13, "On loop" ],
 					[ 17, "On loop finished" ],
 					"---",
-					[ 61, "[ With loop name ] On loop" ],
-					[ 62, "[ With loop name ] On loop finished" ],
+					[ 61, "[With loop name] On loop" ],
+					[ 62, "[With loop name] On loop finished" ],
 					"---",
 					[ 57, "Selected peer is the channel master" ],
 					"---",
@@ -1419,7 +1419,7 @@
 				]
 			},
 			{
-				"Title": "UTF8TestAllowList$(",
+				"Title": "UTF8TestAgainstAllowList$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Text", "Text to test" ],

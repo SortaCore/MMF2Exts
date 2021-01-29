@@ -1877,7 +1877,7 @@ struct codepointsallowlist {
 	// Updates the allowlisted Unicode code points in this struct, returns error or blank
 	std::string setcodepointsallowedlist(std::string codePointList);
 	// True if the string passed matches the allow list.
-	int checkcodepointsallowed(std::string_view toTest) const;
+	int checkcodepointsallowed(const std::string_view toTest, int * const rejectedUTF32CodePoint = NULL) const;
 };
 struct relayserverinternal;
 struct relayserver

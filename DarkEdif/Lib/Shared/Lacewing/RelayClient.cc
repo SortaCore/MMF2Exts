@@ -260,7 +260,6 @@ namespace lacewing
 	relayclient::~relayclient()
 	{
 		lacewing::writelock wl = this->lock.createWriteLock();
-		OutputDebugStringA("~relayclient()\n");
 		delete ((relayclientinternal *)internaltag);
 		internaltag = nullptr;
 	}

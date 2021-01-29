@@ -66,20 +66,20 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(43, BlastNumberToChannel);
 		LinkAction(44, BlastBinaryToClient);
 		LinkAction(45, BlastBinaryToChannel);
-		LinkAction(46, AddByteText);
-		LinkAction(47, AddByteInt);
-		LinkAction(48, AddShort);
-		LinkAction(49, AddInt);
-		LinkAction(50, AddFloat);
-		LinkAction(51, AddStringWithoutNull);
-		LinkAction(52, AddString);
-		LinkAction(53, AddBinary);
-		LinkAction(54, AddFileToBinary);
-		LinkAction(55, CompressSendBinary);
-		LinkAction(56, ClearBinaryToSend);
-		LinkAction(57, SaveReceivedBinaryToFile);
-		LinkAction(58, AppendReceivedBinaryToFile);
-		LinkAction(59, DecompressReceivedBinary);
+		LinkAction(46, SendMsg_AddASCIIByte);
+		LinkAction(47, SendMsg_AddByteInt);
+		LinkAction(48, SendMsg_AddShort);
+		LinkAction(49, SendMsg_AddInt);
+		LinkAction(50, SendMsg_AddFloat);
+		LinkAction(51, SendMsg_AddStringWithoutNull);
+		LinkAction(52, SendMsg_AddString);
+		LinkAction(53, SendMsg_AddBinaryFromAddress);
+		LinkAction(54, SendMsg_AddFileToBinary);
+		LinkAction(55, SendMsg_CompressBinary);
+		LinkAction(56, SendMsg_Clear);
+		LinkAction(57, RecvMsg_SaveToFile);
+		LinkAction(58, RecvMsg_AppendToFile);
+		LinkAction(59, RecvMsg_DecompressBinary);
 		LinkAction(60, Channel_LoopClients);
 		LinkAction(61, OnInteractive_DropMessage);
 		LinkAction(62, Client_SelectSender);
@@ -91,9 +91,9 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(68, FlashServer_Host);
 		LinkAction(69, FlashServer_StopHosting);
 		LinkAction(70, Client_SetLocalData);
-		LinkAction(71, MoveReceivedBinaryCursor);
+		LinkAction(71, RecvMsg_MoveCursor);
 		LinkAction(72, Channel_SetLocalData);
-		LinkAction(73, ResizeBinaryToSend);
+		LinkAction(73, SendMsg_Resize);
 		// Added actions:
 		LinkAction(74, EnableCondition_OnConnectRequest);
 		LinkAction(75, EnableCondition_OnJoinChannelRequest);
@@ -180,7 +180,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	{
 		LinkExpression(0, Error);
 		LinkExpression(1, Lacewing_Version);
-		LinkExpression(2, BinaryToSend_Size);
+		LinkExpression(2, SendBinaryMsg_Size);
 		LinkExpression(3, RequestedClientName);
 		LinkExpression(4, RequestedChannelName);
 		LinkExpression(5, Channel_Name);
@@ -190,42 +190,42 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(9, Client_IP);
 		LinkExpression(10, Client_ConnectionTime);
 		LinkExpression(11, Client_ChannelCount);
-		LinkExpression(12, ReceivedStr);
-		LinkExpression(13, ReceivedInt);
-		LinkExpression(14, ReceivedBinarySize);
-		LinkExpression(15, ReceivedBinaryAddress);
-		LinkExpression(16, StrASCIIByte);
-		LinkExpression(17, UnsignedByte);
-		LinkExpression(18, SignedByte);
-		LinkExpression(19, UnsignedShort);
-		LinkExpression(20, SignedShort);
-		LinkExpression(21, UnsignedInteger);
-		LinkExpression(22, SignedInteger);
-		LinkExpression(23, Float);
-		LinkExpression(24, StringWithSize);
-		LinkExpression(25, String);
-		LinkExpression(26, Subchannel);
+		LinkExpression(12, RecvMsg_ReadAsString);
+		LinkExpression(13, RecvMsg_ReadAsInteger);
+		LinkExpression(14, RecvMsg_SizeInBytes);
+		LinkExpression(15, RecvMsg_MemoryAddress);
+		LinkExpression(16, RecvMsg_StrASCIIByte);
+		LinkExpression(17, RecvMsg_UnsignedByte);
+		LinkExpression(18, RecvMsg_SignedByte);
+		LinkExpression(19, RecvMsg_UnsignedShort);
+		LinkExpression(20, RecvMsg_SignedShort);
+		LinkExpression(21, RecvMsg_UnsignedInteger);
+		LinkExpression(22, RecvMsg_SignedInteger);
+		LinkExpression(23, RecvMsg_Float);
+		LinkExpression(24, RecvMsg_StringWithSize);
+		LinkExpression(25, RecvMsg_String);
+		LinkExpression(26, RecvMsg_Subchannel);
 		LinkExpression(27, Channel_Count);
 		LinkExpression(28, Client_GetLocalData);
-		LinkExpression(29, CursorASCIIByte);
-		LinkExpression(30, CursorUnsignedByte);
-		LinkExpression(31, CursorSignedByte);
-		LinkExpression(32, CursorUnsignedShort);
-		LinkExpression(33, CursorSignedShort);
-		LinkExpression(34, CursorUnsignedInteger);
-		LinkExpression(35, CursorSignedInteger);
-		LinkExpression(36, CursorFloat);
-		LinkExpression(37, CursorStringWithSize);
-		LinkExpression(38, CursorString);
+		LinkExpression(29, RecvMsg_Cursor_StrASCIIByte);
+		LinkExpression(30, RecvMsg_Cursor_UnsignedByte);
+		LinkExpression(31, RecvMsg_Cursor_SignedByte);
+		LinkExpression(32, RecvMsg_Cursor_UnsignedShort);
+		LinkExpression(33, RecvMsg_Cursor_SignedShort);
+		LinkExpression(34, RecvMsg_Cursor_UnsignedInteger);
+		LinkExpression(35, RecvMsg_Cursor_SignedInteger);
+		LinkExpression(36, RecvMsg_Cursor_Float);
+		LinkExpression(37, RecvMsg_Cursor_StringWithSize);
+		LinkExpression(38, RecvMsg_Cursor_String);
 		LinkExpression(39, Client_ProtocolImplementation);
 		LinkExpression(40, Channel_GetLocalData);
 		LinkExpression(41, Port);
-		LinkExpression(42, BinaryToSend_Address);
+		LinkExpression(42, SendBinaryMsg_MemoryAddress);
 		// Added expressions:
-		LinkExpression(43, DumpMessage);
+		LinkExpression(43, RecvMsg_DumpToString);
 		LinkExpression(44, AllClientCount);
 		LinkExpression(45, GetDenyReason);
-		LinkExpression(46, ConvToUTF8_GetCompleteCharCount);
+		LinkExpression(46, ConvToUTF8_GetCompleteCodePointCount);
 		LinkExpression(47, ConvToUTF8_GetVisibleCharCount);
 		LinkExpression(48, ConvToUTF8_GetByteCount);
 		LinkExpression(49, ConvToUTF8_TestAllowList);
@@ -313,7 +313,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	}
 	else
 	{
-		OutputDebugStringA("Non-Global object; creating globals, not submitting to WriteGlobal.\n");
+		OutputDebugStringA(PROJECT_NAME " - Non-Global object; creating globals, not submitting to WriteGlobal.\n");
 		globals = new GlobalInfo(this, edPtr);
 
 		globals->_objEventPump->tick();
@@ -440,7 +440,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	enableInactivityTimer = edPtr->enableInactivityTimer;
 
 	// Timer as ten minutes, or disabled.
-	_server.setinactivitytimer(enableInactivityTimer ? 10 * 60 * 1000 : MAXINT32);
+	_server.setinactivitytimer(enableInactivityTimer ? 10 * 60 * 1000 : INT32_MAX);
 
 	_server.onerror(::OnError);
 	_server.onconnect(::OnClientConnectRequest);
@@ -474,6 +474,10 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 
 	if (!pendingDelete)
 		MarkAsPendingDelete();
+
+	// Holders trying to use MarkAsPendingDelete() secure themselves with this lock,
+	// so we don't delete in the MarkAsPendingDelete() but in dtor only.
+	DeleteCriticalSection(&lock);
 }
 void GlobalInfo::MarkAsPendingDelete()
 {
@@ -616,8 +620,8 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 
 	// Initialise
 	newEvent2.numEvents = twoEvents ? 2 : 1;
-	newEvent2.CondTrig[0] = (unsigned short)event1ID;
-	newEvent2.CondTrig[1] = (unsigned short)event2ID;
+	newEvent2.CondTrig[0] = (std::uint16_t)event1ID;
+	newEvent2.CondTrig[1] = (std::uint16_t)event2ID;
 	newEvent2.channel = channel;
 	newEvent2.senderClient = senderClient;
 	newEvent2.receivingClient = receivingClient;
@@ -648,7 +652,7 @@ void Extension::ClearThreadData()
 {
 	threadData = std::make_shared<EventToRun>();
 }
-std::string Extension::TStringToUTF8Simplified(std::tstring str)
+std::string Extension::TStringToUTF8Simplified(std::tstring_view str)
 {
 	return lw_u8str_simplify(TStringToUTF8(str));
 }
@@ -717,7 +721,7 @@ int Extension::GetNumBytesInUTF8Char(std::string_view sv)
 
 // Reads string at given position of received binary. If sizeInCodePoints is -1, will expect a null byte.
 // isCursorExpression is used for error messages.
-std::tstring Extension::ReadStringFromRecvBinary(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
+std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
 {
 	// User requested empty size, let 'em have it
 	if (sizeInCodePoints == 0)
@@ -900,7 +904,7 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, ...)
 	va_end(v);
 }
 
-void Extension::AddToSend(const void * data, size_t size)
+void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 {
 	if (!data)
 	{
@@ -927,6 +931,13 @@ void Extension::AddToSend(const void * data, size_t size)
 
 	SendMsg = newptr;
 	SendMsgSize += size;
+}
+bool Extension::IsValidPtr(const void * data)
+{
+	// Common error memory addresses; null pointer (0x0), uninitalized filler memory (0xCC/0xCD),
+	// freed filler memory (0xDD). See https://stackoverflow.com/a/370362 .
+	// I'm not expecting Bluewing to have issues with this, but other exts might pass bad memory to Blue.
+	return data != 0x00000000 && (long)data != 0xCCCCCCCC && (long)data != 0xDDDDDDDD && (long)data != 0xCDCDCDCD;
 }
 
 static const std::tstring empty;
