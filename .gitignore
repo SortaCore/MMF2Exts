@@ -5,6 +5,9 @@ FusionSDKConfig.ini
 DarkExt.PostMinify.json
 # Intermediate files from build, and generated ACE callback table
 Temp/
+# HelpNDoc intermediate files, when you're editing HND files in "MFAs and documentation" folders
+*.lck
+*.hnd-journal
 
 #################
 ## Eclipse
