@@ -112,7 +112,7 @@ public:
 	std::string_view getremaining(lw_ui32 minimumlength = 0U, bool nullTerminator = false, bool stripNull = false, lw_ui32 maximumlength = 0xffffffff)
 	{
 		if (failed)
-			return this->buffer;
+			return std::string_view();
 
 		assert(!nullTerminator || minimumlength > 0);
 		assert(maximumlength > minimumlength);

@@ -30,7 +30,7 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 }
 
 /// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
-bool lw_sv_cmp(std::string_view first, std::string_view second)
+bool lw_sv_cmp(const std::string_view first, const std::string_view second)
 {
 	if (first.size() != second.size())
 		return false;
@@ -39,7 +39,8 @@ bool lw_sv_cmp(std::string_view first, std::string_view second)
 }
 
 /// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check. </summary>
-bool lw_sv_icmp(std::string_view first, std::string_view second)
+[[deprecated]]
+bool lw_sv_icmp(const std::string_view first, const std::string_view second)
 {
 	if (first.size() != second.size())
 		return false;
@@ -51,41 +52,122 @@ bool lw_sv_icmp(std::string_view first, std::string_view second)
 #endif
 }
 
-// Unfortunately every single Unicode library decomposes into 4-byte chars.
-// We can at least achieve platform compatibility by using a third-party library.
+// Every Unicode library decomposes into 4-byte chars, probably for the x86 nativeness.
+// For platform compatibility, we use a third-party library.
 #include "deps/utf8proc.h"
 
 
 /// <summary> Returns a composed, lowercased (with invariant culture), stripped-down version of
-///			  name(). Used for easier searching, and to prevent similar names as an exploit. </summary>
-std::string lw_u8str_simplify(std::string_view first)
+///			  passed string. Used for easier searching, and to prevent similar names as an exploit. </summary>
+std::string lw_u8str_simplify(const std::string_view first)
 {
 	if (first.empty())
 		return std::string();
 
 	// Effectively call utf8proc_tolower(), but without null terminator, and return value is more
-	// obviously not the input value
+	// obviously not the input value.
+
+	// This is an NFKC transformation, a stripping transformation, and by use of
+	// custom passing it to utf8proc_lower, a lowercase transformation.
+	constexpr utf8proc_option_t nfkc_lower = (utf8proc_option_t)(UTF8PROC_STABLE | UTF8PROC_COMPOSE | UTF8PROC_COMPAT | UTF8PROC_LUMP |
+		UTF8PROC_NLF2LS | UTF8PROC_STRIPCC | UTF8PROC_STRIPMARK | UTF8PROC_STRIPNA);
+
 	utf8proc_uint8_t * retval;
 	utf8proc_ssize_t resultSizeBytes = utf8proc_map_custom((utf8proc_uint8_t *)first.data(), first.size(), &retval,
-		(utf8proc_option_t)(UTF8PROC_STABLE | UTF8PROC_COMPOSE | UTF8PROC_COMPAT | UTF8PROC_LUMP |
-			UTF8PROC_NLF2LS | UTF8PROC_STRIPCC | UTF8PROC_STRIPMARK | UTF8PROC_STRIPNA),
-		[](utf8proc_int32_t codepoint, void *) { return utf8proc_tolower(codepoint); }, NULL);
+		nfkc_lower, [](utf8proc_int32_t codepoint, void *) {
+			return utf8proc_tolower(codepoint);
+	}, NULL);
 
 	if (resultSizeBytes <= 0)
 		return std::string();
 
-	// _MB_CP_UTF8 YES, multibyte is used for UTF8.
-	// the locale will be the UTF-8 enabled English
-	// auto loc = _create_locale(LC_CTYPE | LC_COLLATE, "en_US.UTF-8");
-	// assert(_mbslwr_s_l((unsigned char *)u8str.data(), u8str.size(), loc) != NO_ERROR);
-	// u8str.resize(strlen(u8str.c_str()));
 	std::string u8str((char *)retval, resultSizeBytes);
 	free(retval);
+
+	// Lots of the characters are lumped together by virtue of UTF8PROC_LUMP enum above.
+	// These further things are not covered by the lumping, and aren't use of lumps
+	for (size_t i = 0; i < u8str.size(); ++i)
+	{
+		char & c = u8str[i];
+		// Don't allow '0' to be confused with 'O', could happen with some fonts
+		if (c == '0')
+		{
+			c = 'o';
+			continue;
+		}
+		// Pipe '|', 1, and uppercase I (converted to 'i' by utf8proc_tolower() above)
+		// Include 'l' for the |\| type of checks later
+		if (c == '|' || c == '1' || c == 'i' || c == 'l')
+		{
+			c = 'l';
+
+			// Someone faking a D with |) or the like
+			if (u8str.size() > i + 1 && u8str[i + 1] == ')')
+				u8str.erase(i + 1, 1);
+
+			// Read backwards from ending | in these detections,
+			// so the simplifcation of "|1il" => "l" has happened already
+			// (so |\| and 1\1 can be looked for by l\l )
+			if (i >= 2 && u8str[i - 2] == 'l')
+			{
+				// |\| (l\l to N (but due to lowercase, n)
+				if (u8str[i - 1] == '\\')
+				{
+					u8str[i - 2] = 'n'; // N but lowercase
+					u8str.erase(i - 2, 2); // remove "\l"
+					i -= 2;
+				}
+				// |\/| (lvl) to M (note a "A\/B" will become "AvB" due to the \/ check later)
+				else if (u8str[i - 1] == 'v')
+				{
+					u8str[i - 2] = 'm'; // M but lowercase
+					u8str.erase(i - 1, 2); // remove "vl"
+					i -= 2;
+				}
+			}
+			continue;
+		}
+		// 5 and S are similar
+		if (c == '5')
+		{
+			c = 's';
+			continue;
+		}
+		if (c == '(')
+		{
+			c = 'c';
+			continue;
+		}
+		// horizontal ellipsis (U+2026) to "..."
+		if (c == ((char)0xE2) && u8str.size() > i + 2 && u8str[i + 1] == ((char)0x80) && u8str[i + 2] == ((char)0xA6))
+		{
+			u8str[i] = '.';
+			u8str[++i] = '.';
+			u8str[++i] = '.';
+			continue;
+		}
+		// \/ to V (but due to lowercase, v)
+		if (c == '\\' && u8str.size() > i + 1 && u8str[i + 1] == '/')
+		{
+			c = 'v';
+			u8str.erase(i + 1, 1); // drop the '/'
+
+			// fall thru deliberately for the vv to w comparison
+		}
+		// vv to w, just in case
+		if (c == 'v' && u8str.size() > i + 1 && u8str[i + 1] == 'v')
+		{
+			c = 'w';
+			u8str.erase(i + 1, 1); // drop the second 'v'
+		}
+		// Box drawing characters are dumb. Anyone allowing those have brought problems upon themselves.
+	}
+
 	return u8str;
 }
 
 /// <summary> Validates a UTF-8 std::string as having readable codepoints. </summary>
-bool lw_u8str_validate(std::string_view first)
+bool lw_u8str_validate(const std::string_view first)
 {
 	if (first.empty())
 		return true;

@@ -330,7 +330,7 @@ namespace lacewing
 		framebuilder &message = internal.messageMF;
 
 		message.addheader(0, 0);  /* request */
-		message.add <unsigned char>(4);  /* channellist */
+		message.add <lw_ui8>(4);  /* channellist */
 
 		message.send(internal.socket);
 	}
@@ -389,7 +389,7 @@ namespace lacewing
 
 		lacewing::writelock wl = lock.createWriteLock();
 
-		framebuilder	&message = internal.messageMF;
+		framebuilder & message = internal.messageMF;
 		message.addheader (0, 0);  /* request */
 		message.add <lw_ui8>(2);  /* joinchannel */
 		message.add <lw_ui8>((hidden ? 1 : 0) | (autoclose ? 2 : 0));
@@ -622,7 +622,7 @@ namespace lacewing
 					id = reader.get <lw_ui16>();
 
 					// Don't expect welcome message to be null terminated
-					std::string_view welcomemessage = reader.get(reader.bytesleft());
+					const std::string_view welcomemessage = reader.getremaining();
 
 					if (reader.failed)
 						break;
@@ -642,7 +642,7 @@ namespace lacewing
 					if (handler_connectiondenied)
 					{
 						// Not null terminated, can't use getremaining()
-						std::string_view denyReason = reader.get(reader.bytesleft());
+						const std::string_view denyReason = reader.get(reader.bytesleft());
 
 						if (reader.failed)
 							break;
@@ -656,8 +656,8 @@ namespace lacewing
 
 			case 1: /* setname */
 			{
-				lw_ui8 namelength = reader.get <lw_ui8>();
-				std::string_view name = reader.get(namelength);
+				const lw_ui8 namelength = reader.get <lw_ui8>();
+				const std::string_view name = reader.get(namelength);
 
 				if (reader.failed)
 					break;
@@ -673,7 +673,7 @@ namespace lacewing
 					}
 					else
 					{
-						std::string oldname = this->name;
+						const std::string oldname = this->name;
 						this->name = name;
 
 						if (handler_name_changed)
@@ -685,7 +685,7 @@ namespace lacewing
 					if (handler_name_denied)
 					{
 						// Not null terminated, can't use getremaining()
-						std::string_view denyReason = reader.get(reader.bytesleft());
+						const std::string_view denyReason = reader.get(reader.bytesleft());
 
 						if (reader.failed)
 							break;
@@ -699,9 +699,9 @@ namespace lacewing
 
 			case 2: /* joinchannel */
 			{
-				lw_ui8 flags = succeeded ? reader.get <lw_ui8>() : 0;
-				lw_ui8 namelength = reader.get <lw_ui8>();
-				std::string_view name = reader.get(namelength);
+				const lw_ui8 flags = succeeded ? reader.get <lw_ui8>() : 0;
+				const lw_ui8 namelength = reader.get <lw_ui8>();
+				const std::string_view name = reader.get(namelength);
 
 				if (reader.failed)
 				{
@@ -711,7 +711,7 @@ namespace lacewing
 
 				if (succeeded)
 				{
-					lw_ui16 channelid = reader.get <lw_ui16>();
+					const lw_ui16 channelid = reader.get <lw_ui16>();
 
 					if (reader.failed)
 					{
@@ -724,6 +724,7 @@ namespace lacewing
 
 					channel->_id = channelid;
 					channel->_name = name;
+					channel->_namesimplified = lw_u8str_simplify(name);
 					channel->_ischannelmaster = (flags & 1) != 0;
 
 					for (; reader.bytesleft() > 0;)
@@ -755,7 +756,7 @@ namespace lacewing
 					if (handler_channel_joindenied)
 					{
 						// Not null terminated, can't use getremaining()
-						std::string_view denyReason = reader.get(reader.bytesleft());
+						const std::string_view denyReason = reader.get(reader.bytesleft());
 
 						if (reader.failed)
 							break;
@@ -769,10 +770,10 @@ namespace lacewing
 
 			case 3: /* leavechannel */
 			{
-				lw_ui16 id = reader.get<lw_ui16>();
+				const lw_ui16 id = reader.get<lw_ui16>();
 				if (reader.failed)
 					break;
-				std::shared_ptr<relayclient::channel> channel = findchannelbyid(id);
+				const std::shared_ptr<relayclient::channel> channel = findchannelbyid(id);
 
 				if (!channel)
 				{
@@ -798,7 +799,7 @@ namespace lacewing
 					// LW_ESCALATION_NOTE
 					// auto relayCliReadLock = this->client.lock.createReadLock();
 					auto relayCliWriteLock = client.lock.createWriteLock();
-					auto i = std::find(channels.cbegin(), channels.cend(), channel);
+					const auto i = std::find(channels.cbegin(), channels.cend(), channel);
 					if (i == channels.cend())
 						break; // Not found...
 					// LW_ESCALATION_NOTE
@@ -810,7 +811,7 @@ namespace lacewing
 					if (handler_channel_leavedenied)
 					{
 						// Not null terminated, can't use getremaining()
-						std::string_view denyReason = reader.get(reader.bytesleft());
+						const std::string_view denyReason = reader.get(reader.bytesleft());
 
 						if (reader.failed)
 							break;
@@ -827,17 +828,27 @@ namespace lacewing
 				auto relayCliWriteLock = this->client.lock.createWriteLock();
 				clearchannellist();
 
+				if (!succeeded)
+				{
+					lacewing::error error = error_new();
+					error->add("Channel listing request failed, got error %s from server.", std::string(reader.getremaining()).c_str());
+					this->handler_error(client, error);
+					error_delete(error);
+					return false;
+				}
+
 				for (; reader.bytesleft() > 0;)
 				{
-					lw_ui16 peercount = reader.get <lw_ui16>();
-					lw_ui8 namelength = reader.get <lw_ui8>();
-					std::string_view name = reader.get(namelength);
+					const lw_ui16 peercount = reader.get <lw_ui16>();
+					const lw_ui8 namelength = reader.get <lw_ui8>();
+					const std::string_view name = reader.get(namelength);
 
 					if (reader.failed)
 						break;
 
 					auto listing = std::make_shared<relayclient::channellisting>();
 					listing->_name = name;
+					listing->_namesimplified = lw_u8str_simplify(name);
 					listing->_peercount = peercount;
 					listing->internaltag = this;
 
@@ -866,7 +877,7 @@ namespace lacewing
 
 		case 1: /* binaryservermessage */
 		{
-			lw_ui8 subchannel = reader.get <lw_ui8>();
+			const lw_ui8 subchannel = reader.get <lw_ui8>();
 
 			// Messages are null-terminated, so must be 1 byte minimum.
 			std::string_view data = reader.getremaining(1, true);
@@ -888,13 +899,13 @@ namespace lacewing
 		{
 			const char * orig = reader.cursor();
 
-			lw_ui8 subchannel = reader.get <lw_ui8>();
-			lw_ui16 channel	  = reader.get<lw_ui16>();
-			lw_ui16 peer	  = reader.get<lw_ui16>();
+			const  lw_ui8 subchannel = reader.get <lw_ui8>();
+			const lw_ui16 channel	 = reader.get<lw_ui16>();
+			const lw_ui16 peer		 = reader.get<lw_ui16>();
 			if (reader.failed)
 				break;
 
-			auto channel2 = findchannelbyid(channel);
+			const auto channel2 = findchannelbyid(channel);
 			if (reader.failed || !channel2)
 				break;
 			std::shared_ptr<relayclient::channel::peer> peer2;
@@ -910,7 +921,7 @@ namespace lacewing
 			if (!peer2 || channel2->_readonly || peer2->_readonly)
 				break;
 
-			std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(1, true);
 
 			if (reader.failed)
 				break;
@@ -924,13 +935,13 @@ namespace lacewing
 
 		case 3: /* binarypeermessage */
 		{
-			lw_ui8 subchannel = reader.get <lw_ui8>();
-			lw_ui16 channel	  = reader.get<lw_ui16>();
-			lw_ui16 peer	  = reader.get<lw_ui16>();
+			const lw_ui8 subchannel = reader.get <lw_ui8>();
+			const lw_ui16 channel	= reader.get<lw_ui16>();
+			const lw_ui16 peer		= reader.get<lw_ui16>();
 			if (reader.failed)
 				break;
 
-			auto channel2 = findchannelbyid(channel);
+			const auto channel2 = findchannelbyid(channel);
 			if (reader.failed || !channel2)
 				break;
 			std::shared_ptr<relayclient::channel::peer> peer2;
@@ -956,7 +967,7 @@ namespace lacewing
 				break;
 			}
 
-			std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(1, true);
 
 			if (handler_message_peer)
 				handler_message_peer(client, channel2, peer2, blasted,
@@ -967,18 +978,18 @@ namespace lacewing
 
 		case 4: /* binaryserverchannelmessage */
 		{
-			lw_ui8 subchannel = reader.get <lw_ui8>();
-			lw_ui16 channel   = reader.get<lw_ui16>();
+			const lw_ui8 subchannel = reader.get <lw_ui8>();
+			const lw_ui16 channel   = reader.get<lw_ui16>();
 			if (reader.failed)
 				break;
 
-			auto channel2 = findchannelbyid(channel);
+			const auto channel2 = findchannelbyid(channel);
 
 			// A UDP message might outspeed against the TCP Channel Join message
 			if (!channel2 || channel2->_readonly)
 				break;
 
-			std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(1, true);
 
 			if (handler_message_serverchannel)
 				handler_message_serverchannel(client, channel2, blasted,
@@ -1002,7 +1013,7 @@ namespace lacewing
 
 		case 9: /* peer */
 		{
-			lw_ui16 channel = reader.get<lw_ui16>();
+			const lw_ui16 channel = reader.get<lw_ui16>();
 			if (reader.failed)
 				break;
 			auto channel2 = findchannelbyid(channel);
@@ -1019,15 +1030,15 @@ namespace lacewing
 				return true;
 			}
 
-			lw_ui16 peerid = reader.get <lw_ui16>();
+			const lw_ui16 peerid = reader.get <lw_ui16>();
 
 			// LW_ESCALATION_NOTE
 			// auto channelReadLock = channel2->lock.createReadLock();
 			auto channelWriteLock = channel2->lock.createWriteLock();
 			auto peer = channel2->findpeerbyid(peerid);
 
-			lw_ui8 flags = reader.get <lw_ui8>();
-			std::string_view name = reader.get(reader.bytesleft()); // name's not null terminated
+			const lw_ui8 flags = reader.get <lw_ui8>();
+			const std::string_view name = reader.get(reader.bytesleft()); // name's not null terminated
 
 			if (reader.failed)
 			{
@@ -1054,14 +1065,13 @@ namespace lacewing
 				// LW_ESCALATION_NOTE
 				// auto channelWriteLock = channelReadLock.lw_upgrade();
 				channelWriteLock.lw_relock();
-				auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
+				const auto i = std::find_if(channel2->peers.begin(), channel2->peers.end(),
 					[=](std::shared_ptr<relayclient::channel::peer> &p) { return p->_id == peerid; });
 				if (i != channel2->peers.end())
 					channel2->peers.erase(i);
 
 				return true;
 			}
-
 
 			if (!peer)
 			{
@@ -1102,7 +1112,7 @@ namespace lacewing
 					peer->_name = name;
 					peer->_namesimplified = lw_u8str_simplify(name);
 
-					std::string prevNameLocal = peer->_prevname;
+					const std::string prevNameLocal = peer->_prevname;
 
 					peerWriteLock.lw_unlock();
 
@@ -1325,8 +1335,8 @@ namespace lacewing
 		// noexcept enforced, so we can't check params
 		this->_id = id;
 		this->_name = name;
-		this->_ischannelmaster = flags;
 		this->_namesimplified = lw_u8str_simplify(name);
+		this->_ischannelmaster = flags;
 	}
 
 	relayclient::channel::peer::~peer() noexcept

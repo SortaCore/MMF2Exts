@@ -94,7 +94,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 	{
 		if (listNames[i] == listToSetStr)
 		{
-			std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)(i % 4), TStringToANSI(allowListContents));
+			const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)(i % 4), TStringToANSI(allowListContents));
 			if (!err.empty())
 				CreateError("Couldn't set Unicode %s allow list, %hs.", TStringToUTF8(listToSet).c_str(), err.c_str());
 			return;
@@ -280,9 +280,14 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 		return CreateError("Cannot change joining channel name: Cannot use a blank name.");
 
 	std::string newNameU8 = TStringToUTF8(newName);
-	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8) ||
-		!Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ChannelNames, newNameU8))
-		return CreateError("Cannot change joining channel name: Invalid characters in new name.");
+	
+	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8))
+		return CreateError("Cannot change joining channel name: name is invalid.");
+
+	int rejectedChar, charIndex = Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ChannelNames, newNameU8, &rejectedChar);
+	if (charIndex != -1)
+		return CreateError("Cannot change joining channel name: character  %i in new name.");
+
 	if (newNameU8.size() > 255)
 		return CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");
 

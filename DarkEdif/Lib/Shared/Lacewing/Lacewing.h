@@ -685,14 +685,14 @@ typedef lw_i8 lw_bool;
 void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
 
 /// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
-bool lw_sv_cmp(std::string_view first, std::string_view second);
+bool lw_sv_cmp(const std::string_view first, const std::string_view second);
 
 /// <summary> Returns a composed, lowercased (with invariant culture), stripped-down version of
 ///			  name(). Used for easier searching, and to prevent similar names as an exploit. </summary>
-std::string lw_u8str_simplify(std::string_view first);
+std::string lw_u8str_simplify(const std::string_view first);
 
 /// <summary> Validates a UTF-8 std::string as having readable codepoints. </summary>
-bool lw_u8str_validate(std::string_view first);
+bool lw_u8str_validate(const std::string_view first);
 
 /// <summary> Returns a normalised std::string (using NFC). Assumes a valid U8 string. </summary>
 bool lw_u8str_normalise(std::string & input);
@@ -1786,7 +1786,6 @@ public:
 			std::string name() const;
 			std::string namesimplified() const;
 			std::string prevname() const;
-			std::string prevnamesimplified() const;
 
 			bool readonly() const;
 		};
@@ -1876,7 +1875,7 @@ struct codepointsallowlist {
 
 	// Updates the allowlisted Unicode code points in this struct, returns error or blank
 	std::string setcodepointsallowedlist(std::string codePointList);
-	// True if the string passed matches the allow list.
+	// -1 if the string passed matches the allow list, otherwise index of failure.
 	int checkcodepointsallowed(const std::string_view toTest, int * const rejectedUTF32CodePoint = NULL) const;
 };
 struct relayserverinternal;
@@ -2135,9 +2134,9 @@ struct relayserver
 
 	// Updates the allowlisted Unicode code points used in text messages, channel names and peer names.
 	std::string setcodepointsallowedlist(codepointsallowlistindex type, std::string codePointList);
-	// True if the string passed matches the allow list.
-	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest) const;
-
+	// -1 if the string passed matches the allow list, otherwise the char index
+	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest, int * rejectedUTF32CodePoint = nullptr) const;
+	
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);
 	void onerror(handler_error);
