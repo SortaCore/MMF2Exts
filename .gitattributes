@@ -13,7 +13,7 @@
 *.png 	binary
 *.gif 	binary
 
-*.cs text=auto diff=csharp 
+*.cs text=auto diff=csharp
 *.vb text=auto
 
 *.py text=auto
@@ -36,11 +36,13 @@
 *.fsx text=auto
 *.hs text=auto
 
-*.csproj text=auto merge=union 
-*.vbproj text=auto merge=union 
-*.fsproj text=auto merge=union 
-*.dbproj text=auto merge=union 
-*.sln text=auto eol=crlf merge=union 
+*.csproj text=auto merge=union
+*.vbproj text=auto merge=union
+*.fsproj text=auto merge=union
+*.dbproj text=auto merge=union
+
+*.vcxproj text=auto merge=union
+*.sln text=auto eol=crlf merge=union
 
 
 # From the editorconfig
