@@ -184,7 +184,7 @@
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="cpp.hint" />
+    <None Include="..\..\cpp.hint" />
     <None Include="DarkExt.json" />
     <None Include="Icon.png" />
   </ItemGroup>

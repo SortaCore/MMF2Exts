@@ -9,11 +9,18 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 		specificCodePoints.clear();
 		codePointRanges.clear();
 		allAllowed = true;
+		list = acStr;
 		return std::string();
 	}
 
 	codepointsallowlist acTemp = *this;
+
+	// Reset to blank
+	codePointCategories.clear();
+	specificCodePoints.clear();
+	codePointRanges.clear();
 	allAllowed = false;
+	list = acStr;
 
 	const auto makeError = [this, &acTemp](const char * str, ...)
 	{
@@ -24,6 +31,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 		size_t numChars = vsnprintf(nullptr, 0, str, v);
 		std::string error(numChars, ' ');
 		vsprintf(error.data(), str, v2);
+		MessageBoxA(NULL, error.c_str(), "Error!", MB_ICONERROR);
 
 		va_end(v);
 		va_end(v2);
@@ -53,7 +61,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 	while (true)
 	{
 		remaining = (acStr.data() + acStr.size()) - cur;
-		if (remaining == 0)
+		if (cur >= acStr.data() + acStr.size() - 1)
 			break;
 
 		// Two-letter category, or letter + * for all categories
@@ -115,7 +123,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 		// Numeric, or numeric range expected
 		if (std::isdigit(cur[0])) {
 			char * endPtr;
-			std::uint32_t codePointAllowed = std::strtoul(cur, &endPtr, 0);
+			unsigned long codePointAllowed = std::strtoul(cur, &endPtr, 0);
 			if (codePointAllowed == 0 || codePointAllowed > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
 				return makeError("Specific codepoint %hs not a valid codepoint.", cur, acStr.c_str());
 
@@ -124,18 +132,21 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 			if (cur[0] == '\0' || cur[0] == ',')
 			{
 				if (std::find(specificCodePoints.cbegin(), specificCodePoints.cend(), codePointAllowed) != specificCodePoints.cend())
-					return makeError("Specific codepoint %ul was added twice in list \"%hs\".", codePointAllowed, acStr.c_str());
+					return makeError("Specific codepoint %lu was added twice in list \"%hs\".", codePointAllowed, acStr.c_str());
 
 				specificCodePoints.push_back(codePointAllowed);
+				if (cur[0] == ',')
+					++cur;
 				goto nextChar;
 			}
 
 			// Range of code points
 			if (cur[0] == '-')
 			{
-				std::uint32_t lastCodePointNum = std::strtoul(cur, &endPtr, 0);
+				++cur;
+				unsigned long lastCodePointNum = std::strtoul(cur, &endPtr, 0);
 				if (lastCodePointNum == 0 || lastCodePointNum > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
-					return makeError("Specific codepoint range  %ul - %hs is broken; %hs was not a valid number.", codePointAllowed, cur, cur);
+					return makeError("Ending number in codepoint range %lu to \"%.15hs...\" could not be read.", codePointAllowed, cur, cur);
 				// Range is reversed
 				if (lastCodePointNum < codePointAllowed)
 					return makeError("Range %lu to %lu is backwards.", codePointAllowed, lastCodePointNum);
@@ -148,13 +159,14 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 					return makeError("Range %lu to %lu is in the list twice.", codePointAllowed, lastCodePointNum);
 
 				codePointRanges.push_back(range);
+				cur = endPtr + 1; // skip the ','
 				goto nextChar;
 			}
 
 			// fall through
 		}
 
-		return makeError("Unrecognised character list starting at \"%hs\".", cur);
+		return makeError("Unrecognised character list starting at \"%.15hs\".", cur);
 
 	nextChar:
 		/* go to next char */;
@@ -172,7 +184,7 @@ int lacewing::codepointsallowlist::checkcodepointsallowed(const std::string_view
 	utf8proc_int32_t thisChar;
 	utf8proc_ssize_t numBytesInCodePoint, remainingBytes = toTest.size();
 	int codePointIndex = 0;
-	while (remainingBytes >= 0)
+	while (remainingBytes > 0)
 	{
 		numBytesInCodePoint = utf8proc_iterate(str, remainingBytes, &thisChar);
 		if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
@@ -182,26 +194,26 @@ int lacewing::codepointsallowlist::checkcodepointsallowed(const std::string_view
 			goto goodChar;
 		if (std::find_if(codePointRanges.cbegin(), codePointRanges.cend(),
 			[=](const std::pair<std::int32_t, std::int32_t> & range) {
-				return range.first >= thisChar && range.second <= thisChar;
+				return thisChar >= range.first && thisChar <= range.second;
 			}) != codePointRanges.cend())
 		{
 			goto goodChar;
 		}
-			utf8proc_category_t category = utf8proc_category(thisChar);
-			if (std::find(codePointCategories.cbegin(), codePointCategories.cend(), category) != codePointCategories.cend())
-				goto goodChar;
+		utf8proc_category_t category = utf8proc_category(thisChar);
+		if (std::find(codePointCategories.cbegin(), codePointCategories.cend(), category) != codePointCategories.cend())
+			goto goodChar;
 
-			// ... fall through from above
-		badChar:
-			if (rejectedUTF32CodePoint != NULL)
-				*rejectedUTF32CodePoint = thisChar;
-			return codePointIndex;
+		// ... fall through from above
+	badChar:
+		if (rejectedUTF32CodePoint != NULL)
+			*rejectedUTF32CodePoint = thisChar;
+		return codePointIndex;
 
-			// Loop around
-		goodChar:
-			++codePointIndex;
-			str += numBytesInCodePoint;
-			remainingBytes -= numBytesInCodePoint;
+		// Loop around
+	goodChar:
+		++codePointIndex;
+		str += numBytesInCodePoint;
+		remainingBytes -= numBytesInCodePoint;
 	}
 
 	return -1; // All good

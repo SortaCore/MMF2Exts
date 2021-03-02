@@ -3,6 +3,7 @@
 #include "Lacewing.h"
 #endif
 
+#include "deps/utf8proc.h"
 #include "IDPool.h"
 #include "FrameReader.h"
 #include "FrameBuilder.h"
@@ -325,6 +326,7 @@ struct relayserverinternal
 	std::string setcodepointsallowedlist(relayserver::codepointsallowlistindex type, std::string acStr);
 	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest, int * rejectedUTF32CodePoint = nullptr) const;
 };
+
 void handlerudperror(lacewing::udp udp, lacewing::error error);
 
 void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing::address address, std::string_view data)
@@ -629,6 +631,25 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 		return;
 	}
 
+	int rejectedCodePoint;
+	if (variant == 0 && serverinternal.checkcodepointsallowed(codepointsallowlistindex::MessagesSentToClients, message, &rejectedCodePoint) != -1)
+	{
+		utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+		if (utf8proc_codepoint_valid(rejectedCodePoint))
+		{
+			int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+			rejectCharAsStr[numBytesUsed] = '\0';
+		}
+
+		// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
+		lacewing::error error = lacewing::error_new();
+		error->add("Blocked peer text message \"%.15hs...\" from client %hs (ID %hu) -> %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
+			message.data(), name(), id(), receivingClient->name(), receivingClient->id(),
+			rejectedCodePoint, rejectCharAsStr);
+		serverinternal.handlererror(server, error);
+		lacewing::error_delete(error);
+		return;
+	}
 
 	framebuilder builder(!blasted);
 	builder.addheader(3, variant, blasted); /* binarypeermessage */
@@ -1147,7 +1168,7 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 	builder.add <lw_ui8>(channel->_channelmaster == client);  /* whether they are the channel master */
 
 	builder.add <lw_ui8>((lw_ui8)channel->_name.size());
-	builder.add(channel->_name.c_str(), channel->_name.size());
+	builder.add(channel->_name);
 
 	builder.add <lw_ui16>(channel->_id);
 
@@ -1157,7 +1178,7 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 		builder.add <lw_ui16>(cli->_id);
 		builder.add <lw_ui8>(cli == channel->_channelmaster ? 1 : 0);
 		builder.add <lw_ui8>((lw_ui8)cli->_name.size());
-		builder.add(cli->_name.c_str(), cli->_name.size());
+		builder.add(cli->_name);
 	}
 
 	{
@@ -1178,7 +1199,7 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 		builder.add <lw_ui16>(channel->_id);
 		builder.add <lw_ui16>(client->_id);
 		builder.add <lw_ui8>(0); // if there are peers, we can't be creating, so channelmaster always false
-		builder.add(client->_name.c_str(), client->_name.size());
+		builder.add(client->_name);
 
 		/* notify the other clients on the channel that this client has joined */
 
@@ -1294,6 +1315,8 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 	builder.framereset();
 }
 
+#include "deps/utf8proc.h"
+
 bool relayserver::client::checkname(std::string_view name)
 {
 	// Size check may be skipped if server is meant to change the name
@@ -1322,7 +1345,7 @@ bool relayserver::client::checkname(std::string_view name)
 	}
 
 	int badCharIndex = -1, rejectedCodePoint;
-	if (!lw_u8str_validate(name) || (badCharIndex = this->server.checkcodepointsallowed(relayserver::codepointsallowlistindex::ClientNames, name, &rejectedCodePoint)) != -1)
+	if (lw_u8str_trim(name, true).empty() || (badCharIndex = this->server.checkcodepointsallowed(codepointsallowlistindex::ClientNames, name, &rejectedCodePoint)) != -1)
 	{
 		framebuilder builder(true);
 
@@ -1333,13 +1356,20 @@ bool relayserver::client::checkname(std::string_view name)
 		builder.add <lw_ui8>((lw_ui8)name.size());
 		builder.add(name);
 
-		if (rejectedCodePoint == -1)
+		if (badCharIndex == -1)
 			builder.add("name not valid"sv);
 		else
 		{
 			char buffer[128];
-			int len = sprintf_s(buffer, "name not valid (U+%0.4X rejected at %i)", rejectedCodePoint, badCharIndex);
-			builder.add(buffer, len);
+			utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+			if (utf8proc_codepoint_valid(rejectedCodePoint))
+			{
+				int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+				rejectCharAsStr[numBytesUsed] = '\0';
+			}
+
+			int lenNoNull = sprintf_s(buffer, "name not valid (char U+%0.4X '%hs' rejected)", rejectedCodePoint, (char *)rejectCharAsStr);
+			builder.add(buffer, lenNoNull);
 		}
 
 		// LW_ESCALATION_NOTE
@@ -1396,8 +1426,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 	auto cliReadLock = client->lock.createReadLock();
 
 	lw_ui8 messagetypeid = (type >> 4);
-	lw_ui8 variant		 = (type << 4);
-	variant >>= 4;
+	lw_ui8 variant		 = (type & 0xF);
 
 	messagereader reader (messageP.data(), messageP.size());
 	framebuilder builder(true);
@@ -1516,26 +1545,45 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 				case 1: /* setname */
 				{
-					const std::string_view name = reader.getremaining (1U, false, true);
+					std::string name(reader.getremaining (1U, false, true)), nametrimmed;
+					nametrimmed.reserve(name.size());
 
-					if (reader.failed || name.find_first_of('\0') != std::string_view::npos || !lw_u8str_validate(name))
+					if (reader.failed || name.find_first_of('\0') != std::string_view::npos ||
+						!lw_u8str_normalize(name))
 					{
 						errStr << "Malformed Set Name request received, name could not be read"sv;
 						reader.failed = true;
-						trustedClient = name.empty(); // Don't make Relay games who allow no name in name sets cause a ban in bluewing-cpp-server
+
+						// Don't make Relay games who allow no name in name sets cause a ban in bluewing-cpp-server
+						trustedClient = name.empty();
 						break;
 					}
 
 					cliReadLock.lw_unlock();
+
+					// After removing spaces, it's blank
+					if ((nametrimmed = lw_u8str_trim(name, false)).empty())
+					{
+						server.nameset_response(client, name.substr(0, 10), "name is invalid"sv);
+
+						// trustedClient remains true, as client is just putting in spaces; it's dumb, but not malicious
+						break;
+					}
+
+					// Name too short/all spaces checked by lw_u8str_trim() and the empty() following.
+					// Name too long - the protocol allows client to set name to >255, but server can only approve <= 255,
+					// so it's tested in checkname(), which is run here if no handler, and in handlernameset() otherwise.
+					// Name set to what it was: handled in nameset_response
+
 					if (handlernameset)
-						handlernameset(server, client, name);
+						handlernameset(server, client, nametrimmed);
 					else
 					{
 						// checkname will grab itself a writelock
-						if (!client->checkname(name))
-							break; // checkname will make an error, if any
+						if (!client->checkname(nametrimmed))
+							break; // checkname will make a deny reason/error, if any
 
-						server.nameset_response(client, name, std::string_view());
+						server.nameset_response(client, nametrimmed, std::string_view());
 					}
 
 					break;
@@ -1544,37 +1592,11 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 				case 2: /* joinchannel */
 				{
 					const lw_ui8 flags = reader.get <lw_ui8> ();
-					size_t channelnamelength = reader.bytesleft();
+					std::string channelname(reader.getremaining(1U, false, true)), channelnametrimmed;
+					channelnametrimmed.reserve(channelname.size());
 
-					if (channelnamelength > 255)
-					{
-						builder.addheader(0, 0);  /* response */
-						builder.add <lw_ui8>(2);  /* joinchannel */
-						builder.add <lw_ui8>(0);  /* failed */
-
-						builder.add <lw_ui8>(255);
-						builder.add(reader.get(255));
-
-						builder.add("Channel name too long."sv);
-
-						cliReadLock.lw_unlock();
-						{
-							auto cliWriteLock = client->lock.createWriteLock();
-							if (!client->_readonly)
-								builder.send(client->socket);
-						}
-
-						reader.failed = true;
-
-						errStr << "Malformed Join Channel request, name too long"sv;
-						trustedClient = false;
-
-						break;
-					}
-
-					std::string channelname(reader.getremaining(/* allowempty = */ false));
-
-					if (reader.failed || channelname.find_first_of('\0') != std::string_view::npos || !lw_u8str_validate(channelname) || !lw_u8str_normalise(channelname))
+					if (reader.failed || channelname.find_first_of('\0') != std::string_view::npos ||
+						!lw_u8str_normalize(channelname) || (channelnametrimmed = lw_u8str_trim(channelname, false)).empty())
 					{
 						errStr << "Malformed Join Channel request, name could not be read"sv;
 						reader.failed = true;
@@ -1582,7 +1604,11 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 						break;
 					}
 
-					const std::string channelnamesimplified = lw_u8str_simplify(channelname);
+					// Name too short/all spaces checked by lw_u8str_trim() and the empty() following.
+					// Name too long - the protocol allows channel name to be requested >255, but server can only approve <= 255,
+					// so it's tested in joinchannel_response(), which is run here if no handler, and in handlerchannel_join() otherwise.
+
+					const std::string channelnamesimplified = lw_u8str_simplify(channelnametrimmed);
 					std::shared_ptr<relayserver::channel> channel;
 
 					//auto cliReadLock = client->lock.createReadLock();
@@ -1599,7 +1625,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 					/* creating a new channel */
 					if (!channel)
 					{
-						channel = std::make_shared<relayserver::channel>(*this, std::string_view(channelname));
+						channel = std::make_shared<relayserver::channel>(*this, channelnametrimmed);
 
 						channel->_channelmaster = client;
 						channel->_hidden = (flags & 1) != 0;
@@ -1633,7 +1659,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 				{
 					std::shared_ptr<lacewing::relayserver::channel> channel;
 					// can't use reader.get<lw_ui16> as readchannel() uses current cursor
-					lw_ui16 channelid = reader.bytesleft() >= 2 ? *(lw_ui16 *)reader.cursor() : 0;
+					const lw_ui16 channelid = reader.bytesleft() >= 2 ? *(lw_ui16 *)reader.cursor() : 0;
 					// auto cliReadLock = client->lock.createReadLock();
 					channel = client->readchannel(reader);
 
@@ -1641,7 +1667,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 					{
 						cliReadLock.lw_unlock();
 
-						// PHI DEBUG NOTE 29TH DEC: Shouldn't send this, if user requests to leave multiple times, it might cause confusion in client.
+						// TODO: PHI DEBUG NOTE 29TH DEC 2020: Shouldn't send this if user requests to leave multiple times,
+						// it might cause confusion in client.
 
 						framebuilder builder(true);
 
@@ -1724,12 +1751,17 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			break;
 		}
 
+		// Used in getremaining() for data messages.
+		// Text messages are not null-terminated, binary messages can be 0-sized too,
+		// but the number messages (variant 1) are 4 bytes in size.
+		#define Require4BytesForNumberMessages (variant == 1 ? sizeof(int) : 0), false, false, (variant == 1 ? sizeof(int) : 0xFFFFFFFFU)
+
 		case 1: /* binaryservermessage */
 		{
 			cliReadLock.lw_unlock();
 
 			const lw_ui8 subchannel = reader.get <lw_ui8> ();
-			const std::string_view message3 = reader.getremaining();
+			const std::string_view message3 = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (reader.failed)
 			{
@@ -1740,17 +1772,28 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			if (handlermessage_server)
 			{
-				// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
-				int rejectedChar = -1, charIndexInStr = server.checkcodepointsallowed(relayserver::codepointsallowlistindex::MessagesSentToClients, message3, &rejectedChar);
-				if (charIndexInStr > -1)
+				if (variant == 0)
 				{
-					auto error = lacewing::error_new();
-					error->add("Dropped server message due to invalid char at index %i (U+%0.4X). Client is no longer trusted.", charIndexInStr, rejectedChar);
-					((relayserverinternal *)server.internaltag)->handlererror(server, error);
-					lacewing::error_delete(error);
-					trustedClient = false;
-					reader.failed = true;
-					break;
+					int rejectedCodePoint = -1, charIndexInStr = server.checkcodepointsallowed(relayserver::codepointsallowlistindex::MessagesSentToServer, message3, &rejectedCodePoint);
+					if (charIndexInStr > -1)
+					{
+						utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+						if (utf8proc_codepoint_valid(rejectedCodePoint))
+						{
+							int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+							rejectCharAsStr[numBytesUsed] = '\0';
+						}
+
+						// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
+						auto error = lacewing::error_new();
+						error->add("Dropped server text message \"%.15hs...\" from client %hs (ID %hu), invalid char U+%0.4X '%hs' rejected. Client is no longer trusted.",
+							message3.data(), client->name(), client->id(), rejectedCodePoint, rejectCharAsStr);
+						((relayserverinternal *)server.internaltag)->handlererror(server, error);
+						lacewing::error_delete(error);
+						trustedClient = false;
+						reader.failed = true;
+						break;
+					}
 				}
 
 				handlermessage_server(server, client, blasted, subchannel, message3, variant);
@@ -1764,11 +1807,11 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 		case 2: /* binarychannelmessage */
 		{
-			const lw_ui8 subchannel = reader.get <unsigned char> ();
-			lw_ui16 channelid = *(lw_ui16 *)reader.cursor();
+			const lw_ui8 subchannel = reader.get <lw_ui8> ();
+			const lw_ui16 channelid = *(lw_ui16 *)reader.cursor();
 			auto channel = client->readchannel (reader);
 
-			const std::string_view message2 = reader.getremaining();
+			const std::string_view message2 = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (reader.failed)
 			{
@@ -1822,9 +1865,9 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 		case 3: /* binarypeermessage */
 		{
-			const lw_ui8 subchannel		= reader.get <unsigned char> ();
-			auto channel	= client->readchannel(reader);
-			auto peer		= channel->readpeer(reader);
+			const lw_ui8 subchannel = reader.get <lw_ui8> ();
+			auto channel = client->readchannel(reader);
+			auto peer = channel->readpeer(reader);
 
 			// Message to yourself? Witchcraft!
 			if (peer == client || peer == nullptr)
@@ -1836,7 +1879,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			cliReadLock.lw_unlock();
 
-			const std::string_view message3 = reader.getremaining(1U, true);
+			const std::string_view message3 = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (reader.failed)
 			{
@@ -1899,8 +1942,6 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		}
 		case 8: /* channelmaster */
 			errStr << "Channel master message ID 8 not allowed"sv;
-
-
 			break;
 
 		case 9: /* ping */
@@ -2458,7 +2499,7 @@ void relayserver::connect_response(
 	builder.add <lw_ui8>(1);  /* success */
 
 	builder.add <lw_ui16>(client->_id);
-	builder.add(serverI.welcomemessage.c_str(), serverI.welcomemessage.size());
+	builder.add(serverI.welcomemessage);
 
 	builder.send(client->socket);
 
@@ -2554,7 +2595,7 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 
 		// actual length 1-255, checked by channel ctor
 		builder.add <lw_ui8>((lw_ui8)channel->_name.size());
-		builder.add(channel->_name.c_str(), channel->_name.size());
+		builder.add(channel->_name);
 		builder.add(denyReason);
 		builder.send(client->socket);
 
@@ -2635,6 +2676,7 @@ void relayserver::clientmessage_permit(std::shared_ptr<relayserver::client> send
 {
 	if (!accept || channel->_readonly || receivingclient->_readonly)
 		return;
+
 	sendingclient->PeerToPeer(*this, channel, receivingclient, blasted, subchannel, variant, data);
 }
 
@@ -2805,14 +2847,25 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 		return;
 
 	// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
-	int rejectedChar = -1, charIndexInStr = server.checkcodepointsallowed(codepointsallowlistindex::MessagesSentToClients, message, &rejectedChar);
-	if (charIndexInStr > -1)
+	if (variant == 0)
 	{
-		auto error = lacewing::error_new();
-		error->add("Dropped channel message due to invalid char at index %i (U+%0.4X).", charIndexInStr, rejectedChar);
-		((relayserverinternal *)server.internaltag)->handlererror(server, error);
-		lacewing::error_delete(error);
-		return;
+		int rejectedCodePoint = -1, charIndexInStr = server.checkcodepointsallowed(codepointsallowlistindex::MessagesSentToClients, message, &rejectedCodePoint);
+		if (charIndexInStr > -1)
+		{
+			utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+			if (utf8proc_codepoint_valid(rejectedCodePoint))
+			{
+				int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+				rejectCharAsStr[numBytesUsed] = '\0';
+			}
+
+			auto error = lacewing::error_new();
+			error->add("Dropped channel text message \"%.15hs...\" from client %hs (ID %hu) -> %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
+				message.data(), client->name(), client->id(), name(), rejectedCodePoint, rejectCharAsStr);
+			((relayserverinternal *)server.internaltag)->handlererror(server, error);
+			lacewing::error_delete(error);
+			return;
+		}
 	}
 
 	framebuilder builder(!blasted);

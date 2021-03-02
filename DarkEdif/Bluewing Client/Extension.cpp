@@ -418,25 +418,25 @@ void GlobalInfo::AddEvent1(std::uint16_t event1ID,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
 	std::string_view messageOrErrorText,
-	lw_ui8 subchannel)
+	lw_ui8 subchannel, lw_ui8 variant)
 {
-	return AddEventF(false, event1ID, 35353, channel, channelListing, peer, messageOrErrorText, subchannel);
+	return AddEventF(false, event1ID, 35353, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
 }
 void GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
 	std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
 	std::string_view messageOrErrorText,
-	lw_ui8 subchannel)
+	lw_ui8 subchannel, lw_ui8 variant)
 {
-	return AddEventF(true, event1ID, event2ID, channel, channelListing, peer, messageOrErrorText, subchannel);
+	return AddEventF(true, event1ID, event2ID, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
 }
 void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
 	std::shared_ptr<lacewing::relayclient::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing /* = nullptr */,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer /* = nullptr */,
 	std::string_view messageOrErrorText /* = std::string_view() */,
-	lw_ui8 subchannel /* = 255 */)
+	lw_ui8 subchannel /* = 255 */, lw_ui8 variant /* = 255 */)
 {
 	/*
 		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
@@ -473,6 +473,7 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 	newEvent2.peer = peer;
 	newEvent2.receivedMsg.content = messageOrErrorText;
 	newEvent2.receivedMsg.subchannel = subchannel;
+	newEvent2.receivedMsg.variant = variant;
 
 	EnterCriticalSectionDebug(&lock); // Needed before we access Extension
 #if 0
@@ -510,28 +511,38 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * error, ...)
 	CreateError(error, v);
 	va_end(v);
 }
-void GlobalInfo::CreateError(_Printf_format_string_ const char * error, va_list v)
+void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, va_list v)
 {
-	char buffer[4096];
-	va_start(v, error);
-	try {
-		if (sprintf_s(buffer, error, v) <= 0)
-		{
-			if (strerror_s(buffer, errno) < 0)
-				strcpy_s(buffer, "Error message and internal handler failed.");
+	std::stringstream errorDetailed;
+	if (std::this_thread::get_id() != mainThreadID)
+		errorDetailed << "[handler] "sv;
+	// Use extsHoldingGlobals[0] because Ext is (rarely) not set when an error is being made.
+	else if (extsHoldingGlobals[0])
+		errorDetailed << "[Fusion event #"sv << DarkEdif::GetEventNumber(extsHoldingGlobals[0]->rhPtr->EventGroup) << "] "sv;
 
-			MessageBoxW(NULL, UTF8ToWide(buffer).c_str(), L"" PROJECT_NAME "- super error handler", MB_ICONERROR);
+	char output[2048];
+	try {
+		if (vsprintf_s(output, errorU8, v) <= 0)
+		{
+			errorDetailed.str("vsprintf_s failed with errno "s);
+			errorDetailed << errno << ", format ["sv << errorU8 << "]."sv;
 		}
 		else
-			AddEvent1(0, nullptr, nullptr, nullptr, buffer);
+			errorDetailed << output;
 	}
 	catch (...)
 	{
-		sprintf_s(buffer, "Crash while formatting error string %s", error);
-		MessageBoxW(NULL, UTF8ToWide(buffer).c_str(), L"" PROJECT_NAME "- super error handler", MB_ICONERROR);
+		errorDetailed.str("vsprintf_s failed with crash, format ["s);
+		errorDetailed << errorU8 << "]."sv;
 	}
-	va_end(v);
-	// DebugBreak();
+
+#ifdef _DEBUG
+	const std::string errTextU8 = errorDetailed.str();
+	const std::wstring errText = UTF8ToWide(errTextU8);
+	OutputDebugStringW(errText.c_str());
+	OutputDebugStringW(L"\n");
+#endif
+	AddEvent1(0, nullptr, nullptr, nullptr, errTextU8);
 }
 
 void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
@@ -1144,6 +1155,9 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_automaticallyClearBinary(edPtr->automaticClear), _thread(nullptr),
 	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer()
 {
+	// GlobalInfos are always created by Extension, which are always created by Fusion main thread
+	mainThreadID = std::this_thread::get_id();
+
 	_ext = e;
 	extsHoldingGlobals.push_back(e);
 	if (edPtr->isGlobal)

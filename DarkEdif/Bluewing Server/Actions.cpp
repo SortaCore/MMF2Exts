@@ -66,7 +66,9 @@ void Extension::SetWelcomeMessage(const TCHAR * message)
 {
 	Srv.setwelcomemessage(TStringToUTF8(message));
 }
-void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allowListContents)
+
+
+int FindAllowListFromName(const TCHAR * listToSet)
 {
 	static const std::tstring_view listNames[]{
 		_T("clientnames"sv),
@@ -84,29 +86,34 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 		_T("reçuparleclient"sv),
 		_T("reçuparleserveur"sv)
 	};
-	
+
 	std::tstring listToSetStr(listToSet);
 
+	listToSetStr.erase(std::remove(listToSetStr.begin(), listToSetStr.end(), _T(' ')), listToSetStr.end());
 	std::transform(listToSetStr.begin(), listToSetStr.end(), listToSetStr.begin(),
 		[](const TCHAR c) { return ::_totlower(c); });
 
 	for (size_t i = 0; i < std::size(listNames); i++)
 	{
 		if (listNames[i] == listToSetStr)
-		{
-			const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)(i % 4), TStringToANSI(allowListContents));
-			if (!err.empty())
-				CreateError("Couldn't set Unicode %s allow list, %hs.", TStringToUTF8(listToSet).c_str(), err.c_str());
-			return;
-		}
+			return (i % 4);
 	}
+	return -1;
+}
+void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allowListContents)
+{
+	const int listIndex = FindAllowListFromName(listToSet);
+	if (listIndex == -1)
+		return CreateError(R"(Unicode allow list %s does not exist, should be "client names", "channel names", "received by client" or "received by server".)", TStringToUTF8(listToSet).c_str());
 
-	CreateError(R"(Unicode allow list %s does not exist, should be "client names", "channel names", "received by client" or "received by server".)", TStringToUTF8(listToSet).c_str());
+	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, TStringToANSI(allowListContents));
+	if (!err.empty())
+		CreateError("Couldn't set Unicode %s allow list, %hs.", TStringToUTF8(listToSet).c_str(), err.c_str());
 }
 
 
 static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWith,
-	const char * & denyReason, GlobalInfo * globals, const char * const funcName)
+	std::string &denyReason, GlobalInfo * globals, const char * const funcName)
 {
 	static char err[256];
 
@@ -127,9 +134,9 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 			" and Fusion condition triggering off, the server wouldn't know what to do.", funcName);
 	else
 	{
-		// If we're not denying, replace deny parameter with null
+		// If we're not denying, replace deny parameter with blank
 		if (immediateRespondWith != 1)
-			denyReason = "";
+			denyReason.clear();
 
 		AutoResponse autoResponse = AutoResponse::Invalid;
 		if (informFusion == 1)
@@ -157,59 +164,54 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 	return AutoResponse::Invalid;
 }
 
-
 void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	const std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
-	const char * autoDenyReasonU8CStr = autoDenyReasonU8.c_str();
+	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReasonU8CStr, globals, "on connect request");
+		autoDenyReasonU8, globals, "on connect request");
 	if (resp == AutoResponse::Invalid)
 		return;
 	globals->autoResponse_Connect = resp;
-	globals->autoResponse_Connect_DenyReason = TStringToUTF8(autoDenyReason);
+	globals->autoResponse_Connect_DenyReason = autoDenyReasonU8;
 	Srv.onconnect(::OnClientConnectRequest);
 }
 void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	const std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
-	const char * autoDenyReasonU8CStr = autoDenyReasonU8.c_str();
+	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReasonU8CStr, globals, "on name set request");
+		autoDenyReasonU8, globals, "on name set request");
 	if (resp == AutoResponse::Invalid)
 		return;
 	globals->autoResponse_NameSet = resp;
-	globals->autoResponse_NameSet_DenyReason = TStringToUTF8(autoDenyReason);
+	globals->autoResponse_NameSet_DenyReason = autoDenyReasonU8;
 	Srv.onnameset(resp != AutoResponse::Approve_Quiet ? ::OnNameSetRequest : nullptr);
 }
 void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	const std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
-	const char * autoDenyReasonU8CStr = autoDenyReasonU8.c_str();
+	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReasonU8CStr, globals, "on join channel request");
+		autoDenyReasonU8, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
 		return;
 	globals->autoResponse_ChannelJoin = resp;
-	globals->autoResponse_ChannelJoin_DenyReason = TStringToUTF8(autoDenyReason);
+	globals->autoResponse_ChannelJoin_DenyReason = autoDenyReasonU8;
 	Srv.onchannel_join(resp != AutoResponse::Approve_Quiet ? ::OnJoinChannelRequest : nullptr);
 }
 void Extension::EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	const std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
-	const char * autoDenyReasonU8CStr = autoDenyReasonU8.c_str();
+	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
-		autoDenyReasonU8CStr, globals, "on join channel request");
+		autoDenyReasonU8, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
 		return;
 	globals->autoResponse_ChannelLeave = resp;
-	globals->autoResponse_ChannelLeave_DenyReason = TStringToUTF8(autoDenyReason);
+	globals->autoResponse_ChannelLeave_DenyReason = autoDenyReasonU8;
 	// If local data for channel is used at all, we don't want it dangling, so make sure OnLeave is always ran.
 	Srv.onchannel_leave(::OnLeaveChannelRequest);
 }
 void Extension::EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith)
 {
-	const char * dummyDenyReason = "X";
+	std::string dummyDenyReason;
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		dummyDenyReason, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
@@ -219,7 +221,7 @@ void Extension::EnableCondition_OnMessageToPeer(int informFusion, int immediateR
 }
 void Extension::EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith)
 {
-	const char * dummyDenyReason = "X";
+	std::string dummyDenyReason;
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		dummyDenyReason, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
@@ -255,8 +257,8 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 		return CreateError("Cannot change new client name: Cannot use a blank name.");
 
 	std::string newNameU8 = TStringToUTF8(newName);
-	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8) ||
-		!Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ClientNames, newNameU8))
+	if (!lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty() ||
+		Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ClientNames, newNameU8) != -1)
 	{
 		return CreateError("Cannot change new client name: Invalid characters in new name.");
 	}
@@ -281,12 +283,12 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 
 	std::string newNameU8 = TStringToUTF8(newName);
 	
-	if (newNameU8.empty() || !lw_u8str_validate(newNameU8) || !lw_u8str_normalise(newNameU8))
+	if (newNameU8.empty() || !lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty())
 		return CreateError("Cannot change joining channel name: name is invalid.");
 
 	int rejectedChar, charIndex = Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ChannelNames, newNameU8, &rejectedChar);
 	if (charIndex != -1)
-		return CreateError("Cannot change joining channel name: character  %i in new name.");
+		return CreateError("Cannot change joining channel name: invalid character %i in new name.", rejectedChar);
 
 	if (newNameU8.size() > 255)
 		return CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");

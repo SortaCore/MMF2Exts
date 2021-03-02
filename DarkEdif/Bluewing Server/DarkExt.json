@@ -797,7 +797,7 @@
 			{
 				"Title": "Set Unicode allowed codepoint list %0 to %1",
 				"Parameters": [
-					[ "Text", "Codepoint list name (\"client name\", \"channel name\", \"received by client\" or \"received by server\")" ],
+					[ "Text", "Codepoint list name (\"client names\", \"channel names\", \"received by client\" or \"received by server\")" ],
 					[ "Text", "Codepoint list (category names, codepoint number ranges, or specific codepoint numbers)" ]
 				]
 			}

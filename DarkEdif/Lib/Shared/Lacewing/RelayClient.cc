@@ -262,6 +262,7 @@ namespace lacewing
 		lacewing::writelock wl = this->lock.createWriteLock();
 		delete ((relayclientinternal *)internaltag);
 		internaltag = nullptr;
+		wl.lw_unlock();
 	}
 
 	void relayclient::connect(const char * host, lw_ui16 port)
@@ -755,8 +756,7 @@ namespace lacewing
 
 					if (handler_channel_joindenied)
 					{
-						// Not null terminated, can't use getremaining()
-						const std::string_view denyReason = reader.get(reader.bytesleft());
+						const std::string_view denyReason = reader.getremaining();
 
 						if (reader.failed)
 							break;
@@ -875,19 +875,19 @@ namespace lacewing
 			break;
 		}
 
+		
+		// Used in getremaining() for data messages.
+		// Text messages are not null-terminated, binary messages can be 0-sized too,
+		// but the number messages (variant 1) are 4 bytes in size.
+		#define Require4BytesForNumberMessages (variant == 1 ? sizeof(int) : 0), false, false, (variant == 1 ? sizeof(int) : 0xFFFFFFFFU)
+
 		case 1: /* binaryservermessage */
 		{
 			const lw_ui8 subchannel = reader.get <lw_ui8>();
-
-			// Messages are null-terminated, so must be 1 byte minimum.
-			std::string_view data = reader.getremaining(1, true);
-			if (!reader.failed && data.back() != '\0')
-				reader.failed = true;
+			const std::string_view data = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (reader.failed)
 				break;
-
-			data.remove_suffix(1); // Drop null terminator
 
 			if (handler_message_server)
 				handler_message_server(client, blasted, subchannel, data, variant);
@@ -897,11 +897,10 @@ namespace lacewing
 
 		case 2: /* binarychannelmessage */
 		{
-			const char * orig = reader.cursor();
-
 			const  lw_ui8 subchannel = reader.get <lw_ui8>();
 			const lw_ui16 channel	 = reader.get<lw_ui16>();
 			const lw_ui16 peer		 = reader.get<lw_ui16>();
+
 			if (reader.failed)
 				break;
 
@@ -914,14 +913,14 @@ namespace lacewing
 				peer2 = channel2->findpeerbyid(peer);
 			}
 
-			// A UDP message might win against the TCP Channel Join/Peer Connect message,
+			// A UDP message might be faster than the TCP Channel Join/Peer Connect message,
 			// making a message for a channel that's OK'd to join on server side be delivered
-			// before the this client receives its channel join message.
+			// before the "this" client receives its channel join message.
 			// Thus, invalid channel.
 			if (!peer2 || channel2->_readonly || peer2->_readonly)
 				break;
 
-			const std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (reader.failed)
 				break;
@@ -950,9 +949,9 @@ namespace lacewing
 				peer2 = channel2->findpeerbyid(peer);
 			}
 
-			// A UDP message might win against the TCP Channel Join/Peer Connect message,
+			// A UDP message might be faster than the TCP Channel Join/Peer Connect message,
 			// making a message for a channel that's OK'd to join on server side be delivered
-			// before the this client receives its channel join message.
+			// before the "this" client receives its channel join message.
 			// Thus, invalid channel.
 			if (!peer2 || channel2->_readonly || peer2->_readonly)
 			{
@@ -967,7 +966,7 @@ namespace lacewing
 				break;
 			}
 
-			const std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (handler_message_peer)
 				handler_message_peer(client, channel2, peer2, blasted,
@@ -989,7 +988,7 @@ namespace lacewing
 			if (!channel2 || channel2->_readonly)
 				break;
 
-			const std::string_view data = reader.getremaining(1, true);
+			const std::string_view data = reader.getremaining(Require4BytesForNumberMessages);
 
 			if (handler_message_serverchannel)
 				handler_message_serverchannel(client, channel2, blasted,
@@ -1004,7 +1003,7 @@ namespace lacewing
 		case 8: /* objectserverchannelmessage */
 		{
 			// todo: replace every lacewingassert() with a real error.
-			lacewing::error error = error_new();
+			lacewing::error error = lacewing::error_new();
 			error->add("'Object' message type received, but Bluewing Client implementation does not support it.");
 			this->handler_error(client, error);
 			error_delete(error);
@@ -1038,7 +1037,7 @@ namespace lacewing
 			auto peer = channel2->findpeerbyid(peerid);
 
 			const lw_ui8 flags = reader.get <lw_ui8>();
-			const std::string_view name = reader.get(reader.bytesleft()); // name's not null terminated
+			const std::string_view name = reader.getremaining(0U, false, false, 255U); // name's not null terminated
 
 			if (reader.failed)
 			{

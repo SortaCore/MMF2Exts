@@ -310,47 +310,77 @@ void eventpumpdeleter(lacewing::eventpump);
 struct GlobalInfo
 {
 	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
-	lacewing::relayclient						_client;
-	std::string									_previousName;
-	char *										_sendMsg;
-	std::string									_denyReasonBuffer;
-	size_t										_sendMsgSize;
-	bool										_automaticallyClearBinary;
-	std::string									_globalID;
-	HANDLE										_thread;
-	Extension *									_ext;
-	std::vector<std::shared_ptr<EventToRun>>	_eventsToRun;
-	std::string									_hostIP;
-	HANDLE										timeoutThread = NULL;
-	std::weak_ptr<lacewing::relayclient::channel>				lastDestroyedExtSelectedChannel;
-	std::weak_ptr<lacewing::relayclient::channel::peer>		lastDestroyedExtSelectedPeer;
+	lacewing::relayclient _client;
 
-	CRITICAL_SECTION							lock;
-	std::vector<Extension *>					extsHoldingGlobals;
-	bool										timeoutWarningEnabled; // If no Bluewing exists, fuss after set time period
-	bool										fullDeleteEnabled; // If no Bluewing exists after DestroyRunObject, clean up GlobalInfo
+	// Server's IP address, set during connect.
+	std::string _hostIP;
 
+	// Binary message to send
+	char * _sendMsg;
+	// Number of bytes in binary message to send (sendMsg)
+	size_t _sendMsgSize;
+	
+	// Previous name of this client, as UTF-8
+	std::string _previousName;
+	// Last deny reason, set during Handle() when running deny events.
+	std::string _denyReasonBuffer;
+	// Clear binary when a binary message is sent/blasted?
+	bool _automaticallyClearBinary;
+
+	// This GlobalInfo global ID of extension, in UTF-8
+	std::string _globalID;
+	// If in multithreading mode, the Lacewing message handler thread
+	HANDLE _thread;
+	// Current "owner" extension used to run events. Can be null, e.g. during frame switches.
+	Extension * _ext;
+	// Thread checking whether a client extension has not regained control of connection in a reasonable time, i.e. slow frame transition.
+	HANDLE timeoutThread = NULL;
+
+
+	// Used to keep Fusion selection across frames
+	std::weak_ptr<lacewing::relayclient::channel> lastDestroyedExtSelectedChannel;
+	std::weak_ptr<lacewing::relayclient::channel::peer> lastDestroyedExtSelectedPeer;
+
+	// Queued conditions to trigger, with selected client/channel
+	std::vector<std::shared_ptr<EventToRun>> _eventsToRun;
+
+	// Lock to protect GlobalInfo contents, initialized to zeroes.
+	CRITICAL_SECTION lock;
+	// List of all extensions holding this Global ID
+	std::vector<Extension *> extsHoldingGlobals;
+	// If no Bluewing exists, fuss after a preset time period
+	bool timeoutWarningEnabled;
+	// If no Bluewing exists after DestroyRunObject, clean up this GlobalInfo
+	bool fullDeleteEnabled;
+	// Used to determine if an error event happened in a Fusion event, e.g. user put in bad parameter.
+	// Fusion code always runs in main thread, but errors can occur outside of user input.
+	std::thread::id mainThreadID;
+
+	// Locks and queues an EventToRun with 1 condition ID to trigger
 	void AddEvent1(std::uint16_t event1ID,
 		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
 		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
 		std::string_view messageOrErrorText = std::string_view(),
-		lw_ui8 subchannel = 255);
+		lw_ui8 subchannel = 255, lw_ui8 variant = 255);
+	// Locks and queues an EventToRun with 2 condition IDs to trigger (e.g. on any message + on text message)
 	void AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
 		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
 		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
 		std::string_view messageOrErrorText = std::string_view(),
-		lw_ui8 subchannel = 255);
+		lw_ui8 subchannel = 255, lw_ui8 variant = 255);
 private:
+	// Locks and queues an EventToRun with either 1 or 2 condition IDs to trigger (used by AddEvent1 & 2)
 	void AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
-		std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
-		std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
-		std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
-		std::string_view messageOrErrorText = std::string_view(),
-		lw_ui8 subchannel = 255
+		std::shared_ptr<lacewing::relayclient::channel> channel,
+		std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
+		std::shared_ptr<lacewing::relayclient::channel::peer> peer,
+		std::string_view messageOrErrorText,
+		lw_ui8 subchannel, lw_ui8 variant
 		);
 public:
+	// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
 	void CreateError(_Printf_format_string_ const char * errorText, ...);
 	void CreateError(_Printf_format_string_ const char *errorText, va_list v);
 

@@ -1,5 +1,5 @@
-
 #include "Common.h"
+#include <iomanip>
 
 const TCHAR * Extension::Error()
 {
@@ -15,15 +15,18 @@ const TCHAR * Extension::Client_Name()
 }
 const TCHAR * Extension::RecvMsg_ReadAsString()
 {
-	// RecvMsg_Sub_ReadString expects size in code points, not bytes, so we'll just test it's UTF-8 and return as-is.
-	if (!lw_u8str_validate(threadData->receivedMsg.content))
-		return Runtime.CopyString(_T(""));
+	if (threadData->receivedMsg.variant != 0)
+		return CreateError("Received$() was used on a message that is not a text message."), Runtime.CopyString(_T(""));
 
+	// UTF-8 validation happens before the Fusion server message handler is called.
+	
+	// RecvMsg_Sub_ReadString expects size in code points or a null terminator,
+	// but in a text message neither is present, so we'll just directly convert.
 	return Runtime.CopyString(UTF8ToTString(threadData->receivedMsg.content).c_str());
 }
 int Extension::RecvMsg_ReadAsInteger()
 {
-	if (threadData->receivedMsg.content.size() != sizeof(int))
+	if (threadData->receivedMsg.variant != 1)
 		return CreateError("Received() was used on a message that is not a number message."), 0;
 
 	return *(int *)threadData->receivedMsg.content.data();
@@ -90,21 +93,22 @@ const TCHAR * Extension::RecvMsg_StrASCIIByte(int index)
 	}
 
 	const std::string_view partial(threadData->receivedMsg.content.data() + index, 1);
+	const std::uint8_t charUnsigned = *(std::uint8_t *)(&partial[0]);
 
 	// ASCII goes up to 127, ANSI continues to 255. ANSI is locale-dependent, and if we only
 	// interpret it as a fixed one like "en-us", that may not be the sender's locale, muddying
 	// the water further for a Fusion developer.
-	if (reinterpret_cast<const std::uint8_t &>(partial[0]) > 127)
+	if (charUnsigned > 127)
 	{
-		CreateError("ANSI char %u read at position %d, which is not an ASCII character. Use StringWithSize() with size 1 to ensure consistency.",
-			(std::uint32_t)reinterpret_cast<const std::uint8_t &>(partial[0]), index);
+		CreateError("ANSI char %hhu read at position %d, which is not an ASCII character. Use StringWithSize() with size 1 to ensure consistency.",
+			charUnsigned, index);
 		return Runtime.CopyString(_T(""));
 	}
 	// Also check character is displayable (aka "printable").
-	if (!isprint(partial[0]))
+	if (!isprint(charUnsigned))
 	{
-		CreateError("ASCII char %u read, which cannot be displayed. Check index %d is correct.",
-			(std::uint32_t)reinterpret_cast<const std::uint8_t &>(partial[0]), index);
+		CreateError("ASCII char %hhu read, which cannot be displayed. Check index %d is correct.",
+			charUnsigned, index);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -264,22 +268,23 @@ const TCHAR * Extension::RecvMsg_Cursor_StrASCIIByte()
 	}
 
 	const std::string_view partial(threadData->receivedMsg.content.data() + threadData->receivedMsg.cursor, 1);
+	const std::uint8_t charUnsigned = *(std::uint8_t *)(&partial[0]);
 	++threadData->receivedMsg.cursor;
 
 	// ASCII goes up to 127, ANSI continues to 255. ANSI is locale-dependent, and if we only
 	// interpret it as a fixed one like "en-us", that may not be the sender's locale, muddying
 	// the water further for a Fusion developer.
-	if (reinterpret_cast<const std::uint8_t &>(partial[0]) > 127)
+	if (charUnsigned > 127)
 	{
-		CreateError("ANSI char %u read from cursor position %u, which is not an ASCII character. Use CursorStringWithSize() with size 1 to ensure consistency.",
-			(std::uint32_t)reinterpret_cast<const std::uint8_t &>(partial[0]), threadData->receivedMsg.cursor - 1);
+		CreateError("ANSI char %hhu read from cursor position %u, which is not an ASCII character. Use CursorStringWithSize() with size 1 to ensure consistency.",
+			charUnsigned, threadData->receivedMsg.cursor - 1);
 		return Runtime.CopyString(_T(""));
 	}
 	// Also check character is displayable (aka "printable").
-	if (!isprint(partial[0]))
+	if (!isprint(charUnsigned))
 	{
-		CreateError("ASCII char %u read, which cannot be displayed. Check cursor index %u is correct.",
-			(std::uint32_t)reinterpret_cast<const std::uint8_t &>(partial[0]), threadData->receivedMsg.cursor - 1);
+		CreateError("ASCII char %hhu read, which cannot be displayed. Check cursor index %u is correct.",
+			charUnsigned, threadData->receivedMsg.cursor - 1);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -388,7 +393,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 	}
 	if (threadData->receivedMsg.content.size() - index <= 0)
 	{
-		CreateError("Dumping message failed; index %i is at message end index %i or beyond it.", index, threadData->receivedMsg.content.size() - 1);
+		CreateError("Dumping message failed; index %i is beyond message end index %zu.", index, threadData->receivedMsg.content.size() - 1);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -402,50 +407,70 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 	const char * format = formatANSI.c_str();
 
 
-	std::stringstream Output;
-	size_t SizeOfFormat = strlen(format);
-	bool Signed;
-	size_t Count = 0;
-	const char * Msg = &threadData->receivedMsg.content[index];
-	// +c10c20c
-	for (const char * i = format; i < format+SizeOfFormat;)
+	std::stringstream output;
+	output << std::setfill('0') << std::uppercase;
+	size_t sizeOfFormat = strlen(format);
+	bool varSigned;
+	size_t varCount = 0;
+	const char * msg = &threadData->receivedMsg.content[index];
+	// Example, signed char x10: "+c10"
+	for (const char * i = format; i < format + sizeOfFormat;)
 	{
-		// Skip past last loop's numbers to get to variable type letter
+		// Skip last iteration's count to get to next variable type letter
 		while (isdigit(i[0]))
 			++i;
 
+		// We skipped past digits into the end of string
+		if (i == format + sizeOfFormat)
+			break;
+
 		// Determine if variable should be signed or unsigned
 		if (i[0] != '+')
-			Signed = true;
+			varSigned = true;
 		else
 		{
-			Signed = false;
+			varSigned = false;
 			++i;
 		}
 
 		// Count number of expected variables
-		Count = max(atoi(i+1),1);
+		varCount = max(atoi(i+1),1);
 
 		// Char
 		if (i[0] == 'c')
 		{
 			++i;
-			if (threadData->receivedMsg.content.size()-index < Count)
+			if (threadData->receivedMsg.content.size()-index < varCount)
 			{
 				CreateError("Could not dump; message was not large enough to contain all variables.");
 				return Runtime.CopyString(_T(""));
 			}
-			if (Signed)
+
+			std::uint32_t curChar;
+			std::streamsize width = output.width();
+			if (varSigned)
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Signed char: "sv << (int)Msg[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+				{
+					curChar = *(std::uint8_t *)&msg[j];
+					output << "Signed char: "sv;
+					if (isprint(curChar))
+						output << '\'' << *(char *)&curChar << '\'';
+					else
+						output << "(?)"sv;
+					output << " ("sv << curChar << ", 0x"sv << std::hex << std::setw(2) << curChar << std::dec << std::setw(width) << ")\r\n"sv;
+				}
 			}
 			else
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Unsigned char: "sv << (int)((unsigned char *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+				{
+					curChar = *(std::uint8_t *)&msg[j];
+					output << "Unsigned char: "sv << curChar << " (0x" << std::hex << std::setw(2) << curChar << std::dec << std::setw(width) << ")\r\n"sv;
+				}
 			}
-			Msg += Count;
+			output.width(width);
+			msg += varCount;
 
 			continue;
 		}
@@ -454,22 +479,22 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		if (i[0] == 'h')
 		{
 			++i;
-			if (threadData->receivedMsg.content.size()-index < Count*sizeof(short))
+			if (threadData->receivedMsg.content.size()-index < varCount*sizeof(short))
 			{
 				CreateError("Could not dump; message was not large enough to contain variables.");
 				return Runtime.CopyString(_T(""));
 			}
-			if (Signed)
+			if (varSigned)
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Signed short: "sv << (int)((short *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+					output << "Signed short: "sv << (int)((short *)msg)[j] << "\r\n"sv;
 			}
 			else
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Unsigned short: "sv << (int)((unsigned short *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+					output << "Unsigned short: "sv << (int)((unsigned short *)msg)[j] << "\r\n"sv;
 			}
-			Msg += Count*sizeof(short);
+			msg += varCount*sizeof(short);
 			continue;
 		}
 
@@ -477,25 +502,25 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		if (i[0] == 's')
 		{
 			++i;
-			if (Signed == false)
+			if (varSigned == false)
 				CreateError("'+' flag not expected next to 's'; strings cannot be unsigned.");
-			for (unsigned int j = 0; j < Count; ++j)
+			for (unsigned int j = 0; j < varCount; ++j)
 			{
-				size_t u8StrSize = strnlen(Msg, threadData->receivedMsg.content.size() - index + 1);
+				size_t u8StrSize = strnlen(msg, threadData->receivedMsg.content.size() - index + 1);
 				if (u8StrSize == threadData->receivedMsg.content.size()-index+1)
 				{
 					CreateError("Could not dump; message was not large enough to contain variables.");
 					return Runtime.CopyString(_T(""));
 				}
 
-				if (!lw_u8str_validate(std::string_view(Msg, u8StrSize)))
+				if (!lw_u8str_validate(std::string_view(msg, u8StrSize)))
 				{
 					CreateError("Could not dump; the null-terminated string starting at message index %i, read as %i chars long, was not valid UTF-8 text.", index, u8StrSize);
 					return Runtime.CopyString(_T(""));
 				}
 
-				Output << "String: "sv << Msg << "\r\n"sv;
-				Msg += u8StrSize + 1;
+				output << "String: "sv << msg << "\r\n"sv;
+				msg += u8StrSize + 1;
 			}
 			continue;
 		}
@@ -504,22 +529,22 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		if (i[0] == 'i')
 		{
 			++i;
-			if (threadData->receivedMsg.content.size()-index < Count*sizeof(int))
+			if (threadData->receivedMsg.content.size()-index < varCount*sizeof(int))
 			{
 				CreateError("Could not dump; message was not large enough to contain variables.");
 				return Runtime.CopyString(_T(""));
 			}
-			if (Signed)
+			if (varSigned)
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Signed integer: "sv << ((int *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+					output << "Signed integer: "sv << ((int *)msg)[j] << "\r\n"sv;
 			}
 			else
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Unsigned integer: "sv << ((unsigned int *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+					output << "Unsigned integer: "sv << ((unsigned int *)msg)[j] << "\r\n"sv;
 			}
-			Msg += Count*sizeof(int);
+			msg += varCount*sizeof(int);
 			continue;
 		}
 
@@ -527,19 +552,19 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		if (i[0] == 'f')
 		{
 			++i;
-			if (threadData->receivedMsg.content.size()-index < Count*sizeof(float))
+			if (threadData->receivedMsg.content.size()-index < varCount*sizeof(float))
 			{
 				CreateError("Could not dump; message was not large enough to contain variables.");
 				return Runtime.CopyString(_T(""));
 			}
-			if (!Signed)
+			if (!varSigned)
 				CreateError("'+' flag not expected next to 'f'; floats cannot be unsigned.");
 			else
 			{
-				for (unsigned int j = 0; j < Count; ++j)
-					Output << "Float: "sv << ((float *)Msg)[j] << "\r\n"sv;
+				for (unsigned int j = 0; j < varCount; ++j)
+					output << "Float: "sv << ((float *)msg)[j] << "\r\n"sv;
 			}
-			Msg += Count*sizeof(float);
+			msg += varCount*sizeof(float);
 			continue;
 		}
 
@@ -548,7 +573,9 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		return Runtime.CopyString(_T(""));
 	}
 
-	return Runtime.CopyString(UTF8ToTString(Output.str()).c_str());
+	std::string outputTrim = output.str();
+	outputTrim.resize(outputTrim.size() - 2);
+	return Runtime.CopyString(UTF8ToTString(outputTrim).c_str());
 }
 unsigned int Extension::AllClientCount()
 {
@@ -559,10 +586,6 @@ const TCHAR * Extension::GetDenyReason()
 	return Runtime.CopyString(UTF8ToTString(DenyReason).c_str());
 }
 
-// Yoink Lacewing's UTF8 library
-#include "../Lib/Shared/Lacewing/deps/utf8proc.h"
-#include <iomanip>
-
 /// <summary> Number of UTF-8 code points (including things like combining accents) </summary>
 int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 {
@@ -570,13 +593,13 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 	if (tStr[0] == _T('\0'))
 		return 0;
 
-	std::string u8str = TStringToUTF8(tStr);
+	const std::string u8str = TStringToUTF8(tStr);
 	if (u8str.empty())
 		return -1;
 
 	size_t numCodePoints = 0;
 
-	utf8proc_uint8_t * str = (utf8proc_uint8_t *)u8str.data();
+	const utf8proc_uint8_t * str = (const utf8proc_uint8_t *)u8str.data();
 	utf8proc_int32_t thisChar;
 	utf8proc_ssize_t numBytesInCodePoint, remainder = u8str.size();
 	while (remainder > 0)
@@ -584,6 +607,8 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 		numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisChar);
 		if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
 			return -1;
+
+		// str[0] - str[numBytesInCodePoint - 1] is one code point
 		++numCodePoints;
 
 		str += numBytesInCodePoint;
@@ -599,32 +624,32 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	if (tStr[0] == _T('\0'))
 		return 0;
 
-	std::string u8str = TStringToUTF8(tStr);
+	const std::string u8str = TStringToUTF8(tStr);
 	if (u8str.empty())
 		return -1;
 
-	size_t numChars = 0;
+	size_t numGraphemes = 0;
 
 	utf8proc_uint8_t * str = (utf8proc_uint8_t *)u8str.data();
-	utf8proc_int32_t lastChar = 0, thisChar, state = 0;
+	utf8proc_int32_t lastCodePoint = 0, thisCodePoint, state = 0;
 	utf8proc_ssize_t numBytesInCodePoint, remainder = u8str.size();
 	while (remainder > 0)
 	{
-		numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisChar);
-		if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisChar))
+		numBytesInCodePoint = utf8proc_iterate(str, remainder, &thisCodePoint);
+		if (numBytesInCodePoint <= 0 || !utf8proc_codepoint_valid(thisCodePoint))
 			return -1;
-		// str[0] - str[numBytesInCodePoint - 1] is a char
-		// if utf8proc_grapheme returns true, there is a new grapheme starting between lastChar and thisChar
-		if (lastChar != 0 && utf8proc_grapheme_break_stateful(lastChar, thisChar, &state))
-			++numChars;
-		lastChar = thisChar;
+
+		// if utf8proc_grapheme returns true, there is a new grapheme starting between lastCodePoint and thisCodePoint
+		if (lastCodePoint != 0 && utf8proc_grapheme_break_stateful(lastCodePoint, thisCodePoint, &state))
+			++numGraphemes;
+		lastCodePoint = thisCodePoint;
 
 		str += numBytesInCodePoint;
 		remainder -= numBytesInCodePoint;
 	}
 
-	// Add 1 char for the thisChar at end
-	return ++numChars;
+	// Add 1 codePoint for the thisCodePoint at end
+	return ++numGraphemes;
 }
 /// <summary> Get number of bytes in a UTF-8 string </summary>
 int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
@@ -635,27 +660,38 @@ int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 
 	// TODO: can make this a little faster by only measuring length of output in WideToMultiByte(),
 	// instead of doing that + the conversion itself as TStringToUTF8() does internally.
-	size_t u8size = TStringToUTF8(tStr).size();
-	if (u8size <= 0)
-		return -1;
-	return (int)u8size;
+	const size_t u8size = TStringToUTF8(tStr).size();
+	return u8size <= 0 ? -1 : (int)u8size;
 }
+
+extern int FindAllowListFromName(const TCHAR * listToSet);
 /// <summary> Tests if the UTF-8 equivalent matches the passed allow list, and if allow list is valid.
 ///			  If so, blank is returned, otherwise the error or faulty character. </summary>
 const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList)
 {
 	lacewing::codepointsallowlist list;
-	std::string err = list.setcodepointsallowedlist(TStringToUTF8(allowList));
-	if (!err.empty())
-		return Runtime.CopyString(UTF8ToTString(err).c_str());
-
 	utf8proc_int32_t rejectedChar = -1;
-	int idx = list.checkcodepointsallowed(TStringToUTF8(toTest), &rejectedChar);
-	if (idx == -1)
+
+	// First, allow an already-set allow list to be used by name instead
+	int allowListSrvIndex = FindAllowListFromName(allowList);
+	if (allowListSrvIndex == -1)
+	{
+		// Not found by name; try to parse it as a list
+		const std::string err = list.setcodepointsallowedlist(TStringToUTF8(allowList));
+		if (!err.empty())
+			return Runtime.CopyString(UTF8ToTString(err).c_str());
+
+		// fall through
+	}
+
+	const int rejectedCodePointIndex = allowListSrvIndex == -1 ?
+		list.checkcodepointsallowed(TStringToUTF8(toTest), &rejectedChar) :
+		Srv.checkcodepointsallowed((lacewing::relayserver::codepointsallowlistindex)allowListSrvIndex, TStringToUTF8(toTest), &rejectedChar);
+	if (rejectedCodePointIndex == -1)
 		return Runtime.CopyString(_T(""));
 
 	TCHAR output[256];
 	_stprintf_s(output, _T("Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %hs."),
-		idx, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), utf8proc_category_string(rejectedChar));
+		rejectedCodePointIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), utf8proc_category_string(rejectedChar));
 	return Runtime.CopyString(output);
 }

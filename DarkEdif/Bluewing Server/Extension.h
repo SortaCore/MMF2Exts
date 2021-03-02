@@ -413,7 +413,7 @@ struct GlobalInfo
 	CRITICAL_SECTION lock = {};
 	// List of all extensions holding this Global ID
 	std::vector<Extension *> extsHoldingGlobals;
-	// If no Lacewing exists, fuss after a preset time period
+	// If no Bluewing exists, fuss after a preset time period
 	bool timeoutWarningEnabled = true;
 	// If no Bluewing exists after DestroyRunObject, clean up this GlobalInfo
 	bool fullDeleteEnabled = true;

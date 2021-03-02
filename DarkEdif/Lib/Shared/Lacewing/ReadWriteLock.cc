@@ -82,7 +82,7 @@ void lacewing::readlock::unlockDebug(lw_rwlock_debugParamNames)
 	locked = false;
 }
 
-#if LW_ESCALATION
+#ifdef LW_ESCALATION
 lacewing::writelock lacewing::readlock::upgrade(lw_rwlock_debugParamNames)
 {
 	if (!locked)

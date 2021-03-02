@@ -314,7 +314,7 @@
     <None Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="cpp.hint" />
+    <None Include="..\..\cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

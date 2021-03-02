@@ -19,6 +19,7 @@
 				std::string		content;
 				std::uint32_t	cursor;
 				lw_ui8			subchannel;
+				lw_ui8			variant;
 			} receivedMsg;
 
 			// When an error occurs
@@ -35,6 +36,7 @@
 			new(&receivedMsg.content)std::string();
 			receivedMsg.cursor = 0;
 			receivedMsg.subchannel = 0;
+			receivedMsg.variant = 0;
 		}
 		~EventToRun()
 		{

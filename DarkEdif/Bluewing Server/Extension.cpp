@@ -459,12 +459,26 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 
 	InitializeCriticalSection(&lock);
 
-	// Allow all letters, all numbers, all punctuation, and char 32 i.e. space
-	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ClientNames, "L*,N*,P*,32"s);
-	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ChannelNames, "L*,N*,P*,32"s);
-
 	// Useful so Lacewing callbacks can access Extension
 	_server.tag = this;
+
+	// Allow ASCII, outside of some select characters; space allowed, tab newline nope.
+	const std::string list =
+		// ASCII, excluding double-quote (34), the slashes \/ (47, 92), grave accent ` (96)
+		// Single quote is allowed, for O'Brians out there. It's not necessary to keep A-Z/a-z/0-9
+		// due to L*,N* later, but it's easier.
+		"32,33," // space, exclamation mark
+		"35-46,48-91," // # through [, including #$%&'()*+,-. 0-9 :;<=>?@ A-Z [
+		"93-95," // ], ^, _
+		"97-126," // a-z, {|}~
+		// Additional punctuation:
+		"0xA1-0xA5,0xA9,0xAE," // inverted exclamation mark, currency symbols, copyright symbol, register symbol
+		"0xB0,0xBF," // degree sign, inverted question mark
+		// Allow all letters, all marks, all numbers
+		"L*,M*,N*"s;
+
+	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ClientNames, list);
+	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ChannelNames, list);
 }
 
 GlobalInfo::~GlobalInfo() noexcept(false)

@@ -107,6 +107,11 @@ public:
 	}
 
 	template<> inline
+		void add(std::string value)
+	{
+		add(value.data(), (lw_i32)value.size());
+	}
+	template<> inline
 		void add(std::string_view value)
 	{
 		add(value.data(), (lw_i32)value.size());

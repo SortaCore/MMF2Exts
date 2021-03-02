@@ -1,31 +1,32 @@
 
-/* vim: set et ts=4 sw=4 ft=cpp:
+/* vim: set et ts=3 sw=3 ft=cpp:
  *
- * copyright (c) 2011 james mclaughlin.  all rights reserved.
+ * Copyright (C) 2011 James McLaughlin.  All rights reserved.
  *
- * redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
- * 1. redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *	notice, this list of conditions and the following disclaimer.
  *
- * 2. redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *	notice, this list of conditions and the following disclaimer in the
  *	documentation and/or other materials provided with the distribution.
  *
- * this software is provided by the author and contributors ``as is'' and
- * any express or implied warranties, including, but not limited to, the
- * implied warranties of merchantability and fitness for a particular purpose
- * are disclaimed.  in no event shall the author or contributors be liable
- * for any direct, indirect, incidental, special, exemplary, or consequential
- * damages (including, but not limited to, procurement of substitute goods
- * or services; loss of use, data, or profits; or business interruption)
- * however caused and on any theory of liability, whether in contract, strict
- * liability, or tort (including negligence or otherwise) arising in any way
- * out of the use of this software, even if advised of the possibility of
- * such damage.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
+
 #include "messagebuilder.h"
 
 #ifndef lacewingframebuilder
@@ -40,11 +41,12 @@ protected:
 		if (tosend)
 			return;
 
-		int type = *(unsigned int *) buffer;
-		int messagesize = size - 8;
+		lw_ui32 type = *(lw_ui32 *) buffer;
+		lw_i32 messagesize = size - 8;
 
-		int headersize;
+		lw_ui32 headersize;
 
+		// Message size < 254; store as type byte + size byte
 		if (messagesize < 254)
 		{
 			buffer[6] = type;
@@ -52,21 +54,23 @@ protected:
 
 			headersize = 2;
 		}
+		// Message size >= 0xFF and <= 0xFFFF; store as type byte, plus size indicator byte of 254, plus size uint16
 		else if (messagesize < 0xffff)
 		{
 			buffer[4] = type;
 
-			(*(unsigned char  *) (buffer + 5)) = 254;
-			(*(unsigned short *) (buffer + 6)) = messagesize;
+			(*(lw_ui8 *) (buffer + 5))	= 254;
+			(*(lw_ui16 *) (buffer + 6)) = messagesize;
 
 			headersize = 4;
 		}
+		// Message size > 0xFFFF and <= 0xFFFFFFFF; store as type byte, plus size indicator byte of 255, plus size uint32
 		else if (messagesize < 0xffffffff)
 		{
 			buffer[2] = type;
 
-			(*(unsigned char  *) (buffer + 3)) = 255;
-			(*(unsigned int	*) (buffer + 4)) = messagesize;
+			(*(lw_ui8 *) (buffer + 3))	= 255;
+			(*(lw_ui32 *) (buffer + 4)) = messagesize;
 
 			headersize = 6;
 		}
@@ -91,23 +95,23 @@ public:
 		tosendsize = 0;
 	}
 
-	inline void addheader(unsigned char type, unsigned char variant, bool forudp = false, int udpclientid = -1)
+	inline void addheader(lw_ui8 type, lw_ui8 variant, bool forudp = false, int udpclientid = -1)
 	{
 		if (size != 0)
 			throw std::exception("lacewing framebuilder.addheader() error: adding header to message that already has one.");
 
 		if (!forudp)
 		{
-			add <unsigned int> ((type << 4) | variant);
-			add <unsigned int> (0);
+			add <lw_ui32> ((type << 4) | variant);
+			add <lw_ui32> (0);
 
 			return;
 		}
 
-		add <unsigned char>  ((type << 4) | variant);
+		add <lw_ui8>  ((type << 4) | variant);
 
 		if (isudpclient)
-			add <unsigned short> (udpclientid);
+			add <lw_ui16> (udpclientid);
 	}
 
 	inline void send(lacewing::server_client client, bool clear = true)

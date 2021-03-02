@@ -63,7 +63,7 @@ public:
 		tofree.clear();
 	}
 
-	inline bool check(size_t size)
+	inline bool check(const size_t size)
 	{
 		if (failed)
 			return false;
@@ -109,29 +109,29 @@ public:
 		return buffer + offset;
 	}
 
-	std::string_view getremaining(lw_ui32 minimumlength = 0U, bool nullTerminator = false, bool stripNull = false, lw_ui32 maximumlength = 0xffffffff)
+	std::string_view getremaining(const lw_ui32 minimumlength = 0U, const bool nullTerminator = false, const bool stripNull = false, const lw_ui32 maximumlength = 0xffffffff)
 	{
 		if (failed)
 			return std::string_view();
 
 		assert(!nullTerminator || minimumlength > 0);
-		assert(maximumlength > minimumlength);
+		assert(maximumlength >= minimumlength);
 
 		std::string_view remaining(this->buffer + offset, bytesleft());
 		offset += remaining.size();
 
-		// Message must be in size limits, and not starting with a null terminator
-		if (remaining.size() > maximumlength || remaining.size() < minimumlength ||
-			(remaining.size() > 1 && remaining.front() == '\0'))
-		{
+		// Message must be in size limits
+		if (remaining.size() > maximumlength || remaining.size() < minimumlength)
 			failed = true;
-		}
-		else if (nullTerminator)
+		// Null terminator required, and not present
+		else if (nullTerminator && (remaining.empty() || remaining.back() != '\0'))
+			failed = true;
+		if (!failed && stripNull)
 		{
-			if (remaining.empty() || remaining.back() != '\0')
-				failed = true;
-			else if (stripNull)
+			if (remaining.back() == '\0')
 				remaining.remove_suffix(1);
+			if (remaining.back() == '\0')
+				failed = true;
 		}
 
 		return remaining;
@@ -139,4 +139,3 @@ public:
 };
 
 #endif
-

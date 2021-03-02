@@ -1,0 +1,18 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+#define lw_import
+#define UTF8PROC_DLLEXPORT
+#define LW_ESCALATION 0
+#define Require4BytesForNumberMessages (variant == 1 ? sizeof(int) : 0), false, false, (variant == 1 ? sizeof(int) : ((unsigned int)~(0U)))
+
+//#ifdef _DEBUG
+#define lw_unlock() unlockDebug(lw_rwlock_debugParamDefs)
+#define lw_relock() relockDebug(lw_rwlock_debugParamDefs)
+#define createReadLock() createReadLock(lw_rwlock_debugParamDefs)
+#define createWriteLock() createWriteLock(lw_rwlock_debugParamDefs)
+#define lw_upgrade() upgrade(lw_rwlock_debugParamDefs)
+#define lw_downgrade() downgrade(lw_rwlock_debugParamDefs)
+#define lw_upgrade_to(x) upgrade(lw_rwlock_debugParamDefs, x)
+#define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
+//#endif

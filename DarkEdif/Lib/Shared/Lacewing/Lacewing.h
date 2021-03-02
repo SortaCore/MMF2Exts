@@ -680,22 +680,50 @@ typedef lw_i8 lw_bool;
 
 #pragma region Phi stuff
 
+// Every Unicode library decomposes into 4-byte chars, probably for the x86 nativeness, and
+// for one code unit per code point.
+// For platform compatibility, we use a third-party library; this one is actually used in Julia.
+#include "deps/utf8proc.h"
+
 /// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
 /// 		  If the address is IPv4 or unmapped IPv6, copies it as is. </summary>
 void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
 
-/// <summary> Compares if two strings match, returns true if so. Case sensitive. Does a size check. </summary>
+/// <summary> Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
+///			  make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
+///			  Does not validate or check strings' content. </summary>
 bool lw_sv_cmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Returns a composed, lowercased (with invariant culture), stripped-down version of
-///			  name(). Used for easier searching, and to prevent similar names as an exploit. </summary>
-std::string lw_u8str_simplify(const std::string_view first);
+/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check.
+///			  Expects both are valid UTF-8 strings, non-destructively simplified.
+///			  Also see lw_sv_cmp(). </summary>
+bool lw_u8str_icmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Validates a UTF-8 std::string as having readable codepoints. </summary>
-bool lw_u8str_validate(const std::string_view first);
+/// <summary> Validates a UTF-8 std::string as having valid UTF-8 codepoints.
+///			  Does not ensure strings are normalized; empty strings return true. </summary>
+bool lw_u8str_validate(const std::string_view toValidate);
 
-/// <summary> Returns a normalised std::string (using NFC). Assumes a valid U8 string. </summary>
-bool lw_u8str_normalise(std::string & input);
+/// <summary> Normalizes the passed std::string to its least-bytes equivalent (using NFC), and returns true.
+///			  Empty = true. Handles invalid UTF-8 strings by returning false. </summary>
+bool lw_u8str_normalize(std::string & input);
+
+/// <summary> Returns a NFC/NKFC, case-folded, stripped-down version of
+///			  passed string. Used for easier searching, and to prevent similar names as an exploit.
+///			  Handles invalid UTF-8 string by returning blank. </summary>
+/// <param name="destructive"> If true, converts to lowercase, and replaces lookalike characters (e.g. 0 to o).
+///							   Use false to check if two strings (after the simplifying) differ by case alone. </param>
+std::string lw_u8str_simplify(const std::string_view first, bool destructive = true);
+
+/// <summary> Removes whitespace, control, and strange code points from both beginning and end of string,
+///			  and returns the result. Stricter on the beginning. Ignores the middle of the string.
+///			  Handles invalid UTF-8 strings by returning blank. </summary>
+/// <param name="abortIfTrimNeeded"> If abort is specified, at the first code point needed to be trimmed,
+///									 the function aborts and returns an empty string_view instead. </param>
+/// <remarks> The front of the string must be letters, numbers, punctuation in Unicode category.
+///			  The end of the string is like the start, but also allows marks and symbols.
+///			  Both control and whitespace category will always be removed. </remarks>
+std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded = false);
+
 
 // to preserve namespace
 #pragma endregion
@@ -1575,7 +1603,7 @@ struct readlock {
 	readlock(readwritelock &lock, lw_rwlock_debugParamNames);
 	void unlockDebug(lw_rwlock_debugParamNames);
 	void relockDebug(lw_rwlock_debugParamNames);
-#if LW_ESCALATION
+#ifdef LW_ESCALATION
 	lacewing::writelock upgrade(lw_rwlock_debugParamNames);
 	void upgrade(lw_rwlock_debugParamNames, lacewing::writelock &wl);
 #endif
@@ -1588,7 +1616,7 @@ struct readlock {
 	readlock(readwritelock &lock);
 	void unlock();
 	void relock();
-#if LW_ESCALATION
+#ifdef LW_ESCALATION
 	lacewing::writelock upgrade();
 	void upgrade(lacewing::writelock &wl);
 #endif // LW_ESCALATION

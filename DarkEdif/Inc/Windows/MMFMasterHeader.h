@@ -72,6 +72,7 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 
 #include <stdio.h>
+#include <iomanip>
 #include <tchar.h>
 
 struct ACEParamReader {

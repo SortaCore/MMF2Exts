@@ -33,7 +33,7 @@ void Extension::SetName(const TCHAR * name)
 		return CreateError("Error: Set Name was called with name \"\".");
 
 	std::string nameU8(TStringToUTF8(name));
-	if (!lw_u8str_normalise(nameU8))
+	if (!lw_u8str_normalize(nameU8))
 		return CreateError("Error: Set Name was called with malformed name \"%s\".", nameU8.c_str());
 
 	Cli.name(nameU8);
