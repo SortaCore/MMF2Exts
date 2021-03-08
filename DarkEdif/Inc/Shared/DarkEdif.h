@@ -98,10 +98,13 @@ namespace DarkEdif {
 	// v6: 14th Sept 2020, commit 7548374fa9400b18196465a9e430e32240ed8912
 	// Removed SDK::EdittimeProperties in runtime builds; it's only necessary to read
 	// the property value and type via JSON in runtime.
-	// v7: 1st December 2020, commit (latest)
+	// v7: 1st December 2020, commit 28b0c089dfeafc69bd00f1c0bc47801f085fb318
 	// Replaced the charset-converting code std::string input parameter with std::string_view.
+	// v8: 8th March 2021, commit (latest)
+	// Optimised LinkACE debug functions. Cleaned up the JSON parser, including better error messages and fixing a 1-byte overflow.
+	// Fixed static analysis and Windows XP clash, atomic header clash, pre-build tool not liking space-indented JSON.
 
-	static const int SDKVersion = 7;
+	static const int SDKVersion = 8;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.

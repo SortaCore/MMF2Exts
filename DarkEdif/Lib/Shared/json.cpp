@@ -856,11 +856,16 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	#pragma warning(push)
 	#pragma warning(disable: 4133)
 	#pragma warning(disable: 4018)
+
 	unsigned int size = *_size;
 	// Used as an indicator whether i is currently inside a string var.
 	int string = 0;
 	int comment = 0;
-	const char * json = *json_input, * i = json;
+	const char * json = *json_input, * i;
+
+	// No '/', so no comments; skip the cleaning of comments
+	if (memchr(json, '/', size) == NULL)
+		return 1;
 
 	char * newJSON = (char *)json_alloc(state, size, 1);
 	char * j = newJSON;
@@ -915,6 +920,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 			if (!(i = strchr(i, '\n')))
 			{
 				sprintf_s(error, error_len, "Line %d, char %d: Opened // comment but no newline encountered.", cur_line, startPos);
+				free(newJSON);
 				return 0;
 			}
 
@@ -936,16 +942,27 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 
 	if (comment)
 	{
-		// /* */ not completed
+		// a /* */ was not completed
 		sprintf_s(error, error_len, "Line %d, char %d: Opened /* */ comment without closing it.", cur_line, newJSON - cur_line_begin);
+		free(newJSON);
 		return 0;
 	}
-	size = j - newJSON + 1;		// After skipping comments the size of the new buffer will be different
-	newJSON[size - 1] = '\0';	// Ensure new JSON ends with a null terminator (i.e. End Of File)
+
+	// After skipping comments the size of the new buffer will be different, add 1 for null terminator
+	int newSize = j - newJSON + 1;
+
+	// There was a '/', but no comments at all: no change happened with JSON
+	if (size == newSize - 1)
+	{
+		free(newJSON);
+		return 1;
+	}
+
+	newJSON[newSize - 1] = '\0';	// Ensure new JSON ends with a null terminator (i.e. End Of File)
 
 	free((void *) *json_input);
 	*json_input = (const char *)newJSON;
-	*_size = size;
+	*_size = newSize;
 
 	return 1;
 	#pragma warning(pop)
