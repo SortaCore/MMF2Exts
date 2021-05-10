@@ -15,8 +15,7 @@
 		"ActionMenu": [
 			[ 0, "Action Example" ],
 			"---",
-			[
-				"Sub Menu",
+			[ "Sub Menu",
 				[ 1, "Second Action Example" ]
 			]
 		],
@@ -70,7 +69,7 @@
 			},
 			{
 				"Title": "Checkbox within folder",
-				"Info": "yeah, it should be bold.",
+				"Info": "Should be bold text.",
 				"Type": "Checkbox",
 				"DefaultState": true, // or false
 				"Bold": true
@@ -86,29 +85,29 @@
 			},
 			{
 				"Title": "Static text 2",
-				"Info": "Blank text, bold'd",
+				"Info": "Blank text, bold",
 				"Type": "Text",
-				"DefaultState": "Bolded static text.",
+				"DefaultState": "Bolded static text",
 				"Bold": true
 			},
 			{
 				"Title": "Editable 3",
-				"Info": "yeah, it shouldn't be bold.",
+				"Info": "Shouldn't be bold.",
 				"Type": "Edit button",
-				"DefaultState": "Bolded static text.",
+				"DefaultState": "Button text",
 				"Text": "Button"
 			},
 			{
 				"Title": "Editable 4",
 				"Info": "yeah, it are very bold.",
 				"Type": "Edit button",
-				"DefaultState": "Verah Boldz Edit Butt.",
+				"DefaultState": "Bolded button text",
 				"Bold": true
 			},
 			{
 				"Title": "Editable 5",
 				"Info": "yeah, it are very bold.",
-				"DefaultState": "Verah Boldz Edit Strng.",
+				"DefaultState": "Default text",
 				"Type": "Editbox String",
 				"Bold": true
 			},
@@ -116,24 +115,24 @@
 				"Title": "Editable 6",
 				"Info": "This one should force uppercase.",
 				"Type": "Editbox String",
-				"DefaultState": "Non Bolz Edit Strng Upperz!",
+				"DefaultState": "Default text, made uppercase",
 				"Case": "Upper"
 			},
 			{
 				"Title": "Editable 7",
 				"Info": "This one should be limited to 25 characters.",
 				"Type": "Editbox String",
-				"DefaultState": "Non Bolz Edit Strng Loalwas!",
+				"DefaultState": "Default text, made lowercase",
 				"Case": "Lower",
 				"MaxLength": 25
 			},
 			{
 				"Title": "Editable 8",
-				"Info": "yeah, limited between 25 and 20",
+				"Info": "Number limited between 20 and 25",
 				"Type": "Editbox Number",
 				"DefaultState": 21,
-				"Maximum": 25,
-				"Minimum": 20
+				"Minimum": 20,
+				"Maximum": 25
 			}
 		]
 	},
@@ -149,8 +148,7 @@
 		"ActionMenu": [
 			[ 0, "Exemple d'action" ],
 			"---",
-			[
-				"Sub Menu",
+			[ "Sub Menu",
 				[ 1, "Exemple deuxième action" ]
 			]
 		],

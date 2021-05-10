@@ -267,7 +267,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	#if EditorBuild
 		cSurface * proto = nullptr;
 		if (GetSurfacePrototype(&proto, 32, ST_MEMORYWITHDC, SD_BITMAP) == FALSE)
-			MessageBoxA(NULL, "Getting surface prototype failed.", "DarkEdif error", MB_ICONERROR);
+			MessageBoxA(NULL, "Getting surface prototype failed.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
 
 		Icon = new cSurface();
 		if (mV->ImgFilterMgr)
@@ -296,11 +296,14 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
 
 				if (tempIcon->Blit(*Icon) == FALSE)
-					MessageBoxA(NULL, "Blitting to surface failed.", "DarkEdif error", MB_ICONERROR);
+					MessageBoxA(NULL, "Blitting to ext icon surface failed.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
 			}
 		}
 
 		#if USE_DARKEDIF_UPDATE_CHECKER
+		// Is in editor, not EXE using Run Application?
+		// Note this check is also done by Edif::Init(mv,edPtr) and stored in Edif::IsEdittime, but Edif::Init(mv,edPtr) is called after this.
+		if (mV->HMainWin != 0)
 			DarkEdif::SDKUpdater::StartUpdateCheck();
 		#endif
 	#endif // EditorBuild
