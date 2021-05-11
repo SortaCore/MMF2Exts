@@ -9,10 +9,16 @@ Minor changes won't necessitate an immediate version update, so to get the lates
 If you're editing this file, note that the use of Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit
 
+Changes until v10 release
+----
+*v10 not released yet*
+
+- To be determined
+
 
 Changes until v9 release
 ----
-*v9 released on 10th May 2021, commit [unset](/)*
+*v9 released on 10th May 2021, commit [9935197](https://github.com/SortaCore/MMF2Exts/commit/99351979ffba98ed4417c4007b581acbeab70c5a)*
 
 - Adapted LinkConditionDebug for comparison condition parameters. They work a bit strangely, making conditions return the integer/text variable that Fusion runtime will compare.  
 These were also updated for clearer variable names, and use of type comparisons instead of converting types to string and comparing after. Lost of const was also documented.  
