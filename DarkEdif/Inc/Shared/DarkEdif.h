@@ -79,7 +79,7 @@ std::wstring TStringToWide(const std::tstring_view);
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 9;
+	static const int SDKVersion = 10;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.

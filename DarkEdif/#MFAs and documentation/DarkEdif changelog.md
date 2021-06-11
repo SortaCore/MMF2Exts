@@ -7,13 +7,20 @@ This does not mean a game-ending bug, but if there is a lot of code updates (inc
 Minor changes won't necessitate an immediate version update, so to get the latest DarkEdif SDK, use the latest MMF2Exts commit.
 
 If you're editing this file, note that the use of Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
-Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit
+Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
+
+Changes until v11 release
+----
+*v11 not released yet*
+
 
 Changes until v10 release
 ----
-*v10 not released yet*
+*v10 released on 11th June 2021, commit (latest)*
 
-- To be determined
+- Fixed Edif::Condition for comparison condition parameters, uses long instead of int, and returns a text result correctly.
+- Removed UNICODE undef. Some Windows APIs like AdvAPI.h use UNICODE define instead of \_UNICODE. Enums members UNICODE now use UNICODE\_.
+- Removed excess newlines in template Conditions.cpp
 
 
 Changes until v9 release

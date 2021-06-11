@@ -639,7 +639,7 @@ Edif::SDK::~SDK()
 #endif
 }
 
-int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, long Params2)
+long ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, long Params2)
 {
 	bool Condition = (SDK->ConditionFunctions.size() >= (unsigned int)ID+1) && (SDK->ConditionFunctions[ID] == Function);
 	int * Parameters;
@@ -665,6 +665,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 		ParameterCount = (int)numAutoProps.u.integer;
 
 	Parameters = (int *) alloca(sizeof(int) * ParameterCount);
+	bool isComparisonCondition = false;
 
 	for (int i = 0; i < ParameterCount; ++ i)
 	{
@@ -676,6 +677,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 								CNC_GetIntParameter(rdPtr);
 				break;
 
+			case Params::String_Comparison:
 			case Params::String_Expression:
 			case Params::Filename:
 				Parameters[i] = CNC_GetStringParameter(rdPtr);
@@ -685,6 +687,13 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 					MessageBoxA(NULL, "Error calling action/condition: null pointer given as string parameter.", "DarkEdif - ActionOrCondition() error", MB_OK);
 					return 0L;
 				}
+				isComparisonCondition |= Info->Parameter[i].p == Params::String_Comparison;
+				break;
+
+			case Params::Compare_Time:
+			case Params::Comparison:
+				Parameters[i] = CNC_GetIntParameter(rdPtr);
+				isComparisonCondition = true;
 				break;
 
 			default:
@@ -696,7 +705,7 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 	void * Extension = rdPtr->pExtension;
 	rdPtr->rHo.CurrentParam = saveCurParam;
 
-	int Result;
+	long Result = 0L;
 
 	__asm
 	{
@@ -718,11 +727,11 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 		PushLoop:
 
 			push [edx]			; Push value pointed to by Parameters[edx]
-			sub edx, 4			; Decrement next loop`s Parameter index:	for (><; ><; edx -= 4)
+			sub edx, 4			; Decrement next loop`s Parameter index: for (><; ><; edx -= 4)
 
 			dec ecx				; Decrement loop index:					 for (><; ><; ecx--)
 
-			cmp ecx, 0			; If ecx == 0, end loop:					for (><; ecx == 0; ><)
+			cmp ecx, 0			; If ecx == 0, end loop:				 for (><; ecx == 0; ><)
 			jne PushLoop		; Optimisation: "cmp ecx, 0 / jne" can be replaced with "jcxz"
 
 		CallNow:
@@ -735,7 +744,12 @@ int ActionOrCondition(void * Function, int ID, RUNDATA * rdPtr, long Params1, lo
 		popad					; End new register set (restore registers that existed before popad)
 	}
 
-	return Result;
+	// Comparisons return an integer or string pointer, pass as-is
+	if (isComparisonCondition)
+		return Result;
+
+	// Bool returns aren't 0x0 or 0x1, they botch the other 24 bits.
+	return (long)*(bool *)&Result;
 }
 
 HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
@@ -799,9 +813,7 @@ long FusionAPI Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
 	if (!Function)
 		return rdPtr->pExtension->Condition(ID, rdPtr, param1, param2);
 
-	int Result = ActionOrCondition(Function, ID, rdPtr, param1, param2);
-
-	return *(char *) &Result;
+	return ActionOrCondition(Function, ID, rdPtr, param1, param2);
 }
 
 short FusionAPI Edif::Action(RUNDATA * rdPtr, long param1, long param2)
@@ -817,6 +829,7 @@ short FusionAPI Edif::Action(RUNDATA * rdPtr, long param1, long param2)
 		rdPtr->pExtension->Action(ID, rdPtr, param1, param2);
 		return 0;
 	}
+
 	void * Function = ::SDK->ActionFunctions[ID];
 
 	if (!Function)
@@ -824,9 +837,8 @@ short FusionAPI Edif::Action(RUNDATA * rdPtr, long param1, long param2)
 		rdPtr->pExtension->Action(ID, rdPtr, param1, param2);
 		return 0;
 	}
-
+	
 	ActionOrCondition(Function, ID, rdPtr, param1, param2);
-
 	return 0;
 }
 

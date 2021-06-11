@@ -1689,7 +1689,7 @@ struct ParamGroup {
 		/* Old flags
 		FADE_IN			= bit3,
 		FADE_OUT		= bit4,
-		UNICODE			= bit5,*/
+		UNICODE_		= bit5,*/
 	};
 };
 #define GETEVPGRP(evpPtr) (paramGroup *)&evpPtr->evp.evp0
@@ -4349,7 +4349,6 @@ __inline int mvGetAppCodePage(mv * mV, void * pApp) \
 typedef	int (CALLBACK* ENUMELTPROC)(unsigned short *, int, LPARAM, LPARAM);
 
 // kpxGetInfos
-#undef UNICODE
 enum class KGI : int {
 	VERSION,			// Version (required)
 	NOTUSED,			// Not used
@@ -4359,7 +4358,7 @@ enum class KGI : int {
 	ATX_CONTROL,		// Not used
 	PRODUCT,			// Minimum product the extension is compatible with
 	BUILD,				// Minimum build the extension is compatible with
-	UNICODE,			// Returns TRUE if the extension is in Unicode
+	UNICODE_,			// Returns TRUE if the extension is in Unicode
 };
 
 // Extension function table

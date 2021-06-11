@@ -149,7 +149,7 @@ std::uint32_t FusionAPI GetInfos(int info)
 			return Extension::MinimumBuild;
 
 	#ifdef _UNICODE
-		case KGI::UNICODE:
+		case KGI::UNICODE_:
 			return TRUE;	// I'm building in Unicode
 	#endif
 
