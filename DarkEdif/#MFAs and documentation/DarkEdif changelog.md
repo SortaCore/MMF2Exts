@@ -16,7 +16,7 @@ Changes until v11 release
 
 Changes until v10 release
 ----
-*v10 released on 11th June 2021, commit (latest)*
+*v10 released on 11th June 2021, commit [357036f](https://github.com/SortaCore/MMF2Exts/commit/357036fa10c8d3293b447ca4cd27d0bc52bfaff6)*
 
 - Fixed Edif::Condition for comparison condition parameters, uses long instead of int, and returns a text result correctly.
 - Removed UNICODE undef. Some Windows APIs like AdvAPI.h use UNICODE define instead of \_UNICODE. Enums members UNICODE now use UNICODE\_.

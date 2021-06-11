@@ -185,13 +185,16 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			break;
 	}
 
+	// In case someone pauses debugger during messagebox, and wants to read the error message, here it is on the stack.
+	char fullResult[1024];
+	strcpy_s(fullResult, str.str().c_str());
 	if (!GlobalExt->data->fileHandle)
 	{
 		if (GlobalExt->data->doMsgBoxIfPathNotSet)
-			MessageBoxA(NULL, str.str().c_str(), "DebugObject - crash caught", MB_OK | MB_ICONERROR);
+			MessageBoxA(NULL, fullResult, "DebugObject - crash caught", MB_OK | MB_ICONERROR | MB_TOPMOST | MB_TASKMODAL);
 	}
 	else
-		GlobalExt->OutputNow(5, -2, str.str().c_str());
+		GlobalExt->OutputNow(5, -2, fullResult);
 
 	// Not set to ignore
 	if (NoHandling || !GlobalExt->data)
