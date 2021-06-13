@@ -13,6 +13,12 @@ HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
 {
+	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
+	// Otherwise, enables debug memory, tracking for memory leaks or overflow/underflow
+	#ifdef _CRTDBG_MAP_ALLOC
+		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
+	#endif
+
 	// Nullify the thread-specific data
 	ClearThreadData();
 
@@ -96,17 +102,18 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkAction(72, ReplacedNoParams);
 		LinkAction(73, Connect);
 		LinkAction(74, SendMsg_Resize);
+		// Added Blue-only actions
 		LinkAction(75, SetDestroySetting);
 	}
 	{
-		LinkCondition(0, AlwaysTrue /* OnError */);
+		LinkCondition(0, MandatoryTriggeredEvent /* OnError */);
 		LinkCondition(1, AlwaysTrue /* OnConnect */);
-		LinkCondition(2, AlwaysTrue /* OnConnectDenied */);
-		LinkCondition(3, AlwaysTrue /* OnDisconnect */);
+		LinkCondition(2, MandatoryTriggeredEvent /* OnConnectDenied */);
+		LinkCondition(3, MandatoryTriggeredEvent /* OnDisconnect */);
 		LinkCondition(4, AlwaysTrue /* OnChannelJoin */);
-		LinkCondition(5, AlwaysTrue /* OnChannelJoinDenied */);
+		LinkCondition(5, MandatoryTriggeredEvent /* OnChannelJoinDenied */);
 		LinkCondition(6, AlwaysTrue /* OnNameSet */);
-		LinkCondition(7, AlwaysTrue /* OnNameDenied */);
+		LinkCondition(7, MandatoryTriggeredEvent /* OnNameDenied */);
 		LinkCondition(8, OnSentTextMessageFromServer);
 		LinkCondition(9, OnSentTextMessageFromChannel);
 		LinkCondition(10, AlwaysTrue /* OnPeerConnect */);
@@ -143,7 +150,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(41, OnBlastedBinaryMessageFromPeer);
 		LinkCondition(42, IsConnected);
 		LinkCondition(43, AlwaysTrue /* OnChannelLeave */);
-		LinkCondition(44, AlwaysTrue /* OnChannelLeaveDenied */);
+		LinkCondition(44, MandatoryTriggeredEvent /* OnChannelLeaveDenied */);
 		LinkCondition(45, AlwaysTrue /* OnPeerChangedName */);
 		LinkCondition(46, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(47, OnAnySentMessageFromServer);
@@ -152,7 +159,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(50, OnAnyBlastedMessageFromServer);
 		LinkCondition(51, OnAnyBlastedMessageFromChannel);
 		LinkCondition(52, OnAnyBlastedMessageFromPeer);
-		LinkCondition(53, AlwaysTrue /* OnNameChanged */);
+		LinkCondition(53, MandatoryTriggeredEvent /* OnNameChanged */);
 		LinkCondition(54, ClientHasAName);
 		LinkCondition(55, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(56, AlwaysFalse /* ReplacedCondNoParams */);
@@ -172,6 +179,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkCondition(70, OnBlastedNumberChannelMessageFromServer);
 		LinkCondition(71, OnBlastedBinaryChannelMessageFromServer);
 		LinkCondition(72, OnAnyBlastedChannelMessageFromServer);
+		// Added Blue-only conditions
 		LinkCondition(73, IsJoinedToChannel);
 		LinkCondition(74, IsPeerOnChannel_Name);
 		LinkCondition(75, IsPeerOnChannel_ID);
@@ -216,7 +224,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(36, ReplacedExprNoParams);
 		LinkExpression(37, DenyReason);
 		LinkExpression(38, Host_IP);
-		LinkExpression(39, HostPort);
+		LinkExpression(39, Host_Port);
 		LinkExpression(40, ReplacedExprNoParams);
 		LinkExpression(41, WelcomeMessage);
 		LinkExpression(42, RecvMsg_MemoryAddress);
@@ -232,6 +240,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(52, RecvMsg_Cursor_String);
 		LinkExpression(53, ReplacedExprNoParams);
 		LinkExpression(54, SendBinaryMsg_MemoryAddress);
+		// Added Blue-only expressions
 		LinkExpression(55, RecvMsg_DumpToString);
 		LinkExpression(56, ChannelListing_ChannelCount);
 		LinkExpression(57, ConvToUTF8_GetVisibleCharCount);
@@ -240,11 +249,17 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		LinkExpression(60, ConvToUTF8_TestAllowList);
 	}
 
-	// This is signalled by EndApp in Runtime.cpp. It's used to close the connection
-	// when the application closes, from the timeout thread - assuming events or the
-	// server hasn't done that already.
-	if (!AppWasClosed)
+	isGlobal = edPtr->isGlobal;
+
+	// This is signalled by EndApp() in Runtime.cpp. It's used to disconnect the client
+	// when the application closes, from the timeout thread - assuming events haven't
+	// done that already.
+	if (isGlobal && !AppWasClosed)
+	{
 		AppWasClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!AppWasClosed)
+			throw std::runtime_error(PROJECT_NAME " - Couldn't create an AppWasClosed event.");
+	}
 
 #if EditorBuild
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
@@ -254,7 +269,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	}
 #endif
 
-	isGlobal = edPtr->isGlobal;
 	char msgBuff[500];
 	sprintf_s(msgBuff, PROJECT_NAME " - Extension create: isGlobal=%i.\n", isGlobal ? 1 : 0);
 	OutputDebugStringA(msgBuff);
@@ -300,18 +314,20 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 				globals->_ext = this;
 			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
 
-			if (globals->timeoutThread)
+			HANDLE timeoutThread = globals->timeoutThread;
+			LeaveCriticalSectionDebug(&globals->lock); // can't hold it while timeout thread tries to exit
+
+			if (timeoutThread)
 			{
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
-				SetEvent(AppWasClosed);
-				WaitForSingleObject(globals->timeoutThread, 200);
-				CloseHandle(globals->timeoutThread);
+				SetEvent(globals->cancelTimeoutThread);
+				WaitForSingleObject(timeoutThread, 200);
+				// The thread should have ended. Due to us reclaiming control, globals remains valid.
+				CloseHandle(timeoutThread);
 				globals->timeoutThread = NULL;
-				ResetEvent(AppWasClosed);
+				ResetEvent(globals->cancelTimeoutThread);
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
 			}
-
-			LeaveCriticalSectionDebug(&globals->lock);
 		}
 	}
 	else
@@ -325,7 +341,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	// Try to boot the Lacewing thread if multithreading and not already running
 	if (edPtr->multiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
 	{
-		CreateError("Error: failed to boot thread. Falling back to single-threaded interface.");
+		CreateError("failed to boot thread. Falling back to single-threaded interface.");
 		Runtime.Rehandle();
 	}
 	else if (!edPtr->multiThreading)
@@ -496,22 +512,22 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		_ext->Runtime.Rehandle();
 }
 
-void Extension::CreateError(_Printf_format_string_ const char * error, ...)
+void Extension::CreateError(_Printf_format_string_ const char * errorFormatU8, ...)
 {
 	va_list v;
-	va_start(v, error);
-	globals->CreateError(error, v);
+	va_start(v, errorFormatU8);
+	globals->CreateError(errorFormatU8, v);
 	va_end(v);
 }
 
-void GlobalInfo::CreateError(_Printf_format_string_ const char * error, ...)
+void GlobalInfo::CreateError(_Printf_format_string_ const char * errorFormatU8, ...)
 {
 	va_list v;
-	va_start(v, error);
-	CreateError(error, v);
+	va_start(v, errorFormatU8);
+	CreateError(errorFormatU8, v);
 	va_end(v);
 }
-void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, va_list v)
+void GlobalInfo::CreateError(_Printf_format_string_ const char * errorFormatU8, va_list v)
 {
 	std::stringstream errorDetailed;
 	if (std::this_thread::get_id() != mainThreadID)
@@ -522,10 +538,10 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, va_lis
 
 	char output[2048];
 	try {
-		if (vsprintf_s(output, errorU8, v) <= 0)
+		if (vsprintf_s(output, errorFormatU8, v) <= 0)
 		{
 			errorDetailed.str("vsprintf_s failed with errno "s);
-			errorDetailed << errno << ", format ["sv << errorU8 << "]."sv;
+			errorDetailed << errno << ", format ["sv << errorFormatU8 << "]."sv;
 		}
 		else
 			errorDetailed << output;
@@ -533,11 +549,11 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * errorU8, va_lis
 	catch (...)
 	{
 		errorDetailed.str("vsprintf_s failed with crash, format ["s);
-		errorDetailed << errorU8 << "]."sv;
+		errorDetailed << errorFormatU8 << "]."sv;
 	}
 
-#ifdef _DEBUG
 	const std::string errTextU8 = errorDetailed.str();
+#ifdef _DEBUG
 	const std::wstring errText = UTF8ToWide(errTextU8);
 	OutputDebugStringW(errText.c_str());
 	OutputDebugStringW(L"\n");
@@ -841,9 +857,12 @@ Extension::~Extension()
 			globals->_ext = nullptr;
 			globals->lastDestroyedExtSelectedChannel = selChannel;
 			globals->lastDestroyedExtSelectedPeer = selPeer;
+			ClearThreadData();
+			selPeer = nullptr;
+			selChannel = nullptr;
 			LeaveCriticalSectionDebug(&globals->lock);
 
-			sprintf_s(msgBuff, PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds,%s.\n",
+			sprintf_s(msgBuff, PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
 				globals->timeoutWarningEnabled
 				? "a warning message will be shown"
 				: "the connection will terminate and all pending messages will be discarded");
@@ -853,14 +872,16 @@ Extension::~Extension()
 			// Instead, the thread marks it as pending delete, and in ReadGlobal in Extension ctor, it checks if it's
 			// pending delete and deletes there.
 			globals->timeoutThread = CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
-			ClearThreadData();
-			selPeer = nullptr;
-			selChannel = nullptr;
 			return;
 		}
 		const std::tstring id = UTF8ToTString(globals->_globalID) + _T("BlueClient"s);
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		LeaveCriticalSectionDebug(&globals->lock);
+
+		// Due to the shared_ptr dtor potentially freeing ID, the deselection must be before globals delete
+		selPeer = nullptr;
+		selChannel = nullptr;
+
 		delete globals; // Disconnects and closes event pump, deletes lock
 		globals = nullptr;
 	}
@@ -913,29 +934,49 @@ REFLAG Extension::Handle()
 			isOverloadWarningQueued = false;
 			break;
 		}
-		std::shared_ptr<EventToRun> s = EventsToRun.front();
+		std::shared_ptr<EventToRun> evtToRun = EventsToRun.front();
 		EventsToRun.erase(EventsToRun.begin());
 		remainingCount = EventsToRun.size();
 
 		LeaveCriticalSectionDebug(&globals->lock);
 
+		// Events that absolutely need a processing event.
+		const static std::pair<const std::wstring_view, const std::uint16_t> mandatoryEventIDs[] = {
+			{ L"On Error"sv, 0 },
+			{ L"On Connection Denied"sv, 2 },
+			{ L"On Disconnect"sv, 3 },
+			{ L"On Join Denied"sv, 5 },
+			{ L"On Name Denied"sv, 7 },
+			{ L"On Leave Denied"sv, 44 },
+			{ L"On Name Changed"sv, 53 },
+		};
+		int mandatoryEventIndex = -1;
+		for (size_t i = 0; i < std::size(mandatoryEventIDs); ++i)
+		{
+			if (mandatoryEventIDs[i].second == evtToRun->condTrig[0])
+			{
+				mandatoryEventIndex = i;
+				globals->lastMandatoryEventWasChecked = false;
+				break;
+			}
+		}
 
 		for (auto i : globals->extsHoldingGlobals)
 		{
 			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-			for (std::uint8_t u = 0; u < s->numEvents; ++u)
+			for (size_t u = 0; u < evtToRun->numEvents; ++u)
 			{
-				if (s->condTrig[u] != 0xFFFF)
+				if (evtToRun->condTrig[u] != CLEAR_EVTNUM)
 				{
 					auto origSelChannel = selChannel;
 					auto origSelPeer = selPeer;
 					auto origTData = i->threadData; // may not be needed
 
-					i->threadData = s;
-					i->selChannel = s->channel;
-					i->selPeer = s->peer;
+					i->threadData = evtToRun;
+					i->selChannel = evtToRun->channel;
+					i->selPeer = evtToRun->peer;
 
-					i->Runtime.GenerateEvent((int)s->condTrig[u]);
+					i->Runtime.GenerateEvent((int)evtToRun->condTrig[u]);
 
 					// Restore old selection - if there was a selection
 					i->threadData = origTData;
@@ -944,26 +985,27 @@ REFLAG Extension::Handle()
 					if (origSelPeer)
 						selPeer = origSelPeer;
 				}
-				// Remove copies if this particular event number is used
+				// Clear up data if CLEAR_EVTNUM event number is used
 				else
 				{
 					// On disconnect, clear everyting
-					if (!s->channel)
+					if (!evtToRun->channel)
 					{
-						// After On Disconnect is triggered (cond ID 3), 0xFFFF is triggered.
+						// After On Disconnect is triggered (cond ID 3), CLEAR_EVTNUM is triggered.
 						// Invalidate the cached server's host IP, old prev name, and old deny reason.
 						HostIP.clear();
+						HostPort = UINT32_MAX;
 						PreviousName.clear();
 						DenyReasonBuffer.clear();
 					}
 
 					// No channel: full clear of all channels/peers
 					// Channel and no peer: this client leaving channel
-					if (!s->channel || (s->channel && !s->peer))
+					if (!evtToRun->channel || (evtToRun->channel && !evtToRun->peer))
 					{
 						for (auto& dropExt : globals->extsHoldingGlobals)
 						{
-							if (!s->channel || dropExt->selChannel == s->channel)
+							if (!evtToRun->channel || dropExt->selChannel == evtToRun->channel)
 							{
 								dropExt->selChannel = nullptr;
 								dropExt->selPeer = nullptr;
@@ -973,12 +1015,33 @@ REFLAG Extension::Handle()
 
 					// No channel: full clear of all channels/peers
 					// Channel and peer: this peer leaving channel
-					if (!s->channel || (s->channel && s->peer))
+					if (!evtToRun->channel || (evtToRun->channel && evtToRun->peer))
 						for (auto& dropExt : globals->extsHoldingGlobals)
-							if (!s->channel || dropExt->selPeer == s->peer)
+							if (!evtToRun->channel || dropExt->selPeer == evtToRun->peer)
 								dropExt->selPeer = nullptr;
 				}
 			}
+		}
+
+		// On Error was not processed. Shameful.
+		if (!globals->lastMandatoryEventWasChecked)
+		{
+			// Make a nice big error message.
+			std::wstringstream wstr;
+			wstr << L"" PROJECT_NAME " event occurred. Please add a \"" PROJECT_NAME " > "sv <<
+				mandatoryEventIDs[mandatoryEventIndex].first << L"\" event to report it";
+
+			// On Error has message
+			if (mandatoryEventIDs[mandatoryEventIndex].first == L"On Error"sv)
+				wstr << L". Error message:\n"sv << UTF8ToWide(evtToRun->error.text);
+			// On Disconnect and On Name Changed has no text included
+			else if (mandatoryEventIDs[mandatoryEventIndex].first == L"On Disconnect"sv || mandatoryEventIDs[mandatoryEventIndex].first == L"On Name Changed"sv)
+				wstr << L'.';
+			else
+				wstr << L". Deny reason:\n"sv << UTF8ToWide(DenyReasonBuffer);
+
+			MessageBoxW(NULL, wstr.str().c_str(), L"" PROJECT_NAME " - Mandatory Event Error", MB_ICONERROR | MB_TOPMOST);
+			globals->lastMandatoryEventWasChecked = true; // reset for next loop
 		}
 	}
 
@@ -1019,16 +1082,16 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G->_client.connected())
 		return OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout client not connected, exiting.\n"), 0U;
 
-	// App closed within next 3 seconds: close connection by default.
-	// This is also triggered by main thread after a frame switch finishes, to kick the timeout thread
-	// out of the wait early. So app could be closed, or there's a new Ext to take over; we'll check.
-
-	bool appCloseHandleTriggered = false;
-	if (WaitForSingleObject(AppWasClosed, 3000U) == WAIT_OBJECT_0)
+	// Triggered by main thread after a frame switch finishes, to kick the timeout thread
+	// out of the wait early, or triggered by app exiting via EndApp() in Runtime.cpp.
+	const HANDLE handles[2] = { G->cancelTimeoutThread, AppWasClosed };
+	const DWORD triggeredHandle = WaitForMultipleObjects(std::size(handles), handles, FALSE, 3000U);
+	if (triggeredHandle == WAIT_OBJECT_0)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: waitforsingleobject triggered, may be app exit or new ext available.\n");
-		appCloseHandleTriggered = true;
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n");
+		return 0U;
 	}
+	const bool appWasClosed = triggeredHandle == (WAIT_OBJECT_0 + 1);
 
 	EnterCriticalSectionDebug(&G->lock);
 
@@ -1041,35 +1104,35 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 
 	if (!G->_client.connected())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout client not connected, killing globals safely.\n"), 0U;
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout client not connected, killing globals safely.\n");
 		goto killGlobals;
 	}
 
-	if (!appCloseHandleTriggered && G->timeoutWarningEnabled)
+	if (!appWasClosed && G->timeoutWarningEnabled)
 	{
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: timeout warning message.\n");
 		// Otherwise, fuss at them.
-		MessageBoxA(NULL, "Bluewing Client warning!\r\n"
+		MessageBoxA(NULL, "Bluewing Client warning!\n"
 			"All Bluewing Client objects have been destroyed and some time has passed; but "
-			"the connection has been left open in the background, unused, but still connected.\r\n"
+			"the connection has been left open in the background, unused, but still connected.\n"
 			"If you want to close the connection if no Bluewing Client objects are around, use the Disconnect action or "
-			"disable the timeout warning in the Bluewing Client object properties.\r\n",
+			"disable the timeout warning in the Bluewing Client object properties.\n",
 			"Bluewing Client Warning",
 			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
 	}
 
 	killGlobals:
-	OutputDebugStringA(PROJECT_NAME " - timeout thread: Faux-deleting globals.\n");
+	OutputDebugStringA(PROJECT_NAME " - timeout thread: (Faux?-)deleting globals.\n");
 
 	// Don't delete GlobalInfo, as we don't know what main thread is doing,
 	// and we can't destroy GlobalInfo in case a thread is waiting to use it
 
-	if (!appCloseHandleTriggered)
+	if (!appWasClosed)
 		G->MarkAsPendingDelete();
 	LeaveCriticalSectionDebug(&G->lock);
 
 	// App was closed, we can completely delete the memory
-	if (appCloseHandleTriggered)
+	if (appWasClosed)
 		delete G;
 
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
@@ -1135,7 +1198,7 @@ bool Extension::Load(HANDLE File)
 
 void Extension::Action(int ID, RUNDATA * rdPtr, long param1, long param2)
 {
-
+	MessageBoxA(NULL, "Defaulting on an action", PROJECT_NAME " - Action() note", MB_OK | MB_ICONERROR);
 }
 
 long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
@@ -1161,7 +1224,12 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_ext = e;
 	extsHoldingGlobals.push_back(e);
 	if (edPtr->isGlobal)
+	{
 		_globalID = edPtr->edGlobalID;
+
+		// This handle is used by timeout threads when a new ext regains control of this Bluewing instance
+		cancelTimeoutThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+	}
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
 	fullDeleteEnabled = edPtr->fullDeleteEnabled;
 
@@ -1198,6 +1266,10 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 
 	if (!pendingDelete)
 		MarkAsPendingDelete();
+
+	// Counterpart to AppWasClosed, but used for cancelling the timeout thread.
+	if (cancelTimeoutThread)
+		CloseHandle(cancelTimeoutThread);
 
 	// Holders trying to use MarkAsPendingDelete() secure themselves with this lock,
 	// so we don't delete in the MarkAsPendingDelete() but in dtor only
@@ -1240,16 +1312,12 @@ void GlobalInfo::MarkAsPendingDelete()
 	if (!_thread)
 		_objEventPump->tick();
 
+	_objEventPump->post_eventloop_exit();
+
 	if (_client.connected() || _client.connecting())
-	{
 		_client.disconnect();
 
-		if (!_thread)
-			_objEventPump->tick();
-		Sleep(0U);
-	}
-
-	_objEventPump->post_eventloop_exit();
+	clientWriteLock.lw_unlock();
 
 	// Multithreading mode; wait for thread to end
 	auto threadHandle = _thread;
@@ -1261,6 +1329,8 @@ void GlobalInfo::MarkAsPendingDelete()
 			TerminateThread(_thread, 0U);
 			_thread = NULL;
 		}
+
+		OutputDebugStringA(PROJECT_NAME " - Lacewing loop thread should have ended.\n");
 	}
 	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
 	{

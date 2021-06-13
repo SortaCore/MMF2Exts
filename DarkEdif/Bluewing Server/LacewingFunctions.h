@@ -20,4 +20,5 @@ void OnJoinChannelRequest(lacewing::relayserver &Server, std::shared_ptr<lacewin
 	bool hidden, bool autoclose);
 void OnLeaveChannelRequest(lacewing::relayserver &Server, std::shared_ptr<lacewing::relayserver::client> client,
 	std::shared_ptr<lacewing::relayserver::channel> channel);
+bool OnChannelClose(lacewing::relayserver & Server, std::shared_ptr<lacewing::relayserver::channel> channel);
 void OnNameSetRequest(lacewing::relayserver &Server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view newName);

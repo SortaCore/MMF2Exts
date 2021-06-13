@@ -288,3 +288,9 @@ bool Extension::IsPeerOnChannel_ID(int peerID, const TCHAR * channelNamePtr)
 			[=](const auto & peer) { return peer->id() == peerID; });
 	return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
 }
+
+bool Extension::MandatoryTriggeredEvent()
+{
+	globals->lastMandatoryEventWasChecked = true;
+	return true;
+}

@@ -279,6 +279,10 @@
 			<PreprocessorDefinitions Condition="$(RuntimeBuild)==1">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- non-Debug needs NDEBUG -->
 			<PreprocessorDefinitions Condition="$(RelBuild)==1">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+
+			<!-- Windows XP needs manual defines. Was in MMFMasterHeader, but external libraries won't respect that. -->
+			<PreprocessorDefinitions Condition="$(WindowsXPCompatibility)==1">_WIN32_WINNT=0x0501;WINVER=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+
 			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android'">$(_FusionSDKAdds);$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
 
 			<!-- Not including .\ causes includes of "Common.h" from the DarkEdif SDK to fail.

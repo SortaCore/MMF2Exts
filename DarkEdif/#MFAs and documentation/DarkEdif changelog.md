@@ -12,7 +12,9 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v11 release
 ----
 *v11 not released yet*
-
+- Windows XP compatibility improved for external libraries by defining \_WIN32\_WINNT in project properties instead
+- Made DarkEdif Template's icon file size smaller
+- Updated DarkEdif pre-build tool to multiplatform version, fixing the constantly-rebuilding problem
 
 Changes until v10 release
 ----

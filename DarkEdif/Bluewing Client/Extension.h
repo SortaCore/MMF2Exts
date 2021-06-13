@@ -1,9 +1,11 @@
-
 #include "Edif.h"
 #include <functional>
 void NewEvent(EventToRun *);
 
 struct GlobalInfo;
+static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
+static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
+
 class Extension
 {
 public:
@@ -53,6 +55,7 @@ public:
 	#define AutomaticallyClearBinary	globals->_automaticallyClearBinary
 	#define GlobalID					globals->_globalID
 	#define HostIP						globals->_hostIP
+	#define HostPort					globals->_hostPort
 
 	std::shared_ptr<lacewing::relayclient::channel> selChannel;
 	std::shared_ptr<lacewing::relayclient::channel::peer> selPeer; // make sure it's one inside selChannel!
@@ -149,7 +152,10 @@ public:
 
 		const bool AlwaysTrue() { return true; }
 		const bool AlwaysFalse() { return false; }
-		// AlwaysTrue:	bool OnError();
+		// Used for triggered events;
+		bool MandatoryTriggeredEvent();
+
+		// CheckedEvent
 		// AlwaysTrue:	bool OnConnect();
 		// AlwaysTrue:	bool OnConnectDenied();
 		// AlwaysTrue:	bool OnDisconnect();
@@ -258,7 +264,7 @@ public:
 		// ReplacedExprNoParams, x2
 		const TCHAR * DenyReason();
 		const TCHAR * Host_IP();
-		unsigned int HostPort();
+		unsigned int Host_Port();
 		// ReplacedExprNoParams
 		const TCHAR * WelcomeMessage();
 		unsigned int RecvMsg_MemoryAddress();
@@ -309,20 +315,25 @@ void eventpumpdeleter(lacewing::eventpump);
 
 struct GlobalInfo
 {
+	// Lacewing event queue and ticker
 	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
 	lacewing::relayclient _client;
 
-	// Server's IP address, set during connect.
+	// Check to make sure current non-ignorable triggered event was processed by Fusion events
+	bool lastMandatoryEventWasChecked = true;
+
+	// Server's IP address, set during connect; no port
 	std::string _hostIP;
+	unsigned int _hostPort = UINT32_MAX;
 
 	// Binary message to send
 	char * _sendMsg;
 	// Number of bytes in binary message to send (sendMsg)
 	size_t _sendMsgSize;
-	
+
 	// Previous name of this client, as UTF-8
 	std::string _previousName;
-	// Last deny reason, set during Handle() when running deny events.
+	// Last deny reason, set during Handle() when running deny events
 	std::string _denyReasonBuffer;
 	// Clear binary when a binary message is sent/blasted?
 	bool _automaticallyClearBinary;
@@ -331,10 +342,12 @@ struct GlobalInfo
 	std::string _globalID;
 	// If in multithreading mode, the Lacewing message handler thread
 	HANDLE _thread;
-	// Current "owner" extension used to run events. Can be null, e.g. during frame switches.
+	// Current "owner" extension used to run events. Can be null, e.g. during frame switches
 	Extension * _ext;
-	// Thread checking whether a client extension has not regained control of connection in a reasonable time, i.e. slow frame transition.
+	// Thread handle; Thread checking whether a client extension has not regained control of connection in a reasonable time, i.e. slow frame transition
 	HANDLE timeoutThread = NULL;
+	// Event; counterpart to AppWasClosed, but used for cancelling the timeout thread from Ext ctor when a new ext is taking over
+	HANDLE cancelTimeoutThread = NULL;
 
 
 	// Used to keep Fusion selection across frames
@@ -377,8 +390,7 @@ private:
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
 		std::shared_ptr<lacewing::relayclient::channel::peer> peer,
 		std::string_view messageOrErrorText,
-		lw_ui8 subchannel, lw_ui8 variant
-		);
+		lw_ui8 subchannel, lw_ui8 variant);
 public:
 	// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
 	void CreateError(_Printf_format_string_ const char * errorText, ...);

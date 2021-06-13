@@ -94,6 +94,7 @@ namespace lacewing
 		std::string name;
 		lw_ui16 id = 0xFFFF;
 		std::string welcomemessage;
+		// Indicates connected on a Lacewing level; full Lacewing TCP/UDP handshake finished
 		bool connected = false;
 
 		std::vector<std::shared_ptr<relayclient::channel>> channels;
@@ -186,15 +187,18 @@ namespace lacewing
 	{
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
+		auto cliWriteLock = internal.client.lock.createWriteLock();
 		internal.udphellotimer->stop();
 
 		internal.connected = false;
 
 		internal.disconnect_mark_all_as_readonly();
 
-		if (internal.handler_disconnect)
+		cliWriteLock.lw_unlock();
+		if (internal.handler_disconnect)// && handlerNeedsRunning)
 			internal.handler_disconnect(internal.client);
 
+		cliWriteLock.lw_relock();
 		internal.clear();
 
 		// Lacewing self-deletes streams on socket close - while client variable is valid here,
@@ -207,15 +211,28 @@ namespace lacewing
 	{
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
-		char * dataCpy = (char *)malloc(size);
-		if (!dataCpy)
-			throw std::exception("Out of memory.");
+		// To prevent stack overflow from a big TCP packet with multiple Lacewing messages, I've reworked
+		// this function to prevent it recursively calling process() after shaving a message off.
+		const char * dataPtr = data;
+		size_t sizePtr = size;
 
-		memcpy(dataCpy, data, size);
+		constexpr size_t maxMessagesInOneProcess = 300;
+		for (size_t i = 0; i < maxMessagesInOneProcess; i++)
+		{
+			// Ran out of messages, or error occurred and rest should be ignored; exit quietly
+			if (!internal.reader.process(&dataPtr, &sizePtr))
+				return;
+		}
 
-		internal.reader.process(dataCpy, size);
+		if (internal.handler_error)
+		{
+			lacewing::error error = lacewing::error_new();
+			error->add("Overload of message stack; got more than %zu messages in one packet (sized %zu) from server.",
+				maxMessagesInOneProcess, size);
 
-		free(dataCpy);
+			internal.handler_error(internal.client, error);
+			lacewing::error_delete(error);
+		}
 	}
 
 	void handlererror(client socket, error error)
@@ -286,6 +303,14 @@ namespace lacewing
 	void relayclient::disconnect()
 	{
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
+
+		// If you run relayclient::disconnect() while a connection/connect attempt isn't pending,
+		// the disconnect is effectively "stored" inside the socket, causing the next
+		// successful connection to be met with an instant disconnect.
+		// So, make it a no-op when not trying to use a connection yet.
+		if (!internal.socket->connecting() && !internal.socket->connected())
+			return;
+
 		internal.connected = false;
 
 		if (internal.udphellotimer)
@@ -296,7 +321,7 @@ namespace lacewing
 		// In future versions we could use a timer to immediate close after a while,
 		// in case server is lagging with the polite close response, but we'd have
 		// to watch it on app close.
-		internal.socket->close(lw_true);
+		internal.socket->close(lw_false);
 		// lacewing::stream_delete(internal.socket);
 		// internal.socket = nullptr;
 		internal.udp->unhost();
@@ -630,8 +655,13 @@ namespace lacewing
 
 					this->welcomemessage = welcomemessage;
 
-					socket->server_address()->resolve();
-					udp->host(socket->server_address());
+					// If midway during connection when Disconnect is called, returned address can be null.
+					lacewing::address srvAddress = socket->server_address();
+					if (!srvAddress)
+						break;
+
+					srvAddress->resolve();
+					udp->host(srvAddress);
 					udphellotick();
 
 					udphellotimer->start(500); // see udphellotick
@@ -875,7 +905,7 @@ namespace lacewing
 			break;
 		}
 
-		
+
 		// Used in getremaining() for data messages.
 		// Text messages are not null-terminated, binary messages can be 0-sized too,
 		// but the number messages (variant 1) are 4 bytes in size.
@@ -1023,7 +1053,7 @@ namespace lacewing
 			if (!channel2)
 			{
 				lacewing::error error = error_new();
-				error->add("Peer message received, but channel ID was not found in this client's joined channel list. Discarding.");
+				error->add("Peer message received, but channel ID %hu was not found in this client's joined channel list. Discarding.", channel);
 				this->handler_error(client, error);
 				error_delete(error);
 				return true;

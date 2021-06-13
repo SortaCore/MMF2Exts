@@ -108,7 +108,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 
 	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, TStringToANSI(allowListContents));
 	if (!err.empty())
-		CreateError("Couldn't set Unicode %s allow list, %hs.", TStringToUTF8(listToSet).c_str(), err.c_str());
+		CreateError("Couldn't set Unicode %s allow list, %hs.", listToSet, err.c_str());
 }
 
 
@@ -236,6 +236,7 @@ void Extension::EnableCondition_OnMessageToServer(int informFusion)
 
 	// This one's handled a bit differently; there is no auto approve/deny.
 	// The message is either read by Fusion or discarded immediately.
+	// Note that the Unicode allowlist is only tested if onmessage_server is set to a function
 	globals->autoResponse_MessageServer = informFusion == 1 ? AutoResponse::WaitForFusion : AutoResponse::Deny_Quiet;
 	Srv.onmessage_server(informFusion == 1 ? ::OnServerMessage : nullptr);
 }
@@ -253,24 +254,44 @@ void Extension::OnInteractive_Deny(const TCHAR * reason)
 }
 void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 {
-	if (newName[0] == _T('\0'))
-		return CreateError("Cannot change new client name: Cannot use a blank name.");
-
-	std::string newNameU8 = TStringToUTF8(newName);
-	if (!lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty() ||
-		Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ClientNames, newNameU8) != -1)
-	{
-		return CreateError("Cannot change new client name: Invalid characters in new name.");
-	}
-	if (newNameU8.size() > 255)
-		return CreateError("Cannot change new client name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");
-
 	if (InteractivePending == InteractiveType::None)
 		return CreateError("Cannot change new client name: No interactive action is pending.");
 	if (InteractivePending != InteractiveType::ClientNameSet)
 		return CreateError("Cannot change new client name: Interactive event is not compatible with this action.");
 	if (!DenyReason.empty())
-		return CreateError("Cannot change new client name: Name change has already been denied by the Deny Request action.");
+		return CreateError("Cannot change new client name: Name change has already been denied, by the Deny Request action or by a rejected client name modification.");
+
+	// Deny joining if the modified name is invalid; we can assume the server only wants the client name
+	// set/changed if it's set to its modified variant, so the original should not be allowed
+	const std::string_view serverModifiedNameError = "Server modified the client name and got an error on its end"sv;
+	if (newName[0] == _T('\0'))
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change new client name: Cannot use a blank name.");
+	}
+
+	std::string newNameU8 = TStringToUTF8(newName);
+	if (!lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty())
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change new client name: Name is invalid.");
+	}
+	if (newNameU8.size() > 255)
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change new client name: Name is %zu bytes long after UTF-8 conversion (max is 255 bytes).", newNameU8.size());
+	}
+
+	int rejectedChar, charIndex = Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ClientNames, newNameU8, &rejectedChar);
+	if (charIndex != -1)
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change new client name: invalid code point U+%0.4X, decimal %u; valid Unicode point = %hs, Unicode category = %hs.",
+			rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
+	}
+	
+	// If NewClientName is non-empty, client->name() will be called, so check for an exact match
+	// Also, this is the one invalid name case where we don't need to deny
 	if (lw_sv_cmp(NewClientName, newNameU8))
 		return CreateError("Cannot change new channel name: New name is same as original name.");
 
@@ -278,29 +299,46 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 }
 void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 {
+	if (InteractivePending == InteractiveType::None)
+		return CreateError("Cannot change joining channel name: No interactive action is pending.");
+	if (InteractivePending != InteractiveType::ChannelJoin)
+		return CreateError("Cannot change joining channel name: Interactive event is not compatible with this action.");
+	if (!DenyReason.empty())
+		return CreateError("Cannot change joining channel name: Channel name join has already been denied, by the Deny Request action or by a rejected channel name modification.");
+
+	// Deny joining if the modified name is invalid; we can assume the server only wants the channel to be joined
+	// if the name is set to its modified variant, so the original should not be allowed
+	const std::string_view serverModifiedNameError = "Server modified the channel name and got an error on its end"sv;
 	if (newName[0] == _T('\0'))
+	{
+		DenyReason = serverModifiedNameError;
 		return CreateError("Cannot change joining channel name: Cannot use a blank name.");
+	}
 
 	std::string newNameU8 = TStringToUTF8(newName);
-	
 	if (newNameU8.empty() || !lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty())
+	{
+		DenyReason = serverModifiedNameError;
 		return CreateError("Cannot change joining channel name: name is invalid.");
+	}
+	if (newNameU8.size() > 255)
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change joining channel name: Name is %zu bytes long after UTF-8 conversion (max is 255 bytes).", newNameU8.size());
+	}
+
+	// If NewChannelName is non-empty, channel->name() will be called, so check for an exact match
+	// Also, this is the one invalid name case where we don't need to deny
+	if (lw_sv_cmp(NewChannelName, newNameU8))
+		return CreateError("Cannot change new channel name: New name is same as original name.");
 
 	int rejectedChar, charIndex = Srv.checkcodepointsallowed(lacewing::relayserver::codepointsallowlistindex::ChannelNames, newNameU8, &rejectedChar);
 	if (charIndex != -1)
-		return CreateError("Cannot change joining channel name: invalid character %i in new name.", rejectedChar);
-
-	if (newNameU8.size() > 255)
-		return CreateError("Cannot change joining channel name: Cannot use a name longer than 255 characters (after UTF-8 conversion).");
-
-	if (InteractivePending == InteractiveType::None)
-		return CreateError("Cannot change joining channel name: No interactive action is pending.");
-	if ((InteractivePending & InteractiveType::ChannelJoin) != InteractiveType::ChannelJoin)
-		return CreateError("Cannot change joining channel name: Interactive event is not compatible with this action.");
-	if (!DenyReason.empty())
-		return CreateError("Cannot change joining channel name: Channel name join has already been denied by the Deny Request action.");
-	if (lw_sv_cmp(NewChannelName, newNameU8))
-		return CreateError("Cannot change new channel name: New name is same as original name.");
+	{
+		DenyReason = serverModifiedNameError;
+		return CreateError("Cannot change joining channel name: Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %hs.",
+			charIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
+	}
 
 	NewChannelName = newNameU8;
 }
@@ -422,11 +460,11 @@ void Extension::Channel_LoopClients()
 	if (!selChannel)
 		return CreateError("Loop Clients On Channel was called without a channel being selected.");
 
-	auto origSelChannel = selChannel;
-	auto origSelClient = selClient;
-	auto origLoopName = loopName;
+	const auto origSelChannel = selChannel;
+	const auto origSelClient = selClient;
+	const auto origLoopName = loopName;
 
-	std::vector<decltype(origSelClient)> channelClientListDup;
+	std::vector<decltype(selClient)> channelClientListDup;
 	{
 		auto channelReadLock = origSelChannel->lock.createReadLock();
 		channelClientListDup = origSelChannel->getclients();
@@ -439,25 +477,28 @@ void Extension::Channel_LoopClients()
 		loopName = std::tstring_view();
 		Runtime.GenerateEvent(8);
 	}
+
 	selChannel = origSelChannel;
 	selClient = origSelClient;
 	loopName = std::tstring_view();
-
 	Runtime.GenerateEvent(44);
+
 	loopName = origLoopName;
 }
 void Extension::Channel_LoopClientsWithName(const TCHAR * passedLoopName)
 {
 	if (!selChannel)
 		return CreateError("Loop Clients On Channel With Name was called without a channel being selected.");
+	if (passedLoopName[0] == _T('\0'))
+		return CreateError("Cannot loop clients joined to channel \"%hs\": invalid loop name \"\" supplied.", selChannel->name().c_str());
 
 	// You can loop a closed channel's clients, but it's read-only.
-	auto origSelChannel = selChannel;
-	auto origSelClient = selClient;
-	auto origLoopName = loopName;
-
+	const auto origSelChannel = selChannel;
+	const auto origSelClient = selClient;
+	const auto origLoopName = loopName;
 	const std::tstring_view loopNameDup(passedLoopName);
-	std::vector<decltype(origSelClient)> channelClientListDup;
+
+	std::vector<decltype(selClient)> channelClientListDup;
 	{
 		auto channelReadLock = origSelChannel->lock.createReadLock();
 		channelClientListDup = origSelChannel->getclients();
@@ -470,11 +511,12 @@ void Extension::Channel_LoopClientsWithName(const TCHAR * passedLoopName)
 		loopName = loopNameDup;
 		Runtime.GenerateEvent(39);
 	}
+
 	selChannel = origSelChannel;
 	selClient = origSelClient;
 	loopName = loopNameDup;
-
 	Runtime.GenerateEvent(40);
+
 	loopName = origLoopName;
 }
 void Extension::Channel_SetLocalData(const TCHAR * key, const TCHAR * value)
@@ -507,7 +549,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 		const auto & channels = Srv.getchannels();
 		auto foundChIt = std::find_if(channels.cbegin(), channels.cend(),
 			[&](const auto & cli) {
-				return lw_sv_cmp(cli->nameSimplified(), channelNameU8); });
+				return lw_sv_cmp(cli->nameSimplified(), channelNameU8Simplified); });
 		if (foundChIt != channels.cend())
 		{
 			return CreateError("Error creating channel with name \"%s\"; channel already exists (matching channel ID %hu, name %s).",
@@ -517,7 +559,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 
 	// Blank master client
 	decltype(selClient) masterClientToUse;
-	if (masterClientName == _T('\0'))
+	if (masterClientName[0] == _T('\0'))
 	{
 		// Autoclose means when master leaves, you leave. Since there's no "set master" action yet...
 		// the channel will autoclose immediately on creation, which makes no sense.
@@ -825,11 +867,11 @@ void Extension::Channel_KickClientByName(const TCHAR * clientNamePtr)
 }
 void Extension::LoopAllChannels()
 {
-	auto origSelChannel = selChannel;
-	auto origSelClient = selClient;
-	auto origLoopName = loopName;
+	const auto origSelChannel = selChannel;
+	const auto origSelClient = selClient;
+	const auto origLoopName = loopName;
 
-	std::vector<decltype(origSelChannel)> serverChannelListDup;
+	std::vector<decltype(selChannel)> serverChannelListDup;
 	{
 		auto serverReadLock = Srv.lock.createReadLock();
 		serverChannelListDup = Srv.getchannels();
@@ -842,21 +884,25 @@ void Extension::LoopAllChannels()
 		loopName = std::tstring_view();
 		Runtime.GenerateEvent(5);
 	}
+
 	selChannel = origSelChannel;
 	selClient = origSelClient;
 	loopName = std::tstring_view();
-
 	Runtime.GenerateEvent(45);
+
 	loopName = origLoopName;
 }
 void Extension::LoopAllChannelsWithName(const TCHAR * passedLoopName)
 {
-	auto origSelChannel = selChannel;
-	auto origSelClient = selClient;
-	auto origLoopName = loopName;
+	if (passedLoopName[0] == _T('\0'))
+		return CreateError("Cannot loop all channels on server: invalid loop name \"\" supplied.");
 
+	const auto origSelChannel = selChannel;
+	const auto origSelClient = selClient;
+	const auto origLoopName = loopName;
 	const std::tstring_view loopNameDup(passedLoopName);
-	std::vector<decltype(origSelChannel)> serverChannelListDup;
+
+	std::vector<decltype(selChannel)> serverChannelListDup;
 	{
 		auto serverReadLock = Srv.lock.createReadLock();
 		serverChannelListDup = Srv.getchannels();
@@ -869,11 +915,12 @@ void Extension::LoopAllChannelsWithName(const TCHAR * passedLoopName)
 		loopName = loopNameDup;
 		Runtime.GenerateEvent(36);
 	}
+
 	selChannel = origSelChannel;
 	selClient = origSelClient;
 	loopName = loopNameDup;
-
 	Runtime.GenerateEvent(41);
+
 	loopName = origLoopName;
 }
 void Extension::Client_Disconnect()
@@ -902,9 +949,10 @@ void Extension::Client_LoopJoinedChannels()
 	if (!selClient)
 		return CreateError("Cannot loop client's joined channels: No client selected.");
 
-	auto origSelClient = selClient;
-	auto origSelChannel = selChannel;
-	auto origLoopName = loopName;
+	const auto origSelClient = selClient;
+	const auto origSelChannel = selChannel;
+	const auto origLoopName = loopName;
+
 	std::vector<decltype(selChannel)> joinedChannelListDup;
 	{
 		auto selClientReadLock = origSelClient->lock.createReadLock();
@@ -930,11 +978,14 @@ void Extension::Client_LoopJoinedChannelsWithName(const TCHAR * passedLoopName)
 {
 	if (!selClient)
 		return CreateError("Cannot loop client's joined channels: No client selected.");
+	if (passedLoopName[0] == _T('\0'))
+		return CreateError("Cannot loop client ID %hu, name \"%hs\" joined channels: invalid loop name \"\" supplied.", selClient->id(), selClient->name().c_str());
 
-	auto origSelClient = selClient;
-	auto origSelChannel = selChannel;
-	auto origLoopName = loopName;
+	const auto origSelClient = selClient;
+	const auto origSelChannel = selChannel;
+	const auto origLoopName = loopName;
 	const std::tstring_view loopNameDup(passedLoopName);
+
 	std::vector<decltype(selChannel)> joinedChannelListDup;
 	{
 		auto selClientReadLock = origSelClient->lock.createReadLock();
@@ -952,8 +1003,8 @@ void Extension::Client_LoopJoinedChannelsWithName(const TCHAR * passedLoopName)
 	selChannel = origSelChannel;
 	selClient = origSelClient;
 	loopName = loopNameDup;
-
 	Runtime.GenerateEvent(43);
+
 	loopName = origLoopName;
 }
 void Extension::Client_SelectByName(const TCHAR * clientName)
@@ -1025,18 +1076,17 @@ void Extension::Client_SelectReceiver()
 }
 void Extension::LoopAllClients()
 {
-	auto origSelClient = selClient;
-	auto origSelChannel = selChannel;
-	auto origLoopName = loopName;
+	const auto origSelClient = selClient;
+	const auto origSelChannel = selChannel;
+	const auto origLoopName = loopName;
 
-	// Let user write to clients if necessary by duping
 	std::vector<decltype(selClient)> clientListDup;
 	{
 		auto serverReadLock = Srv.lock.createReadLock();
 		clientListDup = Srv.getclients();
 	}
 
-	for (const auto & selectedClient : clientListDup)
+	for (const auto &selectedClient : clientListDup)
 	{
 		selChannel = nullptr;
 		selClient = selectedClient;
@@ -1048,23 +1098,23 @@ void Extension::LoopAllClients()
 	selClient = origSelClient;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(46);
+
 	loopName = origLoopName;
 }
 void Extension::LoopAllClientsWithName(const TCHAR * passedLoopName)
 {
-	auto origSelClient = selClient;
-	auto origSelChannel = selChannel;
-	auto origLoopName = loopName;
+	const auto origSelClient = selClient;
+	const auto origSelChannel = selChannel;
+	const auto origLoopName = loopName;
 	const std::tstring_view loopNameDup(passedLoopName);
 
-	// Let user write to clients if necessary by duping
 	std::vector<decltype(selClient)> clientListDup;
 	{
 		auto serverReadLock = Srv.lock.createReadLock();
 		clientListDup = Srv.getclients();
 	}
 
-	for (const auto & selectedClient : clientListDup)
+	for (const auto &selectedClient : clientListDup)
 	{
 		selChannel = nullptr;
 		selClient = selectedClient;
@@ -1088,8 +1138,7 @@ void Extension::SendTextToChannel(int subchannel, const TCHAR * textToSend)
 	if (selChannel->readonly())
 		return CreateError("Send Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	const std::string textToSendU8 = TStringToUTF8(textToSend);
-	selChannel->send(subchannel, std::string_view(textToSendU8.c_str(), textToSendU8.size() + 1U), 0);
+	selChannel->send(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToClient(int subchannel, const TCHAR * textToSend)
 {
@@ -1100,8 +1149,7 @@ void Extension::SendTextToClient(int subchannel, const TCHAR * textToSend)
 	if (selClient->readonly())
 		return CreateError("Send Text to Client was called with a read-only client ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	const std::string textAsU8 = TStringToUTF8(textToSend);
-	selClient->send(subchannel, std::string_view(textAsU8.c_str(), textAsU8.size() + 1U), 0);
+	selClient->send(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::SendNumberToChannel(int subchannel, int numToSend)
 {
@@ -1162,8 +1210,7 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToBlast)
 	if (selChannel->readonly())
 		return CreateError("Blast Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	const std::string textAsU8 = TStringToUTF8(textToBlast);
-	selChannel->blast(subchannel, std::string_view(textAsU8.c_str(), textAsU8.size() + 1U), 0);
+	selChannel->blast(subchannel, TStringToUTF8(textToBlast), 0);
 }
 void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 {
@@ -1174,8 +1221,7 @@ void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 	if (selClient->readonly())
 		return CreateError("Blast Text to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	const std::string textAsU8 = TStringToUTF8(textToBlast);
-	selClient->blast(subchannel, std::string_view(textAsU8.c_str(), textAsU8.size() + 1U), 0);
+	selClient->blast(subchannel, TStringToUTF8(textToBlast), 0);
 }
 void Extension::BlastNumberToChannel(int subchannel, int numToBlast)
 {

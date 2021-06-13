@@ -336,7 +336,7 @@ void lw_udp_delete (lw_udp ctx)
 
 void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 {
-	if ((!lw_addr_ready (addr)) || !addr->info)
+	if (!addr || (!lw_addr_ready (addr)) || !addr->info)
 	{
 	  lw_error error = lw_error_new ();
 

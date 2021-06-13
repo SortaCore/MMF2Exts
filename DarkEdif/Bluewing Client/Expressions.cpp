@@ -1,8 +1,10 @@
 #include "Common.h"
-#include <iomanip>
 
 const TCHAR * Extension::Error()
 {
+	// Not the On Error event (condition 0)
+	if (threadData->condTrig[0] != 0)
+		return Runtime.CopyString(_T(""));
 	return Runtime.CopyString(UTF8ToTString(threadData->error.text).c_str());
 }
 const TCHAR * Extension::ReplacedExprNoParams()
@@ -51,7 +53,13 @@ int Extension::Peer_ID()
 }
 const TCHAR * Extension::Channel_Name()
 {
-	return Runtime.CopyString(selChannel ? UTF8ToTString(selChannel->name()).c_str() : _T(""));
+	if (selChannel)
+		return Runtime.CopyString(UTF8ToTString(selChannel->name()).c_str());
+
+	// If channel join was denied (condition 5), selChannel will be null, and the denied channel name will be in denied.name
+	if (threadData->condTrig[0] == 5)
+		return Runtime.CopyString(UTF8ToTString(threadData->denied.name).c_str());
+	return Runtime.CopyString(_T(""));
 }
 int Extension::Channel_PeerCount()
 {
@@ -67,7 +75,8 @@ int Extension::ChannelListing_PeerCount()
 }
 int Extension::Self_ID()
 {
-	return Cli.id();
+	int id = Cli.id();
+	return id == UINT16_MAX ? -1 : id;
 }
 const TCHAR * Extension::RecvMsg_StrASCIIByte(int index)
 {
@@ -95,7 +104,7 @@ const TCHAR * Extension::RecvMsg_StrASCIIByte(int index)
 		return Runtime.CopyString(_T(""));
 	}
 	// Also check character is displayable (aka "printable").
-	if (!isprint(charUnsigned))
+	if (!std::isprint(charUnsigned))
 	{
 		CreateError("ASCII char %hhu read, which cannot be displayed. Check index %d is correct.",
 			charUnsigned, index);
@@ -181,7 +190,8 @@ const TCHAR * Extension::RecvMsg_StringWithSize(int index, int size)
 	}
 	if (threadData->receivedMsg.content.size() - index < (size_t)size)
 	{
-		CreateError("Could not read string with size from received binary at position %i, amount of message remaining is smaller than supplied string size %i.", index, size);
+		CreateError("Could not read string with size from received binary at position %i, amount of message remaining (%u bytes) is smaller than supplied string size %i.",
+			index, (std::uint32_t)(threadData->receivedMsg.content.size() - index), size);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -235,16 +245,23 @@ const TCHAR * Extension::Peer_PreviousName()
 }
 const TCHAR * Extension::DenyReason()
 {
+	// Not a Denied event, return blank.
+	// These are condition IDs for connection denied, channel join denied,
+	// name set denied, and channel leave denied, respectively.
+	if (threadData->condTrig[0] != 2 && threadData->condTrig[0] != 5 &&
+		threadData->condTrig[0] != 7 && threadData->condTrig[0] != 44)
+	{
+		return Runtime.CopyString(_T(""));
+	}
 	return Runtime.CopyString(UTF8ToTString(DenyReasonBuffer).c_str());
 }
 const TCHAR * Extension::Host_IP()
 {
 	return Runtime.CopyString(UTF8ToTString(HostIP).c_str());
 }
-unsigned int Extension::HostPort()
+unsigned int Extension::Host_Port()
 {
-	auto addr = Cli.serveraddress();
-	return addr ? addr->port() : -1;
+	return HostPort;
 }
 const TCHAR * Extension::WelcomeMessage()
 {
@@ -277,7 +294,7 @@ const TCHAR * Extension::RecvMsg_Cursor_StrASCIIByte()
 		return Runtime.CopyString(_T(""));
 	}
 	// Also check character is displayable (aka "printable").
-	if (!isprint(charUnsigned))
+	if (!std::isprint(charUnsigned))
 	{
 		CreateError("ASCII char %hhu read, which cannot be displayed. Check cursor index %u is correct.",
 			charUnsigned, threadData->receivedMsg.cursor - 1);
@@ -346,12 +363,13 @@ const TCHAR * Extension::RecvMsg_Cursor_StringWithSize(int size)
 {
 	if (size < 0)
 	{
-		CreateError("Could not read string with size from received binary at cursor position %u, supplied size %i is less than 0.", threadData->receivedMsg.cursor, size);
+		CreateError("Could not read a string with size at cursor position %u, supplied size %i is less than 0.", threadData->receivedMsg.cursor, size);
 		return Runtime.CopyString(_T(""));
 	}
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < (size_t)size)
 	{
-		CreateError("Could not read string with size from received binary at cursor position %u, amount of message remaining is less than supplied size %i.", threadData->receivedMsg.cursor, size);
+		CreateError("Could not read a string with size from received binary at cursor position %u, amount of message remaining %u is less than supplied size %i.",
+			threadData->receivedMsg.cursor, (std::uint32_t)(threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor), size);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -441,7 +459,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 				{
 					curChar = *(std::uint8_t *)&msg[j];
 					output << "Signed char: "sv;
-					if (isprint(curChar))
+					if (std::isprint(curChar))
 						output << '\'' << *(char *)&curChar << '\'';
 					else
 						output << "(?)"sv;

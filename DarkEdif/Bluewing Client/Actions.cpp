@@ -30,11 +30,14 @@ void Extension::Disconnect()
 void Extension::SetName(const TCHAR * name)
 {
 	if (name[0] == _T('\0'))
-		return CreateError("Error: Set Name was called with name \"\".");
+		return CreateError("Set Name was called with name \"\".");
+
+	if (!Cli.connected())
+		return CreateError("Connect to a server before setting name.");
 
 	std::string nameU8(TStringToUTF8(name));
 	if (!lw_u8str_normalize(nameU8))
-		return CreateError("Error: Set Name was called with malformed name \"%s\".", nameU8.c_str());
+		return CreateError("Set Name was called with malformed name \"%s\".", nameU8.c_str());
 
 	Cli.name(nameU8);
 }
@@ -50,123 +53,128 @@ void Extension::LeaveChannel()
 void Extension::SendTextToServer(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.sendserver(subchannel, TStringToUTF8(textToSend));
+		Cli.sendserver(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToChannel(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Text to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Text to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Send Text to Channel was called without a channel being selected.");
+		CreateError("Send Text to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Send Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Send Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->send(subchannel, TStringToUTF8(textToSend));
+		selChannel->send(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToPeer(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Text to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Text to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Send Text to Peer was called without a peer being selected.");
+		CreateError("Send Text to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Send Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
+		CreateError("Send Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->send(subchannel, TStringToUTF8(textToSend));
+		selPeer->send(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::SendNumberToServer(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Number to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Number to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.sendserver(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::SendNumberToChannel(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Number to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Number to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Send Number to Channel was called without a channel being selected.");
+		CreateError("Send Number to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Send Number to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Send Number to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
 		selChannel->send(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::SendNumberToPeer(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Number to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Number to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Send Number to Peer was called without a peer being selected.");
+		CreateError("Send Number to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Send Number to Peer was called with a read-only peer \"%s\".", selPeer->name().c_str());
+		CreateError("Send Number to Peer was called with a read-only peer \"%s\".", selPeer->name().c_str());
 	else
 		selPeer->send(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::BlastTextToServer(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.blastserver(subchannel, TStringToUTF8(textToSend));
+		Cli.blastserver(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Text to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Text to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Blast Text to Channel was called without a channel being selected.");
+		CreateError("Blast Text to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Blast Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Blast Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->blast(subchannel, TStringToUTF8(textToSend));
+		selChannel->blast(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Text to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Text to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Blast Text to Peer was called without a peer being selected.");
+		CreateError("Blast Text to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Blast Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
+		CreateError("Blast Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->blast(subchannel, TStringToUTF8(textToSend));
+		selPeer->blast(subchannel, TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastNumberToServer(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Number to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Number to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.blastserver(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::BlastNumberToChannel(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Number to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Number to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Blast Number to Channel was called without a channel being selected.");
+		CreateError("Blast Number to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Blast Number to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Blast Number to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
 		selChannel->blast(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::BlastNumberToPeer(int subchannel, int numToSend)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Number to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Number to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Blast Number to Peer was called without a peer being selected.");
+		CreateError("Blast Number to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Blast Number to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
+		CreateError("Blast Number to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
 		selPeer->blast(subchannel, std::string_view((char *)&numToSend, sizeof(int)), 1);
 }
 void Extension::SelectChannelWithName(const TCHAR * channelName)
 {
-	std::string channelNameU8 = TStringToUTF8(channelName);
+	const std::string channelNameU8 = TStringToUTF8(channelName);
+
+	// For reselecting in new channel
+	// auto origPeerId = selPeer ? selPeer->id() : -1;
+
 	selChannel = nullptr;
+	selPeer = nullptr;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		const auto &channels = Cli.getchannels();
@@ -179,6 +187,20 @@ void Extension::SelectChannelWithName(const TCHAR * channelName)
 		if (foundChIt != channels.cend())
 		{
 			selChannel = *foundChIt;
+
+			/* Attempt to reselect the selected peer?
+			if (origPeerId != -1)
+			{
+				cliReadLock.lw_unlock();
+				auto chReadLock = selChannel->lock.createReadLock();
+				const auto & peers = selChannel->getpeers();
+				auto foundPeerIt = std::find_if(peers.cbegin(), peers.cend(),
+					[origPeerId](const auto & p) {
+						return p->id() == origPeerId;
+					});
+				if (foundPeerIt != peers.cend())
+					selPeer = *foundPeerIt;
+			}*/
 			return;
 		}
 	}
@@ -192,16 +214,15 @@ void Extension::ReplacedNoParams()
 }
 void Extension::LoopClientChannels()
 {
-	auto origSelChannel = selChannel;
-	auto origSelPeer = selPeer;
-	auto origLoopName = loopName;
+	const auto origSelChannel = selChannel;
+	const auto origSelPeer = selPeer;
+	const auto origLoopName = loopName;
 
 	std::vector<decltype(selChannel)> channelListDup;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListDup = Cli.getchannels(); // duplicate list
 	}
-	// size_t peerID = selPeer ? selPeer->id() : MAXSIZE_T;
 
 	for (const auto &ch : channelListDup)
 	{
@@ -215,14 +236,15 @@ void Extension::LoopClientChannels()
 	selPeer = origSelPeer;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(18);
+
 	loopName = origLoopName;
 }
 void Extension::SelectPeerOnChannelByName(const TCHAR * peerName)
 {
 	if (peerName[0] == _T('\0'))
-		return CreateError("Error: Select Peer On Channel By Name was called with a blank name.");
+		return CreateError("Select Peer On Channel By Name was called with a blank name.");
 	if (!selChannel)
-		return CreateError("Error: Select Peer On Channel By Name was called without a channel being selected.");
+		return CreateError("Select Peer On Channel By Name was called without a channel being selected.");
 
 	selPeer = nullptr;
 	{
@@ -246,9 +268,9 @@ void Extension::SelectPeerOnChannelByName(const TCHAR * peerName)
 void Extension::SelectPeerOnChannelByID(int peerID)
 {
 	if (peerID < 0 || peerID > 0xFFFE)
-		return CreateError("Error: Select Peer On Channel By ID was called with ID %i, which is not in valid range of 0 - 65535.", peerID);
+		return CreateError("Select Peer On Channel By ID was called with ID %i, which is not in valid range of 0 - 65535.", peerID);
 	if (!selChannel)
-		return CreateError("Error: Select Peer On Channel By ID was called without a channel being selected.");
+		return CreateError("Select Peer On Channel By ID was called without a channel being selected.");
 
 	selPeer = nullptr;
 	{
@@ -272,16 +294,18 @@ void Extension::LoopPeersOnChannel()
 {
 	// Store selected channel
 	if (!selChannel)
-		return CreateError("Error: Loop Peers On Channel was called without a channel being selected.");
+		return CreateError("Loop Peers On Channel was called without a channel being selected.");
 
-	auto origSelChannel = selChannel;
-	auto origSelPeer = selPeer;
-	auto origLoopName = loopName;
+	const auto origSelChannel = selChannel;
+	const auto origSelPeer = selPeer;
+	const auto origLoopName = loopName;
+
 	std::vector<decltype(selPeer)> peerListDup;
 	{
 		auto channelReadLock = selChannel->lock.createReadLock();
 		peerListDup = selChannel->getpeers();
 	}
+
 	for (const auto &peer : peerListDup)
 	{
 		selChannel = origSelChannel;
@@ -294,6 +318,7 @@ void Extension::LoopPeersOnChannel()
 	selPeer = origSelPeer;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(17);
+
 	loopName = origLoopName;
 }
 void Extension::RequestChannelList()
@@ -302,13 +327,15 @@ void Extension::RequestChannelList()
 }
 void Extension::LoopListedChannels()
 {
-	auto origLoopName = loopName;
-	auto origChannelList = threadData->channelListing;
+	const auto origLoopName = loopName;
+	const auto origChannelList = threadData->channelListing;
+
 	std::vector<decltype(threadData->channelListing)> channelListingDup;
 	{
-		auto channelReadLock = selChannel->lock.createReadLock();
+		auto clientReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
 	}
+
 	for (const auto &chLst : channelListingDup)
 	{
 		threadData->channelListing = chLst;
@@ -319,13 +346,13 @@ void Extension::LoopListedChannels()
 	threadData->channelListing = nullptr;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(28);
-	threadData->channelListing = origChannelList;
+
 	loopName = origLoopName;
 }
 void Extension::SendBinaryToServer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.sendserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -335,11 +362,11 @@ void Extension::SendBinaryToServer(int subchannel)
 void Extension::SendBinaryToChannel(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Binary to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Binary to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Send Binary to Channel was called without a channel being selected.");
+		CreateError("Send Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Send Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Send Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
 		selChannel->send(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -349,11 +376,11 @@ void Extension::SendBinaryToChannel(int subchannel)
 void Extension::SendBinaryToPeer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Send Binary to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Send Binary to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Send Binary to Peer was called without a peer being selected.");
+		CreateError("Send Binary to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Send Binary to Peer was called with a read-only peer.");
+		CreateError("Send Binary to Peer was called with a read-only peer.");
 	else
 		selPeer->send(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -363,7 +390,7 @@ void Extension::SendBinaryToPeer(int subchannel)
 void Extension::BlastBinaryToServer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
 		Cli.blastserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -373,11 +400,11 @@ void Extension::BlastBinaryToServer(int subchannel)
 void Extension::BlastBinaryToChannel(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Binary to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Binary to Channel was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selChannel)
-		CreateError("Error: Blast Binary to Channel was called without a channel being selected.");
+		CreateError("Blast Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
-		CreateError("Error: Blast Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+		CreateError("Blast Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -387,11 +414,11 @@ void Extension::BlastBinaryToChannel(int subchannel)
 void Extension::BlastBinaryToPeer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
-		CreateError("Error: Blast Binary to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+		CreateError("Blast Binary to Peer was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else if (!selPeer)
-		CreateError("Error: Blast Binary to Peer was called without a peer being selected.");
+		CreateError("Blast Binary to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
-		CreateError("Error: Blast Binary to Peer was called with a read-only peer.");
+		CreateError("Blast Binary to Peer was called with a read-only peer.");
 	else
 		selPeer->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -582,8 +609,6 @@ void Extension::SelectChannelMaster()
 {
 	if (!selChannel)
 		return CreateError("Could not select channel master: no channel selected.");
-	if (selChannel->readonly())
-		return CreateError("Could not select channel master: channel \"%s\" is read-only.", selChannel->name().c_str());
 
 	selPeer = nullptr;
 
@@ -712,25 +737,26 @@ void Extension::RecvMsg_DecompressBinary()
 void Extension::RecvMsg_MoveCursor(int position)
 {
 	if (position < 0)
-		return CreateError("Cannot move cursor; Position less than 0.");
+		return CreateError("Cannot move cursor; Position %d is less than 0.", position);
 	if (threadData->receivedMsg.content.size() - position <= 0)
-		return CreateError("Cannot move cursor; Message is too small.");
+		return CreateError("Cannot move cursor to position %d; message indexes are 0 to %zu.", position, threadData->receivedMsg.content.size());
 
 	threadData->receivedMsg.cursor = position;
 }
 void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 {
 	if (loopName[0] == _T('\0'))
-		return CreateError("Cannot loop listed channels: invalid loop name supplied.");
+		return CreateError("Cannot loop listed channels: invalid loop name \"\" supplied.");
 
-	auto origLoopName = loopName;
-	std::tstring_view loopNameDup(passedLoopName);
+	const std::tstring_view loopNameDup(passedLoopName);
+	const auto origLoopName = loopName;
+	const auto origChannelList = threadData->channelListing;
+
 	std::vector<decltype(threadData->channelListing)> channelListingDup;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
 	}
-	auto origChannelList = threadData->channelListing;
 
 	for (const auto &chLst : channelListingDup)
 	{
@@ -743,29 +769,34 @@ void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 	loopName = loopNameDup;
 	Runtime.GenerateEvent(60);
 
-	threadData->channelListing = origChannelList;
 	loopName = origLoopName;
 }
 void Extension::LoopClientChannelsWithLoopName(const TCHAR * passedLoopName)
 {
 	if (passedLoopName[0] == _T('\0'))
-		return CreateError("Cannot loop client channels: invalid loop name supplied.");
+		return CreateError("Cannot loop client channels: invalid loop name \"\" supplied.");
 
-	auto origLoopName = loopName;
-	std::tstring_view loopNameDup(passedLoopName);
+	const std::tstring_view loopNameDup(passedLoopName);
+	const auto origLoopName = loopName;
+	const auto origSelChannel = selChannel;
+	const auto origSelPeer = selPeer;
+
 	std::vector<decltype(selChannel)> channelListDup;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListDup = Cli.getchannels();
 	}
+
 	for (const auto &ch : channelListDup)
 	{
 		selChannel = ch;
+		selPeer = nullptr;
 		loopName = loopNameDup;
 		Runtime.GenerateEvent(63);
 	}
 
-	selChannel = nullptr;
+	selChannel = origSelChannel;
+	selPeer = origSelPeer;
 	loopName = loopNameDup;
 	Runtime.GenerateEvent(64);
 
@@ -778,10 +809,10 @@ void Extension::LoopPeersOnChannelWithLoopName(const TCHAR * passedLoopName)
 	if (!selChannel)
 		return CreateError("Cannot loop peers on channel: no channel currently selected.");
 
-	std::tstring_view loopNameDup(passedLoopName);
-	auto origSelChannel = selChannel;
-	auto origSelPeer = selPeer;
-	auto origLoopName = loopName;
+	const std::tstring_view loopNameDup(passedLoopName);
+	const auto origSelChannel = selChannel;
+	const auto origSelPeer = selPeer;
+	const auto origLoopName = loopName;
 	std::vector<decltype(selPeer)> peerListDup;
 	{
 		auto channelReadLock = selChannel->lock.createReadLock();

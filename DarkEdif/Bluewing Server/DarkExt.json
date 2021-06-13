@@ -7,7 +7,7 @@
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2021 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
-			"Help": "Help/BluewingHelp.chm",
+			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
 		},
 		"ActionMenu": [
@@ -64,8 +64,8 @@
 				"---",
 				[ 84, "Join client to channel by client name" ],
 				[ 85, "Join client to channel by client ID" ],
-				[ 86, "Kick client by client name" ],
-				[ 87, "Kick client by client ID" ]
+				[ 86, "Kick client from channel by client name" ],
+				[ 87, "Kick client from channel by client ID" ]
 			],
 			[ "Client",
 				[ 29, "Disconnect" ],
@@ -161,21 +161,19 @@
 				"---",
 				[ 5, "On all channels loop" ],
 				[ 45, "On all channels loop finished" ],
-				"---",
-				[ 6, "On client's joined channels loop" ],
-				[ 47, "On client's joined channels loop finished" ],
-				"---",
 				[ 36, "[With loop name] On all channels loop" ],
 				[ 41, "[With loop name] On all channels loop finished" ],
 				"---",
-				[ 37, "[With loop name] On client's joined channels loop" ],
-				[ 43, "[With loop name] On client's joined channels loop finished" ],
+				[ 8, "On channel's clients loop" ],
+				[ 44, "On channel's clients loop finished" ],
+				[ 39, "[With loop name] On channel's clients loop" ],
+				[ 40, "[With loop name] On channel's clients loop finished" ],
 				"---",
 				[ 50, "Is channel hidden from the channel list?" ],
 				[ 51, "Is channel set to close automatically?" ],
 				"---",
 				[ 55, "Does channel name exist?" ],
-			//	[ 56, "Does channel ID exist?" ]
+			//	[ 56, "Does channel ID exist?" ],
 				[ 59, "On channel close" ]
 			],
 			[ "Client",
@@ -184,18 +182,16 @@
 				"---",
 				[ 7, "On all clients loop" ],
 				[ 46, "On all clients loop finished" ],
-				"---",
-				[ 8, "On channel's clients loop" ],
-				[ 44, "On channel's clients loop finished" ],
-				"---",
 				[ 38, "[With loop name] On all clients loop" ],
 				[ 52, "[With loop name] On all clients loop finished" ],
 				"---",
-				[ 39, "[With loop name] On channel's clients loop" ],
-				[ 40, "[With loop name] On channel's clients loop finished" ],
+				[ 6, "On client's joined channels loop" ],
+				[ 47, "On client's joined channels loop finished" ],
+				[ 37, "[With loop name] On client's joined channels loop" ],
+				[ 43, "[With loop name] On client's joined channels loop finished" ],
 				"---",
-				[ 53, "Is selected client joined to certain channel ID?" ],
-				[ 54, "Is selected client joined to certain channel name?" ],
+				[ 54, "Is client ID joined to channel name?" ],
+				[ 53, "Is client name joined to channel name?" ],
 				"---",
 				[ 57, "Does client name exist?" ],
 				[ 58, "Does client ID exist?" ]
@@ -250,6 +246,7 @@
 			"---",
 			[ "Channel",
 				[ 5, "Name" ],
+			//	[ 50, "ID" ],
 				[ 6, "Client count" ],
 				[ 40, "Get local channel data" ],
 				"---",
@@ -1126,14 +1123,14 @@
 			},
 			// New conditions, ID 53+
 			{
-				"Title": "%o : Is client ID %0 joined to channel %1",
+				"Title": "%o : Is client ID %0 joined to channel name %1",
 				"Parameters": [
 					[ "Integer", "Client ID to test" ],
 					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
 			},
 			{
-				"Title": "%o : Is client name %0 joined to channel %1",
+				"Title": "%o : Is client name %0 joined to channel name %1",
 				"Parameters": [
 					[ "Text", "Client name to test" ],
 					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
@@ -1368,7 +1365,7 @@
 				"Returns": "Text"
 			},
 			{
-				"Title": "REMOVED_EXPRESSION$(",
+				"Title": "Client_Implementation$(",
 				"Returns": "Text"
 			},
 			{
@@ -1431,6 +1428,10 @@
 					[ "Text", "Text to test" ],
 					[ "Text", "Codepoint allowlist to test against" ]
 				]
+			},
+			{
+				"Title": "Channel_ID(",
+				"Returns": "Integer"
 			}
 		],
 		"Properties": [
@@ -1644,21 +1645,19 @@
 				"---",
 				[ 5, "Quando for pedida a reciclagem de todos os canais" ],
 				[ 45, "Quando a reciclagem de todos os canais finalizar" ],
-				"---",
-				[ 6, "Quando for pedida a reciclagem dos canais que o cliente entrou" ],
-				[ 47, "Quando a reciclagem dos canais que o cliente entrou finalizar" ],
-				"---",
 				[ 36, "[Com nome a reciclar] Quando for pedida a reciclagem de todos os canais" ],
 				[ 41, "[Com nome a reciclar] Quando a reciclagem de todos os canais finalizar" ],
 				"---",
-				[ 37, "[Com nome a reciclar] Quando for pedida a reciclagem dos canais que o cliente entrou" ],
-				[ 43, "[Com nome a reciclar] Quando a reciclagem dos canais que o cliente entrou finalizar" ],
+				[ 8, "Quando for pedida a reciclagem dos clientes do canal" ],
+				[ 44, "Quando a reciclagem dos clientes do canal finalizar" ],
+				[ 39, "[Com nome a reciclar] Qaundo for pedida a reciclagem dos clientes do canal" ],
+				[ 40, "[Com nome a reciclar] Quando a reciclagem dos clientes do canal finalizar" ],
 				"---",
 				[ 50, "Canal está escondido da lista de canais" ],
 				[ 51, "Canal está definido para fechar automaticamente" ],
 				"---",
 				[ 55, "O nome do canal existe?" ],
-			//	[ 56, "Does channel ID exist?" ]
+			//	[ 56, "O ID do canal existe?" ],
 				[ 59, "Aquando do fecho do canal" ]
 			],
 			[ "Cliente",
@@ -1667,18 +1666,17 @@
 				"---",
 				[ 7, "Quando for pedida a reciclagem de todos os clientes" ],
 				[ 46, "Quando a reciclagem de todos os cliente finalizar" ],
-				"---",
-				[ 8, "Quando for pedida a reciclagem dos clientes do canal" ],
-				[ 44, "Quando a reciclagem dos clientes do canal finalizar" ],
-				"---",
 				[ 38, "[Com nome a reciclar] Quando for pedida a reciclagem de todos os clientes" ],
 				[ 52, "[Com nome a reciclar] Quando a reciclagem de todos os clientes finalizar" ],
 				"---",
-				[ 39, "[Com nome a reciclar] Qaundo for pedida a reciclagem dos clientes do canal" ],
-				[ 40, "[Com nome a reciclar] Quando a reciclagem dos clientes do canal finalizar" ],
+				[ 6, "Quando for pedida a reciclagem dos canais que o cliente entrou" ],
+				[ 47, "Quando a reciclagem dos canais que o cliente entrou finalizar" ],
+				[ 37, "[Com nome a reciclar] Quando for pedida a reciclagem dos canais que o cliente entrou" ],
+				[ 43, "[Com nome a reciclar] Quando a reciclagem dos canais que o cliente entrou finalizar" ],
 				"---",
-				[ 53, "O cliente seleccionado está em certo canal com ID de canal" ],
+				// PORTUGUESE: RETRANSLATE 2 LINES
 				[ 54, "O cliente seleccionado está em canal com certo nome de canal" ],
+				[ 53, "O cliente seleccionado está em certo canal com ID de canal" ],
 				"---",
 				[ 57, "O nomo cliente existe?" ],
 				[ 58, "O ID do cliente existe?" ]
@@ -1733,6 +1731,7 @@
 			"---",
 			[ "Canal",
 				[ 5, "Nome" ],
+			//	[ 50, "ID" ],
 				[ 6, "Contagem de Clientes" ],
 				[ 40, "Mostrar dados locais do canal" ],
 				"---",
@@ -2610,14 +2609,16 @@
 				]
 			},
 			// Novas condições, ID 53+
-			{
+			{ // PORTUGUESE: RETRANSLATE 1 LINE
+				// Should translate "Is client ID %0 joined to channel >name< %1
 				"Title": "%o : O cliente com ID %0 está no canal %1",
 				"Parameters": [
 					[ "Integer", "ID de cliente a testar" ],
 					[ "Text", "Nome do canal a testar (use \"\" para o seleccionado actualmente)" ]
 				]
 			},
-			{
+			{ // PORTUGUESE: RETRANSLATE 1 LINE
+				// Should translate "Is client ID %0 joined to channel >name< %1
 				"Title": "%o : O cliente com o nome %0 está no canal %1",
 				"Parameters": [
 					[ "Text", "Nome de cliente a testar" ],
@@ -2853,7 +2854,7 @@
 				"Returns": "Text"
 			},
 			{
-				"Title": "EXPRESSÃO_REMOVIDA$(",
+				"Title": "Implementação_do_cliente$(",
 				"Returns": "Text"
 			},
 			{
@@ -2916,6 +2917,10 @@
 					[ "Text", "Texto a testar" ],
 					[ "Text", "Códigos na lista de permissões a testar" ]
 				]
+			},
+			{
+				"Title": "ID_do_Canal(",
+				"Returns": "Integer"
 			}
 		],
 		"Properties": [
@@ -3126,21 +3131,19 @@
 				"---",
 				[ 5, "Pour chaque canaux" ],
 				[ 45, "Lorsque la boucle sur tous les canaux est terminée" ],
-				"---",
-				[ 6, "Pour chaque canaux rejoins par le client" ],
-				[ 47, "Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
-				"---",
 				[ 36, "[Avec nom de boucle] Pour chaque canaux" ],
 				[ 41, "[Avec nom de boucle] Lorsque la boucle sur tous les canaux est terminée" ],
 				"---",
-				[ 37, "[Avec nom de boucle] Pour chaque canaux rejoins par le client" ],
-				[ 43, "[Avec nom de boucle] Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
+				[ 8, "Pour chaque clients dans le canal" ],
+				[ 44, "Lorsque la boucle pour chaque clients dans le canal est terminée" ],
+				[ 39, "[Avec nom de boucle] Pour chaque clients dans le canal" ],
+				[ 40, "[Avec nom de boucle] Lorsque la boucle pour chaque clients dans le canal est terminée" ],
 				"---",
 				[ 50, "Le canal est-il caché de la liste des canaux ?" ],
 				[ 51, "Le canal est-il définit pour se fermer automatiquement ?" ],
 				"---",
 				[ 55, "Le nom du canal existe-t-il ?" ],
-			//  [ 56, "L'ID du canal existe-t-il ?" ]
+			//	[ 56, "L'ID du canal existe-t-il ?" ],
 				[ 59, "Fermeture d'un canal" ]
 			],
 			[ "Client",
@@ -3149,18 +3152,16 @@
 				"---",
 				[ 7, "Pour chaque clients" ],
 				[ 46, "Lorsque la boucle pour chaque clients est terminée" ],
-				"---",
-				[ 8, "Pour chaque clients dans le canal" ],
-				[ 44, "Lorsque la boucle pour chaque clients dans le canal est terminée" ],
-				"---",
 				[ 38, "[Avec nom de boucle] Pour chaque clients" ],
 				[ 52, "[Avec nom de boucle] Lorsque la boucle pour chaque clients est terminée" ],
 				"---",
-				[ 39, "[Avec nom de boucle] Pour chaque clients dans le canal" ],
-				[ 40, "[Avec nom de boucle] Lorsque la boucle pour chaque clients dans le canal est terminée" ],
+				[ 6, "Pour chaque canaux rejoins par le client" ],
+				[ 47, "Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
+				[ 37, "[Avec nom de boucle] Pour chaque canaux rejoins par le client" ],
+				[ 43, "[Avec nom de boucle] Lorsque la boucle sur tous les canaux rejoins par le client est terminée" ],
 				"---",
-				[ 53, "Le client sélectionné a-t-il rejoint un canal (par id) ?" ],
-				[ 54, "Le client sélectionné a-t-il rejoint un canal (par nom) ?" ],
+				[ 54, "Le client sélectionné a-t-il est dans le canal (par nom) ?" ],
+				[ 53, "Le client sélectionné a-t-il est dans le canal (par id) ?" ],
 				"---",
 				[ 57, "Le nom du client existe-t-il ?" ],
 				[ 58, "L'ID du client existe-t-il ?" ]
@@ -3215,6 +3216,7 @@
 			"---",
 			[ "Canal",
 				[ 5, "Nom" ],
+			//	[ 50, "ID" ],
 				[ 6, "Nombre de clients" ],
 				[ 40, "Données locales du canal" ],
 				"---",
@@ -3241,38 +3243,30 @@
 				[ 14, "Extraire la taille du Binaire" ],
 				[ 15, "Extraire l'adresse mémoire du Binaire" ],
 				[ 43, "Vidage du Binaire dans une String" ],
-				[
-					"Extraire les données du Binaire",
-					[
-						"Octet",
+				[ "Extraire les données du Binaire",
+					[ "Octet",
 						[ 16, "Caractère ASCII" ],
-						[
-							"Integer",
+						[ "Integer",
 							[ 17, "Non signé" ],
 							[ 18, "Signé" ]
 						]
 					],
-					[
-						"Short",
+					[ "Short",
 						[ 19, "Non signé" ],
 						[ 20, "Signé" ]
 					],
-					[
-						"Integer",
+					[ "Integer",
 						[ 21, "Non signé" ],
 						[ 22, "Signé" ]
 					],
 					[ 23, "Float" ],
-					[
-						"Texte",
+					[ "Texte",
 						[ 24, "Avec taille" ],
 						[ 25, "Avec terminateur null" ]
 					]
 				],
-				[
-					"Extraire données binary (avec curseur)",
-					[
-						"Octet",
+				[ "Extraire données binary (avec curseur)",
+					[ "Octet",
 						[ 29, "Caractère ASCII" ],
 						[
 							"Integer",
@@ -3280,19 +3274,16 @@
 							[ 31, "Signé" ]
 						]
 					],
-					[
-						"Short",
+					[ "Short",
 						[ 32, "Non signé" ],
 						[ 33, "Signé" ]
 					],
-					[
-						"Integer",
+					[ "Integer",
 						[ 34, "Non signé" ],
 						[ 35, "Signé" ]
 					],
 					[ 36, "Float" ],
-					[
-						"Text",
+					[ "Text",
 						[ 37, "Avec taille" ],
 						[ 38, "Avec terminateur null" ]
 					]
@@ -4089,7 +4080,7 @@
 				"Title": "%o : Le canal sélectionné est caché de la liste des canaux"
 			},
 			{
-				"Title": "%o : Le Canal sélectionné est définit pour se fermer automatiquement"
+				"Title": "%o : Le canal sélectionné est définit pour se fermer automatiquement"
 			},
 			// This condition (ID 52) is a duplicate of condition ID 42.
 			// Lacewing Relay menu links to 52, but not sure what backend GenerateEvent uses.
@@ -4103,39 +4094,39 @@
 			},
 			// New conditions, ID 53+
 			{
-				"Title": "%o : Le client d'ID %0 a-t-il rejoint le canal %1 ?",
+				"Title": "%o : Le client d'ID %0 a-t-il est dans le canal de nom %1",
 				"Parameters": [
-					[ "Integer", "ID Client" ],
+					[ "Integer", "ID du Client" ],
 					[ "Text", "Nom du canal à tester (\"\" pour celui qui est actuellement sélectionné)" ]
 				]
 			},
 			{
-				"Title": "%o : Le client de nom %0 a-t-il rejoint le canal %1",
+				"Title": "%o : Le client de nom %0 a-t-il est dans le canal de nom %1",
 				"Parameters": [
-					[ "Text", "Nom du client Client" ],
+					[ "Text", "Nom du client" ],
 					[ "Text", "Nom du canal à tester (\"\" pour celui qui est actuellement sélectionné)" ]
 				]
 			},
 			{
-				"Title": "%o : Le canal de nom %0 existe-t-il ?",
+				"Title": "%o : Le canal de nom %0 existe-t-il",
 				"Parameters": [
 					[ "Text", "Nom de canal à tester" ]
 				]
 			},
 			{
-				"Title": "%o : le canal d'ID %0 existe-t-il ?",
+				"Title": "%o : Le canal d'ID %0 existe-t-il",
 				"Parameters": [
 					[ "Integer", "ID du canal à tester" ]
 				]
 			},
 			{
-				"Title": "%o : Le client de nom %0 existe-t-il ?",
+				"Title": "%o : Le client de nom %0 existe-t-il",
 				"Parameters": [
 					[ "Text", "Nom du client à tester" ]
 				]
 			},
 			{
-				"Title": "%o : Le client d'ID %0 existe-t-il ?",
+				"Title": "%o : Le client d'ID %0 existe-t-il",
 				"Parameters": [
 					[ "Integer", "ID du client à tester" ]
 				]
@@ -4345,7 +4336,7 @@
 				"Returns": "Text"
 			},
 			{
-				"Title": "REMOVED_EXPRESSION$(",
+				"Title": "Implémentation_Client$(",
 				"Returns": "Text"
 			},
 			{
@@ -4408,6 +4399,10 @@
 					[ "Text", "Texte à tester" ],
 					[ "Text", "Liste de permissions de Point de Code à comparer" ]
 				]
+			},
+			{
+				"Title": "ID_Canal(",
+				"Returns": "Integer"
 			}
 		],
 		"Properties": [

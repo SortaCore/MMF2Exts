@@ -1,5 +1,5 @@
 #include "Lacewing.h"
-#include <deps/utf8proc.h>
+#include "deps/utf8proc.h"
 
 std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string acStr)
 {
@@ -30,8 +30,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 
 		size_t numChars = vsnprintf(nullptr, 0, str, v);
 		std::string error(numChars, ' ');
-		vsprintf(error.data(), str, v2);
-		MessageBoxA(NULL, error.c_str(), "Error!", MB_ICONERROR);
+		vsprintf_s(error.data(), error.size(), str, v2);
 
 		va_end(v);
 		va_end(v2);
@@ -91,7 +90,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 						// Wildcard category found, yay
 						for (size_t j = 0; j < std::size(categoryList); j++) {
 							if (firstCharUpper == categoryList[j][0])
-								codePointCategories.push_back(j);
+								codePointCategories.push_back((lw_i32)j);
 						}
 
 						cur += 3;
@@ -104,14 +103,13 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 
 			for (size_t i = 0; i < std::size(categoryList); i++)
 			{
-				if (std::toupper(cur[0]) == categoryList[i][0] &&
-					std::tolower(cur[1]) == categoryList[i][1])
+				if (std::toupper(cur[0]) == categoryList[i][0] && std::tolower(cur[1]) == categoryList[i][1])
 				{
 					// Category found, is it already added?
 					if (std::find(codePointCategories.cbegin(), codePointCategories.cend(), i) != codePointCategories.cend())
 						return makeError("Category \"%.2hs\" was added twice in list \"%hs\".", cur, acStr.c_str());
 
-					codePointCategories.push_back(i);
+					codePointCategories.push_back((lw_i32)i);
 					cur += 3;
 					goto nextChar;
 				}
@@ -124,7 +122,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 		if (std::isdigit(cur[0])) {
 			char * endPtr;
 			unsigned long codePointAllowed = std::strtoul(cur, &endPtr, 0);
-			if (codePointAllowed == 0 || codePointAllowed > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
+			if (codePointAllowed == 0 || codePointAllowed > INT32_MAX) // error in strtoul, or user has put in 0 and approved null char, either way bad
 				return makeError("Specific codepoint %hs not a valid codepoint.", cur, acStr.c_str());
 
 			// Single code point, after this it's a new Unicode list, or it's end of string
@@ -145,7 +143,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 			{
 				++cur;
 				unsigned long lastCodePointNum = std::strtoul(cur, &endPtr, 0);
-				if (lastCodePointNum == 0 || lastCodePointNum > MAXINT32) // error in strtoul, or user has put in 0 and approved null char, either way bad
+				if (lastCodePointNum == 0 || lastCodePointNum > INT32_MAX) // error in strtoul, or user has put in 0 and approved null char, either way bad
 					return makeError("Ending number in codepoint range %lu to \"%.15hs...\" could not be read.", codePointAllowed, cur, cur);
 				// Range is reversed
 				if (lastCodePointNum < codePointAllowed)

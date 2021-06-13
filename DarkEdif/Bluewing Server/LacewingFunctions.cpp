@@ -11,7 +11,7 @@ void OnError(lacewing::relayserver &server, lacewing::error error)
 void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client)
 {
 	// Auto deny quietly can be handled without any lookups or fuss
-	// If we're denying and need to tell Fusion, we need a client copy to reference
+	// If we're denying and need to tell Fusion, we need a client shared_ptr to reference
 	if (globals->autoResponse_Connect == AutoResponse::Deny_Quiet)
 	{
 		server.connect_response(client, globals->autoResponse_Connect_DenyReason);
@@ -21,8 +21,8 @@ void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacew
 	// Found ID, wasn't expecting to
 	if (client->readonly())
 	{
-		globals->CreateError("Copy existed where none was permitted. Denying copy request.");
-		server.connect_response(client, "Server error, copy existed where none was expected."sv);
+		globals->CreateError("Client is already disconnected? Denying connect request.");
+		server.connect_response(client, "Server error, your client is already read-only."sv);
 		return;
 	}
 
@@ -40,9 +40,9 @@ void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacew
 	}
 
 	// We're denying it, but telling Fusion about the connect attempt.
-	// Run event 0xFFFF to delete the client copy immediately after Fusion gets connect request notification.
+	// Run event CLEAR_EVTNUM to delete the client shared_ptr immediately after Fusion gets connect request notification.
 	bool twoEvents = globals->autoResponse_Connect == AutoResponse::Deny_TellFusion;
-	globals->AddEventF(twoEvents, 1, twoEvents ? 0xFFFF : 35353,
+	globals->AddEventF(twoEvents, 1, twoEvents ? CLEAR_EVTNUM : DUMMY_EVTNUM,
 		nullptr, client, std::string_view(), 255, nullptr, InteractiveType::ConnectRequest);
 }
 void OnClientDisconnect(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client)
@@ -51,8 +51,8 @@ void OnClientDisconnect(lacewing::relayserver &server, std::shared_ptr<lacewing:
 	// Ping timer thread will invoke this if it force-disconnects someone, Fusion ext will likewise cause it via Disconnect,
 	// and of course the normal Lacewing event loop thread from clients disconnecting.
 
-	// 0xFFFF: Clear client copy after this event is handled
-	globals->AddEvent2(2, 0xFFFF, nullptr, client);
+	// CLEAR_EVTNUM: Clear selection of client after event 2 (disconnect) is handled
+	globals->AddEvent2(2, CLEAR_EVTNUM, nullptr, client);
 }
 void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel,
 	// Provided in case Fusion edits channel name, we need the create settings to persist
@@ -85,6 +85,14 @@ void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewin
 
 	globals->AddEvent1(3, channel, client, channel->name(), 255, nullptr, InteractiveType::ChannelJoin, '\0', false, hidden, autoclose);
 }
+bool OnChannelClose(lacewing::relayserver & server, std::shared_ptr<lacewing::relayserver::channel> channel)
+{
+	globals->AddEvent2(59, CLEAR_EVTNUM, channel);
+
+	// We can't prevent a channel closure, but returning false indicates the closure should be suspended,
+	// with the messages and peer lists not updated until server.closechannel_finish() is run, by the queued CLEAR_EVTNUM.
+	return false;
+}
 void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel)
 {
 	// Leave channel can mess with writing messages
@@ -95,6 +103,8 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	if (globals->autoResponse_ChannelLeave == AutoResponse::Deny_Quiet)
 	{
 		server.leavechannel_response(channel, client, globals->autoResponse_ChannelLeave_DenyReason);
+
+		// CLEAR_EVTNUM will be run by OnChannelClose handler
 		if (GThread)
 			LeaveCriticalSectionDebug(&globals->lock);
 		return;
@@ -106,6 +116,8 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	{
 		// Since we need consistency we'll run the response anyway.
 		server.leavechannel_response(channel, client, std::string_view());
+
+		// CLEAR_EVTNUM will be run by OnChannelClose handler
 		if (GThread)
 			LeaveCriticalSectionDebug(&globals->lock);
 		return;
@@ -116,27 +128,20 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	{
 		server.leavechannel_response(channel, client, globals->autoResponse_ChannelLeave_DenyReason);
 
-		if (channel->readonly())
-		{
-			globals->ClearLocalData(channel);
-		}
-
 		// Not set to tell Fusion
 		if (globals->autoResponse_ChannelLeave == AutoResponse::Approve_Quiet ||
 			globals->autoResponse_ChannelLeave == AutoResponse::Deny_Quiet)
 		{
+			// CLEAR_EVTNUM will be run by OnChannelClose handler
 			if (GThread)
 				LeaveCriticalSectionDebug(&globals->lock);
 			return;
 		}
 	}
 
-	// 0xFFFF = Clear channel copy after this event is handled.
-	// the two Quiets are handled already (see last return)
-	// Approve_TellFusion has already made change in copy (ch->removeclient() )
-	// Deny_TellFusion does nothing.
-	// WaitForFusion will add 0xFFFF if needed.
+	// CLEAR_EVTNUM will be run by OnChannelClose handler
 	globals->AddEvent1(4, channel, client, std::string_view(), 255, nullptr, InteractiveType::ChannelLeave);
+
 	if (GThread)
 		LeaveCriticalSectionDebug(&globals->lock);
 }

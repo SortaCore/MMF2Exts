@@ -2,6 +2,8 @@
 #include <functional>
 
 struct GlobalInfo;
+static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
+static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
 
 class Extension
 {
@@ -238,8 +240,8 @@ public:
 		bool ChannelIsSetToCloseAutomatically();
 		bool OnAllClientsLoopWithNameFinished(const TCHAR * loopName);
 		// Added conditions:
-		bool IsClientOnChannel_ID(int clientID, const TCHAR * channelName);
-		bool IsClientOnChannel_Name(const TCHAR * clientName, const TCHAR * channelName);
+		bool IsClientOnChannel_ByClientID(int clientID, const TCHAR * channelName);
+		bool IsClientOnChannel_ByClientName(const TCHAR * clientName, const TCHAR * channelName);
 		bool DoesChannelNameExist(const TCHAR * channelName);
 		bool DoesChannelIDExist(int channelID);
 		bool DoesClientNameExist(const TCHAR * clientName);
@@ -300,6 +302,7 @@ public:
 		int ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr);
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
 		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList);
+		int Channel_ID();
 
 	/* These are called if there's no function linked to an ID */
 
@@ -370,8 +373,10 @@ struct GlobalInfo
 	Extension * _ext = nullptr;
 	// Deepest level named loop in use at the moment, checked against in "on loop" triggered conditions
 	std::string_view _loopName;
-	// Thread checking whether the server has not started back up in a reasonable time, i.e. slow frame transition.
+	// Thread handle; Thread checking whether a server extension has not regained control of connection in a reasonable time, i.e. slow frame transition
 	HANDLE timeoutThread = NULL;
+	// Event; counterpart to AppWasClosed, but used for cancelling the timeout thread from Ext ctor when a new ext is taking over
+	HANDLE cancelTimeoutThread = NULL;
 	// Enables or disables the inactivity timer built into liblacewing. See relayserver::setinactivitytimer().
 	bool enableInactivityTimer = true;
 
@@ -385,15 +390,15 @@ struct GlobalInfo
 	// Fusion code always runs in main thread, but errors can occur outside of user input.
 	std::thread::id	mainThreadID;
 
-	// Used to store local data for channels/servers
+	// Used to store local data for clients/channels
 	template<typename T> struct LocalData
 	{
 		std::shared_ptr<T> ptr;
-		std::tstring key;
+		std::string keyU8Simplified; // key, as UTF-8, simplified destructively
 		std::tstring val;
 
-		LocalData(std::shared_ptr<T> ptr, std::tstring key, std::tstring val)
-			: ptr(ptr), key(key), val(val) { }
+		LocalData(std::shared_ptr<T> ptr, std::string keyU8Simplified, std::tstring val)
+			: ptr(ptr), keyU8Simplified(keyU8Simplified), val(val) { }
 	};
 	std::vector<LocalData<lacewing::relayserver::client>> clientLocal;
 	std::vector<LocalData<lacewing::relayserver::channel>> channelLocal;

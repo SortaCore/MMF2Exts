@@ -4,11 +4,24 @@
 // Comments for all the below functions can be found in the header file.
 // IntelliSense should display them anyway.
 
-void lw_addr_prettystring(const char * input, const char * output, size_t outputSize)
+void lw_addr_prettystring(const char * input, char * const output, size_t outputSize)
 {
 	// It's a pure IPv4 already, or a pure IPv6, not IPv4-mapped-IPv6
-	if (strncmp(input, "[::ffff:", 8))
-		memcpy_s((char *)output, outputSize, input, strnlen(input, 64) + 1U);
+	if (strncmp(input, "[::ffff:", 8) != 0)
+	{
+		// IPv6 is in "[address]:port" format, IPv4 is in "address:port" format
+		const char * const portSepPos = strchr(input, input[0] == '[' ? ']' : ':');
+
+		// No port, copy as-is
+		if (portSepPos == NULL)
+			strcpy_s(output, outputSize, input);
+		else // Strip port
+		{
+			const size_t portSepSize = portSepPos - input;
+			memcpy_s(output, outputSize, input, portSepSize);
+			output[portSepSize] = '\0';
+		}
+	}
 	else // IPv4 wrapped inside IPv6
 	{
 		// Start search for "]" at offset of 15
@@ -18,11 +31,9 @@ void lw_addr_prettystring(const char * input, const char * output, size_t output
 		{
 			if (input[i] == ']')
 			{
-				// Apparently the lw_addr's buffer is used for every tostring() call.
-
-				// actually 64, not len, as lw_addr->buffer is 64 chars
-				memmove_s((char *)output, outputSize, &input[8], i - 8);
-				((char *)output)[i - 8] = '\0';
+				// Skip the first 8 chars of "[::ffff:"
+				memmove_s(output, outputSize, &input[8], i - 8);
+				output[i - 8] = '\0';
 
 				break;
 			}
@@ -44,10 +55,10 @@ bool lw_u8str_icmp(const std::string_view first, const std::string_view second)
 	if (first.size() != second.size())
 		return false;
 
-	return lw_u8str_simplify(first, true) == lw_u8str_simplify(second, true);
+	return lw_u8str_simplify(first, false, false) == lw_u8str_simplify(second, false, false);
 }
 
-std::string lw_u8str_simplify(const std::string_view first, bool destructive)
+std::string lw_u8str_simplify(const std::string_view first, bool destructive, bool extralumping)
 {
 	if (first.empty())
 		return std::string();
@@ -71,7 +82,7 @@ std::string lw_u8str_simplify(const std::string_view first, bool destructive)
 	free(retval);
 
 	// Skip additional lumping
-	if (!destructive)
+	if (!destructive || !extralumping)
 		return u8str;
 
 	// Lots of the characters are lumped together by virtue of UTF8PROC_LUMP enum above.
@@ -209,7 +220,7 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 
 	const utf8proc_uint8_t * lastGoodEndChar = NULL;
 	const utf8proc_uint8_t * firstGoodStartChar = NULL;
-	int lastGoodEndCharLen = 0;
+	utf8proc_ssize_t lastGoodEndCharLen = 0;
 	bool lnpMarkSymbol = false;
 	while (remainder > 0)
 	{

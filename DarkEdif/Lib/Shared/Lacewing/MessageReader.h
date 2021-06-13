@@ -128,9 +128,9 @@ public:
 			failed = true;
 		if (!failed && stripNull)
 		{
-			if (remaining.back() == '\0')
+			if (!remaining.empty() && remaining.back() == '\0')
 				remaining.remove_suffix(1);
-			if (remaining.back() == '\0')
+			if (!remaining.empty() && remaining.back() == '\0')
 				failed = true;
 		}
 

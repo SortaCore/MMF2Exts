@@ -686,8 +686,8 @@ typedef lw_i8 lw_bool;
 #include "deps/utf8proc.h"
 
 /// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
-/// 		  If the address is IPv4 or unmapped IPv6, copies it as is. </summary>
-void lw_addr_prettystring(const char * input, const char * output, size_t outputSize);
+/// 		  If the address is IPv4 or unmapped IPv6, copies it without port. </summary>
+void lw_addr_prettystring(const char * input, char * const output, size_t outputSize);
 
 /// <summary> Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
 ///			  make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
@@ -710,9 +710,10 @@ bool lw_u8str_normalize(std::string & input);
 /// <summary> Returns a NFC/NKFC, case-folded, stripped-down version of
 ///			  passed string. Used for easier searching, and to prevent similar names as an exploit.
 ///			  Handles invalid UTF-8 string by returning blank. </summary>
-/// <param name="destructive"> If true, converts to lowercase, and replaces lookalike characters (e.g. 0 to o).
+/// <param name="destructive"> If true, converts to lowercase, and lumps some things together with UTF8PROC lumping.
 ///							   Use false to check if two strings (after the simplifying) differ by case alone. </param>
-std::string lw_u8str_simplify(const std::string_view first, bool destructive = true);
+/// <param name="extralumping"> Replaces lookalike characters (e.g. 0 and O to o). </param>
+std::string lw_u8str_simplify(const std::string_view first, bool destructive = true, bool extralumping = true);
 
 /// <summary> Removes whitespace, control, and strange code points from both beginning and end of string,
 ///			  and returns the result. Stricter on the beginning. Ignores the middle of the string.
@@ -724,6 +725,11 @@ std::string lw_u8str_simplify(const std::string_view first, bool destructive = t
 ///			  Both control and whitespace category will always be removed. </remarks>
 std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded = false);
 
+#if defined(_WIN32) && defined(_UNICODE)
+// For Unicode support on Windows.
+// Returns null or a wide-converted version of the U8 string passed. Free it with free().
+extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str);
+#endif
 
 // to preserve namespace
 #pragma endregion
@@ -1029,14 +1035,6 @@ struct _file : public _fdstream
 
 lw_import file file_new (pump);
 lw_import file file_new (pump, const char * filename, const char * mode = "rb");
-
-#if defined(_WIN32) && defined(_UNICODE)
-// For Unicode support on Windows.
-// Uses __wchar_t due to /Zc:wchar_t flag, which turns wchar_t into unsigned short.
-//
-// Returns null or a wide-converted version of the U8 string passed. Free it with free().
-lw_import __wchar_t * lw_char_to_wchar(const char * u8str);
-#endif
 
 
 /** address **/
@@ -1452,7 +1450,7 @@ struct _webserver_upload
 
 	lw_import const char * form_element_name ();
 	lw_import const char * filename ();
-	lw_import void		 set_autosave ();
+	lw_import void		   set_autosave ();
 	lw_import const char * autosave_filename ();
 
 	lw_import const char * header (const char * name);
@@ -1522,6 +1520,8 @@ lw_import void flashpolicy_delete (flashpolicy);
 // You should also run a check on _lw_addr used on stack. This is normally followed by lw_addr_set_sockaddr.
 // That's fine, but that function runs malloc on the _lw_addr, which leads to a memory leak when the stack
 // variable is freed. Run lw_addr_cleanup() on the stack address at the _lw_addr scope exits to compensate for it.
+//
+// lw_client is_connecting is now set to false properly if getaddrinfo fails.
 
 struct readlock;
 struct writelock;
@@ -1984,6 +1984,8 @@ struct relayserver
 
 	protected:
 		std::atomic<bool> _readonly = false;
+		// Channel Close handler may be run during srvint->channel_removeclient() or ch->channel_close()
+		bool closehandlerrun = false;
 		relayserverinternal &server;
 
 		std::vector<std::shared_ptr<relayserver::client>> clients;
@@ -2052,6 +2054,7 @@ struct relayserver
 		void name(std::string_view);
 
 		size_t channelcount() const;
+		// Set when connection is approved, before that, returns 0
 		lw_i64 getconnecttime() const;
 
 		bool readonly() const;
@@ -2142,6 +2145,9 @@ struct relayserver
 	typedef void(*handler_channel_leave)
 		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel);
 
+	typedef bool(*handler_channel_close)
+		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::channel> channel);
+
 	typedef void(*handler_nameset)
 		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view requestedname);
 
@@ -2164,7 +2170,7 @@ struct relayserver
 	std::string setcodepointsallowedlist(codepointsallowlistindex type, std::string codePointList);
 	// -1 if the string passed matches the allow list, otherwise the char index
 	int checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest, int * rejectedUTF32CodePoint = nullptr) const;
-	
+
 	void onconnect(handler_connect);
 	void ondisconnect(handler_disconnect);
 	void onerror(handler_error);
@@ -2173,6 +2179,7 @@ struct relayserver
 	void onmessage_peer(handler_message_peer);
 	void onchannel_join(handler_channel_join);
 	void onchannel_leave(handler_channel_leave);
+	void onchannel_close(handler_channel_close);
 	void onnameset(handler_nameset);
 
 	void connect_response(std::shared_ptr<lacewing::relayserver::client> client,
@@ -2188,6 +2195,9 @@ struct relayserver
 	// The ability to prevent a client from leaving a channel seems pointless; they can always pull the plug.
 	void leavechannel_response(std::shared_ptr<lacewing::relayserver::channel> channel,
 		std::shared_ptr<lacewing::relayserver::client> client, std::string_view denyReason);
+	// Closing a channel can't be prevented, but the peer list and such needn't be instantly updated.
+	// If it's delayed, this should be run to permit it.
+	void closechannel_finish(std::shared_ptr<lacewing::relayserver::channel> channel);
 	void nameset_response(std::shared_ptr<lacewing::relayserver::client> client,
 		std::string_view newClientName, std::string_view denyReason);
 };

@@ -37,6 +37,7 @@ struct relayserverinternal
 	relayserver::handler_message_peer	  handlermessage_peer;
 	relayserver::handler_channel_join	  handlerchannel_join;
 	relayserver::handler_channel_leave	  handlerchannel_leave;
+	relayserver::handler_channel_close	  handlerchannel_close;
 	relayserver::handler_nameset		  handlernameset;
 
 	relayserverinternal(relayserver &_server, pump pump) noexcept
@@ -50,6 +51,7 @@ struct relayserverinternal
 		handlermessage_peer		= 0;
 		handlerchannel_join		= 0;
 		handlerchannel_leave	= 0;
+		handlerchannel_close	= 0;
 		handlernameset			= 0;
 
 		numTotalClientsPerIP = 5;
@@ -376,7 +378,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				}
 
 				error error = error_new();
-				error->add("Received a UDP message (supposedly) from Client ID %i, but it doesn't have that client's IP. ", id);
+				error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP. ", id);
 				if (realSender)
 				{
 					error->add("Message ACTUALLY originated from client ID %i, on IP %s. Disconnecting client for impersonation attempt. ",
@@ -559,18 +561,18 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 		return;
 	// This occurs in regular usage.
 	error error = error_new();
-	error->add("Received UDP message from Client ID %i, IP %s, but couldn't find client with that ID. Dropping message",
+	error->add("Received UDP message from Client ID %hu, IP %s, but couldn't find client with that ID. Dropping message",
 		id, address->tostring());
 
 	for (const auto& c : todrop)
 	{
 		try {
-			error->add("Dropping client ID %i due to shared IP", c->id);
+			error->add("Dropping client ID %hu due to shared IP", c->id);
 			c->socket->close();
 		}
 		catch (...)
 		{
-			lw_trace("Dropping failed for ID %i.", c->id);
+			lw_trace("Dropping failed for ID %hu.", c->id);
 		}
 	}
 
@@ -637,14 +639,15 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 		utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
 		if (utf8proc_codepoint_valid(rejectedCodePoint))
 		{
-			int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+			utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
 			rejectCharAsStr[numBytesUsed] = '\0';
 		}
 
 		// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
 		lacewing::error error = lacewing::error_new();
-		error->add("Blocked peer text message \"%.15hs...\" from client %hs (ID %hu) -> %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
-			message.data(), name(), id(), receivingClient->name(), receivingClient->id(),
+		size_t msgPartSize = message.size(); msgPartSize = min(msgPartSize, 15);
+		error->add("Dropped peer text message \"%.*hs...\" from client %hs (ID %hu) -> client %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
+			msgPartSize, message.data(), name().c_str(), id(), receivingClient->name().c_str(), receivingClient->id(),
 			rejectedCodePoint, rejectCharAsStr);
 		serverinternal.handlererror(server, error);
 		lacewing::error_delete(error);
@@ -885,7 +888,34 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			return;
 	}
 
-	client.reader.process (data.data(), data.size());
+	// To prevent stack overflow from a big TCP packet with multiple Lacewing messages, I've reworked
+	// this function to prevent it recursively calling process() after shaving a message off.
+	const char * dataPtr = data.data();
+	size_t sizePtr = data.size();
+
+	constexpr size_t maxMessagesInOneProcess = 300;
+	for (size_t i = 0; i < maxMessagesInOneProcess; i++)
+	{
+		// Ran out of messages, or error occurred and rest should be ignored; exit quietly
+		if (!client.reader.process(&dataPtr, &sizePtr))
+			return;
+	}
+
+	char addr[64];
+	const char * ipAddress = client.address.data();
+	lw_addr_prettystring(ipAddress, addr, sizeof(addr));
+
+	relayserverinternal & internal = *(relayserverinternal *)server->tag();
+
+	if (internal.handlererror)
+	{
+		lacewing::error error = lacewing::error_new();
+		error->add("Overload of message stack; got more than %zu messages in one packet (sized %zu) from client ID %hu, name %hs, IP %hs.",
+			maxMessagesInOneProcess, data.size(), client._id, client._name.c_str(), addr);
+
+		internal.handlererror(internal.server, error);
+		lacewing::error_delete(error);
+	}
 }
 
 void handlererror(lacewing::server server, lacewing::error error)
@@ -1018,6 +1048,10 @@ void relayserver::unhost()
 	for (auto &c : serverInternal->clients)
 		c->_readonly = true; // unhost() has already made clients inaccessible
 
+	// Prevent the channel_close handler from being run
+	const auto handler = serverInternal->handlerchannel_close;
+	serverInternal->handlerchannel_close = nullptr;
+
 	while (!serverInternal->clients.empty())
 	{
 		auto& c = serverInternal->clients.back();
@@ -1031,6 +1065,9 @@ void relayserver::unhost()
 		c->_readonly = true;
 		serverInternal->close_channel(c);
 	}
+
+	// Reinstate for next host() call
+	serverInternal->handlerchannel_close = handler;
 }
 
 bool relayserver::hosting()
@@ -1048,9 +1085,18 @@ lw_ui16 relayserver::port()
 void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> channel)
 {
 	auto channelWriteLock = channel->lock.createWriteLock();
-	if (channel->_readonly)
-		return;
 	channel->_readonly = true;
+
+	// Channel is closing, trigger handler
+	if (!channel->closehandlerrun && handlerchannel_close)
+	{
+		channelWriteLock.lw_unlock(); // TODO: This may not be necessary, since readonly should deny writes now.
+		channel->closehandlerrun = true;
+		if (!handlerchannel_close(server, channel))
+			return; // Wait for closechannel_finish() to be called
+		channelWriteLock.lw_relock();
+	}
+
 	channel->_channelmaster.reset(); // so garbage collection can happen
 
 	// Remove the channel from server's list (if it exists)
@@ -1079,7 +1125,7 @@ void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> ch
 
 		while (!channel->clients.empty())
 		{
-			auto& cli = channel->clients[0];
+			auto cli = channel->clients[0];
 			auto cliWriteLock = cli->lock.createWriteLock();
 			if (!cli->_readonly)
 				builder.send(cli->socket, false);
@@ -1107,7 +1153,6 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 	while (!client->channels.empty())
 	{
 		auto clientJoinedCh = client->channels[0];
-		auto channelWriteLock = clientJoinedCh->lock.createWriteLock();
 		// PHI NOTE 29TH DEC: loop server list of channels, upon match run this code
 		// Ensure channel is still open; we rarely get a race condition where it's not
 		channel_removeclient(clientJoinedCh, client);
@@ -1244,12 +1289,42 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 	if (channel->_readonly /* || client->_readonly */)
 		return;
 
+	// Drop channel from client's joined channel list - note this happens even if the channel close handler pauses things
+	for (auto e2 = client->channels.begin(); e2 != client->channels.end(); e2++)
+	{
+		if (*e2 == channel)
+		{
+			client->channels.erase(e2);
+			break;
+		}
+	}
+
 	framebuilder builder(true);
 
 	for (auto e = channel->clients.begin(); e != channel->clients.end(); e++)
 	{
 		if (*e == client)
 		{
+			// Channel is closing. This will call close_channel() below, which will call the channel close handler.
+			// However, we want to call the handler with the peer list keeping the leaving peer.
+			if (handlerchannel_close &&
+				(channel->clients.size() == 1 ||
+				(channel->_channelmaster == client && channel->_autoclose)))
+			{
+				channel->_readonly = true;
+				channel->closehandlerrun = true; // No races!
+
+				// We can safely remove the channel lock, as the channel was marked as readonly...
+				channelWriteLock.lw_unlock();
+				clientWriteLock.lw_unlock();
+				if (!handlerchannel_close(server, channel))
+					return; // Wait for the server to pass on a channel close response.
+
+				// ...but since we'll be editing its peer list we need to relock after.
+				// We also need to relock the client, as we'll be sending a leave success message to it (if they're not disconnected)
+				channelWriteLock.lw_relock();
+				clientWriteLock.lw_relock();
+			}
 			channel->clients.erase (e);
 
 			if (client->_readonly)
@@ -1266,16 +1341,6 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 
 			builder.framereset();
 
-			break;
-		}
-	}
-
-	// Drop channel from client's joined channel list
-	for (auto e2 = client->channels.begin(); e2 != client->channels.end(); e2++)
-	{
-		if (*e2 == channel)
-		{
-			client->channels.erase(e2);
 			break;
 		}
 	}
@@ -1364,7 +1429,7 @@ bool relayserver::client::checkname(std::string_view name)
 			utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
 			if (utf8proc_codepoint_valid(rejectedCodePoint))
 			{
-				int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+				utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
 				rejectCharAsStr[numBytesUsed] = '\0';
 			}
 
@@ -1780,14 +1845,15 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 						utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
 						if (utf8proc_codepoint_valid(rejectedCodePoint))
 						{
-							int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+							utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
 							rejectCharAsStr[numBytesUsed] = '\0';
 						}
 
 						// TODO: This as an error feels awkward as it's easily flooded, but we need some log of it.
 						auto error = lacewing::error_new();
-						error->add("Dropped server text message \"%.15hs...\" from client %hs (ID %hu), invalid char U+%0.4X '%hs' rejected. Client is no longer trusted.",
-							message3.data(), client->name(), client->id(), rejectedCodePoint, rejectCharAsStr);
+						size_t msgPartSize = message3.size(); msgPartSize = min(msgPartSize, 15);
+						error->add("Dropped server text message \"%.*hs...\" from client %hs (ID %hu), invalid char U+%0.4X '%hs' rejected. Client is no longer trusted.",
+							msgPartSize, message3.data(), client->name().c_str(), client->id(), rejectedCodePoint, rejectCharAsStr);
 						((relayserverinternal *)server.internaltag)->handlererror(server, error);
 						lacewing::error_delete(error);
 						trustedClient = false;
@@ -1815,6 +1881,13 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			if (reader.failed)
 			{
+				// TODO: This was too verbose and making servers go down from slow displaying.
+				// It's also within expected behaviour, as some channels being abruptly closed will have clients sending tons of messages
+				// to what to them is still a valid channel. Fusion users like to use 60 messages per second, so even half a second before the
+				// channel leave success message hits them is long enough to flood the server.
+#if 1
+				return trustedClient;
+#else
 				if (channel)
 				{
 					errStr << "Malformed channel message content, for client ID "sv << client->_id << ", name \""sv << client->_name << "\", channel ID "sv <<
@@ -1842,6 +1915,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 					}
 				}
 				break;
+#endif
 			}
 			cliReadLock.lw_unlock();
 
@@ -2378,7 +2452,10 @@ using namespace ::std::chrono;
 
 lw_i64 relayserver::client::getconnecttime() const
 {
-	// No need for read lock: connect time is set in ctor
+	// No need for read lock: connect time is inited in ctor
+	if (!connectRequestApproved)
+		return 0; // Set when connection approve message is sent
+
 	steady_clock::time_point end = steady_clock::now();
 	auto time = end - connectTime;
 	return duration_cast<seconds>(time).count();
@@ -2423,10 +2500,34 @@ std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_vie
 	channel->_hidden = hidden;
 	channel->_autoclose = autoclose;
 
+	// Check channel name if it's the first client being joined
+	// If name is modified, it's done by channel->name() before joinchannel_response()
+	int rejectedCodePoint;
+	std::string failedCharDenyReason(65, '\0');
+	if (serverinternal.checkcodepointsallowed(codepointsallowlistindex::ChannelNames, channel->name(), &rejectedCodePoint) != -1)
+	{
+		utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+		if (utf8proc_codepoint_valid(rejectedCodePoint))
+		{
+			utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+			rejectCharAsStr[numBytesUsed] = '\0';
+		}
+
+		// sprintf then resize to fit, as string_view is copied directly into message, expecting no nulls
+		lacewing::error error = lacewing::error_new();
+		error->add("can't create channel, channel name \"%.*s\" not valid (char U+%0.4X '%s' rejected)",
+			channelName.size(), channelName.data(), rejectedCodePoint, rejectCharAsStr);
+		serverinternal.handlererror(*this, error);
+		lacewing::error_delete(error);
+		return nullptr;
+	}
+
 	if (master)
 	{
 		joinchannel_response(channel, master, std::string_view());
-		// calls serverinternal.channels.push_back(channel);
+		// joinchannel_response() calls serverinternal.channels.push_back(channel);
+		// It also checks the Unicode allowlist, but we don't want a deny reason being sent when
+		// the client hasn't even sent a join request, hence we still check it above.
 	}
 	else
 	{
@@ -2532,7 +2633,8 @@ static void validateorreplacestringview(std::string_view toValidate,
 
 	// Don't let the server get away with it!
 	lacewing::error error = lacewing::error_new();
-	error->add("Error in %*s response: Embedded null chars not allowed in param %*s", functionName.size(), functionName.data(), paramName.size(), paramName.data());
+	error->add("Error in %.*s response: Embedded null chars not allowed in param %.*s",
+		functionName.size(), functionName.data(), paramName.size(), paramName.data());
 	serverI.handlererror(serverI.server, error);
 	lacewing::error_delete(error);
 	writeTo = replaceWith;
@@ -2581,6 +2683,27 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 	if (client->_readonly)
 		return; // No response possible
 
+	// Check channel name if it's the first client being joined
+	// If name is modified, it's done by channel->name() before joinchannel_response()
+	int rejectedCodePoint;
+	std::string failedCharDenyReason(50, '\0');
+	if (denyReason.empty() && channel->clientcount() == 0 &&
+		serverinternal.checkcodepointsallowed(codepointsallowlistindex::ChannelNames, channel->name(), &rejectedCodePoint) != -1)
+	{
+		utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
+		if (utf8proc_codepoint_valid(rejectedCodePoint))
+		{
+			utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+			rejectCharAsStr[numBytesUsed] = '\0';
+		}
+
+		// sprintf then resize to fit, as string_view is copied directly into message, expecting no nulls
+		failedCharDenyReason.resize(
+			sprintf_s(failedCharDenyReason.data(), failedCharDenyReason.size(), "name not valid (char U+%0.4X '%s' rejected)",
+				rejectedCodePoint, rejectCharAsStr)
+		);
+		denyReason = failedCharDenyReason; // stays in scope
+	}
 
 	// If non-empty, request denied.
 	if (!denyReason.empty())
@@ -2657,6 +2780,18 @@ void relayserver::leavechannel_response(std::shared_ptr<relayserver::channel> ch
 	serverinternal.channel_removeclient(channel, client);
 }
 
+/// <summary> Finishes the channel closing event, clearing the peer list and sending the leave messages.
+///			  Should only be called after a false-returning channel close handler. </summary>
+void relayserver::closechannel_finish(std::shared_ptr<lacewing::relayserver::channel> channel)
+{
+	// The channel should already be closed, with this event only updating the peer list and closing.
+	if (!channel->_readonly)
+		throw std::exception("Channel was not previously closed.");
+
+	// channel->close() will check for channel in server list, but we don't have it there
+	((relayserverinternal *)internaltag)->close_channel(channel);
+}
+
 // These two functions allow access to internal transmissions: PeerToChannel, PeerToPeer.
 // The server shouldn't theoretically be able to fake a message from a client.
 // The server's handlerclientmessage/channelmessage is responsible for cloning message content if
@@ -2698,7 +2833,7 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	{
 		static char const * const end = "pproved client name is null or empty. Name refused.";
 		if (denyReason != nullptr)
-			sprintf_s(newDenyReason, "%*s\r\nPlus a%s", denyReason.size(), denyReason.data(), end);
+			sprintf_s(newDenyReason, "%*s\r\nPlus a%s", (lw_i32)denyReason.size(), denyReason.data(), end);
 		else
 			sprintf_s(newDenyReason, "A%s", end);
 		denyReason = newDenyReason;
@@ -2758,7 +2893,9 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	// Checks that name is not blank, or used by another client
 	if (client->checkname(newClientName))
 		client->name(newClientName);
-	else // Name check failed
+	else // Name check failed; checkname() would have sent an error
+		return;
+#if 0
 	{
 		builder.addheader(0, 0);  /* response */
 		builder.add <lw_ui8>(1);  /* setname */
@@ -2783,6 +2920,7 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 		lacewing::error_delete(error);
 		return;
 	}
+#endif
 
 	// Send Name Set Success
 
@@ -2855,13 +2993,14 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 			utf8proc_uint8_t rejectCharAsStr[5] = u8"(?)";
 			if (utf8proc_codepoint_valid(rejectedCodePoint))
 			{
-				int numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
+				utf8proc_ssize_t numBytesUsed = utf8proc_encode_char(rejectedCodePoint, rejectCharAsStr);
 				rejectCharAsStr[numBytesUsed] = '\0';
 			}
 
 			auto error = lacewing::error_new();
-			error->add("Dropped channel text message \"%.15hs...\" from client %hs (ID %hu) -> %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
-				message.data(), client->name(), client->id(), name(), rejectedCodePoint, rejectCharAsStr);
+			size_t msgPartSize = message.size(); msgPartSize = min(msgPartSize, 15);
+			error->add("Dropped channel text message \"%.*hs...\" from client %hs (ID %hu) -> channel %hs (ID %hu), invalid char U+%0.4X '%hs' rejected.",
+				msgPartSize, message.data(), client->name().c_str(), client->id(), name().c_str(), rejectedCodePoint, rejectCharAsStr);
 			((relayserverinternal *)server.internaltag)->handlererror(server, error);
 			lacewing::error_delete(error);
 			return;
@@ -2914,6 +3053,7 @@ autohandlerfunctions(relayserver, relayserverinternal, message_channel)
 autohandlerfunctions(relayserver, relayserverinternal, message_peer)
 autohandlerfunctions(relayserver, relayserverinternal, channel_join)
 autohandlerfunctions(relayserver, relayserverinternal, channel_leave)
+autohandlerfunctions(relayserver, relayserverinternal, channel_close)
 autohandlerfunctions(relayserver, relayserverinternal, nameset)
 
 }

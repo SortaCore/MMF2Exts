@@ -66,7 +66,7 @@ fn_GetFileSizeEx compat_GetFileSizeEx ();
 // Uses __wchar_t due to /Zc:wchar_t flag, which turns wchar_t into unsigned short.
 //
 // Returns null or a wide-converted version of the U8 string passed. Free it with free().
-lw_import __wchar_t * lw_char_to_wchar(const char * u8str);
+extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str);
 #endif
 
 

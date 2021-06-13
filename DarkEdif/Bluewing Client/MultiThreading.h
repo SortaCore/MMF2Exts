@@ -26,6 +26,11 @@
 			struct {
 				std::string	text;
 			} error;
+
+			// When channel join/name set is denied
+			struct {
+				std::string	name;
+			} denied;
 		};
 		std::shared_ptr<lacewing::relayclient::channel> channel;
 		std::shared_ptr<lacewing::relayclient::channellisting> channelListing;

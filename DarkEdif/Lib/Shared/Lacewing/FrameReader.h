@@ -52,45 +52,45 @@ public:
 	framereader() {
 	}
 
-	inline void process(const char * data, size_t size)
+	// Processes a message, returns true if more messages will follow in same data packet.
+	// Sets up dataPtr and sizePtr to point to the next one, for the next process() call.
+	// If no more messages or error, returns false.
+	inline bool process(const char ** dataPtr, size_t * sizePtr)
 	{
-		while(state < 3 && size -- > 0)
+		const char *& data = *dataPtr;
+		size_t &size = *sizePtr;
+
+		while (state < 3 && size -- > 0)
 		{
 			unsigned char byte = *(data ++);
 
-			switch(state)
+			switch (state)
 			{
 				case 0: /* haven't yet got type */
-
 					messagetype = byte;
 					state = 1;
 					sizebytesleft = 0;
-
 					break;
 
 				case 1: /* have type, but no size */
 				{
 					if (sizebytesleft > 0)
 					{
-						buffer.add <char> (byte);
+						buffer.add <unsigned char> (byte);
 
 						if ((-- sizebytesleft) == 0)
 						{
-							switch(buffer.size)
+							switch (buffer.size)
 							{
 							case 2:
-
 								messagesize = *(lw_i16 *) buffer.buffer;
 								break;
-
 							case 4:
-
 								messagesize = *(lw_i32 *) buffer.buffer;
 								break;
 							}
 
 							buffer.reset();
-
 							state = 3;
 							break;
 						}
@@ -103,7 +103,6 @@ public:
 					if (byte == 254)
 					{
 						/* 16 bit message size to follow */
-
 						sizebytesleft = 2;
 						break;
 					}
@@ -111,7 +110,6 @@ public:
 					if (byte == 255)
 					{
 						/* 32 bit message size to follow */
-
 						sizebytesleft = 4;
 						break;
 					}
@@ -123,24 +121,22 @@ public:
 
 					break;
 				}
-			};
+			}
 		}
 
 		if (state < 3) /* header not complete yet */
-			return;
+			return false; // No message to do, exit out
 
 		if (buffer.size == 0)
 		{
 			if (size == messagesize)
 			{
-				/* the message isn't fragmented, and it's the only message. */
-
+				// The message isn't fragmented, and it's the only message.
 				if (!messagehandler(tag, messagetype, data, messagesize))
-					return;
+					return false; // Error, exit out
+
 				state = 0;
-
-
-				return;
+				return false; // No more messages, exit out
 			}
 
 			if (size > messagesize)
@@ -152,14 +148,18 @@ public:
 				char nextbyte = data[messagesize];
 				*(char *)&data[messagesize] = 0;
 
-				if (!messagehandler(tag, messagetype, data, messagesize))
-					return;
+				const bool mhRet = messagehandler(tag, messagetype, data, messagesize);
+				if (!mhRet)
+					return false; // Error, exit out
+
+				// Not safe to do this if messagehandler() is false
 				*(char *)&data[messagesize] = nextbyte;
-
 				state = 0;
-				process(data + messagesize, size - messagesize);
 
-				return;
+				// Was process(data + messagesize, size - messagesize);
+				*dataPtr = data + messagesize;
+				*sizePtr = size - messagesize;
+				return true; // Message follows
 			}
 		}
 
@@ -178,17 +178,22 @@ public:
 			buffer.add <char> (0);
 
 			if (!messagehandler(tag, messagetype, buffer.buffer, messagesize))
-				return;
+				return false; // Error, exit out
 			buffer.reset();
 
 			state = 0;
 
 			if (size > 0)
-				process(data, size);
+			{
+				// Was process(data, size);
+				*dataPtr = data;
+				*sizePtr = size;
+				return true; // Message follows
+			}
 		}
+
+		return false;
 	}
-
-
 };
 
 #endif

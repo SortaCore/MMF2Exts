@@ -136,6 +136,11 @@ void lacewing::writelock::relockDebug(const char * file, const char * func, int 
 {
 	if (locked)
 		throw std::exception("WriteLock: Locking when it's already locked");
+
+	if (lock.checkHoldsWrite(false))
+	{
+		LacewingFatalErrorMsgBox();
+	}
 	lock.openWriteLock(*this, file, func, line);
 	locked = true;
 }
@@ -342,7 +347,7 @@ void lacewing::readwritelock::openWriteLock(writelock &wl)
 		return;
 	}
 
-	write_waiters++;
+	++write_waiters;
 	wl.locker.lock();
 	wl.locked = true;
 
@@ -350,8 +355,8 @@ void lacewing::readwritelock::openWriteLock(writelock &wl)
 	if (writers || readers)
 		LacewingFatalErrorMsgBox();
 
-	write_waiters--;
-	writers++;
+	--write_waiters;
+	++writers;
 
 
 	holder dd;

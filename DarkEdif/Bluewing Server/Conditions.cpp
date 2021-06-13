@@ -17,7 +17,7 @@ bool Extension::IsLacewingServerHosting()
 
 bool Extension::SubchannelMatches(int subchannel)
 {
-	return (threadData->receivedMsg.subchannel == subchannel || subchannel == -1);
+	return (subchannel == -1 || threadData->receivedMsg.subchannel == subchannel);
 }
 bool Extension::Client_IsChannelMaster()
 {
@@ -40,7 +40,7 @@ bool Extension::OnClientsJoinedChannelLoopWithNameFinished(const TCHAR * loopNam
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name Finished");
 }
-bool Extension::IsClientOnChannel_Name(const TCHAR * clientNamePtr, const TCHAR * channelNamePtr)
+bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, const TCHAR * channelNamePtr)
 {
 	if (clientNamePtr[0] == _T('\0') && !selClient)
 		return CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected."), false;
@@ -104,7 +104,7 @@ bool Extension::IsClientOnChannel_Name(const TCHAR * clientNamePtr, const TCHAR 
 	auto& channelClients = foundCh->getclients();
 	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
 }
-bool Extension::IsClientOnChannel_ID(int clientID, const TCHAR * channelNamePtr)
+bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channelNamePtr)
 {
 	if (clientID >= 0xFFFF)
 		return CreateError("Error checking if client is joined to a channel, client ID %i is not in valid ID range of 0-65534.", clientID), false;

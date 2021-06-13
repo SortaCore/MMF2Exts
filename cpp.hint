@@ -16,3 +16,4 @@
 #define lw_upgrade_to(x) upgrade(lw_rwlock_debugParamDefs, x)
 #define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
 //#endif
+#define z_const
