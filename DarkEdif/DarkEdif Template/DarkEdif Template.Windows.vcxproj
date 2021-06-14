@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug Unicode|Win32">
       <Configuration>Debug Unicode</Configuration>
@@ -28,7 +28,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{0FC68544-B3E5-4632-9BBA-7A84EADFC38E}</ProjectGuid>
-    <ProjectName>DarkEdif Template</ProjectName>
+    <ProjectName>DarkEdif Template.Windows</ProjectName>
+    <TargetName>DarkEdif Template</TargetName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Target Name="MissingFusionSDKProps" BeforeTargets="Build">
@@ -57,39 +58,33 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+    <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
+  </ImportGroup>
   <Import Project="..\Lib\FusionSDK_AfterMSPropSheets.props" Condition="exists('..\Lib\FusionSDK_AfterMSPropSheets.props')" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'">
+    <ClCompile />
+  </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Lib\Shared\json.cpp" />
-    <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
-    <ClCompile Include="..\Lib\Shared\Edif.cpp" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
-    <ClCompile Include="..\Lib\Shared\Edif.General.cpp" />
-    <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
-    <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp" />
-    <ClCompile Include="Actions.cpp" />
-    <ClCompile Include="Conditions.cpp" />
     <ClCompile Include="Edittime.cpp" />
-    <ClCompile Include="Expressions.cpp" />
-    <ClCompile Include="Extension.cpp" />
     <ClCompile Include="General.cpp" />
-    <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DarkExt.json" />
+    <ClInclude Include="..\Inc\Windows\Props.h" />
+    <ClInclude Include="DarkExt.json">
+      <FileType>Document</FileType>
+    </ClInclude>
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Shared\json.h" />
-    <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
-    <ClInclude Include="..\Inc\Shared\Edif.h" />
     <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
-    <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Extension.h" />
     <ClInclude Include="Resource.h" />
   </ItemGroup>
   <ItemGroup>

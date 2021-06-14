@@ -1,4 +1,4 @@
-/* vim: set et ts=3 sw=3 ft=c:
+/* vim: set et ts=3 sw=3 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
  * https://github.com/udp/json-parser
@@ -28,6 +28,7 @@
  */
 
 #include "json.h"
+#include "Edif.h"
 
 #ifdef _MSC_VER
 	#ifndef _CRT_SECURE_NO_WARNINGS

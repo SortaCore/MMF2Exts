@@ -1,4 +1,4 @@
-/* vim: set et ts=3 sw=3 ft=c:
+/* vim: set et ts=4 sw=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
  * https://github.com/udp/json-parser
@@ -37,13 +37,15 @@
 #ifndef json_int_t
 	#ifndef _MSC_VER
 	  #include <inttypes.h>
-	  #define json_int_t int64_t
+	  #include <cstdint>
+	  #define json_int_t std::int64_t
 	#else
 	  #define json_int_t __int64
 	#endif
 #endif
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 
@@ -166,7 +168,14 @@ typedef struct _json_value
 		 {  memset (this, 0, sizeof (_json_value));
 		 }
 
-		 inline const struct _json_value &operator [] (int index) const
+		 // 64-bit systems only, where size_t is 64-bit and we'll get complaints about ambiguity/lost detail otherwise
+#if (defined(__LP64__) && __LP64__) || defined(_WIN64)
+		 inline const struct _json_value & operator [] (const std::uint64_t index) const {
+			 return (*this)[(int)index];
+		 }
+#endif
+
+		 inline const struct _json_value &operator [] (const int index) const
 		 {
 			if (type != json_array || index < 0
 					 || ((unsigned int) index) >= u.array.length)
@@ -174,7 +183,7 @@ typedef struct _json_value
 				return json_value_none;
 			}
 
-			return *u.array.values [index];
+			return *u.array.values[index];
 		 }
 
 		 inline const struct _json_value &operator [] (const char * index) const
@@ -183,8 +192,8 @@ typedef struct _json_value
 				return json_value_none;
 
 			for (unsigned int i = 0; i < u.object.length; ++ i)
-				if (!strcmp (u.object.values [i].name, index))
-				  return *u.object.values [i].value;
+				if (!strcmp(u.object.values[i].name, index))
+					return *u.object.values[i].value;
 
 			return json_value_none;
 		 }
@@ -285,5 +294,3 @@ void json_value_free_ex (json_settings * settings,
 #endif
 
 #endif
-
-

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|ARM">
+      <Configuration>Runtime</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|ARM64">
+      <Configuration>Runtime</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|x64">
+      <Configuration>Runtime</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|x86">
+      <Configuration>Runtime</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8d71cd83-be30-4b0f-802e-9629805a663a}</ProjectGuid>
+    <Keyword>iOS</Keyword>
+    <DefaultLanguage>en-GB</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>iOS</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <ProjectName>DarkEdif Template.iOS</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK.props" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK_AfterMSPropSheets.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+    <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />
+  </ItemGroup>
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

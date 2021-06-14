@@ -3,6 +3,11 @@
 #ifndef MMF2_Props_h
 #define	MMF2_Props_h
 
+#ifndef _WIN32
+#include <wchar.h>
+#define strcpy_s(a,b, c) strcpy(a, c)
+#define _tremove(a) remove(a)
+#endif
 
 ///////////////////////////////////////////////////////
 // Property data - used in property definition table.
@@ -11,24 +16,23 @@ struct Prop_Custom;
 struct PropData
 {
 	int				ID;					// Identifier (generated, 1+,)
-	const TCHAR *	Title;				// Name = ID of the property name in the resources, or const char *
-	const TCHAR *	Info;				// Info = ID of the property description in the resources, or const char *
-	union {
-		std::uint32_t	Type_ID;		// Property type...
+	const char *	Title;				// name = ID of the property name in the resources, or const char *
+	const char *	Info;				// Info = ID of the property description in the resources, or const char *
+	union { 
+		unsigned int	Type_ID;		// Property type...
 		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
-	};
-	std::uint32_t	Options;			// Options (check box, bold, etc)
+	}; 
+	unsigned int	Options;			// Options (check box, bold, etc)
 	LPARAM			CreateParam;		// Parameter
-
+	
 	// Use initialiser list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
 	PropData() { PropData(-1, 0);}
-	PropData(std::int32_t ID_, unsigned int Type_) :
-		ID(ID_ + 0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) { }
-
-	void SetAllProperties(std::uint32_t Options_ = 0, LPARAM CreateParam_ = 0)
+	PropData(int ID_, unsigned int Type_) : 
+		ID(ID_+0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) {}
+	void SetAllProperties(unsigned int Options = 0, LPARAM CreateParam = 0)
 	{
-		this->Options = Options_;
-		this->CreateParam = CreateParam_;
+		this->Options = Options;
+		this->CreateParam = CreateParam;
 	}
 };
 
@@ -96,7 +100,7 @@ public:
 	}
 
 	// Data
-	std::int32_t Value;
+	int Value;
 };
 
 // Unsigned integer
@@ -129,8 +133,9 @@ public:
 		return true;
 	}
 
+
 	// Data
-	std::uint32_t Value;
+	unsigned int Value;
 };
 
 // Float
@@ -219,7 +224,7 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return	(this->X == ((Prop_Size *)P)->X) &&
+		return	(this->X == ((Prop_Size *)P)->X) && 
 				(this->Y == ((Prop_Size *)P)->Y);
 	}
 	virtual unsigned int GetClassID()
@@ -235,7 +240,7 @@ public:
 	}
 
 	// Data
-	std::int32_t X, Y;
+	int X, Y;
 };
 
 // Int64 - double-size SInt
@@ -244,7 +249,7 @@ class Prop_Int64 : public Prop
 protected:
 	virtual ~Prop_Int64() {}
 public:
-	Prop_Int64(std::int64_t Value_ = 0) : Value(Value_) {}
+	Prop_Int64(int64_t Value_ = 0) : Value(Value_) {}
 
 	virtual void Delete()
 	{
@@ -264,12 +269,12 @@ public:
 	}
 	virtual bool CopyToAddr(void * const addr)
 	{
-		*(std::int64_t *)addr = Value;
+		*(int64_t *)addr = Value;
 		return true;
 	}
 
 	// Data
-	std::int64_t Value;
+	int64_t Value;
 };
 
 // Pointer - do not use for strings, see A/WStr instead. To store size, use Buff.
@@ -312,28 +317,31 @@ class Prop_Buff : public Prop
 protected:
 	virtual ~Prop_Buff() {}
 public:
-	Prop_Buff(size_t Size_ = 0, void * Address_ = nullptr) : Size(Size_)
+	Prop_Buff(size_t Size_ = 0, void * Address_ = NULL) : Size(Size_)
 	{
 		if (Size == 0)
 			return; // Nothing to do
 
 		Address = malloc(Size); // Allocate size specified
-		if (Address != nullptr && Address_ != nullptr) // If existing address, duplicate memory
+		if (Address != NULL && Address_ != NULL) // If existing address, duplicate memory
 			memcpy_s(Address, Size, Address_, Size);
 	}
 	Prop_Buff(char * Str)
 	{
-		Prop_Buff(Str ? (strlen(Str) + 1) * sizeof(char) : 0, Str);
+		Prop_Buff(Str ? (strlen(Str)+1)*sizeof(char) : 0, Str);
 	}
 	Prop_Buff(wchar_t * Str)
 	{
-		Prop_Buff(Str ? (wcslen(Str) + 1) * sizeof(wchar_t) : 0, Str);
+		Prop_Buff(Str ? (wcslen(Str)+1)*sizeof(wchar_t) : 0, Str);
 	}
 
 	virtual void Delete()
 	{
-		free(Address);
-		Address = nullptr;
+		if (Address) 
+		{
+			free(Address);
+			Address = NULL;
+		}
 		Size = 0;
 		delete this;
 	}
@@ -358,7 +366,7 @@ public:
 	}
 
 	// Data
-	std::uint32_t Size;
+	size_t Size;
 	void * Address;
 };
 
@@ -372,6 +380,7 @@ public:
 	{
 		String = _strdup(Str ? Str : ""); // Allocate size specified
 	}
+#ifndef _WIN32
 	Prop_AStr(const wchar_t * Str)
 	{
 		if (Str == NULL)
@@ -379,26 +388,43 @@ public:
 		else
 		{
 			size_t length = wcslen(Str);
-			String = (char *)calloc(length + 1, sizeof(char));
-
+			String = (char *)calloc(length+1, sizeof(char));
+			
 			if (!String)
 				return; // Stops bad-access crashes
-
+			
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
-			WideCharToMultiByte(CP_ACP, 0, Str, -1, String, length, NULL, NULL);
+			
+			#ifdef _WIN32
+			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
+			#elif defined(__ANDROID__)
+			// iconv is not explicitly available. Android *should* support it, but not within the default libraries.
+			__android_log_write(ANDROID_LOG_FATAL, "MMFRuntime", "Attempted to convert wchar_t * to char *, but not implemented.");
+			#else
+			for (size_t i = 0; i < length; i++)
+				String[i] = (char)(Str[i] & 0x00FF);
+			#endif
+
 			String[length] = 0;	// Force null ending
 		}
 	}
-	Prop_AStr(size_t Size)
+#endif
+	Prop_AStr(size_t size)
 	{
-		String = (char *)calloc(Size ? Size : 1, sizeof(char));
+		if (size > 0)
+			String = (char *)calloc(size, sizeof(char)); // Allocate size specified
+		else
+			String = _strdup("");
 	}
-
+	
 	virtual void Delete()
 	{
-		free(String);
-		String = nullptr;
+		if (String) 
+		{
+			free(String);
+			String = NULL;
+		}
 		delete this;
 	}
 	virtual Prop * CreateCopy()
@@ -407,32 +433,32 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return (this->String == ((Prop_AStr *)P)->String)	||
-				this->String == nullptr						||	// For some reason, default to true if
-				((Prop_AStr *)P)->String == nullptr			||	// NULL for either of params
+		return (this->String == ((Prop_AStr *)P)->String)	|| 
+				this->String == NULL						||	// For some reason, default to true if
+				((Prop_AStr *)P)->String == NULL			||	// NULL for either of params
 				!strcmp(this->String, ((Prop_AStr *)P)->String);
 	}
-	char * GetString()
-	{
-		return String;
-	}
+	char * GetString() {return String;}
 	virtual unsigned int GetClassID()
 	{
 		return 'STRA';
 	}
-
 	virtual bool CopyToAddr(void * const addr)
 	{
 		(*(Prop_AStr *)addr).pad = pad;
 		(*(Prop_AStr *)addr).String = (char *)addr + sizeof(Prop_AStr);
-
-		return !strcpy_s((char *)addr + sizeof(Prop_AStr), strlen(String) + 1, (*(Prop_AStr *)addr).String);
+		
+		return !strcpy_s((char *)addr + sizeof(Prop_AStr), strlen(String) + 1 + sizeof(bool), (*(Prop_AStr *)addr).String);
 	}
 
 	// Data
-	std::uint32_t pad;	// This is a required waste of space or MMF will die trying to read it.
+	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
 	char * String;
 };
+
+#ifndef _WIN32
+extern void LOGF(const char * x, ...);
+#endif
 
 // String (UNICODE)
 class Prop_WStr : public Prop
@@ -455,27 +481,37 @@ public:
 			String = _wcsdup(L"");
 		else
 		{
+#ifndef _WIN32
+			// Shouldn't need implementing
+			LOGF("Unimplemented Prop_WStr function.");
+#else
 			// Convert string to Unicode
 			size_t length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
 			if (length == 0)
-				MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEdif - Property error", MB_OK);
+				MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
 			else {
 				String = (WCHAR*)calloc(length, sizeof(WCHAR));
 				if (!String || MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, String, length) == 0)
-					MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEdif - Property error", MB_OK);
+					MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
 			}
+#endif
 		}
 	}
 	Prop_WStr(size_t Size)
 	{
-		// Allocate size or 1 byte specified
-		String = (wchar_t *)calloc(Size ? Size : 1, sizeof(wchar_t));
+		if (Size > 0)
+			String = (wchar_t *)calloc(Size, sizeof(wchar_t)); // Allocate size specified
+		else
+			String = _wcsdup(L"");
 	}
 
 	virtual void Delete()
 	{
-		free(String);
-		String = NULL;
+		if (String)
+		{
+			free(String);
+			String = NULL;
+		}
 		delete this;
 	}
 	virtual Prop * CreateCopy()
@@ -497,13 +533,13 @@ public:
 	{
 		(*(Prop_WStr *)addr).pad = pad;
 		(*(Prop_WStr *)addr).String = (wchar_t *)((char *)addr + sizeof(Prop_WStr));
-
+		
 		return !wcscpy_s((wchar_t *)((char *)addr + sizeof(Prop_WStr) + sizeof(bool)), wcslen(String) + 1, (*(Prop_WStr *)addr).String);
 	}
 
 
 	// Data
-	std::uint32_t pad;	// This is a required waste of space or MMF will die trying to read it.
+	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
 	wchar_t * String;
 };
 
@@ -517,8 +553,7 @@ public:
 	#define Prop_Str	Prop_AStr
 #endif
 
-/// <summary> Creates a Prop_Str from UTF-8 char *. Allocated by new. </summary>
-Prop_Str * Prop_Str_FromUTF8(const char * u8);
+#ifdef _WIN32
 
 //////////////////
 // Custom property
@@ -548,7 +583,7 @@ struct Prop_Custom
 
 protected:
 	virtual ~Prop_Custom() {
-
+	
 	}
 };
 
@@ -562,15 +597,15 @@ struct CustomPropCreateStruct {
 // Notification Codes for custom properties
 #define PWN_FIRST					(0U-2000U)
 
-// Tells property window to validate the property Item
-// => the property window gets the property value from the property Item
-//	and applies it to the other selected items
+// Tells property window to validate the property item
+// => the property window gets the property value from the property item 
+//    and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
 // Parameter structure for the PWN_VALIDATECUSTOMITEM notification message
 typedef struct _NMPROPWND
 {
-	NMHDR			hdr;
+    NMHDR			hdr;
 	Prop_Custom *	pCP;
 } NMPROPWND, *PNMPROPWND, *LPNMPROPWND;
 
@@ -593,6 +628,7 @@ typedef struct _NMPROPWND
 // Internal symbol used by MMF, not important
 #define IDC_CUSTOMITEM	1500
 
+#endif
 
 ////////////////////////////////////////////////
 //
@@ -638,7 +674,7 @@ enum {
 ///////////////////
 //
 #define	PROPOPT_CHECKBOX		bit1		// Left check box
-#define PROPOPT_BOLD			bit2		// Name must be displayed in bold characters
+#define PROPOPT_BOLD			bit2		// name must be displayed in bold characters
 #define PROPOPT_PARAMREQUIRED	bit3		// A non-null parameter must be provided or it will be requested immediately
 #define PROPOPT_REMOVABLE		bit4		// The property can be deleted by the user
 #define PROPOPT_RENAMEABLE		bit5		// The property can be renamed by the user
@@ -754,7 +790,7 @@ typedef struct {
 typedef MinMaxFloatParam* LPMINMAXFLOATPARAM;
 
 // Direction Control Styles
-enum
+enum 
 {
 	DCS_NOBORDER	= 0x0,		// No border
 	DCS_FLAT		= 0x1,		// Flat
@@ -771,7 +807,7 @@ typedef struct {
 	unsigned int	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
 } DirCtrlCreateParam;
 
-// Direction Property Value
+// Direction Property Value 
 typedef struct {
 	int		selDir;		// Direction index, single selection mode
 	unsigned int	selDir32;	// 32-bit direction mask, multi-selection mode
@@ -783,7 +819,7 @@ typedef struct {
 typedef struct {
 	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
 	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
-} FilenameCreateParam;
+} FilenameCreateParam;	
 
 ////////////////////////////////////////////////
 //
@@ -819,7 +855,7 @@ enum {
 // Property IDs
 //////////
 //
-// If you need them, you can retrieve, set or refresh
+// If you need them, you can retrieve, set or refresh 
 // standard properties with the mvSetPropValue, etc. macros
 // and the following identifiers.
 //

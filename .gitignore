@@ -71,7 +71,6 @@ local.properties
 MFX/
 MOX/
 
-
 *_i.c
 *_p.c
 *.ilk
@@ -90,6 +89,8 @@ MOX/
 *.vspscc
 .builds
 **/*.dotCover
+*.log
+*.desc
 
 ## TODO: If you have NuGet Package Restore enabled, uncomment this
 #**/packages/ 

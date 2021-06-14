@@ -1,4 +1,13 @@
 #pragma once
+#include "Edif.h"
+#ifdef _WIN32
+#include "Resource.h"
+#else
+// These figures don't matter in Android/iOS anyway, a different resources format is used
+#define IDR_EDIF_ICON 101
+#define IDR_EDIF_JSON 102
+#endif
+
 
 // Stops Visual Studio complaining it cannot generate copy functions because of the 0-sized array
 #pragma warning (disable:4200)
@@ -48,19 +57,14 @@ bool CreateNewConditionInfo();
 bool CreateNewExpressionInfo();
 
 #ifndef NOPROPS
-
-#if EditorBuild
-
-void InitialisePropertiesFromJSON(mv *, EDITDATA *);
-
-Prop * GetProperty(EDITDATA *, size_t);
-
-#endif // EditorBuild
-
-void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
-void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
 char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 
+#if EditorBuild
+void InitialisePropertiesFromJSON(mv *, EDITDATA *);
+Prop * GetProperty(EDITDATA *, size_t);
+void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
+void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
+#endif // EditorBuild
 #endif // NOPROPS
 
 std::tstring ANSIToTString(const std::string_view);
@@ -232,6 +236,42 @@ namespace DarkEdif {
 	extern bool IsFusion25;
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(eventGroup *);
+	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
+	int GetCurrentFusionEventNum(const Extension * const ext);
+
+	// allows the compiler to check printf format is correct
+#ifdef _MSC_VER
+#define PrintFHintInside _In_z_ _Printf_format_string_
+#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
+#elif defined(__clang__)
+#define PrintFHintInside /* no op */
+// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
+// Note class member functions should include the "this" pointer in the indexing
+#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+#else
+#define PrintFHintInside /* no op */
+#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
+#endif
+
+	// =====
+	// This region does message boxes
+	// =====
+
+	// Extension name; ANSI/Wide on Windows, UTF-8 elsewhere.
+	extern std::tstring ExtensionName;
+	extern DWORD MainThreadID;
+	extern HWND Internal_WindowHandle;
+
+	void BreakIfDebuggerAttached();
+
+	namespace MsgBox
+	{
+		void WarningOK(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		int WarningYesNo(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		int WarningYesNoCancel(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+	}
 }
 
 

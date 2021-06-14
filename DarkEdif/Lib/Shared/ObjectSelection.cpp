@@ -8,6 +8,7 @@
 
 Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 {
+#if _WIN32
 	this->rhPtr = rhPtr;
 	this->ObjectList = rhPtr->ObjectList;		//get a pointer to the mmf object list
 	this->OiList = rhPtr->OiList;				//get a pointer to the mmf object info list
@@ -15,7 +16,7 @@ Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 	oiListItemSize = sizeof(objInfoList);
 
 //Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
-	#ifndef UNICODE
+	#ifndef _UNICODE
 		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
 			oiListItemSize += 24;
 	#endif
@@ -23,6 +24,7 @@ Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
 			oiListItemSize += sizeof(LPVOID);
 	#endif
+#endif
 }
 
 //Selects *all* objects of the given object-type
@@ -32,7 +34,9 @@ void Riggs::ObjectSelection::SelectAll(short Oi)
 
 	ObjectInfo->NumOfSelected = ObjectInfo->NObjects;
 	ObjectInfo->ListSelected = ObjectInfo->Object;
+#ifdef _WIN32
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+#endif
 
 	int i = ObjectInfo->Object;
 	while(i >= 0)
@@ -50,18 +54,24 @@ void Riggs::ObjectSelection::SelectNone(short Oi)
 
 	ObjectInfo->NumOfSelected = 0;
 	ObjectInfo->ListSelected = -1;
+#if _WIN32
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+#endif
 }
 
 //Resets the SOL and inserts only one given object
 void Riggs::ObjectSelection::SelectOneObject(RunObject * object)
 {
+#ifdef _WIN32
 	objInfoList * ObjectInfo = GetOILFromOI(object->roHo.Oi);
 
 	ObjectInfo->NumOfSelected = 1;
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
 	ObjectInfo->ListSelected = object->roHo.Number;
 	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
+#else
+	DarkEdif::MsgBox::Error("Missing function", "Function %s has not been programmed on Android.", __PRETTY_FUNCTION__);
+#endif
 }
 
 //Resets the SOL and inserts the given list of objects
@@ -72,12 +82,16 @@ void Riggs::ObjectSelection::SelectObjects(short Oi, RunObject ** objects, int c
 
 	objInfoList * const ObjectInfo = GetOILFromOI(Oi);
 
+#ifdef _WIN32
 	ObjectInfo->NumOfSelected = count;
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-
+#else
+	DarkEdif::MsgBox::Error("Missing function", "Function %s has not been programmed on Android.", __PRETTY_FUNCTION__);
+#endif
+	
 	short prevNumber = objects[0]->roHo.Number;
 	ObjectInfo->ListSelected = prevNumber;
-
+	
 	for(int i=1; i<count; i++)
 	{
 		short currentNumber = objects[i]->roHo.Number;
@@ -137,12 +151,14 @@ bool Riggs::ObjectSelection::ObjectIsOfType(RunObject * object, short Oi)
 //Returns the object-info structure from a given object-type
 objInfoList * Riggs::ObjectSelection::GetOILFromOI(short Oi)
 {
+#ifdef _WIN32
 	for(int i = 0; i < rhPtr->NumberOi; ++i)
 	{
 		objInfoList * oil = (objInfoList *)(((char*)OiList) + oiListItemSize*i);
 		if (oil->Oi == Oi)
 			return oil;
 	}
+#endif
 	return NULL;
 }
 
