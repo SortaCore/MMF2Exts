@@ -10,7 +10,7 @@
 
 HANDLE AppWasClosed = NULL;
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
+	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
 {
 	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
 	// Otherwise, enables debug memory, tracking for memory leaks or overflow/underflow
@@ -520,6 +520,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	_server.onnameset(nullptr);
 	_server.onchannel_join(nullptr);
 	_server.onchannel_leave(nullptr);
+	_server.onchannel_close(nullptr);
 	_server.onmessage_server(nullptr);
 	_server.onmessage_channel(nullptr);
 	_server.onmessage_peer(nullptr);
@@ -1546,17 +1547,17 @@ bool Extension::Load(HANDLE File)
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID, RUNDATA * rdPtr, long param1, long param2)
+void Extension::Action(int ID)
 {
 
 }
 
-long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
+long Extension::Condition(int ID)
 {
 	return false;
 }
 
-long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
+long Extension::Expression(int ID)
 {
 	return 0;
 }

@@ -249,6 +249,7 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 			// TODO: May be possible to reverse-iterate, but honestly, with surrogates and stuff, can't do it.
 			lastGoodEndChar = firstGoodStartChar = str;
 			lastGoodEndCharLen = numBytesInCodePoint;
+			lnpMarkSymbol = true; // Init to true for one-char strings
 			goto cont;
 		}
 

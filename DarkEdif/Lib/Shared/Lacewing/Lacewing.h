@@ -87,6 +87,7 @@
 	#ifndef lw_import
 		#define lw_import
 	#endif
+	#include <netinet/in6.h>
 #else
 
 	/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
@@ -96,6 +97,7 @@
 	#endif
 
 	#define lw_callback __cdecl
+	#include <in6addr.h>
 
 #endif
 
@@ -107,7 +109,7 @@
 	#endif
 #endif
 
-#include <in6addr.h>
+
 #include <atomic>
 #include <vector>
 #include <memory>
@@ -1909,7 +1911,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 26;
+	static const int buildnum = 27;
 
 	void * internaltag, * tag = nullptr;
 

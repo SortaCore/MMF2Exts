@@ -306,9 +306,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void Action(int ID);
+	long Condition(int ID);
+	long Expression(int ID);
 
 
 
