@@ -127,7 +127,7 @@
 using namespace std::string_view_literals;
 
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
-void LacewingFatalErrorMsgBox2(char * func, char * file, int line);
+void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line);
 
 typedef lw_i8 lw_bool;
 

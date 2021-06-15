@@ -46,7 +46,7 @@ struct _lw_udp
 
 static void read_ready (void * ptr)
 {
-	lw_udp ctx = ptr;
+	lw_udp ctx = (lw_udp)ptr;
 
 	struct sockaddr_storage from;
 	socklen_t from_size = sizeof (from);
@@ -143,7 +143,7 @@ void lw_udp_unhost (lw_udp ctx)
 
 lw_udp lw_udp_new (lw_pump pump)
 {
-	lw_udp ctx = calloc (sizeof (*ctx), 1);
+	lw_udp ctx = (lw_udp)calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
 	  return 0;

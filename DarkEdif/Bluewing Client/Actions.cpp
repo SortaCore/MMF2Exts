@@ -8,11 +8,22 @@ static char errtext[1024];
 void ErrNoToErrText()
 {
 	int error = errno; // strerror_s may change errno
+#ifdef _WIN32
 	if (strerror_s(errtext, error))
 	{
-		strcpy_s(errtext, "errno failed to convert");
-		_set_errno(error);
+		strcpy_s(errtext, std::size(errtext), "errno failed to convert");
+		errno = error;
 	}
+#else
+	char * strError = strerror(error);
+	if (strError != NULL)
+	{
+		strcpy(errtext, "errno failed to convert");
+		errno = error;
+	}
+	else
+		strcpy(errtext, strError);
+#endif
 }
 
 #define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
@@ -510,25 +521,30 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (((unsigned int)position) + size > threadData->receivedMsg.content.size())
 		return CreateError("Cannot save received binary to file; message doesn't the supplied position range %i to %i.", position, position + size);
 
+#ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("wb"), SH_DENYWR);
+#else
+	FILE * File = fopen(filename, "wb");
+#endif
+
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%hs\" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	size_t amountWritten;
 	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
 	{
 		ErrNoToErrText();
-		CreateError("Cannot save received binary to file, error %i \"%hs\" occurred with writing the file. Wrote %zu"
+		CreateError("Cannot save received binary to file, error %i \"%s\" occurred with writing the file. Wrote %zu"
 			" bytes total. The message has not been modified.", errno, errtext, amountWritten);
 	}
 
 	if (fclose(File))
 	{
 		ErrNoToErrText();
-		CreateError("Cannot save received binary to file, error %i \"%hs\" occurred with writing the last part of the file."
+		CreateError("Cannot save received binary to file, error %i \"%s\" occurred with writing the last part of the file."
 			" The message has not been modified.", errno, errtext);
 	}
 }
@@ -545,7 +561,11 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 		return CreateError("Cannot append received binary to file; message doesn't have the supplied index range %i to %i.", position, position + size);
 
 	// Open while denying write of other programs
+#ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("ab"), SH_DENYWR);
+#else
+	FILE * File = fopen(filename, "ab");
+#endif
 	if (!File)
 	{
 		ErrNoToErrText();
@@ -556,10 +576,14 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
 	{
 		fseek(File, 0, SEEK_END);
+#ifdef _WIN32
 		std::int64_t filesize = _ftelli64(File);
+#else
+		std::int64_t filesize = ftell(File);
+#endif
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\" occurred with writing the file. "
-			"Wrote %zu bytes, leaving file at size %lld bytes.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
+			"Wrote %zu bytes, leaving file at size %zd bytes.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
 	}
 
 	if (fclose(File))
@@ -571,7 +595,11 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 		return CreateError("Cannot add file to send binary; supplied filename \"\" is invalid.");
 
 	// Open and deny other programs write privileges
-	FILE * File = _tfsopen(filename, _T("rb"), _SH_DENYWR);
+#ifdef _WIN32
+	FILE * File = _tfsopen(filename, _T("rb"), SH_DENYWR);
+#else
+	FILE * File = fopen(filename, "rb");
+#endif
 	if (!File)
 	{
 		ErrNoToErrText();
@@ -590,7 +618,7 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	std::byte * buffer = (std::byte *)malloc(filesize);
 	if (!buffer)
 	{
-		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve %i bytes of memory to add file into message.",
+		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve %li bytes of memory to add file into message.",
 			TStringToUTF8(filename).c_str(), filesize);
 	}
 	else
@@ -640,7 +668,7 @@ void Extension::SendMsg_CompressBinary()
 	z_stream strm = {};
 	ret = deflateInit(&strm, 9); // 9 is maximum compression level
 	if (ret)
-		return CreateError("Zlib error %i: %hs occurred with initiating compression.", ret, strm.msg ? "No details" : strm.msg);
+		return CreateError("Zlib error %i: %s occurred with initiating compression.", ret, strm.msg ? "No details" : strm.msg);
 
 	// 4: precursor lw_ui32 with uncompressed size, required by Relay
 	// 256: if compression results in larger message, it shouldn't be *that* much larger.
@@ -649,7 +677,7 @@ void Extension::SendMsg_CompressBinary()
 	if (!output_buffer)
 	{
 		deflateEnd(&strm);
-		return CreateError("Error with compressing send binary, could not allocate %u bytes of memory.", 4U + SendMsgSize + 256U);
+		return CreateError("Error with compressing send binary, could not allocate %zu bytes of memory.", 4U + SendMsgSize + 256U);
 	}
 
 	// Store size as precursor - required by Relay
@@ -668,7 +696,7 @@ void Extension::SendMsg_CompressBinary()
 		const char *strmMsg = strm.msg ? strm.msg : "(no description)";
 		free(output_buffer);
 		deflateEnd(&strm);
-		return CreateError("Error with compressing send binary, deflate() returned %i. Zlib error: %hs.", ret, strmMsg);
+		return CreateError("Error with compressing send binary, deflate() returned %i. Zlib error: %s.", ret, strmMsg);
 	}
 
 	deflateEnd(&strm);
@@ -696,7 +724,7 @@ void Extension::RecvMsg_DecompressBinary()
 	if (ret)
 	{
 		const char * strmMsg = strm.msg ? strm.msg : "(no description)";
-		return CreateError("Decompression failed; error %d: %hs with initiating decompression.", ret, strmMsg);
+		return CreateError("Decompression failed; error %d: %s with initiating decompression.", ret, strmMsg);
 	}
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
@@ -725,7 +753,7 @@ void Extension::RecvMsg_DecompressBinary()
 	{
 		const char *strmMsg = strm.msg ? strm.msg : "(no description)";
 		inflateEnd(&strm);
-		return CreateError("Error with decompression, inflate() returned error %i. Zlib description: %hs.", ret, strmMsg);
+		return CreateError("Error with decompression, inflate() returned error %i. Zlib description: %s.", ret, strmMsg);
 	}
 
 	inflateEnd(&strm);

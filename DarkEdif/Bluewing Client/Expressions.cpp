@@ -227,7 +227,7 @@ const TCHAR * Extension::Lacewing_Version()
 		str << _T("Unicode ");
 #endif
 		str << _T("reimpl b") << lacewing::relayclient::buildnum;
-		_tcscpy_s(version, str.str().c_str());
+		_tcscpy_s(version, std::size(version), str.str().c_str());
 	}
 	return Runtime.CopyString(version);
 }
@@ -269,7 +269,7 @@ const TCHAR * Extension::WelcomeMessage()
 }
 unsigned int Extension::RecvMsg_MemoryAddress()
 {
-	return (unsigned int)threadData->receivedMsg.content.data();
+	return (unsigned int)((unsigned long)threadData->receivedMsg.content.data());
 }
 
 const TCHAR * Extension::RecvMsg_Cursor_StrASCIIByte()
@@ -379,7 +379,7 @@ const TCHAR * Extension::RecvMsg_Cursor_String()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < 1)
 	{
-		CreateError("Could not read null-terminated string from received binary at cursor position %zu, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor);
+		CreateError("Could not read null-terminated string from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -439,7 +439,9 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		}
 
 		// varCount number of expected variables
-		varCount = max(atoi(i + 1), 1);
+		varCount = atoi(i + 1);
+		if (varCount < 1)
+			varCount = 1;
 
 		// Char
 		if (i[0] == 'c')
@@ -520,7 +522,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 
 				if (!lw_u8str_validate(std::string_view(msg, u8StrSize)))
 				{
-					CreateError("Could not dump; the null-terminated string starting at message index %i, read as %i chars long, was not valid UTF-8 text.", index, u8StrSize);
+					CreateError("Could not dump; the null-terminated string starting at message index %i, read as %zu chars long, was not valid UTF-8 text.", index, u8StrSize);
 					return Runtime.CopyString(_T(""));
 				}
 
@@ -574,7 +576,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		}
 
 		// Did not find identifier; error out
-		CreateError("Unrecognised character in dump format: '%hc'. Valid : c, h, s, i, f; operator +.", i[0]);
+		CreateError("Unrecognised character in dump format: '%c'. Valid : c, h, s, i, f; operator +.", i[0]);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -677,7 +679,7 @@ const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TC
 		return Runtime.CopyString(_T(""));
 
 	TCHAR output[256];
-	_stprintf_s(output, _T("Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %hs."),
-		idx, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), utf8proc_category_string(rejectedChar));
+	_stprintf_s(output, std::size(output), _T("Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s."),
+		idx, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), UTF8ToTString(utf8proc_category_string(rejectedChar)).c_str());
 	return Runtime.CopyString(output);
 }

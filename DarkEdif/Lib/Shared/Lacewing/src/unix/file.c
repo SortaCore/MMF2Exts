@@ -46,7 +46,7 @@ void lwp_file_init (lw_file ctx, lw_pump pump)
 
 lw_file lw_file_new (lw_pump pump)
 {
-	lw_file ctx = malloc (sizeof (*ctx));
+	lw_file ctx = (lw_file)malloc (sizeof (*ctx));
 	lwp_file_init (ctx, pump);
 
 	return ctx;
@@ -141,7 +141,7 @@ lw_bool lw_file_open (lw_file ctx,
 		return lw_false;
 	}
 
-	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, 0, lw_true);
+	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, 0, lw_true, lw_false);
 
 	if (lw_fdstream_valid ((lw_fdstream) ctx))
 	{

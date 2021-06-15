@@ -1,7 +1,7 @@
 
 /* vim: set et ts=3 sw=3 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin et al.	All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -63,7 +63,7 @@ size_t lw_file_size (const char * filename)
 	LARGE_INTEGER size;
 
 	if (!GetFileAttributesExA (filename, GetFileExInfoStandard, &info))
-	  return 0;
+		return 0;
 
 	size.LowPart = info.nFileSizeLow;
 	size.HighPart = info.nFileSizeHigh;
@@ -77,7 +77,7 @@ lw_i64 lw_last_modified (const char * filename)
 	LARGE_INTEGER time;
 
 	if (!GetFileAttributesExA (filename, GetFileExInfoStandard, &info))
-	  return 0;
+		return 0;
 
 	time.LowPart = info.ftLastWriteTime.dwLowDateTime;
 	time.HighPart = info.ftLastWriteTime.dwHighDateTime;
@@ -95,7 +95,7 @@ static HCRYPTPROV crypt_prov = 0;
 static lw_bool crypt_init ()
 {
 	if (!crypt_prov)
-	  CryptAcquireContext (&crypt_prov, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+		CryptAcquireContext (&crypt_prov, 0, 0, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
 
 	return crypt_prov != 0;
 }
@@ -103,13 +103,13 @@ static lw_bool crypt_init ()
 lw_bool lw_random (char * buffer, size_t size)
 {
 	if (!crypt_init ())
-	  return lw_false;
+		return lw_false;
 
 	if (size > 0xFFFFFFFF)
-	  return lw_false;
+		return lw_false;
 
 	if (!CryptGenRandom (crypt_prov, (DWORD) size, (PBYTE) buffer))
-	  return lw_false;
+		return lw_false;
 
 	return lw_true;
 }

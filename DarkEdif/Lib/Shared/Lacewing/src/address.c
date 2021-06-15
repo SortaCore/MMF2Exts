@@ -196,7 +196,7 @@ lw_addr lw_addr_clone (lw_addr ctx)
 
 	memcpy (addr->service, ctx->service, sizeof (ctx->service));
 
-	addr->hostname = addr->hostname_to_free = _strdup(ctx->hostname);
+	addr->hostname = addr->hostname_to_free = strdup(ctx->hostname);
 
 	return addr;
 }
@@ -286,21 +286,21 @@ const char * lw_addr_tostring (lw_addr ctx)
 		}
 	};
 
-	return ctx->buffer ? ctx->buffer: "";
+	return *ctx->buffer ? ctx->buffer: "";
 }
 
 in6_addr lw_addr_toin6_addr (lw_addr ctx)
 {
-	static in6_addr empty = { 0 };
+	static in6_addr empty = { };
 	if ((!ctx->info) || (!ctx->info->ai_addr))
 		return empty;
 
 	if (((struct sockaddr_storage *) ctx->info->ai_addr)->ss_family == AF_INET6)
 		return ((struct sockaddr_in6 *) ctx->info->ai_addr)->sin6_addr;
 
-	in6_addr v4 = { 0 };
-	v4.u.Byte[10] = 0xff;
-	v4.u.Byte[11] = 0xff;
+	in6_addr v4 = { };
+	((lw_ui8 *)&v4)[10] = 0xff;
+	((lw_ui8 *)&v4)[11] = 0xff;
 	*(lw_ui32 *)(&(((char *)&v4)[12])) = *(lw_ui32 *)&((struct sockaddr_in *) ctx->info->ai_addr)->sin_addr;
 	return v4;
 }

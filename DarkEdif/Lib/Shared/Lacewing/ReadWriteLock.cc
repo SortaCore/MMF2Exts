@@ -111,14 +111,14 @@ lacewing::readlock::readlock(readwritelock &lock)
 void lacewing::readlock::relock()
 {
 	if (locked)
-		throw std::exception("ReadLock: Locking when it's already locked");
+		throw std::runtime_error("ReadLock: Locking when it's already locked");
 	lock.openReadLock(*this);
 	locked = true;
 }
 void lacewing::readlock::unlock()
 {
 	if (!locked)
-		throw std::exception("ReadLock: Unlocking when it's already unlocked");
+		throw std::runtime_error("ReadLock: Unlocking when it's already unlocked");
 	lock.closeReadLock(*this);
 	locked = false;
 }
@@ -160,7 +160,7 @@ lacewing::writelock::writelock(readwritelock &lock)
 void lacewing::writelock::relock()
 {
 	if (locked)
-		throw std::exception("WriteLock: Locking when it's already locked");
+		throw std::runtime_error("WriteLock: Locking when it's already locked");
 	lock.openWriteLock(*this);
 	locked = true;
 }
@@ -168,7 +168,7 @@ void lacewing::writelock::unlock()
 {
 	if (!locked)
 		return;
-		// throw std::exception("WriteLock: Unlocking when it's already unlocked");
+		// throw std::runtime_error("WriteLock: Unlocking when it's already unlocked");
 	lock.closeWriteLock(*this);
 	locked = false;
 }
@@ -210,11 +210,7 @@ bool lacewing::readwritelock::checkHoldsWrite(bool excIfNot /* = true */) const
 
 	nope:
 	if (excIfNot)
-	{
-		if (!IsDebuggerPresent())
-			MessageBoxA(NULL, "Undefined behaviour; write lock not held when expected. Please attach debugger now.", "Invalid state.", MB_ICONERROR);
-		DebugBreak();
-	}
+		throw std::runtime_error("Undefined behaviour; write lock not held when expected. Please attach debugger now.");
 	return false;
 }
 // Debug breakpoint if readlock is not held by current thread.
@@ -243,11 +239,7 @@ bool lacewing::readwritelock::checkHoldsRead(bool excIfNot /* = true */) const
 
 	nope:
 	if (excIfNot)
-	{
-		if (!IsDebuggerPresent())
-			MessageBoxA(NULL, "Undefined behaviour; read lock not held when expected. Please attach debugger now.", "Invalid state.", MB_ICONERROR);
-		DebugBreak();
-	}
+		throw std::runtime_error("Undefined behaviour; read lock not held when expected. Please attach debugger now.");
 	return false;
 }
 

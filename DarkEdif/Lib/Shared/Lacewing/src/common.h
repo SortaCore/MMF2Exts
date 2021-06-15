@@ -57,7 +57,8 @@
 	  #define _GNU_SOURCE
 	#endif
 
-	#include "config.h"
+	//#include "config.h"
+	#include <sys/sendfile.h>
 
 #endif
 

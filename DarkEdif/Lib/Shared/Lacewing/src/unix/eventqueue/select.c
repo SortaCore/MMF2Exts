@@ -58,7 +58,7 @@ struct _lwp_eventqueue
 
 lwp_eventqueue lwp_eventqueue_new ()
 {
-	lwp_eventqueue queue = calloc (sizeof (*queue), 1);
+	lwp_eventqueue queue = (lwp_eventqueue)calloc (sizeof (*queue), 1);
 
 	if (!queue)
 	  return NULL;

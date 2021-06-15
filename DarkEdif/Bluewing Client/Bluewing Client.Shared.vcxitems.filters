@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{BC76E42F-1167-456A-A0A8-5126C396E1A2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing">
+      <UniqueIdentifier>{ED2BBB1B-D123-4835-8DD6-9507FF0656B4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src">
+      <UniqueIdentifier>{C381CB1B-7689-4009-9FC4-74E0CB552F5C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\cxx">
+      <UniqueIdentifier>{A2B6125A-DBB4-469D-8D3D-220C6D5AC1EC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{78F5C460-0F6F-4CB4-9217-1B636B629FF9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{BC1134D5-2EB6-4F46-A9E9-1654E95A5D42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing">
+      <UniqueIdentifier>{BC5A1906-0ADF-4DFB-A348-8BA1EE1C5480}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src">
+      <UniqueIdentifier>{B95DE20C-81C6-4B7E-9800-F523CEBB759D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{5908C106-B1FA-445D-9BDC-F898850B357F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif">
+      <UniqueIdentifier>{0ece0766-93cc-4031-9cdc-c6c652483495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif\JSON">
+      <UniqueIdentifier>{3115030c-1825-4b33-917b-4724953d8fd6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\address2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\client2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Conditions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\error.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\error2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\event2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\eventpump2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Extension.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\fdstream2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\file2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\filter2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\flashpolicy2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\filter.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\flashpolicy.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\PhiAddress.cc">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)LacewingFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\RelayClient.cc">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pipe.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\stream.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\util.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\pipe2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\pump2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\server2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\stream2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\sync2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\thread2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\timer2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\udp2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.General.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.Runtime.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\json.cpp">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\ObjectSelection.cpp">
+      <Filter>Global to all extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\CodePointAllowList.cpp">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\ReadWriteLock.cc">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
+      <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\global.c">
+      <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\Lacewing.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)LacewingFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\stream.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer-cxx.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)MultiThreading.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameBuilder.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameReader.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageBuilder.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageReader.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

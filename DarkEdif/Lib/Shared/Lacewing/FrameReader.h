@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#include "messagebuilder.h"
+#include "MessageBuilder.h"
 
 #ifndef lacewingframereader
 #define lacewingframereader

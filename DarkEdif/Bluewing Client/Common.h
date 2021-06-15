@@ -13,45 +13,44 @@
 #define JSON_COMMENT_MACRO lacewing::relayclient::buildnum, STRIFY(CONFIG)
 
 // Lacewing-required imports for accessing Windows sockets
+#ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 #pragma comment(lib, "mpr.lib")
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "crypt32.lib")
+#endif
 
 // #define lw_import
 // #define _lacewing_static
 // These two are now defined in project settings; they're absolutely required.
 
-#include "Edif.h"
-#include "Resource.h"
-#include "DarkEdif.h"
+#include "..\Inc\Shared\DarkEdif.h"
 
-#include "Lacewing.h"
+#include "..\Lib\Shared\Lacewing\Lacewing.h"
 #include "LacewingFunctions.h"
 
+#include "..\Inc\Windows\zlib.h"
+#ifdef _WIN32
 #include <stdlib.h>
 #include <crtdbg.h>
-#include <algorithm>
-#include <sstream>
-#include <chrono>
-#include "zlib.h"
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
+#endif
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
 #define EnterCriticalSectionDebug(x) \
-		EnterCriticalSection(x); \
+		(x)->lock(); \
 		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Entered on "sv \
 			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
 
 #define LeaveCriticalSectionDebug(x) \
 		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Left on "sv \
 			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
-		LeaveCriticalSection(x)
+		(x)->unlock()
 #else
-#define EnterCriticalSectionDebug(x)  EnterCriticalSection(x)
-#define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
+#define EnterCriticalSectionDebug(x)  (x)->lock()
+#define LeaveCriticalSectionDebug(x)  (x)->unlock()
 #endif
 
 // Enable DarkEdif's utility

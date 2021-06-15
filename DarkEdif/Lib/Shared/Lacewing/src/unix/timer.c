@@ -52,44 +52,44 @@ struct _lw_timer
 
 static void timer_tick (lw_timer ctx)
 {
-  if (ctx->on_tick)
-	  ctx->on_tick (ctx);
+	if (ctx->on_tick)
+		ctx->on_tick (ctx);
 
-  #ifdef _lacewing_use_timerfd
-	 lw_i64 expirations;
-	 read (ctx->fd, &expirations, sizeof (lw_i64));
-  #endif
+	#ifdef _lacewing_use_timerfd
+		lw_i64 expirations;
+		read (ctx->fd, &expirations, sizeof (lw_i64));
+	#endif
 }
 
 static void timer_thread (void * ptr)
 {
-	lw_timer ctx = ptr;
+	lw_timer ctx = (lw_timer)ptr;
 
 	for (;;)
 	{
-	  lw_event_wait (ctx->stop_event, ctx->interval);
+		lw_event_wait (ctx->stop_event, ctx->interval);
 
-	  if (lw_event_signalled (ctx->stop_event))
-		 break;
+		if (lw_event_signalled (ctx->stop_event))
+			break;
 
-	  lw_pump_post (ctx->pump, timer_tick, ctx);
+		lw_pump_post (ctx->pump, (void *)timer_tick, ctx);
 	}
 }
 
 lw_timer lw_timer_new (lw_pump pump)
 {
-	lw_timer ctx = calloc (sizeof (*ctx), 1);
+	lw_timer ctx = (lw_timer)calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	ctx->pump = pump;
-	ctx->timer_thread = lw_thread_new ("timer_thread", timer_thread);
+	ctx->timer_thread = lw_thread_new ("timer_thread", (void *)timer_thread);
 	ctx->stop_event = lw_event_new ();
 
 	#ifdef _lacewing_use_timerfd
-	  ctx->fd = timerfd_create (CLOCK_MONOTONIC, TFD_NONBLOCK);
-	  lw_pump_add (ctx->pump, ctx->fd, ctx, (lw_pump_callback) timer_tick, 0, lw_true);
+		ctx->fd = timerfd_create (CLOCK_MONOTONIC, TFD_NONBLOCK);
+		lw_pump_add (ctx->pump, ctx->fd, ctx, (lw_pump_callback) timer_tick, 0, lw_true);
 	#endif
 
 	return ctx;
@@ -101,7 +101,7 @@ void lw_timer_delete (lw_timer ctx)
 	lw_event_delete (ctx->stop_event);
 
 	#ifdef _lacewing_use_timerfd
-	  close (ctx->fd);
+		close (ctx->fd);
 	#endif
 
 	free (ctx);

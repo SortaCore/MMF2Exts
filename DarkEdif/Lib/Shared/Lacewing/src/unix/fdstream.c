@@ -1,7 +1,7 @@
 
 /* vim: set et ts=3 sw=3 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin.	All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -30,7 +30,7 @@
 #include "../common.h"
 #include "fdstream.h"
 
-const static lw_streamdef def_fdstream;
+extern const lw_streamdef def_fdstream;
 
 /* FDStream makes the assumption that this will fail for anything but a regular
  * file (i.e. something that is always considered read ready)
@@ -90,10 +90,10 @@ static void write_ready (void * tag)
 
 static void read_ready (void * tag)
 {
-	lw_fdstream ctx = tag;
+	lw_fdstream ctx = (lw_fdstream)tag;
 
 	if (ctx->flags & lwp_fdstream_flag_reading)
-	  return;
+		return;
 
 	ctx->flags |= lwp_fdstream_flag_reading;
 
@@ -107,109 +107,109 @@ static void read_ready (void * tag)
 
 	while (ctx->reading_size == -1 || ctx->reading_size > 0)
 	{
-	  if (ctx->fd == -1)
+		if (ctx->fd == -1)
 		 break;
 
-	  size_t to_read = sizeof (buffer);
+		size_t to_read = sizeof (buffer);
 
-	  if (ctx->reading_size != -1 && to_read > ctx->reading_size)
+		if (ctx->reading_size != -1 && to_read > ctx->reading_size)
 		 to_read = ctx->reading_size;
 
-	  int bytes = read (ctx->fd, buffer, to_read);
+		int bytes = read (ctx->fd, buffer, to_read);
 
-	  if (bytes == 0)
-	  {
+		if (bytes == 0)
+		{
 		 close_stream = lw_true;
 		 break;
-	  }
+		}
 
-	  if (bytes == -1)
-	  {
+		if (bytes == -1)
+		{
 		 if (errno == EAGAIN)
 			break;
 
 		 close_stream = lw_true;
 		 break;
-	  }
+		}
 
-	  if (ctx->reading_size != -1)
-	  {
+		if (ctx->reading_size != -1)
+		{
 		 if (bytes > ctx->reading_size)
 			ctx->reading_size = 0;
 		 else
 			ctx->reading_size -= bytes;
-	  }
+		}
 
-	  lw_stream_data ((lw_stream) ctx, buffer, bytes);
+		lw_stream_data ((lw_stream) ctx, buffer, bytes);
 
-	  /* Calling Data or Close may result in destruction of the Stream -
+		/* Calling Data or Close may result in destruction of the Stream -
 		* see FDStream destructor.
 		*/
 
-	  if (! (ctx->flags & lwp_fdstream_flag_reading))
+		if (! (ctx->flags & lwp_fdstream_flag_reading))
 		 break;
 	}
 
 	ctx->flags &= ~ lwp_fdstream_flag_reading;
 
 	if (lwp_release (ctx, "fdstream read_ready") || ctx->stream.flags & lwp_stream_flag_dead)
-	  return;
+		return;
 
 	if (close_stream)
-	  lw_stream_close ((lw_stream) ctx, lw_true);
+		lw_stream_close ((lw_stream) ctx, lw_true);
 }
 
 void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
-						 lw_bool auto_close)
+						 lw_bool auto_close, lw_bool is_socket)
 {
 	if (ctx->watch)
 	{
-	  lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
-	  ctx->watch = 0;
+		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
+		ctx->watch = 0;
 	}
 
 	if ( (ctx->flags & lwp_fdstream_flag_autoclose) && ctx->fd != -1)
-	  lw_stream_close ((lw_stream) ctx, lw_true);
+		lw_stream_close ((lw_stream) ctx, lw_true);
 
 	ctx->fd = fd;
 
 	if (auto_close)
-	  ctx->flags |= lwp_fdstream_flag_autoclose;
+		ctx->flags |= lwp_fdstream_flag_autoclose;
 	else
-	  ctx->flags &= ~ lwp_fdstream_flag_autoclose;
+		ctx->flags &= ~ lwp_fdstream_flag_autoclose;
 
 	if (ctx->fd == -1)
-	  return;
+		return;
 
 	fcntl (fd, F_SETFL, fcntl (fd, F_GETFL, 0) | O_NONBLOCK);
 
 	#ifdef HAVE_DECL_SO_NOSIGPIPE
-	{  int b = 1;
-	  setsockopt (fd, SOL_SOCKET, SO_NOSIGPIPE, (char *) &b, sizeof (b));
+	{	int b = 1;
+		setsockopt (fd, SOL_SOCKET, SO_NOSIGPIPE, (char *) &b, sizeof (b));
 	}
 	#endif
 
-	{  int b = (ctx->flags & lwp_fdstream_flag_nagle) ? 0 : 1;
-	  setsockopt (fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
+	{	int b = (ctx->flags & lwp_fdstream_flag_nagle) ? 0 : 1;
+		setsockopt (fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
 	}
 
 	struct stat stat;
 	fstat (fd, &stat);
 
-	if (S_ISSOCK (stat.st_mode))
+	if (is_socket /* S_ISSOCK(stat.st_mode) */)
 	{
-	  ctx->flags |= lwp_fdstream_flag_is_socket;
+		ctx->flags |= lwp_fdstream_flag_is_socket;
 	}
 	else
 	{
-	  ctx->flags &= ~ lwp_fdstream_flag_is_socket;
+		ctx->flags &= ~ lwp_fdstream_flag_is_socket;
 
-	  if ((ctx->size = stat.st_size) > 0)
+		if ((ctx->size = stat.st_size) > 0)
 		 return;
 
-	  /* Not a socket, and size is 0.  Is it really just an empty file? */
+		/* Not a socket, and size is 0.	Is it really just an empty file? */
 
-	  if (S_ISREG (stat.st_mode))
+		if (S_ISREG (stat.st_mode))
 		 return;
 	}
 
@@ -221,16 +221,16 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 
 	if (watch)
 	{
-	  /* Given an existing pump watch - change it to use our callbacks */
+		/* Given an existing pump watch - change it to use our callbacks */
 
-	  ctx->watch = watch;
+		ctx->watch = watch;
 
-	  lw_pump_update_callbacks (pump, ctx->watch, ctx,
+		lw_pump_update_callbacks (pump, ctx->watch, ctx,
 			read_ready, write_ready, lw_true);
 	}
 	else
 	{
-	  ctx->watch = lw_pump_add (pump, fd, ctx, read_ready,
+		ctx->watch = lw_pump_add (pump, fd, ctx, read_ready,
 			write_ready, lw_true);
 	}
 }
@@ -243,8 +243,8 @@ lw_bool lw_fdstream_valid (lw_fdstream ctx)
 void lw_fdstream_cork (lw_fdstream ctx)
 {
 	#ifdef lw_cork
-	  int enabled = 1;
-	  setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
+		int enabled = 1;
+		setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
 						lw_cork, &enabled, sizeof (enabled));
 	#endif
 }
@@ -252,8 +252,8 @@ void lw_fdstream_cork (lw_fdstream ctx)
 void lw_fdstream_uncork (lw_fdstream ctx)
 {
 	#ifdef lw_cork
-	  int enabled = 0;
-	  setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
+		int enabled = 0;
+		setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
 						lw_cork, &enabled, sizeof (enabled));
 	#endif
 }
@@ -261,14 +261,14 @@ void lw_fdstream_uncork (lw_fdstream ctx)
 void lw_fdstream_nagle (lw_fdstream ctx, lw_bool enabled)
 {
 	if (enabled)
-	  ctx->flags |= lwp_fdstream_flag_nagle;
+		ctx->flags |= lwp_fdstream_flag_nagle;
 	else
-	  ctx->flags &= ~ lwp_fdstream_flag_nagle;
+		ctx->flags &= ~ lwp_fdstream_flag_nagle;
 
 	if (ctx->fd != -1)
 	{
-	  int b = enabled ? 0 : 1;
-	  setsockopt (ctx->fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
+		int b = enabled ? 0 : 1;
+		setsockopt (ctx->fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
 	}
 }
 
@@ -281,22 +281,22 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 	size_t written;
 
 	#ifdef HAVE_DECL_SO_NOSIGPIPE
-	  written = write (ctx->fd, buffer, size);
+		written = write (ctx->fd, buffer, size);
 	#else
-	  if (ctx->flags & lwp_fdstream_flag_is_socket)
+		if (ctx->flags & lwp_fdstream_flag_is_socket)
 		 written = send (ctx->fd, buffer, size, MSG_NOSIGNAL);
-	  else
+		else
 		 written = write (ctx->fd, buffer, size);
 	#endif
 
 	if (written == -1)
 	{
-	  lwp_trace ("fdstream sank nothing!  write failed: %d", errno);
-	  return 0;
+		lwp_trace ("fdstream sank nothing!	write failed: %d", errno);
+		return 0;
 	}
 
 	lwp_trace ("fdstream sank " lwp_fmt_size " of " lwp_fmt_size " bytes",
-			  written, size);
+				written, size);
 
 	return written;
 }
@@ -306,13 +306,13 @@ static size_t def_sink_stream (lw_stream _dest,
 								size_t size)
 {
 	if (lw_stream_get_def (_src) != &def_fdstream)
-	  return -1;
+		return -1;
 
 	if (size == -1)
 	{
-	  size = lw_stream_bytes_left (_src);
+		size = lw_stream_bytes_left (_src);
 
-	  if (size == -1)
+		if (size == -1)
 		 return -1;
 	}
 
@@ -343,12 +343,12 @@ static void def_read (lw_stream _ctx, size_t bytes)
 	lw_bool was_reading = ctx->reading_size != 0;
 
 	if (bytes == -1)
-	  ctx->reading_size = lw_stream_bytes_left ((lw_stream) ctx);
+		ctx->reading_size = lw_stream_bytes_left ((lw_stream) ctx);
 	else
-	  ctx->reading_size += bytes;
+		ctx->reading_size += bytes;
 
 	if (!was_reading)
-	  read_ready (ctx);
+		read_ready (ctx);
 }
 
 static size_t def_bytes_left (lw_stream _ctx)
@@ -356,10 +356,10 @@ static size_t def_bytes_left (lw_stream _ctx)
 	lw_fdstream ctx = (lw_fdstream) _ctx;
 
 	if (ctx->fd == -1)
-	  return -1; /* not valid */
+		return -1; /* not valid */
 
 	if (ctx->size == -1)
-	  return -1;
+		return -1;
 
 	lwp_trace ("lseek for FD %d, size " lwp_fmt_size, ctx->fd, ctx->size);
 
@@ -382,8 +382,8 @@ static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
 
 	if (ctx->watch)
 	{
-	  lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
-	  ctx->watch = 0;
+		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
+		ctx->watch = 0;
 	}
 
 	int fd = ctx->fd;
@@ -392,11 +392,11 @@ static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
 
 	if (fd != -1)
 	{
-	  if (ctx->flags & lwp_fdstream_flag_autoclose)
-	  {
+		if (ctx->flags & lwp_fdstream_flag_autoclose)
+		{
 		 shutdown (fd, SHUT_RDWR);
 		 close (fd);
-	  }
+		}
 	}
 
 	lwp_release (ctx, "fdstream close");
@@ -404,14 +404,14 @@ static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
 	return lw_true;
 }
 
-const static lw_streamdef def_fdstream =
+const lw_streamdef def_fdstream =
 {
-	.sink_data	= def_sink_data,
-	.sink_stream  = def_sink_stream,
-	.close		= def_close,
-	.bytes_left	= def_bytes_left,
+	.sink_data	 = def_sink_data,
+	.sink_stream = def_sink_stream,
+	.close		 = def_close,
+	.bytes_left	 = def_bytes_left,
 	.read		 = def_read,
-	.cleanup	  = def_cleanup
+	.cleanup	 = def_cleanup
 };
 
 void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
@@ -426,7 +426,7 @@ void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 
 lw_fdstream lw_fdstream_new (lw_pump pump)
 {
-	lw_fdstream ctx = malloc (sizeof (*ctx));
+	lw_fdstream ctx = (lw_fdstream)malloc (sizeof (*ctx));
 	lwp_fdstream_init (ctx, pump);
 
 	return ctx;

@@ -38,10 +38,10 @@ struct _lw_event
 
 lw_event lw_event_new ()
 {
-	lw_event ctx = malloc (sizeof (*ctx));
+	lw_event ctx = (lw_event) malloc (sizeof (*ctx));
 
 	int p [2];
-	pipe (p);
+	::pipe (p);
 
 	ctx->pipe_r = p [0];
 	ctx->pipe_w = p [1];

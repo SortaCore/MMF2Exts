@@ -87,6 +87,7 @@
 	#ifndef lw_import
 		#define lw_import
 	#endif
+	#include <netinet/in6.h>
 #else
 
 	/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
@@ -97,7 +98,7 @@
 	#endif
 
 	#define lw_callback __cdecl
-
+	#include <in6addr.h>
 #endif
 
 #ifndef lw_import
@@ -107,7 +108,6 @@
 		#define lw_import __declspec (dllimport)
 	#endif
 #endif
-#include <in6addr.h>
 
 typedef lw_i8 lw_bool;
 

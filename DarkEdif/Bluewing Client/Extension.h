@@ -13,8 +13,13 @@ public:
 	std::shared_ptr<EventToRun> threadData; // Must be first variable in Extension class
 	std::tstring_view loopName;
 
+#ifdef _WIN32
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
+#else
+	RuntimeFunctions & runFuncs;
+	global<jobject> javaExtPtr;
+#endif
 
 	Edif::Runtime Runtime;
 
@@ -26,7 +31,11 @@ public:
 
 	static const int WindowProcPriority = 100;
 
+#ifdef _WIN32
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
+#else
+	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr);
+#endif
 	~Extension();
 
 
@@ -61,7 +70,7 @@ public:
 	std::shared_ptr<lacewing::relayclient::channel::peer> selPeer; // make sure it's one inside selChannel!
 	bool isOverloadWarningQueued = false;
 
-	void CreateError(_Printf_format_string_ const char * errU8, ...);
+	void CreateError(PrintFHintInside const char * errU8, ...) PrintFHintAfter(2, 3);
 
 	void SendMsg_Sub_AddData(const void *, size_t);
 	bool IsValidPtr(const void *);
@@ -289,9 +298,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void Action(int ID);
+	long Condition(int ID);
+	long Expression(int ID);
 
 
 
@@ -341,13 +350,13 @@ struct GlobalInfo
 	// This GlobalInfo global ID of extension, in UTF-8
 	std::string _globalID;
 	// If in multithreading mode, the Lacewing message handler thread
-	HANDLE _thread;
+	std::thread _thread;
 	// Current "owner" extension used to run events. Can be null, e.g. during frame switches
 	Extension * _ext;
 	// Thread handle; Thread checking whether a client extension has not regained control of connection in a reasonable time, i.e. slow frame transition
-	HANDLE timeoutThread = NULL;
+	std::thread timeoutThread;
 	// Event; counterpart to AppWasClosed, but used for cancelling the timeout thread from Ext ctor when a new ext is taking over
-	HANDLE cancelTimeoutThread = NULL;
+	std::atomic<bool> cancelTimeoutThread;
 
 
 	// Used to keep Fusion selection across frames
@@ -358,7 +367,7 @@ struct GlobalInfo
 	std::vector<std::shared_ptr<EventToRun>> _eventsToRun;
 
 	// Lock to protect GlobalInfo contents, initialized to zeroes.
-	CRITICAL_SECTION lock;
+	Edif::recursive_mutex lock;
 	// List of all extensions holding this Global ID
 	std::vector<Extension *> extsHoldingGlobals;
 	// If no Bluewing exists, fuss after a preset time period
@@ -393,8 +402,8 @@ private:
 		lw_ui8 subchannel, lw_ui8 variant);
 public:
 	// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
-	void CreateError(_Printf_format_string_ const char * errorText, ...);
-	void CreateError(_Printf_format_string_ const char *errorText, va_list v);
+	void CreateError(PrintFHintInside const char * errorText, ...) PrintFHintAfter(2, 3);
+	void CreateError(PrintFHintInside const char *errorText, va_list v) PrintFHintAfter(2, 0);
 
 
 	// Constructor and destructor

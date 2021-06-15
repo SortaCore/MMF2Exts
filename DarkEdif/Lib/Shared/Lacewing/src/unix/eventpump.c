@@ -43,7 +43,7 @@ enum
 
 lw_eventpump lw_eventpump_new ()
 {
-	lw_eventpump ctx = calloc (sizeof (*ctx), 1);
+	lw_eventpump ctx = (lw_eventpump)calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
 	  return NULL;
@@ -58,7 +58,7 @@ lw_eventpump lw_eventpump_new ()
 	ctx->sync_signals = lw_sync_new ();
 
 	int signalpipe [2];
-	pipe (signalpipe);
+	::pipe (signalpipe);
 
 	ctx->signalpipe_read	= signalpipe [0];
 	ctx->signalpipe_write  = signalpipe [1];
@@ -101,7 +101,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 	lw_bool read_ready = lwp_eventqueue_event_read_ready (event),
 			write_ready = lwp_eventqueue_event_write_ready (event);
 
-	lw_pump_watch watch = lwp_eventqueue_event_tag (event);
+	lw_pump_watch watch = (lw_pump_watch)lwp_eventqueue_event_tag (event);
 
 	/* fudge: nothing kqueue specific belongs in this file, but since the
 	* kqueue code doesn't actually look at the events it's the only place
@@ -150,7 +150,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 
 	  case sig_remove:
 	  {
-		 lw_pump_watch to_remove = list_front (ctx->signalparams);
+		 lw_pump_watch to_remove = (lw_pump_watch)list_front (ctx->signalparams);
 		 list_pop_front (ctx->signalparams);
 
 		 free (to_remove);
@@ -319,7 +319,7 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 	if ((!on_read_ready) && (!on_write_ready))
 	  return 0;
 
-	lw_pump_watch watch = calloc (sizeof (*watch), 1);
+	lw_pump_watch watch = (lw_pump_watch)calloc (sizeof (*watch), 1);
 
 	if (!watch)
 	  return 0;
@@ -406,9 +406,9 @@ static void def_post (lw_pump pump, void * func, void * param)
 const lw_pumpdef def_eventpump =
 {
 	.add				= def_add,
-	.remove			= def_remove,
-	.update_callbacks  = def_update_callbacks,
-	.post			  = def_post,
+	.remove				= def_remove,
+	.update_callbacks	= def_update_callbacks,
+	.post				= def_post,
 	.cleanup			= def_cleanup
 };
 

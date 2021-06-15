@@ -72,7 +72,7 @@ struct _lw_eventpump
 	#endif
 };
 
-const lw_pumpdef def_eventpump;
+extern const lw_pumpdef def_eventpump;
 
 /* epoll/kqueue/select specific
  */

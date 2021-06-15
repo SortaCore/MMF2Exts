@@ -27,14 +27,14 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 	char ipAddr[64];
 	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
 
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	HostIP = ipAddr;
 	HostPort = addr->port();
 	DenyReasonBuffer = denyReason;
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 	globals->AddEvent1(2); // no CLEAR_EVTNUM, as OnDisconnect() will be called after
 }
@@ -68,12 +68,12 @@ void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 }
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason)
 {
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	DenyReasonBuffer = denyReason;
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 	globals->AddEvent1(5, nullptr, nullptr, nullptr, channelName);
 }
@@ -84,12 +84,12 @@ void OnLeaveChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rel
 }
 void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target, std::string_view denyReason)
 {
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	DenyReasonBuffer = denyReason;
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 	globals->AddEvent1(44, target);
 }
@@ -99,23 +99,23 @@ void OnNameSet(lacewing::relayclient &client)
 }
 void OnNameDenied(lacewing::relayclient &client, std::string_view deniedName, std::string_view denyReason)
 {
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	DenyReasonBuffer = denyReason;
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 	globals->AddEvent1(7);
 }
 void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 {
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	PreviousName = oldName;
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 	globals->AddEvent1(53);
 }

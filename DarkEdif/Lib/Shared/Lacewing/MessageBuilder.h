@@ -77,12 +77,11 @@ public:
 
 			char * test = (char *) realloc(this->buffer, allocated);
 			if (!test)
-				throw std::exception("could not reallocate buffer for message.");
+				throw std::runtime_error("could not reallocate buffer for message.");
 			this->buffer = test;
 		}
 
-		if (memcpy_s(this->buffer + this->size, size, buffer, size))
-			throw std::exception("could not copy data into message");
+		memcpy(this->buffer + this->size, buffer, size);
 		this->size += size;
 	}
 
@@ -106,16 +105,6 @@ public:
 		add((const char *) &value, sizeof(t));
 	}
 
-	template<> inline
-		void add(std::string value)
-	{
-		add(value.data(), (lw_i32)value.size());
-	}
-	template<> inline
-		void add(std::string_view value)
-	{
-		add(value.data(), (lw_i32)value.size());
-	}
 	/*
 	inline void AddNetwork16Bit (short Value)
 	{
@@ -165,6 +154,16 @@ public:
 	}
 
 };
+template<> inline
+void messagebuilder::add(std::string value)
+{
+	add(value.data(), (lw_i32)value.size());
+}
+template<> inline
+void messagebuilder::add(std::string_view value)
+{
+	add(value.data(), (lw_i32)value.size());
+}
 
 #endif
 

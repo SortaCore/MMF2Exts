@@ -98,6 +98,11 @@ typedef struct list_element list_element;
  *	 and set to an elemator pointing to each element.
  */
 
+#ifndef typeof
+#define typeof(x) \
+	std::remove_reference<decltype(x)>::type
+#endif // typeof
+
 #define list_type(type) \
 	type *
 

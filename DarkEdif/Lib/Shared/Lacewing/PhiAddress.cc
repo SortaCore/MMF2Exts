@@ -1,4 +1,3 @@
-#pragma once
 #include "Lacewing.h"
 
 // Comments for all the below functions can be found in the header file.
@@ -14,11 +13,15 @@ void lw_addr_prettystring(const char * input, char * const output, size_t output
 
 		// No port, copy as-is
 		if (portSepPos == NULL)
-			strcpy_s(output, outputSize, input);
+		{
+			assert(outputSize > strlen(input) && "IP output buffer too small");
+			strcpy(output, input);
+		}
 		else // Strip port
 		{
 			const size_t portSepSize = portSepPos - input;
-			memcpy_s(output, outputSize, input, portSepSize);
+			assert(outputSize > portSepSize && "IP output buffer too small");
+			memcpy(output, input, portSepSize);
 			output[portSepSize] = '\0';
 		}
 	}
@@ -32,7 +35,8 @@ void lw_addr_prettystring(const char * input, char * const output, size_t output
 			if (input[i] == ']')
 			{
 				// Skip the first 8 chars of "[::ffff:"
-				memmove_s(output, outputSize, &input[8], i - 8);
+				assert(outputSize >= i - 8 && "IP output buffer too small");
+				memmove(output, &input[8], i - 8);
 				output[i - 8] = '\0';
 
 				break;
@@ -212,7 +216,6 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 	const utf8proc_uint8_t * str = (utf8proc_uint8_t *)toTrim.data();
 	utf8proc_int32_t thisChar;
 	utf8proc_ssize_t numBytesInCodePoint, remainder = toTrim.size();
-	bool inStart = true;
 
 	// ...Nothing to do
 	if (remainder == 0)
@@ -290,9 +293,15 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 #define SUB_STRIFY(X) #X
 #define STRIFY(X) SUB_STRIFY(X)
 #endif
-void LacewingFatalErrorMsgBox2(char * func, char * file, int line)
+void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
 	std::stringstream err;
 	err << "Lacewing fatal error detected.\nFile: "sv << file << "\nFunction: "sv << func << "\nLine: "sv << line;
+#ifdef _WIN32
 	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " Msg Box Death", MB_ICONERROR);
+#else
+	char output[512];
+	strcpy(output, err.str().c_str());
+	assert(false && "Fatal error. Attach debugger and view output variable.");
+#endif
 }

@@ -55,7 +55,7 @@ struct _lw_client
 
 lw_client lw_client_new (lw_pump pump)
 {
-	lw_client ctx = calloc (sizeof (*ctx), 1);
+	lw_client ctx = (lw_client)calloc (sizeof (*ctx), 1);
 
 	ctx->pump = pump;
 
@@ -85,7 +85,7 @@ void lw_client_connect (lw_client ctx, const char * host, long port)
 
 static void write_ready (void * tag)
 {
-	lw_client ctx = tag;
+	lw_client ctx = (lw_client)tag;
 
 	assert (ctx->flags & lw_client_flag_connecting);
 
@@ -112,7 +112,7 @@ static void write_ready (void * tag)
 	  return;
 	}
 
-	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true);
+	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
 
 	ctx->flags &= ~ lw_client_flag_connecting;
 
@@ -230,7 +230,7 @@ lw_addr lw_client_server_addr (lw_client ctx)
 static void on_stream_data (lw_stream stream, void * tag,
 							const char * buffer, size_t length)
 {
-	lw_client ctx = tag;
+	lw_client ctx = (lw_client)tag;
 
 	ctx->on_data (ctx, buffer, length);
 }
@@ -252,7 +252,7 @@ void lw_client_on_data (lw_client ctx, lw_client_hook_data on_data)
 
 static void on_close (lw_stream stream, void * tag)
 {
-	lw_client ctx = tag;
+	lw_client ctx = (lw_client)tag;
 
 	ctx->on_disconnect (ctx);
 }

@@ -9,9 +9,15 @@
 #define Ext (*globals->_ext)
 #define EventsToRun globals->_eventsToRun
 
-HANDLE AppWasClosed = NULL;
+std::atomic<bool> AppWasClosed(false);
+
+#ifdef _WIN32
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr), FusionDebugger(this)
+	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
+#else
+Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr) :
+	runFuncs(runFuncs), javaExtPtr(javaExtPtr), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+#endif
 {
 	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
 	// Otherwise, enables debug memory, tracking for memory leaks or overflow/underflow
@@ -251,16 +257,6 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	isGlobal = edPtr->isGlobal;
 
-	// This is signalled by EndApp() in Runtime.cpp. It's used to disconnect the client
-	// when the application closes, from the timeout thread - assuming events haven't
-	// done that already.
-	if (isGlobal && !AppWasClosed)
-	{
-		AppWasClosed = CreateEvent(NULL, TRUE, FALSE, NULL);
-		if (!AppWasClosed)
-			throw std::runtime_error(PROJECT_NAME " - Couldn't create an AppWasClosed event.");
-	}
-
 #if EditorBuild
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
@@ -314,18 +310,16 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 				globals->_ext = this;
 			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
 
-			HANDLE timeoutThread = globals->timeoutThread;
+			std::thread timeoutThread;
+			globals->timeoutThread.swap(timeoutThread);
 			LeaveCriticalSectionDebug(&globals->lock); // can't hold it while timeout thread tries to exit
 
-			if (timeoutThread)
+			if (timeoutThread.joinable())
 			{
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
-				SetEvent(globals->cancelTimeoutThread);
-				WaitForSingleObject(timeoutThread, 200);
+				globals->cancelTimeoutThread = true;
+				timeoutThread.join();
 				// The thread should have ended. Due to us reclaiming control, globals remains valid.
-				CloseHandle(timeoutThread);
-				globals->timeoutThread = NULL;
-				ResetEvent(globals->cancelTimeoutThread);
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
 			}
 		}
@@ -337,12 +331,17 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 		globals->_objEventPump->tick();
 	}
-
 	// Try to boot the Lacewing thread if multithreading and not already running
-	if (edPtr->multiThreading && !globals->_thread && !(globals->_thread = CreateThread(NULL, NULL, LacewingLoopThread, this, NULL, NULL)))
+	if (edPtr->multiThreading && !globals->_thread.joinable())
 	{
-		CreateError("failed to boot thread. Falling back to single-threaded interface.");
-		Runtime.Rehandle();
+		try {
+			globals->_thread = ::std::thread(LacewingLoopThread, this);
+		}
+		catch (std::system_error e)
+		{
+			CreateError("Error: failed to boot thread: %s.", e.what());
+			Runtime.Rehandle();
+		}
 	}
 	else if (!edPtr->multiThreading)
 		Runtime.Rehandle();
@@ -414,7 +413,7 @@ DWORD WINAPI LacewingLoopThread(void * thisExt)
 		{
 			std::string text = "Error returned by StartEventLoop(): ";
 			text += error->tostring();
-			G->CreateError(text.c_str());
+			G->CreateError("%s", text.c_str());
 		}
 
 	}
@@ -424,7 +423,8 @@ DWORD WINAPI LacewingLoopThread(void * thisExt)
 		if (G->_ext)
 			G->CreateError("StartEventLoop() killed by exception. Switching to single-threaded.");
 	}
-	G->_thread = NULL;
+	std::thread thread;
+	G->_thread.swap(thread);
 	OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread has exited.\n");
 	return 0;
 }
@@ -512,7 +512,7 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		_ext->Runtime.Rehandle();
 }
 
-void Extension::CreateError(_Printf_format_string_ const char * errorFormatU8, ...)
+void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
 	va_start(v, errorFormatU8);
@@ -520,25 +520,25 @@ void Extension::CreateError(_Printf_format_string_ const char * errorFormatU8, .
 	va_end(v);
 }
 
-void GlobalInfo::CreateError(_Printf_format_string_ const char * errorFormatU8, ...)
+void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
 	va_start(v, errorFormatU8);
 	CreateError(errorFormatU8, v);
 	va_end(v);
 }
-void GlobalInfo::CreateError(_Printf_format_string_ const char * errorFormatU8, va_list v)
+void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_list v)
 {
 	std::stringstream errorDetailed;
 	if (std::this_thread::get_id() != mainThreadID)
 		errorDetailed << "[handler] "sv;
 	// Use extsHoldingGlobals[0] because Ext is (rarely) not set when an error is being made.
 	else if (extsHoldingGlobals[0])
-		errorDetailed << "[Fusion event #"sv << DarkEdif::GetEventNumber(extsHoldingGlobals[0]->rhPtr->EventGroup) << "] "sv;
+		errorDetailed << "[Fusion event #"sv << DarkEdif::GetCurrentFusionEventNum(extsHoldingGlobals[0]) << "] "sv;
 
 	char output[2048];
 	try {
-		if (vsprintf_s(output, errorFormatU8, v) <= 0)
+		if (vsprintf(output, errorFormatU8, v) <= 0)
 		{
 			errorDetailed.str("vsprintf_s failed with errno "s);
 			errorDetailed << errno << ", format ["sv << errorFormatU8 << "]."sv;
@@ -553,10 +553,13 @@ void GlobalInfo::CreateError(_Printf_format_string_ const char * errorFormatU8, 
 	}
 
 	const std::string errTextU8 = errorDetailed.str();
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined (_WIN32)
 	const std::wstring errText = UTF8ToWide(errTextU8);
 	OutputDebugStringW(errText.c_str());
 	OutputDebugStringW(L"\n");
+#elif defined(_DEBUG)
+	OutputDebugStringA(errTextU8.c_str());
+	OutputDebugStringA("\n");
 #endif
 	AddEvent1(0, nullptr, nullptr, nullptr, errTextU8);
 }
@@ -675,7 +678,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	if (sizeInCodePoints == 0)
 		return std::tstring();
 
-	if (recvMsgStartIndex < 0)
+	if (*(int *)&recvMsgStartIndex < 0)
 	{
 		CreateError("Could not read from received binary, index less than 0.");
 		return std::tstring();
@@ -701,7 +704,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		// Size too small - we assumed every char was 1-byte for this, so it's way under
 		if (sizeInCodePoints != -1 && (unsigned)sizeInCodePoints > maxSizePlusOne - 1)
 		{
-			CreateError("Could not read string with size %d at %hsstart index %zu, only %zu possible characters in message.",
+			CreateError("Could not read string with size %d at %sstart index %zu, only %zu possible characters in message.",
 				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, maxSizePlusOne);
 			return std::tstring();
 		}
@@ -709,7 +712,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		// Null terminator found within string
 		if (actualStringSizeBytes < (unsigned)sizeInCodePoints)
 		{
-			CreateError("Could not read string with size %d at %hsstart index %zu, found null byte within at index %zu.",
+			CreateError("Could not read string with size %d at %sstart index %zu, found null byte within at index %zu.",
 				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, recvMsgStartIndex + actualStringSizeBytes);
 			return std::tstring();
 		}
@@ -718,7 +721,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// We are expecting (actualStringSizeBytes < maxSizePlusOne - 1) if found.
 	else if (actualStringSizeBytes == maxSizePlusOne - 1)
 	{
-		CreateError("Could not read null-terminated string from %hsstart index %zu; null terminator not found.",
+		CreateError("Could not read null-terminated string from %sstart index %zu; null terminator not found.",
 			isCursorExpression ? "cursor's " : "", recvMsgStartIndex);
 		return std::tstring();
 	}
@@ -729,7 +732,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// Start char is invalid
 	if (GetNumBytesInUTF8Char(result) < 0)
 	{
-		CreateError("Could not read text from received binary, UTF-8 char was cut off at %hsstart index %zu.",
+		CreateError("Could not read text from received binary, UTF-8 char was cut off at %sstart index %u.",
 			isCursorExpression ? "the cursor's " : "", threadData->receivedMsg.cursor);
 		return std::tstring();
 	}
@@ -739,7 +742,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
 	for (int codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = result.size(); ; )
 	{
-		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, min(4, remainder)));
+		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, remainder < 4 ? 4 : remainder));
 
 		// We checked for -2 in start char in previous if(), so the string isn't starting too early.
 		// So, a -2 in middle of the string means it's a malformed UTF-8.
@@ -779,7 +782,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 			if (lw_u8str_validate(resStr))
 				return UTF8ToTString(resStr);
 
-			CreateError("Could not read text from received binary, UTF-8 was malformed at index %u (attempted to read %d chars from %hsstart index %zu).",
+			CreateError("Could not read text from received binary, UTF-8 was malformed at index %zu (attempted to read %d chars from %sstart index %zu).",
 				recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
 			return std::tstring();
 		}
@@ -789,7 +792,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 
 		// Reused error message
 	DeadChar:
-		CreateError("Could not read text from received binary, UTF-8 was malformed at index %u (attempted to read %d chars from %hsstart index %d).",
+		CreateError("Could not read text from received binary, UTF-8 was malformed at index %zu (attempted to read %d chars from %sstart index %zu).",
 			recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
 		return std::tstring();
 	}
@@ -805,7 +808,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 Extension::~Extension()
 {
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %u.\n", globals->extsHoldingGlobals.size());
+	sprintf_s(msgBuff, PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
 	OutputDebugStringA(msgBuff);
 
 	EnterCriticalSectionDebug(&globals->lock);
@@ -848,7 +851,7 @@ Extension::~Extension()
 		else if (globals->fullDeleteEnabled)
 			OutputDebugStringA(PROJECT_NAME " - Full delete enabled, closing Globals info.\n");
 		// Wait for 0ms returns immediately as per spec
-		else if (WaitForSingleObject(AppWasClosed, 0U) == WAIT_OBJECT_0)
+		else if (AppWasClosed)
 			OutputDebugStringA(PROJECT_NAME " - App was closed, closing Globals info.\n");
 		else // !globals->fullDeleteEnabled
 		{
@@ -871,7 +874,7 @@ Extension::~Extension()
 			// Note the timeout thread does not delete globals. It can't, as Runtime.WriteGlobal() requires a valid Extension.
 			// Instead, the thread marks it as pending delete, and in ReadGlobal in Extension ctor, it checks if it's
 			// pending delete and deletes there.
-			globals->timeoutThread = CreateThread(NULL, 0, ObjectDestroyTimeoutFunc, globals, NULL, NULL);
+			globals->timeoutThread = std::thread(ObjectDestroyTimeoutFunc, globals);
 			return;
 		}
 		const std::tstring id = UTF8ToTString(globals->_globalID) + _T("BlueClient"s);
@@ -893,13 +896,13 @@ Extension::~Extension()
 REFLAG Extension::Handle()
 {
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
-	if (!globals->_thread)
+	if (!globals->_thread.joinable())
 	{
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
 			e->add("(in Extension::Handle -> tick())");
-			CreateError(e->tostring());
+			CreateError("%s", e->tostring());
 			return REFLAG::NONE; // Run next loop
 		}
 	}
@@ -910,14 +913,14 @@ REFLAG Extension::Handle()
 
 	// If Thread is not available, we have to tick() on Handle(), so
 	// we have to run next loop even if there's no events in EventsToRun to deal with.
-	bool runNextLoop = !globals->_thread;
+	bool runNextLoop = !globals->_thread.joinable();
 	size_t remainingCount = 0;
 	constexpr size_t maxNumEventsPerEventLoop = 10;
 
 	for (size_t maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
-		if (!TryEnterCriticalSection(&globals->lock))
+		if (!globals->lock.try_lock())
 		{
 			runNextLoop = true;
 			break; // lock already occupied; leave it and run next event loop
@@ -941,14 +944,14 @@ REFLAG Extension::Handle()
 		LeaveCriticalSectionDebug(&globals->lock);
 
 		// Events that absolutely need a processing event.
-		const static std::pair<const std::wstring_view, const std::uint16_t> mandatoryEventIDs[] = {
-			{ L"On Error"sv, 0 },
-			{ L"On Connection Denied"sv, 2 },
-			{ L"On Disconnect"sv, 3 },
-			{ L"On Join Denied"sv, 5 },
-			{ L"On Name Denied"sv, 7 },
-			{ L"On Leave Denied"sv, 44 },
-			{ L"On Name Changed"sv, 53 },
+		const static std::pair<const std::tstring_view, const std::uint16_t> mandatoryEventIDs[] = {
+			{ _T("On Error"sv), 0 },
+			{ _T("On Connection Denied"sv), 2 },
+			{ _T("On Disconnect"sv), 3 },
+			{ _T("On Join Denied"sv), 5 },
+			{ _T("On Name Denied"sv), 7 },
+			{ _T("On Leave Denied"sv), 44 },
+			{ _T("On Name Changed"sv), 53 },
 		};
 		int mandatoryEventIndex = -1;
 		for (size_t i = 0; i < std::size(mandatoryEventIDs); ++i)
@@ -1027,20 +1030,20 @@ REFLAG Extension::Handle()
 		if (!globals->lastMandatoryEventWasChecked)
 		{
 			// Make a nice big error message.
-			std::wstringstream wstr;
-			wstr << L"" PROJECT_NAME " event occurred. Please add a \"" PROJECT_NAME " > "sv <<
-				mandatoryEventIDs[mandatoryEventIndex].first << L"\" event to report it";
+			std::tstringstream wstr;
+			wstr << _T("") PROJECT_NAME " event occurred. Please add a \"" PROJECT_NAME " > "sv <<
+				mandatoryEventIDs[mandatoryEventIndex].first << _T("\" event to report it");
 
 			// On Error has message
-			if (mandatoryEventIDs[mandatoryEventIndex].first == L"On Error"sv)
-				wstr << L". Error message:\n"sv << UTF8ToWide(evtToRun->error.text);
+			if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Error"sv))
+				wstr << _T(". Error message:\n"sv) << UTF8ToTString(evtToRun->error.text);
 			// On Disconnect and On Name Changed has no text included
-			else if (mandatoryEventIDs[mandatoryEventIndex].first == L"On Disconnect"sv || mandatoryEventIDs[mandatoryEventIndex].first == L"On Name Changed"sv)
-				wstr << L'.';
+			else if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Disconnect"sv) || mandatoryEventIDs[mandatoryEventIndex].first == _T("On Name Changed"sv))
+				wstr << _T('.');
 			else
-				wstr << L". Deny reason:\n"sv << UTF8ToWide(DenyReasonBuffer);
+				wstr << _T(". Deny reason:\n"sv) << UTF8ToTString(DenyReasonBuffer);
 
-			MessageBoxW(NULL, wstr.str().c_str(), L"" PROJECT_NAME " - Mandatory Event Error", MB_ICONERROR | MB_TOPMOST);
+			MessageBox(NULL, wstr.str().c_str(), _T("") PROJECT_NAME " - Mandatory Event Error", MB_ICONERROR | MB_TOPMOST);
 			globals->lastMandatoryEventWasChecked = true; // reset for next loop
 		}
 	}
@@ -1050,11 +1053,11 @@ REFLAG Extension::Handle()
 		EnterCriticalSectionDebug(&globals->lock);
 		char error[300];
 		sprintf_s(error, "You're receiving too many messages for the application to process. Max of "
-			"%u events per event loop, currently %u messages in queue.",
+			"%zu events per event loop, currently %zu messages in queue.",
 			maxNumEventsPerEventLoop, EventsToRun.size());
 
 		// Create an error and move it to the front of the queue
-		CreateError(error);
+		CreateError("%s", error);
 		auto errEvt = EventsToRun.back();
 		EventsToRun.erase(--EventsToRun.cend());
 		EventsToRun.insert(EventsToRun.cbegin(), errEvt);
@@ -1084,14 +1087,28 @@ DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 
 	// Triggered by main thread after a frame switch finishes, to kick the timeout thread
 	// out of the wait early, or triggered by app exiting via EndApp() in Runtime.cpp.
-	const HANDLE handles[2] = { G->cancelTimeoutThread, AppWasClosed };
-	const DWORD triggeredHandle = WaitForMultipleObjects(std::size(handles), handles, FALSE, 3000U);
-	if (triggeredHandle == WAIT_OBJECT_0)
+
+	int triggeredHandle = -1;
+	while (true)
+	{
+		Sleep(100);
+		if (G->cancelTimeoutThread == true)
+		{
+			triggeredHandle = 0;
+			break;
+		}
+		if (AppWasClosed == true)
+		{
+			triggeredHandle = 1;
+			break;
+		}
+	}
+	if (triggeredHandle == 0)
 	{
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n");
 		return 0U;
 	}
-	const bool appWasClosed = triggeredHandle == (WAIT_OBJECT_0 + 1);
+	const bool appWasClosed = triggeredHandle == 1;
 
 	EnterCriticalSectionDebug(&G->lock);
 
@@ -1196,17 +1213,17 @@ bool Extension::Load(HANDLE File)
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID, RUNDATA * rdPtr, long param1, long param2)
+void Extension::Action(int ID)
 {
 	MessageBoxA(NULL, "Defaulting on an action", PROJECT_NAME " - Action() note", MB_OK | MB_ICONERROR);
 }
 
-long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
+long Extension::Condition(int ID)
 {
 	return false;
 }
 
-long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
+long Extension::Expression(int ID)
 {
 	return 0;
 }
@@ -1215,8 +1232,8 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
 	_client(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
-	_automaticallyClearBinary(edPtr->automaticClear), _thread(nullptr),
-	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer()
+	_automaticallyClearBinary(edPtr->automaticClear), _thread(),
+	lastDestroyedExtSelectedChannel(), lastDestroyedExtSelectedPeer(), lock()
 {
 	// GlobalInfos are always created by Extension, which are always created by Fusion main thread
 	mainThreadID = std::this_thread::get_id();
@@ -1228,7 +1245,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 		_globalID = edPtr->edGlobalID;
 
 		// This handle is used by timeout threads when a new ext regains control of this Bluewing instance
-		cancelTimeoutThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+		cancelTimeoutThread = false;
 	}
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
 	fullDeleteEnabled = edPtr->fullDeleteEnabled;
@@ -1253,8 +1270,6 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_client.onmessage_serverchannel(::OnServerChannelMessage);
 	_client.onmessage_server(::OnServerMessage);
 
-	InitializeCriticalSection(&lock);
-
 	// Useful so Lacewing callbacks can access Extension
 	_client.tag = this;
 }
@@ -1262,18 +1277,10 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!extsHoldingGlobals.empty())
-		throw std::exception("GlobalInfo dtor called prematurely.");
+		throw std::runtime_error("GlobalInfo dtor called prematurely.");
 
 	if (!pendingDelete)
 		MarkAsPendingDelete();
-
-	// Counterpart to AppWasClosed, but used for cancelling the timeout thread.
-	if (cancelTimeoutThread)
-		CloseHandle(cancelTimeoutThread);
-
-	// Holders trying to use MarkAsPendingDelete() secure themselves with this lock,
-	// so we don't delete in the MarkAsPendingDelete() but in dtor only
-	DeleteCriticalSection(&lock);
 }
 void GlobalInfo::MarkAsPendingDelete()
 {
@@ -1309,7 +1316,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	_client.tag = nullptr; // was == this, now this is not usable
 
 	// Cleanup all usages of GlobalInfo
-	if (!_thread)
+	if (!_thread.joinable())
 		_objEventPump->tick();
 
 	_objEventPump->post_eventloop_exit();
@@ -1320,15 +1327,10 @@ void GlobalInfo::MarkAsPendingDelete()
 	clientWriteLock.lw_unlock();
 
 	// Multithreading mode; wait for thread to end
-	auto threadHandle = _thread;
-	if (_thread)
+	if (_thread.joinable())
 	{
 		Sleep(0U);
-		if (WaitForSingleObject(threadHandle, 5000U) != WAIT_OBJECT_0 && _thread)
-		{
-			TerminateThread(_thread, 0U);
-			_thread = NULL;
-		}
+		_thread.join();
 
 		OutputDebugStringA(PROJECT_NAME " - Lacewing loop thread should have ended.\n");
 	}

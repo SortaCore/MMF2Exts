@@ -258,6 +258,8 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
 			ipv6 = lw_false;
 		 }
+		 else
+			 goto ipv6success;
 	  }
 
 	  if (!ipv6)

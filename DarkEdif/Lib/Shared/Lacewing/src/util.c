@@ -263,8 +263,8 @@ time_t lwp_parse_time (const char * string)
 		tm.tm_min  = atoi (time + 3);
 		tm.tm_sec  = atoi (time + 6);
 
-		#if defined(ANDROID)
-		  return timegm64 (&tm);
+		#if defined(__ANDROID__)
+		  return timegm (&tm);
 		#elif defined (_WIN32)
 		  #ifndef __MINGW_H
 			 return _mkgmtime64 (&tm);

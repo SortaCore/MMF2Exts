@@ -217,9 +217,10 @@ void lwp_refcount_log_release(struct lwp_refcount * refcount)
 				(int) refcount->refcount);
 }
 #else
- void lw_trace(const char * format, ...)
- {
- }
+void lw_trace(const char * format, ...)
+{
+	// Do nothing
+}
 #endif
 
 

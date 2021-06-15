@@ -1198,9 +1198,9 @@ namespace lacewing
 			if (!build[0])
 			{
 				#ifdef _UNICODE
-					sprintf_s(build, sizeof(build), "Bluewing Windows Unicode b%i", relayclient::buildnum);
+					sprintf(build, "Bluewing Windows Unicode b%i", relayclient::buildnum);
 				#else
-					sprintf_s(build, sizeof(build), "Bluewing Windows ANSI b%i", relayclient::buildnum);
+					sprintf(build, "Bluewing Windows ANSI b%i", relayclient::buildnum);
 				#endif
 			}
 
@@ -1232,9 +1232,9 @@ namespace lacewing
 	}
 
 	relayclientinternal::relayclientinternal(relayclient &_client, pump _eventpump) :
-		client(_client), message(true), messageMF(true),
-		socket(nullptr), udp(udp_new(_eventpump)),
-		udphellotimer(timer_new(_eventpump))
+		client(_client), socket(nullptr), udp(udp_new(_eventpump)),
+		udphellotimer(timer_new(_eventpump)),
+		message(true), messageMF(true)
 	{
 		initsocket(_eventpump);
 
@@ -1293,7 +1293,7 @@ namespace lacewing
 		// udphellotick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::udphellotimer var.
 		// It starts from the time the Connect Request Success message is sent.
 		if (!udp->hosting())
-			throw std::exception("udphellotick() called, but not hosting UDP.");
+			throw std::runtime_error("udphellotick() called, but not hosting UDP.");
 
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
@@ -1332,14 +1332,9 @@ namespace lacewing
 	/// <returns> null if it fails, else the matching peer. </returns>
 	std::shared_ptr<relayclient::channel::peer> relayclient::channel::findpeerbyid(lw_ui16 id)
 	{
-		// findchannelbyid() is false, thus channel->findpeerbyid() is false too
-		if (this == nullptr)
-			return nullptr;
-
 		if (!lock.checkHoldsRead(false) && !lock.checkHoldsWrite(false))
-		{
-			MessageBoxA(NULL, "Readlock/writelock not held in findpeerbyid().", "Bluewing Client failure", MB_ICONERROR);
-		}
+			throw std::runtime_error("Readlock/writelock not held in findpeerbyid().");
+
 		auto i = std::find_if(peers.cbegin(), peers.cend(),
 			[&](const std::shared_ptr<relayclient::channel::peer> & p) { return p->_id == id; });
 		return (i == peers.cend() ? nullptr : *i);

@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6e804729-2eba-4680-afdd-6e3820b39f2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{10c5ecc2-7f90-4ead-9b4a-760633de00d8}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{0493bd89-619e-48bb-acdc-15436cf6969d}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{213a3f61-d65b-49f7-8846-402262a08978}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Source files\Lacewing">
+      <UniqueIdentifier>{d14c41ea-9d69-4a1f-8985-4749aabcb9f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src">
+      <UniqueIdentifier>{645ab561-fc4c-4db6-8722-a5eb9cd333eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src\unix">
+      <UniqueIdentifier>{ef0d33b8-6559-4b36-8a06-5617ce9bbefb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{dc22601f-62ad-42ed-aa97-71eaa7c8c432}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing">
+      <UniqueIdentifier>{f01c908b-c84c-4141-a87a-81701e955e8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{fc7700f1-0d0d-44b0-a519-d53df815ccff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing">
+      <UniqueIdentifier>{68b9eb4e-c479-4c1f-a950-95a85b7d9bd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\src">
+      <UniqueIdentifier>{a0fb044e-897f-48ea-8acb-a673b814e951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\src\unix">
+      <UniqueIdentifier>{0519aa1d-6ee3-4091-b3f4-0d301c3cc9a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src\unix\eventqueue">
+      <UniqueIdentifier>{97500112-15ea-4089-9509-d11fbf21f1c0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\event.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\fdstream.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\file.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\server.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\sync.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\thread.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\timer.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\udp.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventpump.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\epoll.c">
+      <Filter>Source files\Lacewing\src\unix\eventqueue</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\global2.c">
+      <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
+      <Filter>Header files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h">
+      <Filter>Header files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h">
+      <Filter>Header files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
