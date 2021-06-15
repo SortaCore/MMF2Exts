@@ -169,9 +169,9 @@ typedef struct _json_value
 		 }
 
 		 // 64-bit systems only, where size_t is 64-bit and we'll get complaints about ambiguity/lost detail otherwise
-#if (defined(__LP64__) && __LP64__) || defined(_WIN64)
+#if (defined(__LP64__) && __LP64__) || (defined(_WIN64) && defined(_WIN32))
 		 inline const struct _json_value & operator [] (const std::uint64_t index) const {
-			 return (*this)[(int)index];
+			 return (*this)[(const int)index];
 		 }
 #endif
 

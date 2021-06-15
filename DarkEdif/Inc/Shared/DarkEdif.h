@@ -8,6 +8,13 @@
 #define IDR_EDIF_JSON 102
 #endif
 
+#include <algorithm>
+#include <sstream>
+#include <chrono>
+#include <condition_variable>
+#include <thread>
+#include <atomic>
+
 
 // Stops Visual Studio complaining it cannot generate copy functions because of the 0-sized array
 #pragma warning (disable:4200)
@@ -239,14 +246,15 @@ namespace DarkEdif {
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
 
-	// allows the compiler to check printf format is correct
+	// allows the compiler to check printf format matches parameters
 #ifdef _MSC_VER
 #define PrintFHintInside _In_z_ _Printf_format_string_
 #define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
 #elif defined(__clang__)
 #define PrintFHintInside /* no op */
 // Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
-// Note class member functions should include the "this" pointer in the indexing
+// Note class member functions should include the "this" pointer in the indexing.
+// You can use 0 for dotsParamIndex for vprintf-like format instead.
 #define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
 #else
 #define PrintFHintInside /* no op */

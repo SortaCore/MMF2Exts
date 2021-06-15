@@ -499,7 +499,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						{
 							// Unicode Properties have IDs 1000 greater than their
 							// ANSI equivalents. If necessary, you can boost all of them.
-							CurrentProperty = new PropData((int)VariableProps.size(), j);
+#ifndef _UNICODE
+							CurrentProperty = new PropData(VariableProps.size(), j);
+#else
+							CurrentProperty = new PropData(VariableProps.size(), j + 1000);
+#endif
 							break;
 						}
 					}
@@ -525,10 +529,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 						// Find out what opt is.
 						// Two settings may be specified by |=ing the options unsigned int.
 					
-						CurrentProperty->Title = Property["Title"];
-						CurrentProperty->Info = Property["Info"];
+						CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
+						CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
 
-						switch (CurrentProperty->Type_ID)
+						switch (CurrentProperty->Type_ID % 1000)
 						{
 							// Simple static text
 							case PROPTYPE_STATIC:
@@ -794,7 +798,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 			case Params::Compare_Time:
 			case Params::Comparison:
-				Parameters[i] = CNC_GetIntParameter(rdPtr);
+				Parameters[i + paramInc] = params.GetInteger(i);
 				isComparisonCondition = true;
 				break;
 
@@ -1841,6 +1845,42 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 }
 #endif // _UNICODE
 
+#ifdef _DEBUG
+#ifdef _WIN32
+static void GetFunctionAndLine(const char *& func, int & line)
+{
+
+}
+#else // !_WIN32
+
+#include <cxxabi.h>
+
+static void GetFunctionAndLine(std::string & func, int & line)
+{
+	size_t outputMemSize = 512;
+	char * outputMem = (char *)malloc(outputMemSize);
+
+	const void * addr = buffer[1];
+	const char * symbol = "";
+
+	Dl_info info;
+	if (dladdr(addr, &info) && info.dli_sname) {
+		symbol = info.dli_sname;
+	}
+	memset(outputMem, 0, outputMemSize);
+	int status = 0;
+	abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
+	func = (status == 0 ? outputMem : symbol) << "\n";
+
+	free(outputMem);
+}
+#endif // _WIN32
+
+#else // !_DEBUG
+static void GetFunctionAndLine(std::string & func, int & line) {
+	line = -1;
+}
+#endif // _DEBUG
 
 Edif::recursive_mutex::recursive_mutex()
 {
@@ -1850,14 +1890,11 @@ Edif::recursive_mutex::~recursive_mutex()
 {
 	this->log << "Recursive mutex dying.\n";
 }
-#if __INTELLISENSE__
-void Edif::recursive_mutex::lock() {}
-#else
-#undef lock
-#undef try_lock
-#undef unlock
-void Edif::recursive_mutex::lockI(const char * func, size_t line)
+void Edif::recursive_mutex::lock()
 {
+	std::string func;
+	int line;
+	GetFunctionAndLine(func, line);
 	try {
 		this->intern.lock();
 	}
@@ -1873,20 +1910,18 @@ void Edif::recursive_mutex::lockI(const char * func, size_t line)
 		{
 			this->log << "FAILED TO LOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
 			std::string str(this->log.str());
-			fwrite(str.c_str(), str.size(), 1, f);
+			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			throw err;
 		}
 	}
 	this->log << "Locked in function " << func << ", line " << line << ".\n";
 }
-#endif
-
-#if __INTELLISENSE__
-bool Edif::recursive_mutex::try_lock() { return false; }
-#else
-bool Edif::recursive_mutex::try_lockI(const char * func, size_t line)
+bool Edif::recursive_mutex::try_lock()
 {
+	std::string func;
+	int line;
+	GetFunctionAndLine(func, line);
 	bool b = false;
 	try {
 		b = this->intern.try_lock();
@@ -1903,7 +1938,7 @@ bool Edif::recursive_mutex::try_lockI(const char * func, size_t line)
 		{
 			this->log << "FAILED TO TRY LOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
 			std::string str(this->log.str());
-			fwrite(str.c_str(), str.size(), 1, f);
+			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			throw err;
 		}
@@ -1911,12 +1946,12 @@ bool Edif::recursive_mutex::try_lockI(const char * func, size_t line)
 	this->log << "Try lock " << (b ? "OK" : "FAIL") << " in function " << func << ", line " << line << ".\n";
 	return b;
 }
-#endif
-#if __INTELLISENSE__
-void Edif::recursive_mutex::unlock() {}
-#else
-void Edif::recursive_mutex::unlockI(const char * func, size_t line)
+void Edif::recursive_mutex::unlock()
 {
+	std::string func;
+	int line;
+	GetFunctionAndLine(func, line);
+
 	try {
 		this->intern.unlock();
 	}
@@ -1932,11 +1967,10 @@ void Edif::recursive_mutex::unlockI(const char * func, size_t line)
 		{
 			this->log << "FAILED TO UNLOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
 			std::string str(this->log.str());
-			fwrite(str.c_str(), str.size(), 1, f);
+			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
 			throw err;
 		}
 	}
 	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 }
-#endif

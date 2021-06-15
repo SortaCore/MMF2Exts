@@ -291,6 +291,9 @@
 			<!-- Not including ProjectDir causes includes of "Common.h" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
 			<AdditionalIncludeDirectories>.\;$(SDKRootFolder)\Inc\$(_TargetPlat);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+
+			<!-- C++ is king. -->
+			<CompileAs>CompileAsCpp</CompileAs>
 		</ClCompile>
 	</ItemDefinitionGroup>
 
@@ -354,8 +357,9 @@
 
 			<!-- Define PROJECT_NAME for use in DLL metadata. Unfortunately, we don't know company name.
 				 Can't do it in PreprocessorDefinitions, it doesn't like projects with spaces in their
-				 name. -->
-			<AdditionalOptions>$(_FusionSDKAdds) %(AdditionalOptions)</AdditionalOptions>
+				 name.
+				 Also, make __cplusplus represent the C++ standard for MSVC. -->
+			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -513,14 +517,12 @@
 		<DARKEDIF_USE_PREMATURE_NDK>0</DARKEDIF_USE_PREMATURE_NDK>
 
 		<!-- To move the compiled SO file into the Data\Runtime\Android zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir)" /OutputDir="$(MFXDir)"</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir)" /OutputDir="$(MFXDir)" /ProjectDir="$(ProjectDir)"</DarkEdifPostBuildToolParams>
 	</PropertyGroup>
 	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
 		<ClCompile>
 			<!-- Don't need it. -->
 			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-			<!-- C++ is king. -->
-			<CompileAs>CompileAsCpp</CompileAs>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
@@ -532,7 +534,7 @@
 			<FunctionLevelLinking>true</FunctionLevelLinking>
 			<!-- Data sections -->
 			<DataLevelLinking>true</DataLevelLinking>
-			<!-- Don't export the functions, as Java doesn't need to see them. -->
+			<!-- Don't export any functions by default, as Java doesn't need to see them. -->
 			<AdditionalOptions>-fvisibility=hidden %(AdditionalOptions)</AdditionalOptions>
 			<!-- AndroidHeaderTriple will incorrectly be arm-linux-androidabi,
 				which defaults it to armv4, causing compiler issues. You want armv7-linux-androidabi.
@@ -575,8 +577,6 @@
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
 			<PreprocessorDefinitions>__APPLE__;PLATFORM=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- C++ is king. -->
-			<CompileAs>CompileAsCpp</CompileAs>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++17</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>

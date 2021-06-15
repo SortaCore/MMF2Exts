@@ -5,19 +5,22 @@
 #endif
 #include <asm-generic\posix_types.h>
 #include <stdlib.h>
-#include <stdio.h> 
+#include <stdio.h>
+#include <iomanip>
 #define memcpy_s(a,b,c,d) memcpy(a, c, d)
 #define _strdup(a) strdup(a)
+/*
 wchar_t* wcsdup(const wchar_t*);
 wchar_t* wcscpy(wchar_t*, const wchar_t*);
 int wcscasecmp(const wchar_t*, const wchar_t*);
 #define _wcsdup(a) wcsdup(a)
-#define wcscpy_s(a,b,c) wcscpy(a,c)
+#define wcscpy_s(a,b,c) wcscpy(a,c)*/
 #define strcat_s(a,b) strcat(a,b)
 #define _stricmp(a,b) strcasecmp(a,b)
 #define _strnicmp(a,b,c) strncasecmp(a,b,c)
-#define sprintf_s(a,...) sprintf(a, __VA_ARGS__)
+#define sprintf_s(a, ...) sprintf(a, __VA_ARGS__)
 #define strcpy_s(a, b, c) strcpy(a, c)
+#define fread_s(a,b,c,d,e) fread(a,c,d,e)
 #define SUBSTRIFY(X) #X
 #define STRIFY(X) #X
 
@@ -30,9 +33,13 @@ int wcscasecmp(const wchar_t*, const wchar_t*);
 #define MB_ICONERROR ANDROID_LOG_ERROR
 #define MB_ICONWARNING ANDROID_LOG_WARN
 #define MB_ICONINFORMATION ANDROID_LOG_INFO
+#define MB_TOPMOST 0
 #define MessageBox(a,b,c,d) MessageBoxA(a,b,c,d)
 #define _msize(a) malloc_usable_size(a)
 void OutputDebugStringA(const char * debugString);
+void Sleep(unsigned int milliseconds);
+#define _CrtCheckMemory() /* no op */
+
 #include <wchar.h>
 #include <string.h>
 #include <sstream>
@@ -62,6 +69,7 @@ using namespace std::string_view_literals;
 #define _tcscat(a,b) strcat(a,b)
 #define _tcscmp(a,b) strcmp(a,b)
 #define _tcsicmp(a,b) strcasecmp(a,b)
+#define _tcsrchr(a,b) strrchr(a,b)
 #define memmove_s(a,b,c,d) memmove(a,c,d)
 #define _tcsnicmp(a,b,c) strncasecmp(a,b,c)
 #define _T(x) x

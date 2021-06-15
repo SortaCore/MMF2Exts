@@ -530,7 +530,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 		return nullptr;
 	}
 
-	const char * curStr = (const char *)j[ID]["Type"];
+	const char * curStr = (const char *)j[(int)ID]["Type"];
 	// Read unchangable properties
 	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 		return nullptr;
@@ -825,7 +825,7 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 
 	const json_value &prop = CurLang["Properties"][propID];
 	if (!_stricmp(prop["Type"], "Combo Box"))
-		return UTF8ToTString((const char  *)prop["Items"][*(unsigned int *)PropIndex(this, propID, nullptr)]);
+		return UTF8ToTString((const char  *)prop["Items"][*(int *)PropIndex(this, propID, nullptr)]);
 	else if (!_stricmp(prop["Type"], "Editbox String"))
 	{
 		unsigned int propDataSize = 0;
@@ -1233,8 +1233,8 @@ DWORD WINAPI DarkEdifUpdateThread(void * data);
 
 void DarkEdif::SDKUpdater::StartUpdateCheck()
 {
-	DarkEdifUpdateThread(::SDK);
-	// updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
+	//DarkEdifUpdateThread(::SDK);
+	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
 	// WaitForSingleObject(updateThread, INFINITE);
 }
 
@@ -1750,6 +1750,13 @@ void OutputDebugStringA(const char * debugString)
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 
 	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "OutputDebugStringA: %s.", debugStringSafe.c_str());
+}
+void Sleep(unsigned int milliseconds)
+{
+	if (milliseconds == 0)
+		std::this_thread::yield();
+	else
+		std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
 }
 
 #endif

@@ -9,6 +9,10 @@
 #include <sstream>
 #include <thread>
 #include <mutex>
+#include <algorithm>
+#include <chrono>
+#include <condition_variable>
+#include <atomic>
 
 #ifdef _WIN32
 #include "..\Windows\MMFMasterHeader.h"
@@ -319,23 +323,15 @@ namespace Edif
 	void Log(const char * format, ...);
 
 	class recursive_mutex {
-		std::stringstream log;
 		std::recursive_mutex intern;
+		std::stringstream log;
 	public:
 		recursive_mutex();
 		~recursive_mutex();
-#if __INTELLISENSE__
+
 		void lock();
 		bool try_lock();
 		void unlock();
-#else
-		void lockI(const char * f, size_t line);
-		bool try_lockI(const char * f, size_t line);
-		void unlockI(const char * f, size_t line);
-#define lock() lockI(__PRETTY_FUNCTION__, __LINE__)
-#define try_lock() try_lockI(__PRETTY_FUNCTION__, __LINE__)
-#define unlock() unlockI(__PRETTY_FUNCTION__, __LINE__)
-#endif
 	};
 
 };

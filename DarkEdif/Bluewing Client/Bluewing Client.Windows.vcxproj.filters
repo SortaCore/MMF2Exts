@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\client.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\compat.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\event.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\eventpump.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\fdstream.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\file.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\server.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\sync.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\thread.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\timer.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\udp.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\sslclient.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\global2.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\clientssl.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.c">
+      <Filter>Source files\Lacewing\src\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="Edittime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="General.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\common.h">
+      <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\compat.h">
+      <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\fdstream.h">
+      <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\typeof.h">
+      <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\sslclient.h">
+      <Filter>Header files\Lacewing\src\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Icon.png">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{00ffa75c-e383-4351-97c4-6bc0941e8a35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{fac537de-dd1c-477e-95c3-33dade7ec05a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6e804729-2eba-4680-afdd-6e3820b39f2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions\Edif">
+      <UniqueIdentifier>{bcad2bc1-a5a5-43ef-af50-f4f85f2ac96d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{00a9f5d7-fa2d-405e-bb97-fdd3f6e33af2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing">
+      <UniqueIdentifier>{6004d1d0-36e5-4f2f-a2ec-4e7366cff284}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{10c5ecc2-7f90-4ead-9b4a-760633de00d8}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{0493bd89-619e-48bb-acdc-15436cf6969d}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{213a3f61-d65b-49f7-8846-402262a08978}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Source files\Lacewing">
+      <UniqueIdentifier>{d14c41ea-9d69-4a1f-8985-4749aabcb9f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src">
+      <UniqueIdentifier>{645ab561-fc4c-4db6-8722-a5eb9cd333eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing">
+      <UniqueIdentifier>{68b9eb4e-c479-4c1f-a950-95a85b7d9bd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\src">
+      <UniqueIdentifier>{58a239a4-8ccb-4aee-8fd9-c8abf876044f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src\windows">
+      <UniqueIdentifier>{5d36408f-c03b-4761-8eb3-b1e89e04ad83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\src\windows">
+      <UniqueIdentifier>{a7ff7726-93b4-4d9b-9d59-40a9177993fd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Ext.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

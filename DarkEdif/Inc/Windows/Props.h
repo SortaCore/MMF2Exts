@@ -16,8 +16,8 @@ struct Prop_Custom;
 struct PropData
 {
 	int				ID;					// Identifier (generated, 1+,)
-	const char *	Title;				// name = ID of the property name in the resources, or const char *
-	const char *	Info;				// Info = ID of the property description in the resources, or const char *
+	const TCHAR *	Title;				// name = ID of the property name in the resources, or const char *
+	const TCHAR *	Info;				// Info = ID of the property description in the resources, or const char *
 	union { 
 		unsigned int	Type_ID;		// Property type...
 		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
