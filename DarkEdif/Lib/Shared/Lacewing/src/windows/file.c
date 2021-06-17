@@ -118,7 +118,7 @@ lw_bool lw_file_open (lw_file ctx, const char * filename, const char * mode)
 	HANDLE fd = INVALID_HANDLE_VALUE;
 	const void * filename2 = filename;
 #if defined(_WIN32) && defined(_UNICODE)
-	filename2 = lw_char_to_wchar(filename);
+	filename2 = lw_char_to_wchar(filename, -1);
 	if (filename != NULL)
 	{
 #endif

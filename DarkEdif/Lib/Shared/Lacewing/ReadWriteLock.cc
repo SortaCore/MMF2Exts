@@ -8,6 +8,9 @@ bool lacewing::writelock::isEnabled() const
 {
 	return locked;
 }
+#if defined(COXSDK) && defined(__ANDROID__)
+#include "../Inc/Android/MMFAndroidMasterHeader.h"
+#endif
 
 lacewing::readlock::~readlock()
 {
@@ -70,14 +73,14 @@ lacewing::readlock::readlock(readwritelock &lock, lw_rwlock_debugParamNames)
 void lacewing::readlock::relockDebug(lw_rwlock_debugParamNames)
 {
 	if (locked)
-		throw std::exception("WriteLock: Locking when it's already locked");
+		throw std::runtime_error("ReadLock: Locking when it's already locked");
 	lock.openReadLock(*this, file, func, line);
 	locked = true;
 }
 void lacewing::readlock::unlockDebug(lw_rwlock_debugParamNames)
 {
 	if (!locked)
-		throw std::exception("ReadLock: Unlocking when it's already unlocked");
+		throw std::runtime_error("ReadLock: Unlocking when it's already unlocked");
 	lock.closeReadLock(*this, file, func, line);
 	locked = false;
 }
@@ -86,7 +89,7 @@ void lacewing::readlock::unlockDebug(lw_rwlock_debugParamNames)
 lacewing::writelock lacewing::readlock::upgrade(lw_rwlock_debugParamNames)
 {
 	if (!locked)
-		throw std::exception("Uhhhhh...");
+		throw std::runtime_error("Uhhhhh...");
 
 	lacewing::writelock wl = this->lock.createWriteLock(false, file, func, line);
 	// Switch wl as read for a bit, then lock over as write.
@@ -135,14 +138,14 @@ lacewing::writelock::writelock(readwritelock &lock, const char * file, const cha
 void lacewing::writelock::relockDebug(const char * file, const char * func, int line)
 {
 	if (locked)
-		throw std::exception("WriteLock: Locking when it's already locked");
-
-	if (lock.checkHoldsWrite(false))
+		throw std::runtime_error("WriteLock: Locking when it's already locked");
+	else if (!lock.checkHoldsWrite(false))
 	{
-		LacewingFatalErrorMsgBox();
+		// Not a meaningful relock?
+		//LacewingFatalErrorMsgBox();
 	}
-	lock.openWriteLock(*this, file, func, line);
 	locked = true;
+	lock.openWriteLock(*this, file, func, line);
 }
 void lacewing::writelock::unlockDebug(const char * file, const char * func, int line)
 {
@@ -187,7 +190,7 @@ lacewing::readwritelock::~readwritelock() noexcept(false)
 // Debug breakpoint if writelock is not held by current thread.
 bool lacewing::readwritelock::checkHoldsWrite(bool excIfNot /* = true */) const
 {
-	// Writers might be coming and going, but if one is held on this thread, this'll definitely be > 0.
+	// Writers might be incrementing/decrementing, but if one is held on this thread, this'll definitely be > 0.
 	if (writers == 0)
 		goto nope;
 
@@ -328,7 +331,7 @@ void lacewing::readwritelock::openWriteLock(writelock &wl)
 		sprintf_s(debugInfo, "Deadlock - opened new write lock with read lock already held by same thread.\nNew writer opened from file [%s], func [%s] line %i.",
 			file, func, line);
 		MessageBoxA(NULL, debugInfo, "Deadlock failure.", MB_ICONERROR);
-		throw std::exception("Deadlock");
+		throw std::runtime_error("Deadlock");
 	}
 #endif
 

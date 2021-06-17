@@ -927,7 +927,7 @@ REFLAG Extension::Handle()
 		}
 		// At this point we have effectively run EnterCriticalSection
 #ifdef _DEBUG
-		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Entered on "sv
+		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv
 			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv;
 #endif
 

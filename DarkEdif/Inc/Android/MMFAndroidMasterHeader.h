@@ -850,6 +850,7 @@ std::string GetJavaExceptionStr();
 };
 std::vector<monitor> monitors;*/
 
+static int globalCount;
 // JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
 template<typename T> struct global {
 	T ref;
@@ -866,7 +867,6 @@ template<typename T> struct global {
 	}*/
 
 	global(T p) {
-		// monitors.at
 		ref = (T)global_env->NewGlobalRef(p);
 		if (ref == NULL) {
 			std::string exc = GetJavaExceptionStr();

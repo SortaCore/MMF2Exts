@@ -1,5 +1,4 @@
 
-/* vim: set et ts=3 sw=3 ft=c:
 /* vim :set noet ts=4 sw=4 ft=c:
  *
  * Copyright (C) 2012, 2013 James McLaughlin et al.  All rights reserved.
@@ -44,7 +43,7 @@ const char * lw_version ()
 	{
 	  #if defined (_WIN32)
 		 platform = "Windows";
-	  #elif defined (ANDROID)
+	  #elif defined (__ANDROID__)
 		 platform = "Android";
 	  #else
 		 uname (&name);
@@ -181,7 +180,7 @@ void lw_trace (const char * format, ...)
 
 	  lw_sync_lock (lw_trace_sync);
 
-	  #ifdef ANDROID
+	  #ifdef __ANDROID__
 		 __android_log_write (ANDROID_LOG_INFO, "liblacewing", data);
 	  #else
 		 #ifdef COXSDK

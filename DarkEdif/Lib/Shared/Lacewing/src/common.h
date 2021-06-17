@@ -57,7 +57,7 @@
 	  #define _GNU_SOURCE
 	#endif
 
-	//#include "config.h"
+	#include "unix/android config.h"
 	#include <sys/sendfile.h>
 
 #endif

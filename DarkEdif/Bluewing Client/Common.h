@@ -41,11 +41,11 @@
 	extern std::stringstream CriticalSection;
 #define EnterCriticalSectionDebug(x) \
 		(x)->lock(); \
-		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Entered on "sv \
+		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv \
 			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
 
 #define LeaveCriticalSectionDebug(x) \
-		::CriticalSection << "Thread "sv << GetCurrentThreadId() << " : Left on "sv \
+		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Left on "sv \
 			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
 		(x)->unlock()
 #else

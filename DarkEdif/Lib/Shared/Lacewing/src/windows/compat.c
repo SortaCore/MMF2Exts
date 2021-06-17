@@ -89,19 +89,23 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
 
 #if defined(_WIN32) && defined(_UNICODE)
 
-// Returns null or a wide-converted version of the U8 string passed. Free it with free().
-extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str)
+// Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
+extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size)
 {
-	int length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, NULL, 0);
+	int length = MultiByteToWideChar(CP_UTF8, 0, u8str, size, NULL, 0);
 	if (length > 0)
 	{
 		length += 10;
 		wchar_t * u8Wide = (wchar_t *)malloc(length * sizeof(wchar_t));
 		if (u8Wide)
 		{
-			length = MultiByteToWideChar(CP_UTF8, 0, u8str, -1, u8Wide, length);
+			length = MultiByteToWideChar(CP_UTF8, 0, u8str, size, u8Wide, length);
 			if (length > 0)
+			{
+				// If size does not include the null byte, the converted result won't either.
+				u8Wide[length] = L'\0';
 				return u8Wide;
+			}
 			free(u8Wide);
 		}
 	}

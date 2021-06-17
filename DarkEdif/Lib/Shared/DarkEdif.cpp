@@ -840,8 +840,35 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 
 
 #ifdef __ANDROID__
+static jobject getGlobalContext()
+{
+	jclass activityThread = global_env->FindClass("android/app/ActivityThread");
+	jmethodID currentActivityThread = global_env->GetStaticMethodID(activityThread, "currentActivityThread", "()Landroid/app/ActivityThread;");
+	jobject at = global_env->CallStaticObjectMethod(activityThread, currentActivityThread);
+
+	jmethodID getApplication = global_env->GetMethodID(activityThread, "getApplication", "()Landroid/app/Application;");
+	jobject context = global_env->CallObjectMethod(at, getApplication);
+	return context;
+}
 int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
+	jclass toast = global_env->FindClass("android/widget/Toast");
+	jobject globalContext = getGlobalContext();
+	jmethodID methodMakeText = global_env->GetStaticMethodID(toast, "makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
+	if (methodMakeText == NULL) {
+		LOGE("toast.makeText not Found");
+		return 0;
+	}
+
+	std::string toastText = caption + std::string(" -  ") + text;
+
+	jobject toastobj = global_env->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastText.c_str());
+
+	// toast.showを実行
+	// Java: toastobj.show();
+	jmethodID methodShow = global_env->GetMethodID(toast, "show", "()V");
+	global_env->CallVoidMethod(toastobj, methodShow);
+
 	__android_log_print(iconAndButtons, "MMFRuntimeNative", "Msg Box swallowed: \"%s\", %s.", caption, text);
 	if (!strncmp(caption, "DarkEdif", sizeof("DarkEdif") - 1) && (iconAndButtons & MB_ICONERROR) != 0)
 		DarkEdif::BreakIfDebuggerAttached();
@@ -1747,6 +1774,8 @@ void OutputDebugStringA(const char * debugString)
 	if (debugStringSafe.back() == '\n')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 	if (debugStringSafe.back() == '\r')
+		debugStringSafe.resize(debugStringSafe.size() - 1U);
+	if (debugStringSafe.back() == '.')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 
 	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "OutputDebugStringA: %s.", debugStringSafe.c_str());

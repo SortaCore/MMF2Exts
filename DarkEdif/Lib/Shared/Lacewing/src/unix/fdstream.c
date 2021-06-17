@@ -29,6 +29,7 @@
 
 #include "../common.h"
 #include "fdstream.h"
+#include "eventpump.h"
 
 extern const lw_streamdef def_fdstream;
 
@@ -114,7 +115,7 @@ static void read_ready (void * tag)
 		if (ctx->reading_size != -1 && to_read > ctx->reading_size)
 			to_read = ctx->reading_size;
 
-		int bytes = read (ctx->fd, buffer, to_read);
+		ssize_t bytes = read (ctx->fd, buffer, to_read);
 
 		if (bytes == 0)
 		{
@@ -224,6 +225,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 		/* Given an existing pump watch - change it to use our callbacks */
 
 		ctx->watch = watch;
+		watch->tag = ctx;
 
 		lw_pump_update_callbacks (pump, ctx->watch, ctx,
 			read_ready, write_ready, lw_true);

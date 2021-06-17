@@ -365,12 +365,122 @@ void exp_setReturnInt(void * javaExtPtr, void * exp, int val) {
 	static jmethodID setexpExpr(global_env->GetMethodID(expClass, "setReturnInt", "(I)V"));
 	global_env->CallVoidMethod((jobject)exp, setexpExpr, val);
 }
+
+static std::uint8_t UTF8_CHAR_WIDTH[] = {
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x1F
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x3F
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x5F
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x7F
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0x9F
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xBF
+	0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 0xDF
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 0xEF
+	4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xFF
+};
+
+jstring CStrToJStr(const char * String)
+{
+	// Java doesn't use regular UTF-8, but "modified" UTF-8, or CESU-8.
+	// In Java, UTF-8 null and UTF8 4-byte characters aren't allowed. They will need re-encoding.
+	// Thankfully, they're not common in English usage. So, we'll quickly check.
+
+	// We can ignore the check for embedded null, as strlen() will stop at first null anyway, and Runtime.CopyString() is
+	// only for expressions returning non-null strings.
+	unsigned char * bytes = (unsigned char *)String;
+	size_t strU8Len = strlen(String);
+	jstring jstr = nullptr;
+
+	for (int k = 0; k < strU8Len; k++)
+	{
+		// 4-byte UTF-8, welp.
+		if (UTF8_CHAR_WIDTH[bytes[k]] == 4)
+			goto reconvert;
+	}
+	LOGV("UTF-8 should be valid Modified UTF-8.");
+	// No 4-byte characters, safe to convert directly
+	jstr = global_env->NewStringUTF(String);
+	return jstr;
+reconvert:
+	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().");
+	std::string newString(strU8Len + (strU8Len >> 2), '\0');
+	int inputByteIndex = 0, outputByteIndex = 0;
+	while (inputByteIndex < strU8Len) {
+		std::uint8_t b = bytes[inputByteIndex];
+
+		/*
+		// Null byte, but since we use strlen above, this won't happen
+		if (b == 0) {
+			assert(false && "Null byte inside expression return");
+			// Null bytes in Java are encoded as 0xc0, 0x80
+			newString[outputByteIndex++] = 0xC0;
+			newString[outputByteIndex++] = 0x80;
+			inputByteIndex++;
+		}
+		else */
+		if (b < 128) {
+			// Pass ASCII through quickly.
+			newString[outputByteIndex++] = bytes[inputByteIndex++];
+		}
+		else {
+			// Figure out how many bytes we need for this character.
+			int w = UTF8_CHAR_WIDTH[bytes[inputByteIndex]];
+			assert(w <= 4);
+			assert(inputByteIndex + w <= strU8Len);
+			if (w == 4) {
+				// Assume valid UTF-8 was already confirmed; we have a 4-byte UTF-8 we need to convert to a UTF-32.
+				// Convert using https://gist.github.com/ozdemirburak/89a7a1673cb65ce83469#file-converter-c-L190
+				unsigned int charAsUTF32 = ((bytes[inputByteIndex] & 0x07) << 18) | ((bytes[inputByteIndex + 1] & 0x3f) << 12) | ((bytes[inputByteIndex + 2] & 0x3f) << 6) | (bytes[inputByteIndex + 3] & 0x3f);
+				unsigned int charAsUTF32Modified = charAsUTF32 - 0x10000;
+				std::uint16_t surrogates[] = { 0, 0 };
+				surrogates[0] = ((std::uint16_t)(charAsUTF32Modified >> 10)) | 0xD800;
+				surrogates[1] = ((std::uint16_t)(charAsUTF32Modified & 0x3FF)) | 0xDC00;
+
+				auto enc_surrogate = [&outputByteIndex, &newString](std::uint16_t surrogate) {
+					assert(0xD800 <= surrogate && surrogate <= 0xDFFF);
+					// 1110xxxx 10xxxxxx 10xxxxxx
+					newString[outputByteIndex++] = 0b11100000 | ((surrogate & 0b1111000000000000) >> 12);
+					newString[outputByteIndex++] = 0b10000000 | ((surrogate & 0b0000111111000000) >> 6);
+					newString[outputByteIndex++] = 0b10000000 | ((surrogate & 0b0000000000111111));
+				};
+				enc_surrogate(surrogates[0]);
+				enc_surrogate(surrogates[1]);
+			}
+			else // Pass through short UTF-8 sequences unmodified.
+			{
+				// Basically just memcpy(newString.data() + outputByteIndex, &bytes[inputByteIndex], w);
+
+				if (w == 1)
+					*((std::uint8_t *)&newString[outputByteIndex]) = bytes[inputByteIndex];
+				else if (w == 2)
+					*((std::uint16_t *)&newString[outputByteIndex]) = *(std::uint16_t *)&bytes[inputByteIndex];
+				else // w == 3
+				{
+					*((std::uint8_t *)&newString[outputByteIndex + 1]) = bytes[inputByteIndex];
+					*((std::uint16_t *)&newString[outputByteIndex + 1]) = *(std::uint16_t *)&bytes[inputByteIndex + 1];
+				}
+				outputByteIndex += w;
+			}
+			inputByteIndex += w;
+		}
+	}
+	newString.resize(outputByteIndex);
+
+	return global_env->NewStringUTF(String);
+}
+
 void exp_setReturnString(void * javaExtPtr, void * exp, const char * val) {
 	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
 	static jmethodID setexpExpr(global_env->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V"));
 
 	// Convert into Java memory
-	jstring jStr = global_env->NewStringUTF(val);
+	jstring jStr = CStrToJStr(val);
 	global_env->CallVoidMethod((jobject)exp, setexpExpr, jStr);
 	global_env->DeleteLocalRef(jStr); // not strictly needed
 }
@@ -569,6 +679,14 @@ static void prepareSignals()
 	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "Set up %d sigactions.", (int)signalCatches.size());
 }
 
+// Included from root dir
+#if __has_include("ExtraAndroidNatives.h")
+#include <ExtraAndroidNatives.h>
+#endif
+#ifndef EXTRAFUNCS
+#define EXTRAFUNCS /* none*/
+#endif
+
 extern "C"
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
@@ -631,6 +749,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		method(condition, "(JILConditions/CCndExtension;)Z"),
 		method(action, "(JILActions/CActExtension;)V"),
 		method(expression, "(JILExpressions/CNativeExpInstance;)V"),
+		EXTRAFUNCS
 	};
 
 	LOGV("Registering natives for %s...", PROJECT_NAME);

@@ -1847,32 +1847,72 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 
 #ifdef _DEBUG
 #ifdef _WIN32
-static void GetFunctionAndLine(const char *& func, int & line)
+static void GetFunctionAndLine(std::string & func, int & line)
 {
 
 }
 #else // !_WIN32
 
+#include <unwind.h>
 #include <cxxabi.h>
 
+struct BacktraceState
+{
+    void** current;
+    void** end;
+};
+
+static _Unwind_Reason_Code unwindCallbackEdif(struct _Unwind_Context* context, void* arg)
+{
+    BacktraceState* state = static_cast<BacktraceState*>(arg);
+    uintptr_t pc = _Unwind_GetIP(context);
+    if (pc) {
+        if (state->current == state->end) {
+            return _URC_END_OF_STACK;
+        } else {
+            *state->current++ = reinterpret_cast<void*>(pc);
+        }
+    }
+    return _URC_NO_REASON;
+}
+
+size_t captureBacktraceEdif(void** buffer, size_t max)
+{
+    BacktraceState state = {buffer, buffer + max};
+    _Unwind_Backtrace(unwindCallbackEdif, &state);
+
+    return state.current - buffer;
+}
+
+void dumpBacktraceEdif(std::ostream& os, void** buffer, size_t count, std::string & func, int & line)
+{
+//	std::ostringstream oss;
+    for (size_t idx = 0; idx < count; ++idx) {
+        const void* addr = buffer[idx];
+        const char* symbol = "";
+
+        Dl_info info;
+        if (dladdr(addr, &info) && info.dli_sname) {
+            symbol = info.dli_sname;
+        }
+
+		size_t outputMemSize = 512;
+		char * outputMem = (char *)malloc(outputMemSize);
+		memset(outputMem, 0, outputMemSize);
+		int status = 0;
+		abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
+		func = (status == 0 ? outputMem : symbol);
+		line = (int)(long)addr;
+//        os << "  #" << std::setw(2) << idx << ": " << addr << "  " << func << "\n";
+		free(outputMem);
+    }
+}
 static void GetFunctionAndLine(std::string & func, int & line)
 {
-	size_t outputMemSize = 512;
-	char * outputMem = (char *)malloc(outputMemSize);
-
-	const void * addr = buffer[1];
-	const char * symbol = "";
-
-	Dl_info info;
-	if (dladdr(addr, &info) && info.dli_sname) {
-		symbol = info.dli_sname;
-	}
-	memset(outputMem, 0, outputMemSize);
-	int status = 0;
-	abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
-	func = (status == 0 ? outputMem : symbol) << "\n";
-
-	free(outputMem);
+	std::ostringstream oss;
+	const size_t max = 5;
+	void * buffer[max];
+	dumpBacktraceEdif(oss, buffer, captureBacktraceEdif(buffer, max), func, line);
 }
 #endif // _WIN32
 
@@ -1900,7 +1940,7 @@ void Edif::recursive_mutex::lock()
 	}
 	catch (std::system_error err)
 	{
-		FILE * f = fopen("/storage/sdcard1/apks/crashlog.txt", "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
 #ifndef _WIN32
 			LOGV("Failed to write log file, error %d.", errno);
@@ -1912,6 +1952,9 @@ void Edif::recursive_mutex::lock()
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}
@@ -1928,7 +1971,7 @@ bool Edif::recursive_mutex::try_lock()
 	}
 	catch (std::system_error err)
 	{
-		FILE * f = fopen("/storage/sdcard1/apks/crashlog.txt", "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
 #ifndef _WIN32
 			LOGV("Failed to write log file, error %d.", errno);
@@ -1940,6 +1983,9 @@ bool Edif::recursive_mutex::try_lock()
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}
@@ -1957,7 +2003,7 @@ void Edif::recursive_mutex::unlock()
 	}
 	catch (std::system_error err)
 	{
-		FILE * f = fopen("/storage/sdcard1/apks/crashlog.txt", "wb");
+		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
 	#ifndef _WIN32
 			LOGV("Failed to write log file, error %d.", errno);
@@ -1969,6 +2015,9 @@ void Edif::recursive_mutex::unlock()
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
+#ifndef _WIN32
+			LOGE("%s", str.c_str());
+#endif
 			throw err;
 		}
 	}

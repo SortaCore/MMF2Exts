@@ -98,5 +98,8 @@
     <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\include\android config.h">
+      <Filter>Header Files\Lacewing</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

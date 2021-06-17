@@ -729,8 +729,8 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded =
 
 #if defined(_WIN32) && defined(_UNICODE)
 // For Unicode support on Windows.
-// Returns null or a wide-converted version of the U8 string passed. Free it with free().
-extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str);
+// Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
+extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size);
 #endif
 
 // to preserve namespace
@@ -1687,7 +1687,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 95;
+	const static int buildnum = 96;
 
 	void * internaltag = nullptr, *tag = nullptr;
 

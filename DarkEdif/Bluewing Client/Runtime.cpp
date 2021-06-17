@@ -35,7 +35,7 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 	}
 #else
 // Called when JavaVM shuts down. Not called for subapps.
-ProjectFunc void darkedif_endapp()
+ProjectFunc void EndApp(JNIEnv *, jclass)
 {
 #endif
 	AppWasClosed = true;

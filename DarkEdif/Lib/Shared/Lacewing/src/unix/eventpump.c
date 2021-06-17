@@ -60,8 +60,6 @@ lw_eventpump lw_eventpump_new ()
 	int signalpipe [2];
 	::pipe (signalpipe);
 
-	ctx->signalpipe_read	= signalpipe [0];
-	ctx->signalpipe_write  = signalpipe [1];
 	ctx->signalpipe_read  = signalpipe [0];
 	ctx->signalpipe_write = signalpipe [1];
 
@@ -119,7 +117,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 
 	#endif
 
-	if (watch)
+	if (watch && watch->tag)
 	{
 		if (read_ready && watch->on_read_ready)
 			watch->on_read_ready (watch->tag);
@@ -138,11 +136,20 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 
 	if (read (ctx->signalpipe_read, &signal, sizeof (signal)) == -1)
 	{
-	  lw_sync_release (ctx->sync_signals);
-	  return lw_true;
+		// In theory, a null tag means signal pipe message was added. If signalparams is 0, that means
+		// either the signal and its params was already handled, or that it wasn't a signal pipe message
+		// and the tag is null by error.
+		if (list_length(ctx->signalparams) == 0)
+		{
+			lw_trace("WARNING: read() of signal pump is -1, and signalparams is 0; was the watch %p or watch->tag %p incorrect?",
+				watch, watch ? watch->tag : NULL);
+		}
+
 		lw_sync_release (ctx->sync_signals);
 		return lw_true;
 	}
+
+	lw_trace("eventpump process_event: signal is %d.", (int)signal);
 
 	switch (signal)
 	{
@@ -336,6 +343,8 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 	watch->on_write_ready = on_write_ready;
 	watch->edge_triggered = edge_triggered;
 	watch->tag = tag;
+	lw_trace("def_add calling lwp_eventqueue_add: fd %d; watch %p, tag %p, on_read_ready set to %p, on_write_ready set to %p.", fd, (void *)watch, watch->tag,
+		(void *)on_read_ready, (void *)on_write_ready);
 
 	lwp_eventqueue_add (ctx->queue,
 						fd,
@@ -367,7 +376,7 @@ static void def_update_callbacks (lw_pump pump,
 							 watch->on_read_ready != NULL, on_read_ready != NULL,
 							 watch->on_write_ready != NULL, on_write_ready != NULL,
 							 watch->edge_triggered, edge_triggered,
-							 watch->tag, tag);
+							 watch, watch);
 	}
 
 	watch->on_read_ready = on_read_ready;
@@ -380,7 +389,10 @@ static void def_remove (lw_pump pump, lw_pump_watch watch)
 {
 	lw_eventpump ctx = (lw_eventpump) pump;
 
-	/* TODO : Should this remove the FD from the eventqueue immediately? */
+	/*
+		James note: Should this remove the FD from the eventqueue immediately?
+		LK response: no, "when you close the FD it is automatically removed from all epoll/select lists"
+	*/
 
 	watch->on_read_ready = NULL;
 	watch->on_write_ready = NULL;

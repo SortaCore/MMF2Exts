@@ -290,7 +290,7 @@ namespace DarkEdif {
 #include <algorithm>
 #include <sstream>
 
-#ifdef _DEBUG
+#if EditorBuild && defined(_DEBUG)
 
 // Uses code from https://stackoverflow.com/a/21272048 (bottom-most section)
 // and from https://stackoverflow.com/a/20170989 (pre the C++17 update section)
