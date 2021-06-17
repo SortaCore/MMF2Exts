@@ -1,7 +1,7 @@
 
-/* vim: set et ts=3 sw=3 ft=c:
+/* vim :set noet ts=4 sw=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.	All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,7 +17,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,17 +31,17 @@
 #include "../address.h"
 #include "fdstream.h"
 
-#define lw_client_flag_connecting  1
+#define lw_client_flag_connecting	1
 #define lw_client_flag_connected	2
 
 struct _lw_client
 {
 	struct _lw_fdstream fdstream;
 
-	lw_client_hook_connect	 on_connect;
-	lw_client_hook_disconnect  on_disconnect;
-	lw_client_hook_data		on_data;
-	lw_client_hook_error		on_error;
+	lw_client_hook_connect	  on_connect;
+	lw_client_hook_disconnect on_disconnect;
+	lw_client_hook_data		  on_data;
+	lw_client_hook_error	  on_error;
 
 	char flags;
 
@@ -69,7 +69,7 @@ lw_client lw_client_new (lw_pump pump)
 void lw_client_delete (lw_client ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	lw_stream_close ((lw_stream) ctx, lw_true);
 
@@ -91,25 +91,25 @@ static void write_ready (void * tag)
 
 	int error;
 
-	{  socklen_t error_len = sizeof (error);
-	  getsockopt (ctx->socket, SOL_SOCKET, SO_ERROR, &error, &error_len);
+	{	socklen_t error_len = sizeof (error);
+		getsockopt (ctx->socket, SOL_SOCKET, SO_ERROR, &error, &error_len);
 	}
 
 	if (error != 0)
 	{
-	  /* Failed to connect */
+		/* Failed to connect */
 
-	  ctx->flags &= ~ lw_client_flag_connecting;
+		ctx->flags &= ~ lw_client_flag_connecting;
 
-	  lw_error error = lw_error_new ();
-	  lw_error_addf (error, "Error connecting");
+		lw_error error = lw_error_new ();
+		lw_error_addf (error, "Error connecting");
 
-	  if (ctx->on_error)
+		if (ctx->on_error)
 		 ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
@@ -117,42 +117,42 @@ static void write_ready (void * tag)
 	ctx->flags &= ~ lw_client_flag_connecting;
 
 	if (ctx->on_connect)
-	  ctx->on_connect (ctx);
+		ctx->on_connect (ctx);
 
 	if (ctx->on_data)
-	  lw_stream_read ((lw_stream) ctx, -1);
+		lw_stream_read ((lw_stream) ctx, -1);
 }
 
 void lw_client_connect_addr (lw_client ctx, lw_addr address)
 {
 	if (lw_client_connected (ctx) || lw_client_connecting (ctx))
 	{
-	  lw_error error = lw_error_new ();
-	  lw_error_addf (error, "Already connected to a server");
+		lw_error error = lw_error_new ();
+		lw_error_addf (error, "Already connected to a server");
 
-	  if (ctx->on_error)
+		if (ctx->on_error)
 		 ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	ctx->flags |= lw_client_flag_connecting;
 
 	/* TODO : Resolve asynchronously? */
 
-	{  lw_error error = lw_addr_resolve (address);
+	{	lw_error error = lw_addr_resolve (address);
 
-	  if (error)
-	  {
-		 if (ctx->on_error)
-			ctx->on_error (ctx, error);
+		if (error)
+		{
+			if (ctx->on_error)
+				ctx->on_error (ctx, error);
 
-		 lw_error_delete (error);
+			lw_error_delete (error);
 
-		 return;
-	  }
+			return;
+		}
 	}
 
 	lw_addr_delete (ctx->address);
@@ -162,30 +162,30 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 				SOCK_STREAM,
 				IPPROTO_TCP)) == -1)
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_add (error, errno);
-	  lw_error_addf (error, "Error creating socket");
+		lw_error_add (error, errno);
+		lw_error_addf (error, "Error creating socket");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	if (!address->info)
 	{
-	  lw_error error = lw_error_new ();
-	  lw_error_addf (error, "The provided Address object is not ready for use");
+		lw_error error = lw_error_new ();
+		lw_error_addf (error, "The provided Address object is not ready for use");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	fcntl (ctx->socket, F_SETFL, fcntl (ctx->socket, F_GETFL, 0) | O_NONBLOCK);
@@ -195,20 +195,20 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	if (connect (ctx->socket, address->info->ai_addr,
 			address->info->ai_addrlen) == -1)
 	{
-	  if (errno == EINPROGRESS)
-		 return;
+		if (errno == EINPROGRESS)
+			return;
 
-	  ctx->flags &= ~ lw_client_flag_connecting;
+		ctx->flags &= ~ lw_client_flag_connecting;
 
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_add (error, errno);
-	  lw_error_addf (error, "The provided Address object is not ready for use");
+		lw_error_add (error, errno);
+		lw_error_addf (error, "The provided Address object is not ready for use");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 	}
 }
 
@@ -241,12 +241,12 @@ void lw_client_on_data (lw_client ctx, lw_client_hook_data on_data)
 
 	if (on_data)
 	{
-	  lw_stream_add_hook_data ((lw_stream) ctx, on_stream_data, ctx);
-	  lw_stream_read ((lw_stream) ctx, -1);
+		lw_stream_add_hook_data ((lw_stream) ctx, on_stream_data, ctx);
+		lw_stream_read ((lw_stream) ctx, -1);
 	}
 	else
 	{
-	  lw_stream_remove_hook_data ((lw_stream) ctx, on_stream_data, ctx);
+		lw_stream_remove_hook_data ((lw_stream) ctx, on_stream_data, ctx);
 	}
 }
 
@@ -258,14 +258,14 @@ static void on_close (lw_stream stream, void * tag)
 }
 
 void lw_client_on_disconnect (lw_client ctx,
-							  lw_client_hook_disconnect on_disconnect)
+								lw_client_hook_disconnect on_disconnect)
 {
 	ctx->on_disconnect = on_disconnect;
 
 	if (on_disconnect)
-	  lw_stream_add_hook_close ((lw_stream) ctx, on_close, ctx);
+		lw_stream_add_hook_close ((lw_stream) ctx, on_close, ctx);
 	else
-	  lw_stream_remove_hook_close ((lw_stream) ctx, on_close, ctx);
+		lw_stream_remove_hook_close ((lw_stream) ctx, on_close, ctx);
 }
 
 lwp_def_hook (client, connect)

@@ -1,4 +1,4 @@
-/* vim: set et ts=3 sw=3 ft=c:
+/* vim :set noet ts=4 sw=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
  *
@@ -330,8 +330,13 @@ void resolver (lw_addr ctx)
 	hints.ai_protocol  =  0;
 	hints.ai_flags	=  0;
 
+	// Android appears to not allow AI_V4MAPPED. https://stackoverflow.com/a/39675076
 	#ifdef AI_V4MAPPED
-		hints.ai_flags |= AI_V4MAPPED;
+		#ifdef __ANDROID__
+			//hints.ai_flags |= AI_ALL;
+		#else
+			hints.ai_flags |= AI_V4MAPPED;
+		#endif
 	#endif
 
 	#ifdef AI_ADDRCONFIG
@@ -385,7 +390,7 @@ void resolver (lw_addr ctx)
 
 lw_bool lw_addr_ready (lw_addr ctx)
 {
-	return !ctx->resolver_thread ||
+	return !ctx || !ctx->resolver_thread ||
 		!lw_thread_started (ctx->resolver_thread);
 }
 

@@ -96,7 +96,7 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
 
 #if defined(_WIN32) && defined(_UNICODE)
 	FILE * file = NULL;
-	__wchar_t * res = lw_char_to_wchar(filename);
+	__wchar_t * res = lw_char_to_wchar(filename, -1);
 	if (res != NULL)
 	{
 	  file = _wfopen(res, L"r");

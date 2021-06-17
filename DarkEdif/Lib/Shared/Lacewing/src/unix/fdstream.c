@@ -1,5 +1,5 @@
 
-/* vim: set et ts=3 sw=3 ft=c:
+/* vim :set noet ts=4 sw=4 ft=c:
  *
  * Copyright (C) 2012 James McLaughlin.	All rights reserved.
  *
@@ -111,33 +111,33 @@ static void read_ready (void * tag)
 		 break;
 
 		size_t to_read = sizeof (buffer);
-
 		if (ctx->reading_size != -1 && to_read > ctx->reading_size)
-		 to_read = ctx->reading_size;
+			to_read = ctx->reading_size;
 
 		int bytes = read (ctx->fd, buffer, to_read);
 
 		if (bytes == 0)
 		{
-		 close_stream = lw_true;
-		 break;
+			close_stream = lw_true;
+			break;
 		}
 
 		if (bytes == -1)
 		{
-		 if (errno == EAGAIN)
-			break;
+			if (errno == EAGAIN)
+				break;
 
-		 close_stream = lw_true;
-		 break;
+			lw_trace("read_ready: Abort for bytes == -1, errno %d (not -1), fd %d, ctx/tag %p (tag is fd_stream) - closing stream", errno, ctx->fd, ctx);
+			close_stream = lw_true;
+			break;
 		}
 
 		if (ctx->reading_size != -1)
 		{
-		 if (bytes > ctx->reading_size)
-			ctx->reading_size = 0;
-		 else
-			ctx->reading_size -= bytes;
+			if (bytes > ctx->reading_size)
+				ctx->reading_size = 0;
+			else
+				ctx->reading_size -= bytes;
 		}
 
 		lw_stream_data ((lw_stream) ctx, buffer, bytes);
@@ -152,7 +152,7 @@ static void read_ready (void * tag)
 
 	ctx->flags &= ~ lwp_fdstream_flag_reading;
 
-	if (lwp_release (ctx, "fdstream read_ready") || ctx->stream.flags & lwp_stream_flag_dead)
+	if (lwp_release(ctx, "fdstream read_ready") || ctx->stream.flags & lwp_stream_flag_dead)
 		return;
 
 	if (close_stream)
@@ -284,9 +284,9 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 		written = write (ctx->fd, buffer, size);
 	#else
 		if (ctx->flags & lwp_fdstream_flag_is_socket)
-		 written = send (ctx->fd, buffer, size, MSG_NOSIGNAL);
+			written = send (ctx->fd, buffer, size, MSG_NOSIGNAL);
 		else
-		 written = write (ctx->fd, buffer, size);
+			written = write (ctx->fd, buffer, size);
 	#endif
 
 	if (written == -1)
