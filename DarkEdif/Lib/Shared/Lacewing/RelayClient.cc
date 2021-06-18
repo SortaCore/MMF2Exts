@@ -1167,6 +1167,14 @@ namespace lacewing
 			if (!blasted)
 				break;
 
+			if (connected)
+			{
+				lw_trace("Swallowing extra UDPWelcome at message address %p, already connected.", message);
+				break;
+			}
+
+			lw_trace("UDPWelcome received for message address %p, now connected.", message);
+
 			udphellotimer->stop();
 			connected = true;
 

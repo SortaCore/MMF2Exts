@@ -11,6 +11,7 @@
 package Extensions;
 import android.util.Log;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.io.InputStream;
 import java.io.IOException;
 import Services.CBinaryFile;
@@ -80,18 +81,30 @@ public class CRunBluewing_Client extends CRunExtension
 	@Override
 	public boolean createRunObject(CBinaryFile file, CCreateObjectInfo cob, int version)
 	{
-		ByteBuffer edPtr = null;
+		// Java doesn't prepend eHeader to EDITDATA, so we'll reconstruct it ourselves.
+		int eHeaderSize = 20; // 32-bit pointers
 		
+		// CRunNativeExtension's createRunObject() does not expect file to be non-null all the time
+		int dataSize = eHeaderSize + (file != null ? file.data.length : 0);
+		ByteBuffer edPtr = ByteBuffer.allocateDirect(dataSize);
+		
+		// Java defaults to big-endian, but the CPUs default to little-endian
+		edPtr.order(ByteOrder.LITTLE_ENDIAN);
+		
+		// create eHeader; ocPtr is not accessible here, which is sad cos it contains everything.
+		edPtr.putInt(dataSize); 	  // extSize
+		edPtr.putInt(dataSize);		  // dummy - extMaxSize not read by CObjectCommon file reader
+		edPtr.putInt(version);		  // extVersion
+		edPtr.putInt(0);			  // dummy - extID read by CObjectCommon file reader, but not passed
+		edPtr.putInt(ho.privateData); // extPrivateData stored in CRunExtension, 
+		
+		// Add actual ext data
 		if (file != null)
-		{
-			edPtr = ByteBuffer.allocateDirect(file.data.length);
-			
 			edPtr.put(file.data);
-			edPtr.position (0);
-		}
 		
+		edPtr.position(0); // Reset for C++ reader
 		cptr = darkedif_createRunObject(edPtr, cob, version);
-			
+		
 		return cptr != 0;
 	}
 	public native long darkedif_createRunObject(ByteBuffer edPtr, CCreateObjectInfo cob, int version);

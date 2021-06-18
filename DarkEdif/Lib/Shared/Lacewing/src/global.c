@@ -35,27 +35,46 @@ const char * lw_version ()
 {
 	const char * platform;
 
-	#ifndef _WIN32
-	 struct utsname name;
-	#endif
-
 	if (!*version)
 	{
-	  #if defined (_WIN32)
-		 platform = "Windows";
-	  #elif defined (__ANDROID__)
-		 platform = "Android";
-	  #else
-		 uname (&name);
-		 platform = name.sysname;
-	  #endif
+		#if defined (_WIN32)
+			#ifdef _WIN64
+				platform = "Windows x64";
+			#elif defined(_M_ARM64) // Soon(tm)
+				platform = "Windows ARM64";
+			#else
+				platform = "Windows x86";
+			#endif
+		#elif defined (__ANDROID__)
+			#ifdef __aarch64__
+				platform = "Android ARM64";
+			#elif defined(__ARM_ARCH_7A__)
+				#ifdef __ARM_NEON__
+					platform = "Android ARMv7/NEON";
+				#else
+					platform = "Android ARMv7";
+				#endif
+			#elif defined(__arm__)
+				platform = "Android ARMv5";
+			#elif defined(__i386__)
+				platform = "Android x86"
+			#elif defined(__x86_64__)
+				platform = "Android x64"
+			#else
+				#error ABI not known, please amend code
+			#endif
+		#else
+			struct utsname name;
+			uname (&name);
+			platform = name.sysname;
+		#endif
 
-	  #ifndef PACKAGE_VERSION
-		 #define PACKAGE_VERSION "0.5.4"
-	  #endif
+		#ifndef PACKAGE_VERSION
+			#define PACKAGE_VERSION "0.5.4"
+		#endif
 
-	  sprintf (version, "liblacewing " PACKAGE_VERSION " (%s, %d-bit)",
-					 platform, ((int) sizeof(void *)) * 8);
+		sprintf (version, "liblacewing " PACKAGE_VERSION " (%s, %d-bit)",
+						platform, ((int) sizeof(void *)) * 8);
 	}
 
 	return version;
@@ -78,47 +97,47 @@ void lw_dump (const char * buffer, size_t size)
 	int row_offset = 0, row_offset_c = 0, row = 0;
 
 	if (size == -1)
-	  size = (lw_ui32) strlen (buffer);
+		size = (lw_ui32) strlen (buffer);
 
 	fprintf (stderr, "=== " lwp_fmt_size " bytes @ %p ===\n", size, buffer);
 
 	while (size > 0)
 	{
-	  i = row * bytes_per_row + row_offset;
+		i = row * bytes_per_row + row_offset;
 
-	  if (i >= size)
-	  {
-		 if (row_offset_c >= text_offset) /* printing text? */
-			break;
-		 else
-			row_offset = bytes_per_row; /* skip to printing text */
-	  }
-	  else
-	  {
-		 b = (unsigned char) buffer [i];
+		if (i >= size)
+		{
+			if (row_offset_c >= text_offset) /* printing text? */
+				break;
+			else
+				row_offset = bytes_per_row; /* skip to printing text */
+		}
+		else
+		{
+			b = *(unsigned char *)&buffer [i];
 
-		 row_offset_c += row_offset_c >= text_offset ?
-			( isprint (b) ? fprintf (stderr, "%c", b) : fprintf (stderr, ".") )
-			: fprintf (stderr, "%02hX ", (short) b);
-	  }
+			row_offset_c += row_offset_c >= text_offset
+					? (isprint (b) ? fprintf (stderr, "%c", b) : fprintf (stderr, ".") )
+					: fprintf (stderr, "%02hX ", (short) b);
+		}
 
-	  if ((++ row_offset) >= bytes_per_row)
-	  {
-		 row_offset = 0;
+		if ((++ row_offset) >= bytes_per_row)
+		{
+			row_offset = 0;
 
-		 if (row_offset_c < text_offset)
-		 {
-			while (row_offset_c < text_offset)
-				row_offset_c += fprintf (stderr, " ");
-		 }
-		 else
-		 {
-			row_offset = row_offset_c = 0;
-			++ row;
+			if (row_offset_c < text_offset)
+			{
+				while (row_offset_c < text_offset)
+					row_offset_c += fprintf (stderr, " ");
+			}
+			else
+			{
+				row_offset = row_offset_c = 0;
+				++ row;
 
-			fprintf (stderr, "\n");
-		 }
-	  }
+				fprintf (stderr, "\n");
+			}
+		}
 	}
 
 	fprintf (stderr, "\n===\n");
@@ -173,28 +192,26 @@ void lw_trace (const char * format, ...)
 
 	size = lwp_format (&data, format, args);
 
-	if(size > 0)
+	if (size > 0)
 	{
-	  if (!lw_trace_sync)
-		  lw_trace_sync = lw_sync_new ();
+		if (!lw_trace_sync)
+			lw_trace_sync = lw_sync_new ();
 
-	  lw_sync_lock (lw_trace_sync);
+		lw_sync_lock (lw_trace_sync);
 
-	  #ifdef __ANDROID__
-		 __android_log_write (ANDROID_LOG_INFO, "liblacewing", data);
-	  #else
-		 #ifdef COXSDK
+		#ifdef __ANDROID__
+			__android_log_write (ANDROID_LOG_INFO, "liblacewing", data);
+		#elif defined(COXSDK)
 			OutputDebugStringA (data);
 			OutputDebugStringA ("\n");
-		 #else
+		#else
 			fprintf (stderr, "[liblacewing] %s\n", data);
 			fflush (stderr);
-		 #endif
-	  #endif
+		#endif
 
-	  free (data);
+		free (data);
 
-	  lw_sync_release (lw_trace_sync);
+		lw_sync_release (lw_trace_sync);
 	}
 
 	va_end (args);

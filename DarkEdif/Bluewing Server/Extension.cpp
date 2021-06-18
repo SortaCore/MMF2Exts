@@ -943,22 +943,40 @@ void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 			"The message has not been modified.");
 		return;
 	}
+	// Nothing to do
 	if (!size)
 		return;
-	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
 
 	// Failed to reallocate memory
+	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
 	if (!newptr)
 	{
-		CreateError("Received error number %u with reallocating memory to append to binary message. "
-			"The message has not been modified.", errno);
-		return;
+		return CreateError("Error number %d occurred when reallocating memory to append new data (%p, %zu bytes) to binary "
+			"message (orig; %p). The message has not been modified.", errno, data, size, SendMsg);
 	}
 
-	// memcpy_s does not allow copying from what's already inside sendMsg; memmove_s does.
-	// If we failed to copy memory...
-	if (memmove_s(newptr + SendMsgSize, size, data, size))
-		CreateError("Received error number %u with copying memory to append to binary message.", errno);
+	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
+	int errnoErrOrPtr = 0;
+	const void * src = data;
+
+	// Can't read from data; it's inside SendMsg which we just realloc'd, so we'll use offset instead
+	if (data >= SendMsg && data <= SendMsg + SendMsgSize)
+		src = newptr + (((const char *)data) - SendMsg);
+
+	// memmove_s returns error number, 0 on success; memmove returns dest on success, has undefined behavior on error
+#ifdef _WIN32
+	errnoErrOrPtr = memmove_s(newptr + SendMsgSize, size, src, size);
+#else
+	errnoErrOrPtr = memmove(newptr + SendMsgSize, src, size) == NULL ? EINVAL : 0;
+#endif
+
+	// If we failed to copy memory. SendMsg is now invalid, so we have to set it to newptr anyway, so no return.
+	if (errnoErrOrPtr != 0)
+	{
+		CreateError("Error number %d occurred when copying memory (%p, %zu bytes) into newly allocated binary message (orig %p; new %p). "
+			"The message has been resized, but the data not copied in.", errnoErrOrPtr, src, size, SendMsg, newptr + SendMsgSize);
+		memset(newptr + SendMsgSize, 0, size); // Don't leave it uninited
+	}
 
 	SendMsg = newptr;
 	SendMsgSize += size;

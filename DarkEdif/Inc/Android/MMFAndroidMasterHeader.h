@@ -7,7 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iomanip>
-#define memcpy_s(a,b,c,d) memcpy(a, c, d)
+#include <stddef.h>
+
+// Different returns! You must reprogram!
+//#define memcpy_s(a,b,c,d) memcpy(a, c, d)
 #define _strdup(a) strdup(a)
 /*
 wchar_t* wcsdup(const wchar_t*);
@@ -70,7 +73,6 @@ using namespace std::string_view_literals;
 #define _tcscmp(a,b) strcmp(a,b)
 #define _tcsicmp(a,b) strcasecmp(a,b)
 #define _tcsrchr(a,b) strrchr(a,b)
-#define memmove_s(a,b,c,d) memmove(a,c,d)
 #define _tcsnicmp(a,b,c) strncasecmp(a,b,c)
 #define _T(x) x
 #define _totlower tolower
@@ -107,8 +109,8 @@ typedef DWORD * LPDWORD;
 typedef WORD * LPWORD;
 typedef FLOAT * PFLOAT;
 typedef void * HANDLE;
-#define CALLBACK __stdcall
-#define WINAPI __stdcall
+#define CALLBACK ERROR_CALLBACK_ON_ANDROID
+#define WINAPI ERROR_WINAPI_ON_ANDROID
 typedef unsigned long DWORD;
 typedef DWORD   COLORREF;
 typedef DWORD   *LPCOLORREF;
@@ -290,11 +292,11 @@ struct extHeader_v1
 
 struct extHeader
 {
-	unsigned long extSize,
+	std::uint32_t extSize,
 				  extMaxSize,
 				  extVersion;			// Version number
-	void *		  extID;				// object's identifier
-	void *		  extPrivateData;		// private data
+	std::uint32_t extID;				// object's identifier; null in Android!
+	std::uint32_t extPrivateData;		// private data; was a pointer
 };
 
 // Callback function identifiers for CallFunction
@@ -910,6 +912,9 @@ template<typename T> struct global {
 	}
 };
 void LOGF(const char * x, ...);
+
+// Converts u8str to UTF-8Modified str. Expects no embedded nulls
+jstring CStrToJStr(const char * u8str);
 
 #define JAVACHKNULL(x) x; \
 	if (global_env->ExceptionCheck()) { \

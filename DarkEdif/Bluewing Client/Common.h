@@ -30,11 +30,18 @@
 #include "..\Lib\Shared\Lacewing\Lacewing.h"
 #include "LacewingFunctions.h"
 
-#include "..\Inc\Windows\zlib.h"
 #ifdef _WIN32
 #include <stdlib.h>
 #include <crtdbg.h>
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
+#include "..\Inc\Windows\zlib.h"
+#else
+#include <zlib.h>
+// libz included in project settings
+
+// Prevent errors with IntelliSense
+#include <string_view>
+using namespace std::string_view_literals;
 #endif
 
 #ifdef _DEBUG
@@ -76,13 +83,15 @@ struct EDITDATA
 	char edGlobalID[255];
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;
-	char pad1[252];
+	char pad1[256];
 
-	// Keep as last or risk overwriting by functions accessing this address
-	size_t DarkEdif_Prop_Size;
-	char DarkEdif_Props[];
+	// Note: To match Lacewing Relay Client, this struct's size must be 544 bytes
 
 #ifndef NOPROPS
+	// Keep as last or risk overwriting by functions accessing this address
+	std::uint32_t DarkEdif_Prop_Size;
+	char DarkEdif_Props[];
+
 	// DarkEdif functions, use within Extension ctor.
 	bool IsPropChecked(int propID);
 	std::tstring GetPropertyStr(const char * propName);
@@ -111,8 +120,8 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-DWORD WINAPI LacewingLoopThread(void * ThisExt);
-DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
+DWORD LacewingLoopThread(void * ThisExt);
+DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
 
 #define COMMON_H
 #include "Extension.h"

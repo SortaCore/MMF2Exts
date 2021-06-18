@@ -269,6 +269,9 @@ const TCHAR * Extension::WelcomeMessage()
 }
 unsigned int Extension::RecvMsg_MemoryAddress()
 {
+#if __aarch64__ || _M_AMD64 || __amd64__
+	CreateError("Warning: can't properly return received message memory address; address is 64-bit and Fusion only deals in 32-bit integers.");
+#endif
 	return (unsigned int)((unsigned long)threadData->receivedMsg.content.data());
 }
 
@@ -387,6 +390,9 @@ const TCHAR * Extension::RecvMsg_Cursor_String()
 }
 unsigned int Extension::SendBinaryMsg_MemoryAddress()
 {
+#if __aarch64__ || _M_AMD64 || __amd64__
+	CreateError("Warning: can't properly return message-to-send memory address; address is 64-bit and Fusion only deals in 32-bit integers.");
+#endif
 	return (unsigned int)(long)SendMsg;
 }
 const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTStr)

@@ -58,7 +58,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -81,7 +81,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -104,7 +104,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -127,7 +127,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -150,7 +150,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
@@ -159,7 +159,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
@@ -168,7 +168,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
@@ -177,7 +177,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>

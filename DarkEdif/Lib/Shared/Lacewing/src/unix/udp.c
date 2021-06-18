@@ -59,21 +59,28 @@ static void read_ready (void * ptr)
 
 	for (;;)
 	{
-	  int bytes = recvfrom (ctx->fd, buffer, sizeof (buffer),
-							  0, (struct sockaddr *) &from, &from_size);
+		int bytes = recvfrom (ctx->fd, buffer, sizeof (buffer),
+								0, (struct sockaddr *) &from, &from_size);
 
-	  if (bytes == -1)
-		 break;
+		if (bytes == -1)
+			break;
 
-	  lwp_addr_set_sockaddr (&addr, (struct sockaddr *) &from);
+		lwp_addr_set_sockaddr (&addr, (struct sockaddr *) &from);
 
-	  if (filter_addr && !lw_addr_equal (&addr, filter_addr))
-		 break;
+		if (filter_addr && !lw_addr_equal(&addr, filter_addr))
+		{
+			free(addr.info->ai_addr);  // alloc'd by lwp_addr_set_sockaddr
+			addr.info->ai_addr = NULL;
+			break;
+		}
 
-	  buffer [bytes] = 0;
+		buffer [bytes] = 0;
 
-	  if (ctx->on_data)
-		 ctx->on_data (ctx, &addr, buffer, bytes);
+		if (ctx->on_data)
+			ctx->on_data (ctx, &addr, buffer, bytes);
+
+		free(addr.info->ai_addr); // alloc'd by lwp_addr_set_sockaddr
+		addr.info->ai_addr = NULL;
 	}
 }
 

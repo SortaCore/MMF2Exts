@@ -78,13 +78,15 @@ struct EDITDATA
 	bool timeoutWarningEnabled,
 		 fullDeleteEnabled,
 		 enableInactivityTimer;
-	char pad1[243];
+	char pad1[249];
 
+	// To match Lacewing Relay Server, this struct's size must be 536 bytes.
+	
+#ifndef NOPROPS
 	// Keep as last or risk overwriting by functions accessing this address
-	size_t DarkEdif_Prop_Size;
+	std::uint32_t DarkEdif_Prop_Size;
 	char DarkEdif_Props[];
 
-#ifndef NOPROPS
 	// DarkEdif functions, use within Extension ctor.
 	bool IsPropChecked(int propID);
 	std::tstring GetPropertyStr(const char * propName);

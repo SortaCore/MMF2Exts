@@ -861,8 +861,9 @@ int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAn
 	}
 
 	std::string toastText = caption + std::string(" -  ") + text;
+	jstring toastTextJStr = CStrToJStr(toastText.c_str());
 
-	jobject toastobj = global_env->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastText.c_str());
+	jobject toastobj = global_env->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastTextJStr, 1 /* toast length long, 0 for short*/);
 
 	// toast.showを実行
 	// Java: toastobj.show();

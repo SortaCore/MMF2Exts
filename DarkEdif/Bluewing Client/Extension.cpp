@@ -266,8 +266,16 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject java
 #endif
 
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " - Extension create: isGlobal=%i.\n", isGlobal ? 1 : 0);
+	sprintf_s(msgBuff, PROJECT_NAME " - Extension create: isGlobal=%hhu (bool %i), automaticClearBinary=%hhu (bool %i),"
+		" fullDeleteEnabled=%hhu (bool %i), multiThreading=%hhu (bool %i), timeoutWarningEnabled=%hhu (bool %i), global ID \"%s\".\n",
+		*(std::uint8_t *)&edPtr->isGlobal, edPtr->isGlobal ? 1 : 0,
+		*(std::uint8_t *)&edPtr->automaticClear, edPtr->automaticClear ? 1 : 0,
+		*(std::uint8_t *)&edPtr->fullDeleteEnabled, edPtr->fullDeleteEnabled ? 1 : 0,
+		*(std::uint8_t *)&edPtr->multiThreading, edPtr->multiThreading ? 1 : 0,
+		*(std::uint8_t *)&edPtr->timeoutWarningEnabled, edPtr->timeoutWarningEnabled ? 1 : 0,
+		edPtr->edGlobalID);
 	OutputDebugStringA(msgBuff);
+
 	if (isGlobal)
 	{
 		const std::tstring id = UTF8ToTString(edPtr->edGlobalID) + _T("BlueClient"s);
@@ -396,7 +404,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject java
 	FusionDebugger.AddItemToDebugger(selectedPeerDebugItemReader, NULL, 100, NULL);
 }
 
-DWORD WINAPI LacewingLoopThread(void * thisExt)
+DWORD LacewingLoopThread(void * thisExt)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
@@ -568,22 +576,40 @@ void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 {
 	if (!IsValidPtr(data))
 		return CreateError("Error adding to send binary: pointer %p supplied is invalid. The message has not been modified.", data);
-
 	// Nothing to do
 	if (!size)
 		return;
 
-	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
-
 	// Failed to reallocate memory
+	char * newptr = (char *)realloc(SendMsg, SendMsgSize + size);
 	if (!newptr)
-		return CreateError("Received error number %u with reallocating memory to append to binary message. The message has not been modified.", errno);
+	{
+		return CreateError("Error number %d occurred when reallocating memory to append new data (%p, %zu bytes) to binary "
+			"message (orig; %p). The message has not been modified.", errno, data, size, SendMsg);
+	}
 
 	// memcpy_s does not allow copying from what's already inside SendMsg; memmove_s does.
+	int errnoErrOrPtr = 0;
+	const void * src = data;
 
-	// If we failed to copy memory.
-	if (memmove_s(newptr + SendMsgSize, size, data, size))
-		return CreateError("Received error number %u with copying memory into newly allocated binary message. The message has not been modified.", errno);
+	// Can't read from data; it's inside SendMsg which we just realloc'd, so we'll use offset instead
+	if (data >= SendMsg && data <= SendMsg + SendMsgSize)
+		src = newptr + (((const char *)data) - SendMsg);
+
+	// memmove_s returns error number, 0 on success; memmove returns dest on success, has undefined behavior on error
+#ifdef _WIN32
+	errnoErrOrPtr = memmove_s(newptr + SendMsgSize, size, src, size);
+#else
+	errnoErrOrPtr = memmove(newptr + SendMsgSize, src, size) == NULL ? EINVAL : 0;
+#endif
+
+	// If we failed to copy memory. SendMsg is now invalid, so we have to set it to newptr anyway, so no return.
+	if (errnoErrOrPtr != 0)
+	{
+		CreateError("Error number %d occurred when copying memory (%p, %zu bytes) into newly allocated binary message (orig %p; new %p). "
+			"The message has been resized, but the data not copied in.", errnoErrOrPtr, src, size, SendMsg, newptr + SendMsgSize);
+		memset(newptr + SendMsgSize, 0, size); // Don't leave it uninited
+	}
 
 	SendMsg = newptr;
 	SendMsgSize += size;
@@ -593,7 +619,11 @@ bool Extension::IsValidPtr(const void * data)
 	// Common error memory addresses; null pointer (0x0), uninitalized filler memory (0xCC/0xCD),
 	// freed filler memory (0xDD). See https://stackoverflow.com/a/370362 .
 	// I'm not expecting Bluewing to have issues with this, but other exts might pass bad memory to Blue.
-	return data != 0x00000000 && (long)data != 0xCCCCCCCC && (long)data != 0xDDDDDDDD && (long)data != 0xCDCDCDCD;
+	return data != 0x00000000
+#ifdef _WIN32
+		&& (long)data != 0xCCCCCCCC && (long)data != 0xDDDDDDDD && (long)data != 0xCDCDCDCD
+#endif
+		;
 }
 
 void Extension::ClearThreadData()
@@ -1070,7 +1100,7 @@ REFLAG Extension::Handle()
 	return runNextLoop ? REFLAG::NONE : REFLAG::ONE_SHOT;
 }
 
-DWORD WINAPI ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
+DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
 
