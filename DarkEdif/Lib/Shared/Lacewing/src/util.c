@@ -29,10 +29,33 @@
 
 #include "common.h"
 
+void lwp_make_nonblocking(lwp_socket fd)
+{
+#ifndef _WIN32
+	int orig = fcntl(fd, F_GETFL, 0);
+	int e = errno;
+	assert(orig != -1);
+	// Don't set to non-blocking if it is already. Gets OS upset.
+	if (!(orig & O_NONBLOCK))
+	{
+		int newVal = fcntl(fd, F_SETFL, orig | O_NONBLOCK);
+		e = errno;
+		assert(newVal != -1);
+	}
+#endif
+}
+void lwp_setsockopt2(lwp_socket fd, int level, int option, const char * optName, const char * value, socklen_t value_length)
+{
+	if (setsockopt(fd, level, option, value, value_length) != 0)
+	{
+		lw_trace("setsockopt for option %s failed with error %d, continuing", optName, errno);
+	}
+}
+
 void lwp_disable_ipv6_only (lwp_socket socket)
 {
 	int no = 0;
-	setsockopt (socket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &no, sizeof (no));
+	lwp_setsockopt(socket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &no, sizeof (no));
 }
 
 struct sockaddr_storage lwp_socket_addr (lwp_socket socket)
@@ -44,8 +67,8 @@ struct sockaddr_storage lwp_socket_addr (lwp_socket socket)
 
 	if (socket != -1)
 	{
-	  addr_len = sizeof (addr);
-	  getsockname (socket, (struct sockaddr *) &addr, &addr_len);
+		addr_len = sizeof (addr);
+		getsockname (socket, (struct sockaddr *) &addr, &addr_len);
 	}
 
 	return addr;
@@ -70,25 +93,25 @@ lw_bool lwp_urldecode (const char * in, size_t in_length,
 
 	while (cur_in < in_length)
 	{
-	  if (cur_out >= out_length)
-		 return lw_false;
-
-	  if( (n[0] = in [cur_in]) == '%')
-	  {
-		 if ((cur_in + 2) > in_length)
+		if (cur_out >= out_length)
 			return lw_false;
 
-		 n [0] = in [++ cur_in];
-		 n [1] = in [++ cur_in];
+		if( (n[0] = in [cur_in]) == '%')
+		{
+			if ((cur_in + 2) > in_length)
+				return lw_false;
 
-		 out [cur_out ++] = (char) strtol (n, 0, 16);
-	  }
-	  else
-	  {
-		 out [cur_out ++] = (plus_spaces && n [0] == '+') ? ' ' : n [0];
-	  }
+			n [0] = in [++ cur_in];
+			n [1] = in [++ cur_in];
 
-	  ++ cur_in;
+			out [cur_out ++] = (char) strtol (n, 0, 16);
+		}
+		else
+		{
+			out [cur_out ++] = (plus_spaces && n [0] == '+') ? ' ' : n [0];
+		}
+
+		++ cur_in;
 	}
 
 	out [cur_out] = 0;
@@ -100,8 +123,8 @@ lw_bool lwp_begins_with (const char * string, const char * substring)
 {
 	while (*substring)
 	{
-	  if (*string ++ != *substring ++)
-		 return lw_false;
+		if (*string ++ != *substring ++)
+			return lw_false;
 	}
 
 	return lw_true;
@@ -112,7 +135,7 @@ void lwp_copy_string (char * dest, const char * source, size_t size)
 	size_t length = strlen (source);
 
 	if (length > -- size)
-	  length = size;
+		length = size;
 
 	memcpy (dest, source, length);
 	dest [length] = 0;
@@ -122,11 +145,11 @@ lw_bool lwp_find_char (const char ** str, size_t * len, char c)
 {
 	while (*len > 0)
 	{
-	  if (**str == c)
-		 return lw_true;
+		if (**str == c)
+			return lw_true;
 
-	  ++ (*str);
-	  -- (*len);
+		++ (*str);
+		-- (*len);
 	}
 
 	return lw_false;
@@ -135,13 +158,13 @@ lw_bool lwp_find_char (const char ** str, size_t * len, char c)
 void lwp_close_socket (lwp_socket socket)
 {
 	if (socket == -1)
-	  return;
+		return;
 
 	#ifdef _WIN32
-	  closesocket (socket);
-	  socket = (lwp_socket)INVALID_HANDLE_VALUE;
+		closesocket (socket);
+		socket = (lwp_socket)INVALID_HANDLE_VALUE;
 	#else
-	  close (socket);
+		close (socket);
 	#endif
 }
 
@@ -155,25 +178,25 @@ ssize_t lwp_format (char ** output, const char * format, va_list args)
 
 	#ifdef _WIN32
 
-	  count = _vscprintf (format, args);
+		count = _vscprintf (format, args);
 
-	  if (! (*output = (char *) malloc (count + 1)))
-		 return 0;
+		if (! (*output = (char *) malloc (count + 1)))
+			return 0;
 
-	  if (vsprintf (*output, format, args) < 0)
-	  {
-		 free (*output);
-		 *output = 0;
+		if (vsprintf (*output, format, args) < 0)
+		{
+			free (*output);
+			*output = 0;
 
-		 return 0;
-	  }
+			return 0;
+		}
 
 	#else
 
-	  /* TODO : Alternative for where vasprintf is not supported? */
+		/* TODO : Alternative for where vasprintf is not supported? */
 
-	  if ((count = vasprintf (output, format, args)) == -1)
-		 *output = 0;
+		if ((count = vasprintf (output, format, args)) == -1)
+			*output = 0;
 
 	#endif
 
@@ -247,13 +270,13 @@ time_t lwp_parse_time (const char * string)
 	{
 		if (strcasecmp (lwp_months [i], month))
 		{
-		  ++ i;
-		  continue;
+			++ i;
+			continue;
 		}
 
 		tm.tm_mon = i;
 
-		if(strlen (time) < 8)
+		if (strlen (time) < 8)
 			return 0;
 
 		time [2] = 0;
@@ -264,19 +287,19 @@ time_t lwp_parse_time (const char * string)
 		tm.tm_sec  = atoi (time + 6);
 
 		#if defined(__ANDROID__)
-		  return timegm (&tm);
+			return timegm (&tm);
 		#elif defined (_WIN32)
-		  #ifndef __MINGW_H
-			 return _mkgmtime64 (&tm);
-		  #else
-			 return compat_mkgmtime64 () (&tm);
-		  #endif
+			#ifndef __MINGW_H
+				return _mkgmtime64 (&tm);
+			#else
+				return compat_mkgmtime64 () (&tm);
+			#endif
 		#else
-		  #ifdef HAVE_TIMEGM
-			 return timegm (&tm);
-		  #else
-			 #pragma error "Can't find a suitable way to convert a tm to a UTC UNIX time"
-		  #endif
+			#ifdef HAVE_TIMEGM
+				return timegm (&tm);
+			#else
+				#pragma error "Can't find a suitable way to convert a tm to a UTC UNIX time"
+			#endif
 		#endif
 	}
 
@@ -288,6 +311,6 @@ void lwp_to_lowercase (char * str)
 	char * i;
 
 	for (i = str; *i; ++ i)
-	  *i = tolower (*i);
+		*i = tolower (*i);
 }
 

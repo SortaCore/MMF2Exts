@@ -35,7 +35,7 @@ void lwp_init ()
 {
 	WSADATA winsock_data;
 
-	if (++init_called == 1)
+	if (++init_called != 1)
 		return;
 
 	WSAStartup (MAKEWORD (2, 2), &winsock_data);

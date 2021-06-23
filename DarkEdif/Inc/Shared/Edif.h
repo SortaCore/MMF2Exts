@@ -65,10 +65,10 @@ class Extension;
 	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 
 #define LinkCondition(ID, Function) \
-    SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 
 #define LinkExpression(ID, Function) \
-    SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 #endif
 
 extern HINSTANCE hInstLib;
@@ -147,22 +147,22 @@ namespace Edif
 			"Edit spin float",
 		};
 	};
-    class SDK
-    {
-    public:
+	class SDK
+	{
+	public:
 
 		json_value &json;
 
-        SDK (mv * mV, json_value &);
-        ~SDK ();
+		SDK (mv * mV, json_value &);
+		~SDK ();
 
-        std::vector<ACEInfo *>	ActionInfos;
+		std::vector<ACEInfo *>	ActionInfos;
 		std::vector<ACEInfo *>	ConditionInfos;
 		std::vector<ACEInfo *>	ExpressionInfos;
 
-        void ** ActionJumps;
-        void ** ConditionJumps;
-        void ** ExpressionJumps;
+		void ** ActionJumps;
+		void ** ConditionJumps;
+		void ** ExpressionJumps;
 
 		std::vector<void *> ActionFunctions;
 		std::vector<void *> ConditionFunctions;
@@ -170,14 +170,14 @@ namespace Edif
 
 		mv* mV;
 #ifdef _WIN32
-        cSurface * Icon;
+		cSurface * Icon;
 		PropData * EdittimeProperties;
 #endif
-    };
-    
-    class Runtime
-    {
-    protected:
+	};
+
+	class Runtime
+	{
+	protected:
 
 #ifdef _WIN32
 		HeaderObject * hoPtr;
@@ -191,31 +191,39 @@ namespace Edif
 		RuntimeFunctions& runFuncs;
 #endif
 
-    public:
+	public:
 		long param1, param2;
 
 #ifdef _WIN32
-        Runtime(HeaderObject * _hoPtr);
+		Runtime(HeaderObject * _hoPtr);
 #else
 		Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr);
 #endif
-        ~Runtime();
+		~Runtime();
 
-        void Rehandle();
+		void Rehandle();
 
-        void GenerateEvent(int EventID);
-        void PushEvent(int EventID);
+		void GenerateEvent(int EventID);
+		void PushEvent(int EventID);
 
-        void * Allocate(size_t);
-        TCHAR * CopyString(const TCHAR *);
+		void * Allocate(size_t);
+		TCHAR * CopyString(const TCHAR *);
 		char * CopyStringEx(const char *);
 		wchar_t * CopyStringEx(const wchar_t *);
 
-        void Pause();
-        void Resume();
+#ifdef __ANDROID__
+		// Attaches current thread, and gets JNIEnv for it; errors are fatal
+		static JNIEnv * AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
+		static void DetachJVMAccessForThisThread();
+		// Gets JNIEnv * for this thread, or null.
+		inline static JNIEnv * GetJNIEnvForThisThread();
+#endif
 
-        void Redisplay();
-        void Redraw();
+		void Pause();
+		void Resume();
+
+		void Redisplay();
+		void Redraw();
 		RunObject * RunObjPtrFromFixed(int fixedValue);
 		int FixedFromRunObjPtr(RunObject * object);
 
@@ -223,51 +231,51 @@ namespace Edif
 #ifdef _WIN32
 		CallTables * GetCallTables();
 #endif
-        void CallMovement(int ID, long Parameter);
+		void CallMovement(int ID, long Parameter);
 
-        void Destroy();
+		void Destroy();
 
-        void GetApplicationDrive(TCHAR * Buffer);
-        void GetApplicationDirectory(TCHAR * Buffer);
-        void GetApplicationPath(TCHAR * Buffer);
-        void GetApplicationName(TCHAR * Buffer);
-        void GetApplicationTempPath(TCHAR * Buffer);
+		void GetApplicationDrive(TCHAR * Buffer);
+		void GetApplicationDirectory(TCHAR * Buffer);
+		void GetApplicationPath(TCHAR * Buffer);
+		void GetApplicationName(TCHAR * Buffer);
+		void GetApplicationTempPath(TCHAR * Buffer);
 
 #ifdef _WIN32
-        void ExecuteProgram(ParamProgram * Program);
+		void ExecuteProgram(ParamProgram * Program);
 
-        long EditInteger(EditDebugInfo *);
-        long EditText(EditDebugInfo *);
+		long EditInteger(EditDebugInfo *);
+		long EditText(EditDebugInfo *);
 
-        event2 &CurrentEvent();
+		event2 &CurrentEvent();
 #endif
 
-        bool IsHWA();
-        bool IsUnicode();
+		bool IsHWA();
+		bool IsUnicode();
 
-        Riggs::ObjectSelection ObjectSelection;
+		Riggs::ObjectSelection ObjectSelection;
 
-        void WriteGlobal(const TCHAR * name, void * Value);
-        void * ReadGlobal(const TCHAR * name);
+		void WriteGlobal(const TCHAR * name, void * Value);
+		void * ReadGlobal(const TCHAR * name);
 
-        #ifdef EdifUseJS
-        
-            JSContext * GetJSContext();
+		#ifdef EdifUseJS
 
-        #endif
-            
-    };
+			JSContext * GetJSContext();
 
-    extern bool ExternalJSON;
+		#endif
+
+	};
+
+	extern bool ExternalJSON;
 #ifdef _WIN32
-    void GetSiblingPath (TCHAR * Buffer, const TCHAR * Extension);
+	void GetSiblingPath (TCHAR * Buffer, const TCHAR * Extension);
 #endif
-    
-    const int DependencyNotFound     = 0;
-    const int DependencyWasFile      = 1;
-    const int DependencyWasResource  = 2;
 
-    int GetDependency (char *& Buffer, size_t &size, const TCHAR * FileExtension, int Resource);
+	const int DependencyNotFound	 = 0;
+	const int DependencyWasFile	  = 1;
+	const int DependencyWasResource  = 2;
+
+	int GetDependency (char *& Buffer, size_t &size, const TCHAR * FileExtension, int Resource);
 
 	TCHAR * ConvertString(const char* utf8String);
 	TCHAR * ConvertAndCopyString(TCHAR* tstr, const char* utf8String, int maxLength);
@@ -276,47 +284,47 @@ namespace Edif
 		free(s);
 	}
 
-    extern TCHAR LanguageCode[3];
-    extern bool IsEdittime;
+	extern TCHAR LanguageCode[3];
+	extern bool IsEdittime;
 
-    extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
+	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
 
-    HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
+	HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
 
-    int Init(mv * mV);
-    void Init(mv * mV, EDITDATA * edPtr);
+	int Init(mv * mV);
+	void Init(mv * mV, EDITDATA * edPtr);
 
-    void Free(mv * mV);
-    void Free(EDITDATA * edPtr);
+	void Free(mv * mV);
+	void Free(EDITDATA * edPtr);
 
 #ifdef _WIN32
-    long __stdcall Condition (RUNDATA * rdPtr, long param1, long param2);
-    short __stdcall Action (RUNDATA * rdPtr, long param1, long param2);
-    long __stdcall Expression (RUNDATA * rdPtr, long param);
+	long __stdcall Condition (RUNDATA * rdPtr, long param1, long param2);
+	short __stdcall Action (RUNDATA * rdPtr, long param1, long param2);
+	long __stdcall Expression (RUNDATA * rdPtr, long param);
 	// handled
 #endif
-   
-    inline int ActionID(int ID)
-    {
-        return 25000 + ID;
-    }
 
-    inline int ConditionID(int ID)
-    {
-        return 26000 + ID;
-    }
+	inline int ActionID(int ID)
+	{
+		return 25000 + ID;
+	}
 
-    inline int ExpressionID(int ID)
-    {
-        return 27000 + ID;
-    }
+	inline int ConditionID(int ID)
+	{
+		return 26000 + ID;
+	}
 
-	
-    template<class T> inline void * MemberFunctionPointer(T Function)
-    {
-        T _Function = Function;
-        return *(void **) &_Function;
-    }
+	inline int ExpressionID(int ID)
+	{
+		return 27000 + ID;
+	}
+
+
+	template<class T> inline void * MemberFunctionPointer(T Function)
+	{
+		T _Function = Function;
+		return *(void **) &_Function;
+	}
 
 	std::string CurrentFolder();
 	void GetExtensionName(char * const writeTo);
@@ -324,7 +332,9 @@ namespace Edif
 
 	class recursive_mutex {
 		std::recursive_mutex intern;
+#ifdef _DEBUG
 		std::stringstream log;
+#endif
 	public:
 		recursive_mutex();
 		~recursive_mutex();

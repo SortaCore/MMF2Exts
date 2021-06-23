@@ -43,6 +43,11 @@
     <ProjectName>Bluewing Client.Android</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(ProjectDir)\..\Lib\FusionSDK.props" Condition="exists('..\Lib\FusionSDK.props')" />
   <ImportGroup Label="ExtensionSettings" />
@@ -51,136 +56,97 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
-    <ResourceCompile>
-      <AdditionalIncludeDirectories>..\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <ResourceCompile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </ResourceCompile>
-    <ResourceCompile>
-      <ResourceOutputFileName>$(IntDir)Ext.res</ResourceOutputFileName>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;EDITOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
-    <ResourceCompile>
-      <AdditionalIncludeDirectories>..\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <ResourceCompile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </ResourceCompile>
-    <ResourceCompile>
-      <ResourceOutputFileName>$(IntDir)Ext.res</ResourceOutputFileName>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
-    <ResourceCompile>
-      <AdditionalIncludeDirectories>..\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <ResourceCompile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </ResourceCompile>
-    <ResourceCompile>
-      <ResourceOutputFileName>$(IntDir)Ext.res</ResourceOutputFileName>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ResourceCompile>
-    <ResourceCompile>
-      <AdditionalIncludeDirectories>..\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ResourceCompile>
-    <ResourceCompile>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-    </ResourceCompile>
-    <ResourceCompile>
-      <ResourceOutputFileName>$(IntDir)Ext.res</ResourceOutputFileName>
-      <Culture>0x0409</Culture>
-    </ResourceCompile>
-    <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;m;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Inc; .\; ..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <ExceptionHandling>Disabled</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);android_support;z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -199,7 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h" />
-    <ClInclude Include="..\Lib\Shared\Lacewing\include\android config.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h" />

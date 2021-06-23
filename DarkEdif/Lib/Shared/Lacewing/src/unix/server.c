@@ -368,21 +368,17 @@ lw_bool lw_server_cert_loaded (lw_server ctx)
 	#endif
 }
 
+#ifdef ENABLE_SSL
 static int ssl_password_callback (char * buffer, int size, int rwflag, void * tag)
 {
-	#ifdef ENABLE_SSL
+	lw_server ctx = tag;
 
-	  lw_server ctx = tag;
+	/* TODO : check length */
 
-	  /* TODO : check length */
-
-	  strcpy (buffer, ctx->ssl_passphrase);
-	  return strlen (ctx->ssl_passphrase);
-
-	#else
-	  return lw_false;
-	#endif
+	strcpy (buffer, ctx->ssl_passphrase);
+	return strlen (ctx->ssl_passphrase);
 }
+#endif
 
 #ifdef _lacewing_npn
 

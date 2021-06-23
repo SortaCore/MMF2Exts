@@ -240,6 +240,7 @@ namespace lacewing
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
 		error->add("socket error");
+		lw_trace("Error event: \"%s\".", error->tostring());
 
 		if (internal.handler_error)
 			internal.handler_error(internal.client, error);
@@ -1300,8 +1301,7 @@ namespace lacewing
 	{
 		// udphellotick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::udphellotimer var.
 		// It starts from the time the Connect Request Success message is sent.
-		if (!udp->hosting())
-			throw std::runtime_error("udphellotick() called, but not hosting UDP.");
+		assert(udp->hosting() && "udphellotick() called, but not hosting UDP.");
 
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, socket->server_address());
@@ -1341,7 +1341,7 @@ namespace lacewing
 	std::shared_ptr<relayclient::channel::peer> relayclient::channel::findpeerbyid(lw_ui16 id)
 	{
 		if (!lock.checkHoldsRead(false) && !lock.checkHoldsWrite(false))
-			throw std::runtime_error("Readlock/writelock not held in findpeerbyid().");
+			assert(false && "Readlock/writelock not held in findpeerbyid().");
 
 		auto i = std::find_if(peers.cbegin(), peers.cend(),
 			[&](const std::shared_ptr<relayclient::channel::peer> & p) { return p->_id == id; });
@@ -1445,6 +1445,7 @@ namespace lacewing
 	}
 	std::string relayclient::channellisting::name() const
 	{
+		(void)this->tag; // Mark as used
 		lacewing::readlock rl = ((relayclientinternal *)this->internaltag)->client.lock.createReadLock();
 		return this->_name;
 	}

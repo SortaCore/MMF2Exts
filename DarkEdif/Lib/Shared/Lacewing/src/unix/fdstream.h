@@ -36,7 +36,7 @@ struct _lw_fdstream
 {
 	struct _lw_stream stream;
 
-	lw_pump_watch watch;
+	//lw_pump_watch watch;
 
 	int fd;
 

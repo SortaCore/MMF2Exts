@@ -178,7 +178,9 @@ void lwp_deinit ();
 
 #define lwp_default_buffer_size (1024 * 64)
 
-
+#define lwp_setsockopt(f,l,o,oname,olen) lwp_setsockopt2(f,l,o,#o,oname,olen)
+void lwp_make_nonblocking (lwp_socket socket);
+void lwp_setsockopt2 (lwp_socket fd, int level, int option, const char * optionText, const char * value, socklen_t value_length);
 void lwp_disable_ipv6_only (lwp_socket socket);
 
 struct sockaddr_storage lwp_socket_addr (lwp_socket socket);

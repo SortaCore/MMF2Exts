@@ -234,8 +234,8 @@ typedef jobject CCreateObjectInfo;
 static RuntimeFunctions runFuncs;
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
 {
-	void * edPtrReal = global_env->GetDirectBufferAddress(edPtr);
-	LOGI("Note: global_env is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.", global_env, env, javaExtPtr, edPtr, edPtrReal, coi);
+	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
+	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr);
 	runFuncs.ext = javaExtP;
 
@@ -270,100 +270,82 @@ ProjectFunc short continueRunObject(JNIEnv *, jobject, jlong ext)
 {
 	return ((Extension *)ext)->Continue();
 }
-/*
-// Called after JNI_OnLoad, before getNumberOfConditions. Good for Edif::Init().
-ProjectFunc(jboolean, extInit)(JNIEnv *, jobject javaExtPtr)
-{
-	__android_log_write(ANDROID_LOG_INFO, "MMFRuntimeNative", "Inside extInit.");
-	if (global_env == NULL)
-		__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "The global_env is NULL. Why is this.");
-	else
-		__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "The global_env is %d. Why is this.", (int)global_env);
 
-	// Note: javaExtPtr has CExtension ho and CRun rh inited (unlike in JNI_OnLoad). Useful stuff.
-
-	mv * mV = NULL;
-	if (!::SDK) {
-		__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "The SDK is being initialised.");
-		Edif::Init(mV);
-		return true;
-	}
-	__android_log_write(ANDROID_LOG_INFO, "MMFRuntimeNative", "extInit ended.");
-	return false;
-}*/
-
+extern thread_local JNIEnv * threadEnv;
 jclass GetExtClass(void * javaExtPtr) {
-	static global<jclass> clazz(global_env->GetObjectClass((jobject)javaExtPtr));
+	assert(threadEnv && mainThreadJNIEnv == threadEnv);
+	static global<jclass> clazz(mainThreadJNIEnv->GetObjectClass((jobject)javaExtPtr));
 	return clazz;
 };
 jobject GetRH(void * javaExtPtr) {
-	static jfieldID getRH(global_env->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
-	return global_env->GetObjectField((jobject)javaExtPtr, getRH);
+	assert(threadEnv && mainThreadJNIEnv == threadEnv);
+	static jfieldID getRH(mainThreadJNIEnv->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
+	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
 };
 
 int act_getParamExpression(void * javaExtPtr, void * act) {
-	static global<jclass> actClass(global_env->GetObjectClass((jobject)act));
-	static jmethodID getActExpr(global_env->GetMethodID(actClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
-	return global_env->CallIntMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act));
+	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
+	return mainThreadJNIEnv->CallIntMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
 }
 RuntimeFunctions::string act_getParamExpString(void * javaExtPtr, void * act) {
 
-	static global<jclass> actClass(global_env->GetObjectClass((jobject)act));
-	static jmethodID getActExpr(global_env->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
+	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act));
+	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
 	RuntimeFunctions::string str;
-	str.ctx = (jstring)global_env->CallObjectMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
-	str.ptr = global_env->GetStringUTFChars((jstring)str.ctx, NULL);
+	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	return str;
 }
 float act_getParamExpFloat(void * javaExtPtr, void * act) {
-	static global<jclass> actClass(global_env->GetObjectClass((jobject)act));
-	static jmethodID getActExpr(global_env->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	return global_env->CallFloatMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act));
+	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
+	return mainThreadJNIEnv->CallFloatMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
 }
 
 int cnd_getParamExpression(void * javaExtPtr, void * cnd) {
-	static global<jclass> cndClass(global_env->GetObjectClass((jobject)cnd));
-	static jmethodID getcndExpr(global_env->GetMethodID(cndClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
-	return global_env->CallIntMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd));
+	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
+	return mainThreadJNIEnv->CallIntMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
 }
 RuntimeFunctions::string cnd_getParamExpString(void * javaExtPtr, void * cnd) {
-	static global<jclass> cndClass(global_env->GetObjectClass((jobject)cnd));
-	static jmethodID getcndExpr(global_env->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
+	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd));
+	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
 	RuntimeFunctions::string str;
-	str.ctx = (jstring)global_env->CallObjectMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
-	str.ptr = global_env->GetStringUTFChars((jstring)str.ctx, NULL);
+	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	return str;
 }
 float cnd_getParamExpFloat(void * javaExtPtr, void * cnd) {
-	static global<jclass> cndClass(global_env->GetObjectClass((jobject)cnd));
-	static jmethodID getcndExpr(global_env->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	float f = global_env->CallFloatMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd));
+	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
+	float f = mainThreadJNIEnv->CallFloatMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
 	return f;
 }
 
 int exp_getParamExpression(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID getexpExpr(global_env->GetMethodID(expClass, "getParamInt", "()I"));
-	return global_env->CallIntMethod((jobject)exp, getexpExpr);
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamInt", "()I"));
+	return mainThreadJNIEnv->CallIntMethod((jobject)exp, getexpExpr);
 }
 RuntimeFunctions::string exp_getParamExpString(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID getexpExpr(global_env->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;"));
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;"));
 	RuntimeFunctions::string str;
-	str.ctx = (jstring)global_env->CallObjectMethod((jobject)exp, getexpExpr);
-	str.ptr = global_env->GetStringUTFChars((jstring)str.ctx, NULL);
+	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)exp, getexpExpr);
+	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	return str;
 }
 float exp_getParamExpFloat(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID setexpExpr(global_env->GetMethodID(expClass, "getParamFloat", "()F"));
-	return global_env->CallFloatMethod((jobject)exp, setexpExpr);
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamFloat", "()F"));
+	return mainThreadJNIEnv->CallFloatMethod((jobject)exp, setexpExpr);
 }
 
 void exp_setReturnInt(void * javaExtPtr, void * exp, int val) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID setexpExpr(global_env->GetMethodID(expClass, "setReturnInt", "(I)V"));
-	global_env->CallVoidMethod((jobject)exp, setexpExpr, val);
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnInt", "(I)V"));
+	mainThreadJNIEnv->CallVoidMethod((jobject)exp, setexpExpr, val);
 }
 
 static std::uint8_t UTF8_CHAR_WIDTH[] = {
@@ -385,8 +367,18 @@ static std::uint8_t UTF8_CHAR_WIDTH[] = {
 	4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xFF
 };
 
+// This is set in Edif::Runtime
+thread_local JNIEnv * threadEnv = nullptr;
+
 jstring CStrToJStr(const char * String)
 {
+#ifdef _DEBUG
+	if (threadEnv->ExceptionCheck())
+		LOGF("Already a bug when returning a string!! Error %s, text to return %s.", GetJavaExceptionStr().c_str(), String);
+	if (String == nullptr)
+		LOGF("String pointer is null in CStrToJStr()!");
+#endif
+
 	// Java doesn't use regular UTF-8, but "modified" UTF-8, or CESU-8.
 	// In Java, UTF-8 null and UTF8 4-byte characters aren't allowed. They will need re-encoding.
 	// Thankfully, they're not common in English usage. So, we'll quickly check.
@@ -400,12 +392,15 @@ jstring CStrToJStr(const char * String)
 	for (int k = 0; k < strU8Len; k++)
 	{
 		// 4-byte UTF-8, welp.
-		if (UTF8_CHAR_WIDTH[bytes[k]] == 4)
+		if (bytes[k] >= 0xF0 && bytes[k] <= 0xF5)
 			goto reconvert;
 	}
-	LOGV("UTF-8 should be valid Modified UTF-8.");
+	LOGV("UTF-8 String \"%s\" should be valid Modified UTF-8.", String);
+
 	// No 4-byte characters, safe to convert directly
-	jstr = global_env->NewStringUTF(String);
+	jstr = threadEnv->NewStringUTF(String);
+	if (threadEnv->ExceptionCheck())
+		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
 	return jstr;
 reconvert:
 	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().");
@@ -462,7 +457,7 @@ reconvert:
 					*((std::uint16_t *)&newString[outputByteIndex]) = *(std::uint16_t *)&bytes[inputByteIndex];
 				else // w == 3
 				{
-					*((std::uint8_t *)&newString[outputByteIndex + 1]) = bytes[inputByteIndex];
+					*((std::uint8_t *)&newString[outputByteIndex]) = bytes[inputByteIndex];
 					*((std::uint16_t *)&newString[outputByteIndex + 1]) = *(std::uint16_t *)&bytes[inputByteIndex + 1];
 				}
 				outputByteIndex += w;
@@ -472,46 +467,60 @@ reconvert:
 	}
 	newString.resize(outputByteIndex);
 
-	return global_env->NewStringUTF(String);
+	jstr = threadEnv->NewStringUTF(String);
+	if (threadEnv->ExceptionCheck())
+		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
+	return jstr;
+}
+
+// Converts std::thread::id to a std::string
+std::string ThreadIDToStr(std::thread::id id)
+{
+	// Most compatible way
+	std::stringstream str;
+	str << id;
+	return str.str();
 }
 
 void exp_setReturnString(void * javaExtPtr, void * exp, const char * val) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID setexpExpr(global_env->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V"));
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V"));
 
 	// Convert into Java memory
 	jstring jStr = CStrToJStr(val);
-	global_env->CallVoidMethod((jobject)exp, setexpExpr, jStr);
-	global_env->DeleteLocalRef(jStr); // not strictly needed
+	mainThreadJNIEnv->CallVoidMethod((jobject)exp, setexpExpr, jStr);
+	mainThreadJNIEnv->DeleteLocalRef(jStr); // not strictly needed
 }
 void exp_setReturnFloat(void * javaExtPtr, void * exp, float val) {
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)exp));
-	static jmethodID getexpExpr(global_env->GetMethodID(expClass, "setReturnFloat", "(F)V"));
-	global_env->CallVoidMethod((jobject)exp, getexpExpr, val);
+	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp));
+	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnFloat", "(F)V"));
+	mainThreadJNIEnv->CallVoidMethod((jobject)exp, getexpExpr, val);
 }
+
 void freeString(void * ext, RuntimeFunctions::string str)
 {
-	global_env->ReleaseStringUTFChars((jstring)str.ctx, str.ptr);
+	threadEnv->ReleaseStringUTFChars((jstring)str.ctx, str.ptr);
 	str = { NULL, NULL };
 }
 void generateEvent(void * javaExtPtr, int code, int param) {
 	// CExtension ho in 
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)javaExtPtr));
-	static jfieldID getHo(global_env->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
-	jobject ho = global_env->GetObjectField((jobject)javaExtPtr, getHo);
-	static global<jclass> hoClass(global_env->GetObjectClass(ho));
-	static jmethodID genEvent(global_env->GetMethodID(hoClass, "generateEvent", "(II)V"));
-	global_env->CallVoidMethod(ho, genEvent, code, param);
+	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr));
+	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
+	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
+	static global<jclass> hoClass(threadEnv->GetObjectClass(ho));
+	static jmethodID genEvent(threadEnv->GetMethodID(hoClass, "generateEvent", "(II)V"));
+	threadEnv->CallVoidMethod(ho, genEvent, code, param);
 };
 void pushEvent(void * javaExtPtr, int code, int param) {
 	// CExtension ho in 
-	static global<jclass> expClass(global_env->GetObjectClass((jobject)javaExtPtr));
-	static jfieldID getHo(global_env->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
-	jobject ho = global_env->GetObjectField((jobject)javaExtPtr, getHo);
-	static global<jclass> hoClass(global_env->GetObjectClass(ho));
-	static jmethodID pushEvent(global_env->GetMethodID(hoClass, "pushEvent", "(II)V"));
-	global_env->CallVoidMethod(ho, pushEvent, code, param);
+	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr));
+	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
+	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
+	static global<jclass> hoClass(threadEnv->GetObjectClass(ho));
+	static jmethodID pushEvent(threadEnv->GetMethodID(hoClass, "pushEvent", "(II)V"));
+	threadEnv->CallVoidMethod(ho, pushEvent, code, param);
 };
+
 void LOGF(const char * x, ...)
 {
 	va_list va;
@@ -519,25 +528,34 @@ void LOGF(const char * x, ...)
 	__android_log_vprint(ANDROID_LOG_ERROR, "MMFRuntimeNative", x, va);
 	va_end(va);
 	__android_log_write(ANDROID_LOG_FATAL, "MMFRuntimeNative", "Killed by extension " PROJECT_NAME ".");
-	global_env->FatalError("Killed by extension " PROJECT_NAME ".");
+	if (threadEnv)
+		threadEnv->FatalError("Killed by extension " PROJECT_NAME ".");
+	else
+	{
+		__android_log_write(ANDROID_LOG_FATAL, "MMFRuntimeNative", "Killed from unattached thread! Running exit.");
+		exit(EXIT_FAILURE);
+	}
 }
 std::string GetJavaExceptionStr()
 {
-	if (!global_env->ExceptionCheck())
+	if (!threadEnv->ExceptionCheck())
 		return std::string("No exception!");
-	jthrowable exc = global_env->ExceptionOccurred();
-	global_env->ExceptionClear(); // else GetObjectClass fails, which is dumb enough.
-	jclass exccls = global_env->GetObjectClass(exc);
-	jmethodID getMsgMeth = global_env->GetMethodID(exccls, "toString", "()Ljava/lang/String;");
+	jthrowable exc = threadEnv->ExceptionOccurred();
+	threadEnv->ExceptionClear(); // else GetObjectClass fails, which is dumb enough.
+	jclass exccls = threadEnv->GetObjectClass(exc);
+	jmethodID getMsgMeth = threadEnv->GetMethodID(exccls, "toString", "()Ljava/lang/String;");
 
-	jstring excStr = (jstring)global_env->CallObjectMethod(exc, getMsgMeth);
-	const char * c = global_env->GetStringUTFChars(excStr, NULL);
+	jstring excStr = (jstring)threadEnv->CallObjectMethod(exc, getMsgMeth);
+	const char * c = threadEnv->GetStringUTFChars(excStr, NULL);
 
 	std::string ret(c);
 
-	global_env->ReleaseStringUTFChars(excStr, c);
+	threadEnv->ReleaseStringUTFChars(excStr, c);
 	return ret;
 }
+
+
+#ifdef _DEBUG
 
 #include <iostream>
 #include <iomanip>
@@ -600,17 +618,17 @@ void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
 	}
 	free(outputMem);
 }
-#include <sstream>
-#include <android/log.h>
-#include <map>
-
 //int signalCatches[] = { SIGABRT, SIGSEGV, SIGBUS, SIGPIPE };
 struct Signal {
 	int signalNum;
 	const char * signalName;
 	Signal(int s, const char * n) : signalNum(s), signalName(n) {}
 };
-static std::vector<Signal> signalCatches;
+static Signal signalCatches[] = {
+//	{SIGSEGV, "SIGSEGV" },
+	{SIGBUS, "SIGBUS"},
+	{SIGPIPE, "SIGPIPE"}
+};
 
 static void my_handler(const int code, siginfo_t * const si, void * const sc)
 {
@@ -620,8 +638,17 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 		return;
 	}
 
-	auto details = std::find_if(signalCatches.begin(), signalCatches.end(), [=](Signal & s) { return s.signalNum == code; });
-	const char * signalName = details == signalCatches.end() ? "Unknown" : details->signalName;
+#if DARKEDIF_MIN_LOG_LEVEL <= DARKEDIF_LOG_ERROR
+	const char * signalName = "Unknown";
+	for (size_t i = 0; i < std::size(signalCatches); i++)
+	{
+		if (signalCatches[i].signalNum == code)
+		{
+			signalName = signalCatches[i].signalName;
+			break;
+		}
+	}
+#endif
 
 	const size_t max = 30;
 	void * buffer[max];
@@ -629,9 +656,12 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 
 	dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
 
-	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "%s", oss.str().c_str());
-	LOGE("code raised: %d, %s.", code, signalName);
-	raise(SIGTRAP); // SIGTRAP is 
+	LOGI("%s", oss.str().c_str());
+	LOGE("signal code raised: %d, %s.", code, signalName);
+	// Breakpoint
+#ifdef _DEBUG
+	raise(SIGTRAP);
+#endif
 }
 static bool didSignals = false;
 
@@ -639,19 +669,7 @@ static void prepareSignals()
 {
 	didSignals = true;
 
-	// This refused to initialize properly, marked as static and/or with attribute constructor, so meh.
-	start:
-	if (signalCatches.empty())
-	{
-		LOGE("Signal catches %p was empty in prepareSignals. Filling.%d%d", (void *)&signalCatches, 0, 0);
-		signalCatches.push_back(Signal(SIGABRT, "SIGABRT"));
-		signalCatches.push_back(Signal(SIGSEGV, "SIGSEGV"));
-		signalCatches.push_back(Signal(SIGBUS, "SIGBUS"));
-		signalCatches.push_back(Signal(SIGPIPE, "SIGPIPE"));
-		goto start;
-	}
-
-	for (int i = 0; i < signalCatches.size(); i++) {
+	for (int i = 0; i < std::size(signalCatches); i++) {
 
 		struct sigaction sa;
 		struct sigaction sa_old;
@@ -660,7 +678,7 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction(signalCatches[i].signalNum, &sa, &sa_old) != 0) {
-			__android_log_print(ANDROID_LOG_WARN, "MMFRuntimeNative", "Failed to set up %s sigaction.", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction.", signalCatches[i].signalName);
 		}
 #if __ANDROID_API__ >= 28
 		struct sigaction64 sa64;
@@ -670,14 +688,14 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction64(signalCatches[i].signalNum, &sa64, &sa64_old) != 0) {
-			__android_log_print(ANDROID_LOG_WARN, "MMFRuntimeNative", "Failed to set up %s sigaction (64 bit).", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction (64 bit).", signalCatches[i].signalName);
 		}
 #endif
 	}
-	if (signalCatches.size() == 0)
-		LOGE("Failed to create sigCatches properly, despite repeated attempts. %d%d", 0, 0);
-	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "Set up %d sigactions.", (int)signalCatches.size());
+
+	LOGI("Set up %zu sigactions.", std::size(signalCatches));
 }
+#endif // _DEBUG
 
 // Included from root dir
 #if __has_include("ExtraAndroidNatives.h")
@@ -686,26 +704,28 @@ static void prepareSignals()
 #ifndef EXTRAFUNCS
 #define EXTRAFUNCS /* none*/
 #endif
-
-extern "C"
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
+ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
 
-	if (vm->GetEnv(reinterpret_cast<void **>(&global_env), JNI_VERSION_1_6) != JNI_OK) {
-		__android_log_write(ANDROID_LOG_INFO, "MMFRuntimeNative", "GetEnv failed.");
+	jint error = vm->GetEnv(reinterpret_cast<void **>(&mainThreadJNIEnv), JNI_VERSION_1_6);
+	if (error != JNI_OK) {
+		LOGF("GetEnv failed with error %d.", error);
 		return -1;
 	}
 	global_vm = vm;
-	LOGV("GetEnv OK, returned %p.", global_env);
+	LOGV("GetEnv OK, returned %p.", mainThreadJNIEnv);
 
 	JavaVMAttachArgs args;
 	args.version = JNI_VERSION_1_6; // choose your JNI version
 	args.name = PROJECT_NAME ", JNI_Load"; // you might want to give the java thread a name
 	args.group = NULL; // you might want to assign the java thread to a ThreadGroup
-	vm->AttachCurrentThread(&global_env, NULL);
+	if ((error = vm->AttachCurrentThread(&mainThreadJNIEnv, NULL)) != JNI_OK) {
+		LOGF("AttachCurrentThread failed with error %d.", error);
+		return -1;
+	}
 
-	// Get jclass with global_env->FindClass.
-	// Register methods with global_env->RegisterNatives.
+	// Get jclass with mainThreadJNIEnv->FindClass.
+	// Register methods with mainThreadJNIEnv->RegisterNatives.
 	static char projName[] = PROJECT_NAME;
 	for (size_t i = 0; i < sizeof(projName) - 1; i++)
 		if (projName[i] == ' ')
@@ -713,18 +733,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	std::string classNameCRun("Extensions/" "CRun" + std::string(projName));
 	std::string className("Extensions/" + std::string(projName));
 	LOGV("Looking for class %s... [1/2]", classNameCRun.c_str());
-	jclass clazz = global_env->FindClass(classNameCRun.c_str());
+	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
-		LOGI("Couldn't find %s, now looking for %s... [2/2]", classNameCRun.c_str(), className.c_str());
-		if (global_env->ExceptionCheck()) {
-			global_env->ExceptionClear();
+		LOGV("Couldn't find %s, now looking for %s... [2/2]", classNameCRun.c_str(), className.c_str());
+		if (mainThreadJNIEnv->ExceptionCheck()) {
+			mainThreadJNIEnv->ExceptionClear();
 			LOGV("EXCEPTION [1] %d", 0);
 		}
-		clazz = global_env->FindClass(className.c_str());
+		clazz = mainThreadJNIEnv->FindClass(className.c_str());
 		if (clazz == NULL)
 		{
-			if (global_env->ExceptionCheck()) {
-				global_env->ExceptionClear();
+			if (mainThreadJNIEnv->ExceptionCheck()) {
+				mainThreadJNIEnv->ExceptionClear();
 				LOGV("EXCEPTION [2] %d", 0);
 			}
 			LOGF("Couldn't find class %s. Aborting load of extension.", className.c_str());
@@ -753,13 +773,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	};
 
 	LOGV("Registering natives for %s...", PROJECT_NAME);
-	if (global_env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
+	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
 		std::string excStr = GetJavaExceptionStr();
 		LOGF("Failed to register natives for class %s; error %s.", PROJECT_NAME, excStr.c_str());
 	}
 	else
 		LOGV("Registered natives for class %s successfully.", PROJECT_NAME);
-	global_env->DeleteLocalRef(clazz);
+	mainThreadJNIEnv->DeleteLocalRef(clazz);
 	runFuncs.ext = NULL;
 
 	// could be Actions.RunLoop.CRun
@@ -782,21 +802,33 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	runFuncs.freeString = freeString;
 
 	runFuncs.generateEvent = generateEvent;
+	threadEnv = mainThreadJNIEnv;
 
+#ifdef _DEBUG
 	if (!didSignals)
 		prepareSignals();
+#endif
 
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGI("The SDK is being initialised.");
+		LOGV("The SDK is being initialised.");
 		Edif::Init(mV);
 	}
 
 	return JNI_VERSION_1_6;
 }
-extern "C"
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
+ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 {
+	LOGV("JNI_Unload.");
+
+#ifdef _DEBUG
+	// Reset signals
+	if (didSignals)
+	{
+		for (int i = 0; i < std::size(signalCatches); i++)
+			signal(signalCatches[i].signalNum, SIG_DFL);
+	}
+#endif
 }
 
 #endif // __ANDROID__

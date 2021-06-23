@@ -97,8 +97,7 @@ public:
 
 	inline void addheader(lw_ui8 type, lw_ui8 variant, bool forudp = false, int udpclientid = -1)
 	{
-		if (size != 0)
-			throw std::runtime_error("lacewing framebuilder.addheader() error: adding header to message that already has one.");
+		assert(size == 0 && "lacewing framebuilder.addheader() error: adding header to message that already has one.");
 
 		if (!forudp)
 		{

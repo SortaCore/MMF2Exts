@@ -163,10 +163,10 @@ static void read_ready (void * tag)
 void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 						 lw_bool auto_close, lw_bool is_socket)
 {
-	if (ctx->watch)
+	if (ctx->stream.watch)
 	{
-		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
-		ctx->watch = 0;
+		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->stream.watch);
+		ctx->stream.watch = 0;
 	}
 
 	if ( (ctx->flags & lwp_fdstream_flag_autoclose) && ctx->fd != -1)
@@ -182,17 +182,11 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 	if (ctx->fd == -1)
 		return;
 
-	fcntl (fd, F_SETFL, fcntl (fd, F_GETFL, 0) | O_NONBLOCK);
-
 	#ifdef HAVE_DECL_SO_NOSIGPIPE
 	{	int b = 1;
-		setsockopt (fd, SOL_SOCKET, SO_NOSIGPIPE, (char *) &b, sizeof (b));
+		lwp_setsockopt (fd, SOL_SOCKET, SO_NOSIGPIPE, (char *) &b, sizeof (b));
 	}
 	#endif
-
-	{	int b = (ctx->flags & lwp_fdstream_flag_nagle) ? 0 : 1;
-		setsockopt (fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
-	}
 
 	struct stat stat;
 	fstat (fd, &stat);
@@ -200,18 +194,20 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 	if (is_socket /* S_ISSOCK(stat.st_mode) */)
 	{
 		ctx->flags |= lwp_fdstream_flag_is_socket;
+
+		lwp_make_nonblocking(fd);
 	}
 	else
 	{
 		ctx->flags &= ~ lwp_fdstream_flag_is_socket;
 
 		if ((ctx->size = stat.st_size) > 0)
-		 return;
+			return;
 
 		/* Not a socket, and size is 0.	Is it really just an empty file? */
 
 		if (S_ISREG (stat.st_mode))
-		 return;
+			return;
 	}
 
 	/* Assuming this is something we can watch for readiness. */
@@ -224,15 +220,14 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 	{
 		/* Given an existing pump watch - change it to use our callbacks */
 
-		ctx->watch = watch;
-		watch->tag = ctx;
+		ctx->stream.watch = watch;
 
-		lw_pump_update_callbacks (pump, ctx->watch, ctx,
+		lw_pump_update_callbacks (pump, ctx->stream.watch, ctx,
 			read_ready, write_ready, lw_true);
 	}
 	else
 	{
-		ctx->watch = lw_pump_add (pump, fd, ctx, read_ready,
+		ctx->stream.watch = lw_pump_add (pump, fd, ctx, read_ready,
 			write_ready, lw_true);
 	}
 }
@@ -246,8 +241,8 @@ void lw_fdstream_cork (lw_fdstream ctx)
 {
 	#ifdef lw_cork
 		int enabled = 1;
-		setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
-						lw_cork, &enabled, sizeof (enabled));
+		lwp_setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
+						lw_cork, (const char *)&enabled, sizeof (enabled));
 	#endif
 }
 
@@ -255,8 +250,8 @@ void lw_fdstream_uncork (lw_fdstream ctx)
 {
 	#ifdef lw_cork
 		int enabled = 0;
-		setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
-						lw_cork, &enabled, sizeof (enabled));
+		lwp_setsockopt (((lw_fdstream) ctx)->fd, IPPROTO_TCP,
+						lw_cork, (const char *)&enabled, sizeof (enabled));
 	#endif
 }
 
@@ -270,7 +265,7 @@ void lw_fdstream_nagle (lw_fdstream ctx, lw_bool enabled)
 	if (ctx->fd != -1)
 	{
 		int b = enabled ? 0 : 1;
-		setsockopt (ctx->fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
+		lwp_setsockopt (ctx->fd, SOL_SOCKET, TCP_NODELAY, (char *) &b, sizeof (b));
 	}
 }
 
@@ -382,10 +377,10 @@ static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
 	* callbacks from the pump.
 	*/
 
-	if (ctx->watch)
+	if (ctx->stream.watch)
 	{
-		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->watch);
-		ctx->watch = 0;
+		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->stream.watch);
+		ctx->stream.watch = 0;
 	}
 
 	int fd = ctx->fd;
@@ -433,4 +428,3 @@ lw_fdstream lw_fdstream_new (lw_pump pump)
 
 	return ctx;
 }
-

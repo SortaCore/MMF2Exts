@@ -492,6 +492,10 @@
 		BEGIN Android
 	################################# -->
 	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
+		<!-- Android can use SDK 21/22 in latest preview, but the default Android.Tools.props file included with
+			Visual Studio won't look for it. So, if you modify that file, let's check it's smart enough to use it. -->
+		<DarkNDKVersion>$(VS_NdkRoot.Substring($([MSBuild]::Add(1,$(VS_NdkRoot64.LastIndexOf('-'))))))</DarkNDKVersion>
+
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
@@ -501,26 +505,24 @@
 			 the GNU STL is second-best but doesn't play nice all the time.
 			 https://www.phoronix.com/scan.php?page=news_item&px=Android-NDK-r16 -->
 		<UseOfStl>c++_static</UseOfStl>
+		<!-- Thankfully, Fusion includes libc++_shared.so in the APKs. However, you'll have to match
+			 the version they use, or you'll get dlopen() errors. They're using r21d as of 22nd June 2021. -->
+		<UseOfStl Condition="$(RelBuild)==1 AND '$(DarkNDKVersion)'=='r21d'">c++_shared</UseOfStl>
+
 		<!-- Generate ARM style code for Thumb archs. -->
 		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
 		<!-- API that's readily accessible. Note 21 is minimum 64-bit API.
 			 Note that this does not really affect app compatibility one-to-one;
 			 but if you do modify the API, you should probably add checks and
 			 warnings, maybe before dlopen() in the Java file. -->
-		<AndroidAPILevel>android-19</AndroidAPILevel>
+		<AndroidAPILevel>android-16</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
 
-		<!-- Android can use SDK 21/22 in latest preview, but the default Android.Tools.props file included with
-			Visual Studio won't look for it. So, if you modify that file, let's check it's smart enough to use it. -->
-		<DarkNDKVersion>$(VS_NdkRoot.Substring($([MSBuild]::Add(1,$(VS_NdkRoot64.LastIndexOf('-'))))))</DarkNDKVersion>
 		<!-- r21e is slightly broken, and tries to build with ARMv4 if left as arm-linux-androideabi. -->
 		<AndroidHeaderTriple Condition="'$(DarkNDKVersion)'=='r21e' AND '$(Platform)'=='ARM'">armv7a-linux-androideabi</AndroidHeaderTriple>
 
 		<!-- Enables use of premature NDKs; that is, NDKs that don't come with VS and must be manually installed. -->
 		<DARKEDIF_USE_PREMATURE_NDK>0</DARKEDIF_USE_PREMATURE_NDK>
-
-		<!-- To move the compiled SO file into the Data\Runtime\Android zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir)" /OutputDir="$(MFXDir)" /ProjectDir="$(ProjectDir)"</DarkEdifPostBuildToolParams>
 	</PropertyGroup>
 	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
 		<ClCompile>
@@ -544,6 +546,9 @@
 				You can edit it in C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
 				\Microsoft\VC\v160\Application Type\Android\3.0\Platforms\ARM\Platform.Default.props,
 				or add -target armv7-linux-androidabi. -->
+
+			<!-- Don't include debugger info in release builds. -->
+			<DebugInformationFormat Condition="$(RelBuild)==1">None</DebugInformationFormat>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>
@@ -555,6 +560,8 @@
 			<LibraryDependencies Condition="'$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool. -->
 			<IncrementalLink>false</IncrementalLink>
+			<!-- Strip out debugger info in release builds. Removes ClCompile.DebuggerSymbolInformation if it's there, too. -->
+			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
 		</Link>
 	</ItemDefinitionGroup>
 

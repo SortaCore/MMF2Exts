@@ -76,8 +76,7 @@ public:
 				allocated += size;
 
 			char * test = (char *) realloc(this->buffer, allocated);
-			if (!test)
-				throw std::runtime_error("could not reallocate buffer for message.");
+			assert(test && "could not reallocate buffer for message.");
 			this->buffer = test;
 		}
 

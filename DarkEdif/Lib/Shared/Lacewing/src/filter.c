@@ -211,69 +211,69 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
 	#ifdef _WIN32
 
-	  if (ipv6)
-	  {
-		 if ((s = WSASocket
-			(AF_INET6, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
-		 {
-			if (WSAGetLastError () != WSAEAFNOSUPPORT)
+		if (ipv6)
+		{
+			if ((s = WSASocket
+				(AF_INET6, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
+			{
+				if (WSAGetLastError () != WSAEAFNOSUPPORT)
+				{
+					lw_error_add (error, WSAGetLastError ());
+					lw_error_addf (error, "Error creating socket");
+
+					return -1;
+				}
+
+				ipv6 = lw_false;
+			}
+			else
+				goto ipv6success;
+		}
+
+		if (!ipv6)
+		{
+			if ((s = WSASocket
+				(AF_INET, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
 			{
 				lw_error_add (error, WSAGetLastError ());
 				lw_error_addf (error, "Error creating socket");
 
 				return -1;
 			}
-
-			ipv6 = lw_false;
-		 }
-		 else
-			 goto ipv6success;
-	  }
-
-	  if (!ipv6)
-	  {
-		 if ((s = WSASocket
-			(AF_INET, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED)) == -1)
-		 {
-			lw_error_add (error, WSAGetLastError ());
-			lw_error_addf (error, "Error creating socket");
-
-			return -1;
-		 }
-	  }
+		}
 
 	#else
 
-	  if (ipv6)
-	  {
-		 if ((s = socket (AF_INET6, type, protocol)) == -1)
-		 {
-			if (errno != EAFNOSUPPORT)
+		if (ipv6)
+		{
+			if ((s = socket (AF_INET6, type, protocol)) == -1)
+			{
+				if (errno != EAFNOSUPPORT)
+				{
+					lw_error_add (error, errno);
+					lw_error_addf (error, "Error creating socket");
+
+					return -1;
+				}
+
+				ipv6 = lw_false;
+			}
+			else
+				goto ipv6success;
+		}
+
+		if (!ipv6)
+		{
+			if ((s = socket (AF_INET, type, protocol)) == -1)
 			{
 				lw_error_add (error, errno);
 				lw_error_addf (error, "Error creating socket");
 
 				return -1;
 			}
+		}
 
-			ipv6 = lw_false;
-		 }
-		 else
-			 goto ipv6success;
-	  }
-
-	  if (!ipv6)
-	  {
-		 if ((s = socket (AF_INET, type, protocol)) == -1)
-		 {
-			lw_error_add (error, errno);
-			lw_error_addf (error, "Error creating socket");
-
-			return -1;
-		 }
-	  }
-
-	  fcntl (s, F_SETFL, fcntl (s, F_GETFL, 0) | O_NONBLOCK);
+		lwp_make_nonblocking(s);
 
 	#endif
 
@@ -282,7 +282,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  lwp_disable_ipv6_only (s);
 
 	reuse = lw_filter_reuse (filter) ? 1 : 0;
-	assert(setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse)) == 0);
+	lwp_setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse));
 
 	memset (&addr, 0, sizeof (addr));
 

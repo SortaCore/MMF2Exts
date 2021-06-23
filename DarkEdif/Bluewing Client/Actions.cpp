@@ -734,6 +734,8 @@ void Extension::RecvMsg_DecompressBinary()
 
 	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
 
+	// Has exception support
+#if !defined(__clang__) || defined(__EXCEPTIONS)
 	std::unique_ptr<unsigned char[]> output_buffer;
 	try {
 		output_buffer = std::make_unique<unsigned char[]>(expectedUncompressedSize);
@@ -743,6 +745,9 @@ void Extension::RecvMsg_DecompressBinary()
 		inflateEnd(&strm);
 		return CreateError("Decompression failed; could not allocate enough memory. Requested %u bytes.", expectedUncompressedSize);
 	}
+#else
+	std::unique_ptr<unsigned char[]> output_buffer = std::make_unique<unsigned char[]>(expectedUncompressedSize);
+#endif
 
 	strm.next_in = (unsigned char *)inputData.data();
 	strm.avail_in = inputData.size();

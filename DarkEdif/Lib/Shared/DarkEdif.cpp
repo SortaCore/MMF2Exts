@@ -593,6 +593,8 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 		return -1;
 	return eventNum;
 #else // Can't read event yet
+
+
 	return -1;
 #endif
 }
@@ -840,21 +842,22 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 
 
 #ifdef __ANDROID__
+extern thread_local JNIEnv * threadEnv;
 static jobject getGlobalContext()
 {
-	jclass activityThread = global_env->FindClass("android/app/ActivityThread");
-	jmethodID currentActivityThread = global_env->GetStaticMethodID(activityThread, "currentActivityThread", "()Landroid/app/ActivityThread;");
-	jobject at = global_env->CallStaticObjectMethod(activityThread, currentActivityThread);
+	jclass activityThread = threadEnv->FindClass("android/app/ActivityThread");
+	jmethodID currentActivityThread = threadEnv->GetStaticMethodID(activityThread, "currentActivityThread", "()Landroid/app/ActivityThread;");
+	jobject at = threadEnv->CallStaticObjectMethod(activityThread, currentActivityThread);
 
-	jmethodID getApplication = global_env->GetMethodID(activityThread, "getApplication", "()Landroid/app/Application;");
-	jobject context = global_env->CallObjectMethod(at, getApplication);
+	jmethodID getApplication = threadEnv->GetMethodID(activityThread, "getApplication", "()Landroid/app/Application;");
+	jobject context = threadEnv->CallObjectMethod(at, getApplication);
 	return context;
 }
 int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
-	jclass toast = global_env->FindClass("android/widget/Toast");
+	jclass toast = threadEnv->FindClass("android/widget/Toast");
 	jobject globalContext = getGlobalContext();
-	jmethodID methodMakeText = global_env->GetStaticMethodID(toast, "makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
+	jmethodID methodMakeText = threadEnv->GetStaticMethodID(toast, "makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
 	if (methodMakeText == NULL) {
 		LOGE("toast.makeText not Found");
 		return 0;
@@ -863,12 +866,12 @@ int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAn
 	std::string toastText = caption + std::string(" -  ") + text;
 	jstring toastTextJStr = CStrToJStr(toastText.c_str());
 
-	jobject toastobj = global_env->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastTextJStr, 1 /* toast length long, 0 for short*/);
+	jobject toastobj = threadEnv->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastTextJStr, 1 /* toast length long, 0 for short*/);
 
 	// toast.showを実行
 	// Java: toastobj.show();
-	jmethodID methodShow = global_env->GetMethodID(toast, "show", "()V");
-	global_env->CallVoidMethod(toastobj, methodShow);
+	jmethodID methodShow = threadEnv->GetMethodID(toast, "show", "()V");
+	threadEnv->CallVoidMethod(toastobj, methodShow);
 
 	__android_log_print(iconAndButtons, "MMFRuntimeNative", "Msg Box swallowed: \"%s\", %s.", caption, text);
 	if (!strncmp(caption, "DarkEdif", sizeof("DarkEdif") - 1) && (iconAndButtons & MB_ICONERROR) != 0)
@@ -1715,6 +1718,7 @@ HWND DarkEdif::Internal_WindowHandle;
 //
 static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, va_list v, int flags)
 {
+	assert(titlePrefix != NULL && msgFormat != NULL);
 	static std::tstring titleSuffix = _T(" - ") + DarkEdif::ExtensionName;
 
 	std::tstring title = titlePrefix + titleSuffix;
@@ -1767,8 +1771,11 @@ void DarkEdif::MsgBox::Info(const TCHAR * titlePrefix, PrintFHintInside const TC
 }
 
 #ifdef __ANDROID__
+
+#if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
 void OutputDebugStringA(const char * debugString)
 {
+	assert(debugString != NULL);
 	// We can't get the user to remove their newlines, as Windows doesn't automatically add them in OutputDebugStringA(),
 	// but __android_log_print includes automatic newlines, so strip them.
 	std::string debugStringSafe(debugString);
@@ -1779,8 +1786,11 @@ void OutputDebugStringA(const char * debugString)
 	if (debugStringSafe.back() == '.')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 
-	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "OutputDebugStringA: %s.", debugStringSafe.c_str());
+	LOGI("OutputDebugStringA: %s.", debugStringSafe.c_str());
 }
+#endif // DarkEdif log level INFO or higher
+
+// To get the Windows-like behaviour
 void Sleep(unsigned int milliseconds)
 {
 	if (milliseconds == 0)

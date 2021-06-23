@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <iomanip>
 #include <stddef.h>
+#include <thread>
 
 // Different returns! You must reprogram!
 //#define memcpy_s(a,b,c,d) memcpy(a, c, d)
@@ -39,7 +40,6 @@ int wcscasecmp(const wchar_t*, const wchar_t*);
 #define MB_TOPMOST 0
 #define MessageBox(a,b,c,d) MessageBoxA(a,b,c,d)
 #define _msize(a) malloc_usable_size(a)
-void OutputDebugStringA(const char * debugString);
 void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
 
@@ -194,7 +194,9 @@ enumType static operator&=(enumType &lhs, enumType rhs) { \
 }
 typedef unsigned short ushort;
 typedef unsigned int uint;
-extern JNIEnv * global_env;
+
+// Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
+extern JNIEnv * mainThreadJNIEnv;
 extern JavaVM * global_vm;
 
 struct eventGroup {
@@ -205,11 +207,53 @@ struct eventGroup {
 	eventGroup() = delete;
 };
 
-void LOGF(const char * x, ...);
+#define DARKEDIF_LOG_VERBOSE 2
+#define DARKEDIF_LOG_DEBUG 3
+#define DARKEDIF_LOG_INFO 4
+#define DARKEDIF_LOG_WARN 5
+#define DARKEDIF_LOG_ERROR 6
+#define DARKEDIF_LOG_FATAL 7
 
-#define LOGV(x,...) __android_log_print(ANDROID_LOG_VERBOSE, "MMFRuntimeNative", x, ##__VA_ARGS__)
-#define LOGI(x,...) __android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", x, ##__VA_ARGS__)
-#define LOGE(x,...) __android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", x, ##__VA_ARGS__)
+#ifndef DARKEDIF_LOG_MIN_LEVEL
+	#ifdef _DEBUG
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+	#else
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
+	#endif
+#endif
+
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
+	#define LOGV(x,...) __android_log_print(ANDROID_LOG_VERBOSE, "MMFRuntimeNative", x, ##__VA_ARGS__)
+#else
+	#define LOGV(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
+	#define LOGD(x,...) __android_log_print(ANDROID_LOG_DEBUG, "MMFRuntimeNative", x, ##__VA_ARGS__)
+#else
+	#define LOGD(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
+	#define LOGI(x,...) __android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", x, ##__VA_ARGS__)
+
+	// Equivalent to LOGI().
+	void OutputDebugStringA(const char * debugString);
+#else
+	#define LOGI(x,...) (void)0
+	// Equivalent to LOGI().
+	#define OutputDebugStringA(x) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
+	#define LOGW(x,...) __android_log_print(ANDROID_LOG_WARN, "MMFRuntimeNative", x, ##__VA_ARGS__)
+#else
+	#define LOGW(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR)
+	#define LOGE(x,...) __android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", x, ##__VA_ARGS__)
+#else
+	#define LOGE(x,...) (void)0
+#endif
+
+void LOGF(const char * x, ...);
 
 struct CTransition;
 struct CDebugger;
@@ -852,39 +896,39 @@ std::string GetJavaExceptionStr();
 };
 std::vector<monitor> monitors;*/
 
+extern thread_local JNIEnv * threadEnv;
+
 static int globalCount;
+
 // JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
-template<typename T> struct global {
+template<class T>
+struct global {
+	static_assert(std::is_pointer<T>::value, "Must be a pointer!");
 	T ref;
 	global(global<T> &&p) = delete;
 	global(global<T> &p) = delete;
-	global<T>& operator= (global<T> &&p) noexcept {
+	global<T> & operator= (global<T> && p) noexcept {
 		this->ref = p.ref;
 		p.ref = NULL;
+		LOGV("Moved global ref %p from holder %p to %p.", &p, this->ref, this);
 		return *this;
-	}/*
-	global(global<T> &p) {
-		p->ref = this->ref;
-		this->ref = NULL;
-	}*/
+	}
 
 	global(T p) {
-		ref = (T)global_env->NewGlobalRef(p);
+		ref = nullptr;
+		if (p == nullptr) {
+			LOGE("Couldn't make global ref from null. Check the calling function.");
+			return;
+		}
+		assert(threadEnv != NULL);
+		ref = (T)threadEnv->NewGlobalRef(p);
 		if (ref == NULL) {
 			std::string exc = GetJavaExceptionStr();
 			LOGE("Couldn't make global ref from %p [1], error: %s.", p, exc.c_str());
 		}
 		LOGV("Creating global pointer %p in global() from original %p.", ref, p);
-		//global_env->DeleteLocalRef(p);
+		//threadEnv->DeleteLocalRef(p);
 	}
-	/*global(T p) {
-		ref = (T)global_env->NewGlobalRef(p);
-		if (ref == NULL) {
-			std::string exc = GetJavaExceptionStr();
-			LOGE("Couldn't make global ref from %p [2], error: %s.", p, exc.c_str());
-		}
-		global_env->DeleteLocalRef(p);
-	}*/
 	global() {
 		ref = NULL;
 	}
@@ -901,25 +945,28 @@ template<typename T> struct global {
 		}
 		return ref;
 	}
-	~global()
-	{
+	~global() {
 		if (ref)
 		{
 			LOGV("Freeing global pointer %p in ~global().", ref);
-			global_env->DeleteGlobalRef(ref);
+			assert(threadEnv != NULL);
+			threadEnv->DeleteGlobalRef(ref);
 			ref = NULL;
 		}
 	}
 };
+
 void LOGF(const char * x, ...);
 
 // Converts u8str to UTF-8Modified str. Expects no embedded nulls
 jstring CStrToJStr(const char * u8str);
+// Converts std::thread::id to a std::string
+std::string ThreadIDToStr(std::thread::id);
 
 #define JAVACHKNULL(x) x; \
-	if (global_env->ExceptionCheck()) { \
+	if (threadEnv->ExceptionCheck()) { \
 		std::string s = GetJavaExceptionStr(); \
-		__android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", "Dead in %s, %i: %s.", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
+		LOGE("Dead in %s, %i: %s.", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
 	}
 
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.

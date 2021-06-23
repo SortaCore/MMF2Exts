@@ -113,15 +113,13 @@ lacewing::readlock::readlock(readwritelock &lock)
 }
 void lacewing::readlock::relock()
 {
-	if (locked)
-		throw std::runtime_error("ReadLock: Locking when it's already locked");
+	assert(!locked && "ReadLock: Locking when it's already locked");
 	lock.openReadLock(*this);
 	locked = true;
 }
 void lacewing::readlock::unlock()
 {
-	if (!locked)
-		throw std::runtime_error("ReadLock: Unlocking when it's already unlocked");
+	assert(locked && "ReadLock: Unlocking when it's already unlocked");
 	lock.closeReadLock(*this);
 	locked = false;
 }
@@ -162,8 +160,7 @@ lacewing::writelock::writelock(readwritelock &lock)
 }
 void lacewing::writelock::relock()
 {
-	if (locked)
-		throw std::runtime_error("WriteLock: Locking when it's already locked");
+	assert(!locked && "WriteLock: Locking when it's already locked");
 	lock.openWriteLock(*this);
 	locked = true;
 }
@@ -212,8 +209,7 @@ bool lacewing::readwritelock::checkHoldsWrite(bool excIfNot /* = true */) const
 	this->metaLock = false;
 
 	nope:
-	if (excIfNot)
-		throw std::runtime_error("Undefined behaviour; write lock not held when expected. Please attach debugger now.");
+	assert(!excIfNot && "Undefined behaviour; write lock not held when expected. Please attach debugger now.");
 	return false;
 }
 // Debug breakpoint if readlock is not held by current thread.
@@ -240,9 +236,8 @@ bool lacewing::readwritelock::checkHoldsRead(bool excIfNot /* = true */) const
 	// Drop meta lock
 	this->metaLock = false;
 
-	nope:
-	if (excIfNot)
-		throw std::runtime_error("Undefined behaviour; read lock not held when expected. Please attach debugger now.");
+nope:
+	assert(!excIfNot && "Undefined behaviour; read lock not held when expected. Please attach debugger now.");
 	return false;
 }
 

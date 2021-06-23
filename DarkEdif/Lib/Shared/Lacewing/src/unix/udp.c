@@ -32,6 +32,7 @@
 
 struct _lw_udp
 {
+	lwp_refcounted;
 	lw_pump pump;
 
 	lw_udp_hook_data on_data;
@@ -40,6 +41,9 @@ struct _lw_udp
 	lw_filter filter;
 
 	int fd;
+
+	long receives_posted;
+	int writes_posted;
 
 	void * tag;
 };
@@ -178,7 +182,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	lwp_trace ("UDP send");
 	lw_dump (data, size);
 
-	if (!lw_addr_ready (addr))
+	if (!addr || !lw_addr_ready (addr))
 	{
 	  lw_error error = lw_error_new ();
 
@@ -196,8 +200,14 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	if (size == -1)
 	  size = strlen (data);
 
+	if constexpr (sizeof(size) > 4)
+		assert(size < 0xFFFFFFFF);
+
 	if (!addr->info)
 	  return;
+
+	++ctx->writes_posted;
+	lwp_retain(ctx, "udp write");
 
 	if (sendto (ctx->fd, data, size, 0, (struct sockaddr *) addr->info->ai_addr,
 				addr->info->ai_addrlen) == -1)

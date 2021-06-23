@@ -318,16 +318,16 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject java
 				globals->_ext = this;
 			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
 
-			std::thread timeoutThread;
-			globals->timeoutThread.swap(timeoutThread);
+			// globals->timeoutThread is now invalid
+			std::thread timeoutThread(std::move(globals->timeoutThread));
 			LeaveCriticalSectionDebug(&globals->lock); // can't hold it while timeout thread tries to exit
 
+			// If timeout thread, join to wait for it
 			if (timeoutThread.joinable())
 			{
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
 				globals->cancelTimeoutThread = true;
-				timeoutThread.join();
-				// The thread should have ended. Due to us reclaiming control, globals remains valid.
+				timeoutThread.join(); // Wait for end
 				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
 			}
 		}
@@ -342,14 +342,19 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject java
 	// Try to boot the Lacewing thread if multithreading and not already running
 	if (edPtr->multiThreading && !globals->_thread.joinable())
 	{
+		// Has exceptions support
+#if !defined(__clang__) || defined(__EXCEPTIONS)
 		try {
-			globals->_thread = ::std::thread(LacewingLoopThread, this);
+			globals->_thread = std::thread(LacewingLoopThread, this);
 		}
 		catch (std::system_error e)
 		{
 			CreateError("Error: failed to boot thread: %s.", e.what());
 			Runtime.Rehandle();
 		}
+#else
+		globals->_thread = std::thread(LacewingLoopThread, this);
+#endif
 	}
 	else if (!edPtr->multiThreading)
 		Runtime.Rehandle();
@@ -409,8 +414,19 @@ DWORD LacewingLoopThread(void * thisExt)
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
 
-	GlobalInfo * G = ((Extension *)thisExt)->globals;
+	Extension * ext = (Extension *)thisExt;
+
+#ifdef __ANDROID__
+	// So Lacewing handlers run by event loop can run Rehandle().
+	ext->Runtime.AttachJVMAccessForThisThread(PROJECT_NAME " Lacewing Loop Thread");
+#endif
+
+	GlobalInfo * G = ext->globals;
+
+	// Has exception support
+#if !defined(__clang__) || defined(__EXCEPTIONS)
 	try {
+#endif
 		lacewing::error error = G->_objEventPump->start_eventloop();
 
 		// Can't error report if there's no extension to error-report to.
@@ -423,7 +439,7 @@ DWORD LacewingLoopThread(void * thisExt)
 			text += error->tostring();
 			G->CreateError("%s", text.c_str());
 		}
-
+#if !defined(__clang__) || defined(__EXCEPTIONS)
 	}
 	catch (...)
 	{
@@ -431,8 +447,12 @@ DWORD LacewingLoopThread(void * thisExt)
 		if (G->_ext)
 			G->CreateError("StartEventLoop() killed by exception. Switching to single-threaded.");
 	}
-	std::thread thread;
-	G->_thread.swap(thread);
+#endif
+
+#ifdef __ANDROID__
+	Edif::Runtime::DetachJVMAccessForThisThread();
+#endif
+
 	OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread has exited.\n");
 	return 0;
 }
@@ -520,6 +540,15 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		_ext->Runtime.Rehandle();
 }
 
+#ifdef HYPER_OPTIMISE
+void Extension::CreateError2() {
+	globals->CreateError2();
+}
+void GlobalInfo::CreateError2() {
+	AddEvent1(0, nullptr, nullptr, nullptr, "Error message optimised away."sv);
+}
+
+#else // not hyperoptimised
 void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
@@ -545,6 +574,7 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 		errorDetailed << "[Fusion event #"sv << DarkEdif::GetCurrentFusionEventNum(extsHoldingGlobals[0]) << "] "sv;
 
 	char output[2048];
+#ifdef _DEBUG
 	try {
 		if (vsprintf(output, errorFormatU8, v) <= 0)
 		{
@@ -559,6 +589,10 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 		errorDetailed.str("vsprintf_s failed with crash, format ["s);
 		errorDetailed << errorFormatU8 << "]."sv;
 	}
+#else
+	vsprintf(output, errorFormatU8, v);
+	errorDetailed << output;
+#endif
 
 	const std::string errTextU8 = errorDetailed.str();
 #if defined(_DEBUG) && defined (_WIN32)
@@ -571,6 +605,7 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 #endif
 	AddEvent1(0, nullptr, nullptr, nullptr, errTextU8);
 }
+#endif
 
 void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 {
@@ -1105,6 +1140,9 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
 
 	GlobalInfo* G = (GlobalInfo *)ThisGlobalsInfo;
+#ifdef __ANDROID__
+	Edif::Runtime::AttachJVMAccessForThisThread(PROJECT_NAME " Timeout Thread");
+#endif
 
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
@@ -1158,6 +1196,7 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!appWasClosed && G->timeoutWarningEnabled)
 	{
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: timeout warning message.\n");
+
 		// Otherwise, fuss at them.
 		MessageBoxA(NULL, "Bluewing Client warning!\n"
 			"All Bluewing Client objects have been destroyed and some time has passed; but "
@@ -1168,7 +1207,8 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
 	}
 
-	killGlobals:
+killGlobals:
+
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: (Faux?-)deleting globals.\n");
 
 	// Don't delete GlobalInfo, as we don't know what main thread is doing,
@@ -1182,6 +1222,9 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (appWasClosed)
 		delete G;
 
+#ifdef __ANDROID__
+	Edif::Runtime::DetachJVMAccessForThisThread();
+#endif
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
 	return 0U;
 }
@@ -1307,7 +1350,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!extsHoldingGlobals.empty())
-		throw std::runtime_error("GlobalInfo dtor called prematurely.");
+		assert(false && "GlobalInfo dtor called prematurely.");
 
 	if (!pendingDelete)
 		MarkAsPendingDelete();

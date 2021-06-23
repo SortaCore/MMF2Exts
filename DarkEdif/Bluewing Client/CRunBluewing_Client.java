@@ -23,13 +23,20 @@ import Expressions.CExpExtension;
 import Actions.CActExtension;
 import Expressions.CValue;
 import Expressions.CNativeExpInstance;
-import Extensions.CRunBluewing_ClientShutdownThread;
 
 public class CRunBluewing_Client extends CRunExtension
 {
+	private class ShutdownThread extends Thread
+	{
+		public void run()
+		{
+			CRunBluewing_Client.darkedif_EndApp();
+		}
+	}
+
 	private static boolean inited = false;
 	private long cptr;
-	public static CRunBluewing_ClientShutdownThread shutdownThreadClass;
+	public static ShutdownThread shutdownThreadClass;
 	public static Thread shutdownThread;
 	public CRunBluewing_Client()
 	{
@@ -46,7 +53,10 @@ public class CRunBluewing_Client extends CRunExtension
 				MMFRuntime.inst.inputStreamToFile(asset, extFilename);
 				
 				android.util.Log.v("MMFRuntimeNative", "Loading Bluewing Client extension from file dir...");
+				
+				System.loadLibrary("c++_shared");
 				System.load(MMFRuntime.inst.getFilesDir() + "/" + extFilename);
+				//System.loadLibrary("Bluewing Client");
 
 				android.util.Log.v("MMFRuntimeNative", "Loaded Bluewing Client extension OK!");
 				
@@ -64,7 +74,7 @@ public class CRunBluewing_Client extends CRunExtension
 			// Set up JavaVM shutdown handler
 			if (inited)
 			{
-				shutdownThreadClass = new CRunBluewing_ClientShutdownThread();
+				shutdownThreadClass = new ShutdownThread();
 				shutdownThread = new Thread(shutdownThreadClass);
 				Runtime.getRuntime().addShutdownHook(shutdownThread);
 			}
@@ -81,6 +91,9 @@ public class CRunBluewing_Client extends CRunExtension
 	@Override
 	public boolean createRunObject(CBinaryFile file, CCreateObjectInfo cob, int version)
 	{
+		// No need to request Internet or AccessNetworkState perms at runtime:
+		// https://developer.android.com/training/basics/network-ops/connecting#:~:text=%20both%20the%20internet%20and%20access_network_state%20
+		
 		// Java doesn't prepend eHeader to EDITDATA, so we'll reconstruct it ourselves.
 		int eHeaderSize = 20; // 32-bit pointers
 		
@@ -169,4 +182,4 @@ public class CRunBluewing_Client extends CRunExtension
 	
 	// JavaVM shutdown handler. Fusion doesn't appear to have a way of notifying native exts if app is closing down.
 	public static native void darkedif_EndApp();
-};
+}

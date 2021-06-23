@@ -57,9 +57,9 @@ const char * lw_version ()
 			#elif defined(__arm__)
 				platform = "Android ARMv5";
 			#elif defined(__i386__)
-				platform = "Android x86"
+				platform = "Android x86";
 			#elif defined(__x86_64__)
-				platform = "Android x64"
+				platform = "Android x64";
 			#else
 				#error ABI not known, please amend code
 			#endif

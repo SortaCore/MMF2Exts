@@ -29,12 +29,12 @@
 
 #include "../common.h"
 
-static lw_bool init_called = lw_false;
+static lw_i32 init_called = 0;
 
 void lwp_init ()
 {
-	if (init_called)
-	  return;
+	if (++init_called != 1)
+		return;
 
 	init_called = lw_true;
 
@@ -52,6 +52,17 @@ void lwp_init ()
 
 	#endif
 }
+void lwp_deinit()
+{
+	/*
+	if (--init_called == 0)
+		WSACleanup();
+	*/
+#ifdef ENABLE_SSL
+#error Is there SSL cleanup? See lwp_init()
+#endif
+}
+
 
 lw_bool lw_file_exists (const char * filename)
 {

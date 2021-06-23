@@ -270,7 +270,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) : 
 	runFuncs(runFuncs), javaExtPtr(javaExtPtr2), ObjectSelection(NULL)
 {
-	javaExtPtrClass = global_env->GetObjectClass(javaExtPtr);
+	javaExtPtrClass = mainThreadJNIEnv->GetObjectClass(javaExtPtr);
 	
 	std::string exc;
 	if (javaExtPtrClass.invalid()) {
@@ -278,19 +278,19 @@ Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) :
 		LOGE("Could not get javaExtPtrClass, got exception %s.", exc.c_str());
 	}
 	
-	jfieldID javaHoField = global_env->GetFieldID(javaExtPtrClass, "ho", "LObjects/CExtension;");
+	jfieldID javaHoField = mainThreadJNIEnv->GetFieldID(javaExtPtrClass, "ho", "LObjects/CExtension;");
 	if (javaHoField == NULL) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaHoField, got exception %s.", exc.c_str());
 	}
 
-	javaHoObject = global_env->GetObjectField(javaExtPtr, javaHoField);
+	javaHoObject = mainThreadJNIEnv->GetObjectField(javaExtPtr, javaHoField);
 	if (javaHoObject.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaHoObject, got exception %s.", exc.c_str());
 	}
 
-	javaHoClass = global_env->GetObjectClass(javaHoObject);
+	javaHoClass = mainThreadJNIEnv->GetObjectClass(javaHoObject);
 	if (javaHoClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not find javaHoClass method, got exception %s.", exc.c_str());
@@ -298,52 +298,37 @@ Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) :
 }
 
 #define GenEdifFunction(x) \
-	static jmethodID javaMethodID = global_env->GetMethodID(javaHoClass, x, "()V"); \
+	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass, x, "()V"); \
 	if (javaMethodID == NULL) {\
 		std::string exc = GetJavaExceptionStr(); \
-		__android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", "Could not find %s method, got exception %s.", x, exc.c_str()); \
+		LOGE("Could not find %s method, got exception %s.", x, exc.c_str()); \
 	} \
 	else \
-		global_env->CallVoidMethod(javaHoObject, javaMethodID);
+		threadEnv->CallVoidMethod(javaHoObject, javaMethodID);
 
 Edif::Runtime::~Runtime()
 {
-	javaExtPtr = NULL;
 }
 
+extern thread_local JNIEnv * threadEnv;
 void Edif::Runtime::Rehandle()
 {
-	LOGI("Calling ReHandle, awaiting... class = %p", (jclass)javaHoClass);
-	static jmethodID javaMethodID = global_env->GetMethodID(javaHoClass.ref, "reHandle", "()V");
-	if (javaMethodID == NULL) {
-		std::string exc = GetJavaExceptionStr();
-		__android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", "Could not find %s method, got exception %s.", "reHandle", exc.c_str());
-	}
-	else {
-		LOGI("Calling ReHandle on method %p, object %p...", javaMethodID, javaHoObject.ref);
-		global_env->CallVoidMethod(javaHoObject.ref, javaMethodID);
-		LOGI("ReHandle success. %d", 0);
-		if (global_env->ExceptionCheck())
-		{
-			std::string exc2 = GetJavaExceptionStr();
-			LOGE("ReHandle exception, %s.", exc2.c_str());
-		}
-		
-	}
+	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "reHandle", "()V");
+	threadEnv->CallVoidMethod(javaHoObject.ref, javaMethodID);
 	// GenEdifFunction reHandle
 }
 
 void Edif::Runtime::GenerateEvent(int EventID)
 {
-	jmethodID javaMethodID = global_env->GetMethodID(javaHoClass, "generateEvent", "(II)V");
-	global_env->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
+	jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass, "generateEvent", "(II)V");
+	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
 	//runFuncs.generateEvent(javaHoObject, EventID, 0);
 }
 
 void Edif::Runtime::PushEvent(int EventID)
 {
-	jmethodID javaMethodID = global_env->GetMethodID(javaHoClass, "pushEvent", "(II)V");
-	global_env->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
+	jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass, "pushEvent", "(II)V");
+	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
 }
 
 void * Edif::Runtime::Allocate(size_t size)
@@ -354,22 +339,70 @@ void * Edif::Runtime::Allocate(size_t size)
 	return NULL;
 }
 
-TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
-{
+// Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside expression return.
+TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
 	return (TCHAR  *)String;
 }
-
-char * Edif::Runtime::CopyStringEx(const char * String)
-{
+char * Edif::Runtime::CopyStringEx(const char * String) {
 	return (char *)String;
 }
-
-
-wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String)
-{
+wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
 	return (wchar_t *)String;
 }
 
+JNIEnv * Edif::Runtime::AttachJVMAccessForThisThread(const char * threadName, bool asDaemon)
+{
+	const auto thisThreadID = std::this_thread::get_id();
+	if (threadEnv != nullptr)
+	{
+		LOGF("Thread ID %s already has JNI access.", ThreadIDToStr(thisThreadID).c_str());
+		return nullptr;
+	}
+
+	JavaVMAttachArgs args = {
+		.name = threadName,
+		.group = NULL,
+		.version = JNI_VERSION_1_6
+	};
+
+	// Daemon means the JVM won't keep the app running if this thread is still alive.
+	// Do you want main thread exiting to choose whether the app is running or not?
+	jint error;
+	if (asDaemon)
+		error = global_vm->AttachCurrentThreadAsDaemon(&threadEnv, &args);
+	else
+		error = global_vm->AttachCurrentThread(&threadEnv, &args);
+	if (error != JNI_OK)
+	{
+		LOGF("Couldn't attach thread %s (ID %s) to JNI, AttachCurrentThread%s error %i.",
+			threadName, ThreadIDToStr(thisThreadID).c_str(), asDaemon ? "AsDaemon" : "", error);
+		return nullptr;
+	}
+
+	LOGV("Attached thread %s (ID %s) to JNI.", threadName, ThreadIDToStr(thisThreadID).c_str());
+	return threadEnv;
+}
+void Edif::Runtime::DetachJVMAccessForThisThread()
+{
+	const auto thisThreadID = std::this_thread::get_id();
+	if (threadEnv == nullptr)
+	{
+		LOGF("Can't detach JVM access, thread ID %s already doesn't have JNI access", ThreadIDToStr(thisThreadID).c_str());
+		return;
+	}
+	const jint error = global_vm->DetachCurrentThread();
+	if (error != JNI_OK)
+	{
+		LOGF("Couldn't attach thread ID %s to JNI, AttachCurrentThread error %i.", ThreadIDToStr(thisThreadID).c_str(), error);
+		return;
+	}
+
+	threadEnv = nullptr;
+}
+inline JNIEnv * Edif::Runtime::GetJNIEnvForThisThread()
+{
+	return threadEnv;
+}
 
 
 void Edif::Runtime::Pause()
@@ -441,8 +474,8 @@ void Edif::Runtime::CallMovement(int ID, long Parameter)
 
 void Edif::Runtime::SetPosition(int X, int Y)
 {
-	jmethodID javaMethodID = global_env->GetMethodID(javaExtPtrClass, "setPosition", "(II)V");
-	global_env->CallVoidMethod(javaExtPtr, javaMethodID, X, Y);
+	jmethodID javaMethodID = threadEnv->GetMethodID(javaExtPtrClass, "setPosition", "(II)V");
+	threadEnv->CallVoidMethod(javaExtPtr, javaMethodID, X, Y);
 }
 
 static EdifGlobal * staticEdifGlobal; // LB says static/global values are functionally equivalent to getUserExtData, so... yay.
@@ -495,12 +528,12 @@ static char * GetObjectNameWithPackage(const char * name)
 	static std::string packageName = "";
 	if (!gotten)
 	{
-		jclass javaExtPtrClass = global_env->GetObjectClass(javaExtPtr);
-		jmethodID getClassNameMethod = global_env->GetMethodID(javaExtPtrClass, "getName", "()Ljava/lang/String;");
-		jstring className = (jstring)global_env->CallObjectMethod(javaExtPtrClass, getClassNameMethod);
-		const char * classNameCPtr = global_env->GetStringUTFChars(className, NULL);
+		jclass javaExtPtrClass = threadEnv->GetObjectClass(javaExtPtr);
+		jmethodID getClassNameMethod = threadEnv->GetMethodID(javaExtPtrClass, "getName", "()Ljava/lang/String;");
+		jstring className = (jstring)threadEnv->CallObjectMethod(javaExtPtrClass, getClassNameMethod);
+		const char * classNameCPtr = threadEnv->GetStringUTFChars(className, NULL);
 		packageName = classNameCPtr;
-		global_env->ReleaseStringUTFChars(className, classNameCPtr);
+		threadEnv->ReleaseStringUTFChars(className, classNameCPtr);
 		gotten = true;
 	}
 
@@ -512,44 +545,43 @@ static char * GetObjectNameWithPackage(const char * name)
 void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 {
 	/*
-	JNIEnv * global_env = NULL;
 	// Access CRun from CRunExtension::rh
 	// Access CRunApp from CRun::rhApp
 	// Access CRunApp from CRunApp::parentApp
 	// Access CRun again from CRunApp::run
 
-	jclass javaExtPtrClass = global_env->GetObjectClass(javaExtPtr);
-	jclass CRunClass = global_env->FindClass(GetObjectNameWithPackage("CRun"));
-	jclass CRunAppClass = global_env->FindClass(GetObjectNameWithPackage("CRunApp"));
+	jclass javaExtPtrClass = threadEnv->GetObjectClass(javaExtPtr);
+	jclass CRunClass = threadEnv->FindClass(GetObjectNameWithPackage("CRun"));
+	jclass CRunAppClass = threadEnv->FindClass(GetObjectNameWithPackage("CRunApp"));
 
-	jfieldID CRunExtension_rh_fieldID = global_env->GetFieldID(javaExtPtrClass, "rh", GetObjectNameWithPackage("CRun"));
-	jfieldID CRun_rhApp_fieldID = global_env->GetFieldID(CRunClass, "rhApp", GetObjectNameWithPackage("CRunApp"));
-	jfieldID CRunApp_parentApp_fieldID = global_env->GetFieldID(CRunAppClass, "parentApp", GetObjectNameWithPackage("CRunApp"));
-	jfieldID CRunApp_run_fieldID = global_env->GetFieldID(CRunAppClass, "run", GetObjectNameWithPackage("CRunApp"));
+	jfieldID CRunExtension_rh_fieldID = threadEnv->GetFieldID(javaExtPtrClass, "rh", GetObjectNameWithPackage("CRun"));
+	jfieldID CRun_rhApp_fieldID = threadEnv->GetFieldID(CRunClass, "rhApp", GetObjectNameWithPackage("CRunApp"));
+	jfieldID CRunApp_parentApp_fieldID = threadEnv->GetFieldID(CRunAppClass, "parentApp", GetObjectNameWithPackage("CRunApp"));
+	jfieldID CRunApp_run_fieldID = threadEnv->GetFieldID(CRunAppClass, "run", GetObjectNameWithPackage("CRunApp"));
 	
-	jobject cRun = global_env->GetObjectField(javaExtPtr, CRunExtension_rh_fieldID);
-	jobject cRunApp = global_env->GetObjectField(javaExtPtr, CRun_rhApp_fieldID);
+	jobject cRun = threadEnv->GetObjectField(javaExtPtr, CRunExtension_rh_fieldID);
+	jobject cRunApp = threadEnv->GetObjectField(javaExtPtr, CRun_rhApp_fieldID);
 	
 	for (jobject cRunAppTemp = cRunApp; cRunAppTemp != NULL; )
 	{
 		cRunApp = cRunAppTemp;
-		cRun = global_env->GetObjectField(cRunApp, CRunApp_run_fieldID);
+		cRun = threadEnv->GetObjectField(cRunApp, CRunApp_run_fieldID);
 	
-		cRunAppTemp = global_env->GetObjectField(cRunApp, CRunApp_parentApp_fieldID);
+		cRunAppTemp = threadEnv->GetObjectField(cRunApp, CRunApp_parentApp_fieldID);
 	}
 	char methodParams[256];
 	
 	sprintf(methodParams, "(%sI)V", GetObjectNameWithPackage("EdifGlobal"));
-	jmethodID CRun_addStorage_methodID = global_env->GetMethodID(CRunClass, "addStorage", methodParams);
+	jmethodID CRun_addStorage_methodID = threadEnv->GetMethodID(CRunClass, "addStorage", methodParams);
 
 	sprintf(methodParams, "(I)%s", GetObjectNameWithPackage("EdifGlobal"));
-	jmethodID CRun_getStorage_methodID = global_env->GetMethodID(CRunClass, "getStorage", methodParams);
+	jmethodID CRun_getStorage_methodID = threadEnv->GetMethodID(CRunClass, "getStorage", methodParams);
 
-	jmethodID CRun_delStorage_methodID = global_env->GetMethodID(CRunClass, "delStorage", "(I)V");
+	jmethodID CRun_delStorage_methodID = threadEnv->GetMethodID(CRunClass, "delStorage", "(I)V");
 
 	int id = 'EDIF';
 
-	jobject edifData = global_env->CallObjectMethod(cRun, CRun_getStorage_methodID, id);
+	jobject edifData = threadEnv->CallObjectMethod(cRun, CRun_getStorage_methodID, id);
 	*/
 	EdifGlobal * Global = staticEdifGlobal;
 

@@ -25,10 +25,10 @@
     <Filter Include="Source files\Lacewing\src\unix">
       <UniqueIdentifier>{ef0d33b8-6559-4b36-8a06-5617ce9bbefb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Header files">
       <UniqueIdentifier>{dc22601f-62ad-42ed-aa97-71eaa7c8c432}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Lacewing">
+    <Filter Include="Header files\Lacewing">
       <UniqueIdentifier>{f01c908b-c84c-4141-a87a-81701e955e8f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Global to all extensions">
@@ -98,8 +98,8 @@
     <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
-    <ClInclude Include="..\Lib\Shared\Lacewing\include\android config.h">
-      <Filter>Header Files\Lacewing</Filter>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h">
+      <Filter>Header files\Lacewing</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -12,7 +12,8 @@ bool Edif::ExternalJSON;
 #include <unistd.h>
 #include <android/log.h>
 #include <dlfcn.h>
-JNIEnv * global_env;
+// Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
+JNIEnv * mainThreadJNIEnv;
 JavaVM * global_vm;
 #elif defined(__APPLE__)
 #include <unistd.h>
@@ -26,7 +27,7 @@ std::string Edif::CurrentFolder()
 	size_t count = GetModuleFileNameA(hInstLib, result, sizeof(result));
 #elif __ANDROID__
 	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-	__android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", "Got %s as the path.", result);
+	LOGI("Got %s as the path.", result);
 #else
 	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
 	printf("Got %s as the path.", result);
@@ -1653,10 +1654,8 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 
 
 	// https://en.wikibooks.org/wiki/OpenGL_Programming/Android_GLUT_Wrapper#Accessing_assets
-	JNIEnv* global_env = state_param->activity->global_env;
 	JavaVM* vm = state_param->activity->vm;
-	vm->AttachCurrentThread(&global_env, NULL);
-	AAssetManager_fromJava(global_env, assetManager);
+	AAssetManager_fromJava(threadEnv, assetManager);
 	// https://stackoverflow.com/a/40935331
 	AssetManager * mgr = app->activity->assetManager;
 	AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
@@ -1916,11 +1915,11 @@ static void GetFunctionAndLine(std::string & func, int & line)
 }
 #endif // _WIN32
 
-#else // !_DEBUG
-static void GetFunctionAndLine(std::string & func, int & line) {
-	line = -1;
-}
 #endif // _DEBUG
+
+
+#ifdef _DEBUG
+
 
 Edif::recursive_mutex::recursive_mutex()
 {
@@ -2005,9 +2004,9 @@ void Edif::recursive_mutex::unlock()
 	{
 		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
 		if (f == NULL) {
-	#ifndef _WIN32
+#ifndef _WIN32
 			LOGV("Failed to write log file, error %d.", errno);
-	#endif
+#endif
 		}
 		else
 		{
@@ -2023,3 +2022,26 @@ void Edif::recursive_mutex::unlock()
 	}
 	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 }
+
+#else // Not debug
+
+Edif::recursive_mutex::recursive_mutex()
+{
+}
+Edif::recursive_mutex::~recursive_mutex()
+{
+}
+void Edif::recursive_mutex::lock()
+{
+	this->intern.lock();
+}
+bool Edif::recursive_mutex::try_lock()
+{
+	return this->intern.try_lock();
+}
+void Edif::recursive_mutex::unlock()
+{
+	this->intern.unlock();
+}
+
+#endif // _DEBUG

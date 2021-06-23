@@ -333,7 +333,7 @@ void resolver (lw_addr ctx)
 	// Android appears to not allow AI_V4MAPPED. https://stackoverflow.com/a/39675076
 	#ifdef AI_V4MAPPED
 		#ifdef __ANDROID__
-			//hints.ai_flags |= AI_ALL;
+			//hints.ai_flags |= AI_V4MAPPED;
 		#else
 			hints.ai_flags |= AI_V4MAPPED;
 		#endif
