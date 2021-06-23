@@ -63,6 +63,17 @@
 		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
 		<!-- If user has enabled DarkEdif Update Checker inside their Extension. -->
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
+		<!-- PSCP copy parameters -->
+		<DarkEdif_PSCPPath>(Specify In FusionSDKConfig.ini)</DarkEdif_PSCPPath>
+		<!-- PSCP copy arguments:
+			{0} is replaced by remote path, {1} by local path.
+			Don't use quotes around {0} or {1}, but use them elsewhere.
+
+			Example using private key file:
+			-P port -i "Path To Private Key.ppk" MacUserName@MacIPAddress:{0} {1} -->
+		<DarkEdif_PSCPArgs>(Specify in FusionSDKConfig.ini) {0} {1}</DarkEdif_PSCPArgs>
+		<!-- Remote output folder to read from with PSCP. Should point to the DarkEdif Temp folder! -->
+		<DarkEdif_RemoteOutputFolder>(Specify in FusionSDKConfig.ini)</DarkEdif_RemoteOutputFolder>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup>
@@ -131,6 +142,25 @@
 		<_UseMultiProcessorRegex><![CDATA[(?im)^UseMultiProcessorCompilationInDebug\s*=\s*true\s*?$]]></_UseMultiProcessorRegex>
 		<_UseMultiProcessor Condition=
 			"$(RelBuild)==1 OR $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_UseMultiProcessorRegex)).Success)">1</_UseMultiProcessor>
+
+		<!-- pscp.exe local filepath, used by iPhone remote build. Part of the PuTTY downloads. -->
+		<_DarkEdif_PSCPPathRegex><![CDATA[(?im)^PSCPPath\s*=\s*(.*)\s*$]]></_DarkEdif_PSCPPathRegex>
+		<DarkEdif_PSCPPath Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PSCPPathRegex)).Success)"
+			>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PSCPPathRegex)).Result('$1'))</DarkEdif_PSCPPath>
+
+		<!-- iPhone remote build PSCP access parameters. -->
+		<_DarkEdif_PSCPArgsRegex><![CDATA[(?im)^PSCPArgs\s*=\s*(.*)\s*$]]></_DarkEdif_PSCPArgsRegex>
+		<DarkEdif_PSCPArgs Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PSCPArgsRegex)).Success)"
+			>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PSCPArgsRegex)).Result('$1').Replace('"','%27'))</DarkEdif_PSCPArgs>
+
+		<!-- iPhone remote build output folder. For some reason, VS won't copy it back. -->
+		<_DarkEdif_RemoteOutputFolderRegex><![CDATA[(?im)^RemoteOutputFolder\s*=\s*(.*)\s*$]]></_DarkEdif_RemoteOutputFolderRegex>
+		<DarkEdif_RemoteOutputFolder Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_RemoteOutputFolderRegex)).Success)"
+			>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_RemoteOutputFolderRegex)).Result('$1'))</DarkEdif_RemoteOutputFolder>
+
+		<!-- iPhone extensions are packaged into zips, with extensions EXT -->
+		<ZipExt>ZIP</ZipExt>
+		<ZipExt Condition="'$(_TargetPlat)'=='iOS'">EXT</ZipExt>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('Edif'))" Label="UserMacros">
 		<_JSON Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\DarkExt.json'))</_JSON>
@@ -242,7 +272,7 @@
 		</When>
 		<When Condition="$(_TargetPlat)=='iOS'">
 			<PropertyGroup Label="UserMacros">
-				<MFXDir>$(SolutionDir)MFX\Data\Runtime\iOS</MFXDir>
+				<MFXDir>$(SolutionDir)MFX\Data\Runtime\iPhone</MFXDir>
 			</PropertyGroup>
 		</When>
 	</Choose>
@@ -489,7 +519,19 @@
 
 <!--#################################
 		END Windows
-		BEGIN Android
+		BEGIN Android and iOS
+	################################# -->
+	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
+		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
+		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /Platform="$(_TargetPlat)"</DarkEdifPostBuildToolParams>
+
+		<!-- iOS build results need copying back from remote folder. -->
+		<DarkEdifPostBuildToolParams>$(DarkEdifPostBuildToolParams) /RemoteOutputRootFolder="$(DarkEdif_RemoteOutputFolder)" /PSCPPath="$(DarkEdif_PSCPPath)" /PSCPArgs="$(DarkEdif_PSCPArgs)"</DarkEdifPostBuildToolParams>
+	</PropertyGroup>
+
+<!--#################################
+		END Android and iOS
+		BEGIN Android-only
 	################################# -->
 	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
 		<!-- Android can use SDK 21/22 in latest preview, but the default Android.Tools.props file included with
@@ -527,7 +569,7 @@
 	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
 		<ClCompile>
 			<!-- Don't need it. -->
-			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
@@ -578,7 +620,7 @@
 		<UseDebugLibraries Condition="$(DbgBuild)=='Y'">true</UseDebugLibraries>
 		<!-- Most recent supported -->
 		<PlatformToolset>XCode_6_1</PlatformToolset>
-		<!-- libSTDc++ was deprecated ages ago, and is not available on watchOS or tvOS. -->
+		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS. -->
 		<UseOfStl>libc++</UseOfStl>
 	</PropertyGroup>
 
@@ -595,11 +637,23 @@
 		</ClCompile>
 	</ItemDefinitionGroup>
 
-	<ItemDefinitionGroup Condition="$(_TargetPlat)=='iOS' AND $(DbgBuild)!=''">
+	<ItemDefinitionGroup Condition="$(_TargetPlat)=='iOS' AND $(DbgBuild)==1">
 		<ClCompile>
+			<!-- Maximum debug information -->
 			<RuntimeTypeInfo>true</RuntimeTypeInfo>
 			<GenerateDebugSymbols>true</GenerateDebugSymbols>
+			<Optimization>Disabled</Optimization>
 			<DebugInformationLevel>Default</DebugInformationLevel>
+			<LinkTimeOptimization>false</LinkTimeOptimization>
+		</ClCompile>
+	</ItemDefinitionGroup>
+	<ItemDefinitionGroup Condition="$(_TargetPlat)=='iOS' AND $(DbgBuild)==0">
+		<ClCompile>
+			<!-- No debugger functionality -->
+			<GenerateDebugSymbols>false</GenerateDebugSymbols>
+			<DebugInformationLevel>Default</DebugInformationLevel>
+			<RuntimeTypeInfo>false</RuntimeTypeInfo>
+			<Optimization>Full</Optimization>
 			<LinkTimeOptimization Condition="$(LTCG)=='Y'">true</LinkTimeOptimization>
 		</ClCompile>
 	</ItemDefinitionGroup>
@@ -663,8 +717,8 @@
 	</Target>
 
 	<!-- Post build tool for non-Windows. Copies built SO into ZIP in MFX\Data\Runtime. -->
-	<Target Name="Copy SO files into ZIP" Condition="$(SDKType)=='DarkEdif' AND $(_TargetPlat)=='Android'" AfterTargets="Build">
-      <Message Text="Copying the built SO into a ZIP file inside MFX\Data\Runtime..." Importance="High" />
+	<Target Name="Copy SO files into ZIP" Condition="$(SDKType)=='DarkEdif' AND '$(_TargetPlat)'!='Windows'" AfterTargets="Build">
+      <Message Text="Copying the built libraries into the $(ZipExt) file in MFX\Data\Runtime..." Importance="High" />
 	  <Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
     </Target>
 
