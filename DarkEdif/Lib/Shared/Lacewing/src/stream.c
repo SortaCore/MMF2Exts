@@ -893,6 +893,7 @@ void lw_stream_retry (lw_stream ctx, int when)
 	{
 		if (!lwp_stream_write_direct (ctx))
 		{
+			lwp_trace("stream_retry returned false.");
 		 /* TODO: ??? */
 		}
 

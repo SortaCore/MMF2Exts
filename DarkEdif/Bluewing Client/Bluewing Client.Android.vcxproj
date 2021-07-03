@@ -43,11 +43,6 @@
     <ProjectName>Bluewing Client.Android</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'" />
-  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$(ProjectDir)\..\Lib\FusionSDK.props" Condition="exists('..\Lib\FusionSDK.props')" />
   <ImportGroup Label="ExtensionSettings" />
@@ -58,10 +53,8 @@
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -69,10 +62,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -80,11 +71,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -92,11 +80,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -104,10 +89,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -115,23 +98,18 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link />
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;m;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
@@ -139,11 +117,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Sysroot)\usr\include;..\Lib\Shared\Lacewing;$(StlIncludeDirectories)%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>$(_FusionSDKAdds);_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalOptions>-Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>

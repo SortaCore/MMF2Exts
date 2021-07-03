@@ -33,12 +33,14 @@ void lwp_make_nonblocking(lwp_socket fd)
 {
 #ifndef _WIN32
 	int orig = fcntl(fd, F_GETFL, 0);
-	int e = errno;
+	[[maybe_unused]] int e = errno;
 	assert(orig != -1);
 	// Don't set to non-blocking if it is already. Gets OS upset.
-	if (!(orig & O_NONBLOCK))
+	if (orig & O_NONBLOCK)
+		lw_trace("Not setting socket/FD %d to non-blocking, already set to that.", fd);
+	else
 	{
-		int newVal = fcntl(fd, F_SETFL, orig | O_NONBLOCK);
+		[[maybe_unused]] int newVal = fcntl(fd, F_SETFL, orig | O_NONBLOCK);
 		e = errno;
 		assert(newVal != -1);
 	}

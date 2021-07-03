@@ -115,13 +115,11 @@ void lacewing::readlock::relock()
 {
 	assert(!locked && "ReadLock: Locking when it's already locked");
 	lock.openReadLock(*this);
-	locked = true;
 }
 void lacewing::readlock::unlock()
 {
 	assert(locked && "ReadLock: Unlocking when it's already unlocked");
 	lock.closeReadLock(*this);
-	locked = false;
 }
 #endif
 
@@ -162,7 +160,6 @@ void lacewing::writelock::relock()
 {
 	assert(!locked && "WriteLock: Locking when it's already locked");
 	lock.openWriteLock(*this);
-	locked = true;
 }
 void lacewing::writelock::unlock()
 {
@@ -170,7 +167,6 @@ void lacewing::writelock::unlock()
 		return;
 		// throw std::runtime_error("WriteLock: Unlocking when it's already unlocked");
 	lock.closeWriteLock(*this);
-	locked = false;
 }
 #endif
 
@@ -276,6 +272,7 @@ void lacewing::readwritelock::openReadLock(readlock &rl)
 
 	read_waiters++;
 	rl.locker.lock();
+	rl.locked = true;
 
 	if (writers)
 		LacewingFatalErrorMsgBox(); // Shouldn't have a writer still locking while we're reading
@@ -420,6 +417,7 @@ void lacewing::readwritelock::closeReadLock(readlock &rl)
 
 	--readers;
 	rl.locker.unlock();
+	rl.locked = false;
 }
 
 #ifdef _DEBUG
@@ -482,6 +480,7 @@ void lacewing::readwritelock::closeWriteLock(writelock &wl)
 
 	--writers;
 	wl.locker.unlock();
+	wl.locked = false;
 }
 
 #ifdef _DEBUG

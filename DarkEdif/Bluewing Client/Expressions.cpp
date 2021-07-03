@@ -468,10 +468,10 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 					curChar = *(std::uint8_t *)&msg[j];
 					output << "Signed char: "sv;
 					if (std::isprint(curChar))
-						output << '\'' << *(char *)&curChar << '\'';
+						output << '\'' << msg[j] << '\'';
 					else
 						output << "(?)"sv;
-					output << " ("sv << curChar << ", 0x"sv << std::hex << std::setw(2) << curChar << std::dec << std::setw(width) << ")\r\n"sv;
+					output << " ("sv << (int)msg[j] << ", 0x"sv << std::hex << std::setw(2) << curChar << std::dec << std::setw(width) << ")\r\n"sv;
 				}
 			}
 			else

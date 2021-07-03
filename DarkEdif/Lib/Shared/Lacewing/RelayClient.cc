@@ -655,13 +655,26 @@ namespace lacewing
 						break;
 
 					this->welcomemessage = welcomemessage;
-
+					lacewing::error error = nullptr;
 					// If midway during connection when Disconnect is called, returned address can be null.
 					lacewing::address srvAddress = socket->server_address();
 					if (!srvAddress)
+					{
+						error = error_new();
+						error->add("Server address not valid during connect response");
+						this->handler_error(client, error);
+						error_delete(error);
 						break;
+					}
+					error = srvAddress->resolve();
+					if (error)
+					{
+						error->add("Server address not resolved during connect response");
+						this->handler_error(client, error);
+						error_delete(error);
+						break;
+					}
 
-					srvAddress->resolve();
 					udp->host(srvAddress);
 					udphellotick();
 

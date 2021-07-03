@@ -446,6 +446,8 @@ DWORD LacewingLoopThread(void * thisExt)
 		OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread got an exception.\n");
 		if (G->_ext)
 			G->CreateError("StartEventLoop() killed by exception. Switching to single-threaded.");
+		// You would normally think of setting G->_thread to none, but we don't need to. Once the
+		// thread exits, it won't be joinable, so the Handle() will switch to manual ticking anyway.
 	}
 #endif
 
@@ -1138,6 +1140,8 @@ REFLAG Extension::Handle()
 DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
+	bool appWasClosed;
+	int triggeredHandle = -1;
 
 	GlobalInfo* G = (GlobalInfo *)ThisGlobalsInfo;
 #ifdef __ANDROID__
@@ -1147,16 +1151,21 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	// If the user has created a new object which is receiving events from Bluewing
 	// it's cool, just close silently
 	if (!G->extsHoldingGlobals.empty())
-		return OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n"), 0U;
+	{
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n");
+		goto exitThread;
+	}
 
 	// If disconnected, no connection to worry about
 	if (!G->_client.connected())
-		return OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout client not connected, exiting.\n"), 0U;
+	{
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout client not connected, exiting.\n");
+		goto exitThread;
+	}
 
 	// Triggered by main thread after a frame switch finishes, to kick the timeout thread
 	// out of the wait early, or triggered by app exiting via EndApp() in Runtime.cpp.
-
-	int triggeredHandle = -1;
+	
 	while (true)
 	{
 		Sleep(100);
@@ -1174,9 +1183,9 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (triggeredHandle == 0)
 	{
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n");
-		return 0U;
+		goto exitThread;
 	}
-	const bool appWasClosed = triggeredHandle == 1;
+	appWasClosed = triggeredHandle == 1;
 
 	EnterCriticalSectionDebug(&G->lock);
 
@@ -1184,13 +1193,14 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G->extsHoldingGlobals.empty())
 	{
 		LeaveCriticalSectionDebug(&G->lock);
-		return OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout refs not empty, exiting.\n"), 0U;
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout refs not empty, exiting.\n");
+		goto exitThread;
 	}
 
 	if (!G->_client.connected())
 	{
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout client not connected, killing globals safely.\n");
-		goto killGlobals;
+		goto killGlobalsAndExitThread;
 	}
 
 	if (!appWasClosed && G->timeoutWarningEnabled)
@@ -1207,25 +1217,29 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
 	}
 
-killGlobals:
-
-	OutputDebugStringA(PROJECT_NAME " - timeout thread: (Faux?-)deleting globals.\n");
+killGlobalsAndExitThread:
 
 	// Don't delete GlobalInfo, as we don't know what main thread is doing,
 	// and we can't destroy GlobalInfo in case a thread is waiting to use it
 
 	if (!appWasClosed)
+	{
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
 		G->MarkAsPendingDelete();
+	}
 	LeaveCriticalSectionDebug(&G->lock);
 
 	// App was closed, we can completely delete the memory
 	if (appWasClosed)
+	{
+		OutputDebugStringA(PROJECT_NAME " - timeout thread: actual delete globals.\n");
 		delete G;
+	}
 
+	exitThread:
 #ifdef __ANDROID__
 	Edif::Runtime::DetachJVMAccessForThisThread();
 #endif
-	OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
 	return 0U;
 }
 

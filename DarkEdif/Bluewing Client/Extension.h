@@ -1,3 +1,4 @@
+#pragma once
 #include "Edif.h"
 #include <functional>
 void NewEvent(EventToRun *);

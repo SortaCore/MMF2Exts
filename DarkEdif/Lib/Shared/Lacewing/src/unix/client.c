@@ -120,6 +120,10 @@ static void first_time_write_ready (void * tag)
 		return;
 	}
 
+	// Clear pending writes, in case user sent messages without checking connection was ready
+	// TODO: If a pending write count is kept, akin to Windows, then reset it here.
+	list_clear(ctx->fdstream.stream.back_queue);
+
 	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
 
 	ctx->flags &= ~ lw_client_flag_connecting;

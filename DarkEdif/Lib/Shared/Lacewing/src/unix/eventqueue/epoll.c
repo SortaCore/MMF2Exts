@@ -71,17 +71,19 @@ void lwp_eventqueue_update (lwp_eventqueue queue,
 
 	event.data.ptr = tag;
 
+	int res;
 	if (read || write)
 	{
 		event.events = (read ? EPOLLIN : 0) |
 					   (write ? EPOLLOUT : 0) |
 					   (edge_triggered ? EPOLLET : 0);
-
-		assert(epoll_ctl (queue, EPOLL_CTL_MOD, fd, &event) != -1);
+		res = epoll_ctl(queue, EPOLL_CTL_MOD, fd, &event);
+		assert(res != -1);
 	}
 	else
 	{
-		assert(epoll_ctl (queue, EPOLL_CTL_DEL, fd, &event) != -1);
+		res = epoll_ctl(queue, EPOLL_CTL_DEL, fd, &event);
+		assert(res != -1);
 	}
 }
 
