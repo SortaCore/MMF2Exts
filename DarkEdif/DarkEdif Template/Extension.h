@@ -1,4 +1,5 @@
 #include <DarkEdif.h>
+#pragma once
 
 class Extension
 {
@@ -12,7 +13,7 @@ public:
 	global<jobject> javaExtPtr;
 #else
 	RuntimeFunctions & runFuncs;
-	void * javaExtPtr;
+	void * objCExtPtr;
 #endif
 
 	Edif::Runtime Runtime;
@@ -27,8 +28,10 @@ public:
 
 #ifdef _WIN32
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
-#else
+#elif defined(__ANDROID__)
 	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr);
+#else
+	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr);
 #endif
 	~Extension();
 

@@ -241,6 +241,7 @@ void Edif::Free(EDITDATA * edPtr)
 }
 
 #include "Resource.h"
+#include "Extension.h"
 
 int Edif::Init(mv * mV)
 {
@@ -1065,31 +1066,56 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 typedef void * CRun;
 
+extern "C"
+{
+	void DarkEdif_generateEvent(void * ext, int code, int param);
+	void DarkEdif_reHandle(void * ext);
+
+	int DarkEdif_actGetParamExpression(void * ext, void * act);
+	const char * DarkEdif_actGetParamExpString(void * ext, void * act);
+	double DarkEdif_actGetParamExpDouble(void * ext, void * act);
+
+	int DarkEdif_cndGetParamExpression(void * ext, void * cnd);
+	const char * DarkEdif_cndGetParamExpString(void * ext, void * cnd);
+	double DarkEdif_cndGetParamExpDouble(void * ext, void * cnd);
+	bool DarkEdif_cndCompareValues(void * ext, void * cnd, int paramNum);
+	bool DarkEdif_cndCompareTime(void * ext, void * cnd, int paramNum);
+
+	int DarkEdif_expGetParamInt(void * ext);
+	const char * DarkEdif_expGetParamString(void * ext);
+	float DarkEdif_expGetParamFloat(void * ext);
+
+	void DarkEdif_expSetReturnInt(void * ext, int toRet);
+	void DarkEdif_expSetReturnString(void * ext, const char * toRet);
+	void DarkEdif_expSetReturnFloat(void * ext, float toRet);
+
+	void DarkEdif_freeString(void * ext, const char * cstr);
+}
+
 struct ConditionOrActionManager_iOS : ACEParamReader
 {
-	Extension* ext;
-	void * javaActOrCndObj;
+	::Extension* ext;
+	void * objCActOrCndObj;
 	bool isCondition;
 
-	ConditionOrActionManager_iOS(bool isCondition, Extension* ext, void * javaActOrCndObj)
-		: ext(ext), javaActOrCndObj(javaActOrCndObj), isCondition(isCondition)
+	ConditionOrActionManager_iOS(bool isCondition, Extension* ext, void * objCActOrCndObj)
+		: ext(ext), objCActOrCndObj(objCActOrCndObj), isCondition(isCondition)
 	{
-		stringIndex = 0;
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		float f = (isCondition ? ext->runFuncs.cnd_getParamExpFloat : ext->runFuncs.act_getParamExpFloat)(ext->javaExtPtr, javaActOrCndObj);
+		double f = (isCondition ? DarkEdif_cndGetParamExpDouble : DarkEdif_actGetParamExpDouble)(ext->objCExtPtr, objCActOrCndObj);
 		LOGV("Got float param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
-		return f;
+		return (float)f;
 	}
 
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		const TCHAR* str = trackString((isCondition ? ext->runFuncs.cnd_getParamExpString : ext->runFuncs.act_getParamExpString)(ext->javaExtPtr, javaActOrCndObj));
+		const TCHAR* str = (isCondition ? DarkEdif_cndGetParamExpString : DarkEdif_actGetParamExpString)(ext->objCExtPtr, objCActOrCndObj);
 		LOGV("Got string param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
 		return str;
 	}
@@ -1097,24 +1123,13 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual std::int32_t GetInteger(int index)
 	{
 		LOGV("Getting integer param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		std::int32_t in = (isCondition ? ext->runFuncs.cnd_getParamExpression : ext->runFuncs.act_getParamExpression)(ext->javaExtPtr, javaActOrCndObj);
+		std::int32_t in = (isCondition ? DarkEdif_cndGetParamExpression : DarkEdif_actGetParamExpression)(ext->objCExtPtr, objCActOrCndObj);
 		LOGV("Got integer param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
 		return in;
 	}
 
-	RuntimeFunctions::string strings[16];
-	int stringIndex;
-
-	inline const char* trackString(RuntimeFunctions::string s)
-	{
-		strings[stringIndex++] = s;
-		return s.ptr;
-	}
-
 	~ConditionOrActionManager_iOS()
 	{
-		while (--stringIndex >= 0)
-			ext->runFuncs.freeString(ext, strings[stringIndex]);
 	}
 };
 #endif
@@ -1126,15 +1141,15 @@ long __stdcall Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
 	int ID = rdPtr->rHo.EventNumber;
 	ConditionOrActionManager_Windows params(true, rdPtr, param1, param2);
 #elif defined(__ANDROID__)
-ProjectFunc jboolean condition(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
+ProjectFunc jlong condition(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
 #else
-	ProjectFunc bool condition(long extPtr, int ID, CCndExtension cndExt)
-	{
-		Extension* ext = (Extension*)extPtr;
-		ConditionOrActionManager_iOS params(true, ext, cndExt);
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _condition(void * cppExtPtr, int ID, CCndExtension cndExt))
+{
+	Extension* ext = (Extension*)cppExtPtr;
+	ConditionOrActionManager_iOS params(true, ext, cndExt);
 #endif
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
@@ -1149,9 +1164,9 @@ ProjectFunc jboolean condition(JNIEnv *, jobject, jlong extPtr, int ID, CCndExte
 		return ext->Condition(ID);
 	}
 
-	int Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
+	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
 
-	return *(char *) &Result;
+	return Result;
 }
 
 #ifdef _WIN32
@@ -1169,9 +1184,9 @@ ProjectFunc void action(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension 
 	ConditionOrActionManager_Android params(false, ext, act);
 #define nowt 
 #else
-ProjectFunc void action(long extPtr, int ID, CActExtension act)
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _action(void * cppExtPtr, int ID, CActExtension act))
 {
-	Extension* ext = (Extension*)extPtr;
+	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
 #define nowt 
 #endif
@@ -1312,40 +1327,32 @@ struct ExpressionManager_Windows : ACEParamReader {
 };
 #else
 
-
+class CValue;
 struct ExpressionManager_iOS : ACEParamReader {
-	CNativeExpInstance expJavaObj;
 	Extension* ext;
+	void * expObjCObj;
 
 	RuntimeFunctions::string strings[16];
-	int stringIndex;
 
-	inline const char* trackString(RuntimeFunctions::string s)
+	ExpressionManager_iOS(Extension* ext) :
+		ext(ext)
 	{
-		strings[stringIndex++] = s;
-		return s.ptr;
-	}
-
-	ExpressionManager_iOS(Extension* ext, CNativeExpInstance expJavaObj) :
-		expJavaObj(expJavaObj), ext(ext)
-	{
-		stringIndex = 0;
 	}
 	void SetValue(int a) {
-		ext->runFuncs.exp_setReturnInt(ext->javaExtPtr, expJavaObj, a);
+		DarkEdif_expSetReturnInt(ext->objCExtPtr, a);
 	}
 	void SetValue(float a) {
-		ext->runFuncs.exp_setReturnFloat(ext->javaExtPtr, expJavaObj, a);
+		DarkEdif_expSetReturnFloat(ext->objCExtPtr, a);
 	}
 	void SetValue(const char* a) {
-		ext->runFuncs.exp_setReturnString(ext->javaExtPtr, expJavaObj, a);
+		DarkEdif_expSetReturnString(ext->objCExtPtr, a);
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.", index);
-		float f = ext->runFuncs.exp_getParamFloat(ext->javaExtPtr, expJavaObj);
+		float f = DarkEdif_expGetParamFloat(ext->objCExtPtr);
 		LOGV("Got float param, expr, index %d OK.", index);
 		return f;
 	}
@@ -1353,7 +1360,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, expr, index %d.", index);
-		const TCHAR* str = trackString(ext->runFuncs.exp_getParamString(ext->javaExtPtr, expJavaObj));
+		const TCHAR* str = DarkEdif_expGetParamString(ext->objCExtPtr);
 		LOGV("Got string param, expr, index %d OK.", index);
 		return str;
 	}
@@ -1361,7 +1368,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual std::int32_t GetInteger(int index)
 	{
 		LOGV("Getting integer param, expr, index %d OK.", index);
-		std::int32_t i = ext->runFuncs.exp_getParamInt(ext->javaExtPtr, expJavaObj);
+		std::int32_t i = DarkEdif_expGetParamInt(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK.", index);
 		return i;
 	}
@@ -1372,8 +1379,6 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 
 	~ExpressionManager_iOS() {
-		while (--stringIndex >= 0)
-			ext->runFuncs.freeString(ext, strings[stringIndex]);
 	}
 };
 #endif
@@ -1390,10 +1395,10 @@ ProjectFunc void expression(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExp
 	Extension * ext = (Extension *)extPtr;
 	ExpressionManager_Android params(ext, expU);
 #else
-ProjectFunc void expression(long extPtr, int ID, CNativeExpInstance expU)
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expression(void * cppExtPtr, int ID))
 {
-	Extension* ext = (Extension*)extPtr;
-	ExpressionManager_iOS params(ext, expU);
+	Extension* ext = (Extension*)cppExtPtr;
+	ExpressionManager_iOS params(ext);
 #endif
 
 	if (::SDK->ExpressionFunctions.size() < (unsigned int)ID)
@@ -1637,14 +1642,21 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	Buffer = (char *) LockResource (LoadResource (hInstLib, res));
 
 	return DependencyWasResource;
+#elif defined(__ANDROID__)
+	if (_tcsicmp(FileExtension, _T("json")))
+		return DependencyNotFound;
+
+	Buffer = (char *)(void *) darkExtJSON;
+	Size = darkExtJSONSize;
+	return DependencyWasResource;
 #else
 	if (_tcsicmp(FileExtension, _T("json")))
 		return DependencyNotFound;
 
-	Buffer = darkExtJSON;
-	Size = darkExtJSONSize;
+#define COMBINE(a,b) a ## b
+	Buffer = (char *)(void *)COMBINE(PROJECT_NAME_RAW, darkExtJSON);
+	Size = COMBINE(PROJECT_NAME_RAW, darkExtJSONSize);
 	return DependencyWasResource;
-
 	// A start at reading JSON from file.
 #if 0
 	// https://stackoverflow.com/questions/25559996/using-resource-files-in-ndk/25560443#25560443
@@ -1850,7 +1862,7 @@ static void GetFunctionAndLine(std::string & func, int & line)
 {
 
 }
-#else // !_WIN32
+#elif defined(__ANDROID__)
 
 #include <unwind.h>
 #include <cxxabi.h>
@@ -1913,12 +1925,12 @@ static void GetFunctionAndLine(std::string & func, int & line)
 	void * buffer[max];
 	dumpBacktraceEdif(oss, buffer, captureBacktraceEdif(buffer, max), func, line);
 }
-#endif // _WIN32
+#endif // __ANROID__
 
 #endif // _DEBUG
 
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && !defined(__APPLE__)
 
 
 Edif::recursive_mutex::recursive_mutex()

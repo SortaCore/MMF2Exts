@@ -160,9 +160,13 @@ public class CRunBluewing_Client extends CRunExtension
 	@Override
 	public boolean condition(int num, CCndExtension cnd)
 	{
-		return darkedif_condition(cptr, num, cnd);
+		// Currently, as of SDK v11, you will need to program comparison conditions manually,
+		// by checking num and the return of darkedif_condition, which is either a 32-bit integer,
+		// or a Java UTF-8 string pointer.
+		// For now, this is sufficient to check regular bool conditions.
+		return darkedif_condition(cptr, num, cnd) != 0;
 	}
-	public native boolean darkedif_condition(long cptr, int num, CCndExtension cnd);
+	public native long darkedif_condition(long cptr, int num, CCndExtension cnd);
 	
 	@Override
 	public void action(int num, CActExtension act)

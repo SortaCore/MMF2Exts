@@ -15,9 +15,8 @@ Changes until v11 release
 - Windows XP compatibility improved for external libraries by defining \_WIN32\_WINNT in project properties instead
 - Made DarkEdif Template's icon file size smaller
 - Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents.
-- MultiTarget SDK integration in DarkEdif Template
+- MultiTarget SDK integration into DarkEdif Template
 - Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files.
-- Update checker is now running in secondary thread, to prevent the rare server downtime freezing Fusions everywhere
 
 Changes until v10 release
 ----

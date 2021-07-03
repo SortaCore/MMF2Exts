@@ -9,8 +9,11 @@
 		<_TargetPlat>$(TargetPlatformIdentifier)</_TargetPlat>
 		<_TargetPlat Condition="$(_TargetPlat)==''">Windows</_TargetPlat>
 		<ExtName>$(ProjectName.Split('.')[0])</ExtName>
-		<TargetArch>x86</TargetArch>
-		<TargetArch Condition="'$(TargetArchAbi)'!=''">$(TargetArchAbi)</TargetArch>
+		<TargetArch Condition="'$(_TargetPlat)'!='iOS'">x86</TargetArch>
+		<TargetArch Condition="'$(_TargetPlat)'=='Android' AND '$(TargetArchAbi)'!=''">$(TargetArchAbi)</TargetArch>
+		<TargetArch Condition="'$(_TargetPlat)'=='iOS'">$(PlatformNativeArch)</TargetArch>
+		<TargetArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='Win32'">i386</TargetArch>
+		<TargetArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='ARM64'">arm64</TargetArch>
 
 		<DbgBuild>0</DbgBuild>
 		<RelBuild>0</RelBuild>
@@ -317,9 +320,9 @@
 			<!-- Runtime configs have RUN_ONLY #defined -->
 			<PreprocessorDefinitions Condition="$(RuntimeBuild)==1">RUN_ONLY;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- non-Debug needs NDEBUG -->
-			<PreprocessorDefinitions Condition="$(RelBuild)==1">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(RelBuild)==1">NDEBUG;$(PreprocessorDefinitions)%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
-			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android'">$(_FusionSDKAdds);$(PreprocessorDefinitions);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android' OR '$(_TargetPlat)'=='iOS'">$(_FusionSDKAdds);%(PreprocessorDefinitions);</PreprocessorDefinitions>
 
 			<!-- Not including ProjectDir causes includes of "Common.h" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
@@ -523,7 +526,7 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArchABI)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /Platform="$(_TargetPlat)"</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /Platform="$(_TargetPlat)"</DarkEdifPostBuildToolParams>
 
 		<!-- iOS build results need copying back from remote folder. -->
 		<DarkEdifPostBuildToolParams>$(DarkEdifPostBuildToolParams) /RemoteOutputRootFolder="$(DarkEdif_RemoteOutputFolder)" /PSCPPath="$(DarkEdif_PSCPPath)" /PSCPArgs="$(DarkEdif_PSCPArgs)"</DarkEdifPostBuildToolParams>
@@ -533,64 +536,53 @@
 		END Android and iOS
 		BEGIN Android-only
 	################################# -->
-	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
-		<!-- Android can use SDK 21/22 in latest preview, but the default Android.Tools.props file included with
-			Visual Studio won't look for it. So, if you modify that file, let's check it's smart enough to use it. -->
-		<DarkNDKVersion>$(VS_NdkRoot.Substring($([MSBuild]::Add(1,$(VS_NdkRoot64.LastIndexOf('-'))))))</DarkNDKVersion>
-
+	<PropertyGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Android'">
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
-		<!-- Clang 5.0 is latest VS can use. 9.0 is the most recent. -->
+		<!-- Clang 5.0 is latest VS can use, packed with r16b. Clang 9.0 is the most recent. -->
 		<PlatformToolset>Clang_5_0</PlatformToolset>
 		<!-- Use LLVM Static C++ Runtime library. It's the only one supported by Google,
 			 the GNU STL is second-best but doesn't play nice all the time.
 			 https://www.phoronix.com/scan.php?page=news_item&px=Android-NDK-r16 -->
 		<UseOfStl>c++_static</UseOfStl>
-		<!-- Thankfully, Fusion includes libc++_shared.so in the APKs. However, you'll have to match
-			 the version they use, or you'll get dlopen() errors. They're using r21d as of 22nd June 2021. -->
-		<UseOfStl Condition="$(RelBuild)==1 AND '$(DarkNDKVersion)'=='r21d'">c++_shared</UseOfStl>
 
 		<!-- Generate ARM style code for Thumb archs. -->
 		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
-		<!-- API that's readily accessible. Note 21 is minimum 64-bit API.
-			 Note that this does not really affect app compatibility one-to-one;
-			 but if you do modify the API, you should probably add checks and
-			 warnings, maybe before dlopen() in the Java file. -->
-		<AndroidAPILevel>android-16</AndroidAPILevel>
+		<!-- API that's readily accessible. Note 21 is minimum 64-bit API. -->
+		<AndroidAPILevel>android-19</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
 
-		<!-- r21e is slightly broken, and tries to build with ARMv4 if left as arm-linux-androideabi. -->
-		<AndroidHeaderTriple Condition="'$(DarkNDKVersion)'=='r21e' AND '$(Platform)'=='ARM'">armv7a-linux-androideabi</AndroidHeaderTriple>
-
-		<!-- Enables use of premature NDKs; that is, NDKs that don't come with VS and must be manually installed. -->
-		<DARKEDIF_USE_PREMATURE_NDK>0</DARKEDIF_USE_PREMATURE_NDK>
+		<!-- We should use _UseMultiProcessor, but on Windows, that prevents incremental linking.
+			 Not so on Android, so we use it all the time. -->
+		<UseMultiToolTask>true</UseMultiToolTask>
 	</PropertyGroup>
-	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Android'">
+	<ItemDefinitionGroup Label="Configuration" Condition="'$(_TargetPlat)'=='Android'">
 		<ClCompile>
-			<!-- Don't need it. -->
-			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
-			<!-- Allows debugging. -->
-			<ExceptionHandling>UnwindTables</ExceptionHandling>
-			<!-- RTTI is requested by Fusion. -->
-			<RuntimeTypeInfo>true</RuntimeTypeInfo>
-			<!-- -->
+
+			<!-- Make it easier to do a call stack trace; also, smaller files. -->
 			<FunctionLevelLinking>true</FunctionLevelLinking>
-			<!-- Data sections -->
 			<DataLevelLinking>true</DataLevelLinking>
-			<!-- Don't export any functions by default, as Java doesn't need to see them. -->
-			<AdditionalOptions>-fvisibility=hidden %(AdditionalOptions)</AdditionalOptions>
-			<!-- AndroidHeaderTriple will incorrectly be arm-linux-androidabi,
-				which defaults it to armv4, causing compiler issues. You want armv7-linux-androidabi.
-				You can edit it in C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild
-				\Microsoft\VC\v160\Application Type\Android\3.0\Platforms\ARM\Platform.Default.props,
-				or add -target armv7-linux-androidabi. -->
+
+			<!-- Allows debugging in GDB/Visual Studio. -->
+			<ExceptionHandling>UnwindTables</ExceptionHandling>
+			<DebugInformationFormat>FullDebug</DebugInformationFormat>
 
 			<!-- Don't include debugger info in release builds. -->
 			<DebugInformationFormat Condition="$(RelBuild)==1">None</DebugInformationFormat>
+
+			<!-- Not necessary in Release, but has minimal size changes. -->
+			<RuntimeTypeInfo>true</RuntimeTypeInfo>
+
+			<!-- Manually add includes -->
+			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+
+			<!-- Don't export any functions by default, as Java doesn't need to see them.
+				 Disable #pragma comment getting compiler upset, and other issues. -->
+			<AdditionalOptions>-fvisibility=hidden -Wno-unknown-pragmas -Wno-unused-const-variable  %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>
@@ -600,10 +592,12 @@
 			<LibraryDependencies>$(StlLibraryName);m;%(LibraryDependencies)</LibraryDependencies>
 			<!-- Include android_support library for x86 and ARM (available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower) -->
 			<LibraryDependencies Condition="'$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
-			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool. -->
+			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
+				 so don't confuse VS by building this way. -->
 			<IncrementalLink>false</IncrementalLink>
 			<!-- Strip out debugger info in release builds. Removes ClCompile.DebuggerSymbolInformation if it's there, too. -->
 			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
+
 		</Link>
 	</ItemDefinitionGroup>
 
@@ -617,7 +611,7 @@
 		<iOSConfigurationType>StaticLibrary</iOSConfigurationType>
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
-		<UseDebugLibraries Condition="$(DbgBuild)=='Y'">true</UseDebugLibraries>
+		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
 		<!-- Most recent supported -->
 		<PlatformToolset>XCode_6_1</PlatformToolset>
 		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS. -->
@@ -628,7 +622,7 @@
 		<ClCompile>
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
-			<PreprocessorDefinitions>__APPLE__;PLATFORM=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>__APPLE__;PLATFORM=1;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++17</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>

@@ -671,168 +671,79 @@ struct RuntimeFunctions
 		void * ctx;
 		const char * ptr;
 	};
-
-	void(*generateEvent) (void * ext, int code, int param);
-
-	int(*act_getParamExpression) (void * ext, void * act);
-	string(*act_getParamExpString) (void * ext, void * act);
-	float(*act_getParamExpFloat) (void * ext, void * act);
-
-	int(*cnd_getParamExpression) (void * ext, void * cnd);
-	string(*cnd_getParamExpString) (void * ext, void * cnd);
-	float(*cnd_getParamExpFloat) (void * ext, void * cnd);
-
-	int(*exp_getParamInt) (void * ext, void * exp);
-	string(*exp_getParamString) (void * ext, void * exp);
-	float(*exp_getParamFloat) (void * ext, void * exp);
-
-	void(*exp_setReturnInt) (void * ext, void * exp, int);
-	void(*exp_setReturnString) (void * ext, void * exp, const char *);
-	void(*exp_setReturnFloat) (void * ext, void * exp, float);
-
-	void(*freeString) (void * ext, string);
 };
 
 
 const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
 
-struct ACE
-{
-	RuntimeFunctions * fn;
-	void * ext;
-
-	RuntimeFunctions::string strings[8];
-	int stringIndex;
-
-	inline const char * trackString(RuntimeFunctions::string s)
-	{
-		strings[stringIndex++] = s;
-		return s.ptr;
-	}
-
-	inline ACE()
-	{
-		stringIndex = 0;
-	}
-
-	inline ~ACE()
-	{
-		while (--stringIndex >= 0)
-			fn->freeString(ext, strings[stringIndex]);
-	}
-};
-
-class Action : public ACE
-{
-	void * act;
-
-public:
-
-	inline Action(RuntimeFunctions * fn, void * ext, void * _act)
-		: act(_act)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamExpression()
-	{
-		return fn->act_getParamExpression(ext, act);
-	}
-
-	inline const char * getParamExpString()
-	{
-		return trackString(fn->act_getParamExpString(ext, act));
-	}
-
-	inline float getParamExpFloat()
-	{
-		return fn->act_getParamExpFloat(ext, act);
-	}
-};
-
-class Condition : public ACE
-{
-	void * cnd;
-
-public:
-
-	inline Condition(RuntimeFunctions * fn, void * ext, void * _cnd)
-		: cnd(_cnd)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamExpression()
-	{
-		return fn->cnd_getParamExpression(ext, cnd);
-	}
-
-	inline const char * getParamExpString()
-	{
-		return trackString(fn->cnd_getParamExpString(ext, cnd));
-	}
-
-	inline float getParamExpFloat()
-	{
-		return fn->cnd_getParamExpFloat(ext, cnd);
-	}
-};
-
-class Expression : public ACE
-{
-	void * exp;
-
-public:
-
-	inline Expression(RuntimeFunctions * fn, void * ext, void * _exp)
-		: exp(_exp)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamInt()
-	{
-		return fn->exp_getParamInt(ext, exp);
-	}
-
-	inline const char * getParamString()
-	{
-		return trackString(fn->exp_getParamString(ext, exp));
-	}
-
-	inline float getParamFloat()
-	{
-		return fn->exp_getParamFloat(ext, exp);
-	}
-
-	inline void setReturnInt(int value)
-	{
-		fn->exp_setReturnInt(ext, exp, value);
-	}
-
-	inline void setReturnString(const char * value)
-	{
-		fn->exp_setReturnString(ext, exp, value);
-	}
-
-	inline void setReturnFloat(float value)
-	{
-		fn->exp_setReturnFloat(ext, exp, value);
-	}
-};
-
 
 void LOGF(const char * x, ...);
 
 
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.
-extern char darkExtJSON[];
-extern unsigned darkExtJSONSize;
+//extern char darkExtJSON[];
+//extern unsigned int darkExtJSONSize;
+#define PROJ_FUNC_GEN2(x,y) x##y
+#define PROJ_FUNC_GEN(x,y) PROJ_FUNC_GEN2(x,y)
 
-#define afiglfndlgndfk PROJECT_NAME
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init());
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _close());
+ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW,_getNumberOfConditions());
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW,_condition(void * cppExtPtr, int ID, void * paramReader));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_action(void * cppExtPtr, int ID, void * paramReader));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_expression(void * cppExtPtr, int ID));
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW,_createRunObject(void * file, int cob, int version, void * objCExtPtr));
+ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW,_handleRunObject(void * cppExtPtr));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtPtr, bool bFast));
+
+// Stolen from IncBin GitHub: https://github.com/graphitemaster/incbin
+// Edited to remove g prefix.
+#ifndef INCBIN_HDR
+#define INCBIN_HDR
+#include <limits.h>
+
+#if defined(__SSE__) || defined(__neon__)
+# define INCBIN_ALIGNMENT 16
+#else
+# if ULONG_MAX == 0xffffffffu
+#  define INCBIN_ALIGNMENT 4
+# else
+#  define INCBIN_ALIGNMENT 8
+# endif
+#endif
+
+#define INCBIN_ALIGN __attribute__((aligned(INCBIN_ALIGNMENT)))
+
+#ifdef __cplusplus
+#  define INCBIN_EXTERNAL extern "C"
+#else
+#  define INCBIN_EXTERNAL extern
+#endif
+
+#define INCBIN_STR(X) #X
+#define INCBIN_STRINGIZE(X) INCBIN_STR(X)
+
+#define INCBIN_EXTERN(NAME) \
+    INCBIN_EXTERNAL const INCBIN_ALIGN unsigned char PROJECT_NAME_RAW ## NAME[]; \
+    INCBIN_EXTERNAL const unsigned int PROJECT_NAME_RAW ## NAME ## Size
+
+#define PROJECT_NAME_RAW_STR #PROJECT_NAME_RAW 
+#define INCBIN(NAME, FILENAME) INCBIN2(PROJECT_NAME_RAW ## NAME, FILENAME)
+
+#define INCBIN2(NAME, FILENAME) \
+    __asm__(".const_data\n" \
+            ".globl _" #NAME "\n"      \
+            ".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
+            "_" #NAME ":\n" \
+                ".incbin \"" FILENAME "\"\n" \
+            ".globl _" #NAME "Size\n"      \
+            ".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
+            "_" #NAME "Size:\n" \
+            ".long _" #NAME "Size - _" #NAME "\n" \
+    ); \
+    INCBIN_EXTERN(NAME)
+INCBIN_EXTERN(darkExtJSON);
+#endif
 
 #pragma clang diagnostic pop

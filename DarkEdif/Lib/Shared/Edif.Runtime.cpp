@@ -393,7 +393,7 @@ void Edif::Runtime::DetachJVMAccessForThisThread()
 	const jint error = global_vm->DetachCurrentThread();
 	if (error != JNI_OK)
 	{
-		LOGF("Couldn't attach thread ID %s to JNI, AttachCurrentThread error %i.", ThreadIDToStr(thisThreadID).c_str(), error);
+		LOGF("Couldn't detach thread ID %s from JNI, DetachCurrentThread error %i.", ThreadIDToStr(thisThreadID).c_str(), error);
 		return;
 	}
 
@@ -596,12 +596,185 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 	return NULL;
 }
 
-#else
-
-Edif::Runtime::Runtime(RuntimeFunctions& runFuncs, jobject obj) :
+#else // iOS
+Edif::Runtime::Runtime(RuntimeFunctions & runFuncs, void * objCExtPtr) :
 	runFuncs(runFuncs), ObjectSelection(NULL)
 {
 
+}
+
+
+Edif::Runtime::~Runtime()
+{
+}
+
+extern "C"
+{
+	void DarkEdif_generateEvent(void * ext, int code, int param);
+	void DarkEdif_reHandle(void * ext);
+}
+
+void Edif::Runtime::Rehandle()
+{
+	DarkEdif_reHandle(this->objCExtPtr);
+}
+
+void Edif::Runtime::GenerateEvent(int EventID)
+{
+	DarkEdif_generateEvent(this->objCExtPtr, EventID, 0);
+}
+
+void Edif::Runtime::PushEvent(int EventID)
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void * Edif::Runtime::Allocate(size_t size)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: Allocate missing.
+	// return (void *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_STRING_SPACE_EX, 0, size * sizeof(TCHAR));
+	return NULL;
+}
+
+// Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside expression return.
+TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
+	return (TCHAR *)String;
+}
+char * Edif::Runtime::CopyStringEx(const char * String) {
+	return (char *)String;
+}
+wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
+	return (wchar_t *)String;
+}
+
+void Edif::Runtime::Pause()
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void Edif::Runtime::Resume()
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void Edif::Runtime::Redisplay()
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void Edif::Runtime::GetApplicationDrive(TCHAR * Buffer)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: This is wrong, but not crucial.
+	// CallRunTimeFunction2(hoPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::DRIVE, (long)Buffer);
+}
+
+void Edif::Runtime::GetApplicationDirectory(TCHAR * Buffer)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: This is wrong, but not crucial.
+	//CallRunTimeFunction2(hoPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::DIR, (long)Buffer);
+}
+
+void Edif::Runtime::GetApplicationPath(TCHAR * Buffer)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: This is wrong, but not crucial.
+	// CallRunTimeFunction2(hoPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::PATH, (long)Buffer);
+}
+
+void Edif::Runtime::GetApplicationName(TCHAR * Buffer)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: This is wrong, but not crucial.
+	//CallRunTimeFunction2(hoPtr, RFUNCTION::GET_FILE_INFOS, (WPARAM)FILEINFO::APP_NAME, (long)Buffer);
+}
+
+void Edif::Runtime::GetApplicationTempPath(TCHAR * Buffer)
+{
+	LOGF("Function %s not implemented in DarkEdif Android, and cannot be called.", __PRETTY_FUNCTION__);
+	// TODO: This is wrong, but not crucial.
+}
+
+void Edif::Runtime::Redraw()
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void Edif::Runtime::Destroy()
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+void Edif::Runtime::CallMovement(int ID, long Parameter)
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+	// See ~line 592, CExtension.java
+	// GenEdifFunction("redisplay");
+	//CallRunTimeFunction2(hoPtr, RFUNCTION::CALL_MOVEMENT, ID, Parameter);
+}
+
+void Edif::Runtime::SetPosition(int X, int Y)
+{
+	LOGF("Function %s not implemented in DarkEdif iOS, and cannot be called.", __PRETTY_FUNCTION__);
+}
+
+static EdifGlobal * staticEdifGlobal; // LB says static/global values are functionally equivalent to getUserExtData, so... yay.
+
+void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
+{
+	EdifGlobal * Global = (EdifGlobal *)staticEdifGlobal;
+
+	if (!Global)
+	{
+		Global = new EdifGlobal;
+
+		_tcscpy(Global->name, name);
+		Global->Value = Value;
+		Global->Next = NULL;
+
+		staticEdifGlobal = Global;
+
+		return;
+	}
+
+	while (Global)
+	{
+		if (!_tcsicmp(Global->name, name))
+		{
+			Global->Value = Value;
+			return;
+		}
+
+		if (!Global->Next)
+			break;
+
+		Global = Global->Next;
+	}
+
+	Global->Next = new EdifGlobal;
+	Global = Global->Next;
+
+	_tcscpy(Global->name, name);
+
+	Global->Value = Value;
+	Global->Next = 0;
+}
+
+void * Edif::Runtime::ReadGlobal(const TCHAR * name)
+{
+	EdifGlobal * Global = staticEdifGlobal;
+
+	while (Global)
+	{
+		if (!_tcsicmp(Global->name, name))
+			return Global->Value;
+
+		Global = Global->Next;
+	}
+
+	return NULL;
 }
 
 #endif

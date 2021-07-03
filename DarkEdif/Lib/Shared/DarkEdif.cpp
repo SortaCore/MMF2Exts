@@ -88,7 +88,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text);
 bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
-	const json_value & Action = CurLang["Actions"][::SDK->ActionInfos.size()];
+	const json_value & Action = CurLang["Actions"][(std::int32_t)::SDK->ActionInfos.size()];
 
 	// Invalid JSON reference
 	if (Action.type != json_object)
@@ -142,7 +142,7 @@ bool CreateNewActionInfo(void)
 bool CreateNewConditionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Condition = CurLang["Conditions"][::SDK->ConditionInfos.size()];
+	const json_value & Condition = CurLang["Conditions"][(std::int32_t)::SDK->ConditionInfos.size()];
 
 	// Invalid JSON reference
 	if (Condition.type != json_object)
@@ -198,7 +198,7 @@ bool CreateNewConditionInfo(void)
 bool CreateNewExpressionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Expression = CurLang["Expressions"][::SDK->ExpressionInfos.size()];
+	const json_value & Expression = CurLang["Expressions"][(std::int32_t)::SDK->ExpressionInfos.size()];
 
 	// Invalid JSON reference
 	if (Expression.type != json_object)
@@ -542,7 +542,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	size_t i = 0;
 	while (i <= ID)
 	{
-		curStr = (const char *)j[i]["Type"];
+		curStr = (const char *)j[(std::int32_t)i]["Type"];
 
 		if (!_stricmp(curStr, "Editbox String"))
 			Current += strlen(Current) + 1;
@@ -814,8 +814,8 @@ std::tstring EDITDATA::GetPropertyStr(const char * propName)
 	const json_value &props = CurLang["Properties"];
 	for (size_t i = 0; i < props.u.array.length; i++)
 	{
-		if (!_stricmp(props[i]["Title"], propName))
-			return GetPropertyStr(i);
+		if (!_stricmp(props[(std::int32_t)i]["Title"], propName))
+			return GetPropertyStr((int)i);
 	}
 	return _T("Property name not found.");
 }
@@ -894,6 +894,21 @@ void DarkEdif::BreakIfDebuggerAttached()
 void DarkEdif::BreakIfDebuggerAttached()
 {
 	__builtin_trap();
+}
+
+int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+{
+	DarkEdif::BreakIfDebuggerAttached();
+	return 0;
+}
+
+void LOGF(const char * x, ...)
+{
+	char buf[2048];
+	va_list va;
+	va_start(va, x);
+	vsprintf(buf, x, va);
+	va_end(va);
 }
 #endif
 
@@ -1264,9 +1279,9 @@ DWORD WINAPI DarkEdifUpdateThread(void * data);
 
 void DarkEdif::SDKUpdater::StartUpdateCheck()
 {
-	//DarkEdifUpdateThread(::SDK);
-	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
-	// WaitForSingleObject(updateThread, INFINITE);
+	DarkEdifUpdateThread(::SDK);
+	//updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
+	//WaitForSingleObject(updateThread, INFINITE);
 }
 
 DarkEdif::SDKUpdater::ExtUpdateType DarkEdif::SDKUpdater::ReadUpdateStatus(std::string * logData)
@@ -1819,18 +1834,30 @@ darkExtJSON_end:						\n\
 darkExtJSONSize:						\n\
 	.int	darkExtJSON_end - darkExtJSON");
 #elif defined(__APPLE__)
+/**
+ * @file incbin.h
+ * @author Dale Weiler
+ * @brief Utility for including binary files
+ *
+ * Facilities for including binary files into the current translation unit and
+ * making use from them externally in other translation units.
+ */
+
+INCBIN(darkExtJSON, "DarkExt.PostMinify.json");
+
 // See https://stackoverflow.com/a/19725269
 // Note the file will NOT be transmitted to Mac unless it's set as a C/C++ header file.
-__asm__(".const_data					\n\
+/*__asm__(".const_data					\n\
 	.global darkExtJSON					\n\
 	.align  4							\n\
 darkExtJSON:							\n\
 	.incbin \"DarkExt.PostMinify.json\"	\n\
-darkExtJSON_end:						\n\
+__asm__("darkExtJSON_end:						\n\
 	.global darkExtJSONSize				\n\
 	.align  4							\n\
 darkExtJSONSize:						\n\
-	.int	darkExtJSON_end - darkExtJSON");
+	.int	darkExtJSON_end - darkExtJSON");*/
+
 #endif
 // These are caused by the above ASM block. (these are also declared in the Android/iOS master header)
 // char darkExtJSON[];

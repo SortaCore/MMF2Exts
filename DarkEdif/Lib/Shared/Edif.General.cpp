@@ -766,7 +766,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		method(displayRunObject, "(J)S"),
 		method(pauseRunObject, "(J)S"),
 		method(continueRunObject, "(J)S"),
-		method(condition, "(JILConditions/CCndExtension;)Z"),
+		method(condition, "(JILConditions/CCndExtension;)J"),
 		method(action, "(JILActions/CActExtension;)V"),
 		method(expression, "(JILExpressions/CNativeExpInstance;)V"),
 		EXTRAFUNCS
@@ -831,6 +831,41 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 #endif
 }
 
-#endif // __ANDROID__
+#else // iOS
+#include "Extension.h"
+class CValue;
+
+// Raw creation func
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
+{
+	// Do nothing?
+}
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _close())
+{
+	// Do nothing?
+}
 
 
+ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW, _getNumberOfConditions())
+{
+	return CurLang["Conditions"].u.array.length;
+}
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
+{
+	void * edPtr = file;
+	LOGI("Note: objCExtPtr is %p, edPtr %p.", objCExtPtr, edPtr);
+	RuntimeFunctions * runFuncs = new RuntimeFunctions();
+	Extension * cppExt = new Extension(*runFuncs, (EDITDATA *)edPtr, objCExtPtr);
+	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
+	return cppExt;
+}
+ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW, _handleRunObject)(void * cppExt)
+{
+	return (short) ((Extension *)cppExt)->Handle();
+}
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppExt, bool bFast)
+{
+	delete ((Extension *)cppExt);
+}
+
+#endif

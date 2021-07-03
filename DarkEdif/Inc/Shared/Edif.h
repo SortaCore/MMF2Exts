@@ -189,6 +189,7 @@ namespace Edif
 		global<jclass> javaHoClass;
 #else
 		RuntimeFunctions& runFuncs;
+		void * objCExtPtr;
 #endif
 
 	public:
@@ -196,8 +197,10 @@ namespace Edif
 
 #ifdef _WIN32
 		Runtime(HeaderObject * _hoPtr);
+#elif defined(__ANDROID__)
+		Runtime(RuntimeFunctions & runFuncs, jobject javaExtPtr);
 #else
-		Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr);
+		Runtime(RuntimeFunctions &runFuncs, void * objCExtPtr);
 #endif
 		~Runtime();
 
@@ -347,7 +350,7 @@ namespace Edif
 };
 
 #ifdef __ANDROID__
-ProjectFunc jboolean condition(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
+ProjectFunc jlong condition(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
 ProjectFunc void action(JNIEnv *, jobject, jlong extPtr, jint actID, CActExtension act);
 ProjectFunc void expression(JNIEnv *, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
 #endif
