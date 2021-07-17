@@ -62,7 +62,7 @@ public:
 
 		while (state < 3 && size -- > 0)
 		{
-			unsigned char byte = *(data ++);
+			lw_ui8 byte = *(data ++);
 
 			switch (state)
 			{
@@ -76,7 +76,7 @@ public:
 				{
 					if (sizebytesleft > 0)
 					{
-						buffer.add <unsigned char> (byte);
+						buffer.add <lw_ui8 > (byte);
 
 						if ((-- sizebytesleft) == 0)
 						{
@@ -152,7 +152,7 @@ public:
 				if (!mhRet)
 					return false; // Error, exit out
 
-				// Not safe to do this if messagehandler() is false
+				// Not safe to do this if messagehandler() is false, if we're using const memory
 				*(char *)&data[messagesize] = nextbyte;
 				state = 0;
 
@@ -175,7 +175,7 @@ public:
 
 		if (buffer.size == messagesize)
 		{
-			buffer.add <char> (0);
+			buffer.add <lw_ui8> (0);
 
 			if (!messagehandler(tag, messagetype, buffer.buffer, messagesize))
 				return false; // Error, exit out

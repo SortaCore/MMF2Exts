@@ -39,6 +39,7 @@ struct _lw_udp
 	lw_udp_hook_error on_error;
 
 	lw_filter filter;
+	lw_pump_watch pump_watch;
 
 	int fd;
 
@@ -56,6 +57,8 @@ static void read_ready (void * ptr)
 	socklen_t from_size = sizeof (from);
 
 	char buffer [lwp_default_buffer_size];
+
+	lwp_retain(ctx, "udp read");
 
 	lw_addr filter_addr = lw_filter_remote (ctx->filter);
 
@@ -80,12 +83,20 @@ static void read_ready (void * ptr)
 
 		buffer [bytes] = 0;
 
-		if (ctx->on_data)
+		// There's a race where UDP is unhosted, and ctx->on_data() is still queued.
+		// We can't unset on_data as the UDP is merely unhosted, not deleted.
+		// However, the FD is now close()'d and invalid.
+		// This check may not be necessary due to the shutdown() and manual dropping
+		// of FD from epoll in the same commit on 17th July 2021, but since it's a cheap test,
+		// we'll keep it.
+		if (ctx->fd != -1 && ctx->on_data)
 			ctx->on_data (ctx, &addr, buffer, bytes);
 
 		free(addr.info->ai_addr); // alloc'd by lwp_addr_set_sockaddr
 		addr.info->ai_addr = NULL;
 	}
+
+	lwp_release(ctx, "udp read");
 }
 
 void lw_udp_host (lw_udp ctx, long port)
@@ -119,18 +130,18 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	if ((ctx->fd = lwp_create_server_socket
 			(filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
 	{
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
-	  return;
+		lw_error_delete (error);
+		return;
 	}
 
 	lw_error_delete (error);
 
 	ctx->filter = lw_filter_clone (filter);
 
-	lw_pump_add (ctx->pump, ctx->fd, ctx, read_ready, 0, lw_true);
+	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->fd, ctx, read_ready, 0, lw_true);
 }
 
 lw_bool lw_udp_hosting (lw_udp ctx)
@@ -145,7 +156,14 @@ long lw_udp_port (lw_udp ctx)
 
 void lw_udp_unhost (lw_udp ctx)
 {
-	lwp_close_socket (ctx->fd);
+	// pump_watch has an FD, used to cancel pending events, so we don't use close_socket until it's used
+	if (ctx->fd != -1)
+		shutdown(ctx->fd, SHUT_RDWR);
+
+	lw_pump_remove(ctx->pump, ctx->pump_watch);
+	ctx->pump_watch = NULL;
+
+	lwp_close_socket(ctx->fd);
 	ctx->fd = -1;
 
 	lw_filter_delete (ctx->filter);
@@ -157,9 +175,11 @@ lw_udp lw_udp_new (lw_pump pump)
 	lw_udp ctx = (lw_udp)calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	lwp_init ();
+	lwp_enable_refcount_logging(ctx, "udp");
+	lwp_retain(ctx, "udp_new");
 
 	ctx->pump = pump;
 	ctx->fd = -1;
@@ -170,60 +190,60 @@ lw_udp lw_udp_new (lw_pump pump)
 void lw_udp_delete (lw_udp ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	lw_udp_unhost (ctx);
 
-	free (ctx);
+	// We should test if it's freed? But there's not really much the app can do to prevent it,
+	// and the better behaviour is to let whatever's using it free it by itself.
+	lwp_release(ctx, "udp_new"); // calls free (ctx)
 }
 
 void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 {
-	lwp_trace ("UDP send");
-	lw_dump (data, size);
-
-	if (!addr || !lw_addr_ready (addr))
+	if (!lw_addr_ready (addr))
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_addf (error, "The address object passed to send() wasn't ready");
-	  lw_error_addf (error, "Error sending");
+		lw_error_addf (error, "The address object passed to send() wasn't ready");
+		lw_error_addf (error, "Error sending");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	if (size == -1)
-	  size = strlen (data);
+		size = strlen (data);
 
 	if constexpr (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
 	if (!addr->info)
-	  return;
+		return;
 
-	++ctx->writes_posted;
 	lwp_retain(ctx, "udp write");
+	++ctx->writes_posted;
 
 	if (sendto (ctx->fd, data, size, 0, (struct sockaddr *) addr->info->ai_addr,
 				addr->info->ai_addrlen) == -1)
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_add (error, errno);
-	  lw_error_addf (error, "Error sending");
+		lw_error_add (error, errno);
+		lw_error_addf (error, "Error sending");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		// fall through to lwp_release
 	}
+	lwp_release(ctx, "udp write");
 }
 
 void lw_udp_set_tag (lw_udp ctx, void * tag)

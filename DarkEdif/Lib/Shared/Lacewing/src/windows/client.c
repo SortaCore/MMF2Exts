@@ -59,6 +59,7 @@ lw_client lw_client_new (lw_pump pump)
 	if (!ctx)
 		return 0;
 
+	lwp_init();
 	lwp_fdstream_init (&ctx->fdstream, pump);
 
 	ctx->socket = INVALID_HANDLE_VALUE;

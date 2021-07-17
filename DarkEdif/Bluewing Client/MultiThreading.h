@@ -4,8 +4,6 @@
 #if defined(MULTI_THREADING) && !defined(ALREADY_DEFINED_MT)
 #define ALREADY_DEFINED_MT
 	/* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */
-	#pragma pack (push, align_to_one_multithreading)
-	#pragma pack (1)
 	struct EventToRun
 	{
 		// Required for DarkEdif
@@ -50,5 +48,4 @@
 			channel = nullptr;
 		}
 	};
-#pragma pack (pop, align_to_one_multithreading)
 #endif // MULTI_THREADING

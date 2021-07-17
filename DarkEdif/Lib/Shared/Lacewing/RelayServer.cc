@@ -910,7 +910,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 	if (internal.handlererror)
 	{
 		lacewing::error error = lacewing::error_new();
-		error->add("Overload of message stack; got more than %zu messages in one packet (sized %zu) from client ID %hu, name %hs, IP %hs.",
+		error->add("Overload of message stack; server running too slow? Got more than %zu messages pending (sized %zu) from client ID %hu, name %hs, IP %hs.",
 			maxMessagesInOneProcess, data.size(), client._id, client._name.c_str(), addr);
 
 		internal.handlererror(internal.server, error);
@@ -2078,12 +2078,12 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 	if (reader.failed)
 	{
 		lacewing::error error = lacewing::error_new();
-		error->add("Reader failed!", client->_id);
+		error->add("Reader failed!");
 		error->add("%s", errStr.str().c_str());
 		if (!trustedClient)
 			error->add("Booting client");
 
-		lw_trace(error->tostring());
+		lw_trace("%s", error->tostring());
 		handlererror(server, error);
 
 		lacewing::error_delete(error);

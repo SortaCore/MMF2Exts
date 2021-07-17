@@ -80,6 +80,7 @@ static void def_cleanup (lw_pump pump)
 	lw_eventpump ctx = (lw_eventpump) pump;
 
 	lwp_eventqueue_delete (ctx->queue);
+	ctx->queue = -1;
 
 	#ifdef ENABLE_THREADS
 
@@ -155,7 +156,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 	{
 		case sig_exit_eventloop:
 		{
-			lw_trace("eventpump process_event: signal is eventloop.");
+			lw_trace("eventpump process_event: signal is exit eventloop.");
 			lw_sync_release (ctx->sync_signals);
 			return lw_false;
 		}
@@ -166,9 +167,10 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 			lw_pump_watch to_remove = (lw_pump_watch)list_front (ctx->signalparams);
 			list_pop_front (ctx->signalparams);
 
-			free (to_remove);
-
-			lw_pump_remove_user ((lw_pump) ctx);
+			// note: lw_pump_remove() is what causes sig_remove
+			lw_pump_remove_user((lw_pump) ctx);
+			memset(to_remove, 0, sizeof(*to_remove));
+			free(to_remove);
 
 			break;
 		}
@@ -392,10 +394,16 @@ static void def_remove (lw_pump pump, lw_pump_watch watch)
 	/*
 		James note: Should this remove the FD from the eventqueue immediately?
 		LK response: no, "when you close the FD it is automatically removed from all epoll/select lists"
+		Phi test: Actually, this falls over very quickly if you don't.
 	*/
 
+	lwp_eventqueue_update(ctx->queue, watch->fd,
+		watch->on_read_ready != NULL, lw_false,
+		watch->on_write_ready != NULL, lw_false,
+		watch->edge_triggered, watch->edge_triggered, watch->tag, watch->tag);
 	watch->on_read_ready = NULL;
 	watch->on_write_ready = NULL;
+		
 
 	lw_sync_lock (ctx->sync_signals);
 

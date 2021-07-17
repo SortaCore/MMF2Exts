@@ -216,8 +216,6 @@ static void close_fd (lw_fdstream ctx)
 	}
 
 	list_clear(ctx->pending_writes);
-
-	lwp_deinit();
 }
 
 void write_completed (lw_fdstream ctx)

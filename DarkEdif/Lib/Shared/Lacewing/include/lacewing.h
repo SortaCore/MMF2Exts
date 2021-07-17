@@ -174,7 +174,10 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_md5_hex			(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1				(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1_hex			(char * output, const char * input, size_t length);
-	lw_import			void  lw_trace				(const char * format, ...);
+#ifdef _MSC_VER
+	#define __printflike(a,b) /* no op */
+#endif
+	lw_import			void  lw_trace				(const char * format, ...) __printflike(1, 2);
 	lw_import			void  lw_dump				(const char * buffer, size_t size);
 	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
 

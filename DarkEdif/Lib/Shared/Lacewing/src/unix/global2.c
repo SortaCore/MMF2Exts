@@ -36,19 +36,17 @@ void lwp_init ()
 	if (++init_called != 1)
 		return;
 
-	init_called = lw_true;
-
 	#ifdef ENABLE_SSL
 
-	  STACK_OF (SSL_COMP) * comp_methods;
+		STACK_OF (SSL_COMP) * comp_methods;
 
-	  SSL_library_init ();
+		SSL_library_init ();
 
-	  SSL_load_error_strings ();
-	  ERR_load_crypto_strings ();
+		SSL_load_error_strings ();
+		ERR_load_crypto_strings ();
 
-	  comp_methods = SSL_COMP_get_compression_methods ();
-	  sk_SSL_COMP_zero (comp_methods);
+		comp_methods = SSL_COMP_get_compression_methods ();
+		sk_SSL_COMP_zero (comp_methods);
 
 	#endif
 }
@@ -69,7 +67,7 @@ lw_bool lw_file_exists (const char * filename)
 	struct stat attr;
 
 	if (stat (filename, &attr) == 0)
-	  return !S_ISDIR (attr.st_mode);
+		return !S_ISDIR (attr.st_mode);
 
 	return lw_false;
 }
@@ -79,7 +77,7 @@ lw_bool lw_path_exists (const char * filename)
 	struct stat attr;
 
 	if (stat (filename, &attr) == 0)
-	  return S_ISDIR (attr.st_mode);
+		return S_ISDIR (attr.st_mode);
 
 	return lw_false;
 }
@@ -89,7 +87,7 @@ size_t lw_file_size (const char * filename)
 	struct stat attr;
 
 	if (stat (filename, &attr) == 0)
-	  return attr.st_size;
+		return attr.st_size;
 
 	return 0;
 }
@@ -99,7 +97,7 @@ lw_i64 lw_last_modified (const char * filename)
 	struct stat attr;
 
 	if (stat (filename, &attr) == 0)
-	  return attr.st_mtime;
+		return attr.st_mtime;
 
 	return 0;
 }
@@ -109,14 +107,14 @@ void lw_temp_path (char * buffer)
 	char * path = getenv ("TMPDIR");
 
 	if (path)
-	  strcpy (buffer, path);
+		strcpy (buffer, path);
 	else if (P_tmpdir)
-	  strcpy (buffer, P_tmpdir);
+		strcpy (buffer, P_tmpdir);
 	else
-	  strcpy (buffer, "/tmp/");
+		strcpy (buffer, "/tmp/");
 
 	if (*buffer && buffer [strlen (buffer) - 1] != '/')
-	  strcat (buffer, "/");
+		strcat (buffer, "/");
 
 	return;
 }
@@ -126,18 +124,18 @@ lw_bool lw_random (char * buffer, size_t size)
 	static int dev_random = -1;
 
 	if (dev_random == -1)
-	  dev_random = open ("/dev/urandom", O_RDONLY);
+		dev_random = open ("/dev/urandom", O_RDONLY);
 
 	if (dev_random == -1)
 	{
-	  lwp_trace ("Error opening random: %s", strerror (errno));
-	  return lw_false;
+		lwp_trace ("Error opening random: %s", strerror (errno));
+		return lw_false;
 	}
 
 	if (read (dev_random, buffer, size) != size)
 	{
-	  lwp_trace ("Error reading from random: %s", strerror (errno));
-	  return lw_false;
+		lwp_trace ("Error reading from random: %s", strerror (errno));
+		return lw_false;
 	}
 
 	return lw_true;
