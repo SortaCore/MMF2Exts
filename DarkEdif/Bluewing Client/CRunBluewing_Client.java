@@ -42,33 +42,19 @@ public class CRunBluewing_Client extends CRunExtension
 	{
 		if (!inited)
 		{
-			String extFilename = "Bluewing Client.so";
-			String assetPath = "darkmmf/" + MMFRuntime.inst.ABI + "/" + extFilename;
+			String libName = "Bluewing_Client";
 			try
 			{
-				android.util.Log.v("MMFRuntimeNative", "Finding Bluewing Client extension in APK assets...");
-				InputStream asset = MMFRuntime.inst.getResources().getAssets().open(assetPath);
+				android.util.Log.v("Bluewing_Client", "Loading Bluewing Client extension from \"app/main/jniLibs/" + MMFRuntime.inst.ABI + "/lib" + libName + ".so\"...");
+				System.loadLibrary(libName);
 
-				android.util.Log.v("MMFRuntimeNative", "Extracting Bluewing Client extension from asset to file dir...");
-				MMFRuntime.inst.inputStreamToFile(asset, extFilename);
-				
-				android.util.Log.v("MMFRuntimeNative", "Loading Bluewing Client extension from file dir...");
-				
-				System.loadLibrary("c++_shared");
-				System.load(MMFRuntime.inst.getFilesDir() + "/" + extFilename);
-				//System.loadLibrary("Bluewing Client");
-
-				android.util.Log.v("MMFRuntimeNative", "Loaded Bluewing Client extension OK!");
+				android.util.Log.v("Bluewing_Client", "Loaded Bluewing Client extension OK!");
 				
 				inited = true;
 			}
-			catch (IOException e)
-			{
-				android.util.Log.e("MMFRuntimeNative", "Couldn't load extension Bluewing Client, asset " + assetPath + " had IO error: " + e.toString());
-			}
 			catch (UnsatisfiedLinkError e)
 			{
-				android.util.Log.e("MMFRuntimeNative", "Couldn't load extension Bluewing Client, library " + extFilename + " couldn't be loaded: " + e.toString());
+				android.util.Log.e("Bluewing_Client", "Couldn't load extension Bluewing Client, library lib" + libName + ".so couldn't be loaded: " + e.toString());
 			}
 			
 			// Set up JavaVM shutdown handler
@@ -117,6 +103,8 @@ public class CRunBluewing_Client extends CRunExtension
 		
 		edPtr.position(0); // Reset for C++ reader
 		cptr = darkedif_createRunObject(edPtr, cob, version);
+		if (cptr == 0)
+			android.util.Log.e("Bluewing_Client", "Bluewing Client's createRunObject returned NULL!");
 		
 		return cptr != 0;
 	}

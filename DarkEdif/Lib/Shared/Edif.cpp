@@ -44,7 +44,7 @@ void Edif::GetExtensionName(char * const writeTo)
 	writeTo[strlen(writeTo) - 4] = 0; // Remove ".mfx"
 	// ::SDK and json not available.
 #else
-	strcpy(writeTo, STRIFY(PROJECT_NAME));
+	strcpy(writeTo, PROJECT_NAME);
 #endif
 }
 
@@ -62,7 +62,7 @@ void Edif::Log(const char * format, ...)
 #elif defined (__ANDROID__)
 	size_t s = strlen(format);
 	std::string format2(format, s - (format[s - 1] == '\n' ? 1 : 0));
-	__android_log_vprint(ANDROID_LOG_DEBUG, "MMFRuntimeNative", format2.c_str(), v);
+	__android_log_vprint(ANDROID_LOG_DEBUG, PROJECT_NAME_UNDERSCORES, format2.c_str(), v);
 #else
 	size_t s = strlen(format);
 	std::string format2(format, s - (format[s - 1] == '\n' ? 1 : 0));
@@ -791,7 +791,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				// Catch null string parameters and return default 0
 				if (!Parameters[i + paramInc])
 				{
-					MessageBoxA(NULL, "Error calling action/condition: null pointer given as string parameter.", "DarkEdif - ActionOrCondition() error", MB_OK);
+					MessageBoxA(NULL, "Error calling action/condition: null pointer given as string parameter.", PROJECT_NAME " - DarkEdif ActionOrCondition() error", MB_ICONERROR);
 					goto endFunc;
 				}
 
@@ -942,7 +942,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 
 		if (MenuItem.type == json_string)
 		{
-			if (!_stricmp(MenuItem, "Separator"))
+			if (!_stricmp(MenuItem, "Separator") || !strcmp(MenuItem, "---"))
 			{
 				AppendMenu(Parent, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 				continue;
@@ -1145,6 +1145,7 @@ ProjectFunc jlong condition(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtensi
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
+	LOGV("Condition ID %i start.", ID);
 #else
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _condition(void * cppExtPtr, int ID, CCndExtension cndExt))
 {
@@ -1153,18 +1154,22 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _condition(void * cppExtPtr, in
 #endif
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
-		MessageBoxA(NULL, "Missing condition ID %d in extension %s, this ID was not linked.", "Error - " STRIFY(PROJECT_NAME), 0);
+		MessageBoxA(NULL, "Missing condition ID %d in extension %s, this ID was not linked.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
 		return ext->Condition(ID);
 	}
 	
 	void * Function = ::SDK->ConditionFunctions[ID];
 
 	if (!Function) {
-		MessageBoxA(NULL, "Missing condition ID %d. Condition existed in vector, but was NULL. Might not be linked.", "Error - " STRIFY(PROJECT_NAME), 0);
+		MessageBoxA(NULL, "Missing condition ID %d. Condition existed in vector, but was NULL. Might not be linked.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
 		return ext->Condition(ID);
 	}
 
 	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
+
+#ifdef __ANDROID__
+	LOGV("Condition ID %i end.", ID);
+#endif
 
 	return Result;
 }
@@ -1182,6 +1187,7 @@ ProjectFunc void action(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension 
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
+	LOGV("Action ID %i start.", ID);
 #define nowt 
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _action(void * cppExtPtr, int ID, CActExtension act))
@@ -1206,6 +1212,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _action(void * cppExtPtr, int I
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
 
+#ifdef __ANDROID__
+	LOGV("Action ID %i end.", ID);
+#endif
 	return nowt;
 #undef nowt
 }
@@ -1240,7 +1249,9 @@ struct ExpressionManager_Android : ACEParamReader {
 		ext->runFuncs.exp_setReturnFloat(ext->javaExtPtr, expJavaObj, a);
 	}
 	void SetValue(const char * a) {
+		LOGV("Setting expression return as text...");
 		ext->runFuncs.exp_setReturnString(ext->javaExtPtr, expJavaObj, a);
+		LOGV("Setting expression return as text \"%s\" OK.", a);
 	}
 
 	// Inherited via ACEParamReader
@@ -1394,6 +1405,7 @@ ProjectFunc void expression(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExp
 {
 	Extension * ext = (Extension *)extPtr;
 	ExpressionManager_Android params(ext, expU);
+	LOGV("Expression ID %i start.", ID);
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expression(void * cppExtPtr, int ID))
 {
@@ -1591,13 +1603,20 @@ endFunc:
 		params.SetReturnType(ExpressionRet);
 	
 		if (ExpressionRet == ExpReturnType::String)
-			params.SetValue((const char*)Result);
+		{
+			lw_trace("Returning string for expression ID %i.", ID);
+			params.SetValue((const char *)Result);
+		}
 		else if (ExpressionRet == ExpReturnType::Integer)
 			params.SetValue((int)Result);
 		else if (ExpressionRet == ExpReturnType::Float)
 			params.SetValue(*(float*)&Result);
 		else
-			MessageBoxA(NULL, "Unrecognised return type.", "DarkEdif SDK - ASM", 1);
+			MessageBoxA(NULL, "Unrecognised return type.", PROJECT_NAME " - DarkEdif SDK - ASM", MB_ICONERROR);
+		
+	#ifdef __ANDROID__
+		LOGV("Expression ID %i end.", ID);
+	#endif
 #endif
 }
 
@@ -1856,79 +1875,6 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 }
 #endif // _UNICODE
 
-#ifdef _DEBUG
-#ifdef _WIN32
-static void GetFunctionAndLine(std::string & func, int & line)
-{
-
-}
-#elif defined(__ANDROID__)
-
-#include <unwind.h>
-#include <cxxabi.h>
-
-struct BacktraceState
-{
-    void** current;
-    void** end;
-};
-
-static _Unwind_Reason_Code unwindCallbackEdif(struct _Unwind_Context* context, void* arg)
-{
-    BacktraceState* state = static_cast<BacktraceState*>(arg);
-    uintptr_t pc = _Unwind_GetIP(context);
-    if (pc) {
-        if (state->current == state->end) {
-            return _URC_END_OF_STACK;
-        } else {
-            *state->current++ = reinterpret_cast<void*>(pc);
-        }
-    }
-    return _URC_NO_REASON;
-}
-
-size_t captureBacktraceEdif(void** buffer, size_t max)
-{
-    BacktraceState state = {buffer, buffer + max};
-    _Unwind_Backtrace(unwindCallbackEdif, &state);
-
-    return state.current - buffer;
-}
-
-void dumpBacktraceEdif(std::ostream& os, void** buffer, size_t count, std::string & func, int & line)
-{
-//	std::ostringstream oss;
-    for (size_t idx = 0; idx < count; ++idx) {
-        const void* addr = buffer[idx];
-        const char* symbol = "";
-
-        Dl_info info;
-        if (dladdr(addr, &info) && info.dli_sname) {
-            symbol = info.dli_sname;
-        }
-
-		size_t outputMemSize = 512;
-		char * outputMem = (char *)malloc(outputMemSize);
-		memset(outputMem, 0, outputMemSize);
-		int status = 0;
-		abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
-		func = (status == 0 ? outputMem : symbol);
-		line = (int)(long)addr;
-//        os << "  #" << std::setw(2) << idx << ": " << addr << "  " << func << "\n";
-		free(outputMem);
-    }
-}
-static void GetFunctionAndLine(std::string & func, int & line)
-{
-	std::ostringstream oss;
-	const size_t max = 5;
-	void * buffer[max];
-	dumpBacktraceEdif(oss, buffer, captureBacktraceEdif(buffer, max), func, line);
-}
-#endif // __ANROID__
-
-#endif // _DEBUG
-
 
 #if defined(_DEBUG) && !defined(__APPLE__)
 
@@ -1941,11 +1887,14 @@ Edif::recursive_mutex::~recursive_mutex()
 {
 	this->log << "Recursive mutex dying.\n";
 }
-void Edif::recursive_mutex::lock()
+
+#ifndef _DEBUG
+static const char * file = "(release mode)";
+static const char * func = "(release mode)";
+static int line = -1;
+#endif
+void Edif::recursive_mutex::lock(edif_lock_debugParams)
 {
-	std::string func;
-	int line;
-	GetFunctionAndLine(func, line);
 	try {
 		this->intern.lock();
 	}
@@ -1959,7 +1908,7 @@ void Edif::recursive_mutex::lock()
 		}
 		else
 		{
-			this->log << "FAILED TO LOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
+			this->log << "FAILED TO LOCK in function " << func << ", file " << file << ", line " << line << ", error " << err.what() << ".\n";
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
@@ -1971,11 +1920,8 @@ void Edif::recursive_mutex::lock()
 	}
 	this->log << "Locked in function " << func << ", line " << line << ".\n";
 }
-bool Edif::recursive_mutex::try_lock()
+bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 {
-	std::string func;
-	int line;
-	GetFunctionAndLine(func, line);
 	bool b = false;
 	try {
 		b = this->intern.try_lock();
@@ -2003,12 +1949,8 @@ bool Edif::recursive_mutex::try_lock()
 	this->log << "Try lock " << (b ? "OK" : "FAIL") << " in function " << func << ", line " << line << ".\n";
 	return b;
 }
-void Edif::recursive_mutex::unlock()
+void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
-	std::string func;
-	int line;
-	GetFunctionAndLine(func, line);
-
 	try {
 		this->intern.unlock();
 	}

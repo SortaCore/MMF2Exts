@@ -336,15 +336,25 @@ namespace Edif
 	class recursive_mutex {
 		std::recursive_mutex intern;
 #ifdef _DEBUG
+#define edif_lock_debugParams const char * file, const char * func, int line
+#define edif_lock_debugParamDefs __FILE__, __FUNCTION__, __LINE__
 		std::stringstream log;
+#else
+#define edif_lock_debugParams /* none */
+#define edif_lock_debugParamDefs /* none */
 #endif
 	public:
 		recursive_mutex();
 		~recursive_mutex();
 
-		void lock();
-		bool try_lock();
-		void unlock();
+		// Don't use these directly! Use lock.edif_lock(), lock.edif_unlock(), etc.
+		void lock(edif_lock_debugParams);
+		bool try_lock(edif_lock_debugParams);
+		void unlock(edif_lock_debugParams);
+
+#define edif_lock() lock(edif_lock_debugParamDefs)
+#define edif_try_lock() try_lock(edif_lock_debugParamDefs)
+#define edif_unlock() unlock(edif_lock_debugParamDefs)
 	};
 
 };

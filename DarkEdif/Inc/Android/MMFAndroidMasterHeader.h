@@ -223,17 +223,17 @@ struct eventGroup {
 #endif
 
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
-	#define LOGV(x,...) __android_log_print(ANDROID_LOG_VERBOSE, "MMFRuntimeNative", x, ##__VA_ARGS__)
+	#define LOGV(x,...) __android_log_print(ANDROID_LOG_VERBOSE, PROJECT_NAME_UNDERSCORES, x, ##__VA_ARGS__)
 #else
 	#define LOGV(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
-	#define LOGD(x,...) __android_log_print(ANDROID_LOG_DEBUG, "MMFRuntimeNative", x, ##__VA_ARGS__)
+	#define LOGD(x,...) __android_log_print(ANDROID_LOG_DEBUG, PROJECT_NAME_UNDERSCORES, x, ##__VA_ARGS__)
 #else
 	#define LOGD(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
-	#define LOGI(x,...) __android_log_print(ANDROID_LOG_INFO, "MMFRuntimeNative", x, ##__VA_ARGS__)
+	#define LOGI(x,...) __android_log_print(ANDROID_LOG_INFO, PROJECT_NAME_UNDERSCORES, x, ##__VA_ARGS__)
 
 	// Equivalent to LOGI().
 	void OutputDebugStringA(const char * debugString);
@@ -243,12 +243,12 @@ struct eventGroup {
 	#define OutputDebugStringA(x) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
-	#define LOGW(x,...) __android_log_print(ANDROID_LOG_WARN, "MMFRuntimeNative", x, ##__VA_ARGS__)
+	#define LOGW(x,...) __android_log_print(ANDROID_LOG_WARN, PROJECT_NAME_UNDERSCORES, x, ##__VA_ARGS__)
 #else
 	#define LOGW(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR)
-	#define LOGE(x,...) __android_log_print(ANDROID_LOG_ERROR, "MMFRuntimeNative", x, ##__VA_ARGS__)
+	#define LOGE(x,...) __android_log_print(ANDROID_LOG_ERROR, PROJECT_NAME_UNDERSCORES, x, ##__VA_ARGS__)
 #else
 	#define LOGE(x,...) (void)0
 #endif
@@ -898,6 +898,14 @@ std::vector<monitor> monitors;*/
 
 extern thread_local JNIEnv * threadEnv;
 
+
+void LOGF(const char * x, ...);
+
+// Converts u8str to UTF-8Modified str. Expects no embedded nulls
+jstring CStrToJStr(const char * u8str);
+// Converts std::thread::id to a std::string
+std::string ThreadIDToStr(std::thread::id);
+
 static int globalCount;
 
 // JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
@@ -905,19 +913,25 @@ template<class T>
 struct global {
 	static_assert(std::is_pointer<T>::value, "Must be a pointer!");
 	T ref;
+	const char * name;
 	global(global<T> &&p) = delete;
 	global(global<T> &p) = delete;
+
 	global<T> & operator= (global<T> && p) noexcept {
 		this->ref = p.ref;
+		this->name = p.name;
 		p.ref = NULL;
-		LOGV("Moved global ref %p from holder %p to %p.", &p, this->ref, this);
+		LOGV("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.",
+			ThreadIDToStr(std::this_thread::get_id()).c_str(),
+			this->ref, name, &p, this);
 		return *this;
 	}
 
-	global(T p) {
+	global(T p, const char * name) {
+		this->name = name;
 		ref = nullptr;
 		if (p == nullptr) {
-			LOGE("Couldn't make global ref from null. Check the calling function.");
+			LOGE("Couldn't make global ref from null (in \"%s\"). Check the calling function.", name);
 			return;
 		}
 		assert(threadEnv != NULL);
@@ -926,11 +940,12 @@ struct global {
 			std::string exc = GetJavaExceptionStr();
 			LOGE("Couldn't make global ref from %p [1], error: %s.", p, exc.c_str());
 		}
-		LOGV("Creating global pointer %p in global() from original %p.", ref, p);
+		LOGV("Thread %s: Creating global pointer %p \"%s\" in global() from original %p.", ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name, p);
 		//threadEnv->DeleteLocalRef(p);
 	}
 	global() {
 		ref = NULL;
+		name = "unset";
 	}
 	bool invalid() const {
 		return ref == NULL;
@@ -940,7 +955,7 @@ struct global {
 	}
 	operator const T() const {
 		if (ref == NULL) {
-			LOGE("null global ref at %p was copied!", this);
+			LOGE("null global ref at %p \"%s\" was copied!", this, name);
 			raise(SIGTRAP);
 		}
 		return ref;
@@ -948,7 +963,8 @@ struct global {
 	~global() {
 		if (ref)
 		{
-			LOGV("Freeing global pointer %p in ~global().", ref);
+			LOGV("Thread %s: Freeing global pointer %p \"%s\" in ~global().",
+				ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name);
 			assert(threadEnv != NULL);
 			threadEnv->DeleteGlobalRef(ref);
 			ref = NULL;
@@ -956,23 +972,21 @@ struct global {
 	}
 };
 
-void LOGF(const char * x, ...);
-
-// Converts u8str to UTF-8Modified str. Expects no embedded nulls
-jstring CStrToJStr(const char * u8str);
-// Converts std::thread::id to a std::string
-std::string ThreadIDToStr(std::thread::id);
-
 #define JAVACHKNULL(x) x; \
 	if (threadEnv->ExceptionCheck()) { \
 		std::string s = GetJavaExceptionStr(); \
 		LOGE("Dead in %s, %i: %s.", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
 	}
 
+void Indirect_JNIExceptionCheck(const char * file, const char * func, int line);
+#ifdef _DEBUG
+	#define JNIExceptionCheck() Indirect_JNIExceptionCheck(__FILE__, __FUNCTION__, __LINE__)
+#else
+	#define JNIExceptionCheck() (void)0
+#endif
+
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.
 extern char darkExtJSON[];
 extern unsigned darkExtJSONSize;
-
-#define afiglfndlgndfk PROJECT_NAME
 
 #pragma clang diagnostic pop

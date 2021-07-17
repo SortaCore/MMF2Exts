@@ -16,7 +16,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
 #else
 Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr) :
-	runFuncs(runFuncs), javaExtPtr(javaExtPtr), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+	runFuncs(runFuncs), javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
 #endif
 {
 	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
@@ -419,6 +419,7 @@ DWORD LacewingLoopThread(void * thisExt)
 #ifdef __ANDROID__
 	// So Lacewing handlers run by event loop can run Rehandle().
 	ext->Runtime.AttachJVMAccessForThisThread(PROJECT_NAME " Lacewing Loop Thread");
+	JNIExceptionCheck();
 #endif
 
 	GlobalInfo * G = ext->globals;
@@ -452,6 +453,7 @@ DWORD LacewingLoopThread(void * thisExt)
 #endif
 
 #ifdef __ANDROID__
+	JNIExceptionCheck();
 	Edif::Runtime::DetachJVMAccessForThisThread();
 #endif
 
@@ -987,7 +989,7 @@ REFLAG Extension::Handle()
 	for (size_t maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; maxTrig++)
 	{
 		// Attempt to Enter, break if we can't get it instantly
-		if (!globals->lock.try_lock())
+		if (!globals->lock.edif_try_lock())
 		{
 			runNextLoop = true;
 			break; // lock already occupied; leave it and run next event loop

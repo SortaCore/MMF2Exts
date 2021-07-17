@@ -255,7 +255,7 @@
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
 		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild)</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild)</_FusionSDKAdds>
 
 		<!-- Not defined by Clang, just MSVC. -->
 		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
@@ -288,6 +288,7 @@
 
 		<!-- TargetName is incorrect on MultiTargetSDK, due to project name containing '.' -->
 		<TargetName>$(ExtName)$(LangSuffix)</TargetName>
+		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlat)=='iOS'">lib$(ExtName.Replace(' ','_'))$(LangSuffix)</TargetName>
 
 		<!-- Prevent the madness of every linked DLL being copied to output folder. -->
 		<CopyCppRuntimeToOutputDir>false</CopyCppRuntimeToOutputDir>
@@ -300,7 +301,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(TargetName)" /TargetPlat="$(_TargetPlat)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)\Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlat)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)\Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup>
@@ -526,7 +527,7 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(TargetName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /Platform="$(_TargetPlat)"</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /Platform="$(_TargetPlat)"</DarkEdifPostBuildToolParams>
 
 		<!-- iOS build results need copying back from remote folder. -->
 		<DarkEdifPostBuildToolParams>$(DarkEdifPostBuildToolParams) /RemoteOutputRootFolder="$(DarkEdif_RemoteOutputFolder)" /PSCPPath="$(DarkEdif_PSCPPath)" /PSCPArgs="$(DarkEdif_PSCPArgs)"</DarkEdifPostBuildToolParams>

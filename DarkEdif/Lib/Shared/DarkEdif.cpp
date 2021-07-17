@@ -868,12 +868,11 @@ int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAn
 
 	jobject toastobj = threadEnv->CallStaticObjectMethod(toast, methodMakeText, globalContext, toastTextJStr, 1 /* toast length long, 0 for short*/);
 
-	// toast.showを実行
 	// Java: toastobj.show();
 	jmethodID methodShow = threadEnv->GetMethodID(toast, "show", "()V");
 	threadEnv->CallVoidMethod(toastobj, methodShow);
 
-	__android_log_print(iconAndButtons, "MMFRuntimeNative", "Msg Box swallowed: \"%s\", %s.", caption, text);
+	__android_log_print(iconAndButtons, PROJECT_NAME_UNDERSCORES, "Msg Box swallowed: \"%s\", %s.", caption, text);
 	if (!strncmp(caption, "DarkEdif", sizeof("DarkEdif") - 1) && (iconAndButtons & MB_ICONERROR) != 0)
 		DarkEdif::BreakIfDebuggerAttached();
 	return 0;

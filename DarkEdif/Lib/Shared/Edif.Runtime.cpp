@@ -268,11 +268,10 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 #elif defined(__ANDROID__) // !_WIN32
 
 Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) : 
-	runFuncs(runFuncs), javaExtPtr(javaExtPtr2), ObjectSelection(NULL)
+	runFuncs(runFuncs), javaExtPtr(javaExtPtr2, "Edif::Runtime::javaExtPtr from Edif::Runtime ctor"), ObjectSelection(NULL)
 {
-	javaExtPtrClass = mainThreadJNIEnv->GetObjectClass(javaExtPtr);
-	
 	std::string exc;
+	javaExtPtrClass = global(mainThreadJNIEnv->GetObjectClass(javaExtPtr), "Extension::javaExtPtrClass from Extension ctor");
 	if (javaExtPtrClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaExtPtrClass, got exception %s.", exc.c_str());
@@ -284,13 +283,13 @@ Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) :
 		LOGE("Could not get javaHoField, got exception %s.", exc.c_str());
 	}
 
-	javaHoObject = mainThreadJNIEnv->GetObjectField(javaExtPtr, javaHoField);
+	javaHoObject = global(mainThreadJNIEnv->GetObjectField(javaExtPtr, javaHoField), "Extension::javaHoObject from Extension ctor");
 	if (javaHoObject.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaHoObject, got exception %s.", exc.c_str());
 	}
 
-	javaHoClass = mainThreadJNIEnv->GetObjectClass(javaHoObject);
+	javaHoClass = global(mainThreadJNIEnv->GetObjectClass(javaHoObject), "Extension::javaHoClass from Extension ctor");
 	if (javaHoClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not find javaHoClass method, got exception %s.", exc.c_str());
@@ -320,7 +319,7 @@ void Edif::Runtime::Rehandle()
 
 void Edif::Runtime::GenerateEvent(int EventID)
 {
-	jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass, "generateEvent", "(II)V");
+	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "generateEvent", "(II)V");
 	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
 	//runFuncs.generateEvent(javaHoObject, EventID, 0);
 }
@@ -340,13 +339,35 @@ void * Edif::Runtime::Allocate(size_t size)
 }
 
 // Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside expression return.
+static char * lastHeapRet;
+static char stackRet[1024];
+static char zero[4];
 TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
-	return (TCHAR  *)String;
+	if (!String[0])
+		return zero;
+	const size_t len = strlen(String) + 1;
+	if (len < sizeof(stackRet))
+	{
+		strcpy(stackRet, String);
+		return stackRet;
+	}
+	char * temp = (char *)realloc(lastHeapRet, len);
+	if (temp == NULL)
+	{
+		free(lastHeapRet);
+		lastHeapRet = NULL;
+		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!", len, String);
+		strcpy(stackRet, "Out of memory! See logcat.");
+		return stackRet;
+	}
+	strcpy(lastHeapRet, String);
+	return (lastHeapRet = temp);
 }
 char * Edif::Runtime::CopyStringEx(const char * String) {
-	return (char *)String;
+	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
+	throw std::runtime_error("Do not use wchar_t in Android!");
 	return (wchar_t *)String;
 }
 
@@ -358,6 +379,8 @@ JNIEnv * Edif::Runtime::AttachJVMAccessForThisThread(const char * threadName, bo
 		LOGF("Thread ID %s already has JNI access.", ThreadIDToStr(thisThreadID).c_str());
 		return nullptr;
 	}
+
+	pthread_setname_np(pthread_self(), threadName);
 
 	JavaVMAttachArgs args = {
 		.name = threadName,
@@ -378,8 +401,8 @@ JNIEnv * Edif::Runtime::AttachJVMAccessForThisThread(const char * threadName, bo
 			threadName, ThreadIDToStr(thisThreadID).c_str(), asDaemon ? "AsDaemon" : "", error);
 		return nullptr;
 	}
-
 	LOGV("Attached thread %s (ID %s) to JNI.", threadName, ThreadIDToStr(thisThreadID).c_str());
+	JNIExceptionCheck();
 	return threadEnv;
 }
 void Edif::Runtime::DetachJVMAccessForThisThread()
@@ -390,6 +413,7 @@ void Edif::Runtime::DetachJVMAccessForThisThread()
 		LOGF("Can't detach JVM access, thread ID %s already doesn't have JNI access", ThreadIDToStr(thisThreadID).c_str());
 		return;
 	}
+	JNIExceptionCheck();
 	const jint error = global_vm->DetachCurrentThread();
 	if (error != JNI_OK)
 	{
