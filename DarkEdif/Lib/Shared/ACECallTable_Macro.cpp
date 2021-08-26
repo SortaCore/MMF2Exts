@@ -1,4 +1,4 @@
-﻿// This file is used by the AltPlatformPreBuildTool as an input template for the calltable generator.
+﻿// This file is used by the DarkEdifPreBuildTool as an input template for the calltable generator.
 // Do not modify or delete this file.
 #if DARKEDIF_ACE_CALL_TABLE_INDEX==0
 			#error ASM Condition Replacement Macro was not replaced!

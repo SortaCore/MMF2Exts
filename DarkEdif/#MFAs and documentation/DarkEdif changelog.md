@@ -9,21 +9,29 @@ Minor changes won't necessitate an immediate version update, so to get the lates
 If you're editing this file, note that the use of Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
 
+Changes until v12 release
+----
+*v12 not released yet*
+
 Changes until v11 release
 ----
-*v11 not released yet*
+*v11 released on 26th August 2021, commit (latest)*
+- MultiTarget SDK integration into DarkEdif Template, providing Android and iOS compatibility - iOS still requires separate Mac with Xcode (latest Xcode on Big Sur is compatible)
+- Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files
+- Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents
 - Windows XP compatibility improved for external libraries by defining \_WIN32\_WINNT in project properties instead
-- Made DarkEdif Template's icon file size smaller
-- Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents.
-- MultiTarget SDK integration into DarkEdif Template
-- Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files.
+- Worked around a Visual Studio 2019 Preview bug that caused Android compilations to fail (reported [here](https://developercommunity.visualstudio.com/t/shared-android-project-with-spaces-in-path-wont-co/1478150) )
+- Made DarkEdif Template's icon file size smaller using TinyPNG [online service](https://tinypng.com/)
+- Modified pre-build tool to report poorly formed DarkExt JSON files, where A/C/E parameter types are present, but names are missing
+- Added DarkEdif MultiTargeting.md documentation file, tips about how to work with mobile C++ development and debug efficiently. Not completed yet. May be moved into the MMF2Exts wiki later.
+- Added DARKEDIF_LOG_XXX compile macros, allowing multiplatform logging functions that can be removed at compile time. Modelled after the Android log levels.
 
 Changes until v10 release
 ----
 *v10 released on 11th June 2021, commit [357036f](https://github.com/SortaCore/MMF2Exts/commit/357036fa10c8d3293b447ca4cd27d0bc52bfaff6)*
 
 - Fixed Edif::Condition for comparison condition parameters, uses long instead of int, and returns a text result correctly.
-- Removed UNICODE undef. Some Windows APIs like AdvAPI.h use UNICODE define instead of \_UNICODE. Enums members UNICODE now use UNICODE\_.
+- Removed UNICODE undef. Some Windows APIs like AdvAPI.h use UNICODE define instead of \_UNICODE. Enums with a member UNICODE now use UNICODE\_ member instead.
 - Removed excess newlines in template Conditions.cpp
 
 

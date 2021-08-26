@@ -1,4 +1,6 @@
 #include "Common.h"
+#include "Edif.h"
+#include "DarkEdif.h"
 
 struct EdifGlobal
 {
@@ -265,7 +267,42 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
     return NULL;
 }
 
-#elif defined(__ANDROID__) // !_WIN32
+#else  // !_WIN32
+
+// We use this in both Android and iOS. It uses stack memory for text up to 1kb,
+// and heap memory for anything else, reusing the memory for every string expression.
+// 
+// This would be considered unsafe in nested A/C/E scenarios,
+// i.e. expression("3rd party object", expression1("this obj"), expression2("this obj"))
+// but the Obj-C/Java wrapper has to copy out the UTF-8 text anyway, so we don't have
+// to worry about expression1 becoming 2 or memory freed too early.
+
+static char * lastHeapRet;
+static char stackRet[1024];
+static char zero[4];
+TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
+	if (!String[0])
+		return zero;
+	const size_t len = strlen(String) + 1;
+	if (len < sizeof(stackRet))
+	{
+		strcpy(stackRet, String);
+		return stackRet;
+	}
+	char * temp = (char *)realloc(lastHeapRet, len);
+	if (temp == NULL)
+	{
+		free(lastHeapRet);
+		lastHeapRet = NULL;
+		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!", len, String);
+		strcpy(stackRet, "Out of memory! See logcat.");
+		return stackRet;
+	} 
+	strcpy(lastHeapRet, String);
+	return (lastHeapRet = temp);
+}
+
+#if defined(__ANDROID__)
 
 Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) : 
 	runFuncs(runFuncs), javaExtPtr(javaExtPtr2, "Edif::Runtime::javaExtPtr from Edif::Runtime ctor"), ObjectSelection(NULL)
@@ -338,31 +375,7 @@ void * Edif::Runtime::Allocate(size_t size)
 	return NULL;
 }
 
-// Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside expression return.
-static char * lastHeapRet;
-static char stackRet[1024];
-static char zero[4];
-TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
-	if (!String[0])
-		return zero;
-	const size_t len = strlen(String) + 1;
-	if (len < sizeof(stackRet))
-	{
-		strcpy(stackRet, String);
-		return stackRet;
-	}
-	char * temp = (char *)realloc(lastHeapRet, len);
-	if (temp == NULL)
-	{
-		free(lastHeapRet);
-		lastHeapRet = NULL;
-		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!", len, String);
-		strcpy(stackRet, "Out of memory! See logcat.");
-		return stackRet;
-	}
-	strcpy(lastHeapRet, String);
-	return (lastHeapRet = temp);
-}
+// Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside Edif::Expression's return.
 char * Edif::Runtime::CopyStringEx(const char * String) {
 	return CopyString(String);
 }
@@ -622,7 +635,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 
 #else // iOS
 Edif::Runtime::Runtime(RuntimeFunctions & runFuncs, void * objCExtPtr) :
-	runFuncs(runFuncs), ObjectSelection(NULL)
+	runFuncs(runFuncs), objCExtPtr(objCExtPtr), ObjectSelection(NULL)
 {
 
 }
@@ -632,11 +645,8 @@ Edif::Runtime::~Runtime()
 {
 }
 
-extern "C"
-{
-	void DarkEdif_generateEvent(void * ext, int code, int param);
-	void DarkEdif_reHandle(void * ext);
-}
+extern "C" void DarkEdif_generateEvent(void * ext, int code, int param);
+extern "C" void DarkEdif_reHandle(void * ext);
 
 void Edif::Runtime::Rehandle()
 {
@@ -661,14 +671,12 @@ void * Edif::Runtime::Allocate(size_t size)
 	return NULL;
 }
 
-// Dummy functions. The conversion to Modified-UTF8 happens in JStrToCStr, inside expression return.
-TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
-	return (TCHAR *)String;
-}
+// Dummy functions.
 char * Edif::Runtime::CopyStringEx(const char * String) {
-	return (char *)String;
+	return CopyString(String);
 }
 wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
+	throw std::runtime_error("Do not use wchar_t in iOS!");
 	return (wchar_t *)String;
 }
 
@@ -802,3 +810,5 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 }
 
 #endif
+
+#endif // !_WIN32

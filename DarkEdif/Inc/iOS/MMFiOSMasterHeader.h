@@ -27,10 +27,13 @@
 #define MB_ICONERROR 1
 #define MB_ICONWARNING 2
 #define MB_ICONINFORMATION 3
+#define MB_TOPMOST 0
 #define MessageBox(a,b,c,d) MessageBoxA(a,b,c,d)
 #define _msize(a) malloc_usable_size(a)
+void Sleep(unsigned int milliseconds);
+#define _CrtCheckMemory() /* no op */
 //#include <Foundation/Foundation.h>
-#define OutputDebugStringA(a) { /* URGENT: NO OP */  }
+#define OutputDebugStringA(a) LOGI("%s", a)
 #include <wchar.h>
 #include <string>
 #include <signal.h>
@@ -39,7 +42,7 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-#define ProjectFunc extern "C" __attribute__((visibility ("default"))) 
+#define ProjectFunc extern "C" __attribute__((visibility ("default")))
 #define FusionAPI /* no declarator */
 #include <fcntl.h>
 #include <errno.h>
@@ -55,6 +58,8 @@ using namespace std::string_view_literals;
 #define _tcscat(a,b) strcat(a,b)
 #define _tcscmp(a,b) strcmp(a,b)
 #define _tcsicmp(a,b) strcasecmp(a,b)
+#define _tcschr(a,b) strchr(a,b)
+#define _tcsrchr(a,b) strrchr(a,b)
 #define memmove_s(a,b,c,d) memmove(a,c,d)
 #define _tcsnicmp(a,b,c) strncasecmp(a,b,c)
 #define _T(x) x
@@ -64,6 +69,7 @@ using namespace std::string_view_literals;
 #define _ttoi(i) atoi(i)
 #define _vstprintf_s(a,b,c,d) sprintf_s(a,c,d)
 #define _tcserror(a) strerror(a)
+#define fread_s(a,b,c,d,e) fread(a,c,d,e)
 #if __cplusplus < 201703L
 #error Not running in C++17 mode
 #endif
@@ -71,6 +77,10 @@ namespace std {
 	typedef std::string tstring;
 	typedef std::stringstream tstringstream;
 	typedef std::string_view tstring_view;
+	template<typename... Args>
+	inline auto to_tstring(Args &&... args) -> decltype(std::to_string(std::forward<Args>(args)...)) {
+		return std::to_string(std::forward<Args>(args)...);
+	}
 }
 
 // You shouldn't be using Unicode during iOS builds, even for TCHAR.
@@ -178,11 +188,27 @@ typedef unsigned int uint;
 
 //#include "Surface.h"
 
-void LOGF(const char * x, ...);
+#define DARKEDIF_LOG_VERBOSE 2
+#define DARKEDIF_LOG_DEBUG 3
+#define DARKEDIF_LOG_INFO 4
+#define DARKEDIF_LOG_WARN 5
+#define DARKEDIF_LOG_ERROR 6
+#define DARKEDIF_LOG_FATAL 7
 
-#define LOGV(x,...) printf(x, __VA_ARGS__)
-#define LOGI(x,...) printf(x, __VA_ARGS__)
-#define LOGE(x,...) printf(x, __VA_ARGS__)
+#ifndef DARKEDIF_LOG_MIN_LEVEL
+	#ifdef _DEBUG
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+	#else
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
+	#endif
+#endif
+
+#define LOGV(x,...) ::DarkEdif::Log(DARKEDIF_LOG_VERBOSE, x, ##__VA_ARGS__)
+#define LOGD(x,...) ::DarkEdif::Log(DARKEDIF_LOG_DEBUG, x, ##__VA_ARGS__)
+#define LOGI(x,...) ::DarkEdif::Log(DARKEDIF_LOG_INFO, x, ##__VA_ARGS__)
+#define LOGW(x,...) ::DarkEdif::Log(DARKEDIF_LOG_WARN, x, ##__VA_ARGS__)
+#define LOGE(x,...) ::DarkEdif::Log(DARKEDIF_LOG_ERROR, x, ##__VA_ARGS__)
+void LOGF(const char * x, ...);
 
 struct eventGroup {
 	// Dummy group
@@ -334,7 +360,7 @@ enum class CallFunctionIDs {
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-// Flags 
+// Flags
 typedef unsigned int uint;
 enum class OEFLAGS : uint {
 	NONE = 0,
@@ -473,7 +499,7 @@ enum class Params : short {
 	Comparison,						// ParamComparison
 	Colour,							// ParamColour
 	Buffer,							// ParamBuffer
-	Frame,							// ParamFrame - Storyboard frame number 
+	Frame,							// ParamFrame - Storyboard frame number
 	Sample_Loop,					// ParamSoundLoop
 	Music_Loop,						// ParamSoundLoop also
 	New_Direction,					// ParamNewDir
@@ -637,7 +663,7 @@ struct HeaderObject {
 	qualToOi *			QualToOiList;
 };
 struct RunObject {
-	HeaderObject  	roHo;		  		// Common structure 
+	HeaderObject  	roHo;		  		// Common structure
 };
 
 // Versions
@@ -728,7 +754,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtP
     INCBIN_EXTERNAL const INCBIN_ALIGN unsigned char PROJECT_NAME_RAW ## NAME[]; \
     INCBIN_EXTERNAL const unsigned int PROJECT_NAME_RAW ## NAME ## Size
 
-#define PROJECT_NAME_RAW_STR #PROJECT_NAME_RAW 
+#define PROJECT_NAME_RAW_STR #PROJECT_NAME_RAW
 #define INCBIN(NAME, FILENAME) INCBIN2(PROJECT_NAME_RAW ## NAME, FILENAME)
 
 #define INCBIN2(NAME, FILENAME) \

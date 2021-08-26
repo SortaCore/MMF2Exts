@@ -1,5 +1,6 @@
 #include "Common.h"
 #include <atomic>
+#include "DarkEdif.h"
 
 extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
@@ -85,6 +86,9 @@ inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 }
 ExpReturnType ReadExpressionReturnType(const char * Text);
 
+#ifdef RUN_ONLY
+#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
+#endif
 bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
@@ -1783,6 +1787,21 @@ void DarkEdif::MsgBox::Info(const TCHAR * titlePrefix, PrintFHintInside const TC
 	Internal_MessageBox(titlePrefix, msgFormat, v, MB_OK | MB_ICONINFORMATION);
 	va_end(v);
 }
+void DarkEdif::Log(int logLevel, const TCHAR * msgFormat, ...)
+{
+	va_list v;
+	va_start(v, msgFormat);
+#ifdef _WIN32
+	static TCHAR outputBuff[1024];
+	_vstprintf_s(outputBuff, msgFormat, v);
+	OutputDebugString(outputBuff);
+#elif defined(__ANDROID__)
+	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);
+#else // iOS
+	vprintf(msgFormat, v);
+#endif
+	va_end(v);
+}
 
 #ifdef __ANDROID__
 
@@ -1803,7 +1822,9 @@ void OutputDebugStringA(const char * debugString)
 	LOGI("OutputDebugStringA: %s.", debugStringSafe.c_str());
 }
 #endif // DarkEdif log level INFO or higher
+#endif // __ANDROID__
 
+#ifndef _WIN32
 // To get the Windows-like behaviour
 void Sleep(unsigned int milliseconds)
 {

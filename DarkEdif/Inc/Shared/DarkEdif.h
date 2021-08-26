@@ -90,7 +90,7 @@ std::wstring TStringToWide(const std::tstring_view);
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 10;
+	static const int SDKVersion = 11;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -250,7 +250,7 @@ namespace DarkEdif {
 #ifdef _MSC_VER
 #define PrintFHintInside _In_z_ _Printf_format_string_
 #define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#elif defined(__clang__)
+#elif defined(__clang__) && !defined (__INTELLISENSE__)
 #define PrintFHintInside /* no op */
 // Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
 // Note class member functions should include the "this" pointer in the indexing.
@@ -280,6 +280,8 @@ namespace DarkEdif {
 		void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 	}
+
+	void Log(int logLevel, const TCHAR * msgFormat, ...);
 }
 
 

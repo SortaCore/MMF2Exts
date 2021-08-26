@@ -51,26 +51,6 @@
   <ImportGroup Label="Shared">
     <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <ClCompile>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <ClCompile>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <ClCompile>
-      <ExceptionHandling>Disabled</ExceptionHandling>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />

@@ -4,6 +4,8 @@
 
 // These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc..)
 
+#include "Edif.h"
+
 #ifndef OBJECTSELECTION
 #define OBJECTSELECTION
 

@@ -875,7 +875,11 @@ class CValue;
 // Raw creation func
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 {
-	// Do nothing?
+	mv * mV = NULL;
+	if (!::SDK) {
+		LOGV("The SDK is being initialised.");
+		Edif::Init(mV);
+	}
 }
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _close())
 {

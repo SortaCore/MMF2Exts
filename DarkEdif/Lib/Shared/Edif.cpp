@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "Edif.h"
 
 Edif::SDK * SDK = nullptr;
 
@@ -913,7 +914,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			#include "Temp_ACECallTable.cpp"
 			
 			default:
-				MessageBoxA(NULL, "Error calling condition: ID not found.", "DarkEdif - ActionOrCondition() error", MB_OK);
+				MessageBoxA(NULL, "Error calling action: ID not found.", "DarkEdif - ActionOrCondition() error", MB_OK);
 				goto endFunc;
 		}
 	}	
@@ -1027,7 +1028,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	{
 		LOGV("Getting float param, cond=%d, index %d.", isCondition ? 1 : 0, index);
 		float f = (isCondition ? ext->runFuncs.cnd_getParamExpFloat : ext->runFuncs.act_getParamExpFloat)(ext->javaExtPtr, javaActOrCndObj);
-		LOGV("Got float param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		LOGV("Got float param, cond=%d, index %d OK: %f.", isCondition ? 1 : 0, index, f);
 		return f;
 	}
 
@@ -1035,7 +1036,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	{
 		LOGV("Getting string param, cond=%d, index %d.", isCondition ? 1 : 0, index);
 		const TCHAR * str = trackString((isCondition ? ext->runFuncs.cnd_getParamExpString : ext->runFuncs.act_getParamExpString)(ext->javaExtPtr, javaActOrCndObj));
-		LOGV("Got string param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".", isCondition ? 1 : 0, index, str);
 		return str;
 	}
 
@@ -1043,7 +1044,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	{
 		LOGV("Getting integer param, cond=%d, index %d.", isCondition ? 1 : 0, index);
 		std::int32_t in = (isCondition ? ext->runFuncs.cnd_getParamExpression : ext->runFuncs.act_getParamExpression)(ext->javaExtPtr, javaActOrCndObj);
-		LOGV("Got integer param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		LOGV("Got integer param, cond=%d, index %d OK: %d.", isCondition ? 1 : 0, index, in);
 		return in;
 	}
 
@@ -1071,13 +1072,13 @@ extern "C"
 	void DarkEdif_generateEvent(void * ext, int code, int param);
 	void DarkEdif_reHandle(void * ext);
 
-	int DarkEdif_actGetParamExpression(void * ext, void * act);
-	const char * DarkEdif_actGetParamExpString(void * ext, void * act);
-	double DarkEdif_actGetParamExpDouble(void * ext, void * act);
+	int DarkEdif_actGetParamExpression(void * ext, void * act, int paramNum);
+	const char * DarkEdif_actGetParamExpString(void * ext, void * act, int paramNum);
+	double DarkEdif_actGetParamExpDouble(void * ext, void * act, int paramNum);
 
-	int DarkEdif_cndGetParamExpression(void * ext, void * cnd);
-	const char * DarkEdif_cndGetParamExpString(void * ext, void * cnd);
-	double DarkEdif_cndGetParamExpDouble(void * ext, void * cnd);
+	int DarkEdif_cndGetParamExpression(void * ext, void * cnd, int paramNum);
+	const char * DarkEdif_cndGetParamExpString(void * ext, void * cnd, int paramNum);
+	double DarkEdif_cndGetParamExpDouble(void * ext, void * cnd, int paramNum);
 	bool DarkEdif_cndCompareValues(void * ext, void * cnd, int paramNum);
 	bool DarkEdif_cndCompareTime(void * ext, void * cnd, int paramNum);
 
@@ -1107,24 +1108,24 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		double f = (isCondition ? DarkEdif_cndGetParamExpDouble : DarkEdif_actGetParamExpDouble)(ext->objCExtPtr, objCActOrCndObj);
-		LOGV("Got float param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		double f = (isCondition ? DarkEdif_cndGetParamExpDouble : DarkEdif_actGetParamExpDouble)(ext->objCExtPtr, objCActOrCndObj, index);
+		LOGV("Got float param, cond=%d, index %d OK: %f.", isCondition ? 1 : 0, index, f);
 		return (float)f;
 	}
 
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		const TCHAR* str = (isCondition ? DarkEdif_cndGetParamExpString : DarkEdif_actGetParamExpString)(ext->objCExtPtr, objCActOrCndObj);
-		LOGV("Got string param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		const TCHAR* str = (isCondition ? DarkEdif_cndGetParamExpString : DarkEdif_actGetParamExpString)(ext->objCExtPtr, objCActOrCndObj, index);
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".", isCondition ? 1 : 0, index, str);
 		return str;
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
 		LOGV("Getting integer param, cond=%d, index %d.", isCondition ? 1 : 0, index);
-		std::int32_t in = (isCondition ? DarkEdif_cndGetParamExpression : DarkEdif_actGetParamExpression)(ext->objCExtPtr, objCActOrCndObj);
-		LOGV("Got integer param, cond=%d, index %d OK.", isCondition ? 1 : 0, index);
+		std::int32_t in = (isCondition ? DarkEdif_cndGetParamExpression : DarkEdif_actGetParamExpression)(ext->objCExtPtr, objCActOrCndObj, index);
+		LOGV("Got integer param, cond=%d, index %d OK: %i.", isCondition ? 1 : 0, index, in);
 		return in;
 	}
 
@@ -1364,7 +1365,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	{
 		LOGV("Getting float param, expr, index %d OK.", index);
 		float f = DarkEdif_expGetParamFloat(ext->objCExtPtr);
-		LOGV("Got float param, expr, index %d OK.", index);
+		LOGV("Got float param, expr, index %d OK: %f.", index, f);
 		return f;
 	}
 
@@ -1372,7 +1373,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	{
 		LOGV("Getting string param, expr, index %d.", index);
 		const TCHAR* str = DarkEdif_expGetParamString(ext->objCExtPtr);
-		LOGV("Got string param, expr, index %d OK.", index);
+		LOGV("Got string param, expr, index %d OK: \"%s\".", index, str);
 		return str;
 	}
 
@@ -1380,7 +1381,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	{
 		LOGV("Getting integer param, expr, index %d OK.", index);
 		std::int32_t i = DarkEdif_expGetParamInt(ext->objCExtPtr);
-		LOGV("Got integer param, expr, index %d OK.", index);
+		LOGV("Got integer param, expr, index %d OK: %d.", index, i);
 		return i;
 	}
 
@@ -1603,10 +1604,7 @@ endFunc:
 		params.SetReturnType(ExpressionRet);
 	
 		if (ExpressionRet == ExpReturnType::String)
-		{
-			lw_trace("Returning string for expression ID %i.", ID);
 			params.SetValue((const char *)Result);
-		}
 		else if (ExpressionRet == ExpReturnType::Integer)
 			params.SetValue((int)Result);
 		else if (ExpressionRet == ExpReturnType::Float)
@@ -1985,15 +1983,15 @@ Edif::recursive_mutex::recursive_mutex()
 Edif::recursive_mutex::~recursive_mutex()
 {
 }
-void Edif::recursive_mutex::lock()
+void Edif::recursive_mutex::lock(edif_lock_debugParams)
 {
 	this->intern.lock();
 }
-bool Edif::recursive_mutex::try_lock()
+bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 {
 	return this->intern.try_lock();
 }
-void Edif::recursive_mutex::unlock()
+void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
 	this->intern.unlock();
 }
