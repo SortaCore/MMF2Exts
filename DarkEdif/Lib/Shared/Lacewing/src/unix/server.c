@@ -68,7 +68,7 @@ struct _lw_server
 		#endif
 	#endif
 
-	list (lw_server_client, clients);
+	lw_list (lw_server_client, clients);
 };
 
 struct _lw_server_client

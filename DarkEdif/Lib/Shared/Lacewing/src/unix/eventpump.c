@@ -80,7 +80,7 @@ static void def_cleanup (lw_pump pump)
 	lw_eventpump ctx = (lw_eventpump) pump;
 
 	lwp_eventqueue_delete (ctx->queue);
-	ctx->queue = -1;
+	ctx->queue = (lwp_eventqueue)~0;
 
 	#ifdef ENABLE_THREADS
 

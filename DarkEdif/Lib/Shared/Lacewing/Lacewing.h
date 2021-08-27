@@ -87,7 +87,8 @@
 	#ifndef lw_import
 		#define lw_import
 	#endif
-	#include <netinet/in6.h>
+	#include <netinet/in.h>
+	// #include <netinet/in6.h>
 #else
 
 	/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
@@ -143,9 +144,7 @@ typedef lw_i8 lw_bool;
 #if (!defined(_lacewing_internal))
 
 	/* The ugly underscore prefixes are only necessary because we have to
-	 * compile the library as C++ for MSVC compatibility.  Maybe one day MSVC
-	 * will support C99 (or everyone will stop using Windows - I'm happy either
-	 * way.)
+	 * compile the library as C++ for MSVC compatibility.
 	 */
 
 	typedef struct _lw_thread			*  lw_thread;
@@ -214,12 +213,12 @@ typedef lw_i8 lw_bool;
 /* Address */
 
 	lw_import			lw_addr  lw_addr_new			(const char * hostname, const char * service);
-	lw_import			lw_addr  lw_addr_new_port		(const char * hostname, long port);
-	lw_import			lw_addr  lw_addr_new_hint		(const char * hostname, const char * service, long hints);
-	lw_import			lw_addr  lw_addr_new_port_hint	(const char * hostname, long port, long hints);
+	lw_import			lw_addr  lw_addr_new_port		(const char * hostname, lw_ui16 port);
+	lw_import			lw_addr  lw_addr_new_hint		(const char * hostname, const char * service, int hints);
+	lw_import			lw_addr  lw_addr_new_port_hint	(const char * hostname, lw_ui16 port, int hints);
 	lw_import			lw_addr  lw_addr_clone			(lw_addr);
 	lw_import			   void  lw_addr_delete			(lw_addr);
-	lw_import			   long  lw_addr_port			(lw_addr);
+	lw_import			lw_ui16  lw_addr_port			(lw_addr);
 	lw_import			   void  lw_addr_set_port		(lw_addr, long port);
 	lw_import				int  lw_addr_type			(lw_addr);
 	lw_import			   void  lw_addr_set_type		(lw_addr, int);
@@ -380,7 +379,7 @@ typedef lw_i8 lw_bool;
 	typedef struct lw_streamdef
 	{
 		  size_t  (* sink_data)		 (lw_stream, const char * buffer, size_t size);
-		  size_t  (* sink_stream)	 (lw_stream, lw_stream source, size_t size);
+		  lw_i64  (* sink_stream)	 (lw_stream, lw_stream source, size_t size);
 			void  (* retry)			 (lw_stream, int when);
 		 lw_bool  (* is_transparent) (lw_stream);
 		 lw_bool  (* close) 		 (lw_stream, lw_bool immediate);
@@ -457,7 +456,7 @@ typedef lw_i8 lw_bool;
 
 	lw_import		lw_error  lw_error_new		();
 	lw_import			void  lw_error_delete	(lw_error);
-	lw_import			void  lw_error_add		(lw_error, long);
+	lw_import			void  lw_error_add		(lw_error, int);
 	lw_import			void  lw_error_addf		(lw_error, const char * format, ...);
 	lw_import			void  lw_error_addv		(lw_error, const char * format, va_list);
 	lw_import		  size_t  lw_error_size		(lw_error);
@@ -473,9 +472,9 @@ typedef lw_i8 lw_bool;
 	 */
 
 	lw_import	   lw_client  lw_client_new					(lw_pump);
-	lw_import			void  lw_client_connect				(lw_client, const char * host, long port);
+	lw_import			void  lw_client_connect				(lw_client, const char * host, lw_ui16 port);
 	lw_import			void  lw_client_connect_addr		(lw_client, lw_addr);
-	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, long port);
+	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, lw_ui16 port);
 	lw_import			void  lw_client_connect_addr_secure	(lw_client, lw_addr);
 	lw_import			void  lw_client_disconnect			(lw_client);
 	lw_import		 lw_bool  lw_client_connected			(lw_client);
@@ -532,12 +531,12 @@ typedef lw_i8 lw_bool;
 
 	lw_import	  lw_udp  lw_udp_new		 (lw_pump);
 	lw_import		void  lw_udp_delete		 (lw_udp);
-	lw_import		void  lw_udp_host		 (lw_udp, long port);
+	lw_import		void  lw_udp_host		 (lw_udp, lw_ui16 port);
 	lw_import		void  lw_udp_host_filter (lw_udp, lw_filter);
 	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr);
 	lw_import	 lw_bool  lw_udp_hosting	 (lw_udp);
 	lw_import		void  lw_udp_unhost		 (lw_udp);
-	lw_import		long  lw_udp_port		 (lw_udp);
+	lw_import	 lw_ui16  lw_udp_port		 (lw_udp);
 	lw_import		void  lw_udp_send		 (lw_udp, lw_addr, const char * buffer, size_t size);
 	lw_import	  void *  lw_udp_tag		 (lw_udp);
 	lw_import		void  lw_udp_set_tag	 (lw_udp, void *);
@@ -1010,7 +1009,7 @@ struct _fdstream : public _stream
 	lw_class_wraps (fdstream);
 
 	lw_import void set_fd
-		(lw_fd, lw_pump_watch watch = 0, bool auto_close = false);
+		(lw_fd, lw_pump_watch watch = 0, bool auto_close = false, bool is_socket = false);
 
 	lw_import bool valid ();
 
@@ -1050,8 +1049,8 @@ struct _address
 {
 	lw_class_wraps (address);
 
-	lw_import long port ();
-	lw_import void port (long);
+	lw_import lw_ui16 port ();
+	lw_import void port (lw_ui16);
 
 	lw_import int type ();
 	lw_import void type (int);
@@ -1074,9 +1073,9 @@ struct _address
 
 lw_import address address_new (address);
 lw_import address address_new (const char * hostname, const char * service);
-lw_import address address_new (const char * hostname, long port);
-lw_import address address_new (const char * hostname, const char * service, long hints);
-lw_import address address_new (const char * hostname, long port, long hints);
+lw_import address address_new (const char * hostname, lw_ui16 port);
+lw_import address address_new (const char * hostname, const char * service, int hints);
+lw_import address address_new (const char * hostname, lw_ui16 port, int hints);
 
 lw_import void address_delete (address);
 
@@ -1123,7 +1122,7 @@ struct _client : public _fdstream
 {
 	lw_class_wraps (client);
 
-	lw_import void connect (const char * host, long port);
+	lw_import void connect (const char * host, lw_ui16 port);
 	lw_import void connect (address);
 
 	lw_import bool connected ();
@@ -1219,14 +1218,14 @@ struct _udp
 {
 	lw_class_wraps (udp);
 
-	lw_import void host (long port);
+	lw_import void host (lw_ui16 port);
 	lw_import void host (filter);
 	lw_import void host (address);
 
 	lw_import bool hosting ();
 	lw_import void unhost ();
 
-	lw_import long port ();
+	lw_import lw_ui16 port ();
 
 	lw_import void send (address, const char * data, size_t size = -1);
 
@@ -1499,7 +1498,7 @@ struct _flashpolicy
 lw_import flashpolicy flashpolicy_new (pump);
 lw_import void flashpolicy_delete (flashpolicy);
 
-#pragma region Phi stuff
+//#pragma region Phi stuff
 // NOTE: if you edit this due to new liblacewing release, note:
 // _flashpolicy::on_error requires flash policy definition to be extracted.
 // Otherwise the flashpolicy can't be accessed for the C++ Flash Policy extension covered in flashpolicy2.cc.
@@ -1583,6 +1582,8 @@ protected:
 
 private:
 
+	// Would use std::shared_mutex, or std::shared_timed_mutex, but iOS doesn't support it until 10.0,
+	// so we'll roll our own.
 	std::shared_timed_mutex lock;
 	//std::condition_variable read, write;
 	::std::atomic<size_t> readers, writers, read_waiters, write_waiters;
@@ -1689,6 +1690,7 @@ protected:
 struct relayclientinternal;
 struct relayclient
 {
+#define forbiddeneggs
 public:
 	const static int buildnum = 96;
 
@@ -1914,7 +1916,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 27;
+	static const int buildnum = 28;
 
 	void * internaltag, * tag = nullptr;
 
@@ -2206,10 +2208,12 @@ struct relayserver
 	void nameset_response(std::shared_ptr<lacewing::relayserver::client> client,
 		std::string_view newClientName, std::string_view denyReason);
 };
-#pragma endregion
+//#pragma endregion
 
 }
 
+#else
+#error Not building as C++
 #endif /* defined (__cplusplus) */
 #endif /* _lacewing_h */
 

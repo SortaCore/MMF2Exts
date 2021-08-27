@@ -14,9 +14,12 @@ std::atomic<bool> AppWasClosed(false);
 #ifdef _WIN32
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
-#else
+#elif defined(__ANDROID__)
 Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr) :
 	runFuncs(runFuncs), javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+#else
+Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr) :
+	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, objCExtPtr), FusionDebugger(this)
 #endif
 {
 	// Does nothing in non-Debug builds, even with _CRTDBG_MAP_ALLOC defined
@@ -688,7 +691,7 @@ int Extension::CheckForUTF8Cutoff(std::string_view sv)
 		return res;
 
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
-	for (int i = 0, j = (sv.size() < 4 ? sv.size() : 4); i < j; ++i)
+	for (size_t i = 0, j = (sv.size() < 4 ? sv.size() : 4); i < j; ++i)
 	{
 		// Cut off a char; go backwards
 		res = GetNumBytesInUTF8Char(sv.substr(sv.size() - i));
@@ -809,7 +812,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// We have the entire received message in result, we need to trim it to sizeInCodePoints
 
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
-	for (int codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = result.size(); ; )
+	for (int codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = (int)result.size(); ; )
 	{
 		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, remainder < 4 ? 4 : remainder));
 
@@ -1027,7 +1030,7 @@ REFLAG Extension::Handle()
 		{
 			if (mandatoryEventIDs[i].second == evtToRun->condTrig[0])
 			{
-				mandatoryEventIndex = i;
+				mandatoryEventIndex = (int)i;
 				globals->lastMandatoryEventWasChecked = false;
 				break;
 			}

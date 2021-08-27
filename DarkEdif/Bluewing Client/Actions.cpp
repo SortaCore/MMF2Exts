@@ -681,13 +681,13 @@ void Extension::SendMsg_CompressBinary()
 	}
 
 	// Store size as precursor - required by Relay
-	*(lw_ui32 *)output_buffer = SendMsgSize;
+	*(lw_ui32 *)output_buffer = (lw_ui32)SendMsgSize;
 
 	strm.next_in = (unsigned char *)SendMsg;
-	strm.avail_in = SendMsgSize;
+	strm.avail_in = (std::uint32_t)SendMsgSize;
 
 	// Allocate memory for compression
-	strm.avail_out = SendMsgSize - 4;
+	strm.avail_out = (std::uint32_t)SendMsgSize - 4;
 	strm.next_out = output_buffer + 4;
 
 	ret = deflate(&strm, Z_FINISH);
@@ -750,7 +750,7 @@ void Extension::RecvMsg_DecompressBinary()
 #endif
 
 	strm.next_in = (unsigned char *)inputData.data();
-	strm.avail_in = inputData.size();
+	strm.avail_in = (std::uint32_t)inputData.size();
 	strm.avail_out = expectedUncompressedSize;
 	strm.next_out = output_buffer.get();
 	ret = inflate(&strm, Z_FINISH);
@@ -778,7 +778,7 @@ void Extension::RecvMsg_MoveCursor(int position)
 }
 void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 {
-	if (loopName[0] == _T('\0'))
+	if (passedLoopName[0] == _T('\0'))
 		return CreateError("Cannot loop listed channels: invalid loop name \"\" supplied.");
 
 	const std::tstring_view loopNameDup(passedLoopName);
@@ -837,7 +837,7 @@ void Extension::LoopClientChannelsWithLoopName(const TCHAR * passedLoopName)
 }
 void Extension::LoopPeersOnChannelWithLoopName(const TCHAR * passedLoopName)
 {
-	if (loopName[0] == _T('\0'))
+	if (passedLoopName[0] == _T('\0'))
 		return CreateError("Cannot loop peers on channel: invalid loop name \"\" supplied.");
 	if (!selChannel)
 		return CreateError("Cannot loop peers on channel: no channel currently selected.");

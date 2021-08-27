@@ -32,7 +32,7 @@
 static void resolver (lw_addr);
 
 void lwp_addr_init (lw_addr ctx, const char * hostname,
-					const char * service, long hints)
+					const char * service, int hints)
 {
 	char * it;
 
@@ -92,11 +92,11 @@ void lw_addr_delete (lw_addr ctx)
 	free (ctx);
 }
 
-lw_addr lw_addr_new_port (const char * hostname, long port)
+lw_addr lw_addr_new_port (const char * hostname, lw_ui16 port)
 {
 	char service [64];
 
-	lwp_snprintf (service, sizeof (service), "%d", (int) port);
+	lwp_snprintf (service, sizeof (service), "%hu", port);
 
 	lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
 	lwp_addr_init (ctx, hostname, service, 0);
@@ -104,7 +104,7 @@ lw_addr lw_addr_new_port (const char * hostname, long port)
 	return ctx;
 }
 
-lw_addr lw_addr_new_hint (const char * hostname, const char * service, long hints)
+lw_addr lw_addr_new_hint (const char * hostname, const char * service, int hints)
 {
 	lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
 	lwp_addr_init (ctx, hostname, service, hints);
@@ -112,11 +112,11 @@ lw_addr lw_addr_new_hint (const char * hostname, const char * service, long hint
 	return ctx;
 }
 
-lw_addr lw_addr_new_port_hint (const char * hostname, long port, long hints)
+lw_addr lw_addr_new_port_hint (const char * hostname, lw_ui16 port, int hints)
 {
 	char service [64];
 
-	lwp_snprintf (service, sizeof (service), "%d", (int) port);
+	lwp_snprintf (service, sizeof (service), "%hu", port);
 
 	lw_addr ctx = (lw_addr) malloc (sizeof (*ctx));
 	lwp_addr_init (ctx, hostname, service, hints);
@@ -394,7 +394,7 @@ lw_bool lw_addr_ready (lw_addr ctx)
 		!lw_thread_started (ctx->resolver_thread);
 }
 
-long lw_addr_port (lw_addr ctx)
+lw_ui16 lw_addr_port (lw_addr ctx)
 {
 	if ((!lw_addr_ready (ctx)) || !ctx->info || !ctx->info->ai_addr)
 		return 0;

@@ -108,10 +108,12 @@ void lw_temp_path (char * buffer)
 
 	if (path)
 		strcpy (buffer, path);
-	else if (P_tmpdir)
-		strcpy (buffer, P_tmpdir);
 	else
+#ifdef P_tmpdir
+		strcpy (buffer, P_tmpdir);
+#else
 		strcpy (buffer, "/tmp/");
+#endif
 
 	if (*buffer && buffer [strlen (buffer) - 1] != '/')
 		strcat (buffer, "/");

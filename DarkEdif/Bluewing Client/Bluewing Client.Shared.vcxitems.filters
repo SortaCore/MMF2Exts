@@ -34,6 +34,12 @@
     <Filter Include="Global to all extensions\Edif\JSON">
       <UniqueIdentifier>{3115030c-1825-4b33-917b-4724953d8fd6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Lacewing\deps">
+      <UniqueIdentifier>{6dfef957-fbe4-4f38-8bbc-64824fca9e8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\deps\uthash">
+      <UniqueIdentifier>{468bc64e-1b4a-4819-a47a-5abe4177a1e6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp">
@@ -247,6 +253,30 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\common.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.h">
+      <Filter>Header Files\Lacewing\deps</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\uthash.h">
+      <Filter>Header Files\Lacewing\deps\uthash</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utarray.h">
+      <Filter>Header Files\Lacewing\deps\uthash</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utlist.h">
+      <Filter>Header Files\Lacewing\deps\uthash</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utstring.h">
+      <Filter>Header Files\Lacewing\deps\uthash</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.h">
+      <Filter>Header Files\Lacewing\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

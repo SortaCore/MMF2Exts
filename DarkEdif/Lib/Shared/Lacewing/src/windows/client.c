@@ -85,7 +85,7 @@ void lw_client_delete (lw_client ctx)
 	free (ctx);
 }
 
-void lw_client_connect (lw_client ctx, const char * host, long port)
+void lw_client_connect (lw_client ctx, const char * host, lw_ui16 port)
 {
 	lw_addr address = lw_addr_new_port (host, port);
 

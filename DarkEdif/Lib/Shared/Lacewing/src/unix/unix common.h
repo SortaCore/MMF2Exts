@@ -42,7 +42,6 @@
 #include <sched.h>
 
 #ifdef __ANDROID__
-
 	#include "android config.h"
 
 	#ifndef __LP64__
@@ -50,12 +49,15 @@
 	#endif
 	#include <android/log.h>
 #endif
+#ifdef __APPLE__
+	#include "ios config.h"
+#endif
 
 #ifdef HAVE_SYS_TIMERFD_H
 	#include <sys/timerfd.h>
 
 	#ifndef USE_KQUEUE
-	  #define _lacewing_use_timerfd
+		#define _lacewing_use_timerfd
 	#endif
 #endif
 
@@ -67,15 +69,17 @@
 	#include <netdb.h>
 #endif
 
-#ifndef __APPLE__
+// TODO: Is this undef necessary? If so, document why.
+// It seems Apple had a buggy implementation, but I think that's an ancient bug long fixed?
+//#ifndef __APPLE__
 	#ifdef TCP_CORK
-	  #define lw_cork TCP_CORK
+		#define lw_cork TCP_CORK
 	#else
-	  #ifdef TCP_NOPUSH
-		 #define lw_cork TCP_NOPUSH
-	  #endif
+		#ifdef TCP_NOPUSH
+			#define lw_cork TCP_NOPUSH
+		#endif
 	#endif
-#endif
+//#endif
 
 #if defined(USE_EPOLL)
 	#include <sys/epoll.h>

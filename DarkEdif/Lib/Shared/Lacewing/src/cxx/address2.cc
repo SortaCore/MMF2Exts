@@ -39,17 +39,17 @@ address lacewing::address_new (const char * hostname, const char * service)
 	return (address) lw_addr_new (hostname, service);
 }
 
-address lacewing::address_new (const char * hostname, long port)
+address lacewing::address_new (const char * hostname, lw_ui16 port)
 {
 	return (address) lw_addr_new_port (hostname, port);
 }
 
-address lacewing::address_new (const char * hostname, const char * service, long hints)
+address lacewing::address_new (const char * hostname, const char * service, int hints)
 {
 	return (address) lw_addr_new_hint (hostname, service, hints);
 }
 
-address lacewing::address_new (const char * hostname, long port, long hints)
+address lacewing::address_new (const char * hostname, lw_ui16 port, int hints)
 {
 	return (address) lw_addr_new_port_hint (hostname, port, hints);
 }
@@ -59,12 +59,12 @@ void lacewing::address_delete (lacewing::address address)
 	lw_addr_delete ((lw_addr) address);
 }
 
-long _address::port ()
+lw_ui16 _address::port ()
 {
 	return lw_addr_port ((lw_addr) this);
 }
 
-void _address::port (long port)
+void _address::port (lw_ui16 port)
 {
 	lw_addr_set_port ((lw_addr) this, port);
 }

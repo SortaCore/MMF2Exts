@@ -893,8 +893,8 @@ ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW, _getNumberOfConditions())
 }
 ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
 {
-	void * edPtr = file;
-	LOGI("Note: objCExtPtr is %p, edPtr %p.", objCExtPtr, edPtr);
+	EDITDATA * edPtr = (EDITDATA *)file;
+	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
 	RuntimeFunctions * runFuncs = new RuntimeFunctions();
 	Extension * cppExt = new Extension(*runFuncs, (EDITDATA *)edPtr, objCExtPtr);
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;

@@ -1103,6 +1103,9 @@ void Extension::LoopAllClients()
 }
 void Extension::LoopAllClientsWithName(const TCHAR * passedLoopName)
 {
+	if (passedLoopName[0] == _T('\0'))
+		return CreateError("Cannot loop all clients: invalid loop name \"\" supplied.");
+
 	const auto origSelClient = selClient;
 	const auto origSelChannel = selChannel;
 	const auto origLoopName = loopName;

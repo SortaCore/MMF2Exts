@@ -8,8 +8,12 @@ bool lacewing::writelock::isEnabled() const
 {
 	return locked;
 }
-#if defined(COXSDK) && defined(__ANDROID__)
-#include "../Inc/Android/MMFAndroidMasterHeader.h"
+#if defined(COXSDK)
+	#if defined(__ANDROID__)
+		#include "../Inc/Android/MMFAndroidMasterHeader.h"
+	#elif defined(__APPLE__)
+		#include "../Inc/iOS/MMFiOSMasterHeader.h"
+	#endif
 #endif
 
 lacewing::readlock::~readlock()
@@ -320,7 +324,7 @@ void lacewing::readwritelock::openWriteLock(writelock &wl)
 	if (checkHoldsRead(false))
 	{
 		char debugInfo[1024];
-		sprintf_s(debugInfo, "Deadlock - opened new write lock with read lock already held by same thread.\nNew writer opened from file [%s], func [%s] line %i.",
+		sprintf(debugInfo, "Deadlock - opened new write lock with read lock already held by same thread.\nNew writer opened from file [%s], func [%s] line %i.",
 			file, func, line);
 		MessageBoxA(NULL, debugInfo, "Deadlock failure.", MB_ICONERROR);
 		throw std::runtime_error("Deadlock");

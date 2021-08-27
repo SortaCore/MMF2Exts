@@ -17,7 +17,7 @@ const TCHAR * Extension::Self_Name()
 }
 unsigned int Extension::Self_ChannelCount()
 {
-	return Cli.channelcount();
+	return (std::uint32_t)Cli.channelcount();
 }
 const TCHAR * Extension::Peer_Name()
 {
@@ -214,7 +214,7 @@ const TCHAR * Extension::RecvMsg_String(int index)
 }
 unsigned int Extension::RecvMsg_SizeInBytes()
 {
-	return threadData->receivedMsg.content.size();
+	return (std::uint32_t)threadData->receivedMsg.content.size();
 }
 const TCHAR * Extension::Lacewing_Version()
 {
@@ -233,7 +233,7 @@ const TCHAR * Extension::Lacewing_Version()
 }
 unsigned int Extension::SendBinaryMsg_Size()
 {
-	return SendMsgSize;
+	return (std::uint32_t)SendMsgSize;
 }
 const TCHAR * Extension::Self_PreviousName()
 {
@@ -460,7 +460,11 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 			}
 
 			std::uint32_t curChar;
+#ifdef __APPLE__
+			int width = (int)output.width();
+#else
 			std::streamsize width = output.width();
+#endif
 			if (varSigned)
 			{
 				for (unsigned int j = 0; j < varCount; ++j)
@@ -592,7 +596,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 }
 unsigned int Extension::ChannelListing_ChannelCount()
 {
-	return Cli.channellistingcount();
+	return (std::uint32_t)Cli.channellistingcount();
 }
 
 /// <summary> Number of UTF-8 code points (including things like combining accents) </summary>
@@ -622,7 +626,7 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 		remainder -= numBytesInCodePoint;
 	}
 
-	return numCodePoints;
+	return (int)numCodePoints;
 }
 /// <summary> Get number of UTF-8 graphemes (distinct graphical characters) </summary>
 int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
@@ -656,7 +660,7 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	}
 
 	// Add 1 char for the thisChar at end
-	return ++numChars;
+	return (int)++numChars;
 }
 /// <summary> Get number of bytes in a UTF-8 string </summary>
 int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)

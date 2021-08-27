@@ -563,7 +563,7 @@ namespace lacewing
 	int relayclient::channel::peercount() const
 	{
 		lacewing::readlock rl = lock.createReadLock();
-		return peers.size();
+		return (int)peers.size();
 	}
 
 	lw_ui16 relayclient::channel::id() const

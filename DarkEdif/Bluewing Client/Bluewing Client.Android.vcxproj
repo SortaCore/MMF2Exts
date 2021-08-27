@@ -51,6 +51,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -101,7 +102,6 @@
       <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-    <Link />
     <Link>
       <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
     </Link>
@@ -141,7 +141,7 @@
   <ItemGroup>
     <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h" />
-    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h" />
   </ItemGroup>

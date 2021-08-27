@@ -1,6 +1,7 @@
 #pragma once
 #include "Edif.h"
 #include <functional>
+#include "MultiThreading.h"
 void NewEvent(EventToRun *);
 
 struct GlobalInfo;
@@ -17,9 +18,12 @@ public:
 #ifdef _WIN32
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
-#else
+#elif defined(__ANDROID__)
 	RuntimeFunctions & runFuncs;
 	global<jobject> javaExtPtr;
+#else
+	RuntimeFunctions & runFuncs;
+	void * objCExtPtr;
 #endif
 
 	Edif::Runtime Runtime;

@@ -76,7 +76,7 @@ struct sockaddr_storage lwp_socket_addr (lwp_socket socket)
 	return addr;
 }
 
-long lwp_socket_port (lwp_socket socket)
+lw_ui16 lwp_socket_port (lwp_socket socket)
 {
 	struct sockaddr_storage addr = lwp_socket_addr (socket);
 
@@ -300,7 +300,7 @@ time_t lwp_parse_time (const char * string)
 			#ifdef HAVE_TIMEGM
 				return timegm (&tm);
 			#else
-				#pragma error "Can't find a suitable way to convert a tm to a UTC UNIX time"
+				#error Can't find a suitable way to convert a tm to a UTC UNIX time
 			#endif
 		#endif
 	}

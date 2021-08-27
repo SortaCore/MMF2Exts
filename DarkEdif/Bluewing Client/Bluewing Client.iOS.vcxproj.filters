@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6c1a7586-850a-4c19-912b-69708e061ba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{c535c28d-c118-42ce-a527-bac473e706bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{b856fc36-178e-4a2c-83cb-a2271c31559b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{7089d004-8497-46d9-b0b5-06c0203acc50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing">
+      <UniqueIdentifier>{74f9c7d4-a0fa-47ca-b5e6-8ff5fe6d869a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src">
+      <UniqueIdentifier>{d2fc63e3-23f9-475a-b279-a4fa5406458a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\unix">
+      <UniqueIdentifier>{11eb42c7-a253-4b25-8af7-91f60214b719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing">
+      <UniqueIdentifier>{d2f20d3f-4fed-4d5e-a728-2099e964b4a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src">
+      <UniqueIdentifier>{e119d8b5-3073-4011-ad47-806dcdf6ba9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\unix">
+      <UniqueIdentifier>{b4eadc10-c1ff-472f-a018-22ecf0bbc1d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\unix\eventqueue">
+      <UniqueIdentifier>{0df22238-6721-45bb-b8e3-e9bb96708a7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\unix\eventqueue">
+      <UniqueIdentifier>{8a3128d7-1485-414c-8856-86b2b20333e1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)\DarkExt.PostMinify.json">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h">
+      <Filter>Header Files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h">
+      <Filter>Header Files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h">
+      <Filter>Header Files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h">
+      <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\ios config.h">
+      <Filter>Header Files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\eventqueue.h">
+      <Filter>Header Files\Lacewing\src\unix\eventqueue</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\event.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventpump.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\fdstream.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\file.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\global2.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\server.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\sync.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\thread.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\timer.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\udp.c">
+      <Filter>Source Files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\kqueue.c">
+      <Filter>Source Files\Lacewing\src\unix\eventqueue</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

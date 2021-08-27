@@ -86,7 +86,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h">
       <Filter>Header files\Lacewing\src\unix</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h">

@@ -39,7 +39,7 @@ void lacewing::udp_delete (lacewing::udp udp)
 	lw_udp_delete ((lw_udp) udp);
 }
 
-void _udp::host (long port)
+void _udp::host (lw_ui16 port)
 {
 	lw_udp_host ((lw_udp) this, port);
 }
@@ -64,7 +64,7 @@ void _udp::unhost ()
 	lw_udp_unhost ((lw_udp) this);
 }
 
-long _udp::port ()
+lw_ui16 _udp::port ()
 {
 	return lw_udp_port ((lw_udp) this);
 }

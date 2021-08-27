@@ -50,7 +50,7 @@ struct _lw_eventpump
 	lw_sync sync_signals;
 
 	int signalpipe_read, signalpipe_write;
-	list (void *, signalparams);
+	lw_list (void *, signalparams);
 
 	#ifndef _lacewing_no_threads
 

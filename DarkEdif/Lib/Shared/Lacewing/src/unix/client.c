@@ -80,7 +80,7 @@ void lw_client_delete (lw_client ctx)
 	free (ctx);
 }
 
-void lw_client_connect (lw_client ctx, const char * host, long port)
+void lw_client_connect (lw_client ctx, const char * host, lw_ui16 port)
 {
 	lw_addr address = lw_addr_new_port (host, port);
 
@@ -211,7 +211,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 	// Android doesn't support AI_V4MAPPED, despite defining it.
 	// Due to that, https://stackoverflow.com/questions/5587935/cant-turn-off-socket-option-ipv6-v6only#comment15775318_8213504
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(__APPLE__)
 	if (lw_addr_ipv6(address))
 		lwp_disable_ipv6_only((lwp_socket)ctx->socket);
 

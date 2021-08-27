@@ -1,3 +1,4 @@
+#pragma once
 // Handles all Lacewing functions.
 #include "Lacewing.h"
 

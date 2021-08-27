@@ -66,7 +66,7 @@ static void read_ready (void * ptr)
 
 	for (;;)
 	{
-		int bytes = recvfrom (ctx->fd, buffer, sizeof (buffer),
+		ssize_t bytes = recvfrom (ctx->fd, buffer, sizeof (buffer),
 								0, (struct sockaddr *) &from, &from_size);
 
 		if (bytes == -1)
@@ -99,7 +99,7 @@ static void read_ready (void * ptr)
 	lwp_release(ctx, "udp read");
 }
 
-void lw_udp_host (lw_udp ctx, long port)
+void lw_udp_host (lw_udp ctx, lw_ui16 port)
 {
 	lw_filter filter = lw_filter_new ();
 	lw_filter_set_local_port (filter, port);
@@ -149,7 +149,7 @@ lw_bool lw_udp_hosting (lw_udp ctx)
 	return ctx->fd != -1;
 }
 
-long lw_udp_port (lw_udp ctx)
+lw_ui16 lw_udp_port (lw_udp ctx)
 {
 	return lwp_socket_port (ctx->fd);
 }

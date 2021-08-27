@@ -25,9 +25,9 @@
 // #define _lacewing_static
 // These two are now defined in project settings; they're absolutely required.
 
-#include "..\Inc\Shared\DarkEdif.h"
+#include "../Inc/Shared/DarkEdif.h"
 
-#include "..\Lib\Shared\Lacewing\Lacewing.h"
+#include "../Lib/Shared/Lacewing/Lacewing.h"
 #include "LacewingFunctions.h"
 
 #ifdef _WIN32
@@ -42,6 +42,10 @@
 // Prevent errors with IntelliSense
 #include <string_view>
 using namespace std::string_view_literals;
+#include <iomanip>
+#endif
+#ifdef __APPLE__
+#include "../Inc/iOS/MMFiOSMasterHeader.h"
 #endif
 
 #ifdef _DEBUG
@@ -64,6 +68,7 @@ using namespace std::string_view_literals;
 #define MULTI_THREADING
 #include "MultiThreading.h"
 
+#include "Edif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA

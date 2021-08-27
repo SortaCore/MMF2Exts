@@ -479,7 +479,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	return size;
 }
 
-static size_t def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
+static lw_i64 def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
 {
 	if (lw_stream_get_def (_src) != &def_fdstream)
 		return -1;

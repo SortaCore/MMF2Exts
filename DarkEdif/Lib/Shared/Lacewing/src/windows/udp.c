@@ -79,11 +79,11 @@ struct _lw_udp
 
 	lw_filter filter;
 
-	long port;
+	lw_ui16 port;
 
 	SOCKET socket;
 
-	list(udp_overlapped, pending_receives);
+	lw_list(udp_overlapped, pending_receives);
 
 	long receives_posted;
 
@@ -212,7 +212,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	free (overlapped);
 }
 
-void lw_udp_host (lw_udp ctx, long port)
+void lw_udp_host (lw_udp ctx, lw_ui16 port)
 {
 	lw_filter filter = lw_filter_new ();
 	lw_filter_set_local_port (filter, port);
@@ -281,7 +281,7 @@ void lw_udp_unhost (lw_udp ctx)
 	ctx->filter = 0;
 }
 
-long lw_udp_port (lw_udp ctx)
+lw_ui16 lw_udp_port (lw_udp ctx)
 {
 	return ctx->port;
 }

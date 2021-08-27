@@ -49,7 +49,7 @@ struct _lw_addr
 };
 
 void lwp_addr_init (lw_addr ctx, const char * hostname,
-					const char * service, long hints);
+					const char * service, int hints);
 
 void lwp_addr_cleanup (lw_addr ctx);
 

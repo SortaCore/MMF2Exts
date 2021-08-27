@@ -298,7 +298,7 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 	return written;
 }
 
-static size_t def_sink_stream (lw_stream _dest,
+static lw_i64 def_sink_stream (lw_stream _dest,
 								lw_stream _src,
 								size_t size)
 {

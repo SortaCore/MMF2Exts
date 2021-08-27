@@ -63,9 +63,9 @@ struct _lw_server
 	lw_bool cert_loaded;
 	CredHandle ssl_creds;
 
-	list (struct _accept_overlapped, pending_accepts);
+	lw_list (struct _accept_overlapped, pending_accepts);
 
-	list (lw_server_client, clients);
+	lw_list (lw_server_client, clients);
 
 	void * tag;
 };

@@ -57,8 +57,16 @@
 	  #define _GNU_SOURCE
 	#endif
 
+	#ifndef _GNU_SOURCE
+	  #define _GNU_SOURCE
+	#endif
+
+#ifdef __ANDROID__
 	#include "unix/android config.h"
 	#include <sys/sendfile.h>
+#elif defined(__APPLE__)
+	#include "unix/ios config.h"
+#endif
 
 #endif
 
@@ -111,7 +119,7 @@
  typedef struct _lw_ws_session		* lw_ws_session;
  typedef struct _lw_ws_sessionitem	* lw_ws_sessionitem;
 
-#include "../include/lacewing.h"
+#include "../Lacewing.h"
 
 #ifdef _MSC_VER
 	#ifndef __cplusplus
@@ -161,11 +169,13 @@ void lwp_deinit ();
 #ifdef _WIN32
 	#include "windows/common.h"
 #else
-	#include "unix/common.h"
+	#include "unix/unix common.h"
 #endif
 
 #if defined(HAVE_MALLOC_H) || defined(_WIN32)
 	#include <malloc.h>
+#elif defined(HAVE_MALLOC_MALLOC_H)
+	#include <malloc/malloc.h>
 #endif
 
 #if defined(_lacewing_debug) || defined(_lacewing_debug_output)
@@ -185,7 +195,7 @@ void lwp_disable_ipv6_only (lwp_socket socket);
 
 struct sockaddr_storage lwp_socket_addr (lwp_socket socket);
 
-long lwp_socket_port (lwp_socket socket);
+lw_ui16 lwp_socket_port (lwp_socket socket);
 
 void lwp_close_socket (lwp_socket socket);
 

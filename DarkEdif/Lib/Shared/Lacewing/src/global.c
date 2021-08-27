@@ -63,6 +63,24 @@ const char * lw_version ()
 			#else
 				#error ABI not known, please amend code
 			#endif
+		#elif defined(__APPLE__)
+			#ifdef __arm64e__
+				platform = "iOS ARM64e";
+			#elif defined(__aarch64__)
+				platform = "iOS ARM64";
+			#elif defined(__ARM_ARCH_6__)
+				platform = "iOS armv6";
+			#elif defined(__ARM_ARCH_7S__)
+				platform = "iOS armv7s";
+			#elif defined(__ARM_ARCH_7A__)
+				platform = "iOS armv7";
+			#elif defined(__i386__)
+				platform = "iOS i386";
+			#elif defined(__x86_64__)
+				platform = "iOS x86_64";
+			#else
+				#error ABI not known, please amend code
+			#endif
 		#else
 			struct utsname name;
 			uname (&name);
@@ -201,7 +219,7 @@ void lw_trace (const char * format, ...)
 
 		#ifdef __ANDROID__
 			__android_log_write (ANDROID_LOG_INFO, "liblacewing", data);
-		#elif defined(COXSDK)
+		#elif defined(COXSDK) && !defined(__APPLE__)
 			OutputDebugStringA (data);
 			OutputDebugStringA ("\n");
 		#else

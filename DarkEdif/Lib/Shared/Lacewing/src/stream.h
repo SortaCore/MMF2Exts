@@ -114,21 +114,21 @@ struct _lw_stream
 
 	void * tag;
 
-	list (struct _lwp_stream_data_hook, data_hooks);
-	list (struct _lwp_stream_close_hook, close_hooks);
+	lw_list (struct _lwp_stream_data_hook, data_hooks);
+	lw_list (struct _lwp_stream_close_hook, close_hooks);
 
 
 	/* Filters affecting this stream (stream == this).  The filter should be
 	 * freed when removed from these lists.
 	 */
 
-	list (lwp_stream_filterspec, filters_upstream);
-	list (lwp_stream_filterspec, filters_downstream);
+	lw_list (lwp_stream_filterspec, filters_upstream);
+	lw_list (lwp_stream_filterspec, filters_downstream);
 
 
 	/* Streams we are a filter for (filter == this) */
 
-	list (lwp_stream_filterspec, filtering);
+	lw_list (lwp_stream_filterspec, filtering);
 
 
 	/* StreamGraph::Expand sets head_upstream to the head of the expanded
@@ -138,7 +138,7 @@ struct _lw_stream
 
 	lw_stream head_upstream;
 
-	list (struct _lwp_stream_data_hook, exp_data_hooks);
+	lw_list (struct _lwp_stream_data_hook, exp_data_hooks);
 
 
 	/* The front queue is to be written before any more data from the current
@@ -146,19 +146,19 @@ struct _lw_stream
 	 * the current source stream has finished.
 	 */
 
-	list (struct _lwp_stream_queued, front_queue);
-	list (struct _lwp_stream_queued, back_queue);
+	lw_list (struct _lwp_stream_queued, front_queue);
+	lw_list (struct _lwp_stream_queued, back_queue);
 
 
 	int retry;
 
 	lwp_streamgraph graph;
 
-	list (lwp_streamgraph_link, prev);
-	list (lwp_streamgraph_link, next);
+	lw_list (lwp_streamgraph_link, prev);
+	lw_list (lwp_streamgraph_link, next);
 
-	list (lwp_streamgraph_link, prev_expanded);
-	list (lwp_streamgraph_link, next_expanded);
+	lw_list (lwp_streamgraph_link, prev_expanded);
+	lw_list (lwp_streamgraph_link, next_expanded);
 
 	int last_expand;
 

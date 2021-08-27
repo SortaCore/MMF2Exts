@@ -50,8 +50,8 @@ typedef struct _lwp_streamgraph
 	* filters, and an internally expanded version with the filters included.
 	*/
 
-	list (lw_stream, roots);
-	list (lw_stream, roots_expanded);
+	lw_list (lw_stream, roots);
+	lw_list (lw_stream, roots_expanded);
 
 	int last_expand;
 

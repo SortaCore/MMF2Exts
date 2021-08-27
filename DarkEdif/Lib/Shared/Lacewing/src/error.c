@@ -115,7 +115,7 @@ void lw_error_addf (lw_error ctx, const char * format, ...)
 	va_end (args);
 }
 
-void lw_error_add (lw_error ctx, long error)
+void lw_error_add (lw_error ctx, int error)
 {
 	#ifdef _WIN32
 

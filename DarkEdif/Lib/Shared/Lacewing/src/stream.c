@@ -778,7 +778,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 }
 
 list_type (struct _lwp_stream_queued) lwp_stream_write_queue
-	(lw_stream ctx, list (struct _lwp_stream_queued, queue))
+	(lw_stream ctx, lw_list (struct _lwp_stream_queued, queue))
 {
 	lwp_trace ("%p : WriteQueued : %zu to write", ctx, list_length (queue));
 
@@ -912,7 +912,7 @@ lw_bool lwp_stream_write_direct (lw_stream ctx)
 	if (!ctx->def->sink_stream)
 		return lw_false;
 
-	size_t written = ctx->def->sink_stream (ctx, ctx->prev_direct,
+	lw_i64 written = ctx->def->sink_stream (ctx, ctx->prev_direct,
 											ctx->direct_bytes_left);
 
 	if (written != -1)
@@ -921,10 +921,10 @@ lw_bool lwp_stream_write_direct (lw_stream ctx)
 		* logic can operate even though the data was already transmitted).
 		*/
 
-		lwp_stream_push (ctx->prev_direct, 0, written);
+		lwp_stream_push (ctx->prev_direct, 0, (size_t)written);
 
 		if (ctx->direct_bytes_left != -1)
-			ctx->direct_bytes_left -= written;
+			ctx->direct_bytes_left -= (size_t)written;
 
 		return lw_true;
 	}

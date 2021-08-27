@@ -106,7 +106,7 @@ typedef struct list_element list_element;
 #define list_type(type) \
 	type *
 
-#define list(type, name) \
+#define lw_list(type, name) \
 	list_type (type) name
 
 #define list_push(list, value) do {											\

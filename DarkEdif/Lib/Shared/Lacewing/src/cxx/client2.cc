@@ -34,7 +34,7 @@ client lacewing::client_new (lacewing::pump pump)
 	return (client) lw_client_new ((lw_pump) pump);
 }
 
-void _client::connect (const char * host, long port)
+void _client::connect (const char * host, lw_ui16 port)
 {
 	lw_client_connect ((lw_client) this, host, port);
 }

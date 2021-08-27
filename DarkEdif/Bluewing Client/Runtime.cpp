@@ -25,7 +25,7 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 
 // Called when the application ends or restarts. Also called for subapps.
 #ifdef _WIN32
-void FusionAPI EndApp(mv *mV, CRunApp* pApp)
+void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 {
 	#pragma DllExportHint
 	if (pApp->ParentApp)
@@ -33,12 +33,15 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;
 	}
-#else
+	AppWasClosed = true;
+}
+#elif defined (__ANDROID__)
 // Called when JavaVM shuts down. Not called for subapps.
 ProjectFunc void EndApp(JNIEnv *, jclass)
 {
-#endif
 	AppWasClosed = true;
 
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
+#else // No iOS auto-quit yet!
+#endif

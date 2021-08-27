@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory.TrimEnd('/\'))</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -76,16 +76,24 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utarray.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\uthash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utlist.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utstring.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameBuilder.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameReader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\Lacewing.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageBuilder.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageReader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer-cxx.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\stream.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.h" />
