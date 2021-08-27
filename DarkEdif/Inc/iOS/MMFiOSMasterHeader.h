@@ -33,7 +33,6 @@
 void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
 //#include <Foundation/Foundation.h>
-#define OutputDebugStringA(a) LOGI("%s", a)
 #include <wchar.h>
 #include <string>
 #include <signal.h>
@@ -203,11 +202,36 @@ typedef unsigned int uint;
 	#endif
 #endif
 
-#define LOGV(x,...) ::DarkEdif::Log(DARKEDIF_LOG_VERBOSE, x, ##__VA_ARGS__)
-#define LOGD(x,...) ::DarkEdif::Log(DARKEDIF_LOG_DEBUG, x, ##__VA_ARGS__)
-#define LOGI(x,...) ::DarkEdif::Log(DARKEDIF_LOG_INFO, x, ##__VA_ARGS__)
-#define LOGW(x,...) ::DarkEdif::Log(DARKEDIF_LOG_WARN, x, ##__VA_ARGS__)
-#define LOGE(x,...) ::DarkEdif::Log(DARKEDIF_LOG_ERROR, x, ##__VA_ARGS__)
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
+	#define LOGV(x,...) ::DarkEdif::Log(DARKEDIF_LOG_VERBOSE, x, ##__VA_ARGS__)
+#else
+	#define LOGV(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
+	#define LOGD(x,...) ::DarkEdif::Log(DARKEDIF_LOG_DEBUG, x, ##__VA_ARGS__)
+#else
+	#define LOGD(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
+	#define LOGI(x,...) ::DarkEdif::Log(DARKEDIF_LOG_INFO, x, ##__VA_ARGS__)
+
+	// Equivalent to LOGI().
+	#define OutputDebugStringA(x) LOGI("%s", x)
+#else
+	#define LOGI(x,...) (void)0
+	// Equivalent to LOGI().
+	#define OutputDebugStringA(x) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
+	#define LOGW(x,...) ::DarkEdif::Log(DARKEDIF_LOG_WARN, x, ##__VA_ARGS__)
+#else
+	#define LOGW(x,...) (void)0
+#endif
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR)
+	#define LOGE(x,...) ::DarkEdif::Log(DARKEDIF_LOG_ERROR, x, ##__VA_ARGS__)
+#else
+	#define LOGE(x,...) (void)0
+#endif
 void LOGF(const char * x, ...);
 
 struct eventGroup {
@@ -300,11 +324,11 @@ struct extHeader_v1
 
 struct extHeader
 {
-	unsigned long extSize,
+	std::uint32_t extSize,
 				  extMaxSize,
 				  extVersion;			// Version number
-	void *		  extID;				// object's identifier
-	void *		  extPrivateData;		// private data
+	std::uint32_t extID;				// object's identifier
+	std::uint32_t extPrivateData;		// private data
 };
 
 // Callback function identifiers for CallFunction
