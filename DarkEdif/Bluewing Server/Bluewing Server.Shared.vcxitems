@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{235d1e71-5acd-40ea-907e-017b94533b42}</ItemsProjectGuid>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory.TrimEnd('/\'))</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\CodePointAllowList.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\PhiAddress.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\ReadWriteLock.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\RelayServer.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\address2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\error2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\event2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\eventpump2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\fdstream2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\file2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\filter2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\flashpolicy2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\pipe2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\pump2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\server2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\stream2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\sync2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\thread2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\timer2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\udp2.cc" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\error.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\filter.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\flashpolicy.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\global.c">
+      <FileType>CppCode</FileType>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pipe.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\stream.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\util.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.General.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.Runtime.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\json.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\ObjectSelection.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Conditions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Extension.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)LacewingFunctions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
+      <FileType>Text</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utarray.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\uthash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utlist.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utstring.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameBuilder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\FrameReader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\IDPool.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\Lacewing.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageBuilder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\MessageReader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\common.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer-cxx.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\stream.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\streamgraph.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Common.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)LacewingFunctions.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)MultiThreading.h" />
+  </ItemGroup>
+</Project>

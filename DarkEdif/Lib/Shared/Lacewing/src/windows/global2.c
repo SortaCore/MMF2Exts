@@ -114,6 +114,11 @@ lw_bool lw_random (char * buffer, size_t size)
 	return lw_true;
 }
 
+size_t lw_min_size_t(size_t a, size_t b)
+{
+	return a < b ? a : b;
+}
+
 void lw_md5 (char * output, const char * input, size_t length)
 {
 	HCRYPTPROV hash_prov;

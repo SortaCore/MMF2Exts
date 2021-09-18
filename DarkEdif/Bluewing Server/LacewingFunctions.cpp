@@ -6,7 +6,7 @@
 
 void OnError(lacewing::relayserver &server, lacewing::error error)
 {
-	globals->CreateError("%hs", error->tostring());
+	globals->CreateError("%s", error->tostring());
 }
 void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client)
 {
@@ -96,7 +96,7 @@ bool OnChannelClose(lacewing::relayserver & server, std::shared_ptr<lacewing::re
 void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::shared_ptr<lacewing::relayserver::channel> channel)
 {
 	// Leave channel can mess with writing messages
-	if (GThread)
+	if (GThread.joinable())
 		EnterCriticalSectionDebug(&globals->lock);
 
 	// Auto deny quietly can be handled without any lookups or fuss
@@ -105,7 +105,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 		server.leavechannel_response(channel, client, globals->autoResponse_ChannelLeave_DenyReason);
 
 		// CLEAR_EVTNUM will be run by OnChannelClose handler
-		if (GThread)
+		if (GThread.joinable())
 			LeaveCriticalSectionDebug(&globals->lock);
 		return;
 	}
@@ -118,7 +118,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 		server.leavechannel_response(channel, client, std::string_view());
 
 		// CLEAR_EVTNUM will be run by OnChannelClose handler
-		if (GThread)
+		if (GThread.joinable())
 			LeaveCriticalSectionDebug(&globals->lock);
 		return;
 	}
@@ -133,7 +133,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 			globals->autoResponse_ChannelLeave == AutoResponse::Deny_Quiet)
 		{
 			// CLEAR_EVTNUM will be run by OnChannelClose handler
-			if (GThread)
+			if (GThread.joinable())
 				LeaveCriticalSectionDebug(&globals->lock);
 			return;
 		}
@@ -142,7 +142,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	// CLEAR_EVTNUM will be run by OnChannelClose handler
 	globals->AddEvent1(4, channel, client, std::string_view(), 255, nullptr, InteractiveType::ChannelLeave);
 
-	if (GThread)
+	if (GThread.joinable())
 		LeaveCriticalSectionDebug(&globals->lock);
 }
 

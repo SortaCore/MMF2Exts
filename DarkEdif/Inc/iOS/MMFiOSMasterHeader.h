@@ -738,7 +738,7 @@ void LOGF(const char * x, ...);
 #define PROJ_FUNC_GEN(x,y) PROJ_FUNC_GEN2(x,y)
 
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init());
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _close());
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc());
 ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW,_getNumberOfConditions());
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW,_condition(void * cppExtPtr, int ID, void * paramReader));
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_action(void * cppExtPtr, int ID, void * paramReader));

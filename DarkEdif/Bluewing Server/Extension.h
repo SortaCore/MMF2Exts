@@ -1,5 +1,6 @@
 #pragma once
 #include "Edif.h"
+#include "MultiThreading.h"
 #include <functional>
 
 struct GlobalInfo;
@@ -12,8 +13,16 @@ public:
 	// Hide stuff requiring other headers
 	std::shared_ptr<EventToRun> threadData;
 
+#ifdef _WIN32
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
+#elif defined(__ANDROID__)
+	RuntimeFunctions & runFuncs;
+	global<jobject> javaExtPtr;
+#else
+	RuntimeFunctions & runFuncs;
+	void * objCExtPtr;
+#endif
 
 	Edif::Runtime Runtime;
 
@@ -24,8 +33,12 @@ public:
 	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
 
 	static const int WindowProcPriority = 100;
-
+	
+#ifdef _WIN32
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
+#else
+	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr);
+#endif
 	~Extension();
 
 	DarkEdif::FusionDebugger FusionDebugger;
@@ -61,10 +74,11 @@ public:
 	// although this may be changed later.
 	std::shared_ptr<lacewing::relayserver::channel> selChannel;
 	std::shared_ptr<lacewing::relayserver::client> selClient;
+	bool isOverloadWarningQueued = false;
 
 
 	void ClearThreadData();
-	void CreateError(_Printf_format_string_ const char * errU8, ...);
+	void CreateError(PrintFHintInside const char * errU8, ...) PrintFHintAfter(2, 3);
 
 	// Called as a subfunction by actions to add to the message-to-send
 	void SendMsg_Sub_AddData(const void *, size_t);
@@ -187,7 +201,7 @@ public:
 
 		const bool AlwaysTrue() { return true; }
 		const bool AlwaysFalse() { return false; }
-		const bool AlwaysFalseWithTextParam(const TCHAR *) { return false; }
+		const bool AlwaysFalseWithTextParam(const TCHAR * s) { return false; }
 		bool SubchannelMatches(int subchannel);
 		// AlwaysTrue:	bool OnError();
 		// AlwaysTrue:	bool OnConnectRequest();
@@ -331,9 +345,9 @@ public:
 
 void eventpumpdeleter(lacewing::eventpump);
 
-enum class AutoResponse : char
+enum class AutoResponse : std::int8_t
 {
-	Invalid = -1,
+	Invalid = (std::int8_t)-1,
 	Approve_Quiet = 0,
 	Deny_Quiet,
 	Approve_TellFusion,
@@ -367,17 +381,17 @@ struct GlobalInfo
 	bool _automaticallyClearBinary = true;
 
 	// This GlobalInfo global ID of extension, in UTF-8
-	char * _globalID = nullptr;
+	std::string _globalID;
 	// If in multithreading mode, the Lacewing message handler thread
-	HANDLE _thread = NULL;
+	std::thread _thread;
 	// Current "owner" extension used to run events. Can be null, e.g. during frame switches.
 	Extension * _ext = nullptr;
 	// Deepest level named loop in use at the moment, checked against in "on loop" triggered conditions
 	std::string_view _loopName;
 	// Thread handle; Thread checking whether a server extension has not regained control of connection in a reasonable time, i.e. slow frame transition
-	HANDLE timeoutThread = NULL;
+	std::thread timeoutThread;
 	// Event; counterpart to AppWasClosed, but used for cancelling the timeout thread from Ext ctor when a new ext is taking over
-	HANDLE cancelTimeoutThread = NULL;
+	std::atomic<bool> cancelTimeoutThread;
 	// Enables or disables the inactivity timer built into liblacewing. See relayserver::setinactivitytimer().
 	bool enableInactivityTimer = true;
 
@@ -391,6 +405,12 @@ struct GlobalInfo
 	// Fusion code always runs in main thread, but errors can occur outside of user input.
 	std::thread::id	mainThreadID;
 
+	// Clang complains about the LocalData constructor, for some reason. Might be LLVM bug 20296.
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wundefined-internal"
+#pragma clang diagnostic push
+#endif
+
 	// Used to store local data for clients/channels
 	template<typename T> struct LocalData
 	{
@@ -398,9 +418,20 @@ struct GlobalInfo
 		std::string keyU8Simplified; // key, as UTF-8, simplified destructively
 		std::tstring val;
 
+
 		LocalData(std::shared_ptr<T> ptr, std::string keyU8Simplified, std::tstring val)
-			: ptr(ptr), keyU8Simplified(keyU8Simplified), val(val) { }
+			: ptr(ptr), keyU8Simplified(keyU8Simplified), val(val)
+		{
+			/* Yes, it is defined, clang. */
+		}
 	};
+
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wundefined-internal"
+#pragma clang diagnostic pop
+#endif
+
+
 	std::vector<LocalData<lacewing::relayserver::client>> clientLocal;
 	std::vector<LocalData<lacewing::relayserver::channel>> channelLocal;
 
@@ -416,7 +447,7 @@ struct GlobalInfo
 	std::shared_ptr<lacewing::relayserver::client> selClient = nullptr;
 
 	// Lock to protect GlobalInfo contents, initialized to zeroes.
-	CRITICAL_SECTION lock = {};
+	Edif::recursive_mutex lock;
 	// List of all extensions holding this Global ID
 	std::vector<Extension *> extsHoldingGlobals;
 	// If no Bluewing exists, fuss after a preset time period
@@ -460,8 +491,8 @@ struct GlobalInfo
 		bool channelCreate_AutoClose = false
 	);
 	// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
-	void CreateError(_Printf_format_string_ const char * errorTextU8, ...);
-	void CreateError(_Printf_format_string_ const char * errorTextU8, va_list);
+	void CreateError(PrintFHintInside const char * errorTextU8, ...) PrintFHintAfter(2, 3);
+	void CreateError(PrintFHintInside const char * errorTextU8, va_list);
 
 	// Handling manner for messages. Not waiting for Fusion to handle it in main thread causes a blisteringly fast automatic
 	// handling system, but sometimes it is necessary to have something more complex.

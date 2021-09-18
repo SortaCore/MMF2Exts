@@ -6,7 +6,7 @@ const TCHAR * Extension::Error()
 }
 unsigned int Extension::Channel_Count()
 {
-	return Srv.channelcount();
+	return (std::uint32_t)Srv.channelcount();
 }
 const TCHAR * Extension::Client_Name()
 {
@@ -59,7 +59,7 @@ unsigned int Extension::Client_ConnectionTime()
 }
 unsigned int Extension::Client_ChannelCount()
 {
-	return selClient ? selClient->channelcount() : -1;
+	return selClient ? (std::uint32_t)selClient->channelcount() : -1;
 }
 const TCHAR * Extension::Client_GetLocalData(const TCHAR * key)
 {
@@ -79,7 +79,7 @@ const TCHAR * Extension::Channel_Name()
 }
 unsigned int Extension::Channel_ClientCount()
 {
-	return selChannel ? selChannel->clientcount() : -1;
+	return selChannel ? (std::uint32_t)selChannel->clientcount() : -1;
 }
 const TCHAR * Extension::RecvMsg_StrASCIIByte(int index)
 {
@@ -217,7 +217,7 @@ const TCHAR * Extension::RecvMsg_String(int index)
 }
 unsigned int Extension::RecvMsg_SizeInBytes()
 {
-	return threadData->receivedMsg.content.size();
+	return (std::uint32_t)threadData->receivedMsg.content.size();
 }
 const TCHAR * Extension::Lacewing_Version()
 {
@@ -230,13 +230,13 @@ const TCHAR * Extension::Lacewing_Version()
 		str << _T("Unicode ");
 #endif
 		str << _T("reimpl b") << lacewing::relayserver::buildnum;
-		_tcscpy_s(version, str.str().c_str());
+		_tcscpy_s(version, std::size(version), str.str().c_str());
 	}
 	return Runtime.CopyString(version);
 }
 unsigned int Extension::SendBinaryMsg_Size()
 {
-	return SendMsgSize;
+	return (std::uint32_t)SendMsgSize;
 }
 const TCHAR * Extension::Client_IP()
 {
@@ -369,7 +369,8 @@ const TCHAR * Extension::RecvMsg_Cursor_String()
 {
 	if (threadData->receivedMsg.content.size() - threadData->receivedMsg.cursor < 1)
 	{
-		CreateError("Could not read null-terminated string from received binary at cursor position %zu, amount of message remaining is smaller than variable to be read.", threadData->receivedMsg.cursor);
+		CreateError("Could not read null-terminated string from received binary at cursor position %u, amount of message remaining is smaller than variable to be read.",
+			threadData->receivedMsg.cursor);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -435,7 +436,9 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		}
 
 		// Count number of expected variables
-		varCount = max(atoi(i+1),1);
+		varCount = atoi(i + 1);
+		if (varCount < 1)
+			varCount = 1;
 
 		// Char
 		if (i[0] == 'c')
@@ -448,7 +451,11 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 			}
 
 			std::uint32_t curChar;
+#ifdef __APPLE__
+			int width = (int)output.width();
+#else
 			std::streamsize width = output.width();
+#endif
 			if (varSigned)
 			{
 				for (unsigned int j = 0; j < varCount; ++j)
@@ -516,7 +523,8 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 
 				if (!lw_u8str_validate(std::string_view(msg, u8StrSize)))
 				{
-					CreateError("Could not dump; the null-terminated string starting at message index %i, read as %i chars long, was not valid UTF-8 text.", index, u8StrSize);
+					CreateError("Could not dump; the null-terminated string starting at message index %i, read as %zu chars long, was not valid UTF-8 text.",
+						index, u8StrSize);
 					return Runtime.CopyString(_T(""));
 				}
 
@@ -570,7 +578,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 		}
 
 		// Did not find identifier; error out
-		CreateError("Unrecognised character in dump format: '%hc'. Valid : c, h, s, i, f; operator +.", i[0]);
+		CreateError("Unrecognised character in dump format: '%c'. Valid : c, h, s, i, f; operator +.", i[0]);
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -580,7 +588,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 }
 unsigned int Extension::AllClientCount()
 {
-	return Srv.clientcount();
+	return (std::uint32_t)Srv.clientcount();
 }
 const TCHAR * Extension::GetDenyReason()
 {
@@ -598,7 +606,7 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 	if (u8str.empty())
 		return -1;
 
-	size_t numCodePoints = 0;
+	int numCodePoints = 0;
 
 	const utf8proc_uint8_t * str = (const utf8proc_uint8_t *)u8str.data();
 	utf8proc_int32_t thisChar;
@@ -629,7 +637,7 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	if (u8str.empty())
 		return -1;
 
-	size_t numGraphemes = 0;
+	int numGraphemes = 0;
 
 	utf8proc_uint8_t * str = (utf8proc_uint8_t *)u8str.data();
 	utf8proc_int32_t lastCodePoint = 0, thisCodePoint, state = 0;
@@ -691,10 +699,10 @@ const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TC
 	if (rejectedCodePointIndex == -1)
 		return Runtime.CopyString(_T(""));
 
-	TCHAR output[256];
-	_stprintf_s(output, _T("Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %hs."),
-		rejectedCodePointIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), utf8proc_category_string(rejectedChar));
-	return Runtime.CopyString(output);
+	char output[256];
+	sprintf_s(output, "Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s.",
+		rejectedCodePointIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
+	return Runtime.CopyString(UTF8ToTString(output).c_str());
 }
 
 int Extension::Channel_ID()

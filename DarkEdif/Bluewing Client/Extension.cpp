@@ -547,15 +547,6 @@ void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t
 		_ext->Runtime.Rehandle();
 }
 
-#ifdef HYPER_OPTIMISE
-void Extension::CreateError2() {
-	globals->CreateError2();
-}
-void GlobalInfo::CreateError2() {
-	AddEvent1(0, nullptr, nullptr, nullptr, "Error message optimised away."sv);
-}
-
-#else // not hyperoptimised
 void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
@@ -612,7 +603,6 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 #endif
 	AddEvent1(0, nullptr, nullptr, nullptr, errTextU8);
 }
-#endif
 
 void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
 {
@@ -1170,7 +1160,7 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 
 	// Triggered by main thread after a frame switch finishes, to kick the timeout thread
 	// out of the wait early, or triggered by app exiting via EndApp() in Runtime.cpp.
-	
+
 	while (true)
 	{
 		Sleep(100);
@@ -1336,7 +1326,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	{
 		_globalID = edPtr->edGlobalID;
 
-		// This handle is used by timeout threads when a new ext regains control of this Bluewing instance
+		// This atomic bool is used by timeout threads when a new ext regains control of this Bluewing instance
 		cancelTimeoutThread = false;
 	}
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;

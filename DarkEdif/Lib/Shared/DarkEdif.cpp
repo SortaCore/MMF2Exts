@@ -901,6 +901,7 @@ void DarkEdif::BreakIfDebuggerAttached()
 
 int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
+	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
 	DarkEdif::BreakIfDebuggerAttached();
 	return 0;
 }

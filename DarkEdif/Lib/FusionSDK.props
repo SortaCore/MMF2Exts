@@ -470,6 +470,10 @@
 
 			<!-- We can turn off the .lib though. -->
 			<AdditionalOptions>/NOIMPLIB %(AdditionalOptions)</AdditionalOptions>
+
+			<!-- DarkEdif uses #pragma DllExportHint in functions to expose them externally.
+				 All other SDKs rely on both DllExport annotation and Ext.def uncommenting. -->
+			<ModuleDefinitionFile Condition="$(SDKType)!='DarkEdif'">Ext.def</ModuleDefinitionFile>
 		</Link>
 		<ResourceCompile>
 			<!-- Important. Used to be defined by CCX.h -->

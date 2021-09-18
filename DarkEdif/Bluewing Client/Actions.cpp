@@ -16,7 +16,7 @@ void ErrNoToErrText()
 	}
 #else
 	char * strError = strerror(error);
-	if (strError != NULL)
+	if (strError == NULL)
 	{
 		strcpy(errtext, "errno failed to convert");
 		errno = error;

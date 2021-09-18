@@ -15,7 +15,7 @@
 // START APP / END APP / START FRAME / END FRAME routines
 // ============================================================================
 
-extern HANDLE AppWasClosed; // Event type; other threads can wait for this to be triggered
+extern std::atomic<bool> AppWasClosed; // Event type; other threads can wait for this to be triggered
 
 // Called when the application starts or restarts. Also called for subapps.
 void FusionAPI StartApp(mv *mV, CRunApp* pApp)
@@ -24,19 +24,30 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 }
 
 // Called when the application ends or restarts. Also called for subapps.
-void FusionAPI EndApp(mv *mV, CRunApp* pApp)
+#ifdef _WIN32
+void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 {
 	#pragma DllExportHint
-
 	if (pApp->ParentApp)
 	{
 		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;
 	}
-
-	if (AppWasClosed)
-		SetEvent(AppWasClosed);
+	AppWasClosed = true;
+}
+#elif defined (__ANDROID__)
+// Called when JavaVM shuts down. Not called for subapps.
+ProjectFunc void EndApp(JNIEnv *, jclass)
+{
+	AppWasClosed = true;
 
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
+#else // No iOS auto-quit yet!
+ProjectFunc void EndApp()
+{
+	AppWasClosed = true;
+	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
+}
+#endif
 

@@ -75,12 +75,7 @@ public:
 	std::shared_ptr<lacewing::relayclient::channel::peer> selPeer; // make sure it's one inside selChannel!
 	bool isOverloadWarningQueued = false;
 
-#ifndef HYPER_OPTIMISE
 	void CreateError(PrintFHintInside const char * errU8, ...) PrintFHintAfter(2, 3);
-#else
-	void CreateError2();
-	#define CreateError(x, ...) CreateError2()
-#endif
 
 	void SendMsg_Sub_AddData(const void *, size_t);
 	bool IsValidPtr(const void *);
@@ -412,12 +407,8 @@ private:
 		lw_ui8 subchannel, lw_ui8 variant);
 public:
 	// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
-#ifndef HYPER_OPTIMISE
 	void CreateError(PrintFHintInside const char * errorText, ...) PrintFHintAfter(2, 3);
 	void CreateError(PrintFHintInside const char *errorText, va_list v) PrintFHintAfter(2, 0);
-#else
-	void CreateError2();
-#endif
 
 
 	// Constructor and destructor

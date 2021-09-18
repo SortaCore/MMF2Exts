@@ -44,4 +44,9 @@ ProjectFunc void EndApp(JNIEnv *, jclass)
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
 #else // No iOS auto-quit yet!
+ProjectFunc void EndApp()
+{
+	AppWasClosed = true;
+	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
+}
 #endif

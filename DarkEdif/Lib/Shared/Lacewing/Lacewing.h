@@ -199,6 +199,7 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_trace				(const char * format, ...) __printflike(1, 2);
 	lw_import			void  lw_dump				(const char * buffer, size_t size);
 	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
+	lw_import		  size_t  lw_min_size_t			(size_t a, size_t b);
 
 /* Thread */
 
@@ -680,6 +681,11 @@ typedef lw_i8 lw_bool;
 	#define lw_class_wraps(c) struct _lw_##c _inst
 #else
 	#define lw_class_wraps(c)
+#endif
+#ifdef _MSC_VER
+#define lw_sprintf_s sprintf_s
+#else
+#define lw_sprintf_s sprintf
 #endif
 
 #pragma region Phi stuff
@@ -1690,9 +1696,8 @@ protected:
 struct relayclientinternal;
 struct relayclient
 {
-#define forbiddeneggs
 public:
-	const static int buildnum = 96;
+	const static int buildnum = 97;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1916,7 +1921,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 28;
+	static const int buildnum = 29;
 
 	void * internaltag, * tag = nullptr;
 

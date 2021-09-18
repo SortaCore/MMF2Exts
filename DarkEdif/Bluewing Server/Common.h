@@ -13,12 +13,14 @@
 
 #define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, STRIFY(CONFIG)
 
+#ifdef _WIN32
 // Lacewing-required imports for accessing Windows sockets
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 #pragma comment(lib, "mpr.lib")
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "crypt32.lib")
+#endif
 
 // #define lw_import
 // #define _lacewing_static
@@ -37,26 +39,26 @@
 
 #include <sstream>
 #include <algorithm>
+#include <iomanip>
 #include "zlib.h"
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
-#define EnterCriticalSectionDebug(x) { \
-		EnterCriticalSection(x); \
-		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Entered on " \
-		<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
-	}
+#define EnterCriticalSectionDebug(x) \
+		(x)->edif_lock(); \
+		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv \
+			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
 
-#define LeaveCriticalSectionDebug(x) { \
-		::CriticalSection << "Thread " << GetCurrentThreadId() << " : Left on " \
-			<< __FILE__ << ", line " << __LINE__ << ".\r\n"; \
-		LeaveCriticalSection(x); \
-	}
+#define LeaveCriticalSectionDebug(x) \
+		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Left on "sv \
+			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
+		(x)->edif_unlock()
 #else
-#define EnterCriticalSectionDebug(x)  EnterCriticalSection(x)
-#define LeaveCriticalSectionDebug(x)  LeaveCriticalSection(x)
+#define EnterCriticalSectionDebug(x)  (x)->edif_lock()
+#define LeaveCriticalSectionDebug(x)  (x)->edif_unlock()
 #endif
+
 
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
@@ -115,7 +117,7 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-DWORD WINAPI LacewingLoopThread(void * ThisExt);
+DWORD LacewingLoopThread(Extension * ThisExt);
 
 #define COMMON_H
 #include "Extension.h"

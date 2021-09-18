@@ -64,7 +64,7 @@ public:
 
 		// More than can be stored in an ID list are in use. JIC.
 		if (borrowedCount > 0xFFFE)
-			throw std::exception("Exceeded limit of ID pool. Please contact the developer.");
+			throw std::runtime_error("Exceeded limit of ID pool. Please contact the developer.");
 
 		if (!releasedIDs.empty())
 		{

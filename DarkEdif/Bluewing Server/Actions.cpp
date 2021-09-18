@@ -12,11 +12,22 @@ static char errtext[1024];
 void ErrNoToErrText()
 {
 	int error = errno; // strerror_s may change errno
+#ifdef _WIN32
 	if (strerror_s(errtext, error))
 	{
-		strcpy_s(errtext, "errno failed to convert");
-		_set_errno(error);
+		strcpy_s(errtext, std::size(errtext), "errno failed to convert");
+		errno = error;
 	}
+#else
+	char * strError = strerror(error);
+	if (strError == NULL)
+	{
+		strcpy(errtext, "errno failed to convert");
+		errno = error;
+	}
+	else
+		strcpy(errtext, strError);
+#endif
 }
 
 
@@ -108,7 +119,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 
 	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, TStringToANSI(allowListContents));
 	if (!err.empty())
-		CreateError("Couldn't set Unicode %s allow list, %hs.", listToSet, err.c_str());
+		CreateError("Couldn't set Unicode %s allow list, %s.", listToSet, err.c_str());
 }
 
 
@@ -126,11 +137,11 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 	// Do nothing, say nothing to Fusion [0, 2] -> not usable!
 
 	if (informFusion < 0 || informFusion > 1)
-		sprintf_s(err, sizeof(err), "Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: %hs\".", funcName);
+		sprintf_s(err, "Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: %s\".", funcName);
 	else if (immediateRespondWith < 0 || immediateRespondWith > 2)
-		sprintf_s(err, sizeof(err), "Invalid \"Immediate Respond With\" parameter passed to \"enable/disable condition: %hs\".", funcName);
+		sprintf_s(err, "Invalid \"Immediate Respond With\" parameter passed to \"enable/disable condition: %s\".", funcName);
 	else if (informFusion == 0 && immediateRespondWith == 2)
-		sprintf_s(err, sizeof(err), "Invalid parameters passed to \"enable/disable condition: %hs\"; with no immediate response"
+		sprintf_s(err, "Invalid parameters passed to \"enable/disable condition: %s\"; with no immediate response"
 			" and Fusion condition triggering off, the server wouldn't know what to do.", funcName);
 	else
 	{
@@ -160,7 +171,7 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 		return autoResponse;
 	}
 
-	globals->CreateError(err);
+	globals->CreateError("%s", err);
 	return AutoResponse::Invalid;
 }
 
@@ -286,7 +297,7 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 	if (charIndex != -1)
 	{
 		DenyReason = serverModifiedNameError;
-		return CreateError("Cannot change new client name: invalid code point U+%0.4X, decimal %u; valid Unicode point = %hs, Unicode category = %hs.",
+		return CreateError("Cannot change new client name: invalid code point U+%0.4X, decimal %u; valid Unicode point = %s, Unicode category = %s.",
 			rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
 	}
 	
@@ -336,7 +347,7 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 	if (charIndex != -1)
 	{
 		DenyReason = serverModifiedNameError;
-		return CreateError("Cannot change joining channel name: Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %hs.",
+		return CreateError("Cannot change joining channel name: Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s.",
 			charIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
 	}
 
@@ -490,7 +501,7 @@ void Extension::Channel_LoopClientsWithName(const TCHAR * passedLoopName)
 	if (!selChannel)
 		return CreateError("Loop Clients On Channel With Name was called without a channel being selected.");
 	if (passedLoopName[0] == _T('\0'))
-		return CreateError("Cannot loop clients joined to channel \"%hs\": invalid loop name \"\" supplied.", selChannel->name().c_str());
+		return CreateError("Cannot loop clients joined to channel \"%s\": invalid loop name \"\" supplied.", selChannel->name().c_str());
 
 	// You can loop a closed channel's clients, but it's read-only.
 	const auto origSelChannel = selChannel;
@@ -979,7 +990,7 @@ void Extension::Client_LoopJoinedChannelsWithName(const TCHAR * passedLoopName)
 	if (!selClient)
 		return CreateError("Cannot loop client's joined channels: No client selected.");
 	if (passedLoopName[0] == _T('\0'))
-		return CreateError("Cannot loop client ID %hu, name \"%hs\" joined channels: invalid loop name \"\" supplied.", selClient->id(), selClient->name().c_str());
+		return CreateError("Cannot loop client ID %hu, name \"%s\" joined channels: invalid loop name \"\" supplied.", selClient->id(), selClient->name().c_str());
 
 	const auto origSelClient = selClient;
 	const auto origSelChannel = selChannel;
@@ -1340,11 +1351,15 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 		return CreateError("Cannot add file to send binary; filename \"\" is invalid.");
 
 	// Open and deny other programs write privileges
-	FILE * file = _tfsopen(filename, _T("rb"), _SH_DENYWR);
+#ifdef _WIN32
+	FILE * file = _tfsopen(filename, _T("rb"), SH_DENYWR);
+#else
+	FILE * file = fopen(filename, "rb");
+#endif
 	if (!file)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot add file \"%s\" to send binary, error %i (%hs) occurred with opening the file."
+		return CreateError("Cannot add file \"%s\" to send binary, error %i (%s) occurred with opening the file."
 			" The send binary has not been modified.", TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
@@ -1394,7 +1409,7 @@ void Extension::SendMsg_CompressBinary()
 	z_stream strm = {};
 	int ret = deflateInit(&strm, 9); // 9 is maximum compression level
 	if (ret)
-		return CreateError("Compressing send binary failed, zlib error %i \"%hs\" occurred with initiating compression.", ret, (strm.msg ? strm.msg : ""));
+		return CreateError("Compressing send binary failed, zlib error %i \"%s\" occurred with initiating compression.", ret, (strm.msg ? strm.msg : ""));
 
 	// 4: precursor lw_ui32 with uncompressed size, required by Relay
 	// 256: if compression results in larger message, it shouldn't be *that* much larger.
@@ -1409,20 +1424,20 @@ void Extension::SendMsg_CompressBinary()
 	}
 
 	// Store size as precursor - required by Relay
-	*(lw_ui32 *)output_buffer = SendMsgSize;
+	*(lw_ui32 *)output_buffer = (std::uint32_t)SendMsgSize;
 
 	strm.next_in = (std::uint8_t *)SendMsg;
-	strm.avail_in = SendMsgSize;
+	strm.avail_in = (std::uint32_t)SendMsgSize;
 
 	// Allocate memory for compression
-	strm.avail_out = SendMsgSize - 4;
+	strm.avail_out = (std::uint32_t)SendMsgSize - 4;
 	strm.next_out = output_buffer + 4;
 
 	ret = deflate(&strm, Z_FINISH);
 	if (ret != Z_STREAM_END)
 	{
 		free(output_buffer);
-		CreateError("Compressing send binary failed, zlib compression call returned error %u \"%hs\".",
+		CreateError("Compressing send binary failed, zlib compression call returned error %u \"%s\".",
 			ret, (strm.msg ? strm.msg : ""));
 		deflateEnd(&strm);
 		return;
@@ -1449,7 +1464,7 @@ void Extension::RecvMsg_DecompressBinary()
 {
 	if (threadData->receivedMsg.content.size() <= 4)
 	{
-		return CreateError("Cannot decompress received binary; message is %u bytes and too small to be a valid compressed message.",
+		return CreateError("Cannot decompress received binary; message is %zu bytes and too small to be a valid compressed message.",
 			threadData->receivedMsg.content.size());
 	}
 
@@ -1457,13 +1472,14 @@ void Extension::RecvMsg_DecompressBinary()
 	int ret = inflateInit(&strm);
 	if (ret)
 	{
-		return CreateError("Compressing send binary failed, zlib error %i \"%hs\" occurred with initiating decompression.",
+		return CreateError("Compressing send binary failed, zlib error %i \"%s\" occurred with initiating decompression.",
 			ret, (strm.msg ? strm.msg : ""));
 	}
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
 	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)threadData->receivedMsg.content.data();
-	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
+	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32),
+		threadData->receivedMsg.content.size() - sizeof(lw_ui32));
 
 	unsigned char * output_buffer = (unsigned char *)malloc(expectedUncompressedSize);
 	if (!output_buffer)
@@ -1473,14 +1489,14 @@ void Extension::RecvMsg_DecompressBinary()
 	}
 
 	strm.next_in = (unsigned char *)inputData.data();
-	strm.avail_in = inputData.size();
+	strm.avail_in = (std::uint32_t)inputData.size();
 	strm.avail_out = expectedUncompressedSize;
 	strm.next_out = output_buffer;
 	ret = inflate(&strm, Z_FINISH);
 	if (ret < Z_OK)
 	{
 		free(output_buffer);
-		CreateError("Decompression failed; zlib decompression call returned error %i \"%hs\".",
+		CreateError("Decompression failed; zlib decompression call returned error %i \"%s\".",
 			ret, (strm.msg ? strm.msg : ""));
 		inflateEnd(&strm);
 		return;
@@ -1497,12 +1513,9 @@ void Extension::RecvMsg_DecompressBinary()
 void Extension::RecvMsg_MoveCursor(int position)
 {
 	if (position < 0)
-		return CreateError("Cannot move cursor; Position less than 0.");
+		return CreateError("Cannot move cursor; index %d is less than 0.", position);
 	if (threadData->receivedMsg.content.size() - position <= 0)
-	{
-		return CreateError("Cannot move cursor to index %i; message is too small. Valid cursor index range is 0 to %i.",
-			position, max(threadData->receivedMsg.content.size() - 1, 0));
-	}
+		return CreateError("Cannot move cursor to index %d; message indexes are 0 to %zu.", position, threadData->receivedMsg.content.size());
 
 	threadData->receivedMsg.cursor = position;
 }
@@ -1515,16 +1528,20 @@ void Extension::RecvMsg_SaveToFile(int passedPosition, int passedSize, const TCH
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot save received binary; filename \"\" is invalid.");
 
-	unsigned int position = (unsigned int)passedPosition;
-	unsigned int size = (unsigned int)passedSize;
+	size_t position = (size_t)passedPosition;
+	size_t size = (size_t)passedSize;
 
 	if (position + size > threadData->receivedMsg.content.size())
 	{
-		return CreateError("Cannot save received binary to file \"%s\"; message doesn't have %i"
-			" bytes from position %u onwards, it only has %u bytes.",
+		return CreateError("Cannot save received binary to file \"%s\"; message doesn't have %zu"
+			" bytes from position %zu onwards, it only has %zu bytes.",
 			TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
 	}
+#ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("wb"), SH_DENYWR);
+#else
+	FILE * File = fopen(filename, "wb");
+#endif
 	if (!File)
 	{
 		ErrNoToErrText();
@@ -1563,11 +1580,15 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 	size_t size = (size_t)passedSize;
 	if (position + size > threadData->receivedMsg.content.size())
 	{
-		return CreateError("Cannot append received binary to file \"%s\"; message doesn't have %i"
-			" bytes from position %u onwards, it only has %u bytes.",
+		return CreateError("Cannot append received binary to file \"%s\"; message doesn't have %zu"
+			" bytes from position %zu onwards, it only has %zu bytes.",
 			TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
 	}
+#ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("ab"), SH_DENYWR);
+#else
+	FILE * File = fopen(filename, "ab");
+#endif
 	if (!File)
 	{
 		ErrNoToErrText();

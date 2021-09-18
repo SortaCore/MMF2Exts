@@ -35,13 +35,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0f4ca888-9b52-479a-8886-9b4ac17b2c57}</ProjectGuid>
+    <ProjectGuid>{c816ed6f-7494-49e5-b52c-be97d6f6ba8b}</ProjectGuid>
     <Keyword>iOS</Keyword>
     <DefaultLanguage>en-GB</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <ApplicationType>iOS</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
-    <ProjectName>Bluewing Client.iOS</ProjectName>
+    <ProjectName>Bluewing Server.iOS</ProjectName>
     <TargetPlatformVersion>12.0</TargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -50,7 +50,7 @@
   <Import Project="$(ProjectDir)\..\Lib\FusionSDK_AfterMSPropSheets.props" />
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="Shared">
-    <Import Project="Bluewing Client.Shared.vcxitems" Label="Shared" />
+    <Import Project="Bluewing Server.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>

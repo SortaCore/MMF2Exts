@@ -113,7 +113,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 		EDITDATASize = infoPtr->EDITDATASize;
 #endif // NOPROPS
 	}
-	
+
 	//+(GetPropertyChbx(edPtr, CurLang["Properties"].u.object.length+1)-&edPtr);
 
 	infoPtr->WindowProcPriority = Extension::WindowProcPriority;
@@ -122,9 +122,9 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->EditPrefs = Extension::OEPREFS;
 
 	memcpy(&infoPtr->Identifier, ::SDK->json["Identifier"], 4);
-	
+
 	infoPtr->Version = Extension::Version;
-	
+
 	return TRUE;
 }
 
@@ -168,7 +168,7 @@ std::int16_t FusionAPI CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, Create
 
 	rdPtr->pExtension = new Extension(rdPtr, edPtr, cobPtr);
 	rdPtr->pExtension->Runtime.ObjectSelection.pExtension = rdPtr->pExtension;
-	
+
 	return 0;
 }
 
@@ -515,7 +515,6 @@ void freeString(void * ext, RuntimeFunctions::string str)
 	str = { NULL, NULL };
 }
 void generateEvent(void * javaExtPtr, int code, int param) {
-	// CExtension ho in
 	LOGW("GenerateEvent ID %i attempting...", code);
 	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from generateEvent");
 	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
@@ -525,7 +524,6 @@ void generateEvent(void * javaExtPtr, int code, int param) {
 	threadEnv->CallVoidMethod(ho, genEvent, code, param);
 };
 void pushEvent(void * javaExtPtr, int code, int param) {
-	// CExtension ho in 
 	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from pushEvent");
 	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
 	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
@@ -632,7 +630,7 @@ size_t captureBacktrace(void ** buffer, size_t max)
 
 	return state.current - buffer;
 }
-#include <cxxabi.h> 
+#include <cxxabi.h>
 void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
 {
 	os << "Call stack, last function is bottommost:\n";
@@ -877,15 +875,17 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 {
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGV("The SDK is being initialised.");
+		LOGV("The SDK is being initialised.\n");
 		Edif::Init(mV);
 	}
 }
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _close())
-{
-	// Do nothing?
-}
 
+// Last Objective-C class was freed
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc())
+{
+	++deallocCount;
+	LOGV("The SDK is being freed.\n");
+}
 
 ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW, _getNumberOfConditions())
 {
