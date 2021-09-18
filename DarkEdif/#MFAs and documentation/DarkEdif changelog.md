@@ -15,7 +15,7 @@ Changes until v12 release
 
 Changes until v11 release
 ----
-*v11 released on 26th August 2021, commit (latest)*
+*v11 released on 26th August 2021, commit [36f8378](https://github.com/SortaCore/MMF2Exts/commit/36f8378d9ef6404420d480d53983c755491f53ac)*
 - MultiTarget SDK integration into DarkEdif Template, providing Android and iOS compatibility - iOS still requires separate Mac with Xcode (latest Xcode on Big Sur is compatible)
 - Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files
 - Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents
