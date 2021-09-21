@@ -21,7 +21,10 @@ BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
 	if (dwReason == DLL_PROCESS_ATTACH && hInstLib == NULL)
 	{
 		hInstLib = hDLL; // Store HINSTANCE
-		DisableThreadLibraryCalls(hDLL); // no thread attach/detach
+		// no thread attach/detach for dynamic CRT
+		#ifdef _DLL
+			DisableThreadLibraryCalls(hDLL);
+		#endif
 	}
 
 	return TRUE;

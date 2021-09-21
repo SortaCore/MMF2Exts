@@ -11,6 +11,10 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 
 Changes until v12 release
 ----
+- iOS properties now passed to extension, changed iOS function name \_free() to \_dealloc()
+- Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
+- DisableThreadLibraryCalls() optimization disabled for static CRT, following [MSDN docs](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-disablethreadlibrarycalls)
+
 *v12 not released yet*
 
 Changes until v11 release
