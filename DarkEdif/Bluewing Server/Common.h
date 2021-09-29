@@ -83,7 +83,7 @@ struct EDITDATA
 	char pad1[249];
 
 	// To match Lacewing Relay Server, this struct's size must be 536 bytes.
-	
+
 #ifndef NOPROPS
 	// Keep as last or risk overwriting by functions accessing this address
 	std::uint32_t DarkEdif_Prop_Size;

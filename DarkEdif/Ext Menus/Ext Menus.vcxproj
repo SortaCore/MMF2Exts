@@ -74,7 +74,6 @@
     <ClCompile Include="Edittime.cpp" />
     <ClCompile Include="Expressions.cpp" />
     <ClCompile Include="Extension.cpp" />
-    <ClCompile Include="General.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DarkExt.json" />

@@ -1,219 +1,197 @@
-#include "common.h"
+#include "Common.h"
 // ============================================================================
 //
 // UNREFENCED FUNCTIONS
 //
 // ============================================================================
+#include <map>
+
+// Vista+ protocols only, not defined if XP target
+#if (_WIN32_WINNT < 0x0600)
+	#define AF_BTH          32
+	#if (_WIN32_WINNT < 0x0601)
+		#define AF_LINK     33
+	#endif
+	#define IPPROTO_ST 5
+	#define IPPROTO_CBT 7
+	#define IPPROTO_EGP 8
+	#define IPPROTO_IGP 9
+	#define IPPROTO_RDP 27
+	#define IPPROTO_PIM 103
+	#define IPPROTO_PGM 113
+	#define IPPROTO_L2TP 115
+	#define IPPROTO_SCTP 132
+#endif
+
+const std::map<const std::string_view, const int> addressFamily = {
+	{ "UNSPEC"sv, AF_UNSPEC }, { "UNSPECIFIED"sv, AF_UNSPEC },
+	{ "UNIX"sv, AF_UNIX },
+	{ "INET"sv, AF_INET }, { "INTERNET"sv, AF_INET }, { "IPV4"sv, AF_INET },
+	{ "IMPLINK"sv, AF_IMPLINK },
+	{ "PUP"sv, AF_PUP },
+	{ "CHAOS"sv, AF_CHAOS },
+	{ "NS"sv, AF_NS },
+	{ "IPX"sv, AF_IPX },
+	{ "ISO"sv, AF_ISO },
+	{ "OSI"sv, AF_OSI },
+	{ "ECMA"sv, AF_ECMA },
+	{ "DATAKIT"sv, AF_DATAKIT },
+	{ "CCITT"sv, AF_CCITT },
+	{ "DECNET"sv, AF_DECnet },
+	{ "DLI"sv, AF_DLI },
+	{ "LAT"sv, AF_LAT },
+	{ "HYLINK"sv, AF_HYLINK },
+	{ "APPLETALK"sv, AF_APPLETALK },
+	{ "NETBIOS"sv, AF_NETBIOS },
+	{ "VOICEVIEW"sv, AF_VOICEVIEW },
+	{ "FIREFOX"sv, AF_FIREFOX },
+	{ "BAN"sv, AF_BAN }, { "BANYAN"sv, AF_BAN },
+	{ "ATM"sv, AF_ATM },
+	{ "INET6"sv, AF_INET6 }, { "INTERNET6"sv, AF_INET6 }, { "IPV6"sv, AF_INET6 },
+	{ "CLUSTER"sv, AF_CLUSTER },
+	{ "12844"sv, AF_12844 },
+	{ "IRDA"sv, AF_IRDA },
+	{ "NETDES"sv, AF_NETDES },
+	{ "TCNPROCESS"sv, AF_TCNPROCESS },
+	{ "TCNMESSAGE"sv, AF_TCNMESSAGE },
+	{ "ICLFXBM"sv, AF_ICLFXBM },
+// Vista+ only
+	{ "BTH"sv, AF_BTH }, { "BLUETOOTH"sv, AF_BTH },
+	{ "LINK"sv, AF_LINK },
+};
+const std::map<const std::string_view, const int> socketType = {
+	{ "STREAM"sv, SOCK_STREAM },
+	{ "DGRAM"sv, SOCK_DGRAM },
+	{ "DATAGRAM"sv, SOCK_DGRAM },
+	{ "RAW"sv, SOCK_RAW },
+	{ "RDM"sv, SOCK_RDM },
+	{ "SEQPACKET"sv, SOCK_SEQPACKET },
+};
+const std::map<const std::string_view, const int> protocolTypes = {
+	{ "HOPOPTS"sv, IPPROTO_HOPOPTS },
+	{ "ICMP"sv, IPPROTO_ICMP },
+	{ "IGMP"sv, IPPROTO_IGMP },
+	{ "GGP"sv, IPPROTO_GGP },
+	{ "IPV4"sv, IPPROTO_IPV4 },
+	{ "ST"sv, IPPROTO_ST },
+	{ "IPPROTO_TCP"sv, IPPROTO_TCP },
+	{ "TCP"sv, IPPROTO_TCP },
+	{ "CBT"sv, IPPROTO_CBT },
+	{ "EGP"sv, IPPROTO_EGP },
+	{ "IGP"sv, IPPROTO_IGP },
+	{ "PUP"sv, IPPROTO_PUP },
+	{ "UDP"sv, IPPROTO_UDP },
+	{ "IDP"sv, IPPROTO_IDP },
+	{ "RDP"sv, IPPROTO_RDP },
+	{ "ICMP"sv, IPPROTO_IPV6 },
+	{ "IPV6 ROUTING"sv, IPPROTO_ROUTING },
+	{ "IPV6 ESP"sv, IPPROTO_ESP }, { "IPV6 ENCAPSULATING SECURITY PAYLOAD"sv, IPPROTO_ESP },
+	{ "IPV6 AH"sv, IPPROTO_AH }, { "IPV6 AUTHENTICATION HEADER"sv, IPPROTO_AH },
+	{ "IPV6 FRAGMENT"sv, IPPROTO_FRAGMENT }, { "FRAGMENT"sv, IPPROTO_FRAGMENT },
+	{ "IPV6 ICMP"sv, IPPROTO_ICMPV6 }, { "ICMPV6"sv, IPPROTO_ICMPV6 },
+	{ "IPV6 NONE"sv, IPPROTO_NONE }, { "IPV6 NO NEXT HEADER"sv, IPPROTO_NONE },
+	{ "IPV6 DSTOPTS"sv, IPPROTO_DSTOPTS }, { "IPV6 DESTINATION OPTIONS"sv, IPPROTO_DSTOPTS },
+	{ "ND"sv, IPPROTO_ND },
+	{ "ICLFXBM"sv, IPPROTO_ICLFXBM },
+	{ "PIM"sv, IPPROTO_PIM },
+	{ "PGM"sv, IPPROTO_PGM },
+	{ "L2TP"sv, IPPROTO_L2TP },
+	{ "SCTP"sv, IPPROTO_SCTP },
+	{ "PGM"sv, IPPROTO_PGM },
+	{ "RAW"sv, IPPROTO_RAW },
+	// { "DARKNET"sv, IPPROTO_DARK },
+};
 
 // Another text->number from macro function. Moved out the action for simplicity.
-int Extension::Unreferenced_WorkOutAddressFamily(TCHAR * t)
+int Extension::Internal_WorkOutAddressFamily(const TCHAR * addrFamAsText)
 {
-	if (_tcsicmp(t, _T("UNSPEC")) == 0 || _tcsicmp(t, _T("UNSPECIFIED")) == 0)
-		return AF_UNSPEC; else
-	if (_tcsicmp(t, _T("UNIX")) == 0)
-		return AF_UNIX; else
-	if (_tcsicmp(t, _T("INET")) == 0 || _tcsicmp(t, _T("INTERNET")) == 0 || _tcsicmp(t, _T("INTERNET v4")) == 0)
-		return AF_INET; else
-	if (_tcsicmp(t, _T("IMPLINK")) == 0)
-		return AF_IMPLINK; else
-	if (_tcsicmp(t, _T("PUP")) == 0)
-		return AF_PUP; else
-	if (_tcsicmp(t, _T("CHAOS")) == 0)
-		return AF_CHAOS; else
-	if (_tcsicmp(t, _T("NS")) == 0)
-		return AF_NS; else
-	if (_tcsicmp(t, _T("IPX")) == 0)
-		return AF_IPX; else
-	if (_tcsicmp(t, _T("ISO")) == 0)
-		return AF_ISO; else
-	if (_tcsicmp(t, _T("OSI")) == 0)
-		return AF_OSI; else
-	if (_tcsicmp(t, _T("ECMA")) == 0)
-		return AF_ECMA; else
-	if (_tcsicmp(t, _T("DATAKIT")) == 0)
-		return AF_DATAKIT; else
-	if (_tcsicmp(t, _T("CCITT")) == 0)
-		return AF_CCITT; else
-	if (_tcsicmp(t, _T("SNA")) == 0)
-		return AF_SNA; else
-	if (_tcsicmp(t, _T("DECnet")) == 0)
-		return AF_DECnet; else
-	if (_tcsicmp(t, _T("DLI")) == 0)
-		return AF_DLI; else
-	if (_tcsicmp(t, _T("LAT")) == 0)
-		return AF_LAT; else
-	if (_tcsicmp(t, _T("HYLINK")) == 0)
-		return AF_HYLINK; else
-	if (_tcsicmp(t, _T("APPLETALK")) == 0)
-		return AF_APPLETALK; else
-	if (_tcsicmp(t, _T("NETBIOS")) == 0)
-		return AF_NETBIOS; else
-	if (_tcsicmp(t, _T("VOICEVIEW")) == 0)
-		return AF_VOICEVIEW; else
-	if (_tcsicmp(t, _T("FIREFOX")) == 0)
-		return AF_FIREFOX; else
-	if (_tcsicmp(t, _T("BAN")) == 0 || _tcsicmp(t, _T("BANYAN")) == 0)
-		return AF_BAN; else
-	if (_tcsicmp(t, _T("ATM")) == 0)
-		return AF_ATM; else
-	if (_tcsicmp(t, _T("INET6")) == 0 || _tcsicmp(t, _T("ITERNET6")) == 0 || _tcsicmp(t, _T("INTERNET v6")) == 0)
-		return AF_INET6; else
-	if (_tcsicmp(t, _T("CLUSTER")) == 0)
-		return AF_CLUSTER; else
-	if (_tcsicmp(t, _T("12844")) == 0)
-		return AF_12844; else
-	if (_tcsicmp(t, _T("IRDA")) == 0)
-		return AF_IRDA; else
-	if (_tcsicmp(t, _T("NETDES")) == 0)
-		return AF_NETDES; else
-	if (_tcsicmp(t, _T("TCNPROCESS")) == 0)
-		return AF_TCNPROCESS; else
-	if (_tcsicmp(t, _T("TCNMESSAGE")) == 0)
-		return AF_TCNMESSAGE; else
-	if (_tcsicmp(t, _T("ICLFXBM")) == 0)
-		return AF_ICLFXBM; else
-	if (_tcsicmp(t, _T("BTH")) == 0 || _tcsicmp(t, _T("Bluetooth")) == 0)
-		return AF_BTH; else
+	// Get string, convert to ANSI and uppercase, then search in the map
+	std::string param = TStringToANSI(addrFamAsText);
+	std::transform(param.begin(), param.end(), param.begin(),
+		[](unsigned char c) { return std::toupper(c); });
+
+	const auto ci = addressFamily.find(param);
+	if (ci != addressFamily.cend())
+		return ci->second;
 	return -1;
 }
 
 // A further text->number from macro function. Moved out the action for simplicity.
-int Extension::Unreferenced_WorkOutSocketType(TCHAR * t)
+int Extension::Internal_WorkOutSocketType(const TCHAR * socketTypeAsText)
 {
-	if (_tcscmp(t, _T("STREAM")) == 0)
-		return SOCK_STREAM; else
-	if (_tcscmp(t, _T("DGRAM")) == 0|| _tcscmp(t, _T("DATAGRAM")) == 0)
-		return SOCK_DGRAM; else
-	if (_tcscmp(t, _T("RAW")) == 0)
-		return SOCK_RAW; else
-	if (_tcscmp(t, _T("RDM")) == 0)
-		return SOCK_RDM; else
-	if (_tcscmp(t, _T("SEQPACKET")) == 0)
-		return SOCK_SEQPACKET; else
+	// Get string, convert to ANSI and uppercase, then search in the map
+	std::string param = TStringToANSI(socketTypeAsText);
+	std::transform(param.begin(), param.end(), param.begin(),
+		[](unsigned char c) { return std::toupper(c); });
+
+	const auto ci = socketType.find(param);
+	if (ci != socketType.cend())
+		return ci->second;
 	return -1;
 }
 
 // A simple text->number from macro function. Moved out the action for simplicity.
-int Extension::Unreferenced_WorkOutProtocolType(TCHAR * t)
+int Extension::Internal_WorkOutProtocolType(const TCHAR * socketTypeAsText)
 {
-	// Using t==_T("Type") fails, as both are pointers
-	if (_tcscmp(t, _T("ICMP")) == 0)
-		return IPPROTO_ICMP; else
-	if (_tcscmp(t, _T("IGMP")) == 0)
-		return IPPROTO_IGMP; else
-	if (_tcscmp(t, _T("GGP")) == 0)
-		return IPPROTO_GGP; else
-	if (_tcscmp(t, _T("IPv4")) == 0)
-		return IPPROTO_IPV4; else
-	if (_tcscmp(t, _T("ST")) == 0)
-		return IPPROTO_ST; else
-	if (_tcscmp(t, _T("TCP")) == 0)
-		return IPPROTO_TCP; else
-	if (_tcscmp(t, _T("CBT")) == 0)
-		return IPPROTO_CBT; else
-	if (_tcscmp(t, _T("EGP")) == 0)
-		return IPPROTO_EGP; else
-	if (_tcscmp(t, _T("IGP")) == 0)
-		return IPPROTO_IGP; else
-	if (_tcscmp(t, _T("PUP")) == 0)
-		return IPPROTO_PUP; else
-	if (_tcscmp(t, _T("UDP")) == 0)
-		return IPPROTO_UDP; else
-	if (_tcscmp(t, _T("IDP")) == 0)
-		return IPPROTO_IDP; else
-	if (_tcscmp(t, _T("RDP")) == 0)
-		return IPPROTO_RDP; else
-	if (_tcscmp(t, _T("IPv6")) == 0)
-		return IPPROTO_IPV6; else
-	if (_tcscmp(t, _T("IPv6 Routing")) == 0||_tcscmp(t, _T("Routing")) == 0)
-		return IPPROTO_ROUTING; else
-	if (_tcscmp(t, _T("IPv6 Fragment")) == 0||_tcscmp(t, _T("Fragment")) == 0)
-		return IPPROTO_FRAGMENT; else
-	if (_tcscmp(t, _T("IPv6 ESP")) == 0||_tcscmp(t, _T("ESP")) == 0)
-		return IPPROTO_ESP; else
-	if (_tcscmp(t, _T("IPv6 AH")) == 0||_tcscmp(t, _T("AH")) == 0)
-		return IPPROTO_AH; else
-	if (_tcscmp(t, _T("IPv6 ICMP")) == 0||_tcscmp(t, _T("ICMPv6")) == 0)
-		return IPPROTO_ICMPV6; else
-	if (_tcscmp(t, _T("IPv6 None")) == 0||_tcscmp(t, _T("None")) == 0)
-		return IPPROTO_NONE; else
-	if (_tcscmp(t, _T("IPv6 DSTOPTS")) == 0||_tcscmp(t, _T("IPv6 DstOpts")) == 0||_tcscmp(t, _T("IPv6 Destination Options")) == 0)
-		return IPPROTO_DSTOPTS; else
-	if (_tcscmp(t, _T("ND")) == 0)
-		return IPPROTO_ND; else
-	if (_tcscmp(t, _T("ICLFXBM")) == 0)
-		return IPPROTO_ICLFXBM; else
-	if (_tcscmp(t, _T("PIM")) == 0)
-		return IPPROTO_PIM; else
-	if (_tcscmp(t, _T("PGM")) == 0)
-		return IPPROTO_PGM; else
-	if (_tcscmp(t, _T("L2TP")) == 0)
-		return IPPROTO_L2TP; else
-	if (_tcscmp(t, _T("SCTP")) == 0)
-		return IPPROTO_SCTP; else
-	if (_tcscmp(t, _T("RAW")) == 0)
-		return IPPROTO_RAW; else
-	if (_tcscmp(t, _T("MAX")) == 0)
-		return IPPROTO_MAX; else
-	//if (_tcscmp(t, _T("DARKNET")) == 0)
-	//	return IPPROTO_DARK; else
+	// Get string, convert to ANSI and uppercase, then search in the map
+	std::string param = TStringToANSI(socketTypeAsText);
+	std::transform(param.begin(), param.end(), param.begin(),
+		[](unsigned char c) { return std::toupper(c); });
+
+	const auto ci = protocolTypes.find(param);
+	if (ci != protocolTypes.cend())
+		return ci->second;
 	return -1;
 }
 
 // Report - For non-errors
-void Extension::Unreferenced_Report(TCHAR * report = _T("Unknown report..."), int SocketID = -1)
+void Extension::Internal_Report(int socketID, const TCHAR * report, ...)
 {
-	// Not from a thread
-	if (SocketID == -1)
+	// Not from a socket
+	if (socketID == -1)
 	{
-		ThreadSafe_Start();
+		threadsafe.edif_lock();
 		CompleteStatus += report;
 		CompleteStatus += _T("\r\n");
-		ThreadSafe_End();
-
-		if (UsePopups)
-			MessageBox(NULL, report, _T("DarkSocket - Latest Report:"), MB_OK);
+		threadsafe.edif_unlock();
 	}
 	else // From a thread
 	{
 		TCHAR text [512];
-		sprintf_s(text, 512, "Socket ID = %i >> %s\r\n", SocketID, report);
+		_stprintf_s(text, 512, "Socket ID = %i >> %s\r\n", socketID, report);
 
-		ThreadSafe_Start(); // cause of last threadsafe_start()
+		threadsafe.edif_lock();
 		CompleteStatus += text;
-		ThreadSafe_End();
-
-		if (UsePopups)
-		{
-			TCHAR title [512];
-			sprintf_s(title, 512, "DarkSocket - Latest Report from %i:", SocketID);
-			MessageBox(NULL, report, title, MB_OK);
-		}
+		threadsafe.edif_unlock();
 	}
 
 	CallEvent(MF2C_DEBUG_ON_NEW_STATUS);
 }
 
 // Explode - For errors
-void Extension::Unreferenced_Error(TCHAR * error, int SocketID)
+void Extension::Internal_Error(int socketID, const TCHAR * error, ...)
 {
+	TCHAR text[1024];
+	va_list v;
+	va_start(v, error);
+	if (_vstprintf_s(text, error, v) <= 0)
+		DarkEdif::MsgBox::Error(_T("Error"), _T("Couldn't print an error with format:\n%s"), error);
+	va_end(v);
+
 	// Not from a thread
-	if (SocketID == -1)
+	if (socketID == -1)
 	{
-		ThreadSafe_Start();
+		threadsafe.edif_lock();
 		LastError += error;
 		LastError += _T("\r\n");
 		CompleteStatus += error;
 		CompleteStatus += _T("\r\n");
-		ThreadSafe_End();
-		if (UsePopups)
-			MessageBox(NULL, error, _T("DarkSocket - Latest Error:"), MB_OK);
+		threadsafe.edif_unlock();
 	}
 	else
 	// From a thread
 	{
-		TCHAR text [255];
-		sprintf_s(text, 255, "Socket ID = %i >> %s.", SocketID, error);
+		_tsprintf_s(text, _T("Socket ID = %i >> %s."), SocketID, error);
 		ThreadSafe_Start();
 		LastError += text;
 		LastError += _T("\r\n");
@@ -221,11 +199,7 @@ void Extension::Unreferenced_Error(TCHAR * error, int SocketID)
 		CompleteStatus += _T("\r\n");
 		ThreadSafe_End();
 		if (UsePopups)
-		{
-			TCHAR title [255];
-			sprintf_s(title, 255, "DarkSocket - Latest Error from %i:", SocketID);
-			MessageBox(NULL, error, title, MB_OK);
-		}
+			DarkEdif::MsgBox::Error(_T("Error"), _T("Error from socket %i:\n%s"), SocketID, error);
 	}
 	CallEvent(MF2C_DEBUG_ON_ERROR);
 	CallEvent(MF2C_DEBUG_ON_NEW_STATUS);

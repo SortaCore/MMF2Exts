@@ -39,9 +39,6 @@
     <ClCompile Include="Extension.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="General.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Threads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

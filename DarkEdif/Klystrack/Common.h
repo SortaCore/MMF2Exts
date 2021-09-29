@@ -24,17 +24,11 @@
 #pragma comment(lib, "winmm.lib")
 
 #define CheckForPlayer(makeError, funcName, ...) \
-	if (curPlayer == nullptr) { \
-		if (makeError) \
-			CreateError(funcName##": No player selected!"); \
+	if (!curPlayer) { \
+		if constexpr (makeError) \
+			CreateError(_T(""## funcName##": No player selected!")); \
 		return __VA_ARGS__; \
 	}
-
-#ifdef _UNICODE
-	#error KSND library not available in Unicode; all functions are ANSI.
-	// In case it ever is available, TCHAR variants are used in this ext.
-#endif
-
 
 extern Edif::SDK * SDK;
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files

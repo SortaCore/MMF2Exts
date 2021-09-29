@@ -26,9 +26,9 @@ void ErrNoToErrText()
 #endif
 }
 
-#define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\r\n" \
-										"This is probably due to parameter changes.", "Lacewing Blue Client", MB_OK)
-#define EventsToRun (globals->_eventsToRun)
+#define EventsToRun globals->_eventsToRun
+#define Remake(name) DarkEdif::MsgBox::Error(_T("Remake action"), _T("Your "#name" actions need to be recreated.\r\n") \
+						_T("This is probably due to parameter changes."))
 
 void Extension::Replaced_Connect(const TCHAR * hostname, int port)
 {

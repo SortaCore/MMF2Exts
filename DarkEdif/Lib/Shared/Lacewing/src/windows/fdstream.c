@@ -318,7 +318,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 	{
 		// Occasionally triggers during a disconnect/reconnect spam.
 		// Simple recreation: "On connect > Disconnect; Connect to X"
-		// 
+		//
 		// TODO: The client is unstable at that point, and will not properly disconnect from original connection
 		// nor acknowledge the server on the new connection, resulting in ping disconnect.
 		// Thankfully, after a ping disconnect, it should be back to functional again.

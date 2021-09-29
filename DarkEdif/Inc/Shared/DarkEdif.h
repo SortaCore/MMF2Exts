@@ -1,7 +1,9 @@
 #pragma once
+
 #include "Edif.h"
 #ifdef _WIN32
 #include "Resource.h"
+#include "MMFMasterHeader.h"
 #else
 // These figures don't matter in Android/iOS anyway, a different resources format is used
 #define IDR_EDIF_ICON 101
@@ -267,7 +269,7 @@ namespace DarkEdif {
 
 	// Extension name; ANSI/Wide on Windows, UTF-8 elsewhere.
 	extern std::tstring ExtensionName;
-	extern DWORD MainThreadID;
+	extern std::thread::id MainThreadID;
 	extern HWND Internal_WindowHandle;
 
 	void BreakIfDebuggerAttached();
@@ -279,6 +281,7 @@ namespace DarkEdif {
 		int WarningYesNoCancel(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 		void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
 
 	void Log(int logLevel, const TCHAR * msgFormat, ...);
@@ -580,12 +583,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-	{
-		char extName[128];
-		Edif::GetExtensionName(extName);
-		strcat_s(extName, " - Linking Error");
-		MessageBoxA(NULL, errorStream.str().c_str(), extName, MB_OK);
-	}
+		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
@@ -670,12 +668,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-	{
-		char extName[128];
-		Edif::GetExtensionName(extName);
-		strcat_s(extName, " - Linking Error");
-		MessageBoxA(NULL, errorStream.str().c_str(), extName, MB_OK);
-	}
+		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
@@ -774,12 +767,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-	{
-		char extName[128];
-		Edif::GetExtensionName(extName);
-		strcat_s(extName, " - Linking Error");
-		MessageBoxA(NULL, errorStream.str().c_str(), extName, MB_OK);
-	}
+		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }

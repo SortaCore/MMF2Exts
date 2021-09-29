@@ -263,8 +263,9 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 #if EditorBuild
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
-		MessageBoxA(NULL, "Properties are the wrong size. Please re-create the Lacewing Blue Client object in frame, "
-			"and use \"Replace by another object\" in Event Editor.", "Lacewing Blue Client error", MB_OK | MB_ICONERROR);
+		DarkEdif::MsgBox::Error(_T("Property size mismatch"), _T("Properties are the wrong size (MFA size %lu, extension size %zu). "
+			"Please re-create the Lacewing Blue Client object in frame, "
+			"and use \"Replace by another object\" in Event Editor."), edPtr->eHeader.extSize, sizeof(EDITDATA));
 	}
 #endif
 
@@ -1088,13 +1089,13 @@ REFLAG Extension::Handle()
 			}
 		}
 
-		// On Error was not processed. Shameful.
+		// On Error or other mandatory events were not processed by Fusion events. Shameful.
 		if (!globals->lastMandatoryEventWasChecked)
 		{
 			// Make a nice big error message.
 			std::tstringstream wstr;
-			wstr << _T("") PROJECT_NAME " event occurred. Please add a \"" PROJECT_NAME " > "sv <<
-				mandatoryEventIDs[mandatoryEventIndex].first << _T("\" event to report it");
+			wstr << _T("") PROJECT_NAME " event occurred, but you have no \"" PROJECT_NAME " > "sv <<
+				mandatoryEventIDs[mandatoryEventIndex].first << _T("\" event to handle it. That is BAD PRACTICE");
 
 			// On Error has message
 			if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Error"sv))
@@ -1105,7 +1106,7 @@ REFLAG Extension::Handle()
 			else
 				wstr << _T(". Deny reason:\n"sv) << UTF8ToTString(DenyReasonBuffer);
 
-			MessageBox(NULL, wstr.str().c_str(), _T("") PROJECT_NAME " - Mandatory Event Error", MB_ICONERROR | MB_TOPMOST);
+			DarkEdif::MsgBox::Custom(MB_ICONERROR | MB_TOPMOST, _T("Mandatory Event Error"), _T("%s"), wstr.str().c_str());
 			globals->lastMandatoryEventWasChecked = true; // reset for next loop
 		}
 	}
@@ -1203,13 +1204,12 @@ DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: timeout warning message.\n");
 
 		// Otherwise, fuss at them.
-		MessageBoxA(NULL, "Bluewing Client warning!\n"
+		DarkEdif::MsgBox::Custom(MB_ICONWARNING | MB_TOPMOST,
+			_T("Warning"), _T("Bluewing Client warning!\n"
 			"All Bluewing Client objects have been destroyed and some time has passed; but "
 			"the connection has been left open in the background, unused, but still connected.\n"
 			"If you want to close the connection if no Bluewing Client objects are around, use the Disconnect action or "
-			"disable the timeout warning in the Bluewing Client object properties.\n",
-			"Bluewing Client Warning",
-			MB_OK | MB_DEFBUTTON1 | MB_ICONWARNING | MB_TOPMOST);
+			"disable the timeout warning in the Bluewing Client object properties."));
 	}
 
 killGlobalsAndExitThread:
@@ -1238,75 +1238,67 @@ killGlobalsAndExitThread:
 	return 0U;
 }
 
+// Called when Fusion wants your extension to redraw, due to window scrolling/resize, etc,
+// or from you manually causing it.
 REFLAG Extension::Display()
 {
-	/*
-		If you return REFLAG::DISPLAY in Handle() this routine will run.
-	*/
+	// Return REFLAG::DISPLAY in Handle() to run this manually, or use Runtime.Redisplay().
 
-	// Ok
 	return REFLAG::NONE;
 }
 
-short Extension::Pause()
-{
-
-	// Ok
-	return 0;
+// Called when Fusion runtime is pausing due to the menu option Pause or an extension causing it.
+short Extension::FusionRuntimePaused() {
+	return 0; // OK
 }
 
-short Extension::Continue()
-{
-
-	// Ok
-	return 0;
+// Called when Fusion runtime is resuming after a pause.
+short Extension::FusionRuntimeContinued() {
+	return 0; // OK
 }
 
-bool Extension::Save(HANDLE File)
+// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
+bool Extension::SaveFramePosition(HANDLE File)
 {
 	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Save the object's data here
-
+	#if defined(_WIN32) && !defined(VITALIZE)
+		// Use WriteFile() to save your data.
 		OK = true;
-
 	#endif
-
 	return OK;
 }
 
-bool Extension::Load(HANDLE File)
+// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
+bool Extension::LoadFramePosition(HANDLE File)
 {
 	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Load the object's data here
-
+	#if defined(_WIN32) && !defined(VITALIZE)
+		// Use ReadFile() to read your data.
 		OK = true;
-
 	#endif
-
 	return OK;
 }
 
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID)
+void Extension::UnlinkedAction(int ID)
 {
-	MessageBoxA(NULL, "Defaulting on an action", PROJECT_NAME " - Action() note", MB_OK | MB_ICONERROR);
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedAction() called"), _T("Running a fallback for action ID %d. Make sure you ran LinkAction()."), ID);
 }
 
-long Extension::Condition(int ID)
+long Extension::UnlinkedCondition(int ID)
 {
-	return false;
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedCondition() called"), _T("Running a fallback for condition ID %d. Make sure you ran LinkCondition()."), ID);
+	return 0;
 }
 
-long Extension::Expression(int ID)
+long Extension::UnlinkedExpression(int ID)
 {
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
+	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
+	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }
 

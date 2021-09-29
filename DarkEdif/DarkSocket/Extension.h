@@ -1,10 +1,11 @@
+#pragma once
 class Extension
 {
 public:
 
-	#define MsgBox(text) MessageBoxA(NULL, text, "DarkSocket Object - Debug information", MB_OK|MB_ICONINFORMATION)
+	#define MsgBox(text) ::DarkEdif::MsgBox::Info(_T("Debug info"), _T("%s"), UTF8ToTString(text))
 	#define MakeDelim() const char delim [] = "|" // Used for delimiters in tokenizing
-	#define FatalBox()	MessageBoxA(NULL, "Fatal error has not been repaired; bypassing erroneous code.", "DarkSocket Object - Bypass notification", MB_OK|MB_ICONERROR);
+	#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
 
 	RUNDATA * rdPtr;
 	RunHeader * rhPtr;
@@ -12,7 +13,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 252;
-	static const int Version = 3;
+	static const int Version = 4;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -36,21 +37,17 @@ public:
 	std::tstring CompleteStatus;			// Contains the last report & errors
 	std::tstring LastLockFile;				// For the VS debugger: contains the filename of the last ThreadSafe_Start()
 	int LastLockLine;						// For the VS debugger: contains the line of the last ThreadSafe_Start()
-	std::atomic<bool> threadsafe;			// Handles whether Extension can be read from/written to.
+	Edif::recursive_mutex threadsafe;		// Handles whether Extension can be read from/written to.
 	std::atomic<bool> nogevent;				// Handles whether GenerateEvent call is being handled.
 	int LastReturnSocketID;					// Indicates what the last SocketID is.
-	std::tstring LastReturnMsg;				// Handles last returned message
+	std::string LastReturnMsg;				// Handles last returned message
 	bool LastReturnType;					// Indicates the last message was from a client or server
-	std::vector<CarryMsg> Returns;			// Carries a message from the client/server->MMF2
-	std::vector<RevCarryMsg> Senders;		// Carries a message from MMF2->the client/server
+	std::vector<CarryMsg> Returns;			// Carries a message from the client/server->Fusion
+	std::vector<RevCarryMsg> Senders;		// Carries a message from Fusion->the client/server
 	int NewSocketID;						// The new socket ID is assigned here.
-	bool UsePopups;							// This defines whether Report/Explode use popups.
  	WSADATA wsaData;						// Holds WSAStartup() information.
-#ifdef AllowTermination
-	std::vector<HANDLE> SocketThreadList;	// Contains handles to threads for terminating later.
-#endif
-	void * PacketFormLocation;			// Contains the packet forming memory location
-	size_t PacketFormSize;				// Contains the packet forming size in bytes
+	std::vector<std::thread> SocketThreadList;	// Contains handles to threads for terminating later.
+	std::string packetForm;
 
 	/*  Add your actions, conditions and expressions as real class member
 		functions here. The arguments (and return type for expressions) must
@@ -60,49 +57,54 @@ public:
 		numeric IDs in the class constructor (Extension.cpp)
 	*/
 	/// Functions (called by this object but not through a direct action)
-		int Unreferenced_WorkOutAddressFamily(TCHAR * t);
-		int Unreferenced_WorkOutSocketType(TCHAR * t);
-		int Unreferenced_WorkOutProtocolType(TCHAR * t);
-		void Unreferenced_Error(TCHAR * error, int SocketID);
-		void Unreferenced_Report(TCHAR * report, int SocketID);
-		void Unreferenced_ReturnToMMF(int ReturnAsI, int SocketID, void * Msg, int MsgLength);
-		unsigned long Unreferenced_WorkOutInAddr(TCHAR * t);
+		int Internal_WorkOutAddressFamily(const TCHAR * addrFamAsText);
+		int Internal_WorkOutSocketType(const TCHAR * sockTypeAsText);
+		int Internal_WorkOutProtocolType(const TCHAR * protoTypeAsText);
+		void Internal_Error(int SocketID, PrintFHintInside const TCHAR * error, ...) PrintFHintAfter(3,4);
+		void Internal_Report(int SocketID, PrintFHintInside const TCHAR * report, ...) PrintFHintAfter(3, 4);
+		void Internal_ReturnToFusion(int ReturnAsI, int SocketID, const void * Msg, int MsgLength);
+		unsigned long Internal_WorkOutInAddr(const TCHAR * t);
+
+
+
 
 	/// Actions
 /* ID = 0 */	void TestReportAndExplode();
 /* ID = 1 */	void UsePopupMessages(int OnOrOff);
 
-/* ID = 2 */	void ClientInitialise_Basic(TCHAR * Hostname, int Port, TCHAR * Protocol, TCHAR * InitialText);
-/* ID = 3 */	void ClientInitialise_Advanced(TCHAR * Hostname, int Port, TCHAR * Protocol, TCHAR * AddressFamily, TCHAR * SocketType, TCHAR * InitialText);
+/* ID = 2 */	void ClientInitialise_Basic(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * InitialText);
+/* ID = 3 */	void ClientInitialise_Advanced(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * AddressFamily, const TCHAR * SocketType, const TCHAR * InitialText);
 /* ID = 4 */	void ClientShutdownSocket(int SocketID);
 /* ID = 5 */	void ClientSend(int SocketID, TCHAR * Message);
 /* ID = 6 */	void ClientGoIndependent(int SocketID);
 /* ID = 7 */	void ClientReceiveOnly(int SocketID);
 /* ID = 8 */	void ClientLinkFileOutput(int SocketID, TCHAR * File);
 /* ID = 9 */	void ClientUnlinkFileOutput(int SocketID);
-/* ID = 10 */	void ClientMMF2Report(int SocketID, int OnOrOff);
+/* ID = 10 */	void ClientFusionReport(int SocketID, int OnOrOff);
 
-/* ID = 11 */	void ServerInitialise_Basic(TCHAR * Protocol, int Port);
-/* ID = 12 */	void ServerInitialise_Advanced(TCHAR * Protocol, TCHAR * AddressFamily, TCHAR * SocketType, int Port, TCHAR * InAddr);
+/* ID = 11 */	void ServerInitialise_Basic(const TCHAR * Protocol, int Port);
+/* ID = 12 */	void ServerInitialise_Advanced(const TCHAR * Protocol, const TCHAR * AddressFamily, const TCHAR * SocketType, int Port, const TCHAR * InAddr);
 /* ID = 13 */	void ServerShutdownSocket(int SocketID);
-/* ID = 14 */	void ServerSend(int SocketID, TCHAR * Message);
+/* ID = 14 */	void ServerSend(int SocketID, const TCHAR * Message);
 /* ID = 15 */	void ServerGoIndependent(int SocketID);
 /* ID = 16 */	void ServerAutoAccept(int SocketID, int OnOrOff);
-/* ID = 17 */	void ServerLinkFileOutput(int SocketID, TCHAR * File);
+/* ID = 17 */	void ServerLinkFileOutput(int SocketID, const TCHAR * File);
 /* ID = 18 */	void ServerUnlinkFileOutput(int SocketID);
-/* ID = 19 */	void ServerMMF2Report(int SocketID, int OnOrOff);
+/* ID = 19 */	void ServerFusionReport(int SocketID, int OnOrOff);
 
-/* ID = 20 */	void PacketForm_NewPacket(size_t Size);
-/* ID = 21 */	void PacketForm_ResizePacket(size_t Size);
-/* ID = 22 */	void PacketForm_SetByte(unsigned char Byte, size_t WhereTo);
-/* ID = 23 */	void PacketForm_SetShort(unsigned short Short, size_t WhereTo, int RunHTON);
-/* ID = 24 */	void PacketForm_SetInteger(unsigned int Integer, size_t WhereTo);
-/* ID = 25 */	void PacketForm_SetLong(unsigned long LongP, size_t WhereTo, int RunHTON);
-/* ID = 26 */	void PacketForm_SetFloat(float Float, size_t WhereTo);
-/* ID = 27 */	void PacketForm_SetDouble(double Double, size_t WhereTo);
-/* ID = 28 */	void PacketForm_SetString(size_t WhereFrom, size_t WhereTo, size_t SizeOfString);
-/* ID = 29 */	void PacketForm_SetWString(size_t WhereFrom, size_t WhereTo, size_t SizeOfStringInChar);
-/* ID = 30 */	void PacketForm_SetBankFromBank(size_t WhereFrom, size_t WhereTo, size_t SizeOfString);
+/* ID = 20 */	void PacketForm_NewPacket(int Size);
+/* ID = 21 */	void PacketForm_ResizePacket(int Size);
+/* ID = 22 */	void PacketForm_SetByte(int Byte, int WhereTo);
+/* ID = 23 */	void PacketForm_SetShort(int Short, int WhereTo, int RunHTON);
+/* ID = 24 */	void PacketForm_SetInteger(int Integer, int WhereTo);
+/* ID = 25 */	void PacketForm_SetLong(int LongP, int WhereTo, int RunHTON);
+/* ID = 26 */	void PacketForm_SetFloat(float Float, int WhereTo);
+/* ID = 27 */	void PacketForm_SetDouble(float Double, int WhereTo);
+/* ID = 28 */	void DEPRECATED_PacketForm_SetString(int WhereFrom, int WhereTo, int SizeOfString);
+/* ID = 29 */	void DEPRECATED_PacketForm_SetWString(int WhereFrom, int WhereTo, int SizeOfStringInChar);
+/* ID = 30 */	void PacketForm_SetBankFromBank(int WhereFrom, int WhereTo, int SizeOfString);
+/* ID = 31 */	void PacketForm_SetString(int WhereFrom, int WhereTo, int includeNull);
+/* ID = 32 */	void PacketForm_SetWString(int WhereFrom, int WhereTo, int includeNull);
 
 
 	/// Conditions
@@ -149,9 +151,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 	/*  These replace the functions like HandleRunObject that used to be
@@ -162,10 +164,10 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
+	bool SaveFramePosition(HANDLE File);
+	bool LoadFramePosition(HANDLE File);
 
 };

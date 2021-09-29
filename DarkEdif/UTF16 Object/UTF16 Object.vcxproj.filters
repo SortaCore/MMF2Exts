@@ -13,9 +13,6 @@
     <ClCompile Include="Extension.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="General.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lib\Shared\json.cpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClCompile>

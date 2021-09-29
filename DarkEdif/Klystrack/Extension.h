@@ -1,3 +1,4 @@
+#pragma once
 class Extension
 {
 public:
@@ -8,7 +9,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 2;
+	static const int Version = 3;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -21,82 +22,83 @@ public:
 	// Song
 
 	struct ExtKSong {
-		KSong * song;
-		KSongInfo songInfo;
-		std::string songName; // user assigned, not the song title
-		std::string filePath;
+		KSong * song = nullptr;
+		KSongInfo songInfo = {};
+		std::tstring songName; // user assigned, not the song title
+		std::tstring filePath;
 		// Length, in pattern rows.
-		int length;
+		int length = 0;
 		ExtKSong();
 		~ExtKSong();
 	};
 	struct ExtKPlayer
 	{
-		std::string playerName;
-		KPlayer * player;
-		std::vector<ExtKSong *> songs;
+		std::tstring playerName;
+		KPlayer * player = nullptr;
+		std::vector<std::unique_ptr<ExtKSong>> songs;
 		// Volume, 0 to 128, inclusive.
-		int volume;
+		int volume = 0;
 		// Quality, 0 to 4, inclusive.
-		int quality;
+		int quality = 0;
 		// 0 or 1
-		int looping;
+		int looping = 0;
 
 		enum PlayState
 		{
 			Stopped,
 			Playing,
 			Paused
-		} state;
+		} state = Stopped;
 		ExtKPlayer();
 		~ExtKPlayer();
-	} *curPlayer;
+	};
+	std::shared_ptr<ExtKPlayer> curPlayer;
 
-	std::vector<ExtKPlayer *> players;
-	void CreateError(const char * format, ...);
-	std::string lastError;
+	std::vector<std::shared_ptr<ExtKPlayer>> players;
+	void CreateError(PrintFHintInside const TCHAR * format, ...) PrintFHintAfter(2, 3);
+	std::tstring lastError;
 
 	/// Actions
 
-		void LoadSongFromFile(const char * songName, const char * filePath);
-		void LoadSongFromMemory(const char * songName, unsigned int address, int size);
-		void CloseSong(const char * songName);
+		void LoadSongFromFile(const TCHAR * songName, const TCHAR * filePath);
+		void LoadSongFromMemory(const TCHAR * songName, unsigned int address, int size);
+		void CloseSong(const TCHAR * songName);
 
-		void CreatePlayer(const char * playerName, int sampleRate);
-		void SelectPlayer(const char * playerName);
+		void CreatePlayer(const TCHAR * playerName, int sampleRate);
+		void SelectPlayer(const TCHAR * playerName);
 		void ClosePlayer();
 		void SetCurrentPlayerQuality(int oversample);
 		void SetCurrentPlayerLooping(int looping);
 		void SetCurrentPlayerVolume(int volume);
-		void PlaySongOnCurrentPlayer(const char * songUserName, int position);
+		void PlaySongOnCurrentPlayer(const TCHAR * songUserName, int position);
 		void SetPauseStateOnCurrentPlayer(int pauseState);
 		void StopCurrentPlayer();
 
 	/// Conditions
 
 		bool OnError();
-		bool DoesPlayerNameExist(const char * playerName);
-		bool DoesSongNameExist(const char * songName);
-		bool IsPlayerNamePlaying(const char * playerName);
-		bool IsPlayerNamePaused(const char * playerName);
+		bool DoesPlayerNameExist(const TCHAR * playerName);
+		bool DoesSongNameExist(const TCHAR * songName);
+		bool IsPlayerNamePlaying(const TCHAR * playerName);
+		bool IsPlayerNamePaused(const TCHAR * playerName);
 
 	/// Expressions
 
-		const char * GetError();
+		const TCHAR * GetError();
 		int GetPlayerCurrentPos();
-		int GetSongLength(const char * songName);
-		const char * GetSongTitle(const char * songName);
-		int GetSongNumInstruments(const char * songName);
-		int GetSongNumChannels(const char * songName);
-		const char * GetSongInstrumentName(const char * songName, int instrumentIndex);
+		int GetSongLength(const TCHAR * songName);
+		const TCHAR * GetSongTitle(const TCHAR * songName);
+		int GetSongNumInstruments(const TCHAR * songName);
+		int GetSongNumChannels(const TCHAR * songName);
+		const TCHAR * GetSongInstrumentName(const TCHAR * songName, int instrumentIndex);
 
 
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
@@ -109,10 +111,9 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
-
+	bool SaveFramePosition(HANDLE File);
+	bool LoadFramePosition(HANDLE File);
 };

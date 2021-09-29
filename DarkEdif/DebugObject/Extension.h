@@ -1,4 +1,4 @@
-
+#pragma once
 class Extension
 {
 public:
@@ -10,7 +10,8 @@ public:
 
 	GlobalData * data;
 	static const int MinimumBuild = 256;
-	static const int Version = 15;
+	static const int Version = 16;
+	// b16: SDK update to v11, first with update checker
 	// b15: Made the error message readable to a native debugger
 	// b14: Added more details to crash information
 	// b13: Fixed message box about properties failing to convert
@@ -82,9 +83,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
@@ -97,10 +98,10 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
+	bool SaveFramePosition(HANDLE File);
+	bool LoadFramePosition(HANDLE File);
 
 };

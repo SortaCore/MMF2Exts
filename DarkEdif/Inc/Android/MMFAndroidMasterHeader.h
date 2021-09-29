@@ -396,7 +396,7 @@ enum class CallFunctionIDs {
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-// Flags 
+// Flags
 typedef unsigned int uint;
 enum class OEFLAGS : uint {
 	NONE = 0,
@@ -535,7 +535,7 @@ enum class Params : short {
 	Comparison,						// ParamComparison
 	Colour,							// ParamColour
 	Buffer,							// ParamBuffer
-	Frame,							// ParamFrame - Storyboard frame number 
+	Frame,							// ParamFrame - Storyboard frame number
 	Sample_Loop,					// ParamSoundLoop
 	Music_Loop,						// ParamSoundLoop also
 	New_Direction,					// ParamNewDir
@@ -698,7 +698,7 @@ struct HeaderObject {
 	qualToOi *			QualToOiList;
 };
 struct RunObject {
-	HeaderObject  	roHo;		  		// Common structure 
+	HeaderObject  	roHo;		  		// Common structure
 };
 
 // Versions

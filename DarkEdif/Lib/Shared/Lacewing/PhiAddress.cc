@@ -295,10 +295,14 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 #endif
 void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
+	// Remove the repository name
+	const char * fileSub = strstr(file, "Lacewing\\");
+	fileSub = fileSub ? fileSub : file;
+
 	std::stringstream err;
-	err << "Lacewing fatal error detected.\nFile: "sv << file << "\nFunction: "sv << func << "\nLine: "sv << line;
+	err << "Lacewing fatal error detected.\nFile: "sv << fileSub << "\nFunction: "sv << func << "\nLine: "sv << line;
 #ifdef _WIN32
-	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " Msg Box Death", MB_ICONERROR);
+	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " fatal error", MB_ICONERROR);
 #else
 	char output[512];
 	strcpy(output, err.str().c_str());

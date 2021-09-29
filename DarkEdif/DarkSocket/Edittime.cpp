@@ -49,6 +49,10 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	if (!Surface)
 		return;
 
+	// If you don't have this function run in Edittime.cpp, SDK Updater will be disabled for your ext
+	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
+	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
+
 	::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
@@ -136,7 +140,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 			}
 			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
 			else
-				MessageBoxA(NULL, "ERROR: Got Buff type for non-string property.", "DarkEdif - Property error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("Property error"), _T("Got Buff type for non-string property."));
 			break;
 		}
 		case 'STRA': // ANSI string
@@ -192,7 +196,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 			Prop_Custom * prop2 = (Prop_Custom *)prop;
 			// PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
 
-			MessageBoxA(NULL, "Assuming class ID is custom - but no custom code yet written.", "DarkEdif - Error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("Property error"), _T("Assuming class ID %.4hs %i is custom - but no custom code written."), (char *)&i, i);
 			break;
 		}
 	}

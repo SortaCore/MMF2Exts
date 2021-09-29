@@ -41,10 +41,8 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
-		if (!newEd) {
-			MessageBoxA(NULL, "Failed to allocate enough size for properites.", PROJECT_NAME " error", MB_ICONERROR);
-			return -1;
-		}
+		if (!newEd)
+			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate enough size for properties."), sizeof(EDITDATA)), -1;
 		edPtr = (EDITDATA*)newEd;
 	}
 
@@ -56,7 +54,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
 	if (strcpy_s(edPtr->edGlobalID, propsJSON[3]["DefaultState"]))
-		MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEdif - CreateObject() error", MB_OK);
+		DarkEdif::MsgBox::Error(_T("CreateObject() error"), _T("Error initialising property 3; error %i copying string."), errno);
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
 	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"];
@@ -107,21 +105,6 @@ void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 #pragma DllExportHint
 }
 
-// Called when a property is initialized and its creation parameter is NULL (in the PropData).
-// Allows you, for example, to change the content of a combobox property according to specific settings in the EDITDATA structure.
-LPARAM FusionAPI GetPropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int PropID)
-{
-#pragma DllExportHint
-	return NULL;
-}
-
-// Called after a property has been initialized.
-// Allows you, for example, to free memory allocated in GetPropCreateParam.
-void FusionAPI ReleasePropCreateParam(mv * mV, EDITDATA * edPtr, unsigned int PropID, LPARAM lParam)
-{
-#pragma DllExportHint
-}
-
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
 Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
@@ -147,7 +130,7 @@ Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		return NULL;
 	}
 
-	MessageBoxA(NULL, "Unknown property ID given to GetPropValue() call.", PROJECT_NAME " - property error", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to GetPropValue() call."), ID);
 	return NULL;
 }
 
@@ -176,7 +159,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			return edPtr->enableInactivityTimer;
 	}
 
-	MessageBoxA(NULL, "Unknown property ID given to GetPropCheck() call.", PROJECT_NAME " - property error", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to GetPropCheck() call."), ID);
 	return FALSE; // Unchecked
 }
 
@@ -192,7 +175,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	{
 		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
 		if (strcpy_s(edPtr->edGlobalID, newValAsU8.c_str()))
-			MessageBoxA(NULL, "Error setting global ID; too long?", PROJECT_NAME " - SetPropValue() error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("SetPropValue() error"), _T("Error %i setting global ID; too long?"), errno);
 	}
 
 	// You may want to have your object redrawn in the frame editor after the modifications,
@@ -226,189 +209,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			return edPtr->enableInactivityTimer = (Check != 0), (void)0;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
-}
-
-// This routine is called when the user clicks the button of a Button or EditButton property.
-BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
-{
-#pragma DllExportHint
-	return FALSE;
-}
-
-// This routine returns the enabled state of a property.
-BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
-{
-#pragma DllExportHint
-	return TRUE;
-}
-
-
-// ============================================================================
-// TEXT PROPERTIES
-// ============================================================================
-
-// Return the text capabilities of the object under the frame editor.
-std::uint32_t FusionAPI GetTextCaps(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
-}
-
-// Return the font used the object.
-// Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
-BOOL FusionAPI GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure from EDITDATA
-	// memcpy(plf, &edPtr->m_lf, sizeof(LOGFONT));
-
-	return TRUE;
-}
-
-// Change the font used the object.
-// Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
-BOOL FusionAPI SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, const char * pStyle)
-{
-#pragma DllExportHint
-	// Example: copy LOGFONT structure to EDITDATA
-	// memcpy(&edPtr->m_lf, plf, sizeof(LOGFONT));
-
-	return TRUE;
-}
-
-// Get the text color of the object.
-COLORREF FusionAPI GetTextClr(mv * mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	// Example
-	return 0;	// edPtr->fontColor;
-}
-
-// Set the text color of the object.
-void FusionAPI SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
-{
-#pragma DllExportHint
-	//edPtr->fontColor = color;
-}
-
-// Get the text alignment of the object.
-std::uint32_t FusionAPI GetTextAlignment(mv *mV, EDITDATA * edPtr)
-{
-#pragma DllExportHint
-	unsigned int dw = 0;
-	/*	if ( (edPtr->eData.dwFlags & ALIGN_LEFT) != 0 )
-			dw |= TEXT_ALIGN_LEFT;
-		if ( (edPtr->eData.dwFlags & ALIGN_HCENTER) != 0 )
-			dw |= TEXT_ALIGN_HCENTER;
-		if ( (edPtr->eData.dwFlags & ALIGN_RIGHT) != 0 )
-			dw |= TEXT_ALIGN_RIGHT;
-		if ( (edPtr->eData.dwFlags & ALIGN_TOP) != 0 )
-			dw |= TEXT_ALIGN_TOP;
-		if ( (edPtr->eData.dwFlags & ALIGN_VCENTER) != 0 )
-			dw |= TEXT_ALIGN_VCENTER;
-		if ( (edPtr->eData.dwFlags & ALIGN_BOTTOM) != 0 )
-			dw |= TEXT_ALIGN_BOTTOM;
-	*/
-	return dw;
-}
-
-// Set the text alignment of the object.
-void FusionAPI SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
-{
-#pragma DllExportHint
-	/*	unsigned int dw = edPtr->eData.dwFlags;
-
-		if ( (dwAlignFlags & TEXT_ALIGN_LEFT) != 0 )
-			dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_LEFT;
-		if ( (dwAlignFlags & TEXT_ALIGN_HCENTER) != 0 )
-			dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_HCENTER;
-		if ( (dwAlignFlags & TEXT_ALIGN_RIGHT) != 0 )
-			dw = (dw & ~(ALIGN_LEFT|ALIGN_HCENTER|ALIGN_RIGHT)) | ALIGN_RIGHT;
-
-		if ( (dwAlignFlags & TEXT_ALIGN_TOP) != 0 )
-			dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_TOP;
-		if ( (dwAlignFlags & TEXT_ALIGN_VCENTER) != 0 )
-			dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_VCENTER;
-		if ( (dwAlignFlags & TEXT_ALIGN_BOTTOM) != 0 )
-			dw = (dw & ~(ALIGN_TOP|ALIGN_VCENTER|ALIGN_BOTTOM)) | ALIGN_BOTTOM;
-
-		edPtr->eData.dwFlags = dw;
-	*/
-}
-
-// ----------------------------------------------------------
-// Custom Parameters
-// ----------------------------------------------------------
-
-// Initialize custom parameter.
-void FusionAPI InitParameter(mv * mV, short code, ParamExtension * pExt)
-{
-#pragma DllExportHint
-	// strcpy(&pExt->pextData[0], "Parameter Test");
-	// pExt->pextSize = sizeof(paramExt) + strlen(pExt->pextData)+1;
-}
-
-// Example of custom parameter setup proc
-// --------------------------------------
-/*
-BOOL FusionAPI SetupProc(HWND hDlg, UINT msgType, WPARAM wParam, LPARAM lParam)
-{
-#pragma DllExportHint
-	paramExt*			pExt;
-
-	switch (msgType)
-	{
-		case WM_INITDIALOG: // Init dialog
-
-			// Save edptr
-			SetWindowLong(hDlg, DWL_USER, lParam);
-			pExt=(paramExt*)lParam;
-
-			SetDlgItemText(hDlg, IDC_EDIT, pExt->pextData);
-			return TRUE;
-
-		case WM_COMMAND: // Command
-
-			// Retrieve edptr
-			pExt = (paramExt *)GetWindowLong(hDlg, DWL_USER);
-
-			switch (wmCommandID)
-			{
-			case IDOK:	// Exit
-				GetDlgItemText(hDlg, IDC_EDIT, pExt->pextData, 500);
-				pExt->pextSize=sizeof(paramExt)+strlen(pExt->pextData)+1;
-				EndDialog(hDlg, TRUE);
-				return TRUE;
-
-				default:
-					break;
-			}
-			break;
-
-		default:
-			break;
-	}
-	return FALSE;
-}
-*/
-
-// Edit the custom parameter.
-void FusionAPI EditParameter(mv *mV, short code, ParamExtension * pExt)
-{
-#pragma DllExportHint
-	// Example
-	// -------
-	// DialogBoxParam(hInstLib, MAKEINTRESOURCE(DB_TRYPARAM), mV->mvHEditWin, SetupProc, (LPARAM)(LPBYTE)pExt);
-}
-
-// Initialize the custom parameter.
-void FusionAPI GetParameterString(mv *mV, short code, ParamExtension * pExt, char * pDest, short size)
-{
-#pragma DllExportHint
-	// Example
-	// -------
-	// wsprintf(pDest, "Super parameter %s", pExt->pextData);
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to SetPropCheck() call."), ID);
 }
 
 #endif // EditorBuild

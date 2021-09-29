@@ -403,7 +403,7 @@ static void def_remove (lw_pump pump, lw_pump_watch watch)
 		watch->edge_triggered, watch->edge_triggered, watch->tag, watch->tag);
 	watch->on_read_ready = NULL;
 	watch->on_write_ready = NULL;
-		
+
 
 	lw_sync_lock (ctx->sync_signals);
 

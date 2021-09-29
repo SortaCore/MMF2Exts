@@ -303,9 +303,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID);
-	long Condition(int ID);
-	long Expression(int ID);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
@@ -317,11 +317,11 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
+	bool SaveFramePosition(HANDLE File);
+	bool LoadFramePosition(HANDLE File);
 
 };
 

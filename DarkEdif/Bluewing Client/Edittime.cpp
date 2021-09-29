@@ -18,7 +18,7 @@
 // Called once object is created or modified, just after setup.
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
-int FusionAPI MakeIconEx(mv *mV, cSurface *pIconSf, TCHAR *lpName, ObjInfo *oiPtr, EDITDATA *edPtr)
+int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * oiPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
 	pIconSf->Delete();
@@ -41,10 +41,8 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
-		if (!newEd) {
-			MessageBoxA(NULL, "Failed to allocate enough size for properites.", PROJECT_NAME " error", MB_ICONERROR);
-			return -1;
-		}
+		if (!newEd)
+			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate enough size for properties."), sizeof(EDITDATA)), -1;
 		edPtr = (EDITDATA *) newEd;
 	}
 
@@ -54,8 +52,8 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	const auto & propsJSON = CurLang["Properties"];
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
-	if (strcpy_s(edPtr->edGlobalID, 255, propsJSON[3]["DefaultState"]))
-		MessageBoxA(NULL, "Error initialising property 3; error copying string.", "DarkEdif - CreateObject() error", MB_OK);
+	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), propsJSON[3]["DefaultState"]))
+		DarkEdif::MsgBox::Error(_T("CreateObject() error"), _T("Error initialising property 3; error %i copying string."), errno);
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
 	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"];
@@ -127,7 +125,7 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		return NULL;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to GetPropValue() call.", PROJECT_NAME " - Invalid property", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to GetPropValue() call."), ID);
 	return NULL;
 }
 
@@ -154,7 +152,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 			return edPtr->fullDeleteEnabled;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to GetPropCheck() call.", "DarkEdif - Invalid property", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to GetPropCheck() call."), ID);
 	return FALSE; // Unchecked
 }
 
@@ -170,7 +168,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	{
 		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
 		if (strcpy_s(edPtr->edGlobalID, newValAsU8.c_str()))
-			MessageBoxA(NULL, "Error setting global ID; too long?", PROJECT_NAME " - SetPropValue() error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("SetPropValue() error"), _T("Error %i setting global ID; too long?"), errno);
 	}
 
 	// You may want to have your object redrawn in the frame editor after the modifications,
@@ -202,7 +200,8 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 			return edPtr->fullDeleteEnabled = (Check != 0), (void)0;
 	}
 
-	MessageBoxA(NULL, "Invalid property ID given to SetPropCheck() call.", PROJECT_NAME " - Invalid property", MB_OK);
+
+	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to SetPropCheck() call."), ID);
 }
 
 #endif // EditorBuild

@@ -4,9 +4,9 @@
 std::stringstream CriticalSection;
 #endif
 
-#define Remake(name) MessageBoxA(NULL, "Your "#name" actions need to be recreated.\n" \
-										"This is probably due to parameter changes.", "Lacewing Blue Server", MB_OK)
 #define EventsToRun globals->_eventsToRun
+#define Remake(name) DarkEdif::MsgBox::Error(_T("Remake action"), _T("Your "#name" actions need to be recreated.\r\n") \
+						_T("This is probably due to parameter changes."))
 
 static char errtext[1024];
 void ErrNoToErrText()
@@ -300,7 +300,7 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 		return CreateError("Cannot change new client name: invalid code point U+%0.4X, decimal %u; valid Unicode point = %s, Unicode category = %s.",
 			rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
 	}
-	
+
 	// If NewClientName is non-empty, client->name() will be called, so check for an exact match
 	// Also, this is the one invalid name case where we don't need to deny
 	if (lw_sv_cmp(NewClientName, newNameU8))

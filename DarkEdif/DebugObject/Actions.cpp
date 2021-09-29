@@ -50,13 +50,10 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 			return;
 		}
 
-		std::tstringstream err;
-		err << _T("Failed to open log file: \n")
-			<< file << _T("\n")
-			<< _T("Returned error: ") << errno << _T(": ") << _tcserror(errno) << _T("\n")
-			<< _T("Look for \"errno errors\" on Google for more information.");
-
-		if (MessageBox(NULL, err.str().c_str(), _T("DebugObject - Error"), MB_RETRYCANCEL | MB_ICONERROR) == IDCANCEL)
+		const int ret = DarkEdif::MsgBox::Custom(MB_RETRYCANCEL | MB_ICONERROR, _T("Error"),
+			_T("Failed to open log file:\n%sReturned error: %i: %s\nLook for \"errno errors\" on Google for more information."),
+			file, errno, _tcserror(errno));
+		if (ret == IDCANCEL)
 		{
 			CloseLock();
 			return;
@@ -195,10 +192,7 @@ void Extension::SetOutputTimeFormat(TCHAR * format)
 {
 	// Check size
 	if (_tcslen(format) > 100)
-	{
-		MessageBoxA(NULL, "Could not change time format: too large (100 chars is the maximum).", "DebugObject - Error setting time format", MB_OK | MB_ICONERROR);
-		return;
-	}
+		return DarkEdif::MsgBox::Error(_T("Time format error"), _T("Could not change time format: too large (100 chars is the maximum)."));
 
 	// Acquire lock, so we don't get fights over TimeFormat
 	OpenLock();

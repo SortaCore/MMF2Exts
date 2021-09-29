@@ -12,15 +12,12 @@
 enum class Commands : unsigned char {
 	UNSET, // unusable
 	SHUTDOWNTHREAD,
-	GOINDEPENDENT,
 	RECEIVEONLY,
 	SENDMSG,
 	AUTOACCEPTSETON,
 	AUTOACCEPTSETOFF,
 	LINKOUTPUTTOFILE,
 	UNLINKFILEOUTPUT,
-	MMFREPORTOFF,
-	MMFREPORTON,
 };
 
 // Conditions
@@ -66,14 +63,11 @@ struct RevCarryMsg
 {
 	Commands Cmd = Commands::UNSET;
 	int Socket = -1; // Ext socket ID, not a SOCKET
-	void * Message = nullptr;
-	int MessageSize = 0;
+	std::string Message;
 	std::tstring Client;
 
 	RevCarryMsg(Commands Cmd, int SocketID) : Cmd(Cmd), Socket(SocketID) {}
 	~RevCarryMsg() {
-		free(Message);
-		Message = nullptr;
 	}
 };
 
@@ -84,7 +78,7 @@ struct ClientAccessNode
 	std::tstring FriendlyName;
 };
 
-DWORD WINAPI ClientThread(StructPassThru * Parameters);
-DWORD WINAPI ClientThreadIRDA(StructPassThru * Parameters);
-DWORD WINAPI ServerThread(StructPassThru *Parameters);
-DWORD WINAPI ServerThreadIRDA(StructPassThru *Paramters);
+void ClientThread(StructPassThru * Parameters);
+void ClientThreadIRDA(StructPassThru * Parameters);
+void ServerThread(StructPassThru *Parameters);
+void ServerThreadIRDA(StructPassThru *Paramters);

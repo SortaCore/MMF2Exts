@@ -1,7 +1,75 @@
+// ============================================================================
+// Edif General:
+// The following routines are used internally by Fusion, and should not need to
+// be modified.
+// ============================================================================
+
 #include "Common.h"
 #include "DarkEdif.h"
 
 #ifdef _WIN32
+
+// ============================================================================
+// LIBRARY ENTRY & QUIT POINTS
+// ============================================================================
+HINSTANCE hInstLib = NULL;
+
+// Entry point for DLL, when DLL is attached to by Fusion, or detached; or threads attach/detach
+BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
+{
+	// DLL is attaching to the address space of the current process.
+	if (dwReason == DLL_PROCESS_ATTACH && hInstLib == NULL)
+	{
+		hInstLib = hDLL; // Store HINSTANCE
+		// no thread attach/detach for dynamic CRT, due to a small memory loss
+		#ifdef _DLL
+			DisableThreadLibraryCalls(hDLL);
+		#endif
+	}
+
+	return TRUE;
+}
+
+// Called when the extension is loaded into memory.
+// DarkEdif users shouldn't need to modify this function.
+int FusionAPI Initialize(mv *mV, int quiet)
+{
+#pragma DllExportHint
+	return Edif::Init(mV, quiet != FALSE);
+}
+
+// The counterpart of Initialize(). Called just before freeing the DLL.
+// DarkEdif users shouldn't need to modify this function.
+int FusionAPI Free(mv *mV)
+{
+#pragma DllExportHint
+	// Edif is singleton, so no clean-up needed
+	return 0; // No error
+}
+
+
+// ============================================================================
+// GENERAL INFO
+// ============================================================================
+
+// Routine called for each object when the object is read from the MFA file (edit time)
+// or from the CCN or EXE file (run time).
+// DarkEdif users shouldn't need to modify this function.
+int FusionAPI LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int reserved)
+{
+#pragma DllExportHint
+	Edif::Init(mV, edPtr);
+	return 0;
+}
+
+// The counterpart of LoadObject(): called just before the object is
+// deleted from the frame.
+// DarkEdif users shouldn't need to modify this function.
+void FusionAPI UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
+{
+	#pragma DllExportHint
+}
+
 
 const TCHAR ** Dependencies = 0;
 
@@ -52,6 +120,7 @@ const TCHAR ** FusionAPI GetDependencies()
 	return Dependencies;
 }
 
+
 /// <summary> Called every time the extension is being created from nothing.
 ///			  Default property contents should be loaded from JSON. </summary>
 std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
@@ -99,14 +168,13 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			}
 			else
 			{
-				std::stringstream err;
-				err << "Can't handle property type \""sv << curPropType << "\"."sv;
-				MessageBoxA(NULL, err.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
+				DarkEdif::MsgBox::Error(_T("Property error"), _T("Property type \"%hs\" has no code for storing its value"),
+					curPropType);
 			}
 		}
 		// Too large for EDITDATASize
 		if (fullSize > UINT16_MAX)
-			MessageBoxA(NULL, "Property default sizes are too large.", "DarkEdif - Error", MB_OK | MB_ICONERROR);
+			DarkEdif::MsgBox::Error(_T("Property error"), _T("Property default sizes are too large (%zu bytes)."), fullSize);
 		else
 			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
 #else // NOPROPS
@@ -210,13 +278,13 @@ std::int16_t FusionAPI PauseRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
 	// Note: PauseRunObject is required, or runtime will crash when pausing.
-	return rdPtr->pExtension->Pause();
+	return rdPtr->pExtension->FusionRuntimePaused();
 }
 
 std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return rdPtr->pExtension->Continue();
+	return rdPtr->pExtension->FusionRuntimeContinued();
 }
 
 
@@ -267,12 +335,12 @@ ProjectFunc REFLAG displayRunObject(JNIEnv *, jobject, jlong ext)
 
 ProjectFunc short pauseRunObject(JNIEnv *, jobject, jlong ext)
 {
-	return ((Extension *)ext)->Pause();
+	return ((Extension *)ext)->FusionRuntimePaused();
 }
 
 ProjectFunc short continueRunObject(JNIEnv *, jobject, jlong ext)
 {
-	return ((Extension *)ext)->Continue();
+	return ((Extension *)ext)->FusionRuntimeContinued();
 }
 
 extern thread_local JNIEnv * threadEnv;
@@ -847,7 +915,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	mv * mV = NULL;
 	if (!::SDK) {
 		LOGV("The SDK is being initialised.");
-		Edif::Init(mV);
+		Edif::Init(mV, false);
 	}
 
 	return JNI_VERSION_1_6;
@@ -876,14 +944,13 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 	mv * mV = NULL;
 	if (!::SDK) {
 		LOGV("The SDK is being initialised.\n");
-		Edif::Init(mV);
+		Edif::Init(mV, false);
 	}
 }
 
 // Last Objective-C class was freed
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc())
 {
-	++deallocCount;
 	LOGV("The SDK is being freed.\n");
 }
 

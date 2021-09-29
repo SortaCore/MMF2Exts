@@ -192,7 +192,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 			}
 			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
 			else
-				MessageBoxA(NULL, "ERROR: Got Buff type for non-string property.", "DarkEdif - Property error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("Property error"), _T("Got Buff type for non-string property."));
 			break;
 		}
 		case 'STRA': // ANSI string
@@ -248,7 +248,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 			Prop_Custom * prop2 = (Prop_Custom *)prop;
 			// PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
 
-			MessageBoxA(NULL, "Assuming class ID is custom - but no custom code yet written.", "DarkEdif - Error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("Property error"), _T("Assuming class ID %i is custom - but no custom code written."), i);
 			break;
 		}
 	}

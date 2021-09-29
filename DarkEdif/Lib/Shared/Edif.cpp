@@ -1,13 +1,20 @@
 #include "Common.h"
 #include "Edif.h"
+#include "DarkEdif.h"
 
 Edif::SDK * SDK = nullptr;
 
 
 TCHAR Edif::LanguageCode[3];
 
+// If true, running in Fusion editor or Fusion loading screen.
+// If false, running in Run Application or built EXEs.
 bool Edif::IsEdittime;
+// If true, JSON file is external. If false, it is an embedded resource (default).
 bool Edif::ExternalJSON;
+// If true, the Edif::Init() and subfunctions are being called from Fusion splash screen.
+// If false, they are being called from a MFA load or Create New Object.
+bool Edif::IsFusionStartupRun;
 
 #ifdef __ANDROID__
 #include <unistd.h>
@@ -47,30 +54,6 @@ void Edif::GetExtensionName(char * const writeTo)
 #else
 	strcpy(writeTo, PROJECT_NAME);
 #endif
-}
-
-void Edif::Log(const char * format, ...)
-{
-	if (!format[0])
-		return;
-	va_list v;
-	va_start(v, format);
-
-#ifdef _WIN32
-	char data[512];
-	vsprintf_s(data, format, v);
-	OutputDebugStringA(data);
-#elif defined (__ANDROID__)
-	size_t s = strlen(format);
-	std::string format2(format, s - (format[s - 1] == '\n' ? 1 : 0));
-	__android_log_vprint(ANDROID_LOG_DEBUG, PROJECT_NAME_UNDERSCORES, format2.c_str(), v);
-#else
-	size_t s = strlen(format);
-	std::string format2(format, s - (format[s - 1] == '\n' ? 1 : 0));
-	vprintf(format2.c_str(), v);
-#endif
-
-	va_end(v);
 }
 
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
@@ -136,7 +119,7 @@ Params ReadParameterType(const char * Text, bool &IsFloat)
 
 	if (!_stricmp(Text, "Comparison"))
 		return Params::Comparison;
-		
+
 	if (!_stricmp(Text, "StringComparison"))
 		return Params::String_Comparison;
 
@@ -164,13 +147,11 @@ Params ReadParameterType(const char * Text, bool &IsFloat)
 	if (!_stricmp(Text, "Program"))
 		return Params::Program;
 
-	if (!_strnicmp(Text, "Custom", 6))
-		return (Params)short(short(Params::Custom_Base) + atoi(Text+6));
-	
-	std::stringstream str;
-	str << "Error reading Parameter type \""sv << Text << "\"; text did not match anything."sv;
-	MessageBoxA(NULL, str.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
-	return (Params)(ushort)0;
+	if (!_strnicmp(Text, "Custom", sizeof("Custom") - 1))
+		return (Params)((short)Params::Custom_Base + ((short)atoi(Text + sizeof("Custom") - 1)));
+
+	DarkEdif::MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."), UTF8ToTString(Text).c_str());
+	return (Params)(std::uint16_t)0;
 }
 
 ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
@@ -190,9 +171,7 @@ ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
 	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpParams::UnsignedInteger;
 
-	std::stringstream str;
-	str << "Error reading Parameter type \"" << Text << "\"; text did not match anything.";
-	MessageBoxA(NULL, str.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
+	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), UTF8ToTString(Text).c_str());
 	return (ExpParams)(ushort)0;
 }
 
@@ -203,10 +182,10 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 
 	if (!_stricmp(Text, "Float"))
 		return ExpReturnType::Float;
-	
+
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return ExpReturnType::String;
-	
+
 	// More specialised, but not allowed for
 	if (!_stricmp(Text, "Short"))
 		return ExpReturnType::Integer;
@@ -214,9 +193,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpReturnType::UnsignedInteger;
 
-	std::stringstream str;
-	str << "Error reading expression return; returns \"" << Text << "\"; which is unrecognised.";
-	MessageBoxA(NULL, str.str().c_str(), "DarkEdif - Error", MB_OK | MB_ICONERROR);
+	DarkEdif::MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), UTF8ToTString(Text).c_str());
 	return ExpReturnType::Integer; // default
 }
 
@@ -224,13 +201,14 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 {
 #ifdef _WIN32
 	IsEdittime = mV->HMainWin != 0;
+	IsFusionStartupRun = false;
 
 	mvInvalidateObject(mV, edPtr);
 #endif
 }
 
 void Edif::Free(mv * mV)
-{	
+{
 	// Workaround for subapp bug (see end of Init below)
 	// Don't delete SDK. The world dies when you do that.
 	// Why? Because Fusion confuses everyone.
@@ -244,12 +222,15 @@ void Edif::Free(EDITDATA * edPtr)
 #include "Resource.h"
 #include "Extension.h"
 
-int Edif::Init(mv * mV)
+int Edif::Init(mv * mV, bool fusionStartupScreen)
 {
 	_tcscpy (LanguageCode, _T ("EN"));
 
-	// Get pathname of MMF2
 #ifdef _WIN32
+	IsEdittime = mV->HMainWin != 0;
+	IsFusionStartupRun = fusionStartupScreen;
+
+	// Get pathname of MMF2
 	TCHAR * mmfname = (TCHAR *)calloc(MAX_PATH, sizeof(TCHAR));
 	if ( mmfname != NULL )
 	{
@@ -278,11 +259,7 @@ int Edif::Init(mv * mV)
 		free(mmfname);
 	}
 #endif
-	
-	// Get filename.mfx so we can use it in error messages
-	char errorMsgTitle [MAX_PATH];
-	Edif::GetExtensionName(errorMsgTitle);
-	
+
 	// Get JSON file
 	char * JSON;
 	size_t JSON_Size;
@@ -290,13 +267,8 @@ int Edif::Init(mv * mV)
 	int result = Edif::GetDependency (JSON, JSON_Size, _T("json"), IDR_EDIF_JSON);
 
 	if (result == Edif::DependencyNotFound)
-	{
-		strcat_s(errorMsgTitle, " - Error");
-		
-		MessageBoxA(0, "JSON file not found on disk or in MFX resources", errorMsgTitle, 0);
-		return -1;	// error, init failed
-	}
-	
+		return DarkEdif::MsgBox::Error(_T("Couldn't find JSON"), _T("JSON file for " PROJECT_NAME " not found on disk or in MFX resources")), -1;
+
 	Edif::ExternalJSON = (result == Edif::DependencyWasFile);
 
 	char * copy = (char *) malloc (JSON_Size + 1);
@@ -313,12 +285,7 @@ int Edif::Init(mv * mV)
 	json_value * json = json_parse_ex (&settings, copy, JSON_Size, json_error, sizeof(json_error));
 
 	if (!json)
-	{
-		strcat_s(errorMsgTitle, " - Error parsing JSON");
-
-		MessageBoxA(0, json_error, errorMsgTitle, MB_OK);
-		return -1;
-	}
+		return DarkEdif::MsgBox::Error(_T("Error parsing JSON"), _T("JSON file for " PROJECT_NAME " couldn't be parsed:\n%s"), UTF8ToTString(json_error).c_str()), -1;
 
 	// Workaround for subapp bug (cheers LB), where Init/Free is called more than once,
 	// even if object is not in subapp and thus doesn't apply
@@ -329,7 +296,7 @@ int Edif::Init(mv * mV)
 #ifdef INTENSE_FUNCTIONS_EXTENSION
 	Extension::AutoGenerateExpressions(&gSDK);
 #endif
-	
+
 	return 0;	// no error
 }
 
@@ -342,14 +309,16 @@ PhiDLLImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, C
 Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
+	DarkEdif::MainThreadID = std::this_thread::get_id();
 #ifdef _WIN32
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
+	DarkEdif::Internal_WindowHandle = mV->HMainWin;
 #endif
 
 	#if EditorBuild
 		cSurface * proto = nullptr;
 		if (GetSurfacePrototype(&proto, 32, ST_MEMORYWITHDC, SD_BITMAP) == FALSE)
-			MessageBoxA(NULL, "Getting surface prototype failed.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
+			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
 		Icon = new cSurface();
 		if (mV->ImgFilterMgr)
@@ -378,27 +347,28 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
 
 				if (tempIcon->Blit(*Icon) == FALSE)
-					MessageBoxA(NULL, "Blitting to ext icon surface failed.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
+					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 			}
 		}
 
 		#if USE_DARKEDIF_UPDATE_CHECKER
-		// Is in editor, not EXE using Run Application?
-		// Note this check is also done by Edif::Init(mv,edPtr) and stored in Edif::IsEdittime, but Edif::Init(mv,edPtr) is called after this.
-		if (mV->HMainWin != 0)
+		// Is in editor, not EXE using Run Application, and not in startup screen
+		// Startup screen seems like a clever place to check, but if the update server is down,
+		// you get plenty of delaying exts when loading Fusion
+		if (Edif::IsEdittime && !Edif::IsFusionStartupRun)
 			DarkEdif::SDKUpdater::StartUpdateCheck();
 		#endif
 	#elif defined(_WIN32)
 		Icon = nullptr;
 	#endif
 
-	
+
 	if (!::SDK)
 		::SDK = this;
 
 	if (CurLang.type != json_object)
 	{
-		MessageBoxA(NULL, "The JSON parser could not find the current language object.", "DarkEdif - Internal JSON error.", MB_OK);
+		DarkEdif::MsgBox::Error(_T("Internal JSON error"), _T("The JSON parser could not find a JSON object to use for current language."));
 		return;
 	}
 
@@ -417,11 +387,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	ConditionJumps [Conditions.u.object.length] = 0;
 	ExpressionJumps [Expressions.u.object.length] = 0;
 #endif
-	
+
 	for (size_t i = 0; i < Actions.u.object.length; ++ i)
 	{
 #ifdef _WIN32
-		ActionJumps [i] = (void *) Edif::Action;
+		ActionJumps [i] = (void *) Edif::UnlinkedAction;
 #endif
 
 		ActionFunctions.push_back(0);
@@ -464,222 +434,216 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		{
 			const json_value &Property = Properties[i];
 			CurrentProperty = nullptr;
+			const char * propTitle = (const char *)Property["Title"] ? (const char *)Property["Title"] : "";
 
 			// Reserved/invalid properties are marked with ! at the start.
 			// If some muppet attempts to use 'em, throw an error.
-			if ( ((const char *) Property["Type"])[0] == '!')
+			if (((const char *)Property["Type"])[0] == '!')
 			{
-				std::string error = "You have specified an invalid Parameter type: [" + 
-									std::string((const char *)Property["Type"]) + 
-									"].\r\nPlease ensure you are permitted to use this.";
-			
-				MessageBoxA(NULL, error.c_str(), "DarkEdif - JSON Property parser", MB_OK);
+				DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %hs (ID %i) has an invalid Parameter type \"%hs\"."),
+					propTitle, i, (const char *)Property["Type"]);
+				continue; // skip property
 			}
-			else // Property is not reserved
+
+			#define SetAllProps(opt,lParams) CurrentProperty->SetAllProperties(Options|(opt), (LPARAM)(lParams)); break
+			using namespace Edif::Properties;
+
+			// Custom Parameter: Read the number CustomXXX and use that.
+			if (!_strnicmp(Property["Type"], "Custom", 6))
 			{
-				#define SetAllProps(opt,lParams) CurrentProperty->SetAllProperties(Options|(opt), (LPARAM)(lParams)); break
-				using namespace Edif::Properties;
-
-				// Custom Parameter: Read the number CustomXXX and use that.
-				if (! _strnicmp(Property["Type"], "Custom", 6))
-				{
-					MessageBoxA(NULL, "Detected as custom.", "Edif note", MB_OK);
-					CurrentProperty = new PropData((int)VariableProps.size(), (unsigned int)i + PROPTYPE_LAST_ITEM);
-				}
-				else if (! _stricmp(Property["Type"], Names[PROPTYPE_FOLDER_END]))
-				{
-					CurrentProperty = new PropData(-1, PROPTYPE_FOLDER_END);
-				}
-				else // Regular Parameter
-				{
-
-					// Loop through Parameter names and compareth them.
-					for(unsigned int j = PROPTYPE_FIRST_ITEM;
-						j < (PROPTYPE_LAST_ITEM - PROPTYPE_FIRST_ITEM);
-						++ j)
-					{
-						if (!_stricmp(Property["Type"], Names[j]))
-						{
-							// Unicode Properties have IDs 1000 greater than their
-							// ANSI equivalents. If necessary, you can boost all of them.
-#ifndef _UNICODE
-							CurrentProperty = new PropData(VariableProps.size(), j);
-#else
-							CurrentProperty = new PropData(VariableProps.size(), j + 1000);
-#endif
-							break;
-						}
-					}
-				
-					if (!CurrentProperty)
-					{
-						char temp[256];
-						sprintf_s(temp, "The Parameter type specified was unrecognised: [%s]."
-											 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
-						MessageBoxA(NULL, temp, "DarkEdif error", MB_OK);
-					}
-					else
-					{
-						// If checkbox is enabled, pass that as flags as well.
-						unsigned int Options = (bool(Property["Checkbox"]) ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
-											 | (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
-											 | (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
-											 | (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
-											 | (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
-											 | (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
-											 | (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
-						// Todo: passing of LParams requires ParamsREQUIRED option.
-						// Find out what opt is.
-						// Two settings may be specified by |=ing the options unsigned int.
-					
-						CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
-						CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
-
-						switch (CurrentProperty->Type_ID % 1000)
-						{
-							// Simple static text
-							case PROPTYPE_STATIC:
-								SetAllProps(0, NULL);
-					
-							// Folder
-							case PROPTYPE_FOLDER:
-								SetAllProps(0, NULL);
-
-							// Edit button, Params1 = button text, or nullptr if Edit
-							case PROPTYPE_EDITBUTTON:
-								SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["Text"])[0] == '\0') ? 0 : (const char *)Property["Text"]);
-					
-							// Edit box for strings, Parameter = max length
-							case PROPTYPE_EDIT_STRING:
-								Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	// Checkbox enabled by property option in JSON
-										|  ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0)	// Checkbox enabled by property option in JSON
-										|  ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD: 0);
-								SetAllProps(PROPOPT_PARAMREQUIRED, ((std::int64_t)Property["MaxLength"] & 0xFFFFFFFF));
-
-					
-							// Edit box for numbers, Parameters = min value, max value
-							case PROPTYPE_EDIT_NUMBER:
-							{
-								int * temp = new int[2];
-								temp[0] = ((std::int64_t)Property["Minimum"]) & 0xFFFFFFFF;
-								temp[1] = ((std::int64_t)Property["Maximum"]) & 0xFFFFFFFF;
-								SetAllProps(PROPOPT_PARAMREQUIRED, temp);
-							}
-
-							// Combo box, Parameters = list of strings, options (sorted, etc)
-							case PROPTYPE_COMBOBOX:
-							{
-								if (Property["Items"].u.object.length == 0)
-									MessageBoxA(NULL, "Warning: no items detected in combobox property.", "DarkEdif error", MB_OK);
-							
-								const TCHAR ** Fixed = new const TCHAR * [Property["Items"].u.object.length+2];
-
-								// NULL is required at start of array
-								Fixed[0] = Fixed[Property["Items"].u.object.length+1] = nullptr;
-
-								// Use incrementation and copy to fixed list.
-								for (size_t index = 1; index < Property["Items"].u.object.length+1; ++ index)
-									Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
-
-								// Pass fixed list as Parameter
-								SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
-							}
-
-							// Size
-							case PROPTYPE_SIZE:
-
-							// Color
-							case PROPTYPE_COLOR:
-
-							// Checkbox
-							case PROPTYPE_LEFTCHECKBOX:
-								// Enforce option to show it is a checkbox
-								SetAllProps(PROPOPT_CHECKBOX, NULL);
-
-							// Edit + Slider
-							case PROPTYPE_SLIDEREDIT:
-								SetAllProps(0, NULL);
-
-							// Edit + Spin
-							case PROPTYPE_SPINEDIT:
-								SetAllProps(0, NULL);
-
-							// Direction Selector
-							case PROPTYPE_DIRCTRL:
-								SetAllProps(0, NULL);
-					
-							// Group
-							case PROPTYPE_GROUP:
-								SetAllProps(0, NULL);
-					
-							// Edit box + browse file button, Parameter = FilenameCreateParams
-							case PROPTYPE_FILENAME:
-								SetAllProps(0, NULL);
-
-							// Font dialog box
-							case PROPTYPE_FONT:
-								SetAllProps(0, NULL);
-					
-							// Edit box + browse image file button
-							case PROPTYPE_PICTUREFILENAME:
-								SetAllProps(0, NULL);
-					
-							// Combo box, Parameters = list of strings, options (sorted, etc)
-							case PROPTYPE_COMBOBOXBTN:
-								SetAllProps(0, NULL);
-					
-							// Edit box for floating point numbers, Parameters = min value, max value, options (signed, float, spin)
-							case PROPTYPE_EDIT_FLOAT:
-								SetAllProps(0, NULL);
-					
-							// Edit box for multiline texts, no Parameter
-							case PROPTYPE_EDIT_MULTILINE:
-								Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	|		// Checkbox enabled by property option in JSON
-											((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0);			// Checkbox enabled by property option in JSON
-								SetAllProps(0, NULL);
-					
-							// Image list
-							case PROPTYPE_IMAGELIST:
-								SetAllProps(0, NULL);
-					
-							// Combo box with icons
-							case PROPTYPE_ICONCOMBOBOX:
-								SetAllProps(0, NULL);
-					
-							// URL button
-							case PROPTYPE_URLBUTTON:
-								SetAllProps(0, NULL);
-					
-							// Directory pathname
-							case PROPTYPE_DIRECTORYNAME:
-								SetAllProps(0, NULL);
-					
-							// Edit + Spin, value = floating point number
-							case PROPTYPE_SPINEDITFLOAT:
-								SetAllProps(0, NULL);
-
-							// Unrecognised
-							default:
-							{
-								char temp [256];
-								sprintf_s(temp, std::size(temp), "The Parameter type specified was unrecognised: [%s]."
-													 "Check your spelling of the \"Type\" Parameter.", (const char *)Property["Type"]);
-								MessageBoxA(NULL, temp, "DarkEdif JSON error", MB_OK);
-								SetAllProps(0, NULL);
-							}
-						}
-					}
-				}
-
-				// Add to properties
-				VariableProps.push_back(*CurrentProperty);
+				CurrentProperty = new PropData((int)VariableProps.size(), (unsigned int)i + PROPTYPE_LAST_ITEM);
+				goto addprop;
 			}
+			// FolderEnd is important
+			else if (!_stricmp(Property["Type"], Names[PROPTYPE_FOLDER_END]))
+			{
+				CurrentProperty = new PropData(-1, PROPTYPE_FOLDER_END);
+				goto addprop;
+			}
+
+			// Regular Parameter: find the type
+			for (size_t j = PROPTYPE_FIRST_ITEM; j < (PROPTYPE_LAST_ITEM - PROPTYPE_FIRST_ITEM); ++j)
+			{
+				if (!_stricmp(Property["Type"], Names[j]))
+				{
+					// Unicode properties have type IDs 1000 greater than their ANSI counterparts
+					#ifndef _UNICODE
+						CurrentProperty = new PropData(VariableProps.size(), j);
+					#else
+						CurrentProperty = new PropData(VariableProps.size(), j + 1000);
+					#endif
+					break;
+				}
+			}
+
+			if (!CurrentProperty)
+			{
+				DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %hs (ID %i) has an invalid Parameter type \"%hs\"."),
+					propTitle, i, (const char *)Property["Type"]);
+				goto addprop;
+			}
+
+			// If checkbox is enabled, pass that as flags as well.
+			unsigned int Options = (bool(Property["Checkbox"]) ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
+									| (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
+									| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
+									| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
+									| (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
+									| (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
+									| (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
+			// Todo: passing of LParams requires ParamsREQUIRED option.
+			// Find out what opt is.
+			// Two settings may be specified by |=ing the options unsigned int.
+
+			CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
+			CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
+
+			switch (CurrentProperty->Type_ID % 1000)
+			{
+				// Simple static text
+				case PROPTYPE_STATIC:
+					SetAllProps(0, NULL);
+
+				// Folder
+				case PROPTYPE_FOLDER:
+					SetAllProps(0, NULL);
+
+				// Edit button, Params1 = button text, or nullptr if Edit
+				case PROPTYPE_EDITBUTTON:
+					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["Text"])[0] == '\0') ? 0 : (const char *)Property["Text"]);
+
+				// Edit box for strings, Parameter = max length
+				case PROPTYPE_EDIT_STRING:
+					Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	// Checkbox enabled by property option in JSON
+							|  ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0)	// Checkbox enabled by property option in JSON
+							|  ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD: 0);
+					SetAllProps(PROPOPT_PARAMREQUIRED, ((std::int64_t)Property["MaxLength"] & 0xFFFFFFFF));
+
+				// Edit box for numbers, Parameters = min value, max value
+				case PROPTYPE_EDIT_NUMBER:
+				{
+					int * temp = new int[2];
+					// JSON parser stores numbers as int64, but Fusion uses int32
+					temp[0] = ((std::int64_t)Property["Minimum"]) & 0xFFFFFFFF;
+					temp[1] = ((std::int64_t)Property["Maximum"]) & 0xFFFFFFFF;
+					SetAllProps(PROPOPT_PARAMREQUIRED, temp);
+				}
+
+				// Combo box, Parameters = list of strings, options (sorted, etc)
+				case PROPTYPE_COMBOBOX:
+				{
+					if (Property["Items"].u.object.length == 0)
+					{
+						DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"),
+							_T("JSON combo box property %s (ID %i) has no list items."),
+							CurrentProperty->Title, i, (const char *)Property["Type"]);
+					}
+
+					const TCHAR ** Fixed = new const TCHAR * [Property["Items"].u.object.length+2];
+
+					// NULL is required at start of array
+					Fixed[0] = Fixed[Property["Items"].u.object.length+1] = nullptr;
+
+					// Use incrementation and copy to fixed list.
+					for (size_t index = 1; index < Property["Items"].u.object.length+1; ++ index)
+						Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
+
+					// Pass fixed list as Parameter
+					SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
+				}
+
+				// Size
+				case PROPTYPE_SIZE:
+
+				// Color
+				case PROPTYPE_COLOR:
+
+				// Checkbox
+				case PROPTYPE_LEFTCHECKBOX:
+					// Enforce option to show it is a checkbox
+					SetAllProps(PROPOPT_CHECKBOX, NULL);
+
+				// Edit + Slider
+				case PROPTYPE_SLIDEREDIT:
+					SetAllProps(0, NULL);
+
+				// Edit + Spin
+				case PROPTYPE_SPINEDIT:
+					SetAllProps(0, NULL);
+
+				// Direction Selector
+				case PROPTYPE_DIRCTRL:
+					SetAllProps(0, NULL);
+
+				// Group
+				case PROPTYPE_GROUP:
+					SetAllProps(0, NULL);
+
+				// Edit box + browse file button, Parameter = FilenameCreateParams
+				case PROPTYPE_FILENAME:
+					SetAllProps(0, NULL);
+
+				// Font dialog box
+				case PROPTYPE_FONT:
+					SetAllProps(0, NULL);
+
+				// Edit box + browse image file button
+				case PROPTYPE_PICTUREFILENAME:
+					SetAllProps(0, NULL);
+
+				// Combo box, Parameters = list of strings, options (sorted, etc)
+				case PROPTYPE_COMBOBOXBTN:
+					SetAllProps(0, NULL);
+
+				// Edit box for floating point numbers, Parameters = min value, max value, options (signed, float, spin)
+				case PROPTYPE_EDIT_FLOAT:
+					SetAllProps(0, NULL);
+
+				// Edit box for multiline texts, no Parameter
+				case PROPTYPE_EDIT_MULTILINE:
+					Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	|		// Checkbox enabled by property option in JSON
+								((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0);			// Checkbox enabled by property option in JSON
+					SetAllProps(0, NULL);
+
+				// Image list
+				case PROPTYPE_IMAGELIST:
+					SetAllProps(0, NULL);
+
+				// Combo box with icons
+				case PROPTYPE_ICONCOMBOBOX:
+					SetAllProps(0, NULL);
+
+				// URL button
+				case PROPTYPE_URLBUTTON:
+					SetAllProps(0, NULL);
+
+				// Directory pathname
+				case PROPTYPE_DIRECTORYNAME:
+					SetAllProps(0, NULL);
+
+				// Edit + Spin, value = floating point number
+				case PROPTYPE_SPINEDITFLOAT:
+					SetAllProps(0, NULL);
+
+				// Unrecognised
+				default:
+				{
+					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %s (ID %zu) has an invalid Parameter type \"%hs\", or DarkEdif is not programmed to understand it."),
+						CurrentProperty->Title, i, (const char *)Property["Type"]);
+
+					SetAllProps(0, NULL);
+				}
+			}
+
+			addprop:
+			// Add to properties
+			VariableProps.push_back(*CurrentProperty);
 		}
 		EdittimeProperties = new PropData[VariableProps.size()+1];
 		// Use incrementation and copy to fixed list.
 		for(unsigned int l = 0; l < VariableProps.size(); ++l)
 			EdittimeProperties[l] = VariableProps[l];
-		
+
 		// End with completely null byte
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
@@ -688,35 +652,36 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
 	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
 
-#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
-	const json_value & about = CurLang["About"];
-	bool unchangedPropsFound =
-		!_stricmp(about["Name"], "DarkEdif Template") ||
-		!_stricmp(about["Author"], "Your Name") ||
-		!_stricmp(about["Comment"], "A sentence or two to describe your extension") ||
-		!_stricmp(about["Help"], "Help/Example.chm") ||
-		!_stricmp(about["URL"], "https://www.example.com/");
-	if (!unchangedPropsFound)
-	{
-		std::string copy = about["Copyright"];
-		std::transform(copy.begin(), copy.end(), copy.begin(),
-			[](unsigned char c) { return std::tolower(c); });
-		unchangedPropsFound = copy.rfind("by your name") != std::string::npos;
-	}
-	if (unchangedPropsFound)
-	{
-		// If you are getting this message, you need to update the About section of your JSON file.
-		// Make sure to do it for all languages in the JSON.
-		MessageBoxA(NULL, "Template properties are unedited in JSON. Please amend them.\n\n"
-			"You need to update the About section of your JSON file. "
-			"Make sure to do it for all languages in the JSON.",
-			PROJECT_NAME " - DarkEdif SDK warning", MB_ICONWARNING);
-	}
-#endif
+	// Check for ext dev forgetting to overwrite some of the Template properties
+	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
+		const json_value & about = CurLang["About"];
+		bool unchangedPropsFound =
+			!_stricmp(about["Name"], "DarkEdif Template") ||
+			!_stricmp(about["Author"], "Your Name") ||
+			!_stricmp(about["Comment"], "A sentence or two to describe your extension") ||
+			!_stricmp(about["Help"], "Help/Example.chm") ||
+			!_stricmp(about["URL"], "https://www.example.com/");
+		if (!unchangedPropsFound)
+		{
+			std::string copy = about["Copyright"];
+			std::transform(copy.begin(), copy.end(), copy.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
+		}
+		if (unchangedPropsFound)
+		{
+			// If you are getting this message, you need to update the About section of your JSON file.
+			// Make sure to do it for all languages in the JSON.
+			DarkEdif::MsgBox::WarningOK(_T("DarkEdif SDK warning"),
+				_T("Template properties are unedited in " PROJECT_NAME "'s JSON file. Please amend them.\n\n")
+				_T("You need to update the About section of your JSON file. ")
+				_T("Make sure to do it for all languages in the JSON."));
+		}
+	#endif
 
-#ifdef INTENSE_FUNCTIONS_EXTENSION
-	Extension::AutoGenerateExpressions();
-#endif
+	#ifdef INTENSE_FUNCTIONS_EXTENSION
+		Extension::AutoGenerateExpressions();
+	#endif
 #endif // EditorBuild
 }
 
@@ -792,7 +757,13 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				// Catch null string parameters and return default 0
 				if (!Parameters[i + paramInc])
 				{
-					MessageBoxA(NULL, "Error calling action/condition: null pointer given as string parameter.", PROJECT_NAME " - DarkEdif ActionOrCondition() error", MB_ICONERROR);
+					DarkEdif::MsgBox::Error(_T("ActionOrCondition() error"),
+						_T("Error calling %s \"%s\" (ID %i); text parameter index %i was given a null string pointer.\n"
+							"Was the parameter type different when the %s was created in the MFA?"),
+						isCond ? _T("condition") : _T("action"),
+						UTF8ToTString((const char *)CurLang[isCond ? "Conditions" : "Actions"][ID]["Title"]).c_str(),
+						ID, i,
+						isCond ? _T("condition") : _T("action"));
 					goto endFunc;
 				}
 
@@ -816,9 +787,9 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	__asm
 	{
 		pushad				  ; Start new register set (do not interfere with already existing registers) \
-		
+
 		mov ecx, ParameterCount ; Store ParameterCount in ecx
-		
+
 		cmp ecx, 0			  ; If no parameters, call function immediately
 		je CallNow
 
@@ -844,7 +815,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 		mov ecx, ext			; Move Extension to ecx
 		call Function			; Call the function inside Extension
-		
+
 		mov Result, eax		 ; Function`s return is stored in eax; copy it to Result
 
 		popad					; End new register set (restore registers that existed before popad)
@@ -859,7 +830,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		argStackCount = argStackCount - 4;
 	}
 
-	// build stack, fill registers and call functions  
+	// build stack, fill registers and call functions
 	// ! volatile ... otherwise compiler "optimize out" our ASM code
 	__asm__ volatile (
 		"mov r4, %[ARGV]\n\t"	// remember pointers (SP will be changed)
@@ -890,7 +861,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		[ACT] "m"(Function),
 		[CNT] "m" (argStackCount)
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
-	// blx 
+	// blx
 #else
 #ifndef __INTELLISENSE__
 	if (isCond)
@@ -901,7 +872,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			#include "Temp_ACECallTable.cpp"
 
 			default:
-				MessageBoxA(NULL, "Error calling condition: ID not found.", "DarkEdif - ActionOrCondition() error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling condition ID %i, not found."), ID);
 				goto endFunc;
 		}
 	}
@@ -912,12 +883,12 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			#undef DARKEDIF_ACE_CALL_TABLE_INDEX
 			#define DARKEDIF_ACE_CALL_TABLE_INDEX 1
 			#include "Temp_ACECallTable.cpp"
-			
+
 			default:
-				MessageBoxA(NULL, "Error calling action: ID not found.", "DarkEdif - ActionOrCondition() error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("ActionOrCondition error"), _T("Error calling action ID %i, not found."), ID);
 				goto endFunc;
 		}
-	}	
+	}
 #endif // __INTELLISENSE__
 #endif
 
@@ -951,7 +922,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 
 			continue;
 		}
-		
+
 		if (MenuItem[0].type == json_string && MenuItem[1].type == json_array)
 		{
 			HMENU SubMenu = CreatePopupMenu();
@@ -1136,34 +1107,36 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 #endif
 
 #ifdef _WIN32
-long __stdcall Edif::Condition(RUNDATA * rdPtr, long param1, long param2)
+long FusionAPI Edif::ConditionJump(RUNDATA * rdPtr, long param1, long param2)
 {
 	Extension * ext = rdPtr->pExtension;
 	int ID = rdPtr->rHo.EventNumber;
 	ConditionOrActionManager_Windows params(true, rdPtr, param1, param2);
 #elif defined(__ANDROID__)
-ProjectFunc jlong condition(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
+ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
 	LOGV("Condition ID %i start.", ID);
 #else
-ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _condition(void * cppExtPtr, int ID, CCndExtension cndExt))
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, CCndExtension cndExt))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 #endif
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
-		MessageBoxA(NULL, "Missing condition ID %d in extension %s, this ID was not linked.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
-		return ext->Condition(ID);
+		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("Missing condition ID %d in extension %s. This ID was not linked in Extension ctor with LinkCondition()."),
+			ID, _T("" PROJECT_NAME));
+		return ext->UnlinkedCondition(ID);
 	}
-	
+
 	void * Function = ::SDK->ConditionFunctions[ID];
 
 	if (!Function) {
-		MessageBoxA(NULL, "Missing condition ID %d. Condition existed in vector, but was NULL. Might not be linked.", PROJECT_NAME " - DarkEdif error", MB_ICONERROR);
-		return ext->Condition(ID);
+		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("Missing condition ID %d in extension %s. Condition existed in vector, but was NULL. Might not be linked."),
+			ID, _T("" PROJECT_NAME));
+		return ext->UnlinkedCondition(ID);
 	}
 
 	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
@@ -1176,7 +1149,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _condition(void * cppExtPtr, in
 }
 
 #ifdef _WIN32
-short __stdcall Edif::Action(RUNDATA * rdPtr, long param1, long param2)
+short __stdcall Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 {
 	Extension * ext = rdPtr->pExtension;
 	/* int ID = rdPtr->rHo.hoAdRunHeader->rh4.rh4ActionStart->evtNum; */
@@ -1184,30 +1157,30 @@ short __stdcall Edif::Action(RUNDATA * rdPtr, long param1, long param2)
 	ConditionOrActionManager_Windows params(false, rdPtr, param1, param2);
 #define nowt 0
 #elif defined (__ANDROID__)
-ProjectFunc void action(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
+ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
 	LOGV("Action ID %i start.", ID);
-#define nowt 
+#define nowt
 #else
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _action(void * cppExtPtr, int ID, CActExtension act))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, CActExtension act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
-#define nowt 
+#define nowt
 #endif
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
-		ext->Action(ID);
+		ext->UnlinkedAction(ID);
 		return nowt;
 	}
 	void * Function = ::SDK->ActionFunctions[ID];
 
 	if (!Function)
 	{
-		ext->Action(ID);
+		ext->UnlinkedAction(ID);
 		return nowt;
 	}
 
@@ -1284,7 +1257,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	{
 		// Do nothing. We only care on Windows.
 	}
-	
+
 	~ExpressionManager_Android() {
 		while (--stringIndex >= 0)
 			ext->runFuncs.freeString(ext, strings[stringIndex]);
@@ -1396,31 +1369,31 @@ struct ExpressionManager_iOS : ACEParamReader {
 #endif
 
 #ifdef _WIN32
-long FusionAPI Edif::Expression(RUNDATA * rdPtr, long param)
+long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 {
 	int ID = rdPtr->rHo.EventNumber;
 	Extension * ext = (Extension *)rdPtr->pExtension;
 	ExpressionManager_Windows params(rdPtr);
 #elif defined(__ANDROID__)
-ProjectFunc void expression(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
+ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
 {
 	Extension * ext = (Extension *)extPtr;
 	ExpressionManager_Android params(ext, expU);
 	LOGV("Expression ID %i start.", ID);
 #else
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expression(void * cppExtPtr, int ID))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
 #endif
 
 	if (::SDK->ExpressionFunctions.size() < (unsigned int)ID)
-		return params.SetValue((int)ext->Expression(ID));
+		return params.SetValue((int)ext->UnlinkedExpression(ID));
 
 	void * Function = ::SDK->ExpressionFunctions[ID];
 
 	if (!Function)
-		return params.SetValue((int)ext->Expression(ID));
+		return params.SetValue((int)ext->UnlinkedExpression(ID));
 
 	const ACEInfo * info = ::SDK->ExpressionInfos[ID];
 	ExpReturnType ExpressionRet = info->Flags.ef;
@@ -1466,7 +1439,11 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expression(void * cppExtPtr, i
 			// Catch null string parameters and return "" or 0 as appropriate
 			if (!Parameters[i + paramInc])
 			{
-				MessageBoxA(NULL, "Error calling expression: null pointer given as string parameter.", "DarkEdif - Expression() error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
+					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
+					"Was the parameter type different when the expression was created in the MFA?"),
+					(const char *)CurLang["Expressions"][ID]["Title"], ID, i);
+
 				if (ExpressionRet == ExpReturnType::String)
 					Result = (long)ext->Runtime.CopyString(_T(""));
 				goto endFunc;
@@ -1484,7 +1461,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expression(void * cppExtPtr, i
 			break;
 		default:
 		{
-			MessageBoxA(NULL, "Error calling expression: not sure what parameter type it is.", "DarkEdif - Expression() error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("Edif::Expression() error"), _T("Error calling expression \"%s\" (ID %i); parameter index %i has unrecognised ExpParams %hi."),
+				(const char *)CurLang["Expressions"][ID]["Title"], ID, i, (short)info->Parameter[i].ep);
 			if (ExpressionRet == ExpReturnType::String)
 				Result = (long)ext->Runtime.CopyString(_T(""));
 			goto endFunc;
@@ -1552,15 +1530,15 @@ endFunc:
 	// While Android OS may use a different ABI, that's not relevant, as this ASM calls functions within our own extension.
 	// Hat tip to https://stackoverflow.com/questions/50021839/assembly-x86-convert-to-arm-function-call-with-varying-number-of-parameters-to-a#50022446
 
-	// build stack, fill registers and call functions  
+	// build stack, fill registers and call functions
 	// ! volatile ... otherwise compiler "optimize out" our ASM code
 	__asm__ volatile (
 		"mov r4, %[ARGV]\n\t"	// remember pointers (SP will be changed)
 		"ldr r5, %[ACT]\n\t"
 		"ldr r0, %[CNT]\n\t"	// argStackCount  => R0
 		"lsl r0, r0, #2\n\t"	// R0 * 4			=> R0
-		"mov r6, r0\n\t"		// R4				=> R6			
-		"mov r1, r0\n"		  // argStackCount  => R1			
+		"mov r6, r0\n\t"		// R4				=> R6
+		"mov r1, r0\n"		  // argStackCount  => R1
 		"loop2: \n\t"
 		"cmp r1, #0\n\t"
 		"beq end2\n\t"			// R1 == 0	  => jump to end
@@ -1593,16 +1571,16 @@ endFunc:
 		#include "Temp_ACECallTable.cpp"
 		#endif // __INTELLISENSE__
 		default:
-			MessageBoxA(NULL, "Error calling condition: ID not found.", "DarkEdif - ActionOrCondition() error", MB_OK);
+			DarkEdif::MsgBox::Error(_T("Expression error"), _T("Error calling expression: expression ID %i not found."), ID);
 			goto endFunc;
 	}
 #endif
 	endFunc:
-	
+
 		// Must set return type after the expression func is evaluated, as sub-expressions inside the
 		// expression func (e.g. from generating events) could change it to something else
 		params.SetReturnType(ExpressionRet);
-	
+
 		if (ExpressionRet == ExpReturnType::String)
 			params.SetValue((const char *)Result);
 		else if (ExpressionRet == ExpReturnType::Integer)
@@ -1610,8 +1588,8 @@ endFunc:
 		else if (ExpressionRet == ExpReturnType::Float)
 			params.SetValue(*(float*)&Result);
 		else
-			MessageBoxA(NULL, "Unrecognised return type.", PROJECT_NAME " - DarkEdif SDK - ASM", MB_ICONERROR);
-		
+			DarkEdif::MsgBox::Error(_T("Expression ASM error"), _T("Error calling expression ID %i: Unrecognised return type."), ID);
+
 	#ifdef __ANDROID__
 		LOGV("Expression ID %i end.", ID);
 	#endif
@@ -1641,7 +1619,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		Buffer[Size] = 0;
 
 		fread(Buffer, 1, Size, File);
-		
+
 		fclose(File);
 
 		return DependencyWasFile;
@@ -1828,7 +1806,7 @@ char* Edif::ConvertString(const char* utf8String)
 {
 #ifndef _WIN32
 	char* str = strdup(utf8String);
-	
+
 	return str;
 #else
 	// Convert string to Unicode

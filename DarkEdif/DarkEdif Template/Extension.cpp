@@ -109,14 +109,14 @@ REFLAG Extension::Display()
 	return REFLAG::DISPLAY;
 }
 
-short Extension::Pause()
+short Extension::FusionRuntimePaused()
 {
 
 	// Ok
 	return 0;
 }
 
-short Extension::Continue()
+short Extension::FusionRuntimeContinued()
 {
 
 	// Ok
@@ -126,19 +126,22 @@ short Extension::Continue()
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID)
+void Extension::UnlinkedAction(int ID)
 {
-
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedAction() called"), _T("Running a fallback for action ID %d. Make sure you ran LinkAction()."), ID);
 }
 
-long Extension::Condition(int ID)
+long Extension::UnlinkedCondition(int ID)
 {
-	return false;
-}
-
-long Extension::Expression(int ID)
-{
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedCondition() called"), _T("Running a fallback for condition ID %d. Make sure you ran LinkCondition()."), ID);
 	return 0;
 }
 
-
+long Extension::UnlinkedExpression(int ID)
+{
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
+	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
+	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+		return (long)Runtime.CopyString(_T(""));
+	return 0;
+}

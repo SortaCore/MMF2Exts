@@ -260,13 +260,6 @@ namespace Edif
 
 		void WriteGlobal(const TCHAR * name, void * Value);
 		void * ReadGlobal(const TCHAR * name);
-
-		#ifdef EdifUseJS
-
-			JSContext * GetJSContext();
-
-		#endif
-
 	};
 
 	extern bool ExternalJSON;
@@ -289,22 +282,23 @@ namespace Edif
 
 	extern TCHAR LanguageCode[3];
 	extern bool IsEdittime;
+	extern bool IsFusionStartupRun;
 
 	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
 
 	HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
 
-	int Init(mv * mV);
+	int Init(mv * mV, bool fusionStartupScreen);
 	void Init(mv * mV, EDITDATA * edPtr);
 
 	void Free(mv * mV);
 	void Free(EDITDATA * edPtr);
 
 #ifdef _WIN32
-	long __stdcall Condition (RUNDATA * rdPtr, long param1, long param2);
-	short __stdcall Action (RUNDATA * rdPtr, long param1, long param2);
-	long __stdcall Expression (RUNDATA * rdPtr, long param);
-	// handled
+	// These jump the Fusion runtime call into the right Extension call
+	long FusionAPI ConditionJump(RUNDATA * rdPtr, long param1, long param2);
+	short FusionAPI ActionJump(RUNDATA * rdPtr, long param1, long param2);
+	long FusionAPI ExpressionJump(RUNDATA * rdPtr, long param);
 #endif
 
 	inline int ActionID(int ID)
@@ -331,7 +325,6 @@ namespace Edif
 
 	std::string CurrentFolder();
 	void GetExtensionName(char * const writeTo);
-	void Log(const char * format, ...);
 
 	class recursive_mutex {
 		std::recursive_mutex intern;

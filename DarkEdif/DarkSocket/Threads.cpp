@@ -1,27 +1,25 @@
-#define NoExt // Extension is not native, so declare this so "common.h" knows
 #include "Common.h"
-#undef NoExt
+
 // ============================================================================
 //
 // THREADS
 //
 // ============================================================================
 
-DWORD WINAPI ClientThread(StructPassThru *Parameters)
+void Extension::ClientThread(StructPassThru *Parameters)
 {
 	// Debugging
 	char temp[1024]; // For chucking any variable into and using in Report()/Explode()
 
 	// Open struct and set variables
-	Extension * Extension = Parameters->para_Ext;					// Access for Extension::
-	TCHAR * Hostname = (TCHAR *)malloc(255*sizeof(TCHAR));			// Hostname
-	unsigned short Port = htons(Parameters->para_Port);			// Port to connect to (htons() rearranges bits)
-	int ProtocolType = Parameters->para_ProtocolType;				// ProtocolType eg IPPROTO_TCP
-	int SocketType = Parameters->para_SocketType;					// SocketType eg SOCK_STREAM
-	int AddressFamily = Parameters->para_AddressFamily;			// AddressFamily eg AF_INTERNET
+	TCHAR * Hostname = (TCHAR *)malloc(255*sizeof(TCHAR));	// Hostname
+	unsigned short Port = htons(Parameters->para_Port);		// Port to connect to (htons() rearranges bits)
+	int ProtocolType = Parameters->para_ProtocolType;		// ProtocolType eg IPPROTO_TCP
+	int SocketType = Parameters->para_SocketType;			// SocketType eg SOCK_STREAM
+	int AddressFamily = Parameters->para_AddressFamily;		// AddressFamily eg AF_INTERNET
 
 	// Get the current socket ID
-	ThreadSafe_Start();
+	threadsafe.edif_lock();
 	int SocketID = Extension->NewSocketID;	// Get the current available Socket ID
 	Extension->NewSocketID++;					// Increment for further threads
 	ThreadSafe_End();
@@ -182,7 +180,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 	_itot_s(Port, StrPort, 6, 10); // 6 is the size of StrPort; 10 here signifies decimal - base 10 numbers
 
 	// Resolve the server address and port
-	int error = GetAddrInfo(Hostname, StrPort, &hints, &result);
+	int error = getaddrinfo(Hostname, StrPort, &hints, &result);
 
 	if (error)
 	{
@@ -217,7 +215,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		sprintf_s(temp, sizeof(temp), "Error with socket(): %i. Thread exiting.", WSAGetLastError());
 		Explode(temp);
 		NullStoredHandle(SocketID);
-		FreeAddrInfo(result);
+		freeaddrinfo(result);
 		free(Hostname);
 		return 1;
 	}
@@ -252,7 +250,7 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 			Explode("Failed to bind address, all addresses already in use. Thread exiting.");
 			free(InitialSend);
 			NullStoredHandle(SocketID);
-			FreeAddrInfo(result);
+			freeaddrinfo(result);
 			return 1;
 			/* fail--all unassigned reserved ports are */
 			/* in use. */
@@ -273,11 +271,11 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 		// if the connect call failed
 		// But for this simple example we just free the resources
 		// returned by getaddrinfo and print an error message
-		FreeAddrInfo(result);
+		freeaddrinfo(result);
 		NullStoredHandle(SocketID);
 		return 1;
 	}
-	FreeAddrInfo(result);
+	freeaddrinfo(result);
 
 	if (ConnectSocket == INVALID_SOCKET)
 	{
@@ -581,33 +579,8 @@ DWORD WINAPI ClientThread(StructPassThru *Parameters)
 
 }
 
-DWORD WINAPI ClientThreadIRDA(StructPassThru *Parameters)
+void ServerThread(StructPassThru *Parameters)
 {
-	MsgBox("IRDA has not yet been programmed due to a storage corruption.");
-#if 0
-#error You need to edit Common.h to include the header.
-#endif
-	// Can't report, no Extension-> declared.
-	//Report("Client thread exit.");
-
-	return 0;
-}
-
-DWORD WINAPI ServerThread(StructPassThru *Parameters)
-{
-	//Open struct and set variables
-	if (!Parameters)
-	{
-		MsgBox("Error reading Parameters.");
-		return 1;
-	}
-	if (!Parameters->para_Ext)
-	{
-		MsgBox("Error reading Parameters->para_Ext.");
-		return 2;
-	}
-
-
 	Extension * Extension = Parameters->para_Ext;					// Access for Extension::
 
 	unsigned short Port = htons(Parameters->para_Port);			// Port to connect to (htons() rearranges bits)
@@ -971,30 +944,3 @@ DWORD WINAPI ServerThread(StructPassThru *Parameters)
 
 	return 0;
 }
-
-DWORD WINAPI ServerThreadIRDA(StructPassThru *Paramters)
-{
-	MsgBox("IRDA has not yet been programmed due to a storage corruption.");
-#if 0
-#error You need to edit Common.h to include the header.
-#endif
-	// Can't report, no Extension-> declared.
-	//Report("Client thread exit.");
-
-	return 0;
-}
-
-/*
-	SOCKADDR_IN ServerAddrIn;
-	sockaddr_storage sinServer;
-	ZeroMemory(&sinServer, sizeof(sinServer));
-
-	ServerAddrIn.sin_family = AddressFamily;
-	ServerAddrIn.sin_addr.S_un.S_addr = WhatEver; // Where to start server?
-	ServerAddrIn.sin_port = Port; // Port
-
-#define INADDR_ANY			  (ULONG)0x00000000
-#define INADDR_LOOPBACK		 0x7f000001
-#define INADDR_BROADCAST		(ULONG)0xffffffff
-#define INADDR_NONE			 0xffffffff
-*/

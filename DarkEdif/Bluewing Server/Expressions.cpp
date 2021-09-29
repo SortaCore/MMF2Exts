@@ -18,7 +18,7 @@ const TCHAR * Extension::RecvMsg_ReadAsString()
 		return CreateError("Received$() was used on a message that is not a text message."), Runtime.CopyString(_T(""));
 
 	// UTF-8 validation happens before the Fusion server message handler is called.
-	
+
 	// RecvMsg_Sub_ReadString expects size in code points or a null terminator,
 	// but in a text message neither is present, so we'll just directly convert.
 	return Runtime.CopyString(UTF8ToTString(threadData->receivedMsg.content).c_str());

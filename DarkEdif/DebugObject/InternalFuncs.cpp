@@ -191,7 +191,8 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	if (!GlobalExt->data->fileHandle)
 	{
 		if (GlobalExt->data->doMsgBoxIfPathNotSet)
-			MessageBoxA(NULL, fullResult, "DebugObject - crash caught", MB_OK | MB_ICONERROR | MB_TOPMOST | MB_TASKMODAL);
+			DarkEdif::MsgBox::Custom(MB_ICONERROR | MB_TOPMOST | MB_TASKMODAL,
+				_T("Crash caught"), _T("%s"), UTF8ToTString(fullResult).c_str());
 	}
 	else
 		GlobalExt->OutputNow(5, -2, fullResult);

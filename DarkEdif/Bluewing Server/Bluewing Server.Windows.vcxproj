@@ -121,7 +121,6 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\udp.c" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="Edittime.cpp" />
-    <ClCompile Include="General.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />

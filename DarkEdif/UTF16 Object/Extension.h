@@ -1,3 +1,4 @@
+#pragma once
 class Extension
 {
 public:
@@ -15,7 +16,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 5;
+	static const int Version = 6;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -68,9 +69,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Condition(int ID, RUNDATA * rdPtr, long param1, long param2);
-	long Expression(int ID, RUNDATA * rdPtr, long param);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
@@ -83,10 +84,10 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 
-	bool Save(HANDLE File);
-	bool Load(HANDLE File);
+	bool SaveFramePosition(HANDLE File);
+	bool LoadFramePosition(HANDLE File);
 
 };

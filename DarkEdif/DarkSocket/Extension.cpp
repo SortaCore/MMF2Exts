@@ -6,7 +6,7 @@
 ///
 
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr)
-	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(_rdPtr)
+	: rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo)
 {
 	/*
 		Link all your action/condition/expression functions to their IDs to match the
@@ -24,7 +24,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(7, ClientReceiveOnly)
 	LinkAction(8, ClientLinkFileOutput)
 	LinkAction(9, ClientUnlinkFileOutput)
-	LinkAction(10, ClientMMF2Report)
+	LinkAction(10, ClientFusionReport)
 	// Server
 	LinkAction(11, ServerInitialise_Basic)
 	LinkAction(12, ServerInitialise_Advanced)
@@ -34,7 +34,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(16, ServerAutoAccept)
 	LinkAction(17, ServerLinkFileOutput)
 	LinkAction(18, ServerUnlinkFileOutput)
-	LinkAction(19, ServerMMF2Report)
+	LinkAction(19, ServerFusionReport)
 	// Form packet
 	LinkAction(20, PacketForm_NewPacket);
 	LinkAction(21, PacketForm_ResizePacket);
@@ -44,9 +44,11 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	LinkAction(25, PacketForm_SetLong);
 	LinkAction(26, PacketForm_SetFloat);
 	LinkAction(27, PacketForm_SetDouble);
-	LinkAction(28, PacketForm_SetString);
-	LinkAction(29, PacketForm_SetWString);
+	LinkAction(28, DEPRECATED_PacketForm_SetString);
+	LinkAction(29, DEPRECATED_PacketForm_SetWString);
 	LinkAction(30, PacketForm_SetBankFromBank);
+	LinkAction(31, PacketForm_SetString);
+	LinkAction(32, PacketForm_SetWString);
 
 /// CONDITIONS
 	LinkCondition(0, OnError);
@@ -153,83 +155,66 @@ REFLAG Extension::Handle()
 }
 
 
+// Called when Fusion wants your extension to redraw, due to window scrolling/resize, etc,
+// or from you manually causing it.
 REFLAG Extension::Display()
 {
-	/*
-		If you return REFLAG_DISPLAY in Handle() this routine will run.
-	*/
+	// Return REFLAG::DISPLAY in Handle() to run this manually, or use Runtime.Redisplay().
 
-	// Ok
 	return REFLAG::NONE;
 }
 
-short Extension::Pause()
-{
-
-	// Ok
-	return 0;
+// Called when Fusion runtime is pausing due to the menu option Pause or an extension causing it.
+short Extension::FusionRuntimePaused() {
+	return 0; // OK
 }
 
-short Extension::Continue()
-{
-
-	// Ok
-	return 0;
+// Called when Fusion runtime is resuming after a pause.
+short Extension::FusionRuntimeContinued() {
+	return 0; // OK
 }
 
-bool Extension::Save(HANDLE File)
+// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
+bool Extension::SaveFramePosition(HANDLE File)
 {
 	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Save the object's data here
-
+	#if defined(_WIN32) && !defined(VITALIZE)
+		// Use WriteFile() to save your data.
 		OK = true;
-
 	#endif
-
 	return OK;
 }
 
-bool Extension::Load(HANDLE File)
+// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
+bool Extension::LoadFramePosition(HANDLE File)
 {
 	bool OK = false;
-
-	#ifndef VITALIZE
-
-		// Load the object's data here
-
+	#if defined(_WIN32) && !defined(VITALIZE)
+		// Use ReadFile() to read your data.
 		OK = true;
-
 	#endif
-
 	return OK;
 }
 
 
 // These are called if there's no function linked to an ID
 
-void Extension::Action(int ID, RUNDATA * rdPtr, long param1, long param2)
+void Extension::UnlinkedAction(int ID)
 {
-	char t [50];
-	sprintf_s(t, 50, "Action not set up: ID %i.", ID);
-	MessageBoxA(NULL, t, "DarkSocket Object Error", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedAction() called"), _T("Running a fallback for action ID %d. Make sure you ran LinkAction()."), ID);
 }
 
-long Extension::Condition(int ID, RUNDATA * rdPtr, long param1, long param2)
+long Extension::UnlinkedCondition(int ID)
 {
-	char t [50];
-	sprintf_s(t, 50, "Condition not set up: ID %i.", ID);
-	MessageBoxA(NULL, t, "DarkSocket Object Error", MB_OK);
-	return false;
-}
-
-long Extension::Expression(int ID, RUNDATA * rdPtr, long param)
-{
-	char t [50];
-	sprintf_s(t, 50, "Expression not set up: ID %i.", ID);
-	MessageBoxA(NULL, t, "DarkSocket Object Error", MB_OK);
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedCondition() called"), _T("Running a fallback for condition ID %d. Make sure you ran LinkCondition()."), ID);
 	return 0;
 }
 
+long Extension::UnlinkedExpression(int ID)
+{
+	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
+	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
+	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+		return (long)Runtime.CopyString(_T(""));
+	return 0;
+}

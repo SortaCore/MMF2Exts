@@ -115,11 +115,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bluewing Server.Windows", "
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		DarkEdif\Bluewing Client\Bluewing Client.Shared.vcxitems*{0f4ca888-9b52-479a-8886-9b4ac17b2c57}*SharedItemsImports = 4
+		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{0fc68544-b3e5-4632-9bba-7a84eadfc38e}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{1b15e55d-4945-41b7-8b4f-dc100b1d326c}*SharedItemsImports = 4
 		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{1ba4daf2-407f-457c-917b-ee67d3ee7fb5}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{235d1e71-5acd-40ea-907e-017b94533b42}*SharedItemsImports = 9
+		DarkEdif\Bluewing Client\Bluewing Client.Shared.vcxitems*{261247d3-23dc-41b1-a8b5-bbebfec4a09c}*SharedItemsImports = 9
+		DarkEdif\Bluewing Client\Bluewing Client.Shared.vcxitems*{7bc7f91b-80e1-4f73-8a95-480962eb4e06}*SharedItemsImports = 4
 		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{8002a7ce-24a0-4994-bda4-2b208fa7d7c5}*SharedItemsImports = 9
+		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{8d71cd83-be30-4b0f-802e-9629805a663a}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{c816ed6f-7494-49e5-b52c-be97d6f6ba8b}*SharedItemsImports = 4
+		DarkEdif\Bluewing Client\Bluewing Client.Shared.vcxitems*{e9e3e2b9-db19-45ca-90a5-de930c241b1a}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{f988ac50-8d68-49c3-a1dd-d58f2a0a6873}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1257,7 +1263,8 @@ Global
 		{54B985F0-7598-42E1-9E7F-1D14E888264A}.Vitalize|x64.ActiveCfg = Debug Unicode|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|ARM.ActiveCfg = Debug|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|ARM64.ActiveCfg = Debug|Win32
-		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|Win32.ActiveCfg = Debug|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|Win32.ActiveCfg = Debug Unicode|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|Win32.Build.0 = Debug Unicode|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug Unicode|x64.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug|ARM.ActiveCfg = Debug|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Debug|ARM64.ActiveCfg = Debug|Win32
@@ -1270,7 +1277,8 @@ Global
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime French|x64.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|ARM.ActiveCfg = Edittime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|ARM64.ActiveCfg = Edittime|Win32
-		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|Win32.ActiveCfg = Edittime|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|Win32.ActiveCfg = Edittime Unicode|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|Win32.Build.0 = Edittime Unicode|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime Unicode|x64.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime|ARM.ActiveCfg = Edittime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Edittime|ARM64.ActiveCfg = Edittime|Win32
@@ -1283,7 +1291,8 @@ Global
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime French|x64.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|ARM.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|ARM64.ActiveCfg = Runtime|Win32
-		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|Win32.ActiveCfg = Runtime|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|Win32.ActiveCfg = Runtime Unicode|Win32
+		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|Win32.Build.0 = Runtime Unicode|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime Unicode|x64.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime|ARM.ActiveCfg = Runtime|Win32
 		{E65C259D-015F-4CEF-BB16-31EE6984EC48}.Runtime|ARM64.ActiveCfg = Runtime|Win32

@@ -45,7 +45,7 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
 	TCHAR * New = NULL;
     New = (TCHAR *) Allocate(_tcslen(String) + 1);
     _tcscpy(New, String);
-    
+
     return New;
 }
 
@@ -250,7 +250,7 @@ void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 {
     RunHeader * rhPtr = hoPtr->AdRunHeader;
-	
+
 	while (rhPtr->App->ParentApp)
 		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 
@@ -271,7 +271,7 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 
 // We use this in both Android and iOS. It uses stack memory for text up to 1kb,
 // and heap memory for anything else, reusing the memory for every string expression.
-// 
+//
 // This would be considered unsafe in nested A/C/E scenarios,
 // i.e. expression("3rd party object", expression1("this obj"), expression2("this obj"))
 // but the Obj-C/Java wrapper has to copy out the UTF-8 text anyway, so we don't have
@@ -297,14 +297,14 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
 		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!", len, String);
 		strcpy(stackRet, "Out of memory! See logcat.");
 		return stackRet;
-	} 
+	}
 	strcpy(lastHeapRet, String);
 	return (lastHeapRet = temp);
 }
 
 #if defined(__ANDROID__)
 
-Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) : 
+Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) :
 	runFuncs(runFuncs), javaExtPtr(javaExtPtr2, "Edif::Runtime::javaExtPtr from Edif::Runtime ctor"), ObjectSelection(NULL)
 {
 	std::string exc;
@@ -313,7 +313,7 @@ Edif::Runtime::Runtime(RuntimeFunctions &runFuncs, jobject javaExtPtr2) :
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaExtPtrClass, got exception %s.", exc.c_str());
 	}
-	
+
 	jfieldID javaHoField = mainThreadJNIEnv->GetFieldID(javaExtPtrClass, "ho", "LObjects/CExtension;");
 	if (javaHoField == NULL) {
 		exc = GetJavaExceptionStr();
@@ -595,19 +595,19 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 	jfieldID CRun_rhApp_fieldID = threadEnv->GetFieldID(CRunClass, "rhApp", GetObjectNameWithPackage("CRunApp"));
 	jfieldID CRunApp_parentApp_fieldID = threadEnv->GetFieldID(CRunAppClass, "parentApp", GetObjectNameWithPackage("CRunApp"));
 	jfieldID CRunApp_run_fieldID = threadEnv->GetFieldID(CRunAppClass, "run", GetObjectNameWithPackage("CRunApp"));
-	
+
 	jobject cRun = threadEnv->GetObjectField(javaExtPtr, CRunExtension_rh_fieldID);
 	jobject cRunApp = threadEnv->GetObjectField(javaExtPtr, CRun_rhApp_fieldID);
-	
+
 	for (jobject cRunAppTemp = cRunApp; cRunAppTemp != NULL; )
 	{
 		cRunApp = cRunAppTemp;
 		cRun = threadEnv->GetObjectField(cRunApp, CRunApp_run_fieldID);
-	
+
 		cRunAppTemp = threadEnv->GetObjectField(cRunApp, CRunApp_parentApp_fieldID);
 	}
 	char methodParams[256];
-	
+
 	sprintf(methodParams, "(%sI)V", GetObjectNameWithPackage("EdifGlobal"));
 	jmethodID CRun_addStorage_methodID = threadEnv->GetMethodID(CRunClass, "addStorage", methodParams);
 

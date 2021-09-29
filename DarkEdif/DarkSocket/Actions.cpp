@@ -16,7 +16,7 @@ void Extension::TestReportAndExplode()
 // ID = 1
 void Extension::UsePopupMessages(int OnOrOff)
 {
-	ThreadSafe_Start();
+	lock.
 	if (OnOrOff)
 		UsePopups = true;
 	else
@@ -31,10 +31,10 @@ void Extension::UsePopupMessages(int OnOrOff)
 // ============================================================================
 
 // ID = 2
-void Extension::ClientInitialise_Basic(TCHAR * Hostname, int Port, TCHAR * Protocol, TCHAR * InitialText)
+void Extension::ClientInitialise_Basic(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * InitialText)
 {
 	if (Port < 1 || Port > 36535)
-		Explode("Port must be greater than 0 and less than 36536.");
+		Indirect_Error(-1, _T("%s: Port must be greater than 0 and less than 36536; you passed %d."), _T(__FUNCTION__), Port);
 	if (_tcscmp(Hostname, _T("")) == 0)
 		Explode("Hostname must not be blank.");
 	// This is the basic action, so limit it to 3 protocols
@@ -170,59 +170,46 @@ void Extension::ClientShutdownSocket(int SocketID)
 // ID = 5
 void Extension::ClientSend(int SocketID, TCHAR * Message)
 {
-	ThreadSafe_Start();
 	RevCarryMsg r(Commands::SENDMSG, SocketID);
 	// Send formed packet
-	if (_tcscmp(Message, _T("PACKET")) == 0)
-	{
-		r.Message = PacketFormLocation;
-		r.MessageSize = PacketFormSize;
-	}
+	if (!_tcscmp(Message, _T("PACKET")))
+		r.Message = std::string((char *)PacketFormLocation, PacketFormSize);
 	// Otherwise send the text
-	else
+	else if (!_tcsncmp(Message, _T("UTF8"), sizeof("UTF8")-1))
+		r.Message = TStringToUTF8(Message);
+	else if (!_tcsncmp(Message, _T("UTF8"), sizeof("UTF8") - 1))
 	{
-		r.Message = _tcsdup(Message);
-		r.MessageSize = (_tcslen(Message) + 1) * sizeof(TCHAR);
+		std::wstring msgWide = TStringToWide(Message);
+		r.Message.assign((char *)msgWide.c_str(), msgWide.size() * sizeof(wchar_t));
 	}
-	Senders.push_back(r);
-	ThreadSafe_End();
+	Indirect_QueueCommandForSocket(r);
 }
 // ID = 6
 void Extension::ClientGoIndependent(int SocketID)
 {
-	ThreadSafe_Start();
-	Senders.push_back(RevCarryMsg(Commands::GOINDEPENDENT, SocketID));
-	ThreadSafe_End();
+	Indirect_Error(SocketID, _T("Going independent was removed from the functionality."));
 }
 // ID = 7
 void Extension::ClientReceiveOnly(int SocketID)
 {
-	ThreadSafe_Start();
-	Senders.push_back(RevCarryMsg(Commands::RECEIVEONLY, SocketID));
-	ThreadSafe_End();
+	Indirect_QueueCommandForSocket(RevCarryMsg(Commands::RECEIVEONLY, SocketID));
 }
 // ID = 8
 void Extension::ClientLinkFileOutput(int SocketID, TCHAR * File)
 {
-	ThreadSafe_Start();
 	RevCarryMsg r(Commands::LINKOUTPUTTOFILE, SocketID);
 	r.Message = File;
-	Senders.push_back(r);
-	ThreadSafe_End();
+	Indirect_QueueCommandForSocket(r);
 }
 // ID = 9
 void Extension::ClientUnlinkFileOutput(int SocketID)
 {
-	ThreadSafe_Start();
-	Senders.push_back(RevCarryMsg(Commands::UNLINKFILEOUTPUT, SocketID));
-	ThreadSafe_End();
+	Indirect_QueueCommandForSocket(RevCarryMsg(Commands::UNLINKFILEOUTPUT, SocketID));
 }
 // ID = 10
 void Extension::ClientMMF2Report(int SocketID, int OnOrOff)
 {
-	ThreadSafe_Start();
-	Senders.push_back(RevCarryMsg(OnOrOff ? Commands::MMFREPORTON : Commands::MMFREPORTOFF, SocketID));
-	ThreadSafe_End();
+	Indirect_Error(SocketID, _T("Disabling reporting was removed from the extension's functionality."));
 }
 
 
@@ -233,17 +220,17 @@ void Extension::ClientMMF2Report(int SocketID, int OnOrOff)
 // ============================================================================
 
 // ID = 11
-void Extension::ServerInitialise_Basic(TCHAR * Protocol, int Port)
+void Extension::ServerInitialise_Basic(const TCHAR * Protocol, int Port)
 {
-	if (Port < 1 || Port > 65536)
-		Explode("Port must be greater than 0 and less than 65537.");
+	if (Port < 1 || Port > 0xFFFF)
+		return Indirect_Error(-1, _T("Port must be greater than 0 and less than 65536, you passed %d."), Port);
 	// This is the basic action, so limit it to 3 protocols
-	if (_tcscmp(Protocol, _T("TCP")) != 0 && _tcscmp(Protocol, _T("UDP")) != 0 && _tcscmp(Protocol, _T("ICMP")) != 0)
-		Explode("Protocol unrecognised. Use \"TCP\", \"UDP\", or \"ICMP\".\
-				Or you may want to use the advanced functionality.");
+	if (!_tcscmp(Protocol, _T("TCP")) && !_tcscmp(Protocol, _T("UDP")) && !_tcscmp(Protocol, _T("ICMP")))
+		return Indirect_Error(-1, _T("Protocol unrecognised. Use \"TCP\", \"UDP\", or \"ICMP\"."
+				"Or you may want to use the advanced functionality."));
 	// Check all and continue
 	if ((_tcscmp(Protocol, _T("TCP")) == 0 || _tcscmp(Protocol, _T("UDP")) == 0 || _tcscmp(Protocol, _T("ICMP")) == 0) &&
-		(Port > -1 && Port < 65537))
+		(Port > -1 && Port <= 0xFFFF))
 	{
 		// Move text to a number from a macro
 		int Protocol2 = Unreferenced_WorkOutProtocolType(Protocol);

@@ -18,7 +18,7 @@
 
 namespace Riggs
 {
-    class ObjectSelection  
+    class ObjectSelection
     {
     public:
 
@@ -32,7 +32,7 @@ namespace Riggs
 	    void SelectObjects(short Oi, RunObject ** objects, int count);
 	    bool ObjectIsOfType(RunObject * object, short Oi);
 	    int GetNumberOfSelected(short Oi);
-    	
+
 	    template<class T> bool FilterObjects(short Oi, bool negate, T filterFunction)
         {
 	        if (Oi & 0x8000)
@@ -143,7 +143,7 @@ namespace Riggs
 
 			        if (previous != NULL)
 				        previous->NextSelected = current;
-        			
+
 			        previous = pObject;
 			        count++;
 		        }

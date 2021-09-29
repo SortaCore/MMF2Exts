@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "DarkSocket",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2019 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2021 by Darkwire Software",
 			"Comment": "Utilizes WinSock v2.2 to provide socket functionality.",
 			"Help": "Help/DarkSocket.chm",
 			"URL": "https://dark-wire.com/"
@@ -48,8 +48,8 @@
 				[ 25, "Set long" ],
 				[ 26, "Set float" ],
 				[ 27, "Set double" ],
-				[ 28, "Set string (ansi)" ],
-				[ 29, "Set string (unicode)" ],
+				[ 31, "Set string (UTF8)" ],
+				[ 32, "Set string (UTF16)" ],
 				[ 30, "Set bank" ]
 			]
 		],
@@ -93,8 +93,8 @@
 					[ 15, "Get long" ],
 					[ 16, "Get float" ],
 					[ 17, "Get double" ],
-					[ 18, "Get string (ansi)" ],
-					[ 19, "Get string (unicode)" ]
+					[ 18, "Get string (read as UTF8)" ],
+					[ 19, "Get string (read as UTF16)" ]
 				]
 			],
 			[ 6, "New Socket ID" ],
@@ -104,9 +104,9 @@
 				[ 9, "Address" ],
 				[ 10, "Size" ],
 				[ 11, "Calculate one's complement" ]
-			],
-			"---",
-			[ 20, "aplfes" ]
+			]
+			//"---",
+			//[ 20, "aplfes" ]
 		],
 		"Actions": [
 			/// DEBUG
@@ -345,20 +345,20 @@
 			},
 			// ID = 28
 			{
-				"Title": "Set ANSI string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!! RECREATE THIS ACTION!! Set UTF-8 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
-					[ "Text", "ANSI string (Fusion non-Unicode only):" ],
+					[ "Text", "UTF-8 string:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
 					[ "Integer", "Size of string in bytes [Len(text)] (+1 for null character):" ]
 				]
 			},
 			// ID = 29
 			{
-				"Title": "Set Unicode string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!! RECREATE THIS ACTION!! Set UTF-16 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
-					[ "Text", "Unicode string (Fusion Unicode only):" ],
+					[ "Text", "UTF-16 string:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Size of string in bytes [Len(text)*2] (+2 for null character):" ]
+					[ "Integer", "Size of string:" ]
 				]
 			},
 			// ID = 30
@@ -563,20 +563,20 @@
 			},
 			// ID = 18
 			{
-				"Title": "GetANSIString$(",
+				"Title": "GetUTF8String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],
-					[ "Integer", "Length of string (bytes)" ]
+					[ "Integer", "Length of string (bytes) or -1" ]
 				]
 			},
 			// ID = 19
 			{
-				"Title": "GetUnicodeString$(",
+				"Title": "GetUTF16String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],
-					[ "Integer", "Length of string (bytes)" ]
+					[ "Integer", "Length of string (bytes) or -1" ]
 				]
 			}
 		]
@@ -585,7 +585,7 @@
 		"About": {
 			"Name": "DarkSocket",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2019 créé par Darkwire Software",
+			"Copyright": "Copyright \u00A9 2021 créé par Darkwire Software",
 			"Comment": "Utilise les fonctionnalités socket de WinSock v2.2.",
 			"Help": "Help/DarkSocket_FR.chm",
 			"URL": "https://dark-wire.com/"
@@ -628,8 +628,8 @@
 				[ 25, "Définir le long" ],
 				[ 26, "Définir le flotter" ],
 				[ 27, "Définir le double" ],
-				[ 28, "Définir la chaîne (ansi)" ],
-				[ 29, "Définir la chaîne (unicode)" ],
+				[ 31, "Définir la chaîne (UTF-8)" ],
+				[ 32, "Définir la chaîne (UTF-16)" ],
 				[ 30, "Définir la banque" ]
 			]
 		],
@@ -672,8 +672,8 @@
 					[ 15, "Obtenir le long" ],
 					[ 16, "Obtenir le flotter" ],
 					[ 17, "Obtenir le double" ],
-					[ 18, "Obtenir la chaîne (ansi)" ],
-					[ 19, "Obtenir la chaîne (unicode)" ]
+					[ 18, "Obtenir la chaîne (UTF-8)" ],
+					[ 19, "Obtenir la chaîne (UTF-16)" ]
 				]
 			],
 			[ 6, "Nouvelle socket ID" ],
@@ -920,16 +920,16 @@
 			},
 			// ID = 28
 			{
-				"Title": "Set ANSI string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!! RECREATE THIS ACTION!! Set UTF-8 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
-					[ "Text", "ANSI string (Fusion non-Unicode only):" ],
+					[ "Text", "UTF-8 string (Fusion non-Unicode only):" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
 					[ "Integer", "Size of string in bytes [Len(text)] (+1 for null character):" ]
 				]
 			},
 			// ID = 29
 			{
-				"Title": "Set Unicode string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!! RECREATE THIS ACTION!! Set UTF-16 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
 					[ "Text", "Unicode string (Fusion Unicode only):" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -943,6 +943,24 @@
 					[ "Integer", "Address to read from:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
 					[ "Integer", "Number of bytes to copy:" ]
+				]
+			},
+			// ID = 31
+			{
+				"Title": "Set UTF-8 string (%0), at position (%1), include null terminator (%2)",
+				"Parameters": [
+					[ "Text", "UTF-8 string (Fusion non-Unicode only):" ],
+					[ "Integer", "Position in packet to write at (0+):" ],
+					[ "Integer", "Include null terminator?" ]
+				]
+			},
+			// ID = 32
+			{
+				"Title": "Set UTF-16 string (%0), at position (%1), include null terminator (%2)",
+				"Parameters": [
+					[ "Text", "Unicode string (Fusion Unicode only):" ],
+					[ "Integer", "Position in packet to write at (0+):" ],
+					[ "Integer", "Include null terminator?" ]
 				]
 			}
 		],
@@ -1138,7 +1156,7 @@
 			},
 			// ID = 18
 			{
-				"Title": "GetANSIString$(",
+				"Title": "GetUTF8String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],
@@ -1147,7 +1165,7 @@
 			},
 			// ID = 19
 			{
-				"Title": "GetUnicodeString$(",
+				"Title": "GetUTF16String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],

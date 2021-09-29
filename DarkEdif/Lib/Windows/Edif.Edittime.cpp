@@ -32,7 +32,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 
 	if (bad)
 	{
-		MessageBoxA(NULL, "Error in JSON comment macro. Ensure your %s are escaped (with %%).", "DarkEdif error", MB_OK);
+		DarkEdif::MsgBox::Error(_T("JSON error"), _T("%s"), _T("Error in JSON comment macro. Ensure your %'s are escaped (with %%)."));
 		strcpy_s(buff, MAX_PATH, CurLang["About"]["Comment"]);
 	}
 

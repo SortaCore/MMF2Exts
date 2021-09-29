@@ -89,10 +89,10 @@ void Riggs::ObjectSelection::SelectObjects(short Oi, RunObject ** objects, int c
 #else
 	DarkEdif::MsgBox::Error("Missing function", "Function %s has not been programmed on Android.", __PRETTY_FUNCTION__);
 #endif
-	
+
 	short prevNumber = objects[0]->roHo.Number;
 	ObjectInfo->ListSelected = prevNumber;
-	
+
 	for(int i=1; i<count; i++)
 	{
 		short currentNumber = objects[i]->roHo.Number;

@@ -74,7 +74,6 @@
   <ItemGroup>
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="Edittime.cpp" />
-    <ClCompile Include="General.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\Props.h" />

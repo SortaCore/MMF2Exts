@@ -1,3 +1,4 @@
+#pragma once
 // Property definitions
 
 #ifndef MMF2_Props_h
@@ -18,16 +19,16 @@ struct PropData
 	int				ID;					// Identifier (generated, 1+,)
 	const TCHAR *	Title;				// name = ID of the property name in the resources, or const char *
 	const TCHAR *	Info;				// Info = ID of the property description in the resources, or const char *
-	union { 
+	union {
 		unsigned int	Type_ID;		// Property type...
 		Prop_Custom *	Type_Custom;	// ... or pointer to CPropItem (custom properties)
-	}; 
+	};
 	unsigned int	Options;			// Options (check box, bold, etc)
 	LPARAM			CreateParam;		// Parameter
-	
+
 	// Use initialiser list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
 	PropData() { PropData(-1, 0);}
-	PropData(int ID_, unsigned int Type_) : 
+	PropData(int ID_, unsigned int Type_) :
 		ID(ID_+0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) {}
 	void SetAllProperties(unsigned int Options = 0, LPARAM CreateParam = 0)
 	{
@@ -224,7 +225,7 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return	(this->X == ((Prop_Size *)P)->X) && 
+		return	(this->X == ((Prop_Size *)P)->X) &&
 				(this->Y == ((Prop_Size *)P)->Y);
 	}
 	virtual unsigned int GetClassID()
@@ -337,7 +338,7 @@ public:
 
 	virtual void Delete()
 	{
-		if (Address) 
+		if (Address)
 		{
 			free(Address);
 			Address = NULL;
@@ -389,13 +390,13 @@ public:
 		{
 			size_t length = wcslen(Str);
 			String = (char *)calloc(length+1, sizeof(char));
-			
+
 			if (!String)
 				return; // Stops bad-access crashes
-			
+
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
-			
+
 			#ifdef _WIN32
 			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
 			#elif defined(__ANDROID__)
@@ -417,10 +418,10 @@ public:
 		else
 			String = _strdup("");
 	}
-	
+
 	virtual void Delete()
 	{
-		if (String) 
+		if (String)
 		{
 			free(String);
 			String = NULL;
@@ -433,7 +434,7 @@ public:
 	}
 	virtual BOOL IsEqual(Prop * P)
 	{
-		return (this->String == ((Prop_AStr *)P)->String)	|| 
+		return (this->String == ((Prop_AStr *)P)->String)	||
 				this->String == NULL						||	// For some reason, default to true if
 				((Prop_AStr *)P)->String == NULL			||	// NULL for either of params
 				!strcmp(this->String, ((Prop_AStr *)P)->String);
@@ -447,7 +448,7 @@ public:
 	{
 		(*(Prop_AStr *)addr).pad = pad;
 		(*(Prop_AStr *)addr).String = (char *)addr + sizeof(Prop_AStr);
-		
+
 		return !strcpy_s((char *)addr + sizeof(Prop_AStr), strlen(String) + 1 + sizeof(bool), (*(Prop_AStr *)addr).String);
 	}
 
@@ -458,6 +459,12 @@ public:
 
 #ifndef _WIN32
 extern void LOGF(const char * x, ...);
+#else
+#define PrintFHintInside _In_z_ _Printf_format_string_
+namespace DarkEdif::MsgBox {
+	void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...);
+}
+
 #endif
 
 // String (UNICODE)
@@ -488,11 +495,11 @@ public:
 			// Convert string to Unicode
 			size_t length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
 			if (length == 0)
-				MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
+				DarkEdif::MsgBox::Error(_T("Property error"), _T("Conversion of JSON default UTF-8 text to UTF-16 failed."));
 			else {
 				String = (WCHAR*)calloc(length, sizeof(WCHAR));
 				if (!String || MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, String, length) == 0)
-					MessageBoxA(NULL, "Conversion of JSON default to wide-string failed.", "DarkEDIF - Property error", MB_OK);
+					DarkEdif::MsgBox::Error(_T("Property error"), _T("Conversion of JSON default UTF-8 text to UTF-16 failed."));
 			}
 #endif
 		}
@@ -533,7 +540,7 @@ public:
 	{
 		(*(Prop_WStr *)addr).pad = pad;
 		(*(Prop_WStr *)addr).String = (wchar_t *)((char *)addr + sizeof(Prop_WStr));
-		
+
 		return !wcscpy_s((wchar_t *)((char *)addr + sizeof(Prop_WStr) + sizeof(bool)), wcslen(String) + 1, (*(Prop_WStr *)addr).String);
 	}
 
@@ -583,7 +590,7 @@ struct Prop_Custom
 
 protected:
 	virtual ~Prop_Custom() {
-	
+
 	}
 };
 
@@ -598,7 +605,7 @@ struct CustomPropCreateStruct {
 #define PWN_FIRST					(0U-2000U)
 
 // Tells property window to validate the property item
-// => the property window gets the property value from the property item 
+// => the property window gets the property value from the property item
 //    and applies it to the other selected items
 #define PWN_VALIDATECUSTOMITEM		(PWN_FIRST-1)
 
@@ -790,7 +797,7 @@ typedef struct {
 typedef MinMaxFloatParam* LPMINMAXFLOATPARAM;
 
 // Direction Control Styles
-enum 
+enum
 {
 	DCS_NOBORDER	= 0x0,		// No border
 	DCS_FLAT		= 0x1,		// Flat
@@ -807,7 +814,7 @@ typedef struct {
 	unsigned int	style;		// Style DCS_NOBORDER, DCS_FLAT, DCS_3D, [DCS_SLIDER,] DCS_EMPTY, DCS_SETALL_BTNS
 } DirCtrlCreateParam;
 
-// Direction Property Value 
+// Direction Property Value
 typedef struct {
 	int		selDir;		// Direction index, single selection mode
 	unsigned int	selDir32;	// 32-bit direction mask, multi-selection mode
@@ -819,7 +826,7 @@ typedef struct {
 typedef struct {
 	const char *	extFilter;	// Filter string for GetOpenFilename dialog (for example "All Files (*.*)|*.*|")
 	unsigned int	options;	// Options for GetOpenFilename dialog (OFN_FILEMUSTEXIST, OFN_PATHMUSTEXIST, OFN_HIDEREADONLY, etc.)
-} FilenameCreateParam;	
+} FilenameCreateParam;
 
 ////////////////////////////////////////////////
 //
@@ -855,7 +862,7 @@ enum {
 // Property IDs
 //////////
 //
-// If you need them, you can retrieve, set or refresh 
+// If you need them, you can retrieve, set or refresh
 // standard properties with the mvSetPropValue, etc. macros
 // and the following identifiers.
 //

@@ -75,7 +75,6 @@
     <ClCompile Include="Edittime.cpp" />
     <ClCompile Include="Expressions.cpp" />
     <ClCompile Include="Extension.cpp" />
-    <ClCompile Include="General.cpp" />
     <ClCompile Include="Runtime.cpp" />
     <ClCompile Include="InternalFuncs.cpp" />
   </ItemGroup>

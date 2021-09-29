@@ -1,5 +1,5 @@
-#include <DarkEdif.h>
 #pragma once
+#include "DarkEdif.h"
 
 class Extension
 {
@@ -21,6 +21,8 @@ public:
 	static const int MinimumBuild = 254;
 	static const int Version = 1;
 
+	// If you change OEFLAGS, make sure you modify RUNDATA so the data is available, or you'll get crashes!
+	// For example, OEFLAGS::VALUES makes use of the AltVals rv struct.
 	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
 
@@ -84,9 +86,9 @@ public:
 
 	/* These are called if there's no function linked to an ID */
 
-	void Action(int ID);
-	long Condition(int ID);
-	long Expression(int ID);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
@@ -99,6 +101,6 @@ public:
 	REFLAG Handle();
 	REFLAG Display();
 
-	short Pause();
-	short Continue();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 };
