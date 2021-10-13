@@ -1713,16 +1713,13 @@ struct RunHeader4 {
 	void *				timerEvents;
 	void *				posOnLoop;
 	short				complexOnLoop;
-	char				rh4QuitString[4];
-
-
-	std::int8_t			quitString[4];		// Free, unknown usage
+	char				quitString[4];		// Free, unknown usage
 
 	std::uint32_t		pickFlags0,			// 00-31
 						pickFlags1,			// 31-63
 						pickFlags2,			// 64-95
 						pickFlags3;			// 96-127
-	std::uint32_t *		timerEventsBase;		// Timer events base
+	std::uint32_t *		timerEventsBase;	// Timer events base
 
 	std::int16_t		droppedFlag,
 						nDroppedFiles;
