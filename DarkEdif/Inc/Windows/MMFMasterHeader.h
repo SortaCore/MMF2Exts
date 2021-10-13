@@ -1,464 +1,39 @@
+///
+
+
 #pragma once
 #ifndef _WIN32
 #error Included the wrong header for this OS.
 #endif
 
-#define PhiDLLImport __declspec(dllimport)
-#define FusionAPI __stdcall
+#include "..\Shared\AllPlatformDefines.hpp"
+#include "Windows\WindowsDefines.hpp"
 
-// All you need to expose this function outside the DLL with undecorated name.
-// Hat tip to https://stackoverflow.com/a/41910450
-#define DllExportHint comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-#define PATH_MAX MAX_PATH
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-
-// Turns any plain text into "plain text", with the quotes.
-#define SUB_STRIFY(X) #X
-#define STRIFY(X) SUB_STRIFY(X)
-
-// If the user hasn't specified a target Windows version via _WIN32_WINNT, and is using an _xp toolset (indicated by _USING_V110_SDK71_),
-// then _WIN32_WINNT will be set to Windows XP (0x0501).
-#if !defined(_WIN32_WINNT) && defined(_USING_V110_SDK71_)
-#define _WIN32_WINNT _WIN32_WINNT_WINXP
-#define WINVER _WIN32_WINNT_WINXP
-#endif
-
-// Used in the ext updater
-#include <winsock2.h> // must be defined before windows.h, or WinSock v1 clashes
-#include <windows.h>
-
-// Activate the ""s and ""sv string literals (C++17)
-using namespace std::string_literals;
-using namespace std::string_view_literals;
-
-#ifndef _UNICODE
-namespace std {
-	typedef std::string tstring;
-	typedef std::stringstream tstringstream;
-	typedef std::string_view tstring_view;
-	template<typename... Args>
-	inline auto to_tstring(Args &&... args) -> decltype(std::to_string(std::forward<Args>(args)...)) {
-		return std::to_string(std::forward<Args>(args)...);
-	}
-}
-#else
-namespace std {
-	typedef std::wstring tstring;
-	typedef std::wstringstream tstringstream;
-	typedef std::wstring_view tstring_view;
-	template<typename... Args>
-	inline auto to_tstring(Args &&... args) -> decltype(std::to_wstring(std::forward<Args>(args)...)) {
-		return std::to_wstring(std::forward<Args>(args)...);
-	}
-}
-#endif
-
-#define fancyenumop(enumType) \
-enumType constexpr static operator|(enumType lhs, enumType rhs) { \
-	return static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) | static_cast<std::underlying_type<enumType>::type>(rhs)); \
-} \
-enumType constexpr static operator&(enumType lhs, enumType rhs) { \
-	return static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) & static_cast<std::underlying_type<enumType>::type>(rhs)); \
-} \
-enumType static operator|=(enumType &lhs, enumType rhs) { \
-	lhs = static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) | static_cast<std::underlying_type<enumType>::type>(rhs)); \
-	return lhs; \
-} \
-enumType static operator&=(enumType &lhs, enumType rhs) { \
-	lhs = static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) & static_cast<std::underlying_type<enumType>::type>(rhs)); \
-	return lhs; \
-}
-typedef unsigned short ushort;
-typedef unsigned int uint;
-
-#include <stdio.h>
-#include <iomanip>
-#include <tchar.h>
-
-struct ACEParamReader {
-	virtual float GetFloat(int i) = 0;
-	virtual const TCHAR * GetString(int i) = 0;
-	virtual std::int32_t GetInteger(int i) = 0;
-};
-
-#define fancyenumop(enumType) \
-enumType constexpr static operator|(enumType lhs, enumType rhs) { \
-	return static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) | static_cast<std::underlying_type<enumType>::type>(rhs)); \
-} \
-enumType constexpr static operator&(enumType lhs, enumType rhs) { \
-	return static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) & static_cast<std::underlying_type<enumType>::type>(rhs)); \
-} \
-enumType static operator|=(enumType &lhs, enumType rhs) { \
-	lhs = static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) | static_cast<std::underlying_type<enumType>::type>(rhs)); \
-	return lhs; \
-} \
-enumType static operator&=(enumType &lhs, enumType rhs) { \
-	lhs = static_cast<enumType>(static_cast<std::underlying_type<enumType>::type>(lhs) & static_cast<std::underlying_type<enumType>::type>(rhs)); \
-	return lhs; \
-}
-typedef unsigned short ushort;
-typedef unsigned int uint;
-
-#include "Surface.h"
+#if EditorBuild
+#include "Surface.hpp"
+// For ext icon
+#include "SafeSurface.hpp"
+// For ext properties
 #include "Props.h"
-
-struct CTransition;
-struct CDebugger;
-#ifdef HWABETA
-	struct CEffectEx;
-	struct CPList;
+#else
+class cSurfaceImplementation;
+class cSurface;
+struct sMask;
+typedef sMask CollisionMask;
 #endif
 
-// Surface.h pre-declaration
-class cSurface;
-struct cSurfaceImplementation;
-struct CFillData;
-class CInputFile;
-struct sMask;
+#include "CFile.hpp"
 
-#define bit1  0x00000001
-#define bit2  0x00000002
-#define bit3  0x00000004
-#define bit4  0x00000008
-#define bit5  0x00000010
-#define bit6  0x00000020
-#define bit7  0x00000040
-#define bit8  0x00000080
-#define bit9  0x00000100
-#define bit10 0x00000200
-#define bit11 0x00000400
-#define bit12 0x00000800
-#define bit13 0x00001000
-#define bit14 0x00002000
-#define bit15 0x00004000
-#define bit16 0x00008000
-#define bit17 0x00010000
-#define bit18 0x00020000
-#define bit19 0x00040000
-#define bit20 0x00080000
-#define bit21 0x00100000
-#define bit22 0x00200000
-#define bit23 0x00400000
-#define bit24 0x00800000
-#define bit25 0x01000000
-#define bit26 0x02000000
-#define bit27 0x04000000
-#define bit28 0x08000000
-#define bit29 0x10000000
-#define bit30 0x20000000
-#define bit31 0x40000000
-#define bit32 0x80000000
 
-// PictEdDefs.h
-enum class PICTEDOPT {
-	FIXEDIMGSIZE		= bit1,		// User cannot change the image size
-	HOTSPOT				= bit2,		// Image has a hot spot
-	ACTIONPOINT			= bit3,		// Image has an action point
-	_16COLORS			= bit4,		// 16 colors image
-	FIXEDNFRAMES		= bit5,		// User cannot add / remove frames (animation editor)
-	NUMBERS				= bit6,		// Numbers (internal)
-	NOTRANSPARENCY		= bit7,		// The image has no transparent color
-	NOALPHACHANNEL		= bit8,		// The image cannot have an alpha channel
-	APPICON				= bit9,		// Internal usage
-	ICONPALETTE			= bit10,	// Internal usage
-	CANBETRANSPARENT	= bit11,	// The image can be empty (if this option is not specified, MMF refuses to close the picture editor if the image is empty)
-	CANNOTMOVEFRAMES	= bit12,	// Frames cannot be moved
-};
+
 // Marquage des ObjectInfo qualifiers
-#define	OIFLAG_QUALIFIER			bit16
+#define	OIFLAG_QUALIFIER			0x8000
 #define	NDQUALIFIERS				100
 #define MAX_EVENTPROGRAMS			256
 
 
-// General errors
-enum class CFCERROR {
-	NOT_ENOUGH_MEM = 0x40000000,
-	READ_ERROR,
-	END_OF_FILE,
-	WRITE_ERROR,
-	DISK_FULL,
-	CANNOT_OPEN_FILE,
-	CANNOT_CREATE_FILE,
-	BUFFER_TOO_SMALL,
-	CANNOT_SET_FILESIZE,
-	UNKNOWN,					// Internal error
-	MAX = 0x40010000,
-};
 
-// Surface errors
-#define	SURFACEERROR_MIN	0x40010000
-#define	SURFACEERROR_MAX	0x40020000
-enum
-{
-	SURFACEERROR_NOERR = 0,
-	SURFACEERROR_NOT_SUPPORTED = SURFACEERROR_MIN,
-	SURFACEERROR_SURFACE_NOT_CREATED,
-	SURFACEERROR_INTERNAL
-};
 
-__declspec(dllimport) HFILE			WINAPI	File_OpenA(const char * fname, int mode);
-__declspec(dllimport) HFILE			WINAPI	File_CreateA(const char * fname);
-__declspec(dllimport) int			WINAPI	File_Read(HFILE hf, void * buf, unsigned int len);
-__declspec(dllimport) int			WINAPI	File_ReadAndCount(HFILE hf, void * buf, unsigned int len);
-__declspec(dllimport) int			WINAPI	File_ReadShortIntelData(HFILE hf, void ** pBuf);
-__declspec(dllimport) int			WINAPI	File_ReadShortIntelString(HFILE hf, void ** pBuf);
-__declspec(dllimport) int			WINAPI	File_ReadLongIntelData(HFILE hf, void ** pBuf);
-__declspec(dllimport) int			WINAPI	File_Write(HFILE hf, void * buf, unsigned int len);
-__declspec(dllimport) unsigned int	WINAPI	File_GetPosition(HFILE hf);
-__declspec(dllimport) unsigned int	WINAPI	File_SeekBegin(HFILE hf, long pos);
-__declspec(dllimport) unsigned int	WINAPI	File_SeekCurrent(HFILE hf, long pos);
-__declspec(dllimport) unsigned int	WINAPI	File_SeekEnd(HFILE hf, long pos);
-__declspec(dllimport) long			WINAPI	File_GetLength( HFILE hf );
-__declspec(dllimport) void			WINAPI	File_Close(HFILE hf);
-__declspec(dllimport) BOOL			WINAPI	File_ExistA(const char * pName);
-
-__declspec(dllimport) HFILE			WINAPI	File_OpenW(const wchar_t * fname, int mode);
-__declspec(dllimport) HFILE			WINAPI	File_CreateW(const wchar_t * fname);
-__declspec(dllimport) BOOL			WINAPI	File_ExistW(const wchar_t * pName);
-
-#ifdef _UNICODE
-#define File_Open File_OpenW
-#define File_Create File_CreateW
-#define File_Exist File_ExistW
-#else
-#define File_Open File_OpenA
-#define File_Create File_CreateA
-#define File_Exist File_ExistA
-#endif
-
-#define	File_ReadIntelWord(h,p,l)	File_Read(h,p,l)
-#define	File_ReadIntelDWord(h,p,l)	File_Read(h,p,l)
-
-// Input file - abstract class
-class __declspec(dllimport) CInputFile
-{
-public:
-	virtual			~CInputFile() {};
-
-	virtual void	Delete();
-
-	virtual	int		Read(unsigned char * dest, unsigned long lsize) = 0;
-	virtual	int		Read(unsigned char * dest, unsigned long lsize, LPDWORD pRead) = 0;
-	virtual	int		ReadByte(unsigned char * dest) = 0;
-	virtual	int		ReadIntelWord(LPWORD dest);
-	virtual	int		ReadIntelDWord(LPDWORD dest);
-	virtual	int		ReadMacWord(LPWORD dest);
-	virtual	int		ReadMacDWord(LPDWORD dest);
-	virtual	int		ReadIntelFloat(PFLOAT dest);
-	virtual	int		ReadMacFloat(PFLOAT dest);
-	virtual	int		ReadIntelWordArray(LPWORD dest, int count);
-	virtual	int		ReadIntelDWordArray(LPDWORD dest, int count);
-	virtual	int		ReadIntelFloatArray(PFLOAT dest, int count);
-	virtual	int		ReadMacWordArray(LPWORD dest, int count);
-	virtual	int		ReadMacDWordArray(LPDWORD dest, int count);
-	virtual	int		ReadMacFloatArray(PFLOAT dest, int count);
-
-	virtual long	GetPosition() = 0;
-	virtual long	GetLength() = 0;
-	virtual	long	Seek(long pos, int method) = 0;
-
-	virtual	int		Attach(HANDLE hnd) = 0;
-	virtual	HANDLE	Detach() = 0;
-
-	virtual unsigned char *	GetBuffer(UINT nSize);
-	virtual void	FreeBuffer(unsigned char * buf);
-
-	virtual	char *	GetFileNameA() = 0;
-	virtual	wchar_t *	GetFileNameW() = 0;
-
-	#ifdef _CFCFILE_UNICODE_DEFS
-		#if defined(_UNICODE)
-			#define GetFileName GetFileNameW
-		#else
-			#define GetFileName GetFileNameA
-		#endif
-	#endif
-};
-//typedef CInputFile * LPINPUTFILE;
-
-// Bufferized input file
-class __declspec(dllimport) CInputBufFile : public CInputFile
-{
-	public:
-								CInputBufFile();
-		virtual					~CInputBufFile();
-
-		static CInputBufFile *	NewInstance();
-
-		int						Create(HFILE hf);
-		int						Create(HFILE hf, unsigned int dwOffset, unsigned int dwSize);
-		int						Create(const char * filename);
-		int						Create(const char * filename, unsigned int dwOffset, unsigned int dwSize);
-		int						Create(const wchar_t * filename);
-		int						Create(const wchar_t * filename, unsigned int dwOffset, unsigned int dwSize);
-
-		virtual	int				Read(unsigned char * dest, unsigned int lsize);
-		virtual	int				Read(unsigned char * dest, unsigned int lsize, LPDWORD pRead);
-		virtual	int				ReadByte(unsigned char * dest);
-//		virtual	int				ReadWord(LPWORD dest);
-//		virtual	int				ReadDWord(LPDWORD dest);
-		virtual long			GetPosition();
-		virtual long			GetLength();
-		virtual	long			Seek(long pos, int method);
-
-		virtual	int				Attach(HANDLE hnd);
-		virtual	HANDLE			Detach();
-
-//		virtual unsigned char *	GetBuffer(UINT nSize);
-//		virtual void			FreeBuffer(unsigned char * buf);
-
-		virtual	char *			GetFileNameA();
-		virtual	wchar_t *		GetFileNameW();
-
-	protected:
-		int						Attach(HANDLE hnd, unsigned int dwOffset, unsigned int dwSize);
-	private:
-		HFILE					m_hf;
-		unsigned int			m_curpos;
-		unsigned char *			m_buffer;
-		unsigned char *			m_bufcurr;
-		unsigned int			m_remains;
-		wchar_t *				m_fnameW;
-		char *					m_fnameA;
-
-		unsigned int			m_startOffset;
-		unsigned int			m_length;
-};
-typedef	CInputBufFile * LPINPUTBUFFILE;
-
-#define	BUFFILE_BUFFER_SIZE	16384
-
-// Memory input file
-class __declspec(dllimport) CInputMemFile : public CInputFile
-{
-	public:
-								CInputMemFile();
-		virtual					~CInputMemFile();
-
-		static CInputMemFile *	NewInstance();
-
-		int						Create(unsigned char * buffer, unsigned long lsize);
-		int						Create(unsigned long lsize);
-		unsigned char *			GetMemBuffer();
-
-		virtual	int				Read(unsigned char * dest, unsigned long lsize);
-		virtual	int				Read (unsigned char * dest, unsigned long lsize, LPDWORD pRead);
-		virtual	int				ReadByte(unsigned char * dest);
-//		virtual	int				ReadWord(LPWORD dest);
-//		virtual	int				ReadDWord(LPDWORD dest);
-		virtual long			GetPosition();
-		virtual long			GetLength();
-		virtual	long			Seek(long pos, int method);
-
-		virtual	int				Attach(HANDLE hnd);
-		virtual	HANDLE			Detach();
-
-		virtual unsigned char *	GetBuffer(UINT nSize);
-		virtual void			FreeBuffer(unsigned char * buf);
-
-		virtual	char *			GetFileNameA() { return NULL; }
-		virtual	wchar_t *		GetFileNameW() { return NULL; }
-
-	private:
-		unsigned char *			m_buffer;
-		unsigned char *			m_bufcurr;
-		unsigned int			m_curpos;
-		unsigned int			m_remains;
-		BOOL					m_bAutoDelete;
-};
-//typedef	CInputMemFile * LPINPUTMEMFILE;
-
-// Output file: base class
-class __declspec(dllimport) COutputFile
-{
-	public:
-								COutputFile() {};
-		virtual					~COutputFile() {};
-
-//		virtual int				WriteByte(BYTE b) = 0;
-//		virtual int				WriteWord(WORD b) = 0;
-
-		int						WriteIntelWord(LPWORD pw);
-		int						WriteIntelDWord(LPDWORD pdw);
-		int						WriteIntelFloat(PFLOAT dest);
-		int						WriteMacWord(LPWORD pw);
-		int						WriteMacDWord(LPDWORD pdw);
-
-		virtual int				Write(unsigned char * pb, UINT sz) = 0;
-		virtual int				Flush() = 0;
-		virtual unsigned int	GetLength() = 0;
-
-		virtual long			GetPosition() = 0;
-		virtual long			Seek(long pos, int method) = 0;
-
-		virtual	char *			GetFileNameA() = 0;
-		virtual	wchar_t *		GetFileNameW() = 0;
-};
-//typedef COutputFile * LPOUTPUTFILE;
-
-// Memory output file
-class __declspec(dllimport) COutputMemFile : public COutputFile
-{
-	public:
-								COutputMemFile();
-		virtual					~COutputMemFile();
-
-		int						Create(UINT nBlockSize = 512);
-		int						Create(unsigned char * buffer, unsigned int nBufferSize = 0x7FFFFFF);
-		unsigned char *			GetBuffer();
-		unsigned char *			DetachBuffer();
-		static void				FreeBuffer(unsigned char * pBuffer);	// car il faut libérer à l'interieur de la DLL
-
-		virtual int				Write(unsigned char * pb, UINT sz);
-		virtual int				Flush();
-		virtual unsigned int	GetLength();
-
-		virtual long			GetPosition();
-		virtual long			Seek(long pos, int method);
-
-		virtual	char *			GetFileNameA() { return NULL; }
-		virtual	wchar_t *		GetFileNameW() { return NULL; }
-
-	private:
-		unsigned char *			m_buffer;
-		unsigned char *			m_curptr;
-		unsigned int			m_totalsize;
-		unsigned int			m_cursize;
-		unsigned int			m_blocksize;
-		BOOL					m_bReallocable;
-};
-
-// Bufferized output file
-class __declspec(dllimport) COutputBufFile : public COutputFile
-{
-	public:
-								COutputBufFile();
-		virtual					~COutputBufFile();
-
-		int						Create(HFILE hf, UINT nBufferSize = 4096);
-		int						Create(const char * fname, UINT nBufferSize = 4096);
-		int						Create(const wchar_t * fname, UINT nBufferSize = 4096);
-
-		virtual int				Write(unsigned char * pb, UINT sz);
-		virtual int				Flush();
-		virtual unsigned int	GetLength();
-
-		virtual long			GetPosition();
-		virtual long			Seek(long pos, int method);
-
-		virtual	char *			GetFileNameA();
-		virtual	wchar_t *		GetFileNameW();
-
-	private:
-		HFILE					m_hf;
-		wchar_t *				m_fnameW;
-		unsigned char *			m_buffer;
-		unsigned char *			m_curptr;
-		unsigned int			m_cursize;
-		unsigned int			m_buffersize;
-		BOOL					m_bBuffered;
-		char *					m_fnameA;
-};
 
 // Possible states of the application, see LApplication::SetRunningState()
 enum class GAMEON {
@@ -508,7 +83,7 @@ enum class CallFunctionIDs {
 	INSERTPROPS = 1,		// Insert properties into Property window
 	REMOVEPROP,				// Remove property
 	REMOVEPROPS,			// Remove properties
-	REFRESHPROP,			// Refresh propery
+	REFRESHPROP,			// Refresh property
 	REALLOCEDITDATA,		// Reallocate edPtr
 	GETPROPVALUE,			// Get object's property value
 	GETAPPPROPVALUE,		// Get application's property value
@@ -598,7 +173,7 @@ struct Spr
 			unsigned int Img;			 // Numero d'image
 			unsigned int ImgNew;		  // Nouvelle image
 		};
-	LPARAM Rout;			// Ownerdraw callback routine
+		LPARAM Rout;			// Ownerdraw callback routine
 	};
 
 	// Ink effect
@@ -612,10 +187,10 @@ struct Spr
 	cSurfaceImplementation *	BackSurf;	// Background surface, if no general background surface
 
 	cSurfaceImplementation *	Sf;			// Surface (if stretched or rotated)
-	sMask*					ColMask;		// Collision mask (if stretched or rotated)
+	CollisionMask *				ColMask;	// Collision mask (if stretched or rotated)
 
-	cSurfaceImplementation*	TempSf;		// Temp surface (if stretched or rotated)
-	sMask*					TempColMask;	// Temp collision mask (if stretched or rotated)
+	cSurfaceImplementation*	TempSf;			// Temp surface (if stretched or rotated)
+	CollisionMask *			TempColMask;	// Temp collision mask (if stretched or rotated)
 
 	// User data
 	LPARAM		ExtraInfo;
@@ -661,9 +236,9 @@ struct eventInformations {
 // Definitions for extensions
 #define TYPE_LONG	0x0000
 #define TYPE_INT	TYPE_LONG
-#define TYPE_STRING	bit1
-#define TYPE_FLOAT	bit2				// Pour les extensions
-#define TYPE_DOUBLE bit2
+#define TYPE_STRING	0x1
+#define TYPE_FLOAT	0x2				// Pour les extensions
+#define TYPE_DOUBLE 0x2
 
 struct CValue {
 	unsigned int m_type,
@@ -726,15 +301,15 @@ public:
 
 	unsigned long	size;			// Total size of the structures
 
-	unsigned short	Movements,		// Offset of the movements
-					Animations, 	// Offset of the animations
-					Version,		// For version versions > MOULI
-					Counter,		// Pointer to COUNTER structure
-					data,			// Pointer to DATA structure
+	unsigned short	Movements,		// Offset of the movements (addr of Object_Common + Movements = addr of rMvt struct)
+					Animations, 	// Offset of the animations (addr of Object_Common + Animations = addr of rAni struct)
+					Version,		// For version versions > MOULI 
+					Counter,		// Pointer to COUNTER structure (addr of Object_Common + Counter = addr of counter struct)
+					data,			// Pointer to DATA structure (addr of Object_Common + Data = addr of rData struct)
 					Free;			// IGNORE: Padding the shorts to 4 bytes
-	OEFLAGS			OEFlags;		// New flags
+	OEFLAGS			OEFlags;		// New flags?
 
-	unsigned short	Qualifiers[8],	// Qualifier list (Max 8 qualifiers)
+	unsigned short	Qualifiers[8],	// Qualifier list (Runtime is hard-capped to 8 qualifiers per object, OC_MAX_QUALIFIERS)
 					Extension,		// Extension structure
 					Values,			// Values structure
 					Strings,		// String structure
@@ -778,16 +353,16 @@ typedef struct
 } OCValueNames;
 typedef	OCValueNames*		LPOCVALUENAMES;
 
-#define	OCFLAGS2_DONTSAVEBKD		bit1
-#define	OCFLAGS2_SOLIDBKD			bit2
-#define	OCFLAGS2_COLBOX				bit3
-#define	OCFLAGS2_VISIBLEATSTART		bit4
-#define	OCFLAGS2_OBSTACLESHIFT		bit3
+#define	OCFLAGS2_DONTSAVEBKD		0x1
+#define	OCFLAGS2_SOLIDBKD			0x2
+#define	OCFLAGS2_COLBOX				0x4
+#define	OCFLAGS2_VISIBLEATSTART		0x8
+#define	OCFLAGS2_OBSTACLESHIFT		0x4
 #define	OCFLAGS2_OBSTACLEMASK		0x0030
-#define	OCFLAGS2_OBSTACLE_SOLID		bit5
-#define	OCFLAGS2_OBSTACLE_PLATFORM	bit6
+#define	OCFLAGS2_OBSTACLE_SOLID		0x10
+#define	OCFLAGS2_OBSTACLE_PLATFORM	0x20
 #define	OCFLAGS2_OBSTACLE_LADDER	0x0030
-#define	OCFLAGS2_AUTOMATICROTATION	bit7
+#define	OCFLAGS2_AUTOMATICROTATION	0x40
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -853,7 +428,7 @@ struct AnimDirection {
 #define EVTFILECHUNK_EVENTBLOCKTYPES	B2L('E','R','b','t')
 
 // Marquage des OI qualifiers
-#define	OIFLAG_QUALIFIER			bit16
+#define	OIFLAG_QUALIFIER			0x8000
 #define	NDQUALIFIERS				100
 #define MAX_EVENTPROGRAMS			256
 
@@ -1019,29 +594,29 @@ struct EventBlockType {
 // Was EVGFLAGS_**
 enum class EventGroupFlags : unsigned short
 {
-	Once = bit1,
-	NotAlways = bit2,
-	Repeat = bit3,
-	NoMore = bit4,
-	Shuffle = bit5,
-	EditorMark = bit6,
-	UndoMark = bit7,
-	ComplexGroup = bit8,
-	Breakpoint = bit9,
-	AlwaysClean = bit10,
-	OrInGroup = bit11,
-	StopInGroup = bit12,
-	OrLogical = bit13,
-	Grouped = bit14,
-	Inactive = bit15,
-	NoGood = bit16,
+	Once = 0x1,
+	NotAlways = 0x2,
+	Repeat = 0x4,
+	NoMore = 0x8,
+	Shuffle = 0x10,
+	EditorMark = 0x20,
+	UndoMark = 0x40,
+	ComplexGroup = 0x80,
+	Breakpoint = 0x100,
+	AlwaysClean = 0x200,
+	OrInGroup = 0x400,
+	StopInGroup = 0x800,
+	OrLogical = 0x1000,
+	Grouped = 0x2000,
+	Inactive = 0x4000,
+	NoGood = 0x8000,
 	Limited = Shuffle | NotAlways | Repeat | NoMore,
 	DefaultMask = Breakpoint | Grouped
 };
-fancyenumop(EventGroupFlags);
+enum_class_is_a_bitmask(EventGroupFlags);
 
-//#define		EVGFLAGS_2MANYACTIONS	bit11
-//#define		EVGFLAGS_NOTASSEMBLED	bit13
+//#define		EVGFLAGS_2MANYACTIONS	0x400
+//#define		EVGFLAGS_NOTASSEMBLED	0x1000
 
 // Eventgroup structure, before conditions and actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1131,31 +706,31 @@ struct event2 {
 // Definition of conditions / actions flags
 enum class EVFLAGS : short {
 	NONE = 0,
-	REPEAT = bit1,
-	DONE = bit2,
-	DEFAULT = bit3,
-	DONEBEFOREFADEIN = bit4,
-	NOTDONEINSTART = bit5,
-	ALWAYS = bit6,
-	BAD = bit7,
-	BADOBJECT = bit8,
+	REPEAT = 0x1,
+	DONE = 0x2,
+	DEFAULT = 0x4,
+	DONEBEFOREFADEIN = 0x8,
+	NOTDONEINSTART = 0x10,
+	ALWAYS = 0x20,
+	BAD = 0x40,
+	BADOBJECT = 0x80,
 	DEFAULTMASK	= (ALWAYS+REPEAT+DEFAULT+DONEBEFOREFADEIN+NOTDONEINSTART),
 	// Originally EVFLAGS_NOTABLE
-	NOTABLE = bit10
+	NOTABLE = 0x200
 };
-fancyenumop(EVFLAGS);
+enum_class_is_a_bitmask(EVFLAGS);
 
-#define		ACTFLAGS_REPEAT			bit1
+#define		ACTFLAGS_REPEAT			0x1
 
 
 // For flags II
 // -------------
-#define		EVFLAG2_NOT			bit1
-#define		EVFLAG2_NOTABLE		bit2
-#define		EVFLAGS_NOTABLE		(bit2 << 8)
-#define		EVFLAGS_MONITORABLE	bit3
-#define		EVFLAGS_TODELETE	bit4
-#define		EVFLAGS_NEWSOUND	bit5
+#define		EVFLAG2_NOT			0x1
+#define		EVFLAG2_NOTABLE		0x2
+#define		EVFLAGS_NOTABLE		(0x2 << 8)
+#define		EVFLAGS_MONITORABLE	0x4
+#define		EVFLAGS_TODELETE	0x8
+#define		EVFLAGS_NEWSOUND	0x10
 #define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
 
 // MACRO: Returns the code for an extension
@@ -1262,10 +837,10 @@ struct expression {
 //typedef	expression *	PEXP;
 
 #define		CMPOPE_EQU				(0)
-#define		CMPOPE_DIF				(bit1)
-#define		CMPOPE_LOWEQU			(bit2)
+#define		CMPOPE_DIF				(0x1)
+#define		CMPOPE_LOWEQU			(0x2)
 #define		CMPOPE_LOW				(CMPOPE_LOWEQU+CMPOPE_DIF)
-#define		CMPOPE_GREEQU			(bit3)
+#define		CMPOPE_GREEQU			(0x4)
 #define		CMPOPE_GRE				(CMPOPE_GREEQU+CMPOPE_DIF)
 #define		MAX_CMPOPE				6
 #define		EXPNEXT(expPtr)			((expression *)((char *)expPtr+expPtr->expSize))
@@ -1273,9 +848,9 @@ struct expression {
 // Expression return type. Originally EXPFLAG_*, expression flags.
 enum class ExpReturnType : short {
 	Integer = 0,
-	String = bit1,
+	String = 0x1,
 	// enum item originally named DOUBLE, but this is misleading; a float is returned.
-	Float = bit2,
+	Float = 0x2,
 	UnsignedInteger = Integer
 };
 
@@ -1323,21 +898,21 @@ struct expressionV1 {
 #define		EXPNEXTV1(expPtr)		((expressionV1 *)((char *)expPtr + expPtr->expSize))
 
 /*
-#define		Q_SPR	bit9
-#define		Q_TXT	bit10
-#define		Q_QST	bit11
-#define		Q_ARE	bit12
-#define		Q_CNT	bit13
-#define		Q_PLA	bit14
-#define		Q_GAM	bit15
-#define		Q_TIM	bit16
-#define		Q_COL	bit1
-#define		Q_ZNE	bit2
-#define		Q_MVT	bit3
-#define		Q_ANI	bit4
-#define		Q_OBJ	bit5
-#define		Q_KEY	bit6
-#define		Q_SYS	bit7
+#define		Q_SPR	0x100
+#define		Q_TXT	0x200
+#define		Q_QST	0x400
+#define		Q_ARE	0x800
+#define		Q_CNT	0x1000
+#define		Q_PLA	0x2000
+#define		Q_GAM	0x4000
+#define		Q_TIM	0x8000
+#define		Q_COL	0x1
+#define		Q_ZNE	0x2
+#define		Q_MVT	0x4
+#define		Q_ANI	0x8
+#define		Q_OBJ	0x10
+#define		Q_KEY	0x20
+#define		Q_SYS	0x40
 */
 
 // Information structure
@@ -1395,62 +970,70 @@ enum class OBJ {
 typedef unsigned int uint;
 enum class OEFLAGS : uint {
 	NONE					= 0,
-	DISPLAY_IN_FRONT		= bit1,		// Active object/window control
-	BACKGROUND				= bit2,		// Background
-	BACK_SAVE				= bit3,		// No effect in HWA
-	RUN_BEFORE_FADE_IN		= bit4,
-	MOVEMENTS				= bit5,
-	ANIMATIONS				= bit6,
-	TAB_STOP				= bit7,
-	WINDOW_PROC				= bit8,		// Needs to receive window process messages (i.e. app was minimized)
-	VALUES					= bit9,		// Has alterable values/strings (will automatically create the associated a/c/e/p)
-	SPRITES					= bit10,
-	INTERNAL_BACK_SAVE		= bit11,	// No effect in HWA
-	SCROLLING_INDEPENDENT	= bit12,
-	QUICK_DISPLAY			= bit13,	// No effect in HWA
-	NEVER_KILL				= bit14,	// Never destroy object if too far from frame
-	NEVER_SLEEP				= bit15,
-	MANUAL_SLEEP			= bit16,
+	DISPLAY_IN_FRONT		= 0x1,		// Active object/window control
+	BACKGROUND				= 0x2,		// Background
+	BACK_SAVE				= 0x4,		// No effect in HWA
+	RUN_BEFORE_FADE_IN		= 0x8,
+	MOVEMENTS				= 0x10,
+	ANIMATIONS				= 0x20,
+	TAB_STOP				= 0x40,
+	WINDOW_PROC				= 0x80,		// Needs to receive window process messages (i.e. app was minimized)
+	VALUES					= 0x100,		// Has alterable values/strings (will automatically create the associated a/c/e/p)
+	SPRITES					= 0x200,
+	INTERNAL_BACK_SAVE		= 0x400,	// No effect in HWA
+	SCROLLING_INDEPENDENT	= 0x800,
+	QUICK_DISPLAY			= 0x1000,	// No effect in HWA
+	NEVER_KILL				= 0x2000,	// Never destroy object if too far from frame
+	NEVER_SLEEP				= 0x4000,
+	MANUAL_SLEEP			= 0x8000,
 	TEXT					= 0x10000,
 	DONT_CREATE_AT_START	= 0x20000,
+	// CF2.5 only
+	FAKE_SPRITE				= 0x40000,
+	// CF2.5 only
+	FAKE_COLLISIONS			= 0x80000,
 };
-fancyenumop(OEFLAGS);
+enum_class_is_a_bitmask(OEFLAGS);
 
 // Flags modifiable by the program
 enum class OEPREFS : short {
 	NONE					= 0,
-	BACK_SAVE				= bit1,		// No effect in HWA
-	SCROLLING_INDEPENDENT	= bit2,
-	QUICK_DISPLAY			= bit3,		// No effect in HWA
-	SLEEP					= bit4,
-	LOAD_ON_CALL			= bit5,
-	GLOBAL					= bit6,
-	BACK_EFFECTS			= bit7,
-	KILL					= bit8,
-	INK_EFFECTS				= bit9,
-	TRANSITIONS				= bit10,
-	FINE_COLLISIONS			= bit11,
-	APPLET_PROBLEMS			= bit12,
+	BACK_SAVE				= 0x1,		// No effect in HWA
+	SCROLLING_INDEPENDENT	= 0x2,
+	QUICK_DISPLAY			= 0x4,		// No effect in HWA
+	SLEEP					= 0x8,
+	LOAD_ON_CALL			= 0x10,
+	GLOBAL					= 0x20,
+	BACK_EFFECTS			= 0x40,
+	KILL					= 0x80,
+	INK_EFFECTS				= 0x100,
+	TRANSITIONS				= 0x200,
+	FINE_COLLISIONS			= 0x400,
+	APPLET_PROBLEMS			= 0x800,
 };
-fancyenumop(OEPREFS);
+enum_class_is_a_bitmask(OEPREFS);
 
 // Running flags
 enum class REFLAG : short {
+	// OK; if used in Handle(), then indicates to call Handle next tick
 	NONE = 0,
-	ONE_SHOT = bit1,
-	DISPLAY = bit2,
-	MSG_HANDLED = bit3,
-	MSG_CATCHED = bit4,
-	MSG_DEF_PROC = bit5,
+	// Don't call Handle next tick
+	ONE_SHOT = 0x1,
+	// Call Display after this
+	DISPLAY = 0x2,
+	// WndProc responses
+	MSG_HANDLED = 0x4,
+	MSG_CATCHED = 0x8,
+	MSG_DEF_PROC = 0x10,
 	// ?
-	MSGRETURNVALUE = bit7,
+	MSGRETURNVALUE = 0x40,
 };
 
 enum class CPF {
-	DIRECTION = bit1,
-	ACTION = bit2,
-	INITIALDIR = bit3,
-	DEFAULTDIR = bit4
+	DIRECTION = 0x1,
+	ACTION = 0x2,
+	INITIALDIR = 0x4,
+	DEFAULTDIR = 0x8
 };
 
 ///////////////////////////////////////////////////////////////////////
@@ -1544,10 +1127,10 @@ struct ParamTime {
 struct ParamBorder {
 	short BorderType;
 	enum BorderFlags {
-		LEFT	= bit1,
-		RIGHT	= bit2,
-		TOP		= bit3,
-		BOTTOM	= bit4,
+		LEFT	= 0x1,
+		RIGHT	= 0x2,
+		TOP		= 0x4,
+		BOTTOM	= 0x8,
 	};
 };
 struct ParamDir {
@@ -1562,10 +1145,12 @@ struct ParamSound {
 			Flags;
 	TCHAR	name[64]; // Max sound name
 	enum SoundFlags {
-		UNINTERRUPTABLE = bit1,
-		BAD = bit2,
-		IPHONE_AUDIOPLAYER = bit3,
-		IPHONE_OPENAL = bit4
+		UNINTERRUPTABLE = 0x1,
+		BAD = 0x2,
+		// CF2.5 and above only
+		IPHONE_AUDIOPLAYER = 0x4,
+		// CF2.5 and above only
+		IPHONE_OPENAL = 0x8
 	};
 };
 struct ParamPosition {
@@ -1656,8 +1241,8 @@ struct ParamProgram {
 			Command[108];		// Command line
 
 	enum Masks {
-		Wait = bit1,
-		Hide = bit2,
+		Wait = 0x1,
+		Hide = 0x2,
 	};
 };
 struct ParamCondSound {
@@ -1681,15 +1266,15 @@ struct ParamGroup {
 					Password[16];	// Protection (max 16? chars)
 	unsigned long	Checksum;		// Checksum
 	enum Masks {
-		INACTIVE		= bit1,
-		CLOSED			= bit2,
-		PARENT_INACTIVE	= bit3,
-		GROUP_INACTIVE	= bit4,
-		GLOBAL			= bit5,
+		INACTIVE		= 0x1,
+		CLOSED			= 0x2,
+		PARENT_INACTIVE	= 0x4,
+		GROUP_INACTIVE	= 0x8,
+		GLOBAL			= 0x10,
 		/* Old flags
-		FADE_IN			= bit3,
-		FADE_OUT		= bit4,
-		UNICODE_		= bit5,*/
+		FADE_IN			= 0x4,
+		FADE_OUT		= 0x8,
+		UNICODE_		= 0x10,*/
 	};
 };
 #define GETEVPGRP(evpPtr) (paramGroup *)&evpPtr->evp.evp0
@@ -1752,8 +1337,8 @@ struct ParamMvt {
 struct ParamProgram2 {
 	short	Flags; // Default flags
 	enum Masks {
-		Wait = bit1,
-		Hide = bit2,
+		Wait = 0x1,
+		Hide = 0x2,
 	};
 };
 struct ParamEffect {
@@ -1774,7 +1359,7 @@ struct FastLoop
 	unsigned short	Flags;
 	long			Index;
 	enum Masks {
-		Stop = bit1,
+		Stop = 0x1,
 	};
 };
 //typedef	FastLoop *	LPFL;
@@ -1810,7 +1395,7 @@ enum class DBTYPE
 enum
 {
 	DB_END = 0xFFFF,
-	DB_PARENT = bit16
+	DB_PARENT = 0x8000
 };
 #define DB_EDITABLE		0x80
 
@@ -1948,10 +1533,10 @@ struct runHeader2 {
 
 
 // Flags pour rh3Scrolling
-#define RH3SCROLLING_SCROLL					bit1
-#define RH3SCROLLING_REDRAWLAYERS			bit2
-#define RH3SCROLLING_REDRAWALL				bit3
-#define RH3SCROLLING_REDRAWTOTALCOLMASK		bit4
+#define RH3SCROLLING_SCROLL					0x1
+#define RH3SCROLLING_REDRAWLAYERS			0x2
+#define RH3SCROLLING_REDRAWALL				0x4
+#define RH3SCROLLING_REDRAWTOTALCOLMASK		0x8
 
 #define	GAME_XBORDER		480
 #define	GAME_YBORDER		300
@@ -2062,7 +1647,7 @@ typedef void (* CALLCOLLISIONS) (HeaderObject *);
 typedef BOOL (* CALLTESTPOSITION) (HeaderObject *, int x, int y, int htFoot, int planCol, BOOL flag);
 #define callTestPosition(hoPtr, x, y, htFoot, planCol) ( (hoPtr->hoAdRunHeader)->rh4.rh4TestPosition(hoPtr, x, y, htFoot, planCol, 0) )
 
-typedef unsigned char (* CALLGETJOYSTICK) (HeaderObject *, int);
+typedef std::uint8_t (* CALLGETJOYSTICK) (HeaderObject *, int);
 #define callGetJoystick(hoPtr, player) ( (hoPtr->hoAdRunHeader)->rh4.rh4Joystick(hoPtr, player) )
 
 typedef BOOL (* CALLCOLMASKTESTRECT) (HeaderObject *, int x, int y , int sx, int sy, int nLayer, int plan);
@@ -2071,7 +1656,7 @@ typedef BOOL (* CALLCOLMASKTESTRECT) (HeaderObject *, int x, int y , int sx, int
 typedef BOOL (* CALLCOLMASKTESTPOINT) (HeaderObject *, int x, int y, int nLayer, int plan);
 #define callColMaskTestPoint(hoPtr, x, y, nLayer, plan) ( (hoPtr->hoAdRunHeader)->rh4.rh4ColMaskTestPoint(hoPtr, x, y, nLayer, plan) )
 
-struct runHeader4 {
+struct RunHeader4 {
 
 	kpj *			rh4KpxJumps;				// Jump table offset
 	short			rh4KpxNumOfWindowProcs,		// Number of routines to call
@@ -2086,121 +1671,133 @@ struct runHeader4 {
 	// Move object
 	BOOL (* MoveIt)(HeaderObject  *);
 	// Approach object
-	BOOL (* rh4ApproachObject)(HeaderObject *, int destX, int destY, int maxX, int maxY, int htFoot, int planCol, int& x, int &y);
+	BOOL (* ApproachObject)(HeaderObject *, int destX, int destY, int maxX, int maxY, int htFoot, int planCol, int& x, int &y);
 	// ?
-	void (* rh4Collisions)(HeaderObject  *);
+	void (* Collisions)(HeaderObject  *);
 	// ?
-	void (* rh4TestPosition)(HeaderObject  *);
+	void (* TestPosition)(HeaderObject  *);
 	// ?
-	unsigned char (* rh4GetJoystick)(HeaderObject  *, int);
+	std::uint8_t (* GetJoystick)(HeaderObject  *, int);
 	// ?
-	BOOL (* rh4ColMaskTestRect)(HeaderObject *, int x, int y , int sx, int sy, int nLayer, int plan);
+	BOOL (* ColMaskTestRect)(HeaderObject *, int x, int y , int sx, int sy, int nLayer, int plan);
 	// ?
-	BOOL (* rh4ColMaskTestPoint)(HeaderObject *, int x, int y, int nLayer, int plan);
+	BOOL (* ColMaskTestPoint)(HeaderObject *, int x, int y, int nLayer, int plan);
 
-	unsigned long		rh4SaveVersion;
-	event2 *			rh4ActionStart;			// Save the current action
-	int					rh4PauseKey;
-	TCHAR *				rh4CurrentFastLoop;
-	int					rh4EndOfPause;
-	int		  			rh4EventCountOR;		// Number of the event for OR conditions
-	short				rh4ConditionsFalse,
-						rh4MouseWheelDelta;
-	int					rh4OnMouseWheel;
-	TCHAR *				rh4PSaveFilename;
-	unsigned int		rh4MusicHandle;
-	unsigned long		rh4MusicFlags,
-						rh4MusicLoops;
-	int					rh4LoadCount;
-	short				rh4DemoMode,
-						rh4SaveFrame;
-	CDemoRecord *		rh4Demo;
-	int					rh4SaveFrameCount;
-	double				rh4MvtTimerCoef;
-	CIPhoneJoystick *	rh4IPhoneJoystick;
-	CIPhoneAd *			rh4IPhoneAd;
-	char				rh4QuitString[32];		// Free, unknown usage
+	std::uint32_t		SaveVersion;
+	event2 *			ActionStart;			// Save the current action
+	int					PauseKey;
+	TCHAR *				CurrentFastLoop;
+	std::int32_t		EndOfPause;
+	std::int32_t		EventCountOR;		// Number of the event for OR conditions
+	std::int16_t		ConditionsFalse,
+						MouseWheelDelta;
+	std::int32_t		OnMouseWheel;
+	TCHAR *				PSaveFilename;
+	std::uint32_t		musicHandle;
+	unsigned int 		musicFlags,
+						musicLoops;
+	int					loadCount;
+	short				demoMode,
+						saveFrame;
+	CDemoRecord *		demo;
+	int					saveFrameCount;
+	double				mvtTimerCoef;
 
-	unsigned long		rh4PickFlags0,			// 00-31
-						rh4PickFlags1,			// 31-63
-						rh4PickFlags2,			// 64-95
-						rh4PickFlags3,			// 96-127
-				  *		rh4TimerEventsBase;		// Timer events base
+	CIPhoneJoystick *	iPhoneJoystick;
+	CIPhoneAd *			iPhoneAd;
+	void *				box2DBase;
+	short				box2DSearched;
+	void *				forEachs;
+	void *				currentForEach;
+	void *				currentForEach2;
+	void *				timerEvents;
+	void *				posOnLoop;
+	short				complexOnLoop;
+	char				rh4QuitString[4];
 
-	short				rh4DroppedFlag,
-						rh4NDroppedFiles;
-	TCHAR *				rh4DroppedFiles;
-	FastLoop *			rh4FastLoops;
-	TCHAR *				rh4CreationErrorMessages;
-	CValue				rh4ExpValue1,				// New V2
-						rh4ExpValue2;
 
-	long				rh4KpxReturn;				// WindowProc return
-	objectsList *		rh4ObjectCurCreate;
-	short				rh4ObjectAddCreate;
-	unsigned short		rh4Free10;					// For step through : fake key pressed
-	HINSTANCE			rh4Instance;				// Application instance
-	HWND				rh4HStopWindow;				// STOP window handle
-	char				rh4DoUpdate,				// Flag for screen update on first loop
-						rh4MenuEaten;				// Menu handled in an event?
-	short				rh4Free2;
-	int					rh4OnCloseCount;			// For OnClose event
-	short				rh4CursorCount,				// Mouse counter
-						rh4ScrMode;					// Current screen mode
-	HPALETTE			rh4HPalette;				// Handle current palette
-	int 				rh4VBLDelta;				// Number of VBL
-	unsigned long		rh4LoopTheoric,				// Theorical VBL counter
-						rh4EventCount;
-	drawRoutine *		rh4FirstBackDrawRoutine,	// Backrgound draw routines list
-				*		rh4LastBackDrawRoutine;		// Last routine used
+	std::int8_t			quitString[4];		// Free, unknown usage
 
-	unsigned long		rh4ObjectList;				// Object list offset
-	short				rh4LastQuickDisplay;		// Quick - display list
-	unsigned char		rh4CheckDoneInstart,		// Correct start of frame with fade in
-						rh4Free0;					// Ignore - padding
-	mv *				rh4Mv;						// Yves' data
-	HCURSOR				rh4OldCursor;				// Old cursor for Show / HideMouse in Vitalize! mode
-	HeaderObject  *		rh4_2ndObject;	 			// Collision object address
-	short 				rh4_2ndObjectNumber,		// Number for collisions
-						rh4FirstQuickDisplay;		// Quick-display object list
-	int					rh4WindowDeltaX,			// For scrolling
-						rh4WindowDeltaY;
-	unsigned int		rh4TimeOut;					// For time-out
-	int					rh4MouseXCenter,			// To correct CROSOFT bugs
-						rh4MouseYCenter,			// To correct CROSOFT bugs
-						rh4TabCounter;				// Objects with tabulation
+	std::uint32_t		pickFlags0,			// 00-31
+						pickFlags1,			// 31-63
+						pickFlags2,			// 64-95
+						pickFlags3;			// 96-127
+	std::uint32_t *		timerEventsBase;		// Timer events base
 
-	unsigned long		rh4AtomNum,					// For child window handling
-						rh4AtomRd,
-						rh4AtomProc;
-	short				rh4SubProcCounter,			// To accelerate the windows
-						rh4Free3;
+	std::int16_t		droppedFlag,
+						nDroppedFiles;
+	TCHAR *				droppedFiles;
+	FastLoop *			fastLoops;
+	TCHAR *				creationErrorMessages;
+	CValue				expValue1,				// New V2
+						expValue2;
 
-	int					rh4PosPile;								// Expression evaluation pile position
-	expression *		rh4ExpToken;							// Current position in expressions
-	CValue *			rh4Results[MAX_INTERMEDIATERESULTS];	// Result pile
-	long				rh4Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
+	std::int32_t		kpxReturn;				// WindowProc return
+	objectsList *		objectCurCreate;
+	short				objectAddCreate;
+	unsigned short		free10;					// For step through : fake key pressed
+	HINSTANCE			instance;				// Application instance
+	HWND				hStopWindow;			// STOP window handle
+	char				doUpdate,				// Flag for screen update on first loop
+						menuEaten;				// Menu handled in an event?
+	short				free2;
+	int					onCloseCount;			// For OnClose event
+	short				cursorCount,			// Mouse counter
+						scrMode;				// Current screen mode
+	HPALETTE			hPalette;				// Handle current palette
+	int 				vblDelta;				// Number of VBL
+	std::uint32_t		loopTheoric,			// Theorical VBL counter
+						eventCount;
+	drawRoutine *		FirstBackDrawRoutine,	// Backrgound draw routines list
+				*		LastBackDrawRoutine;	// Last routine used
 
-	TCHAR **			rh4PTempStrings;		// Debut zone 256 long
-	int					rh4MaxTempStrings;
-	long				rh4Free4[256-2];		// Free buffer
+	unsigned long		ObjectList;				// Object list offset
+	short				LastQuickDisplay;		// Quick - display list
+	unsigned char		CheckDoneInstart,		// Correct start of frame with fade in
+						Free0;					// Ignore - padding
+	mv *				rh4Mv;					// Yves' data
+	HCURSOR				OldCursor;				// Old cursor for Show / HideMouse in Vitalize! mode
+	HeaderObject  *		_2ndObject;	 			// Collision object address
+	short 				_2ndObjectNumber,		// Number for collisions
+						FirstQuickDisplay;		// Quick-display object list
+	int					WindowDeltaX,			// For scrolling
+						WindowDeltaY;
+	unsigned int		TimeOut;				// For time-out
+	int					MouseXCenter,			// To correct CROSOFT bugs
+						MouseYCenter,			// To correct CROSOFT bugs
+						TabCounter;				// Objects with tabulation
 
-	int					rh4NCurTempString;					// Pointer on the current string
-	unsigned long		rh4FrameRateArray[MAX_FRAMERATE];	// Framerate calculation buffer
-	int					rh4FrameRatePos;					// Position in buffer
-	unsigned long		rh4FrameRatePrevious;				// Previous time
+	unsigned long		AtomNum,				// For child window handling
+						AtomRd,
+						AtomProc;
+	short				SubProcCounter,			// To accelerate the windows
+						Free3;
+
+	int					PosPile;								// Expression evaluation pile position
+	expression *		ExpToken;							// Current position in expressions
+	CValue *			Results[MAX_INTERMEDIATERESULTS];	// Result pile
+	long				Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
+
+	TCHAR **			PTempStrings;		// Debut zone 256 long
+	int					MaxTempStrings;
+	long				Free4[256-2];		// Free buffer
+
+	int					NCurTempString;					// Pointer on the current string
+	unsigned long		FrameRateArray[MAX_FRAMERATE];	// Framerate calculation buffer
+	int					FrameRatePos;					// Position in buffer
+	unsigned long		FrameRatePrevious;				// Previous time
 };
 
 enum class GAMEFLAGS {
-	VBLINDEP = bit2,
-	LIMITED_SCROLL = bit3,
-	FIRST_LOOP_FADE_IN = bit5,
-	LOAD_ON_CALL = bit6,
-	REAL_GAME = bit7,
-	PLAY = bit8,
-	//FADE_IN = bit8,
-	//FADE_OUT = bit9,
-	INITIALISING = bit10,
+	VBLINDEP = 0x2,
+	LIMITED_SCROLL = 0x4,
+	FIRST_LOOP_FADE_IN = 0x10,
+	LOAD_ON_CALL = 0x20,
+	REAL_GAME = 0x40,
+	PLAY = 0x80,
+	//FADE_IN = 0x80,
+	//FADE_OUT = 0x100,
+	INITIALISING = 0x200,
 };
 
 struct RunHeader {
@@ -2268,8 +1865,8 @@ struct RunHeader {
 						MT_VBLCount;
 	unsigned int		MT_MoveStep;
 
-	int					LoopCount;			// Number of loops since start of level
-	unsigned int		Timer,				// Timer in 1/50 since start of level
+	int					LoopCount;			// Number of loops (FPS) since start of level (including Before Frame Transition?)
+	unsigned int		Timer,				// Timer in 1/1000 since start of level
 						TimerOld,			// For delta calculation
 						TimerDelta;			// For delta calculation again
 
@@ -2290,7 +1887,7 @@ struct RunHeader {
 
 	runHeader2			rh2;				// Sub-structure #1
 	runHeader3			rh3;				// Sub-structure #2
-	runHeader4			rh4;				// Sub-structure #3
+	RunHeader4			rh4;				// Sub-structure #3
 
 	unsigned long *		DestroyList;		// Destroy list address
 
@@ -2316,18 +1913,18 @@ struct RunHeader {
 
 #define HOX_INT
 
-enum class HeaderObjectFlags : ushort {
-	Destroyed = bit1,
-	TrueEvent = bit2,
-	RealSprite = bit3,
-	FadeIn = bit4,
-	FadeOut = bit5,
-	OwnerDraw = bit6,
-	NoCollision = bit14,
-	Float = bit15,
-	String = bit16
+enum class HeaderObjectFlags : std::uint16_t {
+	Destroyed = 0x1,
+	TrueEvent = 0x2,
+	RealSprite = 0x4,
+	FadeIn = 0x8,
+	FadeOut = 0x10,
+	OwnerDraw = 0x20,
+	NoCollision = 0x2000,
+	Float = 0x4000,
+	String = 0x8000
 };
-fancyenumop(HeaderObjectFlags);
+enum_class_is_a_bitmask(HeaderObjectFlags);
 
 struct HeaderObject {
 	short  				Number,			// Number of the object
@@ -2564,16 +2161,16 @@ struct rAni {
 // ----------------------------------------
 // Sprite display structure
 // ----------------------------------------
-enum class RSFLAG : ushort {
-	HIDDEN = bit1,
-	INACTIVE = bit2,
-	SLEEPING = bit3,
-	SCALE_RESAMPLE = bit4,
-	ROTATE_ANTIA = bit5,
-	VISIBLE = bit6,
-	CREATED_EFFECT = bit7
+enum class RSFLAG : std::uint16_t {
+	HIDDEN = 0x1,
+	INACTIVE = 0x2,
+	SLEEPING = 0x4,
+	SCALE_RESAMPLE = 0x8,
+	ROTATE_ANTIA = 0x10,
+	VISIBLE = 0x20,
+	CREATED_EFFECT = 0x40
 };
-fancyenumop(RSFLAG);
+enum_class_is_a_bitmask(RSFLAG);
 struct Sprite {
 	int	 			Flash,				// When flashing objects
 		 			FlashCount,
@@ -2687,9 +2284,9 @@ struct RunObject {
 //typedef RunObject *	FPRUNOBJECT;
 //typedef RunObject *	LPRUNOBJECT;
 
-#define	GOESINPLAYFIELD		bit1
-#define	GOESOUTPLAYFIELD	bit2
-#define	WRAP				bit3
+#define	GOESINPLAYFIELD		0x1
+#define	GOESOUTPLAYFIELD	0x2
+#define	WRAP				0x4
 
 
 
@@ -2766,17 +2363,17 @@ struct rs {
 //
 
 // Object Info Load Flags
-enum class OILFlags : ushort
+enum class OILFlags : std::uint16_t
 {
-	OC_LOADED = bit1,			//
-	ELT_LOADED = bit2,			//
-	TO_LOAD = bit3,				//
-	TO_DELETE = bit4,			//
-	CUR_FRAME = bit5,			//
-	TO_RELOAD = bit6,			// Reload images when frame change
-	IGNORE_LOAD_ON_CALL = bit7,	// Ignore load on call option
+	OC_LOADED = 0x1,			//
+	ELT_LOADED = 0x2,			//
+	TO_LOAD = 0x4,				//
+	TO_DELETE = 0x8,			//
+	CUR_FRAME = 0x10,			//
+	TO_RELOAD = 0x20,			// Reload images when frame change
+	IGNORE_LOAD_ON_CALL = 0x40,	// Ignore load on call option
 };
-fancyenumop(OILFlags);
+enum_class_is_a_bitmask(OILFlags);
 
 // OILIST Structure : Data concerning the objects in the game
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2822,13 +2419,13 @@ struct objInfoList {
 //typedef	objInfoList	*	objInfoList *;
 
 #define	OILIMITFLAGS_BORDERS		0x000F
-#define	OILIMITFLAGS_BACKDROPS		bit5
-#define	OILIMITFLAGS_ONCOLLIDE		bit8	// used by HWA
-#define	OILIMITFLAGS_QUICKCOL		bit9
-#define	OILIMITFLAGS_QUICKBACK		bit10
-#define	OILIMITFLAGS_QUICKBORDER	bit11
-#define	OILIMITFLAGS_QUICKSPR		bit12
-#define	OILIMITFLAGS_QUICKEXT		bit13
+#define	OILIMITFLAGS_BACKDROPS		0x10
+#define	OILIMITFLAGS_ONCOLLIDE		0x80	// used by HWA
+#define	OILIMITFLAGS_QUICKCOL		0x100
+#define	OILIMITFLAGS_QUICKBACK		0x200
+#define	OILIMITFLAGS_QUICKBORDER	0x400
+#define	OILIMITFLAGS_QUICKSPR		0x800
+#define	OILIMITFLAGS_QUICKEXT		0x1000
 #define	OILIMITFLAGS_ALL			0xFFFF
 
 // Object creation structure
@@ -2848,9 +2445,9 @@ struct CreateObjectInfo {
 
 // Flags for Create Objects
 // -------------------------
-#define	COF_NOMOVEMENT		bit1
-#define	COF_HIDDEN			bit2
-#define	COF_FIRSTTEXT		bit3
+#define	COF_NOMOVEMENT		0x1
+#define	COF_HIDDEN			0x2
+#define	COF_FIRSTTEXT		0x4
 
 // Qualifier to oilist for machine langage
 // ---------------------------------------
@@ -2919,7 +2516,7 @@ struct kpj {
 	COLORREF 			(FusionAPI * GetRunObjectTextColor)		(HeaderObject *);
 	void				(FusionAPI * SetRunObjectTextColor)		(HeaderObject *, COLORREF);
 	short				(FusionAPI * GetRunObjectWindow)		(HeaderObject *);
-	sMask *				(FusionAPI * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
+	CollisionMask *		(FusionAPI * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
 	BOOL				(FusionAPI * SaveRunObject)				(HeaderObject *, HANDLE);
 	BOOL				(FusionAPI * LoadRunObject)				(HeaderObject *, HANDLE);
 	void				(FusionAPI * GetRunObjectMemoryUsage)	(HeaderObject *, int *, int *, int *);
@@ -3147,71 +2744,71 @@ struct PlayerCtrls {
 
 struct AppHeader {
 	unsigned int	size;					// Structure size
-	unsigned short	Flags,					// Flags
-					NewFlags,				// New flags
+	unsigned short	Flags,					// Flags (GA_XXX defines)
+					NewFlags,				// New flags (GANF_XXX defines)
 					Mode,					// Graphic mode
-					OtherFlags;				// Other Flags
+					OtherFlags;				// Other Flags (GAOF_XXX defines?)
 	short			XWinSize,				// Window x-size
 					YWinSize;				// Window y-size
 	unsigned int	ScoreInit,				// Initial score
 					LivesInit;				// Initial number of lives
 	PlayerCtrls		PlayerCtrls[4];			// Player controls
 	unsigned int	BorderColour,			// Border colour
-					NbFrames,				// Number of frames
-					FrameRate;				// Number of frames per second
+					NbFrames,				// Number of frames (taking into account pauses?)
+					FrameRate;				// Application FPS
 	unsigned char	MDIWindowMenu,			// Index of Window menu for MDI applications
 					Free[3];				// Padding to a multiple of 4 bytes
 };
 
 // gaFlags
-#define	GA_BORDERMAX				bit1
-#define	GA_NOHEADING				bit2
-#define	GA_PANIC					bit3
-#define	GA_SPEEDINDEPENDANT			bit4
-#define	GA_STRETCH					bit5
-#define	GA_LOADALLIMAGESATSTART		bit6
-#define	GA_LOADALLSOUNDSATSTART		bit7
-#define	GA_MENUHIDDEN				bit8
-#define	GA_MENUBAR					bit9
-#define	GA_MAXIMISE					bit10
-#define	GA_MIX						bit11
-#define	GA_FULLSCREENATSTART		bit12
-#define	GA_FULLSCREENSWITCH			bit13
-#define	GA_PROTECTED				bit14
-#define	GA_COPYRIGHT				bit15
-#define	GA_ONEFILE					bit16
-#define	GANF_SAMPLESOVERFRAMES		bit1
-#define	GANF_RELOCFILES				bit2
-#define	GANF_RUNFRAME				bit3
-#define	GANF_SAMPLESEVENIFNOTFOCUS	bit4
-#define	GANF_NOMINIMIZEBOX			bit5
-#define	GANF_NOMAXIMIZEBOX			bit6
-#define	GANF_NOTHICKFRAME			bit7
-#define	GANF_DONOTCENTERFRAME		bit8
-#define	GANF_SCREENSAVER_NOAUTOSTOP	bit9
-#define	GANF_DISABLE_CLOSE			bit10
-#define	GANF_HIDDENATSTART			bit11
-#define	GANF_XPVISUALTHEMESUPPORT	bit12
-#define	GANF_VSYNC					bit13
-#define	GANF_RUNWHENMINIMIZED		bit14
-#define	GANF_MDI					bit15
-#define	GANF_RUNWHILERESIZING		bit16
-#define	GAOF_DEBUGGERSHORTCUTS		bit1
-#define	GAOF_DDRAW					bit2
-#define	GAOF_DDRAWVRAM				bit3
-#define	GAOF_OBSOLETE				bit4
-#define	GAOF_AUTOIMGFLT				bit5
-#define	GAOF_AUTOSNDFLT				bit6
-#define	GAOF_ALLINONE				bit7
-#define	GAOF_SHOWDEBUGGER			bit8
-#define	GAOF_RESERVED_1				bit9
-#define	GAOF_RESERVED_2				bit10
-#define	GAOF_RESERVED_3				bit11
-#define	GAOF_RESERVED_4				bit12
-#define	GAOF_JAVASWING				bit13
-#define	GAOF_JAVAAPPLET				bit14
-#define	GAOF_D3D9					bit15
-#define	GAOF_D3D8					bit16
+#define	GA_BORDERMAX				0x1
+#define	GA_NOHEADING				0x2
+#define	GA_PANIC					0x4
+#define	GA_SPEEDINDEPENDANT			0x8
+#define	GA_STRETCH					0x10
+#define	GA_LOADALLIMAGESATSTART		0x20
+#define	GA_LOADALLSOUNDSATSTART		0x40
+#define	GA_MENUHIDDEN				0x80
+#define	GA_MENUBAR					0x100
+#define	GA_MAXIMISE					0x200
+#define	GA_MIX						0x400
+#define	GA_FULLSCREENATSTART		0x800
+#define	GA_FULLSCREENSWITCH			0x1000
+#define	GA_PROTECTED				0x2000
+#define	GA_COPYRIGHT				0x4000
+#define	GA_ONEFILE					0x8000
+#define	GANF_SAMPLESOVERFRAMES		0x1
+#define	GANF_RELOCFILES				0x2
+#define	GANF_RUNFRAME				0x4
+#define	GANF_SAMPLESEVENIFNOTFOCUS	0x8
+#define	GANF_NOMINIMIZEBOX			0x10
+#define	GANF_NOMAXIMIZEBOX			0x20
+#define	GANF_NOTHICKFRAME			0x40
+#define	GANF_DONOTCENTERFRAME		0x80
+#define	GANF_SCREENSAVER_NOAUTOSTOP	0x100
+#define	GANF_DISABLE_CLOSE			0x200
+#define	GANF_HIDDENATSTART			0x400
+#define	GANF_XPVISUALTHEMESUPPORT	0x800
+#define	GANF_VSYNC					0x1000
+#define	GANF_RUNWHENMINIMIZED		0x2000
+#define	GANF_MDI					0x4000
+#define	GANF_RUNWHILERESIZING		0x8000
+#define	GAOF_DEBUGGERSHORTCUTS		0x1
+#define	GAOF_DDRAW					0x2
+#define	GAOF_DDRAWVRAM				0x4
+#define	GAOF_OBSOLETE				0x8
+#define	GAOF_AUTOIMGFLT				0x10
+#define	GAOF_AUTOSNDFLT				0x20
+#define	GAOF_ALLINONE				0x40
+#define	GAOF_SHOWDEBUGGER			0x80
+#define	GAOF_RESERVED_1				0x100
+#define	GAOF_RESERVED_2				0x200
+#define	GAOF_RESERVED_3				0x400
+#define	GAOF_RESERVED_4				0x800
+#define	GAOF_JAVASWING				0x1000
+#define	GAOF_JAVAAPPLET				0x2000
+#define	GAOF_D3D9					0x4000
+#define	GAOF_D3D8					0x8000
 
 // Optional header
 struct AppHeader2 {
@@ -3226,20 +2823,20 @@ struct AppHeader2 {
 };
 
 enum class AH2OPT {
-	KEEPSCREENRATIO = bit1,
-	FRAMETRANSITION = bit2,		// (HWA only) a frame has a transition
-	RESAMPLESTRETCH = bit3,		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
-	GLOBALREFRESH = bit4,		// (Mobile) force global refresh
-	MULTITASK = bit5,			// (iPhone) Multitask
-	RTL = bit6,					// (Unicode) Right-to-left reading
-	STATUSLINE = bit7,			// (iPhone/Android) Display status line
-	RTLLAYOUT = bit8,			// (Unicode) Right-to-left layout
-	ENABLEIAD = bit9,			// (iPhone) Enable iAd
-	IADBOTTOM = bit10,			// (iPhone) Display ad at bottom
-	AUTOEND = bit11,			// (Android)
-	DISABLEBACKBUTTON = bit12,	// (Android) Disable Back button behavior
-	ANTIALIASED = bit13,		// (iPhone) Smooth resizing on bigger screens
-	CRASHREPORTING = bit14,		// (Android) Enable online crash reporting
+	KEEPSCREENRATIO = 0x1,
+	FRAMETRANSITION = 0x2,		// (HWA only) a frame has a transition
+	RESAMPLESTRETCH = 0x4,		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
+	GLOBALREFRESH = 0x8,		// (Mobile) force global refresh
+	MULTITASK = 0x10,			// (iPhone) Multitask
+	RTL = 0x20,					// (Unicode) Right-to-left reading
+	STATUSLINE = 0x40,			// (iPhone/Android) Display status line
+	RTLLAYOUT = 0x80,			// (Unicode) Right-to-left layout
+	ENABLEIAD = 0x100,			// (iPhone) Enable iAd
+	IADBOTTOM = 0x200,			// (iPhone) Display ad at bottom
+	AUTOEND = 0x400,			// (Android)
+	DISABLEBACKBUTTON = 0x800,	// (Android) Disable Back button behavior
+	ANTIALIASED = 0x1000,		// (iPhone) Smooth resizing on bigger screens
+	CRASHREPORTING = 0x2000,		// (Android) Enable online crash reporting
 };
 
 enum class SCREENORIENTATION {
@@ -3282,15 +2879,15 @@ enum class BUILDTYPE {
 };
 
 // Build flag values
-#define	BUILDFLAG_MAXCOMP			bit1
-#define BUILDFLAG_COMPSND			bit2
-#define BUILDFLAG_INCLUDEEXTFILES	bit3
-#define BUILDFLAG_MANUALIMGFILTERS	bit4
-#define BUILDFLAG_MANUALSNDFILTERS	bit5
-#define	BUILDFLAG_NOAUTOEXTRACT		bit6
-#define	BUILDFLAG_NOAPPLETCHECK		bit7
-#define	BUILDFLAG_TEST				bit8
-#define	BUILDFLAG_NOWARNINGS		bit9
+#define	BUILDFLAG_MAXCOMP			0x1
+#define BUILDFLAG_COMPSND			0x2
+#define BUILDFLAG_INCLUDEEXTFILES	0x4
+#define BUILDFLAG_MANUALIMGFILTERS	0x8
+#define BUILDFLAG_MANUALSNDFILTERS	0x10
+#define	BUILDFLAG_NOAUTOEXTRACT		0x20
+#define	BUILDFLAG_NOAPPLETCHECK		0x40
+#define	BUILDFLAG_TEST				0x80
+#define	BUILDFLAG_NOWARNINGS		0x100
 
 #endif // _H2INC
 
@@ -3342,34 +2939,34 @@ struct FrameHeader
 };
 
 // leFlags
-#define	LDISPLAYNAME		bit1
-#define	LGRABDESKTOP		bit2
-#define	LKEEPDISPLAY		bit3
-// #define LFADEIN			bit4
-// #define LFADEOUT			bit5
-#define	LTOTALCOLMASK		bit6
-#define	LPASSWORD			bit7
-#define	LRESIZEATSTART		bit9
-#define	LDONOTCENTER		bit10
-#define	LFORCE_LOADONCALL	bit11
-#define	LNOSURFACE			bit12
-#define	LRESERVED_1			bit13
-#define	LRESERVED_2			bit14
-#define	LRECORDDEMO			bit15
-#define	LTIMEDMVTS			bit16
+#define	LDISPLAYNAME		0x1
+#define	LGRABDESKTOP		0x2
+#define	LKEEPDISPLAY		0x4
+// #define LFADEIN			0x8
+// #define LFADEOUT			0x10
+#define	LTOTALCOLMASK		0x20
+#define	LPASSWORD			0x40
+#define	LRESIZEATSTART		0x100
+#define	LDONOTCENTER		0x200
+#define	LFORCE_LOADONCALL	0x400
+#define	LNOSURFACE			0x800
+#define	LRESERVED_1			0x1000
+#define	LRESERVED_2			0x2000
+#define	LRECORDDEMO			0x4000
+#define	LTIMEDMVTS			0x8000
 
 //////////////////////////////////////////////////////////////////////////////
 // Layers
 //
 
-#define FLOPT_XCOEF				bit1
-#define FLOPT_YCOEF				bit2
-#define FLOPT_NOSAVEBKD			bit3
-#define FLOPT_WRAP_OBSOLETE		bit4
-#define FLOPT_VISIBLE			bit5
-#define FLOPT_WRAP_HORZ			bit6
-#define FLOPT_WRAP_VERT			bit7
-#define FLOPT_PREVIOUSEFFECT	bit8
+#define FLOPT_XCOEF				0x1
+#define FLOPT_YCOEF				0x2
+#define FLOPT_NOSAVEBKD			0x4
+#define FLOPT_WRAP_OBSOLETE		0x8
+#define FLOPT_VISIBLE			0x10
+#define FLOPT_WRAP_HORZ			0x20
+#define FLOPT_WRAP_VERT			0x40
+#define FLOPT_PREVIOUSEFFECT	0x80
 #define FLOPT_REDRAW			0x010000
 #define FLOPT_TOHIDE			0x020000
 #define FLOPT_TOSHOW			0x040000
@@ -3441,12 +3038,12 @@ struct ObjInfoHeader
 // oiFlags (all OIF_* enum)
 enum class OIFlags : short
 {
-	LOAD_ON_CALL = bit1,
-	DISCARDABLE = bit2,
-	GLOBAL = bit3,
-	RESERVED_1 = bit4,
-	GLOBAL_EDITOR_NO_SYNC = bit5,
-	GLOBAL_EDITOR_FORCE_SYNC = bit6,
+	LOAD_ON_CALL = 0x1,
+	DISCARDABLE = 0x2,
+	GLOBAL = 0x4,
+	RESERVED_1 = 0x8,
+	GLOBAL_EDITOR_NO_SYNC = 0x10,
+	GLOBAL_EDITOR_FORCE_SYNC = 0x20,
 };
 
 
@@ -3529,8 +3126,8 @@ enum class FILLTYPE {
 };
 
 // Line flags
-#define	LININVX	bit1
-#define	LININVY	bit2
+#define	LININVX	0x1
+#define	LININVY	0x2
 
 #endif // _H2INC
 
@@ -3670,14 +3267,14 @@ typedef	txString	*	fpts;
 #define	sizeof_ts	8					// (sizeof(txString)-1)
 
 #define	TSF_LEFT		0x0000			// DT_LEFT
-#define	TSF_HCENTER		bit1			// DT_CENTER
-#define	TSF_RIGHT		bit2			// DT_RIGHT
-#define	TSF_VCENTER		bit3			// DT_VCENTER
+#define	TSF_HCENTER		0x1			// DT_CENTER
+#define	TSF_RIGHT		0x2			// DT_RIGHT
+#define	TSF_VCENTER		0x4			// DT_VCENTER
 #define	TSF_HALIGN		0x000F			// DT_LEFT | DT_RIGHT | DT_CENTER | DT_VCENTER | DT_BOTTOM
 
-#define	TSF_CORRECT		bit9
-#define	TSF_RELIEF		bit10
-#define TSF_RTL			bit11
+#define	TSF_CORRECT		0x100
+#define	TSF_RELIEF		0x200
+#define TSF_RTL			0x400
 
 ////////////////////////////////////////
 // Scores, lives, counters
@@ -3717,10 +3314,10 @@ enum class CTA {
 #define	CPTDISPFLAG_FLOATNDIGITS_SHIFT		4
 #define	CPTDISPFLAG_FLOATNDECIMALS			0xF000		// number of digits to display after the decimal point
 #define	CPTDISPFLAG_FLOATNDECIMALS_SHIFT	12
-#define	BARFLAG_INVERSE						bit9
-#define	CPTDISPFLAG_FLOAT_FORMAT			bit10		// 1 to use the specified numbers of digits, 0 to use standard display (%g)
-#define	CPTDISPFLAG_FLOAT_USENDECIMALS		bit11		// 1 to use the specified numbers of digits after the decimal point
-#define	CPTDISPFLAG_FLOAT_PADD				bit12		// 1 to left padd with zeros
+#define	BARFLAG_INVERSE						0x100
+#define	CPTDISPFLAG_FLOAT_FORMAT			0x200		// 1 to use the specified numbers of digits, 0 to use standard display (%g)
+#define	CPTDISPFLAG_FLOAT_USENDECIMALS		0x400		// 1 to use the specified numbers of digits after the decimal point
+#define	CPTDISPFLAG_FLOAT_PADD				0x800		// 1 to left padd with zeros
 
 // Counters images (0-9 for regular numbers)
 enum class COUNTER_IMAGE {
@@ -3748,9 +3345,9 @@ struct ocRTF {
 };
 //typedef ocRTF * LPOCRTF;
 
-//#define	RTFOPT_TRANSPARENT	bit1		// Transparent
-//#define	RTFOPT_VSLIDER		bit2		// Display vertical slider if necessary
-//#define	RTFOPT_HSLIDER		bit3		// Display horizontal slider if necessary
+//#define	RTFOPT_TRANSPARENT	0x1		// Transparent
+//#define	RTFOPT_VSLIDER		0x2		// Display vertical slider if necessary
+//#define	RTFOPT_HSLIDER		0x4		// Display horizontal slider if necessary
 
 #endif // _H2INC
 
@@ -3775,22 +3372,22 @@ struct ocCCA {
 //typedef ocCCA * LPOCCCA;
 
 // Options
-#define	CCAF_SHARE_GLOBALVALUES		bit1
-#define	CCAF_SHARE_LIVES			bit2
-#define	CCAF_SHARE_SCORES			bit3
-#define	CCAF_SHARE_WINATTRIB		bit4
-#define	CCAF_STRETCH				bit5
-#define	CCAF_POPUP					bit6
-#define CCAF_CAPTION				bit7
-#define CCAF_TOOLCAPTION			bit8
-#define CCAF_BORDER					bit9
-#define CCAF_WINRESIZE				bit10
-#define CCAF_SYSMENU				bit11
-#define CCAF_DISABLECLOSE			bit12
-#define CCAF_MODAL					bit13
-#define CCAF_DIALOGFRAME			bit14
-#define	CCAF_INTERNAL				bit15
-#define	CCAF_HIDEONCLOSE			bit16
+#define	CCAF_SHARE_GLOBALVALUES		0x1
+#define	CCAF_SHARE_LIVES			0x2
+#define	CCAF_SHARE_SCORES			0x4
+#define	CCAF_SHARE_WINATTRIB		0x8
+#define	CCAF_STRETCH				0x10
+#define	CCAF_POPUP					0x20
+#define CCAF_CAPTION				0x40
+#define CCAF_TOOLCAPTION			0x80
+#define CCAF_BORDER					0x100
+#define CCAF_WINRESIZE				0x200
+#define CCAF_SYSMENU				0x400
+#define CCAF_DISABLECLOSE			0x800
+#define CCAF_MODAL					0x1000
+#define CCAF_DIALOGFRAME			0x2000
+#define	CCAF_INTERNAL				0x4000
+#define	CCAF_HIDEONCLOSE			0x8000
 #define	CCAF_CUSTOMSIZE				0x00010000
 #define	CCAF_INTERNALABOUTBOX		0x00020000
 #define	CCAF_CLIPSIBLINGS			0x00040000
@@ -3835,21 +3432,21 @@ public:
 };
 typedef Transition_Data * LPTRANSITIONDATA;
 
-#define	TRFLAG_COLOR	bit1
-#define TRFLAG_UNICODE	bit2
+#define	TRFLAG_COLOR	0x1
+#define TRFLAG_UNICODE	0x2
 
 #endif // _H2INC
 
 // text alignment flags
-#define	TEXT_ALIGN_LEFT		bit1
-#define	TEXT_ALIGN_HCENTER	bit2
-#define	TEXT_ALIGN_RIGHT	bit3
-#define	TEXT_ALIGN_TOP		bit4
-#define	TEXT_ALIGN_VCENTER	bit5
-#define	TEXT_ALIGN_BOTTOM	bit6
+#define	TEXT_ALIGN_LEFT		0x1
+#define	TEXT_ALIGN_HCENTER	0x2
+#define	TEXT_ALIGN_RIGHT	0x4
+#define	TEXT_ALIGN_TOP		0x8
+#define	TEXT_ALIGN_VCENTER	0x10
+#define	TEXT_ALIGN_BOTTOM	0x20
 
 // Right-to-left ordering
-#define	TEXT_RTL			bit9
+#define	TEXT_RTL			0x100
 
 // text caps
 #define	TEXT_FONT			0x00010000
@@ -3869,8 +3466,8 @@ typedef Transition_Data * LPTRANSITIONDATA;
 #define	KNP_VERSION				0x300
 
 // Internet Versions
-#define	FIRST_NETVERSION		bit1		// First vitalize version
-#define	CCN_NETVERSION			bit2		// CCN applications
+#define	FIRST_NETVERSION		0x1		// First vitalize version
+#define	CCN_NETVERSION			0x2		// CCN applications
 #define	MORECOMP_NETVERSION		0x003		// Short OIs, compression of levObjs, adpcm sounds,
 #define	CNC_NETVERSION			0x003		// Current Internet Version
 
@@ -3911,8 +3508,8 @@ enum {
 #ifdef RUN_TIME
 
 // Preferences
-#define	PRMUSICON		bit15
-#define	PRSOUNDON		bit16
+#define	PRMUSICON		0x4000
+#define	PRSOUNDON		0x8000
 
 // Frame handles
 #define	HCELL			unsigned short
@@ -3939,10 +3536,10 @@ enum	{
 #define MMFVERSION_MASK		0xFFFF0000
 #define MMFBUILD_MASK		0x00000FFF		// MMF build
 #define MMFVERFLAG_MASK		0x0000F000
-#define MMFVERFLAG_HOME		bit16		// TGF
-#define MMFVERFLAG_PRO		bit15		// MMF Pro
-#define MMFVERFLAG_DEMO		bit14		// Demo
-#define MMFVERFLAG_PLUGIN	bit13		// Plugin
+#define MMFVERFLAG_HOME		0x8000		// TGF
+#define MMFVERFLAG_PRO		0x4000		// MMF Pro
+#define MMFVERFLAG_DEMO		0x2000		// Demo
+#define MMFVERFLAG_PLUGIN	0x1000		// Plugin
 #define MMFVERSION_15		0x01050000		// MMF 1.5
 #define MMFVERSION_20		0x02000000		// MMF 2.0
 #define CFVERSION_25		0x02050000		// CF 2.5
@@ -4017,53 +3614,13 @@ enum class MMF_BUILD {
 	#define MFA_CURRENTBUILD		MFA_BUILD_FIXQUALIF
 #endif
 
-// Structures for picture editor
-struct EditSurfaceParams {
-	unsigned int	size;			// sizeof(EditSurfaceParams)
-	TCHAR *			WindowTitle;	// Picture Editor title (NULL = default title)
-	cSurface *		Sf;				// Surface to edit
-	unsigned int	Options;		// Options, see PictEdDefs.h
-	unsigned int	FixedWidth;		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
-	unsigned int	FixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
-	POINT			hotSpot;		// Hot spot coordinates
-	POINT			actionPoint;	// Action point coordinates
-};
-//typedef EditSurfaceParamsA* LPEDITSURFACEPARAMSA;
-//typedef EditSurfaceParamsW* LPEDITSURFACEPARAMSW;
-
-struct EditImageParams {
-
-	unsigned int	size;			// sizeof(EditImageParams)
-	TCHAR *			WindowTitle;	// Picture Editor title (NULL = default title)
-	unsigned int	Image,			// Image to edit - note: only the LOWORD is used in this version
-					Options,		// Options, see PictEdDefs.h
-					FixedWidth,		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
-					FixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
-
-};
-//typedef EditImageParamsA* LPEDITIMAGEPARAMSA;
-//typedef EditImageParamsW* LPEDITIMAGEPARAMSW;
-
-// Structure for image list editor
-struct EditAnimationParams {
-
-	unsigned int	size;			// sizeof(EditAnimationParams)
-	TCHAR *			WindowTitle;	// Picture Editor title (NULL = default title)
-	int				NumberOfImages,	// Number of images in the list
-					MaxImages,		// Maximum number of images in the list
-					StartIndex;		// Index of first image to edit in the editor
-	unsigned int *	Images;			// Image list (one unsigned short per image)
-	TCHAR **		ImageTitles;	// Image titles (can be NULL)
-	unsigned int	Options,		// Options, see PictEdDefs.h
-					FixedWidth,		// Default width or fixed width (if PICTEDOPT_FIXEDIMGSIZE is used)
-					FixedHeight;	// Default height or fixed height (if PICTEDOPT_FIXEDIMGSIZE is used)
-
-};
-
+struct EditSurfaceParams;
+struct EditImageParams;
+struct EditAnimationParams;
 
 // Global variables structure
 struct mv {
-
+	
 	// Common to editor and runtime
 	HINSTANCE			HInst;				// Application HINSTANCE
 	void *				IdAppli;			// Application object in DLL
@@ -4073,7 +3630,7 @@ struct mv {
 						HEditWin;			// Child window handle
 	HPALETTE			HPal256;			// 256 color palette
 	unsigned short		AppMode,			// Screen mode with flags
-						ScrMode;			// Screen mode
+						ScrMode;			// Screen mode (SM_8=256, SM_15=32768, SM_16=65536, SM_32=16 million colors)
 	unsigned int		EditDXDocToClient,	// Edit time only: top-left coordinates
 						EditDYDocToClient;
 	CImageFilterMgr *	ImgFilterMgr;		// Image filter manager
@@ -4119,8 +3676,8 @@ struct mv {
 	BOOL (CALLBACK * GetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
 
 	// Editor: Edit images and animations
-	BOOL (CALLBACK * EditSurfaceA) (void * edPtr, EditImageParams pParams, HWND hParent);
-	BOOL (CALLBACK * EditImageA) (void * edPtr, EditImageParams pParams, HWND hParent);
+	BOOL (CALLBACK * EditSurfaceA) (void * edPtr, EditImageParams * pParams, HWND hParent);
+	BOOL (CALLBACK * EditImageA) (void * edPtr, EditImageParams * pParams, HWND hParent);
 	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParams * pParams, HWND hParent);
 
 	// Runtime: Extension User data
@@ -4218,122 +3775,129 @@ struct CreateImageFromFileInfo {
 	COLORREF	trspColor;
 };
 
-
+#if EditorBuild
 // Callback function macros for mvCallFunction
-__inline void mvInsertProps(mv * mV, EDITDATA * edPtr, PropData* pProperties, unsigned int nInsertPropID, BOOL bAfter) \
+inline void mvInsertProps(mv * mV, EDITDATA * edPtr, PropData* pProperties, unsigned int nInsertPropID, BOOL bAfter) \
 	{ if (!pProperties) return; mV->CallFunction(edPtr, CallFunctionIDs::INSERTPROPS, (LPARAM)pProperties, (LPARAM)nInsertPropID, (LPARAM)bAfter); }
 
-__inline void mvRemoveProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline void mvRemoveProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::REMOVEPROP, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvRemoveProps(mv * mV, EDITDATA * edPtr, PropData* pProperties) \
+inline void mvRemoveProps(mv * mV, EDITDATA * edPtr, PropData* pProperties) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::REMOVEPROPS, (LPARAM)pProperties, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvRefreshProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOOL bReInit) \
+inline void mvRefreshProp(mv * mV, EDITDATA * edPtr, unsigned int nPropID, BOOL bReInit) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::REFRESHPROP, (LPARAM)nPropID, (LPARAM)bReInit, (LPARAM)0); }
 
-__inline void * mvReAllocEditData(mv * mV, EDITDATA * edPtr, unsigned int dwNewSize) \
+inline void * mvReAllocEditData(mv * mV, EDITDATA * edPtr, unsigned int dwNewSize) \
 	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::REALLOCEDITDATA, (LPARAM)edPtr, dwNewSize, 0); }
 
-__inline Prop * mvGetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+
+inline Prop * mvGetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline Prop * mvGetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline Prop * mvGetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline Prop * mvGetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline Prop * mvGetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (Prop *)mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvSetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
+inline void mvSetPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
-__inline void mvSetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
+inline void mvSetAppPropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETAPPPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
-__inline void mvSetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
+inline void mvSetFramePropValue(mv * mV, EDITDATA * edPtr, unsigned int nPropID, Prop * pValue) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPVALUE, (LPARAM)nPropID, (LPARAM)pValue, (LPARAM)0); }
 
-__inline unsigned int mvGetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline unsigned int mvGetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline unsigned int mvGetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline unsigned int mvGetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline unsigned int mvGetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
+inline unsigned int mvGetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID) \
 	{ return (unsigned int)mV->CallFunction(edPtr, CallFunctionIDs::GETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvSetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
-__inline void mvSetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetAppPropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETAPPPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
-__inline void mvSetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
+inline void mvSetFramePropCheck(mv * mV, EDITDATA * edPtr, unsigned int nPropID, unsigned int nCheck) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::SETFRAMEPROPCHECK, (LPARAM)nPropID, (LPARAM)nCheck, (LPARAM)0); }
 
 // Forces a redraw of the object in the frame editor and updates its icon
-__inline void mvInvalidateObject(mv * mV, EDITDATA * edPtr) \
+inline void mvInvalidateObject(mv * mV, EDITDATA * edPtr) \
 	{ mV->CallFunction(edPtr, CallFunctionIDs::INVALIDATEOBJECT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline void * mvMalloc(mv * mV, int nSize) \
+#endif // EditorBuild
+
+inline void * mvMalloc(mv * mV, int nSize) \
 	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::MALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
 
-__inline void * mvCalloc(mv * mV, int nSize) \
+inline void * mvCalloc(mv * mV, int nSize) \
 	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::CALLOC, (LPARAM)nSize, (LPARAM)0, (LPARAM)0); }
 
-__inline void * mvReAlloc(mv * mV, void * ptr, int nNewSize) \
+inline void * mvReAlloc(mv * mV, void * ptr, int nNewSize) \
 	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::REALLOC, (LPARAM)ptr, (LPARAM)nNewSize, (LPARAM)0); }
 
-__inline void mvFree(mv * mV, void * ptr) \
+inline void mvFree(mv * mV, void * ptr) \
 	{ mV->CallFunction(NULL, CallFunctionIDs::FREE, (LPARAM)ptr, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvRecalcLayout(mv * mV) \
+inline void mvRecalcLayout(mv * mV) \
 	{ mV->CallFunction(NULL, CallFunctionIDs::RECALCLAYOUT, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline CSoundManager* mvGetSoundMgr(mv * mV) \
+inline CSoundManager* mvGetSoundMgr(mv * mV) \
 	{ mV->CallFunction(NULL, CallFunctionIDs::GETSOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline void mvCloseSoundMgr(mv * mV) \
+inline void mvCloseSoundMgr(mv * mV) \
 	{ mV->CallFunction(NULL, CallFunctionIDs::CLOSESOUNDMGR, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline int mvGetNItems(mv * mV, EDITDATA * edPtr, const char * extName) \
+inline int mvGetNItems(mv * mV, EDITDATA * edPtr, const char * extName) \
 	{ return mV->CallFunction(edPtr, CallFunctionIDs::GETNITEMS, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
 
-__inline void * mvGetFirstItem(mv * mV, EDITDATA * edPtr, const char * extName) \
+inline void * mvGetFirstItem(mv * mV, EDITDATA * edPtr, const char * extName) \
 	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)extName, (LPARAM)0, (LPARAM)0); }
 
-__inline void * mvGetNextItem(mv * mV, EDITDATA * edPtr, void * edPtr1, const char * extName) \
+inline void * mvGetNextItem(mv * mV, EDITDATA * edPtr, void * edPtr1, const char * extName) \
 	{ return (void *)mV->CallFunction(edPtr, CallFunctionIDs::GETNEXTITEM, (LPARAM)edPtr1, (LPARAM)extName, (LPARAM)0); }
 
 #ifdef HWABETA
 
-__inline BOOL mvCreateEffect(mv * mV, const char * pEffectName, LPINT pEffect, LPARAM* pEffectParam) \
+inline BOOL mvCreateEffect(mv * mV, const char * pEffectName, LPINT pEffect, LPARAM* pEffectParam) \
 	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEEFFECT, (LPARAM)pEffectName, (LPARAM)pEffect, (LPARAM)pEffectParam); }
 
-__inline void mvDeleteEffect(mv * mV, int nEffect, LPARAM lEffectParam) \
+inline void mvDeleteEffect(mv * mV, int nEffect, LPARAM lEffectParam) \
 	{ mV->CallFunction(NULL, CallFunctionIDs::DELETEEFFECT, (LPARAM)nEffect, (LPARAM)lEffectParam, (LPARAM)0); }
 
 #endif // HWABETA
 
-__inline BOOL mvCreateImageFromFileA(mv * mV, LPWORD pwImg, const char * pFilename, CreateImageFromFileInfo* pInfo) \
+inline BOOL mvCreateImageFromFileA(mv * mV, LPWORD pwImg, const char * pFilename, CreateImageFromFileInfo* pInfo) \
 	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEA, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
 
-__inline BOOL mvCreateImageFromFileW(mv * mV, LPWORD pwImg, const wchar_t * pFilename, CreateImageFromFileInfo* pInfo) \
+inline BOOL mvCreateImageFromFileW(mv * mV, LPWORD pwImg, const wchar_t * pFilename, CreateImageFromFileInfo* pInfo) \
 	{ return (BOOL)mV->CallFunction(NULL, CallFunctionIDs::CREATEIMAGEFROMFILEW, (LPARAM)pwImg, (LPARAM)pFilename, (LPARAM)pInfo); }
 
-__inline void * mvNeedBackgroundAccess(mv * mV, CRunFrame* pFrame, BOOL bNeedAccess) \
+inline void * mvNeedBackgroundAccess(mv * mV, CRunFrame* pFrame, BOOL bNeedAccess) \
 	{ return (void *)mV->CallFunction(NULL, CallFunctionIDs::NEEDBACKGROUNDACCESS, (LPARAM)pFrame, (LPARAM)bNeedAccess, (LPARAM)0); }
 
-__inline BOOL mvIsHWAVersion(mv * mV) \
+inline BOOL mvIsHWAVersion(mv * mV) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::ISHWA, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline BOOL mvIsUnicodeVersion(mv * mV) \
+inline BOOL mvIsUnicodeVersion(mv * mV) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::ISUNICODE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
-__inline BOOL mvIsUnicodeApp(mv * mV, void * pApp) \
+// Expects parameter of mV->mVEditApp
+// see https://github.com/clickteam-plugin/Surface/blob/master/General.cpp#L204
+inline BOOL mvIsUnicodeApp(mv * mV, void * pApp) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::ISUNICODEAPP, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
 
-__inline int mvGetAppCodePage(mv * mV, void * pApp) \
+// Expects parameter of mV->mvEditApp
+// see https://github.com/clickteam-plugin/Surface/blob/master/General.cpp#L204
+inline int mvGetAppCodePage(mv * mV, void * pApp) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::GETAPPCODEPAGE, (LPARAM)pApp, (LPARAM)0, (LPARAM)0); }
 
 #ifdef _UNICODE
@@ -4343,7 +3907,7 @@ __inline int mvGetAppCodePage(mv * mV, void * pApp) \
 #endif
 
 // Options for OpenHFile
-#define	OHFF_LOCALFILE		bit1		// Vitalize mode only: don't try to download file from server
+#define	OHFF_LOCALFILE		0x1		// Vitalize mode only: don't try to download file from server
 
 // EnumEltProc definition
 typedef	int (CALLBACK* ENUMELTPROC)(unsigned short *, int, LPARAM, LPARAM);
@@ -4431,33 +3995,8 @@ struct LevelObject {
 // typedef LO *LPLO;
 // typedef	LO *fpLevObj;
 
-////////////////////
-// ObjInfo structure
-////////////////////
-//
-// Note: mainly used at runtime
-// only some members of the oiHdr member are valid at editing time
-//
-#ifdef OI
-	#undef OI
-#endif
+#include "ObjectInfo.hpp"
 
-struct ObjInfo {
-	ObjInfoHeader		oiHdr;			// Header
-	TCHAR *				oiName;			// name
-	Objects_Common *	oiOC;
-
-	unsigned int		oiFileOffset,
-						oiLoadFlags;
-	unsigned short		oiLoadCount,
-						oiCount;
-
-#ifdef HWABETA
-	unsigned char *		oiExtEffect;
-	CEffectEx *			oiExtEffectEx;	// For backdrops, you must find a more efficient system (bank of effects for backdrops)
-#endif // HWABETA
-
-};
 
 ///////////////////////////////////////////////
 //
@@ -4537,7 +4076,7 @@ struct RunFrameLayer
 // Object transition data
 struct objTransInfo {
 
-	CTransition *	m_pTrans;				// Transition object
+	struct CTransition *	m_pTrans;				// Transition object
 	cSurface *		m_SfSave,				// Background surface
 			 *		m_SfDisplay,			// Working surface
 			 *		m_Sf1,					// Source surface
@@ -4550,10 +4089,8 @@ struct objTransInfo {
 					m_ysave,
 					m_cxsave,
 					m_cysave;
-	#ifdef HWABETA
-		BOOL		m_bStepDrawBlit;		// Use StepDrawBlit instead of StepDraw
-	#endif
-
+	// HWA only!
+	BOOL			m_bStepDrawBlit;		// Use StepDrawBlit instead of StepDraw
 };
 // typedef objTransInfo * LPOBJTRANSINFO;
 
@@ -4563,15 +4100,15 @@ struct objTransInfo {
 //
 
 #define	MAX_TEMPSTRING	16
-#define IPHONEOPT_JOYSTICK_FIRE1 bit1
-#define IPHONEOPT_JOYSTICK_FIRE2 bit2
-#define IPHONEOPT_JOYSTICK_LEFTHAND bit3
-#define	IPHONEFOPT_MULTITOUCH			bit4
-#define	IPHONEFOPT_SCREENLOCKING		bit5
-#define	IPHONEFOPT_IPHONEFRAMEIAD		bit6
+#define IPHONEOPT_JOYSTICK_FIRE1 0x1
+#define IPHONEOPT_JOYSTICK_FIRE2 0x2
+#define IPHONEOPT_JOYSTICK_LEFTHAND 0x4
+#define	IPHONEFOPT_MULTITOUCH			0x8
+#define	IPHONEFOPT_SCREENLOCKING		0x10
+#define	IPHONEFOPT_IPHONEFRAMEIAD		0x20
 #define JOYSTICK_NONE 0x0000
-#define JOYSTICK_TOUCH bit1
-#define JOYSTICK_ACCELEROMETER bit2
+#define JOYSTICK_TOUCH 0x1
+#define JOYSTICK_ACCELEROMETER 0x2
 #define JOYSTICK_EXT 0x0003
 
 
@@ -4681,7 +4218,7 @@ struct CRunFrame {
 
 		// Frame effect
 		FrameEffect *	Effect;						// Frame effect (chunk data, contains effect index & param used in blit)
-		CEffectEx *		EffectEx;					// Current effect
+		struct CEffectEx *		EffectEx;					// Current effect
 		bool			FrameEffectChanged;			// Frame effect has been modified
 		bool			AlwaysUseSecondarySurface;	// This frame always use a secondary surface
 
@@ -4689,7 +4226,7 @@ struct CRunFrame {
 		cSurface *		SecondarySurface;
 
 		// List of sub-app surfaces to refresh at the end in D3D full screen mode
-		CPList *		SurfacedSubApps;
+		struct CPList *		SurfacedSubApps;
 	#endif
 
 };
@@ -4728,10 +4265,10 @@ struct CBinaryFile {
 // Application
 //
 
-#define	ARF_MENUINIT				bit1
-#define	ARF_MENUIMAGESLOADED		bit2		// menu images have been loaded into memory
-#define	ARF_INGAMELOOP				bit3
-#define ARF_PAUSEDBEFOREMODALLOOP	bit4
+#define	ARF_MENUINIT				0x1
+#define	ARF_MENUIMAGESLOADED		0x2		// menu images have been loaded into memory
+#define	ARF_INGAMELOOP				0x4
+#define ARF_PAUSEDBEFOREMODALLOOP	0x8
 
 struct CRunApp {
 	// Application info
@@ -4778,7 +4315,7 @@ struct CRunApp {
 	kpj (*kpxDataTable)[2];						// Function table 2 - pointer to kpj[2]
 
 	// Movement Extensions
-	int				nbMvx;						// Number of extensions
+	int				nbMvx;						// Number of movement extensions
 	MvxFnc *		mvxTable;					// DLL info
 
 	// Elements
@@ -4845,7 +4382,7 @@ struct CRunApp {
 	BOOL			bPlayFromMsgProc;
 
 	// Debugger
-	CDebugger *		pDebugger;
+	struct CDebugger *		pDebugger;
 
 	// Full Screen
 	int				depthFullScreen;
@@ -4908,9 +4445,13 @@ struct CRunApp {
 	AppHeader2 *	pHdr2;
 
 	// Code page
-	#ifdef _UNICODE
+	struct CRunApp_Unicode {
 		unsigned long	dwCodePage;
 		bool			bUnicodeAppFile;
+	};
+
+	#ifdef _UNICODE
+	CRunApp_Unicode codePage;
 	#endif
 
 	// Effects
@@ -4939,3 +4480,5 @@ unsigned long	FusionAPI DibToImage(Appli *, Image *, BITMAPINFOHEADER *);
 unsigned long	FusionAPI DibToImageEx(Appli *, Image *, BITMAPINFOHEADER *, COLORREF, DWORD);
 void	FusionAPI RemapDib(BITMAPINFO *, Appli *, LPBYTE);
 #endif
+
+#include "StockSDKDefines.hpp"

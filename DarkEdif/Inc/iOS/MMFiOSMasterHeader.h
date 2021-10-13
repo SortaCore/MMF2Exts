@@ -38,6 +38,8 @@ void Sleep(unsigned int milliseconds);
 #include <signal.h>
 #include <stdarg.h>
 #include <string_view>
+// used for readlink() in Edif.cpp
+#include <unistd.h>
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
@@ -167,7 +169,7 @@ typedef void * CRunApp;
 int MessageBoxA(HWND hwnd, const TCHAR * caption, const TCHAR * text, int iconAndButtons);
 
 // Note: doesn't use underlying_type due to incompatibility with one of the Android C++ STL libraries (stlport_static).
-#define fancyenumop(enumType) \
+#define enum_class_is_a_bitmask(enumType) \
 enumType constexpr static operator|(enumType lhs, enumType rhs) { \
 	return static_cast<enumType>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs)); \
 } \
@@ -258,8 +260,8 @@ enum class KGI {
 
 // Surface.h pre-declaration
 class cSurface;
-struct cSurfaceImplementation;
-struct CFillData;
+class cSurfaceImplementation;
+class CFillData;
 class CInputFile;
 struct sMask;
 typedef void* jobject;
@@ -407,7 +409,7 @@ enum class OEFLAGS : uint {
 	TEXT = 0x10000,
 	DONT_CREATE_AT_START = 0x20000,
 };
-fancyenumop(OEFLAGS);
+enum_class_is_a_bitmask(OEFLAGS);
 
 // Flags modifiable by the program
 enum class OEPREFS : short {
@@ -425,7 +427,7 @@ enum class OEPREFS : short {
 	FINE_COLLISIONS = bit11,
 	APPLET_PROBLEMS = bit12,
 };
-fancyenumop(OEPREFS);
+enum_class_is_a_bitmask(OEPREFS);
 
 // Running flags
 enum class REFLAG : short {
@@ -604,7 +606,7 @@ enum class EVFLAGS : short {
 	// Originally EVFLAGS_NOTABLE
 	NOTABLE = bit10
 };
-fancyenumop(EVFLAGS);
+enum_class_is_a_bitmask(EVFLAGS);
 
 // Expression return type. Originally EXPFLAG_*, expression flags.
 enum class ExpReturnType : short {
@@ -657,7 +659,7 @@ enum class HeaderObjectFlags : ushort {
 	Float = bit15,
 	String = bit16
 };
-fancyenumop(HeaderObjectFlags);
+enum_class_is_a_bitmask(HeaderObjectFlags);
 struct RunHeader {
 	unsigned short GetEventCount();
 };

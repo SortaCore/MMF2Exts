@@ -139,7 +139,7 @@ void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - 0x80000) % 1000;
+	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
 		return NULL;
@@ -151,13 +151,13 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - 0x80000) % 1000;
+	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
 
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
 		return FALSE;
 
-	return (edPtr->DarkEdif_Props[PropID >> 3] >> (PropID % 8) & 1);
+	return (edPtr->DarkEdif_Props[PropID / CHAR_BIT] >> (PropID % CHAR_BIT) & 1);
 }
 
 // Called by Fusion after a property has been modified.
@@ -166,7 +166,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 #pragma DllExportHint
 	Prop * prop = (Prop *)Param;
 
-	unsigned int i = prop->GetClassID(), PropID = (PropID_ - 0x80000) % 1000;
+	unsigned int i = prop->GetClassID(), PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
 
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
@@ -258,7 +258,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, voi
 void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOOL checked)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - 0x80000) % 1000;
+	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
 	// Not our responsibility; ID unrecognised
 	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
 		return;

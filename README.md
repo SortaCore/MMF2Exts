@@ -1,8 +1,8 @@
 MMF2/CF2.5 Open Source Extension Repository
 ===
-A single repository to contain and/or link to open source extensions for MMF2/CF2.5. All extensions are compatible with both Fusion 2.0 and implicitly 2.5.
-These extensions are collated for examples and for upgrading; these are subject to individual licenses.
-If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.
+A single repository to contain and/or link to open source extensions for MMF2/CF2.5. All extensions are compatible with both Fusion 2.0 and implicitly 2.5.  
+These extensions are collated for examples and for upgrading; these are subject to individual licenses.  
+If you plan on distributing your own version publicly, it is highly recommended you get permission from original authors, where possible.  
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
 ### Tools to use ###
@@ -25,6 +25,27 @@ To confirm if the Windows function is compatible, you can normally find out on M
 for example [GetProcessIdOfThread()](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread) is Vista+.  
 If you want to use later OS functions at cost of compatibility, you can change the targeting by switching the Platform Toolset to non-XP and
 redefining WINVER and \_WIN32\_WINNT to a number from [here](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt).
+
+### Android targeting ###
+To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
+
+For more details on Android, such as pitfalls, features and setting up debugging, make sure you read the Android section of the [MultiTarget guide](DarkEdif/%23MFAs%20and%20documentation/DarkEdif%20MultiTargeting.md) under DarkEdif documentation.
+
+You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it.
+
+### iOS targeting ####
+To target iOS, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools". That should be all you need.
+
+For more details on iOS, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide](DarkEdif/%23MFAs%20and%20documentation/DarkEdif%20MultiTargeting.md) under DarkEdif documentation.
+
+iOS development requires you to have a Mac, with vcremote installed. Follow Microsoft's guide on linking your Visual Studio to a Mac running XCode [here](https://docs.microsoft.com/en-us/cpp/cross-platform/install-and-configure-tools-to-build-using-ios?view=msvc-160).  
+An iMac from late 2012 or above is necessary; you need XCode 10.2 for compatibilty with Visual Studio, which is Mac OS Mojave and later.
+Since the latest Mac OS "Big Sur" runs on 2014 and later Macs, you may want to get a 2014+ instead.
+
+You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it.
+
+DarkEdif will automatically package your built Android files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
+This file is valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in XCode, which thankfully takes less than a minute.
 
 ### Using a single project ###
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.

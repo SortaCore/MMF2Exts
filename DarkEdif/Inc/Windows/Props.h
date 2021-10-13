@@ -1,14 +1,15 @@
+// ==========================================================================================
+// FUSION PROPERTIES
+// Used for the properties pane, and accessing properties. Only usable in Windows edittime.
+// ==========================================================================================
 #pragma once
-// Property definitions
 
-#ifndef MMF2_Props_h
-#define	MMF2_Props_h
-
-#ifndef _WIN32
-#include <wchar.h>
-#define strcpy_s(a,b, c) strcpy(a, c)
-#define _tremove(a) remove(a)
+#if !defined(_WIN32) || !defined(EditorBuild) || EditorBuild==0
+#error Windows editor only
 #endif
+
+#include <tchar.h>
+#include "Windows\WindowsDefines.hpp"
 
 ///////////////////////////////////////////////////////
 // Property data - used in property definition table.
@@ -36,29 +37,20 @@ struct PropData
 		this->CreateParam = CreateParam;
 	}
 };
-
-
-///////////////////////////////////////////////////////
-// Property values - used to set or get property values
-///////////////////////////////////////////////////////
-class Prop;
-
-//////////////
-// Base class
-//////////////
-
-/**
- *  Property Value.
- *  This class is the base class of the classes that contain the values of editable properties.
- *  Prop objects allow to communicate values between the property window and the object data.
- *	Modifications are to this class are pointless as the spec was created by Clickteam and class type may be changed.
- */
+#if 1
+// =====================
+// Base property class
+// This class is the base class of the classes that contain the values of editable properties.
+// Prop objects let us communicate values between the property window and the object.
+// =====================
 class Prop
 {
 protected:
 	virtual ~Prop() {}
 public:
-	Prop() {};
+	inline Prop() {};
+	Prop(Prop&) = delete;
+	Prop(Prop &&) = delete;
 
 	virtual void Delete() = 0;
 	virtual Prop * CreateCopy() = 0;
@@ -103,6 +95,15 @@ public:
 	// Data
 	int Value;
 };
+
+#ifndef _WIN32
+extern void LOGF(const char * x, ...);
+#else
+#define PrintFHintInside _In_z_ _Printf_format_string_
+namespace DarkEdif::MsgBox {
+	void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...);
+}
+#endif
 
 // Unsigned integer
 class Prop_UInt : public Prop
@@ -371,6 +372,8 @@ public:
 	void * Address;
 };
 
+
+
 // String (ANSI)
 class Prop_AStr : public Prop
 {
@@ -456,16 +459,6 @@ public:
 	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
 	char * String;
 };
-
-#ifndef _WIN32
-extern void LOGF(const char * x, ...);
-#else
-#define PrintFHintInside _In_z_ _Printf_format_string_
-namespace DarkEdif::MsgBox {
-	void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...);
-}
-
-#endif
 
 // String (UNICODE)
 class Prop_WStr : public Prop
@@ -680,14 +673,14 @@ enum {
 // Property options
 ///////////////////
 //
-#define	PROPOPT_CHECKBOX		bit1		// Left check box
-#define PROPOPT_BOLD			bit2		// name must be displayed in bold characters
-#define PROPOPT_PARAMREQUIRED	bit3		// A non-null parameter must be provided or it will be requested immediately
-#define PROPOPT_REMOVABLE		bit4		// The property can be deleted by the user
-#define PROPOPT_RENAMEABLE		bit5		// The property can be renamed by the user
-#define PROPOPT_MOVABLE			bit6		// The property can be moved by the user (list only)
-#define	PROPOPT_LIST			bit7		// The property is a list
-#define	PROPOPT_SINGLESEL		bit8		// This property is not displayed in multi-selection mode
+#define	PROPOPT_CHECKBOX		0x1		// Left check box
+#define PROPOPT_BOLD			0x2		// name must be displayed in bold characters
+#define PROPOPT_PARAMREQUIRED	0x4		// A non-null parameter must be provided or it will be requested immediately
+#define PROPOPT_REMOVABLE		0x8		// The property can be deleted by the user
+#define PROPOPT_RENAMEABLE		0x10		// The property can be renamed by the user
+#define PROPOPT_MOVABLE			0x20		// The property can be moved by the user (list only)
+#define	PROPOPT_LIST			0x40		// The property is a list
+#define	PROPOPT_SINGLESEL		0x80		// This property is not displayed in multi-selection mode
 
 // Property-specific options
 #define PROPOPT_EDIT_PASSWORD	0x10000		// For Edit String property
@@ -1013,7 +1006,7 @@ enum {
 	PROPID_EXTITEM_CUSTOM_FIRST=0x80000,
 	PROPID_EXTITEM_CUSTOM_LAST =0xFFFFF,
 };
-
+#endif // 0
 // Application
 enum {
 	PROPID_APP_FIRST = 50,
@@ -1258,4 +1251,3 @@ enum {
 	PROPID_FRAME_LAST,
 };
 
-#endif // MMF2_Props_h

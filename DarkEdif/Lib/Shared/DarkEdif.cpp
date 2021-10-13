@@ -6,6 +6,7 @@ extern HINSTANCE hInstLib;
 extern Edif::SDK * SDK;
 
 #if EditorBuild
+
 static const _json_value * StoredCurrentLanguage = &json_value_none;
 
 static const _json_value * DefaultLanguageIndex()
@@ -504,7 +505,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 
 	const json_value &j = CurLang["Properties"];
 	if (j.type != json_array)
-		return DarkEdif::MsgBox::Error(_T("Property error"), _T("Premature function call!\n  GetProperty() called without edPtr->DarkEdif_Props being valid.")), nullptr;
+		return DarkEdif::MsgBox::Error(_T("Property error"), _T("Premature function call!\n  PropIndex() called without edPtr->DarkEdif_Props being valid.")), nullptr;
 
 	const char * curStr = (const char *)j[(int)ID]["Type"];
 	// Read unchangable properties
@@ -713,12 +714,6 @@ std::wstring TStringToWide(const std::tstring_view input) {
 #else
 	return ANSIToWide(input);
 #endif
-}
-
-/// <summary> Creates a Prop_Str from UTF-8 char *. Allocated by new. </summary>
-Prop_Str * Prop_Str_FromUTF8(const char * u8)
-{
-	return new Prop_Str(UTF8ToTString(u8).c_str());
 }
 
 #else // !_WIN32
@@ -1244,6 +1239,9 @@ std::string DarkEdif::GetIniSetting(const char * key)
 
 #if USE_DARKEDIF_UPDATE_CHECKER
 
+#include <WinSock2.h> // for network sockets
+#include <shellapi.h> // for ShellExecuteW, opening the new ext version URL in preferred browser
+
 static std::atomic_bool updateLock(false);
 static HANDLE updateThread;
 static std::stringstream updateLog = std::stringstream();
@@ -1571,7 +1569,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 				return 1;
 			}
 			GetLockAnd(
-				updateLog << "\nResult concluded.\n"sv;
+				updateLog << page.str() << "\nResult concluded.\n"sv;
 			OutputDebugStringA(updateLog.str().c_str()));
 			closesocket(Socket);
 			WSACleanup();

@@ -11,11 +11,28 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 
 Changes until v12 release
 ----
-- iOS properties now passed to extension, changed iOS function name \_free() to \_dealloc()
-- Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
-- DisableThreadLibraryCalls() optimization disabled for static CRT, following [MSDN docs](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-disablethreadlibrarycalls)
-
 *v12 not released yet*
+- Edittime: DarkEdif update checker no longer runs for Fusion startup screen
+- Edittime: Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
+- iOS: properties now passed to extension, changed iOS function name \_free() to \_dealloc()
+- All platforms: Added a DarkEdif::MsgBox::Custom function for manually passing icon/default button/etc; mostly has effect on Windows
+- All platforms: Repaired MsgBox function to have extension name
+- All platforms: Renamed jump A/C/E functions:
+  - Windows: Edif::Action is now Edif:\:ActionJump, Edif::Condition and Edif::Expression, ditto for C/E
+  - Android: darkedif\_action() is now darkedif\_actionJump(), ditto for C/E
+  - iOS: extName\_action() is now extName\_actionJump(), ditto for C/E
+  - DarkEdif PostBuildTool reflects these changes in its internal Objective-C++/Java templates
+- Windows: DisableThreadLibraryCalls() optimization disabled for static CRT, following [MSDN docs](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-disablethreadlibrarycalls)
+- Windows: Removed General.cpp files; functions are now in Edif.General.cpp
+- Windows: Edittime.cpp for all exts updated due to MsgBox functions
+- All platforms: Renamed ambiguous Extension functions:
+  - Extension::Save is now SaveFramePosition
+  - Extension::Load is now LoadFramePosition
+  - Extension::Pause is now FusionRuntimePaused
+  - Extension::Continue is now FusionRuntimeContinued  
+(It should probably be FusionRuntimeResumed, but I would rather keep Continue in the name so it's not hard to search for.)
+- All platforms: renamed macro which granted bitwise ops to enum classes from "fancyenumop" to "enum_class_is_a_bitmask"
+
 
 Changes until v11 release
 ----

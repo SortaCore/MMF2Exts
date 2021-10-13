@@ -169,7 +169,7 @@ namespace Edif
 		std::vector<void *> ExpressionFunctions;
 
 		mv* mV;
-#ifdef _WIN32
+#if EditorBuild
 		cSurface * Icon;
 		PropData * EdittimeProperties;
 #endif
@@ -353,8 +353,8 @@ namespace Edif
 };
 
 #ifdef __ANDROID__
-ProjectFunc jlong condition(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
-ProjectFunc void action(JNIEnv *, jobject, jlong extPtr, jint actID, CActExtension act);
-ProjectFunc void expression(JNIEnv *, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
+ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
+ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint actID, CActExtension act);
+ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
 #endif
 extern Edif::SDK * SDK;

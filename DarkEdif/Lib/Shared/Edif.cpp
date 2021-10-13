@@ -1,31 +1,35 @@
 #include "Common.h"
 #include "Edif.h"
 #include "DarkEdif.h"
+#include "Resource.h"
+#include "Extension.h"
 
+// ============================================================================
+// GLOBAL DEFINES
+// Contains the definitions of all the Edif class global variables.
+// ============================================================================
+
+// Global SDK pointer
 Edif::SDK * SDK = nullptr;
 
-
+// 2-char language code; EN, FR or JP, since that's all the Fusion versions.
 TCHAR Edif::LanguageCode[3];
 
 // If true, running in Fusion editor or Fusion loading screen.
 // If false, running in Run Application or built EXEs.
 bool Edif::IsEdittime;
+
 // If true, JSON file is external. If false, it is an embedded resource (default).
 bool Edif::ExternalJSON;
+
 // If true, the Edif::Init() and subfunctions are being called from Fusion splash screen.
 // If false, they are being called from a MFA load or Create New Object.
 bool Edif::IsFusionStartupRun;
 
 #ifdef __ANDROID__
-#include <unistd.h>
-#include <android/log.h>
-#include <dlfcn.h>
 // Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
 JNIEnv * mainThreadJNIEnv;
 JavaVM * global_vm;
-#elif defined(__APPLE__)
-#include <unistd.h>
-#include <dlfcn.h>
 #endif
 
 std::string Edif::CurrentFolder()
@@ -172,7 +176,7 @@ ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
 		return ExpParams::UnsignedInteger;
 
 	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), UTF8ToTString(Text).c_str());
-	return (ExpParams)(ushort)0;
+	return (ExpParams)(std::uint16_t)0;
 }
 
 ExpReturnType ReadExpressionReturnType(const char * Text)
@@ -200,10 +204,16 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 void Edif::Init(mv * mV, EDITDATA * edPtr)
 {
 #ifdef _WIN32
+	// It's edittime if the main window is available
 	IsEdittime = mV->HMainWin != 0;
+
+	// An edPtr means there's an EDITDATA, so it's not the splash screen
 	IsFusionStartupRun = false;
 
-	mvInvalidateObject(mV, edPtr);
+	// Redraw the object in frame editor
+	#if EditorBuild
+		mvInvalidateObject(mV, edPtr);
+	#endif
 #endif
 }
 
@@ -218,9 +228,6 @@ void Edif::Free(EDITDATA * edPtr)
 {
 	// ??
 }
-
-#include "Resource.h"
-#include "Extension.h"
 
 int Edif::Init(mv * mV, bool fusionStartupScreen)
 {
@@ -302,7 +309,8 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 
 #if EditorBuild
 // Used for reading the icon image file
-PhiDLLImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, CInputFile* pf, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
+// Filter ID can be null, 
+FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr, CInputFile* pf, cSurface* psf, LPDWORD pDWFilterID, DWORD dwFlags);
 
 #endif
 
@@ -317,7 +325,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	#if EditorBuild
 		cSurface * proto = nullptr;
-		if (GetSurfacePrototype(&proto, 32, ST_MEMORYWITHDC, SD_BITMAP) == FALSE)
+		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory, (int)SurfaceDriver::Bitmap) == FALSE)
 			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
 		Icon = new cSurface();
@@ -333,8 +341,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				File->Create((LPBYTE)IconData, IconSize);
 
 				std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
-				DWORD PNG = 'PNG ';
-				ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), &PNG, 0);
+				ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
 
 				File->Delete();
 
@@ -358,8 +365,6 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		if (Edif::IsEdittime && !Edif::IsFusionStartupRun)
 			DarkEdif::SDKUpdater::StartUpdateCheck();
 		#endif
-	#elif defined(_WIN32)
-		Icon = nullptr;
 	#endif
 
 
@@ -391,7 +396,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	for (size_t i = 0; i < Actions.u.object.length; ++ i)
 	{
 #ifdef _WIN32
-		ActionJumps [i] = (void *) Edif::UnlinkedAction;
+		ActionJumps [i] = (void *) Edif::ActionJump;
 #endif
 
 		ActionFunctions.push_back(0);
@@ -403,7 +408,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	for (size_t i = 0; i < Conditions.u.object.length; ++ i)
 	{
 #ifdef _WIN32
-		ConditionJumps [i] = (void *) Edif::Condition;
+		ConditionJumps [i] = (void *) Edif::ConditionJump;
 #endif
 
 		ConditionFunctions.push_back(0);
@@ -415,7 +420,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	for (size_t i = 0; i < Expressions.u.object.length; ++ i)
 	{
 #ifdef _WIN32
-		ExpressionJumps [i] = (void *) Edif::Expression;
+		ExpressionJumps [i] = (void *) Edif::ExpressionJump;
 #endif
 
 		ExpressionFunctions.push_back(0);

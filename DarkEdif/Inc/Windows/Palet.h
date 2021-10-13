@@ -1,24 +1,8 @@
+#pragma once
+#include <WinDef.h>
+#include <WinGDI.h>
 
-#ifndef _Palet_h
-#define	_Palet_h
-
-#ifndef _WIN32
-#define SURFACES_API
-
-#else
-#define SURFACES_API __declspec(dllimport)
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#ifdef _WIN32_WCE
-#define PC_NOCOLLAPSE	4
-#endif
-
-typedef	struct csPalette
+struct csPalette
 {
 	// LOGPALETTE
 	WORD			palVersion;
@@ -36,54 +20,47 @@ typedef	struct csPalette
 
 	// Ref count
 	UINT			refCount;
+};
 
-} csPalette;
-typedef	csPalette *	LPCSPALETTE;
+extern "C"
+{
+	FusionAPIImport void csPalette_Remove(csPalette * pCsPal);
 
-void csPalette_Remove(LPCSPALETTE pCsPal);
+	// Initialize and free palette manager
+	FusionAPIImport void FusionAPI Init_Palettes();
+	FusionAPIImport void FusionAPI Free_Palettes();
 
-// Initialize and free palette manager
-SURFACES_API void WINAPI Init_Palettes();
-SURFACES_API void WINAPI Free_Palettes();
+	// Create list of palettes attached to the current thread
+	FusionAPIImport void FusionAPI Create_CurrentPalList();
 
-// Create list of palettes attached to the current thread
-void 		FAR	Create_CurrentPalList();
+	// Delete list of palettes attached to the current thread
+	FusionAPIImport void FusionAPI Delete_CurrentPalList();
 
-// Delete list of palettes attached to the current thread
-void 		FAR	Delete_CurrentPalList();
+	// Create / Delete CSPalette
+	FusionAPIImport csPalette * FusionAPI csPalette_Create(LPLOGPALETTE pLogPal);
+	FusionAPIImport void 		FusionAPI csPalette_Delete(csPalette * pCsPal);		// another name for csPalette_SubRef
+	FusionAPIImport csPalette * FusionAPI csPalette_NormalizePalette(csPalette * pCsPal, LPBYTE pTabRemap);
 
-// Create / Delete CSPalette
-SURFACES_API LPCSPALETTE 	FAR	WINAPI csPalette_Create (LPLOGPALETTE pLogPal);
-SURFACES_API void 		FAR	WINAPI csPalette_Delete (LPCSPALETTE pCsPal);		// another name for csPalette_SubRef
-SURFACES_API LPCSPALETTE  WINAPI csPalette_NormalizePalette(LPCSPALETTE pCsPal, LPBYTE pTabRemap);
+	// Create default 256 color palette
+	// This palette must be deleted using csPalette_Delete or csPalette_SubRef
+	FusionAPIImport csPalette * FusionAPI  csPalette_CreateDefaultPalette();
 
-// Create default 256 color palette
-// This palette must be deleted using csPalette_Delete or csPalette_SubRef
-SURFACES_API LPCSPALETTE 	FAR	WINAPI  csPalette_CreateDefaultPalette();
+	// GetNearColorIndex with 16bit cache (warning: small loss of color possible)
+	FusionAPIImport int FusionAPI csPalette_GetNearColorIndex(csPalette * ptCsPal, COLORREF color);
+	FusionAPIImport void FusionAPI csPalette_GetPaletteEntries(csPalette * ptCsPal, LPPALETTEENTRY pe, int start, int count);
 
-// GetNearColorIndex with 16bit cache (warning: small loss of color possible)
-SURFACES_API int 			FAR csPalette_GetNearColorIndex(LPCSPALETTE ptCsPal, COLORREF color);
-SURFACES_API void 		FAR WINAPI csPalette_GetPaletteEntries(LPCSPALETTE ptCsPal, LPPALETTEENTRY pe, int start, int count);
+	// GetNearColorIndex slow (but no loss of color) - Optimized for MMX machines -
+	// Warning: if nColors == 256, this routine assumes the first color is RGB(0,0,0)
+	FusionAPIImport int FusionAPI GetNearestColorIndex(LPPALETTEENTRY ppe, UINT nColors, COLORREF color);
 
-// GetNearColorIndex slow (but no loss of color) - Optimized for MMX machines -
-// Warning: if nColors == 256, this routine assumes the first color is RGB(0,0,0)
-int GetNearestColorIndex (LPPALETTEENTRY ppe, UINT nColors, COLORREF color);
+	// Normalize palette: add system colors and replace black>0 by OPAQUE_BLACK
+	FusionAPIImport BOOL FusionAPI NormalizePalette(PALETTEENTRY * destPal, PALETTEENTRY * srcPal, LPBYTE ptabRemap);
 
-// Normalize palette: add system colors and replace black>0 by OPAQUE_BLACK
-SURFACES_API BOOL 		FAR	WINAPI NormalizePalette (PALETTEENTRY *destPal, PALETTEENTRY *srcPal, LPBYTE ptabRemap);
+	// Copy RGB to BGR and reverse
+	FusionAPIImport void FusionAPI CopyRGBToBGR(RGBQUAD * dest, PALETTEENTRY * src, UINT nbColors);
+	FusionAPIImport void FusionAPI CopyBGRToRGB(PALETTEENTRY * dest, RGBQUAD * src, UINT nbColors);
 
-// Copy RGB to BGR and reciprocally
-void 		FAR	CopyRGBToBGR ( RGBQUAD *dest, PALETTEENTRY *src, UINT nbColors );
-void 		FAR	CopyBGRToRGB ( PALETTEENTRY *dest, RGBQUAD *src, UINT nbColors );
+	// Default palettes
+	extern	FusionAPIImport BYTE Palet16[], Palet256[];
 
-// Default palettes
-extern	BYTE	Palet16[], Palet256[];
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // _WIN32
-
-#endif	// _Palet_h
+} // extern "C"

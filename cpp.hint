@@ -17,3 +17,5 @@
 #define lw_downgrade_to(x) downgrade(lw_rwlock_debugParamDefs, x)
 //#endif
 #define z_const
+#define FusionAPIImport __declspec(dllimport)
+#define FusionAPI __stdcall

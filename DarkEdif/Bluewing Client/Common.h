@@ -42,8 +42,9 @@
 // Prevent errors with IntelliSense
 #include <string_view>
 using namespace std::string_view_literals;
-#include <iomanip>
 #endif
+#include <iomanip>
+
 #ifdef __APPLE__
 #include "../Inc/iOS/MMFiOSMasterHeader.h"
 #endif

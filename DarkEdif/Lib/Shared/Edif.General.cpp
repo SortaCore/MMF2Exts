@@ -142,7 +142,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 		const json_value& JSON = CurLang["Properties"];
 		size_t fullSize = sizeof(EDITDATA);
 		// Store one bit per property, for any checkboxes
-		fullSize += (int)ceil(JSON.u.array.length / 8.0);
+		fullSize += (int)ceil(JSON.u.array.length / ((float)CHAR_BIT));
 
 		for (unsigned int i = 0; i < JSON.u.array.length; ++i)
 		{
@@ -869,9 +869,9 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		method(displayRunObject, "(J)S"),
 		method(pauseRunObject, "(J)S"),
 		method(continueRunObject, "(J)S"),
-		method(condition, "(JILConditions/CCndExtension;)J"),
-		method(action, "(JILActions/CActExtension;)V"),
-		method(expression, "(JILExpressions/CNativeExpInstance;)V"),
+		method(conditionJump, "(JILConditions/CCndExtension;)J"),
+		method(actionJump, "(JILActions/CActExtension;)V"),
+		method(expressionJump, "(JILExpressions/CNativeExpInstance;)V"),
 		EXTRAFUNCS
 	};
 

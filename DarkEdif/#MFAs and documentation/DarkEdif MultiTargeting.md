@@ -61,14 +61,26 @@ Second, if you delete a file from Mac side, it will not be re-copied over.
 Solution: Copy them over to Mac manually.  
 Third, if you remove the entire project folder, that won't be enough; it still won't be re-copied over.
 
+### I get errors with included file missing!
+DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
+This file is valid, or Fusion wouldn't build at all, but the Fusion does not auto-add third-party extensions. So while it will include your ext's files in the built iOS project zips, the XCode project won't have them referenced.  
+You'll have to manually add both the framework and the code files to the XCode project, which thankfully takes less than a minute.
+1. Open your XCode project in XCode.
+2. Right-click the Extension folder in your XCode project, and press Add Files.
+3. Select the extension's files to add them; they should be in your project\\Extensions folder.  
+They will normally be named CRun*ExtName*.xxx - XCode should also highlight the files that your project hasn't linked already.
+4. After adding those, right-click your Frameworks folder and pick Add Files again
+5. This time, under your project folder\\Frameworks, add the xcframework package. Don't add the contents; add the xcframework itself.
+
+
 ### IntelliSense is out of date
-IntelliSense is using a lot of old headers that don't match the current iOS SDK. To fix this, you'll need to modify Microsoft's linked headers.
+IntelliSense is using a lot of old headers that don't match the current iOS SDK. To fix this, you'll need to modify Microsoft's linked headers.  
 from Mac: `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/include`  
 to PC: `C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\VC\vcpackages\IntelliSense\iOS\OSS\xcodefiles`  
 Then amend what VS looks in for headers:  
 `C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Microsoft\VC\v160\Application Type\iOS\1.0\iOS.Common.props`  
 Find `<ISenseIncludePath>`, remove the libcxx and musl entries, and instead link the xcodefiles folder.  
-(You could use the iPhoneOS platform's headers instead, but since you'll be debugging on the simulators, that could cause confusion as your IntelliSense will be out of sync with Xcode's autocomplete.)
+(You could use the iPhoneOS platform's headers instead of the simulator's headers, but since you'll be debugging on the simulators, that could cause confusion as your IntelliSense will be out of sync with Xcode's autocomplete.)
 
 ### Different CPU architectures
 You can build for 7 iOS CPU types, of which 4 are targeted by defaults.  
@@ -93,7 +105,7 @@ Apple uses extra architectures, but the table above is hard-coded into PostBuild
 It is worth noting that Apple's devices are backwards-compatible. More on that later.
 
 You can include armv7s and arm64e, at the cost of some extra size in the built EXT; you'll gain some speed boosts, in theory.  
-(As for armv6, it's best to exclude it, as only a few of the oldest devices use it. You should avoid it)  
+(As for armv6, it's best to exclude it, as only a few of the oldest devices use it.)  
 
 As far as the DarkEdif wrapper, there are no limitations on platforms you can use; all the code is platform-agnostic.  
 However, the PostBuildTool is only programmed to link the seven architectures above, if passed in the target list.

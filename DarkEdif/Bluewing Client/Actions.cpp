@@ -583,7 +583,7 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 #endif
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\" occurred with writing the file. "
-			"Wrote %zu bytes, leaving file at size %zd bytes.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
+			"Wrote %zu bytes, leaving file at size %" PRId64 " bytes.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
 	}
 
 	if (fclose(File))

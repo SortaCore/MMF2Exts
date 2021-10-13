@@ -473,7 +473,7 @@
 
 			<!-- DarkEdif uses #pragma DllExportHint in functions to expose them externally.
 				 All other SDKs rely on both DllExport annotation and Ext.def uncommenting. -->
-			<ModuleDefinitionFile Condition="$(SDKType)!='DarkEdif'">.\Ext.def</ModuleDefinitionFile>
+			<ModuleDefinitionFile Condition="$(SDKType)!='DarkEdif'">Ext.def</ModuleDefinitionFile>
 		</Link>
 		<ResourceCompile>
 			<!-- Important. Used to be defined by CCX.h -->
@@ -632,7 +632,7 @@
 			<!-- Include math library (libm.so). -->
 			<LibraryDependencies>$(StlLibraryName);m;%(LibraryDependencies)</LibraryDependencies>
 			<!-- Include android_support library for x86 and ARM (available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower) -->
-			<LibraryDependencies Condition="'$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
+			<LibraryDependencies Condition="$(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
 				 so don't confuse VS by building this way. -->
 			<IncrementalLink>false</IncrementalLink>
