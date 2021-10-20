@@ -417,8 +417,9 @@
 			<!-- Old SDKs need this defined.
 				 STRICT is also defined, but not seemingly used. -->
 			<PreprocessorDefinitions Condition="$(SDKType)!='DarkEdif'">_WINDOWS;IN_EXT_VERSION2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Windows XP needs manual defines. Was in MMFMasterHeader, but external libraries won't respect that. -->
-			<PreprocessorDefinitions Condition="$(WindowsXPCompatibility)==1">_WIN32_WINNT=0x0501;WINVER=0x0501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Windows XP (0x0501), SP3 (0300) needs manual defines.
+				 Was in Fusion SDK headers, but external libraries won't respect without pedantic header ordering. -->
+			<PreprocessorDefinitions Condition="$(WindowsXPCompatibility)==1">_WIN32_WINNT=0x0502;WINVER=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
 			<!-- Max number of warnings without being asinine -->
 			<WarningLevel>Level3</WarningLevel>

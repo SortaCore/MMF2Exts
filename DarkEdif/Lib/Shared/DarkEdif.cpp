@@ -122,7 +122,7 @@ bool CreateNewActionInfo(void)
 			ActInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
-		// For some reason in Edif an extra short is provided, initialised to 0, so duplicate that
+		// For some reason in Edif an extra short is provided, initialized to 0, so duplicate that
 		memset(&ActInfo->Parameter[ActInfo->NumOfParams], 0, ActInfo->NumOfParams * sizeof(short));
 	}
 
@@ -169,7 +169,7 @@ bool CreateNewConditionInfo(void)
 			CondInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
-		// For some reason in Edif an extra short is provided, initialised to 0, so duplicate that
+		// For some reason in Edif an extra short is provided, initialized to 0, so duplicate that
 		memset(&CondInfo->Parameter[CondInfo->NumOfParams], 0, CondInfo->NumOfParams * sizeof(short));
 	}
 
@@ -216,7 +216,7 @@ bool CreateNewExpressionInfo(void)
 			ExpInfo->FloatFlags |= (IsFloat << c);											// Store whether it is a float or not with a single bit
 		}
 
-		// For some reason in Edif an extra short is provided, initialised to 0, so duplicate that
+		// For some reason in Edif an extra short is provided, initialized to 0, so duplicate that
 		memset(&ExpInfo->Parameter[ExpInfo->NumOfParams], 0, ExpInfo->NumOfParams * sizeof(short));
 	}
 
@@ -234,7 +234,7 @@ bool CreateNewExpressionInfo(void)
 using namespace Edif::Properties;
 #include <sstream>
 
-void InitialisePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
+void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 {
 	std::stringstream propValues;
 	const size_t propChkboxesSize = (size_t)std::ceil(CurLang["Properties"].u.array.length / 8.0f);

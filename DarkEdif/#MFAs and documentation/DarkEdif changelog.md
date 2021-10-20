@@ -12,6 +12,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v12 release
 ----
 *v12 not released yet*
+- Windows: XP builds now target Windows XP SP2+, Windows Server 2003+
 - Edittime: DarkEdif update checker no longer runs for Fusion startup screen
 - Edittime: Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
 - iOS: properties now passed to extension, changed iOS function name \_free() to \_dealloc()

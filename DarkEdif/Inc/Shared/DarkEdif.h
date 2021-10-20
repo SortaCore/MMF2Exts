@@ -69,7 +69,7 @@ bool CreateNewExpressionInfo();
 char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 
 #if EditorBuild
-void InitialisePropertiesFromJSON(mv *, EDITDATA *);
+void InitializePropertiesFromJSON(mv *, EDITDATA *);
 Prop * GetProperty(EDITDATA *, size_t);
 void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
 void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);

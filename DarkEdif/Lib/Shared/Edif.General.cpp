@@ -914,7 +914,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGV("The SDK is being initialised.");
+		LOGV("The SDK is being initialized.");
 		Edif::Init(mV, false);
 	}
 
@@ -943,7 +943,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 {
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGV("The SDK is being initialised.\n");
+		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}
 }
