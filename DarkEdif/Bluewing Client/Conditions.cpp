@@ -252,7 +252,7 @@ bool Extension::IsPeerOnChannel_Name(const TCHAR * peerNameTStr, const TCHAR * c
 	auto foundPeerIt =
 		std::find_if(peers.cbegin(), peers.cend(),
 			[&](const auto & peer) { return lw_sv_cmp(peer->namesimplified(), peerNameStripped); });
-	return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
+	return foundPeerIt != peers.cend() && !(*foundPeerIt)->readonly();
 }
 bool Extension::IsPeerOnChannel_ID(int peerID, const TCHAR * channelNamePtr)
 {
@@ -286,7 +286,7 @@ bool Extension::IsPeerOnChannel_ID(int peerID, const TCHAR * channelNamePtr)
 	auto foundPeerIt =
 		std::find_if(peers.cbegin(), peers.cend(),
 			[=](const auto & peer) { return peer->id() == peerID; });
-	return foundPeerIt != peers.cend() && (*foundPeerIt)->readonly();
+	return foundPeerIt != peers.cend() && !(*foundPeerIt)->readonly();
 }
 
 bool Extension::MandatoryTriggeredEvent()
