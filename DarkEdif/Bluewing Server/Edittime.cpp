@@ -53,7 +53,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	const auto &propsJSON = CurLang["Properties"];
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
-	if (strcpy_s(edPtr->edGlobalID, UTF8ToTString((const char *)propsJSON[3]["DefaultState"]).c_str()))
+	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), propsJSON[3]["DefaultState"]))
 		DarkEdif::MsgBox::Error(_T("CreateObject() error"), _T("Error initialising property 3; error %i copying string."), errno);
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
