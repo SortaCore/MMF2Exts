@@ -11,7 +11,7 @@ void Extension::Output(int intensity, int line, const TCHAR * textP)
 
 void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 {
-	// Can't continue if Data failed to initialise
+	// Can't continue if Data failed to initialize
 	if (!data)
 		return;
 
@@ -126,7 +126,7 @@ void Extension::SetHandler(int reaction, int continues)
 // Called by non-action only
 void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 {
-	// Can't output if Data failed to initialise
+	// Can't output if Data failed to initialize
 	if (!data)
 	{
 		DebugBreak();
@@ -205,7 +205,7 @@ void Extension::SetOutputTimeFormat(TCHAR * format)
 
 void Extension::SetOutputOnOff(int OnOff)
 {
-	// Can't continue if Data failed to initialise
+	// Can't continue if Data failed to initialize
 	if (!data)
 		return;
 
@@ -221,7 +221,7 @@ void Extension::SetOutputOnOff(int OnOff)
 
 void Extension::SetConsoleOnOff(int OnOff)
 {
-	// Can't continue if Data failed to initialise
+	// Can't continue if Data failed to initialize
 	if (!data)
 		return;
 
@@ -340,7 +340,7 @@ void Extension::CauseCrash_ReadAccessViolation(void)
 void Extension::CauseCrash_ArrayOutOfBoundsRead(void)
 {
 	// This warning is correct; a crash will occur since i[2] is not
-	// initialised - in fact, i[2] doesn't even exist.
+	// initialized - in fact, i[2] doesn't even exist.
 	#pragma warning (push)
 	#pragma warning (disable:4700)
 

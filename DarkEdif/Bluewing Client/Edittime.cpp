@@ -52,7 +52,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	const auto & propsJSON = CurLang["Properties"];
 	edPtr->automaticClear = propsJSON[1]["DefaultState"];
 	edPtr->isGlobal = propsJSON[2]["DefaultState"];
-	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), propsJSON[3]["DefaultState"]))
+	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), UTF8ToTString((const char *)propsJSON[3]["DefaultState"]).c_str()))
 		DarkEdif::MsgBox::Error(_T("CreateObject() error"), _T("Error initialising property 3; error %i copying string."), errno);
 	edPtr->multiThreading = propsJSON[4]["DefaultState"];
 	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
@@ -61,7 +61,8 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	// ext version 1 = before Unicode port, 2 = after. Does not mean the properties are UTF16; they're UTF8.
 	edPtr->eHeader.extVersion = 2;
 
-	// InitialisePropertiesFromJSON(mV, edPtr);
+	// Since we're echoing Relay's property layout, we don't use DarkEdif's property manager.
+	// InitializePropertiesFromJSON(mV, edPtr);
 	return 0;
 }
 

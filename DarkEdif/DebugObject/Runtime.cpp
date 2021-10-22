@@ -14,7 +14,7 @@ void Extension::LoadDataVariable()
 {
 	data = (GlobalData *)Runtime.ReadGlobal(_T("DebugObject"));
 
-	// Not initialised
+	// Not initialized
 	if (!data)
 	{
 		// Create new container
@@ -26,7 +26,7 @@ void Extension::LoadDataVariable()
 		// Mark data position
 		Runtime.WriteGlobal(GlobalID, data);
 
-		// Initialise data
+		// Initialize data
 		data->fileHandle = NULL;
 		data->debugEnabled = false;
 		memset(data->timeFormat, 0, sizeof(data->timeFormat));
@@ -51,7 +51,7 @@ void Extension::LoadDataVariable()
 		// Exception handling (WinAPI call)
 		SetUnhandledExceptionFilter(UnhandledExceptionCatcher);
 	}
-	else // Already initialised
+	else // Already initialized
 	{
 		OpenLock();
 		++data->numUsages;

@@ -669,7 +669,6 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 	auto newEvent = std::make_shared<EventToRun>();
 	EventToRun &newEvent2 = *newEvent;
 
-	// Initialise
 	newEvent2.numEvents = twoEvents ? 2 : 1;
 	newEvent2.CondTrig[0] = (std::uint16_t)event1ID;
 	newEvent2.CondTrig[1] = (std::uint16_t)event2ID;

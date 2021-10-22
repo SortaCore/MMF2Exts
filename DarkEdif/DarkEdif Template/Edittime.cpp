@@ -120,7 +120,7 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 
 	if (edPtr->DarkEdif_Prop_Size == 0)
 	{
-		InitialisePropertiesFromJSON(mV, edPtr);
+		InitializePropertiesFromJSON(mV, edPtr);
 		mvInvalidateObject(mV, edPtr);
 	}
 

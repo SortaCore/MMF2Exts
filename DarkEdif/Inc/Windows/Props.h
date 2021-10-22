@@ -27,10 +27,10 @@ struct PropData
 	unsigned int	Options;			// Options (check box, bold, etc)
 	LPARAM			CreateParam;		// Parameter
 
-	// Use initialiser list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
+	// Use initializer list for performance. 0x80000 is PROPID_EXTITEM_CUSTOM_FIRST, in enum at bottom of this file.
 	PropData() { PropData(-1, 0);}
 	PropData(int ID_, unsigned int Type_) :
-		ID(ID_+0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) {}
+		ID(ID_ + 0x80000), Title(0), Info(0), Type_ID(Type_), Options(0), CreateParam(0) {}
 	void SetAllProperties(unsigned int Options = 0, LPARAM CreateParam = 0)
 	{
 		this->Options = Options;
