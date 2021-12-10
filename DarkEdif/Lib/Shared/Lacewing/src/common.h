@@ -144,7 +144,7 @@ void lwp_deinit ();
 #include <stdlib.h>
 #include <assert.h>
 #include <stdarg.h>
-#include <ctype.h>
+#include <cctype>
 #include <time.h>
 
 #ifdef _lacewing_debug

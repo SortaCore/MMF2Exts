@@ -113,7 +113,7 @@
 		<WindowsXPCompatibility>0</WindowsXPCompatibility>
 		<!-- Yep, XP compatible pack is installed. If VS accidentally picks VS 2019 compiler, VCTargets will point to "...\v160\", so
 			 we hop up a folder and pick VS 2017 (v150) directly, as the XP compatible pack is VS 2017-based. -->
-		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
+		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props') OR Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_WindowsXPCompatibilityRegex)).Success)">0</WindowsXPCompatibility>
 
@@ -549,8 +549,8 @@
 			<BufferSecurityCheck>false</BufferSecurityCheck>
 			<!-- Optimise favouring a smaller size over faster speed, if set to -->
 			<Optimization Condition="$(FavorSizeOrSpeed.StartsWith('size'))">MinSpace</Optimization>
-			<!-- Speed is preferred over size; note VS 2017 does not support Ob3. -->
-			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)!='v141'">/Ob3 %(AdditionalOptions)</AdditionalOptions>
+			<!-- Speed is preferred over size; note VS 2017 (15.x) does not support Ob3. -->
+			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)!='v141' AND $(VisualStudioVersion) &gt;= '16.0'">/Ob3 %(AdditionalOptions)</AdditionalOptions>
 			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)=='v141'">AnySuitable</InlineFunctionExpansion>
 			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed.StartsWith('size'))">OnlyExplicitInline</InlineFunctionExpansion>
 		</ClCompile>
@@ -686,14 +686,18 @@
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
 			<PreprocessorDefinitions>__APPLE__;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Use C++17, and C11, latest finalised standards. -->
-			<CppLanguageStandard>c++17</CppLanguageStandard>
+			<!-- Use C++17, and C11, latest finalised standards.
+				 VS 2017 doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
+			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
 			<!-- We need C++ exception handling. -->
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
 			<AdditionalOptions>-fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
+
+			<!-- VS 2017 doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
+			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 	</ItemDefinitionGroup>
 

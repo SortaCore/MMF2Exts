@@ -44,7 +44,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <cctype>
 #include <math.h>
 
 
