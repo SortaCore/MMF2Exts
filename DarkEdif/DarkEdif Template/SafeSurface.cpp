@@ -899,7 +899,7 @@ int SurfaceSafe::DrawText(std::tstring_view text, LPRECT clipRect, ULONG dtFlags
 	// TODO: Check dtFlags is valid (DT_XXX flags, e.g. DT_LEFT)
 	// TODO: Check textColor is valid
 	// TODO: Check fontHandle is valid - null uses system font, but might be an invalid handle
-	
+
 #ifdef _UNICODE
 	return dynamic_cast<cSurface *>(this)->DrawTextW((const UShortWCHAR *)text.data(), text.size(), clipRect, dtFlags, textColor, fontHandle, blitMode, (BlitOp)blitOp, param, antiAliasing, leftMargin, rightMargin, tabSize);
 #else
@@ -927,7 +927,7 @@ bool SurfaceSafe::ReplaceColor(COLORREF newColor, COLORREF oldColor) {
 // Test fine collision between two surfaces
 bool SurfaceSafe::IsColliding(cSurface & destSurf, size_t destX, size_t destY, size_t srcX, size_t srcY, int rcWidth, int rcHeight) {
 	// TODO: Check surface is valid
-	// TODO: Check src coords are in bounds 
+	// TODO: Check src coords are in bounds
 	// TODO: Check dest coords are in bounds
 	// TODO: Check rcWidth/rcHeight is valid? Not sure what they're for
 	// TODO: Check both surface have collision masks?

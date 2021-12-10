@@ -1,8 +1,9 @@
 #include "Common.h"
-#include "Edif.h"
-#include "DarkEdif.h"
-#include "Resource.h"
 #include "Extension.h"
+#include "DarkEdif.h"
+
+// Used for Win32 resource ID numbers
+#include "Resource.h"
 
 // ============================================================================
 // GLOBAL DEFINES
@@ -62,7 +63,7 @@ void Edif::GetExtensionName(char * const writeTo)
 
 HMENU Edif::ActionMenu, Edif::ConditionMenu, Edif::ExpressionMenu;
 
-Params ReadParameterType(const char * Text, bool &IsFloat)
+Params ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
 {
 	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
 		return Params::String_Expression;
@@ -395,9 +396,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Actions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ActionJumps [i] = (void *) Edif::ActionJump;
-#endif
+	#endif
 
 		ActionFunctions.push_back(0);
 
@@ -407,9 +408,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Conditions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ConditionJumps [i] = (void *) Edif::ConditionJump;
-#endif
+	#endif
 
 		ConditionFunctions.push_back(0);
 
@@ -419,9 +420,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	for (size_t i = 0; i < Expressions.u.object.length; ++ i)
 	{
-#ifdef _WIN32
+	#ifdef _WIN32
 		ExpressionJumps [i] = (void *) Edif::ExpressionJump;
-#endif
+	#endif
 
 		ExpressionFunctions.push_back(0);
 
@@ -429,8 +430,9 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewExpressionInfo();
 	}
 
-	// Phi woz 'ere
+	// Object properties, as they appear in Properties tab, so only under editor.
 #if EditorBuild
+	const json_value& Properties = CurLang["Properties"];
 	{
 		std::vector <PropData> VariableProps;
 		PropData * CurrentProperty;
@@ -490,12 +492,12 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 			// If checkbox is enabled, pass that as flags as well.
 			unsigned int Options = (bool(Property["Checkbox"]) ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
-									| (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
-									| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
-									| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
-									| (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
-									| (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
-									| (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
+								 | (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
+								 | (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
+								 | (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
+								 | (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
+								 | (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
+								 | (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
 			// Todo: passing of LParams requires ParamsREQUIRED option.
 			// Find out what opt is.
 			// Two settings may be specified by |=ing the options unsigned int.
@@ -515,7 +517,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 				// Edit button, Params1 = button text, or nullptr if Edit
 				case PROPTYPE_EDITBUTTON:
-					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["Text"])[0] == '\0') ? 0 : (const char *)Property["Text"]);
+					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["DefaultState"])[0] == '\0') ? 0 : Edif::ConvertString((const char *)Property["DefaultState"]));
 
 				// Edit box for strings, Parameter = max length
 				case PROPTYPE_EDIT_STRING:
@@ -653,9 +655,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 	}
 
+#if EditorBuild
 	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
 	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
 	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
+#endif
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
@@ -1153,40 +1157,44 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	return Result;
 }
 
+// For some reason, actions are expected to return a short.
+// On Android/iOS, we make the Fusion wrapper, so we can return void instead.
+// To handle that, the "actreturn"  hack is used.
+
 #ifdef _WIN32
-short __stdcall Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
+short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 {
 	Extension * ext = rdPtr->pExtension;
 	/* int ID = rdPtr->rHo.hoAdRunHeader->rh4.rh4ActionStart->evtNum; */
 	int ID = rdPtr->rHo.EventNumber;
 	ConditionOrActionManager_Windows params(false, rdPtr, param1, param2);
-#define nowt 0
+#define actreturn 0
 #elif defined (__ANDROID__)
 ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
 	LOGV("Action ID %i start.", ID);
-#define nowt
+#define actreturn /* void */
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, CActExtension act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
-#define nowt
+#define actreturn /* void */
 #endif
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
 		ext->UnlinkedAction(ID);
-		return nowt;
+		return actreturn;
 	}
 	void * Function = ::SDK->ActionFunctions[ID];
 
 	if (!Function)
 	{
 		ext->UnlinkedAction(ID);
-		return nowt;
+		return actreturn;
 	}
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
@@ -1194,8 +1202,8 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 #ifdef __ANDROID__
 	LOGV("Action ID %i end.", ID);
 #endif
-	return nowt;
-#undef nowt
+	return actreturn;
+#undef actreturn
 }
 
 #ifdef __ANDROID__
@@ -1712,7 +1720,6 @@ static void GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 	// Is the file in the directory of the MFX? (if so, use this pathname)
 	TCHAR FullFilename [MAX_PATH];
 	_tcscpy(FullFilename, temp);
-	if (GetFileAttributes(FullFilename) == 0xFFFFFFFF)
 	{
 		// No => editor
 		TCHAR ExecutablePath [MAX_PATH];

@@ -1,15 +1,10 @@
 #pragma once
 
-// #define TGFEXT	// TGF2, MMF2, MMF2 Dev
-#define MMFEXT		// MMF2, MMF2 Dev
-// #define PROEXT	// MMF2 Dev only
+// Do not move XXXEXT after #include of DarkEdif.h!
+// #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
+#define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
+// #define PROEXT	// Fusion 2.x Dev only
 
-#ifdef RUN_ONLY
-	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
-#else
-	const extern struct _json_value & CurrentLanguage();
-	#define CurLang CurrentLanguage()
-#endif
 #define JSON_COMMENT_MACRO lacewing::relayclient::buildnum, STRIFY(CONFIG)
 
 // Lacewing-required imports for accessing Windows sockets
@@ -21,33 +16,23 @@
 #pragma comment(lib, "crypt32.lib")
 #endif
 
-// #define lw_import
-// #define _lacewing_static
-// These two are now defined in project settings; they're absolutely required.
+#ifndef _lacewing_static
+#error Required Lacewing definitions are not in project settings.
+#endif
 
-#include "../Inc/Shared/DarkEdif.h"
+#include "DarkEdif.h"
 
 #include "../Lib/Shared/Lacewing/Lacewing.h"
 #include "LacewingFunctions.h"
 
 #ifdef _WIN32
-#include <stdlib.h>
-#include <crtdbg.h>
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
 #include "..\Inc\Windows\zlib.h"
 #else
 #include <zlib.h>
 // libz included in project settings
-
-// Prevent errors with IntelliSense
-#include <string_view>
-using namespace std::string_view_literals;
 #endif
 #include <iomanip>
-
-#ifdef __APPLE__
-#include "../Inc/iOS/MMFiOSMasterHeader.h"
-#endif
 
 #ifdef _DEBUG
 	extern std::stringstream CriticalSection;
@@ -64,17 +49,12 @@ using namespace std::string_view_literals;
 #define EnterCriticalSectionDebug(x)  (x)->edif_lock()
 #define LeaveCriticalSectionDebug(x)  (x)->edif_unlock()
 #endif
-
-// Enable DarkEdif's utility
-#define MULTI_THREADING
 #include "MultiThreading.h"
-
-#include "Edif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
-	// Header - required
+	// Header - required, must be first variable in EDITDATA
 	extHeader			eHeader;
 
 	// Because Lacewing Blue can be interchanged with Lacewing Relay by replacing the MFXes,
@@ -83,9 +63,10 @@ struct EDITDATA
 
 	// Any random edittime stuff? Place here.
 	char pad0[5];				// For matching Relay Client extension
-	bool automaticClear,
-		 multiThreading;
+	bool automaticClear;
+	bool multiThreading;
 	bool isGlobal;
+	// UTF-8 global ID
 	char edGlobalID[255];
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;
@@ -94,13 +75,19 @@ struct EDITDATA
 	// Note: To match Lacewing Relay Client, this struct's size must be 544 bytes
 
 #ifndef NOPROPS
-	// Keep as last or risk overwriting by functions accessing this address
-	std::uint32_t DarkEdif_Prop_Size;
-	char DarkEdif_Props[];
+	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	int				DarkEdif_Prop_Size;
+	char			DarkEdif_Props[];
 
+	// =====
 	// DarkEdif functions, use within Extension ctor.
+	// =====
+
+	// Returns property checked or unchecked.
 	bool IsPropChecked(int propID);
+	// Returns std::tstring property setting from property name.
 	std::tstring GetPropertyStr(const char * propName);
+	// Returns std::tstring property string from property ID.
 	std::tstring GetPropertyStr(int propID);
 #endif
 };
@@ -129,6 +116,4 @@ struct RUNDATA
 DWORD LacewingLoopThread(void * ThisExt);
 DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
 
-#define COMMON_H
 #include "Extension.h"
-#undef COMMON_H

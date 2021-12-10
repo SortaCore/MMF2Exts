@@ -15,7 +15,7 @@
 HINSTANCE hInstLib = NULL;
 
 // Entry point for DLL, when DLL is attached to by Fusion, or detached; or threads attach/detach
-BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
+__declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason, LPVOID lpReserved)
 {
 	// DLL is attaching to the address space of the current process.
 	if (dwReason == DLL_PROCESS_ATTACH && hInstLib == NULL)
@@ -807,6 +807,11 @@ static void prepareSignals()
 #ifndef EXTRAFUNCS
 #define EXTRAFUNCS /* none*/
 #endif
+
+ProjectFunc jlong conditionJump(JNIEnv*, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
+ProjectFunc void actionJump(JNIEnv*, jobject, jlong extPtr, jint actID, CActExtension act);
+ProjectFunc void expressionJump(JNIEnv*, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
+
 ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
 

@@ -258,7 +258,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	isGlobal = edPtr->isGlobal;
 
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " - Extension create: IsGlobal=%i.\n", isGlobal ? 1 : 0);
+	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Extension create: IsGlobal=%i.\n", isGlobal ? 1 : 0);
 	OutputDebugStringA(msgBuff);
 	if (isGlobal)
 	{
@@ -597,8 +597,6 @@ void eventpumpdeleter(lacewing::eventpump pump)
 }
 
 
-#ifdef MULTI_THREADING
-
 void GlobalInfo::AddEvent1(int event1ID,
 	std::shared_ptr<lacewing::relayserver::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayserver::client> senderClient /* = nullptr */,
@@ -694,8 +692,6 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 	if (_ext != nullptr)
 		_ext->Runtime.Rehandle();
 }
-
-#endif // MULTI_THREADING
 
 
 void Extension::ClearThreadData()
@@ -1477,7 +1473,7 @@ exitThread:
 Extension::~Extension()
 {
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " - ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
+	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
 	OutputDebugStringA(msgBuff);
 
 	EnterCriticalSectionDebug(&globals->lock);
@@ -1536,7 +1532,7 @@ Extension::~Extension()
 			selChannel = nullptr;
 			LeaveCriticalSectionDebug(&globals->lock);
 
-			sprintf_s(msgBuff, PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
+			sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
 				globals->timeoutWarningEnabled
 				? "a warning message will be shown"
 				: "the hosting will terminate and all pending messages will be discarded");
@@ -1581,29 +1577,6 @@ short Extension::FusionRuntimePaused() {
 short Extension::FusionRuntimeContinued() {
 	return 0; // OK
 }
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
-bool Extension::SaveFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use WriteFile() to save your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
-bool Extension::LoadFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use ReadFile() to read your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
 
 // These are called if there's no function linked to an ID
 

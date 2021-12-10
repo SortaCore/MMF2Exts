@@ -72,10 +72,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\utarray.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\uthash\uthash.h" />

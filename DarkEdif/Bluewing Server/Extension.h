@@ -36,8 +36,10 @@ public:
 
 #ifdef _WIN32
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
-#else
+#elif defined(__ANDROID__)
 	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr);
+#else
+	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr);
 #endif
 	~Extension();
 
@@ -337,10 +339,6 @@ public:
 
 	short FusionRuntimePaused();
 	short FusionRuntimeContinued();
-
-	bool SaveFramePosition(HANDLE File);
-	bool LoadFramePosition(HANDLE File);
-
 };
 
 void eventpumpdeleter(lacewing::eventpump);

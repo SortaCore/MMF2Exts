@@ -1,25 +1,16 @@
 #pragma once
 
-// #define TGFEXT	// TGF2, MMF2, MMF2 Dev
-#define MMFEXT		// MMF2, MMF2 Dev
-// #define PROEXT	// MMF2 Dev only
+// Do not move XXXEXT after #include of DarkEdif.h!
+// #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
+#define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
+// #define PROEXT	// Fusion 2.x Dev only
 
-#ifdef RUN_ONLY
-	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
-#else
-	const extern struct _json_value & CurrentLanguage();
-	#define CurLang (CurrentLanguage())
-#endif
-
-#include "Edif.h"
-#include "Resource.h"
 #include "DarkEdif.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
 struct EDITDATA
 {
-	// Header - required
+	// Header - required, must be first variable in EDITDATA
 	extHeader		eHeader;
 
 	// Object's data

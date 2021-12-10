@@ -1,28 +1,21 @@
 #pragma once
 
-#include "Edif.h"
-#ifdef _WIN32
-#include "Resource.h"
-#include "MMFMasterHeader.h"
+// JSON can have multiple languages; we'll use the last language in Runtime builds.
+#if RuntimeBuild
+	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
 #else
-// These figures don't matter in Android/iOS anyway, a different resources format is used
-#define IDR_EDIF_ICON 101
-#define IDR_EDIF_JSON 102
+	// Singleton expression for finding the current JSON based on preferred language in Extensions\DarkEdif.ini
+	const extern struct _json_value & CurrentLanguage();
+	#define CurLang CurrentLanguage()
 #endif
 
-#include <algorithm>
-#include <sstream>
-#include <chrono>
-#include <condition_variable>
-#include <thread>
-#include <atomic>
-
-
-// Stops Visual Studio complaining it cannot generate copy functions because of the 0-sized array
-#pragma warning (disable:4200)
+#include "Edif.h"
 
 // Struct contains information about a/c/e
 struct ACEInfo {
+	// We can't copy this consistently because of the zero-sized array. Prevent creating copy/move constructors.
+	NO_DEFAULT_CTORS(ACEInfo);
+
 	union BothParams {
 		// Actions, conditions
 		Params p;
@@ -48,7 +41,9 @@ struct ACEInfo {
 							 // For exps: EXPFLAG_DOUBLE, etc; return type
 							 // For acts: unused, always 0
 	short		NumOfParams; // Number of parameters this A/C/E is called with (Parameters[n])
-	BothParams	Parameter[]; // Parameter information (max sizeof(FloatFlags)*8 params)
+
+	SuppressZeroArraySizeWarning
+	BothParams	Parameter[]; // Parameter information (max sizeof(FloatFlags)*CHAR_BIT params)
 
 	ACEInfo(short _ID, BothFlags _Flags, short _NumOfParams) :
 			FloatFlags(0), ID(_ID),
@@ -58,22 +53,28 @@ struct ACEInfo {
 	}
 
 	// Simple function to return the part of the struct that is expected by MMF2
-	inline void * MMFPtr (void) { return &ID; }
+	inline void * FusionPtr () { return &ID; }
 };
+
+Params ReadActionOrConditionParameterType(const char*, bool&);
+ExpParams ReadExpressionParameterType(const char*, bool&);
+ExpReturnType ReadExpressionReturnType(const char* text);
 
 bool CreateNewActionInfo();
 bool CreateNewConditionInfo();
 bool CreateNewExpressionInfo();
 
+// NOPROPS indicates the properties' storage is managed manually by ext developer.
 #ifndef NOPROPS
-char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
+	char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
 
-#if EditorBuild
-void InitializePropertiesFromJSON(mv *, EDITDATA *);
-Prop * GetProperty(EDITDATA *, size_t);
-void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
-void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
-#endif // EditorBuild
+	// Property setup for the property pane in the editor. Not used elsewhere
+	#if EditorBuild
+		void InitializePropertiesFromJSON(mv *, EDITDATA *);
+		Prop * GetProperty(EDITDATA *, size_t);
+		void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
+		void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
+	#endif // EditorBuild
 #endif // NOPROPS
 
 std::tstring ANSIToTString(const std::string_view);
@@ -92,12 +93,12 @@ std::wstring TStringToWide(const std::tstring_view);
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 11;
+	static const int SDKVersion = 12;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
 	///			  Will generate a languages file if absent. </summary>
-	std::string GetIniSetting(const char * key);
+	std::string GetIniSetting(const std::string_view key);
 
 	namespace SDKUpdater
 	{
@@ -118,6 +119,8 @@ namespace DarkEdif {
 			ExtDevError,
 			// Check returned an DarkEdif SDK update (usually only returned in Debug/Debug Unicode builds)
 			SDKUpdate,
+			// Check returned an install corruption (UC tag malfunction)
+			ReinstallNeeded,
 			// Minor ext update, will change ext icon but not cause message box
 			Minor,
 			// Major ext update, will change ext icon, and cause message box once per Fusion session
@@ -270,7 +273,66 @@ namespace DarkEdif {
 	// Extension name; ANSI/Wide on Windows, UTF-8 elsewhere.
 	extern std::tstring ExtensionName;
 	extern std::thread::id MainThreadID;
-	extern HWND Internal_WindowHandle;
+	extern WindowHandleType Internal_WindowHandle;
+
+	enum class MFXRunMode
+	{
+		// Haven't calculated it yet (this should never happen in user code)
+		Unset = -1,
+
+		// Running as a built EXE; can happen for both edittime and runtime MFXs, although it is expected only runtime MFXs are used.
+		BuiltEXE,
+
+		// Editor builds can be used by all builds, including copying to Data\Runtime to be used as runtime.
+		// Runtime builds lack A/C/E menus and other details, so they can only be used in built EXEs.
+		#if EditorBuild
+			// Running in Fusion load-up splash screen - or during a Refresh button press in Create New Object window
+			SplashScreen,
+			// Sitting in the Fusion frame editor
+			Editor,
+			// Being used by a Run Application/Frame/Project test.
+			// Does not include Build and Run, because that is BuiltEXE.
+			RunApplication,
+		#endif
+	};
+	extern MFXRunMode RunMode;
+
+#ifdef _MSC_VER
+	_Enum_is_bitflag_
+#endif
+	enum GetRunningApplicationPathType {
+		FullPath = 0,
+		AppFolderOnly = 1,
+		// If "compress the runtime" is used, Fusion EXEs extract a stdrt.exe file to parse the content of the MFA.
+		// Specifying this flag makes the GetRunningApplicationPath return the path of stdrt.exe in temp,
+		// instead of the actual exe path.
+		GetSTDRTNotApp = 2,
+	};
+
+	std::tstring_view GetRunningApplicationPath(GetRunningApplicationPathType type);
+
+	// For use with GetMFXRelativeFolder()
+	enum class GetFusionFolderType
+	{
+		// Gets Fusion root folder
+		FusionRoot,
+		// Gets MFX folder, always Extensions even in Extensions\\Unicode folders
+		FusionExtensions,
+		// Gets MFX folder, be it Extensions\\ or Extensions\\Unicode
+		MFXLocation,
+	};
+	// Returns a path relative to this MFX, with an appended slash.
+	std::tstring_view GetMFXRelativeFolder(GetFusionFolderType type);
+
+	// Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
+	bool RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive = true);
+
+	// Checks if first parameter ends with second parameter, returns true if so.
+	bool EndsWith(const std::tstring_view tstr, const std::tstring_view suffix, bool caseInsensitive = true);
+
+	// Checks if path exists, and is a file
+	bool FileExists(const std::tstring_view filePath);
+
 
 	void BreakIfDebuggerAttached();
 
@@ -291,9 +353,6 @@ namespace DarkEdif {
 // This region does type checking on LinkXXX functions.
 // Since the JSON should never change between Debug versus Edittime/Runtime versions,
 // we'll only do the slow check in Debug Mode.
-
-#include <algorithm>
-#include <sstream>
 
 #if EditorBuild && defined(_DEBUG)
 
@@ -375,7 +434,7 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 	do
 	{
 		bool isFloat = false;
-		Params p = ReadParameterType(json["Parameters"][acParamIndex][0], isFloat);
+		Params p = ReadActionOrConditionParameterType(json["Parameters"][acParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.

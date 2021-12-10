@@ -62,9 +62,12 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Shared\json.h" />
+    <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp" />
+    <ClInclude Include="..\Inc\Shared\json.hpp" />
     <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
     <ClInclude Include="..\Inc\Shared\Edif.h" />
+    <ClInclude Include="..\Inc\Shared\NonWindowsDefines.hpp" />
+    <ClInclude Include="..\Inc\Shared\Strings.hpp" />
     <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
     <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
     <ClInclude Include="Common.h" />

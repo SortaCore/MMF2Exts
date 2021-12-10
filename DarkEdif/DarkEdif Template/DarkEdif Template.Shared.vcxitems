@@ -15,12 +15,16 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Common.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp" />

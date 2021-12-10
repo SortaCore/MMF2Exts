@@ -17,14 +17,16 @@
 
 extern std::atomic<bool> AppWasClosed; // Event type; other threads can wait for this to be triggered
 
+#ifdef _WIN32
 // Called when the application starts or restarts. Also called for subapps.
 void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
+	// We don't need this function, just use EndApp, but it's good practice to do both of a pair...
+	// starts and ends, loads and unloads, etc.
 }
 
 // Called when the application ends or restarts. Also called for subapps.
-#ifdef _WIN32
 void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 {
 	#pragma DllExportHint

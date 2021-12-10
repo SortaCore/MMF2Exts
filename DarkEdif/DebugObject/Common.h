@@ -1,24 +1,16 @@
 #pragma once
 
-// #define TGFEXT	// TGF2, MMF2, MMF2 Dev
-#define MMFEXT		// MMF2, MMF2 Dev
-// #define PROEXT	// MMF2 Dev only
+// Do not move XXXEXT after #include of DarkEdif.h!
+// #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
+#define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
+// #define PROEXT	// Fusion 2.x Dev only
 
-#ifdef RUN_ONLY
-	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
-#else
-	const extern struct _json_value & CurrentLanguage();
-	#define CurLang CurrentLanguage()
-#endif
 #define JSON_COMMENT_MACRO Extension::Version
 
 #pragma comment(lib, "..\\Lib\\Windows\\dbghelp.lib")
 
-#include "Edif.h"
-#include "Resource.h"
 #include "DarkEdif.h"
 #include <time.h>
-#include <sstream>
 #include <iostream>
 #include <iomanip>
 
@@ -27,24 +19,25 @@
 #include <dbghelp.h>
 #pragma warning (pop)
 
-// If your extension will be using multithreading, remove the #if and #endif lines here.
-#define MULTI_THREADING
-#include "MultiThreading.h"
-#include <atomic>
-
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
-	// Header - required
+	// Header - required, must be first variable in EDITDATA
 	extHeader		eHeader;
 
-	// DarkEdif properties
+	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
 	int				DarkEdif_Prop_Size;
 	char			DarkEdif_Props[];
 
+	// =====
 	// DarkEdif functions, use within Extension ctor.
+	// =====
+
+	// Returns property checked or unchecked.
 	bool IsPropChecked(int propID);
+	// Returns std::tstring property setting from property name.
 	std::tstring GetPropertyStr(const char * propName);
+	// Returns std::tstring property string from property ID.
 	std::tstring GetPropertyStr(int propID);
 };
 

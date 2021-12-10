@@ -248,9 +248,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.h">
-      <Filter>Global to all extensions\Edif\JSON</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
@@ -277,6 +274,18 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.h">
       <Filter>Header Files\Lacewing\src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp">
+      <Filter>Global to all extensions\Edif\JSON</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -66,7 +66,6 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	return 0;
 }
 
-cSurface * FusionAPI WinGetSurface(int idWin, int surfID = 0);
 // Displays the object under the frame editor
 void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, EDITDATA * edPtr, RECT * rc)
 {

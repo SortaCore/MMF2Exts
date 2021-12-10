@@ -19,3 +19,4 @@
 #define z_const
 #define FusionAPIImport __declspec(dllimport)
 #define FusionAPI __stdcall
+#define PrintFHintAfter(formatParamIndex, dotsParamIndex) /* no op */

@@ -121,7 +121,7 @@
 #include <thread>
 
 // std::string_view requires C++17
-#if __cplusplus < 201703L && _MSVC_LANG < 201703L
+#if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))
 	#error C++17 std::string_view not available, check what C++ standard your project is using
 #endif
 #include <string_view>
@@ -1573,6 +1573,7 @@ protected:
 #else
 	lacewing::readlock createReadLock();
 	lacewing::writelock createWriteLock();
+#endif
 
 protected:
 	void openReadLock(readlock & rl);
@@ -1583,8 +1584,6 @@ protected:
 	lacewing::readlock downgradeWriteLock(writelock &wl);
 	void upgradeReadLock(readlock &rl, writelock &wl);
 	void downgradeWriteLock(writelock &wl, readlock &rl);
-
-#endif
 
 private:
 

@@ -279,7 +279,7 @@ enum class _Enum_is_bitflag_ BlitOptions : ULONG {
 	// Anti-aliasing
 	AntiAliasing	= 0x0001,
 	// Copy alpha channel to destination alpha channel instead of applying it
-	CopyAlpha		= 0x0002,		
+	CopyAlpha		= 0x0002,
 #ifdef HWABETA
 	// TODO: YQ: What is a safe source?
 	// HWA only
@@ -379,7 +379,7 @@ public:
 		#endif
 
 		// Operators
-		
+
 		cSurface & operator= (const cSurface & source);
 
 		// Create surface implementation from surface prototype
@@ -457,7 +457,7 @@ public:
 		// ======================
 	    // Raster operations
 		// ======================
-		
+
 		// Locks the raw memory of the Surface, and returns the address to it. When you're done writing, use UnlockBuffer to return it.
 		// TODO: YQ: Does this work for all surface types?
 		LPBYTE	LockBuffer();
@@ -511,11 +511,13 @@ public:
 		#undef LoadImage
 
 		BOOL	LoadImageA (HFILE hf, ULONG lsize, LoadImageFlags loadFlags = LoadImageFlags::None);
+		// See the _FUSIONT macro for filename!
 		BOOL	LoadImageA (LPCSTR fileName, LoadImageFlags loadFlags = LoadImageFlags::None);
 		BOOL	LoadImageA (HINSTANCE hInst, int bmpID, LoadImageFlags loadFlags = LoadImageFlags::None);
 		BOOL	LoadImageA (LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LoadImageFlags loadFlags = LoadImageFlags::None);
 
 		BOOL	LoadImageW (HFILE hf, ULONG lsize, LoadImageFlags loadFlags = LoadImageFlags::None);
+		// See the _FUSIONT macro for filename!
 		BOOL	LoadImageW (const UShortWCHAR * fileName, LoadImageFlags loadFlags = LoadImageFlags::None);
 		BOOL	LoadImageW (HINSTANCE hInst, int bmpID, LoadImageFlags loadFlags = LoadImageFlags::None);
 		BOOL	LoadImageW (LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LoadImageFlags loadFlags = LoadImageFlags::None);
@@ -527,7 +529,9 @@ public:
 		#endif
 
 		BOOL	SaveImage (HFILE hf, SaveImageFlags saveFlags = SaveImageFlags::None);
+		// See the _FUSIONT macro for filename!
 		BOOL	SaveImage (LPCSTR fileName, SaveImageFlags saveFlags = SaveImageFlags::None);
+		// See the _FUSIONT macro for filename!
 		BOOL	SaveImage (const UShortWCHAR * fileName, SaveImageFlags saveFlags = SaveImageFlags::None);
 		BOOL	SaveImage (LPBITMAPINFO pBmi, LPBYTE pBits, SaveImageFlags saveFlags = SaveImageFlags::None);
 
@@ -743,7 +747,9 @@ public:
 		// text
 		// ======================
 
+		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
 		int		TextOutA(LPCSTR text, ULONG dwCharCount,int x,int y,ULONG alignMode,LPRECT pClipRc, COLORREF color=0, HFONT hFnt=(HFONT)NULL, BlitMode bm=BMODE_TRANSP, BlitOp=BOP_COPY, LPARAM param=0, int AntiA=0);
+		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
 		int		TextOutW(const UShortWCHAR * text, ULONG dwCharCount,int x,int y,ULONG alignMode,LPRECT pClipRc, COLORREF color=0, HFONT hFnt=(HFONT)NULL, BlitMode bm=BMODE_TRANSP, BlitOp=BOP_COPY, LPARAM param=0, int AntiA=0);
 
 #ifdef _UNICODE
@@ -751,9 +757,10 @@ public:
 #else
 	#define TextOut TextOutA
 #endif
-
+		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
 		int		DrawTextA(LPCSTR text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
 						  BlitMode bm=BMODE_TRANSP, BlitOp bo=BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
+		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
 		int		DrawTextW(const UShortWCHAR * text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
 						  BlitMode bm=BMODE_TRANSP, BlitOp bo=BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
 
@@ -878,3 +885,5 @@ public:
 
 extern "C" FusionAPIImport BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE *, LOGPALETTE *, WORD);
 
+// Used by EditorDisplay of most Fusion exts
+FusionAPIImport cSurface* FusionAPI WinGetSurface(int idWin, int surfID = 0);

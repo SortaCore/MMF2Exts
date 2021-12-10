@@ -700,7 +700,7 @@ const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TC
 		return Runtime.CopyString(_T(""));
 
 	char output[256];
-	sprintf_s(output, "Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s.",
+	sprintf_s(output, std::size(output), "Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s.",
 		rejectedCodePointIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
 	return Runtime.CopyString(UTF8ToTString(output).c_str());
 }

@@ -1,8 +1,11 @@
 #include "Common.h"
 #include <atomic>
 #include "DarkEdif.h"
+#include <math.h>
 
+#ifdef _WIN32
 extern HINSTANCE hInstLib;
+#endif
 extern Edif::SDK * SDK;
 
 #if EditorBuild
@@ -86,6 +89,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text);
 #ifdef RUN_ONLY
 #define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
 #endif
+
 bool CreateNewActionInfo(void)
 {
 	// Get ID and thus properties by counting currently existing actions.
@@ -118,7 +122,7 @@ bool CreateNewActionInfo(void)
 		for (std::uint8_t c = 0; c < ActInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			ActInfo->Parameter[c].p = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
+			ActInfo->Parameter[c].p = ReadActionOrConditionParameterType(Param[c][0], IsFloat);	// Store parameter type
 			ActInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
@@ -165,7 +169,7 @@ bool CreateNewConditionInfo(void)
 		for (std::uint8_t c = 0; c < CondInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			CondInfo->Parameter[c].p = ReadParameterType(Param[c][0], IsFloat);	// Store parameter type
+			CondInfo->Parameter[c].p = ReadActionOrConditionParameterType(Param[c][0], IsFloat);	// Store parameter type
 			CondInfo->FloatFlags |= (IsFloat << c);								// Store whether it is a float or not with a single bit
 		}
 
@@ -372,7 +376,14 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	const char * curStr = jsonItem["Type"];
 	Prop * ret = nullptr;
 	bool allConvToTString = false;
-	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
+
+	// Edit button text isn't returned here; it's passed as lParam when EdittimeProperties are created.
+	// Returning it here is pointless, as Fusion will ignore it.
+	if (!_stricmp(curStr, "Edit button"))
+		return nullptr;
+
+	// Static text is returned here
+	if (!_stricmp(curStr, "Text"))
 	{
 		ret = new Prop_Str(UTF8ToTString((const char *)jsonItem["DefaultState"], &allConvToTString).c_str());
 		if (!allConvToTString)
@@ -509,7 +520,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 
 	const char * curStr = (const char *)j[(int)ID]["Type"];
 	// Read unchangable properties
-	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Checkbox") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1))
+	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button") || !_stricmp(curStr, "Checkbox") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1))
 		return nullptr;
 	// if (curTypeStr == "other stuff")
 	//	return new Prop_XXX();
@@ -1702,9 +1713,10 @@ std::tstring DarkEdif::ExtensionName(_T("" PROJECT_NAME ""s));
 std::thread::id DarkEdif::MainThreadID;
 HWND DarkEdif::Internal_WindowHandle;
 
-//
-//
-//
+// =====
+// Message boxes that mostly work on all platforms
+// On Android, this makes a small popup on bottom of the screen, called a biscuit?
+// =====
 static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, va_list v, int flags)
 {
 	assert(titlePrefix != NULL && msgFormat != NULL);

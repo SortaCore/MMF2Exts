@@ -37,7 +37,7 @@ enum class _Enum_is_bitflag_ PictureEditorOptions : unsigned int {
 	// The image can be empty (if this option is not specified, MMF refuses to close the picture editor if the image is empty)
 	CanBeTransparent	= 0x0400,
 	// Frames cannot be moved
-	CannotMoveFrames	= 0x0800,	
+	CannotMoveFrames	= 0x0800,
 };
 enum_class_is_a_bitmask(PictureEditorOptions);
 

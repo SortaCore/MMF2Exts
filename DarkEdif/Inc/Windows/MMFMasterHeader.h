@@ -1,6 +1,5 @@
 ///
 
-
 #pragma once
 #ifndef _WIN32
 #error Included the wrong header for this OS.
@@ -24,16 +23,10 @@ typedef sMask CollisionMask;
 
 #include "CFile.hpp"
 
-
-
 // Marquage des ObjectInfo qualifiers
 #define	OIFLAG_QUALIFIER			0x8000
 #define	NDQUALIFIERS				100
 #define MAX_EVENTPROGRAMS			256
-
-
-
-
 
 // Possible states of the application, see LApplication::SetRunningState()
 enum class GAMEON {
@@ -303,7 +296,7 @@ public:
 
 	unsigned short	Movements,		// Offset of the movements (addr of Object_Common + Movements = addr of rMvt struct)
 					Animations, 	// Offset of the animations (addr of Object_Common + Animations = addr of rAni struct)
-					Version,		// For version versions > MOULI 
+					Version,		// For version versions > MOULI
 					Counter,		// Pointer to COUNTER structure (addr of Object_Common + Counter = addr of counter struct)
 					data,			// Pointer to DATA structure (addr of Object_Common + Data = addr of rData struct)
 					Free;			// IGNORE: Padding the shorts to 4 bytes
@@ -703,23 +696,6 @@ struct event2 {
 #define	CND_SIZE					sizeof(event2)
 #define	ACT_SIZE					(sizeof(event2)-2) // Ignore Identifier
 
-// Definition of conditions / actions flags
-enum class EVFLAGS : short {
-	NONE = 0,
-	REPEAT = 0x1,
-	DONE = 0x2,
-	DEFAULT = 0x4,
-	DONEBEFOREFADEIN = 0x8,
-	NOTDONEINSTART = 0x10,
-	ALWAYS = 0x20,
-	BAD = 0x40,
-	BADOBJECT = 0x80,
-	DEFAULTMASK	= (ALWAYS+REPEAT+DEFAULT+DONEBEFOREFADEIN+NOTDONEINSTART),
-	// Originally EVFLAGS_NOTABLE
-	NOTABLE = 0x200
-};
-enum_class_is_a_bitmask(EVFLAGS);
-
 #define		ACTFLAGS_REPEAT			0x1
 
 
@@ -764,22 +740,6 @@ public:
 // --------------------------------------------------
 #define		MIN_LONG				(-10000000L)
 #define		MAX_LONG				(10000000L)
-enum class ExpParams : short {
-	Long = 1,
-	Integer = Long,
-	Float = Integer,
-	UnsignedInteger = Integer,
-	GlobalVariable,
-	String,
-	AlterableValue,
-	Flag,
-};
-enum class ExpReturns {
-	Long = 0,
-	Integer = Long,
-	Float,
-	String,
-};
 
 #define		EXP_STOP				-1
 #define		OPERATOR_START			0x00000000
@@ -844,15 +804,6 @@ struct expression {
 #define		CMPOPE_GRE				(CMPOPE_GREEQU+CMPOPE_DIF)
 #define		MAX_CMPOPE				6
 #define		EXPNEXT(expPtr)			((expression *)((char *)expPtr+expPtr->expSize))
-
-// Expression return type. Originally EXPFLAG_*, expression flags.
-enum class ExpReturnType : short {
-	Integer = 0,
-	String = 0x1,
-	// enum item originally named DOUBLE, but this is misleading; a float is returned.
-	Float = 0x2,
-	UnsignedInteger = Integer
-};
 
 struct expressionV1 {
 	union
@@ -966,69 +917,6 @@ enum class OBJ {
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-// Flags
-typedef unsigned int uint;
-enum class OEFLAGS : uint {
-	NONE					= 0,
-	DISPLAY_IN_FRONT		= 0x1,		// Active object/window control
-	BACKGROUND				= 0x2,		// Background
-	BACK_SAVE				= 0x4,		// No effect in HWA
-	RUN_BEFORE_FADE_IN		= 0x8,
-	MOVEMENTS				= 0x10,
-	ANIMATIONS				= 0x20,
-	TAB_STOP				= 0x40,
-	WINDOW_PROC				= 0x80,		// Needs to receive window process messages (i.e. app was minimized)
-	VALUES					= 0x100,		// Has alterable values/strings (will automatically create the associated a/c/e/p)
-	SPRITES					= 0x200,
-	INTERNAL_BACK_SAVE		= 0x400,	// No effect in HWA
-	SCROLLING_INDEPENDENT	= 0x800,
-	QUICK_DISPLAY			= 0x1000,	// No effect in HWA
-	NEVER_KILL				= 0x2000,	// Never destroy object if too far from frame
-	NEVER_SLEEP				= 0x4000,
-	MANUAL_SLEEP			= 0x8000,
-	TEXT					= 0x10000,
-	DONT_CREATE_AT_START	= 0x20000,
-	// CF2.5 only
-	FAKE_SPRITE				= 0x40000,
-	// CF2.5 only
-	FAKE_COLLISIONS			= 0x80000,
-};
-enum_class_is_a_bitmask(OEFLAGS);
-
-// Flags modifiable by the program
-enum class OEPREFS : short {
-	NONE					= 0,
-	BACK_SAVE				= 0x1,		// No effect in HWA
-	SCROLLING_INDEPENDENT	= 0x2,
-	QUICK_DISPLAY			= 0x4,		// No effect in HWA
-	SLEEP					= 0x8,
-	LOAD_ON_CALL			= 0x10,
-	GLOBAL					= 0x20,
-	BACK_EFFECTS			= 0x40,
-	KILL					= 0x80,
-	INK_EFFECTS				= 0x100,
-	TRANSITIONS				= 0x200,
-	FINE_COLLISIONS			= 0x400,
-	APPLET_PROBLEMS			= 0x800,
-};
-enum_class_is_a_bitmask(OEPREFS);
-
-// Running flags
-enum class REFLAG : short {
-	// OK; if used in Handle(), then indicates to call Handle next tick
-	NONE = 0,
-	// Don't call Handle next tick
-	ONE_SHOT = 0x1,
-	// Call Display after this
-	DISPLAY = 0x2,
-	// WndProc responses
-	MSG_HANDLED = 0x4,
-	MSG_CATCHED = 0x8,
-	MSG_DEF_PROC = 0x10,
-	// ?
-	MSGRETURNVALUE = 0x40,
-};
-
 enum class CPF {
 	DIRECTION = 0x1,
 	ACTION = 0x2,
@@ -1042,79 +930,6 @@ enum class CPF {
 //
 ///////////////////////////////////////////////////////////////////////
 
-enum class Params : short {
-	Object = 1,						// ParamObject
-	Time,							// ParamTime
-	Border,							// ParamBorder
-	Direction,						// ParamDir
-	Integer,						// ParamInt
-	Sample,							// ParamSound
-	Music,							// ParamSound also
-	Position,						// ParamPosition
-	Create,							// ParamCreate
-	Animation,						// ParamAnimation
-	NoP,							// No struct (no data)
-	Player,							// ParamPlayer
-	Every,							// ParamEvery
-	Key,							// ParamKey
-	Speed,							// ParamSpeed
-	NewPosition,					// ParamNewPosition
-	Joystick_Direction, 			// ParamNewPosition also
-	Shoot,							// ParamShoot
-	Playfield_Zone,					// ParamZone
-	System_Create,					// ParamCreate
-	Expression = 22,				// ParamExpression
-	// ParamComparison, also PARAM_COMPARAISON [sic] or PARAM_COMPARISON.
-	// Used in conditions only. Expects condition to return an int, and user is asked to give a value expression and math op to compare with.
-	// The parameter is int in C++, but can be ignored, as Fusion handles the comparison.
-	// Return the int to compare with the condition function.
-	Comparison,
-	Colour,							// ParamColour
-	Buffer,							// ParamBuffer
-	Frame,							// ParamFrame - Storyboard frame number
-	Sample_Loop,					// ParamSoundLoop
-	Music_Loop,						// ParamSoundLoop also
-	New_Direction,					// ParamNewDir
-	Text_Number,					// ParamTextNum
-	Click,							// ParamClick
-	Program = 33,					// ParamProgram
-	Old_GlobalVariable, 			// DEPRECATED - DO NOT USE
-	Condition_Sample,				// ParamCondSound
-	Condition_Music,				// ParamCondSound also
-	Editor_Comment,					// ParamEditorComment - Event editor comment
-	Group,							// ParamGroup
-	Group_Pointer,					// ParamGroupPointer
-	Filename,						// ParamFilename
-	String,							// ParamString
-	// ParamCmpTime; PARAM_CMPTIME. See Comparison above.
-	// Condition should return int type (time in milliseconds to compare to), and expect C++ int parameter.
-	Compare_Time,
-	Paste_Sprite,					// ParamPasteSprite
-	Virtual_Key_Code,				// ParamVKCode
-	String_Expression,				// ParamStringExp
-	// ParamCmpString; PARAM_CMPSTRING. See Comparison above.
-	// Condition should return text type (const TCHAR *), and expect C++ text type parameter.
-	String_Comparison,
-	Ink_Effect,						// ParamInkEffect
-	Menu,							// ParamMenu
-	Global_Variable,				// ParamVariable
-	Alterable_Value,				// ParamVariable also
-	Flag,							// ParamVariable also also!
-	Global_Variable_Expression, 	// ParamExpression
-	Alterable_Value_Expression,		// ParamExpression also
-	Flag_Expression,				// ParamExpression also also!
-	Extension,						// ParamExtension
-	_8Dirs,							// Param8Dirs
-	Movement,						// ParamMvt
-	Global_String,					// ParamVariable
-	Global_String_Expression,		// ParamExpression also also also!!
-	Program_2,						// ParamProgram2
-	Alterable_String,				// ParamVariable
-	Alterable_String_Expression,	// ParamExpression
-	Filename_2,						// ParamFilename2 - allows filters of extensions or something.
-	Effect,							// ParamEffect - HWA effect?
-	Custom_Base = 1000,				// Base number for custom returns
-};
 struct ParamObject {
 	unsigned short	OffsetListOI,	//
 					Number,			//
@@ -1345,7 +1160,7 @@ struct ParamEffect {
 	TCHAR *	name;
 };
 
-Params ReadParameterType(const char *, bool &);
+Params ReadActionOrConditionParameterType(const char *, bool &);
 ExpParams ReadExpressionParameterType(const char *, bool &);
 ExpReturnType ReadExpressionReturnType(const char * text);
 
@@ -1910,19 +1725,6 @@ struct RunHeader {
 
 #define HOX_INT
 
-enum class HeaderObjectFlags : std::uint16_t {
-	Destroyed = 0x1,
-	TrueEvent = 0x2,
-	RealSprite = 0x4,
-	FadeIn = 0x8,
-	FadeOut = 0x10,
-	OwnerDraw = 0x20,
-	NoCollision = 0x2000,
-	Float = 0x4000,
-	String = 0x8000
-};
-enum_class_is_a_bitmask(HeaderObjectFlags);
-
 struct HeaderObject {
 	short  				Number,			// Number of the object
 		 				NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
@@ -2298,16 +2100,6 @@ struct extHeader_v1
 		  extVersion;		// Version number
 };
 //typedef extHeader_v1*	extHeader *V1;
-
-struct extHeader
-{
-	unsigned long extSize,
-				  extMaxSize,
-				  extVersion;			// Version number
-	void *		  extID;				// object's identifier
-	void *		  extPrivateData;		// private data
-};
-//typedef extHeader *		extHeader *;
 
 // ------------------------------------------------------
 // System objects (text, question, score, lives, counter)
@@ -3533,10 +3325,10 @@ enum	{
 #define MMFVERSION_MASK		0xFFFF0000
 #define MMFBUILD_MASK		0x00000FFF		// MMF build
 #define MMFVERFLAG_MASK		0x0000F000
-#define MMFVERFLAG_HOME		0x8000		// TGF
-#define MMFVERFLAG_PRO		0x4000		// MMF Pro
-#define MMFVERFLAG_DEMO		0x2000		// Demo
-#define MMFVERFLAG_PLUGIN	0x1000		// Plugin
+#define MMFVERFLAG_HOME		0x00008000		// TGF
+#define MMFVERFLAG_PRO		0x00004000		// MMF Pro
+#define MMFVERFLAG_DEMO		0x00002000		// Demo
+#define MMFVERFLAG_PLUGIN	0x00001000		// Plugin
 #define MMFVERSION_15		0x01050000		// MMF 1.5
 #define MMFVERSION_20		0x02000000		// MMF 2.0
 #define CFVERSION_25		0x02050000		// CF 2.5
@@ -3617,7 +3409,7 @@ struct EditAnimationParams;
 
 // Global variables structure
 struct mv {
-	
+
 	// Common to editor and runtime
 	HINSTANCE			HInst;				// Application HINSTANCE
 	void *				IdAppli;			// Application object in DLL
@@ -3645,7 +3437,7 @@ struct mv {
 
 	// Runtime
 	RunHeader *			RunHdr;				// Current RunHeader
-	unsigned int		Prefs;				// Preferences (sound on/off)
+	unsigned int		PextsHoldingGlobals;				// Preferences (sound on/off)
 	TCHAR *				subType;
 	BOOL				FullScreen;			// Full screen mode
 	TCHAR *				MainAppFileName;	// App filename
@@ -3884,6 +3676,7 @@ inline void * mvNeedBackgroundAccess(mv * mV, CRunFrame* pFrame, BOOL bNeedAcces
 inline BOOL mvIsHWAVersion(mv * mV) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::ISHWA, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 
+// Returns true if the runtime is Unicode. Will return true for ANSI extensions used by the Unicode runtime.
 inline BOOL mvIsUnicodeVersion(mv * mV) \
 	{ return mV->CallFunction(NULL, CallFunctionIDs::ISUNICODE, (LPARAM)0, (LPARAM)0, (LPARAM)0); }
 

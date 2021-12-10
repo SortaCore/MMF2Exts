@@ -1,6 +1,7 @@
 #include "Common.h"
 
-#ifndef RUN_ONLY
+#if EditorBuild
+
 void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * ObjAuthor,
 	TCHAR * ObjCopyright, TCHAR * ObjComment, TCHAR * ObjHttp)
 {
@@ -186,12 +187,11 @@ HMENU FusionAPI GetExpressionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 	return NULL;
 }
 
-
 void * FusionAPI GetConditionInfos(mv *mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ConditionInfos[code]->MMFPtr();
+		return ::SDK->ConditionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -199,7 +199,7 @@ void * FusionAPI GetActionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ActionInfos[code]->MMFPtr();
+		return ::SDK->ActionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -207,7 +207,7 @@ void * FusionAPI GetExpressionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
-		return ::SDK->ExpressionInfos[code]->MMFPtr();
+		return ::SDK->ExpressionInfos[code]->FusionPtr();
 	return NULL;
 }
 
@@ -275,6 +275,6 @@ void FusionAPI PrepareFlexBuild(mv * pMV, EDITDATA * edPtr, const wchar_t * wTem
 
 	AddDirectory(std::tstring(FlashFolderPath) + _T("\\"), std::tstring(TempFolder));
 }
-#endif
+#endif // DARKEXT_JSON_FILE_EXTERNAL
 
-#endif // !defined(RUN_ONLY)
+#endif // EditorBuild

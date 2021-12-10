@@ -48,7 +48,7 @@
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Shared\json.h">
+    <ClInclude Include="..\Inc\Shared\json.hpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\DarkEdif.h">
@@ -62,6 +62,15 @@
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\ObjectSelection.h">
       <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\Strings.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\NonWindowsDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

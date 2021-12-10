@@ -1,12 +1,9 @@
 #pragma once
 
 
-#include "json.h"
+#include "json.hpp"
 
 #include <vector>
-#include <list>
-#include <string>
-#include <sstream>
 #include <thread>
 #include <mutex>
 #include <algorithm>
@@ -15,22 +12,13 @@
 #include <atomic>
 
 #ifdef _WIN32
-#include "..\Windows\MMFMasterHeader.h"
+	#include "..\Windows\MMFMasterHeader.h"
+	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-#include "..\Android\MMFAndroidMasterHeader.h"
+	#include "..\Android\MMFAndroidMasterHeader.h"
 #elif defined (__APPLE__)
-#include "../iOS/MMFiOSMasterHeader.h"
+	#include "../iOS/MMFiOSMasterHeader.h"
 #endif
-#include "json.h"
-
-/*
-#include "ccxhdr.h"
-#include "CfcFile.h"
-#include "ImageFlt.h"
-#include "ImgFlt.h"
-
-#include "Patch.h"
-*/
 
 class Extension;
 
@@ -50,28 +38,20 @@ class Extension;
 
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)
-
-#define LinkAction(ID, Function) \
-	LinkActionDebug(ID, &Extension::Function);
-
-#define LinkCondition(ID, Function) \
-	LinkConditionDebug(ID, &Extension::Function);
-
-#define LinkExpression(ID, Function) \
-	LinkExpressionDebug(ID, &Extension::Function);
-
+	#define LinkAction(ID, Function) \
+		LinkActionDebug(ID, &Extension::Function);
+	#define LinkCondition(ID, Function) \
+		LinkConditionDebug(ID, &Extension::Function);
+	#define LinkExpression(ID, Function) \
+		LinkExpressionDebug(ID, &Extension::Function);
 #else
-#define LinkAction(ID, Function) \
-	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
-
-#define LinkCondition(ID, Function) \
-	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
-
-#define LinkExpression(ID, Function) \
-	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkAction(ID, Function) \
+		SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkCondition(ID, Function) \
+		SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+	#define LinkExpression(ID, Function) \
+		SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 #endif
-
-extern HINSTANCE hInstLib;
 
 struct RUNDATA;
 struct EDITDATA;
@@ -352,9 +332,4 @@ namespace Edif
 
 };
 
-#ifdef __ANDROID__
-ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, jint cndID, CCndExtension cnd);
-ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint actID, CActExtension act);
-ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
-#endif
 extern Edif::SDK * SDK;

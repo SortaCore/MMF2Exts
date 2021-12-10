@@ -539,7 +539,7 @@ public:
 
 
 	// Data
-	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
+	unsigned int pad = 0;	// This is a required waste of space or MMF will die trying to read it.
 	wchar_t * String;
 };
 

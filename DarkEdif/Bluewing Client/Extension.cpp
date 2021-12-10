@@ -270,7 +270,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 #endif
 
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " - Extension create: isGlobal=%hhu (bool %i), automaticClearBinary=%hhu (bool %i),"
+	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Extension create: isGlobal=%hhu (bool %i), automaticClearBinary=%hhu (bool %i),"
 		" fullDeleteEnabled=%hhu (bool %i), multiThreading=%hhu (bool %i), timeoutWarningEnabled=%hhu (bool %i), global ID \"%s\".\n",
 		*(std::uint8_t *)&edPtr->isGlobal, edPtr->isGlobal ? 1 : 0,
 		*(std::uint8_t *)&edPtr->automaticClear, edPtr->automaticClear ? 1 : 0,
@@ -1114,7 +1114,7 @@ REFLAG Extension::Handle()
 	{
 		EnterCriticalSectionDebug(&globals->lock);
 		char error[300];
-		sprintf_s(error, "You're receiving too many messages for the application to process. Max of "
+		sprintf_s(error, std::size(error), "You're receiving too many messages for the application to process. Max of "
 			"%zu events per event loop, currently %zu messages in queue.",
 			maxNumEventsPerEventLoop, EventsToRun.size());
 
@@ -1254,28 +1254,6 @@ short Extension::FusionRuntimePaused() {
 // Called when Fusion runtime is resuming after a pause.
 short Extension::FusionRuntimeContinued() {
 	return 0; // OK
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
-bool Extension::SaveFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use WriteFile() to save your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
-bool Extension::LoadFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use ReadFile() to read your data.
-		OK = true;
-	#endif
-	return OK;
 }
 
 
