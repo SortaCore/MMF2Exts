@@ -6,46 +6,54 @@ If you plan on distributing your own version publicly, it is highly recommended 
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
 ### Tools to use ###
-It's recommended you use Visual Studio 2019, although Visual Studio 2017 should also be compatible.
+It's recommended you use Visual Studio 2019, although [Visual Studio 2017][Older VS editions] should also be compatible.  
+You can also use VS 2022, although you'll lose Windows XP compatibility.
 
-You should install an [Express edition](https://visualstudio.microsoft.com/vs/express/), or register for free with Microsoft to get
-[Community edition](https://visualstudio.microsoft.com/vs/community/), which supports VS addons.
+You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
+* VS 2017 and 2019 can be downloaded under [older downloads][Older VS editions]. Requires a free registration.
+* VS 2022 - no Windows XP support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
 
-The SDKs are compatible with the C++ Windows XP targeting pack, for XP+ instead of Vista+ targeting. You can find it under Additional Components tab in the Visual Studio installer.
+### Windows targeting ###
+The SDKs are compatible with the **C++ Windows XP targeting pack**, for Windows XP+ instead of Vista+ targeting. You can find it under Additional/Individual Components tab in the Visual Studio installer; search for "Windows XP" using the search bar on the top.
 
-
-
-### XP targeting ###
-If the XP-targeting compiler is installed it will be auto-detected by all the SDKs and used instead.  
+If the Visual Studio XP-targeting pack is installed, it will be auto-detected by all the Fusion SDKs and XP+ targeting will be enabled by default.  
 If XP targeting pack is used, your extensions will be Windows XP and later compatible, and if not, it's Windows Vista and later.  
-DarkEdif will use [WINVER and _WIN32_WINNT](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt) preprocessor
-macros so Windows headers will disable Vista+ functions, making them unavailable to your project.
+All Fusion SDKs will use [WINVER and _WIN32_WINNT][WINVER] preprocessor macros so Windows headers will hide Vista+ functions, making them unavailable to your project.
 
-To confirm if the Windows function is compatible, you can normally find out on MSDN under "minimum client OS",
-for example [GetProcessIdOfThread()](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread) is Vista+.  
-If you want to use later OS functions at cost of compatibility, you can change the targeting by switching the Platform Toolset to non-XP and
-redefining WINVER and \_WIN32\_WINNT to a number from [here](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt).
+To confirm manually if any Windows API function is compatible, you can normally find out on MSDN under "Requirements > minimum client OS" at the bottom of the page;
+for example [GetProcessIdOfThread()] is Vista+.
+
+#### Later OS versions
+If you want to use later OS functions at cost of compatibility, you can change the targeting by using the FusionSDKConfig INI WindowsXPCompatibility option to false ([how to][XP compatibility false]), and reloading your VS solution.
+
+You may want to:
+1. Under project properties for Windows > General, there is Windows SDK Version property; change it to a later SDK to expose newer functions.  
+You can install more Windows SDKs via the Visual Studio Installer under Additional/Individual Components tab.
+2. Under project properties, change C/C++ > Preprocessor > Preprocessor Definitions to manually define WINVER and \_WIN32\_WINNT to a number from [here][WINVER].  
+By default, if not targeting XP, the default your Windows SDK specifies will be used. Be aware Windows SDK 8.1 supports compiling for earlier than Windows 8.1, but targets WINVER/\_WIN32_WINNT to 8.1 by default.
+3. Under project properties Linker > System > Minimum Required Version, change it to match the WINVER.  
+XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to target Vista+ (0x0600), set minimum version to "6.00".
 
 ### Android targeting ###
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
 
-For more details on Android, such as pitfalls, features and setting up debugging, make sure you read the Android section of the [MultiTarget guide](DarkEdif/%23MFAs%20and%20documentation/DarkEdif%20MultiTargeting.md) under DarkEdif documentation.
+For more details on Android, such as pitfalls, features and setting up debugging, make sure you read the Android section of the [MultiTarget guide] under DarkEdif documentation.
 
 You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it.
 
 ### iOS targeting ####
 To target iOS, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools". That should be all you need.
 
-For more details on iOS, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide](DarkEdif/%23MFAs%20and%20documentation/DarkEdif%20MultiTargeting.md) under DarkEdif documentation.
-
-iOS development requires you to have a Mac, with vcremote installed. Follow Microsoft's guide on linking your Visual Studio to a Mac running XCode [here](https://docs.microsoft.com/en-us/cpp/cross-platform/install-and-configure-tools-to-build-using-ios?view=msvc-160).  
-An iMac from late 2012 or above is necessary; you need XCode 10.2 for compatibilty with Visual Studio, which is Mac OS Mojave and later.
+iOS development requires you to have a Mac, with vcremote installed. Follow Microsoft's guide on linking your Visual Studio to a Mac running Xcode [here][Link VS to Xcode].  
+An iMac from late 2012 or above is necessary; you need Xcode 10.2+ for compatibilty with Visual Studio, which is Mac OS Mojave and later.
 Since the latest Mac OS "Big Sur" runs on 2014 and later Macs, you may want to get a 2014+ instead.
 
-You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it.
+You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it, and as any developer would tell you, there's no way you'll write code that works as expected first try.
 
-DarkEdif will automatically package your built Android files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
-This file is valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in XCode, which thankfully takes less than a minute.
+DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
+These produced files are valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in Xcode, which thankfully takes less than a minute.
+
+For more details on iOS, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide] under DarkEdif documentation.
 
 ### Using a single project ###
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
@@ -57,6 +65,7 @@ All projects in this repository use a shared Visual Studio props file, found in 
 3. Adding a new project configuration (example, you have Edittime, and you add Edittime Unicode), the props file will read the project configuration name and apply the settings for Edittime and Unicode; making it non-debug, adding the `_UNICODE` defines, etc.
 
 ## SDK variants
+
 ### MMF2SDK
 MMF2SDK is the original MMF2SDK provided by Clickteam, programmed in C, with use of some preprocessor macros. It's a lot of manual work, and IntelliSense doesn't like it much (IntelliSense isn't great with preprocessor macros that start/end functions/sections).
 
@@ -64,13 +73,15 @@ MMF2SDK is the original MMF2SDK provided by Clickteam, programmed in C, with use
 MMF2SDK_Unicode is the MMF2SDK provided by Clickteam, with both ANSI (non-Unicode) and Unicode builds possible. Ease of use is about equal with MMF2SDK, as long as you understand [how to convert an ANSI project to ANSI & Unicode](#markdown-anchor-how-to-convert-ansi-functions-to-ansi--unicode).
 
 ### rSDK
-rSDK is a change up with even heavier use of preprocessor macros, written by James with contribution from other users. [CT forum thread](https://community.clickteam.com/threads/42183-rSDK).  It was introduced with extra macros that did away quite a bit of work of MMF2SDK, but still a lot of manual work and IntelliSense doesn't like it either.
+rSDK is a change up with even heavier use of preprocessor macros, written by James with contribution from other users. [rSDK Clickteam forum thread].  
+It was introduced with extra macros that did away quite a bit of work of MMF2SDK, but still a lot of manual work and IntelliSense doesn't like it either, so you will have very inconsistent auto-complete in VS.
 
 ### Edif
-Edif is a newer, C++ SDK that handles most of the messy parts of Fusion, and does away with the heavy use of preprocessor macros inherent to older SDKs. This was written by James as well, some time later. [CT forum thread](https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun).
+Edif is a newer, C++ SDK that handles most of the messy parts of Fusion, and does away with the heavy use of preprocessor macros inherent to older SDKs. This was written by James as well, some time later. [Edif Clickteam forum thread].
 
 ### DarkEdif
-DarkEdif is a continuation of Edif with changes mostly coded by Phi, with some code contributions from LB and other developers. [CT forum thread](https://community.clickteam.com/threads/71793-DarkEDIF-Taking-suggestions?p=608099&viewfull=1#post608099).
+DarkEdif is a continuation of Edif with changes mostly coded by Phi, with some code contributions from LB and
+other developers. [DarkEdif Clickteam forum thread].
 
 It includes all the features of Edif and some extra, including:
 
@@ -87,8 +98,8 @@ It includes all the features of Edif and some extra, including:
 DarkEdif uses a pre-build standalone tool (and in non-Windows platforms, also a post-build standalone tool) programmed in C#. This tool is currently not open-source.
 
 More details on DarkEdif are available in the Wiki, see:
-* [DarkEdif ext dev features](https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features) for a list of features available to a DarkEdif extension developer
-* [DarkEdif Fusion user features](https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-Fusion-user-features) for a list of features available to Fusion users
+* [DarkEdif ext dev features] for a list of features available to a DarkEdif extension developer
+* [DarkEdif Fusion user features] for a list of features available to Fusion users
 
 ## How to convert ANSI functions to ANSI & Unicode
 Make sure you're aware of what any text-related function you call expects. Does it ask for number of elements in array, or number of bytes in array?
@@ -101,3 +112,18 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 * `sizeof(char[] variable)` -> `sizeof(TCHAR[] variable) / sizeof(TCHAR)` (for functions expecting array sizes in elements)
 * `sizeof(char[] variable)` -> `sizeof(TCHAR[] variable) * sizeof(TCHAR)` (for functions expecting array sizes in bytes)
 * `std::string` -> `std::tstring`, likewise for `std::stringstream` and `std::string_view`; a feature of DarkEdif, evil as it's not part of std, but a readability feature.
+
+
+[XP compatibility false]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features#disable-windows-xp-compatibility
+[Older VS editions]: https://visualstudio.microsoft.com/vs/older-downloads/
+[VS 2022 Express]: https://visualstudio.microsoft.com/vs/express/
+[VS 2022 Community]: https://visualstudio.microsoft.com/vs/community/
+[DarkEdif ext dev features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-ext-dev-features
+[DarkEdif Fusion user features]: https://github.com/SortaCore/MMF2Exts/wiki/DarkEdif-Fusion-user-features
+[DarkEdif Clickteam forum thread]: https://community.clickteam.com/threads/71793-DarkEDIF-Taking-suggestions?p=608099&viewfull=1#post608099 "DarkEdif forum thread"
+[GetProcessIdOfThread()]: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessidofthread#requirements
+[WINVER]: https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt
+[MultiTarget guide]: DarkEdif/%23MFAs%20and%20documentation/DarkEdif%20MultiTargeting.md
+[Link VS to Xcode]: https://docs.microsoft.com/en-us/cpp/cross-platform/install-and-configure-tools-to-build-using-ios?view=msvc-160
+[rSDK Clickteam forum thread]: https://community.clickteam.com/threads/42183-rSDK
+[Edif Clickteam forum thread]: https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun

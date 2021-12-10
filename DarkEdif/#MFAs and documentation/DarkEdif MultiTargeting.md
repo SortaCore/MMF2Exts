@@ -7,14 +7,131 @@ It has been carefully attempted to make multiplatform compiling as simple as pos
 There are, though, several notes.
 
 ## Prerequisites
-As a DarkEdif developer, you should start by reading the README in the [MMF2Exts root folder](https://github.com/SortaCore/MMF2Exts/blob/master/README.md), to find the base requirements of using the SDK.  
-In your Visual Studio setup, ensure you have enabled the latest NDK versions, and enable Android C++ targeting, and iOS C++ targeting.
+As a DarkEdif developer, you should start by reading the README in the [MMF2Exts root folder][README],
+to find the base requirements of using the SDK.  
+In your Visual Studio setup, ensure you have enabled the latest NDK versions, and enable Android C++
+targeting, iOS C++ targeting, and Windows XP toolset, as needed.
+
+
+## Building with XP support
+There are extra handicaps when compiling for XP and above.
+
+### VS toolset compatibility
+While VS 2015 through VS 2022 come with XP-targeting C++ toolset, the C/C++ Run-Time (CRT) is not obligated
+to support XP in how its functions are implemented. The CRT includes the C++ runtime libraries that contain
+all the std::XX code and built-in C/C++ functions like `printf()`.
+
+The Windows OS SDK is correctly annotated with `#if WINVER >= VISTA` to prevent you calling Windows API
+functions that aren't available in your targeted OS version. The problem is, the CRT's library could use
+ anything to implement its std::XX functions.
+
+For example, std:\:shared_timed_mutex is a basic locking mechanism to prevent multiple threads fighting over
+access to the same block of memory. It is available on Windows XP and above.  
+However, in later versions of VS 2019 and in all versions of VS 2022, std::shared_timed_mutex was changed to
+use an OS feature called [SRW locks],
+to provide the mutex feature.   
+SRW locks are only available in **Vista** and above. So although std::shared_timed_mutex is available while
+using the XP toolset, using it will produce an application (or in this case, Fusion extension) that won't load.
+
+To ensure your STL doesn't start falling over at random on XP, Microsoft [recommends][VS 2019 XP recommendation] using no later than Visual Studio 2019 toolset v14.27, which comes with Visual Studio 2019 Update 7 (VS v16.7).  
+You can set up this old VS 2019 toolset in two ways:
+1. Install the VS 2019 16.7 version directly; it should be linked in your MS account [here][VS 2019 Redist]. (if only later versions are available, open a [support ticket][VS redist support].)
+2. Alternatively, install a later version of VS 2019, but install the v14.27 toolset under Individual Components tab of the Visual Studio Installer.  
+This will produce binaries that work in XP and above, but note that IntelliSense may get confused about what \_MSC\_VER is defined as.  
+It's worth noting VS 2019 Preview can be used with this method too, but VS 2022 *cannot* be used with either method.
+
+### Tools to go with Visual Studio
+Windows XP does not support Visual Studio 2017 or above, and DarkEdif uses C++17 features that are only available in VS 2017 and above.  
+Your best bet for debugging is using **WinDbg**, which can be found in the Windows 7 SDK as the "Debugging tools" component.  
+Get it from [here][Windows 7 SDK Debugging Tools] or [here][Windows SDK archive].  
+Install the variant that matches your XP computer; if your XP OS is 32-bit, get the 32-bit (x86) Windows 7 SDK installer.
+
+WinDbg is fiddly to use, but you only need to know the commands:
+- Menu item File > Open executable: opens the EXE file and starts running it while watching for crashes.
+- `g`: Tells the program to continue until something breaks.  
+  Note that WinDbg will automatically pause shortly after opening an executable, without a bug happening; this is expected behavior.
+- `.dump /mFA "C:\Filename.dmp"`: produces a DMP dumpfile that Visual Studio 2017 can open.  
+  Send the DMP back to the VS computer, and use File > Open in the Fusion ext project; then press Attach in the dmp file's tab.
+
+You may want to:
+- Uninstall any redistributible before installing the Windows 7 SDK, particularly VS 2010, as you may get errors during the Windows 7 SDK install otherwise.
+- Copy your symbol files from your VS computer to your XP one.  
+  Symbol files (PDB files) contain the function names and addresses that are used by your extension.  
+  Your symbol file cache location should be under your Visual Studio options.  
+  You can set up the symbol cache in WinDbg by File > Symbol File Path (read [more][WinDbg symbol path guide]).
+
+
+#### My Windows ext doesn't load
+If your extension compiles and links without error (build success in Output window), but it does not load, in either of these ways:
+1. Fusion 2.0/2.5 will not show the extension in the Create New Object window
+2. Built Fusion EXEs that use your extension, when run, are creating a messagebox:  
+  "Cannot load ExtName.mfx. This object might need an external program or library not yet installed."
+This error means that external files are missing.
+
+This error message box also occurs when:
+- your extension is set to build with `FavorSizeOrSpeed=size_redist` Fusion SDK config option,
+  or has VS property setting C/C++ > Code Generation > Runtime Library to a DLL version.  
+  This means project properties Multithreaded Debug DLL or Multithreaded DLL. `_DLL` will be defined.  
+  These will have CRT functions outside of your extension's MFX, depending on the user having your VS's C++ redistributible installed.
+  For VS 2015-2022, you can use any VS redistributible up to the VS 2022 redistributible; but note that Windows XP is only compatible
+  up to VS 2019 redistributible v16.7.
+- you use a Vista+ function in Windows XP, or a 7+ function in Windows Vista, etc.
+- you use external DLLs that you link to with LIB files (dynamic library), which are not found by the running application.
+
+Your Fusion extension will look for the external DLLs (redistributible DLL files, Windows DLL files, or third-party DLLs you've
+directly linked to), in system path, and:
+- During Fusion editor usage: Fusion install folder (where mmf2u.exe is)
+- During Run Application: Data\\Runtime or Data\\Runtime\\Unicode folder
+- For built EXEs: The built EXE application folder.
+
+If you're struggling to find the function that your ext can't find in the OS, try opening Microsoft's [Dependency Walker] on your MFX file.  
+1. Once opened, it should show red-icon DLL files on the left.
+2. Click on a red one, and functions with a red C icon on the top right are functions that your ext cannot find.  
+3. If your ext seems fine, try opening the Walker on your Fusion EXE, and press Start Profiling.  
+Regretfully, Dependency Walker only works on Windows 8 and lower; you may prefer third-party apps like [Dependencies][Dependencies tool], but they may not have the profiling option.
+
+
+### CRT bug workround to do with static initialization
+By default, XP-targeted Fusion SDK projects will use `/ZcthreadSafeInit-`.  
+This means that static thread-local variables will not be initialized in a thread-safe way; but this will only matter
+if these static variables are both function-level in scope, use constructors, and need to be thread-safe.
+
+By default, VS uses Windows **Vista** and above functionality to initialize static local variables in a thread-safe way,
+unless `/Zc:threadSafeInit-` is specified to disable this behaviour.  
+When it is disabled, `__cpp_threadsafe_static_init` is left undefined.
+
+Since it uses Vista+ functions, it causes buggy behaviour on Windows XP with any non-trivial initialization of static
+local variables; that is, where a constructor function has to be called to set up the static, not a flat struct initialization.
+
+static int, const char \*, char \[], etc  std:\:pair, std:\:tuple etc will construct fine; it's just non-trivial initialization like struct constructors:
+```cpp
+static std::string foo = "x"s;
+static std::string_view yes = "no"sv;  
+static structname bar = structname(XX);
+```
+...these will not construct properly.
+
+Windows XP will allocate the memory for the variable, but not run the initializer, only default-constructing or zero-filling the memory.
+
+Static variables on a file-level scope don't use this, and so will construct with no issues.
+
+Consider using wraparound code to disable static behaviour.
+```cpp
+#if _WIN32 && WINVER < 0x0600 && defined(__cpp_threadsafe_static_init)`
+	// Broken function-level scope static initialization; construct a non-static instead
+#else 
+	// Function-level static initialization is okay
+#endif
+```
+
+For an example of this workaround, see the Edif::Init() function.
+
 
 ## Building Fusion for Android
 To set up your Fusion for Android building, refer to this guide
 
 ### Fusion's built-in native support
-Buried in Clickteam's docs, there's an [NDK example](https://github.com/ClickteamLLC/android), but barely complete at all.  
+Buried in Clickteam's docs, there's an [NDK example][Clickteam NDK example], but it's barely complete at all.  
 It uses libRuntimeNative.so as a go-between wrapper, as well as shared STL, libc++\_shared.so.  
 
 ### libRuntimeNative.so
@@ -24,8 +141,8 @@ Normally, SO files use JNI_OnLoad() to start off their JNI process, but dlopen()
 
 ### libc++\_shared.so
 The shared STL, libc++\_shared.so in the APKs/AABs. In order to make use of a shared STL, you have to match the version they use, or you'll get dlopen() errors.  
-Fusion Android runtime uses r21d as of 22nd June 2021. The [latest LTS](https://developer.android.com/ndk/downloads) is r21e, latest stable r22b.  
-Meanwhile, Visual Studio 2019 is using r16b, but has support for all NDK versions, [in theory](https://developercommunity.visualstudio.com/t/Update-the-bundled-Android-NDK-to-Releas/782660#T-N1452635).
+Fusion Android runtime uses r21d as of 22nd June 2021. The [latest LTS][latest NDK LTS] is r21e, latest stable r22b.  
+Meanwhile, Visual Studio 2019 is using r16b, but has support for all NDK versions, [in theory][Visual Studio NDK compatibility discussion].
 
 Note that attempts to use Fusion's built-in shared STL even with correct versions, result in SIGSEGV on app start, so presently DarkEdif uses a static runtime even in the Runtime configuration.  
 
@@ -40,16 +157,16 @@ Consider using API 19, which gives you 4.4.x+, most API 16 devices will be upgra
 - OS v4.0 is on 0.1% of Android devices
 - OS v4.1-4.3 is on 0.5% of Android devices
 - OS v4.4 is on 1.5% of Android devices  
-You can calculate the trade-off yourself, by refering to [this page](https://www.appbrain.com/stats/top-android-sdk-versions).
+You can calculate the trade-off yourself, by refering to [this page][AppBrain Android OS usage].
 
 Fusion users themselves are better off using the latest API available, presently API 30, particularly if they plan on publishing on Play Store.
 However, the API 18 is the minimum that the Fusion runtime itself will support, with Java exts raising the bar as needed.
 
 ### Tools to check the API and NDK version of Android SO libraries
 You can test the runtime of an SO file using Command Prompt, `python parse_elf.py "path to libc++_shared.so`.
-You can get parse_elf.py from [Android source code](https://android.googlesource.com/platform/ndk/+/master/parse_elfnote.py) - click the File button on top of that page.
+You can get parse_elf.py from [Android source code][Parse ELF py file] - click the File button on top of that page.
 
-As far as STL, you should use LLVM's STL, c++\_shared.so, which is [the only one still supported by Google](https://www.phoronix.com/scan.php?page=news_item&px=Android-NDK-r16). GNU STL is second-best, but doesn't play nice all the time.  
+As far as STL, you should use LLVM's STL, c++\_shared.so, which is the only one [still supported by Google][Google's STL support]. GNU STL is second-best, but doesn't play nice all the time.  
 If you bring in a third-party library, it must target the same shared STL, or have one/both use static, but as Fusion runtime uses a shared one, it will probalby be best to rebuild the third-party libraries manually from source.
 
 
@@ -86,18 +203,18 @@ Find `<ISenseIncludePath>`, remove the libcxx and musl entries, and instead link
 You can build for 7 iOS CPU types, of which 4 are targeted by defaults.  
 Of these CPU targets, some are simulator, some are device-only, and some are used for both.
 
-| iOS Arch 	| VS arch 	| Default? 	| Sim? 	| Device? 	| Depends on 	| Notes/devices used in                                                                                                                                                                                                                      	|
-|----------	|---------	|----------	|------	|---------	|------------	|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| armv6    	| ARM¹    	| No       	| No   	| Yes     	| armv7      	| **Deprecated**²<br>ARMv6-_only_ devices:<br>iPod Touch 1st/2nd gen<br>iPod Nano 4th gen<br>iPhone 1, iPhone 3G                                                                                                                             	|
-| armv7    	| ARM     	| No       	| No   	| Yes     	| _(none)_   	| iPhone 3GS+<br>iPad Mini 1st gen+<br>iPod Touch 3rd gen+                                                                                                                                                                                   	|
-| armv7s   	| ARM¹    	| No       	| No   	| Yes     	| armv7      	| Introduced in iOS 7.0.<br>Superseded by arm64 quickly, so only in:<br>iPhone 5/5C<br>iPad 4th gen<br>iPod 5th gen                                                                                                                          	|
-| arm64    	| ARM64   	| Yes      	| Yes  	| Yes     	| _(none)_   	| iPhone 5S+ (not iPhone 5 or 5C)<br>iPod Touch 6th gen+<br>iPad Mini 2nd gen+<br>iPad Air 1st gen+, iPad Pro 1st gen+, iPad 5th gen+<br>In most Macs pre-2021. Used for iOS simulation in those Macs.                                       	|
-| arm64e   	| ARM64¹  	| No       	| Yes  	| Yes     	| arm64      	| 2018 evolution, since ARMv8.3A, in [A12+ chips](https://en.wikipedia.org/wiki/Apple_A12).<br>iPhone XS, XS Max, XR, 11, 11 Pro<br>iPad Mini 5th gen+<br>iPad Air 3rd gen+<br>iPad 8th gen+<br>Also in 2021+ Macs. Used for iOS simulation. 	|
-| i386     	| x86     	| Yes      	| Yes  	| No      	| _(none)_   	| Simulator used on 32-bit Macs.<br>Only simulator choice for iOS 6.1 and below.<br>Mac doesn't _emulate_ iOS like a VM, it just simulates it.                                                                                               	|
-| x86_64   	| x64     	| Yes      	| Yes  	| No      	| _(none)_   	| Simulator used on 64-bit pre-2021 Macs.<br>(Can also be used in 2021+ Macs.³)                                                                                                                                                              	|
+| iOS Arch 	| VS arch 	| Default? 	| Sim? 	| Device? 	| Depends on 	| Notes/devices used in                                                                                                                                                                                 	|
+|----------	|---------	|----------	|------	|---------	|------------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| armv6    	| ARM¹    	| No       	| No   	| Yes     	| armv7      	| **Deprecated**²<br>ARMv6-_only_ devices:<br>iPod Touch 1st/2nd gen<br>iPod Nano 4th gen<br>iPhone 1, iPhone 3G                                                                                        	|
+| armv7    	| ARM     	| No       	| No   	| Yes     	| _(none)_   	| iPhone 3GS+<br>iPad Mini 1st gen+<br>iPod Touch 3rd gen+                                                                                                                                              	|
+| armv7s   	| ARM¹    	| No       	| No   	| Yes     	| armv7      	| Introduced in iOS 7.0.<br>Superseded by arm64 quickly, so only in:<br>iPhone 5/5C<br>iPad 4th gen<br>iPod 5th gen                                                                                     	|
+| arm64    	| ARM64   	| Yes      	| Yes  	| Yes     	| _(none)_   	| iPhone 5S+ (not iPhone 5 or 5C)<br>iPod Touch 6th gen+<br>iPad Mini 2nd gen+<br>iPad Air 1st gen+, iPad Pro 1st gen+, iPad 5th gen+<br>In most Macs pre-2021. Used for iOS simulation in those Macs.  	|
+| arm64e   	| ARM64¹  	| No       	| Yes  	| Yes     	| arm64      	| 2018 evolution, since ARMv8.3A, in [A12+ chips].<br>iPhone XS, XS Max, XR, 11, 11 Pro<br>iPad Mini 5th gen+<br>iPad Air 3rd gen+<br>iPad 8th gen+<br>Also in 2021+ Macs. Used for iOS simulation. 		|
+| i386     	| x86     	| Yes      	| Yes  	| No      	| _(none)_   	| Simulator used on 32-bit Macs.<br>Only simulator choice for iOS 6.1 and below.<br>Mac doesn't _emulate_ iOS like a VM, it just simulates it.                                                          	|
+| x86_64   	| x64     	| Yes      	| Yes  	| No      	| _(none)_   	| Simulator used on 64-bit pre-2021 Macs.<br>(Can also be used in 2021+ Macs.³)                                                                                                                         	|
 
 ¹ = You will have to include the "Depends on" iOS arch and build for the VS arch if targeting those.  
-² = If running Xcode under [Rosetta translation](https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment), you can run x86_64 code on an ARM64 host machine, but that's not recommnded.  
+² = If running Xcode under [Rosetta translation], you can run x86_64 code on an ARM64 host machine, but that's not recommnded.  
 ³ = Xcode will no longer build for armv6, if using iOS SDK 5.0 or above, or XCode 4.5 and above. DarkEdif technically supports it, but we make no promises all the rest of Apple's tools will play nice.
 
 #### Including extra architectures
@@ -138,4 +255,25 @@ As a simple example, if you only build armv7, and it fails, should PostBuildTool
 It is recommended you always build for all your targeted architectures when you build at all, to prevent an inconsistent result across devices. Best to get in the habit earlier rather than later.  
 You can build for all architectures by right-clicking the solution file, selecting Batch Build and selecting the desired project configurations.
 
-For a list of all Apple's supported devices and CPU architectures, see [this link](https://en.wikipedia.org/wiki/Apple_silicon#A_series).
+For a list of all Apple's supported devices and CPU architectures, see [this link][Apple CPU A series].
+
+
+[README]: https://github.com/SortaCore/MMF2Exts/blob/master/README.md "MMF2Exts README"
+[SRW locks]: https://docs.microsoft.com/en-us/windows/win32/sync/slim-reader-writer--srw--locks "Slim Reader-Writer Locks"
+[VS 2019 Redist]: https://my.visualstudio.com/Downloads?q=Visual%20C%20Redistributable%20Visual%20Studio%202019%20version%20%2216.7%22 "VS Dev Essentials VS2019 v16.7 C++ redistributables"
+[VS support]: https://my.visualstudio.com/GetHelp?mkt=en-us "VS Dev Essentials support"
+[VS 2019 XP recommendation]: https://docs.microsoft.com/en-us/cpp/porting/binary-compat-2015-2017?view=msvc-160#:~:text=support%20Windows%20XP-,is%20version%2016.7
+[Windows 7 SDK Debugging Tools]: https://www.microsoft.com/en-gb/download/details.aspx?id=8279
+[Windows SDK archive]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/
+[WinDbg symbol path guide]: https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/setting-symbol-and-source-paths-in-windbg#symbol-path
+[Dependency Walker]: https://www.dependencywalker.com/
+[Dependencies tool]: https://github.com/lucasg/Dependencies/releases
+[Clickteam NDK example]: https://github.com/ClickteamLLC/android
+[Latest NDK LTS]: https://developer.android.com/ndk/downloads
+[Visual Studio NDK compatibility discussion]: https://developercommunity.visualstudio.com/t/Update-the-bundled-Android-NDK-to-Releas/782660#T-N1452635
+[AppBrain Android OS usage]: https://www.appbrain.com/stats/top-android-sdk-versions
+[Parse ELF py file]: https://android.googlesource.com/platform/ndk/+/master/parse_elfnote.py
+[Google's STL support]: https://www.phoronix.com/scan.php?page=news_item&px=Android-NDK-r16
+[A12+ chips]: https://en.wikipedia.org/wiki/Apple_A12
+[Rosetta translation]: https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
+[Apple CPU A series]: https://en.wikipedia.org/wiki/Apple_silicon#A_series

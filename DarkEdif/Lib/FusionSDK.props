@@ -414,12 +414,17 @@
 			<!-- UTF-8 everywhere! -->
 			<UseUnicodeForAssemblerListing>true</UseUnicodeForAssemblerListing>
 
-			<!-- Old SDKs need this defined.
-				 STRICT is also defined, but not seemingly used. -->
+			<!-- Old SDKs need this defined. -->
 			<PreprocessorDefinitions Condition="$(SDKType)!='DarkEdif'">_WINDOWS;IN_EXT_VERSION2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Windows XP (0x0501), SP3 (0300) needs manual defines.
-				 Was in Fusion SDK headers, but external libraries won't respect without pedantic header ordering. -->
+			<!-- Windows XP SP2+ targeting needs manual defines to adjust what WinAPI functions are hidden or declared.
+				 For XP, it's normally 0x0501. 0x05010300 for XP SP3+.
+				 0x0502 is XP SP2+ with Windows Server 2003+.
+				 Was in Fusion SDK headers, but external libraries won't respect that without pedantic header ordering. -->
 			<PreprocessorDefinitions Condition="$(WindowsXPCompatibility)==1">_WIN32_WINNT=0x0502;WINVER=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Disable the bad-practice min/max preprocessor macros.
+				 Also disable Windows.h including extra headers, which can still be included manually.
+				 STRICT is also defined. Seems to enable more type safety (e.g. for handles). -->
+			<PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
 			<!-- Max number of warnings without being asinine -->
 			<WarningLevel>Level3</WarningLevel>
@@ -676,8 +681,10 @@
 		-->
 
 		<!-- iOS files redirection -->
-		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
+ 		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
+
+		<!-- See comments above. -->
 		<_TargetiPhoneOSDeployTarget>10.0</_TargetiPhoneOSDeployTarget>
 	</PropertyGroup>
 
@@ -825,7 +832,7 @@
 	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
 	</Target>
 
-	<!-- armv6 is a variant of armv7 -->
+	<!-- armv6 is a variant of armv7, in the sense they both use ARM project configuration -->
 	<Target Name="iOS Build armv6" Condition="$(_TargetPlat)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv6'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv6 variant..." Importance="High" />
 

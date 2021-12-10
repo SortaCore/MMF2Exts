@@ -12,8 +12,8 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v12 release
 ----
 *v12 not released yet*
-- Windows: XP builds now target Windows XP SP2+, Windows Server 2003+
-- Edittime: DarkEdif update checker no longer runs for Fusion startup screen
+- Edittime/Windows: Windows XP CRT bug worked around, now fully supports XP
+- Edittime: DarkEdif update checker runs in background, no longer runs for Fusion startup screen, and will usually not report server-side errors
 - Edittime: Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
 - iOS: properties now passed to extension, changed iOS function name \_free() to \_dealloc()
 - All platforms: Added a DarkEdif::MsgBox::Custom function for manually passing icon/default button/etc; mostly has effect on Windows
@@ -38,6 +38,7 @@ Changes until v12 release
 Changes until v11 release
 ----
 *v11 released on 26th August 2021, commit [36f8378](https://github.com/SortaCore/MMF2Exts/commit/36f8378d9ef6404420d480d53983c755491f53ac)*
+
 - MultiTarget SDK integration into DarkEdif Template, providing Android and iOS compatibility - iOS still requires separate Mac with Xcode (latest Xcode on Big Sur is compatible)
 - Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files
 - Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents

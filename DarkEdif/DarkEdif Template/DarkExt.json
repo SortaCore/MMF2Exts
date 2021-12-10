@@ -94,26 +94,25 @@
 				"Title": "Editable 3",
 				"Info": "Shouldn't be bold.",
 				"Type": "Edit button",
-				"DefaultState": "Button text",
-				"Text": "Button"
+				"DefaultState": "Button text"
 			},
 			{
 				"Title": "Editable 4",
-				"Info": "yeah, it are very bold.",
+				"Info": "Fusion ignores the bold setting.",
 				"Type": "Edit button",
 				"DefaultState": "Bolded button text",
 				"Bold": true
 			},
 			{
 				"Title": "Editable 5",
-				"Info": "yeah, it are very bold.",
+				"Info": "Still set to bold, and bold is ignored.",
 				"DefaultState": "Default text",
 				"Type": "Editbox String",
 				"Bold": true
 			},
 			{
 				"Title": "Editable 6",
-				"Info": "This one should force uppercase.",
+				"Info": "Force uppercase on the input text.",
 				"Type": "Editbox String",
 				"DefaultState": "Default text, made uppercase",
 				"Case": "Upper"
@@ -200,13 +199,13 @@
 				"Info": "Folder d'information",
 				"Type": "Folder"
 			},
-			{
-				"Title": "Case à cocher dans le dossier",
-				"Info": "oui, il faut faire preuve d'audace.",
-				"Type": "Checkbox",
-				"Bold": true,
-				"DefaultState": true
-			},
+				{
+					"Title": "Case à cocher dans le dossier",
+					"Info": "oui, il faut faire preuve d'audace.",
+					"Type": "Checkbox",
+					"Bold": true,
+					"DefaultState": true
+				},
 			{
 				"Type": "FolderEnd"
 			},
@@ -225,12 +224,13 @@
 				"Title": "Éditable 3",
 				"Info": "Ouais, il ne devrait pas faire preuve d'audace.",
 				"Type": "Edit button",
-				"Text": "Bouton"
+				"DefaultState": "Bouton"
 			},
 			{
 				"Title": "Éditable 4",
 				"Info": "Ouais, il est très gras.",
 				"Type": "Edit button",
+				"DefaultState": "Bouton texte",
 				"Bold": true
 			},
 			{
