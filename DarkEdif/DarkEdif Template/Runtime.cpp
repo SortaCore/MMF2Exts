@@ -193,6 +193,17 @@ RUNDATA * FusionAPI GetRdPtr(HWND hwnd, RunHeader * rhPtr)
 LRESULT FusionAPI WindowProc(RunHeader * rhPtr, HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	#pragma DllExportHint
+
+#ifndef VISUAL_EXTENSION
+	// If you do not define this, DisplayRunObject() isn't exposed to Fusion runtime.
+	// When a window is redisplayed, e.g. after resizing, all exts with OEFLAGS::WNDPROC are assumed to need their
+	// DisplayRunObject functions called, and if it's missing for an ext, the Fusion runtime crashes.
+	//
+	// To test if it's working for you, simply make a Fusion application, drop your ext in,
+	// change the application property to "resize display to fill window size" to true, then run the app and resize it.
+	#error Define VISUAL_EXTENSION in project properties!
+#endif
+
 	RUNDATA * rdPtr = NULL;
 
 	switch (nMsg) {

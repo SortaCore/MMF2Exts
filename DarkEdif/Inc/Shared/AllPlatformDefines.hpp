@@ -63,19 +63,21 @@ struct ACEParamReader {
 enum class OEFLAGS : std::uint32_t {
 	NONE = 0,
 	DISPLAY_IN_FRONT = 0x0001,		// Active object/window control
-	BACKGROUND = 0x0002,		// Background
-	BACK_SAVE = 0x0004,		// No effect in HWA
+	BACKGROUND = 0x0002,			// Background
+	BACK_SAVE = 0x0004,				// No effect in HWA
 	RUN_BEFORE_FADE_IN = 0x0008,
 	MOVEMENTS = 0x0010,
 	ANIMATIONS = 0x0020,
 	TAB_STOP = 0x0040,
-	WINDOW_PROC = 0x0080,		// Needs to receive window process messages (i.e. app was minimized)
-	VALUES = 0x0100,		// Has alterable values/strings (will automatically create the associated a/c/e/p)
+	// Needs to receive window process messages (i.e. app was minimized)
+	// You NEED VISUAL_EXTENSION defined to use this!
+	WINDOW_PROC = 0x0080,
+	VALUES = 0x0100,				// Has alterable values/strings (will automatically create the associated a/c/e/p)
 	SPRITES = 0x0200,
 	INTERNAL_BACK_SAVE = 0x0400,	// No effect in HWA
 	SCROLLING_INDEPENDENT = 0x0800,
-	QUICK_DISPLAY = 0x1000,	// No effect in HWA
-	NEVER_KILL = 0x2000,	// Never destroy object if too far from frame
+	QUICK_DISPLAY = 0x1000,			// No effect in HWA
+	NEVER_KILL = 0x2000,			// Never destroy object if too far from frame
 	NEVER_SLEEP = 0x4000,
 	MANUAL_SLEEP = 0x8000,
 	TEXT = 0x10000,
