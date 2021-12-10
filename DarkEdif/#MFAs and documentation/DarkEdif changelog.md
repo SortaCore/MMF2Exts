@@ -33,6 +33,7 @@ Changes until v12 release
   - Extension::Continue is now FusionRuntimeContinued  
 (It should probably be FusionRuntimeResumed, but I would rather keep Continue in the name so it's not hard to search for.)
 - All platforms: renamed macro which granted bitwise ops to enum classes from "fancyenumop" to "enum_class_is_a_bitmask"
+- All platforms: Improved VS 2017 compatibilty
 
 
 Changes until v11 release

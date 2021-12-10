@@ -35,7 +35,7 @@ using the XP toolset, using it will produce an application (or in this case, Fus
 
 To ensure your STL doesn't start falling over at random on XP, Microsoft [recommends][VS 2019 XP recommendation] using no later than Visual Studio 2019 toolset v14.27, which comes with Visual Studio 2019 Update 7 (VS v16.7).  
 You can set up this old VS 2019 toolset in two ways:
-1. Install the VS 2019 16.7 version directly; it should be linked in your MS account [here][VS 2019 Redist]. (if only later versions are available, open a [support ticket][VS redist support].)
+1. Install the VS 2019 16.7 version directly; it should be linked in your MS account [here][VS 2019 Redist]. (if only later versions are available, open a [support ticket][VS support].)
 2. Alternatively, install a later version of VS 2019, but install the v14.27 toolset under Individual Components tab of the Visual Studio Installer.  
 This will produce binaries that work in XP and above, but note that IntelliSense may get confused about what \_MSC\_VER is defined as.  
 It's worth noting VS 2019 Preview can be used with this method too, but VS 2022 *cannot* be used with either method.
