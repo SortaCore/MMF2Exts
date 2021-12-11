@@ -119,6 +119,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <thread>
+#include <cctype>
 
 // std::string_view requires C++17
 #if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))

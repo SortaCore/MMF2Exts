@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<!-- If displayed in VS -->
@@ -116,6 +116,13 @@
 		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props') OR Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_WindowsXPCompatibilityRegex)).Success)">0</WindowsXPCompatibility>
+
+		<!-- Windows XP only works properly in VS 2019 16.7 and below (toolset v14.27.29114 and below).
+			 Some STL libraries will randomly break otherwise, like std::shared_timed_mutex,
+			 because the SDK's lib files under the hood use Vista+ functions, ignoring the compatibility.
+			 (in std::shared_timed_mutex's case, it uses Vista-only SRWLock functions). -->
+		<VCToolsVersion Condition="$(VCToolsVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsVersion>
+		<VCToolsRedistVersion Condition="$(VCToolsRedistVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsRedistVersion>
 
 		<!-- RunStaticCodeAnalysis = true|debugonly
 			 If set to true, will cause all settings to be adjusted to run static analysis; including
@@ -439,6 +446,9 @@
 				 name.
 				 Also, make __cplusplus represent the C++ standard for MSVC. -->
 			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+			<!-- Disable thread-safe initialization on XP, as VS 2019 uses Vista+ functionality to implement it.
+				 This will only create a problem if you have statics accessed from multiple threads that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init. -->
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)==16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -694,7 +704,7 @@
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
 			<PreprocessorDefinitions>__APPLE__;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Use C++17, and C11, latest finalised standards.
-				 VS 2017 doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
+				 VS 2017 (15.0) doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
 			<!-- We need C++ exception handling. -->
@@ -703,7 +713,7 @@
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
 			<AdditionalOptions>-fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
 
-			<!-- VS 2017 doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
+			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 	</ItemDefinitionGroup>
@@ -770,6 +780,25 @@
 			<Value>$(RunAnalyzerSetting)</Value>
 		</BuildMacro>
 	</ItemGroup>
+
+	<!-- Windows XP requires VS 2017 (any toolset version) or VS 2019 (specific toolset version). -->
+	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) != 15.0" BeforeTargets="ClCompile;CheckVCToolsetVersion">
+		<!-- VS 2017 (15.0) ^ doesn't have any restrictions on toolset version, so no checks are done for it. -->
+
+		<!-- Using VS 2022. -->
+		<Error Text="FusionSDK error: You're using XP compatibility - you have to use Visual Studio 2019 or 2017. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion) &gt;= 17.0" />
+		<!-- Using VS 2019, but aren't correctly specifying the toolset. This only happens if user manually specifies a toolset too large in their vcxproj/props files. -->
+		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting toolset v14.27 or lower. Contact DarkEdif creators." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110" />
+
+		<!-- Using VS 2019, but don't have the XP toolset version. -->
+		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110 AND !Exists('$(VCToolsInstallDir)')" />
+		<Message Text="VCToolsInstallDir=$(VCToolsInstallDir), VCToolsVersion=$(VCToolsVersion)" Importance="High" />
+	</Target>
+	<!-- VS 2017 doesn't support C++17 on Android projects - it does on Windows, and a workaround is used on iOS. -->
+	<Target Name="Android on VS 2017 check" Condition="$(_TargetPlat)=='Android' AND $(VisualStudioVersion)==15.0" BeforeTargets="ClCompile;Build">
+		<Error Text="FusionSDK error: You cannot use DarkEdif Android builds with VS 2017. VS 2019 is the recommended version."/>
+	</Target>
+
 
 	<!-- Pre build tool for non-Windows. Minifies JSON, and generates a jump function list based on ACE in the Extension. -->
 	<Target Name="Generate jump table" Condition="$(SDKType)=='DarkEdif' AND $(RuntimeBuild)==1" BeforeTargets="ClCompile">

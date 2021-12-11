@@ -870,7 +870,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 Extension::~Extension()
 {
 	char msgBuff[500];
-	sprintf_s(msgBuff, PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
+	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
 	OutputDebugStringA(msgBuff);
 
 	EnterCriticalSectionDebug(&globals->lock);

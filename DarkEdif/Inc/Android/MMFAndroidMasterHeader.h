@@ -4,13 +4,6 @@
 #error Included the wrong header for this OS. Include MMFMasterHeader.h instead
 #endif
 
-// Using VS 2017
-#if _MSC_VER == 1916
-	// Visual Studio 2017 also cannot tell an Android project to build with the C++17 standard.
-	// VS 2019 and 2022 are compatible with Android, but note only VS 2019 supports XP.
-	#error Your version of Visual Studio is too old! Try VS 2019.
-#endif
-
 // Cover up clang warnings about unused features we make available
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wignored-attributes"

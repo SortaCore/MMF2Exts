@@ -6,12 +6,12 @@ If you plan on distributing your own version publicly, it is highly recommended 
 Since these source codes are collated by Phi, not by the authors themselves, they may be old versions, but should be suitable for demonstration.
 
 ### Tools to use ###
-It's recommended you use Visual Studio 2019, although [Visual Studio 2017][Older VS editions] should also be compatible.  
-You can also use VS 2022, although you'll lose Windows XP compatibility.
+It's recommended you use Visual Studio 2019, although other editions can be used with loss of platform compatiblity.
 
 You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
-* VS 2017 and 2019 can be downloaded under [older downloads][Older VS editions]. Requires a free registration.
-* VS 2022 - no Windows XP support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
+* VS 2017 - Android, Windows XP+ support - and 2019 can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2019 - iOS, Android, Windows XP+ support - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2022 - iOS, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
 
 ### Windows targeting ###
 The SDKs are compatible with the **C++ Windows XP targeting pack**, for Windows XP+ instead of Vista+ targeting. You can find it under Additional/Individual Components tab in the Visual Studio installer; search for "Windows XP" using the search bar on the top.
@@ -22,6 +22,8 @@ All Fusion SDKs will use [WINVER and _WIN32_WINNT][WINVER] preprocessor macros s
 
 To confirm manually if any Windows API function is compatible, you can normally find out on MSDN under "Requirements > minimum client OS" at the bottom of the page;
 for example [GetProcessIdOfThread()] is Vista+.
+
+You'll have to install v14.27 of the C++ compiler tools - this is easy to search for in Visual Studio 2019 Components tab in Visual Studio Installer. It will appear as "MSVC v142 - VS 2019 C++ x64/x86 build tools (v14.27)". This is the latest toolset that Microsoft recommend for XP targeting.
 
 #### Later OS versions
 If you want to use later OS functions at cost of compatibility, you can change the targeting by using the FusionSDKConfig INI WindowsXPCompatibility option to false ([how to][XP compatibility false]), and reloading your VS solution.
@@ -37,9 +39,11 @@ XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to
 ### Android targeting ###
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
 
+You'll need Visual Studio 2019 or 2022. VS 2017 can't use C++17 standard on Android.
+
 For more details on Android, such as pitfalls, features and setting up debugging, make sure you read the Android section of the [MultiTarget guide] under DarkEdif documentation.
 
-You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it.
+You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
 ### iOS targeting ####
 To target iOS, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools". That should be all you need.
@@ -48,7 +52,7 @@ iOS development requires you to have a Mac, with vcremote installed. Follow Micr
 An iMac from late 2012 or above is necessary; you need Xcode 10.2+ for compatibilty with Visual Studio, which is Mac OS Mojave and later.
 Since the latest Mac OS "Big Sur" runs on 2014 and later Macs, you may want to get a 2014+ instead.
 
-You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it, and as any developer would tell you, there's no way you'll write code that works as expected first try.
+You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
 DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
 These produced files are valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in Xcode, which thankfully takes less than a minute.

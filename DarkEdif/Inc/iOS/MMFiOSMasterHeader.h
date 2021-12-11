@@ -18,6 +18,7 @@
 #define ProjectFunc extern "C" __attribute__((visibility ("default")))
 #define FusionAPI /* no declarator */
 #define DLLExport __attribute__ ((stdcall))
+#define SuppressZeroArraySizeWarning /* no op */
 #define PhiDLLImport
 
 // Surface.h pre-declaration
