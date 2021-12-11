@@ -24,17 +24,7 @@ class Extension;
 
 #include "ObjectSelection.h"
 
-#ifndef RUN_ONLY
-#if defined(MMFEXT)
-#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_HOME) == 0)
-#elif defined(PROEXT)
-#define IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20 && ((v->GetVersion() & MMFVERFLAG_MASK) & MMFVERFLAG_PRO) != 0)
-#else
-#define	IS_COMPATIBLE(v) (v->GetVersion != nullptr && (v->GetVersion() & MMFBUILD_MASK) >= Extension::MinimumBuild && (v->GetVersion() & MMFVERSION_MASK) >= MMFVERSION_20)
-#endif
-#else
-#define IS_COMPATIBLE(v) (false)
-#endif
+extern bool IS_COMPATIBLE(struct mv * mV);
 
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)
@@ -262,11 +252,6 @@ namespace Edif
 
 	extern TCHAR LanguageCode[3];
 	extern bool IsEdittime;
-	extern bool IsFusionStartupRun;
-
-	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
-
-	HMENU LoadMenuJSON (int BaseID, const json_value &Source, HMENU Parent = 0);
 
 	int Init(mv * mV, bool fusionStartupScreen);
 	void Init(mv * mV, EDITDATA * edPtr);
@@ -275,6 +260,12 @@ namespace Edif
 	void Free(EDITDATA * edPtr);
 
 #ifdef _WIN32
+#if EditorBuild
+	extern HMENU ActionMenu, ConditionMenu, ExpressionMenu;
+
+	HMENU LoadMenuJSON(int BaseID, const json_value& Source, HMENU Parent = 0);
+#endif
+
 	// These jump the Fusion runtime call into the right Extension call
 	long FusionAPI ConditionJump(RUNDATA * rdPtr, long param1, long param2);
 	short FusionAPI ActionJump(RUNDATA * rdPtr, long param1, long param2);
@@ -303,7 +294,9 @@ namespace Edif
 		return *(void **) &_Function;
 	}
 
+	[[deprecated("Use DarkEdif::GetMFXRelativeFolder()")]]
 	std::string CurrentFolder();
+	[[deprecated("Use PROJECT_NAME define")]]
 	void GetExtensionName(char * const writeTo);
 
 	class recursive_mutex {

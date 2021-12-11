@@ -78,6 +78,8 @@
 		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
 		<!-- If user has enabled DarkEdif Update Checker inside their Extension. -->
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
+		<!-- If user has enabled update checker tagging -->
+		<DarkEdif_UCTagging>0</DarkEdif_UCTagging>
 		<!-- PSCP run path -->
 		<DarkEdif_PSCPPath>(Specify In FusionSDKConfig.ini)</DarkEdif_PSCPPath>
 		<!-- PSCP copy arguments:
@@ -239,6 +241,10 @@
 		<!-- This define is true if SDKUpdater::RunUpdateNotifs() function is detected in Edittime.cpp -->
 		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
+
+		<!-- This define is true if you want to machine-uniquely tag your extensions -->
+		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*true\s*?$]]></_DarkEdif_UCTaggingRegex>
+		<DarkEdif_UCTagging Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">1</DarkEdif_UCTagging>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
@@ -283,7 +289,9 @@
 			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
 			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
-			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"</_FusionSDKAdds>
+			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
+			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)"
+			</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
@@ -792,7 +800,6 @@
 
 		<!-- Using VS 2019, but don't have the XP toolset version. -->
 		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110 AND !Exists('$(VCToolsInstallDir)')" />
-		<Message Text="VCToolsInstallDir=$(VCToolsInstallDir), VCToolsVersion=$(VCToolsVersion)" Importance="High" />
 	</Target>
 	<!-- VS 2017 doesn't support C++17 on Android projects - it does on Windows, and a workaround is used on iOS. -->
 	<Target Name="Android on VS 2017 check" Condition="$(_TargetPlat)=='Android' AND $(VisualStudioVersion)==15.0" BeforeTargets="ClCompile;Build">

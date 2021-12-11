@@ -9,20 +9,31 @@ Minor changes won't necessitate an immediate version update, so to get the lates
 If you're editing this file, note that the use of Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
 
+Changes until v13 release
+----
+*v13 not released yet*
+
+
 Changes until v12 release
 ----
-*v12 not released yet*
+*v12 released on 11th December 2021, commit (latest)*
 - Edittime/Windows: Windows XP CRT bug worked around, now fully supports XP
+- All platforms: Improved VS 2017 compatibilty
 - Edittime: DarkEdif update checker runs in background, no longer runs for Fusion startup screen, and will usually not report server-side errors
 - Edittime: Release of DarkEdif update checker ext database tool (database is shared with all versions of SDK, including older ones)
-- iOS: properties now passed to extension, changed iOS function name \_free() to \_dealloc()
-- All platforms: Added a DarkEdif::MsgBox::Custom function for manually passing icon/default button/etc; mostly has effect on Windows
+- Edittime/Windows: Added UC tagging feature, to enable Runtime MFX files to be unique per Fusion developer, hopefully preventing antiviruses blocking the wheat with the chaff.
+- All platforms: Moved ACE menu handling to Edif.Edittime.cpp, since it's Windows only.
+- All platforms: DarkEdif::RunMode added - clearly tell when your MFX is being used, e.g. Frame Editor, Run Application, built EXE, Fusion splash screen, etc.
+- All platforms: deprecated Edif::IsEdittime and Edif::IsFusionStartupRun. See previous item.
+- All platforms: Added DarkEdif::EndsWith(), FileExists(), RemoveSuffixIfExists(), GetRunningApplicationPath(), GetMFXRelativeFolder()
+- All platforms: Added a DarkEdif::MsgBox::Custom() function for manually passing icon/default button/etc; mostly has effect on Windows
 - All platforms: Repaired MsgBox function to have extension name
 - All platforms: Renamed jump A/C/E functions:
   - Windows: Edif::Action is now Edif:\:ActionJump, Edif::Condition and Edif::Expression, ditto for C/E
   - Android: darkedif\_action() is now darkedif\_actionJump(), ditto for C/E
   - iOS: extName\_action() is now extName\_actionJump(), ditto for C/E
   - DarkEdif PostBuildTool reflects these changes in its internal Objective-C++/Java templates
+- iOS: properties now passed to extension, changed iOS function name \_free() to \_dealloc()
 - Windows: DisableThreadLibraryCalls() optimization disabled for static CRT, following [MSDN docs](https://docs.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-disablethreadlibrarycalls)
 - Windows: Removed General.cpp files; functions are now in Edif.General.cpp
 - Windows: Edittime.cpp for all exts updated due to MsgBox functions
@@ -32,8 +43,9 @@ Changes until v12 release
   - Extension::Pause is now FusionRuntimePaused
   - Extension::Continue is now FusionRuntimeContinued  
 (It should probably be FusionRuntimeResumed, but I would rather keep Continue in the name so it's not hard to search for.)
+- Edittime: Fixed edit button properties that crashed Fusion editor or had invalid text.
 - All platforms: renamed macro which granted bitwise ops to enum classes from "fancyenumop" to "enum_class_is_a_bitmask"
-- All platforms: Improved VS 2017 compatibilty
+- DarkEdif Template: Added warning inside WndProc function so DisplayRunObject is used.
 
 
 Changes until v11 release

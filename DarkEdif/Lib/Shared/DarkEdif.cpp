@@ -39,7 +39,11 @@ const json_value & CurrentLanguage()
 	if (StoredCurrentLanguage->type != json_none)
 		return *StoredCurrentLanguage;
 
-	std::string langList = DarkEdif::GetIniSetting("Languages");
+	// Not in editor mode; the fancy language features are not necessary
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::RunApplication || DarkEdif::RunMode == DarkEdif::MFXRunMode::BuiltEXE)
+		return *(StoredCurrentLanguage = DefaultLanguageIndex());
+
+	std::string langList = DarkEdif::GetIniSetting("Languages"sv);
 	if (langList.empty())
 		return *DefaultLanguageIndex();
 
@@ -835,7 +839,7 @@ static jobject getGlobalContext()
 	jobject context = threadEnv->CallObjectMethod(at, getApplication);
 	return context;
 }
-int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
 	jclass toast = threadEnv->FindClass("android/widget/Toast");
 	jobject globalContext = getGlobalContext();
@@ -877,7 +881,7 @@ void DarkEdif::BreakIfDebuggerAttached()
 	__builtin_trap();
 }
 
-int MessageBoxA(HWND hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
 	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
 	DarkEdif::BreakIfDebuggerAttached();
@@ -1142,6 +1146,176 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
 
+
+
+// Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
+bool DarkEdif::RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive /*= true */)
+{
+	assert(suffix.size() != 0);
+
+	// tstr is smaller than suffix, obviously can't match
+	if (tstr.size() < suffix.size())
+		return false;
+	if (EndsWith(tstr, suffix, caseInsensitive))
+	{
+		tstr.remove_suffix(suffix.size());
+		return true;
+	}
+	return false;
+}
+
+// Checks if first parameter ends with second parameter, returns true if so.
+bool DarkEdif::EndsWith(const std::tstring_view tstr, const std::tstring_view suffix, bool caseInsensitive /* = true */)
+{
+	if (tstr.size() < suffix.size())
+		return false;
+
+	if (caseInsensitive)
+		return 0 == _tcsnicmp(tstr.data() + tstr.size() - suffix.size(), suffix.data(), suffix.size());
+	return 0 == tstr.compare(tstr.size() - suffix.size(), suffix.size(), suffix);
+}
+
+bool DarkEdif::FileExists(const std::tstring_view path)
+{
+#if _WIN32
+	const std::tstring pathSafe(path);
+	const DWORD fileAttr = GetFileAttributes(pathSafe.c_str());
+	return fileAttr != INVALID_FILE_ATTRIBUTES && (fileAttr & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY;
+#else
+	throw std::runtime_error("Function not implemented in non-Windows");
+#endif
+}
+
+
+#if _WIN32
+
+static std::tstring appPath, mfxPath, stdrtPath;
+static std::tstring GetModulePath(HMODULE hModule)
+{
+	std::tstring path(MAX_PATH, _T('\0'));
+	DWORD numCharsWrittenExcludingNull = GetModuleFileName(hModule, path.data(), path.size());
+
+	// Something broke in our call
+	if (numCharsWrittenExcludingNull == 0)
+		std::abort();
+
+	// Successfully looked up the path!
+	if (numCharsWrittenExcludingNull != MAX_PATH)
+		return path.substr(0, numCharsWrittenExcludingNull);
+
+	// else path is too long.
+
+	// Only Unicode L"\\?\" prefix allows using a bigger path.
+	// There's no point calling the wide version and then WideToANSI, because the result would be unusable as it would
+	// be bigger than MAX_PATH in any file call, and would potentially have replacement characters if the codepage
+	// couldn't represent all of it.
+	// WideToUTF8 works, but if you want to support Unicode on Windows, do that in the Unicode builds of your extension,
+	// don't try and force it in an ANSI build.
+	// The only possible workarounds is using an 8.3 path, and that can be disabled, and also might not be long enough.
+	//
+	// MAX_PATH can be extended in Windows 10 b1603+, but the app/mfx requires a manifest showing it's big path aware.
+	// https://docs.microsoft.com/en-gb/windows/win32/fileio/maximum-file-path-limitation#enable-long-paths-in-windows-10-version-1607-and-later
+
+#ifndef _UNICODE
+	DarkEdif::MsgBox::Error(_T("Fatal error - Path too long"),
+		_T("Your application path is too long, several Fusion extensions may have difficulty loading.\n"
+			"Build with the Unicode " PROJECT_NAME " to remove the limit."));
+	throw std::runtime_error("Path reading error"); // Don't bother returning anything to user code.
+#else
+	// Max limit on path is 32,767 characters... ish. The documentation says it may go further.
+	// If we assume surrogate pairs are in play, this limit can nearly double, although the folder names in the path are still capped to MAX_PATH each.
+	path.resize(64 * 1024);
+	numCharsWrittenExcludingNull = GetModuleFileName(hModule, path.data(), path.size());
+
+	// We have no error handling for when this fails; there's no workaround, so we might as well give up.
+	if (numCharsWrittenExcludingNull == 0 || numCharsWrittenExcludingNull == MAX_PATH)
+		std::abort();
+
+	return path.substr(0, numCharsWrittenExcludingNull);
+#endif
+}
+std::tstring_view DarkEdif::GetRunningApplicationPath(GetRunningApplicationPathType type)
+{
+	// Singleton; load paths if we don't have 'em
+	if (appPath.empty())
+	{
+		appPath = GetModulePath(NULL);
+
+		// The user is using "compress the runtime", so we're running inside temp, not app folder
+		if (EndsWith(appPath, _T(".tmp\\stdrt.exe")))
+		{
+			stdrtPath = appPath;
+
+			// Ccompress the runtime runs stdrt.exe with commandline
+			// "%tmp%\mrtXXX.tmp\stdrt.exe" /SF "full path to original.exe" ...
+			const std::tstring_view cmdLine = GetCommandLine();
+
+			size_t sfAt = cmdLine.find(_T(" /SF \""));
+			if (sfAt == std::tstring_view::npos)
+				std::abort(); // Commandline is in unrecognised format
+			sfAt += sizeof(" /SF \"") - 1;
+
+			const size_t sfEnd = cmdLine.find(_T('"'), sfAt);
+			if (sfEnd == std::tstring_view::npos)
+				std::abort(); // Commandline is in unrecognised format
+
+			appPath = cmdLine.substr(sfAt, sfEnd - sfAt);
+		}
+	}
+
+	std::tstring_view path = appPath;
+	if (!stdrtPath.empty() && (type & GetSTDRTNotApp) == GetSTDRTNotApp)
+		path = stdrtPath;
+
+	if ((type & AppFolderOnly) == AppFolderOnly)
+	{
+		size_t lastSlash = std::tstring::npos;
+		if ((lastSlash = path.find(_T('\\'))) == std::tstring::npos)
+			lastSlash = path.find(_T('/'));
+		if (lastSlash == std::tstring::npos)
+			std::abort();
+		return path.substr(0, lastSlash);
+	}
+
+	return path;
+}
+//
+std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
+{
+	if (mfxPath.empty())
+		mfxPath = GetModulePath(hInstLib);
+
+	// Start by getting the MFX parent folder
+	std::tstring_view curPath(mfxPath.c_str(), mfxPath.rfind(_T('\\')) + 1);
+
+	// If in Extensions\Unicode, hop out to Extensions level; likewise for Data\Runtime\Unicode
+	if (type != GetFusionFolderType::MFXLocation && !_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Unicode\\") - 1), _T("Unicode\\"), sizeof("Unicode\\") - 1))
+		curPath.remove_suffix(sizeof("Unicode\\") - 1);
+
+	// Go straight to root
+	if (type == GetFusionFolderType::FusionRoot)
+	{
+		if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Extensions") - 1), _T("Extensions"), sizeof("Extensions") - 1))
+			curPath.remove_suffix(sizeof("Extensions\\") - 1);
+		else if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Data\\Runtime") - 1), _T("Data\\Runtime"), sizeof("Data\\Runtime") - 1))
+			curPath.remove_suffix(sizeof("Data\\Runtime") - 1);
+		//else // we're not in Extensions or Data\Runtime... where are we?
+		//	DarkEdif::MsgBox::Error(_T("Folder location failure"), _T("Couldn't calculate the Fusion root folder from \"%s\"; can't look for settings!"), FileToLookup);
+	}
+
+	return curPath;
+}
+#else
+std::tstring_view DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType type)
+{
+	throw std::runtime_error("GetRunningApplicationPath function not implemented on non-Windows.");
+}
+std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
+{
+	throw std::runtime_error("GetMFXRelativeFolder function not implemented on non-Windows.");
+}
+#endif // _WIN32
+
 #if EditorBuild
 
 // =====
@@ -1151,48 +1325,40 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 static std::string sdkSettingsFileContent;
 static std::atomic<bool> fileLock;
 static bool fileOpened;
-std::string DarkEdif::GetIniSetting(const char * key)
+
+std::string DarkEdif::GetIniSetting(const std::string_view key)
 {
+	assert(DarkEdif::RunMode != DarkEdif::MFXRunMode::RunApplication && DarkEdif::RunMode != DarkEdif::MFXRunMode::BuiltEXE);
+
+	// File locked already; wait
+	while (fileLock.exchange(true))
+		/* wait */;
+
 	if (!fileOpened)
 	{
-		if (fileLock.exchange(true))
-			return std::string();
-		fileOpened = true;
+		fileOpened = true; // Prevent repeatedly loading it into memory
 
-		char FileToLookup[MAX_PATH];
+		std::tstring iniPath(GetMFXRelativeFolder(GetFusionFolderType::FusionExtensions));
+		iniPath += _T("DarkEdif.ini"sv);
+
+		// Is the file in the directory of the MFX? (should be, languages are only needed in edittime)
+		if (!FileExists(iniPath))
 		{
-			GetModuleFileNameA(hInstLib, FileToLookup, sizeof(FileToLookup));
+			// Ignore DarkEdif.ini being non-existent; all other errors we report
+			if (GetLastError() != ERROR_FILE_NOT_FOUND)
+				DarkEdif::MsgBox::Error(_T("DarkEdif SDK error"), _T("Error %u opening Extensions\\DarkEdif.ini."), GetLastError());
 
-			// This mass of code converts Extensions\Bla.mfx and Extensions\Unicode\Bla.mfx to Extensions\DarkEdif.ini
-			char * Filename = FileToLookup + strlen(FileToLookup) - 1;
-			while (*Filename != '\\' && *Filename != '/')
-				--Filename;
-
-			// Look in Extensions, not Extensions\Unicode
-			if (!_strnicmp("Unicode", Filename - (sizeof("Unicode") - 1), sizeof("Unicode") - 1))
-				Filename -= sizeof("Unicode\\") - 1;
-
-			strcpy(++Filename, "DarkEdif.ini");
-
-			// Is the file in the directory of the MFX? (should be, languages are only needed in edittime)
-			if (GetFileAttributesA(FileToLookup) == INVALID_FILE_ATTRIBUTES)
-			{
-				// DarkEdif.ini non-existent
-				if (GetLastError() != ERROR_FILE_NOT_FOUND)
-					DarkEdif::MsgBox::Error(_T("DarkEdif SDK error"), _T("Error %u opening DarkEdif.ini."), GetLastError());
-
-				fileLock = false;
-				return std::string();
-			}
+			fileLock = false;
+			return std::string();
 		}
 
-		// TODO: Change to WinAPI?
 		// Open DarkEdif.ini settings file in read binary, and deny other apps writing permissions.
-		FILE * fileHandle = _fsopen(FileToLookup, "rb", _SH_DENYWR);
+		FILE * fileHandle = _tfsopen(iniPath.c_str(), _T("rb"), _SH_DENYWR);
 
 		// Could not open; abort (should report error)
 		if (!fileHandle)
 		{
+			DarkEdif::MsgBox::Error(_T("DarkEdif SDK error"), _T("Couldn't open Extensions\\DarkEdif.ini, error %d."), errno);
 			fileLock = false;
 			return std::string();
 		}
@@ -1201,40 +1367,50 @@ std::string DarkEdif::GetIniSetting(const char * key)
 		long fileSize = ftell(fileHandle);
 		fseek(fileHandle, 0, SEEK_SET);
 
-		sdkSettingsFileContent.resize(fileSize);
+		sdkSettingsFileContent.resize(fileSize + 2);
 		// Could not read all of the file properly
-		if (fileSize != fread_s(sdkSettingsFileContent.data(), sdkSettingsFileContent.size(), 1, fileSize, fileHandle))
+		if (fileSize != fread_s(&sdkSettingsFileContent.data()[1], sdkSettingsFileContent.size() - 2, 1, fileSize, fileHandle))
 		{
+			DarkEdif::MsgBox::Error(_T("DarkEdif SDK error"), _T("Couldn't read Extensions\\DarkEdif.ini file, error %i."), errno);
 			fclose(fileHandle);
-			fileLock = false;
 			sdkSettingsFileContent.clear();
+			fileLock = false;
 			return std::string();
 		}
+		// Start and end with newline for easy line detection
+		sdkSettingsFileContent.back() = sdkSettingsFileContent.front() = '\n';
 
-		// Load entire file into a std::string for searches
+		// Destroy any spaces to left or right of "=" - will only handle one space on the sides
+		for (size_t s = 0; s != std::string::npos; s = sdkSettingsFileContent.find('=', s))
+		{
+			if (sdkSettingsFileContent[s - 1] == ' ')
+				sdkSettingsFileContent.erase(--s, 1);
+			if (sdkSettingsFileContent[s + 1] == ' ')
+				sdkSettingsFileContent.erase(++s, 1);
+			if (++s > sdkSettingsFileContent.size())
+			{
+				DarkEdif::MsgBox::Error(_T("DarkEdif SDK error"), _T("SDK settings file is incorrectly formatted (ends with '=')."));
+				break;
+			}
+		}
+
 		fclose(fileHandle);
-		fileLock = false;
+		// fall thru into unlock
 	}
+	// else other thread has finished loading the file, so we don't need to lock it
+	fileLock = false;
 
-	// Look for two strings (one with space before =)
-	std::string keyFind1(key), keyFind2(key);
-	keyFind1 += "=";
-	keyFind2 += " =";
+	// Look for key (spaces around '=' are stripped in file open)
+	std::string keyFind1;
+	keyFind1 = '\n';
+	keyFind1 += key;
+	keyFind1 += '=';
 
 	size_t Reading;
 	if (sdkSettingsFileContent.find(keyFind1) != std::string::npos)
 		Reading = sdkSettingsFileContent.find(keyFind1) + keyFind1.size();
-	else
-	{
-		if (sdkSettingsFileContent.find(keyFind2) != std::string::npos)
-			Reading = sdkSettingsFileContent.find(keyFind2) + keyFind2.size();
-		else // key not found in settings file
-			return std::string();
-	}
-
-	// If there's a space after the =
-	if (sdkSettingsFileContent[Reading] == ' ')
-		++Reading;
+	else // key not found in settings file
+		return std::string();
 
 	size_t lineEnd = sdkSettingsFileContent.find_first_of("\r\n", Reading);
 	// Line hits end of file
@@ -1254,7 +1430,7 @@ std::string DarkEdif::GetIniSetting(const char * key)
 #include <shellapi.h> // for ShellExecuteW, opening the new ext version URL in preferred browser
 
 static std::atomic_bool updateLock(false);
-static HANDLE updateThread;
+HANDLE updateThread;
 static std::stringstream updateLog = std::stringstream();
 static DarkEdif::SDKUpdater::ExtUpdateType pendingUpdateType;
 static std::wstring pendingUpdateURL = std::wstring();
@@ -1264,9 +1440,22 @@ DWORD WINAPI DarkEdifUpdateThread(void * data);
 
 void DarkEdif::SDKUpdater::StartUpdateCheck()
 {
-	//DarkEdifUpdateThread(::SDK);
-	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, ::SDK, 0, NULL);
-	//WaitForSingleObject(updateThread, INFINITE);
+	// Can run in background, but not during startup screen. During the startup screen process, the MFX is loaded, read from, unloaded.
+	// The update checker thread will try to write back to variables that have been unloaded from memory, crashing.
+	// In Run Application/Built EXEs, it's useless, and shouldn't be running.
+	if (DarkEdif::RunMode != DarkEdif::MFXRunMode::Editor)
+		return DarkEdif::MsgBox::Error(_T("Critial error"), _T("The update checker is running during the wrong mode."));
+
+	// Shouldn't run twice.
+	if (updateThread != NULL)
+		throw std::runtime_error("Using multiple update threads");
+
+	updateThread = CreateThread(NULL, NULL, DarkEdifUpdateThread, NULL, 0, NULL);
+	if (updateThread == NULL)
+	{
+		DarkEdif::MsgBox::Error(_T("Critial error"), _T("The update checker failed to start, error %u."), GetLastError());
+		DarkEdifUpdateThread(::SDK);
+	}
 }
 
 DarkEdif::SDKUpdater::ExtUpdateType DarkEdif::SDKUpdater::ReadUpdateStatus(std::string * logData)
@@ -1304,6 +1493,10 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 	// Prevent this function running again
 	handledUpdate = true;
 
+	// Clean up the thread object
+	CloseHandle(updateThread);
+	updateThread = NULL;
+
 	// Connection errors are relevant to all users
 	if (extUpdateType == ExtUpdateType::ConnectionError) {
 		DarkEdif::MsgBox::Error(_T("Update check error"), _T("Error occurred while checking for extension updates:\n%hs"), updateLog.str().c_str());
@@ -1322,8 +1515,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		return;
 	}
 
-
-	if (extUpdateType != ExtUpdateType::Major && extUpdateType != ExtUpdateType::Minor)
+	if (extUpdateType != ExtUpdateType::Major && extUpdateType != ExtUpdateType::Minor && extUpdateType != ExtUpdateType::ReinstallNeeded)
 		return;
 
 	// Lots of magic numbers created by a lot of trial and error. Do not recommend.
@@ -1344,7 +1536,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		FF_MODERN /* Pitch and family: use fonts with constant stroke width */,
 		"Small Fonts" /* Font face name */);
 
-	auto FillBackground = [](const RECT rect, COLORREF color) {
+	auto FillBackground = [](const RECT rect, COLORREF fillColor) {
 		// This is the grey background rectangle, which we'll need to both de-alpha and colour.
 		if (::SDK->Icon->HasAlpha())
 		{
@@ -1356,7 +1548,8 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 				::SDK->Icon->UnlockAlpha();
 			}
 		}
-		::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, color);
+
+		::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, fillColor);
 	};
 
 	if (extUpdateType == ExtUpdateType::Major)
@@ -1365,7 +1558,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		FillBackground(greyBkgdRect, RGB(80, 80, 80));
 
 		// For some reason there are margins added in by the font drawing technique;
-		// we have to counter it.
+		// we have to counter it by positioning each line manually.
 		RECT textDrawRect = { greyBkgdRect.left + 1, greyBkgdRect.top - 1, 32, 32 };
 		COLORREF textColor = RGB(240, 0, 0);
 		::SDK->Icon->DrawTextA("MAJOR", sizeof("MAJOR") - 1,
@@ -1376,16 +1569,18 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
-		textDrawRect.top += 6;
 		textDrawRect.left += 1;
+		textDrawRect.top += 6;
 		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
-		// It's possible to do this so the icon in the side bar is updated too, but that causes Fusion to register that the properties have changed,
+		// It's possible to do this so the icon in the sidebar is updated too, but that causes Fusion to register that the properties have changed,
 		// and causes Fusion to save the "update needed" icon into the MFA, which is no good as it'll never be restored to normal.
+		// We'll attempt to avoid that, although copying the frame with an altered icon causes it to have the altered icon in sidebar too,
+		// making our avoidance only an attempt.
 		// mvInvalidateObject(mV, edPtr);
 
-		if (DarkEdif::GetIniSetting("MsgBoxForMajorUpdate") != "false")
+		if (DarkEdif::GetIniSetting("MsgBoxForMajorUpdate"sv) != "false")
 		{
 			// No URL? Open a dialog to report it.
 			if (pendingUpdateURL.empty())
@@ -1400,18 +1595,23 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 	}
 	else if (extUpdateType == ExtUpdateType::Minor)
 	{
-		const RECT greyBkgdRect{ 1, 25, 30, 32 };
+		const RECT greyBkgdRect{ 1, 18, 31, 31 };
 		FillBackground(greyBkgdRect, RGB(60, 60, 60));
 
 		// For some reason there are margins added in by the font drawing technique;
-		// we have to counter it.
+		// we have to counter it by positioning each line manually.
 		RECT textDrawRect = { greyBkgdRect.left, greyBkgdRect.top - 1, 32, 32 };
 		COLORREF textColor = RGB(0, 180, 180);
 
 		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
-		if (DarkEdif::GetIniSetting("MsgBoxForMinorUpdate") == "true")
+		textDrawRect.left += 1;
+		textDrawRect.top += 6;
+		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		if (DarkEdif::GetIniSetting("MsgBoxForMinorUpdate"sv) == "true")
 		{
 			// No URL? Open a dialog to report it.
 			if (pendingUpdateURL.empty())
@@ -1424,6 +1624,37 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 			}
 		}
 	}
+	else if (extUpdateType == ExtUpdateType::ReinstallNeeded)
+	{
+		const RECT greyBkgdRect{ 1, 18, 31, 31 };
+		FillBackground(greyBkgdRect, RGB(60, 60, 60));
+
+		// For some reason there are margins added in by the font drawing technique;
+		// we have to counter it by positioning each line manually.
+		RECT textDrawRect = { greyBkgdRect.left, greyBkgdRect.top - 1, 32, 32 };
+		COLORREF textColor = RGB(180, 0, 0);
+
+		::SDK->Icon->DrawTextA("REINSTL", sizeof("REINSTL") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		textDrawRect.left += 1;
+		textDrawRect.top += 6;
+		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
+
+		if (pendingUpdateDetails.size() > 3)
+		{
+			// No URL? Open a dialog to report it.
+			if (pendingUpdateURL.empty())
+				MsgBox::Info(_T("Reinstall needed"), _T("Reinstalled needed for " PROJECT_NAME ":\n%ls"), pendingUpdateDetails.c_str());
+			else // URL? Request to open it. Let user say no, but default to yes.
+			{
+				int ret = MessageBoxW(NULL, (L"Reinstall needed for " PROJECT_NAME ":\n" + pendingUpdateDetails).c_str(), L"" PROJECT_NAME " error", MB_ICONERROR | MB_YESNO);
+				if (ret == IDYES)
+					ShellExecuteW(NULL, L"open", pendingUpdateURL.c_str(), NULL, NULL, SW_SHOWNORMAL);
+			}
+		}
+	}
 
 	if (font)
 		DeleteObject(font);
@@ -1431,6 +1662,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 
 #pragma comment(lib,"ws2_32.lib")
 #include <iomanip>
+#include <functional>
 
 std::string url_encode(const std::string & value) {
 	std::ostringstream escaped;
@@ -1455,11 +1687,11 @@ std::string url_encode(const std::string & value) {
 	return escaped.str();
 }
 
-DWORD WINAPI DarkEdifUpdateThread(void * data)
+DWORD WINAPI DarkEdifUpdateThread(void *)
 {
 	// In order to detect it regardless of whether it as the start or end of the list,
 	// we make sure the line content is wrapped in semicolons
-	std::string ini = ";" + DarkEdif::GetIniSetting("DisableUpdateCheckFor") + ";";
+	std::string ini = ";" + DarkEdif::GetIniSetting("DisableUpdateCheckFor"sv) + ";";
 
 	// Remove spaces around the ';'s. We can't just remove all spaces, as some ext names have them.
 	size_t semiSpace = 0;
@@ -1486,6 +1718,154 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 	while ((semiSpace = projConfig.find(' ')) != std::string::npos)
 		projConfig.replace(semiSpace, 1, "%20");
 
+	// Opt-in feature for tagging built EXEs with a unique key.
+	// This key is unique per Fusion install, but is otherwise meaningless; it's not a hash of anything.
+
+#if USE_DARKEDIF_UC_TAGGING
+	// Due to code in the update checker caller, this MFX can be safely assumed to be in Extensions or Extensions\Unicode
+	assert(DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor);
+
+	// Find Data\Runtime MFX that will be used in built apps.
+	// If ANSI runtime, it will only use ANSI MFX.
+	// If Unicode runtime, it will always prefer a Data\Runtime\Unicode MFX, even when the MFA uses an ANSI Extensions MFX.
+	// So in the case of a Unicode runtime, always look for Unicode MFX.
+
+	std::tstring drMFXPath(DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::FusionRoot));
+	drMFXPath += _T("Data\\Runtime\\"sv);
+	if (mvIsUnicodeVersion(::SDK->mV))
+	{
+		std::tstring uniPath = drMFXPath;
+		uniPath += _T("Unicode\\") PROJECT_NAME ".mfx"sv;
+
+		if (!DarkEdif::FileExists(uniPath))
+		{
+			drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+
+			// Couldn't find either; roll back to Uni
+			if (DarkEdif::FileExists(drMFXPath))
+				drMFXPath = uniPath;
+			// else roll with ANSI
+		}
+		// else roll with Uni
+	}
+	else // ANSI runtime will only use ANSI
+		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+
+	// Stores UC tags in resources or registry.
+	std::wstring resKey, regKey;
+	bool resFileExists = true;
+	const std::wstring_view UC_TAG_NEW_SETUP = L"New setup."sv;
+
+	// If used, indicates the resource file didn't have it
+	HKEY mainKey = NULL;
+
+	// Use RAII to auto-close the opened registry key, when this update thread exits
+	auto CloseRegHandle = [](HKEY *h) { if (*h != NULL) { RegCloseKey(*h); *h = NULL; } return; };
+	std::unique_ptr<HKEY, std::function<void(HKEY*)>> registryHandleHolder(&mainKey, CloseRegHandle);
+
+	// if Data\Runtime(\Unicode) MFX is missing.
+	HMODULE readHandle = LoadLibraryEx(drMFXPath.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
+	if (readHandle == NULL)
+	{
+		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+		{
+			resKey = L"Couldn't load MFX; not found"sv;
+			resFileExists = false;
+		}
+		else // Some other error loading; we'll consider it fatal.
+		{
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX."), __LINE__, GetLastError());
+			std::abort();
+		}
+	}
+	else
+	{
+		// Read key back from Data\\Runtime MFX
+		HRSRC hsrcForRes = FindResourceEx(readHandle, RT_STRING, _T("UCTAG"), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US));
+		if (hsrcForRes == NULL)
+			resKey = UC_TAG_NEW_SETUP;
+		else
+		{
+			// Not actually a HGLOBAL! If you use GlobalXXX on it, you'll get an invalid handle error.
+			// Use the Resource-related functions like LockResource instead.
+			HGLOBAL data2 = LoadResource(readHandle, hsrcForRes);
+			if (data2 == NULL)
+			{
+				DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading resource for reading."), GetLastError());
+				FreeLibrary(readHandle);
+				std::abort();
+			}
+			wchar_t * dataSrc = (wchar_t *)LockResource(data2);
+			if (dataSrc == NULL)
+			{
+				DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while locking resource for reading."), GetLastError());
+				FreeResource(data2);
+				FreeLibrary(readHandle);
+				std::abort();
+			}
+
+			unsigned short strLength = dataSrc[0];
+			resKey = std::wstring_view(&dataSrc[1], strLength);
+			UnlockResource(data2);
+			FreeResource(data2);
+		}
+
+		FreeLibrary(readHandle);
+	}
+
+	// Attempt to open for writing
+	HANDLE resHandle = NULL;
+	if (resFileExists)
+	{
+		resHandle = BeginUpdateResource(drMFXPath.c_str(), FALSE);
+		if (resHandle == NULL)
+		{
+			DWORD err = GetLastError();
+			DarkEdif::MsgBox::Error(_T("Resource missing"), _T("UC tagging temporary failure %u. Try running your Fusion as admin."), err);
+			wchar_t keyError[64];
+			swprintf_s(keyError, std::size(keyError), L"Error %u tagging.", err);
+			resKey = keyError;
+		}
+	}
+	// Use RAII to auto-close the opened resource writing when this update thread exits
+	auto CloseHandle = [](HANDLE *h) { EndUpdateResource(*h, TRUE); *h = NULL; return; };
+	std::unique_ptr<HANDLE, std::function<void(HANDLE*)>> resHandleHolder(&resHandle, CloseHandle);
+
+	// Users have access to registry of local machine, albeit read-only, so this should not fail.
+	// Note: we always use the wide version of registry as it's always stored as UTF-16, and we
+	// don't want half-baked ANSI conversions.
+	if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey) != ERROR_SUCCESS)
+	{
+		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), GetLastError());
+		FreeLibrary(readHandle);
+		std::abort();
+	}
+
+	// Users have access to registry of local machine, albeit read-only, so this should not fail.
+	regKey.resize(256);
+	DWORD keySize = regKey.size() * sizeof(wchar_t), type;
+	DWORD ret = RegQueryValueExW(mainKey, L"UCTag", NULL, &type, (LPBYTE)regKey.data(), &keySize);
+	if (ret == ERROR_SUCCESS)
+	{
+		regKey.resize(keySize / sizeof(wchar_t), L'?');
+		// Null terminator is usually included in the value, remove it if so
+		if (regKey[regKey.size() - 1] == L'\0')
+			regKey.resize(regKey.size() - 1);
+	}
+	else if (ret != ERROR_FILE_NOT_FOUND)
+	{
+		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), GetLastError());
+		RegCloseKey(mainKey);
+		FreeLibrary(readHandle);
+		std::abort();
+	}
+	else
+		regKey = UC_TAG_NEW_SETUP;
+
+#else // !USE_DARKEDIF_UC_TAGGING
+	std::wstring resKey = L"disabled"s, regKey = L"disabled"s;
+#endif
+
 	try {
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -1502,17 +1882,80 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			return 1;
 		}
 
-		// Used in IP lookup and
+		// If this returns true, updateLock is still held.
+		const auto handleWSAError = [&](int lastWSAError) {
+			// Get lock; caller will release it at end of app
+			while (updateLock.exchange(true))
+				;
+
+			// Overloading with details is unnecessary - empty the updateLog
+			updateLog.str(std::string());
+			updateLog.clear();
+
+			bool reportError = true;
+			// This machine doesn't have internet, so DNS lookup of nossl.dark-wire.com failed
+			// Only occurs in gethostbyname()
+			if (lastWSAError == WSANO_DATA) {
+				reportError = false;
+				updateLog << "The DNS provider couldn't find the update server; is your computer offline?\n"sv;
+			}
+			// Server machine is online, but refusing connection - e.g. http service is offline
+			else if (lastWSAError == WSAECONNREFUSED) {
+				reportError = false;
+				updateLog << "The Darkwire update server is online, but not servicing HTTP requests.\n"sv;
+			}
+			// Server machine is offline
+			else if (lastWSAError == WSAETIMEDOUT) {
+				reportError = false;
+				updateLog << "The Darkwire update server is offline.\n"sv;
+			}
+			// lastWSA is only set to this if the page content has an error
+			else if (lastWSAError == EINVAL) {
+				reportError = false;
+				updateLog << "Page's response was unreadable.\n"sv;
+			}
+
+			// If it's not one of those errors, or user has set to report all errors, we report.
+			reportError |= DarkEdif::GetIniSetting("ReportAllUpdateCheckErrors"sv) == "true"sv;
+
+			// We also have to report if we can't read the resTag on a UC tagged file, or there's inconsistency.
+			// We NEED internet for resolving that issue.
+			#if USE_DARKEDIF_UC_TAGGING
+				if (resFileExists && (resKey == UC_TAG_NEW_SETUP || regKey != resKey))
+				{
+					reportError = true;
+					updateLog << "This extension needs internet access for its initial setup.\n"sv;
+				}
+			#endif
+
+			if (!reportError)
+			{
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::None;
+				updateLog << "Not reporting, as it's an error the user is unlikely to fix.\n"sv;
+				updateLock = false;
+				return false;
+			}
+
+			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError;
+			// Let caller fill updateLog with the error information
+			return true;
+		};
+
+		// Used in IP lookup and the HTTP request content
 		const char domain[] = "nossl.dark-wire.com";
 
 		struct hostent * host;
-		OutputDebugStringA("gethostbyname() start for " PROJECT_NAME "\n");
 		host = gethostbyname(domain);
-		OutputDebugStringA("gethostbyname() end for " PROJECT_NAME "\n");
+
 		if (host == NULL)
 		{
-			GetLockSetConnectErrorAnd(
-				updateLog << "getting host "sv << domain << " failed, error "sv << WSAGetLastError() << "."sv);
+			if (handleWSAError(WSAGetLastError()))
+			{
+				updateLog << "DNS lookup of \""sv << domain << "\" failed, error "sv << WSAGetLastError() << '.';
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError;
+				updateLock = false;
+			}
+
 			closesocket(Socket);
 			WSACleanup();
 			return 1;
@@ -1524,26 +1967,31 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		GetLockAnd(
 			updateLog << "Connecting...\n"sv);
 		if (connect(Socket, (SOCKADDR *)(&SockAddr), sizeof(SockAddr)) != 0) {
-			GetLockSetConnectErrorAnd(
-				updateLog << "Connect failed, error "sv << WSAGetLastError() << "."sv);
+			if (handleWSAError(WSAGetLastError()))
+			{
+				updateLog << "Connect failed, error number "sv << WSAGetLastError() << '.';
+				updateLock = false;
+			}
 			closesocket(Socket);
 			WSACleanup();
 			return 1;
 		}
 		GetLockAnd(
-			updateLog << "Connected to update server.\n");
+			updateLog << "Connected to update server.\n"sv);
 		// Host necessary so servers serving multiple domains know what domain is requested.
 		// Connection: close indicates server should close connection after transfer.
 		std::stringstream requestStream;
-		requestStream << "GET /storage/darkedif_vercheck.php?ext="sv << url_encode(PROJECT_NAME)
+		requestStream << "GET /storage/darkedif_vercheck_new.php?ext="sv << url_encode(PROJECT_NAME)
 			<< "&build="sv << Extension::Version << "&sdkBuild="sv << DarkEdif::SDKVersion
 			<< "&projConfig="sv << projConfig
+			<< "&tagRes="sv << url_encode(WideToUTF8(resKey)) << "&tagReg="sv << url_encode(WideToUTF8(regKey))
 			<< " HTTP/1.1\r\nHost: "sv << domain << "\r\nConnection: close\r\n\r\n"sv;
 		std::string request = requestStream.str();
 
 		GetLockAnd(
 			updateLog << "Sent update request for ext \"" PROJECT_NAME "\", encoded as \""sv << url_encode(PROJECT_NAME)
-				<< "\", build "sv << Extension::Version << ", SDK build "sv << DarkEdif::SDKVersion << ", config "sv << projConfig << ".\n"sv);
+				<< "\", build "sv << Extension::Version << ", SDK build "sv << DarkEdif::SDKVersion << ", config "sv << projConfig
+				<< ", tagging res \""sv << url_encode(WideToUTF8(resKey)) << "\", reg \""sv << url_encode(WideToUTF8(regKey)) << "\".\n"sv);
 #ifdef _DEBUG
 		GetLockAnd(
 			updateLog << request.substr(0, request.find(' ', 4)) << '\n');
@@ -1573,15 +2021,21 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			}
 			if (nDataLength < 0)
 			{
-				GetLockSetConnectErrorAnd(
-					updateLog << "Error "sv << WSAGetLastError() << " with recv()."sv);
+				if (handleWSAError(WSAGetLastError()))
+				{
+					updateLog << "Error with recv()."sv;
+					updateLock = false;
+				}
 				closesocket(Socket);
 				WSACleanup();
 				return 1;
 			}
-			GetLockAnd(
-				updateLog << page.str() << "\nResult concluded.\n"sv;
-			OutputDebugStringA(updateLog.str().c_str()));
+			#if _DEBUG
+				GetLockAnd(
+					updateLog << page.str() << "\nResult concluded.\n"sv;
+					OutputDebugStringA(updateLog.str().c_str());
+				);
+			#endif
 			closesocket(Socket);
 			WSACleanup();
 
@@ -1600,7 +2054,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		}
 
 		const char expHttpHeader[] = "HTTP/1.1", expHttpOKHeader[] = "HTTP/1.1 200";
-		std::string statusLine = endIndex == std::string::npos ? fullPage : fullPage.substr(0, endIndex - 1);
+		std::string statusLine = endIndex == std::string::npos ? fullPage : fullPage.substr(0, endIndex);
 		// Not a HTTP response
 		if (endIndex == std::string::npos || strncmp(statusLine.c_str(), expHttpHeader, sizeof(expHttpHeader) - 1))
 		{
@@ -1622,7 +2076,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		if ((headerStart = fullPage.find("\r\n\r\n")) == std::string::npos)
 		{
 			GetLockSetConnectErrorAnd(
-				updateLog << "Malformed HTTP response; end of HTTP header not found.");
+				updateLog << "Malformed HTTP response; end of HTTP header not found."sv);
 			return 1;
 		}
 
@@ -1644,18 +2098,98 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 		GetLockAnd(
 			updateLog << "Completed OK. Response:\n"sv << pageBody;
 		);
-		if (pageBody == "None"sv)
+
+		const char noUpdate[] = "None";
+		const char sdkUpdate[] = "SDK Update:\n";
+		const char majorUpdate[] = "Major Update:\n";
+		const char minorUpdate[] = "Minor Update:\n";
+
+		// introduced in DarkEdif SDK v4
+		const char extDevUpdate[] = "Ext Dev Error:\n";
+		// introduced in DarkEdif SDK v12
+		const char noUpdateWithTag[] = "None:\nTag=";
+		const char reinstallNeeded[] = "Reinstall Needed:\n";
+
+		if (!_strnicmp(pageBody.c_str(), reinstallNeeded, sizeof(reinstallNeeded) - 1))
+		{
+			pageBody = pageBody.substr(sizeof(reinstallNeeded) - 1);
+			GetLockAnd(
+				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ReinstallNeeded;
+				pendingUpdateDetails = UTF8ToWide(pageBody));
+			return 0;
+		}
+
+		if (!_strnicmp(pageBody.c_str(), noUpdate, sizeof(noUpdate) - 1))
 		{
 			GetLockAnd(
 				pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::None;
 				pendingUpdateDetails = UTF8ToWide(pageBody));
+
+			#if USE_DARKEDIF_UC_TAGGING
+			// Pure "None" response, no tag
+			if (!_stricmp(pageBody.c_str(), noUpdate))
+				return 0; // Tagging disabled
+
+			// None, but not recognised as plain None or None with tag.
+			if (_strnicmp(pageBody.c_str(), noUpdateWithTag, sizeof(noUpdateWithTag) - 1))
+				return DarkEdif::MsgBox::Error(_T("Update checker failure"), _T("Update checker failed to return a valid response.")), 0;
+
+			const std::wstring providedKey = UTF8ToWide(pageBody.substr(sizeof(noUpdateWithTag) - 1));
+			if (resKey == providedKey && regKey == providedKey)
+				return 0; // our tag is up to date! woot!
+
+			// No point trying to write resource key if there is no resource file
+			if (resKey != providedKey && resFileExists)
+			{
+				if (resHandle == NULL)
+				{
+					if (GetLastError() == ERROR_ACCESS_DENIED)
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running Fusion as admin, or enabling write permissions for Users role on Fusion folder."), GetLastError());
+				}
+				else
+				{
+					// String resources are always UTF-16, stored with preceding uint16 size, no null terminator, and always in groups of 16
+					const int groupSize = 16;
+					std::wstring keyOut(1 + providedKey.size() + (groupSize - 1), L'\0');
+
+					// Copy string size then string content in
+					*(std::uint16_t *)&keyOut[0] = (std::uint16_t)providedKey.size();
+					memcpy_s(&keyOut[1], keyOut.size() - 2U, providedKey.data(), providedKey.size() * sizeof(wchar_t));
+
+					if (!UpdateResource(resHandle, RT_STRING, _T("UCTAG"), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), keyOut.data(), keyOut.size() * sizeof(wchar_t)))
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; updating tag returned %u."), GetLastError());
+
+					if (!EndUpdateResource(resHandle, FALSE))
+					{
+						if (GetLastError() == ERROR_ACCESS_DENIED)
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running Fusion as admin, or enabling write permissions for Users role on Fusion folder."), GetLastError());
+						else
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
+					}
+					// Release the unique_ptr, we no longer need it to auto-run EndUpdateResource for us
+					resHandleHolder.release();
+				}
+			}
+
+			if (regKey != providedKey)
+			{
+				DWORD err = 0;
+
+				// Users have access to registry of local machine, albeit read-only, so this should not fail.
+				if (mainKey == NULL)
+					err = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey);
+
+				// We can try writing to the registry - we'll include null, as RegEdit uses it
+				err = err ? err : RegSetValueExW(mainKey, L"UCTag", 0, REG_SZ, (LPBYTE)providedKey.c_str(), (providedKey.size() + 1) * sizeof(wchar_t));
+				DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
+					GetLastError() == ERROR_ACCESS_DENIED ? "Try running Fusion as admin." : "");
+			}
+
+			#endif
+
 			return 0;
 		};
 
-		const char extDevUpdate[] = "Ext Dev Error:\n";
-		const char sdkUpdate[] = "SDK Update:\n";
-		const char majorUpdate[] = "Major Update:\n";
-		const char minorUpdate[] = "Minor Update:\n";
 		if (!_strnicmp(pageBody.c_str(), extDevUpdate, sizeof(extDevUpdate) - 1))
 		{
 			GetLockAnd(
@@ -1686,9 +2220,17 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 			return 0;
 		}
 
-		GetLockSetConnectErrorAnd(
-			updateLog << "Can't interpret type. Page content is:\n"sv << pageBody;
-			pendingUpdateDetails = UTF8ToWide(pageBody));
+		if (handleWSAError(EINVAL))
+		{
+			#if _DEBUG
+				updateLog << "Can't interpret type of page:\n"sv << pageBody;
+				pendingUpdateDetails = UTF8ToWide(pageBody);
+			#else
+				updateLog << "You should report this to Phi on the Clickteam Discord."sv;
+				pendingUpdateDetails.clear();
+			#endif
+			updateLock = false;
+		}
 		return 0;
 	}
 	catch (...)
@@ -1707,11 +2249,11 @@ DWORD WINAPI DarkEdifUpdateThread(void * data)
 
 #endif // EditorBuild
 
-
 // Define it
 std::tstring DarkEdif::ExtensionName(_T("" PROJECT_NAME ""s));
 std::thread::id DarkEdif::MainThreadID;
-HWND DarkEdif::Internal_WindowHandle;
+WindowHandleType DarkEdif::Internal_WindowHandle;
+DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
 // =====
 // Message boxes that mostly work on all platforms
@@ -1720,7 +2262,26 @@ HWND DarkEdif::Internal_WindowHandle;
 static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, va_list v, int flags)
 {
 	assert(titlePrefix != NULL && msgFormat != NULL);
+
+	// This doesn't work on Windows XP in some scenarios; for an explanation, see the README file.
+#if defined(_WIN32) && WINVER < 0x0600 && defined(__cpp_threadsafe_static_init)
+	const static TCHAR projNameStatic[] = _T(" - " PROJECT_NAME);
+	const std::tstring titleSuffix = projNameStatic;
+#else
 	const static std::tstring titleSuffix = _T(" - " PROJECT_NAME ""s);
+#endif
+
+	// Without this modal setting, the user will usually crash Fusion.
+	// With non-modal, they can interact with the editor window of Fusion.
+	// If you then switch editor from frame to event, then back to frame, then close the message box, the MB_OK gets sent back to Fusion's main
+	// window unexpectedly, making it crash.
+	//
+	// Note: You can also fix the crash by passing HWND of NULL to MessageBox(), but this means it isn't put in front of Fusion, meaning that
+	// users will often click too fast and hide the message behind the editor window... meaning they interact.. meaning when they close it, it crashes.
+#if EditorBuild
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor && DarkEdif::MainThreadID == std::this_thread::get_id() && (flags & (MB_SYSTEMMODAL | MB_TASKMODAL)) == 0)
+		flags |= (MB_TASKMODAL | MB_SETFOREGROUND);
+#endif
 
 	std::tstring title = titlePrefix + titleSuffix;
 	TCHAR msgData[4096];

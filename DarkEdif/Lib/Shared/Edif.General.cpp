@@ -44,6 +44,13 @@ int FusionAPI Free(mv *mV)
 {
 #pragma DllExportHint
 	// Edif is singleton, so no clean-up needed
+
+	// But if the update checker thread is running, we don't want it to try to write to memory it can't access.
+#if USE_DARKEDIF_UPDATE_CHECKER
+	extern HANDLE updateThread;
+	if (updateThread != NULL && WaitForSingleObject(updateThread, 3000) == WAIT_TIMEOUT)
+		TerminateThread(updateThread, 2);
+#endif
 	return 0; // No error
 }
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<!-- If displayed in VS -->
@@ -78,6 +78,8 @@
 		<DarkEdif_FusionDebugger>0</DarkEdif_FusionDebugger>
 		<!-- If user has enabled DarkEdif Update Checker inside their Extension. -->
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
+		<!-- If user has enabled update checker tagging -->
+		<DarkEdif_UCTagging>0</DarkEdif_UCTagging>
 		<!-- PSCP run path -->
 		<DarkEdif_PSCPPath>(Specify In FusionSDKConfig.ini)</DarkEdif_PSCPPath>
 		<!-- PSCP copy arguments:
@@ -113,9 +115,16 @@
 		<WindowsXPCompatibility>0</WindowsXPCompatibility>
 		<!-- Yep, XP compatible pack is installed. If VS accidentally picks VS 2019 compiler, VCTargets will point to "...\v160\", so
 			 we hop up a folder and pick VS 2017 (v150) directly, as the XP compatible pack is VS 2017-based. -->
-		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
+		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props') OR Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
 			$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_WindowsXPCompatibilityRegex)).Success)">0</WindowsXPCompatibility>
+
+		<!-- Windows XP only works properly in VS 2019 16.7 and below (toolset v14.27.29114 and below).
+			 Some STL libraries will randomly break otherwise, like std::shared_timed_mutex,
+			 because the SDK's lib files under the hood use Vista+ functions, ignoring the compatibility.
+			 (in std::shared_timed_mutex's case, it uses Vista-only SRWLock functions). -->
+		<VCToolsVersion Condition="$(VCToolsVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsVersion>
+		<VCToolsRedistVersion Condition="$(VCToolsRedistVersion)=='' AND $(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion)==16.0">14.27.29110</VCToolsRedistVersion>
 
 		<!-- RunStaticCodeAnalysis = true|debugonly
 			 If set to true, will cause all settings to be adjusted to run static analysis; including
@@ -232,6 +241,10 @@
 		<!-- This define is true if SDKUpdater::RunUpdateNotifs() function is detected in Edittime.cpp -->
 		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
+
+		<!-- This define is true if you want to machine-uniquely tag your extensions -->
+		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*true\s*?$]]></_DarkEdif_UCTaggingRegex>
+		<DarkEdif_UCTagging Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">1</DarkEdif_UCTagging>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
@@ -276,7 +289,9 @@
 			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
 			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
-			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"</_FusionSDKAdds>
+			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
+			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)"
+			</_FusionSDKAdds>
 		<!-- ResourceCompiler doesn't like newlines. -->
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
@@ -414,12 +429,17 @@
 			<!-- UTF-8 everywhere! -->
 			<UseUnicodeForAssemblerListing>true</UseUnicodeForAssemblerListing>
 
-			<!-- Old SDKs need this defined.
-				 STRICT is also defined, but not seemingly used. -->
+			<!-- Old SDKs need this defined. -->
 			<PreprocessorDefinitions Condition="$(SDKType)!='DarkEdif'">_WINDOWS;IN_EXT_VERSION2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Windows XP (0x0501), SP3 (0300) needs manual defines.
-				 Was in Fusion SDK headers, but external libraries won't respect without pedantic header ordering. -->
+			<!-- Windows XP SP2+ targeting needs manual defines to adjust what WinAPI functions are hidden or declared.
+				 For XP, it's normally 0x0501. 0x05010300 for XP SP3+.
+				 0x0502 is XP SP2+ with Windows Server 2003+.
+				 Was in Fusion SDK headers, but external libraries won't respect that without pedantic header ordering. -->
 			<PreprocessorDefinitions Condition="$(WindowsXPCompatibility)==1">_WIN32_WINNT=0x0502;WINVER=0x0502;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<!-- Disable the bad-practice min/max preprocessor macros.
+				 Also disable Windows.h including extra headers, which can still be included manually.
+				 STRICT is also defined. Seems to enable more type safety (e.g. for handles). -->
+			<PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;STRICT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 
 			<!-- Max number of warnings without being asinine -->
 			<WarningLevel>Level3</WarningLevel>
@@ -434,6 +454,9 @@
 				 name.
 				 Also, make __cplusplus represent the C++ standard for MSVC. -->
 			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+			<!-- Disable thread-safe initialization on XP, as VS 2019 uses Vista+ functionality to implement it.
+				 This will only create a problem if you have statics accessed from multiple threads that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init. -->
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)==16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->
@@ -549,8 +572,8 @@
 			<BufferSecurityCheck>false</BufferSecurityCheck>
 			<!-- Optimise favouring a smaller size over faster speed, if set to -->
 			<Optimization Condition="$(FavorSizeOrSpeed.StartsWith('size'))">MinSpace</Optimization>
-			<!-- Speed is preferred over size; note VS 2017 does not support Ob3. -->
-			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)!='v141'">/Ob3 %(AdditionalOptions)</AdditionalOptions>
+			<!-- Speed is preferred over size; note VS 2017 (15.x) does not support Ob3. -->
+			<AdditionalOptions Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)!='v141' AND $(VisualStudioVersion) &gt;= '16.0'">/Ob3 %(AdditionalOptions)</AdditionalOptions>
 			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed)=='speed' AND $(PlatformToolset)=='v141'">AnySuitable</InlineFunctionExpansion>
 			<InlineFunctionExpansion Condition="$(FavorSizeOrSpeed.StartsWith('size'))">OnlyExplicitInline</InlineFunctionExpansion>
 		</ClCompile>
@@ -676,8 +699,10 @@
 		-->
 
 		<!-- iOS files redirection -->
-		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
+ 		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
+
+		<!-- See comments above. -->
 		<_TargetiPhoneOSDeployTarget>10.0</_TargetiPhoneOSDeployTarget>
 	</PropertyGroup>
 
@@ -686,14 +711,18 @@
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
 			<PreprocessorDefinitions>__APPLE__;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
-			<!-- Use C++17, and C11, latest finalised standards. -->
-			<CppLanguageStandard>c++17</CppLanguageStandard>
+			<!-- Use C++17, and C11, latest finalised standards.
+				 VS 2017 (15.0) doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
+			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
 			<!-- We need C++ exception handling. -->
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
 			<AdditionalOptions>-fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
+
+			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
+			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 	</ItemDefinitionGroup>
 
@@ -760,6 +789,24 @@
 		</BuildMacro>
 	</ItemGroup>
 
+	<!-- Windows XP requires VS 2017 (any toolset version) or VS 2019 (specific toolset version). -->
+	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) != 15.0" BeforeTargets="ClCompile;CheckVCToolsetVersion">
+		<!-- VS 2017 (15.0) ^ doesn't have any restrictions on toolset version, so no checks are done for it. -->
+
+		<!-- Using VS 2022. -->
+		<Error Text="FusionSDK error: You're using XP compatibility - you have to use Visual Studio 2019 or 2017. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion) &gt;= 17.0" />
+		<!-- Using VS 2019, but aren't correctly specifying the toolset. This only happens if user manually specifies a toolset too large in their vcxproj/props files. -->
+		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting toolset v14.27 or lower. Contact DarkEdif creators." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110" />
+
+		<!-- Using VS 2019, but don't have the XP toolset version. -->
+		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110 AND !Exists('$(VCToolsInstallDir)')" />
+	</Target>
+	<!-- VS 2017 doesn't support C++17 on Android projects - it does on Windows, and a workaround is used on iOS. -->
+	<Target Name="Android on VS 2017 check" Condition="$(_TargetPlat)=='Android' AND $(VisualStudioVersion)==15.0" BeforeTargets="ClCompile;Build">
+		<Error Text="FusionSDK error: You cannot use DarkEdif Android builds with VS 2017. VS 2019 is the recommended version."/>
+	</Target>
+
+
 	<!-- Pre build tool for non-Windows. Minifies JSON, and generates a jump function list based on ACE in the Extension. -->
 	<Target Name="Generate jump table" Condition="$(SDKType)=='DarkEdif' AND $(RuntimeBuild)==1" BeforeTargets="ClCompile">
 		<Message Text="Minifying JSON and checking that ASM/jump table exists for this platform..." Importance="High" />
@@ -821,7 +868,7 @@
 	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
 	</Target>
 
-	<!-- armv6 is a variant of armv7 -->
+	<!-- armv6 is a variant of armv7, in the sense they both use ARM project configuration -->
 	<Target Name="iOS Build armv6" Condition="$(_TargetPlat)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv6'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv6 variant..." Importance="High" />
 
