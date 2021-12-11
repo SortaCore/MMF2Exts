@@ -26,13 +26,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <atomic>
 
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
 
 struct lwp_refcount
 {
-	unsigned short refcount;
+	std::atomic<unsigned short> refcount;
 	void (* on_dealloc) (void *);
 };
 

@@ -38,13 +38,19 @@ const char * lw_version ()
 	if (!*version)
 	{
 		#if defined (_WIN32)
+		#ifdef _UNICODE
+			#define LWS_UNI "Unicode "
+		#else
+			#define LWS_UNI "ANSI "
+		#endif
 			#ifdef _WIN64
-				platform = "Windows x64";
+				platform = "Windows " LWS_UNI "x64";
 			#elif defined(_M_ARM64) // Soon(tm)
-				platform = "Windows ARM64";
+				platform = "Windows " LWS_UNI "ARM64";
 			#else
-				platform = "Windows x86";
+				platform = "Windows " LWS_UNI "x86";
 			#endif
+		#undef LWS_UNI
 		#elif defined (__ANDROID__)
 			#ifdef __aarch64__
 				platform = "Android ARM64";

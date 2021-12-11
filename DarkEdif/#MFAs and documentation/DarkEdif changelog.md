@@ -16,7 +16,7 @@ Changes until v13 release
 
 Changes until v12 release
 ----
-*v12 released on 11th December 2021, commit (latest)*
+*v12 released on 11th December 2021, commit [5f82ae9](https://github.com/SortaCore/MMF2Exts/commit/5f82ae9cb8c219ecc3df6e05e1c85a4eea391598)*
 - Edittime/Windows: Windows XP CRT bug worked around, now fully supports XP
 - All platforms: Improved VS 2017 compatibilty
 - Edittime: DarkEdif update checker runs in background, no longer runs for Fusion startup screen, and will usually not report server-side errors

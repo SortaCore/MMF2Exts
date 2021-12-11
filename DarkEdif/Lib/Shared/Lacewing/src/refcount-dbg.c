@@ -49,6 +49,10 @@ static void list_refs (char * buf, struct lwp_refcount * refcount)
 
 lw_bool _lwp_retain (struct lwp_refcount * refcount, const char * name)
 {
+	// this ref counter is in use; wait and retry
+	while (refcount->reflock.exchange(true))
+		std::this_thread::yield();
+
 	/* sanity check
 	*/
 	assert (refcount->refcount < MAX_REFS);
@@ -77,11 +81,17 @@ lw_bool _lwp_retain (struct lwp_refcount * refcount, const char * name)
 		}
 	}
 
+	refcount->reflock = false;
+
 	return lw_false;
 }
 
 lw_bool _lwp_release (struct lwp_refcount * refcount, const char * name)
 {
+	// this ref counter is in use; wait and retry
+	while (refcount->reflock.exchange(true))
+		std::this_thread::yield();
+
 	assert (refcount->refcount >= 1 && refcount->refcount < MAX_REFS);
 
 	-- refcount->refcount;
@@ -111,14 +121,16 @@ lw_bool _lwp_release (struct lwp_refcount * refcount, const char * name)
 
 	if (refcount->refcount == 0)
 	{
-	  if (refcount->on_dealloc)
-		 refcount->on_dealloc ((void *) refcount);
-	  else
-		 free (refcount);
+		if (refcount->on_dealloc)
+			refcount->on_dealloc ((void *) refcount);
+		else
+			free (refcount);
 
-	  return lw_true;
+		refcount->reflock = false;
+		return lw_true;
 	}
 
+	refcount->reflock = false;
 	return lw_false;
 }
 

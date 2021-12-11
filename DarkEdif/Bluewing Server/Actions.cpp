@@ -137,11 +137,11 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 	// Do nothing, say nothing to Fusion [0, 2] -> not usable!
 
 	if (informFusion < 0 || informFusion > 1)
-		sprintf_s(err, "Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: %s\".", funcName);
+		sprintf_s(err, std::size(err), "Invalid \"Inform Fusion\" parameter passed to \"enable/disable condition: %s\".", funcName);
 	else if (immediateRespondWith < 0 || immediateRespondWith > 2)
-		sprintf_s(err, "Invalid \"Immediate Respond With\" parameter passed to \"enable/disable condition: %s\".", funcName);
+		sprintf_s(err, std::size(err), "Invalid \"Immediate Respond With\" parameter passed to \"enable/disable condition: %s\".", funcName);
 	else if (informFusion == 0 && immediateRespondWith == 2)
-		sprintf_s(err, "Invalid parameters passed to \"enable/disable condition: %s\"; with no immediate response"
+		sprintf_s(err, std::size(err), "Invalid parameters passed to \"enable/disable condition: %s\"; with no immediate response"
 			" and Fusion condition triggering off, the server wouldn't know what to do.", funcName);
 	else
 	{
@@ -416,11 +416,11 @@ void Extension::OnInteractive_ReplaceMessageWithSendBinary()
 void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 {
 	if (channelNamePtr[0] == _T('\0'))
-		return CreateError("Channel_SelectByName() was called with a blank name.");
+		return CreateError("Selecting channel by name failed: name cannot be blank.");
 
 	const std::string channelName(TStringToUTF8(channelNamePtr));
 	if (channelName.size() > 255U)
-		return CreateError("Channel_SelectByName() was called with a name exceeding the max length of 255 characters.");
+		return CreateError("Selecting channel by name failed: channel name \"%s\" was %zu UTF-8 characters, exceeding max of 255 characters.", channelName.c_str(), channelName.size());
 
 	const std::string channelNameSimplified = lw_u8str_simplify(channelName.c_str());
 	selChannel = nullptr;
@@ -448,7 +448,7 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 		}
 	}
 
-	CreateError("Selecting channel by name failed: Channel with name %s not found on server.", TStringToUTF8(channelNamePtr).c_str());
+	CreateError("Selecting channel by name failed: Channel with name \"%s\" not found on server.", TStringToUTF8(channelNamePtr).c_str());
 }
 void Extension::Channel_Close()
 {

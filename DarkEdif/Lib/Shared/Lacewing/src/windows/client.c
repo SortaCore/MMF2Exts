@@ -92,18 +92,19 @@ void lw_client_connect (lw_client ctx, const char * host, lw_ui16 port)
 	lw_client_connect_addr (ctx, address);
 }
 
-static void completion (void * tag, OVERLAPPED * overlapped,
-							unsigned long bytes_transfered, int error)
+static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
+									unsigned long bytes_transfered, int errorNum)
 {
 	lw_client ctx = (lw_client) tag;
 
 	assert (ctx->connecting);
 
-	if (error)
+	if (errorNum)
 	{
 		ctx->connecting = lw_false;
 
 		lw_error error = lw_error_new ();
+		lw_error_add (error, errorNum);
 		lw_error_addf (error, "Error connecting");
 
 		if (ctx->on_error)
@@ -200,7 +201,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 	lwp_disable_ipv6_only ((lwp_socket) ctx->socket);
 
-	ctx->watch = lw_pump_add (ctx->pump, ctx->socket, ctx, completion);
+	ctx->watch = lw_pump_add (ctx->pump, ctx->socket, ctx, first_time_write_ready);
 
 	/* LPFN_CONNECTEX and WSAID_CONNECTEX aren't defined w/ MinGW */
 
@@ -272,6 +273,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 		ctx->connecting = false;
 
+		// Note: Connecting errors also occur in the first_time_write_ready callback.
 		lw_error error = lw_error_new();
 
 		lw_error_add(error, code);

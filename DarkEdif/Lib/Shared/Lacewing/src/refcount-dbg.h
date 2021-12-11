@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  */
 
+#include <atomic>
+
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
 
@@ -41,6 +43,7 @@ struct lwp_refcount
 	const char * refs[MAX_REFS];
 
 	lw_bool enable_logging;
+	std::atomic<bool> reflock;
 };
 
 lw_bool _lwp_retain (struct lwp_refcount * refcount, const char * name);

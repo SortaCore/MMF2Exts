@@ -27,20 +27,8 @@
 
 #ifdef _WIN32
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
-	extern std::stringstream CriticalSection;
-#define EnterCriticalSectionDebug(x) \
-		(x)->edif_lock(); \
-		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv \
-			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
-
-#define LeaveCriticalSectionDebug(x) \
-		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Left on "sv \
-			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
-		(x)->edif_unlock()
 #include "..\Inc\Windows\zlib.h"
 #else
-#define EnterCriticalSectionDebug(x)  (x)->edif_lock()
-#define LeaveCriticalSectionDebug(x)  (x)->edif_unlock()
 #include <zlib.h>
 // libz included in project settings
 #endif
@@ -110,7 +98,7 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-DWORD LacewingLoopThread(Extension * ThisExt);
+void LacewingLoopThread(Extension * ThisExt);
 
 #define COMMON_H
 #include "Extension.h"

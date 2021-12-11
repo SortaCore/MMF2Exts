@@ -275,12 +275,12 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		{
 			globals = (GlobalInfo *)globalVoidPtr;
 
-			EnterCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_lock();
 
 			if (globals->pendingDelete)
 			{
 				OutputDebugStringA(PROJECT_NAME " - Pending delete is true. Deleting.\n");
-				LeaveCriticalSectionDebug(&globals->lock);
+				globals->lock.edif_unlock();
 				delete globals;
 				goto MakeNewGlobalInfo;
 			}
@@ -305,7 +305,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 			// globals->timeoutThread is now invalid
 			std::thread timeoutThread(std::move(globals->timeoutThread));
-			LeaveCriticalSectionDebug(&globals->lock); // can't hold it while timeout thread tries to exit
+			globals->lock.edif_unlock(); // can't hold it while timeout thread tries to exit
 
 			if (timeoutThread.joinable())
 			{
@@ -405,7 +405,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	FusionDebugger.AddItemToDebugger(selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
 
-DWORD LacewingLoopThread(Extension * ext)
+void LacewingLoopThread(Extension * ext)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
@@ -452,7 +452,6 @@ DWORD LacewingLoopThread(Extension * ext)
 #endif
 
 	OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread has exited.\n");
-	return 0;
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
@@ -567,7 +566,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	// Multithreading mode; wait for thread to end
 	if (_thread.joinable())
 	{
-		Sleep(0U);
+		std::this_thread::yield();
 		_thread.join();
 
 		OutputDebugStringA(PROJECT_NAME " - Lacewing loop thread should have ended.\n");
@@ -583,7 +582,7 @@ void GlobalInfo::MarkAsPendingDelete()
 			OutputDebugStringA(errStr.str().c_str());
 		}
 		OutputDebugStringA(PROJECT_NAME " - Pump should be closed.\n");
-		Sleep(0U);
+		std::this_thread::yield();
 	}
 
 	_objEventPump.reset();
@@ -682,11 +681,11 @@ void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 	newEvent2.channelCreate_Hidden = channelCreate_Hidden;
 	newEvent2.channelCreate_AutoClose = channelCreate_AutoClose;
 
-	EnterCriticalSectionDebug(&lock); // Needed before we access Extension
+	lock.edif_lock(); // Needed before we access Extension
 
 	_eventsToRun.push_back(newEvent);
 
-	LeaveCriticalSectionDebug(&lock); // We're done accessing Extension
+	lock.edif_unlock(); // We're done accessing Extension
 
 	// Cause Handle() to be triggered, allowing EventsToRun to be parsed
 	if (_ext != nullptr)
@@ -793,8 +792,8 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	}
 	const bool fixedSize = sizeInCodePoints != -1;
 
-	size_t maxSizePlusOne = threadData->receivedMsg.content.size() - recvMsgStartIndex + 1;
-	size_t actualStringSizeBytes = strnlen(threadData->receivedMsg.content.c_str() + recvMsgStartIndex, maxSizePlusOne);
+	const size_t maxSizePlusOne = threadData->receivedMsg.content.size() - recvMsgStartIndex + 1;
+	const size_t actualStringSizeBytes = strnlen(threadData->receivedMsg.content.c_str() + recvMsgStartIndex, maxSizePlusOne);
 	if (fixedSize)
 	{
 		// Size too small - we assumed every char was 1-byte for this, so it's way under
@@ -1102,14 +1101,10 @@ REFLAG Extension::Handle()
 			break; // lock already occupied; leave it and run next event loop
 		}
 		// At this point we have effectively run EnterCriticalSection
-#ifdef _DEBUG
-		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv
-			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv;
-#endif
 
 		if (EventsToRun.empty())
 		{
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 			isOverloadWarningQueued = false;
 			break;
 		}
@@ -1142,7 +1137,7 @@ REFLAG Extension::Handle()
 				globals->autoResponse_MessageClient == AutoResponse::Deny_TellFusion;
 		}
 
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 
 		// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
 		for (size_t u = 0; u < evtToRun->numEvents; ++u)
@@ -1195,14 +1190,14 @@ REFLAG Extension::Handle()
 // Only called by Handle().
 void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 {
-#define EnterSectionIfMultiThread(x) if (GThread.joinable()) { EnterCriticalSectionDebug(x); Sleep(0); }
-#define LeaveSectionIfMultiThread(x) if (GThread.joinable()) LeaveCriticalSectionDebug(x)
+#define EnterSectionIfMultiThread(x) if (GThread.joinable()) { x.edif_lock(); std::this_thread::yield(); }
+#define LeaveSectionIfMultiThread(x) if (GThread.joinable()) { x.edif_unlock(); }
 	if (s->InteractiveType == InteractiveType::ConnectRequest)
 	{
 		if (globals->autoResponse_Connect == AutoResponse::WaitForFusion
 			&& !s->senderClient->readonly())
 		{
-			EnterSectionIfMultiThread(&globals->lock);
+			EnterSectionIfMultiThread(globals->lock);
 			Srv.connect_response(s->senderClient, DenyReason.c_str());
 
 			// Disconnected by Fusion: reflect in copy
@@ -1217,7 +1212,7 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 				s->CondTrig[1] = CLEAR_EVTNUM;
 				s->numEvents = 2;
 			}
-			LeaveSectionIfMultiThread(&globals->lock);
+			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
 	else if (s->InteractiveType == InteractiveType::ClientNameSet)
@@ -1225,12 +1220,12 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 		if (globals->autoResponse_NameSet == AutoResponse::WaitForFusion
 			&& !s->senderClient->readonly())
 		{
-			EnterSectionIfMultiThread(&globals->lock);
+			EnterSectionIfMultiThread(globals->lock);
 			Srv.nameset_response(s->senderClient, NewClientName, DenyReason.c_str());
 
 			if (!DenyReason.empty())
 				s->senderClient->name(NewClientName);
-			LeaveSectionIfMultiThread(&globals->lock);
+			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
 	else if (s->InteractiveType == InteractiveType::ChannelJoin)
@@ -1367,7 +1362,7 @@ void Extension::DeselectIfDestroyed(std::shared_ptr<EventToRun> s)
 	}
 }
 
-DWORD ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
+void ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 {
 	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
 	bool appWasClosed;
@@ -1398,7 +1393,7 @@ DWORD ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 
 	while (true)
 	{
-		Sleep(100);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		if (G->cancelTimeoutThread == true)
 		{
 			triggeredHandle = 0;
@@ -1417,11 +1412,11 @@ DWORD ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 	}
 	appWasClosed = triggeredHandle == 1;
 
-	EnterCriticalSectionDebug(&G->lock);
+	G->lock.edif_lock();
 	// 3 seconds have passed: if we now have an ext, or server was unhosted, we're good
 	if (!G->extsHoldingGlobals.empty())
 	{
-		LeaveCriticalSectionDebug(&G->lock);
+		G->lock.edif_unlock();
 		goto exitThread;
 	}
 
@@ -1454,7 +1449,7 @@ killGlobalsAndExitThread:
 		OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
 		G->MarkAsPendingDelete();
 	}
-	LeaveCriticalSectionDebug(&G->lock);
+	G->lock.edif_unlock();
 
 	// App was closed, we can completely delete the memory
 	if (appWasClosed)
@@ -1467,7 +1462,7 @@ exitThread:
 #ifdef __ANDROID__
 	Edif::Runtime::DetachJVMAccessForThisThread();
 #endif
-	return 0U;
+	return;
 }
 
 Extension::~Extension()
@@ -1476,7 +1471,7 @@ Extension::~Extension()
 	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
 	OutputDebugStringA(msgBuff);
 
-	EnterCriticalSectionDebug(&globals->lock);
+	globals->lock.edif_lock();
 
 	// Remove this Extension from liblacewing usage.
 	auto i = std::find(globals->extsHoldingGlobals.cbegin(), globals->extsHoldingGlobals.cend(), this);
@@ -1494,13 +1489,13 @@ Extension::~Extension()
 		if (wasBegin)
 		{
 			globals->_ext = globals->extsHoldingGlobals.front();
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 
 			globals->_ext->Runtime.Rehandle();
 		}
 		else // This extension wasn't even the main event handler (for Handle()/globals).
 		{
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 		}
 	}
 	// Last instance of this object; if global and not full-delete-enabled, do not cleanup.
@@ -1530,7 +1525,7 @@ Extension::~Extension()
 			ClearThreadData();
 			selClient = nullptr;
 			selChannel = nullptr;
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 
 			sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
 				globals->timeoutWarningEnabled
@@ -1547,7 +1542,7 @@ Extension::~Extension()
 
 		const std::tstring id = UTF8ToTString(globals->_globalID) + _T("BlueServer"s);
 		Runtime.WriteGlobal(id.c_str(), nullptr);
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 
 		// Due to the shared_ptr dtor potentially freeing ID, the deselection must be before globals delete
 		selClient = nullptr;

@@ -97,19 +97,20 @@ static void first_time_write_ready (void * tag)
 
 	assert (ctx->flags & lw_client_flag_connecting);
 
-	int error;
+	int errorNum;
 
-	{	socklen_t error_len = sizeof (error);
-		getsockopt (ctx->socket, SOL_SOCKET, SO_ERROR, &error, &error_len);
+	{	socklen_t error_len = sizeof (errorNum);
+		getsockopt (ctx->socket, SOL_SOCKET, SO_ERROR, &errorNum, &error_len);
 	}
 
-	if (error != 0)
+	if (errorNum != 0)
 	{
 		/* Failed to connect */
 
 		ctx->flags &= ~ lw_client_flag_connecting;
 
 		lw_error error = lw_error_new ();
+		lw_error_add (error, errorNum);
 		lw_error_addf (error, "Error connecting");
 
 		if (ctx->on_error)
@@ -256,6 +257,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 		ctx->flags &= ~ lw_client_flag_connecting;
 
+		// Connecting errors are also reported in first_time_write_ready()
 		lw_error error = lw_error_new ();
 
 		lw_error_add (error, errno);

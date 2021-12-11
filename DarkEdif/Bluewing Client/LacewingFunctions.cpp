@@ -28,14 +28,14 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
 
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	HostIP = ipAddr;
 	HostPort = addr->port();
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 	globals->AddEvent1(2); // no CLEAR_EVTNUM, as OnDisconnect() will be called after
 }
 void OnDisconnect(lacewing::relayclient &client)
@@ -51,7 +51,7 @@ void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 {
 #if 0
 	if (GThread)
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	// Autoselect the first channel?
 	if (client.getchannelcount() == 1U)
@@ -61,7 +61,7 @@ void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 	}
 
 	if (GThread)
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 #endif
 
 	globals->AddEvent1(4, target);
@@ -69,12 +69,12 @@ void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason)
 {
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 	globals->AddEvent1(5, nullptr, nullptr, nullptr, channelName);
 }
 void OnLeaveChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target)
@@ -85,12 +85,12 @@ void OnLeaveChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::rel
 void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target, std::string_view denyReason)
 {
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 	globals->AddEvent1(44, target);
 }
 void OnNameSet(lacewing::relayclient &client)
@@ -100,23 +100,23 @@ void OnNameSet(lacewing::relayclient &client)
 void OnNameDenied(lacewing::relayclient &client, std::string_view deniedName, std::string_view denyReason)
 {
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 	globals->AddEvent1(7);
 }
 void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 {
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	PreviousName = oldName;
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 	globals->AddEvent1(53);
 }
 void OnPeerConnect(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer)

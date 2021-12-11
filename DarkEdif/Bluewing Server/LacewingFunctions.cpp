@@ -97,7 +97,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 {
 	// Leave channel can mess with writing messages
 	if (GThread.joinable())
-		EnterCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_lock();
 
 	// Auto deny quietly can be handled without any lookups or fuss
 	if (globals->autoResponse_ChannelLeave == AutoResponse::Deny_Quiet)
@@ -106,7 +106,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 
 		// CLEAR_EVTNUM will be run by OnChannelClose handler
 		if (GThread.joinable())
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 		return;
 	}
 
@@ -119,7 +119,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 
 		// CLEAR_EVTNUM will be run by OnChannelClose handler
 		if (GThread.joinable())
-			LeaveCriticalSectionDebug(&globals->lock);
+			globals->lock.edif_unlock();
 		return;
 	}
 
@@ -134,7 +134,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 		{
 			// CLEAR_EVTNUM will be run by OnChannelClose handler
 			if (GThread.joinable())
-				LeaveCriticalSectionDebug(&globals->lock);
+				globals->lock.edif_unlock();
 			return;
 		}
 	}
@@ -143,7 +143,7 @@ void OnLeaveChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewi
 	globals->AddEvent1(4, channel, client, std::string_view(), 255, nullptr, InteractiveType::ChannelLeave);
 
 	if (GThread.joinable())
-		LeaveCriticalSectionDebug(&globals->lock);
+		globals->lock.edif_unlock();
 }
 
 void OnNameSetRequest(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client, std::string_view nameRequested)

@@ -1219,11 +1219,25 @@ namespace lacewing
 
 			if (!build[0])
 			{
-				#ifdef _UNICODE
-					sprintf(build, "Bluewing Windows Unicode b%i", relayclient::buildnum);
+				const char * platform;
+				#ifdef _WIN32
+					#ifdef _UNICODE
+						platform = "Windows Unicode";
+					#else
+						platform = "Windows ANSI";
+					#endif
+				#elif defined (__ANDROID__)
+					platform = "Android";
+				#elif defined(__APPLE__)
+					platform = "iOS";
 				#else
-					sprintf(build, "Bluewing Windows ANSI b%i", relayclient::buildnum);
+					platform = "Unix-based";
+					struct utsname name;
+					if (uname(&name) == 0)
+						platform = name.sysname;
 				#endif
+
+				sprintf(build, "Bluewing %s b%i", platform, relayclient::buildnum);
 			}
 
 			auto relayCliWriteLock = client.lock.createWriteLock();

@@ -34,21 +34,6 @@
 #endif
 #include <iomanip>
 
-#ifdef _DEBUG
-	extern std::stringstream CriticalSection;
-#define EnterCriticalSectionDebug(x) \
-		(x)->edif_lock(); \
-		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Entered on "sv \
-			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv
-
-#define LeaveCriticalSectionDebug(x) \
-		::CriticalSection << "Thread "sv << std::this_thread::get_id() << " : Left on "sv \
-			<< __FILE__ << ", line "sv << __LINE__ << ".\r\n"sv; \
-		(x)->edif_unlock()
-#else
-#define EnterCriticalSectionDebug(x)  (x)->edif_lock()
-#define LeaveCriticalSectionDebug(x)  (x)->edif_unlock()
-#endif
 #include "MultiThreading.h"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
@@ -113,7 +98,7 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-DWORD LacewingLoopThread(void * ThisExt);
-DWORD ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
+void LacewingLoopThread(void * ThisExt);
+void ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
 
 #include "Extension.h"
