@@ -32,7 +32,7 @@ You may want to:
 1. Under project properties for Windows > General, there is Windows SDK Version property; change it to a later SDK to expose newer functions.  
 You can install more Windows SDKs via the Visual Studio Installer under Additional/Individual Components tab.
 2. Under project properties, change C/C++ > Preprocessor > Preprocessor Definitions to manually define WINVER and \_WIN32\_WINNT to a number from [here][WINVER].  
-By default, if not targeting XP, the default your Windows SDK specifies will be used. Be aware Windows SDK 8.1 supports compiling for earlier than Windows 8.1, but targets WINVER/\_WIN32_WINNT to 8.1 by default.
+By default, if not targeting XP, the chosen Windows SDK's default Windows version will be used; e.g. Windows SDK 8.1 supports compiling for earlier than Windows 8.1, but targets WINVER/\_WIN32_WINNT to Windows 8.1+ by default.
 3. Under project properties Linker > System > Minimum Required Version, change it to match the WINVER.  
 XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to target Vista+ (0x0600), set minimum version to "6.00".
 
