@@ -1295,9 +1295,9 @@ std::tstring_view DarkEdif::GetMFXRelativeFolder(GetFusionFolderType type)
 	// Go straight to root
 	if (type == GetFusionFolderType::FusionRoot)
 	{
-		if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Extensions") - 1), _T("Extensions"), sizeof("Extensions") - 1))
+		if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Extensions\\") - 1), _T("Extensions\\"), sizeof("Extensions\\") - 1))
 			curPath.remove_suffix(sizeof("Extensions\\") - 1);
-		else if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Data\\Runtime") - 1), _T("Data\\Runtime"), sizeof("Data\\Runtime") - 1))
+		else if (!_tcsnicmp(curPath.data() + curPath.size() - (sizeof("Data\\Runtime\\") - 1), _T("Data\\Runtime\\"), sizeof("Data\\Runtime\\") - 1))
 			curPath.remove_suffix(sizeof("Data\\Runtime") - 1);
 		//else // we're not in Extensions or Data\Runtime... where are we?
 		//	DarkEdif::MsgBox::Error(_T("Folder location failure"), _T("Couldn't calculate the Fusion root folder from \"%s\"; can't look for settings!"), FileToLookup);
@@ -1381,7 +1381,7 @@ std::string DarkEdif::GetIniSetting(const std::string_view key)
 		sdkSettingsFileContent.back() = sdkSettingsFileContent.front() = '\n';
 
 		// Destroy any spaces to left or right of "=" - will only handle one space on the sides
-		for (size_t s = 0; s != std::string::npos; s = sdkSettingsFileContent.find('=', s))
+		for (size_t s = sdkSettingsFileContent.find('='); s != std::string::npos; s = sdkSettingsFileContent.find('=', s))
 		{
 			if (sdkSettingsFileContent[s - 1] == ' ')
 				sdkSettingsFileContent.erase(--s, 1);
@@ -1774,7 +1774,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		}
 		else // Some other error loading; we'll consider it fatal.
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX."), __LINE__, GetLastError());
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX."), GetLastError());
 			std::abort();
 		}
 	}
@@ -1805,6 +1805,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			}
 
 			unsigned short strLength = dataSrc[0];
+			// We're setting to a view, but passing it to a copying std::wstring
 			resKey = std::wstring_view(&dataSrc[1], strLength);
 			UnlockResource(data2);
 			FreeResource(data2);
@@ -1924,7 +1925,10 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resFileExists && (resKey == UC_TAG_NEW_SETUP || regKey != resKey))
 				{
 					reportError = true;
-					updateLog << "This extension needs internet access for its initial setup.\n"sv;
+
+					// Page content errors are none of their concern
+					if (lastWSAError != EINVAL)
+						updateLog << "This extension needs internet access for its initial setup.\n"sv;
 				}
 			#endif
 
@@ -1981,7 +1985,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		// Host necessary so servers serving multiple domains know what domain is requested.
 		// Connection: close indicates server should close connection after transfer.
 		std::stringstream requestStream;
-		requestStream << "GET /storage/darkedif_vercheck_new.php?ext="sv << url_encode(PROJECT_NAME)
+		requestStream << "GET /storage/darkedif_vercheck.php?ext="sv << url_encode(PROJECT_NAME)
 			<< "&build="sv << Extension::Version << "&sdkBuild="sv << DarkEdif::SDKVersion
 			<< "&projConfig="sv << projConfig
 			<< "&tagRes="sv << url_encode(WideToUTF8(resKey)) << "&tagReg="sv << url_encode(WideToUTF8(regKey))
@@ -2030,7 +2034,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				WSACleanup();
 				return 1;
 			}
-			#if _DEBUG
+			#ifdef _DEBUG
 				GetLockAnd(
 					updateLog << page.str() << "\nResult concluded.\n"sv;
 					OutputDebugStringA(updateLog.str().c_str());
@@ -2141,6 +2145,9 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			// No point trying to write resource key if there is no resource file
 			if (resKey != providedKey && resFileExists)
 			{
+				if (providedKey.back() == L'\0')
+					DarkEdif::MsgBox::Error(_T("?"), _T("Provided key is invalid."));
+
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
@@ -2154,7 +2161,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 					// Copy string size then string content in
 					*(std::uint16_t *)&keyOut[0] = (std::uint16_t)providedKey.size();
-					memcpy_s(&keyOut[1], keyOut.size() - 2U, providedKey.data(), providedKey.size() * sizeof(wchar_t));
+					wmemcpy_s(&keyOut[1], keyOut.size() - 1, providedKey.data(), providedKey.size());
 
 					if (!UpdateResource(resHandle, RT_STRING, _T("UCTAG"), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), keyOut.data(), keyOut.size() * sizeof(wchar_t)))
 						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; updating tag returned %u."), GetLastError());
@@ -2162,7 +2169,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running Fusion as admin, or enabling write permissions for Users role on Fusion folder."), GetLastError());
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running Fusion as admin and dropping a " PROJECT_NAME " extension into frame editor again."));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -2181,8 +2188,11 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 				// We can try writing to the registry - we'll include null, as RegEdit uses it
 				err = err ? err : RegSetValueExW(mainKey, L"UCTag", 0, REG_SZ, (LPBYTE)providedKey.c_str(), (providedKey.size() + 1) * sizeof(wchar_t));
-				DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-					GetLastError() == ERROR_ACCESS_DENIED ? "Try running Fusion as admin." : "");
+				if (err != 0)
+				{
+					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
+						err == ERROR_ACCESS_DENIED ? "Try running Fusion as admin." : "");
+				}
 			}
 
 			#endif
@@ -2222,7 +2232,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 		if (handleWSAError(EINVAL))
 		{
-			#if _DEBUG
+			#ifdef _DEBUG
 				updateLog << "Can't interpret type of page:\n"sv << pageBody;
 				pendingUpdateDetails = UTF8ToWide(pageBody);
 			#else
