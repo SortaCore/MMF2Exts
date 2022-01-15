@@ -113,7 +113,7 @@
 			 If set to true, uses Windows XP compatibility if available. -->
 		<_WindowsXPCompatibilityRegex><![CDATA[(?im)^WindowsXPCompatibility\s*=\s*false\s*?$]]></_WindowsXPCompatibilityRegex>
 		<WindowsXPCompatibility>0</WindowsXPCompatibility>
-		<!-- Yep, XP compatible pack is installed. If VS accidentally picks VS 2019 compiler, VCTargets will point to "...\v160\", so
+		<!-- Yep, XP compatible pack is installed. If VS accidentally picks VS 2019 compiler, VCTargets will point to "..\v160\", so
 			 we hop up a folder and pick VS 2017 (v150) directly, as the XP compatible pack is VS 2017-based. -->
 		<WindowsXPCompatibility Condition="Exists('$(VCTargetsPath)\..\v150\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props') OR Exists('$(VCTargetsPath)\Platforms\Win32\PlatformToolsets\v141_xp\Toolset.props')">1</WindowsXPCompatibility>
 		<WindowsXPCompatibility Condition="$(WindowsXPCompatibility)==1 AND
@@ -204,6 +204,7 @@
 			 DarkEdif/#MFAs and documentation/DarkEdif MultiTargeting.md file,
 			 as well as extra details on each arch. -->
 		<_iOSBuildArchitecturesRegex><![CDATA[(?im)^iOSBuildArchitecturesREPLME\s*=\s*(.*)\s*$]]></_iOSBuildArchitecturesRegex>
+		<_iOSBuildArchitectures>arm64;armv7;x64_64</_iOSBuildArchitectures>
 		<_iOSBuildArchitectures Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Result('$1'))</_iOSBuildArchitectures>
 
 		<!-- iPhone extensions are packaged into zips, with extensions EXT -->
@@ -331,7 +332,7 @@
 		</When>
 	</Choose>
 	<!-- All runtimes should have these -->
-	<PropertyGroup>
+	<PropertyGroup Label="Configuration">
 		<!-- Only used in CLR (C# mixed with C++) -->
 		<RootNamespace>$(SDKType)</RootNamespace>
 		<!-- MFX files are internally DLLs -->
@@ -355,7 +356,7 @@
 		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlat)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)\Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
-	<ItemDefinitionGroup>
+	<ItemDefinitionGroup Label="Configuration">
 		<ClCompile>
 			<!-- All configs, all platforms -->
 			<!-- COXSDK is the general SDK term for all Fusion SDKs.
@@ -392,14 +393,14 @@
 	<!-- Wish I could merge all these into a Choose,
 		 but ItemDefinitionGroup can't be in a Choose. -->
 
-	<PropertyGroup Condition="$(_TargetPlat)=='Windows'">
+	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows'">
 		<!-- Latest XP-compatible compiler.
 			 While pre-XP may still run on XP compiler, it's dubious.
 			 In a similar vein, the XP compiler may work on pre-XP, but also dubious. -->
 		<PlatformToolset Condition="$(WindowsXPCompatibility)==1">v141_xp</PlatformToolset>
 		<!-- Prevent Windows XP not-being-supported-later warnings -->
 		<XPDeprecationWarning Condition="$(WindowsXPCompatibility)==1">false</XPDeprecationWarning>
-		<MSBuildWarningsAsMessages Condition="$(WindowsXPCompatibility)==1">MSB8012</MSBuildWarningsAsMessages>
+		<MSBuildWarningsAsMessages Condition="$(WindowsXPCompatibility)==1">MSB8012;$(MSBuildWarningsAsMessages)</MSBuildWarningsAsMessages>
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
@@ -424,7 +425,7 @@
 		<CodeAnalysisLogFile>$(IntDir)$(TargetFileName).CodeAnalysisLog.xml</CodeAnalysisLogFile>
         <CodeAnalysisSucceededFile>$(IntDir)$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
 	</PropertyGroup>
-	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows'">
+	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows'">
 		<ClCompile>
 			<!-- UTF-8 everywhere! -->
 			<UseUnicodeForAssemblerListing>true</UseUnicodeForAssemblerListing>
@@ -476,6 +477,9 @@
 			<!-- This one is bulkier, but faster to make and better for local debug -->
 			<GenerateDebugInformation Condition="$(MakePDB)==1 AND $(DbgBuild)==1">true</GenerateDebugInformation>
 
+			<!-- If debug build, add profiling information -->
+			<Profile Condition="$(DbgBuild)==1">true</Profile>
+
 			<!-- Support up to 4GB RAM addresses, not 2GB -->
 			<LargeAddressAware>true</LargeAddressAware>
 
@@ -521,11 +525,11 @@
 	<!-- Windows: configuration type -->
 
 	<!-- ## Debug, Debug Unicode -->
-	<PropertyGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
+	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
 		<!-- Enables EditAndContinue, devs can modify functions mid-debug session -->
 		<LinkIncremental Condition="$(_UseMultiProcessor)==0">true</LinkIncremental>
 	</PropertyGroup>
-	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
+	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==1">
 		<ClCompile>
 			<!-- Make debugging more accurate -->
 			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)!='size_redist'">MultiThreadedDebug</RuntimeLibrary>
@@ -550,11 +554,11 @@
 		</Link>
 	</ItemDefinitionGroup>
 	<!-- ## Edittime, Edittime Unicode, Runtime, Runtime Unicode -->
-	<PropertyGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==0">
+	<PropertyGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==0">
 		<!-- Link Time Code Generation. See the same property under ClCompile. -->
 		<WholeProgramOptimization Condition="$(UseLinkTimeCodeGeneration)==1">true</WholeProgramOptimization>
 	</PropertyGroup>
-	<ItemDefinitionGroup Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==0">
+	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows' AND $(DbgBuild)==0">
 		<ClCompile>
 			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)!='size_redist'">MultiThreaded</RuntimeLibrary>
 			<RuntimeLibrary Condition="$(FavorSizeOrSpeed)=='size_redist'">MultiThreadedDll</RuntimeLibrary>
@@ -647,7 +651,7 @@
 
 			<!-- Don't export any functions by default, as Java doesn't need to see them.
 				 Disable #pragma comment getting compiler upset, and other issues. -->
-			<AdditionalOptions>-fvisibility=hidden -Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fvisibility=hidden -fPIC -Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>
@@ -787,7 +791,17 @@
 		<BuildMacro Include="RunAnalyzerSetting">
 			<Value>$(RunAnalyzerSetting)</Value>
 		</BuildMacro>
+		<BuildMacro Include="Betsy">
+			<Value Condition="$(_TargetPlat)=='Windows'">true</Value>
+		</BuildMacro>
 	</ItemGroup>
+
+	<!-- Windows 8.1 SDK misses half its C++ standard library headers if you don't have the Visual Studio Windows Universal CRT SDK component.
+		 Windows 10 SDK+ doesn't have this bug.
+		 Windows 7.1 SDK from XP targeting pack does have it, but requires Universal CRT SDK as part of XP targeting. -->
+	<Target Name="Win8_1 or lower SDK without UCRT" Condition="$(_TargetPlat)==Windows AND $(WindowsTargetPlatformVersion)=='8.1' AND '$(UniversalCRT_IncludePath)'==''" BeforeTargets="ClCompile">
+		<Error Text="FusionSDK error: Windows 8.1 or lower SDK cannot work fully without the 'Universal CRT SDK' Visual Studio component." />
+	</Target>
 
 	<!-- Windows XP requires VS 2017 (any toolset version) or VS 2019 (specific toolset version). -->
 	<Target Name="XP toolset check" Condition="$(WindowsXPCompatibility)==1 AND $(_TargetPlat)=='Windows' AND $(VisualStudioVersion) != 15.0" BeforeTargets="ClCompile;CheckVCToolsetVersion">
@@ -799,13 +813,12 @@
 		<Error Text="FusionSDK error: You're using XP compatibility, but not correctly selecting toolset v14.27 or lower. Contact DarkEdif creators." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110" />
 
 		<!-- Using VS 2019, but don't have the XP toolset version. -->
-		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &gt; 142729110 AND !Exists('$(VCToolsInstallDir)')" />
+		<Error Text="FusionSDK error: You're using XP compatibility, but you don't have C++ toolset v14.27 or earlier added on your VS setup. See the MMF2Exts README.md file." Condition="$(VisualStudioVersion)==16.0 AND $(VCToolsVersion.Replace('.','')) &lt;= 142729110 AND !Exists('$(VCToolsInstallDir)')" />
 	</Target>
 	<!-- VS 2017 doesn't support C++17 on Android projects - it does on Windows, and a workaround is used on iOS. -->
 	<Target Name="Android on VS 2017 check" Condition="$(_TargetPlat)=='Android' AND $(VisualStudioVersion)==15.0" BeforeTargets="ClCompile;Build">
 		<Error Text="FusionSDK error: You cannot use DarkEdif Android builds with VS 2017. VS 2019 is the recommended version."/>
 	</Target>
-
 
 	<!-- Pre build tool for non-Windows. Minifies JSON, and generates a jump function list based on ACE in the Extension. -->
 	<Target Name="Generate jump table" Condition="$(SDKType)=='DarkEdif' AND $(RuntimeBuild)==1" BeforeTargets="ClCompile">

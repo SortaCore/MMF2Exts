@@ -8,13 +8,38 @@ There are, though, several notes.
 
 ## Prerequisites
 As a DarkEdif developer, you should start by reading the README in the [MMF2Exts root folder][README],
-to find the base requirements of using the SDK.  
+to find the base requirements of using the DarkEdif SDK.  
 In your Visual Studio setup, ensure you have enabled the latest NDK versions, and enable Android C++
 targeting, iOS C++ targeting, and Windows XP toolset, as needed.
 
+## Windows project won't build
 
-## Building with XP support
-There are extra handicaps when compiling for XP and above.
+### Windows SDK issues
+If you receive a warning *"The WindowsSDKDir property is not defined. Some build tools may not be found."* then
+you don't have a Windows SDK installed.
+
+This isn't Fusion's Windows SDK; it's the Windows SDK saying what the OS makes available to C++ code.  
+* If you're targeting XP+, you should have the Windows 7 SDK installed for you, as part of the XP-targeting component in Visual Studio Installer.
+* If you're targeting Vista+, you can manually install the Windows 8.1 SDK from the VS Installer (VS 2017) or [Windows SDK archive] (VS 2019-2022).  
+  (If you use 8.1 SDK, make sure in Visual Studio Installer, you add  "Windows Universal CRT SDK" component, or the 8.1 SDK will have missing headers).  
+* If you only want Windows 10+ compatibility, use Visual Studio Installer's Components tab to install Windows 10 SDK.
+
+You can install multiple Windows SDKs alongside each other.  
+This repo's SDKs are designed to use the XP SDK if it can find it; otherwise it will defer to Visual Studio,
+which will by default use the latest one you have.  
+You can override the default in project properties > General > Windows SDK Version, but **don't** override the XP targeting this way.  
+Instead, use the FusionSDKConfig.ini, `WindowsXPCompatibility = false` setting to disable Windows XP targeting temporarily, and restart VS.
+
+Note that the backwards-compatibility is usually present, but not guaranteed. Write your code using the oldest SDK version you can use.  
+Using later OS functions will make your extension not load on older OS versions; that includes both inside Fusion on older OSes, and in built Fusion apps running on older OSes.
+
+If you want to access later Windows OS features, such as the taskbar progress bar, but you don't want your extension to not load on older OSes,
+then consider using GetProcAddress to check if the function is there at runtime, so your extension can still load if it is not.  
+There are guides on how to do it online, and Lacewing uses it in a [small way][CancelIOEx Lacewing example].
+
+
+## Building with Windows XP support
+There are extra handicaps when compiling for XP and above. However, they're mostly about setting up your developer environment properly and take only a few minutes of changes.
 
 ### VS toolset compatibility
 While VS 2015 through VS 2022 come with XP-targeting C++ toolset, the C/C++ Run-Time (CRT) is not obligated
@@ -28,8 +53,7 @@ functions that aren't available in your targeted OS version. The problem is, the
 For example, std:\:shared_timed_mutex is a basic locking mechanism to prevent multiple threads fighting over
 access to the same block of memory. It is available on Windows XP and above.  
 However, in later versions of VS 2019 and in all versions of VS 2022, std::shared_timed_mutex was changed to
-use an OS feature called [SRW locks],
-to provide the mutex feature.   
+use an OS feature called [SRW locks] to provide the mutex feature.   
 SRW locks are only available in **Vista** and above. So although std::shared_timed_mutex is available while
 using the XP toolset, using it will produce an application (or in this case, Fusion extension) that won't load.
 
@@ -41,7 +65,7 @@ This will produce binaries that work in XP and above, but note that IntelliSense
 It's worth noting VS 2019 Preview can be used with this method too, but VS 2022 *cannot* be used with either method.
 
 ### Tools to go with Visual Studio
-Windows XP does not support Visual Studio 2017 or above, and DarkEdif uses C++17 features that are only available in VS 2017 and above.  
+Windows XP does not support running Visual Studio 2017 or above, and DarkEdif uses C++17 features that are only available in VS 2017 and above.  
 Your best bet for debugging is using **WinDbg**, which can be found in the Windows 7 SDK as the "Debugging tools" component.  
 Get it from [here][Windows 7 SDK Debugging Tools] or [here][Windows SDK archive].  
 Install the variant that matches your XP computer; if your XP OS is 32-bit, get the 32-bit (x86) Windows 7 SDK installer.
@@ -50,7 +74,7 @@ WinDbg is fiddly to use, but you only need to know the commands:
 - Menu item File > Open executable: opens the EXE file and starts running it while watching for crashes.
 - `g`: Tells the program to continue until something breaks.  
   Note that WinDbg will automatically pause shortly after opening an executable, without a bug happening; this is expected behavior.
-- `.dump /mFA "C:\Filename.dmp"`: produces a DMP dumpfile that Visual Studio 2017 can open.  
+- `.dump /mFA "C:\Filename.dmp"`: produces a DMP dumpfile that Visual Studio 2017+ can open.  
   Send the DMP back to the VS computer, and use File > Open in the Fusion ext project; then press Attach in the dmp file's tab.
 
 You may want to:
@@ -61,28 +85,28 @@ You may want to:
   You can set up the symbol cache in WinDbg by File > Symbol File Path (read [more][WinDbg symbol path guide]).
 
 
-#### My Windows ext doesn't load
-If your extension compiles and links without error (build success in Output window), but it does not load, in either of these ways:
+## My Windows ext doesn't load
+If your extension compiles and links without error (Visual Studio's Output window ends with "build succeeded"), but your project does not load, in either of these ways:
 1. Fusion 2.0/2.5 will not show the extension in the Create New Object window
 2. Built Fusion EXEs that use your extension, when run, are creating a messagebox:  
   "Cannot load ExtName.mfx. This object might need an external program or library not yet installed."
 This error means that external files are missing.
 
 This error message box also occurs when:
-- your extension is set to build with `FavorSizeOrSpeed=size_redist` Fusion SDK config option,
-  or has VS property setting C/C++ > Code Generation > Runtime Library to a DLL version.  
-  This means project properties Multithreaded Debug DLL or Multithreaded DLL. `_DLL` will be defined.  
-  These will have CRT functions outside of your extension's MFX, depending on the user having your VS's C++ redistributible installed.
+- you use a Vista+ function in Windows XP, or a 7+ function in Windows Vista, etc.
+- your extension is set to build with `FavorSizeOrSpeed=size_redist` Fusion SDK config INI option,
+  or has VS property setting C/C++ > Code Generation > Runtime Library to a DLL version (Multithreaded Debug DLL or Multithreaded DLL).  
+  `_DLL` will be defined if you've done either.  
+  DLL runtime libraries store CRT functions outside of your extension's MFX, depending on the user having your VS's C++ redistributible installed.
   For VS 2015-2022, you can use any VS redistributible up to the VS 2022 redistributible; but note that Windows XP is only compatible
   up to VS 2019 redistributible v16.7.
-- you use a Vista+ function in Windows XP, or a 7+ function in Windows Vista, etc.
 - you use external DLLs that you link to with LIB files (dynamic library), which are not found by the running application.
 
 Your Fusion extension will look for the external DLLs (redistributible DLL files, Windows DLL files, or third-party DLLs you've
 directly linked to), in system path, and:
 - During Fusion editor usage: Fusion install folder (where mmf2u.exe is)
 - During Run Application: Data\\Runtime or Data\\Runtime\\Unicode folder
-- For built EXEs: The built EXE application folder.
+- For built EXEs: The built EXE application folder; and Modules sub-directory, if it's an Unpacked EXE.
 
 If you're struggling to find the function that your ext can't find in the OS, try opening Microsoft's [Dependency Walker] on your MFX file.  
 1. Once opened, it should show red-icon DLL files on the left.
@@ -171,33 +195,39 @@ If you bring in a third-party library, it must target the same shared STL, or ha
 
 
 ## Building Fusion for iOS
-Problems with iOS building:  
-First, if you delete a file from your project, it will stay on the Mac side.  
-Solution: Delete from Mac side too.  
-Second, if you delete a file from Mac side, it will not be re-copied over.  
-Solution: Copy them over to Mac manually.  
-Third, if you remove the entire project folder, that won't be enough; it still won't be re-copied over.
+Problems with iOS building:
 
-### I get errors with included file missing!
-DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
-This file is valid, or Fusion wouldn't build at all, but the Fusion does not auto-add third-party extensions. So while it will include your ext's files in the built iOS project zips, the XCode project won't have them referenced.  
-You'll have to manually add both the framework and the code files to the XCode project, which thankfully takes less than a minute.
-1. Open your XCode project in XCode.
-2. Right-click the Extension folder in your XCode project, and press Add Files.
-3. Select the extension's files to add them; they should be in your project\\Extensions folder.  
-They will normally be named CRun*ExtName*.xxx - XCode should also highlight the files that your project hasn't linked already.
-4. After adding those, right-click your Frameworks folder and pick Add Files again
-5. This time, under your project folder\\Frameworks, add the xcframework package. Don't add the contents; add the xcframework itself.
+Problem 1: if you delete a file from your project, it will stay on the Mac side.  
+Solution: Delete from Mac side too.  
+
+Problem 2: if you delete a file from Mac side, it will not be re-copied over.  
+Solution: Copy them over to Mac manually. If you remove the entire project folder, that won't be enough; it still won't be re-copied over.
+
+Problem 3: if you don't include a file in your VS project or shared project, it won't be copied over, regardless of whether it's a code, header or resource file.
+Solution: Add them to your project.
+
+### iOS development setup
+An iMac late 2012 or above is necessary; you need XCode 10.2, which is OS Mojave+.  
+Mac OS Big Sur and Montgomery are both compatible, as is the latest Xcode.
+
+The earliest iOS you can simulate in latest XCode - noted in July 2021 - is iOS 11.4, which runs on iPhone 5S, but not 5 or 5C.
+You can install it under XCode config > Components > Simulators.
+
+Install Xcode on Mac. Set up SSH on Mac.
+PuTTY setup. Validate by running PuTTY. Recommended to use encryption keys. Link guides.
+
 
 
 ### IntelliSense is out of date
-IntelliSense is using a lot of old headers that don't match the current iOS SDK. To fix this, you'll need to modify Microsoft's linked headers.  
+If you're inundanted with a ton of IntelliSense errors, then read this section. Visual Studio's IntelliSense is using a lot of old iOS headers that don't match
+Xcode's SDK. To fix this, you'll need to modify Microsoft's linked headers. Copy:  
 from Mac: `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/include`  
 to PC: `C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\VC\vcpackages\IntelliSense\iOS\OSS\xcodefiles`  
-Then amend what VS looks in for headers:  
+Then amend what VS looks in for headers, open:  
 `C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Microsoft\VC\v160\Application Type\iOS\1.0\iOS.Common.props`  
 Find `<ISenseIncludePath>`, remove the libcxx and musl entries, and instead link the xcodefiles folder.  
-(You could use the iPhoneOS platform's headers instead of the simulator's headers, but since you'll be debugging on the simulators, that could cause confusion as your IntelliSense will be out of sync with Xcode's autocomplete.)
+(You could use the iPhoneOS platform's headers instead of the simulator's headers, but since you'll be debugging on the simulators,
+that may cause confusion as your IntelliSense will be out of sync with Xcode's runtime.)
 
 ### Different CPU architectures
 You can build for 7 iOS CPU types, of which 4 are targeted by defaults.  
@@ -215,7 +245,7 @@ Of these CPU targets, some are simulator, some are device-only, and some are use
 
 ¹ = You will have to include the "Depends on" iOS arch and build for the VS arch if targeting those.  
 ² = If running Xcode under [Rosetta translation], you can run x86_64 code on an ARM64 host machine, but that's not recommnded.  
-³ = Xcode will no longer build for armv6, if using iOS SDK 5.0 or above, or XCode 4.5 and above. DarkEdif technically supports it, but we make no promises all the rest of Apple's tools will play nice.
+³ = Xcode will no longer build for armv6, if using iOS SDK 5.0 or above, or Xcode 4.5 and above. DarkEdif technically supports it, but we make no promises all the rest of Apple's tools will play nice.
 
 #### Including extra architectures
 Apple uses extra architectures, but the table above is hard-coded into PostBuildTool.
@@ -231,6 +261,17 @@ However, the PostBuildTool is only programmed to link the seven architectures ab
 Excluding one of the default 4 architectures above is possible. However, Visual Studio will still build that architecture if the project configuration is built, but the EXT file generated by PostBuildTool will not include them.
 
 The only limitation DarkEdif has with excluding is that you have at least one device architecture, and one simulator architecture.
+
+### My extension's files are missing from built Fusion iOS projects!
+DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
+This file is valid, or Fusion wouldn't build at all, but the Fusion does not automatically add third-party extensions. So while it will include your ext's files in the built iOS project zips, the Xcode project won't have them referenced.  
+You'll have to manually add both the framework and the code files to the Xcode project, which thankfully takes less than a minute.
+1. Open your Xcode project in Xcode.
+2. Right-click the Extension folder in your Xcode project, and press Add Files.
+3. Select the extension's files to add them; they should be in your project\\Extensions folder.  
+   They will normally be named CRun**ExtName**.xxx - Xcode should also highlight the files that your project hasn't linked already.
+4. After adding those, right-click your Frameworks folder and pick Add Files again
+5. This time, under your project folder\\Frameworks, add the xcframework package. Don't add the contents; add the xcframework itself.
 
 #### Notes
 
@@ -277,3 +318,4 @@ For a list of all Apple's supported devices and CPU architectures, see [this lin
 [A12+ chips]: https://en.wikipedia.org/wiki/Apple_A12
 [Rosetta translation]: https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
 [Apple CPU A series]: https://en.wikipedia.org/wiki/Apple_silicon#A_series
+[CancelIOEx Lacewing example]: https://github.com/SortaCore/MMF2Exts/blob/master/DarkEdif/Lib/Shared/Lacewing/src/windows/fdstream.c#:~:text=GetProcAddress

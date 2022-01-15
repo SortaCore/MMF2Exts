@@ -9,8 +9,19 @@
 		 If that happens, only a target warning is generated, it's not a show-stopper,
 		 but for the sake of cleanliness.
 		 So we use this extra sheet to force back to .mfx/.mox. -->
-	<PropertyGroup Condition="'$(Platform)'=='Win32' AND $(RunCodeAnalysis)!='true'">
+	<PropertyGroup Label="Configuration" Condition="'$(Platform)'=='Win32' AND $(RunCodeAnalysis)!='true'">
 		<TargetExt Condition="!$(Configuration.Contains('Vitalize'))">.mfx</TargetExt>
 		<TargetExt Condition="$(Configuration.Contains('Vitalize'))">.mox</TargetExt>
+	</PropertyGroup>
+
+	<!-- Reset by VS 2019 to '' under some circumstances, by Microsoft.Cpp.Redirect.15.props;
+		 Although it's still set correctly in the build, project properties won't display it properly. -->
+	<PropertyGroup Label="Configuration" Condition="'$(CharacterSet)'==''">
+		<CharacterSet>NotSet</CharacterSet>
+	</PropertyGroup>
+	<!-- Reset by VS 2019 to 'v100' under some circumstances. Although it's still set correctly in the build,
+		 project properties won't display it. -->
+	<PropertyGroup Label="Configuration" Condition="$(WindowsXPCompatibility)==1 AND $(PlatformToolset)=='v100'">
+		<PlatformToolset>$(FusionSDKPlatformToolset)</PlatformToolset>
 	</PropertyGroup>
 </Project>

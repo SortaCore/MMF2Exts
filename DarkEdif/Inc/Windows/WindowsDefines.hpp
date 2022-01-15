@@ -28,8 +28,8 @@
 
 // Targeting XP is surprisingly poorly done; you would think you can just specify v141_xp toolset and be okay,
 // but the toolset eventually uses STL library versions that don't link properly.
-// Noteably, std::shared_timed_mutex is linked to a kernel32.lib, which under the hood uses SWRLock, a feature
-// introduced in Vista's kernel32.dll. The kernel32.dll in the OS won't have the SWRLock functions, resulting in
+// Noteably, std::shared_timed_mutex is linked to a kernel32.lib, which under the hood uses SRWLock, a feature
+// introduced in Vista's kernel32.dll. The kernel32.dll in the OS won't have the SRWLock functions, resulting in
 // the ext not loading on Fusion startup.
 // You can track these missing calls down using Dependency Walker.
 #if (defined(_USING_V110_SDK71_) || (defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0600) || (defined(WINVER) && WINVER < 0x0600)) && _MSC_VER > 1927
@@ -51,6 +51,7 @@
 #ifndef NOMINMAX
 	#error NOMINMAX should be defined!
 #endif
+
 #include <windows.h>
 
 // Include TCHAR, allowing both ANSI and Unicode functions

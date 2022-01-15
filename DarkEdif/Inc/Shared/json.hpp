@@ -44,6 +44,8 @@
 	#endif
 #endif
 
+// If stdlib.h is missing, you don't have a Windows SDK set up properly.
+// If you're using Windows 8.1 SDK, also install the Universal CRT SDK component.
 #include <stdlib.h>
 #include <stdint.h>
 

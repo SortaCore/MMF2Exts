@@ -6,12 +6,17 @@ Due to this, editor builds of DarkEdif extensions check for SDK updates using th
 This does not mean a game-ending bug, but if there is a lot of code updates (including cosmetic), or a bugfix that will likely affect new or current users, then a new SDK version will be released.  
 Minor changes won't necessitate an immediate version update, so to get the latest DarkEdif SDK, use the latest MMF2Exts commit.
 
-If you're editing this file, note that the use of Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
+If you're editing this file, note that the use of a Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
+
 
 Changes until v13 release
 ----
 *v13 not released yet*
+- Edittime/Windows: several crash fixes to UC tagging feature (testing wasn't done, evidently)
+- Edittime/Windows: removed debug popup related to RunMode
+- Windows: Added errors when invalid Windows SDK 8.1/7.0 configuration is detected
+- Windows: Fixed some Visual Studio property display issues (Label attribute in PropertyGroup)
 
 
 Changes until v12 release

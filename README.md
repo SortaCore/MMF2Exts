@@ -9,11 +9,13 @@ Since these source codes are collated by Phi, not by the authors themselves, the
 It's recommended you use Visual Studio 2019, although other editions can be used with loss of platform compatiblity.
 
 You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
-* VS 2017 - Android, Windows XP+ support - and 2019 can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2017 - Android, Windows XP+ support, no iOS - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
 * VS 2019 - iOS, Android, Windows XP+ support - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
 * VS 2022 - iOS, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
 
 ### Windows targeting ###
+
+#### XP+ targeting ####
 The SDKs are compatible with the **C++ Windows XP targeting pack**, for Windows XP+ instead of Vista+ targeting. You can find it under Additional/Individual Components tab in the Visual Studio installer; search for "Windows XP" using the search bar on the top.
 
 If the Visual Studio XP-targeting pack is installed, it will be auto-detected by all the Fusion SDKs and XP+ targeting will be enabled by default.  
@@ -28,13 +30,23 @@ You'll have to install v14.27 of the C++ compiler tools - this is easy to search
 #### Later OS versions
 If you want to use later OS functions at cost of compatibility, you can change the targeting by using the FusionSDKConfig INI WindowsXPCompatibility option to false ([how to][XP compatibility false]), and reloading your VS solution.
 
-You may want to:
+You will want to:
 1. Under project properties for Windows > General, there is Windows SDK Version property; change it to a later SDK to expose newer functions.  
-You can install more Windows SDKs via the Visual Studio Installer under Additional/Individual Components tab.
+   You can install more Windows SDKs via the Visual Studio Installer under Additional/Individual Components tab.
 2. Under project properties, change C/C++ > Preprocessor > Preprocessor Definitions to manually define WINVER and \_WIN32\_WINNT to a number from [here][WINVER].  
-By default, if not targeting XP, the chosen Windows SDK's default Windows version will be used; e.g. Windows SDK 8.1 supports compiling for earlier than Windows 8.1, but targets WINVER/\_WIN32_WINNT to Windows 8.1+ by default.
+   By default, if not targeting XP, the chosen Windows SDK's default Windows version will be used; e.g. Windows SDK 8.1 supports compiling for earlier than Windows 8.1, but targets WINVER/\_WIN32_WINNT to Windows 8.1+ by default.
 3. Under project properties Linker > System > Minimum Required Version, change it to match the WINVER.  
-XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to target Vista+ (0x0600), set minimum version to "6.00".
+   XP is WINVER 0x0501; the Linker version equivalent is "5.01". So, if you want to target Vista+ (0x0600), set minimum version to "6.00".
+
+You will also need a Windows SDK:
+* Windows 7.0 SDK: If you've got the *C++ Windows XP-targeting pack* Visual Studio Installer component installed, the Windows 7.0 SDK will be installed as part of it.  
+* Windows 8.1 SDK:  
+  Install *Universal CRT SDK* component in Visual Studio Installer's Components tab. Then:
+  * VS 2017: Add 8.1 SDK from Visual Studio Installer's Components tab.  
+  * VS 2019, 2022: Install 8.1 SDK manually from the [Windows SDK archive]. You only need the first option in the installer.
+* Windows 10 SDK: VS 2017-2022, install from Visual Studio Installer's Components tab.
+* Windows 11 SDK: VS 2022, install from Visual Studio Installer's Components tab.
+
 
 ### Android targeting ###
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
@@ -131,3 +143,5 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 [Link VS to Xcode]: https://docs.microsoft.com/en-us/cpp/cross-platform/install-and-configure-tools-to-build-using-ios?view=msvc-160
 [rSDK Clickteam forum thread]: https://community.clickteam.com/threads/42183-rSDK
 [Edif Clickteam forum thread]: https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun
+[Windows SDK archive]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/
+
