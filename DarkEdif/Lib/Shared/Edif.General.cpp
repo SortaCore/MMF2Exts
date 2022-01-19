@@ -473,7 +473,7 @@ jstring CStrToJStr(const char * String)
 		if (bytes[k] >= 0xF0 && bytes[k] <= 0xF5)
 			goto reconvert;
 	}
-	LOGV("UTF-8 String \"%s\" should be valid Modified UTF-8.", String);
+	LOGV("UTF-8 String \"%s\" should already be valid Modified UTF-8.", String);
 
 	// No 4-byte characters, safe to convert directly
 	jstr = threadEnv->NewStringUTF(String);
@@ -841,12 +841,8 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	// Get jclass with mainThreadJNIEnv->FindClass.
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
-	static char projName[] = PROJECT_NAME;
-	for (size_t i = 0; i < sizeof(projName) - 1; i++)
-		if (projName[i] == ' ')
-			projName[i] = '_';
-	std::string classNameCRun("Extensions/" "CRun" + std::string(projName));
-	std::string className("Extensions/" + std::string(projName));
+	std::string classNameCRun("Extensions/" "CRun" PROJECT_NAME_UNDERSCORES);
+	std::string className("Extensions/" PROJECT_NAME_UNDERSCORES);
 	LOGV("Looking for class %s... [1/2]", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
@@ -873,7 +869,6 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 #define method(a,b) { "darkedif_" #a, b, (void *)&a }
 	//public native long DarkEdif_createRunObject(ByteBuffer edPtr, CCreateObjectInfo cob, int version);
 	static JNINativeMethod methods[] = {
-		//method(extInit, "()Z"),
 		method(getNumberOfConditions, "(J)I"),
 		method(createRunObject, "(Ljava/nio/ByteBuffer;LRunLoop/CCreateObjectInfo;I)J"),
 		method(destroyRunObject, "(JZ)V"),
@@ -889,11 +884,12 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	LOGV("Registering natives for %s...", PROJECT_NAME);
 	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
+		threadEnv = mainThreadJNIEnv;
 		std::string excStr = GetJavaExceptionStr();
-		LOGF("Failed to register natives for class %s; error %s.", PROJECT_NAME, excStr.c_str());
+		LOGF("Failed to register natives for ext %s; error %s.", PROJECT_NAME, excStr.c_str());
 	}
 	else
-		LOGV("Registered natives for class %s successfully.", PROJECT_NAME);
+		LOGV("Registered natives for ext %s successfully.", PROJECT_NAME);
 	mainThreadJNIEnv->DeleteLocalRef(clazz);
 	runFuncs.ext = NULL;
 

@@ -897,38 +897,25 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	ext->rdPtr->rHo.CurrentParam = saveCurParam;
 	__asm
 	{
-		pushad				  ; Start new register set (do not interfere with already existing registers) \
-
-		mov ecx, ParameterCount ; Store ParameterCount in ecx
-
-		cmp ecx, 0			  ; If no parameters, call function immediately
-		je CallNow
-
-		mov edx, Parameters	 ; Otherwise store pointer to int * in Parameters
-
+		pushad					; Start new register set (do not interfere with already existing registers)
+		mov ecx, ParameterCount	; Store ParameterCount in ecx
+		cmp ecx, 0				; If no parameters, call function immediately
+			je CallNow
+		mov edx, Parameters		; Otherwise store pointer to int * in Parameters
 		mov ebx, ecx			; Copy ecx, or ParameterCount, to ebx
-		shl ebx, 2			  ; Multiply parameter count by 2^2 (size of 32-bit variable)
-
+		shl ebx, 2				; Multiply parameter count by 2^2 (size of 32-bit variable)
 		add edx, ebx			; add (ParameterCount * 4) to Parameters, making edx point to Parameters[param count]
-		sub edx, 4			  ; subtract 4 from edx, making it 0-based (ending array index)
-
+		sub edx, 4				; subtract 4 from edx, making it 0-based (ending array index)
 		PushLoop:
-
-			push [edx]		  ; Push value pointed to by Parameters[edx]
-			sub edx, 4		  ; Decrement next loop`s Parameter index:	for (><; ><; edx -= 4)
-
-			dec ecx			 ; Decrement loop index:					 for (><; ><; ecx--)
-
-			cmp ecx, 0		  ; If ecx == 0, end loop:					for (><; ecx == 0; ><)
-			jne PushLoop		; Optimisation: "cmp ecx, 0 / jne" can be replaced with "jcxz"
-
+			push [edx]			; Push value pointed to by Parameters[edx]
+			sub edx, 4			; Decrement next loop`s Parameter index:	for (><; ><; edx -= 4)
+			dec ecx				; Decrement loop index:						for (><; ><; ecx--)
+			cmp ecx, 0			; If ecx == 0, end loop:					for (><; ecx == 0; ><)
+				jne PushLoop	; Optimisation: "cmp ecx, 0 / jne" can be replaced with "jcxz"
 		CallNow:
-
 		mov ecx, ext			; Move Extension to ecx
 		call Function			; Call the function inside Extension
-
-		mov Result, eax		 ; Function`s return is stored in eax; copy it to Result
-
+		mov Result, eax			; Function`s return is stored in eax; copy it to Result
 		popad					; End new register set (restore registers that existed before popad)
 	}
 
@@ -944,36 +931,38 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	// build stack, fill registers and call functions
 	// ! volatile ... otherwise compiler "optimize out" our ASM code
 	__asm__ volatile (
-		"mov r4, %[ARGV]\n\t"	// remember pointers (SP will be changed)
-		"ldr r5, %[ACT]\n\t"
-		"ldr r0, %[CNT]\n\t"	// arg_stack_count  => R0
-		"lsl r0, r0, #2\n\t"	// R0 * 4			=> R0
-		"mov r6, r0\n\t"		// R4				=> R6
-		"mov r1, r0\n"		  // arg_stack_count  => R1
-		"loop: \n\t"
-		"cmp r1, #0\n\t"
-		"beq end\n\t"			// R1 == 0	  => jump to end
-		"sub r1, r1, #4\n\t"	// R1--
-		"mov r3, r4\n\t"		// argv_stack	=> R3
-		"add r3, r3, #16\n\t"
-		"ldr r2, [r3, r1]\n\t"  // argv[r1]
-		"push {r2}\n\t"		 // argv[r1] => push to stack
-		"b loop\n"			  //		  => repeat
-		"end:\n\t"
-		"ldr r0, [r4]\n\t"	  // 1st argument
-		"ldr r1, [r4, #4]\n\t"  // 2nd argument
-		"ldr r2, [r4, #8]\n\t"  // 3rd argument
-		"ldr r3, [r4, #12]\n\t" // 4th argument
-		"blx r5\n\t"			// call function
-		"add sp, sp, r6\n\t"	// fix stack position
-		"mov %[ER], r0\n\t"	 // store result
+		"mov r4, %[ARGV]\r\n\t"		// remember pointers (SP will be changed)
+		"ldr r5, %[ACT]\r\n\t"
+		"ldr r0, %[CNT]\r\n\t"		// arg_stack_count	=> R0
+		"lsl r0, r0, #2\r\n\t"		// R0 * 4			=> R0
+		"mov r6, r0\r\n\t"			// R4				=> R6
+		"mov r1, r0\r\n"			// arg_stack_count	=> R1
+		"Lloop:\r\n\t"
+			"cmp r1, #0\r\n\t"
+				"beq Lend\r\n\t"	// R1 == 0		=> jump to end
+			"sub r1, r1, #4\n\t"	// R1--
+			"mov r3, r4\n\t"		// argv_stack	=> R3
+			"add r3, r3, #16\n\t"
+			"ldr r2, [r3, r1]\n\t"	// argv[r1]
+			"push {r2}\n\t"			// argv[r1] => push to stack
+			"b Lloop\n"				//			=> repeat
+		"Lend:\n\t"
+			"ldr r0, [r4]\n\t"		// 1st argument
+			"ldr r1, [r4, #4]\n\t"	// 2nd argument
+			"ldr r2, [r4, #8]\n\t"	// 3rd argument
+			"ldr r3, [r4, #12]\n\t"	// 4th argument
+			"blx r5\n\t"			// call function
+			"add sp, sp, r6\n\t"	// fix stack position
+			"mov %[ER], r0\n\t"		// store result
+		// Output
 		: [ER] "=r"(Result)
+		// Input
 		: [ARGV] "r" (Parameters),
 		[ACT] "m"(Function),
 		[CNT] "m" (argStackCount)
-		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
-	// blx
-
+		// Clobber - registers probably changed by this ASM block, but not used for I/O
+		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "memory", "cc"
+	);
 #else
 #ifndef __INTELLISENSE__
 	if (isCond)
@@ -1214,7 +1203,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 // For some reason, actions are expected to return a short.
 // On Android/iOS, we make the Fusion wrapper, so we can return void instead.
-// To handle that, the "actreturn"  hack is used.
+// To handle that, the "actreturn"	hack is used.
 
 #ifdef _WIN32
 short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
@@ -1563,7 +1552,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		add edx, ebx
 		sub edx, 4
 		PushLoop:
-			push[edx]
+			push [edx]
 			sub edx, 4
 			dec ecx
 			cmp ecx, 0
@@ -1886,7 +1875,7 @@ wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int
 	size_t sSize = strlen(utf8String);
 	if (sSize > maxLength)
 	{
-		LOGE("Failed to convert  text... %d", 0);
+		LOGE("Failed to convert	text... %d", 0);
 		wcscpy(tstr, L"<Failed to convert text>");
 	}
 	else
