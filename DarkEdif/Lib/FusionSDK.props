@@ -707,7 +707,7 @@
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
 
 		<!-- See comments above. -->
-		<_TargetiPhoneOSDeployTarget>10.0</_TargetiPhoneOSDeployTarget>
+		<_TargetiPhoneOSDeployTarget Condition="$(ProjectName.StartsWith('Bluewing'))">10.0</_TargetiPhoneOSDeployTarget>
 	</PropertyGroup>
 
 	<ItemDefinitionGroup Condition="'$(_TargetPlat)'=='iOS'">
