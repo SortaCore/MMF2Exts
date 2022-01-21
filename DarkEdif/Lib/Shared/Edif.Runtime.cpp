@@ -287,6 +287,7 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
 	if (len < sizeof(stackRet))
 	{
 		strcpy(stackRet, String);
+		LOGV("Returning text on stack: %p moved to stack %p \"%s\".\n", String, stackRet, stackRet);
 		return stackRet;
 	}
 	char * temp = (char *)realloc(lastHeapRet, len);
@@ -294,11 +295,12 @@ TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
 	{
 		free(lastHeapRet);
 		lastHeapRet = NULL;
-		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!", len, String);
+		LOGE("Ran out of memory allocating %zu bytes for string returning \"%.20s...\"!\n", len, String);
 		strcpy(stackRet, "Out of memory! See logcat.");
 		return stackRet;
 	}
-	strcpy(lastHeapRet, String);
+	LOGV("Returning text on heap: %p moved to heap %p \"%s\".\n", String, temp, temp);
+	strcpy(temp, String);
 	return (lastHeapRet = temp);
 }
 

@@ -2365,7 +2365,7 @@ void DarkEdif::Log(int logLevel, const TCHAR * msgFormat, ...)
 	va_end(v);
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(__APPLE__)
 
 #if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
 void OutputDebugStringA(const char * debugString)
@@ -2374,12 +2374,14 @@ void OutputDebugStringA(const char * debugString)
 	// We can't get the user to remove their newlines, as Windows doesn't automatically add them in OutputDebugStringA(),
 	// but __android_log_print includes automatic newlines, so strip them.
 	std::string debugStringSafe(debugString);
+#ifdef __ANDROID__
 	if (debugStringSafe.back() == '\n')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 	if (debugStringSafe.back() == '\r')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 	if (debugStringSafe.back() == '.')
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
+#endif
 
 	LOGI("OutputDebugStringA: %s.", debugStringSafe.c_str());
 }
