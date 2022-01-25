@@ -80,10 +80,11 @@ public class CRunBluewing_Server extends CRunExtension
 		// No need to request Internet or AccessNetworkState perms at runtime:
 		// https://developer.android.com/training/basics/network-ops/connecting#:~:text=%20both%20the%20internet%20and%20access_network_state%20
 		
-		// Java doesn't prepend eHeader to EDITDATA, so we'll reconstruct it ourselves.
-		int eHeaderSize = 20; // 32-bit pointers
+		// CRunNativeExtension's createRunObject() does not expect "file" to be non-null all the time,
+		// so this function doesn't either.
 		
-		// CRunNativeExtension's createRunObject() does not expect file to be non-null all the time
+		// Also, Fusion's Android runtime doesn't prepend eHeader to EDITDATA, so we'll reconstruct it ourselves.
+		int eHeaderSize = 20; // 32-bit pointers
 		int dataSize = eHeaderSize + (file != null ? file.data.length : 0);
 		ByteBuffer edPtr = ByteBuffer.allocateDirect(dataSize);
 		
@@ -97,11 +98,11 @@ public class CRunBluewing_Server extends CRunExtension
 		edPtr.putInt(0);			  // dummy - extID read by CObjectCommon file reader, but not passed
 		edPtr.putInt(ho.privateData); // extPrivateData stored in CRunExtension, 
 		
-		// Add actual ext data
+		// Add EDITDATA, if available
 		if (file != null)
 			edPtr.put(file.data);
 		
-		edPtr.position(0); // Reset for C++ reader
+		edPtr.position(0); // Reset to start for C++ reader
 		cptr = darkedif_createRunObject(edPtr, cob, version);
 		if (cptr == 0)
 			android.util.Log.e("Bluewing_Server", "Bluewing Server's createRunObject returned NULL!");
@@ -149,28 +150,28 @@ public class CRunBluewing_Server extends CRunExtension
 	public boolean condition(int num, CCndExtension cnd)
 	{
 		// Currently, as of SDK v11, you will need to program comparison conditions manually,
-		// by checking num and the return of darkedif_condition, which is either a 32-bit integer,
-		// or a Java UTF-8 string pointer.
-		// For now, this is sufficient to check regular bool conditions.
-		return darkedif_condition(cptr, num, cnd) != 0;
+		// by checking num and the return of Bluewing_Server_conditionJump, which is either a 32-bit integer,
+		// 32-bit float, or a UTF-8 string pointer. For now, this is sufficient to check non-bool.
+		// Use cnd.compareValues() or cnd.compareTime() as appropriate.
+		return darkedif_conditionJump(cptr, num, cnd) != 0;
 	}
-	public native long darkedif_condition(long cptr, int num, CCndExtension cnd);
+	public native long darkedif_conditionJump(long cptr, int num, CCndExtension cnd);
 	
 	@Override
 	public void action(int num, CActExtension act)
 	{
-		darkedif_action(cptr, num, act);
+		darkedif_actionJump(cptr, num, act);
 	}
-	public native void darkedif_action(long cptr, int num, CActExtension act);
+	public native void darkedif_actionJump(long cptr, int num, CActExtension act);
 	
 	@Override
 	public CValue expression (int num)
 	{
 		CNativeExpInstance exp = new CNativeExpInstance(this.ho);
-		darkedif_expression(cptr, num, exp);
+		darkedif_expressionJump(cptr, num, exp);
 		return exp.result;
 	}
-	private native void darkedif_expression(long cptr, int num, CNativeExpInstance exp);
+	private native void darkedif_expressionJump(long cptr, int num, CNativeExpInstance exp);
 	
 	// JavaVM shutdown handler. Fusion doesn't appear to have a way of notifying native exts if app is closing down.
 	public static native void darkedif_EndApp();
