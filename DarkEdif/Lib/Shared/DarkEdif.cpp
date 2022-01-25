@@ -2349,7 +2349,7 @@ int DarkEdif::MsgBox::Custom(const int flags, const TCHAR * titlePrefix, PrintFH
 	va_end(v);
 	return ret;
 }
-void DarkEdif::Log(int logLevel, const TCHAR * msgFormat, ...)
+void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 {
 	va_list v;
 	va_start(v, msgFormat);

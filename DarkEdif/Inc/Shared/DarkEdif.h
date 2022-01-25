@@ -251,21 +251,6 @@ namespace DarkEdif {
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
 
-	// allows the compiler to check printf format matches parameters
-#ifdef _MSC_VER
-#define PrintFHintInside _In_z_ _Printf_format_string_
-#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#elif defined(__clang__) && !defined (__INTELLISENSE__)
-#define PrintFHintInside /* no op */
-// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
-// Note class member functions should include the "this" pointer in the indexing.
-// You can use 0 for dotsParamIndex for vprintf-like format instead.
-#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
-#else
-#define PrintFHintInside /* no op */
-#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#endif
-
 	// =====
 	// This region does message boxes
 	// =====
@@ -346,7 +331,7 @@ namespace DarkEdif {
 		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
 
-	void Log(int logLevel, const TCHAR * msgFormat, ...);
+	void Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 }
 
 
@@ -517,18 +502,18 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 	// end of loop; do nothing
 }
 
-template<int acParamIndexPlusOne, class Ret, class Struct, class... Args>
-typename std::enable_if<(acParamIndexPlusOne > 0), void>::type
+template<int expParamIndexPlusOne, class Ret, class Struct, class... Args>
+typename std::enable_if<(expParamIndexPlusOne > 0), void>::type
 forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(Struct::*Function)(Args...) const) {
-	constexpr int acParamIndex = acParamIndexPlusOne - 1U;
+	constexpr int expParamIndex = expParamIndexPlusOne - 1U;
 	do
 	{
 		bool isFloat = false;
-		ExpParams p = ReadExpressionParameterType(json["Parameters"][acParamIndex][0], isFloat);
+		ExpParams p = ReadExpressionParameterType(json["Parameters"][expParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
-		using cppType = typename std::tuple_element<acParamIndex, std::tuple<Args...>>::type;
+		using cppType = typename std::tuple_element<expParamIndex, std::tuple<Args...>>::type;
 		const std::string cppTypeAsString(typestr(cppType));
 		std::string expCppType = "?";
 
@@ -550,7 +535,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		}
 		else if (p == ExpParams::Integer)
 		{
-			if (!_stricmp(json["Parameters"][acParamIndex][0], "Unsigned Integer"))
+			if (!_stricmp(json["Parameters"][expParamIndex][0], "Unsigned Integer"))
 			{
 				if (std::is_same<cppType, unsigned int>())
 					break;
@@ -566,16 +551,16 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		else // ?
 			break;
 
-		str << "Has JSON parameter "sv << (const char *)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char *)json["Parameters"][acParamIndex][0]
-			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
+		str << "Has JSON parameter \""sv << (const char *)json["Parameters"][expParamIndex][1] << "\", JSON type \""sv << (const char *)json["Parameters"][expParamIndex][0]
+			<< "\"; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
 	} while (false);
 
 	// Recurse into next iteration
-	forLoopE<acParamIndex>(ID, json, str, Function);
+	forLoopE<expParamIndex>(ID, json, str, Function);
 }
 
-template<int acParamIndexPlusOne, class Ret, class Struct, class... Args>
-typename std::enable_if<(acParamIndexPlusOne == 0), void>::type
+template<int expParamIndexPlusOne, class Ret, class Struct, class... Args>
+typename std::enable_if<(expParamIndexPlusOne == 0), void>::type
 forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(Struct::*Function)(Args...) const) {
 	// end of loop; do nothing
 }
@@ -820,6 +805,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 				str2 << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << ":\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
+				break;
 			}
 		}
 	}

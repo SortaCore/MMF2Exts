@@ -52,6 +52,20 @@ using namespace std::string_view_literals;
 		return lhs; \
 	}
 
+// allows the compiler to check printf format matches parameters
+#ifdef _MSC_VER
+	#define PrintFHintInside _In_z_ _Printf_format_string_
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
+#elif defined(__clang__) && !defined (__INTELLISENSE__)
+	#define PrintFHintInside /* no op */
+	// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
+	// Note class member functions should include the "this" pointer in the indexing.
+	// You can use 0 for dotsParamIndex for vprintf-like format instead.
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+#else
+	#define PrintFHintInside /* no op */
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
+#endif
 // Generic class for reading actions, conditions and expression parameters
 struct ACEParamReader {
 	virtual float GetFloat(int i) = 0;
@@ -112,7 +126,7 @@ enum_class_is_a_bitmask(OEPREFS);
 #define DARKEDIF_LOG_ERROR 6
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
-	void Log(int logLevel, const TCHAR* msgFormat, ...);
+	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL

@@ -7,6 +7,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 {
 #pragma DllExportHint
 	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"]["Author"], MAX_PATH);
+	// Could make this auto-replace the year, but only the ext author should be doing that.
 	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"]["Copyright"], MAX_PATH);
 	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"]["URL"], MAX_PATH);
 

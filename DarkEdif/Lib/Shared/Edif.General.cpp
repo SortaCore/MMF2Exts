@@ -615,7 +615,7 @@ void LOGF(const char * x, ...)
 	va_end(va);
 	__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
-		threadEnv->FatalError("Killed by extension " PROJECT_NAME ".");
+		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_NAME_UNDERSCORES ".");
 	else
 	{
 		__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
