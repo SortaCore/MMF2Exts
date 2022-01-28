@@ -1749,6 +1749,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		// else roll with Uni
 	}
 	else // ANSI runtime will only use ANSI
+	else // ANSI runtime will only use ANSI MFX
 		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
 
 	// Stores UC tags in resources or registry.
