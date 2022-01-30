@@ -112,6 +112,8 @@ void lw_timer_start (lw_timer ctx, long interval)
 	lw_timer_stop (ctx);
 
 	ctx->started = lw_true;
+	ctx->interval = interval;
+
 	lw_pump_add_user (ctx->pump);
 
 	#ifdef USE_KQUEUE
@@ -143,11 +145,8 @@ void lw_timer_start (lw_timer ctx, long interval)
 
 			struct itimerspec spec;
 
-			spec.it_interval.tv_sec  = interval / 1000;
-			spec.it_interval.tv_nsec = (interval % 1000) * 1000000;
-
-			spec.it_value.tv_sec = 0;
-			spec.it_value.tv_nsec = 1;
+			spec.it_value.tv_sec = spec.it_interval.tv_sec  = interval / 1000;
+			spec.it_value.tv_nsec = spec.it_interval.tv_nsec = (interval % 1000) * 1000000;
 
 			timerfd_settime (ctx->fd, 0, &spec, 0);
 

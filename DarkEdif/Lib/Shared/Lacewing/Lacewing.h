@@ -1534,6 +1534,9 @@ lw_import void flashpolicy_delete (flashpolicy);
 //
 // lw_client is_connecting is now set to false properly if getaddrinfo fails.
 
+// Make sure you also add UDP keep-alive. Routers close connection otherwise.
+// Make sure you also fix the timer issue in unix.
+
 struct readlock;
 struct writelock;
 struct readwritelock

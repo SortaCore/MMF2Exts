@@ -34,6 +34,9 @@
 #define lw_client_flag_connecting	1
 #define lw_client_flag_connected	2
 
+// 3 second timeout
+static const int lw_client_timeout_ms = 3 * 1000;
+
 struct _lw_client
 {
 	struct _lw_fdstream fdstream;
@@ -49,10 +52,33 @@ struct _lw_client
 
 	int socket;
 	//lw_bool connecting; // part of flags, see lw_client_flag_connecting
+	lw_timer connect_timer;
 
 	lw_pump pump;
 	lw_pump_watch watch;
 };
+
+void lw_client_connect_timeout(lw_timer timer)
+{
+	lw_timer_stop (timer);
+
+	lw_client client = (lw_client)lw_timer_tag(timer);
+	if (lw_client_connected(client))
+		return;
+
+	if (client->on_error)
+	{
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Connection timeout");
+		lw_error_addf(error, "Error connecting");
+		client->on_error(client, error);
+
+		lw_error_delete(error);
+	}
+
+	lwp_close_socket(client->socket);
+	client->flags &= ~lw_client_flag_connecting;
+}
 
 lw_client lw_client_new (lw_pump pump)
 {
@@ -64,6 +90,10 @@ lw_client lw_client_new (lw_pump pump)
 
 	lwp_fdstream_init (&ctx->fdstream, pump);
 
+	ctx->connect_timer = lw_timer_new(pump);
+	lw_timer_set_tag (ctx->connect_timer, ctx);
+	lw_timer_on_tick (ctx->connect_timer, lw_client_connect_timeout);
+
 	return ctx;
 }
 
@@ -71,6 +101,9 @@ void lw_client_delete (lw_client ctx)
 {
 	if (!ctx)
 		return;
+
+	lw_timer_delete (ctx->connect_timer);
+	ctx->connect_timer = NULL;
 
 	lw_stream_close ((lw_stream) ctx, lw_true);
 
@@ -96,6 +129,8 @@ static void first_time_write_ready (void * tag)
 	lw_client ctx = (lw_client)tag;
 
 	assert (ctx->flags & lw_client_flag_connecting);
+
+	lw_timer_stop (ctx->connect_timer);
 
 	int errorNum;
 
@@ -253,7 +288,11 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	{
 		lw_trace("connect() done, error %d", errno);
 		if (errno == EINPROGRESS)
+		{
+			// Start the connect timeout timer
+			lw_timer_start(ctx->connect_timer, lw_client_timeout_ms);
 			goto good; // No problem
+		}
 
 		ctx->flags &= ~ lw_client_flag_connecting;
 
