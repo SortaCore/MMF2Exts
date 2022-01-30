@@ -1200,8 +1200,12 @@ static std::tstring GetModulePath(HMODULE hModule)
 		std::abort();
 
 	// Successfully looked up the path!
-	if (numCharsWrittenExcludingNull != MAX_PATH)
+	if (numCharsWrittenExcludingNull != MAX_PATH &&
+		// Convert the path to long path, check it's not too long or error'd
+		(numCharsWrittenExcludingNull = GetLongPathName(path.data(), path.data(), path.size())) < MAX_PATH && numCharsWrittenExcludingNull > 0)
+	{
 		return path.substr(0, numCharsWrittenExcludingNull);
+	}
 
 	// else path is too long.
 
@@ -1741,14 +1745,15 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		{
 			drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
 
-			// Couldn't find either; roll back to Uni
-			if (DarkEdif::FileExists(drMFXPath))
+			// Couldn't find either; roll back to Uni for error messages
+			if (!DarkEdif::FileExists(drMFXPath))
 				drMFXPath = uniPath;
+
 			// else roll with ANSI
 		}
-		// else roll with Uni
+		else // else roll with Uni
+			drMFXPath = uniPath;
 	}
-	else // ANSI runtime will only use ANSI
 	else // ANSI runtime will only use ANSI MFX
 		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
 
@@ -1773,9 +1778,11 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resKey = L"Couldn't load MFX; not found"sv;
 			resFileExists = false;
 		}
+		else if (GetLastError() == ERROR_ACCESS_DENIED)
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running Fusion as admin, or re-installing the extension."));
 		else // Some other error loading; we'll consider it fatal.
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX."), GetLastError());
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX.\n%s"), GetLastError(), drMFXPath.c_str());
 			std::abort();
 		}
 	}
