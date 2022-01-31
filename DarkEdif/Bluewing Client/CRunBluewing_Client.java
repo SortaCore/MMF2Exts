@@ -23,6 +23,7 @@ import Expressions.CExpExtension;
 import Actions.CActExtension;
 import Expressions.CValue;
 import Expressions.CNativeExpInstance;
+import RunLoop.CRun;
 
 public class CRunBluewing_Client extends CRunExtension
 {
@@ -175,4 +176,12 @@ public class CRunBluewing_Client extends CRunExtension
 	
 	// JavaVM shutdown handler. Fusion doesn't appear to have a way of notifying native exts if app is closing down.
 	public static native void darkedif_EndApp();
+	
+	
+	// Methods accessed from C++ side of DarkEdif via JNI:
+	
+	public int darkedif_jni_getCurrentFusionEventNum ()
+	{
+		return this.rh.rhEvtProg.rhEventGroup.evgLine;
+	}
 }

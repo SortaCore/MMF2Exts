@@ -2,6 +2,7 @@
 #include <atomic>
 #include "DarkEdif.h"
 #include <math.h>
+#include "Extension.h"
 
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
@@ -575,19 +576,37 @@ std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
 /// <summary> If error, -1 is returned. </summary>
 int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
+	// Reading Fusion's internals requires the main runtime to not be editing them
+	if (MainThreadID != std::this_thread::get_id()) {
+		LOGE("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n");
+		return -1;
+	}
+
 #ifdef _WIN32
 	// Can we read current event?
 	if (!ext->rhPtr->EventGroup)
 		return -1;
 
 	int eventNum = GetEventNumber(ext->rhPtr->EventGroup);
-	if (eventNum == 0)
-		return -1;
-	return eventNum;
-#else // Can't read event yet
-
-
+	if (eventNum != 0)
+		return eventNum;
 	return -1;
+#elif defined(__ANDROID__)
+	// Call `int darkedif_jni_getCurrentFusionEventNum()` Java function
+	static jmethodID getEventIDMethod;
+	if (getEventIDMethod == nullptr)
+	{
+		jclass javaExtClass = threadEnv->GetObjectClass(ext->javaExtPtr);
+		getEventIDMethod = threadEnv->GetMethodID(javaExtClass, "darkedif_jni_getCurrentFusionEventNum", "()I");
+
+		// This is a Java wrapper implementation failure and so its absence should be considered fatal
+		if (getEventIDMethod == nullptr)
+			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
+	}
+
+	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
+#else // iOS
+	return DarkEdif_getCurrentFusionEventNum(ext->objCExtPtr);
 #endif
 }
 
