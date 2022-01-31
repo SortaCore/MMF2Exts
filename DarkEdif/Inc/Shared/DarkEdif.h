@@ -839,3 +839,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...))
 }
 
 #endif // _DEBUG
+
+#ifdef __APPLE__
+extern "C" int DarkEdif_getCurrentFusionEventNum(void* objCExt);
+#endif
