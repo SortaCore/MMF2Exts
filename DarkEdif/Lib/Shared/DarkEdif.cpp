@@ -578,7 +578,7 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 {
 	// Reading Fusion's internals requires the main runtime to not be editing them
 	if (MainThreadID != std::this_thread::get_id()) {
-		LOGE("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n");
+		LOGE(_T("Read GetCurrentFusionEventNum from non-main thread. Returning -1.\n"));
 		return -1;
 	}
 

@@ -116,7 +116,7 @@ Regretfully, Dependency Walker only works on Windows 8 and lower; you may prefer
 
 
 ### CRT bug workround to do with static initialization
-By default, XP-targeted Fusion SDK projects will use `/ZcthreadSafeInit-`.  
+By default, XP-targeted Fusion SDK projects will use `/Zc:threadSafeInit-`.  
 This means that static thread-local variables will not be initialized in a thread-safe way; but this will only matter
 if these static variables are both function-level in scope, use constructors, and need to be thread-safe.
 
