@@ -811,7 +811,7 @@ Edif::SDK::~SDK()
 }
 
 #if defined(__arm__) && defined(__ANDROID__)
-const static size_t paramInc = 1; // In ARM, the first parameter must be Extension *
+const static size_t paramInc = 0; // In ARM, the first parameter must be Extension *
 #else
 const static size_t paramInc = 0;
 #endif
@@ -918,51 +918,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		mov Result, eax			; Function`s return is stored in eax; copy it to Result
 		popad					; End new register set (restore registers that existed before popad)
 	}
-
-#elif defined(__arm__) && defined(__ANDROID__)
-	// Hat tip to https://stackoverflow.com/questions/50021839/assembly-x86-convert-to-arm-function-call-with-varying-number-of-parameters-to-a#50022446
-
-	argStackCount = ParameterCount + paramInc;
-	// if > 4 params, they're stored on stack
-	if (argStackCount > 4) {
-		argStackCount = argStackCount - 4;
-	}
-
-	// build stack, fill registers and call functions
-	// ! volatile ... otherwise compiler "optimize out" our ASM code
-	__asm__ volatile (
-		"mov r4, %[ARGV]\r\n\t"		// remember pointers (SP will be changed)
-		"ldr r5, %[ACT]\r\n\t"
-		"ldr r0, %[CNT]\r\n\t"		// arg_stack_count	=> R0
-		"lsl r0, r0, #2\r\n\t"		// R0 * 4			=> R0
-		"mov r6, r0\r\n\t"			// R4				=> R6
-		"mov r1, r0\r\n"			// arg_stack_count	=> R1
-		"Lloop:\r\n\t"
-			"cmp r1, #0\r\n\t"
-				"beq Lend\r\n\t"	// R1 == 0		=> jump to end
-			"sub r1, r1, #4\n\t"	// R1--
-			"mov r3, r4\n\t"		// argv_stack	=> R3
-			"add r3, r3, #16\n\t"
-			"ldr r2, [r3, r1]\n\t"	// argv[r1]
-			"push {r2}\n\t"			// argv[r1] => push to stack
-			"b Lloop\n"				//			=> repeat
-		"Lend:\n\t"
-			"ldr r0, [r4]\n\t"		// 1st argument
-			"ldr r1, [r4, #4]\n\t"	// 2nd argument
-			"ldr r2, [r4, #8]\n\t"	// 3rd argument
-			"ldr r3, [r4, #12]\n\t"	// 4th argument
-			"blx r5\n\t"			// call function
-			"add sp, sp, r6\n\t"	// fix stack position
-			"mov %[ER], r0\n\t"		// store result
-		// Output
-		: [ER] "=r"(Result)
-		// Input
-		: [ARGV] "r" (Parameters),
-		[ACT] "m"(Function),
-		[CNT] "m" (argStackCount)
-		// Clobber - registers probably changed by this ASM block, but not used for I/O
-		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "memory", "cc"
-	);
+	// if you add back old ARM ASM, remember to increment paramInc
 #else
 #ifndef __INTELLISENSE__
 	if (isCond)
@@ -1578,84 +1534,9 @@ endFunc:
 	params.SetReturnType(ExpressionRet);
 	return Result;
 
+	// if you add back old ARM ASM, remember to increment paramInc
 #else // CLANG
 
-
-// Nicely ported
-#if defined(__arm__) && defined(__ANDROID__)
-
-	// In ARM, the floats are returned in the same ASM register as int/pointers when using soft float ABI.
-	// While Android OS may use a different ABI, that's not relevant, as this ASM calls functions within our own extension.
-	// Hat tip to https://stackoverflow.com/questions/50021839/assembly-x86-convert-to-arm-function-call-with-varying-number-of-parameters-to-a#50022446
-
-	// build stack, fill registers and call functions
-	// ! volatile ... otherwise compiler "optimize out" our ASM code
-	__asm__ volatile (
-		"mov r4, %[ARGV]\n\t"	// remember pointers (SP will be changed)
-		"ldr r5, %[ACT]\n\t"
-		"ldr r0, %[CNT]\n\t"	// argStackCount  => R0
-		"lsl r0, r0, #2\n\t"	// R0 * 4			=> R0
-		"mov r6, r0\n\t"		// R4				=> R6
-		"mov r1, r0\n"		  // argStackCount  => R1
-		"loop2: \n\t"
-		"cmp r1, #0\n\t"
-		"beq end2\n\t"			// R1 == 0	  => jump to end
-		"sub r1, r1, #4\n\t"	// R1--
-		"mov r3, r4\n\t"		// argv_stack	=> R3
-		"add r3, r3, #16\n\t"
-		"ldr r2, [r3, r1]\n\t"  // argv[r1]
-		"push {r2}\n\t"		 // argv[r1] => push to stack
-		"b loop2\n"			  //		  => repeat
-		"end2:\n\t"
-		"ldr r0, [r4]\n\t"	  // 1st argument
-		"ldr r1, [r4, #4]\n\t"  // 2nd argument
-		"ldr r2, [r4, #8]\n\t"  // 3rd argument
-		"ldr r3, [r4, #12]\n\t" // 4th argument
-		"blx r5\n\t"			// call function
-		"add sp, sp, r6\n\t"	// fix stack position
-		"mov %[ER], r0\n\t"	 // store result
-		: [ER] "=r"(Result)
-		: [ARGV] "r" (Parameters),
-		[ACT] "m"(Function),
-		[CNT] "m" (argStackCount)
-		: "r0", "r1", "r2", "r3", "r4", "r5", "r6");
-	
-#elif defined(__i386__)// && defined(__APPLE__)
-	{
-		// We have all the parameters and values we need, run the function
-		__asm
-		{
-			pushad					; Start new register set (do not interfere with already existing registers)
-			mov ecx, ParameterCount	; Store numParameters in ecx
-			cmp ecx, 0				; If no parameters, call function immediately
-				je CallNow
-			mov edx, Parameters		; Otherwise store pointer to int * in Parameters
-			mov ebx, ecx			; Copy ecx, or ParameterCount, to ebx
-			shl ebx, 2				; Multiply parameter count by 2^2 (size of 32-bit variable)
-			add edx, ebx			; add (ParameterCount * 4) to Parameters, making edx point to Parameters[param count]
-			sub edx, 4				; subtract 4 from edx, making it 0-based (ending array index)
-			PushLoop:
-				push [edx]			; Push value pointed to by Parameters[edx]
-				sub edx, 4			; Decrement next loop`s Parameter index:	for (><; ><; edx -= 4)
-				dec ecx				; Decrement loop index:						for (><; ><; ecx--)
-				cmp ecx, 0			; If ecx == 0, end loop:					for (><; ecx == 0; ><)
-					jne PushLoop	; Optimisation: "cmp ecx, 0 / jne" can be replaced with "jcxz"
-			CallNow:
-				mov ecx, ext			; Move Module to ecx
-				call Function			; Call the function inside Module
-				mov ecx, ExpressionRet2
-				cmp ecx, 2				; Return type is not float
-					jne NotFloat
-				fstp Result
-				jmp End
-			NotFloat:
-				mov Result, eax			; Function`s return is stored in eax; copy it to returnValue
-			End:
-				popad					; End new register set (restore registers that existed before popad)
-		};
-	};
-
-#else
 	switch (ID)
 	{
 		#ifndef __INTELLISENSE__
@@ -1667,7 +1548,6 @@ endFunc:
 			DarkEdif::MsgBox::Error(_T("Expression error"), _T("Error calling expression: expression ID %i not found."), ID);
 			goto endFunc;
 	}
-#endif
 	(void)0;
 	endFunc:
 
