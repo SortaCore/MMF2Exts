@@ -50,7 +50,7 @@ lacewing::readlock::~readlock()
 		this->lock.metaLock = false;
 		if (!foundWriter)
 		{
-			MessageBoxA(NULL, "Writer not found.", "Closing readlock failure.", MB_ICONERROR);
+			assert(false && "Closing readlock failure: Writer not found.");
 		}
 	}
 #endif

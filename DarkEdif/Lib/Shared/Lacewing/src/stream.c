@@ -38,7 +38,7 @@ void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 
 	lwp_enable_refcount_logging (ctx, "stream");
 
-	/* This means that the refcount can never become 0 until lw_stream_delete */
+	// This means that the refcount can never become 0 until lw_stream_delete
 	lwp_retain (ctx, "lwp_stream_init");
 
 	ctx->def = def;
@@ -100,19 +100,18 @@ void lw_stream_delete (lw_stream ctx)
 
 	lw_stream_close (ctx, lw_true);
 
-	/* Prevent any entry to lw_stream_close now */
+	// Prevent any entry to lw_stream_close now
 
 	ctx->flags |= lwp_stream_flag_closing;
 
 	list_clear (ctx->close_hooks);
 
-	/* If this stream is a root in the graph, remove it */
+	// If this stream is a root in the graph, remove it
 
 	list_remove (ctx->graph->roots, ctx);
 
-	/* If this stream is filtering any other streams, remove it from their
-	* filter list.
-	*/
+	/*	If this stream is filtering any other streams, remove it from their
+		filter list. */
 
 	while (list_length (ctx->filtering) > 0)
 	{
@@ -125,9 +124,8 @@ void lw_stream_delete (lw_stream ctx)
 		free (spec);
 	}
 
-	/* If this stream is being filtered upstream by any other streams, remove
-	* it from their filtering list.
-	*/
+	/*	If this stream is being filtered upstream by any other streams, remove
+		it from their filtering list. */
 
 	while (list_length (ctx->filters_upstream) > 0)
 	{
@@ -142,9 +140,8 @@ void lw_stream_delete (lw_stream ctx)
 		free (spec);
 	}
 
-	/* If this stream is being filtered downstream by any other streams, remove
-	* it from their filtering list.
-	*/
+	/*	If this stream is being filtered downstream by any other streams, remove
+		it from their filtering list. */
 
 	while (list_length (ctx->filters_downstream) > 0)
 	{
@@ -159,7 +156,7 @@ void lw_stream_delete (lw_stream ctx)
 		free (spec);
 	}
 
-	/* Is the graph empty now? */
+	// Is the graph empty now?
 
 	if (list_length (ctx->graph->roots) == 0)
 		lwp_streamgraph_delete (ctx->graph);
@@ -171,7 +168,7 @@ void lw_stream_delete (lw_stream ctx)
 	if (ctx->def->cleanup)
 		ctx->def->cleanup (ctx);
 
-	/* Clear queues */
+	// Clear queues
 
 	list_each (ctx->front_queue, queued)
 		lwp_heapbuffer_free (&queued.buffer);
@@ -188,13 +185,12 @@ void lw_stream_delete (lw_stream ctx)
 		ctx->watch = NULL;
 	}
 
-	/* This matches the lwp_retain in lw_stream_new, allowing the refcount to
-	* become 0 and the stream to be destroyed.
-	*/
+	/*	This matches the lwp_retain in lw_stream_new, allowing the refcount to
+		become 0 and the stream to be destroyed. */
 	lwp_release (ctx, "lwp_stream_init");
 }
 
-/* The public lw_stream_write just calls lwp_stream_write with flags = 0 */
+// The public lw_stream_write just calls lwp_stream_write with flags = 0
 
 void lw_stream_write (lw_stream ctx, const char * buffer, size_t size)
 {
@@ -223,12 +219,12 @@ void lw_stream_writev (lw_stream ctx, const char * format, va_list args)
 }
 
 
-/* Convenience queue functions for lwp_stream_write */
+// Convenience queue functions for lwp_stream_write
 
 static void queue_back (lw_stream ctx, const char * buffer, size_t size)
 {
 	if ( (!list_length (ctx->back_queue)) ||
-			list_back (ctx->back_queue).type != lwp_stream_queued_data)
+		 list_back (ctx->back_queue).type != lwp_stream_queued_data)
 	{
 		struct _lwp_stream_queued queued = {0};
 
@@ -243,7 +239,7 @@ static void queue_back (lw_stream ctx, const char * buffer, size_t size)
 static void queue_front (lw_stream ctx, const char * buffer, size_t size)
 {
 	if ( (!list_length (ctx->front_queue)) ||
-			list_back (ctx->front_queue).type != lwp_stream_queued_data)
+		 list_back (ctx->front_queue).type != lwp_stream_queued_data)
 	{
 		struct _lwp_stream_queued queued = {0};
 
@@ -266,17 +262,16 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 	lwp_trace ("Writing " lwp_fmt_size " bytes to %p with flags %d", size, ctx, flags);
 
 	if (size == 0)
-		return size; /* nothing to do */
+		return size; // nothing to do
 
 	if ((! (flags & lwp_stream_write_ignore_filters)) && ctx->head_upstream)
 	{
 		lwp_trace ("%p is filtered upstream by %p; writing " lwp_fmt_size " to that",
-						ctx, ctx->head_upstream, size);
+			ctx, ctx->head_upstream, size);
 
-		/* There's a filter to write the data to first.	At the end of the
-		* chain of filters, the data will be written back to us again
-		* with the write_ignore_filters flag.
-		*/
+		/*	There's a filter to write the data to first.
+			At the end of the chain of filters, the data will be written back
+			to us again with the write_ignore_filters flag. */
 
 		if (flags & lwp_stream_write_partial)
 		{
@@ -296,18 +291,17 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 			lwp_trace ("Busy: Adding to back queue");
 
 			if (flags & lwp_stream_write_partial)
-			return 0;
+				return 0;
 
-			/* Something is behind us, but this data doesn't come from it.
-			* Queue the data to write when we're not busy.
-			*/
+			// Something is behind us, but this data doesn't come from it.
+			// Queue the data to write when we're not busy.
 
 			queue_back (ctx, buffer, size);
 
 			return size;
 		}
 
-		/* Something is behind us and gave us this data. */
+		// Something is behind us and gave us this data.
 
 		if ((! (flags & lwp_stream_write_ignore_queue))
 				&& list_length (ctx->front_queue) > 0)
@@ -317,12 +311,12 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 				list_length (ctx->front_queue));
 
 			if (flags & lwp_stream_write_partial)
-			return 0;
+				return 0;
 
 			queue_front (ctx, buffer, size);
 
 			if (ctx->retry == lw_stream_retry_more_data)
-			lw_stream_retry (ctx, lw_stream_retry_now);
+				lw_stream_retry (ctx, lw_stream_retry_now);
 
 			return size;
 		}
@@ -349,8 +343,7 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 	}
 
 	if ( (! (flags & lwp_stream_write_ignore_queue)) &&
-			( (ctx->flags & lwp_stream_flag_queueing)
-			|| list_length (ctx->back_queue) > 0))
+			( (ctx->flags & lwp_stream_flag_queueing) || list_length (ctx->back_queue) > 0))
 	{
 		lwp_trace ("%p : Adding to back queue (queueing = %d, front queue length = %zu)",
 			ctx, (int) ( (ctx->flags & lwp_stream_flag_queueing) != 0),
@@ -367,9 +360,8 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 		return size;
 	}
 
-	/* If the stream def says the stream should be considered transparent, we
-	* can skip sinking the data and just act as if it's already passed though.
-	*/
+	/*	If the stream def says the stream should be considered transparent, we
+		can skip sinking the data and just act as if it's already passed though. */
 
 	if (ctx->def->is_transparent && ctx->def->is_transparent (ctx))
 	{
@@ -389,20 +381,20 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 		{
 			if (lwp_heapbuffer_length (&list_front (ctx->back_queue).buffer) == 0)
 			{
-			lwp_heapbuffer_add (&list_elem_front (ctx->back_queue)->buffer,
-								buffer + written, size - written);
+				lwp_heapbuffer_add (&list_elem_front (ctx->back_queue)->buffer,
+									buffer + written, size - written);
 			}
 			else
 			{
-			/* TODO : rewind offset where possible instead of creating a new Queued? */
+				// TODO: rewind offset where possible instead of creating a new Queued?
 
-			struct _lwp_stream_queued queued = {};
+				struct _lwp_stream_queued queued = {};
 
-			queued.type = lwp_stream_queued_data;
+				queued.type = lwp_stream_queued_data;
 
-			lwp_heapbuffer_add (&queued.buffer, buffer + written, size - written);
+				lwp_heapbuffer_add (&queued.buffer, buffer + written, size - written);
 
-			list_push_front (ctx->back_queue, queued);
+				list_push_front (ctx->back_queue, queued);
 			}
 		}
 		else
@@ -465,7 +457,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 		return;
 	}
 
-	/* Are we currently in a different graph from the source stream? */
+	// Are we currently in a different graph from the source stream?
 
 	if (ctx->graph != source->graph)
 		lwp_streamgraph_swallow (source->graph, ctx->graph);
@@ -482,7 +474,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 	list_push (source->next, link);
 	list_push (ctx->prev, link);
 
-	/* This stream is now linked to, so doesn't need to be a root */
+	// This stream is now linked to, so doesn't need to be a root
 
 	list_remove (ctx->graph->roots, ctx);
 
@@ -492,7 +484,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 
 void lw_stream_write_file (lw_stream ctx, const char * filename)
 {
-	/* This method may only be used when the stream is associated with a pump */
+	// This method may only be used when the stream is associated with a pump
 
 	assert (ctx->pump);
 
@@ -520,7 +512,7 @@ void lw_stream_add_filter_upstream (lw_stream ctx, lw_stream filter,
 	spec->link.delete_stream = lw_false;
 	spec->link.to = 0;
 
-	/* Upstream data passes through the most recently added filter first */
+	// Upstream data passes through the most recently added filter first
 
 	list_push (ctx->filters_upstream, spec);
 	list_push (filter->filtering, spec);
@@ -547,7 +539,7 @@ void lw_stream_add_filter_downstream (lw_stream ctx, lw_stream filter,
 	spec->link.delete_stream = lw_false;
 	spec->link.to = 0;
 
-	/* Downstream data passes through the most recently added filter last */
+	// Downstream data passes through the most recently added filter last
 
 	list_push (ctx->filters_downstream, spec);
 	list_push (filter->filtering, spec);
@@ -578,9 +570,8 @@ void lw_stream_data (lw_stream ctx, const char * buffer, size_t size)
 
 	lwp_retain (ctx, "lw_stream_data");
 
-	/* TODO: The data hook list would be faster to make a copy of if it was
-	* a real array.
-	*/
+	/*	TODO: The data hook list would be faster to make a copy of if it was
+		a real array. */
 
 	lwp_stream_data_hook data_hooks = (lwp_stream_data_hook) alloca
 		(sizeof (struct _lwp_stream_data_hook) * num_data_hooks);
@@ -604,9 +595,8 @@ void lw_stream_data (lw_stream ctx, const char * buffer, size_t size)
 		lwp_release (hook->stream, "stream_data hook");
 	}
 
-	/* Write the data to any streams next in the (expanded) graph, if this
-	* stream still exists.
-	*/
+	/*	Write the data to any streams next in the (expanded) graph, if this
+		stream still exists. */
 
 	if (! (ctx->flags & lwp_stream_flag_dead))
 	{
@@ -628,11 +618,9 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 	lwp_streamgraph_link * links = (lwp_streamgraph_link *) alloca
 		(sizeof (lwp_streamgraph_link) * num_links);
 
-	/* Copy the link dest pointers into our local array.
-	*
-	* TODO: This would be faster if the links were a real array in the first
-	* place.
-	*/
+	/*	Copy the link dest pointers into our local array.
+
+		TODO: This would be faster if the links were a real array in the first place. */
 
 	int i = 0;
 
@@ -717,12 +705,12 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 		if (link->bytes_left == -1)
 		{
 			if (lw_stream_bytes_left (link->from_exp) != 0)
-			continue;
+				continue;
 		}
 		else
 		{
 			if ((link->bytes_left -= to_write) > 0)
-			continue;
+				continue;
 		}
 
 		if (link->delete_stream)
@@ -777,8 +765,8 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 	}
 }
 
-list_type (struct _lwp_stream_queued) lwp_stream_write_queue
-	(lw_stream ctx, lw_list (struct _lwp_stream_queued, queue))
+list_type (struct _lwp_stream_queued) lwp_stream_write_queue(lw_stream ctx,
+	list (struct _lwp_stream_queued, queue))
 {
 	lwp_trace ("%p : WriteQueued : %zu to write", ctx, list_length (queue));
 
@@ -912,7 +900,7 @@ lw_bool lwp_stream_write_direct (lw_stream ctx)
 	if (!ctx->def->sink_stream)
 		return lw_false;
 
-	lw_i64 written = ctx->def->sink_stream (ctx, ctx->prev_direct,
+	size_t written = ctx->def->sink_stream (ctx, ctx->prev_direct,
 											ctx->direct_bytes_left);
 
 	if (written != -1)
@@ -921,10 +909,10 @@ lw_bool lwp_stream_write_direct (lw_stream ctx)
 		* logic can operate even though the data was already transmitted).
 		*/
 
-		lwp_stream_push (ctx->prev_direct, 0, (size_t)written);
+		lwp_stream_push (ctx->prev_direct, 0, written);
 
 		if (ctx->direct_bytes_left != -1)
-			ctx->direct_bytes_left -= (size_t)written;
+			ctx->direct_bytes_left -= written;
 
 		return lw_true;
 	}
@@ -957,9 +945,8 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 	{
 		assert (!immediate);
 
-		/* The stream itself is ready to close, but something higher up isn't.
-		* lw_stream_close should be called again later with immediate = true
-		*/
+		/*	The stream itself is ready to close, but something higher up isn't.
+			lw_stream_close should be called again later with immediate = true	*/
 
 		return lw_false;
 	}
@@ -968,10 +955,9 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 
 	lwp_retain (ctx, "stream_close");
 
-	/* If roots_expanded is already empty, something else has already cleared
-	* the expanded graph (e.g. another stream closing) and should re-expand
-	* later (meaning we don't have to bother)
-	*/
+	// If roots_expanded is already empty, something else has already cleared
+	// the expanded graph (e.g. another stream closing) and should re-expand
+	// later (meaning we don't have to bother)
 
 	lw_bool already_cleared = ctx->graph == nullptr || list_length (ctx->graph->roots_expanded) == 0;
 
@@ -979,7 +965,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 		lwp_streamgraph_clear_expanded (ctx->graph);
 
 
-	/* Anything that comes before us can no longer link here */
+	// Anything that comes before us can no longer link here
 
 	list_each (ctx->prev, link)
 	{
@@ -991,7 +977,7 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 	list_clear (ctx->prev);
 
 
-	/* Anything that comes after us will have to be a root */
+	// Anything that comes after us will have to be a root
 
 	list_each (ctx->next, link)
 	{
@@ -1003,14 +989,11 @@ lw_bool lw_stream_close (lw_stream ctx, lw_bool immediate)
 
 	list_clear (ctx->next);
 
+	// If we're set to close together with any filters, close those too (this
+	// is the reason for the already_cleared check)
 
-	/* If we're set to close together with any filters, close those too (this
-	* is the reason for the already_cleared check)
-	*/
-
-	/* TODO: For non-immediate close, don't call this stream's close
-	* hooks until all filters have finished closing.
-	*/
+	// TODO: For non-immediate close, don't call this stream's close
+	// hooks until all filters have finished closing.
 
 	lw_stream * to_close	= (lw_stream *) alloca (sizeof (lw_stream) *
 								(list_length (ctx->filtering)
@@ -1085,11 +1068,10 @@ void lw_stream_begin_queue (lw_stream stream)
 	if (list_length (stream->front_queue)
 			|| list_length (stream->back_queue))
 	{
-		/* Although we're going to start queueing any new data, whatever is
-		* currently in the queue still needs to be written.	A queued item with
-		* the begin_marker type indicates where the stream should stop writing
-		* and set the queueing flag.
-		*/
+		/*	Although we're going to start queueing any new data, whatever is
+			currently in the queue still needs to be written.
+			A queued item with the begin_marker type indicates where the stream
+			should stop writing and set the queueing flag. */
 
 		struct _lwp_stream_queued queued = {};
 
@@ -1139,7 +1121,7 @@ size_t lw_stream_queued (lw_stream stream)
 }
 
 void lw_stream_end_queue_hb (lw_stream ctx, int num_head_buffers,
-								const char ** buffers, size_t * lengths)
+	const char ** buffers, size_t * lengths)
 {
 	for (int i = 0; i < num_head_buffers; ++ i)
 	{
@@ -1154,7 +1136,7 @@ void lw_stream_end_queue (lw_stream ctx)
 {
 	lwp_trace ("%p : end_queue called", ctx);
 
-	/* TODO : Look for a queued item w/ Flag_BeginQueue if Queueing is false? */
+	// TODO : Look for a queued item w/ Flag_BeginQueue if Queueing is false?
 
 	assert (ctx->flags & lwp_stream_flag_queueing);
 
@@ -1170,8 +1152,8 @@ lw_bool lwp_stream_is_transparent (lw_stream ctx)
 	if (list_length (ctx->exp_data_hooks) > 0)
 		return lw_false;
 
-	if (list_length (ctx->back_queue) > 0
-			|| list_length (ctx->front_queue) > 0)
+	if (list_length (ctx->back_queue) > 0 ||
+		list_length (ctx->front_queue) > 0)
 	{
 		return lw_false;
 	}
@@ -1182,11 +1164,9 @@ lw_bool lwp_stream_is_transparent (lw_stream ctx)
 	return ctx->def->is_transparent && ctx->def->is_transparent (ctx);
 }
 
-void lw_stream_add_hook_data (lw_stream stream,
-								lw_stream_hook_data proc,
-								void * tag)
+void lw_stream_add_hook_data (lw_stream stream, lw_stream_hook_data proc, void * tag)
 {
-	/* TODO : Prevent the same hook being registered twice? */
+	// TODO : Prevent the same hook being registered twice?
 
 	_lwp_stream_data_hook hook = { proc, stream, tag };// (lwp_stream_data_hook)calloc(sizeof(*hook), 1);
 
@@ -1195,12 +1175,10 @@ void lw_stream_add_hook_data (lw_stream stream,
 	lwp_streamgraph_clear_expanded (stream->graph);
 	lwp_streamgraph_expand (stream->graph);
 
-	/* TODO: Do we need to call lwp_streamgraph_read here? */
+	// TODO: Do we need to call lwp_streamgraph_read here?
 }
 
-void lw_stream_remove_hook_data (lw_stream stream,
-									lw_stream_hook_data proc,
-									void * tag)
+void lw_stream_remove_hook_data (lw_stream stream, lw_stream_hook_data proc, void * tag)
 {
 	if (list_length(stream->data_hooks) == 0)
 		return;
@@ -1223,9 +1201,7 @@ void lw_stream_remove_hook_data (lw_stream stream,
 	lwp_streamgraph_expand (stream->graph);
 }
 
-void lw_stream_add_hook_close(lw_stream stream,
-	lw_stream_hook_close proc,
-	void *tag)
+void lw_stream_add_hook_close(lw_stream stream, lw_stream_hook_close proc, void *tag)
 {
 	_lwp_stream_close_hook hook = { proc, tag };
 	list_push (stream->close_hooks, hook);
@@ -1234,9 +1210,7 @@ void lw_stream_add_hook_close(lw_stream stream,
 	lwp_streamgraph_expand (stream->graph);
 }
 
-void lw_stream_remove_hook_close (lw_stream stream,
-									lw_stream_hook_close proc,
-									void * tag)
+void lw_stream_remove_hook_close (lw_stream stream, lw_stream_hook_close proc, void * tag)
 {
 	if (list_length(stream->close_hooks) == 0)
 		return;

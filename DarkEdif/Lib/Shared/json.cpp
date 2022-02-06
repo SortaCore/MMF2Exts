@@ -1,4 +1,4 @@
-/* vim: set et ts=3 sw=3 ft=cpp:
+/* vim: set noet ts=4 sw=4 ft=cpp:
  *
  * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
  * https://github.com/udp/json-parser

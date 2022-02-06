@@ -162,12 +162,6 @@ struct relayserverinternal
 			if (!client->pseudoUDP)
 				msElapsedUDP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastudpmessagetime).count();
 
-			// detect a buggy version of std::chrono::steady_clock (was in a VS 2019 preview)
-#if defined(_MSC_VER) && defined(_DEBUG)
-			if (msElapsedTCP < 0 || msElapsedUDP < 0 || msElapsedNonPing < 0)
-				DebugBreak();
-#endif
-
 			// less than 5 seconds (or tcpPingMS) passed since last TCP message, skip the TCP ping
 			if (msElapsedTCP < tcpPingMS)
 			{
@@ -2515,7 +2509,6 @@ std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_vie
 			rejectCharAsStr[numBytesUsed] = '\0';
 		}
 
-		// sprintf then resize to fit, as string_view is copied directly into message, expecting no nulls
 		lacewing::error error = lacewing::error_new();
 		error->add("can't create channel, channel name \"%.*s\" not valid (char U+%0.4X '%s' rejected)",
 			channelName.size(), channelName.data(), rejectedCodePoint, rejectCharAsStr);
@@ -2594,7 +2587,7 @@ void relayserver::connect_response(
 
 	lw_trace("Connect request accepted in relayserver::connectresponse");
 	client->connectRequestApproved = true;
-	client->connectTime = std::chrono::steady_clock::now();
+	client->connectTime = decltype(client->connectTime)::clock::now();
 	client->clientImpl = relayserver::client::clientimpl::Unknown;
 
 	builder.addheader(0, 0);  /* response */
