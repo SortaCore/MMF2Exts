@@ -32,12 +32,18 @@
 
 lwp_eventqueue lwp_eventqueue_new ()
 {
-	return epoll_create (32);
+	lwp_eventqueue queue = (lwp_eventqueue)malloc(sizeof(_lw_eventqueue));
+	queue->epollFD = epoll_create (32);
+	queue->numFDsWatched = 0;
+	return queue;
 }
 
 void lwp_eventqueue_delete (lwp_eventqueue queue)
 {
-	close (queue);
+	if (queue->numFDsWatched > 0)
+		lw_trace("lwp_eventqueue_delete warning: had %i FDs left when closing eventqueue.", queue->numFDsWatched);
+	close (queue->epollFD);
+	free (queue);
 }
 
 void lwp_eventqueue_add (lwp_eventqueue queue,
@@ -55,9 +61,11 @@ void lwp_eventqueue_add (lwp_eventqueue queue,
 	event.events = (read ? EPOLLIN : 0) |
 				  (write ? EPOLLOUT : 0) |
 				  (edge_triggered ? EPOLLET : 0);
-	lw_trace("lwp_eventqueue_add EPOLL_CTL_ADD: Queuing event with fd %d, read %d, write %d, edge %d, TAG %p.", fd, read ? 1 : 0, write ? 1 : 0, edge_triggered ? 1 : 0, tag);
+	lw_trace("lwp_eventqueue_add EPOLL_CTL_ADD: Queuing event with fd %d, read %d, write %d, edge %d, TAG %p.",
+		fd, read ? 1 : 0, write ? 1 : 0, edge_triggered ? 1 : 0, tag);
 
-	epoll_ctl (queue, EPOLL_CTL_ADD, fd, &event);
+	epoll_ctl (queue->epollFD, EPOLL_CTL_ADD, fd, &event);
+	++queue->numFDsWatched;
 }
 
 void lwp_eventqueue_update (lwp_eventqueue queue,
@@ -72,17 +80,19 @@ void lwp_eventqueue_update (lwp_eventqueue queue,
 	event.data.ptr = tag;
 
 	int res;
+	(void)res; // prevent unused warnings
 	if (read || write)
 	{
 		event.events = (read ? EPOLLIN : 0) |
 					   (write ? EPOLLOUT : 0) |
 					   (edge_triggered ? EPOLLET : 0);
-		res = epoll_ctl(queue, EPOLL_CTL_MOD, fd, &event);
+		res = epoll_ctl(queue->epollFD, EPOLL_CTL_MOD, fd, &event);
 		assert(res != -1);
 	}
 	else
 	{
-		res = epoll_ctl(queue, EPOLL_CTL_DEL, fd, &event);
+		res = epoll_ctl(queue->epollFD, EPOLL_CTL_DEL, fd, &event);
+		--queue->numFDsWatched;
 		assert(res != -1);
 	}
 }
@@ -92,7 +102,7 @@ int lwp_eventqueue_drain (lwp_eventqueue queue,
 						  int max_events,
 						  lwp_eventqueue_event * events)
 {
-	return epoll_wait (queue, events, max_events, block ? -1 : 0);
+	return epoll_wait (queue->epollFD, events, max_events, block ? -1 : 0);
 }
 
 lw_bool lwp_eventqueue_event_read_ready (lwp_eventqueue_event event)

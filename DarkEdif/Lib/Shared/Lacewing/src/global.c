@@ -120,7 +120,7 @@ void lw_dump (const char * buffer, size_t size)
 	size_t i;
 	int row_offset = 0, row_offset_c = 0, row = 0;
 
-	if (size == -1)
+	if (size == (size_t)-1)
 		size = (lw_ui32) strlen (buffer);
 
 	fprintf (stderr, "=== " lwp_fmt_size " bytes @ %p ===\n", size, buffer);

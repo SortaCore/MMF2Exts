@@ -88,7 +88,6 @@
 		#define lw_import
 	#endif
 	#include <netinet/in.h>
-	// #include <netinet/in6.h>
 #else
 
 	/* For the definition of HANDLE and OVERLAPPED (used by lw_pump) */
@@ -120,6 +119,7 @@
 #include <shared_mutex>
 #include <thread>
 #include <cctype>
+#include <cstring>
 
 // std::string_view requires C++17
 #if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))
@@ -194,7 +194,7 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_md5_hex			(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1				(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1_hex			(char * output, const char * input, size_t length);
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || (defined(__unix__) && !defined(__ANDROID__))
 	#define __printflike(a,b) /* no op */
 #endif
 	lw_import			void  lw_trace				(const char * format, ...) __printflike(1, 2);

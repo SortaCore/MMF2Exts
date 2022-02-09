@@ -216,7 +216,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 		return;
 	}
 
-	if (size == -1)
+	if (size == (size_t)-1)
 		size = strlen (data);
 
 	if constexpr (sizeof(size) > 4)

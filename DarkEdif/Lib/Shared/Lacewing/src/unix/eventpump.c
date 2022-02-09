@@ -58,7 +58,12 @@ lw_eventpump lw_eventpump_new ()
 	ctx->sync_signals = lw_sync_new ();
 
 	int signalpipe [2];
-	::pipe (signalpipe);
+	if (::pipe(signalpipe) == -1)
+	{
+		ctx->signalpipe_read = ctx->signalpipe_write = -1;
+		lw_pump_delete(&ctx->pump);
+		return NULL;
+	}
 
 	ctx->signalpipe_read  = signalpipe [0];
 	ctx->signalpipe_write = signalpipe [1];
@@ -82,19 +87,21 @@ static void def_cleanup (lw_pump pump)
 	lwp_eventqueue_delete (ctx->queue);
 	ctx->queue = (lwp_eventqueue)~0;
 
+	if (ctx->signalpipe_read != -1)
+	{
+		close(ctx->signalpipe_read);
+		close(ctx->signalpipe_write);
+	}
+
 	#ifdef ENABLE_THREADS
+		if (lw_thread_started (ctx->watcher.thread))
+		{
+			lw_event_signal (ctx->watcher.resume_event);
+			lw_thread_join (ctx->watcher.thread);
+		}
 
-	  if (lw_thread_started (ctx->watcher.thread))
-	  {
-		 lw_event_signal (ctx->watcher.resume_event);
-		 lw_thread_join (ctx->watcher.thread);
-	  }
-
-	  lw_event_delete (ctx->watcher.resume_event);
-
+		lw_event_delete (ctx->watcher.resume_event);
 	#endif
-
-	/* TODO */
 }
 
 lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
@@ -267,8 +274,8 @@ void lw_eventpump_post_eventloop_exit (lw_eventpump ctx)
 {
 	lw_sync_lock (ctx->sync_signals);
 
-	  char signal = sig_exit_eventloop;
-	  write (ctx->signalpipe_write, &signal, sizeof (signal));
+		char signal = sig_exit_eventloop;
+		write (ctx->signalpipe_write, &signal, sizeof (signal));
 
 	lw_sync_release (ctx->sync_signals);
 }
@@ -292,34 +299,31 @@ static void watcher (lw_eventpump ctx)
 {
 	for (;;)
 	{
-	  assert (ctx->watcher.num_events == 0);
+		assert (ctx->watcher.num_events == 0);
 
-	  int count = lwp_eventqueue_drain (ctx->queue,
-										lw_true,
-										max_events,
-										ctx->watcher.events);
+		int count = lwp_eventqueue_drain (ctx->queue,
+			lw_true, max_events, ctx->watcher.events);
 
-	  if (count == -1)
-	  {
-		 if (errno == EINTR)
+		if (count == -1)
+		{
+			if (errno == EINTR)
+				continue;
+
+			lwp_trace ("drain error: %d", errno);
+			break;
+		}
+
+		if (count == 0)
 			continue;
 
-		 lwp_trace ("drain error: %d", errno);
-		 break;
-	  }
+		ctx->watcher.num_events = count;
 
-	  if (count == 0)
-		 continue;
+		/*	We have some events. Notify the application from this thread, then
+			wait for tick() to be called from the application main thread. */
+		ctx->on_tick_needed (ctx);
 
-	  ctx->watcher.num_events = count;
-
-	  /* We have some events.  Notify the application from this thread, then
-		* wait for tick() to be called from the application main thread.
-		*/
-	  ctx->on_tick_needed (ctx);
-
-	  lw_event_wait (ctx->watcher.resume_event, -1);
-	  lw_event_unsignal (ctx->watcher.resume_event);
+		lw_event_wait (ctx->watcher.resume_event, -1);
+		lw_event_unsignal (ctx->watcher.resume_event);
 	}
 }
 
@@ -433,8 +437,8 @@ static void def_post (lw_pump pump, void * func, void * param)
 const lw_pumpdef def_eventpump =
 {
 	.add				= def_add,
+	.update_callbacks = def_update_callbacks,
 	.remove				= def_remove,
-	.update_callbacks	= def_update_callbacks,
 	.post				= def_post,
 	.cleanup			= def_cleanup
 };

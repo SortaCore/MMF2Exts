@@ -300,7 +300,7 @@ time_t lwp_parse_time (const char * string)
 			#ifdef HAVE_TIMEGM
 				return timegm (&tm);
 			#else
-				#error Can't find a suitable way to convert a tm to a UTC UNIX time
+				#error Cannot find a suitable way to convert a tm to a UTC UNIX time
 			#endif
 		#endif
 	}
@@ -313,6 +313,6 @@ void lwp_to_lowercase (char * str)
 	char * i;
 
 	for (i = str; *i; ++ i)
-		*i = tolower (*i);
+		*i = (char)tolower (*i);
 }
 

@@ -47,27 +47,27 @@ protected:
 		lw_ui32 headersize;
 
 		// Message size < 254; store as type byte + size byte
-		if (messagesize < 254)
+		if (messagesize < 0xfe)
 		{
-			buffer[6] = type;
-			buffer[7] = messagesize;
+			(*(lw_ui8*)(buffer + 6)) = (lw_ui8)type;
+			(*(lw_ui8*)(buffer + 7)) = (lw_ui8)messagesize;
 
 			headersize = 2;
 		}
 		// Message size >= 0xFF and <= 0xFFFF; store as type byte, plus size indicator byte of 254, plus size uint16
 		else if (messagesize < 0xffff)
 		{
-			buffer[4] = type;
+			(*(lw_ui8*)(buffer + 4)) = (lw_ui8)type;
 
 			(*(lw_ui8 *) (buffer + 5))	= 254;
-			(*(lw_ui16 *) (buffer + 6)) = messagesize;
+			(*(lw_ui16 *) (buffer + 6)) = (lw_ui16)messagesize;
 
 			headersize = 4;
 		}
 		// Message size > 0xFFFF and <= 0xFFFFFFFF; store as type byte, plus size indicator byte of 255, plus size uint32
-		else if (messagesize < 0xffffffff)
+		else if ((lw_ui32)messagesize < 0xffffffff)
 		{
-			buffer[2] = type;
+			(*(lw_ui8*)(buffer + 2)) = (lw_ui8)type;
 
 			(*(lw_ui8 *) (buffer + 3))	= 255;
 			(*(lw_ui32 *) (buffer + 4)) = messagesize;
@@ -107,10 +107,10 @@ public:
 			return;
 		}
 
-		add <lw_ui8>  ((type << 4) | variant);
+		add <lw_ui8>  ((lw_ui8)((type << 4) | variant));
 
 		if (isudpclient)
-			add <lw_ui16> (udpclientid);
+			add <lw_ui16> ((lw_ui16)udpclientid);
 	}
 
 	inline void send(lacewing::server_client client, bool clear = true)

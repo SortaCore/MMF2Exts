@@ -365,6 +365,7 @@ void resolver (lw_addr ctx)
 		if (gaierr[gaiLen - 2] == '.')
 			gaierr[gaiLen - 2] = '\0';
 
+		// Android note: missing INTERNET permission on some Android devices prevents DNS finding any records
 		lw_error_addf(ctx->error, "DNS lookup error - %s", gaierr);
 		free(gaierr);
 		return;

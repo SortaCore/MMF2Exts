@@ -42,7 +42,7 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 {
 	/* TODO: discard data before the offset (might save a realloc) */
 
-	if (length == -1)
+	if (length == (size_t)-1)
 	  length = strlen (buffer);
 
 	if (length == 0)

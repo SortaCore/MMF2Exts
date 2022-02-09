@@ -253,7 +253,7 @@ static void queue_front (lw_stream ctx, const char * buffer, size_t size)
 
 size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int flags)
 {
-	if (size == -1)
+	if (size == (size_t)-1)
 		size = strlen (buffer);
 
 	if (ctx->flags & (lwp_stream_flag_dead | lwp_stream_flag_closing | lwp_stream_flag_closeASAP))
@@ -645,12 +645,12 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 
 		lwp_trace ("Pushing to link %zu of %zu (%p)", i, num_links, link);
 
-		size_t to_write = link->bytes_left != -1 && size > link->bytes_left ?
-							link->bytes_left : size;
+		size_t to_write = link->bytes_left != (size_t)-1 && size > link->bytes_left
+			? link->bytes_left : size;
 
 		if (!lwp_stream_is_transparent (link->to_exp))
 		{
-			/* If we have some actual data, write it to the target stream */
+			// If we have some actual data, write it to the target stream
 
 			lwp_trace ("Link target is not transparent; buffer = %p", buffer);
 
@@ -679,10 +679,9 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 		{
 			lwp_trace ("Graph has re-expanded - checking local Push list...");
 
-			/* If any new links have been added to next_expanded, this push will
-			* not write to them.	However, if any links in our local array
-			* (yet to be written to) have disappeared, they must be removed.
-			*/
+			/*	If any new links have been added to next_expanded, this push will
+				not write to them. However, if any links in our local array
+				(yet to be written to) have disappeared, they must be removed. */
 
 			for (size_t x = i; x < num_links; ++ x)
 			{
@@ -702,7 +701,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 		if (!link->to)
 			continue; /* filters cannot expire */
 
-		if (link->bytes_left == -1)
+		if (link->bytes_left == (size_t)-1)
 		{
 			if (lw_stream_bytes_left (link->from_exp) != 0)
 				continue;
@@ -737,18 +736,15 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 			lwp_streamgraph_read (ctx->graph);
 		}
 
-		/* Maybe deleting the source stream caused this stream to be
-		* deleted, too?
-		*/
+		// Maybe deleting the source stream caused this stream to be deleted, too?
 
 		if (ctx->flags & lwp_stream_flag_dead)
 			break;
 
 		lwp_trace ("Graph re-expanded by Push - checking local list...");
 
-		/* Since the graph has re-expanded, check the rest of the links we
-		* intend to write to are still present in the list.
-		*/
+		/*	Since the graph has re-expanded, check the rest of the links we
+			intend to write to are still present in the list. */
 
 		for (size_t x = i; x < num_links; ++ x)
 			if (!list_find (ctx->next_expanded, links [x]))
@@ -766,7 +762,7 @@ void lwp_stream_push (lw_stream ctx, const char * buffer, size_t size)
 }
 
 list_type (struct _lwp_stream_queued) lwp_stream_write_queue(lw_stream ctx,
-	list (struct _lwp_stream_queued, queue))
+	lw_list (struct _lwp_stream_queued, queue))
 {
 	lwp_trace ("%p : WriteQueued : %zu to write", ctx, list_length (queue));
 
@@ -900,19 +896,18 @@ lw_bool lwp_stream_write_direct (lw_stream ctx)
 	if (!ctx->def->sink_stream)
 		return lw_false;
 
-	size_t written = ctx->def->sink_stream (ctx, ctx->prev_direct,
+	lw_i64 written = ctx->def->sink_stream (ctx, ctx->prev_direct,
 											ctx->direct_bytes_left);
 
 	if (written != -1)
 	{
-		/* Pushing with a buffer of 0 pushes without any data (so the stream
-		* logic can operate even though the data was already transmitted).
-		*/
+		/*	Pushing with a buffer of 0 pushes without any data (so the stream
+			logic can operate even though the data was already transmitted). */
 
-		lwp_stream_push (ctx->prev_direct, 0, written);
+		lwp_stream_push (ctx->prev_direct, 0, (size_t)written);
 
-		if (ctx->direct_bytes_left != -1)
-			ctx->direct_bytes_left -= written;
+		if (ctx->direct_bytes_left != (size_t)-1)
+			ctx->direct_bytes_left -= (size_t)written;
 
 		return lw_true;
 	}
@@ -1102,13 +1097,13 @@ size_t lw_stream_queued (lw_stream stream)
 			if (!queued.stream)
 				continue;
 
-			if (queued.stream_bytes_left != -1)
+			if (queued.stream_bytes_left != (size_t)-1)
 			{
 				size += queued.stream_bytes_left;
 				continue;
 			}
 
-			if ((bytes_left = lw_stream_bytes_left (queued.stream)) == -1)
+			if ((bytes_left = lw_stream_bytes_left (queued.stream)) == (size_t)-1)
 				return -1;
 
 			size += bytes_left;

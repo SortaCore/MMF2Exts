@@ -81,7 +81,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 			// Wildcard
 			if (cur[1] == '*')
 			{
-				char firstCharUpper = std::toupper(cur[0]);
+				char firstCharUpper = (char)std::toupper(cur[0]);
 				for (size_t i = 0; i < sizeof(wildcardCategory); i++)
 				{
 					if (firstCharUpper == wildcardCategory[i])

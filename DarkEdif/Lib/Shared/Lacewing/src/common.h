@@ -57,14 +57,14 @@
 	  #define _GNU_SOURCE
 	#endif
 
-	#ifndef _GNU_SOURCE
-	  #define _GNU_SOURCE
-	#endif
-
 #ifdef __ANDROID__
 	#include "unix/android config.h"
+#elif defined(__unix__)
+	#include "unix/unix config.h"
+#endif
+
 	#include <sys/sendfile.h>
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 	#include "unix/ios config.h"
 #endif
 
@@ -169,7 +169,7 @@ void lwp_deinit ();
 #ifdef _WIN32
 	#include "windows/common.h"
 #else
-	#include "unix/unix common.h"
+	#include "unix/common.h"
 #endif
 
 #if defined(HAVE_MALLOC_H) || defined(_WIN32)

@@ -1486,7 +1486,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 {
 	auto cliReadLock = client->lock.createReadLock();
 
-	lw_ui8 messagetypeid = (type >> 4);
+	lw_ui8 messagetypeid = (lw_ui8)(type >> 4);
 	lw_ui8 variant		 = (type & 0xF);
 
 	messagereader reader (messageP.data(), messageP.size());
@@ -2452,7 +2452,7 @@ lw_i64 relayserver::client::getconnecttime() const
 	if (!connectRequestApproved)
 		return 0; // Set when connection approve message is sent
 
-	steady_clock::time_point end = steady_clock::now();
+	decltype(connectTime)::clock::time_point end = decltype(connectTime)::clock::now();
 	auto time = end - connectTime;
 	return duration_cast<seconds>(time).count();
 }

@@ -57,8 +57,8 @@ public:
 
 	void add(const char * const buffer, size_t sizeP)
 	{
-		if (sizeP == -1)
-			sizeP = (lw_i32)strlen(buffer);
+		if (sizeP == (size_t)-1)
+			sizeP = (lw_ui32)strlen(buffer);
 
 		if constexpr (sizeof(sizeP) > 4)
 			assert(sizeP < 0xFFFFFFFF);

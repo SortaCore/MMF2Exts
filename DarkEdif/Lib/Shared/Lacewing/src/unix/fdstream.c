@@ -106,13 +106,13 @@ static void read_ready (void * tag)
 
 	lw_bool close_stream = lw_false;
 
-	while (ctx->reading_size == -1 || ctx->reading_size > 0)
+	while (ctx->reading_size == (size_t)-1 || ctx->reading_size > 0)
 	{
 		if (ctx->fd == -1)
 		 break;
 
 		size_t to_read = sizeof (buffer);
-		if (ctx->reading_size != -1 && to_read > ctx->reading_size)
+		if (ctx->reading_size != (size_t)-1 && to_read > ctx->reading_size)
 			to_read = ctx->reading_size;
 
 		ssize_t bytes = read (ctx->fd, buffer, to_read);
@@ -133,9 +133,9 @@ static void read_ready (void * tag)
 			break;
 		}
 
-		if (ctx->reading_size != -1)
+		if (ctx->reading_size != (size_t)-1)
 		{
-			if (bytes > ctx->reading_size)
+			if (bytes > (ssize_t)ctx->reading_size)
 				ctx->reading_size = 0;
 			else
 				ctx->reading_size -= bytes;
@@ -286,7 +286,7 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 			written = write (ctx->fd, buffer, size);
 	#endif
 
-	if (written == -1)
+	if (written == (size_t)-1)
 	{
 		lwp_trace ("fdstream sank nothing!	write failed: %d", errno);
 		return 0;
@@ -305,11 +305,11 @@ static lw_i64 def_sink_stream (lw_stream _dest,
 	if (lw_stream_get_def (_src) != &def_fdstream)
 		return -1;
 
-	if (size == -1)
+	if (size == (size_t)-1)
 	{
 		size = lw_stream_bytes_left (_src);
 
-		if (size == -1)
+		if (size == (size_t)-1)
 		 return -1;
 	}
 
@@ -339,7 +339,7 @@ static void def_read (lw_stream _ctx, size_t bytes)
 
 	lw_bool was_reading = ctx->reading_size != 0;
 
-	if (bytes == -1)
+	if (bytes == (size_t)-1)
 		ctx->reading_size = lw_stream_bytes_left ((lw_stream) ctx);
 	else
 		ctx->reading_size += bytes;
@@ -355,7 +355,7 @@ static size_t def_bytes_left (lw_stream _ctx)
 	if (ctx->fd == -1)
 		return -1; /* not valid */
 
-	if (ctx->size == -1)
+	if (ctx->size == (size_t)-1)
 		return -1;
 
 	lwp_trace ("lseek for FD %d, size " lwp_fmt_size, ctx->fd, ctx->size);
@@ -413,7 +413,7 @@ const lw_streamdef def_fdstream =
 
 void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 {
-	memset (ctx, 0, sizeof (*ctx));
+	ctx = {};
 
 	ctx->fd = -1;
 	ctx->flags = lwp_fdstream_flag_nagle;

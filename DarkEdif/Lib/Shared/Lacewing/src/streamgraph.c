@@ -268,7 +268,7 @@ static lw_bool find_next_direct (lw_stream stream, lw_stream * next_direct,
 {
 	list_each (stream->next_expanded, link)
 	{
-	  if (link->bytes_left != -1 && link->bytes_left < *bytes)
+	  if (link->bytes_left != (size_t)-1 && link->bytes_left < *bytes)
 		 *bytes = link->bytes_left;
 
 	  lw_stream next = link->to_exp;
@@ -299,13 +299,13 @@ static void graph_read (lwp_streamgraph graph, int this_expand,
 	if (!list_length (stream->next_expanded))
 	  return;
 
-	if (bytes == -1)
+	if (bytes == (size_t)-1)
 	{
 	  /* Use the biggest bytes_left from all the links */
 
 	  list_each (stream->next, link)
 	  {
-		 if (link->bytes_left == -1)
+		 if (link->bytes_left == (size_t)-1)
 		 {
 			bytes = -1;
 			break;

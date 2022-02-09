@@ -134,7 +134,7 @@ lw_bool lw_random (char * buffer, size_t size)
 		return lw_false;
 	}
 
-	if (read (dev_random, buffer, size) != size)
+	if (read (dev_random, buffer, size) != (ssize_t)size)
 	{
 		lwp_trace ("Error reading from random: %s", strerror (errno));
 		return lw_false;

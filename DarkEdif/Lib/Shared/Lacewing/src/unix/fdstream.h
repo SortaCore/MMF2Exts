@@ -34,16 +34,16 @@
 
 struct _lw_fdstream
 {
-	struct _lw_stream stream;
+	struct _lw_stream stream = {};
 
 	//lw_pump_watch watch;
 
-	int fd;
+	int fd = -1;
 
-	char flags;
+	char flags = 0;
 
-	size_t size;
-	size_t reading_size;
+	size_t size = 0;
+	size_t reading_size = 0;
 };
 
 #define lwp_fdstream_flag_nagle		1

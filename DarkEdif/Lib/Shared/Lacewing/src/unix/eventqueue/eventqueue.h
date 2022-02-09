@@ -40,7 +40,13 @@
 
 	/* epoll: lwp_eventqueue is an epoll fd, _event is an epoll_event
 	*/
-	typedef int lwp_eventqueue;
+	typedef struct _lw_eventqueue * lwp_eventqueue;
+
+	typedef struct _lw_eventqueue
+	{
+		int epollFD;
+		int numFDsWatched;
+	} _lw_eventqueue;
 	typedef struct epoll_event lwp_eventqueue_event;
 
 #elif defined(USE_KQUEUE)

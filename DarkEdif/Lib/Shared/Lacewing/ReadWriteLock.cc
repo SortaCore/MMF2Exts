@@ -326,7 +326,9 @@ void lacewing::readwritelock::openWriteLock(writelock &wl)
 		char debugInfo[1024];
 		sprintf(debugInfo, "Deadlock - opened new write lock with read lock already held by same thread.\nNew writer opened from file [%s], func [%s] line %i.",
 			file, func, line);
-		MessageBoxA(NULL, debugInfo, "Deadlock failure.", MB_ICONERROR);
+		#ifdef _WIN32
+			MessageBoxA(NULL, debugInfo, "Deadlock failure.", MB_ICONERROR);
+		#endif
 		throw std::runtime_error("Deadlock");
 	}
 #endif
