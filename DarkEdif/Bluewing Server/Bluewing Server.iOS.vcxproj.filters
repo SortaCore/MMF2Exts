@@ -45,9 +45,6 @@
     <ClInclude Include="$(ProjectDir)\DarkExt.PostMinify.json">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h">
-      <Filter>Header Files\Lacewing\src\unix</Filter>
-    </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h">
       <Filter>Header Files\Lacewing\src\unix</Filter>
     </ClInclude>
@@ -65,6 +62,9 @@
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\eventqueue.h">
       <Filter>Header Files\Lacewing\src\unix\eventqueue</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
+      <Filter>Header Files\Lacewing\src\unix</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

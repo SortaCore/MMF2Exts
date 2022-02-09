@@ -413,7 +413,7 @@ const lw_streamdef def_fdstream =
 
 void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 {
-	ctx = {};
+	memset(ctx, 0, sizeof(*ctx));
 
 	ctx->fd = -1;
 	ctx->flags = lwp_fdstream_flag_nagle;

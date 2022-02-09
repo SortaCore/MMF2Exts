@@ -63,9 +63,10 @@
 	#include "unix/unix config.h"
 #endif
 
-	#include <sys/sendfile.h>
 #if defined(__APPLE__)
 	#include "unix/ios config.h"
+#else
+	#include <sys/sendfile.h>
 #endif
 
 #endif
