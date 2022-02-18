@@ -810,16 +810,10 @@ Edif::SDK::~SDK()
 #endif
 }
 
-#if defined(__arm__) && defined(__ANDROID__)
-const static size_t paramInc = 0; // In ARM, the first parameter must be Extension *
-#else
-const static size_t paramInc = 0;
-#endif
-
 long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo * info, ACEParamReader &params, bool isCond)
 {
 	int ParameterCount = info->NumOfParams;
-	long * Parameters;
+	long Parameters[16];
 	long Result = 0L;
 #if defined(__arm__) && defined(__ANDROID__)
 	long argStackCount; // Must be declared here or error reports in param reading won't compile
@@ -840,12 +834,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
-	Parameters = (long *)alloca(sizeof(long) * ParameterCount);
 	bool isComparisonCondition = false;
-
-	if constexpr (paramInc == 1) {
-		Parameters[0] = (long)ext;
-	}
 
 	for (int i = 0; i < ParameterCount; ++ i)
 	{
@@ -855,18 +844,18 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				if (info->FloatFlags & (1 << i))
 				{
 					float f = params.GetFloat(i);
-					Parameters[i + paramInc] = *(int*)(&f);
+					Parameters[i] = *(int*)(&f);
 				}
 				else
-					Parameters[i + paramInc] = params.GetInteger(i);
+					Parameters[i] = params.GetInteger(i);
 				break;
 
 			case Params::String_Comparison:
 			case Params::String_Expression:
 			case Params::Filename:
-				Parameters[i + paramInc] = (long)params.GetString(i);
+				Parameters[i] = (long)params.GetString(i);
 				// Catch null string parameters and return default 0
-				if (!Parameters[i + paramInc])
+				if (!Parameters[i])
 				{
 					DarkEdif::MsgBox::Error(_T("ActionOrCondition() error"),
 						_T("Error calling %s \"%s\" (ID %i); text parameter index %i was given a null string pointer.\n"
@@ -883,12 +872,12 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 			case Params::Compare_Time:
 			case Params::Comparison:
-				Parameters[i + paramInc] = params.GetInteger(i);
+				Parameters[i] = params.GetInteger(i);
 				isComparisonCondition = true;
 				break;
 
 			default:
-				Parameters[i + paramInc] = params.GetInteger(i);
+				Parameters[i] = params.GetInteger(i);
 				break;
 		}
 	}
@@ -1425,17 +1414,14 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
-
-	long * Parameters = (long *)alloca(sizeof(long) * (ParameterCount + paramInc));
-	memset(Parameters, 0, sizeof(long) * (ParameterCount + paramInc));
-	long Result = 0;
+	long Parameters[16];
+	std::uintptr_t Result = 0;
 
 	int ExpressionRet2 = (int)ExpressionRet;
 #ifdef _WIN32
 	//int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
 #else
-	Parameters[0] = (long)ext;
-	int argStackCount = ParameterCount + paramInc;
+	int argStackCount = ParameterCount;
 	// if > 4 params, they're stored on stack
 	if (argStackCount > 4) {
 		argStackCount = argStackCount - 4;
@@ -1448,10 +1434,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		switch (info->Parameter[i].ep)
 		{
 		case ExpParams::String:
-			Parameters[i + paramInc] = (long)params.GetString(i);
+			Parameters[i] = (long)params.GetString(i);
 
 			// Catch null string parameters and return "" or 0 as appropriate
-			if (!Parameters[i + paramInc])
+			if (!Parameters[i])
 			{
 				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
 					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
@@ -1468,10 +1454,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 			if ((info->FloatFlags & (1 << i)) != 0)
 			{
 				float f = params.GetFloat(i);
-				Parameters[i + paramInc] = *(int*)&f;
+				Parameters[i] = *(int*)&f;
 			}
 			else
-				Parameters[i + paramInc] = params.GetInteger(i);
+				Parameters[i] = params.GetInteger(i);
 			break;
 		default:
 		{
@@ -1556,16 +1542,16 @@ endFunc:
 		params.SetReturnType(ExpressionRet);
 
 		if (ExpressionRet == ExpReturnType::String)
-			params.SetValue((const char *)Result);
+			params.SetValue((const TCHAR *)Result);
 		else if (ExpressionRet == ExpReturnType::Integer)
 			params.SetValue((int)Result);
 		else if (ExpressionRet == ExpReturnType::Float)
-			params.SetValue(*(float*)&Result);
+			params.SetValue(*(float *)&Result);
 		else
 			DarkEdif::MsgBox::Error(_T("Expression ASM error"), _T("Error calling expression ID %i: Unrecognised return type."), ID);
 
 	#ifdef __ANDROID__
-		LOGV("Expression ID %i end.", ID);
+		LOGV("Expression ID %i end.\n", ID);
 	#endif
 #endif
 }
