@@ -283,6 +283,7 @@ static char zero[4];
 TCHAR * Edif::Runtime::CopyString(const TCHAR * String) {
 	if (!String[0])
 		return zero;
+
 	const size_t len = strlen(String) + 1;
 	if (len < sizeof(stackRet))
 	{

@@ -2388,6 +2388,10 @@ void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 #elif defined(__ANDROID__)
 	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);
 #else // iOS
+	static const char* logLevels[] = {
+		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
+	};
+	printf("%-9s", logLevels[logLevel]);
 	vprintf(msgFormat, v);
 #endif
 	va_end(v);

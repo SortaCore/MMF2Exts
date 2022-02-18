@@ -222,12 +222,16 @@ PuTTY setup. Validate by running PuTTY. Recommended to use encryption keys. Link
 If you're inundanted with a ton of IntelliSense errors, then read this section. Visual Studio's IntelliSense is using a lot of old iOS headers that don't match
 Xcode's SDK. To fix this, you'll need to modify Microsoft's linked headers. Copy:  
 from Mac: `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/include`  
-to PC: `C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\Common7\IDE\VC\vcpackages\IntelliSense\iOS\OSS\xcodefiles`  
-Then amend what VS looks in for headers, open:  
-`C:\Program Files (x86)\Microsoft Visual Studio\2019\Preview\MSBuild\Microsoft\VC\v160\Application Type\iOS\1.0\iOS.Common.props`  
-Find `<ISenseIncludePath>`, remove the libcxx and musl entries, and instead link the xcodefiles folder.  
-(You could use the iPhoneOS platform's headers instead of the simulator's headers, but since you'll be debugging on the simulators,
-that may cause confusion as your IntelliSense will be out of sync with Xcode's runtime.)
+to PC: `C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\VC\vcpackages\IntelliSense\iOS\OSS\xcodefiles`  
+(If you're not using VS 2019 Community, then your PC path may vary.)
+
+Next step is to amend what folders VS IntelliSense looks in for headers, so open:  
+`C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Application Type\iOS\1.0\iOS.Common.props`  
+Find `<ISenseIncludePath>`, remove the libcxx and musl entries, and instead link the xcodefiles folder; and also link the xcodefiles\c++\v1 folder.  
+You may have to open an editor in Administrator mode, or grant the Users role modify permissions, as the props file will be read-only to Users.  
+
+As a side note, you could use the iPhoneOS platform's headers instead of the simulator's headers, but since you'll be debugging on the simulators,
+that may cause yourself some confusion as your IntelliSense will be out of sync with Xcode's IntelliSense equivalent.
 
 ### Different CPU architectures
 You can build for 7 iOS CPU types, of which 4 are targeted by defaults.  
