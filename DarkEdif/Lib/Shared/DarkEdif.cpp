@@ -297,6 +297,7 @@ void InitializePropertiesFromJSON(mv * mV, EDITDATA * edPtr)
 
 
 			case PROPTYPE_EDIT_STRING:
+			case PROPTYPE_EDIT_MULTILINE:
 			{
 				if (JProp["DefaultState"].type != json_string)
 				{
@@ -405,7 +406,7 @@ Prop * GetProperty(EDITDATA * edPtr, size_t ID)
 	unsigned int size;
 	char * Current = PropIndex(edPtr, ID, &size);
 
-	if (!_stricmp(curStr, "Editbox String"))
+	if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 	{
 		ret = new Prop_Str(UTF8ToTString(Current, &allConvToTString).c_str());
 		if (!allConvToTString)
@@ -446,7 +447,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	char * oldPropValue = PropIndex(edPtr, PropID, &oldPropValueSize);
 	bool rearrangementRequired = false;
 
-	if (!_stricmp(curTypeStr, "Editbox String"))
+	if (!_strnicmp(curTypeStr, "Editbox String", sizeof("Editbox String") - 1))
 		rearrangementRequired = newPropValueSize != oldPropValueSize; // May need resizing
 	else if (!_stricmp(curTypeStr, "Editbox Number"))
 		rearrangementRequired = false; // Number of editbox, always same data size
@@ -537,7 +538,7 @@ char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size)
 	{
 		curStr = (const char *)j[(std::int32_t)i]["Type"];
 
-		if (!_stricmp(curStr, "Editbox String"))
+		if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1))
 			Current += strlen(Current) + 1;
 		else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Combo Box"))
 			Current += sizeof(unsigned int);
@@ -833,7 +834,7 @@ std::tstring EDITDATA::GetPropertyStr(int propID)
 	const json_value &prop = CurLang["Properties"][propID];
 	if (!_stricmp(prop["Type"], "Combo Box"))
 		return UTF8ToTString((const char  *)prop["Items"][*(int *)PropIndex(this, propID, nullptr)]);
-	else if (!_stricmp(prop["Type"], "Editbox String"))
+	else if (!_strnicmp(prop["Type"], "Editbox String", sizeof("Editbox String") - 1))
 	{
 		unsigned int propDataSize = 0;
 		char * propDataStart = PropIndex(this, propID, &propDataSize);

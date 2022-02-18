@@ -156,7 +156,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 			const json_value& propjson = *JSON.u.array.values[i];
 			const char* curPropType = propjson["Type"];
 
-			if (!_stricmp(curPropType, "Editbox String"))
+			if (!_strnicmp(curPropType, "Editbox String", sizeof("Editbox String") - 1))
 			{
 				const char* defaultText = CurLang["Properties"]["DefaultState"];
 				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
