@@ -473,7 +473,7 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	size_t afterOldSize = edPtr->DarkEdif_Prop_Size - oldPropValueSize - beforeOldSize;			// Pointer to O|P>|O
 	size_t odps = edPtr->DarkEdif_Prop_Size;
 
-	// Duplicate memory to another buffer (if new arragement is smaller - we can't just copy from old buffer after realloc)
+	// Duplicate memory to another buffer (if new arrangement is smaller - we can't just copy from old buffer after realloc)
 	char * newEdPtr = (char *)malloc(edPtr->DarkEdif_Prop_Size + (newPropValueSize - oldPropValueSize));
 
 	if (!newEdPtr)
@@ -481,7 +481,6 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 		DarkEdif::MsgBox::Error(_T("Property error"), _T("Out of memory attempting to rewrite properties!"));
 		return;
 	}
-	((EDITDATA *)newEdPtr)->DarkEdif_Prop_Size = _msize(newEdPtr);
 
 	// Copy the part before new data into new address
 	memcpy(newEdPtr, edPtr, beforeOldSize);
@@ -509,6 +508,9 @@ void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * ne
 	memcpy(((char *)fusionNewEdPtr) + sizeof(EDITDATA::eHeader),
 		newEdPtr + sizeof(EDITDATA::eHeader),
 		_msize(newEdPtr) - sizeof(EDITDATA::eHeader));
+
+	// This size set cannot be moved before the memcpy calls above; gets overwritten with old value
+	fusionNewEdPtr->DarkEdif_Prop_Size = _msize(newEdPtr);
 	free(newEdPtr);
 
 	edPtr = fusionNewEdPtr; // Inform caller of new address
