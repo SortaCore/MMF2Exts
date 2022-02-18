@@ -244,8 +244,13 @@
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
 
 		<!-- This define is true if you want to machine-uniquely tag your extensions -->
-		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*true\s*?$]]></_DarkEdif_UCTaggingRegex>
-		<DarkEdif_UCTagging Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">1</DarkEdif_UCTagging>
+		<_RunAnalyzerRegex><![CDATA[(?im)^RunStaticCodeAnalysis\s*=\s*([a-z]+)\s*?$]]></_RunAnalyzerRegex>
+		<RunAnalyzerSetting Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_RunAnalyzerRegex)).Success)"
+			></RunAnalyzerSetting>
+
+		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*(.*?)\s*?$]]></_DarkEdif_UCTaggingRegex>
+		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
+		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
 		<ExtVersion>1</ExtVersion>
