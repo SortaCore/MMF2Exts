@@ -17,7 +17,10 @@ Changes until v13 release
 - Edittime/Windows: removed debug popup related to RunMode
 - Windows: Added errors when invalid Windows SDK 8.1/7.0 configuration is detected
 - Windows: Fixed some Visual Studio property display issues (Label attribute in PropertyGroup)
+- Android/iOS: Added current event number reading to mobile platforms - DarkEdif::GetCurrentFusionEventNum()
 - Android/iOS: Fixes to generated template file inside PostBuildTool.
+- Edittime: Fixed text property updating, would potentially corrupt or crash after 2+ edits
+- All platforms: Added Editbox String Multiline property
 
 
 Changes until v12 release

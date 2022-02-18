@@ -180,7 +180,7 @@ public class CRunBluewing_Client extends CRunExtension
 	
 	// Methods accessed from C++ side of DarkEdif via JNI:
 	
-	public int darkedif_jni_getCurrentFusionEventNum ()
+	public int darkedif_jni_getCurrentFusionEventNum()
 	{
 		return this.rh.rhEvtProg.rhEventGroup.evgLine;
 	}

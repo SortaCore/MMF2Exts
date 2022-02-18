@@ -23,6 +23,7 @@ import Expressions.CExpExtension;
 import Actions.CActExtension;
 import Expressions.CValue;
 import Expressions.CNativeExpInstance;
+import RunLoop.CRun;
 
 public class CRunBluewing_Server extends CRunExtension
 {
@@ -179,7 +180,7 @@ public class CRunBluewing_Server extends CRunExtension
 	
 	// Methods accessed from C++ side of DarkEdif via JNI:
 	
-	public int darkedif_jni_getCurrentFusionEventNum ()
+	public int darkedif_jni_getCurrentFusionEventNum()
 	{
 		return this.rh.rhEvtProg.rhEventGroup.evgLine;
 	}

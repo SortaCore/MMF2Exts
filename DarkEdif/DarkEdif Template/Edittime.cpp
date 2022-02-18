@@ -388,4 +388,23 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 #pragma DllExportHint
 }*/
 
+
+// ============================================================================
+// ROUTINES USED WHEN BUILDING
+// ============================================================================
+
+// This routine is called by Fusion when an Android build is prepared before building.
+// It enables you to modify the Android manifest file to add your own content, or otherwise check the Android build.
+// It is called in the Extensions[\Unicode] MFX, for any extension in the MFA that defines PrepareAndroidBuild,
+// including exts that have no corresponding Data\Runtime\Android file and would create a not-compatible build warning.
+/*void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname)
+{
+#pragma DllExportHint
+	// Erase the manifest file so the build will fail
+	std::tstring manifestPath = androidDirectoryPathname;
+	manifestPath += _T("app\\src\\main\\AndroidManifest.xml"sv);
+	// Open manifestPath as a file, say with
+	// _tfopen(manifestPath.c_str(), _T("ab"))
+	// and you're free to edit the manifest
+}*/
 #endif // EditorBuild
