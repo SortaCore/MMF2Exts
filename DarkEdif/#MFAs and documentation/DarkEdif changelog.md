@@ -10,9 +10,14 @@ If you're editing this file, note that the use of a Markdown syntax, two spaces 
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
 
 
+Changes until v14 release
+----
+*v14 not released yet*
+
+
 Changes until v13 release
 ----
-*v13 not released yet*
+*v13 released on 18th February 2022, commit (latest) *
 - Edittime/Windows: several crash fixes to UC tagging feature (testing wasn't done, evidently)
 - Edittime/Windows: removed debug popup related to RunMode
 - Windows: Added errors when invalid Windows SDK 8.1/7.0 configuration is detected
@@ -21,6 +26,7 @@ Changes until v13 release
 - Android/iOS: Fixes to generated template file inside PostBuildTool.
 - Edittime: Fixed text property updating, would potentially corrupt or crash after 2+ edits
 - All platforms: Added Editbox String Multiline property
+- DarkEdif Template: Added PrepareAndroidBuild() example for accessing manifest mid-build
 
 
 Changes until v12 release

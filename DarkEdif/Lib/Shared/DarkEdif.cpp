@@ -1801,7 +1801,10 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resFileExists = false;
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running Fusion as admin, or re-installing the extension."));
+		{
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin."));
+			std::abort();
+		}
 		else // Some other error loading; we'll consider it fatal.
 		{
 			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while reading Data\\Runtime MFX.\n%s"), GetLastError(), drMFXPath.c_str());
@@ -1890,7 +1893,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		FreeLibrary(readHandle);
 		std::abort();
 	}
-	else
+	else // reg key is missing
 		regKey = UC_TAG_NEW_SETUP;
 
 #else // !USE_DARKEDIF_UC_TAGGING
@@ -2181,7 +2184,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
-						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running Fusion as admin, or enabling write permissions for Users role on Fusion folder."), GetLastError());
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin."), GetLastError());
 				}
 				else
 				{
@@ -2199,7 +2202,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running Fusion as admin and dropping a " PROJECT_NAME " extension into frame editor again."));
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin."));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -2221,7 +2224,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (err != 0)
 				{
 					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-						err == ERROR_ACCESS_DENIED ? "Try running Fusion as admin." : "");
+						err == ERROR_ACCESS_DENIED ? _T("Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
 				}
 			}
 

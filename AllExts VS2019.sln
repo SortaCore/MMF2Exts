@@ -115,12 +115,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Bluewing Server.Windows", "
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{0fc68544-b3e5-4632-9bba-7a84eadfc38e}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{1b15e55d-4945-41b7-8b4f-dc100b1d326c}*SharedItemsImports = 4
-		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{1ba4daf2-407f-457c-917b-ee67d3ee7fb5}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{235d1e71-5acd-40ea-907e-017b94533b42}*SharedItemsImports = 9
 		DarkEdif\Bluewing Client\Bluewing Client.Shared.vcxitems*{7bc7f91b-80e1-4f73-8a95-480962eb4e06}*SharedItemsImports = 4
-		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{8002a7ce-24a0-4994-bda4-2b208fa7d7c5}*SharedItemsImports = 9
 		DarkEdif\DarkEdif Template\DarkEdif Template.Shared.vcxitems*{8d71cd83-be30-4b0f-802e-9629805a663a}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{c816ed6f-7494-49e5-b52c-be97d6f6ba8b}*SharedItemsImports = 4
 		DarkEdif\Bluewing Server\Bluewing Server.Shared.vcxitems*{f988ac50-8d68-49c3-a1dd-d58f2a0a6873}*SharedItemsImports = 4

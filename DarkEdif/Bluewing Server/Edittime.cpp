@@ -161,7 +161,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 	return FALSE; // Unchecked
 }
 
-// This routine is called by MMF after a property has been modified.
+// This routine is called by Fusion after a property has been modified.
 void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop * NewParam)
 {
 #pragma DllExportHint
@@ -181,7 +181,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	// mvInvalidateObject(mV, edPtr);
 }
 
-// This routine is called by MMF when the user modifies a checkbox in the properties.
+// This routine is called by Fusion when the user modifies a checkbox in the properties.
 void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL Check)
 {
 #pragma DllExportHint
