@@ -17,7 +17,7 @@ Changes until v14 release
 
 Changes until v13 release
 ----
-*v13 released on 18th February 2022, commit (latest) *
+*v13 released on 18th February 2022, commit [fee5f1a](https://github.com/SortaCore/MMF2Exts/commit/fee5f1a6c0dd9ec988926fb96b2184f1de42c6cb)*
 - Edittime/Windows: several crash fixes to UC tagging feature (testing wasn't done, evidently)
 - Edittime/Windows: removed debug popup related to RunMode
 - Windows: Added errors when invalid Windows SDK 8.1/7.0 configuration is detected
