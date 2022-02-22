@@ -4,7 +4,7 @@
 	"UK English": {
 		"About": {
 			"Name": "AndroidManifestMod",
-			"Author": "Darkiwre Software",
+			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
 			"Comment": "Allows the Fusion developer to modify the Android manifest during build. (b%i)",
 			"Help": "Help/AndroidManifestMod.chm",
