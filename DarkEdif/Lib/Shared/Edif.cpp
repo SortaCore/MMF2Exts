@@ -1488,7 +1488,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		mov ecx, ParameterCount
 		cmp ecx, 0
 			je CallNow
-		mov edx, Parameters
+		lea edx, Parameters
 		mov ebx, ecx
 		shl ebx, 2
 		add edx, ebx
