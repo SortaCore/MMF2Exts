@@ -495,24 +495,26 @@ struct GlobalInfo
 	// Handling manner for messages. Not waiting for Fusion to handle it in main thread causes a blisteringly fast automatic
 	// handling system, but sometimes it is necessary to have something more complex.
 	// Approve_Quiet = sends an OK message immediately, does not notify Fusion
-	// Deny_Quiet = sends a Failed message immediately, does not notify Fusion
+	// Deny_Quiet = sends a Denied message immediately, does not notify Fusion
 	// Approve_TellFusion = approves the event immediately, queues Fusion On [...] request event
-	// Deny_TellFusion = sends a Failed message immediately, queues Fusion On [...] request event with preset deny reason
+	// Deny_TellFusion = sends a Denied message immediately, queues Fusion On [...] request event with preset deny reason
 	// WaitForFusion = sends no message, queues Fusion On [...] request event, and after all triggered events finish
-	//				   on Fusion's side, sends an OK or Failed message, based on whether a Deny action was run or not.
+	//				   on Fusion's side, sends an OK or Denied message, based on whether a Deny action was run or not.
 	//
 	// The deny reasons here are only used in Deny_Quiet/Deny_TellFusion.
 	// It is not possible to set anything except WaitForFusion and Deny_Quiet for messages to server.
 	// Some handlers will not even be set in liblacewing side, but some are required for Fusion to stay in sync,
 	// e.g. channel local data cannot be freed unless channel close handler is run.
 
-	AutoResponse autoResponse_Connect = AutoResponse::Approve_Quiet;
+	// As of b29, defaults match what Relay Server uses, to avoid confusion
+	// Prior builds would only run server message events by default, for efficiency
+	AutoResponse autoResponse_Connect = AutoResponse::Approve_TellFusion;
 	std::string autoResponse_Connect_DenyReason;
-	AutoResponse autoResponse_NameSet = AutoResponse::Approve_Quiet;
+	AutoResponse autoResponse_NameSet = AutoResponse::Approve_TellFusion;
 	std::string autoResponse_NameSet_DenyReason;
-	AutoResponse autoResponse_ChannelJoin = AutoResponse::Approve_Quiet;
+	AutoResponse autoResponse_ChannelJoin = AutoResponse::Approve_TellFusion;
 	std::string autoResponse_ChannelJoin_DenyReason;
-	AutoResponse autoResponse_ChannelLeave = AutoResponse::Approve_Quiet;
+	AutoResponse autoResponse_ChannelLeave = AutoResponse::Approve_TellFusion;
 	std::string autoResponse_ChannelLeave_DenyReason;
 	AutoResponse autoResponse_MessageClient = AutoResponse::Approve_Quiet;
 	AutoResponse autoResponse_MessageChannel = AutoResponse::Approve_Quiet;

@@ -184,7 +184,7 @@ void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediate
 		return;
 	globals->autoResponse_Connect = resp;
 	globals->autoResponse_Connect_DenyReason = autoDenyReasonU8;
-	Srv.onconnect(::OnClientConnectRequest);
+	Srv.onconnect(resp != AutoResponse::Approve_Quiet ? ::OnClientConnectRequest : nullptr);
 }
 void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
@@ -217,8 +217,8 @@ void Extension::EnableCondition_OnLeaveChannelRequest(int informFusion, int imme
 		return;
 	globals->autoResponse_ChannelLeave = resp;
 	globals->autoResponse_ChannelLeave_DenyReason = autoDenyReasonU8;
-	// If local data for channel is used at all, we don't want it dangling, so make sure OnLeave is always ran.
-	Srv.onchannel_leave(::OnLeaveChannelRequest);
+	// Local data for channel is cleared by channel close function, not channel leave
+	Srv.onchannel_leave(resp != AutoResponse::Approve_Quiet ? ::OnLeaveChannelRequest : nullptr);
 }
 void Extension::EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith)
 {
@@ -247,7 +247,8 @@ void Extension::EnableCondition_OnMessageToServer(int informFusion)
 
 	// This one's handled a bit differently; there is no auto approve/deny.
 	// The message is either read by Fusion or discarded immediately.
-	// Note that the Unicode allowlist is only tested if onmessage_server is set to a function
+
+	// Note: the Unicode allowlist for server messageis only tested if onmessage_server is set to non-null
 	globals->autoResponse_MessageServer = informFusion == 1 ? AutoResponse::WaitForFusion : AutoResponse::Deny_Quiet;
 	Srv.onmessage_server(informFusion == 1 ? ::OnServerMessage : nullptr);
 }

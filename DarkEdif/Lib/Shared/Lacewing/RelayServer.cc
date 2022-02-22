@@ -2828,7 +2828,7 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	{
 		static char const * const end = "pproved client name is null or empty. Name refused.";
 		if (denyReason != nullptr)
-			lw_sprintf_s(newDenyReason, "%*s\r\nPlus a%s", (lw_i32)denyReason.size(), denyReason.data(), end);
+			lw_sprintf_s(newDenyReason, "%.*s\r\nPlus a%s", (lw_i32)denyReason.size(), denyReason.data(), end);
 		else
 			lw_sprintf_s(newDenyReason, "A%s", end);
 		denyReason = newDenyReason;

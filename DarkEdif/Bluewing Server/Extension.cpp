@@ -257,9 +257,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	isGlobal = edPtr->isGlobal;
 
-	char msgBuff[500];
-	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Extension create: IsGlobal=%i.\n", isGlobal ? 1 : 0);
-	OutputDebugStringA(msgBuff);
+	LOGV(_T("" PROJECT_NAME " - Extension create: IsGlobal=%i.\n"), isGlobal ? 1 : 0);
 	if (isGlobal)
 	{
 		const std::tstring id = UTF8ToTString(edPtr->edGlobalID) + _T("BlueServer"s);
@@ -269,7 +267,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		MakeNewGlobalInfo:
 			globals = new GlobalInfo(this, edPtr);
 			Runtime.WriteGlobal(id.c_str(), globals);
-			OutputDebugStringA(PROJECT_NAME " - Created new globals.\n");
+			LOGV(_T("" PROJECT_NAME " - Created new globals.\n"));
 		}
 		else // Add this Extension to extsHoldingGlobals
 		{
@@ -279,7 +277,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 			if (globals->pendingDelete)
 			{
-				OutputDebugStringA(PROJECT_NAME " - Pending delete is true. Deleting.\n");
+				LOGV(_T("" PROJECT_NAME " - Pending delete is true. Deleting.\n"));
 				globals->lock.edif_unlock();
 				delete globals;
 				goto MakeNewGlobalInfo;
@@ -301,7 +299,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 			globals->extsHoldingGlobals.push_back(this);
 			if (!globals->_ext)
 				globals->_ext = this;
-			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
+			LOGV(_T("" PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n"));
 
 			// globals->timeoutThread is now invalid
 			std::thread timeoutThread(std::move(globals->timeoutThread));
@@ -309,16 +307,16 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 			if (timeoutThread.joinable())
 			{
-				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
+				LOGV(_T("" PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n"));
 				globals->cancelTimeoutThread = true;
 				timeoutThread.join(); // Wait for end
-				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
+				LOGV(_T("" PROJECT_NAME " - Timeout thread has closed.\n"));
 			}
 		}
 	}
 	else
 	{
-		OutputDebugStringA(PROJECT_NAME " - Non-Global object; creating globals, not submitting to WriteGlobal.\n");
+		LOGV(_T("" PROJECT_NAME " - Non-Global object; creating globals, not submitting to WriteGlobal.\n"));
 		globals = new GlobalInfo(this, edPtr);
 
 		globals->_objEventPump->tick();
@@ -368,7 +366,6 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 			writeTo = _T("All channel count: ") + std::to_tstring(ext->Srv.channelcount());
 		else
 			writeTo = _T("All channel count: N/A"sv);
-
 	};
 	FusionDebugger.AddItemToDebugger(channelCountDebugItemReader, NULL, 500, NULL);
 
@@ -427,7 +424,7 @@ void LacewingLoopThread(Extension * ext)
 		// Can't error report if there's no extension to error-report to.
 		// Worst case scenario CreateError calls Runtime.Rehandle which breaks because ext is gone.
 		if (!error)
-			OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread closing gracefully.\n");
+			LOGV(_T("" PROJECT_NAME " - LacewingLoopThread closing gracefully.\n"));
 		else if (G->_ext)
 		{
 			std::string text = "Error returned by StartEventLoop(): ";
@@ -438,7 +435,7 @@ void LacewingLoopThread(Extension * ext)
 	}
 	catch (...)
 	{
-		OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread got an exception.\n");
+		LOGV(_T("" PROJECT_NAME " - LacewingLoopThread got an exception.\n"));
 		if (G->_ext)
 			G->CreateError("StartEventLoop() killed by exception. Switching to single-threaded.");
 		// You would normally think of setting G->_thread to none, but we don't need to. Once the
@@ -451,7 +448,7 @@ void LacewingLoopThread(Extension * ext)
 	Edif::Runtime::DetachJVMAccessForThisThread();
 #endif
 
-	OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread has exited.\n");
+	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
 }
 
 GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
@@ -479,17 +476,28 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	// Timer as ten minutes, or disabled.
 	_server.setinactivitytimer(enableInactivityTimer ? 10 * 60 * 1000 : INT32_MAX);
 
+	// Always ran for cleanup and logging
 	_server.onerror(::OnError);
-	_server.onconnect(::OnClientConnectRequest);
-	_server.onnameset(::OnNameSetRequest);
-	_server.onchannel_join(::OnJoinChannelRequest);
-	_server.onchannel_leave(::OnLeaveChannelRequest);
-	_server.onchannel_close(::OnChannelClose);
-	_server.onmessage_server(::OnServerMessage);
 	_server.ondisconnect(::OnClientDisconnect);
+	_server.onchannel_close(::OnChannelClose);
+
+	// The default auto responses here are set where autoResponses are declared in struct
 	// Approve quiet needs no handler
-	//_server.onmessage_channel(::OnChannelMessage);
-	//_server.onmessage_peer(::OnPeerMessage);
+	if (autoResponse_Connect != AutoResponse::Approve_Quiet)
+		_server.onconnect(::OnClientConnectRequest);
+	if (autoResponse_NameSet != AutoResponse::Approve_Quiet)
+		_server.onnameset(::OnNameSetRequest);
+	if (autoResponse_ChannelJoin != AutoResponse::Approve_Quiet)
+		_server.onchannel_join(::OnJoinChannelRequest);
+	if (autoResponse_ChannelLeave != AutoResponse::Approve_Quiet)
+		_server.onchannel_leave(::OnLeaveChannelRequest);
+	if (autoResponse_MessageServer != AutoResponse::Approve_Quiet)
+		_server.onmessage_server(::OnServerMessage);
+
+	if (autoResponse_MessageChannel != AutoResponse::Approve_Quiet)
+		_server.onmessage_channel(::OnChannelMessage);
+	if (autoResponse_MessageClient != AutoResponse::Approve_Quiet)
+		_server.onmessage_peer(::OnPeerMessage);
 
 	// RelayServer combines flash policy errors with regular errors.
 	// So this is handled by _server.onerror
@@ -569,19 +577,17 @@ void GlobalInfo::MarkAsPendingDelete()
 		std::this_thread::yield();
 		_thread.join();
 
-		OutputDebugStringA(PROJECT_NAME " - Lacewing loop thread should have ended.\n");
+		LOGV(_T("" PROJECT_NAME " - Lacewing loop thread should have ended.\n"));
 	}
 	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
 	{
 		lacewing::error err = _objEventPump->tick();
 		if (err != NULL)
 		{
-			// No way to report it; the last ext is being destroyed.
-			std::stringstream errStr;
-			errStr << PROJECT_NAME " - Pump closed with error \"" << err->tostring() << "\".\n";
-			OutputDebugStringA(errStr.str().c_str());
+			// No way to report it to Fusion itself; the last ext is being destroyed.
+			LOGE(_T("" PROJECT_NAME " - Pump closed with error \"%s\".\n"), UTF8ToTString(err->tostring()).c_str());
 		}
-		OutputDebugStringA(PROJECT_NAME " - Pump should be closed.\n");
+		LOGV(_T("" PROJECT_NAME " - Pump should be closed.\n"));
 		std::this_thread::yield();
 	}
 
@@ -589,9 +595,9 @@ void GlobalInfo::MarkAsPendingDelete()
 }
 void eventpumpdeleter(lacewing::eventpump pump)
 {
-	OutputDebugStringA(PROJECT_NAME " - pump deleting...\n");
+	LOGV(_T("" PROJECT_NAME " - pump deleting...\n"));
 	lacewing::pump_delete(pump);
-	OutputDebugStringA(PROJECT_NAME " - pump deleted.\n");
+	LOGV(_T("" PROJECT_NAME " - pump deleted.\n"));
 	_CrtCheckMemory();
 }
 
@@ -1188,53 +1194,53 @@ REFLAG Extension::Handle()
 }
 
 // Only called by Handle().
-void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
+void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> evt)
 {
 #define EnterSectionIfMultiThread(x) if (GThread.joinable()) { x.edif_lock(); std::this_thread::yield(); }
 #define LeaveSectionIfMultiThread(x) if (GThread.joinable()) { x.edif_unlock(); }
-	if (s->InteractiveType == InteractiveType::ConnectRequest)
+	if (evt->InteractiveType == InteractiveType::ConnectRequest)
 	{
 		if (globals->autoResponse_Connect == AutoResponse::WaitForFusion
-			&& !s->senderClient->readonly())
+			&& !evt->senderClient->readonly())
 		{
 			EnterSectionIfMultiThread(globals->lock);
-			Srv.connect_response(s->senderClient, DenyReason.c_str());
+			Srv.connect_response(evt->senderClient, DenyReason.c_str());
 
 			// Disconnected by Fusion: reflect in copy
 			if (!DenyReason.empty())
 			{
 				// Mark as disconnected
-				s->senderClient->disconnect();
+				evt->senderClient->disconnect();
 
 				// Trick the running for loop that called HandleInteractiveEvent() into running a CLEAR_EVTNUM event,
 				// to cleanup immediately
-				assert(s->numEvents == 1); // connect req must be one event for this to work
-				s->CondTrig[1] = CLEAR_EVTNUM;
-				s->numEvents = 2;
+				assert(evt->numEvents == 1); // connect req must be one event for this to work
+				evt->CondTrig[1] = CLEAR_EVTNUM;
+				evt->numEvents = 2;
 			}
 			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
-	else if (s->InteractiveType == InteractiveType::ClientNameSet)
+	else if (evt->InteractiveType == InteractiveType::ClientNameSet)
 	{
 		if (globals->autoResponse_NameSet == AutoResponse::WaitForFusion
-			&& !s->senderClient->readonly())
+			&& !evt->senderClient->readonly())
 		{
 			EnterSectionIfMultiThread(globals->lock);
-			Srv.nameset_response(s->senderClient, NewClientName, DenyReason.c_str());
+			Srv.nameset_response(evt->senderClient, NewClientName, DenyReason.c_str());
 
 			if (!DenyReason.empty())
-				s->senderClient->name(NewClientName);
+				evt->senderClient->name(NewClientName);
 			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
-	else if (s->InteractiveType == InteractiveType::ChannelJoin)
+	else if (evt->InteractiveType == InteractiveType::ChannelJoin)
 	{
 		if (globals->autoResponse_ChannelJoin == AutoResponse::WaitForFusion
-			&& !s->channel->readonly() && !s->senderClient->readonly())
+			&& !evt->channel->readonly() && !evt->senderClient->readonly())
 		{
 			std::string denyReason = DenyReason;
-			auto channelToJoinTo = s->channel;
+			auto channelToJoinTo = evt->channel;
 
 			if (denyReason.empty())
 			{
@@ -1243,11 +1249,11 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 				{
 					const std::string newChannelNameU8Simplified = lw_u8str_simplify(NewChannelName);
 					// New channel name is in use by another channel
-					auto channelWriteLock = s->channel->lock.createWriteLock();
+					auto channelWriteLock = evt->channel->lock.createWriteLock();
 					auto serverReadLock = Srv.lock.createReadLock();
 					auto channels = Srv.getchannels();
 					auto srvChIt = std::find_if(channels.cbegin(), channels.cend(),
-						[&](const auto & otherCh) { return otherCh != s->channel && lw_sv_cmp(newChannelNameU8Simplified, otherCh->nameSimplified()); });
+						[&](const auto & otherCh) { return otherCh != evt->channel && lw_sv_cmp(newChannelNameU8Simplified, otherCh->nameSimplified()); });
 
 					if (srvChIt != channels.cend())
 					{
@@ -1259,35 +1265,35 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 						//	CreateError(text);
 					}
 					else // Rename channel
-						s->channel->name(NewChannelName);
+						evt->channel->name(NewChannelName);
 				}
 			}
 
 			// Deny, create or join channel
-			Srv.joinchannel_response(s->channel, s->senderClient, denyReason);
+			Srv.joinchannel_response(evt->channel, evt->senderClient, denyReason);
 		} // is any closed
 	}
-	else if (s->InteractiveType == InteractiveType::ChannelLeave)
+	else if (evt->InteractiveType == InteractiveType::ChannelLeave)
 	{
 		if (globals->autoResponse_ChannelLeave == AutoResponse::WaitForFusion
-			&& !s->channel->readonly() && !s->senderClient->readonly())
+			&& !evt->channel->readonly() && !evt->senderClient->readonly())
 		{
-			Srv.leavechannel_response(s->channel, s->senderClient, DenyReason.c_str());
+			Srv.leavechannel_response(evt->channel, evt->senderClient, DenyReason.c_str());
 		}
 	}
-	else if (s->InteractiveType == InteractiveType::ChannelMessageIntercept)
+	else if (evt->InteractiveType == InteractiveType::ChannelMessageIntercept)
 	{
 		if (globals->autoResponse_MessageChannel == AutoResponse::WaitForFusion)
 		{
-			if (!DropMessage && (s->channel->readonly() || s->senderClient->readonly()))
+			if (!DropMessage && (evt->channel->readonly() || evt->senderClient->readonly()))
 				DropMessage = true;
 
 			// s->senderClient may not be accurate, since user selection will alter Client,
 			// and it overlaps with Client. Refer to original event "s".
-			Srv.channelmessage_permit(s->senderClient, s->channel,
-				s->receivedMsg.blasted, s->receivedMsg.subchannel,
-				s->receivedMsg.content,
-				s->receivedMsg.variant, !DropMessage);
+			Srv.channelmessage_permit(evt->senderClient, evt->channel,
+				evt->receivedMsg.blasted, evt->receivedMsg.subchannel,
+				evt->receivedMsg.content,
+				evt->receivedMsg.variant, !DropMessage);
 		}
 
 		// Replace messages not programmed.
@@ -1297,21 +1303,21 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 		//srv.channelmessage_permit(*s->channel, *s->senderClient,
 		//	s->receivedMsg.content, s->MsgToSend.size, s->receivedMsg.subchannel);
 	}
-	else if (s->InteractiveType == InteractiveType::ClientMessageIntercept)
+	else if (evt->InteractiveType == InteractiveType::ClientMessageIntercept)
 	{
 		if (globals->autoResponse_MessageClient == AutoResponse::WaitForFusion)
 		{
-			if (!DropMessage && (s->channel->readonly() ||
-				s->senderClient->readonly() || s->receivingClient->readonly()))
+			if (!DropMessage && (evt->channel->readonly() ||
+				evt->senderClient->readonly() || evt->receivingClient->readonly()))
 			{
 				DropMessage = true;
 			}
 
-			Srv.clientmessage_permit(s->senderClient, s->channel,
-				s->receivingClient,
-				s->receivedMsg.blasted, s->receivedMsg.subchannel,
-				s->receivedMsg.content,
-				s->receivedMsg.variant, !DropMessage);
+			Srv.clientmessage_permit(evt->senderClient, evt->channel,
+				evt->receivingClient,
+				evt->receivedMsg.blasted, evt->receivedMsg.subchannel,
+				evt->receivedMsg.content,
+				evt->receivedMsg.variant, !DropMessage);
 		}
 	}
 	else
@@ -1322,30 +1328,30 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> s)
 }
 
 // Only called by Handle().
-void Extension::DeselectIfDestroyed(std::shared_ptr<EventToRun> s)
+void Extension::DeselectIfDestroyed(std::shared_ptr<EventToRun> evt)
 {
 	// If channel, it's a channel close
-	if (s->channel)
+	if (evt->channel)
 	{
-		assert(s->channel->readonly());
-		Srv.closechannel_finish(s->channel);
+		assert(evt->channel->readonly());
+		Srv.closechannel_finish(evt->channel);
 
-		globals->ClearLocalData(s->channel);
+		globals->ClearLocalData(evt->channel);
 
 		for (auto dropExt : globals->extsHoldingGlobals)
-			if (dropExt->selChannel == s->channel)
+			if (dropExt->selChannel == evt->channel)
 				dropExt->selChannel = nullptr;
 	}
 	// No channel, client: client is disconnecting.
-	else if (s->senderClient)
+	else if (evt->senderClient)
 	{
-		assert(s->senderClient->readonly());
-		globals->ClearLocalData(s->senderClient);
+		assert(evt->senderClient->readonly());
+		globals->ClearLocalData(evt->senderClient);
 
 		// Make sure user doesn't have them selected.
 		for (auto dropExt : globals->extsHoldingGlobals)
 		{
-			if (dropExt->selClient == s->senderClient)
+			if (dropExt->selClient == evt->senderClient)
 				dropExt->selClient = nullptr;
 		}
 	}
@@ -1362,13 +1368,12 @@ void Extension::DeselectIfDestroyed(std::shared_ptr<EventToRun> s)
 	}
 }
 
-void ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
+void ObjectDestroyTimeoutFunc(GlobalInfo * G)
 {
-	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
+	LOGV(_T("" PROJECT_NAME " - timeout thread: startup.\n"));
 	bool appWasClosed;
 	int triggeredHandle = -1;
 
-	GlobalInfo * G = (GlobalInfo *)ThisGlobalsInfo;
 #ifdef __ANDROID__
 	Edif::Runtime::AttachJVMAccessForThisThread(PROJECT_NAME " Timeout Thread");
 #endif
@@ -1377,14 +1382,14 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 	// it's cool, just close silently
 	if (!G->extsHoldingGlobals.empty())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n"));
 		goto exitThread;
 	}
 
 	// If not hosting, no clients to worry about dropping
 	if (!G->_server.hosting())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout server not hosting, exiting.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: pre timeout server not hosting, exiting.\n"));
 		goto exitThread;
 	}
 
@@ -1407,7 +1412,7 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 	}
 	if (triggeredHandle == 0)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n"));
 		goto exitThread;
 	}
 	appWasClosed = triggeredHandle == 1;
@@ -1422,13 +1427,13 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * ThisGlobalsInfo)
 
 	if (!G->_server.hosting())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout server not hosting, killing globals safely.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: post timeout server not hosting, killing globals safely.\n"));
 		goto killGlobalsAndExitThread;
 	}
 
 	if (!appWasClosed && G->timeoutWarningEnabled)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: timeout warning message.\n");
+		LOGI(_T("" PROJECT_NAME " - timeout thread: timeout warning message.\n"));
 
 		// Otherwise, fuss at them.
 		DarkEdif::MsgBox::Custom(MB_ICONWARNING | MB_TOPMOST,
@@ -1446,7 +1451,7 @@ killGlobalsAndExitThread:
 
 	if (!appWasClosed)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n"));
 		G->MarkAsPendingDelete();
 	}
 	G->lock.edif_unlock();
@@ -1454,7 +1459,7 @@ killGlobalsAndExitThread:
 	// App was closed, we can completely delete the memory
 	if (appWasClosed)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: actual delete globals.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: actual delete globals.\n"));
 		delete G;
 	}
 
@@ -1467,9 +1472,7 @@ exitThread:
 
 Extension::~Extension()
 {
-	char msgBuff[500];
-	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
-	OutputDebugStringA(msgBuff);
+	LOGV(_T("" PROJECT_NAME " - ~Extension called; extsHoldingGlobals count is %zu.\n"), globals->extsHoldingGlobals.size());
 
 	globals->lock.edif_lock();
 
@@ -1483,7 +1486,7 @@ Extension::~Extension()
 	// Shift secondary event management to other Extension, if any
 	if (!globals->extsHoldingGlobals.empty())
 	{
-		OutputDebugStringA(PROJECT_NAME " - Note: Switched Lacewing instances.\n");
+		LOGV(_T("" PROJECT_NAME " - Note: Switched Lacewing instances.\n"));
 
 		// Switch Handle ticking over to next Extension visible.
 		if (wasBegin)
@@ -1507,18 +1510,18 @@ Extension::~Extension()
 	else
 	{
 		if (!globals->_server.hosting())
-			OutputDebugStringA(PROJECT_NAME " - Not hosting, nothing important to retain, closing globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Not hosting, nothing important to retain, closing globals info.\n"));
 		else if (!isGlobal)
-			OutputDebugStringA(PROJECT_NAME " - Not global, closing globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Not global, closing globals info.\n"));
 		else if (globals->fullDeleteEnabled)
-			OutputDebugStringA(PROJECT_NAME " - Full delete enabled, closing globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Full delete enabled, closing globals info.\n"));
 		// Wait for 0ms returns immediately as per spec
 		else if (AppWasClosed)
-			OutputDebugStringA(PROJECT_NAME " - App was closed, closing globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - App was closed, closing globals info.\n"));
 		else // !globals->fullDeleteEnabled
 		{
-			OutputDebugStringA(PROJECT_NAME " - Last instance dropped, and currently hosting - "
-				"globals will be retained until a Unhost is called.\n");
+			LOGV(_T("" PROJECT_NAME " - Last instance dropped, and currently hosting - "
+				"globals will be retained until a Unhost is called.\n"));
 			globals->_ext = nullptr;
 			globals->lastDestroyedExtSelectedChannel = selChannel;
 			globals->lastDestroyedExtSelectedClient = selClient;
@@ -1527,11 +1530,10 @@ Extension::~Extension()
 			selChannel = nullptr;
 			globals->lock.edif_unlock();
 
-			sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
+			LOGV(_T("" PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n"),
 				globals->timeoutWarningEnabled
-				? "a warning message will be shown"
-				: "the hosting will terminate and all pending messages will be discarded");
-			OutputDebugStringA(msgBuff);
+				? _T("a warning message will be shown")
+				: _T("the hosting will terminate and all pending messages will be discarded"));
 
 			// Note the timeout thread does not delete globals. It can't, as Runtime.WriteGlobal() requires a valid Extension.
 			// Instead, the thread marks it as pending delete and cleans up everything but does not free the memory.

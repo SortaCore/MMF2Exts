@@ -210,4 +210,31 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	DarkEdif::MsgBox::Error(_T("Unknown property"), _T("Unknown property ID %u given to SetPropCheck() call."), ID);
 }
 
+// This routine is called by Fusion when an Android build happens, in the Extensions[\Unicode] MFX.
+// It enables you to modify the manifest file to add your own content, or otherwise check the Android build.
+void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirectoryPathname)
+{
+#pragma DllExportHint
+
+	// Android permissions: 5 is access network state, 7 access wifi state, 13 bluetooth, 14 bluetooth admin, 50 internet,
+	// 115 nfc, 25 change network state, 26 change wifi multicast state, 27 change wifi state
+	//
+	// The permissions do not 1:1 match the index in the Fusion properties window, so you'll have to loop through them to work out the ID.
+	// They match between CF2.5 and MMF2.0, but 2.0 lacks some permissions (105+, so including NFC).
+
+	DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 50);
+	if (hasINTERNETPerm == TRUE)
+		return;
+
+	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing, please enable the INTERNET permission in application "
+		"properties under the Android tab.\nAborting build with a SAXParseException."));
+
+	// Erase the manifest file so the build will fail
+	std::tstring manifestPath = androidDirectoryPathname;
+	manifestPath += _T("app\\src\\main\\AndroidManifest.xml"sv);
+	FILE * manifest = _tfopen(manifestPath.c_str(), _T("wb"));
+	fputs("<!-- Enable the INTERNET permission! ~love from " PROJECT_NAME " -->", manifest);
+	fclose(manifest);
+}
+
 #endif // EditorBuild

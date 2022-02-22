@@ -9,6 +9,7 @@
 */
 
 package Extensions;
+import android.Manifest;
 import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -24,6 +25,7 @@ import Actions.CActExtension;
 import Expressions.CValue;
 import Expressions.CNativeExpInstance;
 import RunLoop.CRun;
+import Runtime.PermissionsHelper;
 
 public class CRunBluewing_Server extends CRunExtension
 {
@@ -78,8 +80,16 @@ public class CRunBluewing_Server extends CRunExtension
 	@Override
 	public boolean createRunObject(CBinaryFile file, CCreateObjectInfo cob, int version)
 	{
-		// No need to request Internet or AccessNetworkState perms at runtime:
+		// No need to request Internet or AccessNetworkState perms at runtime; they're only requested at install/update time.
 		// https://developer.android.com/training/basics/network-ops/connecting#:~:text=%20both%20the%20internet%20and%20access_network_state%20
+		
+		// Missing INTERNET perm results in DNS not working on Client, who knows what it does on Server, so check we have it
+		if (!PermissionsHelper.getInstance().hasPermission(MMFRuntime.inst.getApplicationContext(), Manifest.permission.INTERNET))
+		{
+			android.util.Log.wtf("Bluewing_Server", "INTERNET permission not granted!");
+			return false;
+		}
+		android.util.Log.i("Bluewing_Server", "INTERNET permission granted.");
 		
 		// CRunNativeExtension's createRunObject() does not expect "file" to be non-null all the time,
 		// so this function doesn't either.

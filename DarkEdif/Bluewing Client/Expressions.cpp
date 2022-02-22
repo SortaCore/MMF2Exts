@@ -222,7 +222,7 @@ const TCHAR * Extension::Lacewing_Version()
 	if (version[0] == _T('\0'))
 	{
 		std::tstringstream str;
-		str << lw_version() << _T(" / Bluewing ");
+		str << UTF8ToTString(lw_version()) << _T(" / Bluewing ");
 #ifdef _UNICODE
 		str << _T("Unicode ");
 #endif

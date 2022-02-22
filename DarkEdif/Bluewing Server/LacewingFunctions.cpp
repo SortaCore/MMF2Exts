@@ -39,8 +39,9 @@ void OnClientConnectRequest(lacewing::relayserver &server, std::shared_ptr<lacew
 		}
 	}
 
-	// We're denying it, but telling Fusion about the connect attempt.
-	// Run event CLEAR_EVTNUM to delete the client shared_ptr immediately after Fusion gets connect request notification.
+	// If we're denying it, but telling Fusion about the connect attempt,
+	// then after disconnect event (ID 1) we run event CLEAR_EVTNUM to clean up the
+	// client shared_ptr immediately after ID 1 is done.
 	bool twoEvents = globals->autoResponse_Connect == AutoResponse::Deny_TellFusion;
 	globals->AddEventF(twoEvents, 1, twoEvents ? CLEAR_EVTNUM : DUMMY_EVTNUM,
 		nullptr, client, std::string_view(), 255, nullptr, InteractiveType::ConnectRequest);
@@ -89,7 +90,7 @@ bool OnChannelClose(lacewing::relayserver & server, std::shared_ptr<lacewing::re
 {
 	globals->AddEvent2(59, CLEAR_EVTNUM, channel);
 
-	// We can't prevent a channel closure, but returning false indicates the closure should be suspended,
+	// We can't prevent a channel closure, but returning false indicate the clsosure should be suspended,
 	// with the messages and peer lists not updated until server.closechannel_finish() is run, by the queued CLEAR_EVTNUM.
 	return false;
 }

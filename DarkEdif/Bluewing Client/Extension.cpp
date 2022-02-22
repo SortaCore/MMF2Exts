@@ -269,16 +269,14 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	}
 #endif
 
-	char msgBuff[500];
-	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " - Extension create: isGlobal=%hhu (bool %i), automaticClearBinary=%hhu (bool %i),"
-		" fullDeleteEnabled=%hhu (bool %i), multiThreading=%hhu (bool %i), timeoutWarningEnabled=%hhu (bool %i), global ID \"%s\".\n",
+	LOGV(_T("" PROJECT_NAME " - Extension create: isGlobal=%hhu (bool %i), automaticClearBinary=%hhu (bool %i),"
+		" fullDeleteEnabled=%hhu (bool %i), multiThreading=%hhu (bool %i), timeoutWarningEnabled=%hhu (bool %i), global ID \"%s\".\n"),
 		*(std::uint8_t *)&edPtr->isGlobal, edPtr->isGlobal ? 1 : 0,
 		*(std::uint8_t *)&edPtr->automaticClear, edPtr->automaticClear ? 1 : 0,
 		*(std::uint8_t *)&edPtr->fullDeleteEnabled, edPtr->fullDeleteEnabled ? 1 : 0,
 		*(std::uint8_t *)&edPtr->multiThreading, edPtr->multiThreading ? 1 : 0,
 		*(std::uint8_t *)&edPtr->timeoutWarningEnabled, edPtr->timeoutWarningEnabled ? 1 : 0,
-		edPtr->edGlobalID);
-	OutputDebugStringA(msgBuff);
+		UTF8ToTString(edPtr->edGlobalID).c_str());
 
 	if (isGlobal)
 	{
@@ -289,7 +287,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		MakeNewGlobalInfo:
 			globals = new GlobalInfo(this, edPtr);
 			Runtime.WriteGlobal(id.c_str(), globals);
-			OutputDebugStringA(PROJECT_NAME " - Created new Globals.\n");
+
+			LOGV(_T("" PROJECT_NAME " - Created new Globals.\n"));
 		}
 		else // Add this Extension to extsHoldingGlobals to inherit control later
 		{
@@ -299,7 +298,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 			if (globals->pendingDelete)
 			{
-				OutputDebugStringA(PROJECT_NAME " - Pending delete is true. Deleting.\n");
+				LOGV(_T("" PROJECT_NAME " - Pending delete is true. Deleting.\n"));
 				globals->lock.edif_unlock();
 				delete globals;
 				goto MakeNewGlobalInfo;
@@ -320,7 +319,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 			globals->extsHoldingGlobals.push_back(this);
 			if (!globals->_ext)
 				globals->_ext = this;
-			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
+			LOGV(_T("" PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n"));
 
 			// globals->timeoutThread is now invalid
 			std::thread timeoutThread(std::move(globals->timeoutThread));
@@ -329,16 +328,16 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 			// If timeout thread, join to wait for it
 			if (timeoutThread.joinable())
 			{
-				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
+				LOGV(_T("" PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n"));
 				globals->cancelTimeoutThread = true;
 				timeoutThread.join(); // Wait for end
-				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
+				LOGV(_T("" PROJECT_NAME " - Timeout thread has closed.\n"));
 			}
 		}
 	}
 	else
 	{
-		OutputDebugStringA(PROJECT_NAME " - Non-Global object; creating Globals, not submitting to WriteGlobal.\n");
+		LOGV(_T("" PROJECT_NAME " - Non-Global object; creating Globals, not submitting to WriteGlobal.\n"));
 		globals = new GlobalInfo(this, edPtr);
 
 		globals->_objEventPump->tick();
@@ -451,7 +450,7 @@ void LacewingLoopThread(void * thisExt)
 		// Can't error report if there's no extension to error-report to.
 		// Worst case scenario CreateError calls Runtime.Rehandle which breaks because ext is gone.
 		if (!error)
-			OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread closing gracefully.\n");
+			LOGV(_T("" PROJECT_NAME " - LacewingLoopThread closing gracefully.\n"));
 		else if (G->_ext)
 		{
 			std::string text = "Error returned by StartEventLoop(): ";
@@ -462,7 +461,7 @@ void LacewingLoopThread(void * thisExt)
 	}
 	catch (...)
 	{
-		OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread got an exception.\n");
+		LOGV(_T("" PROJECT_NAME " - LacewingLoopThread got an exception.\n"));
 		if (G->_ext)
 			G->CreateError("StartEventLoop() killed by exception. Switching to single-threaded.");
 		// You would normally think of setting G->_thread to none, but we don't need to. Once the
@@ -474,8 +473,7 @@ void LacewingLoopThread(void * thisExt)
 	JNIExceptionCheck();
 	Edif::Runtime::DetachJVMAccessForThisThread();
 #endif
-
-	OutputDebugStringA(PROJECT_NAME " - LacewingLoopThread has exited.\n");
+	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
 	return;
 }
 
@@ -883,9 +881,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 
 Extension::~Extension()
 {
-	char msgBuff[500];
-	sprintf_s(msgBuff, std::size(msgBuff), PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %zu.\n", globals->extsHoldingGlobals.size());
-	OutputDebugStringA(msgBuff);
+	LOGV(_T("" PROJECT_NAME " ~Extension called; extsHoldingGlobals count is %zu.\n"), globals->extsHoldingGlobals.size());
 
 	globals->lock.edif_lock();
 	// Remove this Extension from liblacewing usage.
@@ -898,7 +894,7 @@ Extension::~Extension()
 	// Shift secondary event management to other Extension, if any
 	if (!globals->extsHoldingGlobals.empty())
 	{
-		OutputDebugStringA(PROJECT_NAME " - Note: Switched Lacewing instances.\n");
+		LOGV(_T("" PROJECT_NAME " - Note: Switched Lacewing instances.\n"));
 
 		// Switch Handle ticking over to next Extension visible.
 		if (wasBegin)
@@ -921,18 +917,18 @@ Extension::~Extension()
 	else
 	{
 		if (!globals->_client.connected())
-			OutputDebugStringA(PROJECT_NAME " - Not connected, nothing important to retain, closing Globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Not connected, nothing important to retain, closing Globals info.\n"));
 		else if (!isGlobal)
-			OutputDebugStringA(PROJECT_NAME " - Not global, closing Globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Not global, closing Globals info.\n"));
 		else if (globals->fullDeleteEnabled)
-			OutputDebugStringA(PROJECT_NAME " - Full delete enabled, closing Globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - Full delete enabled, closing Globals info.\n"));
 		// Wait for 0ms returns immediately as per spec
 		else if (AppWasClosed)
-			OutputDebugStringA(PROJECT_NAME " - App was closed, closing Globals info.\n");
+			LOGV(_T("" PROJECT_NAME " - App was closed, closing Globals info.\n"));
 		else // !globals->fullDeleteEnabled
 		{
-			OutputDebugStringA(PROJECT_NAME " - Last instance dropped, and currently connected - "
-				"Globals will be retained until a Disconnect is called.\n");
+			LOGV(_T("" PROJECT_NAME " - Last instance dropped, and currently connected - "
+				"Globals will be retained until a Disconnect is called.\n"));
 			globals->_ext = nullptr;
 			globals->lastDestroyedExtSelectedChannel = selChannel;
 			globals->lastDestroyedExtSelectedPeer = selPeer;
@@ -941,11 +937,10 @@ Extension::~Extension()
 			selChannel = nullptr;
 			globals->lock.edif_unlock();
 
-			sprintf_s(msgBuff, PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n",
+			LOGV(_T("" PROJECT_NAME " - Timeout thread started. If no instance has reclaimed ownership in 3 seconds, %s.\n"),
 				globals->timeoutWarningEnabled
-				? "a warning message will be shown"
-				: "the connection will terminate and all pending messages will be discarded");
-			OutputDebugStringA(msgBuff);
+				? _T("a warning message will be shown")
+				: _T("the connection will terminate and all pending messages will be discarded"));
 
 			// Note the timeout thread does not delete globals. It can't, as Runtime.WriteGlobal() requires a valid Extension.
 			// Instead, the thread marks it as pending delete, and in ReadGlobal in Extension ctor, it checks if it's
@@ -1149,7 +1144,7 @@ REFLAG Extension::Handle()
 
 void ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
-	OutputDebugStringA(PROJECT_NAME " - timeout thread: startup.\n");
+	LOGV(_T("" PROJECT_NAME " - timeout thread: startup.\n"));
 	bool appWasClosed;
 	int triggeredHandle = -1;
 
@@ -1162,14 +1157,14 @@ void ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	// it's cool, just close silently
 	if (!G->extsHoldingGlobals.empty())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: pre timeout refs not empty, exiting.\n"));
 		goto exitThread;
 	}
 
 	// If disconnected, no connection to worry about
 	if (!G->_client.connected())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: pre timeout client not connected, exiting.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: pre timeout client not connected, exiting.\n"));
 		goto exitThread;
 	}
 
@@ -1192,7 +1187,7 @@ void ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	}
 	if (triggeredHandle == 0)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: thread cancelled, closing thread.\n"));
 		goto exitThread;
 	}
 	appWasClosed = triggeredHandle == 1;
@@ -1203,19 +1198,19 @@ void ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 	if (!G->extsHoldingGlobals.empty())
 	{
 		G->lock.edif_unlock();
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout refs not empty, exiting.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: post timeout refs not empty, exiting.\n"));
 		goto exitThread;
 	}
 
 	if (!G->_client.connected())
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: post timeout client not connected, killing globals safely.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: post timeout client not connected, killing globals safely.\n"));
 		goto killGlobalsAndExitThread;
 	}
 
 	if (!appWasClosed && G->timeoutWarningEnabled)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: timeout warning message.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: timeout warning message.\n"));
 
 		// Otherwise, fuss at them.
 		DarkEdif::MsgBox::Custom(MB_ICONWARNING | MB_TOPMOST,
@@ -1233,7 +1228,7 @@ killGlobalsAndExitThread:
 
 	if (!appWasClosed)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: Globals faux-deleted, closing timeout thread.\n"));
 		G->MarkAsPendingDelete();
 	}
 	G->lock.edif_unlock();
@@ -1241,7 +1236,7 @@ killGlobalsAndExitThread:
 	// App was closed, we can completely delete the memory
 	if (appWasClosed)
 	{
-		OutputDebugStringA(PROJECT_NAME " - timeout thread: actual delete globals.\n");
+		LOGV(_T("" PROJECT_NAME " - timeout thread: actual delete globals.\n"));
 		delete G;
 	}
 
@@ -1398,30 +1393,29 @@ void GlobalInfo::MarkAsPendingDelete()
 		std::this_thread::yield();
 		_thread.join();
 
-		OutputDebugStringA(PROJECT_NAME " - Lacewing loop thread should have ended.\n");
+		LOGV(_T("" PROJECT_NAME " - Lacewing loop thread should have ended.\n"));
 	}
 	else // single-threaded; tick so all pending events are parsed, like the eventloop exit
 	{
 		lacewing::error err = _objEventPump->tick();
 		if (err != NULL)
 		{
-			// No way to report it; the last ext is being destroyed.
-			std::stringstream errStr;
-			errStr << PROJECT_NAME " - Pump closed with error \"" << err->tostring() << "\".\n";
-			OutputDebugStringA(errStr.str().c_str());
+			// No way to report it to Fusion; the last ext is being destroyed.
+			LOGV(_T("" PROJECT_NAME " - Pump closed with error \"%s\".\n"),
+				UTF8ToTString(err->tostring()).c_str());
 		}
-		OutputDebugStringA(PROJECT_NAME " - Pump should be closed.\n");
+		LOGV(_T("" PROJECT_NAME " - Pump should be closed.\n"));
 
 		std::this_thread::yield();
 	}
 
-	OutputDebugStringA(PROJECT_NAME " - ~GlobalInfo end\n");
+	LOGV(_T("" PROJECT_NAME " - ~GlobalInfo end\n"));
 }
 
 void eventpumpdeleter(lacewing::eventpump pump)
 {
-	OutputDebugStringA(PROJECT_NAME " - Pump deleting...\n");
+	LOGV(_T("" PROJECT_NAME " - Pump deleting...\n"));
 	lacewing::pump_delete(pump);
-	OutputDebugStringA(PROJECT_NAME " - Pump deleted.\n");
+	LOGV(_T("" PROJECT_NAME " - Pump deleted.\n"));
 	_CrtCheckMemory();
 }

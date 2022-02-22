@@ -1700,7 +1700,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 97;
+	const static int buildnum = 98;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
