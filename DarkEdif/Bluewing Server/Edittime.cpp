@@ -216,8 +216,8 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 {
 #pragma DllExportHint
 
-	// Android permissions: 5 is access network state, 7 access wifi state, 13 bluetooth, 14 bluetooth admin, 50 internet,
-	// 115 nfc, 25 change network state, 26 change wifi multicast state, 27 change wifi state
+	// Android permissions: 4 is access network state, 6 access wifi state, 12 bluetooth, 13 bluetooth admin, 49 internet,
+	// 114 nfc, 24 change network state, 25 change wifi multicast state, 26 change wifi state
 	//
 	// The permissions do not 1:1 match the index in the Fusion properties window, so you'll have to loop through them to work out the ID.
 	// They match between CF2.5 and MMF2.0, but 2.0 lacks some permissions (105+, so including NFC).
