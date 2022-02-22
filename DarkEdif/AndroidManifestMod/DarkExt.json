@@ -1,0 +1,58 @@
+{
+	"Identifier": "ANDM",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "AndroidManifestMod",
+			"Author": "Darkiwre Software",
+			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Comment": "Allows the Fusion developer to modify the Android manifest during build. (b%i)",
+			"Help": "Help/AndroidManifestMod.chm",
+			"URL": "https://dark-wire.com/"
+		},
+		"ActionMenu": [
+			[ 0, "This is handled by object properties only!", true ]
+		],
+		"ConditionMenu": [
+			[ 0, "This is handled by object properties only!", true ]
+		],
+		"ExpressionMenu": [
+			[ 0, "This is handled by object properties only!", true ]
+		],
+		"Actions": [
+			{
+				"Title": "Dummy action"
+			}
+		],
+		"Conditions": [
+			{
+				"Title": "Dummy condition",
+				"Triggered": true
+			}
+		],
+		"Expressions": [
+			// While this menu item is disabled, it can still be used by typing it out.
+			// So we make it unnecessarily long so it won't happen.
+			{
+				"Title": "DummyExpressionNoOneCanTypeThisByAccident(",
+				"Returns": "Integer"
+			}
+		],
+		"Properties": [
+			{
+				"Title": "Data to replace",
+				"Info": "Manifest locators and replacements. See the help file for format.",
+				"DefaultState": "",
+				"Type": "Editbox String Multiline"
+			},
+			{
+				"Title": "Debug paths",
+				"Info": "Saves the manifest original and modified by ext to this Windows folder path.",
+				"DefaultState": "",
+				"Type": "Editbox String",
+				"Checkbox": true,
+				"ChkDefault": false
+			}
+		]
+	}
+}

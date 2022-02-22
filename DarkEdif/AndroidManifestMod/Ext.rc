@@ -1,0 +1,156 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+// Wraps str into double-quotes, like "str". This function cannot be defined via /D.
+#define sub_asStr(str) #str
+#define asStr(str) sub_asStr(str)
+
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include <windows.h>
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif // _WIN32
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+1 VERSIONINFO
+ FILEVERSION 1,0,0,EXTENSION_VERSION
+ PRODUCTVERSION 1,0,0,EXTENSION_VERSION
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG
+#else
+ FILEFLAGS 0
+#endif
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904e4"
+		BEGIN
+			VALUE "ProductName", PROJECT_NAME "\0"
+			VALUE "CompanyName", COMPANY_NAME "\0"
+			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
+			VALUE "FileVersion", "2.00" "\0"
+			VALUE "InternalName", PROJECT_NAME ".mfx\0"
+			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
+			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1252
+	END
+END
+// Note: 0x0409 is English US, 1252 is International
+// https://docs.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RCDATA
+//
+
+// All new extensions should use this! Don't set it to 0!
+// Pre-existing extensions that are already in MFAs (i.e. pre 8th Nov 2019) should use 0!
+// 
+// Some backstory:
+// KPX_MAGICNUMBER is normally 200. The magic number in the KPX_MAGICNUMBER resource
+// is stored in the MFA, normally as below: 0x2516, 0x5908.
+// Due to an SDK optimisation mistake, KPX_MAGICNUMBER was undefined in DarkEdif
+// extensions and the magic number was stored as 0 in all MFXs and thus MFAs made
+// with them.
+//
+// A MFA that was written with an ext with one magic number, and a MFX that has a
+// different magic number, are treated as completely different extensions, so you can't
+// upgrade your magic tool number outside of a CF2.5+ MFACFG file (ask Yves) or a
+// particular MFA modding tool (ask Phi).
+//
+// In the event you're getting "MFX is not installed" mistakes, you'll need to either
+// revert your magic number, or rewrite your MFAs with new magic number. That requires
+// a MFA modding tool, that Phi has.
+
+KPX_MAGICNUMBER RCDATA
+BEGIN
+	0x2516, 0x5908
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE
+BEGIN
+	"resource.h\0"
+END
+
+2 TEXTINCLUDE
+BEGIN
+	"#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"#include <windows.h>\r\n"
+	"#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+	"\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+	1                "MF2"
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Edif
+//
+
+// External JSON file (DARKEXT_JSON_FILE_EXTERNAL) means not embedded in ext
+// If editor, DarkExt.json is used, otherwise DarkExt.PostMinify.json,
+// which is created by DarkEdifPreBuildTool minifying DarkExt.json.
+
+#if EditorBuild
+IDR_EDIF_ICON	Edif	"Icon.png"
+#if !defined(DARKEXT_JSON_FILE_EXTERNAL)
+IDR_EDIF_JSON	Edif	"DarkExt.json"
+#endif
+#elif /* RuntimeBuild and */ !defined(DARKEXT_JSON_FILE_EXTERNAL)
+IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
+#endif
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
