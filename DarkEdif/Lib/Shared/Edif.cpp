@@ -890,7 +890,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		mov ecx, ParameterCount	; Store ParameterCount in ecx
 		cmp ecx, 0				; If no parameters, call function immediately
 			je CallNow
-		mov edx, Parameters		; Otherwise store pointer to int * in Parameters
+		lea edx, Parameters		; Otherwise store address of (first element of) Parameters
 		mov ebx, ecx			; Copy ecx, or ParameterCount, to ebx
 		shl ebx, 2				; Multiply parameter count by 2^2 (size of 32-bit variable)
 		add edx, ebx			; add (ParameterCount * 4) to Parameters, making edx point to Parameters[param count]

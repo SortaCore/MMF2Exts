@@ -2224,7 +2224,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (err != 0)
 				{
 					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-						err == ERROR_ACCESS_DENIED ? _T("Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
+						err == ERROR_ACCESS_DENIED ? _T(" Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
 				}
 			}
 
