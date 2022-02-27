@@ -700,7 +700,7 @@
 
 		<!-- The below part sets it from preprocessor definitions. -->
 		<_TargetiOSFromPPRegex><![CDATA[(?im)[>;]\s*_TargetiPhoneOSDeployTarget\s*=\s*([^;%\s]+)]]></_TargetiOSFromPPRegex>
-		<_TargetiPhoneOSDeployTarget Condition="$([System.Text.RegularExpressions.Regex]::Match($(PreprocessorDefinitions), $(_TargetiOSFromPPRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(PreprocessorDefinitions), $(_TargetiOSFromPPRegex)).Result('$1'))"</_TargetiPhoneOSDeployTarget>
+		<_TargetiPhoneOSDeployTarget Condition="$([System.Text.RegularExpressions.Regex]::Match($(PreprocessorDefinitions), $(_TargetiOSFromPPRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(PreprocessorDefinitions), $(_TargetiOSFromPPRegex)).Result('$1'))</_TargetiPhoneOSDeployTarget>
 		<DeadPreprocessor>';$(PreprocessorDefinitions);'</DeadPreprocessor>
 		<!-- TODO: this.
 		regex to find in preprocessor:

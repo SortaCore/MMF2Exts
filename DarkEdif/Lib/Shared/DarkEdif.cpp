@@ -1802,7 +1802,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin."));
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
 			std::abort();
 		}
 		else // Some other error loading; we'll consider it fatal.
@@ -2184,7 +2184,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
-						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin."), GetLastError());
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"), GetLastError());
 				}
 				else
 				{
@@ -2202,7 +2202,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin."));
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -2224,7 +2224,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (err != 0)
 				{
 					DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u.%s"), err,
-						err == ERROR_ACCESS_DENIED ? _T(" Try running the UCT Fix Tool, or running Fusion as admin.") : _T(""));
+						err == ERROR_ACCESS_DENIED ? _T(" Try running the UCT Fix Tool, or running Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe") : _T(""));
 				}
 			}
 
