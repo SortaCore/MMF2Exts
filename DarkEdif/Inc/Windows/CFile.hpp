@@ -1,3 +1,4 @@
+#pragma once
 // General errors
 enum class CFCERROR {
 	NOT_ENOUGH_MEM = 0x40000000,
@@ -31,9 +32,9 @@ FusionAPIImport long			FusionAPI	File_GetLength(HFILE hf);
 FusionAPIImport void			FusionAPI	File_Close(HFILE hf);
 FusionAPIImport BOOL			FusionAPI	File_ExistA(const char * pName);
 
-FusionAPIImport HFILE			FusionAPI	File_OpenW(const wchar_t * fname, int mode);
-FusionAPIImport HFILE			FusionAPI	File_CreateW(const wchar_t * fname);
-FusionAPIImport BOOL			FusionAPI	File_ExistW(const wchar_t * pName);
+FusionAPIImport HFILE			FusionAPI	File_OpenW(const UShortWCHAR * fname, int mode);
+FusionAPIImport HFILE			FusionAPI	File_CreateW(const UShortWCHAR * fname);
+FusionAPIImport BOOL			FusionAPI	File_ExistW(const UShortWCHAR * pName);
 
 #ifdef _UNICODE
 #define File_Open File_OpenW
@@ -83,7 +84,7 @@ public:
 	virtual void	FreeBuffer(unsigned char * buf);
 
 	virtual	char * GetFileNameA() = 0;
-	virtual	wchar_t * GetFileNameW() = 0;
+	virtual	UShortWCHAR * GetFileNameW() = 0;
 
 #ifdef _CFCFILE_UNICODE_DEFS
 #if defined(_UNICODE)
@@ -108,8 +109,8 @@ public:
 	int						Create(HFILE hf, unsigned int dwOffset, unsigned int dwSize);
 	int						Create(const char * filename);
 	int						Create(const char * filename, unsigned int dwOffset, unsigned int dwSize);
-	int						Create(const wchar_t * filename);
-	int						Create(const wchar_t * filename, unsigned int dwOffset, unsigned int dwSize);
+	int						Create(const UShortWCHAR * filename);
+	int						Create(const UShortWCHAR * filename, unsigned int dwOffset, unsigned int dwSize);
 
 	virtual	int				Read(unsigned char * dest, unsigned int lsize);
 	virtual	int				Read(unsigned char * dest, unsigned int lsize, LPDWORD pRead);
@@ -127,7 +128,7 @@ public:
 	//		virtual void			FreeBuffer(unsigned char * buf);
 
 	virtual	char * GetFileNameA();
-	virtual	wchar_t * GetFileNameW();
+	virtual	UShortWCHAR * GetFileNameW();
 
 protected:
 	int						Attach(HANDLE hnd, unsigned int dwOffset, unsigned int dwSize);
@@ -137,7 +138,7 @@ private:
 	unsigned char * m_buffer;
 	unsigned char * m_bufcurr;
 	unsigned int			m_remains;
-	wchar_t * m_fnameW;
+	UShortWCHAR * m_fnameW;
 	char * m_fnameA;
 
 	unsigned int			m_startOffset;
@@ -176,7 +177,7 @@ public:
 	virtual void			FreeBuffer(unsigned char * buf);
 
 	virtual	char * GetFileNameA() { return NULL; }
-	virtual	wchar_t * GetFileNameW() { return NULL; }
+	virtual	UShortWCHAR * GetFileNameW() { return NULL; }
 
 private:
 	unsigned char * m_buffer;
@@ -211,7 +212,7 @@ public:
 	virtual long			Seek(long pos, int method) = 0;
 
 	virtual	char * GetFileNameA() = 0;
-	virtual	wchar_t * GetFileNameW() = 0;
+	virtual	UShortWCHAR * GetFileNameW() = 0;
 };
 //typedef COutputFile * LPOUTPUTFILE;
 
@@ -236,7 +237,7 @@ public:
 	virtual long			Seek(long pos, int method);
 
 	virtual	char * GetFileNameA() { return NULL; }
-	virtual	wchar_t * GetFileNameW() { return NULL; }
+	virtual	UShortWCHAR * GetFileNameW() { return NULL; }
 
 private:
 	unsigned char * m_buffer;
@@ -256,7 +257,7 @@ public:
 
 	int						Create(HFILE hf, UINT nBufferSize = 4096);
 	int						Create(const char * fname, UINT nBufferSize = 4096);
-	int						Create(const wchar_t * fname, UINT nBufferSize = 4096);
+	int						Create(const UShortWCHAR * fname, UINT nBufferSize = 4096);
 
 	virtual int				Write(unsigned char * pb, UINT sz);
 	virtual int				Flush();
@@ -266,11 +267,11 @@ public:
 	virtual long			Seek(long pos, int method);
 
 	virtual	char * GetFileNameA();
-	virtual	wchar_t * GetFileNameW();
+	virtual	UShortWCHAR * GetFileNameW();
 
 private:
 	HFILE					m_hf;
-	wchar_t * m_fnameW;
+	UShortWCHAR * m_fnameW;
 	unsigned char * m_buffer;
 	unsigned char * m_curptr;
 	unsigned int			m_cursize;
