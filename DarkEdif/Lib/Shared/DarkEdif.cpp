@@ -1868,9 +1868,10 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	// Users have access to registry of local machine, albeit read-only, so this should not fail.
 	// Note: we always use the wide version of registry as it's always stored as UTF-16, and we
 	// don't want half-baked ANSI conversions.
-	if (RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey) != ERROR_SUCCESS)
+	DWORD ret;
+	if ((ret = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Clickteam", &mainKey)) != ERROR_SUCCESS)
 	{
-		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), GetLastError());
+		DarkEdif::MsgBox::Error(_T("Resource loading"), _T("UC tagging resource load failed. Error %u while loading registration resource for reading."), ret);
 		FreeLibrary(readHandle);
 		std::abort();
 	}
