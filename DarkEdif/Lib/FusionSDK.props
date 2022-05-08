@@ -656,7 +656,7 @@
 
 			<!-- Don't export any functions by default, as Java doesn't need to see them.
 				 Disable #pragma comment getting compiler upset, and other issues. -->
-			<AdditionalOptions>-fvisibility=hidden -fPIC -Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fvisibility=hidden -fPIC -fasm-blocks -Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>
