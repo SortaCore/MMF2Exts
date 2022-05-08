@@ -97,7 +97,7 @@ public:
 };
 
 #ifndef _WIN32
-extern void LOGF(const char * x, ...);
+extern void LOGF(const TCHAR * x, ...);
 #else
 #define PrintFHintInside _In_z_ _Printf_format_string_
 namespace DarkEdif::MsgBox {

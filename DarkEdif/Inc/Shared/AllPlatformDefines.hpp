@@ -336,7 +336,7 @@ enum class REFLAG : short {
 };
 
 // LOGF is implemented in Windows and iOS, with Android the built-in LOGF() is used.
-void LOGF(const char* x, ...);
+void LOGF(const TCHAR * x, ...);
 
 // Useful functions
 #include <thread>

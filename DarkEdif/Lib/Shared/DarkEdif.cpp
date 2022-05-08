@@ -897,6 +897,17 @@ void DarkEdif::BreakIfDebuggerAttached()
 	if (IsDebuggerPresent())
 		DebugBreak();
 }
+
+void LOGF(const TCHAR * x, ...)
+{
+	TCHAR buf[2048];
+	va_list va;
+	va_start(va, x);
+	_vstprintf_s(buf, std::size(buf), x, va);
+	va_end(va);
+	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
+	std::abort();
+}
 #else // APPLE
 void DarkEdif::BreakIfDebuggerAttached()
 {
@@ -910,7 +921,7 @@ int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption
 	return 0;
 }
 
-void LOGF(const char * x, ...)
+void LOGF(const TCHAR * x, ...)
 {
 	char buf[2048];
 	va_list va;

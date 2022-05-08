@@ -504,7 +504,7 @@ std::vector<monitor> monitors;*/
 extern thread_local JNIEnv * threadEnv;
 
 
-void LOGF(const char * x, ...);
+void LOGF(const TCHAR * x, ...);
 
 // Converts u8str to UTF-8Modified str. Expects no embedded nulls
 jstring CStrToJStr(const char * u8str);

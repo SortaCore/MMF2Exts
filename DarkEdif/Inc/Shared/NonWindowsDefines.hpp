@@ -45,7 +45,7 @@ void Sleep(unsigned int milliseconds);
 	#define OutputDebugStringA(x) (void)0
 #endif
 
-void LOGF(const char * x, ...);
+void LOGF(const TCHAR * x, ...);
 
 using WindowHandleType = void*;
 

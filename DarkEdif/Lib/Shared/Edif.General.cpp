@@ -607,7 +607,7 @@ void pushEvent(void * javaExtPtr, int code, int param) {
 	threadEnv->CallVoidMethod(ho, pushEvent, code, param);
 };
 
-void LOGF(const char * x, ...)
+void LOGF(const TCHAR * x, ...)
 {
 	va_list va;
 	va_start(va, x);
