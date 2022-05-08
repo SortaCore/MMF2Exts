@@ -2730,6 +2730,7 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 	lacewing::writelock serverWriteLock = lock.createWriteLock();
 	if (std::find(serverinternal.channels.cbegin(), serverinternal.channels.cend(), channel) == serverinternal.channels.cend())
 		serverinternal.channels.push_back(channel);
+	serverWriteLock.lw_unlock();
 
 	// LW_ESCALATION_NOTE
 	channelReadLock.lw_unlock();
