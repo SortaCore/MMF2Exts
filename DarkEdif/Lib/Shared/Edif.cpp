@@ -1812,7 +1812,7 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 #endif // _UNICODE
 
 
-#if defined(_DEBUG) && !defined(__APPLE__)
+#if defined(_DEBUG)
 
 
 Edif::recursive_mutex::recursive_mutex()
@@ -1824,23 +1824,31 @@ Edif::recursive_mutex::~recursive_mutex()
 	this->log << "Recursive mutex dying.\n";
 }
 
-#ifndef _DEBUG
-static const char * file = "(release mode)";
-static const char * func = "(release mode)";
-static int line = -1;
-#endif
 void Edif::recursive_mutex::lock(edif_lock_debugParams)
 {
 	try {
-		this->intern.lock();
+		if (!this->intern.try_lock_for(std::chrono::milliseconds(500)))
+		{
+			std::string log2 = this->log.str();
+			//if (log2.size() > 600)
+			//	log2 = log2.substr(log2.size() - 500, 500);
+			log2 += "Couldn't append in "sv;
+			log2 += func;
+			log2 += ", line "sv;
+			log2 += std::to_string(line);
+			log2 += "\n";
+			OutputDebugStringA(log2.c_str());
+			DarkEdif::BreakIfDebuggerAttached();
+			throw std::runtime_error("timeout");
+		}
 	}
-	catch (std::system_error err)
+	catch (std::runtime_error err)
 	{
-		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
+		char exc_addr[128];
+		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
+		FILE * f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-#ifndef _WIN32
-			LOGV("Failed to write log file, error %d.", errno);
-#endif
+			LOGF(_T("Failed to write log file, error %d."), errno);
 		}
 		else
 		{
@@ -1848,9 +1856,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-#ifndef _WIN32
-			LOGE("%s", str.c_str());
-#endif
+			LOGE(_T("%s"), UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}
@@ -1864,11 +1870,11 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 	}
 	catch (std::system_error err)
 	{
-		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
+		char exc_addr[128];
+		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
+		FILE* f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-#ifndef _WIN32
-			LOGV("Failed to write log file, error %d.", errno);
-#endif
+			LOGF(_T("Failed to write log file, error %d."), errno);
 		}
 		else
 		{
@@ -1876,27 +1882,28 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-#ifndef _WIN32
-			LOGE("%s", str.c_str());
-#endif
+			LOGE(_T("%s"), UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}
-	this->log << "Try lock " << (b ? "OK" : "FAIL") << " in function " << func << ", line " << line << ".\n";
+	// this->log isn't safe to use if we don't have the lock
+	if (b)
+		this->log << "Try lock OK in function " << func << ", line " << line << ".\n";
 	return b;
 }
 void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
+	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 	try {
 		this->intern.unlock();
 	}
 	catch (std::system_error err)
 	{
-		FILE * f = fopen("/storage/emulated/0/crashlog.txt", "wb");
+		char exc_addr[128];
+		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
+		FILE* f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-#ifndef _WIN32
-			LOGV("Failed to write log file, error %d.", errno);
-#endif
+			LOGF(_T("Failed to write log file, error %d."), errno);
 		}
 		else
 		{
@@ -1904,13 +1911,10 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-#ifndef _WIN32
-			LOGE("%s", str.c_str());
-#endif
+			LOGE(_T("%s"), UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}
-	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 }
 
 #else // Not debug

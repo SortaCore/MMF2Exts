@@ -300,12 +300,13 @@ namespace Edif
 	void GetExtensionName(char * const writeTo);
 
 	class recursive_mutex {
-		std::recursive_mutex intern;
 #ifdef _DEBUG
+		std::recursive_timed_mutex intern;
 #define edif_lock_debugParams const char * file, const char * func, int line
 #define edif_lock_debugParamDefs __FILE__, __FUNCTION__, __LINE__
 		std::stringstream log;
 #else
+		std::recursive_mutex intern;
 #define edif_lock_debugParams /* none */
 #define edif_lock_debugParamDefs /* none */
 #endif
