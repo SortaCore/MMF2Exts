@@ -29,7 +29,7 @@
 #include "common.h"
 #include "address.h"
 
-static void resolver (lw_addr);
+static int resolver (lw_addr);
 
 void lwp_addr_init (lw_addr ctx, const char * hostname,
 					const char * service, int hints)
@@ -305,7 +305,7 @@ in6_addr lw_addr_toin6_addr (lw_addr ctx)
 	return v4;
 }
 
-void resolver (lw_addr ctx)
+int resolver (lw_addr ctx)
 {
 	struct addrinfo hints;
 	int result;
@@ -368,7 +368,7 @@ void resolver (lw_addr ctx)
 		// Android note: missing INTERNET permission on some Android devices prevents DNS finding any records
 		lw_error_addf(ctx->error, "DNS lookup error - %s", gaierr);
 		free(gaierr);
-		return;
+		return result;
 	}
 
 	for (info = ctx->info_list; info; info = info->ai_next)
@@ -387,6 +387,7 @@ void resolver (lw_addr ctx)
 	}
 
 	lw_addr_set_type (ctx, ctx->hints & (lw_addr_type_tcp | lw_addr_type_udp));
+	return 0;
 }
 
 lw_bool lw_addr_ready (lw_addr ctx)
