@@ -950,7 +950,13 @@ namespace lacewing
 
 			const auto channel2 = findchannelbyid(channel);
 			if (reader.failed || !channel2)
+			{
+				// Disconnected by user request before this message was processed; drop the message
+				// without processing future messages (return false), and make no error.
+				if (!connected)
+					return false;
 				break;
+			}
 			std::shared_ptr<relayclient::channel::peer> peer2;
 			{
 				auto channelReadLock = channel2->lock.createReadLock();
@@ -986,7 +992,13 @@ namespace lacewing
 
 			const auto channel2 = findchannelbyid(channel);
 			if (reader.failed || !channel2)
+			{
+				// Disconnected by user request before this message was processed; drop the message
+				// without processing future messages (return false), and make no error.
+				if (!connected)
+					return false;
 				break;
+			}
 			std::shared_ptr<relayclient::channel::peer> peer2;
 			{
 				auto channelReadLock = channel2->lock.createReadLock();
@@ -1030,7 +1042,13 @@ namespace lacewing
 
 			// A UDP message might outspeed against the TCP Channel Join message
 			if (!channel2 || channel2->_readonly)
+			{
+				// Disconnected by user request before this message was processed; drop the message
+				// without processing future messages (return false), and make no error.
+				if (!connected)
+					return false;
 				break;
+			}
 
 			const std::string_view data = reader.getremaining(Require4BytesForNumberMessages);
 
@@ -1066,6 +1084,11 @@ namespace lacewing
 			// so we'll error it.
 			if (!channel2)
 			{
+				// Disconnected by user request before this message was processed; drop the message
+				// without processing future messages (return false), and make no error.
+				if (!connected)
+					return false;
+
 				lacewing::error error = error_new();
 				error->add("Peer message received, but channel ID %hu was not found in this client's joined channel list. Discarding.", channel);
 				this->handler_error(client, error);

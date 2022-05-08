@@ -36,7 +36,24 @@ void Extension::Replaced_Connect(const TCHAR * hostname, int port)
 }
 void Extension::Disconnect()
 {
-	Cli.disconnect(); // calls OnDisconnect so clear-all 0xFFFF is done there
+	Cli.disconnect(); // calls LacewingHandler.cpp's OnDisconnect, so clear-all event is scheduled there
+
+	// While it's neat to have all the old messages processed prior to disconnect,
+	// as shared_ptr will keep client/channel readable, it's safe to say that
+	// if the user has asked to disconnect, they don't care about pending messages.
+	//
+	// Note that we don't clear pending messages if the server disconnects us, though.
+	// Otherwise, if the server sends a text message explanation then disconnects the client,
+	// the explanation message would be discarded.
+	globals->lock.edif_lock();
+
+	// Keep specific event IDs 0-3, which are error, connect, connect denied, disconnect; erase the rest.
+	globals->_eventsToRun.erase(
+		std::remove_if(globals->_eventsToRun.begin(), globals->_eventsToRun.end(),
+			[](const auto &e) { return e->condTrig[0] > 3; }),
+		globals->_eventsToRun.end()
+	);
+	globals->lock.edif_unlock();
 }
 void Extension::SetName(const TCHAR * name)
 {
