@@ -162,7 +162,7 @@ struct Spr
 					TempScaleY;
 	// Image or owner-draw routine
 	union {
-		struct	{
+		struct {
 			unsigned int Img;			 // Numero d'image
 			unsigned int ImgNew;		  // Nouvelle image
 		};
@@ -1991,13 +1991,24 @@ struct Sprite {
 // Objects's internal variables (build # >= 243)
 // ----------------------------------------
 struct AltVals {
-	CValue *				Values;
-	int						NumAltValues;
-	long					Free1[25-1];	// 26 = number of alterable values
-	long					InternalFlags;	// Bitmask of all internal flags; flag 0 is accessed via (InternalFlags & 1). Previously named ValueFlags.
-	unsigned char			Free2[26];		// 26 = number of alterable values
-	const TCHAR * const *	Strings;		// Alterable strings (will be null if never used, including if blank in obj properties)
-	int						NumAltStrings;
+	union {
+		struct CF25 {
+			CValue* Values;
+			int						NumAltValues;
+			long					Free1[25 - 1];	// 26 = number of alterable values
+			long					InternalFlags;	// Bitmask of all internal flags; flag 0 is accessed via (InternalFlags & 1). Previously named ValueFlags.
+			unsigned char			Free2[26];		// 26 = number of alterable values
+			const TCHAR* const*		Strings;		// Alterable strings (will be null if never used, including if blank in obj properties)
+			int						NumAltStrings;
+		} CF25;
+		struct MMF2 {
+			CValue* rvpValues;
+			long	rvFree1[26 - 1];
+			long	rvValueFlags;
+			BYTE	rvFree2[26];
+			LPTSTR	rvStrings[10];
+		} MMF2;
+	};
 };
 //typedef AltVals *	LPRVAL;
 
@@ -3046,7 +3057,7 @@ struct otText {
 typedef otText	*	fpot;
 #define sizeof_ot	(sizeof(otText)-sizeof(unsigned int))
 
-typedef	struct	txString {
+typedef	struct txString {
 	unsigned short		tsFont;					// Font
 	unsigned short		tsFlags;				// Flags
 	COLORREF	tsColor;				// Color

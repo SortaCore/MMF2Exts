@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v14 release
 ----
 *v14 not released yet*
+- Windows: fixed incompatibility with Fusion 2.0 if extension had alt values (caused crash on alt string C and later being set)
 
 
 Changes until v13 release
