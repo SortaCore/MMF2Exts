@@ -12,146 +12,236 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		Link all your action/condition/expression functions to their IDs to match the
 		IDs in the JSON here
 	*/
+	
 /// ACTIONS
-	LinkAction(0, TestReportAndExplode)
-	LinkAction(1, UsePopupMessages)
+	LinkAction(0, DEPRECATED_TestReportAndErrors);
+	LinkAction(1, DEPRECATED_UsePopupMessages);
 	// Client
-	LinkAction(2, ClientInitialise_Basic)
-	LinkAction(3, ClientInitialise_Advanced)
-	LinkAction(4, ClientShutdownSocket)
-	LinkAction(5, ClientSend)
-	LinkAction(6, ClientGoIndependent)
-	LinkAction(7, ClientReceiveOnly)
-	LinkAction(8, ClientLinkFileOutput)
-	LinkAction(9, ClientUnlinkFileOutput)
-	LinkAction(10, ClientFusionReport)
+	LinkAction(2, DEPRECATED_ClientInitialize_Basic);
+	LinkAction(3, DEPRECATED_ClientInitialize_Advanced);
+	LinkAction(4, ClientCloseSocket);
+	LinkAction(5, DEPRECATED_ClientSend);
+	LinkAction(6, REMOVED_ClientGoIndependent);
+	LinkAction(7, ClientReceiveOnly);
+	LinkAction(8, DEPRECATED_ClientLinkFileOutput);
+	LinkAction(9, DEPRECATED_ClientUnlinkFileOutput);
+	LinkAction(10, REMOVED_ClientFusionReport);
 	// Server
-	LinkAction(11, ServerInitialise_Basic)
-	LinkAction(12, ServerInitialise_Advanced)
-	LinkAction(13, ServerShutdownSocket)
-	LinkAction(14, ServerSend)
-	LinkAction(15, ServerGoIndependent)
-	LinkAction(16, ServerAutoAccept)
-	LinkAction(17, ServerLinkFileOutput)
-	LinkAction(18, ServerUnlinkFileOutput)
-	LinkAction(19, ServerFusionReport)
+	LinkAction(11, ServerInitialize_Basic);
+	LinkAction(12, ServerInitialize_Advanced);
+	LinkAction(13, ServerShutdown);
+	LinkAction(14, DEPRECATED_ServerSend);
+	LinkAction(15, REMOVED_ServerGoIndependent);
+	LinkAction(16, ServerAutoAccept);
+	LinkAction(17, DEPRECATED_ServerLinkFileOutput);
+	LinkAction(18, DEPRECATED_ServerUnlinkFileOutput);
+	LinkAction(19, REMOVED_ServerFusionReport);
 	// Form packet
-	LinkAction(20, PacketForm_NewPacket);
-	LinkAction(21, PacketForm_ResizePacket);
-	LinkAction(22, PacketForm_SetByte);
-	LinkAction(23, PacketForm_SetShort);
-	LinkAction(24, PacketForm_SetInteger);
-	LinkAction(25, PacketForm_SetLong);
-	LinkAction(26, PacketForm_SetFloat);
-	LinkAction(27, PacketForm_SetDouble);
-	LinkAction(28, DEPRECATED_PacketForm_SetString);
-	LinkAction(29, DEPRECATED_PacketForm_SetWString);
-	LinkAction(30, PacketForm_SetBankFromBank);
-	LinkAction(31, PacketForm_SetString);
-	LinkAction(32, PacketForm_SetWString);
+	LinkAction(20, PacketBeingBuilt_NewPacket);
+	LinkAction(21, PacketBeingBuilt_ResizePacket);
+	LinkAction(22, PacketBeingBuilt_SetByte);
+	LinkAction(23, PacketBeingBuilt_SetShort);
+	LinkAction(24, PacketBeingBuilt_SetInteger);
+	LinkAction(25, DEPRECATED_PacketBeingBuilt_SetLong);
+	LinkAction(26, PacketBeingBuilt_SetFloat);
+	LinkAction(27, PacketBeingBuilt_SetDouble);
+	LinkAction(28, DEPRECATED_PacketBeingBuilt_SetString);
+	LinkAction(29, DEPRECATED_PacketBeingBuilt_SetWString);
+	LinkAction(30, DEPRECATED_PacketBeingBuilt_SetBuffer);
+
+	// New actions as of year 2022, build 4:
+	LinkAction(31, ClientInitialize_Basic);
+	LinkAction(32, ClientInitialize_Advanced);
+	LinkAction(33, ClientSend);
+	LinkAction(34, ServerSend);
+	LinkAction(35, ServerShutdownPeerSocket); // server link new action, now removed
+	LinkAction(36, PacketBeingBuilt_SetInt64);
+	LinkAction(37, PacketBeingBuilt_SetString);
+	LinkAction(38, PacketBeingBuilt_SetBuffer);
+	LinkAction(39, PendingData_DiscardBytes);
+
+
 
 /// CONDITIONS
-	LinkCondition(0, OnError);
-	LinkCondition(1, OnNewStatus);
+	LinkCondition(0, AlwaysTrue /* On error */);
+	LinkCondition(1, AlwaysTrue /* On any info */);
 
- 	LinkCondition(2, ClientSocketConnected);
-	LinkCondition(3, ClientSocketDisconnected);
-	LinkCondition(4, ClientReturnedMessage);
+	LinkCondition(2, SocketIDCondition /* Client connected */);
+	LinkCondition(3, SocketIDCondition /* Cient disconnected */);
+	LinkCondition(4, SocketIDCondition /* Client received packet */);
 
-	LinkCondition(5, ServerReturnedMessage);
-	LinkCondition(6, ServerSocketDone);
-	LinkCondition(7, ServerPeerConnected);
+	LinkCondition(5, SocketIDCondition /* Server received packet */);
+	LinkCondition(6, SocketIDCondition /* Server socket done */);
+	LinkCondition(7, SocketIDCondition /* Peer connected to server */);
 	LinkCondition(8, ServerPeerDisconnected);
+	LinkCondition(9, SocketIDCondition /* Peer attempting connection */);
+	LinkCondition(10, SocketIDCondition /* Server started hosting */);
 
 /// EXPRESSIONS
-	LinkExpression(0, GetErrors);
-	LinkExpression(1, GetReports);
-	LinkExpression(2, GetLastMessageSocketID);
-	LinkExpression(3, GetLastMessageText);
-	LinkExpression(4, GetLastMessageAddress);
-	LinkExpression(5, GetLastMessageSize);
+	LinkExpression(0, DEPRECATED_GetErrors);
+	LinkExpression(1, DEPRECATED_GetReports);
+	LinkExpression(2, GetCurrent_SocketID);
+	LinkExpression(3, DEPRECATED_GetLastMessageText);
+	LinkExpression(4, DEPRECATED_GetLastMessageAddress);
+	LinkExpression(5, GetLastReceivedData_Size);
 	LinkExpression(6, GetNewSocketID);
-	LinkExpression(7, GetSocketIDForLastEvent);
+	LinkExpression(7, DEPRECATED_GetSocketIDForLastEvent);
 	LinkExpression(8, GetPortFromType);
 
-	LinkExpression(9, PacketForm_GetAddress);
-	LinkExpression(10, PacketForm_GetSize);
-	LinkExpression(11, PacketForm_RunOnesComplement);
+	LinkExpression(9, DEPRECATED_PacketBeingBuilt_GetAddress);
+	LinkExpression(10, PacketBeingBuilt_GetSize);
+	LinkExpression(11, PacketBeingBuilt_ICMPChecksum);
 
-	LinkExpression(12, LastMessage_GetByte);
-	LinkExpression(13, LastMessage_GetShort);
-	LinkExpression(14, LastMessage_GetInteger);
-	LinkExpression(15, LastMessage_GetLong);
-	LinkExpression(16, LastMessage_GetFloat);
-	LinkExpression(17, LastMessage_GetDouble);
-	LinkExpression(18, LastMessage_GetString);
-	LinkExpression(19, LastMessage_GetWString);
+	LinkExpression(12, PendingData_GetByte);
+	LinkExpression(13, PendingData_GetShort);
+	LinkExpression(14, PendingData_GetInteger);
+	LinkExpression(15, DEPRECATED_PendingData_GetLong);
+	LinkExpression(16, PendingData_GetFloat);
+	LinkExpression(17, PendingData_GetDouble);
+	LinkExpression(18, DEPRECATED_PendingData_GetString);
+	LinkExpression(19, DEPRECATED_PendingData_GetWString);
 
-	/*
-		This is where you'd do anything you'd do in CreateRunObject in the original SDK
+	// New actions as of year 2022, build 4:
+	LinkExpression(20, GetCurrent_PeerSocketID);
+	LinkExpression(21, PacketBeingBuilt_GetAddress);
+	LinkExpression(22, PendingData_GetAddress);
+	LinkExpression(23, PendingData_GetUnsignedByte);
+	LinkExpression(24, PendingData_GetUnsignedShort);
+	LinkExpression(25, PendingData_GetInt64);
+	LinkExpression(26, PendingData_GetUnsignedInt64);
+	LinkExpression(27, PendingData_GetString);
+	LinkExpression(28, PendingData_FindIndexOfChar);
+	LinkExpression(29, PendingData_ReverseFindIndexOfChar);
+	LinkExpression(30, GetCurrent_RemoteAddress);
+	LinkExpression(31, GetLastReceivedData_Offset);
+	LinkExpression(32, Statistics_BytesIn);
+	LinkExpression(33, Statistics_BytesOut);
+	LinkExpression(34, Statistics_PacketsIn);
+	LinkExpression(35, Statistics_PacketsOut);
+	LinkExpression(36, GetErrorOrInfo);
 
-		It's the only place you'll get access to edPtr at runtime, so you should transfer
-		anything from edPtr to the extension class here.
+	isGlobal = false; // edPtr->IsPropChecked(0); // IsGlobal
+	this->curEvent = std::make_shared<EventToRun>(-1, nullptr, Conditions::Unset);
 
-	*/
-	threadsafe = false;
-	nogevent = false;
-	LastReturnSocketID = -1;
-	LastReturnType = false;
-	NewSocketID = 0;
-	UsePopups = false;
-	PacketFormSize = 0;
-	PacketFormLocation = NULL;
-	LastError = _T("");
-	CompleteStatus = _T("");
-	LastLockFile = _T("");
-	LastLockLine = -1;
-	LastReturnMsg = _T("");
-
-	// Initialize Winsock
-	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+#if EditorBuild
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
-		MsgBox("WSAStartup() failed! There is something seriously off with your computer.");
-
+		DarkEdif::MsgBox::Error(_T("Property size mismatch"), _T("Properties are the wrong size (MFA size %lu, extension size %zu). "
+			"Please re-create the DarkSocket object in frame, "
+			"and use \"Replace by another object\" in Event Editor."), edPtr->eHeader.extSize, sizeof(EDITDATA));
 	}
-	else if (wsaData.wVersion != MAKEWORD(2,2))
+#endif
+
+	// This uses the Bluewing pattern
+	if (isGlobal)
 	{
-		MsgBox("WSAStartup() returned an older version of WinSock.\n"
-				"DarkSocket does not support old versions directly;\n"
-				"This means possible undefined behaviour, including crashes.");
-	}
+		const std::tstring id = edPtr->GetPropertyStr("GlobalID") + _T("DarkSocket"s);
+		void * globalVoidPtr = Runtime.ReadGlobal(id.c_str());
+		if (!globalVoidPtr)
+		{
+		MakeNewGlobalInfo:
+			globals = new GlobalInfo(this, edPtr);
+			Runtime.WriteGlobal(id.c_str(), globals);
+			OutputDebugStringA(PROJECT_NAME " - Created new Globals.\n");
+		}
+		else // Add this Extension to extsHoldingGlobals to inherit control later
+		{
+			globals = (GlobalInfo *)globalVoidPtr;
 
+			globals->threadsafe.edif_lock();
+
+			if (globals->pendingDelete)
+			{
+				OutputDebugStringA(PROJECT_NAME " - Pending delete is true. Deleting.\n");
+				globals->threadsafe.edif_unlock();
+				delete globals;
+				goto MakeNewGlobalInfo;
+			}
+
+			globals->extsHoldingGlobals.push_back(this);
+			OutputDebugStringA(PROJECT_NAME " - Globals exists: added to extsHoldingGlobals.\n");
+
+			// globals->timeoutThread is now invalid
+			std::thread timeoutThread(std::move(globals->timeoutThread));
+			globals->threadsafe.edif_unlock(); // can't hold it while timeout thread tries to exit
+
+			// If timeout thread, join to wait for it
+			if (timeoutThread.joinable())
+			{
+				OutputDebugStringA(PROJECT_NAME " - Timeout thread is active: waiting for it to close.\n");
+				globals->cancelTimeoutThread = true;
+				timeoutThread.join(); // Wait for end
+				OutputDebugStringA(PROJECT_NAME " - Timeout thread has closed.\n");
+			}
+		}
+	}
+	else
+	{
+		OutputDebugStringA(PROJECT_NAME " - Non-Global object; creating Globals, not submitting to WriteGlobal.\n");
+		globals = new GlobalInfo(this, edPtr);
+	}
 }
 
 Extension::~Extension()
 {
-	/*
-		This is where you'd do anything you'd do in DestroyRunObject in the original SDK.
-		(except calling destructors and other such atrocities, because that's automatic in Edif)
-	*/
+	globals->threadsafe.edif_lock();
+	
+	auto refIt = std::find(globals->extsHoldingGlobals.cbegin(), globals->extsHoldingGlobals.cend(), this);
+	assert(refIt != globals->extsHoldingGlobals.cend() && "Couldn't find this ext in extsHoldingGlobals.");
+	globals->extsHoldingGlobals.erase(refIt);
 
-#if defined(AllowTermination) && defined(TerminateOnEnd)
-	for (unsigned char i = 0; i < SocketThreadList.size(); i++)
-	{
-		if (SocketThreadList[i] != NULL)
-		{
-			// TerminateThread is dangerous and will not deallocate properly.
-			if (TerminateThread(SocketThreadList[i], 0))
-				MsgBox("Error: Thread could not be terminated!");
-		}
-	}
-#endif
-	if (PacketFormLocation)
-		free(PacketFormLocation);
+	globals->threadsafe.edif_unlock();
 
-	WSACleanup();
+	// is deleted when app ends
+	if (!isGlobal)
+		delete globals;
 }
 
 
 REFLAG Extension::Handle()
 {
-	// Will not be called next loop
-	return REFLAG::ONE_SHOT;
+	size_t maxNumEvents = 10;
+	for (size_t i = 0; i < maxNumEvents; i++)
+	{
+		if (!globals->threadsafe.edif_try_lock())
+			return REFLAG::NONE;
+
+	getnext:
+		if (globals->eventsToRun.empty())
+		{
+			globals->threadsafe.edif_unlock();
+			break;
+		}
+		std::shared_ptr<EventToRun> cpy(std::move(globals->eventsToRun[0]));
+		globals->eventsToRun.erase(globals->eventsToRun.cbegin());
+
+		if (cpy->eventID == Conditions::CleanupSocket)
+		{
+			// It's safe to read from Extension without locking. Only main thread will write to Ext directly.
+			auto thdIt = std::find_if(globals->socketThreadList.cbegin(), globals->socketThreadList.cend(),
+				[&](const std::shared_ptr<Thread> t) {
+					return t->fusionSocketID == cpy->fusionSocketID;
+				}
+			);
+			if (thdIt != globals->socketThreadList.cend())
+				globals->socketThreadList.erase(thdIt);
+			goto getnext;
+		}
+		globals->threadsafe.edif_unlock();
+
+		if (!cpy->msg.empty())
+			cpy->source->pendingDataToRead.append(cpy->msg);
+
+		// chance of crash here, if a generated event destroys the ext k?
+		for (size_t k = 0; k < globals->extsHoldingGlobals.size(); k++)
+		{
+			auto curEventBackup = globals->extsHoldingGlobals[k]->curEvent;
+			globals->extsHoldingGlobals[k]->curEvent = cpy;
+			globals->extsHoldingGlobals[k]->Runtime.GenerateEvent((int)cpy->eventID);
+			globals->extsHoldingGlobals[k]->curEvent = curEventBackup;
+		}
+	}
+	return REFLAG::NONE;
 }
 
 
@@ -172,28 +262,6 @@ short Extension::FusionRuntimePaused() {
 // Called when Fusion runtime is resuming after a pause.
 short Extension::FusionRuntimeContinued() {
 	return 0; // OK
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
-bool Extension::SaveFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use WriteFile() to save your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
-bool Extension::LoadFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use ReadFile() to read your data.
-		OK = true;
-	#endif
-	return OK;
 }
 
 

@@ -6,941 +6,657 @@
 //
 // ============================================================================
 
-void Extension::ClientThread(StructPassThru *Parameters)
+void GlobalInfo::ClientThread(std::shared_ptr<Thread> self, std::unique_ptr<StructPassThru> params)
 {
-	// Debugging
-	char temp[1024]; // For chucking any variable into and using in Report()/Explode()
+	Extension * ext = params->ext;
 
-	// Open struct and set variables
-	TCHAR * Hostname = (TCHAR *)malloc(255*sizeof(TCHAR));	// Hostname
-	unsigned short Port = htons(Parameters->para_Port);		// Port to connect to (htons() rearranges bits)
-	int ProtocolType = Parameters->para_ProtocolType;		// ProtocolType eg IPPROTO_TCP
-	int SocketType = Parameters->para_SocketType;			// SocketType eg SOCK_STREAM
-	int AddressFamily = Parameters->para_AddressFamily;		// AddressFamily eg AF_INTERNET
-
-	// Get the current socket ID
-	threadsafe.edif_lock();
-	int SocketID = Extension->NewSocketID;	// Get the current available Socket ID
-	Extension->NewSocketID++;					// Increment for further threads
-	ThreadSafe_End();
-
-	if (!Hostname)
-	{
-		Explode("Could not reserve space for hostname!");
-		NullStoredHandle(SocketID);
-		ThreadSafe_Start();
-		if (Parameters->para_client_InitialSend != Extension->PacketFormLocation)
-		{
-			ThreadSafe_End();
-			free(Parameters->para_client_InitialSend);
-		}
-		else
-			ThreadSafe_End();
-		delete Parameters;
-		return 1;
-	}
-	else
-	{
-		if (_tcscpy_s(Hostname, 255, Parameters->para_client_hostname))
-		{
-			Explode("Could not copy hostname data! Thread exiting.");
-			NullStoredHandle(SocketID);
-			ThreadSafe_Start();
-			if (Parameters->para_client_InitialSend != Extension->PacketFormLocation)
-			{
-				ThreadSafe_End();
-				free(Parameters->para_client_InitialSend);
-			}
-			else
-				ThreadSafe_End();
-			free(Hostname);
-			delete Parameters;
-			return 1;
-		}
-		else // We're good: remove old string
-			free(Parameters->para_client_hostname);
-	}
-
-	// Get the text to send on initial connection
-	void * InitialSend = NULL;
-	size_t InitialSendSize = 0;
-
-	Report("* Initial send copying BEGIN *");
-	ThreadSafe_Start();
-	// If FormPacket
-	if (Parameters->para_client_InitialSend == Extension->PacketFormLocation)
-	{
-		InitialSendSize = Extension->PacketFormSize;
-		InitialSend = malloc(InitialSendSize);
-		ZeroMemory(InitialSend, InitialSendSize);
-		ThreadSafe_End();
-		if (memcpy_s(InitialSend, InitialSendSize, Parameters ->para_client_InitialSend, InitialSendSize))
-		{
-			Explode("Error occured with copying the Form Packet to the thread's local buffer. Thread exiting.");
-			NullStoredHandle(SocketID);
-			delete Parameters;
-			return 1;
-		}
-
-		// We don't want to run free() on the FormPacket, further references
-		// from the user may be made to it, eg two usages.
-	}
-	else
-	{
-		InitialSendSize = (_tcslen((TCHAR *)Parameters->para_client_InitialSend) + 1) * sizeof(TCHAR);
-		InitialSend = malloc(InitialSendSize);
-		ThreadSafe_End();
-		if (memcpy_s(InitialSend, InitialSendSize, Parameters->para_client_InitialSend, InitialSendSize))
-		{
-			Explode("Error occured with copying the initial send text to the thread's local buffer!");
-			free(Parameters->para_client_InitialSend);
-			NullStoredHandle(SocketID);
-			delete Parameters;
-			return 1;
-		}
-		else
-			free(Parameters->para_client_InitialSend);
-	}
-	Report("* Initial send copying END *");
-
-	delete Parameters;	// Scat!
-	Report("* Parameters retrieval END *");
-	Report("* Struct creation BEGIN *");
-
-	Report("Now declaring addrinfo and sockaddr.");
-#ifndef UNICODE
-	struct addrinfo *result = NULL, *ptr = NULL, hints;
-#else
-	struct addrinfoW *result = NULL, *ptr = NULL, hints;
+	ReportInfo(self->fusionSocketID, _T("Finding a DNS address"));
+	// Declare two pointers to addrinfo, and one hints that's used to indicate to OS what protocol we expect
+#ifndef _UNICODE
+	struct addrinfo *result = NULL, *addrInfo = NULL, hints = {};
+#else // Windows Unicode only
+	struct addrinfoW *result = NULL, *addrInfo = NULL, hints = {};
+#define freeaddrinfo(x) FreeAddrInfoW(x)
 #endif
-	struct sockaddr_storage SockAddr;
-	ZeroMemory(&SockAddr, sizeof(SockAddr));
 
-	// Copy data into sockaddr_storage and retrieve address
-	if (AddressFamily != AF_INET6)
-	{
-		DWORD d = 255, e = d, f = 255;
+	hints.ai_protocol = params->protoType;
+	hints.ai_family = params->addressFamily;
+	hints.ai_socktype = params->socketType;
+	// default flags:
+	// AI_ALL and V4_MAPPED queries for IPv6, and if fails, queries for IPv4 and returns a IPv6-mapped-result
+	// AI_ADDRCONFIG prevents returning addresses that are valid but no adapter allows them
+	// for example, returning IPv6 addresses on an IPv4-adapter-only system
+	// https://man7.org/linux/man-pages/man3/getaddrinfo.3.html
+	hints.ai_flags = AI_ALL | AI_V4MAPPED | AI_ADDRCONFIG;
 
-		sockaddr_in fun;
-		fun.sin_family = AddressFamily;
-		fun.sin_port = Port;
+#if _WIN32
+	// AI_XX flags are only supported in Vista+
+	if (Internal_GetWinVer() < _WIN32_WINNT_VISTA)
+		hints.ai_flags = 0;
+#endif
 
-		if (WSAAddressToString((sockaddr *)&fun, sizeof(fun), NULL, Hostname, &d))
+	// If service name is not given, pass the port as the service name
+	if (params->client_serviceName.empty() && params->port != 0)
+		params->client_serviceName = std::to_tstring(params->port);
+
+	// Note: client_hostname is edited in a certain way of using getaddrinfo, we don't use that way,
+	// but that's why client_hostname.data() is used instead of c_str()
+
+	int err;
+	do {
+#if _WIN32
+		// Windows likes its UTF-16 variants
+		err = GetAddrInfo(params->client_hostname.data(),
+			params->client_serviceName.empty() ? NULL : params->client_serviceName.c_str(),
+			(PADDRINFOT)&hints, (PADDRINFOT *)&addrInfo);
+#else
+		err = getaddrinfo(params->client_hostname.data(),
+			params->client_serviceName.empty() ? NULL : params->client_serviceName.c_str(),
+			&hints, &addrInfo);
+#endif
+
+		if (!self->HandleSockOpReturn("getaddrinfo()", err, true))
 		{
-			sprintf_s(temp, sizeof(temp), "Error with WSAAddressToString(), number %i.", WSAGetLastError());
-			Explode(temp);
-		}
-		else
-		{
-			sprintf_s(temp, 1024, "WSAAdressToString() returned [%.14s].", (char *)((&fun)+2));
-			Report(temp);
-		}
-
-		if (memcpy_s((void *)(&SockAddr), sizeof(SockAddr), (void *)(&fun), sizeof(fun)))
-		{
-			Explode("Struct memory copying v4 failed. Thread exiting.");
-			free(InitialSend);
-			NullStoredHandle(SocketID);
-			return 1;
-		}
-	}
-	else // AddressFamily == AF_INET6
-	{
-		DWORD d = 255;
-
-		sockaddr_in6 fun;
-		fun.sin6_family = AddressFamily;
-		fun.sin6_port = Port;
-
-		if (WSAAddressToString((sockaddr *)&fun, sizeof(fun), NULL, Hostname, &d))
-		{
-			sprintf_s(temp, sizeof(temp), "Error with WSAAddressToString(), number %i.", WSAGetLastError());
-			Explode(temp);
-		}
-
-		if (memcpy_s((void *)(&SockAddr), sizeof(SockAddr), (void *)(&fun), sizeof(fun)))
-		{
-			Explode("Struct memory copying v6 failed. Thread exiting.");
-			free(InitialSend);
-			NullStoredHandle(SocketID);
-			return 1;
-		}
-
-	}
-
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AddressFamily;
-	hints.ai_socktype = SocketType;
-	hints.ai_protocol = ProtocolType;
-	hints.ai_flags = AI_PASSIVE;
-
-	Report("Now running GetAddrInfo");
-	// Cast port to TCHAR *, defaults to 80
-	TCHAR StrPort[6] = _T("80\0\0\0");
-	_itot_s(Port, StrPort, 6, 10); // 6 is the size of StrPort; 10 here signifies decimal - base 10 numbers
-
-	// Resolve the server address and port
-	int error = getaddrinfo(Hostname, StrPort, &hints, &result);
-
-	if (error)
-	{
-		sprintf_s(temp, 1024, "GetAddrInfo() failed with error %i! Parameters %s, %s, N/A*2. Thread exiting.", WSAGetLastError(), Hostname, StrPort);
-		Explode(temp);
-		if (result) // result exists
-		{
-			if (!result->ai_addr) // Does not exist
-				Explode("result->ai_addr == NULL");
-			else // result->ai_addr exists
+			if (err == 1002 /* WSATRYAGAIN */)
 			{
-				sprintf_s(temp, 1024, "ai_addr = %p.", result->ai_addr);
-				Explode(temp);
+				ReportInfo(self->fusionSocketID, _T("getaddrinfo() returned \"try again\" error, will retry in 5 seconds."));
+				std::this_thread::sleep_for(std::chrono::seconds(5));
+				continue;
+			};
+			if (err == 1004 /* WSANO_DATA */)
+			{
+				return CreateError(self->fusionSocketID, _T("Error with getaddrinfo(): hostname \"%s\" with service name \"%s\" has DNS records, but no records that can be used to connect to. Thread aborting."),
+					params->client_hostname.c_str());
 			}
+			return CreateError(self->fusionSocketID, _T("Error with getaddrinfo(): [%i] %s. Thread aborting."), err, gai_strerror(err));
 		}
-		free(InitialSend);
-		NullStoredHandle(SocketID);
-		return 1;
-	}
 
-	SOCKET ConnectSocket = INVALID_SOCKET;
+		ReportInfo(self->fusionSocketID, _T("getaddrinfo() success."));
+		break;
+	} while (true);
 
-	Report("Past GetAddrInfo(), next using socket() function...");
-	// Attempt to connect to the first address returned by the call to getaddrinfo
-	ptr = result;
-
-	Report("* Main connect BEGIN *");
+	ReportInfo(self->fusionSocketID, _T("DNS list found, trying to connect..."));
 	// Create a SOCKET for connecting to server
-	ConnectSocket = socket(AddressFamily, SocketType, ProtocolType);
-	if (ConnectSocket == INVALID_SOCKET)
-	{
-		sprintf_s(temp, sizeof(temp), "Error with socket(): %i. Thread exiting.", WSAGetLastError());
-		Explode(temp);
-		NullStoredHandle(SocketID);
-		freeaddrinfo(result);
-		free(Hostname);
-		return 1;
-	}
-	Report("ConnectSocket not invalid. Now moving on to bind()");
+	int addrInfoNum = 0;
+	for (auto * curAddrInfo = addrInfo; curAddrInfo != NULL; curAddrInfo = curAddrInfo->ai_next) {
+		++addrInfoNum;
+		self->mainSocketFD = socket(curAddrInfo->ai_family, curAddrInfo->ai_socktype, curAddrInfo->ai_protocol);
+		if (!self->HandleSockOpReturn("socket()", self->mainSocketFD))
+			continue; // Move to next one
 
-	Report("* bind() attempt BEGIN *");
-	// Loop until successful... or not
+		ReportInfo(self->fusionSocketID, _T("socket() for address #%i okay, moving on to connect()"), addrInfoNum);
+		// Connect to server.
+		err = connect(self->mainSocketFD, curAddrInfo->ai_addr, (int)curAddrInfo->ai_addrlen);
+		if (!self->HandleSockOpReturn("connect()", err, true))
+		{
+			CloseSocket(self->mainSocketFD);
+			continue;
+		};
+		ReportInfo(self->fusionSocketID, _T("connect() for address #%i worked, done connecting!"), addrInfoNum);
+		self->mainSockAddressSize = curAddrInfo->ai_addrlen;
+		if (memcpy_s(&self->mainSockAddress, sizeof(self->mainSockAddress), curAddrInfo->ai_addr, curAddrInfo->ai_addrlen))
+			CreateError(self->fusionSocketID, _T("Failed to copy memory; error %d."), errno);
+
+		freeaddrinfo(addrInfo);
+		addrInfo = nullptr;
+		goto found;
+	}
+
+	CreateError(self->fusionSocketID, _T("Couldn't connect to any of the %d matching addresses. Closing client."), addrInfoNum);
+	CloseSocket(self->mainSocketFD);
+	freeaddrinfo(addrInfo);
+#if defined(_WIN32) && defined(_UNICODE)
+#undef freeaddrinfo
+#endif
+	return;
+
+found:
+
+	std::shared_ptr<SocketSource> socketSource = std::make_shared<SocketSource>(self, self->mainSockAddress, self->mainSockAddressSize);
+	self->sources.push_back(socketSource);
+
+	ReportInfo(self->fusionSocketID, _T("Switching to non-blocking socket"));
+	{
+		unsigned long UL = 1;
+		// Set to non-blocking
+		int error = ioctlsocket(self->mainSocketFD, FIONBIO, &UL);
+		if (error != 0)
+			CreateError(self->fusionSocketID, _T("Warning: non-blocking mode could not be set."));
+	}
+	ReportInfo(self->fusionSocketID, _T("Socket connected and set to non-blocking, now main loop start"));
+	AddEvent(EventToRun(self->fusionSocketID, socketSource, Conditions::OnClientConnect));
+
+	bool receiveOnly = false;
+	// Default stuff
+	size_t recvbufsize = 1 * 1024 * 1024; // 1MB
+	std::unique_ptr<char[]> recvbuf = std::make_unique<char[]>(recvbufsize);
+
+	// Main receiving loop
+	int lastErr = 0, curReturn;
 	while (true)
 	{
-		if (bind(ConnectSocket, (sockaddr*)(&SockAddr), sizeof(SockAddr)) == 0)
+		if (self->changesPendingForThread)
 		{
-			Report("Successful bind!");
+			self->lock.edif_lock();
+			ReportInfo(self->fusionSocketID, _T("Thread signaled for changes; looking for them."));
+
+			if (self->shutdownPending)
+			{
+				ReportInfo(self->fusionSocketID, _T("Thread responding to shutdown request."));
+				self->Shutdown();
+				self->lock.edif_unlock();
+				break;
+			}
+
+			if (!receiveOnly && self->receiveOnly)
+			{
+				ReportInfo(self->fusionSocketID, _T("Thread responding to receive-only request. Now read-only."));
+				curReturn = shutdown(self->mainSocketFD, SD_SEND);
+				receiveOnly = true;
+				self->HandleSockOpReturn("shutdown(SD_SEND)", curReturn);
+			}
+			ReportInfo(self->fusionSocketID, _T("Thread change signal processed and reset."));
+			self->changesPendingForThread = false;
+			self->lock.edif_unlock();
+		}
+
+		fd_set readFDs = {}, exceptFDs = {};
+		FD_ZERO(&readFDs);
+		FD_ZERO(&exceptFDs);
+		FD_SET(self->mainSocketFD, &readFDs);
+		FD_SET(self->mainSocketFD, &exceptFDs);
+
+		// select() burns CPU until timeout, so make it short
+		struct timeval timeout = { 0, 100 * 1000 };
+
+		curReturn = select(1, &readFDs, NULL, &exceptFDs, &timeout);
+
+		// No FDs set; nothing to do
+		if (curReturn == 0)
+		{
+			if (!self->changesPendingForThread)
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			continue;
+		}
+
+		if (!self->HandleSockOpReturn("select()", curReturn))
+		{
+			ReportInfo(self->fusionSocketID, _T("Got error %d when looking for received data."), curReturn);
+
+			// Same error as last loop; give up
+			if (lastErr == curReturn)
+			{
+				ReportInfo(self->fusionSocketID, _T("Error %d was repeated from last loop, stopping thread."), lastErr);
+				break;
+			}
+			lastErr = curReturn;
+			continue;
+		}
+
+
+		// This apparently only happens when out-of-band (OOB) data is returned.
+		if (exceptFDs.fd_count > 0)
+			ReportInfo(self->fusionSocketID, _T("Received out-of-band data."));
+
+		if (readFDs.fd_count > 0)
+		{
+			// Receive data until the server closes the connection
+			curReturn = recv(self->mainSocketFD, recvbuf.get(), recvbufsize, 0);
+			if (self->HandleSockOpReturn("recv", curReturn, true))
+			{
+				if (curReturn > 0)
+				{
+					if (recvbufsize == curReturn)
+						CreateError(self->fusionSocketID, _T("Too much data left to receive."));
+
+					ReportInfo(self->fusionSocketID, _T("Msg recv: %i bytes."), curReturn);
+					++socketSource->numPacketsIn;
+					socketSource->bytesIn += curReturn;
+					EventToRun etr(self->fusionSocketID, socketSource, Conditions::OnClientReceivedPacket);
+					etr.msg.assign(recvbuf.get(), curReturn);
+					this->AddEvent(std::move(etr));
+					continue;
+				}
+				else // curReturn == 0, socket was gracefully closed
+				{
+					ReportInfo(self->fusionSocketID, _T("Client connection was closed. Thread exiting."));
+					break;
+				}
+			}
+
+			// error reported already, we check if continuable later
+		}
+
+		// OOB data to receive
+		if (exceptFDs.fd_count > 0)
+		{
+			ULONG atMark;
+			curReturn = ioctlsocket(self->mainSocketFD, SIOCATMARK, &atMark);
+			if (curReturn < 0)
+				CreateError(self->fusionSocketID, _T("Couldn't check if OOB data was present."));
+
+			// If true, we're at mark; if not, got some more regular data to receive before OOB.
+			// Worth noting recv() is guaranteed to not read past OOB in a recv(0) call...
+			// unless MSG_OOBINLINE is used, which would prevent exceptFDs triggering anyway.
+			if (atMark != 0)
+			{
+				curReturn = recv(self->fusionSocketID, recvbuf.get(), recvbufsize, MSG_OOB);
+				if (!self->HandleSockOpReturn("recv for OOB", curReturn))
+				{
+					ReportInfo(self->fusionSocketID, _T("recv() for OOB failed with error %d, continuing thread"), curReturn);
+					continue;
+				}
+
+				// TCP only supports one OOB byte at a time, weirdly.
+				if (curReturn > 0)
+				{
+					++socketSource->numPacketsIn;
+					socketSource->bytesIn += curReturn;
+					EventToRun etr(self->fusionSocketID, socketSource, Conditions::OnClientReceivedPacket);
+					etr.msg.assign(recvbuf.get(), curReturn);
+					etr.msgIsOOB = true;
+					this->AddEvent(std::move(etr));
+					continue;
+				}
+			}
+		}
+
+		// Sockets are okay, time to loop again
+		if (curReturn > 0)
+			continue;
+
+		// Error happened, and it was same as last time
+		if (curReturn == lastErr)
+		{
+			ReportInfo(self->fusionSocketID, _T("Error %d was repeated from last loop, stopping thread."), lastErr);
 			break;
 		}
 		else
 		{
-			if (WSAGetLastError() == WSAENOTSOCK)
+			lastErr = curReturn;
+			continue;
+		}
+
+		static int conDedErrors[]{ ENOTCONN, 58 /* WSAESHUTDOWN */, ECONNABORTED, WSAECONNABORTED - WSABASEERR, WSAECONNRESET - WSABASEERR, ENETRESET};
+		for (size_t i = 0; i < std::size(conDedErrors); i++)
+		{
+			if (-lastErr == conDedErrors[i])
 			{
-				Report("\"Not Socket\" error. bind() operation skipped.");
+				ReportInfo(self->fusionSocketID, _T("Client connection was closed. Thread exiting."));
 				break;
 			}
-			else
-			{
-				sprintf_s(temp, 1024, "Error with bind(): %i. Thread continues.", WSAGetLastError());
-				Report(temp);
-				//Report("bind address, address already in use. Moving on...");
-			}
 		}
-		Port--;
-		if (Port == IPPORT_RESERVED/2 )
-		{
-			Explode("Failed to bind address, all addresses already in use. Thread exiting.");
-			free(InitialSend);
-			NullStoredHandle(SocketID);
-			freeaddrinfo(result);
-			return 1;
-			/* fail--all unassigned reserved ports are */
-			/* in use. */
-		}
+		// continue;
 	}
-	Report("* bind() attempt END *");
 
-	Report("Moving on to connect()");
-	// Connect to server.
-	error = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-	if (error == SOCKET_ERROR)
+
+	ReportInfo(self->fusionSocketID, _T("* Main loop ended, beginning cleanup"));
+
+	self->lock.edif_lock();
+	if (!self->shutdownPending)
+		self->Shutdown();
+
+	AddEvent(EventToRun(self->fusionSocketID, socketSource, Conditions::OnClientDisonnect));
+
+	self->lock.edif_unlock();
+	while (true)
 	{
-		sprintf_s(temp, sizeof(temp), "Error with connect(): %i. Thread exiting.", WSAGetLastError());
-		Explode(temp);
-		closesocket(ConnectSocket);
-		free(InitialSend);
-		// Should really try the next address returned by getaddrinfo
-		// if the connect call failed
-		// But for this simple example we just free the resources
-		// returned by getaddrinfo and print an error message
-		freeaddrinfo(result);
-		NullStoredHandle(SocketID);
-		return 1;
+		threadsafe.edif_lock();
+		bool anyFound = std::any_of(eventsToRun.cbegin(), eventsToRun.cend(),
+			[&](const std::unique_ptr<EventToRun>& e) { return e->fusionSocketID == self->fusionSocketID; });
+		threadsafe.edif_unlock();
+		if (!anyFound)
+			break;
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
-	freeaddrinfo(result);
+	AddEvent(EventToRun(self->fusionSocketID, socketSource, Conditions::CleanupSocket));
 
-	if (ConnectSocket == INVALID_SOCKET)
-	{
-		Explode("Unable to connect to server!");
-		closesocket(ConnectSocket);
-		free(InitialSend);
-		NullStoredHandle(SocketID);
-		return 1;
-	}
-
-	Report("* Main connect END *");
-
-	Report("* Send initial buffer BEGIN *");
-	Report("Next using send() function.");
-	// Send an initial buffer
-	int iResult = send(ConnectSocket, (char *)InitialSend, InitialSendSize, 0);
-	if (iResult == SOCKET_ERROR)
-	{
-		Explode("Initial send() function failed.");
-		free(InitialSend);
-		NullStoredHandle(SocketID);
-		closesocket(ConnectSocket);
-		CallEvent(MF2C_CLIENT_ON_DISCONNECT);
-		return 1;
-	}
-	sprintf_s(temp, sizeof(temp), "Bytes Sent: %i", iResult);
-	Report(temp);		// Report send
-	free(InitialSend);	// Don't need this anymore!
-	CallEvent(MF2C_CLIENT_ON_CONNECT);
-	Report("* Send initial buffer END *");
-
-	Report("* Blocking->non-blocking change BEGIN *");
-	unsigned long UL = 1;
-	// Set to non-blocking
-	error = ioctlsocket(ConnectSocket, FIONBIO, &UL);
-	if (error != 0)
-		Explode("Warning: non-blocking mode could not be set.");
-	Report("* Blocking->non-blocking change END *");
-
-	Report("The socket has initialised completely.");
-	Report("The socket will now spend its time looking for commands from MMF2 and receiving messages.");
-
-	Report("* Main loop BEGIN *");
-	// For going independent from MMF2
-	bool Independent = false, MMF2Report = true, run = true, loop = false;
-	// Default stuff
-	char recvbuf[512];
-	int recvbuflen = sizeof(recvbuf), num_bytes_present = 0;
-	std::string OutputTo = "", totalrec = "";
-	FILE * OutputFile = NULL;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// MAIN PART
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	while (run)
-	{
-		if (!Independent)
-		{
-			ThreadSafe_Start();
-			// Check if there's any messages from MMF2 to handle
-			if (!Extension->Senders.empty())
-			{
-				// If so, loop through them
-				for (unsigned int i = 0; i < Extension->Senders.size(); i++)
-				{
-					// Message is for us
-					if (Extension->Senders[i].Socket == SocketID)
-					{
-						// Copy outside of threadsafe so Report() functions don't lock up
-						Commands c = Extension->Senders[i].Cmd;
-						ThreadSafe_End();
-						// What does MMF2 want us to do?
-						switch(c)
-						{
-							// Command to close the thread
-							case Commands::SHUTDOWNTHREAD:
-								Report("Thread terminated by SHUTDOWNTHREAD");
-								run = false;
-								break;
-
-							// Command to send a message.
-							case Commands::SENDMSG:
-								Report("Now using send()...");
-								iResult = send(ConnectSocket, (char *)Extension->Senders[i].Message, Extension->Senders[i].MessageSize, 0);
-								if (iResult == SOCKET_ERROR)
-									Explode("send() failed!");
-								else
-									Report("Send operation completed successfully.");
-								ThreadSafe_Start();
-								// We don't want to run free() on the FormPacket
-								if (Extension->Senders[i].Message != Extension->PacketFormLocation)
-									free(Extension->Senders[i].Message);
-								ThreadSafe_End();
-								break;
-
-							// Command to switch to receiving only.
-							case Commands::RECEIVEONLY:
-								Report("Now using shutdown() so we don't send data. But we can receive.");
-								iResult = shutdown(ConnectSocket, SD_SEND);
-								if (iResult == SOCKET_ERROR)
-								{
-									Explode("shutdown() failed!"); // %d\n", WSAGetLastError());
-									run = false;
-								}
-								Report("Shutdown operation completed.");
-								break;
-
-							// Ignore any further commands from MMF2. This will speed up the thread but make the
-							// thread as unreachable as that aunt you heard of but don't know their phone number.
-							case Commands::GOINDEPENDENT:
-								Report("Socket is now independent and cannot be contacted.");
-								Independent = true;
-								break;
-
-							// Command to copy the received data to a file
-							case Commands::LINKOUTPUTTOFILE:
-								Report("Linking received messages to file.");
-								ThreadSafe_Start();
-								OutputTo = (TCHAR *)Extension->Senders[i].Message;
-								ThreadSafe_End();
-								if (OutputTo != "")
-									fclose(OutputFile);
-								OutputFile = fopen(OutputTo.c_str(), "ab");
-								if (!OutputFile)
-
-								break;
-
-							// Command to stop copying the received data to a file
-							case Commands::UNLINKFILEOUTPUT:
-								Report("Received messages unlinked from file.");
-								OutputTo = "";
-								fclose(OutputFile);
-								break;
-
-							// Command to stop reporting messages to MMF2 (disconnection will still be reported)
-							case Commands::MMFREPORTOFF:
-								if (OutputTo != "")
-									Report("No MMF2 report enabled, outputting to file only.");
-								else
-									Report("No MMF2 report enabled, no file output either!"
-											"You will not receive any received messages from this socket.");
-								MMF2Report = false;
-								break;
-
-							// Command to re-start the reporting of messages to MMF2
-							case Commands::MMFREPORTON:
-								MMF2Report = true;
-								Report("MMF2 report re-enabled.");
-								break;
-
-							// Unrecognised command.
-							default:
-								Explode("Unrecognised command!");
-						}
-					ThreadSafe_Start();
-					// We handled this one, so remove it.
-					Extension->Senders.erase(Extension->Senders.begin() + i);
-					i--;
-					// Only handle one of the queue per while loop.
-					break;
-					}
-				}
-			}
-			ThreadSafe_End();
-		}
-
-		// Receive data until the server closes the connection
-		do
-		{
-			loop = false;
-			// The call is nonblocking.
-			// If nothing to receive, it would go to the WSAEWOULDBLOCK error code.
-			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-			if (iResult > 0)
-			{
-				// Left-over characters may be appended: use iResult to
-				// get the correct number of bytes from the buffer
-				totalrec.append(recvbuf, iResult);
-			}
-			else // (iResult <= 0)
-			{
-				// On disconnect
-				if (iResult == 0)
-				{
-					// If not already sent
-					if (totalrec != "")
-					{
-						// Send packet to MMF2
-						if (MMF2Report)
-							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-
-						// Send packet to the file output
-						if (OutputTo != "")
-							fputs(totalrec.c_str(), OutputFile);
-						totalrec = "";
-					}
-					ThreadSafe_Start();
-					Extension->LastReturnType = CLIENT_RETURN;
-					Extension->LastReturnSocketID = SocketID;
-					ThreadSafe_End();
-					CallEvent(MF2C_CLIENT_ON_DISCONNECT);
-				}
-				// On error (or other stuff)
-
-				else // (iResult < 0)
-				{
-					// If a message is pending
-					if (totalrec != "")
-					{
-						// Send packet to MMF2
-						if (MMF2Report)
-							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-
-						// Send packet to the file output
-						if (OutputTo != "")
-							fputs(totalrec.c_str(), OutputFile);
-
-						totalrec = "";
-					}
-					if (iResult == SOCKET_ERROR)
-					{
-						iResult = WSAGetLastError();
-						switch(iResult)
-						{
-							case ERROR_SUCCESS:
-							case WSAEWOULDBLOCK:
-								loop = true;
-								break;
-							case WSAENOTCONN:
-							case WSAESHUTDOWN:
-							case WSAECONNABORTED:
-							case WSAECONNRESET:
-							case WSAENETRESET:
-								Report("Client connection was closed. Thread exiting.");
-								run = false;
-								break;
-							case WSANOTINITIALISED:
-								Explode("Very unexpected error: WSA not initialised (WSANOTINITIALISED). "
-										"This is odd because WSAStartup() was error-checked earlier. "
-										"For developers: WSAStartup() was run in CreateRunObject(). Thread exiting.");
-								run = false;
-								break;
-							case WSAENETDOWN:
-							case WSAETIMEDOUT:
-								Explode("Network error and/or timeout. (WSAENETDOWN or WSAETIMEDOUT)\n"
-										"According to MSDN:\n"
-										"\"The connection has been dropped because of a network failure or because the peer system failed to respond.\"\n"
-										"So uh, have fun debugging. Thread exiting.");
-								run = false;
-								break;
-							case WSAEFAULT:
-								Explode("Socket variables invalid! Check you supplied the correct variables to the initialise action. Thread exiting.");
-								run = false;
-								break;
-							case WSAEMSGSIZE:
-								Explode("Buffer too small for datagram. "
-										"This is not your fault! "
-										"Please inform SortaCore of this error. Thread remains open.");
-								break;
-							default:
-								// Error that is rare and unhandled.
-								sprintf_s(temp, sizeof(temp), "recv() function failed, with unusual error %i. Thread remains open.", WSAGetLastError());
-								Explode(temp);
-								break;
-						}
-
-						iResult = SOCKET_ERROR;
-					}
-					else // (iResult < -1)
-						 // This shouldn't occur: iResult should be -1 for normal errors,
-						 // or 0 for disconnection, or >0 for number of bytes received.
-						Explode("Unexpected error (tell SortaCore): iResult < -1.");
-				}
-			}
-		}
-		// Loop this part if there was a message to receive, in case there's more to the message.
-		while (iResult > 0); // || loop
-
-		// Nothing to do: give the CPU a rest before the next MMF2 message check & recv() check.
-		Sleep(10);
-	}
-	Report("* Main loop END *");
-	ThreadSafe_Start();
-	Extension->LastReturnType = CLIENT_RETURN;
-	Extension->LastReturnSocketID = SocketID;
-	ThreadSafe_End();
-	CallEvent(MF2C_CLIENT_ON_DISCONNECT);
-
-	Report("* Shutdown BEGIN *");
-	// Cleanup - the reason TerminateThread() isn't recommended.
-	if (OutputTo != "")
-		fclose(OutputFile);
-	free(Hostname);
-	NullStoredHandle(SocketID);
-	closesocket(ConnectSocket);
-	Report("* Shutdown END *");
-
-	Report("Client thread exit.");
-	return 0;
-
+	ReportInfo(self->fusionSocketID, _T("Client thread exit."));
 }
 
-void ServerThread(StructPassThru *Parameters)
+void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<StructPassThru> params)
 {
-	Extension * Extension = Parameters->para_Ext;					// Access for Extension::
+	Extension* ext = params->ext;
 
-	unsigned short Port = htons(Parameters->para_Port);			// Port to connect to (htons() rearranges bits)
-	int ProtocolType = Parameters->para_ProtocolType;				// ProtocolType eg IPPROTO_TCP
-	int SocketType = Parameters->para_SocketType;					// SocketType eg SOCK_STREAM
-	int AddressFamily = Parameters->para_AddressFamily;			// AddressFamily eg AF_INTERNET
-	int WhatEver = Parameters->para_server_InAddr;							// Needed for something
+	struct sockaddr_storage addrInfo = {};
+	addrInfo.ss_family = params->addressFamily;
 
-	ThreadSafe_Start();
-	int SocketID = Extension->NewSocketID;	// Get the current available Socket ID
-	Extension->NewSocketID++;					// Increment for further threads
-	ThreadSafe_End();
+	// Address family 0 indicates IPv4 + IPv6, but that only works for client connections.
+	// We'll manipulate the server to give the same functionality.
+	bool isIPv6And4 = params->addressFamily == AF_UNSPEC;
+	size_t sockaddrSize = sizeof(sockaddr_storage);
+	if (isIPv6And4)
+		addrInfo.ss_family = AF_INET6;
 
-	Report("Socket ID acquired");
-	delete Parameters;	// Scat!
-	Report("After delete");
+	self->mainSocketFD = socket(addrInfo.ss_family, params->socketType, params->protoType);
+	if (!self->HandleSockOpReturn("socket()", self->mainSocketFD))
+		return CreateError(self->fusionSocketID, _T("Couldn't create a socket with address %d, socket %d, protocol %d."), params->addressFamily, params->socketType, params->protoType);
+
+	// With this disabled, new server applications won't be able to re-use the port immediately - the OS
+	// has to free the port for reusing, which can be several minutes later, equating to several minutes of downtime.
+	unsigned long on = 1;
+	int curReturn = setsockopt(self->mainSocketFD, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, 4); // sizeof int, we reuse as 8 byte
+	if (!self->HandleSockOpReturn("setsockopt(reuse)", curReturn, true))
+		return;
+
+	if (isIPv6And4)
+	{
+		ReportInfo(self->fusionSocketID, _T("Switching to IPv6-and-IPv4"));
+		int no = 0;
+		curReturn = setsockopt(self->mainSocketFD, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&no, sizeof(no));
+		self->HandleSockOpReturn("setsockopt(IPv6 only = no)", curReturn, true);
+	}
+
+	auto serverSocketSource = std::make_shared<SocketSource>(self, self->mainSockAddress, self->mainSockAddressSize);
+	self->sources.push_back(serverSocketSource);
 
 
-	//Create own variables
-	char temp[1024]; // For chucking any variable into and using in Report()/Explode()
+	ReportInfo(self->fusionSocketID, _T("Switching to non-blocking socket"));
+	{
+		// Set to non-blocking
+		int error = ioctlsocket(self->mainSocketFD, FIONBIO, &on);
+		if (error != 0)
+			CreateError(self->fusionSocketID, _T("Warning: non-blocking mode could not be set."));
+	}
+	ReportInfo(self->fusionSocketID, _T("Socket prepared and set to non-blocking, now main loop start"));
+	
+	if (addrInfo.ss_family == AF_INET6)
+	{
+		// sockaddr_in and sockaddr_in6 has port as second member
+		// ((unsigned short*)&addrInfo)[1] = params->port;
+		((sockaddr_in6*)&addrInfo)->sin6_port = htons(params->port);
+		((sockaddr_in6*)&addrInfo)->sin6_addr = params->server_InAddr;
+		sockaddrSize = sizeof(sockaddr_in6);
+	}
+	else if (addrInfo.ss_family == AF_INET) {
+		((sockaddr_in*)&addrInfo)->sin_port = htons(params->port);
+		((sockaddr_in*)&addrInfo)->sin_addr = *(in_addr*)&params->server_InAddr;
+		sockaddrSize = sizeof(sockaddr_in);
+	}
 
-	Report("Now declaring addrinfo and sockaddr.");
-	struct addrinfo *result = NULL, *ptr = NULL, hints;
-	//void * SockADDR;
-	//if (AddressFamily == AFstruct sockaddr_in;
-	struct sockaddr_storage SockAddr;
-	ZeroMemory(&SockAddr, sizeof(SockAddr));
+	self->mainSockAddressSize = sockaddrSize;
+	if (memcpy_s(&self->mainSockAddress, sizeof(self->mainSockAddress), &addrInfo, sockaddrSize))
+		CreateError(self->fusionSocketID, _T("Failed to copy memory; error %d."), errno);
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AddressFamily;
-	hints.ai_socktype = SocketType;
-	hints.ai_protocol = ProtocolType;
+	curReturn = bind(self->mainSocketFD,
+		(struct sockaddr*)&addrInfo, sockaddrSize);
+	if (!self->HandleSockOpReturn("bind()", curReturn, true))
+		return;
+	ReportInfo(self->fusionSocketID, _T("Starting to listen"));
 
-	Report("Now running getaddrinfo");
-	SOCKET MainSocket = INVALID_SOCKET;
-	Report("Socket declared, next using bind() function.");
-	// Attempt to connect to the first address returned by the call to getaddrinfo
-	ptr = result;
+	curReturn = listen(self->mainSocketFD, 32);
+	if (!self->HandleSockOpReturn("listen()", curReturn, true))
+		return;
 
-	SockAddr.ss_family = AddressFamily;
+	// Master set holds both server and all the client FD sockets, working_set is returned by listening to changes
+	fd_set master_set = {}, readFDs = {}, exceptFDs = {};
+	FD_SET(self->mainSocketFD, &master_set);
 
-	// Loop until successful... or not
+	// select() burns CPU until timeout, so make it short
+	struct timeval timeout = { 0, 100 * 1000 };
+
+	AddEvent(EventToRun(self->fusionSocketID, self->sources[0], Conditions::OnServerStartHosting));
+
+	bool receiveOnly = false;
+	// Default stuff
+	size_t recvbufsize = 1 * 1024 * 1024; // 1MB
+	std::unique_ptr<char[]> recvbuf = std::make_unique<char[]>(recvbufsize);
+
+	std::shared_ptr<SocketSource> socketSource;
+	size_t newSockID = 0;
+	int max_sd = self->mainSocketFD;
+	// Main receiving loop
+	int lastErr = 0;
 	while (true)
 	{
-		if (bind(MainSocket, (struct sockaddr*)&SockAddr, sizeof(SockAddr)) == 0)
+		if (self->changesPendingForThread)
 		{
-			Report("Successful bind!");
+			self->lock.edif_lock();
+			ReportInfo(self->fusionSocketID, _T("Thread signaled for changes; looking for them."));
+
+			if (self->shutdownPending)
+			{
+				ReportInfo(self->fusionSocketID, _T("Thread responding to shutdown request."));
+				self->Shutdown();
+				self->lock.edif_unlock();
+				break;
+			}
+
+			if (!receiveOnly && self->receiveOnly)
+			{
+				ReportInfo(self->fusionSocketID, _T("Thread responding to receive-only request. Now read-only."));
+				curReturn = shutdown(self->mainSocketFD, SD_SEND);
+				receiveOnly = true;
+				self->HandleSockOpReturn("shutdown(SD_SEND)", curReturn);
+			}
+			ReportInfo(self->fusionSocketID, _T("Thread change signal processed and reset."));
+			self->changesPendingForThread = false;
+			self->lock.edif_unlock();
+		}
+
+		if (memcpy_s(&readFDs, sizeof(readFDs), &master_set, sizeof(master_set)) ||
+			memcpy_s(&exceptFDs, sizeof(exceptFDs), &master_set, sizeof(master_set)))
+		{
+			CreateError(self->fusionSocketID, _T("Couldn't copy data, error %d."), errno);
+			break;
+		}
+
+		curReturn = select(max_sd + 1, &readFDs, NULL, &exceptFDs, &timeout);
+
+		// No FDs set; nothing to do
+		if (curReturn == 0)
+		{
+			if (!self->changesPendingForThread)
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			continue;
+		}
+
+		if (!self->HandleSockOpReturn("select()", curReturn))
+		{
+			ReportInfo(self->fusionSocketID, _T("Got error %d when looking for received data."), curReturn);
+
+			// Same error as last loop; give up
+			if (lastErr == curReturn)
+			{
+				ReportInfo(self->fusionSocketID, _T("Error %d was repeated from last loop, stopping thread."), lastErr);
+				break;
+			}
+			lastErr = curReturn;
+			continue;
+		}
+
+		// This apparently only happens when out-of-band (OOB) data is returned.
+		if (exceptFDs.fd_count > 0)
+			ReportInfo(self->fusionSocketID, _T("Received out-of-band data."));
+
+		int desc_ready = curReturn;
+		for (int i = 0; i <= max_sd && desc_ready > 0; ++i)
+		{
+			if (FD_ISSET(i, &readFDs))
+			{
+				// Server socket was triggered - new incoming connection(s)
+				if (i == self->mainSocketFD)
+				{
+					sockaddr_storage newSockAddr;
+					int new_sd;
+					do
+					{
+						int sockaddr_len = sizeof(newSockAddr);
+						new_sd = accept(self->mainSocketFD, (sockaddr*)&newSockAddr, &sockaddr_len);
+						if (new_sd < 0)
+						{
+							// Would block if no connection waiting - so ignore EWOULDBLOCK
+							if (errno != EWOULDBLOCK)
+								self->HandleSockOpReturn("accept()", curReturn, true);
+							break; // no connection waiting
+						}
+
+						auto newSockSource = std::make_shared<SocketSource>(self, newSockAddr, sockaddr_len);
+						newSockSource->peerSocketFD = new_sd;
+						newSockSource->peerSocketID = newSockID++;
+						ReportInfo(self->fusionSocketID, _T("New connection with peer sock ID %i was created."), newSockSource->peerSocketID);
+						self->lock.edif_lock();
+						self->sources.push_back(newSockSource);
+						self->lock.edif_unlock();
+
+						FD_SET(new_sd, &master_set);
+						if (new_sd > max_sd)
+							max_sd = new_sd;
+						AddEvent(EventToRun(self->fusionSocketID, newSockSource, Conditions::OnServerPeerConnected));
+					} while (new_sd != -1);
+
+					goto exceptCheck; // jump to next FD
+				}
+
+				// It's an existing connection; find it
+				auto socketSourceIt = std::find_if(self->sources.cbegin(), self->sources.cend(),
+					[i](const std::shared_ptr<SocketSource>& src) {
+						return src->peerSocketFD == i;
+					});
+				assert(socketSourceIt != self->sources.cend());
+				socketSource = *socketSourceIt;
+
+				// Receive data
+				curReturn = recv(i, recvbuf.get(), recvbufsize, 0);
+				if (self->HandleSockOpReturn("recv", curReturn, true))
+				{
+					if (curReturn > 0)
+					{
+						if (recvbufsize == curReturn)
+							CreateError(self->fusionSocketID, _T("Too much data left to receive from client %d."), i);
+
+						ReportInfo(self->fusionSocketID, _T("Msg recv: %i bytes."), curReturn);
+						++socketSource->numPacketsIn;
+						socketSource->bytesIn += curReturn;
+						++serverSocketSource->numPacketsIn;
+						serverSocketSource->bytesIn += curReturn;
+						EventToRun etr(self->fusionSocketID, socketSource, Conditions::OnServerReceivedPacket);
+						etr.msg.assign(recvbuf.get(), curReturn);
+						AddEvent(std::move(etr));
+						continue;
+					}
+					else // curReturn == 0, socket was gracefully closed
+					{
+						ReportInfo(self->fusionSocketID, _T("Client connection %i (peer sock ID %i) was closed."), i, socketSource->peerSocketID);
+						AddEvent(EventToRun(self->fusionSocketID, socketSource, Conditions::OnServerPeerDisconnected));
+						CloseSocket(socketSource->peerSocketFD);
+						FD_CLR(i, &master_set);
+						if (i == max_sd)
+						{
+							while (FD_ISSET(max_sd, &master_set) == FALSE)
+								max_sd -= 1;
+						}
+						continue;
+					}
+				}
+				// else  error reported already, we check if continuable later
+			}
+		exceptCheck:
+			// OOB data to receive
+			if (FD_ISSET(i, &exceptFDs))
+			{
+				ULONG atMark;
+				curReturn = ioctlsocket(i, SIOCATMARK, &atMark);
+				if (curReturn < 0)
+					CreateError(self->fusionSocketID, _T("Couldn't check if OOB data was present."));
+
+				// If true, we're at mark; if not, got some more regular data to receive before OOB.
+				// Worth noting recv() is guaranteed to not read past OOB in a recv(0) call...
+				// unless MSG_OOBINLINE is used, which would prevent exceptFDs triggering anyway.
+				if (atMark != 0)
+				{
+					curReturn = recv(i, recvbuf.get(), recvbufsize, MSG_OOB);
+					if (!self->HandleSockOpReturn("recv for OOB", curReturn))
+					{
+						ReportInfo(self->fusionSocketID, _T("recv() for OOB (peer socket %d) failed with error %d, continuing thread"), i, curReturn);
+						continue;
+					}
+
+					// TCP only supports one OOB byte at a time, weirdly.
+					if (curReturn > 0)
+					{
+						++socketSource->numPacketsIn;
+						socketSource->bytesIn += curReturn;
+						++serverSocketSource->numPacketsIn;
+						serverSocketSource->bytesIn += curReturn;
+						EventToRun etr(self->fusionSocketID, socketSource, Conditions::OnClientReceivedPacket);
+						etr.msg.assign(recvbuf.get(), curReturn);
+						etr.msgIsOOB = true;
+						this->AddEvent(std::move(etr));
+						continue;
+					}
+				}
+			}
+		}
+
+		// Sockets are okay, time to loop again
+		if (curReturn >= 0)
+			continue;
+
+		// Error happened, and it was same as last time
+		if (curReturn == lastErr)
+		{
+			ReportInfo(self->fusionSocketID, _T("Error %d was repeated from last loop, stopping thread."), lastErr);
 			break;
 		}
 		else
 		{
-			if (WSAGetLastError() == WSAENOTSOCK)
+			lastErr = curReturn;
+			continue;
+		}
+
+		static int conDedErrors[]{ ENOTCONN, 58 /* WSAESHUTDOWN */, ECONNABORTED, WSAECONNABORTED - WSABASEERR, WSAECONNRESET - WSABASEERR, ENETRESET };
+		for (size_t i = 0; i < std::size(conDedErrors); i++)
+		{
+			if (-lastErr == conDedErrors[i])
 			{
-				Report("\"Not Socket\" error. bind() operation skipped.");
+				ReportInfo(self->fusionSocketID, _T("Client connection %i was forcibly closed. Thread exiting."), socketSource->peerSocketID);
 				break;
 			}
-			else
-			{
-				sprintf_s(temp, 1024, "Error with bind(): %i.", WSAGetLastError());
-				Report(temp);
-				//Report("bind address, address already in use. Moving on...");
-			}
 		}
-		Port--;
-		if (Port == IPPORT_RESERVED/2 )
-		{
-			Explode("Failed to bind address, all addresses already in use. Thread exiting.");
-			NullStoredHandle(SocketID);
-			freeaddrinfo(result);
-			return 1;
-			/* fail--all unassigned reserved ports are */
-			/* in use. */
-		}
+		// continue;
 	}
 
-	// Create a SOCKET for connecting to server
-	MainSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-	if (MainSocket == INVALID_SOCKET)
+
+	ReportInfo(self->fusionSocketID, _T("* Main loop ended, beginning cleanup"));
+
+	self->lock.edif_lock();
+	if (!self->shutdownPending)
+		self->Shutdown();
+
+	AddEvent(EventToRun(self->fusionSocketID, self->sources[0], Conditions::OnServerStoppedHosting));
+
+	self->lock.edif_unlock();
+	while (true)
 	{
-		sprintf_s(temp, sizeof(temp), "Error with socket(): %i. Thread exiting.", WSAGetLastError());
-		Explode(temp); // Error 10043
-		NullStoredHandle(SocketID);
-		freeaddrinfo(result);
-		return 1;
+		threadsafe.edif_lock();
+		bool anyFound = std::any_of(eventsToRun.cbegin(), eventsToRun.cend(),
+			[&](const std::unique_ptr<EventToRun>& e) { return e->fusionSocketID == self->fusionSocketID; });
+		threadsafe.edif_unlock();
+		if (!anyFound)
+			break;
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
+	AddEvent(EventToRun(self->fusionSocketID, self->sources[0], Conditions::CleanupSocket));
 
-	Report("MainSocket not invalid. Now moving on to main loop()");
+	ReportInfo(self->fusionSocketID, _T("Client thread exit."));
+}
 
-	unsigned long UL = 1;
-	// Set to non-blocking
-	int error = ioctlsocket(MainSocket, FIONBIO, &UL);
-	if (error != 0)
-		Report("Warning: non-blocking mode could not be set.");
+void GlobalInfo::ClientThreadIRDA(std::shared_ptr<Thread> self, std::unique_ptr<StructPassThru> Parameters)
+{
+	// not implemented
+	CreateError(self->fusionSocketID, _T("IRDA client/server not programmed."));
+}
+void GlobalInfo::ServerThreadIRDA(std::shared_ptr<Thread> self, std::unique_ptr<StructPassThru> Parameters)
+{
+	// not implemented
+	CreateError(self->fusionSocketID, _T("IRDA client/server not programmed."));
+}
 
-	// For going independent from MMF2
-	bool Independent = false, MMF2Report = true;
-	// Default stuff
-	char recvbuf[512];
-	int recvbuflen = sizeof(recvbuf), iResult = 0;
-	int num_bytes_present = 0;
-	std::string OutputTo = "", totalrec = "";
-	FILE * OutputFile = NULL;
-	bool run = true, loop = false;
-	std::vector<ClientAccessNode> ClientSockets;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// MAIN PART
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	while (run)
-	{
-		if (!Independent)
-		{
-			ThreadSafe_Start();
-			// Check if there's any messages from MMF2 to handle
-			if (!Extension->Senders.empty())
-			{
-				// If so, loop through them
-				for (unsigned int i = 0; i < Extension->Senders.size(); i++)
-				{
-					// Message is for us
-					if (Extension->Senders[i].Socket == SocketID)
-					{
-						// Copy outside of threadsafe so Report() functions don't lock up
-						Commands c = Extension->Senders[i].Cmd;
-						ThreadSafe_End();
-						// What does MMF2 want us to do?
-						switch(c)
-						{
-							// Command to close the thread
-							case Commands::SHUTDOWNTHREAD:
-								Report("Thread terminated by SHUTDOWNTHREAD");
-								run = false;
-								break;
-
-							// Command to send a message.
-							case Commands::SENDMSG:
-								Report("Locating client...");
-								for (unsigned int j = 0; j < ClientSockets.size(); j++)
-								{
-									if (Extension->Senders[i].Client == _T("") || ClientSockets[j].FriendlyName == Extension->Senders[i].Client.c_str())
-									{
-										iResult = send(ClientSockets[j].socket, (char *)Extension->Senders[i].Message, Extension->Senders[i].MessageSize, 0);
-										if (iResult == SOCKET_ERROR)
-											Explode("Selected the socket, but the send() operation failed!");
-										else
-											Report("Send operation completed successfully.");
-									}
-								}
-								Explode("Send operation couldn't locate the applicable client(s)!");
-							break;
-
-							// Command to switch to receiving only.
-							case Commands::RECEIVEONLY:
-								Report("Now using shutdown() so we don't send data. But we can receive.");
-								iResult = shutdown(MainSocket, SD_SEND);
-								if (iResult == SOCKET_ERROR)
-								{
-									Explode("shutdown() failed!"); // %d\n", WSAGetLastError());
-									run = false;
-								}
-								Report("Shutdown operation completed.");
-								break;
-
-							// Ignore any further commands from MMF2. This will speed up the thread but make the
-							// thread as unreachable as that aunt you heard of but don't know their phone number.
-							case Commands::GOINDEPENDENT:
-								Report("Socket is now independent and cannot be contacted.");
-								Independent = true;
-								break;
-
-							// Command to copy the received data to a file
-							case Commands::LINKOUTPUTTOFILE:
-								Report("Linking output to file.");
-								ThreadSafe_Start();
-								OutputTo = (TCHAR *)Extension->Senders[i].Message;
-								ThreadSafe_End();
-								if (OutputTo != "")
-									fclose(OutputFile);
-								OutputFile = fopen(OutputTo.c_str(), "ab");
-								break;
-
-							// Command to stop copying the received data to a file
-							case Commands::UNLINKFILEOUTPUT:
-								Report("Output unlinked from file.");
-								OutputTo = "";
-								fclose(OutputFile);
-								break;
-
-							// Command to stop reporting messages to MMF2
-							case Commands::MMFREPORTOFF:
-								if (OutputTo != "")
-									Report("No MMF2 report enabled, outputting to file only.");
-								else
-									Report("No MMF2 report enabled, no file output either!"
-											"You will not receive anything from this socket.");
-								MMF2Report = false;
-								break;
-
-							// Command to re-start the reporting of messages to MMF2
-							case Commands::MMFREPORTON:
-								Report("MMF2 report re-enabled.");
-								MMF2Report = true;
-								break;
-
-							// Unrecognised command.
-							default:
-								Explode("Unrecognised command!");
-						}
-					ThreadSafe_Start();
-					// We handled this one, so remove it.
-					Extension->Senders.erase(Extension->Senders.begin() + i);
-					i--;
-					// Only handle one of the queue per while loop.
-					break;
-					}
-				}
-			}
-			ThreadSafe_End();
-		}
-
-		// Loop the main part
-		do
-		{
-			// Always revert to false, so MMF2 messages are checked for
-			loop = false;
-
-			// Does listen() find a socket
-			if (((iResult = listen(MainSocket, SOMAXCONN)) == SOCKET_ERROR) && (WSAGetLastError() != WSAEWOULDBLOCK))
-			{
-				sprintf_s(temp, sizeof(temp), "Error with listen(): %i. Thread exiting.", WSAGetLastError());
-				Explode(temp);
-				run = false;
-			}
-			else
-			{
-				SOCKADDR_STORAGE AcceptStruct;
-				SOCKET Temp = accept(MainSocket, (struct sockaddr *)&AcceptStruct, (int *) sizeof(AcceptStruct));
-				if (Temp != SOCKET_ERROR)
-				{
-					ClientAccessNode c;
-					c.sockaddr = AcceptStruct;
-					c.socket = Temp;
-					c.FriendlyName = _T("Not set.");
-					ClientSockets.push_back(c);
-					CallEvent(MF2C_SERVER_CLIENT_CONNECTED);
-				}
-				else
-				{
-					sprintf_s(temp, sizeof(temp), "Error with accept(): %i. Server continues to run.", WSAGetLastError());
-					Explode(temp);
-				}
-			}
-			// The call is nonblocking.
-			// If nothing to receive, it would go to the WSAEWOULDBLOCK error code.
-
-			if ((iResult = recv(MainSocket, recvbuf, recvbuflen, 0)) > 0)
-			{
-				// For some odd reason random characters are appended. So cast to std::string and use its' substr command.
-				totalrec.append(recvbuf, iResult);
-				//RtlZeroMemory(&recvbuf, recvbuflen);
-				//memcp
-			}
-			else
-			{
-				// On disconnect
-				if (iResult == 0)
-				{
-					// If some message remains to be sent
-					if (totalrec != "")
-					{
-						if (MMF2Report)
-							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-						if (OutputTo != "")
-							fputs(totalrec.c_str(), OutputFile);
-						totalrec = "";
-					}
-					// Tell MMF2 the socket is idle
-					ThreadSafe_Start();
-					Extension->LastReturnSocketID = SocketID;
-					ThreadSafe_End();
-					CallEvent(MF2C_SERVER_SOCKET_DONE);
-				}
-				// On error (or other stuff)
-				else
-				{
-					if (totalrec != "")
-					{
-						if (MMF2Report)
-							ReturnToMMF(CLIENT_RETURN, SocketID, (void *)totalrec.c_str(), totalrec.size()); // remove dodgy ending
-						if (OutputTo != "")
-							fputs(totalrec.c_str(), OutputFile);
-						totalrec = "";
-					}
-					if (iResult == SOCKET_ERROR)
-					{
-						iResult = WSAGetLastError();
-						switch(iResult)
-						{
-							case ERROR_SUCCESS:
-							case WSAEWOULDBLOCK:
-								loop = true;
-								break;
-							case WSAENOTCONN:
-							case WSAESHUTDOWN:
-							case WSAECONNABORTED:
-							case WSAECONNRESET:
-							case WSAENETRESET:
-								Report("Server socket closed.");
-								ThreadSafe_Start();
-								Extension->LastReturnSocketID = SocketID;
-								ThreadSafe_End();
-								CallEvent(MF2C_SERVER_SOCKET_DONE);
-								break;
-							case WSANOTINITIALISED:
-								Explode("Very unexpected error: WSA not initialised (WSANOTINITIALISED).\n\
-										This is odd because WSAStartup() was error-checked earlier.\n\
-										FYI, WSAStartup() was run in CreateRunObject.");
-								break;
-							case WSAENETDOWN:
-							case WSAETIMEDOUT:
-								Explode("Network error and/or timeout. (WSAENETDOWN or WSAETIMEDOUT)\n\
-										According to MSDN:\n\
-										\"The connection has been dropped because of a network failure or because the peer system failed to respond.\"\n\
-										So uh, have fun debugging.");
-								break;
-							case WSAEFAULT:
-								Explode("Socket variables invalid!");
-								break;
-							case WSAEMSGSIZE:
-								Explode("Buffer too small for datagram. Message not received.");
-								break;
-							default:
-								// Error.... ?
-								sprintf_s(temp, sizeof(temp), "recv() function failed, with unusual error %i.", WSAGetLastError());
-								Explode(temp);
-								break;
-						}
-						// If not just "No message" then
-						if (iResult != WSAEWOULDBLOCK && iResult != ERROR_SUCCESS)
-							// Shutdown thread
-							run = false;
-						iResult = SOCKET_ERROR;
-					}
-					else
-						Explode("Line 308 occured.");
-				}
-			}
-		}
-		// Loop this part if the data isn't empty, else stop
-		while (iResult > 0);
-		Sleep(100); // Stops CPU killing (hopefully)
-	}
-	// We're done - Cleanup
-	if (OutputTo != "")
-		fclose(OutputFile);
-	NullStoredHandle(SocketID);
-
-	closesocket(MainSocket);
-	Report("Server thread exit.");
-
-	return 0;
+void GlobalInfo::AddEvent(EventToRun && etr)
+{
+	threadsafe.edif_lock();
+	if (!pendingDelete)
+		eventsToRun.push_back(std::make_unique<EventToRun>(etr));
+	threadsafe.edif_unlock();
 }

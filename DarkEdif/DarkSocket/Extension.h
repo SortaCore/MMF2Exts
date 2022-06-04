@@ -1,4 +1,8 @@
 #pragma once
+#include <map>
+
+#include "Structures.h"
+
 class Extension
 {
 public:
@@ -23,131 +27,146 @@ public:
 	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
 	~Extension();
 
+	std::shared_ptr<EventToRun> curEvent;
 
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr)
+	GlobalInfo * globals = nullptr;
+	bool isGlobal = false;
+	//
+	std::string packetBeingBuilt;
 
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
+	bool Internal_GetTextWithEncoding(const std::string_view encoding, const std::string_view packetBytes, std::tstring &msgTo, int socketID);
+	bool Internal_SetTextWithEncoding(const std::string_view encoding, const std::tstring_view userPacketText, std::string &msgTo, int socketID);
 
-	// int MyVariable;
-	std::tstring LastError;					// Contains the last error
-	std::tstring CompleteStatus;			// Contains the last report & errors
-	std::tstring LastLockFile;				// For the VS debugger: contains the filename of the last ThreadSafe_Start()
-	int LastLockLine;						// For the VS debugger: contains the line of the last ThreadSafe_Start()
-	Edif::recursive_mutex threadsafe;		// Handles whether Extension can be read from/written to.
-	std::atomic<bool> nogevent;				// Handles whether GenerateEvent call is being handled.
-	int LastReturnSocketID;					// Indicates what the last SocketID is.
-	std::string LastReturnMsg;				// Handles last returned message
-	bool LastReturnType;					// Indicates the last message was from a client or server
-	std::vector<CarryMsg> Returns;			// Carries a message from the client/server->Fusion
-	std::vector<RevCarryMsg> Senders;		// Carries a message from Fusion->the client/server
-	int NewSocketID;						// The new socket ID is assigned here.
- 	WSADATA wsaData;						// Holds WSAStartup() information.
-	std::vector<std::thread> SocketThreadList;	// Contains handles to threads for terminating later.
-	std::string packetForm;
-
-	/*  Add your actions, conditions and expressions as real class member
-		functions here. The arguments (and return type for expressions) must
-		match EXACTLY what you defined in the JSON.
-
-		Remember to link the actions, conditions and expressions to their
-		numeric IDs in the class constructor (Extension.cpp)
-	*/
-	/// Functions (called by this object but not through a direct action)
-		int Internal_WorkOutAddressFamily(const TCHAR * addrFamAsText);
-		int Internal_WorkOutSocketType(const TCHAR * sockTypeAsText);
-		int Internal_WorkOutProtocolType(const TCHAR * protoTypeAsText);
-		void Internal_Error(int SocketID, PrintFHintInside const TCHAR * error, ...) PrintFHintAfter(3,4);
-		void Internal_Report(int SocketID, PrintFHintInside const TCHAR * report, ...) PrintFHintAfter(3, 4);
-		void Internal_ReturnToFusion(int ReturnAsI, int SocketID, const void * Msg, int MsgLength);
-		unsigned long Internal_WorkOutInAddr(const TCHAR * t);
-
-
-
+	// If packetBeingBuiltOffset == -1, sets it to packetBeingBuilt.size()
+	void Internal_BuiltPacketSizeSet(int& packetBeingBuiltOffset);
+	// Converts sockaddr to IPv6. Optionally unmaps IPv4-mapped-IPv6 to IPv4. Includes port.
+	std::tstring Internal_GetIPFromSockaddr(sockaddr_storage* sockadd, size_t size);
 
 	/// Actions
-/* ID = 0 */	void TestReportAndExplode();
-/* ID = 1 */	void UsePopupMessages(int OnOrOff);
 
-/* ID = 2 */	void ClientInitialise_Basic(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * InitialText);
-/* ID = 3 */	void ClientInitialise_Advanced(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * AddressFamily, const TCHAR * SocketType, const TCHAR * InitialText);
-/* ID = 4 */	void ClientShutdownSocket(int SocketID);
-/* ID = 5 */	void ClientSend(int SocketID, TCHAR * Message);
-/* ID = 6 */	void ClientGoIndependent(int SocketID);
-/* ID = 7 */	void ClientReceiveOnly(int SocketID);
-/* ID = 8 */	void ClientLinkFileOutput(int SocketID, TCHAR * File);
-/* ID = 9 */	void ClientUnlinkFileOutput(int SocketID);
-/* ID = 10 */	void ClientFusionReport(int SocketID, int OnOrOff);
+	// Got rid of these:
+	// they only needed testing because I was a poor coder and not sure why things didn't work
+	void DEPRECATED_TestReportAndErrors();
+	// You can use a popup message object to equate it, and a popup would generally interrupt socket handling anyway
+	void DEPRECATED_UsePopupMessages(int onOrOff);
 
-/* ID = 11 */	void ServerInitialise_Basic(const TCHAR * Protocol, int Port);
-/* ID = 12 */	void ServerInitialise_Advanced(const TCHAR * Protocol, const TCHAR * AddressFamily, const TCHAR * SocketType, int Port, const TCHAR * InAddr);
-/* ID = 13 */	void ServerShutdownSocket(int SocketID);
-/* ID = 14 */	void ServerSend(int SocketID, const TCHAR * Message);
-/* ID = 15 */	void ServerGoIndependent(int SocketID);
-/* ID = 16 */	void ServerAutoAccept(int SocketID, int OnOrOff);
-/* ID = 17 */	void ServerLinkFileOutput(int SocketID, const TCHAR * File);
-/* ID = 18 */	void ServerUnlinkFileOutput(int SocketID);
-/* ID = 19 */	void ServerFusionReport(int SocketID, int OnOrOff);
+	// Initial text was more trouble than what it was worth, let the events handle it
+	void DEPRECATED_ClientInitialize_Basic(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * InitialText);
+	void DEPRECATED_ClientInitialize_Advanced(const TCHAR * Hostname, int Port, const TCHAR * Protocol, const TCHAR * AddressFamily, const TCHAR * SocketType, const TCHAR * InitialText);
+	// Text encoding was confusing, so gonna make the user pass it explicitly
+	void DEPRECATED_ClientSend(int socketID, const TCHAR * packet);
+	// Client identification was meant to be IP or a comma-separated list
+	void DEPRECATED_ServerSend(int socketID, const TCHAR * packet, const TCHAR * clientID);
+	// Just an absolutely awful idea to detach a thread from control
+	void REMOVED_ClientGoIndependent(int socketID);
+	void REMOVED_ServerGoIndependent(int socketID);
+	// Also an awful idea to make a thread do its own thing - the servers/clients had no functionality of their own!
+	void REMOVED_ClientFusionReport(int socketID, int onOrOff);
+	void REMOVED_ServerFusionReport(int socketID, int onOrOff);
+	// Long makes no sense; it's stored either as signed int32, for which we have SetInteger action,
+	// or it's stored as int64, in which case "long" is ambiguous
+	void DEPRECATED_PacketBeingBuilt_SetLong(int longParam, int whereTo, int runHTONL);
+	// Text encoding should not depend on the runtime's Unicode compatibility and user awareness!
+	void DEPRECATED_PacketBeingBuilt_SetString(const TCHAR* text, int whereTo, int SizeOfString);
+	void DEPRECATED_PacketBeingBuilt_SetWString(const TCHAR* text, int whereTo, int SizeOfStringInChar);
+	// Removed these; it quickly spiralled DarkSocket into file and binary manipulation, which is feature creep
+	void DEPRECATED_ClientLinkFileOutput(int socketID, const TCHAR* file);
+	void DEPRECATED_ServerLinkFileOutput(int socketID, const TCHAR* file);
+	void DEPRECATED_ClientUnlinkFileOutput(int socketID);
+	void DEPRECATED_ServerUnlinkFileOutput(int socketID);
 
-/* ID = 20 */	void PacketForm_NewPacket(int Size);
-/* ID = 21 */	void PacketForm_ResizePacket(int Size);
-/* ID = 22 */	void PacketForm_SetByte(int Byte, int WhereTo);
-/* ID = 23 */	void PacketForm_SetShort(int Short, int WhereTo, int RunHTON);
-/* ID = 24 */	void PacketForm_SetInteger(int Integer, int WhereTo);
-/* ID = 25 */	void PacketForm_SetLong(int LongP, int WhereTo, int RunHTON);
-/* ID = 26 */	void PacketForm_SetFloat(float Float, int WhereTo);
-/* ID = 27 */	void PacketForm_SetDouble(float Double, int WhereTo);
-/* ID = 28 */	void DEPRECATED_PacketForm_SetString(int WhereFrom, int WhereTo, int SizeOfString);
-/* ID = 29 */	void DEPRECATED_PacketForm_SetWString(int WhereFrom, int WhereTo, int SizeOfStringInChar);
-/* ID = 30 */	void PacketForm_SetBankFromBank(int WhereFrom, int WhereTo, int SizeOfString);
-/* ID = 31 */	void PacketForm_SetString(int WhereFrom, int WhereTo, int includeNull);
-/* ID = 32 */	void PacketForm_SetWString(int WhereFrom, int WhereTo, int includeNull);
+	// Text encoding was ignored or assumed to be equal to runtime, which is useless
+	// as most protocols use UTF-8 and neither of Fusion's runtime uses that natively
+	const TCHAR * DEPRECATED_GetLastMessageText();
+	const TCHAR * DEPRECATED_PendingData_GetString(int readFromIndex, int sizeOfString);
+	const TCHAR * DEPRECATED_PendingData_GetWString(int readFromIndex, int sizeOfString);
+	// Memory addresses can be 64-bit, which can't be represented by a 32-bit integer address.
+	void DEPRECATED_PacketBeingBuilt_SetBuffer(int memoryAddress, int indexToWriteTo, int numBytes);
+	// Long is ambiguous
+	int DEPRECATED_PendingData_GetLong(int readFromIndex);
+	// Will only work with 32-bit systems, which makes cross-platform sockets impossible.
+	unsigned int DEPRECATED_PacketBeingBuilt_GetAddress();
+	unsigned int DEPRECATED_GetLastMessageAddress();
+
+
+
+	void ClientInitialize_Basic(const TCHAR * hostname, int port, const TCHAR * protocol);
+	void ClientInitialize_Advanced(const TCHAR * hostname, int port, const TCHAR * protocol, const TCHAR * addressFamily, const TCHAR * socketType);
+	void ClientSend(int socketID, const TCHAR * packet, const TCHAR * encoding, int flags);
+	void ClientCloseSocket(int socketID);
+	void ClientReceiveOnly(int socketID);
+
+	void ServerInitialize_Basic(const TCHAR * protocol, int port);
+	void ServerInitialize_Advanced(const TCHAR * protocol, const TCHAR * addressFamily, const TCHAR * socketType, int port, const TCHAR * inAddr);
+	void ServerShutdown(int socketID);
+	void ServerShutdownPeerSocket(int socketID, int peerSocketID, int immediate);
+	void ServerSend(int socketID, int peerSocketID, const TCHAR * message, const TCHAR * encoding, int flags);
+	void ServerAutoAccept(int socketID, int onOrOff);
+
+	void PacketBeingBuilt_NewPacket(int size);
+	void PacketBeingBuilt_ResizePacket(int size);
+	void PacketBeingBuilt_SetByte(int Byte, int whereTo);
+	void PacketBeingBuilt_SetShort(int Short, int whereTo, int RunHTON);
+	void PacketBeingBuilt_SetInteger(int Integer, int whereTo, int RunHTOL);
+	void PacketBeingBuilt_SetFloat(float Float, int whereTo);
+	void PacketBeingBuilt_SetDouble(float Double, int whereTo);
+	void PacketBeingBuilt_SetBuffer(const TCHAR * readFromAddress, int indexToWriteTo, int numBytes);
+	void PacketBeingBuilt_SetInt64(const TCHAR * int64AsText, int indexToWriteTo);
+	void PacketBeingBuilt_SetString(const TCHAR * text, const TCHAR * encoding, int whereTo, int includeNull);
+
+	// Some protocols glue multiple messages in one packet, but will cut off messages to do so.
+	// In order to ensure we have full messages, the data is sent from receiving thread into an EventToRun.
+	// We then append it to the pendingData for that socket. To show the user has used the data, this action is run.
+	// The first parameter is in case the messages are processed in a non-FIFO arrangement.
+	void PendingData_DiscardBytes(int fromPosition, int numBytes);
 
 
 	/// Conditions
 
-/* ID = 0 */	bool OnError();
-/* ID = 1 */	bool OnNewStatus();
-
-/* ID = 8 */	bool ClientSocketConnected(int SocketID);
-/* ID = 3 */	bool ClientSocketDisconnected(int SocketID);
-/* ID = 2 */	bool ClientReturnedMessage(int SocketID);
-
-/* ID = 4 */	bool ServerReturnedMessage(int SocketID);
-/* ID = 5 */	bool ServerSocketDone(int SocketID);
-/* ID = 6 */	bool ServerPeerConnected(int SocketID);
-/* ID = 7 */	bool ServerPeerDisconnected(int SocketID);
+	bool AlwaysTrue() const;
+	bool SocketIDCondition(int socketIDOrMinusOne) const;
+	bool ServerPeerDisconnected(int socketID);
 
 
 
 	/// Expressions
 
-/* ID = 0 */	TCHAR * GetErrors(int clear);
-/* ID = 1 */	TCHAR * GetReports(int clear);
+	const TCHAR * DEPRECATED_GetErrors(int clear);
+	const TCHAR * DEPRECATED_GetReports(int clear);
+	const TCHAR* GetErrorOrInfo();
 
-/* ID = 2 */	int GetLastMessageSocketID();
-/* ID = 3 */	TCHAR * GetLastMessageText();
-/* ID = 4 */	size_t GetLastMessageAddress();
-/* ID = 5 */	size_t GetLastMessageSize();
+	int GetCurrent_SocketID();
+	int GetCurrent_PeerSocketID();
+	const TCHAR * PendingData_GetAddress();
+	unsigned int GetLastReceivedData_Size();
 
-/* ID = 6 */	int GetNewSocketID();
-/* ID = 7 */	int GetSocketIDForLastEvent();
-/* ID = 8 */	int GetPortFromType(TCHAR * t);
+	int GetNewSocketID();
+	int DEPRECATED_GetSocketIDForLastEvent();
+	int GetPortFromType(const TCHAR * type);
 
-/* ID = 9 */	size_t PacketForm_GetAddress();
-/* ID = 10 */	size_t PacketForm_GetSize();
-/* ID = 11 */	unsigned short PacketForm_RunOnesComplement(size_t WhereFrom, size_t SizeOfBank);
-/* ID = 12 */	char LastMessage_GetByte(size_t WhereFrom);
-/* ID = 13 */	short LastMessage_GetShort(size_t WhereFrom);
-/* ID = 14 */	int LastMessage_GetInteger(size_t WhereFrom);
-/* ID = 15 */	long LastMessage_GetLong(size_t WhereFrom);
-/* ID = 16 */	float LastMessage_GetFloat(size_t WhereFrom);
-/* ID = 17 */	double LastMessage_GetDouble(size_t WhereFrom);
-/* ID = 18 */	char * LastMessage_GetString(size_t WhereFrom, size_t SizeOfString);
-/* ID = 19 */	wchar_t * LastMessage_GetWString(size_t WhereFrom, size_t SizeOfString);
+
+	const TCHAR * PacketBeingBuilt_GetAddress();
+	unsigned int PacketBeingBuilt_GetSize();
+	int PacketBeingBuilt_ICMPChecksum(int readFromIndex, int SizeOfBank);
+	int PendingData_GetByte(int readFromIndex);
+	int PendingData_GetUnsignedByte(int readFromIndex);
+	int PendingData_GetShort(int readFromIndex);
+	int PendingData_GetUnsignedShort(int readFromIndex);
+	int PendingData_GetInteger(int readFromIndex);
+	const TCHAR * PendingData_GetInt64(int readFromIndex);
+	const TCHAR* PendingData_GetUnsignedInt64(int readFromIndex);	
+	float PendingData_GetFloat(int readFromIndex);
+	float PendingData_GetDouble(int readFromIndex); // Reads as double, casts to float
+	const TCHAR * PendingData_GetString(const TCHAR * encoding, int readFromIndex, int sizeOfStringOrMinusOne);
+	int PendingData_FindIndexOfChar(int charToFind, int numBytesInChar, int searchStartIndex, int textEndChars);
+	int PendingData_ReverseFindIndexOfChar(int charToFind, int numBytesInChar, int searchStartIndex, int textEndChars);
+
+	int GetLastReceivedData_Offset();
+	const TCHAR * GetCurrent_RemoteAddress();
+	int Statistics_BytesIn(int socketID, int peerSocketID);
+	int Statistics_BytesOut(int socketID, int peerSocketID);
+	int Statistics_PacketsIn(int socketID, int peerSocketID);
+	int Statistics_PacketsOut(int socketID, int peerSocketID);
 
 	/* These are called if there's no function linked to an ID */
 
@@ -166,8 +185,5 @@ public:
 
 	short FusionRuntimePaused();
 	short FusionRuntimeContinued();
-
-	bool SaveFramePosition(HANDLE File);
-	bool LoadFramePosition(HANDLE File);
 
 };

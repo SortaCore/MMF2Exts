@@ -5,119 +5,125 @@
 		"About": {
 			"Name": "DarkSocket",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2021 by Darkwire Software",
-			"Comment": "Utilizes WinSock v2.2 to provide socket functionality.",
+			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Comment": "Utilizes WinSock and POSIX sockets to provide socket functionality. (b%i)",
 			"Help": "Help/DarkSocket.chm",
 			"URL": "https://dark-wire.com/"
 		},
 		"ActionMenu": [
-			"---",
-			[ "Debug",
-				[ 0, "Test regular and error reporting" ],
-				[ 1, "Set popups on/off" ]
-			],
 			[ "Client",
-				[ 2, "Basic initialise" ],
-				[ 3, "Advanced initialise" ],
-				[ 4, "Shutdown socket" ],
-				[ 5, "Send message to server" ],
-				[ 6, "Go independent (no undo)" ],
-				[ 7, "Set to receive only (no undo)" ],
-				[ 8, "Link socket output to file" ],
-				[ 9, "Unlink socket output to file" ],
-				[ 10, "Fusion status reports on/off" ]
+				[ 31, "Basic initialize" ],
+				[ 32, "Advanced initialize" ],
+				"---",
+				[ 4, "Close down socket" ],
+				[ 33, "Send packet to server" ],
 			],
 			[ "Server",
-				[ 11, "Basic initialise" ],
-				[ 12, "Advanced initialise" ],
-				[ 13, "Shutdown socket" ],
-				[ 14, "Send message to client" ],
-				[ 15, "Go independent (no undo)" ],
-				[ 16, "Auto-accept connections (default: on)" ],
-				[ 17, "Link socket output to file" ],
-				[ 18, "Unlink socket output to file" ],
-				[ 19, "Fusion status reports on/off" ]
+				[ 11, "Basic initialize" ],
+				[ 12, "Advanced initialize" ],
+				"---",
+				[ 16, "Auto-accept connections (default: on)", true ],
+				[ 13, "Shutdown server socket" ],
+				"---",
+				[ 34, "Send packet to client" ],
+				[ 35, "Shutdown client socket" ]
 			],
-			[ "Form packet",
+			[ "Build packet",
 				[ 20, "Create new packet" ],
 				[ 21, "Resize packet" ],
 				"---",
 				[ 22, "Set byte" ],
 				[ 23, "Set short" ],
 				[ 24, "Set integer" ],
-				[ 25, "Set long" ],
+				[ 36, "Set int64 (using text)" ],
 				[ 26, "Set float" ],
 				[ 27, "Set double" ],
-				[ 31, "Set string (UTF8)" ],
-				[ 32, "Set string (UTF16)" ],
-				[ 30, "Set bank" ]
+				[ 37, "Set string" ],
+				[ 38, "Set binary" ]
+			],
+			[ "Pending data",
+				[ 39, "Discard range" ]
 			]
 		],
 		"ConditionMenu": [
-			"---",
 			[ "Debug",
 				[ 0, "On error" ],
-				"---",
-				[ 1, "On new status" ]
+				[ 1, "On any info" ]
 			],
 			[ "Client",
 				[ 2, "Client connected" ],
 				[ 3, "Client disconnected" ],
-				[ 4, "Client received message" ]
+				[ 4, "Client received data" ]
 			],
 			[ "Server",
-				[ 5, "Server received message" ],
+				[ 10, "Server started hosting" ],
+				[ 5, "Server received data" ],
 				[ 6, "Server socket done" ],
+				[ 9, "Peer attempting connection", true],
 				[ 7, "Peer connected to server" ],
 				[ 8, "Peer disconnected from server" ]
 			],
 
 			"---",
-			[ 9, "Darkwire Software", true ]
+			[ 11, "Darkwire Software", true ]
 		],
 		"ExpressionMenu": [
-			[ "Debug",
-				[ 0, "Last error" ],
-				[ 1, "Last report" ]
-			],
-			[ "Last message",
+			[ 36, "Current error/info"],
+			[ "Current source",
 				[ 2, "Socket ID" ],
-				[ 3, "Text" ],
-				"---",
-				[ 4, "Memory Address" ],
-				[ 5, "Size" ],
-				[ "Retrieve variable",
-					[ 12, "Get byte" ],
-					[ 13, "Get short" ],
-					[ 14, "Get integer" ],
-					[ 15, "Get long" ],
-					[ 16, "Get float" ],
-					[ 17, "Get double" ],
-					[ 18, "Get string (read as UTF8)" ],
-					[ 19, "Get string (read as UTF16)" ]
-				]
+				[ 20, "Peer socket ID (server only)" ],
+				[ "Pending received data",
+					[ 22, "Memory address" ],
+					[ 30, "Size" ],
+					[ "Retrieve variable",
+						[ 12, "Get signed byte (-127 to 128)" ],
+						[ 23, "Get unsigned byte (0 to 255)" ],
+						[ 13, "Get signed short" ],
+						[ 24, "Get unsigned short" ],
+						[ 14, "Get signed integer" ],
+						[ 25, "Get signed int64 as text" ],
+						[ 26, "Get unsigned int64 as text" ],
+						[ 16, "Get float" ],
+						[ 17, "Get double" ],
+						"---",
+						[ 27, "Get string" ],
+						"---",
+						[ 28, "Find byte index of char" ],
+						[ 29, "Reverse-find byte index of char" ]
+					]
+				],
+				[ 30, "Remote address" ]
 			],
-			[ 6, "New Socket ID" ],
-			[ 7, "Get ID for last event" ],
-			[ 8, "Get port from name" ],
-			[ "Form packet",
-				[ 9, "Address" ],
+			[ "Received packet",
+				[ 31, "Packet offset in pending data" ],
+				[ 5, "Packet size" ]
+			],
+			[ "Statistics",
+				[ 32, "Total bytes in"],
+				[ 33, "Total bytes out"],
+				[ 34, "Number of packets in"],
+				[ 35, "Number of packets out"]
+			],
+			
+			[ 6, "Next new socket ID" ],
+			[ 8, "Get port num from protocol name" ],
+			[ "Built packet",
+				[ 21, "Address" ],
 				[ 10, "Size" ],
-				[ 11, "Calculate one's complement" ]
+				"---",
+				[ 11, "Calculate ICMP checksum (one's complement)" ]
 			]
-			//"---",
-			//[ 20, "aplfes" ]
 		],
 		"Actions": [
 			/// DEBUG
 
 			// ID = 0
 			{
-				"Title": "Test Report() and Explode()"
+				"Title": "!!REMOVE THIS ACTION!! Test Report() and Explode()!!!"
 			},
 			// ID = 1
 			{
-				"Title": "Use popup messages",
+				"Title": "!!REMOVE THIS ACTION!! Use popup messages",
 				"Parameters": [
 					[ "Integer", "Use 0 for off and 1 for on:" ]
 				]
@@ -127,44 +133,44 @@
 
 			// ID = 2
 			{
-				"Title": "Initialise client - connect to (%0) on port (%1) with protocol (%2)",
+				"Title": "!!REMOVE THIS ACTION!! Initialize client - connect to (%0) on port (%1) with protocol (%2)",
 				"Parameters": [
 					[ "Text", "Hostname" ],
-					[ "Integer", "Port (0-65535)" ],
+					[ "Integer", "Port (1-65535)" ],
 					[ "Text", "Protocol (use \"TCP\", \"UDP\" or \"ICMP\"):" ],
-					[ "Text", "Initial text to send on connection (use \"PACKET\" to send the formed packet):" ]
+					[ "Text", "Initial text to send on connection (use \"PACKET\" to send the built packet):" ]
 				]
 			},
 			// ID = 3
 			{
-				"Title": "Initialise advanced client - connect to (%0) on port (%1) with protocol (%2); use address family (%3) and socket (%4)",
+				"Title": "!!REMOVE THIS ACTION!! Initialize advanced client - connect to (%0) on port (%1) with protocol (%2); use address family (%3) and socket (%4)",
 				"Parameters": [
 					[ "Text", "Hostname:" ],
-					[ "Integer", "Port (0-36535):" ],
+					[ "Integer", "Port (1-65535):" ],
 					[ "Text", "Protocol (use \"TCP\", \"UDP\", \"ICMP\" or see help file):" ],
 					[ "Text", "Address family (use \"INTERNET\" if unsure):" ],
 					[ "Text", "Socket type (use \"STREAM\" if unsure):" ],
-					[ "Text", "Initial text to send on connection (use \"PACKET\" to send the formed packet):" ]
+					[ "Text", "Initial text to send on connection (use \"PACKET\" to send the built packet):" ]
 				]
 			},
 			// ID = 4
 			{
-				"Title": "Shutdown client socket %0",
+				"Title": "Close down client socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ]
 				]
 			},
 			// ID = 5
 			{
-				"Title": "Send message to server on socket %0",
+				"Title": "!!RE-INSERT THIS ACTION!! Send packet to server on socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
-					[ "Text", "Message (use \"PACKET\" for the formed packet):" ]
+					[ "Text", "Packet text (use \"PACKET\" for the built packet):" ]
 				]
 			},
 			// ID = 6
 			{
-				"Title": "Set client socket %0 to independent (no undo)",
+				"Title": "!!REMOVE THIS ACTION!! Set client socket %0 to independent (no undo)",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ]
 				]
@@ -178,7 +184,7 @@
 			},
 			// ID = 8
 			{
-				"Title": "Link client socket %0 to %1",
+				"Title": "!!REMOVE THIS ACTION!! Link client socket %0 to file %1",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
 					[ "Text", "File to link output to:" ]
@@ -186,14 +192,14 @@
 			},
 			// ID = 9
 			{
-				"Title": "Unlink client socket %0 from file",
+				"Title": "!!REMOVE THIS ACTION!! Unlink client socket %0 from file",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ]
 				]
 			},
 			// ID = 10
 			{
-				"Title": "Set Fusion status reports to %1 for socket %0",
+				"Title": "!!REMOVE THIS ACTION!! Set Fusion status infos to %1 for socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
 					[ "Integer", "Use 0 for off, anything else for on:" ]
@@ -204,20 +210,20 @@
 
 			// ID = 11
 			{
-				"Title": "Initialise basic server (port %1, protocol %0)",
+				"Title": "Initialize basic server (protocol %0, port %1)",
 				"Parameters": [
 					[ "Text", "Protocol (use \"TCP\", \"UDP\" or \"ICMP\" or see help file):" ],
-					[ "Integer", "Port (0-65535)" ]
+					[ "Integer", "Port (1-65535)" ]
 				]
 			},
 			// ID = 12
 			{
-				"Title": "Initialise advanced server - port (%0), protocol (%1), address family (%2), socket type (%3)",
+				"Title": "Initialize advanced server - protocol %0, address family %1, socket type %2, port %3, inaddr type %4",
 				"Parameters": [
 					[ "Text", "Protocol (use \"TCP\", \"UDP\", \"ICMP\" or see help file):" ],
 					[ "Text", "Address family (use \"INTERNET\" if unsure):" ],
 					[ "Text", "Socket type (use \"STREAM\" if unsure):" ],
-					[ "Integer", "Port (0-65535):" ],
+					[ "Integer", "Port (1-65535):" ],
 					[ "Text", "InAddr type (use \"ANY\" if unsure):" ]
 				]
 			},
@@ -230,16 +236,16 @@
 			},
 			// ID = 14
 			{
-				"Title": "Send message to client from server socket %0",
+				"Title": "!!RE-INSERT THIS ACTION!! Send packet %1 to client %2 from server socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
-					[ "Text", "Message (use \"PACKET\" for the formed packet):" ],
+					[ "Text", "Packet text (or use \"PACKET\" for the built packet):" ],
 					[ "Text", "Client identification:" ]
 				]
 			},
 			// ID = 15
 			{
-				"Title": "Set server socket %0 to independent.",
+				"Title": "!!REMOVE THIS ACTION!! Set server socket %0 to independent",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ]
 				]
@@ -254,22 +260,22 @@
 			},
 			// ID = 17
 			{
-				"Title": "Link server socket %0 to %1",
+				"Title": "!!REMOVE THIS ACTION!! Link server socket %0 to %1",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
-					[ "Text", "File to link output to:" ]
+					[ "Text", "File to link output to (or \"\" for none):" ]
 				]
 			},
 			// ID = 18
 			{
-				"Title": "Unlink server socket %0 from file",
+				"Title": "!!REMOVE THIS ACTION!! Unlink server socket %0 from file",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ]
 				]
 			},
 			// ID = 19
 			{
-				"Title": "Set Fusion status reports to %1 for socket %0",
+				"Title": "!!REMOVE THIS ACTION!! Set Fusion status infos to %1 for socket %0",
 				"Parameters": [
 					[ "Integer", "Socket ID:" ],
 					[ "Integer", "Use 0 for off, anything else for on:" ]
@@ -294,15 +300,15 @@
 			},
 			// ID = 22
 			{
-				"Title": "Set byte to (%0), at position (%1)",
+				"Title": "Set byte to %0, at position %1",
 				"Parameters": [
-					[ "Integer", "Char value:" ],
+					[ "Integer", "Byte value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ]
 				]
 			},
 			// ID = 23
 			{
-				"Title": "Set short to (%0), at position (%1)",
+				"Title": "Set short to %0, at position %1 - run htons() = %2",
 				"Parameters": [
 					[ "Integer", "Short value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -311,7 +317,7 @@
 			},
 			// ID = 24
 			{
-				"Title": "Set integer to (%0), at position (%1)",
+				"Title": "Set integer to %0, at position %1 - run htonl() = %2",
 				"Parameters": [
 					[ "Integer", "Integer value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -320,7 +326,7 @@
 			},
 			// ID = 25
 			{
-				"Title": "Set long to (%0), at position (%1)",
+				"Title": "!!RECREATE THIS ACTION AS SET INTEGER/INT64!! Set long to %0, at position %1",
 				"Parameters": [
 					[ "Integer", "Long value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -329,7 +335,7 @@
 			},
 			// ID = 26
 			{
-				"Title": "Set float to (%0), at position (%1)",
+				"Title": "Set float to %0, at position %1",
 				"Parameters": [
 					[ "Float", "Float value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ]
@@ -337,7 +343,7 @@
 			},
 			// ID = 27
 			{
-				"Title": "Set double to (%0), at position (%1)",
+				"Title": "Set double to %0, at position %1",
 				"Parameters": [
 					[ "Float", "Double value:" ],
 					[ "Integer", "Position in packet to write at (0+):" ]
@@ -345,7 +351,7 @@
 			},
 			// ID = 28
 			{
-				"Title": "!! RECREATE THIS ACTION!! Set UTF-8 string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!!RECREATE THIS ACTION!! Set UTF-8 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
 					[ "Text", "UTF-8 string:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -354,7 +360,7 @@
 			},
 			// ID = 29
 			{
-				"Title": "!! RECREATE THIS ACTION!! Set UTF-16 string (%0), at position (%1), number of bytes (%2)",
+				"Title": "!!RECREATE THIS ACTION!! Set UTF-16 string (%0), at position (%1), number of bytes (%2)",
 				"Parameters": [
 					[ "Text", "UTF-16 string:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
@@ -363,11 +369,98 @@
 			},
 			// ID = 30
 			{
-				"Title": "Copy %2 bytes from (%0) to (%1)",
+				"Title": "!!RECREATE THIS ACTION!! Copy %2 bytes from %0 to %1",
 				"Parameters": [
 					[ "Integer", "Address to read from:" ],
 					[ "Integer", "Position in packet to write at (0+):" ],
 					[ "Integer", "Number of bytes to copy:" ]
+				]
+			},
+
+			/// NEW ACTIONS FROM BUILD 4
+			// ID = 31
+			{
+				"Title": "Initialize client - connect to %0 on port %1 with protocol %2",
+				"Parameters": [
+					[ "Text", "Hostname" ],
+					[ "Integer", "Port (0-65535)" ],
+					[ "Text", "Protocol (use \"TCP\", \"UDP\" or \"ICMP\"):" ]
+				]
+			},
+			// ID = 32
+			{
+				"Title": "Initialize advanced client - connect to %0 on port %1 with protocol %2; use address family %3 and socket %4",
+				"Parameters": [
+					[ "Text", "Hostname" ],
+					[ "Integer", "Port (0-65535)" ],
+					[ "Text", "Protocol (use \"TCP\", \"UDP\", \"ICMP\" or see help file)" ],
+					[ "Text", "Address family (use \"INTERNET\" if unsure)" ],
+					[ "Text", "Socket type (use \"STREAM\" if unsure)" ]
+				]
+			},
+			// ID = 33
+			{
+				"Title": "Socket %0: send %1, using text encoding %2 and flags %3",
+				"Parameters": [
+					[ "Integer", "Socket ID:" ],
+					[ "Text", "Text to send to server (or \"\")" ],
+					[ "Text", "Text encoding (\"UTF-8\", \"PACKET\", etc)" ],
+					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ],
+				]
+			},
+			// ID = 34
+			{
+				"Title": "Socket %0, peer socket %1: send %2, using text encoding %3 and flags %4",
+				"Parameters": [
+					[ "Integer", "Fusion socket ID:" ],
+					[ "Integer", "Peer socket ID:" ],
+					[ "Text", "Text to send to client (or \"\")" ],
+					[ "Text", "Text encoding (\"UTF-8\", \"PACKET\", etc)" ],
+					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ],
+				]
+			},
+			// ID = 35
+			{
+				"Title": "Server socket ID %0: disconnect peer ID %1 (immediate = %2)",
+				"Parameters": [
+					[ "Integer", "Socket ID:" ],
+					[ "Integer", "Peer socket ID:" ],
+					[ "Integer", "Graceful (0) or immediate (1)? (default 0, see help file)" ]
+				]
+			},
+			// ID = 36
+			{
+				"Title": "Set int64 to %0, at position %1",
+				"Parameters": [
+					[ "Text", "Int64 value as text:" ],
+					[ "Integer", "Position in packet to write at (0+):" ]
+				]
+			},
+			// ID = 37
+			{
+				"Title": "Set string to %0, using encoding %1, at packet position %2 (include null = %3)",
+				"Parameters": [
+					[ "Text", "Text to set:" ],
+					[ "Text", "Encoding to use (\"UTF-8\", \"UTF-16\", etc):" ],
+					[ "Integer", "Position in packet to write at (0+):" ],
+					[ "Integer", "Include null terminator? (1 = yes, 0 = no)" ]
+				]
+			},
+			// ID = 38
+			{
+				"Title": "Copy memory from source address %0 (%1 bytes) to built packet position %2",
+				"Parameters": [
+					[ "Text", "Address to read from:" ],
+					[ "Integer", "Number of bytes to copy (1+):" ],
+					[ "Integer", "Position in built packet to write at (0+):" ]
+				]
+			},
+			// ID = 39
+			{
+				"Title": "Pending data: discard %1 bytes from position %0",
+				"Parameters": [
+					[ "Integer", "Position to discard from (0+)" ],
+					[ "Integer", "Number of bytes to discard (or -1 for all)" ]
 				]
 			}
 		],
@@ -379,7 +472,7 @@
 			},
 			// ID = 1
 			{
-				"Title": "%o : On status report",
+				"Title": "%o : On any info",
 				"Triggered": true
 			},
 			// ID = 2
@@ -400,7 +493,7 @@
 			},
 			// ID = 4
 			{
-				"Title": "%o : On client received message (Socket %0)",
+				"Title": "%o : On client received data (Socket %0)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Socket ID (Use -1 for any):" ]
@@ -408,7 +501,7 @@
 			},
 			// ID = 5
 			{
-				"Title": "%o : On server received message (Socket %0)",
+				"Title": "%o : On server received data (Socket %0)",
 				"Triggered": true,
 				"Parameters": [
 					[ "Integer", "Socket ID (Use -1 for any):" ]
@@ -437,12 +530,28 @@
 				"Parameters": [
 					[ "Integer", "Socket ID (Use -1 for any):" ]
 				]
+			},
+			// ID = 9
+			{
+				"Title": "%o : On peer attempting connection from server (Socket %0)",
+				"Triggered": true,
+				"Parameters": [
+					[ "Integer", "Socket ID (Use -1 for any):" ]
+				]
+			},
+			// ID = 10
+			{
+				"Title": "%o : On server started hosting (Socket %0)",
+				"Triggered": true,
+				"Parameters": [
+					[ "Integer", "Socket ID (Use -1 for any):" ]
+				]
 			}
 		],
 		"Expressions": [
 			// ID = 0
 			{
-				"Title": "Error$(",
+				"Title": "DEPRECATED_Errors$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Clear the current error text?" ]
@@ -450,31 +559,31 @@
 			},
 			// ID = 1
 			{
-				"Title": "Report$(",
+				"Title": "DEPRECATED_Reports$(",
 				"Returns": "Text",
 				"Parameters": [
-					[ "Integer", "Clear the current report text?" ]
+					[ "Integer", "Clear the current info text?" ]
 				]
 			},
 			// ID = 2
 			{
-				"Title": "LastMessageSocketID(",
+				"Title": "Current_SocketID(",
 				"Returns": "Integer"
 			},
 			// ID = 3
 			{
-				"Title": "LastMessageText$(",
+				"Title": "DEPRECATED_LastMessageText$(",
 				"Returns": "Text"
 			},
 			// ID = 4
 			{
-				"Title": "LastMessageAddress(",
-				"Returns": "Integer"
+				"Title": "DEPRECATED_LastMessageAddress(",
+				"Returns": "Unsigned Integer"
 			},
 			// ID = 5
 			{
-				"Title": "LastMessageSize(",
-				"Returns": "Integer"
+				"Title": "LastPacketSize(",
+				"Returns": "Unsigned Integer"
 			},
 			// ID = 6
 			{
@@ -483,7 +592,7 @@
 			},
 		 	// ID = 7
 			{
-				"Title": "GetSocketIDForLastEvent(",
+				"Title": "DEPRECATED_GetSocketIDForLastEvent(",
 				"Returns": "Integer"
 			},
 			// ID = 8
@@ -496,17 +605,17 @@
 			},
 			// ID = 9
 			{
-				"Title": "FormPacket_Address(",
-				"Returns": "Integer"
+				"Title": "DEPRECATED_FormPacket_Address(",
+				"Returns": "Unsigned Integer"
 			},
 			// ID = 10
 			{
 				"Title": "FormPacket_Size(",
-				"Returns": "Integer"
+				"Returns": "Unsigned Integer"
 			},
 			// ID = 11
 			{
-				"Title": "FormPacket_OnesComplement(",
+				"Title": "FormPacket_ICMPChecksum(",
 				"Returns": "Integer",
 				"Parameters": [
 					[ "Integer", "Position in packet to start" ],
@@ -539,7 +648,7 @@
 			},
 			// ID = 15
 			{
-				"Title": "GetLong(",
+				"Title": "DEPRECATED_GetLong(",
 				"Returns": "Integer",
 				"Parameters": [
 					[ "Integer", "Position in packet" ]
@@ -563,7 +672,7 @@
 			},
 			// ID = 18
 			{
-				"Title": "GetUTF8String$(",
+				"Title": "DEPRECATED_GetUTF8String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],
@@ -572,605 +681,142 @@
 			},
 			// ID = 19
 			{
-				"Title": "GetUTF16String$(",
+				"Title": "DEPRECATED_GetUTF16String$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Position in packet" ],
 					[ "Integer", "Length of string (bytes) or -1" ]
 				]
-			}
-		]
-	},
-	"French": {
-		"About": {
-			"Name": "DarkSocket",
-			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2021 créé par Darkwire Software",
-			"Comment": "Utilise les fonctionnalités socket de WinSock v2.2.",
-			"Help": "Help/DarkSocket_FR.chm",
-			"URL": "https://dark-wire.com/"
-		},
-		"ActionMenu": [
-			"---",
-			[ "Déboguer",
-				[ 0, "Test régulié et du rapport d'erreur" ],
-				[ 1, "Définir la popups en activer/désactiver" ]
-			],
-			[ "Client",
-				[ 2, "Initialisation de base" ],
-				[ 3, "Initialisation avancée" ],
-				[ 4, "Arrêter le socket" ],
-				[ 5, "Envoyer un message au serveur" ],
-				[ 6, "Etre indépendante (aucun retour possible)" ],
-				[ 7, "Définir pour recevoir seulement (aucun retour possible)" ],
-				[ 8, "Lier le socket externe au fichier" ],
-				[ 9, "Délier le socket externe au fichier" ],
-				[ 10, "Rapport de Fusion activer/désactiver" ]
-			],
-			[ "Serveur",
-				[ 11, "Initialisation de base" ],
-				[ 12, "Initialisation avancée" ],
-				[ 13, "Arrêter le socket" ],
-				[ 14, "Envoyer un message au client" ],
-				[ 15, "Etre indépendante (aucun retour possible)" ],
-				[ 16, "Accpeter automatiquement les connexions (par défaut: activé)" ],
-				[ 17, "Lier le socket externe au fichier" ],
-				[ 18, "Délier le socket externe au fichier" ],
-				[ 19, "Rapport de Fusion activer/désactiver" ]
-			],
-			[ "Forme du paquet",
-				[ 20, "Créer un nouveau paquet" ],
-				[ 21, "Redimensionner le paquet" ],
-				"---",
-				[ 22, "Définir l'octet" ],
-				[ 23, "Définir le court" ],
-				[ 24, "Définir l'entier" ],
-				[ 25, "Définir le long" ],
-				[ 26, "Définir le flotter" ],
-				[ 27, "Définir le double" ],
-				[ 31, "Définir la chaîne (UTF-8)" ],
-				[ 32, "Définir la chaîne (UTF-16)" ],
-				[ 30, "Définir la banque" ]
-			]
-		],
-		"ConditionMenu": [
-			"---",
-			[ "Déboguer",
-				[ 0, "En cas d'erreur" ],
-				"---",
-				[ 1, "En cas d'un nouveau statut" ]
-			],
-			[ "Client",
-				[ 2, "Client connecté" ],
-				[ 3, "Client déconnecté" ],
-				[ 4, "Le client reçoit un message" ]
-			],
-			[ "Serveur",
-				[ 5, "Le serveur reçoit un message" ],
-				[ 6, "Le serveur du soket fait" ],
-				[ 7, "Un client se connecte au serveur" ],
-				[ 8, "Un client se déconnecte du serveur" ]
-			],
-			"---",
-			[ 9, "Darkwire Software", true ]
-		],
-		"ExpressionMenu": [
-			[ "Déboguer",
-				[ 0, "Dernière erreur" ],
-				[ 1, "Dernier rapport" ]
-			],
-			[ "Dernier message",
-				[ 2, "ID du socket" ],
-				[ 3, "Texte" ],
-				"---",
-				[ 4, "Adresse de la mémoire" ],
-				[ 5, "Taille" ],
-				[ "Récupérer la variable",
-					[ 12, "Obtenir l'octet" ],
-					[ 13, "Obtenir le court" ],
-					[ 14, "Obtenir l'entier" ],
-					[ 15, "Obtenir le long" ],
-					[ 16, "Obtenir le flotter" ],
-					[ 17, "Obtenir le double" ],
-					[ 18, "Obtenir la chaîne (UTF-8)" ],
-					[ 19, "Obtenir la chaîne (UTF-16)" ]
-				]
-			],
-			[ 6, "Nouvelle socket ID" ],
-			[ 7, "Obtenir l'ID du dernier événement" ],
-			[ 8, "Obtenir le port du nom" ],
-			[ "Forme du paquet",
-				[ 9, "Addresse" ],
-				[ 10, "Taille" ],
-				[ 11, "Calculer un complément" ]
-			],
-			"---",
-			[ 20, "aplfes" ]
-		],
-		"Actions": [
-			/// DEBUG
-			// ID = 0
-			{
-				"Title": "Rapport de test () et Explode ()"
 			},
-			// ID = 1
-			{
-				"Title": "Utilisez le messages popup",
-				"Parameters": [
-					[ "Integer", "Utiliser 0 pour désactiver et 1 pour activer:" ]
-				]
-			},
-
-			/// CLIENT
-			// ID = 2
-			{
-				"Title": "Initialiser le client - connecter (0%) sur le port (1%) avec le protocole (2%)",
-				"Parameters": [
-					[ "Text", "Hostname" ],
-					[ "Integer", "Port (0-65535)" ],
-					[ "Text", "Protocole (utiliser \"TCP\", \"UDP\" or \"ICMP\"):" ],
-					[ "Text", "Texte initial à envoyer sur la connexion (utiliser \"PACKET\" pour envoyer la forme du paquet):" ]
-				]
-			},
-			// ID = 3
-			{
-				"Title": "Initialiser le client avancé - connecter (% 0) sur le port (1%) avec le protocole (% 2); utilisation famille d'adresse (3%) et le socket (4%)",
-				"Parameters": [
-					[ "Text", "Hostname:" ],
-					[ "Integer", "Port (0-36535):" ],
-					[ "Text", "Protocole (Utiliser \"TCP\", \"UDP\", \"ICMP\" ou voir le fichier d'aide):" ],
-					[ "Text", "Famille d'adresse (Utiliser \"INTERNET\" En cas de doute):" ],
-					[ "Text", "Type de socket (Utiliser \"STREAM\" En cas de doute):" ],
-					[ "Text", "Texte initial à envoyer sur la connexion (Utiliser \"PACKET\" pour envoyer le paquet formé):" ]
-				]
-			},
-			// ID = 4
-			{
-				"Title": "Arrêter le socket du client %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 5
-			{
-				"Title": "Envoyer un message au serveur sur le socket %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Text", "Message (Utiliser \"PACKET\" pour un paquet formé):" ]
-				]
-			},
-			// ID = 6
-			{
-				"Title": "Définir le socket du client %0 à indépendant (aucun retour possible)",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 7
-			{
-				"Title": "Regler le socket du client %0 a recevoir seulement (aucun retour possible)",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 8
-			{
-				"Title": "Lier le socket du client de %0 à %1",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Text", "Fichier a lier en sortie:" ]
-				]
-			},
-			// ID = 9
-			{
-				"Title": "Délier le socket du client %0 du fichier",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 10
-			{
-				"Title": "Définir le statut de rapport d'Fusion de %1 pour le socket %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Integer", "Utiliser 0 pour désactiver, ou n'importe quoi pour l'activer:" ]
-				]
-			},
-
-			/// SERVER
-			// ID = 11
-			{
-				"Title": "Initialiser le serveur de base (port %1, protocole %0)",
-				"Parameters": [
-					[ "Text", "Protocole (Utiliser \"TCP\", \"UDP\" ou \"ICMP\" ou regarder le fichier d'aide):" ],
-					[ "Integer", "Port (0-65535)" ]
-				]
-			},
-			// ID = 12
-			{
-				"Title": "Initialiser le serveur avancé - port (%0), protocole (%1), famille d'adresse (%2), type de socket (%3)",
-				"Parameters": [
-					[ "Text", "Protocole (Utiliser \"TCP\", \"UDP\", \"ICMP\" ou regarder le fichier d'aide):" ],
-					[ "Text", "Famille d'adresse (utiliser \"INTERNET\" en cas de doute):" ],
-					[ "Text", "Type de socket (Utiliser \"STREAM\" en cas de doute):" ],
-					[ "Integer", "Port (0-65535):" ],
-					[ "Text", "InAddr type (Utiliser \"ANY\" en cas de doute):" ]
-				]
-			},
-			// ID = 13
-			{
-				"Title": "Arrêter le serveur du socket %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 14
-			{
-				"Title": "Envoyer un message au client du socket du serveur %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Text", "Message (Utiliser \"PACKET\" pour un paquet formé):" ],
-					[ "Text", "Identification du client:" ]
-				]
-			},
-			// ID = 15
-			{
-				"Title": "Set server socket %0 to independent.",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 16
-			{
-				"Title": "Set auto-accept to %1 for server socket %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Integer", "Use 0 for off, anything else for on:" ]
-				]
-			},
-			// ID = 17
-			{
-				"Title": "Link server socket %0 to %1",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Text", "File to link output to:" ]
-				]
-			},
-			// ID = 18
-			{
-				"Title": "Unlink server socket %0 from file",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ]
-				]
-			},
-			// ID = 19
-			{
-				"Title": "Set Fusion status reports to %1 for socket %0",
-				"Parameters": [
-					[ "Integer", "Socket ID:" ],
-					[ "Integer", "Use 0 for off, anything else for on:" ]
-				]
-			},
-
-			/// PACKET FORMING
 			// ID = 20
 			{
-				"Title": "Create new packet of size %0",
-				"Parameters": [
-					[ "Integer", "Size" ]
-				]
+				"Title": "Current_PeerSocketID(",
+				"Returns": "Integer"
 			},
 			// ID = 21
 			{
-				"Title": "Resize packet to size %0",
-				"Parameters": [
-					[ "Integer", "Size (can be 0):" ]
-				]
+				"Title": "FormPacket_Address$(",
+				"Returns": "Text"
 			},
 			// ID = 22
 			{
-				"Title": "Set byte to (%0), at position (%1)",
-				"Parameters": [
-					[ "Integer", "Char value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ]
-				]
+				"Title": "PendingData_Address$(",
+				"Returns": "Text"
 			},
 			// ID = 23
 			{
-				"Title": "Set short to (%0), at position (%1)",
+				"Title": "GetUnsignedByte(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Short value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Run htons() on variable?" ]
+					[ "Integer", "Position in packet" ]
 				]
 			},
 			// ID = 24
 			{
-				"Title": "Set integer to (%0), at position (%1)",
+				"Title": "GetUnsignedShort(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Integer value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Run htonl() on variable?" ]
+					[ "Integer", "Position in packet" ]
 				]
 			},
 			// ID = 25
 			{
-				"Title": "Set long to (%0), at position (%1)",
+				"Title": "GetInt64$(",
+				"Returns": "Text",
 				"Parameters": [
-					[ "Integer", "Long value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Run htonl() on variable?" ]
+					[ "Integer", "Position in packet" ]
 				]
 			},
 			// ID = 26
 			{
-				"Title": "Set float to (%0), at position (%1)",
+				"Title": "GetUInt64$(",
+				"Returns": "Text",
 				"Parameters": [
-					[ "Float", "Float value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ]
+					[ "Integer", "Position in packet" ]
 				]
 			},
 			// ID = 27
 			{
-				"Title": "Set double to (%0), at position (%1)",
+				"Title": "GetString$(",
+				"Returns": "Text",
 				"Parameters": [
-					[ "Float", "Double value:" ],
-					[ "Integer", "Position in packet to write at (0+):" ]
+					[ "Text", "Text encoding" ],
+					[ "Integer", "Position in packet" ],
+					[ "Integer", "Length of string (bytes) or -1" ]
 				]
 			},
 			// ID = 28
 			{
-				"Title": "!! RECREATE THIS ACTION!! Set UTF-8 string (%0), at position (%1), number of bytes (%2)",
+				"Title": "FindIndexOfChar(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Text", "UTF-8 string (Fusion non-Unicode only):" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Size of string in bytes [Len(text)] (+1 for null character):" ]
+					[ "Integer", "Character to find (as int, see help file)" ],
+					[ "Integer", "Min bytes per character" ],
+					[ "Integer", "Position in packet to start from (bytes)" ],
+					[ "Integer", "Num characters before end of search, or -1" ]
 				]
 			},
 			// ID = 29
 			{
-				"Title": "!! RECREATE THIS ACTION!! Set UTF-16 string (%0), at position (%1), number of bytes (%2)",
+				"Title": "ReverseFindIndexOfChar(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Text", "Unicode string (Fusion Unicode only):" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Size of string in bytes [Len(text)*2] (+2 for null character):" ]
+					[ "Integer", "Character to find (as int, see help file)" ],
+					[ "Integer", "Min bytes per character" ],
+					[ "Integer", "Position in packet to stop at (bytes)" ],
+					[ "Integer", "Num characters before end of search, or -1" ]
 				]
 			},
 			// ID = 30
 			{
-				"Title": "Copy %2 bytes from (%0) to (%1)",
-				"Parameters": [
-					[ "Integer", "Address to read from:" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Number of bytes to copy:" ]
-				]
+				"Title": "Current_RemoteAddress$(",
+				"Returns": "Text"
 			},
 			// ID = 31
 			{
-				"Title": "Set UTF-8 string (%0), at position (%1), include null terminator (%2)",
-				"Parameters": [
-					[ "Text", "UTF-8 string (Fusion non-Unicode only):" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Include null terminator?" ]
-				]
+				"Title": "LastPacketOffset(",
+				"Returns": "Integer"
 			},
 			// ID = 32
 			{
-				"Title": "Set UTF-16 string (%0), at position (%1), include null terminator (%2)",
+				"Title": "Statistics_BytesIn(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Text", "Unicode string (Fusion Unicode only):" ],
-					[ "Integer", "Position in packet to write at (0+):" ],
-					[ "Integer", "Include null terminator?" ]
-				]
-			}
-		],
-		"Conditions": [
-			// ID = 0
-			{
-				"Title": "%o : On error",
-				"Triggered": true
-			},
-			// ID = 1
-			{
-				"Title": "%o : On status report",
-				"Triggered": true
-			},
-			// ID = 2
-			{
-				"Title": "%o : On client socket connected to server (Socket %0)",
-				"Triggered": true,
-				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
+					[ "Integer", "Socket ID" ],
+					[ "Integer", "Peer socket ID or -1" ]
 				]
 			},
-			// ID = 3
+			// ID = 33
 			{
-				"Title": "%o : On client socket disconnected from server (Socket %0)",
-				"Triggered": true,
+				"Title": "Statistics_BytesOut(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
+					[ "Integer", "Socket ID" ],
+					[ "Integer", "Peer socket ID or -1" ]
 				]
 			},
-			// ID = 4
+			// ID = 34
 			{
-				"Title": "%o : On client received message (Socket %0)",
-				"Triggered": true,
+				"Title": "Statistics_PacketsIn(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
+					[ "Integer", "Socket ID" ],
+					[ "Integer", "Peer socket ID or -1" ]
 				]
 			},
-			// ID = 5
+			// ID = 35
 			{
-				"Title": "%o : On server received message (Socket %0)",
-				"Triggered": true,
+				"Title": "Statistics_PacketsOut(",
+				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
+					[ "Integer", "Socket ID" ],
+					[ "Integer", "Peer socket ID or -1" ]
 				]
 			},
-			// ID = 6
+			// ID = 36
 			{
-				"Title": "%o : On server socket done (Socket %0)",
-				"Triggered": true,
-				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
-				]
-			},
-			// ID = 7
-			{
-				"Title": "%o : On peer connected to server (Socket %0)",
-				"Triggered": true,
-				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
-				]
-			},
-			// ID = 8
-			{
-				"Title": "%o : On peer disconnected from server (Socket %0)",
-				"Triggered": true,
-				"Parameters": [
-					[ "Integer", "Socket ID (Use -1 for any):" ]
-				]
-			}
-		],
-		"Expressions": [
-			// ID = 0
-			{
-				"Title": "Error$(",
-				"Returns": "Text",
-				"Parameters": [
-					[ "Integer", "Clear the current error text?" ]
-				]
-			},
-			// ID = 1
-			{
-				"Title": "Report$(",
-				"Returns": "Text",
-				"Parameters": [
-					[ "Integer", "Clear the current report text?" ]
-				]
-			},
-			// ID = 2
-			{
-				"Title": "LastMessageSocketID(",
-				"Returns": "Integer"
-			},
-			// ID = 3
-			{
-				"Title": "LastMessageText$(",
+				"Title": "GetErrorOrInfo$(",
 				"Returns": "Text"
-			},
-			// ID = 4
-			{
-				"Title": "LastMessageAddress(",
-				"Returns": "Integer"
-			},
-			// ID = 5
-			{
-				"Title": "LastMessageSize(",
-				"Returns": "Integer"
-			},
-			// ID = 6
-			{
-				"Title": "NewSocketID(",
-				"Returns": "Integer"
-			},
-			// ID = 7
-			{
-				"Title": "GetSocketIDForLastEvent(",
-				"Returns": "Integer"
-			},
-			// ID = 8
-			{
-				"Title": "GetPortFromName(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Text", "Name" ]
-				]
-			},
-			// ID = 9
-			{
-				"Title": "FormPacket_Address(",
-				"Returns": "Integer"
-			},
-			// ID = 10
-			{
-				"Title": "FormPacket_Size(",
-				"Returns": "Integer"
-			},
-			// ID = 11
-			{
-				"Title": "FormPacket_OnesComplement(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Integer", "Position in packet to start" ],
-					[ "Integer", "Length of packet to read" ]
-				]
-			},
-			// ID = 12
-			{
-				"Title": "GetByte(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 13
-			{
-				"Title": "GetShort(",
-				"Returns": "Short",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 14
-			{
-				"Title": "GetInteger(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 15
-			{
-				"Title": "GetLong(",
-				"Returns": "Integer",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 16
-			{
-				"Title": "GetFloat(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 17
-			{
-				"Title": "GetDouble(",
-				"Returns": "Float",
-				"Parameters": [
-					[ "Integer", "Position in packet" ]
-				]
-			},
-			// ID = 18
-			{
-				"Title": "GetUTF8String$(",
-				"Returns": "Text",
-				"Parameters": [
-					[ "Integer", "Position in packet" ],
-					[ "Integer", "Length of string (bytes)" ]
-				]
-			},
-			// ID = 19
-			{
-				"Title": "GetUTF16String$(",
-				"Returns": "Text",
-				"Parameters": [
-					[ "Integer", "Position in packet" ],
-					[ "Integer", "Length of string (bytes)" ]
-				]
 			}
 		]
 	}
