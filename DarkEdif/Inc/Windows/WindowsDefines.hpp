@@ -32,7 +32,7 @@
 // introduced in Vista's kernel32.dll. The kernel32.dll in the OS won't have the SRWLock functions, resulting in
 // the ext not loading on Fusion startup.
 // You can track these missing calls down using Dependency Walker.
-#if (defined(_USING_V110_SDK71_) || (defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0600) || (defined(WINVER) && WINVER < 0x0600)) && _MSC_VER > 1927
+#if (defined(_USING_V110_SDK71_) || (defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0600) || (defined(WINVER) && WINVER < 0x0600)) && _MSC_VER > 1929
 	#error Windows XP is not properly supported after VS 2019 v16.7 (toolset 14.27)
 #endif
 
