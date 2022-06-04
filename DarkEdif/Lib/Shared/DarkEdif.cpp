@@ -867,7 +867,7 @@ int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption
 	jobject globalContext = getGlobalContext();
 	jmethodID methodMakeText = threadEnv->GetStaticMethodID(toast, "makeText", "(Landroid/content/Context;Ljava/lang/CharSequence;I)Landroid/widget/Toast;");
 	if (methodMakeText == NULL) {
-		LOGE("toast.makeText not Found");
+		LOGE("toast.makeText not Found\n");
 		return 0;
 	}
 
@@ -2399,8 +2399,20 @@ void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 	va_list v;
 	va_start(v, msgFormat);
 #ifdef _WIN32
-	static TCHAR outputBuff[1024];
-	_vstprintf_s(outputBuff, msgFormat, v);
+	static TCHAR outputBuff[2048];
+	int didTrunc = _vsntprintf_s(outputBuff, std::size(outputBuff), _TRUNCATE, msgFormat, v);
+
+	// Truncated the log; trim it
+	if (didTrunc == -1)
+	{
+		_tcscpy(&outputBuff[std::size(outputBuff) - std::size(_T("... [truncated]")) - 2], _T("... [truncated]"));
+		// add newline if format had it
+		if (msgFormat[_tcslen(msgFormat) - 2] == _T('\r'))
+			_tcscpy(&outputBuff[std::size(outputBuff) - std::size(_T("\r\n"))], _T("\r\n"));
+		else if (msgFormat[_tcslen(msgFormat) - 1] == _T('\n'))
+			_tcscpy(&outputBuff[std::size(outputBuff) - std::size(_T("\n"))], _T("\n"));
+	}
+
 	OutputDebugString(outputBuff);
 #elif defined(__ANDROID__)
 	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);

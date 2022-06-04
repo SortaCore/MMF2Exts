@@ -1225,25 +1225,25 @@ struct ExpressionManager_Android : ACEParamReader {
 		ext->runFuncs.exp_setReturnFloat(ext->javaExtPtr, expJavaObj, a);
 	}
 	void SetValue(const char * a) {
-		LOGV("Setting expression return as text...");
+		LOGV("Setting expression return as text...\n");
 		ext->runFuncs.exp_setReturnString(ext->javaExtPtr, expJavaObj, a);
-		LOGV("Setting expression return as text \"%s\" OK.", a);
+		LOGV("Setting expression return as text \"%s\" OK.\n", a);
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		LOGV("Getting float param, expr, index %d OK.", index);
+		LOGV("Getting float param, expr, index %d OK.\n", index);
 		float f = ext->runFuncs.exp_getParamFloat(ext->javaExtPtr, expJavaObj);
-		LOGV("Got float param, expr, index %d OK.", index);
+		LOGV("Got float param, expr, index %d OK.\n", index);
 		return f;
 	}
 
 	virtual const TCHAR * GetString(int index)
 	{
-		LOGV("Getting string param, expr, index %d.", index);
+		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR * str = trackString(ext->runFuncs.exp_getParamString(ext->javaExtPtr, expJavaObj));
-		LOGV("Got string param, expr, index %d OK.", index);
+		LOGV("Got string param, expr, index %d OK."\n, index);
 		return str;
 	}
 
@@ -1338,25 +1338,25 @@ struct ExpressionManager_iOS : ACEParamReader {
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		LOGV("Getting float param, expr, index %d OK.", index);
+		LOGV("Getting float param, expr, index %d OK.\n", index);
 		float f = DarkEdif_expGetParamFloat(ext->objCExtPtr);
-		LOGV("Got float param, expr, index %d OK: %f.", index, f);
+		LOGV("Got float param, expr, index %d OK: %f.\n", index, f);
 		return f;
 	}
 
 	virtual const TCHAR* GetString(int index)
 	{
-		LOGV("Getting string param, expr, index %d.", index);
+		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR* str = DarkEdif_expGetParamString(ext->objCExtPtr);
-		LOGV("Got string param, expr, index %d OK: \"%s\".", index, str);
+		LOGV("Got string param, expr, index %d OK: \"%s\".\n", index, str);
 		return str;
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
-		LOGV("Getting integer param, expr, index %d OK.", index);
+		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		std::int32_t i = DarkEdif_expGetParamInt(ext->objCExtPtr);
-		LOGV("Got integer param, expr, index %d OK: %d.", index, i);
+		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
 
@@ -1376,12 +1376,12 @@ long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 	int ID = rdPtr->rHo.EventNumber;
 	Extension * ext = (Extension *)rdPtr->pExtension;
 	ExpressionManager_Windows params(rdPtr);
+	LOGV(_T("Expression ID %i start.\n"), ID);
 #elif defined(__ANDROID__)
 ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
 {
 	Extension * ext = (Extension *)extPtr;
 	ExpressionManager_Android params(ext, expU);
-	LOGV("Expression ID %i start.", ID);
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
@@ -1518,6 +1518,7 @@ endFunc:
 	// Must set return type after the expression func is evaluated, as sub-expressions inside the
 	// expression func (e.g. from generating events) could change it to something else
 	params.SetReturnType(ExpressionRet);
+	LOGV(_T("Expression ID %i end.\n"), ID);
 	return Result;
 
 	// if you add back old ARM ASM, remember to increment paramInc
@@ -1549,10 +1550,6 @@ endFunc:
 			params.SetValue(*(float *)&Result);
 		else
 			DarkEdif::MsgBox::Error(_T("Expression ASM error"), _T("Error calling expression ID %i: Unrecognised return type."), ID);
-
-	#ifdef __ANDROID__
-		LOGV("Expression ID %i end.\n", ID);
-	#endif
 #endif
 }
 
@@ -1817,11 +1814,11 @@ char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLengt
 
 Edif::recursive_mutex::recursive_mutex()
 {
-	this->log << "New recursive mutex.\n";
+	this->log << "New recursive mutex.\n"sv;
 }
 Edif::recursive_mutex::~recursive_mutex()
 {
-	this->log << "Recursive mutex dying.\n";
+	this->log << "Recursive mutex dying.\n"sv;
 }
 
 void Edif::recursive_mutex::lock(edif_lock_debugParams)
@@ -1836,7 +1833,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			log2 += func;
 			log2 += ", line "sv;
 			log2 += std::to_string(line);
-			log2 += "\n";
+			log2 += '\n';
 			OutputDebugStringA(log2.c_str());
 			DarkEdif::BreakIfDebuggerAttached();
 			throw std::runtime_error("timeout");
@@ -1848,11 +1845,11 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
 		FILE * f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+			LOGF(_T("Failed to write log file, error %d.\n"), errno);
 		}
 		else
 		{
-			this->log << "FAILED TO LOCK in function " << func << ", file " << file << ", line " << line << ", error " << err.what() << ".\n";
+			this->log << "FAILED TO LOCK in function "sv << func << ", file "sv << file << ", line "sv << line << ", error "sv << err.what() << ".\n"sv;
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
@@ -1860,7 +1857,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			throw err;
 		}
 	}
-	this->log << "Locked in function " << func << ", line " << line << ".\n";
+	this->log << "Locked in function "sv << func << ", line "sv << line << ".\n"sv;
 }
 bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 {
@@ -1878,7 +1875,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 		}
 		else
 		{
-			this->log << "FAILED TO TRY LOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
+			this->log << "FAILED TO TRY LOCK in function "sv << func << ", line "sv << line << ", error "sv << err.what() << ".\n"sv;
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
@@ -1888,7 +1885,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 	}
 	// this->log isn't safe to use if we don't have the lock
 	if (b)
-		this->log << "Try lock OK in function " << func << ", line " << line << ".\n";
+		this->log << "Try lock OK in function "sv << func << ", line "sv << line << ".\n"sv;
 	return b;
 }
 void Edif::recursive_mutex::unlock(edif_lock_debugParams)
@@ -1903,11 +1900,11 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
 		FILE* f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+			LOGF(_T("Failed to write log file, error %d.\n"), errno);
 		}
 		else
 		{
-			this->log << "FAILED TO UNLOCK in function " << func << ", line " << line << ", error " << err.what() << ".\n";
+			this->log << "FAILED TO UNLOCK in function "sv << func << ", line "sv << line << ", error "sv << err.what() << ".\n"sv;
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);

@@ -323,10 +323,10 @@ ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDi
 ProjectFunc void destroyRunObject(JNIEnv *, jobject, jlong ext, jboolean fast)
 {
 	JNIExceptionCheck();
-	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...");
+	LOGV("Running " PROJECT_NAME " extension dtor in destroyRunObject...\n");
 	delete ((Extension *)ext);
 	JNIExceptionCheck();
-	LOGV("Ran " PROJECT_NAME " extension dtor OK.");
+	LOGV("Ran " PROJECT_NAME " extension dtor OK.\n");
 }
 
 ProjectFunc REFLAG handleRunObject(JNIEnv *, jobject, jlong ext)
@@ -452,9 +452,9 @@ jstring CStrToJStr(const char * String)
 {
 #ifdef _DEBUG
 	if (threadEnv->ExceptionCheck())
-		LOGF("Already a bug when returning a string!! Error %s, text to return %s.", GetJavaExceptionStr().c_str(), String);
+		LOGF("Already a bug when returning a string!! Error %s, text to return %s.\n", GetJavaExceptionStr().c_str(), String);
 	if (String == nullptr)
-		LOGF("String pointer is null in CStrToJStr()!");
+		LOGF("String pointer is null in CStrToJStr()!\n");
 #endif
 
 	// Java doesn't use regular UTF-8, but "modified" UTF-8, or CESU-8.
@@ -473,15 +473,15 @@ jstring CStrToJStr(const char * String)
 		if (bytes[k] >= 0xF0 && bytes[k] <= 0xF5)
 			goto reconvert;
 	}
-	LOGV("UTF-8 String \"%s\" should already be valid Modified UTF-8.", String);
+	LOGV("UTF-8 String \"%s\" should already be valid Modified UTF-8.\n", String);
 
 	// No 4-byte characters, safe to convert directly
 	jstr = threadEnv->NewStringUTF(String);
 	if (threadEnv->ExceptionCheck())
-		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
+		LOGE("Failed to convert string, got error %s.\n", GetJavaExceptionStr().c_str());
 	return jstr;
 reconvert:
-	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().");
+	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().\n");
 	std::string newString(strU8Len + (strU8Len >> 2), '\0');
 	int inputByteIndex = 0, outputByteIndex = 0;
 	while (inputByteIndex < strU8Len) {
@@ -558,7 +558,7 @@ std::string ThreadIDToStr(std::thread::id id)
 	std::ostringstream str;
 	if (id != std::this_thread::get_id())
 	{
-		LOGE("Not the right ID.");
+		LOGE("Not the right ID.\n");
 		str << std::hex << id;
 	}
 	else
@@ -627,7 +627,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 {
 	if (!threadEnv)
 	{
-		LOGF("JNIExceptionCheck() called before threadEnv was inited.");
+		LOGF("JNIExceptionCheck() called before threadEnv was initialized.\n");
 		return;
 	}
 	if (!threadEnv->ExceptionCheck())
@@ -922,7 +922,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	mv * mV = NULL;
 	if (!::SDK) {
-		LOGV("The SDK is being initialized.");
+		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}
 
@@ -930,7 +930,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 }
 ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 {
-	LOGV("JNI_Unload.");
+	LOGV("JNI_Unload.\n");
 
 #ifdef _DEBUG
 	// Reset signals
