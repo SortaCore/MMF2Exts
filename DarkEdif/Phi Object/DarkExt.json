@@ -1,0 +1,344 @@
+{
+	"Identifier": "PMFP",
+	"Dependencies": "",
+	"UK English":
+	{
+		"About": {
+			"Name": "Phi Object",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Comment": "Retrieves extra details from Fusion runtime and objects, as well as the OS. (b%i)",
+			"Help": "",
+			"URL": "https://dark-wire.com"
+		},
+		"ActionMenu": [
+			[ "System info",
+				[ 4, "Refresh system specs" ],
+				[ 5, "Read permissions of system object" ],
+				[ 6, "Iterate discrete ACL" ],
+				[ 7, "Add new discrete ACL entry", true ]
+			]
+			
+			/*,
+			[   "Active",
+				[ 0, "Insert placeholders into animation" ],
+				[ 1, "Insert image file(s) into animation" ]
+			],
+			[
+				"Test",
+				[ 2, "Store details" ],
+				[ 3, "Check for diff" ]
+			]*/
+		],
+		"ConditionMenu": [
+			[ 0, "On error" ],
+			[ "Fusion",
+				[ 1, "Is this frame running in a subapp?"]
+			],
+			[ "System info",
+				[ 2, "OS perm: Does user have access?"],
+				[ 3, "OS perm: On DACL entry loop" ]
+			]
+
+			//,
+		//	[ 1, "Is equal" ]
+		],
+		"ExpressionMenu": [
+			[ 0, "Error text" ],
+			/*[
+				"Event",
+				[ 1, "Get event index" ]
+			],
+			[ "Frame",
+				[ 2, "Get frame index from name" ],
+				[ 3, "Get frame name from index" ]
+			],
+			[ "Active",
+				[ 4, "Get number of animation frames" ]
+			],*/
+			[ "System",
+				[ "RAM",
+					[ 5, "Get physical RAM total (MB)" ],
+					[ 6, "Get physical RAM free (MB)" ],
+					[ 7, "Get page file RAM total (MB)" ],
+					[ 8, "Get page file RAM free (MB)" ],
+					[ 9, "Get virtual RAM total (MB)" ],
+					[ 10, "Get virtual RAM free (MB)" ]
+				],
+				[ "Drive",
+					[ 11, "Get total capacity of drive (MB)" ],
+					[ 12, "Get available space in drive (MB)" ]
+				],
+				[ "CPU",
+					[ 20, "Get CPU temperature (C)", true ]
+				],
+				[ "Discrete ACL loop entry",
+					[ 21, "Account name" ],
+					[ 22, "SID" ],
+					[ 23, "Access mask" ]
+				],
+				[ "Sensor",
+					[ 24, "Proximity sensor"]
+				]
+			],
+			[ "Fusion objects",
+				[ 14, "Get list of alt vals by object name" ],
+				[ 15, "Get list of alt strings by object name" ],
+				[ 16, "Get list of internal flag states by object name" ],
+				"Separator",
+				[ 17, "Get list of alt vals by fixed value", true ], 
+				[ 18, "Get list of alt strings by fixed value", true ],
+				[ 19, "Get list of internal flag states by fixed value", true ]
+			],
+			[ 13, "Test Parameters!"]
+		],
+		"Actions": [
+			{
+				"Title": "Object with FV %0: insert %3 placeholder frames into anim id %1, dir %2, frame index %4",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Animation ID (0+, 0 = Stopped)" ],
+					[ "Integer", "Animation direction (0-31, 0 is right, add 1 for anti-clockwise by 1)" ],
+					[ "Integer", "Number of blank frames to add", 1 ],
+					[ "Integer", "Insert at index (or -1 for end of animation)" ]
+				]
+			},
+			{
+				"Title": "Object with FV %0: add image files %1 at index %2",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Animation ID (0+, 0 = Stopped)" ],
+					[ "Integer", "Animation direction (0-31, 0 is right, add 1 for anti-clockwise by 1)" ],
+					[ "Text", "Filenames (separated with \"|\" or line break)" ],
+					[ "Integer", "Insert at index (or -1 for end of animation)" ]
+				]
+			},
+			{
+				"Title": "Store Details (Fixed Value = %0)",
+				"Parameters": [
+					[ "Integer", "Fixed value" ]
+				]
+			},
+			{
+				"Title": "Check for diff"
+			},
+			{
+				"Title": "Refresh the system specs"
+			},
+			{
+				"Title": "Read permissions of system object %0 (object type %1)",
+				"Parameters": [
+					[ "Text", "File, directory, registry key etc full path" ],
+					[ "Text", "Object type (\"registry\", \"file\" for files/folders, etc; see help file)" ],
+					[ "Integer", "Include system ACL entries? (requires more perms; choose 1 or 0)" ]
+				]
+			},
+			{
+				"Title": "Iterate through discrete ACL, loop name %0, include %1 types, include inherited = %2, include inherit-only %3",
+				"Parameters": [
+					[ "Text", "Loop name for conditions" ],
+					[ "Text", "Include allow, deny or both entry types?" ],
+					[ "Integer", "Include inherited ACL entries? (1 or 0)" ],
+					[ "Integer", "Include ACL entries not applied to this generation? (1 or 0)" ]
+				]
+			},
+			{
+				"Title": "Add new discrete ACL entry; account %0, entry type %1, permissions %2, inheritance %3",
+				"Parameters": [
+					[ "Text", "Account name or SID" ],
+					[ "Text", "Entry type (one of \"grant\", \"deny\", \"set\", \"revoke\")" ],
+					[ "Text", "Permission list (\"read\", \"write\", \"all\", comma-separated, see help file)" ],
+					[ "Text", "Inheritance list (\"subcontainers\", \"subobjects\", \"inheritonly\", etc, see help file)" ]
+				]
+			}
+		],
+		"Conditions": [
+			{
+				"Title": "%o: On error",
+				"Triggered": true
+			},
+			{
+				"Title": "%o: Is this Fusion frame running in a subapp?"
+			},
+			{
+				"Title": "%o: OS perm: Does %0 have %1 access?",
+				"Parameters": [
+					[ "Text", "Account name or SID" ],
+					[ "Text", "Permission list (\"read\", \"write\", \"all\", comma-separated, see help file)" ]
+				]
+			},
+			{
+				"Title": "%o: OS perm: On discrete ACL entry loop %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Loop name" ]
+				]
+			}
+		],
+		"Expressions": [
+			{
+				"Title": "Error$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "Event_Index(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Frame_IndexFromName(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Text", "Frame name" ]
+				]
+			},
+			{
+				"Title": "Frame_NameFromIndex$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Frame index (1+)" ]
+				]
+			},
+			{
+				"Title": "Active_NumOfFrames(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Animation number" ],
+					[ "Integer", "Animation dir" ]
+				]
+			},
+			{
+				"Title": "Memory_PhysicalTotal(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Memory_PhysicalFree(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Memory_PageFileTotal(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Memory_PageFileFree(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Memory_VirtualTotal(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Memory_VirtualFree(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "Disk_TotalCapacityMB(",
+				"Returns": "Unsigned Integer",
+				"Parameters": [
+					[ "String", "Path with ending slash" ]
+				]
+			},
+			{
+				"Title": "Disk_AvailableSpaceMB(",
+				"Returns": "Unsigned Integer",
+				"Parameters": [
+					[ "String", "Path with ending slash" ]
+				]
+			},
+			{
+				"Title": "TestParamsFunc(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Integer", "First int" ],
+					[ "Float", "Second float" ],
+					[ "Text", "StringC" ],
+					[ "Float", "FloatD" ],
+					[ "Integer", "IntE" ],
+					[ "Float", "FloatF" ],
+					[ "Text", "StringG" ],
+					[ "Integer", "IntH" ],
+					[ "Float", "FloatI" ],
+					[ "String", "StringJ" ],
+					[ "Integer", "IntK" ],
+					[ "Float", "FloatL" ],
+					[ "Text", "StringM" ],
+					[ "Float", "FloatN" ],
+					[ "Integer", "IntO" ],
+					[ "Text", "StringP" ]
+				]
+			},
+			{
+				"Title": "GetAllAltValsFromObjName$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "String", "Object name" ],
+					[ "Integer", "Alt value index" ],
+					[ "Integer", "Num decimal places" ]
+				]
+			},
+			{
+				"Title": "GetAllAltStringsFromObjName$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "String", "Object name" ],
+					[ "Integer", "Alt string index" ],
+					[ "String", "Delimiter between strings" ]
+				]
+			},
+			{
+				"Title": "GetAllInternalFlagsFromObjName$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "String", "Object name" ],
+					[ "Integer", "Internal flag index" ]
+				]
+			},
+			{
+				"Title": "GetAllAltValsFromFixedValue$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Alt value index" ],
+					[ "Integer", "Num decimal places" ]
+				]
+			},
+			{
+				"Title": "GetAllAltStringsFromFixedValue$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Alt string index" ],
+					[ "String", "Delimiter between strings" ]
+				]
+			},
+			{
+				"Title": "GetAllInternalFlagsFromFixedValue$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "Integer", "Fixed value" ],
+					[ "Integer", "Internal flag index" ]
+				]
+			},
+			{
+				"Title": "GetCPUTemp(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "GetLoopedACLEntry_AccountName$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetLoopedACLEntry_SID$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "GetLoopedACLEntry_AccessMask(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "ProximitySensor(",
+				"Returns": "Float"
+			}
+		]
+	}
+}

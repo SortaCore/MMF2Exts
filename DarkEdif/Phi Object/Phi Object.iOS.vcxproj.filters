@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6c1a7586-850a-4c19-912b-69708e061ba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{c535c28d-c118-42ce-a527-bac473e706bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{b856fc36-178e-4a2c-83cb-a2271c31559b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{7089d004-8497-46d9-b0b5-06c0203acc50}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="$(ProjectDir)\DarkExt.PostMinify.json">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
