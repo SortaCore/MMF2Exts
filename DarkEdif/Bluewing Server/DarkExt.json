@@ -1490,7 +1490,7 @@
 		"About": {
 			"Name": "Servidor Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2021 por Darkwire Software",
+			"Copyright": "Copyright \u00A9 2022 por Darkwire Software",
 			"Comment": "Servidor multijogador para usar em LAN ou através da internet. \"Bluewing\" recriação do Servidor Lacewing Relay. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -2979,7 +2979,7 @@
 		"About": {
 			"Name": "Serveur Lacewing Blue",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2021 par Darkwire Software",
+			"Copyright": "Copyright \u00A9 2022 par Darkwire Software",
 			"Comment": "Serveur multijoueur, pour utilisation par LAN ou internet. \"Bluewing\", une refonte de Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/BluewingServer.chm",
 			"URL": "https://dark-wire.com/relay/"
