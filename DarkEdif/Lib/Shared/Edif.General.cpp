@@ -310,7 +310,7 @@ static RuntimeFunctions runFuncs;
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
 {
 	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
-	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
+	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
 	runFuncs.ext = javaExtP;
 
@@ -547,7 +547,7 @@ reconvert:
 
 	jstr = threadEnv->NewStringUTF(String);
 	if (threadEnv->ExceptionCheck())
-		LOGE("Failed to convert string, got error %s.", GetJavaExceptionStr().c_str());
+		LOGE("Failed to convert string, got error %s.\n", GetJavaExceptionStr().c_str());
 	return jstr;
 }
 
@@ -590,7 +590,7 @@ void freeString(void * ext, RuntimeFunctions::string str)
 	str = { NULL, NULL };
 }
 void generateEvent(void * javaExtPtr, int code, int param) {
-	LOGW("GenerateEvent ID %i attempting...", code);
+	LOGW("GenerateEvent ID %i attempting...\n", code);
 	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from generateEvent");
 	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
 	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
@@ -639,7 +639,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 
 	jstring excStr = (jstring)threadEnv->CallObjectMethod(exc, getMsgMeth);
 	const char * c = threadEnv->GetStringUTFChars(excStr, NULL);
-	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.",
+	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.\n",
 		file, func, line, c);
 
 	raise(SIGINT);
@@ -766,8 +766,8 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 
 	dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
 
-	LOGI("%s", oss.str().c_str());
-	LOGE("signal code raised: %d, %s.", code, signalName);
+	LOGI("%s\n", oss.str().c_str());
+	LOGE("signal code raised: %d, %s.\n", code, signalName);
 	// Breakpoint
 #ifdef _DEBUG
 	raise(SIGTRAP);
@@ -788,7 +788,7 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction(signalCatches[i].signalNum, &sa, &sa_old) != 0) {
-			LOGW("Failed to set up %s sigaction.", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction.\n", signalCatches[i].signalName);
 		}
 #if 0 && __ANDROID_API__ >= 28
 		struct sigaction64 sa64;
@@ -798,12 +798,12 @@ static void prepareSignals()
 		sa.sa_sigaction = my_handler;
 		sa.sa_flags = SA_SIGINFO;
 		if (sigaction64(signalCatches[i].signalNum, &sa64, &sa64_old) != 0) {
-			LOGW("Failed to set up %s sigaction (64 bit).", signalCatches[i].signalName);
+			LOGW("Failed to set up %s sigaction (64 bit).\n", signalCatches[i].signalName);
 		}
 #endif
 	}
 
-	LOGI("Set up %zu sigactions.", std::size(signalCatches));
+	LOGI("Set up %zu sigactions.\n", std::size(signalCatches));
 }
 #endif // _DEBUG
 
@@ -824,18 +824,18 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	jint error = vm->GetEnv(reinterpret_cast<void **>(&mainThreadJNIEnv), JNI_VERSION_1_6);
 	if (error != JNI_OK) {
-		LOGF("GetEnv failed with error %d.", error);
+		LOGF("GetEnv failed with error %d.\n", error);
 		return -1;
 	}
 	global_vm = vm;
-	LOGV("GetEnv OK, returned %p.", mainThreadJNIEnv);
+	LOGV("GetEnv OK, returned %p.\n", mainThreadJNIEnv);
 
 	JavaVMAttachArgs args;
 	args.version = JNI_VERSION_1_6; // choose your JNI version
 	args.name = PROJECT_NAME ", JNI_Load"; // you might want to give the java thread a name
 	args.group = NULL; // you might want to assign the java thread to a ThreadGroup
 	if ((error = vm->AttachCurrentThread(&mainThreadJNIEnv, NULL)) != JNI_OK) {
-		LOGF("AttachCurrentThread failed with error %d.", error);
+		LOGF("AttachCurrentThread failed with error %d.\n", error);
 		return -1;
 	}
 
@@ -843,28 +843,28 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
 	std::string classNameCRun("Extensions/" "CRun" PROJECT_NAME_UNDERSCORES);
 	std::string className("Extensions/" PROJECT_NAME_UNDERSCORES);
-	LOGV("Looking for class %s... [1/2]", classNameCRun.c_str());
+	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
-		LOGV("Couldn't find %s, now looking for %s... [2/2]", classNameCRun.c_str(), className.c_str());
+		LOGV("Couldn't find %s, now looking for %s... [2/2]\n", classNameCRun.c_str(), className.c_str());
 		if (mainThreadJNIEnv->ExceptionCheck()) {
 			mainThreadJNIEnv->ExceptionClear();
-			LOGV("EXCEPTION [1] %d", 0);
+			LOGV("EXCEPTION [1] %d\n", 0);
 		}
 		clazz = mainThreadJNIEnv->FindClass(className.c_str());
 		if (clazz == NULL)
 		{
 			if (mainThreadJNIEnv->ExceptionCheck()) {
 				mainThreadJNIEnv->ExceptionClear();
-				LOGV("EXCEPTION [2] %d", 0);
+				LOGV("EXCEPTION [2] %d\n", 0);
 			}
-			LOGF("Couldn't find class %s. Aborting load of extension.", className.c_str());
+			LOGF("Couldn't find class %s. Aborting load of extension.\n", className.c_str());
 			return JNI_VERSION_1_6;
 		}
-		LOGV("Found %s. [2/2]", className.c_str());
+		LOGV("Found %s. [2/2]\n", className.c_str());
 	}
 	else
-		LOGV("Found %s. [1/2]", classNameCRun.c_str());
+		LOGV("Found %s. [1/2]\n", classNameCRun.c_str());
 
 #define method(a,b) { "darkedif_" #a, b, (void *)&a }
 	//public native long DarkEdif_createRunObject(ByteBuffer edPtr, CCreateObjectInfo cob, int version);
@@ -882,14 +882,14 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		EXTRAFUNCS
 	};
 
-	LOGV("Registering natives for %s...", PROJECT_NAME);
+	LOGV("Registering natives for %s...\n", PROJECT_NAME);
 	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
 		threadEnv = mainThreadJNIEnv;
 		std::string excStr = GetJavaExceptionStr();
-		LOGF("Failed to register natives for ext %s; error %s.", PROJECT_NAME, excStr.c_str());
+		LOGF("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
 	}
 	else
-		LOGV("Registered natives for ext %s successfully.", PROJECT_NAME);
+		LOGV("Registered natives for ext %s successfully.\n", PROJECT_NAME);
 	mainThreadJNIEnv->DeleteLocalRef(clazz);
 	runFuncs.ext = NULL;
 

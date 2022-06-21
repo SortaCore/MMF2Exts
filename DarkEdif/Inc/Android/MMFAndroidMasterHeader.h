@@ -526,7 +526,7 @@ struct global {
 		this->ref = p.ref;
 		this->name = p.name;
 		p.ref = NULL;
-		LOGV("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.",
+		LOGV("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.\n",
 			ThreadIDToStr(std::this_thread::get_id()).c_str(),
 			this->ref, name, &p, this);
 		return *this;
@@ -536,16 +536,16 @@ struct global {
 		this->name = name;
 		ref = nullptr;
 		if (p == nullptr) {
-			LOGE("Couldn't make global ref from null (in \"%s\"). Check the calling function.", name);
+			LOGE("Couldn't make global ref from null (in \"%s\"). Check the calling function.\n", name);
 			return;
 		}
 		assert(threadEnv != NULL);
 		ref = (T)threadEnv->NewGlobalRef(p);
 		if (ref == NULL) {
 			std::string exc = GetJavaExceptionStr();
-			LOGE("Couldn't make global ref from %p [1], error: %s.", p, exc.c_str());
+			LOGE("Couldn't make global ref from %p [1], error: %s.\n", p, exc.c_str());
 		}
-		LOGV("Thread %s: Creating global pointer %p \"%s\" in global() from original %p.", ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name, p);
+		LOGV("Thread %s: Creating global pointer %p \"%s\" in global() from original %p.\n", ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name, p);
 		//threadEnv->DeleteLocalRef(p);
 	}
 	global() {
@@ -560,7 +560,7 @@ struct global {
 	}
 	operator const T() const {
 		if (ref == NULL) {
-			LOGE("null global ref at %p \"%s\" was copied!", this, name);
+			LOGE("null global ref at %p \"%s\" was copied!\n", this, name);
 			raise(SIGTRAP);
 		}
 		return ref;
@@ -568,7 +568,7 @@ struct global {
 	~global() {
 		if (ref)
 		{
-			LOGV("Thread %s: Freeing global pointer %p \"%s\" in ~global().",
+			LOGV("Thread %s: Freeing global pointer %p \"%s\" in ~global().\n",
 				ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name);
 			assert(threadEnv != NULL);
 			threadEnv->DeleteGlobalRef(ref);
@@ -580,7 +580,7 @@ struct global {
 #define JAVACHKNULL(x) x; \
 	if (threadEnv->ExceptionCheck()) { \
 		std::string s = GetJavaExceptionStr(); \
-		LOGE("Dead in %s, %i: %s.", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
+		LOGE("Dead in %s, %i: %s.\n", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
 	}
 
 void Indirect_JNIExceptionCheck(const char * file, const char * func, int line);

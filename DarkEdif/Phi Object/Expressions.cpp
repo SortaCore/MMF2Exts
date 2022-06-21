@@ -139,7 +139,7 @@ dieearly:
 		return -1;
 	}
 
-	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.",
+	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.\n",
 		path, data.f_blocks, data.f_bsize, data.f_frsize, data.f_bfree, data.f_bavail, data.f_bfree * data.f_frsize);
 	std::uint64_t freeSpace = ((((std::uint64_t)data.f_bfree) * data.f_frsize) / DIV);
 	if (freeSpace > INT32_MAX)
@@ -164,7 +164,7 @@ dieearly:
 		return -1;
 	}
 
-	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.",
+	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Available: %lu bytes.\n",
 		path, data.f_blocks, data.f_bsize, data.f_frsize, data.f_bfree, data.f_bavail, data.f_bfree * data.f_frsize);
 	std::uint64_t freeSpace = ((((std::uint64_t)data.f_bfree) * data.f_frsize) / DIV);
 	if (freeSpace > INT32_MAX)
@@ -203,7 +203,7 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 		MakeError("Couldn't look up total size of drive \"%s\", error %u: %s.", path, GetLastError(), GetLastErrorAsString().c_str());
 		return -1;
 	}
-	
+
 	return (std::uint32_t)(size.QuadPart / DIV);
 
 	dieearly:
@@ -226,7 +226,7 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 		return -1;
 	}
 
-	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Total capacity: %lu.",
+	LOGI("Note: Result of statvfs for path \"%s\": blocks = %lu, bsize = %lu, frsize = %lu, bfree = %lu, bavail = %lu. Total capacity: %lu.\n",
 		path, data.f_blocks, data.f_bsize, data.f_frsize, data.f_bfree, data.f_bavail, data.f_blocks * data.f_frsize);
 	std::uint64_t totalSpace = ((((std::uint64_t)data.f_blocks) * data.f_frsize) / DIV);
 	if (totalSpace > INT32_MAX)
@@ -239,9 +239,9 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 	//std::uint64_t freeSpace = ((data.f_bfree * data.f_frsize) / DIV);
 	//std::uint64_t availSpace = ((data.f_bavail * data.f_frsize) / DIV);
 
-	//LOGI("Success: total space %lu mb, free space %lu mb, avail %lu mb.", totalSpace, freeSpace, availSpace);
-	//LOGI("Success: bsize = %lu, frsize %lu, blocks %lu, bfree %lu, avail %lu.", data.f_bsize, data.f_frsize, data.f_blocks, data.f_bfree, data.f_bavail);
-	//LOGI("Success: files = %lu, ffree %lu, favail %lu, fsid %lu, flag %lu, namemax %lu.", data.f_files, data.f_ffree, data.f_favail, data.f_fsid, data.f_flag, data.f_namemax);
+	//LOGI("Success: total space %lu mb, free space %lu mb, avail %lu mb.\n", totalSpace, freeSpace, availSpace);
+	//LOGI("Success: bsize = %lu, frsize %lu, blocks %lu, bfree %lu, avail %lu.\n", data.f_bsize, data.f_frsize, data.f_blocks, data.f_bfree, data.f_bavail);
+	//LOGI("Success: files = %lu, ffree %lu, favail %lu, fsid %lu, flag %lu, namemax %lu.\n", data.f_files, data.f_ffree, data.f_favail, data.f_fsid, data.f_flag, data.f_namemax);
 #else
 #error not coded
 #endif
@@ -277,7 +277,7 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 		// In case NumberOI no worky
 		if (!rhPtr->Frame->oiList[i].name[0])
 			break;
-		
+
 		// Found object by name
 		if (!_tcsicmp(rhPtr->Frame->oiList[i].name, objectNameStrLengthLimited.c_str()))
 		{
@@ -300,7 +300,7 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 				// theObject->roc.val
 				if (av->CF25.NumAltValues <= altValueIndex)
 				{
-					MakeError("Object %s doesn't have alterable value at index %i; max available alt value index is %i.", 
+					MakeError("Object %s doesn't have alterable value at index %i; max available alt value index is %i.",
 						objectNameStr.c_str(), altValueIndex, av->CF25.NumAltValues - 1);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}

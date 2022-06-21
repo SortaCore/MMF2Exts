@@ -79,12 +79,9 @@ std::string Edif::CurrentFolder()
 	char result[PATH_MAX];
 #ifdef _WIN32
 	size_t count = GetModuleFileNameA(hInstLib, result, sizeof(result));
-#elif __ANDROID__
-	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-	LOGI("Got %s as the path.", result);
 #else
 	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-	printf("Got %s as the path.", result);
+	LOGI("Got %s as the path.\n", result);
 #endif
 	return std::string(result, count > 0 ? count : 0);
 }
@@ -995,25 +992,25 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		LOGV("Getting float param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		float f = (isCondition ? ext->runFuncs.cnd_getParamExpFloat : ext->runFuncs.act_getParamExpFloat)(ext->javaExtPtr, javaActOrCndObj);
-		LOGV("Got float param, cond=%d, index %d OK: %f.", isCondition ? 1 : 0, index, f);
+		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return f;
 	}
 
 	virtual const TCHAR * GetString(int index)
 	{
-		LOGV("Getting string param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const TCHAR * str = trackString((isCondition ? ext->runFuncs.cnd_getParamExpString : ext->runFuncs.act_getParamExpString)(ext->javaExtPtr, javaActOrCndObj));
-		LOGV("Got string param, cond=%d, index %d OK: \"%s\".", isCondition ? 1 : 0, index, str);
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
 		return str;
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
-		LOGV("Getting integer param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting integer param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		std::int32_t in = (isCondition ? ext->runFuncs.cnd_getParamExpression : ext->runFuncs.act_getParamExpression)(ext->javaExtPtr, javaActOrCndObj);
-		LOGV("Got integer param, cond=%d, index %d OK: %d.", isCondition ? 1 : 0, index, in);
+		LOGV("Got integer param, cond=%d, index %d OK: %d.\n", isCondition ? 1 : 0, index, in);
 		return in;
 	}
 
@@ -1076,25 +1073,25 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		LOGV("Getting float param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		double f = (isCondition ? DarkEdif_cndGetParamExpDouble : DarkEdif_actGetParamExpDouble)(ext->objCExtPtr, objCActOrCndObj, index);
-		LOGV("Got float param, cond=%d, index %d OK: %f.", isCondition ? 1 : 0, index, f);
+		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return (float)f;
 	}
 
 	virtual const TCHAR* GetString(int index)
 	{
-		LOGV("Getting string param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const TCHAR* str = (isCondition ? DarkEdif_cndGetParamExpString : DarkEdif_actGetParamExpString)(ext->objCExtPtr, objCActOrCndObj, index);
-		LOGV("Got string param, cond=%d, index %d OK: \"%s\".", isCondition ? 1 : 0, index, str);
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
 		return str;
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
-		LOGV("Getting integer param, cond=%d, index %d.", isCondition ? 1 : 0, index);
+		LOGV("Getting integer param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		std::int32_t in = (isCondition ? DarkEdif_cndGetParamExpression : DarkEdif_actGetParamExpression)(ext->objCExtPtr, objCActOrCndObj, index);
-		LOGV("Got integer param, cond=%d, index %d OK: %i.", isCondition ? 1 : 0, index, in);
+		LOGV("Got integer param, cond=%d, index %d OK: %i.\n", isCondition ? 1 : 0, index, in);
 		return in;
 	}
 
@@ -1115,13 +1112,13 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
-	LOGV("Condition ID %i start.", ID);
 #else
 ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, CCndExtension cndExt))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 #endif
+	LOGV("Condition ID %i start.\n", ID);
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("Missing condition ID %d in extension %s. This ID was not linked in Extension ctor with LinkCondition()."),
@@ -1139,10 +1136,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
 
-#ifdef __ANDROID__
-	LOGV("Condition ID %i end.", ID);
-#endif
-
+	LOGV("Condition ID %i end.\n", ID);
 	return Result;
 }
 
@@ -1163,7 +1157,6 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
-	LOGV("Action ID %i start.", ID);
 #define actreturn /* void */
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, CActExtension act))
@@ -1172,6 +1165,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ConditionOrActionManager_iOS params(false, ext, act);
 #define actreturn /* void */
 #endif
+	LOGV("Action ID %i start.\n", ID);
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
@@ -1188,9 +1182,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
 
-#ifdef __ANDROID__
-	LOGV("Action ID %i end.", ID);
-#endif
+	LOGV("Action ID %i end.\n", ID);
 	return actreturn;
 #undef actreturn
 }
@@ -1243,15 +1235,15 @@ struct ExpressionManager_Android : ACEParamReader {
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR * str = trackString(ext->runFuncs.exp_getParamString(ext->javaExtPtr, expJavaObj));
-		LOGV("Got string param, expr, index %d OK."\n, index);
+		LOGV("Got string param, expr, index %d OK.\n", index);
 		return str;
 	}
 
 	virtual std::int32_t GetInteger(int index)
 	{
-		LOGV("Getting integer param, expr, index %d OK.", index);
+		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		std::int32_t i = ext->runFuncs.exp_getParamInt(ext->javaExtPtr, expJavaObj);
-		LOGV("Got integer param, expr, index %d OK.", index);
+		LOGV("Got integer param, expr, index %d OK.\n", index);
 		return i;
 	}
 
@@ -1738,7 +1730,7 @@ wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int
 	size_t sSize = strlen(utf8String);
 	if (sSize > maxLength)
 	{
-		LOGE("Failed to convert	text... %d", 0);
+		LOGE("Failed to convert	text... %d\n", 0);
 		wcscpy(tstr, L"<Failed to convert text>");
 	}
 	else
@@ -1746,7 +1738,7 @@ wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int
 		size_t outSize = std::mbstowcs(tstr, utf8String, sSize);
 		if (outSize == -1)
 		{
-			LOGE("Failed to convert text... %d", 1);
+			LOGE("Failed to convert text... %d\n", 1);
 			wcscpy(tstr, L"<Failed to convert text>");
 		}
 		else

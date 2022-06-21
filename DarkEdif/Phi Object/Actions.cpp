@@ -166,7 +166,7 @@ void Extension::UpdateRAMUsageInfo()
 
 	auto memInfoOutputLines = split(memInfoStr, '\n');
 	std::map<std::string_view, std::int32_t> memInfoOutputHashToMB;
-	OutputDebugStringA("Contents of /proc/meminfo:");
+	OutputDebugStringA("Contents of /proc/meminfo:\n");
 
 	auto parseMBfromLine = [&](size_t lineIndex) {
 		if (lineIndex > memInfoOutputLines.size())
@@ -180,7 +180,7 @@ void Extension::UpdateRAMUsageInfo()
 		auto nonSpaceIndex = memInfoOutputLines[lineIndex].find_first_not_of(' ', colonIndex + 1);
 		if (nonSpaceIndex == std::string::npos)
 			return MakeError("Failed to find non-space index in meminfo line %zu \"%s\".", lineIndex, memInfoOutputLines[lineIndex].c_str()), -1;
-		
+
 		auto nextSpaceIndex = memInfoOutputLines[lineIndex].find_first_of(' ', nonSpaceIndex + 1);
 		if (nextSpaceIndex == std::string::npos)
 			return MakeError("Failed to find next index in meminfo line %zu \"%s\".", lineIndex, memInfoOutputLines[lineIndex].c_str()), -1;
@@ -192,7 +192,7 @@ void Extension::UpdateRAMUsageInfo()
 		std::int64_t kbInLine = strtoll(std::string(retString).c_str(), NULL, 10);
 		std::int32_t res = kbInLine <= 0 ? kbInLine : (std::int32_t)(kbInLine / 1024LL);
 		auto op = memInfoOutputHashToMB.insert(std::make_pair(std::string_view(memInfoOutputLines[lineIndex].data(), colonIndex), res));
-		LOGV("Added mem info line: \"%s\" = %d MB.", std::string(op.first->first).c_str(), res);
+		LOGV("Added mem info line: \"%s\" = %d MB.\n", std::string(op.first->first).c_str(), res);
 		return res;
 	};
 
@@ -210,7 +210,7 @@ void Extension::UpdateRAMUsageInfo()
 	virtualMemFreeMB = virtualMemTotalMB - memInfoOutputHashToMB["VmallocUsed"sv]; // VmallocUsed
 
 	// https://stackoverflow.com/questions/8133417/android-get-free-size-of-internal-external-memory
-	OutputDebugStringA("Result of df:");
+	OutputDebugStringA("Result of df:\n");
 	std::string dfOutputStr = exec("df -h");
 	auto dfOutputLines = split(dfOutputStr, '\n');
 	for (size_t i = 0; i < dfOutputLines.size(); i++)
@@ -242,7 +242,7 @@ bool Extension::Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __i
 	else // use account name
 	{
 		BuildTrusteeWithName(trustee, sidOrAcc.data()); // no idea why this is not const TCHAR * param
-		
+
 		// 256 recommended by https://stackoverflow.com/a/60289851
 		DWORD ignoredDomainSize = MAX_SID_SIZE;
 		TCHAR ignoredDomain[MAX_SID_SIZE] = {};
@@ -345,7 +345,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 	lastReadPerms.readObjectType = objectType;
 	lastReadPerms.itemPath = itemPathPtr;
 
-	// If you want to read the SACL, note you need to enable perms. See 
+	// If you want to read the SACL, note you need to enable perms. See
 	// https://docs.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-getsecurityinfo#:~:text=to%20read%20the%20sacl%20from
 	lastReadPerms.securityInfo = DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
 		(includeSystemACL ? SACL_SECURITY_INFORMATION : 0);
@@ -367,7 +367,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 
 	PSECURITY_DESCRIPTOR tempSecDesc;
 	DWORD d = GetNamedSecurityInfo(itemPathPtr, objectType, lastReadPerms.securityInfo,
-		&lastReadPerms.owner, &lastReadPerms.primaryGroup, &lastReadPerms.dacl, 
+		&lastReadPerms.owner, &lastReadPerms.primaryGroup, &lastReadPerms.dacl,
 		includeSystemACL ? &lastReadPerms.sacl : NULL, &tempSecDesc);
 	if (d != ERROR_SUCCESS)
 	{
@@ -394,13 +394,13 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 
 	std::string allowDenyBoth = TStringToANSI(allowDenyBothPtr);
 	MakeStringLower(allowDenyBoth);
-	
+
 	const bool includeAllowed = (allowDenyBoth == "allow"sv || allowDenyBoth == "both"sv);
 	const bool includeDenied = (allowDenyBoth == "deny"sv || allowDenyBoth == "both"sv);
 
 	if (!includeAllowed && !includeDenied)
 		return MakeError(R"(You specified an invalid ACE entry type "%s". Valid types are "allow", "deny", or "both".)", allowDenyBothPtr);
-	
+
 	if (lastReadPerms.itemPath.empty())
 		return MakeError("Last read system object permissions is invalid, can't iterate through the permissions.");
 
@@ -410,7 +410,7 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 
 	// GetExplicitEntriesFromAcl() ignores inherited ACE entries.
 	// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/msmq/ms700142(v=vs.85)#top
-	
+
 	ACL_SIZE_INFORMATION aclsizeinfo;
 	if (GetAclInformation(lastReadPerms.dacl, &aclsizeinfo, sizeof(aclsizeinfo), ACL_INFORMATION_CLASS::AclSizeInformation) == FALSE)
 	{
@@ -467,7 +467,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	// DACL canonical order:
 	// Explicit Deny - Explicit Allow - Inherited (Deny - Inherited Allow)
 	// https://referencesource.microsoft.com/#mscorlib/System/security/accesscontrol/acl.cs,85460059921e396e
-	
+
 	// Since we're adding, we don't need to sort per se, just calculate our priority, and find the first one that exceeds the priority.
 
 	std::tstring sidOrAcc(sidOrAccPtr);
@@ -487,7 +487,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	EXPLICIT_ACCESS access;
 	SecureZeroMemory(&access, sizeof(access));
 
-	// 
+	//
 	const std::map<const std::string_view, const ACCESS_MODE> accessModeList = {
 		{ "grant"sv, ACCESS_MODE::GRANT_ACCESS },
 		{ "deny"sv, ACCESS_MODE::DENY_ACCESS },
@@ -504,7 +504,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 
 	if (!Sub_BuildTrusteeAndAccessPerms(sidOrAcc, argPermList, &access.Trustee, &trusteePSID, &access.grfAccessPermissions))
 		return; // Sub will create error
-	
+
 	const std::map<const std::string_view, const ACCESS_MASK> inheritList = {
 		// Subfolders
 		{ "subcontainers"sv, SUB_CONTAINERS_ONLY_INHERIT },
@@ -517,7 +517,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 		// Not grandchildren
 		{ "nopropogation"sv, INHERIT_NO_PROPAGATE },
 	};
-	
+
 	if (argInheritList != "none"sv && argInheritList != "no inheritance"sv && !argInheritList.empty())
 	{
 		DWORD inheritMode = NO_INHERITANCE;
@@ -540,7 +540,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 		}
 		access.grfInheritance = inheritMode;
 	}
-		
+
 	// https://docs.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-buildexplicitaccesswithnamea
 	PACL newACL = nullptr;
 	DWORD res = SetEntriesInAcl(1UL, &access, lastReadPerms.dacl, &newACL);
@@ -573,7 +573,7 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	// CI: Container Inherit - folders inside inherit it
 	// IO: Inherit Only - doesn't apply to current file/folder
 	// NP: No Propogation - applies to subfolders, but not sub-subfolders, and further levels
-	// 
+	//
 	// Windows Security tab shows options:
 	// XX XX XX This folder only
 	// OI CI XX This folder, subfolders and files
@@ -582,8 +582,8 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	// OI CI IO Subfolders and files only
 	// XX CI IO Subfolders only
 	// OI XX IO Files only
-	// 
-	// 
+	//
+	//
 	// Note: SID such as "Users" is dependent on system language.
 	// See https://docs.microsoft.com/en-US/troubleshoot/windows-server/identity/security-identifiers-in-windows to convert.
 	// Also https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/81d92bba-d22b-4a8c-908a-554ab29148ab .
@@ -754,7 +754,7 @@ HANDLE GetHeaps(void * pointer, size_t expectedSize)
 	HANDLE ret = NULL;
 
 	//
-	// Retrieve handles to the process heaps and print them to stdout. 
+	// Retrieve handles to the process heaps and print them to stdout.
 	// Note that heap functions should be called only on the default heap of the process
 	// or on private heaps that your component creates by calling HeapCreate.
 	//
@@ -856,7 +856,7 @@ void Extension::AddBlankFramesToObject(int objectFV,
 	int numOfFrames, int insertIndexAt)
 {
 	::objectFV = objectFV;
-	OutputDebugStringA("Set FV for blank frames. Now waiting.");
+	OutputDebugStringA("Set FV for blank frames. Now waiting.\n");
 
 	RunObject * runObj = Runtime.RunObjPtrFromFixed(objectFV);
 	if (!runObj)
@@ -1043,7 +1043,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 		return MakeError("Failed to reallocate %u bytes for new frame.", oc->size + extraSizeNeeded);
 
 	if (oc2 != oc)
-		OutputDebugStringA("WARNING: re-allocation produced entirely new memory address.");
+		OutputDebugStringA("WARNING: re-allocation produced entirely new memory address.\n");
 #else
 	Objects_Common* oc2 = (Objects_Common *)HeapAlloc(heapOfRunObj, 0, oc->size + extraSizeNeeded);
 	if (oc2 == NULL)
@@ -1124,7 +1124,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	// TODO: Confirm animations earlier in list have a lower offset than later
 	// There's potential for a mixmatch
 
-	
+
 	for (size_t i = animNum + 1; i < animHead->AnimMax; i++)
 	{
 		if (animHead->OffsetToAnim[i] < 0)
@@ -1167,7 +1167,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	}
 
 	runObj->roHo.OiList->OIFlags |= OILFlags::TO_RELOAD;
-	
+
 
 	short numObj = runObj->roHo.OiList->Object;
 	while (numObj >= 0)
@@ -1211,7 +1211,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	{
 		DebugBreak();
 	}
-		 
+
 #if 0
 	std::stringstream str;
 	str << "Attempts complete.\n";
@@ -1222,7 +1222,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	std::fstream of("D:\\output.log", std::ios_base::out | std::ios_base::app);
 	of << "===== " << mode << str.str() << "=====\n";
 	of.close();
-#endif 
+#endif
 }
 
 Objects_Common* copy = NULL;
