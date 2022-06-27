@@ -1118,7 +1118,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
 #endif
-	LOGV("Condition ID %i start.\n", ID);
+	LOGV(_T("Condition ID %i start.\n"), ID);
 
 	if (::SDK->ConditionFunctions.size() < (unsigned int)ID) {
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("Missing condition ID %d in extension %s. This ID was not linked in Extension ctor with LinkCondition()."),
@@ -1136,7 +1136,7 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 	long Result = ActionOrCondition(Function, ID, ext, ::SDK->ConditionInfos[ID], params, true);
 
-	LOGV("Condition ID %i end.\n", ID);
+	LOGV(_T("Condition ID %i end.\n"), ID);
 	return Result;
 }
 
@@ -1165,7 +1165,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ConditionOrActionManager_iOS params(false, ext, act);
 #define actreturn /* void */
 #endif
-	LOGV("Action ID %i start.\n", ID);
+	LOGV(_T("Action ID %i start.\n"), ID);
 
 	if (::SDK->ActionFunctions.size() < (unsigned int)ID)
 	{
@@ -1182,7 +1182,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 
 	ActionOrCondition(Function, ID, ext, ::SDK->ActionInfos[ID], params, false);
 
-	LOGV("Action ID %i end.\n", ID);
+	LOGV(_T("Action ID %i end.\n"), ID);
 	return actreturn;
 #undef actreturn
 }
