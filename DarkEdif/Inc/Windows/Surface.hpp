@@ -233,14 +233,15 @@ enum class SurfaceDriver : int
 	// Backwards compatible to Windows 98 (last supported 9.0c, Dec 2006).
 	Direct3D9,
 
-	// Microsoft Direct3D v8
+	// Microsoft Direct3D v8, deprecated.
 	// The first version of Direct3D to take over DirectDraw, and take over 2D as well as 3D; the first version to
 	// not use WinGDI, and instead call to the kernel directly.
 	// Introduced in 2000, final release 2002. Backwards compatible to Windows 95 (last support v8.0a, 2001).
 	Direct3D8,
 
-	// TODO: What is Direct3D 11 registered as?
-	Direct3D11 = Direct3D8,
+	// Microsoft Direct3D v11, introduced 2009, and still maintained in 2022.
+	// Compatible with Vista+.
+	Direct3D11,
 
 	// Max valid number
 	Max

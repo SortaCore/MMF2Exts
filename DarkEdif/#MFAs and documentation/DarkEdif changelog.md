@@ -16,6 +16,7 @@ Changes until v14 release
 - Windows: fixed incompatibility with Fusion 2.0 if extension had alt values (caused crash on alt string C and later being set)
 - Updated DarkEdif pre-build tool to v1.0.0.2, fixed an infinite-loop bug caused by comments
 - Windows: fixed potential error on Fusion 2.0 and CF2.5 < build 293.9 if an expression generated an event (e.g. creating errors)
+- Windows: Fixed Direct3D 11 enum value in Surface
 
 
 Changes until v13 release
