@@ -81,3 +81,4 @@ int MessageBoxA(WindowHandleType hwnd, const TCHAR* caption, const TCHAR* text, 
 #define SuppressZeroArraySizeWarning /* no op */
 
 #include <unistd.h> // for readlink()
+#include <cmath> // for std::ceil and co

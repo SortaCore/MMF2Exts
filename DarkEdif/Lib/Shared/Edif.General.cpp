@@ -127,7 +127,6 @@ const TCHAR ** FusionAPI GetDependencies()
 	return Dependencies;
 }
 
-
 /// <summary> Called every time the extension is being created from nothing.
 ///			  Default property contents should be loaded from JSON. </summary>
 std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)

@@ -53,6 +53,9 @@
 	#define _vstprintf_s(a,b,c,d) vsprintf(a,c,d)
 
 	// Expects you to specify the 2nd parameter as size (std::size is preferred)
+	#define _vsntprintf_s(a,b,c,d,e) vsnprintf(a,(c == (size_t)-1 ? b : std::min(b,c)),d,e)
+
+	// Expects you to specify the 2nd parameter as size (std::size is preferred)
 	#define _stprintf_s(a,b,c,...) sprintf(a, c, __VA_ARGS__)
 
 	// Expects you to specify the 2nd parameter as size (std::size is preferred)

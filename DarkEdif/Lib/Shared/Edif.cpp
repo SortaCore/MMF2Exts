@@ -32,7 +32,6 @@ JavaVM * global_vm;
 
 // Checks Fusion runtime is compatible with your extension.
 // In Runtime, this expression should not be called and always returns false.
-static int isCompatibleResult = -1;
 bool IS_COMPATIBLE(mv * v)
 {
 #if RuntimeBuild
@@ -44,6 +43,7 @@ bool IS_COMPATIBLE(mv * v)
 	if (!v->GetVersion)
 		return false;
 
+	static int isCompatibleResult = -1;
 	if (isCompatibleResult == -1)
 	{
 		isCompatibleResult = -2;

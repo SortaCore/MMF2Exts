@@ -58,13 +58,13 @@ namespace Edif
 			PROPTYPE_FOLDER_END,		// Folder End
 			PROPTYPE_EDITBUTTON,		// Edit button, param1 = button text, or nullptr if Edit
 			PROPTYPE_EDIT_STRING,		// Edit box for strings, parameter = max length
-			PROPTYPE_EDIT_NUMBER,		// Edit box for numbers, parameters = min value, max value
+			PROPTYPE_EDIT_NUMBER,		// Edit box for numbers
 			PROPTYPE_COMBOBOX,			// Combo box, parameters = list of strings, options (sorted, etc)
 			PROPTYPE_SIZE,				// Size
 			PROPTYPE_COLOR,				// Color
 			PROPTYPE_LEFTCHECKBOX,		// Checkbox
-			PROPTYPE_SLIDEREDIT,		// Edit + Slider
-			PROPTYPE_SPINEDIT,			// Edit + Spin
+			PROPTYPE_SLIDEREDIT,		// Edit + Slider, parameters = min value, max value
+			PROPTYPE_SPINEDIT,			// Edit + Spin, parameters = min value, max value (min must be >= -32768, max <= 32767, and (max - min) <= 32767
 			PROPTYPE_DIRCTRL,			// Direction Selector
 			PROPTYPE_GROUP,				// Group
 			PROPTYPE_LISTBTN,			// !Internal, do not use
@@ -73,7 +73,7 @@ namespace Edif
 			PROPTYPE_CUSTOM,			// Custom property
 			PROPTYPE_PICTUREFILENAME,	// Edit box + browse image file button
 			PROPTYPE_COMBOBOXBTN,		// Combo box, parameters = list of strings, options (sorted, etc)
-			PROPTYPE_EDIT_FLOAT,		// Edit box for floating point numbers, parameters = min value, max value, options (signed, float, spin)
+			PROPTYPE_EDIT_FLOAT,		// Edit box for floating point numbers, parameters = min value, max value, options
 			PROPTYPE_EDIT_MULTILINE,	// Edit box for multiline texts, no parameter
 			PROPTYPE_IMAGELIST,			// Image list
 			PROPTYPE_ICONCOMBOBOX,		// Combo box with icons
