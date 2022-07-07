@@ -4144,7 +4144,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	// Users have access to registry of local machine, albeit read-only, so this should not fail.
 	regKey.resize(256);
 	DWORD keySize = regKey.size() * sizeof(wchar_t), type;
-	DWORD ret = RegQueryValueExW(mainKey, L"UCTag", NULL, &type, (LPBYTE)regKey.data(), &keySize);
+	ret = RegQueryValueExW(mainKey, L"UCTag", NULL, &type, (LPBYTE)regKey.data(), &keySize);
 	if (ret == ERROR_SUCCESS)
 	{
 		regKey.resize(keySize / sizeof(wchar_t), L'?');
@@ -4184,7 +4184,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 		// If this returns true, updateLock is still held.
 		const auto handleWSAError = [&](int lastWSAError) {
-			// Get lock; caller will release it at end of app
+			// Get lock; caller will release it at end of update check
 			while (updateLock.exchange(true))
 				;
 
@@ -4344,6 +4344,18 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 			// the c_str() ensures no null or beyond in string, by using a different constructor
 			fullPage = page.str().c_str();
+		}
+
+		// Socket was closed without any content or error - can happen if Darkwire is down from power cut
+		// We only allow ignoring errors of server being down and just report no update
+		if (fullPage.empty())
+		{
+			if (handleWSAError(WSAETIMEDOUT))
+			{
+				updateLog << "Page result was empty."sv;
+				updateLock = false;
+			}
+			return 1;
 		}
 
 		// In case there's an automatic error page with CRLF, we'll check for CRs after.
