@@ -50,8 +50,7 @@
 				"Info": "Saves the manifest original and modified by ext to this Windows folder path.",
 				"DefaultState": "",
 				"Type": "Editbox String",
-				"Checkbox": true,
-				"ChkDefault": false
+				"CheckboxDefaultState": false
 			}
 		]
 	}

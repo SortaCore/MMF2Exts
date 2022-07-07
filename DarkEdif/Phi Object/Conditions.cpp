@@ -22,7 +22,7 @@ const bool Extension::IsThisFrameASubApp() {
 
 const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const TCHAR * argPermListPtr) {
 	std::tstring accOrSID(accOrSIDPtr);
-	std::string argPermList(TStringToANSI(argPermListPtr));
+	std::string argPermList(DarkEdif::TStringToANSI(argPermListPtr));
 
 	if (lastReadPerms.itemPath.empty())
 		return MakeError("Last read system object permissions is invalid, can't check for effective permissions."), false;

@@ -307,7 +307,7 @@ void Extension::ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * i
 	lastReadPerms.itemPath.clear();
 
 #if _WIN32
-	std::string itemType(TStringToANSI(itemTypePtr));
+	std::string itemType(DarkEdif::TStringToANSI(itemTypePtr));
 	MakeStringLower(itemType);
 
 	if (includeSystemACLInt > 1 || includeSystemACLInt < 0)
@@ -392,7 +392,7 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 		return MakeError("Invalid \"include inherit-only\" parameter, must be 0 or 1, but you supplied %d.", includeInheritOnlyInt);
 	bool includeInheritOnly = includeInheritOnlyInt == 1;
 
-	std::string allowDenyBoth = TStringToANSI(allowDenyBothPtr);
+	std::string allowDenyBoth = DarkEdif::TStringToANSI(allowDenyBothPtr);
 	MakeStringLower(allowDenyBoth);
 
 	const bool includeAllowed = (allowDenyBoth == "allow"sv || allowDenyBoth == "both"sv);
@@ -471,7 +471,9 @@ void Extension::AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TC
 	// Since we're adding, we don't need to sort per se, just calculate our priority, and find the first one that exceeds the priority.
 
 	std::tstring sidOrAcc(sidOrAccPtr);
-	std::string allowDenyRevoke(TStringToANSI(allowDenyRevokePtr)), argPermList(TStringToANSI(permListPtr)), argInheritList(TStringToANSI(inheritListPtr));
+	std::string allowDenyRevoke(DarkEdif::TStringToANSI(allowDenyRevokePtr)),
+		argPermList(DarkEdif::TStringToANSI(permListPtr)),
+		argInheritList(DarkEdif::TStringToANSI(inheritListPtr));
 
 	StripSpaces(allowDenyRevoke);
 	MakeStringLower(allowDenyRevoke);

@@ -5,7 +5,7 @@
 void Extension::Output(int intensity, int line, const TCHAR * textP)
 {
 	// Output (OutputNow will acquire lock)
-	OutputNow(intensity, line, TStringToUTF8(std::tstring(textP)).c_str());
+	OutputNow(intensity, line, DarkEdif::TStringToUTF8(textP).c_str());
 }
 
 
@@ -85,7 +85,7 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 			<< _T("Original MFA path: \"") << rhPtr->App->editorFileName << _T("\"\r\n")
 			<< _T("File first opened from frame #") << rhPtr->App->nCurrentFrame
 			<< _T("(") << rhPtr->Frame->name << _T(")\r\n");
-		std::string str2 = TStringToUTF8(str.str());
+		std::string str2 = DarkEdif::TStringToUTF8(str.str());
 		fputs(str2.c_str(), data->fileHandle);
 
 		// Close lock
@@ -149,7 +149,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 		time(&data->rawtime);
 		data->timeinfo = localtime(&data->rawtime);
 		_tcsftime(data->realTime, std::size(data->realTime), data->timeFormat, data->timeinfo);
-		std::string realTimeU8 = TStringToUTF8(data->realTime);
+		std::string realTimeU8 = DarkEdif::TStringToUTF8(data->realTime);
 
 		// Output
 		if (data->fileHandle)
@@ -159,9 +159,9 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 		if (data->consoleEnabled)
 		{
 			SetConsoleTextAttribute(data->consoleOut, 0x0A);
-			wprintf_s(L"%i\t%i\t%s\t", intensity, line, TStringToWide(data->realTime).c_str());
+			wprintf_s(L"%i\t%i\t%s\t", intensity, line, DarkEdif::TStringToWide(data->realTime).c_str());
 			SetConsoleTextAttribute(data->consoleOut, 0x0B);
-			wprintf_s(L"%s\r\n", UTF8ToWide(textToOutputU8).c_str());
+			wprintf_s(L"%s\r\n", DarkEdif::UTF8ToWide(textToOutputU8).c_str());
 			SetConsoleTextAttribute(data->consoleOut, 0x07);
 		}
 	}
@@ -176,7 +176,7 @@ void Extension::OutputNow(int intensity, int line, std::string textToOutputU8)
 			SetConsoleTextAttribute(data->consoleOut, 0x0A);
 			wprintf_s(L"%i\t%i\t", intensity, line);
 			SetConsoleTextAttribute(data->consoleOut, 0x0B);
-			wprintf_s(L"%s\r\n", UTF8ToWide(textToOutputU8).c_str());
+			wprintf_s(L"%s\r\n", DarkEdif::UTF8ToWide(textToOutputU8).c_str());
 			SetConsoleTextAttribute(data->consoleOut, 0x07);
 		}
 	}

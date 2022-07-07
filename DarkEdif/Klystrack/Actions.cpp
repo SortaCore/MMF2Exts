@@ -31,7 +31,7 @@ void Extension::LoadSongFromFile(const TCHAR * songName, const TCHAR * filePath)
 	// Good to go
 	KSong * newSong = nullptr;
 	try {
-		newSong = KSND_LoadSong(curPlayer->player, TStringToUTF8(filePath).c_str());
+		newSong = KSND_LoadSong(curPlayer->player, DarkEdif::TStringToUTF8(filePath).c_str());
 	}
 	catch (...)
 	{

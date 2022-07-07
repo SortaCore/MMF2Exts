@@ -47,7 +47,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			}
 			else // Minidump write successful
 			{
-				str << "Minidump created at path [" << TStringToUTF8(GlobalExt->data->miniDumpPath) << "].";
+				str << "Minidump created at path [" << DarkEdif::TStringToUTF8(GlobalExt->data->miniDumpPath) << "].";
 				GlobalExt->OutputNow(5, -1, str.str().c_str());
 				str.str("");
 			}
@@ -83,7 +83,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const wchar_t *)pExceptionPtrs->ExceptionRecord->ExceptionAddress, &moduleHandle) &&
 				GetModuleFileNameW(moduleHandle, moduleName, sizeof(moduleName)) > 0)
 			{
-				std::string utf8Ver = WideToUTF8(wcsrchr(moduleName, L'\\') + 1);
+				std::string utf8Ver = DarkEdif::WideToUTF8(wcsrchr(moduleName, L'\\') + 1);
 				str << utf8Ver << " ";
 			}
 			else
@@ -192,7 +192,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 	{
 		if (GlobalExt->data->doMsgBoxIfPathNotSet)
 			DarkEdif::MsgBox::Custom(MB_ICONERROR | MB_TOPMOST | MB_TASKMODAL,
-				_T("Crash caught"), _T("%s"), UTF8ToTString(fullResult).c_str());
+				_T("Crash caught"), _T("%s"), DarkEdif::UTF8ToTString(fullResult).c_str());
 	}
 	else
 		GlobalExt->OutputNow(5, -2, fullResult);

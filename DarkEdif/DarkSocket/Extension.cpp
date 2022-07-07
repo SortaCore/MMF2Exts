@@ -135,7 +135,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 	// This uses the Bluewing pattern
 	if (isGlobal)
 	{
-		const std::tstring id = edPtr->GetPropertyStr("GlobalID") + _T("DarkSocket"s);
+		const std::tstring id = edPtr->Props.GetPropertyStr("GlobalID") + _T("DarkSocket"s);
 		void * globalVoidPtr = Runtime.ReadGlobal(id.c_str());
 		if (!globalVoidPtr)
 		{

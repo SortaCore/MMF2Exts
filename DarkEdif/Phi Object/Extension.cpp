@@ -165,7 +165,7 @@ void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)
 	va_list v;
 	TCHAR buffer[4096], prefix[64];
 
-	std::tstring tcharFormat = ANSIToTString(ansiFormat);
+	std::tstring tcharFormat = DarkEdif::ANSIToTString(ansiFormat);
 
 	va_start(v, ansiFormat);
 	try

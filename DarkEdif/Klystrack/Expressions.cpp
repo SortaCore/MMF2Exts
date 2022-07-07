@@ -45,7 +45,7 @@ const TCHAR * Extension::GetSongTitle(const TCHAR * songName)
 		return Runtime.CopyString(_T(""));
 	}
 
-	return Runtime.CopyString(UTF8ToTString((**song).songInfo.song_title).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString((**song).songInfo.song_title).c_str());
 }
 int Extension::GetSongNumInstruments(const TCHAR * songName)
 {
@@ -97,5 +97,5 @@ const TCHAR * Extension::GetSongInstrumentName(const TCHAR * songName, int instr
 		CreateError(_T("GetSongInstrumentName: Instrument index %i is beyond valid range 0 to %i."), instrumentIndex, (**song).songInfo.n_instruments - 1);
 		return Runtime.CopyString(_T(""));
 	}
-	return Runtime.CopyString(UTF8ToTString((**song).songInfo.instrument_name[instrumentIndex]).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString((**song).songInfo.instrument_name[instrumentIndex]).c_str());
 }

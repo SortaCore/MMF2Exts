@@ -46,15 +46,15 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 
 	// Could use AttachDebugger(), but if the debugger isn't one of the defaults, it could close the app,
 	// instead of opening a Just-In-Time debugger-choosing dialog
-	if (edPtr->IsPropChecked(4))
+	if (edPtr->Props.IsPropChecked(4))
 		DarkEdif::MsgBox::Info(_T("Pausing for debugger"), _T("Pause for debugger property is enabled; attach your debugger now, then press OK."));
 
 	// Initialise from edittime
-	SetOutputOnOff(edPtr->IsPropChecked(0));
-	data->doMsgBoxIfPathNotSet = edPtr->IsPropChecked(1);
-	SetConsoleOnOff(edPtr->IsPropChecked(3));
+	SetOutputOnOff(edPtr->Props.IsPropChecked(0));
+	data->doMsgBoxIfPathNotSet = edPtr->Props.IsPropChecked(1);
+	SetConsoleOnOff(edPtr->Props.IsPropChecked(3));
 
-	std::tstring outputFile = edPtr->GetPropertyStr(2);
+	std::tstring outputFile = edPtr->Props.GetPropertyStr(2);
 	if (!outputFile.empty()) // if not blank
 		SetOutputFile(outputFile.c_str(), 0);
 }

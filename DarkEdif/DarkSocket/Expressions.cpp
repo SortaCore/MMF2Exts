@@ -70,7 +70,7 @@ int Extension::DEPRECATED_GetSocketIDForLastEvent()
 }
 int Extension::GetPortFromType(const TCHAR * typeStr)
 {
-	const struct servent * const service = getservbyname(TStringToUTF8(typeStr).c_str(), NULL);
+	const struct servent * const service = getservbyname(DarkEdif::TStringToUTF8(typeStr).c_str(), NULL);
 	if (service == nullptr)
 	{
 		globals->CreateError(-1, _T("Couldn't find service \"%s\" in /etc/services file."), typeStr);
@@ -231,7 +231,7 @@ int Extension::PacketBeingBuilt_ICMPChecksum(int readFromIndex, int sizeToChecks
 const TCHAR * Extension::PendingData_GetString(const TCHAR * encodingParam, int readFromIndex, int sizeOfStringInBytesOrMinusOne)
 {
 	// note PendingData_FindIndexOfChar() can be used to find the sizeOfStringInBytes
-	const std::string encoding = TStringToUTF8(encodingParam);
+	const std::string encoding = DarkEdif::TStringToUTF8(encodingParam);
 	size_t sizeToUse;
 	int maxOutAt = (int)curEvent->source->pendingDataToRead.size() - readFromIndex;
 

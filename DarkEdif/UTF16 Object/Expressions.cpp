@@ -5,13 +5,13 @@
 // convert UTF-8 string to wstring
 std::wstring utf8_to_wstring(const std::string& str)
 {
-	return UTF8ToWide(str);
+	return DarkEdif::UTF8ToWide(str);
 }
 
 // convert wstring to UTF-8 string
 std::string wstring_to_utf8(const std::wstring& str)
 {
-	return WideToUTF8(str);
+	return DarkEdif::WideToUTF8(str);
 }
 
 

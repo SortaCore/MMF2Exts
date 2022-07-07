@@ -66,7 +66,7 @@ bool Thread::HandleSockOpReturn(const char * func, int& sockOpRet, bool ifZero)
 	sockOpRet = err;
 #endif
 
-	globals->CreateError(fusionSocketID, _T("Error running %s; got error %d: %s."), UTF8ToTString(func).c_str(), err, errMsg);
+	globals->CreateError(fusionSocketID, _T("Error running %s; got error %d: %s."), DarkEdif::UTF8ToTString(func).c_str(), err, errMsg);
 	return false;
 }
 SocketSource::SocketSource(std::shared_ptr<Thread> thread, sockaddr_storage& dest, int sockAddrSize)

@@ -10,9 +10,8 @@ public:
 
 	GlobalData * data;
 	static const int MinimumBuild = 256;
-	static const int Version = 16;
-	// b16: SDK update to v11, first with update checker
-	// b15: Made the error message readable to a native debugger
+	static const int Version = 15;
+	// b15: SDK update to v14, update checker + smart properties, and made the error message readable to a native debugger
 	// b14: Added more details to crash information
 	// b13: Fixed message box about properties failing to convert
 	// b12: Fixed use of tcsdup in expressions, upgrade to SDK v5

@@ -7,7 +7,7 @@ class Extension
 {
 public:
 
-	#define MsgBox(text) ::DarkEdif::MsgBox::Info(_T("Debug info"), _T("%s"), UTF8ToTString(text))
+	#define MsgBox(text) ::DarkEdif::MsgBox::Info(_T("Debug info"), _T("%s"), DarkEdif::UTF8ToTString(text))
 	#define MakeDelim() const char delim [] = "|" // Used for delimiters in tokenizing
 	#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
 
@@ -17,7 +17,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 252;
-	static const int Version = 4;
+	static const int Version = 5;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;

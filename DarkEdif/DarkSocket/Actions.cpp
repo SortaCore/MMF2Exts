@@ -34,7 +34,7 @@ void Extension::ClientInitialize_Basic(const TCHAR * hostnameParam, int port, co
 		return globals->CreateError(-1, _T("Basic client initialize error: port must be greater than 0 and less than 65535; you passed %d."), _T(__FUNCTION__), port);
 
 	// This is the basic action, so limit it to 3 protocols
-	std::string protoASCIIUpper = TStringToANSI(protocol);
+	std::string protoASCIIUpper = DarkEdif::TStringToANSI(protocol);
 	std::transform(protoASCIIUpper.begin(), protoASCIIUpper.end(), protoASCIIUpper.begin(),
 		[](unsigned char c) { return std::toupper(c); });
 
@@ -96,9 +96,9 @@ void Extension::ClientInitialize_Advanced(const TCHAR * hostnameParam, int port,
 		return globals->CreateError(-1, _T("Hostname must not be blank."));
 
 	// Move text to a number from a macro
-	int Protocol2 = GlobalInfo::ProtocolTypeTextToNum(TStringToANSI(Protocol));
-	int AddressFamily2 = GlobalInfo::AddressFamilyTextToNum(TStringToANSI(AddressFamily));
-	int SocketType2 = GlobalInfo::SocketTypeTextToNum(TStringToANSI(SocketType));
+	int Protocol2 = GlobalInfo::ProtocolTypeTextToNum(DarkEdif::TStringToANSI(Protocol));
+	int AddressFamily2 = GlobalInfo::AddressFamilyTextToNum(DarkEdif::TStringToANSI(AddressFamily));
+	int SocketType2 = GlobalInfo::SocketTypeTextToNum(DarkEdif::TStringToANSI(SocketType));
 	// If error'd out report it
 	if (Protocol2 == -1)
 		return globals->CreateError(-1, _T("Protocol unrecognised. Use the help file to see the available protocols."));
@@ -156,7 +156,7 @@ void Extension::DEPRECATED_ClientSend(int socketID, const TCHAR * packet)
 }
 void Extension::ClientSend(int socketID, const TCHAR * packet, const TCHAR * encodingParam, int flags)
 {
-	const std::string encoding(TStringToUTF8(encodingParam));
+	const std::string encoding(DarkEdif::TStringToUTF8(encodingParam));
 
 	auto sock = globals->GetSocket("Client send action", SocketType::Client, socketID);
 	if (!sock)
@@ -234,7 +234,7 @@ void Extension::ServerInitialize_Basic(const TCHAR * protocol, int port)
 		return globals->CreateError(-1, _T("Basic server initialize error: Port must be greater than 0 and less than 65535, you passed %d."), port);
 
 	// This is the basic action, so limit it to 3 protocols
-	std::string protoASCIIUpper = TStringToANSI(protocol);
+	std::string protoASCIIUpper = DarkEdif::TStringToANSI(protocol);
 	std::transform(protoASCIIUpper.begin(), protoASCIIUpper.end(), protoASCIIUpper.begin(),
 		[](unsigned char c) { return std::toupper(c); });
 
@@ -270,9 +270,9 @@ void Extension::ServerInitialize_Advanced(const TCHAR * protocol, const TCHAR * 
 		return globals->CreateError(-1, _T("Advanced server initialize error: Port must be greater than 0 and less than 65535, you passed %d."), port);
 
 	// Move text to a number from a macro
-	int protocolNum = GlobalInfo::ProtocolTypeTextToNum(TStringToANSI(protocol));
-	int addressFamilyNum = GlobalInfo::AddressFamilyTextToNum(TStringToANSI(addressFamily));
-	int socketTypeNum = GlobalInfo::SocketTypeTextToNum(TStringToANSI(socketType));
+	int protocolNum = GlobalInfo::ProtocolTypeTextToNum(DarkEdif::TStringToANSI(protocol));
+	int addressFamilyNum = GlobalInfo::AddressFamilyTextToNum(DarkEdif::TStringToANSI(addressFamily));
+	int socketTypeNum = GlobalInfo::SocketTypeTextToNum(DarkEdif::TStringToANSI(socketType));
 	in6_addr InAddr2 = {}; // all zeros is IN6ADDR_INIT or INADDR_ANY, accepts all incoming addresses
 
 	// If error'd out report it.
@@ -282,7 +282,7 @@ void Extension::ServerInitialize_Advanced(const TCHAR * protocol, const TCHAR * 
 		return globals->CreateError(-1, _T("Address family \"%s\" unrecognised. Use the help file to see the available families."), addressFamily);
 	if (socketTypeNum == -1)
 		return globals->CreateError(-1, _T("Socket type \"%s\" unrecognised. Use the help file to see the available socket types."), socketType);
-	if (!GlobalInfo::InAddrTextToStruct(TStringToANSI(InAddr), &InAddr2))
+	if (!GlobalInfo::InAddrTextToStruct(DarkEdif::TStringToANSI(InAddr), &InAddr2))
 		return globals->CreateError(-1, _T("InAddr type \"%s\" unrecognised. Use the help file to see the available InAddr types."), InAddr);
 
 	std::unique_ptr<StructPassThru> threadParams = std::make_unique<StructPassThru>();
@@ -350,7 +350,7 @@ void Extension::DEPRECATED_ServerSend(int socketID, const TCHAR * packet, const 
 }
 void Extension::ServerSend(int socketID, int peerSocketID, const TCHAR * packet, const TCHAR * encodingParam,  int flags)
 {
-	const std::string encoding(TStringToUTF8(encodingParam));
+	const std::string encoding(DarkEdif::TStringToUTF8(encodingParam));
 
 	auto sock = globals->GetSocketSource("Server send action", socketID, peerSocketID);
 	if (!sock)
@@ -608,7 +608,7 @@ void Extension::PacketBeingBuilt_SetInt64(const TCHAR* int64AsText, int packetBe
 		return globals->CreateError(-1, _T("Can't set int64: index %i - %i is beyond the being built's index range 0 to %zu. Resize the packet being built first."),
 			packetBeingBuiltOffset, packetBeingBuiltOffset + 1, packetBeingBuilt.size() - 1U);
 
-	std::string int64AsANSIText = TStringToANSI(int64AsText);
+	std::string int64AsANSIText = DarkEdif::TStringToANSI(int64AsText);
 	if (int64AsText[0] == '\0')
 		return globals->CreateError(-1, _T("Can't set int64: \"\" is not an int64."));
 	std::int64_t conv;
@@ -649,7 +649,7 @@ void Extension::PacketBeingBuilt_SetString(const TCHAR * text, const TCHAR * enc
 		return globals->CreateError(-1, _T("Can't set text inside packet being built: \"include null\" parameter is %i, can only be 0 or 1."), includeNull);
 
 	std::string outputBytes;
-	if (!Internal_SetTextWithEncoding(TStringToANSI(encoding), text, outputBytes, -1))
+	if (!Internal_SetTextWithEncoding(DarkEdif::TStringToANSI(encoding), text, outputBytes, -1))
 		return; // assume it reported an error
 
 	if (packetBeingBuiltOffset < 0 || (size_t)packetBeingBuiltOffset > packetBeingBuilt.size() - outputBytes.size())

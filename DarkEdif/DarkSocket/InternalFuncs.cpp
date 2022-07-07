@@ -221,7 +221,7 @@ std::shared_ptr<Thread> GlobalInfo::GetSocket(const char * func, SocketType sock
 	if (socketID < 0 || (size_t)socketID >= socketThreadList.size())
 	{
 		return CreateError(socketID, _T("%s: Couldn't get socket ID %d; socket ID is outside valid range (0 to %zu)."),
-			UTF8ToTString(func).c_str(), socketID, socketThreadList.size() - 1U), nullptr;
+			DarkEdif::UTF8ToTString(func).c_str(), socketID, socketThreadList.size() - 1U), nullptr;
 	}
 
 	// It's safe to read from Extension without locking. Only main thread will write to Ext directly.
@@ -231,17 +231,17 @@ std::shared_ptr<Thread> GlobalInfo::GetSocket(const char * func, SocketType sock
 	if (thdIt == socketThreadList.cend())
 	{
 		return CreateError(socketID, _T("%s: Couldn't get socket ID %d; socket ID is not valid."),
-			UTF8ToTString(func).c_str(), socketID), nullptr;
+			DarkEdif::UTF8ToTString(func).c_str(), socketID), nullptr;
 	}
 	if (socketType == SocketType::Client && (*thdIt)->isServer)
 	{
 		return CreateError(socketID, _T("%s: Socket ID %d is a server, not a client."),
-			UTF8ToTString(func).c_str(), socketID), nullptr;
+			DarkEdif::UTF8ToTString(func).c_str(), socketID), nullptr;
 	}
 	else if (socketType == SocketType::Server && !(*thdIt)->isServer)
 	{
 		return CreateError(socketID, _T("%s: Socket ID %d is a client, not a server."),
-			UTF8ToTString(func).c_str(), socketID), nullptr;
+			DarkEdif::UTF8ToTString(func).c_str(), socketID), nullptr;
 	}
 
 	return *thdIt;
@@ -526,7 +526,7 @@ bool Extension::Internal_GetTextWithEncoding(const std::string_view encoding, co
 		}
 #if _WIN32
 		bool allValidChars;
-		outputString = WideToTString(std::wstring_view((const wchar_t *)inputBytes.data(), inputBytes.size() / sizeof(wchar_t)), &allValidChars);
+		outputString = DarkEdif::WideToTString(std::wstring_view((const wchar_t *)inputBytes.data(), inputBytes.size() / sizeof(wchar_t)), &allValidChars);
 		if (!allValidChars)
 		{
 			globals->CreateError(socketID, _T("Couldn't fully convert incoming data \"%.*s...\" to local codepage. Are you using a non-Unicode runtime, or is the text not encoded properly?"),
@@ -539,7 +539,7 @@ bool Extension::Internal_GetTextWithEncoding(const std::string_view encoding, co
 	}
 	if (encoding == "UTF-8"sv)
 	{
-		outputString = UTF8ToTString(inputBytes, &allValidChars);
+		outputString = DarkEdif::UTF8ToTString(inputBytes, &allValidChars);
 		if (!allValidChars)
 		{
 			globals->CreateError(socketID, _T("Couldn't convert incoming data \"%.*s...\" to local codepage. Are you using a non-Unicode runtime, or is the text not encoded properly?"),
@@ -555,13 +555,13 @@ bool Extension::Internal_GetTextWithEncoding(const std::string_view encoding, co
 	if (encULong == -1 && encoding != "0"sv)
 	{
 		return globals->CreateError(socketID, _T("Couldn't understand encoding \"%s\". Maybe use \"UTF-8\"?"),
-			ANSIToTString(encoding).c_str()), false;
+			DarkEdif::ANSIToTString(encoding).c_str()), false;
 	}
 
 	// Delegate!
 	if (encULong == 65001 /* CP_UTF8 */)
 	{
-		globals->ReportInfo(socketID, _T("Use of \"%s\" as an encoding for UTF-8 is unnecessary; just use \"UTF-8\"."), ANSIToTString(encoding).c_str());
+		globals->ReportInfo(socketID, _T("Use of \"%s\" as an encoding for UTF-8 is unnecessary; just use \"UTF-8\"."), DarkEdif::ANSIToTString(encoding).c_str());
 		return Internal_GetTextWithEncoding("UTF-8"sv, inputBytes, outputString, socketID);
 	}
 
@@ -584,7 +584,7 @@ bool Extension::Internal_GetTextWithEncoding(const std::string_view encoding, co
 		outputString.clear();
 		return globals->CreateError(socketID, _T("Failed to convert from codepage %u to " OUTPUTCHAR ", input string is not encoded correctly."), encULong), false;
 	}
-	outputString = WideToTString(temp, &allValidChars);
+	outputString = DarkEdif::WideToTString(temp, &allValidChars);
 	if (!allValidChars)
 	{
 		std::tstring cpName;
@@ -627,7 +627,7 @@ bool Extension::Internal_SetTextWithEncoding(const std::string_view encoding, co
 	else if (encoding == "ANSI"sv)
 	{
 		bool allValidChars;
-		outputBytes = TStringToANSI(inputText, &allValidChars);
+		outputBytes = DarkEdif::TStringToANSI(inputText, &allValidChars);
 
 		std::tstring cpName;
 #if _WIN32
@@ -645,13 +645,13 @@ bool Extension::Internal_SetTextWithEncoding(const std::string_view encoding, co
 	}
 	if (encoding == "UTF-16"sv)
 	{
-		const std::wstring msgWide = TStringToWide(inputText);
+		const std::wstring msgWide = DarkEdif::TStringToWide(inputText);
 		outputBytes.assign((const char *)msgWide.c_str(), msgWide.size() * sizeof(wchar_t));
 		return true;
 	}
 	if (encoding == "UTF-8"sv)
 	{
-		outputBytes = TStringToUTF8(inputText);
+		outputBytes = DarkEdif::TStringToUTF8(inputText);
 		return true;
 	}
 
@@ -662,17 +662,17 @@ bool Extension::Internal_SetTextWithEncoding(const std::string_view encoding, co
 	if (encULong == 0 && encoding != "0"sv)
 	{
 		return globals->CreateError(socketID, _T("Couldn't understand encoding \"%s\". Maybe use \"UTF-8\"?"),
-			ANSIToTString(encoding).c_str()), false;
+			DarkEdif::ANSIToTString(encoding).c_str()), false;
 	}
 	// Delegate!
 	if (encULong == CP_UTF8)
 	{
-		globals->ReportInfo(socketID, _T("Use of \"%s\" as an encoding for UTF-8 is unnecessary; just use \"UTF-8\"."), ANSIToTString(encoding).c_str());
+		globals->ReportInfo(socketID, _T("Use of \"%s\" as an encoding for UTF-8 is unnecessary; just use \"UTF-8\"."), DarkEdif::ANSIToTString(encoding).c_str());
 		return Internal_SetTextWithEncoding("UTF-8"sv, inputText, outputBytes, socketID);
 	}
 
 #if _WIN32
-	std::wstring input = TStringToWide(inputText);
+	std::wstring input = DarkEdif::TStringToWide(inputText);
 	BOOL someFailed = FALSE;
 
 	// First call WideCharToMultiByte() to get output size to reserve
@@ -757,7 +757,7 @@ std::tstring Extension::Internal_GetIPFromSockaddr(sockaddr_storage* sockadd, si
 						assert(std::size(output) >= i - 8 && "IP output buffer too small");
 						memmove(output, &buffer[8], i - 8);
 						strcpy(&output[i - 8], &buffer[i + 1]); // append port
-						return UTF8ToTString(output);
+						return DarkEdif::UTF8ToTString(output);
 					}
 				}
 			}
@@ -765,12 +765,12 @@ std::tstring Extension::Internal_GetIPFromSockaddr(sockaddr_storage* sockadd, si
 			else if (strncmp(buffer, "[::1]", 5) == 0)
 			{
 				sprintf_s(output, std::size(output), "127.0.0.1:%s", &buffer[6]);
-				return UTF8ToTString(output);
+				return DarkEdif::UTF8ToTString(output);
 			}
 		}
 	}
 	else
 		return _T("Incompatible address family"s);
 
-	return UTF8ToTString(buffer);
+	return DarkEdif::UTF8ToTString(buffer);
 }

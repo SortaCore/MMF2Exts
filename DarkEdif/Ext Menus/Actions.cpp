@@ -184,7 +184,7 @@ void Extension::SetMFXFile(const TCHAR * filename_)
 	{
 		funcs[i] = (funcFormat)GetProcAddress(hGetProcIDDLL, funcNames[i]);
 		if (!funcs[i]) {
-			error << _T("Could not locate function ") << ANSIToTString(funcNames[i]);
+			error << _T("Could not locate function ") << DarkEdif::ANSIToTString(funcNames[i]);
 			return;
 		}
 	}
@@ -192,7 +192,7 @@ void Extension::SetMFXFile(const TCHAR * filename_)
 	{
 		menus[i] = funcs[i](SDK->mV, nullptr, nullptr);
 		if (!menus[i]) {
-			error << ANSIToTString(funcNames[i]) << " returned nullptr";
+			error << DarkEdif::ANSIToTString(funcNames[i]) << _T(" returned nullptr");
 			return;
 		}
 	}

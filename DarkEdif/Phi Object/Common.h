@@ -4,12 +4,6 @@
    #define MMFEXT       // MMF2, MMF2 Dev
 // #define PROEXT       // MMF2 Dev only
 
-#ifdef RUN_ONLY
-	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
-#else
-	const extern struct _json_value & CurrentLanguage();
-	#define CurLang CurrentLanguage()
-#endif
 #define JSON_COMMENT_MACRO Extension::Version
 
 // Enable DarkEdif's utility
@@ -21,17 +15,12 @@
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
+	NO_DEFAULT_CTORS(EDITDATA);
 	// Header - required
 	extHeader			eHeader;
-	
-	// Keep as last or risk overwriting by functions accessing this address
-	size_t DarkEdif_Prop_Size;
-	char DarkEdif_Props[];
 
-	// DarkEdif functions, use within Extension ctor.
-	bool IsPropChecked(int propID);
-	std::tstring GetPropertyStr(const char * propName);
-	std::tstring GetPropertyStr(int propID);
+	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	DarkEdif::Properties Props;
 };
 
 class Extension;
