@@ -485,7 +485,7 @@ namespace DarkEdif {
 #endif // EditorBuild
 
 		// Turn on for lots of logging.
-		static constexpr bool DebugProperties = true;
+		static constexpr bool DebugProperties = false;
 
 		struct Data;
 

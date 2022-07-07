@@ -17,7 +17,7 @@ Changes until v15 release
 
 Changes until v14 release
 ----
-*v14 released on 7th July 2022, commit (latest) *
+*v14 released on 7th July 2022, commit [90c1990](https://github.com/SortaCore/MMF2Exts/commit/90c199053b9b9e99769522cdf5ab0182a369aab1)   *
 - All platforms: Added smart property system; properties can now be altered between extension versions easily
 - Edittime: Fixed update checker reporting to user when server sends no content. This is caused by server being down.  
 	Server down is by default considered a "no update" scenario. This behaviour can be overriden by DarkEdif.ini setting.  
