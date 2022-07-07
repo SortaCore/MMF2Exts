@@ -10,9 +10,14 @@ If you're editing this file, note that the use of a Markdown syntax, two spaces 
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
 
 
+Changes until v15 release
+----
+*v15 not released yet*
+
+
 Changes until v14 release
 ----
-*v14 not released yet*
+*v14 released on 7th July 2022, commit (latest) *
 - All platforms: Added smart property system; properties can now be altered between extension versions easily
 - Edittime: Fixed update checker reporting to user when server sends no content. This is caused by server being down.  
 	Server down is by default considered a "no update" scenario. This behaviour can be overriden by DarkEdif.ini setting.  

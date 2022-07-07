@@ -1428,15 +1428,17 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 	{
 		this->convState = &convState;
 
-		// Properties as expected
+		// Are JSON Properties item an array?
 		if (convState.jsonProps.type != json_array || convState.jsonProps.u.array.length > 1000)
 		{
-			if (convState.jsonProps.type != json_none)
+			// There is no Properties item in the JSON file. Consider the JSON valid, but with no properties.
+			if (convState.jsonProps.type == json_none)
+				DebugProp_OutputString(_T("JSONPropertyReader: No Properties item. Going to initialize with 0 properties.\n"));
+			else // Properties is not an array - nani?
 			{
-				MsgBox::Error(_T("Property error"), _T("JSONPropertyReader: properties are broken.\n"));
-				BreakIfDebuggerAttached();
+				MsgBox::Error(_T("Property error"), _T("JSONPropertyReader: Properties is the wrong type, expected an array.\n"));
+				return Abort(convRet);
 			}
-			return Abort(convRet);
 		}
 
 		DebugProp_OutputString(_T("JSONPropertyReader: Initialised OK. %u properties.\n"),
@@ -1874,8 +1876,10 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			// EDITDATA makes no sense
 			if (readers.empty())
 			{
-				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed. Your property data is corrupt beyond "
-					"recovery or reset. Please re-add the object to frame."));
+				if (DarkEdif::RunMode == MFXRunMode::SplashScreen)
+					MsgBox::Error(_T("Property reading error"), _T("Setting up %s object properties from JSON failed."), _T("" PROJECT_NAME));
+				else
+					MsgBox::Error(_T("Property conversion error"), _T("All %s property readers have failed. Your property data is corrupt beyond recovery or reset. Please re-add the object to frame."), _T("" PROJECT_NAME));
 				return NULL;
 			}
 		}
@@ -1895,8 +1899,6 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			DLL::ConverterReturnAccessor& retStateAdmin = *(DLL::ConverterReturnAccessor *)&retState;
 			if (readers.empty())
 			{
-				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed. Your property data is corrupt beyond "
-					"recovery or reset. Please re-add the object to frame."));
 				return NULL;
 			}
 
