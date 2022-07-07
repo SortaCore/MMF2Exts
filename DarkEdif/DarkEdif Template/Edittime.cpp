@@ -36,7 +36,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		return -1;
 
 	Edif::Init(mV, edPtr);
-	return 0;
+	return DarkEdif::DLL::DLL_CreateObject(mV, loPtr, edPtr);
 }
 
 // Displays the object under the frame editor
@@ -114,154 +114,43 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 #pragma DllExportHint
-	mvInsertProps(mV, edPtr, SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
-
-	if (edPtr->DarkEdif_Prop_Size == 0)
-	{
-		InitializePropertiesFromJSON(mV, edPtr);
-		mvInvalidateObject(mV, edPtr);
-	}
-
-	// OK
-	return TRUE;
+	return DarkEdif::DLL::DLL_GetProperties(mV, edPtr, bMasterItem);
 }
 
 // Called when the properties are removed from the property window.
 void FusionAPI ReleaseProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 #pragma DllExportHint
+	return DarkEdif::DLL::DLL_ReleaseProperties(mV, edPtr, bMasterItem);
 }
 
 // Returns the value of properties that have a value.
 // Note: see GetPropCheck for checkbox properties
-Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
+void * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return NULL;
-
-	return GetProperty(edPtr, PropID);
+	return DarkEdif::DLL::DLL_GetPropValue(mV, edPtr, PropID);
 }
 
 // Returns the checked state of properties that have a check box.
-BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_)
+BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return FALSE;
-
-	return (edPtr->DarkEdif_Props[PropID / CHAR_BIT] >> (PropID % CHAR_BIT) & 1);
+	return DarkEdif::DLL::DLL_GetPropCheck(mV, edPtr, PropID);
 }
 
 // Called by Fusion after a property has been modified.
-void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID_, void * Param)
+void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, void * Param)
 {
 #pragma DllExportHint
-	Prop * prop = (Prop *)Param;
-
-	unsigned int i = prop->GetClassID(), PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-	{
-#ifdef _DEBUG
-		std::stringstream str;
-		str << "Accessed property ID " << PropID << ", outside of custom extension range; ignoring it.\n";
-		OutputDebugStringA(str.str().c_str());
-#endif
-		return;
-	}
-
-	switch (i)
-	{
-		case 'DATA': // Buffer or string
-		{
-			const json_value & propjson = CurLang["Properties"][PropID];
-			// Buff can be used for a string property
-			if (!_stricmp(propjson["Type"], "Editbox String"))
-			{
-				std::string utf8Str = TStringToUTF8(((Prop_Str *)prop)->String);
-				PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			}
-			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
-			else
-				DarkEdif::MsgBox::Error(_T("Property error"), _T("Got Buff type for non-string property."));
-			break;
-		}
-		case 'STRA': // ANSI string
-		{
-			std::string utf8Str = ANSIToUTF8(((Prop_AStr *)prop)->String);
-			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			break;
-		}
-		case 'STRW': // Unicode string
-		{
-			std::string utf8Str = WideToUTF8(((Prop_WStr *)prop)->String);
-			PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size() + 1);
-			break;
-		}
-		case 'INT ': // 4-byte signed int
-		{
-			Prop_SInt * prop2 = (Prop_SInt *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(int));
-			break;
-		}
-		case 'DWRD': // 4-byte unsigned int
-		{
-			Prop_UInt * prop2 = (Prop_UInt *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(unsigned int));
-			break;
-		}
-		case 'INT2': // 8-byte signed int
-		{
-			Prop_Int64 * prop2 = (Prop_Int64 *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(__int64));
-			break;
-		}
-		case 'DBLE': // 8-byte floating point var
-		{
-			Prop_Double * prop2 = (Prop_Double *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(double));
-			break;
-		}
-		case 'FLOT': // 4-byte floating point var
-		{
-			Prop_Float * prop2 = (Prop_Float *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->Value, sizeof(float));
-			break;
-		}
-		case 'SIZE': // Two ints depicting a size
-		{
-			Prop_Size * prop2 = (Prop_Size *)prop;
-			PropChange(mV, edPtr, PropID, &prop2->X, sizeof(int)*2);
-			break;
-		}
-		default: // Custom property
-		{
-			Prop_Custom * prop2 = (Prop_Custom *)prop;
-			// PropChange(mV, edPtr, PropID, prop2->GetPropValue(), prop2->GetPropValueSize());
-
-			DarkEdif::MsgBox::Error(_T("Property error"), _T("Assuming class ID %i is custom - but no custom code written."), i);
-			break;
-		}
-	}
+	DarkEdif::DLL::DLL_SetPropValue(mV, edPtr, PropID, Param);
 }
 
 // Called by Fusion when the user modifies a checkbox in the properties.
-void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOOL checked)
+void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL checked)
 {
 #pragma DllExportHint
-	std::uint32_t PropID = (PropID_ - PROPID_EXTITEM_CUSTOM_FIRST) % 1000;
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return;
-
-	PropChangeChkbox(edPtr, PropID, checked != FALSE);
+	DarkEdif::DLL::DLL_SetPropCheck(mV, edPtr, PropID, checked);
 }
 
 // Called by Fusion when the user clicks the button of a Button or EditButton property.
@@ -282,7 +171,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 }*/
 
 // Called by Fusion to request the enabled state of a property.
-/*BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
 	// Example
@@ -293,9 +182,9 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 	case PROPID_CHECK:
 		return (edPtr->nComboIndex != 0);
 	}
-*\/
-	return TRUE;
-}*/
+*/
+	return DarkEdif::DLL::DLL_IsPropEnabled(mV, edPtr, PropID);
+}
 
 
 // Called when a property is initialized and its creation parameter is NULL (in the PropData).
@@ -316,7 +205,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 	//		}
 	//	}
 
-	return NULL;
+	return DarkEdif::DLL::DLL_GetPropCreateParam(mV, edPtr, PropID);
 }*/
 
 // Called after a property has been initialized.
@@ -324,6 +213,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID_, BOO
 /*void FusionAPI ReleasePropCreateParam(mv *mV, EDITDATA *edPtr, unsigned int PropID, LPARAM lParam)
 {
 #pragma DllExportHint
+	return DarkEdif::DLL::DLL_ReleasePropCreateParam(mV, edPtr, PropID, lParam);
 }*/
 
 // ============================================================================

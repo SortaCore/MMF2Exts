@@ -143,52 +143,13 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	static unsigned short EDITDATASize = 0;
 	if (EDITDATASize == 0)
 	{
-		infoPtr->EDITDATASize = sizeof(EDITDATA);
-#ifndef NOPROPS
-		const json_value& JSON = CurLang["Properties"];
-		size_t fullSize = sizeof(EDITDATA);
-		// Store one bit per property, for any checkboxes
-		fullSize += (int)ceil(JSON.u.array.length / ((float)CHAR_BIT));
-
-		for (unsigned int i = 0; i < JSON.u.array.length; ++i)
-		{
-			const json_value& propjson = *JSON.u.array.values[i];
-			const char* curPropType = propjson["Type"];
-
-			if (!_strnicmp(curPropType, "Editbox String", sizeof("Editbox String") - 1))
-			{
-				const char* defaultText = CurLang["Properties"]["DefaultState"];
-				fullSize += (defaultText ? strlen(defaultText) : 0) + 1; // UTF-8
-			}
-			// Stores a number (in combo box, an index)
-			else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Combo Box"))
-				fullSize += sizeof(int);
-			// No content, or already stored in checkbox part before this for loop
-			else if (!_stricmp(curPropType, "Text") || !_stricmp(curPropType, "Checkbox") ||
-				// Folder or FolderEnd - no data, folders are cosmetic
-				!_strnicmp(curPropType, "Folder", sizeof("Folder") - 1) ||
-				// Buttons - no data, they're just clickable
-				!_stricmp(curPropType, "Edit button"))
-			{
-				// skip 'em, no changeable data
-			}
-			else
-			{
-				DarkEdif::MsgBox::Error(_T("Property error"), _T("Property type \"%hs\" has no code for storing its value"),
-					curPropType);
-			}
-		}
-		// Too large for EDITDATASize
-		if (fullSize > UINT16_MAX)
-			DarkEdif::MsgBox::Error(_T("Property error"), _T("Property default sizes are too large (%zu bytes)."), fullSize);
-		else
-			infoPtr->EDITDATASize = EDITDATASize = (unsigned short)fullSize;
-#else // NOPROPS
-		EDITDATASize = infoPtr->EDITDATASize;
+#ifdef NOPROPS
+		EDITDATASize = sizeof(EDITDATA);
+#else 
+		EDITDATASize = DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON();
 #endif // NOPROPS
 	}
-
-	//+(GetPropertyChbx(edPtr, CurLang["Properties"].u.object.length+1)-&edPtr);
+	infoPtr->EDITDATASize = EDITDATASize;
 
 	infoPtr->WindowProcPriority = Extension::WindowProcPriority;
 

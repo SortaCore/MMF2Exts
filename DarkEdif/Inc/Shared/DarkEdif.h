@@ -4,9 +4,7 @@
 #if RuntimeBuild
 	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
 #else
-	// Singleton expression for finding the current JSON based on preferred language in Extensions\DarkEdif.ini
-	const extern struct _json_value & CurrentLanguage();
-	#define CurLang CurrentLanguage()
+	#define CurLang (DarkEdif::JSON::LanguageJSON())
 #endif
 
 #include "Edif.h"
@@ -64,36 +62,10 @@ bool CreateNewActionInfo();
 bool CreateNewConditionInfo();
 bool CreateNewExpressionInfo();
 
-// NOPROPS indicates the properties' storage is managed manually by ext developer.
-#ifndef NOPROPS
-	char * PropIndex(EDITDATA * edPtr, unsigned int ID, unsigned int * size);
-
-	// Property setup for the property pane in the editor. Not used elsewhere
-	#if EditorBuild
-		void InitializePropertiesFromJSON(mv *, EDITDATA *);
-		Prop * GetProperty(EDITDATA *, size_t);
-		void PropChangeChkbox(EDITDATA * edPtr, unsigned int PropID, const bool newValue);
-		void PropChange(mv * mV, EDITDATA * &edPtr, unsigned int PropID, const void * newData, size_t newSize);
-	#endif // EditorBuild
-#endif // NOPROPS
-
-std::tstring ANSIToTString(const std::string_view);
-std::string ANSIToUTF8(const std::string_view);
-std::wstring ANSIToWide(const std::string_view);
-std::string UTF8ToANSI(const std::string_view, bool * const allValidChars = nullptr);
-std::tstring UTF8ToTString(const std::string_view, bool * const allValidChars = nullptr);
-std::wstring UTF8ToWide(const std::string_view);
-std::string WideToANSI(const std::wstring_view, bool * const allValidChars = nullptr);
-std::tstring WideToTString(const std::wstring_view, bool * const allCharsValid = nullptr);
-std::string WideToUTF8(const std::wstring_view);
-std::string TStringToANSI(const std::tstring_view, bool * const allValidChars = nullptr);
-std::string TStringToUTF8(const std::tstring_view);
-std::wstring TStringToWide(const std::tstring_view);
-
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 13;
+	static const int SDKVersion = 14;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -332,6 +304,225 @@ namespace DarkEdif {
 	}
 
 	void Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
+
+	// =====
+	// This region does looking up correct languages from INI.
+	// Internally singleton; no need to cache the results.
+	// =====
+	namespace JSON
+	{
+		// Language JSON (equivalent to SDK->json[language name])
+		const json_value & LanguageJSON();
+		// Language JSON name
+		const TCHAR* const LanguageName();
+	}
+
+	std::tstring ANSIToTString(const std::string_view);
+	std::string ANSIToUTF8(const std::string_view);
+	std::wstring ANSIToWide(const std::string_view);
+	std::string UTF8ToANSI(const std::string_view, bool* const allValidChars = nullptr);
+	std::tstring UTF8ToTString(const std::string_view, bool* const allValidChars = nullptr);
+	std::wstring UTF8ToWide(const std::string_view);
+	std::string WideToANSI(const std::wstring_view, bool* const allValidChars = nullptr);
+	std::tstring WideToTString(const std::wstring_view, bool* const allCharsValid = nullptr);
+	std::string WideToUTF8(const std::wstring_view);
+	std::string TStringToANSI(const std::tstring_view, bool* const allValidChars = nullptr);
+	std::string TStringToUTF8(const std::tstring_view);
+	std::wstring TStringToWide(const std::tstring_view);
+
+	// =====
+	// This region does JSON-based properties.
+	// =====
+
+
+	// Functions redirected from Fusion DLL calls.
+	// The DLL_XX prefixes are necessary due to DEF files getting confused despite the namespaces.
+	namespace DLL
+	{
+		// Returns size of EDITDATA and all properties if they were using their default values from JSON
+		std::uint16_t Internal_GetEDITDATASizeFromJSON();
+
+		void GeneratePropDataFromJSON();
+	}
+
+#ifndef NOPROPS
+	namespace DLL
+	{
+#if EditorBuild
+		// Ext devs should not use these! Returns properties to Fusion itself for rendering.
+		BOOL DLL_GetProperties(mv* mV, EDITDATA* edPtr, bool masterItem);
+		void DLL_ReleaseProperties(mv* mV, EDITDATA* edPtr, BOOL bMasterItem);
+
+		LPARAM DLL_GetPropCreateParam(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+		void DLL_ReleasePropCreateParam(mv* mV, EDITDATA* edPtr, unsigned int PropID, LPARAM lParam);
+		void* DLL_GetPropValue(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+		void DLL_SetPropValue(mv* mV, EDITDATA* edPtr, unsigned int PropID, void* Param);
+		BOOL DLL_GetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+		void DLL_SetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID, BOOL checked);
+		BOOL DLL_IsPropEnabled(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+
+		HGLOBAL DLL_UpdateEditStructure(mv* mV, EDITDATA* OldEdPtr);
+#endif
+
+		// /// <summary> Loads all default values into EDITDATA. Only used for new objects. </summary>
+		// std::vector<std::string> PopulateEDITDATA(mv * mV, EDITDATA *& edPtr, EDITDATA ** oldEdPtr, void *(*reallocFunc)(mv * mV, void * ptr, size_t s));
+
+		struct PropAccesser;
+		struct ConverterReturnAccessor;
+
+		int DLL_CreateObject(mv* mV, LevelObject* loPtr, EDITDATA* edPtr);
+	}
+
+	struct Properties
+	{
+		NO_DEFAULT_CTORS(Properties);
+
+		// =====
+		// DarkEdif functions, use within Extension ctor.
+		// =====
+
+		// Returns property checked or unchecked from property name.
+		bool IsPropChecked(std::string_view propName) const;
+		// Returns property checked or unchecked from property ID.
+		bool IsPropChecked(int propID) const;
+		// Returns std::tstring property setting from property name.
+		std::tstring GetPropertyStr(std::string_view propName) const;
+		// Returns std::tstring property string from property ID.
+		std::tstring GetPropertyStr(int propID) const;
+
+#if EditorBuild
+		// =====
+		// Custom property upgrader. Fusion ext developers can use it, if they want to die.
+		// =====
+
+		struct ConverterState
+		{
+			// Will be null when object is created.
+			const EDITDATA* oldEdPtr;
+			// Will be null when object is created. Will also be null if converting from pre-smart properties.
+			const Properties* oldEdPtrProps;
+			// Always set to CurLang["Properties"]. A json_array.
+			const json_value& jsonProps;
+			// Number of properties reset to JSON (as opposed to upgrading from old props)
+			size_t numPropsReset;
+			// List of reset prop name = value with newline delimiter.
+			::std::stringstream resetPropertiesStream;
+
+			// You won't use this.
+			ConverterState(EDITDATA*, const json_value& json);
+		};
+		enum class ConvReturnType
+		{
+			// Converter hasn't set the response
+			Unset,
+			// Converter read the value okay
+			OK,
+			// Converter failed to read, but it should be okay to use this converter after
+			// Passing to next level of converter is requested (e.g. reading default from JSON)
+			Pass,
+			// Should have been okay to return it, but had a third-party error (e.g. memcpy)
+			// Report error to user
+			Error,
+			// The converter can't interpret the source data, so this converter is the wrong one, and shouldn't be used
+			ConverterUnsuitable
+		};
+		struct ConverterReturn
+		{
+			friend struct DLL::ConverterReturnAccessor;
+		protected:
+			ConvReturnType convRetType;
+			const void* data;
+			size_t dataSize;
+			int checkboxState; // 0, 1, or -1 if unset
+
+			// If non-null, a pointer to a freeing function.
+			void (*freeData)(const void*);
+		public:
+
+			// Return a value with optional deleter, and optional checkbox state
+			void Return_OK(const void* data, size_t dataSize, void (*freeData)(const void*) = nullptr, int checkboxState = -1);
+
+			// Failed to read, but it should be okay to use this converter after
+			// Passing to next converter is requested
+			void Return_Pass();
+
+			// Was okay to return it, but had a third-party error
+			// Report this error to user
+			void Return_Error(PrintFHintInside const TCHAR * error, ...) PrintFHintAfter(2,3);
+
+			// The source data doesn't have this, and clearly the source is unreliable
+			// This converter should no longer be used
+			void Return_ConverterUnsuitable();
+
+			ConverterReturn();
+		};
+
+		// Abstract (pure virtual) struct for reading properties.
+		struct PropertyReader
+		{
+			// Start the property reader/converter. Return ConverterUnsuitable if the converter isn't usable.
+			virtual void Initialise(ConverterState& convState, ConverterReturn* const convRet) = 0;
+
+			// Get property by ID.
+			// Note that IDs will always be increasing, but you should program GetProperty() as if IDs can be skipped (non-monotonic).
+			virtual void GetProperty(size_t id, ConverterReturn* const convRet) = 0;
+
+			// Get property by ID.
+			// Note that IDs will always be increasing, but you should program GetPropertyCheckbox() as if IDs can be skipped (non-monotonic).
+			virtual void GetPropertyCheckbox(size_t id, ConverterReturn* const convRet) = 0;
+		};
+
+		// =====
+		// Internal DarkEdif use. Fusion ext developers should not try to use it.
+		// =====
+
+		// Defined later. Should error out if someone tries to use it.
+		struct PreSmartPropertyReader;
+		struct SmartPropertyReader;
+		struct JSONPropertyReader;
+
+#endif // EditorBuild
+
+		// Turn on for lots of logging.
+		static constexpr bool DebugProperties = true;
+
+		struct Data;
+
+		// We hide some stuff so newbie ext devs don't mistakenly use it
+		friend DarkEdif::DLL::PropAccesser;
+
+	protected:
+		// Version of this DarkEdif::Properties struct. If smart properties' layouts ever need updating, voila.
+		std::uint32_t propVersion = 'DAR1';
+		// fnv1a hashes, used to read JSON properties to see if a property layout change has been made.
+		std::uint32_t hash; // property titles and types
+		std::uint32_t hashTypes; // property types only
+		// Number of properties
+		std::uint16_t numProps;
+		// Size of DataForProps - including EDITDATA (and thus EDITDATA::Properties)
+		// Note that this is uint32, because initial EDITDATA is capped to uint16 by GetRunObjectInfos()'s EDITDATASize,
+		// but the size after initial setup is in EDITDATA::eHeader::extSize, which is uint32.
+		std::uint32_t sizeBytes;
+		// The actual data for properties, merged together
+		// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
+		SuppressZeroArraySizeWarning
+		std::uint8_t dataForProps[];
+		// Note: There is a single bit for each checkbox.
+		// Use numProps / 8 for num of bytes used by checkboxes.
+
+		const Data* Internal_FirstData() const;
+		const Data* Internal_DataAt(int ID) const;
+#if EditorBuild
+		Data* Internal_FirstData();
+		Data* Internal_DataAt(int ID);
+		Prop* GetProperty(size_t);
+
+		static void Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigned int PropID, const void* newData, size_t newSize);
+#endif
+	};
+
+#endif // NOPROPS
 }
 
 
@@ -627,7 +818,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
+		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
@@ -712,7 +903,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
+		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
@@ -812,7 +1003,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	// Exit with error
 	if (errorStream.str().size() > 0)
-		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), UTF8ToTString(errorStream.str()).c_str());
+		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
 	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }

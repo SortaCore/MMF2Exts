@@ -20,19 +20,7 @@ struct EDITDATA
 //	short			sheight;
 
 	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
-	int				DarkEdif_Prop_Size;
-	char			DarkEdif_Props[];
-
-	// =====
-	// DarkEdif functions, use within Extension ctor.
-	// =====
-
-	// Returns property checked or unchecked.
-	bool IsPropChecked(int propID);
-	// Returns std::tstring property setting from property name.
-	std::tstring GetPropertyStr(const char * propName);
-	// Returns std::tstring property string from property ID.
-	std::tstring GetPropertyStr(int propID);
+	DarkEdif::Properties Props;
 };
 
 class Extension;

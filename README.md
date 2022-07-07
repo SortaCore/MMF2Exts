@@ -102,7 +102,8 @@ other developers. [DarkEdif Clickteam forum thread].
 It includes all the features of Edif and some extra, including:
 
 * Multi-language JSON file
-* Properties defined in the JSON file
+* Object properties defined in the JSON file
+* Smart properties - you can rearrange, delete, rename object properties between extension versions, and their data will updated automatically
 * In debug build, a runtime check that A/C/E parameters in C++ and JSON are the same
   (only active in Debug/Debug Unicode builds; disable via defining `FAST_ACE_LINK` in project properties)
 * A JSON minifier for runtime builds

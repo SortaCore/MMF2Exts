@@ -186,7 +186,7 @@ Params ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
 	if (!_strnicmp(Text, "Custom", sizeof("Custom") - 1))
 		return (Params)((short)Params::Custom_Base + ((short)atoi(Text + sizeof("Custom") - 1)));
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."), UTF8ToTString(Text).c_str());
+	DarkEdif::MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return (Params)(std::uint16_t)0;
 }
 
@@ -207,7 +207,7 @@ ExpParams ReadExpressionParameterType(const char * Text, bool &IsFloat)
 	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpParams::UnsignedInteger;
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), UTF8ToTString(Text).c_str());
+	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return (ExpParams)(std::uint16_t)0;
 }
 
@@ -229,7 +229,7 @@ ExpReturnType ReadExpressionReturnType(const char * Text)
 	if (!_stricmp(Text, "Unsigned Integer"))
 		return ExpReturnType::UnsignedInteger;
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), UTF8ToTString(Text).c_str());
+	DarkEdif::MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return ExpReturnType::Integer; // default
 }
 
@@ -372,7 +372,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	json_value * json = json_parse_ex (&settings, copy, JSON_Size, json_error, sizeof(json_error));
 
 	if (!json)
-		return DarkEdif::MsgBox::Error(_T("Error parsing JSON"), _T("JSON file for " PROJECT_NAME " couldn't be parsed:\n%s"), UTF8ToTString(json_error).c_str()), -1;
+		return DarkEdif::MsgBox::Error(_T("Error parsing JSON"), _T("JSON file for " PROJECT_NAME " couldn't be parsed:\n%s"), DarkEdif::UTF8ToTString(json_error).c_str()), -1;
 
 	// Workaround for subapp bug (cheers LB), where Init/Free is called more than once,
 	// even if object is not in subapp and thus doesn't apply
@@ -528,236 +528,13 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewExpressionInfo();
 	}
 
-	// Object properties, as they appear in Properties tab, so only under editor.
 #if EditorBuild
-	const json_value& Properties = CurLang["Properties"];
-	{
-		std::vector <PropData> VariableProps;
-		PropData * CurrentProperty;
+	// Object properties, as they appear in Properties tab, in the frame editor only.
+	DarkEdif::DLL::GeneratePropDataFromJSON();
 
-		for (size_t i = 0; i < Properties.u.array.length; ++ i)
-		{
-			const json_value &Property = Properties[i];
-			CurrentProperty = nullptr;
-			const char * propTitle = (const char *)Property["Title"] ? (const char *)Property["Title"] : "";
-
-			// Reserved/invalid properties are marked with ! at the start.
-			// If some muppet attempts to use 'em, throw an error.
-			if (((const char *)Property["Type"])[0] == '!')
-			{
-				DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %hs (ID %i) has an invalid Parameter type \"%hs\"."),
-					propTitle, i, (const char *)Property["Type"]);
-				continue; // skip property
-			}
-
-			#define SetAllProps(opt,lParams) CurrentProperty->SetAllProperties(Options|(opt), (LPARAM)(lParams)); break
-			using namespace Edif::Properties;
-
-			// Custom Parameter: Read the number CustomXXX and use that.
-			if (!_strnicmp(Property["Type"], "Custom", 6))
-			{
-				CurrentProperty = new PropData((int)VariableProps.size(), (unsigned int)i + PROPTYPE_LAST_ITEM);
-				goto addprop;
-			}
-			// FolderEnd is important
-			else if (!_stricmp(Property["Type"], Names[PROPTYPE_FOLDER_END]))
-			{
-				CurrentProperty = new PropData(-1, PROPTYPE_FOLDER_END);
-				goto addprop;
-			}
-
-			// Regular Parameter: find the type
-			for (size_t j = PROPTYPE_FIRST_ITEM; j < (PROPTYPE_LAST_ITEM - PROPTYPE_FIRST_ITEM); ++j)
-			{
-				if (!_stricmp(Property["Type"], Names[j]))
-				{
-					// Unicode properties have type IDs 1000 greater than their ANSI counterparts
-					#ifndef _UNICODE
-						CurrentProperty = new PropData(VariableProps.size(), j);
-					#else
-						CurrentProperty = new PropData(VariableProps.size(), j + 1000);
-					#endif
-					break;
-				}
-			}
-
-			if (!CurrentProperty)
-			{
-				DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %hs (ID %i) has an invalid Parameter type \"%hs\"."),
-					propTitle, i, (const char *)Property["Type"]);
-				goto addprop;
-			}
-
-			// If checkbox is enabled, pass that as flags as well.
-			unsigned int Options = (bool(Property["Checkbox"]) ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
-								 | (bool(Property["Bold"]) ? PROPOPT_BOLD: 0)				// Bold enabled by property option in JSON
-								 | (bool(Property["Removable"]) ? PROPOPT_REMOVABLE: 0)		// Removable enabled by property option in JSON
-								 | (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE: 0)	// Renamable enabled by property option in JSON
-								 | (bool(Property["Moveable"]) ? PROPOPT_MOVABLE: 0)		// Movable enabled by property option in JSON
-								 | (bool(Property["List"]) ? PROPOPT_LIST: 0)				// List enabled by property option in JSON
-								 | (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL: 0);	// Single-select enabled by property option in JSON
-			// Todo: passing of LParams requires ParamsREQUIRED option.
-			// Find out what opt is.
-			// Two settings may be specified by |=ing the options unsigned int.
-
-			CurrentProperty->Title = Edif::ConvertString(Property["Title"]);
-			CurrentProperty->Info = Edif::ConvertString(Property["Info"]);
-
-			switch (CurrentProperty->Type_ID % 1000)
-			{
-				// Simple static text
-				case PROPTYPE_STATIC:
-					SetAllProps(0, NULL);
-
-				// Folder
-				case PROPTYPE_FOLDER:
-					SetAllProps(0, NULL);
-
-				// Edit button, Params1 = button text, or nullptr if Edit
-				case PROPTYPE_EDITBUTTON:
-					SetAllProps(PROPOPT_PARAMREQUIRED, (((const char *)Property["DefaultState"])[0] == '\0') ? 0 : Edif::ConvertString((const char *)Property["DefaultState"]));
-
-				// Edit box for strings, Parameter = max length
-				case PROPTYPE_EDIT_STRING:
-					Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	// Checkbox enabled by property option in JSON
-							|  ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0)	// Checkbox enabled by property option in JSON
-							|  ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD: 0);
-					SetAllProps(PROPOPT_PARAMREQUIRED, ((std::int64_t)Property["MaxLength"] & 0xFFFFFFFF));
-
-				// Edit box for numbers, Parameters = min value, max value
-				case PROPTYPE_EDIT_NUMBER:
-				{
-					int * temp = new int[2];
-					// JSON parser stores numbers as int64, but Fusion uses int32
-					temp[0] = ((std::int64_t)Property["Minimum"]) & 0xFFFFFFFF;
-					temp[1] = ((std::int64_t)Property["Maximum"]) & 0xFFFFFFFF;
-					SetAllProps(PROPOPT_PARAMREQUIRED, temp);
-				}
-
-				// Combo box, Parameters = list of strings, options (sorted, etc)
-				case PROPTYPE_COMBOBOX:
-				{
-					if (Property["Items"].u.object.length == 0)
-					{
-						DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"),
-							_T("JSON combo box property %s (ID %i) has no list items."),
-							CurrentProperty->Title, i, (const char *)Property["Type"]);
-					}
-
-					const TCHAR ** Fixed = new const TCHAR * [Property["Items"].u.object.length+2];
-
-					// NULL is required at start of array
-					Fixed[0] = Fixed[Property["Items"].u.object.length+1] = nullptr;
-
-					// Use incrementation and copy to fixed list.
-					for (size_t index = 1; index < Property["Items"].u.object.length+1; ++ index)
-						Fixed[index] = Edif::ConvertString(Property["Items"][index-1]);
-
-					// Pass fixed list as Parameter
-					SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
-				}
-
-				// Size
-				case PROPTYPE_SIZE:
-
-				// Color
-				case PROPTYPE_COLOR:
-
-				// Checkbox
-				case PROPTYPE_LEFTCHECKBOX:
-					// Enforce option to show it is a checkbox
-					SetAllProps(PROPOPT_CHECKBOX, NULL);
-
-				// Edit + Slider
-				case PROPTYPE_SLIDEREDIT:
-					SetAllProps(0, NULL);
-
-				// Edit + Spin
-				case PROPTYPE_SPINEDIT:
-					SetAllProps(0, NULL);
-
-				// Direction Selector
-				case PROPTYPE_DIRCTRL:
-					SetAllProps(0, NULL);
-
-				// Group
-				case PROPTYPE_GROUP:
-					SetAllProps(0, NULL);
-
-				// Edit box + browse file button, Parameter = FilenameCreateParams
-				case PROPTYPE_FILENAME:
-					SetAllProps(0, NULL);
-
-				// Font dialog box
-				case PROPTYPE_FONT:
-					SetAllProps(0, NULL);
-
-				// Edit box + browse image file button
-				case PROPTYPE_PICTUREFILENAME:
-					SetAllProps(0, NULL);
-
-				// Combo box, Parameters = list of strings, options (sorted, etc)
-				case PROPTYPE_COMBOBOXBTN:
-					SetAllProps(0, NULL);
-
-				// Edit box for floating point numbers, Parameters = min value, max value, options (signed, float, spin)
-				case PROPTYPE_EDIT_FLOAT:
-					SetAllProps(0, NULL);
-
-				// Edit box for multiline texts, no Parameter
-				case PROPTYPE_EDIT_MULTILINE:
-					Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE: 0)	|		// Checkbox enabled by property option in JSON
-								((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE: 0);			// Checkbox enabled by property option in JSON
-					SetAllProps(0, NULL);
-
-				// Image list
-				case PROPTYPE_IMAGELIST:
-					SetAllProps(0, NULL);
-
-				// Combo box with icons
-				case PROPTYPE_ICONCOMBOBOX:
-					SetAllProps(0, NULL);
-
-				// URL button
-				case PROPTYPE_URLBUTTON:
-					SetAllProps(0, NULL);
-
-				// Directory pathname
-				case PROPTYPE_DIRECTORYNAME:
-					SetAllProps(0, NULL);
-
-				// Edit + Spin, value = floating point number
-				case PROPTYPE_SPINEDITFLOAT:
-					SetAllProps(0, NULL);
-
-				// Unrecognised
-				default:
-				{
-					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property error"), _T("JSON property %s (ID %zu) has an invalid Parameter type \"%hs\", or DarkEdif is not programmed to understand it."),
-						CurrentProperty->Title, i, (const char *)Property["Type"]);
-
-					SetAllProps(0, NULL);
-				}
-			}
-
-			addprop:
-			// Add to properties
-			VariableProps.push_back(*CurrentProperty);
-		}
-		EdittimeProperties = new PropData[VariableProps.size()+1];
-		// Use incrementation and copy to fixed list.
-		for(unsigned int l = 0; l < VariableProps.size(); ++l)
-			EdittimeProperties[l] = VariableProps[l];
-
-		// End with completely null byte
-		memset(&EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
-	}
-
-#if EditorBuild
 	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
 	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
 	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
-#endif
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
@@ -801,7 +578,6 @@ Edif::SDK::~SDK()
 	delete [] ActionJumps;
 	delete [] ConditionJumps;
 	delete [] ExpressionJumps;
-	delete [] EdittimeProperties;
 
 	delete Icon;
 #endif
@@ -858,7 +634,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 						_T("Error calling %s \"%s\" (ID %i); text parameter index %i was given a null string pointer.\n"
 							"Was the parameter type different when the %s was created in the MFA?"),
 						isCond ? _T("condition") : _T("action"),
-						UTF8ToTString((const char *)CurLang[isCond ? "Conditions" : "Actions"][ID]["Title"]).c_str(),
+						DarkEdif::UTF8ToTString((const char *)CurLang[isCond ? "Conditions" : "Actions"][ID]["Title"]).c_str(),
 						ID, i,
 						isCond ? _T("condition") : _T("action"));
 					goto endFunc;
@@ -1845,7 +1621,7 @@ void Edif::recursive_mutex::lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}
@@ -1871,7 +1647,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}
@@ -1900,7 +1676,7 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 			std::string str(this->log.str());
 			fwrite(str.c_str(), 1, str.size(), f);
 			fclose(f);
-			LOGE(_T("%s"), UTF8ToTString(str).c_str());
+			LOGE(_T("%s"), DarkEdif::UTF8ToTString(str).c_str());
 			throw err;
 		}
 	}

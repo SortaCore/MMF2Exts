@@ -13,6 +13,10 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v14 release
 ----
 *v14 not released yet*
+- All platforms: Added smart property system; properties can now be altered between extension versions easily
+- Edittime: Fixed update checker reporting to user when server sends no content. This is caused by server being down.  
+	Server down is by default considered a "no update" scenario. This behaviour can be overriden by DarkEdif.ini setting.  
+	When server sends garbage, it's reported to user, though, as it's abnormal, whereas server being down, while uncommon, is normal.
 - Windows: fixed incompatibility with Fusion 2.0 if extension had alt values (caused crash on alt string C and later being set)
 - Updated DarkEdif pre-build tool to v1.0.0.2, fixed an infinite-loop bug caused by comments
 - Windows: fixed potential error on Fusion 2.0 and CF2.5 < build 293.9 if an expression generated an event (e.g. creating errors)

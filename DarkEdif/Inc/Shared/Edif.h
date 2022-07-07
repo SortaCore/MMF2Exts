@@ -139,9 +139,13 @@ namespace Edif
 		std::vector<void *> ExpressionFunctions;
 
 		mv* mV;
+		// A fnv1a hash of all changeable property names and types, all separated by pipe. Used for property upgrades.
+		std::uint32_t jsonPropsNameAndTypesHash;
+		// A fnv1a hash of all changeable property types, separated by pipe. Used for property upgrades.
+		std::uint32_t jsonPropsTypesHash;
 #if EditorBuild
 		cSurface * Icon;
-		PropData * EdittimeProperties;
+		std::unique_ptr<PropData[]> EdittimeProperties;
 #endif
 	};
 
