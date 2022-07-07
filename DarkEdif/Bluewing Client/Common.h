@@ -39,6 +39,7 @@
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
+	NO_DEFAULT_CTORS(EDITDATA);
 	// Header - required, must be first variable in EDITDATA
 	extHeader			eHeader;
 
@@ -57,24 +58,8 @@ struct EDITDATA
 	bool fullDeleteEnabled;
 	char pad1[256];
 
-	// Note: To match Lacewing Relay Client, this struct's size must be 544 bytes
-
-#ifndef NOPROPS
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
-	int				DarkEdif_Prop_Size;
-	char			DarkEdif_Props[];
-
-	// =====
-	// DarkEdif functions, use within Extension ctor.
-	// =====
-
-	// Returns property checked or unchecked.
-	bool IsPropChecked(int propID);
-	// Returns std::tstring property setting from property name.
-	std::tstring GetPropertyStr(const char * propName);
-	// Returns std::tstring property string from property ID.
-	std::tstring GetPropertyStr(int propID);
-#endif
+	// Note: To match Lacewing Relay Client, this struct's size must be 544 bytes.
+	// NOPROPS is used to manually set the size of this struct and access properties in it.
 };
 
 class Extension;

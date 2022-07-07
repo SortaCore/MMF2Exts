@@ -227,7 +227,7 @@ bool Extension::IsPeerOnChannel_Name(const TCHAR * peerNameTStr, const TCHAR * c
 			std::find_if(channels.cbegin(), channels.cend(),
 				[&](const auto & ch) { return lw_sv_cmp(ch->namesimplified(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if peer is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNameTStr).c_str()), false;
+			return CreateError("Error checking if peer is joined to a channel, channel name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(channelNameTStr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 
@@ -276,7 +276,7 @@ bool Extension::IsPeerOnChannel_ID(int peerID, const TCHAR * channelNamePtr)
 			std::find_if(channels.cbegin(), channels.cend(),
 				[&](const auto & ch) { return lw_sv_cmp(ch->namesimplified(), channelNameStripped); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if peer is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
+			return CreateError("Error checking if peer is joined to a channel, channel name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 

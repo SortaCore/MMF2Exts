@@ -276,11 +276,11 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		*(std::uint8_t *)&edPtr->fullDeleteEnabled, edPtr->fullDeleteEnabled ? 1 : 0,
 		*(std::uint8_t *)&edPtr->multiThreading, edPtr->multiThreading ? 1 : 0,
 		*(std::uint8_t *)&edPtr->timeoutWarningEnabled, edPtr->timeoutWarningEnabled ? 1 : 0,
-		UTF8ToTString(edPtr->edGlobalID).c_str());
+		DarkEdif::UTF8ToTString(edPtr->edGlobalID).c_str());
 
 	if (isGlobal)
 	{
-		const std::tstring id = UTF8ToTString(edPtr->edGlobalID) + _T("BlueClient"s);
+		const std::tstring id = DarkEdif::UTF8ToTString(edPtr->edGlobalID) + _T("BlueClient"s);
 		void * globalVoidPtr = Runtime.ReadGlobal(id.c_str());
 		if (!globalVoidPtr)
 		{
@@ -368,14 +368,14 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		if (ext->Cli.connecting())
 			writeTo = _T("Connected: Connecting..."sv);
 		else if (ext->Cli.connected())
-			writeTo = _T("Connected: ") + ANSIToTString(ext->HostIP);
+			writeTo = _T("Connected: ") + DarkEdif::ANSIToTString(ext->HostIP);
 		else
 			writeTo = _T("Connected: No connection"sv);
 	};
 	FusionDebugger.AddItemToDebugger(connectedDebugItemReader, NULL, 500, NULL);
 
 	const auto clientNameDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
-		auto cliName = UTF8ToTString(ext->Cli.name());
+		auto cliName = DarkEdif::UTF8ToTString(ext->Cli.name());
 		if (cliName.empty())
 			cliName = _T("(unset)"sv);
 		writeTo = _T("Name: ") + cliName;
@@ -389,7 +389,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	const auto selectedChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Selected channel: ") + UTF8ToTString(ext->selChannel->name());
+			writeTo = _T("Selected channel: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
 			writeTo = _T("Selected channel: (none)"sv);
 	};
@@ -405,7 +405,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	const auto selectedPeerDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selPeer && ext->selChannel)
-			writeTo = _T("Selected peer: ") + UTF8ToTString(ext->selPeer->name());
+			writeTo = _T("Selected peer: ") + DarkEdif::UTF8ToTString(ext->selPeer->name());
 		else
 			writeTo = _T("Selected peer: (none)"sv);
 	};
@@ -606,7 +606,7 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 
 	const std::string errTextU8 = errorDetailed.str();
 #if defined(_DEBUG) && defined (_WIN32)
-	const std::wstring errText = UTF8ToWide(errTextU8);
+	const std::wstring errText = DarkEdif::UTF8ToWide(errTextU8);
 	OutputDebugStringW(errText.c_str());
 	OutputDebugStringW(L"\n");
 #elif defined(_DEBUG)
@@ -677,7 +677,7 @@ void Extension::ClearThreadData()
 
 std::string Extension::TStringToUTF8Simplified(std::tstring str)
 {
-	return lw_u8str_simplify(TStringToUTF8(str));
+	return lw_u8str_simplify(DarkEdif::TStringToUTF8(str));
 }
 
 // Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
@@ -854,7 +854,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 
 			const std::string_view resStr(result.data(), numBytesRead);
 			if (lw_u8str_validate(resStr))
-				return UTF8ToTString(resStr);
+				return DarkEdif::UTF8ToTString(resStr);
 
 			CreateError("Could not read text from received binary, UTF-8 was malformed at index %zu (attempted to read %d chars from %sstart index %zu).",
 				recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
@@ -948,7 +948,7 @@ Extension::~Extension()
 			globals->timeoutThread = std::thread(ObjectDestroyTimeoutFunc, globals);
 			return;
 		}
-		const std::tstring id = UTF8ToTString(globals->_globalID) + _T("BlueClient"s);
+		const std::tstring id = DarkEdif::UTF8ToTString(globals->_globalID) + _T("BlueClient"s);
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		globals->lock.edif_unlock();
 
@@ -1108,12 +1108,12 @@ REFLAG Extension::Handle()
 
 			// On Error has message
 			if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Error"sv))
-				wstr << _T(". Error message:\n"sv) << UTF8ToTString(evtToRun->error.text);
+				wstr << _T(". Error message:\n"sv) << DarkEdif::UTF8ToTString(evtToRun->error.text);
 			// On Disconnect and On Name Changed has no text included
 			else if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Disconnect"sv) || mandatoryEventIDs[mandatoryEventIndex].first == _T("On Name Changed"sv))
 				wstr << _T('.');
 			else
-				wstr << _T(". Deny reason:\n"sv) << UTF8ToTString(DenyReasonBuffer);
+				wstr << _T(". Deny reason:\n"sv) << DarkEdif::UTF8ToTString(DenyReasonBuffer);
 
 			DarkEdif::MsgBox::Custom(MB_ICONERROR | MB_TOPMOST, _T("Mandatory Event Error"), _T("%s"), wstr.str().c_str());
 			globals->lastMandatoryEventWasChecked = true; // reset for next loop
@@ -1402,7 +1402,7 @@ void GlobalInfo::MarkAsPendingDelete()
 		{
 			// No way to report it to Fusion; the last ext is being destroyed.
 			LOGV(_T("" PROJECT_NAME " - Pump closed with error \"%s\".\n"),
-				UTF8ToTString(err->tostring()).c_str());
+				DarkEdif::UTF8ToTString(err->tostring()).c_str());
 		}
 		LOGV(_T("" PROJECT_NAME " - Pump should be closed.\n"));
 

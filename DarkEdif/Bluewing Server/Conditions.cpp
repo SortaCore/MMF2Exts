@@ -65,7 +65,7 @@ bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, cons
 			std::find_if(clients.cbegin(), clients.cend(),
 				[&](auto const & cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", TStringToUTF8(clientNamePtr).c_str()), false;
+			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(clientNamePtr).c_str()), false;
 		foundCli = *foundCliIt;
 	}
 
@@ -81,7 +81,7 @@ bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, cons
 			std::find_if(channels.cbegin(), channels.cend(),
 				[&](auto const & ch) { return lw_sv_cmp(ch->nameSimplified(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
+			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 
@@ -141,7 +141,7 @@ bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channel
 			std::find_if(channels.cbegin(), channels.cend(),
 				[&](auto const & ch) { return lw_sv_cmp(ch->name(), channelNameU8Simplified); });
 		if (foundChIt == channels.cend())
-			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", TStringToUTF8(channelNamePtr).c_str()), false;
+			return CreateError("Error checking if client is joined to a channel, channel name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str()), false;
 		foundCh = *foundChIt;
 	}
 

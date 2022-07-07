@@ -92,7 +92,7 @@ BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 	if (!IS_COMPATIBLE(mV))
 		return FALSE;
 
-	mvInsertProps(mV, edPtr, ::SDK->EdittimeProperties, PROPID_TAB_GENERAL, TRUE);
+	mvInsertProps(mV, edPtr, ::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
 
 	return TRUE; // OK
 }
@@ -119,10 +119,10 @@ Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		{
 			char extVerBuffer[256];
 			sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayserver::buildnum, STRIFY(CONFIG));
-			return new Prop_Str(UTF8ToTString(extVerBuffer).c_str());
+			return new Prop_Str(DarkEdif::UTF8ToTString(extVerBuffer).c_str());
 		}
 		if (ID == 3)
-			return new Prop_Str(UTF8ToTString(edPtr->edGlobalID).c_str());
+			return new Prop_Str(DarkEdif::UTF8ToTString(edPtr->edGlobalID).c_str());
 
 		// Note that checkbox-only properties call GetPropValue() too for no reason, so
 		return NULL;
@@ -171,7 +171,7 @@ void FusionAPI SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID, Prop
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 	if (ID == 3)
 	{
-		const std::string newValAsU8 = TStringToUTF8(((Prop_Str *)NewParam)->String);
+		const std::string newValAsU8 = DarkEdif::TStringToUTF8(((Prop_Str *)NewParam)->String);
 		if (strcpy_s(edPtr->edGlobalID, newValAsU8.c_str()))
 			DarkEdif::MsgBox::Error(_T("SetPropValue() error"), _T("Error %i setting global ID; too long?"), errno);
 	}

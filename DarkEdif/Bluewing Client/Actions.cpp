@@ -63,7 +63,7 @@ void Extension::SetName(const TCHAR * name)
 	if (!Cli.connected())
 		return CreateError("Connect to a server before setting name.");
 
-	std::string nameU8(TStringToUTF8(name));
+	std::string nameU8(DarkEdif::TStringToUTF8(name));
 	if (!lw_u8str_normalize(nameU8))
 		return CreateError("Set Name was called with malformed name \"%s\".", nameU8.c_str());
 
@@ -83,7 +83,7 @@ void Extension::SendTextToServer(int subchannel, const TCHAR * textToSend)
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Send Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.sendserver(subchannel, TStringToUTF8(textToSend), 0);
+		Cli.sendserver(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToChannel(int subchannel, const TCHAR * textToSend)
 {
@@ -94,7 +94,7 @@ void Extension::SendTextToChannel(int subchannel, const TCHAR * textToSend)
 	else if (selChannel->readonly())
 		CreateError("Send Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->send(subchannel, TStringToUTF8(textToSend), 0);
+		selChannel->send(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToPeer(int subchannel, const TCHAR * textToSend)
 {
@@ -105,7 +105,7 @@ void Extension::SendTextToPeer(int subchannel, const TCHAR * textToSend)
 	else if (selPeer->readonly())
 		CreateError("Send Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->send(subchannel, TStringToUTF8(textToSend), 0);
+		selPeer->send(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::SendNumberToServer(int subchannel, int numToSend)
 {
@@ -141,7 +141,7 @@ void Extension::BlastTextToServer(int subchannel, const TCHAR * textToSend)
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Blast Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.blastserver(subchannel, TStringToUTF8(textToSend), 0);
+		Cli.blastserver(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 {
@@ -152,7 +152,7 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 	else if (selChannel->readonly())
 		CreateError("Blast Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->blast(subchannel, TStringToUTF8(textToSend), 0);
+		selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 {
@@ -163,7 +163,7 @@ void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 	else if (selPeer->readonly())
 		CreateError("Blast Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->blast(subchannel, TStringToUTF8(textToSend), 0);
+		selPeer->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::BlastNumberToServer(int subchannel, int numToSend)
 {
@@ -196,7 +196,7 @@ void Extension::BlastNumberToPeer(int subchannel, int numToSend)
 }
 void Extension::SelectChannelWithName(const TCHAR * channelName)
 {
-	const std::string channelNameU8 = TStringToUTF8(channelName);
+	const std::string channelNameU8 = DarkEdif::TStringToUTF8(channelName);
 
 	// For reselecting in new channel
 	// auto origPeerId = selPeer ? selPeer->id() : -1;
@@ -291,7 +291,7 @@ void Extension::SelectPeerOnChannelByName(const TCHAR * peerName)
 		}
 	}
 
-	CreateError("Peer with name %s not found on channel %s.", TStringToUTF8(peerName).c_str(), selChannel->name().c_str());
+	CreateError("Peer with name %s not found on channel %s.", DarkEdif::TStringToUTF8(peerName).c_str(), selChannel->name().c_str());
 }
 void Extension::SelectPeerOnChannelByID(int peerID)
 {
@@ -455,7 +455,7 @@ void Extension::BlastBinaryToPeer(int subchannel)
 }
 void Extension::SendMsg_AddASCIIByte(const TCHAR * byte)
 {
-	const std::string u8Str(TStringToUTF8(byte));
+	const std::string u8Str(DarkEdif::TStringToUTF8(byte));
 	if (u8Str.size() != 1)
 		return CreateError("Adding ASCII character to binary failed: byte \"%s\" supplied was part of a string, not a single byte.", u8Str.c_str());
 
@@ -498,7 +498,7 @@ void Extension::SendMsg_AddStringWithoutNull(const TCHAR * string)
 	if (!IsValidPtr(string))
 		return CreateError("Adding string without null terminator failed: string address %p supplied was invalid.", string);
 
-	const std::string stringU8(TStringToUTF8(string));
+	const std::string stringU8(DarkEdif::TStringToUTF8(string));
 	SendMsg_Sub_AddData(stringU8.c_str(), stringU8.size());
 }
 void Extension::SendMsg_AddString(const TCHAR *string)
@@ -506,7 +506,7 @@ void Extension::SendMsg_AddString(const TCHAR *string)
 	if (!IsValidPtr(string))
 		return CreateError("Adding string failed: string address %p supplied was invalid.", string);
 
-	const std::string stringU8(TStringToUTF8(string));
+	const std::string stringU8(DarkEdif::TStringToUTF8(string));
 	SendMsg_Sub_AddData(stringU8.c_str(), stringU8.size() + 1);
 }
 void Extension::SendMsg_AddBinaryFromAddress(unsigned int address, int size)
@@ -547,7 +547,7 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	size_t amountWritten;
@@ -586,7 +586,7 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot append received binary to file, error %i \"%s\" occurred with opening file \"%s\".", errno, errtext, TStringToUTF8(filename).c_str());
+		return CreateError("Cannot append received binary to file, error %i \"%s\" occurred with opening file \"%s\".", errno, errtext, DarkEdif::TStringToUTF8(filename).c_str());
 	}
 
 	size_t amountWritten;
@@ -600,11 +600,11 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 #endif
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\" occurred with writing the file. "
-			"Wrote %zu bytes, leaving file at size %" PRId64 " bytes.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
+			"Wrote %zu bytes, leaving file at size %" PRId64 " bytes.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext, amountWritten, filesize);
 	}
 
 	if (fclose(File))
-		CreateError("Cannot append received binary to file \"%s\", error number %i occurred with writing last part of the file.", TStringToUTF8(filename).c_str(), errno);
+		CreateError("Cannot append received binary to file \"%s\", error number %i occurred with writing last part of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno);
 }
 void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 {
@@ -620,7 +620,7 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot add file \"%s\" to send binary, error number %i \"%s\" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot add file \"%s\" to send binary, error number %i \"%s\" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	// Jump to end
@@ -636,13 +636,13 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	if (!buffer)
 	{
 		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve %li bytes of memory to add file into message.",
-			TStringToUTF8(filename).c_str(), filesize);
+			DarkEdif::TStringToUTF8(filename).c_str(), filesize);
 	}
 	else
 	{
 		size_t amountRead;
 		if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
-			CreateError("Couldn't read file \"%s\" into binary to send; reading file caused error %i \"%s\".", TStringToUTF8(filename).c_str(), errno, errtext);
+			CreateError("Couldn't read file \"%s\" into binary to send; reading file caused error %i \"%s\".", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 		else
 			SendMsg_Sub_AddData(buffer, amountRead);
 
@@ -672,7 +672,7 @@ void Extension::SelectChannelMaster()
 }
 void Extension::JoinChannel(const TCHAR * channelName, int hidden, int closeAutomatically)
 {
-	const std::string channelNameU8(TStringToUTF8(channelName));
+	const std::string channelNameU8(DarkEdif::TStringToUTF8(channelName));
 	if (channelName[0] == _T('\0'))
 		return CreateError("Cannot join channel: invalid channel name %s supplied.", channelNameU8.c_str());
 	Cli.join(channelNameU8, hidden != 0, closeAutomatically != 0);
@@ -898,7 +898,7 @@ void Extension::Connect(const TCHAR * hostname)
 		if (Port <= 0 || Port > 0xFFFF)
 			return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 1 to 65535.");
 	}
-	std::string hostnameU8(TStringToUTF8(hostname));
+	std::string hostnameU8(DarkEdif::TStringToUTF8(hostname));
 	Cli.connect(hostnameU8.c_str(), Port);
 }
 void Extension::SendMsg_Resize(int newSize)

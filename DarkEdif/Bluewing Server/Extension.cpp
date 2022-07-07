@@ -260,7 +260,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	LOGV(_T("" PROJECT_NAME " - Extension create: IsGlobal=%i.\n"), isGlobal ? 1 : 0);
 	if (isGlobal)
 	{
-		const std::tstring id = UTF8ToTString(edPtr->edGlobalID) + _T("BlueServer"s);
+		const std::tstring id = DarkEdif::UTF8ToTString(edPtr->edGlobalID) + _T("BlueServer"s);
 		void * globalVoidPtr = Runtime.ReadGlobal(id.c_str());
 		if (!globalVoidPtr)
 		{
@@ -371,7 +371,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	const auto selChannelDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selChannel)
-			writeTo = _T("Selected channel: ") + UTF8ToTString(ext->selChannel->name());
+			writeTo = _T("Selected channel: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
 			writeTo = _T("Selected channel: (none)"sv);
 	};
@@ -387,7 +387,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 
 	const auto selClientDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
 		if (ext->selClient)
-			writeTo = _T("Selected client: ") + UTF8ToTString(ext->selChannel->name());
+			writeTo = _T("Selected client: ") + DarkEdif::UTF8ToTString(ext->selChannel->name());
 		else
 			writeTo = _T("Selected client: (none)"sv);
 	};
@@ -585,7 +585,7 @@ void GlobalInfo::MarkAsPendingDelete()
 		if (err != NULL)
 		{
 			// No way to report it to Fusion itself; the last ext is being destroyed.
-			LOGE(_T("" PROJECT_NAME " - Pump closed with error \"%s\".\n"), UTF8ToTString(err->tostring()).c_str());
+			LOGE(_T("" PROJECT_NAME " - Pump closed with error \"%s\".\n"), DarkEdif::UTF8ToTString(err->tostring()).c_str());
 		}
 		LOGV(_T("" PROJECT_NAME " - Pump should be closed.\n"));
 		std::this_thread::yield();
@@ -705,7 +705,7 @@ void Extension::ClearThreadData()
 }
 std::string Extension::TStringToUTF8Simplified(std::tstring_view str)
 {
-	return lw_u8str_simplify(TStringToUTF8(str));
+	return lw_u8str_simplify(DarkEdif::TStringToUTF8(str));
 }
 
 int Extension::CheckForUTF8Cutoff(std::string_view sv)
@@ -881,7 +881,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 
 			const std::string_view resStr(result.data(), numBytesRead);
 			if (lw_u8str_validate(resStr))
-				return UTF8ToTString(resStr);
+				return DarkEdif::UTF8ToTString(resStr);
 
 			CreateError("Could not read text from received binary, UTF-8 was malformed at index %zu (attempted to read %d chars from %sstart index %zu).",
 				recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
@@ -947,7 +947,7 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 
 	const std::string errTextU8 = errorDetailed.str();
 #if defined(_DEBUG) && defined(_UNICODE)
-	const std::wstring errText = UTF8ToWide(errTextU8);
+	const std::wstring errText = DarkEdif::UTF8ToWide(errTextU8);
 	OutputDebugStringW(errText.c_str());
 	OutputDebugStringW(L"\n");
 #endif
@@ -1019,7 +1019,7 @@ bool Extension::IsValidPtr(const void * data)
 static const std::tstring empty;
 const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key)
 {
-	const std::string keyU8Simplified = lw_u8str_simplify(TStringToUTF8(key), true, false);
+	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(clientLocal.cbegin(), clientLocal.cend(),
 		[&keyU8Simplified, &client](const LocalData<lacewing::relayserver::client> & c) {
 			return c.ptr == client && lw_sv_cmp(c.keyU8Simplified, keyU8Simplified.c_str());
@@ -1031,7 +1031,7 @@ const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserv
 }
 const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key)
 {
-	const std::string keyU8Simplified = lw_u8str_simplify(TStringToUTF8(key), true, false);
+	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(channelLocal.cbegin(), channelLocal.cend(),
 		[&keyU8Simplified, &channel](const LocalData<lacewing::relayserver::channel> & c) {
 			return c.ptr == channel && lw_sv_cmp(c.keyU8Simplified, keyU8Simplified.c_str());
@@ -1043,7 +1043,7 @@ const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserv
 }
 void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key, std::tstring value)
 {
-	const std::string keyU8Simplified = lw_u8str_simplify(TStringToUTF8(key), true, false);
+	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(clientLocal.begin(), clientLocal.end(),
 		[&keyU8Simplified, &client](const LocalData<lacewing::relayserver::client> &c) {
 			return c.ptr == client && lw_sv_cmp(c.keyU8Simplified, keyU8Simplified.c_str());
@@ -1056,7 +1056,7 @@ void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> cli
 }
 void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key, std::tstring value)
 {
-	const std::string keyU8Simplified = lw_u8str_simplify(TStringToUTF8(key), true, false);
+	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(channelLocal.begin(), channelLocal.end(),
 		[&keyU8Simplified, &channel](const LocalData<lacewing::relayserver::channel> &c) {
 			return c.ptr == channel && lw_sv_cmp(c.keyU8Simplified, keyU8Simplified.c_str());
@@ -1542,7 +1542,7 @@ Extension::~Extension()
 			return;
 		}
 
-		const std::tstring id = UTF8ToTString(globals->_globalID) + _T("BlueServer"s);
+		const std::tstring id = DarkEdif::UTF8ToTString(globals->_globalID) + _T("BlueServer"s);
 		Runtime.WriteGlobal(id.c_str(), nullptr);
 		globals->lock.edif_unlock();
 

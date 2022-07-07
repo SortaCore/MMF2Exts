@@ -51,7 +51,7 @@ void Extension::FlashServer_Host(const TCHAR * path)
 	if (FlashSrv->hosting())
 		return CreateError("Cannot start hosting flash policy: already hosting a flash policy.");
 
-	FlashSrv->host(TStringToUTF8(path).c_str());
+	FlashSrv->host(DarkEdif::TStringToUTF8(path).c_str());
 }
 void Extension::FlashServer_StopHosting()
 {
@@ -75,7 +75,7 @@ void Extension::ChannelListing_Disable()
 }
 void Extension::SetWelcomeMessage(const TCHAR * message)
 {
-	Srv.setwelcomemessage(TStringToUTF8(message));
+	Srv.setwelcomemessage(DarkEdif::TStringToUTF8(message));
 }
 
 
@@ -115,9 +115,9 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 {
 	const int listIndex = FindAllowListFromName(listToSet);
 	if (listIndex == -1)
-		return CreateError(R"(Unicode allow list %s does not exist, should be "client names", "channel names", "received by client" or "received by server".)", TStringToUTF8(listToSet).c_str());
+		return CreateError(R"(Unicode allow list %s does not exist, should be "client names", "channel names", "received by client" or "received by server".)", DarkEdif::TStringToUTF8(listToSet).c_str());
 
-	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, TStringToANSI(allowListContents));
+	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, DarkEdif::TStringToANSI(allowListContents));
 	if (!err.empty())
 		CreateError("Couldn't set Unicode %s allow list, %s.", listToSet, err.c_str());
 }
@@ -177,7 +177,7 @@ static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWit
 
 void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
+	std::string autoDenyReasonU8 = DarkEdif::TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		autoDenyReasonU8, globals, "on connect request");
 	if (resp == AutoResponse::Invalid)
@@ -188,7 +188,7 @@ void Extension::EnableCondition_OnConnectRequest(int informFusion, int immediate
 }
 void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
+	std::string autoDenyReasonU8 = DarkEdif::TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		autoDenyReasonU8, globals, "on name set request");
 	if (resp == AutoResponse::Invalid)
@@ -199,7 +199,7 @@ void Extension::EnableCondition_OnNameSetRequest(int informFusion, int immediate
 }
 void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
+	std::string autoDenyReasonU8 = DarkEdif::TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		autoDenyReasonU8, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
@@ -210,7 +210,7 @@ void Extension::EnableCondition_OnJoinChannelRequest(int informFusion, int immed
 }
 void Extension::EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason)
 {
-	std::string autoDenyReasonU8 = TStringToUTF8(autoDenyReason);
+	std::string autoDenyReasonU8 = DarkEdif::TStringToUTF8(autoDenyReason);
 	AutoResponse resp = ConvToAutoResponse(informFusion, immediateRespondWith,
 		autoDenyReasonU8, globals, "on join channel request");
 	if (resp == AutoResponse::Invalid)
@@ -262,7 +262,7 @@ void Extension::OnInteractive_Deny(const TCHAR * reason)
 	if (!DenyReason.empty())
 		return CreateError("Can't deny client's action: Set to auto-deny, or Deny was called more than once. Ignoring additional denies.");
 
-	DenyReason = reason[0] ? TStringToUTF8(reason) : "No reason specified."s;
+	DenyReason = reason[0] ? DarkEdif::TStringToUTF8(reason) : "No reason specified."s;
 }
 void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 {
@@ -282,7 +282,7 @@ void Extension::OnInteractive_ChangeClientName(const TCHAR * newName)
 		return CreateError("Cannot change new client name: Cannot use a blank name.");
 	}
 
-	std::string newNameU8 = TStringToUTF8(newName);
+	std::string newNameU8 = DarkEdif::TStringToUTF8(newName);
 	if (!lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty())
 	{
 		DenyReason = serverModifiedNameError;
@@ -327,7 +327,7 @@ void Extension::OnInteractive_ChangeChannelName(const TCHAR * newName)
 		return CreateError("Cannot change joining channel name: Cannot use a blank name.");
 	}
 
-	std::string newNameU8 = TStringToUTF8(newName);
+	std::string newNameU8 = DarkEdif::TStringToUTF8(newName);
 	if (newNameU8.empty() || !lw_u8str_normalize(newNameU8) || lw_u8str_trim(newNameU8, true).empty())
 	{
 		DenyReason = serverModifiedNameError;
@@ -419,7 +419,7 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 	if (channelNamePtr[0] == _T('\0'))
 		return CreateError("Selecting channel by name failed: name cannot be blank.");
 
-	const std::string channelName(TStringToUTF8(channelNamePtr));
+	const std::string channelName(DarkEdif::TStringToUTF8(channelNamePtr));
 	if (channelName.size() > 255U)
 		return CreateError("Selecting channel by name failed: channel name \"%s\" was %zu UTF-8 characters, exceeding max of 255 characters.", channelName.c_str(), channelName.size());
 
@@ -449,7 +449,7 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 		}
 	}
 
-	CreateError("Selecting channel by name failed: Channel with name \"%s\" not found on server.", TStringToUTF8(channelNamePtr).c_str());
+	CreateError("Selecting channel by name failed: Channel with name \"%s\" not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
 }
 void Extension::Channel_Close()
 {
@@ -549,9 +549,9 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 	if (autocloseInt < 0 || autocloseInt > 1)
 		return CreateError("Cannot create new channel; autoclose channel setting is %i, should be 0 or 1.", autocloseInt);
 
-	const std::string channelNameU8 = TStringToUTF8(channelNamePtr);
+	const std::string channelNameU8 = DarkEdif::TStringToUTF8(channelNamePtr);
 	if (channelNameU8.size() > 254)
-		return CreateError("Cannot create new channel; channel name \"%s\" is too long (after UTF-8 conversion).", TStringToUTF8(channelNamePtr).c_str());
+		return CreateError("Cannot create new channel; channel name \"%s\" is too long (after UTF-8 conversion).", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
 	const std::string channelNameU8Simplified = lw_u8str_simplify(channelNameU8);
 
 	const bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
@@ -565,7 +565,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 		if (foundChIt != channels.cend())
 		{
 			return CreateError("Error creating channel with name \"%s\"; channel already exists (matching channel ID %hu, name %s).",
-				TStringToUTF8(channelNamePtr).c_str(), (**foundChIt).id(), (**foundChIt).name().c_str());
+				DarkEdif::TStringToUTF8(channelNamePtr).c_str(), (**foundChIt).id(), (**foundChIt).name().c_str());
 		}
 	}
 
@@ -587,7 +587,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 			std::find_if(clients.cbegin(), clients.cend(),
 				[&](const auto & cli) { return lw_sv_cmp(cli->nameSimplified(), masterClientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Error creating channel; specified master client name \"%s\" not found on server.", TStringToUTF8(masterClientName).c_str());
+			return CreateError("Error creating channel; specified master client name \"%s\" not found on server.", DarkEdif::TStringToUTF8(masterClientName).c_str());
 		selClient = *foundCliIt;
 	}
 
@@ -605,9 +605,9 @@ void Extension::Channel_CreateChannelWithMasterByID(const TCHAR * channelNamePtr
 	if (masterClientID < -1 || masterClientID >= 65535)
 		return CreateError("Cannot create new channel; master client ID %i is invalid. Use -1 for no master.", masterClientID);
 
-	const std::string channelNameU8 = TStringToUTF8(channelNamePtr);
+	const std::string channelNameU8 = DarkEdif::TStringToUTF8(channelNamePtr);
 	if (channelNameU8.size() > 254)
-		return CreateError("Cannot create new channel; channel name \"%s\" is too long (after UTF-8 conversion).", TStringToUTF8(channelNamePtr).c_str());
+		return CreateError("Cannot create new channel; channel name \"%s\" is too long (after UTF-8 conversion).", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
 	const std::string channelNameU8Simplified = lw_u8str_simplify(channelNameU8);
 
 	bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
@@ -619,7 +619,7 @@ void Extension::Channel_CreateChannelWithMasterByID(const TCHAR * channelNamePtr
 			std::find_if(channels.cbegin(), channels.cend(),
 				[=](const auto & cli) { return lw_sv_cmp(cli->nameSimplified(), channelNameU8Simplified); });
 		if (foundChIt != channels.cend())
-			return CreateError("Error creating channel with name \"%s\"; channel already exists.", TStringToUTF8(channelNamePtr).c_str());
+			return CreateError("Error creating channel with name \"%s\"; channel already exists.", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
 	}
 
 	// Blank master client
@@ -730,7 +730,7 @@ void Extension::Channel_JoinClientByName(const TCHAR * clientNamePtr)
 			std::find_if(clients.cbegin(), clients.cend(),
 				[&](const auto & cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Error joining client with name \"%s\" to channel; client with that name not found on server.", TStringToUTF8(clientNamePtr).c_str());
+			return CreateError("Error joining client with name \"%s\" to channel; client with that name not found on server.", DarkEdif::TStringToUTF8(clientNamePtr).c_str());
 		clientToUse = *foundCliIt;
 	}
 
@@ -844,7 +844,7 @@ void Extension::Channel_KickClientByName(const TCHAR * clientNamePtr)
 			std::find_if(clients.cbegin(), clients.cend(),
 				[&](const auto & cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Error kicking client with name \"%s\" from channel; client with that name not found on server.", TStringToUTF8(clientNamePtr).c_str());
+			return CreateError("Error kicking client with name \"%s\" from channel; client with that name not found on server.", DarkEdif::TStringToUTF8(clientNamePtr).c_str());
 		clientToUse = *foundCliIt;
 	}
 
@@ -1033,7 +1033,7 @@ void Extension::Client_SelectByName(const TCHAR * clientName)
 			std::find_if(clients.cbegin(), clients.cend(),
 				[&](const auto &cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
 		if (foundCliIt == clients.cend())
-			return CreateError("Client with name %s not found on server.", TStringToUTF8(clientName).c_str());
+			return CreateError("Client with name %s not found on server.", DarkEdif::TStringToUTF8(clientName).c_str());
 		selClient = *foundCliIt;
 	}
 
@@ -1153,7 +1153,7 @@ void Extension::SendTextToChannel(int subchannel, const TCHAR * textToSend)
 	if (selChannel->readonly())
 		return CreateError("Send Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	selChannel->send(subchannel, TStringToUTF8(textToSend), 0);
+	selChannel->send(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::SendTextToClient(int subchannel, const TCHAR * textToSend)
 {
@@ -1164,7 +1164,7 @@ void Extension::SendTextToClient(int subchannel, const TCHAR * textToSend)
 	if (selClient->readonly())
 		return CreateError("Send Text to Client was called with a read-only client ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	selClient->send(subchannel, TStringToUTF8(textToSend), 0);
+	selClient->send(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
 }
 void Extension::SendNumberToChannel(int subchannel, int numToSend)
 {
@@ -1225,7 +1225,7 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToBlast)
 	if (selChannel->readonly())
 		return CreateError("Blast Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	selChannel->blast(subchannel, TStringToUTF8(textToBlast), 0);
+	selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
 }
 void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 {
@@ -1236,7 +1236,7 @@ void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 	if (selClient->readonly())
 		return CreateError("Blast Text to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	selClient->blast(subchannel, TStringToUTF8(textToBlast), 0);
+	selClient->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
 }
 void Extension::BlastNumberToChannel(int subchannel, int numToBlast)
 {
@@ -1290,7 +1290,7 @@ void Extension::BlastBinaryToClient(int subchannel)
 }
 void Extension::SendMsg_AddASCIIByte(const TCHAR * byte)
 {
-	const std::string u8Str(TStringToUTF8(byte));
+	const std::string u8Str(DarkEdif::TStringToUTF8(byte));
 	if (u8Str.size() != 1)
 		return CreateError("Adding ASCII character to binary failed: byte \"%s\" supplied was part of a string, not a single byte.", u8Str.c_str());
 
@@ -1330,12 +1330,12 @@ void Extension::SendMsg_AddFloat(float _float)
 }
 void Extension::SendMsg_AddStringWithoutNull(const TCHAR * string)
 {
-	const std::string u8String = TStringToUTF8(string);
+	const std::string u8String = DarkEdif::TStringToUTF8(string);
 	SendMsg_Sub_AddData(u8String.c_str(), u8String.size());
 }
 void Extension::SendMsg_AddString(const TCHAR * string)
 {
-	const std::string u8Str = TStringToUTF8(string);
+	const std::string u8Str = DarkEdif::TStringToUTF8(string);
 	SendMsg_Sub_AddData(u8Str.c_str(), u8Str.size() + 1U);
 }
 void Extension::SendMsg_AddBinaryFromAddress(unsigned int address, int size)
@@ -1361,7 +1361,7 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	{
 		ErrNoToErrText();
 		return CreateError("Cannot add file \"%s\" to send binary, error %i (%s) occurred with opening the file."
-			" The send binary has not been modified.", TStringToUTF8(filename).c_str(), errno, errtext);
+			" The send binary has not been modified.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	// Jump to end
@@ -1378,7 +1378,7 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	if ((amountRead = fread_s(buffer.get(), filesize, 1U, filesize, file)) != filesize)
 	{
 		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve enough memory "
-			"to add file into message. The send binary has not been modified.", TStringToUTF8(filename).c_str());
+			"to add file into message. The send binary has not been modified.", DarkEdif::TStringToUTF8(filename).c_str());
 	}
 	else
 		SendMsg_Sub_AddData(buffer.get(), amountRead);
@@ -1536,7 +1536,7 @@ void Extension::RecvMsg_SaveToFile(int passedPosition, int passedSize, const TCH
 	{
 		return CreateError("Cannot save received binary to file \"%s\"; message doesn't have %zu"
 			" bytes from position %zu onwards, it only has %zu bytes.",
-			TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
+			DarkEdif::TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
 	}
 #ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("wb"), SH_DENYWR);
@@ -1547,7 +1547,7 @@ void Extension::RecvMsg_SaveToFile(int passedPosition, int passedSize, const TCH
 	{
 		ErrNoToErrText();
 		CreateError("Cannot save received binary to file \"%s\", error %i \"%s\""
-			" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+			" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 		return;
 	}
 
@@ -1556,7 +1556,7 @@ void Extension::RecvMsg_SaveToFile(int passedPosition, int passedSize, const TCH
 	{
 		ErrNoToErrText();
 		CreateError("Cannot save received binary to file \"%s\", error %i \"%s\""
-			" occurred with writing the file. Wrote %zu bytes total.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten);
+			" occurred with writing the file. Wrote %zu bytes total.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext, amountWritten);
 		fclose(File);
 		return;
 	}
@@ -1565,7 +1565,7 @@ void Extension::RecvMsg_SaveToFile(int passedPosition, int passedSize, const TCH
 	{
 		ErrNoToErrText();
 		CreateError("Cannot save received binary to file \"%s\", error %i \"%s\""
-			" occurred with writing the end of the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+			" occurred with writing the end of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 }
 void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const TCHAR * filename)
@@ -1583,7 +1583,7 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 	{
 		return CreateError("Cannot append received binary to file \"%s\"; message doesn't have %zu"
 			" bytes from position %zu onwards, it only has %zu bytes.",
-			TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
+			DarkEdif::TStringToUTF8(filename).c_str(), size, position, threadData->receivedMsg.content.size() - position);
 	}
 #ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("ab"), SH_DENYWR);
@@ -1594,7 +1594,7 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 	{
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\""
-			" occurred with opening the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+			" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 		return;
 	}
 
@@ -1603,7 +1603,7 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 	{
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\""
-			" occurred with writing the file. Wrote %zu bytes total.", TStringToUTF8(filename).c_str(), errno, errtext, amountWritten);
+			" occurred with writing the file. Wrote %zu bytes total.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext, amountWritten);
 		fclose(File);
 		return;
 	}
@@ -1612,6 +1612,6 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 	{
 		ErrNoToErrText();
 		CreateError("Cannot append received binary to file \"%s\", error %i \"%s\""
-			" occurred with writing the end of the file.", TStringToUTF8(filename).c_str(), errno, errtext);
+			" occurred with writing the end of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 }

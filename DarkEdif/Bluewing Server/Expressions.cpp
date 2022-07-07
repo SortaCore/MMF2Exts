@@ -2,7 +2,7 @@
 
 const TCHAR * Extension::Error()
 {
-	return Runtime.CopyString(!threadData->error.text.empty() ? UTF8ToTString(threadData->error.text).c_str() : _T(""));
+	return Runtime.CopyString(!threadData->error.text.empty() ? DarkEdif::UTF8ToTString(threadData->error.text).c_str() : _T(""));
 }
 unsigned int Extension::Channel_Count()
 {
@@ -10,7 +10,7 @@ unsigned int Extension::Channel_Count()
 }
 const TCHAR * Extension::Client_Name()
 {
-	return Runtime.CopyString(!selClient ? _T("") : UTF8ToTString(selClient->name()).c_str());
+	return Runtime.CopyString(!selClient ? _T("") : DarkEdif::UTF8ToTString(selClient->name()).c_str());
 }
 const TCHAR * Extension::RecvMsg_ReadAsString()
 {
@@ -21,7 +21,7 @@ const TCHAR * Extension::RecvMsg_ReadAsString()
 
 	// RecvMsg_Sub_ReadString expects size in code points or a null terminator,
 	// but in a text message neither is present, so we'll just directly convert.
-	return Runtime.CopyString(UTF8ToTString(threadData->receivedMsg.content).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->receivedMsg.content).c_str());
 }
 int Extension::RecvMsg_ReadAsInteger()
 {
@@ -40,7 +40,7 @@ unsigned int Extension::Client_ID()
 }
 const TCHAR * Extension::RequestedClientName()
 {
-	return Runtime.CopyString(UTF8ToTString(threadData->requested.name).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->requested.name).c_str());
 }
 const TCHAR * Extension::RequestedChannelName()
 {
@@ -48,7 +48,7 @@ const TCHAR * Extension::RequestedChannelName()
 	if (threadData->CondTrig[0] == 4)
 		CreateError("Requested channel name is not available in a Leave Channel Request. Use Channel_Name$() instead.");
 
-	return Runtime.CopyString(UTF8ToTString(threadData->requested.name).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->requested.name).c_str());
 }
 unsigned int Extension::Client_ConnectionTime()
 {
@@ -75,7 +75,7 @@ const TCHAR * Extension::Channel_GetLocalData(const TCHAR * key)
 }
 const TCHAR * Extension::Channel_Name()
 {
-	return Runtime.CopyString(selChannel ? UTF8ToTString(selChannel->name()).c_str() : _T(""));
+	return Runtime.CopyString(selChannel ? DarkEdif::UTF8ToTString(selChannel->name()).c_str() : _T(""));
 }
 unsigned int Extension::Channel_ClientCount()
 {
@@ -114,7 +114,7 @@ const TCHAR * Extension::RecvMsg_StrASCIIByte(int index)
 		return Runtime.CopyString(_T(""));
 	}
 
-	return Runtime.CopyString(ANSIToTString(partial).c_str());
+	return Runtime.CopyString(DarkEdif::ANSIToTString(partial).c_str());
 }
 unsigned int Extension::RecvMsg_UnsignedByte(int index)
 {
@@ -248,7 +248,7 @@ const TCHAR * Extension::Client_IP()
 
 	char addr[64];
 	lw_addr_prettystring(selClient->getaddress().data(), addr, 64);
-	return Runtime.CopyString(ANSIToTString(addr).c_str());
+	return Runtime.CopyString(DarkEdif::ANSIToTString(addr).c_str());
 }
 unsigned int Extension::Port()
 {
@@ -256,7 +256,7 @@ unsigned int Extension::Port()
 }
 const TCHAR * Extension::Welcome_Message()
 {
-	return Runtime.CopyString(UTF8ToTString(Srv.getwelcomemessage()).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(Srv.getwelcomemessage()).c_str());
 }
 unsigned int Extension::RecvMsg_MemoryAddress()
 {
@@ -291,7 +291,7 @@ const TCHAR * Extension::RecvMsg_Cursor_StrASCIIByte()
 		return Runtime.CopyString(_T(""));
 	}
 
-	return Runtime.CopyString(ANSIToTString(partial).c_str());
+	return Runtime.CopyString(DarkEdif::ANSIToTString(partial).c_str());
 }
 unsigned int Extension::RecvMsg_Cursor_UnsignedByte()
 {
@@ -380,7 +380,7 @@ const TCHAR * Extension::Client_ProtocolImplementation()
 {
 	if (selClient == nullptr)
 		return Runtime.CopyString(_T("(no client selected)"));
-	return Runtime.CopyString(UTF8ToTString(selClient->getimplementation()).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(selClient->getimplementation()).c_str());
 }
 unsigned int Extension::SendBinaryMsg_MemoryAddress()
 {
@@ -400,10 +400,10 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 	}
 
 	bool allValid;
-	const std::string formatANSI = TStringToANSI(formatTStr, &allValid);
+	const std::string formatANSI = DarkEdif::TStringToANSI(formatTStr, &allValid);
 	if (!allValid)
 	{
-		CreateError("Dumping message failed; format supplied \"%s\" had unrecognised characters. See help file.", TStringToUTF8(formatTStr).c_str());
+		CreateError("Dumping message failed; format supplied \"%s\" had unrecognised characters. See help file.", DarkEdif::TStringToUTF8(formatTStr).c_str());
 		return Runtime.CopyString(_T(""));
 	}
 	const char * format = formatANSI.c_str();
@@ -584,7 +584,7 @@ const TCHAR * Extension::RecvMsg_DumpToString(int index, const TCHAR * formatTSt
 
 	std::string outputTrim = output.str();
 	outputTrim.resize(outputTrim.size() - 2);
-	return Runtime.CopyString(UTF8ToTString(outputTrim).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(outputTrim).c_str());
 }
 unsigned int Extension::AllClientCount()
 {
@@ -592,7 +592,7 @@ unsigned int Extension::AllClientCount()
 }
 const TCHAR * Extension::GetDenyReason()
 {
-	return Runtime.CopyString(UTF8ToTString(DenyReason).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(DenyReason).c_str());
 }
 
 /// <summary> Number of UTF-8 code points (including things like combining accents) </summary>
@@ -602,7 +602,7 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 	if (tStr[0] == _T('\0'))
 		return 0;
 
-	const std::string u8str = TStringToUTF8(tStr);
+	const std::string u8str = DarkEdif::TStringToUTF8(tStr);
 	if (u8str.empty())
 		return -1;
 
@@ -633,7 +633,7 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	if (tStr[0] == _T('\0'))
 		return 0;
 
-	const std::string u8str = TStringToUTF8(tStr);
+	const std::string u8str = DarkEdif::TStringToUTF8(tStr);
 	if (u8str.empty())
 		return -1;
 
@@ -668,8 +668,8 @@ int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 		return 0;
 
 	// TODO: can make this a little faster by only measuring length of output in WideToMultiByte(),
-	// instead of doing that + the conversion itself as TStringToUTF8() does internally.
-	const size_t u8size = TStringToUTF8(tStr).size();
+	// instead of doing that + the conversion itself as DarkEdif::TStringToUTF8() does internally.
+	const size_t u8size = DarkEdif::TStringToUTF8(tStr).size();
 	return u8size <= 0 ? -1 : (int)u8size;
 }
 
@@ -686,23 +686,23 @@ const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TC
 	if (allowListSrvIndex == -1)
 	{
 		// Not found by name; try to parse it as a list
-		const std::string err = list.setcodepointsallowedlist(TStringToUTF8(allowList));
+		const std::string err = list.setcodepointsallowedlist(DarkEdif::TStringToUTF8(allowList));
 		if (!err.empty())
-			return Runtime.CopyString(UTF8ToTString(err).c_str());
+			return Runtime.CopyString(DarkEdif::UTF8ToTString(err).c_str());
 
 		// fall through
 	}
 
 	const int rejectedCodePointIndex = allowListSrvIndex == -1 ?
-		list.checkcodepointsallowed(TStringToUTF8(toTest), &rejectedChar) :
-		Srv.checkcodepointsallowed((lacewing::relayserver::codepointsallowlistindex)allowListSrvIndex, TStringToUTF8(toTest), &rejectedChar);
+		list.checkcodepointsallowed(DarkEdif::TStringToUTF8(toTest), &rejectedChar) :
+		Srv.checkcodepointsallowed((lacewing::relayserver::codepointsallowlistindex)allowListSrvIndex, DarkEdif::TStringToUTF8(toTest), &rejectedChar);
 	if (rejectedCodePointIndex == -1)
 		return Runtime.CopyString(_T(""));
 
 	char output[256];
 	sprintf_s(output, std::size(output), "Code point at index %d does not match allowed list. Code point U+%0.4X, decimal %u; valid = %s, Unicode category = %s.",
 		rejectedCodePointIndex, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? "yes" : "no", utf8proc_category_string(rejectedChar));
-	return Runtime.CopyString(UTF8ToTString(output).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(output).c_str());
 }
 
 int Extension::Channel_ID()

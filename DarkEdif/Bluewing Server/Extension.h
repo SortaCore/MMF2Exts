@@ -92,7 +92,7 @@ public:
 	// called from Handle() when an interactive event needs to be responded to
 	void HandleInteractiveEvent(std::shared_ptr<EventToRun> s);
 
-	// Runs TStringToUTF8() then lw_u8str_simplify() on input.
+	// Runs DarkEdif::TStringToUTF8() then lw_u8str_simplify() on input.
 	std::string TStringToUTF8Simplified(std::tstring_view);
 
 	// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
