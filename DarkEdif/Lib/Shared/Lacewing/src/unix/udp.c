@@ -139,6 +139,8 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
 	lw_error_delete (error);
 
+	lwp_make_nonblocking(ctx->fd);
+
 	ctx->filter = lw_filter_clone (filter);
 
 	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->fd, ctx, read_ready, 0, lw_true);

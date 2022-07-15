@@ -196,7 +196,7 @@ lw_addr lw_addr_clone (lw_addr ctx)
 
 	memcpy (addr->service, ctx->service, sizeof (ctx->service));
 
-	addr->hostname = addr->hostname_to_free = strdup(ctx->hostname);
+	addr->hostname = addr->hostname_to_free = ctx->hostname ? strdup(ctx->hostname) : NULL;
 
 	return addr;
 }
@@ -256,10 +256,12 @@ const char * lw_addr_tostring (lw_addr ctx)
 
 	case AF_INET6:
 	{
-		int length = sizeof (ctx->buffer) - 1;
 
+		// WIN32 maps to "[ipv6]", Unix maps to "ipv6". We merge to Windows' IPv6 format, as it's the standard.
+		// If you do change this to Unix style, then update lw_addr_prettystring().
 		#ifdef _WIN32
 
+			int length = sizeof(ctx->buffer) - 1;
 			WSAAddressToStringA ((LPSOCKADDR) ctx->info->ai_addr,
 								(DWORD) ctx->info->ai_addrlen,
 								0,
@@ -268,11 +270,14 @@ const char * lw_addr_tostring (lw_addr ctx)
 
 		#else
 
+			int length = sizeof(ctx->buffer) - 2;
+			ctx->buffer[0] = '[';
 			inet_ntop (AF_INET6,
 						&((struct sockaddr_in6 *)
 						ctx->info->ai_addr)->sin6_addr,
-						ctx->buffer,
+						&ctx->buffer[1],
 						length);
+			strcat(&ctx->buffer[1], "]");
 
 		#endif
 

@@ -82,8 +82,6 @@ struct _lw_server_client
 	  When looking up string representation make sure to check. */
 	lw_addr addr;
 
-	HANDLE socket;
-
 	lw_server_client * elem;
 
 	/* TODO: don't include this for non SSL clients

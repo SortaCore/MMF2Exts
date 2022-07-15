@@ -85,9 +85,6 @@ struct _lw_server_client
 
 	lw_addr address;
 
-	int fd;
-	lw_pump_watch watch;
-
 	lw_server_client * elem;
 };
 
@@ -172,9 +169,9 @@ lw_server lw_server_new (lw_pump pump)
 	ctx->pump = pump;
 
 	#ifdef _lacewing_npn
-		lwp_trace ("NPN is available\n");
+		lwp_trace ("NPN is available");
 	#else
-		lwp_trace ("NPN is NOT available\n");
+		lwp_trace ("NPN is NOT available");
 	#endif
 
 	ctx->socket = -1;
@@ -257,6 +254,8 @@ static void listen_socket_read_ready (void * tag)
 		 if (lwp_release (client, "on_connect") ||
 				((lw_stream) ctx)->flags & lwp_stream_flag_dead)
 		 {
+			 if (ctx->on_disconnect)
+				 ctx->on_disconnect(ctx, client);
 			/* Client was deleted by connect hook
 			 */
 			return;
@@ -329,6 +328,8 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	  lw_error_delete (error);
 	  return;
 	}
+
+	lwp_make_nonblocking(ctx->socket);
 
 	lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
 
@@ -570,9 +571,9 @@ void on_client_close (lw_stream stream, void * tag)
 
 	lw_server ctx = client->server;
 
-	lwp_trace ("Close %d", client->fd);
+	lwp_trace ("Close %d", client->fdstream.fd);
 
-	client->fd = -1;
+	client->fdstream.fd = -1;
 
 	if (client->on_connect_called)
 	{
