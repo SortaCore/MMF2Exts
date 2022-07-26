@@ -16,7 +16,7 @@
 				[ 32, "Advanced initialize" ],
 				"---",
 				[ 4, "Close down socket" ],
-				[ 33, "Send packet to server" ],
+				[ 33, "Send packet to server" ]
 			],
 			[ "Server",
 				[ 11, "Basic initialize" ],
@@ -405,7 +405,7 @@
 					[ "Integer", "Socket ID:" ],
 					[ "Text", "Text to send to server (or \"\")" ],
 					[ "Text", "Text encoding (\"UTF-8\", \"PACKET\", etc)" ],
-					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ],
+					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ]
 				]
 			},
 			// ID = 34
@@ -416,7 +416,7 @@
 					[ "Integer", "Peer socket ID:" ],
 					[ "Text", "Text to send to client (or \"\")" ],
 					[ "Text", "Text encoding (\"UTF-8\", \"PACKET\", etc)" ],
-					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ],
+					[ "Integer", "(Advanced) Flags (Use 0, or see help file)" ]
 				]
 			},
 			// ID = 35
