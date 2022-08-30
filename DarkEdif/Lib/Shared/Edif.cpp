@@ -424,8 +424,20 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			CInputMemFile * File = CInputMemFile::NewInstance();
 			File->Create((LPBYTE)IconData, IconSize);
 
-			std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
-			ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
+			const std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
+			const bool loadedOK = ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
+			if (!loadedOK)
+			{
+				// Read PNG bit depth: Skip 8 byte PNG header, IHDR 4 byte chunk length/type, img width/height,
+				// and then get bit depth byte.
+				// 4 bit or less bit depth is not loadable by Fusion's PNG filter.
+				const std::uint8_t bitDepth = File->GetMemBuffer()[8 + 4 + 4 + 4 + 4];
+
+				if (bitDepth <= 4)
+					DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png uses a bit depth of %hhu, which is too small."), bitDepth);
+				else
+					DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png failed to load."));
+			}
 
 			File->Delete();
 
@@ -442,7 +454,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 			else
 				Icon->CreateAlpha();
 
-			if (tempIcon->Blit(*Icon) == FALSE)
+			if (loadedOK && tempIcon->Blit(*Icon) == FALSE)
 				DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 		}
 	}

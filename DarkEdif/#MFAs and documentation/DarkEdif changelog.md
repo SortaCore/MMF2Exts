@@ -6,22 +6,24 @@ Due to this, editor builds of DarkEdif extensions check for SDK updates using th
 This does not mean a game-ending bug, but if there is a lot of code updates (including cosmetic), or a bugfix that will likely affect new or current users, then a new SDK version will be released.  
 Minor changes won't necessitate an immediate version update, so to get the latest DarkEdif SDK, use the latest MMF2Exts commit.
 
-If you're editing this file, note that the use of a Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph, is used heavily.  
-Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The day of releases should be in UTC timezone.
+If you're editing this file, note that there is use of a Markdown syntax, two spaces before line break to keep the line break without creating a new paragraph.  
+Some editors will consider this to be trailing whitespace and remove it; make sure yours doesn't.  
+Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
 
 Changes until v15 release
 ----
 *v15 not released yet*
+- Edittime: Added a Icon.png bit depth check. When a minified PNG has less than 8-bit color depth, Fusion's PNG filter won't load it.
 
 
 Changes until v14 release
 ----
-*v14 released on 7th July 2022, commit [90c1990](https://github.com/SortaCore/MMF2Exts/commit/90c199053b9b9e99769522cdf5ab0182a369aab1)   *
+*v14 released on 7th July 2022, commit [90c1990](https://github.com/SortaCore/MMF2Exts/commit/90c199053b9b9e99769522cdf5ab0182a369aab1)*
 - All platforms: Added smart property system; properties can now be altered between extension versions easily
 - Edittime: Fixed update checker reporting to user when server sends no content. This is caused by server being down.  
 	Server down is by default considered a "no update" scenario. This behaviour can be overriden by DarkEdif.ini setting.  
-	When server sends garbage, it's reported to user, though, as it's abnormal, whereas server being down, while uncommon, is normal.
+	When server sends garbage, it's reported to user though, as it's abnormal; whereas server being down, while uncommon, is normal.
 - Windows: fixed incompatibility with Fusion 2.0 if extension had alt values (caused crash on alt string C and later being set)
 - Updated DarkEdif pre-build tool to v1.0.0.2, fixed an infinite-loop bug caused by comments
 - Windows: fixed potential error on Fusion 2.0 and CF2.5 < build 293.9 if an expression generated an event (e.g. creating errors)
