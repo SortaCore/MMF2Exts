@@ -19,7 +19,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 2;
+	static const int Version = 3;
 
 	// If you change OEFLAGS, make sure you modify RUNDATA so the data is available, or you'll get crashes!
 	// For example, OEFLAGS::VALUES makes use of the AltVals rv struct.
