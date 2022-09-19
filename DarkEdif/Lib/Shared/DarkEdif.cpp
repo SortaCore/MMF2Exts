@@ -1498,9 +1498,9 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			++convState->numPropsReset;
 			std::string data = (const char*)prop["DefaultState"];
 			if (!_stricmp(prop["Case"], "Lower"))
-				std::transform(data.begin(), data.end(), data.begin(), std::tolower);
+				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::tolower(c); });
 			else if (!_stricmp(prop["Case"], "Upper"))
-				std::transform(data.begin(), data.end(), data.begin(), std::toupper);
+				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::toupper(c); });
 			return convRet->Return_OK(_strdup(data.c_str()), sizeOfStr, [](const void* v) { free((void *)v); });
 		}
 		// Stores text of item, but checks it's in Items
@@ -2372,6 +2372,9 @@ found:
 	case Edif::Properties::IDs::PROPTYPE_FILENAME:
 	case Edif::Properties::IDs::PROPTYPE_PICTUREFILENAME:
 	case Edif::Properties::IDs::PROPTYPE_DIRECTORYNAME:
+	case Edif::Properties::IDs::PROPTYPE_COMBOBOX:
+	case Edif::Properties::IDs::PROPTYPE_COMBOBOXBTN:
+	case Edif::Properties::IDs::PROPTYPE_ICONCOMBOBOX:
 		ret = UTF8ToTString(std::string_view((const char*)data->ReadPropValue(), data->ReadPropValueSize()));
 #ifndef _WIN32
 		// On non-Windows, the multiline editbox is stored as CRLF, and we want LF newlines instead
@@ -2402,6 +2405,9 @@ std::tstring DarkEdif::Properties::GetPropertyStr(int propID) const
 	case Edif::Properties::IDs::PROPTYPE_FILENAME:
 	case Edif::Properties::IDs::PROPTYPE_PICTUREFILENAME:
 	case Edif::Properties::IDs::PROPTYPE_DIRECTORYNAME:
+	case Edif::Properties::IDs::PROPTYPE_COMBOBOX:
+	case Edif::Properties::IDs::PROPTYPE_COMBOBOXBTN:
+	case Edif::Properties::IDs::PROPTYPE_ICONCOMBOBOX:
 		ret = UTF8ToTString(std::string_view((const char*)data->ReadPropValue(), data->ReadPropValueSize()));
 #ifndef _WIN32
 		// On non-Windows, the multiline editbox is stored as CRLF, and we want LF newlines instead
@@ -2412,6 +2418,81 @@ std::tstring DarkEdif::Properties::GetPropertyStr(int propID) const
 	default:
 		LOGE(_T("GetPropertyStr(ID = %d) is not a string property."), propID);
 		return std::tstring();
+	}
+}
+
+// Returns a float property setting from property name.
+float DarkEdif::Properties::GetPropertyNum(std::string_view propName) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	LOGE(_T("GetPropertyNum() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return 0.f;
+
+found:
+	float ret;
+	switch (data->propTypeID)
+	{
+	case Edif::Properties::IDs::PROPTYPE_EDIT_NUMBER:
+	case Edif::Properties::IDs::PROPTYPE_COLOR:
+	case Edif::Properties::IDs::PROPTYPE_SLIDEREDIT:
+	case Edif::Properties::IDs::PROPTYPE_SPINEDIT:
+	case Edif::Properties::IDs::PROPTYPE_DIRCTRL:
+		// Integer prop; but since they have a low precision, we'll return as float
+		if (data->ReadPropValueSize() != 4)
+			LOGE(_T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
+		ret = (float)*(int*)data->ReadPropValue();
+		return ret;
+	case Edif::Properties::IDs::PROPTYPE_EDIT_FLOAT:
+	case Edif::Properties::IDs::PROPTYPE_SPINEDITFLOAT:
+		if (data->ReadPropValueSize() != 4)
+			LOGE(_T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
+		ret = *(float*)data->ReadPropValue();
+		return ret;
+	default:
+		LOGE(_T("GetPropertyNum(name = \"%s\") is not a numeric property."), UTF8ToTString(propName).c_str());
+		return 0.f;
+	}
+}
+// Returns float property setting from a property ID.
+float DarkEdif::Properties::GetPropertyNum(int propID) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (data)
+	{
+		LOGE(_T("GetPropertyNum() error; property ID %d does not exist."), propID);
+		return 0.f;
+	}
+	float ret;
+	switch (data->propTypeID)
+	{
+	case Edif::Properties::IDs::PROPTYPE_EDIT_NUMBER:
+	case Edif::Properties::IDs::PROPTYPE_COLOR:
+	case Edif::Properties::IDs::PROPTYPE_SLIDEREDIT:
+	case Edif::Properties::IDs::PROPTYPE_SPINEDIT:
+	case Edif::Properties::IDs::PROPTYPE_DIRCTRL:
+		// Integer prop; but since they have a low precision, we'll return as float
+		if (data->ReadPropValueSize() != 4)
+			LOGE(_T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
+		ret = (float)*(int *)data->ReadPropValue();
+		return ret;
+	case Edif::Properties::IDs::PROPTYPE_EDIT_FLOAT:
+	case Edif::Properties::IDs::PROPTYPE_SPINEDITFLOAT:
+		if (data->ReadPropValueSize() != 4)
+			LOGE(_T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
+		ret = *(float *)data->ReadPropValue();
+		return ret;
+	default:
+		LOGE(_T("GetPropertyNum(ID = %d) is not a numeric property."), propID);
+		return 0.f;
 	}
 }
 
@@ -2634,7 +2715,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_COLOR:
 				SetAllProps(0, NULL);
 
-				// Edit box for slider or spin control, Parameters = min value, max value
+			// Edit box for slider or spin control, Parameters = min value, max value
 			case PROPTYPE_SPINEDIT:
 			case PROPTYPE_SLIDEREDIT:
 			{
@@ -2668,41 +2749,41 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_SIZE:
 				SetAllProps(0, NULL);
 
-				// Checkbox
+			// Checkbox
 			case PROPTYPE_LEFTCHECKBOX:
 				// Enforce option to show it is a checkbox
 				SetAllProps(PROPOPT_CHECKBOX, NULL);
 
-				// Direction Selector
+			// Direction Selector
 			case PROPTYPE_DIRCTRL:
 				SetAllProps(0, NULL);
 
-				// Group
+			// Group
 			case PROPTYPE_GROUP:
 				SetAllProps(0, NULL);
 
-				// Edit box + browse file button, Parameter = FilenameCreateParams
+			// Edit box + browse file button, Parameter = FilenameCreateParams
 			case PROPTYPE_FILENAME:
 			case PROPTYPE_PICTUREFILENAME:
 				SetAllProps(0, NULL);
 
-				// Font dialog box
+			// Font dialog box
 			case PROPTYPE_FONT:
 				SetAllProps(0, NULL);
 
-				// Edit box for floating point numbers (does not support min/max)
+			// Edit box for floating point numbers (does not support min/max)
 			case PROPTYPE_EDIT_FLOAT:
 				SetAllProps(0, NULL);
 
-				// Image list
+			// Image list
 			case PROPTYPE_IMAGELIST:
 				SetAllProps(0, NULL);
 
-				// Combo box with icons
+			// Combo box with icons
 			case PROPTYPE_ICONCOMBOBOX:
 				SetAllProps(0, NULL);
 
-				// URL button
+			// URL button
 			case PROPTYPE_URLBUTTON:
 				SetAllProps(0, NULL);
 

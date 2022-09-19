@@ -184,6 +184,7 @@ struct extHeader
 };
 
 enum class HeaderObjectFlags : std::uint16_t {
+	None,
 	Destroyed = 0x0001,
 	TrueEvent = 0x0002,
 	RealSprite = 0x0004,

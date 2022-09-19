@@ -276,21 +276,31 @@ namespace Edif
 	long FusionAPI ExpressionJump(RUNDATA * rdPtr, long param);
 #endif
 
-	inline int ActionID(int ID)
-	{
+#ifndef INTENSE_FUNCTIONS_EXTENSION
+	inline int ActionID(int ID) {
 		return 25000 + ID;
 	}
 
-	inline int ConditionID(int ID)
-	{
+	inline int ConditionID(int ID) {
 		return 26000 + ID;
 	}
 
-	inline int ExpressionID(int ID)
-	{
+	inline int ExpressionID(int ID) {
 		return 27000 + ID;
 	}
+#else // INTENSE_FUNCTIONS_EXTENSION
+	inline int ActionID(int ID) {
+		return ID;
+	}
 
+	inline int ConditionID(int ID) {
+		return 100 + ID;
+	}
+
+	inline int ExpressionID(int ID) {
+		return 200 + ID;
+	}
+#endif
 
 	template<class T> inline void * MemberFunctionPointer(T Function)
 	{

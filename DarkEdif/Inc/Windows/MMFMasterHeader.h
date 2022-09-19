@@ -1768,8 +1768,12 @@ struct HeaderObject {
 
 	OEFLAGS				OEFlags;		// Objects flags
 	HeaderObjectFlags	Flags;			// HeaderObjectFlags (originally HOF_)
-	unsigned char		SelectedInOR,	// Selection lors d'un evenement OR
-						Free;			// Ignore - used for struct member alignment
+
+	// 0 or 1; indicates this object was filtered/selected by conditions in the event.
+	// If 0, all the object instances should be considered selected; if 1, only the selected ones.
+	// Invalid if not an OR event! (check EventGroup->Flags & EventGroupFlags::OrInGroup != 0)
+	bool				SelectedInOR;
+	std::uint8_t		Free;			// Ignore - used for struct member alignment
 	int					OffsetValue;	// Offset from HeaderObject -> AltVals
 	unsigned int		Layer;			// Layer
 
@@ -2199,7 +2203,7 @@ struct objInfoList {
 	int				CurrentOi,		// Current object
 					Next,			// Pointer on the next
 					EventCount,		// When the event list is done
-					NumOfSelected;	// Number of selected objects
+					NumOfSelected;	// Number of selected objects [broken in OR events!]
 	unsigned int	OEFlags;		// Object's flags
 	short			LimitFlags,		// Movement limitation flags
 					LimitList;	  // Pointer to limitation list

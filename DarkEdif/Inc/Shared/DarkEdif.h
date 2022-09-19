@@ -390,6 +390,10 @@ namespace DarkEdif {
 		std::tstring GetPropertyStr(std::string_view propName) const;
 		// Returns std::tstring property string from property ID.
 		std::tstring GetPropertyStr(int propID) const;
+		// Returns a float property setting from property name.
+		float GetPropertyNum(std::string_view propName) const;
+		// Returns float property setting from a property ID.
+		float GetPropertyNum(int propID) const;
 
 #if EditorBuild
 		// =====
