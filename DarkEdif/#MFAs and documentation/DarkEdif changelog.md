@@ -16,6 +16,7 @@ Changes until v15 release
 *v15 not released yet*
 - Edittime: Added a Icon.png bit depth check. When a minified PNG has less than 8-bit color depth, Fusion's PNG filter won't load it.
 - All platforms: Added GetPropertyNum for reading numeric properties. While they were stored fine, they couldn't be read.
+- Edittime: Fixed a bug with reading JSON checkbox properties defaults, where every other checkbox property would be false.
 
 
 Changes until v14 release

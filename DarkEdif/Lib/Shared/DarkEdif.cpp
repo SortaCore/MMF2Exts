@@ -2028,6 +2028,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 						auto f = std::find(chkboxIndexesToRead.cbegin(), chkboxIndexesToRead.cend(), i);
 						assert(f != chkboxIndexesToRead.cend());
 						chkboxIndexesToRead.erase(f);
+						--k;
 					}
 
 					break;
