@@ -31,12 +31,12 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// https://community.clickteam.com/threads/108993-Application-crashed-in-some-cases-when-calling-an-event-via-expression?p=769763&viewfull=1#post769763
 	// As of CF2.5 build 293.9, this is done by runtime anyway, but if you want to
 	// support Fusion 2.0, and you're generating events from expressions, you should include this
-#ifdef INTENSE_FUNCTIONS_EXTENSION
+#ifdef DARKSCRIPT_EXTENSION
 	auto pRh = hoPtr->AdRunHeader;
 	expression*	saveExpToken = pRh->rh4.ExpToken;
 #endif
 	CallRunTimeFunction2(hoPtr, RFUNCTION::GENERATE_EVENT, EventID, 0);
-#ifdef INTENSE_FUNCTIONS_EXTENSION
+#ifdef DARKSCRIPT_EXTENSION
 	pRh->rh4.ExpToken = saveExpToken;
 #endif
 }

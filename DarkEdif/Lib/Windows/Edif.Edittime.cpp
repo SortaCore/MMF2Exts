@@ -63,6 +63,7 @@ void FusionAPI GetActionTitle(mv *mV, short code, short param, TCHAR * strBuf, s
 		Edif::ConvertAndCopyString(strBuf, CurLang["Actions"][code]["Parameters"][param][1], maxLen);
 }
 
+#ifndef DARKSCRIPT_EXTENSION
 void FusionAPI GetExpressionParam(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
@@ -81,6 +82,7 @@ void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxL
 		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
 	}
 }
+#endif
 
 void FusionAPI GetConditionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
@@ -96,12 +98,14 @@ void FusionAPI GetActionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 		Edif::ConvertAndCopyString(strPtr, CurLang["Actions"][code]["Title"], maxLen);
 }
 
+#ifndef DARKSCRIPT_EXTENSION
 void FusionAPI GetExpressionString(mv * mV, short code, TCHAR * strPtr, short maxLen)
 {
 #pragma DllExportHint
 	if (IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strPtr, CurLang["Expressions"][code]["Title"], maxLen);
 }
+#endif
 
 std::int16_t FusionAPI GetConditionCodeFromMenu(mv* mV, short menuId)
 {

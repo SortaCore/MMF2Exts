@@ -139,6 +139,9 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->NumOfConditions = CurLang["Conditions"].u.object.length;
 	infoPtr->NumOfActions = CurLang["Actions"].u.object.length;
 	infoPtr->NumOfExpressions = CurLang["Expressions"].u.object.length;
+#ifdef DARKSCRIPT_EXTENSION
+	infoPtr->NumOfExpressions = Extension::GetNumExpressions();
+#endif
 
 	static unsigned short EDITDATASize = 0;
 	if (EDITDATASize == 0)

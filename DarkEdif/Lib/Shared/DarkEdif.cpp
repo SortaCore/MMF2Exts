@@ -106,7 +106,7 @@ const TCHAR* const DarkEdif::JSON::LanguageName()
 
 #endif // EditorBuild
 
-inline ACEInfo * ACEInfoAlloc(unsigned int NumParams)
+ACEInfo * ACEInfoAlloc(unsigned int NumParams)
 {
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
@@ -467,7 +467,6 @@ struct DarkEdif::DLL::PropAccesser
 	decltype(Properties::sizeBytes) sizeBytes;
 	// The actual data for properties, merged together
 	// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-	SuppressZeroArraySizeWarning
 	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype*/;
 
 	// Note: There is a single bit for each checkbox.

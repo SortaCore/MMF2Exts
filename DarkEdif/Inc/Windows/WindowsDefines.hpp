@@ -79,7 +79,5 @@ using UShortTCHAR = unsigned short;
 using WindowHandleType = HWND;
 
 // We hide error 4200, caused by zero-length arrays causing constructors to not be created.
-#define SuppressZeroArraySizeWarning _Pragma("warning (suppress:4200)")
-// This is a temporary workaround as EDITDATA uses it; when we implement DarkEdif smart properties, we'll remove this.
 #pragma warning (disable: 4200)
 

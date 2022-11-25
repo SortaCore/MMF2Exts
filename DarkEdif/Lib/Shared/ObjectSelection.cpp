@@ -15,14 +15,19 @@ Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 	this->OiList = rhPtr->OiList;				//get a pointer to the mmf object info list
 	this->QualToOiList = rhPtr->QualToOiList;	//get a pointer to the mmf qualifier to Oi list
 	oiListItemSize = sizeof(objInfoList);
-
-//Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
+	
+	// Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
 	#ifndef _UNICODE
 		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
-			oiListItemSize += 24;
+			oiListItemSize += 24; // objInfoList::name is built in ext as char[24], but app is using wchar_t[24]
 	#endif
-	#ifndef HWABETA
-		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
+	// SDK is set up to support HWA, but runtime is not using HWA, so oi structs are smaller than expected
+	#ifdef HWABETA
+		if (! rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
+			oiListItemSize -= sizeof(LPVOID);
+	#else
+		// SDK is not set up to support HWA, but runtime is using HWA, so oi structs are bigger than expected
+		if (rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0))
 			oiListItemSize += sizeof(LPVOID);
 	#endif
 #endif
@@ -37,6 +42,8 @@ void Riggs::ObjectSelection::SelectAll(short Oi)
 	ObjectInfo->ListSelected = ObjectInfo->Object;
 #ifdef _WIN32
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+	//ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
+	ObjectInfo->NumOfSelected = ObjectInfo->NObjects;
 #endif
 
 	int i = ObjectInfo->Object;
@@ -49,14 +56,32 @@ void Riggs::ObjectSelection::SelectAll(short Oi)
 }
 
 //Resets all objects of the given object-type
-void Riggs::ObjectSelection::SelectNone(short Oi)
+void Riggs::ObjectSelection::SelectNone(short oiList)
 {
-	objInfoList * ObjectInfo = GetOILFromOI(Oi);
+#if _WIN32
+	objInfoList* pObjectInfo = (objInfoList*)(((char*)rhPtr->OiList) + oiListItemSize * oiList);
+	if (pObjectInfo == nullptr)
+		return;
+
+	pObjectInfo->NumOfSelected = 0;
+	pObjectInfo->ListSelected = -1;
+	pObjectInfo->EventCount = rhPtr->rh2.EventCount;
+#endif
+}
+
+//Resets all objects of the given object-type
+void Riggs::ObjectSelection::SelectNone(RunObject* object)
+{
+	objInfoList * ObjectInfo = GetOILFromOI(object->roHo.Oi);
 
 	ObjectInfo->NumOfSelected = 0;
 	ObjectInfo->ListSelected = -1;
 #if _WIN32
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+	// Phi test to see if it fixes resetting
+	// ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
+	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
+	ObjectList[object->roHo.Number].oblOffset->SelectedInOR = 0;
 #endif
 }
 
@@ -68,6 +93,7 @@ void Riggs::ObjectSelection::SelectOneObject(RunObject * object)
 
 	ObjectInfo->NumOfSelected = 1;
 	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
+	//ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
 	ObjectInfo->ListSelected = object->roHo.Number;
 	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
 #else

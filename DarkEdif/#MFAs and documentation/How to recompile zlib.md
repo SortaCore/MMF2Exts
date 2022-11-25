@@ -12,7 +12,7 @@ This will make it not reliant on VS Redistributable.
 7. Open VS Command Prompt for VS 2019 x86 Native, in start menu.
 8. CD into the extracted zlib folder.
 9. Then run:
-`nmake /f win32/Makefile.msc staticlib`
+`nmake /f win32/Makefile.msc zlib.lib`
 10. Job done. See **zlib.lib**, **zconf.h**, and **zlib.h** in the zlib folder (where you CD'd). Don't use zdll.lib!
 11. Note: to rebuild/clean, use:
 `nmake /f win32/Makefile.msc clean`

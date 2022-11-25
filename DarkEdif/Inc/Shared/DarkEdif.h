@@ -40,7 +40,6 @@ struct ACEInfo {
 							 // For acts: unused, always 0
 	short		NumOfParams; // Number of parameters this A/C/E is called with (Parameters[n])
 
-	SuppressZeroArraySizeWarning
 	BothParams	Parameter[]; // Parameter information (max sizeof(FloatFlags)*CHAR_BIT params)
 
 	ACEInfo(short _ID, BothFlags _Flags, short _NumOfParams) :
@@ -65,7 +64,7 @@ bool CreateNewExpressionInfo();
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 14;
+	static const int SDKVersion = 15;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -510,7 +509,6 @@ namespace DarkEdif {
 		std::uint32_t sizeBytes;
 		// The actual data for properties, merged together
 		// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-		SuppressZeroArraySizeWarning
 		std::uint8_t dataForProps[];
 		// Note: There is a single bit for each checkbox.
 		// Use numProps / 8 for num of bytes used by checkboxes.

@@ -27,13 +27,15 @@ namespace Riggs
 	    ObjectSelection(RunHeader * rhPtr);
 
 	    void SelectAll(short Oi);
-	    void SelectNone(short Oi);
+		void SelectNone(short oiList);
+	    void SelectNone(RunObject * object);
 	    void SelectOneObject(RunObject * object);
 	    void SelectObjects(short Oi, RunObject ** objects, int count);
 	    bool ObjectIsOfType(RunObject * object, short Oi);
 	    int GetNumberOfSelected(short Oi);
 
-	    template<class T> bool FilterObjects(short Oi, bool negate, T filterFunction)
+		template<class Ext, class T>
+		bool FilterObjects(short Oi, bool negate, T (Ext::*filterFunction))
         {
 	        if (Oi & 0x8000)
 		        return FilterQualifierObjects(Oi & 0x7FFF, negate, filterFunction) ^ negate;
@@ -41,15 +43,15 @@ namespace Riggs
 		        return FilterNonQualifierObjects(Oi, negate, filterFunction) ^ negate;
         }
 
+		int oiListItemSize;
+	    objInfoList * GetOILFromOI(short Oi);
     protected:
 
 	    RunHeader * rhPtr;
 	    objectsList * ObjectList;
 	    objInfoList	* OiList;
 	    qualToOi * QualToOiList;
-	    int oiListItemSize;
 
-	    objInfoList * GetOILFromOI(short Oi);
 
         template<class T> bool DoCallback(void * Class, T Function, RunObject * Parameter)
         {
@@ -94,7 +96,7 @@ namespace Riggs
             return (*(char *) &Result) != 0;
         }
 
-	    template<class T> bool FilterQualifierObjects(short Oi, bool negate, T filterFunction)
+	    template<class Ext, class T> bool FilterQualifierObjects(short Oi, bool negate, T (Ext::* filterFunction))
         {
 	        qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
 	        qualToOi * CurrentQualToOi = CurrentQualToOiStart;
@@ -109,7 +111,7 @@ namespace Riggs
 	        return hasSelected;
         }
 
-	    template<class T> bool FilterNonQualifierObjects(short Oi, bool negate, T filterFunction)
+	    template<class Ext, class T> bool FilterNonQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
         {
 	        objInfoList * pObjectInfo = GetOILFromOI(Oi);
 	        bool hasSelected = false;

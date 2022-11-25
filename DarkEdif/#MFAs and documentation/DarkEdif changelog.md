@@ -11,12 +11,24 @@ Some editors will consider this to be trailing whitespace and remove it; make su
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
 
+Changes until v16 release
+----
+*v16 not released yet*
+
+
 Changes until v15 release
 ----
-*v15 not released yet*
-- Edittime: Added a Icon.png bit depth check. When a minified PNG has less than 8-bit color depth, Fusion's PNG filter won't load it.
+*v15 released on 25th Nov 2022, latest commit*
+- Windows: Optimized A/C calls when 2 parameters or less, E calls when 1 parameter or less
+- Windows: Expanded ObjectSelection to use oiList parameters - hat tip to defisym
 - All platforms: Added GetPropertyNum for reading numeric properties. While they were stored fine, they couldn't be read.
+- All platforms: Added Time action/condition parameter type (turns into number)
 - Edittime: Fixed a bug with reading JSON checkbox properties defaults, where every other checkbox property would be false.
+- Edittime: Added a Icon.png bit depth check. When a minified PNG has less than 8-bit color depth, Fusion's PNG filter won't load it.
+- Windows: Fixed object selection in Fusion 2.0 under HWA, Unicode and other scenarios
+- All platforms: Renamed INTENSE_FUNCTIONS_EXTENSION to DARKSCRIPT_EXTENSION, and modified its effects
+- All platforms: Removed SuppressZeroArraySizeWarning, as it doesn't work; warning 4200 is now set to be ignored globally
+- Published FusionSDKConfig.ini template for users who want to customize their experience
 
 
 Changes until v14 release
