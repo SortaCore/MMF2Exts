@@ -18,7 +18,7 @@ Changes until v16 release
 
 Changes until v15 release
 ----
-*v15 released on 25th Nov 2022, latest commit*
+*v15 released on 25th Nov 2022, commit [0d3bbbd](https://github.com/SortaCore/MMF2Exts/commit/0d3bbbd95fde6e259dc545ea5f21d3db314341ae)*
 - Windows: Optimized A/C calls when 2 parameters or less, E calls when 1 parameter or less
 - Windows: Expanded ObjectSelection to use oiList parameters - hat tip to defisym
 - All platforms: Added GetPropertyNum for reading numeric properties. While they were stored fine, they couldn't be read.
