@@ -31,6 +31,8 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkAction(5, ReadSystemObjectPerms);
 	LinkAction(6, IterateLastReadSystemObjectDACL);
 	LinkAction(7, AddNewDACLPermToSystemObject);
+	LinkAction(8, CopyAltVals);
+	LinkAction(9, CopyAltStrings);
 
 	LinkCondition(0, AlwaysTrue /* On error */);
 	LinkCondition(1, IsThisFrameASubApp);

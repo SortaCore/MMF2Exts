@@ -5,7 +5,6 @@
 // Wraps str into double-quotes, like "str". This function cannot be defined via /D.
 #define sub_asStr(str) #str
 #define asStr(str) sub_asStr(str)
-#define STRIFY(X) #X
 
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -140,11 +139,18 @@ END
 // Edif
 //
 
+// External JSON file (DARKEXT_JSON_FILE_EXTERNAL) means not embedded in ext
+// If editor, DarkExt.json is used, otherwise DarkExt.PostMinify.json,
+// which is created by DarkEdifPreBuildTool minifying DarkExt.json.
+
 #if EditorBuild
 IDR_EDIF_ICON	Edif	"Icon.png"
-#endif
+#if !defined(DARKEXT_JSON_FILE_EXTERNAL)
 IDR_EDIF_JSON	Edif	"DarkExt.json"
+#endif
+#elif /* RuntimeBuild and */ !defined(DARKEXT_JSON_FILE_EXTERNAL)
+IDR_EDIF_JSON	Edif	"DarkExt.PostMinify.json"
+#endif
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
-

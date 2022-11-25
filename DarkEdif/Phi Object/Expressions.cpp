@@ -267,6 +267,12 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 		MakeError("Alterable values range from index 0+, but you supplied index %i.", altValueIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
+	if (!DarkEdif::IsFusion25 && altValueIndex > 25)
+	{
+		MakeError("Alterable values range from index 0-25 in Fusion 2.0, but you supplied index %i.", altValueIndex);
+		return Runtime.CopyString(_T("<ERROR>"));
+	}
+
 
 #ifdef _WIN32
 	std::tstring objectNameStrLengthLimited(objectNameStr);
@@ -298,7 +304,7 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 				// theObject->roc.val
-				if (av->CF25.NumAltValues <= altValueIndex)
+				if (DarkEdif::IsFusion25 && av->CF25.NumAltValues <= altValueIndex)
 				{
 					MakeError("Object %s doesn't have alterable value at index %i; max available alt value index is %i.",
 						objectNameStr.c_str(), altValueIndex, av->CF25.NumAltValues - 1);
@@ -307,7 +313,7 @@ const TCHAR* Extension::GetAltValsFromObjName(const TCHAR* objectName, int altVa
 
 				// av->Free1
 				// int
-				auto cValue = av->CF25.Values[altValueIndex];
+				auto cValue = DarkEdif::IsFusion25 ? av->CF25.Values[altValueIndex] : av->MMF2.rvpValues[altValueIndex];
 
 				enum types
 				{
@@ -420,12 +426,41 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 	}
 	if (altStringIndex <= 0)
 	{
-		MakeError("Alterable values range from index 0+, but you supplied index %i.", altStringIndex);
+		MakeError("Alterable strings range from index 0+, but you supplied index %i.", altStringIndex);
+		return Runtime.CopyString(_T("<ERROR>"));
+	}
+	if (!DarkEdif::IsFusion25 && altStringIndex > 25)
+	{
+		MakeError("Alterable strings range from index 0-25 in Fusion 2.0, but you supplied index %i.", altStringIndex);
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 	if (delimStr.empty())
 	{
 		MakeError("Delimiter cannot be blank. Use Newline$, \" \", etc.");
+		return Runtime.CopyString(_T("<ERROR>"));
+	}
+	bool isUnicode = mvIsUnicodeApp(::SDK->mV, ::SDK->mV->RunApp);
+
+#if _UNICODE
+	// Unicode exts can only load in Unicode
+	if (!isUnicode)
+	{
+		MakeError("Alterable strings reading failed - Non-Unicode app using Unicode ext?!");
+		return Runtime.CopyString(_T("<ERROR>"));
+	}
+#else
+	// While we could convert, Phi Object comes in Unicode flavour, so why are we using non-Unicode?
+	if (isUnicode)
+	{
+		MakeError("Alterable strings reading failed - Unicode app using non-Unicode ext.");
+		return Runtime.CopyString(_T("<ERROR>"));
+	}
+#endif
+
+	// Unicode exts can only load in Unicode
+	if (DarkEdif::IsFusion25 && !isUnicode)
+	{
+		MakeError("Copying alt strings failed - CF2.5 not using a Unicode app?!");
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
 
@@ -458,14 +493,14 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 				// theObject->roc.val
-				if (av->CF25.NumAltStrings <= altStringIndex)
+				if (DarkEdif::IsFusion25 && av->CF25.NumAltStrings <= altStringIndex)
 				{
 					MakeError("Object %s doesn't have an alterable string at index %i; max available alt string index is %i.",
 						objectNameStr.c_str(), altStringIndex, av->CF25.NumAltStrings - 1);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
-
-				const TCHAR* strOrNull = av->CF25.Strings[altStringIndex];
+				
+				const TCHAR* strOrNull = DarkEdif::IsFusion25 ? av->CF25.Strings[altStringIndex] : av->MMF2.rvStrings[altStringIndex];
 				std::tstring str(strOrNull ? strOrNull : _T(""));
 
 				if (str.empty())
@@ -554,7 +589,7 @@ const TCHAR* Extension::GetFlagsFromObjName(const TCHAR* objectName, int flagInd
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
 
-				if (av->CF25.InternalFlags & (1 << flagIndex))
+				if ((DarkEdif::IsFusion25 ? av->CF25.InternalFlags : av->MMF2.rvValueFlags) & (1 << flagIndex))
 					++numTrueFlags;
 				else
 					++numFalseFlags;
@@ -590,7 +625,7 @@ const TCHAR* Extension::GetFlagsFromObjName(const TCHAR* objectName, int flagInd
 	}
 #else // ANDROID
 	// TODO: Android implementation
-	MakeError("Function not implemented in Android.");
+	MakeError("Function not implemented in Android/iOS.");
 	return Runtime.CopyString(_T("<not implemented>"));
 #endif
 
@@ -600,6 +635,7 @@ const TCHAR* Extension::GetFlagsFromObjName(const TCHAR* objectName, int flagInd
 
 const TCHAR * Extension::GetAltValsFromFixedValue(int fixedValue, int altValueIndex, int numDecimalDigits)
 {
+	// refer to copying alt vals/string action, it has a nicer list method than above
 	return Runtime.CopyString(_T("<not implemented>"));
 }
 const TCHAR * Extension::GetAltStringsFromFixedValue(int fixedValue, int altStringIndex, const TCHAR * delim)

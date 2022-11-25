@@ -17,6 +17,10 @@
 				[ 5, "Read permissions of system object" ],
 				[ 6, "Iterate discrete ACL" ],
 				[ 7, "Add new discrete ACL entry", true ]
+			],
+			[ "Active",
+				[ 8, "Bulk-copy alt values to different index"],
+				[ 9, "Bulk-copy alt strings to different index"]
 			]
 			
 			/*,
@@ -149,6 +153,24 @@
 					[ "Text", "Entry type (one of \"grant\", \"deny\", \"set\", \"revoke\")" ],
 					[ "Text", "Permission list (\"read\", \"write\", \"all\", comma-separated, see help file)" ],
 					[ "Text", "Inheritance list (\"subcontainers\", \"subobjects\", \"inheritonly\", etc, see help file)" ]
+				]
+			},
+			{
+				"Title": "Copy alt values from %0 start index %1 (%2 values) to destination index %3",
+				"Parameters": [
+					[ "Object", "Object or qualifier" ],
+					[ "Integer", "Start index (0+)" ],
+					[ "Integer", "Count to copy" ],
+					[ "Integer", "Destination index (0+)" ]
+				]
+			},
+			{
+				"Title": "Copy alt strings from %0 start index %1 (%2 strings) to destination index %3",
+				"Parameters": [
+					[ "Object", "Object or qualifier" ],
+					[ "Integer", "Start index (0+)" ],
+					[ "Integer", "Count to copy" ],
+					[ "Integer", "Destination index (0+)" ]
 				]
 			}
 		],

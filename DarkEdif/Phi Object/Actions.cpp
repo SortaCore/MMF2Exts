@@ -1380,4 +1380,218 @@ void Extension::AddImagesToObject(int objectFV,
 {
 }
 
+#ifdef _WIN32
+static void AddToList(Extension* ext, short oil, std::vector<HeaderObject*>& writeTo)
+{
+	// regular object
+	assert(oil >= 0);
 
+	auto poil = (objInfoList*)(((char*)ext->rhPtr->OiList) + ext->Runtime.ObjectSelection.oiListItemSize * oil);
+
+	// Object's selected instance list wasn't set by conditions for this event.
+	// It would be good if we could do Runtime.ObjectSelection.SelectAll(),
+	// but actions can't modify selection, so we'll not bother.
+	const bool selectAll = (poil->EventCount != ext->rhPtr->rh2.EventCount);
+
+	short num = selectAll ? poil->Object : poil->ListSelected, lastNum = -1;
+	// Iterate over list (until no other objects are found)
+	while (num >= 0)
+	{
+		// Get the object instance
+		auto pObl = ext->rhPtr->ObjectList + num;
+		HeaderObject* pHo = pObl->oblOffset;
+		if (pHo == nullptr)
+			break; // we hit end of list
+
+		// Make sure the obj wasn't already destroyed (e.g. Disappearing animation)
+		// and make sure obj has alt vals/strings
+		if ((pHo->Flags & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None && (pHo->OEFlags & OEFLAGS::VALUES) == OEFLAGS::VALUES)
+			writeTo.push_back(pHo);
+
+		// Jump to next instance in list
+		num = selectAll ? pHo->NumNext : pHo->NextSelected;
+	}
+}
+#endif
+
+void Extension::CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int destIndex)
+{
+#if _WIN32
+	// The HeaderObject * points to the first instance of the selected objects this action
+	// has in its parameters.
+	// If you want your action to be called repeatedly, once for each object instance,
+	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
+	// will cycle through each HeaderObject * that is the object instances passed by the event.
+	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
+	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
+	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+
+	if (numVals == 0)
+		return;
+	if (startIndex < 0 || numVals < 0 || destIndex < 0 ||
+		(startIndex < destIndex ? (startIndex + numVals > destIndex) : (destIndex + numVals > startIndex)))
+	{
+		MakeError("Can't copy alt vals, indexes are invalid or overlap");
+		return;
+	}
+
+	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+
+	std::vector<HeaderObject*> list;
+	// regular object
+	if (oil >= 0)
+		AddToList(this, oil, list);
+	// qualifier
+	else if (oil != -1)
+	{
+		for (auto pqoi = (qualToOi*)((std::uint8_t*)rhPtr->QualToOiList + (oil & 0x7FFF));
+			pqoi->OiList >= 0;
+			pqoi = (qualToOi*)((std::uint8_t*)pqoi + 4))
+		{
+			AddToList(this, pqoi->OiList, list);
+		}
+	}
+	// else -1, just leave list empty
+	// oil could be -1 if valid object type, but no instances - or invalid obj type, e.g. global events but no corresponding frame obj
+
+	// No instances available
+	if (list.empty())
+	{
+		MakeError("Can't copy alt vals, no object instances available.");
+		return;
+	}
+
+	for (auto a : list)
+	{
+		for (size_t i = 0, j = startIndex, k = destIndex; i < (size_t)numVals; ++i, ++j, ++k)
+		{
+			AltVals* prv = (AltVals*)((LPBYTE)a + a->OffsetValue);
+			if (!prv)
+			{
+				MakeError("Aborting alt value copy for %s; null pointer.", list[0]->OiList->name);
+				return;
+			}
+
+			if (DarkEdif::IsFusion25)
+			{
+				prv->CF25.Values[k].m_double = prv->CF25.Values[j].m_double;
+				prv->CF25.Values[k].m_type = prv->CF25.Values[j].m_type;
+			}
+			else
+			{
+				prv->MMF2.rvpValues[k].m_double = prv->MMF2.rvpValues[j].m_double;
+				prv->MMF2.rvpValues[k].m_type = prv->MMF2.rvpValues[j].m_type;
+			}
+		}
+	}
+#else
+	MakeError("Copying alt values is not available on this platform - ask for it to be ported!");
+#endif
+}
+
+void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, int destIndex)
+{
+#ifdef _WIN32
+	// The HeaderObject * points to the first instance of the selected objects this action
+	// has in its parameters.
+	// If you want your action to be called repeatedly, once for each object instance,
+	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
+	// will cycle through each HeaderObject * that is the object instances passed by the event.
+	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
+	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
+	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+
+	if (numVals == 0)
+		return;
+	if (startIndex < 0 || numVals < 0 || destIndex < 0 || startIndex + numVals > destIndex)
+	{
+		MakeError("Can't copy alt strings, indexes are invalid or overlap");
+		return;
+	}
+
+	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+
+	std::vector<HeaderObject*> list;
+	// regular object
+	if (oil >= 0)
+		AddToList(this, oil, list);
+	// qualifier
+	else if (oil != -1)
+	{
+		for (auto pqoi = (qualToOi*)((std::uint8_t*)rhPtr->QualToOiList + (oil & 0x7FFF));
+			pqoi->OiList >= 0;
+			pqoi = (qualToOi*)((std::uint8_t*)pqoi + 4))
+		{
+			AddToList(this, pqoi->OiList, list);
+		}
+	}
+	// else -1, just leave list empty
+	// oil could be -1 if valid object type, but no instances - or invalid obj type, e.g. global events but no corresponding frame obj
+
+	// No instances available
+	if (list.empty())
+	{
+		MakeError("Can't copy alt vals, no object instances available.");
+		return;
+	}
+
+	bool isUnicode = mvIsUnicodeApp(::SDK->mV, ::SDK->mV->RunApp);
+#if _UNICODE
+	// Unicode exts can only load in Unicode
+	if (!isUnicode)
+	{
+		MakeError("Copying alt strings failed - Non-Unicode app using Unicode ext?!");
+		return;
+	}
+#endif
+
+	// Unicode exts can only load in Unicode
+	if (DarkEdif::IsFusion25 && !isUnicode)
+	{
+		MakeError("Copying alt strings failed - CF2.5 not using a Unicode app?!");
+		return;
+	}
+
+	for (const auto a : list)
+	{
+		for (size_t i = 0, j = startIndex, k = destIndex; i < (size_t)numVals; ++i, ++j, ++k)
+		{
+			AltVals* prv = (AltVals*)((LPBYTE)a + a->OffsetValue);
+			if (!prv)
+			{
+				MakeError("Aborting alt string copy for %s; null pointer.", list[0]->OiList->name);
+				return;
+			}
+
+			if (DarkEdif::IsFusion25)
+			{
+				mvFree(::SDK->mV, (void *)prv->CF25.Strings[k]);
+				if (prv->CF25.Strings[j] == NULL)
+					*(TCHAR**)&prv->CF25.Strings[k] = NULL;
+				else
+				{
+					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->CF25.Strings[j]) + 1) * 2) : (strlen((char*)prv->CF25.Strings[j]) + 1);
+					char* data = (char*)mvMalloc(::SDK->mV, numBytes);
+					memcpy(data, prv->CF25.Strings[j], numBytes);
+					*(TCHAR**)&prv->CF25.Strings[k] = (TCHAR*)data;
+				}
+			}
+			else
+			{
+				mvFree(::SDK->mV, prv->MMF2.rvStrings[k]);
+				if (prv->MMF2.rvStrings[j] == NULL)
+					prv->MMF2.rvStrings[k] = NULL;
+				else
+				{
+					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->MMF2.rvStrings[j]) + 1) * 2) : (strlen((char *)prv->MMF2.rvStrings[j]) + 1);
+					char * data = (char *)mvMalloc(::SDK->mV, numBytes);
+					memcpy(data, prv->MMF2.rvStrings[j], numBytes);
+					prv->MMF2.rvStrings[k] = (TCHAR *)data;
+				}
+			}
+		}
+	}
+#else
+	MakeError("Copying alt strings is not available on this platform - ask for it to be ported!");
+#endif
+}
