@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{F0C71EC3-BDAD-47D2-8FE8-43847EEE2A6F}</ItemsProjectGuid>
+    <ItemsProjectName>DarkScript.Shared</ItemsProjectName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory.TrimEnd('/\'))</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\json.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Common.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Extension.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\DarkEdif.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.General.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Edif.Runtime.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\json.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\ObjectSelection.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Conditions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Extension.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Functions.cpp" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,942 @@
+{
+	"Identifier": "DKSC",
+	"Dependencies": "",
+	"UK English": {
+		"About": {
+			"Name": "DarkScript",
+			"Author": "Darkwire Software",
+			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Comment": "Advanced Fusion-event based expression-based functions, with loops, object selection, etc.",
+			"Help": "",
+			"URL": "https://dark-wire.com/"
+		},
+		"ActionMenu": [
+			"---",
+			[ "Function declarations",
+				[ 0, "Add/change function signature" ],
+				[ "Set default return value",
+					[ 1, "Integer" ],
+					[ 2, "Float" ],
+					[ 3, "String" ],
+					"---",
+					[ 4, "Nothing (must be explicitly set)" ]
+				],
+				[ "Set default parameter value",
+					[ 5, "Integer" ],
+					[ 6, "Float" ],
+					[ 7, "String" ],
+					"---",
+					[ 8, "None (param must be passed)" ]
+				],
+				[ "Set scoped variable on start",
+					[ 9, "Integer" ],
+					[ 10, "Float" ],
+					[ 11, "String" ],
+					"---",
+					[ 12, "Cancel set" ]
+				],
+				[ 13, "Set global ID to run in" ],
+				[ 14, "Disable/enable function" ],
+				[ 15, "Redirect function" ],
+				"---",
+				[ 16, "Loop all declarations" ]
+			],
+			[ "Waiting functions",
+				[ 17, "Loop" ],
+				[ 18, "Cancel by prefix" ]
+			],
+			[ "Run function",
+				[ "Immediately",
+					[ 0, "Run your functions directly by expressions!", true ],
+					[ 0, "These are for starting them from actions, instead", true ],
+					"---",
+					[ 19, "Run Integer/Float func" ],
+					[ 20, "Run String func" ]
+				],
+				[ "For each object",
+					[ 21, "Run Integer/Float func" ],
+					[ 22, "Run String func" ]
+				],
+				[ "With delay",
+					[ 0, "The values you pass will not be recalculated!", true ],
+					[ 0, "See help file for workaround.", true ],
+					"---",
+					[ 23, "Run Integer/Float func with delay (time)" ],
+					[ 24, "Run String func with delay (time)" ],
+					"---",
+					[ 25, "Run Integer/Float func with delay (ticks)" ],
+					[ 26, "Run String func with delay (ticks)" ]
+				],
+				[ 27, "From script text" ]
+			],
+			"---",
+			[ "During function run",
+				[ "Set return value",
+					[ 28, "Integer" ],
+					[ 29, "Float" ],
+					[ 30, "String" ]
+				],
+				[ "Parameters/variables",
+					[ "Set by name",
+						[ 31, "Set integer" ],
+						[ 32, "Set float" ],
+						[ 33, "Set string" ]
+					],
+					[ 34, "Loop parameters" ],
+					[ 35, "Loop scoped variables" ]
+				],
+				[ 36, "Stop function/repeats" ],
+				[ 37, "Change repeat index/count" ],
+				[ 38, "Abort with user error" ]
+			],
+			[ 39, "Change logging" ]
+		],
+		"ConditionMenu": [
+			"---",
+			[ 0, "On DarkScript error" ],
+			"---",
+			[ 1, "On function" ],
+			[ 2, "On function for each object" ],
+			[ 3, "On function aborted" ],
+			"---",
+			[ 4, "Is running func still active?" ],
+			[ 5, "Does function have a declaration?" ],
+			[ 6, "Is function in call stack?" ],
+			[ "Internal loops",
+				[ 7, "On function declaration loop" ],
+				[ 8, "On pending function loop" ],
+				[ 9, "On parameter loop" ],
+				[ 10, "On scoped variable loop" ]
+			],
+			[ "Logging",
+				[ 11, "On any function" ],
+				[ 12, "On any function completed OK" ],
+				[ 13, "On any function aborted" ]
+			]
+		],
+		"ExpressionMenu": [
+			[ "Errors/logging",
+				[ 0, "Get object error" ],
+				[ 1, "Get user abort reason" ],
+				[ 2, "Get log" ]
+			],
+			[ "Running function",
+				[ 3, "Repeat index" ],
+				[ 4, "Number of repeats remaining" ],
+				[ 5, "Number of repeats total" ],
+				[ 6, "Get for-each object fixed value" ],
+				"---",
+				[ 7, "Number of parameters passed" ],
+				[ "Parameter/scoped variable by name",
+					[ 8, "Integer" ],
+					[ 9, "Float" ],
+					[ 10, "String" ]
+				],
+				[ "Parameter by index",
+					[ 11, "Integer" ],
+					[ 12, "Float" ],
+					[ 13, "String" ]
+				],
+				[ 14, "Get all parameters as text" ],
+				[ 15, "Call stack" ]
+			],
+			[ "Internal loops",
+				[ 16, "Get loop index" ],
+				"---",
+				[ 17, "Get param/scoped var name" ],
+				[ 18, "Get param/scoped var type" ]
+			],
+			[ "Function declaration",
+				[ 19, "Get function name" ],
+				[ 20, "Number of required parameters" ],
+				[ 21, "Number of possible parameters" ],
+				[ 22, "Expected return type as text" ],
+				"---",
+				[ 23, "Should repeat?" ],
+				[ 24, "Should delay?" ],
+				[ 25, "Is recursion allowed" ],
+				[ 26, "Is enabled" ],
+				[ 27, "Get redirect function name" ],
+				[ 28, "Global ID to run on" ],
+				"---",
+				[ "Parameter by index",
+					[ 29, "Name" ],
+					[ 30, "Type" ],
+					[ 31, "Default value as string" ]
+				],
+				[ "Parameter by name",
+					[ 32, "Index" ],
+					[ 33, "Type" ],
+					[ 34, "Default value as string" ]
+				]
+			],
+			[ "Last function return",
+				[ 0, "This should only be needed", true ],
+				[ 0, "if foreach func returns something", true ],
+				"---",
+				[ "Return value",
+					[ 35, "As integer" ],
+					[ 36, "As float" ],
+					[ 37, "As string" ]
+				],
+				[ 38, "Return type" ]
+			],
+			
+			[ 39, "Run test func" ],
+			[ 0, "[K][R][F]Func[FIS]^n[$]", true ],
+			[ "Run Func",
+				[ 0, "See help file", true ],
+				[ 60, "Returns int" ],
+				[ 68, "Returns float" ],
+				[ 64, "Returns string" ],
+				[ "Keep object selection",
+					[ 61, "Returns int" ],
+					[ 69, "Returns float" ],
+					[ 65, "Returns string" ]
+				]
+			]
+		],
+		"Actions": [
+			{
+				"Title": "Set up function with signature %0, delayable %1, repeatable %2, recursable %3",
+				"Parameters": [
+					[ "String", "Function name and parameters (see help file for format)" ],
+					[ "Integer", "Function should be delayed? (0 = no, 1 = yes, 2 = either)" ],
+					[ "Integer", "Function should repeat? (0 = no, 1 = yes, 2 = either)" ],
+					[ "Integer", "Function allows recursive? (0 or 1)" ]
+				]
+			},
+			{
+				"Title": "Function %0: set default return to integer %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "Integer", "Default integer" ]
+				]
+			},
+			{
+				"Title": "Function %0: set default return to float %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "Float", "Default float" ]
+				]
+			},
+			{
+				"Title": "Function %0: set default return to string %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Default string" ]
+				]
+			},
+			{
+				"Title": "Function %0: set default return to nothing",
+				"Parameters": [
+					[ "String", "Function name" ]
+				]
+			},
+
+			// Param by index
+			{
+				"Title": "Function %0: set parameter %1 default value to integer %2 (set param to any type = %3)",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Parameter name" ],
+					[ "Integer", "Default integer" ],
+					[ "Integer", "Set param type to Any (1) or Integer? (0)" ]
+				]
+			},
+			{
+				"Title": "Function %0: set parameter %1 default value to float %2 (set param to any type = %3)",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Parameter name" ],
+					[ "Float", "Default float" ],
+					[ "Integer", "Set param type to Any (1) or Float? (0)" ]
+				]
+			},
+			{
+				"Title": "Function %0: set parameter %1 default value to string %2 (set param to any type = %3)",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Parameter name" ],
+					[ "String", "Default string" ],
+					[ "Integer", "Set param type to Any (1) or String? (0)" ]
+				]
+			},
+			{
+				"Title": "Function %0: set parameter %1 default value to none (set param to any type = %3)",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Parameter name" ],
+					[ "Integer", "Set param type to Any (1) or None? (0)" ]
+				]
+			},
+			{
+				"Title": "Function %0: on start, set scoped variable %1 to %2 (integer), overwrite when recursing = %3",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Variable name" ],
+					[ "Integer", "Variable integer value" ],
+					[ "Integer", "Overwrite existing variable when recursing? (0 = no, 1 = yes)" ]
+				]
+			},
+			{
+				"Title": "Function %0: on start, set scoped variable %1 to %2 (float), overwrite when recursing = %3",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Variable name" ],
+					[ "Float", "Variable float value" ],
+					[ "Integer", "Overwrite existing variable when recursing? (0 = no, 1 = yes)" ]
+				]
+			},
+			{
+				"Title": "Function %0: on start, set scoped variable %1 to %2 (string), overwrite when recursing = %3",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Variable name" ],
+					[ "String", "Variable string value" ],
+					[ "Integer", "Overwrite existing variable when recursing? (0 = no, 1 = yes)" ]
+				]
+			},
+			{
+				"Title": "Function %0: cancel setting scoped variable on start for variable %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Variable name" ]
+				]
+			},
+			{
+				"Title": "Function %0: Run in DarkScript global ID %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "DarkScript global ID (or \"\" for local)" ]
+				]
+			},
+			{
+				"Title": "Function %0: Set function enabled to %i",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "Integer", "Set 1 to enable, 0 to disable" ]
+				]
+			},
+			{
+				"Title": "Function %0: Redirect to function %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "Redirect to function name" ]
+				]
+			},
+			{
+				"Title": "Loop declarations with loop name %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				]
+			},
+			{
+				"Title": "Loop waiting function queue with loop name %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				]
+			},
+			{
+				"Title": "Cancel waiting delayed functions with name starting with %0",
+				"Parameters": [
+					[ "String", "Function name prefix (or \"\" for all)" ]
+				]
+			},
+			{
+				"Title": "Run %0",
+				"Parameters": [
+					[ "Integer", "Use the Expressions menu to run a number-returning function" ]
+				]
+			},
+			{
+				"Title": "Run %0",
+				"Parameters": [
+					[ "String", "Use the Expressions menu to run a text-returning function" ]
+				]
+			},
+			{
+				"Title": "For each currently selected %0, run %1",
+				"Parameters": [
+					[ "Object", "Object to run loop on" ],
+					[ "Integer", "Use the Expressions menu to run a number-returning function" ]
+				]
+			},
+			{
+				"Title": "For each currently selected %0, run %1",
+				"Parameters": [
+					[ "Object", "Object to run loop on" ],
+					[ "String", "Use the Expressions menu to run a text-returning function" ]
+				]
+			},
+			// Parameters are in this weird order so they're already evaluated when the Func is evaluated
+			{
+				"Title": "After %0 delay, run, then repeat %1 times every %2, keep if frame changed = %3: Run function %4",
+				"Parameters": [
+					[ "Time", "Delay until first run" ],
+					[ "Integer", "Number of repeats (0+)" ],
+					[ "Time", "Delay between repeats" ],
+					[ "Integer", "Keep running if Fusion frame is changed? (0 = no, 1 = yes)" ],
+					[ "Integer", "Use the Expressions menu to run a number-returning function" ]
+				]
+			},
+			{
+				"Title": "After %0 delay, run, then repeat %1 times every %2, keep if frame changed = %3: Run function %4",
+				"Parameters": [
+					[ "Time", "Delay until first run" ],
+					[ "Integer", "Number of repeats (0+)" ],
+					[ "Time", "Delay between repeats" ],
+					[ "Integer", "Run if Fusion frame is changed? (0 = no, 1 = yes)" ],
+					[ "String", "Use the Expressions menu to run a text-returning function" ]
+				]
+			},
+			{
+				"Title": "After %0 frame tick delay, repeat %1 times every %2 ticks, keep if frame changed = %3: Run function %4",
+				"Parameters": [
+					[ "Integer", "First run delay in frame ticks" ],
+					[ "Integer", "Number of repeats" ],
+					[ "Integer", "Delay in frame ticks" ],
+					[ "Integer", "Run if Fusion frame is changed? (0 = no, 1 = yes)" ],
+					[ "Integer", "Use the Expressions menu to run a number-returning function" ]
+				]
+			},
+			{
+				"Title": "After %0 frame tick delay, repeat %1 times every %2 ticks, keep if frame changed = %3: Run function %4",
+				"Parameters": [
+					[ "Integer", "First run delay in frame ticks" ],
+					[ "Integer", "Number of repeats" ],
+					[ "Integer", "Delay in frame ticks" ],
+					[ "Integer", "Run if Fusion frame is changed? (0 = no, 1 = yes)" ],
+					[ "String", "Use the Expressions menu to run a text-returning function" ]
+				]
+			},
+			{
+				"Title": "Run function from script %0",
+				"Parameters": [
+					[ "String", "Script text (custom format, see help file)" ]
+				]
+			},
+			{
+				"Title": "Current func: Set return value to %0 (integer)",
+				"Parameters": [
+					[ "Integer", "Return value" ]
+				]
+			},
+			{
+				"Title": "Current func: Set return value to %0 (float)",
+				"Parameters": [
+					[ "Float", "Return value" ]
+				]
+			},
+			{
+				"Title": "Current func: Set return value to %0 (string)",
+				"Parameters": [
+					[ "String", "Return text" ]
+				]
+			},
+
+			{
+				"Title": "Change scoped variable/parameter %0 to %1 (integer)",
+				"Parameters": [
+					[ "String", "Parameter/variable name" ],
+					[ "Integer", "New value" ]
+				]
+			},
+			{
+				"Title": "Change scoped variable/parameter %0 to %1 (float)",
+				"Parameters": [
+					[ "String", "Parameter/variable name" ],
+					[ "Float", "New value" ]
+				]
+			},
+			{
+				"Title": "Change scoped variable/parameter %0 to %1 (string)",
+				"Parameters": [
+					[ "String", "Param name" ],
+					[ "String", "New text" ]
+				]
+			},
+			{
+				"Title": "Loop current function's parameters with loop name %0 (exclude non-passed params = %1)",
+				"Parameters": [
+					[ "String", "Loop name" ],
+					[ "Integer", "Exclude parameters that weren't passed? (0 = no, 1 = yes)" ]
+				]
+			},
+
+			{
+				"Title": "Loop available scoped variables with loop name %0 (exclude inherited = %1)",
+				"Parameters": [
+					[ "String", "Loop name" ],
+					[ "Integer", "Exclude inherited scope variables? (0 = no, 1 = yes)" ]
+				]
+			},
+
+			// Use 1, 0 = C-style continue
+			// Use 1, 1 = immediate stop of function and goes to caller (C-style break)
+			// Use 0, 1 = "Stop loop"-style break
+			// Use 0, 0 = *wrist slap*
+			// Last param applies to the containing foreach instead of RFunc repeats.
+			{
+				"Title": "Current function: Stop function (stop current iteration = %0, stop remaining repeats = %1, stop ForEach = %2)",
+				"Parameters": [
+					[ "Integer", "Cancel later On Function for current iteration?" ],
+					[ "Integer", "Cancel new repeats?" ],
+					[ "Integer", "Cancel loop of remaining ForEach object instances?" ]
+				]
+			},
+			{
+				"Title": "Change current repeat index to %0, remaining repeats to %1 (undo cancel = %2)",
+				"Parameters": [
+					[ "Integer", "New repeat index" ],
+					[ "Integer", "Number of times since now to run" ],
+					[ "Integer", "If future iterations are already stopped, restore them (1) or cancel them (0)?" ]
+				]
+			},
+			{
+				"Title": "Abort with error %0 (stop aborting at function %1)",
+				"Parameters": [
+					[ "String", "Error to abort with" ],
+					[ "String", "Abort until this function name" ]
+				]
+			},
+			{
+				"Title": "Change logging for functions %0 to level %1",
+				"Parameters": [
+					[ "String", "Function names (separate with a space)" ],
+					[ "String", "Set logging level (verbose, errors, none)" ]
+				]
+			}
+		],
+		"Conditions": [
+			{
+				"Title": "%o : On Error",
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On Function %0",
+				"Parameters": [
+					[ "String", "Function name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On function %0 for object %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "Object", "Object/Qualifier being looped through" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On function %0 aborted",
+				"Parameters": [
+					[ "String", "Function name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : Is running function still active?"
+			},
+			{
+				"Title": "%o : Does function %0 have a declaration?",
+				"Parameters": [
+					[ "String", "Function name" ]
+				]
+			},
+			{
+				"Title": "%o : Is function %0 in call stack",
+				"Parameters": [
+					[ "String", "Function name" ]
+				]
+			},
+			{
+				"Title": "%o : On function declaration loop %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On pending function loop %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On parameter loop %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On scoped variable loop %0",
+				"Parameters": [
+					[ "String", "Loop name" ]
+				],
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On any function",
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On any function completed OK",
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On any function aborted",
+				"Triggered": true
+			}
+		],
+		"Expressions": [
+			{
+				"Title": "Error$(",
+				"Returns": "String"
+			},
+			{
+				"Title": "AbortReason$(",
+				"Returns": "String"
+			},
+			{
+				"Title": "PendingLog$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "Integer", "Clear log?" ]
+				]
+			},
+			// Running function
+			{
+				"Title": "RepeatIndex(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name or \"\" for current" ]
+				]
+			},
+			{
+				"Title": "NumRepeatsRemaining(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name or \"\" for current" ]
+				]
+			},
+			{
+				"Title": "NumRepeatsTotal(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name or \"\" for current" ]
+				]
+			},
+			{
+				"Title": "ForEachFV(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name or \"\" for current" ]
+				]
+			},
+			{
+				"Title": "NumParamsPassed(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name or \"\" for current" ]
+				]
+			},
+
+			{
+				"Title": "GetInt(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Param/var name" ]
+				]
+			},
+			{
+				"Title": "GetFloat(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "String", "Param/var name" ]
+				]
+			},
+			{
+				"Title": "GetString$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Param/var name" ]
+				]
+			},
+			{
+				"Title": "IntParamByIndex(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "FloatParamByIndex(",
+				"Returns": "Float",
+				"Parameters": [
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "StringParamByIndex$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "GetAllParamsAsText$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ],
+					[ "String", "Separator" ],
+					[ "Integer", "Annotate floats/strings" ]
+				]
+			},
+			// Returns function calling function
+			{
+				"Title": "GetCallStack$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Most recent first (0) or last (1)?" ],
+					[ "Integer", "Rewind count (-1 = all functions)" ]
+				]
+			},
+			{
+				"Title": "InternalLoopIndex(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "LoopVarName$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "LoopVarType$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "FuncName$(",
+				"Returns": "String"
+			},
+			{
+				"Title": "NumRequiredParams(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "NumPossibleParameters(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "ExpectedReturnType$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "ShouldRepeat(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "ShouldBeDelayed(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "RecursiveAllowed(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "IsEnabled(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "GetRedirectFunctionName$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "RunOnGlobalID$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ]
+				]
+			},
+			{
+				"Title": "ParamNameByIndex$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ],
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "ParamTypeByIndex$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ],
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "ParamDefaultByIndex$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ],
+					[ "Integer", "Param index" ]
+				]
+			},
+			{
+				"Title": "ParamIndexByName$(",
+				"Returns": "Integer",
+				"Parameters": [
+					[ "String", "Func name (or \"\" for current)" ],
+					[ "String", "Param name" ]
+				]
+			},
+			{
+				"Title": "ParamTypeByName$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or blank for current)" ],
+					[ "String", "Param name" ]
+				]
+			},
+			{
+				"Title": "ParamDefaultByName$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or blank for current)" ],
+					[ "String", "Param name" ]
+				]
+			},
+			{
+				"Title": "LastReturnValueAsInt(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "LastReturnValueAsFloat(",
+				"Returns": "Float"
+			},
+			{
+				"Title": "LastReturnValueAsString$(",
+				"Returns": "String"
+			},
+			{
+				"Title": "LastReturnType$(",
+				"Returns": "String"
+			},
+			{
+				"Title": "TestFunc$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Selection count" ]
+				]
+			}
+			// Dynamic functions start from ID lastNonFuncID, with the interim between JSON list above
+			// and lastNonFuncID filled with dummy expressions that take no parameters and return int
+		],
+		"Properties": [
+			{
+				"Title": "Global ID",
+				"Info": "Used for running functions in other frames; if blank, will be unavailable to other frames",
+				"Type": "Editbox String",
+				"DefaultState": ""
+			},
+			{
+				"Title": "Global scoped vars",
+				"Info": "Convenient way to pre-define scoped variables that can be accessed from any function.",
+				"Type": "Editbox String Multiline",
+				"DefaultState": ""
+			},
+			{
+				"Title": "Conversion strictness level",
+				"Info": "When converting parameter values to match expressions. See help file.",
+				"Type": "Combo Box",
+				"DefaultState": "Exact",
+				"Items": [ "Exact", "Float <-> Integer OK", "Any conversion (e.g. \"1\" -> 1.0)", "Any (no errors)" ]
+			},
+			{
+				"Title": "Require declaration for all functions",
+				"Info": "If disabled, allows you to use functions without a pre-defined declaration.",
+				"Type": "Checkbox",
+				"DefaultState": false
+			},
+			{
+				"Title": "Keep declarations across frame switches",
+				"Info": "If true, will not discard declarations set up before a Fusion frame switch.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Keep global vars across frame switches",
+				"Info": "If true, will not discard global scope scoped vars set up before a Fusion frame switch.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Create error for unhandled functions",
+				"Info": "Creates an error when a function is called that has no On XX Function events.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Create error for unhandled aborts",
+				"Info": "Creates an error when a function is aborted with no matching On Function XX Aborted events.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Enable Any Function conditions",
+				"Info": "If disabled, saves execution time by not running unnecessary functions.",
+				"Type": "Checkbox",
+				"DefaultState": false
+			},
+			{
+				"Title": "Create an error when overriding scoped values",
+				"Info": "If enabled, creates an error when a function creates a new scoped value that hides an existing one.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Prevent any recursion",
+				"Info": "Prevents any recursion by default. 99% of recursion functions can be written as a non-recursive loop.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
+				"Title": "Run errors/aborts on called extension",
+				"Info": "If true, when a cross-frame function aborts, generates on destination ext.",
+				"Type": "Checkbox",
+				"DefaultState": false
+			},
+			{
+				"Title": "Allow singular objects in qualifier foreach",
+				"Info": "If true, a foreach run on a qualifier containing X will also trigger On Foreach for X.",
+				"Type": "Checkbox",
+				"DefaultState": false
+			}
+		]
+	}
+}
