@@ -11,9 +11,20 @@ Some editors will consider this to be trailing whitespace and remove it; make su
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
 
+Changes until v17 release
+----
+*v17 not released yet*
+
+
 Changes until v16 release
 ----
-*v16 not released yet*
+*v16 released on 31st Dec 2022, latest commit*
+- All platforms: Added DarkEdif::MakePathUnembeddedIfNeeded() to pull binary data files into temporary files
+- Android/iOS: PostBuildTool now v1.0.0.2; template files modified for the embedded file feature
+- Android: Fixed freeze in text expression when returning invalid UTF-8
+- Edittime: Improved reporting for link A/C/E errors occurring in multiple languages
+- iOS: Fixed library lookup so libraries can be linked to by C++ side; automatic adding of libraries to iOS build zips is not yet implemented
+- iOS: PostBuildTool explicitly adds libcrypto and libssl to iOS built zips
 
 
 Changes until v15 release

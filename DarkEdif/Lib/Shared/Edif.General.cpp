@@ -490,6 +490,15 @@ reconvert:
 			}
 			else // Pass through short UTF-8 sequences unmodified.
 			{
+				// Corrupt string may cause infinite loop; replace invalid char instead
+				if (w == 0)
+				{
+					newString[outputByteIndex] = '?';
+					outputByteIndex += 1;
+					inputByteIndex += 1;
+					break;
+				}
+
 				// Basically just memcpy(newString.data() + outputByteIndex, &bytes[inputByteIndex], w);
 
 				if (w == 1)

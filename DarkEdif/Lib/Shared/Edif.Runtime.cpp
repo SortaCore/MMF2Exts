@@ -447,6 +447,7 @@ void Edif::Runtime::DetachJVMAccessForThisThread()
 		LOGF("Couldn't detach thread ID %s from JNI, DetachCurrentThread error %i.\n", ThreadIDToStr(thisThreadID).c_str(), error);
 		return;
 	}
+	LOGV("Detached thread ID %s from JNI OK.\n", ThreadIDToStr(thisThreadID).c_str());
 
 	threadEnv = nullptr;
 }

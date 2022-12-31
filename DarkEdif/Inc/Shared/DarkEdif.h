@@ -64,7 +64,7 @@ bool CreateNewExpressionInfo();
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 15;
+	static const int SDKVersion = 16;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -221,6 +221,9 @@ namespace DarkEdif {
 	std::uint16_t GetEventNumber(eventGroup *);
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
+	// Returns path as is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
+	// On Windows, just copies string
+	std::tstring MakePathUnembeddedIfNeeded(const Extension* ext, const std::tstring_view filePath);
 
 	// =====
 	// This region does message boxes
@@ -773,8 +776,8 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Actions"].u.array.length <= ID)
 		{
-			errorStream << curLangName << ": error in linking action ID "sv << ID << "; it has no Actions JSON item."sv;
-			break;
+			errorStream << curLangName << ": error in linking action ID "sv << ID << "; it has no Actions JSON item.\r\n"sv;
+			continue;
 		}
 		const json_value &json = curLang["Actions"][ID];
 
@@ -841,7 +844,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		if (curLang["Conditions"].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking condition ID "sv << ID << "; it has no Conditions JSON item.\r\n"sv;
-			break;
+			continue;
 		}
 		const json_value &json = curLang["Conditions"][ID];
 
@@ -925,8 +928,8 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 		if (curLang["Expressions"].u.array.length <= ID)
 		{
-			errorStream << curLangName << ": error in linking expression ID "sv << ID << "; it has no Expressions JSON item."sv;
-			break;
+			errorStream << curLangName << ": error in linking expression ID "sv << ID << "; it has no Expressions JSON item.\r\n"sv;
+			continue;
 		}
 
 		std::string expCppRetType = "<unknown>"s;
@@ -998,7 +1001,6 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 				str2 << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << ":\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
-				break;
 			}
 		}
 	}
@@ -1034,5 +1036,16 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...))
 #endif // _DEBUG
 
 #ifdef __APPLE__
+//
 extern "C" int DarkEdif_getCurrentFusionEventNum(void* objCExt);
+
+// Reads files from inside anywhere Fusion runtime can readily access.
+// Uses the CRun functions used by Edit Box to load files.
+// Works with Data Elements - pass filename only, not full Windows/iOS path.
+// May work with other paths like iOS app files... not obvious yet.
+//
+// Errors are indicated by > at start of return, which is illegal filename char;
+// otherwise the return is the file path in a temporary folder, suitable for fopen()
+// Return is malloc'd and must be free'd, even for errors
+extern "C" char* DarkEdif_makePathUnembeddedIfNeeded(void* ext, const char* fileName);
 #endif

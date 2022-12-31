@@ -2993,6 +2993,50 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 #endif
 }
 
+// Returns path as-is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
+std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const std::tstring_view filePath)
+{
+	if (filePath.empty())
+		return _T(">File path was blank"s);
+#if _WIN32
+	std::tstring truePath(MAX_PATH + 1, _T(' '));
+#ifdef _UNICODE
+	if (::SDK->mV->GetFileW(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+#else
+	if (::SDK->mV->GetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+#endif
+		return _T(">mvGetFile returned false"s);
+#elif defined(__ANDROID__)
+	// Call `String darkedif_jni_makePathUnembeddedIfNeeded(String)` Java function
+	static jmethodID getEventIDMethod;
+	if (getEventIDMethod == nullptr)
+	{
+		jclass javaExtClass = threadEnv->GetObjectClass(ext->javaExtPtr);
+		getEventIDMethod = threadEnv->GetMethodID(javaExtClass, "darkedif_jni_makePathUnembeddedIfNeeded", "(Ljava/lang/String;)Ljava/lang/String;");
+
+		// This is a Java wrapper implementation failure and so its absence should be considered fatal
+		if (getEventIDMethod == nullptr)
+			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_makePathUnembeddedIfNeeded method in Java wrapper file.\n");
+	}
+
+	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
+	RuntimeFunctions::string str;
+	str.ctx = threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
+	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
+	const std::string truePath = str.ptr ? str.ptr : "";
+
+	threadEnv->DeleteLocalRef(pathJava);
+	threadEnv->DeleteLocalRef((jobject)str.ctx);
+#else
+	const std::string truePath = DarkEdif_makePathUnembeddedIfNeeded(ext->objCExtPtr, std::string(filePath).c_str());
+#endif
+	if (filePath != truePath)
+		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
+	else
+		LOGV(_T("File path extraction of \"%s\" produced no change.\n"), truePath.c_str());
+	return truePath;
+}
+
 // =====
 // Text conversion - definitions
 // =====

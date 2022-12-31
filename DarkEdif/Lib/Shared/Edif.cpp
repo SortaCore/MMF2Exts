@@ -604,7 +604,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	long Parameters[16];
 	long Result = 0L;
 #if defined(__arm__) && defined(__ANDROID__)
-	long argStackCount; // Must be declared here or error reports in param reading won't compile
+	// long argStackCount; // Must be declared here or error reports in param reading won't compile
 #elif defined(_WIN32)
 	// Reset by CNC_GetParam inside params.GetXX(). CurrentParam being correct only matters if you have object parameters, though.
 	EventParam* saveCurParam = ext->rdPtr->rHo.CurrentParam;
@@ -1231,10 +1231,10 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 	long Parameters[16];
 	std::uintptr_t Result = 0;
 
-	int ExpressionRet2 = (int)ExpressionRet;
+	//int ExpressionRet2 = (int)ExpressionRet;
 #ifdef _WIN32
-	//int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
-#else
+	int ExpressionRet2 = (int)ExpressionRet; // easier for ASM
+#elif 0
 	int argStackCount = ParameterCount;
 	// if > 4 params, they're stored on stack
 	if (argStackCount > 4) {

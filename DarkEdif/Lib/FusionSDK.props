@@ -385,10 +385,10 @@
 			<!-- Not including ProjectDir causes includes of "Common.h" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
 			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlat);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-
-			<!-- C++ is king. -->
-			<CompileAs>CompileAsCpp</CompileAs>
 		</ClCompile>
+		<Link>
+			<AdditionalLibraryDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Lib\$(_TargetPlat)\$(TargetArch);$(SDKRootFolder)\Lib\$(_TargetPlat);$(SDKRootFolder)\Lib\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Lib;%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
+		</Link>
 	</ItemDefinitionGroup>
 
 
@@ -656,7 +656,7 @@
 
 			<!-- Don't export any functions by default, as Java doesn't need to see them.
 				 Disable #pragma comment getting compiler upset, and other issues. -->
-			<AdditionalOptions>-fvisibility=hidden -fPIC -fasm-blocks -Wno-unknown-pragmas -Wno-unused-const-variable %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fvisibility=hidden -fPIC -fasm-blocks -Wno-unknown-pragmas -Wno-unused-const-variable -Wno-missing-braces %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>

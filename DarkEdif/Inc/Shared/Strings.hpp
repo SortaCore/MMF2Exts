@@ -39,6 +39,7 @@
 	#define _ttof(f) atof(f)
 	#define _ttoi(i) atoi(i)
 	#define _tcserror(a) strerror(a)
+	#define _tcsftime(a,b,c,d) strftime(a,b,c,d)
 
 	#define _tcscpy_s(a,b,c) strcpy(a,c)
 
