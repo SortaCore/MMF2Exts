@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../../common.h"
 #include "eventqueue.h"
@@ -41,7 +22,7 @@ lwp_eventqueue lwp_eventqueue_new ()
 void lwp_eventqueue_delete (lwp_eventqueue queue)
 {
 	if (queue->numFDsWatched > 0)
-		lw_trace("lwp_eventqueue_delete warning: had %i FDs left when closing eventqueue.", queue->numFDsWatched);
+		always_log ("lwp_eventqueue_delete warning: had %i FDs left when closing eventqueue.", queue->numFDsWatched);
 	close (queue->epollFD);
 	free (queue);
 }
@@ -53,15 +34,14 @@ void lwp_eventqueue_add (lwp_eventqueue queue,
 						 lw_bool edge_triggered,
 						 void * tag)
 {
-	struct epoll_event event = {};
-	memset(&event, 0, sizeof(epoll_event));
+	struct epoll_event event = {0};
 
 	event.data.ptr = tag;
-
-	event.events = (read ? EPOLLIN : 0) |
-				  (write ? EPOLLOUT : 0) |
-				  (edge_triggered ? EPOLLET : 0);
-	lw_trace("lwp_eventqueue_add EPOLL_CTL_ADD: Queuing event with fd %d, read %d, write %d, edge %d, TAG %p.",
+	
+	event.events = (read != 0 ? EPOLLIN : 0u) |
+				  (write != 0 ? EPOLLOUT : 0u) |
+				  (edge_triggered != 0 ? EPOLLET : 0u);
+	lwp_trace ("lwp_eventqueue_add EPOLL_CTL_ADD: Queuing event with fd %d, read %d, write %d, edge %d, TAG %p.",
 		fd, read ? 1 : 0, write ? 1 : 0, edge_triggered ? 1 : 0, tag);
 
 	epoll_ctl (queue->epollFD, EPOLL_CTL_ADD, fd, &event);
@@ -75,7 +55,7 @@ void lwp_eventqueue_update (lwp_eventqueue queue,
 							lw_bool was_edge_triggered, lw_bool edge_triggered,
 							void * old_tag, void * tag)
 {
-	struct epoll_event event = {};
+	struct epoll_event event = {0};
 
 	event.data.ptr = tag;
 
@@ -83,17 +63,31 @@ void lwp_eventqueue_update (lwp_eventqueue queue,
 	(void)res; // prevent unused warnings
 	if (read || write)
 	{
-		event.events = (read ? EPOLLIN : 0) |
-					   (write ? EPOLLOUT : 0) |
-					   (edge_triggered ? EPOLLET : 0);
+		event.events = (read ? EPOLLIN : 0u) |
+					   (write ? EPOLLOUT : 0u) |
+					   (edge_triggered ? EPOLLET : 0u);
 		res = epoll_ctl(queue->epollFD, EPOLL_CTL_MOD, fd, &event);
-		assert(res != -1);
+		if (res == -1)
+			always_log("epoll_ctl mod for fd %d, epoll fd %d returned -1, err %d", fd, queue->epollFD, errno);
+		else {
+			lwp_trace("epoll_ctl mod for fd %d, epoll fd %d returned %i, err %d", fd, queue->epollFD, res, errno);
+		}
+		assert(res != -1 && "mod");
 	}
-	else
+	else // deleting
 	{
-		res = epoll_ctl(queue->epollFD, EPOLL_CTL_DEL, fd, &event);
+		// Pump already closed down - this should not happen!
+		// It means the client/server closes after the pump is deleted. Should be before.
+		if (queue->epollFD == -1)
+			always_log("Error: Can't delete pump FD %d, main pump FD is already closed down.", fd);
+		else
+		{
+			res = epoll_ctl(queue->epollFD, EPOLL_CTL_DEL, fd, &event);
+			if (res == -1)
+				always_log ("epoll_ctl delete for fd %d, epoll fd %d returned -1, err %d", fd, queue->epollFD, errno);
+			// assert(res != -1 && "del");
+		}
 		--queue->numFDsWatched;
-		assert(res != -1);
 	}
 }
 

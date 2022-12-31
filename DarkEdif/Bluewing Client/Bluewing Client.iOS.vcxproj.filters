@@ -51,9 +51,6 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\fdstream.h">
       <Filter>Header Files\Lacewing\src\unix</Filter>
     </ClInclude>
-    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h">
       <Filter>Header Files\Lacewing\src</Filter>
     </ClInclude>
@@ -66,6 +63,7 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
       <Filter>Header Files\Lacewing\src\unix</Filter>
     </ClInclude>
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">

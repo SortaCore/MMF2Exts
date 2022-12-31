@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin.	All rights reserved.
+ * Copyright (C) 2012 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "fdstream.h"
@@ -45,7 +26,7 @@ static lw_i64 lwp_sendfile (int source, int dest, lw_i64 size)
 
 	 ssize_t sent = 0;
 
-	 if ((sent = sendfile (dest, source, 0, size)) == -1)
+	 if ((sent = sendfile (dest, source, 0, (size_t)size)) == -1)
 		 return errno == EAGAIN ? 0 : -1;
 
 	 return sent;
@@ -106,13 +87,13 @@ static void read_ready (void * tag)
 
 	lw_bool close_stream = lw_false;
 
-	while (ctx->reading_size == (size_t)-1 || ctx->reading_size > 0)
+	while (ctx->reading_size == SIZE_MAX || ctx->reading_size > 0)
 	{
 		if (ctx->fd == -1)
 		 break;
 
 		size_t to_read = sizeof (buffer);
-		if (ctx->reading_size != (size_t)-1 && to_read > ctx->reading_size)
+		if (ctx->reading_size != SIZE_MAX && to_read > ctx->reading_size)
 			to_read = ctx->reading_size;
 
 		ssize_t bytes = read (ctx->fd, buffer, to_read);
@@ -133,15 +114,15 @@ static void read_ready (void * tag)
 			break;
 		}
 
-		if (ctx->reading_size != (size_t)-1)
+		if (ctx->reading_size != SIZE_MAX)
 		{
 			if (bytes > (ssize_t)ctx->reading_size)
 				ctx->reading_size = 0;
 			else
-				ctx->reading_size -= bytes;
+				ctx->reading_size -= (size_t)bytes;
 		}
 
-		lw_stream_data ((lw_stream) ctx, buffer, bytes);
+		lw_stream_data ((lw_stream) ctx, buffer, (size_t)bytes);
 
 		/* Calling Data or Close may result in destruction of the Stream -
 		* see FDStream destructor.
@@ -158,6 +139,11 @@ static void read_ready (void * tag)
 
 	if (close_stream)
 		lw_stream_close ((lw_stream) ctx, lw_true);
+}
+
+long lw_fdstream_get_fd_debug(lw_fdstream ctx)
+{
+	return ctx->fd;
 }
 
 void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
@@ -201,7 +187,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 	{
 		ctx->flags &= ~ lwp_fdstream_flag_is_socket;
 
-		if ((ctx->size = stat.st_size) > 0)
+		if ((ctx->size = (size_t)stat.st_size) > 0)
 			return;
 
 		/* Not a socket, and size is 0.	Is it really just an empty file? */
@@ -212,7 +198,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 
 	/* Assuming this is something we can watch for readiness. */
 
-	ctx->size = -1;
+	ctx->size = SIZE_MAX;
 
 	lw_pump pump = lw_stream_pump ((lw_stream) ctx);
 
@@ -275,7 +261,7 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 
 	lwp_trace ("fdstream sink " lwp_fmt_size " bytes", size);
 
-	size_t written;
+	ssize_t written;
 
 	#ifdef HAVE_DECL_SO_NOSIGPIPE
 		written = write (ctx->fd, buffer, size);
@@ -286,16 +272,16 @@ static size_t def_sink_data (lw_stream stream, const char * buffer, size_t size)
 			written = write (ctx->fd, buffer, size);
 	#endif
 
-	if (written == (size_t)-1)
+	if (written == -1)
 	{
 		lwp_trace ("fdstream sank nothing!	write failed: %d", errno);
 		return 0;
 	}
 
 	lwp_trace ("fdstream sank " lwp_fmt_size " of " lwp_fmt_size " bytes",
-				written, size);
+				(size_t)written, size);
 
-	return written;
+	return (size_t)written;
 }
 
 static lw_i64 def_sink_stream (lw_stream _dest,
@@ -305,18 +291,18 @@ static lw_i64 def_sink_stream (lw_stream _dest,
 	if (lw_stream_get_def (_src) != &def_fdstream)
 		return -1;
 
-	if (size == (size_t)-1)
+	if (size == SIZE_MAX)
 	{
 		size = lw_stream_bytes_left (_src);
 
-		if (size == (size_t)-1)
+		if (size == SIZE_MAX)
 		 return -1;
 	}
 
 	lw_fdstream source = (lw_fdstream) _src;
 	lw_fdstream dest = (lw_fdstream) _dest;
 
-	lw_i64 sent = lwp_sendfile (source->fd, dest->fd, size);
+	lw_i64 sent = lwp_sendfile (source->fd, dest->fd, (lw_i64)size);
 
 	lwp_trace ("lwp_sendfile sent " lwp_fmt_size " of " lwp_fmt_size,
 					 ((size_t) sent), (size_t) size);
@@ -339,7 +325,7 @@ static void def_read (lw_stream _ctx, size_t bytes)
 
 	lw_bool was_reading = ctx->reading_size != 0;
 
-	if (bytes == (size_t)-1)
+	if (bytes == SIZE_MAX)
 		ctx->reading_size = lw_stream_bytes_left ((lw_stream) ctx);
 	else
 		ctx->reading_size += bytes;
@@ -353,16 +339,16 @@ static size_t def_bytes_left (lw_stream _ctx)
 	lw_fdstream ctx = (lw_fdstream) _ctx;
 
 	if (ctx->fd == -1)
-		return -1; /* not valid */
+		return SIZE_MAX; /* not valid */
 
-	if (ctx->size == (size_t)-1)
-		return -1;
+	if (ctx->size == SIZE_MAX)
+		return SIZE_MAX;
 
 	lwp_trace ("lseek for FD %d, size " lwp_fmt_size, ctx->fd, ctx->size);
 
 	/* TODO : lseek64? */
 
-	return ctx->size - lseek (ctx->fd, 0, SEEK_CUR);
+	return ctx->size - (size_t)lseek (ctx->fd, 0, SEEK_CUR);
 }
 
 static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
@@ -413,10 +399,9 @@ const lw_streamdef def_fdstream =
 
 void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 {
-	memset(ctx, 0, sizeof(*ctx));
-
 	ctx->fd = -1;
 	ctx->flags = lwp_fdstream_flag_nagle;
+	ctx->size = ctx->reading_size = 0;
 
 	lwp_stream_init (&ctx->stream, &def_fdstream, pump);
 }

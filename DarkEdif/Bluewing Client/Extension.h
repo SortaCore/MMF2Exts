@@ -380,6 +380,8 @@ struct GlobalInfo
 	// Used to determine if an error event happened in a Fusion event, e.g. user put in bad parameter.
 	// Fusion code always runs in main thread, but errors can occur outside of user input.
 	std::thread::id mainThreadID;
+	// If single-threaded, indicates if Lacewing is being ticked by Handle(). Used for error message location.
+	bool lacewingTicking = false;
 
 	// Locks and queues an EventToRun with 1 condition ID to trigger
 	void AddEvent1(std::uint16_t event1ID,

@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "../address.h"
@@ -62,7 +43,7 @@ static void read_ready (void * ptr)
 
 	lw_addr filter_addr = lw_filter_remote (ctx->filter);
 
-	struct _lw_addr addr = {};
+	struct _lw_addr addr = {0};
 
 	for (;;)
 	{
@@ -78,6 +59,8 @@ static void read_ready (void * ptr)
 		{
 			free(addr.info->ai_addr);  // alloc'd by lwp_addr_set_sockaddr
 			addr.info->ai_addr = NULL;
+			free(addr.info);
+			addr.info = NULL;
 			break;
 		}
 
@@ -86,14 +69,16 @@ static void read_ready (void * ptr)
 		// There's a race where UDP is unhosted, and ctx->on_data() is still queued.
 		// We can't unset on_data as the UDP is merely unhosted, not deleted.
 		// However, the FD is now close()'d and invalid.
-		// This check may not be necessary due to the shutdown() and manual dropping
+		// TODO: This check may not be necessary due to the shutdown() and manual dropping
 		// of FD from epoll in the same commit on 17th July 2021, but since it's a cheap test,
 		// we'll keep it.
 		if (ctx->fd != -1 && ctx->on_data)
-			ctx->on_data (ctx, &addr, buffer, bytes);
+			ctx->on_data (ctx, &addr, buffer, (size_t)bytes);
 
 		free(addr.info->ai_addr); // alloc'd by lwp_addr_set_sockaddr
 		addr.info->ai_addr = NULL;
+		free(addr.info);
+		addr.info = NULL;
 	}
 
 	lwp_release(ctx, "udp read");
@@ -218,10 +203,10 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 		return;
 	}
 
-	if (size == (size_t)-1)
+	if (size == SIZE_MAX)
 		size = strlen (data);
 
-	if constexpr (sizeof(size) > 4)
+	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
 	if (!addr->info)

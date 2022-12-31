@@ -252,8 +252,8 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		// Added Blue-only expressions
 		LinkExpression(55, RecvMsg_DumpToString);
 		LinkExpression(56, ChannelListing_ChannelCount);
-		LinkExpression(57, ConvToUTF8_GetVisibleCharCount);
-		LinkExpression(58, ConvToUTF8_GetCompleteCodePointCount);
+		LinkExpression(57, ConvToUTF8_GetCompleteCodePointCount);
+		LinkExpression(58, ConvToUTF8_GetVisibleCharCount);
 		LinkExpression(59, ConvToUTF8_GetByteCount);
 		LinkExpression(60, ConvToUTF8_TestAllowList);
 	}
@@ -760,7 +760,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	if (recvMsgStartIndex > threadData->receivedMsg.content.size())
 	{
 		CreateError("Could not read from received binary, index %zu is outside range of 0 to %zu.",
-			recvMsgStartIndex, recvMsgStartIndex + threadData->receivedMsg.content.size());
+			recvMsgStartIndex, std::max((size_t)0, threadData->receivedMsg.content.size()));
 		return std::tstring();
 	}
 
@@ -779,7 +779,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		if (sizeInCodePoints != -1 && (unsigned)sizeInCodePoints > maxSizePlusOne - 1)
 		{
 			CreateError("Could not read string with size %d at %sstart index %zu, only %zu possible characters in message.",
-				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, maxSizePlusOne);
+				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, std::max((size_t)1, maxSizePlusOne) - 1U);
 			return std::tstring();
 		}
 
@@ -816,7 +816,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
 	for (int codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = (int)result.size(); ; )
 	{
-		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, remainder < 4 ? 4 : remainder));
+		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, std::min(4, remainder)));
 
 		// We checked for -2 in start char in previous if(), so the string isn't starting too early.
 		// So, a -2 in middle of the string means it's a malformed UTF-8.
@@ -870,12 +870,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 			recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
 		return std::tstring();
 	}
-
-	// Either no problems, and numBytesRead
-
-	CreateError("Could not read text from received binary, UTF-8 char was cut off at the cursor's end index %zu.",
-		threadData->receivedMsg.cursor + actualStringSizeBytes);
-	return std::tstring();
+	// code should never reach here
 }
 
 
@@ -969,13 +964,16 @@ REFLAG Extension::Handle()
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
 	if (!globals->_thread.joinable())
 	{
+		globals->lacewingTicking = true;
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
 			e->add("(in Extension::Handle -> tick())");
 			CreateError("%s", e->tostring());
+			globals->lacewingTicking = false;
 			return REFLAG::NONE; // Run next loop
 		}
+		globals->lacewingTicking = false;
 	}
 
 	// AddEvent() was called and not yet handled
@@ -1056,14 +1054,14 @@ REFLAG Extension::Handle()
 					// Restore old selection - if there was a selection
 					i->threadData = origTData;
 					if (origSelChannel)
-						selChannel = origSelChannel;
+						i->selChannel = origSelChannel;
 					if (origSelPeer)
-						selPeer = origSelPeer;
+						i->selPeer = origSelPeer;
 				}
 				// Clear up data if CLEAR_EVTNUM event number is used
 				else
 				{
-					// On disconnect, clear everyting
+					// On disconnect, clear everything
 					if (!evtToRun->channel)
 					{
 						// After On Disconnect is triggered (cond ID 3), CLEAR_EVTNUM is triggered.
@@ -1237,6 +1235,8 @@ killGlobalsAndExitThread:
 	if (appWasClosed)
 	{
 		LOGV(_T("" PROJECT_NAME " - timeout thread: actual delete globals.\n"));
+		// Leaving timeoutThread held in G while destroying = std::terminate
+		G->timeoutThread.detach();
 		delete G;
 	}
 

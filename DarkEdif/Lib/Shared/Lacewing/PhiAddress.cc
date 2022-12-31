@@ -1,3 +1,12 @@
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
+ *
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * Copyright (C) 2017-2022 Darkwire Software.
+ * All rights reserved.
+ *
+ * https://opensource.org/licenses/mit-license.php
+*/
+
 #include "Lacewing.h"
 
 // Comments for all the below functions can be found in the header file.
@@ -19,7 +28,10 @@ void lw_addr_prettystring(const char * input, char * const output, size_t output
 		}
 		else // Strip port
 		{
-			const size_t portSepSize = portSepPos - input;
+			size_t portSepSize = portSepPos - input;
+			if (input[0] == '[')
+				++portSepSize; // include the ']' of IPv6
+
 			assert(outputSize > portSepSize && "IP output buffer too small");
 			memcpy(output, input, portSepSize);
 			output[portSepSize] = '\0';
@@ -172,6 +184,10 @@ std::string lw_u8str_simplify(const std::string_view first, bool destructive, bo
 	return u8str;
 }
 
+extern "C" bool lw_u8str_validate(const char* toValidate, size_t size)
+{
+	return lw_u8str_validate(std::string_view(toValidate, size));
+}
 bool lw_u8str_validate(const std::string_view toValidate)
 {
 	if (toValidate.empty())

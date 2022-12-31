@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012, 2013 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012, 2013 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 #include "streamgraph.h"
@@ -33,6 +14,7 @@
 
 static void graph_dealloc (lwp_streamgraph graph)
 {
+	lw_trace("graph at %p was dealloc'd\n", graph);
 	lwp_streamgraph_clear_expanded (graph);
 
 	list_clear (graph->roots);
@@ -75,22 +57,22 @@ static void swallow (lwp_streamgraph graph, lw_stream stream)
 	stream->graph = graph;
 	stream->last_expand = graph->last_expand;
 
-	list_each (stream->filters_upstream, spec)
+	list_each (lwp_stream_filterspec, stream->filters_upstream, spec)
 	{
 	  swallow (graph, spec->filter);
 	}
 
-	list_each (stream->filters_downstream, spec)
+	list_each (lwp_stream_filterspec, stream->filters_downstream, spec)
 	{
 	  swallow (graph, spec->filter);
 	}
 
-	list_each (stream->filtering, spec)
+	list_each (lwp_stream_filterspec, stream->filtering, spec)
 	{
 	  swallow (graph, spec->stream);
 	}
 
-	list_each (stream->next, link)
+	list_each (lwp_streamgraph_link, stream->next, link)
 	{
 	  swallow (graph, link->to);
 	}
@@ -102,9 +84,9 @@ void lwp_streamgraph_swallow (lwp_streamgraph graph, lwp_streamgraph old_graph)
 
 	lwp_streamgraph_clear_expanded (old_graph);
 
-	list_each (old_graph->roots, root)
+	list_each (lw_stream, old_graph->roots, root)
 	{
-	  list_push (graph->roots, root);
+	  list_push (lw_stream, graph->roots, root);
 	  swallow (graph, root);
 	}
 
@@ -120,7 +102,7 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 
 	/* Upstream filters come first */
 
-	list_each (stream->filters_upstream, spec)
+	list_each (lwp_stream_filterspec, stream->filters_upstream, spec)
 	{
 	  lw_stream filter_stream = spec->filter, expanded, next;
 
@@ -135,8 +117,8 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 		 spec->link.from_exp = *last;
 		 spec->link.to_exp = expanded;
 
-		 list_push ((*last)->next_expanded, &spec->link);
-		 list_push (expanded->prev_expanded, &spec->link);
+		 list_push (lwp_streamgraph_link, (*last)->next_expanded, &spec->link);
+		 list_push (lwp_streamgraph_link, expanded->prev_expanded, &spec->link);
 	  }
 
 	  *last = next;
@@ -156,10 +138,10 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 
 	  link->from_exp = *last;
 	  link->to_exp = stream;
-	  link->bytes_left = -1;
+	  link->bytes_left = SIZE_MAX;
 
-	  list_push ((*last)->next_expanded, link);
-	  list_push (stream->prev_expanded, link);
+	  list_push (lwp_streamgraph_link, (*last)->next_expanded, link);
+	  list_push (lwp_streamgraph_link, stream->prev_expanded, link);
 
 	  *last = stream;
 	}
@@ -171,7 +153,7 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 
 	/* And downstream filters afterwards */
 
-	list_each (stream->filters_downstream, spec)
+	list_each (lwp_stream_filterspec, stream->filters_downstream, spec)
 	{
 	  lw_stream filter_stream = spec->filter;
 
@@ -184,8 +166,8 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 		 spec->link.from_exp = *last;
 		 spec->link.to_exp = expanded;
 
-		 list_push ((*last)->next_expanded, &spec->link);
-		 list_push (expanded->prev_expanded, &spec->link);
+		 list_push (lwp_streamgraph_link, (*last)->next_expanded, &spec->link);
+		 list_push (lwp_streamgraph_link, expanded->prev_expanded, &spec->link);
 	  }
 
 	  *last = next;
@@ -194,9 +176,9 @@ static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 
 	/* The last downstream filter is in charge of calling any data hooks */
 
-	list_each (stream->data_hooks, hook)
+	list_each (struct _lwp_stream_data_hook, stream->data_hooks, hook)
 	{
-	  list_push ((*last)->exp_data_hooks, hook);
+	  list_push (struct _lwp_stream_data_hook, (*last)->exp_data_hooks, hook);
 	}
 }
 
@@ -212,23 +194,26 @@ static void expand (lwp_streamgraph graph, lw_stream last,
 	{
 	  link->to_exp = expanded_first;
 
-	  list_push (expanded_first->prev_expanded, link);
+	  list_push (lwp_streamgraph_link, expanded_first->prev_expanded, link);
 
 	  link->from_exp = last;
 
-	  assert (!list_find (last->next_expanded, link));
+#ifndef NDEBUG
+	  list_find(lwp_streamgraph_link, last->next_expanded, link);
+	  assert(elem == NULL);
+#endif
 
-	  list_push (last->next_expanded, link);
+	  list_push (lwp_streamgraph_link, last->next_expanded, link);
 	}
 	else
 	{
-	  list_push (graph->roots_expanded, expanded_first);
+	  list_push (lw_stream, graph->roots_expanded, expanded_first);
 	}
 
 	last = expanded_last;
 	last_link = link;
 
-	list_each (stream->next, link)
+	list_each (lwp_streamgraph_link, stream->next, link)
 	{
 	  expand (graph, last, last_link, link, link->to);
 	}
@@ -238,7 +223,7 @@ void lwp_streamgraph_expand (lwp_streamgraph graph)
 {
 	lwp_streamgraph_clear_expanded (graph);
 
-	list_each (graph->roots, stream)
+	list_each (lw_stream, graph->roots, stream)
 	{
 	  if (stream->last_expand == graph->last_expand)
 		 continue;
@@ -246,7 +231,7 @@ void lwp_streamgraph_expand (lwp_streamgraph graph)
 	  expand (graph, 0, 0, 0, stream);
 	}
 
-	list_each_elem (graph->roots_expanded, elem)
+	list_each_elem (lw_stream, graph->roots_expanded, elem)
 	{
 	  lw_stream stream = *elem;
 
@@ -266,9 +251,9 @@ void lwp_streamgraph_expand (lwp_streamgraph graph)
 static lw_bool find_next_direct (lw_stream stream, lw_stream * next_direct,
 								 size_t * bytes)
 {
-	list_each (stream->next_expanded, link)
+	list_each (lwp_streamgraph_link, stream->next_expanded, link)
 	{
-	  if (link->bytes_left != (size_t)-1 && link->bytes_left < *bytes)
+	  if (link->bytes_left != SIZE_MAX && link->bytes_left < *bytes)
 		 *bytes = link->bytes_left;
 
 	  lw_stream next = link->to_exp;
@@ -299,15 +284,15 @@ static void graph_read (lwp_streamgraph graph, int this_expand,
 	if (!list_length (stream->next_expanded))
 	  return;
 
-	if (bytes == (size_t)-1)
+	if (bytes == SIZE_MAX)
 	{
 	  /* Use the biggest bytes_left from all the links */
 
-	  list_each (stream->next, link)
+	  list_each (lwp_streamgraph_link, stream->next, link)
 	  {
-		 if (link->bytes_left == (size_t)-1)
+		 if (link->bytes_left == SIZE_MAX)
 		 {
-			bytes = -1;
+			bytes = SIZE_MAX;
 			break;
 		 }
 
@@ -385,7 +370,7 @@ static void graph_read (lwp_streamgraph graph, int this_expand,
 	  return;
 	}
 
-	list_each (stream->next_expanded, link)
+	list_each (lwp_streamgraph_link, stream->next_expanded, link)
 	{
 	  graph_read (graph, this_expand, link->to_exp, link->bytes_left);
 
@@ -402,9 +387,9 @@ void lwp_streamgraph_read (lwp_streamgraph graph)
 
 	lwp_trace ("streamgraph_read with last_expand %d", this_expand);
 
-	list_each (graph->roots_expanded, root)
+	list_each (lw_stream, graph->roots_expanded, root)
 	{
-	  graph_read (graph, this_expand, root, -1);
+	  graph_read (graph, this_expand, root, SIZE_MAX);
 
 	  if (graph->last_expand != this_expand || graph->dead)
 	  {
@@ -418,7 +403,7 @@ void lwp_streamgraph_read (lwp_streamgraph graph)
 
 static void clear_expanded (lw_stream stream)
 {
-	list_each (stream->next_expanded, link)
+	list_each (lwp_streamgraph_link, stream->next_expanded, link)
 	{
 	  assert (link->from_exp == stream);
 
@@ -440,7 +425,7 @@ void lwp_streamgraph_clear_expanded (lwp_streamgraph graph)
 {
 	++ graph->last_expand;
 
-	list_each (graph->roots_expanded, root)
+	list_each (lw_stream, graph->roots_expanded, root)
 	{
 	  clear_expanded (root);
 	}
@@ -462,7 +447,7 @@ static void print (lwp_streamgraph graph, lw_stream stream, int depth)
 		 (int) list_length (stream->filters_downstream),
 		 (int) list_length (stream->filtering));
 
-	list_each (stream->next, link)
+	list_each (lwp_streamgraph_link, stream->next, link)
 	{
 	  for (int i = 0; i < depth; ++ i)
 		 fprintf (stderr, "  ");
@@ -482,7 +467,7 @@ static void print_expanded (lwp_streamgraph graph, lw_stream stream, int depth)
 		 stream, lw_stream_bytes_left (stream),
 		 (int) list_length (stream->exp_data_hooks));
 
-	list_each (stream->next_expanded, link)
+	list_each (lwp_streamgraph_link, stream->next_expanded, link)
 	{
 	  for (int i = 0; i < depth; ++ i)
 		 fprintf (stderr, "  ");
@@ -503,11 +488,11 @@ void lwp_streamgraph_print (lwp_streamgraph graph)
 
 	if (list_length (graph->roots) > 0)
 	{
-	  assert (list_front (graph->roots));
-	  assert (list_back (graph->roots));
+	  assert (list_front (lw_stream, graph->roots));
+	  assert (list_back (lw_stream, graph->roots));
 	}
 
-	list_each (graph->roots, root)
+	list_each (lw_stream, graph->roots, root)
 	{
 	  print (graph, root, 1);
 	}
@@ -517,11 +502,11 @@ void lwp_streamgraph_print (lwp_streamgraph graph)
 
 	if (list_length (graph->roots_expanded) > 0)
 	{
-	  assert (list_front (graph->roots_expanded));
-	  assert (list_back (graph->roots_expanded));
+	  assert (list_front (lw_stream, graph->roots_expanded));
+	  assert (list_back (lw_stream, graph->roots_expanded));
 	}
 
-	list_each (graph->roots_expanded, root)
+	list_each (lw_stream, graph->roots_expanded, root)
 	{
 	  print_expanded (graph, root, 1);
 	}

@@ -1,31 +1,12 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 
@@ -64,13 +45,13 @@ void lwp_ws_req_clean (lw_ws_req ctx)
 	ctx->version_major = 0;
 	ctx->version_minor = 0;
 
-	list_each (ctx->headers_in, header)
+	list_each (struct _lw_ws_req_hdr, ctx->headers_in, header)
 	{
 	  free (header.name);
 	  free (header.value);
 	}
 
-	list_each (ctx->headers_out, header)
+	list_each (struct _lw_ws_req_hdr, ctx->headers_out, header)
 	{
 	  free (header.name);
 	  free (header.value);
@@ -118,7 +99,7 @@ void lwp_ws_req_before_handler (lw_ws_req ctx)
 
 	strcpy (ctx->status, "200 OK");
 
-	list_each (ctx->headers_out, header)
+	list_each (struct _lw_ws_req_hdr, ctx->headers_out, header)
 	{
 	  free (header.name);
 	  free (header.value);
@@ -208,8 +189,8 @@ lw_bool lwp_ws_req_in_version (lw_ws_req ctx, size_t len, const char * version)
 	if (memcmp (version, "HTTP/", 5) || version [6] != '.')
 	  return lw_false;
 
-	ctx->version_major = version [5] - '0';
-	ctx->version_minor = version [7] - '0';
+	ctx->version_major = (char)(version [5] - '0');
+	ctx->version_minor = (char)(version [7] - '0');
 
 	if (ctx->version_major != 1)
 	  return lw_false;
@@ -308,7 +289,7 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	  return lw_false;
 
 	for (size_t i = 0; i < name_len; ++ i)
-	  header.name [i] = tolower (name [i]);
+	  header.name [i] = (char) tolower (name [i]);
 
 	header.name [name_len] = 0;
 
@@ -317,7 +298,7 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	memcpy (header.value, value, value_len);
 	header.value [value_len] = 0;
 
-	list_push (ctx->headers_in, header);
+	list_push (struct _lw_ws_req_hdr, ctx->headers_in, header);
 
 	if (!strcmp (name, "cookie"))
 	  return parse_cookie_header (ctx, value_len, value);
@@ -418,7 +399,7 @@ lw_bool lwp_ws_req_in_url (lw_ws_req ctx, size_t length, const char * url)
 		 {
 			/* TODO : Is this robust? */
 
-			host_length += 1 + parsed.field_data [UF_PORT].off;
+			host_length += 1u + parsed.field_data [UF_PORT].off;
 		 }
 
 		 lwp_ws_req_in_header (ctx, 4, "host", host_length, host);
@@ -440,7 +421,7 @@ lw_bool lwp_ws_req_in_url (lw_ws_req ctx, size_t length, const char * url)
 			if (!lwp_find_char (&data, &length, '='))
 				break;
 
-			size_t name_length = data - name;
+			size_t name_length = (size_t)(data - name);
 
 			/* skip the = character */
 
@@ -452,7 +433,7 @@ lw_bool lwp_ws_req_in_url (lw_ws_req ctx, size_t length, const char * url)
 
 			if (lwp_find_char (&data, &length, '&'))
 			{
-				value_length = data - value;
+				value_length = (size_t)(data - value);
 
 				/* skip the & character */
 
@@ -484,7 +465,8 @@ void lwp_ws_req_respond (lw_ws_req ctx)
 {
 	assert (!ctx->responded);
 
-	/* Respond may delete us w/ SPDY blah blah */
+	/* James note: Respond may delete us w/ SPDY blah blah
+	   Phi note: SPDY was deprecated in favour of HTTP/2 in 2021, and so removed from liblacewing */
 
 	ctx->client->respond (ctx->client, ctx);
 }
@@ -494,9 +476,38 @@ lw_addr lw_ws_req_addr (lw_ws_req ctx)
 	return lw_server_client_addr (ctx->client->socket);
 }
 
-void lw_ws_req_disconnect (lw_ws_req ctx)
+void lw_ws_req_disconnect (lw_ws_req ctx, unsigned int websocket_exit_reason)
 {
-	lw_stream_close ((lw_stream) ctx->client->socket, lw_true);
+	if (!ctx->client->websocket)
+		lw_stream_close ((lw_stream) ctx->client->socket, lw_true);
+	else
+	{
+		// Worth noting these close code checks mean that subsequent local disconnects do nothing
+		// There's a timeout activated, so there's no need to rush, regardless.
+		
+		// Close message not sent already
+		if (ctx->client->local_close_code == -1)
+		{
+			// if no error code, report normal closure reason
+			if (websocket_exit_reason == 0)
+				websocket_exit_reason = 1000;
+
+			ctx->client->local_close_code = (lw_i16)websocket_exit_reason;
+
+			lw_ui8 opcode = 0b10001000; // fin, connection close
+			lw_ui16 exit_reason = htons((lw_ui16)websocket_exit_reason);
+			char maskAndLen = (char)sizeof(exit_reason);
+			char close_msg[] = { *(char*)&opcode, maskAndLen, ((char*)&exit_reason)[0], ((char*)&exit_reason)[1] };
+			lwp_stream_write((lw_stream)ctx->client->socket, close_msg, sizeof(close_msg), lwp_stream_write_ignore_busy);
+
+			ctx->client->timeout = 5; // WebSocket client has 5 seconds to acknowledge our sent close packet
+		}
+
+		// We already got a close packet, and since we just sent one, it's safe to exit now
+		// lw_stream_close(..., lw_false) results in "non-clean" close for browser
+		if (ctx->client->remote_close_code != -1)
+			lw_stream_close((lw_stream)ctx->client->socket, lw_true);
+	}
 }
 
 void lw_ws_req_guess_mimetype (lw_ws_req ctx, const char * filename)
@@ -536,7 +547,7 @@ void lw_ws_req_disable_cache (lw_ws_req ctx)
 
 void lw_ws_req_set_header (lw_ws_req ctx, const char * name, const char * value)
 {
-	list_each_elem (ctx->headers_out, header)
+	list_each_elem (struct _lw_ws_req_hdr, ctx->headers_out, header)
 	{
 	  if (!strcasecmp (header->name, name))
 	  {
@@ -560,11 +571,11 @@ void lw_ws_req_add_header (lw_ws_req ctx, const char * name, const char * value)
 	header.name [name_len] = 0;
 
 	for (size_t i = 0; i < name_len; ++ i)
-	  header.name [i] = tolower (name [i]);
+	  header.name [i] = (char)tolower (name [i]);
 
 	header.value = strdup (value);
 
-	list_push (ctx->headers_out, header);
+	list_push (struct _lw_ws_req_hdr, ctx->headers_out, header);
 }
 
 void lw_ws_req_set_cookie (lw_ws_req ctx, const char * name, const char * value)
@@ -675,7 +686,7 @@ void lw_ws_req_finish (lw_ws_req ctx)
 
 const char * lw_ws_req_header (lw_ws_req ctx, const char * name)
 {
-	list_each (ctx->headers_in, header)
+	list_each (struct _lw_ws_req_hdr, ctx->headers_in, header)
 	{
 	  if (!strcasecmp (header.name, name))
 		 return header.value;
@@ -686,7 +697,7 @@ const char * lw_ws_req_header (lw_ws_req ctx, const char * name)
 
 lw_ws_req_hdr lw_ws_req_hdr_first (lw_ws_req ctx)
 {
-	return list_elem_front (ctx->headers_in);
+	return list_elem_front (struct _lw_ws_req_hdr, ctx->headers_in);
 }
 
 const char * lw_ws_req_hdr_name (lw_ws_req_hdr header)
@@ -701,7 +712,7 @@ const char * lw_ws_req_hdr_value (lw_ws_req_hdr header)
 
 lw_ws_req_hdr lw_ws_req_hdr_next (lw_ws_req_hdr header)
 {
-	return list_elem_next (header);
+	return list_elem_next (struct _lw_ws_req_hdr, header);
 }
 
 const char * lw_ws_req_get_cookie (lw_ws_req ctx, const char * name)
@@ -766,14 +777,14 @@ static void parse_post_data (lw_ws_req ctx)
 	{
 	  char * name = post_data, * value = strchr (post_data, '=');
 
-	  size_t name_length = value - name;
+	  size_t name_length = (size_t)(value - name);
 
 	  if (!value ++)
 		 break;
 
 	  char * next = strchr (value, '&');
 
-	  size_t value_length = next ? next - value : strlen (value);
+	  size_t value_length = next ? (size_t)(next - value) : strlen (value);
 
 	  char * name_decoded = (char *) malloc (name_length + 1),
 			* value_decoded = (char *) malloc (value_length + 1);
@@ -845,6 +856,11 @@ lw_i64 lw_ws_req_last_modified (lw_ws_req ctx)
 lw_bool lw_ws_req_secure (lw_ws_req ctx)
 {
 	return ctx->client->secure;
+}
+
+lw_bool lw_ws_req_websocket (lw_ws_req ctx)
+{
+	return ctx->client->websocket;
 }
 
 const char * lw_ws_req_hostname (lw_ws_req ctx)

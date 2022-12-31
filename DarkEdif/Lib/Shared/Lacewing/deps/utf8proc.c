@@ -50,6 +50,15 @@
 #  define UINT16_MAX 65535U
 #endif
 
+
+#ifdef __clang__
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wsign-conversion"
+#elif !defined(_WIN32)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+
 #include "utf8proc_data.c"
 
 
@@ -133,7 +142,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
   end = str + ((strlen < 0) ? 4 : strlen);
   uc = *str++;
   if (uc < 0x80) {
-	*dst = uc;
+	*dst = (utf8proc_int32_t)uc;
 	return 1;
   }
   // Must be between 0xc2 and 0xf4 inclusive to be valid
@@ -141,7 +150,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
   if (uc < 0xe0) {		 // 2-byte sequence
 	 // Must have valid continuation character
 	 if (str >= end || !utf_cont(*str)) return UTF8PROC_ERROR_INVALIDUTF8;
-	 *dst = ((uc & 0x1f)<<6) | (*str & 0x3f);
+	 *dst = (utf8proc_int32_t)(((uc & 0x1f)<<6) | (*str & 0x3f));
 	 return 2;
   }
   if (uc < 0xf0) {		// 3-byte sequence
@@ -153,7 +162,7 @@ UTF8PROC_DLLEXPORT utf8proc_ssize_t utf8proc_iterate(
 	 uc = ((uc & 0xf)<<12) | ((*str & 0x3f)<<6) | (str[1] & 0x3f);
 	 if (uc < 0x800)
 		 return UTF8PROC_ERROR_INVALIDUTF8;
-	 *dst = uc;
+	 *dst = (utf8proc_int32_t)uc;
 	 return 3;
   }
   // 4-byte sequence
@@ -771,3 +780,8 @@ UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC_Casefold(const utf8proc_uint8
 	UTF8PROC_COMPOSE | UTF8PROC_COMPAT | UTF8PROC_CASEFOLD | UTF8PROC_IGNORE));
   return retval;
 }
+#ifdef __clang__
+	#pragma clang diagnostic pop // reset warnings
+#elif !defined(_WIN32)
+	#pragma GCC diagnostic pop // reset warnings
+#endif

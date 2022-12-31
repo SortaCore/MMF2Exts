@@ -1,33 +1,17 @@
-
-/* vim: set noet ts=4 sw=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
- * Copyright (C) 2011 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "MessageBuilder.h"
+
+// TODO: This isn't an ideal workaround.
+extern "C" size_t lwp_stream_write(lw_stream ctx, const char* buffer, size_t size, int flags);
 
 #ifndef lacewingframebuilder
 #define lacewingframebuilder
@@ -36,7 +20,7 @@ class framebuilder : public messagebuilder
 {
 protected:
 
-	void preparefortransmission()
+	void preparefortransmission(bool iswebsocketclient)
 	{
 		if (tosend)
 			return;
@@ -45,6 +29,56 @@ protected:
 		lw_i32 messagesize = size - 8;
 
 		lw_ui32 headersize;
+
+		// We're sending to a websocket client, we need to mash this into WebSocket format
+		if (iswebsocketclient)
+		{
+			// If we're sending to a websocket client, we must be a server.
+			// If we're a server, the UDP header has one byte: the type.
+			if (origUDP != UINT32_MAX)
+				type = buffer[7] | 0x8;
+
+			// Since we send text messages to channels and so on, we can't use text opcode for text messages
+			const lw_ui8 flagopcode = 0b10000010; // fin flag enabled + binary message
+			if (messagesize + 1 <= 125)
+			{
+				(*(lw_ui8*)(buffer + 5)) = flagopcode;
+				(*(lw_ui8*)(buffer + 6)) = (lw_ui8)(messagesize + 1);
+				(*(lw_ui8*)(buffer + 7)) = (lw_ui8)type;
+				headersize = 3;
+				tosend = (buffer + 8) - headersize;
+				tosendsize = messagesize + headersize;
+			}
+			else if (messagesize <= 0xFFFF)
+			{
+				(*(lw_ui8*)(buffer + 3)) = flagopcode;
+				(*(lw_ui8*)(buffer + 4)) = (lw_ui8)126; // indicate uint16 following size
+				(*(lw_ui16*)(buffer + 5)) = htons((lw_ui16)(messagesize + 1));
+				(*(lw_ui8*)(buffer + 7)) = (lw_ui8)type;
+				headersize = 5;
+				tosend = buffer + 8 - headersize;
+				tosendsize = messagesize + headersize;
+			}
+			else
+			{
+				// The TCP header uses only 8 bytes, and we need 10 for uint64 size, so hack an extra two bytes in
+				// It's not efficient, but anyone passing this much data shouldn't expect speed
+				add<lw_ui16>(0);
+				memmove(buffer + 10, buffer + 8, size - 8);
+
+				assert(!"Host to native!");
+
+				(*(lw_ui8*)(buffer)) = flagopcode;
+				(*(lw_ui8*)(buffer + 1)) = (lw_ui8)127; // indicate uint64 following size
+				(*(lw_ui64*)(buffer + 2)) = messagesize + 1;
+				(*(lw_ui8*)(buffer + 10)) = (lw_ui8)type;
+
+				tosend = buffer;
+				tosendsize = messagesize + 10;
+			}
+
+			return;
+		}
 
 		// Message size < 254; store as type byte + size byte
 		if (messagesize < 0xfe)
@@ -79,12 +113,15 @@ protected:
 
 		tosend	 = (buffer + 8) - headersize;
 		tosendsize =  messagesize + headersize;
+
 	}
 
 	bool isudpclient;
 
-	char * tosend;
+	char* tosend;
 	int tosendsize;
+	lw_ui32 origUDP;
+	lw_i8 wasWebLast;
 
 public:
 
@@ -93,6 +130,8 @@ public:
 		this->isudpclient = isudpclient;
 		tosend = nullptr;
 		tosendsize = 0;
+		origUDP = UINT32_MAX;
+		wasWebLast = -1;
 	}
 
 	inline void addheader(lw_ui8 type, lw_ui8 variant, bool forudp = false, int udpclientid = -1)
@@ -102,21 +141,34 @@ public:
 		if (!forudp)
 		{
 			add <lw_ui32> ((type << 4) | variant);
-			add <lw_ui32> (0);
+			add <lw_ui32> (0); // this is used for reserving space for adding message size later, in preparefortransmission()
 
 			return;
 		}
+		// Pad to 8 bytes in buffer
+		add(std::string(8 - 1 - (isudpclient ? 2 : 0), '\xCD'));
 
-		add <lw_ui8>  ((lw_ui8)((type << 4) | variant));
+		add <lw_ui8> ((lw_ui8)((type << 4) | variant));
 
 		if (isudpclient)
 			add <lw_ui16> ((lw_ui16)udpclientid);
+		else
+			origUDP = ((lw_ui32*)buffer)[1];
 	}
 
 	inline void send(lacewing::server_client client, bool clear = true)
 	{
-		preparefortransmission();
-		client->write(tosend, tosendsize);
+		if (wasWebLast == -1 || client->is_websocket() != wasWebLast)
+		{
+			wasWebLast = client->is_websocket();
+			tosend = nullptr; // or preparefortransmission does nothing
+			preparefortransmission(wasWebLast);
+		}
+
+		if (wasWebLast)
+			lwp_stream_write((lw_stream)client, tosend, tosendsize, 2 /* lwp_stream_write_ignore_busy */);
+		else
+			client->write(tosend, tosendsize);
 
 		if (clear)
 			framereset();
@@ -124,16 +176,22 @@ public:
 
 	inline void send(lacewing::client client, bool clear = true)
 	{
-		preparefortransmission();
+		preparefortransmission(false);
 		client->write(tosend, tosendsize);
 
 		if (clear)
 			framereset();
 	}
 
+	inline void revert() {
+		((lw_ui32*)buffer)[1] = origUDP;
+		tosend = nullptr;
+		tosendsize = 0;
+	}
+
 	inline void send(lacewing::udp udp, lacewing::address address, bool clear = true)
 	{
-		udp->send(address, buffer, size);
+		udp->send(address, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
 
 		if (clear)
 			framereset();
@@ -142,8 +200,9 @@ public:
 	inline void framereset()
 	{
 		reset();
-		tosend = 0;
+		tosend = NULL;
 		tosendsize = 0;
+		wasWebLast = -1;
 	}
 
 };

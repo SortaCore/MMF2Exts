@@ -1,39 +1,24 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
+
+// Allows files to include c file all the time and conditionally define ENABLE_SSL
+#ifdef ENABLE_SSL
+
 #include "sslclient.h"
 #include "../stream.h"
 
-#define lwp_sslclient_flag_handshook	1
-#define lwp_sslclient_flag_pumping	 2
-#define lwp_sslclient_flag_dead		4
+#define lwp_sslclient_flag_handshook	((lw_i8)1)
+#define lwp_sslclient_flag_pumping		((lw_i8)2)
+#define lwp_sslclient_flag_dead			((lw_i8)4)
 
 struct _lwp_sslclient
 {
@@ -44,7 +29,7 @@ struct _lwp_sslclient
 
 	int write_condition;
 
-	char flags;
+	lw_i8 flags;
 
 	void * tag;
 	lwp_sslclient_on_handshook on_handshook;
@@ -57,16 +42,16 @@ struct _lwp_sslclient
 	struct _lw_stream downstream;
 };
 
-const static lw_streamdef def_upstream;
-const static lw_streamdef def_downstream;
+extern lw_streamdef def_upstream;
+extern lw_streamdef def_downstream;
 
-static void pump (lwp_sslclient);
+static void pumpclient (lwp_sslclient);
 
 lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_stream socket,
 								 lwp_sslclient_on_handshook on_handshook,
 								 void * tag)
 {
-	lwp_sslclient ctx = calloc (sizeof (*ctx), 1);
+	lwp_sslclient ctx = (lwp_sslclient)calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
 	  return 0;
@@ -107,7 +92,7 @@ lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_stream socket,
 	lw_stream_add_filter_downstream
 	  (socket, &ctx->downstream, lw_false, lw_false);
 
-	pump (ctx);
+	pumpclient (ctx);
 
 	assert (! (ctx->flags & lwp_sslclient_flag_dead));
 
@@ -142,7 +127,7 @@ lw_bool lwp_sslclient_handshook (lwp_sslclient ctx)
 const char * lwp_sslclient_npn (lwp_sslclient ctx)
 {
 	#ifdef _lacewing_npn
-	  return ctx->npn;
+	  return (const char *)ctx->npn;
 	#else
 	  return "";
 	#endif
@@ -154,9 +139,9 @@ static size_t downstream_sink_data (lw_stream downstream,
 	lwp_sslclient ctx = container_of
 	  (downstream, struct _lwp_sslclient, downstream);
 
-	int bytes = BIO_write (ctx->bio_external, buffer, size);
+	int bytes = BIO_write (ctx->bio_external, buffer, (int)size);
 
-	pump (ctx);
+	pumpclient (ctx);
 
 	if (ctx->flags & lwp_sslclient_flag_dead)
 	{
@@ -166,7 +151,7 @@ static size_t downstream_sink_data (lw_stream downstream,
 
 	if (bytes < 0)
 	{
-	  lwp_trace ("SSL downstream write error!");
+	  always_log ("SSL downstream write error!");
 
 	  lw_stream_close (&ctx->downstream, lw_true);
 
@@ -186,7 +171,7 @@ static size_t downstream_sink_data (lw_stream downstream,
 	  lw_stream_retry (&ctx->upstream, lw_stream_retry_now);
 	}
 
-	return bytes;
+	return (size_t)bytes;
 }
 
 static size_t upstream_sink_data (lw_stream upstream,
@@ -195,10 +180,10 @@ static size_t upstream_sink_data (lw_stream upstream,
 	lwp_sslclient ctx = container_of
 	  (upstream, struct _lwp_sslclient, upstream);
 
-	int bytes = SSL_write (ctx->ssl, buffer, size);
+	int bytes = SSL_write (ctx->ssl, buffer, (int)size);
 	int error = bytes < 0 ? SSL_get_error (ctx->ssl, bytes) : -1;
 
-	pump (ctx);
+	pumpclient (ctx);
 
 	if (ctx->flags & lwp_sslclient_flag_dead)
 	{
@@ -211,17 +196,17 @@ static size_t upstream_sink_data (lw_stream upstream,
 	  if (error == SSL_ERROR_WANT_READ)
 		 ctx->write_condition = error;
 
-	  lwp_trace ("SSL upstream write error!");
+	  always_log ("SSL upstream write error!");
 
 	  return 0;
 	}
 
 	assert (bytes == size);
 
-	return bytes;
+	return (size_t)bytes;
 }
 
-void pump (lwp_sslclient ctx)
+void pumpclient (lwp_sslclient ctx)
 {
 	if (ctx->flags & lwp_sslclient_flag_pumping)
 	  return; /* prevent stack overflow (we loop anyway) */
@@ -274,7 +259,7 @@ void pump (lwp_sslclient ctx)
 		 {
 			exit = lw_false;
 
-			lw_stream_data (&ctx->upstream, buffer, bytes);
+			lw_stream_data (&ctx->upstream, buffer, (size_t)bytes);
 
 			/* Pushing data may end up destroying the SSLClient user, which
 			 * will then set the _dead flag.
@@ -301,7 +286,7 @@ void pump (lwp_sslclient ctx)
 		 if (bytes > 0)
 		 {
 			exit = lw_false;
-			lw_stream_data (&ctx->downstream, buffer, bytes);
+			lw_stream_data (&ctx->downstream, buffer, (size_t)bytes);
 
 			if (ctx->flags & lwp_sslclient_flag_dead)
 				return;
@@ -323,7 +308,10 @@ void pump (lwp_sslclient ctx)
 
 				if (error != SSL_ERROR_WANT_READ)
 				{
-				  lwp_trace ("SSL error: %s", ERR_error_string (error, 0));
+				  always_log ("SSL error: %s", ERR_error_string ((unsigned long)error, 0));
+				  // TODO: SSL failure should kill this client's connection, but not sure how to do that from here
+				  // They should eventually be kicked anyway by inactivity timeouts, like relayserver uses
+				  // Worth noting error 1 (SSL_ERROR_SSL) will happen if you use a HTTP non-secure connection to a secure port
 				}
 			}
 		 }
@@ -339,14 +327,14 @@ void pump (lwp_sslclient ctx)
 	ctx->flags &= ~ lwp_sslclient_flag_pumping;
 }
 
-const static lw_streamdef def_upstream =
+lw_streamdef def_upstream =
 {
 	.sink_data = upstream_sink_data
 };
 
-const static lw_streamdef def_downstream =
+lw_streamdef def_downstream =
 {
 	.sink_data = downstream_sink_data
 };
 
-
+#endif // ENABLE_SSL

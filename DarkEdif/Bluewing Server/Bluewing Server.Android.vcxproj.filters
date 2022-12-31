@@ -46,6 +46,12 @@
     <Filter Include="Source files\Lacewing\src\unix\eventqueue">
       <UniqueIdentifier>{97500112-15ea-4089-9509-d11fbf21f1c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\Lacewing\src\openssl">
+      <UniqueIdentifier>{e9220a58-5cfd-4e35-963d-2aea9aa870c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\openssl">
+      <UniqueIdentifier>{6710188e-87da-4b76-baac-1cbf29c522d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">
@@ -84,6 +90,9 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\global2.c">
       <Filter>Source files\Lacewing\src\unix</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c">
+      <Filter>Source files\Lacewing\src\openssl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h">
@@ -100,6 +109,9 @@
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h">
       <Filter>Header files\Lacewing</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.h">
+      <Filter>Header files\Lacewing\openssl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011-2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 #include "address.h"
@@ -108,7 +89,7 @@ void lw_filter_set_remote (lw_filter ctx, lw_addr addr)
 
 lw_addr lw_filter_remote (lw_filter ctx)
 {
-	return ctx ? ctx->remote : nullptr;
+	return ctx ? ctx->remote : NULL;
 }
 
 void lw_filter_set_local (lw_filter ctx, lw_addr addr)
@@ -189,7 +170,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 									 int protocol, lw_error error)
 {
 	lwp_socket s;
-	size_t addr_len;
+	socklen_t addr_len;
 	struct sockaddr_storage addr;
 	lw_bool ipv6;
 	int reuse;
@@ -295,7 +276,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  if (info)
 	  {
 		 memcpy (&addr, info->ai_addr, info->ai_addrlen);
-		 addr_len = info->ai_addrlen;
+		 addr_len = (socklen_t)info->ai_addrlen;
 	  }
 	}
 
@@ -325,14 +306,24 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  }
 	}
 
-	if (bind (s, (struct sockaddr *) &addr, (int) addr_len) == -1)
+	if (bind (s, (struct sockaddr *) &addr, (socklen_t) addr_len) == -1)
 	{
 	  lw_error_add (error, lwp_last_socket_error);
 
-	  if (lwp_last_socket_error == 10013 || lwp_last_socket_error == 10048)
-		  lw_error_addf(error, "Socket is in use already?");
+#if _WIN32
+		if (lwp_last_socket_error == 10013 || lwp_last_socket_error == 10048)
+			lw_error_addf(error, "Port is in use already?");
+#else
+		if (lwp_last_socket_error == EACCES)
+		{
+			if (lw_filter_local_port(filter) > 0 && lw_filter_local_port(filter) < 1024)
+				lw_error_addf(error, "Priviledged port, needs sudo/iptables port redirect; or port is in use already?");
+			else
+				lw_error_addf(error, "Port is in use already?");
+		}
+#endif
 
-	  lw_error_addf (error, "Error binding socket");
+	  lw_error_addf (error, "Error binding socket (port %li)", lw_filter_local_port(filter));
 
 	  lwp_close_socket (s);
 

@@ -1,31 +1,13 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
+#pragma once
 
 #define _lacewing_internal
 
@@ -50,7 +32,7 @@
 	#ifdef HAVE_CONFIG_H
 	  #include "../config.h"
 	#endif
-
+	#include <tchar.h>
 #else
 
 	#ifndef _GNU_SOURCE
@@ -85,6 +67,11 @@
 	#endif
 #endif
 
+#ifdef __cplusplus
+extern "C"
+#endif
+void always_log(const char* c, ...);
+
 /* For convenience, some types (such as lw_client and lw_ws_req) are typedef-d
  * to lw_stream in lacewing.h instead of to their extended structure.  The
  * typedefs here are the internal ones mapping everything to their _real_ type,
@@ -93,60 +80,53 @@
  */
 
  typedef struct _lw_thread			* lw_thread;
- typedef struct _lw_addr			  * lw_addr;
+ typedef struct _lw_addr			* lw_addr;
  typedef struct _lw_filter			* lw_filter;
- typedef struct _lw_pump			  * lw_pump;
+ typedef struct _lw_pump			* lw_pump;
  typedef struct _lw_pump_watch		* lw_pump_watch;
- typedef struct _lw_eventpump		 * lw_eventpump;
+ typedef struct _lw_eventpump		* lw_eventpump;
  typedef struct _lw_stream			* lw_stream;
- typedef struct _lw_fdstream		  * lw_fdstream;
- typedef struct _lw_file			  * lw_file;
- typedef struct _lw_timer			 * lw_timer;
- typedef struct _lw_sync			  * lw_sync;
- typedef struct _lw_event			 * lw_event;
- typedef struct _lw_error			 * lw_error;
+ typedef struct _lw_fdstream		* lw_fdstream;
+ typedef struct _lw_file			* lw_file;
+ typedef struct _lw_timer			* lw_timer;
+ typedef struct _lw_sync			* lw_sync;
+ typedef struct _lw_event			* lw_event;
+ typedef struct _lw_error			* lw_error;
  typedef struct _lw_client			* lw_client;
  typedef struct _lw_server			* lw_server;
- typedef struct _lw_server_client	 * lw_server_client;
+ typedef struct _lw_server_client	* lw_server_client;
  typedef struct _lw_udp				* lw_udp;
  typedef struct _lw_flashpolicy		* lw_flashpolicy;
  typedef struct _lw_ws				* lw_ws;
  typedef struct _lw_ws_req			* lw_ws_req;
  typedef struct _lw_ws_req_hdr		* lw_ws_req_hdr;
- typedef struct _lw_ws_req_param	  * lw_ws_req_param;
- typedef struct _lw_ws_req_cookie	 * lw_ws_req_cookie;
- typedef struct _lw_ws_upload		 * lw_ws_upload;
- typedef struct _lw_ws_upload_hdr	 * lw_ws_upload_hdr;
+ typedef struct _lw_ws_req_param	* lw_ws_req_param;
+ typedef struct _lw_ws_req_cookie	* lw_ws_req_cookie;
+ typedef struct _lw_ws_upload		* lw_ws_upload;
+ typedef struct _lw_ws_upload_hdr	* lw_ws_upload_hdr;
  typedef struct _lw_ws_session		* lw_ws_session;
  typedef struct _lw_ws_sessionitem	* lw_ws_sessionitem;
 
+#ifndef _lacewing_h
 #include "../Lacewing.h"
+#endif
 
 #ifdef _MSC_VER
-	#ifndef __cplusplus
-		#error "Can only compile as C++ with MSVC"
-		#error "Try enabling /TP, using Compile As property in C/C++ > Advanced page."
-	#endif
 	#pragma warning(disable: 4200) /* zero-sized array in struct/union */
-	#pragma warning(disable: 4800) /* forcing value to bool 'true' or 'false' */
-	#include "windows/typeof.h"
 #endif
 
 #include "list.h"
-
-#ifdef __cplusplus
-	extern "C" {
-#endif
-
-void lwp_init ();
-void lwp_deinit ();
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdarg.h>
-#include <cctype>
 #include <time.h>
+#include <ctype.h>
+
+
+void lwp_init ();
+void lwp_deinit ();
 
 #ifdef _lacewing_debug
 	#include "refcount-dbg.h"
@@ -190,6 +170,10 @@ void lwp_deinit ();
 #define lwp_default_buffer_size (1024 * 64)
 
 #define lwp_setsockopt(f,l,o,oname,olen) lwp_setsockopt2(f,l,o,#o,oname,olen)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 void lwp_make_nonblocking (lwp_socket socket);
 void lwp_setsockopt2 (lwp_socket fd, int level, int option, const char * optionText, const char * value, socklen_t value_length);
 void lwp_disable_ipv6_only (lwp_socket socket);

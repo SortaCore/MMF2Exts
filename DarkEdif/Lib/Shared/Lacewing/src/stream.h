@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #ifndef _lw_stream_h
 #define _lw_stream_h
@@ -33,24 +14,24 @@
 #include "streamgraph.h"
 
 /* BeginQueue has been called */
- #define lwp_stream_flag_queueing  1
+ #define lwp_stream_flag_queuing  ((lw_i8)1)
 
 /* Close was called with immediately = false, stream was busy */
- #define lwp_stream_flag_closeASAP  2
+ #define lwp_stream_flag_closeASAP  ((lw_i8)2)
 
 /* Currently in the process of an immediate Close (this is just to prevent
  * re-entrance to the Close routine)
  */
- #define lwp_stream_flag_closing  4
+ #define lwp_stream_flag_closing  ((lw_i8)4)
 
 /* Deleted when user count was > 0 - waiting to be freed */
- #define lwp_stream_flag_dead 8
+ #define lwp_stream_flag_dead ((lw_i8)8)
 
 /* Currently attempting to drain the queues.  Because draining the queues
  * might cause another retry, this flag prevents re-entrance to the
  * write_queued proc.
  */
- #define lwp_stream_flag_draining_queues 16
+ #define lwp_stream_flag_draining_queues ((lw_i8)16)
 
 typedef struct _lwp_stream_data_hook
 {
@@ -110,7 +91,7 @@ struct _lw_stream
 	lw_pump pump;
 	lw_pump_watch watch;
 
-	char flags;
+	lw_i8 flags;
 
 	void * tag;
 

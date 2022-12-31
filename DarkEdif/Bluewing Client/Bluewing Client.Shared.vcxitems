@@ -95,6 +95,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\heapbuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\list.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\nvhash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\openssl\sslclient.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\pump.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount-dbg.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\refcount.h" />

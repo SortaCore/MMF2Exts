@@ -54,56 +54,56 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -112,6 +112,7 @@
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\flashpolicy.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\eventqueue.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h" />
@@ -122,6 +123,7 @@
     <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\event.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventpump.c" />

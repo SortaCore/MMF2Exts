@@ -18,9 +18,10 @@ Changes until v17 release
 
 Changes until v16 release
 ----
-*v16 released on 31st Dec 2022, latest commit*
+*v16 released on 31st Dec 2022, commit [9790d06](https://github.com/SortaCore/MMF2Exts/commit/9790d061263939e19bc015e5a6d254d216bd6160)*
 - All platforms: Added DarkEdif::MakePathUnembeddedIfNeeded() to pull binary data files into temporary files
-- Android/iOS: PostBuildTool now v1.0.0.2; template files modified for the embedded file feature
+- Android/iOS: PostBuildTool now v1.0.0.3; template files modified for the embedded file feature
+- Android/iOS: PostBuildTool now checks for updates to Android/iOS wrapper files in the C++ project folder
 - Android: Fixed freeze in text expression when returning invalid UTF-8
 - Edittime: Improved reporting for link A/C/E errors occurring in multiple languages
 - iOS: Fixed library lookup so libraries can be linked to by C++ side; automatic adding of libraries to iOS build zips is not yet implemented

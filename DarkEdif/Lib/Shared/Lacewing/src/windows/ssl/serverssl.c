@@ -1,43 +1,53 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012, 2013 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012, 2013 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../../common.h"
 #include "../../stream.h"
 #include "serverssl.h"
+#include "../fdstream.h"
 
+// TODO: These fake structs are a hack to get around the otherwise opaque pointers, to get the error handler
+// Can't clone the handler's address, in case it's changed; can copy server, though, but can't get the handler from that
+// Maybe an extra internal function
+
+struct _lw_server_fake
+{
+	lwp_refcounted;
+
+	SOCKET socket;
+
+	lw_pump pump;
+	lw_pump_watch pump_watch;
+
+	lw_server_hook_connect on_connect;
+	lw_server_hook_disconnect on_disconnect;
+	lw_server_hook_data on_data;
+	lw_server_hook_error on_error;
+	// ... not the real struct, which is defined in a .c file
+};
+struct _lw_server_client_fake
+{
+	struct _lw_fdstream fdstream;
+
+	struct _lw_server_fake* server;
+	// ... not the real struct, which is defined in a .c file
+};
 static size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size);
 
 void lwp_serverssl_init (lwp_serverssl ctx,
 						 CredHandle server_creds,
-						 lw_stream socket)
+						 lw_server_client socket)
 {
-	lwp_ssl_init (&ctx->ssl, socket);
+	ctx->server_creds = server_creds;
+	ctx->socket = socket;
+	lwp_ssl_init (&ctx->ssl, (lw_stream) socket);
 
 	ctx->ssl.proc_handshake_data = proc_handshake_data;
 }
@@ -71,13 +81,13 @@ size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size)
 	  out [1].pvBuffer = 0;
 	  out [1].cbBuffer = 0;
 
-	SecBufferDesc in_desc = {};
+	SecBufferDesc in_desc = {0};
 
 	in_desc.ulVersion = SECBUFFER_VERSION,
 	in_desc.pBuffers = in;
 	in_desc.cBuffers = 2;
 
-	SecBufferDesc out_desc = {};
+	SecBufferDesc out_desc = {0};
 
 	out_desc.ulVersion = SECBUFFER_VERSION,
 	out_desc.pBuffers = out;
@@ -110,16 +120,17 @@ size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size)
 	  if (ctx->ssl.status == SEC_E_INCOMPLETE_MESSAGE)
 		 return 0; /* need more data */
 
-		/* Lacewing::Error Error;
+	  lw_error error = lw_error_new();
+	  lw_error_add(error, GetLastError() );
+	  lw_error_addf(error, "Secure handshake failure");
 
-		Error.Add(WSAGetLastError ());
-		Error.Add("Secure handshake failure");
+	  struct _lw_server_client_fake* sock = (struct _lw_server_client_fake *)ctx->socket;
+	  if (sock->server->on_error)
+		  sock->server->on_error((lw_server)sock->server, error);
 
-		if (ctx->Server.Handlers.Error)
-			ctx->Server.Handlers.Error(ctx->Server.Public, Error);
+	  lw_error_delete(error);
 
-		ctx->Public.Disconnect(); */
-
+	  lw_stream_close(&sock->fdstream.stream, lw_false);
 	  return size;
 	}
 

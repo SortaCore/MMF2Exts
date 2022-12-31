@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #ifndef _list_h
 #define _list_h
@@ -98,96 +79,71 @@ typedef struct list_element list_element;
  *	 and set to an elemator pointing to each element.
  */
 
-#ifndef typeof
-#define typeof(x) \
-	std::remove_reference<decltype(x)>::type
-#endif // typeof
-
 #define list_type(type) \
 	type *
 
 #define lw_list(type, name) \
 	list_type (type) name
 
-#define list_push(list, value) do {											\
-	typeof (*list) _v_copy = (typeof (*list)) value;						\
+#define list_push(type, list, value) do {											\
+	type _v_copy = value;						\
 	_list_push ((list_head **) &list, sizeof (_v_copy), &_v_copy);			\
 } while (0)
 
-#define list_push_front(list, value) do {									\
-	typeof (*list) _v_copy = (typeof (*list)) value;						\
+#define list_push_front(type, list, value) do {									\
+	type _v_copy = value;						\
 	_list_push_front ((list_head **) &list, sizeof (_v_copy), &_v_copy);	\
 } while (0)
 
-#define list_elem(list)														\
-	typeof (list)
+#define list_elem(type, list)														\
+	type
 
-#define list_elem_front(list)												\
-	((typeof (list)) _list_front ((list_head *) list))
+#define list_elem_front(type, list)												\
+	((type*) _list_front ((list_head *) list))
 
-#define list_elem_back(list)												\
-	((typeof (list)) _list_back ((list_head *) list))
+#define list_elem_back(type, list)												\
+	((type*) _list_back ((list_head *) list))
 
-#define list_elem_next(elem)												\
-	((typeof (elem)) _list_next ((list_element *) elem))
+#define list_elem_next(type, elem)												\
+	((type*) _list_next ((list_element *) elem))
 
-#define list_elem_prev(elem)												\
-	((typeof (elem)) _list_prev ((list_element *) elem))
+#define list_elem_prev(type, elem)												\
+	((type*) _list_prev ((list_element *) elem))
 
-#define list_each_elem(list, e)												\
-	for (typeof (list) e = list_elem_front (list),							\
-		 e##_next = list_elem_next (e); e;									\
-		  e = e##_next, e##_next = list_elem_next (e))
+#define list_each_elem(type, list, e)												\
+	for (type* e = list_elem_front (type, list),							\
+		* e##_next = list_elem_next (type, e); e;									\
+		  e = e##_next, e##_next = list_elem_next (type, e))
 
-#define list_each_r_elem(list, e)											\
-	for (typeof (list) e = list_elem_back (list),							\
-		 e##_prev = list_elem_prev (e); e;									\
-		  e = e##_prev, e##_prev = list_elem_prev (e))
+#define list_each_r_elem(type, list, e)											\
+	for (type e = list_elem_back (type, list),							\
+		 e##_prev = list_elem_prev (type, e); e;									\
+		  e = e##_prev, e##_prev = list_elem_prev (type, e))
 
-#define list_each(list, e)													\
-	for (typeof (*list) e, * _##e = list_elem_front (list),					\
-		* _##e##_next = list_elem_next (_##e); _##e;						\
-		  _##e = _##e##_next, _##e##_next = list_elem_next (_##e))			\
+#define list_each(type, list, e)													\
+	for (type e, * _##e = list_elem_front (type, list),					\
+		* _##e##_next = list_elem_next (type, _##e); _##e;						\
+		  _##e = _##e##_next, _##e##_next = list_elem_next (type, _##e))			\
 			 if (!memcpy (&e, _##e, sizeof (e))) {} else
 
-#define list_each_r(list, e)												\
-	for (typeof (*list) e, * _##e = list_elem_back (list),					\
-		* _##e##_prev = list_elem_prev (_##e); _##e;						\
-		  _##e = _##e##_prev, _##e##_prev = list_elem_prev (_##e))			\
+#define list_each_r(type, list, e)												\
+	for (type e, * _##e = list_elem_back (type, list),					\
+		* _##e##_prev = list_elem_prev (type, _##e); _##e;						\
+		  _##e = _##e##_prev, _##e##_prev = list_elem_prev (type, _##e))			\
 			 if (!memcpy (&e, _##e, sizeof (e))) {} else
 
-/* The only macro that has to use a statement expression.  As list_find has to
- * be able to create an l-value from value but also has to work as an
- * expression, I can't see a way to accomplish this without.
- *
- * Since MSVC doesn't support statement expressions, a template function is
- * used instead.
- */
-
-#ifndef _MSC_VER
-	#define list_find(list, value) ({										\
-	  list_elem (list) elem = list_elem_front (list);						\
-	  for (; elem; elem = list_elem_next (elem))							\
+	#define list_find(type, list, value) \
+	  type* elem = list_elem_front (type, list);						\
+	  for (; elem; elem = list_elem_next (type, elem))							\
 		 if (*elem == value)												\
 			break;															\
-	  elem;																	\
-	})
-#else
-	template<class T> inline T * list_find (T * list, T value)
-	{
-	  list_elem (list) elem = list_elem_front (list);
-	  for (; elem; elem = list_elem_next (elem))
-		 if (*elem == value)
-			return elem;
-	  return 0;
-	}
-#endif
-
-#define list_remove(list, value)											\
-	list_elem_remove (list_find (list, value))
 
 #define list_elem_remove(elem)												\
 	_list_remove ((list_element *) elem)
+
+#define list_remove(type, list, value)											\
+	{list_find (type, list, value);\
+	list_elem_remove (elem);}
 
 #define list_length(list)													\
 	_list_length ((list_head *) (list))
@@ -195,14 +151,14 @@ typedef struct list_element list_element;
 #define list_clear(list)													\
 	_list_clear ((list_head **) &(list), sizeof (*list))
 
-#define list_front(list)													\
-	(*list_elem_front (list))
+#define list_front(type, list)													\
+	(*list_elem_front (type, list))
 
-#define list_back(list)														\
-	(*list_elem_back (list))
+#define list_back(type, list)														\
+	(*list_elem_back (type, list))
 
-#define list_pop_front(list)												\
-	list_elem_remove (list_elem_front (list))
+#define list_pop_front(type, list)												\
+	list_elem_remove (list_elem_front (type, list))
 
 #define list_pop_back(list)													\
 	list_elem_remove (list_elem_back (list))

@@ -1,33 +1,16 @@
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 #include "address.h"
+#include <ctype.h>
 
 static int resolver (lw_addr);
 
@@ -270,7 +253,7 @@ const char * lw_addr_tostring (lw_addr ctx)
 
 		#else
 
-			int length = sizeof(ctx->buffer) - 2;
+			unsigned int length = sizeof(ctx->buffer) - 2;
 			ctx->buffer[0] = '[';
 			inet_ntop (AF_INET6,
 						&((struct sockaddr_in6 *)
@@ -294,16 +277,16 @@ const char * lw_addr_tostring (lw_addr ctx)
 	return *ctx->buffer ? ctx->buffer: "";
 }
 
-in6_addr lw_addr_toin6_addr (lw_addr ctx)
+struct in6_addr lw_addr_toin6_addr (lw_addr ctx)
 {
-	static in6_addr empty = { };
+	static struct in6_addr empty = { 0 };
 	if ((!ctx->info) || (!ctx->info->ai_addr))
 		return empty;
 
 	if (((struct sockaddr_storage *) ctx->info->ai_addr)->ss_family == AF_INET6)
 		return ((struct sockaddr_in6 *) ctx->info->ai_addr)->sin6_addr;
 
-	in6_addr v4 = { };
+	struct in6_addr v4 = { 0 };
 	((lw_ui8 *)&v4)[10] = 0xff;
 	((lw_ui8 *)&v4)[11] = 0xff;
 	*(lw_ui32 *)(&(((char *)&v4)[12])) = *(lw_ui32 *)&((struct sockaddr_in *) ctx->info->ai_addr)->sin_addr;

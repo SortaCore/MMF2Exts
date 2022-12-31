@@ -19,10 +19,13 @@
 				[ 68, "Host" ],
 				[ 69, "Stop hosting" ]
 			],
-		/*	[ "HTML5 Server",
-				[ 82, "Host" ],
-				[ 83, "Stop hosting" ]
-			], */
+			[ "HTML5 Server",
+				[ 89, "Load SSL/TLS certificate from file(s)" ],
+				[ 90, "Load SSL/TLS certificate from system store (Windows only)"],
+				"---",
+				[ 91, "Host WebSocket server(s)" ],
+				[ 92, "Stop hosting WebSocket server(s)" ]
+			],
 			"---",
 			[ 2, "Set welcome message" ],
 			[ 88, "(Advanced) Set Unicode allowlist" ],
@@ -149,7 +152,7 @@
 			"---",
 			[ 48, "Lacewing server is hosting" ],
 			[ 49, "Flash Player policy server is hosting" ],
-			// [ X, "HTML5 server is hosting" ],
+			[ 60, "HTML5 WebSocket server(s) are hosting" ],
 			"---",
 			[ "Connection",
 				[ 1, "On connect request" ],
@@ -325,6 +328,12 @@
 				[ 47, "Count visible chars (graphemes)" ],
 				[ 48, "Count bytes" ],
 				[ 49, "Check against Unicode allowlist" ]
+			],
+			[ "HTML5 Server",
+				[ 51, "Get insecure port" ],
+				[ 52, "Get secure port" ],
+				"---",
+				[ 53, "Get TLS cert expiry time" ]
 			],
 
 			"---"
@@ -797,19 +806,38 @@
 					[ "Text", "Codepoint list name (\"client names\", \"channel names\", \"received by client\" or \"received by server\")" ],
 					[ "Text", "Codepoint list (category names, codepoint number ranges, or specific codepoint numbers)" ]
 				]
-			}
-			/*,
+			},
 			// ID 89+
 			{
-				"Title": "Host HTML5 WebSocket server on port %0",
+				"Title": "Load HTML5 TLS/SSL certificate from files %0 and %1, private key password %2",
 				"Parameters": [
-					[ "Integer", "Port number (default 80, or 443)" ],
-					[ "Integer", "Use Secure Web Sockets? (default 80, or 443)" ]
+					[ "File", "Cert chain file (fullchain.pem), or PFX file" ],
+					[ "File", "Cert private key file (privkey.pem), or blank if PFX" ],
+					[ "Text", "Password for private key (if any)" ]
 				]
 			},
 			{
-				"Title": "Stop hosting HTML5 WebSocket server"
-			}*/
+				"Title": "Load HTML5 TLS/SSL certificate from Windows system store: common name %0, location %1, store name %2",
+				"Parameters": [
+					[ "Text", "Cert common name (domain or IP, e.g. \"localhost\")" ],
+					[ "Text", "Cert location (e.g. \"CurrentUser\", \"LocalMachine\", etc)" ],
+					[ "Text", "Cert store name (\"My\" for Personal store, \"Root\" for Trusted Root Cert Auth)" ]
+				]
+			},
+
+			{
+				"Title": "Host HTML5 WebSocket server on insecure port %0 (0 = no change), secure port %1 (0 = no change)",
+				"Parameters": [
+					[ "Integer", "Insecure port (no cert, http webpage clients only), or 0 to ignore" ],
+					[ "Integer", "Secure port (requires SSL/TLS cert), or 0 to ignore" ]
+				]
+			},
+			{
+				"Title": "Stop hosting the %0 HTML5 server(s)",
+				"Parameters": [
+					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
+				]
+			}
 		],
 		"Conditions": [
 			{
@@ -1165,9 +1193,12 @@
 				"Triggered": true
 			},
 
-			// 60+
+			// ID 60
 			{
-				"Title": "%o : HTML5 is hosting"
+				"Title": "%o : %0 HTML5 server is hosting",
+				"Parameters": [
+					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -1432,6 +1463,22 @@
 			{
 				"Title": "Channel_ID(",
 				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Insecure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Secure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Cert_ExpiryTime$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Use local time (0) or UTC (1)?" ],
+					[ "Text", "strftime() format (or \"\" for default)" ]
+				]
 			}
 		],
 		"Properties": [
@@ -1810,6 +1857,13 @@
 				[ 47, "Contar os caracteres visíveis(grafemas)" ],
 				[ 48, "Contar bytes" ],
 				[ 49, "Verificar Unicode com a lista permitida" ]
+			],
+			// Needs retranslation
+			[ "HTML5 Server",
+				[ 51, "Get insecure port" ],
+				[ 52, "Get secure port" ],
+				"---",
+				[ 53, "Get TLS cert expiry time" ]
 			],
 
 			"---"
@@ -2283,19 +2337,40 @@
 					[ "Text", "Nome lista de códigos (\"nome do cliente\", \"nome do canal\", \"recebido pelo cliente\" ou \"recebido pelo servidor\")" ],
 					[ "Text", "Lista de códigos (nome das categorias, intervalo de números dos códigos, ou um números de código específicos)" ]
 				]
-			}
-			/*,
+			},
+
 			// ID 89+
 			{
-				"Title": "Activar servidor WebSocket HTML5 na porta %0",
+				"Title": "Load HTML5 TLS/SSL certificate from files %0 and %1, private key password %2",
 				"Parameters": [
-					[ "Integer", "Número da porta (padrão 80, ou 443)" ],
-					[ "Integer", "Utilizar Secure Web Sockets? (padrão 80, ou 443)" ]
+					[ "File", "Cert chain file (fullchain.pem), or PFX file" ],
+					[ "File", "Cert private key file (privkey.pem), or blank if PFX" ],
+					[ "Text", "Password for private key (if any)" ]
 				]
 			},
 			{
-				"Title": "Parar o servidor de WebSocket HTML5"
-			}*/
+				"Title": "Load HTML5 TLS/SSL certificate from Windows system store: common name %0, location %1, store name %2",
+				"Parameters": [
+					[ "Text", "Cert common name (domain or IP, e.g. \"localhost\")" ],
+					[ "Text", "Cert location (e.g. \"CurrentUser\", \"LocalMachine\", etc)" ],
+					[ "Text", "Cert store name (\"My\" for Personal store, \"Root\" for Trusted Root Cert Auth)" ]
+				]
+			},
+
+			// This section needs retranslation
+			{
+				"Title": "Activar servidor WebSocket HTML5 na porta insecure %0 (0 = no change), secure porta %1 (0 = no change)",
+				"Parameters": [
+					[ "Integer", "Insecure port (no cert, http webpage clients only), or 0 to ignore" ],
+					[ "Integer", "Secure port (requires SSL/TLS cert), or 0 to ignore" ]
+				]
+			},
+			{
+				"Title": "Parar o servidor de WebSocket HTML5 %0 servidor(s)",
+				"Parameters": [
+					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
+				]
+			}
 		],
 		"Conditions": [
 			{
@@ -2656,7 +2731,10 @@
 
 			// 60+
 			{
-				"Title": "%o : HTML5 está ligado"
+				"Title": "%o : HTML5 está ligado",
+				"Parameters": [
+					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -2921,6 +2999,23 @@
 			{
 				"Title": "ID_do_Canal(",
 				"Returns": "Integer"
+			},
+			// Needs retranslation
+			{
+				"Title": "HTML5_Insecure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Secure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Cert_ExpiryTime$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Use local time (0) or UTC (1)?" ],
+					[ "Text", "strftime() format (or \"\" for default)" ]
+				]
 			}
 		],
 		"Properties": [
@@ -3268,8 +3363,7 @@
 				[ "Extraire données binary (avec curseur)",
 					[ "Octet",
 						[ 29, "Caractère ASCII" ],
-						[
-							"Integer",
+						[ "Integer",
 							[ 30, "Non signé" ],
 							[ 31, "Signé" ]
 						]
@@ -3720,7 +3814,7 @@
 				]
 			},
 			{
-				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné de nom %3 (\"\" = aucun maître)",
+				"Title": "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné de nom %3 (\"\" = aucun maître)",
 				"Parameters": [
 					[ "Text", "Nom du canal" ],
 					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
@@ -3729,7 +3823,7 @@
 				]
 			},
 			{
-				"Title":  "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné d'ID %3 (-1 = aucun maître)",
+				"Title": "Créer le canal de nom %0, caché %1, fermeture automatique %2, avec le client maître sélectionné d'ID %3 (-1 = aucun maître)",
 				"Parameters": [
 					[ "Text", "Nom du canal" ],
 					[ "Integer", "Cacher le canal de la liste publique ? Oui (1) ou Non (0)" ],
@@ -3767,19 +3861,39 @@
 					[ "Text", "Nom de la liste de Point de Code (\"nom du client\", \"nom du canal\", \"Reçu par le client\" ou \"reçu par le serveur\")" ],
 					[ "Text", "Liste de Point de Code (noms de categorie, plages de numéros de points de code, ou numéros de points de code spécifiques)" ]
 				]
-			}
-			/*,
+			},
 			// ID 89+
+
 			{
-				"Title": "Héberger le serveur HTML5 WebSocket sur le port %0",
+				"Title": "Load HTML5 TLS/SSL certificate from files %0 and %1, private key password %2",
 				"Parameters": [
-					[ "Integer", "Port (80 par défaut, ou 443)" ],
-					[ "Integer", "Utiliser Web Sockets sécurisé ? (80 par défaut, ou 443)" ]
+					[ "File", "Cert chain file (fullchain.pem), or PFX file" ],
+					[ "File", "Cert private key file (privkey.pem), or blank if PFX" ],
+					[ "Text", "Password for private key (if any)" ]
 				]
 			},
 			{
-				"Title": "Stopper l'hébergement du serveur HTML5 WebSocket"
-			}*/
+				"Title": "Load HTML5 TLS/SSL certificate from Windows system store: common name %0, location %1, store name %2",
+				"Parameters": [
+					[ "Text", "Cert common name (domain or IP, e.g. \"localhost\")" ],
+					[ "Text", "Cert location (e.g. \"CurrentUser\", \"LocalMachine\", etc)" ],
+					[ "Text", "Cert store name (\"My\" for Personal store, \"Root\" for Trusted Root Cert Auth)" ]
+				]
+			},
+
+			{
+				"Title": "Héberger le serveur HTML5 WebSocket sur le port insecure %0 (0 = no change), secure port %1 (0 = no change)",
+				"Parameters": [
+					[ "Integer", "Insecure port (no cert, http webpage clients only), or 0 to ignore" ],
+					[ "Integer", "Secure port (requires SSL/TLS cert), or 0 to ignore" ]
+				]
+			},
+			{
+				"Title": "Stopper l'hébergement du serveur(s) HTML5 WebSocket %0 server",
+				"Parameters": [
+					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
+				]
+			}
 		],
 		"Conditions": [
 			{
@@ -4138,7 +4252,10 @@
 
 			// 60+
 			{
-				"Title": "%o : Serveur HTML5 est hébergé"
+				"Title": "%o : Serveur HTML5 est hébergé",
+				"Parameters": [
+					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -4403,6 +4520,24 @@
 			{
 				"Title": "ID_Canal(",
 				"Returns": "Integer"
+			},
+
+			// Needs retranslation
+			{
+				"Title": "HTML5_Insecure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Secure_Port(",
+				"Returns": "Integer"
+			},
+			{
+				"Title": "HTML5_Cert_ExpiryTime$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "Integer", "Use local time (0) or UTC (1)?" ],
+					[ "Text", "strftime() format (or \"\" for default)" ]
+				]
 			}
 		],
 		"Properties": [

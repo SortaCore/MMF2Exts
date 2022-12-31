@@ -1,31 +1,12 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "../../deps/multipart-parser/multipart_parser.h"
@@ -54,7 +35,7 @@ struct _lw_ws_upload
 	lw_file autosave_file;
 	char * autosave_filename;
 
-	list (struct _lw_ws_upload_hdr, headers);
+	lw_list (struct _lw_ws_upload_hdr, headers);
 };
 
 lw_ws_upload lwp_ws_upload_new (lw_ws_req request);
@@ -74,27 +55,30 @@ struct _lw_ws_session
 
 struct _lw_ws
 {
-	lw_pump pump;
-
 	lw_server socket, socket_secure;
+
+	lw_pump pump;
 
 	lw_timer timer;
 
 	lw_ws_session sessions;
 
 	lw_bool auto_finish;
+	lw_bool websocket;
 
+	// No request made timeout - ignored for websocket
 	long timeout;
 
-	lw_ws_hook_error		  on_error;
-	lw_ws_hook_get			on_get;
-	lw_ws_hook_post			on_post;
-	lw_ws_hook_head			on_head;
-	lw_ws_hook_upload_start	on_upload_start;
-	lw_ws_hook_upload_chunk	on_upload_chunk;
-	lw_ws_hook_upload_done	on_upload_done;
-	lw_ws_hook_upload_post	on_upload_post;
-	lw_ws_hook_disconnect	 on_disconnect;
+	lw_ws_hook_error		  		on_error;
+	lw_ws_hook_get					on_get;
+	lw_ws_hook_post					on_post;
+	lw_ws_hook_head					on_head;
+	lw_ws_hook_upload_start			on_upload_start;
+	lw_ws_hook_upload_chunk			on_upload_chunk;
+	lw_ws_hook_upload_done			on_upload_done;
+	lw_ws_hook_upload_post			on_upload_post;
+	lw_ws_hook_disconnect			on_disconnect;
+	lw_ws_hook_websocket_message	on_websocket_message;
 
 	void * tag;
 };
@@ -127,9 +111,8 @@ struct _lw_ws_req
 	char url		[4096];
 	char hostname	[128];
 
-	list (struct _lw_ws_req_hdr, headers_in);
+	lw_list (struct _lw_ws_req_hdr, headers_in);
 	lwp_nvhash get_items, post_items;
-
 
 	/* The protocol implementation can use this for any intermediate
 	* buffering, providing it contains the request body (if any) when
@@ -145,7 +128,7 @@ struct _lw_ws_req
 
 	char status [64];
 
-	list (struct _lw_ws_req_hdr, headers_out);
+	lw_list (struct _lw_ws_req_hdr, headers_out);
 
 	lw_bool responded;
 };
@@ -153,6 +136,9 @@ struct _lw_ws_req
 lw_ws_req lwp_ws_req_new (lw_ws, lwp_ws_client, const lw_streamdef *);
 void lwp_ws_req_delete (lw_ws_req);
 
+#ifdef __cplusplus
+extern "C"
+#endif
 void lwp_ws_req_clean (lw_ws_req);
 
 void lwp_ws_req_set_cookie (lw_ws_req, size_t name_len, const char * name,
@@ -190,18 +176,16 @@ struct _lwp_ws_client
 	void (* cleanup) (lwp_ws_client);
 
 	lw_bool secure;
+	lw_bool websocket;
 
 	lw_ws ws;
 	lw_server_client socket;
 
 	long timeout;
+	// WebSocket: -1 or close code. WebSocket requires a close packet from both ends for a "clean" connection close
+	lw_i16 local_close_code, remote_close_code;
 
 	lwp_ws_multipart multipart;
 };
 
 #include "http/http.h"
-
-#ifdef ENABLE_SPDY
-	#include "spdy/spdy.h"
-#endif
-

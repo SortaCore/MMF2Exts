@@ -261,13 +261,21 @@ bool Extension::DoesClientIDExist(int clientID)
 	return foundCliIt != clients.cend();
 }
 
-bool Extension::IsHTML5Hosting()
+bool Extension::IsHTML5Hosting(const TCHAR * serverTypeParam)
 {
-	static bool HTML5Warning = false;
-	if (!HTML5Warning)
-	{
-		HTML5Warning = true;
-		CreateError("HTML5 Hosting condition not usable yet. Returning false.");
-	}
-	return false; // HTML5Srv->hosting();
+	const std::string serverType = TStringToUTF8Simplified(serverTypeParam);
+	const bool hostingSecure = Srv.websocket->hosting_secure(),
+		hostingInsecure = Srv.websocket->hosting();
+
+	if (serverType == "both"sv)
+		return hostingSecure && hostingInsecure;
+	if (serverType == "secure"sv)
+		return hostingSecure;
+	if (serverType == "insecure"sv)
+		return hostingInsecure;
+	if (serverType == "either"sv || serverType == "any"sv)
+		return hostingSecure || hostingInsecure;
+
+	CreateError("Is HTML5 Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.", serverTypeParam);
+	return false;
 }

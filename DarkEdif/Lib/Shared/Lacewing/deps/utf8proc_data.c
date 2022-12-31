@@ -1,8 +1,11 @@
 #include "utf8proc.h"
 
 #ifdef __clang__
-#pragma clang diagnostic ignored "-Wunused-const-variable"
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-const-variable"
+#elif !defined(_WIN32)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 #endif
 
 static const utf8proc_uint16_t utf8proc_sequences[] = {
@@ -14935,4 +14938,6 @@ static const utf8proc_uint16_t utf8proc_combinations[] = {
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#elif !defined(_WIN32)
+#pragma GCC diagnostic pop
 #endif

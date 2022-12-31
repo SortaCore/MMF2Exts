@@ -320,10 +320,10 @@
 				]
 			],
 			[ "Convert string to UTF-8 and...",
-				[ 46, "Count complete UTF-8 chars" ],
-				[ 47, "Count visible chars (graphemes)" ],
-				[ 48, "Count bytes" ],
-				[ 49, "Check against Unicode allowlist" ]
+				[ 57, "Count complete UTF-8 chars" ],
+				[ 58, "Count visible chars (graphemes)" ],
+				[ 59, "Count bytes" ],
+				[ 60, "Check against Unicode allowlist" ]
 			]
 		],
 		"Actions": [

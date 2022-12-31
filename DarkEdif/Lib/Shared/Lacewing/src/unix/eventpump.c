@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "eventpump.h"
@@ -58,7 +39,7 @@ lw_eventpump lw_eventpump_new ()
 	ctx->sync_signals = lw_sync_new ();
 
 	int signalpipe [2];
-	if (::pipe(signalpipe) == -1)
+	if (pipe(signalpipe) == -1)
 	{
 		ctx->signalpipe_read = ctx->signalpipe_write = -1;
 		lw_pump_delete(&ctx->pump);
@@ -84,14 +65,14 @@ static void def_cleanup (lw_pump pump)
 {
 	lw_eventpump ctx = (lw_eventpump) pump;
 
-	lwp_eventqueue_delete (ctx->queue);
-	ctx->queue = (lwp_eventqueue)~0;
-
 	if (ctx->signalpipe_read != -1)
 	{
 		close(ctx->signalpipe_read);
 		close(ctx->signalpipe_write);
 	}
+
+	lwp_eventqueue_update(ctx->queue, ctx->signalpipe_read,
+		lw_true, lw_false, lw_false, lw_false, lw_true, lw_false, NULL, NULL);
 
 	#ifdef ENABLE_THREADS
 		if (lw_thread_started (ctx->watcher.thread))
@@ -99,9 +80,14 @@ static void def_cleanup (lw_pump pump)
 			lw_event_signal (ctx->watcher.resume_event);
 			lw_thread_join (ctx->watcher.thread);
 		}
+		lw_thread_delete(ctx->watcher.thread);
+		lw_sync_delete(ctx->sync_signals);
 
 		lw_event_delete (ctx->watcher.resume_event);
 	#endif
+
+	lwp_eventqueue_delete(ctx->queue);
+	ctx->queue = (lwp_eventqueue)~0;
 }
 
 lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
@@ -140,62 +126,65 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 
 	lw_sync_lock (ctx->sync_signals);
 
-	char signal;
+	do {
+		char signal;
 
-	if (read (ctx->signalpipe_read, &signal, sizeof (signal)) == -1)
-	{
-		// In theory, a null tag means signal pipe message was added. If signalparams is 0, that means
-		// either the signal and its params was already handled, or that it wasn't a signal pipe message
-		// and the tag is null by error.
-		if (list_length(ctx->signalparams) == 0)
+		const ssize_t amountRead = read(ctx->signalpipe_read, &signal, sizeof(signal));
+		if (amountRead != 1)
 		{
-			lw_trace("WARNING: read() of signal pump is -1, and signalparams is 0; was the watch %p or watch->tag %p incorrect?",
-				watch, watch ? watch->tag : NULL);
+			// In theory, a null tag means signal pipe message was added. If signalparams is 0, that means
+			// either the signal and its params was already handled, or that it wasn't a signal pipe message
+			// and the tag is null by error.
+			if (amountRead == -1 && list_length(ctx->signalparams) == 0)
+			{
+				always_log("WARNING: read() of signal pump is -1, and signalparams is 0; was the watch %p or watch->tag %p incorrect?",
+					watch, watch ? watch->tag : NULL);
+			}
+			lw_sync_release(ctx->sync_signals);
+			return lw_true;
 		}
 
-		lw_sync_release (ctx->sync_signals);
-		return lw_true;
-	}
+		--ctx->waiting_pipe_bytes;
 
-	lw_trace("eventpump process_event: signal is %d.", (int)signal);
-
-	switch (signal)
-	{
+		switch (signal)
+		{
 		case sig_exit_eventloop:
 		{
 			lw_trace("eventpump process_event: signal is exit eventloop.");
-			lw_sync_release (ctx->sync_signals);
+			lw_sync_release(ctx->sync_signals);
 			return lw_false;
 		}
 
 		case sig_remove:
 		{
 			lw_trace("eventpump process_event: signal is remove.");
-			lw_pump_watch to_remove = (lw_pump_watch)list_front (ctx->signalparams);
-			list_pop_front (ctx->signalparams);
+			lw_pump_watch to_remove = (lw_pump_watch)list_front(void*, ctx->signalparams);
+			list_pop_front(void*, ctx->signalparams);
 
 			// note: lw_pump_remove() is what causes sig_remove
-			lw_pump_remove_user((lw_pump) ctx);
+			lw_pump_remove_user((lw_pump)ctx);
 			memset(to_remove, 0, sizeof(*to_remove));
 			free(to_remove);
 
-			break;
+			break; // out of switch
 		}
 
 		case sig_post:
 		{
 			lw_trace("eventpump process_event: signal is post.");
-			void * func = list_front (ctx->signalparams);
-			list_pop_front (ctx->signalparams);
+			void* func = list_front(void*, ctx->signalparams);
+			list_pop_front(void*, ctx->signalparams);
 
-			void * param = list_front (ctx->signalparams);
-			list_pop_front (ctx->signalparams);
+			void* param = list_front(void*, ctx->signalparams);
+			list_pop_front(void*, ctx->signalparams);
 
-			((void * (*) (void *)) func) (param);
+			((void* (*) (void*)) func) (param);
 
-			break;
+			break; // out of switch
 		}
-	};
+		};
+		
+	} while (ctx->waiting_pipe_bytes > 0);
 
 	lw_sync_release (ctx->sync_signals);
 
@@ -253,7 +242,7 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
 		 if (errno == EINTR)
 			continue;
 
-		 lwp_trace ("epoll error: %d", errno);
+		 always_log ("epoll error: %d", errno);
 		 break;
 	  }
 
@@ -275,7 +264,10 @@ void lw_eventpump_post_eventloop_exit (lw_eventpump ctx)
 	lw_sync_lock (ctx->sync_signals);
 
 		char signal = sig_exit_eventloop;
-		write (ctx->signalpipe_write, &signal, sizeof (signal));
+		if (write(ctx->signalpipe_write, &signal, sizeof(signal)) == -1)
+			always_log ("pipe failed to write with error %d.", errno);
+		else
+			++ctx->waiting_pipe_bytes;
 
 	lw_sync_release (ctx->sync_signals);
 }
@@ -309,7 +301,7 @@ static void watcher (lw_eventpump ctx)
 			if (errno == EINTR)
 				continue;
 
-			lwp_trace ("drain error: %d", errno);
+			always_log ("drain error: %d", errno);
 			break;
 		}
 
@@ -364,6 +356,8 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 	return watch;
 }
 
+lw_bool global_delete_block = lw_false;
+
 static void def_update_callbacks (lw_pump pump,
 								  lw_pump_watch watch, void * tag,
 								  lw_pump_callback on_read_ready,
@@ -411,10 +405,13 @@ static void def_remove (lw_pump pump, lw_pump_watch watch)
 
 	lw_sync_lock (ctx->sync_signals);
 
-		list_push (ctx->signalparams, watch);
+		list_push (void *, ctx->signalparams, watch);
 
 		char signal = sig_remove;
-		write (ctx->signalpipe_write, &signal, sizeof (signal));
+		if (write(ctx->signalpipe_write, &signal, sizeof(signal)) == -1)
+			always_log("pipe failed to write with error %d.", errno);
+		else
+			++ctx->waiting_pipe_bytes;
 
 	lw_sync_release (ctx->sync_signals);
 }
@@ -425,11 +422,14 @@ static void def_post (lw_pump pump, void * func, void * param)
 
 	lw_sync_lock (ctx->sync_signals);
 
-		list_push (ctx->signalparams, func);
-		list_push (ctx->signalparams, param);
+		list_push (void *, ctx->signalparams, func);
+		list_push (void*, ctx->signalparams, param);
 
 		char signal = sig_post;
-		write (ctx->signalpipe_write, &signal, sizeof (signal));
+		if (write(ctx->signalpipe_write, &signal, sizeof(signal)) == -1)
+			always_log("pipe failed to write with error %d.", errno);
+		else
+			++ctx->waiting_pipe_bytes;
 
 	lw_sync_release (ctx->sync_signals);
 }

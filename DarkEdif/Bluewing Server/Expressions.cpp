@@ -709,3 +709,28 @@ int Extension::Channel_ID()
 {
 	return selChannel ? selChannel->id() : -1;
 }
+
+int Extension::HTML5_Insecure_Port()
+{
+	return Srv.websocket->hosting() ? Srv.websocket->port() : -1;
+}
+int Extension::HTML5_Secure_Port()
+{
+	return Srv.websocket->hosting_secure() ? Srv.websocket->port_secure() : -1;
+}
+const TCHAR* Extension::HTML5_Cert_ExpiryTime(int useUTC, const TCHAR* formatParam)
+{
+	if (!Srv.websocket->cert_loaded())
+		return Runtime.CopyString(_T("HTML5 Secure WebSocket server not hosting"));
+
+	std::tstring format = formatParam;
+	if (format.empty())
+		format = _T("%I:%M:%S%p on %A %d %B %Y"s);
+
+	TCHAR buff[512];
+	const time_t time = Srv.websocket->cert_expiry_time();
+	const tm * const tm = useUTC == 1 ? std::gmtime(&time) : std::localtime(&time);
+	if (std::_tcsftime(buff, std::size(buff), format.c_str(), tm) <= 0)
+		return Runtime.CopyString(_T("Format \"%s\" is invalid"));
+	return Runtime.CopyString(buff);
+}

@@ -222,11 +222,11 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 	// The permissions do not 1:1 match the index in the Fusion properties window, so you'll have to loop through them to work out the ID.
 	// They match between CF2.5 and MMF2.0, but 2.0 lacks some permissions (105+, so including NFC).
 
-	DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 50);
+	DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 49);
 	if (hasINTERNETPerm == TRUE)
 		return;
 
-	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing, please enable the INTERNET permission in application "
+	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing Server, please enable the INTERNET permission in application "
 		"properties under the Android tab.\nAborting build with a SAXParseException."));
 
 	// Erase the manifest file so the build will fail

@@ -41,8 +41,8 @@ void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 // Called when JavaVM shuts down. Not called for subapps.
 ProjectFunc void EndApp(JNIEnv *, jclass)
 {
+	// Note: on Java side, is declared as darkedif_EndApp, due to how RegisterNatives() works.
 	AppWasClosed = true;
-
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
 #else // No iOS auto-quit yet!

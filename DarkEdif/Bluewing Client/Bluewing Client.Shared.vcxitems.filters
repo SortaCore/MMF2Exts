@@ -40,6 +40,12 @@
     <Filter Include="Header Files\Lacewing\deps\uthash">
       <UniqueIdentifier>{468bc64e-1b4a-4819-a47a-5abe4177a1e6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lacewing\src\deps">
+      <UniqueIdentifier>{76cf5e5d-79f1-481a-ac8f-8344e1097c1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\openssl">
+      <UniqueIdentifier>{d66b2375-f972-4c2f-a256-f64f8bf36078}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp">
@@ -180,14 +186,14 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\ReadWriteLock.cc">
       <Filter>Source Files\Lacewing</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c">
-      <Filter>Source Files\Lacewing</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
-      <Filter>Source Files\Lacewing</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\global.c">
       <Filter>Source Files\Lacewing\src</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
+      <Filter>Source Files\Lacewing\src\deps</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c">
+      <Filter>Source Files\Lacewing\src\deps</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -286,6 +292,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp">
       <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\openssl\sslclient.h">
+      <Filter>Header Files\Lacewing\src\openssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

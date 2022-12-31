@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 #include "common.h"
 #include "flashpolicy.h"
 
@@ -36,13 +17,13 @@ static void on_data (lw_server server, lw_server_client client,
 
 	for (size_t i = 0; i < size; ++ i)
 	{
-	  if (!buffer [i])
-	  {
-		 lw_stream_write ((lw_stream) client, ctx->buffer, ctx->size);
-		 lw_stream_write ((lw_stream) client, "\0", 1);
+		if (!buffer [i])
+		{
+			lw_stream_write ((lw_stream) client, ctx->buffer, ctx->size);
+			lw_stream_write ((lw_stream) client, "", 1);
 
-		 return;
-	  }
+			return;
+		}
 	}
 }
 
@@ -53,7 +34,7 @@ static void on_error (lw_server server, lw_error error)
 	lw_error_addf (error, "Socket error");
 
 	if (ctx->on_error)
-	  ctx->on_error (ctx, error);
+		ctx->on_error (ctx, error);
 }
 
 lw_flashpolicy lw_flashpolicy_new (lw_pump pump)
@@ -72,7 +53,7 @@ lw_flashpolicy lw_flashpolicy_new (lw_pump pump)
 void lw_flashpolicy_delete (lw_flashpolicy ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	lw_server_delete (ctx->server);
 
@@ -96,32 +77,32 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
 
 #if defined(_WIN32) && defined(_UNICODE)
 	FILE * file = NULL;
-	__wchar_t * res = lw_char_to_wchar(filename, -1);
+	wchar_t * res = lw_char_to_wchar(filename, -1);
 	if (res != NULL)
 	{
-	  file = _wfopen(res, L"r");
-	  free(res);
+		file = _wfopen(res, L"rb");
+		free(res);
 	}
 #else
-	FILE * file = fopen (filename, "r");
+	FILE * file = fopen (filename, "rb");
 #endif
 
 	if (!file)
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_add (error, lwp_last_socket_error);
-	  lw_error_addf (error, "Error opening file: %s", filename);
+		lw_error_add (error, lwp_last_socket_error);
+		lw_error_addf (error, "Error opening file: %s", filename);
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  return;
+		return;
 	}
 
 	fseek (file, 0, SEEK_END);
 
-	ctx->size = ftell (file);
+	ctx->size = (size_t)ftell (file);
 	ctx->buffer = (char *) malloc (ctx->size);
 
 	fseek (file, 0, SEEK_SET);
@@ -130,25 +111,22 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
 
 	if (bytes != ctx->size)
 	{
-	  ctx->size = bytes;
+		lw_error error = lw_error_new ();
 
-	  if (ferror (file))
-	  {
-		 lw_error error = lw_error_new ();
+		if (ferror (file))
+			lw_error_add (error, lwp_last_error);
+		else
+			lw_error_addf(error, "Only read %zu bytes", bytes);
+		lw_error_addf (error, "Error reading flash policy file: %s", filename);
 
-		 lw_error_add (error, lwp_last_error);
-		 lw_error_addf (error, "Error reading file: %s", filename);
-
-		 if (ctx->on_error)
+		if (ctx->on_error)
 			ctx->on_error (ctx, error);
 
-		 free (ctx->buffer);
-		 ctx->buffer = 0;
+		free (ctx->buffer);
+		ctx->buffer = NULL;
 
-		 fclose (file);
-
-		 return;
-	  }
+		fclose (file);
+		return;
 	}
 
 	fclose (file);

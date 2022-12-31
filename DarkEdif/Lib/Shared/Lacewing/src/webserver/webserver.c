@@ -1,31 +1,12 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 
@@ -34,30 +15,7 @@ static void on_connect (lw_server server, lw_server_client client_socket)
 	lw_ws ws = (lw_ws) lw_server_tag (server);
 	lw_bool secure = (server == ws->socket_secure);
 
-	lwp_ws_client client;
-
-	do
-	{
-	  #ifdef ENABLE_SPDY
-
-		 if (!strcasecmp (lw_server_client_npn (client_socket), "spdy/3"))
-		 {
-			client = lwp_ws_spdyclient_new (ws, client_socket, secure, 3);
-			break;
-		 }
-
-		 if (!strcasecmp (lw_server_client_npn (client_socket), "spdy/2"))
-		 {
-			client = lwp_ws_spdyclient_new (ws, client_socket, secure, 2);
-			break;
-		 }
-
-	  #endif
-
-	  client = lwp_ws_httpclient_new (ws, client_socket, secure);
-
-	} while (0);
-
+	lwp_ws_client client = lwp_ws_httpclient_new (ws, client_socket, secure);
 	if (!client)
 	{
 	  lw_stream_close ((lw_stream) client_socket, lw_true);
@@ -67,13 +25,21 @@ static void on_connect (lw_server server, lw_server_client client_socket)
 	lw_stream_set_tag ((lw_stream) client_socket, client);
 
 	lw_stream_write_stream
-	  ((lw_stream) client, (lw_stream) client_socket, -1, lw_false);
+	  ((lw_stream) client, (lw_stream) client_socket, SIZE_MAX, lw_false);
 }
 
 static void on_disconnect (lw_server server, lw_server_client client_socket)
 {
 	lwp_ws_client client = (lwp_ws_client) lw_stream_tag ((lw_stream) client_socket);
 
+	// If client is kicked more than once, somehow
+	// TODO: Seems to happen for websocket connections under some circumstances
+	if (client == NULL)
+	{
+		long fd = lw_fdstream_get_fd_debug((lw_fdstream)client_socket);
+		always_log("client tag is unexpected null for stream %p, fd %ld.", (void *)client_socket, fd);
+		return; // no op
+	}
 	assert (client);
 
 	client->cleanup (client);
@@ -92,40 +58,239 @@ static void on_error (lw_server server, lw_error error)
 		ws->on_error (ws, error);
 }
 
+_Bool lw_u8str_validate(const char* toValidate, size_t size);
+
+size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, const char* data, size_t size)
+{
+	const size_t originalSize = size;
+	char * unmaskedData = NULL;
+	const char * error = NULL;
+	static char error2[256];
+	lw_ui32 errorCode = 0;
+#define data_remove_prefix(i) data += i; size -= i;
+	do {
+		// Minimum packet size - fin/opcode byte, mask + content len byte, 4-byte mask key
+		if (size < 1 + 1 + 4)
+		{
+			error = "message too small to be valid";
+			errorCode = 1002; // 1002 = protocol error
+			break;
+		}
+
+		// The three reserved bits must be 0
+		if (data[0] & 0b01110000)
+		{
+			error = "reserved bits are set";
+			errorCode = 1002;
+			break;
+		}
+		// We expect all data in one packet, no continuation
+		if (data[0] & 0b1000000)
+		{
+			error = "fin flag is not set; continuation not allowed";
+			errorCode = 1009;
+			break;
+		}
+
+		lw_ui8 opcode = data[0] & 0b00001111;
+		// opcode 0 = continuation of previous packet
+		// opcode 1 = text, 2 = binary, 3-7 reserved, 8 connection close, 9 ping, 10 pong, 11-15 reserved
+		// We only use 2 and 8, and allow 9-10
+		if ((opcode >= 3 && opcode <= 7) || (opcode >= 11 && opcode <= 15))
+		{
+			error = "reserved opcodes used";
+			errorCode = 1002;
+			break;
+		}
+		// Continuation or text are not expected. Continuation is possible, but it'll necessitate adding a cache,
+		// so until I see it being used (perhaps under high load), I will stick to small packets.
+		// Text isn't used by Bluewing JS, as text messages could only be for "sent TCP to server" messages...
+		// so might as well put them in the regular Blue binary format like all the other text message types.
+		if (opcode == 0 || opcode == 1)
+		{
+			sprintf(error2, "opcode %hhu is valid, but not expected by Bluewing", opcode);
+			error = error2;
+			errorCode = 1003; // 1003 = opcode is OK but not meant to process it
+			break;
+		}
+
+		// WebSocket spec demands XOR masking from client->server, and requires no mask server -> client
+		if ((data[1] & 0b10000000) == 0)
+		{
+			error = "masking is required";
+			errorCode = 1002;
+			break;
+		}
+
+		// Packet length is three forms in WebSocket; 8-bit (<126), 16-bit (126), and 64-bit (127).
+		// We don't expect user to send >65kb message via Bluewing, HTML5 or not.
+		// It's possible we could read it anyway if it's less than 4GB, but the
+		// Bluewing level ping timeout will make sending big packets dangerous anyway.
+		lw_i32 packetLen = data[1] & 0b01111111;
+		if (packetLen == 127)
+		{
+			error = "message too big for Bluewing";
+			errorCode = 1009; // 1009 = message too big
+			break;
+		}
+
+		data_remove_prefix(2);
+		if (packetLen == 126)
+		{
+			// Control opcodes like close, ping etc, must be <= 125
+			// Only non-control opcode after all those ifs above is 2, binary message
+			if (opcode != 2)
+			{
+				error = "control codes can only be 1 byte long";
+				errorCode = 1002;
+				break;
+			}
+
+			// Packet is too small to necessitate a 2-byte size
+			if (size < 2 + 4 + 126)
+			{
+				error = "message too small to be valid";
+				errorCode = 1002;
+				break;
+			}
+
+			packetLen = ntohs(*(unsigned short*)&data[0]);
+			data_remove_prefix(sizeof(unsigned short));
+
+			// Packet is too small to necessitate a 2-byte size, or does not match size specified
+			if (packetLen < 126 || size < 4 + (size_t)packetLen)
+			{
+				error = "message too small to be valid";
+				errorCode = 1002;
+				break;
+			}
+		}
+
+		// Read mask, make sure it actually masks
+		lw_ui32 mask = *(lw_ui32*)data;
+		if (mask == 0)
+		{
+			error = "masking with zero";
+			errorCode = 1002;
+			break;
+		}
+		data_remove_prefix(sizeof(lw_ui32));
+
+		// Unmask the packet
+		unmaskedData = (char *)malloc(size);
+		for (size_t i = 0; i < size; i++)
+			unmaskedData[i] = data[i] ^ ((char *)&mask)[i % 4];
+		data = unmaskedData;
+
+		// If we've started a disconnect (!= -1), we'll ignore everything except an acknowledging close response.
+		// (if the client is dodgy and won't acknowledge, they'll get timed out anyway)
+		if (client->client.local_close_code == -1)
+		{
+			// Binary message - make sure there's content
+			if (opcode == 2 && size > 0)
+				webserver->on_websocket_message(webserver, client->request, unmaskedData, size);
+			// WebSocket layer ping
+			// Bluewing doesn't actually use the WebSocket ping, because if the Fusion app crashes, the browser will keep the socket alive,
+			// responding to WebSocket pings, but the app will be unresponsive.
+			// So it's better to send the ping on the Blue level and make sure the Fusion app is alive on the other end.
+			// However, the browser could send its own pings, so we'll respond as expected.
+			else if (opcode == 9)
+			{
+				error2[0] = (char)0b10001010; // fin + pong
+				error2[1] = (char)size; // msg size (no mask); note control frames like ping are hard-capped to < 125 bytes
+				memcpy(error2 + 2, unmaskedData, size);
+				lwp_stream_write(&client->client.stream, error2, 2 + size, lwp_stream_write_ignore_busy);
+			}
+			// WebSocket layer pong
+			else if (opcode == 10) {
+				lwp_trace("Got WebSocket ping response!");
+			}
+		}
+		// Close connection opcode - usually a 6-byte minimum message, but WebSocket spec allows
+		// an optional two-byte reason code, and optionally UTF-8 text, up to 123 bytes long.
+		// WebSocket expects the other end to reply with a close packet for a "clean" disconnect.
+		if (opcode == 8)
+		{
+			lw_ui16 remote_code_reason = 1000;
+			const char * reason = "(none given)";
+
+			// Close reason was specified, read it
+			if (size >= 2)
+			{
+				remote_code_reason = ntohs(*(lw_ui16*)unmaskedData);
+
+				// More data? Should be a UTF-8 close reason.
+				// (if it's not UTF-8, they're already closing the connection with this close packet)
+				if (size > 2 && lw_u8str_validate(&unmaskedData[2], size - 2))
+					reason = &unmaskedData[2];
+			}
+
+			// Not a normal disconnect code, report as error
+			if (remote_code_reason != 1000)
+			{
+				lw_error error = lw_error_new();
+				lw_error_addf(error, "Client disconnected; error code %hu, reason \"%s\".", remote_code_reason, reason);
+				webserver->on_error(webserver, error);
+				lw_error_delete(error);
+			}
+
+			// Log close reason; req_disconnect will send our WebSocket close packet, then close connection immediately
+			client->client.remote_close_code = (lw_i16)remote_code_reason;
+			lw_ws_req_disconnect(client->request, 1000);
+		}
+
+		free(unmaskedData);
+		return originalSize;
+	} while (lw_false);
+
+	// Protocol error - client is suspect, starts a WebSocket disconnect, and disconnect timeout
+	if (error != NULL)
+	{
+		lw_error err = lw_error_new();
+		lw_error_addf(err, "Disconnecting client %s due to %s.", lw_server_client_addr(client->client.socket), error);
+		if (webserver->on_error)
+			webserver->on_error(webserver, err);
+		lw_error_delete(err);
+		lw_ws_req_disconnect(client->request, errorCode);
+	}
+	free(unmaskedData);
+	return originalSize;
+}
+
 static void start_timer (lw_ws ctx)
 {
-	#ifdef LacewingTimeoutExperiment
-
 	  if (lw_timer_started (ctx->timer))
 		 return;
 
 	  lw_timer_start (ctx->timer, ctx->timeout * 1000);
-
-	#endif
 }
 
 static void on_timer_tick (lw_timer timer)
 {
-	lw_server_client client_socket;
+	lw_server_client client_socket, next = 0;
 	lwp_ws_client client;
 	lw_ws ws = (lw_ws) lw_timer_tag (timer);
 
 	for (client_socket = lw_server_client_first (ws->socket);
 		 client_socket;
-		 client_socket = lw_server_client_next (client_socket))
+		client_socket = next)
 	{
-	  client = (lwp_ws_client) lw_stream_tag ((lw_stream) client_socket);
+		client = (lwp_ws_client) lw_stream_tag ((lw_stream) client_socket);
 
-	  client->tick (client);
+		// Load next before tick, in case tick() causes client free(), so client->next is invalid
+		next = lw_server_client_next(client_socket);
+		client->tick(client);
 	}
 
 	for (client_socket = lw_server_client_first (ws->socket_secure);
 		 client_socket;
-		 client_socket = lw_server_client_next (client_socket))
+		client_socket = next)
 	{
 	  client = (lwp_ws_client) lw_stream_tag ((lw_stream) client_socket);
 
-	  client->tick (client);
+	  // Load next before tick, in case tick() causes client free(), so client->next is invalid
+	  next = lw_server_client_next(client_socket);
+	  client->tick(client);
 	}
 }
 
@@ -140,7 +305,8 @@ lw_ws lw_ws_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->auto_finish = lw_true;
-	ctx->timeout = 5;
+	ctx->timeout = 5; // time to respond to first request
+	ctx->websocket = lw_false;
 
 	ctx->timer = lw_timer_new (ctx->pump);
 	lw_timer_set_tag (ctx->timer, ctx);
@@ -159,11 +325,6 @@ lw_ws lw_ws_new (lw_pump pump)
 	lw_server_on_connect (ctx->socket_secure, on_connect);
 	lw_server_on_disconnect (ctx->socket_secure, on_disconnect);
 	lw_server_on_error (ctx->socket_secure, on_error);
-
-	#ifdef ENABLE_SPDY
-	  lw_server_add_npn (ctx->socket_secure, "spdy/3");
-	  lw_server_add_npn (ctx->socket_secure, "spdy/2");
-	#endif
 
 	lw_server_add_npn (ctx->socket_secure, "http/1.1");
 	lw_server_add_npn (ctx->socket_secure, "http/1.0");
@@ -248,33 +409,38 @@ lw_bool lw_ws_hosting_secure (lw_ws ctx)
 	return lw_server_hosting (ctx->socket_secure);
 }
 
-long lw_ws_port (lw_ws ctx)
+int lw_ws_port (lw_ws ctx)
 {
 	return lw_server_port (ctx->socket);
 }
 
-long lw_ws_port_secure (lw_ws ctx)
+int lw_ws_port_secure (lw_ws ctx)
 {
 	return lw_server_port (ctx->socket_secure);
 }
 
-lw_bool lw_ws_load_cert_file (lw_ws ctx, const char * filename,
+lw_bool lw_ws_load_cert_file (lw_ws ctx, const char * filename_certchain, const char* filename_privkey,
 							  const char * passphrase)
 {
-	return lw_server_load_cert_file (ctx->socket_secure, filename, passphrase);
+	return lw_server_load_cert_file (ctx->socket_secure, filename_certchain, filename_privkey, passphrase);
 }
 
-lw_bool lw_ws_load_sys_cert (lw_ws ctx, const char * store_name,
-										const char * common_name,
-										const char * location)
+lw_bool lw_ws_load_sys_cert (lw_ws ctx, const char * common_name,
+										const char * location,
+										const char * store_name)
 {
-	return lw_server_load_sys_cert (ctx->socket_secure, store_name,
-									common_name, location);
+	return lw_server_load_sys_cert (ctx->socket_secure,
+									common_name, location, store_name);
 }
 
 lw_bool lw_ws_cert_loaded (lw_ws ctx)
 {
 	return lw_server_cert_loaded (ctx->socket_secure);
+}
+
+time_t lw_ws_cert_expiry_time (lw_ws ctx)
+{
+	return lw_server_cert_expiry_time (ctx->socket_secure);
 }
 
 void lw_ws_enable_manual_finish (lw_ws ctx)
@@ -317,4 +483,5 @@ lwp_def_hook (ws, upload_chunk)
 lwp_def_hook (ws, upload_done)
 lwp_def_hook (ws, upload_post)
 lwp_def_hook (ws, disconnect)
+lwp_def_hook (ws, websocket_message)
 

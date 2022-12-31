@@ -404,13 +404,13 @@ do {																			 \
   _hj_i = _hj_j = 0x9e3779b9;													\
   _hj_k = (unsigned)keylen;																\
   while (_hj_k >= 12) {														  \
-	_hj_i +=	(_hj_key[0] + ( (unsigned)_hj_key[1] << 8 )					  \
+	_hj_i +=	(((unsigned)_hj_key[0]) + ( (unsigned)_hj_key[1] << 8 )					  \
 		+ ( (unsigned)_hj_key[2] << 16 )										 \
 		+ ( (unsigned)_hj_key[3] << 24 ) );									  \
-	_hj_j +=	(_hj_key[4] + ( (unsigned)_hj_key[5] << 8 )					  \
+	_hj_j +=	(((unsigned)_hj_key[4]) + ( (unsigned)_hj_key[5] << 8 )					  \
 		+ ( (unsigned)_hj_key[6] << 16 )										 \
 		+ ( (unsigned)_hj_key[7] << 24 ) );									  \
-	hashv += (_hj_key[8] + ( (unsigned)_hj_key[9] << 8 )						 \
+	hashv += (((unsigned)_hj_key[8]) + ( (unsigned)_hj_key[9] << 8 )						 \
 		+ ( (unsigned)_hj_key[10] << 16 )										\
 		+ ( (unsigned)_hj_key[11] << 24 ) );									 \
 																				 \
@@ -427,11 +427,11 @@ do {																			 \
 	 case 8:  _hj_j += ( (unsigned)_hj_key[7] << 24 );							\
 	 case 7:  _hj_j += ( (unsigned)_hj_key[6] << 16 );							\
 	 case 6:  _hj_j += ( (unsigned)_hj_key[5] << 8 );							\
-	 case 5:  _hj_j += _hj_key[4];												\
+	 case 5:  _hj_j += (unsigned)_hj_key[4];												\
 	 case 4:  _hj_i += ( (unsigned)_hj_key[3] << 24 );							\
 	 case 3:  _hj_i += ( (unsigned)_hj_key[2] << 16 );							\
 	 case 2:  _hj_i += ( (unsigned)_hj_key[1] << 8 );							\
-	 case 1:  _hj_i += _hj_key[0];												\
+	 case 1:  _hj_i += (unsigned)_hj_key[0];												\
   }																			  \
   HASH_JEN_MIX(_hj_i, _hj_j, hashv);											 \
   bkt = hashv & (num_bkts-1);													\

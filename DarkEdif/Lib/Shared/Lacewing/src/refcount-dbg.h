@@ -1,36 +1,30 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2014 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2014 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-#include <atomic>
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
+
+// in C++ mode, define atomic as std::atomic
+// In C, if MSVC and an ancient version of C standard, then use workaround InterlockedXX functions,
+// which use a volatile LONG, so the type of _Atomic must be ignored and it must be aligned on 32 bit address
+#ifndef __cplusplus
+#if !defined(_MSC_VER) || _STDC_VERSION__ >= 201112
+# include <stdatomic.h>
+#else
+#define msvc_windows_atomic_workaround
+# define _Atomic(X) volatile LONG
+#endif
+#else
+# include <atomic>
+# define _Atomic(X) std::atomic< X >
+#endif
 
 #define MAX_REFS  256
 
@@ -43,14 +37,17 @@ struct lwp_refcount
 	const char * refs[MAX_REFS];
 
 	lw_bool enable_logging;
-	std::atomic<bool> reflock;
+#ifdef msvc_windows_atomic_workaround
+	lw_i8 pad; // aligns reflock to 32-bit boundary
+#endif
+	_Atomic(lw_bool) reflock;
 };
 
 lw_bool _lwp_retain (struct lwp_refcount * refcount, const char * name);
 lw_bool _lwp_release (struct lwp_refcount * refcount, const char * name);
 
 #define lwp_refcounted \
-struct lwp_refcount refcount;
+struct lwp_refcount refcount
 
 #define lwp_retain(x, name) \
 	_lwp_retain ((struct lwp_refcount *) (x), name)

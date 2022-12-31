@@ -1,31 +1,12 @@
-
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "common.h"
 
@@ -179,7 +160,7 @@ static int on_header_value (multipart_parser * parser,
 
 	lwp_trace ("Multipart %p: Got header: %s => %s", ctx, header.name, header.value);
 
-	list_push (ctx->headers, header);
+	list_push (struct _lw_ws_upload_hdr, ctx->headers, header);
 
 	if (!strcmp (header.name, "content-disposition"))
 	{
@@ -227,9 +208,9 @@ static int on_headers_complete (multipart_parser * parser)
 	  ctx->cur_upload->disposition = ctx->disposition;
 	  ctx->disposition = 0;
 
-	  list_each (ctx->headers, header)
+	  list_each (struct _lw_ws_upload_hdr, ctx->headers, header)
 	  {
-		 list_push (ctx->cur_upload->headers, header);
+		 list_push (struct _lw_ws_upload_hdr, ctx->cur_upload->headers, header);
 	  }
 
 	  list_clear (ctx->headers);
@@ -300,6 +281,7 @@ static int on_part_data (multipart_parser * parser,
 static int on_part_data_begin (multipart_parser * parser)
 {
 	lwp_ws_multipart ctx = (lwp_ws_multipart) multipart_parser_get_data (parser);
+	(void)ctx; // We're not using ctx in all builds
 
 	lwp_trace ("Multipart %p: onPartDataBegin", ctx);
 
@@ -389,7 +371,7 @@ void lwp_ws_multipart_call_hook (lwp_ws_multipart ctx)
 
 	/* Only call the handler if all files are closed
 	*/
-	for (int i = 0; i < ctx->num_uploads; ++ i)
+	for (size_t i = 0; i < ctx->num_uploads; ++ i)
 	{
 	  if (ctx->uploads [i]->autosave_file)
 		 return;
@@ -453,7 +435,7 @@ void lwp_ws_multipart_delete (lwp_ws_multipart ctx)
 
 	lwp_nvhash_clear (&ctx->disposition);
 
-	list_each (ctx->headers, header)
+	list_each (struct _lw_ws_upload_hdr, ctx->headers, header)
 	{
 	  free (header.name);
 	  free (header.value);
@@ -497,7 +479,7 @@ size_t lwp_ws_multipart_process (lwp_ws_multipart ctx,
 			}
 		 }
 
-		 int to_parse = i + 1;
+		 size_t to_parse = i + 1;
 		 lw_bool error = lw_false;
 
 		 if (lwp_heapbuffer_length (&ctx->request->buffer) > 0)

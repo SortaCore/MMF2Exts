@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 
@@ -51,6 +32,7 @@ struct _lw_server
 	int socket;
 
 	lw_pump pump;
+	lw_pump_watch pump_watch;
 
 	lw_server_hook_connect on_connect;
 	lw_server_hook_disconnect on_disconnect;
@@ -62,6 +44,7 @@ struct _lw_server
 	#ifdef ENABLE_SSL
 		SSL_CTX * ssl_context;
 		char ssl_passphrase [128];
+		time_t cert_expiry_time; // expiry time in UTC
 
 		#ifdef _lacewing_npn
 			unsigned char npn [128];
@@ -78,6 +61,9 @@ struct _lw_server_client
 	lw_server server;
 
 	lw_bool on_connect_called;
+	lw_bool is_websocket;
+
+	void* relay_tag;
 
 	#ifdef ENABLE_SSL
 		lwp_sslclient ssl;
@@ -128,7 +114,7 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 
  void on_ssl_handshook (lwp_sslclient ssl, void * tag)
  {
-	lw_server_client client = tag;
+	lw_server_client client = (lw_server_client)tag;
 	lw_server server = client->server;
 
 	#ifdef _lacewing_npn
@@ -151,8 +137,8 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 		return;
 	}
 
-	list_push (server->clients, client);
-	client->elem = list_elem_back (server->clients);
+	list_push (lw_server_client, server->clients, client);
+	client->elem = list_elem_back (lw_server_client, server->clients);
  }
 
 #endif
@@ -185,6 +171,11 @@ void lw_server_delete (lw_server ctx)
 	  return;
 
 	lw_server_unhost (ctx);
+
+#ifdef ENABLE_SSL
+	if (ctx->ssl_context)
+		SSL_CTX_free(ctx->ssl_context);
+#endif
 
 	free (ctx);
 }
@@ -252,7 +243,7 @@ static void listen_socket_read_ready (void * tag)
 			ctx->on_connect (ctx, client);
 
 		 if (lwp_release (client, "on_connect") ||
-				((lw_stream) ctx)->flags & lwp_stream_flag_dead)
+				((lw_stream)client)->flags & lwp_stream_flag_dead)
 		 {
 			 if (ctx->on_disconnect)
 				 ctx->on_disconnect(ctx, client);
@@ -261,8 +252,8 @@ static void listen_socket_read_ready (void * tag)
 			return;
 		 }
 
-		 list_push (ctx->clients, client);
-		 client->elem = list_elem_back (ctx->clients);
+		 list_push (lw_server_client, ctx->clients, client);
+		 client->elem = list_elem_back (lw_server_client, ctx->clients);
 
 	  #ifdef ENABLE_SSL
 	  }
@@ -276,7 +267,7 @@ static void listen_socket_read_ready (void * tag)
 	  {
 		 lwp_retain (client, "client initial read");
 
-		 lw_stream_read ((lw_stream) client, -1);
+		 lw_stream_read ((lw_stream) client, SIZE_MAX);
 
 		 if (lwp_release (client, "client initial read") ||
 				((lw_stream) client)->flags & lwp_stream_flag_dead)
@@ -331,7 +322,7 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 
 	lwp_make_nonblocking(ctx->socket);
 
-	lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
+	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
 
 	lw_error_delete (error);
 }
@@ -343,6 +334,14 @@ void lw_server_unhost (lw_server ctx)
 
 	close (ctx->socket);
 	ctx->socket = -1;
+
+	lw_pump_remove(ctx->pump, ctx->pump_watch);
+	ctx->pump_watch = NULL;
+
+	// Not having this leaves lw_server_client connections open but server is closed
+	list_each(lw_server_client, ctx->clients, e) {
+		lw_stream_close(&e->fdstream.stream, lw_true);
+	}
 }
 
 lw_bool lw_server_hosting (lw_server ctx)
@@ -355,7 +354,7 @@ size_t lw_server_num_clients (lw_server ctx)
 	return list_length (ctx->clients);
 }
 
-long lw_server_port (lw_server ctx)
+int lw_server_port (lw_server ctx)
 {
 	return lwp_socket_port (ctx->socket);
 }
@@ -369,15 +368,33 @@ lw_bool lw_server_cert_loaded (lw_server ctx)
 	#endif
 }
 
+time_t lw_server_cert_expiry_time (lw_server ctx)
+{
+	#ifdef ENABLE_SSL
+	  return ctx->cert_expiry_time;
+	#else
+	  return 0;
+	#endif
+}
+
 #ifdef ENABLE_SSL
 static int ssl_password_callback (char * buffer, int size, int rwflag, void * tag)
 {
-	lw_server ctx = tag;
+	lw_server ctx = (lw_server)tag;
 
-	/* TODO : check length */
+	int passSize = (int)strlen(ctx->ssl_passphrase);
+	if (size < passSize)
+	{
+		lw_error error = lw_error_new ();
+		lw_error_addf (error, "Password is %i bytes, too big for buffer of %i bytes", passSize, size);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
+		lw_error_delete (error);
+		return -1;
+	}
 
 	strcpy (buffer, ctx->ssl_passphrase);
-	return strlen (ctx->ssl_passphrase);
+	return passSize;
 }
 #endif
 
@@ -386,13 +403,13 @@ static int ssl_password_callback (char * buffer, int size, int rwflag, void * ta
 	static int npn_advertise (SSL * ssl, const unsigned char ** data,
 							 unsigned int * len, void * tag)
 	{
-	  lw_server ctx = tag;
+	  lw_server ctx = (lw_server)tag;
 
 	  *len = 0;
 
 	  for (unsigned char * i = ctx->npn; *i; )
 	  {
-		 *len += 1 + *i;
+		 *len += 1u + *i;
 		 i += 1 + *i;
 	  }
 
@@ -405,7 +422,7 @@ static int ssl_password_callback (char * buffer, int size, int rwflag, void * ta
 
 #endif
 
-lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename,
+lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename_cert_chain, const char* filename_privkey,
 								  const char * passphrase)
 {
 	#ifndef ENABLE_SSL
@@ -438,21 +455,76 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename,
 	SSL_CTX_set_default_passwd_cb (ctx->ssl_context, ssl_password_callback);
 	SSL_CTX_set_default_passwd_cb_userdata (ctx->ssl_context, ctx);
 
-	if (SSL_CTX_use_certificate_chain_file (ctx->ssl_context, filename) != 1)
+	if (SSL_CTX_use_certificate_chain_file (ctx->ssl_context, filename_cert_chain) != 1)
 	{
-		lwp_trace ("Failed to load certificate chain file: %s",
-						ERR_error_string (ERR_get_error(), 0));
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Failed to load certificate chain file: %s", ERR_error_string(ERR_get_error(), 0));
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		lw_error_delete(error);
 
+		SSL_CTX_free (ctx->ssl_context);
 		ctx->ssl_context = 0;
 		return lw_false;
 	}
 
-	if (SSL_CTX_use_PrivateKey_file (ctx->ssl_context, filename,
+	if (SSL_CTX_use_PrivateKey_file (ctx->ssl_context, filename_privkey,
 									 SSL_FILETYPE_PEM) != 1)
 	{
-		lwp_trace ("Failed to load private key file: %s",
-						ERR_error_string (ERR_get_error(), 0));
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Failed to load private key file: %s", ERR_error_string(ERR_get_error(), 0));
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		lw_error_delete(error);
 
+		SSL_CTX_free (ctx->ssl_context);
+		ctx->ssl_context = 0;
+		return lw_false;
+	}
+
+	X509* x509 = SSL_CTX_get0_certificate(ctx->ssl_context);
+	const ASN1_TIME* notAfter = X509_getm_notAfter(x509);
+	struct tm tm;
+	if (ASN1_TIME_to_tm(notAfter, &tm))
+	{
+		int day, sec;
+		// time must be valid
+		if (!ASN1_TIME_diff(&day, &sec, NULL, notAfter)) {
+			assert(lw_false);
+			abort();
+		}
+
+		char buff[50];
+		// Unix, iOS: int return; Android: size_t return
+		if (strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", &tm) <= 0)
+			always_log("time conversion failed, error %d", errno);
+		else
+			always_log("SSL certificate will expire at %s (local time).", buff);
+
+		if (day > 0 || sec > 0)
+			ctx->cert_expiry_time = timegm(&tm);
+		else
+		{
+			SSL_CTX_free(ctx->ssl_context);
+			ctx->ssl_context = 0;
+
+			lw_error error = lw_error_new ();
+			lw_error_addf(error, "SSL certificate has already expired, at %s (local time)", buff);
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
+			lw_error_delete(error);
+			return lw_false;
+		}
+	}
+	else
+	{
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Failed to read certificate expiration time.");
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		lw_error_delete(error);
+
+		SSL_CTX_free(ctx->ssl_context);
 		ctx->ssl_context = 0;
 		return lw_false;
 	}
@@ -463,9 +535,9 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename,
 }
 
 lw_bool lw_server_load_sys_cert (lw_server ctx,
-								 const char * store_name,
 								 const char * common_name,
-								 const char * location)
+								 const char * location,
+								 const char * store_name)
 {
 	lw_error error = lw_error_new ();
 	lw_error_addf (error, "System certificates are only supported on Windows");
@@ -533,9 +605,29 @@ lw_addr lw_server_client_addr (lw_server_client client)
 	return client->address;
 }
 
+lw_bool lw_server_client_is_websocket(lw_server_client client)
+{
+	return client->is_websocket;
+}
+
+void* lw_server_client_get_relay_tag(lw_server_client client)
+{
+	return client->relay_tag;
+}
+
+void lw_server_client_set_relay_tag(lw_server_client client, void* ptr)
+{
+	client->relay_tag = ptr;
+}
+
+void lw_server_client_set_websocket(lw_server_client client, lw_bool isWebSocket)
+{
+	client->is_websocket = isWebSocket;
+}
+
 lw_server_client lw_server_client_next (lw_server_client client)
 {
-	lw_server_client * next_client = list_elem_next (client->elem);
+	lw_server_client * next_client = list_elem_next (lw_server_client, client->elem);
 
 	if (!next_client)
 	  return NULL;
@@ -548,7 +640,7 @@ lw_server_client lw_server_client_first (lw_server ctx)
 	if (list_length (ctx->clients) == 0)
 	  return NULL;
 
-	return list_front (ctx->clients);
+	return list_front (lw_server_client, ctx->clients);
 }
 
 void on_client_data (lw_stream stream, void * tag, const char * buffer, size_t size)
@@ -582,7 +674,10 @@ void on_client_close (lw_stream stream, void * tag)
 	}
 
 	if (client->elem)
-	  list_elem_remove (client->elem);
+	{
+		list_elem_remove(client->elem);
+		client->elem = NULL;
+	}
 
 	#ifdef ENABLE_SSL
 	  if (client->ssl)
@@ -604,10 +699,10 @@ void lw_server_on_data (lw_server ctx, lw_server_hook_data on_data)
 
 	  if (!ctx->on_data)
 	  {
-		 list_each (ctx->clients, client)
+		 list_each (lw_server_client, ctx->clients, client)
 		 {
 			lw_stream_add_hook_data ((lw_stream) client, on_client_data, client);
-			lw_stream_read ((lw_stream) client, -1);
+			lw_stream_read ((lw_stream) client, SIZE_MAX);
 		 }
 	  }
 
@@ -616,7 +711,7 @@ void lw_server_on_data (lw_server ctx, lw_server_hook_data on_data)
 
 	/* Setting on_data to 0 */
 
-	list_each (ctx->clients, client)
+	list_each (lw_server_client, ctx->clients, client)
 	{
 	  lw_stream_remove_hook_data ((lw_stream) client, on_client_data, client);
 	}

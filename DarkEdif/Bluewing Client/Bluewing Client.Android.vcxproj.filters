@@ -46,6 +46,9 @@
     <Filter Include="Source files\Lacewing\src\unix\eventqueue">
       <UniqueIdentifier>{97500112-15ea-4089-9509-d11fbf21f1c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\Lacewing\src\unix\openssl">
+      <UniqueIdentifier>{fb26c2ca-4cbb-4b58-a3d0-c74fa666f154}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">
@@ -83,6 +86,9 @@
     </ClCompile>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\global2.c">
       <Filter>Source files\Lacewing\src\unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c">
+      <Filter>Source files\Lacewing\src\unix\openssl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

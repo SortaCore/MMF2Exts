@@ -54,77 +54,78 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;atomic;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;atomic;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;atomic;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;atomic;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;_lacewing_debug=1;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_lacewing_static;NOPROPS;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_lacewing_static;NOPROPS;ENABLE_SSL;$(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <LibraryDependencies>$(StlLibraryName);z;%(LibraryDependencies)</LibraryDependencies>
+      <LibraryDependencies>$(StlLibraryName);z;ssl;crypto;%(LibraryDependencies)</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\event.c" />
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventpump.c" />
@@ -140,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h" />
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h" />

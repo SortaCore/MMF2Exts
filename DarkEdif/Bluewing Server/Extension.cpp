@@ -9,6 +9,7 @@
 #define EventsToRun globals->_eventsToRun
 
 std::atomic<bool> AppWasClosed(false);
+
 #ifdef _WIN32
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
@@ -124,8 +125,10 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(86, Channel_KickClientByName);
 		LinkAction(87, Channel_KickClientByID);
 		LinkAction(88, SetUnicodeAllowList);
-		//LinkAction(X, HTML5Server_EnableHosting);
-		//LinkAction(X, HTML5Server_DisableHosting);
+		LinkAction(89, HTML5Server_LoadHostCertificate_FromFile);
+		LinkAction(90, HTML5Server_LoadHostCertificate_FromSystemStore);
+		LinkAction(91, HTML5Server_EnableHosting);
+		LinkAction(92, HTML5Server_DisableHosting);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
@@ -189,7 +192,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkCondition(57, DoesClientNameExist);
 		LinkCondition(58, DoesClientIDExist);
 		LinkCondition(59, AlwaysTrue /* UponChannelClose */);
-	//	LinkCondition(X, IsHTML5Hosting);
+		LinkCondition(60, IsHTML5Hosting);
 	}
 	{
 		LinkExpression(0, Error);
@@ -244,6 +247,9 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(48, ConvToUTF8_GetByteCount);
 		LinkExpression(49, ConvToUTF8_TestAllowList);
 		LinkExpression(50, Channel_ID);
+		LinkExpression(51, HTML5_Insecure_Port);
+		LinkExpression(52, HTML5_Secure_Port);
+		LinkExpression(53, HTML5_Cert_ExpiryTime);
 	}
 
 #if EditorBuild
@@ -353,8 +359,24 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	};
 	FusionDebugger.AddItemToDebugger(hostingDebugItemReader, NULL, 500, NULL);
 
+	const auto hostingWebSocketDebugItemReader = [](Extension* ext, std::tstring& writeTo) {
+		if (ext->Srv.websocket->hosting() && ext->Srv.websocket->hosting_secure())
+		{
+			writeTo = _T("WebSocket: Hosting insecure port ") + std::to_tstring(ext->Srv.websocket->port());
+			writeTo += _T(", secure "sv);
+			writeTo += std::to_tstring(ext->Srv.websocket->port_secure());
+		}
+		else if (ext->Srv.websocket->hosting())
+			writeTo = _T("WebSocket: Hosting insecure port "s) + std::to_tstring(ext->Srv.websocket->port());
+		else if (ext->Srv.websocket->hosting_secure())
+			writeTo = _T("WebSocket: Hosting secure port "s) + std::to_tstring(ext->Srv.websocket->port_secure());
+		else
+			writeTo = _T("WebSocket: Not hosting "sv);
+	};
+	FusionDebugger.AddItemToDebugger(hostingWebSocketDebugItemReader, NULL, 500, NULL);
+
 	const auto clientCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
-		if (ext->Srv.hosting())
+		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
 			writeTo = _T("All client count: ") + std::to_tstring(ext->Srv.clientcount());
 		else
 			writeTo = _T("All client count: N/A"sv);
@@ -362,7 +384,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	FusionDebugger.AddItemToDebugger(clientCountDebugItemReader, NULL, 500, NULL);
 
 	const auto channelCountDebugItemReader = [](Extension *ext, std::tstring &writeTo) {
-		if (ext->Srv.hosting())
+		if (ext->Srv.hosting() || ext->Srv.websocket->hosting() || ext->Srv.websocket->hosting_secure())
 			writeTo = _T("All channel count: ") + std::to_tstring(ext->Srv.channelcount());
 		else
 			writeTo = _T("All channel count: N/A"sv);
@@ -564,6 +586,8 @@ void GlobalInfo::MarkAsPendingDelete()
 
 	if (_server.flash->hosting())
 		_server.flash->unhost();
+	// internally checks if hosting
+	_server.unhost_websocket(true, true);
 	if (_server.hosting())
 		_server.unhost();
 
@@ -591,7 +615,9 @@ void GlobalInfo::MarkAsPendingDelete()
 		std::this_thread::yield();
 	}
 
-	_objEventPump.reset();
+	// Don't use. We don't reset objEventPump until after _server and co are destructed,
+	// as they'll try to remove themselves from the pump.
+	// _objEventPump.reset();
 }
 void eventpumpdeleter(lacewing::eventpump pump)
 {
@@ -787,7 +813,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	if (recvMsgStartIndex > threadData->receivedMsg.content.size())
 	{
 		CreateError("Could not read from received binary, index %zu is outside range of 0 to %zu.",
-			recvMsgStartIndex, recvMsgStartIndex + threadData->receivedMsg.content.size());
+			recvMsgStartIndex, std::max((size_t)0, threadData->receivedMsg.content.size()));
 		return std::tstring();
 	}
 
@@ -806,7 +832,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		if (sizeInCodePoints != -1 && (unsigned)sizeInCodePoints > maxSizePlusOne - 1)
 		{
 			CreateError("Could not read string with size %d at %sstart index %zu, only %zu possible characters in message.",
-				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, maxSizePlusOne);
+				sizeInCodePoints, isCursorExpression ? "cursor's " : "", recvMsgStartIndex, std::max((size_t)1, maxSizePlusOne) - 1U);
 			return std::tstring();
 		}
 
@@ -843,7 +869,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
 	for (int codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = (int)result.size(); ; )
 	{
-		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, remainder < 4 ? 4 : remainder));
+		int numBytes = GetNumBytesInUTF8Char(result.substr(byteIndex, std::min(4, remainder)));
 
 		// We checked for -2 in start char in previous if(), so the string isn't starting too early.
 		// So, a -2 in middle of the string means it's a malformed UTF-8.
@@ -897,12 +923,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 			recvMsgStartIndex + byteIndex, byteIndex, isCursorExpression ? "the cursor's " : "", recvMsgStartIndex);
 		return std::tstring();
 	}
-
-	// Either no problems, and numBytesRead
-
-	CreateError("Could not read text from received binary, UTF-8 char was cut off at the cursor's end index %zu.",
-		threadData->receivedMsg.cursor + actualStringSizeBytes);
-	return std::tstring();
+	// we should never reach here
 }
 
 
@@ -920,6 +941,8 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 	if (std::this_thread::get_id() != mainThreadID)
 		errorDetailed << "[handler] "sv;
 	// Use extsHoldingGlobals[0] because Ext is (rarely) not set when an error is being made.
+	else if (lacewingTicking)
+		errorDetailed << "[ticker] "sv;
 	else if (extsHoldingGlobals[0])
 		errorDetailed << "[Fusion event #"sv << DarkEdif::GetCurrentFusionEventNum(extsHoldingGlobals[0]) << "] "sv;
 
@@ -1083,12 +1106,15 @@ REFLAG Extension::Handle()
 	// If thread is not working, use Tick functionality. This may add events, so do it before the event-loop check.
 	if (!globals->_thread.joinable())
 	{
+		globals->lacewingTicking = true;
 		lacewing::error e = ObjEventPump->tick();
 		if (e != nullptr)
 		{
 			CreateError("%s", e->tostring());
+			globals->lacewingTicking = false;
 			return REFLAG::NONE; // Run next loop
 		}
+		globals->lacewingTicking = false;
 	}
 
 	// AddEvent() was called and not yet handled
@@ -1387,7 +1413,7 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * G)
 	}
 
 	// If not hosting, no clients to worry about dropping
-	if (!G->_server.hosting())
+	if (!G->_server.hosting() && !G->_server.websocket->hosting() && !G->_server.websocket->hosting_secure())
 	{
 		LOGV(_T("" PROJECT_NAME " - timeout thread: pre timeout server not hosting, exiting.\n"));
 		goto exitThread;
@@ -1404,7 +1430,7 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * G)
 			triggeredHandle = 0;
 			break;
 		}
-		if (AppWasClosed == true)
+		if (AppWasClosed)
 		{
 			triggeredHandle = 1;
 			break;
@@ -1425,7 +1451,7 @@ void ObjectDestroyTimeoutFunc(GlobalInfo * G)
 		goto exitThread;
 	}
 
-	if (!G->_server.hosting())
+	if (!G->_server.hosting() && !G->_server.websocket->hosting() && !G->_server.websocket->hosting_secure())
 	{
 		LOGV(_T("" PROJECT_NAME " - timeout thread: post timeout server not hosting, killing globals safely.\n"));
 		goto killGlobalsAndExitThread;
@@ -1460,6 +1486,8 @@ killGlobalsAndExitThread:
 	if (appWasClosed)
 	{
 		LOGV(_T("" PROJECT_NAME " - timeout thread: actual delete globals.\n"));
+		// Leaving timeoutThread held in G while destroying = std::terminate
+		G->timeoutThread.detach();
 		delete G;
 	}
 
@@ -1509,7 +1537,7 @@ Extension::~Extension()
 	// difference is made to the clients, other than the events explicitly handled by Fusion events.
 	else
 	{
-		if (!globals->_server.hosting())
+		if (!globals->_server.hosting() && !globals->_server.websocket->hosting() && !globals->_server.websocket->hosting_secure())
 			LOGV(_T("" PROJECT_NAME " - Not hosting, nothing important to retain, closing globals info.\n"));
 		else if (!isGlobal)
 			LOGV(_T("" PROJECT_NAME " - Not global, closing globals info.\n"));

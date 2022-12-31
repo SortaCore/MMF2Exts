@@ -37,6 +37,12 @@
     <Filter Include="Header Files\Lacewing\src\unix\eventqueue">
       <UniqueIdentifier>{8a3128d7-1485-414c-8856-86b2b20333e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Lacewing\src\openssl">
+      <UniqueIdentifier>{726bdd2c-6247-4f87-8d43-e983554cce18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\openssl">
+      <UniqueIdentifier>{c059454a-0ed7-4efd-8286-a6dffd023225}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h">
@@ -65,6 +71,9 @@
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
       <Filter>Header Files\Lacewing\src\unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.h">
+      <Filter>Header Files\Lacewing\src\openssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\kqueue.c">
       <Filter>Source Files\Lacewing\src\unix\eventqueue</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\openssl\sslclient.c">
+      <Filter>Source Files\Lacewing\src\openssl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "../address.h"
@@ -93,14 +74,14 @@ struct _lw_udp
 };
 
 // Returns true if lw_udp was freed.
-static bool read_completed(lw_udp ctx)
+static lw_bool read_completed(lw_udp ctx)
 {
 	--ctx->receives_posted;
 	return lwp_release(ctx, "udp read");
 }
 
 // Returns true if lw_udp was freed.
-static bool write_completed(lw_udp ctx)
+static lw_bool write_completed(lw_udp ctx)
 {
 	--ctx->writes_posted;
 	return lwp_release(ctx, "udp write");
@@ -157,7 +138,7 @@ static void post_receives (lw_udp ctx)
 	  // else no error, running as sync
 
 
-	  list_push(ctx->pending_receives, overlapped);
+	  list_push(udp_overlapped, ctx->pending_receives, overlapped);
 	  ++ ctx->receives_posted;
 	}
 }
@@ -198,7 +179,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 		 lwp_addr_cleanup(&addr);
 		 free (info);
 
-		 list_remove(ctx->pending_receives, overlapped);
+		 list_remove(udp_overlapped, ctx->pending_receives, overlapped);
 
 		 // read_completed may free ctx (and thus return true); if not, post more receives
 		 if (!read_completed(ctx))
@@ -354,7 +335,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	if (size == -1)
 	  size = strlen (buffer);
 
-	if constexpr (sizeof(size) > 4)
+	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
 	WSABUF winsock_buf = { (ULONG)size, (CHAR *) buffer };

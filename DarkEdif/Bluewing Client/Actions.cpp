@@ -371,7 +371,7 @@ void Extension::LoopListedChannels()
 		Runtime.GenerateEvent(27);
 	}
 
-	threadData->channelListing = nullptr;
+	threadData->channelListing = origChannelList;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(28);
 
@@ -606,21 +606,31 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	if (fclose(File))
 		CreateError("Cannot append received binary to file \"%s\", error number %i occurred with writing last part of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno);
 }
-void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
+void Extension::SendMsg_AddFileToBinary(const TCHAR * filenameParam)
 {
-	if (filename[0] == _T('\0'))
+	if (filenameParam[0] == _T('\0'))
 		return CreateError("Cannot add file to send binary; supplied filename \"\" is invalid.");
+
+	// Unembed file if necessary
+	const std::tstring filename = DarkEdif::MakePathUnembeddedIfNeeded(this, filenameParam);
+	if (filename[0] == _T('>'))
+	{
+		return CreateError("Cannot add file \"%s\" to send binary, error %s occurred with opening the file."
+			" The send binary has not been modified.",
+			DarkEdif::TStringToUTF8(filenameParam).c_str(), DarkEdif::TStringToUTF8(filename.substr(1)).c_str());
+	}
 
 	// Open and deny other programs write privileges
 #ifdef _WIN32
-	FILE * File = _tfsopen(filename, _T("rb"), SH_DENYWR);
+	FILE * File = _tfsopen(filename.c_str(), _T("rb"), SH_DENYWR);
 #else
-	FILE * File = fopen(filename, "rb");
+	FILE * File = fopen(filename.c_str(), "rb");
 #endif
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot add file \"%s\" to send binary, error number %i \"%s\" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot add file \"%s\" (original \"%s\") to send binary, error number %i \"%s\" occurred with opening the file.",
+			DarkEdif::TStringToUTF8(filename).c_str(), DarkEdif::TStringToUTF8(filenameParam).c_str(), errno, errtext);
 	}
 
 	// Jump to end
@@ -636,13 +646,16 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	if (!buffer)
 	{
 		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve %li bytes of memory to add file into message.",
-			DarkEdif::TStringToUTF8(filename).c_str(), filesize);
+			DarkEdif::TStringToUTF8(filenameParam).c_str(), filesize);
 	}
 	else
 	{
 		size_t amountRead;
 		if ((amountRead = fread_s(buffer, filesize, 1, filesize, File)) != filesize)
-			CreateError("Couldn't read file \"%s\" into binary to send; reading file caused error %i \"%s\".", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
+		{
+			CreateError("Couldn't read file \"%s\" into binary to send; reading file caused error %i \"%s\".",
+				DarkEdif::TStringToUTF8(filenameParam).c_str(), errno, errtext);
+		}
 		else
 			SendMsg_Sub_AddData(buffer, amountRead);
 
@@ -704,7 +717,7 @@ void Extension::SendMsg_CompressBinary()
 	strm.avail_in = (std::uint32_t)SendMsgSize;
 
 	// Allocate memory for compression
-	strm.avail_out = (std::uint32_t)SendMsgSize - 4;
+	strm.avail_out = (std::uint32_t)SendMsgSize + 256;
 	strm.next_out = output_buffer + 4;
 
 	ret = deflate(&strm, Z_FINISH);

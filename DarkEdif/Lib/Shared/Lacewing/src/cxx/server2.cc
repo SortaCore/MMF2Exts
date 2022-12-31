@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
- * Copyright (C) 2012 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 
@@ -64,16 +45,16 @@ long _server::port  ()
 	return lw_server_port ((lw_server) this);
 }
 
-bool _server::load_cert_file (const char * filename, const char * passphrase)
+bool _server::load_cert_file (const char * filename_certchain, const char* filename_privkey, const char * passphrase)
 {
-	return lw_server_load_cert_file ((lw_server) this, filename, passphrase);
+	return lw_server_load_cert_file ((lw_server) this, filename_certchain, filename_privkey, passphrase);
 }
 
-bool _server::load_sys_cert (const char * store_name, const char * common_name,
-							 const char * location)
+bool _server::load_sys_cert (const char * common_name, const char * location,
+							 const char * store_name)
 {
-	return lw_server_load_sys_cert ((lw_server) this, store_name,
-									common_name, location);
+	return lw_server_load_sys_cert ((lw_server) this, common_name,
+									location, store_name);
 }
 
 bool _server::cert_loaded ()
@@ -134,6 +115,11 @@ server_client _server_client::next ()
 const char * _server_client::npn ()
 {
 	return lw_server_client_npn ((lw_server_client) this);
+}
+
+lw_bool _server_client::is_websocket ()
+{
+	return lw_server_client_is_websocket ((lw_server_client) this);
 }
 
 void * _server::tag ()

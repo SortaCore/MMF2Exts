@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
- * Copyright (C) 2011, 2012, 2013 James McLaughlin.  All rights reserved.
+ * Copyright (C) 2011, 2012, 2013 James McLaughlin.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #ifndef _lacewing_h
 #define _lacewing_h
@@ -109,6 +90,7 @@
 	#endif
 #endif
 
+#ifdef __cplusplus
 
 #include <atomic>
 #include <vector>
@@ -128,6 +110,7 @@
 #include <string_view>
 using namespace std::string_view_literals;
 
+#endif // __cplusplus
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
 void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line);
 
@@ -153,21 +136,21 @@ typedef lw_i8 lw_bool;
 	typedef struct _lw_filter			*  lw_filter;
 	typedef struct _lw_pump				*  lw_pump;
 	typedef struct _lw_pump_watch		*  lw_pump_watch;
-	typedef struct _lw_pump				*  lw_eventpump;
+	typedef struct _lw_eventpump		*  lw_eventpump;
 	typedef struct _lw_stream			*  lw_stream;
-	typedef struct _lw_stream			*  lw_fdstream;
-	typedef struct _lw_stream			*  lw_file;
+	typedef struct _lw_fdstream			*  lw_fdstream;
+	typedef struct _lw_file				*  lw_file;
 	typedef struct _lw_timer			*  lw_timer;
 	typedef struct _lw_sync				*  lw_sync;
 	typedef struct _lw_event			*  lw_event;
 	typedef struct _lw_error			*  lw_error;
-	typedef struct _lw_stream			*  lw_client;
+	typedef struct _lw_client			*  lw_client;
 	typedef struct _lw_server			*  lw_server;
-	typedef struct _lw_stream			*  lw_server_client;
+	typedef struct _lw_server_client	*  lw_server_client;
 	typedef struct _lw_udp				*  lw_udp;
 	typedef struct _lw_flashpolicy		*  lw_flashpolicy;
 	typedef struct _lw_ws				*  lw_ws;
-	typedef struct _lw_stream			*  lw_ws_req;
+	typedef struct _lw_ws_req			*  lw_ws_req;
 	typedef struct _lw_ws_req_hdr		*  lw_ws_req_hdr;
 	typedef struct _lw_ws_req_param		*  lw_ws_req_param;
 	typedef struct _lw_ws_req_cookie	*  lw_ws_req_cookie;
@@ -405,6 +388,7 @@ typedef lw_i8 lw_bool;
 	lw_import		  void  lw_fdstream_uncork	(lw_fdstream);
 	lw_import		  void  lw_fdstream_nagle	(lw_fdstream, lw_bool nagle);
 	lw_import	   lw_bool  lw_fdstream_valid	(lw_fdstream);
+	lw_import		  long  lw_fdstream_get_fd_debug (lw_fdstream);
 
 	/* File */
 
@@ -489,7 +473,7 @@ typedef lw_i8 lw_bool;
 	typedef void (lw_callback * lw_client_hook_disconnect) (lw_client);
 	lw_import void lw_client_on_disconnect (lw_client, lw_client_hook_disconnect);
 
-	typedef void (lw_callback * lw_client_hook_data) (lw_client, const char * buffer, long size);
+	typedef void (lw_callback * lw_client_hook_data) (lw_client, const char * buffer, size_t size);
 	lw_import void lw_client_on_data (lw_client, lw_client_hook_data);
 
 	typedef void (lw_callback * lw_client_hook_error) (lw_client, lw_error);
@@ -503,13 +487,15 @@ typedef lw_i8 lw_bool;
 	lw_import				void  lw_server_host_filter		(lw_server, lw_filter);
 	lw_import				void  lw_server_unhost			(lw_server);
 	lw_import			 lw_bool  lw_server_hosting			(lw_server);
-	lw_import				long  lw_server_port			(lw_server);
-	lw_import			 lw_bool  lw_server_load_cert_file	(lw_server, const char * filename, const char * passphrase);
-	lw_import			 lw_bool  lw_server_load_sys_cert	(lw_server, const char * store_name, const char * common_name, const char * location);
+	lw_import				 int  lw_server_port			(lw_server);
+	lw_import			 lw_bool  lw_server_load_cert_file	(lw_server, const char * filename_certchain, const char * filename_privkey, const char * passphrase);
+	lw_import			 lw_bool  lw_server_load_sys_cert	(lw_server, const char * common_name, const char * location, const char * store_name);
 	lw_import			 lw_bool  lw_server_cert_loaded		(lw_server);
+	lw_import			  time_t  lw_server_cert_expiry_time(lw_server);
 	lw_import			 lw_bool  lw_server_can_npn			(lw_server);
 	lw_import				void  lw_server_add_npn			(lw_server, const char * protocol);
 	lw_import		const char *  lw_server_client_npn		(lw_server_client);
+	lw_import			 lw_bool  lw_server_client_is_websocket (lw_server_client);
 	lw_import			 lw_addr  lw_server_client_addr		(lw_server_client);
 	lw_import			  size_t  lw_server_num_clients		(lw_server);
 	lw_import	lw_server_client  lw_server_client_first	(lw_server);
@@ -575,11 +561,12 @@ typedef lw_i8 lw_bool;
 	lw_import				void  lw_ws_unhost_secure			(lw_ws);
 	lw_import			 lw_bool  lw_ws_hosting					(lw_ws);
 	lw_import			 lw_bool  lw_ws_hosting_secure			(lw_ws);
-	lw_import				long  lw_ws_port					(lw_ws);
-	lw_import				long  lw_ws_port_secure				(lw_ws);
-	lw_import			 lw_bool  lw_ws_load_cert_file			(lw_ws, const char * filename, const char * passphrase);
-	lw_import			 lw_bool  lw_ws_load_sys_cert			(lw_ws, const char * store_name, const char * common_name, const char * location);
+	lw_import				 int  lw_ws_port					(lw_ws);
+	lw_import				 int  lw_ws_port_secure				(lw_ws);
+	lw_import			 lw_bool  lw_ws_load_cert_file			(lw_ws, const char * filename_certchain, const char * filename_privkey, const char * passphrase);
+	lw_import			 lw_bool  lw_ws_load_sys_cert			(lw_ws, const char * common_name, const char * location, const char * store_name);
 	lw_import			 lw_bool  lw_ws_cert_loaded				(lw_ws);
+	lw_import			  time_t  lw_ws_cert_expiry_time		(lw_ws);
 	lw_import				void  lw_ws_session_close			(lw_ws, const char * id);
 	lw_import				void  lw_ws_enable_manual_finish	(lw_ws);
 	lw_import				long  lw_ws_idle_timeout			(lw_ws);
@@ -588,9 +575,10 @@ typedef lw_i8 lw_bool;
 	lw_import				void  lw_ws_set_tag					(lw_ws, void * tag);
 	lw_import			 lw_addr  lw_ws_req_addr				(lw_ws_req);
 	lw_import			 lw_bool  lw_ws_req_secure				(lw_ws_req);
+	lw_import			 lw_bool  lw_ws_req_websocket			(lw_ws_req);
 	lw_import		const char *  lw_ws_req_url					(lw_ws_req);
 	lw_import		const char *  lw_ws_req_hostname			(lw_ws_req);
-	lw_import				void  lw_ws_req_disconnect			(lw_ws_req);
+	lw_import				void  lw_ws_req_disconnect			(lw_ws_req, unsigned int websocket_reason_code);
 	lw_import				void  lw_ws_req_set_redirect		(lw_ws_req, const char * url);
 	lw_import				void  lw_ws_req_status				(lw_ws_req, long code, const char * message);
 	lw_import				void  lw_ws_req_set_mimetype		(lw_ws_req, const char * mimetype);
@@ -674,6 +662,10 @@ typedef lw_i8 lw_bool;
 	typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads [], size_t num_uploads);
 	lw_import void lw_ws_on_upload_post (lw_ws, lw_ws_hook_upload_post);
 
+	typedef void (lw_callback* lw_ws_hook_websocket_message) (lw_ws, lw_ws_req, const char * buffer, size_t size);
+	lw_import void lw_ws_on_websocket_message (lw_ws, lw_ws_hook_websocket_message);
+
+
 #ifdef __cplusplus
 
 } /* extern "C" */
@@ -684,10 +676,10 @@ typedef lw_i8 lw_bool;
 	#define lw_class_wraps(c)
 #endif
 #ifdef _MSC_VER
-#define lw_sprintf_s sprintf_s
+	#define lw_sprintf_s sprintf_s
 #else
-#define lw_sprintf_s sprintf
-#endif
+	#define lw_sprintf_s sprintf
+#endif // _MSC_VER
 
 #pragma region Phi stuff
 
@@ -736,7 +728,7 @@ std::string lw_u8str_simplify(const std::string_view first, bool destructive = t
 ///			  Both control and whitespace category will always be removed. </remarks>
 std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded = false);
 
-#if defined(_WIN32) && defined(_UNICODE)
+#if defined(_WIN32)
 // For Unicode support on Windows.
 // Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
 extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size);
@@ -1171,11 +1163,11 @@ struct _server
 	lw_import long port	();
 
 	lw_import bool load_cert_file
-		(const char * filename, const char * passphrase = "");
+		(const char * filename_certchain, const char * filename_privkey, const char * passphrase = "");
 
 	lw_import bool load_sys_cert
-		(const char * storename, const char * common_name,
-		 const char * location = "CurrentUser");
+		(const char * common_name, const char * location = "CurrentUser",
+			const char * store_name = "My");
 
 	lw_import bool cert_loaded ();
 
@@ -1214,6 +1206,8 @@ struct _server_client : public _fdstream
 	lw_import server_client next ();
 
 	lw_import const char * npn ();
+
+	lw_import lw_bool is_websocket ();
 };
 
 
@@ -1279,17 +1273,18 @@ struct _webserver
 	lw_import bool hosting ();
 	lw_import bool hosting_secure ();
 
-	lw_import long port ();
-	lw_import long port_secure ();
+	lw_import int port ();
+	lw_import int port_secure ();
 
 	lw_import bool load_cert_file
-		(const char * filename, const char * passphrase = "");
+		(const char * filename_certchain, const char* filename_privkey, const char * passphrase = "");
 
 	lw_import bool load_sys_cert
-		(const char * store_name, const char * common_name,
-		 const char * location = "CurrentUser");
+		(const char* common_name, const char* location = "CurrentUser",
+			const char* store_name = "My");
 
 	lw_import bool cert_loaded ();
+	lw_import time_t cert_expiry_time ();
 
 	lw_import void enable_manual_finish ();
 
@@ -1316,6 +1311,9 @@ struct _webserver
 	typedef void (lw_callback * hook_upload_post)
 		(webserver, webserver_request, webserver_upload uploads[], size_t num_uploads);
 
+	typedef void (lw_callback* hook_websocketmessage)
+		(webserver, webserver_request, const char * buffer, size_t size);
+
 	lw_import void on_get			(hook_get);
 	lw_import void on_upload_start	(hook_upload_start);
 	lw_import void on_upload_chunk	(hook_upload_chunk);
@@ -1325,6 +1323,7 @@ struct _webserver
 	lw_import void on_head			(hook_head);
 	lw_import void on_disconnect	(hook_disconnect);
 	lw_import void on_error			(hook_error);
+	lw_import void on_websocket_message (hook_websocketmessage);
 
 	lw_import void tag (void *);
 	lw_import void * tag ();
@@ -1341,6 +1340,7 @@ struct _webserver_request : public _stream
 	lw_import lacewing::address address ();
 
 	lw_import bool secure ();
+	lw_import bool websocket ();
 
 	lw_import const char * url ();
 	lw_import const char * hostname ();
@@ -1700,7 +1700,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 99;
+	const static int buildnum = 100;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1924,11 +1924,12 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 31;
+	static const int buildnum = 33;
 
 	void * internaltag, * tag = nullptr;
 
 	lacewing::server socket;
+	lacewing::webserver websocket;
 	lacewing::udp udp;
 	lacewing::flashpolicy flash;
 
@@ -1937,7 +1938,11 @@ struct relayserver
 
 	void host(lw_ui16 port = 6121);
 	void host(lacewing::filter &filter);
+	void host_websocket(lw_ui16 portNonSecure = 80, lw_ui16 portSecure = 443);
+	void host_websocket(lacewing::filter& filterNonSecure, lacewing::filter& filterSecure);
 	void unhost();
+	// This works with clients of regular server, so you should use this instead of websocket->unhost/unhost_secure
+	void unhost_websocket(bool insecure, bool secure);
 
 	bool hosting();
 	lw_ui16 port();
@@ -2047,6 +2052,17 @@ struct relayserver
 			// Edit relayserverinternal::client::getimplementation if you add more lines
 		};
 
+		enum class webstate {
+			// Not a websocket
+			rawsocket = -1,
+			// In Lacewing websocket mode
+			websocket = 0,
+			// Websocket handshake part 1: Waiting for client to send HTTP upgrade request
+			httprequestpending,
+			// Websocket handshake part 2: Waiting for client to reply to the HTTP upgrade approval in a Lacewing way
+			httprespackpending,
+		};
+
 		mutable lacewing::readwritelock lock;
 
 		void * tag = nullptr;
@@ -2059,7 +2075,7 @@ struct relayserver
 		clientimpl getimplementationvalue() const;
 		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
 
-		void disconnect();
+		void disconnect(int websocket_exit_code = 0);
 
 		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
 		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
@@ -2085,7 +2101,8 @@ struct relayserver
 		// Since there's a logical use for looking up address during closing, we'll keep a copy.
 		std::string address;
 		in6_addr addressInt = {};
-		::std::chrono::high_resolution_clock::time_point connectTime;
+		// Time the Relay connection was approved - zero timepoint if not yet approved
+		::std::chrono::high_resolution_clock::time_point connectRequestApprovedTime;
 		::std::chrono::steady_clock::time_point lasttcpmessagetime;
 		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
 		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
@@ -2099,7 +2116,7 @@ struct relayserver
 
 		std::string clientImplStr;
 
-		bool pseudoUDP = true; // Is UDP not supported (e.g. Flash) so "faked" by receiver
+		bool pseudoUDP = true; // Is UDP not supported (e.g. Flash, HTML5) so "faked" by receiver
 
 		// Got opening null byte, indicating not a HTTP client.
 		bool gotfirstbyte = false;
@@ -2220,8 +2237,6 @@ struct relayserver
 
 }
 
-#else
-#error Not building as C++
 #endif /* defined (__cplusplus) */
 #endif /* _lacewing_h */
 

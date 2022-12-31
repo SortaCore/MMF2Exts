@@ -88,7 +88,10 @@ void OnJoinChannelRequest(lacewing::relayserver &server, std::shared_ptr<lacewin
 }
 bool OnChannelClose(lacewing::relayserver & server, std::shared_ptr<lacewing::relayserver::channel> channel)
 {
-	globals->AddEvent2(59, CLEAR_EVTNUM, channel);
+	if (globals->unhostingInProgress)
+		globals->AddEvent1(CLEAR_EVTNUM, channel);
+	else
+		globals->AddEvent2(59, CLEAR_EVTNUM, channel);
 
 	// We can't prevent a channel closure, but returning false indicate the clsosure should be suspended,
 	// with the messages and peer lists not updated until server.closechannel_finish() is run, by the queued CLEAR_EVTNUM.
@@ -261,5 +264,39 @@ void OnServerMessage(lacewing::relayserver &server, std::shared_ptr<lacewing::re
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
 	globals->AddEvent2(eventNums.first, eventNums.second, nullptr, senderClient, message, subchannel, nullptr, InteractiveType::None, variant, blasted);
 }
+
+extern "C" void always_log(const char* str, ...)
+{
+	// if LOGW() will do something, then log; otherwise, we'll discard
+	// always_log is used for info and for errors
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
+
+	// Unicode %s is UTF-16, not a UTF-8 %s; if always_log is passing %s, it means UTF-8
+	std::tstring tcharStr = DarkEdif::UTF8ToTString(str);
+	tcharStr += _T('\n');
+#if defined (_WIN32) && defined(_UNICODE)
+	// always_log reports UTF-8, DarkEdif::Log uses TCHAR, so we'll convert
+	if (tcharStr.find(_T("%s")) != std::tstring::npos)
+	{
+		va_list v;
+		va_start(v, str);
+		char utf8Output[1024];
+		if (vsprintf_s(utf8Output, std::size(utf8Output), "%s", v) <= 0)
+			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't convert format \"%s\" to UTF-8."), utf8Output);
+
+		LOGW(_T("%s"), utf8Output);
+		va_end(v);
+	}
+	else
+#endif
+	{
+		va_list v;
+		va_start(v, str);
+		DarkEdif::LogV(DARKEDIF_LOG_WARN, tcharStr.c_str(), v);
+		va_end(v);
+	}
+#endif
+}
+
 
 #undef globals

@@ -44,26 +44,97 @@ void Extension::RelayServer_Host(int port)
 }
 void Extension::RelayServer_StopHosting()
 {
+	if (globals->unhostingInProgress)
+		return CreateError("You're unhosting while unhosting. Don't, it messes up the cleanup. Second unhost cancelled.");
+	globals->unhostingInProgress = true;
 	Srv.unhost();
+	globals->unhostingInProgress = false;
 }
 void Extension::FlashServer_Host(const TCHAR * path)
 {
 	if (FlashSrv->hosting())
 		return CreateError("Cannot start hosting flash policy: already hosting a flash policy.");
+	
+	const std::tstring flashFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, path);
 
-	FlashSrv->host(DarkEdif::TStringToUTF8(path).c_str());
+	// Errors in DarkEdif::MakePathUnembeddedIfNeeded indicated by starting with '>' char
+	if (flashFileUnembedded[0] == _T('>'))
+		return CreateError("Cannot load flash policy file: %s.", DarkEdif::TStringToUTF8(flashFileUnembedded.substr(1)).c_str());
+
+	// Pass through as UTF-8; it'll be converted back to wide by lacewing if Unicode Windows build
+	FlashSrv->host(DarkEdif::TStringToUTF8(flashFileUnembedded).c_str());
 }
 void Extension::FlashServer_StopHosting()
 {
+	// Don't need to mess with globals->unhostingInProgress. No events will be triggered by leaving Flash clients,
+	// as the Flash server hosts policy separately; the Flash clients connect to regular Relay server Srv, not FlashSrv
 	FlashSrv->unhost();
 }
-void Extension::HTML5Server_EnableHosting()
-{
 
+void Extension::HTML5Server_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privKeyFile, const TCHAR* password)
+{
+	// this will return false if it fails - but we should get an error made anyway
+	const std::tstring chainFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, chainFile);
+
+	// Errors in DarkEdif::MakePathUnembeddedIfNeeded indicated by starting with '>' char
+	if (chainFileUnembedded[0] == _T('>'))
+		return CreateError("Cannot load cert chain file: %s.", DarkEdif::TStringToUTF8(chainFileUnembedded.substr(1)).c_str());
+
+	// Allow blank path for the second path param, in case first path's file has both cert and priv key within
+	const std::tstring privKeyFileUnembedded = privKeyFile[0] == _T('\0') ? std::tstring() : DarkEdif::MakePathUnembeddedIfNeeded(this, privKeyFile);
+
+	if (privKeyFileUnembedded[0] == _T('>'))
+		return CreateError("Cannot load private key file: %s.", DarkEdif::TStringToUTF8(privKeyFileUnembedded.substr(1)).c_str());
+
+	// Pass through as UTF-8; it'll be converted back to wide by lacewing if Unicode Windows build
+	Srv.websocket->load_cert_file(
+		DarkEdif::TStringToUTF8(chainFileUnembedded).c_str(),
+		DarkEdif::TStringToUTF8(privKeyFileUnembedded).c_str(),
+		DarkEdif::TStringToUTF8(password).c_str());
 }
-void Extension::HTML5Server_DisableHosting()
+void Extension::HTML5Server_LoadHostCertificate_FromSystemStore(const TCHAR* commonName, const TCHAR* location, const TCHAR* storeName)
 {
+#ifdef _WIN32
+	// this will return false if it fails - but we should get an error made anyway
+	Srv.websocket->load_sys_cert(DarkEdif::TStringToUTF8(commonName).c_str(), DarkEdif::TStringToUTF8(location).c_str(), DarkEdif::TStringToUTF8(storeName).c_str());
+#else
+	CreateError("Cannot load host certificate from system store: the system store is only available on Windows.");
+#endif
+}
+void Extension::HTML5Server_EnableHosting(int insecurePort, int securePort)
+{
+	if (insecurePort < -1 || insecurePort > UINT16_MAX)
+		return CreateError("Cannot start HTML5 WebSocket hosting: the passed insecure port %i is invalid.", insecurePort);
+	if (securePort < -1 || securePort > UINT16_MAX)
+		return CreateError("Cannot start HTML5 WebSocket hosting: the passed secure port %i is invalid.", insecurePort);
+	if (securePort == 0 && insecurePort == 0)
+		return CreateError("Cannot start HTML5 WebSocket hosting: you passed 0 for both insecure and secure ports; nothing to host.");
+	if (securePort != 0 && !Srv.websocket->cert_loaded())
+		return CreateError("Cannot start HTML5 WebSocket hosting: Can't run secure server with no certificate loaded. See help file.");
 
+	if (insecurePort != 0 && Srv.websocket->hosting())
+		return CreateError("Cannot start HTML5 WebSocket hosting: HTML5 Insecure server is already running on port %d.", Srv.websocket->port());
+	if (securePort != 0 && Srv.websocket->hosting_secure())
+		return CreateError("Cannot start HTML5 WebSocket hosting: HTML5 Secure server is already running on port %d.", Srv.websocket->port_secure());
+
+	Srv.host_websocket(insecurePort, securePort);
+}
+void Extension::HTML5Server_DisableHosting(const TCHAR* whichParam)
+{
+	const std::string which = TStringToUTF8Simplified(whichParam);
+	// i is converted to l as part of text simplifying, so it's actually lnsecure
+	if (which == "both"sv || which == "lnsecure"sv || which == "secure"sv)
+	{
+		if (globals->unhostingInProgress)
+			return CreateError("You're unhosting while unhosting. Don't, it messes up the cleanup. Second unhost cancelled.");
+		globals->unhostingInProgress = true;
+		Srv.unhost_websocket(
+			which == "both"sv || which == "lnsecure"sv,
+			which == "both"sv || which == "secure"sv);
+		globals->unhostingInProgress = false;
+	}
+	else
+		CreateError("Couldn't stop hosting WebSocket: server type \"%s\" unrecognised. Should be \"both\", \"insecure\" or \"secure\".", which.c_str());
 }
 void Extension::ChannelListing_Enable()
 {
@@ -649,7 +720,7 @@ void Extension::Channel_JoinClientByID(int clientID)
 {
 	if (!selChannel)
 		return CreateError("Cannot force client to join channel; no channel selected.");
-	if (!selChannel->readonly())
+	if (selChannel->readonly())
 		return CreateError("Error forcing client to join channel; channel is read-only.");
 	if (clientID < -1 || clientID >= 65535)
 		return CreateError("Cannot join client to channel; supplied client ID %i is invalid. Use -1 for currently selected client.", clientID);
@@ -711,7 +782,7 @@ void Extension::Channel_JoinClientByName(const TCHAR * clientNamePtr)
 {
 	if (!selChannel)
 		return CreateError("Cannot join client to channel; no channel selected.");
-	if (!selChannel->readonly())
+	if (selChannel->readonly())
 		return CreateError("Error joining client to selected channel; channel is read-only.");
 
 	decltype(selClient) clientToUse = nullptr;
@@ -767,7 +838,7 @@ void Extension::Channel_KickClientByID(int clientID)
 {
 	if (!selChannel)
 		return CreateError("Cannot force client to leave channel; no channel selected.");
-	if (!selChannel->readonly())
+	if (selChannel->readonly())
 		return CreateError("Error forcing client to leave channel; channel is read-only.");
 	if (clientID < -1 || clientID >= 65535)
 		return CreateError("Cannot kick client from channel; supplied client ID %i is invalid. Use -1 for currently selected client.", clientID);
@@ -825,7 +896,7 @@ void Extension::Channel_KickClientByName(const TCHAR * clientNamePtr)
 {
 	if (!selChannel)
 		return CreateError("Cannot force client to leave channel; no channel selected.");
-	if (!selChannel->readonly())
+	if (selChannel->readonly())
 		return CreateError("Error forcing client to leave channel; channel is read-only.");
 
 	decltype(selClient) clientToUse = nullptr;
@@ -1346,22 +1417,28 @@ void Extension::SendMsg_AddBinaryFromAddress(unsigned int address, int size)
 
 	SendMsg_Sub_AddData((void *)(long)address, size);
 }
-void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
+void Extension::SendMsg_AddFileToBinary(const TCHAR * filenameParam)
 {
-	if (filename[0] == _T('\0'))
+	if (filenameParam[0] == _T('\0'))
 		return CreateError("Cannot add file to send binary; filename \"\" is invalid.");
+
+	// Unembed file if necessary
+	const std::tstring filename = DarkEdif::MakePathUnembeddedIfNeeded(this, filenameParam);
+	if (filename[0] == _T('>'))
+		return CreateError("Cannot add file \"%s\" to send binary, error %s occurred with opening the file."
+			" The send binary has not been modified.", DarkEdif::TStringToUTF8(filenameParam).c_str(), DarkEdif::TStringToUTF8(filename.substr(1)).c_str());
 
 	// Open and deny other programs write privileges
 #ifdef _WIN32
-	FILE * file = _tfsopen(filename, _T("rb"), SH_DENYWR);
+	FILE * file = _tfsopen(filename.c_str(), _T("rb"), SH_DENYWR);
 #else
-	FILE * file = fopen(filename, "rb");
+	FILE * file = fopen(filename.c_str(), "rb");
 #endif
 	if (!file)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot add file \"%s\" to send binary, error %i (%s) occurred with opening the file."
-			" The send binary has not been modified.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot add file \"%s\" (original \"%s\") to send binary, error %i (%s) occurred with opening the file."
+			" The send binary has not been modified.", DarkEdif::TStringToUTF8(filename).c_str(), DarkEdif::TStringToUTF8(filenameParam).c_str(), errno, errtext);
 	}
 
 	// Jump to end
@@ -1378,7 +1455,8 @@ void Extension::SendMsg_AddFileToBinary(const TCHAR * filename)
 	if ((amountRead = fread_s(buffer.get(), filesize, 1U, filesize, file)) != filesize)
 	{
 		CreateError("Couldn't read file \"%s\" into binary to send; couldn't reserve enough memory "
-			"to add file into message. The send binary has not been modified.", DarkEdif::TStringToUTF8(filename).c_str());
+			"to add file into message. The send binary has not been modified.",
+			DarkEdif::TStringToUTF8(filenameParam).c_str());
 	}
 	else
 		SendMsg_Sub_AddData(buffer.get(), amountRead);
@@ -1431,7 +1509,7 @@ void Extension::SendMsg_CompressBinary()
 	strm.avail_in = (std::uint32_t)SendMsgSize;
 
 	// Allocate memory for compression
-	strm.avail_out = (std::uint32_t)SendMsgSize - 4;
+	strm.avail_out = (std::uint32_t)SendMsgSize + 256;
 	strm.next_out = output_buffer + 4;
 
 	ret = deflate(&strm, Z_FINISH);

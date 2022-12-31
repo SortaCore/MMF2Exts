@@ -223,7 +223,7 @@ void FusionAPI PrepareAndroidBuild(mv * mV, EDITDATA * edPtr, LPCTSTR androidDir
 	if (hasINTERNETPerm == TRUE)
 		return;
 
-	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing, please enable the INTERNET permission in application "
+	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing Client, please enable the INTERNET permission in application "
 		"properties under the Android tab.\nAborting build with a SAXParseException."));
 
 	// Erase the manifest file so the build will fail

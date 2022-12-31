@@ -1,31 +1,12 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2012, 2013 James McLaughlin et al.  All rights reserved.
+ * Copyright (C) 2012, 2013 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "fdstream.h"
@@ -88,7 +69,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 			// First, establish if connection has died, or temporarily had an error.
 			// If it's died, we'll do an immediate shutdown, otherwise a graceful.
 
-			bool otherEndUnreachable =
+			lw_bool otherEndUnreachable =
 				// Connection closed on other end nicely
 				(error == NO_ERROR && bytes_transferred == 0) ||
 				// Connection closed on other end
@@ -121,7 +102,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 		break;
 
 	case overlapped_type_write:
-		list_remove (ctx->pending_writes, overlapped);
+		list_remove (fdstream_overlapped, ctx->pending_writes, overlapped);
 		free (overlapped);
 
 		write_completed (ctx);
@@ -142,7 +123,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 	}
 
 	default:
-		assert (false);
+		assert (lw_false);
 	};
 
 	lwp_release (ctx, "fdstream completion");
@@ -241,7 +222,8 @@ void issue_read (lw_fdstream ctx)
 	if (ctx->fd == INVALID_HANDLE_VALUE)
 		return;
 
-	if (ctx->flags & lwp_fdstream_flag_read_pending)
+	if ((ctx->flags & lwp_fdstream_flag_read_pending) != 0)
+	//if ((ctx->flags & (lwp_fdstream_flag_read_pending | lwp_fdstream_flag_close_asap)) != 0 || (ctx->stream.flags & lwp_stream_flag_closeASAP) != 0)
 		return; // Only one read pending on a stream at once
 
 	ctx->flags |= lwp_fdstream_flag_read_pending;
@@ -259,7 +241,7 @@ void issue_read (lw_fdstream ctx)
 	if (ctx->reading_size != -1 && to_read > ctx->reading_size)
 	{
 		to_read = (DWORD)ctx->reading_size;
-		if constexpr (sizeof(ctx->reading_size) > 4)
+		if (sizeof(ctx->reading_size) > 4)
 			assert(ctx->reading_size < 0xFFFFFFFF);
 	}
 
@@ -322,12 +304,12 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		// TODO: The client is unstable at that point, and will not properly disconnect from original connection
 		// nor acknowledge the server on the new connection, resulting in ping disconnect.
 		// Thankfully, after a ping disconnect, it should be back to functional again.
-		assert("disconnecting and reconnecting too fast, now unstable.");
+		assert(!"disconnecting and reconnecting too fast, now unstable.");
 
 		// These following lines prevent an issue where the old callbacks/pump are sent to new callback,
 		// which will result in accumulating On Disconnect events, apparently.
 		lw_pump pump = lw_stream_pump((lw_stream)ctx);
-		lw_pump_update_callbacks(pump, ctx->stream.watch, nullptr, nullptr);
+		lw_pump_update_callbacks(pump, ctx->stream.watch, NULL, NULL);
 		lw_pump_post_remove(pump, ctx->stream.watch);
 		ctx->stream.watch = NULL;
 	}
@@ -403,6 +385,10 @@ lw_bool lw_fdstream_valid (lw_fdstream ctx)
 {
 	return ctx->fd != INVALID_HANDLE_VALUE && !(ctx->flags & lwp_fdstream_flag_close_asap);
 }
+long  lw_fdstream_get_fd_debug(lw_fdstream ctx)
+{
+	return *(long *)&ctx->fd;
+}
 
 /* Note that this always swallows all of the data (unlike on *nix where it
  * might only be able to use some of it.)  Because Windows FDStream never
@@ -418,7 +404,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 		return size; /* nothing to do */
 
 	// Size must be storable in 32-bit
-	if constexpr (sizeof(size) > 4)
+	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
 	if (_ctx->flags & lwp_fdstream_flag_close_asap)
@@ -446,25 +432,25 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	* Same goes for ReadFile and WSARecv.
 	*/
 
-	if (WriteFile (ctx->fd,
-				overlapped->data,
-				(DWORD)size,
-				0,
-				(OVERLAPPED *) overlapped) == FALSE)
+	if (WriteFile(ctx->fd,
+		overlapped->data,
+		(DWORD)size,
+		0,
+		(OVERLAPPED*)overlapped) == FALSE)
 	{
-		int error = GetLastError ();
+		int error = GetLastError();
 
 		if (error != ERROR_IO_PENDING)
 		{
 			free(overlapped);
 
 			// There's no error reporting function here, and not worth killing the app over
-		#ifdef _lacewing_debug
+#ifdef _lacewing_debug
 			lw_error err = lw_error_new();
 			lw_error_add(err, error);
 			lwp_trace("Failed to write to socket %p, got error %s", lw_error_tostring(err));
 			lw_error_delete(err);
-		#endif
+#endif
 
 			return size;
 		}
@@ -474,7 +460,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 		ctx->offset.QuadPart += size;
 
 	add_pending_write (ctx);
-	list_push (ctx->pending_writes, overlapped);
+	list_push (fdstream_overlapped, ctx->pending_writes, overlapped);
 
 	return size;
 }

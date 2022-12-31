@@ -1,38 +1,19 @@
-
-/* vim: set noet ts=4 sw=4 ft=c:
+/* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
- * Copyright (C) 2011, 2012 James McLaughlin et al.	All rights reserved.
+ * Copyright (C) 2011, 2012 James McLaughlin et al.
+ * Copyright (C) 2012-2022 Darkwire Software.
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+ * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
+ * https://opensource.org/licenses/mit-license.php
+*/
 
 #include "../common.h"
 #include "../address.h"
 #include "fdstream.h"
 
-#define lw_client_flag_connecting	1
-#define lw_client_flag_connected	2
+#define lw_client_flag_connecting	((lw_i8)1)
+#define lw_client_flag_connected	((lw_i8)2)
 
 // 3 second timeout
 static const int lw_client_timeout_ms = 3 * 1000;
@@ -46,7 +27,7 @@ struct _lw_client
 	lw_client_hook_data		  on_data;
 	lw_client_hook_error	  on_error;
 
-	char flags;
+	lw_i8 flags;
 
 	lw_addr address;
 
@@ -168,7 +149,7 @@ static void first_time_write_ready (void * tag)
 		ctx->on_connect (ctx);
 
 	if (ctx->on_data)
-		lw_stream_read ((lw_stream) ctx, -1);
+		lw_stream_read ((lw_stream) ctx, SIZE_MAX);
 }
 
 void lw_client_connect_addr (lw_client ctx, lw_addr address)
@@ -251,7 +232,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	if (lw_addr_ipv6(address))
 		lwp_disable_ipv6_only((lwp_socket)ctx->socket);
 
-	struct sockaddr_storage local_address = {};
+	struct sockaddr_storage local_address = {0};
 
 	if (lw_addr_ipv6(address))
 	{
@@ -360,7 +341,7 @@ void lw_client_on_data (lw_client ctx, lw_client_hook_data on_data)
 	if (on_data)
 	{
 		lw_stream_add_hook_data ((lw_stream) ctx, on_stream_data, ctx);
-		lw_stream_read ((lw_stream) ctx, -1);
+		lw_stream_read ((lw_stream) ctx, SIZE_MAX);
 	}
 	else
 	{

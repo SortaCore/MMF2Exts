@@ -34,11 +34,41 @@
     <Filter Include="Global to all extensions\Edif\JSON">
       <UniqueIdentifier>{3115030c-1825-4b33-917b-4724953d8fd6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lacewing\src\webserver">
+      <UniqueIdentifier>{c0980f17-82a7-41e3-8451-0405335b8bf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\src\webserver\http">
+      <UniqueIdentifier>{9c44e872-02c6-4a5a-b15e-9d516440bccf}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\Lacewing\deps">
       <UniqueIdentifier>{6dfef957-fbe4-4f38-8bbc-64824fca9e8b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Lacewing\deps\uthash">
       <UniqueIdentifier>{468bc64e-1b4a-4819-a47a-5abe4177a1e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\deps\http-parser">
+      <UniqueIdentifier>{9a7eaa09-3f0b-4e41-907f-33c1a529620c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\deps\multipart-parser">
+      <UniqueIdentifier>{937ed17e-779f-4b36-b7f5-91e38972823d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\webserver">
+      <UniqueIdentifier>{fab6e2de-ff9e-42d8-9bcd-980bfbf3c132}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\src\webserver\http">
+      <UniqueIdentifier>{b50e289f-a529-4b79-b221-9ccc5a7fc486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\deps">
+      <UniqueIdentifier>{0c6172ef-5ac2-454c-bc16-e511b8eea96f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\deps\http-parser">
+      <UniqueIdentifier>{a5fbb3e7-a50a-4d9a-b824-790f36fd21c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lacewing\deps\multipart-parser">
+      <UniqueIdentifier>{153f3187-04a0-4fe0-abec-2fa8c09eecec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lacewing\openssl">
+      <UniqueIdentifier>{f87e4a24-4e10-4fea-87b2-8764f1c21b77}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -174,17 +204,50 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\ReadWriteLock.cc">
       <Filter>Source Files\Lacewing</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c">
-      <Filter>Source Files\Lacewing</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
-      <Filter>Source Files\Lacewing</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\global.c">
       <Filter>Source Files\Lacewing\src</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\RelayServer.cc">
       <Filter>Source Files\Lacewing</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\http-parser\http_parser.c">
+      <Filter>Source Files\Lacewing\deps\http-parser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\multipart-parser\multipart_parser.c">
+      <Filter>Source Files\Lacewing\deps\multipart-parser</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc_data.c">
+      <Filter>Source Files\Lacewing\deps</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.c">
+      <Filter>Source Files\Lacewing\deps</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\cxx\webserver2.cc">
+      <Filter>Source Files\Lacewing\src\cxx</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\http\http-client.c">
+      <Filter>Source Files\Lacewing\src\webserver\http</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\http\http-parse.c">
+      <Filter>Source Files\Lacewing\src\webserver\http</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\mimetypes.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\multipart.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\request.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\sessions.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\upload.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\webserver.c">
+      <Filter>Source Files\Lacewing\src\webserver</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -286,6 +349,186 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp">
       <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\http-parser\http_parser.h">
+      <Filter>Header Files\Lacewing\deps\http-parser</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\multipart-parser\multipart_parser.h">
+      <Filter>Header Files\Lacewing\deps\multipart-parser</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\http\http.h">
+      <Filter>Header Files\Lacewing\src\webserver\http</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\common.h">
+      <Filter>Header Files\Lacewing\src\webserver</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\multipart.h">
+      <Filter>Header Files\Lacewing\src\webserver</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\asn1.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\asn1err.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\async.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\asyncerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\bio.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\bioerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\bn.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\bnerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\buffer.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\buffererr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\comp.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\comperr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\crypto.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\cryptoerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ct.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\cterr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\dh.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\dherr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\dsa.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\dsaerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\dtls1.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ec.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ecerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\err.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\evp.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\evperr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\e_os2.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\hmac.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\lhash.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\md5.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\objects.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\objectserr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\obj_mac.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\opensslconf.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\opensslv.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ossl_typ.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\pem.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\pemerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\pkcs7.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\pkcs7err.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\rsa.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\rsaerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\safestack.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\sha.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\srtp.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ssl.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ssl2.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\ssl3.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\sslerr.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\stack.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\symhacks.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\tls1.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\x509.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\x509err.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\x509_vfy.h">
+      <Filter>Header Files\Lacewing\openssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
