@@ -1503,7 +1503,8 @@ void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, i
 
 	if (numVals == 0)
 		return;
-	if (startIndex < 0 || numVals < 0 || destIndex < 0 || startIndex + numVals > destIndex)
+	if (startIndex < 0 || numVals < 0 || destIndex < 0 ||
+		(startIndex < destIndex ? (startIndex + numVals > destIndex) : (destIndex + numVals > startIndex)))
 	{
 		MakeError("Can't copy alt strings, indexes are invalid or overlap");
 		return;

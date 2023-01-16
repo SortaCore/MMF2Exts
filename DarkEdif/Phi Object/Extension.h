@@ -29,6 +29,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
+	// b7: Bugfix to alt string copying (SDK v16)
 	// b6: Added alt string/value bulk copying (SDK v15)
 	// b5: Smart property release (SDK v14)
 	// b4: Release for FredT, added proximity sensor
