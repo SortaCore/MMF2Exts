@@ -2392,7 +2392,7 @@ std::tstring DarkEdif::Properties::GetPropertyStr(int propID) const
 {
 	const auto& p = Elevate(*this);
 	const Properties::Data * data = p.Internal_DataAt(propID);
-	if (data)
+	if (!data)
 	{
 		LOGE(_T("GetPropertyStr() error; property ID %d does not exist."), propID);
 		return std::tstring();
@@ -2466,7 +2466,7 @@ float DarkEdif::Properties::GetPropertyNum(int propID) const
 {
 	const auto& p = Elevate(*this);
 	const Properties::Data* data = p.Internal_DataAt(propID);
-	if (data)
+	if (!data)
 	{
 		LOGE(_T("GetPropertyNum() error; property ID %d does not exist."), propID);
 		return 0.f;
@@ -4589,7 +4589,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 				if (resHandle == NULL)
 				{
 					if (GetLastError() == ERROR_ACCESS_DENIED)
-						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"), GetLastError());
+						DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure %u. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%%20Fix%%20Tool.exe"), GetLastError());
 				}
 				else
 				{
@@ -4607,7 +4607,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 					if (!EndUpdateResource(resHandle, FALSE))
 					{
 						if (GetLastError() == ERROR_ACCESS_DENIED)
-							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
+							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%%20Fix%%20Tool.exe"));
 						else
 							DarkEdif::MsgBox::Error(_T("Tag failure"), _T("UC tagging failure; saving new tag returned %u."), GetLastError());
 					}
@@ -4736,7 +4736,7 @@ static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const
 	int numChars = _vstprintf_s(msgData, std::size(msgData), msgFormat, v);
 	if (numChars <= 0)
 	{
-		MessageBox(DarkEdif::Internal_WindowHandle, _T("Failed to format a message box."), title.c_str(), MB_OK | MB_ICONERROR);
+		MessageBox(DarkEdif::Internal_WindowHandle, _T("Failed to format a message box. Contact extension developer."), title.c_str(), MB_OK | MB_ICONERROR);
 		DarkEdif::BreakIfDebuggerAttached();
 		return IDCANCEL;
 	}

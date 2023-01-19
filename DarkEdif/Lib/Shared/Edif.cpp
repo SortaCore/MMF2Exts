@@ -264,6 +264,25 @@ void Edif::Free(EDITDATA * edPtr)
 	// ??
 }
 
+#ifndef _DEBUG
+// CRT invalid parameter handler
+extern "C" void DarkEdif_Invalid_Parameter(const wchar_t* /*expression - NULL*/, const wchar_t* /*function - NULL */,
+	const wchar_t* /* file - NULL */, unsigned int /* line = 0 */, uintptr_t /* pReserved - irrelevant */)
+{
+#pragma DllExportHint
+	// All these parameters are NULL in non-Debug builds. Since Debug builds have their own handler,
+	// we don't replace it except in non-Debug, so the parameters are useless.
+	// After this, the caller may use _invoke_watson - which will never continue the program - or it may continue after this,
+	// returning EINVAL instead.
+
+	// To get proper debug information, build your application under Debug Unicode (or Debug), not Edittime/Runtime.
+	LOGE(_T("CRT invalid parameter caught"), _T("Invalid parameter crash - since it's not Debug, no trace information."));
+	DarkEdif::MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
+		"If you're a Fusion extension developer, attach a debugger now for information.\n"
+		"Otherwise, the program will attempt to continue."));
+}
+#endif
+
 int Edif::Init(mv * mV, bool fusionStartupScreen)
 {
 	_tcscpy (LanguageCode, _T ("EN"));
@@ -348,6 +367,22 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		// Free resources
 		FreeLibrary(hRes);
 	}
+
+	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
+	// Invalid parameters include e.g. sprintf format errors.
+	// Debug builds have their own handler that makes a message box, so don't register ours
+#ifndef _DEBUG
+	// Don't register for splash screen, or override an existing handler
+	if (
+#if EditorBuild
+		DarkEdif::RunMode != DarkEdif::MFXRunMode::SplashScreen &&
+#endif
+		_get_invalid_parameter_handler() == NULL)
+	{
+		_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
+	}
+#endif // not Debug
+
 #endif
 
 	// Get JSON file

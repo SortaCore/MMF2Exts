@@ -14,6 +14,9 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v17 release
 ----
 *v17 not released yet*
+- Edittime: Fixed UCT fix tool links causing crash, due to presence of %20 in a sprintf function
+- All platforms: Fixed DarkEdif property ID error reporting in GetPropertyNum and GetPropertyStr
+- Edittime/Windows: Added invalid parameter handler if none present to prevent sprintf and related issues, in Edittime/Runtime configs
 
 
 Changes until v16 release
