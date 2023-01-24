@@ -25,7 +25,7 @@ typedef struct _lwp_clientssl
 
 void lwp_clientssl_init (lwp_clientssl,
 						 CredHandle server_creds,
-						 lw_stream socket);
+						 lw_server_client socket);
 
 void lwp_clientssl_cleanup (lwp_clientssl);
 

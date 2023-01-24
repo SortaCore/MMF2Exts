@@ -710,18 +710,18 @@ int Extension::Channel_ID()
 	return selChannel ? selChannel->id() : -1;
 }
 
-int Extension::HTML5_Insecure_Port()
+int Extension::WebSocket_Insecure_Port()
 {
 	return Srv.websocket->hosting() ? Srv.websocket->port() : -1;
 }
-int Extension::HTML5_Secure_Port()
+int Extension::WebSocket_Secure_Port()
 {
 	return Srv.websocket->hosting_secure() ? Srv.websocket->port_secure() : -1;
 }
-const TCHAR* Extension::HTML5_Cert_ExpiryTime(int useUTC, const TCHAR* formatParam)
+const TCHAR* Extension::WebSocket_Cert_ExpiryTime(int useUTC, const TCHAR* formatParam)
 {
 	if (!Srv.websocket->cert_loaded())
-		return Runtime.CopyString(_T("HTML5 Secure WebSocket server not hosting"));
+		return Runtime.CopyString(_T("Secure WebSocket server not hosting"));
 
 	std::tstring format = formatParam;
 	if (format.empty())

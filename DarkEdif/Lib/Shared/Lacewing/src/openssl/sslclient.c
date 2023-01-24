@@ -33,6 +33,8 @@ struct _lwp_sslclient
 
 	void * tag;
 	lwp_sslclient_on_handshook on_handshook;
+	lw_server_client client;
+	void (*on_error)(lw_server_client client, lw_error error);
 
 	#ifdef _lacewing_npn
 	  unsigned char npn [32];
@@ -47,7 +49,7 @@ extern lw_streamdef def_downstream;
 
 static void pumpclient (lwp_sslclient);
 
-lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_stream socket,
+lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_server_client socket,
 								 lwp_sslclient_on_handshook on_handshook,
 								 void * tag)
 {
@@ -87,10 +89,10 @@ lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_stream socket,
 	lwp_retain (&ctx->downstream, "lwp_sslclient downstream");
 
 	lw_stream_add_filter_upstream
-	  (socket, &ctx->upstream, lw_false, lw_false);
+	  ((lw_stream)socket, &ctx->upstream, lw_false, lw_false);
 
 	lw_stream_add_filter_downstream
-	  (socket, &ctx->downstream, lw_false, lw_false);
+	  ((lw_stream)socket, &ctx->downstream, lw_false, lw_false);
 
 	pumpclient (ctx);
 
@@ -151,7 +153,12 @@ static size_t downstream_sink_data (lw_stream downstream,
 
 	if (bytes < 0)
 	{
-	  always_log ("SSL downstream write error!");
+		lw_error err = lw_error_new();
+		lw_error_addf(err, "SSL downstream write error %d", SSL_get_error(ctx->ssl, bytes));
+
+		if (ctx->on_error)
+			ctx->on_error(ctx->client, err);
+		lw_error_delete (err);
 
 	  lw_stream_close (&ctx->downstream, lw_true);
 
@@ -195,8 +202,15 @@ static size_t upstream_sink_data (lw_stream upstream,
 	{
 	  if (error == SSL_ERROR_WANT_READ)
 		 ctx->write_condition = error;
+	  else
+	  {
+		  lw_error err = lw_error_new();
+		  lw_error_addf(err, "SSL upstream write error %d", error);
 
-	  always_log ("SSL upstream write error!");
+		  if (ctx->on_error)
+			  ctx->on_error(ctx->client, err);
+		  lw_error_delete(err);
+	  }
 
 	  return 0;
 	}

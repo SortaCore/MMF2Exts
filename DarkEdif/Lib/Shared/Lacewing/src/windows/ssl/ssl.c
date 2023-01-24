@@ -51,9 +51,14 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 
 	if (status != SEC_E_OK)
 	{
-	  /* TODO : error? */
+		lw_error err = lw_error_new();
+		lw_error_add(err, status);
+		lw_error_addf(err, "Encrypting message failed");
+		if (ctx->handle_error)
+			ctx->handle_error(ctx->client, err);
+		lw_error_delete(err);
 
-	  return size;
+		return size;
 	}
 
 	lw_stream_data (upstream, (char *) buffers [0].pvBuffer, buffers [0].cbBuffer);
@@ -90,16 +95,12 @@ static size_t def_downstream_sink_data (lw_stream downstream,
 												 SECPKG_ATTR_STREAM_SIZES,
 												 &ctx->sizes)) != SEC_E_OK)
 	  {
-		 /* Lacewing::Error Error;
-
-			Error.Add(WSAGetLastError ());
-			Error.Add("Secure handshake failure");
-
-			if (ctx->Server.Handlers.Error)
-			ctx->Server.Handlers.Error (ctx->Server.Public, Error);
-
-			ctx->Public.Disconnect(); */
-
+		 lw_error err = lw_error_new();
+		 lw_error_add(err, ctx->status);
+		 lw_error_addf(err, "Secure handshake failure");
+		 if (ctx->handle_error)
+			 ctx->handle_error(ctx->client, err);
+		 lw_error_delete(err);
 		 return size;
 	  }
 
@@ -137,8 +138,13 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 
 	if (ctx->status == _HRESULT_TYPEDEF_ (0x00090317L)) /* SEC_I_CONTENT_EXPIRED */
 	{
-	  /* ctx->Public.Disconnect(); */
-	  return size;
+		lw_error err = lw_error_new();
+		lw_error_add(err, ctx->status);
+		lw_error_addf(err, "Secure content expired");
+		if (ctx->handle_error)
+			ctx->handle_error(ctx->client, err);
+		lw_error_delete(err);
+		return size;
 	}
 
 	if (ctx->status == SEC_I_RENEGOTIATE)
@@ -156,20 +162,20 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 		* http://msdn.microsoft.com/en-us/library/aa374781%28v=VS.85%29.aspx
 		*/
 
-	  return size;
+		// TODO: Phi note: when TLS cert expires, this may trigger for existing connections. I've rewritten this, but not tested yet.
+		ctx->handshake_complete = lw_false;
+		return ctx->proc_handshake_data(ctx, NULL, 0);
 	}
 
 	if (FAILED (ctx->status))
 	{
-	  /* Error decrypting the message */
-
-	  /* Lacewing::Error Error;
-		 Error.Add(Status);
-		 lwp_trace("Error decrypting the message: %s", Error.ToString ());
-
-		 ctx->Public.Disconnect(); */
-
-	  return size;
+		lw_error err = lw_error_new();
+		lw_error_add(err, ctx->status);
+		lw_error_addf(err, "Error decrypting the message");
+		if (ctx->handle_error)
+			ctx->handle_error(ctx->client, err);
+		lw_error_delete(err);
+		return size;
 	}
 
 	/* Find the decrypted data
@@ -185,7 +191,7 @@ size_t proc_message_data (lwp_ssl ctx, const char * buffer, size_t size)
 	  }
 	}
 
-	/* Check for any trailing data that wasn't part of the messagei
+	/* Check for any trailing data that wasn't part of the message
 	*/
 	for (int i = 0; i < 4; ++ i)
 	{
@@ -225,7 +231,7 @@ const static lw_streamdef def_downstream =
 	0  /* cleanup */
 };
 
-void lwp_ssl_init (lwp_ssl ctx, lw_stream socket)
+void lwp_ssl_init (lwp_ssl ctx, lw_server_client socket)
 {
 	memset (ctx, 0, sizeof (*ctx));
 

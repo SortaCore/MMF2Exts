@@ -15,7 +15,7 @@ typedef struct _lwp_sslclient * lwp_sslclient;
 
 typedef void (* lwp_sslclient_on_handshook) (lwp_sslclient, void * tag);
 
-lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_stream socket,
+lwp_sslclient lwp_sslclient_new (SSL_CTX * server_context, lw_server_client socket,
 								 lwp_sslclient_on_handshook, void * tag);
 
 void lwp_sslclient_delete (lwp_sslclient);

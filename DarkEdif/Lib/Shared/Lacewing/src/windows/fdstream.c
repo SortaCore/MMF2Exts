@@ -34,8 +34,8 @@ static void remove_pending_write (lw_fdstream ctx)
 	/* If any writes were pending, the stream was being retained.  Since the
 		* last write has finished, we can release it now.
 		*/
-
-	lwp_release (ctx, "fdstream pending write");
+		
+		lwp_release (ctx, "fdstream pending write");
 	}
 }
 
@@ -102,15 +102,18 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 		break;
 
 	case overlapped_type_write:
+		lw_sync_lock(ctx->pending_writes_sync);
 		list_remove (fdstream_overlapped, ctx->pending_writes, overlapped);
 		free (overlapped);
 
 		write_completed (ctx);
+		lw_sync_release(ctx->pending_writes_sync);
 
 		break;
 
 	case overlapped_type_transmitfile:
 	{
+		lw_sync_lock(ctx->pending_writes_sync);
 		assert (overlapped == &ctx->transmitfile_overlapped);
 
 		ctx->transmit_file_from->transmit_file_to = 0;
@@ -118,6 +121,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 		ctx->transmit_file_from = 0;
 
 		write_completed (ctx);
+		lw_sync_release(ctx->pending_writes_sync);
 
 		break;
 	}
@@ -196,11 +200,12 @@ static void close_fd (lw_fdstream ctx)
 		}
 	}
 
-	list_clear(ctx->pending_writes);
+	//list_clear(ctx->pending_writes);
 }
 
 void write_completed (lw_fdstream ctx)
 {
+	lw_sync_lock(ctx->pending_writes_sync);
 	remove_pending_write (ctx);
 
 	if (ctx->num_pending_writes == 0)
@@ -208,13 +213,14 @@ void write_completed (lw_fdstream ctx)
 		// Were we trying to close?
 		if ( (ctx->flags & lwp_fdstream_flag_close_asap) && !(ctx->flags & lwp_fdstream_flag_read_pending))
 		{
+			lw_sync_release(ctx->pending_writes_sync);
 			close_fd (ctx);
 
 			lw_stream_close ((lw_stream) ctx, lw_true);
-
 			return;
 		}
 	}
+	lw_sync_release(ctx->pending_writes_sync);
 }
 
 void issue_read (lw_fdstream ctx)
@@ -432,6 +438,12 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	* Same goes for ReadFile and WSARecv.
 	*/
 
+	// We add before write, because the IOCP thread writing it could free it underneath us
+	// But... wouldn't this create an atomic issue? either way, two things are modifying pending_writes with no sync
+	lw_sync_lock(ctx->pending_writes_sync);
+	add_pending_write(ctx);
+	list_push(fdstream_overlapped, ctx->pending_writes, overlapped);
+
 	if (WriteFile(ctx->fd,
 		overlapped->data,
 		(DWORD)size,
@@ -448,9 +460,10 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 #ifdef _lacewing_debug
 			lw_error err = lw_error_new();
 			lw_error_add(err, error);
-			lwp_trace("Failed to write to socket %p, got error %s", lw_error_tostring(err));
+			lwp_trace("Failed to write to socket %p, got error %s", ctx, lw_error_tostring(err));
 			lw_error_delete(err);
 #endif
+			lw_sync_release(ctx->pending_writes_sync);
 
 			return size;
 		}
@@ -459,9 +472,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	if (ctx->size != -1)
 		ctx->offset.QuadPart += size;
 
-	add_pending_write (ctx);
-	list_push (fdstream_overlapped, ctx->pending_writes, overlapped);
-
+	lw_sync_release(ctx->pending_writes_sync);
 	return size;
 }
 
@@ -510,6 +521,10 @@ static lw_i64 def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
 	* the head buffers could be used to drain it.
 	*/
 
+	// Phi note: this sync and the pending_write count is only half-implemented with file transmit,
+	// so redo it and make sure it's consistent if you're allowing it.
+	lw_sync_lock(dest->pending_writes_sync);
+
 	if (!TransmitFile ((SOCKET) dest->fd,
 					source->fd,
 					(DWORD) size,
@@ -521,7 +536,10 @@ static lw_i64 def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
 		int error = WSAGetLastError ();
 
 		if (error != WSA_IO_PENDING)
+		{
+			lw_sync_release(dest->pending_writes_sync);
 			return -1;
+		}
 	}
 
 	/* OK, looks like the TransmitFile call succeeded. */
@@ -535,6 +553,7 @@ static lw_i64 def_sink_stream (lw_stream _dest, lw_stream _src, size_t size)
 	add_pending_write (dest);
 	add_pending_write (source);
 
+	lw_sync_release(dest->pending_writes_sync);
 	/* As far as stream is concerned, we've now written everything. */
 
 	return size;
@@ -646,6 +665,15 @@ const lw_streamdef def_fdstream =
 	def_cleanup
 };
 
+void lw_fdstream_dealloc(lw_fdstream ctx)
+{
+	// No refs, so there should be no pending writes
+	assert(list_length(ctx->pending_writes) == 0);
+	list_clear(ctx->pending_writes);
+	lw_sync_delete(ctx->pending_writes_sync);
+
+	free(ctx);
+}
 void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 {
 	memset (ctx, 0, sizeof (*ctx));
@@ -654,7 +682,10 @@ void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 	ctx->flags  = lwp_fdstream_flag_nagle;
 	ctx->size	= -1;
 
+	ctx->pending_writes_sync = lw_sync_new();
+
 	lwp_stream_init ((lw_stream) ctx, &def_fdstream, pump);
+	lwp_set_dealloc_proc(ctx, lw_fdstream_dealloc);
 }
 
 lw_fdstream lw_fdstream_new (lw_pump pump)

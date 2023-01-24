@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2023 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -19,7 +19,7 @@
 				[ 68, "Host" ],
 				[ 69, "Stop hosting" ]
 			],
-			[ "HTML5 Server",
+			[ "HTML5/UWP servers",
 				[ 89, "Load SSL/TLS certificate from file(s)" ],
 				[ 90, "Load SSL/TLS certificate from system store (Windows only)"],
 				"---",
@@ -152,7 +152,7 @@
 			"---",
 			[ 48, "Lacewing server is hosting" ],
 			[ 49, "Flash Player policy server is hosting" ],
-			[ 60, "HTML5 WebSocket server(s) are hosting" ],
+			[ 60, "HTML5/UWP WebSocket server(s) are hosting" ],
 			"---",
 			[ "Connection",
 				[ 1, "On connect request" ],
@@ -329,7 +329,7 @@
 				[ 48, "Count bytes" ],
 				[ 49, "Check against Unicode allowlist" ]
 			],
-			[ "HTML5 Server",
+			[ "HTML5/UWP WebSocket servers",
 				[ 51, "Get insecure port" ],
 				[ 52, "Get secure port" ],
 				"---",
@@ -809,7 +809,7 @@
 			},
 			// ID 89+
 			{
-				"Title": "Load HTML5 TLS/SSL certificate from files %0 and %1, private key password %2",
+				"Title": "Load WebSocket TLS/SSL certificate from files %0 and %1, private key password %2",
 				"Parameters": [
 					[ "File", "Cert chain file (fullchain.pem), or PFX file" ],
 					[ "File", "Cert private key file (privkey.pem), or blank if PFX" ],
@@ -817,7 +817,7 @@
 				]
 			},
 			{
-				"Title": "Load HTML5 TLS/SSL certificate from Windows system store: common name %0, location %1, store name %2",
+				"Title": "Load WebSocket TLS/SSL certificate from Windows system store: common name %0, location %1, store name %2",
 				"Parameters": [
 					[ "Text", "Cert common name (domain or IP, e.g. \"localhost\")" ],
 					[ "Text", "Cert location (e.g. \"CurrentUser\", \"LocalMachine\", etc)" ],
@@ -826,14 +826,14 @@
 			},
 
 			{
-				"Title": "Host HTML5 WebSocket server on insecure port %0 (0 = no change), secure port %1 (0 = no change)",
+				"Title": "Host WebSocket server(s) on insecure port %0 (0 = no change), secure port %1 (0 = no change)",
 				"Parameters": [
 					[ "Integer", "Insecure port (no cert, http webpage clients only), or 0 to ignore" ],
 					[ "Integer", "Secure port (requires SSL/TLS cert), or 0 to ignore" ]
 				]
 			},
 			{
-				"Title": "Stop hosting the %0 HTML5 server(s)",
+				"Title": "Stop hosting the %0 WebSocket server(s)",
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
 				]
@@ -1195,7 +1195,7 @@
 
 			// ID 60
 			{
-				"Title": "%o : %0 HTML5 server is hosting",
+				"Title": "%o : %0 WebSocket server is hosting",
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
 				]
@@ -1465,15 +1465,15 @@
 				"Returns": "Integer"
 			},
 			{
-				"Title": "HTML5_Insecure_Port(",
+				"Title": "WebSocket_Insecure_Port(",
 				"Returns": "Integer"
 			},
 			{
-				"Title": "HTML5_Secure_Port(",
+				"Title": "WebSocket_Secure_Port(",
 				"Returns": "Integer"
 			},
 			{
-				"Title": "HTML5_Cert_ExpiryTime$(",
+				"Title": "WebSocket_Cert_ExpiryTime$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Use local time (0) or UTC (1)?" ],
@@ -1551,10 +1551,13 @@
 				[ 68, "Iniciar servidor" ],
 				[ 69, "Parar servidor" ]
 			],
-		/*	[ "Servidor de HTML5",
-				[ 82, "Iniciar servidor" ],
-				[ 83, "Parar servidor" ]
-			], */
+			[ "Servidor de HTML5/UWP",
+				[ 89, "Load SSL/TLS certificate from file(s)" ],
+				[ 90, "Load SSL/TLS certificate from system store (Windows only)"],
+				"---",
+				[ 91, "Iniciar WebSocket de servidor(s)" ],
+				[ 92, "Parar WebSocket de servidor(s)" ]
+			],
 			"---",
 			[ 2, "Definir mensagem de boas vindas" ],
 			[ 88, "(Avançado) Definir lista permitida Unicode" ],
@@ -1680,7 +1683,8 @@
 			"---",
 			[ 48, "O servidor de Lacewing está ligado" ],
 			[ 49, "O servidor de Políticas de Flash Player está ligado" ],
-			// [ X, "O servidor de HTML5 está ligado" ],
+			// Needs retranslation
+			[ 60, "O servidor de HTML5/UWP WebSocket está ligado" ],
 			"---",
 			[ "Conexão",
 				[ 1, "Quando for pedida a ligação" ],
@@ -3088,10 +3092,13 @@
 				[ 68, "Héberger" ],
 				[ 69, "Arrêter d'héberger" ]
 			],
-		/*	[ "Serveur HTML5",
-				[ 82, "Héberger" ],
-				[ 83, "Arrêter d'héberger" ]
-			], */
+			[ "Serveur HTML5/UWP",
+				[ 89, "Load SSL/TLS certificate from file(s)" ],
+				[ 90, "Load SSL/TLS certificate from system store (Windows only)"],
+				"---",
+				[ 91, "Héberger WebSocket d'servidor(s)" ],
+				[ 92, "Arrêter WebSocket d'servidor(s)" ]
+			],
 			"---",
 			[ 2, "Définir le message d'accueil" ],
 			[ 88, "(Avancé) Definir la liste de permission Unicode" ],
@@ -3214,7 +3221,8 @@
 			"---",
 			[ 48, "Le Serveur Lacewing héberge" ],
 			[ 49, "Serveur de politique Flash Player héberge" ],
-			// [ X, "Serveur HTML5 est hébergé" ],
+			// Needs retranslation
+			[ 60, "Serveur HTML5/UWP WebSocket est hébergé" ],
 			"---",
 			[ "Connexion",
 				[ 1, "Lors d'une requête de connexion" ],
@@ -4252,7 +4260,7 @@
 
 			// 60+
 			{
-				"Title": "%o : Serveur HTML5 est hébergé",
+				"Title": "%o : Serveur WebSocket est hébergé",
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
 				]
@@ -4524,15 +4532,15 @@
 
 			// Needs retranslation
 			{
-				"Title": "HTML5_Insecure_Port(",
+				"Title": "WebSocket_Insecure_Port(",
 				"Returns": "Integer"
 			},
 			{
-				"Title": "HTML5_Secure_Port(",
+				"Title": "WebSocket_Secure_Port(",
 				"Returns": "Integer"
 			},
 			{
-				"Title": "HTML5_Cert_ExpiryTime$(",
+				"Title": "WebSocket_Cert_ExpiryTime$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "Integer", "Use local time (0) or UTC (1)?" ],

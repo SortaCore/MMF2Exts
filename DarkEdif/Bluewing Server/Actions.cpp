@@ -71,7 +71,7 @@ void Extension::FlashServer_StopHosting()
 	FlashSrv->unhost();
 }
 
-void Extension::HTML5Server_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privKeyFile, const TCHAR* password)
+void Extension::WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privKeyFile, const TCHAR* password)
 {
 	// this will return false if it fails - but we should get an error made anyway
 	const std::tstring chainFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, chainFile);
@@ -92,7 +92,7 @@ void Extension::HTML5Server_LoadHostCertificate_FromFile(const TCHAR* chainFile,
 		DarkEdif::TStringToUTF8(privKeyFileUnembedded).c_str(),
 		DarkEdif::TStringToUTF8(password).c_str());
 }
-void Extension::HTML5Server_LoadHostCertificate_FromSystemStore(const TCHAR* commonName, const TCHAR* location, const TCHAR* storeName)
+void Extension::WebSocketServer_LoadHostCertificate_FromSystemStore(const TCHAR* commonName, const TCHAR* location, const TCHAR* storeName)
 {
 #ifdef _WIN32
 	// this will return false if it fails - but we should get an error made anyway
@@ -101,25 +101,25 @@ void Extension::HTML5Server_LoadHostCertificate_FromSystemStore(const TCHAR* com
 	CreateError("Cannot load host certificate from system store: the system store is only available on Windows.");
 #endif
 }
-void Extension::HTML5Server_EnableHosting(int insecurePort, int securePort)
+void Extension::WebSocketServer_EnableHosting(int insecurePort, int securePort)
 {
 	if (insecurePort < -1 || insecurePort > UINT16_MAX)
-		return CreateError("Cannot start HTML5 WebSocket hosting: the passed insecure port %i is invalid.", insecurePort);
+		return CreateError("Cannot start WebSocket hosting: the passed insecure port %i is invalid.", insecurePort);
 	if (securePort < -1 || securePort > UINT16_MAX)
-		return CreateError("Cannot start HTML5 WebSocket hosting: the passed secure port %i is invalid.", insecurePort);
+		return CreateError("Cannot start WebSocket hosting: the passed secure port %i is invalid.", insecurePort);
 	if (securePort == 0 && insecurePort == 0)
-		return CreateError("Cannot start HTML5 WebSocket hosting: you passed 0 for both insecure and secure ports; nothing to host.");
+		return CreateError("Cannot start WebSocket hosting: you passed 0 for both insecure and secure ports; nothing to host.");
 	if (securePort != 0 && !Srv.websocket->cert_loaded())
-		return CreateError("Cannot start HTML5 WebSocket hosting: Can't run secure server with no certificate loaded. See help file.");
+		return CreateError("Cannot start WebSocket hosting: Can't run secure server with no certificate loaded. See help file.");
 
 	if (insecurePort != 0 && Srv.websocket->hosting())
-		return CreateError("Cannot start HTML5 WebSocket hosting: HTML5 Insecure server is already running on port %d.", Srv.websocket->port());
+		return CreateError("Cannot start WebSocket hosting: WebSocket Insecure server is already running on port %d.", Srv.websocket->port());
 	if (securePort != 0 && Srv.websocket->hosting_secure())
-		return CreateError("Cannot start HTML5 WebSocket hosting: HTML5 Secure server is already running on port %d.", Srv.websocket->port_secure());
+		return CreateError("Cannot start WebSocket hosting: WebSocket Secure server is already running on port %d.", Srv.websocket->port_secure());
 
 	Srv.host_websocket(insecurePort, securePort);
 }
-void Extension::HTML5Server_DisableHosting(const TCHAR* whichParam)
+void Extension::WebSocketServer_DisableHosting(const TCHAR* whichParam)
 {
 	const std::string which = TStringToUTF8Simplified(whichParam);
 	// i is converted to l as part of text simplifying, so it's actually lnsecure
@@ -332,6 +332,15 @@ void Extension::OnInteractive_Deny(const TCHAR * reason)
 	//	return CreateError("Cannot deny client's action: Interactive event is not compatible with this action.");
 	if (!DenyReason.empty())
 		return CreateError("Can't deny client's action: Set to auto-deny, or Deny was called more than once. Ignoring additional denies.");
+	if ((InteractivePending == InteractiveType::ConnectRequest && globals->autoResponse_Connect != AutoResponse::WaitForFusion) ||
+		(InteractivePending == InteractiveType::ClientNameSet && globals->autoResponse_NameSet != AutoResponse::WaitForFusion) ||
+		(InteractivePending == InteractiveType::ChannelJoin && globals->autoResponse_ChannelJoin != AutoResponse::WaitForFusion) ||
+		(InteractivePending == InteractiveType::ChannelLeave && globals->autoResponse_ChannelLeave != AutoResponse::WaitForFusion) ||
+		(InteractivePending == InteractiveType::ChannelMessageIntercept && globals->autoResponse_MessageChannel != AutoResponse::WaitForFusion) ||
+		(InteractivePending == InteractiveType::ClientMessageIntercept && globals->autoResponse_MessageClient != AutoResponse::WaitForFusion))
+	{
+		return CreateError("Can't deny client's action: Already auto-approved or auto-denied; response was already sent due to handling method. See help file.");
+	}
 
 	DenyReason = reason[0] ? DarkEdif::TStringToUTF8(reason) : "No reason specified."s;
 }
@@ -497,7 +506,7 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 	const std::string channelNameSimplified = lw_u8str_simplify(channelName.c_str());
 	selChannel = nullptr;
 	{
-		lacewing::readlock serverReadLock = Srv.lock.createReadLock();
+		lacewing::readlock serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		const auto& channels = Srv.getchannels();
 		for (const auto &ch : channels)
 		{
@@ -509,7 +518,7 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 					return;
 
 				// If selected client is on new channel, keep it selected, otherwise deselect client
-				serverReadLock.lw_unlock();
+				serverChannelListReadLock.lw_unlock();
 
 				auto channelReadLock = ch->lock.createReadLock();
 				const auto &clientsOnChannel = ch->getclients();
@@ -628,7 +637,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 	const bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
 
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		const auto & channels = Srv.getchannels();
 		auto foundChIt = std::find_if(channels.cbegin(), channels.cend(),
 			[&](const auto & cli) {
@@ -652,7 +661,7 @@ void Extension::Channel_CreateChannelWithMasterByName(const TCHAR * channelNameP
 	else // Pick master client
 	{
 		const std::string masterClientNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -684,7 +693,7 @@ void Extension::Channel_CreateChannelWithMasterByID(const TCHAR * channelNamePtr
 	bool hidden = hiddenInt == 1, autoclose = autocloseInt == 1;
 
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		const auto & channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
@@ -703,7 +712,7 @@ void Extension::Channel_CreateChannelWithMasterByID(const TCHAR * channelNamePtr
 	}
 	else // Pick master client
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -739,7 +748,7 @@ void Extension::Channel_JoinClientByID(int clientID)
 	}
 	else
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -795,7 +804,7 @@ void Extension::Channel_JoinClientByName(const TCHAR * clientNamePtr)
 	else
 	{
 		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -853,7 +862,7 @@ void Extension::Channel_KickClientByID(int clientID)
 	}
 	else
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -909,7 +918,7 @@ void Extension::Channel_KickClientByName(const TCHAR * clientNamePtr)
 	else
 	{
 		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto & clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -956,7 +965,7 @@ void Extension::LoopAllChannels()
 
 	std::vector<decltype(selChannel)> serverChannelListDup;
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		serverChannelListDup = Srv.getchannels();
 	}
 
@@ -987,7 +996,7 @@ void Extension::LoopAllChannelsWithName(const TCHAR * passedLoopName)
 
 	std::vector<decltype(selChannel)> serverChannelListDup;
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		serverChannelListDup = Srv.getchannels();
 	}
 
@@ -1098,7 +1107,7 @@ void Extension::Client_SelectByName(const TCHAR * clientName)
 	selClient = nullptr;
 	{
 		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientName);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -1124,7 +1133,7 @@ void Extension::Client_SelectByID(int clientID)
 
 	selClient = nullptr;
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -1165,7 +1174,7 @@ void Extension::LoopAllClients()
 
 	std::vector<decltype(selClient)> clientListDup;
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		clientListDup = Srv.getclients();
 	}
 
@@ -1196,7 +1205,7 @@ void Extension::LoopAllClientsWithName(const TCHAR * passedLoopName)
 
 	std::vector<decltype(selClient)> clientListDup;
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		clientListDup = Srv.getclients();
 	}
 

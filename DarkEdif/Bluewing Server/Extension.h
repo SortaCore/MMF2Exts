@@ -119,10 +119,10 @@ public:
 		void RelayServer_StopHosting();
 		void FlashServer_Host(const TCHAR * path);
 		void FlashServer_StopHosting();
-		void HTML5Server_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privkeyFile, const TCHAR* password);
-		void HTML5Server_LoadHostCertificate_FromSystemStore(const TCHAR* store, const TCHAR* name, const TCHAR* password);
-		void HTML5Server_EnableHosting(int insecurePort, int securePort);
-		void HTML5Server_DisableHosting(const TCHAR * which);
+		void WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privkeyFile, const TCHAR* password);
+		void WebSocketServer_LoadHostCertificate_FromSystemStore(const TCHAR* store, const TCHAR* name, const TCHAR* password);
+		void WebSocketServer_EnableHosting(int insecurePort, int securePort);
+		void WebSocketServer_DisableHosting(const TCHAR * which);
 		void ChannelListing_Enable();
 		void ChannelListing_Disable();
 		void SetWelcomeMessage(const TCHAR * message);
@@ -265,7 +265,7 @@ public:
 		bool DoesChannelIDExist(int channelID);
 		bool DoesClientNameExist(const TCHAR * clientName);
 		bool DoesClientIDExist(int clientID);
-		bool IsHTML5Hosting(const TCHAR * serverType);
+		bool IsWebSocketHosting(const TCHAR * serverType);
 
 	/// Expressions
 
@@ -322,9 +322,9 @@ public:
 		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
 		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList);
 		int Channel_ID();
-		int HTML5_Insecure_Port();
-		int HTML5_Secure_Port();
-		const TCHAR* HTML5_Cert_ExpiryTime(int useUTC, const TCHAR * format);
+		int WebSocket_Insecure_Port();
+		int WebSocket_Secure_Port();
+		const TCHAR* WebSocket_Cert_ExpiryTime(int useUTC, const TCHAR * format);
 
 	/* These are called if there's no function linked to an ID */
 

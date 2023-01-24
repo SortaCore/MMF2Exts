@@ -108,7 +108,14 @@ struct relayserverinternal
 	}
 	~relayserverinternal() noexcept
 	{
-		auto serverWriteLock = server.lock.createWriteLock();
+		// There shouldn't be any contention here anyway; by the time relayserverinternal is destructed,
+		// all other threads reading from relayserver should be shut down.
+		auto serverMetaWriteLock = server.lock_meta.createWriteLock();
+		auto serverCliListWriteLock = server.lock_clientlist.createWriteLock();
+		auto serverChListWriteLock = server.lock_channellist.createWriteLock();
+		auto serverUDPWriteLock = server.lock_udp.createWriteLock();
+
+		// TODO: Will this ever be non-empty?
 		for (auto& c : clients)
 		{
 			auto cliWriteLock = c->lock.createWriteLock();
@@ -175,7 +182,8 @@ struct relayserverinternal
 		msgBuilderUDP.addheader(11, 0, true);	/* ping header, true for UDP */
 
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		auto serverReadLock = server.lock.createReadLock();
+		auto serverClientListReadLock = server.lock_clientlist.createReadLock();
+		auto serverUDPWriteLock = server.lock_udp.createWriteLock();
 		for (const auto& client : clients)
 		{
 			if (client->_readonly)
@@ -252,7 +260,8 @@ struct relayserverinternal
 		if (pingUnresponsivesToDisconnect.empty() && inactivesToDisconnects.empty())
 			return;
 
-		serverReadLock.lw_unlock();
+		serverClientListReadLock.lw_unlock();
+		serverUDPWriteLock.lw_unlock();
 
 		// Loop all pending ping disconnects
 		for (auto& client : pingUnresponsivesToDisconnect)
@@ -263,12 +272,12 @@ struct relayserverinternal
 
 			// To allow client disconnect handlers to run without clashes, we keep the lock open
 			// as frequently as possible.
-			if (!serverReadLock.isEnabled())
-				serverReadLock.lw_relock();
+			if (!serverClientListReadLock.isEnabled())
+				serverClientListReadLock.lw_relock();
 
 			if (std::find(clients.begin(), clients.end(), client) != clients.end())
 			{
-				serverReadLock.lw_unlock();
+				serverClientListReadLock.lw_unlock();
 				auto clientWriteLock = client->lock.createWriteLock();
 				if (client->_readonly)
 					continue;
@@ -309,11 +318,11 @@ struct relayserverinternal
 			if (client->_readonly)
 				continue;
 
-			if (!serverReadLock.isEnabled())
-				serverReadLock.lw_relock();
+			if (!serverClientListReadLock.isEnabled())
+				serverClientListReadLock.lw_relock();
 			if (std::find(clients.begin(), clients.end(), client) != clients.end())
 			{
-				serverReadLock.lw_unlock();
+				serverClientListReadLock.lw_unlock();
 
 				auto clientWriteLock = client->lock.createWriteLock();
 				if (client->_readonly)
@@ -394,12 +403,12 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 
 	data.remove_prefix(sizeof(type) + sizeof(id));
 
-	auto serverReadLock = server.lock.createReadLock();
+	auto serverClientListReadLock = server.lock_clientlist.createReadLock();
 	for (const auto& clientsocket : clients)
 	{
 		if (clientsocket->_id == id)
 		{
-			serverReadLock.lw_unlock();
+			serverClientListReadLock.lw_unlock();
 			// Pay close attention to this * here. You can do
 			// lacewing::address == lacewing::_address, but
 			// not any other combo.
@@ -457,7 +466,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 		}
 	}
 
-	serverReadLock.lw_unlock();
+	serverClientListReadLock.lw_unlock();
 #if 0
 	// http://web.archive.org/web/20020609030916/http://www.gamehigh.net/document/netdocs/docs/ping_src.htm
 
@@ -720,7 +729,7 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 
 	if (blasted && !receivingClient->pseudoUDP)
 	{
-		auto serverWriteLock = server.lock.createWriteLock();
+		auto serverUDPWriteLock = server.lock_udp.createWriteLock();
 		builder.send(server.udp, receivingClient->udpaddress);
 	}
 	else
@@ -761,6 +770,8 @@ const char * relayserver::client::getimplementation() const
 			return "Macintosh";
 		case clientimpl::HTML5:
 			return "HTML5";
+		case clientimpl::UWP:
+			return "UWP";
 		default:
 			return "Unknown [error]";
 	}
@@ -849,7 +860,7 @@ void relayserverinternal::generic_handlerconnect(lacewing::server server, lacewi
 	auto newClient = std::make_shared<relayserver::client>(*this, clientsocket);
 	lw_server_client_set_relay_tag((lw_server_client)clientsocket, newClient.get());
 	{
-		auto serverWriteLock = this->server.lock.createWriteLock();
+		auto serverClientListWriteLock = this->server.lock_clientlist.createWriteLock();
 		this->clients.push_back(newClient);
 	}
 
@@ -878,7 +889,7 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 	lacewing::writelock cliWriteLock = client->lock.createWriteLock();
 	client->_readonly = true;
 
-	lacewing::writelock serverWriteLock = this->server.lock.createWriteLock();
+	lacewing::writelock serverClientListWriteLock = this->server.lock_clientlist.createWriteLock();
 	auto clientIt =
 		std::find_if(clients.begin(), clients.end(),
 			[=](const auto &p) { return p.get() == client; });
@@ -892,9 +903,6 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 
 	lw_server_client_set_relay_tag((lw_server_client)clientsocket, nullptr);
 
-	lw_trace("socket closure for %p", this->server.socket);
-	//client->socket->close(true);
-	//client->disconnect();
 	cliWriteLock.lw_unlock();
 
 	if (client->connectRequestApproved && handlerdisconnect && server->hosting())
@@ -902,13 +910,13 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 		// We want count of clients to be accurate for the ondisconnect handler.
 		// Note close_client() will also remove it, if it's the else block.
 		clients.erase(clientIt);
-		serverWriteLock.lw_unlock();
+		serverClientListWriteLock.lw_unlock();
 
 		handlerdisconnect(this->server, clientShd);
 	}
 	else
 	{
-		serverWriteLock.lw_unlock();
+		serverClientListWriteLock.lw_unlock();
 	}
 
 	close_client(clientShd);
@@ -1041,12 +1049,12 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			// This will instantly disconnect, destroying the relay tag; which will cause the relay
 			// write lock to notice the disconnect func is still write-locking the relay tag, and abort the app.
 			// So, we grab a shared_ptr owner for ourselves
-			auto rl = internal.server.lock.createReadLock();
+			auto serverClientListReadLock = internal.server.lock_clientlist.createReadLock();
 			const auto csc = std::find_if(internal.clients.crbegin(), internal.clients.crend(),
 				[=](const auto& s) { return &*s == clientPtr; });
 			if (csc == internal.clients.crend())
 			{
-				rl.lw_unlock();
+				serverClientListReadLock.lw_unlock();
 				// This direct close may still cause a crash, but no idea what recovery we can do at this point
 				clientsocket->tag(nullptr);
 				clientsocket->close(true);
@@ -1054,7 +1062,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			else
 			{
 				const auto csc2 = *csc;
-				rl.lw_unlock();
+				serverClientListReadLock.lw_unlock();
 				csc2->disconnect(1003);
 			}
 			return;
@@ -1105,12 +1113,12 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 	// This will instantly disconnect, destroying the relay tag; which will cause the relay
 	// write lock to notice the disconnect func is still write-locking the relay tag, and abort the app.
 	// So, we grab a shared_ptr owner for ourselves
-	auto rl = internal.server.lock.createReadLock();
+	auto serverClientListReadLock = internal.server.lock_clientlist.createReadLock();
 	const auto csc = std::find_if(internal.clients.crbegin(), internal.clients.crend(),
 		[=](const auto& s) { return &*s == clientPtr; });
 	if (csc == internal.clients.crend())
 	{
-		rl.lw_unlock();
+		serverClientListReadLock.lw_unlock();
 		// This direct close may still cause a crash, but no idea what recovery we can do at this point
 		clientsocket->tag(nullptr);
 		clientsocket->close(true);
@@ -1118,7 +1126,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 	else
 	{
 		const auto csc2 = *csc;
-		rl.lw_unlock();
+		serverClientListReadLock.lw_unlock();
 		csc2->disconnect(1008);
 	}
 }
@@ -1154,7 +1162,9 @@ void handlerwebserverget(lacewing::webserver webserver, lacewing::webserver_requ
 	relayserverinternal& internal = *(relayserverinternal*)webserver->tag();
 	std::string error;
 
-	if (!strcasecmp(req->header("Connection"), "upgrade"))
+	// According to spec Connection must only *include* Upgrade.
+	// Firefox sends Keep-Alive as well, for some reason.
+	if (strstr(req->header("Connection"), "Upgrade") != NULL)
 	{
 		do {
 			const char* webSocketKey2 = req->header("Sec-WebSocket-Key");
@@ -1205,7 +1215,7 @@ void handlerwebserverget(lacewing::webserver webserver, lacewing::webserver_requ
 		} while (false);
 
 		lacewing::error err = lacewing::error_new();
-		err->add("Failed a HTML5 WebSocket connection, due to %s.\n", error.c_str());
+		err->add("Failed a HTML5/UWP WebSocket connection, due to %s.\n", error.c_str());
 		if (internal.handlererror)
 			internal.handlererror(internal.server, err);
 		lacewing::error_delete(err);
@@ -1542,13 +1552,13 @@ void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> ch
 
 	// Remove the channel from server's list (if it exists)
 	{
-		auto serverWriteLock = server.lock.createWriteLock();
+		auto serverChannelListWriteLock = server.lock_channellist.createWriteLock();
 		for (auto e3 = channels.begin(); e3 != channels.end(); e3++)
 		{
 			if (*e3 == channel)
 			{
 				// LW_ESCALATION_NOTE
-				// auto serverWriteLock = serverReadLock.lw_upgrade();
+				// auto serverChannelListWriteLock = serverChannelListReadLock.lw_upgrade();
 				channels.erase(e3);
 				break;
 			}
@@ -1597,6 +1607,8 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 		// PHI NOTE 29TH DEC: loop server list of channels, upon match run this code
 		// Ensure channel is still open; we rarely get a race condition where it's not
 		channel_removeclient(clientJoinedCh, client);
+		// channel may still contain us in client list if channel close was triggered and close handler was
+		// delayed, but client should no longer have it in channel list.
 		if (std::find(client->channels.cbegin(), client->channels.cend(), clientJoinedCh) != client->channels.cend())
 			LacewingFatalErrorMsgBox();
 	}
@@ -1607,8 +1619,8 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 	clientWriteLock.lw_unlock();
 
 	// LW_ESCALATION_NOTE
-	//auto serverReadLock = server.lock.createReadLock();
-	auto serverWriteLock = server.lock.createWriteLock();
+	//auto serverClientListReadLock = server.lock_clientlist.createReadLock();
+	auto serverClientListWriteLock = server.lock_clientlist.createWriteLock();
 
 	// Drop this client from server list (if it exists)
 	for (auto cli = clients.begin(); cli != clients.end(); cli++)
@@ -1616,7 +1628,7 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 		if (*cli == client)
 		{
 			// LW_ESCALATION_NOTE
-			// auto serverWriteLock = serverReadLock.lw_upgrade();
+			// auto serverClientListWriteLock = serverClientListReadLock.lw_upgrade();
 			clients.erase(cli);
 			break;
 		}
@@ -1726,10 +1738,6 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 	auto channelWriteLock = channel->lock.createWriteLock();
 	auto clientWriteLock = client->lock.createWriteLock();
 
-	// Note: We still have to tell peers if only leaving client is readonly, so keep running.
-	if (channel->_readonly /* || client->_readonly */)
-		return;
-
 	// Drop channel from client's joined channel list - note this happens even if the channel close handler pauses things
 	for (auto e2 = client->channels.begin(); e2 != client->channels.end(); e2++)
 	{
@@ -1739,6 +1747,12 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 			break;
 		}
 	}
+
+	// Note: We still have to tell peers if only leaving client is readonly, so keep running.
+	// If client is disconnecting and channel is already closed, we're in the limbo between close handler queued
+	// and completed.
+	if (channel->_readonly /* || client->_readonly */)
+		return;
 
 	framebuilder builder(true);
 
@@ -1885,7 +1899,7 @@ bool relayserver::client::checkname(std::string_view name)
 	}
 
 	const std::string nameSimplified = lw_u8str_simplify(name);
-	auto serverReadLock = server.server.lock.createReadLock();
+	auto serverClientListReadLock = server.server.lock_clientlist.createReadLock();
 
 	// const auto breaks on Unix - the lock doesn't destruct
 	for (auto& e2 : server.clients)
@@ -2528,6 +2542,9 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			// First test in client build 99, first release as build 100
 			else if (impl.find("HTML5"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::HTML5;
+			// Released in client build 101 - uses HTML5 JS code
+			else if (impl.find("UWP"sv) != std::string_view::npos)
+				client->clientImpl = relayserver::client::clientimpl::UWP;
 			// While supported, Blue Flash never existed, and Relay Flash won't return a implementation response
 			else if (impl.find("Flash"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Flash;
@@ -2616,15 +2633,12 @@ void relayserver::client::blast(lw_ui8 subchannel, std::string_view message, lw_
 	builder.add<lw_ui8>(subchannel);
 	builder.add (message);
 
-	auto serverWriteLock = server.server.lock.createWriteLock();
+	auto serverUDPWriteLock = server.server.lock_udp.createWriteLock();
 	auto clientReadLock = lock.createReadLock();
 	if (!_readonly)
 	{
 		if (pseudoUDP)
-		{
 			builder.send(this->socket);
-			builder.revert();
-		}
 		else
 			builder.send(server.server.udp, udpaddress);
 	}
@@ -2664,10 +2678,10 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 	if (_readonly)
 		return;
 
-	auto serverWriteLock = server.server.lock.createWriteLock();
+	auto serverClientListReadLock = server.server.lock_clientlist.createReadLock();
 	for (const auto& e : clients)
 	{
-		auto clientReadLock = e->lock.createWriteLock();
+		auto clientWriteLock = e->lock.createWriteLock();
 		if (!e->_readonly)
 		{
 			if (e->socket->is_websocket())
@@ -2684,7 +2698,7 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 /// <summary> Throw all clients off this channel, sending Leave Request Success. </summary>
 void relayserver::channel::close()
 {
-	auto serverReadLock = server.server.lock.createReadLock();
+	auto serverChannelListReadLock = server.server.lock_channellist.createReadLock();
 	auto ch = std::find_if(server.channels.begin(), server.channels.end(),
 		[=](const auto &p) { return p.get() == this; });
 
@@ -2692,7 +2706,7 @@ void relayserver::channel::close()
 	if (ch == server.channels.end())
 		return;
 
-	serverReadLock.lw_unlock();
+	serverChannelListReadLock.lw_unlock();
 	server.close_channel(*ch);
 }
 
@@ -2820,20 +2834,20 @@ std::vector<std::shared_ptr<lacewing::relayserver::client>>& relayserver::channe
 
 void relayserver::setwelcomemessage(std::string_view message)
 {
-	lacewing::writelock wl = lock.createWriteLock();
+	lacewing::writelock serverMetaWriteLock = lock_meta.createWriteLock();
 	relayserverinternal& serverinternal = *(relayserverinternal *)internaltag;
 	serverinternal.welcomemessage = message;
 }
 
 std::string relayserver::getwelcomemessage()
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock serverMetaReadLock = lock_meta.createReadLock();
 	return ((relayserverinternal *)internaltag)->welcomemessage;
 }
 
 void relayserver::setchannellisting (bool enabled)
 {
-	lacewing::writelock wl = lock.createWriteLock();
+	lacewing::writelock serverMetaWriteLock = lock_meta.createWriteLock();
 	((relayserverinternal *) internaltag)->channellistingenabled = enabled;
 }
 
@@ -2853,26 +2867,26 @@ void relayserver::client::disconnect(int websocketReasonCode)
 		return;
 	}
 
-	lacewing::writelock wl = lock.createWriteLock();
+	lacewing::writelock clientWriteLock = lock.createWriteLock();
 	if (socket && socket->valid())
 		socket->close();
 }
 
 std::string relayserver::client::name() const
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock clientReadLock = lock.createReadLock();
 	return _name;
 }
 
 std::string relayserver::client::nameSimplified() const
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock clientReadLock = lock.createReadLock();
 	return _namesimplified;
 }
 
 void relayserver::client::name(std::string_view name)
 {
-	lacewing::writelock wl = lock.createWriteLock();
+	lacewing::writelock clientWriteLock = lock.createWriteLock();
 	_prevname = _name;
 	_name = name;
 	_namesimplified = lw_u8str_simplify(name);
@@ -2895,7 +2909,7 @@ std::vector<std::shared_ptr<lacewing::relayserver::channel>> & relayserver::clie
 
 size_t relayserver::channelcount() const
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock serverChannelListReadLock = lock_channellist.createReadLock();
 	return ((relayserverinternal *) internaltag)->channels.size();
 }
 
@@ -2909,14 +2923,14 @@ void relayserver::setinactivitytimer(long MS)
 std::string relayserver::setcodepointsallowedlist(codepointsallowlistindex type, std::string acStr) {
 	// String should be format:
 	// 2 letters, or 1 letter + *, or an integer number that is the UTF32 number of char
-	lacewing::writelock wl = lock.createWriteLock();
+	lacewing::writelock serverMetaWriteLock = lock_meta.createWriteLock();
 	return ((relayserverinternal *)internaltag)->setcodepointsallowedlist(type, acStr);
 }
 
 // True if the string passed only has code points within the code point allow list.
 int relayserver::checkcodepointsallowed(relayserver::codepointsallowlistindex type, std::string_view toTest, int * rejectedUTF32CodePoint /* = nullptr */) const
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock serverMetaReadLock = lock_meta.createReadLock();
 	return ((relayserverinternal *)internaltag)->checkcodepointsallowed(type, toTest, rejectedUTF32CodePoint);
 }
 
@@ -2927,12 +2941,12 @@ std::string relayserverinternal::setcodepointsallowedlist(relayserver::codepoint
 
 std::vector<std::shared_ptr<lacewing::relayserver::client>> & relayserver::getclients()
 {
-	lock.checkHoldsRead();
+	lock_clientlist.checkHoldsRead();
 	return ((lacewing::relayserverinternal *)internaltag)->clients;
 }
 std::vector<std::shared_ptr<lacewing::relayserver::channel>>& relayserver::getchannels()
 {
-	lock.checkHoldsRead();
+	lock_channellist.checkHoldsRead();
 	return ((lacewing::relayserverinternal *)internaltag)->channels;
 }
 
@@ -2964,13 +2978,13 @@ lw_i64 relayserver::client::getconnecttime() const
 
 size_t relayserver::clientcount() const
 {
-	lacewing::readlock rl = lock.createReadLock();
+	lacewing::readlock serverClientListReadLock = lock_clientlist.createReadLock();
 	return ((relayserverinternal *)internaltag)->clients.size();
 }
 
 relayserver::client::~client() noexcept
 {
-	writelock wl = lock.createWriteLock();
+	lacewing::writelock clientWriteLock = lock.createWriteLock();
 	//lw_trace("~relayserver::client called for address %p, name %s, ID %hu\n", this, _name.c_str(), _id);
 
 	channels.clear();
@@ -3031,7 +3045,7 @@ std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_vie
 	}
 	else
 	{
-		lacewing::writelock serverWriteLock = lock.createWriteLock();
+		lacewing::writelock serverChannelListWriteLock = lock_channellist.createWriteLock();
 		if (std::find(serverinternal.channels.cbegin(), serverinternal.channels.cend(), channel) == serverinternal.channels.cend())
 			serverinternal.channels.push_back(channel);
 	}
@@ -3070,7 +3084,7 @@ void relayserver::connect_response(
 
 	// Force a connect refusal if not hosting server
 	// TODO: Is this necessary? Client should've been d/c'd on unhost
-	// If it is necessary, the HTML5 server hosting check is borked, client could be on the other  server
+	// If it is necessary, this WebSocket server hosting check is borked, as connecting client could be on the other WebSocket server
 	std::string_view denyReason = passedDenyReason;
 	if (denyReason.empty() && (client->socket->is_websocket() ? !websocket->hosting() && !websocket->hosting_secure() : !hosting()))
 		denyReason = "Server has shut down."sv;
@@ -3234,10 +3248,10 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 		return;
 	}
 
-	lacewing::writelock serverWriteLock = lock.createWriteLock();
+	lacewing::writelock serverChannelListWriteLock = lock_channellist.createWriteLock();
 	if (std::find(serverinternal.channels.cbegin(), serverinternal.channels.cend(), channel) == serverinternal.channels.cend())
 		serverinternal.channels.push_back(channel);
-	serverWriteLock.lw_unlock();
+	serverChannelListWriteLock.lw_unlock();
 
 	// LW_ESCALATION_NOTE
 	channelReadLock.lw_unlock();
@@ -3521,9 +3535,9 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 	// Loop through and send message to all clients that aren't this one
 
 	// Only need server write lock for shared lw_udp socket
-	auto serverWriteLock = server.lock.createWriteLock();
+	auto serverUDPWriteLock = server.lock_udp.createWriteLock();
 	if (!blasted)
-		serverWriteLock.lw_unlock();
+		serverUDPWriteLock.lw_unlock();
 
 	for (const auto& e : clients)
 	{
@@ -3543,10 +3557,10 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 	builder.framereset();
 }
 
-
 #define autohandlerfunctions(pub, intern, handlername)			  \
-	void pub::on##handlername(pub::handler_##handlername handler)   \
-		{   ((intern *) internaltag)->handler##handlername = handler;	  \
+	void pub::on##handlername(pub::handler_##handlername handler) {  \
+			lacewing::writelock serverMetaWriteLock = lock_meta.createWriteLock(); \
+			((intern *) internaltag)->handler##handlername = handler;	  \
 		}
 autohandlerfunctions(relayserver, relayserverinternal, connect)
 autohandlerfunctions(relayserver, relayserverinternal, disconnect)

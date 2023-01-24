@@ -125,10 +125,10 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkAction(86, Channel_KickClientByName);
 		LinkAction(87, Channel_KickClientByID);
 		LinkAction(88, SetUnicodeAllowList);
-		LinkAction(89, HTML5Server_LoadHostCertificate_FromFile);
-		LinkAction(90, HTML5Server_LoadHostCertificate_FromSystemStore);
-		LinkAction(91, HTML5Server_EnableHosting);
-		LinkAction(92, HTML5Server_DisableHosting);
+		LinkAction(89, WebSocketServer_LoadHostCertificate_FromFile);
+		LinkAction(90, WebSocketServer_LoadHostCertificate_FromSystemStore);
+		LinkAction(91, WebSocketServer_EnableHosting);
+		LinkAction(92, WebSocketServer_DisableHosting);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);
@@ -192,7 +192,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkCondition(57, DoesClientNameExist);
 		LinkCondition(58, DoesClientIDExist);
 		LinkCondition(59, AlwaysTrue /* UponChannelClose */);
-		LinkCondition(60, IsHTML5Hosting);
+		LinkCondition(60, IsWebSocketHosting);
 	}
 	{
 		LinkExpression(0, Error);
@@ -247,9 +247,9 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		LinkExpression(48, ConvToUTF8_GetByteCount);
 		LinkExpression(49, ConvToUTF8_TestAllowList);
 		LinkExpression(50, Channel_ID);
-		LinkExpression(51, HTML5_Insecure_Port);
-		LinkExpression(52, HTML5_Secure_Port);
-		LinkExpression(53, HTML5_Cert_ExpiryTime);
+		LinkExpression(51, WebSocket_Insecure_Port);
+		LinkExpression(52, WebSocket_Secure_Port);
+		LinkExpression(53, WebSocket_Cert_ExpiryTime);
 	}
 
 #if EditorBuild
@@ -560,7 +560,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	if (pendingDelete)
 		return;
 
-	auto srvWriteLock = _server.lock.createWriteLock();
+	auto srvMetaWriteLock = _server.lock_meta.createWriteLock();
 
 	// We're no longer responding to these events
 	_server.onerror(nullptr);
@@ -593,7 +593,7 @@ void GlobalInfo::MarkAsPendingDelete()
 
 	_objEventPump->post_eventloop_exit();
 
-	srvWriteLock.lw_unlock();
+	srvMetaWriteLock.lw_unlock();
 
 	// Multithreading mode; wait for thread to end
 	if (_thread.joinable())
@@ -1276,7 +1276,7 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> evt)
 					const std::string newChannelNameU8Simplified = lw_u8str_simplify(NewChannelName);
 					// New channel name is in use by another channel
 					auto channelWriteLock = evt->channel->lock.createWriteLock();
-					auto serverReadLock = Srv.lock.createReadLock();
+					auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 					auto channels = Srv.getchannels();
 					auto srvChIt = std::find_if(channels.cbegin(), channels.cend(),
 						[&](const auto & otherCh) { return otherCh != evt->channel && lw_sv_cmp(newChannelNameU8Simplified, otherCh->nameSimplified()); });

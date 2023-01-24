@@ -15,7 +15,7 @@ static size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size
 
 void lwp_clientssl_init (lwp_clientssl ctx,
 						 CredHandle server_creds,
-						 lw_stream socket)
+						 lw_server_client socket)
 {
 	memset (ctx, 0, sizeof (*ctx));
 

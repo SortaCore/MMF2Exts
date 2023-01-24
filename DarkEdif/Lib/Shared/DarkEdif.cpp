@@ -2340,7 +2340,7 @@ bool DarkEdif::Properties::IsPropChecked(int propID) const
 {
 	if (propID >= this->numProps)
 	{
-		LOGE(_T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu is out of bounds."), propID, this->numProps);
+		LOGE(_T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu."), propID, this->numProps);
 		return false;
 	}
 	// The dataForProps consists of a set of chars, whereby each bit in the char is the "checked"

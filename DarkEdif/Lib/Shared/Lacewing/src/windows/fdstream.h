@@ -51,6 +51,7 @@ struct _lw_fdstream
 	int num_pending_writes;
 
 	lw_list (fdstream_overlapped, pending_writes);
+	lw_sync pending_writes_sync;
 
 	lw_fdstream transmitfile_from, transmitfile_to;
 };

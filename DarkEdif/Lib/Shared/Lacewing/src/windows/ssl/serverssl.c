@@ -13,32 +13,6 @@
 #include "serverssl.h"
 #include "../fdstream.h"
 
-// TODO: These fake structs are a hack to get around the otherwise opaque pointers, to get the error handler
-// Can't clone the handler's address, in case it's changed; can copy server, though, but can't get the handler from that
-// Maybe an extra internal function
-
-struct _lw_server_fake
-{
-	lwp_refcounted;
-
-	SOCKET socket;
-
-	lw_pump pump;
-	lw_pump_watch pump_watch;
-
-	lw_server_hook_connect on_connect;
-	lw_server_hook_disconnect on_disconnect;
-	lw_server_hook_data on_data;
-	lw_server_hook_error on_error;
-	// ... not the real struct, which is defined in a .c file
-};
-struct _lw_server_client_fake
-{
-	struct _lw_fdstream fdstream;
-
-	struct _lw_server_fake* server;
-	// ... not the real struct, which is defined in a .c file
-};
 static size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size);
 
 void lwp_serverssl_init (lwp_serverssl ctx,
@@ -47,7 +21,7 @@ void lwp_serverssl_init (lwp_serverssl ctx,
 {
 	ctx->server_creds = server_creds;
 	ctx->socket = socket;
-	lwp_ssl_init (&ctx->ssl, (lw_stream) socket);
+	lwp_ssl_init (&ctx->ssl, socket);
 
 	ctx->ssl.proc_handshake_data = proc_handshake_data;
 }
@@ -124,13 +98,11 @@ size_t proc_handshake_data (lwp_ssl ssl, const char * buffer, size_t size)
 	  lw_error_add(error, GetLastError() );
 	  lw_error_addf(error, "Secure handshake failure");
 
-	  struct _lw_server_client_fake* sock = (struct _lw_server_client_fake *)ctx->socket;
-	  if (sock->server->on_error)
-		  sock->server->on_error((lw_server)sock->server, error);
+	  if (ctx->ssl.handle_error)
+		 ctx->ssl.handle_error(ctx->socket, error);
 
 	  lw_error_delete(error);
 
-	  lw_stream_close(&sock->fdstream.stream, lw_false);
 	  return size;
 	}
 

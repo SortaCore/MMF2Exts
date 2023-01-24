@@ -380,10 +380,39 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 		}
 		else
 		{
-			queue_back (ctx, buffer + written, size - written);
+#if _WIN32
+			// Phi note 6th Jan 2023: queue_back() was indefinitely queued and wouldn't advance
+			// for secure websockets on Windows.
+			// Initial data - that is, the lacewing connect and response, including implementation, would work.
+			// But after that, no server-sent messages would go through, and received client messages
+			// would be received, but due to not processing and decrypting all the data prior, could not decrypt
+			// properly.
+			// Note the SECBUFFER_EXTRA data, which is initial TLS non-handshake data that is returned back by
+			// the handshake func, and is not yet decrypted, thus must be passed through to the encrypt func again;
+			// this extra data triggers this if(), as not all data "written" to the TLS stream was passed through,
+			// so written < size.
+			// Since we were getting an infinite recursion where written == 0, I check written is > 0 first.
+			// Fallback are queue_back(), which on Windows doesn't work and causes client to be kicked from timeout,
+			// but is better than recurring to death.
+			//
+			
+			// loop around and pass again
+			if (written > 0)
+			{
+				const size_t roundTwo = lwp_stream_write(ctx, buffer + written, size - written, flags);
+				if (roundTwo < size - written)
+				{
+					always_log("Failed to loop around initial TLS data. Attempting to queue_back().");
+					written -= roundTwo;
+					queue_back(ctx, buffer + written, size - written);
+				}
+			}
+			else // infinite loop of written == 0 is bad
+#endif // _WIN32
+				queue_back(ctx, buffer + written, size - written);
 		}
 	}
-
+	
 	return size;
 }
 

@@ -44,7 +44,7 @@ lw_bool lw_file_exists (const char * filename)
 	if (stat(filename, &attr) == 0)
 		return !S_ISDIR(attr.st_mode);
 
-	always_log("%s stat failed", filename);
+	always_log("%s stat failed, errno %d: %s", filename, errno, strerror(errno));
 	return lw_false;
 }
 

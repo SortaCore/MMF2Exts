@@ -264,7 +264,7 @@ void Edif::Free(EDITDATA * edPtr)
 	// ??
 }
 
-#ifndef _DEBUG
+#if defined(_WIN32) && !defined(_DEBUG)
 // CRT invalid parameter handler
 extern "C" void DarkEdif_Invalid_Parameter(const wchar_t* /*expression - NULL*/, const wchar_t* /*function - NULL */,
 	const wchar_t* /* file - NULL */, unsigned int /* line = 0 */, uintptr_t /* pReserved - irrelevant */)
@@ -276,7 +276,7 @@ extern "C" void DarkEdif_Invalid_Parameter(const wchar_t* /*expression - NULL*/,
 	// returning EINVAL instead.
 
 	// To get proper debug information, build your application under Debug Unicode (or Debug), not Edittime/Runtime.
-	LOGE(_T("CRT invalid parameter caught"), _T("Invalid parameter crash - since it's not Debug, no trace information."));
+	LOGE(_T("Invalid parameter crash - since it's not Debug, no trace information."));
 	DarkEdif::MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
 		"If you're a Fusion extension developer, attach a debugger now for information.\n"
 		"Otherwise, the program will attempt to continue."));
@@ -384,7 +384,6 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 #endif // not Debug
 
 #endif
-
 	// Get JSON file
 	char * JSON;
 	size_t JSON_Size;

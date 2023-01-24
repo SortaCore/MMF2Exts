@@ -74,6 +74,17 @@ struct _lw_server_client
 	lw_server_client * elem;
 };
 
+void on_ssl_error(lw_server_client client, lw_error error)
+{
+	lw_error_addf(error, "SSL error");
+
+	if (client->server->on_error)
+		client->server->on_error(client->server, error);
+
+	// SSL errors are generally unrecoverable
+	lw_stream_close((lw_stream)client, lw_true);
+}
+
 static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int fd)
 {
 	lw_server_client client = (lw_server_client)calloc (sizeof (*client), 1);
@@ -99,7 +110,7 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 
 		if (ctx->ssl_context)
 		{
-			client->ssl = lwp_sslclient_new (ctx->ssl_context, (lw_stream) client,
+			client->ssl = lwp_sslclient_new (ctx->ssl_context, client,
 											on_ssl_handshook, client);
 		}
 

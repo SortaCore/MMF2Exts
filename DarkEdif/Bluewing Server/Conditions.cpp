@@ -59,7 +59,7 @@ bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, cons
 	else
 	{
 		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -75,7 +75,7 @@ bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, cons
 	else
 	{
 		const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
@@ -119,7 +119,7 @@ bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channel
 	// Always look up client ID
 	// If user wants to use currently selected client, they can use the shortcut of IsClientOnChannel_Name with a blank name
 	{
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 		const auto &clients = Srv.getclients();
 		auto foundCliIt =
 			std::find_if(clients.cbegin(), clients.cend(),
@@ -135,7 +135,7 @@ bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channel
 	else
 	{
 		const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
-		auto serverReadLock = Srv.lock.createReadLock();
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 		const auto &channels = Srv.getchannels();
 		auto foundChIt =
 			std::find_if(channels.cbegin(), channels.cend(),
@@ -209,7 +209,7 @@ bool Extension::DoesChannelNameExist(const TCHAR * channelNamePtr)
 
 	const std::string channelNameU8Simplified = TStringToUTF8Simplified(channelNamePtr);
 
-	auto serverReadLock = Srv.lock.createReadLock();
+	auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 	const auto &channels = Srv.getchannels();
 	auto foundChIt =
 		std::find_if(channels.cbegin(), channels.cend(),
@@ -225,7 +225,7 @@ bool Extension::DoesClientNameExist(const TCHAR * clientNamePtr)
 
 	const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
 
-	auto serverReadLock = Srv.lock.createReadLock();
+	auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 	const auto &clients = Srv.getclients();
 	auto foundCliIt =
 		std::find_if(clients.cbegin(), clients.cend(),
@@ -239,7 +239,7 @@ bool Extension::DoesChannelIDExist(int channelID)
 	if (channelID < 0 || channelID >= 0xFFFF)
 		return CreateError("Error checking if channel exists, channel ID was invalid."), false;
 
-	auto serverReadLock = Srv.lock.createReadLock();
+	auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 	const auto &channels = Srv.getchannels();
 	auto foundChIt =
 		std::find_if(channels.cbegin(), channels.cend(),
@@ -251,7 +251,7 @@ bool Extension::DoesClientIDExist(int clientID)
 	if (clientID < 0 || clientID >= 0xFFFF)
 		return CreateError("Error checking if client exists, client ID was invalid."), false;
 
-	auto serverReadLock = Srv.lock.createReadLock();
+	auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 	const auto &clients = Srv.getclients();
 	auto foundCliIt =
 		std::find_if(clients.cbegin(), clients.cend(),
@@ -261,7 +261,7 @@ bool Extension::DoesClientIDExist(int clientID)
 	return foundCliIt != clients.cend();
 }
 
-bool Extension::IsHTML5Hosting(const TCHAR * serverTypeParam)
+bool Extension::IsWebSocketHosting(const TCHAR * serverTypeParam)
 {
 	const std::string serverType = TStringToUTF8Simplified(serverTypeParam);
 	const bool hostingSecure = Srv.websocket->hosting_secure(),
@@ -276,6 +276,6 @@ bool Extension::IsHTML5Hosting(const TCHAR * serverTypeParam)
 	if (serverType == "either"sv || serverType == "any"sv)
 		return hostingSecure || hostingInsecure;
 
-	CreateError("Is HTML5 Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.", serverTypeParam);
+	CreateError("Is WebSocket Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.", serverTypeParam);
 	return false;
 }

@@ -1700,7 +1700,7 @@ struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 100;
+	const static int buildnum = 101;
 
 	void * internaltag = nullptr, *tag = nullptr;
 
@@ -1924,7 +1924,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 33;
+	static const int buildnum = 34;
 
 	void * internaltag, * tag = nullptr;
 
@@ -2048,19 +2048,9 @@ struct relayserver
 			Android,
 			iOS,
 			Macintosh,
-			HTML5
+			HTML5,
+			UWP
 			// Edit relayserverinternal::client::getimplementation if you add more lines
-		};
-
-		enum class webstate {
-			// Not a websocket
-			rawsocket = -1,
-			// In Lacewing websocket mode
-			websocket = 0,
-			// Websocket handshake part 1: Waiting for client to send HTTP upgrade request
-			httprequestpending,
-			// Websocket handshake part 2: Waiting for client to reply to the HTTP upgrade approval in a Lacewing way
-			httprespackpending,
 		};
 
 		mutable lacewing::readwritelock lock;
@@ -2116,7 +2106,7 @@ struct relayserver
 
 		std::string clientImplStr;
 
-		bool pseudoUDP = true; // Is UDP not supported (e.g. Flash, HTML5) so "faked" by receiver
+		bool pseudoUDP = true; // Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
 
 		// Got opening null byte, indicating not a HTTP client.
 		bool gotfirstbyte = false;
@@ -2151,7 +2141,14 @@ struct relayserver
 	// Expects you have already checked channel with that name does not exist.
 	std::shared_ptr<relayserver::channel> createchannel(std::string_view channelName, std::shared_ptr<lacewing::relayserver::client> master, bool hidden, bool autoclose);
 
-	mutable lacewing::readwritelock lock;
+	// handles unhost/host, welcome message change, handler change
+	mutable lacewing::readwritelock lock_meta;
+	// handles channel list modifications - only to the underlying vector, not to requests like leave or close requests
+	mutable lacewing::readwritelock lock_channellist;
+	// handles client list modifications - only to the underlying vector, not to requests like disconnect requests
+	mutable lacewing::readwritelock lock_clientlist;
+	// handles UDP?
+	mutable lacewing::readwritelock lock_udp;
 
 	typedef void(*handler_connect)		(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client);
 	typedef void(*handler_disconnect)	(lacewing::relayserver &server, std::shared_ptr<lacewing::relayserver::client> client);

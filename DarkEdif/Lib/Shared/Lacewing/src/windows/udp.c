@@ -358,7 +358,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	++ctx->writes_posted;
 	lwp_retain(ctx, "udp write");
 
-	if (WSASendTo (ctx->socket, &winsock_buf, 1, 0, 0, addr->info->ai_addr,
+	if (WSASendTo (ctx->socket, &winsock_buf, 1, 0, /* MSG_XX flags */ 0, addr->info->ai_addr,
 				  (int)addr->info->ai_addrlen, (OVERLAPPED *) overlapped, 0) == SOCKET_ERROR)
 	{
 		int code = WSAGetLastError();

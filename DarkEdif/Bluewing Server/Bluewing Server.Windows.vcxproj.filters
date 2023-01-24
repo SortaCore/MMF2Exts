@@ -31,16 +31,7 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\udp.c">
       <Filter>Source files\Lacewing\src\windows</Filter>
     </ClCompile>
-    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\sslclient.c">
-      <Filter>Source files\Lacewing\src\windows</Filter>
-    </ClCompile>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\global2.c">
-      <Filter>Source files\Lacewing\src\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.c">
-      <Filter>Source files\Lacewing\src\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.c">
       <Filter>Source files\Lacewing\src\windows</Filter>
     </ClCompile>
     <ClCompile Include="Edittime.cpp">
@@ -48,6 +39,12 @@
     </ClCompile>
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp">
       <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.c">
+      <Filter>Source files\Lacewing\src\windows\ssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.c">
+      <Filter>Source files\Lacewing\src\windows\ssl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -66,11 +63,14 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\typeof.h">
       <Filter>Header files\Lacewing\src\windows</Filter>
     </ClInclude>
-    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\sslclient.h">
-      <Filter>Header files\Lacewing\src\windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
       <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.h">
+      <Filter>Header files\Lacewing\src\windows\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.h">
+      <Filter>Header files\Lacewing\src\windows\ssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -126,6 +126,12 @@
     </Filter>
     <Filter Include="Header files\Lacewing\src\windows">
       <UniqueIdentifier>{a7ff7726-93b4-4d9b-9d59-40a9177993fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Lacewing\src\windows\ssl">
+      <UniqueIdentifier>{e073860b-849d-425e-aa67-1f15072c3d5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Lacewing\src\windows\ssl">
+      <UniqueIdentifier>{61203ccc-0e0f-44e7-807c-8f8227d337f9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -165,7 +165,7 @@ void lwp_stream_init (lw_stream, const lw_streamdef *, lw_pump);
  void lwp_stream_push (lw_stream, const char * buffer, size_t size);
 
 
-/* Extended (internal) versions of lw_stream_write* */
+/* Extended (internal) versions of lw_stream_write */
 
 #define lwp_stream_write_ignore_filters  1
 #define lwp_stream_write_ignore_busy  2

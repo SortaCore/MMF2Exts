@@ -319,6 +319,7 @@ void LacewingFatalErrorMsgBox2(const char * const func, const char * const file,
 	err << "Lacewing fatal error detected.\nFile: "sv << fileSub << "\nFunction: "sv << func << "\nLine: "sv << line;
 #ifdef _WIN32
 	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " fatal error", MB_ICONERROR);
+	std::abort();
 #else
 	char output[512];
 	strcpy(output, err.str().c_str());

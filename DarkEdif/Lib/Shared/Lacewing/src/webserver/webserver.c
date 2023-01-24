@@ -123,7 +123,7 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 		}
 
 		// Packet length is three forms in WebSocket; 8-bit (<126), 16-bit (126), and 64-bit (127).
-		// We don't expect user to send >65kb message via Bluewing, HTML5 or not.
+		// We don't expect user to send >65kb message via Bluewing, WebSocket or not.
 		// It's possible we could read it anyway if it's less than 4GB, but the
 		// Bluewing level ping timeout will make sending big packets dangerous anyway.
 		lw_i32 packetLen = data[1] & 0b01111111;
@@ -149,9 +149,11 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 			// Packet is too small to necessitate a 2-byte size
 			if (size < 2 + 4 + 126)
 			{
-				error = "message too small to be valid";
-				errorCode = 1002;
-				break;
+				// Pretend we haven't read anything, so this header comes back, but with more data behind it
+				// This is necessary due to Firefox sending big WS packets as one network packet with just WS header,
+				// with next packet data.
+				// TODO: Performance: WebSocket large packet processing will be faster if we actually store the read part here, like MessageReader does.
+				return 0;
 			}
 
 			packetLen = ntohs(*(unsigned short*)&data[0]);
