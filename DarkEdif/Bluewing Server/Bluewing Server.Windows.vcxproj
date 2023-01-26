@@ -73,9 +73,6 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);..\Lib\Shared\Lacewing;$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USING_V110_SDK71_;NOPROPS;_lacewing_static;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
-    <Link>
-      <OutputFile>D:\Program Files (x86)\Multimedia Fusion 2\Extensions\$(TargetName)$(TargetExt)</OutputFile>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'">
     <ClCompile>
