@@ -122,6 +122,7 @@ unsigned int Extension::RecvMsg_UnsignedByte(int index)
 
 	return (unsigned int)(*(unsigned char *)(threadData->receivedMsg.content.data() + index));
 }
+
 int Extension::RecvMsg_SignedByte(int index)
 {
 	if (index < 0)
@@ -129,6 +130,10 @@ int Extension::RecvMsg_SignedByte(int index)
 	if (threadData->receivedMsg.content.size() - index < sizeof(char))
 		return CreateError("Could not read signed byte from received binary at position %i, amount of message remaining is smaller than variable to be read.", index), 0;
 
+	// Note: on ARM arch, char pretends to be signed by default (IntelliSense and compiler checks say it's signed), but is actually unsigned.
+	// https://developer.arm.com/documentation/dui0041/c/ARM-Procedure-Call-Standard/C-language-calling-conventions/Argument-representation?lang=en
+	// This is overridden with -fsigned-char in FusionSDK.props
+	
 	return (int)(*(threadData->receivedMsg.content.data() + index));
 }
 unsigned int Extension::RecvMsg_UnsignedShort(int index)

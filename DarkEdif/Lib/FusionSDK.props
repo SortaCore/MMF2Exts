@@ -658,8 +658,9 @@
 			<AdditionalIncludeDirectories>$(Sysroot)\usr\include;$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 
 			<!-- Don't export any functions by default, as Java doesn't need to see them.
+				 Char is signed in normal builds, but runs as unsigned on built APKs - override that.
 				 Disable #pragma comment getting compiler upset, and other issues. -->
-			<AdditionalOptions>-fvisibility=hidden -fPIC -fasm-blocks -Wno-unknown-pragmas -Wno-unused-const-variable -Wno-missing-braces %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fvisibility=hidden -fsigned-char -fPIC -fasm-blocks -Wno-unknown-pragmas -Wno-unused-const-variable -Wno-missing-braces %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<VerboseOutput>false</VerboseOutput>
@@ -731,7 +732,7 @@
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
-			<AdditionalOptions>-fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
 
 			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
