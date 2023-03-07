@@ -9,7 +9,7 @@
 #define Ext (*globals->_ext)
 #define EventsToRun globals->_eventsToRun
 
-std::atomic<bool> AppWasClosed(false);
+std::atomic<bool> Extension::AppWasClosed(false);
 
 #ifdef _WIN32
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
@@ -426,7 +426,7 @@ EventToRun::~EventToRun()
 	channel = nullptr;
 }
 
-void LacewingLoopThread(void * thisExt)
+void Extension::LacewingLoopThread(void * thisExt)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
@@ -477,7 +477,7 @@ void LacewingLoopThread(void * thisExt)
 	return;
 }
 
-void GlobalInfo::AddEvent1(std::uint16_t event1ID,
+void Extension::GlobalInfo::AddEvent1(std::uint16_t event1ID,
 	std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -486,7 +486,7 @@ void GlobalInfo::AddEvent1(std::uint16_t event1ID,
 {
 	return AddEventF(false, event1ID, 35353, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
 }
-void GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
+void Extension::GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
 	std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -495,7 +495,7 @@ void GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
 {
 	return AddEventF(true, event1ID, event2ID, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
 }
-void GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
+void Extension::GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
 	std::shared_ptr<lacewing::relayclient::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayclient::channellisting> channelListing /* = nullptr */,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer /* = nullptr */,
@@ -567,14 +567,14 @@ void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 	va_end(v);
 }
 
-void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, ...)
+void Extension::GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
 	va_start(v, errorFormatU8);
 	CreateError(errorFormatU8, v);
 	va_end(v);
 }
-void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_list v)
+void Extension::GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_list v)
 {
 	std::stringstream errorDetailed;
 	if (std::this_thread::get_id() != mainThreadID)
@@ -1140,7 +1140,7 @@ REFLAG Extension::Handle()
 	return runNextLoop ? REFLAG::NONE : REFLAG::ONE_SHOT;
 }
 
-void ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
+void Extension::ObjectDestroyTimeoutFunc(void * ThisGlobalsInfo)
 {
 	LOGV(_T("" PROJECT_NAME " - timeout thread: startup.\n"));
 	bool appWasClosed;
@@ -1284,12 +1284,12 @@ long Extension::UnlinkedExpression(int ID)
 {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
 	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
-	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }
 
-GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
+Extension::GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
 	_client(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
@@ -1335,7 +1335,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_client.tag = this;
 }
 
-GlobalInfo::~GlobalInfo() noexcept(false)
+Extension::GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!extsHoldingGlobals.empty())
 		assert(false && "GlobalInfo dtor called prematurely.");
@@ -1343,7 +1343,7 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	if (!pendingDelete)
 		MarkAsPendingDelete();
 }
-void GlobalInfo::MarkAsPendingDelete()
+void Extension::GlobalInfo::MarkAsPendingDelete()
 {
 	if (pendingDelete)
 		return;
@@ -1412,7 +1412,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	LOGV(_T("" PROJECT_NAME " - ~GlobalInfo end\n"));
 }
 
-void eventpumpdeleter(lacewing::eventpump pump)
+void Extension::eventpumpdeleter(lacewing::eventpump pump)
 {
 	LOGV(_T("" PROJECT_NAME " - Pump deleting...\n"));
 	lacewing::pump_delete(pump);

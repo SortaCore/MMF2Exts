@@ -83,7 +83,5 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-void LacewingLoopThread(void * ThisExt);
-void ObjectDestroyTimeoutFunc(void * ThisGlobalInfo);
 
 #include "Extension.h"

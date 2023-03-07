@@ -54,7 +54,7 @@
 // Global data, including sub-applications, just how God intended.
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 16) ? globalThis['darkEdif'] :
+globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 17) ? globalThis['darkEdif'] :
 	new (/** @constructor */ function() {
 	// window variable is converted into __scope for some reason, so globalThis it is.
 	this.data = {};
@@ -73,10 +73,10 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 16;
+	this.sdkVersion = 17;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 16) {
-			throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion + " Bluewing Client does not support DarkEdif SDK version ";
+		if (sdkVer < 16 || sdkVer > 17) {
+			throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
 
@@ -94,7 +94,8 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 				ext['DebugMode'] = false;
 			}
 
-			const extName = (ext == null || this['minified']) ? "Unknown DarkEdif ext" : ext.constructor.name.replaceAll('CRun', '').replaceAll('_',' ');
+			const extName = (ext == null || this['minified']) ? "Unknown DarkEdif ext" :
+				ext['ExtensionName'] || ext.constructor.name.replaceAll('CRun', '').replaceAll('_',' ');
 			console.log(extName + " - " + str);
 		}
 	};
@@ -103,14 +104,137 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 		// Use this for debugging to make sure objects are deleted.
 		// Note they're not garbage collected when last holder releases it, but at any point after,
 		// when the GC decides to.
-		// On Chrome, it took half a minute or so, and was possibly changed based on if the page has focus.
-		// GC is not required, remember - the cleanup may not happen at all in some browsers
+		// On Chrome, it took half a minute or so, and delay was possibly affected by whether the page has focus.
+		// GC is not required, remember - the cleanup may not happen at all in some browsers.
 		this.finalizer = new FinalizationRegistry(function(desc) {
 			that.consoleLog(null, "Noting the destruction of [" + desc + "].");
 		});
 	}
 	else {
 		this.finalizer = new /** @constructor */ function() { this.register = function(desc) { }; };
+	}
+
+	this['Properties'] = function(ext, edPtrFile, extVersion) {
+		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
+		// eHeader is 20 bytes, so this should be 20+ bytes.
+		if (ext.ho.privateData < 20)
+			throw "Not smart properties - eHeader missing?";
+		// DarkEdif SDK header read:
+		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
+		// then checkbox list, one bit per checkbox, including non-checkbox properties
+		// so skip numProps / 8 bytes
+		// then moving to Data list:
+		// size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
+
+		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 4 + 2 + 2 + 4));
+		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1')
+			throw "Did you read this.ho.privateData bytes?";
+
+		let headerDV = new DataView(header.buffer);
+		this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
+		this.sizeBytes = headerDV.getUint32(4 + 4 + 4 + 4, true); // skip past numProps and pad
+
+		let editData = edPtrFile.readBuffer(this.sizeBytes - header.byteLength);
+		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
+		let that = this;
+		let GetPropertyIndex = function(chkIDOrName) {
+			if (typeof chkIDOrName == 'Number') {
+				if (that.numProps >= chkIDOrName) {
+					throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
+				}
+				return chkIDOrName;
+			}
+			const p = that.props.find(function(p) { return p.propName == chkIDOrName; });
+			if (p == null)
+				throw "Invalid property name \"" + chkIDOrName + "\"";
+			return p.index;
+		};
+		this['IsPropChecked'] = function(chkIDOrName) {
+			const idx = GetPropertyIndex(chkIDOrName);
+			if (idx == -1)
+				return 0;
+			return (that.chkboxes[Math.floor(idx / 8)] & (1 << idx % 8)) != 0;
+		};
+		this['GetPropertyStr'] = function(chkIDOrName) {
+			const idx = GetPropertyIndex(chkIDOrName);
+			if (idx == -1)
+				return "";
+			const prop = that.props[idx];
+			const textPropIDs = [
+				5, // PROPTYPE_EDIT_STRING:
+				22, // PROPTYPE_EDIT_MULTILINE:
+				16, // PROPTYPE_FILENAME:
+				19, // PROPTYPE_PICTUREFILENAME:
+				26, // PROPTYPE_DIRECTORYNAME:
+				7, // PROPTYPE_COMBOBOX:
+				20, // PROPTYPE_COMBOBOXBTN:
+				24 // PROPTYPE_ICONCOMBOBOX:
+			];
+			if (textPropIDs.indexOf(prop.propTypeID) != -1) {
+				let t = that.textDecoder.decode(prop.propData);
+				if (prop.propTypeID == 22) //PROPTYPE_EDIT_MULTILINE
+					t = t.replaceAll('\r', ''); // CRLF to LF
+				return t;
+			}
+			throw "Property " + prop.propName  + " is not textual.";
+			return "";
+		}
+		this['GetPropertyNum'] = function(chkIDOrName) {
+			const idx = that.GetPropertyIndex(chkIDOrName);
+			if (idx == -1)
+				return 0.0;
+			const prop = that.props[idx];
+			const numPropIDsInteger = [
+				6, // PROPTYPE_EDIT_NUMBER
+				9, // PROPTYPE_COLOR
+				11, // PROPTYPE_SLIDEREDIT
+				12, // PROPTYPE_SPINEDIT
+				13 // PROPTYPE_DIRCTRL
+			];
+			const numPropIDsFloat = [
+				21, // PROPTYPE_EDIT_FLOAT
+				27 // PROPTYPE_SPINEDITFLOAT
+			];
+			if (numPropIDsInteger.indexOf(prop.propTypeID) != -1) {
+				return new DataView(prop.propData).getUint32(0, true);
+			}
+			if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
+				return new DataView(prop.propData).getFloat32(0, true);
+			}
+			throw "Property " + prop.propName  + " is not numeric.";
+			return "";
+		}
+
+		this.props = [];
+		const data = editData.slice(this.chkboxes.length);
+		const dataDV = new DataView(new Uint8Array(data).buffer);
+
+		this.textDecoder = null;
+		if (globalThis['TextDecoder'] != null) {
+			this.textDecoder = new globalThis['TextDecoder']();
+		}
+		else {
+			// one byte = one char - should suffice for basic ASCII property names
+			this.textDecoder = {
+				decode: function(txt) {
+					return String.fromCharCode.apply("", txt);
+				}
+			};
+		}
+
+		for (let i = 0, pt = 0, propSize, propEnd; i < this.numProps; ++i) {
+			propSize = dataDV.getUint32(pt, true);
+			propEnd = pt + propSize;
+			const propTypeID = dataDV.getUint16(pt + 4, true);
+			const propNameLength = dataDV.getUint8(pt + 4 + 2);
+			pt += 4 + 2 + 1;
+			const propName = this.textDecoder.decode(new Uint8Array(data.slice(pt, pt + propNameLength)));
+			pt += propNameLength;
+			const propData = new Uint8Array(data.slice(pt, pt + propSize - (4 + 2 + 1 + propNameLength)));
+
+			this.props.push({ index: i, propTypeID: propTypeID, propName: propName, propData: propData });
+			pt = propEnd;
+		}
 	}
 })();
 
@@ -124,8 +248,9 @@ function CRunBluewing_Client() {
 	// DarkEdif SDK exts should have these three variables defined:
 	// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 101; // To match C++ version
-	this['SDKVersion'] = 16;
+	this['SDKVersion'] = 17;
 	this['DebugMode'] = false;
+	this['ExtensionName'] = 'Bluewing Client';
 
 	// Can't find DarkEdif wrapper
 	if (!globalThis.hasOwnProperty('darkEdif')) {
@@ -190,6 +315,7 @@ function CRunBluewing_Client() {
 	this.selPeer = null;
 	this.threadData = new BluewingClient_EventToRun(null, {});
 
+	// Called from outside of ext, so protect function names from minifier by using this[] instead of this.
 	this['GetSendMsg'] = function() {
 		return this.globals.sendMsg;
 	};
@@ -2281,7 +2407,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 	{
 		/// <summary> Returns the number of conditions </summary>
 		/// <returns type="Number" isInteger="true"> Warning, if this number is not correct, the application _will_ crash</returns>
-		return this.$conditionFuncs.length; // $conditionFuncs not available yet
+		return 76; // $conditionFuncs not available yet
 	},
 
 	createRunObject: function(file, cob, version)
@@ -2304,6 +2430,8 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		// Text encoders
 		this.textEncoder = new TextEncoder(/* utf-8 assumed */);
 		this.textDecoder = new TextDecoder('utf-8');
+
+		// We have to read object properties  manually, since C++ version doesn't use DarkEdif smart properties
 
 		file.skipBytes(5); // there is padding to match Relay's offsets
 

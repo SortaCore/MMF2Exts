@@ -67,11 +67,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
-      <FileType>Text</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\DarkEdif.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Edif.h" />

@@ -125,6 +125,9 @@
     <ClCompile Include="Edittime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DarkExt.json">
+      <FileType>Text</FileType>
+    </None>
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>

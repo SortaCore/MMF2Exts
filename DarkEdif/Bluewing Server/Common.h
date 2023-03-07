@@ -83,7 +83,6 @@ struct RUNDATA
 		of the Extension class (Extension.h) instead.
 	*/
 };
-void LacewingLoopThread(Extension * ThisExt);
 
 #define COMMON_H
 #include "Extension.h"

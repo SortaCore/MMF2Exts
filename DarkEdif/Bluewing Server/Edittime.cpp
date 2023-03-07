@@ -21,7 +21,7 @@ int FusionAPI MakeIconEx(mv *mV, cSurface *pIconSf, TCHAR *lpName, ObjInfo *oiPt
 {
 #pragma DllExportHint
 	pIconSf->Delete();
-	pIconSf->Clone(*SDK->Icon);
+	pIconSf->Clone(*Edif::SDK->Icon);
 
 	pIconSf->SetTransparentColor(RGB(255, 0, 255));
 	return 0;
@@ -34,7 +34,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return -1;
 	Edif::Init(mV, edPtr);
 
@@ -82,7 +82,7 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
 	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
 
-	SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
+	Edif::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
 // ============================================================================
@@ -93,10 +93,10 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 BOOL FusionAPI GetProperties(mv * mV, EDITDATA * edPtr, BOOL bMasterItem)
 {
 #pragma DllExportHint
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return FALSE;
 
-	mvInsertProps(mV, edPtr, ::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
+	mvInsertProps(mV, edPtr, Edif::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
 
 	return TRUE; // OK
 }

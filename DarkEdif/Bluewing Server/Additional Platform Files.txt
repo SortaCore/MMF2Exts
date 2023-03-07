@@ -1,0 +1,3 @@
+Platform	path relative to project	path inside zip
+iOS	..\Lib\iOS\libcrypto.a	Frameworks/libcrypto.a
+iOS	..\Lib\iOS\libssl.a	Frameworks/libssl.a

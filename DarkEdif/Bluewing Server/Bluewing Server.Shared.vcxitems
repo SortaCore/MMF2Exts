@@ -78,9 +78,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\cpp.hint" />
-    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
-      <FileType>Text</FileType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\AllPlatformDefines.hpp" />

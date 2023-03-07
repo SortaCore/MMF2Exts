@@ -3,7 +3,6 @@
 #include "MultiThreading.h"
 #include <functional>
 
-struct GlobalInfo;
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
 static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
 
@@ -12,6 +11,9 @@ class Extension
 public:
 	// Hide stuff requiring other headers
 	std::shared_ptr<EventToRun> threadData;
+	static std::atomic<bool> AppWasClosed;
+	static void eventpumpdeleter(lacewing::eventpump);
+	static void LacewingLoopThread(Extension* ThisExt);
 
 #ifdef _WIN32
 	RUNDATA * rdPtr;
@@ -46,7 +48,9 @@ public:
 	DarkEdif::FusionDebugger FusionDebugger;
 
 	bool isGlobal;
+	struct GlobalInfo;
 	GlobalInfo * globals;
+	static void ObjectDestroyTimeoutFunc(GlobalInfo* G);
 
 
 	// This allows prettier and more readable access while maintaining global variables.
@@ -346,7 +350,6 @@ public:
 	short FusionRuntimeContinued();
 };
 
-void eventpumpdeleter(lacewing::eventpump);
 
 enum class AutoResponse : std::int8_t
 {
@@ -358,7 +361,7 @@ enum class AutoResponse : std::int8_t
 	WaitForFusion
 };
 
-struct GlobalInfo
+struct Extension::GlobalInfo
 {
 	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
 	lacewing::relayserver		_server;

@@ -1,8 +1,8 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define globals ((GlobalInfo *) server.tag)
-#define Ext (*(((GlobalInfo *) server.tag)->_ext))
+#define globals ((Extension::GlobalInfo *) server.tag)
+#define Ext (*(((Extension::GlobalInfo *) server.tag)->_ext))
 
 void OnError(lacewing::relayserver &server, lacewing::error error)
 {

@@ -532,9 +532,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="$(MSBuildThisFileDirectory)..\..\cpp.hint" />
   </ItemGroup>
 </Project>

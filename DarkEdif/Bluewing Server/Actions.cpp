@@ -1,15 +1,11 @@
-
 #include "Common.h"
-#ifdef _DEBUG
-std::stringstream CriticalSection;
-#endif
 
 #define EventsToRun globals->_eventsToRun
 #define Remake(name) DarkEdif::MsgBox::Error(_T("Remake action"), _T("Your "#name" actions need to be recreated.\r\n") \
 						_T("This is probably due to parameter changes."))
 
 static char errtext[1024];
-void ErrNoToErrText()
+static void ErrNoToErrText()
 {
 	int error = errno; // strerror_s may change errno
 #ifdef _WIN32
@@ -195,7 +191,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 
 
 static AutoResponse ConvToAutoResponse(int informFusion, int immediateRespondWith,
-	std::string &denyReason, GlobalInfo * globals, const char * const funcName)
+	std::string &denyReason, Extension::GlobalInfo * globals, const char * const funcName)
 {
 	static char err[256];
 

@@ -1,11 +1,7 @@
 #include "Common.h"
 
-#ifdef _DEBUG
-std::stringstream CriticalSection;
-#endif
-
 static char errtext[1024];
-void ErrNoToErrText()
+static void ErrNoToErrText()
 {
 	int error = errno; // strerror_s may change errno
 #ifdef _WIN32

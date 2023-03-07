@@ -297,9 +297,4 @@
       <Filter>Header Files\Lacewing\src\openssl</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)DarkExt.json">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
 </Project>

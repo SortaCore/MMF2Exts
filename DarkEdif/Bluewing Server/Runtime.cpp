@@ -15,8 +15,6 @@
 // START APP / END APP / START FRAME / END FRAME routines
 // ============================================================================
 
-extern std::atomic<bool> AppWasClosed; // Event type; other threads can wait for this to be triggered
-
 #ifdef _WIN32
 // Called when the application starts or restarts. Also called for subapps.
 void FusionAPI StartApp(mv *mV, CRunApp* pApp)
@@ -35,20 +33,20 @@ void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;
 	}
-	AppWasClosed = true;
+	Extension::AppWasClosed = true;
 }
 #elif defined (__ANDROID__)
 // Called when JavaVM shuts down. Not called for subapps.
 ProjectFunc void EndApp(JNIEnv *, jclass)
 {
 	// Note: on Java side, is declared as darkedif_EndApp, due to how RegisterNatives() works.
-	AppWasClosed = true;
+	Extension::AppWasClosed = true;
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
 #else // No iOS auto-quit yet!
 ProjectFunc void EndApp()
 {
-	AppWasClosed = true;
+	Extension::AppWasClosed = true;
 	OutputDebugStringA(PROJECT_NAME " - EndApp called.\n");
 }
 #endif

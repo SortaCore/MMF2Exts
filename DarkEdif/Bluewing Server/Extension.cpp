@@ -8,7 +8,7 @@
 #define Ext (*globals->_ext)
 #define EventsToRun globals->_eventsToRun
 
-std::atomic<bool> AppWasClosed(false);
+std::atomic<bool> Extension::AppWasClosed(false);
 
 #ifdef _WIN32
 Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
@@ -424,7 +424,7 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 	FusionDebugger.AddItemToDebugger(selClientNumChannelsDebugItemReader, NULL, 100, NULL);
 }
 
-void LacewingLoopThread(Extension * ext)
+void Extension::LacewingLoopThread(Extension * ext)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
 	// However, it is better to use PostEventLoopExit().
@@ -473,7 +473,7 @@ void LacewingLoopThread(Extension * ext)
 	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
 }
 
-GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
+Extension::GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	: _objEventPump(lacewing::eventpump_new(), eventpumpdeleter),
 	_server(_objEventPump.get()),
 	_sendMsg(nullptr), _sendMsgSize(0),
@@ -547,7 +547,7 @@ GlobalInfo::GlobalInfo(Extension * e, EDITDATA * edPtr)
 	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ChannelNames, list);
 }
 
-GlobalInfo::~GlobalInfo() noexcept(false)
+Extension::GlobalInfo::~GlobalInfo() noexcept(false)
 {
 	if (!extsHoldingGlobals.empty())
 		assert(false && "GlobalInfo dtor called prematurely.");
@@ -555,7 +555,7 @@ GlobalInfo::~GlobalInfo() noexcept(false)
 	if (!pendingDelete)
 		MarkAsPendingDelete();
 }
-void GlobalInfo::MarkAsPendingDelete()
+void Extension::GlobalInfo::MarkAsPendingDelete()
 {
 	if (pendingDelete)
 		return;
@@ -619,7 +619,7 @@ void GlobalInfo::MarkAsPendingDelete()
 	// as they'll try to remove themselves from the pump.
 	// _objEventPump.reset();
 }
-void eventpumpdeleter(lacewing::eventpump pump)
+void Extension::eventpumpdeleter(lacewing::eventpump pump)
 {
 	LOGV(_T("" PROJECT_NAME " - pump deleting...\n"));
 	lacewing::pump_delete(pump);
@@ -628,7 +628,7 @@ void eventpumpdeleter(lacewing::eventpump pump)
 }
 
 
-void GlobalInfo::AddEvent1(int event1ID,
+void Extension::GlobalInfo::AddEvent1(int event1ID,
 	std::shared_ptr<lacewing::relayserver::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayserver::client> senderClient /* = nullptr */,
 	std::string_view messageOrErrorText /* = std::string_view() */,
@@ -645,7 +645,7 @@ void GlobalInfo::AddEvent1(int event1ID,
 		channel, senderClient, messageOrErrorText, subchannel,
 		receivingClient, interactiveType, variant, blasted, channelCreate_Hidden, channelCreate_AutoClose);
 }
-void GlobalInfo::AddEvent2(int event1ID, int event2ID,
+void Extension::GlobalInfo::AddEvent2(int event1ID, int event2ID,
 	std::shared_ptr<lacewing::relayserver::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayserver::client> senderClient /* = nullptr */,
 	std::string_view messageOrErrorText /* = std::string_view() */,
@@ -661,7 +661,7 @@ void GlobalInfo::AddEvent2(int event1ID, int event2ID,
 		channel, senderClient, messageOrErrorText, subchannel,
 		receivingClient, interactiveType, variant, blasted, channelCreate_Hidden, channelCreate_AutoClose);
 }
-void GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
+void Extension::GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID,
 	std::shared_ptr<lacewing::relayserver::channel> channel /* = nullptr */,
 	std::shared_ptr<lacewing::relayserver::client> senderClient /* = nullptr */,
 	std::string_view messageOrErrorText /* = std::string_view() */,
@@ -935,7 +935,7 @@ void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 	va_end(v);
 }
 
-void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_list v)
+void Extension::GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_list v)
 {
 	std::stringstream errorDetailed;
 	if (std::this_thread::get_id() != mainThreadID)
@@ -977,7 +977,7 @@ void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, va_lis
 	AddEvent1(0, nullptr, nullptr, errTextU8);
 }
 
-void GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, ...)
+void Extension::GlobalInfo::CreateError(PrintFHintInside const char * errorFormatU8, ...)
 {
 	va_list v;
 	va_start(v, errorFormatU8);
@@ -1040,7 +1040,7 @@ bool Extension::IsValidPtr(const void * data)
 }
 
 static const std::tstring empty;
-const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key)
+const std::tstring& Extension::GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key)
 {
 	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(clientLocal.cbegin(), clientLocal.cend(),
@@ -1052,7 +1052,7 @@ const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserv
 		return empty;
 	return local->val;
 }
-const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key)
+const std::tstring& Extension::GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key)
 {
 	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(channelLocal.cbegin(), channelLocal.cend(),
@@ -1064,7 +1064,7 @@ const std::tstring& GlobalInfo::GetLocalData(std::shared_ptr<lacewing::relayserv
 		return empty;
 	return local->val;
 }
-void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key, std::tstring value)
+void Extension::GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> client, std::tstring key, std::tstring value)
 {
 	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(clientLocal.begin(), clientLocal.end(),
@@ -1077,7 +1077,7 @@ void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::client> cli
 	else
 		local->val = value;
 }
-void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key, std::tstring value)
+void Extension::GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key, std::tstring value)
 {
 	const std::string keyU8Simplified = lw_u8str_simplify(DarkEdif::TStringToUTF8(key), true, false);
 	const auto local = std::find_if(channelLocal.begin(), channelLocal.end(),
@@ -1090,12 +1090,12 @@ void GlobalInfo::SetLocalData(std::shared_ptr<lacewing::relayserver::channel> ch
 	else
 		local->val = value;
 }
-void GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver::client> client)
+void Extension::GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver::client> client)
 {
 	clientLocal.erase(std::remove_if(clientLocal.begin(), clientLocal.end(),
 		[&](const auto &c) { return c.ptr == client; }), clientLocal.end());
 }
-void GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver::channel> channel)
+void Extension::GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver::channel> channel)
 {
 	channelLocal.erase(std::remove_if(channelLocal.begin(), channelLocal.end(),
 		[&](const auto &c) { return c.ptr == channel; }), channelLocal.end());
@@ -1394,7 +1394,7 @@ void Extension::DeselectIfDestroyed(std::shared_ptr<EventToRun> evt)
 	}
 }
 
-void ObjectDestroyTimeoutFunc(GlobalInfo * G)
+void Extension::ObjectDestroyTimeoutFunc(GlobalInfo * G)
 {
 	LOGV(_T("" PROJECT_NAME " - timeout thread: startup.\n"));
 	bool appWasClosed;
@@ -1620,7 +1620,7 @@ long Extension::UnlinkedExpression(int ID)
 {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
 	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
-	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }

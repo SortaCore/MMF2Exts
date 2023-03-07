@@ -1,8 +1,8 @@
 // Handles all Lacewing functions.
 #include "Common.h"
 
-#define Ext (*((GlobalInfo *) client.tag)->_ext)
-#define globals ((GlobalInfo *) client.tag)
+#define Ext (*((Extension::GlobalInfo *) client.tag)->_ext)
+#define globals ((Extension::GlobalInfo *) client.tag)
 #define GThread globals->_thread
 
 void OnError(lacewing::relayclient &client, lacewing::error error)
