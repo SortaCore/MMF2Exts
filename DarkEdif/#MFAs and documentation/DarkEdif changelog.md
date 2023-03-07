@@ -18,7 +18,7 @@ Changes until v18 release
 
 Changes until v17 release
 ----
-*v17 released on 7th Mar 2023, commit (latest)*
+*v17 released on 7th Mar 2023, commit [160c20b](https://github.com/SortaCore/MMF2Exts/commit/160c20bcf391b4ac26da45c042cf472177b3c419)*
 - HTML5/UWP: Added HTML5/UWP template files for DarkEdif Template
 - All platforms: Moved functions and global variables including ::SDK into Edif/DarkEdif namespace, as iOS was merging multiple exts' global functions/variables
 - All platforms: Added support for New_Direction parameter (the 32-direction picker wheel).

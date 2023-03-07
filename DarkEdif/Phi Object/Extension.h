@@ -29,6 +29,7 @@ public:
     Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
+	// b8: Update for iOS fixes in SDK (SDK v17)
 	// b7: Bugfix to alt string copying (SDK v16)
 	// b6: Added alt string/value bulk copying (SDK v15)
 	// b5: Smart property release (SDK v14)
@@ -36,7 +37,7 @@ public:
 	// b3: Release for Michael, added system object permission reading for Windows.
 	// b2: Release to Flipswitchx with alt value by name feature.
 	// b1: initial build with RAM, disk, and frame usage.
-    static const int Version = 6;
+    static const int Version = 8;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
     static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace

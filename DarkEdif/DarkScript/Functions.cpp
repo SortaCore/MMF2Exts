@@ -315,7 +315,7 @@ std::tstring Extension::Sub_GetValAsString(const Extension::Value &val)
 // ID - return type % num param types / num param types
 
 // Defined in DarkEdif.cpp
-extern ACEInfo * ACEInfoAlloc(unsigned int NumParams);
+ACEInfo * Edif::ACEInfoAlloc(unsigned int NumParams);
 
 #define lastNonDummyFunc (CurLang["Expressions"].u.array.length)
 constexpr short lastNonFuncID = 59;
@@ -396,7 +396,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 	// Get last function before this template, with None variant.
 	// For example, FuncS should look up FuncI.
 	if (inputID >= NumVariants)
-		last = ::SDK->ExpressionInfos[lastNonFuncID + 1 + (inputID - NumVariants - (inputID % NumVariants))];
+		last = Edif::SDK->ExpressionInfos[lastNonFuncID + 1 + (inputID - NumVariants - (inputID % NumVariants))];
 	else // We're on the first set of functions
 	{
 		last = (ACEInfo*)alloca(sizeof(ACEInfo) + (1 * sizeof(short) * 2));
@@ -477,11 +477,11 @@ static void GenerateExpressionFuncFor(const int inputID)
 		DebugBreak(); // missed a param?
 
 	// Parameters checked; allocate new info
-	ACEInfo* const ExpInfo = ACEInfoAlloc(paramTypes.size());
+	ACEInfo* const ExpInfo = Edif::ACEInfoAlloc(paramTypes.size());
 
 	// Could not allocate memory
 	if (!ExpInfo)
-		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for expression ID %zu return."), ::SDK->ExpressionInfos.size());
+		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for expression ID %zu return."), Edif::SDK->ExpressionInfos.size());
 
 	// If a non-triggered condition, set the correct flags
 	ExpInfo->ID = inputID + lastNonFuncID + 1;
@@ -573,7 +573,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 	memset(&ExpInfo->Parameter[ExpInfo->NumOfParams], 0, ExpInfo->NumOfParams * sizeof(short));
 
 	// Add to table
-	::SDK->ExpressionInfos.push_back(ExpInfo);
+	Edif::SDK->ExpressionInfos.push_back(ExpInfo);
 
 #if _DEBUG
 	if (false) // (inputID % 4 == 0)
@@ -586,18 +586,18 @@ static void GenerateExpressionFuncFor(const int inputID)
 
 void GenerateDummyExpression(int inputID)
 {
-	ACEInfo * ExpInfo = ACEInfoAlloc(0);
+	ACEInfo * ExpInfo = Edif::ACEInfoAlloc(0);
 
 	// Could not allocate memory
 	if (!ExpInfo)
-		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for dummy expression ID %zu return."), ::SDK->ExpressionInfos.size());
+		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for dummy expression ID %zu return."), Edif::SDK->ExpressionInfos.size());
 
 	ExpInfo->ID = inputID;
 	ExpInfo->NumOfParams = 0;
 	ExpInfo->Flags.ef = ExpReturnType::Integer;
 
 	// Add to table
-	::SDK->ExpressionInfos.push_back(ExpInfo);
+	Edif::SDK->ExpressionInfos.push_back(ExpInfo);
 }
 #pragma comment (lib, "Version.lib")
 
@@ -633,7 +633,7 @@ void Extension::AutoGenerateExpressions()
 
 	if (numFuncVariantsToGenerate == 0)
 	{
-		const int build = (::SDK->mV->GetVersion() & MMFBUILD_MASK);
+		const int build = (Edif::SDK->mV->GetVersion() & MMFBUILD_MASK);
 		const bool useMoreExpressions = DarkEdif::IsFusion25 &&
 			(build >= 295 || (build == 294 && getFusionSubBuild() >= 8));
 		numFuncVariantsToGenerate = (useMoreExpressions ? numFuncVariantsToGenerateCF25 : numFuncVariantsToGenerateMMF2);
@@ -641,49 +641,49 @@ void Extension::AutoGenerateExpressions()
 
 	// Jumps uses new[], not malloc(), otherwise we'd realloc
 	{
-		delete[] ::SDK->ExpressionJumps;
+		delete[] Edif::SDK->ExpressionJumps;
 
 		// We want to get the last index, then add one for null pointer at end
 		const size_t maxFuncIndex = lastNonFuncID + numFuncVariantsToGenerate;
-		::SDK->ExpressionJumps = new void* [maxFuncIndex + 2]; // +1 for index -> length, +1 cos we want an extra for null
-		for (size_t i = 0; i < ::SDK->ExpressionInfos.size(); ++i)
-			::SDK->ExpressionJumps[i] = &Edif::ExpressionJump;
-		::SDK->ExpressionJumps[maxFuncIndex + 1] = NULL;
+		Edif::SDK->ExpressionJumps = new void* [maxFuncIndex + 2]; // +1 for index -> length, +1 cos we want an extra for null
+		for (size_t i = 0; i < Edif::SDK->ExpressionInfos.size(); ++i)
+			Edif::SDK->ExpressionJumps[i] = &Edif::ExpressionJump;
+		Edif::SDK->ExpressionJumps[maxFuncIndex + 1] = NULL;
 	}
 
 	// 1. Find end of Expressions
-	assert(::SDK->ExpressionInfos.size() <= lastNonFuncID);
+	assert(Edif::SDK->ExpressionInfos.size() <= lastNonFuncID);
 
-	size_t i = ::SDK->ExpressionInfos.size();
+	size_t i = Edif::SDK->ExpressionInfos.size();
 
 	// 2. Add safety buffer (50 expressions?) pointing to dummy function
 	// 21 used, reserve 20, intermediate index 40
-	while (::SDK->ExpressionInfos.size() <= lastNonFuncID)
+	while (Edif::SDK->ExpressionInfos.size() <= lastNonFuncID)
 	{
 #ifdef _WIN32
-		::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
+		Edif::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
 #endif
-		GenerateDummyExpression(::SDK->ExpressionInfos.size());
-		::SDK->ExpressionFunctions.push_back(0);
+		GenerateDummyExpression(Edif::SDK->ExpressionInfos.size());
+		Edif::SDK->ExpressionFunctions.push_back(0);
 	}
 
 	// 3. Generate IDs and infos following CreateNewExpressionInfo
 	// formula is in excel
 	
-	while (::SDK->ExpressionInfos.size() - 1 < lastNonFuncID + numFuncVariantsToGenerate)
+	while (Edif::SDK->ExpressionInfos.size() - 1 < lastNonFuncID + numFuncVariantsToGenerate)
 	{
 #ifdef _WIN32
-		::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
+		Edif::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
 #endif
-		GenerateExpressionFuncFor(::SDK->ExpressionInfos.size() - 1 - lastNonFuncID);
-		::SDK->ExpressionFunctions.push_back(Edif::MemberFunctionPointer(&Extension::VariableFunction));
+		GenerateExpressionFuncFor(Edif::SDK->ExpressionInfos.size() - 1 - lastNonFuncID);
+		Edif::SDK->ExpressionFunctions.push_back(Edif::MemberFunctionPointer(&Extension::VariableFunction));
 	}
 }
 
 void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 	{
 		if ((size_t)code < lastNonDummyFunc)
 			Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"][code]["Parameters"][param][1], maxLen);
@@ -699,7 +699,7 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 			sprintf_s(errorStr, "Outputting param %i for dynamic function, expression ID %i, funcID %i.\n", param, code, funcID);
 			OutputDebugStringA(errorStr);
 
-			ACEInfo& exp = *::SDK->ExpressionInfos[code];
+			ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
 			if (exp.NumOfParams < param + 1)
 			{
 				DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Param %i missing for function ID %i (expr ID %i)."), param, funcID, code);
@@ -739,7 +739,7 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 void FusionAPI GetExpressionTitle(mv* mV, short code, TCHAR* strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return;
 
 	if ((size_t)code < lastNonDummyFunc)
@@ -757,7 +757,7 @@ void FusionAPI GetExpressionTitle(mv* mV, short code, TCHAR* strBuf, short maxLe
 	{
 		const int origFuncID = code - lastNonFuncID - 1;
 
-		ACEInfo& exp = *::SDK->ExpressionInfos[code];
+		ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
 		std::stringstream str;
 		if (origFuncID & Flags::KeepObjSelection)
 			str << 'K';
@@ -799,7 +799,7 @@ void FusionAPI GetExpressionTitle(mv* mV, short code, TCHAR* strBuf, short maxLe
 void FusionAPI GetExpressionString(mv* mV, short code, TCHAR* strPtr, short maxLen)
 {
 #pragma DllExportHint
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return;
 	GetExpressionTitle(mV, code, strPtr, maxLen);
 }
@@ -1071,8 +1071,8 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	// else Foreach or Delayed func
 	// ForEach
-	if (::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
+	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
 	{
 		if (foreachFuncToRun)
 			LOGE(_T("Possible crash! Foreach function is already set, but is being set again. Original foreach: \"%s\", current foreach: \"%s\"."), foreachFuncToRun->funcTemplate->name.c_str(), newFunc->funcTemplate->name.c_str());
@@ -1090,10 +1090,10 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	}
 	// Delayed func
-	else if (::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
+	else if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
 	{
 		int firstRunDelayedFor = *(int*)&actParameters[0];
 		int numRepeats = *(int*)&actParameters[1];
@@ -1106,8 +1106,8 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		delayFunc->numRepeats = numRepeats;
 		delayFunc->numUnitsUntilRun = delayBetweenRuns;
 		delayFunc->useTicks =
-			::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-			::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks);
+			Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
+			Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks);
 		if (delayFunc->useTicks)
 			delayFunc->runAtTick = curFrame + firstRunDelayedFor;
 		else
@@ -1208,8 +1208,8 @@ std::tstring Extension::Sub_GetLocation(int actID)
 		return _T("Unknown event"s);
 	}
 
-	if (::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_Num) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_String))
+	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_Num) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_ActionDummy_String))
 	{
 		// currently this overrides when a delayed funcA calls a non-delayed funcB which calls a non-delayed funcC.
 		//callerOrNull->funcToRun->level
@@ -1217,17 +1217,17 @@ std::tstring Extension::Sub_GetLocation(int actID)
 			<< GetActionIndex(this);
 		return str.str();
 	}
-	if (::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
+	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_Num) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Foreach_String))
 	{
 		str << _T("DarkScript foreach action in Fusion event #"sv) << curFusionEvent << _T(", in "sv)
 			<< GetActionIndex(this);
 		return str.str();
 	}
-	if (::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
-		::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
+	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
+		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_Ticks))
 	{
 		str << _T("DarkScript delayed function call, queued by "sv)
 			<< curDelayedFunc->fusionStartEvent.substr("DarkScript expression in "sv.size());

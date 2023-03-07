@@ -178,7 +178,7 @@ void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)
 			// Failed to report failure; try direct UI error message - we could detect failure then too but no point
 			if (_stprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), _T("Failed to use format \"%s\"; error %i: %s."), tcharFormat.c_str(), errno, _tcserror(errno)) == -1)
 				DarkEdif::MsgBox::Error(_T("Failed to report error"), _T("Double error report failure..."));
-			MessageBox(NULL, buffer, _T("Phi Object - Error"), MB_OK | MB_ICONERROR);
+			DarkEdif::MsgBox::Error(_T("Error"), _T("%s"), buffer);
 		}
 		else // Error report OK; output it
 		{
@@ -338,7 +338,7 @@ long Extension::UnlinkedExpression(int ID)
 {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
 	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
-	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }

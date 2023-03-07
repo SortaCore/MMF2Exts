@@ -621,7 +621,7 @@ std::vector<int> memfind(void * startV, size_t size, void* lookFor, size_t lookF
 	for (char* c = start; c < end; c++)
 	{
 		if (memcmp(c, lookFor, lookForSize) == 0)
-			ret.push_back(c - start);
+			ret.push_back((int)(c - start));
 	}
 	return ret;
 }
@@ -1536,7 +1536,7 @@ void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, i
 		return;
 	}
 
-	bool isUnicode = mvIsUnicodeApp(::SDK->mV, ::SDK->mV->RunApp);
+	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
 #if _UNICODE
 	// Unicode exts can only load in Unicode
 	if (!isUnicode)
@@ -1566,26 +1566,26 @@ void Extension::CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, i
 
 			if (DarkEdif::IsFusion25)
 			{
-				mvFree(::SDK->mV, (void *)prv->CF25.Strings[k]);
+				mvFree(Edif::SDK->mV, (void *)prv->CF25.Strings[k]);
 				if (prv->CF25.Strings[j] == NULL)
 					*(TCHAR**)&prv->CF25.Strings[k] = NULL;
 				else
 				{
 					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->CF25.Strings[j]) + 1) * 2) : (strlen((char*)prv->CF25.Strings[j]) + 1);
-					char* data = (char*)mvMalloc(::SDK->mV, numBytes);
+					char* data = (char*)mvMalloc(Edif::SDK->mV, numBytes);
 					memcpy(data, prv->CF25.Strings[j], numBytes);
 					*(TCHAR**)&prv->CF25.Strings[k] = (TCHAR*)data;
 				}
 			}
 			else
 			{
-				mvFree(::SDK->mV, prv->MMF2.rvStrings[k]);
+				mvFree(Edif::SDK->mV, prv->MMF2.rvStrings[k]);
 				if (prv->MMF2.rvStrings[j] == NULL)
 					prv->MMF2.rvStrings[k] = NULL;
 				else
 				{
 					size_t numBytes = isUnicode ? ((wcslen((wchar_t*)prv->MMF2.rvStrings[j]) + 1) * 2) : (strlen((char *)prv->MMF2.rvStrings[j]) + 1);
-					char * data = (char *)mvMalloc(::SDK->mV, numBytes);
+					char * data = (char *)mvMalloc(Edif::SDK->mV, numBytes);
 					memcpy(data, prv->MMF2.rvStrings[j], numBytes);
 					prv->MMF2.rvStrings[k] = (TCHAR *)data;
 				}

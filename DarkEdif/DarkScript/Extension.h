@@ -167,7 +167,7 @@ public:
 		Value defaultVal;
 
 		Param(const std::tstring_view name, const Type typ) :
-			name(name), nameL(ToLower(name)), defaultVal(Type::Any), type(typ)
+			name(name), nameL(ToLower(name)), type(typ), defaultVal(Type::Any)
 		{
 		}
 	};
@@ -207,7 +207,7 @@ public:
 		std::shared_ptr<FunctionTemplate> redirectFuncPtr;
 
 		FunctionTemplate(Extension* ext, const TCHAR * funcName, Expected delayable, Expected repeatable, bool recursable, Type returnType)
-			: ext(ext), name(funcName), repeating(repeatable), delaying(delayable),
+			: name(funcName), repeating(repeatable), ext(ext), delaying(delayable),
 			recursiveAllowed(recursable), defaultReturnValue(returnType)
 		{
 			nameL = Extension::ToLower(name);

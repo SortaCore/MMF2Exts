@@ -92,7 +92,7 @@ const TCHAR * Extension::GetAllActionInfos()
 
 	std::tstringstream output;
 
-	short ret = getRunObjectInfosFunc(SDK->mV, runInfos.get());
+	short ret = getRunObjectInfosFunc(Edif::SDK->mV, runInfos.get());
 	output << "Size of EDITDATA: " << runInfos->EDITDATASize << ".";
 
 	const short bufferSize = 512;
@@ -107,7 +107,7 @@ const TCHAR * Extension::GetAllActionInfos()
 	for (short i = 0; ; i++)
 	{
 		try {
-			getActionStringFunc(SDK->mV, i, buffer.get(), bufferSize);
+			getActionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
@@ -116,14 +116,14 @@ const TCHAR * Extension::GetAllActionInfos()
 			output << i << _T(": ") << buffer.get() << _T(" (");
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
-			ACEInfo * fun = (ACEInfo *)(((char *)getActionInfosFunc(SDK->mV, i)) - 2); // don't free
+			ACEInfo * fun = (ACEInfo *)(((char *)getActionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
 			for (short j = 0; j < fun->NumOfParams; j++)
 			{
 				if (actionAndConditionParamTypes.find(fun->Parameter[j].p) == actionAndConditionParamTypes.cend())
 					output << _T("<UNKNOWN TYPE Params val ") << (short)fun->Parameter[j].p << _T("> ");
 				else
 					output << actionAndConditionParamTypes[fun->Parameter[j].p] << _T(" ");
-				getActionTitleFunc(SDK->mV, i, j, buffer.get(), bufferSize);
+				getActionTitleFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
 				output << _T("\"") << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" ") : _T("\", "));
 			}
 			output << _T(")\r\n");
@@ -186,7 +186,7 @@ const TCHAR * Extension::GetAllConditionInfos()
 	for (short i = 0; ; i++)
 	{
 		try {
-			getConditionStringFunc(SDK->mV, i, buffer.get(), bufferSize);
+			getConditionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
@@ -195,14 +195,14 @@ const TCHAR * Extension::GetAllConditionInfos()
 			output << i << _T(": ") << buffer << _T(" (");
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
-			const ACEInfo * const fun = (ACEInfo *)(((char *)getConditionInfosFunc(SDK->mV, i)) - 2); // don't free
+			const ACEInfo * const fun = (ACEInfo *)(((char *)getConditionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
 			for (short j = 0; j < fun->NumOfParams; j++)
 			{
 				if (actionAndConditionParamTypes.find(fun->Parameter[j].p) == actionAndConditionParamTypes.cend())
 					output << _T("<UNKNOWN TYPE Params val ") << (short)fun->Parameter[j].p << _T("> ");
 				else
 					output << actionAndConditionParamTypes[fun->Parameter[j].p] << _T(" ");
-				getConditionTitleFunc(SDK->mV, i, j, buffer.get(), bufferSize);
+				getConditionTitleFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
 				output << _T("\"") << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" ") : _T("\", "));
 			}
 			output << _T(")\r\n");
@@ -265,7 +265,7 @@ const TCHAR * Extension::GetAllExpressionInfos()
 	for (short i = 0; ; i++)
 	{
 		try {
-			getExpressionStringFunc(SDK->mV, i, buffer.get(), bufferSize);
+			getExpressionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
@@ -274,7 +274,7 @@ const TCHAR * Extension::GetAllExpressionInfos()
 			output << i << _T(": ") << buffer.get(); // ( at end of buffer
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
-			ACEInfo * fun = (ACEInfo *)(((char *)getExpressionInfosFunc(SDK->mV, i)) - 2); // don't free
+			ACEInfo * fun = (ACEInfo *)(((char *)getExpressionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
 
 			for (short j = 0; j < fun->NumOfParams; j++)
 			{
@@ -282,7 +282,7 @@ const TCHAR * Extension::GetAllExpressionInfos()
 					output << _T("<UNKNOWN TYPE ExpParams val ") << (short)fun->Parameter[j].ep;
 				else
 					output << _T("<") << expressionParamTypes[fun->Parameter[j].ep];
-				getExpressionParamFunc(SDK->mV, i, j, buffer.get(), bufferSize);
+				getExpressionParamFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
 				output << _T(" ") << buffer << ((j == fun->NumOfParams - 1) ? _T(">") : _T(">, "));
 			}
 			output << _T(")\r\n");

@@ -17,7 +17,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 252;
-	static const int Version = 6;
+	static const int Version = 7;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;

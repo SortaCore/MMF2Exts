@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "DarkSocket",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2022 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2023 by Darkwire Software",
 			"Comment": "Utilizes WinSock and POSIX sockets to provide socket functionality. (b%i)",
 			"Help": "Help/DarkSocket.chm",
 			"URL": "https://dark-wire.com/"

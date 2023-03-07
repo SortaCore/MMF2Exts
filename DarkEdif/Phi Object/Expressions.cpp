@@ -26,7 +26,7 @@ int Extension::Frame_IndexFromName(const TCHAR * name)
 	}
 
 	// 1-based
-	return 1U + std::distance(frameNames.cbegin(), res);
+	return (int)(1 + std::distance(frameNames.cbegin(), res));
 }
 
 const TCHAR * Extension::Frame_NameFromIndex(int index)
@@ -172,7 +172,7 @@ dieearly:
 		MakeError("Couldn't look up available space of path %s; result is too large to fit in 32-bit to return to Fusion.", path);
 		return -1;
 	}
-	return freeSpace;
+	return (int)freeSpace;
 #endif
 }
 std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
@@ -234,7 +234,7 @@ std::uint32_t Extension::Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path)
 		MakeError("Couldn't look up total capacity of path %s; result is too large to fit in 32-bit to return to Fusion.", path);
 		return -1;
 	}
-	return totalSpace;
+	return (int)totalSpace;
 
 	//std::uint64_t freeSpace = ((data.f_bfree * data.f_frsize) / DIV);
 	//std::uint64_t availSpace = ((data.f_bavail * data.f_frsize) / DIV);
@@ -439,7 +439,11 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 		MakeError("Delimiter cannot be blank. Use Newline$, \" \", etc.");
 		return Runtime.CopyString(_T("<ERROR>"));
 	}
-	bool isUnicode = mvIsUnicodeApp(::SDK->mV, ::SDK->mV->RunApp);
+#ifdef _WIN32
+	bool isUnicode = mvIsUnicodeApp(Edif::SDK->mV, Edif::SDK->mV->RunApp);
+#else
+	bool isUnicode = true;
+#endif
 
 #if _UNICODE
 	// Unicode exts can only load in Unicode

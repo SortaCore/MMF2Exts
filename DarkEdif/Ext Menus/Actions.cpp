@@ -190,7 +190,7 @@ void Extension::SetMFXFile(const TCHAR * filename_)
 	}
 	for (size_t i = 0; i < 3; i++)
 	{
-		menus[i] = funcs[i](SDK->mV, nullptr, nullptr);
+		menus[i] = funcs[i](Edif::SDK->mV, nullptr, nullptr);
 		if (!menus[i]) {
 			error << DarkEdif::ANSIToTString(funcNames[i]) << _T(" returned nullptr");
 			return;

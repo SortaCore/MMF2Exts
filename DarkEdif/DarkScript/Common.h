@@ -33,12 +33,13 @@ struct RUNDATA
 {
 	// Main header - required
 	HeaderObject rHo;
-
+#ifdef _WIN32
 	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	Sprite			rs;				// Sprite (displayable objects)
 	AltVals			rv;				// Alterable values
+#endif
 
 	// Required
 	Extension * pExtension;

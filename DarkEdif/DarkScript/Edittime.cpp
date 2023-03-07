@@ -21,7 +21,7 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 {
 #pragma DllExportHint
 	pIconSf->Delete();
-	pIconSf->Clone(*SDK->Icon);
+	pIconSf->Clone(*Edif::SDK->Icon);
 
 	pIconSf->SetTransparentColor(RGB(255, 0, 255));
 	return 0;
@@ -32,7 +32,7 @@ int FusionAPI MakeIconEx(mv * mV, cSurface * pIconSf, TCHAR * lpName, ObjInfo * 
 int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return -1;
 
 	Edif::Init(mV, edPtr);
@@ -51,7 +51,7 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
 	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
 
-	::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
+	Edif::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
 // This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
@@ -70,7 +70,7 @@ BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return FALSE;
 
 	edPtr->swidth = cx;
@@ -97,7 +97,7 @@ BOOL FusionAPI EditObject(mv *mV, ObjInfo * oiPtr, LevelObject * loPtr, EDITDATA
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (!IS_COMPATIBLE(mV))
+	if (!Edif::IS_COMPATIBLE(mV))
 		return FALSE;
 
 	// do stuff

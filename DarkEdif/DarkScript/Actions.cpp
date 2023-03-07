@@ -108,9 +108,9 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 
 	// Too many parameters to ever call this with all of them - they should use scoped vars on start instead
 	// Subtract 2: one for func name, one for repeat count, since last function will be a KRFunc
-	if (params.size() > (size_t)::SDK->ExpressionInfos.back()->NumOfParams - 2)
+	if (params.size() > (size_t)Edif::SDK->ExpressionInfos.back()->NumOfParams - 2)
 		return CreateErrorT("%s: Too many parameters to run this function via expression. You have %zu parameters, but max is %hi. Consider using \"set scoped var on start\" action instead.",
-			_T(__FUNCTION__), params.size(), ::SDK->ExpressionInfos.back()->NumOfParams - 2);
+			_T(__FUNCTION__), params.size(), Edif::SDK->ExpressionInfos.back()->NumOfParams - 2);
 
 	std::shared_ptr<FunctionTemplate> func;
 	const auto funcExisting = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
@@ -702,7 +702,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	std::vector<FusionSelectedObjectListCache> selObjList;
 	evt_SaveSelectedObjects(selObjList);
 	runningFunc->runLocation = Sub_GetLocation(27);
-	assert(::SDK->ActionFunctions[27] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script));
+	assert(Edif::SDK->ActionFunctions[27] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script));
 	ExecuteFunction(nullptr, runningFunc);
 	evt_RestoreSelectedObjects(selObjList, true);
 }
