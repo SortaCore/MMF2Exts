@@ -32,20 +32,18 @@
 // msize() may return the size of memory BLOCK allocated, not the requested size.
 #define _msize(a) malloc_usable_size(a)
 
-// Translates to std::this_thread::sleep_for(), or yield(), depending on parameter.
-[[deprecated("Use std::this_thread::sleep_for() or yield()")]]
-void Sleep(unsigned int milliseconds);
-
 #define SUBSTRIFY(X) #X
 #define STRIFY(X) #X
 
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
-	void OutputDebugStringA(const char * debugString);
+// Hide in namespace for iOS, which cannot share global functions without conflict
+namespace DarkEdif {
+	void OutputDebugStringAInternal(const char* debugString);
+}
+#define OutputDebugStringA(x) DarkEdif::OutputDebugStringAInternal(x)
 #else
 	#define OutputDebugStringA(x) (void)0
 #endif
-
-void LOGF(const TCHAR * x, ...);
 
 using WindowHandleType = void*;
 
@@ -56,8 +54,13 @@ struct eventGroup {
 	std::uint16_t	evgIdentifier;
 	eventGroup() = delete;
 };
+namespace DarkEdif {
+	int MessageBoxA(WindowHandleType hwnd, const TCHAR* caption, const TCHAR* text, int iconAndButtons);
 
-int MessageBoxA(WindowHandleType hwnd, const TCHAR* caption, const TCHAR* text, int iconAndButtons);
+	// Translates to std::this_thread::sleep_for(), or yield(), depending on parameter.
+	[[deprecated("Use std::this_thread::sleep_for() or yield()")]]
+	void Sleep(unsigned int milliseconds);
+}
 
 // MessageBox button selected
 #define IDOK 0

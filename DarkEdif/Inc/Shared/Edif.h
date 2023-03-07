@@ -24,8 +24,6 @@ class Extension;
 
 #include "ObjectSelection.h"
 
-extern bool IS_COMPATIBLE(struct mv * mV);
-
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)
 	#define LinkAction(ID, Function) \
@@ -36,11 +34,11 @@ extern bool IS_COMPATIBLE(struct mv * mV);
 		LinkExpressionDebug(ID, &Extension::Function);
 #else
 	#define LinkAction(ID, Function) \
-		SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+		Edif::SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 	#define LinkCondition(ID, Function) \
-		SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+		Edif::SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 	#define LinkExpression(ID, Function) \
-		SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
+		Edif::SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(&Extension::Function);
 #endif
 
 struct RUNDATA;
@@ -326,4 +324,7 @@ namespace Edif
 
 };
 
-extern Edif::SDK * SDK;
+namespace Edif {
+	class SDK;
+	extern SDK* SDK;
+}

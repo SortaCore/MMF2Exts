@@ -732,7 +732,7 @@
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
-			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden $(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -D Edif=$(ExtName.Replace(' ','_'))_Edif -D Extension=$(ExtName.Replace(' ','_'))_Extension -D DarkEdif=$(ExtName.Replace(' ','_'))_DarkEdif $(AdditionalOptions)</AdditionalOptions>
 
 			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>

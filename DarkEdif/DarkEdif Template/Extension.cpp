@@ -54,6 +54,15 @@ Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCE
 		}, 500, NULL
 	);
 
+
+	// Read object DarkEdif properties; you can pass property name, or property index
+	// This will work on all platforms the same way.
+	bool checkboxWithinFolder = edPtr->Props.IsPropChecked("Checkbox within folder"sv);
+	std::tstring editable6Text = edPtr->Props.GetPropertyStr("Editable 6"sv);
+
+	// These lines do nothing, but prevent the compiler warning the variables are unused
+	(void)checkboxWithinFolder;
+	(void)editable6Text;
 }
 
 Extension::~Extension()
@@ -141,7 +150,7 @@ long Extension::UnlinkedExpression(int ID)
 {
 	DarkEdif::MsgBox::Error(_T("Extension::UnlinkedExpression() called"), _T("Running a fallback for expression ID %d. Make sure you ran LinkExpression()."), ID);
 	// Unlinked A/C/E is fatal error , but try not to return null string and definitely crash it
-	if ((size_t)ID < ::SDK->ExpressionInfos.size() && ::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
+	if ((size_t)ID < Edif::SDK->ExpressionInfos.size() && Edif::SDK->ExpressionInfos[ID]->Flags.ef == ExpReturnType::String)
 		return (long)Runtime.CopyString(_T(""));
 	return 0;
 }

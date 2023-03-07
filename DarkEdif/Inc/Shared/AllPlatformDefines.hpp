@@ -66,12 +66,6 @@ using namespace std::string_view_literals;
 	#define PrintFHintInside /* no op */
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
 #endif
-// Generic class for reading actions, conditions and expression parameters
-struct ACEParamReader {
-	virtual float GetFloat(int i) = 0;
-	virtual const TCHAR * GetString(int i) = 0;
-	virtual int GetInteger(int i) = 0;
-};
 
 // Flags
 enum class OEFLAGS : std::uint32_t {
@@ -127,11 +121,12 @@ enum_class_is_a_bitmask(OEPREFS);
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
 	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
+	void LOGF(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
 	#ifdef _DEBUG
-		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
 	#endif
@@ -162,6 +157,7 @@ namespace DarkEdif {
 #else
 	#define LOGE(x,...) (void)0
 #endif
+
 
 
 // Tells the compiler not to generate any default constructor/destructor for this class
@@ -301,6 +297,13 @@ enum class ExpReturnType : short {
 	UnsignedInteger = Integer
 };
 
+// Generic class for reading actions, conditions and expression parameters
+struct ACEParamReader {
+	virtual float GetFloat(int i) = 0;
+	virtual const TCHAR* GetString(int i) = 0;
+	virtual int GetInteger(int i, Params type) = 0;
+};
+
 
 
 // Definition of conditions / actions flags
@@ -336,8 +339,7 @@ enum class REFLAG : short {
 	MSGRETURNVALUE = 0x40,
 };
 
-// LOGF is implemented in Windows and iOS, with Android the built-in LOGF() is used.
-void LOGF(const TCHAR * x, ...);
+#define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Useful functions
 #include <thread>

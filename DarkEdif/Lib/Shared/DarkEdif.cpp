@@ -7,7 +7,10 @@
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
 #endif
-extern Edif::SDK * SDK;
+namespace Edif {
+	class SDK;
+	extern class SDK * SDK;
+}
 
 #if EditorBuild
 
@@ -17,15 +20,15 @@ static std::tstring StoredCurrentLanguageName = _T("<default>"s);
 static const _json_value * DefaultLanguageIndex()
 {
 	// Misuse of function; called before ::SDK is valid
-	if (!::SDK)
+	if (!Edif::SDK)
 	{
 		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Premature function call!\n  Called DefaultLanguageIndex() before ::SDK was a valid pointer."));
 		return &json_value_none;
 	}
 
-	for (unsigned int i = 0; i < SDK->json.u.object.length; ++i)
+	for (unsigned int i = 0; i < Edif::SDK->json.u.object.length; ++i)
 	{
-		auto& lang = SDK->json.u.object.values[i];
+		auto& lang = Edif::SDK->json.u.object.values[i];
 		if ((*lang.value).type == json_object
 			&& (*lang.value)["About"]["Name"].type == json_string)
 		{
@@ -35,7 +38,7 @@ static const _json_value * DefaultLanguageIndex()
 	}
 
 	// Fallback on last object
-	auto& lang = SDK->json.u.object.values[SDK->json.u.object.length - 1];
+	auto& lang = Edif::SDK->json.u.object.values[Edif::SDK->json.u.object.length - 1];
 	StoredCurrentLanguageName = DarkEdif::UTF8ToTString(lang.name);
 	return lang.value;
 }
@@ -70,14 +73,14 @@ const json_value & DarkEdif::JSON::LanguageJSON()
 		}
 
 		// langItem matched, get index of language in JSON
-		for (unsigned int i = 0; i < ::SDK->json.u.object.length; ++i)
+		for (unsigned int i = 0; i < Edif::SDK->json.u.object.length; ++i)
 		{
 			// Return index
-			if ((*::SDK->json.u.object.values[i].value).type == json_object &&
-				!_stricmp(::SDK->json.u.object.values[i].name, langItem.c_str()))
+			if ((*Edif::SDK->json.u.object.values[i].value).type == json_object &&
+				!_stricmp(Edif::SDK->json.u.object.values[i].name, langItem.c_str()))
 			{
-				StoredCurrentLanguage = SDK->json.u.object.values[i].value;
-				StoredCurrentLanguageName = DarkEdif::UTF8ToTString(SDK->json.u.object.values[i].name);
+				StoredCurrentLanguage = Edif::SDK->json.u.object.values[i].value;
+				StoredCurrentLanguageName = DarkEdif::UTF8ToTString(Edif::SDK->json.u.object.values[i].name);
 				return *StoredCurrentLanguage;
 			}
 		}
@@ -93,53 +96,49 @@ const TCHAR* const DarkEdif::JSON::LanguageName()
 	return StoredCurrentLanguageName.c_str();
 }
 #else // not EditorBuild
-#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
+#define CurLang (*Edif::SDK->json.u.object.values[Edif::SDK->json.u.object.length - 1].value)
 
 // In runtime, only one langauge is included, so we'll use a single string to contain it
 static std::tstring jsonLangName;
 const TCHAR* const DarkEdif::JSON::LanguageName()
 {
 	if (jsonLangName.empty())
-		jsonLangName = UTF8ToTString(::SDK->json.u.object.values[::SDK->json.u.object.length - 1].name);
+		jsonLangName = UTF8ToTString(Edif::SDK->json.u.object.values[Edif::SDK->json.u.object.length - 1].name);
 	return jsonLangName.c_str();
 }
 
 #endif // EditorBuild
 
-ACEInfo * ACEInfoAlloc(unsigned int NumParams)
+ACEInfo * Edif::ACEInfoAlloc(unsigned int NumParams)
 {
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
 }
-ExpReturnType ReadExpressionReturnType(const char * Text);
+ExpReturnType Edif::ReadExpressionReturnType(const char * Text);
 
-#ifdef RUN_ONLY
-#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
-#endif
-
-bool CreateNewActionInfo(void)
+bool Edif::CreateNewActionInfo()
 {
 	// Get ID and thus properties by counting currently existing actions.
-	const json_value & UnlinkedAction = CurLang["Actions"][(std::int32_t)::SDK->ActionInfos.size()];
+	const json_value & UnlinkedAction = CurLang["Actions"][(std::int32_t)Edif::SDK->ActionInfos.size()];
 
 	// Invalid JSON reference
 	if (UnlinkedAction.type != json_object)
-		return DarkEdif::MsgBox::Error(_T("Error reading action JSON"), _T("Invalid JSON reference for action ID %zu, expected object."), ::SDK->ActionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading action JSON"), _T("Invalid JSON reference for action ID %zu, expected object."), Edif::SDK->ActionInfos.size()), false;
 
 	const json_value & Param = UnlinkedAction["Parameters"];
 
 	// Num of parameters is beyond number of bits in FloatFlags
 	if (sizeof(ACEInfo::FloatFlags)*CHAR_BIT < Param.u.object.length)
-		return DarkEdif::MsgBox::Error(_T("Error reading action JSON"), _T("Too many parameters in action ID %zu."), ::SDK->ActionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading action JSON"), _T("Too many parameters in action ID %zu."), Edif::SDK->ActionInfos.size()), false;
 
 	// Parameters checked; allocate new info
 	ACEInfo * ActInfo = ACEInfoAlloc(Param.u.object.length);
 
 	// Could not allocate memory
 	if (!ActInfo)
-		return DarkEdif::MsgBox::Error(_T("Error creating action info"), _T("Could not allocate memory for action ID %zu return."), ::SDK->ActionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error creating action info"), _T("Could not allocate memory for action ID %zu return."), Edif::SDK->ActionInfos.size()), false;
 
-	ActInfo->ID = (short)SDK->ActionInfos.size();
+	ActInfo->ID = (short)Edif::SDK->ActionInfos.size();
 	ActInfo->NumOfParams = Param.u.object.length;
 
 	if (ActInfo->NumOfParams > 0)
@@ -158,34 +157,34 @@ bool CreateNewActionInfo(void)
 	}
 
 	// Add to table
-	SDK->ActionInfos.push_back(ActInfo);
+	Edif::SDK->ActionInfos.push_back(ActInfo);
 	return true;
 }
 
-bool CreateNewConditionInfo(void)
+bool Edif::CreateNewConditionInfo()
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Condition = CurLang["Conditions"][(std::int32_t)::SDK->ConditionInfos.size()];
+	const json_value & Condition = CurLang["Conditions"][(std::int32_t)Edif::SDK->ConditionInfos.size()];
 
 	// Invalid JSON reference
 	if (Condition.type != json_object)
-		return DarkEdif::MsgBox::Error(_T("Error reading condition JSON"), _T("Invalid JSON reference for condition ID %zu, expected a JSON object."), ::SDK->ConditionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading condition JSON"), _T("Invalid JSON reference for condition ID %zu, expected a JSON object."), Edif::SDK->ConditionInfos.size()), false;
 
 	const json_value & Param = Condition["Parameters"];
 
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(ACEInfo::FloatFlags) *CHAR_BIT < Param.u.object.length)
-		return DarkEdif::MsgBox::Error(_T("Error reading condition JSON"), _T("Too many parameters in condition ID %zu."), ::SDK->ConditionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading condition JSON"), _T("Too many parameters in condition ID %zu."), Edif::SDK->ConditionInfos.size()), false;
 
 	// Parameters checked; allocate new info
 	ACEInfo * CondInfo = ACEInfoAlloc(Param.u.object.length);
 
 	// Could not allocate memory
 	if (!CondInfo)
-		return DarkEdif::MsgBox::Error(_T("Error creating condition info"), _T("Could not allocate memory for condition ID %zu return."), ::SDK->ConditionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error creating condition info"), _T("Could not allocate memory for condition ID %zu return."), Edif::SDK->ConditionInfos.size()), false;
 
 	// If a non-triggered condition, set the correct flags
-	CondInfo->ID = (short)::SDK->ConditionInfos.size();
+	CondInfo->ID = (short)Edif::SDK->ConditionInfos.size();
 	CondInfo->NumOfParams = Param.u.object.length;
 	CondInfo->Flags.ev = bool (Condition["Triggered"]) ? EVFLAGS::NONE : (EVFLAGS::ALWAYS | EVFLAGS::NOTABLE);
 
@@ -205,36 +204,36 @@ bool CreateNewConditionInfo(void)
 	}
 
 	// Add to table
-	::SDK->ConditionInfos.push_back(CondInfo);
+	Edif::SDK->ConditionInfos.push_back(CondInfo);
 	return true;
 }
 
-bool CreateNewExpressionInfo(void)
+bool Edif::CreateNewExpressionInfo()
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Expression = CurLang["Expressions"][(std::int32_t)::SDK->ExpressionInfos.size()];
+	const json_value & Expression = CurLang["Expressions"][(std::int32_t)Edif::SDK->ExpressionInfos.size()];
 
 	// Invalid JSON reference
 	if (Expression.type != json_object)
-		return DarkEdif::MsgBox::Error(_T("Error reading expression JSON"), _T("Invalid JSON reference for expression ID %zu, expected a JSON object."), ::SDK->ExpressionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading expression JSON"), _T("Invalid JSON reference for expression ID %zu, expected a JSON object."), Edif::SDK->ExpressionInfos.size()), false;
 
 	const json_value & Param = Expression["Parameters"];
 
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(ACEInfo::FloatFlags)*CHAR_BIT < Param.u.object.length)
-		return DarkEdif::MsgBox::Error(_T("Error reading expression JSON"), _T("Too many JSON parameters in expression ID %zu."), ::SDK->ExpressionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error reading expression JSON"), _T("Too many JSON parameters in expression ID %zu."), Edif::SDK->ExpressionInfos.size()), false;
 
 	// Parameters checked; allocate new info
 	ACEInfo * ExpInfo = ACEInfoAlloc(Param.u.object.length);
 
 	// Could not allocate memory
 	if (!ExpInfo)
-		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for expression ID %zu return."), ::SDK->ExpressionInfos.size()), false;
+		return DarkEdif::MsgBox::Error(_T("Error creating expression info"), _T("Could not allocate memory for expression ID %zu return."), Edif::SDK->ExpressionInfos.size()), false;
 
 	// If a non-triggered condition, set the correct flags
-	ExpInfo->ID = (short)::SDK->ExpressionInfos.size();
+	ExpInfo->ID = (short)Edif::SDK->ExpressionInfos.size();
 	ExpInfo->NumOfParams = Param.u.object.length;
-	ExpInfo->Flags.ef = ReadExpressionReturnType(Expression["Returns"]);
+	ExpInfo->Flags.ef = Edif::ReadExpressionReturnType(Expression["Returns"]);
 
 	if (ExpInfo->NumOfParams > 0)
 	{
@@ -243,7 +242,7 @@ bool CreateNewExpressionInfo(void)
 		for (std::uint8_t c = 0; c < ExpInfo->NumOfParams; ++c)
 		{
 			IsFloat = false;
-			ExpInfo->Parameter[c].ep = ReadExpressionParameterType(Param[c][0], IsFloat);	// Store parameter type
+			ExpInfo->Parameter[c].ep = Edif::ReadExpressionParameterType(Param[c][0], IsFloat);	// Store parameter type
 			ExpInfo->FloatFlags |= (IsFloat << c);											// Store whether it is a float or not with a single bit
 		}
 
@@ -252,7 +251,7 @@ bool CreateNewExpressionInfo(void)
 	}
 
 	// Add to table
-	::SDK->ExpressionInfos.push_back(ExpInfo);
+	Edif::SDK->ExpressionInfos.push_back(ExpInfo);
 	return true;
 }
 
@@ -262,7 +261,7 @@ using namespace DarkEdif;
 namespace DarkEdif { namespace Properties { struct Data; static constexpr bool DebugProperties = false; } }
 #endif
 
-void DebugProp_OutputString(PrintFHintInside const TCHAR* msgFormat, ...)
+static void DebugProp_OutputString(PrintFHintInside const TCHAR* msgFormat, ...)
 {
 	if constexpr (!DarkEdif::Properties::DebugProperties)
 		return;
@@ -463,6 +462,8 @@ struct DarkEdif::DLL::PropAccesser
 	decltype(Properties::hashTypes) hashTypes; // fnv1a hash of property types only (with NOT applied)
 	// Number of properties
 	decltype(Properties::numProps) numProps;
+	// VS decided to pad this struct, so let's continue the idiocy officially
+	decltype(Properties::pad) pad;
 	// Size of DataForProps - including EDITDATA (and thus EDITDATA::Properties)
 	decltype(Properties::sizeBytes) sizeBytes;
 	// The actual data for properties, merged together
@@ -671,10 +672,10 @@ BOOL DarkEdif::DLL::DLL_GetProperties(mv * mV, EDITDATA * edPtr, bool masterItem
 {
 	DebugProp_OutputString(_T("Call to GetProperties with edPtr version %u.\n"), edPtr->eHeader.extVersion);
 
-	if (::SDK->EdittimeProperties == nullptr)
+	if (Edif::SDK->EdittimeProperties == nullptr)
 		MsgBox::Error(_T("Property error"), _T("Call to DLL_GetProperties without valid EdittimeProperties."));
 
-	mvInsertProps(mV, edPtr, ::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
+	mvInsertProps(mV, edPtr, Edif::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
 	mvInvalidateObject(mV, edPtr);
 	return TRUE; // OK
 }
@@ -722,7 +723,8 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 	const Data * Current = Internal_DataAt(ID);
 	if (!Current)
 	{
-		MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: Returned null Data."));
+		MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: Returned null Data. Properties are corrupt; "
+			"replace the existing " PROJECT_NAME ", by creating a new one and using \"Replace by another object\" in event editor."));
 		return nullptr;
 	}
 
@@ -1042,7 +1044,7 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 	bool Next2(ConverterReturn * const convRet)
 	{
 		using IDs = Edif::Properties::IDs;
-		int propTypeID = ::SDK->EdittimeProperties[atID].Type_ID % 1000;
+		int propTypeID = Edif::SDK->EdittimeProperties[atID].Type_ID % 1000;
 
 		// look up checkbox if we think it's in it
 		int chkState = -1;
@@ -1461,7 +1463,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		std::string title = prop["Title"].type == json_string ? (const char *)prop["Title"] : "<missing title>";
 
 		using IDs = Edif::Properties::IDs;
-		int propTypeID = ::SDK->EdittimeProperties[id].Type_ID % 1000;
+		int propTypeID = Edif::SDK->EdittimeProperties[id].Type_ID % 1000;
 		switch (propTypeID)
 		{
 		case IDs::PROPTYPE_STATIC:
@@ -1630,7 +1632,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		std::string title = prop["Title"].type == json_string ? (const char *)prop["Title"] : "<missing title>";
 
 		using IDs = Edif::Properties::IDs;
-		int propTypeID = ::SDK->EdittimeProperties[id].Type_ID % 1000;
+		int propTypeID = Edif::SDK->EdittimeProperties[id].Type_ID % 1000;
 		if (propTypeID == IDs::PROPTYPE_LEFTCHECKBOX)
 		{
 			if (prop["DefaultState"].type == json_boolean)
@@ -1787,7 +1789,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 
 		// Names and types match, both old and new version have same properties.
 		// The upgrade of Extension::Version did not involve a property change.
-		if (oldProps.hash == ~::SDK->jsonPropsNameAndTypesHash)
+		if (oldProps.hash == ~Edif::SDK->jsonPropsNameAndTypesHash)
 		{
 			// No changes to EDITDATA outside properties, so Extension::Version change had no change to EDITDATA at all.
 			// UpdateEditStructure() thus has nothing to do.
@@ -1806,7 +1808,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 		}
 		// Names changed, but types didn't. Perhaps a typo was fixed.
 		// All the data we could copy was copied, so now add defaults.
-		else if (oldProps.hashTypes == ~::SDK->jsonPropsTypesHash)
+		else if (oldProps.hashTypes == ~Edif::SDK->jsonPropsTypesHash)
 			DebugProp_OutputString(_T("Note: Types the same arrangement, but names changed. Assuming cosmetic change.\n"));
 		else
 			DebugProp_OutputString(_T("Types and names are both different.\n"));
@@ -1924,7 +1926,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 				{
 					ok = true;
 
-					std::uint16_t propTypeID = ::SDK->EdittimeProperties[i].Type_ID % 1000;
+					std::uint16_t propTypeID = Edif::SDK->EdittimeProperties[i].Type_ID % 1000;
 
 					assert(title.size() <= UINT8_MAX - 1); // can't store in titleLen
 					std::uint8_t titleLen = (std::uint8_t)title.size();
@@ -2116,8 +2118,8 @@ ReadyToOutput:
 	DLL::PropAccesser &newEdPtrProps = Elevate(newEdPtr->Props);
 
 	newEdPtrProps.propVersion = 'DAR1';
-	newEdPtrProps.hash = ~::SDK->jsonPropsNameAndTypesHash;
-	newEdPtrProps.hashTypes = ~::SDK->jsonPropsTypesHash;
+	newEdPtrProps.hash = ~Edif::SDK->jsonPropsNameAndTypesHash;
+	newEdPtrProps.hashTypes = ~Edif::SDK->jsonPropsTypesHash;
 	newEdPtrProps.sizeBytes = newEdPtrSize;
 	newEdPtrProps.numProps = (std::uint16_t)numPropsIncludingStatics;
 
@@ -2313,7 +2315,7 @@ bool DarkEdif::Properties::IsPropChecked(std::string_view propName) const
 	const auto& p = Elevate(*this);
 	const Properties::Data* data = p.Internal_FirstData();
 	int index = 0;
-	while (data)
+	while (data && index < p.numProps)
 	{
 		if (data->ReadPropName() == propName)
 			goto found;
@@ -2321,7 +2323,7 @@ bool DarkEdif::Properties::IsPropChecked(std::string_view propName) const
 		++index;
 	}
 
-	LOGE(_T("IsPropChecked() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	MsgBox::Error(_T("DarkEdif property error"), _T("IsPropChecked() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
 	return false;
 
 found:
@@ -2329,7 +2331,7 @@ found:
 	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_LEFTCHECKBOX &&
 		CurLang["Properties"][index]["CheckboxDefaultState"].type == json_none)
 	{
-		LOGE(_T("IsPropChecked() name = \"%s\" does not have a checkbox in the JSON."), UTF8ToTString(propName).c_str());
+		MsgBox::Error(_T("DarkEdif property error"), _T("IsPropChecked() name = \"%s\" does not have a checkbox in the JSON."), UTF8ToTString(propName).c_str());
 		return false;
 	}
 #endif
@@ -2340,7 +2342,7 @@ bool DarkEdif::Properties::IsPropChecked(int propID) const
 {
 	if (propID >= this->numProps)
 	{
-		LOGE(_T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu."), propID, this->numProps);
+		MsgBox::Error(_T("DarkEdif property error"), _T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu."), propID, this->numProps);
 		return false;
 	}
 	// The dataForProps consists of a set of chars, whereby each bit in the char is the "checked"
@@ -2353,14 +2355,16 @@ std::tstring DarkEdif::Properties::GetPropertyStr(std::string_view propName) con
 {
 	const auto& p = Elevate(*this);
 	const Properties::Data* data = p.Internal_FirstData();
-	while (data)
+	int index = 0;
+	while (data && index < p.numProps)
 	{
 		if (data->ReadPropName() == propName)
 			goto found;
 		data = data->Next();
+		++index;
 	}
 
-	LOGE(_T("GetPropertyStr() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyStr() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
 	return std::tstring();
 
 found:
@@ -2383,7 +2387,7 @@ found:
 #endif
 		return ret;
 	default:
-		LOGE(_T("GetPropertyStr(name = \"%s\") is not a string property."), UTF8ToTString(propName).c_str());
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyStr(name = \"%s\") is not a string property."), UTF8ToTString(propName).c_str());
 		return std::tstring();
 	}
 }
@@ -2394,7 +2398,7 @@ std::tstring DarkEdif::Properties::GetPropertyStr(int propID) const
 	const Properties::Data * data = p.Internal_DataAt(propID);
 	if (!data)
 	{
-		LOGE(_T("GetPropertyStr() error; property ID %d does not exist."), propID);
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyStr() error; property ID %d does not exist."), propID);
 		return std::tstring();
 	}
 	std::tstring ret;
@@ -2416,7 +2420,7 @@ std::tstring DarkEdif::Properties::GetPropertyStr(int propID) const
 #endif
 		return ret;
 	default:
-		LOGE(_T("GetPropertyStr(ID = %d) is not a string property."), propID);
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyStr(ID = %d) is not a string property."), propID);
 		return std::tstring();
 	}
 }
@@ -2433,7 +2437,7 @@ float DarkEdif::Properties::GetPropertyNum(std::string_view propName) const
 		data = data->Next();
 	}
 
-	LOGE(_T("GetPropertyNum() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
 	return 0.f;
 
 found:
@@ -2447,17 +2451,17 @@ found:
 	case Edif::Properties::IDs::PROPTYPE_DIRCTRL:
 		// Integer prop; but since they have a low precision, we'll return as float
 		if (data->ReadPropValueSize() != 4)
-			LOGE(_T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
+			MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
 		ret = (float)*(int*)data->ReadPropValue();
 		return ret;
 	case Edif::Properties::IDs::PROPTYPE_EDIT_FLOAT:
 	case Edif::Properties::IDs::PROPTYPE_SPINEDITFLOAT:
 		if (data->ReadPropValueSize() != 4)
-			LOGE(_T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
+			MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(name = \"%s\") is a numeric property, but has an unexpected size."), UTF8ToTString(propName).c_str());
 		ret = *(float*)data->ReadPropValue();
 		return ret;
 	default:
-		LOGE(_T("GetPropertyNum(name = \"%s\") is not a numeric property."), UTF8ToTString(propName).c_str());
+		DarkEdif::MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(name = \"%s\") is not a numeric property."), UTF8ToTString(propName).c_str());
 		return 0.f;
 	}
 }
@@ -2468,7 +2472,7 @@ float DarkEdif::Properties::GetPropertyNum(int propID) const
 	const Properties::Data* data = p.Internal_DataAt(propID);
 	if (!data)
 	{
-		LOGE(_T("GetPropertyNum() error; property ID %d does not exist."), propID);
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum() error; property ID %d does not exist."), propID);
 		return 0.f;
 	}
 	float ret;
@@ -2481,17 +2485,17 @@ float DarkEdif::Properties::GetPropertyNum(int propID) const
 	case Edif::Properties::IDs::PROPTYPE_DIRCTRL:
 		// Integer prop; but since they have a low precision, we'll return as float
 		if (data->ReadPropValueSize() != 4)
-			LOGE(_T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
+			MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
 		ret = (float)*(int *)data->ReadPropValue();
 		return ret;
 	case Edif::Properties::IDs::PROPTYPE_EDIT_FLOAT:
 	case Edif::Properties::IDs::PROPTYPE_SPINEDITFLOAT:
 		if (data->ReadPropValueSize() != 4)
-			LOGE(_T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
+			MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(ID = %d) is a numeric property, but has an unexpected size."), propID);
 		ret = *(float *)data->ReadPropValue();
 		return ret;
 	default:
-		LOGE(_T("GetPropertyNum(ID = %d) is not a numeric property."), propID);
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNum(ID = %d) is not a numeric property."), propID);
 		return 0.f;
 	}
 }
@@ -2532,6 +2536,12 @@ Properties::Data * DarkEdif::Properties::Internal_FirstData()
 }
 Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 {
+	if (ID >= this->numProps)
+	{
+		DebugProp_OutputString(_T("DataAt ID %u was not found.\n"), ID);
+		return nullptr;
+	}
+
 	const json_value& j = CurLang["Properties"];
 	if (j.type != json_array)
 	{
@@ -2546,7 +2556,7 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 		return nullptr;
 
 	Data * data = Internal_FirstData();
-	for (size_t i = 0; i < (size_t)ID; i++)
+	for (size_t i = 0; i < (size_t)ID && data; i++)
 	{
 		DebugProp_OutputString(_T("Locating ID %u, at %u: type %s, title: %s.\n"), ID, i, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 		data = data->Next();
@@ -2803,13 +2813,13 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		VariableProps.push_back(*CurrentProperty);
 	}
 
-	::SDK->EdittimeProperties = std::make_unique<PropData[]>(VariableProps.size() + 1);
+	Edif::SDK->EdittimeProperties = std::make_unique<PropData[]>(VariableProps.size() + 1);
 	// Use incrementation and copy to fixed list.
 	for (size_t l = 0; l < VariableProps.size(); ++l)
-		::SDK->EdittimeProperties[l] = VariableProps[l];
+		Edif::SDK->EdittimeProperties[l] = VariableProps[l];
 
 	// End with completely null PropData
-	memset(&::SDK->EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
+	memset(&Edif::SDK->EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
 
 	if (!openFolderList.empty())
 	{
@@ -2832,14 +2842,14 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		std::string propName = (const char*)p["Title"];
 		std::transform(propName.begin(), propName.end(), propName.begin(), ::tolower);
 
-		size_t propTypeID = ::SDK->EdittimeProperties[i].Type_ID % 1000;
+		size_t propTypeID = Edif::SDK->EdittimeProperties[i].Type_ID % 1000;
 
 		hashNamesAndTypes << propName << '|' << propTypeID << " | "sv;
 		hashTypes << propTypeID << '|';
 	}
 
-	::SDK->jsonPropsNameAndTypesHash = fnv1a(hashNamesAndTypes.str());
-	::SDK->jsonPropsTypesHash = fnv1a(hashTypes.str());
+	Edif::SDK->jsonPropsNameAndTypesHash = fnv1a(hashNamesAndTypes.str());
+	Edif::SDK->jsonPropsTypesHash = fnv1a(hashTypes.str());
 }
 #endif
 
@@ -2910,7 +2920,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	// To check it's working, generate an actual fresh edPtr and see if it's different
 	if constexpr (DarkEdif::Properties::DebugProperties)
 	{
-		HGLOBAL data = DLL_UpdateEditStructure(::SDK->mV, nullptr);
+		HGLOBAL data = DLL_UpdateEditStructure(Edif::SDK->mV, nullptr);
 		if (!data)
 			return std::numeric_limits<std::uint16_t>::max();
 		EDITDATA* edPtr = (EDITDATA*)GlobalLock(data);
@@ -2989,7 +2999,7 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
 #else // iOS
-	return DarkEdif_getCurrentFusionEventNum(ext->objCExtPtr);
+	return DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
 #endif
 }
 
@@ -3001,9 +3011,9 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 #if _WIN32
 	std::tstring truePath(MAX_PATH + 1, _T(' '));
 #ifdef _UNICODE
-	if (::SDK->mV->GetFileW(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+	if (Edif::SDK->mV->GetFileW(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
 #else
-	if (::SDK->mV->GetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
+	if (Edif::SDK->mV->GetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
 #endif
 		return _T(">mvGetFile returned false"s);
 #elif defined(__ANDROID__)
@@ -3028,7 +3038,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	threadEnv->DeleteLocalRef(pathJava);
 	threadEnv->DeleteLocalRef((jobject)str.ctx);
 #else
-	const std::string truePath = DarkEdif_makePathUnembeddedIfNeeded(ext->objCExtPtr, std::string(filePath).c_str());
+	const std::string truePath = DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -3242,7 +3252,7 @@ static jobject getGlobalContext()
 	jobject context = threadEnv->CallObjectMethod(at, getApplication);
 	return context;
 }
-int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
 	jclass toast = threadEnv->FindClass("android/widget/Toast");
 	jobject globalContext = getGlobalContext();
@@ -3279,7 +3289,7 @@ void DarkEdif::BreakIfDebuggerAttached()
 		DebugBreak();
 }
 
-void LOGF(const TCHAR * x, ...)
+void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 {
 	TCHAR buf[2048];
 	va_list va;
@@ -3295,14 +3305,14 @@ void DarkEdif::BreakIfDebuggerAttached()
 	__builtin_trap();
 }
 
-int MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
+int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
 {
 	::DarkEdif::Log(iconAndButtons, "Message box \"%s\" absorbed: \"%s\".", caption, text);
 	DarkEdif::BreakIfDebuggerAttached();
 	return 0;
 }
 
-void LOGF(const TCHAR * x, ...)
+void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 {
 	char buf[2048];
 	va_list va;
@@ -3872,7 +3882,7 @@ void DarkEdif::SDKUpdater::StartUpdateCheck()
 	if (updateThread == NULL)
 	{
 		DarkEdif::MsgBox::Error(_T("Critial error"), _T("The update checker failed to start, error %u."), GetLastError());
-		DarkEdifUpdateThread(::SDK);
+		DarkEdifUpdateThread(Edif::SDK);
 	}
 }
 
@@ -3937,7 +3947,7 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		return;
 
 	// Lots of magic numbers created by a lot of trial and error. Do not recommend.
-	if (::SDK->Icon->GetWidth() != 32)
+	if (Edif::SDK->Icon->GetWidth() != 32)
 		return DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("" PROJECT_NAME "'s icon width is not 32. Contact the extension developer."));
 
 	// If font creation fails, it's not that important; a null HFONT is replaced with a system default.
@@ -3956,18 +3966,18 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 
 	auto FillBackground = [](const RECT rect, COLORREF fillColor) {
 		// This is the grey background rectangle, which we'll need to both de-alpha and colour.
-		if (::SDK->Icon->HasAlpha())
+		if (Edif::SDK->Icon->HasAlpha())
 		{
-			LPBYTE alpha = ::SDK->Icon->LockAlpha();
+			LPBYTE alpha = Edif::SDK->Icon->LockAlpha();
 			if (alpha != nullptr)
 			{
 				for (int i = rect.top; i < rect.bottom; i++)
 					memset(&alpha[rect.left + (i * 32)], 0xFF, rect.right - rect.left);
-				::SDK->Icon->UnlockAlpha();
+				Edif::SDK->Icon->UnlockAlpha();
 			}
 		}
 
-		::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, fillColor);
+		Edif::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, fillColor);
 	};
 
 	if (extUpdateType == ExtUpdateType::Major)
@@ -3979,17 +3989,17 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		// we have to counter it by positioning each line manually.
 		RECT textDrawRect = { greyBkgdRect.left + 1, greyBkgdRect.top - 1, 32, 32 };
 		COLORREF textColor = RGB(240, 0, 0);
-		::SDK->Icon->DrawTextA("MAJOR", sizeof("MAJOR") - 1,
+		Edif::SDK->Icon->DrawTextA("MAJOR", sizeof("MAJOR") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		textDrawRect.left -= 1;
 		textDrawRect.top += 6;
-		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
+		Edif::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		textDrawRect.left += 1;
 		textDrawRect.top += 6;
-		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+		Edif::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		// It's possible to do this so the icon in the sidebar is updated too, but that causes Fusion to register that the properties have changed,
@@ -4021,12 +4031,12 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		RECT textDrawRect = { greyBkgdRect.left, greyBkgdRect.top - 1, 32, 32 };
 		COLORREF textColor = RGB(0, 180, 180);
 
-		::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
+		Edif::SDK->Icon->DrawTextA("UPDATE", sizeof("UPDATE") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		textDrawRect.left += 1;
 		textDrawRect.top += 6;
-		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+		Edif::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		if (DarkEdif::GetIniSetting("MsgBoxForMinorUpdate"sv) == "true")
@@ -4052,12 +4062,12 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 		RECT textDrawRect = { greyBkgdRect.left, greyBkgdRect.top - 1, 32, 32 };
 		COLORREF textColor = RGB(180, 0, 0);
 
-		::SDK->Icon->DrawTextA("REINSTL", sizeof("REINSTL") - 1,
+		Edif::SDK->Icon->DrawTextA("REINSTL", sizeof("REINSTL") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		textDrawRect.left += 1;
 		textDrawRect.top += 6;
-		::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
+		Edif::SDK->Icon->DrawTextA("NEEDED", sizeof("NEEDED") - 1,
 			&textDrawRect, DT_NOPREFIX, textColor, font, BMODE_TRANSP, BOP_COPY, 0L, 1);
 
 		if (pendingUpdateDetails.size() > 3)
@@ -4150,7 +4160,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 	std::tstring drMFXPath(DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::FusionRoot));
 	drMFXPath += _T("Data\\Runtime\\"sv);
-	if (mvIsUnicodeVersion(::SDK->mV))
+	if (mvIsUnicodeVersion(Edif::SDK->mV))
 	{
 		std::tstring uniPath = drMFXPath;
 		uniPath += _T("Unicode\\") PROJECT_NAME ".mfx"sv;
@@ -4826,7 +4836,7 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 #if defined(__ANDROID__) || defined(__APPLE__)
 
 #if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
-void OutputDebugStringA(const char * debugString)
+void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 {
 	assert(debugString != NULL);
 	// We can't get the user to remove their newlines, as Windows doesn't automatically add them in OutputDebugStringA(),
@@ -4848,7 +4858,7 @@ void OutputDebugStringA(const char * debugString)
 
 #ifndef _WIN32
 // To get the Windows-like behaviour
-void Sleep(unsigned int milliseconds)
+void DarkEdif::Sleep(unsigned int milliseconds)
 {
 	if (milliseconds == 0)
 		std::this_thread::yield();
@@ -4885,7 +4895,7 @@ darkExtJSONSize:						\n\
  * making use from them externally in other translation units.
  */
 
-INCBIN(darkExtJSON, "DarkExt.PostMinify.json");
+INCBIN(PROJECT_NAME_RAW, _darkExtJSON, "DarkExt.PostMinify.json");
 
 // See https://stackoverflow.com/a/19725269
 // Note the file will NOT be transmitted to Mac unless it's set as a C/C++ header file.

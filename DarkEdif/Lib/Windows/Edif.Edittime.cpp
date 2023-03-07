@@ -14,7 +14,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	if (mV && mV->IdAppli)
 		Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
 	else
-		Edif::ConvertAndCopyString(ObjName, (*SDK->json.u.object.values[2].value)["About"]["Name"], MAX_PATH);
+		Edif::ConvertAndCopyString(ObjName, (*Edif::SDK->json.u.object.values[2].value)["About"]["Name"], MAX_PATH);
 
 	// Allows user to specify a static variable in the object comment.
 	// e.g. build number, liblacewing version, etc.
@@ -52,14 +52,14 @@ const TCHAR * FusionAPI GetHelpFileName()
 void FusionAPI GetConditionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strBuf, CurLang["Conditions"][code]["Parameters"][param][1], maxLen);
 }
 
 void FusionAPI GetActionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strBuf, CurLang["Actions"][code]["Parameters"][param][1], maxLen);
 }
 
@@ -67,14 +67,14 @@ void FusionAPI GetActionTitle(mv *mV, short code, short param, TCHAR * strBuf, s
 void FusionAPI GetExpressionParam(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"][code]["Parameters"][param][1], maxLen);
 }
 
 void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 	{
 		std::string Return = CurLang["Expressions"][code]["Title"];
 		if (Return.back() != '(')
@@ -87,14 +87,14 @@ void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxL
 void FusionAPI GetConditionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strPtr, CurLang["Conditions"][code]["Title"], maxLen);
 }
 
 void FusionAPI GetActionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strPtr, CurLang["Actions"][code]["Title"], maxLen);
 }
 
@@ -102,7 +102,7 @@ void FusionAPI GetActionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 void FusionAPI GetExpressionString(mv * mV, short code, TCHAR * strPtr, short maxLen)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 		Edif::ConvertAndCopyString(strPtr, CurLang["Expressions"][code]["Title"], maxLen);
 }
 #endif
@@ -206,7 +206,7 @@ HMENU FusionAPI GetConditionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 	{
 		HMENU Menu = CreatePopupMenu();
 		menucpy(Menu, Edif::ConditionMenu);
@@ -219,7 +219,7 @@ HMENU FusionAPI GetActionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 	{
 		HMENU Menu = CreatePopupMenu();
 		menucpy(Menu, Edif::ActionMenu);
@@ -232,7 +232,7 @@ HMENU FusionAPI GetExpressionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 {
 #pragma DllExportHint
 	// Check compatibility
-	if (IS_COMPATIBLE(mV))
+	if (Edif::IS_COMPATIBLE(mV))
 	{
 		HMENU Menu = CreatePopupMenu();
 		menucpy(Menu, Edif::ExpressionMenu);
@@ -244,24 +244,24 @@ HMENU FusionAPI GetExpressionMenu(mv* mV, ObjectInfo* oiPtr, EDITDATA* edPtr)
 void * FusionAPI GetConditionInfos(mv *mV, short code)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
-		return ::SDK->ConditionInfos[code]->FusionPtr();
+	if (Edif::IS_COMPATIBLE(mV))
+		return Edif::SDK->ConditionInfos[code]->FusionPtr();
 	return NULL;
 }
 
 void * FusionAPI GetActionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
-		return ::SDK->ActionInfos[code]->FusionPtr();
+	if (Edif::IS_COMPATIBLE(mV))
+		return Edif::SDK->ActionInfos[code]->FusionPtr();
 	return NULL;
 }
 
 void * FusionAPI GetExpressionInfos(mv * mV, short code)
 {
 #pragma DllExportHint
-	if (IS_COMPATIBLE(mV))
-		return ::SDK->ExpressionInfos[code]->FusionPtr();
+	if (Edif::IS_COMPATIBLE(mV))
+		return Edif::SDK->ExpressionInfos[code]->FusionPtr();
 	return NULL;
 }
 

@@ -60,7 +60,7 @@ struct LevelObject;
 
 typedef short OINUM;
 typedef short HFII;
-
+struct mv;
 
 
 // ------------------------------------------------------------
@@ -89,9 +89,11 @@ struct RuntimeFunctions
 	};
 };
 
-Params ReadActionOrConditionParameterType(const char *, bool &);
-ExpParams ReadExpressionParameterType(const char *, bool &);
-ExpReturnType ReadExpressionReturnType(const char * text);
+namespace Edif {
+	Params ReadActionOrConditionParameterType(const char*, bool&);
+	ExpParams ReadExpressionParameterType(const char*, bool&);
+	ExpReturnType ReadExpressionReturnType(const char* text);
+}
 
 struct runHeader2 {
 	short EventCount;
@@ -164,6 +166,9 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW,_createRunObject(void * file, 
 ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW,_handleRunObject(void * cppExtPtr));
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtPtr, bool bFast));
 
+#define DarkEdifObjCFunc2(a,b) DarkEdif_##a##_##b
+#define DarkEdifObjCFunc(a,b) DarkEdifObjCFunc2(a,b)
+
 // Stolen from IncBin GitHub: https://github.com/graphitemaster/incbin
 // Edited to remove g prefix.
 #ifndef INCBIN_HDR
@@ -191,26 +196,27 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtP
 #define INCBIN_STR(X) #X
 #define INCBIN_STRINGIZE(X) INCBIN_STR(X)
 
-#define INCBIN_EXTERN(NAME) \
-    INCBIN_EXTERNAL const INCBIN_ALIGN unsigned char PROJECT_NAME_RAW ## NAME[]; \
-    INCBIN_EXTERNAL const unsigned int PROJECT_NAME_RAW ## NAME ## Size
+#define INCBIN_EXTERN(NAME1, NAME2) \
+    INCBIN_EXTERNAL const INCBIN_ALIGN unsigned char NAME1 ## NAME2[]; \
+    INCBIN_EXTERNAL const unsigned int NAME1 ## NAME2 ## Size
 
 #define PROJECT_NAME_RAW_STR #PROJECT_NAME_RAW
-#define INCBIN(NAME, FILENAME) INCBIN2(PROJECT_NAME_RAW ## NAME, FILENAME)
+#define INCBIN(NAME1, NAME2, FILENAME) INCBIN2(NAME1, NAME2, FILENAME)
 
-#define INCBIN2(NAME, FILENAME) \
+#define INCBIN2(NAME1, NAME2, FILENAME) \
     __asm__(".const_data\n" \
-            ".globl _" #NAME "\n"      \
+            ".globl _" #NAME1 #NAME2 "\n"      \
             ".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
-            "_" #NAME ":\n" \
+            "_" #NAME1 #NAME2 ":\n" \
                 ".incbin \"" FILENAME "\"\n" \
-            ".globl _" #NAME "Size\n"      \
+            ".globl _" #NAME1 #NAME2 "Size\n"      \
             ".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
-            "_" #NAME "Size:\n" \
-            ".long _" #NAME "Size - _" #NAME "\n" \
+            "_" #NAME1 #NAME2 "Size:\n" \
+            ".long _" #NAME1 #NAME2 "Size - _" #NAME1 #NAME2 "\n" \
     ); \
-    INCBIN_EXTERN(NAME)
-INCBIN_EXTERN(darkExtJSON);
+    INCBIN_EXTERN(NAME1, NAME2)
+#define INCBIN_EXTERN2(a, b) INCBIN_EXTERN(a, b);
+INCBIN_EXTERN2(PROJECT_NAME_RAW, _darkExtJSON);
 #endif
 
 // Undo warnings

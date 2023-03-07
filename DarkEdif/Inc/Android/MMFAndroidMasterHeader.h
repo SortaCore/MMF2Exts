@@ -340,13 +340,13 @@ struct RuntimeFunctions
 
 	void(*generateEvent) (void * ext, int code, int param);
 
-	int(*act_getParamExpression) (void * ext, void * act);
-	string(*act_getParamExpString) (void * ext, void * act);
-	float(*act_getParamExpFloat) (void * ext, void * act);
+	int(*act_getParamExpression) (void * ext, void * act, int paramIndex, Params type);
+	string(*act_getParamExpString) (void * ext, void * act, int paramIndex);
+	float(*act_getParamExpFloat) (void * ext, void * act, int paramIndex);
 
-	int(*cnd_getParamExpression) (void * ext, void * cnd);
-	string(*cnd_getParamExpString) (void * ext, void * cnd);
-	float(*cnd_getParamExpFloat) (void * ext, void * cnd);
+	int(*cnd_getParamExpression) (void * ext, void * cnd, int paramIndex, Params type);
+	string(*cnd_getParamExpString) (void * ext, void * cnd, int paramIndex);
+	float(*cnd_getParamExpFloat) (void * ext, void * cnd, int paramIndex);
 
 	int(*exp_getParamInt) (void * ext, void * exp);
 	string(*exp_getParamString) (void * ext, void * exp);
@@ -363,135 +363,6 @@ struct RuntimeFunctions
 const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
 
-struct ACE
-{
-	RuntimeFunctions * fn;
-	void * ext;
-
-	RuntimeFunctions::string strings[8];
-	int stringIndex;
-
-	inline const char * trackString(RuntimeFunctions::string s)
-	{
-		strings[stringIndex++] = s;
-		return s.ptr;
-	}
-
-	inline ACE()
-	{
-		stringIndex = 0;
-	}
-
-	inline ~ACE()
-	{
-		while (--stringIndex >= 0)
-			fn->freeString(ext, strings[stringIndex]);
-	}
-};
-
-class Action : public ACE
-{
-	void * act;
-
-public:
-
-	inline Action(RuntimeFunctions * fn, void * ext, void * _act)
-		: act(_act)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamExpression()
-	{
-		return fn->act_getParamExpression(ext, act);
-	}
-
-	inline const char * getParamExpString()
-	{
-		return trackString(fn->act_getParamExpString(ext, act));
-	}
-
-	inline float getParamExpFloat()
-	{
-		return fn->act_getParamExpFloat(ext, act);
-	}
-};
-
-class Condition : public ACE
-{
-	void * cnd;
-
-public:
-
-	inline Condition(RuntimeFunctions * fn, void * ext, void * _cnd)
-		: cnd(_cnd)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamExpression()
-	{
-		return fn->cnd_getParamExpression(ext, cnd);
-	}
-
-	inline const char * getParamExpString()
-	{
-		return trackString(fn->cnd_getParamExpString(ext, cnd));
-	}
-
-	inline float getParamExpFloat()
-	{
-		return fn->cnd_getParamExpFloat(ext, cnd);
-	}
-};
-
-class Expression : public ACE
-{
-	void * exp;
-
-public:
-
-	inline Expression(RuntimeFunctions * fn, void * ext, void * _exp)
-		: exp(_exp)
-	{
-		this->ext = ext;
-		this->fn = fn;
-	}
-
-	inline int getParamInt()
-	{
-		return fn->exp_getParamInt(ext, exp);
-	}
-
-	inline const char * getParamString()
-	{
-		return trackString(fn->exp_getParamString(ext, exp));
-	}
-
-	inline float getParamFloat()
-	{
-		return fn->exp_getParamFloat(ext, exp);
-	}
-
-	inline void setReturnInt(int value)
-	{
-		fn->exp_setReturnInt(ext, exp, value);
-	}
-
-	inline void setReturnString(const char * value)
-	{
-		fn->exp_setReturnString(ext, exp, value);
-	}
-
-	inline void setReturnFloat(float value)
-	{
-		fn->exp_setReturnFloat(ext, exp, value);
-	}
-};
-
-
 // Gets and returns a Java Exception. Pre-supposes there is one. Clears the exception.
 std::string GetJavaExceptionStr();
 
@@ -503,8 +374,6 @@ std::vector<monitor> monitors;*/
 
 extern thread_local JNIEnv * threadEnv;
 
-
-void LOGF(const TCHAR * x, ...);
 
 // Converts u8str to UTF-8Modified str. Expects no embedded nulls
 jstring CStrToJStr(const char * u8str);

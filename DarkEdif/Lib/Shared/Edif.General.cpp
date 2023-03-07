@@ -85,7 +85,7 @@ const TCHAR ** FusionAPI GetDependencies()
 #pragma DllExportHint
 	if (!Dependencies)
 	{
-		const json_value &DependenciesJSON = SDK->json["Dependencies"];
+		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"];
 
 		Dependencies = new const TCHAR * [DependenciesJSON.u.object.length + 2];
 
@@ -132,9 +132,9 @@ const TCHAR ** FusionAPI GetDependencies()
 std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 {
 #pragma DllExportHint
-	infoPtr->Conditions = &::SDK->ConditionJumps[0];
-	infoPtr->Actions = &::SDK->ActionJumps[0];
-	infoPtr->Expressions = &::SDK->ExpressionJumps[0];
+	infoPtr->Conditions = &Edif::SDK->ConditionJumps[0];
+	infoPtr->Actions = &Edif::SDK->ActionJumps[0];
+	infoPtr->Expressions = &Edif::SDK->ExpressionJumps[0];
 
 	infoPtr->NumOfConditions = CurLang["Conditions"].u.object.length;
 	infoPtr->NumOfActions = CurLang["Actions"].u.object.length;
@@ -159,7 +159,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	infoPtr->EditFlags = Extension::OEFLAGS;
 	infoPtr->EditPrefs = Extension::OEPREFS;
 
-	memcpy(&infoPtr->Identifier, ::SDK->json["Identifier"], 4);
+	memcpy(&infoPtr->Identifier, Edif::SDK->json["Identifier"], 4);
 
 	infoPtr->Version = Extension::Version;
 
@@ -325,42 +325,40 @@ jobject GetRH(void * javaExtPtr) {
 	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
 };
 
-int act_getParamExpression(void * javaExtPtr, void * act) {
-	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act), "static global<> actClass, from act_getParamExpression");
-	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
-	return mainThreadJNIEnv->CallIntMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+int act_getParamExpression(void * javaExtPtr, void * act, int paramIndex, Params type) {
+	static jmethodID getExpr(mainThreadJNIEnv->GetMethodID(GetExtClass(javaExtPtr), "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I"));
+	return mainThreadJNIEnv->CallIntMethod((jobject)javaExtPtr, getExpr, (jobject)act, paramIndex, (int)type);
 }
-RuntimeFunctions::string act_getParamExpString(void * javaExtPtr, void * act) {
+RuntimeFunctions::string act_getParamExpString(void * javaExtPtr, void * act, int paramIndex) {
 	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act), "static global<> actClass, from act_getParamExpString");
 	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
 	RuntimeFunctions::string str;
-	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)act, getActExpr, GetRH(javaExtPtr), paramIndex);
 	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	return str;
 }
-float act_getParamExpFloat(void * javaExtPtr, void * act) {
+float act_getParamExpFloat(void * javaExtPtr, void * act, int paramIndex) {
 	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act), "static global<>actClass, from act_getParamExpFloat");
 	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	return mainThreadJNIEnv->CallFloatMethod((jobject)act, getActExpr, GetRH(javaExtPtr), -1);
+	return mainThreadJNIEnv->CallFloatMethod((jobject)act, getActExpr, GetRH(javaExtPtr), paramIndex);
 }
 
-int cnd_getParamExpression(void * javaExtPtr, void * cnd) {
-	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd), "static global<>cndClass, from cnd_getParamExpression");
-	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpression", "(LRunLoop/CRun;I)I"));
-	return mainThreadJNIEnv->CallIntMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+int cnd_getParamExpression(void * javaExtPtr, void * cnd, int paramIndex, Params type) {
+	static jmethodID getExpr(mainThreadJNIEnv->GetMethodID(GetExtClass(javaExtPtr), "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I"));
+	return mainThreadJNIEnv->CallIntMethod((jobject)javaExtPtr, getExpr, (jobject)cnd, paramIndex, (int)type);
 }
-RuntimeFunctions::string cnd_getParamExpString(void * javaExtPtr, void * cnd) {
+RuntimeFunctions::string cnd_getParamExpString(void * javaExtPtr, void * cnd, int paramIndex) {
 	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd), "static global<>cndClass, from cnd_getParamExpString");
 	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
 	RuntimeFunctions::string str;
-	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), paramIndex);
 	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	return str;
 }
-float cnd_getParamExpFloat(void * javaExtPtr, void * cnd) {
+float cnd_getParamExpFloat(void * javaExtPtr, void * cnd, int paramIndex) {
 	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd), "static global<> cndClass, from cnd_getParamExpFloat");
 	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	float f = mainThreadJNIEnv->CallFloatMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), -1);
+	float f = mainThreadJNIEnv->CallFloatMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), paramIndex);
 	return f;
 }
 
@@ -579,7 +577,7 @@ void pushEvent(void * javaExtPtr, int code, int param) {
 	threadEnv->CallVoidMethod(ho, pushEvent, code, param);
 };
 
-void LOGF(const TCHAR * x, ...)
+void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 {
 	va_list va;
 	va_start(va, x);
@@ -893,7 +891,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 #endif
 
 	mv * mV = NULL;
-	if (!::SDK) {
+	if (!Edif::SDK) {
 		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}
@@ -922,7 +920,7 @@ class CValue;
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 {
 	mv * mV = NULL;
-	if (!::SDK) {
+	if (!Edif::SDK) {
 		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}

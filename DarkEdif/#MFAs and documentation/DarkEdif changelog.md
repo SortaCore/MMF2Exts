@@ -11,12 +11,26 @@ Some editors will consider this to be trailing whitespace and remove it; make su
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
 
+Changes until v18 release
+----
+*v18 not released yet*
+
+
 Changes until v17 release
 ----
-*v17 not released yet*
-- Edittime: Fixed UCT fix tool links causing crash, due to presence of %20 in a sprintf function
+*v17 released on 7th Mar 2023, commit (latest)*
+- HTML5/UWP: Added HTML5/UWP template files for DarkEdif Template
+- All platforms: Moved functions and global variables including ::SDK into Edif/DarkEdif namespace, as iOS was merging multiple exts' global functions/variables
+- All platforms: Added support for New_Direction parameter (the 32-direction picker wheel).
+- All platforms: PostBuildTool now v1.0.0.4; template files now support New_Direction parameter.
 - All platforms: Fixed DarkEdif property ID error reporting in GetPropertyNum and GetPropertyStr
+- All platforms: Changed default log level in Debug builds to info, not verbose. It gets old reading A/C/E parameter logs.
+- Edittime: Fixed UCT Fix Tool links in messageboxes causing crash, due to presence of %20 in a sprintf function
 - Edittime/Windows: Added invalid parameter handler if none present to prevent sprintf and related issues, in Edittime/Runtime configs
+- Android/iOS: PostBuildTool libcrypto/libssl hack removed; now reads Additional Platform Files.txt from project directory, used to add to zip during Android/iOS building.
+- Android: Fixed char not being signed by default on ARMv7 arch, due to a strange compiler default. This may affect iOS too.
+- iOS: PostBuildTool has altered Objective-C wrapper so multiple DarkEdif extensions can co-exist in one iOS MFA.
+- iOS: Edif and Extension are now #defined to include extension name (with underscores), so they are not shared on iOS
 
 
 Changes until v16 release
@@ -110,7 +124,6 @@ Changes until v12 release
 Changes until v11 release
 ----
 *v11 released on 26th August 2021, commit [36f8378](https://github.com/SortaCore/MMF2Exts/commit/36f8378d9ef6404420d480d53983c755491f53ac)*
-
 - MultiTarget SDK integration into DarkEdif Template, providing Android and iOS compatibility - iOS still requires separate Mac with Xcode (latest Xcode on Big Sur is compatible)
 - Added post-build tool for multiplatform version, allowing auto-packaging of built Android SO/iOS A files
 - Updated pre-build tool to multiplatform version, fixing the constantly-rebuilding problem, and writing function calltable on build for the A/C/E functions, for ABIs that lack ASM equivalents
@@ -124,7 +137,6 @@ Changes until v11 release
 Changes until v10 release
 ----
 *v10 released on 11th June 2021, commit [357036f](https://github.com/SortaCore/MMF2Exts/commit/357036fa10c8d3293b447ca4cd27d0bc52bfaff6)*
-
 - Fixed Edif::Condition for comparison condition parameters, uses long instead of int, and returns a text result correctly.
 - Removed UNICODE undef. Some Windows APIs like AdvAPI.h use UNICODE define instead of \_UNICODE. Enums with a member UNICODE now use UNICODE\_ member instead.
 - Removed excess newlines in template Conditions.cpp
@@ -133,7 +145,6 @@ Changes until v10 release
 Changes until v9 release
 ----
 *v9 released on 10th May 2021, commit [9935197](https://github.com/SortaCore/MMF2Exts/commit/99351979ffba98ed4417c4007b581acbeab70c5a)*
-
 - Adapted LinkConditionDebug for comparison condition parameters. They work a bit strangely, making conditions return the integer/text variable that Fusion runtime will compare.  
 These were also updated for clearer variable names, and use of type comparisons instead of converting types to string and comparing after. Lost of const was also documented.  
 - MMFMasterHeader: Fixed rCom::rcSprite mistakenly being Spr instead of Spr \*, found by Uppernate  
@@ -146,7 +157,6 @@ These were also updated for clearer variable names, and use of type comparisons 
 Changes until v8 release
 ----
 *v8 released on 8th March 2021, commit [1ad988b](https://github.com/SortaCore/MMF2Exts/commit/1ad988b0715c46ce3b045958de5ea961dd6dd99a)*
-
 - Optimised LinkACE debug functions. Cleaned up the JSON parser, including better error messages and fixing a 1-byte overflow.  
 - Fixed static analysis and Windows XP clash, atomic header clash, pre-build tool not liking space-indented JSON.
 
@@ -154,21 +164,18 @@ Changes until v8 release
 Changes until v7 release
 ----
 *v7 released on 1st December 2020, commit [28b0c08](https://github.com/SortaCore/MMF2Exts/commit/28b0c089dfeafc69bd00f1c0bc47801f085fb318)*
-
 - Replaced the charset-converting code std::string input parameter with std::string_view.
 
 
 Changes until v6 release
 ----
 *v6 released on 14th Sept 2020, commit [7548374](https://github.com/SortaCore/MMF2Exts/commit/7548374fa9400b18196465a9e430e32240ed8912)*
-
 - Removed SDK::EdittimeProperties in runtime builds; it's only needed to read the property value and type via JSON in runtime.
 
 
 Changes until v5 release
 ----
 *v5 released on 9th Sept 2020, commit [e86745c](https://github.com/SortaCore/MMF2Exts/commit/e86745c6cdc32af36e8bd6eeb011bb4b04788c43)*
-
 - Added DarkEdif::GetEventNumber. Now sets XP targeting when XP compiler is used.  
 - Pre-build tool now allows multiline-declared ACE functions. Fixed combo box property's initial value.  
 - Fixed sub-expressions causing wrong expression return type (corrupting float expression responses).
@@ -177,7 +184,6 @@ Changes until v5 release
 Changes until v4 release
 ----
 *v4 released on 4th Sept 2020, commit [9181958](https://github.com/SortaCore/MMF2Exts/commit/918195897fcdc229d535d229972b3ac734c73fb5)*
-
 - Added a new type of updater reply for a nice message to ext dev, instead of one that includes all updater log.  
 - Switched update thread spawn and wait to directly invoking the updater function.
 
@@ -185,19 +191,16 @@ Changes until v4 release
 Changes until v3 release
 ----
 *v3 released on 1st Sept 2020, commit [3d4cc24](https://github.com/SortaCore/MMF2Exts/commit/3d4cc2470c6cf0c562608620cc31979b506986a4)*
-
-Made updater error messages visible to end users. The webserver will be smart about what errors to show, basing it on whether it's a pre-release extension, an SDK update but the user isn't the ext owner, etc.
+- Made updater error messages visible to end users. The webserver will be smart about what errors to show, basing it on whether it's a pre-release extension, an SDK update but the user isn't the ext owner, etc.
 
 
 Changes until v2 release
 ----
 *v2 released on 31st Aug 2020, commit [31a7d45](https://github.com/SortaCore/MMF2Exts/commit/31a7d45216095646452f2722c794c033aaf71ea1)*
-
 - Fixed the icon display in event editor when updater is in use.
 
 
 v1 release
 ---
 *v1 released on 30th Aug 2020, commit [08a9013](https://github.com/SortaCore/MMF2Exts/commit/08a901341a102af790f1b57b5b9ea6d0150892eb)*
-
 - First SDK with updater, where a documented SDK version was more relevant.

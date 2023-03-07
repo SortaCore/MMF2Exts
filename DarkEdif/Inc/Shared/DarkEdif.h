@@ -2,7 +2,7 @@
 
 // JSON can have multiple languages; we'll use the last language in Runtime builds.
 #if RuntimeBuild
-	#define CurLang (*::SDK->json.u.object.values[::SDK->json.u.object.length - 1].value)
+	#define CurLang (*Edif::SDK->json.u.object.values[Edif::SDK->json.u.object.length - 1].value)
 #else
 	#define CurLang (DarkEdif::JSON::LanguageJSON())
 #endif
@@ -53,18 +53,22 @@ struct ACEInfo {
 	inline void * FusionPtr () { return &ID; }
 };
 
-Params ReadActionOrConditionParameterType(const char*, bool&);
-ExpParams ReadExpressionParameterType(const char*, bool&);
-ExpReturnType ReadExpressionReturnType(const char* text);
+namespace Edif {
+	Params ReadActionOrConditionParameterType(const char*, bool&);
+	ExpParams ReadExpressionParameterType(const char*, bool&);
+	ExpReturnType ReadExpressionReturnType(const char* text);
+	ACEInfo* ACEInfoAlloc(unsigned int NumParams);
 
-bool CreateNewActionInfo();
-bool CreateNewConditionInfo();
-bool CreateNewExpressionInfo();
+	bool CreateNewActionInfo();
+	bool CreateNewConditionInfo();
+	bool CreateNewExpressionInfo();
+	bool IS_COMPATIBLE(mv* mV);
+}
 
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 16;
+	static const int SDKVersion = 17;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -294,6 +298,7 @@ namespace DarkEdif {
 
 
 	void BreakIfDebuggerAttached();
+	void LOGFInternal(PrintFHintInside const TCHAR* fmt, ...) PrintFHintAfter(1, 2);
 
 	namespace MsgBox
 	{
@@ -506,6 +511,9 @@ namespace DarkEdif {
 		std::uint32_t hashTypes; // property types only
 		// Number of properties
 		std::uint16_t numProps;
+
+		// VS decided to pad this struct, so let's continue the idiocy officially
+		std::uint16_t pad;
 		// Size of DataForProps - including EDITDATA (and thus EDITDATA::Properties)
 		// Note that this is uint32, because initial EDITDATA is capped to uint16 by GetRunObjectInfos()'s EDITDATASize,
 		// but the size after initial setup is in EDITDATA::eHeader::extSize, which is uint32.
@@ -615,7 +623,7 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 	do
 	{
 		bool isFloat = false;
-		Params p = ReadActionOrConditionParameterType(json["Parameters"][acParamIndex][0], isFloat);
+		Params p = Edif::ReadActionOrConditionParameterType(json["Parameters"][acParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
@@ -705,7 +713,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 	do
 	{
 		bool isFloat = false;
-		ExpParams p = ReadExpressionParameterType(json["Parameters"][expParamIndex][0], isFloat);
+		ExpParams p = Edif::ReadExpressionParameterType(json["Parameters"][expParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
@@ -765,10 +773,10 @@ template<class Ret, class Struct, class... Args>
 void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < SDK->json.u.object.length; curLangIndex++)
+	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
 	{
-		const json_value &curLang = *SDK->json.u.object.values[curLangIndex].value;
-		const char * const curLangName = SDK->json.u.object.values[curLangIndex].name;
+		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
+		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
@@ -825,17 +833,17 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	(Edif::SDK)->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < SDK->json.u.object.length; curLangIndex++)
+	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
 	{
-		const json_value &curLang = *SDK->json.u.object.values[curLangIndex].value;
-		const char * const curLangName = SDK->json.u.object.values[curLangIndex].name;
+		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
+		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
@@ -910,17 +918,17 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	(Edif::SDK)->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < SDK->json.u.object.length; curLangIndex++)
+	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
 	{
-		const json_value &curLang = *SDK->json.u.object.values[curLangIndex].value;
-		const char * const curLangName = SDK->json.u.object.values[curLangIndex].name;
+		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
+		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
 		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
@@ -936,7 +944,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		std::string cppRetType = typestr(Ret);
 		bool retTypeOK = false;
 		const json_value &json = curLang["Expressions"][ID];
-		ExpReturnType jsonRetType = ReadExpressionReturnType(json["Returns"]);
+		ExpReturnType jsonRetType = Edif::ReadExpressionReturnType(json["Returns"]);
 
 		if (jsonRetType == ExpReturnType::Integer)
 		{
@@ -1009,7 +1017,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	(Edif::SDK)->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 // Combine the two:
@@ -1037,7 +1045,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...))
 
 #ifdef __APPLE__
 //
-extern "C" int DarkEdif_getCurrentFusionEventNum(void* objCExt);
+extern "C" int DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(void* objCExt);
 
 // Reads files from inside anywhere Fusion runtime can readily access.
 // Uses the CRun functions used by Edit Box to load files.
@@ -1047,5 +1055,5 @@ extern "C" int DarkEdif_getCurrentFusionEventNum(void* objCExt);
 // Errors are indicated by > at start of return, which is illegal filename char;
 // otherwise the return is the file path in a temporary folder, suitable for fopen()
 // Return is malloc'd and must be free'd, even for errors
-extern "C" char* DarkEdif_makePathUnembeddedIfNeeded(void* ext, const char* fileName);
+extern "C" char* DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(void* ext, const char* fileName);
 #endif

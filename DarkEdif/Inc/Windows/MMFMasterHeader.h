@@ -1160,9 +1160,11 @@ struct ParamEffect {
 	TCHAR *	name;
 };
 
-Params ReadActionOrConditionParameterType(const char *, bool &);
-ExpParams ReadExpressionParameterType(const char *, bool &);
-ExpReturnType ReadExpressionReturnType(const char * text);
+namespace Edif {
+	Params ReadActionOrConditionParameterType(const char*, bool&);
+	ExpParams ReadExpressionParameterType(const char*, bool&);
+	ExpReturnType ReadExpressionReturnType(const char* text);
+}
 
 ///////////////////////////////////////////////////////////////
 // STRUCTURE FOR FAST LOOPS

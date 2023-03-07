@@ -660,17 +660,17 @@ Edif::Runtime::~Runtime()
 {
 }
 
-extern "C" void DarkEdif_generateEvent(void * ext, int code, int param);
-extern "C" void DarkEdif_reHandle(void * ext);
+extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(void * ext, int code, int param);
+extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(void * ext);
 
 void Edif::Runtime::Rehandle()
 {
-	DarkEdif_reHandle(this->objCExtPtr);
+	DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(this->objCExtPtr);
 }
 
 void Edif::Runtime::GenerateEvent(int EventID)
 {
-	DarkEdif_generateEvent(this->objCExtPtr, EventID, 0);
+	DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
 }
 
 void Edif::Runtime::PushEvent(int EventID)

@@ -33,6 +33,7 @@
 	#define _tcscpy(a,b) strcpy(a,b)
 	#define _tcscat(a,b) strcat(a,b)
 	#define _tcscmp(a,b) strcmp(a,b)
+	#define _tcschr(a,b) strchr(a,b)
 	#define _tcsrchr(a,b) strrchr(a,b)
 	#define _totlower tolower
 	#define _totupper toupper
