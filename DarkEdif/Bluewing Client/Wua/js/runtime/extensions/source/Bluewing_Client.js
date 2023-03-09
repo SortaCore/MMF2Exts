@@ -14,10 +14,12 @@
 
 /// <reference path="https://cdn.jsdelivr.net/gh/inexorabletash/text-encoding@master/lib/encoding.min.js" />
 /// <reference path="https://cdn.jsdelivr.net/gh/imaya/zlib.js@master/bin/zlib.min.js" />
-/* global console, darkEdif, Zlib, window, alert, GraphemeSplitter, CRunExtension, FinalizationRegistry, CServices */
+/* global console, darkEdif, Zlib, window, alert, GraphemeSplitter, CRunExtension, FinalizationRegistry, CServices, document, navigator,
+	XMLHttpRequest, URL, Blob, TextEncoder, TextDecoder, WebSocket, setTimeout, clearTimeout */
+/* jslint esversion: 6, sub: true */
 
 // This is strict, but that can be assumed
-// "use strict";
+//"use strict";
 
 // Main differences between Windows and UWP:
 // 1) UDP is not used, but is faked by part of the variant of the messages.
@@ -119,7 +121,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 		}
 	};
     // UWP does not have FinalizationRegistry
-	this.finalizer = new /** @constructor */ function() { this.register = function(desc) { }; };
+	this.finalizer = { register: function(desc) { } };
 
 	this['Properties'] = function(ext, edPtrFile, extVersion) {
 		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
@@ -145,7 +147,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
 		let that = this;
 		let GetPropertyIndex = function(chkIDOrName) {
-			if (typeof chkIDOrName == 'Number') {
+			if (typeof chkIDOrName == 'number') {
 				if (that.numProps >= chkIDOrName) {
 					throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
 				}
@@ -184,8 +186,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 				return t;
 			}
 			throw "Property " + prop.propName  + " is not textual.";
-			return "";
-		}
+		};
 		this['GetPropertyNum'] = function(chkIDOrName) {
 			const idx = that.GetPropertyIndex(chkIDOrName);
 			if (idx == -1)
@@ -209,16 +210,15 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 				return new DataView(prop.propData).getFloat32(0, true);
 			}
 			throw "Property " + prop.propName  + " is not numeric.";
-			return "";
-		}
+		};
 
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);
 		const dataDV = new DataView(new Uint8Array(data).buffer);
 
 		this.textDecoder = null;
-		if (globalThis['TextDecoder'] != null) {
-			this.textDecoder = new globalThis['TextDecoder']();
+		if (window['TextDecoder'] != null) {
+			this.textDecoder = new window['TextDecoder']();
 		}
 		else {
 			// one byte = one char - should suffice for basic ASCII property names
@@ -242,7 +242,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 			this.props.push({ index: i, propTypeID: propTypeID, propName: propName, propData: propData });
 			pt = propEnd;
 		}
-	}
+	};
 })();
 
 // External scripts to load - mostly text encoding
@@ -2711,7 +2711,7 @@ CRunBluewing_Client.prototype =
 
 		const func = this.$conditionFuncs[~~num];
 		if (func == null)
-			throw "Unrecognised condition ID [" + (~~num) + "] passed to Bluewing.";
+			throw "Unrecognised condition ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
 
 		const args = new Array(func.length);
 		for (let i = 0; i < args.length; i++)
@@ -2729,7 +2729,7 @@ CRunBluewing_Client.prototype =
 
 		const func = this.$actionFuncs[~~num];
 		if (func == null)
-			throw "Action ID " + ~~num + " was not defined in CRunBluewing_Client's constructor.";
+			throw "Unrecognised action ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
 
 		const args = new Array(func.length);
 		for (let i = 0; i < args.length; i++)
@@ -2749,7 +2749,7 @@ CRunBluewing_Client.prototype =
 
 		const func = this.$expressionFuncs[~~num];
 		if (func == null)
-			throw "Unexpected expression ID " + (~~num) + " was called in Bluewing.";
+			throw "Unrecognised expression ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
 
 		const args = new Array(func.length);
 		for (let i = 0; i < args.length; i++)
@@ -2767,7 +2767,7 @@ CServices.extend(CRunExtension, CRunBluewing_Client);
 // Template code -> Bluewing specifics
 /** @constructor */
 function BluewingClient_GlobalInfo(ext, edPtr) {
-	this.objEventPump = new (/** @constructor */ function() { this.tick = function () { return null; }; })();
+	this.objEventPump = { tick: function () { return null; } };
 	this.client = new Bluewing_Client(ext);
 	// Check to make sure current non-ignorable triggered event was processed by Fusion events
 	this.lastMandatoryEventWasChecked = true;
@@ -2792,7 +2792,7 @@ function BluewingClient_GlobalInfo(ext, edPtr) {
 	// This GlobalInfo global ID of extension, in UTF-8
 	this.globalID = edPtr.globalID;
 	// If in multithreading mode, the Lacewing message handler thread
-	this.thread = new (/** @constructor */ function() { this.joinable = function() { return false; }; this.join = function() { }; })();
+	this.thread = { joinable: function() { return false; }, join: function() { } };
 	// Current "owner" extension used to run events. Can be null, e.g. during frame switches
 	this.ext = ext;
 	// Thread handle; Thread checking whether a client extension has not regained control of connection in a reasonable time, i.e. slow frame transition

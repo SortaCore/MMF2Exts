@@ -2,7 +2,8 @@
 	This DarkEdif Template Fusion extension UWP port is under MIT license.
 */
 
-/* global console, darkEdif, alert, CRunExtension, CServices */
+/* global console, darkEdif, alert, CRunExtension, CServices, window */
+/* jslint esversion: 6, sub: true */
 
 // This is strict, but that can be assumed
 // "use strict";
@@ -74,7 +75,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 		}
 	};
     // UWP does not have FinalizationRegistry
-	this.finalizer = new /** @constructor */ function() { this.register = function(desc) { }; };
+	this.finalizer = { register: function(desc) { } };
 
 	this['Properties'] = function(ext, edPtrFile, extVersion) {
 		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
@@ -100,7 +101,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
 		let that = this;
 		let GetPropertyIndex = function(chkIDOrName) {
-			if (typeof chkIDOrName == 'Number') {
+			if (typeof chkIDOrName == 'number') {
 				if (that.numProps >= chkIDOrName) {
 					throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
 				}
@@ -139,8 +140,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 				return t;
 			}
 			throw "Property " + prop.propName  + " is not textual.";
-			return "";
-		}
+		};
 		this['GetPropertyNum'] = function(chkIDOrName) {
 			const idx = that.GetPropertyIndex(chkIDOrName);
 			if (idx == -1)
@@ -164,8 +164,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 				return new DataView(prop.propData).getFloat32(0, true);
 			}
 			throw "Property " + prop.propName  + " is not numeric.";
-			return "";
-		}
+		};
 
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);
@@ -197,7 +196,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 			this.props.push({ index: i, propTypeID: propTypeID, propName: propName, propData: propData });
 			pt = propEnd;
 		}
-	}
+	};
 })();
 
 /** @constructor */
@@ -329,7 +328,7 @@ CRunDarkEdif_Template.prototype =
 
 		const func = this.$conditionFuncs[~~num];
 		if (func == null)
-			throw "Unrecognised condition ID " + (~~num) + " passed to DarkEdif Template.";
+			throw "Unrecognised condition ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
 
 		// Note: New Direction parameter is not supported by this, add a workaround based on condition and parameter index;
 		// SDL Joystick's source has an example.
@@ -349,7 +348,7 @@ CRunDarkEdif_Template.prototype =
 
 		const func = this.$actionFuncs[~~num];
 		if (func == null)
-			throw "Unrecognised action ID " + (~~num) + " passed to DarkEdif Template.";
+			throw "Unrecognised action ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
 
 		// Note: New Direction parameter is not supported by this, add a workaround based on action and parameter index;
 		// SDL Joystick's source has an example.
@@ -371,7 +370,7 @@ CRunDarkEdif_Template.prototype =
 
 		const func = this.$expressionFuncs[~~num];
 		if (func == null)
-			throw "Unrecognised expression ID " + (~~num) + " passed to DarkEdif Template.";
+			throw "Unrecognised expression ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
 
 		const args = new Array(func.length);
 		for (let i = 0; i < args.length; i++)
