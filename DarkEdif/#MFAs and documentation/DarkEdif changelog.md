@@ -15,6 +15,8 @@ Changes until v18 release
 ----
 *v18 not released yet*
 - Windows: Fixed issues that caused projects using C++20 not to work
+- Android/iOS: Fixed projects seen as building successfully when PostBuildTool failed  
+  (this happens commonly wth iOS, as all iOS CPU archs must be built before PostBuildTool can combine them into a xcframework)
 
 
 Changes until v17 release

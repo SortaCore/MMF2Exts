@@ -677,6 +677,10 @@
 			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
 		</Link>
 	</ItemDefinitionGroup>
+	<!-- Ensure VS knows the build failed if the .so or .zip files weren't updated -->
+	<ItemGroup Condition="'$(_TargetPlat)'=='Android'">
+		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName.Replace(' ','_')).zip;$(SolutionDir)\Temp\$(ExtName)\Android\$(Configuration)\$(TargetArch)\lib$(ExtName.Replace(' ','_')).so" />
+	</ItemGroup>
 
 <!--#################################
 		END Android
@@ -759,7 +763,10 @@
 			<LinkTimeOptimization Condition="$(LTCG)=='Y'">true</LinkTimeOptimization>
 		</ClCompile>
 	</ItemDefinitionGroup>
-
+	<!-- Ensure VS knows the build failed if the .xcframework or .ext files weren't updated -->
+	<ItemGroup Condition="'$(_TargetPlat)'=='iOS'">
+		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName.Replace(' ','_')).ext;$(SolutionDir)\Temp\$(ExtName)\iOS\$(Configuration)\$(ExtName.Replace(' ','_')).xcframework\Info.plist" />
+	</ItemGroup>
 
 	<!-- All runtimes -->
 	<ItemGroup>
