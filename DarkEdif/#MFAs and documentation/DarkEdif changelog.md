@@ -14,6 +14,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v18 release
 ----
 *v18 not released yet*
+- Windows: Fixed issues that caused projects using C++20 not to work
 
 
 Changes until v17 release

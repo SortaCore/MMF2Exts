@@ -123,7 +123,7 @@ struct qualToOi {
 };
 
 struct RunHeader {
-	unsigned short GetEventCount();
+	int GetEventCount();
 };
 
 typedef void * CCndExtension;

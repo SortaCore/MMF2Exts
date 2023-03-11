@@ -76,7 +76,7 @@ void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxL
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
 	{
-		std::string Return = CurLang["Expressions"][code]["Title"];
+		std::string Return = (const char *)CurLang["Expressions"][code]["Title"];
 		if (Return.back() != '(')
 			Return.push_back('(');
 		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);

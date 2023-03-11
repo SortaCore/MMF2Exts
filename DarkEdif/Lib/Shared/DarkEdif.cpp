@@ -350,7 +350,7 @@ static size_t GetPropRealID(size_t fromFusion)
 	if (fromFusion < PROPID_EXTITEM_CUSTOM_FIRST)
 		return std::numeric_limits<size_t>::max();
 
-	// Ext properties start from 0x80000, PROPID_EXTITEM_CUSTOM_FIRST 
+	// Ext properties start from 0x80000, PROPID_EXTITEM_CUSTOM_FIRST
 	return fromFusion - PROPID_EXTITEM_CUSTOM_FIRST;
 }
 static DarkEdif::Properties & GetRealPropsAddress(EDITDATA * edPtr)
@@ -1142,7 +1142,7 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 				// If there is a return, send it back
 				if (convRet)
 				{
-					std::string res = itemsJSON[*(int*)at];
+					std::string res = (const char *)itemsJSON[*(int*)at];
 					if (res.size() > 0)
 						convRet->Return_OK(_strdup(res.c_str()), res.size(), [](const void* v) { free((void *)v); }, chkState);
 					else
@@ -1326,14 +1326,14 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 	{
 		const json_value & propJ = convState->jsonProps[id];
 
-		std::string jsonPropName = propJ["Title"];
+		std::string jsonPropName = (const char *)propJ["Title"];
 
 		// If a property has "OldTitle", we'll check for that first
 		// Worth noting if you rename a -> b and b -> a, a will simply be put as a.
 		std::string jsonPropOldName = propJ["OldTitle"].type == json_none ? "" : propJ["OldTitle"];
 
 		int jsonPropTypeID = -1;
-		
+
 		// Loop through Parameter names and compareth them.
 		for (size_t j = Edif::Properties::IDs::PROPTYPE_FIRST_ITEM; j < Edif::Properties::IDs::PROPTYPE_LAST_ITEM; ++j)
 		{
@@ -1446,7 +1446,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			convState.jsonProps.u.array.length);
 		return convRet->Return_OK(nullptr, 0U);
 	}
-	
+
 	// Get property by ID.
 	// Note that IDs will always be increasing, but you should program GetProperty() as if IDs can be skipped.
 	void GetProperty(size_t id, ConverterReturn * const convRet)
@@ -1802,7 +1802,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 
 			// Prop offsets change: properties are same, but EDITDATA changed.
 			// Bulk copy all the properties over
-			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, oldProps.sizeBytes - oldOffset);
+			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, oldProps.sizeBytes - ((int)oldOffset));
 			DebugProp_OutputString(_T("Prop offsets changed, but hashes are the same. Jumping to output.\n"));
 			goto ReadyToOutput;
 		}
@@ -3973,11 +3973,11 @@ void DarkEdif::SDKUpdater::RunUpdateNotifs(mv * mV, EDITDATA * edPtr)
 			{
 				for (int i = rect.top; i < rect.bottom; i++)
 					memset(&alpha[rect.left + (i * 32)], 0xFF, rect.right - rect.left);
-				Edif::SDK->Icon->UnlockAlpha();
+				(Edif::SDK)->Icon->UnlockAlpha();
 			}
 		}
 
-		Edif::SDK->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, fillColor);
+		(Edif::SDK)->Icon->Fill(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, fillColor);
 	};
 
 	if (extUpdateType == ExtUpdateType::Major)
@@ -4384,8 +4384,12 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		// Used in IP lookup and the HTTP request content
 		const char domain[] = "nossl.dark-wire.com";
 
-		struct hostent * host;
-		host = gethostbyname(domain);
+		// Suppress warning C4996 about using getaddrinfo instead; we don't need a newer function
+		// for Darkwire's simple DNS, and it'll be a lot more code for no obvious benefit.
+#pragma warning (push)
+#pragma warning (disable: 4996)
+		struct hostent * host = gethostbyname(domain);
+#pragma warning (pop)
 
 		if (host == NULL)
 		{
@@ -4715,7 +4719,7 @@ DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
 // =====
 // Message boxes that mostly work on all platforms
-// On Android, this makes a small popup on bottom of the screen, called a biscuit?
+// On Android, this makes a small popup on bottom of the screen, called a toast notification
 // =====
 static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, va_list v, int flags)
 {
@@ -4833,9 +4837,7 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 #endif
 }
 
-#if defined(__ANDROID__) || defined(__APPLE__)
-
-#if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
+#if (defined(__ANDROID__) || defined(__APPLE__)) && DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO
 void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 {
 	assert(debugString != NULL);
@@ -4853,8 +4855,7 @@ void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 
 	LOGI("OutputDebugStringA: %s.", debugStringSafe.c_str());
 }
-#endif // DarkEdif log level INFO or higher
-#endif // __ANDROID__
+#endif // Android, iOS, and DarkEdif log level INFO or lower level
 
 #ifndef _WIN32
 // To get the Windows-like behaviour
@@ -4867,6 +4868,25 @@ void DarkEdif::Sleep(unsigned int milliseconds)
 }
 
 #endif
+
+
+// =====
+// Object selection for all platforms
+// =====
+
+int RunHeader::GetEventCount() {
+#ifdef _WIN32
+	return rh4.eventCount;
+#else
+	LOGF(_T("GetEventCount not implemented on this platform."));
+	return -1;
+#endif
+}
+
+
+// =====
+// Embed the minified JSON file in Android and iOS
+// =====
 
 // Causes the produced extension to include DarkExt.PostMinify.json.
 // Hat tip: https://stackoverflow.com/a/4910421

@@ -1713,6 +1713,8 @@ struct RunHeader {
 
 	objectsList *		ObjectList;			// Object list address
 
+	// Reads the EventCount variable from RunHeader4. DarkEdif-added function for cross-platform.
+	int GetEventCount();
 };
 //typedef	RunHeader 	* fprh;
 //typedef	RunHeader 	* RunHeader *;

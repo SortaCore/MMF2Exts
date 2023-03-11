@@ -276,7 +276,7 @@ struct qualToOi {
 
 struct RunHeader {
 	NO_DEFAULT_CTORS(RunHeader);
-	unsigned short GetEventCount();
+	int GetEventCount();
 };
 
 struct CreateObjectInfo {
