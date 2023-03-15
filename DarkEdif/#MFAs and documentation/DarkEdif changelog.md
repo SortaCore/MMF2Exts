@@ -15,6 +15,8 @@ Changes until v18 release
 ----
 *v18 not released yet*
 - Windows: Fixed issues that caused projects using C++20 not to work
+- Windows: Fixed float parameters being corrupted when it's an action/condition taking 1-2 parameters  
+  (bug introduced by SDK v15's A/C optimization)
 - Android/iOS: Fixed projects seen as building successfully when PostBuildTool failed  
   (this happens commonly wth iOS, as all iOS CPU archs must be built before PostBuildTool can combine them into a xcframework)
 

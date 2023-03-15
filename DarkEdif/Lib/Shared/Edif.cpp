@@ -792,15 +792,18 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	ConditionOrActionManager_Windows(bool isCondition, RUNDATA * rdPtr, long param1, long param2)
 		: rdPtr(rdPtr)
 	{
-		isTwoOrLess = ((isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.EventNumber]->NumOfParams <= 2);
+		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.EventNumber];
+		// Can't use param1/param2 if the params are float; Fusion interprets them as integer
+		// parameters, and so calculates them incorrectly
+		isTwoOrLess = info->NumOfParams <= 2 && (info->FloatFlags & 0b11) == 0;
 		rdPtr->pExtension->Runtime.param1 = param1;
 		rdPtr->pExtension->Runtime.param2 = param2;
 	}
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		if (isTwoOrLess)
-			return index == 0 ? *(float *)&rdPtr->pExtension->Runtime.param1 : *(float*)&rdPtr->pExtension->Runtime.param2;
+		// Cannot use the optimization for float parameters
+		assert(!isTwoOrLess);
 		int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
