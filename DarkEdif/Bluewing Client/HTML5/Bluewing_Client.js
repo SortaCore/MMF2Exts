@@ -56,7 +56,7 @@
 // Global data, including sub-applications, just how God intended.
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 17) ? globalThis['darkEdif'] :
+globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 18) ? globalThis['darkEdif'] :
 	new (/** @constructor */ function() {
 	// window variable is converted into __scope for some reason, so globalThis it is.
 	this.data = {};
@@ -75,9 +75,9 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 17;
+	this.sdkVersion = 18;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 17) {
+		if (sdkVer < 16 || sdkVer > 18) {
 			throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
@@ -247,8 +247,8 @@ function CRunBluewing_Client() {
 
 	// DarkEdif SDK exts should have these three variables defined:
 	// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-	this['ExtensionVersion'] = 101; // To match C++ version
-	this['SDKVersion'] = 17;
+	this['ExtensionVersion'] = 103; // To match C++ version
+	this['SDKVersion'] = 18;
 	this['DebugMode'] = false;
 	this['ExtensionName'] = 'Bluewing Client';
 

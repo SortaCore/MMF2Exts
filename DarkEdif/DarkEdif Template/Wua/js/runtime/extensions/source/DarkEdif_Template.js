@@ -30,7 +30,7 @@ if (!String.prototype.replaceAll) {
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and window[] instead of direct, because HTML5 Final Project minifies and breaks the names otherwise
 // In case UWP is minified later, we'll keep these HTML5 minify precautions in UWP
-window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17) ? window['darkEdif'] :
+window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 18) ? window['darkEdif'] :
 	new (/** @constructor */ function() {
 	this.data = {};
 	this.getGlobalData = function (key) {
@@ -48,9 +48,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 17)
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 17;
+	this.sdkVersion = 18;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 17) {
+		if (sdkVer < 16 || sdkVer > 18) {
 			throw "UWP DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
@@ -207,7 +207,7 @@ function CRunDarkEdif_Template() {
 	// DarkEdif SDK exts should have these three variables defined:
 	// We need this[] and window[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 1; // To match C++ version
-	this['SDKVersion'] = 17; // To match C++ version
+	this['SDKVersion'] = 18; // To match C++ version
 	this['DebugMode'] = true;
 	this['ExtensionName'] = 'DarkEdif Template';
 
