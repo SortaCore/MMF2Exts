@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<!-- If displayed in VS -->
@@ -24,4 +24,64 @@
 	<PropertyGroup Label="Configuration" Condition="$(WindowsXPCompatibility)==1 AND $(PlatformToolset)=='v100'">
 		<PlatformToolset>$(FusionSDKPlatformToolset)</PlatformToolset>
 	</PropertyGroup>
+
+	<!-- This only runs for the first Mac run; otherwise the Import of this file doesn't happen in vcxproj.
+		 Even though Android and Windows also import this file, they can't fulfil the GenerateXCodeProj dependency. -->
+	<Target Name="ClCompile"
+        Condition="$(MacBuild)==1 AND '@(ClCompile)' != ''"
+        DependsOnTargets="GenerateXCodeProj">
+		<Message Text="Successfully overrode ClCompile." Importance="Normal" />
+
+		<!-- The ClCompile task will fail on Mac x86_64, because it ignores the Mac sdk type we specify and builds with iphonesimulator SDK,
+			 even if the pbxproj is set to macosx internally; and that will fail because AppKit and MMF2Lib are Mac SDK only, not iOS.
+			 However, ClCompile is responsible for copying all the files to Mac for compilation, so we still need to run it,
+			 before we call Xcode, and just ignore its errors.
+			 Note ARM64 Mac builds fine, strangely enough. There's probably some internal setting in vcremote, but I can't find any
+			 documentation or props/target files using it. The VS MacSDK property appears to be a defunct path.
+
+			 There is a MSBuild task, but we're not using it; I think it may be due to project confusing itself doing the same build
+			 config two times simultaenously, but maybe that's an assumption.
+			 Swap out -noConLog for -v:d for extra verbosity. -->
+		<Message Text="Running background update of Mac project files..." Importance="High" />
+		<Message Text="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(MSBuildProjectFullPath)&quot; -nologo -noConLog -t:ClCompile -p:Configuration=$(Configuration);Platform=$(Platform);IsSecondRun=1;SolutionDir=&quot;$(SolutionDir)\&quot;" Importance="Normal" />
+		<Exec Command="&quot;$(MSBuildBinPath)\msbuild.exe&quot; &quot;$(MSBuildProjectFullPath)&quot; -noLogo -noConLog -t:ClCompile -p:Configuration=$(Configuration);Platform=$(Platform);IsSecondRun=1;SolutionDir=&quot;$(SolutionDir)\&quot;"
+			ContinueOnError="true" IgnoreExitCode="true" />
+
+		<Message Text="Background update of Mac project done. Running Mac build." Importance="Normal" />
+
+		<!-- After that, we use PLink to run the xcodebuild ourselves. -->
+		<PropertyGroup>
+			<!-- PLink run path. -->
+			<DarkEdif_PLinkPath>(Specify In FusionSDKConfig.ini)</DarkEdif_PLinkPath>
+			<!-- PLink running arguments. See comments in FusionSDKConfig.ini. -->
+			<DarkEdif_PLinkArgs>(Specify in FusionSDKConfig.ini) {0} {1}</DarkEdif_PLinkArgs>
+			<!-- Remote output folder to read from with PSCP. Should point to the DarkEdif Temp folder! -->
+			<DarkEdif_RemoteOutputFolder>(Specify in FusionSDKConfig.ini)</DarkEdif_RemoteOutputFolder>
+
+			<!-- putty.exe local filepath, used by iPhone remote build. Part of the PLink downloads. -->
+			<_DarkEdif_PLinkPathRegex><![CDATA[(?im)^PLinkPath\s*=\s*(.*)\s*$]]></_DarkEdif_PLinkPathRegex>
+			<DarkEdif_PLinkPath Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PLinkPathRegex)).Success)"
+				>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PLinkPathRegex)).Result('$1'))</DarkEdif_PLinkPath>
+
+			<!-- iPhone remote build PLink access parameters. -->
+			<_DarkEdif_PLinkArgsRegex><![CDATA[(?im)^PLinkArgs\s*=\s*(.*)\s*$]]></_DarkEdif_PLinkArgsRegex>
+			<DarkEdif_PLinkArgs Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PLinkArgsRegex)).Success)"
+				>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_PLinkArgsRegex)).Result('$1').Replace('"','%27'))</DarkEdif_PLinkArgs>
+
+			<!-- iPhone remote build output folder. -->
+			<_DarkEdif_RemoteOutputFolderRegex><![CDATA[(?im)^iOSOrMacRemoteOutputFolder\s*=\s*(.*)\s*$]]></_DarkEdif_RemoteOutputFolderRegex>
+			<DarkEdif_RemoteOutputFolder Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_RemoteOutputFolderRegex)).Success)"
+				>$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_RemoteOutputFolderRegex)).Result('$1'))</DarkEdif_RemoteOutputFolder>
+
+			<!-- Pre-create the temp folder, then run the build -->
+			<XCodeBuildScript>mkdir -p $(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch) ^&amp;^&amp;</XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) cd $(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch) ^&amp;^&amp;</XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) xcodebuild build -configuration $(Configuration) -sdk macosx$(AppleSDKDeployVersion)</XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) -arch $(TargetArch) -project "$(ExtName.Replace(' ', '\ ')).Mac.xcodeproj" </XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) "CONFIGURATION_BUILD_DIR=$(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch)/"</XCodeBuildScript>
+			<XCodeBuildScript>$(XCodeBuildScript) "CONFIGURATION_TEMP_DIR=$(DarkEdif_RemoteOutputFolder.Replace(' ', '\ '))/$(ExtName.Replace(' ', '\ '))/Mac/$(Configuration)/$(TargetArch)/tmp/$(Configuration)/$(TargetArch)</XCodeBuildScript>
+		</PropertyGroup>
+		<Message Text="Running XCodeBuild for Mac $(ProjectName), $(Configuration) build, $(TargetArch) arch..." Importance="High" />
+		<Exec Command="&quot;$(DarkEdif_PLinkPath)&quot; $(DarkEdif_PLinkArgs.Replace(&quot;'&quot;, '&quot;')) $(XCodeBuildScript)" />
+	</Target>
 </Project>

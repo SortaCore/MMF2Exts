@@ -11,14 +11,34 @@ Some editors will consider this to be trailing whitespace and remove it; make su
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
 
+Changes until v19 release
+----
+*v19 not released yet*
+
+
 Changes until v18 release
 ----
-*v18 not released yet*
+*v18 released on 31st Mar 2023, commit (latest)*
+- Mac: Added Mac exporter compatibility, iOS based, uses some compilation edits by the DarkEdif tools to target Mac instead.  
+  To use it:
+  1. Duplicate your iOS vcxproj file and filter file.
+  2. Name the files XX.Mac instead of XX.iOS.
+  3. Crack it open in a text editor. Change the internal GUID in a text editor. (VS has a menu item Tools \> Create GUID)
+  4. Change the project name to XX.Mac inside the project.
+  5. Delete the ARM and x86 configurations at the top. Each should take 4 lines each.
+  6. Move the Import of FusionSDK_AfterMSSheets.props from the top of the file (approx line 33) to just before ImportGroup of ExtensionTargets, just before end of file.
+  7. Modify the Import of AfterMSSheets to add `Condition="$(Platform)=='x64' AND '$(IsSecondRun)'!='1'"`. Refer to DarkEdif Template Mac vcxproj if you're not sure how.  
+  8. Copy the ClInclude of the two Mac files - CRun$(ExtNameUnderscores).hpp, and CRun$(ExtNameUnderscores).mm, from the DarkEdif Template. You should copy 4 lines doing this.  
+  9. Modify the vcxproj.filters and add the two CInclude/ClCompile files, so they are put nicely in the right folder.
+  10. Any third-party libraries will need building for Mac (not Mac Catalyst, which is iOS-running-on-Mac). You can link with MacExtraLibraries in FusionSDKConfig.ini.
 - Windows: Fixed issues that caused projects using C++20 not to work
 - Windows: Fixed float parameters being corrupted when it's an action/condition taking 1-2 parameters  
   (bug introduced by SDK v15's A/C optimization)
-- Android/iOS: Fixed projects seen as building successfully when PostBuildTool failed  
-  (this happens commonly wth iOS, as all iOS CPU archs must be built before PostBuildTool can combine them into a xcframework)
+- Android/iOS/Mac: (hopefully) fixed projects seen as building successfully when PostBuildTool failed  
+  (this happens commonly wth iOS/Mac, as all iOS CPU archs must be built before PostBuildTool can combine them into a xcframework)
+- iOS: Fixes from v17 was not actually implemented in the tool and this was elusive during tests
+- iOS/Mac: PreBuildTool updated to v1.0.0.4, now reads FusionSDKConfig.ini for modifying pbxproj, and generates/copies Mac code files
+- Android/iOS/Mac: PostBuildTool updated to v1.0.0.5, now reads FusionSDKConfig.ini for expected OS archs/version instead of FusionSDK.props passing it; Mac compatiblity added
 
 
 Changes until v17 release
@@ -34,7 +54,8 @@ Changes until v17 release
 - Edittime/Windows: Added invalid parameter handler if none present to prevent sprintf and related issues, in Edittime/Runtime configs
 - Android/iOS: PostBuildTool libcrypto/libssl hack removed; now reads Additional Platform Files.txt from project directory, used to add to zip during Android/iOS building.
 - Android: Fixed char not being signed by default on ARMv7 arch, due to a strange compiler default. This may affect iOS too.
-- iOS: PostBuildTool has altered Objective-C wrapper so multiple DarkEdif extensions can co-exist in one iOS MFA.
+- iOS: ~~PostBuildTool has altered Objective-C wrapper so multiple DarkEdif extensions can co-exist in one iOS MFA.~~  
+  This was intended, and frustratingly, was the main reason DarkEdif SDK v17 was released, but the PostBuildTool's internal Objective-C files were not updated for that; this was done in PostBuildTool v1.0.0.5, i.e. SDK v18.
 - iOS: Edif and Extension are now #defined to include extension name (with underscores), so they are not shared on iOS
 
 

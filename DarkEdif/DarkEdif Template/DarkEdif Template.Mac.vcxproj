@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|x64">
+      <Configuration>Runtime</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|ARM64">
+      <Configuration>Runtime</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1bd1b0d9-6be0-4564-9902-c4e32c9c4102}</ProjectGuid>
+    <Keyword>iOS</Keyword>
+    <DefaultLanguage>en-GB</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>iOS</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <ProjectName>DarkEdif Template.Mac</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+    <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp" />
+    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+      <FileType>CppCode</FileType>
+    </ClCompile>
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />
+  </ItemGroup>
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK_AfterMSPropSheets.props" Condition="$(Platform)=='x64' AND '$(IsSecondRun)'!='1'" />
+  <ImportGroup Label="ExtensionTargets" />
+  <PropertyGroup>
+    <TargetOSAndVersion>Mac</TargetOSAndVersion>
+  </PropertyGroup>
+</Project>

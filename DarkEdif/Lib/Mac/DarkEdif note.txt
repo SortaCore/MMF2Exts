@@ -1,0 +1,5 @@
+MMF2Lib.framework originates from build 294.14's Mac exporter, specifically a built .app.
+
+Symlinks aren't easily retained on Mac -> Windows filesystems, and Mac uses those
+heavily, so the files were rearranged from the MMF2Lib.framework\Versions\A,
+rather than this .framework being a 1:1 of the exporter's MMF2Lib.framework.

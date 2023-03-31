@@ -68,7 +68,7 @@ namespace Edif {
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 17;
+	static const int SDKVersion = 18;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.

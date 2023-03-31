@@ -61,3 +61,6 @@
 *.rc text eol=crlf
 *.htm text eol=crlf
 *.html text eol=crlf
+*.mm text eol=lf
+*.plist text eol=lf
+CodeResources text eol=lf
