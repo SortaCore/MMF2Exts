@@ -1233,7 +1233,12 @@ namespace lacewing
 				#elif defined (__ANDROID__)
 					platform = "Android";
 				#elif defined(__APPLE__)
-					platform = "iOS";
+					// Not ifdef!
+					#if MacBuild
+						platform = "Macintosh";
+					#else
+						platform = "iOS";
+					#endif
 				#else
 					platform = "Unix-based";
 					struct utsname name;

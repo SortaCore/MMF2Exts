@@ -51,23 +51,29 @@ const char * lw_version ()
 				#error ABI not known, please amend code
 			#endif
 		#elif defined(__APPLE__)
+			#if MacBuild
+				#define prefix "Mac "
+			#else
+				#define prefix "iOS "
+			#endif
 			#ifdef __arm64e__
-				platform = "iOS ARM64e";
+				platform = prefix "ARM64e";
 			#elif defined(__aarch64__)
-				platform = "iOS ARM64";
+				platform = prefix "ARM64";
 			#elif defined(__ARM_ARCH_6__)
-				platform = "iOS armv6";
+				platform = prefix "armv6";
 			#elif defined(__ARM_ARCH_7S__)
-				platform = "iOS armv7s";
+				platform = prefix "armv7s";
 			#elif defined(__ARM_ARCH_7A__)
-				platform = "iOS armv7";
+				platform = prefix "armv7";
 			#elif defined(__i386__)
-				platform = "iOS i386";
+				platform = prefix "i386";
 			#elif defined(__x86_64__)
-				platform = "iOS x86_64";
+				platform = prefix "x86_64";
 			#else
 				#error ABI not known, please amend code
 			#endif
+			#undef prefix
 		#else
 			struct utsname name;
 			uname (&name);

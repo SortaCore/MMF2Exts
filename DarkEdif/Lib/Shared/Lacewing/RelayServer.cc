@@ -1191,7 +1191,7 @@ void handlerwebserverget(lacewing::webserver webserver, lacewing::webserver_requ
 			char sha1[20];
 			lw_sha1(sha1, webSocketKey.data(), webSocketKey.size());
 			const std::string webSocketKeyResponse = b64encode(sha1, sizeof(sha1));
-			
+
 			lwp_ws_client reqClient = ((struct _lw_ws_req*)req)->client;
 			reqClient->websocket = lw_true;
 			reqClient->ws->timeout = 0; // disable timeout - next used when server inits a disconnect and is waiting for WebSocket close packet back
@@ -2548,7 +2548,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			// While supported, Blue Flash never existed, and Relay Flash won't return a implementation response
 			else if (impl.find("Flash"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Flash;
-			// While supported, not created yet
+			// Released in client build 103 - uses iOS implementation
 			else if (impl.find("Macintosh"sv) != std::string_view::npos)
 				client->clientImpl = relayserver::client::clientimpl::Macintosh;
 			else
