@@ -199,6 +199,8 @@ enum class SurfaceType : int
 	HWA_UnmanagedTexture,
 	// HWA texture created in video memory, managed (automatically reloaded when the device is lost)
 	HWA_ManagedTexture,
+	// HWA mosaic texture
+	HWA_Mosaic,
 	Max
 };
 
@@ -246,6 +248,18 @@ enum class SurfaceDriver : int
 	// Max valid number
 	Max
 };
+
+
+// SetAutoVSync() function flags.
+enum class _Enum_is_bitflag_ SetAutoVSyncFlags : int
+{
+	VSync = 0x0001,
+	ResetDevice = 0x0002,
+	BackBuffers = 0x0004,
+	// YQ: Why is this the same?!
+	BackBufferShift = 0x0004,
+};
+enum_class_is_a_bitmask(SetAutoVSyncFlags);
 
 // LoadImage() function flags. Cannot rename this; part of the function signatures for cSurface.
 enum class _Enum_is_bitflag_ LIFlags : int
@@ -566,19 +580,25 @@ public:
 		// Blit surface to surface
 		BOOL	Blit(cSurface & dest) const;
 
+		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+		// TODO: does it apply to this func?
 		BOOL	Blit(cSurface & dest, int destX, int destY,
 					  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0,
 					  ULONG dwBlitFlags = 0) const;
 
 		// Blit rectangle to surface
+		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+		// TODO: does it apply to this func?
 		BOOL	Blit(cSurface & dest, int destX, int destY,
 					  int srcX, int srcY, int srcWidth, int srcHeight,
 					  BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0,
 					  ULONG dwBlitFlags = 0) const;
 
+#ifdef HWABETA
 		// Extended blit : can do stretch & rotate at the same time
 		// Only implemented in 3D mode
-#ifdef HWABETA
+		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+		// TODO: does it apply to this func?
 		BOOL	BlitEx(cSurface & dest, float dX, float dY, float fScaleX, float fScaleY,
 						int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle,
 						BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
@@ -613,19 +633,19 @@ public:
 						BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
 
 		// Revert surface horizontally
-		// Note: Slow for HWA, as it implicitly ocpies to software memory, and flips there
+		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
 		BOOL	ReverseX();
 
 		// Revert rectangle horizontally
-		// Note: Slow for HWA, as it implicitly ocpies to software memory, and flips there
+		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
 		BOOL	ReverseX(int x, int y, int width, int height);
 
 		// Revert surface vertically
-		// Note: Slow for HWA, as it implicitly ocpies to software memory, and flips there
+		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
 		BOOL	ReverseY();
 
 		// Revert rectangle vertically
-		// Note: Slow for HWA, as it implicitly ocpies to software memory, and flips there
+		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
 		BOOL	ReverseY(int x, int y, int width, int height);
 
 		// Remove empty borders
@@ -658,6 +678,11 @@ public:
 		// TODO: YQ: dwFlags is made from what enum/flags?
 		// HWA only
 		BOOL	Fill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags);
+
+		// Fill with blit mode and RGBA coef
+		// TODO: This may be CF2.5+ only, or D3D11 surfaces only
+		BOOL	fxFill(int x, int y, int w, int h, COLORREF c, BlitMode bm, COLORREF rgbaCoef);
+		BOOL	fxFill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags, BlitMode bm, COLORREF rgbaCoef);
 #endif
 
 		// ======================
@@ -807,8 +832,7 @@ public:
 		void	CopyScreenModeInfo(cSurface* pSrc);
 
 #ifdef HWABETA
-		// TODO: YQ: Why int, not bool?
-		BOOL	SetAutoVSync(int nAutoVSync);
+		BOOL	SetAutoVSync(SetAutoVSyncFlags nAutoVSync);
 #endif
 		BOOL	WaitForVBlank();
 
@@ -843,6 +867,16 @@ public:
 		void		OnLostDevice();
 		void		AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 		void		RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+
+		// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
+		void		SetPremultipliedAlpha(BOOL usePMAlpha, BOOL pmedTextures);
+		void		PremultiplyAlpha();		// Only for surfaces with a lockable buffer
+
+		// CF2.5+'s Direct3D11 surfaces only.
+		// Only for surfaces with a lockable buffer.
+		// TODO: Which surface types have a lockable buffer?
+		void		DemultiplyAlpha();
+
 #endif
 
 	// Friend functions

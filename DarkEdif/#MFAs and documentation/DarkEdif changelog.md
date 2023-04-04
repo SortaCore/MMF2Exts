@@ -14,8 +14,9 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v19 release
 ----
 *v19 not released yet*
-- Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself.
-- Android: Fixed GetJNIEnvForThisThread()'s strange declarations. `threadEnv` is preferred.
+- Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself
+- Android: Fixed GetJNIEnvForThisThread()'s strange declarations. `threadEnv` is preferred
+- Windows: Added CF2.5+/Direct3D 11 specific cSurface code
 
 
 Changes until v18 release
