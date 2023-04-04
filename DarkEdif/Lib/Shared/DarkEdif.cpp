@@ -1594,14 +1594,14 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 					title, id, DarkEdif::JSON::LanguageName());
 			}
 
-			float* f = new float;
-            *f = (float)convState->jsonProps[id]["DefaultState"].u.dbl;
+			static float f;
+            f = (float)convState->jsonProps[id]["DefaultState"].u.dbl;
 
 			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << title << "\n";
 			++convState->numPropsReset;
 
-			return convRet->Return_OK(f, sizeof(float), [](const void* v) { delete v; });
+			return convRet->Return_OK(&f, sizeof(float));
 		}
 
 		case IDs::PROPTYPE_CUSTOM:
