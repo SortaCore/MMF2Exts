@@ -9,9 +9,9 @@ Since these source codes are collated by Phi, not by the authors themselves, the
 It's recommended you use Visual Studio 2019, although other editions can be used with loss of platform compatiblity.
 
 You should install either the Express edition, or get the free **Community** edition, which supports VS addons.
-* VS 2017 - Android, Windows XP+ support, no iOS - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
-* VS 2019 - iOS, Android, Windows XP+ support - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
-* VS 2022 - iOS, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
+* VS 2017 - Android, Windows XP+ support, no iOS, no Mac - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2019 - iOS, Mac, Android, Windows XP+ support - can be downloaded under [older VS downloads][Older VS editions]. Requires a free registration.
+* VS 2022 - iOS, Mac, Android, Windows Vista+ support - can be downloaded here: [VS 2022 Express], [VS 2022 Community]
 
 ### Windows targeting ###
 
@@ -57,19 +57,21 @@ For more details on Android, such as pitfalls, features and setting up debugging
 
 You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
-### iOS targeting ####
-To target iOS, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools". That should be all you need.
+### iOS/Mac targeting ####
+To target iOS and/or Mac, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools".  
+You will also need to download the free [PuTTY tools][Link to PuTTY], and set up how to use it in FusionSDKConfig.ini; the FusionSDKConfig.Template.ini file should describe how to do it.
 
 iOS development requires you to have a Mac, with vcremote installed. Follow Microsoft's guide on linking your Visual Studio to a Mac running Xcode [here][Link VS to Xcode].  
 An iMac from late 2012 or above is necessary; you need Xcode 10.2+ for compatibilty with Visual Studio, which is Mac OS Mojave and later.
 Since the latest Mac OS "Big Sur" runs on 2014 and later Macs, you may want to get a 2014+ instead.
 
-You don't need the Fusion iOS exporter to build iOS extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
+You don't need the Fusion iOS/Mac exporter to build iOS/Mac extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
 DarkEdif will automatically package your built iOS files into a encoded EXT file in the MFX\\Data\\Runtime\\iPhone folder.  
-These produced files are valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in Xcode, which thankfully takes less than a minute.
+These produced files are valid, but Fusion does not look for third-party extensions, so you'll have to manually add both the framework and the code files in Xcode, which thankfully takes less than a minute.  
+Likewise, DarkEdif will automatically package your built Mac files into a DAT file in the MFX\\Data\\Runtime\\Mac folder.
 
-For more details on iOS, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide] under DarkEdif documentation.
+For more details on iOS/Mac, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide] under DarkEdif documentation.
 
 ### Using a single project ###
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
@@ -145,4 +147,5 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 [rSDK Clickteam forum thread]: https://community.clickteam.com/threads/42183-rSDK
 [Edif Clickteam forum thread]: https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun
 [Windows SDK archive]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/
+[Link to PuTTY]: https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
 
