@@ -14,11 +14,13 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v19 release
 ----
 *v19 not released yet*
+- Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself.
+- Android: Fixed GetJNIEnvForThisThread()'s strange declarations. `threadEnv` is preferred.
 
 
 Changes until v18 release
 ----
-*v18 released on 31st Mar 2023, commit (latest)*
+*v18 released on 31st Mar 2023, commit [81164af](https://github.com/SortaCore/MMF2Exts/commit/81164af0a252393e58ee0ec93d9a5fd20e1a5e62)*
 - Mac: Added Mac exporter compatibility, iOS based, uses some compilation edits by the DarkEdif tools to target Mac instead.  
   To use it:
   1. Duplicate your iOS vcxproj file and filter file.

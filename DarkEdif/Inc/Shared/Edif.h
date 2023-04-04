@@ -191,7 +191,7 @@ namespace Edif
 		static JNIEnv * AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
 		static void DetachJVMAccessForThisThread();
 		// Gets JNIEnv * for this thread, or null.
-		inline static JNIEnv * GetJNIEnvForThisThread();
+		static JNIEnv * GetJNIEnvForThisThread();
 #endif
 
 		void Pause();

@@ -3698,8 +3698,8 @@ std::tstring_view DarkEdif::GetRunningApplicationPath(GetRunningApplicationPathT
 	if ((type & AppFolderOnly) == AppFolderOnly)
 	{
 		size_t lastSlash = std::tstring::npos;
-		if ((lastSlash = path.find(_T('\\'))) == std::tstring::npos)
-			lastSlash = path.find(_T('/'));
+		if ((lastSlash = path.rfind(_T('\\'))) == std::tstring::npos)
+			lastSlash = path.rfind(_T('/'));
 		if (lastSlash == std::tstring::npos)
 			std::abort();
 		return path.substr(0, lastSlash);

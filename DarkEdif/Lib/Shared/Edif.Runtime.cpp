@@ -451,7 +451,7 @@ void Edif::Runtime::DetachJVMAccessForThisThread()
 
 	threadEnv = nullptr;
 }
-inline JNIEnv * Edif::Runtime::GetJNIEnvForThisThread()
+JNIEnv * Edif::Runtime::GetJNIEnvForThisThread()
 {
 	return threadEnv;
 }
