@@ -1595,7 +1595,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			}
 
 			static float f;
-            f = (float)convState->jsonProps[id]["DefaultState"].u.dbl;
+            f = (float)prop["DefaultState"].u.dbl;
 
 			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << title << "\n";
