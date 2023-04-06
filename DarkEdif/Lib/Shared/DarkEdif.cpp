@@ -740,6 +740,9 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 	}
 	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Edit Spin") || !_stricmp(curStr, "Edit Slider"))
 		ret = new Prop_SInt(*(const int *)Current->ReadPropValue());
+	else if (!_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Edit spin float")) {
+		ret = new Prop_Float(*(const float *)Current->ReadPropValue());
+    }
 	else if (!_strnicmp(curStr, "Combo Box", sizeof("Combo Box") - 1))
 	{
 		// Combo box is stored as its item text, so items can be altered between versions.
@@ -1472,6 +1475,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_EDITBUTTON:
 		case IDs::PROPTYPE_LEFTCHECKBOX:
 		case IDs::PROPTYPE_URLBUTTON:
+		case IDs::PROPTYPE_GROUP:
 		{
 			// No data for these. We store just metadata so getting property by index has consistent indexes
 			DebugProp_OutputString(_T("JSDNPropertyReader: Got static type %i (%hs) for property title %hs, ID %zu. Storing just metadata.\n"),
@@ -1590,7 +1594,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 					title, id, DarkEdif::JSON::LanguageName());
 			}
 
-			static float f = (float)prop["DefaultState"].u.dbl;
+			static float f;
+            f = (float)prop["DefaultState"].u.dbl;
 
 			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << title << "\n";
