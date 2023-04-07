@@ -1049,7 +1049,7 @@ void SurfaceSafe::CopyScreenModeInfo(cSurface* pSrc) {
 }
 
 // TODO: YQ: Why int, not bool?
-bool SurfaceSafe::SetAutoVSync(int nAutoVSync) {
+bool SurfaceSafe::SetAutoVSync(SetAutoVSyncFlags nAutoVSync) {
 #ifdef HWABETA
 	// TODO: Check surface is valid
 	// TODO: Check driver type?

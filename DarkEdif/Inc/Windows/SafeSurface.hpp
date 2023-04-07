@@ -426,8 +426,7 @@ public:
 		void CopyScreenModeInfo(cSurface* pSrc);
 
 #ifdef HWABETA
-		// TODO: YQ: Why int, not bool?
-		bool SetAutoVSync(int nAutoVSync);
+		bool SetAutoVSync(SetAutoVSyncFlags nAutoVSync);
 #endif
 		bool WaitForVBlank();
 
