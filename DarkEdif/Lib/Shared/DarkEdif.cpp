@@ -655,7 +655,28 @@ int DarkEdif::DLL::DLL_CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edP
 			err = ENOMEM;
 	}
 	else
-		err = memcpy_s(fusionEdPtr, fusionEdPtr->eHeader.extSize, gblEdPtr, numBytes);
+	{
+		// Copy out any extra EDITDATA variables between eHeader and Props
+		size_t extraDataSize = ((char*)&edPtr->Props) - (((char*)&edPtr->eHeader) + sizeof(edPtr->eHeader));
+		char* extraData = NULL;
+		if (extraDataSize > 0)
+		{
+			extraData = (char*)malloc(extraDataSize);
+			err = extraData ? memcpy_s(extraData, extraDataSize, ((char*)&edPtr->eHeader) + sizeof(edPtr->eHeader), extraDataSize) : ENOMEM;
+		}
+
+		if (err == 0)
+			err = memcpy_s(fusionEdPtr, fusionEdPtr->eHeader.extSize, gblEdPtr, numBytes);
+
+		// Copy back extra EDITDATA variables
+		if (err == 0 && extraData)
+		{
+			err = memcpy_s(((char *)fusionEdPtr)+sizeof(fusionEdPtr->eHeader),
+				fusionEdPtr->eHeader.extSize - sizeof(fusionEdPtr->eHeader),
+				extraData, extraDataSize);
+			free(extraData);
+		}
+	}
 	GlobalUnlock(gblPtr);
 	GlobalFree(gblPtr);
 
@@ -742,7 +763,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		ret = new Prop_SInt(*(const int *)Current->ReadPropValue());
 	else if (!_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Edit spin float")) {
 		ret = new Prop_Float(*(const float *)Current->ReadPropValue());
-    }
+	}
 	else if (!_strnicmp(curStr, "Combo Box", sizeof("Combo Box") - 1))
 	{
 		// Combo box is stored as its item text, so items can be altered between versions.
@@ -1595,7 +1616,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			}
 
 			static float f;
-            f = (float)prop["DefaultState"].u.dbl;
+			f = (float)prop["DefaultState"].u.dbl;
 
 			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << title << "\n";

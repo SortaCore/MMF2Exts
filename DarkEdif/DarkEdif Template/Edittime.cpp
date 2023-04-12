@@ -36,6 +36,9 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 		return -1;
 
 	Edif::Init(mV, edPtr);
+
+	// Init any custom EDITDATA stuff here, between Init and DLL_CreateObject
+
 	return DarkEdif::DLL::DLL_CreateObject(mV, loPtr, edPtr);
 }
 
@@ -51,15 +54,37 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	// Don't comment or preprocessor-it out if you're removing it; delete the line entirely.
 	DarkEdif::SDKUpdater::RunUpdateNotifs(mV, edPtr);
 
+	// Draw to surface here with Surface->Rectangle(), Surface->Line(), Surface->SetPixel(), etc.
+	// Note writing text is not possible in Direct3D display mode, unless you create a
+	// software + DC surface type, write the text there, then blit it into Surface.
+	// RunUpdateNotifs does this, to write "minor/major update" text onto the ext icon.
+	// 
+	// Positions are absolute, and refer to the whole Fusion editor window, so to draw
+	// on your object's left, draw at X = rc->left, and be careful to only use the
+	// Surface functions that take X/Y positions.
+	// 
+	// If you're making your object different to 32x32, don't forget to
+	// pre-set the size in CreateObject() above, and uncomment GetObjectRect() below
+	// so Fusion can read the current size.
+	// If it's partially transparent, implement IsTransparent() below as well.
+	// If it's resizeable, also implement SetEditSize() below.
+
+	// If you don't want to draw the icon, you can take this out.
+	// To display updates in a custom way, you can use DarkEdif::SDKUpdater::ReadUpdateStatus(NULL);
+	// to get the type of update.
+	// Note the message box for major updates will still show, and cannot be disabled.
 	Edif::SDK->Icon->Blit(*Surface, rc->left, rc->top, BMODE_TRANSP, BOP_COPY, 0);
 }
 
-// This routine tells MMF2 if the mouse pointer is over a transparent zone of the object.
+// This routine tells Fusion if the mouse pointer is over a transparent zone of the object.
 // If not exported, the entire display is assumed to be opaque.
 /*
 BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int dx, int dy)
 {
 #pragma DllExportHint
+	// Don't forget to pre-set the size in CreateObject() above,
+	// and uncomment GetObjectRect() below so Fusion can read the current size.
+	// You should display in EditorDisplay() above.
 	return FALSE;
 }
 */
@@ -73,6 +98,9 @@ BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
 	if (!Edif::IS_COMPATIBLE(mV))
 		return FALSE;
 
+	// Don't forget to pre-set the size in CreateObject() above,
+	// and uncomment GetObjectRect() below so Fusion can read the current size.
+	// You should display in EditorDisplay() above.
 	edPtr->swidth = cx;
 	edPtr->sheight = cy;
 	return TRUE;
@@ -80,15 +108,18 @@ BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
 */
 
 // Returns the size of the rectangle of the object in the frame editor.
-// If this function isn't define, a size of 32x32 is assumed.
+// If this function isn't defined, a size of 32x32 is assumed.
 /* void FusionAPI GetObjectRect(mv * mV, RECT * rc, LevelObject * loPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
 	if (!mV || !rc || !edPtr)
 		return;
 
-	rc->right = rc->left + SDK->Icon->GetWidth();	// edPtr->swidth;
-	rc->bottom = rc->top + SDK->Icon->GetHeight();	// edPtr->sheight;
+	// Don't forget to pre-set the size in CreateObject() above,
+	// and uncomment SetEditSize() if you want the user to be able to resize it.
+	// You should display it in EditorDisplay() above.
+	rc->right = rc->left + Edif::SDK->Icon->GetWidth();	// edPtr->swidth;
+	rc->bottom = rc->top + Edif::SDK->Icon->GetHeight();	// edPtr->sheight;
 }*/
 
 // Called when the user selects the Edit command in the object's popup menu

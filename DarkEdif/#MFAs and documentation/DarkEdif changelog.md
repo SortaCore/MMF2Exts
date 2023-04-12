@@ -17,6 +17,7 @@ Changes until v19 release
 - Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself
 - Android: Fixed GetJNIEnvForThisThread()'s strange declarations. `threadEnv` is preferred
 - Windows: Added CF2.5+/Direct3D 11 specific cSurface code
+- Edittime: Fixed new objects' custom EDITDATA variables being cleared in DarkEdif::DLL::DLL_CreateObject(), when their init should happen just before that
 
 
 Changes until v18 release
