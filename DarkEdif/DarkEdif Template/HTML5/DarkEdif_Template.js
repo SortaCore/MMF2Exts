@@ -1,5 +1,5 @@
 /*
-	This DarkEdif TEmplate Fusion extension HTML5 port is under MIT license.
+	This DarkEdif Template Fusion extension HTML5 port is under MIT license.
 
 	Modification for purposes of tuning to your own HTML5 application is permitted, but must retain this notice and not be redistributed,
 	outside of its (hopefully minified) presence inside your HTML5 website's source code.
