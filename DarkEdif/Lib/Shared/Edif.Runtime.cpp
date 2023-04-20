@@ -160,15 +160,51 @@ CallTables * Edif::Runtime::GetCallTables()
     return (CallTables *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_CALL_TABLES, 0, 0);
 }
 
-bool Edif::Runtime::IsHWA()
-{
 #ifdef _WIN32
+bool Edif::Runtime::IsHWACapableRuntime()
+{
+	// The old IsHWA() function. This returns true if it's a HWA-capable runtime, even if
+	// the app is using Standard display mode. This function is necessary as HWA runtimes still allocate
+	// extra RAM for the unused HWA features, moving the offsets and sizes of graphics-related classes
+	//
+	// Consider using GetAppDisplayMode() >= SurfaceDriver::Direct3D9 for "HWA with shaders" detection.
+	// Note Direct3D8 is greater than Direct3D9.
+
 	return hoPtr->AdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) == 1;
-#else
-	// TODO: This is wrong
-	return false;
-#endif
 }
+
+SurfaceDriver Edif::Runtime::GetAppDisplayMode()
+{
+	static SurfaceDriver sd = SurfaceDriver::Max;
+	if (sd == SurfaceDriver::Max)
+	{
+		// Using GAOF_XX flags
+		//constexpr int GAOF_DDRAW = 0x0002;
+		//constexpr int GAOF_DDRAWVRAM = 0x0004;
+		//constexpr int GAOF_D3D9 = 0x4000;
+		//constexpr int GAOF_D3D8 = 0x8000;
+		constexpr int GAOF_DDRAWEITHER = GAOF_DDRAW | GAOF_DDRAWVRAM;
+		constexpr int GAOF_D3D11 = GAOF_D3D9 | GAOF_D3D8;
+
+		// No need to find parent-most app; subapps have same OtherFlags
+		const int i = hoPtr->AdRunHeader->App->hdr.OtherFlags;
+
+		if ((i & GAOF_DDRAWEITHER) != 0)
+			sd = SurfaceDriver::DirectDraw;
+		else if ((i & GAOF_D3D11) == GAOF_D3D11)
+			sd = SurfaceDriver::Direct3D11;
+		else if ((i & GAOF_D3D8) != 0)
+			sd = SurfaceDriver::Direct3D8;
+		else if ((i & GAOF_D3D9) != 0)
+			sd = SurfaceDriver::Direct3D9;
+		else if ((i & (GAOF_D3D11 | GAOF_DDRAWEITHER)) == 0)
+			sd = SurfaceDriver::Bitmap;
+		else
+			throw std::runtime_error("Unrecognised display mode");
+	}
+	return sd;
+}
+#endif // _WIN32
 
 bool Edif::Runtime::IsUnicode()
 {

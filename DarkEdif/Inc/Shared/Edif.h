@@ -223,9 +223,10 @@ namespace Edif
 		long EditText(EditDebugInfo *);
 
 		event2 &CurrentEvent();
+		bool IsHWACapableRuntime();
+		SurfaceDriver GetAppDisplayMode();
 #endif
 
-		bool IsHWA();
 		bool IsUnicode();
 
 		Riggs::ObjectSelection ObjectSelection;
