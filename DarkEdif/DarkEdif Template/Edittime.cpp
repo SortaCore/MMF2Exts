@@ -58,11 +58,11 @@ void FusionAPI EditorDisplay(mv *mV, ObjectInfo * oiPtr, LevelObject * loPtr, ED
 	// Note writing text is not possible in Direct3D display mode, unless you create a
 	// software + DC surface type, write the text there, then blit it into Surface.
 	// RunUpdateNotifs does this, to write "minor/major update" text onto the ext icon.
-	// 
+	//
 	// Positions are absolute, and refer to the whole Fusion editor window, so to draw
 	// on your object's left, draw at X = rc->left, and be careful to only use the
 	// Surface functions that take X/Y positions.
-	// 
+	//
 	// If you're making your object different to 32x32, don't forget to
 	// pre-set the size in CreateObject() above, and uncomment GetObjectRect() below
 	// so Fusion can read the current size.

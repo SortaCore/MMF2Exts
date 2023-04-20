@@ -133,7 +133,7 @@ int Extension::RecvMsg_SignedByte(int index)
 	// Note: on ARM arch, char pretends to be signed by default (IntelliSense and compiler checks say it's signed), but is actually unsigned.
 	// https://developer.arm.com/documentation/dui0041/c/ARM-Procedure-Call-Standard/C-language-calling-conventions/Argument-representation?lang=en
 	// This is overridden with -fsigned-char in FusionSDK.props
-	
+
 	return (int)(*(threadData->receivedMsg.content.data() + index));
 }
 unsigned int Extension::RecvMsg_UnsignedShort(int index)

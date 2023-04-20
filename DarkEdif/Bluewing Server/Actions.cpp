@@ -50,7 +50,7 @@ void Extension::FlashServer_Host(const TCHAR * path)
 {
 	if (FlashSrv->hosting())
 		return CreateError("Cannot start hosting flash policy: already hosting a flash policy.");
-	
+
 	const std::tstring flashFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, path);
 
 	// Errors in DarkEdif::MakePathUnembeddedIfNeeded indicated by starting with '>' char

@@ -503,7 +503,7 @@ const TCHAR* Extension::GetAltStringsFromObjName(const TCHAR* objectName, int al
 						objectNameStr.c_str(), altStringIndex, av->CF25.NumAltStrings - 1);
 					return Runtime.CopyString(_T("<ERROR>"));
 				}
-				
+
 				const TCHAR* strOrNull = DarkEdif::IsFusion25 ? av->CF25.Strings[altStringIndex] : av->MMF2.rvStrings[altStringIndex];
 				std::tstring str(strOrNull ? strOrNull : _T(""));
 

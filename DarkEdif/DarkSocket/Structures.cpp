@@ -86,7 +86,7 @@ void SocketSource::LinkFileOutput(const std::tstring_view newPathOrBlank)
 			fileWriteToPath.clear();
 		}
 	}
-	
+
 	if (fileWriteTo != NULL && fclose(fileWriteTo) != 0)
 	{
 		sock->globals->CreateError(sock->fusionSocketID, _T("Failed to close old file \"%s\", error %d: %s. The ending section of the file may have been discarded."),

@@ -649,7 +649,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	auto res = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
 		[&](const std::shared_ptr<FunctionTemplate>& f) { return f->nameL == funcNameL;
 	});
-	
+
 	if (res == globals->functionTemplates.end())
 	{
 		if (funcsMustHaveTemplate)

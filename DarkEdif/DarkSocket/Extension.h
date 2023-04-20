@@ -154,7 +154,7 @@ public:
 	int PendingData_GetUnsignedShort(int readFromIndex);
 	int PendingData_GetInteger(int readFromIndex);
 	const TCHAR * PendingData_GetInt64(int readFromIndex);
-	const TCHAR* PendingData_GetUnsignedInt64(int readFromIndex);	
+	const TCHAR* PendingData_GetUnsignedInt64(int readFromIndex);
 	float PendingData_GetFloat(int readFromIndex);
 	float PendingData_GetDouble(int readFromIndex); // Reads as double, casts to float
 	const TCHAR * PendingData_GetString(const TCHAR * encoding, int readFromIndex, int sizeOfStringOrMinusOne);

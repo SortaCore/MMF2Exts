@@ -395,7 +395,7 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 			// Fallback are queue_back(), which on Windows doesn't work and causes client to be kicked from timeout,
 			// but is better than recurring to death.
 			//
-			
+
 			// loop around and pass again
 			if (written > 0)
 			{
@@ -412,7 +412,7 @@ size_t lwp_stream_write (lw_stream ctx, const char * buffer, size_t size, int fl
 				queue_back(ctx, buffer + written, size - written);
 		}
 	}
-	
+
 	return size;
 }
 

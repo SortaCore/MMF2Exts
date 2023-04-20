@@ -34,7 +34,7 @@ static void remove_pending_write (lw_fdstream ctx)
 	/* If any writes were pending, the stream was being retained.  Since the
 		* last write has finished, we can release it now.
 		*/
-		
+
 		lwp_release (ctx, "fdstream pending write");
 	}
 }

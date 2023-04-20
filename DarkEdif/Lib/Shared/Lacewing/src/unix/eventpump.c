@@ -183,7 +183,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 			break; // out of switch
 		}
 		};
-		
+
 	} while (ctx->waiting_pipe_bytes > 0);
 
 	lw_sync_release (ctx->sync_signals);

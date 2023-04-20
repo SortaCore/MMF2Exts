@@ -218,7 +218,7 @@ void FusionAPI PrepareAndroidBuild(mv * mV, EDITDATA * edPtr, LPCTSTR androidDir
 	//
 	// The permissions do not 1:1 match the index in the Fusion properties window, so you'll have to loop through them to work out the ID.
 	// They match between CF2.5 and MMF2.0, but 2.0 lacks some permissions (105+, so including NFC).
-	
+
 	DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 49);
 	if (hasINTERNETPerm == TRUE)
 		return;

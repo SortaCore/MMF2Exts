@@ -125,7 +125,7 @@ void * lw_server_tag (lw_server ctx)
 void on_ssl_error (lw_server_client client, lw_error error)
 {
 	lw_error_addf(error, "SSL error");
-	
+
 	if (client->server->on_error)
 		client->server->on_error(client->server, error);
 

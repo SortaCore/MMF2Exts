@@ -33,7 +33,7 @@ typedef struct _lwp_ssl
 
 	struct _lw_stream upstream;
 	struct _lw_stream downstream;
-	
+
 } * lwp_ssl;
 
 void lwp_ssl_init (lwp_ssl, lw_server_client socket);

@@ -322,19 +322,19 @@ constexpr short lastNonFuncID = 59;
 // 5 parameters seems to be the maximum Fusion supports, because there is a hard cap of around 5,582 expression IDs.
 // Any further and CF2.5 crashes when you try to add an action. MMF2 Standard staggers after 5632, and dies completely at 5647.
 // Yves modified the CF2.5 b294.8 to allow more expressions, giving up to max ID 32392.
-// 
+//
 // 4,368 IDs for up to 5 params when there's 3 param types, 3 return types, 4 variants.
 // 13,116 IDs for up to 6 params when there's 3 param types, 3 return types, 4 variants.
 // 39,360 IDs for up to 7 params when there's 3 param types, 3 return types, 4 variants.
 // 118,092 IDs for up to 8 params when there's 3 param types, 3 return types, 4 variants.
 // ^ which is impossible since IDs are 16-bit ints, so max out at 65,535.
-// 
+//
 // We could potentially merge float and int, make all int returns/param parameters floats instead, giving us up to 8 parameters.
 // The SDK can be set to switch at runtime and get either for a numeric parameter, but we'd not be able to tell what the type is
 // before we request it, so we'd basically have to assume float. So it's less like a clever merge and more like a dumb assumption.
 // That said,
 // 4,088 IDs for up to 8 params when there's 2 param types, 2 return types, 4 variants.
-// 
+//
 // We could also spin out the "Keep selection" and "Repeat" flags into obvious actions, reducing the variants to 2 or 1.
 // However, the less inline this object's functions are, the less useful it is.
 constexpr int numParamsToAllow = 5;
@@ -422,7 +422,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 		}
 	};
 
-	
+
 	bool needNewParam = false;
 	// If we're progressing to add a new parameter, we're on last variant, and highest value ExpReturnType, float,
 	// and all parameters are string
@@ -453,7 +453,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 
 	// If we're adding a new parameter, we start with int-returning funcs
 	assert(!needNewParam || returnType == Extension::Type::Integer);
-	
+
 	int intermediate = (funcID / (int)Extension::Type::NumCallableReturnTypes) - 1;
 	for (size_t i = paramTypes.size(); i < (size_t)(last->NumOfParams + (needNewParam ? 1 : 0) + (flags & Flags::Repeat ? 1 : 0)); i++)
 	{
@@ -669,7 +669,7 @@ void Extension::AutoGenerateExpressions()
 
 	// 3. Generate IDs and infos following CreateNewExpressionInfo
 	// formula is in excel
-	
+
 	while (Edif::SDK->ExpressionInfos.size() - 1 < lastNonFuncID + numFuncVariantsToGenerate)
 	{
 #ifdef _WIN32
@@ -712,7 +712,7 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 			case ExpParams::Float: // also integer
 				if ((exp.FloatFlags & (1 << param)) != 0)
 					sprintf_s(errorStr, "Float%i", param + 1);
-				else // integer 
+				else // integer
 				{
 					// Repeat is always 2nd param if just Repeat
 					if (param == 1 && (funcID & Flags::Repeat) == Flags::Repeat)
@@ -1289,7 +1289,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 	do
 	{
 		// On Obj Function, or On Function
-		rf->funcTemplate->ext->Runtime.GenerateEvent(objToRunOn ? 2 : 1); 
+		rf->funcTemplate->ext->Runtime.GenerateEvent(objToRunOn ? 2 : 1);
 
 		if (enableOnAnyFunctions)
 			rf->funcTemplate->ext->Runtime.GenerateEvent(11); // On Any Function
@@ -1335,7 +1335,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 			CreateErrorT("Function \"%s\" has no default return value, and no return value was set by any On Function \"%s\" events.",
 				rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str());
 	}
-		
+
 	// No abort
 	if (rf->abortReason.empty())
 	{
@@ -1423,7 +1423,7 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 		// Selected?
 		if (poil->EventCount == rhPtr->rh2.EventCount)
 		{
-			// Already in the list? 
+			// Already in the list?
 			int j;
 			for (j = 0; j < (int)selectedObjects.size(); j++)
 			{

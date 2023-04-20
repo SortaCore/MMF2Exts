@@ -107,7 +107,7 @@ public:
 		Integer,
 		String, // String must be before float, because ExpReturnType has it that way
 		Float,
-		
+
 		// UPDATE THESE WHEN CHANGING THE ABOVE
 		NumCallableReturnTypes = 3,
 		MaskReturnTypes = 0x3,
@@ -325,7 +325,7 @@ public:
 	// If calling subapp ext for running our expression, we generate errors from caller side,
 	// not from the subapp ext
 	Extension* errorExt = nullptr;
-	// Last return value - useful 
+	// Last return value - useful
 	Value lastReturn = Value(Type::Any);
 
 	// Current frame index (while functions pending, this number accumulates by 1 per event loop via Handle)

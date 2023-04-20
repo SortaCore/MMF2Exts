@@ -64,7 +64,7 @@ static inline lw_bool _lwp_release (struct lwp_refcount * refcount)
 }
 
 #define lwp_refcounted														\
-	struct lwp_refcount refcount											  
+	struct lwp_refcount refcount
 
 #define lwp_retain(x, name)													\
 	_lwp_retain ((struct lwp_refcount *) (x))								 \

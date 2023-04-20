@@ -15,7 +15,7 @@ Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 	this->OiList = rhPtr->OiList;				//get a pointer to the mmf object info list
 	this->QualToOiList = rhPtr->QualToOiList;	//get a pointer to the mmf qualifier to Oi list
 	oiListItemSize = sizeof(objInfoList);
-	
+
 	// Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
 	#ifndef _UNICODE
 		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )

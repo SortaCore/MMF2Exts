@@ -365,7 +365,7 @@ void Extension::ServerSend(int socketID, int peerSocketID, const TCHAR * packet,
 	if (!(flags & MSG_DONTROUTE | MSG_OOB))
 		return globals->CreateError(socketID, _T("Flags %i are not recognised."), flags);
 #endif
-	
+
 	sock->lock.edif_lock();
 	// sendto is equivalent to send, with address ignored for one-destination anyway
 	int ret = sendto(sock->peerSocketFD, msgTo.data(), msgTo.size(), flags, (sockaddr *)&sock->peerSockAddress, sock->peerSockAddressSize);
@@ -603,7 +603,7 @@ void Extension::PacketBeingBuilt_SetInt64(const TCHAR* int64AsText, int packetBe
 	Internal_BuiltPacketSizeSet(packetBeingBuiltOffset);
 	if (packetBeingBuiltOffset < 0 || (size_t)packetBeingBuiltOffset > packetBeingBuilt.size())
 		return globals->CreateError(-1, _T("Can't set int64: Packet being built offset %i is invalid. Must be 0 to %zu."), packetBeingBuiltOffset, packetBeingBuilt.size());
-	
+
 	if ((packetBeingBuilt.size() - (size_t)packetBeingBuiltOffset) < sizeof(std::int64_t))
 		return globals->CreateError(-1, _T("Can't set int64: index %i - %i is beyond the being built's index range 0 to %zu. Resize the packet being built first."),
 			packetBeingBuiltOffset, packetBeingBuiltOffset + 1, packetBeingBuilt.size() - 1U);
@@ -654,7 +654,7 @@ void Extension::PacketBeingBuilt_SetString(const TCHAR * text, const TCHAR * enc
 
 	if (packetBeingBuiltOffset < 0 || (size_t)packetBeingBuiltOffset > packetBeingBuilt.size() - outputBytes.size())
 		return globals->CreateError(-1, _T("Can't set string of %zu bytes inside packet being built at index %d. The range is 0 to %zu."), outputBytes.size(), packetBeingBuiltOffset, packetBeingBuilt.size() - 1U);
-	
+
 	// Expand to add two null bytes if UTF-16, one byte if UTF-8, ANSI, etc
 	if (includeNull == 1)
 		outputBytes.resize(outputBytes.size() + (encoding == _T("UTF-16"sv) ? 2 : 1));

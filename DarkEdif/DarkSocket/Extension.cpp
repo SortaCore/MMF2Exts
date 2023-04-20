@@ -12,7 +12,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 		Link all your action/condition/expression functions to their IDs to match the
 		IDs in the JSON here
 	*/
-	
+
 /// ACTIONS
 	LinkAction(0, DEPRECATED_TestReportAndErrors);
 	LinkAction(1, DEPRECATED_UsePopupMessages);
@@ -185,7 +185,7 @@ Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobP
 Extension::~Extension()
 {
 	globals->threadsafe.edif_lock();
-	
+
 	auto refIt = std::find(globals->extsHoldingGlobals.cbegin(), globals->extsHoldingGlobals.cend(), this);
 	assert(refIt != globals->extsHoldingGlobals.cend() && "Couldn't find this ext in extsHoldingGlobals.");
 	globals->extsHoldingGlobals.erase(refIt);

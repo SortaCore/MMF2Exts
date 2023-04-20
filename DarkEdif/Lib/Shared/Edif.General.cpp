@@ -148,7 +148,7 @@ std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	{
 #ifdef NOPROPS
 		EDITDATASize = sizeof(EDITDATA);
-#else 
+#else
 		EDITDATASize = DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON();
 #endif // NOPROPS
 	}

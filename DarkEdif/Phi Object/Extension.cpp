@@ -155,11 +155,11 @@ Extension::~Extension()
 
 Extension::LastReadACL::LastReadACL()
 #ifdef _WIN32
-	: secDesc((SECURITY_DESCRIPTOR *)LocalAlloc(0,1), 
+	: secDesc((SECURITY_DESCRIPTOR *)LocalAlloc(0,1),
 		[](SECURITY_DESCRIPTOR * p) { LocalFree(p); return; })
 #endif
 {
-	
+
 }
 
 void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)

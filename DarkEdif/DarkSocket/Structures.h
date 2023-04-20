@@ -55,7 +55,7 @@ struct EventToRun {
 
 	// This specific event's received data. When the event runs, it is appended to sock->pendingData.
 	std::string msg;
-	
+
 	// Is this specific event received data out of bound data?
 	bool msgIsOOB = false;
 	// Is this specific event's received data still intact within the source's pendingData?
@@ -136,7 +136,7 @@ struct SocketSource
 	int peerSocketFD = -1;
 	// Socket ID (0+), not affected by closed sockets.
 	int peerSocketID = -1;
-	 
+
 	// Socket address for sending to/receiving from
 	struct sockaddr_storage peerSockAddress = {};
 	size_t peerSockAddressSize = sizeof(sockaddr_storage); // sockaddr_storage is IPv6 sized; so this may need changing.

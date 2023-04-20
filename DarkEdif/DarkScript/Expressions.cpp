@@ -383,7 +383,7 @@ const TCHAR* Extension::TestFunc(int fixedValue)
 
 	::fixedValue = fixedValue;
 	str << _T("Started with "sv) << originalSelection <<
-		_T(", rh2 event count = "sv) << origEventCount << 
+		_T(", rh2 event count = "sv) << origEventCount <<
 		_T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
 	evt_SaveSelectedObjects(selectedObjects);
 	Runtime.GenerateEvent(2);
@@ -397,7 +397,7 @@ const TCHAR* Extension::TestFunc(int fixedValue)
 	int newEventCount = rhPtr->rh2.EventCount;
 	//runObj->roHo.OiList->EventCount = origEventCount;
 	//rhPtr->rh2.EventCount = origEventCount;
-	
+
 	int newSelection = numSelected(&runObj->roHo);
 	str << _T("Ended up with [reset] ") << newSelection <<
 		_T(", rh2 event count = "sv) << newEventCount <<

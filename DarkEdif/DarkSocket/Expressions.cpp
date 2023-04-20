@@ -307,7 +307,7 @@ int Extension::PendingData_FindIndexOfChar(int charToFind, int numBytesInChar, i
 {
 	// This expression is meant for searching for a single byte, or single Unicode character, including null.
 	// For more complicated searches, the user is expected to extract the full text, and use Fusion's Find().
-	// 
+	//
 	// This should have been a single-byte search, but it'll be unusable in UTF-16 searching for null byte,
 	// as UTF-16 has null byte, char byte, null byte, etc, so numBytesInChar avoids that issue.
 	// There was a clever & 0xFF trick to figure out how many bytes to search, but endianness made it unusable too.
@@ -321,7 +321,7 @@ int Extension::PendingData_FindIndexOfChar(int charToFind, int numBytesInChar, i
 	}
 	if (numBytesInChar < 1 || numBytesInChar > 4)
 		return globals->CreateError(curEvent->fusionSocketID, _T("Can't search for char %d, a %d-byte character is impossible."), charToFind, numBytesInChar), -1;
-	
+
 	if (textEndBytes == -1)
 		textEndBytes = curEvent->source->pendingDataToRead.size() - searchStartIndex;
 	else if (textEndBytes <= 0)

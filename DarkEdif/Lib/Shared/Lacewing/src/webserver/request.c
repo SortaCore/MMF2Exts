@@ -484,7 +484,7 @@ void lw_ws_req_disconnect (lw_ws_req ctx, unsigned int websocket_exit_reason)
 	{
 		// Worth noting these close code checks mean that subsequent local disconnects do nothing
 		// There's a timeout activated, so there's no need to rush, regardless.
-		
+
 		// Close message not sent already
 		if (ctx->client->local_close_code == -1)
 		{

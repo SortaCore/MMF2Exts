@@ -27,9 +27,9 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	// CallEvent(ONFUNC);
 	// pRh->rh4.rh4ExpToken = saveExpToken;
 	// I'll add this code to GenerateEvent in the next build.
-	// 
+	//
 	// Phi on 05/06/2022: I added it to GenerateEvent in the mainstream DarkEdif.
-	
+
     /*
         Link all your action/condition/expression functions to their IDs to match the
         IDs in the JSON here

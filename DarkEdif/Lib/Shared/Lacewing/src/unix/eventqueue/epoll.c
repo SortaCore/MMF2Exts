@@ -37,7 +37,7 @@ void lwp_eventqueue_add (lwp_eventqueue queue,
 	struct epoll_event event = {0};
 
 	event.data.ptr = tag;
-	
+
 	event.events = (read != 0 ? EPOLLIN : 0u) |
 				  (write != 0 ? EPOLLOUT : 0u) |
 				  (edge_triggered != 0 ? EPOLLET : 0u);

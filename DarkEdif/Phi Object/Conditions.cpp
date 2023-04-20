@@ -37,11 +37,11 @@ const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const 
 			LocalFree(trusteePSID);
 		return false; // errors reported by Sub
 	}
-	
+
 	// May not work in scenarios such as remote computers, or for some permissions.
 	// https://docs.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-geteffectiverightsfromacla
 	bool effectiveAccessRes = Sub_GetTrueEffectiveRights(trusteePSID, &actualAccessPerms);
-	
+
 	LocalFree(trusteePSID);
 
 	if (!effectiveAccessRes)

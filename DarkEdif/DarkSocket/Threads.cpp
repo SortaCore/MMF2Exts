@@ -359,7 +359,7 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 			CreateError(self->fusionSocketID, _T("Warning: non-blocking mode could not be set."));
 	}
 	ReportInfo(self->fusionSocketID, _T("Socket prepared and set to non-blocking, now main loop start"));
-	
+
 	if (addrInfo.ss_family == AF_INET6)
 	{
 		// sockaddr_in and sockaddr_in6 has port as second member
