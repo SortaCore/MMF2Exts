@@ -8,7 +8,7 @@ const TCHAR * Extension::Logging_GetDarkScriptError()
 const TCHAR* Extension::Logging_GetAbortReason()
 {
 	// TODO: Shouldn't this be the called func's abort reason, not this one?
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	return Runtime.CopyString(rf ? rf->abortReason.c_str() : _T(""));
 }
 const TCHAR* Extension::Logging_GetCurrentLog(int clearLog)
@@ -21,63 +21,63 @@ const TCHAR* Extension::Logging_GetCurrentLog(int clearLog)
 
 int Extension::RunningFunc_GetRepeatIndex(const TCHAR * funcNameOrBlank)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return rf ? rf->index : -1;
 }
 int Extension::RunningFunc_GetNumRepeatsLeft(const TCHAR* funcNameOrBlank)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return rf ? rf->numRepeats - rf->index : -1;
 }
 int Extension::RunningFunc_GetNumRepeatsTotal(const TCHAR* funcNameOrBlank)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return rf ? rf->numRepeats : -1;
 }
 int Extension::RunningFunc_ForeachFV(const TCHAR* funcNameOrBlank)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return rf ? rf->currentForeachObjFV : -1;
 }
 int Extension::RunningFunc_NumParamsPassed(const TCHAR* funcNameOrBlank)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return rf ? rf->numPassedParams : -1;
 }
 int Extension::RunningFunc_ScopedVar_GetI(const TCHAR* scopedVarName)
 {
-	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), scopedVarName, Expected::Either, true);
+	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), scopedVarName, Expected::Either, true);
 	return !val ? 0 : Sub_GetValAsInteger(*val);
 }
 float Extension::RunningFunc_ScopedVar_GetF(const TCHAR* scopedVarName)
 {
-	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), scopedVarName, Expected::Either, true);
+	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), scopedVarName, Expected::Either, true);
 	return !val ? 0.f : Sub_GetValAsFloat(*val);
 }
 const TCHAR* Extension::RunningFunc_ScopedVar_GetS(const TCHAR* scopedVarName)
 {
-	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), scopedVarName, Expected::Either, true);
+	const Value * const val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), scopedVarName, Expected::Either, true);
 	return Runtime.CopyString(!val ? _T("") : Sub_GetValAsString(*val).c_str());
 }
 int Extension::RunningFunc_GetParamValueByIndexI(int paramIndex)
 {
-	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__), paramIndex);
+	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramIndex);
 	return !val ? 0 : Sub_GetValAsInteger(*val);
 }
 float Extension::RunningFunc_GetParamValueByIndexF(int paramIndex)
 {
-	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__), paramIndex);
+	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramIndex);
 	return !val ? 0.f : Sub_GetValAsFloat(*val);
 }
 
 const TCHAR* Extension::RunningFunc_GetParamValueByIndexS(int paramIndex)
 {
-	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__), paramIndex);
+	const Value * const val = Sub_CheckParamAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramIndex);
 	return Runtime.CopyString(!val ? _T("") : Sub_GetValAsString(*val).c_str());
 }
 const TCHAR * Extension::RunningFunc_GetAllParamsAsText(const TCHAR* funcNameOrBlank, const TCHAR * separatorPtr, int annotate)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), funcNameOrBlank);
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	if (!rf)
 		return Runtime.CopyString(_T(""));
 
@@ -181,12 +181,12 @@ const TCHAR* Extension::InternalLoop_GetVarType()
 
 const TCHAR* Extension::FuncTemplate_GetFunctionName()
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), _T(""));
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	return Runtime.CopyString(ft ? ft->name.c_str() : _T(""));
 }
 int Extension::FuncTemplate_GetNumRequiredParams(const TCHAR* funcNameOrBlank)
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	if (!ft)
 		return -1;
 	// Type of Any is unset default value, so is required param
@@ -195,68 +195,68 @@ int Extension::FuncTemplate_GetNumRequiredParams(const TCHAR* funcNameOrBlank)
 }
 int Extension::FuncTemplate_GetNumPossibleParams(const TCHAR * funcNameOrBlank)
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return ft ? (int)ft->params.size() : -1;
 }
 const TCHAR* Extension::FuncTemplate_GetReturnType(const TCHAR* funcNameOrBlank)
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return Runtime.CopyString(ft ? TypeToString(ft->defaultReturnValue.type) : _T(""));
 }
 int Extension::FuncTemplate_ShouldRepeat(const TCHAR * funcNameOrBlank)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return f ? (int)f->repeating : -1;
 }
 int Extension::FuncTemplate_ShouldBeDelayed(const TCHAR * funcNameOrBlank)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return f ? (int)f->delaying : -1;
 }
 int Extension::FuncTemplate_RecursionAllowed(const TCHAR * funcNameOrBlank)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return f ? (f->recursiveAllowed ? 1 : 0) : -1;
 }
 int Extension::FuncTemplate_IsEnabled(const TCHAR* funcNameOrBlank)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return f ? (f->isEnabled ? 1 : 0) : -1;
 }
 
 const TCHAR* Extension::FuncTemplate_GetRedirectFuncName(const TCHAR* funcNameOrBlank)
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return Runtime.CopyString(ft ? ft->redirectFunc.c_str() : _T(""));
 }
 const TCHAR* Extension::FuncTemplate_GlobalID(const TCHAR* funcNameOrBlank)
 {
-	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
+	const auto ft = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
 	return Runtime.CopyString(ft ? ft->globalID.c_str() : _T(""));
 }
 
 const TCHAR * Extension::FuncTemplate_ParamNameByIndex(const TCHAR * funcNameOrBlank, int paramIndex)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramIndex);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramIndex);
 	return Runtime.CopyString(p ? p->name.c_str() : _T(""));
 }
 const TCHAR * Extension::FuncTemplate_ParamTypeByIndex(const TCHAR * funcNameOrBlank, int paramIndex)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramIndex);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramIndex);
 	return Runtime.CopyString(p ? TypeToString(p->defaultVal.type) : _T(""));
 }
 const TCHAR * Extension::FuncTemplate_ParamDefaultValByIndex(const TCHAR * funcNameOrBlank, int paramIndex)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramIndex);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramIndex);
 	return Runtime.CopyString(p ? Sub_GetValAsString(p->defaultVal).c_str() : _T(""));
 }
 int Extension::FuncTemplate_ParamIndexByName(const TCHAR * funcNameOrBlank, const TCHAR * paramName)
 {
-	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	const auto f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	if (!p)
 		return -1;
 
@@ -269,14 +269,14 @@ int Extension::FuncTemplate_ParamIndexByName(const TCHAR * funcNameOrBlank, cons
 }
 const TCHAR * Extension::FuncTemplate_ParamTypeByName(const TCHAR * funcNameOrBlank, const TCHAR * paramName)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	return Runtime.CopyString(p ? TypeToString(p->defaultVal.type) : _T(""));
 }
 const TCHAR * Extension::FuncTemplate_ParamDefaultValByName(const TCHAR * funcNameOrBlank, const TCHAR * paramName)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcNameOrBlank);
-	const Param * p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	const Param * p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	return Runtime.CopyString(p ? Sub_GetValAsString(p->defaultVal).c_str() : _T(""));
 }
 int Extension::LastReturn_AsInt()

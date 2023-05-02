@@ -312,7 +312,7 @@
 				]
 			},
 			{
-				"Title": "Function %0: Set function enabled to %i",
+				"Title": "Function %0: Set function enabled to %1",
 				"Parameters": [
 					[ "String", "Function name" ],
 					[ "Integer", "Set 1 to enable, 0 to disable" ]

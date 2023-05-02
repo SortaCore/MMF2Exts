@@ -86,7 +86,7 @@ std::shared_ptr<Extension::FunctionTemplate> Extension::Sub_GetFuncTemplateByNam
 		if (curFuncTemplateLoop)
 			return curFuncTemplateLoop;
 		if (globals->runningFuncs.empty())
-			CreateErrorExp(std::shared_ptr<Extension::FunctionTemplate>(), "%s: no function running and not a func template loop, so a function template name must be passed.", cppFuncName + sizeof("Extension::") - 1);
+			CreateErrorExp(std::shared_ptr<Extension::FunctionTemplate>(), "%s: no function running and not a func template loop, so a function template name must be passed.", cppFuncName);
 		return globals->runningFuncs.back()->funcTemplate;
 	}
 
@@ -96,13 +96,13 @@ std::shared_ptr<Extension::FunctionTemplate> Extension::Sub_GetFuncTemplateByNam
 		[&](const std::shared_ptr<FunctionTemplate> & f) { return f->nameL == nameL;
 	});
 	if (res == globals->functionTemplates.end())
-		CreateErrorExp(std::shared_ptr<Extension::FunctionTemplate>(), "%s: couldn't find a function template with name %s.", funcNameOrBlank);
+		CreateErrorExp(std::shared_ptr<Extension::FunctionTemplate>(), "%s: couldn't find a function template with name %s.", cppFuncName, funcNameOrBlank);
 	return *res;
 }
 std::shared_ptr<Extension::RunningFunction> Extension::Sub_GetRunningFunc(const TCHAR* cppFuncName, const TCHAR* funcNameOrBlank)
 {
 	if (globals->runningFuncs.empty())
-		CreateErrorExp(std::shared_ptr<Extension::RunningFunction>(), "Use of %s without a function active.", cppFuncName + sizeof("Extension::") - 1);
+		CreateErrorExp(std::shared_ptr<Extension::RunningFunction>(), "Use of %s without a function active.", cppFuncName);
 	if (funcNameOrBlank[0] == _T('\0'))
 		return globals->runningFuncs.back();
 
@@ -112,7 +112,7 @@ std::shared_ptr<Extension::RunningFunction> Extension::Sub_GetRunningFunc(const 
 		[&](const std::shared_ptr<RunningFunction>& f) { return !_tcscmp(f->funcTemplate->nameL.c_str(), nameL.c_str());
 		});
 	if (res == globals->runningFuncs.rend())
-		CreateErrorExp(std::shared_ptr<Extension::RunningFunction>(), "%s: couldn't find a running function with name %s.", cppFuncName + sizeof("Extension::") - 1, funcNameOrBlank);
+		CreateErrorExp(std::shared_ptr<Extension::RunningFunction>(), "%s: couldn't find a running function with name %s.", cppFuncName, funcNameOrBlank);
 	return *res;
 }
 
@@ -855,6 +855,26 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	auto funcTemplateIt = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
 		[&](const auto &f) { return f->nameL == nameL; });
 
+	// Handles redirection to another function
+	if (funcTemplateIt != globals->functionTemplates.end() && !(**funcTemplateIt).redirectFunc.empty())
+	{
+		LOGV(_T("Redirecting from function \"%s\" to \"%s\".\n"), funcName, (**funcTemplateIt).redirectFunc.c_str());
+		auto funcTemplateIt2 = std::find(globals->functionTemplates.begin(), globals->functionTemplates.end(), (**funcTemplateIt).redirectFuncPtr);
+
+		// To redirect, the function must exist as a template, even with anonymous functions allowed. So if it doesn't, that's a pretty big problem
+		if (funcTemplateIt2 == globals->functionTemplates.end() /* && funcsMustHaveTemplate */)
+		{
+			CreateErrorT("Can't call function \"%s\"; was redirected to function \"%s\", which was defined when redirection was set, but does not exist in templates now. "
+				"Returning default return value of \"%s\".",
+				funcName, (**funcTemplateIt).redirectFunc.c_str(), funcName);
+			lastReturn = (*funcTemplateIt)->defaultReturnValue;
+			return lastReturn.type == Type::String ? (long)Runtime.CopyString(lastReturn.data.string ? lastReturn.data.string : _T("")) : (long)lastReturn.data.string;
+		}
+		funcName = (**funcTemplateIt).name.c_str();
+		nameL = (**funcTemplateIt).nameL.c_str();
+		funcTemplateIt = funcTemplateIt2;
+	}
+
 	size_t expParamIndex = 1; // skip func name (index 0), we already read it
 	// If 0, then function does not run
 	int repeatTimes = 1;
@@ -920,13 +940,13 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		if (runImmediately && funcTemplate->delaying == Expected::Always)
 			CreateError2V("Can't call function %s without delaying, template expects delaying.", funcName);
 
-		if ((!funcTemplate->recursiveAllowed || !preventAllRecursion) &&
+		if ((!funcTemplate->recursiveAllowed || preventAllRecursion) &&
 			std::find_if(globals->runningFuncs.begin(), globals->runningFuncs.end(),
 				[&](std::shared_ptr<RunningFunction>& rf) { return rf->funcTemplate == funcTemplate; }
 			) != globals->runningFuncs.end())
 		{
 			CreateError2V("Can't call function %s recursively, %s.", funcName,
-				!preventAllRecursion ? _T("recursion has been prevented globally") :_T("template does not allow recursing")
+				preventAllRecursion ? _T("recursion has been prevented globally") :_T("template does not allow recursing")
 			);
 		}
 

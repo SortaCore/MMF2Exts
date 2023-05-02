@@ -3,15 +3,15 @@
 void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, int repeatable, int recursable)
 {
 	if (funcSig[0] == _T('\0'))
-		return CreateErrorT("%s: You must supply a function signature, not blank.", funcSig);
+		return CreateErrorT("%s: You must supply a function signature, not blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSig);
 
 	// Test these first cos they're faster
 	if ((recursable & 1) != recursable)
-		return CreateErrorT("%s: Parameter recursable must be 0 or 1, you supplied %i.", _T(__FUNCTION__), recursable);
+		return CreateErrorT("%s: Parameter recursable must be 0 or 1, you supplied %i.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), recursable);
 	if (delayable < 0 || delayable > 2)
-		return CreateErrorT("%s: Parameter \"delay expected\" must be 0, 1 or 2, you supplied %i.", _T(__FUNCTION__), delayable);
+		return CreateErrorT("%s: Parameter \"delay expected\" must be 0, 1 or 2, you supplied %i.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), delayable);
 	if (repeatable < 0 || repeatable > 2)
-		return CreateErrorT("%s: Parameter \"repeating expected\" must be 0, 1 or 2, you supplied %i.", _T(__FUNCTION__), repeatable);
+		return CreateErrorT("%s: Parameter \"repeating expected\" must be 0, 1 or 2, you supplied %i.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), repeatable);
 
 	// Complicated escaping here; to convert regex to C++ string, take original regex, double the backslashes, and escape double quotes with one backslash.
 	// Original regex:
@@ -26,7 +26,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 	const std::tstring funcSigStr(funcSig);
 
 	if (!std::regex_match(funcSigStr.cbegin(), funcSigStr.cend(), funcSigBreakdown, funcSigParser))
-		return CreateErrorT("%s: Function signature \"%s\" not parseable.", _T(__FUNCTION__), funcSig);
+		return CreateErrorT("%s: Function signature \"%s\" not parseable.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSig);
 
 	const std::tstring funcNameL(ToLower(funcSigBreakdown[2].str()));
 
@@ -34,11 +34,11 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 	// (used in "run text as script") will find it ambiguous.
 	const std::basic_regex<TCHAR> isKRFunc(_T("k?r?f?func[fis]*\\$?"s));
 	if (std::regex_match(funcNameL, isKRFunc))
-		return CreateErrorT("%s: Function name \"%s\" is invalid; KRFuncXX format will confuse the script parser.", _T(__FUNCTION__), funcSigBreakdown[2].str().c_str());
+		return CreateErrorT("%s: Function name \"%s\" is invalid; KRFuncXX format will confuse the script parser.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSigBreakdown[2].str().c_str());
 
 	Type returnTypeValid;
 	if (!StringToType(returnTypeValid, funcSigBreakdown[1].str().c_str()))
-		return CreateErrorT("%s: Return type \"%s\" not recognised. Use Any, String, Integer, or Float.", _T(__FUNCTION__), funcSigBreakdown[1].str().c_str());
+		return CreateErrorT("%s: Return type \"%s\" not recognised. Use Any, String, Integer, or Float.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSigBreakdown[1].str().c_str());
 
 	std::vector<Param> params;
 
@@ -64,7 +64,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 			if (!StringToType(paramTypeValid, paramTypeStr.c_str()))
 			{
 				return CreateErrorT("%s: Parameter \"%s\" (index %zu) has unrecognised type \"%s\". Use Any, String, Integer, or Float.",
-					_T(__FUNCTION__), paramName.c_str(), j, paramTypeStr.c_str());
+					_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName.c_str(), j, paramTypeStr.c_str());
 			}
 
 			const auto existingParam = std::find_if(params.cbegin(), params.cend(),
@@ -72,7 +72,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 			if (existingParam != params.cend())
 			{
 				return CreateErrorT("%s: Parameter \"%s\" (index %zu) has the same name as previous parameter index %zu.",
-					_T(__FUNCTION__), paramName.c_str(), j, (size_t)std::distance(params.cbegin(), existingParam));
+					_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName.c_str(), j, (size_t)std::distance(params.cbegin(), existingParam));
 			}
 
 			// type funcCallBreakdown[i], name funcS
@@ -84,7 +84,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 				{
 					return CreateErrorT("%s: Parameter \"%s\" (index %zu) has no default value, but earlier parameter \"%s\" (index %zu) has a default."
 						" All parameters with defaults must be at the end of the parameter list.",
-						_T(__FUNCTION__), paramName.c_str(), j, params[j - 2].name.c_str(), j - 1);
+						_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName.c_str(), j, params[j - 2].name.c_str(), j - 1);
 				}
 				continue;
 			}
@@ -98,10 +98,10 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 			if (defaultVal.empty() || ::_istspace(defaultVal[0]))
 			{
 				return CreateErrorT("%s: Parameter \"%s\" (index %zu) has an empty default value; don't include the '=' if you want no default.",
-					_T(__FUNCTION__), paramName.c_str(), j);
+					_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName.c_str(), j);
 			}
 			Param& justAdded = params.back();
-			if (!Sub_ParseParamValue(_T(__FUNCTION__), defaultVal, justAdded, j, justAdded.defaultVal))
+			if (!Sub_ParseParamValue(_T(__FUNCTION__) + (sizeof("Extension::") - 1), defaultVal, justAdded, j, justAdded.defaultVal))
 				return;
 		}
 	}
@@ -109,8 +109,13 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 	// Too many parameters to ever call this with all of them - they should use scoped vars on start instead
 	// Subtract 2: one for func name, one for repeat count, since last function will be a KRFunc
 	if (params.size() > (size_t)Edif::SDK->ExpressionInfos.back()->NumOfParams - 2)
-		return CreateErrorT("%s: Too many parameters to run this function via expression. You have %zu parameters, but max is %hi. Consider using \"set scoped var on start\" action instead.",
-			_T(__FUNCTION__), params.size(), Edif::SDK->ExpressionInfos.back()->NumOfParams - 2);
+	{
+		return CreateErrorT("%s: Parsed \"%s\" function signature has too many parameters to run via expression. "
+			"You have %zu parameters, but max is %hi. Consider using scoped vars instead.",
+			_T(__FUNCTION__) + (sizeof("Extension::") - 1),
+			funcSigBreakdown[2].str().c_str(),
+			params.size(), Edif::SDK->ExpressionInfos.back()->NumOfParams - 2);
+	}
 
 	std::shared_ptr<FunctionTemplate> func;
 	const auto funcExisting = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
@@ -133,7 +138,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 }
 void Extension::Template_SetDefaultReturnN(const TCHAR * funcName)
 {
-	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!funcExisting)
 		return;
 
@@ -148,7 +153,7 @@ void Extension::Template_SetDefaultReturnN(const TCHAR * funcName)
 }
 void Extension::Template_SetDefaultReturnI(const TCHAR * funcName, int value)
 {
-	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!funcExisting)
 		return;
 
@@ -163,7 +168,7 @@ void Extension::Template_SetDefaultReturnI(const TCHAR * funcName, int value)
 }
 void Extension::Template_SetDefaultReturnF(const TCHAR * funcName, float value)
 {
-	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!funcExisting)
 		return;
 
@@ -178,7 +183,7 @@ void Extension::Template_SetDefaultReturnF(const TCHAR * funcName, float value)
 }
 void Extension::Template_SetDefaultReturnS(const TCHAR * funcName, const TCHAR * newVal)
 {
-	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> funcExisting = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!funcExisting)
 		return;
 
@@ -198,11 +203,11 @@ void Extension::Template_SetDefaultReturnS(const TCHAR * funcName, const TCHAR *
 
 void Extension::Template_Param_SetDefaultValueI(const TCHAR * funcName, const TCHAR * paramName, int paramValue, int useTheAnyType)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 
-	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	if (!p)
 		return;
 	Value * val = &p->defaultVal;
@@ -215,11 +220,11 @@ void Extension::Template_Param_SetDefaultValueI(const TCHAR * funcName, const TC
 }
 void Extension::Template_Param_SetDefaultValueF(const TCHAR * funcName, const TCHAR * paramName, float paramValue, int useTheAnyType)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 
-	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	if (!p)
 		return;
 
@@ -233,11 +238,11 @@ void Extension::Template_Param_SetDefaultValueF(const TCHAR * funcName, const TC
 }
 void Extension::Template_Param_SetDefaultValueS(const TCHAR * funcName, const TCHAR * paramName, const TCHAR * paramValue, int useTheAnyType)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 
-	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	if (!p)
 		return;
 
@@ -255,11 +260,11 @@ void Extension::Template_Param_SetDefaultValueS(const TCHAR * funcName, const TC
 }
 void Extension::Template_Param_SetDefaultValueN(const TCHAR * funcName, const TCHAR * paramName, int useTheAnyType)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 
-	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__), f, paramName);
+	Param * const p = Sub_GetTemplateParam(_T(__FUNCTION__) + (sizeof("Extension::") - 1), f, paramName);
 	if (!p)
 		return;
 
@@ -279,7 +284,7 @@ void Extension::Template_SetScopedVarOnStartI(const TCHAR* funcName, const TCHAR
 	if ((overrideWhenRecursing & 1) != overrideWhenRecursing)
 		return CreateErrorT("Couldn't set scoped var on start; \"override when recursing\" must be 0 or 1, you supplied %i.", overrideWhenRecursing);
 
-	ScopedVar* const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__), funcName, varName);
+	ScopedVar* const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName, varName);
 	if (!p)
 		return;
 
@@ -296,7 +301,7 @@ void Extension::Template_SetScopedVarOnStartF(const TCHAR* funcName, const TCHAR
 	if ((overrideWhenRecursing & 1) != overrideWhenRecursing)
 		return CreateErrorT("Couldn't set scoped var on start; \"override when recursing\" must be 0 or 1, you supplied %i.", overrideWhenRecursing);
 
-	ScopedVar* const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__), funcName, varName);
+	ScopedVar* const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName, varName);
 	if (!p)
 		return;
 
@@ -313,7 +318,7 @@ void Extension::Template_SetScopedVarOnStartS(const TCHAR* funcName, const TCHAR
 	if ((overrideWhenRecursing & 1) != overrideWhenRecursing)
 		return CreateErrorT("Couldn't set scoped var on start; \"override when recursing\" must be 0 or 1, you supplied %i.", overrideWhenRecursing);
 
-	ScopedVar * const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__), funcName, varName);
+	ScopedVar * const p = Sub_GetOrCreateTemplateScopedVar(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName, varName);
 	if (!p)
 		return;
 
@@ -331,11 +336,11 @@ void Extension::Template_SetScopedVarOnStartS(const TCHAR* funcName, const TCHAR
 }
 void Extension::Template_CancelScopedVarOnStart(const TCHAR* funcName, const TCHAR* varName)
 {
-	auto funcTemplate = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	auto funcTemplate = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!funcTemplate)
 		return;
 	if (varName[0] == _T('\0'))
-		return CreateErrorT("%s: scoped var name is blank.", _T(__FUNCTION__));
+		return CreateErrorT("%s: scoped var name is blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 
 	const std::tstring varNameL(ToLower(varName));
 	const auto scopedVarIt = std::find_if(funcTemplate->scopedVarOnStart.begin(), funcTemplate->scopedVarOnStart.end(),
@@ -348,7 +353,7 @@ void Extension::Template_CancelScopedVarOnStart(const TCHAR* funcName, const TCH
 }
 void Extension::Template_SetGlobalID(const TCHAR* funcName, const TCHAR* globalIDToRunOn)
 {
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 
@@ -368,7 +373,7 @@ void Extension::Template_SetEnabled(const TCHAR* funcName, int funcEnabled)
 	if ((funcEnabled & 1) != funcEnabled)
 		return CreateErrorT("Couldn't set function \"%s\" enabled; parameter should be 0 or 1, and was %d.", funcName, funcEnabled);
 
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName);
 	if (!f)
 		return;
 	f->isEnabled = funcEnabled != 0;
@@ -379,8 +384,8 @@ void Extension::Template_RedirectFunction(const TCHAR* funcName, const TCHAR* re
 	if (!_tcsicmp(funcName, redirectFuncName))
 		return CreateErrorT("Couldn't set function \"%s\" to redirect to \"%s\"; same function.", funcName, redirectFuncName);
 
-	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__), funcName),
-		f2 = Sub_GetFuncTemplateByName(_T(__FUNCTION__), redirectFuncName);
+	const std::shared_ptr<FunctionTemplate> f = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName),
+		f2 = Sub_GetFuncTemplateByName(_T(__FUNCTION__) + (sizeof("Extension::") - 1), redirectFuncName);
 	if (!f || !f2)
 		return;
 
@@ -388,6 +393,7 @@ void Extension::Template_RedirectFunction(const TCHAR* funcName, const TCHAR* re
 	if (f->nameL == f2->nameL)
 		return CreateErrorT("Couldn't set function \"%s\" to redirect to \"%s\"; same function.", funcName, redirectFuncName);
 
+	// If you decide to allow anonymous function template redirection, modify the if() in VariableFunction
 	f->redirectFunc = f2->name;
 	f->redirectFuncPtr = f2;
 }
@@ -627,7 +633,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	std::match_results<std::tstring::iterator> funcCallBreakdown;
 	std::tstring test(script);
 	if (!std::regex_match(test.begin(), test.end(), funcCallBreakdown, funcCallMatcher))
-		return CreateErrorT("%s: Function script \"%s\" not parseable.", _T(__FUNCTION__), script);
+		return CreateErrorT("%s: Function script \"%s\" not parseable.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), script);
 
 	std::tstring funcName = funcCallBreakdown[1].str();
 	std::tstring funcNameL(ToLower(funcName));
@@ -641,7 +647,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 		const std::tstring params = isKRFuncCallBreakdown[2].str();
 		const std::tstring suffix = isKRFuncCallBreakdown[3].str();
 
-		return CreateErrorT("%s: Function name \"%s\" is invalid; KRFuncXX format will confuse the script parser.", _T(__FUNCTION__), funcName.c_str());
+		return CreateErrorT("%s: Function name \"%s\" is invalid; KRFuncXX format will confuse the script parser.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
 	}
 
 	std::shared_ptr<FunctionTemplate> funcTemplate;
@@ -653,7 +659,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	if (res == globals->functionTemplates.end())
 	{
 		if (funcsMustHaveTemplate)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which has no template.", _T(__FUNCTION__), funcName.c_str());
+			return CreateErrorT("%s: Function script uses function name \"%s\", which has no template.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
 
 		funcTemplate = std::make_shared<FunctionTemplate>(this, funcName.c_str(), Expected::Either, Expected::Either, false, Type::Any);
 		TCHAR name[3] = { _T('a'), _T('\0') };
@@ -669,15 +675,15 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	{
 		funcTemplate = *res;
 		if (funcTemplate->delaying == Expected::Always)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called delayed only.", _T(__FUNCTION__), funcName.c_str());
+			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called delayed only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
 		if (funcTemplate->repeating == Expected::Always)
-			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called repeating only.", _T(__FUNCTION__), funcName.c_str());
+			return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called repeating only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
 
 		if (!funcTemplate->isEnabled)
 		{
 			lastReturn = funcTemplate->defaultReturnValue;
 			if (funcTemplate->defaultReturnValue.type == Type::Any)
-				CreateErrorT("%s: Function script uses function name \"%s\", which is set to disabled, and has no default return value.", _T(__FUNCTION__), funcName.c_str());
+				CreateErrorT("%s: Function script uses function name \"%s\", which is set to disabled, and has no default return value.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str());
 			return;
 		}
 	}
@@ -716,7 +722,7 @@ void Extension::RunningFunc_Params_Loop(const TCHAR* loopName, int includeNonPas
 	if ((includeNonPassed & 1) != includeNonPassed)
 		return CreateErrorT("%s: Can't run params loop; \"include non-passed\" parameter was %d, not 0 or 1.", includeNonPassed);
 
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -741,7 +747,7 @@ void Extension::RunningFunc_ScopedVar_Loop(const TCHAR* loopName, int includeInh
 	if ((includeInherited & 1) != includeInherited)
 		return CreateErrorT("%s: Can't run params loop; \"include inherited\" parameter was %d, not 0 or 1.", includeInherited);
 
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -759,7 +765,7 @@ void Extension::RunningFunc_ScopedVar_Loop(const TCHAR* loopName, int includeInh
 }
 void Extension::RunningFunc_SetReturnI(int value)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -783,7 +789,7 @@ void Extension::RunningFunc_SetReturnI(int value)
 }
 void Extension::RunningFunc_SetReturnF(float value)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -805,7 +811,7 @@ void Extension::RunningFunc_SetReturnF(float value)
 }
 void Extension::RunningFunc_SetReturnS(const TCHAR * newVal)
 {
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -835,7 +841,7 @@ void Extension::RunningFunc_SetReturnS(const TCHAR * newVal)
 void Extension::RunningFunc_ScopedVar_SetI(const TCHAR* paramName, int newVal)
 {
 	const Param* param = nullptr;
-	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), paramName, Expected::Either, false, &param);
+	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName, Expected::Either, false, &param);
 	if (!val)
 	{
 		globals->scopedVars.push_back(ScopedVar(paramName, Type::String, true, globals->runningFuncs.size()));
@@ -847,7 +853,7 @@ void Extension::RunningFunc_ScopedVar_SetI(const TCHAR* paramName, int newVal)
 	if (param->type != Type::Integer && param->type != Type::Any)
 	{
 		return CreateErrorT("%s: param/scoped var %s does not accept integer type.",
-			_T(__FUNCTION__), param->name.c_str());
+			_T(__FUNCTION__) + (sizeof("Extension::") - 1), param->name.c_str());
 	}
 
 	if (val->type == Type::String)
@@ -859,7 +865,7 @@ void Extension::RunningFunc_ScopedVar_SetI(const TCHAR* paramName, int newVal)
 void Extension::RunningFunc_ScopedVar_SetF(const TCHAR* paramName, float newVal)
 {
 	const Param* param = nullptr;
-	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), paramName, Expected::Either, false, &param);
+	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName, Expected::Either, false, &param);
 	if (!val)
 	{
 		globals->scopedVars.push_back(ScopedVar(paramName, Type::Float, true, globals->runningFuncs.size()));
@@ -871,7 +877,7 @@ void Extension::RunningFunc_ScopedVar_SetF(const TCHAR* paramName, float newVal)
 	if (param->type != Type::Float && param->type != Type::Any)
 	{
 		return CreateErrorT("%s: param/scoped var %s does not accept float type.",
-			_T(__FUNCTION__), param->name.c_str());
+			_T(__FUNCTION__) + (sizeof("Extension::") - 1), param->name.c_str());
 	}
 
 	if (val->type == Type::String)
@@ -883,7 +889,7 @@ void Extension::RunningFunc_ScopedVar_SetF(const TCHAR* paramName, float newVal)
 void Extension::RunningFunc_ScopedVar_SetS(const TCHAR* paramName, const TCHAR* newVal)
 {
 	const Param* param = nullptr;
-	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__), paramName, Expected::Either, false, &param);
+	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName, Expected::Either, false, &param);
 	if (!val)
 	{
 		globals->scopedVars.push_back(ScopedVar(paramName, Type::String, true, globals->runningFuncs.size()));
@@ -895,7 +901,7 @@ void Extension::RunningFunc_ScopedVar_SetS(const TCHAR* paramName, const TCHAR* 
 	if (param->type != Type::String && param->type != Type::Any)
 	{
 		return CreateErrorT("%s: param/scoped var %s does not accept string type.",
-			_T(__FUNCTION__), param->name.c_str());
+			_T(__FUNCTION__) + (sizeof("Extension::") - 1), param->name.c_str());
 	}
 
 	// TODO: realloc, combine size_t measurements for dup alloc and copy
@@ -925,7 +931,7 @@ void Extension::RunningFunc_StopFunction(int cancelCurrentIteration, int cancelN
 	if (!cancelCurrentB && !cancelNextB && !cancelForeachB)
 		return CreateErrorT("Use of StopFunction with all cancel parameters as 0. This will have no effect.");
 
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 
@@ -948,7 +954,7 @@ void Extension::RunningFunc_ChangeRepeatSetting(int newRepeatIndex, int newRepea
 	if (newRepeatIndex >= newRepeatCount)
 		return CreateErrorT("Use of ChangeRepeatSetting with a new repeat index of %i, higher than new repeat count %i.", newRepeatIndex, newRepeatCount);
 
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf || !rf->active)
 		return;
 
@@ -962,7 +968,7 @@ void Extension::RunningFunc_Abort(const TCHAR* error, const TCHAR* funcToUnwindT
 	if (error[0] == _T('\0'))
 		return CreateErrorT("Can't abort with an empty reason.");
 
-	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__), _T(""));
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
 		return;
 	if (!rf->active)
@@ -1001,5 +1007,5 @@ void Extension::RunningFunc_Abort(const TCHAR* error, const TCHAR* funcToUnwindT
 
 void Extension::Logging_SetLevel(const TCHAR* funcNames, const TCHAR* logLevel)
 {
-	CreateErrorT("%s not implemented", _T(__FUNCTION__));
+	CreateErrorT("%s not implemented", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 }
