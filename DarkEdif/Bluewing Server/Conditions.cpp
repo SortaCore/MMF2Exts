@@ -271,11 +271,13 @@ bool Extension::IsWebSocketHosting(const TCHAR * serverTypeParam)
 		return hostingSecure && hostingInsecure;
 	if (serverType == "secure"sv)
 		return hostingSecure;
-	if (serverType == "insecure"sv)
+	// i is converted to l as part of text simplifying, so it's actually lnsecure
+	if (serverType == "lnsecure"sv)
 		return hostingInsecure;
 	if (serverType == "either"sv || serverType == "any"sv)
 		return hostingSecure || hostingInsecure;
 
-	CreateError("Is WebSocket Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.", serverTypeParam);
+	CreateError("Is WebSocket Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.",
+		DarkEdif::TStringToUTF8(serverTypeParam).c_str());
 	return false;
 }

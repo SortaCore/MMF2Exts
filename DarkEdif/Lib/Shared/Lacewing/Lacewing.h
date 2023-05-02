@@ -1924,7 +1924,7 @@ struct codepointsallowlist {
 struct relayserverinternal;
 struct relayserver
 {
-	static const int buildnum = 36;
+	static const int buildnum = 37;
 
 	void * internaltag, * tag = nullptr;
 
