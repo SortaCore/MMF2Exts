@@ -19,6 +19,7 @@ Changes until v19 release
 - Windows: Added CF2.5+/Direct3D 11 specific cSurface code
 - Edittime: Fixed new objects' custom EDITDATA variables being cleared in DarkEdif::DLL::DLL_CreateObject(), when their init should happen just before that
 - Windows: Renamed Runtime.IsHWA() to better reflect it doesn't indicate HWA of app, but HWA of underlying runtime; added Runtime.GetAppDisplayMode().
+- iOS/Mac: Updated DarkEdifPreBuildTool to v1.0.0.5, no longer uses FusionSDKConfig global setting over project-specific
 
 
 Changes until v18 release
@@ -42,7 +43,7 @@ Changes until v18 release
 - Android/iOS/Mac: (hopefully) fixed projects seen as building successfully when PostBuildTool failed  
   (this happens commonly wth iOS/Mac, as all iOS CPU archs must be built before PostBuildTool can combine them into a xcframework)
 - iOS: Fixes from v17 was not actually implemented in the tool and this was elusive during tests
-- iOS/Mac: PreBuildTool updated to v1.0.0.4, now reads FusionSDKConfig.ini for modifying pbxproj, and generates/copies Mac code files
+- iOS/Mac: PreBuildTool updated ~~to v1.0.0.4~~ (EXE accidentally still v1.0.0.3), now reads FusionSDKConfig.ini for modifying pbxproj, and generates/copies Mac code files
 - Android/iOS/Mac: PostBuildTool updated to v1.0.0.5, now reads FusionSDKConfig.ini for expected OS archs/version instead of FusionSDK.props passing it; Mac compatiblity added
 
 
