@@ -920,8 +920,14 @@
 				"DefaultState": true
 			},
 			{
+				"Title": "Inherit parameters as scoped variables",
+				"Info": "If enabled, subfunctions will inherit COPIES of their callers' parameters as scoped variables.",
+				"Type": "Checkbox",
+				"DefaultState": true
+			},
+			{
 				"Title": "Prevent any recursion",
-				"Info": "Prevents any recursion by default. 99% of recursion functions can be written as a non-recursive loop.",
+				"Info": "Prevents any recursion, overriding any function-level settings. 99% of recursion functions can be written as a non-recursive loop.",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},

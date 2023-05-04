@@ -131,6 +131,69 @@ Extension::Value * Extension::Sub_CheckParamAvail(const TCHAR * cppFuncName, int
 
 	return &rf->paramValues[paramNum];
 }
+std::tstring Extension::Sub_GetAvailableVars(std::shared_ptr<RunningFunction>& rf, Expected includeParam) const {
+	std::vector<std::tstring_view> availableVars;
+	std::tstringstream str;
+	if (includeParam != Expected::Never)
+	{
+		for (size_t i = 0; i < rf->funcTemplate->params.size(); ++i)
+		{
+			const auto& tp = rf->funcTemplate->params[i];
+			const auto& pv = rf->paramValues[i];
+
+			// Already outputted; a later function could overwrite an earlier scoped variable, so skip any we're doing in reverse
+			if (std::find_if(availableVars.crbegin(), availableVars.crend(), [&](const auto& t) { return t == tp.nameL; }) != availableVars.crend())
+				continue;
+			availableVars.push_back(tp.nameL);
+			if (pv.type == Type::Integer)
+				str << _T("[int]    "sv) << tp.name << _T(" = "sv) << pv.data.integer << _T('\n');
+			else if (pv.type == Type::Float)
+				str << _T("[float]  "sv) << tp.name << _T(" = "sv) << pv.data.decimal << _T('\n');
+			else if (pv.type == Type::String)
+				str << _T("[string] "sv) << tp.name << _T(" = \""sv) << std::tstring_view(pv.data.string, (pv.dataSize / sizeof(TCHAR)) - 1) << _T("\"\n"sv);
+			else
+				str << _T("[any]    "sv) << tp.name << _T(" = unset ("sv) << pv.dataSize << _T(" bytes)\n"sv);
+		}
+	}
+	if (includeParam != Expected::Always)
+	{
+		for (auto it = globals->scopedVars.crbegin(); it != globals->scopedVars.crend(); ++it)
+		{
+			// Already outputted; a later function could overwrite an earlier scoped variable, so skip any we're doing in reverse
+			if (std::find_if(availableVars.crbegin(), availableVars.crend(), [&](const auto& t) { return t == it->nameL; }) != availableVars.crend())
+				continue;
+			availableVars.push_back(it->nameL);
+			if (it->defaultVal.type == Type::Integer)
+				str << _T("[int]    "sv) << it->name << _T(" = "sv) << it->defaultVal.data.integer << _T('\n');
+			else if (it->defaultVal.type == Type::Float)
+				str << _T("[float]  "sv) << it->name << _T(" = "sv) << it->defaultVal.data.decimal << _T('\n');
+			else if (it->defaultVal.type == Type::String)
+				str << _T("[string] "sv) << it->name << _T(" = \""sv) << std::tstring_view(it->defaultVal.data.string, (it->defaultVal.dataSize / sizeof(TCHAR)) - 1) << _T("\"\n"sv);
+			else
+				str << _T("[any]    "sv) << it->name << _T(" = unset ("sv) << it->defaultVal.dataSize << _T(" bytes)\n"sv);
+		}
+	}
+
+	std::tstring availableVarsStr = str.str();
+	str.str(std::tstring());
+
+	std::tstring_view types;
+	if (includeParam == Expected::Either)
+		types = _T("params/scoped vars"sv);
+	else if (includeParam == Expected::Always)
+		types = _T("params"sv);
+	else
+		types = _T("scoped vars"sv);
+
+	if (availableVarsStr.empty())
+		str << _T("No "sv) << types << _T(" available."s);
+	else
+	{
+		str << _T("Available \n"sv) << types << _T(":\n"sv)
+			<< std::tstring_view(availableVarsStr.data(), availableVarsStr.size() - 1);
+	}
+	return str.str();
+}
 Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName, const TCHAR * scopedVarName, Expected shouldBeParam, bool makeError, const Param ** paramTo /* = nullptr */)
 {
 	if (scopedVarName[0] == _T('\0'))
@@ -156,7 +219,10 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 
 		// Must be scoped var, not param, and not found - ded
 		if (shouldBeParam == Expected::Never)
-			CreateErrorExpOpt(makeError, NULL, "%s: scoped var name \"%s\" not found.", cppFuncName, scopedVarName);
+		{
+			std::tstring availableVarsStr = Sub_GetAvailableVars(rf, shouldBeParam);
+			CreateErrorExpOpt(makeError, NULL, "%s: scoped var name \"%s\" not found.\n%s", cppFuncName, scopedVarName, availableVarsStr.c_str());
+		}
 	}
 	// shouldBeParam is either Either or Always, Never would've returned in ^ already
 
@@ -164,8 +230,14 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 		[&](const Extension::Param & a) { return a.nameL == strL; }
 	);
 	if (param == rf->funcTemplate->params.end())
-		CreateErrorExpOpt(makeError, NULL, "%s: param%s name \"%s\" not found. Anonymous functions use \"a\", \"b\" for parameters.",
-			cppFuncName, shouldBeParam == Expected::Never ? _T("") : _T("/scoped var"), scopedVarName);
+	{
+		std::tstring availableVarsStr = Sub_GetAvailableVars(rf, shouldBeParam);
+		CreateErrorExpOpt(makeError, NULL, "%s: param%s name \"%s\" not found.%s\n%s",
+			cppFuncName, shouldBeParam == Expected::Never ? _T("") : _T("/scoped var"), scopedVarName,
+			std::find(globals->functionTemplates.crbegin(), globals->functionTemplates.crend(), rf->funcTemplate) != globals->functionTemplates.crend() ? "" : "Anonymous functions use \"a\", \"b\" for parameters.\n",
+			availableVarsStr.c_str()
+		);
+	}
 	if (paramTo)
 		*paramTo = &*param;
 	const size_t index = std::distance(rf->funcTemplate->params.begin(), param);
@@ -835,18 +907,18 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	{
 		// dummy func: run immediately, but don't reset actID, we use it later in Sub_GetLocation()
 		if (actID >= 19 && actID <= 20)
-			LOGI(_T("Called for Dummy action! Action ID is %i.\n"), actID);
+			LOGV(_T("Called for Dummy action! Action ID is %i.\n"), actID);
 		else
 		{
 			runImmediately = false;
-			LOGI(_T("Called for Foreach or Delayed action! Action ID is %i.\n"), actID);
+			LOGV(_T("Called for Foreach or Delayed action! Action ID is %i.\n"), actID);
 		}
 		isVoidRun = true;
 	}
 	else
 	{
 		actID = -1;
-		LOGI(_T("NOT called from Foreach/Delayed action! Oi is %i, action ID is %i.\n"), callingAction ? callingAction->evtOi : -1, actID);
+		LOGV(_T("NOT called from Foreach/Delayed action! Oi is %i, action ID is %i.\n"), callingAction ? callingAction->evtOi : -1, actID);
 	}
 
 	int funcID = exp.ID - lastNonFuncID - 1;
@@ -1285,8 +1357,17 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 		objFixedValue = (objToRunOn->CreationId << 16) + objToRunOn->Number;
 	else
 	{
-		globalsRunningOn->runningFuncs.push_back(rf);
 		numScopedVarsBeforeCall = globalsRunningOn->scopedVars.size();
+		if (inheritParametersAsScopedVariables && !globals->runningFuncs.empty())
+		{
+			auto& lastFunc = globals->runningFuncs.back();
+			for (size_t i = 0; i < lastFunc->funcTemplate->params.size(); ++i)
+			{
+				globalsRunningOn->scopedVars.push_back(ScopedVar(lastFunc->funcTemplate->params[i].name, Type::Any, true, globals->runningFuncs.size()));
+				globalsRunningOn->scopedVars.back().defaultVal = lastFunc->paramValues[i];
+			}
+		}
+		globalsRunningOn->runningFuncs.push_back(rf);
 		for (auto& sv : rf->funcTemplate->scopedVarOnStart)
 		{
 			if (sv.recursiveOverride || 1 == std::count_if(globalsRunningOn->runningFuncs.cbegin(), globalsRunningOn->runningFuncs.cend(),
@@ -1340,7 +1421,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 
 		// In case they cancelled current iteration's On Function, reset back to normal for next loop
 		rf->currentIterationTriggering = true;
-	} while (rf->active && rf->numRepeats > ++rf->index);
+	} while (rf->active && rf->numRepeats >= ++rf->index);
 
 	// We need return value, no default return value, but we're returning with no return value set... uh oh
 	if (!rf->isVoidRun && rf->returnValue.dataSize == 0 && rf->funcTemplate->defaultReturnValue.dataSize == 0)
@@ -1516,7 +1597,7 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 			pHoFound->SelectedInOR = 0;
 			objectsListIndex = pHoFound->NextSelected;
 		}*/
-		LOGI(_T("Zero'd poil->Oi = %d, name = %hs.\n"), poil->Oi, poil->name);
+		LOGV(_T("Zero'd poil->Oi = %d, name = %hs.\n"), poil->Oi, poil->name);
 	}
 
 	for (int i = 0; i < (int)selectedObjects.size(); i++)

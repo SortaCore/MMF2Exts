@@ -974,7 +974,7 @@ void Extension::RunningFunc_Abort(const TCHAR* error, const TCHAR* funcToUnwindT
 	if (!rf->active)
 		return CreateErrorT("Can't abort twice. Second reason discarded.");
 
-	size_t unwindToRunningFuncIndex = 0;
+	int unwindToRunningFuncIndex = 0;
 	if (funcToUnwindTo[0] != _T('\0'))
 	{
 		const std::tstring funcToUnwindToL = ToLower(funcToUnwindTo);
@@ -982,13 +982,13 @@ void Extension::RunningFunc_Abort(const TCHAR* error, const TCHAR* funcToUnwindT
 			{ return f->funcTemplate->nameL == funcToUnwindToL; });
 		if (q == globals->runningFuncs.crend())
 			return CreateErrorT("Aborting function \"%s\" to function \"%s\" failed; unwind function \"%s\" not in call stack.", rf->funcTemplate->name.c_str(), funcToUnwindTo, funcToUnwindTo);
-		unwindToRunningFuncIndex = globals->runningFuncs.size() - std::distance(globals->runningFuncs.crbegin(), q);
+		unwindToRunningFuncIndex = (int)(globals->runningFuncs.size() - std::distance(globals->runningFuncs.crbegin(), q));
 		assert((long)unwindToRunningFuncIndex >= 0);
 	}
 
-	for (size_t i = globals->runningFuncs.size() - 1; i >= unwindToRunningFuncIndex; --i)
+	for (int i = (int)globals->runningFuncs.size() - 1; i >= unwindToRunningFuncIndex; --i)
 	{
-		const auto& fa = globals->runningFuncs[i];
+		const auto& fa = globals->runningFuncs[(size_t)i];
 		fa->abortReason = error;
 		fa->currentIterationTriggering = false;
 		fa->nextRepeatIterationTriggering = false;

@@ -88,6 +88,8 @@ public:
 	bool runAbortsOnDestination;
 	// If true, allows a ForEach run on a qualifier to trigger for objcets in qualifier, not just qualifier.
 	bool allowForeachSingular;
+	// If true, parents' parameters are passed as scoped variables, but read-only.
+	bool inheritParametersAsScopedVariables;
 
 	// Function settings passed by action -> expression
 
@@ -365,6 +367,7 @@ public:
 
 	std::shared_ptr<FunctionTemplate> Sub_GetFuncTemplateByName(const TCHAR * cppFuncName, const TCHAR * funcNameOrBlank);
 	std::shared_ptr<RunningFunction> Sub_GetRunningFunc(const TCHAR* cppFuncName, const TCHAR * funcNameOrBlank);
+	std::tstring Sub_GetAvailableVars(std::shared_ptr<RunningFunction>& rf, Expected includeParam) const;
 	Value * Sub_CheckParamAvail(const TCHAR * const cppFuncName, int paramIndex);
 	Value * Sub_CheckScopedVarAvail(const TCHAR * const cppFuncName, const TCHAR * scopedVarOrParamName, Expected shouldBeParam, bool makeError, const Param ** optParam = nullptr);
 	Param * Sub_GetTemplateParam(const TCHAR * const cppFuncName, const std::shared_ptr<FunctionTemplate> f, int paramIndex);

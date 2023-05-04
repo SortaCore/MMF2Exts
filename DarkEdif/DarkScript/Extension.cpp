@@ -93,6 +93,8 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkCondition(9, LoopNameMatch); // OnParameterLoop
 	LinkCondition(10, LoopNameMatch); // OnScopedVarLoop
 	LinkCondition(11, Logging_OnAnyFunction);
+	LinkCondition(12, Logging_OnAnyFunctionCompletedOK);
+	LinkCondition(13, Logging_OnAnyFunctionAborted);
 
 
 	// Expressions
@@ -168,6 +170,8 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	preventAllRecursion = edPtr->Props.IsPropChecked("Prevent any recursion"sv);
 	runAbortsOnDestination = edPtr->Props.IsPropChecked("Run errors/aborts on called extension"sv);
 	allowForeachSingular = edPtr->Props.IsPropChecked("Allow singular objects in qualifier foreach"sv);
+	inheritParametersAsScopedVariables = edPtr->Props.IsPropChecked("Inherit parameters as scoped variables"sv);
+
 
 	const std::tstring globalScoped = edPtr->Props.GetPropertyStr("Global scoped vars"sv);
 	// TODO: Loop global scoped ^ and insert

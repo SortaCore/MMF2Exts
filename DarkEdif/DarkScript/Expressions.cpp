@@ -27,6 +27,7 @@ int Extension::RunningFunc_GetRepeatIndex(const TCHAR * funcNameOrBlank)
 int Extension::RunningFunc_GetNumRepeatsLeft(const TCHAR* funcNameOrBlank)
 {
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	// Exclude current iteration: and yes, this calculation is correct
 	return rf ? rf->numRepeats - rf->index : -1;
 }
 int Extension::RunningFunc_GetNumRepeatsTotal(const TCHAR* funcNameOrBlank)
