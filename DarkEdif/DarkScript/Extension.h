@@ -262,6 +262,9 @@ public:
 		// Fusion event #(num) or delayed event.
 		std::tstring runLocation;
 
+		// If non-empty, the original function name before it was redirected to this one
+		std::tstring redirectedFromFunctionName;
+
 		RunningFunction(std::shared_ptr<FunctionTemplate> funcTemplate, bool active, int numRepeats)
 			: funcTemplate(funcTemplate), active(active), index(0), numRepeats(numRepeats), returnValue(funcTemplate->defaultReturnValue)
 		{
@@ -484,9 +487,10 @@ public:
 	const TCHAR * RunningFunc_ScopedVar_GetS(const TCHAR* paramName);
 	int RunningFunc_GetParamValueByIndexI(int paramIndex);
 	float RunningFunc_GetParamValueByIndexF(int paramIndex);
-	const TCHAR* RunningFunc_GetParamValueByIndexS(int paramIndex);
-	const TCHAR* RunningFunc_GetAllParamsAsText(const TCHAR * funcNameOrBlank, const TCHAR* separator, int includeAnnotation);
-	const TCHAR* RunningFunc_GetCallStack(int mostRecentAtBottom, int rewindCount);
+	const TCHAR * RunningFunc_GetParamValueByIndexS(int paramIndex);
+	const TCHAR * RunningFunc_GetAllParamsAsText(const TCHAR * funcNameOrBlank, const TCHAR* separator, int includeAnnotation);
+	const TCHAR * RunningFunc_GetCallStack(int mostRecentAtBottom, int rewindCount);
+	const TCHAR * RunningFunc_GetCalledFuncName(const TCHAR * funcNameOrBlank);
 
 	int InternalLoop_GetIndex();
 	const TCHAR * InternalLoop_GetVarName();

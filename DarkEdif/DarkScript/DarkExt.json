@@ -121,6 +121,7 @@
 				[ 2, "Get log" ]
 			],
 			[ "Running function",
+				[ 39, "Get called function name" ],
 				[ 3, "Repeat index" ],
 				[ 4, "Number of repeats remaining" ],
 				[ 5, "Number of repeats total" ],
@@ -156,7 +157,7 @@
 				[ 24, "Should delay?" ],
 				[ 25, "Is recursion allowed" ],
 				[ 26, "Is enabled" ],
-				[ 27, "Get redirect function name" ],
+				[ 27, "Get redirect-to function name" ],
 				[ 28, "Global ID to run on" ],
 				"---",
 				[ "Parameter by index",
@@ -182,7 +183,7 @@
 				[ 38, "Return type" ]
 			],
 			
-			[ 39, "Run test func" ],
+			[ 40, "Run test func" ],
 			[ 0, "[K][R][F]Func[FIS]^n[$]", true ],
 			[ "Run Func",
 				[ 0, "See help file", true ],
@@ -770,7 +771,7 @@
 				]
 			},
 			{
-				"Title": "GetRedirectFunctionName$(",
+				"Title": "RedirectedToFuncName$(",
 				"Returns": "Text",
 				"Parameters": [
 					[ "String", "Func name (or \"\" for current)" ]
@@ -846,6 +847,13 @@
 			{
 				"Title": "LastReturnType$(",
 				"Returns": "String"
+			},
+			{
+				"Title": "OriginalFuncName$(",
+				"Returns": "Text",
+				"Parameters": [
+					[ "String", "Func name (or blank for current)" ]
+				]
 			},
 			{
 				"Title": "TestFunc$(",

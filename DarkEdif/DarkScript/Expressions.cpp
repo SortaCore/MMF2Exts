@@ -156,6 +156,15 @@ const TCHAR* Extension::RunningFunc_GetCallStack(int mostRecentAtBottom, int rew
 	str2.resize(str2.size() - nl.size());
 	return Runtime.CopyString(str2.c_str());
 }
+const TCHAR* Extension::RunningFunc_GetCalledFuncName(const TCHAR* funcNameOrBlank)
+{
+	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
+	if (!rf)
+		return Runtime.CopyString(_T(""));
+	if (!rf->redirectedFromFunctionName.empty())
+		return Runtime.CopyString(rf->redirectedFromFunctionName.c_str());
+	return Runtime.CopyString(rf->funcTemplate->name.c_str());
+}
 
 int Extension::InternalLoop_GetIndex()
 {

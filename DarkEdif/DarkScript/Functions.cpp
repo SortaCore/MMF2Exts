@@ -922,7 +922,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	}
 
 	int funcID = exp.ID - lastNonFuncID - 1;
-	std::tstring nameL(ToLower(funcName));
+	std::tstring nameL(ToLower(funcName)), redirectedFromName;
 
 	auto funcTemplateIt = std::find_if(globals->functionTemplates.begin(), globals->functionTemplates.end(),
 		[&](const auto &f) { return f->nameL == nameL; });
@@ -942,8 +942,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 			lastReturn = (*funcTemplateIt)->defaultReturnValue;
 			return lastReturn.type == Type::String ? (long)Runtime.CopyString(lastReturn.data.string ? lastReturn.data.string : _T("")) : (long)lastReturn.data.string;
 		}
-		funcName = (**funcTemplateIt).name.c_str();
-		nameL = (**funcTemplateIt).nameL.c_str();
+		redirectedFromName = funcName;
+		funcName = (**funcTemplateIt2).name.c_str();
+		nameL = (**funcTemplateIt2).nameL.c_str();
 		funcTemplateIt = funcTemplateIt2;
 	}
 
@@ -1039,6 +1040,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	auto newFunc = std::make_shared<RunningFunction>(funcTemplate, runImmediately, repeatTimes - 1);
 	newFunc->keepObjectSelection = funcID & Flags::KeepObjSelection;
 	newFunc->isVoidRun = isVoidRun;
+	newFunc->redirectedFromFunctionName = redirectedFromName;
 
 	size_t numNotInParamsVector = expParamIndex;
 	size_t numPassedExpFuncParams = exp.NumOfParams - numNotInParamsVector; // ignore func name and num repeats

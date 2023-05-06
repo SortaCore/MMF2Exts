@@ -142,7 +142,8 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkExpression(36, LastReturn_AsFloat);
 	LinkExpression(37, LastReturn_AsString);
 	LinkExpression(38, LastReturn_Type);
-	LinkExpression(39, TestFunc);
+	LinkExpression(39, RunningFunc_GetCalledFuncName);
+	LinkExpression(40, TestFunc);
 
 	// Used to make sure if we're doing a foreach, make sure we don't call a DarkScript function on another frame
 	fusionFrameNum = rhPtr->App->nCurrentFrame;
