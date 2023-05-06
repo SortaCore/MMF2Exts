@@ -193,8 +193,8 @@
 				[ 37, "[With loop name] On client's joined channels loop" ],
 				[ 43, "[With loop name] On client's joined channels loop finished" ],
 				"---",
-				[ 54, "Is client ID joined to channel name?" ],
-				[ 53, "Is client name joined to channel name?" ],
+				[ 54, "Is client name joined to channel name?" ],
+				[ 53, "Is client ID joined to channel name?" ],
 				"---",
 				[ 57, "Does client name exist?" ],
 				[ 58, "Does client ID exist?" ]
