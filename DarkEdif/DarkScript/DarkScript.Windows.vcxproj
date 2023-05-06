@@ -72,8 +72,6 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'">
     <Link />
-    <Link>
-      <OutputFile>D:\Program Files (x86)\Steam\steamapps\common\Clickteam Fusion 2.5\Extensions\Unicode\$(TargetName)$(TargetExt)</OutputFile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
