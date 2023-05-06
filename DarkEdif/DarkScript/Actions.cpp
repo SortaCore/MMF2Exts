@@ -15,12 +15,12 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 
 	// Complicated escaping here; to convert regex to C++ string, take original regex, double the backslashes, and escape double quotes with one backslash.
 	// Original regex:
-	// (any|int|string|float)\s+([^\s(]+)\s*\(((?:\s*(?:[^\s]+)\s+(?:[^,\s]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)+?")))?,\s*)*(?:\s*(?:[^\s]+)\s+(?:[^,)\s=]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)+?")))?)?)\)
+	// (any|int|string|float)\s+([^\s(]+)\s*\(((?:\s*(?:[^\s]+)\s+(?:[^,\s]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)+?")))?,\s*)*(?:\s*(?:[^\s]+)\s+(?:[^,)\s=]+)(?:\s*=\s*(?:[^",]+|(?:"(?:(?=(?:\\?)).)*?")))?)?)\)
 	//
 	// This regex takes into account strings with backslash escaping in default values, double quotes, etc.
 	// Anything is allowed for parameter names, as long as it's 1+ character, does not contain whitespace or brackets, and is unique.
 	// So, to confuse yourself, {} and [] are allowed as parameter names.
-	const std::basic_regex<TCHAR> funcSigParser(_T("(any|int|string|float)\\s+([^\\s(]+)\\s*\\(((?:\\s*(?:[^\\s]+)\\s+(?:[^,\\s]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)+?\")))?,\\s*)*(?:\\s*(?:[^\\s]+)\\s+(?:[^,)\\s=]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)+?\")))?)?)\\)"s));
+	const std::basic_regex<TCHAR> funcSigParser(_T("(any|int|string|float)\\s+([^\\s(]+)\\s*\\(((?:\\s*(?:[^\\s]+)\\s+(?:[^,\\s]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)+?\")))?,\\s*)*(?:\\s*(?:[^\\s]+)\\s+(?:[^,)\\s=]+)(?:\\s*=\\s*(?:[^\",]+|(?:\"(?:(?=(?:\\\\?)).)*?\")))?)?)\\)"s));
 
 	std::match_results<std::tstring::const_iterator> funcSigBreakdown;
 	const std::tstring funcSigStr(funcSig);
@@ -48,7 +48,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 		// Regex is dumb and for repeating groups, only the last one will be considered;
 		// so we re-run a regex on the parameter list, looping all matches.
 		// .NET regex does capture repeating groups nicely, but no other regex engines support it.
-		const std::basic_regex<TCHAR> paramListParser(_T("\\s*([^\\s]+)\\s+([^,)\\s=]+)(?:\\s*=\\s*([^\",]+|(?:\"(?:(?=(?:\\\\?)).)+?\")))?,"s));
+		const std::basic_regex<TCHAR> paramListParser(_T("\\s*([^\\s]+)\\s+([^,)\\s=]+)(?:\\s*=\\s*([^\",]+|(?:\"(?:(?=(?:\\\\?)).)*?\")))?,"s));
 		const std::tstring paramList = funcSigBreakdown[3].str() + _T(',');
 		size_t j = 1;
 		for (auto i = std::regex_iterator<std::tstring::const_iterator>(
