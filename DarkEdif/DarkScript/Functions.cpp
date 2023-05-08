@@ -1371,12 +1371,12 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 	else
 	{
 		numScopedVarsBeforeCall = globalsRunningOn->scopedVars.size();
-		if (inheritParametersAsScopedVariables && !globals->runningFuncs.empty())
+		if (inheritParametersAsScopedVariables && !globalsRunningOn->runningFuncs.empty())
 		{
-			auto& lastFunc = globals->runningFuncs.back();
+			auto& lastFunc = globalsRunningOn->runningFuncs.back();
 			for (size_t i = 0; i < lastFunc->funcTemplate->params.size(); ++i)
 			{
-				globalsRunningOn->scopedVars.push_back(ScopedVar(lastFunc->funcTemplate->params[i].name, Type::Any, true, globals->runningFuncs.size()));
+				globalsRunningOn->scopedVars.push_back(ScopedVar(lastFunc->funcTemplate->params[i].name, Type::Any, true, globalsRunningOn->runningFuncs.size()));
 				globalsRunningOn->scopedVars.back().defaultVal = lastFunc->paramValues[i];
 			}
 		}
@@ -1387,7 +1387,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 				[&](const auto& f) { return Sub_FunctionMatches(rf, f); }))
 			{
 				globalsRunningOn->scopedVars.push_back(sv);
-				globalsRunningOn->scopedVars.back().level = globals->runningFuncs.size();
+				globalsRunningOn->scopedVars.back().level = globalsRunningOn->runningFuncs.size();
 			}
 		}
 	}
@@ -1417,7 +1417,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 				{
 					CreateErrorT("Function \"%s\" was not handled by any On Function \"%s\" for each %s events.", rf->funcTemplate->name.c_str(),
 						rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str(),
-						globals->runningFuncs.back()->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->OiList->name);
+						globalsRunningOn->runningFuncs.back()->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->OiList->name);
 				}
 				else
 					CreateErrorT("Function \"%s\" was not handled by any On Function \"%s\" events.", rf->funcTemplate->name.c_str(),
