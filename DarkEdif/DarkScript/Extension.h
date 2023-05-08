@@ -334,7 +334,7 @@ public:
 	Value lastReturn = Value(Type::Any);
 
 	// Current frame index (while functions pending, this number accumulates by 1 per event loop via Handle)
-	int curFrame;
+	int curFrame = 0;
 
 	static void AutoGenerateExpressions();
 	static int GetNumExpressions();

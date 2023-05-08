@@ -236,13 +236,12 @@ REFLAG Extension::Handle()
 
 	for (size_t i = 0; i < globals->pendingFuncs.size(); i++)
 	{
-		if ((globals->pendingFuncs[i]->useTicks && globals->pendingFuncs[i]->runAtTick <= curFrame) ||
-			(!globals->pendingFuncs[i]->useTicks && globals->pendingFuncs[i]->runAtTime > now))
+		if (globals->pendingFuncs[i]->useTicks ? globals->pendingFuncs[i]->runAtTick <= curFrame : globals->pendingFuncs[i]->runAtTime < now)
 		{
 			std::shared_ptr<DelayedFunction> pf = globals->pendingFuncs[i];
 
 			if (pf->useTicks && pf->startFrame < curFrame)
-				CreateErrorT("Function %s started too late. Unsure why.", pf->funcToRun->funcTemplate->name.c_str());
+				CreateErrorT("Warning: delayed function \"%s\" started too late (%i < %i).", pf->funcToRun->funcTemplate->name.c_str(), pf->startFrame, curFrame);
 
 			curDelayedFunc = pf;
 			pf->funcToRun->runLocation = Sub_GetLocation(23);
