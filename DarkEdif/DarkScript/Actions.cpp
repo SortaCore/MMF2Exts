@@ -844,7 +844,7 @@ void Extension::RunningFunc_ScopedVar_SetI(const TCHAR* paramName, int newVal)
 	Value* val = Sub_CheckScopedVarAvail(_T(__FUNCTION__) + (sizeof("Extension::") - 1), paramName, Expected::Either, false, &param);
 	if (!val)
 	{
-		globals->scopedVars.push_back(ScopedVar(paramName, Type::String, true, globals->runningFuncs.size()));
+		globals->scopedVars.push_back(ScopedVar(paramName, Type::Integer, true, globals->runningFuncs.size()));
 		param = &globals->scopedVars.back();
 		val = &globals->scopedVars.back().defaultVal;
 	}
