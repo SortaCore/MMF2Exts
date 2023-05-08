@@ -204,7 +204,7 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 	if (scopedVarName[0] == _T('\0'))
 		CreateErrorExpOpt(makeError, NULL, "%s: param/scoped var name is blank.", cppFuncName);
 
-	auto rf = Sub_GetRunningFunc(cppFuncName, _T(""));
+	auto rf = globals->runningFuncs.empty() && !makeError ? nullptr : Sub_GetRunningFunc(cppFuncName, _T(""));
 	if (!rf)
 		return NULL;
 
