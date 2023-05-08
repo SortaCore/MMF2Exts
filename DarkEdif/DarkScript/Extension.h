@@ -414,6 +414,7 @@ public:
 	void Template_SetEnabled(const TCHAR* funcName, int funcEnabled);
 	void Template_RedirectFunction(const TCHAR* funcName, const TCHAR* redirectFuncName);
 	void Template_Loop(const TCHAR* loopName);
+	void Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCHAR* globalIDToImportFrom);
 
 	void DelayedFunctions_Loop(const TCHAR* loopName);
 	void DelayedFunctions_CancelByPrefix(const TCHAR* funcNamePrefix);

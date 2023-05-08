@@ -415,6 +415,36 @@ void Extension::Template_Loop(const TCHAR* loopName)
 	curFuncTemplateLoop = nullptr;
 	internalLoopIndex = -1;
 }
+void Extension::Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCHAR* globalIDToImportFrom)
+{
+	// I can't imagine a scenario where a function is already running and then needs to be imported.
+	if (funcName[0] == _T('\0'))
+		return CreateErrorT("Can't import a blank function name.");
+	if (globalIDToImportFrom[0] == _T('\0'))
+		return CreateErrorT("Can't import from DarkScript with global ID \"\". A local import doesn't make sense.");
+
+	// Match by name
+	const std::tstring nameL(ToLower(funcName));
+	if (std::find_if(globals->functionTemplates.cbegin(), globals->functionTemplates.cend(),
+		[&](const std::shared_ptr<FunctionTemplate>& f) { return f->nameL == nameL;
+		}) != globals->functionTemplates.cend())
+	{
+		return CreateErrorT("Can't import function \"%s\" from global ID \"%s\"; a function template with that name already exists.", funcName, globalIDToImportFrom);
+	}
+
+	const std::tstring key = _T("DarkScript"s) + globalIDToImportFrom;
+	const GlobalData* const gd = (GlobalData*)Runtime.ReadGlobal(key.c_str());
+	if (gd == NULL)
+		return CreateErrorT("Couldn't import function template \"%s\" from global ID \"%s\", no matching extension with that global ID found.", funcName, globalIDToImportFrom);
+	auto ft = std::find_if(gd->functionTemplates.cbegin(), gd->functionTemplates.cend(),
+		[&](const std::shared_ptr<FunctionTemplate>& f) { return f->nameL == nameL;
+	});
+	if (ft == gd->functionTemplates.cend())
+		return CreateErrorT("Can't import function \"%s\" from global ID \"%s\"; a function template with that name already exists.", funcName, globalIDToImportFrom);
+
+	// By the power of std::shared_ptr, we now have it linked up
+	globals->functionTemplates.push_back(*ft);
+}
 
 void Extension::DelayedFunctions_CancelByPrefix(const TCHAR * funcName)
 {

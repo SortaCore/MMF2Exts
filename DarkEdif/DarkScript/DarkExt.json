@@ -35,7 +35,11 @@
 					"---",
 					[ 12, "Cancel set" ]
 				],
-				[ 13, "Set global ID to run in" ],
+				[ "Other frames",
+					[ 13, "Set global ID to run in" ],
+					"---",
+					[ 40, "Add link to existing template" ]
+				],
 				[ 14, "Disable/enable function" ],
 				[ 15, "Redirect function" ],
 				"---",
@@ -506,6 +510,13 @@
 				"Parameters": [
 					[ "String", "Function names (separate with a space)" ],
 					[ "String", "Set logging level (verbose, errors, none)" ]
+				]
+			},
+			{
+				"Title": "Link to function template %0 inside global ID %1",
+				"Parameters": [
+					[ "String", "Function name" ],
+					[ "String", "DarkScript global ID" ]
 				]
 			}
 		],

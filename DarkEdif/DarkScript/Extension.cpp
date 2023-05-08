@@ -77,6 +77,7 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	LinkAction(37, RunningFunc_ChangeRepeatSetting);
 	LinkAction(38, RunningFunc_Abort);
 	LinkAction(39, Logging_SetLevel);
+	LinkAction(40, Template_ImportFromAnotherFrame);
 
 
 	// Conditions
