@@ -9,7 +9,7 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 	va_list v;
 	va_start(v, format);
 
-	static TCHAR backRAM[2048];
+	static TCHAR backRAM[2048], prefix[256];
 
 	try {
 		if (_vstprintf_s(backRAM, std::size(backRAM), format, v) <= 0)
@@ -31,7 +31,12 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 			curError.c_str(), backRAM);
 		return; // don't generate event
 	}
-	curError = backRAM; // will dup memory
+	int fusionEventNum = DarkEdif::GetCurrentFusionEventNum(this);
+	prefix[0] = _T('\0');
+	if (fusionEventNum != -1)
+		_stprintf_s(prefix, std::size(prefix), _T("[Fusion event #%d] "), fusionEventNum);
+	curError = prefix;
+	curError += backRAM; // will dup memory
 
 	std::vector<FusionSelectedObjectListCache> list;
 	evt_SaveSelectedObjects(list);
