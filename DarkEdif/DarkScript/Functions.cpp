@@ -194,7 +194,7 @@ std::tstring Extension::Sub_GetAvailableVars(std::shared_ptr<RunningFunction>& r
 		str << _T("No "sv) << types << _T(" available."s);
 	else
 	{
-		str << _T("Available \n"sv) << types << _T(":\n"sv)
+		str << _T("Available "sv) << types << _T(":\n"sv)
 			<< std::tstring_view(availableVarsStr.data(), availableVarsStr.size() - 1);
 	}
 	return str.str();
@@ -225,8 +225,8 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 		// Must be scoped var, not param, and not found - ded
 		if (shouldBeParam == Expected::Never)
 		{
-			std::tstring availableVarsStr = Sub_GetAvailableVars(rf, shouldBeParam);
-			CreateErrorExpOpt(makeError, NULL, "%s: scoped var name \"%s\" not found.\n%s", cppFuncName, scopedVarName, availableVarsStr.c_str());
+			CreateErrorExpOpt(makeError, NULL, "%s: %s: scoped var name \"%s\" not found.\n%s",
+				cppFuncName, rf->funcTemplate->name.c_str(), scopedVarName, Sub_GetAvailableVars(rf, shouldBeParam).c_str());
 		}
 	}
 	// shouldBeParam is either Either or Always, Never would've returned in ^ already
@@ -236,11 +236,10 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 	);
 	if (param == rf->funcTemplate->params.end())
 	{
-		std::tstring availableVarsStr = Sub_GetAvailableVars(rf, shouldBeParam);
-		CreateErrorExpOpt(makeError, NULL, "%s: param%s name \"%s\" not found.%s\n%s",
-			cppFuncName, shouldBeParam == Expected::Never ? _T("") : _T("/scoped var"), scopedVarName,
-			std::find(globals->functionTemplates.crbegin(), globals->functionTemplates.crend(), rf->funcTemplate) != globals->functionTemplates.crend() ? "" : "Anonymous functions use \"a\", \"b\" for parameters.\n",
-			availableVarsStr.c_str()
+		CreateErrorExpOpt(makeError, NULL, "%s: %s: param%s name \"%s\" not found.%s\n%s",
+			cppFuncName, rf->funcTemplate->name.c_str(), shouldBeParam == Expected::Never ? _T("") : _T("/scoped var"), scopedVarName,
+			std::find(globals->functionTemplates.crbegin(), globals->functionTemplates.crend(), rf->funcTemplate) != globals->functionTemplates.crend() ? _T("") : _T(" Anonymous functions use \"a\", \"b\" for parameters.\n"),
+			Sub_GetAvailableVars(rf, shouldBeParam).c_str()
 		);
 	}
 	if (paramTo)
