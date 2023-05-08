@@ -1040,6 +1040,13 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 			funcName, globals->runningFuncs.back()->funcTemplate->name.c_str());
 	}
 
+	// User requested a looping function to run 0 times - return default value from function
+	if (repeatTimes == 0)
+	{
+		if (runImmediately)
+			return LastReturn;
+		return DummyReturn;
+	}
 
 	auto newFunc = std::make_shared<RunningFunction>(funcTemplate, runImmediately, repeatTimes - 1);
 	newFunc->keepObjectSelection = funcID & Flags::KeepObjSelection;
