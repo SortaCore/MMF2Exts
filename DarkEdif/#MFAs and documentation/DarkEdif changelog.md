@@ -14,6 +14,8 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v19 release
 ----
 *v19 not released yet*
+- Edittime: Added a PrepareDarkEdifSDK tool (v1.0.0.2), so new extensions can be made in a couple minutes,  
+  without making breaking inconsistencies (e.g. ext name and project folder name being different will break the BuildTools)
 - Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself
 - Android: Fixed GetJNIEnvForThisThread()'s strange declarations. `threadEnv` is preferred
 - Windows: Added CF2.5+/Direct3D 11 specific cSurface code
