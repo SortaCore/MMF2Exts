@@ -253,7 +253,7 @@ function CRunBluewing_Client() {
 	/// <summary> Constructor of Fusion object. </summary>
     CRunExtension.call(this);
 
-	// DarkEdif SDK exts should have these three variables defined:
+	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and window[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 103; // To match C++ version
 	this['SDKVersion'] = 18;

@@ -200,7 +200,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 function CRunDarkEdif_Template() {
 	/// <summary> Constructor of Fusion object. </summary>
 
-	// DarkEdif SDK exts should have these three variables defined:
+	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 1; // To match C++ version
 	this['SDKVersion'] = 18; // To match C++ version
