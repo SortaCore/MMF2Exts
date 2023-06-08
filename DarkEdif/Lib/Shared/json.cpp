@@ -865,8 +865,8 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	int comment = 0;
 	const char * json = *json_input, * i;
 
-	// Doesn't start with brace or space: is it a BOM?
-	if (json[0] != '{' && !std::isspace(json[0]))
+	// Doesn't start with brace, comment or space: is it a BOM?
+	if (json[0] != '{' && json[0] != '/' && !std::isspace(json[0]))
 	{
 		// It's not a UTF-8 BOM
 		if (size < 3 || json[0] != '\xEF' || json[1] != '\xBB' || json[2] != '\xBF')
