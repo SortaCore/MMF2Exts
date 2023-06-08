@@ -22,6 +22,7 @@ Changes until v19 release
 - Edittime: Fixed new objects' custom EDITDATA variables being cleared in DarkEdif::DLL::DLL_CreateObject(), when their init should happen just before that
 - Windows: Renamed Runtime.IsHWA() to better reflect it doesn't indicate HWA of app, but HWA of underlying runtime; added Runtime.GetAppDisplayMode().
 - iOS/Mac: Updated DarkEdifPreBuildTool to v1.0.0.5, no longer uses FusionSDKConfig global setting over project-specific
+- Edittime: JSON parser now ignores UTF-8 BOM if present; assumes UTF-8 if not. Other BOMs will cause parser abort.
 
 
 Changes until v18 release
