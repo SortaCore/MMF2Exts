@@ -1,4 +1,4 @@
-{
+ï»¿{
 	// 4-character identifer that uniquely identifies your extension.
 	// Can be letters, numbers, or punctuation, but must be 4 ASCII characters.
 	"Identifier": "EXMP",
@@ -140,7 +140,7 @@
 			"Name": "Exemple objet",
 			"Author": "Votre Nom",
 			"Copyright": "Copyright \u00A9 2022 par Votre Nom",
-			"Comment": "Une ou deux phrases pour décrire votre poste",
+			"Comment": "Une ou deux phrases pour dÃ©crire votre poste",
 			"Help": "Help/Example.chm",
 			"URL": "http://www.example.com/"
 		},
@@ -148,11 +148,11 @@
 			[ 0, "Exemple d'action" ],
 			"---",
 			[ "Sub Menu",
-				[ 1, "Exemple deuxième action" ]
+				[ 1, "Exemple deuxiÃ¨me action" ]
 			]
 		],
 		"ConditionMenu": [
-			[ 0, "Sont deux nombres égaux?" ]
+			[ 0, "Sont deux nombres Ã©gaux?" ]
 		],
 		"ExpressionMenu": [
 			[ 0, "Ajouter deux nombres" ],
@@ -160,22 +160,22 @@
 		],
 		"Actions": [
 			{
-				"Title": "Exemple d'action avec le paramètre %0",
+				"Title": "Exemple d'action avec le paramÃ¨tre %0",
 				"Parameters": [
-					[ "Integer", "Paramètre exemple" ]
+					[ "Integer", "ParamÃ¨tre exemple" ]
 				]
 			},
 			{
-				"Title": "Exemple deuxième action"
+				"Title": "Exemple deuxiÃ¨me action"
 			}
 		],
 		"Conditions": [
 			{
-				"Title": "%o : Sont de %0 et %1 égale?",
+				"Title": "%o : Sont de %0 et %1 Ã©gale?",
 				"Triggered": false,
 				"Parameters": [
-					[ "Integer", "Premier numéro" ],
-					[ "Integer", "Deuxième numéro" ]
+					[ "Integer", "Premier numÃ©ro" ],
+					[ "Integer", "DeuxiÃ¨me numÃ©ro" ]
 				]
 			}
 		],
@@ -184,8 +184,8 @@
 				"Title": "Adherer(",
 				"Returns": "Integer",
 				"Parameters": [
-					[ "Integer", "Premier numéro" ],
-					[ "Integer", "Deuxième numéro" ]
+					[ "Integer", "Premier numÃ©ro" ],
+					[ "Integer", "DeuxiÃ¨me numÃ©ro" ]
 				]
 			},
 			{
@@ -200,7 +200,7 @@
 				"Type": "Folder"
 			},
 				{
-					"Title": "Case à cocher dans le dossier",
+					"Title": "Case Ã  cocher dans le dossier",
 					"Info": "oui, il faut faire preuve d'audace.",
 					"Type": "Checkbox",
 					"Bold": true,
@@ -216,44 +216,44 @@
 			},
 			{
 				"Title": "Texte statique 2",
-				"Info": "Texte vide, en caractères gras",
+				"Info": "Texte vide, en caractÃ¨res gras",
 				"Type": "Text",
 				"Bold": true
 			},
 			{
-				"Title": "Éditable 3",
+				"Title": "Ã‰ditable 3",
 				"Info": "Ouais, il ne devrait pas faire preuve d'audace.",
 				"Type": "Edit button",
 				"DefaultState": "Bouton"
 			},
 			{
-				"Title": "Éditable 4",
-				"Info": "Ouais, il est très gras.",
+				"Title": "Ã‰ditable 4",
+				"Info": "Ouais, il est trÃ¨s gras.",
 				"Type": "Edit button",
 				"DefaultState": "Bouton texte",
 				"Bold": true
 			},
 			{
-				"Title": "Éditable 5",
-				"Info": "Régulière chaîne de boîte d'édition.",
+				"Title": "Ã‰ditable 5",
+				"Info": "RÃ©guliÃ¨re chaÃ®ne de boÃ®te d'Ã©dition.",
 				"Type": "Editbox String"
 			},
 			{
-				"Title": "Éditable 6",
+				"Title": "Ã‰ditable 6",
 				"Info": "Celui-ci devrait obliger les majuscules.",
 				"Type": "Editbox String",
 				"Case": "Upper"
 			},
 			{
-				"Title": "Éditable 7",
-				"Info": "Celui-ci devrait être limité à 25 caractères.",
+				"Title": "Ã‰ditable 7",
+				"Info": "Celui-ci devrait Ãªtre limitÃ© Ã  25 caractÃ¨res.",
 				"Type": "Editbox String",
 				"Case": "Lower",
 				"MaxLength": 25
 			},
 			{
-				"Title": "Éditable 8",
-				"Info": "Celui-ci devrait être limité entre 20 et 25.",
+				"Title": "Ã‰ditable 8",
+				"Info": "Celui-ci devrait Ãªtre limitÃ© entre 20 et 25.",
 				"Type": "Editbox Number",
 				"Maximum": 25,
 				"Minimum": 20
