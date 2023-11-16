@@ -1608,8 +1608,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			convState->resetPropertiesStream << title << '\n';
 			++convState->numPropsReset;
 
-			static int intData2 = (int)intDataAsLong;
-			
+			static int intData2;
 			intData2 = (int)intDataAsLong;
 			
 			return convRet->Return_OK(&intData2, sizeof(int));
