@@ -22,6 +22,7 @@
 // CTRANSITIONDATA : donnÈes transitions
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define TRFLAG_COLOR 0x0001

@@ -22,6 +22,7 @@
 // CLives : Objet lives
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
 #import "CObject.h"

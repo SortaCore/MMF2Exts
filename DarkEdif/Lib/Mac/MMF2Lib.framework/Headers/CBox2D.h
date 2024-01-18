@@ -24,6 +24,7 @@
 //  Created by Francois Lionet on 14/11/13.
 //  Copyright (c) 2013 Clickteam. All rights reserved.
 //
+#pragma once
 #import <Foundation/Foundation.h>
 #import "Box2D.h"
 #import "CRunExtension.h"

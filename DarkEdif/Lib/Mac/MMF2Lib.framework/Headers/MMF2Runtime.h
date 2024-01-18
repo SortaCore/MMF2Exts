@@ -18,6 +18,7 @@
  * IN THE SOFTWARE.
  */
 
+#pragma once
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 

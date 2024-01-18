@@ -22,6 +22,7 @@
 // CCCA : Objet sub-application
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CObject.h"
 #import "IDrawable.h"

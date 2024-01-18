@@ -22,6 +22,7 @@
 // CTransitionCTrans : point d'entree des transitions standart
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CTransitions.h"
 #import "CTrans.h"

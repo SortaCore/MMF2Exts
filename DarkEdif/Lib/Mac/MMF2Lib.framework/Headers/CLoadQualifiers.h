@@ -22,6 +22,7 @@
 // CLOADQUALIFIERS : chargement des qualifiers
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 

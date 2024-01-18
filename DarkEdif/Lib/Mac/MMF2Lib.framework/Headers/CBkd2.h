@@ -22,6 +22,7 @@
 // CBKD2 : objet paste dans le decor
 //
 // -----------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRun;

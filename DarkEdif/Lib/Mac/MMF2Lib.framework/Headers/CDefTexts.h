@@ -22,6 +22,7 @@
 // CDEFTEXTS : liste de textes
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CDefObject.h"
 

@@ -22,6 +22,7 @@
 // CFONT : une fonte
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

@@ -22,6 +22,7 @@
 // CCOLMASK : masque de collision
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define CM_TEST_OBSTACLE 0

@@ -24,6 +24,7 @@
 //  Created by Francois Lionet on 08/10/09.
 //  Copyright 2009 __MyCompanyName__. All rights reserved.
 //
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunApp;

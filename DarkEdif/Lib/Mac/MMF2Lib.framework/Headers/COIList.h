@@ -22,6 +22,7 @@
 // COILIST : liste des OI de l'application
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 

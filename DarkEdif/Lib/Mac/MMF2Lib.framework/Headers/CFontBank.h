@@ -22,6 +22,7 @@
 // CFONTBANK : stockage des fontes
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 

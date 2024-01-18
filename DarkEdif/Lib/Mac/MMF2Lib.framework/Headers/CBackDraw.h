@@ -22,6 +22,7 @@
 // CBACKDRAW classe abtraite pour les backdraw routines
 //
 // -----------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRun;

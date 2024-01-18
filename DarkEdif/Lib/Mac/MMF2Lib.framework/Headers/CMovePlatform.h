@@ -22,6 +22,7 @@
 // CMOVEPLATFORM : Mouvement plateforme
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

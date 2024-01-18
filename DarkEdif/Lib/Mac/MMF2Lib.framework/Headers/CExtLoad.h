@@ -22,6 +22,7 @@
 // CEXTLOAD Chargement des extensions
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunExtension;

@@ -22,6 +22,7 @@
 // CSYSEVENT : classe abstraite pour stocker les evenements systeme
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRun;

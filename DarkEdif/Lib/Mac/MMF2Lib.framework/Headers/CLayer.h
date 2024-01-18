@@ -22,6 +22,7 @@
 // CLAYER : classe layer
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CoreMath.h"
 #import "CRect.h"

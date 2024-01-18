@@ -22,6 +22,7 @@
 // CDEFCOUNTER : valeurs de depart counter
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CDefObject.h"
 

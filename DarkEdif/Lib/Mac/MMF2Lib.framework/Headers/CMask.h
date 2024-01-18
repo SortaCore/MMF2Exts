@@ -22,6 +22,7 @@
 // CMASK : un masque
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define SCMF_FULL 0x0000

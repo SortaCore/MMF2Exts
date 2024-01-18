@@ -22,6 +22,7 @@
 // CMOVEEXTENSION : classe abstraite de mouvement extension
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CPoint.h"
 

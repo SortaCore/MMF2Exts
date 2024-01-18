@@ -3,6 +3,7 @@
 // CEVENTS : actions, conditions et expressions
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CValue.h"
 #import "CRVal.h"
@@ -39,9 +40,9 @@ typedef struct tagEVG
         WORD    evgFree;
 		DWORD	evgInhibit;				// 6 If the group is inhibited
 		DWORD	evgInhibitCpt;			// 8 Counter
-	} eventGroup;
-typedef		eventGroup	*		PEVG;
-typedef		eventGroup	*		LPEVG;
+	} eventGroup2;
+typedef		eventGroup2	*		PEVG;
+typedef		eventGroup2	*		LPEVG;
 
 // MACRO: next group
 #define		EVGNEXT(evgPtr)		   	((LPEVG)((char*)evgPtr-evgPtr->evgSize))
@@ -117,7 +118,7 @@ typedef	event	*	LPEVT;
 #define		EVFLAGS_BAD				0x40
 #define		EVFLAGS_BADOBJECT		0x80
 #define		EVFLAGS_DEFAULTMASK		(EVFLAGS_ALWAYS+EVFLAGS_REPEAT+EVFLAGS_DEFAULT+EVFLAGS_DONEBEFOREFADEIN+EVFLAGS_NOTDONEINSTART)
-#define		ACTFLAGS_REPEAT			0x0001
+//#define		ACTFLAGS_REPEAT			0x0001
 
 // For flags II
 // -------------                    

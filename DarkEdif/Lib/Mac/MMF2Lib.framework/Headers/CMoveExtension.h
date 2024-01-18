@@ -22,6 +22,7 @@
 // CMOVEEXTENSIOn : Mouvement extension
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

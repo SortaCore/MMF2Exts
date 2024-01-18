@@ -22,6 +22,7 @@
 // CTRANS : interface avec un effet de transition
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define LEFT_RIGHT 0

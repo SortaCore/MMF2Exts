@@ -22,6 +22,7 @@
 // CSPRITEGEN : Generateur de sprites
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 

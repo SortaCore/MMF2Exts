@@ -22,6 +22,7 @@
 // CMOVEDEFBALL : donnees du mouvement ball
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

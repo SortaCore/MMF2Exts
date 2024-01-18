@@ -3,6 +3,7 @@
 //  MacRuntime
 //
 
+#pragma once
 #import <Foundation/Foundation.h>
 @class CArrayList;
 @class CRunApp;

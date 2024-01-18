@@ -22,6 +22,7 @@
 // CLOOP une fast loop
 //
 // -----------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define FLFLAG_STOP 0x0001

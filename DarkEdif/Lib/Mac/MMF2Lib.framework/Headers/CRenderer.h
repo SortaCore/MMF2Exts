@@ -25,6 +25,7 @@
 //  Copyright (c) 2013 Clickteam. All rights reserved.
 //
 
+#pragma once
 #import <QuartzCore/QuartzCore.h>
 #import <OpenGL/glu.h>
 #import <OpenGL/gl3.h>

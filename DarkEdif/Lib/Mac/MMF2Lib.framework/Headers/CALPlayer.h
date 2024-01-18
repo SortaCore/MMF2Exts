@@ -25,6 +25,7 @@
 //  Copyright 2011 Clickteam. All rights reserved.
 //
 
+#pragma once
 #import <Foundation/Foundation.h>
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>

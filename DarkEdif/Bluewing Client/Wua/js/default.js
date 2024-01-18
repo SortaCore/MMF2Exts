@@ -305,7 +305,7 @@
     scripts.push("js/runtime/conditions/CND_CHOOSEZONE_OLD.js");
     scripts.push("js/runtime/conditions/CND_NOMOREALLZONE.js");
     scripts.push("js/runtime/conditions/CND_NOMOREALLZONE_OLD.js");
-    scripts.push("js/runtime/conditions/CND_NUMOFALLOBJECT.js");
+    scripts.push("js/runtime/conditions/CND_NUzMOFALLOBJECT.js");
     scripts.push("js/runtime/conditions/CND_NUMOFALLOBJECT_OLD.js");
     scripts.push("js/runtime/conditions/CND_NUMOFALLZONE.js");
     scripts.push("js/runtime/conditions/CND_NUMOFALLZONE_OLD.js");

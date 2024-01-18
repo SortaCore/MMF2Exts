@@ -22,6 +22,7 @@
 // CBACKDRAWCLSZONE effacement d'une zone du fond de l'ecran
 //
 // -----------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CBackDraw.h"
 

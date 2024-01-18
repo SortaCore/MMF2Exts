@@ -18,6 +18,7 @@
 * IN THE SOFTWARE.
 */
 
+#pragma once
 #import <Foundation/Foundation.h>
 
 @interface ModalInput : NSObject 
@@ -34,8 +35,8 @@
 	NSSecureTextField *passwordField;
 	NSView* accessoryView;
 }
-@property (nonatomic, retain) NSTextField *textField;
-@property (nonatomic, retain) NSTextField *passwordField;
+@property (nonatomic, retain) NSTextField * textField;
+@property (nonatomic, retain) NSTextField * passwordField;
 @property (readonly) NSString* text;
 @property (readonly) NSString* password;
 

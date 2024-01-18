@@ -22,6 +22,7 @@
 // CRUNFRAME : contenu d'une frame
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 

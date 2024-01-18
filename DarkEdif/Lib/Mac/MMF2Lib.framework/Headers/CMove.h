@@ -22,6 +22,7 @@
 // CMOVE : Classe de base des mouvements
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 

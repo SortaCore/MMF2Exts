@@ -22,6 +22,7 @@
 // CFONTINFO : informations sur une fonte
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 

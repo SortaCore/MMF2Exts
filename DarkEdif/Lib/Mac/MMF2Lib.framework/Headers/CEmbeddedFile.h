@@ -22,6 +22,7 @@
 // CEMBEDDEDFILE : fichiers inclus dans l'application
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunApp;

@@ -22,6 +22,7 @@
 // CMOVEDEFSTATIC : donnÈes du mouvement statique
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

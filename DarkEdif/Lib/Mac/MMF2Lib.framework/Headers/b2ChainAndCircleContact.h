@@ -16,6 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#pragma once
 #ifndef B2_CHAIN_AND_CIRCLE_CONTACT_H
 #define B2_CHAIN_AND_CIRCLE_CONTACT_H
 

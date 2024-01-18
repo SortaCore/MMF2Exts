@@ -22,6 +22,7 @@
 // CDEFCOUNTERS : DonnÈes d'un objet score / vies / counter
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 // Display types

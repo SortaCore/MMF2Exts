@@ -22,6 +22,7 @@
 // CANIMDIR : Une direction d'animation
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

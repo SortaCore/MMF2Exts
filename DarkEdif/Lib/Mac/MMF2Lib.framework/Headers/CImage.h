@@ -22,6 +22,7 @@
 // CIMAGE Une image
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import <OpenGL/OpenGL.h>
 #import "IDrawable.h"

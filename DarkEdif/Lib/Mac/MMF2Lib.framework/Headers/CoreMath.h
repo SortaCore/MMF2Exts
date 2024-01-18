@@ -1,3 +1,4 @@
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define _PI 3.1415926535897932

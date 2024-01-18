@@ -22,6 +22,7 @@
 // CMOVEDEFLIST : liste des mouvements d'un objet'
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

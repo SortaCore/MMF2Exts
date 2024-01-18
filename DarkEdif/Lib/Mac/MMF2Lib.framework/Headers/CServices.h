@@ -25,6 +25,7 @@
 //  Copyright 2009 __MyCompanyName__. All rights reserved.
 //
 
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 #import "CoreMath.h"

@@ -22,6 +22,7 @@
 // CANIMHEADER : header d'un ensemble d'animations
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

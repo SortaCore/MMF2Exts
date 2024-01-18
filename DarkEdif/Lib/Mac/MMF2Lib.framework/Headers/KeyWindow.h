@@ -6,6 +6,7 @@
 //
 //
 
+#pragma once
 #import <Cocoa/Cocoa.h>
 
 @interface KeyWindow : NSWindow

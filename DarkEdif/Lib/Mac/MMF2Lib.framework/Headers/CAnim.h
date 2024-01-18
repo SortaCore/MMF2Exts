@@ -22,6 +22,7 @@
 // CANIM : definition d'une animation
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

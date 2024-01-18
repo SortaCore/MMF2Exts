@@ -22,6 +22,7 @@
 // CDEFSTRINGS : definition des alterable strings
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

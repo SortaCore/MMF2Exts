@@ -22,6 +22,7 @@
 // CMOVEDEFPATH : donnÈes du mouvement path
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

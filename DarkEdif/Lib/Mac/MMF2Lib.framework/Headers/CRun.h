@@ -22,6 +22,7 @@
 // CRUN : BOucle principale
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 #import "CRect.h"

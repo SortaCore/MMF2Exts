@@ -22,6 +22,7 @@
 // CMOVERACE : Mouvement voiture de course
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

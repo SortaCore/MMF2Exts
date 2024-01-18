@@ -22,6 +22,7 @@
 // CBITMAP : ecran bitmap
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CImage;

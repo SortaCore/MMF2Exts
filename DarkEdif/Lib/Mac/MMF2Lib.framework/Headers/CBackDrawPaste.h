@@ -22,6 +22,7 @@
 // CBACKDRAWPASTE
 //
 // -----------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CBackDraw.h"
 

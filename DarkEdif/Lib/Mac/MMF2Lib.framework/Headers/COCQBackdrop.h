@@ -22,6 +22,7 @@
 // COBJECTCOMMON : Donn�es d'un objet normal
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "IDrawable.h"

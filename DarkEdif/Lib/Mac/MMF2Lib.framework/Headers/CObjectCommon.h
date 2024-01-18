@@ -22,6 +22,7 @@
 // COBJECTCOMMON : Donnees d'un objet normal
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "COI.h"

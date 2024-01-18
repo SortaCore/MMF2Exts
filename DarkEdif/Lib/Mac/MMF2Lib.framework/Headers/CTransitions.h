@@ -22,6 +22,7 @@
 // CTRANSITIONS : interface avec la dll
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CTrans;

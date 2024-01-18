@@ -22,6 +22,7 @@
 // COC: classe abstraite d'objectsCommon
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 #import "IDrawable.h"

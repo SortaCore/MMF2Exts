@@ -22,6 +22,7 @@
 // CMOVEDEFRACE : donnees du mouvement racecar
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

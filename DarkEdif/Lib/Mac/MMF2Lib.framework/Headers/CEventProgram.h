@@ -22,6 +22,7 @@
 // CEVENTPROGRAM : Programme des evenements
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 #import "COI.h"

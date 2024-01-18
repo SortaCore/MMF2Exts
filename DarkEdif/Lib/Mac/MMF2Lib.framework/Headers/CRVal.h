@@ -22,6 +22,7 @@
 // CRVAL : Alterable values et strings
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define VALUES_NUMBEROF_ALTERABLE_DEFAULT 26

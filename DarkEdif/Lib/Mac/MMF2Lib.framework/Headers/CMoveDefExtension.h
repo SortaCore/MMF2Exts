@@ -22,6 +22,7 @@
 // CMOVEDEFEXTENSION : donnees d'un movement extension
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

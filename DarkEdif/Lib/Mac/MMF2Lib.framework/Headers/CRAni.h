@@ -22,6 +22,7 @@
 // CRANI gestion des animations
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 @class CObject;

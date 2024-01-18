@@ -22,6 +22,7 @@
 // CRSPR : Gestion des objets sprites
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 #define RSFLAG_HIDDEN 0x0001

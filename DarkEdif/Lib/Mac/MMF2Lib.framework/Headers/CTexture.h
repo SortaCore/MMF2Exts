@@ -25,6 +25,7 @@
 //  Copyright (c) 2013 Clickteam. All rights reserved.
 //
 
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CoreMath.h"
 

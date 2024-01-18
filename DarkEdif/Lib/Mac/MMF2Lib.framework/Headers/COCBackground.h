@@ -22,6 +22,7 @@
 // COCBACKGROUND : un objet dÈcor normal
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "IDrawable.h"

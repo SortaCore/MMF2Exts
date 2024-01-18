@@ -22,6 +22,7 @@
 // CRUNVIEWCONTROLLER
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CRunView.h"
 

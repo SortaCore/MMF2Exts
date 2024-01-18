@@ -22,7 +22,9 @@
 // CRUNAPP : Classe Application
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 
 #define RUNTIME_VERSION 0x0302
 #define RUNTIME_CM 1

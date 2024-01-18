@@ -22,6 +22,7 @@
 // CMOVEBALL : Mouvement balle
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

@@ -22,6 +22,7 @@
 // CRCOM : Structure commune aux objets animes
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 
 

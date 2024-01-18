@@ -16,6 +16,7 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
+#pragma once
 #ifndef B2_ROPE_JOINT_H
 #define B2_ROPE_JOINT_H
 

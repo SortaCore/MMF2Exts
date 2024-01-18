@@ -22,6 +22,7 @@
 // CIMAGEBANK : Stockage des images
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 #import "CImage.h"

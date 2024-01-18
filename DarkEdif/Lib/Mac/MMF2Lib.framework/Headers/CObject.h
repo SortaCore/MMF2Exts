@@ -22,6 +22,7 @@
 // COBJECT : Classe de base d'un objet'
 //
 //----------------------------------------------------------------------------------
+#pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
 #import "CRect.h"

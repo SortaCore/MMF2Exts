@@ -6,14 +6,15 @@
 ///
 
 #ifdef _WIN32
-Extension::Extension(RUNDATA * _rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr) :
-	rdPtr(_rdPtr), rhPtr(_rdPtr->rHo.AdRunHeader), Runtime(&_rdPtr->rHo), FusionDebugger(this)
+Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
+	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this), FusionDebugger(this)
 #elif defined(__ANDROID__)
-Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr) :
-	runFuncs(runFuncs), javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"), Runtime(runFuncs, this->javaExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr) :
+	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
+	Runtime(this, this->javaExtPtr), FusionDebugger(this)
 #else
-Extension::Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr) :
-	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, this->objCExtPtr), FusionDebugger(this)
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
+	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr), FusionDebugger(this)
 #endif
 {
 	/*
