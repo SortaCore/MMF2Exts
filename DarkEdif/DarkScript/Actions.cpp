@@ -3,7 +3,7 @@
 void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, int repeatable, int recursable)
 {
 	if (funcSig[0] == _T('\0'))
-		return CreateErrorT("%s: You must supply a function signature, not blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcSig);
+		return CreateErrorT("%s: You must supply a function signature, not blank.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 
 	// Test these first cos they're faster
 	if ((recursable & 1) != recursable)
@@ -114,7 +114,7 @@ void Extension::Template_SetFuncSignature(const TCHAR * funcSig, int delayable, 
 			"You have %zu parameters, but max is %hi. Consider using scoped vars instead.",
 			_T(__FUNCTION__) + (sizeof("Extension::") - 1),
 			funcSigBreakdown[2].str().c_str(),
-			params.size(), Edif::SDK->ExpressionInfos.back()->NumOfParams - 2);
+			params.size(), (short)(Edif::SDK->ExpressionInfos.back()->NumOfParams - (short)2));
 	}
 
 	std::shared_ptr<FunctionTemplate> func;
@@ -399,10 +399,10 @@ void Extension::Template_RedirectFunction(const TCHAR* funcName, const TCHAR* re
 }
 void Extension::Template_Loop(const TCHAR* loopName)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 
 	internalLoopIndex = 0;
 	for (const auto& f : globals->functionTemplates)
@@ -459,10 +459,10 @@ void Extension::DelayedFunctions_CancelByPrefix(const TCHAR * funcName)
 }
 void Extension::DelayedFunctions_Loop(const TCHAR* loopName)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 
 	internalLoopIndex = 0;
 	for (const auto &f : globals->pendingFuncs)
@@ -593,7 +593,7 @@ void Extension::RunFunction_ActionDummy_String(const TCHAR * result)
 		str.str(std::tstring());
 	}*/
 }
-void Extension::RunFunction_Foreach_Num(HeaderObject* obj, int dummy)
+void Extension::RunFunction_Foreach_Num(HeaderObject*, int dummy)
 {
 	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
@@ -621,7 +621,7 @@ void Extension::RunFunction_Foreach_String(HeaderObject* obj, const TCHAR* dummy
 {
 	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
-		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__));
+		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 
 	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
 	auto funcToRun = foreachFuncToRun;
@@ -745,12 +745,12 @@ void Extension::RunFunction_Script(const TCHAR* script)
 
 void Extension::RunningFunc_Params_Loop(const TCHAR* loopName, int includeNonPassed)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 	if ((includeNonPassed & 1) != includeNonPassed)
-		return CreateErrorT("%s: Can't run params loop; \"include non-passed\" parameter was %d, not 0 or 1.", includeNonPassed);
+		return CreateErrorT("%s: Can't run params loop; \"include non-passed\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeNonPassed);
 
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
@@ -770,12 +770,12 @@ void Extension::RunningFunc_Params_Loop(const TCHAR* loopName, int includeNonPas
 }
 void Extension::RunningFunc_ScopedVar_Loop(const TCHAR* loopName, int includeInherited)
 {
-	if (loopName == _T('\0'))
-		return CreateErrorT("%s: Empty loop name not allowed.");
+	if (loopName[0] == _T('\0'))
+		return CreateErrorT("%s: Empty loop name not allowed.", _T(__FUNCTION__) + (sizeof("Extension::") - 1));
 	if (curLoopName[0] != _T('\0'))
-		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", curLoopName.c_str(), loopName);
+		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 	if ((includeInherited & 1) != includeInherited)
-		return CreateErrorT("%s: Can't run params loop; \"include inherited\" parameter was %d, not 0 or 1.", includeInherited);
+		return CreateErrorT("%s: Can't run params loop; \"include inherited\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeInherited);
 
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
