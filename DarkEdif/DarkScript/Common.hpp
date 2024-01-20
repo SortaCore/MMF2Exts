@@ -1,23 +1,27 @@
 #pragma once
 
-// #define TGFEXT       // TGF2, MMF2, MMF2 Dev
-   #define MMFEXT       // MMF2, MMF2 Dev
-// #define PROEXT       // MMF2 Dev only
-
+// Do not move XXXEXT after #include of DarkEdif.h!
+// #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
+#define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
+// #define PROEXT	// Fusion 2.x Dev only
 #define JSON_COMMENT_MACRO Extension::Version
 
-// Enable DarkEdif's utility
-// #define MULTI_THREADING
-// #include "MultiThreading.h"
+// Activates some Edif workarounds to get internal A/C/E parameters
+#define DARKSCRIPT_EXTENSION
 
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
 	NO_DEFAULT_CTORS(EDITDATA);
 	// Header - required
-	extHeader			eHeader;
+	extHeader		eHeader;
+
+	// Object's data
+
+//	short			swidth;
+//	short			sheight;
 
 	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
 	DarkEdif::Properties Props;
@@ -29,22 +33,22 @@ struct RUNDATA
 {
 	// Main header - required
 	HeaderObject rHo;
-
+#ifdef _WIN32
 	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	Sprite			rs;				// Sprite (displayable objects)
-//	AltVals			rv;				// Alterable values
+	AltVals			rv;				// Alterable values
+#endif
 
-    // Required
+	// Required
 	Extension * pExtension;
 
-    /*
-        You shouldn't add any variables or anything here. Add them as members
-        of the Extension class (Extension.h) instead.
-    */
+	/*
+		You shouldn't add any variables or anything here. Add them as members
+		of the Extension class (Extension.h) instead.
+	*/
 };
 
-#define COMMON_H
-#include "Extension.h"
-#undef COMMON_H
+#include <regex>
+#include "Extension.hpp"

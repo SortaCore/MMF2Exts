@@ -7,7 +7,7 @@
 	#define CurLang (DarkEdif::JSON::LanguageJSON())
 #endif
 
-#include "Edif.h"
+#include "Edif.hpp"
 
 // Struct contains information about a/c/e
 struct ACEInfo {

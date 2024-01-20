@@ -1,7 +1,7 @@
-#include "Common.h"
-#include "Extension.h"
-#include "DarkEdif.h"
-#include "Edif.h"
+#include "Common.hpp"
+#include "Extension.hpp"
+#include "DarkEdif.hpp"
+#include "Edif.hpp"
 
 // Used for Win32 resource ID numbers
 #include "Resource.h"

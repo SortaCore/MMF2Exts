@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 class Extension * GlobalExt = NULL;
 ///

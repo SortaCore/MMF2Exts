@@ -4,9 +4,7 @@
 //
 // Including creating, display, and setting up your object.
 // ============================================================================
-
-#include "Common.h"
-#include "DarkEdif.h"
+#include "Common.hpp"
 
 
 // ============================================================================

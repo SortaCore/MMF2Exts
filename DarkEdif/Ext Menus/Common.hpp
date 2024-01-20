@@ -4,19 +4,10 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
-#define JSON_COMMENT_MACRO Extension::Version, STRIFY(CONFIG)
 
-#include "DarkEdif.h"
-
-#ifdef _WIN32
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <AF_Irda.h>
-#pragma comment(lib, "ws2_32.lib")
-#endif
+#include "DarkEdif.hpp"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
 struct EDITDATA
 {
 	NO_DEFAULT_CTORS(EDITDATA);
@@ -54,7 +45,4 @@ struct RUNDATA
 	*/
 };
 
-// Include the structs/enums/etc used later on in the object
-#include "Structures.h"
-
-#include "Extension.h"
+#include "Extension.hpp"

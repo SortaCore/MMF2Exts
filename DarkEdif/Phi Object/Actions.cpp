@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 #ifdef _WIN32
 #include <psapi.h>

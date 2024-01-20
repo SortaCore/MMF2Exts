@@ -4,19 +4,16 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
+
 #define JSON_COMMENT_MACRO Extension::Version
 
-#include "DarkEdif.h"
-
-#ifndef _UNICODE
-	#error UTF-16 Object requires Unicode runtime, or the text expressions will be downgraded by Fusion to non-Unicode, which means they can never be displayed.
-#endif
+#include "DarkEdif.hpp"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
 	NO_DEFAULT_CTORS(EDITDATA);
-	// Header - required, must be first variable in EDITDATA
+	// Header - required
 	extHeader		eHeader;
 
 	// Object's data
@@ -50,4 +47,4 @@ struct RUNDATA
 	*/
 };
 
-#include "Extension.h"
+#include "Extension.hpp"

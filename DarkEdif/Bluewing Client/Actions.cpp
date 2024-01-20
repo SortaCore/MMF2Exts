@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 static char errtext[1024];
 static void ErrNoToErrText()

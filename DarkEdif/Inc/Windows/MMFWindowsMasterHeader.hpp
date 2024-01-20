@@ -9,11 +9,11 @@
 #include "Windows\WindowsDefines.hpp"
 
 #if EditorBuild
-#include "Surface.hpp"
 // For ext icon
+#include "Surface.hpp"
 #include "SafeSurface.hpp"
 // For ext properties
-#include "Props.h"
+#include "Props.hpp"
 #else
 class cSurfaceImplementation;
 class cSurface;

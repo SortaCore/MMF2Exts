@@ -4,14 +4,23 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
+#define JSON_COMMENT_MACRO Extension::Version, STRIFY(CONFIG)
 
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
+
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <AF_Irda.h>
+#pragma comment(lib, "ws2_32.lib")
+#endif
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
+
 struct EDITDATA
 {
 	NO_DEFAULT_CTORS(EDITDATA);
-	// Header - required
+	// Header - required, must be first variable in EDITDATA
 	extHeader		eHeader;
 
 	// Object's data
@@ -34,7 +43,7 @@ struct RUNDATA
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	Sprite			rs;				// Sprite (displayable objects)
-//	AltVals			rv;				// Alterable values
+	AltVals			rv;				// Alterable values
 
 	// Required
 	Extension * pExtension;
@@ -45,4 +54,6 @@ struct RUNDATA
 	*/
 };
 
-#include "Extension.h"
+// Include the structs/enums/etc used later on in the object
+#include "Structures.hpp"
+#include "Extension.hpp"

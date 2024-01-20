@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 {

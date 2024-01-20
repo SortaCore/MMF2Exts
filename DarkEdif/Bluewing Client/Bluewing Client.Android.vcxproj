@@ -139,7 +139,7 @@
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\udp.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h" />
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.hpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\android config.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\unix common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\eventpump.h" />

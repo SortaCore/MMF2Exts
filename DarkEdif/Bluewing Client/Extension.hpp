@@ -1,7 +1,7 @@
 #pragma once
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 #include <functional>
-#include "MultiThreading.h"
+#include "MultiThreading.hpp"
 void NewEvent(EventToRun *);
 
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;

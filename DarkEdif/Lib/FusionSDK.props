@@ -174,7 +174,7 @@
 
 		<!-- Find the line where Extension::Version is defined, read number -->
 		<_ExtVersionRegex><![CDATA[Version\s*=\s*(\d*);]]></_ExtVersionRegex>
-		<ExtVersion Condition="!$(ProjectDir.Contains('Bluewing'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)Extension.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
+		<ExtVersion Condition="!$(ProjectDir.Contains('Bluewing'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)Extension.hpp')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
 
 		<_ExtVersionRegex><![CDATA[relayclient[^}]*?buildnum\s*=\s*(\d*);]]></_ExtVersionRegex>
 		<ExtVersion Condition="$(ProjectDir.Contains('Bluewing Client'))">$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(ProjectDir)\$(SDKRootFolder)\Lib\Shared\Lacewing\Lacewing.h')), $(_ExtVersionRegex)).Result('$1'))</ExtVersion>
@@ -188,11 +188,12 @@
 
 		<!-- Use Author Name if company isn't found -->
 		<_CompanyNameRegex><![CDATA[(?im)"Company"\s*:\s*"(.*)"\s*?,\s*$]]></_CompanyNameRegex>
-		<_ExtH>$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
+		<_ExtH Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.hpp'))</_ExtH>
+		<_ExtH Condition="$(SDKType)=='Edif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\Extension.h'))</_ExtH>
 		<CompanyName Condition="$(_JSON.Contains('CompanyName'))">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_CompanyNameRegex)).Result('$1').Replace('\'', '\u0027'))</CompanyName>
 		<CompanyName Condition="$(CompanyName)==''">$(AuthorName)</CompanyName>
 
-		<!-- This define is true if FusionDebugger variable is detected in Extension.h, it's true at runtime. -->
+		<!-- This define is true if FusionDebugger variable is detected in Extension.hpp, it's true at runtime. -->
 		<_DarkEdif_DetectFusionDebuggerRegex><![CDATA[(?m)^\s*DarkEdif::FusionDebugger\s+FusionDebugger\s*;\s*$]]></_DarkEdif_DetectFusionDebuggerRegex>
 		<DarkEdif_FusionDebugger Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::IsMatch($(_ExtH), $(_DarkEdif_DetectFusionDebuggerRegex)))">1</DarkEdif_FusionDebugger>
 
@@ -346,7 +347,7 @@
 
 			<PreprocessorDefinitions Condition="$(_TargetPlat)=='Android' OR '$(_TargetPlat)'=='iOS'">$(_FusionSDKAdds);%(PreprocessorDefinitions);</PreprocessorDefinitions>
 
-			<!-- Not including ProjectDir causes includes of "Common.h" from the DarkEdif SDK to fail.
+			<!-- Not including ProjectDir causes includes of "Common.hpp" from the DarkEdif SDK to fail.
 				 OpenCV's projects are in an addition layer of subfolders. -->
 			<AdditionalIncludeDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Inc\$(_TargetPlat);$(SDKRootFolder)\Inc\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 		</ClCompile>

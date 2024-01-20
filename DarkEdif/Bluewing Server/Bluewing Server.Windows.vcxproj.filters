@@ -63,7 +63,7 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\typeof.h">
       <Filter>Header files\Lacewing\src\windows</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\ssl\serverssl.h">

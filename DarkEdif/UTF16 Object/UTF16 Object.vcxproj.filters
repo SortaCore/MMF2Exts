@@ -36,28 +36,28 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Extension.h">
+    <ClInclude Include="Extension.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
+    <ClInclude Include="Common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Shared\ObjectSelection.h">
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Shared\Edif.h">
+    <ClInclude Include="..\Inc\Shared\Edif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Shared\DarkEdif.h">
+    <ClInclude Include="..\Inc\Shared\DarkEdif.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\json.hpp">
       <Filter>Global to all extensions\Edif\JSON</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\Strings.hpp">

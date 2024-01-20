@@ -1,5 +1,5 @@
 // Handles all Lacewing functions.
-#include "Common.h"
+#include "Common.hpp"
 
 #define Ext (*((Extension::GlobalInfo *) client.tag)->_ext)
 #define globals ((Extension::GlobalInfo *) client.tag)

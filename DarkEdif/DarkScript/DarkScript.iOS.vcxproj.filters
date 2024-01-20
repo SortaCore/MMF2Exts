@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h">
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="$(ProjectDir)\DarkExt.PostMinify.json" />

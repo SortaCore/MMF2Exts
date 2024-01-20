@@ -1,6 +1,6 @@
-#include "Common.h"
-#include "Edif.h"
-#include "DarkEdif.h"
+#include "Common.hpp"
+#include "Edif.hpp"
+#include "DarkEdif.hpp"
 
 struct EdifGlobal
 {

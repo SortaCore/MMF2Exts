@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 void Extension::UTF16StrToUTF16Mem(const wchar_t * utf16Str, int addr, int removeNull)
 {

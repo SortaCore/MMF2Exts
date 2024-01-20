@@ -9,13 +9,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h">
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="DarkExt.json">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Windows\Props.h">
+    <ClInclude Include="..\Inc\Windows\Props.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp">

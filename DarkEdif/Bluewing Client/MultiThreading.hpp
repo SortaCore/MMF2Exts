@@ -1,5 +1,5 @@
 #pragma once
-#include "Common.h"
+#include "Common.hpp"
 #include "Lacewing.h"
 
 /* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */

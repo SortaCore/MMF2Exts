@@ -1,8 +1,4 @@
 #pragma once
-
-
-#include "json.hpp"
-
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -10,19 +6,20 @@
 #include <chrono>
 #include <condition_variable>
 #include <atomic>
+#include "json.hpp"
 
 #ifdef _WIN32
-	#include "..\Windows\MMFMasterHeader.h"
+	#include "..\Windows\MMFWindowsMasterHeader.hpp"
 	extern HINSTANCE hInstLib;
 #elif defined (__ANDROID__)
-	#include "..\Android\MMFAndroidMasterHeader.h"
+	#include "..\Android\MMFAndroidMasterHeader.hpp"
 #elif defined (__APPLE__)
-	#include "../iOS/MMFiOSMasterHeader.h"
+	#include "../iOS/MMFiOSMasterHeader.hpp"
 #endif
 
 class Extension;
 
-#include "ObjectSelection.h"
+#include "ObjectSelection.hpp"
 
 // DarkEdif provides C++11 type checking between JSON and C++ definition.
 #if defined(_DEBUG) && defined(_WIN32) && !defined(FAST_ACE_LINK)

@@ -1,8 +1,8 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <atomic>
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 #include <math.h>
-#include "Extension.h"
+#include "Extension.hpp"
 
 #ifdef _WIN32
 extern HINSTANCE hInstLib;

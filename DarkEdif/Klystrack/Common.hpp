@@ -7,7 +7,7 @@
 
 #define JSON_COMMENT_MACRO Extension::Version
 
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 
 #include "..\Inc\Windows\ksnd.h"
 // Static linking of KSND
@@ -59,6 +59,4 @@ struct RUNDATA
 	*/
 };
 
-
-
-#include "Extension.h"
+#include "Extension.hpp"

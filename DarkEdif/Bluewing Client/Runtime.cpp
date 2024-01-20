@@ -8,7 +8,7 @@
 // you can safely exclude this file.
 // ============================================================================
 
-#include "Common.h"
+#include "Common.hpp"
 
 // ============================================================================
 // START APP / END APP / START FRAME / END FRAME routines

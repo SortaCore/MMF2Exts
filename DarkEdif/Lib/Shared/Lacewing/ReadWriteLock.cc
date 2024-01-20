@@ -19,9 +19,9 @@ bool lacewing::writelock::isEnabled() const
 }
 #if defined(COXSDK)
 	#if defined(__ANDROID__)
-		#include "../Inc/Android/MMFAndroidMasterHeader.h"
+		#include "../Inc/Android/MMFAndroidMasterHeader.hpp"
 	#elif defined(__APPLE__)
-		#include "../Inc/iOS/MMFiOSMasterHeader.h"
+		#include "../Inc/iOS/MMFiOSMasterHeader.hpp"
 	#endif
 #endif
 

@@ -79,23 +79,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp" />
-    <ClInclude Include="..\Inc\Shared\DarkEdif.h" />
-    <ClInclude Include="..\Inc\Shared\Edif.h" />
+    <ClInclude Include="..\Inc\Shared\DarkEdif.hpp" />
+    <ClInclude Include="..\Inc\Shared\Edif.hpp" />
     <ClInclude Include="..\Inc\Shared\json.hpp" />
-    <ClInclude Include="..\Inc\Shared\ObjectSelection.h" />
+    <ClInclude Include="..\Inc\Shared\ObjectSelection.hpp" />
     <ClInclude Include="..\Inc\Shared\Strings.hpp" />
-    <ClInclude Include="..\Inc\Windows\Props.h" />
+    <ClInclude Include="..\Inc\Windows\Props.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
-    <ClInclude Include="Common.h" />
+    <ClInclude Include="Common.hpp" />
     <ClInclude Include="DarkExt.json">
       <FileType>Document</FileType>
     </ClInclude>
-    <ClInclude Include="Extension.h" />
+    <ClInclude Include="Extension.hpp" />
     <ClInclude Include="Resource.h" />
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Ext.rc" />

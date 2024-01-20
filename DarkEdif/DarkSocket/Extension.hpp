@@ -1,7 +1,6 @@
 #pragma once
 #include <map>
-
-#include "Structures.h"
+#include "Structures.hpp"
 
 class Extension
 {

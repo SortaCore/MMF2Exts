@@ -7,7 +7,7 @@
 // If your object does not use any of those, a simple non-displaying object,
 // you can safely exclude this file.
 // ============================================================================
-#include "Common.h"
+#include "Common.hpp"
 
 
 // ============================================================================

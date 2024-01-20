@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 const TCHAR * Extension::GetError()
 {

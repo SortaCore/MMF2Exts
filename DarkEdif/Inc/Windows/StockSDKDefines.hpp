@@ -1,5 +1,5 @@
 #pragma once
-#include "MMFMasterHeader.h"
+#include "MMFWindowsMasterHeader.hpp"
 #include "SafeSurface.hpp"
 
 // Surface.h old defines

@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 // This is used in KSND, seems to be a GCC x64 -> x86 *nix weirdness.
 extern "C" {

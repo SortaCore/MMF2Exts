@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 #include <sstream>
 
 typedef HMENU (FusionAPI * funcFormat)(mv * mV, ObjectInfo * oiPtr, EDITDATA * edPtr);

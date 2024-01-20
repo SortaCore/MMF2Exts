@@ -5,11 +5,10 @@
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
 
-#define JSON_COMMENT_MACRO lacewing::relayserver::buildnum, STRIFY(CONFIG)
-#include "DarkEdif.h"
+#define JSON_COMMENT_MACRO lacewing::relayclient::buildnum, STRIFY(CONFIG)
 
-#ifdef _WIN32
 // Lacewing-required imports for accessing Windows sockets
+#ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 #pragma comment(lib, "mpr.lib")
@@ -18,12 +17,13 @@
 #endif
 
 #ifndef _lacewing_static
-	#error Required Lacewing definitions are not in project settings.
+#error Required Lacewing definitions are not in project settings.
 #endif
 
-#include "Lacewing.h"
-#include "LacewingFunctions.h"
-#include "MultiThreading.h"
+#include "DarkEdif.hpp"
+
+#include "../Lib/Shared/Lacewing/Lacewing.h"
+#include "LacewingFunctions.hpp"
 
 #ifdef _WIN32
 #pragma comment(lib, "..\\Lib\\Windows\\zlib.lib")
@@ -34,6 +34,7 @@
 #endif
 #include <iomanip>
 
+#include "MultiThreading.hpp"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -47,7 +48,7 @@ struct EDITDATA
 	// matching the Relay's memory layout, and changing Edittime.cpp.
 
 	// Any random edittime stuff? Place here.
-	char pad0[5];				// For matching old extension
+	char pad0[5];				// For matching Relay Client extension
 	bool automaticClear;
 	bool multiThreading;
 	bool isGlobal;
@@ -55,10 +56,9 @@ struct EDITDATA
 	char edGlobalID[255];
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;
-	bool enableInactivityTimer;
-	char pad1[249];
+	char pad1[256];
 
-	// To match Lacewing Relay Server, this struct's size must be 536 bytes.
+	// Note: To match Lacewing Relay Client, this struct's size must be 544 bytes.
 	// NOPROPS is used to manually set the size of this struct and access properties in it.
 };
 
@@ -84,6 +84,4 @@ struct RUNDATA
 	*/
 };
 
-#define COMMON_H
-#include "Extension.h"
-#undef COMMON_H
+#include "Extension.hpp"

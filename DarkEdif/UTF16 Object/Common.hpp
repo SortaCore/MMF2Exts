@@ -4,8 +4,13 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
+#define JSON_COMMENT_MACRO Extension::Version
 
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
+
+#ifndef _UNICODE
+	#error UTF-16 Object requires Unicode runtime, or the text expressions will be downgraded by Fusion to non-Unicode, which means they can never be displayed.
+#endif
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -34,7 +39,7 @@ struct RUNDATA
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	Sprite			rs;				// Sprite (displayable objects)
-	AltVals			rv;				// Alterable values
+//	AltVals			rv;				// Alterable values
 
 	// Required
 	Extension * pExtension;
@@ -45,6 +50,4 @@ struct RUNDATA
 	*/
 };
 
-
-
-#include "Extension.h"
+#include "Extension.hpp"

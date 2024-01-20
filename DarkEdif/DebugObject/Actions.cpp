@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 // Called by action only
 void Extension::Output(int intensity, int line, const TCHAR * textP)

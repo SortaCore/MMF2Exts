@@ -1,5 +1,4 @@
-
-#include "Common.h"
+#include "Common.hpp"
 
 #define LoopNameMatches(cond) \
 	if (loopName[0] == _T('\0')) \

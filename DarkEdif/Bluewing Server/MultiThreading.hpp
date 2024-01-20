@@ -1,6 +1,6 @@
 #pragma once
 // DarkEdif extension: allows safe multithreading returns.
-#include "Common.h"
+#include "Common.hpp"
 
 enum InteractiveType : std::uint8_t
 {

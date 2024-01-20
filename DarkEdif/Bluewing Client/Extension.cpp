@@ -1,6 +1,6 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <assert.h>
-#include "MultiThreading.h"
+#include "MultiThreading.hpp"
 
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR

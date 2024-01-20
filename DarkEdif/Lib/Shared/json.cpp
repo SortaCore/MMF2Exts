@@ -29,7 +29,7 @@
  */
 
 #include "json.hpp"
-#include "Edif.h"
+#include "Edif.hpp"
 
 #ifdef _MSC_VER
 	#ifndef _CRT_SECURE_NO_WARNINGS

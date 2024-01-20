@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <aclapi.h>
 #include <authz.h>
 #include <WinSpool.h>

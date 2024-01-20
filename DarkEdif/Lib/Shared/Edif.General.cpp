@@ -4,8 +4,8 @@
 // be modified.
 // ============================================================================
 
-#include "Common.h"
-#include "DarkEdif.h"
+#include "Common.hpp"
+#include "DarkEdif.hpp"
 
 #ifdef _WIN32
 

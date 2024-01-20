@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 #ifdef __ANDROID__
 #include <android/sensor.h>

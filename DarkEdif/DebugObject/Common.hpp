@@ -9,7 +9,7 @@
 
 #pragma comment(lib, "..\\Lib\\Windows\\dbghelp.lib")
 
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 #include <time.h>
 #include <iostream>
 #include <iomanip>
@@ -109,6 +109,6 @@ extern DWORD WINAPI ReceiveConsoleInput(void *);
 extern LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs);
 extern bool AttachDebugger();
 
-#include "Extension.h"
+#include "Extension.hpp"
 
 

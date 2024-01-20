@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 EventToRun::EventToRun(int fusionSocketID, std::shared_ptr<SocketSource> source, Conditions cond) :
 	fusionSocketID(fusionSocketID), source(source), eventID(cond)

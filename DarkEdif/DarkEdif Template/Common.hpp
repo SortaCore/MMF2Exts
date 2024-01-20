@@ -4,12 +4,8 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
-#define JSON_COMMENT_MACRO Extension::Version
 
-// Activates some Edif workarounds to get internal A/C/E parameters
-#define DARKSCRIPT_EXTENSION
-
-#include "DarkEdif.h"
+#include "DarkEdif.hpp"
 
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
@@ -33,13 +29,12 @@ struct RUNDATA
 {
 	// Main header - required
 	HeaderObject rHo;
-#ifdef _WIN32
+
 	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
 //	rCom			rc;				// Common structure for movements & animations
 //	rMvt			rm;				// Movements
 //	Sprite			rs;				// Sprite (displayable objects)
-	AltVals			rv;				// Alterable values
-#endif
+//	AltVals			rv;				// Alterable values
 
 	// Required
 	Extension * pExtension;
@@ -50,5 +45,4 @@ struct RUNDATA
 	*/
 };
 
-#include <regex>
-#include "Extension.h"
+#include "Extension.hpp"

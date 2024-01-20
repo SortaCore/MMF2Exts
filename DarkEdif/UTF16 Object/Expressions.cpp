@@ -1,6 +1,4 @@
-
-#include "Common.h"
-
+#include "Common.hpp"
 
 // convert UTF-8 string to wstring
 std::wstring utf8_to_wstring(const std::string& str)

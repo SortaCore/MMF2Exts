@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.h" />
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1ba4daf2-407f-457c-917b-ee67d3ee7fb5}</ProjectGuid>

@@ -1,6 +1,6 @@
 #pragma once
-#include "Edif.h"
-#include "MultiThreading.h"
+#include "Edif.hpp"
+#include "MultiThreading.hpp"
 #include <functional>
 
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;

@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 
 #define EventsToRun globals->_eventsToRun
 #define Remake(name) DarkEdif::MsgBox::Error(_T("Remake action"), _T("Your "#name" actions need to be recreated.\r\n") \

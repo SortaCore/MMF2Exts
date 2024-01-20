@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "Common.hpp"
 #include <cstdlib>
 
 #define CreateErrorExp(Ret, Error, ...) { CreateErrorT(Error, ##__VA_ARGS__); return Ret; }

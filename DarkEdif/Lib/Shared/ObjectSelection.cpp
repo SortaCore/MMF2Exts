@@ -1,11 +1,11 @@
 // By Anders Riggelsen (Andos)
 // http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=214148&gonew=1
 
-// These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc..)
+// These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc.)
+#include "Common.hpp"
+#include "DarkEdif.hpp"
+#include "ObjectSelection.hpp"
 
-#include "Common.h"
-#include "DarkEdif.h"
-#include "ObjectSelection.h"
 
 Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
 {

@@ -131,7 +131,7 @@
     <None Include="Icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\Windows\MMFMasterHeader.h" />
+    <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\compat.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\fdstream.h" />
