@@ -670,7 +670,7 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				continue;
 			expCppType = "const TCHAR *"sv;
 		}
-		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time)
+		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time || p == Params::Time)
 		{
 			if (p == Params::Comparison || p == Params::Compare_Time)
 				ComparisonHandler();
