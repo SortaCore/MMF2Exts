@@ -273,7 +273,7 @@ static RuntimeFunctions runFuncs;
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
 {
 	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
-	LOGI("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
+	LOGV("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
 	runFuncs.ext = javaExtP;
 
@@ -439,7 +439,7 @@ jstring CStrToJStr(const char * String)
 	// No 4-byte characters, safe to convert directly
 	jstr = threadEnv->NewStringUTF(String);
 	if (threadEnv->ExceptionCheck())
-		LOGE("Failed to convert string, got error %s.\n", GetJavaExceptionStr().c_str());
+		LOGE("Failed to convert string to Java UTF-8, got error %s.\n", GetJavaExceptionStr().c_str());
 	return jstr;
 reconvert:
 	LOGV("Reconverting UTF-8 to Modified UTF-8 in Runtime.CopyStringEx().\n");

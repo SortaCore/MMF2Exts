@@ -42,7 +42,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 }
 
 void Edif::Runtime::PushEvent(int EventID)
-{
+{                               
 	CallRunTimeFunction2(hoPtr, RFUNCTION::PUSH_EVENT, EventID, 0);
 }
 
@@ -54,10 +54,10 @@ void * Edif::Runtime::Allocate(size_t size)
 TCHAR * Edif::Runtime::CopyString(const TCHAR * String)
 {
 	TCHAR * New = NULL;
-    New = (TCHAR *) Allocate(_tcslen(String) + 1);
-    _tcscpy(New, String);
+	New = (TCHAR *) Allocate(_tcslen(String) + 1);
+	_tcscpy(New, String);
 
-    return New;
+	return New;
 }
 
 char * Edif::Runtime::CopyStringEx(const char * String)
@@ -137,12 +137,12 @@ void Edif::Runtime::ExecuteProgram(ParamProgram * Program)
 
 long Edif::Runtime::EditInteger(EditDebugInfo * EDI)
 {
-    return CallRunTimeFunction2(hoPtr, RFUNCTION::EDIT_INT, 0, (long) EDI);
+	return CallRunTimeFunction2(hoPtr, RFUNCTION::EDIT_INT, 0, (long) EDI);
 }
 
 long Edif::Runtime::EditText(EditDebugInfo * EDI)
 {
-    return CallRunTimeFunction2(hoPtr, RFUNCTION::EDIT_TEXT, 0, (long) EDI);
+	return CallRunTimeFunction2(hoPtr, RFUNCTION::EDIT_TEXT, 0, (long) EDI);
 }
 
 void Edif::Runtime::CallMovement(int ID, long Parameter)
@@ -157,7 +157,7 @@ void Edif::Runtime::SetPosition(int X, int Y)
 
 CallTables * Edif::Runtime::GetCallTables()
 {
-    return (CallTables *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_CALL_TABLES, 0, 0);
+	return (CallTables *)CallRunTimeFunction2(hoPtr, RFUNCTION::GET_CALL_TABLES, 0, 0);
 }
 
 #ifdef _WIN32
@@ -211,14 +211,16 @@ bool Edif::Runtime::IsUnicode()
 #ifdef _WIN32
 	return hoPtr->AdRunHeader->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) == 1;
 #else
-	// TODO: This is wrong
-	return false;
+	// At this point in DarkEdif dev, Unicode is assumed in non-Windows runtime, as it's assumed to be CF2.5.
+	// This is because the Android exporter in Fusion 2.0 only went to Android OS v4.3, API 18,
+	// which ended in 2013 and was before 64-bit phones were even introduced in API 21.
+	return true;
 #endif
 }
 
 event2 &Edif::Runtime::CurrentEvent()
 {
-    return *(event2 *) (((char *) param1) - CND_SIZE);
+	return *(event2 *) (((char *) param1) - CND_SIZE);
 }
 
 RunObject * Edif::Runtime::RunObjPtrFromFixed(int fixedvalue)
@@ -250,68 +252,68 @@ extern HINSTANCE hInstLib;
 
 void Edif::Runtime::WriteGlobal(const TCHAR * name, void * Value)
 {
-    RunHeader * rhPtr = hoPtr->AdRunHeader;
+	RunHeader * rhPtr = hoPtr->AdRunHeader;
 
 	while (rhPtr->App->ParentApp)
 		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 
-    EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
+	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
 
-    if (!Global)
-    {
-        Global = new EdifGlobal;
+	if (!Global)
+	{
+		Global = new EdifGlobal;
 
-        _tcscpy(Global->name, name);
-        Global->Value = Value;
+		_tcscpy(Global->name, name);
+		Global->Value = Value;
 
-        Global->Next = 0;
+		Global->Next = 0;
 
-        rhPtr->rh4.rh4Mv->SetExtUserData(rhPtr->App, hInstLib, Global);
+		rhPtr->rh4.rh4Mv->SetExtUserData(rhPtr->App, hInstLib, Global);
 
-        return;
-    }
+		return;
+	}
 
-    while (Global)
-    {
-        if (!_tcsicmp(Global->name, name))
-        {
-            Global->Value = Value;
-            return;
-        }
+	while (Global)
+	{
+		if (!_tcsicmp(Global->name, name))
+		{
+			Global->Value = Value;
+			return;
+		}
 
-        if (!Global->Next)
-            break;
+		if (!Global->Next)
+			break;
 
-        Global = Global->Next;
-    }
+		Global = Global->Next;
+	}
 
-    Global->Next = new EdifGlobal;
-    Global = Global->Next;
+	Global->Next = new EdifGlobal;
+	Global = Global->Next;
 
-    _tcscpy(Global->name, name);
+	_tcscpy(Global->name, name);
 
-    Global->Value = Value;
-    Global->Next = 0;
+	Global->Value = Value;
+	Global->Next = 0;
 }
 
 void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 {
-    RunHeader * rhPtr = hoPtr->AdRunHeader;
+	RunHeader * rhPtr = hoPtr->AdRunHeader;
 
 	while (rhPtr->App->ParentApp)
 		rhPtr = rhPtr->App->ParentApp->Frame->rhPtr;
 
-    EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
+	EdifGlobal * Global = (EdifGlobal *) rhPtr->rh4.rh4Mv->GetExtUserData(rhPtr->App, hInstLib);
 
-    while (Global)
-    {
-        if (!_tcsicmp(Global->name, name))
-            return Global->Value;
+	while (Global)
+	{
+		if (!_tcsicmp(Global->name, name))
+			return Global->Value;
 
-        Global = Global->Next;
-    }
+		Global = Global->Next;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 #else  // !_WIN32

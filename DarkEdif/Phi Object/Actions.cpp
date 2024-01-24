@@ -192,6 +192,7 @@ void Extension::UpdateRAMUsageInfo()
 		std::int64_t kbInLine = strtoll(std::string(retString).c_str(), NULL, 10);
 		std::int32_t res = kbInLine <= 0 ? kbInLine : (std::int32_t)(kbInLine / 1024LL);
 		auto op = memInfoOutputHashToMB.insert(std::make_pair(std::string_view(memInfoOutputLines[lineIndex].data(), colonIndex), res));
+		(void)op;
 		LOGV("Added mem info line: \"%s\" = %d MB.\n", std::string(op.first->first).c_str(), res);
 		return res;
 	};
@@ -391,6 +392,8 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 	if (includeInheritOnlyInt > 1 || includeInheritOnlyInt < 0)
 		return MakeError("Invalid \"include inherit-only\" parameter, must be 0 or 1, but you supplied %d.", includeInheritOnlyInt);
 	bool includeInheritOnly = includeInheritOnlyInt == 1;
+	(void)includeInherited;
+	(void)includeInheritOnly;
 
 	std::string allowDenyBoth = DarkEdif::TStringToANSI(allowDenyBothPtr);
 	MakeStringLower(allowDenyBoth);

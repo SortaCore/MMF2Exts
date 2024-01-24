@@ -476,122 +476,13 @@ void Extension::DelayedFunctions_Loop(const TCHAR* loopName)
 	internalLoopIndex = -1;
 }
 
-/*
-int numSelected(HeaderObject * obj);
-int numSelectedQualifier(Extension* ext, int qualID);
-extern std::tstringstream str;
-extern int fixedValue;
-extern bool inTestFunc;*/
 void Extension::RunFunction_ActionDummy_Num(int result)
 {
 	// Ignore params, this action just allows user to run an expression's functions.
-
-	/*RunObject* runObj = Runtime.RunObjPtrFromFixed(fixedValue ? fixedValue : result);
-
-	str << _T("Event #"sv) << DarkEdif::GetCurrentFusionEventNum(this) <<
-		_T(" inside action func: "sv) << numSelected(&runObj->roHo) <<
-		_T(", rh2 event count = "sv) << rhPtr->rh2.EventCount << _T(", rh4 eventCount = "sv) << rhPtr->rh4.eventCount
-		<< _T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
-	if (!inTestFunc) {
-		LOGI(_T("%s"), str.str().c_str());
-		str.str(std::tstring());
-	}
-	*/
 }
 void Extension::RunFunction_ActionDummy_String(const TCHAR * result)
 {
 	// Ignore params, this action just allows user to run an expression's functions.
-
-	/*
-	if (Oi & 0x8000)
-	{
-		Oi &= 0x7FFF;	//Mask out the qualifier part
-		int numberSelected = 0;
-
-		qualToOi* CurrentQualToOiStart = (qualToOi*)rhPtr->QualToOiList;
-		qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-		while (CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList* CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
-			numberSelected += CurrentOi->NumOfSelected;
-			CurrentQualToOi = (qualToOi*)((char*)CurrentQualToOi + 4);
-		}
-		return numberSelected;
-	}
-
-	LOGI("======== starting loop.\n");
-	struct dep
-	{
-		int qualID;
-		int objCount;
-		int instanceCount;
-	};
-	std::vector<dep> qualifiers;
-	for (int i = 0; i < rhPtr->NumberOi; ++i)
-	{
-		objInfoList* oil = (objInfoList*)(((char*)rhPtr->OiList) + Runtime.ObjectSelection.oiListItemSize * i);
-		for (size_t unwindToRunningFuncIndex = 0; unwindToRunningFuncIndex < std::size(oil->Qualifiers); unwindToRunningFuncIndex++) {
-			if (oil->Qualifiers[unwindToRunningFuncIndex] == -1)
-				break;
-
-			auto dp = std::find_if(qualifiers.begin(), qualifiers.end(),
-				[&](const dep& d) { return d.qualID == oil->Qualifiers[unwindToRunningFuncIndex]; });
-			if (dp == qualifiers.cend())
-			{
-				qualifiers.push_back({ oil->Qualifiers[unwindToRunningFuncIndex], 1, 0 });
-				dp = --qualifiers.end();
-			}
-			else
-				++dp->objCount;
-			LOGI("Object %s has qualifier ID %i.\n", oil->name, oil->Qualifiers[unwindToRunningFuncIndex]);
-
-			short num = oil->Object;
-			if (num != -1)
-				dp->instanceCount += numSelected((rdPtr->rHo.AdRunHeader->ObjectList + num)->oblOffset);
-		}
-	}
-	for (size_t i = 0; i < qualifiers.size(); i++)
-		LOGI("Detected qualifier ID: %i, with %i objects (%i instances) using it.\n", qualifiers[i].qualID, qualifiers[i].objCount, qualifiers[i].instanceCount);
-
-	/*
-	int numberSelected = 0;
-
-	for (size_t i = 0; i < qualifiers.size(); i++)
-	{
-		numberSelected = 0;
-		qualToOi* CurrentQualToOiStart = (qualToOi*)&rhPtr->QualToOiList[i];
-		qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-		while (CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList* CurrentOi = Runtime.ObjectSelection.GetOILFromOI(CurrentQualToOi->OiList);
-			numberSelected += numSelected((rdPtr->rHo.AdRunHeader->ObjectList + CurrentQualToOi->OiList)->oblOffset);
-			CurrentQualToOi = (qualToOi*)((char*)CurrentQualToOi + 4);
-		}
-		LOGI("New calculation: qualifer ID %zu had %i instances.\n", i, numberSelected);
-	}
-	LOGI("======== ended loop.\n");
-	qualToOi* q = (qualToOi*)rhPtr->QualToOiList;
-	int i = 0;
-	while (q != NULL)
-	{
-		LOGI(_T("Got q [%i] = %p.\n"), i++, q);
-		q = &q[1];
-	}
-	qualToOi* CurrentQualToOi = CurrentQualToOiStart;
-
-	Runtime.ObjectSelection.SelectOneObject
-	RunObject* runObj = Runtime.RunObjPtrFromFixed(fixedValue);
-
-	str << _T("Event #"sv) << DarkEdif::GetCurrentFusionEventNum(this) <<
-		_T(" inside action func [qualifier]: "sv) << numSelectedQualifier(this, runObj->roHo.OiList->Qualifiers[0]) <<
-		_T(", rh2 event count = "sv) << rhPtr->rh2.EventCount << _T(", rh4 eventCount = "sv) << rhPtr->rh4.eventCount
-		<< _T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
-	if (!inTestFunc) {
-		LOGI(_T("%s"), str.str().c_str());
-		str.str(std::tstring());
-	}*/
 }
 void Extension::RunFunction_Foreach_Num(HeaderObject*, int dummy)
 {

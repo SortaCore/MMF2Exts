@@ -15,7 +15,7 @@
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
-	NO_DEFAULT_CTORS(EDITDATA);
+	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
 	// Header - required
 	extHeader			eHeader;
 

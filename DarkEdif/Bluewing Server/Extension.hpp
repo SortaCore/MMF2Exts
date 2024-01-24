@@ -426,7 +426,6 @@ struct Extension::GlobalInfo
 		std::string keyU8Simplified; // key, as UTF-8, simplified destructively
 		std::tstring val;
 
-
 		LocalData(std::shared_ptr<T> ptr, std::string keyU8Simplified, std::tstring val)
 			: ptr(ptr), keyU8Simplified(keyU8Simplified), val(val)
 		{

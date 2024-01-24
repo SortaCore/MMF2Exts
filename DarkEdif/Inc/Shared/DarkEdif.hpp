@@ -226,7 +226,6 @@ namespace DarkEdif {
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
 	// Returns path as is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
-	// On Windows, just copies string
 	std::tstring MakePathUnembeddedIfNeeded(const Extension* ext, const std::tstring_view filePath);
 
 	// =====

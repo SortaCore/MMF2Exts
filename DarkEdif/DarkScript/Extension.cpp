@@ -16,19 +16,6 @@ Extension::Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtP
 	runFuncs(runFuncs), objCExtPtr(objCExtPtr), Runtime(runFuncs, this->objCExtPtr), FusionDebugger(this)
 #endif
 {
-	// Yves on 27/10/2021. Current build is beta 298.3:
-	// https://community.clickteam.com/threads/108993-Application-crashed-in-some-cases-when-calling-an-event-via-expression?p=769763&viewfull=1#post769763
-	// GenerateEvent does not support running from expressions
-	// To fix the crash, save rdPtr->rHo.hoAdRunHeader->rh4.rh4ExpToken before calling CallEvent and restore it just after:
-	// Code:
-	//	 LPRH pRh = rdPtr->rHo.hoAdRunHeader;
-	// expression*	saveExpToken = pRh->rh4.rh4ExpToken;
-	// CallEvent(ONFUNC);
-	// pRh->rh4.rh4ExpToken = saveExpToken;
-	// I'll add this code to GenerateEvent in the next build.
-	//
-	// Phi on 05/06/2022: I added it to GenerateEvent in the mainstream DarkEdif.
-
     /*
         Link all your action/condition/expression functions to their IDs to match the
         IDs in the JSON here

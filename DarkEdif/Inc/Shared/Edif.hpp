@@ -171,6 +171,7 @@ namespace Edif
 #else
 		Runtime(RuntimeFunctions &runFuncs, void * objCExtPtr);
 #endif
+
 		~Runtime();
 
 		void Rehandle();

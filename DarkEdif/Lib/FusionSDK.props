@@ -201,11 +201,12 @@
 		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
 
-		<!-- This define is true if you want to machine-uniquely tag your extensions -->
+		<!-- This define is true if you want to analyse your code for more subtly incorrect code, which doesn't cause compiler/linker errors-->
 		<_RunAnalyzerRegex><![CDATA[(?im)^RunStaticCodeAnalysis\s*=\s*([a-z]+)\s*?$]]></_RunAnalyzerRegex>
 		<RunAnalyzerSetting Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_RunAnalyzerRegex)).Success)"
 			></RunAnalyzerSetting>
 
+		<!-- This define is true if you want to machine-uniquely tag your extensions -->
 		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*(.*?)\s*?$]]></_DarkEdif_UCTaggingRegex>
 		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
 		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
@@ -779,9 +780,6 @@
 		</BuildMacro>
 		<BuildMacro Include="RunAnalyzerSetting">
 			<Value>$(RunAnalyzerSetting)</Value>
-		</BuildMacro>
-		<BuildMacro Include="Betsy">
-			<Value Condition="$(_TargetPlat)=='Windows'">true</Value>
 		</BuildMacro>
 	</ItemGroup>
 

@@ -69,7 +69,6 @@ void Extension::FlashServer_StopHosting()
 
 void Extension::WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privKeyFile, const TCHAR* password)
 {
-	// this will return false if it fails - but we should get an error made anyway
 	const std::tstring chainFileUnembedded = DarkEdif::MakePathUnembeddedIfNeeded(this, chainFile);
 
 	// Errors in DarkEdif::MakePathUnembeddedIfNeeded indicated by starting with '>' char
@@ -83,6 +82,7 @@ void Extension::WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainF
 		return CreateError("Cannot load private key file: %s.", DarkEdif::TStringToUTF8(privKeyFileUnembedded.substr(1)).c_str());
 
 	// Pass through as UTF-8; it'll be converted back to wide by lacewing if Unicode Windows build
+	// this will return false if it fails - but we should get an error made anyway
 	Srv.websocket->load_cert_file(
 		DarkEdif::TStringToUTF8(chainFileUnembedded).c_str(),
 		DarkEdif::TStringToUTF8(privKeyFileUnembedded).c_str(),

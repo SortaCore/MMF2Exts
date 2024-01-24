@@ -623,7 +623,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 Edif::SDK::~SDK()
 {
-	OutputDebugStringA("Edif::SDK::~SDK() call.\r\n");
+	LOGV(_T("Edif::SDK::~SDK() call.\n"));
 	json_value_free (&json);
 
 #if EditorBuild
@@ -649,6 +649,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	// Reset by CNC_GetParam inside params.GetXX(). CurrentParam being correct only matters if you have object parameters, though.
 	EventParam* saveCurParam = ext->rdPtr->rHo.CurrentParam;
 #endif
+
 #ifdef DARKSCRIPT_EXTENSION
 	// Store action parameters so when evaluating the Func() expression, the prior Action parameters are available
 	if (!isCond)
@@ -775,7 +776,6 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 #endif
 
 endFunc:
-
 	// Comparisons return an integer or string pointer, pass as-is
 	if (isComparisonCondition)
 		return Result;
@@ -1006,7 +1006,8 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 	long Result = ActionOrCondition(Function, ID, ext, Edif::SDK->ConditionInfos[ID], params, true);
 
-	LOGV(_T(PROJECT_NAME " Condition ID %i end.\n"), ID);
+	LOGD(_T(PROJECT_NAME " Condition ID %i end on event %i, returning %li (%s).\n"), ID, DarkEdif::GetCurrentFusionEventNum(ext), Result, Result != 0 ? _T("TRUE") : _T("FALSE"));
+
 	return Result;
 }
 
@@ -1256,6 +1257,11 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 {
 	Extension * ext = (Extension *)extPtr;
 	ExpressionManager_Android params(ext, expU);
+	// Phi note 27/11/2023: Sometimes the expression is called and no CEvent to read action/condition index.
+	// However, I don't want to override an existing act/condition's CEvent since it's actually a CEvent,
+	// whereas an expresssion is a sub-variable of a CEvent.
+	//if (ext->Runtime.curCEvent.invalid())
+	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
 {

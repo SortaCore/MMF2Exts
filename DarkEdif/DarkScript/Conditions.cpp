@@ -13,14 +13,14 @@ bool Extension::OnFunction(const TCHAR * name)
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("OnFunction(\"%s\" %p) on event %i. Self aware = 0. Exiting.\n"), name, name, DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("OnFunction(\"%s\" %p) on event %i. Self aware = 0. Exiting.\n"), name, name, DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 	assert(!globals->runningFuncs.empty());
 
 	const std::tstring nameR(ToLower(name));
 	auto & lowest = *globals->runningFuncs.back();
-	LOGV(_T("OnFunction(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
+	LOGD(_T("OnFunction(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
 		name, DarkEdif::GetCurrentFusionEventNum(this), lowest.funcTemplate->name.c_str(), lowest.currentIterationTriggering ? 1 : 0);
 
 	if (lowest.funcTemplate->nameL != nameR || !lowest.currentIterationTriggering)
@@ -35,13 +35,13 @@ bool Extension::OnForeachFunction(const TCHAR* name, HeaderObject *obj)
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("OnForeachFunction(\"%s\") on event %i. Self aware = 0. Exiting.\n"), name, DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("OnForeachFunction(\"%s\") on event %i. Self aware = 0. Exiting.\n"), name, DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 	assert(!globals->runningFuncs.empty());
 	std::tstring nameR(ToLower(name));
 	auto& lowest = *globals->runningFuncs.back();
-	LOGV(_T("OnForeachFunction(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
+	LOGD(_T("OnForeachFunction(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
 		name, DarkEdif::GetCurrentFusionEventNum(this), lowest.funcTemplate->name.c_str(), lowest.currentIterationTriggering ? 1 : 0);
 
 	if (lowest.funcTemplate->nameL != nameR || !lowest.currentIterationTriggering)
@@ -63,7 +63,7 @@ bool Extension::OnForeachFunction(const TCHAR* name, HeaderObject *obj)
 	// And, the loop is either not being run on a qualifier, or the singular-on-qualifier property isn't enabled.
 	if (oil != expectedOi && (expectedOi >= 0 || !allowForeachSingular))
 	{
-		LOGV(_T("OnForeachFunction(\"%s\") on event %i. Oi %i does not match expected Oi %i.\n"),
+		LOGD(_T("OnForeachFunction(\"%s\") on event %i. Oi %i does not match expected Oi %i.\n"),
 			name, DarkEdif::GetCurrentFusionEventNum(this), oil, expectedOi);
 		// If we just return false, it crashes.
 		// We have to deselect all the qualifier entries, then return false.
@@ -86,7 +86,7 @@ bool Extension::OnForeachFunction(const TCHAR* name, HeaderObject *obj)
 			poil = (const objInfoList*)(((char*)rhPtr->OiList) + Runtime.ObjectSelection.oiListItemSize * oil);
 			if (poil->Oi != ro->roHo.Oi) //(obj->Number != (lowest.currentForeachObjFV & 0xFFFF))
 			{
-				LOGV(_T("OnForeachFunction(\"%s\") on event %i. Expected FV is %i, Number = %i; does not equal passed FV is %i, number %i. Exiting.\n"),
+				LOGD(_T("OnForeachFunction(\"%s\") on event %i. Expected FV is %i, Number = %i; does not equal passed FV is %i, number %i. Exiting.\n"),
 					name, DarkEdif::GetCurrentFusionEventNum(this),
 					lowest.currentForeachObjFV, (lowest.currentForeachObjFV & 0xFFFF),
 					(obj->CreationId << 16) + obj->Number, obj->Number);
@@ -126,13 +126,13 @@ bool Extension::OnForeachFunction(const TCHAR* name, HeaderObject *obj)
 
 		if (!found)
 		{
-			LOGV(_T("OnForeachFunction(\"%s\") on event %i. Couldn't find FV %i in qualifier. Exiting.\n"),
+			LOGD(_T("OnForeachFunction(\"%s\") on event %i. Couldn't find FV %i in qualifier. Exiting.\n"),
 				name, DarkEdif::GetCurrentFusionEventNum(this), lowest.currentForeachObjFV);
 			return false;
 		}
 	}
 
-	LOGV(_T("OnForeachFunction(\"%s\") on event %i. Current FV = %d. Event count %d. Triggering.\n"),
+	LOGD(_T("OnForeachFunction(\"%s\") on event %i. Current FV = %d. Event count %d. Triggering.\n"),
 		name, DarkEdif::GetCurrentFusionEventNum(this), lowest.currentForeachObjFV, rhPtr->rh2.EventCount);
 
 	// Pre-restore any objects selected, if needed
@@ -149,13 +149,13 @@ bool Extension::OnFunctionAborted(const TCHAR* name)
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("OnFunctionAborted(\"%s\") on event %i. Self aware = 0. Exiting.\n"), name, DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("OnFunctionAborted(\"%s\") on event %i. Self aware = 0. Exiting.\n"), name, DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 	assert(!globals->runningFuncs.empty() && !globals->runningFuncs.back()->active);
 	std::tstring nameR(ToLower(name));
 	auto& lowest = *globals->runningFuncs.back();
-	LOGV(_T("OnFunctionAborted(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
+	LOGD(_T("OnFunctionAborted(\"%s\") on event %i. Self aware = 1. Current function: \"%s\". Current iteration = %i.\n"),
 		name, DarkEdif::GetCurrentFusionEventNum(this), lowest.funcTemplate->name.c_str(), lowest.currentIterationTriggering ? 1 : 0);
 	// We can assume the function has aborted if this is running.
 	if (lowest.funcTemplate->nameL != nameR)
@@ -187,11 +187,11 @@ bool Extension::Logging_OnAnyFunction()
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("Logging_OnAnyFunction() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("Logging_OnAnyFunction() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 
-	LOGV(_T("Logging_OnAnyFunction() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+	LOGD(_T("Logging_OnAnyFunction() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 	return true;
 }
 
@@ -200,11 +200,11 @@ bool Extension::Logging_OnAnyFunctionCompletedOK()
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("Logging_OnAnyFunctionCompletedOK() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("Logging_OnAnyFunctionCompletedOK() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 
-	LOGV(_T("Logging_OnAnyFunctionCompletedOK() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+	LOGD(_T("Logging_OnAnyFunctionCompletedOK() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 	return true;
 }
 bool Extension::Logging_OnAnyFunctionAborted()
@@ -212,10 +212,10 @@ bool Extension::Logging_OnAnyFunctionAborted()
 	// We're not aware
 	if (!selfAwareness)
 	{
-		LOGV(_T("Logging_OnAnyFunctionAborted() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+		LOGD(_T("Logging_OnAnyFunctionAborted() on event %i. Self aware = 0. Exiting.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 		return false;
 	}
 
-	LOGV(_T("Logging_OnAnyFunctionAborted() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
+	LOGD(_T("Logging_OnAnyFunctionAborted() on event %i. Self aware = 1. Triggering.\n"), DarkEdif::GetCurrentFusionEventNum(this));
 	return true;
 }
