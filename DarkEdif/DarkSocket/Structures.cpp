@@ -107,7 +107,7 @@ Thread::~Thread()
 		// DarkEdif::MsgBox::Error(_T("Socket thread alive"), _T("Killing socket thread %d, when thread for socket is still alive."));
 }
 
-GlobalInfo::GlobalInfo(Extension * firstExt, EDITDATA *edPtr)
+GlobalInfo::GlobalInfo(Extension * firstExt, const EDITDATA * const edPtr)
 {
 	isGlobal = firstExt->isGlobal;
 	extsHoldingGlobals.push_back(firstExt);

@@ -22,7 +22,7 @@
 // edPtr : Used at edittime and saved in the MFA/CCN/EXE files
 struct EDITDATA
 {
-	NO_DEFAULT_CTORS(EDITDATA);
+	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
 	// Header - required, must be first variable in EDITDATA
 	extHeader		eHeader;
 
@@ -32,25 +32,6 @@ struct EDITDATA
 
 class Extension;
 
-struct RUNDATA
-{
-	// Main header - required
-	HeaderObject rHo;
-
-	// Optional headers - depend on the OEFLAGS value, see documentation and examples for more info
-//	rCom			rc;				// Common structure for movements & animations
-//	rMvt			rm;				// Movements
-//	rSpr			rs;				// Sprite (displayable objects)
-//	rVal			rv;				// Alterable values
-
-	// Required
-	Extension * pExtension;
-
-	/*
-		You shouldn't add any variables or anything here. Add them as members
-		of the Extension class (Extension.h) instead.
-	*/
-};
 struct GlobalData {
 	FILE * fileHandle;
 	std::atomic<bool> readingThis, releaseConsoleInput;

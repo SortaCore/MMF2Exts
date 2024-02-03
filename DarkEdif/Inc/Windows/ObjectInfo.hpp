@@ -6,6 +6,7 @@
 #pragma once
 
 struct ObjInfo {
+	NO_DEFAULT_CTORS_OR_DTORS(ObjInfo);
 	ObjInfoHeader		oiHdr;			// Header
 	TCHAR *				oiName;			// name
 	Objects_Common *	oiOC;

@@ -119,6 +119,7 @@ enum class CallFunctionIDs {
 
 struct Obj
 {
+	NO_DEFAULT_CTORS_OR_DTORS(Obj);
 	unsigned int	size,		// Taille de l'objet: 0 = fin objets
 					PrevSize,	// Taille objet precedent (0 = 1er objet)
 					Type,		// Type d'objet (1=vide,2=appli,3=fenetre,...)
@@ -130,6 +131,7 @@ struct Obj
 
 struct Spr
 {
+	NO_DEFAULT_CTORS_OR_DTORS(Spr);
 	#ifndef SPRLIST
 		Obj			Obj;
 	#endif
@@ -198,6 +200,7 @@ struct Spr
 
 // Structure de definition des conditions / actions POUR LES EXTENSIONS V1
 struct infosEvents {
+	NO_DEFAULT_CTORS_OR_DTORS(infosEvents);
 	short 	code;					// Le numero de type + code event
 	short	flags;					// Les flags a mettre dans l'event
 	short	param[2];				// Le type des parametres
@@ -209,6 +212,7 @@ struct infosEvents {
 // Event information structure
 // ---------------------------
 struct eventInformations {
+	NO_DEFAULT_CTORS_OR_DTORS(eventInformations);
 	short		menu;	// Menu identifier
 	short		string;	// String identifier
 	infosEvents	infos;	// Sub structure
@@ -249,6 +253,7 @@ typedef short *				LPSHORT;
 //class CValue;
 // Structure for SaveRect
 struct saveRect {
+	NO_DEFAULT_CTORS_OR_DTORS(saveRect);
 	unsigned char * pData;
 	RECT			rc;
 };
@@ -290,6 +295,7 @@ enum class OEFLAGS : unsigned int;
 // ObjectsCommon - Dynamic items
 //
 class Objects_Common {
+	NO_DEFAULT_CTORS_OR_DTORS(Objects_Common);
 public:
 
 	unsigned long	size;			// Total size of the structures
@@ -323,6 +329,7 @@ public:
 
 struct OCValues
 {
+	NO_DEFAULT_CTORS_OR_DTORS(OCValues);
 	unsigned short	number;
 	long			values[1];
 };
@@ -330,6 +337,7 @@ struct OCValues
 
 struct OCStrings
 {
+	NO_DEFAULT_CTORS_OR_DTORS(OCStrings);
 	unsigned short	number;
 	TCHAR			str[2];
 };
@@ -362,6 +370,7 @@ typedef	OCValueNames*		LPOCVALUENAMES;
 // Counter
 //
 struct counter {
+	NO_DEFAULT_CTORS_OR_DTORS(counter);
 	unsigned short	ctSize;
 	long			ctInit,				// Initial value
 					ctMini,				// Minimal value
@@ -378,6 +387,7 @@ struct counter {
 
 // Anim header
 struct AnimHeader {
+	NO_DEFAULT_CTORS_OR_DTORS(AnimHeader);
 	unsigned short	size,				// Size of AnimHeader, its Animation structs, and their AnimDirs structs.
 					AnimMax;			// New V2, number of entries in offset table
 	short			OffsetToAnim[16];	// Minimum 16 animations, can be larger!
@@ -389,6 +399,7 @@ struct AnimHeader {
 
 // Animation structure - collection of AnimDirections
 struct Animation {
+	NO_DEFAULT_CTORS_OR_DTORS(Animation);
 	short	OffsetToDir[32];	// Offset to animations with a direction (32 dirs max)
 	// negative indicates no animation direction in OffsetToDir. Offset based on Animation addr.
 };
@@ -398,6 +409,7 @@ struct Animation {
 
 // AnimDirection - Info about a specific direction in a specific animation
 struct AnimDirection {
+	NO_DEFAULT_CTORS_OR_DTORS(AnimDirection);
 	unsigned char	MinSpeed;		// Minimum speed
 	unsigned char	MaxSpeed;		// Maximum speed
 	unsigned short	Repeat,			// Number of loops
@@ -428,6 +440,7 @@ struct AnimDirection {
 // COMMUNICATION STRUCTURE BETWEEN RUNTIME AND EDITOR
 struct ComStructure
 {
+	NO_DEFAULT_CTORS_OR_DTORS(ComStructure);
 	unsigned int		command;
 
 	unsigned short		runMode;
@@ -638,6 +651,7 @@ typedef		eventGroup	*		LPEVG;
 // Condition and action structures
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct eventV1 {
+	NO_DEFAULT_CTORS_OR_DTORS(eventV1);
 	short	size;				// 0 Size of the event
 	union
 	{
@@ -716,6 +730,7 @@ struct event2 {
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
 class EventParam {
+	NO_DEFAULT_CTORS_OR_DTORS(EventParam);
 public:
 	short			size,
 					Code;
@@ -755,6 +770,7 @@ public:
 #define		EXPL_XOR				0x00120000
 #define		OPERATOR_END			0x00140000
 struct expression {
+	NO_DEFAULT_CTORS_OR_DTORS(expression);
 	union {
 		struct {
 			long	Code;		// 2 Code (hi:NUM lo:TYPE)
@@ -806,6 +822,7 @@ struct expression {
 #define		EXPNEXT(expPtr)			((expression *)((char *)expPtr+expPtr->expSize))
 
 struct expressionV1 {
+	NO_DEFAULT_CTORS_OR_DTORS(expressionV1);
 	union
 	{
 		struct {
@@ -931,15 +948,18 @@ enum class CPF {
 ///////////////////////////////////////////////////////////////////////
 
 struct ParamObject {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamObject);
 	unsigned short	OffsetListOI,	//
 					Number,			//
 					Type;			// Version > FVERSION_NEWOBJECTS
 };
 struct ParamTime {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamTime);
 	long	Timer,		// Timer
 			EqivLoops;	// Equivalent loops
 };
 struct ParamBorder {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamBorder);
 	short BorderType;
 	enum BorderFlags {
 		LEFT	= 0x1,
@@ -949,13 +969,16 @@ struct ParamBorder {
 	};
 };
 struct ParamDir {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamDir);
 	short Direction;	// Direction, 0-31 presumably.
 };
 struct ParamInt  {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamInt);
 	short	Base,		// Short (or base)
 			Maximum;	// Nothing (or maximum)
 };
 struct ParamSound {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamSound);
 	short	Handle,
 			Flags;
 	TCHAR	name[64]; // Max sound name
@@ -969,6 +992,7 @@ struct ParamSound {
 	};
 };
 struct ParamPosition {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamPosition);
 	short	Parent_ObjInfoNum,
 			Flags,
 			X, Y,
@@ -980,6 +1004,7 @@ struct ParamPosition {
 			Layer;				//
 };
 struct ParamCreate {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamCreate);
 	ParamPosition	Pos;	// Position structure
 	HFII			FII;	// FrameItemInstance number
 	OINUM			Oi;		// OI of the object to create
@@ -987,63 +1012,80 @@ struct ParamCreate {
 	unsigned int	Free;	// Ignore - Given due to no longer used FII
 };
 struct ParamShoot {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamShoot);
 	ParamPosition	Pos;	// Position structure
 	HFII			FII;	// FrameItemInstance number
 	OINUM			Oi;		// OI of the object to shoot
 	short			Speed;	// Speed
 };
 struct ParamAnimation {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamAnimation);
 	short	Number;
 	TCHAR *	name;
 };
 struct ParamNoP {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamNoP);
 	short Unused;
 };
 struct ParamPlayer {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamPlayer);
 	short Number;
 };
 struct ParamEvery {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamEvery);
 	long	Delay,
 			Counter;
 };
 struct ParamKey {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamKey);
 	unsigned short VK_Code;	// Virtual Key Code
 };
 struct ParamSpeed {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamSpeed);
 	int Speed;
 };
 struct ParamNewPosition {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamNewPosition);
 	unsigned short Direction; // The rest of the position variables are specified elsewhere
 };
 struct ParamZone {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamZone);
 	short	X1, Y1,	// Top-left corner
 			X2, Y2;	// Bottom-right corner
 };
 struct ParamExpression {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamExpression);
 	short	ID,
 			Unknown[6];
 };
 struct ParamColour {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamColour);
 	COLORREF	RGB;
 	long		ID;
 };
 struct ParamBuffer {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamBuffer);
 	void * Buffer; // Or it could be size, I dunno.
 };
 struct ParamFrame {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamFrame);
 	unsigned short Number;
 };
 struct ParamSoundLoop {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamSoundLoop);
 	short NumOfLoops;
 };
 struct ParamNewDir {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamNewDir);
 	unsigned short	OldDir,	// No idea what's inside this struct, all we know is it's 4 bytes.
 					NewDir;
 };
 struct ParamTextNum {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamTextNum);
 	int Number;
 };
 struct ParamClick {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamClick);
 	int Value;
 	enum Masks {
 		ClickMask = 0x00FF,
@@ -1051,6 +1093,7 @@ struct ParamClick {
 	};
 };
 struct ParamProgram {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamProgram);
 	short	Flags;				// Default flags
 	TCHAR	Path[MAX_PATH],		// name of the program
 			Command[108];		// Command line
@@ -1061,12 +1104,14 @@ struct ParamProgram {
 	};
 };
 struct ParamCondSound {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamCondSound);
 	unsigned short	Number,
 					Flags,
 					Loops;
 	TCHAR *			name;
 };
 struct ParamEditorComment {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamEditorComment);
 	LOGFONTV1		LogFont;			// Font
 	COLORREF		ColourFont,			// text color
 					ColourBack;			// Background color
@@ -1075,6 +1120,7 @@ struct ParamEditorComment {
 	TCHAR			Style[40];			// Style
 };
 struct ParamGroup {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamGroup);
 	short			Flags,			// Active / Inactive?
 					ID;				// Group identifier
 	TCHAR			Title[80],		// Title (max 80? chars)
@@ -1094,45 +1140,56 @@ struct ParamGroup {
 };
 #define GETEVPGRP(evpPtr) (paramGroup *)&evpPtr->evp.evp0
 struct ParamGroupPointer {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamGroupPointer);
 	void *	PointTo;
 	short	ID;
 };
 struct ParamFilename {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamFilename);
 	TCHAR * FileName;
 };
 struct ParamString {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamString);
 	TCHAR * String;
 };
 struct ParamCmpTime {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamCmpTime);
 	long	Timer,
 			Loops;
 	short Comparison;
 };
 struct ParamPasteSprite {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamPasteSprite);
 	short	Flags,
 			Security; // == padding?
 };
 struct ParamVKCode {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamVKCode);
 	short Code;
 };
 struct ParamStringExp {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamStringExp);
 	short	ID,
 			Unknown[6];	// Assuming 6 from ParamExpression
 };
 struct ParamInkEffect {
-	short	ID,			// ID of effect
+	NO_DEFAULT_CTORS_OR_DTORS(ParamInkEffect);
+	short	ID,					// ID of effect
 			ParameterEffect;	// Effect parameter
 	long	Free;		// Ignore - free
 };
 struct ParamMenu {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamMenu);
 	long	ID,
 			Security; // == Padding?
 };
 struct ParamVariable {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamVariable);
 	long Value; // Global variable, alterable value, flag
 };
 struct ParamExtension
 {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamExtension);
 	short	size,
 			Type,
 			Code;
@@ -1140,16 +1197,19 @@ struct ParamExtension
 };
 #define		PARAM_EXTBASE			1000
 struct Param8Dirs {
+	NO_DEFAULT_CTORS_OR_DTORS(Param8Dirs);
 	long Flags;
 	enum Mask {
 		// Todo! Use bitXX.
 	};
 };
 struct ParamMvt {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamMvt);
 	short	mvtNumber;
 	TCHAR	mvtName[32];	// Max movement name = 32 bytes
 };
 struct ParamProgram2 {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamProgram2);
 	short	Flags; // Default flags
 	enum Masks {
 		Wait = 0x1,
@@ -1157,6 +1217,7 @@ struct ParamProgram2 {
 	};
 };
 struct ParamEffect {
+	NO_DEFAULT_CTORS_OR_DTORS(ParamEffect);
 	TCHAR *	name;
 };
 
@@ -1171,6 +1232,7 @@ namespace Edif {
 ///////////////////////////////////////////////////////////////////////
 struct FastLoop
 {
+	NO_DEFAULT_CTORS_OR_DTORS(FastLoop);
 	TCHAR *			Next;
 	TCHAR			name[64];	// Max fast loop name (64 bytes)
 	unsigned short	Flags;
@@ -1306,6 +1368,7 @@ struct objectsList {
 #define		STEP_TEMPSTRINGS	64
 
 struct runHeader2 {
+	NO_DEFAULT_CTORS_OR_DTORS(runHeader2);
 	unsigned long	OldPlayer,		// Previous player entries
 					NewPlayer,		// Modified player entries
 					InputMask,		// Inhibated players entries
@@ -1359,7 +1422,7 @@ struct runHeader2 {
 #define	GAME_YBORDER		300
 
 struct runHeader3 {
-
+	NO_DEFAULT_CTORS_OR_DTORS(runHeader3);
 	unsigned short	Graine,			// Random generator seed
 					Free;			// Ignore - padding
 
@@ -1474,7 +1537,7 @@ typedef BOOL (* CALLCOLMASKTESTPOINT) (HeaderObject *, int x, int y, int nLayer,
 #define callColMaskTestPoint(hoPtr, x, y, nLayer, plan) ( (hoPtr->hoAdRunHeader)->rh4.rh4ColMaskTestPoint(hoPtr, x, y, nLayer, plan) )
 
 struct RunHeader4 {
-
+	NO_DEFAULT_CTORS_OR_DTORS(RunHeader4);
 	kpj *			rh4KpxJumps;				// Jump table offset
 	short			rh4KpxNumOfWindowProcs,		// Number of routines to call
 					rh4Free;					// Padding - ignore
@@ -1615,6 +1678,7 @@ enum class GAMEFLAGS {
 };
 
 struct RunHeader {
+	NO_DEFAULT_CTORS_OR_DTORS(RunHeader);
 	void *				IdEditWin,			// npWin or Win *, but evaluates to void *
 		 *				IdMainWin;
 	void *				IdAppli;			// npAppli or Appli *, but evaluates to void *
@@ -1730,6 +1794,7 @@ struct RunHeader {
 #define HOX_INT
 
 struct HeaderObject {
+	NO_DEFAULT_CTORS_OR_DTORS(HeaderObject);
 	short  				Number,			// Number of the object
 		 				NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
 
@@ -1801,7 +1866,7 @@ struct HeaderObject {
 // Object's movement structure
 // --------------------------------------
 struct rMvt {
-
+	NO_DEFAULT_CTORS_OR_DTORS(rMvt);
 	int  	rmAcc;						// Current acceleration
 	int  	rmDec;						// Current Decelaration
 	int		rmCollisionCount;			// Collision counter
@@ -1940,6 +2005,7 @@ enum
 // Object's animation structure
 // ----------------------------------------
 struct rAni {
+	NO_DEFAULT_CTORS_OR_DTORS(rAni);
 	int	 			AnimForced,		// Flags if forced
 		 			DirForced,
 		 			SpeedForced;
@@ -1979,6 +2045,7 @@ enum class RSFLAG : std::uint16_t {
 };
 enum_class_is_a_bitmask(RSFLAG);
 struct Sprite {
+	NO_DEFAULT_CTORS_OR_DTORS(Sprite);
 	int	 			Flash,				// When flashing objects
 		 			FlashCount,
 		   			Layer,				// Layer
@@ -1999,6 +2066,7 @@ struct Sprite {
 // Objects's internal variables (build # >= 243)
 // ----------------------------------------
 struct AltVals {
+	NO_DEFAULT_CTORS_OR_DTORS(AltVals);
 	union {
 		struct CF25 {
 			CValue* Values;
@@ -2045,7 +2113,7 @@ typedef AltVals *	LPRVAL;
 #endif
 typedef void (* RCROUTINE)(HeaderObject *);
 struct rCom {
-
+	NO_DEFAULT_CTORS_OR_DTORS(rCom);
 	int			rcOffsetAnimation; 		// Offset to anims structures
 	int			rcOffsetSprite;			// Offset to sprites structures
 	RCROUTINE	rcRoutineMove;			// Offset to movement routine
@@ -2091,6 +2159,7 @@ struct rCom {
 struct RunObject {
 
 	HeaderObject  	roHo;		  		// Common structure
+	NO_DEFAULT_CTORS_OR_DTORS(RunObject);
 
 	rCom			roc;				// Anim/movement structure
 	rMvt			rom;				// Movement structure
@@ -2113,6 +2182,7 @@ struct RunObject {
 // ------------------------------------------------------
 struct extHeader_v1
 {
+	NO_DEFAULT_CTORS_OR_DTORS(extHeader_v1);
 	short extSize,
 		  extMaxSize,
 		  extOldFlags,		// For conversion purpose
@@ -2124,6 +2194,7 @@ struct extHeader_v1
 // System objects (text, question, score, lives, counter)
 // ------------------------------------------------------
 struct rs {
+	NO_DEFAULT_CTORS_OR_DTORS(rs);
 	HeaderObject 	HeaderObject;	// For all the objects
 	rCom			Common;			// Anims / movements / sprites structures
 	rMvt			Movement;		// Mouvement structure
@@ -2239,6 +2310,7 @@ struct objInfoList {
 // Object creation structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct CreateObjectInfo {
+	NO_DEFAULT_CTORS_OR_DTORS(CreateObjectInfo);
 	LevelObject *	cobLevObj;		// Leave first!
 	unsigned short	cobLevObjSeg,
 					cobFlags;
@@ -2261,6 +2333,7 @@ struct CreateObjectInfo {
 // ---------------------------------------
 
 struct qualToOi {
+	NO_DEFAULT_CTORS_OR_DTORS(qualToOi);
 	short		CurrentOi,
 				Next;
 	int			ActionPos;
@@ -2281,6 +2354,7 @@ struct qualToOi {
 
 // Information structure about the extension
 struct kpxRunInfos {
+	NO_DEFAULT_CTORS_OR_DTORS(kpxRunInfos);
 	void *			Conditions;			// 00 Ignore - requires STAND_ALONE - Offset to condition jump list
 	void *			Actions;			// 04 Ignore - requires STAND_ALONE - Offset to action jump list
 	void *			Expressions;		// 08 Ignore - requires STAND_ALONE - Offset to expression jump list
@@ -2301,6 +2375,7 @@ struct kpxRunInfos {
 // --------------------
 
 struct kpj {
+	NO_DEFAULT_CTORS_OR_DTORS(kpj);
 	short				(FusionAPI * CreateRunObject)			(HeaderObject *, extHeader *, CreateObjectInfo *);
 	short				(FusionAPI * DestroyRunObject)			(HeaderObject *, long);
 	short				(FusionAPI * HandleRunObject)			(HeaderObject *);
@@ -2353,6 +2428,7 @@ struct kpj {
 // Condition/action jumps
 struct CallTables
 {
+	NO_DEFAULT_CTORS_OR_DTORS(CallTables);
 	BOOL (** pConditions1)(event2* pe, HeaderObject * pHo);
 	BOOL (** pConditions2)(event2* pe);
 	void (** pActions)(event2* pe);
@@ -2418,6 +2494,7 @@ enum class FILEINFO {
 typedef void (* DRAWROUTINE_PROC)(drawRoutine*);
 
 struct drawRoutine {
+	NO_DEFAULT_CTORS_OR_DTORS(drawRoutine);
 	drawRoutine* next;
 	DRAWROUTINE_PROC routine;
 	long	param1;
@@ -2433,6 +2510,7 @@ struct drawRoutine {
 #define		MAX_PUSHEDEVENTS	32
 
 struct pev {
+	NO_DEFAULT_CTORS_OR_DTORS(pev);
 	long	pevCode;
 	void (* pevRoutine)(HeaderObject *, long);
 	long	pevParam;
@@ -2444,6 +2522,7 @@ struct pev {
 // QUALIFIERS
 struct qualifierLoad
 {
+	NO_DEFAULT_CTORS_OR_DTORS(qualifierLoad);
 	OINUM		qOi;
 	ITEMTYPE	qType;
 	unsigned short		qList;
@@ -2493,7 +2572,7 @@ enum class MODIF {
 
 // Menu header (v2)
 struct MenuHdr {
-
+	NO_DEFAULT_CTORS_OR_DTORS(MenuHdr);
 	unsigned long	HdrSize,		// == sizeof(MenuHdr)
 					MenuOffset,		// From start of MenuHdr
 					MenuSize,
@@ -2505,6 +2584,7 @@ struct MenuHdr {
 // Application mini Header
 //
 struct AppMiniHeader {
+	NO_DEFAULT_CTORS_OR_DTORS(AppMiniHeader);
 
 	union {
 		char			Type[4];	// "PAME"
@@ -2545,12 +2625,14 @@ enum {
 
 #define PLAYERNAME_SIZE		100
 struct PlayerCtrls {
+	NO_DEFAULT_CTORS_OR_DTORS(PlayerCtrls);
 	unsigned short	PlayerCtrls_Type,		// Control type per player (0 = keyboard, 1-4 = joy1-4)
 					PlayerCtrls_Keys[8];	// Control keys per player
 };
 //typedef PlayerCtrls* fpPlayerCtrls;
 
 struct AppHeader {
+	NO_DEFAULT_CTORS_OR_DTORS(AppHeader);
 	unsigned int	size;					// Structure size
 	unsigned short	Flags,					// Flags (GA_XXX defines)
 					NewFlags,				// New flags (GANF_XXX defines)
@@ -2620,6 +2702,7 @@ struct AppHeader {
 
 // Optional header
 struct AppHeader2 {
+	NO_DEFAULT_CTORS_OR_DTORS(AppHeader2);
 
 	unsigned long	Options,
 					BuildType,
@@ -2704,6 +2787,7 @@ enum class BUILDTYPE {
 //
 #ifndef	  _H2INC
 struct ExtDesc {
+	NO_DEFAULT_CTORS_OR_DTORS(ExtDesc);
 	unsigned short	extSize,
 					extIndex;
 	unsigned int	extMagicNumber;
@@ -2711,6 +2795,7 @@ struct ExtDesc {
 // typedef ExtDesc *extHeader *DESC;
 
 struct ExtDesc2 {
+	NO_DEFAULT_CTORS_OR_DTORS(ExtDesc2);
 	unsigned short	extSize,
 					extIndex;
 	unsigned long	extMagicNumber,
@@ -2724,6 +2809,7 @@ struct ExtDesc2 {
 // Movement Extensions Chunk
 //
 struct MvtExtDesc {
+	NO_DEFAULT_CTORS_OR_DTORS(MvtExtDesc);
 	unsigned short	extTotalSize,
 					extHdrSize;
 	unsigned int	extBuild;
@@ -2735,6 +2821,7 @@ struct MvtExtDesc {
 //
 struct FrameHeader
 {
+	NO_DEFAULT_CTORS_OR_DTORS(FrameHeader);
 	// Frame width/height
 	LONG			Width,			// Frame width in pixels
 					Height;			// Frame height in pixels
@@ -2781,6 +2868,7 @@ struct FrameHeader
 
 struct EditFrameLayer
 {
+	NO_DEFAULT_CTORS_OR_DTORS(EditFrameLayer);
 	unsigned long	Options;		// Options
 	float			xCoef, yCoef;	// X/Y Coefficents
 	unsigned int	nBkdLOs,
@@ -2789,7 +2877,7 @@ struct EditFrameLayer
 };
 
 struct EditFrameLayerEffect {
-
+	NO_DEFAULT_CTORS_OR_DTORS(EditFrameLayerEffect);
 	unsigned long	InkFx,
 					RGBA,
 					ExtInkFxIdx,
@@ -2802,6 +2890,7 @@ struct EditFrameLayerEffect {
 #ifdef HWABETA
 
 struct EffectHdr {
+	NO_DEFAULT_CTORS_OR_DTORS(EffectHdr);
 	unsigned long	EffectNameOffset,
 					EffectDataOffset,
 					EffectParamsOffset,
@@ -2811,19 +2900,20 @@ struct EffectHdr {
 #define EFFECTOPT_BKDTEXTUREMASK	0x000F
 
 struct EffectParamsHdr {
+	NO_DEFAULT_CTORS_OR_DTORS(EffectParamsHdr);
 	unsigned long	NumOfParams,
 					ParamTypesOffset,
 					ParamNamesOffset;
 };
 
 struct EffectRunData {
-
+	NO_DEFAULT_CTORS_OR_DTORS(EffectRunData);
 	unsigned int	EffectIndex,
 					NumOfParams;
 };
 
 struct FrameEffect {
-
+	NO_DEFAULT_CTORS_OR_DTORS(FrameEffect);
 	unsigned int	InkEffect,
 					InkEffectParam;
 };
@@ -2835,6 +2925,7 @@ struct FrameEffect {
 //
 struct ObjInfoHeader
 {
+	NO_DEFAULT_CTORS_OR_DTORS(ObjInfoHeader);
 	unsigned short	Handle,
 					Type,
 					Flags,			// Memory flags
@@ -2861,6 +2952,7 @@ enum class OIFlags : short
 
 #ifndef	  _H2INC
 struct diskLO {
+	NO_DEFAULT_CTORS_OR_DTORS(diskLO);
 	unsigned short	LO_Handle;			// HLO
 	unsigned short	OI_Handle;			// HOI
 	LONG			X, Y;				// Coords
@@ -2891,6 +2983,7 @@ enum class OBSTACLE {
 //
 #ifndef	  _H2INC
 struct Static_OC {
+	NO_DEFAULT_CTORS_OR_DTORS(Static_OC);
 
 	// Size
 	unsigned int	size;				// OC size?
@@ -2912,6 +3005,7 @@ struct Static_OC {
 #ifndef	  _H2INC
 // Gradient
 typedef struct GradientData {
+	NO_DEFAULT_CTORS_OR_DTORS(GradientData);
 	COLORREF		color1,
 					color2;
 	unsigned int	GradientFlags; // prev. vertical
@@ -2945,6 +3039,7 @@ enum class FILLTYPE {
 #ifndef	  _H2INC
 
 class FillType_Data {
+	NO_DEFAULT_CTORS_OR_DTORS(FillType_Data);
 public:
 	unsigned short			FillType;
 
@@ -2982,7 +3077,7 @@ public:
 #ifndef	  _H2INC
 
 class FilledShape_Data {
-public:
+	NO_DEFAULT_CTORS_OR_DTORS(FilledShape_Data);
 	unsigned short	BorderSize;			// Border
 	COLORREF		BorderColor;
 	unsigned short	Shape;				// Shape
@@ -2998,6 +3093,8 @@ public:
 #ifndef	  _H2INC
 
 typedef struct QuickBackdrop_OC {
+struct QuickBackdrop_OC {
+	NO_DEFAULT_CTORS_OR_DTORS(QuickBackdrop_OC);
 
 	unsigned int		size;
 
@@ -3019,6 +3116,7 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 #ifndef	  _H2INC
 
 struct Backdrop_OC {
+	NO_DEFAULT_CTORS_OR_DTORS(Backdrop_OC);
 
 	unsigned int	size;
 
@@ -3045,6 +3143,7 @@ typedef Backdrop_OC * LPBackdrop_OC;
 
 class ImageSet_Data {
 public:
+	NO_DEFAULT_CTORS_OR_DTORS(ImageSet_Data);
 	unsigned short		nbFrames;		// Number of frames
 								// Followed by list of image handles (unsigned short[])
 };
@@ -3055,6 +3154,7 @@ typedef ImageSet_Data * LPImageSet_Data;
 //
 struct otText {
 
+	NO_DEFAULT_CTORS_OR_DTORS(otText);
 	unsigned int	otDWSize;
 	LONG	otCx;
 	LONG	otCy;
@@ -3066,6 +3166,7 @@ typedef otText	*	fpot;
 #define sizeof_ot	(sizeof(otText)-sizeof(unsigned int))
 
 typedef	struct txString {
+	NO_DEFAULT_CTORS_OR_DTORS(txString);
 	unsigned short		tsFont;					// Font
 	unsigned short		tsFlags;				// Flags
 	COLORREF	tsColor;				// Color
@@ -3088,6 +3189,7 @@ typedef	txString	*	fpts;
 // Scores, lives, counters
 //
 struct CtAnim_Data {
+	NO_DEFAULT_CTORS_OR_DTORS(CtAnim_Data);
 
 	unsigned int		odDWSize;
 	LONG		odCx;					// Size: only lives & counters
@@ -3144,6 +3246,7 @@ enum class COUNTER_IMAGE {
 #ifndef	  _H2INC
 
 struct ocRTF {
+	NO_DEFAULT_CTORS_OR_DTORS(ocRTF);
 	unsigned int	size;
 	unsigned int	Version;	// 0
 	unsigned int	Options;	// Options
@@ -3166,6 +3269,7 @@ struct ocRTF {
 #ifndef	  _H2INC
 
 struct ocCCA {
+	NO_DEFAULT_CTORS_OR_DTORS(ocCCA);
 
 	unsigned int	size;
 	LONG			XSize,			// Size (ignored)
@@ -3222,6 +3326,7 @@ struct ocCCA {
 
 // Transition header
 typedef struct TransitionHdr {
+	NO_DEFAULT_CTORS_OR_DTORS(TransitionHdr);
 	unsigned int		trDllID;				// DLL id
 	unsigned int		trID;					// Transition ID
 	unsigned int		trDuration;				// Duration
@@ -3232,6 +3337,7 @@ typedef struct TransitionHdr {
 // Transition run-time data
 class Transition_Data {
 public:
+	NO_DEFAULT_CTORS_OR_DTORS(Transition_Data);
 	TransitionHdr	trHdr;
 	unsigned int			trDllNameOffset;
 	unsigned int			trParamsOffset;
@@ -3428,7 +3534,7 @@ struct EditAnimationParams;
 
 // Global variables structure
 struct mv {
-
+	NO_DEFAULT_CTORS_OR_DTORS(mv);
 	// Common to editor and runtime
 	HINSTANCE			HInst;				// Application HINSTANCE
 	void *				IdAppli;			// Application object in DLL
@@ -3575,6 +3681,7 @@ struct mv {
 
 // 3rd parameter of CREATEIMAGEFROMFILE
 struct CreateImageFromFileInfo {
+	NO_DEFAULT_CTORS_OR_DTORS(CreateImageFromFileInfo);
 	int			nSize,
 				xHS,
 				yHS,
@@ -3736,6 +3843,7 @@ enum class KGI : int {
 
 // Extension function table
 struct kpxFunc {
+	NO_DEFAULT_CTORS_OR_DTORS(kpxFunc);
 	HINSTANCE	kpxHInst;
 	TCHAR *		kpxName,
 		  *		kpxSubType;
@@ -3767,6 +3875,7 @@ struct kpxFunc {
 
 // Movement Extension
 struct MvxFnc {
+	NO_DEFAULT_CTORS_OR_DTORS(MvxFnc);
 	HINSTANCE	mvxHInst;
 	TCHAR *		mvxFileTitle;
 
@@ -3790,7 +3899,7 @@ struct MvxFnc {
 // Note: mainly used at runtime
 
 struct LevelObject {
-
+	NO_DEFAULT_CTORS_OR_DTORS(LevelObject);
 	unsigned short	Handle,			// HLO
 					OiHandle;		// HOI
 	int				X, Y;			// Coords
@@ -3812,7 +3921,7 @@ struct LevelObject {
 // Added backdrop objects
 //
 struct bkd2 {
-
+	NO_DEFAULT_CTORS_OR_DTORS(bkd2);
 	unsigned short	loHnd,			// 0
 					oiHnd;			// 0
 	int				x,
@@ -3836,6 +3945,7 @@ struct bkd2 {
 //
 struct RunFrameLayer
 {
+	NO_DEFAULT_CTORS_OR_DTORS(RunFrameLayer);
 	// name
 	TCHAR *		pName;			// name
 
@@ -3884,7 +3994,7 @@ struct RunFrameLayer
 
 // Object transition data
 struct objTransInfo {
-
+	NO_DEFAULT_CTORS_OR_DTORS(objTransInfo);
 	struct CTransition *	m_pTrans;				// Transition object
 	cSurface *		m_SfSave,				// Background surface
 			 *		m_SfDisplay,			// Working surface
@@ -3922,6 +4032,7 @@ struct objTransInfo {
 
 
 struct CRunFrame {
+	NO_DEFAULT_CTORS_OR_DTORS(CRunFrame);
 	// Header
 	FrameHeader			hdr;
 
@@ -4080,6 +4191,7 @@ struct CBinaryFile {
 #define ARF_PAUSEDBEFOREMODALLOOP	0x8
 
 struct CRunApp {
+	NO_DEFAULT_CTORS_OR_DTORS(CRunApp);
 	// Application info
 	AppMiniHeader	miniHdr;			// Version
 	AppHeader		hdr;				// General info

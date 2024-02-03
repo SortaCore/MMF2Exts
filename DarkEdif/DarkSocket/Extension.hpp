@@ -10,8 +10,8 @@ public:
 	#define MakeDelim() const char delim [] = "|" // Used for delimiters in tokenizing
 	#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
 
-	RUNDATA * rdPtr;
-	RunHeader * rhPtr;
+	RunHeader* rhPtr;
+	RunObjectMultiPlat rdPtr; // you should not need to access this
 
 	Edif::Runtime Runtime;
 
@@ -23,7 +23,7 @@ public:
 
 	static const int WindowProcPriority = 100;
 
-	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
+	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
 
 	std::shared_ptr<EventToRun> curEvent;

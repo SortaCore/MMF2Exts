@@ -15,15 +15,12 @@ public:
 	// Hide stuff requiring other headers
 	//SaveExtInfo threadData; // Must be first variable in Extension class
 
-#ifdef _WIN32
-	RUNDATA* rdPtr;
 	RunHeader* rhPtr;
-#elif defined(__ANDROID__)
-	RuntimeFunctions& runFuncs;
+	RunObjectMultiPlat rdPtr; // you should not need to access this
+#ifdef __ANDROID__
 	global<jobject> javaExtPtr;
-#else
-	RuntimeFunctions& runFuncs;
-	void* objCExtPtr;
+#elif defined(__APPLE__)
+	void* const objCExtPtr;
 #endif
 
     Edif::Runtime Runtime;
@@ -45,13 +42,13 @@ public:
     static const int WindowProcPriority = 100;
 
 #ifdef _WIN32
-	Extension(RUNDATA* rdPtr, EDITDATA* edPtr, CreateObjectInfo* cobPtr);
+	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
 #else
-	Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
 #endif
-    ~Extension();
+	~Extension();
 
 
     /*  Add any data you want to store in your extension to this class

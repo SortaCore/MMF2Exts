@@ -15,15 +15,12 @@ public:
 	std::tstring_view loopName;
 	static std::atomic<bool> AppWasClosed;
 
-#ifdef _WIN32
-	RUNDATA* rdPtr;
 	RunHeader* rhPtr;
-#elif defined(__ANDROID__)
-	RuntimeFunctions& runFuncs;
+	RunObjectMultiPlat rdPtr; // you should not need to access this
+#ifdef __ANDROID__
 	global<jobject> javaExtPtr;
-#else
-	RuntimeFunctions& runFuncs;
-	void* objCExtPtr;
+#elif defined(__APPLE__)
+	void* const objCExtPtr;
 #endif
 
 	Edif::Runtime Runtime;
@@ -37,11 +34,11 @@ public:
 	static const int WindowProcPriority = 100;
 
 #ifdef _WIN32
-	Extension(RUNDATA* rdPtr, EDITDATA* edPtr, CreateObjectInfo* cobPtr);
+	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
 #else
-	Extension(RuntimeFunctions& runFuncs, EDITDATA* edPtr, void* objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
 #endif
 	~Extension();
 
@@ -416,7 +413,7 @@ public:
 
 		// Constructor and destructor
 
-		GlobalInfo(Extension* e, EDITDATA* edPtr);
+		GlobalInfo(Extension* e, const EDITDATA* const edPtr);
 
 		// Due to Runtime.WriteGlobal() not working if there's no Extension,
 		// or not working mid-frame transition, we'll have to just fake its deletion,

@@ -453,7 +453,7 @@ DarkEdif::DLL::PropAccesser & Elevate(const DarkEdif::Properties &p)
 // Reads DarkEdif::Properties without the fanfare.
 struct DarkEdif::DLL::PropAccesser
 {
-	NO_DEFAULT_CTORS(PropAccesser);
+	NO_DEFAULT_CTORS_OR_DTORS(PropAccesser);
 	// Type of DarKEdif::Properties
 	decltype(Properties::propVersion) propVersion;
 
@@ -1611,6 +1611,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			static int intData2;
 			intData2 = (int)intDataAsLong;
 			
+
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
 		case IDs::PROPTYPE_EDIT_FLOAT:
@@ -3584,21 +3585,21 @@ static DarkEdif::FusionDebuggerAdmin FusionDebugAdmin;
 std::uint16_t * FusionAPI GetDebugTree(RUNDATA *rdPtr)
 {
 #pragma DllExportHint
-	return FusionDebugAdmin.GetDebugTree(rdPtr->pExtension);
+	return FusionDebugAdmin.GetDebugTree(((RunObject*)rdPtr)->GetExtension());
 }
 
 // This routine returns the text of a given item.
 void FusionAPI GetDebugItem(TCHAR *pBuffer, RUNDATA *rdPtr, int id)
 {
 #pragma DllExportHint
-	FusionDebugAdmin.GetDebugItem(rdPtr->pExtension, pBuffer, id);
+	FusionDebugAdmin.GetDebugItem(((RunObject *)rdPtr)->GetExtension(), pBuffer, id);
 }
 
 // This routine allows the user to edit the debugger's editable items.
 void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 {
 #pragma DllExportHint
-	FusionDebugAdmin.StartEditForItemID(rdPtr->pExtension, id);
+	FusionDebugAdmin.StartEditForItemID(((RunObject*)rdPtr)->GetExtension(), id);
 }
 #endif // EditorBuild
 

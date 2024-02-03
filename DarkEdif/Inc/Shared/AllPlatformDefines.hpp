@@ -161,14 +161,19 @@ namespace DarkEdif {
 
 
 // Tells the compiler not to generate any default constructor/destructor for this class
-#define NO_DEFAULT_CTORS(className) \
+#define NO_DEFAULT_CTORS_OR_DTORS(className) \
 	className() = delete; \
 	~className() = delete; \
 	className(className&) = delete; \
 	className(className&&) = delete; \
 	className(const className&) = delete; \
 	className(const className&&) = delete;
-
+#define NO_DEFAULT_CTORS(className) \
+	className() = delete; \
+	className(className&) = delete; \
+	className(className&&) = delete; \
+	className(const className&) = delete; \
+	className(const className&&) = delete;
 
 struct extHeader
 {

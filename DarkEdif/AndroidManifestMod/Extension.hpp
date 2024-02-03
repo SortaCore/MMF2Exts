@@ -5,16 +5,8 @@ class Extension
 {
 public:
 
-#ifdef _WIN32
-	RUNDATA * rdPtr;
-	RunHeader * rhPtr;
-#elif defined(__ANDROID__)
-	RuntimeFunctions & runFuncs;
-	global<jobject> javaExtPtr;
-#else
-	RuntimeFunctions & runFuncs;
-	void * objCExtPtr;
-#endif
+	RunHeader* rhPtr;
+	RunObjectMultiPlat rdPtr; // you should not need to access this
 
 	Edif::Runtime Runtime;
 
@@ -28,13 +20,7 @@ public:
 
 	static const int WindowProcPriority = 100;
 
-#ifdef _WIN32
-	Extension(RUNDATA * rdPtr, EDITDATA * edPtr, CreateObjectInfo * cobPtr);
-#elif defined(__ANDROID__)
-	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, jobject javaExtPtr);
-#else
-	Extension(RuntimeFunctions & runFuncs, EDITDATA * edPtr, void * objCExtPtr);
-#endif
+	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
 
 	int DummyExpression();

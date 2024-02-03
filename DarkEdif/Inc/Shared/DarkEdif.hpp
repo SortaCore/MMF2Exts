@@ -12,7 +12,7 @@
 // Struct contains information about a/c/e
 struct ACEInfo {
 	// We can't copy this consistently because of the zero-sized array. Prevent creating copy/move constructors.
-	NO_DEFAULT_CTORS(ACEInfo);
+	NO_DEFAULT_CTORS_OR_DTORS(ACEInfo);
 
 	union BothParams {
 		// Actions, conditions
@@ -382,7 +382,7 @@ namespace DarkEdif {
 
 	struct Properties
 	{
-		NO_DEFAULT_CTORS(Properties);
+		NO_DEFAULT_CTORS_OR_DTORS(Properties);
 
 		// =====
 		// DarkEdif functions, use within Extension ctor.

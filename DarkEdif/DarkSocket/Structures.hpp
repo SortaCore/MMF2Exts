@@ -70,6 +70,7 @@ enum class SocketType
 	Either
 };
 
+class Extension;
 struct Thread;
 struct GlobalInfo
 {
@@ -112,7 +113,7 @@ struct GlobalInfo
 	bool unwrapIPv6 = true;
 
 	//void ReturnToFusion(int ReturnAsI, int SocketID, const void * Msg, int MsgLength);
-	GlobalInfo(Extension * ext, EDITDATA * edPtr);
+	GlobalInfo(Extension * ext, const EDITDATA * const edPtr);
 	~GlobalInfo();
 
 private:
