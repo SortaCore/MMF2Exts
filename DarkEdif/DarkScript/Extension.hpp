@@ -342,16 +342,6 @@ public:
 	void evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects);
 	void evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjectListCache>& selectedObjects, bool unselectAllExisting);
 
-
-
-    /*  Add your actions, conditions and expressions as real class member
-        functions here. The arguments (and return type for expressions) must
-        match EXACTLY what you defined in the JSON.
-
-        Remember to link the actions, conditions and expressions to their
-        numeric IDs in the class constructor (Extension.cpp)
-    */
-
 	std::shared_ptr<DelayedFunction> curDelayedFuncLoop, curDelayedFunc;
 	std::shared_ptr<FunctionTemplate> curFuncTemplateLoop;
 	const Param * curParamLoop = nullptr;
@@ -392,7 +382,7 @@ public:
 	void CreateError(PrintFHintInside const TCHAR* format, ...) PrintFHintAfter(2, 3);
 	#define CreateErrorT(x, ...) CreateError(_T(x), ##__VA_ARGS__)
 
-    /// Actions
+	/// Actions
 
 	void Template_SetFuncSignature(const TCHAR * funcSig, int delayable, int repeatable, int recursable);
 	void Template_SetDefaultReturnN(const TCHAR * funcName);
@@ -416,7 +406,7 @@ public:
 	void DelayedFunctions_Loop(const TCHAR* loopName);
 	void DelayedFunctions_CancelByPrefix(const TCHAR* funcNamePrefix);
 
-    void RunFunction_ActionDummy_Num(int result); // dummy
+	void RunFunction_ActionDummy_Num(int result); // dummy
 	void RunFunction_ActionDummy_String(const TCHAR * result); // dummy
 	// The dummies must be last parameter, so when last parameter is evaluated, we have the previous parameters we can read from
 	void RunFunction_Foreach_Num(HeaderObject * obj, int dummy);
@@ -442,10 +432,7 @@ public:
 	void Logging_SetLevel(const TCHAR* funcNames, const TCHAR* logLevel);
 
 
-
-
-
-    /// Conditions
+	/// Conditions
 
 	bool AlwaysTrue() const;
 	bool LoopNameMatch(const TCHAR* loopName) const;
@@ -469,7 +456,7 @@ public:
 	bool Logging_OnAnyFunctionCompletedOK();
 	bool Logging_OnAnyFunctionAborted();
 
-    /// Expressions
+	/// Expressions
 
 	const TCHAR * Logging_GetDarkScriptError();
 	const TCHAR * Logging_GetAbortReason();
@@ -517,23 +504,20 @@ public:
 	const TCHAR * LastReturn_AsString();
 	const TCHAR * LastReturn_Type();
 
-	const TCHAR* TestFunc(int param);
+	const TCHAR * TestFunc(int param);
 
-    /* These are called if there's no function linked to an ID */
+	/* These are called if there's no function linked to an ID */
 
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
 
+	/*  These replace the functions like HandleRunObject that used to be
+		implemented in Runtime.cpp. They work exactly the same, but they're
+		inside the extension class.
+	*/
 
-
-
-    /*  These replace the functions like HandleRunObject that used to be
-        implemented in Runtime.cpp. They work exactly the same, but they're
-        inside the extension class.
-    */
-
-    REFLAG Handle();
+	REFLAG Handle();
 	REFLAG Display();
 
 	short FusionRuntimePaused();

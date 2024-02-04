@@ -36,18 +36,18 @@
 {
 @public	
 	CRunApp* pRunApp;
-	
+
 	NSTimer* timer;
 	NSTimer* cleanTimer;
 	NSTimer* pruneTimer;
 	CADisplayLink* displayLink;
 	BOOL usesDisplayLink;
 	int frameInterval;
-	
+
 	CRenderer* renderer;
 	CGRect appRect;
 	CGRect screenRect;
-	
+
 	NSMutableArray* touchesBegan;
 	NSMutableArray* touchesMoved;
 	NSMutableArray* touchesEnded;

@@ -86,7 +86,7 @@ public:
 
 	GLuint buffer;
     GLuint vao;
-    
+
 	//OpenGL capabilities
 	GLint maxTextureSize;
 
@@ -120,10 +120,10 @@ public:
 	CShader* defaultShader;
 	CShader* gradientShader;
 	CShader* currentShader;
-    
+
     CShader* perspectiveShader;
     CShader* sinewaveShader;
-    
+
     CShader* effectShader;
     CShader** indexedShaders;
     int iShader;
@@ -155,7 +155,7 @@ public:
 
 	void setInkEffect(int effect, int effectParam, CShader* shader);
 	void setProjectionMatrix(int x, int y, int width, int height);
-    
+
     void setSurfaceTextureAtIndex(CTexture* image, NSString* name, int index);
     void updateSurfaceTexture();
 
@@ -206,34 +206,34 @@ public:
 	void cleanUnused();
 	void pruneTexture();
 	void clearPruneList();
-    
+
     // to be used with RTT
     void screenAreaToTexture(CTexture* texture, int x , int y, int w, int h, int mode);
     void screenPixelsToTexture(CTexture* texture, int x , int y, int w, int h);
     CIImage* screenAreaToImage(int x , int y, int width, int height);
-    
+
     //Shader operation
     int addShader(NSString* shaderName, NSString* vertexShader, NSString* fragmentShader, NSArray* shaderVariables, bool useTexCoord, bool useColors);
     int addShader(NSString* shaderName, NSArray* shaderVariables, bool useTexCoord, bool useColors);
     void removeShader(int shaderIndex);
     void setEffectShader(int shaderIndex);
     void removeEffectShader();
-    
+
     void updateVariable1i(NSString* varName, int value);
     void updateVariable1i(int varIndex, int value);
     void updateVariable1f(NSString* varName, float value);
     void updateVariable1f(int varIndex, float value);
-    
+
     void updateVariable2i(NSString* varName, int value0, int value1);
     void updateVariable2i(int varIndex, int value0, int value1);
     void updateVariable2f(NSString* varName, float value0, float value1);
     void updateVariable2f(int varIndex, float value0, float value1);
-    
+
     void updateVariable3i(NSString* varName, int value0, int value1, int value2);
     void updateVariable3i(int varIndex, int value0, int value1, int value2);
     void updateVariable3f(NSString* varName, float value0, float value1, float value2);
     void updateVariable3f(int varIndex, float value0, float value1, float value2);
-    
+
     void updateVariable4i(NSString* varName, int value0, int value1, int value2, int value3);
     void updateVariable4i(int varIndex, int value0, int value1, int value2, int value3);
     void updateVariable4f(NSString* varName, float value0, float value1, float value2, float value3);

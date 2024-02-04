@@ -70,20 +70,20 @@ typedef struct ImageInfo ImageInfo;
 	int chunkSize;
 	CArrayList* maskRotation;
 	CArrayList* replacedColors;
-    
+
     #define IMGFLAG_REPLACEDCOLORS  0x1000  // Volatil flag used by replaceColor action
-	
+
 	short format;
 	short flags;
 	short bytesPrPixel;
 	int openGLmode;
 	int openGLformat;
-	
+
 	unsigned int* data;
 	NSUInteger dataLength;
     CMask* mask;
     CMask* maskPlatform;
-	
+
 	int lineWidth;
 	int bLineWidth;
 	BOOL bCanRelease;

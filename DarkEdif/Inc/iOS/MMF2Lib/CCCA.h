@@ -78,7 +78,7 @@
 	CSprite* sprite;
 	BOOL bVisible;
 	CRenderToTexture* rtt;
-    
+
     int nWindowUpdate;
 }
 -(void)startCCA:(CObjectCommon*)ocPtr withStartFrame:(int)nStartFrame;

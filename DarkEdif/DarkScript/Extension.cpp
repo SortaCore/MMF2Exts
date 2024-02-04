@@ -17,14 +17,14 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr), FusionDebugger(this)
 #endif
 {
-    /*
-        Link all your action/condition/expression functions to their IDs to match the
-        IDs in the JSON here
-    */
+	/*
+		Link all your action/condition/expression functions to their IDs to match the
+		IDs in the JSON here
+	*/
 
 	// Actions
 
-    LinkAction(0, Template_SetFuncSignature);
+	LinkAction(0, Template_SetFuncSignature);
 	LinkAction(1, Template_SetDefaultReturnI);
 	LinkAction(2, Template_SetDefaultReturnF);
 	LinkAction(3, Template_SetDefaultReturnS);
@@ -69,7 +69,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 
 	// Conditions
 
-    LinkCondition(0, AlwaysTrue); // OnDarkScriptError
+	LinkCondition(0, AlwaysTrue); // OnDarkScriptError
 	LinkCondition(1, OnFunction);
 	LinkCondition(2, OnForeachFunction);
 	LinkCondition(3, OnFunctionAborted);
@@ -259,12 +259,12 @@ REFLAG Extension::Handle()
 
 REFLAG Extension::Display()
 {
-    /*
-       If you return REFLAG_DISPLAY in Handle() this routine will run.
-    */
+	/*
+	   If you return REFLAG_DISPLAY in Handle() this routine will run.
+	*/
 
-    // Ok
-    return REFLAG::NONE;
+	// Ok
+	return REFLAG::NONE;
 }
 
 short Extension::FusionRuntimePaused()
@@ -272,8 +272,8 @@ short Extension::FusionRuntimePaused()
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 		globals->runtimepausedtime = decltype(globals->runtimepausedtime)::clock::now();
 
-    // Ok
-    return 0;
+	// Ok
+	return 0;
 }
 
 short Extension::FusionRuntimeContinued()
@@ -286,8 +286,8 @@ short Extension::FusionRuntimeContinued()
 				f->runAtTime += diff;
 	}
 
-    // Ok
-    return 0;
+	// Ok
+	return 0;
 }
 
 

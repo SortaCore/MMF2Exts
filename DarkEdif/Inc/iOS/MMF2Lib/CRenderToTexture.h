@@ -54,7 +54,7 @@ class CRenderer;
 	GLint prevHeight;
 	BOOL isUploaded;
 }
- 
+
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap andPOTMode:(bool)potMode;
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap;
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andPOTMode:(bool)potMode;

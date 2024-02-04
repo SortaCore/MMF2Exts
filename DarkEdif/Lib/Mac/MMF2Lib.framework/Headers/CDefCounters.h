@@ -59,7 +59,7 @@
     int ocGradientFlags;
     short nFrames;
     short* frames;
-	
+
 }
 -(id)init;
 -(void)dealloc;

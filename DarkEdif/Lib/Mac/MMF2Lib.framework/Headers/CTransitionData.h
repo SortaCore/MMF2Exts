@@ -39,7 +39,7 @@
     int transFlags;
     int transColor;
     int dataOffset;
-	
+
 }
 -(void)dealloc;
 -(void)load:(CFile*)file;

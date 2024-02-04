@@ -37,10 +37,10 @@
 {
 @public
 	int rvValueFlags;
-    CValue** rvValues;
-    NSString** rvStrings;
+	CValue** rvValues;
+	NSString** rvStrings;
 	int rvNumberOfValues;
-    int rvNumberOfStrings;
+	int rvNumberOfStrings;
 }
 -(void)dealloc;
 -(id)initWithHO:(CObject*)ho andOC:(CObjectCommon*)ocPtr andCOB:(CCreateObjectInfo*)cob;

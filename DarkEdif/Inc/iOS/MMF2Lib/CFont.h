@@ -48,7 +48,7 @@
     unsigned char lfPitchAndFamily;
     NSString* lfFaceName;
     UIFont* font;
-	
+
 }
 -(void)dealloc;
 -(void)loadHandle:(CFile*)file;

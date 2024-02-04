@@ -20,9 +20,9 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 #endif
 {
 	/*
-        Link all your action/condition/expression functions to their IDs to match the
-        IDs in the JSON here
-    */
+		Link all your action/condition/expression functions to their IDs to match the
+		IDs in the JSON here
+	*/
 
 	LinkAction(0, AddBlankFramesToObject);
 	LinkAction(1, AddImagesToObject);
@@ -300,26 +300,26 @@ REFLAG Extension::Handle()
 
 REFLAG Extension::Display()
 {
-    /*
-       If you return REFLAG::DISPLAY in Handle() this routine will run.
-    */
+	/*
+	   If you return REFLAG::DISPLAY in Handle() this routine will run.
+	*/
 
-    // Ok
-    return REFLAG::NONE;
+	// Ok
+	return REFLAG::NONE;
 }
 
 short Extension::FusionRuntimePaused()
 {
 
-    // Ok
-    return 0;
+	// Ok
+	return 0;
 }
 
 short Extension::FusionRuntimeContinued()
 {
 
-    // Ok
-    return 0;
+	// Ok
+	return 0;
 }
 
 // These are called if there's no function linked to an ID

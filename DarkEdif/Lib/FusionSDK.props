@@ -397,7 +397,7 @@
 
 		<!-- Instead of putting in output folder, put it here. -->
 		<CodeAnalysisLogFile>$(IntDir)$(TargetFileName).CodeAnalysisLog.xml</CodeAnalysisLogFile>
-        <CodeAnalysisSucceededFile>$(IntDir)$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
+		<CodeAnalysisSucceededFile>$(IntDir)$(TargetFileName).lastcodeanalysissucceeded</CodeAnalysisSucceededFile>
 	</PropertyGroup>
 	<ItemDefinitionGroup Label="Configuration" Condition="$(_TargetPlat)=='Windows'">
 		<ClCompile>
@@ -844,7 +844,7 @@
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building simulator variant..." Importance="High" />
 
 		<Message Text="MSBuild project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=$(TargetArch);iOSSimulatorBuild=1" Targets="Build" />
 	</Target>
 
 	<!-- armv6 is a variant of armv7, in the sense they both use ARM project configuration -->
@@ -852,7 +852,7 @@
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv6 variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6" Targets="Build" />
 	</Target>
 
 	<!-- armv7s is a variant of armv7 -->
@@ -860,7 +860,7 @@
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv7s variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s" Targets="Build" />
 	</Target>
 
 	<Target Name="iOS Build arm64e" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='arm64' AND $(iOSSimulatorBuild)==1 AND $(_iOSBuildArchitectures.Contains('arm64e'))" AfterTargets="Build;Rebuild">
@@ -868,14 +868,14 @@
 
 		<!-- Note: Set SimulatorBuild=0, or it will inherit the =1 from this project run. The above one will also build SimulatorBuild=1 for it. -->
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0'" Importance="High" />
-	    <MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0" Targets="Build" />
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=arm64e;PlatformNativeArch=arm64e;iOSSimulatorBuild=0" Targets="Build" />
 	</Target>
 
 	<!-- Post build tool for non-Windows. Copies built libraries into ZIP/EXT in MFX\Data\Runtime. -->
 	<Target Name="Copy libraries files into ZIP" Condition="$(SDKType)=='DarkEdif' AND '$(_TargetPlat)'!='Windows' AND '$(IsSecondRun)'!='1'" AfterTargets="Build">
-      <Message Text="Copying the built libraries into the $(ZipExt) file in MFX\Data\Runtime..." Importance="High" />
-	  <Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
-    </Target>
+		<Message Text="Copying the built libraries into the $(ZipExt) file in MFX\Data\Runtime..." Importance="High" />
+		<Exec Command="&quot;$(SDKRootFolder)\DarkEdifPostBuildTool.exe&quot; $(DarkEdifPostBuildToolParams)" />
+	</Target>
 
 	<!-- Writes FusionSDK.props debugging info, usually ext devs should not need this. -->
 	<Target Name="For debugging" Condition="$(EchoAllDefinesFromPropsFileDuringBuild)==1" BeforeTargets="ResourceCompile;Compile;Build;BeforeBuild">

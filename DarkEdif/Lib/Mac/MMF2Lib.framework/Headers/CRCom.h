@@ -45,7 +45,7 @@
     int rcMaxSpeed;					// Maximum speed
     BOOL rcChanged;					// Flag: modified object
     BOOL rcCheckCollides;			// For static objects
-	
+
     int rcOldX;            			// Previous coordinates
     int rcOldY;
     short rcOldImage;
@@ -55,12 +55,12 @@
     int rcOldY1;
     int rcOldX2;
     int rcOldY2;
-	
+
     int rcFadeIn;
     int rcFadeOut;
-	
+
 	BOOL rcCMoveChanged;
-	
+
 }
 -(id)init;
 -(void)kill:(BOOL)bFast;

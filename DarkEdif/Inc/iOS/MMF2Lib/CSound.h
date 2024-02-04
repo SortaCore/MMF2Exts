@@ -64,7 +64,7 @@
     NSTimeInterval pauseTime;
     BOOL bErasable;
     BOOL bAsigned;
-    
+
 }
 -(id)initWithSoundPlayer:(CSoundPlayer*)p andALPlayer:(CALPlayer*)alp;
 -(id)mutableCopyWithZone:(NSZone *) zone;

@@ -156,7 +156,7 @@ public:
 	void Dump();
 
 protected:
-	
+
 	friend class b2Joint;
 	friend class b2GearJoint;
 

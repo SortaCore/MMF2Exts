@@ -168,85 +168,85 @@ class CRenderer;
 	CRunView* runView;
 	MainView* mainView;
 	RuntimeIPhoneAppDelegate* appDelegate;
-    MainViewController* mainViewController;
+	MainViewController* mainViewController;
 	CJoystick* joystick;
 	CJoystickAcc* joystickAcc;
 	CJoystickGamepad* joystickGamepad;
 	id touches;
-    NSUInteger* frameOffsets;
-    int frameMaxIndex;
-    NSString** framePasswords;
-    NSString* appName;
-    short nGlobalValuesInit;
-    char* globalValuesInitTypes;
-    int* globalValuesInit;
-    int nGlobalStringsInit;
-    NSString** globalStringsInit;
-    COIList* OIList;
-    CImageBank* imageBank;
-    CFontBank* fontBank;
-    CSoundBank* soundBank;
-    CEffectBank* effectBank;
-    CSoundPlayer* soundPlayer;
-    CALPlayer* ALPlayer;
-    int appRunningState;
-    int lives[MAX_PLAYER];
-    int scores[MAX_PLAYER];
-    NSString* playerNames[MAX_PLAYER];
-    CArrayList* gValues;
-    CArrayList* gStrings;
-    CValue* tempGValue;
-    int startFrame;
-    int nextFrame;
-    int currentFrame;
-    CRunFrame* frame;
-    CFile* file;
-    CRunApp* parentApp;			//Parent CRunApp if this one is contained in a subapp
-    int parentOptions;
-    int parentX;
-    int parentY;
-    int parentWidth;
-    int parentHeight;
+	NSUInteger* frameOffsets;
+	int frameMaxIndex;
+	NSString** framePasswords;
+	NSString* appName;
+	short nGlobalValuesInit;
+	char* globalValuesInitTypes;
+	int* globalValuesInit;
+	int nGlobalStringsInit;
+	NSString** globalStringsInit;
+	COIList* OIList;
+	CImageBank* imageBank;
+	CFontBank* fontBank;
+	CSoundBank* soundBank;
+	CEffectBank* effectBank;
+	CSoundPlayer* soundPlayer;
+	CALPlayer* ALPlayer;
+	int appRunningState;
+	int lives[MAX_PLAYER];
+	int scores[MAX_PLAYER];
+	NSString* playerNames[MAX_PLAYER];
+	CArrayList* gValues;
+	CArrayList* gStrings;
+	CValue* tempGValue;
+	int startFrame;
+	int nextFrame;
+	int currentFrame;
+	CRunFrame* frame;
+	CFile* file;
+	CRunApp* parentApp;			//Parent CRunApp if this one is contained in a subapp
+	int parentOptions;
+	int parentX;
+	int parentY;
+	int parentWidth;
+	int parentHeight;
 	CCCA* subApp;				//If this CRunApp is contained in a subapp, this is the subapp object pointer
-    int refTime;
-    CRun* run;
+	int refTime;
+	CRun* run;
 	CEventProgram* events;
-    // Application header
-    short gaFlags;				// Flags
-    short gaNewFlags;				// New flags
-    short gaMode;				// graphic mode
-    short gaOtherFlags;				// Other Flags	
-    int gaCxWin;				// Window x-size
-    int gaCyWin;				// Window y-size
-    int gaScoreInit;				// Initial score
-    int gaLivesInit;				// Initial number of lives
-    int gaBorderColour;				// Border colour
-    int gaNbFrames;				// Number of frames
-    int gaFrameRate;				// Number of frames per second
+	// Application header
+	short gaFlags;				// Flags
+	short gaNewFlags;				// New flags
+	short gaMode;				// graphic mode
+	short gaOtherFlags;				// Other Flags	
+	int gaCxWin;				// Window x-size
+	int gaCyWin;				// Window y-size
+	int gaScoreInit;				// Initial score
+	int gaLivesInit;				// Initial number of lives
+	int gaBorderColour;				// Border colour
+	int gaNbFrames;				// Number of frames
+	int gaFrameRate;				// Number of frames per second
 	BOOL bScoresExternal;
 	BOOL bLivesExternal;
-    short* frameHandleToIndex;
-    short frameMaxHandle;
-    int cx;
-    int cy;
+	short* frameHandleToIndex;
+	short frameMaxHandle;
+	int cx;
+	int cy;
 	int mouseX;
-    int mouseY;
+	int mouseY;
 	int mouseClick;
 	BOOL bMouseDown;
-    short appRunFlags;
-    CArrayList* adGO;
-    CArrayList* sysEvents;
-    BOOL quit;
-    CExtLoader* extLoader;
-    int xOffset;
-    int yOffset;
-    int sxComponent;
-    int syComponent;
-    int debug;
-    CArrayList* extensionStorage;
-    CArrayList* embeddedFiles;
-    CTransitionManager* transitionManager;
-    BOOL bUnicode;
+	short appRunFlags;
+	CArrayList* adGO;
+	CArrayList* sysEvents;
+	BOOL quit;
+	CExtLoader* extLoader;
+	int xOffset;
+	int yOffset;
+	int sxComponent;
+	int syComponent;
+	int debug;
+	CArrayList* extensionStorage;
+	CArrayList* embeddedFiles;
+	CTransitionManager* transitionManager;
+	BOOL bUnicode;
 	int sxView;
 	int syView;
 	int displayType;
@@ -257,23 +257,23 @@ class CRenderer;
 	int orientation;
 	int actualOrientation;
 	int hdr2Options;
-    int hdr2Options2;
+	int hdr2Options2;
 	CRenderToTexture* oldFrameImage;
 	CMask* firstMask;
 	CMask* secondMask;
 	CGRect screenRect;
-    CExtension* iOSObject;
-    short typeIOS;
+	CExtension* iOSObject;
+	short typeIOS;
 	UITouch* cancelledTouches[MAX_VIEWTOUCHES];
-    UITouch* currentTouch;
+	UITouch* currentTouch;
 	CGRect lastInteraction;
 	UIWindow* window;
 	NSString* appEditorPathname;
-    NSString* appTargetPathname;
+	NSString* appTargetPathname;
 	int viewMode;
 	CCCA* modalSubapp;
-    int codePage;
-    CEffectEx* frameEffectEx;
+	int codePage;
+	CEffectEx* frameEffectEx;
 
 	float scScaleX;
 	float scScaleY;
@@ -283,14 +283,14 @@ class CRenderer;
 	float scAngle;
 	float scXDest;
 	float scYDest;
-    
-    int nWindowUpdate;
-    
-    BOOL enable_ext_sounds;
-    BOOL expansion_available;
-    
-    int widthSetting;          // Window x-size
-    int heightSetting;         // Window y-size
+
+	int nWindowUpdate;
+
+	BOOL enable_ext_sounds;
+	BOOL expansion_available;
+
+	int widthSetting;		  // Window x-size
+	int heightSetting;		 // Window y-size
 
 }
 -(void)cleanMemory;

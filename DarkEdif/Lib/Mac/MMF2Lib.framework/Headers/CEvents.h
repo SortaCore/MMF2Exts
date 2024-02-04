@@ -295,7 +295,7 @@ public:
 	NSString* m_name;
 	BOOL m_bOR;
     int m_fastLoopIndex;
-    
+
 	CPosOnLoop(NSString* pName, int fastLoopIndex)
 	{
 		m_name = pName;
@@ -1760,7 +1760,7 @@ typedef		prgParam2 *			LPPRG2;
 #define        MULTIVAR_MAXVALUE            4
 
 typedef struct evoValue {
-    
+
     int valIndex;
     DWORD valCompareOp;
     union {
@@ -1771,12 +1771,12 @@ typedef struct evoValue {
 
 typedef struct multipleFlagAndVariableParam {
     DWORD    flags;                // what the structure contains: MULTIVARF_VALUE1 | etc.
-    
+
     DWORD    flagMasks;            // object flags
     DWORD    flagValues;            // flag values
-    
+
     evoValue    values[MULTIVAR_MAXVALUE];
-    
+
 } multipleFlagAndVariableParam;
 
 // Nested event

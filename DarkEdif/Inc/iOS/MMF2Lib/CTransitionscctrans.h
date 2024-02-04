@@ -125,7 +125,7 @@ class CRenderer;
 {
     // Parameters
     int m_spotPercent;
-	
+
     // Runtime
     int m_spotSize;
     int m_nbBlockPerLine;

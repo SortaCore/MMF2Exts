@@ -1,8 +1,8 @@
 #pragma once
 
-// #define TGFEXT       // TGF2, MMF2, MMF2 Dev
-   #define MMFEXT       // MMF2, MMF2 Dev
-// #define PROEXT       // MMF2 Dev only
+// #define TGFEXT	   // TGF2, MMF2, MMF2 Dev
+   #define MMFEXT	   // MMF2, MMF2 Dev
+// #define PROEXT	   // MMF2 Dev only
 
 #define JSON_COMMENT_MACRO Extension::Version
 

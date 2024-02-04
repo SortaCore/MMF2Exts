@@ -86,7 +86,7 @@ bool Authz_GetAccess(Extension * ext, AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, 
 }
 
 bool Extension::Sub_GetTrueEffectiveRights(
-	__in  PSID          pSid,
+	__in  PSID		  pSid,
 	__out PACCESS_MASK  pAccessRights)
 {
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager;

@@ -83,7 +83,7 @@ public:
 	Viewport viewport;
 	Vec2i framebufferSize;
 	unsigned int framebuffer;
-    
+
     BOOL newtransform;
     BOOL newprojection;
 
@@ -102,7 +102,7 @@ public:
     // The pixel dimensions of the CAEAGLLayer
     GLint backingWidth;
     GLint backingHeight;
-    
+
     GLint backingProgram;
 
 	RenderingState currentRenderState;
@@ -111,14 +111,14 @@ public:
     GLuint vao;
     GLuint buffer;
     GLuint indexbuffer;
-    
+
 	//OpenGL capabilities
 	GLint maxTextureSize;
 
 	int originX, originY;
     int baseX, baseY;
     float scaleX, scaleY;
-    
+
 	CGPoint topLeft;
 
 	int textureUsage;
@@ -152,14 +152,14 @@ public:
 	CShader* gradientShader;
 	CShader* currentShader;
 
-    
+
     CShader* perspectiveShader;
     CShader* sinewaveShader;
-    
+
     CShader* effectShader;
     sh_vector* shaders_vector;
     int iShader;
-    
+
 	CRenderer(CRunView* runView);
 	~CRenderer();
 
@@ -177,9 +177,9 @@ public:
 	void flush();
 	void forgetCachedState();
 	void forgetShader();
-   
+
     void setCurrentShader(CShader* shader);
-    
+
 	void bindRenderBuffer();
 	void updateViewport();
 	void setViewport(Viewport viewport);
@@ -189,7 +189,7 @@ public:
 	void setInkEffect(int effect, int effectParam, CShader* shader);
 	void setProjectionMatrix(int x, int y, int width, int height);
 	void setTransformMatrix(const Mat3f matrix);
-    
+
     void setSurfaceTextureAtIndex(CTexture* image, NSString* name, int index);
     void updateSurfaceTexture();
 
@@ -215,7 +215,7 @@ public:
 
 	void useBlending(BOOL useBlending);
     BOOL getBlending();
-    
+
 	void setBlendEquation(GLenum equation);
 	void setBlendEquationSeperate(GLenum equationA, GLenum equationB);
 	void setBlendFunction(GLenum sFactor, GLenum dFactor);
@@ -234,38 +234,38 @@ public:
 	void cleanUnused();
 	void pruneTexture();
 	void clearPruneList();
-    
+
     // to be used with RTT
     void screenAreaToTexture(CTexture* texture, int x , int y, int w, int h, int mode);
     void screenPixelsToTexture(CTexture* texture, int x , int y, int w, int h);
     UIImage* screenAreaToImage(int x , int y, int width, int height);
-    
+
     //Shader operation
     int addShader(NSString* shaderName, NSString* vertexShader, NSString* fragmentShader, NSArray* shaderVariables, bool useTexCoord, bool useColors);
     int addShader(NSString* shaderName, NSArray* shaderVariables, bool useTexCoord, bool useColors);
     void removeShader(int shaderIndex);
     void setEffectShader(int shaderIndex);
     void removeEffectShader();
-    
+
     //Use Background
     void setBackgroundUse(int shaderIndex);
     void setCurrentView(int x, int y, float sX, float sY);
-    
+
     void updateVariable1i(NSString* varName, int value);
     void updateVariable1i(int varIndex, int value);
     void updateVariable1f(NSString* varName, float value);
     void updateVariable1f(int varIndex, float value);
-    
+
     void updateVariable2i(NSString* varName, int value0, int value1);
     void updateVariable2i(int varIndex, int value0, int value1);
     void updateVariable2f(NSString* varName, float value0, float value1);
     void updateVariable2f(int varIndex, float value0, float value1);
-    
+
     void updateVariable3i(NSString* varName, int value0, int value1, int value2);
     void updateVariable3i(int varIndex, int value0, int value1, int value2);
     void updateVariable3f(NSString* varName, float value0, float value1, float value2);
     void updateVariable3f(int varIndex, float value0, float value1, float value2);
-    
+
     void updateVariable4i(NSString* varName, int value0, int value1, int value2, int value3);
     void updateVariable4i(int varIndex, int value0, int value1, int value2, int value3);
     void updateVariable4f(NSString* varName, float value0, float value1, float value2, float value3);

@@ -447,10 +447,9 @@ struct ComStructure
 	unsigned int		timer;
 
 	unsigned short		code;
-	OINUM		oi;
+	OINUM				oi;
 	unsigned int		param[2];
-	char		path[MAX_PATH];
-
+	char				path[MAX_PATH]; // TODO: ANSI only, or Unicode TCHAR?
 };
 const enum
 {

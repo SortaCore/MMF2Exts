@@ -49,7 +49,7 @@
 {
 @public
 	NSString* pName;			/// Name
-	
+
     // Offset
 	int x;				/// Current offset
     int y;
@@ -58,29 +58,29 @@
 
 	int xOff;		//Cached scrolling value (coefficient applied - rounded to integer)
 	int yOff;
-	
+
     CArrayList* pBkd2;
-	
+
     // Ladders
     CArrayList* pLadders;
-	
+
     // Z-order max index for dynamic objects
     int nZOrderMax;
-	
+
     // Permanent data (EditFrameLayer)
     int dwOptions;			/// Options
     double xCoef;
     double yCoef;
     int nBkdLOs;				/// Number of backdrop objects
     int nFirstLOIndex;			/// Index of first backdrop object in LO table
-	
+
     // Backup for restart
     int backUp_dwOptions;
     double backUp_xCoef;
     double backUp_yCoef;
     int backUp_nBkdLOs;
     int backUp_nFirstLOIndex;
-	
+
 	CArrayList* m_loZones;
 	CRunFrame* frame;
 
@@ -97,7 +97,7 @@
 	CRect visibleRect;
 	CRect handleRect;
 	CRect killRect;
-    
+
     int effect;
     int effectParam;
     int effectIndex;

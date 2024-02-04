@@ -40,7 +40,7 @@
 {
  	ALCcontext* mContext; // stores the context (the 'air')
 	ALCdevice* mDevice; // stores the device
-   
+
     ALuint pSources[NALCHANNELS];
     CSound* pSounds[NALCHANNELS];
     int nLoops[NALCHANNELS];

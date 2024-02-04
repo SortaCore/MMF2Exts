@@ -8,9 +8,9 @@
 
 // Vista+ protocols only, not defined if XP target
 #if (_WIN32_WINNT < 0x0600)
-	#define AF_BTH          32
+	#define AF_BTH		  32
 	#if (_WIN32_WINNT < 0x0601)
-		#define AF_LINK     33
+		#define AF_LINK	 33
 	#endif
 	#define IPPROTO_ST 5
 	#define IPPROTO_CBT 7
@@ -23,10 +23,10 @@
 	#define IPPROTO_SCTP 132
 #endif
 #ifndef _WIN32_WINNT_WIN8
-#define _WIN32_WINNT_WIN8                   0x0602 // Windows 8
-#define _WIN32_WINNT_WINBLUE                0x0603 // Windows 8.1
-#define _WIN32_WINNT_WIN10                  0x0A00 // Windows 10
-//#define _WIN32_WINNT_WIN11                  0x0B00 // Windows 11? Currently v10.0.buildnum, so not defined in SDK.
+#define _WIN32_WINNT_WIN8				   0x0602 // Windows 8
+#define _WIN32_WINNT_WINBLUE				0x0603 // Windows 8.1
+#define _WIN32_WINNT_WIN10				  0x0A00 // Windows 10
+//#define _WIN32_WINNT_WIN11				  0x0B00 // Windows 11? Currently v10.0.buildnum, so not defined in SDK.
 #endif
 
 static int winVer;

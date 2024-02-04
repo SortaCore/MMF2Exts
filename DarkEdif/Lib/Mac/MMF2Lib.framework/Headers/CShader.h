@@ -75,7 +75,7 @@ public:
 	GLuint program;
 	GLuint fragmentProgram;
 	GLuint vertexProgram;
-    
+
 	int uniforms[NUM_UNIFORMS];
 	BOOL usesTexCoord;
 	BOOL usesColor;
@@ -88,13 +88,13 @@ public:
 	int currentEffect;
 	float currentR, currentG, currentB, currentA;
 	NSString* sname;
-    
+
     int extraTexID[NUM_XTRATEX];
     BOOL hasExtras;
 
 	CShader(CRenderer* renderer);
 	~CShader();
-    
+
     void checkError();
 
 	bool loadShader(NSString* name, NSString* vertexShader, NSString* fragmentShader, bool useTexCoord, bool useColors);
@@ -119,7 +119,7 @@ public:
 	void setProjectionMatrix(const Mat3f &matrix);
 	void setTransformMatrix(const Mat3f &matrix);
 	void setObjectMatrix(const Mat3f &matrix);
-    
+
     void setSurfaceTextureAtIndex(CTexture* texture, const GLchar* name, int index);
     void updateSurfaceTexture();
 
@@ -127,7 +127,7 @@ public:
 	void setGradientColors(int a, int b, BOOL horizontal);
 	void setGradientColors(int a, int b, int c, int d);
 	void setGradientColors(GradientColor gradient);
-    
+
     void setVariable1i(const GLchar* field, int value);
     void setVariable1f(const GLchar* field, float value);
     void setVariable2i(const GLchar* field, int value0, int value1);

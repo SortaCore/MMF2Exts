@@ -205,7 +205,7 @@ typedef struct tagRDATABASE
     AddMagnet	            pAddMagnet;
     AddTreadmill            pAddTreadmill;
     AddRope					pAddRope;
-    
+
 	float			angle;
 	DWORD			flags;
 	b2World*		world;
@@ -262,12 +262,12 @@ public:
 	virtual ~CRunMvt() {}
 	virtual void		Initialize(LPHO pHo, CFile* file) {}
     virtual void		Delete(void) { delete this; }
-    
+
 	virtual BOOL		Move(CObject* pHo) { return NO; }
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -297,7 +297,7 @@ public:
     CRunMBase*          m_mBase;
     DWORD               m_identifier;
     CRunMvtExtension*   m_movement;
-    
+
 public:
     virtual void		Initialize(CFile* file, CObject* hoPtr) {}
     virtual void		Delete(void) { delete this; }
@@ -305,7 +305,7 @@ public:
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -324,7 +324,7 @@ public:
 	virtual int			GetDeceleration(CObject* hoPtr) {return 0;}
 	virtual int			GetGravity(CObject* hoPtr) {return 0;}
 	virtual int			GetDir(CObject* hoPtr) {return 0;}
-    
+
 	virtual void SetCollidingObject(CRunMBase* object){};
 	virtual BOOL CreateBody(CObject* pHo){return NO;};
 	virtual void CreateJoint(CObject* pHo){};

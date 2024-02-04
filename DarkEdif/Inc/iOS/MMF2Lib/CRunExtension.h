@@ -41,8 +41,8 @@ class CRenderer;
 @interface CRunExtension : NSObject 
 {
 @public
-    CExtension* ho;
-    CRun* rh;	
+	CExtension* ho;
+	CRun* rh;	
 }
 
 @end

@@ -242,7 +242,7 @@ template <class T> void Array<T>::ensureCapacity(size_t capacity)
 		return;
 
 	//Is the internal storage too small? Allocate new memory and clear the old
-    
+
     //TODO this will invalidate pointers.  either make it clear that you shouldn't
     //have a pointer to an object allocated as part of an Array, or delete and
     //re-construct (via copy constructor) all elements here.
@@ -278,7 +278,7 @@ template <class T> void Array<T>::growAndFill(T &var, size_t count)
 	size_t numExtra = count - numElements;
 	for(size_t i=0; i<numExtra; ++i)
 		push(var);
-    
+
     assert(numElements == count);
 }
 
@@ -396,7 +396,7 @@ template <class T> void Array<T>::set(const T &var, size_t index)
 template <class T> void Array<T>::setExpand(T const &var, size_t index)
 {
     /* TODO may need to destruct old value */
-    
+
 	ensureCapacity(index+1);
 	numElements = MAX(numElements, index+1);
 	new (elements + index) T (var);
@@ -411,10 +411,10 @@ template <class T> T &Array<T>::get(size_t index) const
 template <class T> T Array<T>::pop()
 {
     assert(numElements > 0);
-    
+
 	T ret(elements[numElements-1]);
 	(elements + numElements - 1)->~ T();
-	
+
     -- numElements;
 
 	shrinkIfNecessary();
@@ -432,7 +432,7 @@ template <class T> void Array<T>::deleteIndex(size_t index)
 {
     /* TODO call destructor
      */
-    
+
 	if(index < numElements-1)
 		memmove(&elements[index], &elements[index+1], (numElements-index-1)*sizeof(T));
 	//(elements + numElements - 1)->~ T();
@@ -466,7 +466,7 @@ template <class T> void Array<T>::clear()
 {
 	for (size_t i = 0; i < numElements; ++i)
         (elements + i)->~ T();
-    
+
 	numElements = 0;
 	if(m_capacity > ARRAY_SSO_SIZE)
 	{
@@ -480,7 +480,7 @@ template <class T> void Array<T>::clearRetainingCapacity()
 {
 	for (size_t i = 0; i < numElements; ++i)
         (elements + i)->~ T();
-    
+
 	numElements = 0;
 	memset(elements, 0, sizeof(T)*m_capacity);
 }

@@ -56,7 +56,7 @@ class CRenderer;
     int rsColor1;			/// Bar color
     int rsColor2;			/// Gradient bar color
     int displayFlags;
-	
+
 	CTextSurface* textSurface;
 	NSString* cachedString;
 	NSUInteger cachedLength;

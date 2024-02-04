@@ -48,7 +48,7 @@ class CRenderer;
 	GLint prevHeight;
 	BOOL isUploaded;
 }
- 
+
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp*)runApp;
 - (void)dealloc;
 

@@ -35,9 +35,9 @@ void loadJPEGFromData(unsigned char *jpegBuf, unsigned long jpegSize, int *width
 void loadJPEGFromData(unsigned char *jpegBuf, unsigned long jpegSize, int *width, int *height, unsigned int **rawData)
 {
     tjhandle decoder = tjInitDecompress();
-    
+
     int w, h, jpegSubsamp;
-    
+
     int result = tjDecompressHeader2(decoder, jpegBuf, jpegSize, &w, &h, &jpegSubsamp);
     if (result < 0)
     {
@@ -45,7 +45,7 @@ void loadJPEGFromData(unsigned char *jpegBuf, unsigned long jpegSize, int *width
         tjDestroy(decoder);
         return;
     }
-    
+
     int pitch = w * 4;
 
     *rawData = (unsigned int*)calloc(w * h, sizeof(unsigned int));

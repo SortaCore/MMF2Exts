@@ -41,7 +41,7 @@
     int width;
     int xSpot;
     int ySpot;
-	
+
 }
 -(void)dealloc;
 -(void)createMask:(CImage*)img withFlags:(int)nFlags;

@@ -42,65 +42,65 @@
 {
 @public
 	CRunApp2* app;
-    CRun* rhPtr;
-    short maxObjects;
-    short maxOi;
-    short nPlayers;
-    short nConditions[7 + 10];         // NUMBEROF_SYSTEMTYPES+OBJ_LAST
-    short nQualifiers;
-    void** qualifiers;
-    LPEVG pEvents;
+	CRun* rhPtr;
+	short maxObjects;
+	short maxOi;
+	short nPlayers;
+	short nConditions[7 + 10];		 // NUMBEROF_SYSTEMTYPES+OBJ_LAST
+	short nQualifiers;
+	void** qualifiers;
+	LPEVG pEvents;
 	CQualToOiList** qualToOiList;
 	CQualToOiList** qualToOiListFull;
 	DWORD* listPointers;
-    DWORD* eventPointers;
+	DWORD* eventPointers;
 //  BYTE eventPointersCnd[] = null;
-    short* limitBuffer;
-    LPDWORD rhEvents[7 + 1];
-    LPDWORD rhEventAlways;
-    LPDWORD rh4TimerEventsBase;
-    short* colBuffer;
-    int qualOilPtr;
-    int qualOilPos;
-    int qualOilPtr2;
-    int qualOilPos2;
-    BOOL rh4CheckDoneInstart;			/// Build92 to correct start of frame with fade in
-    LPEVG rhEventGroup;				/// Current group
-    int rhCurCode;                                       /// Current event
-    int rh4PickFlags[4];				/// 00-31
-    BOOL rh2ActionLoop;			/// Actions flag
-    BOOL rh2ActionOn;			/// Flag are we in actions?
-    BOOL rh2EnablePick;  			/// Are we in pick for actions?
-    int rh2EventCount;				/// Number of the event
-    int rh2ActionCount;				/// Action counter
-    int rh2ActionLoopCount;	  		/// Action loops counter
-    int rh4EventCountOR;                         /// Number of the event for OR conditions
-    BOOL rh4ConditionsFalse;
-    BOOL rh3DoStop;			/// Force the test of stop actions
-    void* rh2EventQualPos;          /// ***Position in event objects
-    int rh2EventQualPosNum;			/// ***Position in event objects
-    CObject* rh2EventPos;				/// ***Position in event objects
-    int rh2EventPosOiList; 		/// ***Position in oilist for TYPE exploration 
-    CObject* rh2EventPrev;				/// ***Previous object address
-    CObjInfo* rh2EventPrevOiList;				/// ***Previous object address
-    int evtNSelectedObjects;
-    BOOL repeatFlag;
-    short rh2EventType;
-    short rhCurOi;
-    int rhCurParam[2];
-    int rh3CurrentMenu;				/// For menu II events
-    short rh2CurrentClick;			/// For click events II
-    CObject* rh4_2ndObject;	 		/// Collision object address
-    BOOL bReady;
-    CArrayList* rh2ShuffleBuffer;
-    short rhCurObjectNumber;	 		/// Object number
-    short rh1stObjectNumber;          /// Number, for collisions
-    CArrayList* rh2PushedEvents;
-    BOOL rh2ActionEndRoutine;		/// End of action routine
+	short* limitBuffer;
+	LPDWORD rhEvents[7 + 1];
+	LPDWORD rhEventAlways;
+	LPDWORD rh4TimerEventsBase;
+	short* colBuffer;
+	int qualOilPtr;
+	int qualOilPos;
+	int qualOilPtr2;
+	int qualOilPos2;
+	BOOL rh4CheckDoneInstart;			/// Build92 to correct start of frame with fade in
+	LPEVG rhEventGroup;				/// Current group
+	int rhCurCode;									   /// Current event
+	int rh4PickFlags[4];				/// 00-31
+	BOOL rh2ActionLoop;			/// Actions flag
+	BOOL rh2ActionOn;			/// Flag are we in actions?
+	BOOL rh2EnablePick;  			/// Are we in pick for actions?
+	int rh2EventCount;				/// Number of the event
+	int rh2ActionCount;				/// Action counter
+	int rh2ActionLoopCount;	  		/// Action loops counter
+	int rh4EventCountOR;						 /// Number of the event for OR conditions
+	BOOL rh4ConditionsFalse;
+	BOOL rh3DoStop;			/// Force the test of stop actions
+	void* rh2EventQualPos;		  /// ***Position in event objects
+	int rh2EventQualPosNum;			/// ***Position in event objects
+	CObject* rh2EventPos;				/// ***Position in event objects
+	int rh2EventPosOiList; 		/// ***Position in oilist for TYPE exploration 
+	CObject* rh2EventPrev;				/// ***Previous object address
+	CObjInfo* rh2EventPrevOiList;				/// ***Previous object address
+	int evtNSelectedObjects;
+	BOOL repeatFlag;
+	short rh2EventType;
+	short rhCurOi;
+	int rhCurParam[2];
+	int rh3CurrentMenu;				/// For menu II events
+	short rh2CurrentClick;			/// For click events II
+	CObject* rh4_2ndObject;	 		/// Collision object address
+	BOOL bReady;
+	CArrayList* rh2ShuffleBuffer;
+	short rhCurObjectNumber;	 		/// Object number
+	short rh1stObjectNumber;		  /// Number, for collisions
+	CArrayList* rh2PushedEvents;
+	BOOL rh2ActionEndRoutine;		/// End of action routine
 	LPEVT rh4ActionStart;
-    CArrayList* allocatedStrings;
-    BOOL bEndForEach;
-    int gEvgFlagsDefaultMask;
+	CArrayList* allocatedStrings;
+	BOOL bEndForEach;
+	int gEvgFlagsDefaultMask;
 	NSMutableDictionary* onEachLoopConditionIndexes;
 	NSMutableDictionary* onEachLoopConditionIndexesActives;
 }

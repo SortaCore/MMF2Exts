@@ -39,24 +39,24 @@ class Renderer;
 @interface CEffectEx : NSObject
 {
 @public
-    CRunApp* app;
-    
-    int handle;
-    NSString* name;
+	CRunApp* app;
 
-    NSString* vertexData;
-    NSString* fragData;
+	int handle;
+	NSString* name;
 
-    int nParams;
-    int options;
+	NSString* vertexData;
+	NSString* fragData;
 
-    CEffectParam** eParams;
+	int nParams;
+	int options;
 
-    int indexShader;
-    int blendColor;
-    bool hasExtras;
-    bool useBackground;
-    
+	CEffectParam** eParams;
+
+	int indexShader;
+	int blendColor;
+	bool hasExtras;
+	bool useBackground;
+
 }
 -(void)dealloc;
 -(id)initWithApp:(CRunApp*)App;

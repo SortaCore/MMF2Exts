@@ -54,7 +54,7 @@
 @public
 	CArrayList* menuItems;
 	CRunApp* runApp;
-	
+
 	short* accelsKey;
 	short* accelsID;
 	unsigned char* accelsShift;

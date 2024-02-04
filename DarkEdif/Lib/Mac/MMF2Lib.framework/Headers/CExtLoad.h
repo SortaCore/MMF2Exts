@@ -34,7 +34,7 @@
 	short handle;
     NSString* name;
     NSString* subType;
-	
+
 }
 -(CRunExtension*)loadRunObject; 
 -(void)loadInfo:(CFile*)file;

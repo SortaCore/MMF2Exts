@@ -100,14 +100,14 @@ class CRenderer;
 	CArrayList* replacedColors;
 	float controlScaleX;
 	float controlScaleY;
-	
+
     // Classes de gestion communes
     CRCom* roc;                   // The CRCom object
     CRMvt* rom;                   // The CRMvt object
     CRAni* roa;                   // The CRAni object
     CRVal* rov;                   // The CRVal object
     CRSpr* ros;                   // The CRSpr object
-    
+
     // Effect code
     CEffectEx* hoEffect;
 }

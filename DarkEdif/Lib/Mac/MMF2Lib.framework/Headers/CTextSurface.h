@@ -44,7 +44,7 @@ class CRenderer;
 	int prevColor;
 	CFont* prevFont;
 	CImage* textTexture;
-	
+
 	CRect rect;
 	int effect;
 	int effectParam;

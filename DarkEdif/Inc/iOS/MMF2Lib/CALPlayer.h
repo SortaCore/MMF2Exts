@@ -46,7 +46,7 @@ void* ExitFunction(ExtAudioFileRef extRef, AudioFileID fid, void* theData);
 {
     __strong ALCcontext* mContext; // stores the context (the 'air')
     __strong ALCdevice* mDevice; // stores the device
-   
+
     ALuint pSources[NALCHANNELS];
     CSound* pSounds[NALCHANNELS];
     int nLoops[NALCHANNELS];

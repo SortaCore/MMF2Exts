@@ -49,7 +49,7 @@ class CRenderer;
     short ocColMode;			// Collision mode (0 = fine, 1 = box)
     int ocCx;				// Size
     int ocCy;
-    
+
     int ocEffectShader;
     CEffectEx* ocEffect;
 }

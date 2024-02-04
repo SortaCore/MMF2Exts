@@ -43,7 +43,7 @@ struct b2MassData
 class b2Shape
 {
 public:
-	
+
 	enum Type
 	{
 		e_circle = 0,

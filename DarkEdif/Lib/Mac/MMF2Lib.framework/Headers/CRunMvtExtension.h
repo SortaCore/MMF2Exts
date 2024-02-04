@@ -34,7 +34,7 @@
 @public 
 	CObject* ho;
     CRun* rh;
-	
+
 }
 -(void)setObject:(CObject*)hoPtr;
 -(void)initialize:(CFile*)file;

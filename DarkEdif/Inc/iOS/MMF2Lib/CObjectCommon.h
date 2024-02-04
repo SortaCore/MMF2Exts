@@ -108,7 +108,7 @@
     int ocID;
     int ocPrivate;
 	COI* pCOI;
-	
+
 }
 -(id)init;
 -(void)dealloc;

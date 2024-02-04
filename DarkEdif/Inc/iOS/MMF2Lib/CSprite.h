@@ -64,76 +64,76 @@
 @interface CSprite : NSObject 
 {
 @public
-	
+
 	// Donnees 
     CSprite* objPrev;
     CSprite* objNext;
     CImageBank* bank;
 	CRect rect;
-    
+
     int sprFlags;			/// Flags
     short sprLayer;			/// Sprite plane (layer)
     float sprAngle;			/// Angle
     int sprZOrder;			/// Z-order value
-	
+
     // Coordinates
     int sprX;
     int sprY;
-	
+
     // Bounding box
     int sprX1;
     int sprY1;
     int sprX2;
     int sprY2;
-	
+
     // New coordinates
     int sprXnew;
     int sprYnew;
-	
+
     // New bounding box
     int sprX1new;
     int sprY1new;
     int sprX2new;
     int sprY2new;
-	
+
     // Background bounding box
     int sprX1z;
     int sprY1z;
     int sprX2z;
     int sprY2z;
-	
+
     // Scale & Angle
     float sprScaleX;
     float sprScaleY;
-	
+
     // Temporary values for collisions
     short sprTempImg;			// TODO: use DWORD later?
     short sprTempAngle;
     float sprTempScaleX;
     float sprTempScaleY;
-	
+
     // Image or owner-draw routine
     short sprImg;		        /// Numero d'image
     short sprImgNew;			/// Nouvelle image
     id<IDrawable> sprRout;			/// Ownerdraw callback routine
-	
+
     // Ink effect
     int sprEffect;			/// 0=normal, 1=semi-transparent, > 16 = routine
     int sprEffectParam;			/// parametre effet (coef transparence, etc...)
-	
+
     // Effect Shader
     int sprEffectShader;
-    
+
     // Fill color (wipe with color mode)
     int sprBackColor;
-	
+
     // Surfaces
     CMask* sprColMask;			/// Collision mask (if stretched or rotated)
     CMask* sprTempColMask;		/// Temp collision mask (if stretched or rotated)
-	
+
     // User data
     CObject* sprExtraInfo;
-	
+
 	CImage* sprSf;
 	CImage* sprTempSf;
 }

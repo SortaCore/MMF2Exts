@@ -33,11 +33,11 @@
 {
 @public
 	short type;
-    int intValue;
-    double doubleValue;
-    NSString* stringValue;	
+	int intValue;
+	double doubleValue;
+	NSString* stringValue;	
 }
-    
+
 -(id)init;
 -(id)initWithInt:(int)value;
 -(id)initWithDouble:(double)value;

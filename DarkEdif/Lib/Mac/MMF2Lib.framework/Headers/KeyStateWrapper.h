@@ -19,7 +19,7 @@
 	BOOL alternate;
 	BOOL function;
 	CRunApp* app;
-	
+
 }
 -(id)initWithApp:(CRunApp*)app;
 -(void)dealloc;

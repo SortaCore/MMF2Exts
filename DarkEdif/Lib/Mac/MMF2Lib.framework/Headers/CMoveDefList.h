@@ -33,7 +33,7 @@
 @public
 	int nMovements;
     CMoveDef** moveList;
-	
+
 }
 -(void)dealloc;
 -(void)load:(CFile*)file; 

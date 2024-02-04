@@ -44,7 +44,7 @@ extern char Joy2Dir[];
     int rmAccValue;					/// Acceleration calculation
     int rmDecValue;					/// Deceleration calculation
 	unsigned char rmOpt;
-	
+
 }
 -(void)kill;
 -(BOOL)newMake_Move:(int)speed withDir:(int)angle;

@@ -36,7 +36,7 @@
     int otCy;
     int otNumberOfText;
     CDefText** otTexts;
-	
+
 }
 -(void)dealloc;
 -(void)load:(CFile*)file;

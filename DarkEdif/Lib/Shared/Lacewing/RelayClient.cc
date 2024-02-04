@@ -616,7 +616,7 @@ namespace lacewing
 		case 0: /* response */
 		{
 			lw_ui8  responsetype = reader.get <lw_ui8>();
-			bool	succeeded    = reader.get <lw_ui8>() != 0;
+			bool	succeeded	= reader.get <lw_ui8>() != 0;
 
 			if (reader.failed)
 				break;
@@ -755,8 +755,8 @@ namespace lacewing
 
 					for (; reader.bytesleft() > 0;)
 					{
-						lw_ui16 peerid     = reader.get <lw_ui16>();
-						lw_ui8 flags2      = reader.get <lw_ui8>();
+						lw_ui16 peerid	 = reader.get <lw_ui16>();
+						lw_ui8 flags2	  = reader.get <lw_ui8>();
 						lw_ui8 namelength2 = reader.get <lw_ui8>();
 						std::string_view name2 = reader.get(namelength2);
 

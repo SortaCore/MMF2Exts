@@ -23,7 +23,7 @@ public:
 	void* const objCExtPtr;
 #endif
 
-    Edif::Runtime Runtime;
+	Edif::Runtime Runtime;
 
     static const int MinimumBuild = 251;
 	// b8: Update for iOS fixes in SDK (SDK v17)
@@ -34,12 +34,12 @@ public:
 	// b3: Release for Michael, added system object permission reading for Windows.
 	// b2: Release to Flipswitchx with alt value by name feature.
 	// b1: initial build with RAM, disk, and frame usage.
-    static const int Version = 8;
+	static const int Version = 9;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-    static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
+	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
 
-    static const int WindowProcPriority = 100;
+	static const int WindowProcPriority = 100;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
@@ -51,17 +51,17 @@ public:
 	~Extension();
 
 
-    /*  Add any data you want to store in your extension to this class
-        (eg. what you'd normally store in rdPtr).
+	/*  Add any data you want to store in your extension to this class
+		(eg. what you'd normally store in rdPtr).
 
 		For those using multi-threading, any variables that are modified
 		by the threads should be in SaveExtInfo.
 		See MultiThreading.h.
 
-        Unlike rdPtr, you can store real C++ objects with constructors
-        and destructors, without having to call them manually or store
-        a pointer.
-    */
+		Unlike rdPtr, you can store real C++ objects with constructors
+		and destructors, without having to call them manually or store
+		a pointer.
+	*/
 
 	std::vector<std::tstring> errorList;
 	Edif::recursive_mutex errorListLock;
@@ -97,7 +97,7 @@ public:
 		__out PTRUSTEE trustee, __out PSID * trusteePSID,
 		__out DWORD * accessPermissions);
 	bool Sub_GetTrueEffectiveRights(
-		__in  PSID          pSid,
+		__in  PSID		  pSid,
 		__out PACCESS_MASK  pAccessRights);
 
 #endif
@@ -148,7 +148,7 @@ public:
 #endif
 
 
-    /// Actions
+	/// Actions
 
 		std::int32_t physMemTotalMB = 0;
 		std::int32_t physMemFreeMB = 0;
@@ -179,7 +179,7 @@ public:
 		void CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int destIndex);
 		void CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, int destIndex);
 
-    /// Conditions
+	/// Conditions
 
 		const bool AlwaysTrue() const;
 		bool IsEqual(int a, int b);
@@ -187,12 +187,12 @@ public:
 		const bool DoesAccHaveEffectivePerm(const TCHAR * accOrSID, const TCHAR * perm);
 		const bool OnNamedLoop(const TCHAR * loopName);
 
-    /// Expressions
+	/// Expressions
 
 		const TCHAR * Error();
 		int Event_Index();
-        int Frame_IndexFromName(const TCHAR * name);
-        const TCHAR * Frame_NameFromIndex(int index);
+		int Frame_IndexFromName(const TCHAR * name);
+		const TCHAR * Frame_NameFromIndex(int index);
 
 		int Active_GetAnimFrameCount(int fixedValue, int animNum, int animDir);
 		int Memory_PhysicalTotal();
@@ -231,22 +231,22 @@ public:
 #endif
 
 
-    /* These are called if there's no function linked to an ID */
+	/* These are called if there's no function linked to an ID */
 
-    void UnlinkedAction(int ID);
-    long UnlinkedCondition(int ID);
-    long UnlinkedExpression(int ID);
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 
 
 
-    /*  These replace the functions like HandleRunObject that used to be
-        implemented in Runtime.cpp. They work exactly the same, but they're
-        inside the extension class.
-    */
+	/*  These replace the functions like HandleRunObject that used to be
+		implemented in Runtime.cpp. They work exactly the same, but they're
+		inside the extension class.
+	*/
 
-    REFLAG Handle();
+	REFLAG Handle();
 	REFLAG Display();
 
-    short FusionRuntimePaused();
-    short FusionRuntimeContinued();
+	short FusionRuntimePaused();
+	short FusionRuntimeContinued();
 };

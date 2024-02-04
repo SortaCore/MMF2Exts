@@ -37,7 +37,7 @@
     double doubleValue;
     NSString* stringValue;	
 }
-    
+
 -(id)init;
 -(id)initWithInt:(int)value;
 -(id)initWithDouble:(double)value;

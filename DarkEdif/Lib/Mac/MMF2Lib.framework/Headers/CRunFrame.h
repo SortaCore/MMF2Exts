@@ -75,7 +75,7 @@
     int leLastScrlY;
 	short joystick;
 	short iPhoneOptions;
-	
+
     // Transitions
 	CTransitionData* fadeIn;
 	CTransitionData* fadeOut;
@@ -83,13 +83,13 @@
     BOOL fade;
 	int fadeTimerDelta;
 	int fadeVblDelta;
-	
+
     // Exit code
     int levelQuit;
-	
+
     // Events
     BOOL rhOK;				// TRUE when the events are initialized
-	
+
     // public int nPlayers;
     //	int				m_nPlayersReal;
     //	int				m_level_loop_state;
@@ -101,7 +101,7 @@
     //	int				m_oblEnumCpt;
     //	BOOL			m_eventsBranched;
     //	DWORD			m_pasteMask;
-	
+
     //	int				m_nCurTempString;
     //	LPSTR			m_pTempString[MAX_TEMPSTRING];
     int dwColMaskBits;

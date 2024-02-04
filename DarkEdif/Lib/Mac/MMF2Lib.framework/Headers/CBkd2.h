@@ -48,10 +48,10 @@
     CSprite* pSpr[4];
     int inkEffect;
     int inkEffectParam;
-    
+
     int bkdEffectShader;
     CEffectEx* bkdEffect;
-    
+
 	int spriteFlag;
     void* body;
 }

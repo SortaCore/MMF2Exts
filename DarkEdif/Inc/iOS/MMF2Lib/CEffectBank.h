@@ -37,7 +37,7 @@
     CEffect** effects;
     int* effectsOffset;
     int nEffects;
- 
+
 }
 -(id)initWithApp:(CRunApp*)app;
 -(void)preLoad:(CFile*)file;

@@ -117,7 +117,7 @@ protected:
 	b2Vec2 m_groundAnchorB;
 	float32 m_lengthA;
 	float32 m_lengthB;
-	
+
 	// Solver shared
 	b2Vec2 m_localAnchorA;
 	b2Vec2 m_localAnchorB;

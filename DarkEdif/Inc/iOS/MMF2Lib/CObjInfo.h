@@ -41,37 +41,37 @@
 {
 @public 
 	short oilOi;  			/// THE oi
-    short oilListSelected;               /// First selection !!! DO NOT CHANGE POSITION !!!
-    short oilType;			/// Type of the object
-    short oilObject;			/// First objects in the game
-    unsigned int oilEvents;			/// Events
-    unsigned char oilWrap;			/// WRAP flags
-    BOOL oilNextFlag;
-    int oilNObjects;                     /// Current number
-    int oilActionCount;			/// Action loop counter
-    int oilActionLoopCount;              /// Action loop counter
-    int oilCurrentRoutine;               /// Current routine for the actions
-    int oilCurrentOi;			/// Current object
-    int oilNext;				/// Pointer on the next
-    int oilEventCount;			/// When the event list is done
-    int oilNumOfSelected;                /// Number of selected objects
-    int oilOEFlags;			/// Object's flags
-    short oilLimitFlags;			/// Movement limitation flags
-    signed long oilLimitList;       /// Pointer to limitation list
-    short oilOIFlags;			/// Objects preferences
-    short oilOCFlags2;			/// Objects preferences II
-    int oilInkEffect;			/// Ink effect
-    int oilEffectParam;			/// Ink effect param
-    short oilHFII;			/// First available frameitem
-    int oilBackColor;			/// Background erasing color
-    short oilQualifiers[8];               /// Qualifiers for this object
-    NSString* oilName;                 /// Name
-    int oilEventCountOR;                 /// Selection in a list of events with OR
+	short oilListSelected;			   /// First selection !!! DO NOT CHANGE POSITION !!!
+	short oilType;			/// Type of the object
+	short oilObject;			/// First objects in the game
+	unsigned int oilEvents;			/// Events
+	unsigned char oilWrap;			/// WRAP flags
+	BOOL oilNextFlag;
+	int oilNObjects;					 /// Current number
+	int oilActionCount;			/// Action loop counter
+	int oilActionLoopCount;			  /// Action loop counter
+	int oilCurrentRoutine;			   /// Current routine for the actions
+	int oilCurrentOi;			/// Current object
+	int oilNext;				/// Pointer on the next
+	int oilEventCount;			/// When the event list is done
+	int oilNumOfSelected;				/// Number of selected objects
+	int oilOEFlags;			/// Object's flags
+	short oilLimitFlags;			/// Movement limitation flags
+	signed long oilLimitList;	   /// Pointer to limitation list
+	short oilOIFlags;			/// Objects preferences
+	short oilOCFlags2;			/// Objects preferences II
+	int oilInkEffect;			/// Ink effect
+	int oilEffectParam;			/// Ink effect param
+	short oilHFII;			/// First available frameitem
+	int oilBackColor;			/// Background erasing color
+	short oilQualifiers[8];			   /// Qualifiers for this object
+	NSString* oilName;				 /// Name
+	int oilEventCountOR;				 /// Selection in a list of events with OR
 	short* oilColList;
  	short* oilRealQualifiers;
 
 	int oilIndex;				/// Index in rhOiList
-    int oilIndexEffect;
+	int oilIndexEffect;
 }
 -(id)init;
 -(void)dealloc;
