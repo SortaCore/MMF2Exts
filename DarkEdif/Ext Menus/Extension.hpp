@@ -12,7 +12,7 @@ public:
 	#endif
 
 	RunHeader* rhPtr;
-	RunObjectMultiPlat rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
 
 	Edif::Runtime Runtime;
 

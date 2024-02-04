@@ -11,7 +11,7 @@ public:
 	#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
 
 	RunHeader* rhPtr;
-	RunObjectMultiPlat rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
 
 	Edif::Runtime Runtime;
 

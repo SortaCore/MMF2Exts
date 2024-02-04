@@ -6,7 +6,7 @@ class Extension
 public:
 
 	RunHeader* rhPtr;
-	RunObjectMultiPlat rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
 #ifdef __ANDROID__
 	global<jobject> javaExtPtr;
 #elif defined(__APPLE__)
