@@ -27,7 +27,7 @@
 #ifndef CImageUtils_h
 #define CImageUtils_h
 
-#import "Classes/turbojpeg.h"
+#import "turbojpeg.h"
 
 
 void loadJPEGFromData(unsigned char *jpegBuf, unsigned long jpegSize, int *width, int *height, unsigned int **rawData);

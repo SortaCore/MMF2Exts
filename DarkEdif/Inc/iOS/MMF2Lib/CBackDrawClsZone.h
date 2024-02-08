@@ -24,7 +24,7 @@
 // -----------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CBackDraw.h"
+#import "CBackDraw.h"
 
 @class CBitmap;
 @interface CBackDrawClsZone : CBackDraw

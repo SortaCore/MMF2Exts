@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/COC.h"
-#import "Classes/IDrawable.h"
+#import "COC.h"
+#import "IDrawable.h"
 
 #define LINEF_INVX 0x0001
 #define LINEF_INVY 0x0002

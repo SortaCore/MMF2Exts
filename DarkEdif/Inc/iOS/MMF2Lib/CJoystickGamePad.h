@@ -30,7 +30,7 @@
 #ifdef __IPHONE_7_0
 #import <GameController/GameController.h>
 #endif
-#import "Classes/CJoystick.h"
+#import "CJoystick.h"
 
 @class CRunApp;
 

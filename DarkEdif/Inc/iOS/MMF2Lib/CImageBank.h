@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IEnum.h"
-#import "Classes/CImage.h"
+#import "IEnum.h"
+#import "CImage.h"
 
 @class CRunApp;
 

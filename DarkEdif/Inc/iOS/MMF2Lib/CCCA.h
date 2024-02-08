@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CObject.h"
-#import "Classes/IDrawable.h"
+#import "CObject.h"
+#import "IDrawable.h"
 
 #define CCAF_SHARE_GLOBALVALUES 0x00000001
 #define CCAF_SHARE_LIVES 0x00000002

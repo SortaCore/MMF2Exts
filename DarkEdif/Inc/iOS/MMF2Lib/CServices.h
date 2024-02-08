@@ -26,9 +26,9 @@
 //
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CRect.h"
-#import "Classes/CoreMath.h"
-#import "Classes/NSExtensions.h"
+#import "CRect.h"
+#import "CoreMath.h"
+#import "NSExtensions.h"
 
 #define DT_LEFT 0x0000
 #define DT_TOP 0x0000

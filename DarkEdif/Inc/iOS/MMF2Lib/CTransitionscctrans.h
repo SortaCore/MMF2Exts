@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CTransitions.h"
-#import "Classes/CTrans.h"
+#import "CTransitions.h"
+#import "CTrans.h"
 
 
 

@@ -27,9 +27,9 @@
 #pragma once
 #import <Foundation/Foundation.h>
 #import <Box2D/Box2D.h>
-#import "Classes/CRunExtension.h"
-#import "Classes/CRunMvtExtension.h"
-#import "Classes/CRect.h"
+#import "CRunExtension.h"
+#import "CRunMvtExtension.h"
+#import "CRect.h"
 
 typedef unsigned int DWORD;
 typedef unsigned short WORD;

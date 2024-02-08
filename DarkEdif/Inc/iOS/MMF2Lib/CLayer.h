@@ -24,9 +24,9 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CEffectEx.h"
-#import "Classes/CoreMath.h"
-#import "Classes/CRect.h"
+#import "CEffectEx.h"
+#import "CoreMath.h"
+#import "CRect.h"
 
 @class CFile;
 @class CArrayList;

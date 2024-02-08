@@ -40,11 +40,11 @@
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
 
-#import "Classes/CTexture.h"
-#import "Classes/CoreMath.h"
-#import "Classes/CRect.h"
+#import "CTexture.h"
+#import "CoreMath.h"
+#import "CRect.h"
 
-#import "Classes/Array.h"
+#import "Array.h"
 
 #define NUM_INIT_SHADER      50
 

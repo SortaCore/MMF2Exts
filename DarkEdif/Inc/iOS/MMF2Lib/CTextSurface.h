@@ -27,7 +27,7 @@
 
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CRect.h"
+#import "CRect.h"
 
 @class CBitmap;
 @class CFont;

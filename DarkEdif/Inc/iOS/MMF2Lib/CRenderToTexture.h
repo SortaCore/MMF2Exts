@@ -34,8 +34,8 @@
 
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
-#import "Classes/CRect.h"
-#import "Classes/CTexture.h"
+#import "CRect.h"
+#import "CTexture.h"
 
 @class CBitmap;
 @class CFont;

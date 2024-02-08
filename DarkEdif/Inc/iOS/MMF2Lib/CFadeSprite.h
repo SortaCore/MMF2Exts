@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IDrawable.h"
+#import "IDrawable.h"
 
 @class CTrans;
 @class CBitmap;

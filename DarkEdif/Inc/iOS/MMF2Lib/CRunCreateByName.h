@@ -27,8 +27,8 @@
 
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CRunExtension.h"
-#import "Classes/CEvents.h"
+#import "CRunExtension.h"
+#import "CEvents.h"
 
 @interface CRunCreateByName : CRunExtension
 -(void)action:(int)num withActExtension:(CActExtension*)act;

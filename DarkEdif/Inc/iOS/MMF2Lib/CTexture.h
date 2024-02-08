@@ -27,7 +27,7 @@
 
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CoreMath.h"
+#import "CoreMath.h"
 
 
 

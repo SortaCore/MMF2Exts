@@ -28,7 +28,7 @@
 #pragma once
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "Classes/CRenderer.h"
+#import "CRenderer.h"
 
 @class CRunApp;
 

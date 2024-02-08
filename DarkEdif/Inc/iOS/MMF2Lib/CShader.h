@@ -33,7 +33,7 @@
 
 #import <OpenGLES/EAGL.h>
 #import <OpenGLES/ES2/gl.h>
-#import "Classes/CoreMath.h"
+#import "CoreMath.h"
 
 @class CTexture;
 

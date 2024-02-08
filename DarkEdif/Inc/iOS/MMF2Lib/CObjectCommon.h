@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/COC.h"
-#import "Classes/COI.h"
+#import "COC.h"
+#import "COI.h"
 
 
 // Flags 

@@ -25,7 +25,7 @@
 @end
 
 #import <Foundation/Foundation.h>
-#import "Classes/MainViewController.h"
+#import "MainViewController.h"
 
 //@interface ModalInput : UIAlertView
 @interface ModalInput : NSObject

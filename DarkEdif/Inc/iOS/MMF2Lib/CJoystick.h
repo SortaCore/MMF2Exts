@@ -24,7 +24,7 @@
 // --------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/ITouches.h"
+#import "ITouches.h"
 
 #define KEY_JOYSTICK 0
 #define KEY_FIRE1 1

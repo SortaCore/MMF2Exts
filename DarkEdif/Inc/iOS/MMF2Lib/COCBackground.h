@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/COC.h"
-#import "Classes/IDrawable.h"
+#import "COC.h"
+#import "IDrawable.h"
 
 @class CFile;
 @class CSprite;

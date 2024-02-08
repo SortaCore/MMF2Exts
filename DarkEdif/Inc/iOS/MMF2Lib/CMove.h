@@ -28,7 +28,7 @@
 
 @class CObject;
 @class CMoveDef;
-#import "Classes/CPoint.h"
+#import "CPoint.h"
 
 #define MVOPT_8DIR_STICK 0x01
 extern char Joy2Dir[];

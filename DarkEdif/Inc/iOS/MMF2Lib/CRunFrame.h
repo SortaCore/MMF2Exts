@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CEffectEx.h"
-#import "Classes/CRect.h"
+#import "CEffectEx.h"
+#import "CRect.h"
 
 #define LEF_DISPLAYNAME 0x0001
 #define LEF_GRABDESKTOP 0x0002

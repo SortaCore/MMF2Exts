@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IEnum.h"
+#import "IEnum.h"
 
 @class CRunApp;
 @class CFont;

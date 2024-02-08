@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CEvents.h"
+#import "CEvents.h"
 
 #define MAX_CNDPARAMS 16
 

@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CDefObject.h"
+#import "CDefObject.h"
 
 @class CFile;
 

@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CRunView.h"
+#import "CRunView.h"
 
 @class CRunApp;
 

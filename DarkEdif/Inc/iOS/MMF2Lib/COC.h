@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IEnum.h"
-#import "Classes/IDrawable.h"
+#import "IEnum.h"
+#import "IDrawable.h"
 
 #define OBSTACLE_NONE 0
 #define OBSTACLE_SOLID 1

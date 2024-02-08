@@ -24,7 +24,7 @@
 // --------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CFile.h"
+#import "CFile.h"
 
 // Declaration des types de chunks
 #define CHUNK_PREVIEW 0x1122

@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CMoveDef.h"
+#import "CMoveDef.h"
 
 @class CFile;
 

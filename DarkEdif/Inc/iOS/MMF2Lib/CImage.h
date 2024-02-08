@@ -31,8 +31,8 @@
 
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
-#import "Classes/IDrawable.h"
-#import "Classes/CTexture.h"
+#import "IDrawable.h"
+#import "CTexture.h"
 #include <time.h>
 
 @class CFile;

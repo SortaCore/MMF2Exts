@@ -24,8 +24,8 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IDrawable.h"
-#import "Classes/CRect.h"
+#import "IDrawable.h"
+#import "CRect.h"
 
 #define SF_TOKILL 0x00000001		// flag "a detruire"
 #define SF_RECALCSURF 0x00000002		// Recalc surface (if rotation or stretch)

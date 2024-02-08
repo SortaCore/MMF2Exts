@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CSysEvent.h"
+#import "CSysEvent.h"
 
 @class CRun;
 

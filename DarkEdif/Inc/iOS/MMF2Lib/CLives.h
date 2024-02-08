@@ -24,9 +24,9 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/IDrawable.h"
-#import "Classes/CObject.h"
-#import "Classes/CRect.h"
+#import "IDrawable.h"
+#import "CObject.h"
+#import "CRect.h"
 
 @class CObjectCommon;
 @class CCreateObjectInfo;

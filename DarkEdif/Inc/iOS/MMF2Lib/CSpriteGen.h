@@ -24,7 +24,7 @@
 //----------------------------------------------------------------------------------
 #pragma once
 #import <Foundation/Foundation.h>
-#import "Classes/CRect.h"
+#import "CRect.h"
 
 #define AS_DEACTIVATE 0x0000		// Desactive un sprite actif
 #define AS_REDRAW 0x0001			// Reaffiche un sprite inactif
