@@ -1,7 +1,7 @@
 root = true
 # Don't forget to update the gitattributes if you're changing line ending treatment
 
-[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,txt,props,js,mm,plist}]
+[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,txt,props,js,mm,plist,java}]
 end_of_line = lf
 insert_final_newline = true
 charset = utf-8

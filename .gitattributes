@@ -18,8 +18,6 @@
 
 *.py text=auto
 *.rb text=auto
-*.java text=auto
-*.js text=auto eol=lf
 *.css text=auto
 *.scss text=auto
 *.sass text=auto
@@ -63,4 +61,6 @@
 *.html text eol=crlf
 *.mm text eol=lf
 *.plist text eol=lf
+*.java text=auto eol=lf
+*.js text=auto eol=lf
 CodeResources text eol=lf
