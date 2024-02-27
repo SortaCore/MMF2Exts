@@ -158,7 +158,10 @@ namespace DarkEdif {
 	#define LOGE(x,...) (void)0
 #endif
 
-
+// objInfoList::name size, define copied from original SDK
+#ifndef OINAME_SIZE
+	#define	OINAME_SIZE			24
+#endif	// OINAME_SIZE
 
 // Tells the compiler not to generate any default constructor/destructor for this class
 #define NO_DEFAULT_CTORS_OR_DTORS(className) \
@@ -177,6 +180,7 @@ namespace DarkEdif {
 
 struct extHeader
 {
+	NO_DEFAULT_CTORS_OR_DTORS(extHeader);
 	std::uint32_t extSize,
 				  extMaxSize,
 				  extVersion;			// Version number
@@ -193,9 +197,13 @@ enum class HeaderObjectFlags : std::uint16_t {
 	FadeOut = 0x0010,
 	OwnerDraw = 0x0020,
 	DeleteFadeSprite = 0x0040,
+	// Indicates an object was launched from this one
+	Shooter = 0x0040,
 
 	NoCollision = 0x2000,
+	// The current expression of this object is returning float (as opposed to int default)
 	Float = 0x4000,
+	// The current expression of this object is returning string (as opposed to int default)
 	String = 0x8000
 };
 enum_class_is_a_bitmask(HeaderObjectFlags);
@@ -302,13 +310,23 @@ enum class ExpReturnType : short {
 	UnsignedInteger = Integer
 };
 
+#ifdef __APPLE__
+namespace FusionInternals {
+	struct RunObject;
+}
+using namespace FusionInternals;
+#else
+struct RunObject;
+#endif
+
 // Generic class for reading actions, conditions and expression parameters
 struct ACEParamReader {
 	virtual float GetFloat(int i) = 0;
 	virtual const TCHAR* GetString(int i) = 0;
 	virtual int GetInteger(int i, Params type) = 0;
+	// Returns RunObject * for Action, qualifier or singular OI for Condition
+	virtual long GetObject(int i) = 0;
 };
-
 
 
 // Definition of conditions / actions flags
@@ -344,9 +362,29 @@ enum class REFLAG : short {
 	MSGRETURNVALUE = 0x40,
 };
 
+// If set in current event's flags (event2 struct), makes an action function run once for each selected instance
+// before moving to next action in event. If set off, the action is only run once, and it is assumed you loop
+// the selected instances yourself.
+#define	ACTFLAGS_REPEAT	0x1
+
+// Maximum number of qualifiers an object can have
+#define MAX_QUALIFIERS 8	
+
 #define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Useful functions
 #include <thread>
 #include <atomic>
 #include <assert.h>
+
+// Prevents using Fusion internals directly, to allow multiplatform consistency
+// DarkEdif CPP files will define this, your code shouldn't, unless it's Windows only ext and you want internals
+#define DarkEdifInternalAccessPublic public
+#define DarkEdifInternalAccessPriv private
+
+#ifndef FUSION_INTERNAL_ACCESS
+#define DarkEdifInternalAccessProtected protected
+#else
+// no op
+#define DarkEdifInternalAccessProtected public
+#endif

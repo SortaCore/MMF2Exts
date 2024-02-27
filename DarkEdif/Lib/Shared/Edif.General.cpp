@@ -126,12 +126,23 @@ const TCHAR ** FusionAPI GetDependencies()
 
 	return Dependencies;
 }
+struct ForbiddenInternals2 {
+	static inline void SetExtension(RunObject* ro, Extension* ext) {
+		ro->SetExtension(ext);
+	}
+	static std::int16_t GetRunObjectInfos2(mv* mV, kpxRunInfos* infoPtr);
+};
 
 /// <summary> Called every time the extension is being created from nothing.
 ///			  Default property contents should be loaded from JSON. </summary>
-std::int16_t FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
+std::int16_t FusionAPI GetRunObjectInfos(mv* mV, kpxRunInfos* infoPtr)
 {
 #pragma DllExportHint
+	return ForbiddenInternals2::GetRunObjectInfos2(mV, infoPtr);
+}
+
+std::int16_t ForbiddenInternals2::GetRunObjectInfos2(mv * mV, kpxRunInfos * infoPtr)
+{
 	infoPtr->Conditions = &Edif::SDK->ConditionJumps[0];
 	infoPtr->Actions = &Edif::SDK->ActionJumps[0];
 	infoPtr->Expressions = &Edif::SDK->ExpressionJumps[0];
@@ -204,9 +215,9 @@ std::int16_t FusionAPI CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, Create
 #pragma DllExportHint
 	/* Global to all extensions! Use the constructor of your Extension class (Extension.cpp) instead! */
 
-	rdPtr->pExtension = new Extension(rdPtr, edPtr, cobPtr);
-	rdPtr->pExtension->Runtime.ObjectSelection.pExtension = rdPtr->pExtension;
-
+	Extension* ext = new Extension((RunObject*)rdPtr, edPtr, cobPtr);
+	ForbiddenInternals2::SetExtension((RunObject*)rdPtr, ext);
+	ext->Runtime.ObjectSelection.pExtension = ext;
 	return 0;
 }
 
@@ -214,9 +225,17 @@ std::int16_t FusionAPI CreateRunObject(RUNDATA * rdPtr, EDITDATA * edPtr, Create
 
 std::int16_t FusionAPI DestroyRunObject(RUNDATA * rdPtr, long fast)
 {
+	// fast is true if quickly clearing all frame objects at end of frame/app, otherwise false
 #pragma DllExportHint
-	delete rdPtr->pExtension;
-	rdPtr->pExtension = NULL;
+	Extension* ext = ((RunObject*)rdPtr)->GetExtension();
+#ifdef _DEBUG
+	// Something's wrong with the expected arrangement of RUNDATA, is pExtension not immediately following roa/rov and co?
+	if (((RunObject*)rdPtr)->GetExtension() != ext)
+		DarkEdif::MsgBox::Error(_T("DarkEdif - RUNDATA error"), _T("Expected RUNDATA::pExtension at %p, but was not present. Is RUNDATA in the wrong arrangement?"),
+			((RunObject*)rdPtr)->GetExtension());
+#endif
+	delete ext;
+	ForbiddenInternals2::SetExtension((RunObject*)rdPtr, nullptr);
 
 	return 0;
 }
@@ -224,7 +243,7 @@ std::int16_t FusionAPI DestroyRunObject(RUNDATA * rdPtr, long fast)
 REFLAG FusionAPI HandleRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return rdPtr->pExtension->Handle();
+	return ((RunObject*)rdPtr)->GetExtension()->Handle();
 }
 
 #ifdef VISUAL_EXTENSION
@@ -232,15 +251,55 @@ REFLAG FusionAPI HandleRunObject(RUNDATA * rdPtr)
 REFLAG FusionAPI DisplayRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return rdPtr->pExtension->Display();
+	return ((RunObject*)rdPtr)->GetExtension()->Display();
 }
 
 #endif
 
+
+// Grabs the local ext's RUNDATA size by OEFLAG calculation.
+// @remarks While it's permitted to put extra things in RUNDATA, this function assumes pExtension is immediately following
+//			the common structs like AltVals, and that the various structs are local SDK's sizes.
+static constexpr std::uint16_t RDSize() {
+	std::uint16_t rdSize = sizeof(HeaderObject);
+	if constexpr ((Extension::OEFLAGS & (OEFLAGS::ANIMATIONS | OEFLAGS::MOVEMENTS | OEFLAGS::SPRITES)) != OEFLAGS::NONE)
+		rdSize += sizeof(rCom);
+	if constexpr ((Extension::OEFLAGS & OEFLAGS::ANIMATIONS) != OEFLAGS::NONE)
+		rdSize += sizeof(rAni);
+	if constexpr ((Extension::OEFLAGS & OEFLAGS::MOVEMENTS) != OEFLAGS::NONE)
+		rdSize += sizeof(rMvt);
+	if constexpr ((Extension::OEFLAGS & OEFLAGS::SPRITES) != OEFLAGS::NONE)
+		rdSize += sizeof(Sprite);
+	if constexpr ((Extension::OEFLAGS & OEFLAGS::VALUES) != OEFLAGS::NONE)
+		rdSize += std::max(sizeof(AltVals::CF25), sizeof(AltVals::MMF2));
+	// HANDLE[] is ignored as the offset is a full int, so it can be put inside Extension
+	rdSize += sizeof(Extension*); // pExtension
+	return rdSize;
+}
+
+Extension* RunObject::GetExtension() {
+	char* ret = ((char *)this) + sizeof(HeaderObject);
+	if ((rHo.OEFlags & (OEFLAGS::ANIMATIONS | OEFLAGS::MOVEMENTS | OEFLAGS::SPRITES)) != OEFLAGS::NONE)
+		ret += sizeof(rCom);
+	if ((rHo.OEFlags & OEFLAGS::ANIMATIONS) != OEFLAGS::NONE)
+		ret += sizeof(rAni);
+	if ((rHo.OEFlags & OEFLAGS::MOVEMENTS) != OEFLAGS::NONE)
+		ret += sizeof(rMvt);
+	if ((rHo.OEFlags & OEFLAGS::SPRITES) != OEFLAGS::NONE)
+		ret += sizeof(Sprite);
+	if ((rHo.OEFlags & OEFLAGS::VALUES) != OEFLAGS::NONE)
+		ret += std::max(sizeof(AltVals::CF25), sizeof(AltVals::MMF2));
+	return *(Extension**)ret;
+}
+void RunObject::SetExtension(Extension * const ext) {
+	// RDSize includes Extension * ptr, so subtract it to get offset of it
+	*(Extension**)(((char*)this) + RDSize() - sizeof(Extension*)) = ext;
+}
+
 std::uint16_t FusionAPI GetRunObjectDataSize(RunHeader * rhPtr, EDITDATA * edPtr)
 {
 #pragma DllExportHint
-	return (sizeof(RUNDATA));
+	return RDSize();
 }
 
 
@@ -248,15 +307,14 @@ std::int16_t FusionAPI PauseRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
 	// Note: PauseRunObject is required, or runtime will crash when pausing.
-	return rdPtr->pExtension->FusionRuntimePaused();
+	return ((RunObject*)rdPtr)->GetExtension()->FusionRuntimePaused();
 }
 
 std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return rdPtr->pExtension->FusionRuntimeContinued();
+	return ((RunObject*)rdPtr)->GetExtension()->FusionRuntimeContinued();
 }
-
 
 
 #elif defined(__ANDROID__)
@@ -269,16 +327,13 @@ ProjectFunc jint getNumberOfConditions(JNIEnv *, jobject, jlong cptr)
 typedef jobject ByteBufferDirect;
 typedef jobject CCreateObjectInfo;
 
-static RuntimeFunctions runFuncs;
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
 {
 	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
 	LOGV("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
-	runFuncs.ext = javaExtP;
 
-	Extension * ext = new Extension(runFuncs, (EDITDATA *)edPtrReal, javaExtPtr);
-	runFuncs.ext = ext->javaExtPtr; // this is global so it's safer
+	Extension * ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr);
 	ext->Runtime.ObjectSelection.pExtension = ext;
 	return (jlong)ext;
 }
@@ -314,78 +369,6 @@ ProjectFunc short continueRunObject(JNIEnv *, jobject, jlong ext)
 }
 
 extern thread_local JNIEnv * threadEnv;
-jclass GetExtClass(void * javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static global<jclass> clazz(mainThreadJNIEnv->GetObjectClass((jobject)javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
-	return clazz;
-};
-jobject GetRH(void * javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static jfieldID getRH(mainThreadJNIEnv->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
-	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
-};
-
-int act_getParamExpression(void * javaExtPtr, void * act, int paramIndex, Params type) {
-	static jmethodID getExpr(mainThreadJNIEnv->GetMethodID(GetExtClass(javaExtPtr), "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I"));
-	return mainThreadJNIEnv->CallIntMethod((jobject)javaExtPtr, getExpr, (jobject)act, paramIndex, (int)type);
-}
-RuntimeFunctions::string act_getParamExpString(void * javaExtPtr, void * act, int paramIndex) {
-	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act), "static global<> actClass, from act_getParamExpString");
-	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
-	RuntimeFunctions::string str;
-	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)act, getActExpr, GetRH(javaExtPtr), paramIndex);
-	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-	return str;
-}
-float act_getParamExpFloat(void * javaExtPtr, void * act, int paramIndex) {
-	static global<jclass> actClass(mainThreadJNIEnv->GetObjectClass((jobject)act), "static global<>actClass, from act_getParamExpFloat");
-	static jmethodID getActExpr(mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	return mainThreadJNIEnv->CallFloatMethod((jobject)act, getActExpr, GetRH(javaExtPtr), paramIndex);
-}
-
-int cnd_getParamExpression(void * javaExtPtr, void * cnd, int paramIndex, Params type) {
-	static jmethodID getExpr(mainThreadJNIEnv->GetMethodID(GetExtClass(javaExtPtr), "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I"));
-	return mainThreadJNIEnv->CallIntMethod((jobject)javaExtPtr, getExpr, (jobject)cnd, paramIndex, (int)type);
-}
-RuntimeFunctions::string cnd_getParamExpString(void * javaExtPtr, void * cnd, int paramIndex) {
-	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd), "static global<>cndClass, from cnd_getParamExpString");
-	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;"));
-	RuntimeFunctions::string str;
-	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), paramIndex);
-	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-	return str;
-}
-float cnd_getParamExpFloat(void * javaExtPtr, void * cnd, int paramIndex) {
-	static global<jclass> cndClass(mainThreadJNIEnv->GetObjectClass((jobject)cnd), "static global<> cndClass, from cnd_getParamExpFloat");
-	static jmethodID getcndExpr(mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F"));
-	float f = mainThreadJNIEnv->CallFloatMethod((jobject)cnd, getcndExpr, GetRH(javaExtPtr), paramIndex);
-	return f;
-}
-
-int exp_getParamExpression(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_getParamExpression");
-	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamInt", "()I"));
-	return mainThreadJNIEnv->CallIntMethod((jobject)exp, getexpExpr);
-}
-RuntimeFunctions::string exp_getParamExpString(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_getParamExpString");
-	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;"));
-	RuntimeFunctions::string str;
-	str.ctx = (jstring)mainThreadJNIEnv->CallObjectMethod((jobject)exp, getexpExpr);
-	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-	return str;
-}
-float exp_getParamExpFloat(void * javaExtPtr, void * exp) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_getParamExpFloat");
-	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "getParamFloat", "()F"));
-	return mainThreadJNIEnv->CallFloatMethod((jobject)exp, setexpExpr);
-}
-
-void exp_setReturnInt(void * javaExtPtr, void * exp, int val) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_setReturnInt");
-	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnInt", "(I)V"));
-	mainThreadJNIEnv->CallVoidMethod((jobject)exp, setexpExpr, val);
-}
 
 static std::uint8_t UTF8_CHAR_WIDTH[] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -536,56 +519,24 @@ std::string ThreadIDToStr(std::thread::id id)
 	return str.str();
 }
 
-void exp_setReturnString(void * javaExtPtr, void * exp, const char * val) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_setReturnString");
-	static jmethodID setexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V"));
-
-	// Convert into Java memory
-	jstring jStr = CStrToJStr(val);
-	mainThreadJNIEnv->CallVoidMethod((jobject)exp, setexpExpr, jStr);
-	JNIExceptionCheck();
-	mainThreadJNIEnv->DeleteLocalRef(jStr); // not strictly needed
-	JNIExceptionCheck();
-}
-void exp_setReturnFloat(void * javaExtPtr, void * exp, float val) {
-	static global<jclass> expClass(mainThreadJNIEnv->GetObjectClass((jobject)exp), "static global<> expClass, from exp_setReturnFloat");
-	static jmethodID getexpExpr(mainThreadJNIEnv->GetMethodID(expClass, "setReturnFloat", "(F)V"));
-	mainThreadJNIEnv->CallVoidMethod((jobject)exp, getexpExpr, val);
-}
-
-void freeString(void * ext, RuntimeFunctions::string str)
-{
-	threadEnv->ReleaseStringUTFChars((jstring)str.ctx, str.ptr);
-	JNIExceptionCheck();
-	str = { NULL, NULL };
-}
-void generateEvent(void * javaExtPtr, int code, int param) {
-	LOGW("GenerateEvent ID %i attempting...\n", code);
-	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from generateEvent");
-	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
-	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
-	static global<jclass> hoClass(threadEnv->GetObjectClass(ho), "static global<> ho, from generateEvent");
-	static jmethodID genEvent(threadEnv->GetMethodID(hoClass, "generateEvent", "(II)V"));
-	threadEnv->CallVoidMethod(ho, genEvent, code, param);
-};
-void pushEvent(void * javaExtPtr, int code, int param) {
-	static global<jclass> expClass(threadEnv->GetObjectClass((jobject)javaExtPtr), "static global<> expClass, from pushEvent");
-	static jfieldID getHo(threadEnv->GetFieldID(expClass, "ho", "LObjects/CExtension;")); // ?
-	jobject ho = threadEnv->GetObjectField((jobject)javaExtPtr, getHo);
-	static global<jclass> hoClass(threadEnv->GetObjectClass(ho), "static global<> ho, from pushEvent");
-	static jmethodID pushEvent(threadEnv->GetMethodID(hoClass, "pushEvent", "(II)V"));
-	threadEnv->CallVoidMethod(ho, pushEvent, code, param);
-};
-
 void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 {
 	va_list va;
 	va_start(va, x);
-	__android_log_vprint(ANDROID_LOG_ERROR, PROJECT_NAME_UNDERSCORES, x, va);
+	LogV(DARKEDIF_LOG_ERROR, x, va);
 	va_end(va);
+#if _DEBUG
+	fflush(stdout);
+	fflush(stderr);
+#endif
 	__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
+	{
+#if _DEBUG
+		raise(SIGINT);
+#endif
 		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_NAME_UNDERSCORES " for details.");
+	}
 	else
 	{
 		__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
@@ -603,6 +554,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 	if (!threadEnv->ExceptionCheck())
 		return;
 	jthrowable exc = threadEnv->ExceptionOccurred();
+	threadEnv->ExceptionDescribe();
 	threadEnv->ExceptionClear(); // else GetObjectClass fails, which is dumb enough.
 	jclass exccls = threadEnv->GetObjectClass(exc);
 	jmethodID getMsgMeth = threadEnv->GetMethodID(exccls, "toString", "()Ljava/lang/String;");
@@ -708,6 +660,7 @@ static Signal signalCatches[] = {
 	//{SIGSEGV, "SIGSEGV" },
 	{SIGBUS, "SIGBUS"},
 	{SIGPIPE, "SIGPIPE"}
+	// Don't try to catch 33, SIGLWP?, it's the signal used for dumping thrreads post-abort
 };
 
 static void my_handler(const int code, siginfo_t * const si, void * const sc)
@@ -718,7 +671,7 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 		return;
 	}
 
-#if DARKEDIF_MIN_LOG_LEVEL <= DARKEDIF_LOG_ERROR
+#if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR
 	const char * signalName = "Unknown";
 	for (size_t i = 0; i < std::size(signalCatches); i++)
 	{
@@ -837,7 +790,6 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		LOGV("Found %s. [1/2]\n", classNameCRun.c_str());
 
 #define method(a,b) { "darkedif_" #a, b, (void *)&a }
-	//public native long DarkEdif_createRunObject(ByteBuffer edPtr, CCreateObjectInfo cob, int version);
 	static JNINativeMethod methods[] = {
 		method(getNumberOfConditions, "(J)I"),
 		method(createRunObject, "(Ljava/nio/ByteBuffer;LRunLoop/CCreateObjectInfo;I)J"),
@@ -861,28 +813,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	else
 		LOGV("Registered natives for ext %s successfully.\n", PROJECT_NAME);
 	mainThreadJNIEnv->DeleteLocalRef(clazz);
-	runFuncs.ext = NULL;
 
-	// could be Actions.RunLoop.CRun
-	runFuncs.act_getParamExpression = act_getParamExpression;
-	runFuncs.act_getParamExpString = act_getParamExpString;
-	runFuncs.act_getParamExpFloat = act_getParamExpFloat;
-
-	runFuncs.cnd_getParamExpression = cnd_getParamExpression;
-	runFuncs.cnd_getParamExpString = cnd_getParamExpString;
-	runFuncs.cnd_getParamExpFloat = cnd_getParamExpFloat;
-
-	runFuncs.exp_getParamInt = exp_getParamExpression;
-	runFuncs.exp_getParamString = exp_getParamExpString;
-	runFuncs.exp_getParamFloat = exp_getParamExpFloat;
-
-	runFuncs.exp_setReturnInt = exp_setReturnInt;
-	runFuncs.exp_setReturnString = exp_setReturnString;
-	runFuncs.exp_setReturnFloat = exp_setReturnFloat;
-
-	runFuncs.freeString = freeString;
-
-	runFuncs.generateEvent = generateEvent;
 	threadEnv = mainThreadJNIEnv;
 
 #ifdef _DEBUG
@@ -913,8 +844,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 }
 
 #else // iOS
-#include "Extension.h"
-class CValue;
+#include "Extension.hpp"
 
 // Raw creation func
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
@@ -940,8 +870,7 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file,
 {
 	EDITDATA * edPtr = (EDITDATA *)file;
 	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
-	RuntimeFunctions * runFuncs = new RuntimeFunctions();
-	Extension * cppExt = new Extension(*runFuncs, (EDITDATA *)edPtr, objCExtPtr);
+	Extension * cppExt = new Extension((EDITDATA *)edPtr, objCExtPtr);
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
 	return cppExt;
 }

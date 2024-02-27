@@ -446,82 +446,82 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	if (!Edif::SDK)
 		Edif::SDK = this;
 
-#if EditorBuild
-	cSurface * proto = nullptr;
-	if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
-		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
+	#if EditorBuild
+		cSurface * proto = nullptr;
+		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
+			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
-	Icon = new cSurface();
-	if (mV->ImgFilterMgr)
-	{
-		char * IconData;
-		size_t IconSize;
-
-		int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
-		if (result != Edif::DependencyNotFound)
+		Icon = new cSurface();
+		if (mV->ImgFilterMgr)
 		{
-			CInputMemFile * File = CInputMemFile::NewInstance();
-			File->Create((LPBYTE)IconData, IconSize);
+			char * IconData;
+			size_t IconSize;
 
-			const std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
-			const bool loadedOK = ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
-			if (!loadedOK)
+			int result = Edif::GetDependency (IconData, IconSize, _T("png"), IDR_EDIF_ICON);
+			if (result != Edif::DependencyNotFound)
 			{
-				// Read PNG bit depth: Skip 8 byte PNG header, IHDR 4 byte chunk length/type, img width/height,
-				// and then get bit depth byte.
-				// 4 bit or less bit depth is not loadable by Fusion's PNG filter.
-				const std::uint8_t bitDepth = File->GetMemBuffer()[8 + 4 + 4 + 4 + 4];
+				CInputMemFile * File = CInputMemFile::NewInstance();
+				File->Create((LPBYTE)IconData, IconSize);
 
-				if (bitDepth <= 4)
-					DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png uses a bit depth of %hhu, which is too small."), bitDepth);
+				const std::unique_ptr<cSurface> tempIcon = std::make_unique<cSurface>();
+				const bool loadedOK = ImportImageFromInputFile(mV->ImgFilterMgr, File, tempIcon.get(), NULL, 0);
+				if (!loadedOK)
+				{
+					// Read PNG bit depth: Skip 8 byte PNG header, IHDR 4 byte chunk length/type, img width/height,
+					// and then get bit depth byte.
+					// 4 bit or less bit depth is not loadable by Fusion's PNG filter.
+					const std::uint8_t bitDepth = File->GetMemBuffer()[8 + 4 + 4 + 4 + 4];
+
+					if (bitDepth <= 4)
+						DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png uses a bit depth of %hhu, which is too small."), bitDepth);
+					else
+						DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png failed to load."));
+				}
+
+				File->Delete();
+
+				if (!tempIcon->HasAlpha())
+					tempIcon->SetTransparentColor(RGB(255, 0, 255));
+
+				if (result != Edif::DependencyWasResource)
+					free(IconData);
+
+				Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
+
+				if (!tempIcon->HasAlpha())
+					Icon->SetTransparentColor(RGB(255, 0, 255));
 				else
-					DarkEdif::MsgBox::Error(_T("Failed to load ext icon"), _T("" PROJECT_NAME "'s Icon.png failed to load."));
+					Icon->CreateAlpha();
+
+				if (loadedOK && tempIcon->Blit(*Icon) == FALSE)
+					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 			}
-
-			File->Delete();
-
-			if (!tempIcon->HasAlpha())
-				tempIcon->SetTransparentColor(RGB(255, 0, 255));
-
-			if (result != Edif::DependencyWasResource)
-				free(IconData);
-
-			Icon->Create(tempIcon->GetWidth(), tempIcon->GetHeight(), proto);
-
-			if (!tempIcon->HasAlpha())
-				Icon->SetTransparentColor(RGB(255, 0, 255));
-			else
-				Icon->CreateAlpha();
-
-			if (loadedOK && tempIcon->Blit(*Icon) == FALSE)
-				DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 		}
-	}
 
-#if USE_DARKEDIF_UPDATE_CHECKER
-	// Is in editor, not EXE using Run Application, and not in startup screen
-	// Startup screen seems like a clever place to check, but if the update server is down,
-	// you get plenty of delaying exts when loading Fusion
-	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
-		DarkEdif::SDKUpdater::StartUpdateCheck();
-#endif
+		#if USE_DARKEDIF_UPDATE_CHECKER
+			// Is in editor, not EXE using Run Application, and not in startup screen
+			// Startup screen seems like a clever place to check, but if the update server is down,
+			// you get plenty of delaying exts when loading Fusion
+			if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
+				DarkEdif::SDKUpdater::StartUpdateCheck();
+		#endif
 
-	// Is not in editor, but using an Edittime-based MFX. This is UC tag avoiding behaviour
-	// Since PDB files and no optimization is only possible in Debug builds, the ext dev might have copied
-	// it legitimately to debug a Run App error. So we will allow Debug builds to skip the UC tag.
-#if USE_DARKEDIF_UC_TAGGING && !defined(_DEBUG)
-	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::BuiltEXE)
-	{
-	#ifdef _UNICODE
-		const TCHAR * isUni = _T("\\Unicode");
-	#else
-		const TCHAR * isUni = _T("");
-	#endif
-		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Couldn't find UC tag; did you copy an Extensions%s MFX into Data\\Runtime%s?"), isUni, isUni);
-		std::abort();
-	}
-#endif // Using UC Tagging and not Debug build
-#endif // EditorBuild
+		// Is not in editor, but using an Edittime-based MFX. This is UC tag avoiding behaviour
+		// Since PDB files and no optimization is only possible in Debug builds, the ext dev might have copied
+		// it legitimately to debug a Run App error. So we will allow Debug builds to skip the UC tag.
+		#if USE_DARKEDIF_UC_TAGGING && !defined(_DEBUG)
+			if (DarkEdif::RunMode == DarkEdif::MFXRunMode::BuiltEXE)
+			{
+			#ifdef _UNICODE
+				const TCHAR * isUni = _T("\\Unicode");
+			#else
+				const TCHAR * isUni = _T("");
+			#endif
+				DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Couldn't find UC tag; did you copy an Extensions%s MFX into Data\\Runtime%s?"), isUni, isUni);
+				std::abort();
+			}
+		#endif // Using UC Tagging and not Debug build
+	#endif // EditorBuild
 
 	if (CurLang.type != json_object)
 	{
@@ -533,21 +533,21 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 	const json_value &Conditions = CurLang["Conditions"];
 	const json_value &Expressions = CurLang["Expressions"];
 
-#ifdef _WIN32
-	ActionJumps = new void * [Actions.u.object.length + 1];
-	ConditionJumps = new void * [Conditions.u.object.length + 1];
-	ExpressionJumps = new void * [Expressions.u.object.length + 1];
-
-	ActionJumps [Actions.u.object.length] = 0;
-	ConditionJumps [Conditions.u.object.length] = 0;
-	ExpressionJumps [Expressions.u.object.length] = 0;
-#endif
-
-	for (size_t i = 0; i < Actions.u.object.length; ++ i)
-	{
 	#ifdef _WIN32
-		ActionJumps [i] = (void *) Edif::ActionJump;
+		ActionJumps = new void * [Actions.u.object.length + 1];
+		ConditionJumps = new void * [Conditions.u.object.length + 1];
+		ExpressionJumps = new void * [Expressions.u.object.length + 1];
+
+		ActionJumps [Actions.u.object.length] = 0;
+		ConditionJumps [Conditions.u.object.length] = 0;
+		ExpressionJumps [Expressions.u.object.length] = 0;
 	#endif
+
+	for (std::size_t i = 0; i < Actions.u.object.length; ++i)
+	{
+		#ifdef _WIN32
+			ActionJumps[i] = (void*)Edif::ActionJump;
+		#endif
 
 		ActionFunctions.push_back(0);
 
@@ -555,11 +555,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewActionInfo();
 	}
 
-	for (size_t i = 0; i < Conditions.u.object.length; ++ i)
+	for (std::size_t i = 0; i < Conditions.u.object.length; ++i)
 	{
-	#ifdef _WIN32
-		ConditionJumps [i] = (void *) Edif::ConditionJump;
-	#endif
+		#ifdef _WIN32
+			ConditionJumps[i] = (void*)Edif::ConditionJump;
+		#endif
 
 		ConditionFunctions.push_back(0);
 
@@ -567,11 +567,11 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewConditionInfo();
 	}
 
-	for (size_t i = 0; i < Expressions.u.object.length; ++ i)
+	for (std::size_t i = 0; i < Expressions.u.object.length; ++i)
 	{
-	#ifdef _WIN32
-		ExpressionJumps [i] = (void *) Edif::ExpressionJump;
-	#endif
+		#ifdef _WIN32
+			ExpressionJumps[i] = (void*)Edif::ExpressionJump;
+		#endif
 
 		ExpressionFunctions.push_back(0);
 
@@ -579,10 +579,10 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 		CreateNewExpressionInfo();
 	}
 
-	#ifdef DARKSCRIPT_EXTENSION
-		// Generates all the extra expressions dynamically
-		Extension::AutoGenerateExpressions();
-	#endif
+#ifdef DARKSCRIPT_EXTENSION
+	// Generates all the extra expressions dynamically
+	Extension::AutoGenerateExpressions();
+#endif
 #if EditorBuild
 	// Object properties, as they appear in Properties tab, in the frame editor only.
 	DarkEdif::DLL::GeneratePropDataFromJSON();
@@ -593,7 +593,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
-		const json_value & about = CurLang["About"];
+		const json_value& about = CurLang["About"];
 		bool unchangedPropsFound =
 			!_stricmp(about["Name"], "DarkEdif Template") ||
 			!_stricmp(about["Author"], "Your Name") ||
@@ -624,12 +624,12 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 Edif::SDK::~SDK()
 {
 	LOGV(_T("Edif::SDK::~SDK() call.\n"));
-	json_value_free (&json);
+	json_value_free(&json);
 
 #if EditorBuild
-	delete [] ActionJumps;
-	delete [] ConditionJumps;
-	delete [] ExpressionJumps;
+	delete[] ActionJumps;
+	delete[] ConditionJumps;
+	delete[] ExpressionJumps;
 
 	delete Icon;
 #endif
@@ -637,6 +637,27 @@ Edif::SDK::~SDK()
 #ifdef DARKSCRIPT_EXTENSION
 long* actParameters;
 #endif
+#ifdef _WIN32
+// The access restrictions prevent the ext dev accidentally modifying these, but we have to bypass it to set it ourselves
+struct ForbiddenInternals {
+	static inline void UpdateParamToZero(Extension* ext) {
+		ext->rdPtr->rHo.CurrentParam = ext->Runtime.ParamZero;
+	}
+	static inline int GetEventNumber(RunObject* rdPtr) {
+		return rdPtr->rHo.EventNumber;
+	}
+	static inline EventParam* GetCurrentParam(RunObject* rdPtr) {
+		return rdPtr->rHo.CurrentParam;
+	}
+};
+
+// WinGDI intercepts our reasonable function name to GetObjectA/W, prevent that
+#ifdef GetObject
+	#undef GetObject
+#endif
+
+#endif
+
 
 long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo * info, ACEParamReader &params, bool isCond)
 {
@@ -645,15 +666,16 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	long Result = 0L;
 #if defined(__arm__) && defined(__ANDROID__)
 	// long argStackCount; // Must be declared here or error reports in param reading won't compile
-#elif defined(_WIN32)
-	// Reset by CNC_GetParam inside params.GetXX(). CurrentParam being correct only matters if you have object parameters, though.
-	EventParam* saveCurParam = ext->rdPtr->rHo.CurrentParam;
 #endif
 
 #ifdef DARKSCRIPT_EXTENSION
 	// Store action parameters so when evaluating the Func() expression, the prior Action parameters are available
 	if (!isCond)
 		actParameters = Parameters;
+#endif
+#ifdef __ANDROID__
+	// Java variables related to object selection and current event are cached: invalidate them
+	ext->Runtime.InvalidateByNewACE();
 #endif
 
 	// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
@@ -675,7 +697,6 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 		switch (info->Parameter[i].p)
 		{
 			case Params::Expression:
-			case Params::New_Direction:
 				if (info->FloatFlags & (1 << i))
 				{
 					float f = params.GetFloat(i);
@@ -707,10 +728,15 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 			case Params::Compare_Time:
 			case Params::Comparison:
+			case Params::New_Direction:
+			case Params::Time:
 				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
 				isComparisonCondition = true;
 				break;
-
+			// Returns a RunObject * for actions, and a OINUM for conditions
+			case Params::Object:
+				Parameters[i] = params.GetObject(i);
+				break;
 
 			default:
 				// GetString uses GetParam, as opposed to GetIntParam.
@@ -720,7 +746,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	}
 
 #ifdef _WIN32
-	ext->rdPtr->rHo.CurrentParam = saveCurParam;
+	ForbiddenInternals::UpdateParamToZero(ext);
 	__asm
 	{
 		pushad					; Start new register set (do not interfere with already existing registers)
@@ -776,6 +802,9 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 #endif
 
 endFunc:
+#ifdef __ANDROID__
+	JNIExceptionCheck();
+#endif
 	// Comparisons return an integer or string pointer, pass as-is
 	if (isComparisonCondition)
 		return Result;
@@ -787,17 +816,20 @@ endFunc:
 #ifdef _WIN32
 struct ConditionOrActionManager_Windows : ACEParamReader
 {
-	RUNDATA * rdPtr;
+	RunObject * const rdPtr;
+	Extension* const ext;
 	bool isTwoOrLess;
-	ConditionOrActionManager_Windows(bool isCondition, RUNDATA * rdPtr, long param1, long param2)
-		: rdPtr(rdPtr)
+	bool isCondition;
+	ConditionOrActionManager_Windows(bool isCondition, RunObject * rdPtr, long param1, long param2)
+		: rdPtr(rdPtr), ext(rdPtr->GetExtension()), isCondition(isCondition)
 	{
 		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.EventNumber];
-		// Can't use param1/param2 if the params are float; Fusion interprets them as integer
-		// parameters, and so calculates them incorrectly
+		// param1/param2 are pre-calculated parameters, but we can't use them if the params are float;
+		// Fusion defaults the pre-calculations as integer parameters, and so calculates them incorrectly
 		isTwoOrLess = info->NumOfParams <= 2 && (info->FloatFlags & 0b11) == 0;
-		rdPtr->pExtension->Runtime.param1 = param1;
-		rdPtr->pExtension->Runtime.param2 = param2;
+		ext->Runtime.param1 = param1;
+		ext->Runtime.param2 = param2;
+		ext->Runtime.ParamZero = rdPtr->rHo.CurrentParam;
 	}
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
@@ -811,14 +843,16 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	virtual const TCHAR * GetString(int index)
 	{
 		if (isTwoOrLess)
-			return (const TCHAR *)(index == 0 ? rdPtr->pExtension->Runtime.param1 : rdPtr->pExtension->Runtime.param2);
+			return (const TCHAR *)(index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 		return (const TCHAR *)CNC_GetStringParameter(rdPtr);
 	}
 
 	virtual std::int32_t GetInteger(int index, Params type)
 	{
+		// TODO: Does this work with NewDirection?
 		if (isTwoOrLess)
-			return (index == 0 ? rdPtr->pExtension->Runtime.param1 : rdPtr->pExtension->Runtime.param2);
+			return (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
+
 		// PARAM_NEWDIRECTION will return directions as 0-31, instead of bitmask, if you use GetIntParameter(),
 		// and then repeat the condition for each direction.
 		// When the user says 1+1 expression on New Direction, it's stored as a code 22, Expression.
@@ -840,29 +874,120 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		}
 		return (std::int32_t)CNC_GetIntParameter(rdPtr);
 	}
+
+	virtual long GetObject(int index)
+	{
+		long ret;
+		if (isTwoOrLess)
+			ret = (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
+		else
+		{
+			// The String parameter returns a pointer, and this works for object parameters too.
+			// CNC_GetParameter() is defined exactly the same as CNC_GetStringParameter().
+			ret = (long)CNC_GetStringParameter(rdPtr);
+		}
+
+		// Conditions pass Object parameters as EventParam *. Dereference it and read the OI number.
+		if (isCondition)
+		{
+			// ...or they should, all runtimes do it, but the param1/2 here strangely points to
+			// a RunObject *, so delegate OI to GetOIFromObjectParam(), which reads based on paramZero
+			if (isTwoOrLess)
+				return ext->Runtime.GetOIFromObjectParam(index);
+
+			if ((Params)((EventParam*)ret)->Code != Params::Object)
+				LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
+			return ((EventParam*)ret)->evp.W[0];
+		}
+
+		// Actions pass a RunObject *. We'll pass it as is so the ext dev can choose to switch to manual looping as needed.
+		return ret;
+	}
 };
 
 #elif defined(__ANDROID__)
 
-typedef jobject CRun;
+// how many a/c/e are running in this ext at the mo
+int aceIndex = 0;
+
+/*typedef jobject CRun;
+
+jclass GetExtClass(void* javaExtPtr) {
+	assert(threadEnv && mainThreadJNIEnv == threadEnv);
+	static global<jclass> clazz(mainThreadJNIEnv->GetObjectClass((jobject)javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
+	return clazz;
+};
+jobject GetRH(void* javaExtPtr) {
+	assert(threadEnv && mainThreadJNIEnv == threadEnv);
+	static jfieldID getRH(mainThreadJNIEnv->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
+	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
+};*/
+
+void freeString(JavaAndCString& str)
+{
+	threadEnv->ReleaseStringUTFChars((jstring)str.ctx, str.ptr);
+#ifdef _DEBUG
+	JNIExceptionCheck();
+	str = { NULL, NULL };
+#endif
+}
 
 struct ConditionOrActionManager_Android : ACEParamReader
 {
-	Extension * ext;
-	jobject javaActOrCndObj;
+	jobject javaActOrCndObj, javaExtPtr, javaExtRHPtr;
 	bool isCondition;
+	int ourAceIndex;
 
-	ConditionOrActionManager_Android(bool isCondition, Extension * ext, jobject javaActOrCndObj)
-		: ext(ext), javaActOrCndObj(javaActOrCndObj), isCondition(isCondition)
+	static global<jclass> extClass, cndClass, actClass;
+	static jmethodID getActOrCondParamInt,
+		getActParamString, getActParamFloat, getActParamObject,
+		setActRetInt, setActRetFloat, setActRetString,
+		getCndParamString, getCndParamFloat, getCndParamObject,
+		setCndRetInt, setCndRetFloat, setCndRetString;
+	static jfieldID getRH;
+
+	JavaAndCString strings[16];
+	int stringIndex = 0;
+	std::vector<std::shared_ptr<RunObject>> objects;
+	Extension* const ext;
+
+	ConditionOrActionManager_Android(bool isCondition, Extension* ext, jobject javaActOrCndObj)
+		: javaActOrCndObj(javaActOrCndObj), isCondition(isCondition), ext(ext)
 	{
-		stringIndex = 0;
+		ourAceIndex = aceIndex++;
+		javaExtPtr = ext->javaExtPtr;
+		javaExtRHPtr = ext->rhPtr->crun;
+
+		if (extClass.invalid())
+		{
+			extClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
+
+			// Shared by both A/C, has special cases for Direction, Time and Object
+			getActOrCondParamInt = mainThreadJNIEnv->GetMethodID(extClass, "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I");
+
+			// init one from passed param, the counterpart from a search
+			(isCondition ? cndClass : actClass) = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaActOrCndObj), "Act or Cnd class in ConditionOrActionManager ctor [1]");
+			(isCondition ? actClass : cndClass) = global<jclass>(mainThreadJNIEnv->FindClass(isCondition ? "Actions/CActExtension" : "Conditions/CCndExtension"), "Act or Cnd class in ConditionOrActionManager ctor [2]");
+
+			// getParamFilename2 handles both filename params and plain string expressions, so we use that
+			getActParamString = mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getActParamFloat = mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getActParamObject = mainThreadJNIEnv->GetMethodID(actClass, "getParamObject", "(LRunLoop/CRun;I)LObjects/CObject;");
+
+			getCndParamString = mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getCndParamFloat = mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getCndParamObject = mainThreadJNIEnv->GetMethodID(cndClass, "getParamObject", "(LRunLoop/CRun;I)LParams/PARAM_OBJECT;");
+
+			getRH = mainThreadJNIEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
+		}
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		float f = (isCondition ? ext->runFuncs.cnd_getParamExpFloat : ext->runFuncs.act_getParamExpFloat)(ext->javaExtPtr, javaActOrCndObj, index);
+		const float f = mainThreadJNIEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
+		JNIExceptionCheck();
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return f;
 	}
@@ -870,37 +995,71 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	virtual const TCHAR * GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const TCHAR * str = trackString((isCondition ? ext->runFuncs.cnd_getParamExpString : ext->runFuncs.act_getParamExpString)(ext->javaExtPtr, javaActOrCndObj, index));
-		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
-		return str;
+		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index);
+		JNIExceptionCheck();
+		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].ptr);
+		return strings[stringIndex++].ptr;
 	}
 
 	virtual std::int32_t GetInteger(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		std::int32_t in = (isCondition ? ext->runFuncs.cnd_getParamExpression : ext->runFuncs.act_getParamExpression)(ext->javaExtPtr, javaActOrCndObj, index, type);
-		LOGV("Got integer param, cond=%d, index %d, type %d OK: %d.\n", isCondition ? 1 : 0, index, (int)type in);
+		const std::int32_t in = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
+		JNIExceptionCheck();
+		LOGV("Got integer param, cond=%d, index %d, type %d OK: %d.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
 	}
 
-	RuntimeFunctions::string strings[16];
-	int stringIndex;
-
-	inline const char * trackString(RuntimeFunctions::string s)
+	virtual long GetObject(int index)
 	{
-		strings[stringIndex++] = s;
-		return s.ptr;
+		// If condition, getParamObject() returns a PARAM_OBJECT; dereference it and read its OIList var via Java side
+		if (isCondition)
+		{
+			LOGV("Getting object param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)Params::Object);
+			const std::int32_t oiListInt = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, (int)Params::Object);
+			JNIExceptionCheck();
+			LOGV("Got object param, cond=%d, index %d OK: %i.\n", isCondition ? 1 : 0, index, oiListInt);
+			return oiListInt;
+		}
+
+		LOGV("Getting object param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
+
+		// Not sure if this can have a zero selection and thus return null, but allow it
+		JNIExceptionCheck();
+		jobject jObj = mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamObject : getActParamObject, javaExtRHPtr, index);
+		JNIExceptionCheck();
+		if (jObj == nullptr)
+			return 0; // null
+
+		LOGV("Got object param, cond=%d, index %d OK: java %p.\n", isCondition ? 1 : 0, index, jObj);
+
+		// Move from a generic jobject to its index in ObjectList, to prevent two separate shared_ptrs for same RunObject,
+		// inviting inconsistencies. To faster read the Object variable, we'll directly look it up from object list,
+		// instead of constructing a RunObject, HeaderObject and the global refs involved.
+		short objNumber = HeaderObject::GetObjectParamNumber(jObj);
+		RunObjectMultiPlatPtr ptr = ext->rhPtr->GetObjectListOblOffsetByIndex(objNumber);
+		objects.push_back(ptr); // store a shared_ptr copy until the Manager destructs
+		return (long)ptr.get();
 	}
 
 	~ConditionOrActionManager_Android()
 	{
 		while (--stringIndex >= 0)
-			ext->runFuncs.freeString(ext, strings[stringIndex]);
+			freeString(strings[stringIndex]);
+		--aceIndex;
 	}
 };
-#else
 
-typedef void * CRun;
+// Pointless static definition with default ctor
+global<jclass> ConditionOrActionManager_Android::extClass, ConditionOrActionManager_Android::actClass, ConditionOrActionManager_Android::cndClass;
+jmethodID ConditionOrActionManager_Android::getActOrCondParamInt,
+	ConditionOrActionManager_Android::getActParamString, ConditionOrActionManager_Android::getActParamFloat, ConditionOrActionManager_Android::getActParamObject,
+	ConditionOrActionManager_Android::setActRetInt, ConditionOrActionManager_Android::setActRetFloat, ConditionOrActionManager_Android::setActRetString,
+	ConditionOrActionManager_Android::getCndParamString, ConditionOrActionManager_Android::getCndParamFloat, ConditionOrActionManager_Android::getCndParamObject,
+	ConditionOrActionManager_Android::setCndRetInt, ConditionOrActionManager_Android::setCndRetFloat, ConditionOrActionManager_Android::setCndRetString;
+jfieldID ConditionOrActionManager_Android::getRH;
+#else
 
 extern "C"
 {
@@ -965,6 +1124,24 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return in;
 	}
 
+	virtual long GetObject(int index)
+	{
+		// If condition, the parameter look-up gets an EventParam from runtime, which we dereference into a OINUM
+		if (isCondition)
+		{
+			LOGV("Getting object param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
+			const LPEVP eventParam = [((CCndExtension*)objCActOrCndObj) getParamObject:((CRunExtension*)ext->objCExtPtr)->rh withNum : index];
+			const short oiList = eventParam->evp.evpW.evpW0;
+			LOGV("Got object param, cond=%d, index %d OK: %hi.\n", isCondition ? 1 : 0, index, oiList);
+			return oiList;
+		}
+
+		LOGV("Getting object param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
+		void * const obj = [((CActExtension*)objCActOrCndObj) getParamObject:((CRunExtension*)ext->objCExtPtr)->rh withNum: index];
+		LOGV("Got object param, cond=%d, index %d OK: %p.\n", isCondition ? 1 : 0, index, obj);
+		return (long)obj;
+	}
+
 	~ConditionOrActionManager_iOS()
 	{
 	}
@@ -974,19 +1151,22 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 #ifdef _WIN32
 long FusionAPI Edif::ConditionJump(RUNDATA * rdPtr, long param1, long param2)
 {
-	Extension * ext = rdPtr->pExtension;
-	int ID = rdPtr->rHo.EventNumber;
-	ConditionOrActionManager_Windows params(true, rdPtr, param1, param2);
+	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
+	int ID = ForbiddenInternals::GetEventNumber(((RunObject*)rdPtr));
+	ConditionOrActionManager_Windows params(true, (RunObject*)rdPtr, param1, param2);
 #elif defined(__ANDROID__)
 ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExtension cndExt)
 {
-	Extension * ext = (Extension *)extPtr;
+	Extension * const ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(true, ext, (jobject)cndExt);
+	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
+	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
 #else
-ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, CCndExtension cndExt))
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
-	Extension* ext = (Extension*)cppExtPtr;
+	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
+	ext->Runtime.curCEvent = cndExt;
 #endif
 	LOGV(PROJECT_NAME _T(" Condition ID %i start.\n"), ID);
 
@@ -1006,7 +1186,16 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 
 	long Result = ActionOrCondition(Function, ID, ext, Edif::SDK->ConditionInfos[ID], params, true);
 
-	LOGD(_T(PROJECT_NAME " Condition ID %i end on event %i, returning %li (%s).\n"), ID, DarkEdif::GetCurrentFusionEventNum(ext), Result, Result != 0 ? _T("TRUE") : _T("FALSE"));
+	LOGV(_T(PROJECT_NAME " Condition ID %i end on event %i, returning %li (%s).\n"), ID, DarkEdif::GetCurrentFusionEventNum(ext), Result, Result != 0 ? _T("TRUE") : _T("FALSE"));
+
+#ifdef __ANDROID__
+	if (ext->Runtime.curCEvent.ref)
+	{
+		threadEnv->DeleteGlobalRef(ext->Runtime.curCEvent.ref);
+		ext->Runtime.curCEvent.ref = nullptr;
+	}
+	ext->Runtime.curCEvent = lastCEvent.swap_out();
+#endif
 
 	return Result;
 }
@@ -1018,22 +1207,29 @@ ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr
 #ifdef _WIN32
 short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 {
-	Extension * ext = rdPtr->pExtension;
-	/* int ID = rdPtr->rHo.hoAdRunHeader->rh4.rh4ActionStart->evtNum; */
-	int ID = rdPtr->rHo.EventNumber;
-	ConditionOrActionManager_Windows params(false, rdPtr, param1, param2);
+	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
+	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
+	ConditionOrActionManager_Windows params(false, (RunObject*)rdPtr, param1, param2);
+	EventParam* curParam = ForbiddenInternals::GetCurrentParam((RunObject*)rdPtr);
 #define actreturn 0
 #elif defined (__ANDROID__)
 ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
 {
 	Extension * ext = (Extension *)extPtr;
 	ConditionOrActionManager_Android params(false, ext, act);
+	// To prevent subfunctions causing this variable to be incorrect, we'll copy it out and restore after
+	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out();
+	ext->Runtime.curCEvent = global((jobject)act, "Current Act ext");
+	const jobject lastAct = ext->Runtime.curAct;
+	ext->Runtime.curAct = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
 #else
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, CActExtension act))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
+	auto lastCEvent = ext->Runtime.curCEvent;
+	ext->Runtime.curCEvent = act;
 #define actreturn /* void */
 #endif
 	LOGV(PROJECT_NAME _T(" Action ID %i start.\n"), ID);
@@ -1054,42 +1250,62 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 	ActionOrCondition(Function, ID, ext, Edif::SDK->ActionInfos[ID], params, false);
 
 	LOGV(PROJECT_NAME _T(" Action ID %i end.\n"), ID);
+#ifdef __ANDROID__
+	if (ext->Runtime.curCEvent.ref)
+	{
+		threadEnv->DeleteGlobalRef(ext->Runtime.curCEvent.ref);
+		ext->Runtime.curCEvent.ref = nullptr;
+	}
+	ext->Runtime.curCEvent = lastCEvent.swap_out();
+	ext->Runtime.curAct = lastAct;
+#elif defined(__APPLE__)
+	ext->Runtime.curCEvent = lastCEvent;
+#endif
 	return actreturn;
 #undef actreturn
 }
 
 #ifdef __ANDROID__
 
-typedef jobject CNativeExpInstance;
-typedef jobject CRun;
-#include <jni.h>
 struct ExpressionManager_Android : ACEParamReader {
 	CNativeExpInstance expJavaObj;
-	Extension * ext;
-
-	RuntimeFunctions::string strings[16];
-	int stringIndex;
-
-	inline const char * trackString(RuntimeFunctions::string s)
-	{
-		strings[stringIndex++] = s;
-		return s.ptr;
-	}
+	JavaAndCString strings[16];
+	int stringIndex = 0;
+	int ourAceIndex;
+	jobject javaExtPtr;
+	static global<jclass> expClass;
+	static jmethodID setRetInt, setRetFloat, setRetString, getParamInt, getParamString, getParamFloat;
 
 	ExpressionManager_Android(Extension * ext, CNativeExpInstance expJavaObj) :
-		 expJavaObj(expJavaObj), ext(ext)
+		 expJavaObj(expJavaObj), javaExtPtr(ext->javaExtPtr)
 	{
-		stringIndex = 0;
+		ourAceIndex = aceIndex++;
+		if (expClass.invalid())
+		{
+			expClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(expJavaObj), "static global<> expClass, from ExpressionManager ctor");
+			// these aren't memory, just ID numbers, which don't change during app lifetime
+			getParamInt = mainThreadJNIEnv->GetMethodID(expClass, "getParamInt", "()I");
+			getParamFloat = mainThreadJNIEnv->GetMethodID(expClass, "getParamFloat", "()F");
+			getParamString = mainThreadJNIEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;");
+			setRetInt = mainThreadJNIEnv->GetMethodID(expClass, "setReturnInt", "(I)V");
+			setRetFloat = mainThreadJNIEnv->GetMethodID(expClass, "setReturnFloat", "(F)V");
+			setRetString = mainThreadJNIEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
+		}
 	}
 	void SetValue(int a) {
-		ext->runFuncs.exp_setReturnInt(ext->javaExtPtr, expJavaObj, a);
+		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetInt, a);
 	}
 	void SetValue(float a) {
-		ext->runFuncs.exp_setReturnFloat(ext->javaExtPtr, expJavaObj, a);
+		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetFloat, a);
 	}
 	void SetValue(const char * a) {
 		LOGV("Setting expression return as text...\n");
-		ext->runFuncs.exp_setReturnString(ext->javaExtPtr, expJavaObj, a);
+		// Convert into Java memory
+		jstring jStr = CStrToJStr(a);
+		mainThreadJNIEnv->CallVoidMethod(expJavaObj,  setRetString, jStr);
+		JNIExceptionCheck();
+		mainThreadJNIEnv->DeleteLocalRef(jStr); // not strictly needed, it should auto-free when expressionJump ends, but can't hurt
+		JNIExceptionCheck();
 		LOGV("Setting expression return as text \"%s\" OK.\n", a);
 	}
 
@@ -1097,45 +1313,56 @@ struct ExpressionManager_Android : ACEParamReader {
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
-		float f = ext->runFuncs.exp_getParamFloat(ext->javaExtPtr, expJavaObj);
-		LOGV("Got float param, expr, index %d OK.\n", index);
+		const float f = mainThreadJNIEnv->CallFloatMethod(expJavaObj, getParamFloat);
+		LOGV("Got float param, expr, index %d OK: %f.\n", index, (double)f);
 		return f;
 	}
 
 	virtual const TCHAR * GetString(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		const TCHAR * str = trackString(ext->runFuncs.exp_getParamString(ext->javaExtPtr, expJavaObj));
-		LOGV("Got string param, expr, index %d OK.\n", index);
-		return str;
+		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString);
+		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
+		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].ptr);
+		return strings[stringIndex++].ptr;
 	}
 
 	virtual std::int32_t GetInteger(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
-		std::int32_t i = ext->runFuncs.exp_getParamInt(ext->javaExtPtr, expJavaObj);
-		LOGV("Got integer param, expr, index %d OK.\n", index);
+		const std::int32_t i = mainThreadJNIEnv->CallIntMethod(expJavaObj, getParamInt);
+		LOGV("Got integer param, expr, index %d OK: %i.\n", index, i);
 		return i;
 	}
-
-	void SetReturnType(ExpReturnType rt)
+	virtual long GetObject(int)
 	{
+		// Expressions can't use object parameters
+		return 0;
+	}
+
+	void SetReturnType(ExpReturnType rt) {
 		// Do nothing. We only care on Windows.
 	}
 
 	~ExpressionManager_Android() {
 		while (--stringIndex >= 0)
-			ext->runFuncs.freeString(ext, strings[stringIndex]);
+			freeString(strings[stringIndex]);
+		--aceIndex;
 	}
 };
+
+// Pointless static definition with default ctors
+global<jclass> ExpressionManager_Android::expClass;
+jmethodID ExpressionManager_Android::setRetInt, ExpressionManager_Android::setRetFloat, ExpressionManager_Android::setRetString,
+	ExpressionManager_Android::getParamInt, ExpressionManager_Android::getParamString, ExpressionManager_Android::getParamFloat;
 
 #elif defined(_WIN32)
 
 struct ExpressionManager_Windows : ACEParamReader {
-	RUNDATA * rdPtr;
+	RunObject * rdPtr;
 	bool isOneOrLess = false;
 	int param;
-	ExpressionManager_Windows(RUNDATA * rdPtr) : rdPtr(rdPtr)
+	ExpressionManager_Windows(RunObject * rdPtr) : rdPtr(rdPtr)
 	{
 	}
 	void SetOneOrLess(long param)
@@ -1167,6 +1394,11 @@ struct ExpressionManager_Windows : ACEParamReader {
 			return param;
 		return (std::int32_t)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_INT, index);
 	}
+	virtual long GetObject(int)
+	{
+		// Expressions can't use object parameters
+		return 0;
+	}
 
 	void SetReturnType(ExpReturnType rt)
 	{
@@ -1188,13 +1420,8 @@ struct ExpressionManager_Windows : ACEParamReader {
 
 };
 #else
-
-class CValue;
 struct ExpressionManager_iOS : ACEParamReader {
-	Extension* ext;
-	void * expObjCObj;
-
-	RuntimeFunctions::string strings[16];
+	Extension* const ext;
 
 	ExpressionManager_iOS(Extension* ext) :
 		ext(ext)
@@ -1234,6 +1461,11 @@ struct ExpressionManager_iOS : ACEParamReader {
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
+	virtual long GetObject(int)
+	{
+		// Expressions can't use object parameters
+		return 0;
+	}
 
 	void SetReturnType(ExpReturnType rt)
 	{
@@ -1248,9 +1480,9 @@ struct ExpressionManager_iOS : ACEParamReader {
 #ifdef _WIN32
 long FusionAPI Edif::ExpressionJump(RUNDATA * rdPtr, long param)
 {
-	int ID = rdPtr->rHo.EventNumber;
-	Extension * ext = (Extension *)rdPtr->pExtension;
-	ExpressionManager_Windows params(rdPtr);
+	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
+	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
+	ExpressionManager_Windows params((RunObject*)rdPtr);
 	LOGV(PROJECT_NAME _T(" Expression ID %i start.\n"), ID);
 #elif defined(__ANDROID__)
 ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativeExpInstance expU)
@@ -1284,6 +1516,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 #if _WIN32
 	if (ParameterCount <= 1)
 		((ExpressionManager_Windows)params).SetOneOrLess(param);
+#elif defined(__ANDROID__)
+	// Java variables related to object selection and current event are cached: invalidate them
+	ext->Runtime.InvalidateByNewACE();
 #endif
 
 
@@ -1357,6 +1592,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 
 #ifdef DARKSCRIPT_EXTENSION
 	_CrtCheckMemory();
+#ifdef __ANDROID__
+	threadEnv->PushLocalFrame(50);
+#endif
 
 	if (Edif::SDK->ExpressionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::VariableFunction))
 	{
@@ -1435,6 +1673,10 @@ endFunc:
 			params.SetValue(*(float *)&Result);
 		else
 			DarkEdif::MsgBox::Error(_T("Expression ASM error"), _T("Error calling expression ID %i: Unrecognised return type."), ID);
+
+#if defined(DARKSCRIPT_EXTENSION) && defined(__ANDROID__)
+		threadEnv->PopLocalFrame(NULL);
+#endif
 #endif
 }
 

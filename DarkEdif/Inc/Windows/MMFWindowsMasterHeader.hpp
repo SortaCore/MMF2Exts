@@ -11,7 +11,9 @@
 #if EditorBuild
 // For ext icon
 #include "Surface.hpp"
+#if IS_DARKEDIF_TEMPLATE
 #include "SafeSurface.hpp"
+#endif
 // For ext properties
 #include "Props.hpp"
 #else
@@ -45,6 +47,15 @@ enum class GAMEON {
 	#pragma pack(2)
 #endif
 
+namespace DarkEdif {
+	class ObjectSelection;
+}
+namespace Edif {
+	class Runtime;
+}
+struct ConditionOrActionManager_Windows;
+struct ExpressionManager_Windows;
+
 // This declaration list cannot be cut down
 class CImageFilterMgr;
 struct CSoundFilterMgr;
@@ -69,6 +80,14 @@ struct CMvt;
 struct CDemoRecord;
 struct CIPhoneJoystick;
 struct CIPhoneAd;
+struct RunObject;
+
+// Runtime, instance-specific data for object - it is a std::shared_ptr on Android, beware!
+typedef RunObject* RunObjectMultiPlatPtr;
+// Fusion application data
+typedef CRunApp CRunAppMultiPlat;
+// Fusion frame data
+typedef CRunFrame CRunFrameMultiPlat;
 
 // Callback function identifiers for CallFunction
 enum class CallFunctionIDs {
@@ -192,7 +211,6 @@ struct Spr
 
 	// Colliding ites
 	int					CollisList[2];	// liste de ites entrant en collisions
-
 };
 
 // Maximum number of parameters
@@ -237,14 +255,15 @@ struct eventInformations {
 #define TYPE_FLOAT	0x2				// Pour les extensions
 #define TYPE_DOUBLE 0x2
 
-struct CValue {
+struct CValueMultiPlat {
+	NO_DEFAULT_CTORS_OR_DTORS(CValueMultiPlat);
 	unsigned int m_type,
-				 m_paddle;
+				 m_padding;
 	union
 	{
-		long m_long;
-		double m_double;
-		TCHAR * m_pString;
+		std::int32_t m_long;
+		double		 m_double;
+		TCHAR *		 m_pString;
 	};
 };
 
@@ -322,7 +341,6 @@ public:
 					FadeOut,		// Offset fade out
 					ValueNames,		// For the debugger
 					StringNames;
-
 };
 //typedef OC * LPOC;
 //typedef OC * fpoc;
@@ -344,15 +362,13 @@ struct OCStrings
 // typedef	OCStringsA*			LPOCSTRINGS;
 // typedef	OCStringsW*			LPOCSTRINGS;
 
-
-
-typedef struct
+struct OCValueNames
 {
+	NO_DEFAULT_CTORS_OR_DTORS(OCValueNames);
 	unsigned short	number;
 	char	str[2];
-
-} OCValueNames;
-typedef	OCValueNames*		LPOCVALUENAMES;
+};
+//typedef	OCValueNames*		LPOCVALUENAMES;
 
 #define	OCFLAGS2_DONTSAVEBKD		0x1
 #define	OCFLAGS2_SOLIDBKD			0x2
@@ -415,10 +431,9 @@ struct AnimDirection {
 	unsigned short	Repeat,			// Number of loops
 					RepeatFrame,	// Where to loop
 					NumberOfFrame,	// Number of frames
-					Frame[1];		// Frames.
+					Frame[];		// Frames.
 	// The Frame's contents are image indexes in app's image bank. See mvCreateImageFromFile().
 };
-#define sizeof_AnimDirection	(sizeof(AnimDirection)-2)
 //typedef AnimDirection *	fpAnimDir;
 //typedef AnimDirection *	fpad;
 //typedef AnimDirection *	LPAD;
@@ -594,8 +609,6 @@ struct EventBlockType {
 	DWORD blockOffset;
 };
 
-
-
 // Was EVGFLAGS_**
 enum class EventGroupFlags : unsigned short
 {
@@ -625,7 +638,75 @@ enum_class_is_a_bitmask(EventGroupFlags);
 
 // Eventgroup structure, before conditions and actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// Differs from eventV1 by union variable types
+struct event2 {
+	NO_DEFAULT_CTORS_OR_DTORS(event2);
+	short get_evtNum();
+	OINUM get_evtOi();
+	//short get_evtSize();
+	std::int8_t get_evtFlags();
+	void set_evtFlags(std::int8_t);
+
+	event2* Next();
+	int GetIndex();
+
+DarkEdifInternalAccessProtected:
+	short	evtSize;				// 0 Size of the event
+	union
+	{
+		long		evtCode;		// 2 Code (hi:NUM lo:TYPE)
+		struct
+		{
+			short	evtType,		// 2 Type of object
+					evtNum;			// 4 Number of action/condition (SUBTRACT 80 FOR A/C ID, and negate for C ID)
+		};
+	};
+	OINUM	evtOi;					// 6 Object Identifier (if normal object)
+	short	evtOiList;				// 8 Pointer
+	char	evtFlags,				// 10 Flags
+			evtFlags2,				// 11 Flags II
+			evtNParams,				// 12 Number of parameters
+			evtDefType;				// 13 If default, type
+	// Conditions
+	short	evtIdentifier;	  		// 14 Event identifier
+									// 16
+};
+//typedef	event	*	PEVT;
+//typedef	event	*	LPEVT;
+
+#define	CND_SIZE					sizeof(event2)
+#define	ACT_SIZE					(sizeof(event2)-2) // Ignore Identifier
+
+// Moved to AllPlatforms header
+//#define		ACTFLAGS_REPEAT			0x1
+
+
+// For flags II
+// -------------
+#define		EVFLAG2_NOT			0x1
+#define		EVFLAG2_NOTABLE		0x2
+#define		EVFLAGS_NOTABLE		(0x2 << 8)
+#define		EVFLAGS_MONITORABLE	0x4
+#define		EVFLAGS_TODELETE	0x8
+#define		EVFLAGS_NEWSOUND	0x10
+#define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
+
+// MACRO: Returns the code for an extension
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
+#define		EXTACTIONNUM(i)			((short)(i>>16))
+struct RunHeader;
 struct eventGroup {
+	NO_DEFAULT_CTORS_OR_DTORS(eventGroup);
+	std::uint8_t get_evgNCond();
+	std::uint8_t get_evgNAct();
+	std::uint16_t get_evgIdentifier();
+	std::uint16_t get_evgInhibit();
+	event2 * GetCAByIndex(size_t index);
+
+DarkEdifInternalAccessProtected:
+	friend RunHeader;
+
 	short			evgSize;		// 0 Size of the group (<=0)
 	unsigned char	evgNCond;		// 2 Number of conditions
 	unsigned char	evgNAct;		// 3 Number of actions
@@ -680,51 +761,6 @@ struct eventV1 {
 #define	EVTNEXTV1(p)		 		((LPEVTV1)((unsigned char * )p+p->evtSize))
 
 
-
-// Differs from eventV1 by union variable types
-struct event2 {
-	short	evtSize;				// 0 Size of the event
-	union
-	{
-		long		evtCode;		// 2 Code (hi:NUM lo:TYPE)
-		struct
-		{
-			short	evtType,		// 2 Type of object
-					evtNum;			// 4 Number of action/condition (SUBTRACT 80 FOR A/C ID, and negate for C ID)
-		};
-	};
-	OINUM	evtOi;					// 6 Object Identifier (if normal object)
-	short	evtOiList;				// 8 Pointer
-	char	evtFlags,				// 10 Flags
-			evtFlags2,				// 11 Flags II
-			evtNParams,				// 12 Number of parameters
-			evtDefType;				// 13 If default, type
-	// Conditions
-	short	evtIdentifier;	  		// 14 Event identifier
-									// 16
-};
-//typedef	event	*	PEVT;
-//typedef	event	*	LPEVT;
-
-#define	CND_SIZE					sizeof(event2)
-#define	ACT_SIZE					(sizeof(event2)-2) // Ignore Identifier
-
-#define		ACTFLAGS_REPEAT			0x1
-
-
-// For flags II
-// -------------
-#define		EVFLAG2_NOT			0x1
-#define		EVFLAG2_NOTABLE		0x2
-#define		EVFLAGS_NOTABLE		(0x2 << 8)
-#define		EVFLAGS_MONITORABLE	0x4
-#define		EVFLAGS_TODELETE	0x8
-#define		EVFLAGS_NEWSOUND	0x10
-#define		EVFLAG2_MASK		(EVFLAG2_NOT|EVFLAG2_NOTABLE|EVFLAGS_MONITORABLE)
-
-// MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
-#define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
@@ -1122,6 +1158,7 @@ struct ParamGroup {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamGroup);
 	short			Flags,			// Active / Inactive?
 					ID;				// Group identifier
+	// May be editor-only, missing in runtime:
 	TCHAR			Title[80],		// Title (max 80? chars)
 					Password[16];	// Protection (max 16? chars)
 	unsigned long	Checksum;		// Checksum
@@ -1175,7 +1212,7 @@ struct ParamInkEffect {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamInkEffect);
 	short	ID,					// ID of effect
 			ParameterEffect;	// Effect parameter
-	long	Free;		// Ignore - free
+	long	Free;				// Ignore - free
 };
 struct ParamMenu {
 	NO_DEFAULT_CTORS_OR_DTORS(ParamMenu);
@@ -1350,11 +1387,14 @@ enum
 };
 
 //typedef void (*ACTIONENDROUTINE)();
-
 //typedef void (*OBLROUTINE)(HeaderObject *);
+
+// CObject
 struct objectsList {
-	HeaderObject  *	oblOffset;
+	RunObject* oblOffset;
 	void (* oblRoutine)(HeaderObject *);
+
+	RunObjectMultiPlatPtr GetOblOffsetByIndex(std::size_t);
 };
 // typedef	objectsList *			LPOBL;
 
@@ -1366,15 +1406,15 @@ struct objectsList {
 #define		MAX_INTERMEDIATERESULTS		256
 #define		STEP_TEMPSTRINGS	64
 
-struct runHeader2 {
-	NO_DEFAULT_CTORS_OR_DTORS(runHeader2);
+struct RunHeader2 {
+	NO_DEFAULT_CTORS_OR_DTORS(RunHeader2);
 	unsigned long	OldPlayer,		// Previous player entries
 					NewPlayer,		// Modified player entries
 					InputMask,		// Inhibated players entries
 					InputPlayers;	// Valid players entries (mask!)
 	unsigned char 	MouseKeys,		// Mousekey entries
 					ActionLoop,		// Actions flag
-				 	ActionOn,		// Flag: are we in actions?
+					ActionOn,		// Flag: are we in actions?
 					EnablePick;  	// Flag: Are we in pick for actions?
 
 	int		  		EventCount;			// Number of the event
@@ -1391,6 +1431,9 @@ struct runHeader2 {
 	int		  		ActionCount;		// Action counter
 	int		  		ActionLoopCount;	// Action loops counter
 	void	(*ActionEndRoutine)();		// End of action routine
+
+	// Number of objects created since frame start. Increments per object instance create of any object; wraps at 16-bit.
+	// @remarks While CreationCount starts as 0, 0 isn't used since Fusion b243 and it is incremented again to 1
 	unsigned short	CreationCount;		// Number of objects created since beginning of frame
 	short			EventType;
 	POINT 			Mouse;				// Mouse coordinate
@@ -1420,8 +1463,8 @@ struct runHeader2 {
 #define	GAME_XBORDER		480
 #define	GAME_YBORDER		300
 
-struct runHeader3 {
-	NO_DEFAULT_CTORS_OR_DTORS(runHeader3);
+struct RunHeader3 {
+	NO_DEFAULT_CTORS_OR_DTORS(RunHeader3);
 	unsigned short	Graine,			// Random generator seed
 					Free;			// Ignore - padding
 
@@ -1438,15 +1481,15 @@ struct runHeader3 {
 					Scrolling;		// Flag: we need to scroll
 
 	int		  		Panic,
-			  		PanicBase,
-			  		PanicPile,
+					PanicBase,
+					PanicPile,
 
 //	short		  	XBorder_;		// Authorised border
 //	short		  	YBorder_;
-		 	  		XMinimum,   	// Object inactivation coordinates
+					XMinimum,   	// Object inactivation coordinates
 					YMinimum,
 					XMaximum,
-			  		YMaximum,
+					YMaximum,
 					XMinimumKill,	// Object destruction coordinates
 					YMinimumKill,
 					XMaximumKill,
@@ -1605,7 +1648,7 @@ struct RunHeader4 {
 	TCHAR *				droppedFiles;
 	FastLoop *			fastLoops;
 	TCHAR *				creationErrorMessages;
-	CValue				expValue1,				// New V2
+	CValueMultiPlat		expValue1,				// New V2
 						expValue2;
 
 	std::int32_t		kpxReturn;				// WindowProc return
@@ -1651,7 +1694,7 @@ struct RunHeader4 {
 
 	int					PosPile;								// Expression evaluation pile position
 	expression *		ExpToken;							// Current position in expressions
-	CValue *			Results[MAX_INTERMEDIATERESULTS];	// Result pile
+	CValueMultiPlat *	Results[MAX_INTERMEDIATERESULTS];	// Result pile
 	long				Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
 
 	TCHAR **			PTempStrings;		// Debut zone 256 long
@@ -1676,8 +1719,51 @@ enum class GAMEFLAGS {
 	INITIALISING = 0x200,
 };
 
+// A stand-in for the CRun class on other platforms, which may have items from CEventProgram
 struct RunHeader {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader);
+
+	// Reads the EventCount variable from RunHeader2, used in object selection. DarkEdif-added function for cross-platform.
+	int GetRH2EventCount();
+	// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
+	int GetRH4EventCountOR();
+	event2* GetRH4ActionStart();
+
+	// Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
+	bool GetRH2ActionOn();
+
+	// Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
+	int GetRH2ActionCount();
+	// Reads the rh2.rh2ActionLoopCount variable, used when looping object instances to run action on each selected instance one by one
+	int GetRH2ActionLoopCount();
+
+	// Sets the rh2.rh2ActionCount variable, used in an action with multiple instances selected, to repeat one action.
+	void SetRH2ActionCount(int newActionCount);
+	// Sets the rh2.rh2ActionLoopCount variable, used in actions when looping object instances to run an action on each instance
+	void SetRH2ActionLoopCount(int newActLoopCount);
+
+	eventGroup* get_EventGroup();
+	// Gets number of OIList currently in frame, see GetOIListByIndex()
+	// @remarks In non-Windows, this is normally a rhMaxOI variable, in Windows it's NumberOi, and includes an extra, invalid Oi
+	std::size_t GetNumberOi();
+	// Returns a pointer to a list of objects, length MaxObjects, number of non-null entries NObjects
+	objectsList* get_ObjectList();
+	// Gets max capacity of simultaneous object instances currently in frame (up to 30k?)
+	std::size_t get_MaxObjects();
+	// Gets number of valid object instances currently in frame
+	std::size_t get_NObjects();
+	CRunApp* get_App();
+
+	objInfoList* GetOIListByIndex(std::size_t index);
+	qualToOi* GetQualToOiListByOffset(std::size_t byteOffset);
+	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
+	EventGroupFlags GetEVGFlags();
+
+DarkEdifInternalAccessProtected:
+	friend DarkEdif::ObjectSelection;
+	friend ConditionOrActionManager_Windows;
+	friend ExpressionManager_Windows;
+	friend Edif::Runtime;
 	void *				IdEditWin,			// npWin or Win *, but evaluates to void *
 		 *				IdMainWin;
 	void *				IdAppli;			// npAppli or Appli *, but evaluates to void *
@@ -1687,7 +1773,7 @@ struct RunHeader {
 						HTopLevelWnd;
 
 	CRunApp *			App;				// Application info
-	CRunFrame *			Frame;				// Frame info
+	CRunFrameMultiPlat*	Frame;				// Frame info
 
 	unsigned int		JoystickPatch;		// To reroute the joystick
 
@@ -1762,8 +1848,8 @@ struct RunHeader {
 	long				Free5,
 						Free6;
 
-	runHeader2			rh2;				// Sub-structure #1
-	runHeader3			rh3;				// Sub-structure #2
+	RunHeader2			rh2;				// Sub-structure #1
+	RunHeader3			rh3;				// Sub-structure #2
 	RunHeader4			rh4;				// Sub-structure #3
 
 	unsigned long *		DestroyList;		// Destroy list address
@@ -1775,9 +1861,6 @@ struct RunHeader {
 						Free7;
 
 	objectsList *		ObjectList;			// Object list address
-
-	// Reads the EventCount variable from RunHeader4. DarkEdif-added function for cross-platform.
-	int GetEventCount();
 };
 //typedef	RunHeader 	* fprh;
 //typedef	RunHeader 	* RunHeader *;
@@ -1792,72 +1875,214 @@ struct RunHeader {
 
 #define HOX_INT
 
+struct ForbiddenInternals;
 struct HeaderObject {
 	NO_DEFAULT_CTORS_OR_DTORS(HeaderObject);
-	short  				Number,			// Number of the object
-		 				NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
+	friend ForbiddenInternals;
+	friend ConditionOrActionManager_Windows;
+	friend ExpressionManager_Windows;
+	friend Edif::Runtime;
+	friend RunObject;
+DarkEdifInternalAccessProtected:
+	// 0+ unique instance number, used in identifying it out of the runtime duplicates
+	// @remarks Is non-contiguous and may be out of order, but the linked lists should be in consistent reverse-creation order;
+	//			last created is in ObjInfoList::Object, traverse with HeaderObject::NumNext until negative to get to first created.
+	short Number;
+	// A Number of the next selected instance, or 0x8000 set for selection to end here.
+	short NextSelected;
+	// The RUNDATA/RunObject size, including the HeaderObject
+	int size;
+	// Run-header address; a CRun class in non-Windows
+	RunHeader* AdRunHeader;
+private:
+	// Pointer to this - might be an anachronism from 16 -> 32-bit Windows memory addresses
+	HeaderObject* Address;
+DarkEdifInternalAccessProtected:
+	// Number of LevObj or HeaderFrameInstance
+	short HFII;
+	// The 0+ index of this object info in rhPtr->OIList?
+	short Oi;
+	// Same OI, previous object instance, a Number; 0x8000 bit is set if invalid
+	short NumPrev;
+	// Same OI, next object instance, a Number; 0x8000 bit is set if invalid
+	short NumNext;
+	// Type of the object - OBJ_XXX or OBJ::XXX enum
+	// @remarks including the 7 built-in OBJ in event editor from -7 to -1, then other built-ins from 0 until 9.
+	short Type;
 
-	int					size;			// Structure size
-	RunHeader *			AdRunHeader;	// Run-header address
-	HeaderObject *		Address;
-	short				HFII,			// Number of LevObj
-		  				Oi,				// Number of ObjInfo
-						NumPrev,		// Same ObjInfo previous object
-						NumNext,		// ... next
-						Type;			// Type of the object
-	unsigned short		CreationId;		// Number of creation
-	objInfoList *		OiList;			// Pointer to OILIST information
-	unsigned int *		Events,			// Pointer to specific events
-						Free0;			// Ignore - reserved/unused
-	unsigned char *		PrevNoRepeat,	// One-shot event handling
-				  *		BaseNoRepeat;
-	int 				Mark1,			// Number of loop marker for the events
-						Mark2;
-	TCHAR *				MT_NodeName;	// name of the current node for path movements
-	int					EventNumber;	// Number of the event called (for extensions)
-	int					Free2;			// Ignore - reserved/unused
-	Objects_Common *	Common;			// Common structure address
+	// rh2CreationCount, incrementing per object instance create of any object, wraps at 16-bit; but shouldn't be 0
+	// @remarks While rh2CreationCount starts as 0, 0 isn't used since Fusion b243, and it is incremented to 1 instead
+	unsigned short CreationId;
 
+	// Pointer to this object's static Object Info List entry, which is used for all instances of this object
+	objInfoList * OiList;
+
+	// Pointer to which call table array index to use when handling events, set to objectInfoList::Events
+	// @remarks This is old and deep Fusion code, probably from 16-bit KnP days. Only the built-in extensions use different tables.
+	unsigned int * Events;
+
+	// Ignore - padding
+private:
+	unsigned int Free0;
+DarkEdifInternalAccessProtected:
+
+	// List of extension identifiers for one-shot collision event and playzone enter/exit handling
+	// @remarks PrevNoRepeat is set at start of event handling tick; BaseNoRepeat is live list.
+	//			Not entirely sure what this prevents, but I wouldn't recommend messing with them.
+	unsigned char * PrevNoRepeat, * BaseNoRepeat;
+	// Used with path movement, works with rhLoopCount
+	int Mark1, Mark2;
+	// Name of the current node for path movements
+	TCHAR * MT_NodeName;
+
+	// 0+ ID of the current A/C/E call, set before their ext function is run
+	int EventNumber;
+
+	// Ignore - padding
+private:
+	int Free2;
+DarkEdifInternalAccessProtected:
+
+	// Common structure address (OC struct)
+	Objects_Common *	Common;
+
+	// TODO: These are used by built-in movements, but what for?
 	union {
 		struct {
 			int CalculX,	// Low weight value
-				X,		  // X coordinate
+				X,			// X coordinate
 				CalculY,	// Low weight value
 				Y;			// Y coordinate
 		};
 		struct {
-			__int64 CalculXLong,
-					CalculYLong;
+			std::int64_t CalculXLong,
+						 CalculYLong;
 		};
 	};
-	int					ImgXSpot, ImgYSpot,		// Hot spot of the current image
-						ImgWidth, ImgHeight;	// Width/Height of the current picture
-	RECT				Rect;					// Display rectangle
 
-	OEFLAGS				OEFlags;		// Objects flags
-	HeaderObjectFlags	Flags;			// HeaderObjectFlags (originally HOF_)
+	// Hot spot of the current image
+	int	ImgXSpot, ImgYSpot;
+	// Width/Height of the current image
+	int ImgWidth, ImgHeight;
+
+	// Display rectangle
+	// TODO: Relative to frame, window, client area, scroll area?
+	RECT Rect;
+
+	// Objects flags (originally OEFLAG_XX enum)
+	OEFLAGS OEFlags;
+
+	// HeaderObjectFlags (originally HOF_XX enum)
+	HeaderObjectFlags Flags;
 
 	// 0 or 1; indicates this object was filtered/selected by conditions in the event.
 	// If 0, all the object instances should be considered selected; if 1, only the selected ones.
-	// Invalid if not an OR event! (check EventGroup->Flags & EventGroupFlags::OrInGroup != 0)
-	bool				SelectedInOR;
-	std::uint8_t		Free;			// Ignore - used for struct member alignment
-	int					OffsetValue;	// Offset from HeaderObject -> AltVals
-	unsigned int		Layer;			// Layer
+	// Invalid if not an OR event! (check (EventGroup->Flags & EventGroupFlags::OrInGroup) != 0)
+	// This is useless for exts, as the runtime only uses it to temporarily mark objects
+	// before restoring their selection after running conditions, and before running the actions;
+	// so both during condition evaluation, and during actions, there's no reason to preserve it.
+	bool SelectedInOR;
 
-	short (* hoHandleRoutine)(HeaderObject *);	// General handle routine
-	short (* hoModifRoutine)(HeaderObject *);  	// Modification routine when coordinates have been modified
-	short (* hoDisplayRoutine)(HeaderObject *);	// Display routine
+	// Ignore - padding
+private:
+	char Free;
+DarkEdifInternalAccessProtected:
 
-	short				LimitFlags,			// Collision limitation flags
-						NextQuickDisplay;	// Quickdraw list
-	saveRect			BackSave;			// Background
+	// Offset from HeaderObject -> AltVals struct. Only valid if OEFlags includes OEFLAGS::VALUES.
+	int OffsetValue;
 
-	EventParam *		CurrentParam;		// Address of the current parameter
+	// Fusion frame layer, 0+?
+	// TODO: Confirm the bottom layer number 0 or 1 based
+	unsigned int Layer;
 
-	int					OffsetToWindows;	// Offset to windows
-	unsigned int		Identifier;			// ASCII identifier of the object
+	// Pointer to HandleRunObject routine
+	// @remarks Calls Extension::Handle in Edif-based exts
+	short (* hoHandleRoutine)(HeaderObject *);
 
+	// Modification routine when coordinates have been modified; updates coordinate and redraws display
+	// @remarks Is run if HandleRunObject() returns with roc.rocChanged true
+	short (* hoModifRoutine)(HeaderObject *);
+
+	// Pointer to DisplayRunObject; redraws this object
+	short (* hoDisplayRoutine)(HeaderObject *);
+
+	// Collision limitation flags (OILIMITFLAG_XXX)
+	short LimitFlags;
+
+	// Quickdraw list - a mainly Windows-only optimization for software (non-Direct3D) display mode
+	// @remarks I only see this as -1 or -2 in non-Windows runtime usage, but it's a Windows optimization
+	short NextQuickDisplay;
+
+	// Background
+	saveRect BackSave;
+
+	// Address of the current A/C/E parameter, set before A/C/E func is run
+	EventParam * CurrentParam;
+
+	// Offset to the window handle structure, which is an int handle_count, followed by a HANDLE[handle_count] array.
+	// Due to 32-bit variable use, you can specify any RAM address by the offset.
+	std::ptrdiff_t OffsetToWindows;
+
+	// ASCII identifier of the object, in 'ABCD' format.
+	// @remarks Due to small endianness, this is reversed in one way of reading it, and will read as 'D','C','B','A'.
+	//			You might be able to get away with unprintable ASCII characters, but not worth risking.
+	//			This is part of object differentiation, along with resource file magic number, and causes strange
+	//			Fusion editor behaviour if you have multiple with same identifier: for example, Popup Message Object 2,
+	//			and Input Object, both cause out-of-context popups questioning what their unsaid a/c/e intended object is.
+	unsigned int Identifier;
+
+public:
+	// Unique 0+ instance in rhPtr->ObjectList; use with rhPtr->GetObjectListOblOffsetByIndex()
+	// Part of fixed value, with CreationId.
+	// @remarks First instance is 0, and they're created in a generally incrementing way, but if objects are
+	//			destroyed, their Numbers are used by new creations, so don't rely on it for creation order;
+	//			instead, use the NumNext chain.
+	short get_Number();
+
+	// 1+ ID, based on rhPtr->rh2CreationCount. Incremented and wraps at MAX_UINT16, but this never is 0.
+	// Part of fixed value, with Number.
+	// @remarks For example, creating/destroying objects will hit 65,535 objects, even though the simultaneous
+	//			number of objects cannot exceed 30k due to frame properties.
+	//			So you cannot rely on this for ordering by creation order. Instead, use the NumNext chain.
+	unsigned short get_CreationId();
+
+	// Next Number for this object, including unselected instances. If negative/0x8000 bit is set, is not a real Number.
+	short get_NumNext();
+
+	// The 0+ index of this object info in rhPtr->OIList; use with rhPtr->GetOIListByIndex(), or just read get_OiList()
+	// @remarks OI aka object information in OIList is static information shared among all instances of an object
+	short get_Oi();
+
+	// Reads the OIList entry for this object; Obj Info is static information shared among all instances of an object
+	objInfoList* get_OiList();
+
+	// Reads the header object flags, which is a mix of flags for multiple purposes
+	HeaderObjectFlags get_Flags();
+
+	// Reads the current frame's RunHeader/CRun data, which is live information for the frame.
+	RunHeader * get_AdRunHeader();
+
+	// Reads next selected Number for this object, or negative/0x8000 is set, is not a Number and selection chain ends here
+	// @remarks While Number is probably more sense as unsigned with the 0x8000 limitation, every runtime uses it as signed.
+	short get_NextSelected();
+
+	// Changes the next selected Number in this object's selection chain; -1 or 0x8000 bit is set to end the selection chain here
+	void set_NextSelected(short);
+
+	// Reads whether this instance is selected in the current OR event.
+	// @remarks At the moment, I don't think these should be get/set by extensions.
+	//			It's useless as OR handling and switching between OR-separated conditions is done by runtime,
+	//			and OR selection is set into normal selection vars (ListSelected chain), before the actions/conditions are called.
+	//			So reading it is pointless, and writing it even more pointless, even in a condition in an OR event.
+	bool get_SelectedInOR();
+
+	// Sets whether this instance is selected in the current OR event.
+	// TODO: confirm if expression-generated events inside OR events require this to be preserved
+	void set_SelectedInOR(bool);
+
+	// Gets the fixed value by combining Number and CreationId; the result should never be 0 or -1, although can be negative
+	// @remarks This should be an unsigned int, but I'm leaving it as signed for consistency with runtime and other exts
+	int GetFixedValue();
 };
 // typedef	LPHO HeaderObject*;
 
@@ -1866,6 +2091,7 @@ struct HeaderObject {
 // --------------------------------------
 struct rMvt {
 	NO_DEFAULT_CTORS_OR_DTORS(rMvt);
+DarkEdifInternalAccessProtected:
 	int  	rmAcc;						// Current acceleration
 	int  	rmDec;						// Current Decelaration
 	int		rmCollisionCount;			// Collision counter
@@ -1881,7 +2107,7 @@ struct rMvt {
 	BOOL	rmFree5;
 	BOOL	rmFree6;
 
- 	BOOL	rmFree7;
+	BOOL	rmFree7;
 	BOOL	rmMoveFlag;					// Messages/movements
 
 	BOOL	rmWrapping;					// For CHECK POSITION
@@ -2005,28 +2231,27 @@ enum
 // ----------------------------------------
 struct rAni {
 	NO_DEFAULT_CTORS_OR_DTORS(rAni);
+DarkEdifInternalAccessProtected:
 	int	 			AnimForced,		// Flags if forced
-		 			DirForced,
-		 			SpeedForced;
+					DirForced,
+					SpeedForced;
 	BOOL			Stopped;
 	int	 			On;				// Current ation
 	Animation *		Offset;
 	int	 			Dir,			// Direction of current ation
-		 			PreviousDir;	// Previous OK direction
+					PreviousDir;	// Previous OK direction
 	AnimDirection *	DirOffset;
 	int	 			Speed,
-		 			MinSpeed,		// Minimum speed of movement
-		 			MaxSpeed,		// Maximum speed of movement
-		 			DeltaSpeed,
-		 			Counter,		// Animation speed counter
-		 			Delta,			// Speed counter
-		 			Repeat,			// Number of repeats
-		 			RepeatLoop,		// Looping picture
-		 			Frame,			// Current frame
-		 			NumberOfFrame,	// Number of frames
-
-		 			FrameForced;
-
+					MinSpeed,		// Minimum speed of movement
+					MaxSpeed,		// Maximum speed of movement
+					DeltaSpeed,
+					Counter,		// Animation speed counter
+					Delta,			// Speed counter
+					Repeat,			// Number of repeats
+					RepeatLoop,		// Looping picture
+					Frame,			// Current frame
+					NumberOfFrame,	// Number of frames
+					FrameForced;
 };
 //typedef rAni*	LPRA;
 
@@ -2045,11 +2270,12 @@ enum class RSFLAG : std::uint16_t {
 enum_class_is_a_bitmask(RSFLAG);
 struct Sprite {
 	NO_DEFAULT_CTORS_OR_DTORS(Sprite);
+DarkEdifInternalAccessProtected:
 	int	 			Flash,				// When flashing objects
-		 			FlashCount,
-		   			Layer,				// Layer
+					FlashCount,
+					Layer,				// Layer
 					ZOrder,				// Z-order value
-		 			CreationFlags;		// Creation flags
+					CreationFlags;		// Creation flags
 	COLORREF		BackColor;			// background saving color
 	unsigned int	Effect;				// Sprite effects
 	LPARAM			EffectParam;
@@ -2066,24 +2292,38 @@ struct Sprite {
 // ----------------------------------------
 struct AltVals {
 	NO_DEFAULT_CTORS_OR_DTORS(AltVals);
+DarkEdifInternalAccessProtected:
+	friend RunObject;
 	union {
 		struct CF25 {
-			CValue* Values;
-			int						NumAltValues;
-			long					Free1[25 - 1];	// 26 = number of alterable values
-			long					InternalFlags;	// Bitmask of all internal flags; flag 0 is accessed via (InternalFlags & 1). Previously named ValueFlags.
-			unsigned char			Free2[26];		// 26 = number of alterable values
-			const TCHAR* const*		Strings;		// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
-			int						NumAltStrings;
+			CValueMultiPlat * Values;
+			int				  NumAltValues;
+			int				  Free1[25 - 1];	// 26 = number of alterable values
+			std::uint32_t	  InternalFlags;
+			std::uint8_t	  Free2[26];		// 26 = number of alterable values
+			const TCHAR * *   Strings;			// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
+			int				  NumAltStrings;
 		} CF25;
 		struct MMF2 {
-			CValue* rvpValues;
-			long	rvFree1[26 - 1];
-			long	rvValueFlags;
-			BYTE	rvFree2[26];
-			LPTSTR	rvStrings[10]; // Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
+			CValueMultiPlat * rvpValues;
+			int				  rvFree1[26 - 1];
+			std::uint32_t	  rvValueFlags;
+			std::uint8_t	  rvFree2[26];
+			const TCHAR *	  rvStrings[10];	// Alterable strings (will be null if never used, including if blank in obj properties); change with mvMalloc/mvFree
 		} MMF2;
 	};
+
+public:
+	std::size_t GetAltValueCount() const;
+	std::size_t GetAltStringCount() const;
+	const TCHAR* GetAltStringAtIndex(const std::size_t) const;
+	const CValueMultiPlat * GetAltValueAtIndex(const std::size_t) const;
+	void SetAltStringAtIndex(const std::size_t, const std::tstring_view&);
+	void SetAltValueAtIndex(const std::size_t, const double);
+	void SetAltValueAtIndex(const std::size_t, const int);
+	// Bitmask of all internal flags; flag N is accessed via ((InternalFlags & (1 << N)) != 0).
+	std::uint32_t GetInternalFlags() const;
+	void SetInternalFlags(const std::uint32_t);
 };
 //typedef AltVals *	LPRVAL;
 
@@ -2113,6 +2353,8 @@ typedef AltVals *	LPRVAL;
 typedef void (* RCROUTINE)(HeaderObject *);
 struct rCom {
 	NO_DEFAULT_CTORS_OR_DTORS(rCom);
+DarkEdifInternalAccessProtected:
+	friend RunObject;
 	int			rcOffsetAnimation; 		// Offset to anims structures
 	int			rcOffsetSprite;			// Offset to sprites structures
 	RCROUTINE	rcRoutineMove;			// Offset to movement routine
@@ -2154,18 +2396,44 @@ struct rCom {
 // ACTIVE OBJECTS DATAZONE
 // ------------------------------------------------------------
 
+class Extension;
+struct ForbiddenInternals2;
+
 // RUNDATA, but with all OEFlags and all parts, like what an Active object has
 struct RunObject {
-
-	HeaderObject  	roHo;		  		// Common structure
 	NO_DEFAULT_CTORS_OR_DTORS(RunObject);
+	// Reads the header information all objects have available. Cross-platform safe. Never null.
+	HeaderObject* get_rHo();
+	// Reads the common data used by objects with movements or animations; null if not available
+	rCom* get_roc();
+	// Reads the movement data; null if not available
+	rMvt* get_rom();
+	// Reads animation data; null if not available
+	rAni* get_roa();
+	Sprite* get_ros();
+	// Reads alt values, strings, internal flags; null if not available
+	AltVals* get_rov();
+
+	// Windows only: For Edif/DarkEdif exts, returns Extension pointer by calculating RUNDATA size.
+	// @remarks While it's permitted to put extra variables in RUNDATA, this function assumes pExtension is immediately following
+	//			the common structs like AltVals, and that the various structs are local SDK's sizes.
+	//			Variables between will break this function; variables after pExtension in RUNDATA won't.
+	Extension* GetExtension();
+
+	DarkEdifInternalAccessProtected:
+	friend ForbiddenInternals;
+	friend ForbiddenInternals2;
+	friend ConditionOrActionManager_Windows;
+	friend ExpressionManager_Windows;
+	HeaderObject  	rHo;		  		// Common structure
 
 	rCom			roc;				// Anim/movement structure
 	rMvt			rom;				// Movement structure
 	rAni			roa;				// Animation structure
 	Sprite			ros;				// Sprite handling structure
 	AltVals			rov;				// Values structure
-
+	// Internal usage only: sets the extension pointer, used during Create/DestroyRunObject
+	void SetExtension(Extension* const ext);
 };
 //typedef RunObject *	FPRUNOBJECT;
 //typedef RunObject *	LPRUNOBJECT;
@@ -2182,6 +2450,7 @@ struct RunObject {
 struct extHeader_v1
 {
 	NO_DEFAULT_CTORS_OR_DTORS(extHeader_v1);
+DarkEdifInternalAccessProtected:
 	short extSize,
 		  extMaxSize,
 		  extOldFlags,		// For conversion purpose
@@ -2194,6 +2463,7 @@ struct extHeader_v1
 // ------------------------------------------------------
 struct rs {
 	NO_DEFAULT_CTORS_OR_DTORS(rs);
+DarkEdifInternalAccessProtected:
 	HeaderObject 	HeaderObject;	// For all the objects
 	rCom			Common;			// Anims / movements / sprites structures
 	rMvt			Movement;		// Mouvement structure
@@ -2207,25 +2477,25 @@ struct rs {
 	};
 	union
 	{
-		long		Mini;
-		long		OldLevel;
+		int			Mini;
+		int			OldLevel;
 	};
 	union
 	{
-		long		Maxi;				//
-		long		Level;
+		int			Maxi;				//
+		int			Level;
 	};
-	CValue			Value;
+	CValueMultiPlat Value;
 	LONG			BoxCx;			// Dimensions box (for lives, counters, texts)
 	LONG			BoxCy;
 	double			MiniDouble;
 	double			MaxiDouble;
-	short			OldFrame;			// Counter only
+	short			OldFrame;		// Counter only
 	unsigned char	Hidden;
 	unsigned char	Free;
 	TCHAR *			TextBuffer;		// text buffer
-	int				LBuffer;			// Length of the buffer in BYTES
-	unsigned long	Font;				// Temporary font for texts
+	int				LBuffer;		// Length of the buffer in BYTES
+	unsigned int	Font;			// Temporary font for texts
 	union {
 		COLORREF	TextColor;		// text color
 		COLORREF	Color1;			// Bar color
@@ -2255,44 +2525,185 @@ enum_class_is_a_bitmask(OILFlags);
 
 // OILIST Structure : Data concerning the objects in the game
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#define MAX_QUALIFIERS					8	// Maximum number of qualifiers per object
 
-
+// CObjInfo in most platforms
 struct objInfoList {
-	short			Oi,  			 // THE ObjectInfo number
-					ListSelected,	 // First selection
-					Type,			 // Type of the object
-					Object;			 // First objects in the game
-	unsigned int	oilEvents;		 // Events
-	char			Wrap,			 // WRAP flags
-					NextFlag;
-	unsigned short	oilFree;		 // Not used
-	int				NObjects,		 // Current number
-					ActionCount,	 // Action loop counter
-					ActionLoopCount; // Action loop counter
+	NO_DEFAULT_CTORS_OR_DTORS(objInfoList);
+DarkEdifInternalAccessProtected:
+	// Unique ObjectInfo number, in rhPtr->OIList
+	short Oi;
+
+	// First selected object instance's HeaderObject::Number, or -1 for no selection
+	// @remarks If EventCount does not match rh2EventCount, this value is ignored
+	short ListSelected;
+
+	// Type of the object - OBJ:: enum?
+	short Type;
+
+	// First object instance's HeaderObject::Number; 0x8000 bit is set if invalid
+	short Object;
+
+	// listPointers offset for this object's conditions
+	// @remarks Deep Fusion internals, an offset in a list of calltables for conditions,
+	//			used by all exts but mostly for built-in Fusion objects
+	unsigned int Events;
+
+	// WRAP flags, used with instances' movement struct rmWrapping
+	std::int8_t Wrap;
+
+	// bool; used to indicate whether to move to next object instance during action instance loop
+	// @remarks Ties with EventProgram RepeatFlag, which doesn't feature in Windows SDK
+	std::int8_t NextFlag;
+
+private:
+	unsigned short	oilFree; // Padding
+
+DarkEdifInternalAccessProtected:
+	// Number of all object instances of this type
+	int				NObjects;
+
+	// Used to reset selection between actions; if matching rhPtr->rh2ActionCount, the ListSelected-NextSelected chain is used,
+	// otherwise implicitly all instances are still selected (i.e. the Object-NumNext chain).
+	// Then the first instance is set to CurrentOi and the loop starts.
+	int ActionCount;
+
+	// I'm not sure how this plays with ActionCount.
+	// Used to repeat an action selection between actions; if not matching rhPtr->rh2ActionCount, inspects CurrentRoutine
+	// to determine which object instances should be looped on.
+	// Then the first instance is set to CurrentOi and the loop starts.
+	int ActionLoopCount;
 
 	// Current routine for the actions
 	HeaderObject * (*CurrentRoutine)(objInfoList*, BOOL*);
 
-	int				CurrentOi,		// Current object
-					Next,			// Pointer on the next
-					EventCount,		// When the event list is done
-					NumOfSelected;	// Number of selected objects [broken in OR events!]
-	unsigned int	OEFlags;		// Object's flags
+	// Current object HeaderObject::Number, used during looping instances in applying actions to them
+	int CurrentOi;
+
+	// Next selected object HeaderObject::Number, used during looping instances in applying actions to them
+	// @remarks Despite the 32-bit int type, this is actually a short
+	int Next;
+
+	// Used to invalidate selection between events; if matching rhPtr->rh4EventCount, the ListSelected-NextSelected chain is used,
+	// otherwise implicitly all instances are still selected (i.e. the Object-NumNext chain).
+	int EventCount;
+
+	// Number of selected objects - invalid in OR events during second set of OR conditions (in MMF2 thru CF2.5 Fusion build 295.10)
+	int NumOfSelected;
+
+	// Object's OEFLAGS, the default copied during new instance create
+	OEFLAGS OEFlags;
+
 	short			LimitFlags,		// Movement limitation flags
-					LimitList;	  // Pointer to limitation list
+					LimitList;		// Pointer to limitation list
 	OILFlags		OIFlags;		// Objects preferences
 	short			OCFlags2;		// Objects preferences II
-	long			InkEffect,		// Ink effect
+	int				InkEffect,		// Ink effect
 					EffectParam;	// Ink effect param
 	short			HFII;			// First available frameitem
 	COLORREF 		BackColor;		// Background erasing color
 	short			Qualifiers[MAX_QUALIFIERS];		// Qualifiers for this object
-	TCHAR			name[24];	 	// user-specified object name, cropped to 24 chars, garaunteed end with NULL
+	TCHAR			name[OINAME_SIZE];	 	// user-specified object name, cropped to 24 chars, guaranteed end with NULL
 	int				EventCountOR;	// Selection in a list of events with OR
 	#ifdef HWABETA
 		short *		lColList;		// Liste de collisions sprites
 	#endif
+
+public:
+	// If this matches rh2EventCount, the selection of ListSelected-NextSelected is applied, otherwise it is
+	// ignored and all instances are implicitly selected.
+	// @remarks This allows a fast way to invalidate the whole selection linked list when events switch.
+	//			EventCount is incremented per event evaluation, but can be increased any amount,
+	//			not specifically one.
+	//			Decreasing may accidentally validate older events' eventcount selection.
+	int get_EventCount();
+
+	// The first object HeaderObject::Number in current selected object list, or -1.
+	// @remarks -1 when no selection. Selection does not apply if EventCount differs to rh2EventCount.
+	short get_ListSelected();
+
+	// The number of selected objects of this type. Is 0 when no selection. Irrelevant if EventCount does not match rh2EventCount. 
+	// @remarks The first selected object Number is ListSelected, then HeaderObject::NextSelected,
+	//			and keep selecting NextSelected until HO::NS is negative.
+	//			Selection does not apply if EventCount differs to rh2EventCount.
+	//			This is a helper value, and won't prevent ListSelected-NextSelected chain going beyond this count.
+	int get_NumOfSelected();
+
+	// The unique number of this object; the OiList index. Same among instances.
+	// @remarks Used to indicate difference between e.g. Active 1 and Active 2. Does not follow any pattern.
+	//			OIs can be negative when indicating a qualifer ID (has 0x8000 flag), but this
+	//			should not apply for OIL::Oi here, as OIL is one object only.
+	short get_Oi();
+
+	// The count of all object instances of this type, selected or not.
+	// @remarks This is a helper value, and won't prevent Object-NumNext iteration going beyond it.
+	int get_NObjects();
+
+	// The first object index in RunHeader::ObjectList, regardless of selection.
+	// @remarks Set to LAST created object so the newly created objects are created faster.
+	//			Thus loops of objects start from the last created and go backwards to first created.
+	short get_Object();
+
+	// The object's name, as user wrote it; null-terminated, cropped to 23 characters max, 24 with null
+	// @remarks The name is the top field in the About tab of object properties.
+	//			This cropping is done on Fusion runtime side, and stored in built apps pre-cropped,
+	//			so it is cropped on all platforms.
+	const TCHAR * get_name();
+
+	// Reads the qualifiers array of this object at passed zero-based index. Pass 0 to 7 only. Returns -1 if invalid.
+	// @remarks Objects cannot have more than MAX_QUALIFIERS (8) qualifiers.
+	//			The returned value can be used with GetQualToOiListByOffset().
+	//			The array is contiguous, so qualifiers removed in editor are shuffled down to fill the gap.
+	short get_QualifierByIndex(std::size_t);
+
+	// When an ActionLoop is active, this is the next object number in the loop (-1, Object, NextSelected).
+	int get_oilNext();
+
+	// When an ActionLoop is active, this is whether to iterate further or not.
+	bool get_oilNextFlag();
+
+	// When an Action repeat or ActionLoop is active, this specifies which object to loop on.
+	// @remarks 0 indicates no 2nd object (gao2ndNone)
+	//			1 indicates to use one 2nd object (gao2ndOneOnly)
+	//			2 indicates to use the ListSelected->NextSelected current selected chain (gao2ndCurrent)
+	//			3 indicates to use the Object->NumNext chain (gao2ndAll)
+	decltype(CurrentRoutine) get_oilCurrentRoutine();
+
+	// When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
+	int get_oilCurrentOi();
+
+	// When an Action is active, this applies oilCurrentRountine.
+	int get_oilActionCount();
+
+	// When an ActionLoop is active (Action repeating in a fastloop), this applies oilCurrentRountine.
+	int get_oilActionLoopCount();
+
+	// Sets the number of selected, presumably after object selection linked list changes.
+	// @remarks This is a helper value, and won't prevent ListSelected-NextSelected loops going beyond it.
+	void set_NumOfSelected(int);
+
+	// Sets the first selected instance to a HeaderObject::Number, or -1 for no selection.
+	// @remarks The Number is a ObjectList index, usable with rhPtr->GetObjectListOblOffsetByIndex().
+	void set_ListSelected(short);
+
+	// Sets the value of a event count, which sets the validation of ListSelected-NextSelected chain.
+	// @remarks If this matches rh2EventCount, the chain is used, otherwise it is ignored and
+	//			implicitly all object instances are selected.
+	//			To have none selected explicitly instead, you set EventCount to match rh2EventCount,
+	//			set ListSelected to -1, and NumSelected to 0.
+	void set_EventCount(int);
+
+	// Sets all the variables for making selection explicitly none for this object.
+	// This will mean actions for that object will not run for any of them! To invalidate selection
+	void SelectNone(RunHeader * rhPtr);
+
+	// Sets all the variables for making selection explicitly all objects instances for this object.
+	// @explicitAll: If true, slowly and explicitly sets every instance selected in the selection chain.
+	//				 Otherwise, uses a faster implicit-all selection by invalidating the chain.
+	// @remarks Ignores objects in Object-NumNext chain marked as destroyed.
+	void SelectAll(RunHeader * rhPtr, bool explicitAll = false);
+private:
+	int get_EventCountOR();
+	void set_EventCountOR(int);
 };
 //typedef	objInfoList	*	objInfoList *;
 
@@ -2310,6 +2721,7 @@ struct objInfoList {
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 struct CreateObjectInfo {
 	NO_DEFAULT_CTORS_OR_DTORS(CreateObjectInfo);
+DarkEdifInternalAccessProtected:
 	LevelObject *	cobLevObj;		// Leave first!
 	unsigned short	cobLevObjSeg,
 					cobFlags;
@@ -2333,6 +2745,7 @@ struct CreateObjectInfo {
 
 struct qualToOi {
 	NO_DEFAULT_CTORS_OR_DTORS(qualToOi);
+DarkEdifInternalAccessProtected:
 	short		CurrentOi,
 				Next;
 	int			ActionPos;
@@ -2341,8 +2754,18 @@ struct qualToOi {
 				ActionLoopCount;
 	char		NextFlag,
 				SelectedFlag;
-	short		Oi,						// Array OINUM / OFFSET
-				OiList;
+
+	short		OiAndOiList[];
+
+public:
+	short get_Oi(std::size_t idx);
+	short get_OiList(std::size_t idx);
+	// Returns all OiList from internal array, used for looping through a qualifier's object IDs
+	std::vector<short> GetAllOi();
+	// Returns all OiList from internal array, used for looping through a qualifier's objInfoList
+	std::vector<short> GetAllOiList();
+private:
+	std::vector<short> HalfVector(std::size_t first);
 };
 
 // ------------------------------------------------------------------
@@ -2352,8 +2775,11 @@ struct qualToOi {
 // ------------------------------------------------------------------
 
 // Information structure about the extension
+struct ForbiddenInternals2;
 struct kpxRunInfos {
 	NO_DEFAULT_CTORS_OR_DTORS(kpxRunInfos);
+DarkEdifInternalAccessProtected:
+	friend ForbiddenInternals2;
 	void *			Conditions;			// 00 Ignore - requires STAND_ALONE - Offset to condition jump list
 	void *			Actions;			// 04 Ignore - requires STAND_ALONE - Offset to action jump list
 	void *			Expressions;		// 08 Ignore - requires STAND_ALONE - Offset to expression jump list
@@ -2365,7 +2791,7 @@ struct kpxRunInfos {
 	char			WindowProcPriority;	// 16 Priority of the routine 0-255
 	char			Free;
 	OEPREFS			EditPrefs;			// 18 Editing Preferences
-	long			Identifier;			// 1A Identification string
+	DWORD			Identifier;			// 1A Identification string
 	short			Version;			// 1E current version
 										// 20
 };
@@ -2375,6 +2801,7 @@ struct kpxRunInfos {
 
 struct kpj {
 	NO_DEFAULT_CTORS_OR_DTORS(kpj);
+DarkEdifInternalAccessProtected:
 	short				(FusionAPI * CreateRunObject)			(HeaderObject *, extHeader *, CreateObjectInfo *);
 	short				(FusionAPI * DestroyRunObject)			(HeaderObject *, long);
 	short				(FusionAPI * HandleRunObject)			(HeaderObject *);
@@ -2428,6 +2855,7 @@ struct kpj {
 struct CallTables
 {
 	NO_DEFAULT_CTORS_OR_DTORS(CallTables);
+DarkEdifInternalAccessProtected:
 	BOOL (** pConditions1)(event2* pe, HeaderObject * pHo);
 	BOOL (** pConditions2)(event2* pe);
 	void (** pActions)(event2* pe);
@@ -2494,6 +2922,7 @@ typedef void (* DRAWROUTINE_PROC)(drawRoutine*);
 
 struct drawRoutine {
 	NO_DEFAULT_CTORS_OR_DTORS(drawRoutine);
+DarkEdifInternalAccessProtected:
 	drawRoutine* next;
 	DRAWROUTINE_PROC routine;
 	long	param1;
@@ -2510,6 +2939,7 @@ struct drawRoutine {
 
 struct pev {
 	NO_DEFAULT_CTORS_OR_DTORS(pev);
+DarkEdifInternalAccessProtected:
 	long	pevCode;
 	void (* pevRoutine)(HeaderObject *, long);
 	long	pevParam;
@@ -2522,6 +2952,7 @@ struct pev {
 struct qualifierLoad
 {
 	NO_DEFAULT_CTORS_OR_DTORS(qualifierLoad);
+DarkEdifInternalAccessProtected:
 	OINUM		qOi;
 	ITEMTYPE	qType;
 	unsigned short		qList;
@@ -2546,11 +2977,6 @@ typedef void (FusionAPI * UPDATEFILENAMEPROCA)(const char *, char *);
 typedef void (FusionAPI * UPDATEFILENAMEPROCW)(const wchar_t *, wchar_t *);
 typedef void (FusionAPI * UPDATEFILENAMEPROC)(const TCHAR *, TCHAR *);
 
-// Old object name size, still used in events
-#ifndef OINAME_SIZE
-	#define	OINAME_SIZE			24
-#endif	// OINAME_SIZE
-
 // Obsolete
 enum class MODIF {
 	SIZE,
@@ -2572,7 +2998,8 @@ enum class MODIF {
 // Menu header (v2)
 struct MenuHdr {
 	NO_DEFAULT_CTORS_OR_DTORS(MenuHdr);
-	unsigned long	HdrSize,		// == sizeof(MenuHdr)
+DarkEdifInternalAccessProtected:
+	unsigned int	HdrSize,		// == sizeof(MenuHdr)
 					MenuOffset,		// From start of MenuHdr
 					MenuSize,
 					AccelOffset,	// From start of MenuHdr
@@ -2584,6 +3011,7 @@ struct MenuHdr {
 //
 struct AppMiniHeader {
 	NO_DEFAULT_CTORS_OR_DTORS(AppMiniHeader);
+DarkEdifInternalAccessProtected:
 
 	union {
 		char			Type[4];	// "PAME"
@@ -2625,6 +3053,7 @@ enum {
 #define PLAYERNAME_SIZE		100
 struct PlayerCtrls {
 	NO_DEFAULT_CTORS_OR_DTORS(PlayerCtrls);
+DarkEdifInternalAccessProtected:
 	unsigned short	PlayerCtrls_Type,		// Control type per player (0 = keyboard, 1-4 = joy1-4)
 					PlayerCtrls_Keys[8];	// Control keys per player
 };
@@ -2632,6 +3061,9 @@ struct PlayerCtrls {
 
 struct AppHeader {
 	NO_DEFAULT_CTORS_OR_DTORS(AppHeader);
+DarkEdifInternalAccessProtected:
+	friend CRunAppMultiPlat;
+	friend Edif::Runtime;
 	unsigned int	size;					// Structure size
 	unsigned short	Flags,					// Flags (GA_XXX defines)
 					NewFlags,				// New flags (GANF_XXX defines)
@@ -2702,14 +3134,13 @@ struct AppHeader {
 // Optional header
 struct AppHeader2 {
 	NO_DEFAULT_CTORS_OR_DTORS(AppHeader2);
-
-	unsigned long	Options,
+DarkEdifInternalAccessProtected:
+	unsigned int	Options,
 					BuildType,
 					BuildFlags;
 	unsigned short	ScreenRatioTolerance,
 					ScreenAngle;			// 0 (no rotation/portrait), 1 (90 clockwise/landscape left), 2 (90 anticlockwise/landscape right), 3 (automatic portrait), 4 (automatic landscape), 5 (fully automatic)
-	unsigned long	Unused2;
-
+	unsigned int	Unused2;
 };
 
 enum class AH2OPT {
@@ -2787,6 +3218,7 @@ enum class BUILDTYPE {
 #ifndef	  _H2INC
 struct ExtDesc {
 	NO_DEFAULT_CTORS_OR_DTORS(ExtDesc);
+DarkEdifInternalAccessProtected:
 	unsigned short	extSize,
 					extIndex;
 	unsigned int	extMagicNumber;
@@ -2795,9 +3227,10 @@ struct ExtDesc {
 
 struct ExtDesc2 {
 	NO_DEFAULT_CTORS_OR_DTORS(ExtDesc2);
+DarkEdifInternalAccessProtected:
 	unsigned short	extSize,
 					extIndex;
-	unsigned long	extMagicNumber,
+	unsigned int	extMagicNumber,
 					extVersionLS,
 					extVersionMS;
 };
@@ -2809,6 +3242,7 @@ struct ExtDesc2 {
 //
 struct MvtExtDesc {
 	NO_DEFAULT_CTORS_OR_DTORS(MvtExtDesc);
+DarkEdifInternalAccessProtected:
 	unsigned short	extTotalSize,
 					extHdrSize;
 	unsigned int	extBuild;
@@ -2818,18 +3252,16 @@ struct MvtExtDesc {
 //////////////////////////////////////////////////////////////////////////////
 // Frame Header
 //
-struct FrameHeader
-{
+struct FrameHeader {
 	NO_DEFAULT_CTORS_OR_DTORS(FrameHeader);
+DarkEdifInternalAccessProtected:
 	// Frame width/height
-	LONG			Width,			// Frame width in pixels
+	int				Width,			// Frame width in pixels
 					Height;			// Frame height in pixels
 	COLORREF		Background;
 
 	// Options
 	unsigned int	Flags;
-
-
 };
 
 // leFlags
@@ -2868,21 +3300,21 @@ struct FrameHeader
 struct EditFrameLayer
 {
 	NO_DEFAULT_CTORS_OR_DTORS(EditFrameLayer);
-	unsigned long	Options;		// Options
+DarkEdifInternalAccessProtected:
+	unsigned int	Options;		// Options
 	float			xCoef, yCoef;	// X/Y Coefficents
 	unsigned int	nBkdLOs,
 					nFirstLOIndex;
-
 };
 
 struct EditFrameLayerEffect {
 	NO_DEFAULT_CTORS_OR_DTORS(EditFrameLayerEffect);
-	unsigned long	InkFx,
+DarkEdifInternalAccessProtected:
+	unsigned int	InkFx,
 					RGBA,
 					ExtInkFxIdx,
 					NumOfParams;
 	LPARAM			paramData;		// offset
-
 };
 
 // Effects
@@ -2890,7 +3322,8 @@ struct EditFrameLayerEffect {
 
 struct EffectHdr {
 	NO_DEFAULT_CTORS_OR_DTORS(EffectHdr);
-	unsigned long	EffectNameOffset,
+DarkEdifInternalAccessProtected:
+	unsigned int	EffectNameOffset,
 					EffectDataOffset,
 					EffectParamsOffset,
 					Options;
@@ -2900,19 +3333,22 @@ struct EffectHdr {
 
 struct EffectParamsHdr {
 	NO_DEFAULT_CTORS_OR_DTORS(EffectParamsHdr);
-	unsigned long	NumOfParams,
+DarkEdifInternalAccessProtected:
+	unsigned int	NumOfParams,
 					ParamTypesOffset,
 					ParamNamesOffset;
 };
 
 struct EffectRunData {
 	NO_DEFAULT_CTORS_OR_DTORS(EffectRunData);
+DarkEdifInternalAccessProtected:
 	unsigned int	EffectIndex,
 					NumOfParams;
 };
 
 struct FrameEffect {
 	NO_DEFAULT_CTORS_OR_DTORS(FrameEffect);
+DarkEdifInternalAccessProtected:
 	unsigned int	InkEffect,
 					InkEffectParam;
 };
@@ -2925,6 +3361,7 @@ struct FrameEffect {
 struct ObjInfoHeader
 {
 	NO_DEFAULT_CTORS_OR_DTORS(ObjInfoHeader);
+DarkEdifInternalAccessProtected:
 	unsigned short	Handle,
 					Type,
 					Flags,			// Memory flags
@@ -2952,9 +3389,10 @@ enum class OIFlags : short
 #ifndef	  _H2INC
 struct diskLO {
 	NO_DEFAULT_CTORS_OR_DTORS(diskLO);
+DarkEdifInternalAccessProtected:
 	unsigned short	LO_Handle;			// HLO
 	unsigned short	OI_Handle;			// HOI
-	LONG			X, Y;				// Coords
+	int				X, Y;				// Coords
 	unsigned short	ParentType;			// Parent type
 	unsigned short	OI_ParentHandle;	// HOI Parent
 	unsigned short	Layer;				// Layer
@@ -2983,7 +3421,7 @@ enum class OBSTACLE {
 #ifndef	  _H2INC
 struct Static_OC {
 	NO_DEFAULT_CTORS_OR_DTORS(Static_OC);
-
+DarkEdifInternalAccessProtected:
 	// Size
 	unsigned int	size;				// OC size?
 
@@ -2991,8 +3429,7 @@ struct Static_OC {
 	unsigned short	ObstacleType;		// Obstacle type
 	unsigned short	ColMode;			// Collision mode (0 = fine, 1 = box)
 
-	LONG	X, Y;						// Size
-
+	int				X, Y;				// Size
 };
 //typedef Static_OC * LPStatic_OC;
 #endif  // _H2INC
@@ -3005,6 +3442,7 @@ struct Static_OC {
 // Gradient
 typedef struct GradientData {
 	NO_DEFAULT_CTORS_OR_DTORS(GradientData);
+DarkEdifInternalAccessProtected:
 	COLORREF		color1,
 					color2;
 	unsigned int	GradientFlags; // prev. vertical
@@ -3091,20 +3529,18 @@ class FilledShape_Data {
 //
 #ifndef	  _H2INC
 
-typedef struct QuickBackdrop_OC {
 struct QuickBackdrop_OC {
 	NO_DEFAULT_CTORS_OR_DTORS(QuickBackdrop_OC);
-
+DarkEdifInternalAccessProtected:
 	unsigned int		size;
 
 	unsigned short		ObstacleType;	// Obstacle type (0
 	unsigned short		ColMode;		// Collision mode (0 = fine, 1 = box)
 
-	LONG				X, Y;			// Size
+	int					X, Y;			// Size
 
 	FilledShape_Data	FilledShape;	// Filled shape infos
-
-} QuickBackdrop_OC;
+};
 typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 
 #endif // _H2INC
@@ -3116,16 +3552,16 @@ typedef QuickBackdrop_OC * LPQuickBackdrop_OC;
 
 struct Backdrop_OC {
 	NO_DEFAULT_CTORS_OR_DTORS(Backdrop_OC);
+	DarkEdifInternalAccessProtected:
 
 	unsigned int	size;
 
 	unsigned short	ObstacleType;	// Obstacle type (0
 	unsigned short	ColMode;		// Collision mode (0 = fine, 1 = box)
 
-	LONG			X, Y;			// Size
+	int				X, Y;			// Size
 
 	unsigned short	Image;			// Image
-
 };
 typedef Backdrop_OC * LPBackdrop_OC;
 
@@ -3141,10 +3577,10 @@ typedef Backdrop_OC * LPBackdrop_OC;
 //
 
 class ImageSet_Data {
-public:
 	NO_DEFAULT_CTORS_OR_DTORS(ImageSet_Data);
+DarkEdifInternalAccessProtected:
 	unsigned short		nbFrames;		// Number of frames
-								// Followed by list of image handles (unsigned short[])
+										// Followed by list of image handles (unsigned short[])
 };
 typedef ImageSet_Data * LPImageSet_Data;
 
@@ -3152,27 +3588,27 @@ typedef ImageSet_Data * LPImageSet_Data;
 // text - ocData
 //
 struct otText {
-
 	NO_DEFAULT_CTORS_OR_DTORS(otText);
+DarkEdifInternalAccessProtected:
 	unsigned int	otDWSize;
-	LONG	otCx;
-	LONG	otCy;
+	int				otCx;
+	int				otCy;
 	unsigned int	otNumberOfText;			// Paragraph number (> 1 if question object)
-	unsigned int	otStringOffset[1];		// String offsets
-
+	unsigned int	otStringOffset[];		// String offsets
 };
 typedef otText	*	fpot;
-#define sizeof_ot	(sizeof(otText)-sizeof(unsigned int))
+//#define sizeof_ot	(sizeof(otText)-sizeof(unsigned int))
 
 typedef	struct txString {
 	NO_DEFAULT_CTORS_OR_DTORS(txString);
-	unsigned short		tsFont;					// Font
-	unsigned short		tsFlags;				// Flags
-	COLORREF	tsColor;				// Color
-	TCHAR		tsChar[1];
+DarkEdifInternalAccessProtected:
+	unsigned short		tsFont;				// Font
+	unsigned short		tsFlags;			// Flags
+	COLORREF			tsColor;			// Color
+	TCHAR				tsChar[];
 } txString;
 typedef	txString	*	fpts;
-#define	sizeof_ts	8					// (sizeof(txString)-1)
+//#define	sizeof_ts	8					// (sizeof(txString)-1)
 
 #define	TSF_LEFT		0x0000			// DT_LEFT
 #define	TSF_HCENTER		0x1			// DT_CENTER
@@ -3189,10 +3625,11 @@ typedef	txString	*	fpts;
 //
 struct CtAnim_Data {
 	NO_DEFAULT_CTORS_OR_DTORS(CtAnim_Data);
+DarkEdifInternalAccessProtected:
 
 	unsigned int		odDWSize;
-	LONG		odCx;					// Size: only lives & counters
-	LONG		odCy;
+	int					odCx;					// Size: only lives & counters
+	int					odCy;
 	unsigned short		odPlayer;				// Player: only score & lives
 	unsigned short		odDisplayType;			// CTA_xxx
 	unsigned short		odDisplayFlags;			// BARFLAG_INVERSE
@@ -3246,6 +3683,7 @@ enum class COUNTER_IMAGE {
 
 struct ocRTF {
 	NO_DEFAULT_CTORS_OR_DTORS(ocRTF);
+DarkEdifInternalAccessProtected:
 	unsigned int	size;
 	unsigned int	Version;	// 0
 	unsigned int	Options;	// Options
@@ -3269,16 +3707,15 @@ struct ocRTF {
 
 struct ocCCA {
 	NO_DEFAULT_CTORS_OR_DTORS(ocCCA);
-
+DarkEdifInternalAccessProtected:
 	unsigned int	size;
-	LONG			XSize,			// Size (ignored)
+	int				XSize,			// Size (ignored)
 					YSize;
 	unsigned short	Version,		// 0
 					NumStartFrame;
 	unsigned int	Options,		// Options
 					IconOffset,		// Icon offset
 					Free;			// Ignore - reserved
-
 };
 //typedef ocCCA * LPOCCCA;
 
@@ -3324,23 +3761,24 @@ struct ocCCA {
 #ifndef	  _H2INC
 
 // Transition header
-typedef struct TransitionHdr {
+struct TransitionHdr {
 	NO_DEFAULT_CTORS_OR_DTORS(TransitionHdr);
+DarkEdifInternalAccessProtected:
 	unsigned int		trDllID;				// DLL id
 	unsigned int		trID;					// Transition ID
 	unsigned int		trDuration;				// Duration
 	unsigned int		trFlags;				// From / to color / background
 	unsigned int		trColor;				// Color
-} TransitionHdr;
+};
 
 // Transition run-time data
 class Transition_Data {
-public:
 	NO_DEFAULT_CTORS_OR_DTORS(Transition_Data);
+DarkEdifInternalAccessProtected:
 	TransitionHdr	trHdr;
-	unsigned int			trDllNameOffset;
-	unsigned int			trParamsOffset;
-	unsigned int			trParamsSize;
+	unsigned int	trDllNameOffset;
+	unsigned int	trParamsOffset;
+	unsigned int	trParamsSize;
 									// Followed by DLL name & transition parameters
 };
 typedef Transition_Data * LPTRANSITIONDATA;
@@ -3907,7 +4345,6 @@ struct LevelObject {
 					Layer,			// Layer
 					Type;
 	Spr *			Spr[4];			// Sprite handles for backdrop objects from layers > 1
-
 };
 // typedef LO *LPLO;
 // typedef	LO *fpLevObj;
@@ -3932,7 +4369,6 @@ struct bkd2 {
 	Spr *			pSpr[4];
 	unsigned int	inkEffect,
 					inkEffectParam;
-
 };
 // typedef bkd2 *LPBKD2;
 
@@ -4078,30 +4514,30 @@ struct CRunFrame {
 	CTransition *		pTrans;
 
 	// Exit code
-	unsigned long		levelQuit;
+	unsigned int		levelQuit;
 
 	// Events
 	int					rhOK;				// TRUE when the events are initialized
 	RunHeader *			rhPtr;
 	eventGroup *		eventPrograms;
-	unsigned long		free[256-1];		// 256 = max event programs
+	unsigned int		free[256-1];		// 256 = max event programs
 	objInfoList *		oiList;
 	void *				free0;
 	unsigned short * 	qualToOiList,
 				   * 	qualOilPtr,		// Do not liberate!
 				   * 	qualOilPtr2;	// Do not liberate!
 	short *				limitBuffer;
-	unsigned long * 	listPointers,
+	unsigned int  * 	listPointers,
 				  *		eventPointers;
 	qualifierLoad * 	qualifiers;
 	short				nQualifiers;
 
 	short				nConditions[7 + (int)OBJ::LAST]; // Number of system types + OBJ_LAST
-	unsigned long		free2[256];			// 256 = max event programs
+	unsigned int		free2[256];			// 256 = max event programs
 	unsigned short		wJoystick,
 						wIPhoneOptions;
 	unsigned char * 	swapBuffers;
-	unsigned long		objectList;
+	unsigned int		objectList;
 	unsigned char * 	destroyList;
 	int					free3,						// Ignore - reserved
 						NumberOfPlayers,
@@ -4115,7 +4551,7 @@ struct CRunFrame {
 	int					ObjectsList_Count;
 	BOOL				EventsBranched,
 						Fade;
-	unsigned long		FadeTimerDelta,
+	unsigned int		FadeTimerDelta,
 						FadeVblDelta,
 						PasteMask;
 
@@ -4126,28 +4562,27 @@ struct CRunFrame {
 	cSurface *			SaveSurface;
 	int					EditWinWidth,	// Frame (not virtual) width
 						EditWinHeight;	// Frame (not virtual) height
-	unsigned long		ColMaskBits;
+	unsigned int		ColMaskBits;
 	TCHAR *				demoFilePath;
 	unsigned short		RandomSeed,
 						Free;							// Ignore - padding
-	unsigned long		MvtTimerBase;
+	unsigned int		MvtTimerBase;
 
 	#ifdef HWABETA
 		unsigned char * LayerEffects;
 
 		// Frame effect
-		FrameEffect *	Effect;						// Frame effect (chunk data, contains effect index & param used in blit)
-		struct CEffectEx *		EffectEx;					// Current effect
-		bool			FrameEffectChanged;			// Frame effect has been modified
-		bool			AlwaysUseSecondarySurface;	// This frame always use a secondary surface
+		FrameEffect *		Effect;						// Frame effect (chunk data, contains effect index & param used in blit)
+		struct CEffectEx *	EffectEx;					// Current effect
+		bool				FrameEffectChanged;			// Frame effect has been modified
+		bool				AlwaysUseSecondarySurface;	// This frame always use a secondary surface
 
 		// Secondary surface (render target used if background or frame effects)
-		cSurface *		SecondarySurface;
+		cSurface *			SecondarySurface;
 
 		// List of sub-app surfaces to refresh at the end in D3D full screen mode
 		struct CPList *		SurfacedSubApps;
 	#endif
-
 };
 // typedef CRunFrame *fpRunFrame;
 
@@ -4158,9 +4593,9 @@ struct CRunFrame {
 struct CBinaryFile {
 	TCHAR			Path[MAX_PATH],	// path stored in ccn file
 		  *			TempPath;		// path in temporary folder, if any
-	unsigned long	FileSize,		// file size
+	unsigned int	FileSize,		// file size
 					FileOffset;		// file offset in EXE/CCN file
-	long			TempCount;		// usage count
+	int				TempCount;		// usage count
 
 	CBinaryFile() :
 		TempPath(NULL), FileSize(0), FileOffset(0), TempCount(0)
@@ -4191,6 +4626,11 @@ struct CBinaryFile {
 
 struct CRunApp {
 	NO_DEFAULT_CTORS_OR_DTORS(CRunApp);
+	CRunApp* get_ParentApp();
+	std::size_t GetNumFusionFrames();
+
+DarkEdifInternalAccessProtected:
+	friend Edif::Runtime;
 	// Application info
 	AppMiniHeader	miniHdr;			// Version
 	AppHeader		hdr;				// General info
@@ -4204,7 +4644,7 @@ struct CRunApp {
 	TCHAR *			targetFileName;		// filename of original CCN/EXE file
 	TCHAR *			tempPath;			// Temporary directory for external files
 	HFILE			file;				// File handle
-	unsigned long	startOffset;
+	unsigned int	startOffset;
 
 	// Help file
 	TCHAR *			doc;				// Help file pathname
@@ -4224,7 +4664,7 @@ struct CRunApp {
 	int					frameMaxIndex;				// Max. number of frames
 	int					frameMaxHandle;				// Max. frame handle
 	unsigned short *	frame_handle_to_index;		// Handle -> index table
-	unsigned long *		frameOffset;				// Frame offsets in the file
+	unsigned int *		frameOffset;				// Frame offsets in the file
 
 	// Frame passwords
 	TCHAR **			framePasswords;				// Table of frame passwords (TCHAR * [])
@@ -4242,16 +4682,16 @@ struct CRunApp {
 	TCHAR *			eltFileName[MAX_TABREF];	// Element banks
 	HFILE			hfElt[MAX_TABREF];
 
-	unsigned long	eltBaseOff;
+	unsigned int	eltBaseOff;
 	unsigned short	nbEltOff[MAX_TABREF];		// Sizes of file offset tables
-	unsigned long * adTabEltOff[MAX_TABREF];	// File offsets of bank elements
+	unsigned int * adTabEltOff[MAX_TABREF];	// File offsets of bank elements
 
 	unsigned short	 nbEltMemToDisk[MAX_TABREF];	// Size of elt cross-ref tables
 	unsigned short * EltMemToDisk[MAX_TABREF],		// Element memory index -> element disk index
 				   * EltDiskToMem[MAX_TABREF],		// Element disk index -> memory index
 
 					tabNbCpt[MAX_TABREF];		// Sizes of usage count tables
-	long *			tabAdCpt[MAX_TABREF];		// Usage count tables of bank elements
+	int *			tabAdCpt[MAX_TABREF];		// Usage count tables of bank elements
 
 	// Binary files
 	unsigned int	binaryFiles[8];
@@ -4271,7 +4711,7 @@ struct CRunApp {
 	// Sub-application
 	CRunApp *		ParentApp;					// Parent application
 	void *			SubAppObject;				// LPRS
-	unsigned long	SubAppOptions;				// Sub-app options
+	unsigned int	SubAppOptions;				// Sub-app options
 	BOOL			SubAppIsVisible;			// Sub-app visibility
 	HICON			SubAppIcon;					// Sub-app icon
 	int				cx;							// Subapp: valid if stretched
@@ -4320,13 +4760,13 @@ struct CRunApp {
 
 	// Players
 	PlayerCtrls	*	pPlayerCtrls;
-	long *			pLives,
-		 *			pScores;
+	int *			pLives,
+		*			pScores;
 
 	// Global values (warning: not valid if sub-app and global values are shared)
 	unsigned char * pGlobalValuesInit;
 	int				nGlobalValues;				// Number of global values
-	CValue *		pGlobalValues;				// Global values
+	CValueMultiPlat * pGlobalValues;			// Global values
 	unsigned char *	pFree,						// No longer used
 				  *	pGlobalValueNames,
 
@@ -4348,10 +4788,10 @@ struct CRunApp {
 
 	int				nInModalLoopCount;
 	TCHAR *			pPlayerNames;
-	unsigned long	dwColorCache;
+	unsigned int	dwColorCache;
 
 	unsigned char * pVtz4Opt;					// not used
-	unsigned long	dwFree;						// not used
+	unsigned int	dwFree;						// not used
 
 	// Application load
 	TCHAR *			pLoadFilename;
@@ -4366,12 +4806,12 @@ struct CRunApp {
 
 	// Code page
 	struct CRunApp_Unicode {
-		unsigned long	dwCodePage;
+		unsigned int	dwCodePage;
 		bool			bUnicodeAppFile;
 	};
 
 	#ifdef _UNICODE
-	CRunApp_Unicode codePage;
+		CRunApp_Unicode codePage;
 	#endif
 
 	// Effects
@@ -4382,7 +4822,6 @@ struct CRunApp {
 						HWA_ShowWindowedMenu;			// To show menu after switch from full screen to windowed mode
 		int				HWA_SubAppShowCount;			// To show the child window, otherwise it's not displayed...
 	#endif // HWABETA
-
 };
 // typedef CRunApp*	fpRunApp;
 //#endif // mmf_master_header

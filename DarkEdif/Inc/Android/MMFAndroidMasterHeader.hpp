@@ -12,8 +12,8 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-variable"
 
-#include "AllPlatformDefines.hpp"
-#include "NonWindowsDefines.hpp"
+#include "../Shared/AllPlatformDefines.hpp"
+#include "../Shared/NonWindowsDefines.hpp"
 
 #include <asm-generic\posix_types.h>
 #include <stdlib.h>
@@ -39,6 +39,7 @@ void Sleep(unsigned int milliseconds);
 #include <sys/resource.h>
 #include <android/log.h>
 #include <math.h>
+#include <optional>
 
 // Note: doesn't use underlying_type due to incompatibility with one of the Android C++ STL libraries (stlport_static).
 
@@ -128,92 +129,10 @@ struct extHeader_v1
 };
 //typedef extHeader_v1*	extHeader *V1;
 
-// Callback function identifiers for CallFunction
-enum class CallFunctionIDs {
-	// Editor only
-	INSERTPROPS = 1,		// Insert properties into Property window
-	REMOVEPROP,				// Remove property
-	REMOVEPROPS,			// Remove properties
-	REFRESHPROP,			// Refresh propery
-	REALLOCEDITDATA,		// Reallocate edPtr
-	GETPROPVALUE,			// Get object's property value
-	GETAPPPROPVALUE,		// Get application's property value
-	GETFRAMEPROPVALUE,		// Get frame's property value
-	SETPROPVALUE,			// Set object's property value
-	SETAPPPROPVALUE,		// Set application's property value
-	SETFRAMEPROPVALUE,		// Set frame's property value
-	GETPROPCHECK,			// Get object's property check state
-	GETAPPPROPCHECK,		// Get application's property check state
-	GETFRAMEPROPCHECK,		// Get frame's property check state
-	SETPROPCHECK,			// Set object's property check state
-	SETAPPPROPCHECK,		// Set application's property check state
-	SETFRAMEPROPCHECK,		// Set frame's property check state
-	INVALIDATEOBJECT,		// Refresh object in frame editor
-	RECALCLAYOUT,			// Recalc runtime layout (docking)
-	GETNITEMS,				// Get number of items - not yet implemented
-	GETNEXTITEM,			// Get next item - not yet implemented
-	GETNINSTANCES,			// Get number of item instances - not yet implemented
-	GETNEXTINSTANCE,		// Get next item instance - not yet implemented
-
-	// Editor & runtime
-	MALLOC = 100,			// Allocate memory
-	CALLOC,					// Allocate memory & set it to 0
-	REALLOC,				// Re-allocate memory
-	FREE,					// Free memory
-	GETSOUNDMGR,			// Get sound manager
-	CLOSESOUNDMGR,			// Close sound manager
-	ENTERMODALLOOP,			// Reserved
-	EXITMODALLOOP,			// Reserved
-	CREATEEFFECT,			// Create effect (runtime only)
-	DELETEEFFECT,			// Delete effect (runtime only)
-	CREATEIMAGEFROMFILEA,	// Create image from file (runtime only)
-	NEEDBACKGROUNDACCESS,	// HWA : tell the frame the frame surface can be read (runtime only)
-	ISHWA,					// Returns TRUE if HWA version (editor and runtime)
-	ISUNICODE,				// Returns TRUE if the editor or runtime is in Unicode mode
-	ISUNICODEAPP,			// Returns TRUE if the application being loaded is a Unicode application
-	GETAPPCODEPAGE,			// Returns the code page of the application
-	CREATEIMAGEFROMFILEW,	// Create image from file (runtime only)
-};
-
-
-
 // ------------------------------------------------------------
 // EXTENSION OBJECT DATA ZONE
 // ------------------------------------------------------------
 
-#define IsRunTimeFunctionPresent(num)	(num < KPX_MAXFUNCTIONS && hoPtr->AdRunHeader->rh4.rh4KpxFunctions[(int)num].routine != NULL)
-#define	CallRunTimeFunction(hoPtr,num,wParam,lParam)	0L/*(hoPtr->AdRunHeader->rh4.rh4KpxFunctions[(int)num].routine(hoPtr, wParam, lParam) )*/
-#define	CallRunTimeFunction2(hoPtr,num,wParam,lParam)	0L/*(hoPtr->AdRunHeader->rh4.rh4KpxFunctions[(int)num].routine(hoPtr, wParam, lParam) )*/
-#define	CallRunTimeFunction3(rh4_,num,wParam,lParam)	0L/*(rh4_.rh4KpxFunctions[num].routine(hoPtr, wParam, lParam) )*/
-
-enum class RFUNCTION {
-	//
-	REHANDLE,				// Re-enable the call to Handle() every frame
-	GENERATE_EVENT,			// Immediately create a triggered condition (do not call in functions that MMF hasn't began the call to, i.e. threads)
-	PUSH_EVENT,				// Generates the event after the next event loop, safer for calling from threads and such.
-	GET_STRING_SPACE_EX,	// Allocates memory from MMF for a char * or wchar_t *, letting you store a string.
-	GET_PARAM_1,			// Retrieves the value of the first parameter of an a/c/e.
-	GET_PARAM_2,			// Retrieves the value of 2nd+ parameter (first call with this is 2nd, next 3rd, etc).
-	PUSH_EVENT_STOP,		// Removes event created by Push Event. Cannot do this with Generate Event as it happens immediately.
-	PAUSE,
-	CONTINUE,
-	REDISPLAY,
-	GET_FILE_INFOS,			// Retrieve information about the current app (see FILEINFOS namespace and Edif.Runtime.cpp)
-	SUB_CLASS_WINDOW,
-	REDRAW,					// Causes the object to redraw [a certain part or 100%?].
-	DESTROY,
-	GET_STRING_SPACE,		// Deprecated GET_STRING_SPACE_EX
-	EXECUTE_PROGRAM,
-	GET_OBJECT_ADDRESS,
-	GET_PARAM,
-	GET_EXP_PARAM,
-	GET_PARAM_FLOAT,
-	EDIT_INT,
-	EDIT_TEXT,
-	CALL_MOVEMENT,
-	SET_POSITION,
-	GET_CALL_TABLES
-};
 // For GetFileInfos
 enum class FILEINFO {
 	DRIVE = 1,
@@ -229,6 +148,205 @@ class CImageFilterMgr;
 #define CNC_GetStringParameter(hoPtr)					CallRunTimeFunction(hoPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetFloatValue(hoPtr, par)					CallRunTimeFunction(hoPtr, RFUNCTION::GET_PARAM_FLOAT, par, 0)
 
+
+// Was EVGFLAGS_**
+enum class EventGroupFlags : unsigned short
+{
+	Once = 0x1,
+	NotAlways = 0x2,
+	Repeat = 0x4,
+	NoMore = 0x8,
+	Shuffle = 0x10,
+	EditorMark = 0x20,
+	UndoMark = 0x40,
+	ComplexGroup = 0x80,
+	Breakpoint = 0x100,
+	AlwaysClean = 0x200,
+	OrInGroup = 0x400,
+	StopInGroup = 0x800,
+	OrLogical = 0x1000,
+	Grouped = 0x2000,
+	Inactive = 0x4000,
+	NoGood = 0x8000,
+	Limited = Shuffle | NotAlways | Repeat | NoMore,
+	DefaultMask = Breakpoint | Grouped
+};
+enum_class_is_a_bitmask(EventGroupFlags);
+
+
+// Converts u8str to UTF-8-Modified str. Expects no embedded nulls
+jstring CStrToJStr(const char* u8str);
+// Converts std::thread::id to a std::string
+std::string ThreadIDToStr(std::thread::id);
+
+extern thread_local JNIEnv* threadEnv;
+// Gets and returns a Java Exception. Pre-supposes there is one. Clears the exception.
+std::string GetJavaExceptionStr();
+
+// JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
+extern const char* globalToMonitor[1];
+template<class T>
+struct global {
+	static_assert(std::is_pointer<T>::value, "Must be a pointer!");
+	T ref;
+	const char * name;
+	bool monitor = false;
+	global(global<T> &p) = delete;
+
+	global<T> swap_out() noexcept {
+#if _DEBUG
+		if (std::is_same_v<jobject, T> && ref && threadEnv->GetObjectRefType(ref) == 0)
+		{
+			LOGE("Invalid global ref at %p \"%s\" was moved!\n", this, name);
+			raise(SIGTRAP);
+		}
+#endif
+		if (ref == nullptr)
+			return global<T>();
+		global<T> newO(this->ref, this->name);
+		newO.monitor = this->monitor;
+		this->ref = nullptr;
+		this->name = "unset [swapped out]";
+		return std::move(newO);
+	}
+	global<T> & operator= (global<T> && p) noexcept {
+		if (std::is_same_v<jobject, T> && p.ref && threadEnv->GetObjectRefType(p.ref) == 0)
+		{
+			LOGE("Invalid global ref at %p \"%s\" was moved!\n", this, name);
+			raise(SIGTRAP);
+		}
+		this->ref = p.ref;
+		this->name = p.name;
+		this->monitor = p.monitor;
+		p.ref = NULL;
+		if (monitor) {
+			LOGD("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.\n",
+				ThreadIDToStr(std::this_thread::get_id()).c_str(),
+				this->ref, name, &p, this);
+		}
+		return *this;
+	}
+
+	global(T p, const char * name) {
+		this->name = name;
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
+		// Check ref names to monitor
+		for (std::size_t i = 0; i < std::size(globalToMonitor); ++i) {
+			if (globalToMonitor[i] && !strcmp(globalToMonitor[i], name)) {
+				monitor = true;
+				break;
+			}
+		}
+#endif
+
+		ref = nullptr;
+		if (p == nullptr) {
+			LOGE("Couldn't make global ref from null (in \"%s\"). Check the calling function.\n", name);
+			return;
+		}
+		assert(threadEnv != NULL);
+		ref = (T)threadEnv->NewGlobalRef(p);
+		if (ref == NULL) {
+			std::string exc = GetJavaExceptionStr();
+			LOGE("Couldn't make global ref from %p [1], error: %s.\n", p, exc.c_str());
+		}
+		if (monitor)
+			LOGD("Thread %s: Creating global pointer %p \"%s\" in global() from original %p.\n", ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name, p);
+		//threadEnv->DeleteLocalRef(p);
+	}
+	global() {
+		ref = NULL;
+		name = "unset";
+		monitor = false;
+	}
+	bool invalid() const {
+		return ref == NULL;
+	}
+	bool valid() const {
+		return ref != NULL;
+	}
+	operator const T() const {
+		if (ref == NULL) {
+			LOGE("null global ref at %p \"%s\" was copied!\n", this, name);
+			raise(SIGTRAP);
+		}
+#if _DEBUG
+		if (monitor)
+			LOGD("Monitored global ref at %p \"%s\" was used.\n", this, name);
+		if (std::is_same_v<jobject, T> && ref && threadEnv->GetObjectRefType(ref) == 0)
+		{
+			LOGE("Invalid global ref at %p \"%s\" was used!\n", this, name);
+			raise(SIGTRAP);
+		}
+#endif
+		return ref;
+	}
+	~global() {
+		if (ref)
+		{
+#if _DEBUG
+			if (monitor) {
+				LOGD("Thread %s: Freeing global pointer %p \"%s\" in ~global().\n",
+					ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name);
+			}
+			if (std::is_same_v<jobject, T> && threadEnv->GetObjectRefType(ref) == 0)
+			{
+				LOGE("Invalid global ref at %p \"%s\" was moved!\n", this, name);
+				raise(SIGTRAP);
+			}
+			assert(threadEnv != NULL);
+#endif
+			threadEnv->DeleteGlobalRef(ref);
+			ref = NULL;
+		}
+	}
+private:
+	global(global<T>&& p) noexcept {
+#if _DEBUG
+		if (std::is_same_v<jobject, T> && p.ref && threadEnv->GetObjectRefType(p.ref) == 0)
+		{
+			LOGE("Invalid global ref at %p \"%s\" was moved!\n", this, name);
+			raise(SIGTRAP);
+		}
+#endif
+		this->ref = p.ref;
+		this->name = p.name;
+		this->monitor = p.monitor;
+		p.ref = NULL;
+		if (monitor) {
+			LOGD("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.\n",
+				ThreadIDToStr(std::this_thread::get_id()).c_str(),
+				this->ref, name, &p, this);
+		}
+	}
+
+};
+
+namespace Edif { class Runtime; }
+
+struct eventGroup;
+struct event2 {
+	short get_evtNum();
+	OINUM get_evtOi();
+	//short get_evtSize();
+	void set_evtFlags(std::int8_t);
+	std::int8_t get_evtFlags();
+
+	event2(eventGroup * inside, int index, jobject evt, Edif::Runtime* run);
+	std::unique_ptr<event2> Next();
+	int GetIndex();
+protected:
+	//friend class Edif::Runtime;
+	friend struct RunHeader;
+	global<jobject> me;
+	global<jclass> meClass;
+	Edif::Runtime* runtime;
+	eventGroup* owner;
+	int index;
+	// Magic number to tell ctor to JNI-lookup the array index
+	constexpr static int FindIndexMagicNum = -0xABCDEF;
+	static jfieldID evtFlagsFieldID, evtSizeFieldID, evtCodeFieldID, evtOiFieldID;
+};
 ///////////////////////////////////////////////////////////////////////
 //
 // DEFINITION OF THE DIFFERENT PARAMETERS
@@ -244,68 +362,422 @@ struct ParamObject {
 #define	CND_SIZE					sizeof(event2)
 #define	ACT_SIZE					(sizeof(event2)-2) // Ignore Identifier
 
-struct runHeader2 {
-	short EventCount;
-};
-struct runHeader3 {
-};
-struct runHeader4;
+struct RunObject;
 struct HeaderObject;
+// RunObject
+typedef std::shared_ptr<RunObject> RunObjectMultiPlatPtr;
+
+struct RunHeader;
+
 struct objectsList {
 	NO_DEFAULT_CTORS(objectsList);
-	HeaderObject  *	oblOffset;
+	//HeaderObject* get_oblOffset();
+
+	RunObjectMultiPlatPtr GetOblOffsetByIndex(std::size_t);
+	objectsList(jobjectArray me, Edif::Runtime* runtime);
+protected:
+	// For invalidating during events - active as in read from Java, not Active Object specifically
+	std::vector<std::weak_ptr<RunObject>> activeObjs;
+	friend Edif::Runtime;
+	friend RunHeader;
+	global<jobjectArray> me;
+	global<jclass> meClass;
+	int length;
+	Edif::Runtime* runtime;
 };
 struct objInfoList {
-	NO_DEFAULT_CTORS(objInfoList);
-	short			Oi,  			 // THE ObjectInfo number
-					ListSelected,	 // First selection
-					Type,			 // Type of the object
-					Object;			 // First objects in the game
-	short			EventCount,
-					NumOfSelected;
-	objectsList *	ObjectList;			// Object list address
+	int get_EventCount();
+	short get_ListSelected();
+	int get_NumOfSelected();
+	short get_Oi();
+	int get_NObjects();
+	short get_Object();
+	const TCHAR* get_name();
+	short get_QualifierByIndex(std::size_t);
+	int get_oilNext();
+	bool get_oilNextFlag();
+	int get_oilCurrentRoutine();
+	int get_oilCurrentOi();
+	int get_oilActionCount();
+	int get_oilActionLoopCount();
+	void set_NumOfSelected(int);
+	void set_ListSelected(short);
+	void set_EventCount(int);
 
-	int				NObjects,		 // Current number
-					ActionCount,	 // Action loop counter
-					ActionLoopCount; // Action loop counter
+	objInfoList(int index, RunHeader* containerRH, jobject me, Edif::Runtime* runtime);
+	objInfoList(objInfoList&&);
+	~objInfoList();
+
+	void InvalidatedByNewGeneratedEvent();
+	void SelectNone(RunHeader* rhPtr);
+	void SelectAll(RunHeader* rhPtr, bool explicitAll = false);
+protected:
+	// invalidated by new event: listselected, object, eventcount, numofselected, nobjects, actioncount, actionloopcount
+
+	std::optional<short>	Oi,  			 // THE ObjectInfo number
+							ListSelected,	 // First selection
+							Type,			 // Type of the object
+							Object;			 // First objects in the game
+	std::optional<short>	EventCount,
+							EventCountOR,
+							NumOfSelected;
+
+	std::optional<int>		NObjects,		 // Current number
+							ActionCount,	 // Action loop counter
+							ActionLoopCount; // Action loop counter
+	std::optional<std::string> name;
+
+	bool QualifiersLoaded = false;
+	short Qualifiers[MAX_QUALIFIERS];
+
+	friend Edif::Runtime;
+	friend RunHeader;
+	friend HeaderObject;
+	int index;
+	// CObjInfo
+	global<jobject> me;
+	global<jclass> meClass;
+	RunHeader * containerRH;
+	Edif::Runtime* runtime;
+
+private:
+	int get_EventCountOR();
+	void set_EventCountOR(int);
+
+	static jfieldID eventCountFieldID, actionLoopCountFieldID, objectFieldID, nameFieldID,
+		numOfSelectedFieldID, listSelectedFieldID, eventCountORFieldID, qualifiersFieldID,
+		nextFieldID, nextFlagFieldID, currentRoutineFieldID, currentOiFieldID, actionCountFieldID,
+		typeFieldID, nObjectsFieldID, oiFieldID;
 };
 struct qualToOi {
-	NO_DEFAULT_CTORS(qualToOi);
-	short OiList;
+	// returns the object in this qualifier
+	short get_Oi(std::size_t idx);
+	short get_OiList(std::size_t idx);
+	qualToOi(RunHeader* rh, int index, jobject me, Edif::Runtime * runtime);
+	qualToOi(qualToOi&& q);
+	// Returns all OiList from internal array, used for looping through a qualifier's object IDs
+	std::vector<short> GetAllOi();
+	// Returns all OiList from internal array, used for looping through a qualifier's objInfoList
+	std::vector<short> GetAllOiList();
+
+	// Marks that the native Java side may have changed and cached internal variables should be reset.
+	// @remarks Android only, and occurs during new A/C/E runs. Shouldn't need using by user.
+	void InvalidatedByNewCondition();
+protected:
+	std::unique_ptr<short[]> OiAndOiList; // short oi, oiList, oi2, oilist2, etc
+	std::size_t OiAndOiListLength = SIZE_MAX; // number of shorts, not short pairs nor byte size
+	// CQualToOiList
+	RunHeader* rh;
+	int offsetInQualToOiList = -1;
+	global<jobject> me;
+	global<jshortArray> oiAndOiListJava;
+	Edif::Runtime* runtime;
+	friend struct RunHeader;
+private:
+	std::vector<short> HalfVector(std::size_t first);
+};
+struct CEventProgram;
+struct eventGroup {
+	NO_DEFAULT_CTORS(eventGroup);
+
+	std::uint8_t get_evgNCond();
+	std::uint8_t get_evgNAct();
+	// std::int16_t get_evgInhibit();
+	std::int16_t get_evgIdentifier();
+	EventGroupFlags get_evgFlags();
+	eventGroup(jobject me, Edif::Runtime * runtime);
+	std::unique_ptr<event2> GetCAByIndex(std::size_t index);
+protected:
+	friend Edif::Runtime;
+	friend RunHeader;
+	friend struct CEventProgram;
+	friend struct event2;
+	jobjectArray GetEventList();
+
+	std::optional<std::uint8_t> evgNCond, evgNAct;
+	std::optional<std::int16_t> evgIdentifier;
+	std::optional<EventGroupFlags> evgFlags;
+	global<jobject> me;
+	global<jclass> meClass;
+	global<jobjectArray> evgEvents;
+	int evgEventsLength = -1;
+	Edif::Runtime* runtime;
+
+private:
+	static jfieldID evgNCondFieldID, evgNActFieldID, evgLineFieldID, evgFlagsFieldID, evgEventsFieldID;
+};
+struct CEventProgram {
+	NO_DEFAULT_CTORS(CEventProgram);
+
+	int get_rh2EventCount();
+	void set_rh2EventCount(int eventCount);
+
+	int get_rh4EventCountOR();
+	void set_rh4EventCountOR(int eventCount);
+
+	// Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
+	int get_rh2ActionCount();
+	// Sets the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
+	void set_rh2ActionCount(int newActionCount);
+
+	// Reads the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
+	int get_rh2ActionLoopCount();
+	// Sets the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
+	void set_rh2ActionLoopCount(int newActLoopCount);
+
+	// Gets the current expression token number.
+	int get_rh4CurToken();
+	// Sets the current expression token number.
+	void set_rh4CurToken(int newCurToken);
+	// Gets the current expression token array; relevant in Android only. 
+	jobject get_rh4Tokens();
+	// Sets the current expression token array; relevant in Android only. 
+	void set_rh4Tokens(jobject newTokensArray);
+
+	eventGroup* get_eventGroup();
+	// true: actions are being executed. False: conditions. Neither: undefined
+	bool GetRH2ActionOn();
+
+	CEventProgram(jobject me, Edif::Runtime* runtime);
+
+	void InvalidatedByNewGeneratedEvent();
+	void InvalidatedByNewCondition();
+protected:
+	friend Edif::Runtime;
+	friend struct RunHeader;
+
+	// invalidated by new event: eventGrp, rh2EventCount, rh4EventCountOr, rh2ActionOn
+	// invalidated by new condition: rh4EventCountOr, rh2ActionOn
+
+	std::unique_ptr<eventGroup> eventGrp;
+	std::optional<int> rh2EventCount, rh4EventCountOR;
+	std::optional<int> rh2ActionCount, rh2ActionLoopCount;
+
+	void SetEventGroup(global<jobject>&& grp);
+
+	global<jobject> me;
+	global<jclass> meClass;
+	Edif::Runtime* runtime;
+};
+struct CRunFrame {
+	NO_DEFAULT_CTORS(CRunFrame);
+
+	CEventProgram* get_eventProgram();
+
+protected:
+	friend class Edif::Runtime;
+	friend struct RunHeader;
+	Edif::Runtime* runtime;
+	jobject me;
 };
 
+
+struct CRunAppMultiPlat {
+	NO_DEFAULT_CTORS(CRunAppMultiPlat);
+	int get_nCurrentFrame();
+	CRunFrame* get_Frame();
+	CRunAppMultiPlat * get_ParentApp();
+	std::size_t GetNumFusionFrames();
+
+	CRunAppMultiPlat(jobject app, Edif::Runtime * runtime);
+protected:
+	friend class Edif::Runtime;
+	friend struct RunHeader;
+	std::unique_ptr<CRunFrame> frame;
+	std::optional<int> nCurrentFrame;
+	std::size_t numTotalFrames = 0; // 0 if unset
+	std::unique_ptr<CRunAppMultiPlat> parentApp;
+	bool parentAppIsNull = false;
+	jobject me;
+	jclass meClass;
+	Edif::Runtime* runtime;
+};
+typedef CRunAppMultiPlat CRunApp;
+
+struct qualToOi;
 struct RunHeader {
 	NO_DEFAULT_CTORS(RunHeader);
-	int GetEventCount();
+
+	// Reads the EventCount variable from RunHeader2, used in object selection. DarkEdif-added function for cross-platform.
+	int GetRH2EventCount();
+	void SetRH2EventCount(int newEventCount);
+	// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
+	int GetRH4EventCountOR();
+	event2* GetRH4ActionStart();
+
+	// Reads the rh2.rh2ActionCount variable, used in an action with multiple instances selected, to repeat one action.
+	int GetRH2ActionCount();
+	// Reads the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
+	int GetRH2ActionLoopCount();
+	// Reads the current expression token index, used in the middle of expression evaluation.
+	int GetRH4CurToken();
+	// Reads the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
+	global<jobjectArray> GetRH4Tokens();
+
+	// Sets the rh2.rh2ActionCount variable, used in an action with multiple instances selected, to repeat one action.
+	void SetRH2ActionCount(int newActionCount);
+	// Sets the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions in an event.
+	void SetRH2ActionLoopCount(int newActLoopCount);
+	// Sets the current expression token index, used in the middle of expression evaluation.
+	void SetRH4CurToken(int newCurToken);
+	// Sets the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
+	void SetRH4Tokens(jobjectArray newTokensArray);
+
+	eventGroup * get_EventGroup();
+	std::size_t GetNumberOi();
+	//objectsList* get_ObjectList();
+	// Returns max number of objects in the Fusion frame, set in frame properties
+	std::size_t get_MaxObjects();
+	std::size_t get_NObjects();
+
+	objInfoList * GetOIListByIndex(std::size_t index);
+	qualToOi * GetQualToOiListByOffset(std::size_t index);
+	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
+	EventGroupFlags GetEVGFlags();
+	CRunAppMultiPlat* get_App();
+	CEventProgram* get_EventProgram();
+	RunHeader(jobject me, jclass meClass, Edif::Runtime * runtime);
+	void InvalidatedByNewGeneratedEvent();
+protected:
+	friend qualToOi;
+	friend HeaderObject;
+	friend struct ConditionOrActionManager_Android;
+	friend CEventProgram;
+	global<jobject> crun; // CRun seems to have majority of these variables
+	global<jclass> crunClass;
+
+	// There is only one EventProgram, even though there are multiple event sheets; they are all appended inside one EventProgram, in Android.
+	std::unique_ptr<CEventProgram> eventProgram;
+	Edif::Runtime* runtime;
+	std::unique_ptr<event2> rh4ActStart;
+	std::unique_ptr<CRunAppMultiPlat> App;
+	std::optional<eventGroup *> EventGroup; // should be a part of eventProgram, so we don't own it ourselves
+	std::unique_ptr<objectsList> ObjectList;
+	global<jobjectArray> OiList;
+	global<jobjectArray> QualToOiList;
+	global<jclass> QualToOiClass;
+	global<jclass> oiListClass;
+	std::vector<objInfoList> OiListArray;
+	int OiListLength = 0, QualToOiListLength = 0;
+	std::vector<qualToOi> QualToOiListArray;
+
+	// These don't change in the middle of frame, but we might not read them
+	std::optional<int> NumberOi, MaxObjects;
+	// This is number of object instances, so it does get invalidated
+	std::optional<int> NObjects;
+
+	// Called for getting the whole array during a oi find
+	jobjectArray GetOiList();
+
+private:
+	static jfieldID rh4TokensFieldID, rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
 };
 
-struct CreateObjectInfo {
-
-};
 typedef jobject CCndExtension;
 typedef jobject CActExtension;
 typedef jobject CNativeExpInstance;
 struct HeaderObject {
+	short get_NextSelected();
+	unsigned short get_CreationId();
+	short get_Number();
+	short get_NumNext();
+	short get_Oi();
+	bool get_SelectedInOR();
+	HeaderObjectFlags get_Flags();
+	objInfoList * get_OiList();
+	EventGroupFlags GetEVGFlags();
+	RunHeader* get_AdRunHeader();
 
-	RunHeader *			AdRunHeader;	// Run-header address
-	short  				Number,			// Number of the object
-						NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
-	short				EventNumber;
-	HeaderObjectFlags	Flags;
-	short				HFII,			// Number of LevObj
-						Oi,				// Number of ObjInfo
-						NumPrev,		// Same ObjInfo previous object
-						NumNext,		// ... next
-						Type;			// Type of the object
-	unsigned short		CreationId;		// Number of creation
-	objInfoList *		OiList;			// Pointer to OILIST information
+	void set_NextSelected(short);
+	void set_SelectedInOR(bool);
+	HeaderObject(RunObject * ro, jobject me, jclass meClass, Edif::Runtime* runtime);
 
-	qualToOi *			QualToOiList;
+	void InvalidatedByNewGeneratedEvent();
+	int GetFixedValue();
+protected:
+
+	// invalidated by event change: eventnumber, nextselected, numprev, numnext, selectedinor, Flags
+
+	std::unique_ptr<RunHeader>			AdRunHeader;	// Run-header address
+	std::optional<short>  				Number,			// Number of the object; its index in RunHeader::ObjectList
+										NextSelected;	// Selected object list. Do not move from &NextSelected == (this+2).
+	std::optional<short>				EventNumber;	// Last event number this selection was set; if matching rh2eventnumber, this selection applies
+	std::optional<HeaderObjectFlags>	Flags;
+	std::optional<short>				HFII,			// Number of LevObj
+										Oi,				// Number of ObjInfo
+										NumPrev,		// Same ObjInfo previous object
+										NumNext,		// ... next
+										Type;			// Type of the object
+	std::optional<unsigned short>		CreationId;		// Number of creation
+	objInfoList *						OiList = nullptr;			// Pointer to OILIST information
+	int oiListIndex = -1; // stored when OiList is inited
+
+	std::optional<bool>					SelectedInOR;
+	// These are held by RunObject
+	jobject me;
+	jclass meClass;
+	Edif::Runtime* runtime;
+	RunObject* runObj;
+
+	static jfieldID numberFieldID;
+
+	friend struct ConditionOrActionManager_Android;
+	// Short way to get number field from a jobject, used by ConditionOrActionManager::GetParamObject
+	static short GetObjectParamNumber(jobject);
+};
+
+// Java memory pointer and a C memory pointer, for text held in Java memory
+struct JavaAndCString
+{
+	jstring ctx;
+	const char* ptr;
+};
+
+struct rCom;
+struct rMvt;
+struct rAni;
+struct Sprite;
+struct AltVals;
+
+struct CValueMultiPlat {
+	NO_DEFAULT_CTORS_OR_DTORS(CValueMultiPlat);
+	unsigned int m_type;
+	union
+	{
+		std::int32_t m_long;
+		double m_double;
+		TCHAR* m_pString;
+	};
+protected:
+	friend AltVals;
+	JavaAndCString str;
+	CValueMultiPlat(unsigned int type, long value);
+};
+struct AltVals {
+	NO_DEFAULT_CTORS_OR_DTORS(AltVals);
+	std::size_t GetAltValueCount() const;
+	std::size_t GetAltStringCount() const;
+	const TCHAR* GetAltStringAtIndex(const std::size_t) const;
+	const CValueMultiPlat * GetAltValueAtIndex(const std::size_t) const;
+	void SetAltStringAtIndex(const std::size_t, const std::tstring_view&);
+	void SetAltValueAtIndex(const std::size_t, const double);
+	void SetAltValueAtIndex(const std::size_t, const int);
+	std::uint32_t GetInternalFlags() const;
+	void SetInternalFlags(std::uint32_t);
 };
 struct RunObject {
-	HeaderObject  	roHo;		  		// Common structure
+	HeaderObject* get_rHo();
+	rCom* get_roc();
+	rMvt* get_rom();
+	rAni* get_roa();
+	Sprite* get_ros();
+	AltVals* get_rov();
+	RunObject(jobject, jclass, Edif::Runtime *);
+protected:
+	std::unique_ptr<HeaderObject> rHo;
+	global<jobject> me;
+	global<jclass> meClass;
 };
-
 // Versions
 #define MMFVERSION_MASK		0xFFFF0000
 #define MMFBUILD_MASK		0x00000FFF		// MMF build
@@ -323,128 +795,8 @@ struct mv {
 	//void * ReAllocEditData(EDITDATA * edPTr, unsigned int dwNewSize);
 	//void InvalidateObject();
 };
-/*
-__inline void * mvReAllocEditData(mv * mV, EDITDATA * edPtr, unsigned int dwNewSize) {
-	return mV->ReAllocEditData(edPtr, dwNewSize);
-}*/
-
-struct RuntimeFunctions
-{
-	void * ext;
-
-	struct string
-	{
-		void * ctx;
-		const char * ptr;
-	};
-
-	void(*generateEvent) (void * ext, int code, int param);
-
-	int(*act_getParamExpression) (void * ext, void * act, int paramIndex, Params type);
-	string(*act_getParamExpString) (void * ext, void * act, int paramIndex);
-	float(*act_getParamExpFloat) (void * ext, void * act, int paramIndex);
-
-	int(*cnd_getParamExpression) (void * ext, void * cnd, int paramIndex, Params type);
-	string(*cnd_getParamExpString) (void * ext, void * cnd, int paramIndex);
-	float(*cnd_getParamExpFloat) (void * ext, void * cnd, int paramIndex);
-
-	int(*exp_getParamInt) (void * ext, void * exp);
-	string(*exp_getParamString) (void * ext, void * exp);
-	float(*exp_getParamFloat) (void * ext, void * exp);
-
-	void(*exp_setReturnInt) (void * ext, void * exp, int);
-	void(*exp_setReturnString) (void * ext, void * exp, const char *);
-	void(*exp_setReturnFloat) (void * ext, void * exp, float);
-
-	void(*freeString) (void * ext, string);
-};
-
-
-const int REFLAG_DISPLAY = 1;
-const int REFLAG_ONESHOT = 2;
-
-// Gets and returns a Java Exception. Pre-supposes there is one. Clears the exception.
-std::string GetJavaExceptionStr();
-
-/*struct monitor {
-	jobject dat;
-	size_t numRefs;
-};
-std::vector<monitor> monitors;*/
-
-extern thread_local JNIEnv * threadEnv;
-
-
-// Converts u8str to UTF-8Modified str. Expects no embedded nulls
-jstring CStrToJStr(const char * u8str);
-// Converts std::thread::id to a std::string
-std::string ThreadIDToStr(std::thread::id);
 
 static int globalCount;
-
-// JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
-template<class T>
-struct global {
-	static_assert(std::is_pointer<T>::value, "Must be a pointer!");
-	T ref;
-	const char * name;
-	global(global<T> &&p) = delete;
-	global(global<T> &p) = delete;
-
-	global<T> & operator= (global<T> && p) noexcept {
-		this->ref = p.ref;
-		this->name = p.name;
-		p.ref = NULL;
-		LOGV("Thread %s: Moved global ref %p \"%s\" from holder %p to %p.\n",
-			ThreadIDToStr(std::this_thread::get_id()).c_str(),
-			this->ref, name, &p, this);
-		return *this;
-	}
-
-	global(T p, const char * name) {
-		this->name = name;
-		ref = nullptr;
-		if (p == nullptr) {
-			LOGE("Couldn't make global ref from null (in \"%s\"). Check the calling function.\n", name);
-			return;
-		}
-		assert(threadEnv != NULL);
-		ref = (T)threadEnv->NewGlobalRef(p);
-		if (ref == NULL) {
-			std::string exc = GetJavaExceptionStr();
-			LOGE("Couldn't make global ref from %p [1], error: %s.\n", p, exc.c_str());
-		}
-		LOGV("Thread %s: Creating global pointer %p \"%s\" in global() from original %p.\n", ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name, p);
-		//threadEnv->DeleteLocalRef(p);
-	}
-	global() {
-		ref = NULL;
-		name = "unset";
-	}
-	bool invalid() const {
-		return ref == NULL;
-	}
-	bool valid() const {
-		return ref != NULL;
-	}
-	operator const T() const {
-		if (ref == NULL) {
-			LOGE("null global ref at %p \"%s\" was copied!\n", this, name);
-			raise(SIGTRAP);
-		}
-		return ref;
-	}
-	~global() {
-		if (ref)
-		{
-			LOGV("Thread %s: Freeing global pointer %p \"%s\" in ~global().\n",
-				ThreadIDToStr(std::this_thread::get_id()).c_str(), ref, name);
-			assert(threadEnv != NULL);
-			threadEnv->DeleteGlobalRef(ref);
-			ref = NULL;
-		}
-	}
-};
 
 #define JAVACHKNULL(x) x; \
 	if (threadEnv->ExceptionCheck()) { \
@@ -458,6 +810,13 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line);
 #else
 	#define JNIExceptionCheck() (void)0
 #endif
+
+struct ConditionOrActionManager_Android;
+struct ExpressionManager_Android;
+
+const int REFLAG_DISPLAY = 1;
+const int REFLAG_ONESHOT = 2;
+
 
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.
 extern char darkExtJSON[];

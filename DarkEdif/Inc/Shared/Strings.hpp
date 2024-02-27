@@ -33,6 +33,7 @@
 	#define _tcscpy(a,b) strcpy(a,b)
 	#define _tcscat(a,b) strcat(a,b)
 	#define _tcscmp(a,b) strcmp(a,b)
+	#define _tcsncmp(a,b,c) strncmp(a,b,c)
 	#define _tcschr(a,b) strchr(a,b)
 	#define _tcsrchr(a,b) strrchr(a,b)
 	#define _totlower tolower
@@ -42,12 +43,16 @@
 	#define _tcserror(a) strerror(a)
 	#define _tcsftime(a,b,c,d) strftime(a,b,c,d)
 
-	#define _tcscpy_s(a,b,c) strcpy(a,c)
-
 	#define MessageBox MessageBoxA
 
 	#define _tcsicmp(a,b) strcasecmp(a,b)
 	#define _tcsnicmp(a,b,c) strncasecmp(a,b,c)
+	#define _istspace(a) isspace(a)
+	#define _tcstol(a,b,c) strtol(a,b,c)
+	#define _tcstoul(a,b,c) strtoul(a,b,c)
+	#define _tcstoll(a,b,c) strtoll(a,b,c)
+	#define _tcstoull(a,b,c) strtoull(a,b,c)
+	#define _tcstof(a,b) strtof(a,b)
 
 	// Less safe TCHAR equivalents
 

@@ -68,7 +68,7 @@ namespace Edif {
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 18;
+	static const int SDKVersion = 19;
 #if EditorBuild
 
 	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -220,7 +220,11 @@ namespace DarkEdif {
 
 
 	// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
+#ifdef _WIN32
 	extern bool IsFusion25;
+#else
+	constexpr bool IsFusion25 = true;
+#endif
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(eventGroup *);
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
@@ -652,8 +656,12 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 
 		if (isFloat)
 		{
+			// no need to check for const float. Compiler uses a direct const for restrictions
+			// and optimizing, but doesn't put it in built func sig.
+			// In "const type * const", the right-hand const is effectively removed in func sig;
+			// const is also removed with "const type".
 			if (std::is_same<cppType, float>())
-				continue;
+				break;
 			expCppType = "float"sv;
 		}
 		else if (p == Params::String || p == Params::String_Comparison || p == Params::String_Expression ||
@@ -666,15 +674,18 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 			// The const-ness being lost by function signature applies to top-level const,
 			// e.g. to "TCHAR * const" and "const TCHAR * const", NOT "const TCHAR *", hence we do two checks.
 			if (std::is_same<cppType, TCHAR *>() || std::is_same<cppType, const TCHAR *>())
-				continue;
+				break;
 			expCppType = "const TCHAR *"sv;
 		}
-		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time || p == Params::Time)
+		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time || p == Params::Time ||
+			p == Params::Colour || p == Params::Joystick_Direction || p == Params::_8Dirs || p == Params::New_Direction)
 		{
 			if (p == Params::Comparison || p == Params::Compare_Time)
 				ComparisonHandler();
 
-			if (!_stricmp(json["Parameters"][acParamIndex][0], "Unsigned Integer"))
+			// Several params expect unsigned int, e.g. COLORREF is unsigned, New Direction is a mask
+			if (!_stricmp(json["Parameters"][acParamIndex][0], "Unsigned Integer") || p == Params::Colour || p == Params::Joystick_Direction ||
+				p == Params::_8Dirs || p == Params::New_Direction)
 			{
 				if (std::is_same<cppType, unsigned int>())
 					break;
@@ -688,8 +699,29 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				expCppType = "int"sv;
 			}
 		}
-		else
-			continue;
+		else if (p == Params::Object)
+		{
+			// Actions get passed a RunObject * for Object params, also allow const RunObject *; see notes above about top-level const
+			if (condRetType == nullptr)
+			{
+				if (std::is_same<cppType, RunObject*>() || std::is_same<cppType, const RunObject*>())
+					break;
+				expCppType = "RunObject *"sv;
+			}
+			else // Conditions get passed an oiList number; although it's a short, for easier ASM/CPU register consistency later, we'll make it an int
+			{
+				if (std::is_same<cppType, int>())
+					break;
+				expCppType = "int"sv;
+
+			}
+		}
+		else // unimplemented param type test
+		{
+			str << "Has JSON parameter "sv << (const char*)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char*)json["Parameters"][acParamIndex][0]
+				<< "; C++ type is "sv << cppTypeAsString << ", but DarkEdif SDK does not test that type yet. Please report it to Phi.\r\n"sv;
+			break;
+		}
 
 		str << "Has JSON parameter "sv << (const char *)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char *)json["Parameters"][acParamIndex][0]
 			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
@@ -772,7 +804,7 @@ template<class Ret, class Struct, class... Args>
 void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
+	for (std::size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; ++curLangIndex)
 	{
 		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;

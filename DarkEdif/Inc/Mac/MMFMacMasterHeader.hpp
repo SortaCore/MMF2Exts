@@ -1,6 +1,13 @@
 #pragma once
 
-#if defined(_WIN32) || defined (__ANDROID__) || !defined(__APPLE__) || MacBuild==1
+// This file is a duplicate of iOSMasterHeader, with the main difference being its location,
+// altering its #include/#import search preferences.
+// 
+// On Mac, we want to read the Fusion internal headers from MMF2Lib.framework in DarkEdif/Lib/Mac,
+// and on iOS, we want to read them from DarkEdif/Inc/iOS/MMF2Lib folder.
+// As #include prefers the current folder, using the Inc/iOS header would cause iOS/MMF2Lib to be preferred.
+
+#if defined(_WIN32) || defined (__ANDROID__) || !defined(__APPLE__) || MacBuild==0
 	#error Included the wrong header for this OS.
 #endif
 
@@ -136,6 +143,7 @@ namespace FusionInternals
 		void set_EventCount(int);
 		void set_EventCountOR(int);
 		short get_QualifierByIndex(std::size_t) const;
+
 		void SelectNone(RunHeader* rhPtr);
 		void SelectAll(RunHeader* rhPtr, bool explicitAll = false);
 	};
@@ -197,7 +205,7 @@ namespace FusionInternals
 		EventGroupFlags get_evgFlags() const;
 		event2 * GetCAByIndex(std::size_t index);
 	};
-	
+
 	struct CRunFrameMultiPlat {
 
 	};
@@ -271,7 +279,7 @@ namespace FusionInternals
 		NO_DEFAULT_CTORS_OR_DTORS(AltVals);
 		std::size_t GetAltValueCount() const;
 		std::size_t GetAltStringCount() const;
-		const TCHAR * GetAltStringAtIndex(const std::size_t) const;
+		const TCHAR* GetAltStringAtIndex(const std::size_t) const;
 		const CValueMultiPlat * GetAltValueAtIndex(const std::size_t) const;
 		void SetAltStringAtIndex(const std::size_t, const std::tstring_view&);
 		void SetAltValueAtIndex(const std::size_t, const double);
@@ -279,6 +287,7 @@ namespace FusionInternals
 		std::uint32_t GetInternalFlags() const;
 		void SetInternalFlags(std::uint32_t);
 	};
+
 	struct RunObject {
 		NO_DEFAULT_CTORS_OR_DTORS(RunObject);
 		HeaderObject* get_rHo();

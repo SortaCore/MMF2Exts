@@ -1610,7 +1610,6 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 
 			static int intData2;
 			intData2 = (int)intDataAsLong;
-			
 
 			return convRet->Return_OK(&intData2, sizeof(int));
 		}
@@ -2991,14 +2990,22 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 
 // Static definition; set during SDK::SDK()
+#ifdef _WIN32
 bool DarkEdif::IsFusion25;
+#else
+//constexpr bool DarkEdif::IsFusion25 = true;
+#endif
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
+	// Windows may be 2.0 or 2.5; if 2.5, the local SDK's evgInhibit is where the identifier is.
+	// Android/iOS is assumed to be 2.5 and should work directly.
+#ifdef _WIN32
 	if (DarkEdif::IsFusion25) {
-		return evg->evgInhibit;
+		return evg->get_evgInhibit();
 	}
-	return evg->evgIdentifier;
+#endif
+	return evg->get_evgIdentifier();
 }
 
 /// <summary> If error, -1 is returned. </summary>
@@ -3012,10 +3019,10 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 
 #ifdef _WIN32
 	// Can we read current event?
-	if (!ext->rhPtr->EventGroup)
+	if (!ext->rhPtr->get_EventGroup())
 		return -1;
 
-	int eventNum = GetEventNumber(ext->rhPtr->EventGroup);
+	int eventNum = GetEventNumber(ext->rhPtr->get_EventGroup());
 	if (eventNum != 0)
 		return eventNum;
 	return -1;
@@ -3065,8 +3072,8 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	}
 
 	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
-	RuntimeFunctions::string str;
-	str.ctx = threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
+	JavaAndCString str;
+	str.ctx = (jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
 	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
 	const std::string truePath = str.ptr ? str.ptr : "";
 
@@ -4836,6 +4843,7 @@ int DarkEdif::MsgBox::Custom(const int flags, const TCHAR * titlePrefix, PrintFH
 	va_end(v);
 	return ret;
 }
+extern int aceIndex;
 void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 {
 	va_list v;
@@ -4862,7 +4870,10 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 
 	OutputDebugString(outputBuff);
 #elif defined(__ANDROID__)
-	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormat, v);
+	std::string msgFormatT = std::string(aceIndex, '>');
+	msgFormatT += ' ';
+	msgFormatT += msgFormat;
+	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormatT.c_str(), v);
 #else // iOS
 	static const char* logLevels[] = {
 		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
@@ -4904,19 +4915,6 @@ void DarkEdif::Sleep(unsigned int milliseconds)
 
 #endif
 
-
-// =====
-// Object selection for all platforms
-// =====
-
-int RunHeader::GetEventCount() {
-#ifdef _WIN32
-	return rh4.eventCount;
-#else
-	LOGF(_T("GetEventCount not implemented on this platform."));
-	return -1;
-#endif
-}
 
 
 // =====

@@ -5,6 +5,7 @@
 // These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc..)
 
 #include "Edif.hpp"
+#include <type_traits>
 
 #ifndef OBJECTSELECTION
 #define OBJECTSELECTION
@@ -15,68 +16,87 @@
 #ifndef EF_ISUNICODE
 	#define EF_ISUNICODE	113
 #endif
+namespace Edif {
+	class Runtime;
+}
+namespace DarkEdif {
+	class ObjectIterator;
+	class QualifierOIListIterator;
+	class AllObjectIterator;
+	class AllOIListIterator;
 
-namespace Riggs
-{
-    class ObjectSelection
-    {
-    public:
+	class ObjectSelection
+	{
+	public:
 
-        Extension * pExtension;
+		Extension * pExtension;
 
-	    ObjectSelection(RunHeader * rhPtr);
+		ObjectSelection(RunHeader * rhPtr);
 
-	    void SelectAll(short Oi);
-		void SelectNone(short oiList);
-	    void SelectNone(RunObject * object);
-	    void SelectOneObject(RunObject * object);
-	    void SelectObjects(short Oi, RunObject ** objects, int count);
-	    bool ObjectIsOfType(RunObject * object, short Oi);
-	    int GetNumberOfSelected(short Oi);
+		void SelectAll(short Oi) const;
+		void SelectNone(short oiList) const;
+		void SelectNone(RunObject& object) const;
+		void SelectOneObject(RunObject& object) const;
+		void SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, std::size_t count) const;
+		// Checks if the passed object is part of qualifier or singular Oi
+		bool ObjectIsOfType(RunObject& object, short qoil) const;
+		// Gets number of explicitly selected for qualifier or singular Oi
+		std::size_t GetNumberOfSelected(short Oi) const;
 
 		template<class Ext, class T>
 		bool FilterObjects(short Oi, bool negate, T (Ext::*filterFunction))
-        {
-	        if (Oi & 0x8000)
-		        return FilterQualifierObjects(Oi & 0x7FFF, negate, filterFunction) ^ negate;
-	        else
-		        return FilterNonQualifierObjects(Oi, negate, filterFunction) ^ negate;
-        }
+		{
+			if (Oi & 0x8000)
+				return FilterQualifierObjects(Oi & 0x7FFF, negate, filterFunction) ^ negate;
+			else
+				return FilterNonQualifierObjects(Oi, negate, filterFunction) ^ negate;
+		}
 
-		int oiListItemSize;
-	    objInfoList * GetOILFromOI(short Oi);
-    protected:
+		objInfoList* GetOILFromOI(short Oi) const;
+	protected:
 
-	    RunHeader * rhPtr;
-	    objectsList * ObjectList;
-	    objInfoList	* OiList;
-	    qualToOi * QualToOiList;
-
-
-        template<class T> bool DoCallback(void * Class, T Function, RunObject * Parameter)
-        {
-            T _Function = Function;
 #ifdef _WIN32
-            void * FunctionPointer = *(void **) &_Function;
+		static int oiListItemSize;
+#endif
+		friend Edif::Runtime;
+		friend ObjectIterator;
+		friend QualifierOIListIterator;
+		friend AllOIListIterator;
+		friend AllObjectIterator;
+		friend objInfoList;
+		friend RunHeader;
+		RunHeader * rhPtr = nullptr;
+#ifdef _WIN32
+		objectsList * ObjectList = nullptr;
+		objInfoList * OiList = nullptr;
+		qualToOi * QualToOiList = nullptr;
 #endif
 
-            long Result;
+
+		template<class T> bool DoCallback(void * Class, T Function, RunObject * Parameter)
+		{
+			T _Function = Function;
+#ifdef _WIN32
+			void * FunctionPointer = *(void **) &_Function;
+#endif
+
+			long Result;
 
 #ifdef _WIN32
-            __asm
-            {
-                pushad
+			__asm
+			{
+				pushad
 
-                mov ecx, Class
+				mov ecx, Class
 
-                push Parameter
-                    call FunctionPointer
-                add esp, 4
+				push Parameter
+					call FunctionPointer
+				add esp, 4
 
-                mov Result, eax
+				mov Result, eax
 
-                popad
-            };
+				popad
+			};
 #elif defined(__ANDROID__)
 			// Never run
 			/*
@@ -93,73 +113,156 @@ namespace Riggs
 			[FunctionPointer] "m" (FunctionPointer));*/
 #endif
 
-            return (*(char *) &Result) != 0;
-        }
+			return (*(char *) &Result) != 0;
+		}
 
-	    template<class Ext, class T> bool FilterQualifierObjects(short Oi, bool negate, T (Ext::* filterFunction))
-        {
-	        qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
-	        qualToOi * CurrentQualToOi = CurrentQualToOiStart;
+		template<class Ext, class T> bool FilterQualifierObjects(short Oi, bool negate, T (Ext::* filterFunction));
 
-	        bool hasSelected = false;
-	        while(CurrentQualToOi->OiList >= 0)
-	        {
-		        objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
-		        hasSelected |= FilterNonQualifierObjects(CurrentOi->Oi, negate, filterFunction);
-		        CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
-	        }
-	        return hasSelected;
-        }
+		template<class Ext, class T> bool FilterNonQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction));
+	};
 
-	    template<class Ext, class T> bool FilterNonQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
-        {
-	        objInfoList * pObjectInfo = GetOILFromOI(Oi);
-	        bool hasSelected = false;
+	/// @remarks In Active A alt value A = 0 event, Active B actions can be run.
+	///			 Based on that, include all B's (implicit), exclude B's (explicit), or select everything (all).
+	///			 Most selection use cases will need implicit.
+	enum class Selection
+	{
+		// Selects all
+		All,
+		// Includes selected explicitly by conditions, includes all other obj instances selected implicitly
+		Implicit,
+		// Selected explicitly by conditions only, excludes objects that have all obj instances selected implicitly
+		Explicit
+	};
+	// Iterates the object instances in qualifier OI or singular OI
+	class ObjectIterator
+	{
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = RunObjectMultiPlatPtr;
+		using difference_type = std::ptrdiff_t;
+		using pointer = RunObjectMultiPlatPtr*;
+		using reference = RunObjectMultiPlatPtr&;
 
-	        if (pObjectInfo->EventCount != rhPtr->GetEventCount())
-		        SelectAll(Oi);	//The SOL is invalid, must reset.
+		RunHeader* const rhPtr;
+		const short oiList = -1;
+		const Selection select;
+		const bool includeDestroyed = false;
 
-	        //If SOL is empty
-	        if (pObjectInfo->NumOfSelected <= 0)
-		        return false;
+		short curOiList = -1;
+		HeaderObject * curHo = nullptr;
+		RunObjectMultiPlatPtr curRo = nullptr;
+		objInfoList* oil = nullptr;
+		std::vector<short> qualOiList;
+		std::size_t qualOiListAt = 0;
+		std::size_t numNextRun = 0;
 
-	        int firstSelected = -1;
-	        int count = 0;
-	        int current = pObjectInfo->ListSelected;
-	        HeaderObject * previous = NULL;
+		void GetNext();
+		explicit ObjectIterator(RunHeader* rhPtr, int oiList, Selection select, bool destroy, bool);
+	public:
+		// Iterator for all the object instances in qualifier OI or singular OI
+		explicit ObjectIterator(RunHeader* rhPtr, int oiList, Selection selection, bool includeDestroyed = false);
+		ObjectIterator& operator++();
+		// x++, instead of ++x
+		ObjectIterator operator++(int);
+		bool operator==(ObjectIterator other) const;
+		bool operator!=(ObjectIterator other) const;
+		reference operator*();
+		friend difference_type operator -(const ObjectIterator& from, const ObjectIterator& to) {
+			return from.numNextRun - to.numNextRun;
+		}
+		ObjectIterator begin() const;
+		ObjectIterator end() const;
+	};
+	// Iterates the OI List in a qualifier OI; it is valid to pass a singular OI or -1
+	class QualifierOIListIterator
+	{
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = objInfoList*;
+		using difference_type = std::ptrdiff_t;
+		using pointer = objInfoList*;
+		using reference = objInfoList*;
 
-	        while(current >= 0)
-	        {
-				HeaderObject * pObject = ObjectList[current].oblOffset;
-		        bool useObject = DoCallback((void *) pExtension, filterFunction, (RunObject *)pObject);
+		RunHeader* const rhPtr;
+		const short oiList;
+		const Selection select;
+		std::vector<short> qualOiList;
 
-                if (negate)
-                    useObject = !useObject;
+		short curOiList = -1;
+		objInfoList* oil = nullptr;
+		std::size_t qualOiListAt = 0;
 
-		        hasSelected |= useObject;
+		void GetNext();
+		QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select, bool);
+	public:
+		// Iterator for all the OI List in a qualifier OI; it is valid to pass a singular OI or -1
+		explicit QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select);
+		QualifierOIListIterator& operator++();
+		// x++, instead of ++x
+		QualifierOIListIterator operator++(int);
+		bool operator==(const QualifierOIListIterator& other) const;
+		bool operator!=(const QualifierOIListIterator& other) const;
+		reference operator*() const;
+		QualifierOIListIterator begin() const;
+		QualifierOIListIterator end() const;
+	};
+	// Iterates all the object instances in entire frame
+	class AllObjectIterator
+	{
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = RunObjectMultiPlatPtr;
+		using difference_type = std::ptrdiff_t;
+		using pointer = RunObjectMultiPlatPtr;
+		using reference = RunObjectMultiPlatPtr;
 
-		        if (useObject)
-		        {
-			        if (firstSelected == -1)
-				        firstSelected = current;
+		RunHeader* const rhPtr;
+		const std::size_t numObjectsInFrame;
 
-			        if (previous != NULL)
-				        previous->NextSelected = current;
+		pointer curRo = nullptr;
+		// Index of this object in rhObjectList, nulls in rhObjectList ignored
+		std::size_t objListAt = 0;
+		// Index of this object in rhObjectList, nulls in rhObjectList included
+		std::size_t objListTrueIndex = 0;
 
-			        previous = pObject;
-			        count++;
-		        }
-		        current = pObject->NextSelected;
-	        }
-	        if (previous != NULL)
-		        previous->NextSelected = -1;
+		explicit AllObjectIterator(RunHeader* rhPtr, bool);
+	public:
+		// Iterator for all the object instances in entire frame
+		explicit AllObjectIterator(RunHeader* rhPtr);
+		AllObjectIterator& operator++();
+		// x++, instead of ++x
+		AllObjectIterator operator++(int);
+		bool operator==(AllObjectIterator other) const;
+		bool operator!=(AllObjectIterator other) const;
+		reference operator*() const;
+		AllObjectIterator begin() const;
+		AllObjectIterator end() const;
+	};
+	// Iterates all the OI List in entire frame
+	class AllOIListIterator
+	{
+		using iterator_category = std::forward_iterator_tag;
+		using value_type = objInfoList*;
+		using difference_type = std::ptrdiff_t;
+		using pointer = objInfoList*;
+		using reference = objInfoList*;
 
-	        pObjectInfo->ListSelected = firstSelected;
-	        pObjectInfo->NumOfSelected = count;
+		RunHeader* const rhPtr;
+		const std::size_t numOI;
+		objInfoList* oil = nullptr;
+		std::size_t oiListAt = 0;
 
-	        return hasSelected;
-        }
-    };
+		explicit AllOIListIterator(RunHeader* rhPtr, bool);
+
+	public:
+		// Iterator for all the OI List in entire frame
+		explicit AllOIListIterator(RunHeader* rhPtr);
+		AllOIListIterator& operator++();
+		// x++, instead of ++x
+		AllOIListIterator operator++(int);
+		bool operator==(AllOIListIterator other) const;
+		bool operator!=(AllOIListIterator other) const;
+		reference operator*() const;
+
+		AllOIListIterator begin() const;
+		AllOIListIterator end() const;
+	};
 }
-
 #endif // !defined(OBJECTSELECTION)

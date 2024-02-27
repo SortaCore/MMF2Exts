@@ -1,191 +1,488 @@
-// By Anders Riggelsen (Andos)
-// http://www.clickteam.com/epicenter/ubbthreads.php?ubb=showflat&Number=214148&gonew=1
+// DarkEdif Object Selection by Darkwire Software.
+// Based on Edif edit by James McLaughlin, C++ wrapper by Anders Riggelsen (Andos), based on Select Object original by Dynasoft.
+// https://www.andersriggelsen.dk/mmf2_objectselection.php
+// https://community.clickteam.com/forum/thread/61672-for-developers-objectselection-framework/?postID=460665#post460665
 
-// These files do not match up with the originals - modified for Edif (callbacks inside the extension class, etc.)
 #include "Common.hpp"
 #include "DarkEdif.hpp"
 #include "ObjectSelection.hpp"
 
-
-Riggs::ObjectSelection::ObjectSelection(RunHeader * rhPtr)
+namespace DarkEdif
 {
-#if _WIN32
+
+// Static definition, the size of objInfoList struct.
+// The DarkEdif library is Fusion 2.0 and 2.5 compatible; which is only relevant in Windows,
+// and adjusts the struct for objInfoList.
+// Based on which Fusion runtime is used (2.0, HWA, 2.5) runtime, and the #defines for the SDK,
+// e.g. whether the ext itself is HWA-happy, the size is calculated.
+// In non-Windows, it is assumed you are using 2.5, since 2.0 Android/iOS exporter was discontinued over a decade ago.
+#if defined(_WIN32)
+int ObjectSelection::oiListItemSize = -1;
+#endif
+
+ObjectSelection::ObjectSelection(RunHeader * rhPtr)
+{
+	// These are frame-wide, so can be shared among Extension,
+	// but note there is multiple CRun if there are sub-apps
 	this->rhPtr = rhPtr;
-	this->ObjectList = rhPtr->ObjectList;		//get a pointer to the mmf object list
-	this->OiList = rhPtr->OiList;				//get a pointer to the mmf object info list
-	this->QualToOiList = rhPtr->QualToOiList;	//get a pointer to the mmf qualifier to Oi list
-	oiListItemSize = sizeof(objInfoList);
+
+	// For iOS, this isn't fully initialised when objects are created on start of frame, e.g. CRun->CEventProgram->QualToOiList is null
+
+#ifdef _WIN32
+	// Fusion object list - one for each object instance, rhObjectList
+	// This is pre-reserved to rhPtr->MaxObjects size, but rhPtr->NObjects reflects how many are in use;
+	// this is non-contiguous if objects are destroyed, and uses nulls
+	ObjectList = rhPtr->get_ObjectList();
+
+	// Fusion object info list - static, one per object, rhOiList.
+	// You can loop all object instances with oiList->oilObject and curHo->hoNumNext,
+	// and loop selected with oiList->oilListSelected and curHo->hoNextSelected;
+	// those variables reflect the index in rhObjectList.
+	OiList = rhPtr->GetOIListByIndex(0);
+
+	// Fusion qualifer array; static
+	// Qualifier -> OiList[] - static, one per qualifier, but any number of OiList
+	// CRun's rhQualToOiList, or EventProgram's qualToOiList, depending on runtime
+	QualToOiList = rhPtr->GetQualToOiListByOffset(0);
+
+	// Singleton init - don't bother setting if already inited
+	if (ObjectSelection::oiListItemSize != -1)
+		return;
+	ObjectSelection::oiListItemSize = sizeof(objInfoList);
 
 	// Only add the sizes to the runtime structures if they weren't compiled directly for those runtimes
 	#ifndef _UNICODE
 		if ( rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISUNICODE, 0, 0, 0) )
-			oiListItemSize += 24; // objInfoList::name is built in ext as char[24], but app is using wchar_t[24]
+			ObjectSelection::oiListItemSize += 24; // objInfoList::name is built in ext as char[24], but app is using wchar_t[24]
 	#endif
 	// SDK is set up to support HWA, but runtime is not using HWA, so oi structs are smaller than expected
 	#ifdef HWABETA
 		if (! rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0) )
-			oiListItemSize -= sizeof(LPVOID);
+			ObjectSelection::oiListItemSize -= sizeof(LPVOID);
 	#else
 		// SDK is not set up to support HWA, but runtime is using HWA, so oi structs are bigger than expected
 		if (rhPtr->rh4.rh4Mv->CallFunction(NULL, CallFunctionIDs::ISHWA, 0, 0, 0))
-			oiListItemSize += sizeof(LPVOID);
+			ObjectSelection::oiListItemSize += sizeof(LPVOID);
 	#endif
 #endif
 }
 
 //Selects *all* objects of the given object-type
-void Riggs::ObjectSelection::SelectAll(short Oi)
+void ObjectSelection::SelectAll(short Oi) const
 {
-	objInfoList * const ObjectInfo = GetOILFromOI(Oi);
+	objInfoList * ObjectInfo = GetOILFromOI(Oi);
 
-	ObjectInfo->NumOfSelected = ObjectInfo->NObjects;
-	ObjectInfo->ListSelected = ObjectInfo->Object;
-#ifdef _WIN32
-	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-	//ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
-	ObjectInfo->NumOfSelected = ObjectInfo->NObjects;
-#endif
+	// set object listing to all-selected for this event
+	ObjectInfo->set_NumOfSelected(ObjectInfo->get_NObjects());
+	ObjectInfo->set_ListSelected(ObjectInfo->get_Object());
+	ObjectInfo->set_EventCount(rhPtr->GetRH2EventCount());
+	ObjectInfo->set_NumOfSelected(ObjectInfo->get_NObjects());
 
-	int i = ObjectInfo->Object;
-	while(i >= 0)
+	// Set object link chain to all selected
+	for (int i = ObjectInfo->get_Object(); i >= 0;)
 	{
-		HeaderObject * Object = ObjectList[i].oblOffset;
-		Object->NextSelected = Object->NumNext;
-		i = Object->NumNext;
+		auto Object = rhPtr->GetObjectListOblOffsetByIndex(i)->get_rHo();
+		Object->set_NextSelected(Object->get_NumNext());
+		i = Object->get_NumNext();
 	}
 }
 
 //Resets all objects of the given object-type
-void Riggs::ObjectSelection::SelectNone(short oiList)
+void ObjectSelection::SelectNone(short oiList) const
 {
-#if _WIN32
-	objInfoList* pObjectInfo = (objInfoList*)(((char*)rhPtr->OiList) + oiListItemSize * oiList);
-	if (pObjectInfo == nullptr)
-		return;
-
-	pObjectInfo->NumOfSelected = 0;
-	pObjectInfo->ListSelected = -1;
-	pObjectInfo->EventCount = rhPtr->rh2.EventCount;
-#endif
+	for (auto oil : DarkEdif::QualifierOIListIterator(rhPtr, oiList, DarkEdif::Selection::Implicit))
+		oil->SelectNone(rhPtr);
 }
 
 //Resets all objects of the given object-type
-void Riggs::ObjectSelection::SelectNone(RunObject* object)
+void ObjectSelection::SelectNone(RunObject& object) const
 {
-	objInfoList * ObjectInfo = GetOILFromOI(object->roHo.Oi);
+	HeaderObject* const  ho = object.get_rHo();
+	objInfoList* const objInfo = ho->get_OiList();
 
-	ObjectInfo->NumOfSelected = 0;
-	ObjectInfo->ListSelected = -1;
-#if _WIN32
-	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-	// Phi test to see if it fixes resetting
-	// ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
-	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
-	ObjectList[object->roHo.Number].oblOffset->SelectedInOR = 0;
-#endif
+	objInfo->set_NumOfSelected(0);
+	objInfo->set_ListSelected(-1);
+	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
+//	objInfo->set_EventCountOR(rhPtr->GetRH4EventCountOR());
+
+	// This goes to first object of this type, in case passed object isn't it
+	const RunObjectMultiPlatPtr firstObj = rhPtr->GetObjectListOblOffsetByIndex(ho->get_Number());
+	HeaderObject * const firstObjHo = firstObj->get_rHo();
+	firstObjHo->set_NextSelected(-1);
+	// firstObjHo->set_SelectedInOR(true);
 }
 
 //Resets the SOL and inserts only one given object
-void Riggs::ObjectSelection::SelectOneObject(RunObject * object)
+void ObjectSelection::SelectOneObject(RunObject& object) const
 {
-#ifdef _WIN32
-	objInfoList * ObjectInfo = GetOILFromOI(object->roHo.Oi);
+	objInfoList * const objInfo = GetOILFromOI(object.get_rHo()->get_Oi());
+	HeaderObject * const ho = object.get_rHo();
 
-	ObjectInfo->NumOfSelected = 1;
-	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-	//ObjectInfo->EventCountOR = rhPtr->rh4.EventCountOR;
-	ObjectInfo->ListSelected = object->roHo.Number;
-	ObjectList[object->roHo.Number].oblOffset->NextSelected = -1;
-#else
-	DarkEdif::MsgBox::Error("Missing function", "Function %s has not been programmed on Android.", __PRETTY_FUNCTION__);
-#endif
+	objInfo->set_NumOfSelected(1);
+	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
+//	objInfo->set_EventCountOR(rhPtr->GetRH4EventCountOR());
+	objInfo->set_ListSelected(ho->get_Number());
+
+	// This goes to first object of this type, in case passed object isn't it
+	ho->set_NextSelected(-1);
+	ho->set_SelectedInOR(true);
 }
 
 //Resets the SOL and inserts the given list of objects
-void Riggs::ObjectSelection::SelectObjects(short Oi, RunObject ** objects, int count)
+void ObjectSelection::SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, std::size_t count) const
 {
-	if (count <= 0)
+	if ((long)count <= 0)
 		return;
 
-	objInfoList * const ObjectInfo = GetOILFromOI(Oi);
+	objInfoList* ObjectInfo = GetOILFromOI(Oi);
 
-#ifdef _WIN32
-	ObjectInfo->NumOfSelected = count;
-	ObjectInfo->EventCount = rhPtr->rh2.EventCount;
-#else
-	DarkEdif::MsgBox::Error("Missing function", "Function %s has not been programmed on Android.", __PRETTY_FUNCTION__);
-#endif
+	ObjectInfo->set_NumOfSelected((int)count);
+	ObjectInfo->set_EventCount(rhPtr->GetRH2EventCount());
 
-	short prevNumber = objects[0]->roHo.Number;
-	ObjectInfo->ListSelected = prevNumber;
+	short prevNumber = objects[0]->get_rHo()->get_Number();
+	ObjectInfo->set_ListSelected(prevNumber);
 
-	for(int i=1; i<count; i++)
+	for (std::size_t i = 1; i<count; ++i)
 	{
-		short currentNumber = objects[i]->roHo.Number;
-		ObjectList[prevNumber].oblOffset->NextSelected = currentNumber;
+		short currentNumber = objects[i]->get_rHo()->get_Number();
+		rhPtr->GetObjectListOblOffsetByIndex(prevNumber)->get_rHo()->set_NextSelected(currentNumber);
 		prevNumber = currentNumber;
 	}
-	ObjectList[prevNumber].oblOffset->NextSelected = -1;
+	rhPtr->GetObjectListOblOffsetByIndex(prevNumber)->get_rHo()->set_NextSelected(-1);
 }
 
-//Return the number of selected objects for the given object-type
-int Riggs::ObjectSelection::GetNumberOfSelected(short Oi)
+// Return the number of explicitly selected objects for the given object-type
+std::size_t ObjectSelection::GetNumberOfSelected(short Oi) const
+{
+	if (Oi == -1)
+		return 0;
+	if ((Oi & 0x8000) == 0)
+		return GetOILFromOI(Oi)->get_NumOfSelected();
+
+	const std::vector<short> oiLists = rhPtr->GetQualToOiListByOffset(Oi)->GetAllOiList();
+	std::size_t numberSelected = 0;
+	for (const short s : oiLists) {
+		const auto oiL = rhPtr->GetOIListByIndex(s);
+		if (oiL->get_EventCount() == rhPtr->GetRH2EventCount())
+			numberSelected += oiL->get_NumOfSelected();
+	}
+	return numberSelected;
+}
+
+bool ObjectSelection::ObjectIsOfType(RunObject &object, short Oi) const
 {
 	if (Oi & 0x8000)
 	{
-		Oi &= 0x7FFF;	//Mask out the qualifier part
-		int numberSelected = 0;
-
-		qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
-		qualToOi * CurrentQualToOi = CurrentQualToOiStart;
-
-		while(CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
-			numberSelected += CurrentOi->NumOfSelected;
-			CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
-		}
-		return numberSelected;
+		const std::vector<short> ois = rhPtr->GetQualToOiListByOffset(Oi & 0x7FFF)->GetAllOi();
+		return std::find(ois.cbegin(), ois.cend(), object.get_rHo()->get_Oi()) != ois.cend();
 	}
-	else
-	{
-		return GetOILFromOI(Oi)->NumOfSelected;
-	}
-}
 
-bool Riggs::ObjectSelection::ObjectIsOfType(RunObject * object, short Oi)
-{
-	if (Oi & 0x8000)
-	{
-		Oi &= 0x7FFF;	//Mask out the qualifier part
-		qualToOi * CurrentQualToOiStart = (qualToOi *)((char*)QualToOiList + Oi);
-		qualToOi * CurrentQualToOi = CurrentQualToOiStart;
-
-		while(CurrentQualToOi->OiList >= 0)
-		{
-			objInfoList * CurrentOi = GetOILFromOI(CurrentQualToOi->OiList);
-			if (CurrentOi->Oi == object->roHo.Oi)
-				return true;
-			CurrentQualToOi = (qualToOi *)((char*)CurrentQualToOi + 4);
-		}
-		return false;
-	}
-	else
-		return (object->roHo.Oi == Oi);
+	return (object.get_rHo()->get_Oi() == Oi);
 }
 
 
-//Returns the object-info structure from a given object-type
-objInfoList * Riggs::ObjectSelection::GetOILFromOI(short Oi)
+// Returns the object-info structure from a given object-type
+objInfoList * ObjectSelection::GetOILFromOI(short Oi) const
 {
-#ifdef _WIN32
-	for(int i = 0; i < rhPtr->NumberOi; ++i)
+	// TODO: is there a reason you can't just look up Oi directly? i.e. oiList[oi]
+	for (std::size_t i = 0; i < rhPtr->GetNumberOi(); ++i)
 	{
-		objInfoList * oil = (objInfoList *)(((char*)OiList) + oiListItemSize*i);
-		if (oil->Oi == Oi)
+		auto oil = rhPtr->GetOIListByIndex(i);
+		if (oil->get_Oi() == Oi)
 			return oil;
 	}
-#endif
-	return NULL;
+	return nullptr;
+}
+template<class Ext, class T> bool ObjectSelection::FilterQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
+{
+	bool hasSelected = false;
+	for (auto oil : QualifierOIListIterator(rhPtr, Oi, Selection::All)) {
+		hasSelected |= FilterNonQualifierObjects(oil->get_Oi(), negate, filterFunction);
+		if (!hasSelected)
+			return true;
+	}
+	return hasSelected;
 }
 
+template<class Ext, class T> bool ObjectSelection::FilterNonQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
+{
+	auto&& pObjectInfo = GetOILFromOI(Oi);
+	bool hasSelected = false;
+
+	if (pObjectInfo->get_EventCount() != rhPtr->GetRH2EventCount())
+		SelectAll(Oi);	//The SOL is invalid, must reset.
+
+	//If SOL is empty
+	if (pObjectInfo->get_NumOfSelected() <= 0)
+		return false;
+
+	int firstSelected = -1;
+	int count = 0;
+	int current = pObjectInfo->get_ListSelected();
+
+	RunObjectMultiPlatPtr previous = nullptr;
+
+	while (current >= 0)
+	{
+		auto pObject = rhPtr->GetObjectListOblOffsetByIndex(current);
+		bool useObject = DoCallback((void*)pExtension, filterFunction, (RunObject*)&*pObject);
+
+		if (negate)
+			useObject = !useObject;
+
+		hasSelected |= useObject;
+
+		if (useObject)
+		{
+			if (firstSelected == -1)
+				firstSelected = current;
+
+			if (previous != nullptr)
+				previous->get_rHo()->set_NextSelected(current);
+
+			previous = std::move(pObject);
+			count++;
+		}
+		current = pObject->get_rHo()->get_NextSelected();
+	}
+	if (previous != nullptr)
+		previous->get_rHo()->set_NextSelected(-1);
+
+	pObjectInfo->set_ListSelected(firstSelected);
+	pObjectInfo->set_NumOfSelected(count);
+
+	return hasSelected;
+}
+
+// Iterates the object instances in qualifier OI or singular OI
+ObjectIterator::ObjectIterator(RunHeader* rhPtr, int oiList, Selection selection, bool includeDestroyed /* = false */)
+		: rhPtr(rhPtr), oiList(oiList), select(selection), includeDestroyed(includeDestroyed), curOiList(oiList)
+{
+	if (curOiList != -1)
+	{
+		if ((curOiList & 0x8000) == 0)
+			qualOiList.push_back(oiList);
+		else
+		{
+			auto qToOiList = rhPtr->GetQualToOiListByOffset(curOiList);
+			if (qToOiList)
+				qualOiList = qToOiList->GetAllOiList();
+		}
+		GetNext();
+	}
+}
+ObjectIterator& ObjectIterator::operator++() {
+	if (oil == nullptr || curHo == nullptr)
+		return *this;
+	GetNext();
+	return *this;
+}
+// x++, instead of ++x
+ObjectIterator ObjectIterator::operator++(int) {
+	auto retval = *this; ++(*this); return retval;
+}
+bool ObjectIterator::operator==(ObjectIterator other) const {
+	return curHo == other.curHo && oiList == other.oiList;
+}
+bool ObjectIterator::operator!=(ObjectIterator other) const {
+	return !(*this == other);
+}
+ObjectIterator::reference ObjectIterator::operator*() {
+	return curRo;
+}
+void ObjectIterator::GetNext()
+{
+	while (true)
+	{
+		++numNextRun;
+		short nextOi = -1;
+		if (curHo)
+		{
+			const bool ecMatch2 = oil->get_EventCount() == rhPtr->GetRH2EventCount();
+			nextOi = select == Selection::All ? curHo->get_NumNext() : curHo->get_NextSelected();
+
+			// If implicit selection and no condition-selection, select first OI in general
+			if ((!ecMatch2 || (nextOi & 0xF000) != 0) && select == Selection::Implicit)
+				nextOi = curHo->get_NumNext();
+		}
+		// Invalid Oi; jump to next object
+		if ((nextOi & 0xF000) != 0)
+		{
+			if (qualOiList.size() > qualOiListAt) {
+				curOiList = qualOiList[qualOiListAt++];
+				oil = rhPtr->GetOIListByIndex(curOiList);
+
+				const bool ecMatch = oil->get_EventCount() == rhPtr->GetRH2EventCount();
+				nextOi = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
+
+				// If implicit selection and no condition-selection, select first OI in general
+				if ((!ecMatch || (nextOi & 0xF000) != 0) && select == Selection::Implicit)
+					nextOi = oil->get_Object();
+
+				// Skip to next frame: it'll either fall through to end of list, or grab next in qualifier
+				if ((nextOi & 0xF000) != 0)
+					continue;
+			}
+			// hit end of list
+			else
+			{
+				curHo = nullptr;
+				curRo = nullptr;
+				oil = nullptr;
+				curOiList = -1;
+				numNextRun = SIZE_MAX;
+				return;
+			}
+		}
+		curRo = rhPtr->GetObjectListOblOffsetByIndex(nextOi);
+		curHo = curRo ? curRo->get_rHo() : nullptr;
+		if (curRo && (includeDestroyed || (curHo->get_Flags() & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None))
+			return; // we got a valid one
+	}
+}
+ObjectIterator::ObjectIterator(RunHeader* rhPtr, int oiList, Selection select, bool destroy, bool) :
+	rhPtr(rhPtr), oiList(oiList), select(select), includeDestroyed(destroy), numNextRun(SIZE_MAX)
+{
+	// curOiList and oil already inited to empty, numNextRun is set to end already
+}
+ObjectIterator ObjectIterator::begin() const {
+	return ObjectIterator(rhPtr, oiList, select, includeDestroyed);
+}
+ObjectIterator ObjectIterator::end() const {
+	return ObjectIterator(rhPtr, oiList, select, includeDestroyed, false);
+}
+
+QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select)
+	: rhPtr(rhPtr), oiList(oiList), select(select), curOiList(oiList)
+{
+	if (curOiList == -1)
+		return;
+	// Not a qualiier OI, make an iterator that only returns it
+	if ((curOiList & 0xF000) == 0)
+		qualOiList.push_back(curOiList);
+	else
+	{
+		auto qToOiList = rhPtr->GetQualToOiListByOffset(curOiList);
+		if (qToOiList)
+			qualOiList = qToOiList->GetAllOiList();
+	}
+
+	GetNext();
+}
+QualifierOIListIterator& QualifierOIListIterator::operator++()
+{
+	if (oil == nullptr)
+		return *this;
+	GetNext();
+	return *this;
+}
+// x++, instead of ++x
+QualifierOIListIterator QualifierOIListIterator::operator++(int) {
+	auto retval = *this; ++(*this); return retval;
+}
+bool QualifierOIListIterator::operator==(const QualifierOIListIterator& other) const {
+	return curOiList == other.curOiList && oiList == other.oiList;
+}
+bool QualifierOIListIterator::operator!=(const QualifierOIListIterator& other) const { return !(*this == other); }
+QualifierOIListIterator::reference QualifierOIListIterator::operator*() const { return oil; }
+void QualifierOIListIterator::GetNext()
+{
+	for (short firstOi; qualOiListAt < qualOiList.size();)
+	{
+		curOiList = qualOiList[qualOiListAt++]; // always increment; end iterator is indicated by == length
+		oil = rhPtr->GetOIListByIndex(curOiList);
+		const bool ecMatch = oil->get_EventCount() == rhPtr->GetRH2EventCount();
+		firstOi = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
+
+		// If implicit selection and no condition-selection, select first OI in general
+		if ((!ecMatch || firstOi == -1) && select == Selection::Implicit)
+			firstOi = oil->get_Object();
+		if ((firstOi & 0xF000) == 0)
+			return; // invalid flag were not set, so this OiList has some valid instances; else continue loop and find next oilist
+	}
+
+	// End of list, clear up
+	oil = nullptr;
+	curOiList = -1;
+}
+QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select, bool) :
+	rhPtr(rhPtr), oiList(oiList), select(select) {} // curOiList and oil already inited to empty
+QualifierOIListIterator QualifierOIListIterator::begin() const { return QualifierOIListIterator(rhPtr, oiList, select); }
+QualifierOIListIterator QualifierOIListIterator::end() const { return QualifierOIListIterator(rhPtr, oiList, select, false); }
+
+AllObjectIterator::AllObjectIterator(RunHeader* rhPtr, bool) :
+	rhPtr(rhPtr), numObjectsInFrame(rhPtr->get_NObjects()), objListAt(numObjectsInFrame)
+{
+
+}
+AllObjectIterator::AllObjectIterator(RunHeader* rhPtr) :
+	rhPtr(rhPtr), numObjectsInFrame(rhPtr->get_NObjects())
+{
+	// In theory there cannot be 0 objects, since this code can't be run without an object to run it
+	if (numObjectsInFrame > 0)
+		curRo = rhPtr->GetObjectListOblOffsetByIndex(0);
+}
+
+AllObjectIterator& AllObjectIterator::operator++() {
+	if (curRo == nullptr)
+		return *this;
+
+	// haven't hit end of rhObjectList, but NObjects is how many valid entries are in rhObjectList,
+	// so just abort early, rather than loop past all the reserved nulls in rhObjectList
+	if (++objListAt == numObjectsInFrame)
+	{
+		curRo = nullptr;
+		return *this;
+	}
+
+	while (true)
+	{
+		// This can be null, even before maxObjectsInFrame is reached, if object is removed
+		curRo = rhPtr->GetObjectListOblOffsetByIndex(++objListTrueIndex);
+		if (curRo != nullptr)
+			break;
+		// skip nulls in middle of rhObjectList
+	}
+	return *this;
+}
+// x++, instead of ++x
+AllObjectIterator AllObjectIterator::operator++(int) { auto retval = *this; ++(*this); return retval; }
+bool AllObjectIterator::operator==(AllObjectIterator other) const { return curRo == other.curRo; }
+bool AllObjectIterator::operator!=(AllObjectIterator other) const { return !(*this == other); }
+AllObjectIterator::reference AllObjectIterator::operator*() const { return curRo; }
+
+AllObjectIterator AllObjectIterator::begin() const { return AllObjectIterator(rhPtr); }
+AllObjectIterator AllObjectIterator::end() const { return AllObjectIterator(rhPtr, false); }
+
+AllOIListIterator::AllOIListIterator(RunHeader* rhPtr, bool) :
+	rhPtr(rhPtr), numOI(rhPtr->GetNumberOi()), oiListAt(numOI)
+{
+
+}
+// Iterator for all the OI List in entire frame
+AllOIListIterator::AllOIListIterator(RunHeader* rhPtr) :
+	rhPtr(rhPtr), numOI(rhPtr->GetNumberOi())
+{
+	if (numOI > 0)
+		oil = rhPtr->GetOIListByIndex(0);
+}
+
+AllOIListIterator& AllOIListIterator::operator++() {
+	if (oil == nullptr)
+		return *this;
+	if (++oiListAt == numOI)
+		oil = nullptr;
+	else
+		oil = rhPtr->GetOIListByIndex(oiListAt);
+	return *this;
+}
+// x++, instead of ++x
+AllOIListIterator AllOIListIterator::operator++(int) { auto retval = *this; ++(*this); return retval; }
+bool AllOIListIterator::operator==(AllOIListIterator other) const { return oiListAt == other.oiListAt; }
+bool AllOIListIterator::operator!=(AllOIListIterator other) const { return !(*this == other); }
+AllOIListIterator::reference AllOIListIterator::operator*() const { return oil; }
+
+AllOIListIterator AllOIListIterator::begin() const { return AllOIListIterator(rhPtr); }
+AllOIListIterator AllOIListIterator::end() const { return AllOIListIterator(rhPtr, false); }
+
+} // namespace DarkEdif

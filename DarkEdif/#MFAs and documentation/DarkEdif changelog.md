@@ -10,10 +10,32 @@ If you're editing this file, note that there is use of a Markdown syntax, two sp
 Some editors will consider this to be trailing whitespace and remove it; make sure yours doesn't.  
 Also note that commit SHAs are based on time and code differences, so it is impossible to know the commit SHA when writing a new version. The date of release should be in UTC timezone.
 
+Changes until v20 release
+----
+*v20 not released yet*
+
 
 Changes until v19 release
 ----
-*v19 not released yet*
+*v19 released on 27th Feb 2024, commit (latest)*
+- All platforms: Added a multiplatform, C++ style object selection framework, replacing Riggs framework with DarkEdif.
+- All platforms: Added multiplatform-safe functions for the built-in variables used in object selection.  
+Functions reflecting underlying variables exactly will be named get_XX() for variable XX, whereas those that may be
+moved around in platforms (e.g. CRun variables moved to CEventProgram) are named GetXX().
+- All platforms: Object parameters now pass OI number as `int` if condition, first object instance `RunObject *` if action.  
+  You can prevent Fusion's automatic instance loop by calling `Runtime.CancelRepeatingObjectAction()`, or leave as is for every selected object instance `RunObject *` to be passed one by one to your action func.
+- All platforms: Added RunObjectMultiPlatPtr which is `std::shared_ptr<RunObject>` on Android, and raw `RunObject *` pointer on others.  
+Similarly, added CRunAppMultiPlat, CRunFrameMultiPlat; iOS/Mac implement them with that name, the others typedef to original names.
+- Windows: Locked out the ext dev from accessing Fusion internal variables on Windows, as it's not portable.  
+  If you want to mess with internals and there are no helper funcs, define `FUSION_INTERNAL_ACCESS` on project level.
+- Windows: Locked out the ext dev from constructing/destructing Fusion internal structs.  
+  If you need them, look for helper funcs first; otherwise use `(class *)malloc(sizeof(class))` or `std::unique_ptr<char[]>` equivalent.
+- All platforms: Renamed most .h files to .hpp, to accurately reflect their internal C++ content, as opposed to C.  
+  Lacewing Blue noteably uses a mix of C and C++ files, and without a CompileAs override, VS assumes the h files are C.
+- iOS/Mac: Will now override code files' CompileAs to build with Objective-C for C files, and Objective-C++ for C++ files.
+- iOS/Mac: Added library headers for internal variables; access via helper functions, or at your own risk.  
+IntelliSense hates Objective-C and can't recognise Obj-C classes/functions, so you may cause false errors by using internals.
+- iOS/Mac: Introduced a FusionInternals namespace to add helper functions while preventing conflicts between extensions.
 - Edittime: Added a PrepareDarkEdifSDK tool (v1.0.0.2), so new extensions can be made in a couple minutes,  
   without making breaking inconsistencies (e.g. ext name and project folder name being different will break the BuildTools)
 - Windows: Fixed GetRunningApplicationPath() when passed AppFolderOnly flag; would return drive letter by itself
@@ -21,8 +43,14 @@ Changes until v19 release
 - Windows: Added CF2.5+/Direct3D 11 specific cSurface code
 - Edittime: Fixed new objects' custom EDITDATA variables being cleared in DarkEdif::DLL::DLL_CreateObject(), when their init should happen just before that
 - Windows: Renamed Runtime.IsHWA() to better reflect it doesn't indicate HWA of app, but HWA of underlying runtime; added Runtime.GetAppDisplayMode().
-- iOS/Mac: Updated DarkEdifPreBuildTool to v1.0.0.5, no longer uses FusionSDKConfig global setting over project-specific
+- All platforms: Updated DarkEdifPreBuildTool to v1.0.0.6, has ParamTime, ParamObject and event line reading fixes
+- All platforms: Updated DarkEdifPostBuildTool to v1.0.0.6, has ParamTime, ParamObject and event line reading fixes
+- iOS/Mac: PreBuildTool no longer uses FusionSDKConfig global INI setting over project-specific INI setting.
+- Mac: PreBuildTool will now copy whole Lib\Mac folder, instead of specifically MMF2Lib.framework.
 - Edittime: JSON parser now ignores UTF-8 BOM if present; assumes UTF-8 if not. Other BOMs will cause parser abort.
+- Edittime: Color and Edit direction properties now work
+- Edittime: Fix a crash when making error messages for properties in JSONPropertyReader
+- Android/iOS/Mac: Added more TCHAR function defines, strtol variants
 
 
 Changes until v18 release

@@ -47,13 +47,6 @@ namespace DarkEdif {
 
 using WindowHandleType = void*;
 
-struct eventGroup {
-	// Dummy group
-	std::int16_t	evgInhibit;
-	std::uint16_t	evgInhibitCpt;
-	std::uint16_t	evgIdentifier;
-	eventGroup() = delete;
-};
 namespace DarkEdif {
 	int MessageBoxA(WindowHandleType hwnd, const TCHAR* caption, const TCHAR* text, int iconAndButtons);
 
@@ -80,8 +73,6 @@ namespace DarkEdif {
 #define MB_ICONINFORMATION 3
 // MessageBox must be top-most
 #define MB_TOPMOST 0
-
-#define SuppressZeroArraySizeWarning /* no op */
 
 #include <unistd.h> // for readlink()
 #include <cmath> // for std::ceil and co

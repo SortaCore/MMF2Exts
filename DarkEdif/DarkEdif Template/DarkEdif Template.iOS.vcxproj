@@ -52,7 +52,21 @@
     <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h" />
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEventProgram.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEvents.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObject.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObjInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CQualToOiList.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRun.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunApp.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRVal.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CValue.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\IDrawable.h" />
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -35,7 +35,7 @@
     <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemGroup>
-    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.h" />
+	<ClInclude Include="..\Inc\Mac\MMFMacMasterHeader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp" />
