@@ -1,5 +1,5 @@
 /*
-	This Lacewing Blue Client Fusion extension UWP port is copyright © 2023 by Darkwire Software.
+	This Lacewing Blue Client Fusion extension UWP port is copyright © 2024 by Darkwire Software.
 	Any redistribution is expressly prohibited outside of the official channels.
 	It is expressly forbidden to acquire these files from GitHub for free for personal or commercial use;
 	in other words, if there is a fee to acquire or use this port, any developers must pay for it and only
@@ -76,7 +76,7 @@ if (!String.prototype.replaceAll) {
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and window[] instead of direct, because HTML5 Final Project minifies and breaks the names otherwise
 // In case UWP is minified later, we'll keep these HTML5 minify precautions in UWP
-window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 18) ? window['darkEdif'] :
+window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19) ? window['darkEdif'] :
 	new (/** @constructor */ function() {
 	this.data = {};
 	this.getGlobalData = function (key) {
@@ -94,9 +94,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 18)
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 18;
+	this.sdkVersion = 19;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 18) {
+		if (sdkVer < 16 || sdkVer > 19) {
 			throw "UWP DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
@@ -256,7 +256,7 @@ function CRunBluewing_Client() {
 	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and window[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 103; // To match C++ version
-	this['SDKVersion'] = 18;
+	this['SDKVersion'] = 19;
 	this['DebugMode'] = false;
 	this['ExtensionName'] = 'Bluewing Client';
 

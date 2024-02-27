@@ -17,7 +17,7 @@ Changes until v20 release
 
 Changes until v19 release
 ----
-*v19 released on 27th Feb 2024, commit (latest)*
+*v19 released on 27th Feb 2024, commit [ce7afe2](https://github.com/SortaCore/MMF2Exts/commit/ce7afe2499b2fe049f401da4b5ac5f301418e0d8)*
 - All platforms: Added a multiplatform, C++ style object selection framework, replacing Riggs framework with DarkEdif.
 - All platforms: Added multiplatform-safe functions for the built-in variables used in object selection.  
 Functions reflecting underlying variables exactly will be named get_XX() for variable XX, whereas those that may be

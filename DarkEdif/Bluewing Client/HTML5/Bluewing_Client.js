@@ -1,5 +1,5 @@
 /*
-	This Lacewing Blue Client Fusion extension HTML5 port is copyright © 2023 by Darkwire Software.
+	This Lacewing Blue Client Fusion extension HTML5 port is copyright © 2024 by Darkwire Software.
 	Any redistribution is expressly prohibited outside of the official channels.
 	It is expressly forbidden to acquire these files from GitHub for free for personal or commercial use;
 	in other words, if there is a fee to acquire or use this port, any developers must pay for it and only
@@ -56,7 +56,7 @@
 // Global data, including sub-applications, just how God intended.
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 18) ? globalThis['darkEdif'] :
+globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVersion >= 19) ? globalThis['darkEdif'] :
 	new (/** @constructor */ function() {
 	// window variable is converted into __scope for some reason, so globalThis it is.
 	this.data = {};
@@ -75,9 +75,9 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 18;
+	this.sdkVersion = 19;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 18) {
+		if (sdkVer < 16 || sdkVer > 19) {
 			throw "HTML5 DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
@@ -248,7 +248,7 @@ function CRunBluewing_Client() {
 	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 103; // To match C++ version
-	this['SDKVersion'] = 18;
+	this['SDKVersion'] = 19;
 	this['DebugMode'] = false;
 	this['ExtensionName'] = 'Bluewing Client';
 
