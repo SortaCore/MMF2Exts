@@ -81,7 +81,7 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			wchar_t moduleName[1024] = {};
 			str << "A thread running code inside ";
 			if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const wchar_t *)pExceptionPtrs->ExceptionRecord->ExceptionAddress, &moduleHandle) &&
-				GetModuleFileNameW(moduleHandle, moduleName, sizeof(moduleName)) > 0)
+				GetModuleFileNameW(moduleHandle, moduleName, std::size(moduleName)) > 0)
 			{
 				std::string utf8Ver = DarkEdif::WideToUTF8(wcsrchr(moduleName, L'\\') + 1);
 				str << utf8Ver << " ";
@@ -310,7 +310,7 @@ DWORD WINAPI ReceiveConsoleInput(void *)
 		}
 
 		// Input available, try to read
-		ReadConsole(ConsoleHandle, &InputText, sizeof(InputText) - 1, &numRecords, NULL);
+		ReadConsole(ConsoleHandle, &InputText, std::size(InputText) - 1, &numRecords, NULL);
 
 		// Note ReadConsole silently discards InputEvents that aren't keyboard-related.
 		// This includes mouse events, window focus events, etc.
