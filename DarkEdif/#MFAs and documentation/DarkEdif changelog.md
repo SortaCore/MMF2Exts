@@ -51,6 +51,9 @@ IntelliSense hates Objective-C and can't recognise Obj-C classes/functions, so y
 - Edittime: Color and Edit direction properties now work
 - Edittime: Fix a crash when making error messages for properties in JSONPropertyReader
 - Android/iOS/Mac: Added more TCHAR function defines, strtol variants
+- All platforms: Fixed EventGroup being invalid after a generated event
+- All platforms: Fixed expression functions interfering with normal selection, causing infinite loops (ActionLoop) and crashes in some circumstances.  
+Noteably, DarkScript would infinite loop when you created 2+ objects inside an event of a fastloop running 3+ times, then ran a DS function by action. The culprit was ActionLoop being reset by generated event's action, causing the same obj instance to be revisited each time control returned to the fastloop event.
 
 
 Changes until v18 release
