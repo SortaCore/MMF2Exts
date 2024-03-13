@@ -16,6 +16,18 @@
 	#error Not running in C++17 mode
 #endif
 
+// Normally FusionSDK.props turns __cpp_threadsafe_static_init off with /Zc:threadSafeInit- and defines ThreadSafeStaticInitIsSafe
+#ifndef ThreadSafeStaticInitIsSafe
+	// The threadsafe init is disabled, or we're using VS 2017, so it's safe.
+	// Or we're targeting Vista+ (WINVER >= 0x0600), threadsafe init works there, so safe too.
+	#if !defined(__cpp_threadsafe_static_init) || _MSC_VER < 1920 || WINVER > 0x0503 
+		#define ThreadSafeStaticInitIsSafe 1
+	#endif
+// We're still targeting XP, and it's VS 2019, why don't we have the define?
+#elif defined(__cpp_threadsafe_static_init) && WINVER <= 0x0503 && _MSC_VER > 1920 && _MSC_FULL_VER < 193030705
+	#error Static constructors cannot be used on XP; this should be disabled with /Zc:threadSafeInit-
+#endif
+
 // Define std::intXX_t types
 #include <stdint.h>
 

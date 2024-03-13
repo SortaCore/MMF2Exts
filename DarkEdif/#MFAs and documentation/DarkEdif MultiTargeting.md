@@ -122,7 +122,7 @@ if these static variables are both function-level in scope, use constructors, an
 
 By default, VS uses Windows **Vista** and above functionality to initialize static local variables in a thread-safe way,
 unless `/Zc:threadSafeInit-` is specified to disable this behaviour.  
-When it is disabled, `__cpp_threadsafe_static_init` is left undefined.
+When this behaviour is disabled, or you're using Vista+, or otherwise won't have a problem, `ThreadSafeStaticInitIsSafe` is defined.
 
 Since it uses Vista+ functions, it causes buggy behaviour on Windows XP with any non-trivial initialization of static
 local variables; that is, where a constructor function has to be called to set up the static, not a flat struct initialization.
@@ -141,10 +141,12 @@ Static variables on a file-level scope don't use this, and so will construct wit
 
 Consider using wraparound code to disable static behaviour.
 ```cpp
-#if _WIN32 && WINVER < 0x0600 && defined(__cpp_threadsafe_static_init)`
-	// Broken function-level scope static initialization; construct a non-static instead
+#ifdef ThreadSafeStaticInitIsSafe
+	// Function-level static struct initialization is okay
+	static std::string foo = "x"s;
 #else 
-	// Function-level static initialization is okay
+	// Broken function-level scope static initialization; construct a non-static instead
+	std::string foo = "x"s;
 #endif
 ```
 

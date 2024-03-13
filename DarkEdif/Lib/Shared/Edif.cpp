@@ -417,17 +417,19 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	if (!json)
 		return DarkEdif::MsgBox::Error(_T("Error parsing JSON"), _T("JSON file for " PROJECT_NAME " couldn't be parsed:\n%s"), DarkEdif::UTF8ToTString(json_error).c_str()), -1;
 
-	// Workaround for subapp bug (cheers LB), where Init/Free is called more than once,
+	// Use static as a workaround for subapp bug (cheers LB), where Init/Free is called more than once,
 	// even if object is not in subapp and thus doesn't apply
-	// http://community.clickteam.com/threads/97219-MFX-not-found-when-in-subapp?p=693431#post693431
-#if !defined(_WIN32) || WINVER >= 0x0600 || !defined(__cpp_threadsafe_static_init)
-	static class Edif::SDK gSDK(mV, *json);
-	Edif::SDK = &gSDK;
-#else
-	// Static local initialization bug. For more detail, see the MultiTarget MD file on XP targeting.
+	// https://community.clickteam.com/forum/thread/97219-mfx-not-found-when-in-subapp/?postID=693431#post693431
+	//
+	// However, static causes issues on XP, so this #if fixes the static local initialization bug.
+	// For more detail, see the MultiTarget MD file on XP targeting.
 	// On XP, the code above zero-fills gSDK, and doesn't run the constructor, resulting in a
 	// crash later, when GetRunObjectInfos() tries to use the null ::SDK->json via "CurLang".
-	Edif::SDK = new Edif::SDK(mV, *json);
+#ifdef ThreadSafeStaticInitIsSafe
+	static class Edif::SDK gSDK(mV, *json);
+	Edif::SDK = &gSDK;
+#else // workaround, don't use static but singleton
+	Edif::SDK = new class Edif::SDK(mV, *json);
 #endif
 
 	return 0;	// no error

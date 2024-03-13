@@ -1738,6 +1738,12 @@ HGLOBAL FusionAPI UpdateEditStructure(mv * mV, void * OldEdPtr) {
 	return DarkEdif::DLL::DLL_UpdateEditStructure(mV, (EDITDATA*)OldEdPtr);
 }
 
+#ifndef ThreadSafeStaticInitIsSafe
+static bool staticPropsStructCtored = true;
+#else
+static bool staticPropsStructCtored = false;
+#endif
+
 HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 {
 	// Note: GetRunObjectInfos provides the current Extension::Version to Fusion,
@@ -1890,6 +1896,16 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			else
 				DebugProp_OutputString(_T("User converter does not exist; will be excluded.\n"));
 
+			// If XP-compatible, these may be zero-inited but constructors not called (as the CRT uses a Vista+ function),
+			// so zero init is disabled, now we run ctor ourselves
+			if (!staticPropsStructCtored)
+			{
+				staticPropsStructCtored = true;
+				preSmartPropertyReader.PreSmartPropertyReader::PreSmartPropertyReader();
+				smartPropertyReader.SmartPropertyReader::SmartPropertyReader();
+				jsonPropertyReader.JSONPropertyReader::JSONPropertyReader();
+			}
+			
 			preSmartPropertyReader.Initialise(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &preSmartPropertyReader, "PreSmartPropertyReader" });
@@ -4768,11 +4784,11 @@ static int Internal_MessageBox(const TCHAR * titlePrefix, PrintFHintInside const
 	assert(titlePrefix != NULL && msgFormat != NULL);
 
 	// This doesn't work on Windows XP in some scenarios; for an explanation, see the README file.
-#if defined(_WIN32) && WINVER < 0x0600 && defined(__cpp_threadsafe_static_init)
+#ifdef ThreadSafeStaticInitIsSafe
+	const static std::tstring titleSuffix = _T(" - " PROJECT_NAME ""s);
+#else
 	const static TCHAR projNameStatic[] = _T(" - " PROJECT_NAME);
 	const std::tstring titleSuffix = projNameStatic;
-#else
-	const static std::tstring titleSuffix = _T(" - " PROJECT_NAME ""s);
 #endif
 
 	// Without this modal setting, the user will usually crash Fusion.

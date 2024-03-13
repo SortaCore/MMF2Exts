@@ -1011,7 +1011,7 @@ REFLAG Extension::Handle()
 		// Events that absolutely need a processing event.
 
 		// static initialization doesn't work on XP in some scenarios; for an explanation, see Edif::Init().
-		#if !defined(_WIN32) || WINVER >= 0x0600 || !defined(__cpp_threadsafe_static_init)
+		#ifdef ThreadSafeStaticInitIsSafe
 			static
 		#endif
 		const std::pair<const std::tstring_view, const std::uint16_t> mandatoryEventIDs[] = {

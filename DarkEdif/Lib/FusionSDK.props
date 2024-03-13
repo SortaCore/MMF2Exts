@@ -271,7 +271,7 @@
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
 		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild)</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
 
 		<!-- Not defined by Clang, just MSVC. -->
 		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
@@ -431,7 +431,8 @@
 			<AdditionalOptions>$(_FusionSDKAdds) /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
 			<!-- Disable thread-safe initialization on XP, as VS 2019 uses Vista+ functionality to implement it.
 				 This will only create a problem if you have statics accessed from multiple threads that spawn at the same time. To conditionally write code for this, see __cpp_threadsafe_static_init. -->
-			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)==16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==1 AND $(VisualStudioVersion)&gt;=16.0">/Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="$(WindowsXPCompatibility)==0 OR $(VisualStudioVersion)&lt;16.0">/DThreadSafeStaticInitIsSafe=1 %(AdditionalOptions)</AdditionalOptions>
 		</ClCompile>
 		<Link>
 			<!-- Windows subsystem. Required to prevent a warning message -->

@@ -13,6 +13,8 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- Edittime: Fixed a new Visual Studio XP compatiblity bug, causing the object property readers to use uninitalized memory.  
+  If it's safe to use a static struct constructor, `ThreadSafeStaticInitIsSafe` is defined (on all platforms).
 
 
 Changes until v19 release
