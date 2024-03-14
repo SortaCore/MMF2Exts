@@ -3989,8 +3989,8 @@ struct mv {
 	CSoundManager *		SndMgr;				// Sound manager
 
 	union {
-		CEditApp *		EditApp;			// Current application, edit time (not used)
-		CRunApp *		RunApp;				// Current application, runtime
+		CEditApp *		EditApp;			// Current application, edit time - different address per loaded MFA
+		CRunApp *		RunApp;				// Current application, runtime - not usable in frame editor and co, just runtime
 	};
 	union {
 		CEditFrame *	EditFrame;
@@ -4632,7 +4632,7 @@ struct CRunApp {
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
 	// Application info
-	AppMiniHeader	miniHdr;			// Version
+	AppMiniHeader	miniHdr;	 		// Version
 	AppHeader		hdr;				// General info
 	TCHAR *			name,				// name of the application
 		  *			appFileName,		// filename (temporary file in editor mode)
@@ -4643,7 +4643,7 @@ DarkEdifInternalAccessProtected:
 	// File infos
 	TCHAR *			targetFileName;		// filename of original CCN/EXE file
 	TCHAR *			tempPath;			// Temporary directory for external files
-	HFILE			file;				// File handle
+	HFILE			file;				// File handle - Yves confirmed it was opened with CreateFile, not fopen
 	unsigned int	startOffset;
 
 	// Help file

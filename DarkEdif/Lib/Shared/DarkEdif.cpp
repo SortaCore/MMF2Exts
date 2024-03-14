@@ -1389,8 +1389,8 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 			});
 			if (f != data.cend())
 			{
-				DebugProp_OutputString(_T("SmartPropertyReader: found property %zu by old name %s.\n"),
-					id, UTF8ToTString(jsonPropOldName).c_str());
+				DebugProp_OutputString(_T("SmartPropertyReader: found property %zu %s by old name %s, at index %zu.\n"),
+					id, UTF8ToTString(jsonPropName).c_str(), UTF8ToTString(jsonPropOldName).c_str(), std::distance(data.cbegin(), f));
 			}
 		}
 		if (f == data.cend())
@@ -1399,14 +1399,16 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 			f = std::find_if(data.cbegin(), data.cend(), [&](const Data* d) {
 				return !_stricmp(d->ReadPropName().c_str(), jsonPropName.c_str()) && IsSimilar(d->propTypeID, jsonPropTypeID);
 			});
+			DebugProp_OutputString(_T("SmartPropertyReader: found property %zu, name %s at index %zu.\n"),
+				id, UTF8ToTString(jsonPropName).c_str(), std::distance(data.cbegin(), f));
 		}
 
 		if (f != data.cend())
 		{
-			DebugProp_OutputString(_T("SmartPropertyReader: found property %zu by name %s.\n"),
-				id, UTF8ToTString(jsonPropName).c_str());
 			const size_t foundIndex = std::distance(data.cbegin(), f);
-			return convRet->Return_OK(data[id]->ReadPropValue(), data[id]->ReadPropValueSize(), nullptr, convState->oldEdPtrProps->IsPropChecked((int)foundIndex));
+			const auto& p = GetRealPropsAddress((EDITDATA*)convState->oldEdPtr);
+			convRet->Return_OK(data[foundIndex]->ReadPropValue(), data[foundIndex]->ReadPropValueSize(), nullptr, p.IsPropChecked((int)foundIndex));
+			return;
 		}
 
 #if 0
@@ -1439,6 +1441,10 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 	void GetPropertyCheckbox(size_t id, ConverterReturn * const convRet)
 	{
 		const auto &p = GetRealPropsAddress((EDITDATA *)convState->oldEdPtr);
+		// Added new property since last smart ext version? Delegate to JSON
+		if (id >= p.numProps)
+			return convRet->Return_Pass();
+
 		return convRet->Return_OK(NULL, 0, NULL, p.IsPropChecked(id));
 	}
 
@@ -1453,6 +1459,7 @@ static Properties::SmartPropertyReader smartPropertyReader;
 struct Properties::JSONPropertyReader : Properties::PropertyReader
 {
 	Properties::ConverterState * convState;
+	static const char bullet[];
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
 	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
@@ -1525,8 +1532,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 				return Abort(convRet);
 			}
 
-			// convState->resetPropertiesStream << title << " = \"" << (const char *)prop["DefaultState"] << "\"\n";
-			convState->resetPropertiesStream << title << '\n';
+			// convState->resetPropertiesStream << bullet << title << " = \"" << (const char *)prop["DefaultState"] << "\"\n";
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 			std::string data = (const char*)prop["DefaultState"];
 			if (!_stricmp(prop["Case"], "Lower"))
@@ -1558,8 +1565,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 				return Abort(convRet);
 			}
 
-			// convState->resetPropertiesStream << title << " = \"" << (const char *)prop["DefaultState"] << "\"\n";
-			convState->resetPropertiesStream << title << '\n';
+			// convState->resetPropertiesStream << bullet << title << " = \"" << (const char *)prop["DefaultState"] << "\"\n";
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
 			return convRet->Return_OK((const char *)prop["DefaultState"], sizeOfStr);
@@ -1577,8 +1584,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			both[0] = (int)(json_int_t)prop["DefaultState"][0];
 			both[1] = (int)(json_int_t)prop["DefaultState"][1];
 
-			// convState->resetPropertiesStream << title << " = (" << both[0] << ", " << both[1] << ")\n";
-			convState->resetPropertiesStream << title << '\n';
+			// convState->resetPropertiesStream << bullet << title << " = (" << both[0] << ", " << both[1] << ")\n";
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(both, sizeof(both));
@@ -1604,8 +1611,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName(), intDataAsLong);
 			}
 
-			// convState->resetPropertiesStream << title << " = " << intDataAsLong << "\n";
-			convState->resetPropertiesStream << title << '\n';
+			// convState->resetPropertiesStream << bullet << title << " = " << intDataAsLong << "\n";
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
 			static int intData2;
@@ -1626,8 +1633,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			static float f;
 			f = (float)prop["DefaultState"].u.dbl;
 
-			// convState->resetPropertiesStream << title << " = " << std::setprecision(3) << f << "\n";
-			convState->resetPropertiesStream << title << "\n";
+			// convState->resetPropertiesStream << bullet << title << " = " << std::setprecision(3) << f << "\n";
+			convState->resetPropertiesStream << bullet << title << "\n";
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(&f, sizeof(float));
@@ -1671,8 +1678,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (prop["DefaultState"].type == json_boolean)
 			{
-				// convState->resetPropertiesStream << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
-				convState->resetPropertiesStream << title << "\n";
+				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
+				convState->resetPropertiesStream << bullet << title << "\n";
 				++convState->numPropsReset;
 				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["DefaultState"]) ? 1 : 0);
 			}
@@ -1685,8 +1692,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (prop["CheckboxDefaultState"].type == json_boolean)
 			{
-				// convState->resetPropertiesStream << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
-				convState->resetPropertiesStream << title << "\n";
+				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
+				convState->resetPropertiesStream << bullet << title << "\n";
 				++convState->numPropsReset;
 				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["CheckboxDefaultState"]) ? 1 : 0);
 			}
@@ -1706,6 +1713,12 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 	}
 };
 static Properties::JSONPropertyReader jsonPropertyReader;
+// static definition - UTF-8 bullet point, or ASCII
+#ifdef _UNICODE
+const char Properties::JSONPropertyReader::bullet[5] = { (char)0xE2, (char)0x80, (char)0xA2, ' ', '\0' };
+#else
+const char Properties::JSONPropertyReader::bullet[3] = { '>', ' ', '\0' };
+#endif
 
 // Default fallback for test_has_UserConverter when EDITDATA can't be used because it has no matching function: false
 template <class T, typename = void>
@@ -1738,11 +1751,16 @@ HGLOBAL FusionAPI UpdateEditStructure(mv * mV, void * OldEdPtr) {
 	return DarkEdif::DLL::DLL_UpdateEditStructure(mV, (EDITDATA*)OldEdPtr);
 }
 
-#ifndef ThreadSafeStaticInitIsSafe
+// CRT uses a Vista+ function to threadsafe-init, which means static constructors don't run;
+// if this bug will happen, ThreadSafeStaticInitIsSafe is not defined
+#ifdef ThreadSafeStaticInitIsSafe
 static bool staticPropsStructCtored = true;
 #else
 static bool staticPropsStructCtored = false;
 #endif
+// While we can't read CEditApp, we do know it is different for each loaded MFA.
+// This lets us check if we're loading the same frame and prevent repetitive popups.
+static void* lastCEditApp = nullptr;
 
 HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 {
@@ -1944,21 +1962,18 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 
 		DebugProp_OutputString(_T("Starting to read data. Accum data size is now %zu.\n"), std::max(0u, (size_t)dataToWriteStream.tellp()));
 
-		for (size_t i = 0; i < numPropsIncludingStatics; i++)
+		for (std::size_t i = 0; i < numPropsIncludingStatics; ++i)
 		{
 			Properties::ConverterReturn retState;
 			DLL::ConverterReturnAccessor& retStateAdmin = *(DLL::ConverterReturnAccessor *)&retState;
 			if (readers.empty())
-			{
-				return NULL;
-			}
+				return NULL; // error should already be reported when reader failed and removed itself
 
 			// Don't include title for static text types
 			if (IsUnchangeablePropExclCheckbox(convState.jsonProps[i]["Type"]))
 				title.clear();
 			else
 				title = convState.jsonProps[i]["Title"];
-
 
 			// Note: Unchangeable props are included for IDs to be consistent.
 			// So if there's a label at ID 0, then a editbox, and property ID 1 is requested, property ID 0 won't be ignored
@@ -2048,10 +2063,10 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 		}
 
 		readers = chkReaders;
-		for (size_t k = 0; k < chkboxIndexesToRead.size(); k++)
+		for (std::size_t k = 0; k < chkboxIndexesToRead.size(); ++k)
 		{
 			Properties::ConverterReturn retState;
-			DLL::ConverterReturnAccessor & retStateAdmin = *(DLL::ConverterReturnAccessor *) & retState;
+			DLL::ConverterReturnAccessor & retStateAdmin = *(DLL::ConverterReturnAccessor *)&retState;
 			size_t i = chkboxIndexesToRead[k];
 
 			if (IsUnchangeablePropExclCheckbox(convState.jsonProps[i]["Type"]))
@@ -2059,7 +2074,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			else
 				title = convState.jsonProps[i]["Title"];
 
-			for (size_t j = 0; j < readers.size(); j++)
+			for (size_t j = 0; j < readers.size(); ++j)
 			{
 				readers[j].ptr->GetPropertyCheckbox(i, &retState);
 
@@ -2074,7 +2089,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 							i, UTF8ToTString(title).c_str(), UTF8ToTString(readers[j].name).c_str());
 
 						if (retStateAdmin.checkboxState == 1)
-							chkboxes[i / 8] |= 1 << (i % 8);
+							chkboxes[i / CHAR_BIT] |= 1 << (i % CHAR_BIT);
 
 						auto f = std::find(chkboxIndexesToRead.cbegin(), chkboxIndexesToRead.cend(), i);
 						assert(f != chkboxIndexesToRead.cend());
@@ -2093,7 +2108,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 				}
 				else if (retStateAdmin.convRetType == Properties::ConvReturnType::Error)
 				{
-					MsgBox::Error(_T("Property conversion error"), _T("Couldn't read check box of  some properties. Delegating."));
+					MsgBox::Error(_T("Property conversion error"), _T("Couldn't read check box of some properties. Delegating."));
 					continue;
 				}
 				//else if (retStateAdmin.convRetType == Properties::ConvReturnType::Delegate)
@@ -2104,25 +2119,47 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 		// If it's an upgrade, make a message box
 		if (oldEdPtr != nullptr)
 		{
-			std::string upgradeBox = DarkEdif::GetIniSetting("SmartPropertiesUpgradeBox"sv);
-			if (upgradeBox == ""sv)
-				upgradeBox = "never"sv;
-			#if _DEBUG
-			upgradeBox = "always"sv;
-			#endif
+			// Valid upgrade box properties:
+			// always				- make popup regardless of whether all properties converted, repeat every frame with ext in
+			// always, once			- as above, but once for a MFA, not every frame with ext
+			// for reset only		- only make popup if properties had to be reverted to JSON values
+			// for reset only, once - as above, but once for a MFA, not every frame with ext
+			// never				- never makes popup
+			// Default: for reset only, once
+			// 
+			// Worth noting that property upgrade errors will always create an error popup box - this is not affected by this setting.
 
-			if (upgradeBox != "for reset only" && upgradeBox != "always"sv && upgradeBox != "never"sv)
+			std::string upgradeBox = DarkEdif::GetIniSetting("SmartPropertiesUpgradeBox"sv);
+			if (upgradeBox.empty())
+				upgradeBox = "for reset only, once"sv; // if you edit this default, edit the one below and the hasOnce manual set
+
+			bool hasOnce = upgradeBox.size() > ", once"sv.size() && upgradeBox.substr(upgradeBox.size() - ", once"sv.size()) == ", once"sv;
+			const std::string_view upgradeBoxNoOnce = std::string_view(upgradeBox).substr(0, upgradeBox.size() - (hasOnce ? ", once"sv.size() : 0));
+			// Unrecognised INI setting
+			if (upgradeBox != "never"sv && upgradeBoxNoOnce != "for reset only"sv && upgradeBoxNoOnce != "always"sv)
 			{
-				MsgBox::Error(_T("DarkEdif INI error"), _T("Couldn't understand \"SmartProperiesUpgradeBox\" setting of \"%s\". Valid values are \"always\", \"new only\" and \"never\"."), UTF8ToTString(upgradeBox).c_str());
-				upgradeBox = "always"sv;
+				MsgBox::Error(_T("DarkEdif INI error"), _T(
+					R"(Couldn't understand "SmartPropertiesUpgradeBox" setting of "%s".)"
+					R"( Valid values are "always", "always, once", "for reset only", "for reset only, once", and "never".)"),
+					UTF8ToTString(upgradeBox).c_str());
+
+				// see above comment about editing default
+				upgradeBox = "for reset only, once"sv;
+				hasOnce = true;
 			}
 
-			if (upgradeBox != "never"sv)
+			// mv->EditApp contents is opaque, but the pointer changes when a new MFA is loaded
+			// We run a popup only if this is the first time we're seeing this CEditApp address
+			bool isDiffApp = lastCEditApp != mV->EditApp;
+			lastCEditApp = mV->EditApp;
+
+			// Set to do popup, and if once only, this is a new app and eligible for its one popup
+			if (upgradeBox != "never"sv && (!hasOnce || isDiffApp))
 			{
 				std::string resetPropStr = convState.resetPropertiesStream.str();
 				if (resetPropStr.empty())
 				{
-					if (upgradeBox != "new only"sv)
+					if (upgradeBoxNoOnce != "for reset only"sv)
 					{
 						MsgBox::Info(_T("Upgraded properties"), _T("Successfully upgraded all %u of %s object properties from ext version %lu to version %i."),
 							convState.jsonProps.u.array.length, objName.c_str(), oldExtVersion, Extension::Version);
@@ -2131,7 +2168,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 				else
 				{
 					resetPropStr.resize(resetPropStr.size() - 1U); // remove last line's ending newline
-					MsgBox::Info(_T("Upgraded properties"), _T("Successfully copied %u of %s object properties from ext version %lu to %i.\n\nAlso reset %zu %s to default settings, namely:\n%s"),
+					MsgBox::Info(_T("Upgraded properties"), _T("Successfully copied %u of %s object properties from ext version %lu to %i.\n\nAlso set %zu %s to their default settings, namely:\n%s"),
 						convState.jsonProps.u.array.length - convState.numPropsReset, objName.c_str(),
 						oldExtVersion, Extension::Version,
 						convState.numPropsReset, convState.numPropsReset == 1 ? _T("property") : _T("properties"), UTF8ToTString(resetPropStr).c_str());
@@ -2195,156 +2232,9 @@ ReadyToOutput:
 		GlobalFree(globalPtr);
 		return NULL;
 	}
-
-#if 0
-	FILE * fil = fopen("D:\\writeData.txt", "wb");
-	assert(fil != NULL);
-	unsigned char utf8Bom[] = { 0xEF, 0xBB, 0xBF };
-	assert(fwrite(utf8Bom, 1, 3, fil) == 3);
-	assert(fwrite(newEdPtr, 1, newEdPtrSize, fil) == newEdPtrSize);
-	char sep[] = "\r\n\r\nByte data:\r\n";
-	assert(fwrite(sep, 1, sizeof(sep) - 1, fil) == sizeof(sep) - 1);
-
-	std::stringstream str2;
-	auto Dump = [&](void * v, size_t s) {
-		std::map<char, char *> unprintable{
-			{ '\0', "NUL"},
-			{ 1, "SOH", },
-			{ 2, "STX", },
-			{ 3, "ETX", },
-			{ 4, "EOT", },
-			{ 5, "ENQ", },
-			{ 6, "ACK" },
-			{ 7, "BEL", },
-			{ 8, "BS", },
-			{ '\t', "TAB", },
-			{ '\n', "LF"},
-			{ 11, "VT" },
-			{ 12, "FF"},
-			{ '\r', "CR"},
-			{ 14, "SO"},
-			{ 15, "SI"},
-			{ 16, "DLE"},
-			{ 17, "DC1"},
-			{ 18, "DC2"},
-			{ 19, "DC3"},
-			{ 20, "DC4"},
-			{ 21, "NAK"},
-			{ 22, "SYN"},
-			{ 23, "ETB"},
-			{ 24, "CAN"},
-			{ 25, "EM"},
-			{ 26, "SUB"},
-			{ 27 , "ESC"},
-			{ 28, "FS"},
-			{ 29, "GS"},
-			{ 30, "RS"},
-			{ 31, "US"},
-			{ ' ', "space"},
-			{ 127, "DEL"},
-		};
-		char * c = (char *)v;
-		for (size_t i = 0; i < s; i++)
-		{
-			str2 << std::dec << std::setfill('0') << std::setw(2) << i << ", ";
-			if (!c[i])
-				str2 << "NUL";
-			else
-			{
-				auto a = unprintable.find(c[i]);
-				if (a != unprintable.end())
-					str2 << a->second;
-				else
-					str2 << c[i];
-			}
-			str2 << ", 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)(((unsigned char *)c)[i]) << "\n";
-		}
-	};
-	Dump(newEdPtr, newEdPtrSize);
-	std::string str = str2.str();
-	assert(fwrite(str.c_str(), 1, str.size(), fil) == str.size());
-	fclose(fil);
-#endif
-
 	GlobalUnlock(globalPtr);
 
 	return globalPtr;
-
-
-#if 0
-
-	bool reset = false, warning = false;
-
-	// New object and defaults aren't in EDITDATA yet
-	if (edPtr->Props.sizeBytes == 0)
-	{
-		reset = true;
-	}
-
-	// EDITDATA version is out of date. Let's convert!
-	if (edPtr->eHeader.extVersion > Extension::Version)
-	{
-		// Um, slight wrench in the plans...
-		auto localConverter = edPtr->Props.converter;
-		if (localConverter == NULL)
-			localConverter = SmartExtConvert;
-
-		EDITDATA * newEdPtr = NULL;
-		if (localConverter(mV, &edPtr->Props, newEdPtr))
-		{
-			void * v = mvReAllocEditData(mV, edPtr, _msize(newEdPtr));
-			if (v == NULL)
-			{
-				DarkEdif::MsgBox::Error(_T("Upgrading properties failed"), _T("Out of memory."));
-				return FALSE;
-			}
-			edPtr = (EDITDATA *)v;
-			return TRUE;
-		}
-
-		return FALSE;
-	}
-	// EDITDATA has data, but JSON properties have changed, data probably needs porting
-	else if (SDK->jsonPropsNameAndTypesHash != edPtr->Props.hash)
-	{
-
-
-		// JSON properties have changed since MFA was saved, yet Extension::Version remains the same.
-		// This is potentially a bad scenario:
-		// 1) Ext dev corrected some typos in Properties, no rearranging or type changes.
-		// ---> In this scenario, the property data remains the same, so no change is needed.
-		// 2) Ext dev DID change things, but forgot to increment Extension::Version.
-		// ---> This is bad, because the converter function won't be run unless version has changed.
-		bool jsonIDsSame = ::SDK->jsonPropsTypesHash == edPtr->Props.hashTypes;
-
-		// Welp, it's definitely not scenario #1.
-		// We need to convert the properties.
-		if (!jsonIDsSame)
-		{
-			DarkEdif::MsgBox::WarningOK(_T("Version Upgrade Failure"), _T("MFA Extension Version is %i, but JSON properties have changed.\n")
-				_T("Please change Extension::Version in Extension.h to %i, or save the MFA to reset the properties to defaults."),
-				edPtr->eHeader.extVersion, edPtr->eHeader.extVersion + 1);
-			DarkEdif::BreakIfDebuggerAttached();
-		}
-
-
-		if (edPtr->Props.converter == NULL)
-		{
-			reset = true;
-			warning = true;
-		}
-	}
-	else if (edPtr->eHeader.extVersion < Extension::Version)
-	{
-		MessageBoxA(mV->HEditWin, "Had to reset properties for object.", "DarkEdif - Warning", MB_ICONWARNING);
-		LoadDefaultsFromJSON(mV, edPtr);
-	}
-
-	// Call this when the property affects the display of the object.
-	mvInvalidateObject(mV, edPtr);
-#endif
-
-	return NULL;
 }
 
 DarkEdif::Properties::ConverterState::ConverterState(EDITDATA* edPtr, const json_value& json)

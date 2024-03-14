@@ -15,6 +15,9 @@ Changes until v20 release
 *v20 not released yet*
 - Edittime: Fixed a new Visual Studio XP compatiblity bug, causing the object property readers to use uninitalized memory.  
   If it's safe to use a static struct constructor, `ThreadSafeStaticInitIsSafe` is defined (on all platforms).
+- Edittime: Fixed crash when smart properties were upgraded and a new checkbox property was added, while an existing checkbox property was renamed.
+- Edittime: Added once-per-MFA property upgrade popup, instead of once for every frame with ext.  
+  Default smart property upgrade now results in popup if it has to reset any properties to JSON values, once per MFA only.
 
 
 Changes until v19 release
