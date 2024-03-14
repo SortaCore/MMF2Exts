@@ -83,6 +83,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkCondition(11, Logging_OnAnyFunction);
 	LinkCondition(12, Logging_OnAnyFunctionCompletedOK);
 	LinkCondition(13, Logging_OnAnyFunctionAborted);
+	LinkCondition(14, IsLastRepeatOfFunction);
 
 
 	// Expressions
@@ -134,14 +135,13 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkExpression(40, TestFunc);
 
 	// Used to make sure if we're doing a foreach, make sure we don't call a DarkScript function on another frame
-	fusionFrameNum = rhPtr->App->nCurrentFrame;
-
+	fusionFrameNum = Runtime.GetCurrentFusionFrameNumber();
 
 	// Copy all object properties from EDITDATA to Extension
 	globalID = edPtr->Props.GetPropertyStr("Global ID"sv);
 
 	const std::tstring strictProp = edPtr->Props.GetPropertyStr("Conversion strictness level"sv);
-	conversionStrictness = strictProp == _T("Exact"sv) ? ConversionStrictness::Exact :
+	conversionStrictness =
 		strictProp == _T("Exact"sv) ? ConversionStrictness::Exact :
 		strictProp == _T("Float <-> Integer OK"sv) ? ConversionStrictness::Numeric :
 		strictProp == _T("Any conversion (e.g. \"1\" -> 1.0)"sv) ? ConversionStrictness::AnyWithAborts :
@@ -158,7 +158,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	createErrorOverridingScopedVars = edPtr->Props.IsPropChecked("Create an error when overriding scoped values"sv);
 	preventAllRecursion = edPtr->Props.IsPropChecked("Prevent any recursion"sv);
 	runAbortsOnDestination = edPtr->Props.IsPropChecked("Run errors/aborts on called extension"sv);
-	allowForeachSingular = edPtr->Props.IsPropChecked("Allow singular objects in qualifier foreach"sv);
+	allowQualifierToTriggerSingularForeach = edPtr->Props.IsPropChecked("Allow qualifier objects to trigger singular foreach"sv);
+	allowSingularToTriggerQualifierForeach = edPtr->Props.IsPropChecked("Allow singular objects to trigger qualifier foreach"sv);
 	inheritParametersAsScopedVariables = edPtr->Props.IsPropChecked("Inherit parameters as scoped variables"sv);
 
 
@@ -208,7 +209,7 @@ Extension::~Extension()
 	globals->pendingFuncs.erase(std::remove_if(globals->pendingFuncs.begin(), globals->pendingFuncs.end(),
 		[](const auto& pf) { return !pf->keepAcrossFrames; }), globals->pendingFuncs.end());
 
-	// Check function templates should be cleared on end
+	// Check function declaration should be cleared on end
 	if (!this->keepTemplatesAcrossFrames)
 		globals->functionTemplates.clear();
 	if (!this->keepGlobalScopedVarsAcrossFrames)
@@ -234,7 +235,7 @@ REFLAG Extension::Handle()
 			curDelayedFunc = pf;
 			pf->funcToRun->runLocation = Sub_GetLocation(23);
 			pf->funcToRun->isVoidRun = true;
-			ExecuteFunction(NULL, pf->funcToRun);
+			ExecuteFunction(nullptr, pf->funcToRun);
 			pf->funcToRun->runLocation.clear();
 			if (--pf->numRepeats < 0 || !pf->funcToRun->active)
 			{
@@ -281,7 +282,7 @@ short Extension::FusionRuntimeContinued()
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 	{
 		const auto diff = decltype(globals->runtimepausedtime)::clock::now() - globals->runtimepausedtime;
-		for each (auto& f in globals->pendingFuncs)
+		for (auto& f : globals->pendingFuncs)
 			if (!f->useTicks)
 				f->runAtTime += diff;
 	}

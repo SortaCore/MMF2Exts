@@ -15,7 +15,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 1;
+	static const int Version = 2;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -83,8 +83,10 @@ public:
 	// If false, aborts/errors are run on the extension that starts the function (default).
 	// Errors are usually the fault of the caller, some syntax error - so they'll be wherever is local.
 	bool runAbortsOnDestination;
-	// If true, allows a ForEach run on a qualifier to trigger for objcets in qualifier, not just qualifier.
-	bool allowForeachSingular;
+	// If true, allows a ForEach run on a qualifier to trigger for objects in qualifier, not just On Each qualifier.
+	bool allowQualifierToTriggerSingularForeach;
+	// If true, allows a ForEach run on an object to trigger On Each Qualifier for qualifiers containing that object.
+	bool allowSingularToTriggerQualifierForeach;
 	// If true, parents' parameters are passed as scoped variables, but read-only.
 	bool inheritParametersAsScopedVariables;
 
@@ -98,6 +100,16 @@ public:
 	struct FusionSelectedObjectListCache {
 		objInfoList* poil;
 		std::vector<short> selectedObjects;
+
+		// If running in a foreach, it's necessary to back up the action-level selection sometimes.
+		// Otherwise we run the risk of objects not being selected in actions between a DS function
+		// and later actions in the same event.
+
+		// Should we backup OR-related selection? I think not, because conditions will alter them anyway...
+		// maybe if DS function is in an OR event?
+		// Should probably just flat out refuse to run a DS event that uses OR in the On Function
+
+		// TODO: Investigate how ActionCount works and when it's gonna bork things.
 	};
 
 	enum class Type {
@@ -173,9 +185,9 @@ public:
 	struct ScopedVar : Param
 	{
 		bool recursiveOverride;
-		int level; // Indicates how deep in runningFunc vector this is set; 0 is global, 1 is first func layer, etc
-		ScopedVar(const std::tstring_view name, Type typ, bool recursiveOverride, int level) : Param(name, typ),
-			recursiveOverride(recursiveOverride), level(level)
+		std::size_t level; // Indicates how deep in runningFunc vector this is set; 0 is global, 1 is first func layer, etc
+		ScopedVar(const std::tstring_view name, Type typ, bool recursiveOverride, std::size_t level) :
+			Param(name, typ), recursiveOverride(recursiveOverride), level(level)
 		{
 			// all done above
 		}
@@ -206,8 +218,8 @@ public:
 		std::shared_ptr<FunctionTemplate> redirectFuncPtr;
 
 		FunctionTemplate(Extension* ext, const TCHAR * funcName, Expected delayable, Expected repeatable, bool recursable, Type returnType)
-			: name(funcName), repeating(repeatable), ext(ext), delaying(delayable),
-			recursiveAllowed(recursable), defaultReturnValue(returnType)
+			: name(funcName), repeating(repeatable), delaying(delayable),
+			recursiveAllowed(recursable), defaultReturnValue(returnType), ext(ext)
 		{
 			nameL = Extension::ToLower(name);
 		}
@@ -303,7 +315,7 @@ public:
 	struct GlobalData {
 		// Extensions using this GlobalData
 		std::vector<Extension *> exts;
-		// Templates
+		// Templates, otherwise called declarations
 		std::vector<std::shared_ptr<FunctionTemplate>> functionTemplates;
 		// Functions delayed but will run later
 		std::vector<std::shared_ptr<DelayedFunction>> pendingFuncs;
@@ -336,8 +348,6 @@ public:
 	static void AutoGenerateExpressions();
 	static int GetNumExpressions();
 	long VariableFunction(const TCHAR * funcName, const ACEInfo &exp, long * args);
-
-    // int MyVariable;
 
 	void evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects);
 	void evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjectListCache>& selectedObjects, bool unselectAllExisting);
@@ -374,9 +384,9 @@ public:
 	std::tstring Sub_GetLocation(int actID);
 	static void Sub_ReplaceAllString(std::tstring& str, const std::tstring_view from, const std::tstring_view to);
 
-	long ExecuteFunction(HeaderObject * obj, std::shared_ptr<RunningFunction> rf);
-	void Sub_RunPendingForeachFunc(short oil, std::shared_ptr<RunningFunction> rf);
-	bool Sub_ParseParamValue(const TCHAR* cppFuncName, std::tstring& valueTextToParse, const Param& paramExpected, const size_t paramIndex, Value& writeTo);
+	long ExecuteFunction(RunObjectMultiPlatPtr obj, const std::shared_ptr<RunningFunction> &rf);
+	void Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr<RunningFunction> &rf);
+	bool Sub_ParseParamValue(const TCHAR* cppFuncName, std::tstring valueTextToParse, const Param& paramExpected, const size_t paramIndex, Value& writeTo);
 
 
 	void CreateError(PrintFHintInside const TCHAR* format, ...) PrintFHintAfter(2, 3);
@@ -409,8 +419,8 @@ public:
 	void RunFunction_ActionDummy_Num(int result); // dummy
 	void RunFunction_ActionDummy_String(const TCHAR * result); // dummy
 	// The dummies must be last parameter, so when last parameter is evaluated, we have the previous parameters we can read from
-	void RunFunction_Foreach_Num(HeaderObject * obj, int dummy);
-	void RunFunction_Foreach_String(HeaderObject * obj, const TCHAR* dummy);
+	void RunFunction_Foreach_Num(RunObject* obj, int dummy);
+	void RunFunction_Foreach_String(RunObject* obj, const TCHAR* dummy);
 	void RunFunction_Delayed_Num_MS(int timeFirst, int numRepeats, int timeSubsequent, int crossFrames, int funcDummy);
 	void RunFunction_Delayed_String_MS(int timeFirst, int numRepeats, int timeSubsequent, int crossFrames, const TCHAR* funcDummy);
 	void RunFunction_Delayed_Num_Ticks(int timeFirst, int numRepeats, int timeSubsequent, int crossFrames, int funcDummy);
@@ -440,12 +450,13 @@ public:
 	// OnError() -> AlwaysTrue()
 
 	bool OnFunction(const TCHAR * funcName);
-	bool OnForeachFunction(const TCHAR* funcName, HeaderObject * obj);
+	bool OnForeachFunction(const TCHAR* funcName, int objOiList);
 	bool OnFunctionAborted(const TCHAR* funcName);
 	bool IsRunningFuncStillActive();
 
 	bool DoesFunctionHaveTemplate(const TCHAR* funcName);
 	bool IsFunctionInCallStack(const TCHAR* funcName);
+	bool IsLastRepeatOfFunction(const TCHAR* funcName);
 
 	// OnFuncTemplateLoop -> LoopNameMatch
 	// OnPendingFunctionLoop -> LoopNameMatch

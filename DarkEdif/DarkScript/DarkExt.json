@@ -6,7 +6,7 @@
 			"Name": "DarkScript",
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2024 by Darkwire Software",
-			"Comment": "Advanced Fusion-event based expression-based functions, with loops, object selection, etc.",
+			"Comment": "Advanced Fusion-event based expression-based functions, with loops, object selection, etc. (b%i)",
 			"Help": "",
 			"URL": "https://dark-wire.com/"
 		},
@@ -38,7 +38,7 @@
 				[ "Other frames",
 					[ 13, "Set global ID to run in" ],
 					"---",
-					[ 40, "Add link to existing template" ]
+					[ 40, "Add link to existing declaration" ]
 				],
 				[ 14, "Disable/enable function" ],
 				[ 15, "Redirect function" ],
@@ -103,6 +103,7 @@
 			[ 2, "On function for each object" ],
 			[ 3, "On function aborted" ],
 			"---",
+			[ 14, "Is last repeat of function?" ],
 			[ 4, "Is running func still active?" ],
 			[ 5, "Does function have a declaration?" ],
 			[ 6, "Is function in call stack?" ],
@@ -513,7 +514,7 @@
 				]
 			},
 			{
-				"Title": "Link to function template %0 inside global ID %1",
+				"Title": "Link to function declaration %0 inside global ID %1",
 				"Parameters": [
 					[ "String", "Function name" ],
 					[ "String", "DarkScript global ID" ]
@@ -526,7 +527,7 @@
 				"Triggered": true
 			},
 			{
-				"Title": "%o : On Function %0",
+				"Title": "%o : On function %0",
 				"Parameters": [
 					[ "String", "Function name" ]
 				],
@@ -601,6 +602,12 @@
 			{
 				"Title": "%o : On any function aborted",
 				"Triggered": true
+			},
+			{
+				"Title": "%o : Is last repeat of %0",
+				"Parameters": [
+					[ "String", "Function name (or \"\" for top-level)" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -957,8 +964,15 @@
 				"DefaultState": false
 			},
 			{
-				"Title": "Allow singular objects in qualifier foreach",
+				"Title": "Allow qualifier objects to trigger singular foreach",
+				"OldTitle": "Allow singular objects in qualifier foreach",
 				"Info": "If true, a foreach run on a qualifier containing X will also trigger On Foreach for X.",
+				"Type": "Checkbox",
+				"DefaultState": false
+			},
+			{
+				"Title": "Allow singular objects to trigger qualifier foreach",
+				"Info": "If true, a foreach run on X object will also trigger On Foreach for Qualifier containing X.",
 				"Type": "Checkbox",
 				"DefaultState": false
 			}

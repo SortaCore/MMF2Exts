@@ -42,7 +42,7 @@ int Extension::RunningFunc_ForeachFV(const TCHAR* funcNameOrBlank)
 int Extension::RunningFunc_NumParamsPassed(const TCHAR* funcNameOrBlank)
 {
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), funcNameOrBlank);
-	return rf ? rf->numPassedParams : -1;
+	return rf ? (int)rf->numPassedParams : -1;
 }
 int Extension::RunningFunc_ScopedVar_GetI(const TCHAR* scopedVarName)
 {
@@ -269,9 +269,9 @@ int Extension::FuncTemplate_ParamIndexByName(const TCHAR * funcNameOrBlank, cons
 	if (!p)
 		return -1;
 
-	for (size_t i = 0; i < f->params.size(); i++)
+	for (std::size_t i = 0; i < f->params.size(); i++)
 		if (&f->params[i] == p)
-			return i;
+			return (int)i;
 
 	CreateErrorT("Failure at line %i, file %s.", __LINE__, _T(__FILE__));
 	return -1;
@@ -310,18 +310,19 @@ const TCHAR* Extension::LastReturn_Type()
 std::tstringstream str;
 int fixedValue;
 int origEventCount, origEventCountOR;
-int numSelected(HeaderObject * obj)
+int numSelected(Extension * ext, RunObjectMultiPlatPtr obj2)
 {
-	auto poil = obj->OiList;
-	LOGI(_T("numSelected for %s.\n"), obj->OiList->name);
-	if (!_tcscmp(obj->OiList->name, _T("DarkScript object")))
-		DebugBreak();
+	auto obj = obj2->get_rHo();
+	auto poil = obj->get_OiList();
+	LOGI(_T("numSelected for %s.\n"), poil->get_name());
+	if (!_tcscmp(poil->get_name(), _T("DarkScript object")))
+		DarkEdif::BreakIfDebuggerAttached();
 	// If not selected (i.e. filtered) by conditions, default to all selected.
 	// SelectedInOR is true even when event has no OR.
-	if (poil->EventCount != obj->AdRunHeader->rh2.EventCount)
+	if (poil->get_EventCount() != obj->get_AdRunHeader()->GetRH2EventCount())
 	{
-		LOGI(_T("Event %i has event count/unselected. Expected NObjects: %i.\n"), DarkEdif::GetEventNumber(obj->AdRunHeader->EventGroup), poil->NObjects);
-		return poil->NObjects;
+		LOGI(_T("Event %i has event count/unselected. Expected NObjects: %i.\n"), DarkEdif::GetCurrentFusionEventNum(ext), poil->get_NObjects());
+		return poil->get_NObjects();
 	}
 
 	// Filtered OR messes up NumOfSelected, in a bug dating back to Fusion 2.0 and until CF2.5 b294 (Aug 2022) at least.
@@ -331,37 +332,37 @@ int numSelected(HeaderObject * obj)
 	// Worth noting if you combine both types of ORs in one event, the one that is first chooses the flags;
 	// so unfortunately we can't tell if a logical OR indicates the lack of a filtered OR in the same event,
 	// so we have to consider the OrInGroup as invalidating NumOfSelected.
-	if ((obj->AdRunHeader->EventGroup->evgFlags & EventGroupFlags::OrInGroup) != EventGroupFlags::OrInGroup)
+	if ((ext->rhPtr->GetEVGFlags() & EventGroupFlags::OrInGroup) != EventGroupFlags::OrInGroup)
 	{
-		LOGI(_T("OR not found in event %i. Expecting %i.\n"), DarkEdif::GetEventNumber(obj->AdRunHeader->EventGroup), poil->NumOfSelected);
-		return poil->NumOfSelected;
+		LOGI(_T("OR not found in event %i. Expecting %i.\n"), DarkEdif::GetCurrentFusionEventNum(ext), poil->get_NumOfSelected());
+		return poil->get_NumOfSelected();
 	}
 	// OR event, and not filtered/selected
-	else if (!obj->SelectedInOR)
-		return poil->NObjects;
+	else if (!obj->get_SelectedInOR())
+		return poil->get_NObjects();
 
 	int i = 0;
-	for (short num = poil->ListSelected; num >= 0; num = (obj->AdRunHeader->ObjectList + num)->oblOffset->NextSelected)
+	for (short num = poil->get_ListSelected(); num >= 0; num = ext->rhPtr->GetObjectListOblOffsetByIndex(num)->get_rHo()->get_NextSelected())
 		++i;
-	LOGI(_T("Event %i may have filtered OR. List selected expected: %i. Calculated: %i.\n"), DarkEdif::GetEventNumber(obj->AdRunHeader->EventGroup), poil->NumOfSelected, i);
+	LOGI(_T("Event %i may have filtered OR. List selected expected: %i. Calculated: %i.\n"), DarkEdif::GetCurrentFusionEventNum(ext), poil->get_NumOfSelected(), i);
 	return i;
 }
 
 int numSelectedQualifier(Extension * ext, int qualID)
 {
 	int instanceCount = 0;
-	for (int i = 0; i < ext->rhPtr->NumberOi; ++i)
+	for (std::size_t i = 0; i < ext->rhPtr->GetNumberOi(); ++i)
 	{
-		objInfoList* oil = (objInfoList*)(((char*)ext->rhPtr->OiList) + ext->Runtime.ObjectSelection.oiListItemSize * i);
-		for (size_t j = 0; j < std::size(oil->Qualifiers); j++) {
-			if (oil->Qualifiers[j] == -1)
+		auto oil = ext->rhPtr->GetOIListByIndex(i);
+		for (std::size_t j = 0; j < MAX_QUALIFIERS; ++j) {
+			if (oil->get_QualifierByIndex(j) == -1)
 				break;
 
-			if (oil->Qualifiers[j] != qualID)
+			if (oil->get_QualifierByIndex(j) != qualID)
 				continue;
-			short num = oil->Object;
+			short num = oil->get_Object();
 			if (num != -1)
-				instanceCount += numSelected((ext->rdPtr->rHo.AdRunHeader->ObjectList + num)->oblOffset);
+				instanceCount += numSelected(ext, ext->rhPtr->GetObjectListOblOffsetByIndex(num));
 		}
 	}
 
@@ -374,13 +375,13 @@ const TCHAR* Extension::TestFunc(int fixedValue)
 	str.str(_T(""s));
 
 	auto runObj = Runtime.RunObjPtrFromFixed(fixedValue);
-	int originalSelection = numSelected(&runObj->roHo);
-	origEventCount = rhPtr->rh2.EventCount;
-	origEventCountOR = rhPtr->rh4.EventCountOR;
+	int originalSelection = numSelected(this, runObj);
+	origEventCount = rhPtr->GetRH2EventCount(); // rhPtr->rh2.EventCount
+	origEventCountOR = rhPtr->GetRH4EventCountOR(); // rhPtr->rh4.EventCountOR
 
 	str << _T("Started with "sv) << originalSelection <<
 		_T(", rh2 event count = "sv) << origEventCount <<
-		_T(", rh4 eventCountOR = "sv) << rhPtr->rh4.EventCountOR << _T(".\n"sv);
+		_T(", rh4 eventCountOR = "sv) << rhPtr->GetRH4EventCountOR() << _T(".\n"sv);
 	LOGI(_T("* %s"), str.str().c_str());
 
 	/*

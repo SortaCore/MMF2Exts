@@ -1,5 +1,6 @@
 #include "Common.hpp"
 #include <cstdlib>
+#include <algorithm>
 
 #define CreateErrorExp(Ret, Error, ...) { CreateErrorT(Error, ##__VA_ARGS__); return Ret; }
 #define CreateErrorExpOpt(Opt, Ret, Error, ...) { if (Opt) CreateErrorT(Error, ##__VA_ARGS__); return Ret; }
@@ -45,8 +46,6 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 
 	curError.clear(); // to prevent recursion
 }
-
-static char errorStr[2048];
 
 std::tstring Extension::ToLower(const std::tstring_view str2)
 {
@@ -415,13 +414,12 @@ constexpr short lastNonFuncID = 59;
 // However, the less inline this object's functions are, the less useful it is.
 constexpr int numParamsToAllow = 5;
 
-enum _Enum_is_bitflag_ Flags {
+enum Flags {
 	None = 0b00,
 	KeepObjSelection = 0b01,
 	Repeat = 0b10,
 	Both = KeepObjSelection + Repeat,
 };
-enum_class_is_a_bitmask(Flags);
 
 // pow() in constexpr format. Ignore last parameter.
 constexpr int64_t ipow(int64_t base, int exp, int64_t result = 1)
@@ -451,8 +449,6 @@ constexpr size_t numFuncVariantsToGenerateCF25 =
 	((int)duet((int)Extension::Type::NumCallableParamTypes,
 		// multiplied by max number of parameters
 		6)));
-
-#if EditorBuild
 
 static void GenerateExpressionFuncFor(const int inputID)
 {
@@ -485,15 +481,15 @@ static void GenerateExpressionFuncFor(const int inputID)
 		last->Parameter[1].ep = (ExpParams)0; // extra short of 0 follows parameter
 	}
 
-	auto GetParam = [&](int id) {
-		assert(id < last->NumOfParams);
+	auto GetParam = [&](std::size_t id) {
+		assert((short)id < last->NumOfParams);
 		if (last->Parameter[id].ep == ExpParams::String)
 			return Extension::Type::String;
 		else if (last->Parameter[id].ep == ExpParams::Integer)
 			return last->FloatFlags & (1 << id) ? Extension::Type::Float : Extension::Type::Integer;
 		else
 		{
-			MessageBoxA(NULL, "Parameter type not recognised", "", MB_OK);
+			DarkEdif::MsgBox::Error(_T("Param type"), _T("Parameter type not recognised"));
 			return Extension::Type::Any;
 		}
 	};
@@ -506,7 +502,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 	{
 		needNewParam = true;
 		// Skip parameter 0 (function ID) - bear in mind last is None variant, so no repeat count
-		for (size_t i = 1; i < (size_t)last->NumOfParams; i++)
+		for (std::size_t i = 1; i < (std::size_t)last->NumOfParams; i++)
 		{
 			if (GetParam(i) != Extension::Type::Float)
 			{
@@ -535,7 +531,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 	{
 		// too many params?
 		if (intermediate < 0)
-			DebugBreak();
+			DarkEdif::BreakIfDebuggerAttached();
 		// While there's 4 valid parameter types (Any included),
 		// the function can only be called with 3.
 		paramTypes.push_back((Extension::Type)((intermediate % (int)Extension::Type::NumCallableParamTypes) + 1));
@@ -543,17 +539,17 @@ static void GenerateExpressionFuncFor(const int inputID)
 		if (paramTypes[i] < Extension::Type::Integer)
 		{
 			// miscalculated type
-			DebugBreak();
+			DarkEdif::BreakIfDebuggerAttached();
 			break;
 		}
 		intermediate = (intermediate / (int)Extension::Type::NumCallableParamTypes) - 1;
 	}
 
 	if (intermediate > 0)
-		DebugBreak(); // missed a param?
+		DarkEdif::BreakIfDebuggerAttached(); // missed a param?
 
 	// Parameters checked; allocate new info
-	ACEInfo* const ExpInfo = Edif::ACEInfoAlloc(paramTypes.size());
+	ACEInfo* const ExpInfo = Edif::ACEInfoAlloc((unsigned int)paramTypes.size());
 
 	// Could not allocate memory
 	if (!ExpInfo)
@@ -633,7 +629,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 		}
 	}
 
-#if _DEBUG
+#if defined(_DEBUG) && defined(_WIN32)
 	std::string ret = str.str();
 	str.str(std::string());
 	str << ret.substr(0, ret.size() - 2U) << ") [ID "sv << ExpInfo->ID << ", param count "sv << ExpInfo->NumOfParams << "]\n"sv;
@@ -651,16 +647,13 @@ static void GenerateExpressionFuncFor(const int inputID)
 	// Add to table
 	Edif::SDK->ExpressionInfos.push_back(ExpInfo);
 
-#if _DEBUG
+#if _DEBUG && defined(_WIN32)
 	if (false) // (inputID % 4 == 0)
-	{
-		sprintf_s(errorStr, "Outputted dynamic function, expression ID %i, funcID %i.\n%s", ExpInfo->ID, inputID, ret.c_str());
-		OutputDebugStringA(errorStr);
-	}
+		 LOGV(_T("Outputted dynamic function, expression ID %i, funcID %i.\n%s"), ExpInfo->ID, inputID, DarkEdif::UTF8ToTString(ret).c_str());
 #endif
 }
 
-void GenerateDummyExpression(int inputID)
+void GenerateDummyExpression(short inputID)
 {
 	ACEInfo * ExpInfo = Edif::ACEInfoAlloc(0);
 
@@ -675,6 +668,7 @@ void GenerateDummyExpression(int inputID)
 	// Add to table
 	Edif::SDK->ExpressionInfos.push_back(ExpInfo);
 }
+#ifdef _WIN32
 #pragma comment (lib, "Version.lib")
 
 static int getFusionSubBuild() {
@@ -695,12 +689,14 @@ static int getFusionSubBuild() {
 
 	return -1;
 }
+#endif // _WIN32
+
 int Extension::GetNumExpressions()
 {
 	// CF2.5 b294.8+ has modification to allow more functions
 	// +1 for 0-based ID to 1-based size
 	assert(numFuncVariantsToGenerate > 0);
-	return lastNonFuncID + numFuncVariantsToGenerate + 1;
+	return lastNonFuncID + (int)numFuncVariantsToGenerate + 1;
 }
 void Extension::AutoGenerateExpressions()
 {
@@ -709,12 +705,18 @@ void Extension::AutoGenerateExpressions()
 
 	if (numFuncVariantsToGenerate == 0)
 	{
+#ifdef _WIN32
 		const int build = (Edif::SDK->mV->GetVersion() & MMFBUILD_MASK);
 		const bool useMoreExpressions = DarkEdif::IsFusion25 &&
 			(build >= 295 || (build == 294 && getFusionSubBuild() >= 8));
+#else
+		const bool useMoreExpressions = true;
+#endif
+
 		numFuncVariantsToGenerate = (useMoreExpressions ? numFuncVariantsToGenerateCF25 : numFuncVariantsToGenerateMMF2);
 	}
 
+#ifdef _WIN32
 	// Jumps uses new[], not malloc(), otherwise we'd realloc
 	{
 		delete[] Edif::SDK->ExpressionJumps;
@@ -726,11 +728,14 @@ void Extension::AutoGenerateExpressions()
 			Edif::SDK->ExpressionJumps[i] = &Edif::ExpressionJump;
 		Edif::SDK->ExpressionJumps[maxFuncIndex + 1] = NULL;
 	}
+#endif // _WIN32
 
 	// 1. Find end of Expressions
 	assert(Edif::SDK->ExpressionInfos.size() <= lastNonFuncID);
 
+#ifdef _WIN32
 	size_t i = Edif::SDK->ExpressionInfos.size();
+#endif
 
 	// 2. Add safety buffer (50 expressions?) pointing to dummy function
 	// 21 used, reserve 20, intermediate index 40
@@ -739,7 +744,7 @@ void Extension::AutoGenerateExpressions()
 #ifdef _WIN32
 		Edif::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
 #endif
-		GenerateDummyExpression(Edif::SDK->ExpressionInfos.size());
+		GenerateDummyExpression((short)Edif::SDK->ExpressionInfos.size());
 		Edif::SDK->ExpressionFunctions.push_back(0);
 	}
 
@@ -751,11 +756,12 @@ void Extension::AutoGenerateExpressions()
 #ifdef _WIN32
 		Edif::SDK->ExpressionJumps[i++] = (void *)Edif::ExpressionJump;
 #endif
-		GenerateExpressionFuncFor(Edif::SDK->ExpressionInfos.size() - 1 - lastNonFuncID);
+		GenerateExpressionFuncFor((int)Edif::SDK->ExpressionInfos.size() - 1 - lastNonFuncID);
 		Edif::SDK->ExpressionFunctions.push_back(Edif::MemberFunctionPointer(&Extension::VariableFunction));
 	}
 }
 
+#ifdef _WIN32
 void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf, short maxLen)
 {
 #pragma DllExportHint
@@ -772,8 +778,7 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 		{
 			int funcID = code - lastNonFuncID - 1;
 
-			sprintf_s(errorStr, "Outputting param %i for dynamic function, expression ID %i, funcID %i.\n", param, code, funcID);
-			OutputDebugStringA(errorStr);
+			LOGV(_T("Outputting param %i for dynamic function, expression ID %i, funcID %i.\n"), param, code, funcID);
 
 			ACEInfo& exp = *Edif::SDK->ExpressionInfos[code];
 			if (exp.NumOfParams < param + 1)
@@ -783,20 +788,21 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 				return;
 			}
 
+			char ret[64];
 			switch (exp.Parameter[param].ep)
 			{
 			case ExpParams::Float: // also integer
 				if ((exp.FloatFlags & (1 << param)) != 0)
-					sprintf_s(errorStr, "Float%i", param + 1);
+					sprintf_s(ret, "Float%i", param + 1);
 				else // integer
 				{
 					// Repeat is always 2nd param if just Repeat
 					if (param == 1 && (funcID & Flags::Repeat) == Flags::Repeat)
-						sprintf_s(errorStr, "Number of runs (1+)");
+						sprintf_s(ret, "Number of runs (1+)");
 					else
-						sprintf_s(errorStr, "Integer%i", param + 1);
+						sprintf_s(ret, "Integer%i", param + 1);
 				}
-				Edif::ConvertAndCopyString(strBuf, errorStr, maxLen);
+				Edif::ConvertAndCopyString(strBuf, ret, maxLen);
 				return;
 			case ExpParams::String:
 				// Either function (param 0) or string
@@ -898,16 +904,13 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	std::shared_ptr<FunctionTemplate> funcTemplate;
 
-	/* TODO : if running for parameter for one of the delayed function actions, record parameters but don't run.
-		Don't allow anything but expression functions; no nesting. */
-
 	// otherwise not variable func
 	assert(exp.ID > lastNonFuncID && exp.ID <= lastNonFuncID + (short)numFuncVariantsToGenerate);
-	const event2* callingAction = rhPtr->rh4.ActionStart;
-	int actID = callingAction ? callingAction->evtNum - 80 : -1;
+	event2* callingAction = rhPtr->GetRH4ActionStart();
+	int actID = callingAction ? callingAction->get_evtNum() - 80 : -1;
 	bool runImmediately = true, isVoidRun = false;
 	// We don't run simply if we have the Foreach or Delayed action being executed.
-	if (actID >= 19 && actID <= 26 && callingAction->evtOi == rdPtr->rHo.Oi)
+	if (actID >= 19 && actID <= 26 && callingAction->get_evtOi() == rdPtr->get_rHo()->get_Oi())
 	{
 		// dummy func: run immediately, but don't reset actID, we use it later in Sub_GetLocation()
 		if (actID >= 19 && actID <= 20)
@@ -915,14 +918,15 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		else
 		{
 			runImmediately = false;
-			LOGV(_T("Called for Foreach or Delayed action! Action ID is %i.\n"), actID);
+			LOGD(_T("Called for Foreach or Delayed action! Action ID is %i; qual act cause singl cond = %s, singl act cause qual cond = %s.\n"), actID,
+				allowQualifierToTriggerSingularForeach ? _T("yes") : _T("no"), allowSingularToTriggerQualifierForeach ? _T("yes") : _T("no"));
 		}
 		isVoidRun = true;
 	}
 	else
 	{
+		LOGV(_T("NOT called from Foreach/Delayed action! Oi is %i, action ID is %i.\n"), callingAction ? callingAction->get_evtOi() : -1, actID);
 		actID = -1;
-		LOGV(_T("NOT called from Foreach/Delayed action! Oi is %i, action ID is %i.\n"), callingAction ? callingAction->evtOi : -1, actID);
 	}
 
 	int funcID = exp.ID - lastNonFuncID - 1;
@@ -941,14 +945,14 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		if (funcTemplateIt2 == globals->functionTemplates.end() /* && funcsMustHaveTemplate */)
 		{
 			CreateErrorT("Can't call function \"%s\"; was redirected to function \"%s\", which was defined when redirection was set, but does not exist in templates now. "
-				"Returning default return value of \"%s\".",
+				"Returning the default return value of \"%s\".",
 				funcName, (**funcTemplateIt).redirectFunc.c_str(), funcName);
 			lastReturn = (*funcTemplateIt)->defaultReturnValue;
 			return lastReturn.type == Type::String ? (long)Runtime.CopyString(lastReturn.data.string ? lastReturn.data.string : _T("")) : (long)lastReturn.data.string;
 		}
 		redirectedFromName = funcName;
 		funcName = (**funcTemplateIt2).name.c_str();
-		nameL = (**funcTemplateIt2).nameL.c_str();
+		nameL = (**funcTemplateIt2).nameL;
 		funcTemplateIt = funcTemplateIt2;
 	}
 
@@ -972,9 +976,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	// Switch from returning dummy to returning whatever's in lastReturn
 #undef CreateError2V
-#define CreateError2V(...) \
+#define CreateError2V(a, ...) \
 	{ \
-		CreateErrorT(##__VA_ARGS__); \
+		CreateErrorT(a, ##__VA_ARGS__); \
 		if (runImmediately) \
 			return LastReturn; \
 		return DummyReturn; \
@@ -1060,7 +1064,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	// User passed too many parameters
 	if (funcTemplate->params.size() < numPassedExpFuncParams)
-		CreateError2V("%s: called with %i parameters, but only expects %i.", funcName, numPassedExpFuncParams, funcTemplate->params.size());
+		CreateError2V("%s: called with %zu parameters, but only expects %zu.", funcName, numPassedExpFuncParams, funcTemplate->params.size());
 
 	// don't confuse expParamIndex (A/C/E, will include funcName, may include numRepeats)
 	// vs. paramIndex (index of paramValues)
@@ -1090,7 +1094,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 				}
 				else
 				{
-					CreateError2V("Function %s: Parameter %i should have been an %s, but was called with a %s instead.",
+					CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
 						funcName, paramIndex, TypeToString(paramTypeInTemplate), "float");
 				}
 			}
@@ -1104,7 +1108,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 				}
 				else
 				{
-					CreateError2V("Function %s: Parameter %i should have been an %s, but was called with a %s instead.",
+					CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
 						funcName, paramIndex, TypeToString(paramTypeInTemplate), "integer");
 				}
 			}
@@ -1120,7 +1124,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 			}
 			else
 			{
-				CreateError2V("Function %s: Parameter %i should have been an %s, but was called with a %s instead.",
+				CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
 					funcName, paramIndex, TypeToString(paramTypeInTemplate), "string");
 			}
 			break;
@@ -1138,7 +1142,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		if (funcTemplate->params[paramIndex].type != Extension::Type::Any &&
 			funcTemplate->params[paramIndex].defaultVal.type == Extension::Type::Any)
 		{
-			CreateError2V("%s: parameter %s (index %i) was not passed, but must be supplied.",
+			CreateError2V("%s: parameter %s (index %zu) was not passed, but must be supplied.",
 				funcName, funcTemplate->params[paramIndex].name.c_str(), paramIndex);
 		}
 		else
@@ -1149,28 +1153,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	if (newFunc->active)
 	{
-		/*
-		const TCHAR* save = rhPtr->rh4.CurrentFastLoop;
-		unsigned char actionLoop = rhPtr->rh2.ActionLoop;				// Flag boucle
-		int actionLoopCount = rhPtr->rh2.ActionLoopCount;			// Numero de boucle d'actions
-		unsigned char actionOn = rhPtr->rh2.ActionOn;
-		auto eventGroup = rhPtr->EventGroup;
-		auto posOnLoop = rhPtr->rh4.posOnLoop;
-		LOGI(_T("Note: %s expression starting - cur fast loop \"%s\", actionLoop %hhu, actionLoopCount %d, actOn %hhu, evg %p, pOL=%p.\n"),
-			funcName, save, actionLoop, actionLoopCount, actionOn, eventGroup, posOnLoop);
-			*/
 		newFunc->runLocation = Sub_GetLocation(actID);
-		long l = ExecuteFunction(NULL, newFunc);
+		long l = ExecuteFunction(nullptr, newFunc);
 		newFunc->runLocation.clear();
-		/*
-		save = rhPtr->rh4.CurrentFastLoop;
-		actionLoop = rhPtr->rh2.ActionLoop;				// Flag boucle
-		actionLoopCount = rhPtr->rh2.ActionLoopCount;			// Numero de boucle d'actions
-		actionOn = rhPtr->rh2.ActionOn;
-		eventGroup = rhPtr->EventGroup;
-		posOnLoop = rhPtr->rh4.posOnLoop;
-		LOGI(_T("Note: %s expression finished - cur fast loop \"%s\", actionLoop %hhu, actionLoopCount %d, actOn %hhu, evg %p, pOL=%p\n"),
-			funcName, save, actionLoop, actionLoopCount, actionOn, eventGroup, posOnLoop); */
 		return l;
 	}
 
@@ -1223,7 +1208,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		Runtime.Rehandle();
 	}
 	else
-		throw std::exception("Wrong call");
+		throw std::runtime_error("Wrong call");
 
 
 	return DummyReturn;
@@ -1254,37 +1239,41 @@ void Extension::Sub_ReplaceAllString(std::tstring& str, const std::tstring_view 
 std::tstring Extension::Sub_GetLocation(int actID)
 {
 	const auto GetActionIndex = [](Extension* ext)->std::tstring {
-		void* exp = ext->rhPtr->rh4.ActionStart;
+		event2* exp = ext->rhPtr->GetRH4ActionStart();
 		if (exp == nullptr)
 			return _T("a condition"s);
-		char* cur = ((char*)ext->rhPtr->EventGroup) + sizeof(*ext->rhPtr->EventGroup);
-		//cur = cur + -ext->rhPtr->EventGroup->evgSize;
-		size_t i = 0;
-		for (; i < ext->rhPtr->EventGroup->evgNCond; i++)
-			cur = cur + ((event2*)cur)->evtSize;
-		short lastOI = ((event2*)cur)->evtOi;
+		auto evg = ext->rhPtr->get_EventGroup();
+		if (evg == nullptr)
+			return _T("unknown (action?)"s);
+
+		auto cur = evg->GetCAByIndex(0);
+		std::size_t i = 0;
+		for (; i < evg->get_evgNCond(); i++)
+			cur = cur->Next();
+		short lastOI = cur->get_evtOi();
 		std::tstringstream str;
-		for (i = 0; i < ext->rhPtr->EventGroup->evgNAct; i++) {
-			if (cur == exp) {
+
+		for (i = 0; i < evg->get_evgNAct(); i++) {
+			if (cur->GetIndex() == exp->GetIndex()) {
+				lastOI = cur->get_evtOi();
 				// We're using 1-based for action index, so increment i
 				++i;
 
 				// If it's DarkScript, try not to say "DarkScript action running DarkScript".
 				// We check the name, in case there's multiple DarkScripts named differently by user.
-				const std::tstring_view name = ext->Runtime.ObjectSelection.GetOILFromOI(lastOI)->name;
+				const std::tstring_view name = ext->Runtime.ObjectSelection.GetOILFromOI(lastOI)->get_name();
 
-				if (ext->rdPtr->rHo.Oi != lastOI || name != _T("DarkScript"sv))
+				if (((RunObject *)&*ext->rdPtr)->get_rHo()->get_Oi() != lastOI || name != _T("DarkScript"sv))
 					str << name << _T("'s action (index "sv) << i << _T(')');
 				else
 					str << _T("action index "sv) << i;
 				return str.str();
 			}
-			cur = cur + ((event2*)cur)->evtSize;
-			lastOI = ((event2*)cur)->evtOi;
+			cur = cur->Next();
 		}
-		if (cur == exp)
+		if (cur && cur->GetIndex() == exp->GetIndex())
 		{
-			str << ext->Runtime.ObjectSelection.GetOILFromOI(lastOI)->name << _T("'s action (index "sv) << i + 1 << _T(')');
+			str << ext->Runtime.ObjectSelection.GetOILFromOI(lastOI)->get_name() << _T("'s action (index "sv) << i + 1 << _T(')');
 			return str.str();
 		}
 		return _T("unknown"s);
@@ -1343,18 +1332,19 @@ std::tstring Extension::Sub_GetLocation(int actID)
 	return _T(""s);
 }
 
-long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<RunningFunction> rf)
+long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::shared_ptr<RunningFunction>& rf)
 {
 	// If running on another ext like subapp, we want to use its globals.
 	auto globalsRunningOn = rf->funcTemplate->ext->globals;
 
 	// TODO: Can optimize this by adding "isrunning" active to template
-	if (preventAllRecursion || !rf->funcTemplate->recursiveAllowed)
+	if ((preventAllRecursion || !rf->funcTemplate->recursiveAllowed) && globalsRunningOn->runningFuncs.size() > 1)
 	{
-		auto olderIt = std::find_if(globalsRunningOn->runningFuncs.crbegin(), globalsRunningOn->runningFuncs.crend(),
+		auto endIt = --globalsRunningOn->runningFuncs.crend();
+		auto olderIt = std::find_if(globalsRunningOn->runningFuncs.crbegin(), endIt,
 			[&](const auto& f) { return Sub_FunctionMatches(rf, f); }
 		);
-		if (olderIt != globalsRunningOn->runningFuncs.crend())
+		if (olderIt != endIt)
 		{
 			rf->abortReason = _T("Aborted from DarkScript recursion error."sv);
 			CreateErrorT("Running a function recursively, when not allowed. Older run was from %s; current, aborted run is from %s. Aborting.",
@@ -1364,17 +1354,16 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 
 	rf->active = true;
 
-	int objFixedValue = -1;
-	size_t numScopedVarsBeforeCall = SIZE_MAX;
-	if (objToRunOn)
-		objFixedValue = (objToRunOn->CreationId << 16) + objToRunOn->Number;
-	else
+	// If not foreach, we want to save and restore scoped variables?
+	// TODO: Shouldn't we do this for foreach too, or is it a optimization based on not actually running here?
+	std::size_t numScopedVarsBeforeCall = SIZE_MAX;
+	if (!objToRunOn)
 	{
 		numScopedVarsBeforeCall = globalsRunningOn->scopedVars.size();
 		if (inheritParametersAsScopedVariables && !globalsRunningOn->runningFuncs.empty())
 		{
 			auto& lastFunc = globalsRunningOn->runningFuncs.back();
-			for (size_t i = 0; i < lastFunc->funcTemplate->params.size(); ++i)
+			for (std::size_t i = 0; i < lastFunc->funcTemplate->params.size(); ++i)
 			{
 				globalsRunningOn->scopedVars.push_back(ScopedVar(lastFunc->funcTemplate->params[i].name, Type::Any, true, globalsRunningOn->runningFuncs.size()));
 				globalsRunningOn->scopedVars.back().defaultVal = lastFunc->paramValues[i];
@@ -1395,9 +1384,11 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 	// Set up subapp ext for running cross-frame, and in case they do a cross-frame themselves, we'll store what they're using
 	Extension* orig = rf->funcTemplate->ext->errorExt;
 	rf->funcTemplate->ext->errorExt = this;
+	//int origEventCount = rhPtr->GetRH2EventCount();
+	//rhPtr->SetRH2EventCount(origEventCount + 1);
 
 	if (objToRunOn)
-		LOGV(_T("Running On Foreach function \"%s\", passing object \"%s\", FV %i.\n"), rf->funcTemplate->name.c_str(), objToRunOn->OiList->name, rf->currentForeachObjFV);
+		LOGV(_T("Running On Foreach function \"%s\", passing object \"%s\", FV %i.\n"), rf->funcTemplate->name.c_str(), objToRunOn->get_rHo()->get_OiList()->get_name(), rf->currentForeachObjFV);
 	else
 		LOGV(_T("Running On Function \"%s\". Set to repeat %i times.\n"), rf->funcTemplate->name.c_str(), rf->numRepeats);
 	do
@@ -1415,9 +1406,9 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 			{
 				if (objToRunOn)
 				{
-					CreateErrorT("Function \"%s\" was not handled by any On Function \"%s\" for each %s events.", rf->funcTemplate->name.c_str(),
+					CreateErrorT("Function \"%s\" was not handled by any On Function \"%s\" for each %s events.",
 						rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str(),
-						globalsRunningOn->runningFuncs.back()->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->OiList->name);
+						globalsRunningOn->runningFuncs.back()->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->get_rHo()->get_OiList()->get_name());
 				}
 				else
 					CreateErrorT("Function \"%s\" was not handled by any On Function \"%s\" events.", rf->funcTemplate->name.c_str(),
@@ -1443,7 +1434,7 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 		{
 			CreateErrorT("Function \"%s\" has no default return value, and no return value was set by any On Function \"%s\" for each %s events.",
 				rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str(),
-				rf->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->OiList->name);
+				rf->currentForeachOil < 0 ? _T("(qualifier)") : objToRunOn->get_rHo()->get_OiList()->get_name());
 		}
 		else
 			CreateErrorT("Function \"%s\" has no default return value, and no return value was set by any On Function \"%s\" events.",
@@ -1492,91 +1483,77 @@ long Extension::ExecuteFunction(HeaderObject* objToRunOn, std::shared_ptr<Runnin
 	return (long)Runtime.CopyString(tc);
 }
 
-static void AddToList(Extension * ext, short oil, std::vector<HeaderObject*> & writeTo)
-{
-	// regular object
-	assert(oil >= 0);
-
-	auto poil = (objInfoList*)(((char*)ext->rhPtr->OiList) + ext->Runtime.ObjectSelection.oiListItemSize * oil);
-
-	// Object's selected instance list wasn't set by conditions for this event.
-	// It would be good if we could do Runtime.ObjectSelection.SelectAll(),
-	// but actions can't modify selection, so we'll not bother.
-	const bool selectAll = (poil->EventCount != ext->rhPtr->rh2.EventCount);
-
-	short num = selectAll ? poil->Object : poil->ListSelected, lastNum = -1;
-	// Iterate over list (until no other objects are found)
-	while (num >= 0)
-	{
-		// Get the object instance
-		auto pObl = ext->rhPtr->ObjectList + num;
-		HeaderObject* pHo = pObl->oblOffset;
-		if (pHo == nullptr)
-			break; // we hit end of list
-
-		// Make sure the obj wasn't already destroyed (e.g. Disappearing animation)
-		if ((pHo->Flags & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None)
-			writeTo.push_back(pHo);
-		// Jump to next instance in list
-		num = selectAll ? pHo->NumNext : pHo->NextSelected;
-	}
-}
-
 // Save object selection
 void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects)
 {
 	bool wasFound = false;
-	for (int i = 0; i < rhPtr->NumberOi; ++i)
+	const short DSOi = rdPtr->get_rHo()->get_Oi();
+	for (auto poil : DarkEdif::AllOIListIterator(rhPtr))
 	{
-		objInfoList* poil = (objInfoList*)(((char*)rhPtr->OiList) + Runtime.ObjectSelection.oiListItemSize * i);
-
-		// Skip our ext, it'll always appear in selection because otherwise, how is this code right here in our ext running?
-		if (poil->Oi == rhPtr->OiList->Oi)
-			continue;
-
-		// Selected?
-		if (poil->EventCount == rhPtr->rh2.EventCount)
+		// Skip our ext, it'll always appear in selection as it's how this code right here in our ext is running
+		// Since every generated condition will use DarkScript, we shouldn't need to re-select after generated events finish
+		// although... if the user is strange enough to mix DS with other loop-type objects, maybe.
+		if (poil->get_Oi() == DSOi)
 		{
-			// Already in the list?
-			int j;
-			for (j = 0; j < (int)selectedObjects.size(); j++)
-			{
-				if (selectedObjects[j].poil == poil)
-					break;
-			}
-
-			FusionSelectedObjectListCache* pSel;
-			if (j < (int)selectedObjects.size())
-			{
-				// In the list already => replace selection
-				pSel = &selectedObjects[j];
-				pSel->selectedObjects.clear();
-			}
-			else
-			{
-				// Not in the list yet, add new selection
-				FusionSelectedObjectListCache sel;
-				selectedObjects.push_back(sel);
-				pSel = &selectedObjects[selectedObjects.size() - 1];
-			}
-
-			pSel->poil = poil;
-
-			// Store selected objects
-			short num = poil->ListSelected;
-			while (num >= 0)
-			{
-				objectsList* pObl = rhPtr->ObjectList + num;
-				HeaderObject* pHoFound = pObl->oblOffset;
-				if (pHoFound == &rdPtr->rHo)
-					wasFound = true;
-				if (pHoFound == NULL)
-					break;
-				pSel->selectedObjects.push_back(num);
-				num = pHoFound->NextSelected;
-			}
+			LOGV(_T("Skipping object \"%s\", oi %i, it should be DarkScript.\n"), poil->get_name(), poil->get_Oi());
+			wasFound = true;
+			continue;
 		}
+
+		// Selection was caused by condition, or by action
+		if (poil->get_EventCount() != rhPtr->GetRH2EventCount())
+		{
+			LOGV(_T("Skipping object \"%.*s\", event count differs (it is %i, but should be %i) so it is not selected.\n"),
+				std::isprint(poil->get_name()[0] & 0x7F) ? 24 : 3,
+				poil->get_name(), poil->get_EventCount(), rhPtr->GetRH2EventCount());
+			continue;
+		}
+		// Already in the list?
+		// TODO: Is this even possible? Multiple CRuns, maybe, but rhPtr is one CRun.
+		int j;
+		for (j = 0; j < (int)selectedObjects.size(); j++)
+		{
+			if (selectedObjects[j].poil == poil)
+				break;
+		}
+
+		FusionSelectedObjectListCache* pSel;
+		if (j < (int)selectedObjects.size())
+		{
+			// In the list already => replace selection
+			pSel = &selectedObjects[j];
+			pSel->selectedObjects.clear();
+		}
+		else
+		{
+			// Not in the list yet, add new selection
+			FusionSelectedObjectListCache sel;
+			selectedObjects.emplace_back(std::move(sel));
+			pSel = &selectedObjects[selectedObjects.size() - 1];
+		}
+
+		pSel->poil = std::move(poil);
+
+		// Store explicitly selected objects; we ignore Implicit via eventcount check anyway
+		std::size_t numSelected = 0;
+		for (auto pHoFound : DarkEdif::ObjectIterator(rhPtr, poil->get_Oi(), DarkEdif::Selection::Explicit))
+		{
+			//auto&& pHoFound = rhPtr->GetObjectListOblOffsetByIndex(num);
+			// TODO: With multiple CRuns revealed, is this still functional across subapps?
+			if (pHoFound == rdPtr)
+				wasFound = true;
+			if (pHoFound == NULL)
+				break;
+			++numSelected;
+			pSel->selectedObjects.push_back(pHoFound->get_rHo()->get_Oi());
+		//	num = pHoFound->get_rHo()->get_NextSelected();
+		}
+		if (numSelected > 0)
+			LOGI(_T("Added object selection: object \"%s\" num instances %zu.\n"), pSel->poil->get_name(), pSel->selectedObjects.size());
 	}
+
+	if (!wasFound)
+		LOGE(_T("Couldn't find DarkScript in selected objects!\n"));
 }
 
 // Restore objects selection
@@ -1584,95 +1561,60 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 {
 	// Unselect all objects
 	if (unselectAllExisting)
-		for (objInfoList* poil = rhPtr->OiList; poil->Oi != -1;
-			poil = (objInfoList*)(((char*)poil) + Runtime.ObjectSelection.oiListItemSize))
 	{
-		// Skip our ext, it'll always appear in selection because otherwise, how is this code right here in our ext running?
-		if (poil->Oi == rhPtr->OiList->Oi)
-			continue;
-		poil->EventCount = -1;
-		//	poil->EventCountOR = -1;
-		poil->NumOfSelected = 0;
-		int listSel = poil->ListSelected;
-		poil->ListSelected = -1;
-
-		/*
-		if (listSel < 0)
-			continue;
-		// Store selected objects
-		short objectsListIndex = listSel;
-		while (objectsListIndex >= 0)
+		for (auto poil : DarkEdif::AllOIListIterator(rhPtr))
 		{
-			objectsList* pObl = rhPtr->ObjectList + objectsListIndex;
-			HeaderObject* pHoFound = pObl->oblOffset;
-			if (pHoFound == NULL)
-				break;
-			pHoFound->SelectedInOR = 0;
-			objectsListIndex = pHoFound->NextSelected;
-		}*/
-		LOGV(_T("Zero'd poil->Oi = %d, name = %hs.\n"), poil->Oi, poil->name);
+			// Skip our ext, it'll always appear in selection because otherwise, how is this code right here in our ext running?
+			if (poil->get_Oi() == rdPtr->get_rHo()->get_Oi())
+				continue;
+
+			// Invalidate the selection by making the event count not match, as opposed to explicitly selecting all
+			poil->SelectAll(rhPtr, false);
+		}
 	}
 
+	const int rh2EventCount = rhPtr->GetRH2EventCount();
 	for (int i = 0; i < (int)selectedObjects.size(); i++)
 	{
 		const FusionSelectedObjectListCache& sel = selectedObjects[i];
-		objInfoList* poil = sel.poil;
+		auto & poil = sel.poil;
 
-		poil->EventCount = rhPtr->rh2.EventCount;
-		//	poil->EventCountOR = rhPtr->rh4.EventCountOR;
-		poil->ListSelected = -1;
-		poil->NumOfSelected = 0;
+		poil->set_EventCount(rh2EventCount);
+		poil->set_ListSelected(-1);
+		poil->set_NumOfSelected(0);
 		if (sel.selectedObjects.size() > 0)
 		{
-			objectsList* pObl = rhPtr->ObjectList + sel.selectedObjects[0];
-			HeaderObject* pHoPrev = pObl->oblOffset;
+			auto&& pHoPrev = rhPtr->GetObjectListOblOffsetByIndex(sel.selectedObjects[0]);
 			if (pHoPrev != NULL)
 			{
-				poil->ListSelected = sel.selectedObjects[0];
-				//pHoPrev->SelectedInOR = 1;
-				poil->NumOfSelected++;
+				poil->set_ListSelected(sel.selectedObjects[0]);
+				poil->set_NumOfSelected(poil->get_NumOfSelected()+1);
 				for (int j = 1; j < (int)sel.selectedObjects.size(); j++)
 				{
 					short num = sel.selectedObjects[j];
-					pObl = rhPtr->ObjectList + num;
-					HeaderObject* pHo = pObl->oblOffset;
+					auto&& pHo = rhPtr->GetObjectListOblOffsetByIndex(num);
 					//pHo->SelectedInOR = 1;
 					if (pHo == NULL)
 						break;
-					pHoPrev->NextSelected = num;
-					poil->NumOfSelected++;
-					pHoPrev = pHo;
+					pHoPrev->get_rHo()->set_NextSelected(num);
+					poil->set_NumOfSelected(poil->get_NumOfSelected() + 1);
+					pHoPrev = std::move(pHo);
 				}
-				pHoPrev->NextSelected = -1;
+				pHoPrev->get_rHo()->set_NextSelected(-1);
 			}
 		}
 	}
 }
 
-void Extension::Sub_RunPendingForeachFunc(const short oil, std::shared_ptr<RunningFunction> runningFunc)
+void Extension::Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr<RunningFunction> &runningFunc)
 {
-	// The issue is when manually looping, we only have the first instance of selected objects;
-	// we don't know if a qualifier was selected.
-	// newFunc->foreachOIL = oil;
+	LOGI(_T("Sub_RunPendingForeachFunc executing for oil %hi (non-qual: %hi), function \"%s\".\n"),
+		oil, (short)(oil & 0x7FFF), runningFunc->funcTemplate->name.c_str());
 
-	LOGI(_T("Sub_RunPendingForeachFunc executing for oil %hi, function \"%s\".\n"), oil, runningFunc->funcTemplate->name.c_str());
+	std::vector<RunObjectMultiPlatPtr> list;
 
-	std::vector<HeaderObject*> list;
-
-	// regular object
-	if (oil >= 0)
-		AddToList(this, oil, list);
-	// qualifier
-	else if (oil != -1)
-	{
-		//Runtime.ObjectSelection.GetQualifierFromOI(oil);
-		for (auto pqoi = (qualToOi*)((std::uint8_t*)rhPtr->QualToOiList + (oil & 0x7FFF));
-			pqoi->OiList >= 0;
-			pqoi = (qualToOi*)((std::uint8_t*)pqoi + 4))
-		{
-			AddToList(this, pqoi->OiList, list);
-		}
-	}
+	for (auto pqoi : DarkEdif::ObjectIterator(rhPtr, oil, DarkEdif::Selection::Implicit, false))
+		list.push_back(pqoi);
 	// else -1, just leave list empty
 	// oil could be -1 if valid object type, but no instances - or invalid obj type, e.g. global events but no corresponding frame obj
 
@@ -1686,35 +1628,45 @@ void Extension::Sub_RunPendingForeachFunc(const short oil, std::shared_ptr<Runni
 	std::vector<FusionSelectedObjectListCache> selObjList;
 	evt_SaveSelectedObjects(selObjList);
 
-	LOGI(_T("Foreach func \"%s\" starting; has %i object instances selected.\n"), runningFunc->funcTemplate->name.c_str(), list.size());
+#if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
+	size_t totalSel = 0;
+	for (const auto& a : selObjList)
+		totalSel += a.selectedObjects.size();
+	LOGI(_T("Event %i starting foreach func \"%s\"; selection was saved with %zu context objects, %zu instances within. Will for-each over %zu instances.\n"),
+		DarkEdif::GetCurrentFusionEventNum(this), runningFunc->funcTemplate->name.c_str(), selObjList.size(), totalSel, list.size());
+#endif
 	runningFunc->currentForeachOil = oil;
-	for (auto pHo : list)
+	HeaderObject* pHo;
+	for (auto& runObj : list)
 	{
-		// One of the ExecuteFunctions may destroy some obj
-		if ((pHo->Flags & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None)
+		pHo = runObj->get_rHo();
+		// One of the ExecuteFunctions may destroy obj we haven't looped through yet
+		if ((pHo->get_Flags() & HeaderObjectFlags::Destroyed) != HeaderObjectFlags::None)
+			continue;
+
+		LOGI(_T("Event %i running current foreach func \"%s\" for object \"%s\", FV %i, num %hi [object list], oi %hi [oilist].\n"),
+			DarkEdif::GetCurrentFusionEventNum(this),
+			runningFunc->funcTemplate->name.c_str(), pHo->get_OiList()->get_name(),
+			pHo->GetFixedValue(), pHo->get_Number(), pHo->get_Oi());
+		runningFunc->currentForeachObjFV = pHo->GetFixedValue();
+		ExecuteFunction(runObj, runningFunc);
+		// User cancelled the foreach loop or aborted it
+		if (!runningFunc->foreachTriggering || !runningFunc->active)
 		{
-			LOGI(_T("Foreach func \"%s\" for object \"%s\", FV %i.\n"), runningFunc->funcTemplate->name.c_str(), pHo->OiList->name,
-				(pHo->CreationId << 16) + pHo->Number);
-			runningFunc->currentForeachObjFV = (pHo->CreationId << 16) + pHo->Number;
-			ExecuteFunction(pHo, runningFunc);
-			// User cancelled the foreach loop or aborted it
-			if (!runningFunc->foreachTriggering || !runningFunc->active)
-			{
-				if (!runningFunc->active)
-					LOGI(_T("Aborted foreach func \"%s\" with reason \"%s\".\n"), runningFunc->funcTemplate->name.c_str(), runningFunc->abortReason.c_str());
-				else
-					LOGI(_T("Foreach func \"%s\" was cancelled.\n"), runningFunc->funcTemplate->name.c_str());
-				evt_RestoreSelectedObjects(selObjList, true);
-				return;
-			}
-			lastReturn = runningFunc->returnValue;
+			if (!runningFunc->active)
+				LOGI(_T("Aborted foreach func \"%s\" with reason \"%s\".\n"), runningFunc->funcTemplate->name.c_str(), runningFunc->abortReason.c_str());
+			else
+				LOGI(_T("Foreach func \"%s\" was cancelled.\n"), runningFunc->funcTemplate->name.c_str());
+			evt_RestoreSelectedObjects(selObjList, true);
+			return;
 		}
+		lastReturn = runningFunc->returnValue;
 	}
+	LOGI(_T("End of foreach func \"%s\", OI %i, restoring object selection.\n"), runningFunc->funcTemplate->name.c_str(), oil);
 	evt_RestoreSelectedObjects(selObjList, true);
-	LOGI(_T("End of foreach func \"%s\", OI %i.\n"), runningFunc->funcTemplate->name.c_str(), oil);
 }
 
-bool Extension::Sub_ParseParamValue(const TCHAR * cppFuncName, std::tstring& valueTextToParse, const Param & paramExpected, const size_t paramIndex, Value &writeTo)
+bool Extension::Sub_ParseParamValue(const TCHAR * cppFuncName, std::tstring valueTextToParse, const Param & paramExpected, const size_t paramIndex, Value &writeTo)
 {
 	// String type
 	if (valueTextToParse[0] == '"')
@@ -1754,7 +1706,7 @@ bool Extension::Sub_ParseParamValue(const TCHAR * cppFuncName, std::tstring& val
 #ifdef _WIN32
 				valueTextToParse.insert(i, _T("\r\n"sv));
 #else
-				defaultVal.insert(i, "\n"sv);
+				valueTextToParse.insert(i, "\n"sv);
 #endif
 			}
 			else if (valueTextToParse[i + 1] == _T('t'))

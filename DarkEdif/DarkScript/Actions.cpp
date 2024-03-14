@@ -484,31 +484,41 @@ void Extension::RunFunction_ActionDummy_String(const TCHAR * result)
 {
 	// Ignore params, this action just allows user to run an expression's functions.
 }
-void Extension::RunFunction_Foreach_Num(HeaderObject*, int dummy)
+void Extension::RunFunction_Foreach_Num(RunObject*, int dummy)
 {
-	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
+	// No expression executed when reading the "int dummy" used for this action, so we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
 		return CreateErrorT("%s: Did not find any expression-function that was run in the foreach action.", _T(__FUNCTION__));
 
-	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
+	// We store temp copies of the current foreach function, so a Foreach expression
+	// can run a Foreach itself without corrupting.
 	const auto funcToRun = foreachFuncToRun;
 	foreachFuncToRun = nullptr;
-	const short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+
+	// Ignore the RunObject * passed and look up OI number. This is necessary due to the passed object being
+	// a qualifier, which we can't tell from reading the RunObject *. However, the qualifier OI number is
+	// hard-coded as a variable in the event sheet, and you can't modify which object is in a parameter live,
+	// so we can read it back from the event sheet directly.
+	const short oil = Runtime.GetOIFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
 	globals->runningFuncs.erase(--globals->runningFuncs.cend());
 
-	// The HeaderObject * points to the first instance of the selected objects this action
-	// has in its parameters.
+	// The RunObject * passed to Foreach_Num ^ points to the first instance of the selected objects
+	// this action has in its parameters.
 	// If you want your action to be called repeatedly, once for each object instance,
-	// you just run as if the HeaderObject * is the only instance it's being run on, and the Fusion runtime
-	// will cycle through each HeaderObject * that is the object instances passed by the event.
-	// Otherwise, you disable ACTFLAGS_REPEAT, and loop it yourself.
-	// Since we want the user to be able to cancel foreach loops midway, we'll do the loop ourselves.
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	// you just run as if the RunObject * is the only instance this action is being run on, and the
+	// Fusion runtime will cycle through each selected object, changing the RunObject * passed by the event.
+	// Otherwise, you cancel this behaviour, and loop the selection yourself.
+	// 
+	// We want fine-tuned control over loop behaviour - qualifier <-> singular, and stopping loops
+	// midway - so we do it ourselves.
+	// We run this at end of the action, after foreach, as the generated events may cause the cancel
+	// to be overwritten otherwise.
+	Runtime.CancelRepeatingObjectAction();
 }
-void Extension::RunFunction_Foreach_String(HeaderObject* obj, const TCHAR* dummy)
+void Extension::RunFunction_Foreach_String(RunObject * obj, const TCHAR* dummy)
 {
 	// No expression executed when loading the "int dummy" used for this action, we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
@@ -517,14 +527,14 @@ void Extension::RunFunction_Foreach_String(HeaderObject* obj, const TCHAR* dummy
 	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
 	auto funcToRun = foreachFuncToRun;
 	foreachFuncToRun = nullptr;
-	short oil = (short)rdPtr->rHo.CurrentParam->evp.W[0];
+	short oil = Runtime.GetOIFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
 	globals->runningFuncs.erase(--globals->runningFuncs.cend());
 
 	// For an explanation of this flag, see RunFunction_Foreach_Num()
-	rhPtr->rh4.ActionStart->evtFlags &= ~ACTFLAGS_REPEAT;
+	Runtime.CancelRepeatingObjectAction();
 }
 void Extension::RunFunction_Delayed_Num_MS(int timeFirst, int numRepeats, int timeSubsequent, int crossFrames, int funcDummy)
 {
