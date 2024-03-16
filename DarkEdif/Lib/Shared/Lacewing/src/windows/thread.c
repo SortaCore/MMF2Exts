@@ -45,32 +45,31 @@ void lw_thread_delete (lw_thread ctx)
 	free (ctx);
 }
 
+static const DWORD MS_VC_EXCEPTION = 0x406D1388;
+#pragma pack(push,8)
+typedef struct tagTHREADNAME_INFO
+{
+	DWORD dwType; // Must be 0x1000.
+	LPCSTR szName; // Pointer to name (in user addr space).
+	DWORD dwThreadID; // Thread ID (-1=caller thread).
+	DWORD dwFlags; // Reserved for future use, must be zero.
+} THREADNAME_INFO;
+#pragma pack(pop)
+static void SetThreadName(DWORD dwThreadID, const char* threadName) {
+	THREADNAME_INFO info = { 0x1000, threadName, dwThreadID, 0 };
+#pragma warning(push)
+#pragma warning(disable: 6320 6322)
+	__try {
+		RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+	}
+#pragma warning(pop)
+}
+
 static int thread_proc (lw_thread ctx)
 {
-	struct
-	{
-	  DWORD dwType;
-	  LPCSTR szName;
-	  DWORD dwThreadID;
-	  DWORD dwFlags;
-
-	} thread_name_info;
-
-	thread_name_info.dwFlags	 = 0;
-	thread_name_info.dwType	  = 0x1000;
-	thread_name_info.szName	  = ctx->name;
-	thread_name_info.dwThreadID  = -1;
-
-	/* TODO */
-
-	/* __try
-	{	RaiseException (0x406D1388, 0,
-						sizeof (thread_name_info) / sizeof (ULONG),
-						(ULONG *) &thread_name_info);
-	}
-	__except (EXCEPTION_CONTINUE_EXECUTION)
-	{
-	} */
+	SetThreadName(GetCurrentThreadId(), ctx->name);
 
 	return ((int (*) (void *)) ctx->proc) (ctx->param);
 }
