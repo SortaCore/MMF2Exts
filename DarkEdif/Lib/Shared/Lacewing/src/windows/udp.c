@@ -363,11 +363,14 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	{
 		int code = WSAGetLastError();
 
+		// no error, running as async
 		if (code == WSA_IO_PENDING)
-		{
-			// no error, running as async
 			return;
-		}
+		// outgoing is overloaded; as it's UDP, just discard it
+		// Closest to the EAGAIN exception on Unix servers, but since we use overlapped, it's unlikely this will apply
+		// This code as a response to WSASendTo may be Windows NT only
+		if (code == WSAEWOULDBLOCK)
+			return;
 
 		free(overlapped);
 

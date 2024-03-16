@@ -215,8 +215,9 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
 
+	// Ignore EAGAIN since we're sending UDP; if there's not outgoing room to send, just discard
 	if (sendto (ctx->fd, data, size, 0, (struct sockaddr *) addr->info->ai_addr,
-				addr->info->ai_addrlen) == -1)
+				addr->info->ai_addrlen) == -1 && errno != EAGAIN)
 	{
 		lw_error error = lw_error_new ();
 
