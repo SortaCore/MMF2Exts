@@ -249,7 +249,7 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 	if (error != NULL)
 	{
 		lw_error err = lw_error_new();
-		lw_error_addf(err, "Disconnecting client %s due to %s.", lw_server_client_addr(client->client.socket), error);
+		lw_error_addf(err, "Disconnecting client %s due to %s.", lw_addr_tostring(lw_server_client_addr(client->client.socket)), error);
 		if (webserver->on_error)
 			webserver->on_error(webserver, err);
 		lw_error_delete(err);
