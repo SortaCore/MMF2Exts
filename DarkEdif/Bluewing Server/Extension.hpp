@@ -260,8 +260,10 @@ public:
 		bool ChannelIsSetToCloseAutomatically();
 		bool OnAllClientsLoopWithNameFinished(const TCHAR * loopName);
 		// Added conditions:
-		bool IsClientOnChannel_ByClientID(int clientID, const TCHAR * channelName);
-		bool IsClientOnChannel_ByClientName(const TCHAR * clientName, const TCHAR * channelName);
+		bool IsClientOnChannel_ByChannelNameClientID(int clientID, const TCHAR * channelName);
+		bool IsClientOnChannel_ByChannelNameClientName(const TCHAR * clientName, const TCHAR * channelName);
+		bool IsClientOnChannel_ByChannelIDClientID(int clientID, int channelID);
+		bool IsClientOnChannel_ByChannelIDClientName(const TCHAR* clientName, int channelID);
 		bool DoesChannelNameExist(const TCHAR * channelName);
 		bool DoesChannelIDExist(int channelID);
 		bool DoesClientNameExist(const TCHAR * clientName);

@@ -186,14 +186,16 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 		LinkCondition(51, ChannelIsSetToCloseAutomatically);
 		LinkCondition(52, AlwaysFalseWithTextParam /* DUPLICATE IN ORIG, NOT USED IN BLUE: OnAllClientsLoopWithNameFinished */);
 		// Added conditions:
-		LinkCondition(53, IsClientOnChannel_ByClientID);
-		LinkCondition(54, IsClientOnChannel_ByClientName);
+		LinkCondition(53, IsClientOnChannel_ByChannelNameClientID);
+		LinkCondition(54, IsClientOnChannel_ByChannelNameClientName);
 		LinkCondition(55, DoesChannelNameExist);
 		LinkCondition(56, DoesChannelIDExist);
 		LinkCondition(57, DoesClientNameExist);
 		LinkCondition(58, DoesClientIDExist);
 		LinkCondition(59, AlwaysTrue /* UponChannelClose */);
 		LinkCondition(60, IsWebSocketHosting);
+		LinkCondition(61, IsClientOnChannel_ByChannelIDClientID);
+		LinkCondition(62, IsClientOnChannel_ByChannelIDClientName);
 	}
 	{
 		LinkExpression(0, Error);

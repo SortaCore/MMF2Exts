@@ -39,7 +39,7 @@ bool Extension::OnClientsJoinedChannelLoopWithNameFinished(const TCHAR * loopNam
 {
 	LoopNameMatches("Client's Joined Channel Loop With Name Finished");
 }
-bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, const TCHAR * channelNamePtr)
+bool Extension::IsClientOnChannel_ByChannelNameClientName(const TCHAR * clientNamePtr, const TCHAR * channelNamePtr)
 {
 	if (clientNamePtr[0] == _T('\0') && !selClient)
 		return CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected."), false;
@@ -103,9 +103,9 @@ bool Extension::IsClientOnChannel_ByClientName(const TCHAR * clientNamePtr, cons
 	auto& channelClients = foundCh->getclients();
 	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
 }
-bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channelNamePtr)
+bool Extension::IsClientOnChannel_ByChannelNameClientID(int clientID, const TCHAR * channelNamePtr)
 {
-	if (clientID >= 0xFFFF)
+	if (clientID < 0 || clientID >= 0xFFFF)
 		return CreateError("Error checking if client is joined to a channel, client ID %i is not in valid ID range of 0-65534.", clientID), false;
 	if (channelNamePtr[0] == '\0' && !selChannel)
 		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
@@ -161,6 +161,121 @@ bool Extension::IsClientOnChannel_ByClientID(int clientID, const TCHAR * channel
 
 	auto chReadLock = foundCh->lock.createReadLock();
 	const auto& channelClients = foundCh->getclients();
+	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
+}
+
+bool Extension::IsClientOnChannel_ByChannelIDClientID(int clientID, int channelID)
+{
+	if (clientID < 0 || clientID >= 0xFFFF)
+		return CreateError("Error checking if client is joined to a channel, client ID %i is not in valid ID range of 0-65534.", clientID), false;
+	if (channelID < 0 || channelID >= 0xFFFF)
+		return CreateError("Error checking if client is joined to a channel, channel ID %i is not in valid ID range of 0-65534.", channelID), false;
+
+	auto origSelClient = selClient;
+	auto origSelChannel = selChannel;
+	decltype(selChannel) foundCh;
+	decltype(selClient) foundCli;
+
+	// Always look up client ID
+	// If user wants to use currently selected client, they can use the shortcut of IsClientOnChannel_Name with a blank name
+	{
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
+		const auto& clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[=](auto const& copy) { return copy->id() == clientID; });
+		if (foundCliIt == clients.cend())
+			return CreateError("Error checking if client is joined to a channel, client ID %i was not found on server.", clientID), false;
+		foundCli = *foundCliIt;
+	}
+
+	{
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
+		const auto& channels = Srv.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[channelID](auto const& ch) { return ch->id() == channelID; });
+		if (foundChIt == channels.cend())
+			return CreateError("Error checking if client is joined to a channel, channel ID %i was not found on server.", channelID), false;
+		foundCh = *foundChIt;
+	}
+
+	// Check on client's joined channel list
+	bool isInCliJoinedList = false;
+	{
+		auto cliReadLock = foundCli->lock.createReadLock();
+		const auto& clientJoinedChannels = foundCli->getchannels();
+		isInCliJoinedList = std::find(clientJoinedChannels.cbegin(), clientJoinedChannels.cend(), foundCh) != clientJoinedChannels.cend();
+	}
+	if (isInCliJoinedList)
+		return true;
+
+	// If it is not, check that channel list does not contains it either.
+	// In a peer leave/channel leave message, the behaviour of lists is currently defined as:
+	// When a request is processed, the queues are updated AFTER response.
+	// In the event the server kicks someone, it's equivalent to an immediate channel leave.
+
+	auto chReadLock = foundCh->lock.createReadLock();
+	const auto& channelClients = foundCh->getclients();
+	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
+}
+bool Extension::IsClientOnChannel_ByChannelIDClientName(const TCHAR* clientNamePtr, int channelID)
+{
+	if (clientNamePtr[0] == _T('\0') && !selClient)
+		return CreateError("Error checking if client is joined to a channel, client name supplied was blank and no client pre-selected."), false;
+	if (channelID < 0 || channelID >= 0xFFFF)
+		return CreateError("Error checking if client is joined to a channel, channel name supplied was blank and no channel pre-selected."), false;
+
+	auto origSelClient = selClient;
+	auto origSelChannel = selChannel;
+	decltype(selChannel) foundCh;
+	decltype(selClient) foundCli;
+
+	// If blank client name, use currently selected
+	// (check that one is selected is done above)
+	if (clientNamePtr[0] == _T('\0'))
+		foundCli = selClient;
+	else
+	{
+		const std::string clientNameU8Simplified = TStringToUTF8Simplified(clientNamePtr);
+		auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
+		auto& clients = Srv.getclients();
+		auto foundCliIt =
+			std::find_if(clients.cbegin(), clients.cend(),
+				[&](auto const& cli) { return lw_sv_cmp(cli->nameSimplified(), clientNameU8Simplified); });
+		if (foundCliIt == clients.cend())
+			return CreateError("Error checking if client is joined to a channel, client name \"%s\" was not found on server.", DarkEdif::TStringToUTF8(clientNamePtr).c_str()), false;
+		foundCli = *foundCliIt;
+	}
+
+	{
+		auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
+		auto& channels = Srv.getchannels();
+		auto foundChIt =
+			std::find_if(channels.cbegin(), channels.cend(),
+				[channelID](auto const& ch) { return ch->id() == channelID; });
+		if (foundChIt == channels.cend())
+			return CreateError("Error checking if client is joined to a channel, channel ID %d was not found on server.", channelID), false;
+		foundCh = *foundChIt;
+	}
+
+	// Check on client's joined channel list
+	bool isInCliJoinedList = false;
+	{
+		auto cliReadLock = foundCli->lock.createReadLock();
+		const auto& clientJoinedChannels = foundCli->getchannels();
+		isInCliJoinedList = std::find(clientJoinedChannels.cbegin(), clientJoinedChannels.cend(), foundCh) != clientJoinedChannels.cend();
+	}
+	if (isInCliJoinedList)
+		return true;
+
+	// If it is not, check that channel list does not contains it either.
+	// In a peer leave/channel leave message, the behaviour of lists is currently defined as:
+	// When a request is processed, the queues are updated AFTER response.
+	// In the event the server kicks someone, it's equivalent to an immediate channel leave.
+
+	auto chReadLock = foundCh->lock.createReadLock();
+	auto& channelClients = foundCh->getclients();
 	return std::find(channelClients.cbegin(), channelClients.cend(), foundCli) != channelClients.cend();
 }
 
@@ -236,7 +351,7 @@ bool Extension::DoesClientNameExist(const TCHAR * clientNamePtr)
 bool Extension::DoesChannelIDExist(int channelID)
 {
 	if (channelID < 0 || channelID >= 0xFFFF)
-		return CreateError("Error checking if channel exists, channel ID was invalid."), false;
+		return CreateError("Error checking if channel exists, channel ID %i was invalid.", channelID), false;
 
 	auto serverChannelListReadLock = Srv.lock_channellist.createReadLock();
 	const auto &channels = Srv.getchannels();
@@ -248,7 +363,7 @@ bool Extension::DoesChannelIDExist(int channelID)
 bool Extension::DoesClientIDExist(int clientID)
 {
 	if (clientID < 0 || clientID >= 0xFFFF)
-		return CreateError("Error checking if client exists, client ID was invalid."), false;
+		return CreateError("Error checking if client exists, client ID %i was invalid.", clientID), false;
 
 	auto serverClientListReadLock = Srv.lock_clientlist.createReadLock();
 	const auto &clients = Srv.getclients();

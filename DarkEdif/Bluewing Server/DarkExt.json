@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2023 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2024 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -176,7 +176,7 @@
 				[ 51, "Is channel set to close automatically?" ],
 				"---",
 				[ 55, "Does channel name exist?" ],
-			//	[ 56, "Does channel ID exist?" ],
+				[ 56, "Does channel ID exist?" ],
 				[ 59, "On channel close" ]
 			],
 			[ "Client",
@@ -195,6 +195,8 @@
 				"---",
 				[ 54, "Is client name joined to channel name?" ],
 				[ 53, "Is client ID joined to channel name?" ],
+				[ 62, "Is client name joined to channel ID?" ],
+				[ 61, "Is client ID joined to channel ID?" ],
 				"---",
 				[ 57, "Does client name exist?" ],
 				[ 58, "Does client ID exist?" ]
@@ -249,7 +251,7 @@
 			"---",
 			[ "Channel",
 				[ 5, "Name" ],
-			//	[ 50, "ID" ],
+				[ 50, "ID" ],
 				[ 6, "Client count" ],
 				[ 40, "Get local channel data" ],
 				"---",
@@ -1198,6 +1200,20 @@
 				"Title": "%o : %0 WebSocket server is hosting",
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
+			},
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
 				]
 			}
 		],
@@ -2739,6 +2755,21 @@
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
 				]
+			},
+			// Retranslate!
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -4263,6 +4294,20 @@
 				"Title": "%o : Serveur WebSocket est hébergé",
 				"Parameters": [
 					[ "Text", "Which server types? (\"secure\", \"insecure\", \"both\", or \"either\")" ]
+				]
+			},
+			{
+				"Title": "%o : Is client ID %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Integer", "Client ID to test" ],
+					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Is client name %0 joined to channel ID %1",
+				"Parameters": [
+					[ "Text", "Client name to test" ],
+					[ "Integer", "Channel ID to test" ]
 				]
 			}
 		],
