@@ -66,7 +66,8 @@ const TCHAR * Extension::GetAllActionInfos()
 	GetXXXInfosFunc getActionInfosFunc = (GetXXXInfosFunc)GetProcAddress(hGetProcIDDLL, "GetActionInfos");
 	GetXXXTitleFunc getActionTitleFunc = (GetXXXTitleFunc)GetProcAddress(hGetProcIDDLL, "GetActionTitle");
 	GetRunObjectInfosFunc getRunObjectInfosFunc = (GetRunObjectInfosFunc)GetProcAddress(hGetProcIDDLL, "GetRunObjectInfos");
-	auto runInfos = std::make_unique<kpxRunInfos>();
+	auto runInfos2 = std::make_unique<char[]>(sizeof(kpxRunInfos));
+	kpxRunInfos* runInfos = (kpxRunInfos*)runInfos2.get();
 
 	if (!getActionStringFunc) {
 		error << _T("Could not locate function GetActionString, error ") << GetLastError();
@@ -91,7 +92,7 @@ const TCHAR * Extension::GetAllActionInfos()
 
 	std::tstringstream output;
 
-	short ret = getRunObjectInfosFunc(Edif::SDK->mV, runInfos.get());
+	short ret = getRunObjectInfosFunc(Edif::SDK->mV, runInfos);
 	output << "Size of EDITDATA: " << runInfos->EDITDATASize << ".";
 
 	const short bufferSize = 512;

@@ -63,7 +63,12 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\unix\common.h">
       <Filter>Header Files\Lacewing\src\unix</Filter>
     </ClInclude>
-    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\client.c">
@@ -101,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="..\Lib\Shared\Lacewing\src\unix\eventqueue\kqueue.c">
       <Filter>Source Files\Lacewing\src\unix\eventqueue</Filter>
+    </ClCompile>
+    <ClCompile Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

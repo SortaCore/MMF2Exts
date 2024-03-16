@@ -21,7 +21,11 @@ bool lacewing::writelock::isEnabled() const
 	#if defined(__ANDROID__)
 		#include "../Inc/Android/MMFAndroidMasterHeader.hpp"
 	#elif defined(__APPLE__)
-		#include "../Inc/iOS/MMFiOSMasterHeader.hpp"
+		#if MacBuild==0
+			#include "../Inc/iOS/MMFiOSMasterHeader.hpp"
+		#else
+			#include "../Inc/Mac/MMFMacMasterHeader.hpp"
+		#endif
 	#endif
 #endif
 

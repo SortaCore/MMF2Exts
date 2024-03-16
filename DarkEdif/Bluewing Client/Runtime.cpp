@@ -27,7 +27,7 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 void FusionAPI EndApp(mv * mV, CRunApp * pApp)
 {
 	#pragma DllExportHint
-	if (pApp->ParentApp)
+	if (pApp->get_ParentApp())
 	{
 		OutputDebugStringA(PROJECT_NAME " - EndApp called, but it's subapp. Ignoring.\n");
 		return;
