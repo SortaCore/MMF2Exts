@@ -54,7 +54,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 		lw_error err = lw_error_new();
 		lw_error_add(err, status);
 		lw_error_addf(err, "Encrypting message failed");
-		if (ctx->handle_error)
+		if (ctx->handle_error && ctx->client)
 			ctx->handle_error(ctx->client, err);
 		lw_error_delete(err);
 
