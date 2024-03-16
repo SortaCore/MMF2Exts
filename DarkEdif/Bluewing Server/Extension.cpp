@@ -585,7 +585,7 @@ void Extension::GlobalInfo::MarkAsPendingDelete()
 	if (!_thread.joinable())
 		_objEventPump->tick();
 
-	_objEventPump->post_eventloop_exit();
+	//_objEventPump->post_eventloop_exit();
 
 	if (_server.flash->hosting())
 		_server.flash->unhost();

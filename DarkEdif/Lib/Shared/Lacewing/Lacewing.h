@@ -2029,7 +2029,6 @@ struct relayserver
 	void channel_addclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
 	void channel_removeclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client);
 
-
 	struct client
 	{
 		friend relayserverinternal;
@@ -2065,7 +2064,7 @@ struct relayserver
 		clientimpl getimplementationvalue() const;
 		std::vector<std::shared_ptr<lacewing::relayserver::channel>> & getchannels();
 
-		void disconnect(int websocket_exit_code = 0);
+		void disconnect(std::shared_ptr<relayserver::client> cli = nullptr, int websocket_exit_code = 0);
 
 		void send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);
 		void blast(lw_ui8 subchannel, std::string_view data, lw_ui8 variant = 0);

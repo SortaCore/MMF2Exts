@@ -1017,7 +1017,7 @@ void Extension::Client_Disconnect()
 		return CreateError("Could not disconnect client: No client selected.");
 
 	if (!selClient->readonly())
-		selClient->disconnect();
+		selClient->disconnect(selClient);
 }
 void Extension::Client_SetLocalData(const TCHAR * key, const TCHAR * value)
 {

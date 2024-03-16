@@ -40,7 +40,8 @@ extern "C" {
 
 namespace lacewing
 {
-void serverpingtimertick  (lacewing::timer timer);
+void serverpingtimertick(lacewing::timer timer);
+void serveractiontimertick(lacewing::timer timer);
 
 struct relayserverinternal
 {
@@ -50,6 +51,7 @@ struct relayserverinternal
 
 	relayserver &server;
 	timer pingtimer;
+	timer actiontimer;
 
 	relayserver::handler_connect		  handlerconnect;
 	relayserver::handler_disconnect		  handlerdisconnect;
@@ -63,7 +65,7 @@ struct relayserverinternal
 	relayserver::handler_nameset		  handlernameset;
 
 	relayserverinternal(relayserver &_server, pump pump) noexcept
-		: server(_server), pingtimer(lacewing::timer_new(pump))
+		: server(_server), pingtimer(lacewing::timer_new(pump)), actiontimer(lacewing::timer_new(pump))
 	{
 		handlerconnect			= 0;
 		handlerdisconnect		= 0;
@@ -81,8 +83,16 @@ struct relayserverinternal
 
 		welcomemessage = std::string();
 
+		actiontimer->tag(this);
+		actiontimer->on_tick(serveractiontimertick);
+
+		// Every 100 ms, check for actions queued up, and run up to x of them
+		actionThreadMS = 100;
+		numActionsPerTick = 20;
+
 		pingtimer->tag(this);
 		pingtimer->on_tick(serverpingtimertick);
+
 		// If no TCP activity for this period, ping message is sent, then must be replied to during this period
 		tcpPingMS = 5000;
 
@@ -153,10 +163,14 @@ struct relayserverinternal
 	std::vector<std::shared_ptr<relayserver::channel>> channels;
 
 	bool channellistingenabled;
+
 	long tcpPingMS;
 	long maxNoConnectApprovedMS;
 	long udpKeepAliveMS;
 	long maxInactivityMS;
+
+	long actionThreadMS;
+	std::size_t numActionsPerTick;
 
 	/// <summary> Lacewing timer function for pinging and inactivity tests. </summary>
 	///	<remarks> There are three things this function does:
@@ -289,7 +303,7 @@ struct relayserverinternal
 				lacewing::error_delete(error);
 
 				if (client->socket->is_websocket())
-					client->disconnect(1000);
+					client->disconnect(client, 1000);
 				else
 				{
 					// If a client is ignoring messages, which happens in some ping failures,
@@ -342,10 +356,55 @@ struct relayserverinternal
 					client->send(0, "You're being kicked for inactivity.", 0);
 
 				if (client->socket->is_websocket())
-					client->disconnect(1000);
+					client->disconnect(client, 1000);
 				else // Close nicely - if client has not got first byte, e.g. non-Lacewing, close immediately
 					client->socket->close(!client->gotfirstbyte);
 			}
+		}
+	}
+
+	// Data for a delayed action that may interfere with disconnect processing events;
+	// not used for actions that rely on consistent client lists, e.g. channel message,
+	// as those have the channel lock to work with
+	struct action {
+		enum class type {
+			disconnect,
+			closechannelfinish,
+			joinchannelresponse,
+			leavechannelresponse,
+			addclient,
+			removeclient,
+			unhost,
+		};
+
+		type typ;
+		std::shared_ptr<lacewing::relayserver::channel> ch;
+		std::shared_ptr<lacewing::relayserver::client> cli;
+		std::string reason;
+		lw_event event = NULL;
+	};
+
+	// handles actionqueue
+	mutable lacewing::readwritelock lock_queueaction;
+	std::thread::id actiontickerthreadid;
+
+	std::vector<action> actions;
+
+	// Internal usage only. Returns true if action was queued for action thread to run later. False if it should be run now, or was already run now.
+	bool queue_or_run_action(bool directCall, action::type typ, std::shared_ptr<lacewing::relayserver::channel>, std::shared_ptr<lacewing::relayserver::client>, std::string_view);
+	bool isactiontimerthread();
+	void actiontimertick()
+	{
+		if (actiontickerthreadid != std::thread::id())
+			actiontickerthreadid = std::this_thread::get_id();
+
+		auto actionLock = lock_queueaction.createWriteLock();
+		for (std::size_t i = 0, j = std::min<std::size_t>(numActionsPerTick, actions.size()); i < j; ++i) {
+			if (queue_or_run_action(true, actions[0].typ, actions[0].ch, actions[0].cli, actions[0].reason))
+				assert(1 == 0);
+			if (actions[0].event)
+				lw_event_signal(actions[0].event);
+			actions.erase(actions.cbegin());
 		}
 	}
 
@@ -654,8 +713,13 @@ bool relayserverinternal::tcpmessagehandler (void * tag, lw_ui8 type, const char
 	return clientPtr->server.client_messagehandler(*clientIt, type, std::string_view(message, size), false);
 }
 
+void serveractiontimertick(lacewing::timer timer)
+{
+	((relayserverinternal*)timer->tag())->actiontimertick();
+}
 void serverpingtimertick (lacewing::timer timer)
-{   ((relayserverinternal *) timer->tag())->pingtimertick();
+{
+	((relayserverinternal *) timer->tag())->pingtimertick();
 }
 
 std::shared_ptr<relayserver::channel> relayserver::client::readchannel(messagereader &reader)
@@ -1063,7 +1127,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			{
 				const auto csc2 = *csc;
 				serverClientListReadLock.lw_unlock();
-				csc2->disconnect(1003);
+				csc2->disconnect(csc2, 1003);
 			}
 			return;
 		}
@@ -1127,7 +1191,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 	{
 		const auto csc2 = *csc;
 		serverClientListReadLock.lw_unlock();
-		csc2->disconnect(1008);
+		csc2->disconnect(csc2, 1008);
 	}
 }
 
@@ -1390,6 +1454,7 @@ void relayserver::host(lacewing::filter &_filter)
 
 	relayserverinternal * serverInternal = (relayserverinternal *)internaltag;
 	serverInternal->pingtimer->start(serverInternal->tcpPingMS);
+	serverInternal->actiontimer->start(serverInternal->actionThreadMS);
 }
 
 void relayserver::host_websocket(lw_ui16 portNonSecure, lw_ui16 portSecure)
@@ -1410,6 +1475,7 @@ void relayserver::host_websocket(lw_ui16 portNonSecure, lw_ui16 portSecure)
 
 	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
 	serverInternal->pingtimer->start(serverInternal->tcpPingMS);
+	serverInternal->actiontimer->start(serverInternal->actionThreadMS);
 }
 void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::filter& filterSecure)
 {
@@ -1429,14 +1495,17 @@ void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::fi
 
 	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
 	serverInternal->pingtimer->start(serverInternal->tcpPingMS);
+	serverInternal->actiontimer->start(serverInternal->actionThreadMS);
 }
 
 void relayserver::unhost()
 {
+	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
+	if (serverInternal->queue_or_run_action(false, relayserverinternal::action::type::unhost, nullptr, nullptr, "\x1"sv))
+		return;
+
 	// websocket and flash are unhosted explicitly only, as they're hosted explicitly
 	// flash only points to regular server, so it has no client list itself
-
-	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
 	const bool isWebSocketActive = websocket->hosting() || websocket->hosting_secure();
 	if (!isWebSocketActive)
 		serverInternal->pingtimer->stop();
@@ -1471,8 +1540,12 @@ void relayserver::unhost_websocket(bool insecure, bool secure)
 	if (!insecure && !secure)
 		return;
 
-	// disconnect handlers check server that ran them is still hosting
+	const char serverMask = (insecure ? 2 : 0) | (secure ? 4 : 0);
 	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
+	if (serverInternal->queue_or_run_action(false, relayserverinternal::action::type::unhost, nullptr, nullptr, std::string_view(&serverMask, 1)))
+		return;
+
+	// disconnect handlers check server that ran them is still hosting
 	// If we've got a different server up (and we're not about to unhost it here), then keep ping timer running
 	const bool isOtherHosting = socket->hosting() || (!insecure && websocket->hosting()) || (!secure && websocket->hosting_secure());
 	if (!isOtherHosting)
@@ -1635,8 +1708,6 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 	}
 }
 
-
-
 void relayserver::channel_addclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client)
 {
 	if (channel->_readonly || client->_readonly)
@@ -1646,6 +1717,9 @@ void relayserver::channel_addclient(std::shared_ptr<relayserver::channel> channe
 }
 void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client)
 {
+	if (queue_or_run_action(false, relayserverinternal::action::type::addclient, channel, client, std::string_view()))
+		return;
+
 	auto channelWriteLock = channel->lock.createWriteLock();
 	if (channel->_readonly)
 		return;
@@ -1657,6 +1731,8 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 	// LW_ESCALATION_NOTE
 	// auto joiningClientReadLock = client->lock.createReadLock();
 	auto joiningCliWriteLock = client->lock.createWriteLock();
+	if (client->_readonly)
+		return;
 
 	// Join channel is OK
 	framebuilder builder(true);
@@ -1672,6 +1748,10 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 
 	for (const auto &cli : channel->clients)
 	{
+		// Client is disconnecting, so we exclude them; in theory, this may result in a peer disconnect message
+		// being sent to a client who never had that peer in their list anyway, but Blue Client just quietly ignores that scenario
+		if (cli->_readonly)
+			continue;
 		auto cliOnChannelReadLock = cli->lock.createReadLock();
 		builder.add <lw_ui16>(cli->_id);
 		builder.add <lw_ui8>(cli == channel->_channelmaster ? 1 : 0);
@@ -1728,6 +1808,77 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 	client->channels.push_back(channel);
 }
 
+// Returns true if the current thread is the one being ticked by the lw_pump, as opposed to one taking an action
+bool relayserverinternal::isactiontimerthread() {
+	return std::this_thread::get_id() == actiontickerthreadid;
+}
+bool relayserverinternal::queue_or_run_action(bool wasDequeued, action::type act, std::shared_ptr<lacewing::relayserver::channel> ch,
+	std::shared_ptr<lacewing::relayserver::client> cli, std::string_view reason)
+{
+	// We're not the action-applying thread, so we have to wait to run this, to prevent server ticking thread + this thread clashing
+	// In single-threaded server scenarios, this will be true on main thread.
+	if (!isactiontimerthread())
+	{
+		auto aqWriteLock = lock_queueaction.createWriteLock();
+		// If unhosting, set up for blocking wait
+		lw_event evt = NULL;
+		if (act == action::type::unhost)
+			evt = lw_event_new();
+
+		actions.push_back(action{ act, ch, cli, std::string(reason), evt });
+
+		// We're unhosting; this is a blocking call, so we pause and wait for action applying thread to shut down everything.
+		// We don't want the main thread starting to read and write like usual and fight with action thread.
+		if (evt && actiontimer->started())
+		{
+			aqWriteLock.lw_unlock();
+			lw_event_wait(evt, -1);
+		}
+		return true;
+	}
+
+	// else we're in action applying thread, woo.
+	//
+	// The way this action queue works is functions like client->disconnect don't disconnect, but queue_or_action in an if.
+	// If q or a returns false, then the disconnect continues and runs the actual disconnect code.
+	// If q or a returns true, that means it was queued, and the disconnect exits early.
+	// 
+	// wasDequeued = true means this function was just dequeued from action thread, and it is now trying to run action,
+	// by calling q and a itself.
+	// wasDequeued = false at this point means disconnect() called q or a, so we skip the queue entirely,
+	// and return false to tell caller to run its thing now, because the action thread is this calling thread.
+	// If action thread is not this calling thread, then the above if handled it.
+	if (!wasDequeued)
+		return false;
+
+	// We also return false here, because we did not queue.
+	if (act == action::type::disconnect)
+		return cli->disconnect(), false;
+	if (act == action::type::closechannelfinish)
+		return close_channel(ch), false;
+	if (act == action::type::joinchannelresponse)
+		return server.joinchannel_response(ch, cli, reason), false;
+	if (act == action::type::leavechannelresponse)
+		return server.leavechannel_response(ch, cli, reason), false;
+	if (act == action::type::addclient)
+		return channel_addclient(ch, cli), false;
+	if (act == action::type::removeclient)
+		return channel_removeclient(ch, cli), false;
+	if (act == action::type::unhost)
+	{
+		// I attempted to make it different action types as a bitmask, but got compiler warnings for int <-> enum conversion,
+		// and huge ugly cast lines when comparing these, so I gave up.
+		const std::int8_t unhostType = reason[0];
+		if ((unhostType & (2 | 4)) != 0)
+			server.unhost_websocket(unhostType & 2, unhostType & 4);
+		if ((unhostType & 1) != 0)
+			server.unhost();
+		return false;
+	}
+
+	throw std::runtime_error("Unrecognised action type");
+}
+
 void relayserver::channel_removeclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client)
 {
 	// readonly checks done in internal
@@ -1735,6 +1886,9 @@ void relayserver::channel_removeclient(std::shared_ptr<relayserver::channel> cha
 }
 void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::channel> channel, std::shared_ptr<relayserver::client> client)
 {
+	if (queue_or_run_action(false, action::type::removeclient, channel, client, std::string_view()))
+		return;
+
 	auto channelWriteLock = channel->lock.createWriteLock();
 	auto clientWriteLock = client->lock.createWriteLock();
 
@@ -1943,7 +2097,6 @@ bool relayserver::client::checkname(std::string_view name)
 
 	return true;
 }
-
 
 bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::client> client, lw_ui8 type, std::string_view messageP, bool blasted)
 {
@@ -2659,7 +2812,11 @@ void relayserver::channel::send(lw_ui8 subchannel, std::string_view message, lw_
 
 	for (const auto& e : clients)
 	{
-		auto clientReadLock = e->lock.createWriteLock();
+		// Can have a deadlock where ping timer has client lock and is waiting on channel lock,
+		// so check for readonly before locking
+		if (e->_readonly)
+			continue;
+		auto clientWriteLock = e->lock.createWriteLock();
 		if (!e->_readonly)
 			builder.send(e->socket, false);
 	}
@@ -2681,6 +2838,10 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 	auto serverClientListReadLock = server.server.lock_clientlist.createReadLock();
 	for (const auto& e : clients)
 	{
+		// Can have a deadlock where ping timer has client lock and is waiting on channel lock,
+		// so check for readonly before locking
+		if (e->_readonly)
+			continue;
 		auto clientWriteLock = e->lock.createWriteLock();
 		if (!e->_readonly)
 		{
@@ -2857,9 +3018,22 @@ std::shared_ptr<relayserver::client> relayserver::channel::channelmaster() const
 	return _channelmaster;
 }
 
-void relayserver::client::disconnect(int websocketReasonCode)
+void relayserver::client::disconnect(std::shared_ptr<relayserver::client> cli, int websocketReasonCode)
 {
 	_readonly = true;
+
+	if (cli == nullptr && !server.isactiontimerthread())
+	{
+		const auto readLock = server.server.lock_clientlist.createReadLock();
+		const auto cliIt = std::find_if(server.clients.cbegin(), server.clients.cend(), [=](auto a) {
+			return this == &*cli;
+		});
+		assert(cliIt != server.clients.cend());
+		cli = *cliIt;
+
+		if (server.queue_or_run_action(false, relayserverinternal::action::type::disconnect, nullptr, cli, std::string_view((char *)&websocketReasonCode, sizeof(int))))
+			return;
+	}
 
 	if (socket->is_websocket())
 	{
@@ -3098,7 +3272,7 @@ void relayserver::connect_response(
 		builder.add(denyReason);
 
 		builder.send(client->socket);
-		client->disconnect(1003);
+		client->disconnect(client, 1003);
 
 		//delete client;
 		return;
@@ -3167,6 +3341,9 @@ static void validateorreplacestringview(std::string_view toValidate,
 void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> channel,
 	std::shared_ptr<relayserver::client> client, std::string_view denyReason)
 {
+	relayserverinternal& serverinternal = *(relayserverinternal*)this->internaltag;
+	if (serverinternal.queue_or_run_action(false, relayserverinternal::action::type::joinchannelresponse, channel, client, denyReason))
+		return;
 
 	// We can't take out the channel argument, as autoclose and hidden settings will be lost too.
 	// At some point we could alter this, grant the server control over whether autoclose is turned on/off.
@@ -3175,8 +3352,6 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 
 	// Hidden can be made pointless by disabling channel listing, and
 	// autoclose can be run manually (e.g. on channel leave, and no clients left, close channel)
-
-	relayserverinternal &serverinternal = *(relayserverinternal *)this->internaltag;
 
 	lacewing::readlock channelReadLock = channel->lock.createReadLock();
 
@@ -3269,7 +3444,10 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 void relayserver::leavechannel_response(std::shared_ptr<relayserver::channel> channel,
 	std::shared_ptr<relayserver::client> client, std::string_view denyReason)
 {
-	relayserverinternal &serverinternal = *(relayserverinternal *)this->internaltag;
+	relayserverinternal& serverinternal = *(relayserverinternal*)this->internaltag;
+
+	if (serverinternal.queue_or_run_action(false, relayserverinternal::action::type::leavechannelresponse, channel, client, denyReason))
+		return;
 
 	// If non-empty, request denied
 	if (!denyReason.empty())
@@ -3306,7 +3484,7 @@ void relayserver::closechannel_finish(std::shared_ptr<lacewing::relayserver::cha
 		throw std::runtime_error("Channel was not previously closed.");
 
 	// channel->close() will check for channel in server list, but we don't have it there
-	((relayserverinternal *)internaltag)->close_channel(channel);
+	((relayserverinternal*)internaltag)->queue_or_run_action(false, relayserverinternal::action::type::closechannelfinish, channel, nullptr, std::string_view());
 }
 
 // These two functions allow access to internal transmissions: PeerToChannel, PeerToPeer.
