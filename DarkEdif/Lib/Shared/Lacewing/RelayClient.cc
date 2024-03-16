@@ -1045,7 +1045,6 @@ namespace lacewing
 		case 7: /* objectpeermessage */
 		case 8: /* objectserverchannelmessage */
 		{
-			// todo: replace every lacewingassert() with a real error.
 			lacewing::error error = lacewing::error_new();
 			error->add("'Object' message type received, but Bluewing Client implementation does not support it.");
 			this->handler_error(client, error);
