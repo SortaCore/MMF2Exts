@@ -273,7 +273,8 @@ bool Extension::IsWebSocketHosting(const TCHAR * serverTypeParam)
 	// i is converted to l as part of text simplifying, so it's actually lnsecure
 	if (serverType == "lnsecure"sv)
 		return hostingInsecure;
-	if (serverType == "either"sv || serverType == "any"sv)
+	// Likewise, either becomes elther
+	if (serverType == "elther"sv || serverType == "any"sv)
 		return hostingSecure || hostingInsecure;
 
 	CreateError("Is WebSocket Hosting condition passed an invalid parameter \"%s\". Expecting \"both\", \"either\", \"secure\" or \"insecure\". Returning false.",
