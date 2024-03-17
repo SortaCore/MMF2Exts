@@ -24,13 +24,29 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	if (!ctx->handshake_complete)
 	  return 0; /* can't send anything right now */
 
+	// We cannot encrypt in-place, as the buffer is const, and anything reading back from it will get indecipherable data
+	// In Blue, this caused a bug when a secure WebSocket client was in peer list, a peer join/leave would be sent to all
+	// before WS client fine, but the encryption would corrupt the message for clients after.
+	BYTE* copy = _malloca(size);
+	if (!copy)
+	{
+		lw_error err = lw_error_new();
+		lw_error_addf(err, "Out of memory, couldn't alloc %zu bytes", size);
+		lw_error_addf(err, "Encrypting message failed");
+		if (ctx->handle_error && ctx->client)
+			ctx->handle_error(ctx->client, err);
+		lw_error_delete(err);
+		return size;
+	}
+	memcpy(copy, buffer, size);
+
 	SecBuffer buffers [4];
 
 	  buffers [0].pvBuffer = ctx->header;
 	  buffers [0].cbBuffer = ctx->sizes.cbHeader;
 	  buffers [0].BufferType = SECBUFFER_STREAM_HEADER;
 
-	  buffers [1].pvBuffer = (BYTE *) buffer;
+	  buffers [1].pvBuffer = copy;
 	  buffers [1].cbBuffer = (unsigned long)size;
 	  buffers [1].BufferType = SECBUFFER_DATA;
 
@@ -51,6 +67,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 
 	if (status != SEC_E_OK)
 	{
+		_freea(copy);
 		lw_error err = lw_error_new();
 		lw_error_add(err, status);
 		lw_error_addf(err, "Encrypting message failed");
@@ -66,6 +83,7 @@ static size_t def_upstream_sink_data (lw_stream upstream,
 	lw_stream_data (upstream, (char *) buffers [2].pvBuffer, buffers [2].cbBuffer);
 	lw_stream_data (upstream, (char *) buffers [3].pvBuffer, buffers [3].cbBuffer);
 
+	_freea(copy);
 	return size;
 }
 
