@@ -395,7 +395,7 @@ struct relayserverinternal
 	bool isactiontimerthread();
 	void actiontimertick()
 	{
-		if (actiontickerthreadid != std::thread::id())
+		if (actiontickerthreadid == std::thread::id())
 			actiontickerthreadid = std::this_thread::get_id();
 
 		auto actionLock = lock_queueaction.createWriteLock();
