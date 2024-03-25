@@ -128,10 +128,19 @@ END
 // String Table
 //
 
+// KPX_MARK: MF2 for MMF2, CC25 for MMF1.5, CC2 for MMF1.2
+// MMF 1.5 can load both CC25 and CC2, MMF1.2 only loads CC2
 STRINGTABLE
 BEGIN
 	1                "MF2"
 END
+// 2 KPX_NAME - Default object name
+// 3 KPX_CREATETITLE -Tool title (popup?)
+// 4 KPX_HIDDEN - If hidden KCX (?)
+// 400 EXO_ICON - Icon in object bar
+// 401 EXO_IMAGE - Image in frame editor
+// 210 VITALIZE_ID - magic num?
+// 200 KPX_TOOLICON	- Icon v2 (MMF1.5+?)
 
 
 /////////////////////////////////////////////////////////////////////////////

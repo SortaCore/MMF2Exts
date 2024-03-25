@@ -250,15 +250,19 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 // TEXT PROPERTIES
 // ============================================================================
 
-// Return the text capabilities of the object under the frame editor.
+// Return the text capabilities of the object under the frame editor; affects what options
+// appear if you right-click the object in frame editor and use Text submenu.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 /*std::uint32_t FusionAPI GetTextCaps(mv * mV, EDITDATA * edPtr)
 {
 #pragma DllExportHint
 	return 0;	// (TEXT_ALIGN_LEFT|TEXT_ALIGN_HCENTER|TEXT_ALIGN_RIGHT|TEXT_ALIGN_TOP|TEXT_ALIGN_VCENTER|TEXT_ALIGN_BOTTOM|TEXT_FONT|TEXT_COLOR);
 }*/
 
-// Return the font used the object.
-// Note: the pStyle and cbSize parameters are obsolete and passed for compatibility reasons only.
+// Return the font used in the object.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns TEXT_FONT.
+//			The pStyle and cbSize parameters are obsolete in MMF2 and passed for compatibility reasons only.
 /*BOOL FusionAPI GetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, TCHAR * pStyle, unsigned int cbSize)
 {
 #pragma DllExportHint
@@ -269,8 +273,9 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 }*/
 
 // Change the font used the object.
-// Note: the pStyle parameter is obsolete and passed for compatibility reasons only.
-//
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns TEXT_FONT.
+//			The pStyle and cbSize parameters are obsolete in MMF2 and passed for compatibility reasons only.
 /*BOOL FusionAPI SetTextFont(mv * mV, EDITDATA * edPtr, LOGFONT * Font, [[deprecated]] const char * pStyle)
 {
 #pragma DllExportHint
@@ -281,6 +286,8 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 }*/
 
 // Get the text color of the object.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns TEXT_COLOR.
 /*COLORREF FusionAPI GetTextClr(mv * mV, EDITDATA * edPtr)
 {
 #pragma DllExportHint
@@ -288,6 +295,8 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 }*/
 
 // Called by Fusion to set the text color of the object.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns TEXT_COLOR.
 /*void FusionAPI SetTextClr(mv *mV, EDITDATA * edPtr, COLORREF color)
 {
 #pragma DllExportHint
@@ -296,6 +305,8 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 }*/
 
 // Get the text alignment of the object.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns any TEXT_ALIGN_XXX flags
 /*std::uint32_t FusionAPI GetTextAlignment(mv *mV, EDITDATA * edPtr)
 {
 #pragma DllExportHint
@@ -303,6 +314,8 @@ BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 }*/
 
 // Set the text alignment of the object.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns any TEXT_ALIGN_XXX flags
 /*void FusionAPI SetTextAlignment(mv *mV, EDITDATA * edPtr, unsigned int AlignFlags)
 {
 #pragma DllExportHint

@@ -4024,6 +4024,7 @@ struct mv {
 	void (CALLBACK * HelpA) (const char * pHelpFile, unsigned int nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation
+	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer.
 	BOOL (CALLBACK * GetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
 
 	// Editor: Edit images and animations
@@ -4032,6 +4033,7 @@ struct mv {
 	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParams * pParams, HWND hParent);
 
 	// Runtime: Extension User data
+	// @remarks Introduced in MMF1.5, missing in MMF1.2 and below. Runtime only.
 	void * (CALLBACK * GetExtUserData) (CRunApp* pApp, HINSTANCE hInst);
 	void * (CALLBACK * SetExtUserData) (CRunApp* pApp, HINSTANCE hInst, void * pData);
 
@@ -4055,6 +4057,7 @@ struct mv {
 	int (CALLBACK * NetCommandA) (int, void *, unsigned int, void *, unsigned int);
 
 	// Editor & Runtime: Returns the version of MMF or of the runtime
+	// Return is a bitmask of three different flag sets; MMFVERSION_MASK, MMFBUILD_MASK, MMFVERFLAG_MASK
 	unsigned int (CALLBACK * GetVersion) ();
 
 	// Editor & Runtime: callback function for properties or other functions
@@ -4064,6 +4067,7 @@ struct mv {
 	void (CALLBACK * HelpW) (const wchar_t * pHelpFile, unsigned int nID, LPARAM lParam);
 
 	// Editor: Get default font for object creation (UNICODE)
+	// pStyle can be NULL to ignore; cbSize is size of pStyle's buffer in WCHARs.
 	BOOL (CALLBACK * GetDefaultFontW) (LOGFONTW * plf, wchar_t * pStyle, int cbSize);
 
 	// Editor: Edit images and animations (UNICODE)
@@ -4071,7 +4075,7 @@ struct mv {
 	BOOL (CALLBACK * EditImageW) (EDITDATA * edPtr, EditImageParams * Params, HWND Parent);
 	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParams * Params, HWND Parent);
 
-	// Runtime: Binary files (UNICODE
+	// Runtime: Binary files (UNICODE)
 	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, unsigned int dwFlags);
 	void (CALLBACK * ReleaseFileW)(const wchar_t * pPath);
 	HANDLE (CALLBACK * OpenHFileW)(const wchar_t * pPath, unsigned int * pDwSize, unsigned int dwFlags);

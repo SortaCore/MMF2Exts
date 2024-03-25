@@ -26,10 +26,10 @@ cSurface * FusionAPI GetRunObjectSurface(RUNDATA * rdPtr)
 }
 */
 
-// Implement this function if your extension supports fine collision mode (OEPREFS_FINECOLLISIONS),
+// Implement this function if your extension supports fine collision mode (OEPREFS::FINE_COLLISIONS),
 // Or if it's a background object and you want Obstacle properties for this object.
 //
-// Just return NULL if the object is opaque.
+// You can return NULL if the object is opaque (without semi-transparency)
 //
 /*
 LPSMASK FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
@@ -76,6 +76,7 @@ LPSMASK FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM lParam)
 
 /*
 // Called when the application starts or restarts. Also called for subapps.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
@@ -87,12 +88,13 @@ void FusionAPI StartApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
+//		mV->SetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
 /*
 // Called when the application ends or restarts. Also called for subapps.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 {
 	#pragma DllExportHint
@@ -103,12 +105,13 @@ void FusionAPI EndApp(mv *mV, CRunApp* pApp)
 //	if ( pData != NULL )
 //	{
 //		delete pData;
-//		mV->mvSetExtUserData(pApp, hInstLib, NULL);
+//		mV->SetExtUserData(pApp, hInstLib, NULL);
 //	}
 }*/
 
 /*
 // Called when the frame starts or restarts.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {
 	#pragma DllExportHint
@@ -116,6 +119,7 @@ void FusionAPI StartFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 
 /*
 // Called when the frame ends.
+// @remarks Introduced in MMF1.5, missing in MMF1.2 and below.
 void FusionAPI EndFrame(mv *mV, std::uint32_t dwReserved, int nFrameIndex)
 {
 	#pragma DllExportHint
