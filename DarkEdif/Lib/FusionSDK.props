@@ -648,16 +648,16 @@
 
 <!--#################################
 		END Android
-		BEGIN iOS
+		BEGIN iOS and Mac 
 	################################# -->
 	<PropertyGroup Condition="$(_TargetPlat)=='iOS'">
-		<!-- Always static -->
+		<!-- Always static, dynamic is limited to Apple OS and drivers -->
 		<ConfigurationType>StaticLibrary</ConfigurationType>
 		<iOSConfigurationType>StaticLibrary</iOSConfigurationType>
 		<!-- Debug libraries on Debug config -->
 		<UseDebugLibraries>false</UseDebugLibraries>
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
-		<!-- Most recent supported -->
+		<!-- Most recent supported by VS, although works up to XCode 13.4.1 (Mac OS Monterey), possibly further. -->
 		<PlatformToolset>XCode_6_1</PlatformToolset>
 		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS. -->
 		<UseOfStl>libc++</UseOfStl>
@@ -667,19 +667,10 @@
 		<_AppleSDKTarget>iphoneos</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(MacBuild)==1">macosx</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(iOSSimulatorBuild)==1">iphonesimulator</_AppleSDKTarget>
-		<!-- Override target iOS version; VS defaults to iOS 8.1 and doesn't appear to let you edit it. Note that changing it higher or lower may exclude some CPU archs, exclusion which PostBuildTool is not designed to look for.
-			<AppleSDKDeployVersion>11.4</AppleSDKDeployVersion>
-		-->
 
 		<!-- iOS files redirection -->
  		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
-
-		<!-- See comments above. -->
-		<AppleSDKDeployVersion Condition="$(MacBuild)==0 AND $(ProjectName.StartsWith('Bluewing'))">10.0</AppleSDKDeployVersion>
-
-		<!-- Mac build: minimum possible
-		<AppleSDKDeployVersion Condition="$(MacBuild)==1">10.9</AppleSDKDeployVersion> -->
 
 		<!-- We stick with static library default (.a) for iOS, but bundle for Mac -->
 		<TargetExt Condition="$(MacBuild)==1">.bundle</TargetExt>
@@ -743,9 +734,12 @@
 		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName).dat;$(SolutionDir)\Temp\$(ExtName)\Mac\$(Configuration)\$(ExtName)" />
 	</ItemGroup>
 
-	<!-- All runtimes -->
+<!--#################################
+		END iOS and Mac
+		BEGIN VS exports
+	################################# -->
 	<ItemGroup>
-		<!-- Forwards the macros calculated above to the build process -->
+		<!-- Forwards the macros calculated above to the User Macros property pane. Functionally irrelevant. -->
 		<BuildMacro Include="MFXDir">
 			<Value>$(MFXDir)</Value>
 		</BuildMacro>
@@ -784,10 +778,15 @@
 		</BuildMacro>
 	</ItemGroup>
 
+<!--#################################
+		END VS exports
+		BEGIN VS build tasks
+	################################# -->
+	
 	<!-- Windows 8.1 SDK misses half its C++ standard library headers if you don't have the Visual Studio Windows Universal CRT SDK component.
 		 Windows 10 SDK+ doesn't have this bug.
 		 Windows 7.1 SDK from XP targeting pack does have it, but requires Universal CRT SDK as part of XP targeting. -->
-	<Target Name="Win8_1 or lower SDK without UCRT" Condition="$(_TargetPlat)==Windows AND $(WindowsTargetPlatformVersion)=='8.1' AND '$(UniversalCRT_IncludePath)'==''" BeforeTargets="ClCompile">
+	<Target Name="Win8_1 or lower SDK without UCRT" Condition="'$(_TargetPlat)'=='Windows' AND $(WindowsTargetPlatformVersion)=='8.1' AND '$(UniversalCRT_IncludePath)'==''" BeforeTargets="ClCompile">
 		<Error Text="FusionSDK error: Windows 8.1 or lower SDK cannot work fully without the 'Universal CRT SDK' Visual Studio component." />
 	</Target>
 
