@@ -31,14 +31,12 @@
 			[ 88, "(Advanced) Set Unicode allowlist" ],
 			"---",
 			[ "Enable/disable conditions",
-				// [ 9, "On message from client to channel" ],
-				// [ 11, "On message from client to peer" ],
 				[ 74, "On connect request" ],
 				[ 81, "On name set request" ],
 				[ 75, "On join channel request" ],
 				[ 76, "On leave channel request" ],
-				[ 77, "On message from client to channel" ],
-				[ 78, "On message from client to peer" ],
+				[ 77, "On message from client to channel" ], // Relay ID: 9
+				[ 78, "On message from client to peer" ], // Relay ID: 11
 				[ 79, "On message from client to server" ]
 			],
 			[ "On interactive condition",
@@ -51,6 +49,7 @@
 
 			[ "Channel",
 				[ 27, "Select by name" ],
+				[ 93, "Select by ID" ],
 				"---",
 				[ 28, "Loop all channels" ],
 				[ 64, "Loop all channels (with loop name)" ],
@@ -838,6 +837,12 @@
 				"Title": "Stop hosting the %0 WebSocket server(s)",
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
+				]
+			},
+			{
+				"Title": "Select channel by ID %0",
+				"Parameters": [
+					[ "Integer", "Channel ID (0 to 65534, inclusive)" ]
 				]
 			}
 		],

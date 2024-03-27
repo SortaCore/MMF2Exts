@@ -527,6 +527,44 @@ void Extension::Channel_SelectByName(const TCHAR * channelNamePtr)
 
 	CreateError("Selecting channel by name failed: Channel with name \"%s\" not found on server.", DarkEdif::TStringToUTF8(channelNamePtr).c_str());
 }
+void Extension::Channel_SelectByID(int channelIDInt)
+{
+	if (channelIDInt < 0 || channelIDInt >= 0xFFFF)
+		return CreateError("Selecting channel by ID failed: ID %i is less than 0 or greater than 65534.", channelIDInt);
+
+	const lw_ui16 channelID = (lw_ui16)channelIDInt;
+	selChannel = nullptr;
+	{
+		lacewing::readlock serverChannelListReadLock = Srv.lock_channellist.createReadLock();
+		const auto& channels = Srv.getchannels();
+		for (const auto& ch : channels)
+		{
+			// Channel IDs are not contiguous or ordered, so we can't look up by index,
+			// or stop if read ID goes past. Example:
+			// Channel IDs 0, 1, 2 made.
+			// 1 is destroyed. New channel made: ID 1, but at index 2 in channels list.
+			// If we stopped at ID 2 because it was past ID 1, we'd not read index 2.
+			if (ch->id() == channelID)
+			{
+				selChannel = ch;
+
+				if (selClient == nullptr)
+					return;
+
+				// If selected client is on new channel, keep it selected, otherwise deselect client
+				serverChannelListReadLock.lw_unlock();
+
+				auto channelReadLock = ch->lock.createReadLock();
+				const auto& clientsOnChannel = ch->getclients();
+				if (std::find(clientsOnChannel.cbegin(), clientsOnChannel.cend(), selClient) == clientsOnChannel.cend())
+					selClient = nullptr;
+				return;
+			}
+		}
+	}
+
+	return CreateError("Selecting channel by ID failed: channel ID %i does not exist.", channelIDInt);
+}
 void Extension::Channel_Close()
 {
 	if (!selChannel)

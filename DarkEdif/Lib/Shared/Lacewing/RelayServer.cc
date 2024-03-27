@@ -3297,14 +3297,16 @@ void relayserver::connect_response(
 	// Now accepted earlier
 	// serverI.clients.push_back(client);
 
-	builder.framereset();
-
 	// Send request implementation: this is the best time to send it
+	// WebSocket clients will always send it unprompted in response to connect approval
+	if (!client->socket->is_websocket())
+	{
+		builder.framereset();
 
-	builder.addheader(12, 0);  /* request implementation */
-	// response on 10, only responded to by Bluewing b70+, Relay just ignores it
-
-	builder.send(client->socket);
+		builder.addheader(12, 0);  /* request implementation */
+		builder.send(client->socket);
+		// response type 10. Only responded to by Bluewing Client b70+, Relay just ignores it
+	}
 }
 
 // Validates the StringView, or replaces it with the given other one.

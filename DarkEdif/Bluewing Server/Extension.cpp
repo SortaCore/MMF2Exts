@@ -130,6 +130,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 		LinkAction(90, WebSocketServer_LoadHostCertificate_FromSystemStore);
 		LinkAction(91, WebSocketServer_EnableHosting);
 		LinkAction(92, WebSocketServer_DisableHosting);
+		LinkAction(93, Channel_SelectByID);
 	}
 	{
 		LinkCondition(0, AlwaysTrue /* OnError */);

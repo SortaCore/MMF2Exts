@@ -144,6 +144,7 @@ public:
 		void OnInteractive_ReplaceMessageWithSendBinary();
 
 		void Channel_SelectByName(const TCHAR * name);
+		void Channel_SelectByID(int id);
 		void Channel_Close();
 		void Channel_SelectMaster();
 		void Channel_LoopClients();
