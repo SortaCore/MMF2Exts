@@ -1694,13 +1694,11 @@ protected:
 #endif
 
 
-
-
 struct relayclientinternal;
 struct relayclient
 {
 public:
-	const static int buildnum = 103;
+	const static int buildnum = 104;
 
 	void * internaltag = nullptr, *tag = nullptr;
 

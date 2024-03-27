@@ -263,7 +263,7 @@ function CRunBluewing_Client() {
 
 	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and window[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-	this['ExtensionVersion'] = 103; // To match C++ version
+	this['ExtensionVersion'] = 104; // To match C++ version
 	this['SDKVersion'] = 19;
 	this['DebugMode'] = false;
 	this['ExtensionName'] = 'Bluewing Client';
@@ -1259,7 +1259,7 @@ function CRunBluewing_Client() {
 		this.threadData.recvMsg.cursorIndex = newPos;
 	};
 	this.Action_LoopListedChannelsWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null) {
+		if (loopName == null || loopName.constructor.name != 'String') {
 			throw "Loop name must be non-null string.";
 		}
 		if (loopName == "") {
@@ -1282,7 +1282,7 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_LoopClientChannelsWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null) {
+		if (loopName == null || loopName.constructor.name != 'String') {
 			throw "Loop name must be non-null string.";
 		}
 		if (loopName == "") {
@@ -1307,7 +1307,7 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_LoopPeersOnChannelWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null) {
+		if (loopName == null || loopName.constructor.name != 'String') {
 			throw "Loop name must be non-null string.";
 		}
 		if (loopName == "") {
@@ -1336,7 +1336,7 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_Connect = function (serverAddr) {
-		if (serverAddr.constructor.name != 'String' || serverAddr == null) {
+		if (serverAddr == null || serverAddr.constructor.name != 'String') {
 			throw "Server address must be non-null string.";
 		}
 
@@ -1383,7 +1383,7 @@ function CRunBluewing_Client() {
 	// ======================================================================================================
 
 	this.$LoopNameTest = function (curName, func) {
-		if (curName.constructor.name != 'String' || curName == null) {
+		if (curName == null || curName.constructor.name != 'String') {
 			throw func + " condition's parameter must be non-null string.";
 		}
 		return this.loopName == curName;
@@ -1461,7 +1461,7 @@ function CRunBluewing_Client() {
 			this.threadData.recvSubChannel == subchannel);
 	};
 	this.Condition_IsConnected = function () {
-		return this.globals.client.isConnected;
+		return this.globals.client.isConnectApproved;
 	};
 	this.Condition_OnAnySentMessageFromServer = function (subchannel) {
 		return subchannel == -1 || (this.Check_Subchannel(subchannel, "On Any Sent Message From Server") &&
@@ -1501,7 +1501,7 @@ function CRunBluewing_Client() {
 		return true;
 	};
 	this.Condition_SelectedPeerIsChannelMaster = function () {
-		if (!this.globals.client.isConnected) {
+		if (!this.globals.client.isConnectApproved) {
 			this.CreateError("Peer is Channel Master condition failed; client not connected");
 			return;
 		}
@@ -1517,7 +1517,7 @@ function CRunBluewing_Client() {
 		return this.selChannel.master.id == this.selPeer.id;
 	};
 	this.Condition_YouAreChannelMaster = function () {
-		if (!this.globals.client.isConnected) {
+		if (!this.globals.client.isConnectApproved) {
 			this.CreateError("You Are Channel Master condition failed; client not connected");
 			return;
 		}
@@ -1579,11 +1579,11 @@ function CRunBluewing_Client() {
 			this.threadData.recvSubChannel == subchannel);
 	};
 	this.Condition_IsJoinedToChannel = function (channelName) {
-		return this.globals.client.isConnected && this.globals.client.me.name != "" &&
+		return this.globals.client.isConnectApproved && this.globals.client.me.name != "" &&
 			this.globals.client.channelList.findIndex(function (e) { return e.name == channelName; }) !== -1;
 	};
 	this.Condition_IsPeerOnChannel_Name = function (peerName, channelName) {
-		if (!this.globals.client.isConnected || this.globals.client.me.name == "") {
+		if (!this.globals.client.isConnectApproved || this.globals.client.me.name == "") {
 			return false;
 		}
 		const ch = channelName == "" ? this.selChannel : this.globals.client.channelList.find(function (e) { return e.name == channelName; });
@@ -1593,7 +1593,7 @@ function CRunBluewing_Client() {
 		return ch.peerList.find(function (e) { return e.name == peerName; }) != null;
 	};
 	this.Condition_IsPeerOnChannel_ID = function (peerID, channelName) {
-		if (!this.globals.client.isConnected || this.globals.client.me.name == "" || (~~peerID !== peerID)) {
+		if (!this.globals.client.isConnectApproved || this.globals.client.me.name == "" || (~~peerID !== peerID)) {
 			return false;
 		}
 		const ch = channelName == "" ? this.selChannel : this.globals.client.channelList.find(function (e) { return e.name == channelName; });
@@ -1853,7 +1853,10 @@ function CRunBluewing_Client() {
 		return this.globals.client.welcomeMessage;
 	};
 	this.Expression_ReceivedBinaryAddress = function () {
-		return URL.createObjectURL(new Blob(this.threadData.recvMsg));
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
+			return "";
+		}
+		return URL.createObjectURL(new Blob( [ this.threadData.recvMsg ] ));
 	};
 	this.Expression_CursorASCIIStrByte = function () {
 		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
@@ -3013,7 +3016,7 @@ function BluewingClient_EventToRun(ids, data) {
 	this.error = data.errorStr || "";
 	this.denyReason = data.denyReason || "";
 	this.channelListing = data.channelListing || null;
-	this.deniedClientName = data.deniedClientName || ""; // Note: no current way to read the denied name in ext version 103
+	this.deniedClientName = data.deniedClientName || ""; // Note: no current way to read the denied name in ext version 104
 	this.deniedChannelName = data.deniedChannelName || "";
 	if (data.deniedChannelName != null && this.channel != null) {
 		throw "Invalid use of deniedChannelName with channel.";
@@ -3168,7 +3171,8 @@ function Bluewing_Client(blue) {
 
 	darkEdif.finalizer.register(this, "Bluewing_Client itself!");
 	// Statuses of the socket
-	this.isConnected = false;
+	this.isConnected = false; // connected on websocket
+	this.isConnectApproved = false; // connect OK approved by Lacewing
 	this.isConnecting = false;
 	this.isClosed = true;
 	// In case server is slow to close, this indicates the Bluewing_Client is dead and should be GC'd ASAP.
@@ -3223,16 +3227,22 @@ function Bluewing_Client(blue) {
 
 		// this.willReconnect can be assumed false.
 
-		// If isConnected, we've exchanged a Lacewing handshake: so we use 'on disconnect'.
+		// If isConnectApproved, we've exchanged a Lacewing handshake: so we use 'on disconnect'.
 		// Otherwise we use 'on connection denied'.
-		if (this.isConnected && this.ext != null) {
-			this.ext.LacewingCall_OnDisconnect(this);
+		if (this.ext != null) {
+			// connection approved, so disconnect
+			if (this.isConnectApproved) {
+				this.ext.LacewingCall_OnDisconnect(this);
+			}
+			// Edge case where we get WebSocket OK, but no Lacewing response
+			else if (this.isConnected) {
+				this.ext.LacewingCall_OnConnectDenied(this, "Got a WebSocket connection, but couldn't use Bluewing.");	
+			}
+			//else we never connected anyway; but a connection failed error should've been made in handleEvent() already
+			//	this.ext.LacewingCall_OnError(this, "Failed to connect to WebSocket server.");
 		}
-		//else {
-		//	this.ext.LacewingCall_OnConnectDenied(this, "Never made a proper connection.");
-		// }
 
-		this.isConnected = this.isConnecting = false;
+		this.isConnected = this.isConnectApproved = this.isConnecting = false;
 		this.isClosed = true;
 		this.me.name = "";
 		this.me.previousName = "";
@@ -3345,6 +3355,11 @@ function Bluewing_Client(blue) {
 		///		Protocol is indicated by the room aka namespace. </param>
 		/// <param name="rawMsg" type="ArrayBuffer"> The full message, including all headers. </param>
 		const fullMsg = new DataView(rawMsg);
+		
+		if (fullMsg.byteLength < 1) {
+			this.CreateError("Received a useless zero-length message. Server may be broken.");
+			return;
+		}
 
 		const firstByte = fullMsg.getUint8(0);
 		const type = firstByte >> 4;
@@ -3370,6 +3385,11 @@ function Bluewing_Client(blue) {
 		switch (type) {
 			// User response.
 			case 0: {
+				if (fullMsg.byteLength < 2) {
+					this.CreateError("Received a message of type Response, but the size " +
+						"of response was unexpected. Expected 2+, got " + fullMsg.byteLength);
+					return;
+				}
 				const responseType = fullMsg.getUint8(1);
 				const success = fullMsg.getUint8(2) != 0;
 				switch (responseType) {
@@ -3388,6 +3408,7 @@ function Bluewing_Client(blue) {
 							// Might as well send implementation without the server asking; impl was added to Blue Server
 							// before WebSocket was
 							this.comm.send(this.impl);
+							this.isConnectApproved = true;
 
 							// There is no UDP, unless we're going to drag in WebRTC, or make a fake UDP like Socket.IO does.
 							// The fake UDP basically makes a no-queue message system, where if something is being queued already,
@@ -3790,7 +3811,8 @@ function Bluewing_Client(blue) {
 				this.isClosed = true;
 				return;
 			}
-		} else { // No explicit port, guess from this page's protocol
+		}
+		else { // No explicit port, guess from this page's protocol
 			this.serverAddr = addr;
 			this.serverPort = location.protocol === 'https:' ? 443 : 80;
 		}
@@ -3861,7 +3883,7 @@ function Bluewing_Client(blue) {
 		/// <summary> Sets name. Called internally. </summary>
 		/// <param name="newName" type="String"> The new name to set to.
 		///		Must not be longer than 254 chars. </param>
-		if (!this.isConnected) {
+		if (!this.isConnectApproved) {
 			this.CreateError("Not connected, cannot set name");
 			return;
 		}
