@@ -15,7 +15,7 @@
  * @license MIT
  */
 if (!String.prototype.replaceAll) {
-	String.prototype.replaceAll = function(str, newStr){
+	String.prototype.replaceAll = function(str, newStr) {
 		// If a regex pattern
 		if (Object.prototype.toString.call(str).toLowerCase() === '[object regexp]') {
 			return this.replace(str, newStr);
@@ -57,8 +57,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 
 	// minifier will rename notMinified, so we can detect minifier simply
 	this.minified = false;
-	if (!this.hasOwnProperty('minified'))
+	if (!this.hasOwnProperty('minified')) {
 		this['minified'] = true;
+	}
 
 	this.consoleLog = function (ext, str) {
 		// Log if DebugMode not defined, or true
@@ -74,14 +75,15 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 			console.log(extName + " - " + str);
 		}
 	};
-    // UWP does not have FinalizationRegistry
+	// UWP does not have FinalizationRegistry
 	this.finalizer = { register: function(desc) { } };
 
 	this['Properties'] = function(ext, edPtrFile, extVersion) {
 		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
 		// eHeader is 20 bytes, so this should be 20+ bytes.
-		if (ext.ho.privateData < 20)
+		if (ext.ho.privateData < 20) {
 			throw "Not smart properties - eHeader missing?";
+		}
 		// DarkEdif SDK header read:
 		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
 		// then checkbox list, one bit per checkbox, including non-checkbox properties
@@ -90,8 +92,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 		// size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
 
 		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 4 + 2 + 2 + 4));
-		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1')
+		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1') {
 			throw "Did you read this.ho.privateData bytes?";
+		}
 
 		let headerDV = new DataView(header.buffer);
 		this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
@@ -108,20 +111,23 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 				return chkIDOrName;
 			}
 			const p = that.props.find(function(p) { return p.propName == chkIDOrName; });
-			if (p == null)
+			if (p == null) {
 				throw "Invalid property name \"" + chkIDOrName + "\"";
+			}
 			return p.index;
 		};
 		this['IsPropChecked'] = function(chkIDOrName) {
 			const idx = GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return 0;
+			}
 			return (that.chkboxes[Math.floor(idx / 8)] & (1 << idx % 8)) != 0;
 		};
 		this['GetPropertyStr'] = function(chkIDOrName) {
 			const idx = GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return "";
+			}
 			const prop = that.props[idx];
 			const textPropIDs = [
 				5, // PROPTYPE_EDIT_STRING:
@@ -139,12 +145,13 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 					t = t.replaceAll('\r', ''); // CRLF to LF
 				return t;
 			}
-			throw "Property " + prop.propName  + " is not textual.";
+			throw "Property " + prop.propName + " is not textual.";
 		};
 		this['GetPropertyNum'] = function(chkIDOrName) {
 			const idx = that.GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return 0.0;
+			}
 			const prop = that.props[idx];
 			const numPropIDsInteger = [
 				6, // PROPTYPE_EDIT_NUMBER
@@ -163,7 +170,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 			if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
 				return new DataView(prop.propData).getFloat32(0, true);
 			}
-			throw "Property " + prop.propName  + " is not numeric.";
+			throw "Property " + prop.propName + " is not numeric.";
 		};
 
 		this.props = [];
@@ -264,8 +271,7 @@ function CRunDarkEdif_Template() {
 	];
 }
 //
-CRunDarkEdif_Template.prototype =
-{
+CRunDarkEdif_Template.prototype = {
 	/// <summary> Prototype definition </summary>
 	/// <description> This class is a sub-class of CRunExtension, by the mean of the
 	/// CServices.extend function which copies all the properties of
@@ -273,15 +279,13 @@ CRunDarkEdif_Template.prototype =
 	/// As all the necessary functions are defined in the parent class,
 	/// you only need to keep the ones that you actually need in your code. </description>
 
-	getNumberOfConditions: function()
-	{
+	getNumberOfConditions: function() {
 		/// <summary> Returns the number of conditions </summary>
 		/// <returns type="Number" isInteger="true"> Warning, if this number is not correct, the application _will_ crash</returns>
 		return 1; // $conditionFuncs not available yet
 	},
 
-	createRunObject: function(file, cob, version)
-	{
+	createRunObject: function(file, cob, version) {
 		/// <summary> Creation of the Fusion extension. </summary>
 		/// <param name="file"> A CFile object, pointing to the object's data zone </param>
 		/// <param name="cob"> A CCreateObjectInfo containing infos about the created object</param>
@@ -294,8 +298,9 @@ CRunDarkEdif_Template.prototype =
 		// of the C code).
 		// Please report to the documentation for more information on the CFile object
 
-		if (this.ho == null)
+		if (this.ho == null) {
 			throw "HeaderObject not defined when needed to be.";
+		}
 
 		// DarkEdif properties are accessible as on other platforms: IsPropChecked(), GetPropertyStr(), GetPropertyNum()
 		let props = new darkEdif['Properties'](this, file, version);
@@ -307,8 +312,7 @@ CRunDarkEdif_Template.prototype =
 		return false;
 	},
 
-	handleRunObject: function()
-	{
+	handleRunObject: function() {
 		/// <summary> This function is called at every loop of the game. You have to perform
 		/// in it all the tasks necessary for your object to function. </summary>
 		/// <returns type="Number"> One of two options:
@@ -318,8 +322,7 @@ CRunDarkEdif_Template.prototype =
 		return CRunExtension.REFLAG_ONESHOT;
 	},
 
-	condition: function(num, cnd)
-	{
+	condition: function(num, cnd) {
 		/// <summary> Called when a condition of this object is tested. </summary>
 		/// <param name="num" type="Number" integer="true"> The number of the condition; 0+. </param>
 		/// <param name="cnd" type="CCndExtension"> a CCndExtension object, allowing you to retreive the parameters
@@ -327,19 +330,20 @@ CRunDarkEdif_Template.prototype =
 		/// <returns type="Boolean"> True if the condition is currently true. </returns>
 
 		const func = this.$conditionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised condition ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
+		}
 
 		// Note: New Direction parameter is not supported by this, add a workaround based on condition and parameter index;
 		// SDL Joystick's source has an example.
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = cnd.getParamExpString(this.rh, i);
+		}
 
 		return func.apply(this, args);
 	},
-	action: function(num, act)
-	{
+	action: function(num, act) {
 		/// <summary> Called when an action of this object is executed </summary>
 		/// <param name="num" type="Number"> The ID/number of the action, as defined by
 		///		its array index. </param>
@@ -347,19 +351,20 @@ CRunDarkEdif_Template.prototype =
 		///		retrieve the parameters of the action </param>
 
 		const func = this.$actionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised action ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
+		}
 
 		// Note: New Direction parameter is not supported by this, add a workaround based on action and parameter index;
 		// SDL Joystick's source has an example.
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = act.getParamExpression(this.rh, i);
+		}
 
 		func.apply(this, args);
 	},
-	expression: function(num)
-	{
+	expression: function(num) {
 		/// <summary> Called during the evaluation of an expression. </summary>
 		/// <param name="num" type="Number"> The ID/number of the expression. </param>
 		/// <returns> The result of the calculation, a number or a string </returns>
@@ -369,12 +374,14 @@ CRunDarkEdif_Template.prototype =
 		// called. The runtime will crash if you miss parameters.
 
 		const func = this.$expressionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised expression ID " + (~~num) + " passed to " + this['ExtensionName'] + ".";
+		}
 
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = this.ho.getExpParam();
+		}
 
 		return func.apply(this, args);
 	}

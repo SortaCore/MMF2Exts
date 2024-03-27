@@ -84,8 +84,9 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 
 	// minifier will rename notMinified, so we can detect minifier simply
 	this.minified = false;
-	if (!this.hasOwnProperty('minified'))
+	if (!this.hasOwnProperty('minified')) {
 		this['minified'] = true;
+	}
 
 	this.consoleLog = function (ext, str) {
 		// Log if DebugMode not defined, or true
@@ -119,8 +120,9 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 	this['Properties'] = function(ext, edPtrFile, extVersion) {
 		// DarkEdif SDK stores offset of DarkEdif props away from start of EDITDATA inside private data.
 		// eHeader is 20 bytes, so this should be 20+ bytes.
-		if (ext.ho.privateData < 20)
+		if (ext.ho.privateData < 20) {
 			throw "Not smart properties - eHeader missing?";
+		}
 		// DarkEdif SDK header read:
 		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
 		// then checkbox list, one bit per checkbox, including non-checkbox properties
@@ -129,8 +131,9 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 		// size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
 
 		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 4 + 2 + 2 + 4));
-		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1')
+		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1') {
 			throw "Did you read this.ho.privateData bytes?";
+		}
 
 		let headerDV = new DataView(header.buffer);
 		this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
@@ -147,20 +150,23 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 				return chkIDOrName;
 			}
 			const p = that.props.find(function(p) { return p.propName == chkIDOrName; });
-			if (p == null)
+			if (p == null) {
 				throw "Invalid property name \"" + chkIDOrName + "\"";
+			}
 			return p.index;
 		};
 		this['IsPropChecked'] = function(chkIDOrName) {
 			const idx = GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return 0;
+			}
 			return (that.chkboxes[Math.floor(idx / 8)] & (1 << idx % 8)) != 0;
 		};
 		this['GetPropertyStr'] = function(chkIDOrName) {
 			const idx = GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return "";
+			}
 			const prop = that.props[idx];
 			const textPropIDs = [
 				5, // PROPTYPE_EDIT_STRING:
@@ -174,16 +180,18 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 			];
 			if (textPropIDs.indexOf(prop.propTypeID) != -1) {
 				let t = that.textDecoder.decode(prop.propData);
-				if (prop.propTypeID == 22) //PROPTYPE_EDIT_MULTILINE
+				if (prop.propTypeID == 22) { //PROPTYPE_EDIT_MULTILINE
 					t = t.replaceAll('\r', ''); // CRLF to LF
+				}
 				return t;
 			}
-			throw "Property " + prop.propName  + " is not textual.";
+			throw "Property " + prop.propName + " is not textual.";
 		};
 		this['GetPropertyNum'] = function(chkIDOrName) {
 			const idx = that.GetPropertyIndex(chkIDOrName);
-			if (idx == -1)
+			if (idx == -1) {
 				return 0.0;
+			}
 			const prop = that.props[idx];
 			const numPropIDsInteger = [
 				6, // PROPTYPE_EDIT_NUMBER
@@ -202,7 +210,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 			if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
 				return new DataView(prop.propData).getFloat32(0, true);
 			}
-			throw "Property " + prop.propName  + " is not numeric.";
+			throw "Property " + prop.propName + " is not numeric.";
 		};
 
 		this.props = [];
@@ -301,12 +309,14 @@ function CRunBluewing_Client() {
 	// this.intlSegmenter['example']() not this.intlSegmenter.example()
 
 	// Intl.Segmenter - everywhere except Firefox
-	if (globalThis['Intl'] != null && globalThis['Intl']['Segmenter'] != null)
+	if (globalThis['Intl'] != null && globalThis['Intl']['Segmenter'] != null) {
 		this.intlSegmenter = new globalThis['Intl']['Segmenter']();
+	}
 	// Alternative library: https://github.com/orling/grapheme-splitter/blob/master/index.js
 	// We don't load this ourselves; we'll let the user include it manually if they need it
-	else if (globalThis['GraphemeSplitter'] != null)
+	else if (globalThis['GraphemeSplitter'] != null) {
 		this.graphemeSplitter = new globalThis['GraphemeSplitter']();
+	}
 
 	// we don't have these yet, because we don't have edPtr and its Fusion object property data, until CreateRunObject is called
 	this.isGlobal = null;
@@ -392,10 +402,12 @@ function CRunBluewing_Client() {
 	this.CreateError = function (error) {
 		/// <summary> Generates an error event with the given text. </summary>
 		/// <param name="err" type="String" mayBeNull="false"> Error text. String only, cannot be null. </param>
-		if (darkEdif.getCurrentFusionEventNumber(this) != -1)
+		if (darkEdif.getCurrentFusionEventNumber(this) != -1) {
 			error = "[Fusion event #" + darkEdif.getCurrentFusionEventNumber(this) + "] " + error;
-		else
+		}
+		else {
 			error = "[handler] " + error;
+		}
 
 		this.CreateEvent([0], { errorStr: error });
 	};
@@ -479,8 +491,9 @@ function CRunBluewing_Client() {
 		/// <param name="variant" type="Number" mayBeNull="false"> Variant of msg, 0-16, but
 		///		only 0-2 are used in Lacewing Relay protocol. </param>
 		const intArr = this.$GetEventNumsForMsg(blasted, variant, 52, 49, 39, 40, 41, 36, 37, 38);
-		if (intArr == null)
+		if (intArr == null) {
 			return;
+		}
 
 		this.CreateEvent(intArr, { channel: viaChannel, peer: fromPeer, msg: msg, subChannel: subChannel });
 	};
@@ -501,8 +514,9 @@ function CRunBluewing_Client() {
 		/// <param name="variant" type="Number" mayBeNull="false"> Variant of msg, 0-16, but
 		///		only 0-2 are used in Lacewing Relay protocol. </param>
 		const intArr = this.$GetEventNumsForMsg(blasted, variant, 51, 48, 22, 23, 35, 9, 16, 33);
-		if (intArr == null)
+		if (intArr == null) {
 			return;
+		}
 
 		this.CreateEvent(intArr, { channel: onChannel, peer: fromPeer, msg: msg, subChannel: subChannel });
 	};
@@ -520,8 +534,9 @@ function CRunBluewing_Client() {
 		/// <param name="variant" type="Number" mayBeNull="false"> Variant of msg, 0-16, but
 		///		only 0-2 are used in Lacewing Relay protocol. </param>
 		const intArr = this.$GetEventNumsForMsg(blasted, variant, 50, 47, 20, 21, 34, 8, 15, 32);
-		if (intArr == null)
+		if (intArr == null) {
 			return;
+		}
 
 		this.CreateEvent(intArr, { msg: msg, subChannel: subChannel });
 	};
@@ -541,8 +556,9 @@ function CRunBluewing_Client() {
 		/// <param name="variant" type="Number" mayBeNull="false"> Variant of msg, 0-16, but
 		///		only 0-2 are used in Lacewing Relay protocol. </param>
 		const intArr = this.$GetEventNumsForMsg(blasted, variant, 72, 68, 69, 70, 71, 65, 66, 67);
-		if (intArr == null)
+		if (intArr == null) {
 			return;
+		}
 
 		this.CreateEvent(intArr, { msg: msg, subChannel: subChannel });
 	};
@@ -583,8 +599,9 @@ function CRunBluewing_Client() {
 		this.CreateError(die);
 	};
 	this.Action_LeaveChannel = function () {
-		if (this.selChannel == null || this.selChannel.isClosed)
+		if (this.selChannel == null || this.selChannel.isClosed) {
 			return;
+		}
 		this.selChannel.LeaveChannel();
 	};
 	this.Action_SendTextToServer = function (subChannel, textToSend) {
@@ -593,8 +610,9 @@ function CRunBluewing_Client() {
 		/// <param name="textToSend" type="String"> Text to send. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Text to Channel") ||
-			!this.Check_TextMsgValue(textToSend, "Send Text to Channel"))
+			!this.Check_TextMsgValue(textToSend, "Send Text to Channel")) {
 			return;
+		}
 		this.globals.client.SendMsg(subChannel, this.$StringToArrayBuffer(textToSend), 0);
 	};
 	this.Action_SendTextToChannel = function (subChannel, textToSend) {
@@ -604,8 +622,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Text to Channel") ||
 			!this.Check_TextMsgValue(textToSend, "Send Text to Channel") ||
-			!this.Check_ChannelSelection("Send Text to Channel"))
+			!this.Check_ChannelSelection("Send Text to Channel")) {
 			return;
+		}
 		this.selChannel.SendMsg(subChannel, this.$StringToArrayBuffer(textToSend), 0);
 	};
 	this.Action_SendTextToPeer = function (subChannel, textToSend) {
@@ -615,8 +634,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Text to Peer") ||
 			!this.Check_TextMsgValue(textToSend, "Send Text to Peer") ||
-			!this.Check_PeerSelection("Send Text to Peer"))
+			!this.Check_PeerSelection("Send Text to Peer")) {
 			return;
+		}
 		this.selPeer.SendMsg(subChannel, this.$StringToArrayBuffer(textToSend), 0);
 	};
 	this.Action_SendNumberToServer = function (subChannel, numToSend) {
@@ -626,8 +646,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		numToSend = ~~numToSend;
 		if (!this.Check_Subchannel(subChannel, "Send Number to Server") ||
-			!this.Check_NumMsgValue(numToSend, "Send Number to Server"))
+			!this.Check_NumMsgValue(numToSend, "Send Number to Server")) {
 			return;
+		}
 		this.globals.client.SendMsg(subChannel, this.$NumberToArrayBuffer(numToSend), 1);
 	};
 	this.Action_SendNumberToChannel = function (subChannel, numToSend) {
@@ -638,8 +659,9 @@ function CRunBluewing_Client() {
 		numToSend = ~~numToSend;
 		if (!this.Check_Subchannel(subChannel, "Send Number to Channel") ||
 			!this.Check_NumMsgValue(numToSend, "Send Number to Channel") ||
-			!this.Check_ChannelSelection("Send Number to Channel"))
+			!this.Check_ChannelSelection("Send Number to Channel")) {
 			return;
+		}
 		this.selChannel.SendMsg(subChannel, this.$NumberToArrayBuffer(numToSend), 1);
 	};
 	this.Action_SendNumberToPeer = function (subChannel, numToSend) {
@@ -650,8 +672,9 @@ function CRunBluewing_Client() {
 		numToSend = ~~numToSend;
 		if (!this.Check_Subchannel(subChannel, "Send Number to Peer") ||
 			!this.Check_NumMsgValue(numToSend, "Send Number to Peer") ||
-			!this.Check_PeerSelection("Send Number to Peer"))
+			!this.Check_PeerSelection("Send Number to Peer")) {
 			return;
+		}
 		this.selPeer.SendMsg(subChannel, this.$NumberToArrayBuffer(numToSend), 1);
 	};
 	this.Action_BlastTextToServer = function (subChannel, textToBlast) {
@@ -660,8 +683,9 @@ function CRunBluewing_Client() {
 		/// <param name="textToBlast" type="String"> Text to blast. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Server") ||
-			!this.Check_TextMsgValue(textToBlast, "Blast Text to Server"))
+			!this.Check_TextMsgValue(textToBlast, "Blast Text to Server")) {
 			return;
+		}
 		this.globals.client.BlastMsg(subChannel, this.$StringToArrayBuffer(textToBlast), 0);
 	};
 	this.Action_BlastTextToChannel = function (subChannel, textToBlast) {
@@ -671,8 +695,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Channel") ||
 			!this.Check_TextMsgValue(textToBlast, "Blast Text to Channel") ||
-			!this.Check_ChannelSelection("Blast Text to Channel"))
+			!this.Check_ChannelSelection("Blast Text to Channel")) {
 			return;
+		}
 		this.selChannel.BlastMsg(subChannel, this.$StringToArrayBuffer(textToBlast), 0);
 	};
 	this.Action_BlastTextToPeer = function (subChannel, textToBlast) {
@@ -682,8 +707,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Peer") ||
 			!this.Check_TextMsgValue(textToBlast, "Blast Text to Peer") ||
-			!this.Check_PeerSelection("Blast Text to Peer"))
+			!this.Check_PeerSelection("Blast Text to Peer")) {
 			return;
+		}
 		this.selPeer.BlastMsg(subChannel, this.$StringToArrayBuffer(textToBlast), 0);
 	};
 	this.Action_BlastNumberToServer = function (subChannel, numToBlast) {
@@ -693,9 +719,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		numToBlast = ~~numToBlast;
 		if (!this.Check_Subchannel(subChannel, "Blast Number to Server") ||
-			!this.Check_NumMsgValue(numToBlast, "Blast Number to Server"))
+			!this.Check_NumMsgValue(numToBlast, "Blast Number to Server")) {
 			return;
-
+		}
 		this.globals.client.BlastMsg(subChannel, this.$NumberToArrayBuffer(numToBlast), 1);
 	};
 	this.Action_BlastNumberToChannel = function (subChannel, numToBlast) {
@@ -706,9 +732,9 @@ function CRunBluewing_Client() {
 		numToBlast = ~~numToBlast;
 		if (!this.Check_Subchannel(subChannel, "Blast Number to Channel") ||
 			!this.Check_NumMsgValue(numToBlast, "Blast Number to Channel") ||
-			!this.Check_ChannelSelection("Blast Number to Channel"))
+			!this.Check_ChannelSelection("Blast Number to Channel")) {
 			return;
-
+		}
 		this.selChannel.BlastMsg(subChannel, this.$NumberToArrayBuffer(numToBlast), 1);
 	};
 	this.Action_BlastNumberToPeer = function (subChannel, numToBlast) {
@@ -719,9 +745,9 @@ function CRunBluewing_Client() {
 		numToBlast = ~~numToBlast;
 		if (!this.Check_Subchannel(subChannel, "Blast Number to Peer") ||
 			!this.Check_NumMsgValue(numToBlast, "Blast Number to Peer") ||
-			!this.Check_PeerSelection("Blast Number to Peer"))
+			!this.Check_PeerSelection("Blast Number to Peer")) {
 			return;
-
+		}
 		this.selPeer.BlastMsg(subChannel, this.$NumberToArrayBuffer(numToBlast), 1);
 	};
 	this.Action_SelectChannelByName = function (channelName) {
@@ -760,10 +786,12 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_SelectPeerOnChannelByName = function (peerName) {
-		if (peerName == null || peerName == "")
+		if (peerName == null || peerName == "") {
 			this.CreateError("Error: Select Peer On Channel By Name was called with a null parameter/blank name");
-		else if (this.selChannel == null)
+		}
+		else if (this.selChannel == null) {
 			this.CreateError("Error: Select Peer On Channel By Name was called without a channel being selected");
+		}
 		else {
 			const peerNameSimplified = this.globals.client.SimplifyName(peerName);
 			const peer = this.selChannel.peerList.find(function(p) { return p.nameSimplified == peerNameSimplified; });
@@ -778,12 +806,15 @@ function CRunBluewing_Client() {
 	};
 	this.Action_SelectPeerOnChannelByID = function (peerID) {
 		peerID = ~~peerID;
-		if (peerID < 0 || peerID > 65535 || peerID == null)
+		if (peerID < 0 || peerID > 65535 || peerID == null) {
 			this.CreateError("Could not select peer on channel, ID is not within range 0-65535");
-		else if (this.selChannel == null)
+		}
+		else if (this.selChannel == null) {
 			this.CreateError("Error: Select Peer On Channel By ID was called without a channel being selected");
-		else if (this.selChannel.isClosed)
+		}
+		else if (this.selChannel.isClosed) {
 			this.CreateError("Error: Select Peer On Channel By ID was called with a closed channel");
+		}
 		else {
 			const peer = this.selChannel.getPeer(peerID);
 			if (peer == null || peer.isClosed) {
@@ -841,8 +872,9 @@ function CRunBluewing_Client() {
 		/// <param name="subChannel"> An 8-bit unsigned number, 0-255. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Binary to Server") ||
-			!this.Check_UnlockedSendMsg("Send Binary to Server"))
+			!this.Check_UnlockedSendMsg("Send Binary to Server")) {
 			return;
+		}
 		this.globals.client.SendMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -852,8 +884,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Binary to Channel") ||
 			!this.Check_ChannelSelection("Send Binary to Channel") ||
-			!this.Check_UnlockedSendMsg("Send Binary to Channel"))
+			!this.Check_UnlockedSendMsg("Send Binary to Channel")) {
 			return;
+		}
 		this.selChannel.SendMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -863,8 +896,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Binary to Peer") ||
 			!this.Check_PeerSelection("Send Binary to Peer") ||
-			!this.Check_UnlockedSendMsg("Send Binary to Peer"))
+			!this.Check_UnlockedSendMsg("Send Binary to Peer")) {
 			return;
+		}
 		this.selPeer.SendMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -873,8 +907,9 @@ function CRunBluewing_Client() {
 		/// <param name="subChannel" type="Number"> An 8-bit unsigned number, 0-255. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Server") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Server"))
+			!this.Check_UnlockedSendMsg("Blast Binary to Server")) {
 			return;
+		}
 		this.globals.client.BlastMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -884,8 +919,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Channel") ||
 			!this.Check_ChannelSelection("Blast Binary to Channel") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Server"))
+			!this.Check_UnlockedSendMsg("Blast Binary to Server")) {
 			return;
+		}
 		this.selChannel.BlastMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -895,8 +931,9 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Peer") ||
 			!this.Check_PeerSelection("Blast Binary to Peer") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Peer"))
+			!this.Check_UnlockedSendMsg("Blast Binary to Peer")) {
 			return;
+		}
 		this.selPeer.BlastMsg(subChannel, this.globals.sendMsg, 2);
 		this.$ClearBinaryIfSetTo();
 	};
@@ -948,10 +985,12 @@ function CRunBluewing_Client() {
 		const newMsg = new Uint8Array(this.globals.sendMsg.byteLength + 1);
 		newMsg.set(this.globals.sendMsg, 0);
 		const view = new DataView(newMsg.buffer);
-		if (b < 0)
+		if (b < 0) {
 			view.setInt8(this.globals.sendMsg.byteLength, b);
-		else
+		}
+		else {
 			view.setUint8(this.globals.sendMsg.byteLength, b);
+		}
 		this.globals.sendMsg = newMsg;
 	};
 	this.Action_AddShort = function (theShort) {
@@ -972,10 +1011,12 @@ function CRunBluewing_Client() {
 		const newMsg = new Uint8Array(this.globals.sendMsg.byteLength + 2);
 		newMsg.set(this.globals.sendMsg, 0);
 		const view = new DataView(newMsg.buffer);
-		if (s < 0)
+		if (s < 0) {
 			view.setInt16(this.globals.sendMsg.byteLength, s, true);
-		else
+		}
+		else {
 			view.setUint16(this.globals.sendMsg.byteLength, s, true);
+		}
 		this.globals.sendMsg = newMsg;
 	};
 	this.Action_AddInt = function (theInt) {
@@ -997,10 +1038,12 @@ function CRunBluewing_Client() {
 		const newMsg = new Uint8Array(this.globals.sendMsg.byteLength + 4);
 		newMsg.set(this.globals.sendMsg, 0);
 		const view = new DataView(newMsg.buffer);
-		if (i < 0)
+		if (i < 0) {
 			view.setInt32(this.globals.sendMsg.byteLength, i, true);
-		else
+		}
+		else {
 			view.setUint32(this.globals.sendMsg.byteLength, i, true);
+		}	
 		this.globals.sendMsg = newMsg;
 	};
 	this.Action_AddFloat = function (theFloat) {
@@ -1056,8 +1099,9 @@ function CRunBluewing_Client() {
 		}
 
 		size = ~~size;
-		if (size == 0)
+		if (size == 0) {
 			return;
+		}
 
 		if (size < 0 || size > 0xFFFFFFFE) {
 			this.CreateError("Add binary failed: Size < 0");
@@ -1078,7 +1122,8 @@ function CRunBluewing_Client() {
 				newMsg.set(self.globals.sendMsg, 0);
 				newMsg.set(new Uint8Array(arrBuff, 0, size), self.globals.sendMsg.byteLength);
 				self.globals.sendMsg = newMsg;
-			} else {
+			}
+			else {
 				self.CreateError("Couldn't add binary; loading from \"" + address + "\" failed with code " + this.status);
 			}
 		};
@@ -1095,56 +1140,73 @@ function CRunBluewing_Client() {
 	// There's a FileReader/FileWriter API, but only Chrome and some Opera version
 	// support it. W3C have discontinued the spec and said no one should use it... so yeah.
 	this.Action_SaveReceivedBinaryToFile = function (position, size, fileName) {
-		if (position < 0)
+		if (position < 0) {
 			this.CreateError("Cannot save received binary; Position less than 0");
-		else if (size <= 0)
+		}
+		else if (size <= 0) {
 			this.CreateError("Cannot save received binary; Size equal or less than 0");
-		else if (fileName.constructor.name != "String" || !fileName || fileName[0] == '\0')
+		}
+		else if (fileName.constructor.name != "String" || !fileName || fileName[0] == '\0') {
 			this.CreateError("Cannot save received binary; filename is invalid");
-		else if (this.threadData.recvMsg.byteLength - size <= 0)
+		}
+		else if (this.threadData.recvMsg.byteLength - size <= 0) {
 			this.CreateError("Cannot save received binary; Message is too small");
-		else
+		}
+		else {
 			this.CreateError("File saving is not available in HTML5. Only Chrome and some Opera versions support " +
 				"it, and they only supports a spec the W3C standard cancelled development of");
+		}
 	};
 	this.Action_AppendReceivedBinaryToFile = function (position, size, fileName) {
-		if (position < 0)
+		if (position < 0) {
 			this.CreateError("Cannot append received binary; Position less than 0");
-		else if (size <= 0)
+		}
+		else if (size <= 0) {
 			this.CreateError("Cannot append received binary; Size equal or less than 0");
-		else if (fileName.constructor.name != "String" || fileName == "")
+		}
+		else if (fileName.constructor.name != "String" || fileName == "") {
 			this.CreateError("Cannot append received binary; filename is invalid");
-		else if (this.threadData.recvMsg.size - size <= 0)
+		}
+		else if (this.threadData.recvMsg.size - size <= 0) {
 			this.CreateError("Cannot append received binary; Message is too small");
-		else
+		}
+		else {
 			this.CreateError("File loading/saving by path is not available in HTML5. Only Chrome " +
 				"and some Opera versions support it, and they only supports a spec the W3C standard " +
 				"cancelled development of");
+		}
 	};
 	this.Action_AddFileToBinary = function (fileName) {
-		if (fileName.constructor.name != "String" || fileName == "")
+		if (fileName.constructor.name != "String" || fileName == "") {
 			this.CreateError("Cannot add file to send binary; filename is invalid");
-		else
+		}
+		else {
 			this.CreateError("File loading/saving by path is not available in HTML5. Only Chrome " +
 				"and some Opera versions support it, and they only supports a spec the W3C standard " +
 				"cancelled development of");
+		}
 	};
 	this.Action_SelectChannelMaster = function () {
-		if (this.selChannel == null)
+		if (this.selChannel == null) {
 			this.CreateError("Could not select channel master: No channel selected");
+		}
 		else {
 			const stored = this.selPeer;
-			if (this.selChannel.master)
+			if (this.selChannel.master) {
 				this.selPeer = this.selChannel.master;
-			else // Restore if no channel master found
+			}
+			else { // Restore if no channel master found
 				this.selPeer = stored;
+			}
 		}
 	};
 	this.Action_JoinChannel = function (channelName, hidden, closeAutomatically) {
-		if (channelName == null || channelName.constructor.name != "String" || channelName == "")
+		if (channelName == null || channelName.constructor.name != "String" || channelName == "") {
 			this.CreateError("Cannot join channel: invalid channel name supplied");
-		else
+		}
+		else {
 			this.globals.client.JoinChannel(channelName, hidden != 0, closeAutomatically != 0);
+		}
 	};
 	this.Action_CompressSendBinary = function () {
 		// plain = Array.<number> or Uint8Array
@@ -1186,8 +1248,9 @@ function CRunBluewing_Client() {
 		this.threadData.recvMsg.cursorIndex = newPos;
 	};
 	this.Action_LoopListedChannelsWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null)
+		if (loopName.constructor.name != 'String' || loopName == null) {
 			throw "Loop name must be non-null string.";
+		}
 		if (loopName == "") {
 			this.CreateError("Cannot loop listed channels: invalid loop name \"\" supplied.");
 			return;
@@ -1208,8 +1271,9 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_LoopClientChannelsWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null)
+		if (loopName.constructor.name != 'String' || loopName == null) {
 			throw "Loop name must be non-null string.";
+		}
 		if (loopName == "") {
 			this.CreateError("Cannot loop joined channels: invalid loop name \"\" supplied.");
 			return;
@@ -1232,8 +1296,9 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_LoopPeersOnChannelWithLoopName = function (loopName) {
-		if (loopName.constructor.name != 'String' || loopName == null)
+		if (loopName.constructor.name != 'String' || loopName == null) {
 			throw "Loop name must be non-null string.";
+		}
 		if (loopName == "") {
 			this.CreateError("Cannot loop peers on channel: invalid loop name \"\" supplied.");
 			return;
@@ -1260,13 +1325,16 @@ function CRunBluewing_Client() {
 		this.loopName = origLoopName;
 	};
 	this.Action_Connect = function (serverAddr) {
-		if (serverAddr.constructor.name != 'String' || serverAddr == null)
+		if (serverAddr.constructor.name != 'String' || serverAddr == null) {
 			throw "Server address must be non-null string.";
+		}
 
-		if (serverAddr == "")
+		if (serverAddr == "") {
 			this.CreateError("Can't connect to a blank server");
-		//else if (typeof io == 'undefined')
+		}
+		//else if (typeof io == 'undefined') {
 		//	this.connectAddressGiven = serverAddr;
+		// }
 		else {
 			this.globals.client.Connect(serverAddr);
 
@@ -1293,8 +1361,9 @@ function CRunBluewing_Client() {
 		this.globals.sendMsg = newArr;
 	};
 	this.Action_SetDestroySetting = function (enabled) {
-		if (enabled > 1 || enabled < 0)
+		if (enabled > 1 || enabled < 0) {
 			return this.CreateError("Invalid setting passed to SetDestroySetting, expecting 0 or 1.");
+		}
 		this.globals.fullDeleteEnabled = enabled != 0;
 	};
 
@@ -1304,7 +1373,9 @@ function CRunBluewing_Client() {
 
 	this.$LoopNameTest = function (curName, func) {
 		if (curName.constructor.name != 'String' || curName == null)
+		if ( curName == null || curName.constructor.name != 'String') {
 			throw func + " condition's parameter must be non-null string.";
+		}
 		return this.loopName == curName;
 	};
 	this.Condition_OnSentTextMessageFromServer = function (subchannel) {
@@ -1502,19 +1573,23 @@ function CRunBluewing_Client() {
 			this.globals.client.channelList.findIndex(function (e) { return e.name == channelName; }) !== -1;
 	};
 	this.Condition_IsPeerOnChannel_Name = function (peerName, channelName) {
-		if (!this.globals.client.isConnected || this.globals.client.me.name == "")
+		if (!this.globals.client.isConnected || this.globals.client.me.name == "") {
 			return false;
+		}
 		const ch = channelName == "" ? this.selChannel : this.globals.client.channelList.find(function (e) { return e.name == channelName; });
-		if (ch == null)
+		if (ch == null) {
 			return false;
+		}
 		return ch.peerList.find(function (e) { return e.name == peerName; }) != null;
 	};
 	this.Condition_IsPeerOnChannel_ID = function (peerID, channelName) {
-		if (!this.globals.client.isConnected || this.globals.client.me.name == "" || (~~peerID !== peerID))
+		if (!this.globals.client.isConnected || this.globals.client.me.name == "" || (~~peerID !== peerID)) {
 			return false;
+		}
 		const ch = channelName == "" ? this.selChannel : this.globals.client.channelList.find(function (e) { return e.name == channelName; });
-		if (ch == null)
+		if (ch == null) {
 			return false;
+		}
 		return ch.getPeer(peerID) != null;
 	};
 
@@ -1541,8 +1616,9 @@ function CRunBluewing_Client() {
 		return this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength == 0 ? "" : this.textDecoder.decode(this.threadData.recvMsg);
 	};
 	this.Expression_ReceivedInt = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength !== 4)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength !== 4) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength !== 4) {
 			this.CreateError("Received() was used on a message that is not a number message");
 			return 0;
@@ -1557,11 +1633,13 @@ function CRunBluewing_Client() {
 		return this.selPeer != null ? this.selPeer.id : -1;
 	};
 	this.Expression_Channel_Name = function () {
-		if (this.selChannel != null)
+		if (this.selChannel != null) {
 			return this.selChannel.name;
+		}
 		// If channel join was denied (condition 5), selChannel will be null, and the denied channel name will be in deniedChannelName
-		if (this.threadData.idList != null && this.threadData.idList[0] == 5)
+		if (this.threadData.idList != null && this.threadData.idList[0] == 5) {
 			return this.threadData.deniedChannelName;
+		}
 		return "";
 	};
 	this.Expression_Channel_PeerCount = function () {
@@ -1592,8 +1670,9 @@ function CRunBluewing_Client() {
 		return msg2.charAt(0);
 	};
 	this.Expression_UnsignedByte = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1606,8 +1685,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getUint8(index);
 	};
 	this.Expression_SignedByte = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1620,8 +1700,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getInt8(index);
 	};
 	this.Expression_UnsignedShort = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1634,8 +1715,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getUint16(index, true);
 	};
 	this.Expression_SignedShort = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1648,8 +1730,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getInt16(index, true);
 	};
 	this.Expression_UnsignedInteger = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1663,8 +1746,9 @@ function CRunBluewing_Client() {
 		return readFrom.getUint32(index, true);
 	};
 	this.Expression_SignedInteger = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0;
@@ -1677,8 +1761,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getInt32(index, true);
 	};
 	this.Expression_Float = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0.0;
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return 0.0;
@@ -1691,8 +1776,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getFloat32(index, true);
 	};
 	this.Expression_StringWithSize = function (index, stringSize) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return "";
@@ -1709,8 +1795,9 @@ function CRunBluewing_Client() {
 		return this.$GetRecvMsgSubString(index, stringSize, false);
 	};
 	this.Expression_String = function (index) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (index < 0) {
 			this.CreateError("Could not read from received binary, index less than 0");
 			return "";
@@ -1757,8 +1844,9 @@ function CRunBluewing_Client() {
 		return URL.createObjectURL(new Blob(this.threadData.recvMsg));
 	};
 	this.Expression_CursorASCIIStrByte = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 1) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return "";
@@ -1766,14 +1854,16 @@ function CRunBluewing_Client() {
 
 		const retByte = new Uint8Array(this.threadData.recvMsg)[this.threadData.recvMsg.cursorIndex++];
 		// Is ASCII: < 0x7f, is printable: > 0x1f, != 0x7f
-		if (retByte > 0x1f && retByte < 0x7f)
+		if (retByte > 0x1f && retByte < 0x7f) {
 			return String.fromCharCode(retByte);
+		}
 		this.CreateError("Could not read from received binary, character is not a printable ASCII character.");
 		return "";
 	};
 	this.Expression_CursorUnsignedByte = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 1) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1782,8 +1872,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getUint8(this.threadData.recvMsg.cursorIndex++);
 	};
 	this.Expression_CursorSignedByte = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 1) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1792,8 +1883,9 @@ function CRunBluewing_Client() {
 		return new DataView(this.threadData.recvMsg).getInt8(this.threadData.recvMsg.cursorIndex++);
 	};
 	this.Expression_CursorUnsignedShort = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 2) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1804,8 +1896,9 @@ function CRunBluewing_Client() {
 		return readFrom.getUint16(this.threadData.recvMsg.cursorIndex - 2, true);
 	};
 	this.Expression_CursorSignedShort = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 2) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1816,8 +1909,9 @@ function CRunBluewing_Client() {
 		return readFrom.getInt16(this.threadData.recvMsg.cursorIndex - 2, true);
 	};
 	this.Expression_CursorUnsignedInteger = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 4) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1828,8 +1922,9 @@ function CRunBluewing_Client() {
 		return readFrom.getUint32(this.threadData.recvMsg.cursorIndex - 4, true);
 	};
 	this.Expression_CursorSignedInteger = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 4) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1840,8 +1935,9 @@ function CRunBluewing_Client() {
 		return readFrom.getInt32(this.threadData.recvMsg.cursorIndex - 4, true);
 	};
 	this.Expression_CursorFloat = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return 0;
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 4) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return 0;
@@ -1852,8 +1948,9 @@ function CRunBluewing_Client() {
 		return readFrom.getFloat32(this.threadData.recvMsg.cursorIndex - 4, true);
 	};
 	this.Expression_CursorStringWithSize = function (stringSize) {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (stringSize < 0) {
 			this.CreateError("Could not read from received binary, string size to read less than 0");
 			return "";
@@ -1866,8 +1963,9 @@ function CRunBluewing_Client() {
 		return this.$GetRecvMsgSubString(this.threadData.recvMsg.cursorIndex, stringSize, true);
 	};
 	this.Expression_CursorString = function () {
-		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0)
+		if (this.threadData.recvMsg == null || this.threadData.recvMsg.byteLength === 0) {
 			return "";
+		}
 		if (this.threadData.recvMsg.byteLength - this.threadData.recvMsg.cursorIndex < 1) {
 			this.CreateError("Could not read from received binary, message is smaller than variable to be read. Check your index");
 			return "";
@@ -1890,16 +1988,19 @@ function CRunBluewing_Client() {
 	this.Expression_ConvToUTF8_GetVisibleCharCount = function (str) {
 		// We don't convert to UTF8, because JS is strictly UTF-16, and more importantly Unicode graphemes will be
 		// the same length regardless of underlying Unicode bit length, because they're the same display.
-		if (str.length == 0)
+		if (str.length == 0) {
 			return 0;
+		}
 
 		// Intl.Segmenter - everywhere except Firefox
-		if (this.intlSegmenter != null)
+		if (this.intlSegmenter != null) {
 			return Array.from(this.intlSegmenter['segment'](str)).length;
+		}
 
 		// User-included splitter
-		if (this.graphemeSplitter != null)
+		if (this.graphemeSplitter != null) {
 			return this.graphemeSplitter['countGraphemes'](str);
+		}
 
 		// No grapheme splitter; exit with error.
 		this.CreateError("Can't get visible character count: browser has no grapheme splitter functionality. " +
@@ -1908,8 +2009,9 @@ function CRunBluewing_Client() {
 	};
 	this.Expression_ConvToUTF8_GetCompleteCodePointCount = function (str) {
 		let i = 0;
-		for (let c of str) // iterator handles surrogate pairs, unlike str.length, which will register them separately
-			i++;
+		for (let c of str) { // iterator handles surrogate pairs, unlike str.length, which will register them separately
+			++i;
+		}
 		return i;
 	};
 	this.Expression_ConvToUTF8_GetByteCount = function (str) {
@@ -1923,8 +2025,9 @@ function CRunBluewing_Client() {
 	// Macros
 	// =============================
 	this.$ClearBinaryIfSetTo = function () {
-		if (this.globals.automaticallyClearBinary)
+		if (this.globals.automaticallyClearBinary) {
 			this.globals.sendMsg = new ArrayBuffer(0);
+		}
 	};
 	this.$StringToArrayBuffer = function (text) {
 		return this.textEncoder.encode(text);
@@ -1949,10 +2052,12 @@ function CRunBluewing_Client() {
 		/// <param name="ifTCPBinary" type="Number"> Second number to return if TCP and Variant is 2 (Binary). </param>
 		/// <returns type="Array" elementType="Number"> Returns two numbers that correspond or null. </returns>
 		let toRet;
-		if (isUDP)
+		if (isUDP) {
 			toRet = [ifUDPText, ifUDPNumber, ifUDPBinary];
-		else
+		}
+		else {
 			toRet = [ifTCPText, ifTCPNumber, ifTCPBinary];
+		}
 
 		if (variant > 2 || variant < 0) {
 			this.CreateError("An unrecognised variant '" + variant + "' was used in a received message");
@@ -1960,25 +2065,25 @@ function CRunBluewing_Client() {
 		}
 		return [isUDP ? ifUDP : ifTCP, toRet[variant]];
 	};
-// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
-	this.$CheckForUTF8Cutoff = function(sv)
-	{
+	// Returns 0 if OK. -1 if cut off UTF-8 at front, 1 if cut off at end
+	this.$CheckForUTF8Cutoff = function(sv) {
 		// Start char is invalid
 		let res = this.$GetNumBytesInUTF8Char(sv);
 
 		// 0 = empty string; we can't do anything, return it.
 		// -1 = UTF-8 start char, but cut off string; we can't do anything, return it.
 		// -2 = UTF-8 non-start char, so start char is cut off.
-		if (res <= 0)
+		if (res <= 0) {
 			return res;
+		}
 
 		// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
-		for (let i = 0, j = (sv.byteLength < 4 ? sv.byteLength : 4); i < j; ++i)
-		{
+		for (let i = 0, j = (sv.byteLength < 4 ? sv.byteLength : 4); i < j; ++i) {
 			// Cut off a char; go backwards
 			res = this.$GetNumBytesInUTF8Char(sv.slice(0, sv.byteLength - i));
-			if (res == -2)
+			if (res == -2) {
 				continue;
+			}
 
 			// Otherwise, we hit the last start char in the string
 
@@ -1994,33 +2099,39 @@ function CRunBluewing_Client() {
 	};
 	// UTF-8 uses a bitmask to determine how many bytes are in the item.
 	// Note that this does not verify the ending characters other than a size check; but any TString converter will throw them out.
-	this.$GetNumBytesInUTF8Char = function(sv)
-	{
-		if (sv.byteLength == 0)
+	this.$GetNumBytesInUTF8Char = function(sv) {
+		if (sv.byteLength == 0) {
 			return 0;
-		if (sv.constructor.name != "Uint8Array")
+		}
+		if (sv.constructor.name != "Uint8Array") {
 			throw "No!";
+		}
 
 		const c = sv[0];
 		// ASCII/UTF-8 1-byte char
-		if (c <= 0x7F)
+		if (c <= 0x7F) {
 			return 1;
+		}
 
 		// 2-byte indicator
-		if (c >= 0xC2 && c <= 0xDF)
+		if (c >= 0xC2 && c <= 0xDF) {
 			return sv.byteLength >= 2 ? 2 : -1;
+		}
 
 		// 3-byte indicator
-		if (c >= 0xE0 && c <= 0xEF)
+		if (c >= 0xE0 && c <= 0xEF) {
 			return sv.byteLength >= 3 ? 3 : -1;
+		}
 
 		// 4-byte indicator
-		if (c >= 0xF0)
+		if (c >= 0xF0) {
 			return sv.byteLength >= 4 ? 4 : -1;
+		}
 
 		// Non-first character in multibyte sequence; user is reading too far ahead
-		if (c >= 0x80 && c <= 0xBF)
+		if (c >= 0x80 && c <= 0xBF) {
 			return -2;
+		}
 
 		// Note 5-byte and 6-byte variants are theoretically possible but were removed by UTF-8 standard.
 
@@ -2028,26 +2139,23 @@ function CRunBluewing_Client() {
 	};
 	// Called as a subfunction to read string at given position of received binary. If sizeInCodePoints is -1, will expect a null
 	// terminator. The isCursorExpression is used for error messages.
-	this.$GetRecvMsgSubString = function(recvMsgStartIndex, sizeInCodePoints, isCursorExpression)
-	{
+	this.$GetRecvMsgSubString = function(recvMsgStartIndex, sizeInCodePoints, isCursorExpression) {
 		// User requested empty size, let 'em have it
-		if (sizeInCodePoints == 0)
+		if (sizeInCodePoints == 0) {
 			return "";
+		}
 
-		if (recvMsgStartIndex < 0)
-		{
+		if (recvMsgStartIndex < 0) {
 			this.CreateError("Could not read from received binary, index less than 0.");
 			return "";
 		}
-		if (recvMsgStartIndex > this.threadData.recvMsg.byteLength)
-		{
+		if (recvMsgStartIndex > this.threadData.recvMsg.byteLength) {
 			this.CreateError("Could not read from received binary, index " + recvMsgStartIndex + " is outside range of 0 to " +
 				Math.max(0, this.threadData.recvMsg.byteLength - 1) + ".");
 			return "";
 		}
 
-		if (sizeInCodePoints < -1)
-		{
+		if (sizeInCodePoints < -1) {
 			this.CreateError("Could not read string with size " + sizeInCodePoints + "; size is too low.");
 			return "";
 		}
@@ -2055,21 +2163,19 @@ function CRunBluewing_Client() {
 
 		const maxSize = this.threadData.recvMsg.byteLength - recvMsgStartIndex;
 		let actualStringSizeBytes = new Uint8Array(this.threadData.recvMsg, recvMsgStartIndex, maxSize).indexOf(0);
-		if (actualStringSizeBytes == -1)
+		if (actualStringSizeBytes == -1) {
 			actualStringSizeBytes = maxSize;
-		if (fixedSize)
-		{
+		}
+		if (fixedSize) {
 			// Size too small - we assumed every char was 1-byte for this, so it's way under
-			if (sizeInCodePoints != -1 && sizeInCodePoints > maxSize)
-			{
+			if (sizeInCodePoints != -1 && sizeInCodePoints > maxSize) {
 				this.CreateError("Could not read string with size " + sizeInCodePoints + " at " + (isCursorExpression ? "cursor's " : "") +
 					"start index " + recvMsgStartIndex + ", only " + maxSize + " possible characters in message.");
 				return "";
 			}
 
 			// Null terminator found within string
-			if (actualStringSizeBytes < sizeInCodePoints)
-			{
+			if (actualStringSizeBytes < sizeInCodePoints) {
 				this.CreateError("Could not read string with size " + sizeInCodePoints + " at " + (isCursorExpression ? "cursor's " : "") +
 					"start index " + recvMsgStartIndex + ", found null byte within at index " + (recvMsgStartIndex + actualStringSizeBytes) + ".");
 				return "";
@@ -2077,8 +2183,7 @@ function CRunBluewing_Client() {
 		}
 		// Not fixed size; if null terminator not found within remainder of text, then whoops.
 		// We are expecting (actualStringSizeBytes < maxSize) if found.
-		else if (actualStringSizeBytes == maxSize)
-		{
+		else if (actualStringSizeBytes == maxSize) {
 			this.CreateError("Could not read null-terminated string from " + (isCursorExpression ? "cursor's " : "") + "start index " +
 				recvMsgStartIndex + "; null terminator not found.");
 			return "";
@@ -2088,8 +2193,7 @@ function CRunBluewing_Client() {
 		const result = new Uint8Array(this.threadData.recvMsg, recvMsgStartIndex, actualStringSizeBytes);
 
 		// Start char is invalid
-		if (this.$GetNumBytesInUTF8Char(result) < 0)
-		{
+		if (this.$GetNumBytesInUTF8Char(result) < 0) {
 			this.CreateError("Could not read text from received binary, UTF-8 char was cut off at " +
 				(isCursorExpression ? "the cursor's " : "") + "start index " + this.threadData.recvMsg.cursorIndex + ".");
 			return "";
@@ -2098,8 +2202,7 @@ function CRunBluewing_Client() {
 		// We have the entire received message in result, we need to trim it to sizeInCodePoints
 
 		// We don't know the sizeInCodePoints of end char; we'll try for a 1 byte-char at very end, and work backwards and up to max UTF-8 sizeInCodePoints, 4 bytes.
-		for (let codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = result.byteLength; ; )
-		{
+		for (let codePointIndex = 0, numBytesRead = 0, byteIndex = 0, remainder = result.byteLength; ; ) {
 			let numBytes = this.$GetNumBytesInUTF8Char(result.slice(byteIndex, byteIndex + Math.min(remainder, 4)));
 
 			// We checked for -2 in start char in previous if(), so the string isn't starting too early.
@@ -2115,11 +2218,9 @@ function CRunBluewing_Client() {
 			++byteIndex;
 
 			// loop all 2nd+ bytes used by it, validate 'em as UTF-8 continuations
-			for (let i = 1; i < numBytes; ++i)
-			{
+			for (let i = 1; i < numBytes; ++i) {
 				const c = result[byteIndex++];
-				if (c < 0x80 || c > 0xBF)
-				{
+				if (c < 0x80 || c > 0xBF) {
 					numBytes = -1;
 					this.CreateError("Could not read text from received binary, UTF-8 was malformed at index " + (recvMsgStartIndex + byteIndex) +
 						" (attempted to read " + byteIndex + " chars from " + (isCursorExpression ? "the cursor's " : "") + "start index " + recvMsgStartIndex + ").");
@@ -2135,15 +2236,16 @@ function CRunBluewing_Client() {
 			++codePointIndex;
 
 			// Either it's null byte-terminated and we're at the null; or got all the characters we need
-			if ((!fixedSize && numBytes == 0) || (fixedSize && sizeInCodePoints == codePointIndex))
-			{
+			if ((!fixedSize && numBytes == 0) || (fixedSize && sizeInCodePoints == codePointIndex)) {
 				// $U8StrValidate will do a more thorough investigation of characters, +1 for null terminator
-				if (isCursorExpression)
+				if (isCursorExpression) {
 					this.threadData.recvMsg.cursorIndex += numBytesRead + (fixedSize ? 0 : 1);
+				}
 
 				const resStr = result.slice(0, numBytesRead);
-				if (this.$U8StrValidate(resStr))
+				if (this.$U8StrValidate(resStr)) {
 					return this.textDecoder.decode(resStr);
+				}
 
 				this.CreateError("Could not read text from received binary, UTF-8 was malformed at index " + (recvMsgStartIndex + byteIndex) +
 					" (attempted to read " + byteIndex + " chars from " + (isCursorExpression ? "the cursor's " : "") + "start index " + recvMsgStartIndex + ").");
@@ -2394,8 +2496,7 @@ function CRunBluewing_Client() {
 	];
 }
 //
-CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
-{
+CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(), {
 	/// <summary> Prototype definition </summary>
 	/// <description> This class is a sub-class of CRunExtension, by the mean of the
 	/// CServices.extend function which copies all the properties of
@@ -2403,15 +2504,13 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 	/// As all the necessary functions are defined in the parent class,
 	/// you only need to keep the ones that you actually need in your code. </description>
 
-	getNumberOfConditions: function()
-	{
+	getNumberOfConditions: function() {
 		/// <summary> Returns the number of conditions </summary>
 		/// <returns type="Number" isInteger="true"> Warning, if this number is not correct, the application _will_ crash</returns>
 		return 76; // $conditionFuncs not available yet
 	},
 
-	createRunObject: function(file, cob, version)
-	{
+	createRunObject: function(file, cob, version) {
 		/// <summary> Creation of the Fusion extension. </summary>
 		/// <param name="file"> A CFile object, pointing to the object's data zone </param>
 		/// <param name="cob"> A CCreateObjectInfo containing infos about the created object</param>
@@ -2424,14 +2523,15 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		// of the C code).
 		// Please report to the documentation for more information on the CFile object
 
-		if (this.ho == null)
+		if (this.ho == null) {
 			throw "HeaderObject not defined when needed to be.";
+		}
 
 		// Text encoders
 		this.textEncoder = new TextEncoder(/* utf-8 assumed */);
 		this.textDecoder = new TextDecoder('utf-8');
 
-		// We have to read object properties  manually, since C++ version doesn't use DarkEdif smart properties
+		// We have to read object properties manually, since C++ version doesn't use DarkEdif smart properties
 
 		file.skipBytes(5); // there is padding to match Relay's offsets
 
@@ -2461,8 +2561,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 				this.globals = new BluewingClient_GlobalInfo(this, edPtr);
 				darkEdif.setGlobalData(edPtr.globalID + "BlueClient", this.globals);
 			}
-			else // Add this Extension to extsHoldingGlobals to inherit control later
-			{
+			else { // Add this Extension to extsHoldingGlobals to inherit control later
 				this.globals = fromRuntime;
 				if (this.globals.lastDestroyedExtSelectedChannel != null) {
 					this.selChannel = this.globals.lastDestroyedExtSelectedChannel;
@@ -2489,8 +2588,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		return false;
 	},
 
-	handleRunObject: function()
-	{
+	handleRunObject: function() {
 		/// <summary> This function is called at every loop of the game. You have to perform
 		/// in it all the tasks necessary for your object to function. </summary>
 		/// <returns type="Number"> One of two options:
@@ -2510,7 +2608,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		let remainingCount = 0;
 		let runNextLoop = !this.globals.multiThreading;
 
-		for (let maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; maxTrig++) {
+		for (let maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; ++maxTrig) {
 			if (this.globals.eventsToRun.length == 0) {
 				this.isOverloadWarningQueued = false;
 				break;
@@ -2534,19 +2632,21 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 				i.selPeer = evtToRun.peer;
 				i.ho.generateEvent(evtToRun.idList[0]); // run first event
 
-				if (id2 !== this.CLEAR_EVTNUM && id2 != null)
+				if (id2 !== this.CLEAR_EVTNUM && id2 != null) {
 					i.ho.generateEvent(id2);
+				}
 
 				// Restore old selection - if there was a selection
 				i.threadData = origTData;
-				if (origSelChannel != null)
+				if (origSelChannel != null) {
 					i.selChannel = origSelChannel;
-				if (origSelPeer != null)
+				}
+				if (origSelPeer != null) {
 					i.selPeer = origSelPeer;
+				}
 			} // each ext
 
-			if (id2 === this.CLEAR_EVTNUM)
-			{
+			if (id2 === this.CLEAR_EVTNUM) {
 				// On disconnect, clear everything
 				if (evtToRun.channel == null) {
 					this.globals.hostIP = "";
@@ -2559,27 +2659,32 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 					if (evtToRun.channel == null || i.selChannel == evtToRun.channel) {
 						// If evtToRun.peer is not specified, it's channel leave; deselect both channel and peer selection
 						// If evtToRun.peer is specified, it's peer leave; only deselect peer, if peer matches evtToRun.peer
-						if (evtToRun.peer == null)
+						if (evtToRun.peer == null) {
 							i.selChannel = null;
-						if (evtToRun.peer == null || evtToRun.peer == i.selPeer)
+						}
+						if (evtToRun.peer == null || evtToRun.peer == i.selPeer) {
 							i.selPeer = null;
+						}
 					}
 				}
 			} // clear event check
 
 			// On Error or other mandatory events were not processed by Fusion events. Shameful.
 			if (!this.globals.lastMandatoryEventWasChecked) {
-				let err = "Bluewing Client event occurred, but you have no \"Bluewing Client\" > "  +
+				let err = "Bluewing Client event occurred, but you have no \"Bluewing Client\" > " +
 					mandatoryEvent.name + "\" event to handle it. That is BAD PRACTICE";
 
 				// On Error has message
-				if (mandatoryEvent.name == "On Error")
+				if (mandatoryEvent.name == "On Error") {
 					err += ". Error message:\n" + evtToRun.error;
+				}
 				// On Disconnect and On Name Changed has no text included
-				else if (mandatoryEvent.name == "On Disconnect" || mandatoryEvent.name == "On Name Changed")
+				else if (mandatoryEvent.name == "On Disconnect" || mandatoryEvent.name == "On Name Changed") {
 					err += '.';
-				else
+				}
+				else {
 					err += ". Deny reason:\n" + this.threadData.denyReason;
+				}
 
 				alert(err);
 				this.globals.lastMandatoryEventWasChecked = true; // reset for next loop
@@ -2597,8 +2702,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		runNextLoop |= remainingCount > 0;
 		return runNextLoop ? 0 : CRunExtension.REFLAG_ONESHOT; // Do not call next loop
 	},
-	destroyRunObject: function(bFast)
-	{
+	destroyRunObject: function(bFast) {
 		/// <summary> Destruction of the object.</summary>
 		/// <description> Called when the object is actually destroyed. This will always be
 		/// after the main game loop, and out of the actions processing : the
@@ -2616,11 +2720,9 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		this.threadData = new BluewingClient_EventToRun(null, {});
 
 		// Shift secondary event management to other Extension, if any
-		if (this.globals.extsHoldingGlobals.length > 0)
-		{
+		if (this.globals.extsHoldingGlobals.length > 0) {
 			// Switch Handle ticking over to next Extension visible.
-			if (wasBegin)
-			{
+			if (wasBegin) {
 				this.globals.client.ext = this.globals.ext = this.globals.extsHoldingGlobals[0];
 				this.globals.ext.ho.reHandle();
 			}
@@ -2631,20 +2733,22 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		// e.g. TCP, will close the connection after a certain amount of not-responding.
 		// In multi-threaded instances, messages will continue to be queued, and this will retain
 		// the connection indefinitely.
-		else
-		{
-			if (!this.globals.client.isConnected)
+		else {
+			if (!this.globals.client.isConnected) {
 				darkEdif.consoleLog(this, "Bluewing Client - Not connected, nothing important to retain, closing Globals info.\n");
-			else if (!this.isGlobal)
+			}
+			else if (!this.isGlobal) {
 				darkEdif.consoleLog(this, "Bluewing Client - Not global, closing Globals info.\n");
-			else if (this.globals.fullDeleteEnabled)
+			}
+			else if (this.globals.fullDeleteEnabled) {
 				darkEdif.consoleLog(this, "Bluewing Client - Full delete enabled, closing Globals info.\n");
+			}
 			// This can never be true in HTML5. Fusion runtime doesn't respond to end application requests (outside of subapps),
 			// and runs no code when window is closed; it just instantly dies, not even calling the On Destroy actions.
-			//   else if (AppWasClosed == true)
-			//	    darkEdif.consoleLog(this, "Bluewing Client - App was closed, closing Globals info.\n");
-			else // !globals.fullDeleteEnabled
-			{
+			// else if (AppWasClosed == true) {
+			//   darkEdif.consoleLog(this, "Bluewing Client - App was closed, closing Globals info.\n");
+			// }
+			else { // !globals.fullDeleteEnabled
 				darkEdif.consoleLog(this, "Bluewing Client - Last instance dropped, and currently connected - " +
 					"Globals will be retained until a Disconnect is called.\n");
 				this.globals.client.ext = this.globals.ext = null;
@@ -2692,8 +2796,7 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		this.selChannel = null;
 	},
 
-	condition: function(num, cnd)
-	{
+	condition: function(num, cnd) {
 		/// <summary> Called when a condition of this object is tested. </summary>
 		/// <param name="num" type="Number" integer="true"> The number of the condition; 0+. </param>
 		/// <param name="cnd" type="CCndExtension"> a CCndExtension object, allowing you to retreive the parameters
@@ -2701,17 +2804,18 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		/// <returns type="Boolean"> True if the condition is currently true. </returns>
 
 		const func = this.$conditionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised condition ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
+		}
 
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = cnd.getParamExpString(this.rh, i);
+		}
 
 		return func.apply(this, args);
 	},
-	action: function(num, act)
-	{
+	action: function(num, act) {
 		/// <summary> Called when an action of this object is executed </summary>
 		/// <param name="num" type="Number"> The ID/number of the action, as defined by
 		///		its array index. </param>
@@ -2719,17 +2823,18 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		///		retrieve the parameters of the action </param>
 
 		const func = this.$actionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised action ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
+		}
 
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = act.getParamExpression(this.rh, i);
+		}
 
 		func.apply(this, args);
 	},
-	expression: function(num)
-	{
+	expression: function(num) {
 		/// <summary> Called during the evaluation of an expression. </summary>
 		/// <param name="num" type="Number"> The ID/number of the expression. </param>
 		/// <returns> The result of the calculation, a number or a string </returns>
@@ -2739,12 +2844,14 @@ CRunBluewing_Client.prototype = CServices.extend(new CRunExtension(),
 		// called. The runtime will crash if you miss parameters.
 
 		const func = this.$expressionFuncs[~~num];
-		if (func == null)
+		if (func == null) {
 			throw "Unrecognised expression ID " + (~~num) + " was called in " + this['ExtensionName'] + ".";
+		}
 
 		const args = new Array(func.length);
-		for (let i = 0; i < args.length; i++)
+		for (let i = 0; i < args.length; ++i) {
 			args[i] = this.ho.getExpParam();
+		}
 
 		return func.apply(this, args);
 	}
@@ -2811,8 +2918,9 @@ function BluewingClient_GlobalInfo(ext, edPtr) {
 	// and not free memory until later.
 	this.pendingDelete = false;
 	this.MarkAsPendingDelete = function() {
-		if (this.pendingDelete)
+		if (this.pendingDelete) {
 			return;
+		}
 
 		// Let the memory be freed later by _client dtor.
 		this.lastDestroyedExtSelectedChannel = null;
@@ -2830,14 +2938,12 @@ function BluewingClient_GlobalInfo(ext, edPtr) {
 		}
 
 		// Multithreading mode; wait for thread to end
-		if (this.thread.joinable())
-		{
+		if (this.thread.joinable()) {
 			this.thread.join();
 
 			darkEdif.consoleLog(this.ext, "Lacewing loop thread should have ended.\n");
 		}
-		else // single-threaded; tick so all pending events are parsed, like the eventloop exit
-		{
+		else { // single-threaded; tick so all pending events are parsed, like the eventloop exit
 			const err = this.objEventPump.tick();
 			if (err != null) {
 				// No way to report it to Fusion; the last ext is being destroyed.
@@ -2850,11 +2956,13 @@ function BluewingClient_GlobalInfo(ext, edPtr) {
 
 	};
 	this.Delete = function() {
-		if (this.extsHoldingGlobals.length != 0)
+		if (this.extsHoldingGlobals.length != 0) {
 			alert("GlobalInfo dtor called prematurely.");
+		}
 
-		if (!this.pendingDelete)
+		if (!this.pendingDelete) {
 			this.MarkAsPendingDelete();
+		}
 	};
 }
 /** @constructor */
@@ -2879,13 +2987,15 @@ function BluewingClient_EventToRun(ids, data) {
 	/// <param name="deniedChannelName" type="string" mayBeNull="true">
 	///		Only used by ChannelJoin_Denied. </param>
 	this.idList = ids || null;
-	if (this.idList != null && this.idList.length == 0)
+	if (this.idList != null && this.idList.length == 0) {
 		throw "DataQueue ctor was called, but an empty array was specified. Use null for dummies.";
+	}
 	this.peer = data.peer || null;
 	this.channel = data.channel || null;
 	this.recvMsg = data.msg || null;
-	if (this.recvMsg != null)
+	if (this.recvMsg != null) {
 		this.recvMsg.cursorIndex = 0;
+	}
 	this.recvSubChannel = data.subChannel == null ? -1 : data.subChannel;
 	this.loopName = data.loopNameStr || "";
 	this.error = data.errorStr || "";
@@ -2932,8 +3042,9 @@ function Bluewing_Channel(client, id, name) {
 
 	this.LeaveChannel = function () {
 		/// <summary> Leaves the channel. </summary>
-		if (this.isClosed)
+		if (this.isClosed) {
 			return; // No errors.
+		}
 
 		// We'll close the channel on channel leave message
 		const view = new DataView(new ArrayBuffer(4));
@@ -2944,8 +3055,9 @@ function Bluewing_Channel(client, id, name) {
 	};
 
 	this.BlastMsg = function (subChannel, msg, variant) {
-		if (subChannel > 255 || subChannel < 0)
+		if (subChannel > 255 || subChannel < 0) {
 			throw "Cannot send/blast message with subchannel less than 0 or greater than 255.";
+		}
 		const view = new DataView(new ArrayBuffer(4 + msg.byteLength));
 		view.setUint8(0, 0x20 | variant);
 		view.setUint8(1, subChannel);
@@ -2976,7 +3088,7 @@ function Bluewing_Peer(channel, peerID, name) {
 	/// <param name="name" type="String"> The name of the peer. Text. </param>
 
 	/// <field name="channel" type="Bluewing_Channel"> The channel this peer is on. A peer
-	///		cannot be accessed without a channel as a go-between.  </field>
+	///		cannot be accessed without a channel as a go-between. </field>
 	this.channel = channel;
 	/// <field name="peerID" type="Number" integer="true"> The ID number of the peer. UShort. </field>
 	this.id = peerID;
@@ -2991,7 +3103,7 @@ function Bluewing_Peer(channel, peerID, name) {
 	this.isClosed = false;
 
 	this.SendMsg = function (subChannel, userMsg, variant) {
-		/// <summary> Sends a user-defined message via TCP to the peer.  </summary>
+		/// <summary> Sends a user-defined message via TCP to the peer. </summary>
 		/// <param name="subChannel" type="Number"> The subchannel, 0-255. Uint8. </param>
 		/// <param name="userMsg" type="ArrayBuffer"> The user message. </param>
 		/// <param name="variant" type="Number"> The variant. 0-2 only, integer. </param>
@@ -3014,7 +3126,7 @@ function Bluewing_Peer(channel, peerID, name) {
 		this.channel.client.$SendRawTCP(view.buffer);
 	};
 	this.BlastMsg = function (subChannel, userMsg, variant) {
-		/// <summary> Blasts a user-defined message via UDP to the peer.  </summary>
+		/// <summary> Blasts a user-defined message via UDP to the peer. </summary>
 		/// <param name="subChannel" type="Number"> The subchannel, 0-255. Uint8. </param>
 		/// <param name="userMsg" type="ArrayBuffer"> The user message. </param>
 		/// <param name="variant" type="Number"> The variant. 0-2 only, integer. </param>
@@ -3101,11 +3213,12 @@ function Bluewing_Client(blue) {
 
 		// If isConnected, we've exchanged a Lacewing handshake: so we use 'on disconnect'.
 		// Otherwise we use 'on connection denied'.
-		if (this.isConnected && this.ext != null)
+		if (this.isConnected && this.ext != null) {
 			this.ext.LacewingCall_OnDisconnect(this);
-		//else
+		}
+		//else {
 		//	this.ext.LacewingCall_OnConnectDenied(this, "Never made a proper connection.");
-
+		// }
 
 		this.isConnected = this.isConnecting = false;
 		this.isClosed = true;
@@ -3119,11 +3232,11 @@ function Bluewing_Client(blue) {
 		this.welcomeMessage = "";
 	};
 	this.handleEvent = function (evt) {
-		 if (evt.type == 'message')
+		 if (evt.type == 'message') {
 			this.onMessage(false, evt.data);
+		 }
 		// Socket open - just connected on WebSocket level, it's raw socket, or possibly TLS-encrypted raw
-		else if (evt.type == 'open')
-		{
+		else if (evt.type == 'open') {
 			this.isConnected = true;
 			this.isConnecting = false;
 			this.willReconnect = true;
@@ -3135,8 +3248,7 @@ function Bluewing_Client(blue) {
 			this.$SendRawTCP(u8arr.buffer);
 		}
 		// WebSocket closed. Normally handled by close packet exchanged both ways; but could be from protocol failure or timeout (evt.wasClean == false).
-		else if (evt.type == 'close')
-		{
+		else if (evt.type == 'close') {
 			// Unfortunately according to WebSocket spec, webpages can't get proper socket error details.
 			// This is to prevent malicious JS probing the local network and detecting from timeout error vs. protocol error,
 			// whether a device with that IP exists.
@@ -3153,14 +3265,15 @@ function Bluewing_Client(blue) {
 
 			this.OnDisconnect();
 		}
-		else if (evt.type == 'error')
-		{
+		else if (evt.type == 'error') {
 			// Console may have more info, but otherwise try WireShark
-			if (!this.isDead)
+			if (!this.isDead) {
 				this.ext.LacewingCall_OnError(this, evt.reason || "WebSocket error, browser dev console may have more detail.");
+			}
 		}
-		else // unknown event handler
+		else { // unknown event handler
 			throw "a wobbly";
+		}
 	};
 	this.CreateError = function (err) {
 		/// <summary> Generates an error event with the given text. </summary>
@@ -3170,8 +3283,9 @@ function Bluewing_Client(blue) {
 			alert("this.CreateError() called with a null/undefined parameter.");
 			throw "this.CreateError() called with a null/undefined parameter.";
 		}
-		if (this.ext != null)
+		if (this.ext != null) {
 			this.ext.LacewingCall_OnError(this, err);
+		}
 	};
 
 
@@ -3243,383 +3357,379 @@ function Bluewing_Client(blue) {
 
 		switch (type) {
 			// User response.
-			case 0:
-				{
-					const responseType = fullMsg.getUint8(1);
-					const success = fullMsg.getUint8(2) != 0;
-					switch (responseType) {
-						// Connect response
-						case 0:
-							{
-								if (success) {
-									this.me.id = fullMsg.getUint16(3, true);
+			case 0: {
+				const responseType = fullMsg.getUint8(1);
+				const success = fullMsg.getUint8(2) != 0;
+				switch (responseType) {
+					// Connect response
+					case 0: {
+						if (success) {
+							this.me.id = fullMsg.getUint16(3, true);
 
-									if (fullMsg.byteLength == 5)
-										this.welcomeMessage = "";
-									else
-										this.welcomeMessage = this.decoder.decode(rawMsg.slice(5));
-
-									// Might as well send implementation without the server asking; only Blue Server that has impl has WebSocket
-									this.comm.send(this.impl);
-
-									// There is no UDP, unless we're going to drag in WebRTC, or make a fake UDP like Socket.IO does.
-									// The fake UDP basically makes a no-queue message system, where if something is being queued already,
-									// it discards it. WebRTC does the same, giving a max time to pend before giving up, and max queue size.
-									this.ext.LacewingCall_OnConnect(this);
-								}
-								else {
-									const denyReason = this.decoder.decode(rawMsg.slice(3));
-									this.ext.LacewingCall_OnConnectDenied(this, denyReason);
-
-									this.ignoreDisconnectErrorHack = true;
-									this.comm.close();
-								}
-								return;
+							if (fullMsg.byteLength == 5) {
+								this.welcomeMessage = "";
 							}
-							// SetName response
-						case 1:
-							{
-								const nameLength = fullMsg.getUint8(3);
-								if (!success) {
-									const name = this.decoder.decode(rawMsg.slice(4, 4 + nameLength));
-									const denyReason2 = this.decoder.decode(rawMsg.slice(4 + nameLength));
-
-									this.ext.LacewingCall_OnNameDenied(this, name, denyReason2);
-								}
-								else {
-									const name2 = this.decoder.decode(rawMsg.slice(4, 4 + nameLength));
-
-									if (this.me.name === "") {
-										this.me.name = name2;
-										this.ext.LacewingCall_OnNameSet(this);
-									}
-									else {
-										this.me.previousName = this.me.name;
-										this.me.name = name2;
-
-										this.ext.LacewingCall_OnNameChanged(this, this.me.previousName);
-									}
-								}
-								return;
+							else {
+								this.welcomeMessage = this.decoder.decode(rawMsg.slice(5));
 							}
-							// JoinChannel response
-						case 2:
-							{
-								if (success) {
-									let flags = fullMsg.getUint8(3);
-									const nameLength3 = fullMsg.getUint8(4);
-									const name3 = this.decoder.decode(rawMsg.slice(5, 5 + nameLength3));
-									const channelID = fullMsg.getUint16(5 + nameLength3, true);
+							
+							// Might as well send implementation without the server asking; impl was added to Blue Server
+							// before WebSocket was
+							this.comm.send(this.impl);
 
-									if (this.getChannel(channelID) != null) {
-										this.CreateError("Received a \"channel join success\" message for channel \"" +
-											name3 + "\", when the channel had already been joined.");
-										return;
-									}
-									if ((flags & 0xFE) != 0) {
-										this.CreateError("Received a \"channel join success\" message with an unrecognised " +
-											"flags variable. Expected 0 or 1, got " + flags + ".");
-										// Not a serious error, just keep swimmin'
-									}
-
-									const channel = new Bluewing_Channel(this, channelID, name3);
-									darkEdif.finalizer.register(channel, "Channel with name " + channel.name);
-
-									if ((flags & 0x1) == 0x1)
-										channel.master = this.me;
-
-									// No peers
-									if (fullMsg.byteLength != 7 + nameLength3) {
-										let cursor = 7 + nameLength3, curPeer = null;
-
-										while (cursor < fullMsg.byteLength) {
-											curPeer = new Bluewing_Peer(channel,
-												fullMsg.getUint16(cursor, true),
-												this.decoder.decode(rawMsg.slice(cursor + 4, cursor + 4 + fullMsg.getUint8(cursor + 3))));
-											darkEdif.finalizer.register(curPeer, "pre-existing Peer with name " + curPeer.name);
-											channel.peerList.push(curPeer);
-
-											// Flags indicate channel master or not.
-											flags = fullMsg.getUint8(cursor + 2);
-
-											// Dodgy flags? Keep on parsin'
-											if ((flags & 0xFE) != 0)
-												this.CreateError("Unrecognised peer flags. Expected 0 or 1, got " + flags);
-
-											if ((flags & 1) == 1) {
-												// Master already set, fuss
-												if (channel.master != null)
-													this.CreateError("Multiple channel masters are not supported, but were sent by the server");
-												else
-													channel.master = curPeer;
-											}
-											cursor += 4 + fullMsg.getUint8(cursor + 3);
-										}
-									}
-
-									if (channel == null || channel.id == null || channel.name == null) {
-										this.CreateError("Malformed Join Channel Success message received");
-										return;
-									}
-									this.channelList.push(channel);
-
-									this.ext.LacewingCall_OnJoinChannel(this, channel);
-								}
-								else {
-									const nameLength4 = fullMsg.getUint8(3);
-									const name4 = this.decoder.decode(rawMsg.slice(4, 4 + nameLength4)),
-										denyReason3 = this.decoder.decode(rawMsg.slice(4 + nameLength4));
-
-									if (name4 == null || denyReason3 == null) {
-										this.CreateError("Malformed Join Channel Denied message received");
-										return;
-									}
-									this.ext.LacewingCall_OnJoinChannelDenied(this, name4, denyReason3);
-								}
-								return;
-							}
-							// LeaveChannel response
-						case 3:
-							{
-								const channelID2 = fullMsg.getUint16(3, true), channel2 = this.getChannel(channelID2);
-								if (channel2 == null) {
-									this.CreateError("Malformed Leave Channel " + (success ? "" : "Denied ") + "message; channel ID " +
-										channelID2 + " has already been left, or was never joined in the first place");
-									return;
-								}
-
-								if (success) {
-									this.ext.LacewingCall_OnLeaveChannel(this, channel2);
-									this.channelList = this.channelList.filter(function (c) { return c.id != channel2.id; });
-								}
-								else {
-									const denyReason4 = this.decoder.decode(rawMsg.slice(5));
-									this.ext.LacewingCall_OnLeaveChannelDenied(this, channel2, denyReason4);
-								}
-								return;
-							}
-							// ChannelList response
-						case 4:
-							{
-								if (success) {
-									this.channelListing = [];
-									let cursor2 = 3, curChLst = null;
-									while (cursor2 < fullMsg.byteLength) {
-										curChLst = new Bluewing_ChannelListing(this, fullMsg.getUint16(cursor2, true),
-											this.decoder.decode(rawMsg.slice(cursor2 + 3, cursor2 + 3 + fullMsg.getUint8(cursor2 + 2))));
-										cursor2 += 3 + fullMsg.getUint8(cursor2 + 2);
-
-										if (curChLst.name == null) {
-											this.CreateError("Channel Listing Response message was malformed");
-											return;
-										}
-										for (let i = 0; i < this.channelListing.length; i++) {
-											if (this.channelListing[i].nameSimplified == curChLst.nameSimplified) {
-												this.CreateError("Channel Listing response contained duplicates");
-												return;
-											}
-										}
-										darkEdif.finalizer.register(curChLst, "ChannelListing with name " + curChLst.name);
-										this.channelListing.push(curChLst);
-									}
-
-									this.ext.LacewingCall_OnChannelListReceived(this);
-								}
-								else {
-									// No native Channel List Request Denied.
-									let denyReason5 = "Server has disabled or does not support channel listing requests.";
-									if (fullMsg.byteLength > 3)
-										denyReason5 = this.decoder.decode(rawMsg.slice(3));
-									this.CreateError("Channel list request denied. Reason \"" + denyReason5 + "\"");
-								}
-								return;
-							}
-						default:
-							{
-								this.CreateError("Received a message of type Response, but the type " +
-									"of response was unexpected. Expected 0-4, got " + responseType);
-								return;
-							}
-					}
-					// doesn't reach here
-				}
-				// BinaryServerMessage
-			case 1:
-				{
-					const subChannel = fullMsg.getUint8(1), msg = rawMsg.slice(2);
-					this.ext.LacewingCall_OnServerMessage(this, isUDP, subChannel, msg, msg.byteLength, variant);
-					return;
-				}
-				// BinaryChannelMessage, peer message
-			case 2:
-			case 3:
-				{
-					const subChannel2 = fullMsg.getUint8(1);
-					const channelID3 = fullMsg.getUint16(2, true);
-					const channel3 = this.getChannel(channelID3);
-					if (channel3 == null) {
-						this.CreateError("A " +(type == 2 ? "channel" : "peer") + " message on channel ID " + channelID3 +
-							" was received, but client is not joined to it. Message ignored.");
-						return;
-					}
-
-					const peerID = fullMsg.getUint16(4, true);
-					const peer = channel3.getPeer(peerID);
-					if (peer == null) {
-						this.CreateError("A "+(type == 2 ? "channel" : "peer") + " message on channel \"" + channel3.name +
-							"\" was received, but sending peer ID " + peerID + " is not joined to it.");
-						return;
-					}
-
-					const msg3 = rawMsg.slice(6);
-					if (type == 2)
-						this.ext.LacewingCall_OnChannelMessage(this, peer, channel3, isUDP, subChannel2, msg3, msg3.byteLength, variant);
-					else
-						this.ext.LacewingCall_OnPeerMessage(this, peer, channel3, isUDP, subChannel2, msg3, msg3.byteLength, variant);
-					return;
-				}
-				// Message from server to channel
-			case 4:
-				{
-					const subChannel3 = fullMsg.getUint8(1);
-					const channelID4 = fullMsg.getUint16(2, true);
-					const channel4 = this.getChannel(channelID4);
-					if (channel4 == null) {
-						this.CreateError("A server -> channel message for channel ID " + channelID4 +
-							" was received, but client is not joined to that channel. Message ignored.");
-						return;
-					}
-
-					const msg4 = rawMsg.slice(4);
-					this.ext.LacewingCall_OnServerChannelMessage(this, channel4, isUDP, subChannel3, msg4, msg4.byteLength, variant);
-					return;
-				}
-				// Peer change
-			case 9:
-				{
-					const channelID5 = fullMsg.getUint16(1, true);
-					const peerID2 = fullMsg.getUint16(3, true);
-
-					const channel5 = this.getChannel(channelID5);
-					if (channel5 == null) {
-						this.CreateError("A 'peer change' message for a peer on channel ID " + channelID5 +
-							" was received, but client is not joined to that channel. Message ignored.");
-						return;
-					}
-
-					let peer2 = channel5.getPeer(peerID2);
-					const peerName = rawMsg.byteLength == 5 ? "" : this.decoder.decode(rawMsg.slice(6));
-					const flags2 = rawMsg.byteLength == 5 ? 0 : fullMsg.getUint8(5);
-
-					if (flags2 & 0xFE != 0) {
-						this.CreateError("Unexpected flags in 'peer2 change message'; expected 0 or 1, got " + flags2);
-						return;
-					}
-					// peer2 not in channel list: assume the message is 'peer2 connected to channel'
-					if (peer2 == null) {
-						peer2 = new Bluewing_Peer(channel5, peerID2, peerName);
-						darkEdif.finalizer.register(peer2, "Peer with name " + peer2.name);
-
-						channel5.peerList.push(peer2);
-						if ((flags2 & 0x1) == 0x1) {
-							// There's no event to inform the user that the channel master changed.
-							//if (channel.master != null)
-
-							channel5.master = peer2;
-						}
-
-						this.ext.LacewingCall_OnPeerConnect(this, channel5, peer2);
-						return;
-					}
-					// else peer2 in list
-
-					// peer2 disconnect (peerName and flags missing from message)
-					if (rawMsg.byteLength == 5) {
-						peer2.isClosed = true;
-						this.ext.LacewingCall_OnPeerDisconnect(this, channel5, peer2);
-
-						channel5.peerList = channel5.peerList.filter(function (f) { return f.id != peerID2; });
-						if (channel5.master == peer2)
-							channel5.master = null;
-						return;
-					}
-
-					// Otherwise, peer2 name change.
-					if (peer2.name != peerName) {
-						peer2.previousName = peer2.name;
-						peer2.name = peerName;
-						peer2.nameSimplified = this.SimplifyName(peerName);
-						this.ext.LacewingCall_OnPeerNameChanged(this, channel5, peer2);
-						return;
-					}
-
-					// Otherwise, it has to be a master setting change...
-					// but there's no events for that, nor server-side code,
-					// bar in a custom server.
-					// Since custom server deserves a custom client, of which this implementation is NOT,
-					// Bluewing will thus error out, although it will still store the new master.
-
-					// Master reset, currently no master.
-					// Note it's the server's job to disconnect all peers if the
-					// 'close when master leaves' flag was enabled for that channel.
-
-					if ((flags2 & 0x1) == 0x1) {
-						if (channel5.master == peer2) {
-							this.CreateError("A 'peer change' message was sent, but no difference was noted. Message ignored");
-							return;
-						}
-						// Already a master on this channel, and it's not this peer2
-						channel5.master = peer2;
-						if (channel5.master != null) {
-							this.CreateError("A 'peer change' message was sent, which changed the master, but " +
-								"there was already a master... switching, but there's no way to inform Fusion of that");
+							// There is no UDP, unless we're going to drag in WebRTC, or make a fake UDP like Socket.IO does.
+							// The fake UDP basically makes a no-queue message system, where if something is being queued already,
+							// it discards it. WebRTC does the same, giving a max time to pend before giving up, and max queue size.
+							this.ext.LacewingCall_OnConnect(this);
 						}
 						else {
-							this.CreateError("A 'peer change' message added a peer as channel master, but there's no " +
-								"events to inform Fusion of it. Switching");
+							const denyReason = this.decoder.decode(rawMsg.slice(3));
+							this.ext.LacewingCall_OnConnectDenied(this, denyReason);
+
+							this.ignoreDisconnectErrorHack = true;
+							this.comm.close();
 						}
 						return;
 					}
-					// Message peer2 is being removed from master
-					else if (channel5.master == peer2) {
+					// SetName response
+					case 1: {
+						const nameLength = fullMsg.getUint8(3);
+						if (!success) {
+							const name = this.decoder.decode(rawMsg.slice(4, 4 + nameLength));
+							const denyReason2 = this.decoder.decode(rawMsg.slice(4 + nameLength));
+
+							this.ext.LacewingCall_OnNameDenied(this, name, denyReason2);
+						}
+						else {
+							const name2 = this.decoder.decode(rawMsg.slice(4, 4 + nameLength));
+
+							if (this.me.name === "") {
+								this.me.name = name2;
+								this.ext.LacewingCall_OnNameSet(this);
+							}
+							else {
+								this.me.previousName = this.me.name;
+								this.me.name = name2;
+
+								this.ext.LacewingCall_OnNameChanged(this, this.me.previousName);
+							}
+						}
+						return;
+					}
+					// JoinChannel response
+					case 2: {
+						if (success) {
+							let flags = fullMsg.getUint8(3);
+							const nameLength3 = fullMsg.getUint8(4);
+							const name3 = this.decoder.decode(rawMsg.slice(5, 5 + nameLength3));
+							const channelID = fullMsg.getUint16(5 + nameLength3, true);
+
+							if (this.getChannel(channelID) != null) {
+								this.CreateError("Received a \"channel join success\" message for channel \"" +
+									name3 + "\", when the channel had already been joined.");
+								return;
+							}
+							if ((flags & 0xFE) != 0) {
+								this.CreateError("Received a \"channel join success\" message with an unrecognised " +
+									"flags variable. Expected 0 or 1, got " + flags + ".");
+								// Not a serious error, just keep swimmin'
+							}
+
+							const channel = new Bluewing_Channel(this, channelID, name3);
+							darkEdif.finalizer.register(channel, "Channel with name " + channel.name);
+
+							if ((flags & 0x1) == 0x1) {
+								channel.master = this.me;
+							}
+
+							// No peers
+							if (fullMsg.byteLength != 7 + nameLength3) {
+								let cursor = 7 + nameLength3, curPeer = null;
+
+								while (cursor < fullMsg.byteLength) {
+									curPeer = new Bluewing_Peer(channel,
+										fullMsg.getUint16(cursor, true),
+										this.decoder.decode(rawMsg.slice(cursor + 4, cursor + 4 + fullMsg.getUint8(cursor + 3))));
+									darkEdif.finalizer.register(curPeer, "pre-existing Peer with name " + curPeer.name);
+									channel.peerList.push(curPeer);
+
+									// Flags indicate channel master or not.
+									flags = fullMsg.getUint8(cursor + 2);
+
+									// Dodgy flags? Keep on parsin'
+									if ((flags & 0xFE) != 0) {
+										this.CreateError("Unrecognised peer flags. Expected 0 or 1, got " + flags);
+									}
+
+									if ((flags & 1) == 1) {
+										// Master already set, fuss
+										if (channel.master != null) {
+											this.CreateError("Multiple channel masters are not supported, but were sent by the server");
+										}
+										else {
+											channel.master = curPeer;
+										}
+									}
+									cursor += 4 + fullMsg.getUint8(cursor + 3);
+								}
+							}
+
+							if (channel == null || channel.id == null || channel.name == null) {
+								this.CreateError("Malformed Join Channel Success message received");
+								return;
+							}
+							this.channelList.push(channel);
+
+							this.ext.LacewingCall_OnJoinChannel(this, channel);
+						}
+						else {
+							const nameLength4 = fullMsg.getUint8(3);
+							const name4 = this.decoder.decode(rawMsg.slice(4, 4 + nameLength4)),
+								denyReason3 = this.decoder.decode(rawMsg.slice(4 + nameLength4));
+
+							if (name4 == null || denyReason3 == null) {
+								this.CreateError("Malformed Join Channel Denied message received");
+								return;
+							}
+							this.ext.LacewingCall_OnJoinChannelDenied(this, name4, denyReason3);
+						}
+						return;
+					}
+					// LeaveChannel response
+					case 3: {
+						const channelID2 = fullMsg.getUint16(3, true), channel2 = this.getChannel(channelID2);
+						if (channel2 == null) {
+							this.CreateError("Malformed Leave Channel " + (success ? "" : "Denied ") + "message; channel ID " +
+								channelID2 + " has already been left, or was never joined in the first place");
+							return;
+						}
+
+						if (success) {
+							this.ext.LacewingCall_OnLeaveChannel(this, channel2);
+							this.channelList = this.channelList.filter(function (c) { return c.id != channel2.id; });
+						}
+						else {
+							const denyReason4 = this.decoder.decode(rawMsg.slice(5));
+							this.ext.LacewingCall_OnLeaveChannelDenied(this, channel2, denyReason4);
+						}
+						return;
+					}
+					// ChannelList response
+					case 4: {
+						if (success) {
+							this.channelListing = [];
+							let cursor2 = 3, curChLst = null;
+							while (cursor2 < fullMsg.byteLength) {
+								curChLst = new Bluewing_ChannelListing(this, fullMsg.getUint16(cursor2, true),
+									this.decoder.decode(rawMsg.slice(cursor2 + 3, cursor2 + 3 + fullMsg.getUint8(cursor2 + 2))));
+								cursor2 += 3 + fullMsg.getUint8(cursor2 + 2);
+
+								if (curChLst.name == null) {
+									this.CreateError("Channel Listing Response message was malformed");
+									return;
+								}
+								for (let i = 0; i < this.channelListing.length; ++i) {
+									if (this.channelListing[i].nameSimplified == curChLst.nameSimplified) {
+										this.CreateError("Channel Listing response contained duplicates");
+										return;
+									}
+								}
+								darkEdif.finalizer.register(curChLst, "ChannelListing with name " + curChLst.name);
+								this.channelListing.push(curChLst);
+							}
+
+							this.ext.LacewingCall_OnChannelListReceived(this);
+						}
+						else {
+							// No native Channel List Request Denied.
+							let denyReason5 = "Server has disabled or does not support channel listing requests.";
+							if (fullMsg.byteLength > 3) {
+								denyReason5 = this.decoder.decode(rawMsg.slice(3));
+							}
+							this.CreateError("Channel list request denied. Reason \"" + denyReason5 + "\"");
+						}
+						return;
+					}
+					default: {
+						this.CreateError("Received a message of type Response, but the type " +
+							"of response was unexpected. Expected 0-4, got " + responseType);
+						return;
+					}
+				}
+				// doesn't reach here
+			}
+			// BinaryServerMessage
+			case 1: {
+				const subChannel = fullMsg.getUint8(1), msg = rawMsg.slice(2);
+				this.ext.LacewingCall_OnServerMessage(this, isUDP, subChannel, msg, msg.byteLength, variant);
+				return;
+			}
+			// BinaryChannelMessage, peer message
+			case 2:
+			case 3: {
+				const subChannel2 = fullMsg.getUint8(1);
+				const channelID3 = fullMsg.getUint16(2, true);
+				const channel3 = this.getChannel(channelID3);
+				if (channel3 == null) {
+					this.CreateError("A " +(type == 2 ? "channel" : "peer") + " message on channel ID " + channelID3 +
+						" was received, but client is not joined to it. Message ignored.");
+					return;
+				}
+
+				const peerID = fullMsg.getUint16(4, true);
+				const peer = channel3.getPeer(peerID);
+				if (peer == null) {
+					this.CreateError("A "+(type == 2 ? "channel" : "peer") + " message on channel \"" + channel3.name +
+						"\" was received, but sending peer ID " + peerID + " is not joined to it.");
+					return;
+				}
+
+				const msg3 = rawMsg.slice(6);
+				if (type == 2) {
+					this.ext.LacewingCall_OnChannelMessage(this, peer, channel3, isUDP, subChannel2, msg3, msg3.byteLength, variant);
+				}
+				else {
+					this.ext.LacewingCall_OnPeerMessage(this, peer, channel3, isUDP, subChannel2, msg3, msg3.byteLength, variant);
+				}
+				return;
+			}
+			// Message from server to channel
+			case 4: {
+				const subChannel3 = fullMsg.getUint8(1);
+				const channelID4 = fullMsg.getUint16(2, true);
+				const channel4 = this.getChannel(channelID4);
+				if (channel4 == null) {
+					this.CreateError("A server -> channel message for channel ID " + channelID4 +
+						" was received, but client is not joined to that channel. Message ignored.");
+					return;
+				}
+
+				const msg4 = rawMsg.slice(4);
+				this.ext.LacewingCall_OnServerChannelMessage(this, channel4, isUDP, subChannel3, msg4, msg4.byteLength, variant);
+				return;
+			}
+			// Peer change
+			case 9: {
+				const channelID5 = fullMsg.getUint16(1, true);
+				const peerID2 = fullMsg.getUint16(3, true);
+
+				const channel5 = this.getChannel(channelID5);
+				if (channel5 == null) {
+					this.CreateError("A 'peer change' message for a peer on channel ID " + channelID5 +
+						" was received, but client is not joined to that channel. Message ignored.");
+					return;
+				}
+
+				let peer2 = channel5.getPeer(peerID2);
+				const peerName = rawMsg.byteLength == 5 ? "" : this.decoder.decode(rawMsg.slice(6));
+				const flags2 = rawMsg.byteLength == 5 ? 0 : fullMsg.getUint8(5);
+
+				if (flags2 & 0xFE != 0) {
+					this.CreateError("Unexpected flags in 'peer2 change message'; expected 0 or 1, got " + flags2);
+					return;
+				}
+				// peer2 not in channel list: assume the message is 'peer2 connected to channel'
+				if (peer2 == null) {
+					peer2 = new Bluewing_Peer(channel5, peerID2, peerName);
+					darkEdif.finalizer.register(peer2, "Peer with name " + peer2.name);
+
+					channel5.peerList.push(peer2);
+					if ((flags2 & 0x1) == 0x1) {
+						// There's no event to inform the user that the channel master changed.
+						//if (channel.master != null)
+
+						channel5.master = peer2;
+					}
+
+					this.ext.LacewingCall_OnPeerConnect(this, channel5, peer2);
+					return;
+				}
+				// else peer2 in list
+
+				// peer2 disconnect (peerName and flags missing from message)
+				if (rawMsg.byteLength == 5) {
+					peer2.isClosed = true;
+					this.ext.LacewingCall_OnPeerDisconnect(this, channel5, peer2);
+
+					channel5.peerList = channel5.peerList.filter(function (f) { return f.id != peerID2; });
+					if (channel5.master == peer2) {
 						channel5.master = null;
-						this.CreateError("A 'peer change' message was sent, which removed the master from being master " +
-							"... switching, but there's no way to inform Fusion of that.");
+					}
+					return;
+				}
+
+				// Otherwise, peer2 name change.
+				if (peer2.name != peerName) {
+					peer2.previousName = peer2.name;
+					peer2.name = peerName;
+					peer2.nameSimplified = this.SimplifyName(peerName);
+					this.ext.LacewingCall_OnPeerNameChanged(this, channel5, peer2);
+					return;
+				}
+
+				// Otherwise, it has to be a master setting change...
+				// but there's no events for that, nor server-side code,
+				// bar in a custom server.
+				// Since custom server deserves a custom client, of which this implementation is NOT,
+				// Bluewing will thus error out, although it will still store the new master.
+
+				// Master reset, currently no master.
+				// Note it's the server's job to disconnect all peers if the
+				// 'close when master leaves' flag was enabled for that channel.
+
+				if ((flags2 & 0x1) == 0x1) {
+					if (channel5.master == peer2) {
+						this.CreateError("A 'peer change' message was sent, but no difference was noted. Message ignored");
 						return;
 					}
-					// Message peer2 is being removed from master status, but isn't master anyway
+					// Already a master on this channel, and it's not this peer2
+					channel5.master = peer2;
+					if (channel5.master != null) {
+						this.CreateError("A 'peer change' message was sent, which changed the master, but " +
+							"there was already a master... switching, but there's no way to inform Fusion of that");
+					}
 					else {
-						this.CreateError("A 'peer change' message was sent, which removed the master, but " +
-							"the peer that was being removed from master was already not a master... ignoring message.");
-						return;
+						this.CreateError("A 'peer change' message added a peer as channel master, but there's no " +
+							"events to inform Fusion of it. Switching");
 					}
-				}
-				// UDPWelcome
-			case 10:
-				{
-					// The C++ protocol implements a wait for both TCP and UDP to connect before triggering On Connect.
-					// We don't implement UDP connect yet, so this code shouldn't run.
-					this.CreateError("Received UDPWelcome response to UDPHello, but not expecting UDP of any sort");
 					return;
 				}
-				// Ping
-			case 11:
-				{
-					// respond with Pong
-					this.$SendRawTCPServerCmd(this.pong);
+				// Message peer2 is being removed from master
+				else if (channel5.master == peer2) {
+					channel5.master = null;
+					this.CreateError("A 'peer change' message was sent, which removed the master from being master " +
+						"... switching, but there's no way to inform Fusion of that.");
 					return;
 				}
-				// Implementation response
-			case 12:
-				{
-					this.$SendRawTCPServerCmd(this.impl);
+				// Message peer2 is being removed from master status, but isn't master anyway
+				else {
+					this.CreateError("A 'peer change' message was sent, which removed the master, but " +
+						"the peer that was being removed from master was already not a master... ignoring message.");
 					return;
 				}
-				// Unrecognised type.
-			default:
-				{
-					this.CreateError("Received an unknown message type. Expected 0-12, got " + type);
-				}
+			}
+			// UDPWelcome
+			case 10: {
+				// The C++ protocol implements a wait for both TCP and UDP to connect before triggering On Connect.
+				// We don't implement UDP connect yet, so this code shouldn't run.
+				this.CreateError("Received UDPWelcome response to UDPHello, but not expecting UDP of any sort");
+				return;
+			}
+			// Ping
+			case 11: {
+				// respond with Pong
+				this.$SendRawTCPServerCmd(this.pong);
+				return;
+			}
+			// Implementation response
+			case 12: {
+				this.$SendRawTCPServerCmd(this.impl);
+				return;
+			}
+			// Unrecognised type.
+			default: {
+				this.CreateError("Received an unknown message type. Expected 0-12, got " + type);
+			}
 		}
 	};
 	this.Connect = function	(addr) {
@@ -3638,8 +3748,9 @@ function Bluewing_Client(blue) {
 		if (/wss?:\/\//i.test(addr)) {
 			socketSecure = /wss?:\/\//i.exec(addr)[0].toLowerCase();
 			addr = addr.substr(socketSecure.length);
-			if (addr.length > 0 && addr[addr.length - 1] == '/')
+			if (addr.length > 0 && addr[addr.length - 1] == '/') {
 				addr = addr.substr(0, addr.length - 1);
+			}
 		}
 
 		// TODO: IPv6 addresses?
@@ -3656,8 +3767,6 @@ function Bluewing_Client(blue) {
 		// file and http: connect insecurely, for speed
 		// https: connect securely
 		// Note that browsers will reject a ws:// connection if the page is https://
-		// TODO: Allow users to force https even in http/file page?
-
 
 		if (addr.indexOf(':') != -1) {
 			const both = addr.split(':');
@@ -3669,7 +3778,8 @@ function Bluewing_Client(blue) {
 				this.isClosed = true;
 				return;
 			}
-		} else { // No explicit port, guess from this page's protocol
+		}
+		else { // No explicit port, guess from this page's protocol
 			this.serverAddr = addr;
 			this.serverPort = location.protocol === 'https:' ? 443 : 80;
 		}
@@ -3686,13 +3796,11 @@ function Bluewing_Client(blue) {
 			this.comm.addEventListener('close', this);
 			this.comm.addEventListener('message', this);
 		}
-		catch (e)
-		{
+		catch (e) {
 			do {
 				// SecurityError are thrown when HTTPS page tries loading non-secure (ws://) connection
 				// Retry on wss://, same port, and see how it goes
-				if (e.type == "SecurityError" && socketSecure == "ws://")
-				{
+				if (e.type == "SecurityError" && socketSecure == "ws://") {
 					this.CreateError("Cannot connect to insecure WebSocket port on a HTTPS webpage. Check help file. Will retry on secure.");
 					try {
 						this.comm = new WebSocket("wss://" + addr + "/", "bluewing");
@@ -3703,8 +3811,7 @@ function Bluewing_Client(blue) {
 						this.comm.addEventListener('message', this);
 						break;
 					}
-					catch (e2)
-					{
+					catch (e2) {
 						// fall through; original URL caused e, so e's error is more applicable to report over e2
 					}
 				}
@@ -3720,8 +3827,7 @@ function Bluewing_Client(blue) {
 	this.Disconnect = function () {
 		// If dead, the extension that held this Client has "deleted" it, but due to presence of the WebSocket it's still in RAM.
 		// We'll clear out the handlers so garbage collector can get it faster
-		if (this.isDead)
-		{
+		if (this.isDead) {
 			this.comm.removeEventListener('open', this);
 			this.comm.removeEventListener('error', this);
 			this.comm.removeEventListener('close', this);
@@ -3769,7 +3875,7 @@ function Bluewing_Client(blue) {
 		return this.channelList.find(function (f) { return f.id == channelID; });
 	};
 	this.SendMsg = function (subChannel, userMsg, variant) {
-		/// <summary> Sends a user-defined message via TCP to the server.  </summary>
+		/// <summary> Sends a user-defined message via TCP to the server. </summary>
 		/// <param name="subChannel" type="Number"> The subchannel, 0-255. Uint8. </param>
 		/// <param name="userMsg" type="ArrayBuffer"> The user message. </param>
 		/// <param name="variant" type="Number"> The variant. 0-2 only, integer. </param>
