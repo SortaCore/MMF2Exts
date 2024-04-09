@@ -124,6 +124,7 @@ struct relayserverinternal
 		auto serverCliListWriteLock = server.lock_clientlist.createWriteLock();
 		auto serverChListWriteLock = server.lock_channellist.createWriteLock();
 		auto serverUDPWriteLock = server.lock_udp.createWriteLock();
+		auto actionWriteTimer = lock_queueaction.createWriteLock();
 
 		// TODO: Will this ever be non-empty?
 		for (auto& c : clients)
@@ -144,6 +145,9 @@ struct relayserverinternal
 
 		lacewing::timer_delete(pingtimer);
 		pingtimer = nullptr;
+
+		lacewing::timer_delete(actiontimer);
+		actiontimer = nullptr;
 	}
 
 	IDPool clientids;
@@ -1508,7 +1512,10 @@ void relayserver::unhost()
 	// flash only points to regular server, so it has no client list itself
 	const bool isWebSocketActive = websocket->hosting() || websocket->hosting_secure();
 	if (!isWebSocketActive)
+	{
 		serverInternal->pingtimer->stop();
+		serverInternal->actiontimer->stop();
+	}
 
 	// This will drop all clients, by doing so drop all channels
 	// and both of those will free the IDs
@@ -1549,7 +1556,10 @@ void relayserver::unhost_websocket(bool insecure, bool secure)
 	// If we've got a different server up (and we're not about to unhost it here), then keep ping timer running
 	const bool isOtherHosting = socket->hosting() || (!insecure && websocket->hosting()) || (!secure && websocket->hosting_secure());
 	if (!isOtherHosting)
+	{
 		serverInternal->pingtimer->stop();
+		serverInternal->actiontimer->stop();
+	}
 
 	// We'll set the leavers all as readonly before closing channels, so peer leave messages aren't sent to leavers
 	// as the clients leave their channels
