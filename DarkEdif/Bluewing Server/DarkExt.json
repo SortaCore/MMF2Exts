@@ -1602,6 +1602,7 @@
 			"---",
 			[ "Canal",
 				[ 27, "Seleccionar por nome" ],
+				[ 93, "Seleccionar por ID" ],
 				"---",
 				[ 28, "Reciclar todos so canais" ],
 				[ 64, "Reciclar todos os canais (com nome a reciclar)" ],
@@ -2395,6 +2396,12 @@
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
 				]
+			},
+			{
+				"Title": "Seleccionar canal por ID %0",
+				"Parameters": [
+					[ "Integer", "ID" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -3159,6 +3166,7 @@
 			"---",
 			[ "Canal",
 				[ 27, "Sélectionner un canal par nom" ],
+				[ 93, "Sélectionner un canal par ID" ],
 				"---",
 				[ 28, "Pour chaque canaux" ],
 				[ 64, "Pour chaque canaux (avec nom de boucle)" ],
@@ -3936,6 +3944,12 @@
 				"Title": "Stopper l'hébergement du serveur(s) HTML5 WebSocket %0 server",
 				"Parameters": [
 					[ "Text", "Which to unhost, \"secure\", \"insecure\" or \"both\"?" ]
+				]
+			},
+			{
+				"Title": "Sélectionner le canal de ID %0",
+				"Parameters": [
+					[ "Integer", "ID" ]
 				]
 			}
 		],
