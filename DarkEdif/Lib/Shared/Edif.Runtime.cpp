@@ -1555,8 +1555,12 @@ eventGroup * CEventProgram::get_eventGroup() {
 		JNIExceptionCheck();
 		jobject eventGroupJava = mainThreadJNIEnv->GetObjectField(me, rhEventProgFieldID);
 		JNIExceptionCheck();
-		eventGrp = std::make_unique<eventGroup>(eventGroupJava, runtime);
-		LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
+		// This can be null, if running events from Handle tick.
+		if (eventGroupJava != nullptr)
+		{
+			eventGrp = std::make_unique<eventGroup>(eventGroupJava, runtime);
+			LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
+		}
 	}
 	return eventGrp.get();
 }
