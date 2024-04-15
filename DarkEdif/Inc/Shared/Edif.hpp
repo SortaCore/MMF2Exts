@@ -176,8 +176,8 @@ namespace Edif
 		EventParam* ParamZero;
 #elif defined(__ANDROID__)
 		Runtime(Extension* ext, jobject javaExtPtr);
-		global<jobject> curCEvent;
-		jobject curAct = nullptr;
+		global<jobject> curCEvent, curRH4ActStart;
+		jobject curRH4ActBasedOnCEventOnly = nullptr;
 		void InvalidateByNewACE();
 
 		// Attaches current thread, and gets JNIEnv for it; errors are fatal

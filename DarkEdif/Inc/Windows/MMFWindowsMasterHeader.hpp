@@ -65,7 +65,7 @@ struct CRunFrame;
 struct CEditApp;
 struct CEditFrame;
 struct EDITDATA;
-struct ObjectInfo;
+struct ObjectInfo; // for more detail, include ObjectInfo.hpp
 struct dllTrans;
 struct kpj;
 struct drawRoutine;
@@ -1742,6 +1742,9 @@ struct RunHeader {
 	// Sets the rh2.rh2ActionLoopCount variable, used in actions when looping object instances to run an action on each instance
 	void SetRH2ActionLoopCount(int newActLoopCount);
 
+	// Current Fusion event line, confusingly called event group. Can be null, during Handle().
+	// @remarks Will also be null in unpatched runtimes that reset rhEventGroup by generated events;
+	//			DarkEdif exts save and restore during generating, but otherwise it's up to runtime.
 	eventGroup* get_EventGroup();
 	// Gets number of OIList currently in frame, see GetOIListByIndex()
 	// @remarks In non-Windows, this is normally a rhMaxOI variable, in Windows it's NumberOi, and includes an extra, invalid Oi

@@ -552,6 +552,9 @@ protected:
 	std::unique_ptr<eventGroup> eventGrp;
 	std::optional<int> rh2EventCount, rh4EventCountOR;
 	std::optional<int> rh2ActionCount, rh2ActionLoopCount;
+	// Can be NULL if runtime is not patched to include this;
+	// to check if NULL should be allowed, check if RunHeader has its fieldID set
+	static jfieldID rh4ActStartFieldID;
 
 	void SetEventGroup(global<jobject>&& grp);
 
@@ -669,7 +672,6 @@ protected:
 	// Called for getting the whole array during a oi find
 	jobjectArray GetOiList();
 
-private:
 	static jfieldID rh4TokensFieldID, rh4CurTokenFieldID, eventProgramFieldID, oiListFieldID;
 };
 

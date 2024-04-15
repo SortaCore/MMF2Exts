@@ -1222,8 +1222,8 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	// To prevent subfunctions causing this variable to be incorrect, we'll copy it out and restore after
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out();
 	ext->Runtime.curCEvent = global((jobject)act, "Current Act ext");
-	const jobject lastAct = ext->Runtime.curAct;
-	ext->Runtime.curAct = ext->Runtime.curCEvent.ref;
+	const jobject lastAct = ext->Runtime.curRH4ActBasedOnCEventOnly;
+	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
 #else
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
@@ -1259,7 +1259,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, i
 		ext->Runtime.curCEvent.ref = nullptr;
 	}
 	ext->Runtime.curCEvent = lastCEvent.swap_out();
-	ext->Runtime.curAct = lastAct;
+	ext->Runtime.curRH4ActBasedOnCEventOnly = lastAct;
 #elif defined(__APPLE__)
 	ext->Runtime.curCEvent = lastCEvent;
 #endif

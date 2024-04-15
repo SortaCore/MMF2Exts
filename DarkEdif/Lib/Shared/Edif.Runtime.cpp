@@ -1440,26 +1440,56 @@ jobjectArray RunHeader::GetOiList()
 
 event2 * RunHeader::GetRH4ActionStart() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	// rh4ActionStart is not used by Java runtime, but it is by iOS/Windows.
-	// It points to the currently running action in an event.
-	// That's just the current CEvent, if it's running action, which rh2ActionOn == true indicates.
-
-	// This can still be null in scenarios like an expression being read and reading rh4, but no helpful action provided.
-	if (runtime->curCEvent == nullptr)
+	// During A/C/E curCEvent should be copied out, A/C/E func code run, then copied back after.
+	// Failure to do this will result in curCEvent inconsistency which may affect any expression-function
+	// objects, fastloops, etc., and makes debugging events harder.
+	if (!get_EventProgram()->GetRH2ActionOn())
 	{
-#ifdef _DEBUG
-		// During A/C/E curCEvent should be copied out, A/C/E func code run, then copied back after.
-		// Failure to do this will result in curCEvent inconsistency which may affect any expression-function
-		// objects, fastloops, etc., and makes debugging events harder.
-		if (get_EventProgram()->GetRH2ActionOn())
-			LOGF(_T("GetRH4ActionStart(): Failed to retain curCEvent across A/C/E calls.\n"));
-#endif
 		LOGV(_T("GetRH4ActionStart(): curCEvent is invalid, was rh4ActStart read during a non-action?\n"));
 		return nullptr;
 	}
 
+	// rh4ActionStart is not present in the Android runtime, but it is in iOS/Windows.
+	// It points to the currently running action in an event, set in call_Actions().
+	// That's just the current CEvent, if it's running action, which rh2ActionOn == true indicates.
+	// However this wasn't patched for a lot of builds; so we allow it to be missing.
+	if (CEventProgram::rh4ActStartFieldID != NULL)
+	{
+		if (!rh4ActStart)
+		{
+			// Assume EventGroup is out of date if curCEvent is, and reset it too
+			if (EventGroup.has_value())
+			{
+				EventGroup.reset();
+				// We load eventgroup from eventProgram, which is tied to the frame so program should be valid
+				get_EventProgram()->eventGrp.reset();
+				threadEnv->DeleteGlobalRef(runtime->curRH4ActStart.ref);
+				runtime->curRH4ActStart.ref = nullptr;
+			}
+
+			if (runtime->curRH4ActStart.invalid())
+			{
+				// rh4ActStart will hold a global ref if needed
+				jobject rh4AS = threadEnv->GetObjectField(get_EventProgram()->me, CEventProgram::rh4ActStartFieldID);
+				JNIExceptionCheck();
+				if (!rh4AS)
+					LOGE(_T("Can't read rh4ActStart, returned null, but rh2ActionOn is true, so it should be a valid event.\n"));
+
+				rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, rh4AS, runtime);
+			}
+		}
+
+		return rh4ActStart.get();
+	}
+
+	// If we don't have rh4ActionStart patch, work around it by returning the curCEvent.
+	// This only works if this ext's action is being run, which sets curCEvent.
+	// We can't return null because rh2ActionOn is true, so an action is running, so this cannot be null.
+	if (runtime->curCEvent.invalid())
+		LOGF(_T("GetRH4ActionStart(): curCEvent is invalid, and the runtime implementation of rh4ActStart is not available.\n"));
+
 	// CEvent exists and is out of date, and we're running an action
-	if ((!rh4ActStart || rh4ActStart->me.ref != runtime->curCEvent) && get_EventProgram()->GetRH2ActionOn())
+	if (!rh4ActStart || rh4ActStart->me.ref != runtime->curCEvent.ref)
 	{
 		// Assume EventGroup is out of date if curCEvent is, and reset it too
 		if (EventGroup.has_value())
@@ -1469,7 +1499,7 @@ event2 * RunHeader::GetRH4ActionStart() {
 			get_EventProgram()->eventGrp.reset();
 		}
 
-		rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, runtime->curAct, runtime);
+		rh4ActStart = std::make_unique<event2>(get_EventGroup(), event2::FindIndexMagicNum, runtime->curRH4ActBasedOnCEventOnly, runtime);
 	}
 	return rh4ActStart.get();
 }
@@ -1546,6 +1576,8 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 	}
 }
 
+// Static definitions - default inited to zero
+jfieldID CEventProgram::rh4ActStartFieldID;
 
 eventGroup * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1569,6 +1601,18 @@ CEventProgram::CEventProgram(jobject me, Edif::Runtime* runtime) :
 {
 	meClass = global(threadEnv->GetObjectClass(me), "CEventProgram class");
 	JNIExceptionCheck();
+
+	// rh4ActionStart is missing in earlier Runtime versions (<= 295.10)
+	if (RunHeader::eventProgramFieldID != NULL)
+	{
+		rh4ActStartFieldID = threadEnv->GetFieldID(meClass, "rh4ActionStart", "LActions/CAct;");
+		// Missing rh4ActionStart patch, which we allow
+		if (!rh4ActStartFieldID)
+		{
+			threadEnv->ExceptionClear();
+			LOGW(_T("Missing the rh4ActionStart field. Reading rh4ActionStart can fail and kill the application!\n"));
+		}
+	}
 }
 void CEventProgram::InvalidatedByNewGeneratedEvent()
 {
