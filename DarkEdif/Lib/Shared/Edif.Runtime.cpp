@@ -95,7 +95,6 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 #else // Android
 	if (numTotalFrames == 0)
 	{
-		// Application/CRunApp parentApp
 		jfieldID fieldID = threadEnv->GetFieldID(meClass, "gaNbFrames", "I");
 		JNIExceptionCheck();
 		jint totalFrames = threadEnv->GetIntField(me, fieldID);
@@ -157,7 +156,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 }
 
 void Edif::Runtime::PushEvent(int EventID)
-{							   
+{
 	CallRunTimeFunction2(hoPtr, RFUNCTION::PUSH_EVENT, EventID, 0);
 }
 
@@ -935,10 +934,7 @@ void Edif::Runtime::Rehandle()
 static int steadilyIncreasing = 0;
 void Edif::Runtime::GenerateEvent(int EventID)
 {
-	// Cached variables to do with object selection will be invalidated by this new event
 	const auto& rhPtr = this->ObjectSelection.pExtension->rhPtr;
-	rhPtr->InvalidatedByNewGeneratedEvent();
-	hoPtr->InvalidatedByNewGeneratedEvent();
 
 	// If there is a fastloop in progress, generating an event inside an action will alter
 	// Action Count, making it smaller. Thus Action Count constantly decrementing will create
@@ -958,13 +954,19 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Due to Android's JVM use of references, this is efficient as we don't have to do a full array clone.
 
 	const int rh4CurToken = rhPtr->GetRH4CurToken();
-	const global<jobjectArray> rh4Tokens = rhPtr->GetRH4Tokens();
+	jobjectArray rh4Tokens = rhPtr->GetRH4Tokens();
+	if (rh4Tokens)
+		rh4Tokens = (jobjectArray)threadEnv->NewGlobalRef(rh4Tokens);
 
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets this rhEventGroup based on a local variable evgPtr, which it relies on instead
 	// We won't be using this while we're off running this event, so we can swap the reference out to a local
-	global<jobject> eventGroup = rhPtr->get_EventGroup()->me.swap_out();
+	std::unique_ptr<eventGroup> evg = rhPtr->eventProgram ? std::move(rhPtr->eventProgram->eventGrp) : nullptr;
+
+	// Cached variables to do with object selection will be invalidated by this new event
+	rhPtr->InvalidatedByNewGeneratedEvent();
+	hoPtr->InvalidatedByNewGeneratedEvent();
 
 	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "generateEvent", "(II)V");
 	threadEnv->CallVoidMethod(javaHoObject, javaMethodID, EventID, 0);
@@ -973,7 +975,10 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
 	rhPtr->SetRH4CurToken(rh4CurToken);
 	rhPtr->SetRH4Tokens(rh4Tokens);
-	rhPtr->get_EventProgram()->SetEventGroup(eventGroup.swap_out()); // and swap it back in
+	if (rh4Tokens)
+		threadEnv->DeleteGlobalRef(rh4Tokens);
+	if (evg)
+		rhPtr->eventProgram->eventGrp = std::move(evg); // and swap it back in
 }
 
 void Edif::Runtime::PushEvent(int EventID)
@@ -1389,15 +1394,15 @@ void RunHeader::SetRH4CurToken(int newCurToken)
 	JNIExceptionCheck();
 }
 
-// Gets the current expression token array; relevant in Android only. 
-global<jobjectArray> RunHeader::GetRH4Tokens()
+// Gets the current expression token array; relevant in Android only.
+jobjectArray RunHeader::GetRH4Tokens()
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	jobjectArray ptr = (jobjectArray)threadEnv->GetObjectField(crun, rh4TokensFieldID);
 	JNIExceptionCheck();
-	return global(ptr, "RH4Tokens from CRun GetRH4Tokens");
+	return ptr;
 }
-// Sets the current expression token array; relevant in Android only. 
+// Sets the current expression token array; relevant in Android only.
 void RunHeader::SetRH4Tokens(jobjectArray newTokensArray)
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1544,7 +1549,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 	if (EventGroup)
 		EventGroup.reset();
 	if (eventProgram)
-		eventProgram->InvalidatedByNewGeneratedEvent(); 
+		eventProgram->InvalidatedByNewGeneratedEvent();
 	if (OiList.valid())
 	{
 		for (auto& o : OiListArray)
@@ -1622,14 +1627,14 @@ void CEventProgram::InvalidatedByNewGeneratedEvent()
 	if (eventGrp)
 		eventGrp.reset();
 }
-void CEventProgram::SetEventGroup(global<jobject>&& grp)
+void CEventProgram::SetEventGroup(jobject grp)
 {
 	jfieldID rhEventProgFieldID = mainThreadJNIEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
 	JNIExceptionCheck();
-	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp.ref);
+	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp);
 	JNIExceptionCheck();
-	eventGrp = std::make_unique<eventGroup>(grp.ref, runtime);
-	runtime->ObjectSelection.pExtension->rhPtr->EventGroup = eventGrp.get();
+	eventGrp = grp ? std::make_unique<eventGroup>(grp, runtime) : nullptr;
+	runtime->ObjectSelection.pExtension->rhPtr->EventGroup = grp ? eventGrp.get() : nullptr;
 }
 
 int CEventProgram::get_rh2EventCount() {
@@ -2533,7 +2538,7 @@ short qualToOi::get_Oi(std::size_t i) {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	// Update internal list
 	if (OiAndOiListLength == SIZE_MAX)
-		get_OiList(0); 
+		get_OiList(0);
 
 	if (i * 2 >= OiAndOiListLength)
 		return -1;
@@ -2636,7 +2641,7 @@ EventGroupFlags eventGroup::get_evgFlags() {
 
 std::unique_ptr<event2> eventGroup::GetCAByIndex(std::size_t index) {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	if (!evgEvents)
+	if (evgEvents.invalid())
 		GetEventList(); // ignore return
 
 	if (index >= evgEventsLength)
