@@ -414,6 +414,7 @@ constexpr short lastNonFuncID = 59;
 // However, the less inline this object's functions are, the less useful it is.
 constexpr int numParamsToAllow = 5;
 
+// If this is updated, look everywhere for KR func regexes, like running from script and declaration/template setup
 enum Flags {
 	None = 0b00,
 	KeepObjSelection = 0b01,
@@ -1319,6 +1320,12 @@ std::tstring Extension::Sub_GetLocation(int actID)
 			<< GetActionIndex(this);
 		return str.str();
 	}
+	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Script))
+	{
+		str << _T("DarkScript scripting action in Fusion event #"sv) << curFusionEvent << _T(", in "sv)
+			<< GetActionIndex(this);
+		return str.str();
+	}
 	if (Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_MS) ||
 		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_Num_Ticks) ||
 		Edif::SDK->ActionFunctions[actID] == Edif::MemberFunctionPointer(&Extension::RunFunction_Delayed_String_MS) ||
@@ -1705,7 +1712,20 @@ bool Extension::Sub_ParseParamValue(const TCHAR * cppFuncName, std::tstring valu
 		// remove starting and ending quotes
 		valueTextToParse.erase(valueTextToParse.cbegin());
 		valueTextToParse.erase(--valueTextToParse.cend());
-		for (size_t i = valueTextToParse.find(_T('\\')); i != std::tstring::npos; i = valueTextToParse.find(_T('\\'), i + 1))
+
+		// Double-quote within the string, without a \ before it.
+		// This turned up during a test and was incredibly annoying, as it silently merged 2nd and 3rd parameter as 2nd didn't correctly end with a ".
+		// Example case: foo("bar",""yes")
+		for (std::size_t i = valueTextToParse.find(_T('"')); i != std::tstring::npos; i = valueTextToParse.find(_T('"'), i + 1))
+		{
+			if (valueTextToParse[i] == '"' && (i == 0 || valueTextToParse[i - 1] != '\\'))
+			{
+				return CreateErrorT("%s: Parameter \"%s\" (index %zu) has unescaped double-quote at index %zu [%s%.20s%s].",
+					cppFuncName, paramExpected.name.c_str(), paramIndex, i, i < 10 ? _T("...") : _T(""), valueTextToParse.c_str() + std::max(0, (int)i - 10), (int)valueTextToParse.size() - 20 > 0 ? _T("...") : _T("")), false;
+			}
+		}
+
+		for (std::size_t i = valueTextToParse.find(_T('\\')); i != std::tstring::npos; i = valueTextToParse.find(_T('\\'), i + 1))
 		{
 			// ends with a '\' and nothing following... ignore it
 			if (i == valueTextToParse.size())
