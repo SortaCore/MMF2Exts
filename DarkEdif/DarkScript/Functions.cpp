@@ -22,7 +22,7 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 
 	va_end(v);
 
-	LOGI(_T("DarkScript error: %s.\n"), backRAM);
+	LOGI(_T("DarkScript error: %s\n"), backRAM);
 
 	if (!curError.empty())
 	{
@@ -237,7 +237,7 @@ Extension::Value * Extension::Sub_CheckScopedVarAvail(const TCHAR * cppFuncName,
 	{
 		CreateErrorExpOpt(makeError, NULL, "%s: %s: param%s name \"%s\" not found.%s\n%s",
 			cppFuncName, rf->funcTemplate->name.c_str(), shouldBeParam == Expected::Never ? _T("") : _T("/scoped var"), scopedVarName,
-			std::find(globals->functionTemplates.crbegin(), globals->functionTemplates.crend(), rf->funcTemplate) != globals->functionTemplates.crend() ? _T("") : _T(" Anonymous functions use \"a\", \"b\" for parameters.\n"),
+			!rf->funcTemplate->isAnonymous ? _T("") : _T(" Anonymous functions use \"a\", \"b\" for parameters.\n"),
 			Sub_GetAvailableVars(rf, shouldBeParam).c_str()
 		);
 	}
@@ -1004,6 +1004,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 				(exp.FloatFlags & (1 << i) ? Type::Float : Type::Integer) : Type::Any;
 			funcTemplate->params.push_back(Param(name, type));
 		}
+		funcTemplate->isAnonymous = true;
 	}
 	else
 	{
@@ -1428,9 +1429,26 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 	} while (rf->active && rf->numRepeats >= ++rf->index);
 
 	// We need return value, no default return value, but we're returning with no return value set... uh oh
-	if (!rf->isVoidRun && rf->returnValue.dataSize == 0 && rf->funcTemplate->defaultReturnValue.dataSize == 0)
+	if (rf->returnValue.dataSize == 0 && rf->funcTemplate->defaultReturnValue.dataSize == 0)
 	{
-		if (objToRunOn)
+		// Anonymous functions can have no return value set, and we'll just return 0 or ""
+		// If void run, it's a delayed or foreach action
+		if (whenAllowNoRVSet == AllowNoReturnValue::AllFunctions ||
+			(rf->isVoidRun && whenAllowNoRVSet >= AllowNoReturnValue::ForeachDelayedActionsOnly) ||
+			(rf->funcTemplate->isAnonymous && whenAllowNoRVSet >= AllowNoReturnValue::AnonymousForeachDelayedActions))
+		{
+			LOGV(_T("%sFunction \"%s\" has no default return value, and no return value was set by any On Function \"%s\" for each %s events."
+				"Due to \"allow no default value\" property, ignoring it and returning 0/\"\"."),
+				objToRunOn ? _T("Foreach ") : _T(""),
+				rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str());
+			// Return to calling expression - return int and float directly as they occupy same memory address
+			if (rf->returnValue.type != Extension::Type::String)
+				rf->returnValue.dataSize = sizeof(int); // or sizeof float, same thing
+			else
+				rf->returnValue.data.string = _tcsdup(_T(""));
+		}
+		// else error: do foreach error, or do normal error
+		else if (objToRunOn)
 		{
 			CreateErrorT("Function \"%s\" has no default return value, and no return value was set by any On Function \"%s\" for each %s events.",
 				rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str(),

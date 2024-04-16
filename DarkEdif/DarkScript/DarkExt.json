@@ -934,6 +934,13 @@
 				"DefaultState": true
 			},
 			{
+				"Title": "Allow no return value when",
+				"Info": "Creates an error when a function ends with no set return value, or default return value.",
+				"Type": "Combo Box",
+				"DefaultState": "Anonymous, foreach, delayed only",
+				"Items": [ "Never", "Foreach, delayed only", "Anonymous, foreach, delayed only", "All functions" ]
+			},
+			{
 				"Title": "Enable Any Function conditions",
 				"Info": "If disabled, saves execution time by not running unnecessary functions.",
 				"Type": "Checkbox",

@@ -15,7 +15,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 2;
+	static const int Version = 3;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -39,7 +39,7 @@ public:
 	// Object properties
 	std::tstring globalID;
 
-	// Manages discrepances between supplied type and expected type
+	// Manages discrepancies between supplied type and expected type
 	enum class ConversionStrictness {
 		// Requested type must match input type
 		Exact,
@@ -53,6 +53,21 @@ public:
 		AnyWithDefaults
 	};
 	ConversionStrictness conversionStrictness;
+	// Allows 
+	enum class AllowNoReturnValue {
+		// All functions must have a return value set when they return, even if they don't use them
+		Never,
+		// Allow foreach actions and delayed function calls, which don't use the func return directly
+		// to not set a return value
+		ForeachDelayedActionsOnly,
+		// Allow foreach actions, delayed function calls, and anonymous functions
+		AnonymousForeachDelayedActions,
+		// Any function can forgo setting return value and use the defaults of "" or 0
+		AllFunctions
+	};
+	// If funcsMustHaveTemplate is false, allows no return value set at all.
+	AllowNoReturnValue whenAllowNoRVSet;
+
 	// If true, a function can't be run without a pre-existing template
 	bool funcsMustHaveTemplate;
 	// If true, sends template list to new Fusion frames after frame switch.
@@ -216,6 +231,7 @@ public:
 		// Function name to redirect to. Redirects do not combine.
 		std::tstring redirectFunc;
 		std::shared_ptr<FunctionTemplate> redirectFuncPtr;
+		bool isAnonymous = false;
 
 		FunctionTemplate(Extension* ext, const TCHAR * funcName, Expected delayable, Expected repeatable, bool recursable, Type returnType)
 			: name(funcName), repeating(repeatable), delaying(delayable),

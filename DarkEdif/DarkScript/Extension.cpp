@@ -162,6 +162,18 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	allowSingularToTriggerQualifierForeach = edPtr->Props.IsPropChecked("Allow singular objects to trigger qualifier foreach"sv);
 	inheritParametersAsScopedVariables = edPtr->Props.IsPropChecked("Inherit parameters as scoped variables"sv);
 
+	const std::tstring allowNoReturnProp = edPtr->Props.GetPropertyStr("Allow no return value when"sv);
+	whenAllowNoRVSet =
+		allowNoReturnProp == _T("Never"sv) ? AllowNoReturnValue::Never :
+		allowNoReturnProp == _T("Foreach, delayed only"sv) ? AllowNoReturnValue::ForeachDelayedActionsOnly :
+		allowNoReturnProp == _T("Anonymous, foreach, delayed only"sv) ? AllowNoReturnValue::AnonymousForeachDelayedActions :
+		allowNoReturnProp == _T("All functions"sv) ? AllowNoReturnValue::AllFunctions : (AllowNoReturnValue)-1;
+	if ((int)whenAllowNoRVSet == -1)
+		DarkEdif::MsgBox::Error(_T("Property error"), _T("Unrecognised allow no return value property value \"%s\"."), allowNoReturnProp.c_str());
+
+	// Strange combo; we don't make an outright error though, because we can still use the value
+	if (funcsMustHaveTemplate && whenAllowNoRVSet == AllowNoReturnValue::AnonymousForeachDelayedActions)
+		LOGW(_T("\"Allow no return value set\" property is set to \"%s\", but allowing anonymous functions are turned off.\n"), allowNoReturnProp.c_str());
 
 	const std::tstring globalScoped = edPtr->Props.GetPropertyStr("Global scoped vars"sv);
 	// TODO: Loop global scoped ^ and insert
@@ -184,7 +196,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	globals->exts.push_back(this);
 
 	// This can be set to false, then generate event, to find all events that have On Function conditions.
-	// Of course, it won't detect group events inside deactivated groups.
+	// This will allow caching a list of all On Function events -> function names, saving time on comparing line by line.
+	// Of course, it won't detect group events inside deactivated groups, so maybe it's best we manually loop events instead of triggering.
 	selfAwareness = true;
 }
 
