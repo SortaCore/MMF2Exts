@@ -188,7 +188,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 			throw "Property " + prop.propName + " is not textual.";
 		};
 		this['GetPropertyNum'] = function(chkIDOrName) {
-			const idx = that.GetPropertyIndex(chkIDOrName);
+			const idx = GetPropertyIndex(chkIDOrName);
 			if (idx == -1) {
 				return 0.0;
 			}
@@ -205,10 +205,10 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 				27 // PROPTYPE_SPINEDITFLOAT
 			];
 			if (numPropIDsInteger.indexOf(prop.propTypeID) != -1) {
-				return new DataView(prop.propData).getUint32(0, true);
+				return new DataView(prop.propData.buffer).getUint32(0, true);
 			}
 			if (numPropIDsFloat.indexOf(prop.propTypeID) != -1) {
-				return new DataView(prop.propData).getFloat32(0, true);
+				return new DataView(prop.propData.buffer).getFloat32(0, true);
 			}
 			throw "Property " + prop.propName + " is not numeric.";
 		};
