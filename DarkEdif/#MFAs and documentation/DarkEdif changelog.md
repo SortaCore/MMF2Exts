@@ -13,6 +13,8 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- iOS/Mac: Updated PreBuildTool and PostBuildTool to v1.0.0.7, fixed New Direction parameter being incorrectly read in iOS/Mac wrapper files.  
+  This bug was copied from a mistake in Android/iOS/Mac Fusion runtime. The SDK had Android already fixed.
 - Edittime: Fixed a new Visual Studio XP compatiblity bug, causing the object property readers to use uninitalized memory.  
   If it's safe to use a static struct constructor, `ThreadSafeStaticInitIsSafe` is defined (on all platforms).
 - Edittime: Fixed crash when smart properties were upgraded and a new checkbox property was added, while an existing checkbox property was renamed.
