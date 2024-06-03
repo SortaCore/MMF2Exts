@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- All platforms: Fixed new bug in v19, New Direction and Time parameters mistakenly being interpreted as comparison conditions, causing conditions to sometimes be true when false was returned.
 - iOS/Mac: Updated PreBuildTool and PostBuildTool to v1.0.0.7, fixed New Direction parameter being incorrectly read in iOS/Mac wrapper files.  
   This bug was copied from a mistake in Android/iOS/Mac Fusion runtime. The SDK had Android already fixed.
 - Edittime: Fixed a new Visual Studio XP compatiblity bug, causing the object property readers to use uninitalized memory.  

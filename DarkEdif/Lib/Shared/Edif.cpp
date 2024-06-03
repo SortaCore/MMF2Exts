@@ -730,10 +730,10 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 			case Params::Compare_Time:
 			case Params::Comparison:
+				isComparisonCondition = true;
 			case Params::New_Direction:
 			case Params::Time:
 				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
-				isComparisonCondition = true;
 				break;
 			// Returns a RunObject * for actions, and a OINUM for conditions
 			case Params::Object:
