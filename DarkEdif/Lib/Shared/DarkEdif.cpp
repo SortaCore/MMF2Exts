@@ -282,6 +282,14 @@ static bool IsUnchangeablePropInclCheckbox(const char* curStr)
 {
 	return !_stricmp(curStr, "Checkbox") || IsUnchangeablePropExclCheckbox(curStr);
 }
+// If true, a DarkEdif property with a string value in Data. Used for iteration and zero-length checks.
+static bool IsStringPropType(const char* const typeStr, bool includeComboBoxes)
+{
+	return !_strnicmp(typeStr, "Editbox String", sizeof("Editbox String") - 1) ||
+		!_stricmp(typeStr, "Editbox File") || !_stricmp(typeStr, "Editbox Image File") ||
+		!_stricmp(typeStr, "URL button") || !_stricmp(typeStr, "Editbox Folder") ||
+		(includeComboBoxes && !_strnicmp(typeStr, "Combo Box", sizeof("Combo Box") - 1));
+}
 
 #pragma pack(push, 1)
 struct DarkEdif::Properties::Data
@@ -368,7 +376,6 @@ static DarkEdif::Properties & GetRealPropsAddress(EDITDATA * edPtr)
 	}
 	return *(DarkEdif::Properties *)(((std::uint8_t *)edPtr) + propOffset);
 }
-
 
 namespace DarkEdif {
 	namespace DLL
@@ -536,8 +543,9 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		return;
 	}
 
-	// Even an empty string should be 1 (null char). Warn if not.
-	if (newPropValueSize == 0)
+	// Only empty string properties should be 0 length. Originally I planned to include null JIC,
+	// but as each prop has a preceding value size there's not really a need for that.
+	if (newPropValueSize == 0 && !IsStringPropType(curTypeStr, false))
 	{
 		MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (type %hs) is 0!"),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
@@ -755,8 +763,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		return nullptr;
 	}
 
-	if (!_strnicmp(curStr, "Editbox String", sizeof("Editbox String") - 1) ||
-		!_stricmp(curStr, "Editbox File") || !_stricmp(curStr, "Editbox Folder"))
+	if (IsStringPropType(curStr, false))
 	{
 		ret = new Prop_Str(UTF8ToTString(std::string_view((const char *)Current->ReadPropValue(), Current->ReadPropValueSize()), &allConv).c_str());
 		if (!allConv)
@@ -854,7 +861,7 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 		{
 			const json_value & propjson = CurLang["Properties"][PropID];
 			// Buff can be used for a string property
-			if (!_strnicmp(propjson["Type"], "Editbox String", sizeof("Editbox String") - 1))
+			if (IsStringPropType(propjson["Type"], true))
 			{
 				std::string utf8Str = DarkEdif::TStringToUTF8(((Prop_Str *)prop)->String);
 				Props.Internal_PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size());
@@ -2830,9 +2837,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		}
 
 		// Stores text
-		if (!_strnicmp(curPropType, "Editbox String", sizeof("Editbox String") - 1) || !_strnicmp(curPropType, "Combo Box", sizeof("Combo Box") - 1) ||
-			!_stricmp(curPropType, "Editbox File") || !_stricmp(curPropType, "Editbox Image File") ||
-			!_stricmp(curPropType, "URL button") || !_stricmp(curPropType, "Editbox Folder"))
+		if (IsStringPropType(curPropType, true))
 		{
 			const char* defaultText = propjson["DefaultState"];
 			fullSize += (defaultText ? strlen(defaultText) : 0); // UTF-8
