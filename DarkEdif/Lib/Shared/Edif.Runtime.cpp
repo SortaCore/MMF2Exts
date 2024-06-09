@@ -403,7 +403,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 	else
 	{
 		TCHAR * t = (TCHAR *) mvMalloc(Edif::SDK->mV, (str.size() + 1) * sizeof(TCHAR));
-		memcpy(t, str.data(), str.size());
+		memcpy(t, str.data(), str.size() * sizeof(TCHAR));
 		t[str.size()] = _T('\0');
 		*c = t;
 	}
