@@ -357,7 +357,7 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 		return nullptr;
 #ifdef _WIN32
 	const TCHAR* c = DarkEdif::IsFusion25 ? CF25.Strings[i] : MMF2.rvStrings[i];
-	if (c[0] == _T('\0')) // Fusion uses null and blank the same, we merge
+	if (c && c[0] == _T('\0')) // Fusion uses null and blank the same, we merge
 		c = nullptr;
 #else
 	const TCHAR* c = nullptr;
@@ -389,6 +389,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
 #ifdef _WIN32
 		*(void **)&CF25.Strings = v; // TODO: Simplify
+		CF25.NumAltStrings = (int)i;
 #else
 		throw std::runtime_error("Not implemented");
 #endif
