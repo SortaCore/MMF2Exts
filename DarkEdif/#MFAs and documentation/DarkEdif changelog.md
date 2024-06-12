@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- PreBuildTool: Now v1.0.0.8; aborts if you use non-numbers in a LinkA/C/E, which would break the call table generation for non-Windows
 - Windows: Fixed alt string setting, and getting a blank alt string
 - Edititme: Standardized string property handling, fixed blank string properties causing a warning popup
 - All platforms: Fixed new bug in v19, New Direction and Time parameters mistakenly being interpreted as comparison conditions, causing conditions to sometimes be true when false was returned.
