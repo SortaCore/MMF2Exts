@@ -911,13 +911,13 @@
 			},
 			{
 				"Title": "Keep declarations across frame switches",
-				"Info": "If true, will not discard declarations set up before a Fusion frame switch.",
+				"Info": "If true, will not discard declarations set up before a Fusion frame switch. (Requires a global ID.)",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},
 			{
 				"Title": "Keep global vars across frame switches",
-				"Info": "If true, will not discard global scope scoped vars set up before a Fusion frame switch.",
+				"Info": "If true, will not discard global scope scoped vars set up before a Fusion frame switch. (Requires a global ID.)",
 				"Type": "Checkbox",
 				"DefaultState": true
 			},

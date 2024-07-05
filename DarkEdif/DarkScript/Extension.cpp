@@ -195,6 +195,10 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	}
 	globals->exts.push_back(this);
 
+	// Should we error here? It's a property default as true, though.
+	if (globalID.empty() && (keepTemplatesAcrossFrames || keepGlobalScopedVarsAcrossFrames))
+		LOGW(_T("Warning: Got a DarkScript with a \"keep across frames\" property checked, but no global ID given, so they won't be kept.\n"));
+
 	// This can be set to false, then generate event, to find all events that have On Function conditions.
 	// This will allow caching a list of all On Function events -> function names, saving time on comparing line by line.
 	// Of course, it won't detect group events inside deactivated groups, so maybe it's best we manually loop events instead of triggering.
