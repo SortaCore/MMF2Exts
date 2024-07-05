@@ -54,6 +54,10 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 	curError.clear(); // to prevent recursion
 }
 
+Extension::GlobalData* Extension::ReadGlobalDataByID(const std::tstring& str2)
+{
+	return (GlobalData*)Runtime.ReadGlobal((_T("DarkScript"s) + str2).c_str());
+}
 std::tstring Extension::ToLower(const std::tstring_view str2)
 {
 	std::tstring str(str2);
@@ -1043,6 +1047,11 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		// Too many parameters (ignore func name and repeat count)
 		if (((size_t)exp.NumOfParams - expParamIndex) > funcTemplate->params.size())
 			CreateError2V("Can't call function %s with %hi parameters, template expects up to %zu parameters.", funcTemplate->name.c_str(), exp.NumOfParams, funcTemplate->params.size());
+
+		// This template was made with a valid global ID that had an ext, but the ext vanished
+		if (funcTemplate->ext == NULL)
+			CreateError2V("Can't call function %s, it runs on a now non-existent global ID \"%s\".",
+				funcTemplate->name.c_str(), funcTemplate->globalID.c_str());
 	}
 
 

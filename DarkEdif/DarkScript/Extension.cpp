@@ -181,7 +181,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	GlobalData* gc = NULL;
 	std::tstring key = _T("DarkScript"s) + globalID;
 	if (!globalID.empty())
-		gc = (GlobalData*)Runtime.ReadGlobal(key.c_str());
+		gc = ReadGlobalDataByID(globalID);
 	if (gc == NULL)
 	{
 		globals = new GlobalData();
@@ -199,6 +199,22 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	if (globalID.empty() && (keepTemplatesAcrossFrames || keepGlobalScopedVarsAcrossFrames))
 		LOGW(_T("Warning: Got a DarkScript with a \"keep across frames\" property checked, but no global ID given, so they won't be kept.\n"));
 
+	// Claim ownership of the templates inherited from another frame
+	if (keepTemplatesAcrossFrames && globals->exts.size() == 1)
+	{
+		for (auto& f : globals->functionTemplates)
+			if (f->ext == NULL && f->globalID.empty())
+				f->ext = this;
+
+		// And update all globals that are linked to this global's templates so they have an ext to run on
+		for (auto& g : globals->updateTheseGlobalsWhenMyExtCycles)
+		{
+			for (auto& f : g->functionTemplates)
+				if (f->ext == NULL && f->globalID == globalID)
+					f->ext = this;
+		}
+	}
+
 	// This can be set to false, then generate event, to find all events that have On Function conditions.
 	// This will allow caching a list of all On Function events -> function names, saving time on comparing line by line.
 	// Of course, it won't detect group events inside deactivated groups, so maybe it's best we manually loop events instead of triggering.
@@ -207,24 +223,65 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 
 Extension::~Extension()
 {
+	// Move any template set to run this template to next available ext, or to null;
+	// on new ext made with this global ID, it will claim all templates that have a differing global ID
+	const auto MoveRef = [this](Extension::GlobalData * globa) {
+		assert(globa != NULL);
+		Extension* const nextExt = globa->exts.empty() ? NULL : globa->exts[0];
+		for (const auto& f : globa->functionTemplates)
+		{
+			if (f->ext == this && (f->globalID.empty() || f->globalID == globalID))
+				f->ext = nextExt;
+		}
+	};
+
 	globals->exts.erase(std::find(globals->exts.cbegin(), globals->exts.cend(), this));
-
 	if (!globals->exts.empty())
-		return; // only last ext cleans up
+	{
+		if (this->keepTemplatesAcrossFrames)
+		{
+			// We can't run these functions anymore, let next ext take over
+			MoveRef(globals);
 
-	// not a shared object; we can clear everything
+			// The templates that were set up to run these functions via this ext, no longer can either
+			for (auto& g : globals->updateTheseGlobalsWhenMyExtCycles)
+				MoveRef(g);
+		}
+
+		return; // only last ext cleans up
+	}
+
+	// not a shared object; it's local, we can clear everything
 	if (globalID.empty())
 	{
+		// But make sure our "globals" doesn't get notified by other functions
+		for (const auto& f : globals->functionTemplates)
+		{
+			if (f->ext != this && !f->globalID.empty())
+			{
+				auto g = ReadGlobalDataByID(f->globalID);
+				if (!g)
+					continue;
+
+				const auto e = std::find(g->updateTheseGlobalsWhenMyExtCycles.cbegin(), g->updateTheseGlobalsWhenMyExtCycles.cend(), globals);
+				if (e != g->updateTheseGlobalsWhenMyExtCycles.cend())
+					g->updateTheseGlobalsWhenMyExtCycles.erase(e);
+			}
+		}
+
 		delete globals;
 		return;
 	}
 
-	// should this ever be true
+	// Should this ever be true?
 	if (!globals->runningFuncs.empty())
 		DarkEdif::MsgBox::Error(_T("Extension dtor"), _T("Unexpectedly, functions were still executing during exit."));
 
 	globals->pendingFuncs.erase(std::remove_if(globals->pendingFuncs.begin(), globals->pendingFuncs.end(),
 		[](const auto& pf) { return !pf->keepAcrossFrames; }), globals->pendingFuncs.end());
+
+	// We can no longer run these functions, and if some other DS has linked, we can't leave them with our invalid template->ext
+	MoveRef(globals);
 
 	// Check function declaration should be cleared on end
 	if (!this->keepTemplatesAcrossFrames)
@@ -232,6 +289,10 @@ Extension::~Extension()
 	if (!this->keepGlobalScopedVarsAcrossFrames)
 		globals->scopedVars.clear();
 	globals->curFrameOnFrameEnd = curFrame;
+
+	// The templates that were set up to run these functions via this ext, no longer can
+	for (auto& f : globals->updateTheseGlobalsWhenMyExtCycles)
+		MoveRef(f);
 }
 
 

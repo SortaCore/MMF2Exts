@@ -353,8 +353,7 @@ void Extension::Template_SetGlobalID(const TCHAR* funcName, const TCHAR* globalI
 	if (!f)
 		return;
 
-	std::tstring key = _T("DarkScript"s) + globalIDToRunOn;
-	const GlobalData * const gd = (GlobalData *)Runtime.ReadGlobal(key.c_str());
+	GlobalData * const gd = ReadGlobalDataByID(globalIDToRunOn);
 	if (gd == NULL)
 		return CreateErrorT("Couldn't set global ID to \"%s\" for function template \"%s\", no matching extension with that global ID found.", globalIDToRunOn, funcName);
 	if (gd->exts.size() == 0)
@@ -363,6 +362,9 @@ void Extension::Template_SetGlobalID(const TCHAR* funcName, const TCHAR* globalI
 		CreateErrorT("Warning: global ID \"%s\" has more than one extension owning it. The first created one will be used.", globalIDToRunOn);
 	f->globalID = globalIDToRunOn;
 	f->ext = gd->exts[0];
+	// We should have this f's ext edited if its current ext becomes non-existent
+	if (std::find(gd->updateTheseGlobalsWhenMyExtCycles.cbegin(), gd->updateTheseGlobalsWhenMyExtCycles.cend(), globals) == gd->updateTheseGlobalsWhenMyExtCycles.cend())
+		gd->updateTheseGlobalsWhenMyExtCycles.push_back(globals);
 }
 void Extension::Template_SetEnabled(const TCHAR* funcName, int funcEnabled)
 {
@@ -428,8 +430,7 @@ void Extension::Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCH
 		return CreateErrorT("Can't import function \"%s\" from global ID \"%s\"; a function template with that name already exists.", funcName, globalIDToImportFrom);
 	}
 
-	const std::tstring key = _T("DarkScript"s) + globalIDToImportFrom;
-	const GlobalData* const gd = (GlobalData*)Runtime.ReadGlobal(key.c_str());
+	GlobalData* const gd = ReadGlobalDataByID(globalIDToImportFrom);
 	if (gd == NULL)
 		return CreateErrorT("Couldn't import function template \"%s\" from global ID \"%s\", no matching extension with that global ID found.", funcName, globalIDToImportFrom);
 	auto ft = std::find_if(gd->functionTemplates.cbegin(), gd->functionTemplates.cend(),
@@ -440,6 +441,9 @@ void Extension::Template_ImportFromAnotherFrame(const TCHAR* funcName, const TCH
 
 	// By the power of std::shared_ptr, we now have it linked up
 	globals->functionTemplates.push_back(*ft);
+	// We should have this ft's ext edited if its current ext becomes non-existent
+	if (std::find(gd->updateTheseGlobalsWhenMyExtCycles.cbegin(), gd->updateTheseGlobalsWhenMyExtCycles.cend(), globals) == gd->updateTheseGlobalsWhenMyExtCycles.cend())
+		gd->updateTheseGlobalsWhenMyExtCycles.push_back(globals);
 }
 
 void Extension::DelayedFunctions_CancelByPrefix(const TCHAR * funcName)
@@ -653,6 +657,10 @@ void Extension::RunFunction_Script(const TCHAR* script)
 				return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called delayed only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str()), false;
 			if (funcTemplate->repeating == Expected::Always)
 				return CreateErrorT("%s: Function script uses function name \"%s\", which is expected to be called repeating only.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str()), false;
+
+			// This template was made with a valid global ID, but the ext vanished
+			if (funcTemplate->ext == NULL)
+				return CreateErrorT("%s: Function script uses function name \"%s\", which runs on a now non-existent global ID \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), funcName.c_str(), funcTemplate->globalID.c_str()), false;
 		}
 
 		return true;
@@ -682,7 +690,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 			std::tstring valueTextToParse = (*i)[1].str();
 			if (valueTextToParse.empty())
 			{
-				return CreateErrorT("Couldn't run function \"%s\" from script, param value at index %zu was empty or whitespace.", j,
+				return CreateErrorT("Couldn't run function \"%s\" from script, param value at index %zu was empty or whitespace.",
 					funcName.empty() ? _T("<unknown>") : funcName.c_str(), j - 1);
 			}
 
@@ -694,7 +702,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 				if (j == 1)
 				{
 					if (valueTextToParse[0] != _T('"') || valueTextToParse.back() != _T('"') || valueTextToParse.size() <= 2)
-						return CreateErrorT("Couldn't run KR-function script,  function name argument [%s] is not in quotes, or not a valid function name.", j, valueTextToParse.c_str());
+						return CreateErrorT("Couldn't run KR-function script,  function name argument [%s] is not in quotes, or not a valid function name.", valueTextToParse.c_str());
 					funcName = valueTextToParse.substr(1, valueTextToParse.size() - 2);
 					funcNameL = ToLower(funcName);
 					if (funcName.find_first_of(_T("\"\r\n',\\"sv)) != std::tstring::npos)

@@ -227,7 +227,7 @@ public:
 		std::vector<ScopedVar> scopedVarOnStart;
 		// Extension to generate events on - blank if ext points to the globals that holds this template
 		std::tstring globalID;
-		Extension* ext = nullptr; // NULL is invalid!
+		Extension* ext = nullptr; // NULL is invalid! See GlobalInfo::updateTheseGlobalsWhenMyExtCycles
 		// Function name to redirect to. Redirects do not combine.
 		std::tstring redirectFunc;
 		std::shared_ptr<FunctionTemplate> redirectFuncPtr;
@@ -331,6 +331,9 @@ public:
 	struct GlobalData {
 		// Extensions using this GlobalData
 		std::vector<Extension *> exts;
+		// Extensions using func templates registered in this global's exts will register themselves here,
+		// to get template->ext updated when this global's ext instance the template would've run on is destroyed
+		std::vector<GlobalData *> updateTheseGlobalsWhenMyExtCycles;
 		// Templates, otherwise called declarations
 		std::vector<std::shared_ptr<FunctionTemplate>> functionTemplates;
 		// Functions delayed but will run later
@@ -377,7 +380,7 @@ public:
 	size_t internalLoopIndex;
 
 	std::shared_ptr<RunningFunction> foreachFuncToRun;
-
+	GlobalData * ReadGlobalDataByID(const std::tstring & globalID);
 	static std::tstring ToLower(const std::tstring_view str2);
 
 	bool StringToType(Type &type, const TCHAR * typeStr);
