@@ -113,7 +113,7 @@ std::shared_ptr<Extension::RunningFunction> Extension::Sub_GetRunningFunc(const 
 	// Match by name
 	std::tstring nameL(ToLower(funcNameOrBlank));
 	auto res = std::find_if(globals->runningFuncs.rbegin(), globals->runningFuncs.rend(),
-		[&](const std::shared_ptr<RunningFunction>& f) { return !_tcscmp(f->funcTemplate->nameL.c_str(), nameL.c_str());
+		[&](const std::shared_ptr<RunningFunction>& f) { return f->funcTemplate->nameL == nameL;
 		});
 	if (res == globals->runningFuncs.rend())
 		CreateErrorExp(std::shared_ptr<Extension::RunningFunction>(), "%s: couldn't find a running function with name %s.", cppFuncName, funcNameOrBlank);
@@ -293,7 +293,7 @@ Extension::Param * Extension::Sub_GetTemplateParam(const TCHAR * cppFuncName, co
 
 	const std::tstring strL(ToLower(paramName));
 	const auto param = std::find_if(f->params.begin(), f->params.end(),
-		[&](Extension::Param & a) { return !_tcscmp(a.nameL.c_str(), strL.c_str()); }
+		[&](Extension::Param & a) { return a.nameL == strL; }
 	);
 	if (param == f->params.end())
 		CreateErrorExp(NULL, "%s: param name \"%s\" not found.",
@@ -372,7 +372,7 @@ std::tstring Extension::Sub_GetValAsString(const Extension::Value &val)
 	case Type::Float:
 		return Sub_ConvertToString(*(float *)&val.data);
 	case Type::Integer:
-		return Sub_ConvertToString(*(int *)&val.data).c_str();
+		return Sub_ConvertToString(*(int *)&val.data);
 	case Type::Any:
 		CreateErrorT("Failure at line %i, file %s.", __LINE__, _T(__FILE__));
 		// while the default can be unset and thus remain any, it should be replaced when running
@@ -1444,10 +1444,10 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 			(rf->isVoidRun && whenAllowNoRVSet >= AllowNoReturnValue::ForeachDelayedActionsOnly) ||
 			(rf->funcTemplate->isAnonymous && whenAllowNoRVSet >= AllowNoReturnValue::AnonymousForeachDelayedActions))
 		{
-			LOGV(_T("%sFunction \"%s\" has no default return value, and no return value was set by any On Function \"%s\" for each %s events."
+			LOGV(_T("%sFunction \"%s\" has no default return value, and no return value was set by any On %sFunction \"%s\" events."
 				"Due to \"allow no default value\" property, ignoring it and returning 0/\"\"."),
-				objToRunOn ? _T("Foreach ") : _T(""),
-				rf->funcTemplate->name.c_str(), rf->funcTemplate->name.c_str());
+				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str(),
+				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str());
 			// Return to calling expression - return int and float directly as they occupy same memory address
 			if (rf->returnValue.type != Extension::Type::String)
 				rf->returnValue.dataSize = sizeof(int); // or sizeof float, same thing

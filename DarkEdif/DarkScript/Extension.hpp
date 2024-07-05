@@ -53,7 +53,7 @@ public:
 		AnyWithDefaults
 	};
 	ConversionStrictness conversionStrictness;
-	// Allows 
+	// Sets contraint where no return value set is allowed when function finishes
 	enum class AllowNoReturnValue {
 		// All functions must have a return value set when they return, even if they don't use them
 		Never,
@@ -225,7 +225,7 @@ public:
 		Value defaultReturnValue;
 		std::vector<Param> params;
 		std::vector<ScopedVar> scopedVarOnStart;
-		// Extension to generate events on
+		// Extension to generate events on - blank if ext points to the globals that holds this template
 		std::tstring globalID;
 		Extension* ext = nullptr; // NULL is invalid!
 		// Function name to redirect to. Redirects do not combine.

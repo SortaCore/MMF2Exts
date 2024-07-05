@@ -33,11 +33,11 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkAction(6, Template_Param_SetDefaultValueF);
 	LinkAction(7, Template_Param_SetDefaultValueS);
 	LinkAction(8, Template_Param_SetDefaultValueN);
-	LinkAction(9, Template_SetScopedVarOnStartI );
+	LinkAction(9, Template_SetScopedVarOnStartI);
 	LinkAction(10, Template_SetScopedVarOnStartF);
 	LinkAction(11, Template_SetScopedVarOnStartS);
 	LinkAction(12, Template_CancelScopedVarOnStart);
-	LinkAction(13, Template_SetGlobalID)
+	LinkAction(13, Template_SetGlobalID);
 	LinkAction(14, Template_SetEnabled);
 	LinkAction(15, Template_RedirectFunction);
 	LinkAction(16, Template_Loop);
@@ -55,7 +55,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkAction(28, RunningFunc_SetReturnI);
 	LinkAction(29, RunningFunc_SetReturnF);
 	LinkAction(30, RunningFunc_SetReturnS);
-	LinkAction(31, RunningFunc_ScopedVar_SetI)
+	LinkAction(31, RunningFunc_ScopedVar_SetI);
 	LinkAction(32, RunningFunc_ScopedVar_SetF);
 	LinkAction(33, RunningFunc_ScopedVar_SetS);
 	LinkAction(34, RunningFunc_Params_Loop);

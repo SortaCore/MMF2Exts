@@ -514,7 +514,7 @@ void Extension::RunFunction_Foreach_Num(RunObject*, int dummy)
 	// to be overwritten otherwise.
 	Runtime.CancelRepeatingObjectAction();
 }
-void Extension::RunFunction_Foreach_String(RunObject * obj, const TCHAR* dummy)
+void Extension::RunFunction_Foreach_String(RunObject*, const TCHAR* dummy)
 {
 	// No expression executed when loading the "TCHAR * dummy" used for this action, we don't know what func to run foreach on
 	if (foreachFuncToRun == nullptr)
@@ -736,7 +736,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 			}
 			values.push_back(writeTo);
 		}
-		if (funcNameIsParam && j < (repeatCountExists ? 2 : 1)) // no params supplied, but we need them because it's KR style
+		if (funcNameIsParam && j < (repeatCountExists ? 2u : 1u)) // no params supplied, but we need them because it's KR style
 			return CreateErrorT("KR-function argument list is incomplete; expected function name%s.", repeatCountExists ? _T(", repeat count") : _T(""));
 	}
 	else if (funcNameIsParam) // no params supplied, but we need them because it's KR style
@@ -805,7 +805,7 @@ void Extension::RunningFunc_ScopedVar_Loop(const TCHAR* loopName, int includeInh
 	if (curLoopName[0] != _T('\0'))
 		return CreateErrorT("%s: Can't run two internal loops at once; already running loop \"%s\", can't run loop \"%s\".", _T(__FUNCTION__) + (sizeof("Extension::") - 1), curLoopName.c_str(), loopName);
 	if ((includeInherited & 1) != includeInherited)
-		return CreateErrorT("%s: Can't run params loop; \"include inherited\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeInherited);
+		return CreateErrorT("%s: Can't run scoped variables loop; \"include inherited\" parameter was %d, not 0 or 1.", _T(__FUNCTION__) + (sizeof("Extension::") - 1), includeInherited);
 
 	const auto rf = Sub_GetRunningFunc(_T(__FUNCTION__) + (sizeof("Extension::") - 1), _T(""));
 	if (!rf)
