@@ -8,6 +8,12 @@ bool Extension::LoopNameMatch(const TCHAR * loopName) const
 {
 	return !_tcsicmp(curLoopName.c_str(), loopName);
 }
+
+bool Extension::OnDarkScriptError()
+{
+	darkScriptErrorRead = true;
+	return true;
+}
 bool Extension::OnFunction(const TCHAR * name)
 {
 	// We're running this in a dummy fashion; this may be used in future to make a dependency/call tree

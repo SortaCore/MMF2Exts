@@ -69,7 +69,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 
 	// Conditions
 
-	LinkCondition(0, AlwaysTrue); // OnDarkScriptError
+	LinkCondition(0, OnDarkScriptError); // Made this mandatory; I've had too many people not reading the errors
 	LinkCondition(1, OnFunction);
 	LinkCondition(2, OnForeachFunction);
 	LinkCondition(3, OnFunctionAborted);

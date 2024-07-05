@@ -41,8 +41,15 @@ void Extension::CreateError(PrintFHintInside const TCHAR * format, ...)
 
 	std::vector<FusionSelectedObjectListCache> list;
 	evt_SaveSelectedObjects(list);
+	darkScriptErrorRead = false;
 	Runtime.GenerateEvent(0);
 	evt_RestoreSelectedObjects(list, true);
+	if (!darkScriptErrorRead)
+	{
+		DarkEdif::MsgBox::Error(_T("Error unhandled"),
+			_T("DarkScript event occurred, but you have no \"DarkScript > On Error\" event to handle it. That is BAD PRACTICE. Error message:\n%s"),
+			curError.c_str());
+	}
 
 	curError.clear(); // to prevent recursion
 }

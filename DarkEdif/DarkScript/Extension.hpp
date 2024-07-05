@@ -357,6 +357,8 @@ public:
 	Extension* errorExt = nullptr;
 	// Last return value - useful
 	Value lastReturn = Value(Type::Any);
+	// Make errors a mandatory event.
+	bool darkScriptErrorRead = true;
 
 	// Current frame index (while functions pending, this number accumulates by 1 per event loop via Handle)
 	int curFrame = 0;
@@ -463,8 +465,7 @@ public:
 	bool AlwaysTrue() const;
 	bool LoopNameMatch(const TCHAR* loopName) const;
 
-	// OnError() -> AlwaysTrue()
-
+	bool OnDarkScriptError();
 	bool OnFunction(const TCHAR * funcName);
 	bool OnForeachFunction(const TCHAR* funcName, int objOiList);
 	bool OnFunctionAborted(const TCHAR* funcName);
