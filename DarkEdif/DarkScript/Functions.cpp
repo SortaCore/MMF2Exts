@@ -136,7 +136,7 @@ Extension::Value * Extension::Sub_CheckParamAvail(const TCHAR * cppFuncName, int
 	if (!rf)
 		return NULL;
 
-	if (rf->funcTemplate->params.size() < (size_t)paramNum)
+	if (rf->funcTemplate->params.size() <= (size_t)paramNum)
 		CreateErrorExp(NULL, "%s: param index out of range (0 < %i < %zu).",
 			cppFuncName, paramNum, rf->funcTemplate->params.size());
 
@@ -284,7 +284,7 @@ Extension::Param* Extension::Sub_GetTemplateParam(const TCHAR* cppFuncName, cons
 	if (paramNum < 0)
 		CreateErrorExp(NULL, "%s: param index below 0. (%i)", cppFuncName, paramNum);
 
-	if (f->params.size() < (size_t)paramNum)
+	if (f->params.size() <= (size_t)paramNum)
 		CreateErrorExp(NULL, "%s: param index out of range (0 < %i < %zu).",
 			cppFuncName, paramNum, f->params.size());
 
