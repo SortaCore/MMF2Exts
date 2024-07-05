@@ -485,8 +485,8 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 	for (std::size_t i = 0; i < paramIndex; ++i)
 		curParam = (const EventParam*)((const std::uint8_t*)curParam + curParam->size);
 	if ((Params)curParam->Code != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
-	LOGV(_T("GetOIFromExtParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
+		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter.\n"));
+	LOGV(_T("GetOIFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
 	return curParam->evp.W[0];
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
@@ -1300,7 +1300,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 	jint pParamCode = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "code", "S"));
 	JNIExceptionCheck();
 	if ((Params)pParamCode != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
+		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter.\n"));
 #endif
 	// Read the equivalent of evp.W[0]
 	jshort oiList = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oiList", "S"));
@@ -1308,7 +1308,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 #if defined(_DEBUG) && (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
 	jshort oi = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oi", "S"));
 	JNIExceptionCheck();
-	LOGD(_T("GetOIFromExtParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
+	LOGD(_T("GetOIFromObjectParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
 		oiList, oiList, (short)(oiList & 0x7FFF), (short)(oiList & 0x7FFF), oi, oi, (short)(oi & 0x7FFF), (short)(oi & 0x7FFF));
 #endif
 	return oiList;
@@ -2895,8 +2895,8 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 	for (int i = 0; i < paramIndex; ++i)
 		curParam = (const eventParam*)((const std::uint8_t*)curParam + curParam->evpSize);
 	if ((Params)curParam->evpCode != Params::Object)
-		LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter."));
-	LOGD(_T("GetOIFromExtParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
+		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter."));
+	LOGD(_T("GetOIFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
 	return curParam->evp.evpW.evpW0;
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
