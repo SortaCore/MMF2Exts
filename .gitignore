@@ -70,6 +70,9 @@ local.properties
 MFX/
 MOX/
 
+# Mid-edit VS files
+enc_temp_folder/
+
 *_i.c
 *_p.c
 *.ilk
@@ -197,3 +200,4 @@ pip-log.txt
 DarkEdif*.sln
 *.sdf
 *.db
+*.001
