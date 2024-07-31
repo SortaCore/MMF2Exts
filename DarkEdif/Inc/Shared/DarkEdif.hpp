@@ -126,8 +126,8 @@ namespace DarkEdif {
 			int cachedInt;
 			std::tstring cachedText;
 
-			size_t refreshMS;
-			size_t nextRefreshTime;
+			std::uint64_t refreshMS;
+			std::uint64_t nextRefreshTime;
 			const char *userSuppliedName;
 
 			int (*intReadFromExt)(Extension *const ext);
@@ -143,7 +143,7 @@ namespace DarkEdif {
 			{
 				cachedText.resize(30);
 				_itot_s(cachedInt, cachedText.data(), cachedText.size(), 10);
-				nextRefreshTime = refreshMS ? GetTickCount() + refreshMS : -1;
+				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
 			DebugItem(decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
 				size_t refreshMS, const char *userSuppliedName) :
@@ -152,7 +152,7 @@ namespace DarkEdif {
 				textReadFromExt(reader), textStoreDataToExt(editor)
 			{
 				cachedText.reserve(256);
-				nextRefreshTime = refreshMS ? GetTickCount() + refreshMS : -1;
+				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
 
 			// Run when user has finished editing.

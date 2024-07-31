@@ -36,6 +36,12 @@
 	#error Windows XP is not properly supported after VS 2019 v16.7 (toolset 14.27)
 #endif
 
+// Windows XP does not implement GetTickCount64(), and static analysis complains
+// if we use GetTickCount()
+#if defined(WINVER) && WINVER < 0x600 && !defined(GetTickCount64)
+	#define GetTickCount64() ((uint64_t)GetTickCount())
+#endif
+
 // WIN32_LEAN_AND_MEAN excludes APIs such as Cryptography, DDE, RPC, Shell, and Windows Sockets
 // That fixes WinSock v1 being included and conflicting with v2. Otherwise, we would have to include winsock2.h before windows.h.
 #ifndef WIN32_LEAN_AND_MEAN
@@ -79,5 +85,6 @@ using UShortTCHAR = unsigned short;
 using WindowHandleType = HWND;
 
 // We hide error 4200, caused by zero-length arrays causing constructors to not be created.
+// struct { short some_var; int end_array[]; } allows struct to be malloc'd with end_array
+// It IS non-standard to use [0] instead of [] for these members, though GCC supports it.
 #pragma warning (disable: 4200)
-

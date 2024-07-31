@@ -420,6 +420,8 @@
 			<WarningLevel>Level3</WarningLevel>
 			<!-- Use C++ 2017 Standard (C++17) -->
 			<LanguageStandard>stdcpp17</LanguageStandard>
+			<!-- Use C 2011 language standard (C11) -->
+			<LanguageStandard_C>stdc11</LanguageStandard_C>
 			<!-- Use all processors during compilation. Not noticeable during multi-project building,
 				 but matters when it's one project. -->
 			<MultiProcessorCompilation Condition="$(_UseMultiProcessor)==1">true</MultiProcessorCompilation>
@@ -603,6 +605,8 @@
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
 			<CLanguageStandard>c11</CLanguageStandard>
+			<LanguageStandard>c++1z</LanguageStandard>
+			<LanguageStandard_C>c11</LanguageStandard_C>
 
 			<!-- Make it easier to do a call stack trace; also, smaller files. -->
 			<FunctionLevelLinking>true</FunctionLevelLinking>
