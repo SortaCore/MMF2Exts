@@ -619,6 +619,10 @@ CONSTEXPR14_TN static_string type_name()
 // static_string to std::string_view
 #define typestr(type) std::string(type_name<type>().begin(), type_name<type>().end())
 
+// Ignore analysis warning C6287 about left and right sub-expressions being identical - they're not
+#pragma warning(push)
+#pragma warning(disable: 6287)
+
 template<int acParamIndexPlusOne, class Ret, class Struct, class... Args>
 typename std::enable_if<(acParamIndexPlusOne > 0), void>::type
 forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(Struct::*Function)(Args...) const, Params * const condRetType = nullptr) {
@@ -713,7 +717,6 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				if (std::is_same<cppType, int>())
 					break;
 				expCppType = "int"sv;
-
 			}
 		}
 		else // unimplemented param type test
@@ -1050,6 +1053,9 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 
 	(Edif::SDK)->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
+
+// Restore analysis warning C6287
+#pragma warning(pop)
 
 // Combine the two:
 // returnType X() const;

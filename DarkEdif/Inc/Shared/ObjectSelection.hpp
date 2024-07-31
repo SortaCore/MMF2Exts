@@ -29,7 +29,7 @@ namespace DarkEdif {
 	{
 	public:
 
-		Extension * pExtension;
+		Extension * pExtension = NULL;
 
 		ObjectSelection(RunHeader * rhPtr);
 

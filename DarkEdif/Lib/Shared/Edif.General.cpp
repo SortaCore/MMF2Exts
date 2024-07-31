@@ -47,9 +47,14 @@ int FusionAPI Free(mv *mV)
 
 	// But if the update checker thread is running, we don't want it to try to write to memory it can't access.
 #if USE_DARKEDIF_UPDATE_CHECKER
+	// Ignore warning about TerminateThread - better to kill thread than crash Fusion,
+	// and at this point we've waited 3 full seconds
+#pragma warning(push)
+#pragma warning(disable: 6258)
 	extern HANDLE updateThread;
 	if (updateThread != NULL && WaitForSingleObject(updateThread, 3000) == WAIT_TIMEOUT)
 		TerminateThread(updateThread, 2);
+#pragma warning(pop)
 #endif
 	return 0; // No error
 }
@@ -78,18 +83,20 @@ void FusionAPI UnloadObject(mv * mV, EDITDATA * edPtr, int reserved)
 }
 
 
-const TCHAR ** Dependencies = 0;
+const TCHAR * Dependencies[32] = {};
 
 const TCHAR ** FusionAPI GetDependencies()
 {
 #pragma DllExportHint
+	// This is pointed to by Dependencies.
+	static TCHAR singleton[1024];
+
 	if (!Dependencies)
 	{
 		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"];
+		TCHAR* singletonPtr = singleton;
 
-		Dependencies = new const TCHAR * [DependenciesJSON.u.object.length + 2];
-
-		int Offset = 0;
+		std::size_t Offset = 0;
 
 		if (Edif::ExternalJSON)
 		{
@@ -99,29 +106,33 @@ const TCHAR ** FusionAPI GetDependencies()
 
 			TCHAR * Iterator = JSONFilename + _tcslen(JSONFilename) - 1;
 
-			while(*Iterator != _T('.'))
+			while (*Iterator != _T('.'))
 				-- Iterator;
 
 			_tcscpy(++ Iterator, _T("json"));
 
 			Iterator = JSONFilename + _tcslen(JSONFilename) - 1;
 
-			while(*Iterator != _T('\\') && *Iterator != _T('/'))
+			while (*Iterator != _T('\\') && *Iterator != _T('/'))
 				-- Iterator;
 
-			Dependencies [Offset ++] = ++ Iterator;
+			// We append it, then add a pointer to what we just appended
+			// to our pointer list
+			_tcscpy(singletonPtr, ++Iterator);
+			Dependencies[Offset++] = singletonPtr;
+			singletonPtr += _tcslen(singletonPtr) + 1;
 		}
 
-		std::uint32_t i = 0;
-
-		for(; i < DependenciesJSON.u.object.length; ++ i)
+		for (unsigned int i = 0; i < DependenciesJSON.u.array.length; ++i)
 		{
-			TCHAR* tstr = Edif::ConvertString(DependenciesJSON[i]);
-			Dependencies[Offset + i] = tstr;
-			Edif::FreeString(tstr);
+			std::tstring tstr = DarkEdif::UTF8ToTString((const char *)DependenciesJSON[i]);
+
+			_tcscpy(singletonPtr, tstr.c_str());
+			Dependencies[Offset++] = singletonPtr;
+			singletonPtr += tstr.size() + 1;
 		}
 
-		Dependencies[Offset + i] = 0;
+		Dependencies[Offset] = 0;
 	}
 
 	return Dependencies;

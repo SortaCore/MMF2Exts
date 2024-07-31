@@ -402,6 +402,8 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	Edif::ExternalJSON = (result == Edif::DependencyWasFile);
 
 	char * copy = (char *) malloc (JSON_Size + 1);
+	if (!copy)
+		return DarkEdif::MsgBox::Error(_T("Out of memory"), _T("JSON file for " PROJECT_NAME " couldn't allocate %zu bytes while loading"), JSON_Size + 1), -1;
 	memcpy (copy, JSON, JSON_Size);
 	copy [JSON_Size] = 0;
 	if ( result != Edif::DependencyWasResource )
@@ -731,6 +733,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			case Params::Compare_Time:
 			case Params::Comparison:
 				isComparisonCondition = true;
+				[[fallthrough]];
 			case Params::New_Direction:
 			case Params::Time:
 				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
@@ -1363,7 +1366,7 @@ jmethodID ExpressionManager_Android::setRetInt, ExpressionManager_Android::setRe
 struct ExpressionManager_Windows : ACEParamReader {
 	RunObject * rdPtr;
 	bool isOneOrLess = false;
-	int param;
+	int param = 0;
 	ExpressionManager_Windows(RunObject * rdPtr) : rdPtr(rdPtr)
 	{
 	}
@@ -1564,7 +1567,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
 					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
 					"Was the parameter type different when the expression was created in the MFA?"),
-					(const char *)CurLang["Expressions"][ID]["Title"], ID, i);
+					DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i);
 
 				if (ExpressionRet == ExpReturnType::String)
 					Result = (long)ext->Runtime.CopyString(_T(""));
@@ -1584,7 +1587,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 		default:
 		{
 			DarkEdif::MsgBox::Error(_T("Edif::Expression() error"), _T("Error calling expression \"%s\" (ID %i); parameter index %i has unrecognised ExpParams %hi."),
-				(const char *)CurLang["Expressions"][ID]["Title"], ID, i, (short)info->Parameter[i].ep);
+				DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i, (short)info->Parameter[i].ep);
 			if (ExpressionRet == ExpReturnType::String)
 				Result = (long)ext->Runtime.CopyString(_T(""));
 			goto endFunc;
@@ -1600,6 +1603,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPt
 
 	if (Edif::SDK->ExpressionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::VariableFunction))
 	{
+#pragma warning(suppress: 6001)
 		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;
@@ -1702,9 +1706,12 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		fseek(File, 0, SEEK_SET);
 
 		Buffer = (char *) malloc(Size + 1);
+		if (!Buffer)
+			throw std::runtime_error("Out of memory");
 		Buffer[Size] = 0;
 
-		fread(Buffer, 1, Size, File);
+		if (fread(Buffer, 1, Size, File) != Size)
+			throw std::runtime_error("Reading opened file resource into RAM failed");
 
 		fclose(File);
 
@@ -1720,7 +1727,13 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 		return DependencyNotFound;
 
 	Size = SizeofResource (hInstLib, res);
-	Buffer = (char *) LockResource (LoadResource (hInstLib, res));
+	HGLOBAL resHandle = LoadResource(hInstLib, res);
+	if (!resHandle)
+		throw std::runtime_error("Could not load resource");
+
+	Buffer = (char *) LockResource (res);
+	if (!Buffer)
+		throw std::runtime_error("Could not lock resource");
 
 	return DependencyWasResource;
 #elif defined(__ANDROID__)
@@ -1827,13 +1840,11 @@ static void GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 
 void Edif::GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 {
-	TCHAR * Extension = (TCHAR *)
-		alloca ((_tcslen (FileExtension) + _tcslen (LanguageCode) + 2) * sizeof(TCHAR));
+	*Buffer = 0;
 
-	_tcscpy (Extension, LanguageCode);
-	_tcscat (Extension, _T ("."));
-	_tcscat (Extension, FileExtension);
-
+	TCHAR Extension[32];
+	if (_stprintf_s(Extension, std::size(Extension), _T("%s.%s"), LanguageCode, FileExtension) <= 0)
+		return DarkEdif::MsgBox::Error(_T("GetSiblingPath fail"), _T("Invalid file extension %s"), FileExtension);
 	::GetSiblingPath (Buffer, Extension);
 
 	if (*Buffer)
@@ -2022,6 +2033,10 @@ void Edif::recursive_mutex::unlock(edif_lock_debugParams)
 {
 	this->log << "Unlocked in function " << func << ", line " << line << ".\n";
 	try {
+#ifndef __analysis_assume_lock_acquired
+#define __analysis_assume_lock_acquired(x) /* no op */
+#endif
+		__analysis_assume_lock_acquired(this->intern);
 		this->intern.unlock();
 	}
 	catch (std::system_error err)

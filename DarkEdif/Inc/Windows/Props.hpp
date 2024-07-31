@@ -319,7 +319,7 @@ class Prop_Buff : public Prop
 protected:
 	virtual ~Prop_Buff() {}
 public:
-	Prop_Buff(size_t Size_ = 0, void * Address_ = NULL) : Size(Size_)
+	Prop_Buff(std::size_t Size_ = 0, void * Address_ = nullptr) : Size(Size_)
 	{
 		if (Size == 0)
 			return; // Nothing to do
@@ -328,14 +328,12 @@ public:
 		if (Address != NULL && Address_ != NULL) // If existing address, duplicate memory
 			memcpy_s(Address, Size, Address_, Size);
 	}
-	Prop_Buff(char * Str)
-	{
-		Prop_Buff(Str ? (strlen(Str)+1)*sizeof(char) : 0, Str);
-	}
-	Prop_Buff(wchar_t * Str)
-	{
-		Prop_Buff(Str ? (wcslen(Str)+1)*sizeof(wchar_t) : 0, Str);
-	}
+	Prop_Buff(char * Str) :
+		Prop_Buff(Str ? (strlen(Str)+1)*sizeof(char) : 0, Str)
+	{ }
+	Prop_Buff(wchar_t * Str) :
+		Prop_Buff(Str ? (wcslen(Str)+1)*sizeof(wchar_t) : 0, Str)
+	{ }
 
 	virtual void Delete()
 	{
@@ -368,8 +366,8 @@ public:
 	}
 
 	// Data
-	size_t Size;
-	void * Address;
+	std::size_t Size = 0;
+	void * Address = nullptr;
 };
 
 
@@ -380,9 +378,8 @@ class Prop_AStr : public Prop
 protected:
 	virtual ~Prop_AStr() {}
 public:
-	Prop_AStr(const char * Str = NULL)
-	{
-		String = _strdup(Str ? Str : ""); // Allocate size specified
+	Prop_AStr(const char * Str = nullptr) {
+		String = _strdup(Str ? Str : "");
 	}
 #ifndef _WIN32
 	Prop_AStr(const wchar_t * Str)
@@ -391,7 +388,7 @@ public:
 			String = _strdup("");
 		else
 		{
-			size_t length = wcslen(Str);
+			std::size_t length = wcslen(Str);
 			String = (char *)calloc(length+1, sizeof(char));
 
 			if (!String)
@@ -400,21 +397,13 @@ public:
 			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
 			// Use mvGetAppCodePage?
 
-			#ifdef _WIN32
 			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
-			#elif defined(__ANDROID__)
-			// iconv is not explicitly available. Android *should* support it, but not within the default libraries.
-			__android_log_write(ANDROID_LOG_FATAL, "MMFRuntime", "Attempted to convert wchar_t * to char *, but not implemented.");
-			#else
-			for (size_t i = 0; i < length; i++)
-				String[i] = (char)(Str[i] & 0x00FF);
-			#endif
 
 			String[length] = 0;	// Force null ending
 		}
 	}
 #endif
-	Prop_AStr(size_t size)
+	Prop_AStr(std::size_t size)
 	{
 		if (size > 0)
 			String = (char *)calloc(size, sizeof(char)); // Allocate size specified
@@ -456,8 +445,8 @@ public:
 	}
 
 	// Data
-	unsigned int pad;	// This is a required waste of space or MMF will die trying to read it.
-	char * String;
+	unsigned int pad = 0;	// This is a required waste of space or MMF will die trying to read it.
+	char * String = nullptr;
 };
 
 // String (UNICODE)
@@ -497,12 +486,9 @@ public:
 #endif
 		}
 	}
-	Prop_WStr(size_t Size)
+	Prop_WStr(std::size_t Size)
 	{
-		if (Size > 0)
-			String = (wchar_t *)calloc(Size, sizeof(wchar_t)); // Allocate size specified
-		else
-			String = _wcsdup(L"");
+		String = (wchar_t *)calloc(Size > 0 ? Size : 1, sizeof(wchar_t)); // Allocate size specified
 	}
 
 	virtual void Delete()
@@ -540,7 +526,7 @@ public:
 
 	// Data
 	unsigned int pad = 0;	// This is a required waste of space or MMF will die trying to read it.
-	wchar_t * String;
+	wchar_t * String = nullptr;
 };
 
 

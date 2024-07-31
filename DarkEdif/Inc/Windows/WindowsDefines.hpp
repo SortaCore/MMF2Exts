@@ -84,7 +84,11 @@ using UShortTCHAR = unsigned short;
 
 using WindowHandleType = HWND;
 
-// We hide error 4200, caused by zero-length arrays causing constructors to not be created.
+// We hide compiler warning 4200, caused by zero-length arrays causing perhaps
+// unexpected default ctor behaviour. However, despite being a warning that claims
+// these are non-standard, it is a valid ISO C99 standard; called a "flexible array member",
+// for docs see C11, 6.7.21/18.
 // struct { short some_var; int end_array[]; } allows struct to be malloc'd with end_array
+// a runtime-determined size, rather than compile-time. So some_var is a header of sorts.
 // It IS non-standard to use [0] instead of [] for these members, though GCC supports it.
 #pragma warning (disable: 4200)

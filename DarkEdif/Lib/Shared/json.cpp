@@ -170,8 +170,8 @@ static int new_value
 	((int) (i - cur_line_begin))
 
 #define whitespace \
-	case '\n': ++ cur_line;  cur_line_begin = i; \
-	case ' ': case '\t': case '\r'
+	case '\n': ++ cur_line; cur_line_begin = i; [[fallthrough]]; \
+	case ' ': [[fallthrough]]; case '\t': [[fallthrough]]; case '\r'
 
 #define string_add(b)  \
 	do { if (!state.first_pass) string [string_length] = b;  ++ string_length; } while (0);
@@ -390,6 +390,11 @@ json_value * json_parse_ex (json_settings * settings,
 						continue;
 
 					case ']':
+						if (!top)
+						{
+							sprintf_s(error, std::size(error), "Line %d, char %d: Unexpected ]", cur_line, e_off);
+							goto e_failed;
+						}
 
 						if (top->type == json_array)
 							flags = (flags & ~ (flag_need_comma | flag_seek_value)) | flag_next;
@@ -573,7 +578,7 @@ json_value * json_parse_ex (json_settings * settings,
 									flags &= ~ flag_need_comma;
 									break;
 								}
-
+								[[fallthrough]];
 							default:
 								sprintf_s (error, std::size(error), b ? "Line %d, char %d: Unexpected `%c` in object" : "Line %d, char %d: Unexpected `\\0` in object", cur_line, e_off, b);
 								goto e_failed;
@@ -607,11 +612,11 @@ json_value * json_parse_ex (json_settings * settings,
 									continue;
 								}
 
-								top->u.integer = (top->u.integer * 10) + (b - '0');
+								top->u.integer = (top->u.integer * 10) + (((json_int_t)b) - '0');
 								continue;
 							}
 
-							num_fraction = (num_fraction * 10) + (b - '0');
+							num_fraction = (num_fraction * 10) + (((json_int_t)b) - '0');
 							continue;
 						}
 

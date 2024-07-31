@@ -129,9 +129,9 @@ namespace Edif
 		std::vector<ACEInfo *>	ConditionInfos;
 		std::vector<ACEInfo *>	ExpressionInfos;
 
-		void ** ActionJumps;
-		void ** ConditionJumps;
-		void ** ExpressionJumps;
+		void ** ActionJumps = NULL;
+		void ** ConditionJumps = NULL;
+		void ** ExpressionJumps = NULL;
 
 		std::vector<void *> ActionFunctions;
 		std::vector<void *> ConditionFunctions;
@@ -139,11 +139,11 @@ namespace Edif
 
 		mv* mV;
 		// A fnv1a hash of all changeable property names and types, all separated by pipe. Used for property upgrades.
-		std::uint32_t jsonPropsNameAndTypesHash;
+		std::uint32_t jsonPropsNameAndTypesHash = 0;
 		// A fnv1a hash of all changeable property types, separated by pipe. Used for property upgrades.
-		std::uint32_t jsonPropsTypesHash;
+		std::uint32_t jsonPropsTypesHash = 0;
 #if EditorBuild
-		cSurface * Icon;
+		cSurface * Icon = nullptr;
 		std::unique_ptr<PropData[]> EdittimeProperties;
 #endif
 	};
@@ -169,11 +169,11 @@ namespace Edif
 #endif
 
 	public:
-		long param1, param2;
+		long param1 = 0, param2 = 0;
 
 #ifdef _WIN32
 		Runtime(Extension * ext);
-		EventParam* ParamZero;
+		EventParam* ParamZero = NULL;
 #elif defined(__ANDROID__)
 		Runtime(Extension* ext, jobject javaExtPtr);
 		global<jobject> curCEvent, curRH4ActStart;

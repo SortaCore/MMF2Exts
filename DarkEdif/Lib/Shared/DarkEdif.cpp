@@ -519,7 +519,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 	Data* oldPropValue = edPtr->Props.Internal_DataAt(PropID);
 	if (!oldPropValue)
 	{
-		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (type %hs), failed to edit it."),
+		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (JSON type %hs), failed to edit it."),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
 		return;
 	}
@@ -547,14 +547,14 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 	// but as each prop has a preceding value size there's not really a need for that.
 	if (newPropValueSize == 0 && !IsStringPropType(curTypeStr, false))
 	{
-		MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (type %hs) is 0!"),
+		MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (JSON type %hs) is 0!"),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
 	}
 
-	// Shouldn't happen unless user starts messing.
+	// Shouldn't happen unless ext dev starts messing with ext properties without changing version
 	if (edPtr->eHeader.extSize != edPtr->Props.sizeBytes)
 	{
-		if (MsgBox::WarningYesNo(_T("DarkEdif property warning"), _T("Property block size is different to actual size. "
+		if (MsgBox::WarningYesNo(_T("DarkEdif property warning"), _T("Change to property \"%s\" (JSON type \"%hs\") caused reserved size to be different to actual size. "
 			"Press Yes to set it to Fusion's size (may corrupt properties).\n"
 			"Press No to cancel property change."),
 			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr) == IDYES)
@@ -745,8 +745,8 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		ret = new Prop_Str(UTF8ToTString((const char *)propJSON["DefaultState"], &allConv).c_str());
 		if (!allConv)
 		{
-			MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: The property's Unicode string \"%hs\" couldn't be converted to ANSI. "
-				"Characters will be replaced with filler."), (const char *)propJSON["DefaultState"]);
+			MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: The property's Unicode string \"%s\" couldn't be converted to ANSI. "
+				"Characters will be replaced with filler."), UTF8ToTString((const char *)propJSON["DefaultState"]).c_str());
 		}
 		return ret;
 	}
@@ -768,6 +768,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		ret = new Prop_Str(UTF8ToTString(std::string_view((const char *)Current->ReadPropValue(), Current->ReadPropValueSize()), &allConv).c_str());
 		if (!allConv)
 		{
+			// Failed to convert to ANSI (UTF-8 -> UTF-16 won't reasonably fail); if we report it with %s, we'll likely repeat the problem, so use %hs and report as-is.
 			MsgBox::WarningOK(_T("DarkEdif property error"), _T("GetProperty warning: The property's Unicode string \"%hs\" couldn't be converted to ANSI. "
 				"Characters will be replaced with filler."), std::string((const char*)Current->ReadPropValue(), Current->ReadPropValueSize()).c_str());
 		}
@@ -786,7 +787,7 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		if (propJSONItems.type != json_array)
 		{
 			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items not valid in Combo Box property \"%s\", ID %i, language %s."),
-				ID, (const char *)propJSON["Title"], DarkEdif::JSON::LanguageName());
+				UTF8ToTString((const char *)propJSON["Title"]).c_str(), ID, DarkEdif::JSON::LanguageName());
 			return nullptr;
 		}
 		size_t itemIndex = -1;
@@ -802,8 +803,8 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 		}
 		if (itemIndex == -1)
 		{
-			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items does not contain given value %s (Combo Box property \"%s\", ID %i, JSON language %s)."),
-				UTF8ToTString(str).c_str(), (const char *)propJSON["Title"], ID, DarkEdif::JSON::LanguageName());
+			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items does not contain given value %s (Combo Box property \"%s\", ID %zu, JSON language %s)."),
+				UTF8ToTString(str).c_str(), UTF8ToTString((const char *)propJSON["Title"]).c_str(), ID, DarkEdif::JSON::LanguageName());
 			return nullptr;
 		}
 		ret = new Prop_UInt(itemIndex);
@@ -869,8 +870,8 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
 			else
 			{
-				MsgBox::Error(_T("DarkEdif property error"), _T("Got Buff type for non-string property \"%hs\"."),
-					(const char *)propjson["Title"]);
+				MsgBox::Error(_T("DarkEdif property error"), _T("Got Buff type for non-string property \"%s\"."),
+					UTF8ToTString((const char *)propjson["Title"]).c_str());
 			}
 			break;
 		}
@@ -969,12 +970,12 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 {
 	//int numProps;
-	const std::uint8_t * at;
-	size_t atID;
-	const std::uint8_t * endPos;
-	const Properties::ConverterState * convState;
-	size_t maxChkboxID;
-	const std::uint8_t * chkBoxAt;
+	const std::uint8_t * at = nullptr;
+	size_t atID = 0;
+	const std::uint8_t * endPos = nullptr;
+	const Properties::ConverterState * convState = nullptr;
+	size_t maxChkboxID = 0;
+	const std::uint8_t * chkBoxAt = nullptr;
 
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
@@ -1141,8 +1142,14 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 			case IDs::PROPTYPE_DIRECTORYNAME:
 			case IDs::PROPTYPE_URLBUTTON:
 			{
-				size_t maxSize = endPos - at;
-				size_t sizeOfStr = maxSize <= 0 ? INT32_MIN : strnlen((const char *)at, maxSize);
+				std::size_t maxSize = endPos - at;
+				if (maxSize <= 0)
+				{
+					// string went past end of properties.
+					DebugProp_OutputString(_T("PreSmartPropertyReader: Was already reading too far for ID %zu. Killing use of converter.\n"), atID);
+					return false;
+				}
+				std::size_t sizeOfStr = maxSize <= 0 ? ~0 : strnlen((const char*)at, maxSize);
 				if (sizeOfStr == maxSize)
 				{
 					// string went past end of properties.
@@ -1259,7 +1266,7 @@ static Properties::PreSmartPropertyReader preSmartPropertyReader;
 struct Properties::SmartPropertyReader : Properties::PropertyReader
 {
 	std::vector<const Properties::Data *> data;
-	const Properties::ConverterState * convState;
+	const Properties::ConverterState * convState = nullptr;
 
 	// Resets the reader for a new run. Return ConverterUnsuitable if the converter isn't necessary.
 	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
@@ -1285,7 +1292,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 		const std::uint32_t curVer = 'DAR1';
 		if (oldProps.propVersion != curVer)
 		{
-			DebugProp_OutputString(_T("SmartPropertyReader: smart property is implemented with DarkEdif::Properties struct %.4s, but this reader is %.4s.\n"), &oldProps.propVersion, &curVer);
+			DebugProp_OutputString(_T("SmartPropertyReader: smart property is implemented with DarkEdif::Properties struct %.4hs, but this reader is %.4hs.\n"), (const char *)&oldProps.propVersion, (const char*)&curVer);
 			return Abort(convRet);
 		}
 
@@ -1465,7 +1472,7 @@ static Properties::SmartPropertyReader smartPropertyReader;
 
 struct Properties::JSONPropertyReader : Properties::PropertyReader
 {
-	Properties::ConverterState * convState;
+	Properties::ConverterState * convState = nullptr;
 	static const char bullet[];
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
@@ -1867,7 +1874,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 
 			// Prop offsets change: properties are same, but EDITDATA changed.
 			// Bulk copy all the properties over
-			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, oldProps.sizeBytes - ((int)oldOffset));
+			dataToWriteStream.write(((const char *)oldEdPtr) + oldOffset, ((std::streamsize)oldProps.sizeBytes) - oldOffset);
 			DebugProp_OutputString(_T("Prop offsets changed, but hashes are the same. Jumping to output.\n"));
 			goto ReadyToOutput;
 		}
@@ -2038,7 +2045,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 						chkboxIndexesToRead.erase(f);
 					}
 
-					DebugProp_OutputString(_T("Added property %d - accum data size is now %zu.\n"), i, dataToWriteStream.tellp());
+					DebugProp_OutputString(_T("Added property %zu - accum data size is now %zu.\n"), i, dataToWriteStream.str().size());
 					break;
 				}
 
@@ -2064,8 +2071,8 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv * mV, EDITDATA * oldEdPtr)
 			// JSON errors are reported elsewhere, and aren't relevant for upgrading anyway
 			if (!ok && RunMode != MFXRunMode::SplashScreen)
 			{
-				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed for property %i (%hs). Your property data is corrupt "
-					"beyond recovery or reset. Please re-add the object to frame."), i, (const char *)convState.jsonProps[i]["Title"]);
+				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed for property %i (%s). Your property data is corrupt "
+					"beyond recovery or reset. Please re-add the object to frame."), i, UTF8ToTString((const char *)convState.jsonProps[i]["Title"]).c_str());
 			}
 		}
 
@@ -2203,6 +2210,8 @@ ReadyToOutput:
 	}
 
 	EDITDATA * newEdPtr = (EDITDATA *)GlobalLock(globalPtr);
+	if (newEdPtr == NULL)
+		throw std::logic_error("shouldn't fail to lock");
 	newEdPtr->eHeader.extPrivateData = newOffset;
 	newEdPtr->eHeader.extVersion = Extension::Version;
 	newEdPtr->eHeader.extSize = newEdPtrSize;
@@ -2276,7 +2285,7 @@ bool DarkEdif::Properties::IsPropChecked(std::string_view propName) const
 found:
 #if EditorBuild
 	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_LEFTCHECKBOX &&
-		CurLang["Properties"][index]["CheckboxDefaultState"].type == json_none)
+		CurLang["Properties"][index]["CheckboxDefaultState"].type == json_type::json_none)
 	{
 		MsgBox::Error(_T("DarkEdif property error"), _T("IsPropChecked() name = \"%s\" does not have a checkbox in the JSON."), UTF8ToTString(propName).c_str());
 		return false;
@@ -2455,7 +2464,7 @@ const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 const Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID) const
 {
 	const json_value& j = CurLang["Properties"];
-	if (j.type != json_array)
+	if (j.type != json_type::json_array)
 	{
 		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() const called for prop ID %u without JSON properties being valid."), ID);
 		return nullptr;
@@ -2490,9 +2499,9 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 	}
 
 	const json_value& j = CurLang["Properties"];
-	if (j.type != json_array)
+	if (j.type != json_type::json_array)
 	{
-		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() called for prop ID %u without DarkEdif_Props being valid."),
+		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() called for prop ID %u without DarkEdif_Props for language %s being valid."),
 			ID, DarkEdif::JSON::LanguageName());
 		return nullptr;
 	}
@@ -2505,11 +2514,11 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 	Data * data = Internal_FirstData();
 	for (size_t i = 0; i < (size_t)ID && data; i++)
 	{
-		DebugProp_OutputString(_T("Locating ID %u, at %u: type %s, title: %s.\n"), ID, i, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+		DebugProp_OutputString(_T("Locating ID %d, at %u: type %s, title: %s.\n"), ID, i, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 		data = data->Next();
 	}
 
-	DebugProp_OutputString(_T("DataAt ID %u type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), data ? UTF8ToTString(data->ReadPropName()).c_str() : _T("(null)"));
 	return data;
 }
 #endif
@@ -2540,7 +2549,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		//   "Display",
 		//   { ... }, // display props
 		// }
-		if (Property.type == json_string)
+		if (Property.type == json_type::json_string)
 		{
 			DarkEdif::MsgBox::Error(errorPrefix, _T("Properties contains a string \"%s\" instead of an object. ")
 				_T("Multiple categories of properties not currently implemented. (%s)"),
@@ -2595,13 +2604,13 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			if (!CurrentProperty)
 			{
-				DarkEdif::MsgBox::Error(errorPrefix, _T("Property index %zu \"%hs\" has an unrecognised property type \"%hs\" in the JSON (under %s language).\n")
-					_T("Check your spelling of the \"Type\" Parameter."), i, (const char*)Property["Title"], PropertyType, JSON::LanguageName());
+				DarkEdif::MsgBox::Error(errorPrefix, _T("Property index %zu \"%s\" has an unrecognised property type \"%s\" in the JSON (under %s language).\n"
+					"Check your spelling of the \"Type\" Parameter."), i, UTF8ToTString((const char*)Property["Title"]).c_str(), UTF8ToTString(PropertyType).c_str(), JSON::LanguageName());
 				continue;
 			}
 			// If checkbox is enabled, pass that as flags as well.
 			unsigned int Options =
-				(Property["CheckboxDefaultState"].type != json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
+				(Property["CheckboxDefaultState"].type != json_type::json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
 				| (bool(Property["Bold"]) ? PROPOPT_BOLD : 0)				// Bold enabled by property option in JSON
 				| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE : 0)		// Removable enabled by property option in JSON
 				| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE : 0)	// Renamable enabled by property option in JSON
@@ -2651,12 +2660,12 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				}
 				else
 				{
-					if (Property["Case"].type != json_none)
-						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%hs\" is set to \"Case\"=\"%s\", but that won't work with property type %hs."), (const char*)Property["Title"], (const char*)Property["Case"], Names[CurrentProperty->Type_ID % 1000]);
-					if (Property["Password"].type != json_none)
-						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%hs\" is set to password mask, but that won't work with property type %hs."), (const char*)Property["Title"], Names[CurrentProperty->Type_ID % 1000]);
+					if (Property["Case"].type != json_type::json_none)
+						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"), UTF8ToTString((const char*)Property["Title"]).c_str(), (const char*)Property["Case"], Names[CurrentProperty->Type_ID % 1000]);
+					if (Property["Password"].type != json_type::json_none)
+						DarkEdif::MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."), UTF8ToTString((const char*)Property["Title"]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
 				}
-				if (Property["MaxLength"].type != json_integer) {
+				if (Property["MaxLength"].type != json_type::json_integer) {
 					SetAllProps(0, NULL);
 				}
 				else
@@ -2686,8 +2695,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_COMBOBOX:
 			case PROPTYPE_COMBOBOXBTN:
 			{
-				if (Property["Items"].type != json_array || Property["Items"].u.array.length == 0)
-					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %hs."), (const char*)Property["Title"]);
+				if (Property["Items"].type != json_type::json_array || Property["Items"].u.array.length == 0)
+					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."), UTF8ToTString((const char*)Property["Title"]).c_str());
 
 				const TCHAR** Fixed = new const TCHAR * [Property["Items"].u.array.length + 2];
 
@@ -3345,7 +3354,7 @@ namespace DarkEdif
 				if (!di.intStoreDataToExt(ext, edi.value))
 				{
 					di.cachedInt = oldInteger;
-					di.nextRefreshTime = GetTickCount();
+					di.nextRefreshTime = GetTickCount64();
 				}
 			}
 
@@ -3365,7 +3374,7 @@ namespace DarkEdif
 				if (!di.textStoreDataToExt(ext, di.cachedText))
 				{
 					di.cachedText = oldText;
-					di.nextRefreshTime = GetTickCount();
+					di.nextRefreshTime = GetTickCount64();
 				}
 			}
 		}
@@ -3378,7 +3387,7 @@ namespace DarkEdif
 		// Reader function exists, and timer for refreshing (if it exists) has expired
 		auto &di = debugItems[debugItemID];
 		if ((di.isInt ? di.intReadFromExt != NULL : di.textReadFromExt != NULL) &&
-			(!di.refreshMS || GetTickCount() >= di.nextRefreshTime))
+			(!di.refreshMS || GetTickCount64() >= di.nextRefreshTime))
 		{
 			if (di.isInt)
 				di.cachedInt = di.intReadFromExt(ext);
@@ -3397,7 +3406,7 @@ namespace DarkEdif
 				}
 			}
 			if (di.refreshMS)
-				di.nextRefreshTime = GetTickCount() + di.refreshMS;
+				di.nextRefreshTime = GetTickCount64() + di.refreshMS;
 		}
 		_tcscpy_s(writeTo, 256U, di.cachedText.c_str());
 	}
@@ -3645,10 +3654,10 @@ std::tstring_view DarkEdif::GetRunningApplicationPath(GetRunningApplicationPathT
 	}
 
 	std::tstring_view path = appPath;
-	if (!stdrtPath.empty() && (type & GetSTDRTNotApp) == GetSTDRTNotApp)
+	if (!stdrtPath.empty() && (type & GetRunningApplicationPathType::GetSTDRTNotApp) == GetRunningApplicationPathType::GetSTDRTNotApp)
 		path = stdrtPath;
 
-	if ((type & AppFolderOnly) == AppFolderOnly)
+	if ((type & GetRunningApplicationPathType::AppFolderOnly) == GetRunningApplicationPathType::AppFolderOnly)
 	{
 		size_t lastSlash = std::tstring::npos;
 		if ((lastSlash = path.rfind(_T('\\'))) == std::tstring::npos)
@@ -4157,7 +4166,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 		}
 		else if (GetLastError() == ERROR_ACCESS_DENIED)
 		{
-			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%20Fix%20Tool.exe"));
+			DarkEdif::MsgBox::Error(_T("Resource loading"), _T("Failed to set up ") PROJECT_NAME _T(" - access denied writing to Data\\Runtime MFX. Try running the UCT Fix Tool, or run Fusion as admin.\n\nUCT fix tool:\nhttps://dark-wire.com/storage/UCT%%20Fix%%20Tool.exe"));
 			std::abort();
 		}
 		else // Some other error loading; we'll consider it fatal.
