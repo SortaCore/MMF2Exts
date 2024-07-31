@@ -101,7 +101,6 @@ BEGIN
 	"#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
 	"#include <windows.h>\r\n"
 	"#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
-	"#include ""ver.h""\r\n"
 	"\0"
 END
 
@@ -113,15 +112,10 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
 	KPX_MARK                "MF2"
 	KPX_NAME                ObjectName
 END
 
 #endif    // English (U.S.) resources
-
-#ifndef APSTUDIO_INVOKED
-
-#endif    // !APSTUDIO_INVOKED
-
