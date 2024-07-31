@@ -39,7 +39,7 @@ int GlobalInfo::Internal_GetWinVer()
 	// depending on the manifest of the app - pretending to be a different OS version for compatibility.
 	// RtlGetVersion doesn't, but isn't in Windows SDK, so we'll have to look up the address manually.
 
-	NTSTATUS(WINAPI * RtlGetVersion)(LPOSVERSIONINFOEXW) = NULL;
+	LONG(WINAPI * RtlGetVersion)(LPOSVERSIONINFOEXW) = NULL;
 
 	*(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandleW(L"ntdll"), "RtlGetVersion");
 	if (NULL != RtlGetVersion)
