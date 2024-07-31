@@ -325,12 +325,16 @@ namespace Edif
 	// Use mutexvar.edif_lock() and mutexvar.edif_unlock() macros to track locks and find any poor coding.
 	class recursive_mutex {
 #ifdef _DEBUG
+#ifndef DISABLE_EDIF_MUTEX
 		std::recursive_timed_mutex intern;
+#endif
 #define edif_lock_debugParams const char * file, const char * func, int line
 #define edif_lock_debugParamDefs __FILE__, __FUNCTION__, __LINE__
 		std::stringstream log;
 #else
+#ifndef DISABLE_EDIF_MUTEX
 		std::recursive_mutex intern;
+#endif
 #define edif_lock_debugParams /* none */
 #define edif_lock_debugParamDefs /* none */
 #endif
