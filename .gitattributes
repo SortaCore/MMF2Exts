@@ -53,6 +53,7 @@
 *.hpp text eol=lf
 *.hxx text eol=lf
 *.txt text eol=lf
+*.ini text eol=lf
 *.md text eol=lf
 *.js text eol=lf
 *.json text eol=lf
