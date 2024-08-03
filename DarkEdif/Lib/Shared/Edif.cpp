@@ -1731,7 +1731,7 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 	if (!resHandle)
 		throw std::runtime_error("Could not load resource");
 
-	Buffer = (char *) LockResource (res);
+	Buffer = (char *) LockResource (resHandle);
 	if (!Buffer)
 		throw std::runtime_error("Could not lock resource");
 
