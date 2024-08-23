@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- PrepareDarkEdif: Now v1.0.0.3; fixes version in wrapper files put in project folder, now includes preceding "v".
 - PostBuildTool: Now v1.0.0.8; iOS no longer mistakenly looks for custom hpp file twice instead of h and hpp file in project folder
 - PreBuildTool: Now v1.0.0.8; aborts if you use non-numbers in a LinkA/C/E, which would break the call table generation for non-Windows
 - Windows: Fixed alt string setting, and getting a blank alt string
