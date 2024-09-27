@@ -367,6 +367,8 @@ const TCHAR* AltVals::GetAltStringAtIndex(const std::size_t i) const {
 }
 const CValueMultiPlat* AltVals::GetAltValueAtIndex(const std::size_t i) const {
 #ifdef _WIN32
+	if (i >= GetAltValueCount())
+		return nullptr;
 	return DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
 #else
 	throw std::runtime_error("Not implemented");
@@ -383,7 +385,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 #ifdef _WIN32
 		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Strings, (int)i * sizeof(TCHAR *));
 #else
-		void* v = malloc(i * sizeof(TCHAR*));
+		void* v = malloc(i * sizeof(TCHAR*)); // TODO: test this, and alt value equivalent
 #endif
 		if (!v)
 			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
@@ -412,13 +414,67 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 	throw std::runtime_error("Not implemented");
 #endif
 }
-void AltVals::SetAltValueAtIndex(const std::size_t, const double)
+void AltVals::SetAltValueAtIndex(const std::size_t i, const double d)
 {
+	if (i >= GetAltValueCount())
+	{
+		if (!DarkEdif::IsFusion25)
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+		
+		// TODO: if this does not work, just throw
+#ifdef _WIN32
+		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
+#else
+		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
+#endif
+		if (!v)
+			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+#ifdef _WIN32
+		*(void **)&CF25.Values = v; // TODO: Simplify
+		CF25.NumAltValues = (int)i;
+#else
+		throw std::runtime_error("Not implemented");
+#endif
+	}
+
+#ifdef _WIN32
+	auto v = DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
+	v->m_type = TYPE_DOUBLE;
+	v->m_double = d;
+#else
 	throw std::runtime_error("Not implemented");
+#endif
 }
-void AltVals::SetAltValueAtIndex(const std::size_t, const int)
+void AltVals::SetAltValueAtIndex(const std::size_t i, const int l)
 {
+	if (i >= GetAltValueCount())
+	{
+		if (!DarkEdif::IsFusion25)
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+		
+		// TODO: if this does not work, just throw
+#ifdef _WIN32
+		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
+#else
+		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
+#endif
+		if (!v)
+			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+#ifdef _WIN32
+		*(void **)&CF25.Values = v; // TODO: Simplify
+		CF25.NumAltValues = (int)i;
+#else
+		throw std::runtime_error("Not implemented");
+#endif
+	}
+
+#ifdef _WIN32
+	auto v = DarkEdif::IsFusion25 ? &CF25.Values[i] : &MMF2.rvpValues[i];
+	v->m_type = TYPE_LONG;
+	v->m_long = l;
+#else
 	throw std::runtime_error("Not implemented");
+#endif
 }
 std::uint32_t AltVals::GetInternalFlags() const {
 #ifdef _WIN32
