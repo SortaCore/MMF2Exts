@@ -71,7 +71,7 @@ static int thread_proc (lw_thread ctx)
 {
 	SetThreadName(GetCurrentThreadId(), ctx->name);
 
-	return ((int (*) (void *)) ctx->proc) (ctx->param);
+	return ((int (__stdcall *) (void *)) ctx->proc) (ctx->param);
 }
 
 void lw_thread_start (lw_thread ctx, void * param)

@@ -11,7 +11,7 @@
 
 #include "../common.h"
 
-static void timer_thread (lw_timer);
+static DWORD __stdcall timer_thread (lw_timer);
 
 struct _lw_timer
 {
@@ -70,7 +70,7 @@ static void timer_completion (void * ptr)
 	  ctx->on_tick (ctx);
 }
 
-void timer_thread (lw_timer ctx)
+DWORD __stdcall timer_thread (lw_timer ctx)
 {
 	HANDLE events [2] = { ctx->timer_handle, ctx->shutdown_event };
 
@@ -86,6 +86,7 @@ void timer_thread (lw_timer ctx)
 
 	  lw_pump_post (ctx->pump, (void *) timer_completion, ctx);
 	}
+	return 0;
 }
 
 void lw_timer_start (lw_timer ctx, long interval)

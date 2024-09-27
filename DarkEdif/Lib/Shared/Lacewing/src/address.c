@@ -12,7 +12,10 @@
 #include "address.h"
 #include <ctype.h>
 
-static int resolver (lw_addr);
+#ifndef _WIN32
+#define __stdcall /* hm */
+#endif
+static int __stdcall resolver(lw_addr);
 
 void lwp_addr_init (lw_addr ctx, const char * hostname,
 					const char * service, int hints)
@@ -293,7 +296,7 @@ struct in6_addr lw_addr_toin6_addr (lw_addr ctx)
 	return v4;
 }
 
-int resolver (lw_addr ctx)
+int __stdcall resolver(lw_addr ctx)
 {
 	struct addrinfo hints;
 	int result;
