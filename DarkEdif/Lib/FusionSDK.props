@@ -239,43 +239,6 @@
 		<AuthorName>$([System.Text.RegularExpressions.Regex]::Match($(_InfoFile), $(_AuthorNameRegex)).Result('$1'))</AuthorName>
 		<CompanyName>$(AuthorName)</CompanyName>
 	</PropertyGroup>
-	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
-		<!-- Broken in latest MS
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
-			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
-			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""
-			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
-			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
-		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
-			 project needs rebuilding on every run. -->
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=STRIFY($(ExtName))"
-			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
-			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
-			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
-			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
-			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
-			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
-			</_FusionSDKAdds>
-		<!-- ResourceCompiler doesn't like newlines. -->
-		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
-		<!-- #if EditorBuild needs to evaluate to true.
-			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
-	</PropertyGroup>
-	<PropertyGroup Condition="$(_TargetPlat)=='Android' OR $(_TargetPlat)=='iOS'">
-		<!-- Android uses Clang, a different format of commandline items
-			-D PROJECT_NAME=\"$(ExtName)\"
-			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
-			-D EXTENSION_VERSION=$(ExtVersion)
-			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
-		<!-- Doesn't work due to MS bug.
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
-
-		<!-- Not defined by Clang, just MSVC. -->
-		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
-	</PropertyGroup>
 	<Choose>
 		<When Condition="$(_TargetPlat)=='Windows'">
 			<PropertyGroup Label="UserMacros">
@@ -307,12 +270,22 @@
 		<!-- MFX files are internally DLLs, apart from on iOS/Mac -->
 		<ConfigurationType Condition="$(_TargetPlat)!='iOS'">DynamicLibrary</ConfigurationType>
 
-		<!-- TargetName is incorrect on Android/iOS, due to project name containing '.' -->
 		<TargetName>$(ExtName)$(LangSuffix)</TargetName>
-		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlatInclMac)=='iOS'">lib$(ExtName.Replace(' ','_'))$(LangSuffix)</TargetName>
-
-		<ExtNameUnderscores>$(ExtName.Replace(' ','_'))</ExtNameUnderscores>
-
+		
+		<!-- Replace the target name with new text; for example, renaming Firefly 2D Text to Firefly2T.mfx, provide
+			 MFXNameOverride,Firefly 2D Text=Firefly2T
+			 in FusionSDKConfig.ini. Anticipates you rename any custom wrapper files and their internal classes,
+			 like CRunFirefly2T.java containing CRunFirefly2T class. -->
+		<_ExtNameReplaceRegex><![CDATA[(?im)^MFXNameOverride,!!!\s*=\s*([A-Za-z0-9_ -]+)\s*?$]]></_ExtNameReplaceRegex>
+		<TargetName Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Result('$1'))</TargetName>
+		
+		<!-- Used to check for successfully generated library files; due to spaces needing escaping, some exporters replace the spaces with underscores -->
+		<TargetNameUnderscores>$(TargetName.Replace(' ','_'))</TargetNameUnderscores>
+		
+		<!-- Android/iOS expect a lib prefix to libraries, and use underscores in place of spaces -->
+		<TargetNameNoPrefix>$(TargetName)</TargetNameNoPrefix>
+		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlatInclMac)=='iOS'">lib$(TargetName.Replace(' ','_'))</TargetName>
+				
 		<!-- Prevent the madness of every linked DLL being copied to output folder. -->
 		<CopyCppRuntimeToOutputDir>false</CopyCppRuntimeToOutputDir>
 
@@ -324,7 +297,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)\Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">
@@ -357,6 +330,31 @@
 		</Link>
 	</ItemDefinitionGroup>
 
+	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
+		<!-- Broken in latest MS
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
+			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
+			/D "EXTENSION_VERSION=$(ExtVersion)"
+			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""
+			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
+			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
+		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
+			 project needs rebuilding on every run. -->
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix))"
+			/D "PROJECT_NAME=STRIFY($(ExtName))"
+			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
+			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
+			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
+			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
+			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
+			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
+			</_FusionSDKAdds>
+		<!-- ResourceCompiler doesn't like newlines. -->
+		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
+		<!-- #if EditorBuild needs to evaluate to true.
+			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
+	</PropertyGroup>
 
 <!--#################################
 		BEGIN Windows
@@ -573,6 +571,18 @@
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
 		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPostBuildToolParams>
+		
+		<!-- Android uses Clang, a different format of commandline items
+			-D PROJECT_NAME=\"$(ExtName)\"
+			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
+			-D EXTENSION_VERSION=$(ExtVersion)
+			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
+		<!-- Doesn't work due to MS bug.
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
+
+		<!-- Not defined by Clang, just MSVC. -->
+		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
 	</PropertyGroup>
 
 <!--#################################
@@ -647,7 +657,7 @@
 	</ItemDefinitionGroup>
 	<!-- Ensure VS knows the build failed if the .so or .zip files weren't updated -->
 	<ItemGroup Condition="'$(_TargetPlat)'=='Android'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName.Replace(' ','_')).zip;$(SolutionDir)\Temp\$(ExtName)\Android\$(Configuration)\$(TargetArch)\lib$(ExtName.Replace(' ','_')).so" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameUnderscores).zip;$(SolutionDir)\Temp\$(ExtName)\Android\$(Configuration)\$(TargetArch)\lib$(TargetNameUnderscores).so" />
 	</ItemGroup>
 
 <!--#################################
@@ -693,7 +703,7 @@
 		<ClCompile>
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
-			<PreprocessorDefinitions>__APPLE__;PROJECT_NAME_RAW=$(ExtName.Replace(' ','_'));%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>__APPLE__;PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Use C++17, and C11, latest finalised standards.
 				 VS 2017 (15.0) doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>
@@ -702,7 +712,7 @@
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
-			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -Wno-nullability-completeness -D Edif=$(ExtName.Replace(' ','_'))_Edif -D Extension=$(ExtName.Replace(' ','_'))_Extension -D DarkEdif=$(ExtName.Replace(' ','_'))_DarkEdif -D FusionInternals=$(ExtName.Replace(' ','_'))_FusionInternals $(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -Wno-nullability-completeness -D Edif=$(TargetNameUnderscores)_Edif -D Extension=$(TargetNameUnderscores)_Extension -D DarkEdif=$(TargetName.Replace(' ','_'))_DarkEdif -D FusionInternals=$(TargetNameUnderscores)_FusionInternals $(AdditionalOptions)</AdditionalOptions>
 
 			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
@@ -735,7 +745,7 @@
 	</ItemGroup>
 	<!-- Ensure VS knows the build failed if the bundle file or .dat file weren't updated -->
 	<ItemGroup Condition="'$(_TargetPlatInclMac)'=='Mac'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtName).dat;$(SolutionDir)\Temp\$(ExtName)\Mac\$(Configuration)\$(ExtName)" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetName).dat;$(SolutionDir)\Temp\$(ExtName)\Mac\$(Configuration)\$(TargetName)" />
 	</ItemGroup>
 
 <!--#################################
@@ -828,20 +838,14 @@
 	</Target>
 
 	<!-- The iOS compiler for some reason insists on using project name instead of target name.
-		 We'll temporarily change the project name. Since TargetName includes "lib" and shouldn't, we'll substring it. -->
-	<Target Name="iOS library name fix" Condition="$(_TargetPlatInclMac)=='iOS'" BeforeTargets="GenerateXCodeProj">
-		<Message Text="Corrected library name from $(ProjectName) to $(TargetName.Substring(3,$([MSBuild]::Subtract($(TargetName.Length), 3))))." Importance="High" />
+		 We'll temporarily change the project name. -->
+	<Target Name="Apple library name fix" Condition="$(_TargetPlat)=='iOS'" BeforeTargets="GenerateXCodeProj">
+		<Message Text="Corrected library name from $(ProjectName) to $(TargetNameNoPrefix)." Importance="High" />
 		<PropertyGroup>
-			<ProjectName>$(TargetName.Substring(3,$([MSBuild]::Subtract($(TargetName.Length), 3))))</ProjectName>
+			<ProjectName>$(TargetNameNoPrefix)</ProjectName>
  		</PropertyGroup>
 	</Target>
-	<Target Name="Mac library name fix" Condition="$(_TargetPlatInclMac)=='Mac'" BeforeTargets="GenerateXCodeProj">
-		<Message Text="Corrected library name from $(ProjectName) to $(TargetName)." Importance="High" />
-		<PropertyGroup>
-			<ProjectName>$(TargetName)</ProjectName>
-		</PropertyGroup>
-	</Target>
-
+	
 	<!-- Obj-C syntax can be permitted on top of C/C++. We want that as Fusion's internals are strictly Obj-C. -->
 	<Target Name="iOSAlwaysObjC" Condition="$(_TargetPlat)=='iOS'" BeforeTargets="GenerateXCodeProj">
 		<Message Text="FusionProps: overriding CompileAs to include ObjC." Importance="High" />

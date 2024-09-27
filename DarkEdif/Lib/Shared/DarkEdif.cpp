@@ -2956,12 +2956,12 @@ int DarkEdif::GetCurrentFusionEventNum(const Extension * const ext)
 
 		// This is a Java wrapper implementation failure and so its absence should be considered fatal
 		if (getEventIDMethod == nullptr)
-			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
+			LOGF("Failed to find CRun" PROJECT_TARGET_NAME_UNDERSCORES "'s darkedif_jni_getCurrentFusionEventNum method in Java wrapper file.\n");
 	}
 
 	return threadEnv->CallIntMethod(ext->javaExtPtr, getEventIDMethod);
 #else // iOS
-	return DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
+	return DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(ext->objCExtPtr);
 #endif
 }
 
@@ -2988,7 +2988,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 
 		// This is a Java wrapper implementation failure and so its absence should be considered fatal
 		if (getEventIDMethod == nullptr)
-			LOGF("Failed to find CRun" PROJECT_NAME_UNDERSCORES "'s darkedif_jni_makePathUnembeddedIfNeeded method in Java wrapper file.\n");
+			LOGF("Failed to find CRun" PROJECT_TARGET_NAME_UNDERSCORES "'s darkedif_jni_makePathUnembeddedIfNeeded method in Java wrapper file.\n");
 	}
 
 	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
@@ -3000,7 +3000,7 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	threadEnv->DeleteLocalRef(pathJava);
 	threadEnv->DeleteLocalRef((jobject)str.ctx);
 #else
-	const std::string truePath = DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
+	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
 #endif
 	if (filePath != truePath)
 		LOGV(_T("File path extracted from \"%s\" to \"%s\".\n"), std::tstring(filePath).c_str(), truePath.c_str());
@@ -3233,7 +3233,7 @@ int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR
 	jmethodID methodShow = threadEnv->GetMethodID(toast, "show", "()V");
 	threadEnv->CallVoidMethod(toastobj, methodShow);
 
-	__android_log_print(iconAndButtons, PROJECT_NAME_UNDERSCORES, "Msg Box swallowed: \"%s\", %s.", caption, text);
+	__android_log_print(iconAndButtons, PROJECT_TARGET_NAME_UNDERSCORES, "Msg Box swallowed: \"%s\", %s.", caption, text);
 	if (!strncmp(caption, "DarkEdif", sizeof("DarkEdif") - 1) && (iconAndButtons & MB_ICONERROR) != 0)
 		DarkEdif::BreakIfDebuggerAttached();
 	return 0;
@@ -4125,11 +4125,11 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	if (mvIsUnicodeVersion(Edif::SDK->mV))
 	{
 		std::tstring uniPath = drMFXPath;
-		uniPath += _T("Unicode\\") PROJECT_NAME ".mfx"sv;
+		uniPath += _T("Unicode\\") PROJECT_TARGET_NAME ".mfx"sv;
 
 		if (!DarkEdif::FileExists(uniPath))
 		{
-			drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+			drMFXPath += _T("" PROJECT_TARGET_NAME ".mfx"sv);
 
 			// Couldn't find either; roll back to Uni for error messages
 			if (!DarkEdif::FileExists(drMFXPath))
@@ -4141,7 +4141,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			drMFXPath = uniPath;
 	}
 	else // ANSI runtime will only use ANSI MFX
-		drMFXPath += _T("" PROJECT_NAME ".mfx"sv);
+		drMFXPath += _T("" PROJECT_TARGET_NAME ".mfx"sv);
 
 	// Stores UC tags in resources or registry.
 	std::wstring resKey, regKey;
@@ -4793,7 +4793,7 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 	std::string msgFormatT = std::string(aceIndex, '>');
 	msgFormatT += ' ';
 	msgFormatT += msgFormat;
-	__android_log_vprint(logLevel, PROJECT_NAME_UNDERSCORES, msgFormatT.c_str(), v);
+	__android_log_vprint(logLevel, PROJECT_TARGET_NAME_UNDERSCORES, msgFormatT.c_str(), v);
 #else // iOS
 	static const char* logLevels[] = {
 		"", "", "verbose", "debug", "info", "warn", "error", "fatal"
@@ -4868,7 +4868,7 @@ darkExtJSONSize:						\n\
  * making use from them externally in other translation units.
  */
 
-INCBIN(PROJECT_NAME_RAW, _darkExtJSON, "DarkExt.PostMinify.json");
+INCBIN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSON, "DarkExt.PostMinify.json");
 
 // See https://stackoverflow.com/a/19725269
 // Note the file will NOT be transmitted to Mac unless it's set as a C/C++ header file.

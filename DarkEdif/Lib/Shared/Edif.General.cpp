@@ -540,17 +540,17 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	fflush(stdout);
 	fflush(stderr);
 #endif
-	__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
+	__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
 	{
 #if _DEBUG
 		raise(SIGINT);
 #endif
-		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_NAME_UNDERSCORES " for details.");
+		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_TARGET_NAME_UNDERSCORES " for details.");
 	}
 	else
 	{
-		__android_log_write(ANDROID_LOG_FATAL, PROJECT_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
+		__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -775,8 +775,8 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	// Get jclass with mainThreadJNIEnv->FindClass.
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
-	std::string classNameCRun("Extensions/" "CRun" PROJECT_NAME_UNDERSCORES);
-	std::string className("Extensions/" PROJECT_NAME_UNDERSCORES);
+	std::string classNameCRun("Extensions/" "CRun" PROJECT_TARGET_NAME_UNDERSCORES);
+	std::string className("Extensions/" PROJECT_TARGET_NAME_UNDERSCORES);
 	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
@@ -858,7 +858,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 #include "Extension.hpp"
 
 // Raw creation func
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _init())
 {
 	mv * mV = NULL;
 	if (!Edif::SDK) {
@@ -868,16 +868,16 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init())
 }
 
 // Last Objective-C class was freed
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc())
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _dealloc())
 {
 	LOGV("The SDK is being freed.\n");
 }
 
-ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW, _getNumberOfConditions())
+ProjectFunc int PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getNumberOfConditions())
 {
 	return CurLang["Conditions"].u.array.length;
 }
-ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
 {
 	EDITDATA * edPtr = (EDITDATA *)file;
 	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
@@ -885,11 +885,11 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW, _createRunObject(void * file,
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
 	return cppExt;
 }
-ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW, _handleRunObject)(void * cppExt)
+ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _handleRunObject)(void * cppExt)
 {
 	return (short) ((Extension *)cppExt)->Handle();
 }
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _destroyRunObject)(void * cppExt, bool bFast)
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _destroyRunObject)(void * cppExt, bool bFast)
 {
 	delete ((Extension *)cppExt);
 }

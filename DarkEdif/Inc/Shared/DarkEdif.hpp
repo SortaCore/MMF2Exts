@@ -1082,7 +1082,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...))
 
 #ifdef __APPLE__
 //
-extern "C" int DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(void* objCExt);
+extern "C" int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCurrentFusionEventNum)(void* objCExt);
 
 // Reads files from inside anywhere Fusion runtime can readily access.
 // Uses the CRun functions used by Edit Box to load files.
@@ -1092,5 +1092,5 @@ extern "C" int DarkEdifObjCFunc(PROJECT_NAME_RAW, getCurrentFusionEventNum)(void
 // Errors are indicated by > at start of return, which is illegal filename char;
 // otherwise the return is the file path in a temporary folder, suitable for fopen()
 // Return is malloc'd and must be free'd, even for errors
-extern "C" char* DarkEdifObjCFunc(PROJECT_NAME_RAW, makePathUnembeddedIfNeeded)(void* ext, const char* fileName);
+extern "C" char* DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(void* ext, const char* fileName);
 #endif

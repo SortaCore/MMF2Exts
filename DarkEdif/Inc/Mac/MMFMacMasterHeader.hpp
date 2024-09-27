@@ -307,15 +307,15 @@ using namespace FusionInternals;
 #define PROJ_FUNC_GEN2(x,y) x##y
 #define PROJ_FUNC_GEN(x,y) PROJ_FUNC_GEN2(x,y)
 
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _init());
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _dealloc());
-ProjectFunc int PROJ_FUNC_GEN(PROJECT_NAME_RAW,_getNumberOfConditions());
-ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW,_condition(void * cppExtPtr, int ID, void * paramReader));
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_action(void * cppExtPtr, int ID, void * paramReader));
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_expression(void * cppExtPtr, int ID));
-ProjectFunc void * PROJ_FUNC_GEN(PROJECT_NAME_RAW,_createRunObject(void * file, int cob, int version, void * objCExtPtr));
-ProjectFunc short PROJ_FUNC_GEN(PROJECT_NAME_RAW,_handleRunObject(void * cppExtPtr));
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtPtr, bool bFast));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _init());
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _dealloc());
+ProjectFunc int PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_getNumberOfConditions());
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_condition(void * cppExtPtr, int ID, void * paramReader));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_action(void * cppExtPtr, int ID, void * paramReader));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_expression(void * cppExtPtr, int ID));
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_createRunObject(void * file, int cob, int version, void * objCExtPtr));
+ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_handleRunObject(void * cppExtPtr));
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_destroyRunObject(void * cppExtPtr, bool bFast));
 
 #define DarkEdifObjCFunc2(a,b) DarkEdif_##a##_##b
 #define DarkEdifObjCFunc(a,b) DarkEdifObjCFunc2(a,b)
@@ -351,7 +351,6 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtP
 	INCBIN_EXTERNAL const INCBIN_ALIGN unsigned char NAME1 ## NAME2[]; \
 	INCBIN_EXTERNAL const unsigned int NAME1 ## NAME2 ## Size
 
-#define PROJECT_NAME_RAW_STR #PROJECT_NAME_RAW
 #define INCBIN(NAME1, NAME2, FILENAME) INCBIN2(NAME1, NAME2, FILENAME)
 
 #define INCBIN2(NAME1, NAME2, FILENAME) \
@@ -367,7 +366,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW,_destroyRunObject(void * cppExtP
 	); \
 	INCBIN_EXTERN(NAME1, NAME2)
 #define INCBIN_EXTERN2(a, b) INCBIN_EXTERN(a, b);
-INCBIN_EXTERN2(PROJECT_NAME_RAW, _darkExtJSON);
+INCBIN_EXTERN2(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSON);
 #endif
 
 // Undo warnings

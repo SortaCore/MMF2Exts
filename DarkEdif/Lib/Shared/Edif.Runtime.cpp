@@ -2775,12 +2775,12 @@ Edif::Runtime::~Runtime()
 {
 }
 
-extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(void * ext, int code, int param);
-extern "C" void DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(void * ext);
+extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(void * ext, int code, int param);
+extern "C" void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(void * ext);
 
 void Edif::Runtime::Rehandle()
 {
-	DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(this->objCExtPtr);
+	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(this->objCExtPtr);
 }
 
 void Edif::Runtime::GenerateEvent(int EventID)
@@ -2789,7 +2789,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
 	auto evg = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup;
-	DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
+	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
 	((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup = evg;
 }
 

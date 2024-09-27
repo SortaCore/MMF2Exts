@@ -1069,28 +1069,28 @@ jfieldID ConditionOrActionManager_Android::getRH;
 extern "C"
 {
 	// equivalent of void DarkEdif_Ext_Name_generateEvent(void * ext, int code, int param);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, generateEvent)(void* ext, int code, int param);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, reHandle)(void * ext);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(void* ext, int code, int param);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, reHandle)(void * ext);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpression)(void* ext, void* act, int paramNum, int paramType);
-	const char* DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpString)(void* ext, void* act, int paramNum);
-	double DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpDouble)(void* ext, void* act, int paramNum);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression)(void* ext, void* act, int paramNum, int paramType);
+	const char* DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString)(void* ext, void* act, int paramNum);
+	double DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble)(void* ext, void* act, int paramNum);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpression)(void * ext, void * cnd, int paramNum, int paramType);
-	const char * DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpString)(void * ext, void * cnd, int paramNum);
-	double DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpDouble)(void * ext, void * cnd, int paramNum);
-	bool DarkEdifObjCFunc(PROJECT_NAME_RAW, cndCompareValues)(void * ext, void * cnd, int paramNum);
-	bool DarkEdifObjCFunc(PROJECT_NAME_RAW, cndCompareTime)(void * ext, void * cnd, int paramNum);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression)(void * ext, void * cnd, int paramNum, int paramType);
+	const char * DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString)(void * ext, void * cnd, int paramNum);
+	double DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble)(void * ext, void * cnd, int paramNum);
+	bool DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndCompareValues)(void * ext, void * cnd, int paramNum);
+	bool DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndCompareTime)(void * ext, void * cnd, int paramNum);
 
-	int DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamInt)(void * ext);
-	const char * DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamString)(void * ext);
-	float DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamFloat)(void * ext);
+	int DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(void * ext);
+	const char * DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(void * ext);
+	float DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(void * ext);
 
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnInt)(void * ext, int toRet);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnString)(void * ext, const char * toRet);
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnFloat)(void * ext, float toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnInt)(void * ext, int toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnString)(void * ext, const char * toRet);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnFloat)(void * ext, float toRet);
 
-	void DarkEdifObjCFunc(PROJECT_NAME_RAW, freeString)(void * ext, const char * cstr);
+	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, freeString)(void * ext, const char * cstr);
 }
 
 struct ConditionOrActionManager_iOS : ACEParamReader
@@ -1108,7 +1108,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
+		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return (float)f;
 	}
@@ -1116,7 +1116,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
+		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
 		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, str);
 		return str;
 	}
@@ -1124,7 +1124,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	virtual std::int32_t GetInteger(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_NAME_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_NAME_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
+		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
 		LOGV("Got integer param, cond=%d, index %d, type %d OK: %i.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
 	}
@@ -1167,7 +1167,7 @@ ProjectFunc jlong conditionJump(JNIEnv *, jobject, jlong extPtr, int ID, CCndExt
 	global<jobject> lastCEvent = ext->Runtime.curCEvent.swap_out(); // prevent subfunctions causing this variable to be incorrect
 	ext->Runtime.curCEvent = global((jobject)cndExt, "Current Cnd ext");
 #else
-ProjectFunc long PROJ_FUNC_GEN(PROJECT_NAME_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
+ProjectFunc long PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _conditionJump(void * cppExtPtr, int ID, void * cndExt))
 {
 	Extension* const ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(true, ext, cndExt);
@@ -1229,7 +1229,7 @@ ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtens
 	ext->Runtime.curRH4ActBasedOnCEventOnly = ext->Runtime.curCEvent.ref;
 #define actreturn /* void */
 #else
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _actionJump(void * cppExtPtr, int ID, void * act))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ConditionOrActionManager_iOS params(false, ext, act);
@@ -1433,20 +1433,20 @@ struct ExpressionManager_iOS : ACEParamReader {
 	{
 	}
 	void SetValue(int a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnInt)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnInt)(ext->objCExtPtr, a);
 	}
 	void SetValue(float a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnFloat)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnFloat)(ext->objCExtPtr, a);
 	}
 	void SetValue(const char* a) {
-		DarkEdifObjCFunc(PROJECT_NAME_RAW, expSetReturnString)(ext->objCExtPtr, a);
+		DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expSetReturnString)(ext->objCExtPtr, a);
 	}
 
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
-		float f = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamFloat)(ext->objCExtPtr);
+		float f = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(ext->objCExtPtr);
 		LOGV("Got float param, expr, index %d OK: %f.\n", index, f);
 		return f;
 	}
@@ -1454,7 +1454,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual const TCHAR* GetString(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		const TCHAR* str = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamString)(ext->objCExtPtr);
+		const TCHAR* str = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(ext->objCExtPtr);
 		LOGV("Got string param, expr, index %d OK: \"%s\".\n", index, str);
 		return str;
 	}
@@ -1462,7 +1462,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	virtual std::int32_t GetInteger(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
-		std::int32_t i = DarkEdifObjCFunc(PROJECT_NAME_RAW, expGetParamInt)(ext->objCExtPtr);
+		std::int32_t i = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
@@ -1500,7 +1500,7 @@ ProjectFunc void expressionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CNativ
 	//if (ext->Runtime.curCEvent.invalid())
 	//	ext->Runtime.curCEvent = global((jobject)expU, "Current Exp ext");
 #else
-ProjectFunc void PROJ_FUNC_GEN(PROJECT_NAME_RAW, _expressionJump(void * cppExtPtr, int ID))
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJump(void * cppExtPtr, int ID))
 {
 	Extension* ext = (Extension*)cppExtPtr;
 	ExpressionManager_iOS params(ext);
@@ -1749,8 +1749,8 @@ int Edif::GetDependency (char *& Buffer, size_t &Size, const TCHAR * FileExtensi
 
 #define COMBINE2(a,b) a ## b
 #define COMBINE(a,b) COMBINE2(a,b)
-	Buffer = (char *)(void *)COMBINE(PROJECT_NAME_RAW, _darkExtJSON);
-	Size = COMBINE(PROJECT_NAME_RAW, _darkExtJSONSize);
+	Buffer = (char *)(void *)COMBINE(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSON);
+	Size = COMBINE(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _darkExtJSONSize);
 	return DependencyWasResource;
 	// A start at reading JSON from file.
 #if 0
