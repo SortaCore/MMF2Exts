@@ -1113,7 +1113,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 				else
 				{
 					CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
-						funcName, paramIndex, TypeToString(paramTypeInTemplate), "float");
+						funcName, paramIndex, TypeToString(paramTypeInTemplate), _T("float"));
 				}
 			}
 			else // integer passed
@@ -1127,7 +1127,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 				else
 				{
 					CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
-						funcName, paramIndex, TypeToString(paramTypeInTemplate), "integer");
+						funcName, paramIndex, TypeToString(paramTypeInTemplate), _T("integer"));
 				}
 			}
 			break;
@@ -1143,7 +1143,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 			else
 			{
 				CreateError2V("Function %s: Parameter %zu should have been an %s, but was called with a %s instead.",
-					funcName, paramIndex, TypeToString(paramTypeInTemplate), "string");
+					funcName, paramIndex, TypeToString(paramTypeInTemplate), _T("string"));
 			}
 			break;
 		default:

@@ -113,7 +113,7 @@ public:
 	bool selfAwareness = false;
 	// Per object list of selected instances
 	struct FusionSelectedObjectListCache {
-		objInfoList* poil;
+		objInfoList* poil = nullptr;
 		std::vector<short> selectedObjects;
 
 		// If running in a foreach, it's necessary to back up the action-level selection sometimes.
@@ -162,7 +162,7 @@ public:
 			if (type == Type::String && data.string)
 				data.string = _tcsdup(data.string);
 		}
-		Value(Value&& v) : type(v.type), data(v.data), dataSize(v.dataSize)
+		Value(Value&& v) noexcept : type(v.type), data(v.data), dataSize(v.dataSize)
 		{
 			v.type = Type::Any;
 			v.data.string = NULL;
@@ -302,16 +302,16 @@ public:
 		// Tick where this function was queued
 		const int startFrame;
 		// Units may be milliseconds or ticks; see useTicks
-		int numUnitsUntilRun;
+		int numUnitsUntilRun = 0;
 		// If true, numUnitsUntilRun is frame ticks, if false, it's milliseconds
-		bool useTicks;
+		bool useTicks = true;
 		// If true, this delayed function remains in the queue and should trigger even if Fusion frame changes
 		// (requires the new frame to have a DarkScript with a matching global ID)
-		bool keepAcrossFrames;
+		bool keepAcrossFrames = false;
 		// Number of times this delayed event ticks
-		int numRepeats;
+		int numRepeats = 0;
 		// Tick count until this is run (might be N/A, see useTicks)
-		int runAtTick;
+		int runAtTick = 0;
 		// Time when this is run (might be N/A, see useTicks)
 		std::chrono::time_point<std::chrono::system_clock> runAtTime;
 
