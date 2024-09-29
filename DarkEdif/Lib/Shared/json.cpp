@@ -868,6 +868,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	int string = 0;
 	int comment = 0;
 	const char * json = *json_input, * i;
+	bool utf8Bom = false;
 
 	// Doesn't start with brace, comment or space: is it a BOM?
 	if (json[0] != '{' && json[0] != '/' && !std::isspace((unsigned char)json[0]))
@@ -881,12 +882,19 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 
 		// it is UTF-8 BOM, skip it
 		json = &json[3];
+		utf8Bom = true;
 		size -= 3;
 	}
 
 	// No '/', so no comments; skip the cleaning of comments
 	if (memchr(json, '/', size) == NULL)
+	{
+		if (utf8Bom) {
+			*_size -= 3;
+			*json_input += 3;
+		}
 		return 1;
+	}
 
 	char * newJSON = (char *)json_alloc(state, size, 1);
 	char * j = newJSON;
@@ -976,6 +984,10 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	if (size == newSize - 1)
 	{
 		free(newJSON);
+		if (utf8Bom) {
+			*_size -= 3;
+			*json_input += 3;
+		}
 		return 1;
 	}
 
