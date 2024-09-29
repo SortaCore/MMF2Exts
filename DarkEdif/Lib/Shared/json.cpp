@@ -501,15 +501,14 @@ json_value * json_parse_ex (json_settings * settings,
 								break;
 
 							default:
-
-								if (isdigit (b) || b == '-')
+								if (std::isdigit ((unsigned char)b) || b == '-')
 								{
 									if (!new_value (&state, &top, &root, &alloc, json_integer))
 										goto e_alloc_failure;
 
 									if (!state.first_pass)
 									{
-										while (isdigit (b) || b == '+' || b == '-'
+										while (std::isdigit ((unsigned char)b) || b == '+' || b == '-'
 													 || b == 'e' || b == 'E' || b == '.')
 										{
 											b = *++ i;
@@ -589,7 +588,7 @@ json_value * json_parse_ex (json_settings * settings,
 
 					case json_integer:
 					case json_double:
-						if (isdigit (b))
+						if (std::isdigit ((unsigned char)b))
 						{
 							++ num_digits;
 
@@ -871,7 +870,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	const char * json = *json_input, * i;
 
 	// Doesn't start with brace, comment or space: is it a BOM?
-	if (json[0] != '{' && json[0] != '/' && ((unsigned)json[0] > 0x7F || !std::isspace(json[0])))
+	if (json[0] != '{' && json[0] != '/' && !std::isspace((unsigned char)json[0]))
 	{
 		// It's not a UTF-8 BOM
 		if (size < 3 || json[0] != '\xEF' || json[1] != '\xBB' || json[2] != '\xBF')
@@ -1004,7 +1003,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 		goto WrongFormat;
 
 	for (const char* j = &json[2]; j < newlineAt; j++)
-		if (!isdigit(*j))
+		if (!std::isdigit((unsigned char)*j))
 			goto WrongFormat;
 
 	*_size = size - ((newlineAt + 1) - (*json_input));
@@ -1015,6 +1014,4 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	strcpy_s(error, error_len, "JSON was not minified; does not start with //.");
 	return 0;
 #endif
-
 }
-
