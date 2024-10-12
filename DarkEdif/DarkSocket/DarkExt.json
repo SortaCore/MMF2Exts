@@ -7,7 +7,7 @@
 			"Author": "Darkwire Software",
 			"Copyright": "Copyright \u00A9 2024 by Darkwire Software",
 			"Comment": "Utilizes WinSock and POSIX sockets to provide socket functionality. (b%i)",
-			"Help": "Help/DarkSocket.chm",
+			"Help": "Help/DarkSocket Help.chm",
 			"URL": "https://dark-wire.com/"
 		},
 		"ActionMenu": [
