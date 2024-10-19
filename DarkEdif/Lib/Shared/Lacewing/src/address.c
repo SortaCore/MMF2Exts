@@ -35,6 +35,8 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 	while (isspace (ctx->hostname [strlen (ctx->hostname) - 1]))
 		ctx->hostname [strlen (ctx->hostname) - 1] = 0;
 
+	// If IPv6, format may be [a:b:c]:port, or just a:b:c, and we assume no port
+	lw_bool ipv6 = lw_false;
 	for (it = ctx->hostname; *it; ++ it)
 	{
 		if (it [0] == ':' && it [1] == '/' && it [2] == '/')
@@ -45,12 +47,23 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 			ctx->hostname = it + 3;
 		}
 
-		if (*it == ':')
+		// If IPv6, format may be []:port
+		if (*it == '[')
+		{
+			ipv6 = lw_true;
+			ctx->hostname = it + 1; // skip past [
+			ctx->hints |= lw_addr_hint_ipv6;
+		}
+
+		if (*it == ':' && (!ipv6 || *(it - 1) == ']'))
 		{
 			/* an explicit port overrides the service name */
 
-			service = it + 1;
-			*it = 0;
+			service = it + 1; // read past :
+			if (ipv6)
+				*(it - 1) = 0; // block the ]:port from being read
+			else
+				*it = 0; // block :port from being read
 		}
 	}
 
@@ -147,6 +160,9 @@ void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr * sockaddr)
 			memcpy (ctx->info->ai_addr, sockaddr, sizeof (struct sockaddr_in6));
 			break;
 	};
+
+	// clear to_string
+	ctx->buffer[0] = '\0';
 }
 
 lw_addr lw_addr_clone (lw_addr ctx)
@@ -183,6 +199,7 @@ lw_addr lw_addr_clone (lw_addr ctx)
 	memcpy (addr->service, ctx->service, sizeof (ctx->service));
 
 	addr->hostname = addr->hostname_to_free = ctx->hostname ? strdup(ctx->hostname) : NULL;
+	addr->hints = ctx->hints;
 
 	return addr;
 }
