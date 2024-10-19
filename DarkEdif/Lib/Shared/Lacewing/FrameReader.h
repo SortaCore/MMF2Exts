@@ -64,10 +64,10 @@ public:
 							switch (buffer.size)
 							{
 							case 2:
-								messagesize = *(lw_i16 *) buffer.buffer;
+								messagesize = *(lw_ui16 *) buffer.buffer;
 								break;
 							case 4:
-								messagesize = *(lw_i32 *) buffer.buffer;
+								messagesize = *(lw_ui32 *) buffer.buffer;
 								break;
 							}
 
