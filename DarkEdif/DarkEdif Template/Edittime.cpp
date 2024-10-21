@@ -90,7 +90,7 @@ BOOL FusionAPI IsTransparent(mv *mV, LevelObject * loPtr, EDITDATA * edPtr, int 
 
 // Called when the object has been resized
 /*
-BOOL FusionAPI SetEditSize(mv * mv, EDITDATA * edPtr, int cx, int cy)
+BOOL FusionAPI SetEditSize(mv * mV, EDITDATA * edPtr, int cx, int cy)
 {
 #pragma DllExportHint
 	// Check compatibility
