@@ -1997,8 +1997,9 @@ class CRunDarkScript extends CRunExtension {
 		console.assert(exp.ID > this.lastNonFuncID && exp.ID <= this.lastNonFuncID + this.numFuncVariantsToGenerate);
 		let callingAction = this.rhPtr.GetRH4ActionStart();
 		let actID = callingAction != null ? callingAction.get_evtNum() - 80 : -1;
-		let runImmediately = true, isVoidRun = false;
-		// We don't run simply if we have the Foreach or Delayed action being executed.
+		let runImmediately = true, isVoidRun = false, isDelayed = false;
+		// We don't run now if we have the Foreach or Delayed action being executed.
+		// Instead, parameters are collected here, then when the Action func runs, it triggers On Function.
 		if (actID >= 19 && actID <= 26 && callingAction.get_evtOi() == this.rdPtr.get_rHo().get_Oi())
 		{
 			// dummy func: run immediately, but don't reset actID, we use it later in Sub_GetLocation()
@@ -2007,6 +2008,7 @@ class CRunDarkScript extends CRunExtension {
 			}
 			else {
 				runImmediately = false;
+				isDelayed = actID >= 23; // foreach is 21, 22, delayed 23-26
 				console.info(`Called for Foreach or Delayed action! Action ID is ${actID}; qual act cause singl cond = ${this.allowQualifierToTriggerSingularForeach ? "yes" : "no"}, singl act cause qual cond = ${this.allowSingularToTriggerQualifierForeach ? "yes" : "no"}.`);
 			}
 			isVoidRun = true;
@@ -2112,10 +2114,10 @@ class CRunDarkScript extends CRunExtension {
 				return CreateError2V(`Can't call function ${funcName} without repeating, template expects repeating.`);
 			}
 
-			if (!runImmediately && funcTemplate.delaying == DarkScript_Expected.Never) {
+			if (!isDelayed && funcTemplate.delaying == DarkScript_Expected.Never) {
 				return CreateError2V(`Can't call function ${funcName} delayed, template does not allow delaying.`);
 			}
-			if (runImmediately && funcTemplate.delaying == DarkScript_Expected.Always) {
+			if (isDelayed && funcTemplate.delaying == DarkScript_Expected.Always) {
 				return CreateError2V(`Can't call function ${funcName} without delaying, template expects delaying.`);
 			}
 

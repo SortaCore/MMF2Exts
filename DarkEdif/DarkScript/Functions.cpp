@@ -920,8 +920,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 	assert(exp.ID > lastNonFuncID && exp.ID <= lastNonFuncID + (short)numFuncVariantsToGenerate);
 	event2* callingAction = rhPtr->GetRH4ActionStart();
 	int actID = callingAction ? callingAction->get_evtNum() - 80 : -1;
-	bool runImmediately = true, isVoidRun = false;
-	// We don't run simply if we have the Foreach or Delayed action being executed.
+	bool runImmediately = true, isVoidRun = false, isDelayed = false;
+	// We don't run now if we have the Foreach or Delayed action being executed.
+	// Instead, parameters are collected here, then when the Action func runs, it triggers On Function.
 	if (actID >= 19 && actID <= 26 && callingAction->get_evtOi() == rdPtr->get_rHo()->get_Oi())
 	{
 		// dummy func: run immediately, but don't reset actID, we use it later in Sub_GetLocation()
@@ -930,6 +931,7 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		else
 		{
 			runImmediately = false;
+			isDelayed = actID >= 23; // foreach is 21, 22, delayed 23-26
 			LOGD(_T("Called for Foreach or Delayed action! Action ID is %i; qual act cause singl cond = %s, singl act cause qual cond = %s.\n"), actID,
 				allowQualifierToTriggerSingularForeach ? _T("yes") : _T("no"), allowSingularToTriggerQualifierForeach ? _T("yes") : _T("no"));
 		}
@@ -1029,9 +1031,9 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		if ((funcID & Flags::Repeat) == Flags::None && funcTemplate->repeating == Expected::Always)
 			CreateError2V("Can't call function %s without repeating, template expects repeating.", funcName);
 
-		if (!runImmediately && funcTemplate->delaying == Expected::Never)
+		if (isDelayed && funcTemplate->delaying == Expected::Never)
 			CreateError2V("Can't call function %s delayed, template does not allow delaying.", funcName);
-		if (runImmediately && funcTemplate->delaying == Expected::Always)
+		if (!isDelayed && funcTemplate->delaying == Expected::Always)
 			CreateError2V("Can't call function %s without delaying, template expects delaying.", funcName);
 
 		if ((!funcTemplate->recursiveAllowed || preventAllRecursion) &&
