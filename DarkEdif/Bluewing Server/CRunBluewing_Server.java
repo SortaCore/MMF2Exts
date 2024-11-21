@@ -9,6 +9,7 @@
 */
 
 package Extensions;
+import android.Manifest;
 import android.util.Log;
 import java.io.File;
 import java.io.InputStream;
@@ -30,6 +31,7 @@ import Params.PARAM_OBJECT;
 import RunLoop.CCreateObjectInfo;
 import RunLoop.CRun;
 import Runtime.MMFRuntime;
+import Runtime.PermissionsHelper;
 import Services.CBinaryFile;
 
 public class CRunBluewing_Server extends CRunExtension
