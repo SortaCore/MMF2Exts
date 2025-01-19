@@ -90,7 +90,14 @@
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup>
-		<_FusionSDKConfig Condition="exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$([System.IO.File]::ReadAllText('$(ProjectDir)\..\..\FusionSDKConfig.ini'))</_FusionSDKConfig>
+		<!-- Load INI from alongside solution, or 0-2 folder parents up from project, if it exists -->
+		<_FusionSDKConfigIniPath>(not found)</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="exists('$(SolutionDir)FusionSDKConfig.ini')">$(SolutionDir)FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\FusionSDKConfig.ini')">$(ProjectDir)\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\FusionSDKConfig.ini')">$(ProjectDir)\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$(ProjectDir)\..\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
+		
+		<_FusionSDKConfig Condition="'$(_FusionSDKConfigIniPath)'!='(not found)'">$([System.IO.File]::ReadAllText('$(_FusionSDKConfigIniPath)'))</_FusionSDKConfig>
 
 		<!-- These are Fusion SDK settings that are needed by the build process, not post-build. -->
 
@@ -313,7 +320,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)"</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">
@@ -586,7 +593,7 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(SolutionDir)FusionSDKConfig.ini"</DarkEdifPostBuildToolParams>
+		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)"</DarkEdifPostBuildToolParams>
 		
 		<!-- Android uses Clang, a different format of commandline items
 			-D PROJECT_NAME=\"$(ExtName)\"
