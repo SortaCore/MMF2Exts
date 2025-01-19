@@ -167,6 +167,22 @@
 		<ZipExt>ZIP</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='iOS'">EXT</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='Mac'">DAT</ZipExt>
+		
+		<!-- Build for 4 architectures by default, tied to the VS project architectures.
+			 Translating VS arch to iOS arch:
+				ARM = armv7; x86 = i386; x64 = x86_64; ARM64 = arm64
+
+			 Read more about whether you should/can include/exclude archs in
+			 DarkEdif/#MFAs and documentation/DarkEdif MultiTargeting.md file,
+			 as well as extra details on each arch. -->
+		<_iOSBuildArchitecturesRegex><![CDATA[(?im)^iOSBuildArchitecturesREPLME\s*=\s*(.*)\s*$]]></_iOSBuildArchitecturesRegex>
+		<_iOSBuildArchitectures>arm64;armv7;x64_64</_iOSBuildArchitectures>
+		<_iOSBuildArchitectures Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_iOSBuildArchitecturesRegex.Replace('REPLME',$(Configuration)))).Result('$1'))</_iOSBuildArchitectures>
+		<_iOSBuildArchitectures>;$(_iOSBuildArchitectures.Replace(' ','').Replace(',',';'));</_iOSBuildArchitectures>
+
+		<!-- ARM64e with no ARM64: override ARM64 arch to ARM64e -->
+		<TargetArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='arm64' AND !$(_iOSBuildArchitectures.Contains(';arm64;')) AND $(_iOSBuildArchitectures.Contains(';arm64e;'))">arm64e</TargetArch>
+		<PlatformNativeArch Condition="'$(_TargetPlat)'=='iOS' AND '$(Platform)'=='arm64' AND !$(_iOSBuildArchitectures.Contains(';arm64;')) AND $(_iOSBuildArchitectures.Contains(';arm64e;'))">arm64e</PlatformNativeArch>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('Edif'))" Label="UserMacros">
 		<_JSON Condition="$(SDKType)=='DarkEdif'">$([System.IO.File]::ReadAllText('$(ProjectDir)\DarkExt.json'))</_JSON>
@@ -681,7 +697,7 @@
 		<_AppleSDKTarget>iphoneos</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(MacBuild)==1">macosx</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(iOSSimulatorBuild)==1">iphonesimulator</_AppleSDKTarget>
-
+		
 		<!-- iOS files redirection -->
  		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
@@ -867,7 +883,7 @@
 	</Target>
 
 	<!-- armv6 is a variant of armv7, in the sense they both use ARM project configuration -->
-	<Target Name="iOS Build armv6" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv6'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build armv6" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains(';armv6;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv6 variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv6;PlatformNativeArch=armv6'" Importance="High" />
@@ -875,14 +891,14 @@
 	</Target>
 
 	<!-- armv7s is a variant of armv7 -->
-	<Target Name="iOS Build armv7s" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains('armv7s'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build armv7s" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='armv7' AND $(_iOSBuildArchitectures.Contains(';armv7s;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building armv7s variant..." Importance="High" />
 
 		<Message Text="FusionSDK.props: starting variant MSBuild; project '$(ProjectName)' props='Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s'" Importance="High" />
 		<MSBuild Projects="$(MSBuildProjectFullPath)" Properties="Configuration=$(Configuration);Platform=$(Platform);TargetArch=armv7s;PlatformNativeArch=armv7s" Targets="Build" />
 	</Target>
 
-	<Target Name="iOS Build arm64e" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='arm64' AND $(iOSSimulatorBuild)==1 AND $(_iOSBuildArchitectures.Contains('arm64e'))" AfterTargets="Build;Rebuild">
+	<Target Name="iOS Build arm64e" Condition="$(_TargetPlatInclMac)=='iOS' AND $(TargetArch)=='arm64' AND $(iOSSimulatorBuild)==1 AND $(_iOSBuildArchitectures.Contains(';arm64e;'))" AfterTargets="Build;Rebuild">
 		<Message Text="Built device config $(ProjectName), arch $(TargetArch), building arm64e variant..." Importance="High" />
 
 		<!-- Note: Set SimulatorBuild=0, or it will inherit the =1 from this project run. The above one will also build SimulatorBuild=1 for it. -->
