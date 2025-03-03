@@ -625,9 +625,23 @@
 
 		<!-- Generate ARM style code for Thumb archs. -->
 		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
+		
+		<!-- Sysroot link fix; Sysroot is set by API number, but VS doesn't update it
+			 if API number is changed. Original API level is assumed to be android-31,
+			 even when NDK is r16b, which comes with VS, and is too early for API 31. -->
+		<_SysrootLinkFix>$(SysrootLink.Replace('\$(AndroidAPILevel)\', '$evil$'))</_SysrootLinkFix>
+		
 		<!-- API that's readily accessible. Note 21 is minimum 64-bit API. -->
 		<AndroidAPILevel>android-19</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
+		<!-- This one sets the __ANDROID_API__ define to same as above.
+			 Note if you get errors for missing stdout/stderr define, this is due to
+			 mismatch of API in library vs C define; those were changed between NDK versions,
+			 stdout/stderr moved from hidden function calls to real variables. -->
+		<AndroidAPILevelNumber>$(AndroidAPILevel.Substring(8))</AndroidAPILevelNumber>
+		
+		<!-- Sysroot link fix, pt 2, replaces VS assumed android API level with real one -->
+		<SysrootLink>$(_SysrootLinkFix.Replace('$evil$', '\$(AndroidAPILevel)\'))</SysrootLink>
 
 		<!-- We should use _UseMultiProcessor, but on Windows, that prevents incremental linking.
 			 Not so on Android, so we use it all the time. -->
@@ -637,6 +651,7 @@
 		<ClCompile>
 			<!-- Use C++17, and C11, latest finalised standards. -->
 			<CppLanguageStandard>c++1z</CppLanguageStandard>
+			<CppLanguageStandardNumber>17</CppLanguageStandardNumber>
 			<CLanguageStandard>c11</CLanguageStandard>
 			<LanguageStandard>c++1z</LanguageStandard>
 			<LanguageStandard_C>c11</LanguageStandard_C>
