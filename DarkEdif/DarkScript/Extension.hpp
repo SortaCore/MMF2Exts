@@ -15,7 +15,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
-	static const int Version = 3;
+	static const int Version = 4;
 
 	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
 	static const OEPREFS OEPREFS = OEPREFS::NONE;
@@ -114,6 +114,7 @@ public:
 	// Per object list of selected instances
 	struct FusionSelectedObjectListCache {
 		objInfoList* poil = nullptr;
+		// List of object instance numbers
 		std::vector<short> selectedObjects;
 
 		// If running in a foreach, it's necessary to back up the action-level selection sometimes.

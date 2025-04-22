@@ -524,9 +524,15 @@ class EdifRuntime {
 		// This being incorrect doesn't have any major effects, as the event parsing part of
 		// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
 		const evg = this.rhPtr.rhEvtProg.rhEventGroup;
+		
+		// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
+		const rh2ActionOn = this.rhPtr.rh2ActionOn;
+		if (rh2ActionOn)
+			this.rhPtr.rh2ActionOn = false;
 
 		this.hoPtr.generateEvent(id);
 
+		this.rhPtr.rh2ActionOn = rh2ActionOn;
 		this.rhPtr.rhEvtProg.rhEventGroup = evg;
 		this.rhPtr.rh4CurToken = saveExpToken;
 		this.rhPtr.rh4Tokens = rh4Tokens;
@@ -570,23 +576,23 @@ class EdifRuntime {
 		actStart.set_evtFlags(actStart.get_evtFlags() & ~CAct.ACTFLAGS_REPEAT);
 	}
 	/**
-	 * For Object action parameters. Returns the object/qualifier OI used in the events; only necessary if you are looping the instances yourself.
+	 * For Object action parameters. Returns the object/qualifier OIListIndex used in the events; only necessary if you are looping the instances yourself.
 	 * Reads OI number from parameter, used with object parameter for actions
 	 * @param {number} paramIndex Index of action/condition to read param from 
 	 * @returns number
 	 * @remarks This works for conditions too, but it should be unnecessary, as they're passed this OI directly.
 	 */
-	GetOIFromObjectParam(paramIndex) {
+	GetOIListIndexFromObjectParam(paramIndex) {
 		const PARAM_OBJECT_ID = 1;
 		if (paramIndex < 0 || paramIndex >= this.curCEvent.evtParams.length) {
-			throw Error("GetOIFromObjectParam: Returning a OI for a nonexistent parameter.");
+			throw Error("GetOIListIndexFromObjectParam: Returning a OI for a nonexistent parameter.");
 		}
 		/** @type PARAM_OBJECT & { code:number } */
 		const curParam = this.curCEvent.evtParams[paramIndex];
 		if (curParam.code != PARAM_OBJECT_ID) {
-			throw Error("GetOIFromObjectParam: Returning a OI for a non-Object parameter.");
+			throw Error("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter.");
 		}
-		console.debug(`GetOIFromObjectParam: Returning OiList ${curParam.oiList}, oi is ${curParam.oi}.`);
+		console.debug(`GetOIListIndexFromObjectParam: Returning OiList ${curParam.oiList}, oi is ${curParam.oi}.`);
 		return curParam.oiList;
 	}
 	RunObjPtrFromFixed(fixed) {
@@ -2302,7 +2308,9 @@ class CRunDarkScript extends CRunExtension {
 		let wasFound = false;
 		const DSOi = this.ho.get_Oi();
 		let selectedObjects = [];
+		let oiListIndex = -1;
 		for (const poil of new darkEdif['AllOIListIterator'](this.rhPtr)) {
+			++oiListIndex;
 			// Skip our ext, it'll always appear in selection as it's how this code right here in our ext is running
 			// Since every generated condition will use DarkScript, we shouldn't need to re-select after generated events finish
 			// although... if the user is strange enough to mix DS with other loop-type objects, maybe.
@@ -2343,7 +2351,7 @@ class CRunDarkScript extends CRunExtension {
 
 			// Store explicitly selected objects; we ignore Implicit via eventcount check anyway
 			let numSelected = 0;
-			for (const pHoFound of new darkEdif.ObjectIterator(this.rhPtr, poil.get_Oi(), darkEdif.Selection.Explicit)) {
+			for (const pHoFound of new darkEdif.ObjectIterator(this.rhPtr, oiListIndex, darkEdif.Selection.Explicit)) {
 				//auto&& pHoFound = rhPtr->GetObjectListOblOffsetByIndex(num);
 				// TODO: With multiple CRuns revealed, is this still functional across subapps?
 				if (pHoFound == this.rdPtr) {
@@ -2353,7 +2361,7 @@ class CRunDarkScript extends CRunExtension {
 					break;
 				}
 				++numSelected;
-				pSel.selectedObjects.push(pHoFound.get_rHo().get_Oi());
+				pSel.selectedObjects.push(pHoFound.get_rHo().get_Number());
 			//	num = pHoFound->get_rHo()->get_NextSelected();
 			}
 			if (numSelected > 0) {
@@ -3712,11 +3720,11 @@ class CRunDarkScript extends CRunExtension {
 		const funcToRun = this.foreachFuncToRun;
 		this.foreachFuncToRun = null;
 
-		// Ignore the RunObject * passed and look up OI number. This is necessary due to the passed object being
+		// Ignore the RunObject * passed and look up OIList index. This is necessary due to the passed object being
 		// a qualifier, which we can't tell from reading the RunObject *. However, the qualifier OI number is
 		// hard-coded as a variable in the event sheet, and you can't modify which object is in a parameter live,
 		// so we can read it back from the event sheet directly.
-		const  oil = this.Runtime.GetOIFromObjectParam(0);
+		const  oil = this.Runtime.GetOIListIndexFromObjectParam(0);
 
 		this.globals.runningFuncs.push(funcToRun);
 		this.Sub_RunPendingForeachFunc(oil, funcToRun);
@@ -3744,7 +3752,7 @@ class CRunDarkScript extends CRunExtension {
 		// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
 		const funcToRun = this.foreachFuncToRun;
 		this.foreachFuncToRun = null;
-		const oil = this.Runtime.GetOIFromObjectParam(0);
+		const oil = this.Runtime.GetOIListIndexFromObjectParam(0);
 
 		this.globals.runningFuncs.push(funcToRun);
 		this.Sub_RunPendingForeachFunc(oil, funcToRun);

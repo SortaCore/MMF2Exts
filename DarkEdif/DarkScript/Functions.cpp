@@ -1531,8 +1531,11 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 {
 	bool wasFound = false;
 	const short DSOi = rdPtr->get_rHo()->get_Oi();
+	short oiListIndex = -1;
 	for (auto poil : DarkEdif::AllOIListIterator(rhPtr))
 	{
+		++oiListIndex;
+
 		// Skip our ext, it'll always appear in selection as it's how this code right here in our ext is running
 		// Since every generated condition will use DarkScript, we shouldn't need to re-select after generated events finish
 		// although... if the user is strange enough to mix DS with other loop-type objects, maybe.
@@ -1579,7 +1582,7 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 
 		// Store explicitly selected objects; we ignore Implicit via eventcount check anyway
 		std::size_t numSelected = 0;
-		for (auto pHoFound : DarkEdif::ObjectIterator(rhPtr, poil->get_Oi(), DarkEdif::Selection::Explicit))
+		for (auto pHoFound : DarkEdif::ObjectIterator(rhPtr, oiListIndex, DarkEdif::Selection::Explicit))
 		{
 			//auto&& pHoFound = rhPtr->GetObjectListOblOffsetByIndex(num);
 			// TODO: With multiple CRuns revealed, is this still functional across subapps?
@@ -1588,7 +1591,7 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 			if (pHoFound == NULL)
 				break;
 			++numSelected;
-			pSel->selectedObjects.push_back(pHoFound->get_rHo()->get_Oi());
+			pSel->selectedObjects.push_back(pHoFound->get_rHo()->get_Number());
 		//	num = pHoFound->get_rHo()->get_NextSelected();
 		}
 		if (numSelected > 0)
@@ -1687,7 +1690,7 @@ void Extension::Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr
 		if ((pHo->get_Flags() & HeaderObjectFlags::Destroyed) != HeaderObjectFlags::None)
 			continue;
 
-		LOGI(_T("Event %i running current foreach func \"%s\" for object \"%s\", FV %i, num %hi [object list], oi %hi [oilist].\n"),
+		LOGI(_T("Event %i running current foreach func \"%s\" for object \"%s\", FV %i, num %hi [object list], oi %hi [oilist id].\n"),
 			DarkEdif::GetCurrentFusionEventNum(this),
 			runningFunc->funcTemplate->name.c_str(), pHo->get_OiList()->get_name(),
 			pHo->GetFixedValue(), pHo->get_Number(), pHo->get_Oi());

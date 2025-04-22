@@ -499,7 +499,7 @@ void Extension::RunFunction_Foreach_Num(RunObject*, int dummy)
 	// a qualifier, which we can't tell from reading the RunObject *. However, the qualifier OI number is
 	// hard-coded as a variable in the event sheet, and you can't modify which object is in a parameter live,
 	// so we can read it back from the event sheet directly.
-	const short oil = Runtime.GetOIFromObjectParam(0);
+	const short oil = Runtime.GetOIListIndexFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
@@ -527,7 +527,7 @@ void Extension::RunFunction_Foreach_String(RunObject*, const TCHAR* dummy)
 	// We store temp copies, so a Foreach expression's can run a Foreach itself without corrupting
 	auto funcToRun = foreachFuncToRun;
 	foreachFuncToRun = nullptr;
-	short oil = Runtime.GetOIFromObjectParam(0);
+	short oil = Runtime.GetOIListIndexFromObjectParam(0);
 
 	globals->runningFuncs.push_back(funcToRun);
 	Sub_RunPendingForeachFunc(oil, funcToRun);
