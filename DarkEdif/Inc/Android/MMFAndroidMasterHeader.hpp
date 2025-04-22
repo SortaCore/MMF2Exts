@@ -542,6 +542,7 @@ struct CEventProgram {
 	eventGroup* get_eventGroup();
 	// true: actions are being executed. False: conditions. Neither: undefined
 	bool GetRH2ActionOn();
+	void SetRH2ActionOn(bool);
 
 	CEventProgram(jobject me, Edif::Runtime* runtime);
 
@@ -560,6 +561,7 @@ protected:
 	// Can be NULL if runtime is not patched to include this;
 	// to check if NULL should be allowed, check if RunHeader has its fieldID set
 	static jfieldID rh4ActStartFieldID;
+	static jfieldID rh2ActionOnFieldID;
 
 	void SetEventGroup(jobject grp);
 

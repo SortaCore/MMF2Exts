@@ -189,8 +189,14 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
 	eventGroup* const evg = rhPtr->EventGroup;
 
+	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
+	const bool rh2ActOn = rhPtr->rh2.ActionOn;
+	if (rh2ActOn)
+		rhPtr->rh2.ActionOn = false;
+
 	CallRunTimeFunction2(hoPtr, RFUNCTION::GENERATE_EVENT, EventID, 0);
 
+	rhPtr->rh2.ActionOn = rh2ActOn;
 	rhPtr->EventGroup = evg;
 	rhPtr->rh4.ExpToken = saveExpToken;
 	rhPtr->SetRH2ActionCount(oldActionCount);
@@ -1058,10 +1064,14 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Android also swaps out the underlying array when it changes expression, so we have to restore the array too.
 	// Due to Android's JVM use of references, this is efficient as we don't have to do a full array clone.
 
+	const bool rh2ActionOn = rhPtr->get_EventProgram()->GetRH2ActionOn();
 	const int rh4CurToken = rhPtr->GetRH4CurToken();
 	jobjectArray rh4Tokens = rhPtr->GetRH4Tokens();
 	if (rh4Tokens)
 		rh4Tokens = (jobjectArray)threadEnv->NewGlobalRef(rh4Tokens);
+	// We are starting a new condition, so we're not in actions anymore
+	if (rh2ActionOn)
+		rhPtr->get_EventProgram()->SetRH2ActionOn(false);
 
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
@@ -1080,6 +1090,7 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	rhPtr->SetRH2ActionLoopCount(oldActionLoopCount);
 	rhPtr->SetRH4CurToken(rh4CurToken);
 	rhPtr->SetRH4Tokens(rh4Tokens);
+	rhPtr->get_EventProgram()->SetRH2ActionOn(rh2ActionOn);
 	if (rh4Tokens)
 		threadEnv->DeleteGlobalRef(rh4Tokens);
 	if (evg)
@@ -1690,7 +1701,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 }
 
 // Static definitions - default inited to zero
-jfieldID CEventProgram::rh4ActStartFieldID;
+jfieldID CEventProgram::rh4ActStartFieldID, CEventProgram::rh2ActionOnFieldID;
 
 eventGroup * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
@@ -1715,7 +1726,13 @@ CEventProgram::CEventProgram(jobject me, Edif::Runtime* runtime) :
 	meClass = global(threadEnv->GetObjectClass(me), "CEventProgram class");
 	JNIExceptionCheck();
 
-	// rh4ActionStart is missing in earlier Runtime versions (<= 295.10)
+	if (rh2ActionOnFieldID == NULL)
+	{
+		rh2ActionOnFieldID = threadEnv->GetFieldID(meClass, "rh2ActionOn", "Z");
+		JNIExceptionCheck();
+	}
+
+	// rh4ActionStart is missing in unpatched and earlier Runtime versions (<= 295.10)
 	if (RunHeader::eventProgramFieldID != NULL)
 	{
 		rh4ActStartFieldID = threadEnv->GetFieldID(meClass, "rh4ActionStart", "LActions/CAct;");
@@ -1855,11 +1872,15 @@ void CEventProgram::set_rh2ActionLoopCount(int newActLoopCount)
 bool CEventProgram::GetRH2ActionOn() {
 	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
-	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionOn", "Z");
-	JNIExceptionCheck();
-	bool yes = threadEnv->GetBooleanField(me, fieldID);
+	bool yes = threadEnv->GetBooleanField(me, rh2ActionOnFieldID);
 	JNIExceptionCheck();
 	return yes;
+}
+void CEventProgram::SetRH2ActionOn(bool newSet) {
+	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
+	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newSet ? 1 : 0);
+	threadEnv->SetBooleanField(me, rh2ActionOnFieldID, newSet);
+	JNIExceptionCheck();
 }
 
 eventGroup * RunHeader::get_EventGroup() {
@@ -2845,9 +2866,19 @@ void Edif::Runtime::GenerateEvent(int EventID)
 	// Fix event group being incorrect after event finishes.
 	// This being incorrect doesn't have any major effects, as the event parsing part of
 	// runtime sets rhEventGroup based on a local variable evgPtr, which it relies on instead
-	auto evg = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup;
+	auto evp = ((CRun*)ObjectSelection.rhPtr)->rhEvtProg;
+	auto evg = evp->rhEventGroup;
+
+	// Fix rh2ActionOn - affects whether object selection is modified by expressions, or used
+	const bool rh2ActOn = evp->rh2ActionOn;
+	if (rh2ActOn)
+		evp->rh2ActionOn = false;
+
 	DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, generateEvent)(this->objCExtPtr, EventID, 0);
-	((CRun*)ObjectSelection.rhPtr)->rhEvtProg->rhEventGroup = evg;
+
+	// Restore both saved
+	evp->rhEventGroup = evg;
+	evp->rh2ActionOn = rh2ActOn;
 }
 
 void Edif::Runtime::PushEvent(int EventID)
