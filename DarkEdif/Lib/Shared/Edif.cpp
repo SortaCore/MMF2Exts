@@ -896,12 +896,12 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		if (isCondition)
 		{
 			// ...or they should, all runtimes do it, but the param1/2 here strangely points to
-			// a RunObject *, so delegate OI to GetOIFromObjectParam(), which reads based on paramZero
+			// a RunObject *, so delegate OI to GetOIListIndexFromObjectParam(), which reads based on paramZero
 			if (isTwoOrLess)
-				return ext->Runtime.GetOIFromObjectParam(index);
+				return ext->Runtime.GetOIListIndexFromObjectParam(index);
 
 			if ((Params)((EventParam*)ret)->Code != Params::Object)
-				LOGE(_T("GetOIFromExtParam: Returning a OI for a non-Object parameter.\n"));
+				LOGE(_T("GetOIFromExtParam: Returning a OiList index for a non-Object parameter.\n"));
 			return ((EventParam*)ret)->evp.W[0];
 		}
 
@@ -1603,7 +1603,6 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 
 	if (Edif::SDK->ExpressionFunctions[ID] == Edif::MemberFunctionPointer(&Extension::VariableFunction))
 	{
-#pragma warning(suppress: 6001)
 		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;

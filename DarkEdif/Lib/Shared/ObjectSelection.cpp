@@ -76,10 +76,9 @@ void ObjectSelection::SelectAll(short Oi) const
 	ObjectInfo->set_NumOfSelected(ObjectInfo->get_NObjects());
 	ObjectInfo->set_ListSelected(ObjectInfo->get_Object());
 	ObjectInfo->set_EventCount(rhPtr->GetRH2EventCount());
-	ObjectInfo->set_NumOfSelected(ObjectInfo->get_NObjects());
 
 	// Set object link chain to all selected
-	for (int i = ObjectInfo->get_Object(); i >= 0;)
+	for (short i = ObjectInfo->get_Object(); i >= 0;)
 	{
 		auto Object = rhPtr->GetObjectListOblOffsetByIndex(i)->get_rHo();
 		Object->set_NextSelected(Object->get_NumNext());
@@ -97,38 +96,40 @@ void ObjectSelection::SelectNone(short oiList) const
 //Resets all objects of the given object-type
 void ObjectSelection::SelectNone(RunObject& object) const
 {
-	HeaderObject* const  ho = object.get_rHo();
+	HeaderObject* const ho = object.get_rHo();
 	objInfoList* const objInfo = ho->get_OiList();
 
+	// Store that 0 are selected, the first is invalid, and selection is for this event
 	objInfo->set_NumOfSelected(0);
 	objInfo->set_ListSelected(-1);
 	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
-//	objInfo->set_EventCountOR(rhPtr->GetRH4EventCountOR());
 
-	// This goes to first object of this type, in case passed object isn't it
+	// Go to first object instance of this type, and make sure its next selected is invalid too
+	// There must be at least one obj instance, because we're passing it
+	
 	const RunObjectMultiPlatPtr firstObj = rhPtr->GetObjectListOblOffsetByIndex(ho->get_Number());
 	HeaderObject * const firstObjHo = firstObj->get_rHo();
 	firstObjHo->set_NextSelected(-1);
-	// firstObjHo->set_SelectedInOR(true);
+	// TODO: I think this last part is necessary for qualifiers, or OR events, but confirm it
+	// possibly with a hardware breakpoint?
 }
 
 //Resets the SOL and inserts only one given object
 void ObjectSelection::SelectOneObject(RunObject& object) const
 {
-	objInfoList * const objInfo = GetOILFromOI(object.get_rHo()->get_Oi());
 	HeaderObject * const ho = object.get_rHo();
+	objInfoList * const objInfo = ho->get_OiList();
 
+	// Set only one selected, that it is this obj instance, and selection is valid for this event
 	objInfo->set_NumOfSelected(1);
-	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
-//	objInfo->set_EventCountOR(rhPtr->GetRH4EventCountOR());
 	objInfo->set_ListSelected(ho->get_Number());
-
-	// This goes to first object of this type, in case passed object isn't it
+	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
+	
+	// Set next object in selection chain to none
 	ho->set_NextSelected(-1);
-	ho->set_SelectedInOR(true);
 }
 
-//Resets the SOL and inserts the given list of objects
+// Resets the SOL and inserts the given list of objects
 void ObjectSelection::SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, std::size_t count) const
 {
 	if ((long)count <= 0)
@@ -136,36 +137,35 @@ void ObjectSelection::SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, s
 
 	objInfoList* ObjectInfo = GetOILFromOI(Oi);
 
+	// Set count of selected
 	ObjectInfo->set_NumOfSelected((int)count);
+	// Set selection list as valid for this event
 	ObjectInfo->set_EventCount(rhPtr->GetRH2EventCount());
 
+	// Set first selected instance to first passed
 	short prevNumber = objects[0]->get_rHo()->get_Number();
 	ObjectInfo->set_ListSelected(prevNumber);
 
-	for (std::size_t i = 1; i<count; ++i)
+	// For each remaining object instance, store them as next in selection list
+	for (std::size_t i = 1; i < count; ++i)
 	{
 		short currentNumber = objects[i]->get_rHo()->get_Number();
 		rhPtr->GetObjectListOblOffsetByIndex(prevNumber)->get_rHo()->set_NextSelected(currentNumber);
 		prevNumber = currentNumber;
 	}
+	// For the last selected object, set next instance to be none
 	rhPtr->GetObjectListOblOffsetByIndex(prevNumber)->get_rHo()->set_NextSelected(-1);
 }
 
 // Return the number of explicitly selected objects for the given object-type
-std::size_t ObjectSelection::GetNumberOfSelected(short Oi) const
+std::size_t ObjectSelection::GetNumberOfSelected(short oiList) const
 {
-	if (Oi == -1)
+	if (oiList == -1)
 		return 0;
-	if ((Oi & 0x8000) == 0)
-		return GetOILFromOI(Oi)->get_NumOfSelected();
 
-	const std::vector<short> oiLists = rhPtr->GetQualToOiListByOffset(Oi)->GetAllOiList();
 	std::size_t numberSelected = 0;
-	for (const short s : oiLists) {
-		const auto oiL = rhPtr->GetOIListByIndex(s);
-		if (oiL->get_EventCount() == rhPtr->GetRH2EventCount())
-			numberSelected += oiL->get_NumOfSelected();
-	}
+	for (auto oiL : DarkEdif::QualifierOIListIterator(rhPtr, oiList, DarkEdif::Selection::Explicit))
+		numberSelected += oiL->get_NumOfSelected();
 	return numberSelected;
 }
 
@@ -184,19 +184,19 @@ bool ObjectSelection::ObjectIsOfType(RunObject &object, short Oi) const
 // Returns the object-info structure from a given object-type
 objInfoList * ObjectSelection::GetOILFromOI(short Oi) const
 {
-	// TODO: is there a reason you can't just look up Oi directly? i.e. oiList[oi]
-	for (std::size_t i = 0; i < rhPtr->GetNumberOi(); ++i)
+	LOGV(_T("GetOILFromOI: moving an Oi %hi to index.\n"), Oi);
+	for (auto oil : DarkEdif::AllOIListIterator(rhPtr))
 	{
-		auto oil = rhPtr->GetOIListByIndex(i);
 		if (oil->get_Oi() == Oi)
 			return oil;
 	}
 	return nullptr;
 }
-template<class Ext, class T> bool ObjectSelection::FilterQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
+
+template<class Ext, class T> bool ObjectSelection::FilterQualifierObjects(short oiList, bool negate, T(Ext::* filterFunction))
 {
 	bool hasSelected = false;
-	for (auto oil : QualifierOIListIterator(rhPtr, Oi, Selection::All)) {
+	for (auto oil : QualifierOIListIterator(rhPtr, oiList, Selection::All)) {
 		hasSelected |= FilterNonQualifierObjects(oil->get_Oi(), negate, filterFunction);
 		if (!hasSelected)
 			return true;
@@ -204,13 +204,13 @@ template<class Ext, class T> bool ObjectSelection::FilterQualifierObjects(short 
 	return hasSelected;
 }
 
-template<class Ext, class T> bool ObjectSelection::FilterNonQualifierObjects(short Oi, bool negate, T(Ext::* filterFunction))
+template<class Ext, class T> bool ObjectSelection::FilterNonQualifierObjects(short oiList, bool negate, T(Ext::* filterFunction))
 {
-	auto&& pObjectInfo = GetOILFromOI(Oi);
+	auto&& pObjectInfo = rhPtr->GetOIListByIndex(oiList);
 	bool hasSelected = false;
 
 	if (pObjectInfo->get_EventCount() != rhPtr->GetRH2EventCount())
-		SelectAll(Oi);	//The SOL is invalid, must reset.
+		SelectAll(oiList);	//The SOL is invalid, must reset.
 
 	//If SOL is empty
 	if (pObjectInfo->get_NumOfSelected() <= 0)
@@ -255,9 +255,10 @@ template<class Ext, class T> bool ObjectSelection::FilterNonQualifierObjects(sho
 }
 
 // Iterates the object instances in qualifier OI or singular OI
-ObjectIterator::ObjectIterator(RunHeader* rhPtr, int oiList, Selection selection, bool includeDestroyed /* = false */)
+ObjectIterator::ObjectIterator(RunHeader* rhPtr, short oiList, Selection selection, bool includeDestroyed /* = false */)
 		: rhPtr(rhPtr), oiList(oiList), select(selection), includeDestroyed(includeDestroyed), curOiList(oiList)
 {
+	LOGV(_T("Object Iterator created on oilist index %hi.\n"), oiList);
 	if (curOiList != -1)
 	{
 		if ((curOiList & 0x8000) == 0)
@@ -295,32 +296,36 @@ void ObjectIterator::GetNext()
 	while (true)
 	{
 		++numNextRun;
-		short nextOi = -1;
+		short nextObjNum = -1;
 		if (curHo)
 		{
+			// if all: rely on object/numnext
+			// if implicit: rely on list/nextselected; if no entries (ecmatch false), go to object/numnext
+			// if explicit: rely on list/nextselected
+
 			const bool ecMatch2 = oil->get_EventCount() == rhPtr->GetRH2EventCount();
-			nextOi = select == Selection::All ? curHo->get_NumNext() : curHo->get_NextSelected();
+			nextObjNum = select == Selection::All ? curHo->get_NumNext() : curHo->get_NextSelected();
 
 			// If implicit selection and no condition-selection, select first OI in general
-			if ((!ecMatch2 || (nextOi & 0xF000) != 0) && select == Selection::Implicit)
-				nextOi = curHo->get_NumNext();
+			if ((!ecMatch2 || (nextObjNum & 0x8000) != 0) && select == Selection::Implicit)
+				nextObjNum = curHo->get_NumNext();
 		}
 		// Invalid Oi; jump to next object
-		if ((nextOi & 0xF000) != 0)
+		if ((nextObjNum & 0x8000) != 0)
 		{
 			if (qualOiList.size() > qualOiListAt) {
 				curOiList = qualOiList[qualOiListAt++];
 				oil = rhPtr->GetOIListByIndex(curOiList);
 
 				const bool ecMatch = oil->get_EventCount() == rhPtr->GetRH2EventCount();
-				nextOi = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
+				nextObjNum = select == Selection::All ? oil->get_Object() : oil->get_ListSelected();
 
 				// If implicit selection and no condition-selection, select first OI in general
-				if ((!ecMatch || (nextOi & 0xF000) != 0) && select == Selection::Implicit)
-					nextOi = oil->get_Object();
+				if ((!ecMatch || (nextObjNum & 0x8000) != 0) && select == Selection::Implicit)
+					nextObjNum = oil->get_Object();
 
 				// Skip to next frame: it'll either fall through to end of list, or grab next in qualifier
-				if ((nextOi & 0xF000) != 0)
+				if ((nextObjNum & 0x8000) != 0)
 					continue;
 			}
 			// hit end of list
@@ -334,13 +339,13 @@ void ObjectIterator::GetNext()
 				return;
 			}
 		}
-		curRo = rhPtr->GetObjectListOblOffsetByIndex(nextOi);
+		curRo = rhPtr->GetObjectListOblOffsetByIndex(nextObjNum);
 		curHo = curRo ? curRo->get_rHo() : nullptr;
 		if (curRo && (includeDestroyed || (curHo->get_Flags() & HeaderObjectFlags::Destroyed) == HeaderObjectFlags::None))
 			return; // we got a valid one
 	}
 }
-ObjectIterator::ObjectIterator(RunHeader* rhPtr, int oiList, Selection select, bool destroy, bool) :
+ObjectIterator::ObjectIterator(RunHeader* rhPtr, short oiList, Selection select, bool destroy, bool) :
 	rhPtr(rhPtr), oiList(oiList), select(select), includeDestroyed(destroy), numNextRun(SIZE_MAX)
 {
 	// curOiList and oil already inited to empty, numNextRun is set to end already
@@ -352,19 +357,22 @@ ObjectIterator ObjectIterator::end() const {
 	return ObjectIterator(rhPtr, oiList, select, includeDestroyed, false);
 }
 
-QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select)
+QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, short oiList, Selection select)
 	: rhPtr(rhPtr), oiList(oiList), select(select), curOiList(oiList)
 {
+	LOGV(_T("QualifierOIListIterator created on oilist index %hi.\n"), oiList);
 	if (curOiList == -1)
 		return;
-	// Not a qualiier OI, make an iterator that only returns it
-	if ((curOiList & 0xF000) == 0)
+	// Not a qualifier OI, make an iterator that only returns it
+	if ((curOiList & 0x8000) == 0)
 		qualOiList.push_back(curOiList);
 	else
 	{
 		auto qToOiList = rhPtr->GetQualToOiListByOffset(curOiList);
 		if (qToOiList)
 			qualOiList = qToOiList->GetAllOiList();
+
+		LOGI(_T("QualifierOIListIterator created on oilist index %hi.\n"), oiList);
 	}
 
 	GetNext();
@@ -397,7 +405,7 @@ void QualifierOIListIterator::GetNext()
 		// If implicit selection and no condition-selection, select first OI in general
 		if ((!ecMatch || firstOi == -1) && select == Selection::Implicit)
 			firstOi = oil->get_Object();
-		if ((firstOi & 0xF000) == 0)
+		if ((firstOi & 0x8000) == 0)
 			return; // invalid flag were not set, so this OiList has some valid instances; else continue loop and find next oilist
 	}
 
@@ -405,7 +413,7 @@ void QualifierOIListIterator::GetNext()
 	oil = nullptr;
 	curOiList = -1;
 }
-QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select, bool) :
+QualifierOIListIterator::QualifierOIListIterator(RunHeader* rhPtr, short oiList, Selection select, bool) :
 	rhPtr(rhPtr), oiList(oiList), select(select) {} // curOiList and oil already inited to empty
 QualifierOIListIterator QualifierOIListIterator::begin() const { return QualifierOIListIterator(rhPtr, oiList, select); }
 QualifierOIListIterator QualifierOIListIterator::end() const { return QualifierOIListIterator(rhPtr, oiList, select, false); }

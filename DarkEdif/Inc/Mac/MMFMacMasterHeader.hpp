@@ -228,6 +228,7 @@ namespace FusionInternals
 		// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
 		int GetRH4EventCountOR();
 		objInfoList* GetOIListByIndex(std::size_t index);
+		short GetOIListIndexFromOi(const short oi);
 		std::size_t GetNumberOi();
 		std::size_t get_MaxObjects();
 		std::size_t get_NObjects();

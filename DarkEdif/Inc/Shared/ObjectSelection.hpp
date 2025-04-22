@@ -38,18 +38,21 @@ namespace DarkEdif {
 		void SelectNone(RunObject& object) const;
 		void SelectOneObject(RunObject& object) const;
 		void SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, std::size_t count) const;
-		// Checks if the passed object is part of qualifier or singular Oi
-		bool ObjectIsOfType(RunObject& object, short qoil) const;
-		// Gets number of explicitly selected for qualifier or singular Oi
-		std::size_t GetNumberOfSelected(short Oi) const;
+		// Checks if the passed object is part of qualifier or singular OI 
+		bool ObjectIsOfType(RunObject& object, short oi) const;
+		// Gets number of explicitly selected for qualifier or singular oiList index
+		std::size_t GetNumberOfSelected(short oiList) const;
 
+		// Runs a function on the objects, returning true if all match, allowing the function to negate
+		// Does not work cross-platform
 		template<class Ext, class T>
-		bool FilterObjects(short Oi, bool negate, T (Ext::*filterFunction))
+		[[deprecated("Not portable, removed in DarkEdif")]]
+		bool FilterObjects(short oiList, bool negate, T (Ext::*filterFunction))
 		{
-			if (Oi & 0x8000)
-				return FilterQualifierObjects(Oi & 0x7FFF, negate, filterFunction) ^ negate;
+			if (oiList & 0x8000)
+				return FilterQualifierObjects(oiList & 0x7FFF, negate, filterFunction) ^ negate;
 			else
-				return FilterNonQualifierObjects(Oi, negate, filterFunction) ^ negate;
+				return FilterNonQualifierObjects(oiList, negate, filterFunction) ^ negate;
 		}
 
 		objInfoList* GetOILFromOI(short Oi) const;
@@ -156,10 +159,10 @@ namespace DarkEdif {
 		std::size_t numNextRun = 0;
 
 		void GetNext();
-		explicit ObjectIterator(RunHeader* rhPtr, int oiList, Selection select, bool destroy, bool);
+		explicit ObjectIterator(RunHeader* rhPtr, short oiList, Selection select, bool destroy, bool);
 	public:
 		// Iterator for all the object instances in qualifier OI or singular OI
-		explicit ObjectIterator(RunHeader* rhPtr, int oiList, Selection selection, bool includeDestroyed = false);
+		explicit ObjectIterator(RunHeader* rhPtr, short oiList, Selection selection, bool includeDestroyed = false);
 		ObjectIterator& operator++();
 		// x++, instead of ++x
 		ObjectIterator operator++(int);
@@ -191,10 +194,10 @@ namespace DarkEdif {
 		std::size_t qualOiListAt = 0;
 
 		void GetNext();
-		QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select, bool);
+		QualifierOIListIterator(RunHeader* rhPtr, short oiList, Selection select, bool);
 	public:
 		// Iterator for all the OI List in a qualifier OI; it is valid to pass a singular OI or -1
-		explicit QualifierOIListIterator(RunHeader* rhPtr, int oiList, Selection select);
+		explicit QualifierOIListIterator(RunHeader* rhPtr, short oiList, Selection select);
 		QualifierOIListIterator& operator++();
 		// x++, instead of ++x
 		QualifierOIListIterator operator++(int);

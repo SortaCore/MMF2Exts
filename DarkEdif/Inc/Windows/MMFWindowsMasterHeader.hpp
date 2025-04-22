@@ -1758,6 +1758,9 @@ struct RunHeader {
 	CRunApp* get_App();
 
 	objInfoList* GetOIListByIndex(std::size_t index);
+	// Converts a OI number to a OIList index, suitable for GetOIListByIndex()
+	short GetOIListIndexFromOi(const short oi);
+	// Gets a qualifier OIList by its offset
 	qualToOi* GetQualToOiListByOffset(std::size_t byteOffset);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
@@ -2052,8 +2055,9 @@ public:
 	// Next Number for this object, including unselected instances. If negative/0x8000 bit is set, is not a real Number.
 	short get_NumNext();
 
-	// The 0+ index of this object info in rhPtr->OIList; use with rhPtr->GetOIListByIndex(), or just read get_OiList()
+	// A unique number in rhPtr->OIList; NOT the index. You can read get_OiList()
 	// @remarks OI aka object information in OIList is static information shared among all instances of an object
+	//			The OI is unique per object, but this is not the OIList index.
 	short get_Oi();
 
 	// Reads the OIList entry for this object; Obj Info is static information shared among all instances of an object
@@ -2533,7 +2537,7 @@ enum_class_is_a_bitmask(OILFlags);
 struct objInfoList {
 	NO_DEFAULT_CTORS_OR_DTORS(objInfoList);
 DarkEdifInternalAccessProtected:
-	// Unique ObjectInfo number, in rhPtr->OIList
+	// Unique ObjectInfo number, in rhPtr->OIList. Does not relate to OIList index.
 	short Oi;
 
 	// First selected object instance's HeaderObject::Number, or -1 for no selection
@@ -2631,10 +2635,11 @@ public:
 	//			This is a helper value, and won't prevent ListSelected-NextSelected chain going beyond this count.
 	int get_NumOfSelected();
 
-	// The unique number of this object; the OiList index. Same among instances.
+	// The unique number of this object; same among instances. NOT the OiList index.
 	// @remarks Used to indicate difference between e.g. Active 1 and Active 2. Does not follow any pattern.
 	//			OIs can be negative when indicating a qualifer ID (has 0x8000 flag), but this
 	//			should not apply for OIL::Oi here, as OIL is one object only.
+	//			While it often matches OiList index, it differs, particularly in later Fusion frames.
 	short get_Oi();
 
 	// The count of all object instances of this type, selected or not.
@@ -2763,9 +2768,9 @@ DarkEdifInternalAccessProtected:
 public:
 	short get_Oi(std::size_t idx);
 	short get_OiList(std::size_t idx);
-	// Returns all OiList from internal array, used for looping through a qualifier's object IDs
+	// Returns all Oi from internal array
 	std::vector<short> GetAllOi();
-	// Returns all OiList from internal array, used for looping through a qualifier's objInfoList
+	// Returns all OiList index from internal array, used for looping through a qualifier's objInfoList
 	std::vector<short> GetAllOiList();
 private:
 	std::vector<short> HalfVector(std::size_t first);

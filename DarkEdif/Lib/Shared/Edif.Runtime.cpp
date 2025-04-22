@@ -35,9 +35,51 @@ void objInfoList::SelectAll(RunHeader* rhPtr, bool explicitAll /* = false */) {
 	set_EventCount(rhPtr->GetRH2EventCount());
 	if (get_NObjects() == 0)
 		return;
-	const short ourOiList = rhPtr->GetObjectListOblOffsetByIndex(get_Object())->get_rHo()->get_Number();
+
+	// Get the oilist index for looping
+	const short ourOiList = rhPtr->GetOIListIndexFromOi(get_Oi());
+
+	// From there we can loop instances and re-select them
 	for (auto ho : DarkEdif::ObjectIterator(rhPtr, ourOiList, DarkEdif::Selection::All, false))
 		ho->get_rHo()->set_NextSelected(ho->get_rHo()->get_NumNext());
+}
+
+short RunHeader::GetOIListIndexFromOi(const short oi)
+{
+	if (oi == -1)
+		LOGF(_T("OI -1 should not have been passed to GetOIListByOi()."));
+
+	// Qualifier OI not expected
+	if ((oi & 0x8000) != 0)
+		LOGF(_T("OI %hi is a qualifier or invalid OI; it should not have been passed to GetOIListByOi()."), oi);
+
+	// The OIList is a sparse array, but consistently increasing, as I understand it.
+	// TODO: If this is not the case, the last > j, and j > oi checks need removing,
+	// so that looping the entire iterator is permitted.
+	// Also consider HeaderObject::get_OiList().
+	short i = 0, j, last = -1;
+	for (auto oiList : DarkEdif::AllOIListIterator(this))
+	{
+		j = oiList->get_Oi();
+
+		if (j == oi)
+			return i;
+
+		// TODO: Until I know SOL is always consistently increasing, this is LOGF to abort the app
+		if (last > j)
+			LOGF(_T("Is SOL non-increasing? %hi > %hi. Contact DarkEdif developers.\n"), last, j);
+		last = j;
+
+		// Went past 
+		if (j > oi)
+			LOGE(_T("Exceeded expected oi %hi with %hi.\n"), oi, j);
+		++i;
+	}
+
+	// You're either looking up what is already a OIList index, as a OI,
+	// or you're reading something else entirely. Either way, this is a ext dev issue.
+	LOGF(_T("Could not find expected oi %hi.\n"), oi);
+	return INT16_MIN;
 }
 
 std::vector<short> qualToOi::HalfVector(std::size_t first)
@@ -535,14 +577,14 @@ int HeaderObject::GetFixedValue() {
 }
 
 #if defined(_WIN32)
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	const EventParam* curParam = ParamZero;
 	for (std::size_t i = 0; i < paramIndex; ++i)
 		curParam = (const EventParam*)((const std::uint8_t*)curParam + curParam->size);
 	if ((Params)curParam->Code != Params::Object)
-		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter.\n"));
-	LOGV(_T("GetOIFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OiList index for a non-Object parameter.\n"));
+	LOGI(_T("GetOIListIndexFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.W[0], curParam->evp.W[1]);
 	return curParam->evp.W[0];
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
@@ -589,6 +631,12 @@ objectsList* RunHeader::get_ObjectList() {
 }
 objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 {
+	if ((std::size_t)NumberOi <= index)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
+		return nullptr;
+	}
+
 	assert(DarkEdif::ObjectSelection::oiListItemSize != 0 || index == 0); // first time is index 0
 	assert((std::size_t)NumberOi > index); // invalid OI
 
@@ -1340,7 +1388,7 @@ const char* getClassName(jclass myCls, bool fullpath)
 	return res.c_str();
 }
 
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (*(long *)&paramIndex < 0)
@@ -1356,7 +1404,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 	jint pParamCode = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "code", "S"));
 	JNIExceptionCheck();
 	if ((Params)pParamCode != Params::Object)
-		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter.\n"));
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter.\n"));
 #endif
 	// Read the equivalent of evp.W[0]
 	jshort oiList = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oiList", "S"));
@@ -1364,7 +1412,7 @@ short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
 #if defined(_DEBUG) && (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
 	jshort oi = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oi", "S"));
 	JNIExceptionCheck();
-	LOGD(_T("GetOIFromObjectParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
+	LOGD(_T("GetOIListIndexFromObjectParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
 		oiList, oiList, (short)(oiList & 0x7FFF), (short)(oiList & 0x7FFF), oi, oi, (short)(oi & 0x7FFF), (short)(oi & 0x7FFF));
 #endif
 	return oiList;
@@ -1473,7 +1521,10 @@ objInfoList * RunHeader::GetOIListByIndex(std::size_t index)
 	if (OiList.invalid())
 		GetOiList(); // ignore return
 	if (index >= OiListLength)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
 		return nullptr;
+	}
 
 	if ((long)index < 0)
 		raise(SIGINT);
@@ -2262,11 +2313,12 @@ AltVals* RunObject::get_rov() {
 }
 
 objectsList::objectsList(jobjectArray me, Edif::Runtime* runtime) :
-	me(me, "objectList ctor from rhPtr"), runtime(runtime)
+	me(me, "objectList ctor from rhPtr"),
+	meClass(threadEnv->GetObjectClass(this->me), "objectList array inside rhPtr's class"),
+	runtime(runtime)
 {
-	meClass = global(threadEnv->GetObjectClass(me), "objectList array inside rhPtr's class");
 	JNIExceptionCheck();
-	length = threadEnv->GetArrayLength(me);
+	length = threadEnv->GetArrayLength(this->me);
 	JNIExceptionCheck();
 }
 
@@ -2283,6 +2335,11 @@ RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
 	// The CObject is a CRunExtension as well, so we'll just return it directly.
 	jobject rhObjEntry = threadEnv->GetObjectArrayElement(me, index);
 	JNIExceptionCheck();
+	if (rhObjEntry == nullptr)
+	{
+		LOGE(_T("Looked up object by hoNumber %zu, result was null.\n"), index);
+		return nullptr;
+	}
 	jclass rhObjEntryClass = threadEnv->GetObjectClass(rhObjEntry);
 	JNIExceptionCheck();
 	auto ro = std::make_shared<RunObject>(rhObjEntry, rhObjEntryClass, runtime);
@@ -2944,15 +3001,15 @@ void * Edif::Runtime::ReadGlobal(const TCHAR * name)
 	return NULL;
 }
 
-short Edif::Runtime::GetOIFromObjectParam(std::size_t paramIndex)
+short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	// This still works for conditions, as they store params in same offset.
 	const eventParam* curParam = ((CActExtension*)curCEvent)->pParams[0];
 	for (int i = 0; i < paramIndex; ++i)
 		curParam = (const eventParam*)((const std::uint8_t*)curParam + curParam->evpSize);
 	if ((Params)curParam->evpCode != Params::Object)
-		LOGE(_T("GetOIFromObjectParam: Returning a OI for a non-Object parameter."));
-	LOGD(_T("GetOIFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
+		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter."));
+	LOGD(_T("GetOIListIndexFromObjectParam: Returning OiList %hi, oi is %hi.\n"), curParam->evp.evpW.evpW0, curParam->evp.evpW.evpW1);
 	return curParam->evp.evpW.evpW0;
 }
 int Edif::Runtime::GetCurrentFusionFrameNumber()
@@ -2986,6 +3043,12 @@ objectsList* RunHeader::get_ObjectList() {
 
 objInfoList* RunHeader::GetOIListByIndex(std::size_t index)
 {
+	if (index >= ((CRun*)this)->rhMaxOI)
+	{
+		LOGE(_T("RunHeader::GetOIListByIndex() was passed invalid OIList index %zu, are you passing a OI instead?\n"), index);
+		return nullptr;
+	}
+
 #if _DEBUG
 	int maxOi = ((CRun*)this)->rhMaxOI;
 	assert(maxOi > index || (long)index < 0); // invalid OI

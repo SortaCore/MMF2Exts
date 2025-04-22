@@ -213,9 +213,9 @@ namespace Edif
 		RunObjectMultiPlatPtr RunObjPtrFromFixed(int fixedValue);
 		int FixedFromRunObjPtr(RunObjectMultiPlatPtr object);
 
-		// For Object action parameters. Returns the object/qualifier OI used in the events; only necessary if you are looping the instances yourself.
-		// @remarks This works for conditions too, but it should be unnecessary, as they're passed this OI directly.
-		short GetOIFromObjectParam(std::size_t paramIndex);
+		// For Object action parameters. Returns the object/qualifier OIList index used in the events; only necessary if you are looping the instances yourself.
+		// @remarks This works for conditions too, but it should be unnecessary, as they're passed this OIList index directly.
+		short GetOIListIndexFromObjectParam(std::size_t paramIndex);
 
 		// For Object action parameters. Cancels other selected instances of the OI being looped through by Fusion runtime.
 		// Only necessary if you are looping the instances yourself, or doing a singleton pattern.

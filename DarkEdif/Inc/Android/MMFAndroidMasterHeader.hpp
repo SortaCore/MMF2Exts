@@ -640,6 +640,7 @@ struct RunHeader {
 	std::size_t get_NObjects();
 
 	objInfoList * GetOIListByIndex(std::size_t index);
+	short GetOIListIndexFromOi(const short oi);
 	qualToOi * GetQualToOiListByOffset(std::size_t index);
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
