@@ -371,6 +371,7 @@ namespace DarkEdif {
 		BOOL DLL_GetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID);
 		void DLL_SetPropCheck(mv* mV, EDITDATA* edPtr, unsigned int PropID, BOOL checked);
 		BOOL DLL_IsPropEnabled(mv* mV, EDITDATA* edPtr, unsigned int PropID);
+		BOOL DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID);
 
 		HGLOBAL DLL_UpdateEditStructure(mv* mV, EDITDATA* OldEdPtr);
 #endif
@@ -400,10 +401,20 @@ namespace DarkEdif {
 		std::tstring GetPropertyStr(std::string_view propName) const;
 		// Returns std::tstring property string from property ID.
 		std::tstring GetPropertyStr(int propID) const;
-		// Returns a float property setting from property name.
+		// Returns a float/int property setting from property name.
 		float GetPropertyNum(std::string_view propName) const;
-		// Returns float property setting from a property ID.
+		// Returns float/int property setting from a property ID.
 		float GetPropertyNum(int propID) const;
+		// Returns Fusion image bank ID from a image list property ID,
+		// suitable for DarkEdif::Surface::CreateFromImageBankID()
+		std::uint16_t GetPropertyImageID(int propID, std::size_t index) const;
+		// Returns Fusion image bank ID from a image list property name,
+		// suitable for DarkEdif::Surface::CreateFromImageBankID()
+		std::uint16_t GetPropertyImageID(std::string_view propName, std::size_t index) const;
+		// Returns number of images in a image list property by property ID
+		std::uint16_t GetPropertyNumImages(int propID, std::size_t index) const;
+		// Returns number of images in a image list property by property name
+		std::uint16_t GetPropertyNumImages(std::string_view propName, std::size_t index) const;
 
 #if EditorBuild
 		// =====

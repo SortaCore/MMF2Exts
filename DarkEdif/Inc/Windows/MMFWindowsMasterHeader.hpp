@@ -90,7 +90,7 @@ typedef CRunApp CRunAppMultiPlat;
 typedef CRunFrame CRunFrameMultiPlat;
 
 // Callback function identifiers for CallFunction
-enum class CallFunctionIDs {
+enum class CallFunctionIDs : int {
 	// Editor only
 	INSERTPROPS = 1,		// Insert properties into Property window
 	REMOVEPROP,				// Remove property
@@ -3973,9 +3973,79 @@ enum class MMF_BUILD {
 	#define MFA_CURRENTBUILD		MFA_BUILD_FIXQUALIF
 #endif
 
-struct EditSurfaceParams;
-struct EditImageParams;
-struct EditAnimationParams;
+
+// Options for EditSurfaceParams, EditImageParams, EditAnimationParams
+enum class PictureEditOptions : std::uint32_t {
+	None				= 0x00,
+	// User cannot change the image size
+	FixedImageSize		= 0x01,
+	// User can edit the hot spot
+	EditableHotSpot		= 0x02,
+	// User can edit the action point
+	EditableActionPoint = 0x04,
+	// 16 colors image, Windows palette
+	SixteenColors		= 0x08,
+	// User cannot add / remove frames
+	FixedNumOfImages	= 0x10,
+	// No transparent color
+	NoTransparentColor	= 0x20,
+	// No alpha channel
+	NoAlphaChannel		= 0x40,
+	// The animation can be empty (only transparent images)
+	// If this option is not specified, Fusion refuses to close the picture editor
+	// if the animation is empty.
+	CanBeEmpty			= 0x80
+};
+enum_class_is_a_bitmask(PictureEditOptions);
+
+// Structures for picture editor
+template<typename T>
+struct EditSurfaceParams {
+	std::uint32_t		size;				// sizeof(EditSurfaceParams)
+	T *					windowTitle;		// Picture Editor title (NULL = default title)
+	cSurface *			surface;			// Surface to edit
+	PictureEditOptions	options;			// Options
+	std::uint32_t		defaultImageWidth;	// Default width or fixed width (if PictureEditOptions::FixedImageSize is used)
+	std::uint32_t		defaultImageHeight;	// Default height or fixed height (if PictureEditOptions::FixedImageSize is used)
+	POINT				hotSpotCoords;		// Hot spot coordinates
+	POINT				actionPointCoords;	// Action point coordinates
+};
+using EditSurfaceParamsW = EditSurfaceParams<wchar_t>;
+using EditSurfaceParamsA = EditSurfaceParams<char>;
+// typedef EditSurfaceParams* LPEDITSURFACEPARAMS;
+
+template<typename T>
+struct EditImageParams {
+	std::uint32_t		size;				// sizeof(EditImageParams)
+	const T *			windowTitle;		// Picture editor title (NULL = default title)
+	std::uint16_t		imageID;			// Image to edit
+	std::uint16_t		pad;				// Padding because strange Fusion
+	PictureEditOptions	options;			// Edit options
+	std::uint32_t		defaultImageWidth;	// Default width or fixed width (if PictureEditOptions::FixedImageSize is used)
+	std::uint32_t		defaultImageHeight;	// Default height or fixed height (if PictureEditOptions::FixedImageSize is used)
+};
+using EditImageParamsW = EditImageParams<wchar_t>;
+using EditImageParamsA = EditImageParams<char>;
+// typedef EditImageParams* LPEDITIMAGEPARAMS;
+
+// Structure for image list editor
+template<typename T>
+struct EditAnimationParams {
+	std::uint32_t		size;				// sizeof(EditAnimationParams)
+	const T *			windowTitle;		// Picture Editor title (NULL = default title)
+	std::uint32_t		numImages;			// Number of images in the list
+	std::uint32_t		maxNumImages;		// Maximum number of images in the list
+	std::uint32_t		startIndexToEdit;	// Index of first image to edit in the editor
+	std::uint16_t *		imageIDs;			// Image IDs
+	T **				imageTitles;		// Image titles (can be NULL; otherwise first in list of titles, ending with a NULL)
+	PictureEditOptions	options;			// Options, see PictEdDefs.h
+	std::uint32_t		defaultImageWidth;	// Default width or fixed width (if PictureEditOptions::FixedImageSize is used)
+	std::uint32_t		defaultImageHeight;	// Default height or fixed height (if PictureEditOptions::FixedImageSize is used)
+};
+using EditAnimationParamsW = EditAnimationParams<wchar_t>;
+using EditAnimationParamsA = EditAnimationParams<char>;
+// typedef EditAnimationParams* LPEDITANIMATIONPARAMS;
+
 
 // Global variables structure
 struct mv {
@@ -4036,9 +4106,9 @@ struct mv {
 	BOOL (CALLBACK * GetDefaultFontA) (LOGFONTA * plf, char * pStyle, int cbSize);
 
 	// Editor: Edit images and animations
-	BOOL (CALLBACK * EditSurfaceA) (void * edPtr, EditImageParams * pParams, HWND hParent);
-	BOOL (CALLBACK * EditImageA) (void * edPtr, EditImageParams * pParams, HWND hParent);
-	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParams * pParams, HWND hParent);
+	BOOL (CALLBACK * EditSurfaceA) (void * edPtr, EditSurfaceParamsA* pParams, HWND hParent);
+	BOOL (CALLBACK * EditImageA) (void * edPtr, EditImageParamsA * pParams, HWND hParent);
+	BOOL (CALLBACK * EditAnimationA) (void * edPtr, EditAnimationParamsA * pParams, HWND hParent);
 
 	// Runtime: Extension User data
 	// @remarks Introduced in MMF1.5, missing in MMF1.2 and below. Runtime only.
@@ -4079,9 +4149,9 @@ struct mv {
 	BOOL (CALLBACK * GetDefaultFontW) (LOGFONTW * plf, wchar_t * pStyle, int cbSize);
 
 	// Editor: Edit images and animations (UNICODE)
-	BOOL (CALLBACK * EditSurfaceW) (EDITDATA * edPtr, EditImageParams * Params, HWND Parent);
-	BOOL (CALLBACK * EditImageW) (EDITDATA * edPtr, EditImageParams * Params, HWND Parent);
-	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParams * Params, HWND Parent);
+	BOOL (CALLBACK * EditSurfaceW) (EDITDATA * edPtr, EditSurfaceParamsW * Params, HWND Parent);
+	BOOL (CALLBACK * EditImageW) (EDITDATA * edPtr, EditImageParamsW * Params, HWND Parent);
+	BOOL (CALLBACK * EditAnimationW) (EDITDATA * edPtr, EditAnimationParamsW * Params, HWND Parent);
 
 	// Runtime: Binary files (UNICODE)
 	BOOL (CALLBACK * GetFileW)(const wchar_t * pPath, wchar_t * pFilePath, unsigned int dwFlags);
@@ -4101,31 +4171,31 @@ struct mv {
 //typedef mv *LPMV;
 
 #ifdef _UNICODE
-	#define mvHelp	mvHelpW
-	#define mvGetDefaultFont	mvGetDefaultFontW
-	#define mvEditSurface	mvEditSurfaceW
-	#define mvEditImage	mvEditImageW
-	#define mvEditAnimation	mvEditAnimationW
-	#define mvGetFile	mvGetFileW
-	#define mvReleaseFile	mvReleaseFileW
-	#define mvLoadNetFile	mvLoadNetFileW
-	#define mvNetCommand	mvNetCommandW
-	#define	mvGetFile		mvGetFileW
-	#define	mvReleaseFile	mvReleaseFileW
-	#define mvOpenHFile		mvOpenHFileW
+	#define mvHelp				HelpW
+	#define mvGetDefaultFont	GetDefaultFontW
+	#define mvEditSurface		EditSurfaceW
+	#define mvEditImage			EditImageW
+	#define mvEditAnimation		EditAnimationW
+	#define mvGetFile			GetFileW
+	#define mvReleaseFile		ReleaseFileW
+	#define mvLoadNetFile		LoadNetFileW
+	#define mvNetCommand		NetCommandW
+	#define	mvGetFile			GetFileW
+	#define	mvReleaseFile		ReleaseFileW
+	#define mvOpenHFile			OpenHFileW
 #else
-	#define mvHelp	mvHelpA
-	#define mvGetDefaultFont	mvGetDefaultFontA
-	#define mvEditSurface	mvEditSurfaceA
-	#define mvEditImage	mvEditImageA
-	#define mvEditAnimation	mvEditAnimationA
-	#define mvGetFile	mvGetFileA
-	#define mvReleaseFile	mvReleaseFileA
-	#define mvLoadNetFile	mvLoadNetFileA
-	#define mvNetCommand	mvNetCommandA
-	#define	mvGetFile		mvGetFileA
-	#define	mvReleaseFile	mvReleaseFileA
-	#define mvOpenHFile		mvOpenHFileA
+	#define mvHelp				HelpA
+	#define mvGetDefaultFont	GetDefaultFontA
+	#define mvEditSurface		EditSurfaceA
+	#define mvEditImage			EditImageA
+	#define mvEditAnimation		EditAnimationA
+	#define mvGetFile			GetFileA
+	#define mvReleaseFile		ReleaseFileA
+	#define mvLoadNetFile		LoadNetFileA
+	#define mvNetCommand		NetCommandA
+	#define	mvGetFile			GetFileA
+	#define	mvReleaseFile		ReleaseFileA
+	#define mvOpenHFile			OpenHFileA
 #endif
 
 // 3rd parameter of CREATEIMAGEFROMFILE

@@ -151,22 +151,12 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 	DarkEdif::DLL::DLL_SetPropCheck(mV, edPtr, PropID, checked);
 }
 
-// Called by Fusion when the user clicks the button of a Button or EditButton property.
-/*BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
+// Called by Fusion when the user clicks the button of a Button, Image List or Font property.
+BOOL FusionAPI EditProp(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 {
 #pragma DllExportHint
-	// Example
-	// -------
-/*
-	if (nPropID==PROPID_EDITCONTENT)
-	{
-		if ( EditObject(mV, NULL, NULL, edPtr) )
-			return TRUE;
-	}
-*\/
-
-	return FALSE;
-}*/
+	return DarkEdif::DLL::DLL_EditProp(mV, edPtr, PropID);
+}
 
 // Called by Fusion to request the enabled state of a property.
 BOOL FusionAPI IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int PropID)

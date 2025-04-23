@@ -13,8 +13,10 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
-- DarkEdif: Fix rh2ActionOn being true during some scenarios that events are generated in, causing object selection to be modified or unmodified unexpectedly
-- DarkEdif: Renamed `Edif::Runtime::GetOIFromObjectParam()` to `GetOIListIndexFromObjectParam()`, added `RunHeader::GetOIListIndexFromOi()`.
+- All platforms: Added image list property support
+- iOS/Mac: Fixed iOS/Mac conflict caused by ConditionOrActionManager + ExpressionManager.
+- All platforms: Fix rh2ActionOn being true during some scenarios that events are generated in, causing object selection to be modified or unmodified unexpectedly
+- All platforms: Renamed `Edif::Runtime::GetOIFromObjectParam()` to `GetOIListIndexFromObjectParam()`, added `RunHeader::GetOIListIndexFromOi()`.
 - PrepareDarkEdif: Now v1.0.0.4; focuses project name, and adds controls for target MFX differing to project name.
 - PostBuildTool: Now v1.0.0.9; allows target MFX name to differ to project name, and checks for mismatched wrapper on Android + iOS
 - PreBuildTool: Now v1.0.0.9; allows target MFX name to differ to project name, and checks for mismatched wrapper on Mac

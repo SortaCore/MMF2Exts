@@ -329,6 +329,15 @@ struct DarkEdif::Properties::Data
 	}
 };
 #pragma pack(pop)
+
+// Backing struct for an image list property. Varying size.
+struct ImgListProperty {
+	// Number of images stored in this image list
+	std::uint16_t numImages;
+	// Fusion image bank IDs
+	std::uint16_t imageIDs[];
+};
+
 #if EditorBuild
 
 // Hash function; we can't use std::hash as it returns size_t, which varies in size per platform
@@ -461,7 +470,7 @@ DarkEdif::DLL::PropAccesser & Elevate(const DarkEdif::Properties &p)
 struct DarkEdif::DLL::PropAccesser
 {
 	NO_DEFAULT_CTORS_OR_DTORS(PropAccesser);
-	// Type of DarKEdif::Properties
+	// Type of DarkEdif::Properties
 	decltype(Properties::propVersion) propVersion;
 
 	// Used to read JSON properties to see if a change has been made.
@@ -475,7 +484,7 @@ struct DarkEdif::DLL::PropAccesser
 	decltype(Properties::sizeBytes) sizeBytes;
 	// The actual data for properties, merged together
 	// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype*/;
+	decltype(DarkEdif::Properties::dataForProps) dataForProps; /* [], inherited from decltype */;
 
 	// Note: There is a single bit for each checkbox.
 	// Use numProps / 8 for num of bytes used by checkboxes.
@@ -966,6 +975,78 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 	// using an conditional expression kept in the JSON file.
 	return TRUE;
 }
+
+// Enumerates images and fonts used by this object
+int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPROC undoProc, LPARAM p1, LPARAM p2)
+{
+#pragma DllExportHint
+	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
+	// Yves informed that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
+	// GetTextFont(), do not need the font in the font property tab enumed here,
+	// they are automatically grabbed during build.
+	// 
+	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
+	//						Only TTF fonts are supported by D3D11.
+	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
+	//						It's manual: you embed the font yourself in Data Elements,
+	//						then extract it at runtime, then pass the extracted path to its action.
+	//						This supports all fonts.
+	// Android apps:		Requires the Android Font Embed object to embed fonts.
+	// iOS + Mac apps:		You have to manually add the font into your xcodeproj's Resources,
+	//						and then add them to the plist as UIAppFonts. Don't just put them in
+	//						the Resources directory, you must link them.
+	//						You may also need to add the font to Build Phases.
+	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
+
+	// Note that enumProc may change the image or font number passed to it.
+	int error = 0;
+	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
+
+	const auto& realProps = Elevate(edPtr->Props);
+
+	const DarkEdif::Properties::Data* d = realProps.Internal_FirstData();
+	for (std::size_t i = 0, j = realProps.numProps; i < j; ++i)
+	{
+		if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_FONT)
+		{
+			LOGV(_T("Adding font of property %s from font bank ID %hu.\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue());
+			if ((error = enumProc((std::uint16_t*)d->ReadPropValue(), FONT_TAB, p1, p2)) != 0)
+			{
+				MsgBox::Error(_T("EnumElts"), _T("Adding font property %hs, font ID %hu failed! Error %d.\n"),
+					UTF8ToTString(d->ReadPropName()).c_str(), *(std::uint16_t*)d->ReadPropValue(), error);
+				goto postLoop;
+			}
+			IdAndType.emplace_back(std::make_pair((std::uint16_t*)d->ReadPropValue(), FONT_TAB));
+		}
+		else if (d->propTypeID == Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+		{
+			ImgListProperty* imgProp = (ImgListProperty*)d->ReadPropValue();
+			LOGV(_T("Adding images of property %s, num IDs %hu...\n"),
+				UTF8ToTString(d->ReadPropName()).c_str(), imgProp->numImages);
+			for (std::size_t k = 0; k < imgProp->numImages; ++k)
+			{
+				if ((error = enumProc(&imgProp->imageIDs[k], IMG_TAB, p1, p2)) != 0)
+				{
+					MsgBox::Error(_T("EnumElts"), _T("Adding image of property %s, ID %hu failed! Error %d.\n"),
+						UTF8ToTString(d->ReadPropName()).c_str(), imgProp->imageIDs[k], error);
+					goto postLoop;
+				}
+				IdAndType.emplace_back(std::make_pair(&imgProp->imageIDs[k], IMG_TAB));
+			}
+		}
+		d = d->Next();
+	}
+postLoop:
+	// In case of error, undo it
+	if (error != 0)
+	{
+		for (int i = IdAndType.size() - 1; i >= 0; --i)
+			undoProc(std::get<0>(IdAndType[i]), std::get<1>(IdAndType[i]), p1, p2);
+	}
+	return error;
+}
+
 
 struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 {
@@ -1652,6 +1733,25 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(&f, sizeof(float));
+		}
+		case IDs::PROPTYPE_IMAGELIST:
+		{
+			// Image list should have no images
+			if (prop["DefaultState"].type != json_none)
+			{
+				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has a default value, and shouldn't have one."),
+					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+			}
+			// TODO: Check image list JSON options are valid
+
+			static ImgListProperty prop;
+			prop.numImages = 0;
+
+			// convState->resetPropertiesStream << bullet << title << " = image count 0\n";
+			convState->resetPropertiesStream << bullet << title << "\n";
+			++convState->numPropsReset;
+
+			return convRet->Return_OK(&prop, sizeof(prop));
 		}
 
 		case IDs::PROPTYPE_CUSTOM:
@@ -2456,6 +2556,95 @@ float DarkEdif::Properties::GetPropertyNum(int propID) const
 	}
 }
 
+// Returns Fusion image bank ID from a image list property ID
+std::uint16_t DarkEdif::Properties::GetPropertyImageID(int propID, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (!data)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property ID %d does not exist."), propID);
+		return UINT16_MAX;
+	}
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property ID %d is not an image list."), propID);
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	if (index >= imgProp->numImages)
+		return UINT16_MAX;
+	return imgProp->imageIDs[index];
+}
+// Returns Fusion image bank ID from a image list property name
+std::uint16_t DarkEdif::Properties::GetPropertyImageID(std::string_view propName, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return UINT16_MAX;
+
+found:
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" is not an image list."), UTF8ToTString(propName).c_str());
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	if (index >= imgProp->numImages)
+		return UINT16_MAX;
+	return imgProp->imageIDs[index];
+}
+// Returns number of images in a image list property by property ID
+std::uint16_t DarkEdif::Properties::GetPropertyNumImages(int propID, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (!data)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNumImages() error; property ID %d does not exist."), propID);
+		return UINT16_MAX;
+	}
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyNumImages() error; property ID %d is not an image list."), propID);
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	return imgProp->numImages;
+}
+// Returns number of images in a image list property by property name
+std::uint16_t DarkEdif::Properties::GetPropertyNumImages(std::string_view propName, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return UINT16_MAX;
+
+found:
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetPropertyImageID() error; property name \"%s\" is not an image list."), UTF8ToTString(propName).c_str());
+		return UINT16_MAX;
+	}
+	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
+	return imgProp->numImages;
+}
+
 
 const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 {
@@ -2807,6 +2996,132 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 	Edif::SDK->jsonPropsNameAndTypesHash = fnv1a(hashNamesAndTypes.str());
 	Edif::SDK->jsonPropsTypesHash = fnv1a(hashTypes.str());
 }
+
+BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID_)
+{
+	if (PropID_ < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE;
+
+	unsigned int PropID = GetPropRealID(PropID_);
+
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return FALSE;
+
+	auto& Props = Elevate(edPtr->Props);
+	DarkEdif::Properties::Data* data = Props.Internal_DataAt(PropID);
+	const json_value& jsonProp = CurLang["Properties"][PropID];
+	if (jsonProp.type != json_object)
+	{
+		MsgBox::Error(_T("Property error"), _T("Property ID %u (%s) is not correctly formatted."),
+			PropID, UTF8ToTString(data->ReadPropName()).c_str());
+		return FALSE;
+	}
+	if (!_stricmp(jsonProp["Type"], "Image List"))
+	{
+		ImgListProperty* thisPropData = (ImgListProperty*)data->ReadPropValue();
+
+		std::tstring windowTitle = UTF8ToTString((const char*)jsonProp["WindowTitle"]).c_str();
+
+		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"]);
+		const std::uint32_t imageSize[2] = {
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][0]),
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][1])
+		};
+
+		PictureEditOptions opts = PictureEditOptions::None;
+		if ((bool)jsonProp["FixedImageSize"])
+			opts |= PictureEditOptions::FixedImageSize;
+		if ((bool)jsonProp["HotSpotAndActionPoint"])
+			opts |= PictureEditOptions::EditableHotSpot | PictureEditOptions::EditableActionPoint;
+		if ((bool)jsonProp["NoAlphaChannel"])
+			opts |= PictureEditOptions::NoAlphaChannel;
+		if ((bool)jsonProp["NoTransparentColor"])
+			opts |= PictureEditOptions::NoTransparentColor;
+		if ((bool)jsonProp["16Colors"])
+			opts |= PictureEditOptions::SixteenColors;
+		// Ignore FixedNumOfImages if only one image, as it'll enable the add image button but make it no-op
+		if ((bool)jsonProp["FixedNumOfImages"] || maxNumImages == 1)
+			opts |= PictureEditOptions::FixedNumOfImages;
+		if ((bool)jsonProp["AllowEmpty"])
+			opts |= PictureEditOptions::CanBeEmpty;
+
+		BOOL result;
+		// Only one image possible: edit it in solo
+		if (maxNumImages == 1)
+		{
+			EditImageParams<TCHAR> eip;
+			eip.size = sizeof(eip);
+			eip.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eip.pad = 0;
+			eip.imageID = thisPropData->numImages == 0 ? 0 : thisPropData->imageIDs[0];
+			eip.defaultImageWidth = imageSize[0];
+			eip.defaultImageHeight = imageSize[1];
+			eip.options = opts;
+
+			result = mV->mvEditImage(edPtr, &eip, mV->HEditWin);
+			if (result == TRUE)
+			{
+				// Save image count + image ID, same as we do for multiple images
+				// Impersonate a ImageListProperty struct, with one image ID
+				const std::uint16_t two[] = { 1, eip.imageID };
+				Props.Internal_PropChange(mV, edPtr, PropID, two, sizeof(two));
+			}
+		}
+		else
+		{
+			std::tstring imageTitlesBuffer;
+			std::unique_ptr<TCHAR* []> titles;
+			if (jsonProp["ImageTitles"].type == json_array)
+			{
+				const json_value& imgTitles = jsonProp["ImageTitles"];
+				titles = std::make_unique<TCHAR* []>(imgTitles.u.array.length + 1); // + 1 to end with null ptr
+				std::tstringstream str;
+				std::tstring tstr;
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+				{
+					tstr = UTF8ToTString((const char*)imgTitles.u.array.values[i]);
+					str.write(tstr.c_str(), tstr.size() + 1);
+					titles[i] = (TCHAR*)j;
+					j += tstr.size() + 1;
+				}
+				imageTitlesBuffer = str.str();
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+					titles[i] = imageTitlesBuffer.data() + (std::size_t)titles[i];
+			}
+
+			EditAnimationParams<TCHAR> eap;
+			eap.size = sizeof(eap);
+			eap.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eap.numImages = thisPropData->numImages;
+			eap.maxNumImages = maxNumImages;
+			eap.startIndexToEdit = 0;
+			auto prop = std::make_unique<std::uint16_t[]>(1 + maxNumImages);
+			if (!prop || memcpy_s(&prop[1], maxNumImages * sizeof(std::uint16_t),
+				thisPropData->imageIDs, thisPropData->numImages * sizeof(std::uint16_t)) != 0)
+			{
+				return FALSE;
+			}
+			eap.imageIDs = &prop[1];
+			eap.imageTitles = titles.get();
+			eap.defaultImageWidth = imageSize[0];
+			eap.defaultImageHeight = imageSize[1];
+			eap.options = opts;
+
+			result = mV->mvEditAnimation(edPtr, &eap, mV->HEditWin);
+			if (result == TRUE)
+			{
+				prop[0] = eap.numImages;
+				Props.Internal_PropChange(mV, edPtr, PropID,
+					prop.get(), (1 + eap.numImages) * sizeof(std::uint16_t));
+			}
+		}
+		//mvRefreshProp(mV, edPtr, PropID_, FALSE);
+		return result;
+	}
+
+	return FALSE;
+}
 #endif
 
 // Returns size of EDITDATA and all properties if they were using their default values from JSON
@@ -2860,6 +3175,8 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		// Stores two numbers
 		else if (!_stricmp(curPropType, "Size"))
 			fullSize += sizeof(int) * 2;
+		else if (!_stricmp(curPropType, "Image List"))
+			fullSize += sizeof(ImgListProperty);
 		else
 		{
 			DarkEdif::MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"), _T("Calculation of edittime property size can't understand property type \"%s\". (%s)"),
