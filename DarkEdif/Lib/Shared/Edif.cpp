@@ -1093,6 +1093,8 @@ extern "C"
 	void DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, freeString)(void * ext, const char * cstr);
 }
 
+// segregate to prevent two iOS exts conflicting
+inline namespace FusionInternals {
 struct ConditionOrActionManager_iOS : ACEParamReader
 {
 	::Extension* ext;
@@ -1151,6 +1153,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	{
 	}
 };
+} // namespace FusionInternals
 #endif
 
 #ifdef _WIN32
@@ -1425,6 +1428,8 @@ struct ExpressionManager_Windows : ACEParamReader {
 
 };
 #else
+// segregate to prevent two iOS exts conflicting
+inline namespace FusionInternals {
 struct ExpressionManager_iOS : ACEParamReader {
 	Extension* const ext;
 
@@ -1480,6 +1485,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	~ExpressionManager_iOS() {
 	}
 };
+} // namespace FusionInternals
 #endif
 
 #ifdef _WIN32

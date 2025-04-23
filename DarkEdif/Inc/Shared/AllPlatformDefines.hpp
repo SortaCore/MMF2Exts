@@ -324,10 +324,9 @@ enum class ExpReturnType : short {
 };
 
 #ifdef __APPLE__
-namespace FusionInternals {
+inline namespace FusionInternals {
 	struct RunObject;
 }
-using namespace FusionInternals;
 #else
 struct RunObject;
 #endif

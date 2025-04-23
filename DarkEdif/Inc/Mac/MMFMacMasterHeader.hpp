@@ -116,7 +116,7 @@ namespace Edif {
 
 // This namespace is #defined to different per ext, preventing multiple of the iOS/Mac DarkEdif exts
 // exported functions in their static library builds from conflicting when the full iOS/Mac app is built.
-namespace FusionInternals
+inline namespace FusionInternals
 {
 	struct HeaderObject;
 	struct RunObject;
@@ -298,9 +298,7 @@ namespace FusionInternals
 		Sprite* get_ros();
 		AltVals* get_rov();
 	};
-
 } // namespace FusionInternals
-using namespace FusionInternals;
 
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.
 //extern char darkExtJSON[];
