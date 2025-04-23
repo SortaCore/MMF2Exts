@@ -24,12 +24,12 @@
     <ClInclude Include="..\Inc\Mac\MMFMacMasterHeader.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
-    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp">
+    <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+    <ClCompile Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

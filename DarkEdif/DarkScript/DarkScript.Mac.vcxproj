@@ -35,8 +35,8 @@
     <Import Project="DarkScript.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemGroup>
-    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).hpp" />
-    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(ExtNameUnderscores).mm">
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).hpp" />
+    <ClCompile Condition="exists('$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm')" Include="$(SolutionDir)Temp\$(ExtName)\Mac\CRun$(TargetNameUnderscores).mm">
       <FileType>CppCode</FileType>
     </ClCompile>
     <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
