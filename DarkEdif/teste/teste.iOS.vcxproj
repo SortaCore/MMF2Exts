@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|ARM">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|ARM">
+      <Configuration>Runtime</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|ARM64">
+      <Configuration>Debug</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|ARM64">
+      <Configuration>Runtime</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|x64">
+      <Configuration>Runtime</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Runtime|x86">
+      <Configuration>Runtime</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{144a18c1-10fd-40ed-8d27-3c51beee7e72}</ProjectGuid>
+    <Keyword>iOS</Keyword>
+    <DefaultLanguage>en-GB</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+    <ApplicationType>iOS</ApplicationType>
+    <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
+    <ProjectName>teste.iOS</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK.props" />
+  <Import Project="$(ProjectDir)\..\Lib\FusionSDK_AfterMSPropSheets.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+    <Import Project="teste.Shared.vcxitems" Label="Shared" />
+  </ImportGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEventProgram.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEvents.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObject.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObjInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CQualToOiList.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRun.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunApp.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRVal.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CValue.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\IDrawable.h" />
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />
+  </ItemGroup>
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
