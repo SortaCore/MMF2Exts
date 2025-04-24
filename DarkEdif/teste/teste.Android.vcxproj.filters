@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Global to all extensions">
+      <UniqueIdentifier>{36081abd-dfd6-48c8-ba91-b4abd00c6132}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{efdf18ff-7158-4e70-b216-32e8d84ccffe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{6e1f213d-f924-45fa-869c-598a3e1b6fa4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{cf111949-f57d-4ba2-ac10-fc99bcfb5f9e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Inc\Android\MMFAndroidMasterHeader.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
