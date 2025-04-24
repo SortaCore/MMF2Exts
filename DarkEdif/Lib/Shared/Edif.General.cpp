@@ -537,8 +537,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	LogV(DARKEDIF_LOG_ERROR, x, va);
 	va_end(va);
 #if _DEBUG
-	fflush(stdout);
-	fflush(stderr);
+	__android_log_print(ANDROID_LOG_INFO, PROJECT_TARGET_NAME_UNDERSCORES, "Flushing stdout/stderr is not supported.");
 #endif
 	__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
