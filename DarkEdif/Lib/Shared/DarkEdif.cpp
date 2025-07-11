@@ -3228,9 +3228,10 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 // Static definition; set during SDK::SDK()
 #ifdef _WIN32
+// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 bool DarkEdif::IsFusion25;
-#else
-//constexpr bool DarkEdif::IsFusion25 = true;
+// True if running under Wine, false otherwise.
+bool DarkEdif::IsRunningUnderWine;
 #endif
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
@@ -5121,7 +5122,14 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 			_tcscpy(&outputBuff[std::size(outputBuff) - std::size(_T("\n"))], _T("\n"));
 	}
 
-	OutputDebugString(outputBuff);
+	// Wine debugstr only logs OutputDebugStringA, not OutputDebugStringW
+	#ifdef _UNICODE
+		if (DarkEdif::IsRunningUnderWine)
+			OutputDebugStringA(TStringToUTF8(outputBuff).c_str());
+		else
+	#endif // Unicode
+			OutputDebugString(outputBuff);
+
 #elif defined(__ANDROID__)
 	std::string msgFormatT = std::string(aceIndex, '>');
 	msgFormatT += ' ';

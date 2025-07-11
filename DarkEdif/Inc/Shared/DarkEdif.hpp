@@ -218,12 +218,14 @@ namespace DarkEdif {
 		FusionDebugger(FusionDebugger &&) = delete;
 	};
 
-
-	// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 #ifdef _WIN32
 	extern bool IsFusion25;
+	extern bool IsRunningUnderWine;
 #else
+	// True if Fusion 2.5. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
+	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
+	constexpr bool IsRunningUnderWine = false;
 #endif
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(eventGroup *);
