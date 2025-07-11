@@ -220,10 +220,13 @@ namespace DarkEdif {
 
 #ifdef _WIN32
 	extern bool IsFusion25;
+	extern bool IsHWAFloatAngles;
 	extern bool IsRunningUnderWine;
 #else
 	// True if Fusion 2.5. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
+	// True if angle variables are degrees as floats. Always true for non-Windows builds.
+	constexpr bool IsHWAFloatAngles = true;
 	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
 	constexpr bool IsRunningUnderWine = false;
 #endif

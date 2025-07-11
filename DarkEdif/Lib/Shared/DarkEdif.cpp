@@ -3230,6 +3230,9 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 #ifdef _WIN32
 // True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 bool DarkEdif::IsFusion25;
+// True if angle variables are degrees as floats, false if they are ints.
+// Ints are used in MMF2 non-Direct3D display modes.
+bool DarkEdif::IsHWAFloatAngles;
 // True if running under Wine, false otherwise.
 bool DarkEdif::IsRunningUnderWine;
 #endif
