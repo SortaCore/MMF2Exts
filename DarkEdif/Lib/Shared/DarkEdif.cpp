@@ -4402,28 +4402,34 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 
 	// Remove spaces around the ';'s. We can't just remove all spaces, as some ext names have them.
 	size_t semiSpace = 0;
-	while ((semiSpace = ini.find("; ", semiSpace)) != std::string::npos)
-		ini = ini.replace(semiSpace--, 2, ";");
+	while ((semiSpace = ini.find("; "sv, semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";"sv);
 
 	semiSpace = 0;
-	while ((semiSpace = ini.find(" ;", semiSpace)) != std::string::npos)
-		ini = ini.replace(semiSpace--, 2, ";");
+	while ((semiSpace = ini.find(" ;"sv, semiSpace)) != std::string::npos)
+		ini = ini.replace(semiSpace--, 2, ";"sv);
 
 	// Acquire the rudimentary lock, do op, and release
 #define GetLockAnd(x) while (updateLock.exchange(true)) /* retry */; x; updateLock = false
 #define GetLockSetConnectErrorAnd(x) while (updateLock.exchange(true)) /* retry */; x; pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::ConnectionError; updateLock = false
 
 	// If the ext name is found, or the wildcard *
-	if (ini.find(";" PROJECT_NAME ";") != std::string::npos || ini.find(";*;") != std::string::npos)
+	bool updateCheckDisablingWasIgnored = false;
+	if (ini.find(";" PROJECT_NAME ";"sv) != std::string::npos || ini.find(";*;"sv) != std::string::npos)
 	{
+#if USE_DARKEDIF_UC_TAGGING
+		GetLockAnd(updateLog << "Update check was disabled, but UC tagging is on."sv);
+		updateCheckDisablingWasIgnored = true;
+#else
 		GetLockAnd(updateLog << "Update check was disabled."sv;
-			pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
+		pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
 		return 0;
+#endif
 	}
 
 	std::string projConfig = STRIFY(CONFIG);
 	while ((semiSpace = projConfig.find(' ')) != std::string::npos)
-		projConfig.replace(semiSpace, 1, "%20");
+		projConfig.replace(semiSpace, 1, "%20"sv);
 
 	// Opt-in feature for tagging built EXEs with a unique key.
 	// This key is unique per Fusion install, but is otherwise meaningless; it's not a hash of anything.
@@ -4542,6 +4548,7 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 			resKey = keyError;
 		}
 	}
+
 	// Use RAII to auto-close the opened resource writing when this update thread exits
 	auto CloseHandle = [](HANDLE *h) { EndUpdateResource(*h, TRUE); *h = NULL; return; };
 	std::unique_ptr<HANDLE, std::function<void(HANDLE*)>> resHandleHolder(&resHandle, CloseHandle);
@@ -4577,6 +4584,15 @@ DWORD WINAPI DarkEdifUpdateThread(void *)
 	}
 	else // reg key is missing
 		regKey = UC_TAG_NEW_SETUP;
+
+	// If UC tag is used, the ext MUST connect if there's any issues with the tagging,
+	// even if update check was disabled
+	if (updateCheckDisablingWasIgnored && regKey != UC_TAG_NEW_SETUP && resKey == regKey)
+	{
+		GetLockAnd(updateLog << "Update check was disabled, UC tagging already done, closing with disabled."sv;
+		pendingUpdateType = DarkEdif::SDKUpdater::ExtUpdateType::CheckDisabled);
+		return 0;
+	}
 
 #else // !USE_DARKEDIF_UC_TAGGING
 	std::wstring resKey = L"disabled"s, regKey = L"disabled"s;

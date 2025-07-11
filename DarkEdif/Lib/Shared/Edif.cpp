@@ -559,6 +559,18 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 				std::abort();
 			}
 		#endif // Using UC Tagging and not Debug build
+
+	#elif /* EditorBuild == 0 && */ USE_DARKEDIF_UC_TAGGING && !defined(_DEBUG) && defined(_WIN32)
+
+	// If UC tagging is enabled, Runtime MFXes must be tagged by loading the ext in Fusion editor.
+	// This prevents anyone malicious getting the MFX blacklisted for other Fusion developers.
+	// If the edit is not found in a Runtime MFX, abort the application.
+	HRSRC hsrcForRes = FindResourceEx(hInstLib, RT_STRING, _T("UCTAG"), MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US));
+	if (hsrcForRes == NULL)
+	{
+		DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Couldn't find UC tag, error %u. Contact the application developer."), GetLastError());
+		std::abort();
+	}
 	#endif // EditorBuild
 
 	if (CurLang.type != json_object)
