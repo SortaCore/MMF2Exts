@@ -300,6 +300,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 	DarkEdif::Internal_WindowHandle = mV->HMainWin;
 
+	// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
+	// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
+	DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
+
 	// Detect wine by presence of wine_get_version() inside their wrapper ntdll
 	HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
 	if (ntDll == NULL)
