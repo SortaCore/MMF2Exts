@@ -418,8 +418,15 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 
 #ifdef _WIN32
 
+	// Non-Unicode ext used in Unicode-compatible runtime
+#if !defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)
+	if (mvIsUnicodeVersion(mV))
+	{
+		DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
+			PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
 	}
-
+#endif
+	
 	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
 	// Invalid parameters include e.g. sprintf format errors.
 	// Debug builds have their own handler that makes a message box, so don't register ours
