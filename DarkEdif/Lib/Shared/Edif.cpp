@@ -299,6 +299,15 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 #ifdef _WIN32
 	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 	DarkEdif::Internal_WindowHandle = mV->HMainWin;
+
+	// Detect wine by presence of wine_get_version() inside their wrapper ntdll
+	HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
+	if (ntDll == NULL)
+		return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
+
+	const char* (__cdecl * pwine_get_version)(void) =
+		(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
+	DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
 #endif
 
 #if EditorBuild
