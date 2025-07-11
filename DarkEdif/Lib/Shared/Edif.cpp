@@ -342,35 +342,69 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 			}
 		}
 	}
+
+	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
+	{
+		int localeNum = 1033;
+
+		// CF2.5 editor language code is a setting, stored in registry 
+		if (DarkEdif::IsFusion25)
+		{
+			HKEY key = NULL;
+			TCHAR value[6];
+			DWORD value_length = std::size(value), err;
+			const std::tstring settingsRegPath =
+				((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
+				_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
+				_T("Software\\Clickteam\\Fusion 2.5\\General"s);
+			if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
+				(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
+				value_length >= std::size(value))
+			{
+				DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+			}
+			else
+				localeNum = _ttoi(value);
+
+			if (key)
+				RegCloseKey(key);
+		}
+		else // MMF2 uses different editor EXEs, and stores language in resources
+		{
+			// You shouldn't use .data() on a std::string_view and expect null terminator,
+			// but since we know it points to the std::string appPath, we'll make an exception.
+			const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+
+			// Look up the running app and get the language code from its resources.
+			const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+			if (hRes != NULL)
+			{
+				// Load string resource ID 720, contains the language code
+				TCHAR langCode[20];
+				LoadString(hRes, 720, langCode, std::size(langCode));
+
+				localeNum = _ttoi(langCode);
+
+				// Free resources
+				FreeLibrary(hRes);
+			}
+		}
+
+		switch (localeNum) {
+		case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
+			_tcscpy(LanguageCode, _T("FR"));
+			break;
+		case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+			_tcscpy(LanguageCode, _T("JP"));
+			break;
+		}
+	}
 #else // Not editor build, missing things that will let Fusion use it in editor.
 	DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 #endif
 
 #ifdef _WIN32
-	// You shouldn't use .data() on a std::string_view and expect null terminator,
-	// but since we know it points to the std::string appPath, we'll make an exception.
-	const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-	// Look up the running app and get the language code from its resources.
-	const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-	if (hRes != NULL)
-	{
-		// Load string resource ID 720, contains the language code
-		TCHAR langCode[20];
-		LoadString(hRes, 720, langCode, std::size(langCode));
-
-		int nCode = _ttoi(langCode);
-		switch (nCode) {
-			case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
-				_tcscpy (LanguageCode, _T ("FR"));
-				break;
-			case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-				_tcscpy (LanguageCode, _T ("JP"));
-				break;
-		}
-
-		// Free resources
-		FreeLibrary(hRes);
 	}
 
 	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
