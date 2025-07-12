@@ -208,10 +208,10 @@ extern "C" void always_log(const char* str, ...)
 		va_list v;
 		va_start(v, str);
 		char utf8Output[1024];
-		if (vsprintf_s(utf8Output, std::size(utf8Output), "%s", v) <= 0)
-			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't convert format \"%s\" to UTF-8."), utf8Output);
+		if (vsprintf_s(utf8Output, std::size(utf8Output), str, v) <= 0)
+			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't convert format \"%hs\" to UTF-8."), utf8Output);
 
-		LOGW(_T("%s"), utf8Output);
+		LOGW(_T("%hs"), utf8Output);
 		va_end(v);
 	}
 	else
