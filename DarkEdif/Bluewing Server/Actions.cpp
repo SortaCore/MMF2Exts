@@ -186,7 +186,7 @@ void Extension::SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allow
 
 	const std::string err = Srv.setcodepointsallowedlist((lacewing::relayserver::codepointsallowlistindex)listIndex, DarkEdif::TStringToANSI(allowListContents));
 	if (!err.empty())
-		CreateError("Couldn't set Unicode %s allow list, %s.", listToSet, err.c_str());
+		CreateError("Couldn't set Unicode %s allow list, %s.", DarkEdif::TStringToUTF8(listToSet).c_str(), err.c_str());
 }
 
 
