@@ -63,6 +63,10 @@ using namespace std::string_view_literals;
 	EnumClassType constexpr static operator&=(EnumClassType &lhs, EnumClassType rhs) { \
 		lhs = static_cast<EnumClassType>(static_cast<std::underlying_type<EnumClassType>::type>(lhs) & static_cast<std::underlying_type<EnumClassType>::type>(rhs)); \
 		return lhs; \
+	} \
+	EnumClassType constexpr static operator~(EnumClassType &en) { \
+		en = static_cast<EnumClassType>(~static_cast<std::underlying_type<EnumClassType>::type>(en)); \
+		return en; \
 	}
 
 // allows the compiler to check printf format matches parameters
