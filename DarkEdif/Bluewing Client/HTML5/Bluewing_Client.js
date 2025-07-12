@@ -3644,7 +3644,7 @@ function Bluewing_Client(blue) {
 				const peerName = rawMsg.byteLength == 5 ? "" : this.decoder.decode(rawMsg.slice(6));
 				const flags2 = rawMsg.byteLength == 5 ? 0 : fullMsg.getUint8(5);
 
-				if (flags2 & 0xFE != 0) {
+				if ((flags2 & 0xFE) != 0) {
 					this.CreateError("Unexpected flags in 'peer2 change message'; expected 0 or 1, got " + flags2);
 					return;
 				}
