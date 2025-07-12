@@ -200,7 +200,8 @@ extern "C" void always_log(const char* str, ...)
 
 	// Unicode %s is UTF-16, not a UTF-8 %s; if always_log is passing %s, it means UTF-8
 	std::tstring tcharStr = DarkEdif::UTF8ToTString(str);
-	tcharStr += _T('\n');
+	if (tcharStr.back() != _T('\n'))
+		tcharStr += _T('\n');
 #if defined (_WIN32) && defined(_UNICODE)
 	// always_log reports UTF-8, DarkEdif::Log uses TCHAR, so we'll convert
 	if (tcharStr.find(_T("%s")) != std::tstring::npos)
@@ -208,10 +209,10 @@ extern "C" void always_log(const char* str, ...)
 		va_list v;
 		va_start(v, str);
 		char utf8Output[1024];
-		if (vsprintf_s(utf8Output, std::size(utf8Output), "%s", v) <= 0)
-			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't convert format \"%s\" to UTF-8."), utf8Output);
+		if (vsprintf_s(utf8Output, std::size(utf8Output), str, v) <= 0)
+			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't print format \"%s\" in always_log."), str);
 
-		LOGW(_T("%s"), utf8Output);
+		LOGW(_T("%s"), DarkEdif::UTF8ToTString(utf8Output).c_str());
 		va_end(v);
 	}
 	else
