@@ -209,13 +209,17 @@ Problem 3: if you don't include a file in your VS project or shared project, it 
 Solution: Add them to your project.
 
 ### iOS development setup
-An iMac late 2012 or above is necessary; you need XCode 10.2, which is OS Mojave+.  
+An iMac late 2012 or above is necessary; you need XCode 10.2+, which is OS Mojave+.  
 Mac OS Big Sur and Montgomery are both compatible, as is the latest Xcode.
+
+If you want to support 32-bit devices, including ARMv7 and x86 simulator, you will need **XCode 13.4.1 or earlier** [from here][Xcode versions].  
+Xcode below 14 can still targets iOS 10.0+, and iOS 10.0 is the last to support 32-bit CPUs.  
+Note that if you have later, 32-bit incompatibility will not remove the iOS VS project configuration, and you must customise FusionSDKConfig.ini so the PostBuildTool does not expect those CPU arches.
 
 The earliest iOS you can simulate in latest XCode - noted in July 2021 - is iOS 11.4, which runs on iPhone 5S, but not 5 or 5C.
 You can install it under XCode config > Components > Simulators.
 
-Install Xcode on Mac. Set up SSH on Mac.
+Install Xcode 13.4.1 on Mac. Set up SSH on Mac.
 PuTTY setup. Validate by running PuTTY. Recommended to use encryption keys. Link guides.
 
 
@@ -321,6 +325,7 @@ For a list of all Apple's supported devices and CPU architectures, see [this lin
 [AppBrain Android OS usage]: https://www.appbrain.com/stats/top-android-sdk-versions
 [Parse ELF py file]: https://android.googlesource.com/platform/ndk/+/master/parse_elfnote.py
 [Google's STL support]: https://www.phoronix.com/scan.php?page=news_item&px=Android-NDK-r16
+[Xcode versions]: https://xcodereleases.com
 [A12+ chips]: https://en.wikipedia.org/wiki/Apple_A12
 [Rosetta translation]: https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment
 [Apple CPU A series]: https://en.wikipedia.org/wiki/Apple_silicon#A_series
