@@ -39,7 +39,7 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	{
 		void* newEd = mvReAllocEditData(mV, edPtr, sizeof(EDITDATA));
 		if (!newEd)
-			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate enough size for properties."), sizeof(EDITDATA)), -1;
+			return DarkEdif::MsgBox::Error(_T("Invalid properties"), _T("Failed to allocate %zu bytes for properties."), sizeof(EDITDATA)), -1;
 		edPtr = (EDITDATA *) newEd;
 	}
 
