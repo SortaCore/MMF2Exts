@@ -19,7 +19,13 @@ void lwp_init ()
 	if (++init_called != 1)
 		return;
 
-	WSAStartup (MAKEWORD (2, 2), &winsock_data);
+	int err = WSAStartup(MAKEWORD(2, 2), &winsock_data);
+	if (err != 0 || winsock_data.wVersion < MAKEWORD(2, 2))
+	{
+		always_log("Couldn't startup WinSock v2.2, got error %d, ver %d.%d", err, HIBYTE(winsock_data.wVersion), LOBYTE(winsock_data.wVersion));
+		exit(WSAVERNOTSUPPORTED);
+		return;
+	}
 }
 void lwp_deinit()
 {
