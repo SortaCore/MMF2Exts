@@ -458,8 +458,8 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	if (data.size() < (1 + sizeof(unsigned short)))
 		return;
 
-	lw_ui8 type = *(lw_ui8 *)data.data();
-	lw_ui16 id = *(lw_ui16 *)(data.data() + 1);
+	const lw_ui8 type = *(lw_ui8 *)data.data();
+	const lw_ui16 id = *(lw_ui16 *)(data.data() + 1);
 
 	if (id == 0xFFFF)
 		return; // this is a placeholder number, and normally indicates error with client
@@ -472,18 +472,61 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 		if (clientsocket->_id == id)
 		{
 			serverClientListReadLock.lw_unlock();
-			// Pay close attention to this * here. You can do
-			// lacewing::address == lacewing::_address, but
-			// not any other combo.
+
+			// Note the dereference here. You can do lacewing::address == lacewing::_address,
+			// but not any other combo.
+			// This compares IP only, ignoring ports.
 			if (*clientsocket->udpaddress != address)
 			{
-				// A client ID was used by the wrong IP... hack attempt?
-				// Can occasionally occur during legitimate disconnects, but rarely (?)
+				// A client ID was used by the wrong IPv4... hack attempt, or IP is behind double-NAT,
+				// such as T-Mobile CG-NAT, and the TCP + UDP have different IPs.
+				// As a UDP impersonator will result in the real TCP user disconnecting from UDP handshake failing,
+				// it's not a massive security risk, but it is potentially possible to prevent incoming connections
+				// to a server.
+				// 
+				// TODO: The fix would be to pass a secret to the TCP side on connection approval, which must be
+				// echoed back to the UDP side; but Relay wouldn't support that. When we kill Relay compatibility,
+				// that's the method to fix this security issue.
+				//
+				// IPv6 doesn't use NAT, so in theory there should never be an IPv6 difference.
+				// Note that IPv6+4 server sockets always report their IPv4 clients as IPv6 addresses
+				// (mapped to IPv4), so we can't use address->ipv6().
+				const struct in6_addr addrIn6 = address->toin6_addr();
+				if (clientsocket->lockedUDPAddress || IN6_IS_ADDR_V4MAPPED(&addrIn6) == FALSE)
+				{
+					// To prevent log slowing the server down, we don't report UDP impersonation.
+					// Code to reply with ICMP unreachable is in the #if 0 later.
+					#ifdef _lacewing_debug
+					error error = error_new();
+					error->add("Dropping message");
+					error->add("locked = %s, ipv6 = %s, v4 mapped = %s", clientsocket->lockedUDPAddress ? "yes" : "no",
+						address->ipv6() ? "yes" : "no", IN6_IS_ADDR_V4MAPPED(&addrIn6) ? "yes" : "no"
+					);
+					error->add("Message IP \"%s\", client IP \"%s\".", address->tostring(), clientsocket->udpaddress->tostring());
+					error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP.", id);
+					handlerudperror(udp, error);
+					error_delete(error);
+					#endif // _lacewing_debug
+					return;
+				}
+
+				// Not meant to get UDP from here
+				if (clientsocket->pseudoUDP)
+					return;
+
+				// Got a UDP address for this client
+				lwp_trace("Locked UDP address for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
+					clientsocket->udpaddress->tostring(), address->tostring());
+				auto clientWriteLock = clientsocket->lock.createWriteLock();
+				lacewing::address_delete(clientsocket->udpaddress);
+				clientsocket->udpaddress = lacewing::address_new(address);
+				clientsocket->lockedUDPAddress = true;
+
 #if false
 
 				// faulty clients can use ID 0xFFFF and 0x0000
 
-				auto rl = lock.createReadLock();
+				serverClientListReadLock.lw_relock();
 
 				std::shared_ptr<relayserver::client> realSender = nullptr;
 				for (const auto& cs : clients)
@@ -496,35 +539,44 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				}
 
 				error error = error_new();
-				error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP. ", id);
+				error->add("Dropping message");
 				if (realSender)
 				{
-					error->add("Message ACTUALLY originated from client ID %i, on IP %s. Disconnecting client for impersonation attempt. ",
-						realSender->id, realSender->address);
+					error->add("Message ACTUALLY originated from client ID %hu, on IP %s. Disconnecting client for impersonation attempt. ",
+						realSender->id(), realSender->address);
 					realSender->socket->close();
 				}
-				error->add("Dropping message");
+				error->add("Message IP \"%s\", client IP \"%s\".", address->tostring(), clientsocket->udpaddress->tostring());
+				error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP.", id);
 				handlerudperror(udp, error);
 				error_delete(error);
+				return;
 #endif
+			}
+			// IP matches, but port does not; the remote port used by a client on UDP often differs from TCP
+			else if (!clientsocket->lockedUDPAddress && clientsocket->udpaddress->port() != address->port())
+			{
+				lwp_trace("Locked UDP address (port-only) for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
+					clientsocket->udpaddress->tostring(), address->tostring());
+
+				auto clientWriteLock = clientsocket->lock.createWriteLock();
+				clientsocket->udpaddress->port(address->port());
+				clientsocket->lockedUDPAddress = true;
+			}
+
+			// A client ID is set to only have "fake UDP" but used real UDP.
+			// Pseudo setting is wrong, but IP is correct?
+			if (clientsocket->pseudoUDP)
+			{
+				lacewing::error error = lacewing::error_new();
+				error->add("Client ID %i is set to pseudo-UDP, but received a real UDP packet"
+					" on matching address. Ignoring packet.", id);
+				handlerudperror(udp, error);
+				lacewing::error_delete(error);
 				return;
 			}
 
-			if (clientsocket->pseudoUDP)
-			{
-				// A client ID is set to only have "fake UDP" but used real UDP.
-				// Pseudo setting is wrong, which means server didn't init client properly, not good.
-				lacewing::error error = lacewing::error_new();
-				error->add("Client ID %i is set to pseudo-UDP, but received a real UDP packet"
-					" on matching address. Correcting pseudo-UDP; please check your config.", id);
-				lacewing::handlerudperror(udp, error);
-				lacewing::error_delete(error);
-				clientsocket->pseudoUDP = false;
-			}
-
-			clientsocket->udpaddress->port(address->port());
 			client_messagehandler(clientsocket, type, data, true);
-
 			return;
 		}
 	}
@@ -667,8 +719,8 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	// If it IS a deliberate attack, there won't even necesssarily BE any Lacewing clients with that IP.
 	// Again, UDP is connection-less, so the format of messages (Lacewing or not) is irrelevant - the OS
 	// will deliver it to this function here.
-	std::vector<relayserver::client *> todrop;
-	for (const auto& clientsocket : internal.clients)
+	std::vector<std::shared_ptr<relayserver::client> > todrop;
+	for (const auto& clientsocket : clients)
 	{
 		if (*clientsocket->udpaddress == address)
 			todrop.push_back(clientsocket);
@@ -685,12 +737,12 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	for (const auto& c : todrop)
 	{
 		try {
-			error->add("Dropping client ID %hu due to shared IP", c->id);
+			error->add("Dropping client ID %hu due to shared IP", c->id());
 			c->socket->close();
 		}
 		catch (...)
 		{
-			lw_trace("Dropping failed for ID %hu.", c->id);
+			lw_trace("Dropping failed for ID %hu.", c->id());
 		}
 	}
 

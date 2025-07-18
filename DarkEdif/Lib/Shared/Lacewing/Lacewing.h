@@ -2115,6 +2115,8 @@ struct relayserver
 		// Has a TCP ping request been sent by server, and was replied to.
 		// If false, next ping timer tick will consider a failed ping and kick the client, so it is true by default.
 		bool pongedOnTCP = true;
+		// Has a UDP message received, confirming its UDP address. Implies psuedoUDP is false.
+		bool lockedUDPAddress = false;
 
 		lacewing::address udpaddress;
 
