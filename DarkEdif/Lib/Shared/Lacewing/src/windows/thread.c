@@ -55,6 +55,7 @@ typedef struct tagTHREADNAME_INFO
 	DWORD dwFlags; // Reserved for future use, must be zero.
 } THREADNAME_INFO;
 #pragma pack(pop)
+
 static void SetThreadName(DWORD dwThreadID, const char* threadName) {
 	THREADNAME_INFO info = { 0x1000, threadName, dwThreadID, 0 };
 #pragma warning(push)
@@ -65,6 +66,16 @@ static void SetThreadName(DWORD dwThreadID, const char* threadName) {
 	__except (EXCEPTION_EXECUTE_HANDLER) {
 	}
 #pragma warning(pop)
+
+	// Windows 10, version 1607, and later; requires a debugger OS just as recent
+	fn_SetThreadDescription setThreadDesc = compat_SetThreadDescription();
+	if (setThreadDesc)
+	{
+		wchar_t* wideVer = lw_char_to_wchar(threadName, -1);
+		assert(wideVer);
+		setThreadDesc(GetCurrentThread(), wideVer);
+		free(wideVer);
+	}
 }
 
 static int thread_proc (lw_thread ctx)

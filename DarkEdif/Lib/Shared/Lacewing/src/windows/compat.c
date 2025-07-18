@@ -68,6 +68,13 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
 	return fn ? fn : (fn = (fn_GetFileSizeEx) KERNEL32 ("GetFileSizeEx"));
 }
 
+fn_SetThreadDescription compat_SetThreadDescription ()
+{
+	static fn_SetThreadDescription fn = 0;
+
+	return fn ? fn : (fn = (fn_SetThreadDescription) KERNEL32 ("SetThreadDescription"));
+}
+
 #if defined(_WIN32)
 
 // Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
