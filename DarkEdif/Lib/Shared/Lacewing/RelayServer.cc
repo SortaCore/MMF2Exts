@@ -3549,7 +3549,8 @@ void relayserver::closechannel_finish(std::shared_ptr<lacewing::relayserver::cha
 		throw std::runtime_error("Channel was not previously closed.");
 
 	// channel->close() will check for channel in server list, but we don't have it there
-	((relayserverinternal*)internaltag)->queue_or_run_action(false, relayserverinternal::action::type::closechannelfinish, channel, nullptr, std::string_view());
+	if (!((relayserverinternal*)internaltag)->queue_or_run_action(false, relayserverinternal::action::type::closechannelfinish, channel, nullptr, std::string_view()))
+		((relayserverinternal*)internaltag)->close_channel(channel);
 }
 
 // These two functions allow access to internal transmissions: PeerToChannel, PeerToPeer.
