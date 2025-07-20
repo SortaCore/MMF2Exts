@@ -408,7 +408,7 @@ typedef lw_i8 lw_bool;
 
 	/* Timer */
 
-	lw_import		lw_timer  lw_timer_new			(lw_pump);
+	lw_import		lw_timer  lw_timer_new			(lw_pump, const char * timer_name);
 	lw_import			void  lw_timer_delete		(lw_timer);
 	lw_import			void  lw_timer_start		(lw_timer, long milliseconds);
 	lw_import		 lw_bool  lw_timer_started		(lw_timer);
@@ -896,7 +896,7 @@ struct _timer
 	lw_import void * tag ();
 };
 
-lw_import timer timer_new (pump);
+lw_import timer timer_new (pump, const char *);
 lw_import void timer_delete (timer);
 
 

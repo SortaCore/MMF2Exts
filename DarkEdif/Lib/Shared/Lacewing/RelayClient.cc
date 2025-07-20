@@ -1277,7 +1277,7 @@ namespace lacewing
 
 	relayclientinternal::relayclientinternal(relayclient &_client, pump _eventpump) :
 		client(_client), socket(nullptr), udp(udp_new(_eventpump)),
-		udphellotimer(timer_new(_eventpump)),
+		udphellotimer(timer_new(_eventpump, "udphello")),
 		message(true), messageMF(true)
 	{
 		initsocket(_eventpump);

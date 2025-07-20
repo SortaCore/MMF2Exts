@@ -310,7 +310,7 @@ lw_ws lw_ws_new (lw_pump pump)
 	ctx->timeout = 5; // time to respond to first request
 	ctx->websocket = lw_false;
 
-	ctx->timer = lw_timer_new (ctx->pump);
+	ctx->timer = lw_timer_new (ctx->pump, "webserver timer");
 	lw_timer_set_tag (ctx->timer, ctx);
 	lw_timer_on_tick (ctx->timer, on_timer_tick);
 

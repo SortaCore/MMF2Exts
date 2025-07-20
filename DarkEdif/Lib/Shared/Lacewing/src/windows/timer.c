@@ -27,21 +27,28 @@ struct _lw_timer
 	lw_timer_hook_tick on_tick;
 
 	void * tag;
+
+	char * timer_name;
 };
 
-lw_timer lw_timer_new (lw_pump pump)
+lw_timer lw_timer_new (lw_pump pump, const char * timer_name)
 {
 	lw_timer ctx = (lw_timer) calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	ctx->pump = pump;
 
 	ctx->shutdown_event = CreateEvent (0, TRUE, FALSE, 0);
 	ctx->timer_handle = CreateWaitableTimer (0, FALSE, 0);
 
-	ctx->timer_thread = lw_thread_new ("timer", (void *) timer_thread);
+	ctx->timer_name = _strdup (timer_name);
+
+	char threadName[128];
+	sprintf_s(threadName, sizeof(threadName), "lw_thread for lw_timer \"%s\" (0x%" PRIXPTR ")", timer_name, (uintptr_t)ctx);
+
+	ctx->timer_thread = lw_thread_new (threadName, (void *) timer_thread);
 	lw_thread_start (ctx->timer_thread, ctx);
 
 	return ctx;
@@ -58,6 +65,8 @@ void lw_timer_delete (lw_timer ctx)
 
 	lw_thread_join (ctx->timer_thread);
 	lw_thread_delete (ctx->timer_thread);
+
+	free (ctx->timer_name);
 
 	free (ctx);
 }
@@ -76,15 +85,16 @@ DWORD __stdcall timer_thread (lw_timer ctx)
 
 	for (;;)
 	{
-	  int result = WaitForMultipleObjects (2, events, FALSE, INFINITE);
+		int result = WaitForMultipleObjects (2, events, FALSE, INFINITE);
 
-	  if (result != WAIT_OBJECT_0)
-	  {
-		 lwp_trace ("Got result %d", result);
-		 break;
-	  }
+		if (result != WAIT_OBJECT_0)
+		{
+			if (result != WAIT_OBJECT_0 + 1)
+				always_log ("lw_timer \"%s\" got wait result %d\n", ctx->timer_name, result);
+			break;
+		}
 
-	  lw_pump_post (ctx->pump, (void *) timer_completion, ctx);
+		lw_pump_post (ctx->pump, (void *) timer_completion, ctx);
 	}
 	return 0;
 }
@@ -98,7 +108,7 @@ void lw_timer_start (lw_timer ctx, long interval)
 
 	if (!SetWaitableTimer (ctx->timer_handle, &due_time, interval, 0, 0, 0))
 	{
-	  assert (0);
+		always_log("lw_timer \"%s\" couldn't set waitable timer: error %u\n", ctx->timer_name, GetLastError());
 	}
 
 	ctx->started = lw_true;

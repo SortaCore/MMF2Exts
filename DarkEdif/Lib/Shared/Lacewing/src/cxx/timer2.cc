@@ -10,9 +10,9 @@
 
 #include "../common.h"
 
-timer lacewing::timer_new (lacewing::pump pump)
+timer lacewing::timer_new (lacewing::pump pump, const char * timer_name)
 {
-	return (timer) lw_timer_new ((lw_pump) pump);
+	return (timer) lw_timer_new ((lw_pump) pump, timer_name);
 }
 
 void lacewing::timer_delete (lacewing::timer timer)

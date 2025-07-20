@@ -71,7 +71,7 @@ lw_client lw_client_new (lw_pump pump)
 
 	lwp_fdstream_init (&ctx->fdstream, pump);
 
-	ctx->connect_timer = lw_timer_new(pump);
+	ctx->connect_timer = lw_timer_new(pump, "lw_client connect timer");
 	lw_timer_set_tag (ctx->connect_timer, ctx);
 	lw_timer_on_tick (ctx->connect_timer, lw_client_connect_timeout);
 

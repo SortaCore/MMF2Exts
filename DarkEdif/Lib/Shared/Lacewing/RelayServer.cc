@@ -65,7 +65,8 @@ struct relayserverinternal
 	relayserver::handler_nameset		  handlernameset;
 
 	relayserverinternal(relayserver &_server, pump pump) noexcept
-		: server(_server), pingtimer(lacewing::timer_new(pump)), actiontimer(lacewing::timer_new(pump))
+		: server(_server), pingtimer(lacewing::timer_new(pump, "relayserver ping timer")),
+		actiontimer(lacewing::timer_new(pump, "relayserver action timer"))
 	{
 		handlerconnect			= 0;
 		handlerdisconnect		= 0;
