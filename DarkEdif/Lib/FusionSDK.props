@@ -46,10 +46,10 @@
 			 Simulator-and-device-in-one targets are handled by first run through
 			 building as device, then later a second run as simulator - the switch is
 			 handled below, so we don't override here. -->
-		<iOSSimulatorBuild Condition="$(_TargetPlatInclMac)=='iOS' AND ('$(TargetArch)'=='i386' OR '$(TargetArch)'=='x86_64')">1</iOSSimulatorBuild>
+		<iOSSimulatorBuild Condition="'$(_TargetPlatInclMac)'=='iOS' AND ('$(TargetArch)'=='i386' OR '$(TargetArch)'=='x86_64')">1</iOSSimulatorBuild>
 
 		<SimulatorOrDevice></SimulatorOrDevice>
-		<SimulatorOrDevice Condition="$(_TargetPlatInclMac)=='iOS'">\device</SimulatorOrDevice>
+		<SimulatorOrDevice Condition="'$(_TargetPlatInclMac)'=='iOS'">\device</SimulatorOrDevice>
 		<SimulatorOrDevice Condition="$(iOSSimulatorBuild)==1">\simulator</SimulatorOrDevice>
 
 		<!-- Not really needed for DarkEdif, it puts all languages in one MFX. -->
@@ -711,7 +711,8 @@
 		<UseDebugLibraries Condition="$(DbgBuild)==1">true</UseDebugLibraries>
 		<!-- Most recent supported by VS, although works up to XCode 13.4.1 (Mac OS Monterey), possibly further. -->
 		<PlatformToolset>XCode_6_1</PlatformToolset>
-		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS. -->
+		<!-- libSTDc++ (not libc++) was deprecated ages ago, and is not available on watchOS or tvOS.
+https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#349757022 -->
 		<UseOfStl>libc++</UseOfStl>
 
 		<!-- Targets iPhone simulator. ARM64 can be device or simulator, but VS
@@ -719,7 +720,7 @@
 		<_AppleSDKTarget>iphoneos</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(MacBuild)==1">macosx</_AppleSDKTarget>
 		<_AppleSDKTarget Condition="$(iOSSimulatorBuild)==1">iphonesimulator</_AppleSDKTarget>
-		
+
 		<!-- iOS files redirection -->
  		<PbxprojDirectory>$(_FusionSDKTempDir)\$(ProjectName).xcodeproj</PbxprojDirectory>
 		<PayloadDescriptionFilepath>$(_FusionSDKTempDir)\.$(ProjectName).payload.desc</PayloadDescriptionFilepath>
@@ -741,7 +742,6 @@
 		<ClCompile>
 			<PrecompiledHeader>NotUsing</PrecompiledHeader>
 			<!-- <AdditionalIncludeDirectories>$(AdditionalIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>-->
-			<PreprocessorDefinitions>__APPLE__;PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<!-- Use C++17, and C11, latest finalised standards.
 				 VS 2017 (15.0) doesn't understand C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<CppLanguageStandard Condition="$(VisualStudioVersion)&gt;15.0">c++17</CppLanguageStandard>

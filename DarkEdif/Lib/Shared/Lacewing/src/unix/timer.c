@@ -43,6 +43,8 @@ static void timer_tick (lw_timer ctx)
 		lw_i64 expirations;
 		ssize_t s = read (ctx->fd, &expirations, sizeof (lw_i64));
 		(void)s;
+		int e = errno;
+		(void)e;
 		assert(s > 0);
 		// TODO: why was expirations read here? Is there an abort?
 	#endif
@@ -75,7 +77,7 @@ lw_timer lw_timer_new (lw_pump pump, const char * timer_name)
 	ctx->timer_name = strdup (timer_name);
 
 	char threadName[128];
-	sprintf (threadName, "lw_thread for lw_timer \"%s\" (0x%" PRIXPTR ")", timer_name, (uintptr_t)ctx);
+	lwp_snprintf (threadName, sizeof(threadName), "lw_thread for lw_timer \"%s\" (0x%" PRIXPTR ")", timer_name, (uintptr_t)ctx);
 	ctx->timer_thread = lw_thread_new (threadName, (void *)timer_thread);
 
 	#ifdef _lacewing_use_timerfd

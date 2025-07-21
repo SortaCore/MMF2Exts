@@ -89,6 +89,8 @@ multipart_parser* multipart_parser_init
   multipart_parser* p = (multipart_parser *)malloc(sizeof(multipart_parser) +
 							   strlen(boundary) +
 							   strlen(boundary) + 9);
+  if (!p)
+	  exit(ENOMEM);
 
   strcpy(p->multipart_boundary, boundary);
   p->boundary_length = strlen(boundary);

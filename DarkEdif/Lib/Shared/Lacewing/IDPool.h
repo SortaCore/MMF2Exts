@@ -1,4 +1,4 @@
-/* vim: set et ts=4 sw=4 sts=4 ft=cpp:
+/* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * Copyright (C) 2011 James McLaughlin.
  * Copyright (C) 2012-2022 Darkwire Software.
@@ -7,14 +7,15 @@
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
  * https://opensource.org/licenses/mit-license.php
 */
+#include "src/common.h"
 #include <vector>
 #include <set>
 
 #ifndef LacewingIDPool
 #define LacewingIDPool
 
-/// <summary> An ID number list, ensures no duplicate IDs and lowest
-/// 		  available ID numbers used first, etc. </summary>
+// An ID number list, ensures no duplicate IDs and lowest
+// available ID numbers used first, etc.
 class IDPool
 {
 
@@ -27,21 +28,20 @@ protected:
 
 public:
 
-	/// <summary> Creates an ID pool. First ID returned is 0. </summary>
+	// Creates an ID pool. First ID returned is 0.
 	IDPool()
 	{
 		nextID = 0;
 		borrowedCount = 0;
 	}
 
-	/// <summary> Gets the next ID available from the pool. </summary>
-	/// <returns> New ID to use. </returns>
+	// Gets the next ID available from the pool
 	lw_ui16 borrow()
 	{
 		lacewing::writelock writeLock = lock.createWriteLock();
 
 		++borrowedCount;
-		lw_trace("Borrowed Client ID. %i IDs borrowed so far.", borrowedCount);
+		lwp_trace("Borrowed Client ID. %i IDs borrowed so far.", borrowedCount);
 
 		// More than can be stored in an ID list are in use. JIC.
 		if (borrowedCount > 0xFFFE)
@@ -57,9 +57,8 @@ public:
 		return nextID ++;
 	}
 
-	/// <summary> Returns the given identifier. </summary>
-	/// <param name="ID"> The identifier to return. </param>
-	void returnID(lw_ui16 ID)
+	// Returns the given identifier back to the pool for re-use
+	void returnID(const lw_ui16 ID)
 	{
 		lacewing::writelock writeLock = lock.createWriteLock();
 		// No IDs in use at all: empty list

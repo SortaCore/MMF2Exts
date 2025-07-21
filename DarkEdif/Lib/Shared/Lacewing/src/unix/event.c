@@ -20,10 +20,13 @@ struct _lw_event
 lw_event lw_event_new ()
 {
 	lw_event ctx = (lw_event) malloc (sizeof (*ctx));
+	if (!ctx)
+		return NULL;
 
 	int p [2];
 	if (pipe(p) == -1)
 	{
+		always_log ("error %d creating pipe for lw_event\n", errno);
 		free(ctx);
 		return NULL;
 	}
@@ -39,7 +42,7 @@ lw_event lw_event_new ()
 void lw_event_delete (lw_event ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	close (ctx->pipe_w);
 	close (ctx->pipe_r);

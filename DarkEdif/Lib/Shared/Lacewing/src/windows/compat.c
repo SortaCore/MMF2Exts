@@ -91,6 +91,7 @@ lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size)
 			if (length > 0)
 			{
 				// If size does not include the null byte, the converted result won't either.
+				#pragma warning (suppress: 6386)
 				u8Wide[length] = L'\0';
 				return u8Wide;
 			}

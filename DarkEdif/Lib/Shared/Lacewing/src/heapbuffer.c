@@ -35,7 +35,10 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 
 	  if (! (*ctx = (lwp_heapbuffer) malloc (sizeof (**ctx) + init_alloc)))
 		 return lw_false;
-
+	  
+	#ifdef _WIN32
+		#pragma warning (suppress: 6385) // No, it's not overrunning... how could it be?
+	#endif
 	  memset (*ctx, 0, sizeof (**ctx));
 
 	  (*ctx)->allocated = init_alloc;
@@ -49,7 +52,7 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 		 while (new_length > (*ctx)->allocated)
 			(*ctx)->allocated *= 3;
 
-		 if (! (*ctx = (lwp_heapbuffer) realloc
+		 if (! (*ctx = (lwp_heapbuffer) lw_realloc_or_exit
 					(*ctx, sizeof (**ctx) + (*ctx)->allocated)))
 		 {
 			return lw_false;

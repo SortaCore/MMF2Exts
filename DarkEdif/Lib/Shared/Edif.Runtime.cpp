@@ -390,7 +390,7 @@ std::size_t AltVals::GetAltValueCount() const {
 #ifdef _WIN32
 	return DarkEdif::IsFusion25 ? CF25.NumAltValues : 26;
 #else
-throw std::runtime_error("not implemented");
+	throw std::runtime_error("not implemented");
 #endif
 }
 std::size_t AltVals::GetAltStringCount() const {

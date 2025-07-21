@@ -71,13 +71,13 @@ namespace DarkEdif {
 	static const int SDKVersion = 19;
 #if EditorBuild
 
-	/// <summary> Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
-	///			  Will generate a languages file if absent. </summary>
+	// Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
+	// Will generate a languages file if absent.
 	std::string GetIniSetting(const std::string_view key);
 
 	namespace SDKUpdater
 	{
-		/// <summary> Starts an update check in async. Will ignore second runs. </summary>
+		// Starts an update check in async. Will ignore second runs.
 		void StartUpdateCheck();
 
 		enum class ExtUpdateType
@@ -101,10 +101,10 @@ namespace DarkEdif {
 			// Major ext update, will change ext icon, and cause message box once per Fusion session
 			Major
 		};
-		/// <summary> Checks if update is needed. Returns type if so. Optionally returns update log. </summary>
+		// Checks if update is needed. Returns type if so. Optionally returns update log.
 		ExtUpdateType ReadUpdateStatus(std::string * logData);
 
-		/// <summary> Updates ::SDK->Icon to draw on it; optionally displays a message box. </summary>
+		// Updates ::SDK->Icon to draw on it; optionally displays a message box.
 		void RunUpdateNotifs(mv * mV, EDITDATA * edPtr);
 	}
 
@@ -175,12 +175,13 @@ namespace DarkEdif {
 
 	public:
 
-		/// <summary> Adds textual property to Fusion debugger display. </summary>
-		/// <param name="getLatestFromExt"> Pointer to function to read the current text from your code. Null if it never changes. </param>
-		/// <param name="saveUserInputToExt"> Pointer to function to run if user submits a new value via Fusion debugger.
-		///									  Null if you want it uneditable. Return true if edit was accepted by your ext. </param>
-		/// <param name="initialText"> Initial text to have in this item. Null not allowed. </param>
-		/// <param name="refreshMS"> Milliseconds before reader() should be called again to update the cached text. </param>
+		/** Adds textual property to Fusion debugger display.
+		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
+		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
+		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		*/
 		void AddItemToDebugger(
 			// Supply NULL if it will not ever change.
 			void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
@@ -192,12 +193,13 @@ namespace DarkEdif {
 			const char *userSuppliedName
 		);
 
-		/// <summary> Adds integer property to Fusion debugger display. </summary>
-		/// <param name="getLatestFromExt"> Pointer to function to read the current value from your code. Null if it never changes. </param>
-		/// <param name="saveUserInputToExt"> Pointer to function to run if user submits a new value via Fusion debugger.
-		///									  Null if you want it uneditable. Return true if edit was accepted by your ext. </param>
-		/// <param name="initialInteger"> Initial number to have in this item. </param>
-		/// <param name="refreshMS"> Milliseconds before reader() should be called again to update the cached integer. </param>
+		/** Adds integer property to Fusion debugger display.
+		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
+		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
+		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		*/
 		void AddItemToDebugger(
 			// Supply NULL if it will not ever change.
 			int (*getLatestFromExt)(Extension *const ext),
@@ -209,7 +211,7 @@ namespace DarkEdif {
 			const char *userSuppliedName
 		);
 
-		/// <summary> Updates the debug item with the given name from the Fusion debugger. </summary>
+		// Updates the debug item with the given name from the Fusion debugger.
 		void UpdateItemInDebugger(const char *userSuppliedName, const TCHAR *newText);
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
 
@@ -381,7 +383,7 @@ namespace DarkEdif {
 		HGLOBAL DLL_UpdateEditStructure(mv* mV, EDITDATA* OldEdPtr);
 #endif
 
-		// /// <summary> Loads all default values into EDITDATA. Only used for new objects. </summary>
+		// Loads all default values into EDITDATA. Only used for new objects.
 		// std::vector<std::string> PopulateEDITDATA(mv * mV, EDITDATA *& edPtr, EDITDATA ** oldEdPtr, void *(*reallocFunc)(mv * mV, void * ptr, size_t s));
 
 		struct PropAccesser;

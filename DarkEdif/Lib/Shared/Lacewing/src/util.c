@@ -299,3 +299,26 @@ void lwp_to_lowercase (char * str)
 		*i = (char)tolower (*i);
 }
 
+void * lw_realloc_or_exit (void * const origptr, const size_t newSize)
+{
+	void * newMem = realloc(origptr, newSize);
+	if (!newMem)
+		exit(ENOMEM);
+	return newMem;
+}
+
+void * lw_malloc_or_exit(const size_t size)
+{
+	void * newMem = malloc (size);
+	if (!newMem)
+		exit (ENOMEM);
+	return newMem;
+}
+
+void * lw_calloc_or_exit (const size_t count, const size_t size)
+{
+	void * newMem = calloc (count, size);
+	if (!newMem)
+		exit (ENOMEM);
+	return newMem;
+}

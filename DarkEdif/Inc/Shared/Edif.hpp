@@ -356,5 +356,5 @@ namespace Edif
 
 namespace Edif {
 	class SDK;
-	extern SDK* SDK;
+	extern class SDK* SDK;
 }

@@ -41,7 +41,17 @@ lw_flashpolicy lw_flashpolicy_new (lw_pump pump)
 {
 	lw_flashpolicy ctx = (lw_flashpolicy) calloc (sizeof (*ctx), 1);
 
+	if (!ctx)
+		return NULL;
+
 	ctx->server = lw_server_new (pump);
+	
+	if (!ctx->server)
+	{
+		free(ctx);
+		return NULL;
+	}
+	
 	lw_server_set_tag(ctx->server, ctx);
 
 	lw_server_on_error (ctx->server, on_error);
@@ -103,7 +113,7 @@ void lw_flashpolicy_host_filter (lw_flashpolicy ctx, const char * filename,
 	fseek (file, 0, SEEK_END);
 
 	ctx->size = (size_t)ftell (file);
-	ctx->buffer = (char *) malloc (ctx->size);
+	ctx->buffer = (char *) lw_malloc_or_exit (ctx->size);
 
 	fseek (file, 0, SEEK_SET);
 

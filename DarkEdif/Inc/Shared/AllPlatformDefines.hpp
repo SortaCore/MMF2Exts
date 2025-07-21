@@ -10,7 +10,7 @@
 	// as many C++17 features as you can.
 	#error Your version of Visual Studio is too old!
 #endif
-#if __cplusplus < 201703L
+#if __cplusplus < 201703L && !defined(__INTELLISENSE__)
 	// Android IntelliSense uses a different code inspecting engine, triggering this warning in edit time,
 	// although at compile time it may indeed be using C++17 and thus have no issues.
 	#error Not running in C++17 mode

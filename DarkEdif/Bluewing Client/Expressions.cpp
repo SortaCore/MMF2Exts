@@ -604,7 +604,7 @@ unsigned int Extension::ChannelListing_ChannelCount()
 	return (std::uint32_t)Cli.channellistingcount();
 }
 
-/// <summary> Number of UTF-8 code points (including things like combining accents) </summary>
+// Number of UTF-8 code points (including things like combining accents)
 int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -633,7 +633,7 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 
 	return (int)numCodePoints;
 }
-/// <summary> Get number of UTF-8 graphemes (distinct graphical characters) </summary>
+// Get number of UTF-8 graphemes (distinct graphical characters)
 int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -667,7 +667,7 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	// Add 1 char for the thisChar at end
 	return (int)++numChars;
 }
-/// <summary> Get number of bytes in a UTF-8 string </summary>
+// Get number of bytes in a UTF-8 string
 int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -679,8 +679,8 @@ int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 	const size_t u8size = DarkEdif::TStringToUTF8(tStr).size();
 	return u8size <= 0 ? -1 : (int)u8size;
 }
-/// <summary> Tests if the UTF-8 equivalent matches the passed allow list, and if allow list is valid.
-///			  If so, blank is returned, otherwise the error or faulty character. </summary>
+// Tests if the UTF - 8 equivalent matches the passed allow list, and if allow list is valid.
+// If so, blank is returned, otherwise the error or faulty character.
 const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList)
 {
 	lacewing::codepointsallowlist list;

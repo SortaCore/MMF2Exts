@@ -21,7 +21,7 @@ lw_sync lw_sync_new ()
 	lw_sync ctx = (lw_sync)malloc (sizeof (*ctx));
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	pthread_mutexattr_init (&ctx->attr);
 	pthread_mutexattr_settype (&ctx->attr, PTHREAD_MUTEX_RECURSIVE);

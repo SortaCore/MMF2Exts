@@ -365,6 +365,8 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		if (!compat_GetFileSizeEx () (ctx->fd, &size))
 			return;
 
+		// If GetFileSizeEx returned true, this was set, so suppress the uninited var warning
+#pragma warning (suppress: 6001)
 		ctx->size = (size_t) size.QuadPart;
 
 		assert (ctx->size != -1);
@@ -418,8 +420,7 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 
 	/* TODO : Pre-allocate a bunch of these and reuse them? */
 
-	fdstream_overlapped overlapped = (fdstream_overlapped)
-	malloc (sizeof (*overlapped) + size);
+	fdstream_overlapped overlapped = (fdstream_overlapped)malloc (sizeof (*overlapped) + size);
 
 	if (!overlapped)
 		return size;

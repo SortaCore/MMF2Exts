@@ -2,7 +2,7 @@
 // DarkEdif extension: allows safe multithreading returns.
 #include "Common.hpp"
 
-enum InteractiveType : std::uint8_t
+enum class InteractiveType : std::uint8_t
 {
 	None = 0,
 	ConnectRequest = 1,

@@ -33,7 +33,7 @@
 
 #ifdef _MSC_VER
 	#ifndef _CRT_SECURE_NO_WARNINGS
-	  #define _CRT_SECURE_NO_WARNINGS
+		#define _CRT_SECURE_NO_WARNINGS
 	#endif
 #endif
 
@@ -52,13 +52,13 @@
 static unsigned char hex_value (json_char c)
 {
 	if (c >= 'A' && c <= 'F')
-	  return (c - 'A') + 10;
+		return (c - 'A') + 10;
 
 	if (c >= 'a' && c <= 'f')
-	  return (c - 'a') + 10;
+		return (c - 'a') + 10;
 
 	if (c >= '0' && c <= '9')
-	  return c - '0';
+		return c - '0';
 
 	return 0xFF;
 }
@@ -76,12 +76,12 @@ static void default_free (void * ptr, void * user_data)
 static void * json_alloc (json_state * state, unsigned long size, int zero)
 {
 	if ((state->ulong_max - state->used_memory) < size)
-	  return 0;
+		return 0;
 
 	if (state->settings.max_memory
 		 && (state->used_memory += size) > state->settings.max_memory)
 	{
-	  return 0;
+		return 0;
 	}
 
 	return state->settings.mem_alloc (size, zero, state->settings.user_data);
@@ -95,71 +95,71 @@ static int new_value
 
 	if (!state->first_pass)
 	{
-	  value = *top = *alloc;
-	  *alloc = (*alloc)->_reserved.next_alloc;
+		value = *top = *alloc;
+		*alloc = (*alloc)->_reserved.next_alloc;
 
-	  if (!*root)
-		 *root = value;
+		if (!*root)
+			*root = value;
 
-	  switch (value->type)
-	  {
-		 case json_array:
+		switch (value->type)
+		{
+			case json_array:
 
-			if (! (value->u.array.values = (json_value **) json_alloc
-				(state, value->u.array.length * sizeof (json_value *), 0)) )
-			{
-				return 0;
-			}
+				if (! (value->u.array.values = (json_value **) json_alloc
+					(state, value->u.array.length * sizeof (json_value *), 0)) )
+				{
+					return 0;
+				}
 
-			value->u.array.length = 0;
-			break;
+				value->u.array.length = 0;
+				break;
 
-		 case json_object:
+			case json_object:
 
-			values_size = sizeof (*value->u.object.values) * value->u.object.length;
+				values_size = sizeof (*value->u.object.values) * value->u.object.length;
 
-			if (! ((*(void **) &value->u.object.values) = json_alloc
-				  (state, values_size + ((unsigned long) value->u.object.values), 0)) )
-			{
-				return 0;
-			}
+				if (! ((*(void **) &value->u.object.values) = json_alloc
+						(state, values_size + ((unsigned long) value->u.object.values), 0)) )
+				{
+					return 0;
+				}
 
-			value->_reserved.object_mem = (*(char **) &value->u.object.values) + values_size;
+				value->_reserved.object_mem = (*(char **) &value->u.object.values) + values_size;
 
-			value->u.object.length = 0;
-			break;
+				value->u.object.length = 0;
+				break;
 
-		 case json_string:
+			case json_string:
 
-			if (! (value->u.string.ptr = (json_char *) json_alloc
-				(state, (value->u.string.length + 1) * sizeof (json_char), 0)) )
-			{
-				return 0;
-			}
+				if (! (value->u.string.ptr = (json_char *) json_alloc
+					(state, (value->u.string.length + 1) * sizeof (json_char), 0)) )
+				{
+					return 0;
+				}
 
-			value->u.string.length = 0;
-			break;
+				value->u.string.length = 0;
+				break;
 
-		 default:
-			break;
-	  };
+			default:
+				break;
+		};
 
-	  return 1;
+		return 1;
 	}
 
 	value = (json_value *) json_alloc (state, sizeof (json_value), 1);
 
 	if (!value)
-	  return 0;
+		return 0;
 
 	if (!*root)
-	  *root = value;
+		*root = value;
 
 	value->type = type;
 	value->parent = *top;
 
 	if (*alloc)
-	  (*alloc)->_reserved.next_alloc = value;
+		(*alloc)->_reserved.next_alloc = value;
 
 	*alloc = *top = value;
 
@@ -177,16 +177,16 @@ static int new_value
 	do { if (!state.first_pass) string [string_length] = b;  ++ string_length; } while (0);
 
 const static long
-	flag_next			 = 1 << 0,
+	flag_next			= 1 << 0,
 	flag_reproc			= 1 << 1,
 	flag_need_comma		= 1 << 2,
 	flag_seek_value		= 1 << 3,
-	flag_escaped		  = 1 << 4,
+	flag_escaped		= 1 << 4,
 	flag_string			= 1 << 5,
 	flag_need_colon		= 1 << 6,
-	flag_done			 = 1 << 7,
-	flag_num_negative	 = 1 << 8,
-	flag_num_zero		 = 1 << 9,
+	flag_done			= 1 << 7,
+	flag_num_negative	= 1 << 8,
+	flag_num_zero		= 1 << 9,
 	flag_num_e			= 1 << 10,
 	flag_num_e_got_sign	= 1 << 11,
 	flag_num_e_negative	= 1 << 12;
@@ -222,11 +222,8 @@ json_value * json_parse_ex (json_settings * settings,
 	state.uint_max -= 8; /* limit of how much can be added before next check */
 	state.ulong_max -= 8;
 
-//	#pragma warning(disable:4133)
-
 	if (!json_clean_comments (&json, &state, error, sizeof(error), &length))
 		goto e_failed;
-//	#pragma warning(default:4133)
 
 	end = (json + length); // json_clean_comments changes length
 
@@ -802,48 +799,48 @@ void json_value_free_ex (json_settings * settings, json_value * value)
 	json_value * cur_value;
 
 	if (!value)
-	  return;
+		return;
 
 	value->parent = 0;
 
 	while (value)
 	{
-	  switch (value->type)
-	  {
-		 case json_array:
+		switch (value->type)
+		{
+			case json_array:
 
-			if (!value->u.array.length)
-			{
-				settings->mem_free (value->u.array.values, settings->user_data);
+				if (!value->u.array.length)
+				{
+					settings->mem_free (value->u.array.values, settings->user_data);
+					break;
+				}
+
+				value = value->u.array.values [-- value->u.array.length];
+				continue;
+
+			case json_object:
+
+				if (!value->u.object.length)
+				{
+					settings->mem_free (value->u.object.values, settings->user_data);
+					break;
+				}
+
+				value = value->u.object.values [-- value->u.object.length].value;
+				continue;
+
+			case json_string:
+
+				settings->mem_free (value->u.string.ptr, settings->user_data);
 				break;
-			}
 
-			value = value->u.array.values [-- value->u.array.length];
-			continue;
-
-		 case json_object:
-
-			if (!value->u.object.length)
-			{
-				settings->mem_free (value->u.object.values, settings->user_data);
+			default:
 				break;
-			}
+		};
 
-			value = value->u.object.values [-- value->u.object.length].value;
-			continue;
-
-		 case json_string:
-
-			settings->mem_free (value->u.string.ptr, settings->user_data);
-			break;
-
-		 default:
-			break;
-	  };
-
-	  cur_value = value;
-	  value = value->parent;
-	  settings->mem_free (cur_value, settings->user_data);
+		cur_value = value;
+		value = value->parent;
+		settings->mem_free (cur_value, settings->user_data);
 	}
 }
 
@@ -860,8 +857,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 {
 #if EditorBuild
 	#pragma warning(push)
-	#pragma warning(disable: 4133)
-	#pragma warning(disable: 4018)
+	#pragma warning(disable: 4133 4018)
 
 	unsigned int size = *_size;
 	// Used as an indicator whether i is currently inside a string var.

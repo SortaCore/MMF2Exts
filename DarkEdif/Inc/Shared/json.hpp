@@ -37,11 +37,11 @@
 
 #ifndef json_int_t
 	#ifndef _MSC_VER
-	  #include <inttypes.h>
-	  #include <cstdint>
-	  #define json_int_t std::int64_t
+		#include <inttypes.h>
+		#include <cstdint>
+		#define json_int_t std::int64_t
 	#else
-	  #define json_int_t __int64
+		#define json_int_t __int64
 	#endif
 #endif
 
@@ -102,61 +102,61 @@ typedef struct _json_value
 
 	union
 	{
-	  int boolean;
-	  json_int_t integer;
-	  double dbl;
+		int boolean;
+		json_int_t integer;
+		double dbl;
 
-	  struct
-	  {
-		 unsigned int length;
-		 json_char * ptr; /* null terminated */
+		struct
+		{
+			unsigned int length;
+			json_char * ptr; /* null terminated */
 
-	  } string;
+		} string;
 
-	  struct
-	  {
-		 unsigned int length;
+		struct
+		{
+			unsigned int length;
 
-		 struct
-		 {
-			json_char * name;
-			struct _json_value * value;
+			struct
+			{
+				json_char * name;
+				struct _json_value * value;
 
-		 } * values;
+			} * values;
 
-		 #if defined(__cplusplus) && __cplusplus >= 201103L
-		 decltype(values) begin () const
-		 {  return values;
-		 }
-		 decltype(values) end () const
-		 {  return values + length;
-		 }
-		 #endif
+			#if defined(__cplusplus) && __cplusplus >= 201103L
+				decltype(values) begin () const
+				{  return values;
+				}
+				decltype(values) end () const
+				{  return values + length;
+				}
+			#endif
 
-	  } object;
+		} object;
 
-	  struct
-	  {
-		 unsigned int length;
-		 struct _json_value ** values;
+		struct
+		{
+			unsigned int length;
+			struct _json_value ** values;
 
-		 #if defined(__cplusplus) && __cplusplus >= 201103L
-		 decltype(values) begin () const
-		 {  return values;
-		 }
-		 decltype(values) end () const
-		 {  return values + length;
-		 }
-		 #endif
+			#if defined(__cplusplus) && __cplusplus >= 201103L
+				decltype(values) begin () const
+				{  return values;
+				}
+				decltype(values) end () const
+				{  return values + length;
+				}
+			#endif
 
-	  } array;
+		} array;
 
 	} u;
 
 	union
 	{
-	  struct _json_value * next_alloc;
-	  void * object_mem;
+		struct _json_value * next_alloc;
+		void * object_mem;
 
 	} _reserved;
 
@@ -165,32 +165,32 @@ typedef struct _json_value
 
 	#ifdef __cplusplus
 
-	  public:
+		public:
 
-		 inline _json_value ()
-		 {  memset (this, 0, sizeof (_json_value));
-		 }
+		inline _json_value ()
+		{  memset (this, 0, sizeof (_json_value));
+		}
 
-		 // 64-bit systems only, where size_t is 64-bit and we'll get complaints about ambiguity/lost detail otherwise
+		// 64-bit systems only, where size_t is 64-bit and we'll get complaints about ambiguity/lost detail otherwise
 #if (defined(__LP64__) && __LP64__) || (defined(_WIN64) && defined(_WIN32)) || defined(__aarch64__) || defined(__x86_64__)
-		 inline const struct _json_value & operator [] (const std::uint64_t index) const {
-			 return (*this)[(const int)index];
-		 }
+		inline const struct _json_value & operator [] (const std::uint64_t index) const {
+			return (*this)[(const int)index];
+		}
 #endif
 
-		 inline const struct _json_value &operator [] (const int index) const
-		 {
+		inline const struct _json_value &operator [] (const int index) const
+		{
 			if (type != json_array || index < 0
-					 || ((unsigned int) index) >= u.array.length)
+						|| ((unsigned int) index) >= u.array.length)
 			{
 				return json_value_none;
 			}
 
 			return *u.array.values[index];
-		 }
+		}
 
-		 inline const struct _json_value &operator [] (const char * index) const
-		 {
+		inline const struct _json_value &operator [] (const char * index) const
+		{
 			if (type != json_object)
 				return json_value_none;
 
@@ -199,59 +199,59 @@ typedef struct _json_value
 					return *u.object.values[i].value;
 
 			return json_value_none;
-		 }
+		}
 
-		 inline operator const char * () const
-		 {
+		inline operator const char * () const
+		{
 			switch (type)
 			{
 				case json_string:
-				  return u.string.ptr;
+					return u.string.ptr;
 
 				default:
-				  return "";
+					return "";
 			};
-		 }
+		}
 
-		 inline operator json_int_t () const
-		 {
+		inline operator json_int_t () const
+		{
 			switch (type)
 			{
 				case json_integer:
-				  return u.integer;
+					return u.integer;
 
 				case json_double:
-				  return (json_int_t) u.dbl;
+					return (json_int_t) u.dbl;
 
 				default:
-				  return 0;
+					return 0;
 			};
-		 }
+		}
 
-		 inline operator bool () const
-		 {
+		inline operator bool () const
+		{
 			if (type != json_boolean)
 				return false;
 
 			return u.boolean != 0;
-		 }
+		}
 
-		 inline operator double () const
-		 {
+		inline operator double () const
+		{
 			switch (type)
 			{
 				case json_integer:
-				  return (double) u.integer;
+					return (double) u.integer;
 
 				case json_double:
-				  return u.dbl;
+					return u.dbl;
 
 				default:
-				  return 0;
+					return 0;
 			};
-		 }
+		}
 
-	#endif
+	#endif // __cplusplus
 
 } json_value;
 

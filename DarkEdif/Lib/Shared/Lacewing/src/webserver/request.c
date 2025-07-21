@@ -283,13 +283,13 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	/* TODO : limit name_len/value_len */
 
 	if (! (header.name = (char *) malloc (name_len + 1)))
-	  return lw_false;
+		return lw_false;
 
 	if (! (header.value = (char *) malloc (value_len + 1)))
-	  return lw_false;
+		return lw_false;
 
 	for (size_t i = 0; i < name_len; ++ i)
-	  header.name [i] = (char) tolower (name [i]);
+		header.name [i] = (char) tolower (name [i]);
 
 	header.name [name_len] = 0;
 
@@ -301,32 +301,32 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	list_push (struct _lw_ws_req_hdr, ctx->headers_in, header);
 
 	if (!strcmp (name, "cookie"))
-	  return parse_cookie_header (ctx, value_len, value);
+		return parse_cookie_header (ctx, value_len, value);
 
 	if (!strcmp (name, "host"))
 	{
-	  /* The hostname gets stored separately with the port removed for
+		/* The hostname gets stored separately with the port removed for
 		* the hostname function.
 		*/
 
-	  if (value_len > (sizeof (ctx->hostname) - 1))
-		 return lw_false; /* hostname too long */
+		if (value_len > (sizeof (ctx->hostname) - 1))
+			return lw_false; /* hostname too long */
 
-	  size_t host_len = value_len;
+		size_t host_len = value_len;
 
-	  for (size_t i = 0; i < value_len; ++ i)
-	  {
-		 if(i > 0 && value [i] == ':')
-		 {
-			host_len = i;
-			break;
-		 }
-	  }
+		for (size_t i = 0; i < value_len; ++ i)
+		{
+			if(i > 0 && value [i] == ':')
+			{
+				host_len = i;
+				break;
+			}
+		}
 
-	  memcpy (ctx->hostname, value, host_len);
-	  ctx->hostname [host_len] = 0;
+		memcpy (ctx->hostname, value, host_len);
+		ctx->hostname [host_len] = 0;
 
-	  return lw_true;
+		return lw_true;
 	}
 
 	return lw_true;
@@ -336,7 +336,7 @@ static lw_bool get_field (const char * URL, struct http_parser_url * parsed,
 						  int field, const char ** buf, size_t * length)
 {
 	if (! (parsed->field_set & (1 << field)))
-	  return lw_false;
+		return lw_false;
 
 	*buf = URL + parsed->field_data [field].off;
 	*length = parsed->field_data [field].len;
@@ -348,114 +348,116 @@ lw_bool lwp_ws_req_in_url (lw_ws_req ctx, size_t length, const char * url)
 {
 	struct http_parser_url parsed;
 
-
 	/* Check for any directory traversal in the URL. */
 
 	for (size_t i = 0; i < (length - 1); ++ i)
 	{
-	  if(url [i] == '.' && url [i + 1] == '.')
-		 return lw_false;
+		if (url [i] == '.' && url [i + 1] == '.')
+			return lw_false;
 	}
 
 	/* Now hand it over to the URL parser */
 
 	if (http_parser_parse_url (url, length, 0, &parsed))
-	  return lw_false;
+		return lw_false;
 
 
 	/* Path */
 
 	*ctx->url = 0;
 
-	{  const char * path;
-	  size_t path_length;
+	{
+		const char * path;
+		size_t path_length;
 
-	  if (get_field (url, &parsed, UF_PATH, &path, &path_length))
-	  {
-		 if (*path == '/')
-		 {
-			++ path;
-			-- path_length;
-		 }
+		if (get_field (url, &parsed, UF_PATH, &path, &path_length))
+		{
+			if (*path == '/')
+			{
+				++ path;
+				-- path_length;
+			}
 
-		 if (!lwp_urldecode (path, path_length,
-							 ctx->url, sizeof (ctx->url),
-							 lw_false))
-		 {
-			return lw_false;
-		 }
-	  }
+			if (!lwp_urldecode (path, path_length,
+								ctx->url, sizeof (ctx->url),
+								lw_false))
+			{
+				return lw_false;
+			}
+		}
 	}
 
 
 	/* Host */
 
-	{  const char * host;
-	  size_t host_length;
+	{
+		const char * host;
+		size_t host_length;
 
-	  if (get_field (url, &parsed, UF_HOST, &host, &host_length))
-	  {
-		 if (parsed.field_set & (1 << UF_PORT))
-		 {
-			/* TODO : Is this robust? */
+		if (get_field (url, &parsed, UF_HOST, &host, &host_length))
+		{
+			if (parsed.field_set & (1 << UF_PORT))
+			{
+				/* TODO : Is this robust? */
 
-			host_length += 1u + parsed.field_data [UF_PORT].off;
-		 }
+				host_length += 1u + parsed.field_data [UF_PORT].off;
+			}
 
-		 lwp_ws_req_in_header (ctx, 4, "host", host_length, host);
-	  }
+			lwp_ws_req_in_header (ctx, 4, "host", host_length, host);
+		}
 	}
 
 
 	/* GET data */
 
-	{  const char * data;
-	  size_t length;
+	{
+		const char * data;
+		size_t length;
 
-	  if (get_field (url, &parsed, UF_QUERY, &data, &length))
-	  {
-		 for (;;)
-		 {
-			const char * name = data;
-
-			if (!lwp_find_char (&data, &length, '='))
-				break;
-
-			size_t name_length = (size_t)(data - name);
-
-			/* skip the = character */
-
-			++ data;
-			-- length;
-
-			const char * value = data;
-			size_t value_length = length;
-
-			if (lwp_find_char (&data, &length, '&'))
+		if (get_field (url, &parsed, UF_QUERY, &data, &length))
+		{
+			for (;;)
 			{
-				value_length = (size_t)(data - value);
+				const char * name = data;
 
-				/* skip the & character */
+				if (!lwp_find_char (&data, &length, '='))
+					break;
+
+				size_t name_length = (size_t)(data - name);
+
+				/* skip the = character */
 
 				++ data;
 				-- length;
-			}
 
-			char * name_decoded = (char *) malloc (name_length + 1),
-				 * value_decoded = (char *) malloc (value_length + 1);
+				const char * value = data;
+				size_t value_length = length;
 
-			if(!lwp_urldecode (name, name_length, name_decoded, name_length + 1, lw_true)
-				  || !lwp_urldecode (value, value_length, value_decoded, value_length + 1, lw_true))
-			{
-				free (name_decoded);
-				free (value_decoded);
+				if (lwp_find_char (&data, &length, '&'))
+				{
+					value_length = (size_t)(data - value);
+
+					/* skip the & character */
+
+					++ data;
+					-- length;
+				}
+
+				char * name_decoded = (char *) lw_malloc_or_exit (name_length + 1),
+					 * value_decoded = (char *) lw_malloc_or_exit (value_length + 1);
+
+				if (!lwp_urldecode (name, name_length, name_decoded, name_length + 1, lw_true)
+					|| !lwp_urldecode (value, value_length, value_decoded, value_length + 1, lw_true))
+				{
+					free (name_decoded);
+					free (value_decoded);
+				}
+				else
+				{
+					lwp_nvhash_set (&ctx->get_items, name_decoded, value_decoded, lw_false);
+				}
 			}
-			else
-			{
-				lwp_nvhash_set (&ctx->get_items, name_decoded, value_decoded, lw_false);
-			}
-		 }
-	  }
+		}
 	}
 
 	return lw_true;
@@ -519,8 +521,8 @@ void lw_ws_req_set_mimetype_ex (lw_ws_req ctx, const char * mimetype, const char
 {
 	if (!*charset)
 	{
-	  lw_ws_req_set_header (ctx, "content-type", mimetype);
-	  return;
+		lw_ws_req_set_header (ctx, "content-type", mimetype);
+		return;
 	}
 
 	char type [256];
@@ -549,13 +551,13 @@ void lw_ws_req_set_header (lw_ws_req ctx, const char * name, const char * value)
 {
 	list_each_elem (struct _lw_ws_req_hdr, ctx->headers_out, header)
 	{
-	  if (!strcasecmp (header->name, name))
-	  {
-		 free (header->value);
-		 header->value = strdup (value);
+		if (!strcasecmp (header->name, name))
+		{
+			free (header->value);
+			header->value = strdup (value);
 
-		 return;
-	  }
+			return;
+		}
 	}
 
 	lw_ws_req_add_header (ctx, name, value);
@@ -571,7 +573,7 @@ void lw_ws_req_add_header (lw_ws_req ctx, const char * name, const char * value)
 	header.name [name_len] = 0;
 
 	for (size_t i = 0; i < name_len; ++ i)
-	  header.name [i] = (char)tolower (name [i]);
+		header.name [i] = (char)tolower (name [i]);
 
 	header.value = strdup (value);
 
@@ -606,34 +608,34 @@ void lwp_ws_req_set_cookie (lw_ws_req ctx,
 
 	if (!cookie)
 	{
-	  cookie = (lw_ws_req_cookie) calloc (sizeof (*cookie), 1);
+		cookie = (lw_ws_req_cookie) lw_calloc_or_exit (sizeof (*cookie), 1);
 
-	  cookie->changed = changed;
+		cookie->changed = changed;
 
-	  cookie->name = (char *) malloc (name_len + 1);
-	  memcpy (cookie->name, name, name_len);
-	  cookie->name [name_len] = 0;
+		cookie->name = (char *) lw_malloc_or_exit (name_len + 1);
+		memcpy (cookie->name, name, name_len);
+		cookie->name [name_len] = 0;
 
-	  cookie->value = (char *) malloc (value_len + 1);
-	  memcpy (cookie->value, value, value_len);
-	  cookie->value [value_len] = 0;
+		cookie->value = (char *) lw_malloc_or_exit (value_len + 1);
+		memcpy (cookie->value, value, value_len);
+		cookie->value [value_len] = 0;
 
-	  cookie->attr = (char *) malloc (attr_len + 1);
-	  memcpy (cookie->attr, attr, attr_len);
-	  cookie->attr [attr_len] = 0;
+		cookie->attr = (char *) lw_malloc_or_exit (attr_len + 1);
+		memcpy (cookie->attr, attr, attr_len);
+		cookie->attr [attr_len] = 0;
 
-	  HASH_ADD_KEYPTR (hh, ctx->cookies, cookie->name, name_len, cookie);
+		HASH_ADD_KEYPTR (hh, ctx->cookies, cookie->name, name_len, cookie);
 
-	  return;
+		return;
 	}
 
 	cookie->changed = changed;
 
-	cookie->value = (char *) realloc (cookie->value, value_len + 1);
+	cookie->value = (char *) lw_realloc_or_exit (cookie->value, value_len + 1);
 	memcpy (cookie->value, value, value_len);
 	cookie->value [value_len] = 0;
 
-	cookie->attr = (char *) realloc (cookie->attr, attr_len + 1);
+	cookie->attr = (char *) lw_realloc_or_exit (cookie->attr, attr_len + 1);
 	memcpy (cookie->attr, attr, attr_len);
 	cookie->attr [attr_len] = 0;
 }
@@ -658,9 +660,9 @@ void lw_ws_req_set_last_modified (lw_ws_req ctx, lw_i64 _time)
 	time = (time_t) _time;
 
 	#ifdef _WIN32
-	  memcpy (&tm, gmtime (&time), sizeof (struct tm));
+		memcpy (&tm, gmtime (&time), sizeof (struct tm));
 	#else
-	  gmtime_r (&time, &tm);
+		gmtime_r (&time, &tm);
 	#endif
 
 	char modified [128];
@@ -688,8 +690,8 @@ const char * lw_ws_req_header (lw_ws_req ctx, const char * name)
 {
 	list_each (struct _lw_ws_req_hdr, ctx->headers_in, header)
 	{
-	  if (!strcasecmp (header.name, name))
-		 return header.value;
+		if (!strcasecmp (header.name, name))
+			return header.value;
 	}
 
 	return "";
@@ -757,14 +759,14 @@ const char * lw_ws_req_GET (lw_ws_req ctx, const char * name)
 static void parse_post_data (lw_ws_req ctx)
 {
 	if (ctx->parsed_post_data)
-	  return;
+		return;
 
 	ctx->parsed_post_data = lw_true;
 
 	if (!lwp_begins_with (lw_ws_req_header (ctx, "content-type"),
 			"application/x-www-form-urlencoded"))
 	{
-	  return;
+		return;
 	}
 
 	char * post_data = lwp_heapbuffer_buffer (&ctx->buffer),
@@ -775,35 +777,35 @@ static void parse_post_data (lw_ws_req ctx)
 
 	for (;;)
 	{
-	  char * name = post_data, * value = strchr (post_data, '=');
+		char * name = post_data, * value = strchr (post_data, '=');
 
-	  size_t name_length = (size_t)(value - name);
+		size_t name_length = (size_t)(value - name);
 
-	  if (!value ++)
-		 break;
+		if (!value ++)
+			break;
 
-	  char * next = strchr (value, '&');
+		char * next = strchr (value, '&');
 
-	  size_t value_length = next ? (size_t)(next - value) : strlen (value);
+		size_t value_length = next ? (size_t)(next - value) : strlen (value);
 
-	  char * name_decoded = (char *) malloc (name_length + 1),
-			* value_decoded = (char *) malloc (value_length + 1);
+		char * name_decoded = (char *) lw_malloc_or_exit (name_length + 1),
+			* value_decoded = (char *) lw_malloc_or_exit (value_length + 1);
 
-	  if(!lwp_urldecode (name, name_length, name_decoded, name_length, lw_true)
+		if(!lwp_urldecode (name, name_length, name_decoded, name_length, lw_true)
 			|| !lwp_urldecode (value, value_length, value_decoded, value_length, lw_true))
-	  {
-		 free (name_decoded);
-		 free (value_decoded);
-	  }
-	  else
-	  {
-		 lwp_nvhash_set (&ctx->post_items, name_decoded, value_decoded, lw_false);
-	  }
+		{
+			free (name_decoded);
+			free (value_decoded);
+		}
+		else
+		{
+			lwp_nvhash_set (&ctx->post_items, name_decoded, value_decoded, lw_false);
+		}
 
-	  if (!next)
-		 break;
+		if (!next)
+			break;
 
-	  post_data = next + 1;
+		post_data = next + 1;
 	}
 
 	*end = b;
@@ -848,7 +850,7 @@ lw_i64 lw_ws_req_last_modified (lw_ws_req ctx)
 	const char * modified = lw_ws_req_header (ctx, "if-modified-since");
 
 	if (*modified)
-	  return lwp_parse_time (modified);
+		return lwp_parse_time (modified);
 
 	return 0;
 }

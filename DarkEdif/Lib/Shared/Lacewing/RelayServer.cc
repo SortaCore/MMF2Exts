@@ -177,20 +177,20 @@ struct relayserverinternal
 	long actionThreadMS;
 	std::size_t numActionsPerTick;
 
-	/// <summary> Lacewing timer function for pinging and inactivity tests. </summary>
-	///	<remarks> There are three things this function does:
-	///			  1) If the client has not sent a TCP message within tcpPingMS milliseconds, send a ping request.
-	///			  -> If client still hasn't responded after another tcpPingMS, notify server via error handler,
-	///				 and disconnect client.
-	///			  2) If the client has not sent a UDP message within udpKeepAliveMS milliseconds, send a ping request.
-	///			  -> UDP ping response is not checked for by this function; one-way UDP activity is enough to keep the
-	///				 UDP psuedo-connection alive in routers.
-	///				 Note that using default timings, three UDP messages will be sent before routers are likely to close connection.
-	///			  3) If the client has only replied to pings, and not sent any channel, peer, or server messages besides,
-	///				 within a period of maxInactivityMS, then the client will be messaged and disconnected, and the server notified
-	///				 via error handler.
-	///				 Worth noting channel messages when there is no other peers, and serve messages when there is no server message
-	///				 handler, and channel join/leave requests as well as other messages, do not qualify as activity. </remarks>
+	/** Lacewing server timer function for client pinging and inactivity tests.
+		@remarks There are three things this function does:
+				  1) If the client has not sent a TCP message within tcpPingMS milliseconds, send a ping request.
+				  -> If client still hasn't responded after another tcpPingMS, notify server via error handler,
+					 and disconnect client.
+				  2) If the client has not sent a UDP message within udpKeepAliveMS milliseconds, send a ping request.
+				  -> UDP ping response is not checked for by this function; one-way UDP activity is enough to keep the
+					 UDP psuedo-connection alive in routers.
+					 Note that using default timings, three UDP messages will be sent before routers are likely to close connection.
+				  3) If the client has only replied to pings, and not sent any channel, peer, or server messages besides,
+					 within a period of maxInactivityMS, then the client will be messaged and disconnected, and the server notified
+					 via error handler.
+					 Worth noting channel messages when there is no other peers, and serve messages when there is no server message
+					 handler, and channel join/leave requests as well as other messages, do not qualify as activity. */
 	void pingtimertick()
 	{
 		std::vector<std::shared_ptr<relayserver::client>> pingUnresponsivesToDisconnect;
@@ -1667,8 +1667,8 @@ lw_ui16 relayserver::port()
 	return (lw_ui16) socket->port();
 }
 
-/// <summary> Gracefully closes the channel, including deleting memory, removing channel
-/// 		  from server list, and messaging clients. </summary>
+// Gracefully closes the channel, including deleting memory, removing channel
+// from server list, and messaging clients.
 void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> channel)
 {
 	auto channelWriteLock = channel->lock.createWriteLock();
@@ -2919,7 +2919,7 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 	}
 }
 
-/// <summary> Throw all clients off this channel, sending Leave Request Success. </summary>
+// Throw all clients off this channel, sending Leave Request Success.
 void relayserver::channel::close()
 {
 	auto serverChannelListReadLock = server.server.lock_channellist.createReadLock();
@@ -3292,10 +3292,10 @@ std::shared_ptr<relayserver::channel> relayserver::createchannel(std::string_vie
 	return channel;
 }
 
-/// <summary> Responds to a connect request. Pass null for deny reason if approving.
-/// 		  You MUST run this event even if denying, or you will have a connection open and a memory leak. </summary>
-/// <param name="client">	  [in] The client. Deleted if not approved. </param>
-/// <param name="denyReason"> The deny reason. If null, request is approved. </param>
+/** Responds to a connect request. Pass empty for deny reason if approving.
+	You MUST run this event even if denying, or you will have a connection open and a memory leak.
+	@param client [in] The client. Deleted if not approved.
+	@param denyReason The deny reason. If empty, request is approved. */
 void relayserver::connect_response(
 	std::shared_ptr<relayserver::client> client, std::string_view passedDenyReason)
 {
@@ -3372,7 +3372,7 @@ void relayserver::connect_response(
 	}
 }
 
-// Validates the StringView, or replaces it with the given other one.
+// Validates the string_view, or replaces it with the given other one.
 static void validateorreplacestringview(std::string_view toValidate,
 	std::string_view &writeTo,
 	std::string_view replaceWith,
@@ -3394,15 +3394,13 @@ static void validateorreplacestringview(std::string_view toValidate,
 	lacewing::error_delete(error);
 	writeTo = replaceWith;
 }
-/// <summary> Approves or sends a deny response to channel join request. Pass null for deny reason if approving.
-/// 		  Even if you're denying, you still MUST call this event, or you will have a memory leak.
-/// 		  For new channels, this will add them to server's channel list if approved, or delete them. </summary>
-/// <param name="channel">				[in] The channel. Name is as originally requested. </param>
-/// <param name="passedNewChannelName"> Name of the passed channel. If null, original request name is approved.
-/// 									If non-null, must be 1-255 chars, or the channel join is denied entirely. </param>
-/// <param name="client">				[in] The client joining/creating the channel. </param>
-/// <param name="denyReason">			The deny reason. If null, the channel is approved (if new channel name is legal).
-/// 									If non-null, channel join deny is sent, and channel is cleaned up as needed. </param>
+/** Approves or sends a deny response to channel join request. Pass empty for deny reason if approving.
+ *	Even if you're denying, you still MUST call this event, or you will have a memory leak.
+ *	For new channels, this will add them to server's channel list if approved, or delete them.
+ *	@param channel		[in] The channel. Name is as originally requested.
+ *	@param client		[in] The client joining/creating the channel.
+ *	@param denyReason	[in] The deny reason. If empty, the channel is approved.
+ *	 					If non-empty, channel join deny is sent, and channel is cleaned up as needed. */
 void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> channel,
 	std::shared_ptr<relayserver::client> client, std::string_view denyReason)
 {
@@ -3500,12 +3498,12 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 	serverinternal.channel_addclient(channel, client);
 }
 
-/// <summary> Approves or sends a deny response to channel leave request. Pass null for deny reason if approving.
-/// 		  Even if you're denying, you still MUST call this event, or you will have a memory leak. </summary>
-/// <param name="channel">		[in] The channel.  </param>
-/// <param name="client">		[in] The client leaving the channel. </param>
-/// <param name="denyReason">	The deny reason. If null, the channel is approved (if new channel name is legal).
-/// 							If non-null, channel join deny is sent, and channel is cleaned up as needed. </param>
+/** Approves or sends a deny response to channel leave request. Pass null for deny reason if approving.
+	Even if you're denying, you still MUST call this event, or you will have a memory leak.
+	@param channel	  [in] The channel.
+	@param client	  [in] The client leaving the channel.
+	@param denyReason The deny reason. If empty, the channel is approved (if new channel name is legal).
+					  If non-empty , channel join deny is sent, and channel is cleaned up as needed. */
 void relayserver::leavechannel_response(std::shared_ptr<relayserver::channel> channel,
 	std::shared_ptr<relayserver::client> client, std::string_view denyReason)
 {
@@ -3540,8 +3538,8 @@ void relayserver::leavechannel_response(std::shared_ptr<relayserver::channel> ch
 	serverinternal.channel_removeclient(channel, client);
 }
 
-/// <summary> Finishes the channel closing event, clearing the peer list and sending the leave messages.
-///			  Should only be called after a false-returning channel close handler. </summary>
+// Finishes the channel closing event, clearing the peer list and sending the leave messages.
+// Should only be called after a false-returning channel close handler.
 void relayserver::closechannel_finish(std::shared_ptr<lacewing::relayserver::channel> channel)
 {
 	// The channel should already be closed, with this event only updating the peer list and closing.

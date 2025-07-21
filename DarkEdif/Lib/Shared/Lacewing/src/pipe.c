@@ -36,6 +36,10 @@ void lwp_pipe_init (lw_stream ctx, lw_pump pump)
 lw_stream lw_pipe_new (lw_pump pump)
 {
 	lw_stream pipe = (lw_stream) malloc (sizeof (*pipe));
+
+	if (!pipe)
+		return NULL;
+
 	lwp_pipe_init (pipe, pump);
 
 	return pipe;

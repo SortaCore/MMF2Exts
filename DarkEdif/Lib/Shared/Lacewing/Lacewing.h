@@ -662,12 +662,14 @@ typedef lw_i8 lw_bool;
 	typedef void (lw_callback * lw_ws_hook_upload_post) (lw_ws, lw_ws_req, lw_ws_upload uploads [], size_t num_uploads);
 	lw_import void lw_ws_on_upload_post (lw_ws, lw_ws_hook_upload_post);
 
-	typedef void (lw_callback* lw_ws_hook_websocket_message) (lw_ws, lw_ws_req, const char * buffer, size_t size);
+	typedef void (lw_callback * lw_ws_hook_websocket_message) (lw_ws, lw_ws_req, const char * buffer, size_t size);
 	lw_import void lw_ws_on_websocket_message (lw_ws, lw_ws_hook_websocket_message);
 
+	void * lw_malloc_or_exit (const size_t size);
+	void * lw_calloc_or_exit (const size_t count, const size_t size);
+	void * lw_realloc_or_exit (void * origptr, size_t newsize);
 
 #ifdef __cplusplus
-
 } /* extern "C" */
 
 #ifdef _lacewing_wrap_cxx
@@ -681,51 +683,49 @@ typedef lw_i8 lw_bool;
 	#define lw_sprintf_s sprintf
 #endif // _MSC_VER
 
-#pragma region Phi stuff
-
 // Every Unicode library decomposes into 4-byte chars, probably for the x86 nativeness, and
 // for one code unit per code point.
 // For platform compatibility, we use a third-party library; this one is actually used in Julia.
 #include "deps/utf8proc.h"
 
-/// <summary> Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
-/// 		  If the address is IPv4 or unmapped IPv6, copies it without port. </summary>
+// Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
+// If the address is IPv4 or unmapped IPv6, copies it without the port.
 void lw_addr_prettystring(const char * input, char * const output, size_t outputSize);
 
-/// <summary> Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
-///			  make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
-///			  Does not validate or check strings' content. </summary>
+// Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
+// make sure if you're passing UTF-8, both args are valid, normalized UTF-8 strings.
+// Does not validate or check strings' content.
 bool lw_sv_cmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Compares if two strings match, returns true if so. Case insensitive. Does a size check.
-///			  Expects both are valid UTF-8 strings, non-destructively simplified.
-///			  Also see lw_sv_cmp(). </summary>
+// Compares if two strings match, returns true if so. Case insensitive. Does a size check.
+// Expects both are valid UTF-8 strings, non-destructively simplified.
+// See lw_sv_cmp().
 bool lw_u8str_icmp(const std::string_view first, const std::string_view second);
 
-/// <summary> Validates a UTF-8 std::string as having valid UTF-8 codepoints.
-///			  Does not ensure strings are normalized; empty strings return true. </summary>
+// Validates a UTF-8 std::string as having valid UTF-8 codepoints.
+// Does not ensure strings are normalized. Empty strings return true.
 bool lw_u8str_validate(const std::string_view toValidate);
 
-/// <summary> Normalizes the passed std::string to its least-bytes equivalent (using NFC), and returns true.
-///			  Empty = true. Handles invalid UTF-8 strings by returning false. </summary>
+// Normalizes the passed std::string to its least-bytes equivalent (using NFC), and returns true.
+// Empty = true. Handles invalid UTF-8 strings by returning false.
 bool lw_u8str_normalize(std::string & input);
 
-/// <summary> Returns a NFC/NKFC, case-folded, stripped-down version of
-///			  passed string. Used for easier searching, and to prevent similar names as an exploit.
-///			  Handles invalid UTF-8 string by returning blank. </summary>
-/// <param name="destructive"> If true, converts to lowercase, and lumps some things together with UTF8PROC lumping.
-///							   Use false to check if two strings (after the simplifying) differ by case alone. </param>
-/// <param name="extralumping"> Replaces lookalike characters (e.g. 0 and O to o). </param>
+/** Returns a NFC/NKFC, case-folded, stripped-down version of the passed string.
+	Used for easier searching, and to prevent similar names as an exploit.
+	Handles invalid UTF-8 string by returning blank.
+	@param destructive If true, converts to lowercase, and lumps some things together with UTF8PROC lumping.
+					   Use false to check if two strings (after the simplifying) differ by case alone.
+	@param extralumping Replaces lookalike characters (e.g. 0 and O to o). */
 std::string lw_u8str_simplify(const std::string_view first, bool destructive = true, bool extralumping = true);
 
-/// <summary> Removes whitespace, control, and strange code points from both beginning and end of string,
-///			  and returns the result. Stricter on the beginning. Ignores the middle of the string.
-///			  Handles invalid UTF-8 strings by returning blank. </summary>
-/// <param name="abortIfTrimNeeded"> If abort is specified, at the first code point needed to be trimmed,
-///									 the function aborts and returns an empty string_view instead. </param>
-/// <remarks> The front of the string must be letters, numbers, punctuation in Unicode category.
-///			  The end of the string is like the start, but also allows marks and symbols.
-///			  Both control and whitespace category will always be removed. </remarks>
+/** Removes whitespace, control, and strange code points from both beginning and end of string,
+	and returns the result. Stricter on the beginning. Ignores the middle of the string.
+	Handles invalid UTF-8 strings by returning blank.
+	@param abortIfTrimNeeded If abort is specified, at the first code point needed to be trimmed,
+							 the function aborts and returns an empty string_view instead.
+	@remarks The front of the string must be letters, numbers, punctuation in Unicode category.
+			 The end of the string is like the start, but also allows marks and symbols.
+			 Both control and whitespace category will always be removed. */
 std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded = false);
 
 #if defined(_WIN32)
@@ -733,9 +733,6 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded =
 // Returns null or a wide-converted version of the U8 string passed. Free it with free(). Pass size -1 for null-terminated strings.
 extern "C" lw_import wchar_t * lw_char_to_wchar(const char * u8str, int size);
 #endif
-
-// to preserve namespace
-#pragma endregion
 
 namespace lacewing
 {
@@ -1121,8 +1118,9 @@ struct _client : public _fdstream
 {
 	lw_class_wraps (client);
 
-	lw_import void connect (const char * host, lw_ui16 port);
+	lw_import void connect (const char * host, lw_ui16 remote_port);
 	lw_import void connect (address);
+	lw_import void setlocalport (lw_ui16 port);
 
 	lw_import bool connected ();
 	lw_import bool connecting ();
@@ -1177,6 +1175,8 @@ struct _server
 	lw_import size_t num_clients ();
 	lw_import server_client client_first ();
 
+	lw_import lw_ui16 open_pinhole (const char * ip, lw_ui16 local_port);
+
 	typedef void (lw_callback * hook_connect) (server, server_client);
 	typedef void (lw_callback * hook_disconnect) (server, server_client);
 
@@ -1221,7 +1221,7 @@ struct _udp
 
 	lw_import void host (lw_ui16 port);
 	lw_import void host (filter);
-	lw_import void host (address);
+	lw_import void host (address, lw_ui16 local_port = 0);
 
 	lw_import bool hosting ();
 	lw_import void unhost ();
@@ -1707,6 +1707,8 @@ public:
 
 	void connect(const char * host, lw_ui16 port = 6121);
 	void connect(lacewing::address);
+	// For pinholing connections, set before connect()
+	void setlocalport(lw_ui16 port);
 
 	bool connecting();
 	bool connected();
@@ -1772,18 +1774,14 @@ public:
 		std::atomic<bool> _readonly = false;
 		std::vector<std::shared_ptr<relayclient::channel::peer>> peers;
 
-
-		/// <summary> searches for the first peer by id number. </summary>
-		/// <param name="id"> id to look up. </param>
-		/// <returns> null if it fails, else the matching peer. </returns>
+		// Searches for the first peer by id number, returns null if not found
 		std::shared_ptr<relayclient::channel::peer> findpeerbyid(lw_ui16 id);
 
-		/// <summary> Adds a new peer. </summary>
-		/// <param name="peerid"> ID number for the peer. </param>
-		/// <param name="flags"> The flags of the peer connect/channel join message.
-		/// 					 0x1 = master. other flags are not accepted. </param>
-		/// <param name="name"> The name. Cannot be null or blank. </param>
-		/// <returns> null if it fails, else a relayclientinternal::peer *. </returns>
+		/** Adds a new peer.
+		 * @param peerid ID number for the peer.
+		 * @param flags  The flags of the peer connect/channel join message.
+		 *				 0x1 = master. Other flags are not accepted.
+		 * @param name   The peer name. Must not be null or blank. */
 		std::shared_ptr<relayclient::channel::peer> addnewpeer(lw_ui16 peerid, lw_ui8 flags, std::string_view name);
 
 	public:
@@ -1941,6 +1939,7 @@ struct relayserver
 	void unhost();
 	// This works with clients of regular server, so you should use this instead of websocket->unhost/unhost_secure
 	void unhost_websocket(bool insecure, bool secure);
+	void open_pinhole(const char* ip, lw_ui16 localPort);
 
 	bool hosting();
 	lw_ui16 port();
@@ -1963,18 +1962,18 @@ struct relayserver
 
 		std::shared_ptr<client> channelmaster() const;
 
-		/// <summary> Reads a copy of the channel name. Automatically read-locks the channel. </summary>
+		// Reads a copy of the channel name. Automatically read-locks the channel.
 		std::string name() const;
-		/// <summary> Reads a simplified copy of the channel name. Automatically read-locks the channel. </summary>
+		// Reads a simplified copy of the channel name. Automatically read-locks the channel.
 		std::string nameSimplified() const;
-		/// <summary> Sets the channel name. </summary>
+		// Sets the channel name.
 		void name(std::string_view str);
 
 		bool hidden() const;
 		bool autocloseenabled() const;
 		bool readonly() const;
 
-		/// <summary> Throw all clients off this channel, sending Leave Request Success. </summary>
+		// Throw all clients off this channel, sending Leave Request Success.
 		void close();
 
 		void send(lw_ui8 subchannel, std::string_view message, lw_ui8 variant = 0);

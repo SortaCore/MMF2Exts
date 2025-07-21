@@ -66,7 +66,7 @@ class CFillData;
 class CInputFile;
 
 // Types
-//typedef	cSurface * cSurface *;
+//typedef LPSURFACE cSurface *;
 
 // Blit modes
 // Cannot rename, is used by DLL function signatures
@@ -119,7 +119,7 @@ enum class _Enum_is_bitflag_ BlitOperation {
 	// Blend the destination RGB with source surface RGB
 	// dest = ((dest * blend_coef) + ((src==transp) ? replace : src * (128-blend_coef) ))/128
 	BlendReplaceTransp,
-	// TODO: Confirm this
+	// Removed in Fusion 2.5, possibly 2.0
 	// Blits using the WinGDI raster operation (ROP) specified in the lParam
 	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#:~:text=A%20raster-operation%20code
 	DrawWithROP,
@@ -136,6 +136,8 @@ enum class _Enum_is_bitflag_ BlitOperation {
 	// ?
 	EffectEx,
 	// Max possible outside of a bitmask
+	// In Android, this is 15 due to presence of Text, other platforms have it as 14.
+	// @remarks KcBoxA/B on iOS have it as 13, mistakenly
 	Max,
 	// The bitmask for possible blit ops
 	Mask = 0x0FFF,

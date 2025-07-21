@@ -599,7 +599,7 @@ const TCHAR * Extension::GetDenyReason()
 	return Runtime.CopyString(DarkEdif::UTF8ToTString(DenyReason).c_str());
 }
 
-/// <summary> Number of UTF-8 code points (including things like combining accents) </summary>
+// Number of UTF-8 code points (including things like combining accents)
 int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -630,7 +630,7 @@ int Extension::ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr)
 
 	return numCodePoints;
 }
-/// <summary> Get number of UTF-8 graphemes (distinct graphical characters) </summary>
+// Get number of UTF-8 graphemes (distinct graphical characters)
 int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -664,7 +664,7 @@ int Extension::ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr)
 	// Add 1 codePoint for the thisCodePoint at end
 	return ++numGraphemes;
 }
-/// <summary> Get number of bytes in a UTF-8 string </summary>
+// Get number of bytes in a UTF-8 string
 int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 {
 	// Empty string
@@ -678,8 +678,8 @@ int Extension::ConvToUTF8_GetByteCount(const TCHAR * tStr)
 }
 
 extern int FindAllowListFromName(const TCHAR * listToSet);
-/// <summary> Tests if the UTF-8 equivalent matches the passed allow list, and if allow list is valid.
-///			  If so, blank is returned, otherwise the error or faulty character. </summary>
+// Tests if the UTF-8 equivalent matches the passed allow list, and if allow list is valid.
+// If so, blank is returned, otherwise the error or faulty character.
 const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList)
 {
 	lacewing::codepointsallowlist list;

@@ -38,7 +38,10 @@ typedef struct _udp_receive_info
 
 udp_receive_info udp_receive_info_new ()
 {
-	udp_receive_info info = (udp_receive_info) malloc (sizeof (*info));
+	udp_receive_info info = (udp_receive_info) calloc (sizeof (*info), 1);
+
+	if (!info)
+		return NULL;
 
 	info->winsock_buffer.buf = info->buffer;
 	info->winsock_buffer.len = sizeof (info->buffer);
@@ -68,7 +71,7 @@ struct _lw_udp
 
 	long receives_posted;
 
-	int writes_posted;
+	long writes_posted;
 
 	void * tag;
 };
@@ -92,27 +95,27 @@ static void post_receives (lw_udp ctx)
 {
 	while (ctx->receives_posted < ideal_pending_receive_count)
 	{
-	  udp_receive_info receive_info = udp_receive_info_new ();
+		udp_receive_info receive_info = udp_receive_info_new ();
 
-	  if (!receive_info)
-		 break;
+		if (!receive_info)
+			break;
 
-	  udp_overlapped overlapped =
-		 (udp_overlapped) calloc (sizeof (*overlapped), 1);
+		udp_overlapped overlapped =
+			(udp_overlapped) calloc (sizeof (*overlapped), 1);
 
-	  if (!overlapped)
-	  {
-		  free(receive_info);
-		  break;
-	  }
+		if (!overlapped)
+		{
+			free(receive_info);
+			break;
+		}
 
-	  overlapped->type = overlapped_type_receive;
-	  overlapped->tag = receive_info;
+		overlapped->type = overlapped_type_receive;
+		overlapped->tag = receive_info;
 
-	  DWORD flags = 0;
-	  lwp_retain(ctx, "udp read");
+		DWORD flags = 0;
+		lwp_retain(ctx, "udp read");
 
-	  if (WSARecvFrom (ctx->socket,
+		if (WSARecvFrom (ctx->socket,
 						&receive_info->winsock_buffer,
 						1,
 						0,
@@ -121,25 +124,31 @@ static void post_receives (lw_udp ctx)
 						&receive_info->from_length,
 						&overlapped->overlapped,
 						0) == SOCKET_ERROR)
-	  {
-		 int error = WSAGetLastError();
+		{
+			int error = WSAGetLastError();
 
-		 if (error != WSA_IO_PENDING)
-		 {
-			 free(receive_info);
-			 free(overlapped);
-			 lwp_release(ctx, "udp read");
-			 break;
-		 }
-		 // else no error, running as async
+			if (error != WSA_IO_PENDING)
+			{
+				free(receive_info);
+				free(overlapped);
+				lwp_release(ctx, "udp read");
 
-		 // fall through
-	  }
-	  // else no error, running as sync
+				lw_error err = lw_error_new();
+				lw_error_addf(err, "Error posting UDP receive");
+				lw_error_add(err, error);
+				if (ctx->on_error)
+					ctx->on_error(ctx, err);
+				lw_error_delete(err);
+				break;
+			}
+			// else no error, running as async
 
+			// fall through
+		}
+		// else no error, running as sync
 
-	  list_push(udp_overlapped, ctx->pending_receives, overlapped);
-	  ++ ctx->receives_posted;
+		list_push(udp_overlapped, ctx->pending_receives, overlapped);
+		++ ctx->receives_posted;
 	}
 }
 
@@ -152,42 +161,70 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
 	switch (overlapped->type)
 	{
-	  case overlapped_type_send:
-	  {
-		  write_completed(ctx);
-		 break;
-	  }
+		case overlapped_type_send:
+		{
+			write_completed(ctx);
+			break;
+		}
 
-	  case overlapped_type_receive:
-	  {
-		 udp_receive_info info = (udp_receive_info) overlapped->tag;
+		case overlapped_type_receive:
+		{
+			udp_receive_info info = (udp_receive_info) overlapped->tag;
 
-		 info->buffer [bytes_transferred] = 0;
+			if (error == 0)
+			{
+				info->buffer[bytes_transferred] = 0;
 
-		 struct _lw_addr addr = {0};
-		 lwp_addr_set_sockaddr (&addr, (struct sockaddr *) &info->from);
+				struct _lw_addr addr = { 0 };
+				lwp_addr_set_sockaddr(&addr, (struct sockaddr*)&info->from);
 
-		 lw_addr filter_addr = lw_filter_remote (ctx->filter);
+				lw_addr filter_addr = lw_filter_remote(ctx->filter);
 
-		 // If address doesn't match filter, it's a UDP message from unauthorised source.
-		 // There's no way to block UDP messages like that on Lacewing's side; firewall perhaps,
-		 // but user is unlikely to link up automatic firewall changes to Lacewing's error reports.
-		 // To avoid flooding server with reports, we do nothing.
-		 if (ctx->on_data && (!filter_addr || lw_addr_equal(&addr, filter_addr)))
-			ctx->on_data (ctx, &addr, info->buffer, bytes_transferred);
+				// If address doesn't match filter, it's a UDP message from unauthorised source.
+				// There's no way to block UDP messages like that on Lacewing's side; firewall perhaps,
+				// but user is unlikely to link up automatic firewall changes to Lacewing's error reports.
+				// To avoid flooding server with reports, we don't report in release builds.
+				if (filter_addr && !lw_addr_equal(&addr, filter_addr))
+				{
+					lwp_trace("UDP from unexpected source \"%s\", outside of filter \"%s\".\n",
+						lw_addr_tostring(&addr), lw_addr_tostring(filter_addr));
+				}
+				else if (ctx->on_data)
+					ctx->on_data(ctx, &addr, info->buffer, bytes_transferred);
 
-		 lwp_addr_cleanup(&addr);
-		 free (info);
+				lwp_addr_cleanup(&addr);
+			}
+			// ignore aborted, it indicates socket was closed abruptly by something higher up,
+			// i.e. udp unhost
+			else if (error != ERROR_OPERATION_ABORTED)
+			{
+				lw_error err = lw_error_new();
+				lw_error_addf(err, "Error receiving datagram (completion)");
+				lw_error_add(err, error);
 
-		 list_remove(udp_overlapped, ctx->pending_receives, overlapped);
+				if (ctx->on_error)
+					ctx->on_error(ctx, err);
+				lw_error_delete(err);
+			}
+			free (info);
 
-		 // read_completed may free ctx (and thus return true); if not, post more receives
-		 if (!read_completed(ctx))
-			 post_receives (ctx);
-		 break;
-	  }
-	  default:
-		  assert(0);
+			list_remove(udp_overlapped, ctx->pending_receives, overlapped);
+
+			// read_completed may free ctx (and thus return true); if not, post more receives
+			if (!read_completed(ctx) && error == 0)
+				post_receives(ctx);
+			break;
+		}
+		default:
+		{
+			lw_error err = lw_error_new();
+			lw_error_addf(err, "Error with udp completion, unrecognised type %hhi; %p, %lu, %d",
+				overlapped->type, overlapped, bytes_transferred, error);
+			if (ctx->on_error)
+				ctx->on_error(ctx, err);
+			lw_error_delete(err);
+			return; // leak in case pointer is invalid
+		}
 	};
 
 	free (overlapped);

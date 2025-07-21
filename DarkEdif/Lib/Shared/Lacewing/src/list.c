@@ -9,6 +9,7 @@
 */
 
 #include "list.h"
+#include "common.h"
 
 /* This file contains private helper functions for the macros defined in list.h.
  *
@@ -46,14 +47,14 @@ size_t _list_length (list_head * list)
 void _list_push (list_head ** p_list, size_t value_size, void * value)
 {
 	if (!*p_list)
-	  *p_list = (list_head *) calloc (sizeof (list_head), 1);
+		*p_list = (list_head*)lw_calloc_or_exit (sizeof(list_head), 1);
 
 	list_head * list = *p_list;
 
 	++ list->length;
 
 	list_element * elem = (list_element *)
-		malloc (sizeof (*elem) + value_size);
+		lw_malloc_or_exit (sizeof (*elem) + value_size);
 
 	memset (elem, 0, sizeof (*elem));
 	memcpy (get_value_ptr (elem), value, value_size);
@@ -63,26 +64,26 @@ void _list_push (list_head ** p_list, size_t value_size, void * value)
 
 	if (list->last)
 	{
-	  list->last->next = elem;
-	  list->last = elem;
+		list->last->next = elem;
+		list->last = elem;
 	}
 	else
 	{
-	  list->first = list->last = elem;
+		list->first = list->last = elem;
 	}
 }
 
 void _list_push_front (list_head ** p_list, size_t value_size, void * value)
 {
 	if (!*p_list)
-	  *p_list = (list_head *) calloc (sizeof (list_head), 1);
+		*p_list = (list_head *)lw_calloc_or_exit(sizeof(list_head), 1);
 
 	list_head * list = *p_list;
 
 	++ list->length;
 
 	list_element * elem = (list_element *)
-		malloc (sizeof (*elem) + value_size);
+		lw_malloc_or_exit (sizeof (*elem) + value_size);
 
 	memset (elem, 0, sizeof (*elem));
 	memcpy (get_value_ptr (elem), value, value_size);
@@ -92,12 +93,12 @@ void _list_push_front (list_head ** p_list, size_t value_size, void * value)
 
 	if (list->first)
 	{
-	  list->first->prev = elem;
-	  list->first = elem;
+		list->first->prev = elem;
+		list->first = elem;
 	}
 	else
 	{
-	  list->first = list->last = elem;
+		list->first = list->last = elem;
 	}
 }
 
@@ -132,7 +133,7 @@ list_element * _list_prev (list_element * elem)
 void _list_remove (list_element * elem)
 {
 	if (!elem)
-	  return;
+		return;
 
 	elem = get_element (elem);
 
@@ -141,16 +142,16 @@ void _list_remove (list_element * elem)
 	-- list->length;
 
 	if (elem->next)
-	  elem->next->prev = elem->prev;
+		elem->next->prev = elem->prev;
 
 	if (elem->prev)
-	  elem->prev->next = elem->next;
+		elem->prev->next = elem->next;
 
 	if (elem == list->first)
-	  list->first = elem->next;
+		list->first = elem->next;
 
 	if (elem == list->last)
-	  list->last = elem->prev;
+		list->last = elem->prev;
 
 	free (elem);
 }
@@ -158,19 +159,17 @@ void _list_remove (list_element * elem)
 void _list_clear (list_head ** list, size_t value_size)
 {
 	if (!*list)
-	  return;
+		return;
 
 	list_element * elem = (*list)->first;
 
 	while (elem)
 	{
-	  list_element * next = elem->next;
-	  free (elem);
-	  elem = next;
+		list_element * next = elem->next;
+		free (elem);
+		elem = next;
 	}
 
 	free (*list);
 	*list = 0;
 }
-
-

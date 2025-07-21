@@ -345,11 +345,11 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW,_destroyRunOb
 
 #define INCBIN2(NAME1, NAME2, FILENAME) \
 	__asm__(".const_data\n" \
-			".globl _" #NAME1 #NAME2 "\n"	  \
+			".globl _" #NAME1 #NAME2 "\n" \
 			".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
 			"_" #NAME1 #NAME2 ":\n" \
 				".incbin \"" FILENAME "\"\n" \
-			".globl _" #NAME1 #NAME2 "Size\n"	  \
+			".globl _" #NAME1 #NAME2 "Size\n" \
 			".align " INCBIN_STRINGIZE(INCBIN_ALIGNMENT) "\n" \
 			"_" #NAME1 #NAME2 "Size:\n" \
 			".long _" #NAME1 #NAME2 "Size - _" #NAME1 #NAME2 "\n" \

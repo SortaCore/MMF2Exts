@@ -20,7 +20,7 @@ lw_sync lw_sync_new ()
 	lw_sync ctx = (lw_sync) malloc (sizeof (*ctx));
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	InitializeCriticalSection (&ctx->critical_section);
 
@@ -30,7 +30,7 @@ lw_sync lw_sync_new ()
 void lw_sync_delete (lw_sync ctx)
 {
 	if (!ctx)
-	  return;
+		return;
 
 	DeleteCriticalSection (&ctx->critical_section);
 

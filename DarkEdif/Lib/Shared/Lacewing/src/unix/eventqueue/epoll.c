@@ -14,6 +14,9 @@
 lwp_eventqueue lwp_eventqueue_new ()
 {
 	lwp_eventqueue queue = (lwp_eventqueue)malloc(sizeof(_lw_eventqueue));
+	if (!queue)
+		return NULL;
+
 	queue->epollFD = epoll_create (32);
 	queue->numFDsWatched = 0;
 	return queue;

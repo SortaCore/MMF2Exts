@@ -144,8 +144,8 @@ struct ForbiddenInternals2 {
 	static std::int16_t GetRunObjectInfos2(mv* mV, kpxRunInfos* infoPtr);
 };
 
-/// <summary> Called every time the extension is being created from nothing.
-///			  Default property contents should be loaded from JSON. </summary>
+// Called every time the extension is being created from nothing.
+// Default property contents should be loaded from JSON.
 std::int16_t FusionAPI GetRunObjectInfos(mv* mV, kpxRunInfos* infoPtr)
 {
 #pragma DllExportHint
@@ -775,8 +775,8 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 
 	// Get jclass with mainThreadJNIEnv->FindClass.
 	// Register methods with mainThreadJNIEnv->RegisterNatives.
-	std::string classNameCRun("Extensions/" "CRun" PROJECT_TARGET_NAME_UNDERSCORES);
-	std::string className("Extensions/" PROJECT_TARGET_NAME_UNDERSCORES);
+	const std::string classNameCRun("Extensions/" "CRun" PROJECT_TARGET_NAME_UNDERSCORES);
+	const std::string className("Extensions/" PROJECT_TARGET_NAME_UNDERSCORES);
 	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
 	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
 	if (clazz == NULL) {
@@ -818,7 +818,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	LOGV("Registering natives for %s...\n", PROJECT_NAME);
 	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
 		threadEnv = mainThreadJNIEnv;
-		std::string excStr = GetJavaExceptionStr();
+		const std::string excStr = GetJavaExceptionStr();
 		LOGF("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
 	}
 	else

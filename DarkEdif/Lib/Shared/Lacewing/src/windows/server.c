@@ -493,10 +493,10 @@ lw_bool lw_server_load_sys_cert (lw_server ctx,
 	HCERTSTORE cert_store = CertOpenStore
 	(
 		(LPCSTR) 9, /* CERT_STORE_PROV_SYSTEM_A */
-	  0,
 		0,
-	  location_id | CERT_STORE_READONLY_FLAG,
-	 store_name
+		0,
+		location_id | CERT_STORE_READONLY_FLAG,
+		store_name
 	);
 
 	if (!cert_store)
@@ -680,7 +680,7 @@ static lw_error read_cert_file(CRYPT_DATA_BLOB * res, const char* filenameUTF8, 
 		if (textual == lw_false)
 			break;
 
-		DWORD expDERSize;
+		DWORD expDERSize = 0;
 		if (!CryptStringToBinaryA(res->pbData, res->cbData, CRYPT_STRING_BASE64HEADER,
 			NULL, &expDERSize, NULL, NULL))
 		{
@@ -980,6 +980,8 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 
 				// PFXImportCertStore is Unicode only
 				wchar_t * passphrase_wchar = passphrase ? lw_char_to_wchar(passphrase, -1) : NULL;
+				// despite SAL annotation, PFXImportCertStore docs allow null passphrase
+				#pragma warning (suppress: 6387) 
 				cert_store = PFXImportCertStore(&pfx, passphrase_wchar, 0);
 				if (passphrase_wchar)
 				{

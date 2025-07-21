@@ -32,13 +32,12 @@ struct _lw_eventpump
 
 	struct
 	{
-	  lw_thread thread;
-	  OVERLAPPED * overlapped;
-	  DWORD bytes_transferred;
-	  lw_pump_watch event;
-	  lw_event resume_event;
-	  int error;
-
+		lw_thread thread;
+		OVERLAPPED * overlapped;
+		DWORD bytes_transferred;
+		lw_pump_watch event;
+		lw_event resume_event;
+		int error;
 	} watcher;
 
 	size_t num_pending;
@@ -52,15 +51,14 @@ static lw_bool process (lw_eventpump ctx, OVERLAPPED * overlapped,
 	// and that overlapped is a lw_timer address.
 	if (bytes_transferred == 0xFFFFFFFF)
 	{
-	  /* See eventpump_post */
+		/* See eventpump_post */
+		((void * (*) (void *)) watch) (overlapped);
 
-	  ((void * (*) (void *)) watch) (overlapped);
-
-	  return lw_true;
+		return lw_true;
 	}
 
 	if (overlapped == sig_exit_event_loop)
-	  return lw_false;
+		return lw_false;
 
 	if (watch->on_completion)
 		watch->on_completion(watch->tag, overlapped, bytes_transferred, error);
@@ -72,30 +70,30 @@ static void watcher (lw_eventpump ctx)
 {
 	for (;;)
 	{
-	  ctx->watcher.error = 0;
+		ctx->watcher.error = 0;
 
-	  if (!GetQueuedCompletionStatus (ctx->completion_port,
+		if (!GetQueuedCompletionStatus (ctx->completion_port,
 									  &ctx->watcher.bytes_transferred,
 									  (PULONG_PTR) &ctx->watcher.event,
 									  &ctx->watcher.overlapped,
 									  INFINITE))
-	  {
-		 if ((ctx->watcher.error = GetLastError ()) == WAIT_TIMEOUT)
+		{
+			if ((ctx->watcher.error = GetLastError ()) == WAIT_TIMEOUT)
+				break;
+
+			if (!ctx->watcher.overlapped)
+				break;
+
+			ctx->watcher.bytes_transferred = 0;
+		}
+
+		if (ctx->watcher.overlapped == sig_end_watcher_thread)
 			break;
 
-		 if (!ctx->watcher.overlapped)
-			break;
+		ctx->on_tick_needed (ctx);
 
-		 ctx->watcher.bytes_transferred = 0;
-	  }
-
-	  if (ctx->watcher.overlapped == sig_end_watcher_thread)
-		 break;
-
-	  ctx->on_tick_needed (ctx);
-
-	  lw_event_wait (ctx->watcher.resume_event, -1);
-	  lw_event_unsignal (ctx->watcher.resume_event);
+		lw_event_wait (ctx->watcher.resume_event, -1);
+		lw_event_unsignal (ctx->watcher.resume_event);
 	}
 }
 
@@ -106,13 +104,15 @@ lw_eventpump lw_eventpump_new ()
 	lw_eventpump ctx = (lw_eventpump) calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	ctx->watcher.event = NULL;
 	ctx->watcher.thread = lw_thread_new ("watcher", (void *) watcher);
 	ctx->watcher.resume_event = lw_event_new ();
 
 	ctx->completion_port = CreateIoCompletionPort (INVALID_HANDLE_VALUE, 0, 4, 0);
+
+	assert(ctx->completion_port);
 
 	lwp_pump_init ((lw_pump) ctx, &def_eventpump);
 
@@ -125,10 +125,10 @@ static void def_cleanup (lw_pump _ctx)
 
 	if (lw_thread_started (ctx->watcher.thread))
 	{
-	  PostQueuedCompletionStatus (ctx->completion_port, 0, 0, sig_end_watcher_thread);
+		PostQueuedCompletionStatus (ctx->completion_port, 0, 0, sig_end_watcher_thread);
 
-	  lw_event_signal (ctx->watcher.resume_event);
-	  lw_thread_join (ctx->watcher.thread);
+		lw_event_signal (ctx->watcher.resume_event);
+		lw_thread_join (ctx->watcher.thread);
 	}
 
 	lw_thread_delete (ctx->watcher.thread);
@@ -148,9 +148,9 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 {
 	if (ctx->on_tick_needed)
 	{
-	  /* Process whatever the watcher thread dequeued before telling the caller to tick */
+		/* Process whatever the watcher thread dequeued before telling the caller to tick */
 
-	  process (ctx, ctx->watcher.overlapped,
+		process (ctx, ctx->watcher.overlapped,
 					ctx->watcher.bytes_transferred,
 					ctx->watcher.event,
 					ctx->watcher.error);
@@ -163,28 +163,28 @@ lw_error lw_eventpump_tick (lw_eventpump ctx)
 
 	for (;;)
 	{
-	  int error = 0;
+		int error = 0;
 
-	  if (!GetQueuedCompletionStatus (ctx->completion_port,
-									  &bytes_transferred,
-									  (PULONG_PTR) &watch,
-									  &overlapped,
-									  0))
-	  {
-		 error = GetLastError ();
+		if (!GetQueuedCompletionStatus (ctx->completion_port,
+										&bytes_transferred,
+										(PULONG_PTR) &watch,
+										&overlapped,
+										0))
+		{
+			error = GetLastError ();
 
-		 if (error == WAIT_TIMEOUT)
-			break;
+			if (error == WAIT_TIMEOUT)
+				break;
 
-		 if (!overlapped)
-			break;
-	  }
+			if (!overlapped)
+				break;
+		}
 
-	  process (ctx, overlapped, bytes_transferred, watch, error);
+		process (ctx, overlapped, bytes_transferred, watch, error);
 	}
 
 	if (ctx->on_tick_needed)
-	  lw_event_signal (ctx->watcher.resume_event);
+		lw_event_signal (ctx->watcher.resume_event);
 
 	return 0;
 }
@@ -200,28 +200,28 @@ lw_error lw_eventpump_start_eventloop (lw_eventpump ctx)
 
 	for (;;)
 	{
-	  /* TODO : Use GetQueuedCompletionStatusEx where available */
+		/* TODO : Use GetQueuedCompletionStatusEx where available */
 
-	  int error = 0;
+		int error = 0;
 
-	  if (!GetQueuedCompletionStatus (ctx->completion_port,
-									  &bytes_transferred,
-									  (PULONG_PTR) &watch,
-									  &overlapped, finished ? 0 : INFINITE))
-	  {
-		 error = GetLastError();
+		if (!GetQueuedCompletionStatus (ctx->completion_port,
+										&bytes_transferred,
+										(PULONG_PTR) &watch,
+										&overlapped, finished ? 0 : INFINITE))
+		{
+			error = GetLastError();
 
-		 /* Are all pending operations completed?
-		  */
-		 if (finished && error == WAIT_TIMEOUT)
-			 break;
+			/* Are all pending operations completed?
+			*/
+			if (finished && error == WAIT_TIMEOUT)
+				break;
 
-		 if (!overlapped)
-			continue;
-	  }
+			if (!overlapped)
+				continue;
+		}
 
-	  if (!process (ctx, overlapped, bytes_transferred, watch, error))
-		 finished = lw_true;
+		if (!process (ctx, overlapped, bytes_transferred, watch, error))
+			finished = lw_true;
 	}
 
 	return 0;
@@ -251,7 +251,7 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
 	lw_pump_watch watch = (lw_pump_watch) calloc (sizeof (*watch), 1);
 
 	if (!watch)
-	  return 0;
+		return 0;
 
 	watch->on_completion = callback;
 	watch->tag = tag;
@@ -260,6 +260,7 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
 	if (CreateIoCompletionPort (handle, ctx->completion_port,
 								(ULONG_PTR) watch, 0) == NULL)
 	{
+		always_log("CreateIoCompletionPort error %u.\n", GetLastError());
 		free(watch);
 		return 0;
 	}
@@ -308,4 +309,3 @@ const lw_pumpdef def_eventpump =
 	def_post,
 	def_cleanup
 };
-

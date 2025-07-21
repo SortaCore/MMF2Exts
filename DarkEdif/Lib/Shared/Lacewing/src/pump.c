@@ -16,7 +16,7 @@ lw_pump lw_pump_new (const lw_pumpdef * def)
 	lw_pump ctx = (lw_pump) malloc (sizeof (*ctx) + def->tail_size);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	lwp_pump_init (ctx, def);
 
@@ -136,7 +136,7 @@ static void remove_proc (struct remove_proc_data * data)
 void lw_pump_post_remove (lw_pump ctx, lw_pump_watch watch)
 {
 	struct remove_proc_data * data =
-	  (struct remove_proc_data *) malloc (sizeof (*data));
+	  (struct remove_proc_data *) lw_malloc_or_exit (sizeof (*data));
 
 	data->pump = ctx;
 	data->watch = watch;

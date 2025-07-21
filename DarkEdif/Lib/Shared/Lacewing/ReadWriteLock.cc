@@ -498,6 +498,8 @@ void lacewing::readwritelock::closeWriteLock(writelock &wl)
 	this->metaLock = false;
 
 	--writers;
+	// This function won't hold this lock, other functions will, so suppress the "caller doesn't hold lock" warning
+#pragma warning (suppress: 26110)
 	wl.locker.unlock();
 	wl.locked = false;
 }

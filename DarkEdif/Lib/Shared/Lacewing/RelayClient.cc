@@ -52,9 +52,7 @@ namespace lacewing
 		static void udphellotick(lacewing::timer timer);
 		void		udphellotick();
 
-		/// <summary> searches for the first channel by id number. </summary>
-		/// <param name="id"> id to look up. </param>
-		/// <returns> null if it fails, else the matching channel. </returns>
+		// Searches for the first channel by id number, null if no match
 		std::shared_ptr<relayclient::channel> findchannelbyid(lw_ui16 id);
 
 		// message: used by lacewing internal (e.g. automatic ping response)
@@ -63,7 +61,7 @@ namespace lacewing
 
 		std::vector<std::shared_ptr<relayclient::channellisting>> channellist;
 
-		/// <summary> Empties the channel list. </summary>
+		// Empties the channel list.
 		void clearchannellist()
 		{
 			lacewing::writelock wl = client.lock.createWriteLock();
@@ -135,9 +133,6 @@ namespace lacewing
 		}
 	}
 
-	/// <summary> searches for the first channel by id number. </summary>
-	/// <param name="id"> id to look up. </param>
-	/// <returns> null if it fails, else the matching channel. </returns>
 	std::shared_ptr<relayclient::channel> relayclientinternal::findchannelbyid(lw_ui16 id)
 	{
 		lacewing::readlock rl = this->client.lock.createReadLock();
@@ -264,11 +259,11 @@ namespace lacewing
 		wl.lw_unlock();
 	}
 
-	void relayclient::connect(const char * host, lw_ui16 port)
+	void relayclient::connect(const char * host, lw_ui16 remote_port)
 	{
 		lacewing::writelock wl = this->lock.createWriteLock();
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		internal.socket->connect(host, port);
+		internal.socket->connect(host, remote_port);
 	}
 
 	void relayclient::connect(address address)
@@ -1370,9 +1365,6 @@ namespace lacewing
 		_ischannelmaster = false;
 	}
 
-	/// <summary> searches for the first peer by id number. </summary>
-	/// <param name="id"> id to look up. </param>
-	/// <returns> null if it fails, else the matching peer. </returns>
 	std::shared_ptr<relayclient::channel::peer> relayclient::channel::findpeerbyid(lw_ui16 id)
 	{
 		if (!lock.checkHoldsRead(false) && !lock.checkHoldsWrite(false))
@@ -1383,12 +1375,6 @@ namespace lacewing
 		return (i == peers.cend() ? nullptr : *i);
 	}
 
-	/// <summary> Adds a new peer. </summary>
-	/// <param name="peerid"> ID number for the peer. </param>
-	/// <param name="flags"> The flags of the peer connect/channel join message.
-	/// 					 0x1 = master. other flags are not accepted. </param>
-	/// <param name="name"> The name. Cannot be null or blank. </param>
-	/// <returns> null if it fails, else a relayclientinternal::peer *. </returns>
 	std::shared_ptr<relayclient::channel::peer> relayclient::channel::addnewpeer(lw_ui16 peerid, lw_ui8 flags, std::string_view name)
 	{
 		auto p = std::make_shared<relayclient::channel::peer>(*this, peerid, flags, name);

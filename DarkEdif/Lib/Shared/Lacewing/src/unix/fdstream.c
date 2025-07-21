@@ -409,6 +409,8 @@ void lwp_fdstream_init (lw_fdstream ctx, lw_pump pump)
 lw_fdstream lw_fdstream_new (lw_pump pump)
 {
 	lw_fdstream ctx = (lw_fdstream)malloc (sizeof (*ctx));
+	if (!ctx)
+		return NULL;
 	lwp_fdstream_init (ctx, pump);
 
 	return ctx;

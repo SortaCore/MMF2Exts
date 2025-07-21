@@ -1451,7 +1451,7 @@ reexecute:
 			}
 
 			parser->flags |= F_CONTENTLENGTH;
-			parser->content_length = ch - '0';
+			parser->content_length = (uint64_t)ch - '0';
 			parser->header_state = h_content_length_num;
 			break;
 
@@ -1560,9 +1560,7 @@ reexecute:
 				goto error;
 			  }
 
-			  t = parser->content_length;
-			  t *= 10;
-			  t += ch - '0';
+			  t = (parser->content_length * 10) + ((uint64_t)ch - '0');
 
 			  /* Overflow? Test against a conservative limit for simplicity. */
 			  if (UNLIKELY((ULLONG_MAX - 10) / 10 < parser->content_length)) {
@@ -1950,7 +1948,7 @@ reexecute:
 	  case s_body_identity:
 	  {
 		uint64_t to_read = MIN(parser->content_length,
-							   (uint64_t) ((data + len) - p));
+							   (uint64_t) (((uint64_t)data + len) - (uint64_t)p));
 
 		assert(parser->content_length != 0
 			&& parser->content_length != ULLONG_MAX);
@@ -2084,7 +2082,7 @@ reexecute:
 	  case s_chunk_data:
 	  {
 		uint64_t to_read = MIN(parser->content_length,
-							   (uint64_t) ((data + len) - p));
+							   (uint64_t) (((uint64_t)data + len) - (uint64_t)p));
 
 		assert(parser->flags & F_CHUNKED);
 		assert(parser->content_length != 0

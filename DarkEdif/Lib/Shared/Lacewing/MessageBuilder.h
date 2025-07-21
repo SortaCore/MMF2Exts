@@ -56,9 +56,7 @@ public:
 			if (this->size + size > allocated)
 				allocated += size;
 
-			char * test = (char *) realloc(this->buffer, allocated);
-			assert(test && "could not reallocate buffer for message.");
-			this->buffer = test;
+			this->buffer = (char *)lw_realloc_or_exit(this->buffer, allocated);
 		}
 
 		memcpy(this->buffer + this->size, buffer, size);

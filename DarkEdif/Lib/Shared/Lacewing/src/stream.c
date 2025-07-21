@@ -474,7 +474,7 @@ void lwp_stream_write_stream (lw_stream ctx, lw_stream source,
 
 	assert (ctx->graph == source->graph);
 
-	lwp_streamgraph_link link = (lwp_streamgraph_link) calloc (sizeof (*link), 1);
+	lwp_streamgraph_link link = (lwp_streamgraph_link) lw_calloc_or_exit (sizeof (*link), 1);
 
 	link->from = source;
 	link->to = ctx;
@@ -511,7 +511,7 @@ void lw_stream_add_filter_upstream (lw_stream ctx, lw_stream filter,
 									lw_bool delete_with_stream,
 									lw_bool close_together)
 {
-	lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+	lwp_stream_filterspec spec = (lwp_stream_filterspec) lw_malloc_or_exit (sizeof (*spec));
 
 	spec->stream = ctx;
 	spec->filter = filter;
@@ -538,7 +538,7 @@ void lw_stream_add_filter_downstream (lw_stream ctx, lw_stream filter,
 										lw_bool delete_with_stream,
 										lw_bool close_together)
 {
-	lwp_stream_filterspec spec = (lwp_stream_filterspec) malloc (sizeof (*spec));
+	lwp_stream_filterspec spec = (lwp_stream_filterspec) lw_malloc_or_exit (sizeof (*spec));
 
 	spec->stream = ctx;
 	spec->filter = filter;

@@ -26,38 +26,38 @@ void lwp_nvhash_set_ex (lwp_nvhash * hash, size_t key_len, const char * key,
 
 	if (item)
 	{
-	  if (copy)
-	  {
-		 item->value = (char *) realloc (item->value, value_len + 1);
+		if (copy)
+		{
+			item->value = (char *) lw_realloc_or_exit (item->value, value_len + 1);
 
-		 memcpy (item->value, value, value_len);
-		 item->value [value_len] = 0;
-	  }
-	  else
-	  {
-		 free (item->value);
-		 item->value = (char *) value;
-	  }
+			memcpy (item->value, value, value_len);
+			item->value [value_len] = 0;
+		}
+		else
+		{
+			free (item->value);
+			item->value = (char *) value;
+		}
 
-	  return;
+		return;
 	}
 
-	item = (lwp_nvhash) calloc (sizeof (*item), 1);
+	item = (lwp_nvhash) lw_calloc_or_exit (sizeof (*item), 1);
 
 	if (copy)
 	{
-	  item->key = (char *) malloc (key_len + 1);
-	  memcpy (item->key, key, key_len);
-	  item->key [key_len] = 0;
+		item->key = (char *) lw_malloc_or_exit (key_len + 1);
+		memcpy (item->key, key, key_len);
+		item->key [key_len] = 0;
 
-	  item->value = (char *) malloc (value_len + 1);
-	  memcpy (item->value, value, value_len);
-	  item->value [value_len] = 0;
+		item->value = (char *) lw_malloc_or_exit (value_len + 1);
+		memcpy (item->value, value, value_len);
+		item->value [value_len] = 0;
 	}
 	else
 	{
-	  item->key = (char *) key;
-	  item->value = (char *) value;
+		item->key = (char *) key;
+		item->value = (char *) value;
 	}
 
 	HASH_ADD_KEYPTR (hh, *hash, item->key, key_len, item);
@@ -71,7 +71,7 @@ const char * lwp_nvhash_get (lwp_nvhash * hash, const char * key,
 	HASH_FIND (hh, *hash, key, strlen (key), item);
 
 	if (item)
-	  return item->value;
+		return item->value;
 
 	return def;
 }
@@ -82,22 +82,21 @@ void lwp_nvhash_clear (lwp_nvhash * hash)
 
 	HASH_ITER (hh, *hash, item, tmp)
 	{
-	  HASH_DEL (*hash, item);
+		HASH_DEL (*hash, item);
 
-	  free (item->key);
-	  free (item->value);
+		free (item->key);
+		free (item->value);
 
-	  free (item);
+		free (item);
 	}
 
 	while (*hash)
 	{
-	  tail = (lwp_nvhash) (*hash)->hh.tbl->tail;
+		tail = (lwp_nvhash) (*hash)->hh.tbl->tail;
 
-	  HASH_DEL (*hash, tail);
+		HASH_DEL (*hash, tail);
 
-	  free (tail->key);
-	  free (tail->value);
+		free (tail->key);
+		free (tail->value);
 	}
 }
-
