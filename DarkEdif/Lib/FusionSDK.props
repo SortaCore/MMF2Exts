@@ -231,7 +231,7 @@
 
 		<!-- This define is true if you want to machine-uniquely tag your extensions -->
 		<_DarkEdif_UCTaggingRegex><![CDATA[(?im)^DarkEdifUpdateCheckerTagging\s*=\s*(.*?)\s*?$]]></_DarkEdif_UCTaggingRegex>
-		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
+		<DarkEdif_UCTaggingINI Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_DarkEdif_UCTaggingRegex)).Result('$1'))</DarkEdif_UCTaggingINI>
 		<DarkEdif_UCTagging Condition="$(DarkEdif_UCTaggingINI.Contains('$(ExtName)'))">1</DarkEdif_UCTagging>
 	</PropertyGroup>
 	<PropertyGroup Condition="$(SDKType.Contains('MMF2SDK'))" Label="UserMacros">
