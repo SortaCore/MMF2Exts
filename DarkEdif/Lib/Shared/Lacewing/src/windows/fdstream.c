@@ -612,18 +612,9 @@ static lw_bool def_close (lw_stream _ctx, lw_bool immediate)
 	{
 		ctx->flags |= lwp_fdstream_flag_close_asap;
 		shutdown((SOCKET)ctx->fd, SD_RECEIVE);
-		// CancelIoEx is Vista+
-#if WINVER >= 0x0600
-		CancelIoEx(ctx->fd, (OVERLAPPED *)&ctx->read_overlapped);
-#else
-		typedef BOOL(WINAPI * CancelIoExLike)(
-			__in HANDLE hFile,
-			__in_opt LPOVERLAPPED lpOverlapped
-		);
-		CancelIoExLike cancelIoEx = (CancelIoExLike)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "CancelIoEx");
-		if (cancelIoEx != NULL)
-			cancelIoEx(ctx->fd, (OVERLAPPED *)&ctx->read_overlapped);
-#endif
+
+		if (compat_CancelIoEx())
+			compat_CancelIoEx()(ctx->fd, &ctx->read_overlapped.overlapped);
 		return lw_false;
 	}
 }

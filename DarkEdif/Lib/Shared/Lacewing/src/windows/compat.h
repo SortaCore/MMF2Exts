@@ -42,6 +42,9 @@ fn_mkgmtime64 compat_mkgmtime64 ();
 typedef BOOL (WINAPI * fn_GetFileSizeEx) (HANDLE, PLARGE_INTEGER);
 fn_GetFileSizeEx compat_GetFileSizeEx ();
 
+typedef BOOL (WINAPI* fn_CancelIoEx)(HANDLE, LPOVERLAPPED);
+fn_CancelIoEx compat_CancelIoEx ();
+
 typedef HRESULT(WINAPI * fn_SetThreadDescription)(HANDLE, PCWSTR);
 fn_SetThreadDescription compat_SetThreadDescription();
 

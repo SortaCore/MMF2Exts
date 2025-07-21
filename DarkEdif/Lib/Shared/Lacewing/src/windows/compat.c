@@ -68,6 +68,13 @@ fn_GetFileSizeEx compat_GetFileSizeEx ()
 	return fn ? fn : (fn = (fn_GetFileSizeEx) KERNEL32 ("GetFileSizeEx"));
 }
 
+fn_CancelIoEx compat_CancelIoEx ()
+{
+	static fn_CancelIoEx fn = 0;
+
+	return fn ? fn : (fn = (fn_CancelIoEx) KERNEL32 ("CancelIoEx"));
+}
+
 fn_SetThreadDescription compat_SetThreadDescription ()
 {
 	static fn_SetThreadDescription fn = 0;
