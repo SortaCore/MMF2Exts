@@ -36,6 +36,14 @@ fn_getaddrinfo compat_getaddrinfo ();
 typedef INT (WSAAPI * fn_freeaddrinfo) (struct addrinfo *);
 fn_freeaddrinfo compat_freeaddrinfo ();
 
+typedef INT (WSAAPI * fn_WSASendMsg) (SOCKET Handle,
+	LPWSAMSG lpMsg,
+	DWORD dwFlags,
+	LPDWORD lpNumberOfBytesSent,
+	LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+fn_WSASendMsg compat_WSASendMsg ();
+
 typedef __time64_t (__stdcall * fn_mkgmtime64) (struct tm *);
 fn_mkgmtime64 compat_mkgmtime64 ();
 

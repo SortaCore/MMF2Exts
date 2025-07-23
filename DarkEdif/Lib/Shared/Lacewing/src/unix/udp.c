@@ -25,9 +25,18 @@ struct _lw_udp
 	int fd;
 
 	long receives_posted;
-	int writes_posted;
+	long writes_posted;
 
 	void * tag;
+
+	// True if socket is bound for sending to multiple IPv6 clients
+	lw_bool is_ipv6_server;
+
+	// For IPv6 hosters, multiple IPv6 outgoing addresses may be valid.
+	// This will confuse clients who will ignore the messages from a different source.
+	// We lock to one IPv6 address, ideally one with infinite lease, although a limited
+	// lease should be kept active by activity.
+	char public_fixed_ip6_addr_cmsg[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 };
 
 static void read_ready (void * ptr)
@@ -128,6 +137,27 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
 	ctx->filter = lw_filter_clone (filter);
 
+	/* Each IPv6 adapter uses temporary addresses for outgoing connections for privacy reasons,
+	   as covered in RFC 4941.
+	   If we serve public IPv6 addresses (no filter, or unspec/empty addr filter),
+	   then we'll need a consistent outgoing IPv6 address,
+	   or clients won't recognise the incoming messages as from this server. */
+	const lw_addr remoteFilterAddr = lw_filter_remote(ctx->filter);
+	ctx->is_ipv6_server = !remoteFilterAddr || !remoteFilterAddr->info ||
+		(remoteFilterAddr->info->ai_addr->sa_family == AF_INET6 &&
+			IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6*)&remoteFilterAddr->info->ai_addr)->sin6_addr));
+
+	// Couldn't find a matching IPv6; we'll have to let the OS pick a default
+	if (ctx->is_ipv6_server && !lwp_set_ipv6pktinfo_cmsg(ctx->public_fixed_ip6_addr_cmsg))
+	{
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Hosting will continue, but remote IPv6 clients may be unable to connect");
+		lw_error_addf(error, "Error hosting UDP - couldn't find a stable global IPv6 address");
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		lw_error_delete(error);
+	}
+
 	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->fd, ctx, read_ready, 0, lw_true);
 }
 
@@ -155,6 +185,8 @@ void lw_udp_unhost (lw_udp ctx)
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
+
+	ctx->is_ipv6_server = lw_false;
 }
 
 lw_udp lw_udp_new (lw_pump pump)
@@ -170,6 +202,7 @@ lw_udp lw_udp_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->fd = -1;
+	ctx->is_ipv6_server = lw_false;
 
 	return ctx;
 }
@@ -185,6 +218,11 @@ void lw_udp_delete (lw_udp ctx)
 	// and the better behaviour is to let whatever's using it free it by itself.
 	lwp_release(ctx, "udp_new"); // calls free (ctx)
 }
+#ifndef IN6_IS_ADDR_GLOBAL
+#define IN6_IS_ADDR_GLOBAL(a) \
+        ((((const uint32_t *) (a))[0] & htonl(0x70000000)) \
+        == htonl (0x20000000))
+#endif /* IS ADDR GLOBAL */
 
 void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 {
@@ -215,9 +253,29 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
 
+	int res;
+	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
+	if (ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
+		IN6_IS_ADDR_GLOBAL(&((struct sockaddr_in6*)addr->info->ai_addr)->sin6_addr))
+	{
+		struct iovec iov = { .iov_base = (void *)data, .iov_len = size };
+
+		struct msghdr msg;
+		msg.msg_name = addr->info->ai_addr;
+		msg.msg_namelen = addr->info->ai_addrlen;
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+		msg.msg_control = ctx->public_fixed_ip6_addr_cmsg;
+		msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
+		msg.msg_flags = 0;
+		res = sendmsg(ctx->fd, &msg, 0);
+	}
+	else
+		res = sendto(ctx->fd, data, size, 0, addr->info->ai_addr,
+			addr->info->ai_addrlen);
+
 	// Ignore EAGAIN since we're sending UDP; if there's not outgoing room to send, just discard
-	if (sendto (ctx->fd, data, size, 0, (struct sockaddr *) addr->info->ai_addr,
-				addr->info->ai_addrlen) == -1 && errno != EAGAIN)
+	if (res == -1 && errno != EAGAIN)
 	{
 		lw_error error = lw_error_new ();
 

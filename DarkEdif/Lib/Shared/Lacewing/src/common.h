@@ -33,6 +33,7 @@
 	  #include "../config.h"
 	#endif
 	#include <tchar.h>
+	#include <inttypes.h>
 #else
 
 	#ifndef _GNU_SOURCE
@@ -203,6 +204,11 @@ extern const char * const lwp_months [];
 time_t lwp_parse_time (const char *);
 
 lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_error);
+
+extern struct in6_addr lwp_ipv6_public_fixed_addr;
+extern int lwp_ipv6_public_fixed_interface_index;
+extern void lwp_trigger_public_address_hunt (lw_bool block);
+extern lw_bool lwp_set_ipv6pktinfo_cmsg(void * cmsg);
 
 #ifdef __cplusplus
 

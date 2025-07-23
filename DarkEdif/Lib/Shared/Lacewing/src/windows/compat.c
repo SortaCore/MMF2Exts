@@ -54,6 +54,16 @@ fn_freeaddrinfo compat_freeaddrinfo ()
 	return fn ? fn : (fn = (fn_freeaddrinfo) WS2_32 ("freeaddrinfo"));
 }
 
+fn_WSASendMsg compat_WSASendMsg()
+{
+	static fn_WSASendMsg fn = 0;
+
+	/* Note that SIO_GET_EXTENSION_FUNCTION_POINTER for WSASendMsg is not necessary in Vista+:
+	   https://learn.microsoft.com/en-us/windows/win32/winsock/provider-specific-extension-mechanism-2
+	   WSASendMsg is only available in Vista+ anyway, so we will look up directly. */
+	return fn ? fn : (fn = (fn_WSASendMsg) WS2_32 ("WSASendMsg"));
+}
+
 fn_mkgmtime64 compat_mkgmtime64 ()
 {
 	static fn_mkgmtime64 fn = 0;

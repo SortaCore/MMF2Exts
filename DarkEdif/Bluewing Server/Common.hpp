@@ -15,6 +15,7 @@
 #pragma comment(lib, "mpr.lib")
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "Iphlpapi.lib")
 #endif
 
 #ifndef _lacewing_static

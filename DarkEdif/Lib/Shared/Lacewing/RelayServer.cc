@@ -493,7 +493,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				// Note that IPv6+4 server sockets always report their IPv4 clients as IPv6 addresses
 				// (mapped to IPv4), so we can't use address->ipv6().
 				const struct in6_addr addrIn6 = address->toin6_addr();
-				if (clientsocket->lockedUDPAddress || IN6_IS_ADDR_V4MAPPED(&addrIn6) == FALSE)
+				if (clientsocket->lockedUDPAddress || !IN6_IS_ADDR_V4MAPPED(&addrIn6))
 				{
 					// To prevent log slowing the server down, we don't report UDP impersonation.
 					// Code to reply with ICMP unreachable is in the #if 0 later.

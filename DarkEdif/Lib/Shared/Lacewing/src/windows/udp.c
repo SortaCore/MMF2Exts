@@ -10,6 +10,7 @@
 
 #include "../common.h"
 #include "../address.h"
+#include <Iphlpapi.h>
 
 const int ideal_pending_receive_count = 16;
 
@@ -74,6 +75,18 @@ struct _lw_udp
 	long writes_posted;
 
 	void * tag;
+
+	// True if socket is bound for sending to multiple IPv6 clients
+	lw_bool is_ipv6_server;
+
+	// For IPv6 hosters, multiple IPv6 outgoing addresses may be valid.
+	// This will confuse clients who will ignore the messages from a different source.
+	// We lock to one IPv6 address, ideally one with infinite lease, although a limited
+	// lease should be kept active by activity.
+	char public_fixed_ip6_addr_cmsg[WSA_CMSG_SPACE(sizeof(struct in6_pktinfo))];
+
+	// Function for sending with a specified outgoing address - null if not necessary
+	fn_WSASendMsg WSASendMsgPtr;
 };
 
 // Returns true if lw_udp was freed.
@@ -273,9 +286,33 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
 	ctx->filter = lw_filter_clone (filter);
 
-	ctx->pump_watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
+	ctx->port = lwp_socket_port(ctx->socket);
 
-	ctx->port = lwp_socket_port (ctx->socket);
+	/* Each IPv6 adapter uses temporary addresses for outgoing connections for privacy reasons,
+	   as covered in RFC 4941.
+	   If we serve public IPv6 addresses (no filter, or unspec/empty addr filter),
+	   then we'll need a consistent outgoing IPv6 address,
+	   or clients won't recognise the incoming messages as from this server. */
+	const lw_addr remoteFilterAddr = lw_filter_remote(ctx->filter);
+	ctx->is_ipv6_server = !remoteFilterAddr || !remoteFilterAddr->info ||
+		(remoteFilterAddr->info->ai_addr->sa_family == AF_INET6 &&
+			IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6*)&remoteFilterAddr->info->ai_addr)->sin6_addr));
+
+	if (ctx->is_ipv6_server)
+	{
+		if (lwp_set_ipv6pktinfo_cmsg(ctx->public_fixed_ip6_addr_cmsg))
+			ctx->WSASendMsgPtr = compat_WSASendMsg(ctx->socket);
+		else // Couldn't find a matching IPv6; we'll have to let the OS pick a default
+		{
+			lw_error error = lw_error_new();
+			lw_error_addf(error, "Hosting will continue, but remote IPv6 clients may be unable to connect");
+			lw_error_addf(error, "Error hosting UDP - couldn't find a stable global IPv6 address");
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
+			lw_error_delete(error);
+		}
+	}
+	ctx->pump_watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
 
 	post_receives (ctx);
 }
@@ -297,6 +334,8 @@ void lw_udp_unhost (lw_udp ctx)
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
+
+	ctx->is_ipv6_server = lw_false;
 }
 
 lw_ui16 lw_udp_port (lw_udp ctx)
@@ -310,6 +349,12 @@ static void lw_udp_dealloc(lw_udp ctx)
 	// No refs, so there should be no pending read/writes
 	assert(ctx->receives_posted == 0 && ctx->writes_posted == 0);
 	list_clear(ctx->pending_receives);
+
+	if (ctx->pump_watch)
+	{
+		lw_pump_remove(ctx->pump, ctx->pump_watch);
+		ctx->pump_watch = NULL;
+	}
 
 	free(ctx);
 }
@@ -329,6 +374,7 @@ lw_udp lw_udp_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->socket = INVALID_SOCKET;
+	ctx->is_ipv6_server = lw_false;
 
 	return ctx;
 }
@@ -394,18 +440,40 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 
 	++ctx->writes_posted;
 	lwp_retain(ctx, "udp write");
-
-	if (WSASendTo (ctx->socket, &winsock_buf, 1, 0, /* MSG_XX flags */ 0, addr->info->ai_addr,
-				  (int)addr->info->ai_addrlen, (OVERLAPPED *) overlapped, 0) == SOCKET_ERROR)
+	int res;
+	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
+	fn_WSASendMsg wsaSendMsg = ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
+		IN6_IS_ADDR_GLOBAL(&((struct sockaddr_in6 *)addr->info->ai_addr)->sin6_addr) ?
+		ctx->WSASendMsgPtr : NULL;
+	if (!wsaSendMsg)
+		res = WSASendTo(ctx->socket, &winsock_buf, 1, 0, /* MSG_XX flags */ 0, addr->info->ai_addr,
+			(int)addr->info->ai_addrlen, (OVERLAPPED*)overlapped, 0);
+	else // specify source address
 	{
-		int code = WSAGetLastError();
+		WSAMSG msg;
+		msg.name = addr->info->ai_addr;
+		msg.namelen = addr->info->ai_addrlen;
+		msg.lpBuffers = &winsock_buf;
+		msg.dwBufferCount = 1;
+		msg.Control.buf = ctx->public_fixed_ip6_addr_cmsg;
+		msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in6_pktinfo));
+		msg.dwFlags = 0;
+
+		res = wsaSendMsg(ctx->socket, &msg, 0, NULL, &overlapped->overlapped, NULL);
+	}
+
+	if (res == SOCKET_ERROR)
+	{
+		const int code = WSAGetLastError();
 
 		// no error, running as async
 		if (code == WSA_IO_PENDING)
 			return;
-		// outgoing is overloaded; as it's UDP, just discard it
+
+		// outgoing is overloaded; as it's UDP, just discard the message
 		// Closest to the EAGAIN exception on Unix servers, but since we use overlapped, it's unlikely this will apply
 		// This code as a response to WSASendTo may be Windows NT only
+		// TODO: Do we need to undo writes_posted and lwp_retain?
 		if (code == WSAEWOULDBLOCK)
 			return;
 
@@ -414,7 +482,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 		// genuine error, whine about it
 		lw_error error = lw_error_new ();
 
-		lw_error_add (error, WSAGetLastError ());
+		lw_error_add (error, code);
 		lw_error_addf (error, "Error sending datagram");
 
 		if (ctx->on_error)
