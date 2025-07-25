@@ -899,15 +899,18 @@ void Extension::Connect(const TCHAR * hostname)
 		return CreateError("Cannot connect to server: invalid hostname supplied.");
 
 	int Port = 6121;
-	const TCHAR * portPtr = _tcsrchr(hostname, _T(':'));
-	if (portPtr)
+	std::string hostnameU8(DarkEdif::TStringToUTF8(hostname));
+	const std::size_t colonCount = std::count(hostnameU8.cbegin(), hostnameU8.cend(), ':');
+	const bool isIPv6Box = hostnameU8.find('[') != std::string::npos;
+	const TCHAR* portPtr = (colonCount == 1 || isIPv6Box) ? _tcsrchr(hostname, _T(':')) : NULL;
+	// IPv4/hostname, or IPv6 [ip]:port layout - with check for : not being index 0
+	if (portPtr && (colonCount == 1 || (isIPv6Box && portPtr > hostname && *(portPtr - 1) == _T(']'))))
 	{
 		Port = _ttoi(portPtr + 1);
 
 		if (Port <= 0 || Port > 0xFFFF)
-			return CreateError("Invalid port in hostname: too many numbers. Ports are limited from 1 to 65535.");
+			return CreateError("Invalid port in hostname (%s). Ports are limited from 1 to 65535.", DarkEdif::TStringToUTF8(portPtr + 1).c_str());
 	}
-	std::string hostnameU8(DarkEdif::TStringToUTF8(hostname));
 	Cli.connect(hostnameU8.c_str(), Port);
 }
 void Extension::SendMsg_Resize(int newSize)
