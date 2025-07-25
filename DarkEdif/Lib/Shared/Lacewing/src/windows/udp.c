@@ -423,9 +423,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
-	WSABUF winsock_buf = { (ULONG)size, (CHAR *) buffer };
-
-	udp_overlapped overlapped = (udp_overlapped) calloc (sizeof (*overlapped), 1);
+	udp_overlapped overlapped = (udp_overlapped) calloc (sizeof (*overlapped) + size, 1);
 
 	if (!overlapped)
 	{
@@ -434,14 +432,14 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 		return;
 	}
 
-	overlapped->type = overlapped_type_send;
-	overlapped->tag = 0;
-
-	if (!addr->info)
-	  return;
-
-	++ctx->writes_posted;
 	lwp_retain(ctx, "udp write");
+	++ctx->writes_posted;
+
+	overlapped->type = overlapped_type_send;
+	memcpy(((char*)overlapped) + sizeof(*overlapped), buffer, size);
+
+	WSABUF winsock_buf = { (ULONG)size, ((CHAR*)overlapped) + sizeof(*overlapped) };
+
 	int res;
 	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
 	fn_WSASendMsg wsaSendMsg = ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
