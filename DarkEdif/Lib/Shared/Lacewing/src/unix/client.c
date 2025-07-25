@@ -261,6 +261,8 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		(struct sockaddr *)&local_address, sizeof(local_address)) == -1)
 	{
 		ctx->flags &= ~lw_client_flag_connecting;
+		close(ctx->socket);
+		ctx->socket = -1;
 
 		lw_error error = lw_error_new();
 
@@ -286,6 +288,8 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 			goto good; // No problem
 		}
 
+		close(ctx->socket);
+		ctx->socket = -1;
 		ctx->flags &= ~ lw_client_flag_connecting;
 
 		lw_error error = lw_error_new ();
@@ -297,6 +301,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 			ctx->on_error (ctx, error);
 
 		lw_error_delete (error);
+		return;
 	}
 
 	// Else
