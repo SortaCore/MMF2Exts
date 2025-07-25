@@ -108,6 +108,9 @@ static void post_receives (lw_udp ctx)
 {
 	while (ctx->receives_posted < ideal_pending_receive_count)
 	{
+		if (ctx->socket == -1)
+			break;
+		
 		udp_receive_info receive_info = udp_receive_info_new ();
 
 		if (!receive_info)
@@ -327,10 +330,9 @@ void lw_udp_unhost (lw_udp ctx)
 	if (!lw_udp_hosting(ctx))
 		return;
 
-	lwp_close_socket (ctx->socket);
+	SOCKET s = ctx->socket;
 	ctx->socket = INVALID_SOCKET;
-
-	lw_pump_post_remove (ctx->pump, ctx->pump_watch);
+	lwp_close_socket (s);
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
