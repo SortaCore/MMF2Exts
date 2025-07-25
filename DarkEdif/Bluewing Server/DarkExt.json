@@ -13,7 +13,9 @@
 		"ActionMenu": [
 			[ "Relay Server",
 				[ 0, "Host" ],
-				[ 1, "Stop hosting" ]
+				[ 1, "Stop hosting" ],
+				"---",
+				[ 94, "Do pinhole" ]
 			],
 			[ "Flash Player Policy Server",
 				[ 68, "Host" ],
@@ -843,6 +845,13 @@
 				"Title": "Select channel by ID %0",
 				"Parameters": [
 					[ "Integer", "Channel ID (0 to 65534, inclusive)" ]
+				]
+			},
+			{
+				"Title": "Open pinhole to client IP %0 (local port %1)",
+				"Parameters": [
+					[ "Text", "IP address" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
 				]
 			}
 		],
@@ -2402,6 +2411,13 @@
 				"Parameters": [
 					[ "Integer", "ID" ]
 				]
+			},
+			{ // TODO: Translate
+				"Title": "Open pinhole to client IP %0",
+				"Parameters": [
+					[ "Text", "IP address" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -3950,6 +3966,13 @@
 				"Title": "Sélectionner le canal de ID %0",
 				"Parameters": [
 					[ "Integer", "ID" ]
+				]
+			},
+			{ // TODO: Translate
+				"Title": "Open pinhole to client IP %0",
+				"Parameters": [
+					[ "Text", "IP address" ],
+					[ "Integer", "Local port, or 0 to pick free port" ]
 				]
 			}
 		],

@@ -82,6 +82,11 @@ server_client _server::client_first ()
 	return (server_client) lw_server_client_first ((lw_server) this);
 }
 
+lw_ui16 _server::open_pinhole (const char* ip, lw_ui16 local_port)
+{
+	return lw_server_open_pinhole ((lw_server) this, ip, local_port);
+}
+
 void _server::on_connect (_server::hook_connect hook)
 {
 	lw_server_on_connect ((lw_server) this, (lw_server_hook_connect) hook);

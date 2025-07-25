@@ -103,6 +103,9 @@
 				"---",
 				[ 68, "Move cursor" ]
 			],
+			[ "Firewall pinholing",
+				[ 76, "Set local port for next connect"]
+			],
 			"---",
 			[ 75, "Set kill connection when disowned" ],
 
@@ -703,6 +706,12 @@
 				"Title": "Kill connection when last Bluewing instance destroyed: %0",
 				"Parameters": [
 					[ "Integer", "Kill connection when last Bluewing destroyed? (0 or 1)" ]
+				]
+			},
+			{
+				"Title": "Set local port for next connect to %0",
+				"Parameters": [
+					[ "Integer", "Local port to connect from (1 to 65535, 1025+ recommended)" ]
 				]
 			}
 		],

@@ -1555,6 +1555,11 @@ void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::fi
 	serverInternal->actiontimer->start(serverInternal->actionThreadMS);
 }
 
+void relayserver::open_pinhole(const char* ip, lw_ui16 local_port)
+{
+	socket->open_pinhole(ip, local_port);
+}
+
 void relayserver::unhost()
 {
 	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;

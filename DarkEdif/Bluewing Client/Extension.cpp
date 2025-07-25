@@ -114,6 +114,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 		LinkAction(74, SendMsg_Resize);
 		// Added Blue-only actions
 		LinkAction(75, SetDestroySetting);
+		LinkAction(76, SetLocalPortForPinhole);
 	}
 	{
 		LinkCondition(0, MandatoryTriggeredEvent /* OnError */);

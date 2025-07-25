@@ -71,7 +71,7 @@ namespace lacewing
 		void clear();
 
 		std::string name;
-		lw_ui16 id = 0xFFFF;
+		lw_ui16 id = 0xFFFF, local_port = 0;
 		std::string welcomemessage;
 		// Indicates connected on a Lacewing level; full Lacewing TCP/UDP handshake finished
 		bool connected = false;
@@ -264,6 +264,16 @@ namespace lacewing
 		lacewing::writelock wl = this->lock.createWriteLock();
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		internal.socket->connect(host, remote_port);
+		if (internal.local_port)
+		{
+			// Host early for UDP pinholing message - which must be sent at same time as TCP connect
+			internal.udp->host(internal.socket->server_address(), internal.local_port);
+
+			// UDPHello with an ignored ID 0xFFFF, which will be ignored by server,
+			// but its reception at all will cause pinhole success
+			internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);
+			internal.local_port = 0;
+		}
 	}
 
 	void relayclient::connect(address address)
@@ -275,10 +285,22 @@ namespace lacewing
 		// Socket will fuss if we're connecting/connected already, so don't bother checking.
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		internal.socket->connect(address);
+		// Host early for possible UDP pinholing
+		internal.udp->host(internal.socket->server_address(), internal.local_port);
+		// UDPHello, although we probably won't receive response in time for it to be processed
+		internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);
+		internal.local_port = 0;
+	}
+
+	void relayclient::setlocalport(lw_ui16 port)
+	{
+		relayclientinternal& internal = *((relayclientinternal*)internaltag);
+		internal.local_port = port;
+		internal.socket->setlocalport(port);
 	}
 
 	void relayclient::disconnect()
-	{
+	{ 
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 
 		// If you run relayclient::disconnect() while a connection/connect attempt isn't pending,
@@ -651,7 +673,8 @@ namespace lacewing
 						break;
 					}
 
-					udp->host(srvAddress);
+					if (!udp->hosting())
+						udp->host(srvAddress);
 					udphellotick();
 
 					udphellotimer->start(500); // see udphellotick

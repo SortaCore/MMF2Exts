@@ -462,6 +462,7 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_client_connect_addr		(lw_client, lw_addr);
 	lw_import			void  lw_client_connect_secure		(lw_client, const char * host, lw_ui16 port);
 	lw_import			void  lw_client_connect_addr_secure	(lw_client, lw_addr);
+	lw_import			void  lw_client_set_local_port		(lw_client, lw_ui16 localport);
 	lw_import			void  lw_client_disconnect			(lw_client);
 	lw_import		 lw_bool  lw_client_connected			(lw_client);
 	lw_import		 lw_bool  lw_client_connecting			(lw_client);
@@ -502,6 +503,7 @@ typedef lw_i8 lw_bool;
 	lw_import	lw_server_client  lw_server_client_next		(lw_server_client);
 	lw_import			  void *  lw_server_tag				(lw_server);
 	lw_import				void  lw_server_set_tag			(lw_server, void *);
+	lw_import			 lw_ui16  lw_server_open_pinhole	(lw_server, const char * ip, lw_ui16 local_port);
 
 	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
 	lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
@@ -521,7 +523,7 @@ typedef lw_i8 lw_bool;
 	lw_import		void  lw_udp_delete		 (lw_udp);
 	lw_import		void  lw_udp_host		 (lw_udp, lw_ui16 port);
 	lw_import		void  lw_udp_host_filter (lw_udp, lw_filter);
-	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr);
+	lw_import		void  lw_udp_host_addr	 (lw_udp, lw_addr, lw_ui16 local_port);
 	lw_import	 lw_bool  lw_udp_hosting	 (lw_udp);
 	lw_import		void  lw_udp_unhost		 (lw_udp);
 	lw_import	 lw_ui16  lw_udp_port		 (lw_udp);
@@ -1939,7 +1941,7 @@ struct relayserver
 	void unhost();
 	// This works with clients of regular server, so you should use this instead of websocket->unhost/unhost_secure
 	void unhost_websocket(bool insecure, bool secure);
-	void open_pinhole(const char* ip, lw_ui16 localPort);
+	void open_pinhole(const char* ip, lw_ui16 local_port);
 
 	bool hosting();
 	lw_ui16 port();

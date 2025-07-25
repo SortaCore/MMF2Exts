@@ -113,6 +113,171 @@ void lw_server_delete (lw_server ctx)
 	//free (ctx);
 }
 
+lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port)
+{
+	lw_addr addr = lw_addr_new(ip, "");
+	lw_error err = lw_addr_resolve(addr);
+	if (err)
+	{
+		lw_error_addf(err, "Error resolving pinhole address");
+		if (ctx->on_error)
+			ctx->on_error(ctx, err);
+		lw_addr_delete(addr);
+		return 0;
+	}
+	err = lw_error_new();
+
+	if (ctx->socket != INVALID_SOCKET)
+	{
+		lw_error_addf(err, "Server already hosting, cannot pinhole");
+		if (ctx->on_error)
+			ctx->on_error(ctx, err);
+		lw_error_delete(err);
+		lw_addr_delete(addr);
+		return 0;
+	}
+
+	// Init to an invalid ID ping message
+	WSABUF b;
+	b.buf = (char[]){ (char)(11 << 4), (char)0xFF, (char)0xFF };
+	b.len = 3;
+	int type = lw_addr_type_tcp;
+	lw_bool broke = lw_false;
+	lw_bool isIPV6 = lw_addr_ipv6(addr);
+	do {
+		SOCKET tcp = socket(isIPV6 ? AF_INET6 : AF_INET,
+			type == lw_addr_type_tcp ? SOCK_STREAM : SOCK_DGRAM,
+			type == lw_addr_type_tcp ? IPPROTO_TCP : IPPROTO_UDP);
+		char yes = 1;
+		if (tcp == -1)
+		{
+			lw_error_addf(err, "socket type %d create for pinhole failed", type);
+			lw_error_add(err, WSAGetLastError());
+			break;
+		}
+		// reuse addr on
+		lwp_setsockopt(tcp, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+		struct sockaddr_storage s = { 0 };
+		s.ss_family = isIPV6 ? AF_INET6 : AF_INET;
+		// Port is at same offset in both sockaddr_in and sockaddr_in6
+		((struct sockaddr_in6*)&s)->sin6_port = htons((lw_ui16)local_port);
+
+		/*// Tiny timeout?
+		int timeout = 3000;  // user timeout in milliseconds [ms]
+		int SOL_TCP = 6, TCP_USER_TIMEOUT = 18;
+		lwp_setsockopt(tcp, SOL_TCP, TCP_USER_TIMEOUT, (char*)&timeout, sizeof(timeout));
+		*/
+
+		if (bind(tcp, (struct sockaddr*)&s, isIPV6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
+		{
+			lw_error_addf(err, "bind on pinhole failed, continuing");
+			lw_error_add(err, WSAGetLastError());
+			broke = lw_true;
+		}
+		u_long mode = 1;  // 1 to enable non-blocking socket
+		ioctlsocket(tcp, FIONBIO, &mode);
+			
+		int conRet = -1;
+		if (broke == lw_false)
+		{
+			if (type == lw_addr_type_tcp)
+				conRet = connect(tcp, addr->info->ai_addr, addr->info->ai_addrlen);
+			// UDP v4: send plainly
+			else if (!isIPV6)
+				conRet = sendto(tcp, b.buf, b.len, 0, addr->info->ai_addr, addr->info->ai_addrlen);
+			// UDP v6: set fixed output public IP, and send
+			else
+			{
+				fn_WSASendMsg wsaSendMsg = compat_WSASendMsg();
+				if (!wsaSendMsg)
+				{
+					WSASetLastError(WSAEPROTONOSUPPORT);
+					conRet = -1;
+				}
+				else
+				{
+					WSACMSGHDR* cmsg = (WSACMSGHDR*)lw_calloc_or_exit(WSA_CMSG_SPACE(sizeof(struct in6_pktinfo)), 1);
+					if (!lwp_set_ipv6pktinfo_cmsg(cmsg))
+					{
+						lw_error_addf(err, "no suitable public IPv6 found");
+						conRet = -1;
+					}
+					else
+					{
+						WSAMSG msg;
+						msg.name = addr->info->ai_addr;
+						msg.namelen = addr->info->ai_addrlen;
+						msg.lpBuffers = &b;
+						msg.dwBufferCount = 1;
+						msg.Control.buf = (CHAR*)cmsg;
+						msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in6_pktinfo));
+						msg.dwFlags = 0;
+
+						DWORD sentCount;
+						conRet = wsaSendMsg(ctx->socket, (LPWSAMSG)&msg, 0, &sentCount, NULL, NULL);
+					}
+					free(cmsg);
+				}
+			}
+		}
+
+		if (conRet == -1 && WSAGetLastError() == WSAEWOULDBLOCK)
+		{
+			// 0.5 second timeout
+			struct timeval t;
+			t.tv_sec = 0;
+			t.tv_usec = (long)(0.5 * 1000000);
+			fd_set fdset;
+			fdset.fd_count = 1;
+			fdset.fd_array[0] = tcp;
+			conRet = select(-1, NULL, &fdset, NULL, &t);
+			// if conRet == 0, connect timeout - which we ignore
+
+			// these errors are OK! Refused connection mean we got there, hopefully.
+			if (conRet == -1 &&
+				WSAGetLastError() != WSAETIMEDOUT &&
+				WSAGetLastError() != ERROR_CONNECTION_REFUSED && WSAGetLastError() != ERROR_SEM_TIMEOUT)
+			{
+				lw_error_addf(err, "connect on pinhole likely failed");
+				lw_error_add(err, WSAGetLastError());
+				broke = lw_true;
+			}
+		}
+		else if (conRet == -1)
+		{
+			lw_error_addf(err, "setup of connect on pinhole failed");
+			lw_error_add(err, WSAGetLastError());
+			broke = lw_true;
+			//	closesocket(tcp);
+		}
+		// else success
+
+		if (local_port == 0)
+		{
+			// TODO: lwp_socket_port(tcp) equiv?
+			int socklen = (int)sizeof(s);
+			if (getsockname(tcp, (struct sockaddr*)&s, &socklen) == -1)
+			{
+				lw_error_addf(err, "Couldn't get auto-port");
+				lw_error_add(err, WSAGetLastError());
+			}
+			else
+			{
+				local_port = ntohs(((struct sockaddr_in6*)&s)->sin6_port);
+				lw_error_addf(err, "auto-assigned port %hu", local_port);
+			}
+		}
+		else
+			lw_error_addf(err, "sendTo on pinhole, local port %hu should be OK; you can now host", local_port);
+		closesocket(tcp);
+	} while (++type != lw_addr_type_udp + 1);
+	if (ctx->on_error)
+		ctx->on_error(ctx, err);
+	lw_error_delete(err);
+	lw_addr_delete(addr);
+	return local_port;
+}
+
 void lw_server_set_tag (lw_server ctx, void * tag)
 {
 	ctx->tag = tag;

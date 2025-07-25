@@ -25,6 +25,11 @@ void _client::connect (address addr)
 	lw_client_connect_addr ((lw_client) this, (lw_addr) addr);
 }
 
+void _client::setlocalport (lw_ui16 port)
+{
+	lw_client_set_local_port ((lw_client)this, port);
+}
+
 bool _client::connected ()
 {
 	return lw_client_connected ((lw_client) this);

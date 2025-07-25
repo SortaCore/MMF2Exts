@@ -103,7 +103,7 @@ void lw_udp_host (lw_udp ctx, lw_ui16 port)
 	lw_filter_delete (filter);
 }
 
-void lw_udp_host_addr (lw_udp ctx, lw_addr addr)
+void lw_udp_host_addr (lw_udp ctx, lw_addr addr, lw_ui16 local_port)
 {
 	lw_filter filter = lw_filter_new ();
 	lw_filter_set_remote (filter, addr);

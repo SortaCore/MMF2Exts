@@ -256,9 +256,16 @@ void lw_udp_host (lw_udp ctx, lw_ui16 port)
 	lw_filter_delete (filter);
 }
 
-void lw_udp_host_addr (lw_udp ctx, lw_addr addr)
+void lw_udp_host_addr (lw_udp ctx, lw_addr addr, lw_ui16 local_port /* = 0 */)
 {
 	lw_filter filter = lw_filter_new ();
+
+	if (local_port != 0)
+	{
+		lw_filter_set_local_port(filter, local_port);
+		lw_filter_set_reuse(filter, lw_true);
+	}
+
 	lw_filter_set_remote (filter, addr);
 
 	lw_filter_set_ipv6 (filter, lw_addr_ipv6 (addr));

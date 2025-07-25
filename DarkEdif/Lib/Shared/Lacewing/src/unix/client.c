@@ -37,6 +37,7 @@ struct _lw_client
 
 	lw_pump pump;
 	lw_pump_watch watch;
+	lw_ui16 local_port_next_connect;
 };
 
 void lw_client_connect_timeout(lw_timer timer)
@@ -231,6 +232,13 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 #if !defined(__ANDROID__) && !defined(__APPLE__)
 	if (lw_addr_ipv6(address))
 		lwp_disable_ipv6_only((lwp_socket)ctx->socket);
+#endif
+
+	if (ctx->local_port_next_connect)
+	{
+		char reuse = 1;
+		lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
+	}
 
 	struct sockaddr_storage local_address = {0};
 
@@ -238,12 +246,16 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	{
 		((struct sockaddr_in6 *)&local_address)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&local_address)->sin6_addr = in6addr_any;
+		((struct sockaddr_in6 *)&local_address)->sin6_port = ctx->local_port_next_connect;
 	}
 	else
 	{
 		((struct sockaddr_in *)&local_address)->sin_family = AF_INET;
 		((struct sockaddr_in *)&local_address)->sin_addr.s_addr = INADDR_ANY;
+		((struct sockaddr_in *)&local_address)->sin_port = ctx->local_port_next_connect;
 	}
+	const lw_bool wasLocalFixed = ctx->local_port_next_connect != 0;
+	ctx->local_port_next_connect = 0;
 
 	if (bind(ctx->socket,
 		(struct sockaddr *)&local_address, sizeof(local_address)) == -1)
@@ -253,7 +265,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		lw_error error = lw_error_new();
 
 		lw_error_add(error, errno);
-		lw_error_addf(error, "Error binding socket");
+		lw_error_addf(error, "Error binding socket%s", wasLocalFixed ? " with fixed port" : "");
 
 		if (ctx->on_error)
 			ctx->on_error(ctx, error);
@@ -262,7 +274,6 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 		return;
 	}
-#endif
 
 	if (connect (ctx->socket, address->info->ai_addr,
 			address->info->ai_addrlen) == -1)
@@ -277,7 +288,6 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 		ctx->flags &= ~ lw_client_flag_connecting;
 
-		// Connecting errors are also reported in first_time_write_ready()
 		lw_error error = lw_error_new ();
 
 		lw_error_add (error, errno);
@@ -299,6 +309,11 @@ good:
 	}
 
 	ctx->watch = lw_pump_add(ctx->pump, ctx->socket, ctx, 0, first_time_write_ready, lw_true);
+}
+
+void lw_client_set_local_port (lw_client ctx, lw_ui16 localport)
+{
+	ctx->local_port_next_connect = localport;
 }
 
 lw_bool lw_client_connected (lw_client ctx)
