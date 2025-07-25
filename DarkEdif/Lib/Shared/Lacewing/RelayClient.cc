@@ -885,7 +885,8 @@ namespace lacewing
 			default:
 			{
 				lacewing::error error = error_new();
-				error->add("Unrecognised response message received. Response type ID was %i, but expected response type IDs 0-4. Discarding message.");
+				error->add("Unrecognised response message received. Response type ID was %hhu, but "
+					"expected response type IDs 0-4. Discarding message.", responsetype);
 				this->handler_error(client, error);
 				error_delete(error);
 				return true;
