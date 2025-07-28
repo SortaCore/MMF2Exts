@@ -416,8 +416,14 @@ lwp_ws_multipart lwp_ws_multipart_new (lw_ws ws, lw_ws_req request,
 	ctx->ws = ws;
 	ctx->request = request;
 
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6255) // alloca is not evil
+	#endif
 	char * boundary = (char *) alloca (strlen (_boundary) + 3);
 
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6386) // Not an overrun
+	#endif
 	strcpy (boundary, "--");
 	strcat (boundary, _boundary);
 

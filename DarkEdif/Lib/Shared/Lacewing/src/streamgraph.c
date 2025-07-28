@@ -96,6 +96,8 @@ void lwp_streamgraph_swallow (lwp_streamgraph graph, lwp_streamgraph old_graph)
 static void expand_stream (lwp_streamgraph graph, lw_stream stream,
 							lw_stream * first, lw_stream * last)
 {
+	assert (stream); // this is mostly to prevent an analysis complaint
+
 	lw_stream expanded, next;
 
 	*first = *last = 0;

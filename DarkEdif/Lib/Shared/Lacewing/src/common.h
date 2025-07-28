@@ -29,6 +29,11 @@
 	  #define _CRT_NONSTDC_NO_WARNINGS
 	#endif
 
+	// These deprecation warnings are functionally useless
+	#ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+	  #define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#endif
+
 	#ifdef HAVE_CONFIG_H
 	  #include "../config.h"
 	#endif

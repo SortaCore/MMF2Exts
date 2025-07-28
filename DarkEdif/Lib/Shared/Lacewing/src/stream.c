@@ -11,6 +11,12 @@
 #include "common.h"
 #include "stream.h"
 
+#ifdef _MSC_VER
+	// Disable warning about use of alloca over _malloca
+	#pragma warning (push)
+	#pragma warning (disable: 6255)
+#endif
+
 void lwp_stream_init (lw_stream ctx, const lw_streamdef * def, lw_pump pump)
 {
 	lwp_trace ("Stream %p created with def %p, pump %p", ctx, def, pump);
@@ -1262,3 +1268,7 @@ lw_pump lw_stream_pump (lw_stream ctx)
 {
 	return ctx->pump;
 }
+
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif

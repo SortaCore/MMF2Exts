@@ -36,8 +36,8 @@ lw_bool lwp_heapbuffer_add (lwp_heapbuffer * ctx, const char * buffer, size_t le
 	  if (! (*ctx = (lwp_heapbuffer) malloc (sizeof (**ctx) + init_alloc)))
 		 return lw_false;
 	  
-	#ifdef _WIN32
-		#pragma warning (suppress: 6385) // No, it's not overrunning... how could it be?
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6386) // No, it's not overrunning
 	#endif
 	  memset (*ctx, 0, sizeof (**ctx));
 

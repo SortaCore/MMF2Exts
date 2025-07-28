@@ -8,6 +8,11 @@
 */
 
 #include "Lacewing.h"
+#ifdef _MSC_VER
+	// suppress complaints about utf8proc C enums not being C++ enum classes
+	#pragma warning (push)
+	#pragma warning (disable: 26812)
+#endif
 
 // Comments for all the below functions can be found in the header file.
 // IntelliSense should display them anyway.
@@ -326,3 +331,7 @@ void LacewingFatalErrorMsgBox2(const char * const func, const char * const file,
 	assert(false && "Fatal error. Attach debugger and view output variable.");
 #endif
 }
+
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif

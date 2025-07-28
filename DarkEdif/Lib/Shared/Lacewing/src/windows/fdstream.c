@@ -366,7 +366,9 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 			return;
 
 		// If GetFileSizeEx returned true, this was set, so suppress the uninited var warning
-#pragma warning (suppress: 6001)
+		#ifdef _MSC_VER
+			#pragma warning (suppress: 6001)
+		#endif
 		ctx->size = (size_t) size.QuadPart;
 
 		assert (ctx->size != -1);
@@ -425,6 +427,10 @@ static size_t def_sink_data (lw_stream _ctx, const char * buffer, size_t size)
 	if (!overlapped)
 		return size;
 
+#ifdef _MSC_VER
+	// this can't be an overrun
+	#pragma warning (suppress: 6386)
+#endif
 	memset (overlapped, 0, sizeof (*overlapped));
 	overlapped->type = overlapped_type_write;
 

@@ -1103,6 +1103,10 @@ REFLAG Extension::Handle()
 		{
 			// Make a nice big error message.
 			std::tstringstream wstr;
+			#ifdef _MSC_VER
+				// No, it's not reading invalid data inside mandatoryEventIDs...
+				#pragma warning (suppress: 6385)
+			#endif
 			wstr << _T("") PROJECT_NAME " event occurred, but you have no \"" PROJECT_NAME " > "sv <<
 				mandatoryEventIDs[mandatoryEventIndex].first << _T("\" event to handle it. That is BAD PRACTICE");
 

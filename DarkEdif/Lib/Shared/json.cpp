@@ -35,6 +35,9 @@
 	#ifndef _CRT_SECURE_NO_WARNINGS
 		#define _CRT_SECURE_NO_WARNINGS
 	#endif
+	// Disable warnings about use of enum instead of enum class
+	#pragma warning (push)
+	#pragma warning (disable: 26812)
 #endif
 
 #ifdef __cplusplus
@@ -1023,3 +1026,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	return 0;
 #endif
 }
+
+#ifdef _MSC_VER
+	#pragma warning (pop)
+#endif

@@ -291,6 +291,9 @@ lw_bool lwp_ws_req_in_header (lw_ws_req ctx, size_t name_len, const char * name,
 	for (size_t i = 0; i < name_len; ++ i)
 		header.name [i] = (char) tolower (name [i]);
 
+	#ifdef _MSC_VER
+		#pragma warning (suppress: 6386) // Not an overrun
+	#endif
 	header.name [name_len] = 0;
 
 	name = header.name;
@@ -573,7 +576,12 @@ void lw_ws_req_add_header (lw_ws_req ctx, const char * name, const char * value)
 	header.name [name_len] = 0;
 
 	for (size_t i = 0; i < name_len; ++ i)
+	{
+		#ifdef _MSC_VER
+			#pragma warning (suppress: 6386) // Not an overrun
+		#endif
 		header.name [i] = (char)tolower (name [i]);
+	}
 
 	header.value = strdup (value);
 

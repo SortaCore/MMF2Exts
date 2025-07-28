@@ -283,7 +283,7 @@ extern "C" void always_log(const char* str, ...)
 		va_start(v, str);
 		char utf8Output[1024];
 		if (vsprintf_s(utf8Output, std::size(utf8Output), str, v) <= 0)
-			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't print format \"%s\" in always_log."), str);
+			DarkEdif::MsgBox::Error(_T("always_log error"), _T("Couldn't print format \"%s\" in always_log."), tcharStr.c_str());
 
 		LOGW(_T("%s"), DarkEdif::UTF8ToTString(utf8Output).c_str());
 		va_end(v);
