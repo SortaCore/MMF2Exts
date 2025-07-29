@@ -83,14 +83,14 @@ enum state {
   s_end
 };
 
+extern void * lw_malloc_or_exit(const size_t size);
+
 multipart_parser* multipart_parser_init
 	(const char *boundary, const multipart_parser_settings* settings) {
 
-  multipart_parser* p = (multipart_parser *)malloc(sizeof(multipart_parser) +
+  multipart_parser* p = (multipart_parser *)lw_malloc_or_exit(sizeof(multipart_parser) +
 							   strlen(boundary) +
 							   strlen(boundary) + 9);
-  if (!p)
-	  exit(ENOMEM);
 
   strcpy(p->multipart_boundary, boundary);
   p->boundary_length = strlen(boundary);

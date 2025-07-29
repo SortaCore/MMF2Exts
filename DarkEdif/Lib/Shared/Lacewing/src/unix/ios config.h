@@ -21,3 +21,6 @@
 #define HAVE_DECL_SO_NOSIGPIPE
 
 #define HAVE_TIMEGM
+
+// Define to include IPV6PKT_INFO in netinet.h; the choice is old RFC 2292, or newer RFC 3542
+#define __APPLE_USE_RFC_3542
