@@ -330,8 +330,8 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 		char yes = 1;
 		if (sock == -1)
 		{
-			lw_error_addf(err, "socket type %d create for pinhole failed", type);
 			lw_error_add(err, errno);
+			lw_error_addf(err, "socket type %d create for pinhole failed", type);
 			break;
 		}
 		// reuse addr on
@@ -349,14 +349,14 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 
 		if (bind(sock, (struct sockaddr*)&s, isIPV6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
 		{
-			lw_error_addf(err, "bind on pinhole failed, continuing");
 			lw_error_add(err, errno);
+			lw_error_addf(err, "bind on pinhole failed, continuing");
 			broke = lw_true;
 		}
 		u_long mode = 1;  // 1 to enable non-blocking socket
 		ioctl(sock, FIONBIO, &mode);
 
-		int conRet = -1;
+		ssize_t conRet = -1;
 		if (broke == lw_false)
 		{
 			if (type == lw_addr_type_tcp)
@@ -407,15 +407,15 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 				errno != ETIMEDOUT &&
 				errno != ECONNREFUSED)
 			{
-				lw_error_addf(err, "connect on pinhole likely failed");
 				lw_error_add(err, errno);
+				lw_error_addf(err, "connect on pinhole likely failed");
 				broke = lw_true;
 			}
 		}
 		else if (conRet == -1)
 		{
-			lw_error_addf(err, "setup of connect on pinhole failed");
 			lw_error_add(err, errno);
+			lw_error_addf(err, "setup of connect on pinhole failed");
 			broke = lw_true;
 			//	closesocket(sock);
 		}
@@ -424,11 +424,11 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 		if (local_port == 0)
 		{
 			// TODO: lwp_socket_port(sock) equiv?
-			int socklen = (int)sizeof(s);
+			socklen_t socklen = (socklen_t)sizeof(s);
 			if (getsockname(sock, (struct sockaddr*)&s, &socklen) == -1)
 			{
-				lw_error_addf(err, "Couldn't get auto-port");
 				lw_error_add(err, errno);
+				lw_error_addf(err, "Couldn't get auto-port");
 			}
 			else
 			{

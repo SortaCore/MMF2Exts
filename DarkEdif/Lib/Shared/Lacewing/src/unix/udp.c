@@ -253,7 +253,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
 
-	int res;
+	ssize_t res;
 	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
 	if (ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
 		IN6_IS_ADDR_GLOBAL(&((struct sockaddr_in6*)addr->info->ai_addr)->sin6_addr))
