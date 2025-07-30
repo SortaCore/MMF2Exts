@@ -2848,6 +2848,12 @@ void relayserver::client::send(lw_ui8 subchannel, std::string_view message, lw_u
 
 void relayserver::client::blast(lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
 {
+	if (message.size() > relay_max_udp_payload)
+	{
+		lwp_trace("UDP message too large, discarded");
+		return;
+	}
+
 	framebuilder builder(false);
 
 	builder.addheader(1, variant, true); /* binaryservermessage */
@@ -2892,6 +2898,12 @@ void relayserver::channel::send(lw_ui8 subchannel, std::string_view message, lw_
 
 void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
 {
+	if (message.size() > relay_max_udp_payload)
+	{
+		lwp_trace("UDP message too large, discarded");
+		return;
+	}
+
 	framebuilder builder(false);
 
 	builder.addheader (4, variant, true); /* binaryserverchannelmessage */

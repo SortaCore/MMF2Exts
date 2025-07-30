@@ -370,11 +370,19 @@ function CRunBluewing_Client() {
 		}
 		return true;
 	};
-	this.Check_TextMsgValue = function (textMsg, func) {
+	this.Check_TextMsgValue = function (textMsg, func, isUDPMsg) {
 		if (textMsg == null) {
 			this.CreateError("Error: " + func + " was called with a null parameter");
 			return false;
 		}
+		if (isUDPMsg) {
+			let byteLength = this.textEncoder.encode(textMsg).byteLength;
+			if (byteLength > this.globals.maxUDPSize) {
+				this.CreateError("Error: " + func + " was called with text too large (" + byteLength + " bytes)");
+				return false;
+			}
+		}
+
 		return true;
 	};
 	this.Check_ChannelSelection = function (func) {
@@ -402,6 +410,13 @@ function CRunBluewing_Client() {
 	this.Check_UnlockedSendMsg = function (func) {
 		if (this.globals.sendMsgLocked) {
 			this.CreateError(func + " was called while the binary blob is being loaded in background.");
+			return false;
+		}
+		return true;
+	};
+	this.Check_BinaryUDPSized = function (func) {
+		if (this.globals.sendMsg.byteLength > this.globals.maxUDPSize) {
+			this.CreateError(func + " was called with binary too large (" + this.globals.sendMsg.byteLength + " bytes).");
 			return false;
 		}
 		return true;
@@ -622,8 +637,8 @@ function CRunBluewing_Client() {
 		/// <param name="subChannel" type="Number"> An 8-bit unsigned number, 0-255. </param>
 		/// <param name="textToSend" type="String"> Text to send. Can be blank. </param>
 		subChannel = ~~subChannel;
-		if (!this.Check_Subchannel(subChannel, "Send Text to Channel") ||
-			!this.Check_TextMsgValue(textToSend, "Send Text to Channel")) {
+		if (!this.Check_Subchannel(subChannel, "Send Text to Server") ||
+			!this.Check_TextMsgValue(textToSend, "Send Text to Server", false)) {
 			return;
 		}
 		this.globals.client.SendMsg(subChannel, this.$StringToArrayBuffer(textToSend), 0);
@@ -634,7 +649,7 @@ function CRunBluewing_Client() {
 		/// <param name="textToSend" type="String"> Text to send. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Text to Channel") ||
-			!this.Check_TextMsgValue(textToSend, "Send Text to Channel") ||
+			!this.Check_TextMsgValue(textToSend, "Send Text to Channel", false) ||
 			!this.Check_ChannelSelection("Send Text to Channel")) {
 			return;
 		}
@@ -646,7 +661,7 @@ function CRunBluewing_Client() {
 		/// <param name="textToSend" type="String"> Text to send. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Send Text to Peer") ||
-			!this.Check_TextMsgValue(textToSend, "Send Text to Peer") ||
+			!this.Check_TextMsgValue(textToSend, "Send Text to Peer", false) ||
 			!this.Check_PeerSelection("Send Text to Peer")) {
 			return;
 		}
@@ -696,7 +711,7 @@ function CRunBluewing_Client() {
 		/// <param name="textToBlast" type="String"> Text to blast. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Server") ||
-			!this.Check_TextMsgValue(textToBlast, "Blast Text to Server")) {
+			!this.Check_TextMsgValue(textToBlast, "Blast Text to Server", true)) {
 			return;
 		}
 		this.globals.client.BlastMsg(subChannel, this.$StringToArrayBuffer(textToBlast), 0);
@@ -707,7 +722,7 @@ function CRunBluewing_Client() {
 		/// <param name="textToBlast" type="String"> Text to blast. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Channel") ||
-			!this.Check_TextMsgValue(textToBlast, "Blast Text to Channel") ||
+			!this.Check_TextMsgValue(textToBlast, "Blast Text to Channel", true) ||
 			!this.Check_ChannelSelection("Blast Text to Channel")) {
 			return;
 		}
@@ -719,7 +734,7 @@ function CRunBluewing_Client() {
 		/// <param name="textToBlast" type="String"> Text to blast. Can be blank. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Text to Peer") ||
-			!this.Check_TextMsgValue(textToBlast, "Blast Text to Peer") ||
+			!this.Check_TextMsgValue(textToBlast, "Blast Text to Peer", true) ||
 			!this.Check_PeerSelection("Blast Text to Peer")) {
 			return;
 		}
@@ -920,7 +935,8 @@ function CRunBluewing_Client() {
 		/// <param name="subChannel" type="Number"> An 8-bit unsigned number, 0-255. </param>
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Server") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Server")) {
+			!this.Check_UnlockedSendMsg("Blast Binary to Server") ||
+			!this.Check_BinaryUDPSized("Blast Binary to Server")) {
 			return;
 		}
 		this.globals.client.BlastMsg(subChannel, this.globals.sendMsg, 2);
@@ -932,7 +948,8 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Channel") ||
 			!this.Check_ChannelSelection("Blast Binary to Channel") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Server")) {
+			!this.Check_UnlockedSendMsg("Blast Binary to Channel") ||
+			!this.Check_BinaryUDPSized("Blast Binary to Channel")) {
 			return;
 		}
 		this.selChannel.BlastMsg(subChannel, this.globals.sendMsg, 2);
@@ -944,7 +961,8 @@ function CRunBluewing_Client() {
 		subChannel = ~~subChannel;
 		if (!this.Check_Subchannel(subChannel, "Blast Binary to Peer") ||
 			!this.Check_PeerSelection("Blast Binary to Peer") ||
-			!this.Check_UnlockedSendMsg("Blast Binary to Peer")) {
+			!this.Check_UnlockedSendMsg("Blast Binary to Peer") ||
+			!this.Check_BinaryUDPSized("Blast Binary to Peer")) {
 			return;
 		}
 		this.selPeer.BlastMsg(subChannel, this.globals.sendMsg, 2);
@@ -2934,6 +2952,10 @@ function BluewingClient_GlobalInfo(ext, edPtr) {
 	// Used to determine if an error event happened in a Fusion event, e.g. user put in bad parameter.
 	// Fusion code always runs in main thread, but errors can occur outside of user input.
 	this.mainThreadID = 0;
+	// Max size of a UDP message - good values are 1400 bytes for Ethernet MTU,
+	// and 576 bytes for minimum IPv4 packet transmissible without fragmentation.
+	// Another size of note is a bit under 16KiB, due to SSL record size + Lacewing headers.
+	this.maxUDPSize = this.client.relay_max_udp_payload;
 
 	// Due to Runtime.WriteGlobal() not working if there's no Extension,
 	// or not working mid-frame transition, we'll have to just fake its deletion,
@@ -3228,6 +3250,12 @@ function Bluewing_Client(blue) {
 	const impl2 = new Uint8Array(this.impl);
 	impl2.set([10 << 4], 0);
 	impl2.set(implStr, 1);
+
+	// Maximum size of a UDP datagram is 65535, minus IP(v4/v6) header, minus Lacewing Relay UDP header,
+	// with some extra margin, due to WebSocket psuedo.
+	// It's probably fragmented beyond 1400 bytes anyway, due to Ethernet MTU.
+	// UDP exceeding this size will be silently dropped.
+	this.relay_max_udp_payload = 0xFFFF - 40 - 20;
 
 	this.OnDisconnect = function () {
 		/// <summary> Called when the server disconnects or fails to connect. </summary>
@@ -3980,6 +4008,11 @@ function Bluewing_Client(blue) {
 		catch (e) { }
 	};
 	this.$SendRawUDP = function (msg) {
+		if (msg.byteLength > this.relay_max_udp_payload) {
+			console.debug("UDP message too large, discarded");
+			return;
+		}
+
 		const temp = new Uint8Array(msg, 0, 1);
 		temp.set([temp[0] | 0x8], 0);
 		try { this.comm.send(msg); }

@@ -388,13 +388,18 @@ public:
 		// using pre-supplied local ports - which can be random, but must be known.
 		// Since outgoing connections are allowed, the routers generate an exception for that connection;
 		// and the incoming connection's matching tuple of 
-		// local IP, local port, remote IP, remote port
+		//		(local IP, local port, remote IP, remote port)
 		// plus exception specifically for that, creates a two-way exception through the firewall.
 		// However, when NAT is involved (network address translation, like port forwarding), it can get
 		// a mismatch and this will fail.
-		// Since uPnP is an IPv4 tech mostly, pinholing is useful for IPv6 clients; that aside, uPnP is
-		// not always on in routers.
+		// Since uPnP is an IPv4 tech mostly, pinholing is useful for IPv6 clients behind rigid firewalls;
+		// that aside, uPnP is not always on in routers, and IPv4 pinholing can work for them.
 		unsigned short localPort = 0;
+
+		// Max size of a UDP message - good values are 1400 bytes for Ethernet MTU,
+		// and 576 bytes for minimum IPv4 packet transmissible without fragmentation.
+		// Another size of note is a bit under 16KiB, due to SSL record size + Lacewing headers.
+		unsigned short maxUDPSize = lacewing::relay_max_udp_payload;
 
 		// Locks and queues an EventToRun with 1 condition ID to trigger
 		void AddEvent1(std::uint16_t event1ID,

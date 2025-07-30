@@ -137,7 +137,12 @@ void Extension::BlastTextToServer(int subchannel, const TCHAR * textToSend)
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Blast Text to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
 	else
-		Cli.blastserver(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Server was called with text too large (%zu bytes).", utf8Msg.size());
+		Cli.blastserver(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 {
@@ -148,7 +153,12 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToSend)
 	else if (selChannel->readonly())
 		CreateError("Blast Text to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
 	else
-		selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Channel was called with text too large (%zu bytes).", utf8Msg.size());
+		selChannel->blast(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 {
@@ -159,7 +169,12 @@ void Extension::BlastTextToPeer(int subchannel, const TCHAR * textToSend)
 	else if (selPeer->readonly())
 		CreateError("Blast Text to Peer was called with read-only peer \"%s\".", selPeer->name().c_str());
 	else
-		selPeer->blast(subchannel, DarkEdif::TStringToUTF8(textToSend), 0);
+	{
+		const std::string utf8Msg = DarkEdif::TStringToUTF8(textToSend);
+		if (utf8Msg.size() > globals->maxUDPSize)
+			return CreateError("Blast Text to Peer was called with text too large (%zu bytes).", utf8Msg.size());
+		selPeer->blast(subchannel, utf8Msg, 0);
+	}
 }
 void Extension::BlastNumberToServer(int subchannel, int numToSend)
 {
@@ -415,6 +430,8 @@ void Extension::BlastBinaryToServer(int subchannel)
 {
 	if (subchannel > 255 || subchannel < 0)
 		CreateError("Blast Binary to Server was called with invalid subchannel %i; it must be between 0 and 255.", subchannel);
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Server was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		Cli.blastserver(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -429,6 +446,8 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		CreateError("Blast Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
 		CreateError("Blast Binary to Channel was called with read-only channel \"%s\".", selChannel->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Channel was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -443,6 +462,8 @@ void Extension::BlastBinaryToPeer(int subchannel)
 		CreateError("Blast Binary to Peer was called without a peer being selected.");
 	else if (selPeer->readonly())
 		CreateError("Blast Binary to Peer was called with a read-only peer.");
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Peer was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selPeer->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 

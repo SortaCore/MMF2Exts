@@ -1339,7 +1339,11 @@ void Extension::BlastTextToChannel(int subchannel, const TCHAR * textToBlast)
 	if (selChannel->readonly())
 		return CreateError("Blast Text to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
 
-	selChannel->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
+	const std::string utf8Msg = DarkEdif::TStringToUTF8(textToBlast);
+	if (utf8Msg.size() > globals->maxUDPSize)
+		return CreateError("Blast Text to Channel was called with text too large (%zu bytes).", utf8Msg.size());
+
+	selChannel->blast(subchannel, utf8Msg, 0);
 }
 void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 {
@@ -1350,7 +1354,11 @@ void Extension::BlastTextToClient(int subchannel, const TCHAR * textToBlast)
 	if (selClient->readonly())
 		return CreateError("Blast Text to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
 
-	selClient->blast(subchannel, DarkEdif::TStringToUTF8(textToBlast), 0);
+	const std::string utf8Msg = DarkEdif::TStringToUTF8(textToBlast);
+	if (utf8Msg.size() > globals->maxUDPSize)
+		return CreateError("Blast Text to Client was called with text too large (%zu bytes).", utf8Msg.size());
+
+	selClient->blast(subchannel, utf8Msg, 0);
 }
 void Extension::BlastNumberToChannel(int subchannel, int numToBlast)
 {
@@ -1382,6 +1390,8 @@ void Extension::BlastBinaryToChannel(int subchannel)
 		CreateError("Blast Binary to Channel was called without a channel being selected.");
 	else if (selChannel->readonly())
 		CreateError("Blast Binary to Channel was called with a read-only channel, name %s.", selChannel->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Channel was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selChannel->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 
@@ -1396,6 +1406,8 @@ void Extension::BlastBinaryToClient(int subchannel)
 		CreateError("Blast Binary to Client was called without a client being selected.");
 	else if (selClient->readonly())
 		CreateError("Blast Binary to Client was called with a read-only client: ID %hu, name %s.", selClient->id(), selClient->name().c_str());
+	else if (SendMsgSize > globals->maxUDPSize)
+		CreateError("Blast Binary to Client was called with binary too large (%zu bytes).", SendMsgSize);
 	else
 		selClient->blast(subchannel, std::string_view(SendMsg, SendMsgSize), 2);
 

@@ -405,6 +405,11 @@ struct Extension::GlobalInfo
 	// If single-threaded, indicates if Lacewing is being ticked by Handle(). Used for error message location.
 	bool lacewingTicking = false;
 
+	// Max size of a UDP message - good values are 1400 bytes for Ethernet MTU,
+	// and 576 bytes for minimum IPv4 packet transmissible without fragmentation.
+	// Another size of note is a bit under 16KiB, due to SSL record size + Lacewing headers.
+	unsigned short maxUDPSize = lacewing::relay_max_udp_payload;
+
 	// Used to keep Fusion selection across frames
 	std::weak_ptr<lacewing::relayserver::channel> lastDestroyedExtSelectedChannel;
 	std::weak_ptr<lacewing::relayserver::client> lastDestroyedExtSelectedClient;

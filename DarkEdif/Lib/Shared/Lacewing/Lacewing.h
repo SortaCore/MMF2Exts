@@ -1539,6 +1539,13 @@ lw_import void flashpolicy_delete (flashpolicy);
 // Make sure you also add UDP keep-alive. Routers close connection otherwise.
 // Make sure you also fix the timer issue in unix.
 
+
+// Maximum size of a UDP datagram is 65535, minus IP(v4/v6) header, minus Lacewing Relay UDP header,
+// with some extra margin, due to WebSocket psuedo.
+// It's probably fragmented beyond 1400 bytes anyway, due to Ethernet MTU.
+// UDP exceeding this size will be silently dropped.
+const static lw_ui16 relay_max_udp_payload = UINT16_MAX - 40 - 20;
+
 struct readlock;
 struct writelock;
 struct readwritelock

@@ -11,6 +11,7 @@
 #include "FrameBuilder.h"
 #include "FrameReader.h"
 #include "MessageReader.h"
+#include "src/common.h" // lwp_trace
 #include <vector>
 #include <algorithm>
 
@@ -442,6 +443,12 @@ namespace lacewing
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		framebuilder &message = internal.messageMF;
 
+		if (data.size() > relay_max_udp_payload)
+		{
+			lwp_trace("UDP message too large, discarded");
+			return;
+		}
+
 		lacewing::writelock wl = lock.createWriteLock();
 
 		message.addheader (1, variant, true, internal.id); /* binaryservermessage */
@@ -480,6 +487,12 @@ namespace lacewing
 		if (peers.empty() || _readonly)
 			return;
 
+		if (data.size() > relay_max_udp_payload)
+		{
+			lwp_trace("UDP message too large, discarded");
+			return;
+		}
+
 		relayclientinternal &clientinternal = client;
 		framebuilder &message = clientinternal.messageMF;
 		lacewing::writelock wl = lock.createWriteLock();
@@ -514,6 +527,12 @@ namespace lacewing
 	{
 		if (_readonly)
 			return;
+
+		if (data.size() > relay_max_udp_payload)
+		{
+			lwp_trace("UDP message too large, discarded");
+			return;
+		}
 
 		relayclientinternal &internal = channel.client;
 		framebuilder &message = internal.messageMF;
