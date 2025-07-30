@@ -1,5 +1,5 @@
 /*
-	This Lacewing Blue Client Fusion extension UWP port is copyright © 2024 by Darkwire Software.
+	This Lacewing Blue Client Fusion extension UWP port is copyright © 2025 by Darkwire Software.
 	Any redistribution is expressly prohibited outside of the official channels.
 	It is expressly forbidden to acquire these files from GitHub for free for personal or commercial use;
 	in other words, if there is a fee to acquire or use this port, any developers must pay for it and only
@@ -1056,7 +1056,7 @@ function CRunBluewing_Client() {
 		}
 		else {
 			view.setUint32(this.globals.sendMsg.byteLength, i, true);
-		}	
+		}
 		this.globals.sendMsg = newMsg;
 	};
 	this.Action_AddFloat = function (theFloat) {
@@ -1376,6 +1376,12 @@ function CRunBluewing_Client() {
 			return this.CreateError("Invalid setting passed to SetDestroySetting, expecting 0 or 1.");
 		}
 		this.globals.fullDeleteEnabled = enabled != 0;
+	};
+	this.Action_SetLocalPortForPinhole = function (port) {
+		if (port < 1 || port > 0xFFFF) {
+			return this.CreateError("Invalid port passed to SetLocalPortForPinhole, expecting 1 through 65535, got " + port + ".");
+		}
+		this.CreateError("Pinhole is not available in UWP.");
 	};
 
 	// ======================================================================================================
@@ -2362,7 +2368,8 @@ function CRunBluewing_Client() {
 	/* 73 */ this.Action_Connect,
 	/* 74 */ this.Action_ResizeBinaryToSend,
 	// Blue-only actions
-	/* 75 */ this.Action_SetDestroySetting
+	/* 75 */ this.Action_SetDestroySetting,
+	/* 76 */ this.Action_SetLocalPortForPinhole
 	];
 	this.$conditionFuncs = [
 	/* 0 */ this.Condition_MandatoryTriggeredEvent, /* OnError */
@@ -3236,7 +3243,7 @@ function Bluewing_Client(blue) {
 			}
 			// Edge case where we get WebSocket OK, but no Lacewing response
 			else if (this.isConnected) {
-				this.ext.LacewingCall_OnConnectDenied(this, "Got a WebSocket connection, but couldn't use Bluewing.");	
+				this.ext.LacewingCall_OnConnectDenied(this, "Got a WebSocket connection, but couldn't use Bluewing.");
 			}
 			//else we never connected anyway; but a connection failed error should've been made in handleEvent() already
 			//	this.ext.LacewingCall_OnError(this, "Failed to connect to WebSocket server.");
@@ -3355,7 +3362,7 @@ function Bluewing_Client(blue) {
 		///		Protocol is indicated by the room aka namespace. </param>
 		/// <param name="rawMsg" type="ArrayBuffer"> The full message, including all headers. </param>
 		const fullMsg = new DataView(rawMsg);
-		
+
 		if (fullMsg.byteLength < 1) {
 			this.CreateError("Received a useless zero-length message. Server may be broken.");
 			return;
@@ -3404,7 +3411,7 @@ function Bluewing_Client(blue) {
 							else {
 								this.welcomeMessage = this.decoder.decode(rawMsg.slice(5));
 							}
-							
+
 							// Might as well send implementation without the server asking; impl was added to Blue Server
 							// before WebSocket was
 							this.comm.send(this.impl);
