@@ -39,9 +39,14 @@
 *.fsproj text=auto merge=union
 *.dbproj text=auto merge=union
 
-*.vcxproj text=auto merge=union
-*.sln text=auto eol=crlf merge=union
-
+# what VS will generate by default
+*.vcxproj text eol=crlf merge=union
+*.vcxproj.filters text eol=crlf merge=union
+*.vcxitems text eol=crlf merge=union
+*.vcxitems.filters text eol=crlf merge=union
+*.sln text eol=crlf merge=union
+*.config text eol=crlf
+*.xml text eol=crlf
 
 # From the editorconfig
 *.c text eol=lf

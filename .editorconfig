@@ -32,3 +32,12 @@ charset = latin1
 indent_style = tab
 indent_size = 4
 trim_trailing_whitespace = true
+
+# these are based on what VS will generate by default
+[*.{vcxproj,vcxproj.filters,vcxitems,vcxitems.filters,sln}]
+end_of_line = crlf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
