@@ -102,7 +102,7 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 		let that = this;
 		let GetPropertyIndex = function(chkIDOrName) {
 			if (typeof chkIDOrName == 'number') {
-				if (that.numProps >= chkIDOrName) {
+				if (that.numProps <= chkIDOrName) {
 					throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
 				}
 				return chkIDOrName;
