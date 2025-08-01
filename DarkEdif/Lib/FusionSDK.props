@@ -602,7 +602,7 @@
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
 		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
 
 		<!-- Not defined by Clang, just MSVC. -->
 		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
