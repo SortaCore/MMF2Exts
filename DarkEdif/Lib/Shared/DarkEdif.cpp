@@ -2710,7 +2710,134 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID)
 	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), data ? UTF8ToTString(data->ReadPropName()).c_str() : _T("(null)"));
 	return data;
 }
-#endif
+
+BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID_)
+{
+	if (PropID_ < PROPID_EXTITEM_CUSTOM_FIRST)
+		return FALSE;
+
+	unsigned int PropID = GetPropRealID(PropID_);
+
+	// Not our responsibility; ID unrecognised
+	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
+		return FALSE;
+
+	auto& Props = Elevate(edPtr->Props);
+	DarkEdif::Properties::Data* data = Props.Internal_DataAt(PropID);
+	const json_value& jsonProp = CurLang["Properties"][PropID];
+	if (jsonProp.type != json_object)
+	{
+		MsgBox::Error(_T("Property error"), _T("Property ID %u (%s) is not correctly formatted."),
+			PropID, UTF8ToTString(data->ReadPropName()).c_str());
+		return FALSE;
+	}
+	if (!_stricmp(jsonProp["Type"], "Image List"))
+	{
+		ImgListProperty* thisPropData = (ImgListProperty*)data->ReadPropValue();
+
+		std::tstring windowTitle = UTF8ToTString((const char*)jsonProp["WindowTitle"]).c_str();
+
+		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"]);
+		const std::uint32_t imageSize[2] = {
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][0]),
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][1])
+		};
+
+		PictureEditOptions opts = PictureEditOptions::None;
+		if ((bool)jsonProp["FixedImageSize"])
+			opts |= PictureEditOptions::FixedImageSize;
+		if ((bool)jsonProp["HotSpotAndActionPoint"])
+			opts |= PictureEditOptions::EditableHotSpot | PictureEditOptions::EditableActionPoint;
+		if ((bool)jsonProp["NoAlphaChannel"])
+			opts |= PictureEditOptions::NoAlphaChannel;
+		if ((bool)jsonProp["NoTransparentColor"])
+			opts |= PictureEditOptions::NoTransparentColor;
+		if ((bool)jsonProp["16Colors"])
+			opts |= PictureEditOptions::SixteenColors;
+		// Ignore FixedNumOfImages if only one image, as it'll enable the add image button but make it no-op
+		if ((bool)jsonProp["FixedNumOfImages"] || maxNumImages == 1)
+			opts |= PictureEditOptions::FixedNumOfImages;
+		if ((bool)jsonProp["AllowEmpty"])
+			opts |= PictureEditOptions::CanBeEmpty;
+
+		BOOL result;
+		// Only one image possible: edit it in solo
+		if (maxNumImages == 1)
+		{
+			EditImageParams<TCHAR> eip;
+			eip.size = sizeof(eip);
+			eip.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eip.pad = 0;
+			eip.imageID = thisPropData->numImages == 0 ? 0 : thisPropData->imageIDs[0];
+			eip.defaultImageWidth = imageSize[0];
+			eip.defaultImageHeight = imageSize[1];
+			eip.options = opts;
+
+			result = mV->mvEditImage(edPtr, &eip, mV->HEditWin);
+			if (result == TRUE)
+			{
+				// Save image count + image ID, same as we do for multiple images
+				// Impersonate a ImageListProperty struct, with one image ID
+				const std::uint16_t two[] = { 1, eip.imageID };
+				Props.Internal_PropChange(mV, edPtr, PropID, two, sizeof(two));
+			}
+		}
+		else
+		{
+			std::tstring imageTitlesBuffer;
+			std::unique_ptr<TCHAR* []> titles;
+			if (jsonProp["ImageTitles"].type == json_array)
+			{
+				const json_value& imgTitles = jsonProp["ImageTitles"];
+				titles = std::make_unique<TCHAR* []>(imgTitles.u.array.length + 1); // + 1 to end with null ptr
+				std::tstringstream str;
+				std::tstring tstr;
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+				{
+					tstr = UTF8ToTString((const char*)imgTitles.u.array.values[i]);
+					str.write(tstr.c_str(), tstr.size() + 1);
+					titles[i] = (TCHAR*)j;
+					j += tstr.size() + 1;
+				}
+				imageTitlesBuffer = str.str();
+				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
+					titles[i] = imageTitlesBuffer.data() + (std::size_t)titles[i];
+			}
+
+			EditAnimationParams<TCHAR> eap;
+			eap.size = sizeof(eap);
+			eap.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
+			eap.numImages = thisPropData->numImages;
+			eap.maxNumImages = maxNumImages;
+			eap.startIndexToEdit = 0;
+			auto prop = std::make_unique<std::uint16_t[]>(1 + maxNumImages);
+			if (!prop || memcpy_s(&prop[1], maxNumImages * sizeof(std::uint16_t),
+				thisPropData->imageIDs, thisPropData->numImages * sizeof(std::uint16_t)) != 0)
+			{
+				return FALSE;
+			}
+			eap.imageIDs = &prop[1];
+			eap.imageTitles = titles.get();
+			eap.defaultImageWidth = imageSize[0];
+			eap.defaultImageHeight = imageSize[1];
+			eap.options = opts;
+
+			result = mV->mvEditAnimation(edPtr, &eap, mV->HEditWin);
+			if (result == TRUE)
+			{
+				prop[0] = eap.numImages;
+				Props.Internal_PropChange(mV, edPtr, PropID,
+					prop.get(), (1 + eap.numImages) * sizeof(std::uint16_t));
+			}
+		}
+		//mvRefreshProp(mV, edPtr, PropID_, FALSE);
+		return result;
+	}
+
+	return FALSE;
+}
+
+#endif // EditorBuild
 
 #endif // NOPROPS
 
@@ -2997,131 +3124,6 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 	Edif::SDK->jsonPropsTypesHash = fnv1a(hashTypes.str());
 }
 
-BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID_)
-{
-	if (PropID_ < PROPID_EXTITEM_CUSTOM_FIRST)
-		return FALSE;
-
-	unsigned int PropID = GetPropRealID(PropID_);
-
-	// Not our responsibility; ID unrecognised
-	if (CurLang["Properties"].type == json_null || CurLang["Properties"].u.array.length <= PropID)
-		return FALSE;
-
-	auto& Props = Elevate(edPtr->Props);
-	DarkEdif::Properties::Data* data = Props.Internal_DataAt(PropID);
-	const json_value& jsonProp = CurLang["Properties"][PropID];
-	if (jsonProp.type != json_object)
-	{
-		MsgBox::Error(_T("Property error"), _T("Property ID %u (%s) is not correctly formatted."),
-			PropID, UTF8ToTString(data->ReadPropName()).c_str());
-		return FALSE;
-	}
-	if (!_stricmp(jsonProp["Type"], "Image List"))
-	{
-		ImgListProperty* thisPropData = (ImgListProperty*)data->ReadPropValue();
-
-		std::tstring windowTitle = UTF8ToTString((const char*)jsonProp["WindowTitle"]).c_str();
-
-		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"]);
-		const std::uint32_t imageSize[2] = {
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][0]),
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][1])
-		};
-
-		PictureEditOptions opts = PictureEditOptions::None;
-		if ((bool)jsonProp["FixedImageSize"])
-			opts |= PictureEditOptions::FixedImageSize;
-		if ((bool)jsonProp["HotSpotAndActionPoint"])
-			opts |= PictureEditOptions::EditableHotSpot | PictureEditOptions::EditableActionPoint;
-		if ((bool)jsonProp["NoAlphaChannel"])
-			opts |= PictureEditOptions::NoAlphaChannel;
-		if ((bool)jsonProp["NoTransparentColor"])
-			opts |= PictureEditOptions::NoTransparentColor;
-		if ((bool)jsonProp["16Colors"])
-			opts |= PictureEditOptions::SixteenColors;
-		// Ignore FixedNumOfImages if only one image, as it'll enable the add image button but make it no-op
-		if ((bool)jsonProp["FixedNumOfImages"] || maxNumImages == 1)
-			opts |= PictureEditOptions::FixedNumOfImages;
-		if ((bool)jsonProp["AllowEmpty"])
-			opts |= PictureEditOptions::CanBeEmpty;
-
-		BOOL result;
-		// Only one image possible: edit it in solo
-		if (maxNumImages == 1)
-		{
-			EditImageParams<TCHAR> eip;
-			eip.size = sizeof(eip);
-			eip.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
-			eip.pad = 0;
-			eip.imageID = thisPropData->numImages == 0 ? 0 : thisPropData->imageIDs[0];
-			eip.defaultImageWidth = imageSize[0];
-			eip.defaultImageHeight = imageSize[1];
-			eip.options = opts;
-
-			result = mV->mvEditImage(edPtr, &eip, mV->HEditWin);
-			if (result == TRUE)
-			{
-				// Save image count + image ID, same as we do for multiple images
-				// Impersonate a ImageListProperty struct, with one image ID
-				const std::uint16_t two[] = { 1, eip.imageID };
-				Props.Internal_PropChange(mV, edPtr, PropID, two, sizeof(two));
-			}
-		}
-		else
-		{
-			std::tstring imageTitlesBuffer;
-			std::unique_ptr<TCHAR* []> titles;
-			if (jsonProp["ImageTitles"].type == json_array)
-			{
-				const json_value& imgTitles = jsonProp["ImageTitles"];
-				titles = std::make_unique<TCHAR* []>(imgTitles.u.array.length + 1); // + 1 to end with null ptr
-				std::tstringstream str;
-				std::tstring tstr;
-				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
-				{
-					tstr = UTF8ToTString((const char*)imgTitles.u.array.values[i]);
-					str.write(tstr.c_str(), tstr.size() + 1);
-					titles[i] = (TCHAR*)j;
-					j += tstr.size() + 1;
-				}
-				imageTitlesBuffer = str.str();
-				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
-					titles[i] = imageTitlesBuffer.data() + (std::size_t)titles[i];
-			}
-
-			EditAnimationParams<TCHAR> eap;
-			eap.size = sizeof(eap);
-			eap.windowTitle = windowTitle.empty() ? nullptr : windowTitle.c_str();
-			eap.numImages = thisPropData->numImages;
-			eap.maxNumImages = maxNumImages;
-			eap.startIndexToEdit = 0;
-			auto prop = std::make_unique<std::uint16_t[]>(1 + maxNumImages);
-			if (!prop || memcpy_s(&prop[1], maxNumImages * sizeof(std::uint16_t),
-				thisPropData->imageIDs, thisPropData->numImages * sizeof(std::uint16_t)) != 0)
-			{
-				return FALSE;
-			}
-			eap.imageIDs = &prop[1];
-			eap.imageTitles = titles.get();
-			eap.defaultImageWidth = imageSize[0];
-			eap.defaultImageHeight = imageSize[1];
-			eap.options = opts;
-
-			result = mV->mvEditAnimation(edPtr, &eap, mV->HEditWin);
-			if (result == TRUE)
-			{
-				prop[0] = eap.numImages;
-				Props.Internal_PropChange(mV, edPtr, PropID,
-					prop.get(), (1 + eap.numImages) * sizeof(std::uint16_t));
-			}
-		}
-		//mvRefreshProp(mV, edPtr, PropID_, FALSE);
-		return result;
-	}
-
-	return FALSE;
-}
 #endif
 
 // Returns size of EDITDATA and all properties if they were using their default values from JSON
