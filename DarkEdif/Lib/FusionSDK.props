@@ -695,7 +695,7 @@
 	</ItemDefinitionGroup>
 	<!-- Ensure VS knows the build failed if the .so or .zip files weren't updated -->
 	<ItemGroup Condition="'$(_TargetPlat)'=='Android'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameUnderscores).zip;$(SolutionDir)\Temp\$(ExtName)\Android\$(Configuration)\$(TargetArch)\lib$(TargetNameUnderscores).so" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameUnderscores).zip;$(_FusionSDKTempDir)\lib$(TargetNameUnderscores).so" />
 	</ItemGroup>
 
 <!--#################################
@@ -777,13 +777,15 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			<LinkTimeOptimization Condition="$(LTCG)=='Y'">true</LinkTimeOptimization>
 		</ClCompile>
 	</ItemDefinitionGroup>
-	<!-- Ensure VS knows the build failed if the .xcframework or .ext files weren't updated -->
+	<!-- Ensure VS knows the build failed if the .xcframework or .ext files weren't updated.
+		 Go up once for simulator/device, once for target arch, end result is config folder where merged lib output is -->
 	<ItemGroup Condition="'$(_TargetPlatInclMac)'=='iOS'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(ExtNameUnderscores).ext;$(SolutionDir)\Temp\$(ExtName)\iOS\$(Configuration)\$(ExtNameUnderscores)).xcframework\Info.plist" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameNoPrefix).ext;$(_FusionSDKTempDir)\..\..\$(TargetNameNoPrefix).xcframework\Info.plist" />
 	</ItemGroup>
-	<!-- Ensure VS knows the build failed if the bundle file or .dat file weren't updated -->
+	<!-- Ensure VS knows the build failed if the bundle file or .dat file weren't updated.
+		 Go up once for target arch, end result is config folder where merged bundle output is -->
 	<ItemGroup Condition="'$(_TargetPlatInclMac)'=='Mac'">
-		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetName).dat;$(SolutionDir)\Temp\$(ExtName)\Mac\$(Configuration)\$(TargetName)" />
+		<UpToDateCheckOutput Include="$(MFXDir)\$(TargetNameNoPrefix).dat;$(_FusionSDKTempDir)\..\$(TargetNameNoPrefix)" />
 	</ItemGroup>
 
 <!--#################################

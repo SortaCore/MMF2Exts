@@ -13,6 +13,8 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- PostBuildTool: Now v1.0.1.0; iOS frameworks use spaces instead of underscores, and checks for invalid Mac code-signing keychain
+- iOS: Now builds frameworks with spaces instead of underscores
 - All platforms: Added image list property support
 - iOS/Mac: Fixed iOS/Mac conflict caused by ConditionOrActionManager + ExpressionManager.
 - All platforms: Fix rh2ActionOn being true during some scenarios that events are generated in, causing object selection to be modified or unmodified unexpectedly
