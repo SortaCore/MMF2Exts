@@ -31,7 +31,7 @@ struct _lw_client
 
 	lw_addr address;
 
-	int socket;
+	lwp_socket socket;
 	//lw_bool connecting; // part of flags, see lw_client_flag_connecting
 	lw_timer connect_timer;
 
@@ -256,6 +256,9 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	}
 	const lw_bool was_locked_local = ctx->local_port_next_connect != 0;
 	ctx->local_port_next_connect = 0;
+
+	// reuse or not, based on reserved port
+	lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
 
 	if (bind(ctx->socket,
 		(struct sockaddr *)&local_address, sizeof(local_address)) == -1)

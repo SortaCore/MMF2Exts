@@ -384,14 +384,19 @@ static DWORD WINAPI publicFixedIPv6AddressHunterThread(LPVOID data)
 					unicast->PrefixOrigin == IpPrefixOriginDhcp))
 			{
 				// Windows XP does not have a OnLinkPrefixLength member, default to pretending it's good
+				#if WINVER < 0x0600
 				UINT8 onLinkPrefixLength = 64;
-				if (unicast->Length >= sizeof(PIP_ADAPTER_UNICAST_ADDRESS_LH))
+				if (unicast->Length >= sizeof(IP_ADAPTER_UNICAST_ADDRESS_LH))
 					onLinkPrefixLength = ((PIP_ADAPTER_UNICAST_ADDRESS_LH)unicast)->OnLinkPrefixLength;
+				#else // targeting Vista+ SDK
+					UINT8 onLinkPrefixLength = unicast->OnLinkPrefixLength;
+				#endif
 
 				lwp_trace("\tFound possibly usable IPv6; OL prefix length %hhu, valid %u, prefer %u, lease %u:\n\t\t",
 					onLinkPrefixLength, unicast->ValidLifetime, unicast->PreferredLifetime, unicast->LeaseLifetime);
 				lwp_trace("\t\t%s\n", lw_addr_tostring(curIPv6Addr));
-				if (onLinkPrefixLength == 64 && unicast->ValidLifetime == ULONG_MAX)
+				// Note: permanent IPs do not have infinite lifetime, strangely. One was 200k.
+				if (onLinkPrefixLength == 64)
 				{
 					if (lwp_ipv6_public_fixed_interface_index < 0)
 					{
@@ -432,7 +437,7 @@ static DWORD WINAPI publicFixedIPv6AddressHunterThread(LPVOID data)
 	return 0;
 }
 
-#else
+#else // not _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
@@ -443,25 +448,24 @@ static DWORD WINAPI publicFixedIPv6AddressHunterThread(LPVOID data)
 #define WSA_CMSG_LEN(x) CMSG_LEN(x)
 #define WSA_CMSG_DATA(x) CMSG_DATA(x)
 
-// iOS does not define these; these were copied from Linux ifaddr.h
-#ifndef IFA_F_TEMPORARY
-#define IFA_F_SECONDARY 0x01
-#define IFA_F_TEMPORARY IFA_F_SECONDARY
-#define IFA_F_DEPRECATED 0x20
-#define IFA_F_TENTATIVE 0x40
-#define IFA_F_PERMANENT 0x80
-#endif
+// Complaints about various sign to unsigned, they're useless
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic push
 
-#if defined(__ANDROID__) && __ANDROID_API__ < 24
+#if !defined(__APPLE__) || (defined(__ANDROID__) && __ANDROID_API__ < 24)
+// A Netlink-based workaround for missing getifaddrs, based on Android source:
+// https://github.com/LISPmob/lispdroid/blob/master/modulebased/lispd/ifaddrs-android.h#L36
+// Adapted by Phi from C++ to C style.
+// iOS/Mac does not have Netlink at all.
+
 #include <arpa/inet.h>
-#include <net/if.h>
 #include <netinet/in.h>
-#include <sys/ioctl.h>
+#include <unistd.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#include <unistd.h>
 
-struct lw_ifaddrs {
+struct lw_ifaddrs
+{
 	// Pointer to next struct in list, or NULL at end.
 	struct lw_ifaddrs* ifa_next;
 	// Interface name.
@@ -474,38 +478,43 @@ struct lw_ifaddrs {
 	struct sockaddr* ifa_netmask;
 };
 
-// Sadly, we can't keep the interface index for portability with BSD.
-// We'll have to keep the name instead, and re-query the index when
-// we need it later.
-static lw_bool setNameAndFlagsByIndex(struct lw_ifaddrs* that, int interfaceIndex) {
+static lw_bool setNameAndFlagsByIndex(struct lw_ifaddrs* that, int family, unsigned int interfaceIndex)
+{
 	// Get the name.
 	char buf[IFNAMSIZ];
 	char* name = if_indextoname(interfaceIndex, buf);
-	if (name == NULL) {
+	if (name == NULL)
+	{
+		lwp_trace("setNameAndFlagsByIndex > if_indextoname failed, %d\n", errno);
 		return lw_false;
 	}
 	if (that->ifa_name)
 		free(that->ifa_name);
 	that->ifa_name = strdup(name);
 	// Get the flags.
-	int fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd == -1) {
+	int fd = socket(family, SOCK_DGRAM, 0);
+	if (fd == -1)
+	{
+		lwp_trace("setNameAndFlagsByIndex > socket failed, %d\n", errno);
 		return lw_false;
 	}
 	struct ifreq ifr = { 0 };
 	strcpy(ifr.ifr_name, name);
 	int rc = ioctl(fd, SIOCGIFFLAGS, &ifr);
-	if (rc == -1) {
+	if (rc == -1)
+	{
+		lwp_trace("setNameAndFlagsByIndex > ioctl failed, %d\n", errno);
 		close(fd);
 		return lw_false;
 	}
-	that->ifa_flags = ifr.ifr_flags;
+	that->ifa_flags = (unsigned int)ifr.ifr_flags;
 	close(fd);
 	return lw_true;
 }
 // Returns a pointer to the first byte in the address data (which is
 // stored in network byte order).
-static uint8_t* sockaddrBytes(int family, struct sockaddr_storage* ss) {
+static uint8_t* sockaddrBytes(unsigned short family, struct sockaddr_storage* ss)
+{
 	if (family == AF_INET) {
 		struct sockaddr_in* ss4 = (struct sockaddr_in*)ss;
 		return (uint8_t*)(&ss4->sin_addr);
@@ -514,13 +523,15 @@ static uint8_t* sockaddrBytes(int family, struct sockaddr_storage* ss) {
 		struct sockaddr_in6* ss6 = (struct sockaddr_in6*)ss;
 		return (uint8_t*)(&ss6->sin6_addr);
 	}
+	lwp_trace("sockaddrBytes > failed, %d\n", family);
 	return NULL;
 }
 // Netlink gives us the address family in the header, and the
 // sockaddr_in or sockaddr_in6 bytes as the payload. We need to
 // stitch the two bits together into the sockaddr that's part of
 // our portable interface.
-static void setAddress(struct lw_ifaddrs* that, int family, void* data, size_t byteCount) {
+static void setAddress(struct lw_ifaddrs* const that, const unsigned short family, void* data, size_t byteCount)
+{
 	// Set the address proper...
 	struct sockaddr_storage* ss = (struct sockaddr_storage*)calloc(sizeof(*ss), 1);
 	that->ifa_addr = (struct sockaddr*)ss;
@@ -530,35 +541,41 @@ static void setAddress(struct lw_ifaddrs* that, int family, void* data, size_t b
 }
 // Netlink gives us the prefix length as a bit count. We need to turn
 // that into a BSD-compatible netmask represented by a sockaddr*.
-static void setNetmask(struct lw_ifaddrs* that, int family, size_t prefixLength) {
+static void setNetmask(struct lw_ifaddrs* const that, const unsigned short family, const size_t prefixLength)
+{
 	// ...and work out the netmask from the prefix length.
 	struct sockaddr_storage* ss = (struct sockaddr_storage*)calloc(sizeof(*ss), 1);
 	that->ifa_netmask = (struct sockaddr*)ss;
 	ss->ss_family = family;
 	uint8_t* dst = sockaddrBytes(family, ss);
 	memset(dst, 0xff, prefixLength / 8);
-	if ((prefixLength % 8) != 0) {
-		dst[prefixLength / 8] = (0xff << (8 - (prefixLength % 8)));
-	}
+	if ((prefixLength % 8) != 0)
+		dst[prefixLength / 8] = (uint8_t)(0xff << (8 - (prefixLength % 8)));
 }
 struct addrReq_struct {
 	struct nlmsghdr netlinkHeader;
 	struct ifaddrmsg msg;
 };
-static lw_bool sendNetlinkMessage(int fd, const void* data, size_t byteCount) {
+static lw_bool sendNetlinkMessage(int fd, const void* data, size_t byteCount)
+{
 	ssize_t sentByteCount = TEMP_FAILURE_RETRY(send(fd, data, byteCount, 0));
 	return (sentByteCount == (ssize_t)(byteCount));
 }
-static ssize_t recvNetlinkMessage(int fd, char* buf, size_t byteCount) {
+static ssize_t recvNetlinkMessage(int fd, char* buf, size_t byteCount)
+{
 	return TEMP_FAILURE_RETRY(recv(fd, buf, byteCount, 0));
 }
 
-static int getifaddrs2(struct lw_ifaddrs ** result) {
+static int netlink_getifaddrs(struct ifaddrs** resultP)
+{
+	struct lw_ifaddrs** const result = (struct lw_ifaddrs**)resultP;
 	// Simplify cleanup for callers.
 	*result = NULL;
 	// Create a netlink socket.
 	int fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
-	if (fd < 0) {
+	if (fd < 0)
+	{
+		lwp_trace("socket af_netlink couldn't create, %d\n", errno);
 		return -1;
 	}
 	// Ask for the address information.
@@ -569,6 +586,7 @@ static int getifaddrs2(struct lw_ifaddrs ** result) {
 	addrRequest.msg.ifa_family = AF_UNSPEC; // All families.
 	addrRequest.msg.ifa_index = 0; // All interfaces.
 	if (!sendNetlinkMessage(fd, &addrRequest, addrRequest.netlinkHeader.nlmsg_len)) {
+		lwp_trace("send netlink couldn't go thru, %d\n", errno);
 		close(fd);
 		return -1;
 	}
@@ -578,50 +596,57 @@ static int getifaddrs2(struct lw_ifaddrs ** result) {
 	while ((bytesRead = recvNetlinkMessage(fd, &buf[0], 65536)) > 0) {
 		struct nlmsghdr* hdr = (struct nlmsghdr*)(&buf[0]);
 		for (; NLMSG_OK(hdr, (size_t)bytesRead); hdr = NLMSG_NEXT(hdr, bytesRead)) {
-			switch (hdr->nlmsg_type) {
-			case NLMSG_DONE:
-				close(fd);
-				free(buf);
-				return 0;
-			case NLMSG_ERROR:
-				close(fd);
-				free(buf);
-				return -1;
-			case RTM_NEWADDR:
+			switch (hdr->nlmsg_type)
 			{
-				struct ifaddrmsg* address = (struct ifaddrmsg*)(NLMSG_DATA(hdr));
-				struct rtattr* rta = IFA_RTA(address);
-				size_t ifaPayloadLength = IFA_PAYLOAD(hdr);
-				while (RTA_OK(rta, ifaPayloadLength)) {
-					if (rta->rta_type == IFA_LOCAL) {
-						int family = address->ifa_family;
-						if (family == AF_INET || family == AF_INET6) {
-							struct lw_ifaddrs* last = *result;
-							*result = (struct lw_ifaddrs*)calloc(sizeof(**result), 1);
-							(*result)->ifa_next = last;
+				case NLMSG_DONE:
+					close(fd);
+					free(buf);
+					return 0;
+				case NLMSG_ERROR:
+					lwp_trace("NLMSG_ERROR, %d\n", errno);
+					close(fd);
+					free(buf);
+					return -1;
+				case RTM_NEWADDR:
+				{
+					struct ifaddrmsg* const address = (struct ifaddrmsg*)(NLMSG_DATA(hdr));
+					struct rtattr* rta = IFA_RTA(address);
+					size_t ifaPayloadLength = IFA_PAYLOAD(hdr);
+					while (RTA_OK(rta, ifaPayloadLength)) {
+						if (rta->rta_type == IFA_LOCAL || rta->rta_type == IFA_ADDRESS) {
+							const unsigned short family = address->ifa_family;
+							if (family == AF_INET6 || family == AF_INET) {
+								struct lw_ifaddrs* const last = *result;
+								*result = (struct lw_ifaddrs*)calloc(sizeof(**result), 1);
+								(*result)->ifa_next = last;
 
-							if (setNameAndFlagsByIndex(*result, address->ifa_index)) {
-								close(fd);
-								free(buf);
-								return -1;
+								if (!setNameAndFlagsByIndex(*result, family, address->ifa_index)) {
+									lwp_trace("setNameAndFlagsByIndex error, %d\n", errno);
+									close(fd);
+									free(buf);
+									return -1;
+								}
+								setAddress(*result, family, RTA_DATA(rta), RTA_PAYLOAD(rta));
+								setNetmask(*result, family, address->ifa_prefixlen);
 							}
-							setAddress(*result, family, RTA_DATA(rta), RTA_PAYLOAD(rta));
-							setNetmask(*result, family, address->ifa_prefixlen);
 						}
+						rta = RTA_NEXT(rta, ifaPayloadLength);
 					}
-					rta = RTA_NEXT(rta, ifaPayloadLength);
 				}
-			}
-			break;
-			}
-		}
-	}
+				break; // out of case
+			} // switch type of info
+		} // for info in packet
+	} // while data remaining
+
 	// We only get here if recv fails before we see a NLMSG_DONE.
+	lwp_trace("recv failed, %d\n", errno);
 	close(fd);
 	free(buf);
 	return -1;
 }
-static void freeifaddrs2(struct lw_ifaddrs * addresses) {
+static void netlink_freeifaddrs(struct ifaddrs * addressesP)
+{
+	struct lw_ifaddrs* const addresses = (struct lw_ifaddrs *)addressesP;
 	for (struct lw_ifaddrs* addr = addresses, *next; addr; addr = next)
 	{
 		next = addr->ifa_next;
@@ -631,12 +656,6 @@ static void freeifaddrs2(struct lw_ifaddrs * addresses) {
 		free(addr);
 	}
 }
-int local_getifaddrs(struct ifaddrs** result) {
-	return getifaddrs2((struct lw_ifaddrs**)result);
-}
-void local_freeifaddrs(struct ifaddrs* result) {
-	return freeifaddrs2((struct lw_ifaddrs*)result);
-}
 #endif
 typedef int (*getifaddrs_func)(struct ifaddrs**);
 typedef void (*freeifaddrs_func)(struct ifaddrs*);
@@ -644,63 +663,107 @@ typedef void (*freeifaddrs_func)(struct ifaddrs*);
 // Hunt for a public IPv6 address that does not have a time limit or is LAN-only
 static void * publicFixedIPv6AddressHunterThread(void * data)
 {
-	struct ifaddrs* ifaddr, * ifa;
+	struct ifaddrs* ifaddr = NULL, * ifa;
 	char addr_str[INET6_ADDRSTRLEN];
 
-	void* libc = dlopen("libc.so", RTLD_LAZY);
-	if (!libc) {
-		lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). Function could not be dynamically linked. Error %d.", errno);
-		return 0;
-	}
-
-	getifaddrs_func my_getifaddrs = (getifaddrs_func)dlsym(libc, "getifaddrs");
-	freeifaddrs_func my_freeifaddrs = (freeifaddrs_func)dlsym(libc, "freeifaddrs");
-	if (!my_getifaddrs || !my_freeifaddrs)
-	{
-#if defined(__ANDROID__) && __ANDROID_API__ < 24
-		my_getifaddrs = local_getifaddrs;
-		my_freeifaddrs = local_freeifaddrs;
-#else
-		lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). Function could not be dynamically linked. Error %d.", errno);
-		dlclose(libc);
-		return 0;
+	// Android SDK may target too early, in which case OS libc has getifaddrs,
+	// but we can't link to it at build time
+	getifaddrs_func my_getifaddrs = NULL, my_getifaddrs2 = NULL;
+	freeifaddrs_func my_freeifaddrs = NULL, my_freeifaddrs2 = NULL;
+	void* libc = NULL;
+#if !defined(__APPLE__) || (defined(__ANDROID__) && __ANDROID_API__ < 24)
+	my_getifaddrs2 = netlink_getifaddrs;
+	my_freeifaddrs2 = netlink_freeifaddrs;
 #endif
+#if !defined(__ANDROID__) || __ANDROID_API__ >= 24
+	// iOS, Mac, Linux, and Android SDK 24+: link getifaddrs directly
+	my_getifaddrs = getifaddrs;
+	my_freeifaddrs = freeifaddrs;
+#else
+	libc = dlopen("libc.so", RTLD_LAZY);
+	if (!libc) {
+		lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). SO file could not be dynamically opened. Error %d.", errno);
+	}
+	else
+	{
+		my_getifaddrs = (getifaddrs_func)dlsym(libc, "getifaddrs");
+		my_freeifaddrs = (freeifaddrs_func)dlsym(libc, "freeifaddrs");
+
+		if (!my_getifaddrs || !my_freeifaddrs)
+		{
+			lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). Function could not be dynamically linked. Error %d.", errno);
+			dlclose(libc);
+			libc = NULL;
+		}
+	}
+#endif
+
+	if (!my_getifaddrs || my_getifaddrs(&ifaddr) == -1)
+	{
+		if (my_getifaddrs) {
+			lwp_trace("getifaddrs failed with error %d", errno);
+		}
+		if (libc)
+		{
+			dlclose(libc);
+			libc = NULL;
+		}
+
+		if (!my_getifaddrs2)
+			return (void*)-1;
+
+		if (my_getifaddrs2(&ifaddr) == -1)
+		{
+			lwp_trace("netlink_getifaddrs also failed with error %d", errno);
+			return (void*)-1;
+		}
+
+		my_freeifaddrs = my_freeifaddrs2;
 	}
 
-	if (my_getifaddrs(&ifaddr) == -1) {
-		always_log("getifaddrs failed with error %d", errno);
-		dlclose(libc);
-		return (void *)-1;
-	}
-
-	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-		if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET6)
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+	{
+		if (!ifa->ifa_addr)
+		{
+			lwp_trace("\tSkipping due to null.\n");
 			continue;
+		}
 
 		struct sockaddr_in6* sin6 = (struct sockaddr_in6*)ifa->ifa_addr;
 
 		// Convert to text form
-		if (inet_ntop(AF_INET6, &sin6->sin6_addr, addr_str, sizeof(addr_str))) {
-			lwp_trace("Interface: %s, IPv6 Address: %s\n", ifa->ifa_name, addr_str);
+		if (inet_ntop(sin6->sin6_family, sin6->sin6_family == AF_INET6 ? &sin6->sin6_addr
+			: (struct in6_addr *) &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, addr_str, sizeof(addr_str)))
+		{
+			lwp_trace("Interface: %s, IP Address: %s\n", ifa->ifa_name, addr_str);
 		}
 
-		// Skip link-local addresses if desired
+		if (sin6->sin6_family != AF_INET6)
+		{
+			lwp_trace("\tSkipping due to wrong address family (%d).\n", sin6->sin6_family);
+			continue;
+		}
+
+		// Skip link-local addresses (LAN), and loopback
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
 			IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr) ||
 			IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
 			lwp_trace("\tSkipping due to multicast/loopback/linklocal.\n");
 			continue;
 		}
-		// Skip temporary and expired addresses
-		if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_DEPRECATED | IFA_F_TENTATIVE)) != 0) {
-			lwp_trace("\tSkipping due to temporary/deprecated/tentative (flag %i, 0x%x).\n",
+		// Android does not use RFC 4941 privacy addresses by default, but it still has multiple addresses,
+		// and we want the server IPv6 address to be consistent
+		// Ensure network interface is up and capable of broadcast - only wifi does broadcast
+		const unsigned int desired_flags = (IFF_UP | IFF_RUNNING | IFF_BROADCAST);
+		if ((ifa->ifa_flags & desired_flags) != desired_flags) {
+			lwp_trace("\tSkipping due to being down, or not capable of broadcast (flag %i, 0x%x).\n",
 				ifa->ifa_flags, ifa->ifa_flags);
 			continue;
 		}
 
 		if (lwp_ipv6_public_fixed_interface_index == -1)
 		{
-			lwp_ipv6_public_fixed_interface_index = if_nametoindex(ifa->ifa_name);
+			lwp_ipv6_public_fixed_interface_index = (int)if_nametoindex(ifa->ifa_name);
 			lwp_ipv6_public_fixed_addr = sin6->sin6_addr;
 			lwp_trace("\tPicked that address.\n");
 		}
@@ -717,12 +780,15 @@ static void * publicFixedIPv6AddressHunterThread(void * data)
 		lwp_trace("Results of IPv6 adapter lookup: none found\n");
 
 	my_freeifaddrs(ifaddr);
-	dlclose(libc);
+	if (libc)
+		dlclose(libc);
 	return 0;
 }
 
-#endif
+// restore sign conversion complaints
+#pragma GCC diagnostic pop
 
+#endif // _WIN32
 
 // Attempts to populate lwp_ipv6_public_fixed_interface_index + lwp_ipv6_public_fixed_addr
 void lwp_trigger_public_address_hunt(lw_bool block)
@@ -754,6 +820,6 @@ lw_bool lwp_set_ipv6pktinfo_cmsg(void * cmsg2)
 	cmsg->cmsg_len = WSA_CMSG_LEN(sizeof(struct in6_pktinfo));
 	struct in6_pktinfo* pktinfo = (struct in6_pktinfo*)WSA_CMSG_DATA(cmsg);
 	pktinfo->ipi6_addr = lwp_ipv6_public_fixed_addr;
-	pktinfo->ipi6_ifindex = lwp_ipv6_public_fixed_interface_index;
+	pktinfo->ipi6_ifindex = (unsigned int)lwp_ipv6_public_fixed_interface_index;
 	return lw_true;
 }

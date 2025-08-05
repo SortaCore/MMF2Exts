@@ -153,6 +153,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		{
 			lw_error_add(err, WSAGetLastError());
 			lw_error_addf(err, "create for %s hole punch failed", type == lw_addr_type_tcp ? "tcp" : "udp");
+			broke = lw_true;
 			break;
 		}
 		// reuse addr on
@@ -181,10 +182,10 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		if (broke == lw_false)
 		{
 			if (type == lw_addr_type_tcp)
-				conRet = connect(sock, addr->info->ai_addr, addr->info->ai_addrlen);
+				conRet = connect(sock, addr->info->ai_addr, (int)addr->info->ai_addrlen);
 			// UDP v4: send plainly
 			else if (!isIPV6)
-				conRet = sendto(sock, b.buf, b.len, 0, addr->info->ai_addr, addr->info->ai_addrlen);
+				conRet = sendto(sock, b.buf, b.len, 0, addr->info->ai_addr, (int)addr->info->ai_addrlen);
 			// UDP v6: set fixed output public IP, and send
 			else
 			{
@@ -206,7 +207,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 					{
 						WSAMSG msg;
 						msg.name = addr->info->ai_addr;
-						msg.namelen = addr->info->ai_addrlen;
+						msg.namelen = (int)addr->info->ai_addrlen;
 						msg.lpBuffers = &b;
 						msg.dwBufferCount = 1;
 						msg.Control.buf = (CHAR*)cmsg;
@@ -268,6 +269,14 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		}
 		else
 			lw_error_addf(err, "sendTo on hole punch, local port %hu should be OK; you can now host", local_port);
+
+		// If TCP connection is active, end it fast without trying to push through (disable lingering)
+		if (broke && type == lw_addr_type_tcp)
+		{
+			struct linger sl = { 0 };
+			lwp_setsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&sl, sizeof(sl));
+		}
+
 		closesocket(sock);
 	} while (++type != lw_addr_type_udp + 1);
 

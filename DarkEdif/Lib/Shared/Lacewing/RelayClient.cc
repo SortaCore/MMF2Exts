@@ -267,13 +267,20 @@ namespace lacewing
 		internal.socket->connect(host, remote_port);
 		if (internal.local_port)
 		{
+			address addr = internal.socket->server_address();
+			const lw_bool makeAddr = addr == nullptr;
+			if (makeAddr)
+				addr = lacewing::address_new(host, remote_port);
+
 			// Host early for UDP hole punch message - which must be sent closely with TCP connect
-			internal.udp->host(internal.socket->server_address(), internal.local_port);
+			internal.udp->host(addr, internal.local_port);
 
 			// UDPHello with an ignored ID 0xFFFF, which will be ignored by server,
 			// but its reception at all will cause hole punch success
-			internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);
+			internal.udp->send(addr, "\xa0\xFF\xFF", 3);
 			internal.local_port = 0;
+			if (makeAddr)
+				lacewing::address_delete(addr);
 		}
 	}
 
@@ -651,6 +658,17 @@ namespace lacewing
 		{
 		case 0: /* response */
 		{
+			// Client received the initial null byte from a client side, probably from
+			// a bad hole punch doing client -> client instead of server -> client
+			if (size == 0 && !connected)
+			{
+				lacewing::error errorholepunch = error_new();
+				errorholepunch->add("Got the start of a connection from a client side (bad hole punch?)");
+				this->handler_error(client, errorholepunch);
+				error_delete(errorholepunch);
+				return false;
+			}
+
 			lw_ui8  responsetype = reader.get <lw_ui8>();
 			bool	succeeded	= reader.get <lw_ui8>() != 0;
 
@@ -1228,6 +1246,13 @@ namespace lacewing
 				break;
 			}
 
+			// UDP connection completed before TCP, possibly from bad use of hole punch.
+			if (!socket->connected())
+			{
+				lw_trace("Swallowing UDPWelcome at message address %p, TCP is not ready.", message);
+				break;
+			}
+
 			lw_trace("UDPWelcome received for message address %p, now connected.", message);
 
 			udphellotimer->stop();
@@ -1243,6 +1268,14 @@ namespace lacewing
 			auto relayCliWriteLock = client.lock.createWriteLock();
 			if (blasted)
 			{
+				// Hole punch connections send ping messages, as they can be received before or after connection
+				// Continuing here is bad as server_address() is not guaranteed to be set
+				if (!connected)
+				{
+					always_log("Swallowing early UDP ping (assuming it was a hole punch).\n");
+					break;
+				}
+
 				this->message.addheader(9, 0, true, id); /* pong */
 				this->message.send(this->udp, this->socket->server_address());
 			}

@@ -1948,7 +1948,7 @@ reexecute:
 	  case s_body_identity:
 	  {
 		uint64_t to_read = MIN(parser->content_length,
-							   (uint64_t) (((uint64_t)data + len) - (uint64_t)p));
+							   (uint64_t) ((data + len) - p));
 
 		assert(parser->content_length != 0
 			&& parser->content_length != ULLONG_MAX);
@@ -2082,7 +2082,7 @@ reexecute:
 	  case s_chunk_data:
 	  {
 		uint64_t to_read = MIN(parser->content_length,
-							   (uint64_t) (((uint64_t)data + len) - (uint64_t)p));
+							   (uint64_t) ((data + len) - p));
 
 		assert(parser->flags & F_CHUNKED);
 		assert(parser->content_length != 0

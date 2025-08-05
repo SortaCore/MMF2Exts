@@ -1937,6 +1937,7 @@ struct relayserver
 	lacewing::webserver websocket;
 	lacewing::udp udp;
 	lacewing::flashpolicy flash;
+	bool hole_punch_used = false;
 
 	relayserver(pump) noexcept;
 	~relayserver() noexcept;

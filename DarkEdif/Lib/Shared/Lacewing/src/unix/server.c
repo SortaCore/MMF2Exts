@@ -332,6 +332,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		{
 			lw_error_add(err, errno);
 			lw_error_addf(err, "create for %s hole punch failed", type == lw_addr_type_tcp ? "tcp" : "udp");
+			broke = lw_true;
 			break;
 		}
 		// reuse addr on
@@ -437,6 +438,14 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		}
 		else
 			lw_error_addf(err, "sendTo on hole punch, local port %hu should be OK; you can now host", local_port);
+
+		// If tcp connection is active, end it fast without trying to push through (disable lingering)
+		if (broke && type == lw_addr_type_tcp)
+		{
+			struct linger sl = { 0 };
+			lwp_setsockopt(sock, SOL_SOCKET, SO_LINGER, (const char *)&sl, sizeof(sl));
+		}
+
 		close(sock);
 	} while (++type != lw_addr_type_udp + 1);
 

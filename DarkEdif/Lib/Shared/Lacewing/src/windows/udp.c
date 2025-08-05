@@ -459,7 +459,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	{
 		WSAMSG msg;
 		msg.name = addr->info->ai_addr;
-		msg.namelen = addr->info->ai_addrlen;
+		msg.namelen = (int)addr->info->ai_addrlen;
 		msg.lpBuffers = &winsock_buf;
 		msg.dwBufferCount = 1;
 		msg.Control.buf = ctx->public_fixed_ip6_addr_cmsg;

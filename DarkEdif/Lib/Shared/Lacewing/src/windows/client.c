@@ -86,7 +86,10 @@ static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
 		ctx->connecting = lw_false;
 
 		lw_error error = lw_error_new ();
-		lw_error_add (error, errorNum);
+		if (errorNum == ERROR_NETWORK_UNREACHABLE && lw_addr_ipv6(ctx->address))
+			lw_error_addf(error, "Network unreachable - Non-IPv6 client connecting to IPv6 server?");
+		else
+			lw_error_add (error, errorNum);
 		lw_error_addf (error, "Error connecting");
 
 		if (ctx->on_error)
@@ -225,6 +228,8 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	}
 	lw_bool was_locked_local = ctx->local_port_next_connect != 0;
 	ctx->local_port_next_connect = 0;
+
+	lwp_setsockopt((SOCKET)ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
 
 	if (bind ((SOCKET) ctx->socket,
 			(struct sockaddr *) &local_address, sizeof (local_address)) == -1)

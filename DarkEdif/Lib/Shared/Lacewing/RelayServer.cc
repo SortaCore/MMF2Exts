@@ -1486,6 +1486,16 @@ void relayserver::host(lw_ui16 port)
 {
 	lacewing::filter filter = lacewing::filter_new();
 	filter->local_port(port);
+	
+	// If hole punch is used, the socket we're about to host from should be reused
+	// as it was initially used for a hole punch connect call
+	if (hole_punch_used)
+	{
+		filter->reuse(true);
+		// TODO: When 1:1 server-client hole punching is removed, note this line
+		// that allows server sockets to inherit from the hole puncher socket
+		hole_punch_used = false;
+	}
 
 	host(filter);
 	filter_delete(filter);
@@ -1558,6 +1568,7 @@ void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::fi
 void relayserver::hole_punch(const char* ip, lw_ui16 local_port)
 {
 	socket->hole_punch(ip, local_port);
+	hole_punch_used = true;
 }
 
 void relayserver::unhost()
@@ -1605,7 +1616,7 @@ void relayserver::unhost_websocket(bool insecure, bool secure)
 	if (!insecure && !secure)
 		return;
 
-	const char serverMask = (insecure ? 2 : 0) | (secure ? 4 : 0);
+	const char serverMask = (insecure ? '\x2' : '\x0') | (secure ? '\x4' : '\x0');
 	relayserverinternal* serverInternal = (relayserverinternal*)internaltag;
 	if (serverInternal->queue_or_run_action(false, relayserverinternal::action::type::unhost, nullptr, nullptr, std::string_view(&serverMask, 1)))
 		return;

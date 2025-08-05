@@ -168,7 +168,7 @@ void lwp_deinit ();
 #if defined(_lacewing_debug) || defined(_lacewing_debug_output)
 	#define lwp_trace lw_trace
 #else
-	#define lwp_trace(x, ...)
+	#define lwp_trace(x, ...) (void)0
 #endif
 
 /* TODO : find the optimal value for this?  make adjustable? */
