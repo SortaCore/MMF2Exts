@@ -166,7 +166,7 @@ public:
 	void Connect(const TCHAR* Hostname);
 	void SendMsg_Resize(int NewSize);
 	void SetDestroySetting(int enabled);
-	void SetLocalPortForPinhole(int port);
+	void SetLocalPortForHolePunch(int port);
 
 	/// Conditions
 
@@ -384,7 +384,7 @@ public:
 		// If single-threaded, indicates if Lacewing is being ticked by Handle(). Used for error message location.
 		bool lacewingTicking = false;
 		// Local port used when doing a connection. If 0, unset and OS picks.
-		// @remarks This works by having both sides connect to each other at the same time,
+		// @remarks Firewall hole punching works by having both sides connect to each other at the same time,
 		// using pre-supplied local ports - which can be random, but must be known.
 		// Since outgoing connections are allowed, the routers generate an exception for that connection;
 		// and the incoming connection's matching tuple of 
@@ -392,8 +392,8 @@ public:
 		// plus exception specifically for that, creates a two-way exception through the firewall.
 		// However, when NAT is involved (network address translation, like port forwarding), it can get
 		// a mismatch and this will fail.
-		// Since uPnP is an IPv4 tech mostly, pinholing is useful for IPv6 clients behind rigid firewalls;
-		// that aside, uPnP is not always on in routers, and IPv4 pinholing can work for them.
+		// Since uPnP is an IPv4 tech mostly, hole punching is useful for IPv6 clients behind rigid firewalls;
+		// that aside, uPnP is not always on in routers, and IPv4 hole punching can work for them.
 		unsigned short localPort = 0;
 
 		// Max size of a UDP message - good values are 1400 bytes for Ethernet MTU,

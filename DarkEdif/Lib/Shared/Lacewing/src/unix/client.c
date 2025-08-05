@@ -254,7 +254,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		((struct sockaddr_in *)&local_address)->sin_addr.s_addr = INADDR_ANY;
 		((struct sockaddr_in *)&local_address)->sin_port = ctx->local_port_next_connect;
 	}
-	const lw_bool wasLocalFixed = ctx->local_port_next_connect != 0;
+	const lw_bool was_locked_local = ctx->local_port_next_connect != 0;
 	ctx->local_port_next_connect = 0;
 
 	if (bind(ctx->socket,
@@ -267,7 +267,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		lw_error error = lw_error_new();
 
 		lw_error_add(error, errno);
-		lw_error_addf(error, "Error binding socket%s", wasLocalFixed ? " with fixed port" : "");
+		lw_error_addf(error, "Error binding socket%s", was_locked_local ? " with fixed port" : "");
 
 		if (ctx->on_error)
 			ctx->on_error(ctx, error);

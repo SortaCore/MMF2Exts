@@ -267,11 +267,11 @@ namespace lacewing
 		internal.socket->connect(host, remote_port);
 		if (internal.local_port)
 		{
-			// Host early for UDP pinholing message - which must be sent at same time as TCP connect
+			// Host early for UDP hole punch message - which must be sent closely with TCP connect
 			internal.udp->host(internal.socket->server_address(), internal.local_port);
 
 			// UDPHello with an ignored ID 0xFFFF, which will be ignored by server,
-			// but its reception at all will cause pinhole success
+			// but its reception at all will cause hole punch success
 			internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);
 			internal.local_port = 0;
 		}
@@ -286,7 +286,7 @@ namespace lacewing
 		// Socket will fuss if we're connecting/connected already, so don't bother checking.
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		internal.socket->connect(address);
-		// Host early for possible UDP pinholing
+		// Host early for possible UDP hole punch
 		internal.udp->host(internal.socket->server_address(), internal.local_port);
 		// UDPHello, although we probably won't receive response in time for it to be processed
 		internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);

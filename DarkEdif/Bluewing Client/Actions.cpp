@@ -957,7 +957,7 @@ void Extension::SetDestroySetting(int enabled)
 		return CreateError("Invalid setting passed to SetDestroySetting, expecting 0 or 1.");
 	globals->fullDeleteEnabled = enabled != 0;
 }
-void Extension::SetLocalPortForPinhole(int port)
+void Extension::SetLocalPortForHolePunch(int port)
 {
 	if (port < 1 || port > std::numeric_limits<unsigned short>::max())
 		return CreateError("Invalid local port passed, expecting 1 through 65535, got %d.", port);

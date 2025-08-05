@@ -503,7 +503,7 @@ typedef lw_i8 lw_bool;
 	lw_import	lw_server_client  lw_server_client_next		(lw_server_client);
 	lw_import			  void *  lw_server_tag				(lw_server);
 	lw_import				void  lw_server_set_tag			(lw_server, void *);
-	lw_import			 lw_ui16  lw_server_open_pinhole	(lw_server, const char * ip, lw_ui16 local_port);
+	lw_import			 lw_ui16  lw_server_hole_punch		(lw_server, const char * remote_ip_and_port, lw_ui16 local_port);
 
 	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
 	lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
@@ -1177,7 +1177,7 @@ struct _server
 	lw_import size_t num_clients ();
 	lw_import server_client client_first ();
 
-	lw_import lw_ui16 open_pinhole (const char * ip, lw_ui16 local_port);
+	lw_import lw_ui16 hole_punch (const char * ip_and_remote_port, lw_ui16 local_port);
 
 	typedef void (lw_callback * hook_connect) (server, server_client);
 	typedef void (lw_callback * hook_disconnect) (server, server_client);
@@ -1948,7 +1948,7 @@ struct relayserver
 	void unhost();
 	// This works with clients of regular server, so you should use this instead of websocket->unhost/unhost_secure
 	void unhost_websocket(bool insecure, bool secure);
-	void open_pinhole(const char* ip, lw_ui16 local_port);
+	void hole_punch(const char* ip, lw_ui16 local_port);
 
 	bool hosting();
 	lw_ui16 port();

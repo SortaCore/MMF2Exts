@@ -202,7 +202,7 @@ public:
 		void RecvMsg_SaveToFile(int Position, int size, const TCHAR * Filename);
 		void RecvMsg_AppendToFile(int Position, int size, const TCHAR * Filename);
 
-		void Relay_OpenPinhole(const TCHAR* clientIP, int localPort);
+		void Relay_DoHolePunchToFutureClient(const TCHAR* clientIP, int localPort);
 
 
 	/// Conditions

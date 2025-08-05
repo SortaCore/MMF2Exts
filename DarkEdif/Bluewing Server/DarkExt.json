@@ -5,7 +5,7 @@
 		"About": {
 			"Name": "Lacewing Blue Server",
 			"Author": "Darkwire Software",
-			"Copyright": "Copyright \u00A9 2024 by Darkwire Software",
+			"Copyright": "Copyright \u00A9 2025 by Darkwire Software",
 			"Comment": "Multiplayer server, for use over LAN or internet. \"Bluewing\" recreation of Lacewing Relay Server. (b%i, %s)",
 			"Help": "Help/Lacewing Help.chm",
 			"URL": "https://dark-wire.com/relay/"
@@ -15,7 +15,7 @@
 				[ 0, "Host" ],
 				[ 1, "Stop hosting" ],
 				"---",
-				[ 94, "Do pinhole" ]
+				[ 94, "Hole punch to future client" ]
 			],
 			[ "Flash Player Policy Server",
 				[ 68, "Host" ],
@@ -848,9 +848,9 @@
 				]
 			},
 			{
-				"Title": "Open pinhole to client IP %0 (local port %1)",
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
 				"Parameters": [
-					[ "Text", "IP address" ],
+					[ "Text", "Remote IP address (with port)" ],
 					[ "Integer", "Local port, or 0 to pick free port" ]
 				]
 			}
@@ -2413,9 +2413,9 @@
 				]
 			},
 			{ // TODO: Translate
-				"Title": "Open pinhole to client IP %0",
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
 				"Parameters": [
-					[ "Text", "IP address" ],
+					[ "Text", "IP address (with port)" ],
 					[ "Integer", "Local port, or 0 to pick free port" ]
 				]
 			}
@@ -3969,9 +3969,9 @@
 				]
 			},
 			{ // TODO: Translate
-				"Title": "Open pinhole to client IP %0",
+				"Title": "Hole punch connect to future client IP %0 (local port %1)",
 				"Parameters": [
-					[ "Text", "IP address" ],
+					[ "Text", "IP address (with port)" ],
 					[ "Integer", "Local port, or 0 to pick free port" ]
 				]
 			}

@@ -292,13 +292,13 @@ static void listen_socket_read_ready (void * tag)
 	}
 }
 
-lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port)
+lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_ui16 local_port)
 {
-	lw_addr addr = lw_addr_new(ip, "");
+	lw_addr addr = lw_addr_new(remote_ip_and_port, "");
 	lw_error err = lw_addr_resolve(addr);
 	if (err)
 	{
-		lw_error_addf(err, "Error resolving pinhole address");
+		lw_error_addf(err, "Error resolving hole punch address");
 		if (ctx->on_error)
 			ctx->on_error(ctx, err);
 		lw_addr_delete(addr);
@@ -308,7 +308,7 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 
 	if (ctx->socket != -1)
 	{
-		lw_error_addf(err, "Server already hosting, cannot pinhole");
+		lw_error_addf(err, "Server already hosting, cannot hole punch");
 		if (ctx->on_error)
 			ctx->on_error(ctx, err);
 		lw_error_delete(err);
@@ -331,7 +331,7 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 		if (sock == -1)
 		{
 			lw_error_add(err, errno);
-			lw_error_addf(err, "socket type %d create for pinhole failed", type);
+			lw_error_addf(err, "create for %s hole punch failed", type == lw_addr_type_tcp ? "tcp" : "udp");
 			break;
 		}
 		// reuse addr on
@@ -349,8 +349,8 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 
 		if (bind(sock, (struct sockaddr*)&s, isIPV6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
 		{
+			lw_error_addf(err, "bind on hole punch failed, continuing");
 			lw_error_add(err, errno);
-			lw_error_addf(err, "bind on pinhole failed, continuing");
 			broke = lw_true;
 		}
 		u_long mode = 1;  // 1 to enable non-blocking socket
@@ -408,16 +408,15 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 				errno != ECONNREFUSED)
 			{
 				lw_error_add(err, errno);
-				lw_error_addf(err, "connect on pinhole likely failed");
+				lw_error_addf(err, "connect/send on hole punch likely failed");
 				broke = lw_true;
 			}
 		}
 		else if (conRet == -1)
 		{
 			lw_error_add(err, errno);
-			lw_error_addf(err, "setup of connect on pinhole failed");
+			lw_error_addf(err, "connect/send on hole punch failed");
 			broke = lw_true;
-			//	closesocket(sock);
 		}
 		// else success
 
@@ -437,10 +436,15 @@ lw_ui16 lw_server_open_pinhole(lw_server ctx, const char* ip, lw_ui16 local_port
 			}
 		}
 		else
-			lw_error_addf(err, "sendTo on pinhole, local port %hu should be OK; you can now host", local_port);
+			lw_error_addf(err, "sendTo on hole punch, local port %hu should be OK; you can now host", local_port);
 		close(sock);
 	} while (++type != lw_addr_type_udp + 1);
-	if (ctx->on_error)
+
+	// In debug, always report
+#ifdef _DEBUG
+	broke = lw_true;
+#endif
+	if (broke && ctx->on_error)
 		ctx->on_error(ctx, err);
 	lw_error_delete(err);
 	lw_addr_delete(addr);

@@ -1748,12 +1748,12 @@ void Extension::RecvMsg_AppendToFile(int passedPosition, int passedSize, const T
 			" occurred with writing the end of the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 }
-void Extension::Relay_OpenPinhole(const TCHAR* clientIP, int localPort)
+void Extension::Relay_DoHolePunchToFutureClient(const TCHAR* clientIP, int localPort)
 {
 	if (localPort > 0xFFFF || localPort < 0)
-		return CreateError("Cannot pinhole with local port %d; invalid port.", localPort);
+		return CreateError("Cannot hole punch with local port %d; invalid port.", localPort);
 	if (clientIP[0] == _T('\0'))
-		return CreateError("Cannot pinhole with blank remote IP.");
+		return CreateError("Cannot hole punch with blank remote IP.");
 
-	Srv.open_pinhole(DarkEdif::TStringToANSI(clientIP).c_str(), (lw_ui16)localPort);
+	Srv.hole_punch(DarkEdif::TStringToANSI(clientIP).c_str(), (lw_ui16)localPort);
 }

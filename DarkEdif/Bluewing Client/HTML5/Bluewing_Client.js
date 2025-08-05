@@ -255,7 +255,7 @@ function CRunBluewing_Client() {
 
 	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and globalThis[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
-	this['ExtensionVersion'] = 104; // To match C++ version
+	this['ExtensionVersion'] = 105; // To match C++ version
 	this['SDKVersion'] = 19;
 	this['DebugMode'] = false;
 	this['ExtensionName'] = 'Bluewing Client';
@@ -1383,11 +1383,11 @@ function CRunBluewing_Client() {
 		}
 		this.globals.fullDeleteEnabled = enabled != 0;
 	};
-	this.Action_SetLocalPortForPinhole = function (port) {
+	this.Action_SetLocalPortForHolePunch = function (port) {
 		if (port < 1 || port > 0xFFFF) {
-			return this.CreateError("Invalid port passed to SetLocalPortForPinhole, expecting 1 through 65535, got " + port + ".");
+			return this.CreateError("Invalid port passed to SetLocalPortForHolePunch, expecting 1 through 65535, got " + port + ".");
 		}
-		this.CreateError("Pinhole is not available in HTML5.");
+		this.CreateError("Setting local port is not available in HTML5.");
 	};
 
 	// ======================================================================================================
@@ -2373,7 +2373,7 @@ function CRunBluewing_Client() {
 	/* 74 */ this.Action_ResizeBinaryToSend,
 	// Blue-only actions
 	/* 75 */ this.Action_SetDestroySetting,
-	/* 76 */ this.Action_SetLocalPortForPinhole
+	/* 76 */ this.Action_SetLocalPortForHolePunch
 	];
 	this.$conditionFuncs = [
 	/* 0 */ this.Condition_MandatoryTriggeredEvent, /* OnError */

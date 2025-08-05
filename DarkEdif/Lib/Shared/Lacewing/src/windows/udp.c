@@ -315,7 +315,7 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 		else // Couldn't find a matching IPv6; we'll have to let the OS pick a default
 		{
 			lw_error error = lw_error_new();
-			lw_error_addf(error, "Hosting will continue, but remote IPv6 clients may be unable to connect");
+			lw_error_addf(error, "Hosting will continue, but some remote IPv6 clients may be unable to connect");
 			lw_error_addf(error, "Error hosting UDP - couldn't find a stable global IPv6 address");
 			if (ctx->on_error)
 				ctx->on_error(ctx, error);

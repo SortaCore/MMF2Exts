@@ -82,9 +82,9 @@ server_client _server::client_first ()
 	return (server_client) lw_server_client_first ((lw_server) this);
 }
 
-lw_ui16 _server::open_pinhole (const char* ip, lw_ui16 local_port)
+lw_ui16 _server::hole_punch (const char* remote_ip_and_port, lw_ui16 local_port)
 {
-	return lw_server_open_pinhole ((lw_server) this, ip, local_port);
+	return lw_server_hole_punch ((lw_server) this, remote_ip_and_port, local_port);
 }
 
 void _server::on_connect (_server::hook_connect hook)
