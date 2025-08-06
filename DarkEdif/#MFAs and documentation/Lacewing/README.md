@@ -1,7 +1,7 @@
 ## Editor
-The recent HND files can be opened in HelpNDoc v7.x.
+The recent HND files can be opened in HelpNDoc v9.x.
 
-You can download the HelpNDoc v7 Personal Edition for free without registration [here](https://www.helpndoc.com/download/), but note there is a footer added to all pages in output files.  
+You can download the HelpNDoc v9 Personal Edition for free without registration [here](https://www.helpndoc.com/download/), but note there is a footer added to all pages in output files.  
 (Phi has a paid-for copy, bought by Patreon money.)
 
 If for some reason you wish to open LB's original HelpNDoc v2.x file, you can download HelpNDoc v3.9 from [here](https://dl.ibe-software.com/hnd/helpndoc-setup-3.9.1.648.exe).  
