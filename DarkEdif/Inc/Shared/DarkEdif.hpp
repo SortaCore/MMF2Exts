@@ -392,6 +392,11 @@ namespace DarkEdif {
 		int DLL_CreateObject(mv* mV, LevelObject* loPtr, EDITDATA* edPtr);
 	}
 
+	struct Size
+	{
+		int width, height;
+	};
+
 	struct Properties
 	{
 		NO_DEFAULT_CTORS_OR_DTORS(Properties);
@@ -422,6 +427,10 @@ namespace DarkEdif {
 		std::uint16_t GetPropertyNumImages(int propID, std::size_t index) const;
 		// Returns number of images in a image list property by property name
 		std::uint16_t GetPropertyNumImages(std::string_view propName, std::size_t index) const;
+		// Returns a Size property value by property name
+		DarkEdif::Size GetSizeProperty(std::string_view propName, std::size_t index) const;
+		// Returns a Size property value by property ID
+		DarkEdif::Size GetSizeProperty(int propID, std::size_t index) const;
 
 #if EditorBuild
 		// =====

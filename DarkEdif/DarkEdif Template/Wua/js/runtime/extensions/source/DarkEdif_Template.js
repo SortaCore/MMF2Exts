@@ -204,6 +204,19 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 			
 			return new DataView(prop.propData.buffer).getUint16(0, true));
 		};
+		this['GetSizeProperty'] = function(chkIDOrName) {
+			const idx = GetPropertyIndex(chkIDOrName);
+			if (idx == -1) {
+				return -1;
+			}
+			const prop = that.props[idx];
+			if (prop.propTypeID != 8) { // PROPTYPE_SIZE
+				throw "Property " + prop.propName + " is not an size property.";
+			}
+			
+			const dv = new DataView(prop.propData.buffer);
+			return { width: dv.getInt32(0, true), height: dv.getInt32(4, true) };
+		};
 
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);

@@ -787,6 +787,10 @@ Prop * DarkEdif::Properties::GetProperty(size_t IDParam)
 	else if (!_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Edit spin float")) {
 		ret = new Prop_Float(*(const float *)Current->ReadPropValue());
 	}
+	else if (!_stricmp(curStr, "Size")) {
+		const DarkEdif::Size& size = *(DarkEdif::Size *)Current->ReadPropValue();
+		ret = new Prop_Size(size.width, size.height);
+	}
 	else if (!_strnicmp(curStr, "Combo Box", sizeof("Combo Box") - 1))
 	{
 		// Combo box is stored as its item text, so items can be altered between versions.
@@ -2645,6 +2649,47 @@ found:
 	return imgProp->numImages;
 }
 
+// Returns a Size property value by property name
+DarkEdif::Size DarkEdif::Properties::GetSizeProperty(std::string_view propName, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_FirstData();
+	while (data)
+	{
+		if (data->ReadPropName() == propName)
+			goto found;
+		data = data->Next();
+	}
+
+	MsgBox::Error(_T("DarkEdif property error"), _T("GetSizeProperty() error; property name \"%s\" does not exist."), UTF8ToTString(propName).c_str());
+	return Size { -1, -1 };
+
+found:
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_SIZE)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetSizeProperty() error; property name \"%s\" is not a size property."), UTF8ToTString(propName).c_str());
+		return Size { -1, -1 };
+	}
+	return *(Size *)data->ReadPropValue();
+}
+// Returns a Size property value by property ID
+DarkEdif::Size DarkEdif::Properties::GetSizeProperty(int propID, std::size_t index) const
+{
+	const auto& p = Elevate(*this);
+	const Properties::Data* data = p.Internal_DataAt(propID);
+	if (!data)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetSizeProperty() error; property ID %d does not exist."), propID);
+		return Size { -1, -1 };
+	}
+	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_SIZE)
+	{
+		MsgBox::Error(_T("DarkEdif property error"), _T("GetSizeProperty() error; property ID %d is not a size property."), propID);
+		return Size { -1, -1 };
+	}
+	return *(Size *)data->ReadPropValue();
+}
+
 
 const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 {
@@ -3029,7 +3074,42 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 			// Size
 			case PROPTYPE_SIZE:
+			{
+				const json_value& presetList = Property["PresetSizes"];
+				if (presetList.type == json_type::json_array && presetList.u.array.length > 0)
+				{
+					int* const predefSizes = new int[(presetList.u.array.length + 1) * 2];
+					
+					for (unsigned int index = 0; index < presetList.u.array.length; ++index)
+					{
+						const json_value& sizeEntry = presetList[index];
+
+						if (sizeEntry.type != json_type::json_array || sizeEntry.u.array.length != 2 ||
+							sizeEntry[0].type != json_type::json_integer || sizeEntry[1].type != json_type::json_integer ||
+							(json_int_t)sizeEntry[0] < 0 || (json_int_t)sizeEntry[1] < 0)
+						{
+							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid preset size index %d in size property %s."),
+								index, UTF8ToTString((const char*)Property["Title"]).c_str());
+						}
+
+						predefSizes[index * 2] = (int)(json_int_t)sizeEntry[0];
+						predefSizes[index * 2 + 1] = (int)(json_int_t)sizeEntry[1];
+					}
+
+					// Array must end with a 0 x 0 entry
+					predefSizes[presetList.u.array.length * 2] = 0;
+					predefSizes[presetList.u.array.length * 2 + 1] = 0;
+
+					SetAllProps(PROPOPT_PARAMREQUIRED, predefSizes);
+				}
+				if (presetList.type != json_type::json_none)
+				{
+					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid PresetSizes array in size property %s."),
+						UTF8ToTString((const char*)Property["Title"]).c_str());
+				}
+
 				SetAllProps(0, NULL);
+			}
 
 			// Checkbox
 			case PROPTYPE_LEFTCHECKBOX:
