@@ -170,6 +170,38 @@ globalThis['darkEdif'] = (globalThis['darkEdif'] && globalThis['darkEdif'].sdkVe
 			}
 			throw "Property " + prop.propName + " is not numeric.";
 		};
+		this['GetPropertyImageID'] = function(chkIDOrName, imgID) {
+			const idx = GetPropertyIndex(chkIDOrName);
+			if (idx == -1) {
+				return -1;
+			}
+			const prop = that.props[idx];
+			if (prop.propTypeID != 23) { // PROPTYPE_IMAGELIST
+				throw "Property " + prop.propName + " is not an image list.";
+			}
+			
+			if ((~~imgID != imgID) || imgID < 0) {
+				throw "Image index " + imgID + " is invalid.";
+			}
+			const dv = new DataView(prop.propData.buffer);
+			if (imgID >= dv.getUint16(0, true)) {
+				return -1;
+			}
+			
+			return imgID.getUint16(2 * (1 + idx), true)
+		};
+		this['GetPropertyNumImages'] = function(chkIDOrName, imgID) {
+			const idx = GetPropertyIndex(chkIDOrName);
+			if (idx == -1) {
+				return -1;
+			}
+			const prop = that.props[idx];
+			if (prop.propTypeID != 23) { // PROPTYPE_IMAGELIST
+				throw "Property " + prop.propName + " is not an image list.";
+			}
+			
+			return new DataView(prop.propData.buffer).getUint16(0, true));
+		};
 
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);
