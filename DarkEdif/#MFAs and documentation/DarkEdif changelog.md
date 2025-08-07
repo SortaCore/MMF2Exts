@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- Android: Builds 16KB page size libraries on ARM64/x864_64, required by Google Play
 - All platforms: Added support for Size properties
 - PostBuildTool: Now v1.0.1.0; iOS frameworks use spaces instead of underscores, and checks for invalid Mac code-signing keychain
 - iOS: Now builds frameworks with spaces instead of underscores

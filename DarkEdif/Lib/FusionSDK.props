@@ -691,6 +691,11 @@
 			<IncrementalLink>false</IncrementalLink>
 			<!-- Strip out debugger info in release builds. Removes ClCompile.DebuggerSymbolInformation if it's there, too. -->
 			<DebuggerSymbolInformation Condition="$(RelBuild)==1">OmitAllSymbolInformation</DebuggerSymbolInformation>
+			<!-- Since Nov 2025, all Google Play Android 15+ libraries must be built with 16KB alignment.
+				 r22 and lower must specify common page size; higher just max page size.
+				 https://developer.android.com/guide/practices/page-sizes#ndk-build_1 -->
+			<AdditionalOptions Condition="'$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64'">-Wl,-z,max-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions Condition="('$(TargetArch)'=='x86_64' OR '$(TargetArch)'=='arm64') AND $(NDKVersion) &lt;= 22">-Wl,-z,common-page-size=16384 %(AdditionalOptions)</AdditionalOptions>
 		</Link>
 	</ItemDefinitionGroup>
 	<!-- Ensure VS knows the build failed if the .so or .zip files weren't updated -->
