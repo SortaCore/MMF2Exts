@@ -215,7 +215,7 @@ lw_bool lwp_ws_req_in_method (lw_ws_req ctx, size_t len, const char * method)
 static lw_bool parse_cookie_header (lw_ws_req ctx, size_t header_len,
 									const char * header)
 {
-	size_t name_begin, name_len, value_begin, value_len;
+	size_t name_begin = 0, name_len = 0, value_begin = 0, value_len = 0;
 
 	int state = 0;
 
