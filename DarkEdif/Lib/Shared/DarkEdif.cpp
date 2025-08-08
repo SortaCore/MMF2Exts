@@ -3381,6 +3381,8 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	if (Edif::SDK->mV->GetFileA(std::tstring(filePath).c_str(), truePath.data(), 0) == FALSE)
 #endif
 		return _T(">mvGetFile returned false"s);
+	else // trim extra space
+		truePath.resize(_tcslen(truePath.c_str()));
 #elif defined(__ANDROID__)
 	// Call `String darkedif_jni_makePathUnembeddedIfNeeded(String)` Java function
 	static jmethodID getEventIDMethod;
