@@ -374,7 +374,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 				(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
 				value_length >= std::size(value))
 			{
-				DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+				// If the user never went into Tools > Preferences and pressed OK,
+				// a ton of registry keys won't exist. Default to US English.
+				if (err != ERROR_FILE_NOT_FOUND)
+					DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
 			}
 			else
 				localeNum = _ttoi(value);
