@@ -4,7 +4,7 @@
  * Copyright (C) 2012-2025 Darkwire Software.
  * All rights reserved.
  * 
- * liblacewing and Lacewing Relay are provided under MIT license.
+ * liblacewing and Lacewing Relay/Blue are provided under MIT license.
  */
 
 #include "../common.h"

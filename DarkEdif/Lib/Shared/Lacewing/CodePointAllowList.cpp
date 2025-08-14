@@ -4,7 +4,7 @@
  * Copyright (C) 2021-2025 Darkwire Software.
  * All rights reserved.
  *
- * https://opensource.org/licenses/mit-license.php
+ * https://opensource.org/license/mit
 */
 
 #include "Lacewing.h"
