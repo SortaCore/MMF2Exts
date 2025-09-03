@@ -110,7 +110,8 @@ static void first_time_write_ready (void * tag)
 
 	lw_client ctx = (lw_client)tag;
 
-	assert (ctx->flags & lw_client_flag_connecting);
+	// This is sometimes true when connection fails instantly
+	// assert (!(ctx->flags & lw_client_flag_connecting))
 
 	lw_timer_stop (ctx->connect_timer);
 
@@ -192,7 +193,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	lw_addr_delete (ctx->address);
 	ctx->address = lw_addr_clone (address);
 
-	if (!address->info)
+	if (!ctx->address->info)
 	{
 		ctx->flags &= ~lw_client_flag_connecting;
 
@@ -207,7 +208,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		return;
 	}
 
-	if ((ctx->socket = socket (lw_addr_ipv6 (address) ? AF_INET6 : AF_INET,
+	if ((ctx->socket = socket (lw_addr_ipv6 (ctx->address) ? AF_INET6 : AF_INET,
 				SOCK_STREAM,
 				IPPROTO_TCP)) == -1)
 	{
@@ -230,38 +231,34 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	// Android doesn't support AI_V4MAPPED, despite defining it.
 	// Due to that, https://stackoverflow.com/questions/5587935/cant-turn-off-socket-option-ipv6-v6only#comment15775318_8213504
 #if !defined(__ANDROID__) && !defined(__APPLE__)
-	if (lw_addr_ipv6(address))
+	if (lw_addr_ipv6(ctx->address))
 		lwp_disable_ipv6_only((lwp_socket)ctx->socket);
 #endif
 
-	if (ctx->local_port_next_connect)
-	{
-		char reuse = 1;
-		lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(reuse));
-	}
-
 	struct sockaddr_storage local_address = {0};
 
-	if (lw_addr_ipv6(address))
+	if (lw_addr_ipv6(ctx->address))
 	{
 		((struct sockaddr_in6 *)&local_address)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&local_address)->sin6_addr = in6addr_any;
-		((struct sockaddr_in6 *)&local_address)->sin6_port = ctx->local_port_next_connect;
+		((struct sockaddr_in6 *)&local_address)->sin6_port = htons(ctx->local_port_next_connect);
 	}
 	else
 	{
 		((struct sockaddr_in *)&local_address)->sin_family = AF_INET;
 		((struct sockaddr_in *)&local_address)->sin_addr.s_addr = INADDR_ANY;
-		((struct sockaddr_in *)&local_address)->sin_port = ctx->local_port_next_connect;
+		((struct sockaddr_in *)&local_address)->sin_port = htons(ctx->local_port_next_connect);
 	}
-	const lw_bool was_locked_local = ctx->local_port_next_connect != 0;
+
+	const int was_locked_local = ctx->local_port_next_connect != 0 ? 1 : 0;
 	ctx->local_port_next_connect = 0;
 
 	// reuse or not, based on reserved port
 	lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
 
-	if (bind(ctx->socket,
-		(struct sockaddr *)&local_address, sizeof(local_address)) == -1)
+	if (bind(ctx->socket, (struct sockaddr *)&local_address,
+		// iOS does not work with sizeof sockaddr_storage
+		lw_addr_ipv6(ctx->address) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
 	{
 		ctx->flags &= ~lw_client_flag_connecting;
 		close(ctx->socket);

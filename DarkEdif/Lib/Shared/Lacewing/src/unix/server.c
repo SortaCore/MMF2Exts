@@ -327,7 +327,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		int sock = socket(isIPV6 ? AF_INET6 : AF_INET,
 			type == lw_addr_type_tcp ? SOCK_STREAM : SOCK_DGRAM,
 			type == lw_addr_type_tcp ? IPPROTO_TCP : IPPROTO_UDP);
-		char yes = 1;
+		int yes = 1;
 		if (sock == -1)
 		{
 			lw_error_add(err, errno);
@@ -336,7 +336,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 			break;
 		}
 		// reuse addr on
-		lwp_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+		lwp_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
 		struct sockaddr_storage s = { 0 };
 		s.ss_family = isIPV6 ? AF_INET6 : AF_INET;
 		// Port is at same offset in both sockaddr_in and sockaddr_in6
