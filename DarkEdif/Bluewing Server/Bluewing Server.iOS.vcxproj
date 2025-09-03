@@ -54,56 +54,56 @@
   </ImportGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|ARM64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;_lacewing_debug;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Runtime|x86'">
     <ClCompile>
-      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>IPHONEOS_DEPLOYMENT_TARGET=10.0;NOPROPS;_lacewing_static;ENABLE_SSL;always_log=server_always_log;lacewing=fusion_server_lacewing;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\Lib\Shared\Lacewing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-fno-aligned-allocation %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
