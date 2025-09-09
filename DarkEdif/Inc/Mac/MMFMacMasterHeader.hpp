@@ -195,8 +195,8 @@ inline namespace FusionInternals
 	};
 	enum_class_is_a_bitmask(EventGroupFlags);
 
-	struct eventGroup {
-		NO_DEFAULT_CTORS_OR_DTORS(eventGroup);
+	struct EventGroupMP {
+		NO_DEFAULT_CTORS_OR_DTORS(EventGroupMP);
 
 		std::uint8_t get_evgNCond() const;
 		std::uint8_t get_evgNAct() const;
@@ -234,7 +234,7 @@ inline namespace FusionInternals
 		std::size_t get_NObjects();
 		event2* GetRH4ActionStart();
 		EventGroupFlags GetEVGFlags();
-		eventGroup* get_EventGroup();
+		EventGroupMP * get_EventGroup();
 		CRunAppMultiPlat* get_App();
 		//CEventProgram* get_EventProgram();
 	};

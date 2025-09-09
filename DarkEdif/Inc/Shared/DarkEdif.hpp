@@ -233,7 +233,7 @@ namespace DarkEdif {
 	constexpr bool IsRunningUnderWine = false;
 #endif
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
-	std::uint16_t GetEventNumber(eventGroup *);
+	std::uint16_t GetEventNumber(EventGroupMP *);
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0
 	int GetCurrentFusionEventNum(const Extension * const ext);
 	// Returns path as is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
