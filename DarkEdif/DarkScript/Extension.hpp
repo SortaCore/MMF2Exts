@@ -371,7 +371,7 @@ public:
 	static int GetNumExpressions();
 	long VariableFunction(const TCHAR * funcName, const ACEInfo &exp, long * args);
 
-	void evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects);
+	void evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects, short excludeOi = -1);
 	void evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjectListCache>& selectedObjects, bool unselectAllExisting);
 
 	std::shared_ptr<DelayedFunction> curDelayedFuncLoop, curDelayedFunc;

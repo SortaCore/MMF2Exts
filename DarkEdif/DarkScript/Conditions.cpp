@@ -84,6 +84,11 @@ bool Extension::OnForeachFunction(const TCHAR* name, int objOiList)
 		return false;
 	}
 
+	// Pre-restore any objects selected, if needed; don't deselect selected ones,
+	// as the only ones selected are intended at this point
+	if (lowest.keepObjectSelection)
+		evt_RestoreSelectedObjects(lowest.selectedObjects, true);
+
 	// Condition selected a singular object
 	if (conditionExptOi >= 0)
 	{
@@ -166,11 +171,6 @@ bool Extension::OnForeachFunction(const TCHAR* name, int objOiList)
 
 	LOGD(_T("OnForeachFunction(\"%s\") on event %i. Current FV = %d; number %i. Event count %d. Checking selection count: %zu. Triggering.\n"),
 		name, DarkEdif::GetCurrentFusionEventNum(this), lowest.currentForeachObjFV, lowest.currentForeachObjFV & 0xFFFF, rhPtr->GetRH2EventCount(), numSel);
-
-	// Pre-restore any objects selected, if needed
-	if (lowest.keepObjectSelection)
-		//assert(false);
-		evt_RestoreSelectedObjects(lowest.selectedObjects, true);
 #endif
 
 	//Runtime.ObjectSelection.SelectOneObject(ro);

@@ -453,14 +453,14 @@ constexpr size_t numFuncVariantsToGenerateMMF2 =
 	// multiplied by variants of parameter types...
 	((int)duet((int)Extension::Type::NumCallableParamTypes,
 		// multiplied by max number of parameters
-		numParamsToAllow)));
+		std::min(numParamsToAllow, 5))));
 constexpr size_t numFuncVariantsToGenerateCF25 =
 // Variants of return types...
 (((Flags::Both + 1) * ((int)Extension::Type::NumCallableReturnTypes)) *
 	// multiplied by variants of parameter types...
 	((int)duet((int)Extension::Type::NumCallableParamTypes,
 		// multiplied by max number of parameters
-		6)));
+		std::min(numParamsToAllow, 6))));
 
 static void GenerateExpressionFuncFor(const int inputID)
 {
@@ -539,7 +539,7 @@ static void GenerateExpressionFuncFor(const int inputID)
 	assert(!needNewParam || returnType == Extension::Type::Integer);
 
 	int intermediate = (funcID / (int)Extension::Type::NumCallableReturnTypes) - 1;
-	for (size_t i = paramTypes.size(); i < (size_t)(last->NumOfParams + (needNewParam ? 1 : 0) + (flags & Flags::Repeat ? 1 : 0)); i++)
+	for (std::size_t i = paramTypes.size(); i < (std::size_t)(last->NumOfParams + (needNewParam ? 1 : 0) + ((flags & Flags::Repeat) != Flags::None ? 1 : 0)); ++i)
 	{
 		// too many params?
 		if (intermediate < 0)
@@ -1173,9 +1173,16 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 
 	if (newFunc->active)
 	{
+		// Always save selection and restore after action, even for non-K func;
+		// if newFunc->keepObjectSelection is set (K-func), then the On Function
+		// condition will restore for start of each On Function event
+		evt_SaveSelectedObjects(newFunc->selectedObjects);
+
 		newFunc->runLocation = Sub_GetLocation(actID);
 		long l = ExecuteFunction(nullptr, newFunc);
 		newFunc->runLocation.clear();
+
+		evt_RestoreSelectedObjects(newFunc->selectedObjects, true);
 		return l;
 	}
 
@@ -1462,8 +1469,8 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 			(rf->isVoidRun && whenAllowNoRVSet >= AllowNoReturnValue::ForeachDelayedActionsOnly) ||
 			(rf->funcTemplate->isAnonymous && whenAllowNoRVSet >= AllowNoReturnValue::AnonymousForeachDelayedActions))
 		{
-			LOGV(_T("%sFunction \"%s\" has no default return value, and no return value was set by any On %sFunction \"%s\" events."
-				"Due to \"allow no default value\" property, ignoring it and returning 0/\"\"."),
+			LOGV(_T("%sFunction \"%s\" has no default return value, and no return value was set by any On %sFunction \"%s\" events. "
+				"Due to \"allow no default value\" property, ignoring it and returning 0/\"\".\n"),
 				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str(),
 				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str());
 			// Return to calling expression - return int and float directly as they occupy same memory address
@@ -1527,33 +1534,60 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 }
 
 // Save object selection
-void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects)
+void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCache>& selectedObjects, short excludeOi)
 {
 	bool wasFound = false;
 	const short DSOi = rdPtr->get_rHo()->get_Oi();
+	std::vector<short> excludeOis;
+	if (excludeOi > -1)
+	{
+		excludeOis.push_back(excludeOi);
+		LOGD(_T("Should skip oi %hi (%s), it should be a foreach target?\n"),
+			excludeOi, rhPtr->GetOIListByIndex(excludeOi)->get_name());
+	}
+	else if (excludeOi != -1)
+	{
+		excludeOis = rhPtr->GetQualToOiListByOffset(excludeOi)->GetAllOi();
+		LOGD(_T("Should skip qualifier oi %hi, it should be a foreach target?\n"), excludeOi);
+	}
+	else
+		LOGD(_T("No objects to skip.\n"));
+
+	std::size_t numAllOi = 0;
 	short oiListIndex = -1;
 	for (auto poil : DarkEdif::AllOIListIterator(rhPtr))
 	{
 		++oiListIndex;
+		++numAllOi;
 
 		// Skip our ext, it'll always appear in selection as it's how this code right here in our ext is running
 		// Since every generated condition will use DarkScript, we shouldn't need to re-select after generated events finish
 		// although... if the user is strange enough to mix DS with other loop-type objects, maybe.
 		if (poil->get_Oi() == DSOi)
 		{
-			LOGV(_T("Skipping object \"%s\", oi %i, it should be DarkScript.\n"), poil->get_name(), poil->get_Oi());
+			LOGD(_T("Skipping object \"%s\", oi %i, it should be DarkScript.\n"), poil->get_name(), poil->get_Oi());
 			wasFound = true;
+			continue;
+		}
+		if (!excludeOis.empty() &&
+			std::find(excludeOis.cbegin(), excludeOis.cend(), poil->get_Oi()) != excludeOis.cend())
+		{
+			LOGD(_T("Skipping object \"%s\", oi %i, it should be a foreach target and cannot be saved in K.\n"), poil->get_name(), poil->get_Oi());
 			continue;
 		}
 
 		// Selection was caused by condition, or by action
 		if (poil->get_EventCount() != rhPtr->GetRH2EventCount())
 		{
-			LOGV(_T("Skipping object \"%.*s\", event count differs (it is %i, but should be %i) so it is not selected.\n"),
+			LOGD(_T("Skipping object \"%.*s\", event count differs (it is %i, but should be %i) so it is not selected.\n"),
 				std::isprint(poil->get_name()[0] & 0x7F) ? 24 : 3,
 				poil->get_name(), poil->get_EventCount(), rhPtr->GetRH2EventCount());
 			continue;
 		}
+		LOGD(_T("Adding me a sexy object \"%.*s\", event count same (oil ec %i, rh ec %i) so it is selected.\n"),
+			std::isprint(poil->get_name()[0] & 0x7F) ? 24 : 3,
+			poil->get_name(), poil->get_EventCount(), rhPtr->GetRH2EventCount());
+
 		// Already in the list?
 		// TODO: Is this even possible? Multiple CRuns, maybe, but rhPtr is one CRun.
 		int j;
@@ -1588,15 +1622,22 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 			// TODO: With multiple CRuns revealed, is this still functional across subapps?
 			if (pHoFound == rdPtr)
 				wasFound = true;
-			if (pHoFound == NULL)
-				break;
 			++numSelected;
 			pSel->selectedObjects.push_back(pHoFound->get_rHo()->get_Number());
-		//	num = pHoFound->get_rHo()->get_NextSelected();
+			LOGV(_T("Added object selection instance: object \"%s\" hoNumber %hi. ListSelected number is %hi,"
+				" Object is %hi, ho eventCount %i ==? oil %i.\n"),
+				pSel->poil->get_name(), pSel->selectedObjects.back(), pSel->poil->get_ListSelected(), pSel->poil->get_Object(),
+				rhPtr->GetRH2EventCount(), pSel->poil->get_EventCount());
 		}
 		if (numSelected > 0)
 			LOGI(_T("Added object selection: object \"%s\" num instances %zu.\n"), pSel->poil->get_name(), pSel->selectedObjects.size());
 	}
+	LOGD(_T("Save obj select done: %zu objects.\n"), selectedObjects.size());
+
+	if (numAllOi == 0)
+		LOGE(_T("Save obj select FAILED: %zu oilist.\n"), numAllOi);
+	else
+		LOGD(_T("Save obj select note: %zu oilist total.\n"), numAllOi);
 
 	if (!wasFound)
 		LOGE(_T("Couldn't find DarkScript in selected objects!\n"));
@@ -1613,6 +1654,15 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 			// Skip our ext, it'll always appear in selection because otherwise, how is this code right here in our ext running?
 			if (poil->get_Oi() == rdPtr->get_rHo()->get_Oi())
 				continue;
+
+			// If we're manually selecting, then don't reset selection
+			if (std::find_if(selectedObjects.cbegin(), selectedObjects.cend(),
+				[&poil](const FusionSelectedObjectListCache& f) {
+					return f.poil == poil;
+				}) != selectedObjects.cend())
+			{
+				continue;
+			}
 
 			// Invalidate the selection by making the event count not match, as opposed to explicitly selecting all
 			poil->SelectAll(rhPtr, false);
@@ -1654,7 +1704,8 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 
 void Extension::Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr<RunningFunction> &runningFunc)
 {
-	LOGI(_T("Sub_RunPendingForeachFunc executing for oil %hi (non-qual: %hi), function \"%s\".\n"),
+	LOGI(_T("Sub_RunPendingForeachFunc executing on event %i for oil %hi (non-qual: %hi), function \"%s\".\n"),
+		DarkEdif::GetCurrentFusionEventNum(this),
 		oil, (short)(oil & 0x7FFF), runningFunc->funcTemplate->name.c_str());
 
 	std::vector<RunObjectMultiPlatPtr> list;
@@ -1672,7 +1723,7 @@ void Extension::Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr
 	}
 
 	std::vector<FusionSelectedObjectListCache> selObjList;
-	evt_SaveSelectedObjects(selObjList);
+	evt_SaveSelectedObjects(selObjList, oil);
 
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
 	size_t totalSel = 0;
