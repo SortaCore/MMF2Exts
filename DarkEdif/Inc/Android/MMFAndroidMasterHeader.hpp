@@ -328,8 +328,8 @@ private:
 };
 
 namespace Edif { class Runtime; }
+struct EventGroupMP;
 
-struct eventGroup;
 struct event2 {
 	short get_evtNum();
 	OINUM get_evtOi();
@@ -337,7 +337,7 @@ struct event2 {
 	void set_evtFlags(std::int8_t);
 	std::int8_t get_evtFlags();
 
-	event2(eventGroup * inside, int index, jobject evt, Edif::Runtime* run);
+	event2(EventGroupMP  * inside, int index, jobject evt, Edif::Runtime* run);
 	std::unique_ptr<event2> Next();
 	int GetIndex();
 protected:
@@ -346,7 +346,7 @@ protected:
 	global<jobject> me;
 	global<jclass> meClass;
 	Edif::Runtime* runtime;
-	eventGroup* owner;
+	EventGroupMP* owner;
 	int index;
 	// Magic number to tell ctor to JNI-lookup the array index
 	constexpr static int FindIndexMagicNum = -0xABCDEF;
@@ -482,15 +482,15 @@ private:
 	std::vector<short> HalfVector(std::size_t first);
 };
 struct CEventProgram;
-struct eventGroup {
-	NO_DEFAULT_CTORS(eventGroup);
+struct EventGroupMP {
+	NO_DEFAULT_CTORS(EventGroupMP);
 
 	std::uint8_t get_evgNCond();
 	std::uint8_t get_evgNAct();
 	// std::int16_t get_evgInhibit();
 	std::int16_t get_evgIdentifier();
 	EventGroupFlags get_evgFlags();
-	eventGroup(jobject me, Edif::Runtime * runtime);
+	EventGroupMP(jobject me, Edif::Runtime * runtime);
 	std::unique_ptr<event2> GetCAByIndex(std::size_t index);
 protected:
 	friend Edif::Runtime;
@@ -539,7 +539,7 @@ struct CEventProgram {
 	// Sets the current expression token array; relevant in Android only. 
 	void set_rh4Tokens(jobject newTokensArray);
 
-	eventGroup* get_eventGroup();
+	EventGroupMP* get_eventGroup();
 	// true: actions are being executed. False: conditions. Neither: undefined
 	bool GetRH2ActionOn();
 	void SetRH2ActionOn(bool);
@@ -555,7 +555,7 @@ protected:
 	// invalidated by new event: eventGrp, rh2EventCount, rh4EventCountOr, rh2ActionOn
 	// invalidated by new condition: rh4EventCountOr, rh2ActionOn
 
-	std::unique_ptr<eventGroup> eventGrp;
+	std::unique_ptr<EventGroupMP> eventGrp;
 	std::optional<int> rh2EventCount, rh4EventCountOR;
 	std::optional<int> rh2ActionCount, rh2ActionLoopCount;
 	// Can be NULL if runtime is not patched to include this;
@@ -634,7 +634,7 @@ struct RunHeader {
 	// Sets the current expression token array, used in the middle of expression evaluation. Relevant in Android only.
 	void SetRH4Tokens(jobjectArray newTokensArray);
 
-	eventGroup * get_EventGroup();
+	EventGroupMP* get_EventGroup();
 	std::size_t GetNumberOi();
 	//objectsList* get_ObjectList();
 	// Returns max number of objects in the Fusion frame, set in frame properties
@@ -664,7 +664,7 @@ protected:
 	Edif::Runtime* runtime;
 	std::unique_ptr<event2> rh4ActStart;
 	std::unique_ptr<CRunAppMultiPlat> App;
-	std::optional<eventGroup *> EventGroup; // should be a part of eventProgram, so we don't own it ourselves
+	std::optional<EventGroupMP *> evntGroup; // should be a part of eventProgram, so we don't own it ourselves
 	std::unique_ptr<objectsList> ObjectList;
 	global<jobjectArray> OiList;
 	global<jobjectArray> QualToOiList;

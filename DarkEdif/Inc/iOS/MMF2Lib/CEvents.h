@@ -59,9 +59,9 @@ typedef struct tagEVG
 		WORD	evgFree;				// 6 Alignment
 		DWORD	evgInhibit;				// 8 If the group is inhibited
 		DWORD	evgInhibitCpt;			// 12 Counter
-	} eventGroup2;
-typedef		eventGroup2	*		PEVG;
-typedef		eventGroup2	*		LPEVG;
+	} eventGroup;
+typedef		eventGroup	*		PEVG;
+typedef		eventGroup	*		LPEVG;
 #define		EVG_SIZE				14
 
 // MACRO: next group

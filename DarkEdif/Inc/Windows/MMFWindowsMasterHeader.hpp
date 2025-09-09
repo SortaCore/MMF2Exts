@@ -696,13 +696,13 @@ DarkEdifInternalAccessProtected:
 #define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 struct RunHeader;
-struct eventGroup {
-	NO_DEFAULT_CTORS_OR_DTORS(eventGroup);
+struct EventGroupMP {
+	NO_DEFAULT_CTORS_OR_DTORS(EventGroupMP);
 	std::uint8_t get_evgNCond();
 	std::uint8_t get_evgNAct();
 	std::uint16_t get_evgIdentifier();
 	std::uint16_t get_evgInhibit();
-	event2 * GetCAByIndex(size_t index);
+	event2 * GetCAByIndex(std::size_t index);
 
 DarkEdifInternalAccessProtected:
 	friend RunHeader;
@@ -717,14 +717,14 @@ DarkEdifInternalAccessProtected:
 	short 			evgUndo;		// 12 Identifier for UNDO
 };
 
-typedef		eventGroup	*		PEVG;
-typedef		eventGroup	*		LPEVG;
+//typedef		eventGroup	*		PEVG;
+//typedef		eventGroup	*		LPEVG;
 #define		EVG_SIZE				14
 
 // MACRO: next group
 #define		EVGNEXT(evgPtr)		   	((LPEVG)((char *)evgPtr-evgPtr->evgSize))
 // MACRO: first event
-#define		EVGFIRSTEVT(p)	   		((LPEVT)((char *)p+sizeof(eventGroup)))
+#define		EVGFIRSTEVT(p)	   		((LPEVT)((char *)p+sizeof(EventGroupMP)))
 // MACRO: number of events in the group
 #define		EVGNEVENTS(p)	 		(p->evgNCond+p->evgNAct)
 
@@ -756,7 +756,7 @@ struct eventV1 {
 
 #define	CND_SIZEV1					sizeof(eventV1)
 #define	ACT_SIZEV1					(sizeof(event)-2) // Ignore Identifier
-#define	EVGFIRSTEVTV1(p)	   		((LPEVTV1)((char *)p+sizeof(eventGroup)))
+#define	EVGFIRSTEVTV1(p)	   		((LPEVTV1)((char *)p+sizeof(EventGroupMP)))
 #define	EVTPARAMSV1(p) 				((LPEVP)( p->evtCode<0 ? (unsigned char * )p+CND_SIZEV1 : (unsigned char * )p+ACT_SIZEV1) )
 #define	EVTNEXTV1(p)		 		((LPEVTV1)((unsigned char * )p+p->evtSize))
 
@@ -1745,7 +1745,7 @@ struct RunHeader {
 	// Current Fusion event line, confusingly called event group. Can be null, during Handle().
 	// @remarks Will also be null in unpatched runtimes that reset rhEventGroup by generated events;
 	//			DarkEdif exts save and restore during generating, but otherwise it's up to runtime.
-	eventGroup* get_EventGroup();
+	EventGroupMP* get_EventGroup();
 	// Gets number of OIList currently in frame, see GetOIListByIndex()
 	// @remarks In non-Windows, this is normally a rhMaxOI variable, in Windows it's NumberOi, and includes an extra, invalid Oi
 	std::size_t GetNumberOi();
@@ -1810,7 +1810,7 @@ DarkEdifInternalAccessProtected:
 				 *		EventLists,		 	// Pointers on pointers list
 				 *		Free8,				// Timer pointers
 				 *		EventAlways;		// Pointers on events to see at each loop
-	eventGroup *		Programs;			// Program pointers
+	EventGroupMP*		Programs;			// Program pointers
 	short *				LimitLists;			// Movement limitation list
 	qualToOi *			QualToOiList;		// Conversion qualifier->oilist
 
@@ -1839,7 +1839,7 @@ DarkEdifInternalAccessProtected:
 						TimerOld,			// For delta calculation
 						TimerDelta;			// For delta calculation again
 
-	eventGroup *		EventGroup;			// Current group
+	EventGroupMP *		EventGroup;			// Current group
 	long 				CurCode;			// Current event
 	short				CurOi,
 						Free4;				// Alignment
@@ -4601,7 +4601,7 @@ struct CRunFrame {
 	// Events
 	int					rhOK;				// TRUE when the events are initialized
 	RunHeader *			rhPtr;
-	eventGroup *		eventPrograms;
+	EventGroupMP *		eventPrograms;
 	unsigned int		free[256-1];		// 256 = max event programs
 	objInfoList *		oiList;
 	void *				free0;

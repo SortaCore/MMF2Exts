@@ -40,9 +40,9 @@ typedef struct tagEVG
         WORD    evgFree;
 		DWORD	evgInhibit;				// 6 If the group is inhibited
 		DWORD	evgInhibitCpt;			// 8 Counter
-	} eventGroup2;
-typedef		eventGroup2	*		PEVG;
-typedef		eventGroup2	*		LPEVG;
+	} eventGroup;
+typedef		eventGroup	*		PEVG;
+typedef		eventGroup	*		LPEVG;
 
 // MACRO: next group
 #define		EVGNEXT(evgPtr)		   	((LPEVG)((char*)evgPtr-evgPtr->evgSize))

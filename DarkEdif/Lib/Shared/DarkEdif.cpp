@@ -3328,6 +3328,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 	return (std::uint16_t)fullSize;
 }
+
 // =====
 // Get event number (CF2.5+ feature)
 // =====
@@ -3345,7 +3346,9 @@ bool DarkEdif::IsRunningUnderWine;
 #endif
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
-std::uint16_t DarkEdif::GetEventNumber(eventGroup * evg) {
+std::uint16_t DarkEdif::GetEventNumber(EventGroupMP * evg) {
+	if (!evg)
+		return -1;
 	// Windows may be 2.0 or 2.5; if 2.5, the local SDK's evgInhibit is where the identifier is.
 	// Android/iOS is assumed to be 2.5 and should work directly.
 #ifdef _WIN32
