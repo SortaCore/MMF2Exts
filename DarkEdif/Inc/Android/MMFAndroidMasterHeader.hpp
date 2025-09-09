@@ -741,8 +741,16 @@ protected:
 // Java memory pointer and a C memory pointer, for text held in Java memory
 struct JavaAndCString
 {
-	jstring ctx;
-	const char* ptr;
+	jstring ctx = NULL;
+	const char* ptr = NULL;
+	bool global = false;
+	JavaAndCString() = default;
+	JavaAndCString(jstring bob, bool global = false);
+	~JavaAndCString();
+	std::tstring_view str() const;
+
+	JavaAndCString(const JavaAndCString&) = delete;
+	JavaAndCString(JavaAndCString&) = delete;
 };
 
 struct rCom;

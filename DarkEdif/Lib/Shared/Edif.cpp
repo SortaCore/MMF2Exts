@@ -997,15 +997,6 @@ jobject GetRH(void* javaExtPtr) {
 	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
 };*/
 
-void freeString(JavaAndCString& str)
-{
-	threadEnv->ReleaseStringUTFChars((jstring)str.ctx, str.ptr);
-#ifdef _DEBUG
-	JNIExceptionCheck();
-	str = { NULL, NULL };
-#endif
-}
-
 struct ConditionOrActionManager_Android : ACEParamReader
 {
 	jobject javaActOrCndObj, javaExtPtr, javaExtRHPtr;
@@ -1119,8 +1110,6 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 	~ConditionOrActionManager_Android()
 	{
-		while (--stringIndex >= 0)
-			freeString(strings[stringIndex]);
 		--aceIndex;
 	}
 };
@@ -1422,8 +1411,6 @@ struct ExpressionManager_Android : ACEParamReader {
 	}
 
 	~ExpressionManager_Android() {
-		while (--stringIndex >= 0)
-			freeString(strings[stringIndex]);
 		--aceIndex;
 	}
 };

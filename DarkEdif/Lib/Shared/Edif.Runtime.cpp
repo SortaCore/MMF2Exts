@@ -2480,15 +2480,8 @@ const TCHAR* objInfoList::get_name() {
 	LOGV(_T("Running %s()."), _T(__FUNCTION__));
 	if (!name.has_value())
 	{
-		JavaAndCString str;
-		str.ctx = (jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID);
-		JNIExceptionCheck();
-		str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-		name = str.ptr ? std::string(str.ptr) : std::string();
-		JNIExceptionCheck();
-
-		threadEnv->DeleteLocalRef((jobject)str.ctx);
-		JNIExceptionCheck();
+		JavaAndCString str((jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID));
+		name = str.str();
 	}
 	return name.value().c_str();
 }

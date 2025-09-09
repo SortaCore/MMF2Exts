@@ -3206,6 +3206,31 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 
 #endif
 
+#ifdef _WIN32
+#elif defined(__ANDROID__)
+JavaAndCString::JavaAndCString(jstring str, bool global /* = false */)
+{
+	this->global = (global && str);
+	ctx = this->global ? (jstring)threadEnv->NewGlobalRef(str) : str;
+	JNIExceptionCheck();
+	ptr = str ? threadEnv->GetStringUTFChars(ctx, NULL) : NULL;
+	JNIExceptionCheck();
+}
+JavaAndCString::~JavaAndCString() {
+	if (ptr != NULL)
+		threadEnv->ReleaseStringUTFChars(ctx, ptr);
+	if (ctx)
+	{
+		if (global)
+			threadEnv->DeleteGlobalRef(ctx);
+		else
+			threadEnv->DeleteLocalRef(ctx);
+	}
+}
+std::tstring_view JavaAndCString::str() const {
+	return ptr ? ptr : std::tstring_view();
+}
+#endif
 // Returns size of EDITDATA and all properties if they were using their default values from JSON
 std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 {
@@ -3397,13 +3422,8 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 	}
 
 	jstring pathJava = CStrToJStr(std::string(filePath).c_str());
-	JavaAndCString str;
-	str.ctx = (jstring)threadEnv->CallObjectMethod(ext->javaExtPtr, getEventIDMethod, pathJava);
-	str.ptr = mainThreadJNIEnv->GetStringUTFChars((jstring)str.ctx, NULL);
-	const std::string truePath = str.ptr ? str.ptr : "";
-
-	threadEnv->DeleteLocalRef(pathJava);
-	threadEnv->DeleteLocalRef((jobject)str.ctx);
+	JavaAndCString str(pathJava);
+	const std::string truePath(str.str());
 #else
 	const std::string truePath = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, makePathUnembeddedIfNeeded)(ext->objCExtPtr, std::string(filePath).c_str());
 #endif
