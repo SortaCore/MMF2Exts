@@ -12,9 +12,6 @@
 class Extension
 {
 public:
-	// Hide stuff requiring other headers
-	//SaveExtInfo threadData; // Must be first variable in Extension class
-
 	RunHeader* rhPtr;
 	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
 #ifdef __ANDROID__
@@ -25,8 +22,9 @@ public:
 
 	Edif::Runtime Runtime;
 
-    static const int MinimumBuild = 251;
-	// b8: Update for iOS fixes in SDK (SDK v17)
+	static const int MinimumBuild = 251;
+	// b9: Update for iOS fixes, and new app root expression (SDK v19)
+	// b8: Update for [intended] iOS fixes in SDK (SDK v17)
 	// b7: Bugfix to alt string copying (SDK v16)
 	// b6: Added alt string/value bulk copying (SDK v15)
 	// b5: Smart property release (SDK v14)
@@ -44,9 +42,9 @@ public:
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
 #else
-	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
 #endif
 	~Extension();
 
@@ -69,16 +67,7 @@ public:
 
 	void GetFrameNames();
 
-    /*  Add your actions, conditions and expressions as real class member
-        functions here. The arguments (and return type for expressions) must
-        match EXACTLY what you defined in the JSON.
-
-        Remember to link the actions, conditions and expressions to their
-        numeric IDs in the class constructor (Extension.cpp)
-    */
-
-
-	void MakeError(PrintFHintInside const char* ansiFormat, ...) PrintFHintAfter(1 + 1, 1 + 2);
+	void MakeError(PrintFHintInside const TCHAR* tcharFormat, ...) PrintFHintAfter(1 + 1, 1 + 2);
 	void StripSpaces(std::string & str);
 	void StripUnderscores(std::string & str);
 	void MakeStringLower(std::string & str);
@@ -88,21 +77,15 @@ public:
 #endif
 
 #ifdef _WIN32
-
 	static GENERIC_MAPPING objectTypeMappings[];
 
 	static std::string GetLastErrorAsString();
 	// Converts passed text parameters to a TRUSTEE and access perms
-	bool Sub_BuildTrusteeAndAccessPerms(__in std::tstring & sidOrAcc, __in std::string & argPermList,
-		__out PTRUSTEE trustee, __out PSID * trusteePSID,
-		__out DWORD * accessPermissions);
-	bool Sub_GetTrueEffectiveRights(
-		__in  PSID		  pSid,
-		__out PACCESS_MASK  pAccessRights);
-
-#endif
-
-
+	bool Sub_BuildTrusteeAndAccessPerms(std::tstring & sidOrAcc, std::string & argPermList,
+		PTRUSTEE trustee, PSID * trusteePSID,
+		DWORD * accessPermissions);
+	bool Sub_GetTrueEffectiveRights(PSID pSid, PACCESS_MASK  pAccessRights);
+#endif // _WIN32
 
 	struct LastReadACL
 	{
@@ -140,7 +123,7 @@ public:
 	} lastReadPerms;
 
 	// User-supplied name of ACL entry loop
-	const TCHAR * aceLoopName;
+	const TCHAR * aceLoopName = nullptr;
 
 #ifdef _WIN32
 	// Current access control list entry being looped through.
@@ -176,8 +159,8 @@ public:
 		void IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TCHAR * allowDenyBoth, int includeInheritedInt, int includeInheritOnlyInt);
 		void AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TCHAR * allowDenyRevokePtr, const TCHAR * permListPtr, const TCHAR * inheritPtr);
 
-		void CopyAltVals(HeaderObject* obj, int startIndex, int numVals, int destIndex);
-		void CopyAltStrings(HeaderObject* obj, int startIndex, int numVals, int destIndex);
+		void CopyAltVals(RunObject * obj, int startIndex, int numVals, int destIndex);
+		void CopyAltStrings(RunObject * obj, int startIndex, int numVals, int destIndex);
 
 	/// Conditions
 
@@ -186,6 +169,7 @@ public:
 		const bool IsThisFrameASubApp();
 		const bool DoesAccHaveEffectivePerm(const TCHAR * accOrSID, const TCHAR * perm);
 		const bool OnNamedLoop(const TCHAR * loopName);
+		bool InvalidateExplicitSelection();
 
 	/// Expressions
 
@@ -221,6 +205,9 @@ public:
 			const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p);
 
 		float ProximitySensor();
+		const TCHAR* GetAppRoot(int flags);
+		const TCHAR* GetNetworkType();
+
 #ifdef __ANDROID__
 		ASensorManager * androidSensorManager = NULL;
 		const ASensor* androidProximitySensor = NULL;
@@ -228,6 +215,10 @@ public:
 		static int StaticAndroidSensorCallback(int fd, int events, void* data);
 		int AndroidSensorCallback(int fd, int events);
 		std::atomic<float> proximityDistance;
+
+		jmethodID getActiveNetworkInfoMethod = NULL;
+		global<jstring> contextConnectivityString;
+		global<jobject> connectivityService;
 #endif
 
 

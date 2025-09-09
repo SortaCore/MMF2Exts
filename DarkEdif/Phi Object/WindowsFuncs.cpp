@@ -77,7 +77,7 @@ bool Authz_GetAccess(Extension * ext, AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, 
 	AccessReply.Error = (PDWORD)(Buffer + sizeof(ACCESS_MASK));
 
 	if (!AuthzAccessCheck(0, hAuthzClient, &AccessRequest, NULL, psd, NULL, 0, &AccessReply, NULL)) {
-		ext->MakeError("AuthzAccessCheck failed with %hs (code %u)", Extension::GetLastErrorAsString().c_str(), GetLastError());
+		ext->MakeError(_T("AuthzAccessCheck failed with %hs (code %u)"), Extension::GetLastErrorAsString().c_str(), GetLastError());
 		return false;
 	}
 
@@ -85,14 +85,14 @@ bool Authz_GetAccess(Extension * ext, AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClient, 
 	return true;
 }
 
-bool Extension::Sub_GetTrueEffectiveRights(
-	__in  PSID		  pSid,
-	__out PACCESS_MASK  pAccessRights)
+bool Extension::Sub_GetTrueEffectiveRights(PSID pSid, PACCESS_MASK pAccessRights)
 {
+	*pAccessRights = 0; // for warning
+
 	AUTHZ_RESOURCE_MANAGER_HANDLE hManager;
 	BOOL bResult = AuthzInitializeResourceManager(AUTHZ_RM_FLAG_NO_AUDIT, NULL, NULL, NULL, NULL, &hManager);
 	if (!bResult)
-		return MakeError("AuthzInitializeResourceManager failed with %hs (code %u)", GetLastErrorAsString().c_str(), GetLastError()), false;
+		return MakeError(_T("AuthzInitializeResourceManager failed with %hs (code %u)"), GetLastErrorAsString().c_str(), GetLastError()), false;
 
 	LUID unusedId = { };
 	AUTHZ_CLIENT_CONTEXT_HANDLE hAuthzClientContext = NULL;
@@ -104,7 +104,7 @@ bool Extension::Sub_GetTrueEffectiveRights(
 		AuthzFreeContext(hAuthzClientContext);
 	}
 	else // error, don't return for cleanup
-		MakeError("AuthzInitializeContextFromSid failed with %hs (code %u)", GetLastErrorAsString().c_str(), GetLastError());
+		MakeError(_T("AuthzInitializeContextFromSid failed with %hs (code %u)"), GetLastErrorAsString().c_str(), GetLastError());
 
 	AuthzFreeResourceManager(hManager);
 	return bResult != FALSE;

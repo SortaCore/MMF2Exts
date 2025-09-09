@@ -11,12 +11,7 @@ bool Extension::IsEqual(int a, int b) {
 }
 
 const bool Extension::IsThisFrameASubApp() {
-#ifdef _WIN32
-	return rhPtr->App->ParentApp != nullptr;
-#else
-	MakeError("Condition IsThisFrameASubApp not implemented in Android.");
-	return false;
-#endif
+	return rhPtr->get_App()->get_ParentApp() != nullptr;
 }
 
 const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const TCHAR * argPermListPtr) {
@@ -24,7 +19,7 @@ const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const 
 	std::string argPermList(DarkEdif::TStringToANSI(argPermListPtr));
 
 	if (lastReadPerms.itemPath.empty())
-		return MakeError("Last read system object permissions is invalid, can't check for effective permissions."), false;
+		return MakeError(_T("Last read system object permissions is invalid, can't check for effective permissions.")), false;
 
 #if _WIN32
 	TRUSTEE trustee = {};
@@ -45,9 +40,9 @@ const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const 
 
 	if (!effectiveAccessRes)
 	{
-		return MakeError(R"(Invalid ACL access mode list ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
+		return MakeError(_T(R"(Invalid ACL access mode list ("%hs"). Must be "read", "write", "all", etc., comma-separated. See help file )"
 				"for specifics. You can also specify a numeric mask based on GENERIC_READ, or more specific "
-				"number permission such as FILE_READ_EA.", argPermList.c_str()), false;
+				"number permission such as FILE_READ_EA."), argPermList.c_str()), false;
 	}
 
 	// This doesn't work, expects generic perms to be mapped to specific/standard
@@ -66,4 +61,10 @@ const bool Extension::DoesAccHaveEffectivePerm(const TCHAR * accOrSIDPtr, const 
 const bool Extension::OnNamedLoop(const TCHAR * loopName)
 {
 	return !_tcsicmp(loopName, aceLoopName);
+}
+
+bool Extension::InvalidateExplicitSelection()
+{
+	rhPtr->SetRH2EventCount(rhPtr->GetRH2EventCount() + 1);
+	return true;
 }

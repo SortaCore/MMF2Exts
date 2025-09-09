@@ -11,11 +11,11 @@
 Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this)
 #elif defined(__ANDROID__)
-Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
 	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
 	Runtime(this, this->javaExtPtr)
 #else
-Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
 	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr)
 #endif
 {
@@ -39,6 +39,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkCondition(1, IsThisFrameASubApp);
 	LinkCondition(2, DoesAccHaveEffectivePerm);
 	LinkCondition(3, OnNamedLoop /* On DACL entry loop */);
+	LinkCondition(4, InvalidateExplicitSelection);
 	//LinkCondition(1, IsEqual);
 
 	LinkExpression(0, Error);
@@ -68,7 +69,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
 	LinkExpression(22, GetLoopedACLEntry_SID);
 	LinkExpression(23, GetLoopedACLEntry_AccessMask);
 	LinkExpression(24, ProximitySensor);
-
+	LinkExpression(25, GetAppRoot);
+	LinkExpression(26, GetNetworkType);
 
 
 	/*
@@ -163,21 +165,19 @@ Extension::LastReadACL::LastReadACL()
 
 }
 
-void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)
+void Extension::MakeError(PrintFHintInside const TCHAR* tcharFormat, ...)
 {
 	va_list v;
 	TCHAR buffer[4096], prefix[64];
 
-	std::tstring tcharFormat = DarkEdif::ANSIToTString(ansiFormat);
-
-	va_start(v, ansiFormat);
+	va_start(v, tcharFormat);
 	try
 	{
 		// Failed to output; report it
-		if (_vstprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), tcharFormat.c_str(), v) == -1)
+		if (_vstprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), tcharFormat, v) == -1)
 		{
 			// Failed to report failure; try direct UI error message - we could detect failure then too but no point
-			if (_stprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), _T("Failed to use format \"%s\"; error %i: %s."), tcharFormat.c_str(), errno, _tcserror(errno)) == -1)
+			if (_stprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), _T("Failed to use format \"%s\"; error %i: %s."), tcharFormat, errno, _tcserror(errno)) == -1)
 				DarkEdif::MsgBox::Error(_T("Failed to report error"), _T("Double error report failure..."));
 			DarkEdif::MsgBox::Error(_T("Error"), _T("%s"), buffer);
 		}
@@ -204,7 +204,7 @@ void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)
 	catch (...)
 	{
 		// Failed to report failure; try direct UI error message - we could detect failure then too but no point
-		if (_stprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), _T("Failed to use format \"%s\"; error %i: %s."), tcharFormat.c_str(), errno, _tcserror(errno)) == -1)
+		if (_stprintf_s(buffer, sizeof(buffer) / sizeof(*buffer), _T("Failed to use format \"%s\"; error %i: %s."), tcharFormat, errno, _tcserror(errno)) == -1)
 			DarkEdif::MsgBox::Error(_T("Failed to report error"), _T("Double error report failure..."));
 		DarkEdif::MsgBox::Error(_T("Error"), _T("%s"), buffer);
 	}
@@ -215,10 +215,10 @@ void Extension::MakeError(PrintFHintInside const char* ansiFormat, ...)
 void Extension::GetFrameNames()
 {
 #ifdef _WIN32
-	CRunApp& app = *rdPtr->rHo.AdRunHeader->App;
+	CRunAppMultiPlat& app = *rdPtr->get_rHo()->get_AdRunHeader()->get_App();
 	//std::vector<TCHAR*> names;
 	//int numFrames = rdPtr->rHo.AdRunHeader->App->frameMaxIndex;
-	size_t numFrames = rdPtr->rHo.AdRunHeader->App->hdr.NbFrames;
+	std::size_t numFrames = rdPtr->get_rHo()->get_AdRunHeader()->get_App()->GetNumFusionFrames();
 
 	//TCHAR wow[1024] = { 0 };
 	//GetFinalPathNameByHandle((HANDLE)app.file, wow, sizeof(wow), 0);
@@ -228,11 +228,14 @@ void Extension::GetFrameNames()
 
 
 	// Store current position JIC Fusion gets confused
+	// TODO: According to Ruthoranium, this SetFilePointer is what screws up the reading later, somehow
+	// Perhaps it's a POSIX handle - no, Yves confirmed it was CreateFile
+	// File_SeekCurrent?
 	unsigned long lA = SetFilePointer(cnnHandle, 0L, NULL, FILE_CURRENT);
 #define DieWithError(cond, closeIt, doThis) { \
 		if (cond) \
 		{ \
-			MakeError("FrameName collector: Line %i: Failed to "##doThis##", %u.", __LINE__, GetLastError()); \
+			MakeError(_T("") "FrameName collector: Line %i: Failed to "##doThis##", %u.", __LINE__, GetLastError()); \
 			if constexpr(closeIt) \
 				goto safeExit; \
 			else \
@@ -240,7 +243,7 @@ void Extension::GetFrameNames()
 		} \
 	}
 	DieWithError(lA == INVALID_SET_FILE_POINTER, false, "get frame pointer");
-
+	
 
 	for (size_t i = 0; i < numFrames; i++)
 	{
@@ -265,7 +268,12 @@ void Extension::GetFrameNames()
 			if (chunk.ID == CHUNK_FRAMENAME)
 			{
 				TCHAR* c = (TCHAR*)_malloca(chunk.Size);
+				DieWithError(c == nullptr, false, "Allocating memory");
 				DieWithError(FALSE == ReadFile(cnnHandle, c, chunk.Size, NULL, NULL), false, "reading frame name");
+				// TODO: This can be compressed with zlib! grab zlib and slap it into normalcy
+				// int32 decompSize, compSize, then decrypt
+				DieWithError((chunk.Flags & 1) != 0, false, "frank name chunk is compressed");
+				DieWithError((chunk.Flags & 2) != 0, false, "frank name chunk is encrypted");
 				frameNames.push_back(c);
 				_freea(c);
 				break;

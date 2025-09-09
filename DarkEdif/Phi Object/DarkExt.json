@@ -42,6 +42,9 @@
 			[ "System info",
 				[ 2, "OS perm: Does user have access?"],
 				[ 3, "OS perm: On DACL entry loop" ]
+			],
+			[ "Object selection",
+				[ 4, "Invalidate explicit selection" ]
 			]
 
 			//,
@@ -71,7 +74,9 @@
 				],
 				[ "Drive",
 					[ 11, "Get total capacity of drive (MB)" ],
-					[ 12, "Get available space in drive (MB)" ]
+					[ 12, "Get available space in drive (MB)" ],
+					"---",
+					[ 25, "Get app root folder" ]
 				],
 				[ "CPU",
 					[ 20, "Get CPU temperature (C)", true ]
@@ -83,6 +88,9 @@
 				],
 				[ "Sensor",
 					[ 24, "Proximity sensor"]
+				],
+				[ "Network",
+					[ 26, "Current network type" ]
 				]
 			],
 			[ "Fusion objects",
@@ -195,6 +203,9 @@
 				"Parameters": [
 					[ "Text", "Loop name" ]
 				]
+			},
+			{
+				"Title": "%o: Discard object selection"
 			}
 		],
 		"Expressions": [
@@ -360,6 +371,17 @@
 			{
 				"Title": "ProximitySensor(",
 				"Returns": "Float"
+			},
+			{
+				"Title": "AppRootFolder$(",
+				"Returns": "String",
+				"Parameters": [
+					[ "Integer", "Flags (see help file)" ]
+				]
+			},
+			{
+				"Title": "NetworkType$(",
+				"Returns": "Text"
 			}
 		]
 	}

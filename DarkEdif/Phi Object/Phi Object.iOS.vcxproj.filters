@@ -24,5 +24,47 @@
     <ClInclude Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEventProgram.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CEvents.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObject.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CObjInfo.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CQualToOiList.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRun.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunApp.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunExtension.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRVal.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CValue.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\IDrawable.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
