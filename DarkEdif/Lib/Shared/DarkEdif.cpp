@@ -7,10 +7,6 @@
 #ifdef _WIN32
 extern HINSTANCE hInstLib;
 #endif
-namespace Edif {
-	class SDK;
-	extern class SDK * SDK;
-}
 
 #if EditorBuild
 

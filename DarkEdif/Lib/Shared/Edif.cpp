@@ -10,12 +10,7 @@
 // GLOBAL DEFINES
 // Contains the definitions of all the Edif class global variables.
 // ============================================================================
-
-// Global SDK pointer
-namespace Edif {
-	class SDK;
-	class SDK * SDK = nullptr;
-}
+Edif::SDKClass * Edif::SDK = nullptr;
 
 // 2-char language code; EN, FR or JP, since that's all the Fusion versions.
 TCHAR Edif::LanguageCode[3];
@@ -485,10 +480,10 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// On XP, the code above zero-fills gSDK, and doesn't run the constructor, resulting in a
 	// crash later, when GetRunObjectInfos() tries to use the null ::SDK->json via "CurLang".
 #ifdef ThreadSafeStaticInitIsSafe
-	static class Edif::SDK gSDK(mV, *json);
+	static Edif::SDKClass gSDK(mV, *json);
 	Edif::SDK = &gSDK;
 #else // workaround, don't use static but singleton
-	Edif::SDK = new class Edif::SDK(mV, *json);
+	Edif::SDK = new Edif::SDKClass(mV, *json);
 #endif
 
 	return 0;	// no error
@@ -500,7 +495,7 @@ FusionAPIImport BOOL FusionAPI ImportImageFromInputFile(CImageFilterMgr* pImgMgr
 
 #endif
 
-Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
+Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 {
 	this->mV = mV;
 
@@ -694,7 +689,7 @@ Edif::SDK::SDK(mv * mV, json_value &_json) : json (_json)
 #endif // EditorBuild
 }
 
-Edif::SDK::~SDK()
+Edif::SDKClass::~SDKClass()
 {
 	LOGV(_T("Edif::SDK::~SDK() call.\n"));
 	json_value_free(&json);

@@ -116,14 +116,14 @@ namespace Edif
 			"Edit spin float",
 		};
 	};
-	class SDK
+	class SDKClass
 	{
 	public:
 
 		json_value &json;
 
-		SDK (mv * mV, json_value &);
-		~SDK ();
+		SDKClass(mv * mV, json_value &);
+		~SDKClass();
 
 		std::vector<ACEInfo *>	ActionInfos;
 		std::vector<ACEInfo *>	ConditionInfos;
@@ -147,6 +147,7 @@ namespace Edif
 		std::unique_ptr<PropData[]> EdittimeProperties;
 #endif
 	};
+	extern SDKClass * SDK;
 
 	class Runtime
 	{
@@ -353,8 +354,3 @@ namespace Edif
 	};
 
 };
-
-namespace Edif {
-	class SDK;
-	extern class SDK* SDK;
-}
