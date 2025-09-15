@@ -965,7 +965,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 				return ext->Runtime.GetOIListIndexFromObjectParam(index);
 
 			if ((Params)((EventParam*)ret)->Code != Params::Object)
-				LOGE(_T("GetOIFromExtParam: Returning a OiList index for a non-Object parameter.\n"));
+				LOGE(_T("ConditionOrActionManager::GetObject: Returning a OiList index for a non-Object parameter.\n"));
 			return ((EventParam*)ret)->evp.W[0];
 		}
 
