@@ -507,9 +507,9 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 		if (GetSurfacePrototype(&proto, 32, (int)SurfaceType::Memory_DeviceContext, (int)SurfaceDriver::Bitmap) == FALSE)
 			DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Getting surface prototype failed."));
 
-		Icon = new cSurface();
 		if (mV->ImgFilterMgr)
 		{
+			Icon = new cSurface();
 			char * IconData;
 			size_t IconSize;
 
