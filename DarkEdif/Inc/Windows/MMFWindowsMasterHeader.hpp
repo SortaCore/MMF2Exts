@@ -10,10 +10,6 @@
 
 #if EditorBuild
 // For ext icon
-#include "Surface.hpp"
-#if IS_DARKEDIF_TEMPLATE
-#include "SafeSurface.hpp"
-#endif
 // For ext properties
 #include "Props.hpp"
 #else
