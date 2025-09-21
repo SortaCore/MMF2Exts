@@ -291,155 +291,179 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 	// Main thread ID is used to prevent crashes from message boxes not being task-modal.
 	// Since we're initializing this, might as well set all the DarkEdif mV variables.
 	DarkEdif::MainThreadID = std::this_thread::get_id();
+
 #ifdef _WIN32
-	DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
-	DarkEdif::Internal_WindowHandle = mV->HMainWin;
-
-	// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
-	// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
-	DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
-
-	// Detect wine by presence of wine_get_version() inside their wrapper ntdll
-	HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
-	if (ntDll == NULL)
-		return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
-
-	const char* (__cdecl * pwine_get_version)(void) =
-		(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
-	DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
+	if (mV->GetVersion == NULL)
+	{
+		// The ZipToJson tool is used to package a Fusion zip containing MFX, help file, examples etc.,
+		// and upload it to Clickteam Extension Manager.
+		// The tool loads this ext with a fusionStartupScreen of false and a zeroed mV,
+		// making most mv-related function pointers and variables break if they're called.
+		// We'll allow mv functions to not work if running under this tool, otherwise we'll get upset.
+#if EditorBuild
+		const TCHAR zipToJSONFilename[] = _T("\\ZipToJson.exe");
+		const std::tstring path(DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath));
+		if (!path.empty() && !_tcsicmp(path.substr(path.size() - (std::size(zipToJSONFilename) - 1)).data(), zipToJSONFilename))
+		{
+			// Assume ZipToJson is targeting CF2.5 exts
+			DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 = true;
+		}
+		else
 #endif
+		{
+			DarkEdif::MsgBox::Error(_T("Unexpected mV"), _T("The extension is incorrectly initialized. Pass a valid mV struct."));
+			std::abort(); // ZipToJSON ignores return 0
+			return 0;
+		}
+	}
+	else // mv functions are available
+	{
+		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
+		DarkEdif::Internal_WindowHandle = mV->HMainWin;
+
+		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
+		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
+		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
+
+		// Detect wine by presence of wine_get_version() inside their wrapper ntdll
+		HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
+		if (ntDll == NULL)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
+
+		const char* (__cdecl * pwine_get_version)(void) =
+			(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
+		DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
 
 #if EditorBuild
-	// Calculate run mode
-	if (fusionStartupScreen)
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
-	else if (mV->HMainWin != 0)
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
-	else
-	{
-		// This could be either Run Application or Built EXE. We'll assume built EXE for simpler code, but check.
-		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
-
-		std::tstring_view mfxFolder = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
-
-		DarkEdif::RemoveSuffixIfExists(mfxFolder, _T("Unicode\\"sv));
-
-		if (DarkEdif::EndsWith(mfxFolder, _T("Extensions\\"sv)))
+		// Calculate run mode
+		if (fusionStartupScreen)
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::SplashScreen;
+		else if (mV->HMainWin != 0)
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::Editor;
+		else
 		{
-			// Note: In Run Application, the Extensions MFXs are used, but the edrt app is in Data\Runtime, not Extensions.
-			std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
+			// This could be either Run Application or Built EXE. We'll assume built EXE for simpler code, but check.
+			DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 
-			if (DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrt.exe"sv)) || DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrtex.exe"sv)))
+			std::tstring_view mfxFolder = DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::MFXLocation);
+
+			DarkEdif::RemoveSuffixIfExists(mfxFolder, _T("Unicode\\"sv));
+
+			if (DarkEdif::EndsWith(mfxFolder, _T("Extensions\\"sv)))
 			{
-				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Unicode"sv));
-				DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Hwa"sv));
+				// Note: In Run Application, the Extensions MFXs are used, but the edrt app is in Data\Runtime, not Extensions.
+				std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-				// else program is named edrt[ex].exe, but isn't running in Data\Runtime, so it's just an app called edrt.exe
-				if (DarkEdif::RemoveSuffixIfExists(appPath, _T("Data\\Runtime"sv)))
+				if (DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrt.exe"sv)) || DarkEdif::RemoveSuffixIfExists(appPath, _T("\\edrtex.exe"sv)))
 				{
-					std::tstring fusionPath(appPath);
-					if (mvIsUnicodeVersion(mV))
-						fusionPath += _T("mmf2u.exe"sv);
-					else
-						fusionPath += _T("mmf2.exe"sv);
+					DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Unicode"sv));
+					DarkEdif::RemoveSuffixIfExists(appPath, _T("\\Hwa"sv));
 
-					// We found Fusion!
-					if (DarkEdif::FileExists(fusionPath))
-						DarkEdif::RunMode = DarkEdif::MFXRunMode::RunApplication;
+					// else program is named edrt[ex].exe, but isn't running in Data\Runtime, so it's just an app called edrt.exe
+					if (DarkEdif::RemoveSuffixIfExists(appPath, _T("Data\\Runtime"sv)))
+					{
+						std::tstring fusionPath(appPath);
+						if (mvIsUnicodeVersion(mV))
+							fusionPath += _T("mmf2u.exe"sv);
+						else
+							fusionPath += _T("mmf2.exe"sv);
+
+						// We found Fusion!
+						if (DarkEdif::FileExists(fusionPath))
+							DarkEdif::RunMode = DarkEdif::MFXRunMode::RunApplication;
+					}
 				}
 			}
 		}
-	}
 
-	if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
-	{
-		int localeNum = 1033;
-
-		// CF2.5 editor language code is a setting, stored in registry 
-		if (DarkEdif::IsFusion25)
+		if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor || DarkEdif::RunMode == DarkEdif::MFXRunMode::SplashScreen)
 		{
-			HKEY key = NULL;
-			TCHAR value[6];
-			DWORD value_length = std::size(value), err;
-			const std::tstring settingsRegPath =
-				((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
-				_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
-				_T("Software\\Clickteam\\Fusion 2.5\\General"s);
-			if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
-				(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
-				value_length >= std::size(value))
+			int localeNum = 1033;
+
+			// CF2.5 editor language code is a setting, stored in registry 
+			if (DarkEdif::IsFusion25)
 			{
-				// If the user never went into Tools > Preferences and pressed OK,
-				// a ton of registry keys won't exist. Default to US English.
-				if (err != ERROR_FILE_NOT_FOUND)
-					DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+				HKEY key = NULL;
+				TCHAR value[6];
+				DWORD value_length = std::size(value), err;
+				const std::tstring settingsRegPath =
+					((mV->GetVersion() & MMFVERFLAG_MASK) == MMFVERFLAG_PRO) ?
+					_T("Software\\Clickteam\\Fusion Developer 2.5\\General"s) :
+					_T("Software\\Clickteam\\Fusion 2.5\\General"s);
+				if ((err = RegOpenKey(HKEY_CURRENT_USER, settingsRegPath.c_str(), &key)) ||
+					(err = RegQueryValueEx(key, _T("language"), NULL, NULL, (LPBYTE)value, &value_length)) ||
+					value_length >= std::size(value))
+				{
+					// If the user never went into Tools > Preferences and pressed OK,
+					// a ton of registry keys won't exist. Default to US English.
+					if (err != ERROR_FILE_NOT_FOUND)
+						DarkEdif::MsgBox::Error(_T("Language Code error"), _T("Failed to look up Fusion editor language code: error %u."), err);
+				}
+				else
+					localeNum = _ttoi(value);
+
+				if (key)
+					RegCloseKey(key);
 			}
-			else
-				localeNum = _ttoi(value);
-
-			if (key)
-				RegCloseKey(key);
-		}
-		else // MMF2 uses different editor EXEs, and stores language in resources
-		{
-			// You shouldn't use .data() on a std::string_view and expect null terminator,
-			// but since we know it points to the std::string appPath, we'll make an exception.
-			const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
-
-			// Look up the running app and get the language code from its resources.
-			const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
-			if (hRes != NULL)
+			else // MMF2 uses different editor EXEs, and stores language in resources
 			{
-				// Load string resource ID 720, contains the language code
-				TCHAR langCode[20];
-				LoadString(hRes, 720, langCode, std::size(langCode));
+				// You shouldn't use .data() on a std::string_view and expect null terminator,
+				// but since we know it points to the std::string appPath, we'll make an exception.
+				const std::tstring_view appPath = DarkEdif::GetRunningApplicationPath(DarkEdif::GetRunningApplicationPathType::FullPath);
 
-				localeNum = _ttoi(langCode);
+				// Look up the running app and get the language code from its resources.
+				const HINSTANCE hRes = LoadLibraryEx(appPath.data(), NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE);
+				if (hRes != NULL)
+				{
+					// Load string resource ID 720, contains the language code
+					TCHAR langCode[20];
+					LoadString(hRes, 720, langCode, std::size(langCode));
 
-				// Free resources
-				FreeLibrary(hRes);
+					localeNum = _ttoi(langCode);
+
+					// Free resources
+					FreeLibrary(hRes);
+				}
+			}
+
+			switch (localeNum) {
+			case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
+				_tcscpy(LanguageCode, _T("FR"));
+				break;
+			case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
+				_tcscpy(LanguageCode, _T("JP"));
+				break;
 			}
 		}
-
-		switch (localeNum) {
-		case 0x40C: // MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH);
-			_tcscpy(LanguageCode, _T("FR"));
-			break;
-		case 0x411: // MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN);
-			_tcscpy(LanguageCode, _T("JP"));
-			break;
-		}
-	}
 #else // Not editor build, missing things that will let Fusion use it in editor.
-	DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
+		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 #endif
 
-#ifdef _WIN32
-
-	// Non-Unicode ext used in Unicode-compatible runtime
+		// Non-Unicode ext used in Unicode-compatible runtime
 #if !defined(_UNICODE) && !defined(ALLOW_ANSI_EXT_IN_UNICODE_RUNTIME)
-	if (mvIsUnicodeVersion(mV))
-	{
-		DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
-			PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
-	}
+		if (mvIsUnicodeVersion(mV))
+		{
+			DarkEdif::MsgBox::Error(_T("Not using Unicode"), _T("You are using a non-Unicode extension when the Fusion runtime and ")
+				PROJECT_TARGET_NAME " extension is capable of Unicode.\nEnsure you have extracted all the " PROJECT_TARGET_NAME " extension files.");
+		}
 #endif
-	
-	// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
-	// Invalid parameters include e.g. sprintf format errors.
-	// Debug builds have their own handler that makes a message box, so don't register ours
-#ifndef _DEBUG
-	// Don't register for splash screen, or override an existing handler
-	if (
-#if EditorBuild
-		DarkEdif::RunMode != DarkEdif::MFXRunMode::SplashScreen &&
-#endif
-		_get_invalid_parameter_handler() == NULL)
-	{
-		_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
-	}
-#endif // not Debug
 
+
+		// This section catches CRT invalid parameter errors at runtime, rather than insta-crashing.
+		// Invalid parameters include e.g. sprintf format errors.
+		// Debug builds have their own handler that makes a message box, so don't register ours
+#ifndef _DEBUG
+		// Don't register for splash screen, or override an existing handler
+		if (
+#if EditorBuild
+			DarkEdif::RunMode != DarkEdif::MFXRunMode::SplashScreen &&
+#endif
+			_get_invalid_parameter_handler() == NULL)
+		{
+			_set_invalid_parameter_handler(DarkEdif_Invalid_Parameter);
+		}
+#endif // not Debug
+	}
 #endif // Windows
 
 	// Get JSON file
