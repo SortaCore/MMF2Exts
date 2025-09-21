@@ -22,7 +22,6 @@
 // CRMVT : Donnees de base d'un mouvement
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define EF_GOESINPLAYFIELD 0x0001

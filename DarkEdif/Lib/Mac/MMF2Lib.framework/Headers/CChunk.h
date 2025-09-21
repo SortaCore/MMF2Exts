@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -23,7 +23,6 @@
 //
 // --------------------------------------------------------------------------------
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CFile.h"
 
@@ -88,7 +87,7 @@
 #define CHUNK_BLURAYFRAMEOPTIONS 0x3346
 #define CHUNK_MVTTIMERBASE 0x3347
 #define CHUNK_MOSAICIMAGETABLE 0x3348
-#define CHUNK_FRAMeEFFECTS 0x3349
+#define CHUNK_FRAMEEFFECTS 0x3349
 #define CHUNK_FRAME_IPHONE_OPTIONS 0x334A
 
 #define CHUNK_OBJINFOHEADER 0x4444
@@ -107,7 +106,7 @@
 
 #define CHUNK_LAST 0x7F7F
 
-@interface CChunk : NSObject 
+@interface CChunk : NSObject
 {
 @public
     short chID;
@@ -117,7 +116,7 @@
 -(void)dealloc;
 -(id)init;
 -(short)readHeader: (CFile*)file;
--(void)skipChunk: (CFile*) file; 
+-(void)skipChunk: (CFile*) file;
 
 
 @end

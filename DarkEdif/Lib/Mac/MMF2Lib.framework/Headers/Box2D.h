@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef BOX2D_H
 #define BOX2D_H
 

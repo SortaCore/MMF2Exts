@@ -22,7 +22,6 @@
 // CMOVEDEFMOUSE : donnees du mouvement mouse
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

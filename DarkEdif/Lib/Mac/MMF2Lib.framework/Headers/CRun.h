@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -22,7 +22,6 @@
 // CRUN : BOucle principale
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 #import "CRect.h"
@@ -66,7 +65,7 @@
 #define OBSTACLE_SOLID 1
 #define OBSTACLE_PLATFORM 2
 #define OBSTACLE_LADDER 3
-#define OBSTACLE_TRANSPARENT 4		// for Add Backdrop
+#define OBSTACLE_TRANSPARENT 4        // for Add Backdrop
 
 //Flags pour createobject
 #define COF_NOMOVEMENT 0x0001
@@ -96,8 +95,8 @@
 #define MAX_SUBAPPS 5
 
 // Collision detection acceleration
-#define OBJZONE_WIDTH	512
-#define OBJZONE_HEIGHT	512
+#define OBJZONE_WIDTH    512
+#define OBJZONE_HEIGHT    512
 
 @class CRunApp;
 @class CSpriteGen;
@@ -123,105 +122,105 @@ class CRenderer;
 @class ObjectSelection;
 @class CLoop;
 
-@interface CRun : NSObject 
+@interface CRun : NSObject
 {
 @public
-    CRunApp* rhApp;						/// Application info
-    CRunFrame* rhFrame;					/// Frame info
-    CObjInfo** rhOiList;                     		/// ObjectInfo list
+    CRunApp* rhApp;                        /// Application info
+    CRunFrame* rhFrame;                    /// Frame info
+    CObjInfo** rhOiList;                             /// ObjectInfo list
     CArrayList* rh4FastLoops;
-	NSString* rh4CurrentFastLoop;
+    NSString* rh4CurrentFastLoop;
     NSString* rh4PSaveFilename;
-	CValue* rh4ExpValue1;				/// New V2
+    CValue* rh4ExpValue1;                /// New V2
     CValue* rh4ExpValue2;
     CArrayList* rh4BackDrawRoutines;
     int rh4FrameRateArray[MAX_FRAMERATE];             /// Framerate calculation buffer
-    int* rhDestroyList;			/// Destroy list address
-    CObject** rhObjectList;			/// Object list address
-
+    int* rhDestroyList;            /// Destroy list address
+    CObject** rhObjectList;            /// Object list address
+    
     int rhMaxOI;
-    char rhStopFlag;					/// Current movement needs to be stopped
-    char rhEvFlag; 					/// Event evaluation flag
-    int rhNPlayers;					/// Number of players
-    short rhGameFlags;					/// Game flags
-    short rhFree;						/// Alignment
-    unsigned int rhPlayer;					/// Current players entry
+    char rhStopFlag;                    /// Current movement needs to be stopped
+    char rhEvFlag;                     /// Event evaluation flag
+    int rhNPlayers;                    /// Number of players
+    short rhGameFlags;                    /// Game flags
+    short rhFree;                        /// Alignment
+    unsigned int rhPlayer;                    /// Current players entry
     short rhQuit;
-    short rhQuitBis; 					/// Secondary quit (scrollings)
-    int rhReturn;					/// Value to return to the editor
+    short rhQuitBis;                     /// Secondary quit (scrollings)
+    int rhReturn;                    /// Value to return to the editor
     int rhQuitParam;
     int rhNObjects;
     int rhMaxObjects;
     CEventProgram* rhEvtProg;
-    int rhLevelSx;				/// Window size
+    int rhLevelSx;                /// Window size
     int rhLevelSy;
-    int rhWindowX;   				/// Start of window in X/Y
+    int rhWindowX;                   /// Start of window in X/Y
     int rhWindowY;
-    int rhVBLDeltaOld;				/// Number of VBL
-    int rhVBLObjet;				/// For the objects
-    int rhVBLOld;				/// For the counter
-    short rhMT_VBLStep;   			/// Path movement variables
+    int rhVBLDeltaOld;                /// Number of VBL
+    int rhVBLObjet;                /// For the objects
+    int rhVBLOld;                /// For the counter
+    short rhMT_VBLStep;               /// Path movement variables
     short rhMT_VBLCount;
     int rhMT_MoveStep;
-    int rhLoopCount;				/// Number of loops since start of level
-    double rhTimer;				/// Timer in 1/50 since start of level
-    double rhTimerOld;				/// For delta calculation
-    double rhTimerDelta;				/// For delta calculation
-    short rhFree4;				/// Alignment
-    int rhOiListPtr;				/// OI list enumeration
-    short rhObListNext;				/// Branch label
-    char rhMouseUsed;					// Players using the mouse
+    int rhLoopCount;                /// Number of loops since start of level
+    double rhTimer;                /// Timer in 1/50 since start of level
+    double rhTimerOld;                /// For delta calculation
+    double rhTimerDelta;                /// For delta calculation
+    short rhFree4;                /// Alignment
+    int rhOiListPtr;                /// OI list enumeration
+    short rhObListNext;                /// Branch label
+    char rhMouseUsed;                    // Players using the mouse
     short rhDestroyPos;
-    unsigned int rh2OldPlayer;				/// Previous player entries
-    unsigned int rh2NewPlayer;				/// Modified player entries
-    unsigned int rh2InputMask;				/// Inhibated players entries
-	unsigned int rh2InputPlayers;
-    unsigned char rh2MouseKeys;				/// Mousekey entries
-    short rh2CreationCount;			/// Number of objects created since beginning of frame
+    unsigned int rh2OldPlayer;                /// Previous player entries
+    unsigned int rh2NewPlayer;                /// Modified player entries
+    unsigned int rh2InputMask;                /// Inhibated players entries
+    unsigned int rh2InputPlayers;
+    unsigned char rh2MouseKeys;                /// Mousekey entries
+    short rh2CreationCount;            /// Number of objects created since beginning of frame
     short rh2Free;
-    int rh2MouseX;				/// Mouse coordinate
-    int rh2MouseY;				/// Mouse coordinate
-	int rh4OnMouseWheel;
-	int rh4MouseWheelDelta;
+    int rh2MouseX;                /// Mouse coordinate
+    int rh2MouseY;                /// Mouse coordinate
+    int rh4OnMouseWheel;
+    int rh4MouseWheelDelta;
     short rh2Free2;
-    int rh2MouseSaveX;				/// Mouse saving when pause
-    int rh2MouseSaveY;				/// Mouse saving when pause
+    int rh2MouseSaveX;                /// Mouse saving when pause
+    int rh2MouseSaveY;                /// Mouse saving when pause
     int rh2PauseCompteur;
     double rh2PauseTimer;
     int rh2PauseVbl;
     int rh4MouseXCenter;
     int rh4MouseYCenter;
-	int rh4CursorHidden;
-    int rh3DisplayX;				/// To scroll
+    int rh4CursorHidden;
+    int rh3DisplayX;                /// To scroll
     int rh3DisplayY;
-    int rh3WindowSx;   				/// Window size
+    int rh3WindowSx;                   /// Window size
     int rh3WindowSy;
-    short rh3CollisionCount;			/// Collision counter
-    char rh3Scrolling;				/// Flag: we need to scroll
+    short rh3CollisionCount;            /// Collision counter
+    char rh3Scrolling;                /// Flag: we need to scroll
     int rh3Panic;
     int rh3PanicBase;
     int rh3PanicPile;
-    int rh3XMinimum;   				/// Object inactivation coordinates
+    int rh3XMinimum;                   /// Object inactivation coordinates
     int rh3YMinimum;
     int rh3XMaximum;
     int rh3YMaximum;
-    int rh3XMinimumKill;			/// Object destruction coordinates
+    int rh3XMinimumKill;            /// Object destruction coordinates
     int rh3YMinimumKill;
     int rh3XMaximumKill;
     int rh3YMaximumKill;
     short rh3Graine;
-	//	short		rh4KpxNumOfWindowProcs;					// Number of routines to call
-	//	kpxMsg		rh4KpxWindowProc[KPX_MAXNUMBER];		// Message handle routines
-	//	kpxLib		rh4KpxFunctions[KPX_MAXFUNCTIONS];		// Available internal routines
-	//	CALLANIMATIONS	rh4Animations;						
-	//	CALLDIRATSTART	rh4DirAtStart;						
-	//	CALLMOVEIT		rh4MoveIt;
-	//	CALLAPPROACHOBJECT rh4ApproachObject;
-	//	CALLCOLLISIONS rh4Collisions;
-	//	CALLTESTPOSITION rh4TestPosition;
-	//	CALLGETJOYSTICK rh4GetJoystick;
-	//	CALLCOLMASKTESTRECT rh4ColMaskTestRect;
-	//	CALLCOLMASKTESTPOINT rh4ColMaskTestPoint;
+    //    short        rh4KpxNumOfWindowProcs;                    // Number of routines to call
+    //    kpxMsg        rh4KpxWindowProc[KPX_MAXNUMBER];        // Message handle routines
+    //    kpxLib        rh4KpxFunctions[KPX_MAXFUNCTIONS];        // Available internal routines
+    //    CALLANIMATIONS    rh4Animations;
+    //    CALLDIRATSTART    rh4DirAtStart;
+    //    CALLMOVEIT        rh4MoveIt;
+    //    CALLAPPROACHOBJECT rh4ApproachObject;
+    //    CALLCOLLISIONS rh4Collisions;
+    //    CALLTESTPOSITION rh4TestPosition;
+    //    CALLGETJOYSTICK rh4GetJoystick;
+    //    CALLCOLMASKTESTRECT rh4ColMaskTestRect;
+    //    CALLCOLMASKTESTPOINT rh4ColMaskTestPoint;
     short rh4DemoMode;
     int rh4PauseKey;
     int rh4EndOfPause;
@@ -230,54 +229,54 @@ class CRenderer;
     int rh4MusicFlags;
     int rh4MusicLoops;
     int rh4LoadCount;
-	//	LPDWORD		rh4TimerEventsBase;				// Timer events base
-
-	//	short		rh4DroppedFlag;
-	//	short		rh4NDroppedFiles;
-	//	LPSTR		rh4DroppedFiles;
-	//	LPSTR		rh4CreationErrorMessages;
-    int rh4KpxReturn;				/// WindowProc return
+    //    LPDWORD        rh4TimerEventsBase;                // Timer events base
+    
+    //    short        rh4DroppedFlag;
+    //    short        rh4NDroppedFiles;
+    //    LPSTR        rh4DroppedFiles;
+    //    LPSTR        rh4CreationErrorMessages;
+    int rh4KpxReturn;                /// WindowProc return
     int rh4ObjectCurCreate;
     int rh4ObjectAddCreate;
-    short rh4FakeKey;				/// For step through : fake key pressed
-    char rh4DoUpdate;				/// Flag for screen update on first loop
-    BOOL rh4MenuEaten;			/// Menu handled in an event?
-    int rh4OnCloseCount;			/// For OnClose event
-    short rh4ScrMode;				/// Current screen mode
+    short rh4FakeKey;                /// For step through : fake key pressed
+    char rh4DoUpdate;                /// Flag for screen update on first loop
+    BOOL rh4MenuEaten;            /// Menu handled in an event?
+    int rh4OnCloseCount;            /// For OnClose event
+    short rh4ScrMode;                /// Current screen mode
     int rh4EventCount;
-    short rh4LastQuickDisplay;			/// Quick - display list
-    short rh4FirstQuickDisplay;			/// Quick-display object list
-    int rh4WindowDeltaX;			/// For scrolling
+    short rh4LastQuickDisplay;            /// Quick - display list
+    short rh4FirstQuickDisplay;            /// Quick-display object list
+    int rh4WindowDeltaX;            /// For scrolling
     int rh4WindowDeltaY;
-    int rh4TimeOut;				/// For time-out!
-    int rh4TabCounter;				/// Objects with tabulation
+    int rh4TimeOut;                /// For time-out!
+    int rh4TabCounter;                /// Objects with tabulation
     int rh4CurToken;
-    int rh4FrameRatePos;						/// Position in buffer
-    int rh4FrameRatePrevious;					/// Previous time
+    int rh4FrameRatePos;                        /// Position in buffer
+    int rh4FrameRatePrevious;                    /// Previous time
     int rh4SaveFrame;
     int rh4SaveFrameCount;
     double rh4MvtTimerCoef;
-    int xScrolling;					// FRA: = 320;
+    int xScrolling;                    // FRA: = 320;
     BOOL bOperande;
-	//CQuestion* rhQuestionObjectOn;
-    int rh4PosPile;				/// Expression evaluation pile position
-    CValue* rh4Results[MAX_INTERMEDIATERESULTS];				/// Result pile
-    int rh4Operators[MAX_INTERMEDIATERESULTS];				/// Operators pile	
-	LPEXP rh4ExpToken;
-	NSString* rhTempString;
-	CCndExtension* pCndExtension;
-	CActExtension* pActExtension;
-	CValue** rhTempValues;
-	int rhCurTempValue;
-	int rhMaxTempValues;
-	int rhBaseTempValues;
-	CCCA* subApps[MAX_SUBAPPS];
-	int nSubApps;
-	unsigned char rhJoystickMask;
-	CValue* evaTmp;
-	ObjectSelection* objectSelection;
-	NSDate* startTime;
-	int rhCurrentMenu;
+    //CQuestion* rhQuestionObjectOn;
+    int rh4PosPile;                /// Expression evaluation pile position
+    CValue* rh4Results[MAX_INTERMEDIATERESULTS];                /// Result pile
+    int rh4Operators[MAX_INTERMEDIATERESULTS];                /// Operators pile
+    LPEXP rh4ExpToken;
+    NSString* rhTempString;
+    CCndExtension* pCndExtension;
+    CActExtension* pActExtension;
+    CValue** rhTempValues;
+    int rhCurTempValue;
+    int rhMaxTempValues;
+    int rhBaseTempValues;
+    CCCA* subApps[MAX_SUBAPPS];
+    int nSubApps;
+    unsigned char rhJoystickMask;
+    CValue* evaTmp;
+    ObjectSelection* objectSelection;
+    NSDate* startTime;
+    int rhCurrentMenu;
     BOOL rh4Box2DSearched;
     void* rh4Box2DBase;
     BOOL bBodiesCreated;
@@ -288,11 +287,14 @@ class CRenderer;
     LPFOREACH rh4ForEachs;
     CCArrayList* rh4PosOnLoop;
     BOOL rh4ComplexOnLoop;
-	CSpriteGen* spriteGen;
-	std::vector< std::vector<saveSelection> > rhChildEventSelectionStack;
-	event* rhChildEventToExecute;
+    CSpriteGen* spriteGen;
+    std::vector< std::vector<saveSelection> > rhChildEventSelectionStack;
+    event* rhChildEventToExecute;
+    int rhLastCreatedObjectFixedValue;
+    int rh4CurrentFastLoopIndex;
+    std::vector<eventGroup*>* cndGroupAddress;
 
-	BOOL runtimeIsReady;
+    BOOL runtimeIsReady;
 }
 
 -(id)initWithApp:(CRunApp*)a;
@@ -367,8 +369,8 @@ class CRenderer;
 -(void)f_RemoveObjects;
 -(void)getMouseCoords;
 -(BOOL)newHandle_Collisions:(CObject*)pHo;
--(CArrayList*)objectAllCol_IXY:(CObject*)pHo withImage:(short) newImg andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andX:(int)newX andY:(int)newY andColList:(short*)pOiColList;
--(int)colMask_TestObject_IXY:(CObject*)pHo withImage:(short)newImg andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andX:(int)newX andY:(int)newY andFoot:(int)htfoot andPlane:(int)plan;
+-(CArrayList*)objectAllCol_IXY:(CObject*)pHo withImage:(unsigned short) newImg andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andX:(int)newX andY:(int)newY andColList:(short*)pOiColList;
+-(int)colMask_TestObject_IXY:(CObject*)pHo withImage:(unsigned short)newImg andAngle:(float)newAngle andScaleX:(float)newScaleX andScaleY:(float)newScaleY andX:(int)newX andY:(int)newY andFoot:(int)htfoot andPlane:(int)plan;
 -(int)quadran_Out:(int)x1 withY1:(int)y1 andX2:(int)x2 andY2:(int)y2;
 -(int)quadran_In:(int)x1 withY1:(int)y1 andX2:(int)x2 andY2:(int)y2;
 -(unsigned short)random:(unsigned short)wMax;
@@ -421,8 +423,11 @@ class CRenderer;
 -(void*)GetPhysicMovement:(CObject*)pHo;
 -(int)getDir:(CObject*)pHo;
 
--(void)pauseDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo;
--(void)passwordDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo;
+//-(void)pauseDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo;
+//-(void)passwordDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo;
+
+- (void)pauseDidEnd:(NSModalResponse)returnCode;
+- (void)passwordDidEnd:(NSString *)passwordInput returnCode:(NSModalResponse)returnCode;
 
 -(void)execProgram:(NSString*)path withCmdLineOptions:(NSString*)options andFlags:(int)flags;
 

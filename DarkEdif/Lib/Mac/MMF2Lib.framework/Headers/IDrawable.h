@@ -22,7 +22,6 @@
 // IDRAWABLE : Interface pour les sprites owner draw
 //
 //----------------------------------------------------------------------------------
-#pragma once
 
 @class CSprite;
 @class CImageBank;

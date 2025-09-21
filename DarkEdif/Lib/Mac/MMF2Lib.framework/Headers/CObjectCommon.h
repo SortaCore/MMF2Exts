@@ -22,7 +22,6 @@
 // COBJECTCOMMON : Donnees d'un objet normal
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "COI.h"
@@ -108,7 +107,7 @@
     int ocID;
     int ocPrivate;
 	COI* pCOI;
-
+	
 }
 -(id)init;
 -(void)dealloc;

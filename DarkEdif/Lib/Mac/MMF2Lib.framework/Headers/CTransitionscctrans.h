@@ -22,7 +22,6 @@
 // CTransitionCTrans : point d'entree des transitions standart
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CTransitions.h"
 #import "CTrans.h"
@@ -128,7 +127,7 @@ class CRenderer;
 {
     // Parameters
     int m_spotPercent;
-
+	
     // Runtime
     int m_spotSize;
     int m_nbBlockPerLine;

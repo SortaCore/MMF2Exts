@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_WORLD_H
 #define B2_WORLD_H
 
@@ -182,7 +181,7 @@ public:
 
 	/// Change the global gravity vector.
 	void SetGravity(const b2Vec2& gravity);
-
+	
 	/// Get the global gravity vector.
 	b2Vec2 GetGravity() const;
 

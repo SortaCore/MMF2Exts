@@ -17,7 +17,6 @@
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 * IN THE SOFTWARE.
 */
-#pragma once
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -142,7 +141,7 @@ static inline int64_t binary_insertion_find(SORT_TYPE *dst, const SORT_TYPE x, c
   c = r >> 1;
   SORT_TYPE lx, cx, rx;
   lx = dst[l];
-
+  
   /* check for beginning conditions */
   if (SORT_CMP(x, lx) < 0)
     return 0;
@@ -152,7 +151,7 @@ static inline int64_t binary_insertion_find(SORT_TYPE *dst, const SORT_TYPE x, c
     while (SORT_CMP(x, dst[i]) == 0) i++;
     return i;
   }
-
+  
   rx = dst[r];
   // guaranteed not to be >= rx
   cx = dst[c];
@@ -193,7 +192,7 @@ static inline void binary_insertion_sort_start(SORT_TYPE *dst, const size_t star
     int64_t j;
     /* If this entry is already correct, just move along */
     if (SORT_CMP(dst[i - 1], dst[i]) <= 0) continue;
-
+    
     /* Else we need to find the right place, shift everything over, and squeeze in */
     SORT_TYPE x = dst[i];
     int64_t location = binary_insertion_find(dst, x, i);
@@ -235,10 +234,10 @@ void MERGE_SORT(SORT_TYPE *dst, const size_t size)
   }
 
   const int64_t middle = size / 2;
-
+  
   MERGE_SORT(dst, middle);
   MERGE_SORT(&dst[middle], size - middle);
-
+  
   SORT_TYPE newdst[size];
   int64_t out = 0;
   int64_t i = 0;
@@ -327,9 +326,9 @@ static inline int64_t count_run(SORT_TYPE *dst, const int64_t start, const size_
       SORT_SWAP(dst[size - 2], dst[size - 1]);
     return 2;
   }
-
+  
   int64_t curr = start + 2;
-
+  
   if (SORT_CMP(dst[start], dst[start + 1]) <= 0)
   {
     // increasing run
@@ -394,7 +393,7 @@ if (curr == size)\
 }\
 }\
 while (0)
-
+  
 static inline int check_invariant(TIM_SORT_RUN_T *stack, const int stack_curr)
 {
   if (stack_curr < 2) return 1;
@@ -416,7 +415,7 @@ typedef struct {
   size_t alloc;
   SORT_TYPE *storage;
 } TEMP_STORAGE_T;
-
+  
 
 static inline void tim_sort_resize(TEMP_STORAGE_T *store, const size_t new_size)
 {
@@ -441,16 +440,16 @@ static inline void tim_sort_merge(SORT_TYPE *dst, const TIM_SORT_RUN_T *stack, c
 
   tim_sort_resize(store, MIN(A, B));
   SORT_TYPE *storage = store->storage;
-
+  
   int64_t i, j, k;
-
+  
   // left merge
   if (A < B)
   {
     memcpy(storage, &dst[curr], A * sizeof(SORT_TYPE));
     i = 0;
     j = curr + A;
-
+    
     for (k = curr; k < curr + A + B; k++)
     {
       if ((i < A) && (j < curr + A + B))
@@ -474,7 +473,7 @@ static inline void tim_sort_merge(SORT_TYPE *dst, const TIM_SORT_RUN_T *stack, c
     memcpy(storage, &dst[curr + A], B * sizeof(SORT_TYPE));
     i = B - 1;
     j = curr + A - 1;
-
+    
     for (k = curr + A + B - 1; k >= curr; k--)
     {
       if ((i >= 0) && (j >= curr))
@@ -516,11 +515,11 @@ static inline int tim_sort_collapse(SORT_TYPE *dst, TIM_SORT_RUN_T *stack, int s
     }
     else if (stack_curr == 2)
       break;
-
+      
     const int64_t A = stack[stack_curr - 3].length;
     const int64_t B = stack[stack_curr - 2].length;
     const int64_t C = stack[stack_curr - 1].length;
-
+    
     // check first invariant
     if (A <= B + C)
     {
@@ -558,24 +557,24 @@ void TIM_SORT(SORT_TYPE *dst, const size_t size)
     BINARY_INSERTION_SORT(dst, size);
     return;
   }
-
+  
   // compute the minimum run length
   const int minrun = compute_minrun(size);
-
+  
   // temporary storage for merges
   TEMP_STORAGE_T _store, *store = &_store;
   store->alloc = 0;
   store->storage = NULL;
-
+  
   TIM_SORT_RUN_T run_stack[128];
   int stack_curr = 0;
   int64_t len, run;
   int64_t curr = 0;
-
+  
   PUSH_NEXT();
   PUSH_NEXT();
   PUSH_NEXT();
-
+  
   while (1)
   {
     if (!check_invariant(run_stack, stack_curr))
@@ -594,7 +593,7 @@ void TIM_SORT(SORT_TYPE *dst, const size_t size)
 static inline void heap_sift_down(SORT_TYPE *dst, const int64_t start, const int64_t end)
 {
   int64_t root = start;
-
+  
   while ((root << 1) <= end)
   {
     int64_t child = root << 1;
@@ -624,7 +623,7 @@ void HEAP_SORT(SORT_TYPE *dst, const size_t size)
 {
   heapify(dst, size);
   int64_t end = size - 1;
-
+  
   while (end > 0)
   {
     SORT_SWAP(dst[end], dst[0]);

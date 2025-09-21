@@ -22,7 +22,6 @@
 // CSOUND : un echantillon
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 #import <OpenAL/al.h>

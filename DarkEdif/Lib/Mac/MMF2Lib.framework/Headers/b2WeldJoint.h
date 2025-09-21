@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_WELD_JOINT_H
 #define B2_WELD_JOINT_H
 
@@ -49,7 +48,7 @@ struct b2WeldJointDef : public b2JointDef
 
 	/// The bodyB angle minus bodyA angle in the reference state (radians).
 	float32 referenceAngle;
-
+	
 	/// The mass-spring-damper frequency in Hertz. Rotation only.
 	/// Disable softness with a value of 0.
 	float32 frequencyHz;

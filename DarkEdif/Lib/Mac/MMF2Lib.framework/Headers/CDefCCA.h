@@ -22,7 +22,6 @@
 // CDEFCCA : definitions objet CCA
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CDefObject.h"
 

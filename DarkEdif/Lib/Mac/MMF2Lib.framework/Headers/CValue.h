@@ -22,7 +22,6 @@
 // CVALUE : classe de calcul et de stockage de valeurs
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define TYPE_INT 0
@@ -37,7 +36,7 @@
     double doubleValue;
     NSString* stringValue;	
 }
-
+    
 -(id)init;
 -(id)initWithInt:(int)value;
 -(id)initWithDouble:(double)value;

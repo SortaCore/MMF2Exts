@@ -6,7 +6,6 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#pragma once
 #import <Cocoa/Cocoa.h>
 
 @interface PlayerControlSheet : NSControl

@@ -24,8 +24,8 @@
 //  Created by Francois Lionet on 08/10/09.
 //  Copyright 2009 __MyCompanyName__. All rights reserved.
 //
-#pragma once
 #import <Foundation/Foundation.h>
+#define GL_SILENCE_DEPRECATION
 
 @class CRunApp;
 class CRenderer;
@@ -37,11 +37,11 @@ class CRenderer;
 {
 @public	
 	CRunApp* pRunApp;
-
+	
 	NSTimer* timer;
 	NSTimer* cleanTimer;
 	NSTimer* pruneTimer;
-
+	
 	CRenderer* renderer;
 	NSRect appRect;
 	int width;
@@ -62,7 +62,7 @@ class CRenderer;
 	int rttY;
 	int rttWidth;
 	int rttHeight;
-
+    
 	BOOL mouseVisible;
 	NSTrackingArea* trackingArea;
 }

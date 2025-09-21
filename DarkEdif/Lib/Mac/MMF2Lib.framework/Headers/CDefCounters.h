@@ -22,7 +22,6 @@
 // CDEFCOUNTERS : DonnÈes d'un objet score / vies / counter
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 // Display types
@@ -58,8 +57,8 @@
     int ocColor2;
     int ocGradientFlags;
     short nFrames;
-    short* frames;
-
+    unsigned short* frames;
+	
 }
 -(id)init;
 -(void)dealloc;

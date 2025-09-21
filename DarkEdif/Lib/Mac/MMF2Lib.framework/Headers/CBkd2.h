@@ -22,7 +22,6 @@
 // CBKD2 : objet paste dans le decor
 //
 // -----------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRun;
@@ -41,17 +40,17 @@
     int y;
 	int spotX;
 	int spotY;
-    short img;
+    unsigned short img;
     short colMode;
     short nLayer;
     short obstacleType;
     CSprite* pSpr[4];
     int inkEffect;
     int inkEffectParam;
-
+    
     int bkdEffectShader;
     CEffectEx* bkdEffect;
-
+    
 	int spriteFlag;
     void* body;
 }

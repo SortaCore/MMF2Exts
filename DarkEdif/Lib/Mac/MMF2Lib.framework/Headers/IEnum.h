@@ -22,7 +22,6 @@
 // IENUM : Interface pour l'enumeration des objets
 //
 //----------------------------------------------------------------------------------
-#pragma once
 
 @protocol IEnum	
 

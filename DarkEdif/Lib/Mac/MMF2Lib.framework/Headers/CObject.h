@@ -22,7 +22,6 @@
 // COBJECT : Classe de base d'un objet'
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
 #import "CRect.h"
@@ -100,14 +99,14 @@ class CRenderer;
 	CArrayList* replacedColors;
 	float controlScaleX;
 	float controlScaleY;
-
+	
     // Classes de gestion communes
     CRCom* roc;                   // The CRCom object
     CRMvt* rom;                   // The CRMvt object
     CRAni* roa;                   // The CRAni object
     CRVal* rov;                   // The CRVal object
     CRSpr* ros;                   // The CRSpr object
-
+    
     // Effect code
     CEffectEx* hoEffect;
 }
@@ -117,12 +116,15 @@ class CRenderer;
 -(void)initObject:(CObjectCommon*)ocPtr withCOB:(CCreateObjectInfo*)cob;
 -(int)getX;
 -(int)getY;
+-(int)globalToLayerX:(int)X;
+-(int)globalToLayerY:(int)Y;
 -(Vec2i)getPosition;
 -(int)getWidth;
 -(int)getHeight;
 -(void)setX:(int)x;
 -(void)setY:(int)y;
 -(void)setPosition:(int)x withY:(int)y;
+-(void)setLayer:(int)newLayer;
 -(void)setWidth:(int)width;
 -(void)setHeight:(int)height;
 -(void)generateEvent:(int)code withParam:(int)param;
@@ -147,7 +149,7 @@ class CRenderer;
 -(CObject*)getObjectFromFixed:(int)fixed;
 -(BOOL)isOfType:(short)OiList;
 -(void)runtimeIsReady;
--(int)checkOrCreateEffectIfNeededByIndex:(int)index andEffectParam:(int)rgba;
+-(int)checkOrCreateEffectIfNeededByIndex:(int)index withEffectParam:(int)rgba andFillData:(BOOL)fillData;
 -(int)checkOrCreateEffectIfNeededByName:(NSString*)name andEffectParam:(int)rgba;
 -(void)fillEffectData;
 

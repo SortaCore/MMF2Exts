@@ -22,9 +22,7 @@
 // CRUNAPP : Classe Application
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
 
 #define RUNTIME_VERSION 0x0302
 #define RUNTIME_CM 1
@@ -72,7 +70,10 @@
 #define GAOF_JAVAAPPLET 0x2000
 #define AH2OPT_DESTROYIFNOINACTIVATE 0x4000000
 #define AH2OPT_MACAUTOFILEREDIRECT 0x20000000
-#define AH2OPT_RESAMPLESTRETCH     0x0004
+#define AH2OPT_RESAMPLESTRETCH     0x00000004
+#define AH2OPT2_WINDOWSLIKECOLLISIONS    0x0002
+#define AH2OPT2_SELECTDELETEDOBJECTSINCHILDEVENTS 0x0004
+#define AH2OPT2_PREMULTIPLIEDIMAGES 0x0008
 #define SL_RESTART 0
 #define SL_STARTFRAME 1
 #define SL_FRAMEFADEINLOOP 2
@@ -242,6 +243,7 @@ enum {
 	int frameRate;
     CWindowManager* winMan;
 	int hdr2Options;
+    unsigned short hdr2Options2;
 	CRenderToTexture* oldFrameImage;
 	CMask* firstMask;
 	CMask* secondMask;
@@ -275,6 +277,8 @@ enum {
     BOOL isFullScreen;
 	BOOL toggleFullScreen;
 	int setFullScreenMode;
+    
+    BOOL bPremultiply;
 }
 -(void)cleanMemory;
 -(void)setView:(CRunView*)pView;
@@ -352,5 +356,7 @@ enum {
 
 -(NSSize)windowSize;
 -(void)changeWindowDimensions:(int)width withHeight:(int)height;
+-(void)updateWindowPos;
 
+-(void)loadFonts;
 @end

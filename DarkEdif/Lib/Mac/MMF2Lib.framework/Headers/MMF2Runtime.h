@@ -18,7 +18,6 @@
  * IN THE SOFTWARE.
  */
 
-#pragma once
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 
@@ -35,6 +34,8 @@
 #import "CArrayList.h"
 #import "Array.h"
 #import "CBitmap.h"
+#import "CEffectEx.h"
+#import "CEffectBank.h"
 #import "CEvents.h"
 #import "CEventProgram.h"
 #import "CEmbeddedFile.h"
@@ -48,6 +49,7 @@
 #import "CMusicPlayer.h"
 #import "CPoint.h"
 #import "CRect.h"
+#import "CRenderUtils.h"
 #import "CRenderToTexture.h"
 #import "CRenderer.h"
 #import "CRun.h"

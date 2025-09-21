@@ -22,7 +22,6 @@
 // CFONT : une fonte
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;
@@ -48,7 +47,7 @@
     unsigned char lfPitchAndFamily;
     NSString* lfFaceName;
     NSFont* font;
-
+	
 }
 -(void)dealloc;
 -(void)loadHandle:(CFile*)file;

@@ -22,7 +22,6 @@
 // CText : Objet string
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CObject.h"
 #import "IDrawable.h"

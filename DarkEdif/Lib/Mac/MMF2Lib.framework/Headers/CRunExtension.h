@@ -22,7 +22,6 @@
 // CRUNEXTENSION: Classe abstraite run extension
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 

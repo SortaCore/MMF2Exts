@@ -22,7 +22,6 @@
 // CFADESPRITE sprite pour transisions
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
 

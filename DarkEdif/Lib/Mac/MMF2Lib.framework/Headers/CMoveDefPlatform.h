@@ -22,7 +22,6 @@
 // CMOVEDEFPLATFORM : donnees du mouvement platforme
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

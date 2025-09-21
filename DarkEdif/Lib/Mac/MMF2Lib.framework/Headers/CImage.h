@@ -22,7 +22,7 @@
 // CIMAGE Une image
 //
 //----------------------------------------------------------------------------------
-#pragma once
+#define GL_SILENCE_DEPRECATION
 #import <Foundation/Foundation.h>
 #import <OpenGL/OpenGL.h>
 #import "IDrawable.h"
@@ -76,6 +76,8 @@ union PixelGlobal{
 };
 #pragma pack(pop)
 
+static const int JPEG = 5;
+
 struct ImageInfo
 {
 	BOOL isFound;
@@ -101,26 +103,27 @@ typedef struct ImageInfo ImageInfo;
 	int chunkSize;
 	CArrayList* maskRotation;
 	CArrayList* replacedColors;
-
+    
     #define IMGFLAG_REPLACEDCOLORS  0x1000  // Volatil flag used by replaceColor action
-
-	short format;
+	
+//	short format; // is now in CTexture
 	short flags;
 	short bytesPrPixel;
 	int openGLmode;
 	int openGLformat;
-
-	unsigned int* data;
+	
+	__strong unsigned int* data;
 	NSUInteger dataLength;
     CMask* mask;
     CMask* maskPlatform;
-
+	
 	int lineWidth;
 	int bLineWidth;
 	BOOL bCanRelease;
 	NSUInteger offset;
 	CFile* file;
 	BOOL isUploading;
+    BOOL opaqueMask;
 }
 -(id)initWithApp:(CRunApp*)a;
 -(id)initWithWidth:(int)sx andHeight:(int)sy;
@@ -130,6 +133,7 @@ typedef struct ImageInfo ImageInfo;
 -(void)preload:(CFile*)file;
 -(CMask*)getMask:(int)nFlags withAngle:(float)angle andScaleX:(double)scaleX andScaleY:(double)scaleY;
 -(CMask*)getMask:(int)nFlags;
+-(void)setOpaqueMask:(BOOL)_opaqueMask;
 -(void)copyImage:(CImage*)image;
 -(CGImageRef)getCGImage;
 -(NSImage*)getNSImage;
@@ -176,6 +180,7 @@ static inline bool pixelIsSolid(CImage* img, int x, int y)
 	switch (img->format)
 	{
 		case RGBA8888:
+        case JPEG:
 			pixel4 = img->data[x+ y*img->width];
 			return ((pixel4 & 0xFF000000) != 0);
 		case RGBA4444:

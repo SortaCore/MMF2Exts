@@ -22,7 +22,6 @@
 // CBACKDRAWPASTE
 //
 // -----------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CBackDraw.h"
 
@@ -32,7 +31,7 @@
 @interface CBackDrawPaste : CBackDraw 
 {
 @public 
-	short img;
+    unsigned short img;
     int x;
     int y;
     short typeObst;

@@ -22,7 +22,6 @@
 // CIMAGEBANK : Stockage des images
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 #import "CImage.h"
@@ -45,7 +44,7 @@ public:
     int nHandlesTotal;
     int nImages;
     NSUInteger* offsetsToImages;
-    short* handleToIndex;
+    unsigned short* handleToIndex;
     short* useCount;
 	std::map<NSString*,unsigned short,cmpNSString> fileToImg;
 }
@@ -55,18 +54,19 @@ public:
 -(void)preLoad;
 -(void)cleanMemory;
 -(short)enumerate:(short)num;
--(CImage*)getImageFromHandle:(short)handle;
--(CImage*)getImageFromIndex:(short)index;
+-(CImage*)getImageFromHandle:(unsigned short)handle;
+-(CImage*)getImageFromIndex:(unsigned short)index;
 -(void)resetToLoad;
--(void)setToLoad:(short)handle;
+-(void)setToLoad:(unsigned short)handle;
 -(void)load;
--(void)delImage:(short)handle;
--(short)addImageCompare:(CImage*)img withXSpot:(short)xSpot andYSpot:(short)ySpot andXAP:(short)xAP andYAP:(short)yAP;
--(short)addImage:(CImage*)img withXSpot:(short)xSpot andYSpot:(short)ySpot andXAP:(short)xAP andYAP:(short)yAP andCount:(short)count andCopyImage:(BOOL)copyImage;
--(void)loadImageList:(short*)handles withLength:(int)length;
--(void)loadImageByHandle:(short)handle;
--(ImageInfo)getImageInfoEx:(short)nImage withAngle:(float)nAngle andScaleX:(float)fScaleX andScaleY:(float)fScaleY;
+-(void)delImage:(unsigned short)handle;
+-(unsigned short)addImageCompare:(CImage*)img withXSpot:(short)xSpot andYSpot:(short)ySpot andXAP:(short)xAP andYAP:(short)yAP;
+-(unsigned short)addImage:(CImage*)img withXSpot:(short)xSpot andYSpot:(short)ySpot andXAP:(short)xAP andYAP:(short)yAP andCount:(short)count andCopyImage:(BOOL)copyImage;
+-(void)loadImageList:(unsigned short*)handles withLength:(int)length;
+-(void)loadImageByHandle:(unsigned short)handle;
+-(void)removeImageByHandle:(unsigned short)handle;
+-(ImageInfo)getImageInfoEx:(unsigned short)nImage withAngle:(float)nAngle andScaleX:(float)fScaleX andScaleY:(float)fScaleY;
 -(CImage*)loadImageFromString:(NSString*)filename;
--(short)addImageFromFile:(NSString*)filename withXSpot:(int)xSpot andYSpot:(int)ySpot andXAP:(int)xAP andYAP:(int)yAP andTransparentColor:(int)trspColor;
+-(unsigned short)addImageFromFile:(NSString*)filename withXSpot:(int)xSpot andYSpot:(int)ySpot andXAP:(int)xAP andYAP:(int)yAP andTransparentColor:(int)trspColor;
 
 @end

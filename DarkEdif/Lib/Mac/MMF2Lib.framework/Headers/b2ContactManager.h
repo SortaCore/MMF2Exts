@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_CONTACT_MANAGER_H
 #define B2_CONTACT_MANAGER_H
 
@@ -41,7 +40,7 @@ public:
 	void Destroy(b2Contact* c);
 
 	void Collide();
-
+            
 	b2BroadPhase m_broadPhase;
 	b2Contact* m_contactList;
 	int32 m_contactCount;

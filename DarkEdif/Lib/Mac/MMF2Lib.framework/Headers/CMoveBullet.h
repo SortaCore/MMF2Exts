@@ -22,7 +22,6 @@
 // CMOVEBULLET : mouvement shoot
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 #import "CBox2D.h"

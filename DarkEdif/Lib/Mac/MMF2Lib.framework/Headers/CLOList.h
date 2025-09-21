@@ -22,7 +22,6 @@
 // CLOLIST : liste de levelobjects
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunApp;

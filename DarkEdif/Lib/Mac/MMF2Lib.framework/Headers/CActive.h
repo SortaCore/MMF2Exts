@@ -22,7 +22,6 @@
 // CACTIVE : Objets actifs
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
 #import "CObject.h"

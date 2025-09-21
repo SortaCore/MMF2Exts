@@ -22,7 +22,6 @@
 // CDEF : DonnÈes d'un objet normal
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

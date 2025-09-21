@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #include <Box2D/Common/b2Settings.h>
 
 /// Timer for profiling. This has platform specific code and may

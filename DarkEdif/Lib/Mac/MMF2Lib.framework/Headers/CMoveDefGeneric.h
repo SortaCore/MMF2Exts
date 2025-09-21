@@ -22,7 +22,6 @@
 // CMOVEDEFGENERIC : donnÈes du mouvement generique
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMoveDef.h"
 

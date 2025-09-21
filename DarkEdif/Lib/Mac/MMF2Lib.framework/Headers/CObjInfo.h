@@ -22,7 +22,6 @@
 // CObjInfo informations sur un objet
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define OILIMITFLAGS_BORDERS 0x000F
@@ -70,6 +69,7 @@
 	short* oilColList;
 	int oilIndex;				/// Index in rhOiList
     int oilIndexEffect;
+	short* oilRealQualifiers;
 }
 -(id)init;
 -(void)dealloc;

@@ -25,9 +25,10 @@
 //  Copyright 2010 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
+
 #import "CoreMath.h"
+#import "CRenderToTexture.h"
 
 @class CTexture;
 
@@ -40,8 +41,12 @@ enum {
     UNIFORM_OBJECTMATRIX,
     UNIFORM_TEXTUREMATRIX,
     UNIFORM_INKEFFECT,
+    UNIFORM_ELLIPSE_CENTERPOS,
+    UNIFORM_ELLIPSE_RADIUS,
     UNIFORM_RGBA,
     UNIFORM_GRADIENT,
+    UNIFORM_BCKGTEXTURE,
+    UNIFORM_PREMULTIPLY,
     UNIFORM_VAR1,
     UNIFORM_VAR2,
     UNIFORM_VAR3,
@@ -62,72 +67,111 @@ enum {
     UNIFORM_VAR18,
     UNIFORM_VAR19,
     UNIFORM_VAR20,
+    UNIFORM_VAR21,
+    UNIFORM_VAR22,
+    UNIFORM_VAR23,
+    UNIFORM_VAR24,
+    UNIFORM_VAR25,
+    UNIFORM_VAR26,
+    UNIFORM_VAR27,
+    UNIFORM_VAR28,
+    UNIFORM_VAR29,
+    UNIFORM_VAR30,
+
     NUM_UNIFORMS
 };
 
 #define ATTRIB_VERTEX 0
+#define ATTRIB_COLORS 1
 
-#define NUM_XTRATEX 8
+#define NUM_XTRATEX 7
 
 class CShader
 {
 public:
-	GLuint program;
-	GLuint fragmentProgram;
-	GLuint vertexProgram;
+    CRenderer* render;
+    
+    GLuint program;
+    GLuint fragmentProgram;
+    GLuint vertexProgram;
+    
+    int uniforms[NUM_UNIFORMS];
+    BOOL usesTexCoord;
+    BOOL usesColor;
 
-	int uniforms[NUM_UNIFORMS];
-	BOOL usesTexCoord;
-	BOOL usesColor;
-	CRenderer* render;
+    Mat3f prevTexCoord;
 
-	Mat3f prevTransform;
-	Mat3f prevProjection;
-	Mat3f prevTexCoord;
+    BOOL newProjection;
+    BOOL newTransform;
 
-	int currentEffect;
-	float currentR, currentG, currentB, currentA;
-	NSString* sname;
-
+    int currentEffect;
+    float currentParam;
+    GLuint currentTexture;
+    
+    float currentR, currentG, currentB, currentA;
+    NSString* sname;
+    
+    
     int extraTexID[NUM_XTRATEX];
+    int extraLocNb[NUM_XTRATEX];
     BOOL hasExtras;
+    
+    GLuint bckgTexID;
+    CRenderToTexture* bckgRtt;
+    int bckgWidth  = -1;
+    int bckgHeight = -1;
+    
+    bool hasBackground, hasPixelSize;
+    int currentPremultiply;
 
-	CShader(CRenderer* renderer);
-	~CShader();
-
+    CShader(CRenderer* renderer);
+    ~CShader();
+    
     void checkError();
 
-	bool loadShader(NSString* name, NSString* vertexShader, NSString* fragmentShader, bool useTexCoord, bool useColors);
-	bool loadShader(NSString* shaderName, bool useTexCoord, bool useColors);
+    bool loadShader(NSString* name, NSString* vertexShader, NSString* fragmentShader, bool useTexCoord, bool useColors);
+    bool loadShader(NSString* shaderName, bool useTexCoord, bool useColors);
 
-	GLuint compileShader(GLuint* shader, NSString* shaderSource, GLint type);
-	bool linkProgram(GLuint prog);
-	bool validateProgram(GLuint prog);
+    GLuint compileShader(GLuint* shader, NSString* shaderSource, GLint type);
+    bool linkProgram(GLuint prog);
+    bool validateProgram(GLuint prog);
     void detachShader();
+    void forgetCachedState();
+    
+    void setTexture(CTexture* texture);
+    void setTexture(CTexture* texture, Mat3f &textureMatrix);
+    void setTexCoord(Mat3f &texCoord);
+    void setTextureID(GLuint textureId, Mat3f &textureMatrix);
+    void setRGBCoeff(float red, float green, float blue, float alpha);
+    void setPreMultiply(bool premult);
+    void setInkEffect(int effect);
+    void setEllipseCenter (int x, int y, int rA, int rB);
 
-	void setTexture(CTexture* texture);
-	void setTexture(CTexture* texture, Mat3f &textureMatrix);
-	void setTexCoord(Mat3f &texCoord);
-	void setRGBCoeff(float red, float green, float blue, float alpha);
-	void setInkEffect(int effect);
-	void forgetCachedState();
 
-	void bindShader();
-    void unbindShader();
     void bindVertexArray();
     void unbindVertexArray();
-	void setProjectionMatrix(const Mat3f &matrix);
-	void setTransformMatrix(const Mat3f &matrix);
-	void setObjectMatrix(const Mat3f &matrix);
-
+    void bindShader();
+    void unbindShader();
+    void configVertexArray();
+    void setObjectMatrix(const Mat3f &matrix);
+    
+    void setBackgroundTexture (GLuint texture);
     void setSurfaceTextureAtIndex(CTexture* texture, const GLchar* name, int index);
     void updateSurfaceTexture();
-
-	void setGradientColors(int color);
-	void setGradientColors(int a, int b, BOOL horizontal);
-	void setGradientColors(int a, int b, int c, int d);
-	void setGradientColors(GradientColor gradient);
-
+    
+    void setBackgroundUse();
+    void getBackground(int x, int y, int w, int h);
+    void getBackground(CRenderToTexture *rtt, int x, int y, int w, int h);
+    void deleteBackground();
+    void releaseBackground();
+    void setPixelSizeUse();
+    
+    void setGradientColors(int color);
+    void setGradientColors(int a, int b, BOOL horizontal);
+    void setGradientColors(int a, int b, int c, int d);
+    void setGradientColors(GradientColor gradient);
+    void setColors (float* gradient);
+    
     void setVariable1i(const GLchar* field, int value);
     void setVariable1f(const GLchar* field, float value);
     void setVariable2i(const GLchar* field, int value0, int value1);
@@ -146,7 +190,8 @@ public:
     void setVariable4i(int nfield, int value0, int value1, int value2, int value3);
     void setVariable4f(int nfield, float value0, float value1, float value2, float value3);
 
-
+    void MatrixLog(const Mat3f &mat);
+    const char* getGLTypeName(GLenum type);
 };
 
 

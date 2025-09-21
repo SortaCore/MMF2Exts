@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_SHAPE_H
 #define B2_SHAPE_H
 
@@ -43,7 +42,7 @@ struct b2MassData
 class b2Shape
 {
 public:
-
+	
 	enum Type
 	{
 		e_circle = 0,

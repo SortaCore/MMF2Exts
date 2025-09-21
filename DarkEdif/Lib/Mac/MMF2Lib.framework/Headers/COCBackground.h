@@ -22,7 +22,6 @@
 // COCBACKGROUND : un objet dÈcor normal
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "IDrawable.h"
@@ -35,7 +34,7 @@
 @interface COCBackground : COC <IDrawable> 
 {
 @public 
-	short ocImage;			// Image
+    unsigned short ocImage;			// Image
 	COI* pCOI;
 }
 -(id)init;

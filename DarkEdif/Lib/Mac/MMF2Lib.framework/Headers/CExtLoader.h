@@ -22,7 +22,6 @@
 // CEXTLOADER: Chargement des extensions
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define KPX_BASE 32

@@ -22,7 +22,6 @@
 // CANIMDIR : Une direction d'animation
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;
@@ -35,7 +34,7 @@
     short adRepeat;					// Number of loops
     short adRepeatFrame;				// Where to loop
     short adNumberOfFrame;			// Number of frames
-    short* adFrames;	
+    unsigned short* adFrames;	
 }
 -(void)dealloc;
 -(void)load:(CFile*)file; 

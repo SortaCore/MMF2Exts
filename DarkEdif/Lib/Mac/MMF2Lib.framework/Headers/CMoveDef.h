@@ -22,7 +22,6 @@
 // CMOVEDEF classe abstraite de definition d'un mouvement
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 // Definition of movement types

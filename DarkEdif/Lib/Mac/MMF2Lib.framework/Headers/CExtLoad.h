@@ -22,7 +22,6 @@
 // CEXTLOAD Chargement des extensions
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunExtension;
@@ -34,7 +33,7 @@
 	short handle;
     NSString* name;
     NSString* subType;
-
+	
 }
 -(CRunExtension*)loadRunObject; 
 -(void)loadInfo:(CFile*)file;

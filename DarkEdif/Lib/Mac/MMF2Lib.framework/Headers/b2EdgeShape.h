@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_EDGE_SHAPE_H
 #define B2_EDGE_SHAPE_H
 
@@ -51,7 +50,7 @@ public:
 
 	/// @see b2Shape::ComputeMass
 	void ComputeMass(b2MassData* massData, float32 density) const;
-
+	
 	/// These are the edge vertices
 	b2Vec2 m_vertex1, m_vertex2;
 

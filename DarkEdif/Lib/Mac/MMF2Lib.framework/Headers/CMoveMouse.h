@@ -22,7 +22,6 @@
 // CMOVEMOUSE : Mouvement souris
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

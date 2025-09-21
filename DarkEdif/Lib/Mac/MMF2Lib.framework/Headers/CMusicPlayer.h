@@ -22,7 +22,6 @@
 // CMUSICPLAYER : synthetiseur MIDI
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CRunApp;

@@ -22,7 +22,6 @@
 // CCREATEOBJECTINFO: informations pour la creation des objets
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define COF_HIDDEN 0x0002

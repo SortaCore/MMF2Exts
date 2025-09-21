@@ -23,7 +23,6 @@
 //
 //----------------------------------------------------------------------------------
 
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define GROWTH_STEP 5

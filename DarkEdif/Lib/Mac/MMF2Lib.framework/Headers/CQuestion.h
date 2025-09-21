@@ -22,7 +22,6 @@
 // CQuestion : Objet question
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CObject.h"
 #import "IDrawable.h"

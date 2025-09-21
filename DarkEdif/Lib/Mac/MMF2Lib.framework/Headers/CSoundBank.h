@@ -22,7 +22,6 @@
 // CSOUNDBANK: stockage des sons
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 

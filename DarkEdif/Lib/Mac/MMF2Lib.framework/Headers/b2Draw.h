@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #include <Box2D/Common/b2Math.h>
 
 /// Color for debug drawing. Each value has the range [0,1].
@@ -51,7 +50,7 @@ public:
 
 	/// Get the drawing flags.
 	uint32 GetFlags() const;
-
+	
 	/// Append flags to the current flags.
 	void AppendFlags(uint32 flags);
 
@@ -66,10 +65,10 @@ public:
 
 	/// Draw a circle.
 	virtual void DrawCircle(const b2Vec2& center, float32 radius, const b2Color& color) = 0;
-
+	
 	/// Draw a solid circle.
 	virtual void DrawSolidCircle(const b2Vec2& center, float32 radius, const b2Vec2& axis, const b2Color& color) = 0;
-
+	
 	/// Draw a line segment.
 	virtual void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color) = 0;
 

@@ -23,7 +23,6 @@
 //
 //----------------------------------------------------------------------------------
 
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFontInfo;
@@ -51,6 +50,7 @@
 - (void)setUnicode:(BOOL)bUnicode;
 - (char)readAChar;
 - (short)readAShort;
+- (unsigned short)readAUnsignedShort;
 - (unichar)readAUnichar;
 - (unsigned char)readAByte;
 - (void)readACharBuffer:(char*)pBuffer withLength:(NSUInteger)length;

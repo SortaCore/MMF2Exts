@@ -25,7 +25,6 @@
 //  Copyright 2011 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import <OpenAL/al.h>
 #import <OpenAL/alc.h>
@@ -40,7 +39,7 @@
 {
  	ALCcontext* mContext; // stores the context (the 'air')
 	ALCdevice* mDevice; // stores the device
-
+   
     ALuint pSources[NALCHANNELS];
     CSound* pSounds[NALCHANNELS];
     int nLoops[NALCHANNELS];
@@ -58,6 +57,7 @@
 -(void)rewind:(int)nSound;
 -(void)setVolume:(int)nSound volume:(float)v;
 -(void)setPitch:(int)nSound pitch:(float)v;
+-(void)setPan:(int)nSound pan:(float)v;
 -(BOOL)checkPlaying:(int)nSound;
 -(void)resetSources;
 -(void)beginInterruption;

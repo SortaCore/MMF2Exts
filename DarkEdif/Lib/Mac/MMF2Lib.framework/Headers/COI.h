@@ -22,7 +22,6 @@
 // COI
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 // Flags
@@ -73,20 +72,21 @@
 	//  public short oiReserved=0;			/// No longer used
     int oiInkEffect;			/// Ink effect
     int oiInkEffectParam;	        /// Ink effect param
-
+    
     int oiIndexEffect;
     NSUInteger oiEffectOffset;
     int* oiEffectData;
-
+    int oiEffectNParams;
+    
 	NSString* oiName;
-
+	
     // OI
     COC* oiOC;			/// ObjectsCommon
     NSUInteger oiFileOffset;
     int oiLoadFlags;
     short oiLoadCount;
     short oiCount;
-
+	
 }
 
 -(id)init;

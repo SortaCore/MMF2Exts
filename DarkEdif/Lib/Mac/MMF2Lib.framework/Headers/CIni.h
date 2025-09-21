@@ -21,7 +21,7 @@
 //  CIni.h
 //  RuntimeIPhone
 
-#pragma once
+
 #import <Foundation/Foundation.h>
 
 @class CArrayList;

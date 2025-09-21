@@ -22,7 +22,6 @@
 // CMOVEGENERIC : Mouvement joystick
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CMove.h"
 

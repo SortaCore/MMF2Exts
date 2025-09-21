@@ -22,7 +22,6 @@
 // CRCOM : Structure commune aux objets animes
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 
@@ -35,8 +34,8 @@
     int rcMovementType;				// Number of the current movement
     CSprite* rcSprite;					// Sprite ID if defined
     int rcAnim;						// Wanted animation
-    short rcImage;					// Current frame
-    float rcScaleX;					
+    unsigned short rcImage;					// Current frame
+    float rcScaleX;
     float rcScaleY;
     float rcAngle;
     int rcDir;						// Current direction
@@ -45,22 +44,22 @@
     int rcMaxSpeed;					// Maximum speed
     BOOL rcChanged;					// Flag: modified object
     BOOL rcCheckCollides;			// For static objects
-
+	
     int rcOldX;            			// Previous coordinates
     int rcOldY;
-    short rcOldImage;
+    unsigned short rcOldImage;
     float rcOldAngle;
     int rcOldDir;
     int rcOldX1;					// For zone detections
     int rcOldY1;
     int rcOldX2;
     int rcOldY2;
-
+	
     int rcFadeIn;
     int rcFadeOut;
-
+	
 	BOOL rcCMoveChanged;
-
+	
 }
 -(id)init;
 -(void)kill:(BOOL)bFast;

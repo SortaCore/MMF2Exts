@@ -22,7 +22,6 @@
 // CEVENTPROGRAM : Programme des evenements
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 #import "COI.h"
@@ -37,7 +36,9 @@
 @class CRun;
 @class CSoundBank;
 
-@interface CEventProgram : NSObject 
+int forEachLoopIDToConditionCode(int type, int forEachID);
+
+@interface CEventProgram : NSObject
 {
 @public
 	CRunApp* app;
@@ -50,6 +51,7 @@
     CLoadQualifiers** qualifiers;
     LPEVG pEvents;
     CQualToOiList** qualToOiList;
+    CQualToOiList** qualToOiListFull;
 	DWORD* listPointers;
     DWORD* eventPointers;
 //  BYTE eventPointersCnd[] = null;
@@ -117,6 +119,8 @@
 -(short)get_OiListOffset:(short)oi withType:(short)type;
 -(LPEVT)evg_FindAction:(LPEVG)evgPtr withNum:(int)n;
 -(void)freeAssembledData;
+-(void)prepareQualifierList:(CObjInfo**)oiList withMaxOI:(int)maxOI;
+-(void)freeQualifierList;
 -(short)assemblePrograms;
 -(void)unBranchPrograms;
 -(int)getCollisionFlags;
@@ -165,25 +169,26 @@
 -(BOOL)pickFromId:(int)value;
 -(CObject*)count_ObjectsFromOiList:(short)oil withStop:(int)stop;
 -(CObject*)countThem:(short)oil withStop:(int)stop;
--(int)count_ZoneOneObject:(short)oil withZone:(short*)pZone;
--(int)czoCountThem:(short)oil withZone:(short*)pZone;
+-(int)count_ZoneOneObject:(short)oil withZone:(int*)pZone;
+-(int)czoCountThem:(short)oil withZone:(int*)pZone;
 -(int)select_LineOfSight:(int)x1 withY1:(int)y1 andX2:(int)x2 andY2:(int)y2;
 -(BOOL)losCompare:(double)x1 withY1:(double)y1 andX2:(double)x2 andY2:(double)y2 andObject:(CObject*)pHo;
--(int)select_ZoneTypeObjects:(short*)p withType:(short)type;
--(BOOL)czaCompare:(short*)pZone withObject:(CObject*)pHo;
+-(int)select_ZoneTypeObjects:(int*)p withType:(short)type;
+-(BOOL)czaCompare:(int*)pZone withObject:(CObject*)pHo;
 -(CObject*)count_ObjectsFromType:(short)type withStop:(int)stop;
--(CObject*)count_ZoneTypeObjects:(short*)pZone withStop:(int)stop andType:(short)type;
--(BOOL)ctoCompare:(short*)pZone withObject:(CObject*)pHo;
+-(CObject*)count_ZoneTypeObjects:(int*)pZone withStop:(int)stop andType:(short)type;
+-(BOOL)ctoCompare:(int*)pZone withObject:(CObject*)pHo;
 -(void)onMouseMove;
 -(void)handle_PushedEvents;
 -(void)push_Event:(int)routine withCode:(int)code andParam:(int)lParam andObject:(CObject*)pHo andOI:(short)oi;
 -(void)endShuffle;
 -(void)finaliseColList;
 -(void)addColList:(short)oiList withOiNum:(short)oiNum andOiList2:(short)oiList2 andOiNum2:(short)oiNum2;
+-(void)replaceBoxCollisionModes:(short)oiList withOiNum:(short)oiNum andOiList2:(short)oiList2 andOiNum2:(short)oiNum2;
 -(void)freeAllocatedStrings;
 -(void)handle_TimerEvents;
 -(void)computeEventFastLoopList:(LPDWORD)pdw;
-
+-(short)enumerate:(short)num;
 
 
 

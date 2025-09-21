@@ -25,9 +25,8 @@
 //  Copyright 2010 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
-#import <OpenGL/gl3.h>
+
 #import "CRect.h"
 #import "CTexture.h"
 
@@ -40,26 +39,53 @@ class CRenderer;
 @interface CRenderToTexture : CTexture
 {
 @public
+    CRunApp* app;
+    CRenderer* renderer;
+    
 	GLuint framebuffer;
-	CRunApp* app;
-	CRenderer* renderer;
+    GLuint stencilbuffer;
+
 	GLint previousBuffer;
 	GLint prevWidth;
 	GLint prevHeight;
+    
 	BOOL isUploaded;
+    BOOL flipProjection;
+    BOOL useDepth;
+    BOOL useStencil;
 }
+ 
+- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap andPOTMode:(bool)potMode andDepth:(int)bDepth;
+- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap;
+- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andPOTMode:(bool)potMode;
+- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp;
 
-- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp*)runApp;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap andPOTMode:(bool)potMode andDepth:(int)bDepth;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andPOTMode:(bool)potMode;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer*)renderer andDepthMode:(bool)depthMode;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer;
+- (id)initWithWidth:(int)w Height:(int)h withRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap andSwapProjection:(bool)bSwapProj;
+- (id)initWithWidth:(int)w Height:(int)h withRenderer:(CRenderer *)renderer withSwapMode:(bool)bSwap withSwapProjection:(bool)bSwapProj andStencil:(bool)bStencil;
+
+- (void)resizeToWidth:(int)w andHeight:(int)h;
+
 - (void)dealloc;
 
 - (GLuint)newEmptyTextureWithWidth:(int)w andHeight:(int)h;
+- (void)createFBO;
+
 - (void)bindFrameBuffer;
 - (void)bindFrameBufferWithOffset:(Vec2f)offset;
 - (void)unbindFrameBuffer;
 
 - (void)fillWithColor:(int)color;
 - (void)fillWithColor:(int)color andAlpha:(unsigned char)alpha;
+
+- (void)fillWithPixels:(unsigned int*)buffer withWidth:(int)w andHeight:(int)h;
+
 - (void)clearColorChannelWithColor:(int)color;
+- (void)clearWithColorDontBind:(int)color;
 - (void)clearWithAlpha:(float)alpha;
 - (void)clearWithAlphaDontBind:(float)alpha;
 - (void)clearAlphaChannel:(float)alpha;
@@ -67,12 +93,15 @@ class CRenderer;
 - (void)copyFullFrom:(CRenderToTexture*)rtt;
 - (void)copyAreaFrom:(CRenderToTexture*)rtt atX:(int)x atY:(int)y withWidth:(int)w andHeight:(int)h;
 
--(int)uploadTexture;
--(int)deleteTexture;
--(void)cleanMemory;
--(void)setResampling:(BOOL)resample;
--(void)useClampToEdge;
+- (int)uploadTexture;
+- (int)deleteTexture;
+- (void)cleanMemory;
+- (void)setResampling:(BOOL)resample;
 
--(void)debugSaveToTGA:(NSString*)path;
+- (BOOL)isOkSizeWidth:(int)w andHeight:(int) h;
+- (BOOL)isRGBA;
+- (void)useClampToEdge;
 
+- (void)debugSaveToTGA:(NSString*)path;
+- (NSImage*)readFBO;
 @end

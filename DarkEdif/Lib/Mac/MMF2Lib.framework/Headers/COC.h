@@ -22,7 +22,6 @@
 // COC: classe abstraite d'objectsCommon
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "IEnum.h"
 #import "IDrawable.h"
@@ -49,7 +48,7 @@ class CRenderer;
     short ocColMode;			// Collision mode (0 = fine, 1 = box)
     int ocCx;				// Size
     int ocCy;
-
+    
     int ocEffectShader;
     CEffectEx* ocEffect;
 }

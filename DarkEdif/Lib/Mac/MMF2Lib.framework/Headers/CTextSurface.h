@@ -25,7 +25,6 @@
 //  Copyright 2010 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 
@@ -44,7 +43,7 @@ class CRenderer;
 	int prevColor;
 	CFont* prevFont;
 	CImage* textTexture;
-
+	
 	CRect rect;
 	int effect;
 	int effectParam;
@@ -53,11 +52,11 @@ class CRenderer;
 	int textHeight;
 }
 
--(id)initWidthWidth:(int)w andHeight:(int)h;
--(id)initWidthWidth:(int)w andHeight:(int)h andString:(NSString*)string andFont:(CFont*)font;
+-(id)initWithWidth:(int)w andHeight:(int)h;
+-(id)initWithWidth:(int)w andHeight:(int)h andString:(NSString*)string andFont:(CFont*)font;
 -(void)setText:(NSString*)s withFlags:(short)flags andColor:(int)color andFont:(CFont*)font andHeight:(int)h;
 -(void)draw:(CRenderer*)renderer withX:(int)x andY:(int)y andEffect:(int)inkEffect andEffectParam:(int)inkEffectParam;
-
+-(void)draw:(CRenderer*)renderer withX:(int)x andY:(int)y andShader:(int)effectShader andEffect:(int)inkEffect andEffectParam:(int)inkEffectParam;
 -(BOOL)setSizeWithWidth:(int)w andHeight:(int)h;
 -(void)manualDrawText:(NSString*)s withFlags:(short)flags andRect:(CRect)rectangle andColor:(int)color andFont:(CFont*)font;
 -(void)manualClear:(int)color;

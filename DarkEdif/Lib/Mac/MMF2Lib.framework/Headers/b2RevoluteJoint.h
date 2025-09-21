@@ -16,7 +16,6 @@
 * 3. This notice may not be removed or altered from any source distribution.
 */
 
-#pragma once
 #ifndef B2_REVOLUTE_JOINT_H
 #define B2_REVOLUTE_JOINT_H
 
@@ -156,7 +155,7 @@ public:
 	void Dump();
 
 protected:
-
+	
 	friend class b2Joint;
 	friend class b2GearJoint;
 

@@ -6,7 +6,6 @@
 //  Copyright 2011 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Cocoa/Cocoa.h>
 @class CRunApp;
 
@@ -19,7 +18,7 @@
 	BOOL alternate;
 	BOOL function;
 	CRunApp* app;
-
+	
 }
 -(id)initWithApp:(CRunApp*)app;
 -(void)dealloc;

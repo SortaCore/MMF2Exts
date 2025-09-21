@@ -25,7 +25,6 @@
 //  Copyright (c) 2013 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CoreMath.h"
 
@@ -37,7 +36,7 @@
 @interface CTexture : NSObject
 {
 @public
-	int handle;
+    unsigned short handle;
 	GLuint textureId;
 	int width;
 	int height;
@@ -46,6 +45,7 @@
 	int textureWidth;
 	int textureHeight;
 	int usageCount;
+    short format;
 	BOOL resample;		//MUST be set with 'setResampling' so it can update the filters
 	BOOL hasMipMaps;
     BOOL isPrunable;
@@ -58,6 +58,7 @@
 }
 
 -(size_t)uploadTexture;
+-(void)createGLTextureWidth:(int)width withHeight:(int)height andResampling:(int)resampling;
 -(int)deleteTexture;
 -(void)generateMipMaps;
 -(void)cleanMemory;
@@ -66,8 +67,10 @@
 
 -(void)setResampling:(BOOL)resample;
 -(void)updateFilter;
--(void)updateWrapMode:(int)wrapMode;
+-(void)updateFilterNoBind;
+-(void)updateTextureMode:(int)wrapMode;
 
 -(void)updateTextureMatrix;
 
+-(NSImage*)getTextureImage;
 @end

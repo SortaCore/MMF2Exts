@@ -22,7 +22,6 @@
 // EXTENSION conditions
 // 
 // ------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 

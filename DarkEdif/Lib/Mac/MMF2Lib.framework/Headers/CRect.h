@@ -23,7 +23,6 @@
 //
 //----------------------------------------------------------------------------------
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CFile.h"
 

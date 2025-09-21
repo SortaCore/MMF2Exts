@@ -22,7 +22,6 @@
 // CMOVEEXTENSION : classe abstraite de mouvement extension
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CPoint.h"
 
@@ -34,7 +33,7 @@
 @public 
 	CObject* ho;
     CRun* rh;
-
+	
 }
 -(void)setObject:(CObject*)hoPtr;
 -(void)initialize:(CFile*)file;

@@ -22,7 +22,6 @@
 // CACTEXTENSION
 //
 // -----------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CEvents.h"
 

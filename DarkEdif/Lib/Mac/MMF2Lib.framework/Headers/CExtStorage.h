@@ -22,7 +22,6 @@
 // CEXTSTORAGE : donnees gloables pour une extension
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @interface CExtStorage : NSObject 

@@ -22,7 +22,6 @@
 // CDEFTEXTS : liste de textes
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CDefObject.h"
 
@@ -36,7 +35,7 @@
     int otCy;
     int otNumberOfText;
     CDefText** otTexts;
-
+	
 }
 -(void)dealloc;
 -(void)load:(CFile*)file;

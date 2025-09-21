@@ -22,28 +22,29 @@
 // CBITMAP : ecran bitmap
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CImage;
 
 enum
 {
-	BOP_COPY,
-	BOP_BLEND,
-	BOP_INVERT,
-	BOP_XOR,
-	BOP_AND,
-	BOP_OR,
-	BOP_BLEND_REPLEACETRANSP,
-	BOP_DWROP,
-	BOP_ANDNOT,
-	BOP_ADD,
-	BOP_MONO,
-	BOP_SUB,
-	BOP_BLEND_DONTREPLACECOLOR,
-	BOP_EFFECTEX,
-	BOP_MAX
+    BOP_COPY,
+    BOP_BLEND,
+    BOP_INVERT,
+    BOP_XOR,
+    BOP_AND,
+    BOP_OR,
+    BOP_BLEND_REPLACETRANSP,
+    BOP_DWROP,
+    BOP_ANDNOT,
+    BOP_ADD,
+    BOP_MONO,
+    BOP_SUB,
+    BOP_BLEND_DONTREPLACECOLOR,
+    BOP_EFFECTEX,
+    BOP_LAYER,
+    BOP_ONE,
+    BOP_MAX
 };
 #define BOP_MASK 0xFFF
 #define BOP_RGBAFILTER 0x1000

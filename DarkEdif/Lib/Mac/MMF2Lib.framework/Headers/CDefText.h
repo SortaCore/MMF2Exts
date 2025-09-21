@@ -22,7 +22,6 @@
 // CDEFTEXT : un element de texte
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define TSF_LEFT 0x0000

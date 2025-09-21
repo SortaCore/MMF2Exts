@@ -1,4 +1,3 @@
-#pragma once
 #import <Foundation/Foundation.h>
 
 #define _PI 3.1415926535897932
@@ -80,7 +79,8 @@ struct Mat3f {
 	static Mat3f objectMatrix(const Vec2f &position, const Vec2f &size, const Vec2f &center);
 	static Mat3f objectRotationMatrix(const Vec2f &position, const Vec2f &size, const Vec2f &scale, const Vec2f &center, float angle);
 	static Mat3f orthogonalProjectionMatrix(int x, int y, int w, int h);
-
+    static Mat3f orthogonalProjectionMatrix(int x, int y, int w, int h, bool flipY);
+    
 	static Mat3f textureMatrix(float x, float y, float width, float height, float textureWidth, float textureHeight);
 	static Mat3f textureMatrixFlipped(float x, float y, float width, float height, float imageHeight, float textureWidth, float textureHeight);
 	static Mat3f maskspaceToWorldspace(Vec2f position, Vec2f hotspot, Vec2f scale, float angle);
@@ -99,6 +99,39 @@ struct Mat3f {
 	Vec2f transformPoint(Vec2f point) const;
 };
 
+struct Mat4f {
+    float a,e,i,m,      b,f,j,n,      c,g,k,o,      d,h,l,p;    //Column major order   (rows are "abcd, efgh, ijkl, mnop")
+    
+    static Mat4f identity();
+    static Mat4f zero();
+    static Mat4f identityFlippedY();
+    static Mat4f translationMatrix(float x, float y);
+    static Mat4f translationMatrix(float x, float y, float z);
+    static Mat4f scaleMatrix(float x, float y);
+    static Mat4f scaleMatrix(float x, float y, float z);
+    static Mat4f multiply(Mat4f &a, Mat4f &b);
+    static Mat4f multiply(Mat4f &a, Mat4f &b, Mat4f &c, Mat4f &d);
+    static Mat4f objectMatrix(const Vec2f &position, const Vec2f &size, const Vec2f &center);
+    static Mat4f objectRotationMatrix(const Vec2f &position, const Vec2f &size, const Vec2f &scale, const Vec2f &center, float angle);
+    static Mat4f orthogonalProjectionMatrix(int x, int y, int w, int h);
+    
+    static Mat4f textureMatrix(float x, float y, float width, float height, float textureWidth, float textureHeight);
+    static Mat4f textureMatrixFlipped(float x, float y, float width, float height, float imageHeight, float textureWidth, float textureHeight);
+    static Mat4f maskspaceToWorldspace(Vec2f position, Vec2f hotspot, Vec2f scale, float angle);
+    static Mat4f worldspaceToMaskspace(Vec2f position, Vec2f hotspot, Vec2f scale, float angle);
+    static Mat4f maskspaceToMaskspace(Vec2f positionA, Vec2f hotspotA, Vec2f scaleA, float angleA, Vec2f positionB, Vec2f hotspotB, Vec2f scaleB, float angleB);
+    
+    bool operator==(const Mat4f &rhs) const;
+    bool operator!=(const Mat4f &rhs) const;
+    
+    Mat4f transpose() const;
+    float determinant() const;
+    Mat4f inverted() const;
+    
+    Mat4f flippedTexCoord(bool flipX, bool flipY);
+    
+    Vec2f transformPoint(Vec2f point) const;
+};
 
 struct ColorRGBA{
 	float r, g, b, a;
@@ -128,4 +161,5 @@ struct GradientColor{
 	GradientColor(int a, int b, int c, int d);
 	GradientColor(int a, int b, BOOL horizontal);
 	ColorRGBA getColorAtFraction(float x, float y);
+    void toArray(float* colors);
 };

@@ -3,7 +3,6 @@
 //  MacRuntime
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 @class CArrayList;
 @class CRunApp;
@@ -54,7 +53,7 @@
 @public
 	CArrayList* menuItems;
 	CRunApp* runApp;
-
+	
 	short* accelsKey;
 	short* accelsID;
 	unsigned char* accelsShift;

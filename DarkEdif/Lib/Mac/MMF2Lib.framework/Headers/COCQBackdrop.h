@@ -22,7 +22,6 @@
 // COBJECTCOMMON : Donn�es d'un objet normal
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "COC.h"
 #import "IDrawable.h"
@@ -61,7 +60,7 @@ enum {
     int ocColor1;			// Gradient
     int ocColor2;
     int ocGradientFlags;
-    short ocImage;				// Image
+    unsigned short ocImage;				// Image
 	COI* pCOI;
 }
 -(id)init;

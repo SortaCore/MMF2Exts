@@ -22,7 +22,6 @@
 // CPATHSTEP : un pas de mouvement path
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

@@ -22,7 +22,6 @@
 // CMOVE : Classe de base des mouvements
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 
@@ -44,7 +43,7 @@ extern char Joy2Dir[];
     int rmAccValue;					/// Acceleration calculation
     int rmDecValue;					/// Deceleration calculation
 	unsigned char rmOpt;
-
+	
 }
 -(void)kill;
 -(BOOL)newMake_Move:(int)speed withDir:(int)angle;

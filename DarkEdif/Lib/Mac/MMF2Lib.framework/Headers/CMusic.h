@@ -6,7 +6,6 @@
 //  Copyright 2011 __MyCompanyName__. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 //#import <QTKit/QTKit.h>
 //#import <AVFoundation/AVFoundation.h>
@@ -20,17 +19,17 @@
 	CFile* file;
 	NSUInteger pointer;
 	NSData* musicData;
-
+	
 	CMusicPlayer* musicPlayer;
 	//QTMovie* player;
     //AVAudioPlayer* player;
-
+	
     short handle;
     BOOL bPlaying;
 	BOOL bPaused;
 	NSString* name;
     int duration;
-
+    
 	NSTimeInterval pauseTime;
 }
 -(id)initWithMusicPlayer:(CMusicPlayer*)p;

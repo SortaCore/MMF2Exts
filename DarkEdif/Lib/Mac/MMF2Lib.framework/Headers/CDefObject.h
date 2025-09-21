@@ -22,7 +22,6 @@
 // CDEFOBJECT : Classe abstraite de definition d'un objet'
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CFile;

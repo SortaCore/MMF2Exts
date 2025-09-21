@@ -25,7 +25,6 @@
 //  Copyright 2009 __MyCompanyName__. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 #import "CoreMath.h"
@@ -87,6 +86,8 @@ extern int POSX(int ul);
 extern int POSY(int ul);
 extern int MAKELONG(int lo, int hi);
 extern int swapRGB(int rgb);
+extern int SemiTranspToAlpha(int semi);
+extern int AlphaToSemiTransp(int alpha);
 extern int strUnicharLen(unichar* str);
 extern NSColor* getNSColor(int rgb);
 
@@ -95,7 +96,7 @@ extern NSColor* getNSColor(int rgb);
 }
 +(NSColor*)getNSColor:(int)color;
 +(int)indexOf:(NSString*)s withChar:(unichar)c startingAt:(int)start;
-+(int)drawText:(CBitmap*)bitmap withString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andColor:(int)rgb andFont:(CFont*)font andEffect:(int)effect andEffectParam:(int)effectParam;
++(int)drawText:(CBitmap*)bitmap withString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andColor:(int)rgb andFont:(CFont*)font;
 +(NSString*)intToString:(int)v withFlags:(int)flags;
 +(NSString*)doubleToString:(double)v withFlags:(int)flags;
 +(NSSize)textSizeForText:(NSString*)string andFont:(NSFont*)font andMaxWidth:(int)width;

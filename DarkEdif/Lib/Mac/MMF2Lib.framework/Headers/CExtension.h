@@ -22,7 +22,6 @@
 // CEXTENSION: Objets d'extension
 //
 //----------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CObject.h"
 #import "IDrawable.h"
@@ -64,9 +63,9 @@ class CRenderer;
 -(void)action:(int)num withActExtension:(CActExtension*)act;
 -(CValue*)expression:(int)num;
 -(CRunApp*)getApplication;
--(void)loadImageList:(short*)list withLength:(int)length;
--(void)loadImageByHandle:(short)handle;
--(CImage*)getImage:(short)handle;
+-(void)loadImageList:(unsigned short*)list withLength:(int)length;
+-(void)loadImageByHandle:(unsigned short)handle;
+-(CImage*)getImage:(unsigned short)handle;
 -(void)reHandle;
 -(int)getExtUserData;
 -(void)setExtUserData:(int)data;

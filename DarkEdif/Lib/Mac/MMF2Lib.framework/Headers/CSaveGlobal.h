@@ -22,7 +22,6 @@
 // CSaveGlobal : Sauvegarde des objets globaux
 //
 // ---------------------------------------------------------------------------------
-#pragma once
 #import <Foundation/Foundation.h>
 
 @class CArrayList;
