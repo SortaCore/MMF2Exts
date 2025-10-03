@@ -48,6 +48,9 @@
 *.config text eol=crlf
 *.xml text eol=crlf
 
+# ImHex file
+*.hexpat text eol=lf
+
 # From the editorconfig
 *.c text eol=lf
 *.cc text eol=lf
