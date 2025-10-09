@@ -767,7 +767,7 @@ BOOL getDevices(NDIS_PHYSICAL_MEDIUM type, std::vector<MIB_IF_ROW2>& vetIFRow)
 	if (GetIfTable2Ex(MibIfTableRaw, &table) != NOERROR || !table)
 		return FALSE;
 
-	for (ULONG i = 0; i < table->NumEntries; i++)
+	for (ULONG i = 0; i < table->NumEntries; ++i)
 	{
 		MIB_IF_ROW2 row;
 		ZeroMemory(&row, sizeof(MIB_IF_ROW2));
@@ -807,7 +807,7 @@ static const TCHAR * const getWindowsNetworkType()
 	bRet = getDevices(NdisPhysicalMediumNative802_11, vectRow); //WLAN adapters
 	if (bRet)
 	{
-		for (auto it = vectRow.begin(); it != vectRow.end(); it++)
+		for (auto it = vectRow.begin(); it != vectRow.end(); ++it)
 		{
 			// Note: in Windows XP, this is also MIB_IF_TYPE_ETHERNET
 			if (isNetIFConnected(*it, IF_TYPE_IEEE80211))

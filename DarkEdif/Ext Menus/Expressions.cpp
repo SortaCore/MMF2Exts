@@ -52,13 +52,14 @@ const TCHAR * Extension::GetAllActionInfos()
 	error.str(std::tstring());
 	if (filename.empty())
 	{
-		error << _T("MFX filename was empty.");
+		error << _T("MFX filename was empty."sv);
 		return Runtime.CopyString(_T(""));
 	}
 
 	HINSTANCE hGetProcIDDLL = LoadLibrary(filename.c_str());
-	if (!hGetProcIDDLL) {
-		error << _T("Could not load the dynamic library a.k.a. MFX, error ") << GetLastError();
+	if (!hGetProcIDDLL)
+	{
+		error << _T("Could not load the dynamic library a.k.a. MFX, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -69,23 +70,27 @@ const TCHAR * Extension::GetAllActionInfos()
 	auto runInfos2 = std::make_unique<char[]>(sizeof(kpxRunInfos));
 	kpxRunInfos* runInfos = (kpxRunInfos*)runInfos2.get();
 
-	if (!getActionStringFunc) {
-		error << _T("Could not locate function GetActionString, error ") << GetLastError();
+	if (!getActionStringFunc)
+	{
+		error << _T("Could not locate function GetActionString, error "sv) << GetLastError();
 		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getActionInfosFunc) {
-		error << _T("Could not locate function GetActionInfos, error ") << GetLastError();
+	if (!getActionInfosFunc)
+	{
+		error << _T("Could not locate function GetActionInfos, error "sv) << GetLastError();
 		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getActionTitleFunc) {
-		error << _T("Could not locate function GetActionTitle, error ") << GetLastError();
+	if (!getActionTitleFunc)
+	{
+		error << _T("Could not locate function GetActionTitle, error "sv) << GetLastError();
 		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getRunObjectInfosFunc) {
-		error << _T("Could not locate function GetActionTitle, error ") << GetLastError();
+	if (!getRunObjectInfosFunc)
+	{
+		error << _T("Could not locate function GetActionTitle, error "sv) << GetLastError();
 		FreeLibrary(hGetProcIDDLL);
 		return Runtime.CopyString(_T(""));
 	}
@@ -93,45 +98,47 @@ const TCHAR * Extension::GetAllActionInfos()
 	std::tstringstream output;
 
 	short ret = getRunObjectInfosFunc(Edif::SDK->mV, runInfos);
-	output << "Size of EDITDATA: " << runInfos->EDITDATASize << ".";
+	output << _T("Size of EDITDATA: "sv) << runInfos->EDITDATASize << _T('.');
 
 	const short bufferSize = 512;
 	std::unique_ptr<TCHAR[]> buffer = std::make_unique<TCHAR[]>(bufferSize);
-	if (!buffer) {
+	if (!buffer)
+	{
 		error << _T("Could not allocate memory");
 		return Runtime.CopyString(_T(""));
 	}
 
 	//	short FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	//	returns in infoPtr the number of actions
-	for (short i = 0; ; i++)
+	for (short i = 0; ; ++i)
 	{
-		try {
+		try
+		{
 			getActionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
 			if (i < 10)
-				output << _T("0");
-			output << i << _T(": ") << buffer.get() << _T(" (");
+				output << _T('0');
+			output << i << _T(": "sv) << buffer.get() << _T(" ("sv);
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
 			ACEInfo * fun = (ACEInfo *)(((char *)getActionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
-			for (short j = 0; j < fun->NumOfParams; j++)
+			for (short j = 0; j < fun->NumOfParams; ++j)
 			{
 				if (actionAndConditionParamTypes.find(fun->Parameter[j].p) == actionAndConditionParamTypes.cend())
-					output << _T("<UNKNOWN TYPE Params val ") << (short)fun->Parameter[j].p << _T("> ");
+					output << _T("<UNKNOWN TYPE Params val "sv) << (short)fun->Parameter[j].p << _T("> "sv);
 				else
-					output << actionAndConditionParamTypes[fun->Parameter[j].p] << _T(" ");
+					output << actionAndConditionParamTypes[fun->Parameter[j].p] << _T(' ');
 				getActionTitleFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
-				output << _T("\"") << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" ") : _T("\", "));
+				output << _T('"') << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" "sv) : _T("\", "sv));
 			}
-			output << _T(")\r\n");
+			output << _T(")\r\n"sv);
 			buffer[0] = _T('\0'); // null for next loop
 		}
 		catch (...)
 		{
-			error << _T("Some exception happened.");
+			error << _T("Some exception happened."sv);
 			break;
 		}
 	}
@@ -145,14 +152,15 @@ const TCHAR * Extension::GetAllConditionInfos()
 	error.str(std::tstring());
 	if (filename.empty())
 	{
-		error << _T("MFX filename was empty.");
+		error << _T("MFX filename was empty."sv);
 		return Runtime.CopyString(_T(""));
 	}
 
 	HINSTANCE hGetProcIDDLL = LoadLibrary(filename.c_str());
 
-	if (!hGetProcIDDLL) {
-		error << _T("Could not load the dynamic library a.k.a. MFX, error ") << GetLastError();
+	if (!hGetProcIDDLL)
+	{
+		error << _T("Could not load the dynamic library a.k.a. MFX, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -160,57 +168,62 @@ const TCHAR * Extension::GetAllConditionInfos()
 	GetXXXInfosFunc getConditionInfosFunc = (GetXXXInfosFunc)GetProcAddress(hGetProcIDDLL, "GetConditionInfos");
 	GetXXXTitleFunc getConditionTitleFunc = (GetXXXTitleFunc)GetProcAddress(hGetProcIDDLL, "GetConditionTitle");
 
-	if (!getConditionStringFunc) {
-		error << _T("Could not locate function GetConditionString, error ") << GetLastError();
+	if (!getConditionStringFunc)
+	{
+		error << _T("Could not locate function GetConditionString, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getConditionInfosFunc) {
-		error << _T("Could not locate function GetConditionInfos, error ") << GetLastError();
+	if (!getConditionInfosFunc)
+	{
+		error << _T("Could not locate function GetConditionInfos, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getConditionTitleFunc) {
-		error << _T("Could not locate function GetConditionTitle, error ") << GetLastError();
+	if (!getConditionTitleFunc)
+	{
+		error << _T("Could not locate function GetConditionTitle, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
 
 	std::tstringstream output;
 	const short bufferSize = 512;
 	std::unique_ptr<TCHAR[]> buffer = std::make_unique<TCHAR[]>(bufferSize);
-	if (!buffer) {
+	if (!buffer)
+	{
 		error << _T("Could not allocate memory");
 		return Runtime.CopyString(_T(""));
 	}
 
 	//	short FusionAPI GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	//	returns in infoPtr the number of conditions
-	for (short i = 0; ; i++)
+	for (short i = 0; ; ++i)
 	{
-		try {
+		try
+		{
 			getConditionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
 			if (i < 10)
-				output << _T("0");
-			output << i << _T(": ") << buffer << _T(" (");
+				output << _T('0');
+			output << i << _T(": "sv) << buffer << _T(" ("sv);
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
 			const ACEInfo * const fun = (ACEInfo *)(((char *)getConditionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
-			for (short j = 0; j < fun->NumOfParams; j++)
+			for (short j = 0; j < fun->NumOfParams; ++j)
 			{
 				if (actionAndConditionParamTypes.find(fun->Parameter[j].p) == actionAndConditionParamTypes.cend())
-					output << _T("<UNKNOWN TYPE Params val ") << (short)fun->Parameter[j].p << _T("> ");
+					output << _T("<UNKNOWN TYPE Params val "sv) << (short)fun->Parameter[j].p << _T("> "sv);
 				else
 					output << actionAndConditionParamTypes[fun->Parameter[j].p] << _T(" ");
 				getConditionTitleFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
-				output << _T("\"") << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" ") : _T("\", "));
+				output << _T('"') << buffer.get() << ((j == fun->NumOfParams - 1) ? _T("\" "sv) : _T("\", "sv));
 			}
-			output << _T(")\r\n");
+			output << _T(")\r\n"sv);
 			buffer[0] = _T('\0');
 		}
 		catch (...)
 		{
-			error << _T("Some exception happened.");
+			error << _T("Some exception happened."sv);
 			break;
 		}
 	}
@@ -223,14 +236,15 @@ const TCHAR * Extension::GetAllExpressionInfos()
 	error.str(std::tstring());
 	if (filename.empty())
 	{
-		error << _T("MFX filename was empty.");
+		error << _T("MFX filename was empty."sv);
 		return Runtime.CopyString(_T(""));
 	}
 
 	HINSTANCE hGetProcIDDLL = LoadLibrary(filename.c_str());
 
-	if (!hGetProcIDDLL) {
-		error << _T("Could not load the dynamic library a.k.a. MFX, error ") << GetLastError();
+	if (!hGetProcIDDLL)
+	{
+		error << _T("Could not load the dynamic library a.k.a. MFX, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
 
@@ -239,53 +253,58 @@ const TCHAR * Extension::GetAllExpressionInfos()
 	GetXXXTitleFunc getExpressionTitleFunc = (GetXXXTitleFunc)GetProcAddress(hGetProcIDDLL, "GetExpressionTitle");
 	GetExpressionParamFunc getExpressionParamFunc = (GetExpressionParamFunc)GetProcAddress(hGetProcIDDLL, "GetExpressionParam");
 
-	if (!getExpressionStringFunc) {
-		error << _T("Could not locate function GetExpressionString, error ") << GetLastError();
+	if (!getExpressionStringFunc)
+	{
+		error << _T("Could not locate function GetExpressionString, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getExpressionInfosFunc) {
-		error << _T("Could not locate function GetExpressionInfos, error ") << GetLastError();
+	if (!getExpressionInfosFunc)
+	{
+		error << _T("Could not locate function GetExpressionInfos, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
-	if (!getExpressionTitleFunc) {
-		error << _T("Could not locate function GetExpressionTitle, error ") << GetLastError();
+	if (!getExpressionTitleFunc)
+	{
+		error << _T("Could not locate function GetExpressionTitle, error "sv) << GetLastError();
 		return Runtime.CopyString(_T(""));
 	}
 
 	std::tstringstream output;
 	const short bufferSize = 512U;
 	std::unique_ptr<TCHAR[]> buffer = std::make_unique<TCHAR[]>(bufferSize);
-	if (!buffer) {
-		error << _T("Could not allocate memory");
+	if (!buffer)
+	{
+		error << _T("Could not allocate memory"sv);
 		return Runtime.CopyString(_T(""));
 	}
 
 	//	short DLLExport GetRunObjectInfos(mv * mV, kpxRunInfos * infoPtr)
 	//	returns in infoPtr the number of expressions
-	for (short i = 0; ; i++)
+	for (short i = 0; ; ++i)
 	{
-		try {
+		try
+		{
 			getExpressionStringFunc(Edif::SDK->mV, i, buffer.get(), bufferSize);
 			if (buffer[0] == _T('\0'))
 				break;
 
 			if (i < 10)
-				output << _T("0");
-			output << i << _T(": ") << buffer.get(); // ( at end of buffer
+				output << _T('0');
+			output << i << _T(": "sv) << buffer.get(); // ( at end of buffer
 			// Lazy man's pointer decrementation, see ACEInfo->MMFPtr()
 			// fun->FloatFlags is not valid and should not be read
 			ACEInfo * fun = (ACEInfo *)(((char *)getExpressionInfosFunc(Edif::SDK->mV, i)) - 2); // don't free
 
-			for (short j = 0; j < fun->NumOfParams; j++)
+			for (short j = 0; j < fun->NumOfParams; ++j)
 			{
 				if (expressionParamTypes.find(fun->Parameter[j].ep) == expressionParamTypes.cend())
-					output << _T("<UNKNOWN TYPE ExpParams val ") << (short)fun->Parameter[j].ep;
+					output << _T("<UNKNOWN TYPE ExpParams val "sv) << (short)fun->Parameter[j].ep;
 				else
-					output << _T("<") << expressionParamTypes[fun->Parameter[j].ep];
+					output << _T('<') << expressionParamTypes[fun->Parameter[j].ep];
 				getExpressionParamFunc(Edif::SDK->mV, i, j, buffer.get(), bufferSize);
-				output << _T(" ") << buffer << ((j == fun->NumOfParams - 1) ? _T(">") : _T(">, "));
+				output << _T(' ') << buffer << ((j == fun->NumOfParams - 1) ? _T(">"sv) : _T(">, "sv));
 			}
-			output << _T(")\r\n");
+			output << _T(")\r\n"sv);
 			buffer[0] = _T('\0'); // empty for next loop
 		}
 		catch (...)

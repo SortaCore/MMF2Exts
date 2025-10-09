@@ -1202,7 +1202,7 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 	size_t sizePtr = data.size();
 
 	constexpr size_t maxMessagesInOneProcess = 300;
-	for (size_t i = 0; i < maxMessagesInOneProcess; i++)
+	for (size_t i = 0; i < maxMessagesInOneProcess; ++i)
 	{
 		// Ran out of messages, or error occurred (and was reported) and rest should be ignored; exit quietly
 		if (!client.reader.process(&dataPtr, &sizePtr))
@@ -1705,7 +1705,7 @@ void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> ch
 	// Remove the channel from server's list (if it exists)
 	{
 		auto serverChannelListWriteLock = server.lock_channellist.createWriteLock();
-		for (auto e3 = channels.begin(); e3 != channels.end(); e3++)
+		for (auto e3 = channels.begin(); e3 != channels.end(); ++e3)
 		{
 			if (*e3 == channel)
 			{
@@ -1734,7 +1734,7 @@ void relayserverinternal::close_channel(std::shared_ptr<relayserver::channel> ch
 				builder.send(cli->socket, false);
 
 			// Go through client's channel list and remove this channel
-			for (auto cliJoinedCh = cli->channels.begin(); cliJoinedCh != cli->channels.end(); cliJoinedCh++)
+			for (auto cliJoinedCh = cli->channels.begin(); cliJoinedCh != cli->channels.end(); ++cliJoinedCh)
 			{
 				if (*cliJoinedCh == channel)
 				{
@@ -1775,7 +1775,7 @@ void relayserverinternal::close_client (std::shared_ptr<lacewing::relayserver::c
 	auto serverClientListWriteLock = server.lock_clientlist.createWriteLock();
 
 	// Drop this client from server list (if it exists)
-	for (auto cli = clients.begin(); cli != clients.end(); cli++)
+	for (auto cli = clients.begin(); cli != clients.end(); ++cli)
 	{
 		if (*cli == client)
 		{
@@ -1803,7 +1803,7 @@ void relayserverinternal::channel_addclient(std::shared_ptr<relayserver::channel
 	if (channel->_readonly)
 		return;
 
-	for (auto e = channel->clients.begin(); e != channel->clients.end(); e++)
+	for (auto e = channel->clients.begin(); e != channel->clients.end(); ++e)
 		if (*e == client)
 			return; // Nothing to do, client is on channel already
 
@@ -1972,7 +1972,7 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 	auto clientWriteLock = client->lock.createWriteLock();
 
 	// Drop channel from client's joined channel list - note this happens even if the channel close handler pauses things
-	for (auto e2 = client->channels.begin(); e2 != client->channels.end(); e2++)
+	for (auto e2 = client->channels.begin(); e2 != client->channels.end(); ++e2)
 	{
 		if (*e2 == channel)
 		{
@@ -1989,7 +1989,7 @@ void relayserverinternal::channel_removeclient(std::shared_ptr<relayserver::chan
 
 	framebuilder builder(true);
 
-	for (auto e = channel->clients.begin(); e != channel->clients.end(); e++)
+	for (auto e = channel->clients.begin(); e != channel->clients.end(); ++e)
 	{
 		if (*e == client)
 		{
@@ -3001,7 +3001,7 @@ relayserver::channel::~channel() noexcept
 	for (const auto& i : clients)
 	{
 		auto readLock = i->lock.createReadLock();
-		for (auto j = i->channels.begin(); j != i->channels.end(); j++)
+		for (auto j = i->channels.begin(); j != i->channels.end(); ++j)
 		{
 			if ((**j)._id == _id)
 			{

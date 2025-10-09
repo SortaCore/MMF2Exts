@@ -766,7 +766,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 	}
 	
 	const std::shared_ptr<RunningFunction> runningFunc = std::make_shared<RunningFunction>(funcTemplate, true, repeatCount - 1);
-	for (size_t i = 0; i < values.size(); i++)
+	for (std::size_t i = 0; i < values.size(); ++i)
 		runningFunc->paramValues[i] = values[i];
 	runningFunc->numPassedParams = numPassedExpFuncParams;
 	runningFunc->keepObjectSelection = keepSelection;

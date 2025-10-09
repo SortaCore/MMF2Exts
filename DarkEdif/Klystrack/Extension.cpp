@@ -70,7 +70,7 @@ Extension::ExtKSong::ExtKSong()
 Extension::ExtKSong::~ExtKSong()
 {
 	free(songInfo.song_title);
-	for (int i = 0; i < songInfo.n_instruments; i++)
+	for (int i = 0; i < songInfo.n_instruments; ++i)
 		free(songInfo.instrument_name[i]);
 	KSND_FreeSong(song);
 }

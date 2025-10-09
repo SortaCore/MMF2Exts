@@ -269,7 +269,7 @@ int Extension::FuncTemplate_ParamIndexByName(const TCHAR * funcNameOrBlank, cons
 	if (!p)
 		return -1;
 
-	for (std::size_t i = 0; i < f->params.size(); i++)
+	for (std::size_t i = 0; i < f->params.size(); ++i)
 		if (&f->params[i] == p)
 			return (int)i;
 

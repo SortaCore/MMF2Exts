@@ -188,7 +188,7 @@ size_t lw_webserver_sink_websocket(lw_ws webserver, lwp_ws_httpclient client, co
 			errorCode = 1002;
 			break;
 		}
-		for (size_t i = 0; i < size; i++)
+		for (size_t i = 0; i < size; ++i)
 			unmaskedData[i] = data[i] ^ ((char *)&mask)[i % 4];
 
 		// If we've started a disconnect (!= -1), we'll ignore everything except an acknowledging close response.

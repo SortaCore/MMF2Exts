@@ -301,7 +301,7 @@ REFLAG Extension::Handle()
 	++curFrame;
 	const auto now = std::chrono::system_clock::now();
 
-	for (size_t i = 0; i < globals->pendingFuncs.size(); i++)
+	for (std::size_t i = 0; i < globals->pendingFuncs.size(); ++i)
 	{
 		if (globals->pendingFuncs[i]->useTicks ? globals->pendingFuncs[i]->runAtTick <= curFrame : globals->pendingFuncs[i]->runAtTime < now)
 		{

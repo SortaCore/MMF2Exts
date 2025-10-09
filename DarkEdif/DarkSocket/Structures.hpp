@@ -6,6 +6,8 @@
 #pragma once
 #include "DarkEdif.hpp"
 #include <map>
+#include <WinSock2.h>
+#include <in6addr.h>
 
 // Conditions
 enum class Conditions : int {
@@ -40,7 +42,7 @@ struct StructPassThru
 	std::tstring client_hostname;
 	std::tstring client_serviceName;
 	/* Server only */
-	in_addr6 server_InAddr = {};
+	struct in6_addr server_InAddr = {};
 };
 
 struct SocketSource;

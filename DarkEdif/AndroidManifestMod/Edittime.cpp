@@ -288,7 +288,7 @@ struct AutoFileCloser
 };
 
 // Turns number into ordinal; e.g. 1 to "1st", 2 to "2nd", etc.
-std::tstring NumberToOrdinal(size_t number) {
+std::tstring NumberToOrdinal(std::size_t number) {
 	const TCHAR * suffix = _T("th");
 	if (number % 100 < 11 || number % 100 > 13) {
 		if (number % 10 == 1)
@@ -328,7 +328,7 @@ const TCHAR* GetLastErrorText()
 	else
 	{
 		// error messages end with crlf sometimes...
-		size_t errtextbufferlen = _tcslen(errtextbuffer);
+		std::size_t errtextbufferlen = _tcslen(errtextbuffer);
 		if (errtextbuffer[errtextbufferlen - 1] == _T('\n'))
 			errtextbuffer[errtextbufferlen - 2] = _T('\0');
 	}
@@ -338,7 +338,7 @@ const TCHAR* GetLastErrorText()
 
 void replaceAll(std::string &replaceIn, std::string_view from, std::string_view to)
 {
-	size_t start_pos = 0;
+	std::size_t start_pos = 0;
 	while ((start_pos = replaceIn.find(from, start_pos)) != std::string::npos) {
 		replaceIn.replace(start_pos, from.length(), to);
 		start_pos += to.length();
@@ -440,20 +440,20 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 	const std::string_view fromSV = "\r\n\r\n# FROM #\r\n"sv;
 	const std::string_view toSV = "\r\n\r\n# TO #\r\n"sv;
 
-	size_t fromStart = userManifestModifications.find(fromSV);
+	std::size_t fromStart = userManifestModifications.find(fromSV);
 	if (fromStart == std::string::npos)
 	{
 		return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),
 			_T("Couldn't find any \"# FROM #\" in user list of things to change."));
 	}
 
-	for (size_t i = 1, fromSectionStart, fromSectionEnd;
+	for (std::size_t i = 1, fromSectionStart, fromSectionEnd;
 		fromStart != std::string::npos;
-		fromStart = userManifestModifications.find(fromSV, fromStart), i++)
+		fromStart = userManifestModifications.find(fromSV, fromStart), ++i)
 	{
 		fromSectionStart = fromStart + fromSV.size();
 
-		size_t nextTo = userManifestModifications.find(toSV, fromSectionStart);
+		std::size_t nextTo = userManifestModifications.find(toSV, fromSectionStart);
 		if (nextTo == std::string::npos)
 		{
 			return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),
@@ -464,8 +464,8 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 		fromSectionEnd = nextTo;
 
 		// Next FROM, if it exists, is the end of this TO
-		size_t toSectionStart = nextTo + toSV.size(), toSectionEnd;
-		size_t nextFrom = userManifestModifications.find(fromSV, toSectionStart);
+		std::size_t toSectionStart = nextTo + toSV.size(), toSectionEnd;
+		std::size_t nextFrom = userManifestModifications.find(fromSV, toSectionStart);
 		if (nextFrom != std::string::npos)
 			toSectionEnd = nextFrom - 4; // minus the TO section's preceding crlf, crlf
 		else // if there's no FROM after this TO, assume that this TO ends at the end of the string
@@ -533,10 +533,10 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 	}
 
 	// store a little note so ManifestMod doesn't double-execute
-	size_t appAt = manifestContent.find("<application "sv);
+	std::size_t appAt = manifestContent.find("<application "sv);
 	manifestContent.insert(appAt, "<!-- Modified by AndroidManifestMod -->\r\n\t"sv);
 
-	size_t actuallyWritten = fwrite(manifestContent.data(), 1, manifestContent.size(), file);
+	std::size_t actuallyWritten = fwrite(manifestContent.data(), 1, manifestContent.size(), file);
 	if (actuallyWritten != manifestContent.size())
 	{
 		if (errno == 0)
@@ -546,7 +546,7 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 			actuallyWritten, manifestContent.size(), errnotext());
 	}
 	// If new file size is somehow smaller than original file size, truncate it
-	if ((size_t)fileSize > manifestContent.size() &&
+	if ((std::size_t)fileSize > manifestContent.size() &&
 		_chsize_s(_fileno(file), fileSize) != 0)
 	{
 		return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),

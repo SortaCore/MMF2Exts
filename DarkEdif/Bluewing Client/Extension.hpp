@@ -299,7 +299,7 @@ public:
 	int ConvToUTF8_GetByteCount(const TCHAR* tStr);
 	const TCHAR* ConvToUTF8_TestAllowList(const TCHAR* tStr, const TCHAR* charset);
 
-	struct GlobalInfo
+	struct GlobalInfo final
 	{
 		// Lacewing event queue and ticker
 		std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>> _objEventPump;
@@ -315,7 +315,7 @@ public:
 		// Binary message to send
 		char* _sendMsg;
 		// Number of bytes in binary message to send (sendMsg)
-		size_t _sendMsgSize;
+		std::size_t _sendMsgSize;
 
 		// Previous name of this client, as UTF-8
 		std::string _previousName;

@@ -50,7 +50,7 @@ void Extension::LoadSongFromFile(const TCHAR * songName, const TCHAR * filePath)
 	// Uses dodgy memory in strings from KSND, so copy it JIC
 	KSND_GetSongInfo(newSong, &newExtSong->songInfo);
 	newExtSong->songInfo.song_title = _strdup(newExtSong->songInfo.song_title);
-	for (int i = 0; i < newExtSong->songInfo.n_instruments; i++)
+	for (int i = 0; i < newExtSong->songInfo.n_instruments; ++i)
 		newExtSong->songInfo.instrument_name[i] = _strdup(newExtSong->songInfo.instrument_name[i]);
 
 	curPlayer->songs.push_back(std::move(newExtSong));
@@ -83,7 +83,7 @@ CheckForPlayer(true, "LoadSongFromMemory");
 	// Uses dodgy memory in strings from KSND, so copy it JIC
 	KSND_GetSongInfo(newSong, &newExtSong->songInfo);
 	newExtSong->songInfo.song_title = _strdup(newExtSong->songInfo.song_title);
-	for (int i = 0; i < newExtSong->songInfo.n_instruments; i++)
+	for (int i = 0; i < newExtSong->songInfo.n_instruments; ++i)
 		newExtSong->songInfo.instrument_name[i] = _strdup(newExtSong->songInfo.instrument_name[i]);
 
 	curPlayer->songs.push_back(std::move(newExtSong));

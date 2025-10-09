@@ -985,10 +985,10 @@ REFLAG Extension::Handle()
 	// If Thread is not available, we have to tick() on Handle(), so
 	// we have to run next loop even if there's no events in EventsToRun to deal with.
 	bool runNextLoop = !globals->_thread.joinable();
-	size_t remainingCount = 0;
-	constexpr size_t maxNumEventsPerEventLoop = 10;
+	std::size_t remainingCount = 0;
+	constexpr std::size_t maxNumEventsPerEventLoop = 10;
 
-	for (size_t maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; maxTrig++)
+	for (std::size_t maxTrig = 0; maxTrig < maxNumEventsPerEventLoop; ++maxTrig)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!globals->lock.edif_try_lock())
@@ -1039,7 +1039,7 @@ REFLAG Extension::Handle()
 		for (auto i : globals->extsHoldingGlobals)
 		{
 			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
-			for (size_t u = 0; u < evtToRun->numEvents; ++u)
+			for (std::size_t u = 0; u < evtToRun->numEvents; ++u)
 			{
 				if (evtToRun->condTrig[u] != CLEAR_EVTNUM)
 				{

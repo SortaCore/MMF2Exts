@@ -278,7 +278,7 @@ found:
 		}
 
 		static int conDedErrors[]{ ENOTCONN, 58 /* WSAESHUTDOWN */, ECONNABORTED, WSAECONNABORTED - WSABASEERR, WSAECONNRESET - WSABASEERR, ENETRESET};
-		for (size_t i = 0; i < std::size(conDedErrors); i++)
+		for (std::size_t i = 0; i < std::size(conDedErrors); ++i)
 		{
 			if (-lastErr == conDedErrors[i])
 			{
@@ -606,7 +606,7 @@ void GlobalInfo::ServerThread(std::shared_ptr<Thread> self, std::unique_ptr<Stru
 		}
 
 		static int conDedErrors[]{ ENOTCONN, 58 /* WSAESHUTDOWN */, ECONNABORTED, WSAECONNABORTED - WSABASEERR, WSAECONNRESET - WSABASEERR, ENETRESET };
-		for (size_t i = 0; i < std::size(conDedErrors); i++)
+		for (std::size_t i = 0; i < std::size(conDedErrors); ++i)
 		{
 			if (-lastErr == conDedErrors[i])
 			{

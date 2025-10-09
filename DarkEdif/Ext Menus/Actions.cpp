@@ -31,7 +31,7 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 	std::vector<std::unique_ptr<DarkMenuItem>> menuItems;
 	MENUITEMINFO itemData = { };
 
-	for (int i = 0; i < numItems; i++)
+	for (int i = 0; i < numItems; ++i)
 		menuItems.push_back(std::make_unique<DarkMenuItem>(i, GetMenuItemID(menu, i)));
 
 	TCHAR * buffer = (TCHAR *)malloc(1024U * sizeof(TCHAR));
@@ -42,7 +42,7 @@ bool MenuToString(HMENU& menu, std::tstring & output, std::tstring prefix = std:
 		goto end;
 	}
 
-	for (int i = 0; i < numItems; i++)
+	for (int i = 0; i < numItems; ++i)
 	{
 		menuItems[i]->id = GetMenuItemID(menu, menuItems[i]->index);
 
@@ -165,7 +165,8 @@ void Extension::SetMFXFile(const TCHAR * filename_)
 	menuStr[1].clear();
 	menuStr[2].clear();
 
-	if (!hGetProcIDDLL) {
+	if (!hGetProcIDDLL)
+	{
 		error << _T("Could not load the dynamic library a.k.a. MFX, error ") << GetLastError();
 		return;
 	}
@@ -179,26 +180,29 @@ void Extension::SetMFXFile(const TCHAR * filename_)
 	};
 	funcFormat funcs[3];
 	HMENU menus[3];
-	for (size_t i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < 3; ++i)
 	{
 		funcs[i] = (funcFormat)GetProcAddress(hGetProcIDDLL, funcNames[i]);
-		if (!funcs[i]) {
+		if (!funcs[i])
+		{
 			error << _T("Could not locate function ") << DarkEdif::ANSIToTString(funcNames[i]);
 			return;
 		}
 	}
-	for (size_t i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < 3; ++i)
 	{
 		menus[i] = funcs[i](Edif::SDK->mV, nullptr, nullptr);
-		if (!menus[i]) {
+		if (!menus[i])
+		{
 			error << DarkEdif::ANSIToTString(funcNames[i]) << _T(" returned nullptr");
 			return;
 		}
 	}
 
-	for (size_t i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < 3; ++i)
 	{
-		if (!MenuToString(menus[i], menuStr[i])) {
+		if (!MenuToString(menus[i], menuStr[i]))
+		{
 			error << _T("Error: ") << menuStr[i];
 			return;
 		}

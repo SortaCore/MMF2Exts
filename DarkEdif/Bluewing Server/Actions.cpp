@@ -171,7 +171,7 @@ int FindAllowListFromName(const TCHAR * listToSet)
 	std::transform(listToSetStr.begin(), listToSetStr.end(), listToSetStr.begin(),
 		[](const TCHAR c) { return ::_totlower(c); });
 
-	for (size_t i = 0; i < std::size(listNames); i++)
+	for (std::size_t i = 0; i < std::size(listNames); ++i)
 	{
 		if (listNames[i] == listToSetStr)
 			return (i % 4);

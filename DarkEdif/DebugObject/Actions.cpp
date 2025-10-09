@@ -79,11 +79,11 @@ void Extension::SetOutputFile(const TCHAR * fileP, int describeAppI = 0)
 
 		// Print application description
 		std::tstringstream str;
-		str << _T("\"") << rhPtr->App->name
-			<< _T("\" executing from \"") << rhPtr->App->appFileName << _T("\"\r\n")
-			<< _T("Original MFA path: \"") << rhPtr->App->editorFileName << _T("\"\r\n")
-			<< _T("File first opened from frame #") << rhPtr->App->nCurrentFrame
-			<< _T("(") << rhPtr->Frame->name << _T(")\r\n");
+		str << _T("\"") << rhPtr->rhApp->name
+			<< _T("\" executing from \"") << rhPtr->rhApp->appFileName << _T("\"\r\n")
+			<< _T("Original MFA path: \"") << rhPtr->rhApp->editorFileName << _T("\"\r\n")
+			<< _T("File first opened from frame #") << rhPtr->rhApp->nCurrentFrame
+			<< _T("(") << rhPtr->rhFrame->name << _T(")\r\n");
 		std::string str2 = DarkEdif::TStringToUTF8(str.str());
 		fputs(str2.c_str(), data->fileHandle);
 

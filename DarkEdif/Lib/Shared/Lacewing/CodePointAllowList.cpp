@@ -96,12 +96,13 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 			if (cur[1] == '*')
 			{
 				char firstCharUpper = (char)std::toupper(cur[0]);
-				for (size_t i = 0; i < sizeof(wildcardCategory); i++)
+				for (std::size_t i = 0; i < sizeof(wildcardCategory); ++i)
 				{
 					if (firstCharUpper == wildcardCategory[i])
 					{
 						// Wildcard category found, yay
-						for (size_t j = 0; j < std::size(categoryList); j++) {
+						for (std::size_t j = 0; j < std::size(categoryList); ++j)
+						{
 							if (firstCharUpper == categoryList[j][0])
 								codePointCategories.push_back((lw_i32)j);
 						}
@@ -114,7 +115,7 @@ std::string lacewing::codepointsallowlist::setcodepointsallowedlist(std::string 
 				return CPALMakeError(this, acTemp, "Wildcard category \"%.2hs\" not recognised. Check the help file.", cur);
 			}
 
-			for (size_t i = 0; i < std::size(categoryList); i++)
+			for (std::size_t i = 0; i < std::size(categoryList); ++i)
 			{
 				if (std::toupper(cur[0]) == categoryList[i][0] && std::tolower(cur[1]) == categoryList[i][1])
 				{

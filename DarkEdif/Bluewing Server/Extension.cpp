@@ -1129,7 +1129,7 @@ REFLAG Extension::Handle()
 	// we have to run next loop even if there's no events in EventsToRun to deal with.
 	bool RunNextLoop = !globals->_thread.joinable();
 
-	for (size_t maxTrig = 0; maxTrig < 10; maxTrig++)
+	for (std::size_t maxTrig = 0; maxTrig < 10; ++maxTrig)
 	{
 		// Attempt to Enter, break if we can't get it instantly
 		if (!globals->lock.edif_try_lock())

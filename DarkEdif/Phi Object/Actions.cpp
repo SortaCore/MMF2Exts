@@ -198,7 +198,7 @@ void Extension::UpdateRAMUsageInfo()
 	};
 
 	// Skip last line, it's usually empty
-	for (size_t i = 0; i < memInfoOutputLines.size() - 1; i++)
+	for (std::size_t i = 0; i < memInfoOutputLines.size() - 1; ++i)
 		parseMBfromLine(i);
 
 	physMemTotalMB = memInfoOutputHashToMB["MemTotal"sv];
@@ -214,7 +214,7 @@ void Extension::UpdateRAMUsageInfo()
 	LOGI("Result of df:\n");
 	std::string dfOutputStr = exec("df -h");
 	auto dfOutputLines = split(dfOutputStr, '\n');
-	for (size_t i = 0; i < dfOutputLines.size(); i++)
+	for (std::size_t i = 0; i < dfOutputLines.size(); ++i)
 		LOGI("%s", (dfOutputLines[i] + "\n").c_str());
 #else
 	MakeError("iOS RAM usage info not coded");
@@ -421,7 +421,7 @@ void Extension::IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TC
 	}
 
 	aceLoopName = loopName;
-	for (size_t i = 0; i < aclsizeinfo.AceCount; i++)
+	for (std::size_t i = 0; i < aclsizeinfo.AceCount; ++i)
 	{
 		if (GetAce(lastReadPerms.dacl, i, (void **)&currentLoopAce) != 0)
 		{
@@ -620,7 +620,7 @@ std::vector<int> memfind(void * startV, size_t size, void* lookFor, size_t lookF
 	std::vector<int> ret;
 	char* start = (char *)startV;
 	char* end = start + size;
-	for (char* c = start; c < end; c++)
+	for (char* c = start; c < end; ++c)
 	{
 		if (memcmp(c, lookFor, lookForSize) == 0)
 			ret.push_back((int)(c - start));
@@ -669,11 +669,11 @@ void Dump(std::stringstream &str2, void * v, size_t s)
 		{ 127, "DEL"},
 	};
 	char* c = (char*)v;
-	for (size_t i = 0; i < s; i++)
+	for (std::size_t i = 0; i < s; ++i)
 	{
-		str2 << std::dec << std::setfill('0') << std::setw(2) << i << ", ";
+		str2 << std::dec << std::setfill('0') << std::setw(2) << i << ", "sv;
 		if (!c[i])
-			str2 << "NUL";
+			str2 << "NUL"sv;
 		else
 		{
 			auto a = unprintable.find(c[i]);
@@ -682,7 +682,7 @@ void Dump(std::stringstream &str2, void * v, size_t s)
 			else
 				str2 << c[i];
 		}
-		str2 << ", 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)(((unsigned char*)c)[i]) << "\n";
+		str2 << ", 0x"sv << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)(((unsigned char*)c)[i]) << '\n';
 	}
 }
 
@@ -854,12 +854,12 @@ void Extension::AddBlankFramesToObject(int objectFV,
 	std::vector<unsigned short> imgIDs(numOfFrames, blankImgNum);
 
 	size_t s = HeapSize(GetProcessHeap(), 0, runObj);
-	if (s != runObj->rHo.size)
+	if (s != runObj->rHo.hoSize)
 	{
 		DebugBreak();
 	}
-	s = HeapSize(GetProcessHeap(), 0, runObj->rHo.Common);
-	if (s != runObj->rHo.Common->size)
+	s = HeapSize(GetProcessHeap(), 0, runObj->rHo.hoCommon);
+	if (s != runObj->rHo.hoCommon->size)
 	{
 		DebugBreak();
 	}
@@ -874,14 +874,14 @@ void OutputAnimations(const AnimHeader * const animHead)
 {
 	std::stringstream str5;
 	str5 << "===== ANIMATIONS:\n"sv;
-	for (size_t lAniNum = 0; lAniNum < animHead->AnimMax; lAniNum++)
+	for (std::size_t lAniNum = 0; lAniNum < animHead->AnimMax; ++lAniNum)
 	{
 		if (animHead->OffsetToAnim[lAniNum] < 0)
 			continue;
 
 		str5 << "Animation "sv << lAniNum << " directions:\n"sv;
 		Animation* lAnim = (Animation*)(((char*)animHead) + animHead->OffsetToAnim[lAniNum]);
-		for (size_t lAnimDirNum = 0; lAnimDirNum < 32; lAnimDirNum++)
+		for (std::size_t lAnimDirNum = 0; lAnimDirNum < 32; ++lAnimDirNum)
 		{
 			if (lAnim->OffsetToDir[lAnimDirNum] < 0)
 				continue;
@@ -892,10 +892,10 @@ void OutputAnimations(const AnimHeader * const animHead)
 				<< "), loop "sv << (int)lAnimDir->Repeat << " times (back to "sv << (int)lAnimDir->RepeatFrame
 				<< ")\nImage nums: "sv;
 
-			for (size_t lAnimFrame = 0; lAnimFrame < lAnimDir->NumberOfFrame; lAnimFrame++)
+			for (std::size_t lAnimFrame = 0; lAnimFrame < lAnimDir->NumberOfFrame; ++lAnimFrame)
 			{
 				str5 << lAnimDir->Frame[lAnimFrame] <<
-					(lAnimFrame == lAnimDir->NumberOfFrame - 1 ? "\n" : ", ");
+					(lAnimFrame == lAnimDir->NumberOfFrame - 1 ? "\n"sv : ", "sv);
 			}
 
 		}
@@ -910,11 +910,11 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	size_t animNum, size_t dirNum, size_t insertAtIndex = SIZE_T_MAX)
 {
 #ifdef FUSION_INTERNAL_ACCESS
-	if (HeapSize(GetProcessHeap(), 0, runObj) != runObj->rHo.size)
+	if (HeapSize(GetProcessHeap(), 0, runObj) != runObj->rHo.hoSize)
 	{
 		DebugBreak();
 	}
-	if (HeapSize(GetProcessHeap(), 0, runObj->rHo.Common) != runObj->rHo.Common->size)
+	if (HeapSize(GetProcessHeap(), 0, runObj->rHo.hoCommon) != runObj->rHo.hoCommon->size)
 	{
 		DebugBreak();
 	}
@@ -926,7 +926,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	}
 
 
-	Objects_Common* oc = runObj->rHo.Common;
+	Objects_Common* oc = runObj->rHo.hoCommon;
 	if (oc == NULL)
 	{
 		return MakeError(_T("Object with Fixed Value %i (%s) does not have Common?"),
@@ -954,13 +954,13 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	if (animHead->OffsetToAnim[animNum] < 0)
 	{
 		return MakeError(_T("Object with Fixed Value %i (%s) does not have animation with ID %i."),
-			objectFV, runObj->rHo.OiList->name, animNum);
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), animNum);
 	}
 	Animation* anim = (Animation *)(((char *)animHead) + animHead->OffsetToAnim[animNum]);
 	if (anim->OffsetToDir[dirNum] < 0)
 	{
 		return MakeError(_T("Object with Fixed Value %i (%s) has anim ID %i, but no direction %i."),
-			objectFV, runObj->rHo.OiList->name, animNum, dirNum);
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), animNum, dirNum);
 	}
 	AnimDirection* animDir = (AnimDirection *)(((char *)anim) + anim->OffsetToDir[dirNum]);
 
@@ -970,7 +970,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	{
 		return MakeError(_T("Object with Fixed Value %i (%s): couldn't insert images at index %i, that's "
 			"not within anim ID %i, dir %i's valid image range (of 0 to %hu, or -1 for appending)."),
-			objectFV, runObj->rHo.OiList->name, insertAtIndex, animNum, dirNum, animDir->NumberOfFrame);
+			objectFV, runObj->get_rHo()->get_OiList()->get_name(), insertAtIndex, animNum, dirNum, animDir->NumberOfFrame);
 	}
 
 	unsigned short numImagesToAdd = (unsigned short)imgIDs.size();
@@ -1060,7 +1060,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	MoveMemory(&Frame[insertAtIndex + numImagesToAdd], &Frame[insertAtIndex], memCpySize);
 
 	// Add new image in
-	for (size_t i = 0; i < numImagesToAdd; i++)
+	for (std::size_t i = 0; i < numImagesToAdd; ++i)
 		animDir->Frame[insertAtIndex + i] = imgIDs[i];
 	animDir->NumberOfFrame += numImagesToAdd;
 
@@ -1068,7 +1068,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	animHead->size += extraSizeNeeded;
 
 	// Move all offsets for later directions in current animation
-	for (size_t i = dirNum + 1; i < 32; i++)
+	for (std::size_t i = dirNum + 1; i < 32; ++i)
 	{
 		if (anim->OffsetToDir[i] < 0)
 			continue;
@@ -1082,7 +1082,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	// There's potential for a mixmatch
 
 
-	for (size_t i = animNum + 1; i < animHead->AnimMax; i++)
+	for (std::size_t i = animNum + 1; i < animHead->AnimMax; ++i)
 	{
 		if (animHead->OffsetToAnim[i] < 0)
 			continue;
@@ -1101,7 +1101,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 	OutputAnimations(animHead);
 
 	// Animations updated, now update Common pointers
-	runObj->rHo.Common = oc;
+	runObj->rHo.hoCommon = oc;
 	// oc->Animations has unchanged offset, don't update it
 	oc->size += extraSizeNeeded;
 	//TODO:
@@ -1123,15 +1123,15 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 		}
 	}
 
-	runObj->rHo.OiList->OIFlags |= OILFlags::TO_RELOAD;
+	runObj->get_rHo()->get_OiList()->oilOIFlags |= OILFlags::TO_RELOAD;
 
-	short numObj = runObj->rHo.OiList->Object;
+	short numObj = runObj->get_rHo()->get_OiList()->get_Object();
 	while (numObj >= 0)
 	{
-		RunObject * ro = (RunObject *)runObj->rHo.AdRunHeader->ObjectList[numObj].oblOffset;
-		if (ro->rHo.Common != oc)
+		RunObjectMultiPlatPtr ro = runObj->get_rHo()->get_AdRunHeader()->GetObjectListOblOffsetByIndex(numObj);
+		if (ro->rHo.hoCommon != oc)
 		{
-			ro->rHo.Common = oc;
+			ro->rHo.hoCommon = oc;
 			(void)oc2;
 			DebugBreak();
 		}
@@ -1158,7 +1158,7 @@ void Extension::Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned sh
 			}
 		}
 
-		numObj = ro->rHo.NumNext;
+		numObj = ro->rHo.hoNumNext;
 	}
 
 	LOGI(_T("END RESULT:\n"));
@@ -1214,13 +1214,13 @@ void Extension::StoreDetails(int objectFV)
 	if (runNum > 2)
 	{
 		OutputDebugStringA("=== Starting diff check.\n");
-		for (size_t i = 0; i < _msize(copy2); i++)
+		for (std::size_t i = 0; i < _msize(copy2); ++i)
 		{
 			if (*(((char*)ro) + i) != *(((char*)copy2) + i))
 			{
 				std::stringstream str;
-				str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)ro) + i)
-					<< " vals " << std::dec << (size_t)(*(((char*)ro) + i)) << " != " << (size_t)(*(((char*)copy2) + i)) << ".\n";
+				str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)ro) + i)
+					<< " vals "sv << std::dec << (size_t)(*(((char*)ro) + i)) << " != "sv << (size_t)(*(((char*)copy2) + i)) << ".\n"sv;
 				OutputDebugStringA(str.str().c_str());
 			}
 		}
@@ -1243,13 +1243,13 @@ void Extension::StoreDetails(int objectFV)
 	if (runNum > 2)
 	{
 		OutputDebugStringA("=== Starting diff check.\n");
-		for (size_t i = 0; i < _msize(copy); i++)
+		for (std::size_t i = 0; i < _msize(copy); ++i)
 		{
 			if (*(((char*)oc) + i) != *(((char*)copy) + i))
 			{
 				std::stringstream str;
-				str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)oc) + i)
-					<< " vals " << std::dec << (size_t)(*(((char*)oc) + i)) << " != " << (size_t)(*(((char*)copy) + i)) << ".\n";
+				str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)oc) + i)
+					<< " vals "sv << std::dec << (size_t)(*(((char*)oc) + i)) << " != "sv << (size_t)(*(((char*)copy) + i)) << ".\n"sv;
 				OutputDebugStringA(str.str().c_str());
 			}
 		}
@@ -1288,13 +1288,13 @@ void Extension::CheckForDiff()
 
 	Objects_Common* oc = runObj->roHo.Address->Common;
 	OutputDebugStringA("=== Starting diff check.\n");
-	for (size_t i = 0; i < _msize(copy); i++)
+	for (std::size_t i = 0; i < _msize(copy); ++i)
 	{
 		if (*(((char*)oc) + i) != *(((char*)copy) + i))
 		{
 			std::stringstream str;
-			str << "Offset " << i << ", addr 0x" << std::hex << (long)(((char*)oc) + i)
-				<< " vals " << std::dec << (size_t)(*(((char*)oc) + i)) << " != " << (size_t)(*(((char*)copy) + i)) << ".\n";
+			str << "Offset "sv << i << ", addr 0x"sv << std::hex << (long)(((char*)oc) + i)
+				<< " vals "sv << std::dec << (size_t)(*(((char*)oc) + i)) << " != "sv << (size_t)(*(((char*)copy) + i)) << ".\n"sv;
 			OutputDebugStringA(str.str().c_str());
 		}
 	}

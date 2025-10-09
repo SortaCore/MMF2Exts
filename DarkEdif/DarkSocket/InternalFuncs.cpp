@@ -749,7 +749,7 @@ std::tstring Extension::Internal_GetIPFromSockaddr(sockaddr_storage* sockadd, si
 				// Start search for "]" at offset of 15
 				// 8 due to "[::ffff:" -> 8 chars
 				// 7 due to "1.2.3.4" -> 7 chars
-				for (size_t i = 15, len = strnlen(&buffer[15], 64 - 15) + 15; i < len; i++)
+				for (std::size_t i = 15, len = strnlen(&buffer[15], 64 - 15) + 15; i < len; ++i)
 				{
 					if (buffer[i] == ']')
 					{

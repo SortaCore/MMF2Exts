@@ -194,7 +194,7 @@ namespace lacewing
 		size_t sizePtr = size;
 
 		constexpr size_t maxMessagesInOneProcess = 300;
-		for (size_t i = 0; i < maxMessagesInOneProcess; i++)
+		for (size_t i = 0; i < maxMessagesInOneProcess; ++i)
 		{
 			// Ran out of messages, or error occurred and rest should be ignored; exit quietly
 			if (!internal.reader.process(&dataPtr, &sizePtr))

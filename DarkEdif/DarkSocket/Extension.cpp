@@ -200,8 +200,8 @@ Extension::~Extension()
 // Runs every tick of Fusion's runtime, can be toggled off and back on
 REFLAG Extension::Handle()
 {
-	size_t maxNumEvents = 10;
-	for (size_t i = 0; i < maxNumEvents; i++)
+	std::size_t maxNumEvents = 10;
+	for (std::size_t i = 0; i < maxNumEvents; ++i)
 	{
 		if (!globals->threadsafe.edif_try_lock())
 			return REFLAG::NONE;
@@ -233,7 +233,7 @@ REFLAG Extension::Handle()
 			cpy->source->pendingDataToRead.append(cpy->msg);
 
 		// chance of crash here, if a generated event destroys the ext k?
-		for (size_t k = 0; k < globals->extsHoldingGlobals.size(); k++)
+		for (std::size_t k = 0; k < globals->extsHoldingGlobals.size(); ++k)
 		{
 			auto curEventBackup = globals->extsHoldingGlobals[k]->curEvent;
 			globals->extsHoldingGlobals[k]->curEvent = cpy;
