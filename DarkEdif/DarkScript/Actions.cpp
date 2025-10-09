@@ -840,13 +840,12 @@ void Extension::RunningFunc_SetReturnI(int value)
 	Value * const val = &rf->returnValue;
 	// TODO: Complain or ignore delayed func return types?
 	// Delayed func return types will be Any.
-	if (val->type != Type::Integer)
+	if (rf->expectedReturnType != Type::Integer && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value"s);
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + _T(" return type"s);
+		// TODO: Check conversion here.
+		//if (conversionStrictness == ConversionStrictness::Numeric)
 		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("integer"), rf->funcTemplate->name.c_str(), typeName.c_str());
+			_T("integer"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 	if (val->type == Type::String)
 		free(val->data.string);
@@ -862,13 +861,10 @@ void Extension::RunningFunc_SetReturnF(float value)
 		return;
 
 	Value * const val = &rf->returnValue;
-	if (val->type != Type::Float)
+	if (rf->expectedReturnType != Type::Float && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value");
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + std::tstring(_T(" return type"));
 		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("float"), rf->funcTemplate->name.c_str(), typeName.c_str());
+			_T("float"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 	if (val->type == Type::String)
 		free(val->data.string);
@@ -884,13 +880,10 @@ void Extension::RunningFunc_SetReturnS(const TCHAR * newVal)
 		return;
 
 	Value * const val = &rf->returnValue;
-	if (val->type != Type::String)
+	if (rf->expectedReturnType != Type::String && rf->expectedReturnType != Type::Any)
 	{
-		std::tstring typeName = _T("no return value");
-		if (val->type != Type::Any)
-			typeName = TypeToString(val->type) + std::tstring(_T(" return type"));
-		return CreateErrorT("Can't return type %s from function %s, expected %s.",
-			_T("string"), rf->funcTemplate->name.c_str(), typeName.c_str());
+		return CreateErrorT("Can't return type %s from function %s, expected %s return type.",
+			_T("string"), rf->funcTemplate->name.c_str(), TypeToString(rf->expectedReturnType));
 	}
 
 	// TODO: realloc, combine size_t measurements for dup alloc and copy

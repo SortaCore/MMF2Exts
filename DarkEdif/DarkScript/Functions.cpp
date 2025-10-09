@@ -1179,6 +1179,10 @@ long Extension::VariableFunction(const TCHAR* funcName, const ACEInfo& exp, long
 		evt_SaveSelectedObjects(newFunc->selectedObjects);
 
 		newFunc->runLocation = Sub_GetLocation(actID);
+		newFunc->expectedReturnType = (Type)((int)exp.Flags.ef + 1);
+		// TODO: Conversion strictness checks, e.g.
+		// if (newFunc->funcTemplate->returnType != newFunc->expectedReturnType)
+
 		long l = ExecuteFunction(nullptr, newFunc);
 		newFunc->runLocation.clear();
 
@@ -1523,14 +1527,16 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 	lastReturn = rf->returnValue;
 
 	// Return to calling expression - return int and float directly as they occupy same memory address
-	if (rf->returnValue.type != Extension::Type::String)
-		return (long)rf->returnValue.data.integer;
-
-	// Clone string
-	const TCHAR * tc = rf->returnValue.data.string;
-	// assert(tc); // shouldn't have it as null under any scenario
-	tc = tc ? tc : _T("");
-	return (long)Runtime.CopyString(tc);
+	if (rf->expectedReturnType == Extension::Type::String)
+		return (long)Runtime.CopyString(Sub_GetValAsString(rf->returnValue).c_str());
+	if (rf->expectedReturnType == Extension::Type::Float)
+	{
+		const float f = Sub_GetValAsFloat(rf->returnValue);
+		return *(int*)&f;
+	}
+	if (rf->expectedReturnType == Extension::Type::Integer)
+		return Sub_GetValAsInteger(rf->returnValue);
+	return 0;
 }
 
 // Save object selection
@@ -1584,7 +1590,7 @@ void Extension::evt_SaveSelectedObjects(std::vector<FusionSelectedObjectListCach
 				poil->get_name(), poil->get_EventCount(), rhPtr->GetRH2EventCount());
 			continue;
 		}
-		LOGD(_T("Adding me a sexy object \"%.*s\", event count same (oil ec %i, rh ec %i) so it is selected.\n"),
+		LOGD(_T("Adding an object \"%.*s\", event count same (oil ec %i, rh ec %i) so it is selected.\n"),
 			std::isprint(poil->get_name()[0] & 0x7F) ? 24 : 3,
 			poil->get_name(), poil->get_EventCount(), rhPtr->GetRH2EventCount());
 
@@ -1674,6 +1680,8 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 	{
 		const FusionSelectedObjectListCache& sel = selectedObjects[i];
 		auto & poil = sel.poil;
+		LOGD(_T("Restoring obj select: running for %s, with %zu saved instances.\n"), poil->get_name(),
+			sel.selectedObjects.size());
 
 		poil->set_EventCount(rh2EventCount);
 		poil->set_ListSelected(-1);
@@ -1700,6 +1708,8 @@ void Extension::evt_RestoreSelectedObjects(const std::vector<FusionSelectedObjec
 			}
 		}
 	}
+
+	LOGE(_T("Restoring object selection done.\n"));
 }
 
 void Extension::Sub_RunPendingForeachFunc(const short oil, const std::shared_ptr<RunningFunction> &runningFunc)
