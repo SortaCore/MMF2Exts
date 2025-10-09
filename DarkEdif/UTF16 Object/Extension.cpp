@@ -48,49 +48,6 @@ REFLAG Extension::Handle()
 	return REFLAG::ONE_SHOT;
 }
 
-
-// Called when Fusion wants your extension to redraw, due to window scrolling/resize, etc,
-// or from you manually causing it.
-REFLAG Extension::Display()
-{
-	// Return REFLAG::DISPLAY in Handle() to run this manually, or use Runtime.Redisplay().
-
-	return REFLAG::NONE;
-}
-
-// Called when Fusion runtime is pausing due to the menu option Pause or an extension causing it.
-short Extension::FusionRuntimePaused() {
-	return 0; // OK
-}
-
-// Called when Fusion runtime is resuming after a pause.
-short Extension::FusionRuntimeContinued() {
-	return 0; // OK
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Save frame position" action
-bool Extension::SaveFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use WriteFile() to save your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
-// Called when the Fusion runtime executes the "Storyboard > Frame position > Load frame/app position" action
-bool Extension::LoadFramePosition(HANDLE File)
-{
-	bool OK = false;
-	#if defined(_WIN32) && !defined(VITALIZE)
-		// Use ReadFile() to read your data.
-		OK = true;
-	#endif
-	return OK;
-}
-
-
 // These are called if there's no function linked to an ID
 
 void Extension::UnlinkedAction(int ID)

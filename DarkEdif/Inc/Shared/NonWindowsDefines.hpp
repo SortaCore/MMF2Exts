@@ -56,23 +56,39 @@ namespace DarkEdif {
 }
 
 // MessageBox button selected
-#define IDOK 0
-#define IDCANCEL 1
+#define IDOK 1
+#define IDCANCEL 2
+#define IDYES 6
+#define IDNO 7
 
 // MessageBox buttons to show
 #define MB_OK 0
-#define MB_YESNO 0
-#define MB_YESNOCANCEL 0
+#define MB_OKCANCEL 1
+#define MB_YESNOCANCEL 3
+#define MB_YESNO 4
+#define MB_TYPEMASK 7
 
 // MessageBox default button is first one
 #define MB_DEFBUTTON1 0
+#define MB_DEFBUTTON2 0x100
+#define MB_DEFBUTTON3 0x200
+#define MB_DEFBUTTON4 0x300
 
 // MessageBox icon choice
-#define MB_ICONERROR 1
-#define MB_ICONWARNING 2
-#define MB_ICONINFORMATION 3
+#define MB_ICONERROR 0x10
+#define MB_ICONWARNING 0x30
+#define MB_ICONINFORMATION 0x40
 // MessageBox must be top-most
-#define MB_TOPMOST 0
+#define MB_TOPMOST 0x40000
 
 #include <unistd.h> // for readlink()
 #include <cmath> // for std::ceil and co
+
+// Indicates that the class is not virtual or inheriting anything, only needed on Windows
+// when declaring pointers to members before defining the full class
+// @remarks https://learn.microsoft.com/en-us/cpp/cpp/inheritance-keywords?view=msvc-170
+//			Used to call an Extension ptr from a different ext that does
+//			not fully define the other extension.
+#define __single_inheritance /* no op */
+
+class Extension;

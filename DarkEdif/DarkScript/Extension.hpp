@@ -1,11 +1,15 @@
 #pragma once
 #include "DarkEdif.hpp"
-class Extension
+
+class Extension final
 {
 public:
-
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 #ifdef __ANDROID__
 	global<jobject> javaExtPtr;
 #elif defined(__APPLE__)
@@ -17,19 +21,21 @@ public:
 	static const int MinimumBuild = 254;
 	static const int Version = 4;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
-	static const OEPREFS OEPREFS = OEPREFS::NONE;
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::VALUES;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
 #else
-	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
 #endif
 	~Extension();
+
+	// ======================================
+	// Extension data
+	// ======================================
 
 	DarkEdif::FusionDebugger FusionDebugger;
 
@@ -40,7 +46,8 @@ public:
 	std::tstring globalID;
 
 	// Manages discrepancies between supplied type and expected type
-	enum class ConversionStrictness {
+	enum class ConversionStrictness
+	{
 		// Requested type must match input type
 		Exact,
 		// Float and integers can be exchanged, text <-> number is errors
@@ -54,7 +61,8 @@ public:
 	};
 	ConversionStrictness conversionStrictness;
 	// Sets contraint where no return value set is allowed when function finishes
-	enum class AllowNoReturnValue {
+	enum class AllowNoReturnValue
+	{
 		// All functions must have a return value set when they return, even if they don't use them
 		Never,
 		// Allow foreach actions and delayed function calls, which don't use the func return directly
@@ -112,7 +120,8 @@ public:
 	// If true, all functions available are being triggered to analyse event numbers
 	bool selfAwareness = false;
 	// Per object list of selected instances
-	struct FusionSelectedObjectListCache {
+	struct FusionSelectedObjectListCache final
+	{
 		objInfoList* poil = nullptr;
 		// List of object instance numbers
 		std::vector<short> selectedObjects;
@@ -128,7 +137,8 @@ public:
 		// TODO: Investigate how ActionCount works and when it's gonna bork things.
 	};
 
-	enum class Type {
+	enum class Type
+	{
 		// Any allows weakly-typed functions. Not sure if that'd ever be useful, but there ya go.
 		Any = 0,
 		Integer,
@@ -142,14 +152,16 @@ public:
 		MaskParamTypes = 0x3
 	};
 
-	struct Value {
+	struct Value final
+	{
 		Type type;
-		union {
+		union
+		{
 			TCHAR* string;
 			int integer;
 			float decimal;
 		} data;
-		size_t dataSize;
+		std::size_t dataSize;
 
 		Value(Type type) : type(type), dataSize(0)
 		{
@@ -185,7 +197,8 @@ public:
 		}
 	};
 
-	struct Param {
+	struct Param
+	{
 		std::tstring name;
 		std::tstring nameL;
 		// Type can be Any to allow any type of defaultVal; if defaultVal.type == Any, it is unset
@@ -198,7 +211,7 @@ public:
 		{
 		}
 	};
-	struct ScopedVar : Param
+	struct ScopedVar final : Param
 	{
 		bool recursiveOverride;
 		std::size_t level; // Indicates how deep in runningFunc vector this is set; 0 is global, 1 is first func layer, etc
@@ -209,12 +222,14 @@ public:
 		}
 	};
 
-	enum class Expected : std::uint8_t {
+	enum class Expected : std::uint8_t
+	{
 		Never,
 		Always,
 		Either,
 	};
-	struct FunctionTemplate {
+	struct FunctionTemplate final
+	{
 		std::tstring name;
 		std::tstring nameL;
 		Expected repeating, delaying;
@@ -236,12 +251,13 @@ public:
 
 		FunctionTemplate(Extension* ext, const TCHAR * funcName, Expected delayable, Expected repeatable, bool recursable, Type returnType)
 			: name(funcName), repeating(repeatable), delaying(delayable),
-			recursiveAllowed(recursable), defaultReturnValue(returnType), ext(ext)
+			recursiveAllowed(recursable), returnType(returnType), defaultReturnValue(Type::Any), ext(ext)
 		{
 			nameL = Extension::ToLower(name);
 		}
 	};
-	struct RunningFunction {
+	struct RunningFunction final
+	{
 		std::shared_ptr<FunctionTemplate> funcTemplate;
 		// If true, currently running; if false, waiting to be run, or aborting.
 		bool active = false;
@@ -282,8 +298,10 @@ public:
 		std::vector<Value> paramValues;
 		// Number of parameters explicitly passed by user in expression
 		size_t numPassedParams = -1;
-		// Current return value. If Any, is not set yet.
+		// Current return value; if Any, not set yet.
 		Value returnValue;
+		// Desired return type, for an expression. If Any, not being run from expression.
+		Type expectedReturnType = Type::Any;
 
 		// Fusion event #(num) or delayed event.
 		std::tstring runLocation;
@@ -292,13 +310,13 @@ public:
 		std::tstring redirectedFromFunctionName;
 
 		RunningFunction(std::shared_ptr<FunctionTemplate> funcTemplate, bool active, int numRepeats)
-			: funcTemplate(funcTemplate), active(active), index(0), numRepeats(numRepeats), returnValue(funcTemplate->defaultReturnValue)
+			: funcTemplate(funcTemplate), active(active), numRepeats(numRepeats), returnValue(funcTemplate->defaultReturnValue)
 		{
-			for (size_t i = 0; i < funcTemplate->params.size(); i++)
+			for (std::size_t i = 0; i < funcTemplate->params.size(); ++i)
 				paramValues.push_back(funcTemplate->params[i].defaultVal);
 		}
 	};
-	struct DelayedFunction
+	struct DelayedFunction final
 	{
 		// Tick where this function was queued
 		const int startFrame;
@@ -329,7 +347,8 @@ public:
 		}
 	};
 
-	struct GlobalData {
+	struct GlobalData final
+	{
 		// Extensions using this GlobalData
 		std::vector<Extension *> exts;
 		// Extensions using func templates registered in this global's exts will register themselves here,
@@ -378,7 +397,7 @@ public:
 	std::shared_ptr<FunctionTemplate> curFuncTemplateLoop;
 	const Param * curParamLoop = nullptr;
 	const ScopedVar * curScopedVarLoop = nullptr;
-	size_t internalLoopIndex;
+	std::size_t internalLoopIndex;
 
 	std::shared_ptr<RunningFunction> foreachFuncToRun;
 	GlobalData * ReadGlobalDataByID(const std::tstring & globalID);
@@ -413,6 +432,7 @@ public:
 
 	void CreateError(PrintFHintInside const TCHAR* format, ...) PrintFHintAfter(2, 3);
 	#define CreateErrorT(x, ...) CreateError(_T(x), ##__VA_ARGS__)
+
 
 	/// Actions
 
@@ -538,20 +558,17 @@ public:
 
 	const TCHAR * TestFunc(int param);
 
-	/* These are called if there's no function linked to an ID */
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
+	// These are called if there's no function linked to an ID
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
 
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
+#if PAUSABLE_EXTENSION == 0
+#error DarkScript should be pausable
+#endif
+	void FusionRuntimePaused();
+	void FusionRuntimeContinued();
 };

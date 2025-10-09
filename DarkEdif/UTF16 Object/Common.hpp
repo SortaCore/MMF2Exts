@@ -12,20 +12,17 @@
 	#error UTF-16 Object requires Unicode runtime, or the text expressions will be downgraded by Fusion to non-Unicode, which means they can never be displayed.
 #endif
 
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-struct EDITDATA
+#pragma pack (push, 1)
+// Binary block used in Fusion editor and saved in the MFA/CCN/EXE files
+struct EDITDATA final
 {
 	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
 	// Header - required, must be first variable in EDITDATA
-	extHeader		eHeader;
+	extHeader eHeader;
 
-	// Object's data
-
-//	short			swidth;
-//	short			sheight;
-
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	// Keep Properties variable last; its size varies.
 	DarkEdif::Properties Props;
 };
+#pragma pack (pop)
 
 #include "Extension.hpp"

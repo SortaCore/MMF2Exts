@@ -72,6 +72,7 @@
     <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
     <ClCompile Include="..\Lib\Shared\json.cpp" />
     <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp" />
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="Edittime.cpp" />
     <ClCompile Include="Expressions.cpp" />
@@ -84,6 +85,7 @@
     <ClInclude Include="..\Inc\Shared\json.hpp" />
     <ClInclude Include="..\Inc\Shared\ObjectSelection.hpp" />
     <ClInclude Include="..\Inc\Shared\Strings.hpp" />
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp" />
     <ClInclude Include="..\Inc\Windows\Props.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
     <ClInclude Include="Common.hpp" />

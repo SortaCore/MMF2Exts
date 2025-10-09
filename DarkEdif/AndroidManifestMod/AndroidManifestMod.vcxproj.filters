@@ -31,6 +31,9 @@
     <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp">
       <Filter>Global to all extensions</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp">
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

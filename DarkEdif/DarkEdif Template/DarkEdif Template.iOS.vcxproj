@@ -52,7 +52,26 @@
     <Import Project="DarkEdif Template.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemGroup>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\Array.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CBitmap.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCreateObjectInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFont.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImage.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageUtils.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CoreMath.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRCom.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRect.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderer.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderToTexture.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderUtils.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRSpr.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CShader.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CTexture.h" />
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h" />

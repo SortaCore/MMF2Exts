@@ -37,6 +37,9 @@
     <ClCompile Include="..\Lib\Shared\ObjectSelection.cpp">
       <Filter>Global to all extensions</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.hpp">
@@ -70,6 +73,9 @@
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>

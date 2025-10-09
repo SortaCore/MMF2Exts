@@ -72,6 +72,15 @@
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\ssl\ssl.h">
       <Filter>Header files\Lacewing\src\windows\ssl</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\Windows\Surface.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\Props.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">

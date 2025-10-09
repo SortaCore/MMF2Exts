@@ -95,6 +95,7 @@
   <ItemGroup>
     <ClCompile Include="..\Lib\Shared\DarkEdif.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.cpp" />
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp" />
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.General.cpp" />
     <ClCompile Include="..\Lib\Shared\Edif.Runtime.cpp" />
@@ -117,6 +118,7 @@
     <ClInclude Include="..\Inc\Shared\DarkEdif.hpp" />
     <ClInclude Include="..\Inc\Shared\NonWindowsDefines.hpp" />
     <ClInclude Include="..\Inc\Shared\Strings.hpp" />
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp" />
     <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
     <ClInclude Include="..\Inc\Shared\ObjectSelection.hpp" />
     <ClInclude Include="Common.hpp" />

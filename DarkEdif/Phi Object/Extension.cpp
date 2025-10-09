@@ -245,7 +245,7 @@ void Extension::GetFrameNames()
 	DieWithError(lA == INVALID_SET_FILE_POINTER, false, "get frame pointer");
 	
 
-	for (size_t i = 0; i < numFrames; i++)
+	for (std::size_t i = 0; i < numFrames; ++i)
 	{
 		unsigned long frameDataStartPos = app.frameOffset[i];
 		unsigned long l = SetFilePointer(cnnHandle, frameDataStartPos, NULL, FILE_BEGIN);
@@ -304,30 +304,6 @@ REFLAG Extension::Handle()
 
 	// Will not be called next loop if runNextLoop is false
 	return REFLAG::ONE_SHOT;
-}
-
-REFLAG Extension::Display()
-{
-	/*
-	   If you return REFLAG::DISPLAY in Handle() this routine will run.
-	*/
-
-	// Ok
-	return REFLAG::NONE;
-}
-
-short Extension::FusionRuntimePaused()
-{
-
-	// Ok
-	return 0;
-}
-
-short Extension::FusionRuntimeContinued()
-{
-
-	// Ok
-	return 0;
 }
 
 // These are called if there's no function linked to an ID

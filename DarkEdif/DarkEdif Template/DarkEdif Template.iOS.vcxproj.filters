@@ -66,5 +66,62 @@
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCreateObjectInfo.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontInfo.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CoreMath.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRCom.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CBitmap.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFont.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontBank.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImage.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageBank.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageUtils.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CTexture.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderer.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRect.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\Array.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderUtils.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CShader.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderToTexture.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRSpr.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CExtension.h">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

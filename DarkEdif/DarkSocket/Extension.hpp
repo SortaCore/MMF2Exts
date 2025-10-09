@@ -1,36 +1,42 @@
 #pragma once
 #include <map>
+#include "Common.hpp"
 #include "Structures.hpp"
 
-class Extension
+class Extension final
 {
 public:
-
-	#define MsgBox(text) ::DarkEdif::MsgBox::Info(_T("Debug info"), _T("%s"), DarkEdif::UTF8ToTString(text))
-	#define MakeDelim() const char delim [] = "|" // Used for delimiters in tokenizing
-	#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
-
+	// ======================================
+	// Required variables
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 252;
 	static const int Version = 7;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::VALUES;
-	static const OEPREFS OEPREFS = OEPREFS::NONE;
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::VALUES;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
+
+	// ======================================
+	// Extension data
+	// ======================================
+
+#define MsgBox(text) ::DarkEdif::MsgBox::Info(_T("Debug info"), _T("%s"), DarkEdif::UTF8ToTString(text))
+#define MakeDelim() const char delim [] = "|" // Used for delimiters in tokenizing
+#define FatalBox()	::DarkEdif::MsgBox::Error(_T("Bypass notification"), _T("Fatal error has not been repaired; bypassing erroneous code."));
 
 	std::shared_ptr<EventToRun> curEvent;
 
 	GlobalInfo * globals = nullptr;
 	bool isGlobal = false;
-	//
+	// Not an actual string, contains raw binary
 	std::string packetBeingBuilt;
 
 	bool Internal_GetTextWithEncoding(const std::string_view encoding, const std::string_view packetBytes, std::tstring &msgTo, int socketID);
@@ -88,7 +94,6 @@ public:
 	unsigned int DEPRECATED_GetLastMessageAddress();
 
 
-
 	void ClientInitialize_Basic(const TCHAR * hostname, int port, const TCHAR * protocol);
 	void ClientInitialize_Advanced(const TCHAR * hostname, int port, const TCHAR * protocol, const TCHAR * addressFamily, const TCHAR * socketType);
 	void ClientSend(int socketID, const TCHAR * packet, const TCHAR * encoding, int flags);
@@ -126,8 +131,6 @@ public:
 	bool SocketIDCondition(int socketIDOrMinusOne) const;
 	bool ServerPeerDisconnected(int socketID);
 
-
-
 	/// Expressions
 
 	const TCHAR * DEPRECATED_GetErrors(int clear);
@@ -142,7 +145,6 @@ public:
 	int GetNewSocketID();
 	int DEPRECATED_GetSocketIDForLastEvent();
 	int GetPortFromType(const TCHAR * type);
-
 
 	const TCHAR * PacketBeingBuilt_GetAddress();
 	unsigned int PacketBeingBuilt_GetSize();
@@ -167,22 +169,11 @@ public:
 	int Statistics_PacketsIn(int socketID, int peerSocketID);
 	int Statistics_PacketsOut(int socketID, int peerSocketID);
 
-	/* These are called if there's no function linked to an ID */
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
+	// These are called if there's no function linked to an ID
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
-
 };

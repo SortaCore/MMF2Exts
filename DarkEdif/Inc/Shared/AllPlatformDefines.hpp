@@ -84,49 +84,201 @@ using namespace std::string_view_literals;
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
 #endif
 
-// Flags
+// Editor and runtime flags telling Fusion runtime your ext capacity,
+// and what its RUNDATA should implement. Note that in DarkEdif, all RUNDATA
+// layout is handled for you, with most functions passed to Extension.
 enum class OEFLAGS : std::uint32_t {
 	NONE = 0,
-	DISPLAY_IN_FRONT = 0x0001,		// Active object/window control
-	BACKGROUND = 0x0002,			// Background
-	BACK_SAVE = 0x0004,				// No effect in HWA
+
+	// If you set this, DarkEdif will know your ext must run its display functions
+	// However, consider adding SPRITES, MOVEMENTS, BACKGROUND etc instead.
+	MANUAL_DISPLAY_EXT = 0,
+
+	// If you set this, DarkEdif will attempt to manage your ext as a single-surface,
+	// auto-drawing-on-edit object. If you want something more complicated,
+	// use the manual display mode.
+	// This expects the use of SPRITES and BACK_SAVE flags.
+	// You cannot use this with ANIMATIONS.
+	SIMPLE_DISPLAY_EXT = 0,
+
+	// Indicates editor should display this object in front of others.
+	// Recommended if you are displaying a sub-window and it will be drawn that way at runtime.
+	// @remarks Used for child-window objects like buttons, editbox, list,
+	//			as Windows OS draws them as a separate borderless "window",
+	//			so Actives cannot be drawn overlapping the button/editbox/etc.
+	DISPLAY_IN_FRONT = 0x0001,
+
+	// Background object, very infrequent or no display changes.
+	// When this is changed, the entire window is redrawn.
+	BACKGROUND = 0x0002,
+
+	// Makes the runtime save and restore the background of the object.
+	// Only has effect in Windows Software display modes.
+	// Expects OEPREFS::BACK_SAVE
+	BACK_SAVE = 0x0004,
+
+	// Runs CreateRunObject before frame transition frame-in.
+	// Extensions should not specify this; it is set by the runtime for objects with the property checked.
 	RUN_BEFORE_FADE_IN = 0x0008,
+
+	// Adds movement A/C/E/P to the object. See OEFLAGS::SPRITES.
 	MOVEMENTS = 0x0010,
+
+	// Adds animation A/C/E/P and customising to the object. Consider OEPREFS::INK_EFFECTS.
+	// @remarks If specified with OEFLAGS::SPRITES, Fusion will draw the object for you.
 	ANIMATIONS = 0x0020,
+
+	// If set, indicates the Tab button can select this object.
+	// @remarks Tab and Ctrl-Tab is used for child-window controls like button, list, editbox, on all OSes.
 	TAB_STOP = 0x0040,
-	// Needs to receive window process messages (i.e. app was minimized)
-	// You NEED VISUAL_EXTENSION defined to use this!
+
+	// Needs to receive window process messages (i.e. app was minimized).
+	// If you are displaying a window, see OEFLAGS::DISPLAY_IN_FRONT.
+	// @remarks Will #define WNDPROC_OEFLAG_EXTENSION
 	WINDOW_PROC = 0x0080,
-	VALUES = 0x0100,				// Has alterable values/strings (will automatically create the associated a/c/e/p)
+
+	// Enables A/C/E/P for alterable values, strings, internal flags.
+	// @remarks No further effort is needed for you to implement these in DarkEdif; using this flag is enough.
+	VALUES = 0x0100,
+
+	// Enables A/C/E/P similar to an Active object.
 	SPRITES = 0x0200,
-	INTERNAL_BACK_SAVE = 0x0400,	// No effect in HWA
+
+	// Used with BACK_SAVE. Expects the ext to save the background at runtime request,
+	// runtime will call SaveBackground(), RestoreBackground(), KillBackground().
+	// Only has effect in Windows Software display mode.
+	// @remarks DarkEdif does not expose these functions, due to low expected usage.
+	INTERNAL_BACK_SAVE = 0x0400,
+
+	// Indicates "follow the playfield" option is checked. Object will be moved by runtime
+	// when frame is scrolled.
+	// See OEPREFS::SCROLLING_INDEPENDENT to show the scroll independent property.
 	SCROLLING_INDEPENDENT = 0x0800,
-	QUICK_DISPLAY = 0x1000,			// No effect in HWA
-	NEVER_KILL = 0x2000,			// Never destroy object if too far from frame
+
+	// Causes the ext's display to not be erased and redrawn if an active/sprite moves in front
+	// of this object.
+	// Only usable with SPRITES. Has no effect in Direct3D 8+, only Windows Software display.
+	// @remarks Such a sprite is drawn just on the top of the backdrops, rather than with other sprites.
+	QUICK_DISPLAY = 0x1000,
+
+	// Never destroy object if too far from frame
+	NEVER_KILL = 0x2000,
+
+	// If set, object is kept activated when far from frame. See OEFLAGS::MANUAL_SLEEP.
 	NEVER_SLEEP = 0x4000,
+
+	// Indicates the object may not be inactivated if far from frame.
+	// If at runtime, OEFLAGS::NEVER_SLEEP is set, then it stays active.
+	// @remarks OEFLAGS::NEVER_SLEEP can be set/cleared at runtime to set/clear inactivation-ability,
+	//			hence the "manual sleep".
 	MANUAL_SLEEP = 0x8000,
+
+	// Adds text property tab and actions/conditions/expressions to the object.
+	// What properties appear in the tab is defined by Extension::TextCapacity.
+	// Also see DarkEdif::EditDataFont and DarkEdif::FontMultiPlat.
+	// @remarks Very few objects use this; some include HiScore, String, Lives, etc, as they draw text.
 	TEXT = 0x10000,
+
+	// Unchecks Create At Start by default for newly created objects in frame editor.
 	DONT_CREATE_AT_START = 0x20000,
+
+	// Unused editor-set flag added in 2.5; reserved, do not use
+	FAKE_SPRITE = 0x40000,
+
+	// Unused editor-set flag added in 2.5; reserved, do not use
+	FAKE_COLLISIONS = 0x80000,
+
+	// Internal runtime flag used to fix a bug when changing animation
+	DONT_RESET_ANIM_COUNTER = 0x100000,
 };
 enum_class_is_a_bitmask(OEFLAGS);
 
-// Flags modifiable by the program
+// Default preferences and allowed options for your extension when newly created in editor.
 enum class OEPREFS : short {
 	NONE = 0,
-	BACK_SAVE = 0x0001,		// No effect in HWA
+
+	// Enables saving background, has effect in Windows Software display mode only
+	// Expects OEFLAGS::BACK_SAVE
+	BACK_SAVE = 0x0001,
+
+	// Shows the "follow the playfield" option, auto-moving the object when frame is scrolled.
+	// When set, OEFLAGS contains OEFLAGS::SCROLLING_INDEPENDENT.
+	// @remarks Was French-spelt OEPREFS_SCROLLINGINDEPENDANT.
 	SCROLLING_INDEPENDENT = 0x0002,
-	QUICK_DISPLAY = 0x0004,		// No effect in HWA
+
+	// Windows Software display mode only, draws between background and proper sprites
+	QUICK_DISPLAY = 0x0004,
+
+	// Enables "inactivate if far from frame" option.
 	SLEEP = 0x0008,
+
+	// Has no effect, functionality was replaced with properties in Fusion 2.0
+	// But note OIF_GLOBAL and similar tech.
 	LOAD_ON_CALL = 0x0010,
+
+	// Has no effect, functionality was replaced with properties in Fusion 2.0
 	GLOBAL = 0x0020,
+
+	// Enables save background and wipe background display properties.
+	// Requires OEPREFS::BACK_SAVE.
+	// This property only applies in Windows Software display.
+	// @remarks Yves suggested erasing background was intended for paint
+	//			effects, or for static objects while display is scrolling.
 	BACK_EFFECTS = 0x0040,
+
+	// Enables "destroy if far from playfield" property. See OEFLAGS::NEVER_KILL.
 	KILL = 0x0080,
+
+	// Enables HWA effects property pane. Used for both old Fusion 2.0 ink effects,
+	// and newer Direct3D effects.
 	INK_EFFECTS = 0x0100,
+
+	// Enables the (dated) display transitions when appearing/disappearing.
+	// Shows the Transitions > Fade In and Fade Out properties in Display tab.
+	// @remarks Handled by returning the display surface in GetRunObjectSurface().
 	TRANSITIONS = 0x0200,
+
+	// If set, fine collision is active. You must maintain a CollisionMask that reflects the
+	// collision area of the currently displaying image of your object, and return it in Extension::GetCollisionMask().
+	// @remarks If not used, box collision is used; i.e. the entire rectangle of
+	//			(rHo->X, rHo->Y) to (rHo->X + rHo->imgWidth, rHo->Y + rHo->imgHeight)
+	//			is considered the collision area of your object.
 	FINE_COLLISIONS = 0x0400,
+
+	// Flag used for some extensions in the deprecated Fusion 2.0 Java builds
+	// e.g. Java Web Applet, Java Web Start
 	APPLET_PROBLEMS = 0x0800,
+
 };
 enum_class_is_a_bitmask(OEPREFS);
+
+// Bitfield indicating what text support an OEFLAGS::TEXT extension has.
+// @remarks See GetTextCaps() and Extension::TextCapacity.
+//			Based on TEXT_FONT, TEXT_LEFT_ALIGN, etc.
+enum class TextCapacity : std::uint32_t {
+	None = 0,
+	// If set, user can pick these alignments - see HAlign, VAlign, and RightToLeft
+	Left = 0x1,
+	HCenter = 0x2,
+	Right = 0x4,
+	Top = 0x8,
+	VCenter = 0x10,
+	Bottom = 0x20,
+	// If set, text can be drawn in right-to-left (RTL) ordering,
+	// used in some Asian and Arabic languages
+	RightToLeft = 0x100,
+	// If set, font typeface can be edited by user
+	Font = 0x10000,
+	// If set, text color can be picked
+	Color = 0x20000,
+	// Color16 = 0x40000, // limited color palette? (never used, consider this obsolete)
+
+	// Horizontal alignment of all types
+	HorizontalAlign = Left | HCenter | Right,
+	// Vertical alignment of all types
+	VerticalAlign = Top | VCenter | Bottom,
+};
+enum_class_is_a_bitmask(TextCapacity);
 
 // These are based on the ANDROID_LOG_XXX enum.
 
@@ -143,7 +295,11 @@ namespace DarkEdif {
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
 	#ifdef _DEBUG
-		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
+		#ifdef __ANDROID__
+			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+		#else
+			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
+		#endif
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
 	#endif
@@ -195,13 +351,13 @@ namespace DarkEdif {
 	className(const className&) = delete; \
 	className(const className&&) = delete;
 
-struct extHeader
+struct extHeader final
 {
 	NO_DEFAULT_CTORS_OR_DTORS(extHeader);
 	std::uint32_t extSize,
 				  extMaxSize,
 				  extVersion;			// Version number
-	std::uint32_t extID;				// object's identifier; null in Android/iOS!
+	std::uint32_t extID;				// object's identifier; pointer to ext, null in Android/iOS! 
 	std::uint32_t extPrivateData;		// private data; was a pointer
 };
 
@@ -331,6 +487,7 @@ enum class ExpReturnType : short {
 inline namespace FusionInternals {
 	struct RunObject;
 }
+//using namespace FusionInternals;
 #else
 struct RunObject;
 #endif
@@ -343,7 +500,6 @@ struct ACEParamReader {
 	// Returns RunObject * for Action, qualifier or singular OI for Condition
 	virtual long GetObject(int i) = 0;
 };
-
 
 // Definition of conditions / actions flags
 enum class EVFLAGS : std::uint16_t {
@@ -366,10 +522,17 @@ enum_class_is_a_bitmask(EVFLAGS);
 enum class REFLAG : short {
 	// OK; if used in Handle(), then indicates to call Handle next tick
 	NONE = 0,
+#ifdef _WIN32
 	// Don't call Handle next tick
 	ONE_SHOT = 0x1,
 	// Call Display after this
 	DISPLAY = 0x2,
+#else // This was switched for non-Windows... why?!
+	// Call Display after this
+	DISPLAY = 0x1,
+	// Don't call Handle next tick
+	ONE_SHOT = 0x2,
+#endif
 	// WndProc responses
 	MSG_HANDLED = 0x4,
 	MSG_CATCHED = 0x8,
@@ -377,6 +540,7 @@ enum class REFLAG : short {
 	// ?
 	MSGRETURNVALUE = 0x40,
 };
+enum_class_is_a_bitmask(REFLAG);
 
 // If set in current event's flags (event2 struct), makes an action function run once for each selected instance
 // before moving to next action in event. If set off, the action is only run once, and it is assumed you loop
@@ -384,7 +548,7 @@ enum class REFLAG : short {
 #define	ACTFLAGS_REPEAT	0x1
 
 // Maximum number of qualifiers an object can have
-#define MAX_QUALIFIERS 8	
+#define MAX_QUALIFIERS 8
 
 #define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
@@ -392,6 +556,22 @@ enum class REFLAG : short {
 #include <thread>
 #include <atomic>
 #include <assert.h>
+
+// Series of classes/structs that will be referred to later
+namespace DarkEdif { class Surface; }
+namespace Edif { class Runtime; }
+
+// Apple exts are static libs and their defines will clash
+#ifdef __APPLE__
+inline namespace FusionInternals {
+#endif
+
+struct EventGroupMP;
+
+
+#ifdef __APPLE__
+}
+#endif
 
 // Prevents using Fusion internals directly, to allow multiplatform consistency
 // DarkEdif CPP files will define this, your code shouldn't, unless it's Windows only ext and you want internals
@@ -404,3 +584,101 @@ enum class REFLAG : short {
 // no op
 #define DarkEdifInternalAccessProtected public
 #endif
+
+// This ext does not display
+#define DARKEDIF_DISPLAY_NONE		0
+// This ext uses Fusion's built-in animation system
+#define DARKEDIF_DISPLAY_ANIMATIONS	1
+// This ext uses DarkEdif simple display system - one surface, automagic
+#define DARKEDIF_DISPLAY_SIMPLE		2
+// This ext uses DarkEdif manual display system
+#define DARKEDIF_DISPLAY_MANUAL		3
+
+// Indicates visibility, object deactivation from being outside frame, scale quality, etc
+enum class RunSpriteFlag : std::uint16_t {
+	// No flag
+	None = 0x0,
+	// Object is set to invisible, OR flashing is hiding the object, OR layer is set to invisible - takes effect to override the Visible flag
+	Hidden = 0x1,
+	// Obsolete flag; runtime sets this, but does not read it. See Sleeping, and CSprite.F_INACTIV
+	Inactive = 0x2,
+	// Object is outside the RH3MinimumKill margin, inactive if far from frame is on, and object instance has been deactivated.
+	// Player and QuickDisplay objects do not deactivate.
+	// This implies that object is not destroyed when far from frame. Note CRunApp.AH2OPT_DESTROYIFNOINACTIVATE.
+	// Sleeping objects do not move, do not flash, and have their sprite entry (roc.rcSprite) temporarily deleted.
+	Sleeping = 0x4,
+	// Use or has used resample-tech to resize this object display to new scale
+	Scale_Resample = 0x8,
+	// Use or has used resample-tech to rotate this object display to new angle
+	Rotate_Antialias = 0x10,
+	// Object is visible, flashing accounted for, layer visibility not accounted for - overridden by Hidden flag
+	Visible = 0x20,
+	// Runtime use only: Object's effect has been constructed in runtime side
+	Created_Effect = 0x40
+}; // RSFLAG_XX enum
+enum_class_is_a_bitmask(RunSpriteFlag);
+
+// @remarks This is defined here as RunSprite uses it in all platforms
+enum class BlitOperation {
+	// No merge or altering operation, just flat overwriting destination surface
+	Copy = 0,
+	// Blend the destination RGB with source surface RGB
+	// blend_coef is in range 0 to 128, 128 being a full merge
+	// dest = ((dest * blend_coef) + (src * (128-blend_coef)))/128
+	Blend,
+	// Invert the source RGB before overwriting destination RGB
+	// src XOR 0xFFFFFF
+	Invert,
+	// Combine the source RGB with dest RGB using XOR
+	// src XOR dest
+	XOR,
+	// Combine the source RGB with dest RGB using AND
+	// src AND dest
+	AND,
+	// Combine the source RGB with dest RGB using OR
+	// src OR dest
+	OR,
+	// Blend the destination RGB with source surface RGB
+	// dest = ((dest * blend_coef) + ((src==transp) ? replace : src * (128-blend_coef) ))/128
+	BlendReplaceTransp,
+	// Removed in Fusion 2.5, possibly 2.0
+	// Blits using the WinGDI raster operation (ROP) specified in the lParam
+	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#:~:text=A%20raster-operation%20code
+	DrawWithROP,
+	// Applies INVERT then AND
+	AndNot,
+	// Combines the source RGB with the dest RGB by adding src and dest together by color channels
+	Addition,
+	// Gets the mean average of R,G,B and uses it for dest R,G,B
+	Mono,
+	// Combines the source RGB with the dest RGB by subtracting src from dest by color channels
+	Subtract,
+	// ?
+	BlendDontReplaceColor,
+	// Indicates use of a HWA effect (Direct3D)
+	EffectEx,
+#ifdef __ANDROID__
+	// Android only: used to indicate a TextSurface rendering without any HWA effect
+	// @remarks See CTextSurface.java. BOP_TEXT is not defined in Windows or iOS SDK.
+	Text,
+#endif
+	// Max possible outside of a bitmask
+	// In Android, this is 15 due to presence of Text, other platforms have it as 14.
+	// @remarks KcBoxA/B on iOS have it as 13, mistakenly
+	Max,
+	// The bitmask for possible blit ops
+	Mask = 0x0FFF,
+	// The bitmask for blit ops + RGBAFilter
+	EffectMask = 0xFFFF,
+	// Used in ros->rsEffect to indicate alpha and/or color coefficient alters the image.
+	// If not set in ros->rsEffect, indicates blend coefficient is 0, RGB coeff is RGB(255,255,255)
+	RGBAFilter = 0x1000,
+	// Indicates transparency is enabled in ink effect property. Should be excluded with Mask.
+	Transparent = 0x10000000L,
+	// Indicates anti-alias is checked in ink effect property. Should be excluded with Mask.
+	AntiAlias = 0x20000000L,
+	// None: same as Copy, included for bitmask ease
+	None = Copy,
+};
+enum_class_is_a_bitmask(BlitOperation);
+

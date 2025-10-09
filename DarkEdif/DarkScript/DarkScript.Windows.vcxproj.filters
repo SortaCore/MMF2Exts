@@ -21,6 +21,9 @@
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
+    <ClInclude Include="..\Inc\Windows\Surface.hpp">
+      <Filter>Global to all extensions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">

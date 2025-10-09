@@ -1,27 +1,33 @@
 #pragma once
-class Extension
+#include "Common.hpp"
+
+class Extension final
 {
 public:
-
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
 	static const int Version = 5;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
-	static const OEPREFS OEPREFS = OEPREFS::NONE;
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NONE;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
 
-	// Song
+	// ======================================
+	// Extension data
+	// ======================================
 
-	struct ExtKSong {
+	struct ExtKSong final
+	{
 		KSong * song = nullptr;
 		KSongInfo songInfo = {};
 		std::tstring songName; // user assigned, not the song title
@@ -31,7 +37,7 @@ public:
 		ExtKSong();
 		~ExtKSong();
 	};
-	struct ExtKPlayer
+	struct ExtKPlayer final
 	{
 		std::tstring playerName;
 		KPlayer * player = nullptr;
@@ -58,62 +64,43 @@ public:
 	void CreateError(PrintFHintInside const TCHAR * format, ...) PrintFHintAfter(2, 3);
 	std::tstring lastError;
 
-	/// Actions
+	// Actions
+	void LoadSongFromFile(const TCHAR * songName, const TCHAR * filePath);
+	void LoadSongFromMemory(const TCHAR * songName, unsigned int address, int size);
+	void CloseSong(const TCHAR * songName);
 
-		void LoadSongFromFile(const TCHAR * songName, const TCHAR * filePath);
-		void LoadSongFromMemory(const TCHAR * songName, unsigned int address, int size);
-		void CloseSong(const TCHAR * songName);
+	void CreatePlayer(const TCHAR * playerName, int sampleRate);
+	void SelectPlayer(const TCHAR * playerName);
+	void ClosePlayer();
+	void SetCurrentPlayerQuality(int oversample);
+	void SetCurrentPlayerLooping(int looping);
+	void SetCurrentPlayerVolume(int volume);
+	void PlaySongOnCurrentPlayer(const TCHAR * songUserName, int position);
+	void SetPauseStateOnCurrentPlayer(int pauseState);
+	void StopCurrentPlayer();
 
-		void CreatePlayer(const TCHAR * playerName, int sampleRate);
-		void SelectPlayer(const TCHAR * playerName);
-		void ClosePlayer();
-		void SetCurrentPlayerQuality(int oversample);
-		void SetCurrentPlayerLooping(int looping);
-		void SetCurrentPlayerVolume(int volume);
-		void PlaySongOnCurrentPlayer(const TCHAR * songUserName, int position);
-		void SetPauseStateOnCurrentPlayer(int pauseState);
-		void StopCurrentPlayer();
+	// Conditions
+	bool OnError();
+	bool DoesPlayerNameExist(const TCHAR * playerName);
+	bool DoesSongNameExist(const TCHAR * songName);
+	bool IsPlayerNamePlaying(const TCHAR * playerName);
+	bool IsPlayerNamePaused(const TCHAR * playerName);
 
-	/// Conditions
+	// Expressions
+	const TCHAR * GetError();
+	int GetPlayerCurrentPos();
+	int GetSongLength(const TCHAR * songName);
+	const TCHAR * GetSongTitle(const TCHAR * songName);
+	int GetSongNumInstruments(const TCHAR * songName);
+	int GetSongNumChannels(const TCHAR * songName);
+	const TCHAR * GetSongInstrumentName(const TCHAR * songName, int instrumentIndex);
 
-		bool OnError();
-		bool DoesPlayerNameExist(const TCHAR * playerName);
-		bool DoesSongNameExist(const TCHAR * songName);
-		bool IsPlayerNamePlaying(const TCHAR * playerName);
-		bool IsPlayerNamePaused(const TCHAR * playerName);
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
-	/// Expressions
-
-		const TCHAR * GetError();
-		int GetPlayerCurrentPos();
-		int GetSongLength(const TCHAR * songName);
-		const TCHAR * GetSongTitle(const TCHAR * songName);
-		int GetSongNumInstruments(const TCHAR * songName);
-		int GetSongNumChannels(const TCHAR * songName);
-		const TCHAR * GetSongInstrumentName(const TCHAR * songName, int instrumentIndex);
-
-
-
-	/* These are called if there's no function linked to an ID */
+	// These are called if there's no function linked to an ID
 
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
-
-	bool SaveFramePosition(HANDLE File);
-	bool LoadFramePosition(HANDLE File);
 };

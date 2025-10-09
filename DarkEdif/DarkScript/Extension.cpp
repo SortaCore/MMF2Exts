@@ -9,11 +9,11 @@
 Extension::Extension(RunObject* const _rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr) :
 	rdPtr(_rdPtr), rhPtr(_rdPtr->get_rHo()->get_AdRunHeader()), Runtime(this), FusionDebugger(this)
 #elif defined(__ANDROID__)
-Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr) :
 	javaExtPtr(javaExtPtr, "Extension::javaExtPtr from Extension ctor"),
 	Runtime(this, this->javaExtPtr), FusionDebugger(this)
 #else
-Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr) :
+Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr) :
 	objCExtPtr(objCExtPtr), Runtime(this, objCExtPtr), FusionDebugger(this)
 #endif
 {
@@ -335,27 +335,13 @@ REFLAG Extension::Handle()
 	return globals->pendingFuncs.empty() ? REFLAG::ONE_SHOT : REFLAG::NONE;
 }
 
-
-REFLAG Extension::Display()
-{
-	/*
-	   If you return REFLAG_DISPLAY in Handle() this routine will run.
-	*/
-
-	// Ok
-	return REFLAG::NONE;
-}
-
-short Extension::FusionRuntimePaused()
+void Extension::FusionRuntimePaused()
 {
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 		globals->runtimepausedtime = decltype(globals->runtimepausedtime)::clock::now();
-
-	// Ok
-	return 0;
 }
 
-short Extension::FusionRuntimeContinued()
+void Extension::FusionRuntimeContinued()
 {
 	if (globals->exts[0] == this && !globals->pendingFuncs.empty())
 	{
@@ -364,9 +350,6 @@ short Extension::FusionRuntimeContinued()
 			if (!f->useTicks)
 				f->runAtTime += diff;
 	}
-
-	// Ok
-	return 0;
 }
 
 

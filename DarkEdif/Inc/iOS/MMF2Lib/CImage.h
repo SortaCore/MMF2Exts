@@ -43,7 +43,6 @@
 @class CArrayList;
 
 #define MAX_ROTATEDMASKS 10
-#define JPEG 5
 
 struct ImageInfo
 {
@@ -145,6 +144,7 @@ static inline bool pixelIsSolid(CImage* img, int x, int y)
 {
 	int pixel4;
 	short pixel2;
+	static const int JPEG = 5;
 	switch (img->format)
 	{
 		case RGBA8888:

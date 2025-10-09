@@ -34,6 +34,9 @@
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Extension.hpp">
@@ -68,6 +71,9 @@
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp">
       <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp">
+      <Filter>Global to all extensions</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

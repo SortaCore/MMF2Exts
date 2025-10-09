@@ -52,22 +52,41 @@
     <Import Project="DarkScript.Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ItemGroup>
+    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\Array.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CActExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CBitmap.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CCndExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CCreateObjectInfo.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CEffectEx.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CEventProgram.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CEvents.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CExtension.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFont.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CFontInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImage.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageBank.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CImageUtils.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CObject.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CObjInfo.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CoreMath.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CQualToOiList.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRCom.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRect.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderer.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderToTexture.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRenderUtils.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CRSpr.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRun.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunApp.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRunExtension.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CRVal.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CShader.h" />
+    <ClInclude Include="..\Inc\iOS\MMF2Lib\CTexture.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\CValue.h" />
     <ClInclude Include="..\Inc\iOS\MMF2Lib\IDrawable.h" />
     <ClInclude Include="..\Inc\iOS\MMFiOSMasterHeader.hpp" />
-    <ClInclude Condition="exists('$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp')" Include="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Condition="exists('$(ProjectDir)\DarkExt.PostMinify.json')" Include="$(ProjectDir)\DarkExt.PostMinify.json" />

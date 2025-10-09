@@ -6,17 +6,19 @@
 #endif
 
 #include "..\Shared\AllPlatformDefines.hpp"
-#include "Windows\WindowsDefines.hpp"
+#include "WindowsDefines.hpp"
 
 #if EditorBuild
 // For ext icon
+class cSurfaceImplementation;
+class cSurface;
+struct sMask;
 // For ext properties
 #include "Props.hpp"
 #else
 class cSurfaceImplementation;
 class cSurface;
 struct sMask;
-typedef sMask CollisionMask;
 #endif
 
 #include "CFile.hpp"
@@ -26,7 +28,7 @@ typedef sMask CollisionMask;
 #define	NDQUALIFIERS				100
 #define MAX_EVENTPROGRAMS			256
 
-// Possible states of the application, see LApplication::SetRunningState()
+// Possible states of the application, see Application::SetRunningState()
 enum class GAMEON {
 	EMPTY,
 	UNLOADED,
@@ -45,6 +47,8 @@ enum class GAMEON {
 
 namespace DarkEdif {
 	class ObjectSelection;
+	struct FontInfoMultiPlat;
+	class Surface;
 }
 namespace Edif {
 	class Runtime;
@@ -54,8 +58,8 @@ struct ExpressionManager_Windows;
 
 // This declaration list cannot be cut down
 class CImageFilterMgr;
-struct CSoundFilterMgr;
-struct CSoundManager;
+class CSoundFilterMgr;
+class CSoundManager;
 struct CRunApp;
 struct CRunFrame;
 struct CEditApp;
@@ -77,6 +81,13 @@ struct CDemoRecord;
 struct CIPhoneJoystick;
 struct CIPhoneAd;
 struct RunObject;
+struct RunHeader;
+struct ForbiddenInternals;
+struct rCom;
+struct rMvt;
+struct rSpr;
+struct rAni;
+enum class BlitOperation;
 
 // Runtime, instance-specific data for object - it is a std::shared_ptr on Android, beware!
 typedef RunObject* RunObjectMultiPlatPtr;
@@ -144,9 +155,10 @@ struct Obj
 //typedef Obj *npObj;
 //typedef Obj *fpObj;
 
-struct Spr
+// This is the CSprite class, not the CRSpr class.
+struct Sprite
 {
-	NO_DEFAULT_CTORS_OR_DTORS(Spr);
+	NO_DEFAULT_CTORS_OR_DTORS(Sprite);
 	#ifndef SPRLIST
 		Obj			Obj;
 	#endif
@@ -197,10 +209,10 @@ struct Spr
 	cSurfaceImplementation *	BackSurf;	// Background surface, if no general background surface
 
 	cSurfaceImplementation *	Sf;			// Surface (if stretched or rotated)
-	CollisionMask *				ColMask;	// Collision mask (if stretched or rotated)
+	sMask *						ColMask;	// Collision mask (if stretched or rotated)
 
-	cSurfaceImplementation*	TempSf;			// Temp surface (if stretched or rotated)
-	CollisionMask *			TempColMask;	// Temp collision mask (if stretched or rotated)
+	cSurfaceImplementation*		TempSf;			// Temp surface (if stretched or rotated)
+	sMask *						TempColMask;	// Temp collision mask (if stretched or rotated)
 
 	// User data
 	LPARAM		ExtraInfo;
@@ -605,25 +617,57 @@ struct EventBlockType {
 	DWORD blockOffset;
 };
 
-// Was EVGFLAGS_**
+// Fusion event's header flags.
+// @remarks Despite being named Event Group Flags, in Fusion user terms, it is an event.
+//			Fusion event groups are indicated by using specific conditions,
+//			Was EVGFLAGS_**. 
 enum class EventGroupFlags : unsigned short
 {
+	None = 0,
+	// Indicates System: run this event once
 	Once = 0x1,
+	// Indicates a triggered event
 	NotAlways = 0x2,
+	// Indicates a non-triggered event - see NoMore
 	Repeat = 0x4,
+	// If NoMore is set, this event won't run. Used for System: Repeat X times event,
+	// or Run While Event Loops?
+	// TODO: Confirm what it is used for
 	NoMore = 0x8,
+	// Indicates presence of a Position > Swap with another object action on
+	// a OEFLAGS:: SPRITE object (e.g. Active)
 	Shuffle = 0x10,
+	// ? bookmark in editor?
+	// TODO: Confirm what it is used for
 	EditorMark = 0x20,
-	UndoMark = 0x40,
-	ComplexGroup = 0x80,
+	// Indicates this event has children events (C2.5+)
+	// @remarks Was UndoMark
+	HasChildren = 0x40,
+	// Event has a Break action
+	// @remarks Was ComplexGroup
+	Break = 0x80,
+	// ? Possibly profiler-related
+	// TODO: Confirm what it is used for
 	Breakpoint = 0x100,
+	// ?
+	// TODO: Confirm what it is used for
 	AlwaysClean = 0x200,
+	// Has an OR filtered or OR logical condition - see OrLogical
+	// Mixing those or multiple ORs is not recommended... in fact I would avoid OR entirely
 	OrInGroup = 0x400,
+	// Has a Movement > Stop or Movement > Bounce action in event
 	StopInGroup = 0x800,
+	// Has an OR (logical) condition
 	OrLogical = 0x1000,
+	// ? inside a group of events?
+	// TODO: Confirm what it is used for
 	Grouped = 0x2000,
+	// Deactivated in editor
+	// TODO: Do these even appear in runtime? Run Application only?
 	Inactive = 0x4000,
-	NoGood = 0x8000,
+	// Is a child event (CF2.5+)
+	HasParent = 0x8000,
+
 	Limited = Shuffle | NotAlways | Repeat | NoMore,
 	DefaultMask = Breakpoint | Grouped
 };
@@ -702,6 +746,8 @@ struct EventGroupMP {
 
 DarkEdifInternalAccessProtected:
 	friend RunHeader;
+	friend Edif::Runtime;
+	friend ConditionOrActionManager_Windows;
 
 	short			evgSize;		// 0 Size of the group (<=0)
 	unsigned char	evgNCond;		// 2 Number of conditions
@@ -1404,48 +1450,48 @@ struct objectsList {
 
 struct RunHeader2 {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader2);
-	unsigned long	OldPlayer,		// Previous player entries
-					NewPlayer,		// Modified player entries
-					InputMask,		// Inhibated players entries
-					InputPlayers;	// Valid players entries (mask!)
-	unsigned char 	MouseKeys,		// Mousekey entries
-					ActionLoop,		// Actions flag
-					ActionOn,		// Flag: are we in actions?
-					EnablePick;  	// Flag: Are we in pick for actions?
+	unsigned long	rh2OldPlayer,		// Previous player entries
+					rh2NewPlayer,		// Modified player entries
+					rh2InputMask,		// Inhibated players entries
+					rh2InputPlayers;	// Valid players entries (mask!)
+	unsigned char 	rh2MouseKeys,		// Mousekey entries
+					rh2ActionLoop,		// Actions flag
+					rh2ActionOn,		// Flag: are we in actions? Confirmed by Yves to be used bool-like, 0 or 1 only.
+					rh2EnablePick;  	// Flag: Are we in pick for actions?
 
-	int		  		EventCount;			// Number of the event
-	qualToOi *		EventQualPos;		// Position in event objects
-	HeaderObject  *	EventPos;			// Position in event objects
-	objInfoList *	EventPosOiList, 	// Position in oilist for TYPE exploration
-				*	EventPrev;			// Previous object address
+	int		  		rh2EventCount;			// Number of the event
+	qualToOi *		rh2EventQualPos;		// Position in event objects
+	HeaderObject  * rh2EventPos;			// Position in event objects
+	objInfoList *	rh2EventPosOiList, 	// Position in oilist for TYPE exploration
+				*	rh2EventPrev;			// Previous object address
 
-	pev *			PushedEvents;		//
-	unsigned char *	PushedEventsTop,	//
-				  *	PushedEventsMax;	//
-	int	  			NewPushedEvents;	//
+	pev *			rh2PushedEvents;		//
+	unsigned char * rh2PushedEventsTop,	//
+				  * rh2PushedEventsMax;	//
+	int	  			rh2NewPushedEvents;	//
 
-	int		  		ActionCount;		// Action counter
-	int		  		ActionLoopCount;	// Action loops counter
-	void	(*ActionEndRoutine)();		// End of action routine
+	int		  		rh2ActionCount;		// Action counter
+	int		  		rh2ActionLoopCount;	// Action loops counter
+	void	(*rh2ActionEndRoutine)();	// End of action routine
 
 	// Number of objects created since frame start. Increments per object instance create of any object; wraps at 16-bit.
 	// @remarks While CreationCount starts as 0, 0 isn't used since Fusion b243 and it is incremented again to 1
-	unsigned short	CreationCount;		// Number of objects created since beginning of frame
-	short			EventType;
-	POINT 			Mouse;				// Mouse coordinate
-	POINT 			MouseClient;		// Mouse coordinates in the window
-	short	  		CurrentClick,		// For click events II
-					Free2;				// Ignore - Padding
-	HeaderObject **	ShuffleBuffer,
-				 ** ShufflePos;
-	int		  		ShuffleNumber;
+	unsigned short	rh2CreationCount;		// Number of objects created since beginning of frame
+	short			rh2EventType;
+	POINT 			rh2Mouse;				// Mouse coordinate
+	POINT 			rh2MouseClient;		// Mouse coordinates in the window
+	short	  		rh2CurrentClick,		// For click events II
+					rh2Free2;				// Ignore - Padding
+	HeaderObject ** rh2ShuffleBuffer,
+				 ** rh2ShufflePos;
+	int		  		rh2ShuffleNumber;
 
-	POINT			MouseSave;			// Mouse saving when pause
-	int		  		PauseCompteur;
-	unsigned long	PauseTimer;
-	unsigned int	PauseVbl;
-	FARPROC	   		LoopTraceProc,		// Debugging routine
-					EventTraceProc;
+	POINT			rh2MouseSave;			// Mouse saving when pause
+	int		  		rh2PauseCompteur;
+	unsigned long	rh2PauseTimer;
+	unsigned int	rh2PauseVbl;
+	FARPROC	   		rh2LoopTraceProc,		// Debugging routine
+					rh2EventTraceProc;
 
 };
 
@@ -1461,35 +1507,35 @@ struct RunHeader2 {
 
 struct RunHeader3 {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader3);
-	unsigned short	Graine,			// Random generator seed
-					Free;			// Ignore - padding
+	unsigned short	rh3Graine,			// Random generator seed
+					rh3Free;			// Ignore - padding
 
-	int		  		DisplayX,		// To scroll
-					DisplayY;
+	int		  		rh3DisplayX,		// To scroll
+					rh3DisplayY;
 
-	long			CurrentMenu;	// For menu II events
+	long			rh3CurrentMenu;	// For menu II events
 
-	int 			WindowSx,		// Window size
-					WindowSy;
+	int 			rh3WindowSx,		// Window size
+					rh3WindowSy;
 
-	short			CollisionCount;	// Collision counter
-	char			DoStop,			// Force the test of stop actions
-					Scrolling;		// Flag: we need to scroll
+	short			rh3CollisionCount;	// Collision counter
+	char			rh3DoStop,			// Force the test of stop actions
+					rh3Scrolling;		// Flag: we need to scroll
 
-	int		  		Panic,
-					PanicBase,
-					PanicPile,
+	int		  		rh3Panic,
+					rh3PanicBase,
+					rh3PanicPile,
 
-//	short		  	XBorder_;		// Authorised border
-//	short		  	YBorder_;
-					XMinimum,   	// Object inactivation coordinates
-					YMinimum,
-					XMaximum,
-					YMaximum,
-					XMinimumKill,	// Object destruction coordinates
-					YMinimumKill,
-					XMaximumKill,
-					YMaximumKill;
+//	short		  	rh3XBorder_;		// Authorised border
+//	short		  	rh3YBorder_;
+					rh3XMinimum,   	// Object inactivation coordinates
+					rh3YMinimum,
+					rh3XMaximum,
+					rh3YMaximum,
+					rh3XMinimumKill,	// Object destruction coordinates
+					rh3YMinimumKill,
+					rh3XMaximumKill,
+					rh3YMaximumKill;
 };
 
 // Extensions
@@ -1502,9 +1548,9 @@ typedef struct tagKPXMSG {
 typedef struct tagKPXLIB {
 	long 	( WINAPI * routine) (HeaderObject *, WPARAM, LPARAM);
 	} kpxLib;
-#define IsRunTimeFunctionPresent(num)	(num < KPX_MAXFUNCTIONS && ((RunHeader *)rdPtr->rHo.AdRunHeader)->rh4.rh4KpxFunctions[(int)num].routine != NULL)
-#define	CallRunTimeFunction(rdPtr,num,wParam,lParam)	(rdPtr->rHo.AdRunHeader->rh4.rh4KpxFunctions[(int)num].routine((HeaderObject *)rdPtr, wParam, lParam) )
-#define	CallRunTimeFunction2(hoPtr,num,wParam,lParam)	(hoPtr->AdRunHeader->rh4.rh4KpxFunctions[(int)num].routine(hoPtr, wParam, lParam) )
+#define IsRunTimeFunctionPresent(num)	(num < KPX_MAXFUNCTIONS && ((RunHeader *)rdPtr->rHo.hoAdRunHeader)->rh4.rh4KpxFunctions[(int)num].routine != NULL)
+#define	CallRunTimeFunction(rdPtr,num,wParam,lParam)	(rdPtr->rHo.hoAdRunHeader->rh4.rh4KpxFunctions[(int)num].routine((HeaderObject *)rdPtr, wParam, lParam) )
+#define	CallRunTimeFunction2(hoPtr,num,wParam,lParam)	(hoPtr->hoAdRunHeader->rh4.rh4KpxFunctions[(int)num].routine(hoPtr, wParam, lParam) )
 #define	CallRunTimeFunction3(rh4_,num,wParam,lParam)	(rh4_.rh4KpxFunctions[num].routine(hoPtr, wParam, lParam) )
 
 enum class RFUNCTION {
@@ -1536,10 +1582,12 @@ enum class RFUNCTION {
 	GET_CALL_TABLES
 };
 
+// For A/C: interprets parameter by requesting runtime evaluate, based on hoCurrentParam
 #define CNC_GetParameter(rdPtr)							CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetIntParameter(rdPtr)						CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0, 0)
 #define CNC_GetStringParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 0xFFFFFFFF, 0)
 #define CNC_GetFloatParameter(rdPtr)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM, 2, 0)
+// For A/C taking <= 2 params only: reads a number param as float, does not re-evaluate
 #define CNC_GetFloatValue(rdPtr, par)					CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_FLOAT, par, 0)
 #define CNC_GetFirstExpressionParameter(rdPtr, lParam, wParam)	CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1, wParam, lParam)
 #define CNC_GetNextExpressionParameter(rdPtr, lParam, wParam)	CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_2, wParam, lParam)
@@ -1574,133 +1622,197 @@ typedef BOOL (* CALLCOLMASKTESTRECT) (HeaderObject *, int x, int y , int sx, int
 typedef BOOL (* CALLCOLMASKTESTPOINT) (HeaderObject *, int x, int y, int nLayer, int plan);
 #define callColMaskTestPoint(hoPtr, x, y, nLayer, plan) ( (hoPtr->hoAdRunHeader)->rh4.rh4ColMaskTestPoint(hoPtr, x, y, nLayer, plan) )
 
-struct RunHeader4 {
+struct RunHeader4
+{
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader4);
-	kpj *			rh4KpxJumps;				// Jump table offset
-	short			rh4KpxNumOfWindowProcs,		// Number of routines to call
-					rh4Free;					// Padding - ignore
-	kpxMsg			rh4KpxWindowProc[96];		// Message handle routines (max 96)
-	kpxLib			rh4KpxFunctions[32];		// Available internal routines (max 32)
+	friend Edif::Runtime;
+	friend ConditionOrActionManager_Windows;
+	friend ExpressionManager_Windows;
+	friend RunHeader;
+	friend HeaderObject;
+DarkEdifInternalAccessProtected:
+	// Jump table offset
+	kpj * rh4KpxJumps;
+	// Number of routines to call
+	std::int16_t rh4KpxNumOfWindowProcs;
+	// Padding
+	std::int16_t rh4Free;
+	// Message handle routines
+	kpxMsg rh4KpxWindowProc[96];
+	// Available internal routines (max 32)
+	kpxLib rh4KpxFunctions[32];
 
 	// ?
-	void (* Animations)(HeaderObject  *, int);
+	void (* rh4Animations)(HeaderObject  *, int);
 	// Get direction at start
-	unsigned int (* DirAtStart)(HeaderObject  *, unsigned int);
+	std::uint32_t (* rh4DirAtStart)(HeaderObject  *, unsigned int);
 	// Move object
-	BOOL (* MoveIt)(HeaderObject  *);
+	BOOL (* rh4MoveIt)(HeaderObject  *);
 	// Approach object
-	BOOL (* ApproachObject)(HeaderObject *, int destX, int destY, int maxX, int maxY, int htFoot, int planCol, int& x, int &y);
+	BOOL (* rh4ApproachObject)(HeaderObject *, int destX, int destY, int maxX, int maxY, int htFoot, int planCol, int& x, int &y);
 	// ?
-	void (* Collisions)(HeaderObject  *);
+	void (* rh4Collisions)(HeaderObject  *);
 	// ?
-	void (* TestPosition)(HeaderObject  *);
+	void (* rh4TestPosition)(HeaderObject  *);
 	// ?
-	std::uint8_t (* GetJoystick)(HeaderObject  *, int);
+	std::uint8_t (* rh4GetJoystick)(HeaderObject  *, int);
 	// ?
-	BOOL (* ColMaskTestRect)(HeaderObject *, int x, int y , int sx, int sy, int nLayer, int plan);
+	BOOL (* rh4ColMaskTestRect)(HeaderObject *, int x, int y , int sx, int sy, int nLayer, int plan);
 	// ?
-	BOOL (* ColMaskTestPoint)(HeaderObject *, int x, int y, int nLayer, int plan);
+	BOOL (* rh4ColMaskTestPoint)(HeaderObject *, int x, int y, int nLayer, int plan);
 
-	std::uint32_t		SaveVersion;
-	event2 *			ActionStart;			// Save the current action
-	int					PauseKey;
-	TCHAR *				CurrentFastLoop;
-	std::int32_t		EndOfPause;
-	std::int32_t		EventCountOR;		// Number of the event for OR conditions
-	std::int16_t		ConditionsFalse,
-						MouseWheelDelta;
-	std::int32_t		OnMouseWheel;
-	TCHAR *				PSaveFilename;
-	std::uint32_t		musicHandle;
-	unsigned int 		musicFlags,
-						musicLoops;
-	int					loadCount;
-	short				demoMode,
-						saveFrame;
-	CDemoRecord *		demo;
-	int					saveFrameCount;
-	double				mvtTimerCoef;
+	std::uint32_t rh4SaveVersion;
+	// Save the current action
+	event2 * rh4ActionStart;
+	std::int32_t rh4PauseKey;
+	TCHAR * rh4CurrentFastLoop;
+	std::int32_t rh4EndOfPause;
+	// Number of the event for OR conditions - not useful for exts
+	std::int32_t rh4EventCountOR;
+	std::int16_t rh4ConditionsFalse;
+	std::int16_t rh4MouseWheelDelta;
+	std::int32_t rh4OnMouseWheel;
+	TCHAR * rh4PSaveFilename;
+	std::uint32_t rh4MusicHandle;
+	std::uint32_t rh4MusicFlags;
+	std::uint32_t rh4MusicLoops;
+	std::int32_t rh4LoadCount;
+	std::int16_t rh4DemoMode;
+	std::int16_t rh4SaveFrame;
+	CDemoRecord * rh4Demo;
+	std::int32_t rh4SaveFrameCount;
+	double rh4MvtTimerCoef;
 
-	CIPhoneJoystick *	iPhoneJoystick;
-	CIPhoneAd *			iPhoneAd;
-	void *				box2DBase;
-	short				box2DSearched;
-	void *				forEachs;
-	void *				currentForEach;
-	void *				currentForEach2;
-	void *				timerEvents;
-	void *				posOnLoop;
-	short				complexOnLoop;
-	char				quitString[4];		// Free, unknown usage
+	CIPhoneJoystick * rh4iPhoneJoystick;
+	CIPhoneAd * rh4iPhoneAd;
+	void * rh4Box2DBase;
+	std::int16_t rh4Box2DSearched;
+	void * rh4ForEachs;
+	void * rh4CurrentForEach;
+	void * rh4CurrentForEach2;
+	void * rh4TimerEvents;
+	void * rh4PosOnLoop;
+	std::int16_t rh4ComplexOnLoop;
+	// Free, unknown usage
+	char rh4QuitString[4];
 
-	std::uint32_t		pickFlags0,			// 00-31
-						pickFlags1,			// 31-63
-						pickFlags2,			// 64-95
-						pickFlags3;			// 96-127
-	std::uint32_t *		timerEventsBase;	// Timer events base
+	// Object pick flags 00-31
+	std::uint32_t rh4PickFlags0;
+	// Object pick flags 31-63
+	std::uint32_t rh4PickFlags1;
+	// Object pick flags 64-95
+	std::uint32_t rh4PickFlags2;
+	// Object pick flags 96-127
+	std::uint32_t rh4PickFlags3;
+	// Timer events base
+	std::uint32_t *	rh4TimerEventsBase;
 
-	std::int16_t		droppedFlag,
-						nDroppedFiles;
-	TCHAR *				droppedFiles;
-	FastLoop *			fastLoops;
-	TCHAR *				creationErrorMessages;
-	CValueMultiPlat		expValue1,				// New V2
-						expValue2;
+	std::int16_t rh4DroppedFlag;
+	std::int16_t rh4NDroppedFiles;
+	TCHAR * rh4DroppedFiles;
 
-	std::int32_t		kpxReturn;				// WindowProc return
-	objectsList *		objectCurCreate;
-	short				objectAddCreate;
-	unsigned short		free10;					// For step through : fake key pressed
-	HINSTANCE			instance;				// Application instance
-	HWND				hStopWindow;			// STOP window handle
-	char				doUpdate,				// Flag for screen update on first loop
-						menuEaten;				// Menu handled in an event?
-	short				free2;
-	int					onCloseCount;			// For OnClose event
-	short				cursorCount,			// Mouse counter
-						scrMode;				// Current screen mode
-	HPALETTE			hPalette;				// Handle current palette
-	int 				vblDelta;				// Number of VBL
-	std::uint32_t		loopTheoric,			// Theorical VBL counter
-						eventCount;
-	drawRoutine *		FirstBackDrawRoutine,	// Backrgound draw routines list
-				*		LastBackDrawRoutine;	// Last routine used
+	FastLoop * rh4FastLoops;
+	TCHAR * rh4CreationErrorMessages;
+	// New V2
+	CValueMultiPlat	rh4ExpValue1;
+	CValueMultiPlat rh4ExpValue2;
 
-	unsigned long		ObjectList;				// Object list offset
-	short				LastQuickDisplay;		// Quick - display list
-	unsigned char		CheckDoneInstart,		// Correct start of frame with fade in
-						Free0;					// Ignore - padding
-	mv *				rh4Mv;					// Yves' data
-	HCURSOR				OldCursor;				// Old cursor for Show / HideMouse in Vitalize! mode
-	HeaderObject  *		_2ndObject;	 			// Collision object address
-	short 				_2ndObjectNumber,		// Number for collisions
-						FirstQuickDisplay;		// Quick-display object list
-	int					WindowDeltaX,			// For scrolling
-						WindowDeltaY;
-	unsigned int		TimeOut;				// For time-out
-	int					MouseXCenter,			// To correct CROSOFT bugs
-						MouseYCenter,			// To correct CROSOFT bugs
-						TabCounter;				// Objects with tabulation
+	// Extension's WindowProc return
+	std::int32_t rh4KpxReturn;
+	objectsList * rh4ObjectCurCreate;
+	std::int16_t rh4ObjectAddCreate;
+	// For step through : fake key pressed ?
+	std::uint32_t rh4Free10;
+	// Application instance
+	HINSTANCE rh4Instance;
+	// STOP window handle
+	HWND rh4HStopWindow;
+	// Flag for screen update on first loop
+	char rh4DoUpdate;
+	// Menu handled in an event? - is this bool?
+	char rh4MenuEaten;
+private:
+	std::int16_t rh4Free2;
+DarkEdifInternalAccessProtected:
+	// For OnClose event (?)
+	std::int32_t rh4OnCloseCount;
+	// Mouse counter
+	std::int16_t rh4CursorCount;
+	// Current screen mode - enum?
+	std::int16_t rh4ScrMode;
+	// Handle of current screen palette?
+	HPALETTE rh4HPalette;
+	// Number of VBL (Vertical Blanking Lines, old display tech)
+	int rh4VblDelta;
+	// Theorical VBL counter
+	std::uint32_t rh4LoopTheoric;
+	// Number of events ticked, used for object selection
+	std::uint32_t rh4EventCount;
+	// Backrgound draw routines list
+	drawRoutine * rh4FirstBackDrawRoutine;
+	// Last routine used
+	drawRoutine * rh4LastBackDrawRoutine;	
 
-	unsigned long		AtomNum,				// For child window handling
-						AtomRd,
-						AtomProc;
-	short				SubProcCounter,			// To accelerate the windows
-						Free3;
+	// Object list offset
+	std::uint32_t rh4ObjectList;
+	// Quick-display list
+	std::int16_t rh4LastQuickDisplay;
+	// Correct start of frame with fade in
+	std::uint8_t rh4CheckDoneInStart;
+private:
+	std::uint8_t rh4Free0;
+DarkEdifInternalAccessProtected:
+	// A ptr to mV struct
+	mv * rh4Mv;
+	// Old cursor for Show / HideMouse in Vitalize! mode
+	HCURSOR				rh4OldCursor;
+	// Collision object address (?)
+	HeaderObject  *		rh4_2ndObject;
+	// Number for collisions (?)
+	std::int16_t rh4_2ndObjectNumber;
+	// Quick-display object list
+	std::int16_t rh4FirstQuickDisplay;
+	// For scrolling
+	std::int32_t rh4WindowDeltaX, rh4WindowDeltaY;
+	// For time-out
+	std::uint32_t rh4TimeOut;
+	// ?
+	std::int32_t rh4MouseXCenter, rh4MouseYCenter;
+	// Objects with tabulation
+	std::int32_t rh4TabCounter;				
 
-	int					PosPile;								// Expression evaluation pile position
-	expression *		ExpToken;							// Current position in expressions
-	CValueMultiPlat *	Results[MAX_INTERMEDIATERESULTS];	// Result pile
-	long				Operators[MAX_INTERMEDIATERESULTS];	// Operators pile
+	// For child window handling
+	std::uint32_t rh4AtomNum;
+	std::uint32_t rh4AtomRd;
+	std::uint32_t rh4AtomProc;
+	// To accelerate the windows (?)
+	std::int16_t rh4SubProcCounter;
+private:
+	std::int16_t rh4Free3;
+DarkEdifInternalAccessProtected:
+	// Expression evaluation pile position
+	std::int32_t rh4PosPile;
+	// Current position in expressions
+	expression * rh4ExpToken;
+	// Result pile
+	CValueMultiPlat * rh4Results[MAX_INTERMEDIATERESULTS];
+	// Operators pile
+	std::int32_t rh4Operators[MAX_INTERMEDIATERESULTS];
 
-	TCHAR **			PTempStrings;		// Debut zone 256 long
-	int					MaxTempStrings;
-	long				Free4[256-2];		// Free buffer
+	// Debut zone 256 long ?
+	TCHAR ** rh4PTempStrings;
+	std::int32_t rh4MaxTempStrings;
+	// Free buffer ?
+	std::int32_t rh4Free4[256-2];		
 
-	int					NCurTempString;					// Pointer on the current string
-	unsigned long		FrameRateArray[MAX_FRAMERATE];	// Framerate calculation buffer
-	int					FrameRatePos;					// Position in buffer
-	unsigned long		FrameRatePrevious;				// Previous time
+	// Pointer on the current string
+	std::int32_t rh4NCurTempString;					
+	// Framerate calculation buffer
+	std::uint32_t rh4FrameRateArray[MAX_FRAMERATE];	
+	// Position in rh4FrameRateArray buffer
+	std::int32_t rh4FrameRatePos;					
+	// Previous time
+	std::uint32_t rh4FrameRatePrevious;				
 };
 
 enum class GAMEFLAGS {
@@ -1720,6 +1832,8 @@ struct RunHeader {
 	NO_DEFAULT_CTORS_OR_DTORS(RunHeader);
 
 	// Reads the EventCount variable from RunHeader2, used in object selection. DarkEdif-added function for cross-platform.
+	void SetRH2EventCount(int);
+	// Reads the EventCount variable from RunHeader2, used in object selection. DarkEdif-added function for cross-platform.
 	int GetRH2EventCount();
 	// Gets the EventCountOR, used in object selection in OR-related events. DarkEdif-added function for cross-platform.
 	int GetRH4EventCountOR();
@@ -1727,6 +1841,9 @@ struct RunHeader {
 
 	// Reads the rh2.rh2ActionOn variable, used to indicate actions are being run (as opposed to conditions, or Handle, etc).
 	bool GetRH2ActionOn();
+	// Sets the rh2.rh2ActionOn variable, used in an action to affect selection
+	// @remarks May change whether selection is being changed or applied
+	void SetRH2ActionOn(bool newActOn);
 
 	// Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 	int GetRH2ActionCount();
@@ -1753,6 +1870,9 @@ struct RunHeader {
 	std::size_t get_NObjects();
 	CRunApp* get_App();
 
+	int get_WindowX() const;
+	int get_WindowY() const;
+
 	objInfoList* GetOIListByIndex(std::size_t index);
 	// Converts a OI number to a OIList index, suitable for GetOIListByIndex()
 	short GetOIListIndexFromOi(const short oi);
@@ -1761,108 +1881,113 @@ struct RunHeader {
 	RunObjectMultiPlatPtr GetObjectListOblOffsetByIndex(std::size_t index);
 	EventGroupFlags GetEVGFlags();
 
+	void RollbackSelection();
+
 DarkEdifInternalAccessProtected:
 	friend DarkEdif::ObjectSelection;
 	friend ConditionOrActionManager_Windows;
 	friend ExpressionManager_Windows;
 	friend Edif::Runtime;
-	void *				IdEditWin,			// npWin or Win *, but evaluates to void *
-		 *				IdMainWin;
-	void *				IdAppli;			// npAppli or Appli *, but evaluates to void *
+	friend HeaderObject;
+	friend rCom;
+	friend DarkEdif::Surface;
+	void *				rhIdEditWin,			// npWin or Win *, but evaluates to void *
+		 *				rhIdMainWin;
+	void *				rhIdAppli;			// npAppli or Appli *, but evaluates to void *
 
-	HWND				HEditWin,			// Call GetClientRect(HEditWin, RECT *) to get the frame width/height (non-virtual) area
-						HMainWin,			// Call GetClientRect(HMainWin, RECT *) to get the real client area
-						HTopLevelWnd;
+	HWND				rhHEditWin,			// Call GetClientRect(HEditWin, RECT *) to get the frame width/height (non-virtual) area
+						rhHMainWin,			// Call GetClientRect(HMainWin, RECT *) to get the real client area
+						rhHTopLevelWnd;
 
-	CRunApp *			App;				// Application info
-	CRunFrameMultiPlat*	Frame;				// Frame info
+	CRunApp *			rhApp;				// Application info
+	CRunFrameMultiPlat*	rhFrame;				// Frame info
 
-	unsigned int		JoystickPatch;		// To reroute the joystick
+	unsigned int		rhJoystickPatch;		// To reroute the joystick
 
-	unsigned char		Free10,				// Current movement needs to be stopped
-						Free12, 			// Event evaluation flag
-						NPlayers,			// Number of players
-						MouseUsed;			// Players using the mouse
+	unsigned char		rhFree10,				// Current movement needs to be stopped
+						rhFree12, 			// Event evaluation flag
+						rhNPlayers,			// Number of players
+						rhMouseUsed;			// Players using the mouse
 
-	unsigned short		GameFlags,			// Game flags
-						Free;				// Alignment
-	unsigned int		Player;				// Current players entry
+	unsigned short		rhGameFlags,			// Game flags
+						rhFree;				// Alignment
+	unsigned int		rhPlayer;				// Current players entry
 
-	short 				Quit,
-						QuitBis; 			// Secondary quit (scrollings)
-	unsigned int		Free11,				// Value to return to the editor
-						QuitParam;
+	short 				rhQuit,
+						rhQuitBis; 			// Secondary quit (scrollings)
+	unsigned int		rhFree11,				// Value to return to the editor
+						rhQuitParam;
 
 	// Buffers
-	int					NObjects,
-						MaxObjects;
+	int					rhNObjects,
+						rhMaxObjects;
 
-	unsigned int		Free2[4];			// !No description in original SDK
+	unsigned int		rhFree2[4];			// !No description in original SDK
 
-	int 				NumberOi;			// Number of OI in the list
-	objInfoList *		OiList;				// ObjectInfo list
+	int 				rhNumberOi;			// Number of OI in the list
+	objInfoList *		rhOiList;				// ObjectInfo list
 
-	unsigned int *		Events[7+1],		// Events pointers (NUMBER_OF_SYSTEM_TYPES+1)
-				 *		EventLists,		 	// Pointers on pointers list
-				 *		Free8,				// Timer pointers
-				 *		EventAlways;		// Pointers on events to see at each loop
-	EventGroupMP*		Programs;			// Program pointers
-	short *				LimitLists;			// Movement limitation list
-	qualToOi *			QualToOiList;		// Conversion qualifier->oilist
+	unsigned int *		rhEvents[7+1],		// Events pointers (NUMBER_OF_SYSTEM_TYPES+1)
+				 *		rhEventLists,		 	// Pointers on pointers list
+				 *		rhFree8,				// Timer pointers
+				 *		rhEventAlways;		// Pointers on events to see at each loop
+	EventGroupMP*		rhPrograms;			// Program pointers
+	short *				rhLimitLists;			// Movement limitation list
+	qualToOi *			rhQualToOiList;		// Conversion qualifier->oilist
 
-	unsigned int		SBuffers;			// Buffer size /1024
-	unsigned char * 	Buffer,				// Position in current buffer
-				  * 	FBuffer,			// End of current buffer
-				  * 	Buffer1,			// First buffer
-				  * 	Buffer2;			// Second buffer
+	unsigned int		rhSBuffers;			// Buffer size /1024
+	unsigned char * 	rhBuffer,				// Position in current buffer
+				  * 	rhFBuffer,			// End of current buffer
+				  * 	rhBuffer1,			// First buffer
+				  * 	rhBuffer2;			// Second buffer
 
-	int 				LevelSx,			// Window size
-						LevelSy,
-						WindowX,   			// Start of window in X/Y
-						WindowY;
+	int 				rhLevelSx,			// Window size
+						rhLevelSy,
+						rhWindowX,   			// Start of window in X/Y
+						rhWindowY;
 
-	unsigned int		VBLDeltaOld,		// Number of VBL
-						VBLObjet,			// For the objects
-						VBLOld;				// For the counter
+	unsigned int		rhVBLDeltaOld,		// Number of VBL
+						rhVBLObjet,			// For the objects
+						rhVBLOld;				// For the counter
 
-	int					EventsSize;
-	unsigned short		MT_VBLStep,   		// Path movement variables
-						MT_VBLCount;
-	unsigned int		MT_MoveStep;
+	int					rhEventsSize;
+	unsigned short		rhMT_VBLStep,   		// Path movement variables
+						rhMT_VBLCount;
+	unsigned int		rhMT_MoveStep;
 
-	int					LoopCount;			// Number of loops (FPS) since start of level (including Before Frame Transition?)
-	unsigned int		Timer,				// Timer in 1/1000 since start of level
-						TimerOld,			// For delta calculation
-						TimerDelta;			// For delta calculation again
+	int					rhLoopCount;			// Number of loops (FPS) since start of level (including Before Frame Transition?)
+	unsigned int		rhTimer,				// Timer in 1/1000 since start of level
+						rhTimerOld,			// For delta calculation
+						rhTimerDelta;			// For delta calculation again
 
-	EventGroupMP *		EventGroup;			// Current group
-	long 				CurCode;			// Current event
-	short				CurOi,
-						Free4;				// Alignment
-	long				CurParam[2];
-	short 				CurObjectNumber,	// Object number
-						FirstObjectNumber;	// Number, for collisions
+	EventGroupMP *		rhEventGroup;			// Current group
+	long 				rhCurCode;			// Current event
+	short				rhCurOi,
+						rhFree4;				// Alignment
+	long				rhCurParam[2];
+	short 				rhCurObjectNumber,	// Object number
+						rhFirstObjectNumber;	// Number, for collisions
 
-	long				OiListPtr;			// OI list enumeration
-	short 				ObListNext,			// Branch label
+	long				rhOiListPtr;			// OI list enumeration
+	short 				rhObListNext,			// Branch label
 
-						DestroyPos;
-	long				Free5,
-						Free6;
+						rhDestroyPos;
+	long				rhFree5,
+						rhFree6;
 
 	RunHeader2			rh2;				// Sub-structure #1
 	RunHeader3			rh3;				// Sub-structure #2
 	RunHeader4			rh4;				// Sub-structure #3
 
-	unsigned long *		DestroyList;		// Destroy list address
+	unsigned long *		rhDestroyList;		// Destroy list address
 
-	int					DebuggerCommand;	// Current debugger command
-	char				Free13[DB_BUFFERSIZE];		// Buffer libre!
-	void *				DbOldHO;
-	unsigned short		DbOldId,
-						Free7;
+	int					rhDebuggerCommand;	// Current debugger command
+	char				rhFree13[DB_BUFFERSIZE];		// Buffer libre!
+	void *				rhDbOldHO;
+	unsigned short		rhDbOldId,
+						rhFree7;
 
-	objectsList *		ObjectList;			// Object list address
+	objectsList *		rhObjectList;			// Object list address
 };
 //typedef	RunHeader 	* fprh;
 //typedef	RunHeader 	* RunHeader *;
@@ -1877,7 +2002,6 @@ DarkEdifInternalAccessProtected:
 
 #define HOX_INT
 
-struct ForbiddenInternals;
 struct HeaderObject {
 	NO_DEFAULT_CTORS_OR_DTORS(HeaderObject);
 	friend ForbiddenInternals;
@@ -1885,97 +2009,99 @@ struct HeaderObject {
 	friend ExpressionManager_Windows;
 	friend Edif::Runtime;
 	friend RunObject;
+	friend DarkEdif::Surface;
 DarkEdifInternalAccessProtected:
 	// 0+ unique instance number, used in identifying it out of the runtime duplicates
 	// @remarks Is non-contiguous and may be out of order, but the linked lists should be in consistent reverse-creation order;
 	//			last created is in ObjInfoList::Object, traverse with HeaderObject::NumNext until negative to get to first created.
-	short Number;
+	short hoNumber;
 	// A Number of the next selected instance, or 0x8000 set for selection to end here.
-	short NextSelected;
+	short hoNextSelected;
 	// The RUNDATA/RunObject size, including the HeaderObject
-	int size;
+	int hoSize;
 	// Run-header address; a CRun class in non-Windows
-	RunHeader* AdRunHeader;
+	RunHeader* hoAdRunHeader;
 private:
 	// Pointer to this - might be an anachronism from 16 -> 32-bit Windows memory addresses
-	HeaderObject* Address;
+	HeaderObject* hoAddress;
 DarkEdifInternalAccessProtected:
 	// Number of LevObj or HeaderFrameInstance
-	short HFII;
+	short hoHFII;
 	// The 0+ index of this object info in rhPtr->OIList?
-	short Oi;
-	// Same OI, previous object instance, a Number; 0x8000 bit is set if invalid
-	short NumPrev;
+	short hoOi;
+	// hoSame OI, previous object instance, a Number; 0x8000 bit is set if invalid
+	short hoNumPrev;
 	// Same OI, next object instance, a Number; 0x8000 bit is set if invalid
-	short NumNext;
+	short hoNumNext;
 	// Type of the object - OBJ_XXX or OBJ::XXX enum
 	// @remarks including the 7 built-in OBJ in event editor from -7 to -1, then other built-ins from 0 until 9.
-	short Type;
+	short hoType;
 
 	// rh2CreationCount, incrementing per object instance create of any object, wraps at 16-bit; but shouldn't be 0
 	// @remarks While rh2CreationCount starts as 0, 0 isn't used since Fusion b243, and it is incremented to 1 instead
-	unsigned short CreationId;
+	unsigned short hoCreationId;
 
 	// Pointer to this object's static Object Info List entry, which is used for all instances of this object
-	objInfoList * OiList;
+	objInfoList * hoOiList;
 
 	// Pointer to which call table array index to use when handling events, set to objectInfoList::Events
 	// @remarks This is old and deep Fusion code, probably from 16-bit KnP days. Only the built-in extensions use different tables.
-	unsigned int * Events;
+	unsigned int * hoEvents;
 
-	// Ignore - padding
 private:
-	unsigned int Free0;
+	// Ignore - padding
+	unsigned int hoFree0;
 DarkEdifInternalAccessProtected:
 
 	// List of extension identifiers for one-shot collision event and playzone enter/exit handling
 	// @remarks PrevNoRepeat is set at start of event handling tick; BaseNoRepeat is live list.
 	//			Not entirely sure what this prevents, but I wouldn't recommend messing with them.
-	unsigned char * PrevNoRepeat, * BaseNoRepeat;
+	unsigned char * hoPrevNoRepeat, * hoBaseNoRepeat;
 	// Used with path movement, works with rhLoopCount
-	int Mark1, Mark2;
+	int hoMark1, hoMark2;
 	// Name of the current node for path movements
-	TCHAR * MT_NodeName;
+	TCHAR * hoMT_NodeName;
 
 	// 0+ ID of the current A/C/E call, set before their ext function is run
-	int EventNumber;
+	// This is not Fusion event number, it is A/C/E index in ext
+	int hoEventNumber;
 
 	// Ignore - padding
 private:
-	int Free2;
+	int hoFree2;
 DarkEdifInternalAccessProtected:
 
 	// Common structure address (OC struct)
-	Objects_Common *	Common;
+	Objects_Common * hoCommon;
 
 	// TODO: These are used by built-in movements, but what for?
 	union {
 		struct {
-			int CalculX,	// Low weight value
-				X,			// X coordinate
-				CalculY,	// Low weight value
-				Y;			// Y coordinate
+			int hoCalculX,	// Low weight value
+				hoX,			// X coordinate
+				hoCalculY,	// Low weight value
+				hoY;			// Y coordinate
 		};
 		struct {
-			std::int64_t CalculXLong,
-						 CalculYLong;
+			std::int64_t hoCalculXLong,
+						 hoCalculYLong;
 		};
 	};
 
 	// Hot spot of the current image
-	int	ImgXSpot, ImgYSpot;
+	int	hoImgXSpot, hoImgYSpot;
 	// Width/Height of the current image
-	int ImgWidth, ImgHeight;
+	int hoImgWidth, hoImgHeight;
 
 	// Display rectangle
 	// TODO: Relative to frame, window, client area, scroll area?
-	RECT Rect;
+	RECT hoRect;
 
 	// Objects flags (originally OEFLAG_XX enum)
-	OEFLAGS OEFlags;
+	OEFLAGS hoOEFlags;
 
 	// HeaderObjectFlags (originally HOF_XX enum)
-	HeaderObjectFlags Flags;
+	HeaderObjectFlags hoFlags;
 
 	// 0 or 1; indicates this object was filtered/selected by conditions in the event.
 	// If 0, all the object instances should be considered selected; if 1, only the selected ones.
@@ -1983,19 +2109,19 @@ DarkEdifInternalAccessProtected:
 	// This is useless for exts, as the runtime only uses it to temporarily mark objects
 	// before restoring their selection after running conditions, and before running the actions;
 	// so both during condition evaluation, and during actions, there's no reason to preserve it.
-	bool SelectedInOR;
+	bool hoSelectedInOR;
 
 	// Ignore - padding
 private:
-	char Free;
+	char hoFree;
 DarkEdifInternalAccessProtected:
 
 	// Offset from HeaderObject -> AltVals struct. Only valid if OEFlags includes OEFLAGS::VALUES.
-	int OffsetValue;
+	int hoOffsetValue;
 
 	// Fusion frame layer, 0+?
 	// TODO: Confirm the bottom layer number 0 or 1 based
-	unsigned int Layer;
+	unsigned int hoLayer;
 
 	// Pointer to HandleRunObject routine
 	// @remarks Calls Extension::Handle in Edif-based exts
@@ -2006,24 +2132,27 @@ DarkEdifInternalAccessProtected:
 	short (* hoModifRoutine)(HeaderObject *);
 
 	// Pointer to DisplayRunObject; redraws this object
+	// @remarks If this does not return a valid result on non-Windows,
+	//			GetRunObjectDisplaySurface is run instead
 	short (* hoDisplayRoutine)(HeaderObject *);
 
 	// Collision limitation flags (OILIMITFLAG_XXX)
-	short LimitFlags;
+	short hoLimitFlags;
 
-	// Quickdraw list - a mainly Windows-only optimization for software (non-Direct3D) display mode
+	// Quickdraw list - a mainly Windows-only optimization for software display mode
 	// @remarks I only see this as -1 or -2 in non-Windows runtime usage, but it's a Windows optimization
-	short NextQuickDisplay;
+	short hoNextQuickDisplay;
 
-	// Background
-	saveRect BackSave;
+	// Background saving, a copy of background image. Used in Windows software display for objects with OEFLAGS::BACK_SAVE.
+	saveRect hoBackSave;
 
 	// Address of the current A/C/E parameter, set before A/C/E func is run
-	EventParam * CurrentParam;
+	// Do not rely on this for A/C/E parameters! It may not have the right index.
+	EventParam * hoCurrentParam;
 
 	// Offset to the window handle structure, which is an int handle_count, followed by a HANDLE[handle_count] array.
 	// Due to 32-bit variable use, you can specify any RAM address by the offset.
-	std::ptrdiff_t OffsetToWindows;
+	std::ptrdiff_t hoOffsetToWindows;
 
 	// ASCII identifier of the object, in 'ABCD' format.
 	// @remarks Due to small endianness, this is reversed in one way of reading it, and will read as 'D','C','B','A'.
@@ -2031,7 +2160,7 @@ DarkEdifInternalAccessProtected:
 	//			This is part of object differentiation, along with resource file magic number, and causes strange
 	//			Fusion editor behaviour if you have multiple with same identifier: for example, Popup Message Object 2,
 	//			and Input Object, both cause out-of-context popups questioning what their unsaid a/c/e intended object is.
-	unsigned int Identifier;
+	int hoIdentifier;
 
 public:
 	// Unique 0+ instance in rhPtr->ObjectList; use with rhPtr->GetObjectListOblOffsetByIndex()
@@ -2070,6 +2199,7 @@ public:
 	short get_NextSelected();
 
 	// Changes the next selected Number in this object's selection chain; -1 or 0x8000 bit is set to end the selection chain here
+	// There are subtleties to selection: see help file
 	void set_NextSelected(short);
 
 	// Reads whether this instance is selected in the current OR event.
@@ -2086,6 +2216,42 @@ public:
 	// Gets the fixed value by combining Number and CreationId; the result should never be 0 or -1, although can be negative
 	// @remarks This should be an unsigned int, but I'm leaving it as signed for consistency with runtime and other exts
 	int GetFixedValue();
+
+	// Gets X coordinate of object, relative to top left of frame, without scroll compensation
+	int	get_X() const;
+	// Gets Y coordinate of object, relative to top left of frame, without scroll compensation
+	int get_Y() const;
+	// Width of the current image
+	int get_ImgWidth() const;
+	// Height of the current image
+	int get_ImgHeight() const;
+	int get_ImgXSpot() const;
+	int get_ImgYSpot() const;
+
+	// Returns the 4 ASCII character code for this extension. Compare with return == 'XXXX'.
+	// Identifies the extension MFX uniquely.
+	// @remarks Defined in JSON->Identifier in DarkEdif,
+	//			JSON->About->Identifier in Edif,
+	//			#define IDENTIFIER MAKEID(xx) in Information.h in rSDK,
+	//			#define IDENTIFIER MAKEID(xx) in Common.h in MMF2SDK.
+	//			See int i = 'ABCD'; type of declaration.
+	int get_Identifier() const;
+
+	// Sets X coordinate of object, based on top-left of frame without scroll compensation
+	void SetX(const int x);
+	// Sets Y coordinate of object, based on top-left of frame without scroll compensation
+	void SetY(const int y);
+	// Sets X and Y coordinate of object, based on top-left of frame without scroll compensation
+	void SetPosition(const int x, const int y);
+
+	// Sets... ??? width of current image
+	void SetImgWidth(const int width);
+	// Sets... ??? height of the current image
+	void SetImgHeight(const int height);
+	// Sets width and height ... ??? of the current image
+	void SetSize(const int width, const int height);
+private:
+	void Internal_SetSize(int width, int height);
 };
 // typedef	LPHO HeaderObject*;
 
@@ -2095,6 +2261,9 @@ public:
 struct rMvt {
 	NO_DEFAULT_CTORS_OR_DTORS(rMvt);
 DarkEdifInternalAccessProtected:
+	friend HeaderObject;
+	friend rCom;
+
 	int  	rmAcc;						// Current acceleration
 	int  	rmDec;						// Current Decelaration
 	int		rmCollisionCount;			// Collision counter
@@ -2258,35 +2427,55 @@ DarkEdifInternalAccessProtected:
 };
 //typedef rAni*	LPRA;
 
+
 // ----------------------------------------
 // Sprite display structure
 // ----------------------------------------
-enum class RSFLAG : std::uint16_t {
-	HIDDEN = 0x1,
-	INACTIVE = 0x2,
-	SLEEPING = 0x4,
-	SCALE_RESAMPLE = 0x8,
-	ROTATE_ANTIA = 0x10,
-	VISIBLE = 0x20,
-	CREATED_EFFECT = 0x40
-};
-enum_class_is_a_bitmask(RSFLAG);
-struct Sprite {
-	NO_DEFAULT_CTORS_OR_DTORS(Sprite);
+
+// Contains sprite effect data: visible, alpha / RGB blend coefficient,
+// software flashing, HWA effect type, etc.
+// @remarks wrapped version of CRSpr class, not to be confused with CSprite in Sprite class.
+struct RunSprite
+{
+	NO_DEFAULT_CTORS_OR_DTORS(RunSprite);
+	// Returns a bitmask of what effects are active on this sprite
+	BlitOperation get_Effect() const;
+	// Gets alpha blend coefficient as it appears in Fusion editor
+	std::uint8_t GetAlphaBlendCoefficient() const;
+	// Gets RGB coefficient as a color (without alpha)
+	std::uint32_t GetRGBCoefficient() const;
+	// Gets the layer of the object, 0+ (Layer 1 in Fusion is 0 here)
+	std::uint32_t get_layer() const;
+	// Returns a mix of alpha + color blend coefficient
+	int get_EffectParam() const;
+	// CF2.5 296+: Gets effect shader index - not present in Windows
+	int get_EffectShader() const;
+	RunSpriteFlag get_Flags() const;
+
 DarkEdifInternalAccessProtected:
-	int	 			Flash,				// When flashing objects
-					FlashCount,
-					Layer,				// Layer
-					ZOrder,				// Z-order value
-					CreationFlags;		// Creation flags
-	COLORREF		BackColor;			// background saving color
-	unsigned int	Effect;				// Sprite effects
-	LPARAM			EffectParam;
-	RSFLAG			Flags;				// Handling flags
-	unsigned short	FadeCreationFlags;	// Saved during a fadein
+	friend DarkEdif::Surface;
+	int	 			rsFlash,				// When flashing objects
+					rsFlashCount,
+					rsLayer,				// Layer
+					rsZOrder,				// Z-order value
+					rsCreationFlags;		// Creation flags
+	std::uint32_t	rsBackColor;			// background saving color
+
+	// Sprite blit effects, a bitmask?
+	BlitOperation	rsEffect;
+
+	// For HWA (Direct3D+):
+	// Color coefficient + NOT inverse of alpha blend coefficient, i.e.
+	// BYTE alpha = 255 - (EffectParam >> 24);
+	// COLORREF color = EffectParam & 0xFFFFFF;
+	// For software display modes, semi-transparency stores 0 to 0x80,
+	// and other display modes are
+	std::uint32_t	rsEffectParam;
+	RunSpriteFlag	rsFlags;				// Handling flags
+	unsigned short	rsFadeCreationFlags;	// Saved during a fadein
 };
-//typedef Sprite *	LPRSP;
-//typedef rSpr	Sprite;
+//typedef RunSprite rSpr;
+//typedef RunSprite *	LPRSP;
 
 
 
@@ -2346,18 +2535,71 @@ typedef AltVals *	LPRVAL;
 // -----------------------------------------------
 // Objects animation and movement structure
 // -----------------------------------------------
-#ifndef ANGLETYPE
-	#ifdef HWABETA
-		typedef float AngleVar;
-	#else
-		typedef int AngleVar;
-	#endif
-#endif
 typedef void (* RCROUTINE)(HeaderObject *);
 struct rCom {
 	NO_DEFAULT_CTORS_OR_DTORS(rCom);
+	enum class MovementID : int {
+		// When launching, CreateRunObject will have -1 as movement
+		// Later, it will have 13 (Bullet).
+		// Other movements will have correct type in CreateRunObject,
+		// and objects without movement will have...
+		Launching = -1,
+		Static = 0,
+		MouseControlled = 1,
+		RaceCar = 2,
+		EightDirection = 3, // named Generic
+		BouncingBall = 4,
+		Path = 5, // named Taped
+		Platform = 9,
+		// Disappear movement - not same as Disappearing animation.
+		// Only applied for OEFLAG ANIMATIONS or SPRITES.
+		Disappear = 11,
+		Appear = 12,
+		// Launched movement (see Launching)
+		Launched = 13, // named Bullet
+
+		// Circular, Drag n Drop, Invaders, Presentation, Regular Polygon,
+		// Simple Ellipse, Sinewave, Vector, InAndOut, Pinball, Space Ship;
+		// and includes all Physics movements
+		ExtensionMvt = 14,
+	};
+	// If -1, object was launched or doesn't have a movement, and rom is invalid.
+	// Otherwise, a movement ID; 0 is static, 1 is mouse controlled, etc.
+	MovementID get_nMovement() const;
+	int get_anim() const;
+	int get_image() const;
+	float get_scaleX() const;
+	float get_scaleY() const;
+	// Reads angle, converting from int in MMF2 if needed
+	float GetAngle() const;
+	// Current direction (0-31, 0 is right, incrementing ccw)
+	int get_dir() const;
+	int get_speed() const;
+	int get_minSpeed() const;
+	int get_maxSpeed() const;
+	bool get_changed() const;
+	bool get_checkCollides() const;
+
+	void set_nMovement(const MovementID);
+	void set_anim(const int);
+	void set_image(const int);
+	void set_scaleX(const float);
+	void set_scaleY(const float);
+	// Sets angle, converting to int in MMF2 if needed
+	void SetAngle(const float);
+	// Sets current direction (0-31, 0 is right, incrementing ccw)
+	void set_dir(const int);
+	void set_speed(const int);
+	void set_minSpeed(const int);
+	void set_maxSpeed(const int);
+	// If true, triggers a DisplayRunObject call after tick
+	void set_changed(const bool);
+	// If true, triggers collisions to be checked after tick
+	void set_checkCollides(const bool);
+
 DarkEdifInternalAccessProtected:
 	friend RunObject;
+	friend DarkEdif::Surface;
 	int			rcOffsetAnimation; 		// Offset to anims structures
 	int			rcOffsetSprite;			// Offset to sprites structures
 	RCROUTINE	rcRoutineMove;			// Offset to movement routine
@@ -2367,13 +2609,14 @@ DarkEdifInternalAccessProtected:
 
 	int	   		rcNMovement;			// Number of the current movement
 	CRunMvt *	rcRunMvt;				// Pointer to extension movement
-	Spr *  		rcSprite;				// Sprite ID if defined
+	Sprite * 	rcSprite;				// Sprite ID if defined
 	int	 		rcAnim;					// Wanted animation
 	int	   		rcImage;				// Current frame
 	float		rcScaleX;
 	float		rcScaleY;
-	AngleVar	rcAngle;
-	int	   		rcDir;					// Current direction
+	// may be int; see DarkEdif::IsHWAFloatAngles
+	float		rcAngle;
+	int	   		rcDir;					// Current direction (0-31, 0 is right, incrementing ccw)
 	int	   		rcSpeed;				// Current speed
 	int	   		rcMinSpeed;				// Minimum speed
 	int	   		rcMaxSpeed;				// Maximum speed
@@ -2383,7 +2626,8 @@ DarkEdifInternalAccessProtected:
 	int	 		rcOldX;					// Previous coordinates
 	int	 		rcOldY;
 	int	 		rcOldImage;
-	AngleVar	rcOldAngle;
+	// may be int; see DarkEdif::IsHWAFloatAngles
+	float		rcOldAngle;
 	int	 		rcOldDir;
 	int	 		rcOldX1;					// For zone detections
 	int	 		rcOldY1;
@@ -2399,7 +2643,6 @@ DarkEdifInternalAccessProtected:
 // ACTIVE OBJECTS DATAZONE
 // ------------------------------------------------------------
 
-class Extension;
 struct ForbiddenInternals2;
 
 // RUNDATA, but with all OEFlags and all parts, like what an Active object has
@@ -2413,14 +2656,19 @@ struct RunObject {
 	rMvt* get_rom();
 	// Reads animation data; null if not available
 	rAni* get_roa();
-	Sprite* get_ros();
+	// Reads sprite data i.e. layer, flashing, Z order, Direct3D effects; null if not available
+	RunSprite * get_ros();
 	// Reads alt values, strings, internal flags; null if not available
 	AltVals* get_rov();
 
-	// Windows only: For Edif/DarkEdif exts, returns Extension pointer by calculating RUNDATA size.
-	// @remarks While it's permitted to put extra variables in RUNDATA, this function assumes pExtension is immediately following
-	//			the common structs like AltVals, and that the various structs are local SDK's sizes.
-	//			Variables between will break this function; variables after pExtension in RUNDATA won't.
+	// @brief !! Warning: This will not return Extension * as this extension contains, but as the RunObject contains.            !!
+	//		  For DarkEdif exts, returns Extension pointer by calculating RUNDATA size.
+	// @remarks While it's permitted to put extra variables in RUNDATA, this function assumes pExtension
+	//			is immediately following the common structs like AltVals, and that the various structs
+	//			are local SDK's sizes.
+	//			Custom variables in RUNDATA between eHeader -> pExtension will break this function; variables
+	//			after pExtension won't.
+	//			This will work for Edif Windows extensions, but Edif is not strictly supported.
 	Extension* GetExtension();
 
 	DarkEdifInternalAccessProtected:
@@ -2428,12 +2676,13 @@ struct RunObject {
 	friend ForbiddenInternals2;
 	friend ConditionOrActionManager_Windows;
 	friend ExpressionManager_Windows;
+	friend DarkEdif::Surface;
 	HeaderObject  	rHo;		  		// Common structure
 
 	rCom			roc;				// Anim/movement structure
 	rMvt			rom;				// Movement structure
 	rAni			roa;				// Animation structure
-	Sprite			ros;				// Sprite handling structure
+	RunSprite		ros;				// Sprite handling structure
 	AltVals			rov;				// Values structure
 	// Internal usage only: sets the extension pointer, used during Create/DestroyRunObject
 	void SetExtension(Extension* const ext);
@@ -2470,7 +2719,7 @@ DarkEdifInternalAccessProtected:
 	HeaderObject 	HeaderObject;	// For all the objects
 	rCom			Common;			// Anims / movements / sprites structures
 	rMvt			Movement;		// Mouvement structure
-	Sprite			Sprite;			// Sprite handling
+	RunSprite		Sprite;			// Sprite handling
 
 	short			Player;			// Number of the player if score or lives
 	short			Flags;			// Type + flags
@@ -2532,83 +2781,97 @@ enum_class_is_a_bitmask(OILFlags);
 // CObjInfo in most platforms
 struct objInfoList {
 	NO_DEFAULT_CTORS_OR_DTORS(objInfoList);
+	friend RunHeader;
 DarkEdifInternalAccessProtected:
 	// Unique ObjectInfo number, in rhPtr->OIList. Does not relate to OIList index.
-	short Oi;
+	std::int16_t oilOi;
 
 	// First selected object instance's HeaderObject::Number, or -1 for no selection
 	// @remarks If EventCount does not match rh2EventCount, this value is ignored
-	short ListSelected;
+	std::int16_t oilListSelected;
 
 	// Type of the object - OBJ:: enum?
-	short Type;
+	std::int16_t oilType;
 
 	// First object instance's HeaderObject::Number; 0x8000 bit is set if invalid
-	short Object;
+	std::int16_t oilObject;
 
 	// listPointers offset for this object's conditions
 	// @remarks Deep Fusion internals, an offset in a list of calltables for conditions,
 	//			used by all exts but mostly for built-in Fusion objects
-	unsigned int Events;
+	std::uint32_t oilEvents;
 
 	// WRAP flags, used with instances' movement struct rmWrapping
-	std::int8_t Wrap;
+	std::int8_t oilWrap;
 
 	// bool; used to indicate whether to move to next object instance during action instance loop
 	// @remarks Ties with EventProgram RepeatFlag, which doesn't feature in Windows SDK
-	std::int8_t NextFlag;
+	std::int8_t oilNextFlag;
 
 private:
-	unsigned short	oilFree; // Padding
+	std::uint16_t oilFree; // Padding
 
 DarkEdifInternalAccessProtected:
 	// Number of all object instances of this type
-	int				NObjects;
+	std::int32_t oilNObjects;
 
-	// Used to reset selection between actions; if matching rhPtr->rh2ActionCount, the ListSelected-NextSelected chain is used,
-	// otherwise implicitly all instances are still selected (i.e. the Object-NumNext chain).
+	// Used to reset selection between actions; if matching rhPtr->rh2ActionCount, the
+	// ListSelected-NextSelected chain is used, otherwise implicitly all instances are still selected (i.e.
+	// the Object-NumNext chain).
 	// Then the first instance is set to CurrentOi and the loop starts.
-	int ActionCount;
+	std::int32_t oilActionCount;
 
 	// I'm not sure how this plays with ActionCount.
 	// Used to repeat an action selection between actions; if not matching rhPtr->rh2ActionCount, inspects CurrentRoutine
 	// to determine which object instances should be looped on.
 	// Then the first instance is set to CurrentOi and the loop starts.
-	int ActionLoopCount;
+	std::int32_t oilActionLoopCount;
 
 	// Current routine for the actions
-	HeaderObject * (*CurrentRoutine)(objInfoList*, BOOL*);
+	HeaderObject * (*oilCurrentRoutine)(objInfoList*, BOOL*);
 
 	// Current object HeaderObject::Number, used during looping instances in applying actions to them
-	int CurrentOi;
+	std::int32_t oilCurrentOi;
 
 	// Next selected object HeaderObject::Number, used during looping instances in applying actions to them
 	// @remarks Despite the 32-bit int type, this is actually a short
-	int Next;
+	std::int32_t oilNext;
 
 	// Used to invalidate selection between events; if matching rhPtr->rh4EventCount, the ListSelected-NextSelected chain is used,
 	// otherwise implicitly all instances are still selected (i.e. the Object-NumNext chain).
-	int EventCount;
+	std::int32_t oilEventCount;
 
 	// Number of selected objects - invalid in OR events during second set of OR conditions (in MMF2 thru CF2.5 Fusion build 295.10)
-	int NumOfSelected;
+	std::int32_t oilNumOfSelected;
 
 	// Object's OEFLAGS, the default copied during new instance create
-	OEFLAGS OEFlags;
+	OEFLAGS oilOEFlags;
 
-	short			LimitFlags,		// Movement limitation flags
-					LimitList;		// Pointer to limitation list
-	OILFlags		OIFlags;		// Objects preferences
-	short			OCFlags2;		// Objects preferences II
-	int				InkEffect,		// Ink effect
-					EffectParam;	// Ink effect param
-	short			HFII;			// First available frameitem
-	COLORREF 		BackColor;		// Background erasing color
-	short			Qualifiers[MAX_QUALIFIERS];		// Qualifiers for this object
-	TCHAR			name[OINAME_SIZE];	 	// user-specified object name, cropped to 24 chars, guaranteed end with NULL
-	int				EventCountOR;	// Selection in a list of events with OR
+	// Movement limitation flags
+	std::int16_t oilLimitFlags;
+	// Pointer to limitation list
+	std::int16_t oilLimitList;
+	// Objects preferences
+	OILFlags oilOIFlags;
+	// Objects preferences II
+	std::uint16_t oilOCFlags2;
+	// Ink effect
+	std::int32_t oilInkEffect;
+	// Ink effect param
+	std::int32_t oilEffectParam;
+	// First available frameitem
+	std::int16_t oilHFII;
+	// Background erasing color
+	COLORREF oilBackColor;
+	// Qualifiers for this object
+	std::int16_t oilQualifiers[MAX_QUALIFIERS];
+	// user-specified object name, cropped to 24 chars, guaranteed end with NULL
+	TCHAR oilName[OINAME_SIZE];
+	// Selection in a list of events with OR
+	std::int16_t 	oilEventCountOR;
 	#ifdef HWABETA
-		short *		lColList;		// Liste de collisions sprites
+		// Liste de collisions sprites
+		short *		oilColList;		
 	#endif
 
 public:
@@ -2631,12 +2894,16 @@ public:
 	//			This is a helper value, and won't prevent ListSelected-NextSelected chain going beyond this count.
 	int get_NumOfSelected();
 
-	// The unique number of this object; same among instances. NOT the OiList index.
+	// The unique number of this object; unique in the OiList, but not an index. Same among instances.
 	// @remarks Used to indicate difference between e.g. Active 1 and Active 2. Does not follow any pattern.
 	//			OIs can be negative when indicating a qualifer ID (has 0x8000 flag), but this
 	//			should not apply for OIL::Oi here, as OIL is one object only.
 	//			While it often matches OiList index, it differs, particularly in later Fusion frames.
 	short get_Oi();
+
+	// The unique number of this object; the index of this OiList in the rhPtr global OiList. Same among instances.
+	// You shouldn't need this index, as most operations can be done on this object directly.
+	short GetOiListIndex(RunHeader*);
 
 	// The count of all object instances of this type, selected or not.
 	// @remarks This is a helper value, and won't prevent Object-NumNext iteration going beyond it.
@@ -2670,7 +2937,7 @@ public:
 	//			1 indicates to use one 2nd object (gao2ndOneOnly)
 	//			2 indicates to use the ListSelected->NextSelected current selected chain (gao2ndCurrent)
 	//			3 indicates to use the Object->NumNext chain (gao2ndAll)
-	decltype(CurrentRoutine) get_oilCurrentRoutine();
+	decltype(oilCurrentRoutine) get_oilCurrentRoutine();
 
 	// When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
 	int get_oilCurrentOi();
@@ -2708,6 +2975,7 @@ public:
 private:
 	int get_EventCountOR();
 	void set_EventCountOR(int);
+	friend Edif::Runtime;
 };
 //typedef	objInfoList	*	objInfoList *;
 
@@ -2723,28 +2991,62 @@ private:
 
 // Object creation structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-struct CreateObjectInfo {
+struct CreateObjectInfo
+{
 	NO_DEFAULT_CTORS_OR_DTORS(CreateObjectInfo);
+	// The COF_XX enum: COF_NOMOVEMENT, COF_HIDDEN, COF_FIRSTTEXT, COF_CREATEDATSTART.
+	enum class Flags : std::uint16_t
+	{
+		None,
+		// Launched objects have this, meaning rom is ignored.
+		NoMovement = 0x1,
+		// Launched objects have this.
+		Hidden = 0x2,
+		// String objects aren't destroyed, so first String gets kept via cobFlags
+		FirstText = 0x4,
+		// Created at start from frame editor, otherwise by Launch or Create
+		// Added in CF2.5
+		CreatedAtStart = 0x8
+	};
+
 DarkEdifInternalAccessProtected:
 	LevelObject *	cobLevObj;		// Leave first!
-	unsigned short	cobLevObjSeg,
-					cobFlags;
+	unsigned short	cobLevObjSeg;
+	Flags			cobFlags; // COF_XXX
 	int				cobX,
 					cobY,
+					// This is -1 if created from frame or no direction.
+					// It is set when using Launch Object.
+					// See roc->rcDir instead for a consistent direction.
 					cobDir,
+					// 0-based layer (layer 1 is 0)
 					cobLayer,
+					// Z order, +1 from display; so z-order of 1 in frame editor
+					// is actually 2 here.
+					// Not sure why that is, perhaps 0 is reserved.
 					cobZOrder;
+public:
+	Flags get_flags() const;
+	std::int32_t get_X() const;
+	std::int32_t get_Y() const;
+	// Gets direction, reading from RunObject if CreateObjInfo class has invalid data
+	std::int32_t GetDir(RunObjectMultiPlatPtr rdPtr) const;
+	// Layer, 0+
+	std::int32_t get_layer() const;
+	std::int32_t get_ZOrder() const;
 };
 //typedef	CreateObjectInfo *	LPCOB;
 //typedef	CreateObjectInfo *	fpcob;
+enum_class_is_a_bitmask(CreateObjectInfo::Flags);
 
 // Flags for Create Objects
 // -------------------------
 #define	COF_NOMOVEMENT		0x1
 #define	COF_HIDDEN			0x2
-#define	COF_FIRSTTEXT		0x4
+#define	COF_FIRSTTEXT		0x4 // String objects aren't destroyed, so first String gets kept via cobFlags
+#define COF_CREATEDATSTART	0x8
 
-// Qualifier to oilist for machine langage
+// Qualifier to oilist for machine language
 // ---------------------------------------
 
 struct qualToOi {
@@ -2790,9 +3092,9 @@ DarkEdifInternalAccessProtected:
 	short			NumOfConditions;	// 0C Number of conditions
 	short			NumOfActions;		// 0E Number of actions
 	short			NumOfExpressions;	// 10 Number of expressions
-	unsigned short	EDITDATASize;		// 12 Size of the data zone when exploded
+	unsigned short	EDITDATASize;		// 12 Size of the data zone for newly created objects
 	OEFLAGS			EditFlags;			// 14 Object flags
-	char			WindowProcPriority;	// 16 Priority of the routine 0-255
+	char			WindowProcPriority;	// 16 Priority of the WndProc routine 0-255
 	char			Free;
 	OEPREFS			EditPrefs;			// 18 Editing Preferences
 	DWORD			Identifier;			// 1A Identification string
@@ -2829,7 +3131,7 @@ DarkEdifInternalAccessProtected:
 	COLORREF 			(FusionAPI * GetRunObjectTextColor)		(HeaderObject *);
 	void				(FusionAPI * SetRunObjectTextColor)		(HeaderObject *, COLORREF);
 	short				(FusionAPI * GetRunObjectWindow)		(HeaderObject *);
-	CollisionMask *		(FusionAPI * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
+	sMask *				(FusionAPI * GetRunObjectCollisionMask)	(HeaderObject *, LPARAM);
 	BOOL				(FusionAPI * SaveRunObject)				(HeaderObject *, HANDLE);
 	BOOL				(FusionAPI * LoadRunObject)				(HeaderObject *, HANDLE);
 	void				(FusionAPI * GetRunObjectMemoryUsage)	(HeaderObject *, int *, int *, int *);
@@ -3158,10 +3460,10 @@ enum class AH2OPT {
 	RTLLAYOUT = 0x80,			// (Unicode) Right-to-left layout
 	ENABLEIAD = 0x100,			// (iPhone) Enable iAd
 	IADBOTTOM = 0x200,			// (iPhone) Display ad at bottom
-	AUTOEND = 0x400,			// (Android)
-	DISABLEBACKBUTTON = 0x800,	// (Android) Disable Back button behavior
+	AUTOEND = 0x400,			// (Android) Exits app when switched away
+	DISABLEBACKBUTTON = 0x800,	// (Android) Disable Back button behavior (ending app when no ext intercepts the Back key)
 	ANTIALIASED = 0x1000,		// (iPhone) Smooth resizing on bigger screens
-	CRASHREPORTING = 0x2000,		// (Android) Enable online crash reporting
+	CRASHREPORTING = 0x2000,	// (Android) Enable online crash reporting
 };
 
 enum class SCREENORIENTATION {
@@ -3792,21 +4094,6 @@ typedef Transition_Data * LPTRANSITIONDATA;
 
 #endif // _H2INC
 
-// text alignment flags
-#define	TEXT_ALIGN_LEFT		0x1
-#define	TEXT_ALIGN_HCENTER	0x2
-#define	TEXT_ALIGN_RIGHT	0x4
-#define	TEXT_ALIGN_TOP		0x8
-#define	TEXT_ALIGN_VCENTER	0x10
-#define	TEXT_ALIGN_BOTTOM	0x20
-
-// Right-to-left ordering
-#define	TEXT_RTL			0x100
-
-// text caps
-#define	TEXT_FONT			0x00010000
-#define	TEXT_COLOR			0x00020000
-#define	TEXT_COLOR16		0x00040000
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -3900,76 +4187,6 @@ enum	{
 #define CFVERSION_25		0x02050000		// CF 2.5
 #define	MMF_CURRENTVERSION	MMFVERSION_20
 
-// Build numbers
-enum class MMF_BUILD {
-	NONAME = 203,
-	MMF_BUILD_MENUIMAGES,
-	MMF_BUILD_SUBAPPICON,
-	MMF_BUILD_WINMENUIDX,
-	MMF_BUILD_NOTUSED,
-	MMF_BUILD_ABOUTTEXT,
-	FRAMEDPOS,
-	TRSPCOLOR,
-	BLD211,
-	DEMO,
-	PREBETA_2,
-	PREBETA_3,
-	PREBETA_4,	// First update of Jason's book
-	ALTVALUES,
-	EDTCHUNKS,
-	COUNTERTEXT,
-	BLD_SDK,		// Pre-SDK version,
-	BLD_SDK2,		// Second SDK version,
-	MVTSDK2,		// Second Mvt SDK version
-	FIXCOLLISANDBEH,
-	PROPFILTERS,
-	MFXEXTS,
-	LASTFRAMEOFFSET,
-	EDUDEMOFEB06,
-	GLBOBJBUG,
-	IDTC,
-	BLD229,
-	BLD230,
-	BLD231,
-	FIXQUALIF,
-	BLD233,
-	BLD234_TGFPR,
-	BLD235,
-	BLD236,
-	BLD237,
-	BLD238,
-	BLD239_CD,
-	BLD240_DEMO,
-	BLD241_SP1,
-	BLD242_SP2,
-	BLD243_SP3,
-	BLD244_SP4,
-	BLD245_SP5,
-	BLD246_SP6,
-	BLD247_SP7,
-	BLD248_JAVA,
-	BLD249_MOBILE_FLASH,
-	BLD250,
-	BLD251,
-	BLD252,
-	BLD253,
-	BLD254,
-};
-#define MMF_CURRENTBUILD 255
-
-// MFA file format versions
-#define MFA_BUILD_ALTSTR			1						// Alterable strings
-#define MFA_BUILD_COUNTERTEXT		2						// text mode in counters
-#define MFA_BUILD_LASTFRAMEOFFSET	3						// Additional frame offset
-#define MFA_BUILD_FIXQUALIF			4						// Fix in qualifiers + prd version
-#ifdef _UNICODE
-	#define MFA_BUILD_LANGID		5						// Language ID
-	#define MFA_CURRENTBUILD		MFA_BUILD_LANGID
-#else
-	#define MFA_CURRENTBUILD		MFA_BUILD_FIXQUALIF
-#endif
-
-
 // Options for EditSurfaceParams, EditImageParams, EditAnimationParams
 enum class PictureEditOptions : std::uint32_t {
 	None				= 0x00,
@@ -4041,7 +4258,6 @@ struct EditAnimationParams {
 using EditAnimationParamsW = EditAnimationParams<wchar_t>;
 using EditAnimationParamsA = EditAnimationParams<char>;
 // typedef EditAnimationParams* LPEDITANIMATIONPARAMS;
-
 
 // Global variables structure
 struct mv {
@@ -4422,7 +4638,7 @@ struct LevelObject {
 					OiParentHandle,	// HOI Parent
 					Layer,			// Layer
 					Type;
-	Spr *			Spr[4];			// Sprite handles for backdrop objects from layers > 1
+	Sprite *		Spr[4];			// Sprite handles for backdrop objects from layers > 1
 };
 // typedef LO *LPLO;
 // typedef	LO *fpLevObj;
@@ -4444,7 +4660,7 @@ struct bkd2 {
 					colMode,
 					nLayer,
 					obstacleType;
-	Spr *			pSpr[4];
+	Sprite*			pSpr[4];
 	unsigned int	inkEffect,
 					inkEffectParam;
 };
@@ -4709,6 +4925,7 @@ struct CRunApp {
 
 DarkEdifInternalAccessProtected:
 	friend Edif::Runtime;
+	friend DarkEdif::FontInfoMultiPlat;
 	// Application info
 	AppMiniHeader	miniHdr;	 		// Version
 	AppHeader		hdr;				// General info
@@ -4918,4 +5135,6 @@ unsigned long	FusionAPI DibToImageEx(Appli *, Image *, BITMAPINFOHEADER *, COLOR
 void	FusionAPI RemapDib(BITMAPINFO *, Appli *, LPBYTE);
 #endif
 
-#include "StockSDKDefines.hpp"
+//#include "StockSDKDefines.hpp"
+
+enum class SurfaceDriver : int;

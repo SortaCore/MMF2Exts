@@ -1,22 +1,20 @@
 #pragma once
-#include "Edif.hpp"
+#include "DarkEdif.hpp"
 #include "MultiThreading.hpp"
 #include <functional>
 
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
 static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
 
-class Extension
+class Extension final
 {
 public:
-	// Hide stuff requiring other headers
-	std::shared_ptr<EventToRun> threadData;
-	static std::atomic<bool> AppWasClosed;
-	static void eventpumpdeleter(lacewing::eventpump);
-	static void LacewingLoopThread(Extension* ThisExt);
-
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 #ifdef __ANDROID__
 	global<jobject> javaExtPtr;
 #elif defined(__APPLE__)
@@ -28,21 +26,28 @@ public:
 	static const int MinimumBuild = 251;
 	static const int Version = lacewing::relayserver::buildnum;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
 #else
-	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
 #endif
 	~Extension();
 
+	// ======================================
+	// Extension data
+	// ======================================
+
 	DarkEdif::FusionDebugger FusionDebugger;
+
+	std::shared_ptr<EventToRun> threadData;
+	static std::atomic<bool> AppWasClosed;
+	static void eventpumpdeleter(lacewing::eventpump);
+	static void LacewingLoopThread(Extension* ThisExt);
 
 	bool isGlobal;
 	struct GlobalInfo;
@@ -114,242 +119,232 @@ public:
 	// We can't "deny" a disconnect, so we must accept it immediately.
 
 	/// Actions
-		void RemovedActionNoParams();
+	void RemovedActionNoParams();
 
-		void RelayServer_Host(int port);
-		void RelayServer_StopHosting();
-		void FlashServer_Host(const TCHAR * path);
-		void FlashServer_StopHosting();
-		void WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privkeyFile, const TCHAR* password);
-		void WebSocketServer_LoadHostCertificate_FromSystemStore(const TCHAR* store, const TCHAR* name, const TCHAR* password);
-		void WebSocketServer_EnableHosting(int insecurePort, int securePort);
-		void WebSocketServer_DisableHosting(const TCHAR * which);
-		void ChannelListing_Enable();
-		void ChannelListing_Disable();
-		void SetWelcomeMessage(const TCHAR * message);
-		void SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allowListContents);
-		void EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
-		void EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
-		void EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
-		void EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
-		void EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith);
-		void EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith);
-		void EnableCondition_OnMessageToServer(int informFusion);
-		void OnInteractive_Deny(const TCHAR * reason);
-		void OnInteractive_ChangeClientName(const TCHAR * newName);
-		void OnInteractive_ChangeChannelName(const TCHAR * newName);
-		void OnInteractive_DropMessage();
-		void OnInteractive_ReplaceMessageWithText(const TCHAR * newText);
-		void OnInteractive_ReplaceMessageWithNumber(int newNumber);
-		void OnInteractive_ReplaceMessageWithSendBinary();
+	void RelayServer_Host(int port);
+	void RelayServer_StopHosting();
+	void FlashServer_Host(const TCHAR * path);
+	void FlashServer_StopHosting();
+	void WebSocketServer_LoadHostCertificate_FromFile(const TCHAR* chainFile, const TCHAR* privkeyFile, const TCHAR* password);
+	void WebSocketServer_LoadHostCertificate_FromSystemStore(const TCHAR* store, const TCHAR* name, const TCHAR* password);
+	void WebSocketServer_EnableHosting(int insecurePort, int securePort);
+	void WebSocketServer_DisableHosting(const TCHAR * which);
+	void ChannelListing_Enable();
+	void ChannelListing_Disable();
+	void SetWelcomeMessage(const TCHAR * message);
+	void SetUnicodeAllowList(const TCHAR * listToSet, const TCHAR * allowListContents);
+	void EnableCondition_OnConnectRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
+	void EnableCondition_OnNameSetRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
+	void EnableCondition_OnJoinChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
+	void EnableCondition_OnLeaveChannelRequest(int informFusion, int immediateRespondWith, const TCHAR * autoDenyReason);
+	void EnableCondition_OnMessageToChannel(int informFusion, int immediateRespondWith);
+	void EnableCondition_OnMessageToPeer(int informFusion, int immediateRespondWith);
+	void EnableCondition_OnMessageToServer(int informFusion);
+	void OnInteractive_Deny(const TCHAR * reason);
+	void OnInteractive_ChangeClientName(const TCHAR * newName);
+	void OnInteractive_ChangeChannelName(const TCHAR * newName);
+	void OnInteractive_DropMessage();
+	void OnInteractive_ReplaceMessageWithText(const TCHAR * newText);
+	void OnInteractive_ReplaceMessageWithNumber(int newNumber);
+	void OnInteractive_ReplaceMessageWithSendBinary();
 
-		void Channel_SelectByName(const TCHAR * name);
-		void Channel_SelectByID(int id);
-		void Channel_Close();
-		void Channel_SelectMaster();
-		void Channel_LoopClients();
-		void Channel_LoopClientsWithName(const TCHAR * loopName);
-		void Channel_SetLocalData(const TCHAR * key, const TCHAR * value);
-		void LoopAllChannels();
-		void LoopAllChannelsWithName(const TCHAR * loopName);
-		void Channel_CreateChannelWithMasterByName(const TCHAR * channelName, int hidden, int autoclose, const TCHAR * masterClientName);
-		void Channel_CreateChannelWithMasterByID(const TCHAR * channelName, int hidden, int autoclose, int masterClientID);
-		void Channel_KickClientByName(const TCHAR * clientName);
-		void Channel_KickClientByID(int id);
-		void Channel_JoinClientByName(const TCHAR * clientName);
-		void Channel_JoinClientByID(int id);
-		void Client_Disconnect();
-		void Client_SetLocalData(const TCHAR * key, const TCHAR * value);
-		void Client_LoopJoinedChannels();
-		void Client_LoopJoinedChannelsWithName(const TCHAR * loopName);
-		void Client_SelectByName(const TCHAR * clientName);
-		void Client_SelectByID(int clientID);
-		void Client_SelectSender();
-		void Client_SelectReceiver();
-		void Client_JoinToChannel(const TCHAR * channelNamePtr);
-		void LoopAllClients();
-		void LoopAllClientsWithName(const TCHAR * loopName);
+	void Channel_SelectByName(const TCHAR * name);
+	void Channel_SelectByID(int id);
+	void Channel_Close();
+	void Channel_SelectMaster();
+	void Channel_LoopClients();
+	void Channel_LoopClientsWithName(const TCHAR * loopName);
+	void Channel_SetLocalData(const TCHAR * key, const TCHAR * value);
+	void LoopAllChannels();
+	void LoopAllChannelsWithName(const TCHAR * loopName);
+	void Channel_CreateChannelWithMasterByName(const TCHAR * channelName, int hidden, int autoclose, const TCHAR * masterClientName);
+	void Channel_CreateChannelWithMasterByID(const TCHAR * channelName, int hidden, int autoclose, int masterClientID);
+	void Channel_KickClientByName(const TCHAR * clientName);
+	void Channel_KickClientByID(int id);
+	void Channel_JoinClientByName(const TCHAR * clientName);
+	void Channel_JoinClientByID(int id);
+	void Client_Disconnect();
+	void Client_SetLocalData(const TCHAR * key, const TCHAR * value);
+	void Client_LoopJoinedChannels();
+	void Client_LoopJoinedChannelsWithName(const TCHAR * loopName);
+	void Client_SelectByName(const TCHAR * clientName);
+	void Client_SelectByID(int clientID);
+	void Client_SelectSender();
+	void Client_SelectReceiver();
+	void Client_JoinToChannel(const TCHAR * channelNamePtr);
+	void LoopAllClients();
+	void LoopAllClientsWithName(const TCHAR * loopName);
 
-		void SendTextToChannel(int subchannel, const TCHAR * textToSend);
-		void SendTextToClient(int subchannel, const TCHAR * textToSend);
-		void SendNumberToChannel(int subchannel, int numToSend);
-		void SendNumberToClient(int subchannel, int numToSend);
-		void SendBinaryToChannel(int subchannel);
-		void SendBinaryToClient(int subchannel);
+	void SendTextToChannel(int subchannel, const TCHAR * textToSend);
+	void SendTextToClient(int subchannel, const TCHAR * textToSend);
+	void SendNumberToChannel(int subchannel, int numToSend);
+	void SendNumberToClient(int subchannel, int numToSend);
+	void SendBinaryToChannel(int subchannel);
+	void SendBinaryToClient(int subchannel);
 
-		void BlastTextToChannel(int subchannel, const TCHAR * TextToBlast);
-		void BlastTextToClient(int subchannel, const TCHAR * TextToBlast);
-		void BlastNumberToChannel(int subchannel, int NumToBlast);
-		void BlastNumberToClient(int subchannel, int NumToBlast);
-		void BlastBinaryToChannel(int subchannel);
-		void BlastBinaryToClient(int subchannel);
+	void BlastTextToChannel(int subchannel, const TCHAR * TextToBlast);
+	void BlastTextToClient(int subchannel, const TCHAR * TextToBlast);
+	void BlastNumberToChannel(int subchannel, int NumToBlast);
+	void BlastNumberToClient(int subchannel, int NumToBlast);
+	void BlastBinaryToChannel(int subchannel);
+	void BlastBinaryToClient(int subchannel);
 
-		void SendMsg_AddASCIIByte(const TCHAR * Byte);
-		void SendMsg_AddByteInt(int Byte);
-		void SendMsg_AddShort(int Short);
-		void SendMsg_AddInt(int Int);
-		void SendMsg_AddFloat(float Float);
-		void SendMsg_AddStringWithoutNull(const TCHAR * string);
-		void SendMsg_AddString(const TCHAR * string);
-		void SendMsg_AddBinaryFromAddress(unsigned int address, int size);
-		void SendMsg_AddFileToBinary(const TCHAR * file);
-		void SendMsg_Resize(int newSize);
-		void SendMsg_CompressBinary();
-		void SendMsg_Clear();
+	void SendMsg_AddASCIIByte(const TCHAR * Byte);
+	void SendMsg_AddByteInt(int Byte);
+	void SendMsg_AddShort(int Short);
+	void SendMsg_AddInt(int Int);
+	void SendMsg_AddFloat(float Float);
+	void SendMsg_AddStringWithoutNull(const TCHAR * string);
+	void SendMsg_AddString(const TCHAR * string);
+	void SendMsg_AddBinaryFromAddress(unsigned int address, int size);
+	void SendMsg_AddFileToBinary(const TCHAR * file);
+	void SendMsg_Resize(int newSize);
+	void SendMsg_CompressBinary();
+	void SendMsg_Clear();
 
-		void RecvMsg_DecompressBinary();
-		void RecvMsg_MoveCursor(int Position);
-		void RecvMsg_SaveToFile(int Position, int size, const TCHAR * Filename);
-		void RecvMsg_AppendToFile(int Position, int size, const TCHAR * Filename);
+	void RecvMsg_DecompressBinary();
+	void RecvMsg_MoveCursor(int Position);
+	void RecvMsg_SaveToFile(int Position, int size, const TCHAR * Filename);
+	void RecvMsg_AppendToFile(int Position, int size, const TCHAR * Filename);
 
-		void Relay_DoHolePunchToFutureClient(const TCHAR* clientIP, int localPort);
+	void Relay_DoHolePunchToFutureClient(const TCHAR* clientIP, int localPort);
 
 
 	/// Conditions
 
-		const bool AlwaysTrue() { return true; }
-		const bool AlwaysFalse() { return false; }
-		const bool AlwaysFalseWithTextParam(const TCHAR * s) { return false; }
-		bool SubchannelMatches(int subchannel);
-		// AlwaysTrue:	bool OnError();
-		// AlwaysTrue:	bool OnConnectRequest();
-		// AlwaysTrue:	bool OnDisconnect();
-		// AlwaysTrue:	bool OnChannel_JoinRequest();
-		// AlwaysTrue:	bool OnChannel_LeaveRequest();
-		// AlwaysTrue:	bool AllChannelsLoop();
-		// AlwaysTrue:	bool OnClient_JoinedChannelsLoop();
-		// AlwaysTrue:	bool AllClientsLoop();
-		// AlwaysTrue:	bool OnChannel_ClientLoop();
-		bool Client_IsChannelMaster();
-		// AlwaysTrue:	bool OnClient_NameSetRequest();
-		// MessageMatches:	bool OnSentTextMessageToServer(int subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToServer(int subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToServer(int subchannel);
-		// MessageMatches:	bool OnAnySentMessageToServer(int subchannel);
-		// MessageMatches:	bool OnSentTextMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnAnySentMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnSentTextMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnSentNumberMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnSentBinaryMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnAnySentMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToServer(int subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToServer(int subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToServer(int subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToServer(int subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToChannel(int subchannel);
-		// MessageMatches:	bool OnBlastedTextMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnBlastedNumberMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnBlastedBinaryMessageToPeer(int subchannel);
-		// MessageMatches:	bool OnAnyBlastedMessageToPeer(int subchannel);
-		bool OnAllChannelsLoopWithName(const TCHAR * loopName);
-		bool OnClientsJoinedChannelLoopWithName(const TCHAR * loopName);
-		bool OnAllClientsLoopWithName(const TCHAR * loopName);
-		bool OnChannelClientsLoopWithName(const TCHAR * loopName);
-		bool OnChannelClientsLoopWithNameFinished(const TCHAR * loopName);
-		bool OnAllChannelsLoopWithNameFinished(const TCHAR * loopName);
-		bool OnClientsJoinedChannelLoopWithNameFinished(const TCHAR * loopName);
-		// AlwaysTrue	bool OnChannelsClientLoopFinished(const TCHAR * loopName);
-		// AlwaysTrue	bool OnAllChannelsLoopFinished();
-		// AlwaysTrue	bool OnAllClientsLoopFinished();
-		// AlwaysTrue	bool OnClientsJoinedChannelLoopFinished();
-		bool IsLacewingServerHosting();
-		bool IsFlashPolicyServerHosting();
-		bool ChannelIsHiddenFromChannelList();
-		bool ChannelIsSetToCloseAutomatically();
-		bool OnAllClientsLoopWithNameFinished(const TCHAR * loopName);
-		// Added conditions:
-		bool IsClientOnChannel_ByChannelNameClientID(int clientID, const TCHAR * channelName);
-		bool IsClientOnChannel_ByChannelNameClientName(const TCHAR * clientName, const TCHAR * channelName);
-		bool IsClientOnChannel_ByChannelIDClientID(int clientID, int channelID);
-		bool IsClientOnChannel_ByChannelIDClientName(const TCHAR* clientName, int channelID);
-		bool DoesChannelNameExist(const TCHAR * channelName);
-		bool DoesChannelIDExist(int channelID);
-		bool DoesClientNameExist(const TCHAR * clientName);
-		bool DoesClientIDExist(int clientID);
-		bool IsWebSocketHosting(const TCHAR * serverType);
+	const bool AlwaysTrue() { return true; }
+	const bool AlwaysFalse() { return false; }
+	const bool AlwaysFalseWithTextParam(const TCHAR * s) { return false; }
+	bool SubchannelMatches(int subchannel);
+	// AlwaysTrue:	bool OnError();
+	// AlwaysTrue:	bool OnConnectRequest();
+	// AlwaysTrue:	bool OnDisconnect();
+	// AlwaysTrue:	bool OnChannel_JoinRequest();
+	// AlwaysTrue:	bool OnChannel_LeaveRequest();
+	// AlwaysTrue:	bool AllChannelsLoop();
+	// AlwaysTrue:	bool OnClient_JoinedChannelsLoop();
+	// AlwaysTrue:	bool AllClientsLoop();
+	// AlwaysTrue:	bool OnChannel_ClientLoop();
+	bool Client_IsChannelMaster();
+	// AlwaysTrue:	bool OnClient_NameSetRequest();
+	// MessageMatches:	bool OnSentTextMessageToServer(int subchannel);
+	// MessageMatches:	bool OnSentNumberMessageToServer(int subchannel);
+	// MessageMatches:	bool OnSentBinaryMessageToServer(int subchannel);
+	// MessageMatches:	bool OnAnySentMessageToServer(int subchannel);
+	// MessageMatches:	bool OnSentTextMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnSentNumberMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnSentBinaryMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnAnySentMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnSentTextMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnSentNumberMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnSentBinaryMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnAnySentMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnBlastedTextMessageToServer(int subchannel);
+	// MessageMatches:	bool OnBlastedNumberMessageToServer(int subchannel);
+	// MessageMatches:	bool OnBlastedBinaryMessageToServer(int subchannel);
+	// MessageMatches:	bool OnAnyBlastedMessageToServer(int subchannel);
+	// MessageMatches:	bool OnBlastedTextMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnBlastedNumberMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnBlastedBinaryMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnAnyBlastedMessageToChannel(int subchannel);
+	// MessageMatches:	bool OnBlastedTextMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnBlastedNumberMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnBlastedBinaryMessageToPeer(int subchannel);
+	// MessageMatches:	bool OnAnyBlastedMessageToPeer(int subchannel);
+	bool OnAllChannelsLoopWithName(const TCHAR * loopName);
+	bool OnClientsJoinedChannelLoopWithName(const TCHAR * loopName);
+	bool OnAllClientsLoopWithName(const TCHAR * loopName);
+	bool OnChannelClientsLoopWithName(const TCHAR * loopName);
+	bool OnChannelClientsLoopWithNameFinished(const TCHAR * loopName);
+	bool OnAllChannelsLoopWithNameFinished(const TCHAR * loopName);
+	bool OnClientsJoinedChannelLoopWithNameFinished(const TCHAR * loopName);
+	// AlwaysTrue	bool OnChannelsClientLoopFinished(const TCHAR * loopName);
+	// AlwaysTrue	bool OnAllChannelsLoopFinished();
+	// AlwaysTrue	bool OnAllClientsLoopFinished();
+	// AlwaysTrue	bool OnClientsJoinedChannelLoopFinished();
+	bool IsLacewingServerHosting();
+	bool IsFlashPolicyServerHosting();
+	bool ChannelIsHiddenFromChannelList();
+	bool ChannelIsSetToCloseAutomatically();
+	bool OnAllClientsLoopWithNameFinished(const TCHAR * loopName);
+	// Added conditions:
+	bool IsClientOnChannel_ByChannelNameClientID(int clientID, const TCHAR * channelName);
+	bool IsClientOnChannel_ByChannelNameClientName(const TCHAR * clientName, const TCHAR * channelName);
+	bool IsClientOnChannel_ByChannelIDClientID(int clientID, int channelID);
+	bool IsClientOnChannel_ByChannelIDClientName(const TCHAR* clientName, int channelID);
+	bool DoesChannelNameExist(const TCHAR * channelName);
+	bool DoesChannelIDExist(int channelID);
+	bool DoesClientNameExist(const TCHAR * clientName);
+	bool DoesClientIDExist(int clientID);
+	bool IsWebSocketHosting(const TCHAR * serverType);
 
 	/// Expressions
 
-		const TCHAR * Error();
-		const TCHAR * Lacewing_Version();
-		unsigned int SendBinaryMsg_Size();
-		const TCHAR * RequestedClientName();
-		const TCHAR * RequestedChannelName();
-		const TCHAR * Channel_Name();
-		unsigned int Channel_ClientCount();
-		const TCHAR * Client_Name();
-		unsigned int Client_ID();
-		const TCHAR * Client_IP();
-		unsigned int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
-		unsigned int Client_ChannelCount();
-		const TCHAR * RecvMsg_ReadAsString();
-		int RecvMsg_ReadAsInteger();
-		unsigned int RecvMsg_SizeInBytes();
-		unsigned int RecvMsg_MemoryAddress();
-		const TCHAR * RecvMsg_StrASCIIByte(int index);
-		unsigned int RecvMsg_UnsignedByte(int index);
-		int RecvMsg_SignedByte(int index);
-		unsigned int RecvMsg_UnsignedShort(int index);
-		int RecvMsg_SignedShort(int index);
-		unsigned int RecvMsg_UnsignedInteger(int index);
-		int RecvMsg_SignedInteger(int index);
-		float RecvMsg_Float(int index);
-		const TCHAR * RecvMsg_StringWithSize(int index, int size);
-		const TCHAR * RecvMsg_String(int index);
-		unsigned int RecvMsg_Subchannel();
-		unsigned int Channel_Count();
-		const TCHAR * Client_GetLocalData(const TCHAR * key);
-		const TCHAR * RecvMsg_Cursor_StrASCIIByte();
-		unsigned int RecvMsg_Cursor_UnsignedByte();
-		int RecvMsg_Cursor_SignedByte();
-		unsigned int RecvMsg_Cursor_UnsignedShort();
-		int RecvMsg_Cursor_SignedShort();
-		unsigned int RecvMsg_Cursor_UnsignedInteger();
-		int RecvMsg_Cursor_SignedInteger();
-		float RecvMsg_Cursor_Float();
-		const TCHAR * RecvMsg_Cursor_StringWithSize(int size);
-		const TCHAR * RecvMsg_Cursor_String();
-		const TCHAR * Client_ProtocolImplementation();
-		const TCHAR * Channel_GetLocalData(const TCHAR * key);
-		unsigned int Port();
-		unsigned int SendBinaryMsg_MemoryAddress();
-		const TCHAR * Welcome_Message();
-		// Added expressions:
-		const TCHAR * RecvMsg_DumpToString(int index, const TCHAR * format);
-		unsigned int AllClientCount();
-		const TCHAR * GetDenyReason();
-		int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
-		int ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr);
-		int ConvToUTF8_GetByteCount(const TCHAR * tStr);
-		const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList);
-		int Channel_ID();
-		int WebSocket_Insecure_Port();
-		int WebSocket_Secure_Port();
-		const TCHAR* WebSocket_Cert_ExpiryTime(int useUTC, const TCHAR * format);
+	const TCHAR * Error();
+	const TCHAR * Lacewing_Version();
+	unsigned int SendBinaryMsg_Size();
+	const TCHAR * RequestedClientName();
+	const TCHAR * RequestedChannelName();
+	const TCHAR * Channel_Name();
+	unsigned int Channel_ClientCount();
+	const TCHAR * Client_Name();
+	unsigned int Client_ID();
+	const TCHAR * Client_IP();
+	unsigned int Client_ConnectionTime(); // NB: was removed in Lacewing, kept in Bluewing
+	unsigned int Client_ChannelCount();
+	const TCHAR * RecvMsg_ReadAsString();
+	int RecvMsg_ReadAsInteger();
+	unsigned int RecvMsg_SizeInBytes();
+	unsigned int RecvMsg_MemoryAddress();
+	const TCHAR * RecvMsg_StrASCIIByte(int index);
+	unsigned int RecvMsg_UnsignedByte(int index);
+	int RecvMsg_SignedByte(int index);
+	unsigned int RecvMsg_UnsignedShort(int index);
+	int RecvMsg_SignedShort(int index);
+	unsigned int RecvMsg_UnsignedInteger(int index);
+	int RecvMsg_SignedInteger(int index);
+	float RecvMsg_Float(int index);
+	const TCHAR * RecvMsg_StringWithSize(int index, int size);
+	const TCHAR * RecvMsg_String(int index);
+	unsigned int RecvMsg_Subchannel();
+	unsigned int Channel_Count();
+	const TCHAR * Client_GetLocalData(const TCHAR * key);
+	const TCHAR * RecvMsg_Cursor_StrASCIIByte();
+	unsigned int RecvMsg_Cursor_UnsignedByte();
+	int RecvMsg_Cursor_SignedByte();
+	unsigned int RecvMsg_Cursor_UnsignedShort();
+	int RecvMsg_Cursor_SignedShort();
+	unsigned int RecvMsg_Cursor_UnsignedInteger();
+	int RecvMsg_Cursor_SignedInteger();
+	float RecvMsg_Cursor_Float();
+	const TCHAR * RecvMsg_Cursor_StringWithSize(int size);
+	const TCHAR * RecvMsg_Cursor_String();
+	const TCHAR * Client_ProtocolImplementation();
+	const TCHAR * Channel_GetLocalData(const TCHAR * key);
+	unsigned int Port();
+	unsigned int SendBinaryMsg_MemoryAddress();
+	const TCHAR * Welcome_Message();
+	// Added expressions:
+	const TCHAR * RecvMsg_DumpToString(int index, const TCHAR * format);
+	unsigned int AllClientCount();
+	const TCHAR * GetDenyReason();
+	int ConvToUTF8_GetVisibleCharCount(const TCHAR * tStr);
+	int ConvToUTF8_GetCompleteCodePointCount(const TCHAR * tStr);
+	int ConvToUTF8_GetByteCount(const TCHAR * tStr);
+	const TCHAR * ConvToUTF8_TestAllowList(const TCHAR * toTest, const TCHAR * allowList);
+	int Channel_ID();
+	int WebSocket_Insecure_Port();
+	int WebSocket_Secure_Port();
+	const TCHAR* WebSocket_Cert_ExpiryTime(int useUTC, const TCHAR * format);
 
-	/* These are called if there's no function linked to an ID */
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
+
+	// These are called if there's no function linked to an ID
 
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
 };
 
 
@@ -363,7 +358,7 @@ enum class AutoResponse : std::int8_t
 	WaitForFusion
 };
 
-struct Extension::GlobalInfo
+struct Extension::GlobalInfo final
 {
 	std::unique_ptr<lacewing::_eventpump, std::function<decltype(eventpumpdeleter)>>	_objEventPump;
 	lacewing::relayserver		_server;

@@ -1,4 +1,6 @@
 #pragma once
+
+#include <stdint.h>
 #include <vector>
 #include <thread>
 #include <mutex>
@@ -7,6 +9,17 @@
 #include <condition_variable>
 #include <atomic>
 #include "json.hpp"
+
+namespace DarkEdif
+{
+	struct Rect;
+	struct FontInfoMultiPlat;
+	struct EdittimePropSet;
+}
+struct mv;
+struct EDITDATA;
+struct LevelObject;
+class Prop;
 
 #ifdef _WIN32
 	#include "..\Windows\MMFWindowsMasterHeader.hpp"
@@ -20,8 +33,6 @@
 	#include "../Mac/MMFMacMasterHeader.hpp"
 #endif
 #endif
-
-class Extension;
 
 #include "ObjectSelection.hpp"
 
@@ -142,10 +153,19 @@ namespace Edif
 		std::uint32_t jsonPropsNameAndTypesHash = 0;
 		// A fnv1a hash of all changeable property types, separated by pipe. Used for property upgrades.
 		std::uint32_t jsonPropsTypesHash = 0;
+
+		// Intercepts DarkEdif::Log calls. If returns true, the default log behavior does not happen.
+		bool (*LogIntercept)(const char * extName, int lvl, const TCHAR*, va_list) = nullptr;
+
 #if EditorBuild
 		cSurface * Icon = nullptr;
+		DarkEdif::Surface * ExtIcon = nullptr;
 		std::unique_ptr<PropData[]> EdittimeProperties;
+
+#ifndef NOPROPS
+		std::vector<DarkEdif::EdittimePropSet> EdittimePropertySets;
 #endif
+#endif // EditorBuild
 	};
 	extern SDKClass * SDK;
 
@@ -153,8 +173,11 @@ namespace Edif
 	{
 	protected:
 		friend RunHeader;
+		friend DarkEdif::Surface;
 
 		HeaderObject* hoPtr;
+		Extension* ext;
+
 #ifdef __ANDROID__
 		friend ConditionOrActionManager_Android;
 		friend ExpressionManager_Android;
@@ -171,6 +194,14 @@ namespace Edif
 
 	public:
 		long param1 = 0, param2 = 0;
+		Edif::SDKClass * SDKPointer = nullptr;
+
+		// If set, Runtime.CopyString() will always return string memory via _tcsdup().
+		// Useful for exts calling into other extensions's string expressions.
+		// @remarks The HeaderObjectFlag for Float/String may also need reverting if you
+		// call into another ext before ExpressionJump, rather than after.
+		// You should also be aware of generated events and object selection clobbering.
+		bool runtimeCopyHeapAlloc = false;
 
 #ifdef _WIN32
 		Runtime(Extension * ext);
@@ -189,6 +220,14 @@ namespace Edif
 #else
 		Runtime(Extension* ext, void * const objCExtPtr);
 		void * curCEvent;
+#endif
+
+		DarkEdif::FontInfoMultiPlat* extFont = NULL;
+		void (Extension::* fontChangedFunc)(bool colorEdit, DarkEdif::Rect* rc) = NULL;
+
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
+		std::unique_ptr<DarkEdif::Surface> surf;
+		void SetSurfaceWithSize(int width, int height);
 #endif
 
 		~Runtime();
@@ -250,6 +289,16 @@ namespace Edif
 		bool IsHWACapableRuntime();
 		SurfaceDriver GetAppDisplayMode();
 #endif
+#if TEXT_OEFLAG_EXTENSION
+		std::uint32_t GetRunObjectTextColor() const;
+		void SetRunObjectTextColor(const std::uint32_t rgb);
+		void SetRunObjectFont(const void* pLf, const void* const pRc);
+#ifdef _WIN32
+		void GetRunObjectFont(LOGFONT* pLf) const;
+#else
+		void * GetRunObjectFont() const;
+#endif
+#endif // TEXT_OEFLAG_EXTENSION
 
 		bool IsUnicode();
 

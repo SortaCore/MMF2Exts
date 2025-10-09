@@ -25,12 +25,7 @@
 //  Copyright 2010 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
-
-#define GLES_SILENCE_DEPRECATION
-#define GL_SILENCE_DEPRECATION
-#define QC_SILENCE_GL_DEPRECATION
 
 #import <OpenGLES/ES2/gl.h>
 #import <OpenGLES/ES2/glext.h>
@@ -46,28 +41,42 @@ class CRenderer;
 @interface CRenderToTexture : CTexture
 {
 @public
+    CRunApp* app;
+    CRenderer* renderer;
+    
 	GLuint framebuffer;
-	CRunApp* app;
-	CRenderer* renderer;
+    GLuint stencilbuffer;
+
 	GLint previousBuffer;
 	GLint prevWidth;
 	GLint prevHeight;
+    
 	BOOL isUploaded;
+    BOOL flipProjection;
+    BOOL useDepth;
+    BOOL useStencil;
 }
-
-- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap andPOTMode:(bool)potMode;
+ 
+- (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap andPOTMode:(bool)potMode andDepth:(int)bDepth;
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andSwapMode:(bool)bSwap;
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp andPOTMode:(bool)potMode;
 - (id)initWithWidth:(int)w andHeight:(int)h andRunApp:(CRunApp *)runApp;
 
-- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap andPOTMode:(bool)potMode;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap andPOTMode:(bool)potMode andDepth:(int)bDepth;
 - (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap;
 - (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer andPOTMode:(bool)potMode;
+- (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer*)renderer andDepthMode:(bool)depthMode;
 - (id)initWithWidth:(int)w andHeight:(int)h andRenderer:(CRenderer *)renderer;
+- (id)initWithWidth:(int)w Height:(int)h withRenderer:(CRenderer *)renderer andSwapMode:(bool)bSwap andSwapProjection:(bool)bSwapProj;
+- (id)initWithWidth:(int)w Height:(int)h withRenderer:(CRenderer *)renderer withSwapMode:(bool)bSwap withSwapProjection:(bool)bSwapProj andStencil:(bool)bStencil;
+
+- (void)resizeToWidth:(int)w andHeight:(int)h;
 
 - (void)dealloc;
 
 - (GLuint)newEmptyTextureWithWidth:(int)w andHeight:(int)h;
+- (void)createFBO;
+
 - (void)bindFrameBuffer;
 - (void)bindFrameBufferWithOffset:(Vec2f)offset;
 - (void)unbindFrameBuffer;
@@ -78,14 +87,18 @@ class CRenderer;
 - (void)fillWithPixels:(unsigned int*)buffer withWidth:(int)w andHeight:(int)h;
 
 - (void)clearColorChannelWithColor:(int)color;
+- (void)clearWithColorDontBind:(int)color;
 - (void)clearWithAlpha:(float)alpha;
 - (void)clearWithAlphaDontBind:(float)alpha;
 - (void)clearAlphaChannel:(float)alpha;
 - (void)copyAlphaFrom:(CRenderToTexture*)rtt;
 
--(int)uploadTexture;
--(int)deleteTexture;
--(void)cleanMemory;
--(void)setResampling:(BOOL)resample;
+- (size_t)uploadTexture;
+- (int)deleteTexture;
+- (void)cleanMemory;
+- (void)setResampling:(BOOL)resample;
 
+- (BOOL)isOkSizeWidth:(int)w andHeight:(int) h;
+- (BOOL)isRGBA;
+- (UIImage*)readFBO;
 @end

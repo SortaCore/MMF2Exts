@@ -25,6 +25,8 @@
 #pragma once
 #import <Foundation/Foundation.h>
 #import "IDrawable.h"
+#import "CoreMath.h"
+#import "CRect.h"
 
 @class CRun;
 @class CRCom;
@@ -42,18 +44,6 @@
 @class CBitmap;
 @class CEffectEx;
 class CRenderer;
-
-struct CRect
-{
-	int left;
-	int top;
-	int right;
-	int bottom;
-	int width() const;
-	int height() const;
-	BOOL isNil() const;
-	BOOL containsPoint(int x, int y) const;
-};
 
 @interface CObject : NSObject <IDrawable>
 {
@@ -110,4 +100,47 @@ struct CRect
 	// Effect code
 	CEffectEx* hoEffect;
 }
+-(void)dealloc;
+-(void)setScale:(float)fScaleX withScaleY:(float)fScaleY andFlag:(BOOL)bResample;
+-(void)setBoundingBoxFromWidth:(int)cx andHeight:(int)cy andXSpot:(int)hsx andYSpot:(int)hsy;
+-(void)initObject:(CObjectCommon*)ocPtr withCOB:(CCreateObjectInfo*)cob;
+-(int)getX;
+-(int)getY;
+-(int)globalToLayerX:(int)X;
+-(int)globalToLayerY:(int)Y;
+-(Vec2i)getPosition;
+-(int)getWidth;
+-(int)getHeight;
+-(void)setX:(int)x;
+-(void)setY:(int)y;
+-(void)setPosition:(int)x withY:(int)y;
+-(void)setLayer:(int)newLayer;
+-(void)setWidth:(int)width;
+-(void)setHeight:(int)height;
+-(void)generateEvent:(int)code withParam:(int)param;
+-(void)pushEvent:(int)code withParam:(int)param;
+-(bool)isPaused;
+-(void)pause;
+-(void)resume;
+-(void)redisplay;
+-(void)redraw;
+-(void)destroy;
+-(int)fixedValue;
+-(void)handle;
+-(void)modif;
+-(void)display;
+-(BOOL)kill:(BOOL)bFast;
+-(void)getZoneInfos;
+-(void)draw:(CRenderer*)renderer;
+-(CMask*)getCollisionMask:(int)flags;
+-(void)spriteDraw:(CRenderer*)renderer withSprite:(CSprite*)spr andImageBank:(CImageBank*)bank andX:(int)x andY:(int)y;
+-(void)spriteKill:(CSprite*)spr;
+-(CMask*)spriteGetMask;
+-(NSString*)description;
+-(CObject*)getObjectFromFixed:(int)fixed;
+-(BOOL)isOfType:(short)OiList;
+-(void)runtimeIsReady;
+-(int)checkOrCreateEffectIfNeededByIndex:(int)index andEffectParam:(int)rgba;
+-(int)checkOrCreateEffectIfNeededByName:(NSString*)name andEffectParam:(int)rgba;
+-(void)fillEffectData;
 @end

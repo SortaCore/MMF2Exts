@@ -25,7 +25,6 @@
 //  Copyright 2010 Clickteam. All rights reserved.
 //
 
-#pragma once
 #import <Foundation/Foundation.h>
 #import "CRect.h"
 
@@ -43,17 +42,24 @@ class CRenderer;
 	int prevColor;
 	CFont* prevFont;
 	CImage* textTexture;
-
+	
 	CRect rect;
 	int width;
 	int height;
 	int effect;
 	int effectParam;
 	CBitmap* textBitmap;
+    
+    // Let's keep this heavy burden here
+    NSMutableParagraphStyle *cachedParagraphStyle;
+    short cachedFlags;
+    BOOL smoothfonts;
 }
 
 -(id)initWidthWidth:(int)w andHeight:(int)h;
+-(void)setAntialiased:(BOOL)antialias;
 -(void)setText:(NSString*)s withFlags:(short)flags andColor:(int)color andFont:(CFont*)font;
+-(void)draw:(CRenderer*)renderer withX:(int)x andY:(int)y andShader:(int)effectShader andEffect:(int)inkEffect andEffectParam:(int)inkEffectParam;
 -(void)draw:(CRenderer*)renderer withX:(int)x andY:(int)y andEffect:(int)inkEffect andEffectParam:(int)inkEffectParam;
 
 -(BOOL)setSizeWithWidth:(int)w andHeight:(int)h;
@@ -61,4 +67,5 @@ class CRenderer;
 -(void)manualUploadTexture;
 -(void)manualClear:(int)color;
 
+-(CGSize)calculateTextSizeWithString:(NSString*)s andFlags:(short)flags andRect:(CRect)rc andFont:(CFont*)font;
 @end

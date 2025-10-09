@@ -249,6 +249,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\webserver.c">
       <Filter>Source Files\Lacewing\src\webserver</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\address.h">
@@ -529,6 +532,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\openssl\x509_vfy.h">
       <Filter>Header Files\Lacewing\openssl</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\SurfaceMultiPlat.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

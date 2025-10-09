@@ -30,7 +30,7 @@ if (!String.prototype.replaceAll) {
 // Note: This will allow newer SDK versions in later SDKs to take over.
 // We need this[] and window[] instead of direct, because HTML5 Final Project minifies and breaks the names otherwise
 // In case UWP is minified later, we'll keep these HTML5 minify precautions in UWP
-window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19) ? window['darkEdif'] :
+window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20) ? window['darkEdif'] :
 	new (/** @constructor */ function() {
 	this.data = {};
 	this.getGlobalData = function (key) {
@@ -48,9 +48,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 19;
+	this.sdkVersion = 20;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 19) {
+		if (sdkVer < 16 || sdkVer > 20) {
 			throw "UWP DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};
@@ -86,24 +86,133 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 		}
 		// DarkEdif SDK header read:
 		// header uint32, hash uint32, hashtypes uint32, numprops uint16, pad uint16, sizeBytes uint32 (includes whole EDITDATA)
+		// if prop set v2, then uint64 editor checkbox ptr
 		// then checkbox list, one bit per checkbox, including non-checkbox properties
 		// so skip numProps / 8 bytes
 		// then moving to Data list:
 		// size uint32 (includes whole Data), propType uint16, propNameSize uint8, propname u8 (lowercased), then data bytes
 
-		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 4 + 2 + 2 + 4));
-		if (String.fromCharCode.apply('', [header[3], header[2], header[1], header[0]]) != 'DAR1') {
-			throw "Did you read this.ho.privateData bytes?";
+		let bytes = edPtrFile.ccfBytes.slice(edPtrFile.pointer);
+		
+		edPtrFile.skipBytes(ext.ho.privateData - 20); // sub size of eHeader; edPtrFile won't start with eHeader
+		const verBuff = new Uint8Array(edPtrFile.readBuffer(4));
+		const verStr = String.fromCharCode.apply('', verBuff.reverse());
+		let propVer;
+		if (verStr == 'DAR2') {
+			propVer = 2;
+		} else if (verStr == 'DAR1') {
+			propVer = 1;
+		} else {
+			throw "Version string " + verStr + " unknown. Did you restore the file offset?";
 		}
-
+		// Pull out hash, hashTypes, numProps, pad, sizeBytes, visibleEditorProps
+		let header = new Uint8Array(edPtrFile.readBuffer(4 + 4 + 2 + 2 + 4 + (propVer > 1 ? 8 : 0)));
 		let headerDV = new DataView(header.buffer);
-		this.numProps = headerDV.getUint16(4 + 4 + 4, true); // Skip past hash and hashTypes
-		this.sizeBytes = headerDV.getUint32(4 + 4 + 4 + 4, true); // skip past numProps and pad
+		this.numProps = headerDV.getUint16(4 + 4, true); // Skip past hash and hashTypes
+		this.sizeBytes = headerDV.getUint32(4 + 4 + 4, true); // skip past numProps and pad
 
-		let editData = edPtrFile.readBuffer(this.sizeBytes - header.byteLength);
+		let editData = edPtrFile.readBuffer(
+			this.sizeBytes -
+			// skip area between eHeader -> Props
+			(ext.ho.privateData - 20) -
+			// Skip DarkEdif header
+			header.byteLength
+		);
 		this.chkboxes = editData.slice(0, Math.ceil(this.numProps / 8));
 		let that = this;
+		let IsComboBoxProp = function(propTypeID) {
+			// PROPTYPE_COMBOBOX, PROPTYPE_COMBOBOXBTN, PROPTYPE_ICONCOMBOBOX
+			return propTypeID == 7 || propTypeID == 20 || propTypeID == 24;
+		};
+		let RuntimePropSet = function(data) {
+			let rsDV = new DataView(data.propData.buffer);
+			let rs = /* RuntimePropSet */ { 
+				// Always 'S', compared with 'L' for non-set list.
+				setIndicator: String.fromCharCode(rsDV.getUint8(0)),
+				// Number of repeats of this set, 1 is minimum and means one of this set
+				numRepeats: rsDV.getUint16(1, true),
+				// Property that ends this set's data, as a JSON index, inclusive
+				lastSetJSONPropIndex: rsDV.getUint16(1 + 2, true),
+				// First property that begins this set's data, as a JSON index
+				firstSetJSONPropIndex: rsDV.getUint16(1 + (2 * 2), true),
+				// Name property JSON index that will appear in list when switching set entry
+				setNameJSONPropIndex: rsDV.getUint16(1 + (2 * 3), true),
+				// Current set index selected (0+), present at runtime too, but not used there
+				get setIndexSelected() {
+					return rsDV.getUint16(1 + (2 * 4), true);
+				},
+				set setIndexSelected(i) {
+					rsDV.setUint16(1 + (2 * 4), i, true);
+				},
+				// Set name, as specified in JSON. Don't confuse with user-specified set name.
+				setName: that.textDecoder.decode(data.propData.slice(1 + (2 * 5))),
+			};
+			if (rs.setIndicator != 'S')
+				throw "Not a prop set!";
+			return rs;
+		};
 		let GetPropertyIndex = function(chkIDOrName) {
+			if (propVer > 1) {
+				let jsonIdx = -1;
+				if (typeof chkIDOrName == 'number') {
+					const p = that.props.find(function(p) { return p.index == chkIDOrName; });
+					if (p == null) {
+						throw "Invalid property name \"" + chkIDOrName + "\"";
+					}
+					jsonIdx = p.propJSONIndex;
+				} else {
+					const p = that.props.find(function(p) { return p.propName == chkIDOrName; });
+					if (p == null) {
+						throw "Invalid property name \"" + chkIDOrName + "\"";
+					}
+					jsonIdx = p.propJSONIndex;
+				}
+				// Look up prop index from JSON index - DarkEdif::Properties::PropIdxFromJSONIdx
+				let data = that.props[0], i = 0;
+				while (data.propJSONIndex != jsonIdx) {
+					if (i >= that.numProps) {
+						throw "Couldn't find property of JSON ID " + jsonIdx + ", hit property " + i + " of " + that.numProps + " stored.\n";
+					}
+					if (IsComboBoxProp(data.propTypeID) && String.fromCharCode(data.propData[0]) == 'S') {
+						let rs = new RuntimePropSet(data);
+						let rsContainer = data;
+						// We're beyond all of this set's JSON range: skip past all repeats
+						if (jsonIdx > rs.lastSetJSONPropIndex) {
+							while (data.propJSONIndex != rs.lastSetJSONPropIndex) {
+								data = that.props[i++];
+							}
+							rs = rsContainer = null;
+						}
+						// It's within this set's range
+						else if (jsonIdx >= rs.firstSetJSONPropIndex && jsonIdx <= rs.lastSetJSONPropIndex) {
+							if (rs.setIndexSelected > 0) {
+								for (let j = 0; ;) {
+									data = that.props[++i];
+									
+									// Skip until end of this entry, then move to next prop
+									if (data.propJSONIndex == rs.lastSetJSONPropIndex) {
+										if (++j == rs.setIndexSelected) {
+											data = that.props[++i];
+											break;
+										}
+									}
+								}
+								continue;
+							} else {
+								data = that.props[++i];
+								continue;
+							}
+						}
+						// else it's not in this set: continue to standard loop
+						else {
+							rs = rsContainer = null;
+						}
+					}
+					
+					data = that.props[++i];
+				}
+				return data.index;
+			}
 			if (typeof chkIDOrName == 'number') {
 				if (that.numProps <= chkIDOrName) {
 					throw "Invalid property ID " + chkIDOrName + ", max ID is " + (that.numProps - 1) + ".";
@@ -135,14 +244,22 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 				16, // PROPTYPE_FILENAME:
 				19, // PROPTYPE_PICTUREFILENAME:
 				26, // PROPTYPE_DIRECTORYNAME:
-				7, // PROPTYPE_COMBOBOX:
-				20, // PROPTYPE_COMBOBOXBTN:
-				24 // PROPTYPE_ICONCOMBOBOX:
 			];
-			if (textPropIDs.indexOf(prop.propTypeID) != -1) {
+			if (textPropIDs.indexOf(prop.propTypeID) != -1 || IsComboBoxProp(prop.propTypeID)) {
+				// Prop ver 2 added repeating prop sets
+				if (propVer == 2 && IsComboBoxProp(prop.propTypeID)) {
+					const setIndicator = String.fromCharCode(prop.propData[0]);
+					if (setIndicator == 'L') {
+						return that.textDecoder.decode(prop.propData.slice(1));
+					} else if (setIndicator == 'S') {
+						throw "Property " + prop.propName + " is not textual.";
+					}
+					throw "Property " + prop.propName + " is not a valid list property.";
+				}
 				let t = that.textDecoder.decode(prop.propData);
-				if (prop.propTypeID == 22) //PROPTYPE_EDIT_MULTILINE
+				if (prop.propTypeID == 22) { //PROPTYPE_EDIT_MULTILINE
 					t = t.replaceAll('\r', ''); // CRLF to LF
+				}
 				return t;
 			}
 			throw "Property " + prop.propName + " is not textual.";
@@ -202,7 +319,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 				throw "Property " + prop.propName + " is not an image list.";
 			}
 			
-			return new DataView(prop.propData.buffer).getUint16(0, true));
+			return new DataView(prop.propData.buffer).getUint16(0, true);
 		};
 		this['GetSizeProperty'] = function(chkIDOrName) {
 			const idx = GetPropertyIndex(chkIDOrName);
@@ -218,13 +335,49 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 			return { width: dv.getInt32(0, true), height: dv.getInt32(4, true) };
 		};
 
+		this['PropSetIterator'] = this.PropSetIterator = function(nameListJSONIdx, numSkippedSetsBefore, runSetEntry, props) {
+			this.nameListJSONIdx = nameListJSONIdx;
+			this.numSkippedSetsBefore = numSkippedSetsBefore;
+			this.props = that.props;
+			this.runSetEntry = runSetEntry;
+			
+			this.runPropSet = new RuntimePropSet(runSetEntry);
+			this.runPropSet.setIndexSelected = 0;
+			this.firstIt = true;
+			let thatToo = this;
+			this.next = function() {
+				// next() is called for first iterator
+				if (thatToo.firstIt) {
+					thatToo.firstIt = false;
+				} else {
+					++thatToo.runPropSet.setIndexSelected;
+				}
+				return {
+					value: thatToo.runPropSet.setIndexSelected,
+					done: thatToo.runPropSet.setIndexSelected >= thatToo.runPropSet.numRepeats
+				};
+			};
+			this[Symbol.iterator] = function () { return this; };
+		};
+		this['LoopPropSet'] = this.LoopPropSet = function(setName, numSkips = 0) {
+			let d;
+			for (let i = 0, j = 0; i < that.numProps; ++i) {
+				d = that.props[i];
+				if (IsComboBoxProp(d.propTypeID) && String.fromCharCode(d.propData[0]) == 'S') {
+					if (new RuntimePropSet(d).setName == setName && ++j > numSkips)
+						return new that.PropSetIterator(i, j - 1, d, this);
+				}
+			}
+			throw "No set found with name " + setName + ".";
+		}
+
 		this.props = [];
 		const data = editData.slice(this.chkboxes.length);
 		const dataDV = new DataView(new Uint8Array(data).buffer);
 
 		this.textDecoder = null;
-		if (window['TextDecoder'] != null) {
-			this.textDecoder = new window['TextDecoder']();
+		if (globalThis['TextDecoder'] != null) {
+			this.textDecoder = new globalThis['TextDecoder']();
 		}
 		else {
 			// one byte = one char - should suffice for basic ASCII property names
@@ -238,16 +391,97 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 		for (let i = 0, pt = 0, propSize, propEnd; i < this.numProps; ++i) {
 			propSize = dataDV.getUint32(pt, true);
 			propEnd = pt + propSize;
-			const propTypeID = dataDV.getUint16(pt + 4, true);
-			const propNameLength = dataDV.getUint8(pt + 4 + 2);
-			pt += 4 + 2 + 1;
+			pt += 4;
+			const propTypeID = dataDV.getUint16(pt, true);
+			pt += 2;
+			// propJSONIndex does not exist in Data in DarkEdif smart props ver 1, so JSON index is same as prop index
+			let propJSONIndex = i;
+			if (propVer == 2) {
+				propJSONIndex = dataDV.getUint16(pt, true);
+				pt += 2;
+			}
+			const propNameLength = dataDV.getUint8(pt);
+			pt += 1;
 			const propName = this.textDecoder.decode(new Uint8Array(data.slice(pt, pt + propNameLength)));
 			pt += propNameLength;
-			const propData = new Uint8Array(data.slice(pt, pt + propSize - (4 + 2 + 1 + propNameLength)));
+			const propData = new Uint8Array(data.slice(pt, propEnd));
 
-			this.props.push({ index: i, propTypeID: propTypeID, propName: propName, propData: propData });
+			this.props.push({ index: i, propTypeID: propTypeID, propJSONIndex: propJSONIndex, propName: propName, propData: propData });
 			pt = propEnd;
 		}
+	};
+	this['Surface'] = function(rhPtr, needBitmapFuncs, needTextFuncs, width, height, alpha) {
+		if (rhPtr == null || needBitmapFuncs == null || needTextFuncs == null || width == null || height == null || alpha == null)
+			throw "Invalid Surface ctor arguments";
+		this.rhPtr = rhPtr;
+		this.hasGeometryCapacity = needBitmapFuncs;
+		this.hasTextCapacity = needTextFuncs;
+		this.canvas = document.createElement("canvas");
+		this.context = this.canvas.getContext("2d");
+		this.altered = false;
+		this.canvas.width = width;
+		this.canvas.height = height;
+		this.mosaic = 0;
+		this.xSpot = this.ySpot = 0;
+		
+		let surf = this;
+		this.faux = { img: surf.canvas, mosaic: 0, xSpot: 0, ySpot: 0 };
+		this['FillImageWith'] = function(sf) {
+			if (sf.fillType == darkEdif['SurfaceFill']['FillType']['Flat']) {
+				surf.context.rect(0, 0, surf.canvas.width, surf.canvas.height);
+				surf.context.fillStyle = sf.color;
+				surf.context.fill();
+				this.altered = true;
+				return true;
+			}
+		};
+		this['GetAndResetAltered'] = function() {
+			if (!this.altered) {
+				return false;
+			}
+			this.altered = false;
+			return true;
+		}
+		this.ext = null;
+		this['SetAsExtensionDisplay'] = function(ext) {
+			surf.ext = ext;
+		};
+		this['BlitToFrameWithExtEffects'] = function(renderer, pt) {
+			const x = this.ext.ho.hoX + (pt ? pt.x : 0),
+				y = this.ext.ho.hoY + (pt ? pt.y : 0);
+			let angle = 0, scaleX = 1, scaleY = 1, inkEffect = 1, inkEffectParam = 0;
+			if ((this.ext.ho.hoOEFlags & CObjectCommon.OEFLAG_SPRITES) != 0) {
+				angle = this.ext.ho.roc.rcAngle;
+				scaleX = this.ext.ho.roc.rcScaleX;
+				scaleY = this.ext.ho.roc.rcScaleY;
+				inkEffect = this.ext.ho.ros.rsEffect;
+				inkEffectParam = this.ext.ho.ros.rsEffectParam;
+				this.faux.xSpot = this.ext.ho.hoImgXSpot;
+				this.faux.ySpot = this.ext.ho.hoImgYSpot;
+			}
+			
+			surf.context.save();
+			renderer._context.save();
+			renderer.renderImage(this.faux, x, y, angle, scaleX, scaleY, inkEffect, inkEffectParam);
+			renderer._context.restore();
+			surf.context.restore();
+		};
+		this.img = surf.canvas;
+		
+		return this;
+	};
+	this['SurfaceFill'] = {
+		'FillType': {
+			'Flat': 0
+		},
+		'Solid': function(color) {
+			this.fillType = darkEdif['SurfaceFill']['FillType']['Flat'];
+			this.color = color;
+			return this;
+		}
+	};
+	this['ColorRGB'] = function(r,g,b) {
+		return `rgba(${r}, ${g}, ${b}, 1.0)`;
 	};
 })();
 
@@ -259,7 +493,7 @@ function CRunDarkEdif_Template() {
 	// DarkEdif SDK exts should have these four variables defined.
 	// We need this[] and window[] instead of direct because HTML5 Final Project minifies and breaks the names otherwise
 	this['ExtensionVersion'] = 1; // To match C++ version
-	this['SDKVersion'] = 19; // To match C++ version
+	this['SDKVersion'] = 20; // To match C++ version
 	this['DebugMode'] = true;
 	this['ExtensionName'] = 'DarkEdif Template';
 

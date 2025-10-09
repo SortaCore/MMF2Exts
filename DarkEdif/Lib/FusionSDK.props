@@ -87,6 +87,24 @@
 		<DarkEdif_UpdateChecker>0</DarkEdif_UpdateChecker>
 		<!-- If user has enabled update checker tagging -->
 		<DarkEdif_UCTagging>0</DarkEdif_UCTagging>
+		<!-- If ext dev uses OEFLAGS::TEXT, indicating they need EditTimeFont -->
+		<DarkEdif_OEFLAGTextPresent>0</DarkEdif_OEFLAGTextPresent>
+		<!-- If ext dev uses OEFLAGS that indicate the ext displays, enabling DisplayRunObject() etc,
+			 this is set to 1 or more. Current possible values:
+			 0 is no display exports, or display exports don't call Extension handlers
+			 1 is display via built-in animation system (not sure if this is even possible)
+			 2 is display via DarkEdif simple display system
+			 3 is display via DarkEdif manual display system -->
+		<DarkEdif_DisplayType>0</DarkEdif_DisplayType>
+		<!-- If ext dev uses OEFLAGS::WINDOW_PROC, indicating they need window proc -->
+		<DarkEdif_OEFLAGWndProcPresent>0</DarkEdif_OEFLAGWndProcPresent>
+		<!-- If ext dev has a FusionSDKConfig flag or defines in Windows proj, indicates they implement
+			 ContinueRunObject/PauseRunObject handlers. On Windows, this is required or runtime will crash on pause,
+			 but DE will not call the handlers in Extension without this define. -->
+		<DarkEdif_PausableExt Condition="'$(SDKType)'=='DarkEdif'">0</DarkEdif_PausableExt>
+
+		<!-- Windows vcxproj path, handles one-proj Windows and multi-plat, used for define lookups -->
+		<DarkEdif_WinProjPath Condition="$(SDKType)=='DarkEdif'">$(ProjectDir)$(ProjectFileName.Replace('.$(_TargetPlatInclMac).', '.Windows.'))</DarkEdif_WinProjPath>
 	</PropertyGroup>
 	<!-- Fusion SDK settings. Sets user preferences. -->
 	<PropertyGroup>
@@ -96,7 +114,7 @@
 		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\FusionSDKConfig.ini')">$(ProjectDir)\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
 		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\FusionSDKConfig.ini')">$(ProjectDir)\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
 		<_FusionSDKConfigIniPath Condition="'$(_FusionSDKConfigIniPath)'=='(not found)' AND exists('$(ProjectDir)\..\..\FusionSDKConfig.ini')">$(ProjectDir)\..\..\FusionSDKConfig.ini</_FusionSDKConfigIniPath>
-		
+
 		<_FusionSDKConfig Condition="'$(_FusionSDKConfigIniPath)'!='(not found)'">$([System.IO.File]::ReadAllText('$(_FusionSDKConfigIniPath)'))</_FusionSDKConfig>
 
 		<!-- These are Fusion SDK settings that are needed by the build process, not post-build. -->
@@ -174,7 +192,7 @@
 		<ZipExt>ZIP</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='iOS'">EXT</ZipExt>
 		<ZipExt Condition="'$(_TargetPlatInclMac)'=='Mac'">DAT</ZipExt>
-		
+
 		<!-- Build for 4 architectures by default, tied to the VS project architectures.
 			 Translating VS arch to iOS arch:
 				ARM = armv7; x86 = i386; x64 = x86_64; ARM64 = arm64
@@ -223,6 +241,34 @@
 		<!-- This define is true if SDKUpdater::RunUpdateNotifs() function is detected in Edittime.cpp -->
 		<_DarkEdif_DetectUpdateCheckerRegex><![CDATA[(?m)^\s*DarkEdif::SDKUpdater::RunUpdateNotifs\s*\(]]></_DarkEdif_DetectUpdateCheckerRegex>
 		<DarkEdif_UpdateChecker Condition="$(SDKType)=='DarkEdif' AND $(EditorBuild)==1 AND $([System.Text.RegularExpressions.Regex]::IsMatch($([System.IO.File]::ReadAllText('$(ProjectDir)\Edittime.cpp')), $(_DarkEdif_DetectUpdateCheckerRegex)))">1</DarkEdif_UpdateChecker>
+
+		<!-- This define is set by Extension::OEFLAGS in Extension.hpp -->
+		<_DarkEdif_GetOEFLAGListRegex><![CDATA[(?m)^\s*[A-Za-z0-9_\s]+?OEFLAGS\s+OEFLAGS\s*=\s*([^;]*);]]></_DarkEdif_GetOEFLAGListRegex>
+		<_DarkEdif_OEFLAGList>Fake</_DarkEdif_OEFLAGList>
+		<_DarkEdif_OEFLAGList Condition="'$(SDKType)'=='DarkEdif'">$([System.Text.RegularExpressions.Regex]::Match($(_ExtH), $(_DarkEdif_GetOEFLAGListRegex)).Result('$1')).Replace('OEFLAGS::', '')</_DarkEdif_OEFLAGList>
+		<!-- This define is true if OEFLAGS contains TEXT -->
+		<DarkEdif_OEFLAGTextPresent Condition="'$(SDKType)'=='DarkEdif' AND $(_DarkEdif_OEFLAGList.Contains('TEXT'))">1</DarkEdif_OEFLAGTextPresent>
+		<!-- This define is true if OEFLAGS contains WINDOW_PROC -->
+		<DarkEdif_OEFLAGWndProcPresent Condition="'$(SDKType)'=='DarkEdif' AND $(_DarkEdif_OEFLAGList.Contains('WINDOW_PROC'))">1</DarkEdif_OEFLAGWndProcPresent>
+
+		<!-- Looks for this line in FusionSDKConfig.ini:
+			 PausableExt,Ext Name=true
+			 It also allows PAUSABLE_EXTENSION to be defined in Windows project. -->
+		<_PausableExtReplaceRegex><![CDATA[(?im)^PausableExt,!!!\s*=\s*true\s*?$]]></_PausableExtReplaceRegex>
+		<DarkEdif_PausableExt Condition="$(SDKType)=='DarkEdif' AND $([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_PausableExtReplaceRegex.Replace('!!!',$(ExtName)))).Success)">1</DarkEdif_PausableExt>
+		<DarkEdif_PausableExt Condition="$(SDKType)=='DarkEdif' AND $([System.IO.File]::ReadAllText($(DarkEdif_WinProjPath)).Contains('PAUSABLE_EXTENSION'))">1</DarkEdif_PausableExt>
+
+		<!-- This define is true if OEFLAGS contains SPRITES, QUICK_DISPLAY, BACKGROUND, ANIMATIONS, or DISPLAY_EXT.
+			It is not true for DISPLAY_IN_FRONT, as this is used by non-display exts according to MMF2 original SDK help file. -->
+		<DarkEdif_DisplayType Condition="'$(SDKType)'=='DarkEdif' AND ($(_DarkEdif_OEFLAGList.Contains('SPRITES')) OR $(_DarkEdif_OEFLAGList.Contains('ANIMATIONS')) OR $(_DarkEdif_OEFLAGList.Contains('QUICK_DISPLAY')) OR $(_DarkEdif_OEFLAGList.Contains('BACKGROUND')) OR $(_DarkEdif_OEFLAGList.Contains('MOVEMENTS')) OR $(_DarkEdif_OEFLAGList.Contains('SIMPLE_DISPLAY_EXT')) OR $(_DarkEdif_OEFLAGList.Contains('MANUAL_DISPLAY_EXT')))">1</DarkEdif_DisplayType>
+		<DarkEdif_DisplayType Condition="$(DarkEdif_DisplayType)==1 AND $(_DarkEdif_OEFLAGList.Contains('SIMPLE_DISPLAY_EXT'))">2</DarkEdif_DisplayType>
+		<DarkEdif_DisplayType Condition="$(DarkEdif_DisplayType)==1 AND $(_DarkEdif_OEFLAGList.Contains('MANUAL_DISPLAY_EXT'))">3</DarkEdif_DisplayType>
+
+		<!-- Default to 0 for all SDKs, true for DarkEdif -->
+		<UsingSmartPropertySystem>0</UsingSmartPropertySystem>
+		<UsingSmartPropertySystem Condition="$(SDKType)=='DarkEdif'">1</UsingSmartPropertySystem>
+		<!-- This define is false if NOPROPS is defined in the Windows vcxproj -->
+		<UsingSmartPropertySystem Condition="$(SDKType)=='DarkEdif' AND $([System.IO.File]::ReadAllText($(DarkEdif_WinProjPath)).Contains('NOPROPS'))">0</UsingSmartPropertySystem>
 
 		<!-- This define is true if you want to analyse your code for more subtly incorrect code, which doesn't cause compiler/linker errors-->
 		<_RunAnalyzerRegex><![CDATA[(?im)^RunStaticCodeAnalysis\s*=\s*([a-z]+)\s*?$]]></_RunAnalyzerRegex>
@@ -294,21 +340,21 @@
 		<ConfigurationType Condition="$(_TargetPlat)!='iOS'">DynamicLibrary</ConfigurationType>
 
 		<TargetName>$(ExtName)$(LangSuffix)</TargetName>
-		
+
 		<!-- Replace the target name with new text; for example, renaming Firefly 2D Text to Firefly2T.mfx, provide
 			 MFXNameOverride,Firefly 2D Text=Firefly2T
 			 in FusionSDKConfig.ini. Anticipates you rename any custom wrapper files and their internal classes,
 			 like CRunFirefly2T.java containing CRunFirefly2T class. -->
 		<_ExtNameReplaceRegex><![CDATA[(?im)^MFXNameOverride,!!!\s*=\s*([A-Za-z0-9_ -]+)\s*?$]]></_ExtNameReplaceRegex>
 		<TargetName Condition="$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Success)">$([System.Text.RegularExpressions.Regex]::Match($(_FusionSDKConfig), $(_ExtNameReplaceRegex.Replace('!!!',$(ExtName)))).Result('$1'))</TargetName>
-		
+
 		<!-- Used to check for successfully generated library files; due to spaces needing escaping, some exporters replace the spaces with underscores -->
 		<TargetNameUnderscores>$(TargetName.Replace(' ','_'))</TargetNameUnderscores>
-		
+
 		<!-- Android/iOS expect a lib prefix to libraries, and use underscores in place of spaces -->
 		<TargetNameNoPrefix>$(TargetName)</TargetNameNoPrefix>
 		<TargetName Condition="$(_TargetPlat)=='Android' OR $(_TargetPlatInclMac)=='iOS'">lib$(TargetName.Replace(' ','_'))</TargetName>
-				
+
 		<!-- Prevent the madness of every linked DLL being copied to output folder. -->
 		<CopyCppRuntimeToOutputDir>false</CopyCppRuntimeToOutputDir>
 
@@ -320,7 +366,7 @@
 		<IntDir>$(_FusionSDKTempDir)\</IntDir>
 
 		<!-- Minifies JSON file and builds call table for runtimes that lack A/C/E ASM -->
-		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)"</DarkEdifPreBuildToolParams>
+		<DarkEdifPreBuildToolParams>/ProjName="$(ExtName)" /TargetPlat="$(_TargetPlatInclMac)" /TargetArch="$(TargetArch)" /MacroInputFile="$(SDKRootFolder)\Lib\Shared\ACECallTable_Macro.cpp"  /MacroOutputFile="$(SolutionDir)Temp\$(ExtName)\Temp_ACECallTable.cpp" /JSONInputPathToMinify="$(ProjectDir)\DarkExt.json" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /UsingSmartPropertySystem=$(UsingSmartPropertySystem) /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPreBuildToolParams>
 	</PropertyGroup>
 	<!-- Worth noting a When cannot contain a ItemDefinitionGroup -->
 	<ItemDefinitionGroup Label="Configuration">
@@ -351,17 +397,14 @@
 		<Link>
 			<AdditionalLibraryDirectories>$(ProjectDir.TrimEnd('\'));$(SDKRootFolder)\Lib\$(_TargetPlat)\$(TargetArch);$(SDKRootFolder)\Lib\$(_TargetPlat);$(SDKRootFolder)\Lib\Shared;$(SolutionDir)Temp\$(ExtName);$(SDKRootFolder)\Lib;%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
 		</Link>
+		<BuildLog>
+			<!-- Android insists on making a log file, make sure it's in Temp -->
+			<Path>$(_FusionSDKTempDir)\build.log</Path>
+		</BuildLog>
 	</ItemDefinitionGroup>
 
 	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
-		<!-- Broken in latest MS
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_NAME=\"$(ExtName)\""
-			/D "AUTHOR_NAME=\"$(AuthorName)\"" /D "COMPANY_NAME=\"$(CompanyName)\""
-			/D "EXTENSION_VERSION=$(ExtVersion)"
-			/D "BUILD_DATE=\"$(BuildDate)\"" /D "YEAR=\"$(Year)\""
-			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
-			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"</_FusionSDKAdds> -->
-		<!-- Do not include build date in the C++ compilation. It causes VS to think the whole
+		<!-- Do not include full build date in the C++ compilation. It causes VS to think the whole
 			 project needs rebuilding on every run. -->
 		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix))"
 			/D "PROJECT_NAME=STRIFY($(ExtName))"
@@ -369,6 +412,10 @@
 			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
 			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
+			/D "TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent)"
+			/D "WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent)"
+			/D "PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)"
+			/D "DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType)"
 			/D "EditorBuild=$(EditorBuild)" /D "RuntimeBuild=$(RuntimeBuild)" /D "UniBuild=$(UniBuild)"
 			/D "USE_DARKEDIF_UC_TAGGING=$(DarkEdif_UCTagging)" /D "MacBuild=$(MacBuild)"
 			</_FusionSDKAdds>
@@ -593,8 +640,8 @@
 	################################# -->
 	<PropertyGroup Condition="'$(_TargetPlat)'!='Windows'">
 		<!-- To move the compiled SO file into the Data\Runtime\Android/iOS zip file. -->
-		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)"</DarkEdifPostBuildToolParams>
-		
+		<DarkEdifPostBuildToolParams>/ProjName="$(ExtName)" /TargetArch="$(TargetArch)" /InputSOFolder="$(OutDir.TrimEnd('\'))" /OutputDir="$(MFXDir.TrimEnd('\'))" /ProjectDir="$(ProjectDir.TrimEnd('\'))" /TargetPlat="$(_TargetPlatInclMac)" /ProjConfig="$(Configuration)" /FusionConfigIniPath="$(_FusionSDKConfigIniPath)" /ExtDisplayType=$(DarkEdif_DisplayType) /IsTextExt=$(DarkEdif_OEFLAGTextPresent) /IsPausableExt=$(DarkEdif_PausableExt)</DarkEdifPostBuildToolParams>
+
 		<!-- Android uses Clang, a different format of commandline items
 			-D PROJECT_NAME=\"$(ExtName)\"
 			-D AUTHOR_NAME=\"$(AuthorName)\" -D "COMPANY_NAME=\"$(CompanyName)\"
@@ -602,7 +649,7 @@
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
 		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1;TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent);WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent);DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType);PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)</_FusionSDKAdds>
 
 		<!-- Not defined by Clang, just MSVC. -->
 		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>
@@ -625,12 +672,12 @@
 
 		<!-- Generate ARM style code for Thumb archs. -->
 		<ThumbMode Condition="'$(Platform)'=='ARM'">ARM</ThumbMode>
-		
+
 		<!-- Sysroot link fix; Sysroot is set by API number, but VS doesn't update it
 			 if API number is changed. Original API level is assumed to be android-31,
 			 even when NDK is r16b, which comes with VS, and is too early for API 31. -->
 		<_SysrootLinkFix>$(SysrootLink.Replace('\$(AndroidAPILevel)\', '$evil$'))</_SysrootLinkFix>
-		
+
 		<!-- API that's readily accessible. Note 21 is minimum 64-bit API. -->
 		<AndroidAPILevel>android-19</AndroidAPILevel>
 		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
@@ -639,7 +686,7 @@
 			 mismatch of API in library vs C define; those were changed between NDK versions,
 			 stdout/stderr moved from hidden function calls to real variables. -->
 		<AndroidAPILevelNumber>$(AndroidAPILevel.Substring(8))</AndroidAPILevelNumber>
-		
+
 		<!-- Sysroot link fix, pt 2, replaces VS assumed android API level with real one -->
 		<SysrootLink>$(_SysrootLinkFix.Replace('$evil$', '\$(AndroidAPILevel)\'))</SysrootLink>
 
@@ -683,7 +730,7 @@
 			<OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
 
 			<!-- Include math library (libm.so). -->
-			<LibraryDependencies>$(StlLibraryName);m;%(LibraryDependencies)</LibraryDependencies>
+			<LibraryDependencies>$(StlLibraryName);m;ESxRenderer;ES1Renderer;%(LibraryDependencies)</LibraryDependencies>
 			<!-- Include android_support library for x86 and ARM (available in x86/ARM constantly, but only in ARM64/x64 for NDK17 and lower) -->
 			<LibraryDependencies Condition="$(Platform)=='ARM' OR $(Platform)=='x86' OR '$(NDKVersion)' &lt; '17.0'">$(StlLibraryName);android_support;%(LibraryDependencies)</LibraryDependencies>
 			<!-- This SO static object file will be moved by the DarkEdifPostBuildTool,
@@ -705,7 +752,7 @@
 
 <!--#################################
 		END Android
-		BEGIN iOS and Mac 
+		BEGIN iOS and Mac
 	################################# -->
 	<PropertyGroup Condition="$(_TargetPlat)=='iOS'">
 		<!-- Always static, dynamic is limited to Apple OS and drivers -->
@@ -755,7 +802,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			<ExceptionHandling>Enabled</ExceptionHandling>
 			<!-- Prevents a weird glitch from using structs.
 				 Hopefully, also obscures the repeated static library Edif functions from using each others' functions. -->
-			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -Wno-nullability-completeness -D Edif=$(TargetNameUnderscores)_Edif -D Extension=$(TargetNameUnderscores)_Extension -D DarkEdif=$(TargetName.Replace(' ','_'))_DarkEdif -D FusionInternals=$(TargetNameUnderscores)_FusionInternals $(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>-fsigned-char -fno-aligned-allocation -fvisibility=hidden -Wno-nullability-completeness -D Edif=$(TargetNameUnderscores)_Edif -D Extension=$(TargetNameUnderscores)_Extension -D DarkEdif=$(TargetNameUnderscores)_DarkEdif -D FusionInternals=$(TargetNameUnderscores)_FusionInternals $(AdditionalOptions)</AdditionalOptions>
 
 			<!-- VS 2017 (15.0) doesn't accept C++17 as a target for iOS, so we'll add it to additional options manually. -->
 			<AdditionalOptions Condition="$(VisualStudioVersion)==15.0">-std=c++17 $(AdditionalOptions)</AdditionalOptions>
@@ -841,7 +888,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		END VS exports
 		BEGIN VS build tasks
 	################################# -->
-	
+
 	<!-- Windows 8.1 SDK misses half its C++ standard library headers if you don't have the Visual Studio Windows Universal CRT SDK component.
 		 Windows 10 SDK+ doesn't have this bug.
 		 Windows 7.1 SDK from XP targeting pack does have it, but requires Universal CRT SDK as part of XP targeting. -->
@@ -890,7 +937,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			<ProjectName>$(TargetNameNoPrefix)</ProjectName>
  		</PropertyGroup>
 	</Target>
-	
+
 	<!-- Obj-C syntax can be permitted on top of C/C++. We want that as Fusion's internals are strictly Obj-C. -->
 	<Target Name="iOSAlwaysObjC" Condition="$(_TargetPlat)=='iOS'" BeforeTargets="GenerateXCodeProj">
 		<Message Text="FusionProps: overriding CompileAs to include ObjC." Importance="High" />
@@ -901,7 +948,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			</ClCompile>
 		</ItemGroup>
 	</Target>
-	
+
 	<!-- After building x86_64, i386, or ARM64, build the Simulator variant of the same.
 		 Note that armv7/armv7s are not simulator arches. -->
 	<Target Name="iOS build device and simulator together" Condition="'$(_TargetPlatInclMac)'=='iOS' AND $(iOSSimulatorBuild)!=1 AND !$(TargetArch.StartsWith('armv'))" AfterTargets="Build;Rebuild">

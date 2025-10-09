@@ -7,22 +7,31 @@
 
 #include "DarkEdif.hpp"
 
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-struct EDITDATA
+#pragma pack (push, 1)
+// Binary block used in Fusion editor and saved in the MFA/CCN/EXE files
+struct EDITDATA final
 {
 	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
-	// Header - required
-	extHeader		eHeader;
+	// Header - required, must be first variable in EDITDATA
+	extHeader eHeader;
 
-	// Object's data
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+	// Object size in Fusion editor
+	DarkEdif::Size objSize;
+#endif
+#if TEXT_OEFLAG_EXTENSION
+	// Font set in font tab, only for font property tab extensions
+	DarkEdif::EditDataFont font;
+#endif
 
-//	short			swidth;
-//	short			sheight;
+	// Extra object data needed in Fusion editor should be placed after this comment, before Props.
+	// The majority of extensions will not need this!
+	// If you do, look in DarkEdif help file for CreateObject(),
+	// UserConverter() and MigrateMiddle().
 
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	// Keep Properties variable last; its size varies.
 	DarkEdif::Properties Props;
 };
-
-class Extension;
+#pragma pack (pop)
 
 #include "Extension.hpp"

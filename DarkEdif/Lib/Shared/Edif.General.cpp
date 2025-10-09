@@ -5,7 +5,6 @@
 // ============================================================================
 
 #include "Common.hpp"
-#include "DarkEdif.hpp"
 
 #ifdef _WIN32
 
@@ -63,6 +62,9 @@ int FusionAPI Free(mv *mV)
 // ============================================================================
 // GENERAL INFO
 // ============================================================================
+#ifndef NOPROPS
+extern void LoadObjectWipe(EDITDATA* edPtr);
+#endif
 
 // Routine called for each object when the object is read from the MFA file (edit time)
 // or from the CCN or EXE file (run time).
@@ -71,6 +73,11 @@ int FusionAPI LoadObject(mv * mV, const char * fileName, EDITDATA * edPtr, int r
 {
 #pragma DllExportHint
 	Edif::Init(mV, edPtr);
+
+	// DarkEdif smart props v2 checkbox wipe
+#ifndef NOPROPS
+	LoadObjectWipe(edPtr);
+#endif
 	return 0;
 }
 
@@ -149,6 +156,9 @@ struct ForbiddenInternals2 {
 std::int16_t FusionAPI GetRunObjectInfos(mv* mV, kpxRunInfos* infoPtr)
 {
 #pragma DllExportHint
+#if RuntimeBuild
+	DarkEdif::MsgBox::Info(_T("!!"), _T("GetRunObjectInfos() called.\n"));
+#endif
 	return ForbiddenInternals2::GetRunObjectInfos2(mV, infoPtr);
 }
 
@@ -165,25 +175,32 @@ std::int16_t ForbiddenInternals2::GetRunObjectInfos2(mv * mV, kpxRunInfos * info
 	infoPtr->NumOfExpressions = Extension::GetNumExpressions();
 #endif
 
-	static unsigned short EDITDATASize = 0;
-	if (EDITDATASize == 0)
+	static unsigned short EDITDATASize = UINT16_MAX;
+	if (EDITDATASize == UINT16_MAX)
 	{
 #ifdef NOPROPS
 		EDITDATASize = sizeof(EDITDATA);
-#else
+#elif EditorBuild
 		EDITDATASize = DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON();
+#else
+		EDITDATASize = sizeof(EDITDATA);
 #endif // NOPROPS
 	}
 	infoPtr->EDITDATASize = EDITDATASize;
 
+#if WNDPROC_OEFLAG_EXTENSION
 	infoPtr->WindowProcPriority = Extension::WindowProcPriority;
+#else
+	infoPtr->WindowProcPriority = 100; // default
+#endif
 
 	infoPtr->EditFlags = Extension::OEFLAGS;
 	infoPtr->EditPrefs = Extension::OEPREFS;
 
 	memcpy(&infoPtr->Identifier, Edif::SDK->json["Identifier"], 4);
 
-	infoPtr->Version = Extension::Version;
+	// Smart properties can change the version Fusion is told
+	infoPtr->Version = DarkEdif::Properties::VersionFlags | Extension::Version;
 
 	return TRUE;
 }
@@ -257,16 +274,6 @@ REFLAG FusionAPI HandleRunObject(RUNDATA * rdPtr)
 	return ((RunObject*)rdPtr)->GetExtension()->Handle();
 }
 
-#ifdef VISUAL_EXTENSION
-
-REFLAG FusionAPI DisplayRunObject(RUNDATA * rdPtr)
-{
-#pragma DllExportHint
-	return ((RunObject*)rdPtr)->GetExtension()->Display();
-}
-
-#endif
-
 
 // Grabs the local ext's RUNDATA size by OEFLAG calculation.
 // @remarks While it's permitted to put extra things in RUNDATA, this function assumes pExtension is immediately following
@@ -280,27 +287,37 @@ static constexpr std::uint16_t RDSize() {
 	if constexpr ((Extension::OEFLAGS & OEFLAGS::MOVEMENTS) != OEFLAGS::NONE)
 		rdSize += sizeof(rMvt);
 	if constexpr ((Extension::OEFLAGS & OEFLAGS::SPRITES) != OEFLAGS::NONE)
-		rdSize += sizeof(Sprite);
+		rdSize += sizeof(RunSprite);
 	if constexpr ((Extension::OEFLAGS & OEFLAGS::VALUES) != OEFLAGS::NONE)
 		rdSize += std::max(sizeof(AltVals::CF25), sizeof(AltVals::MMF2));
-	// HANDLE[] is ignored as the offset is a full int, so it can be put inside Extension
+	// OEFLAGS::WINDOW_PROC is ignored, as the int + HANDLE[] offset is pointed to by
+	// a full pointer, so it can be put inside Extension
 	rdSize += sizeof(Extension*); // pExtension
 	return rdSize;
 }
 
-Extension* RunObject::GetExtension() {
+Extension* RunObject::GetExtension()
+{
 	char* ret = ((char *)this) + sizeof(HeaderObject);
-	if ((rHo.OEFlags & (OEFLAGS::ANIMATIONS | OEFLAGS::MOVEMENTS | OEFLAGS::SPRITES)) != OEFLAGS::NONE)
+	if ((rHo.hoOEFlags & (OEFLAGS::ANIMATIONS | OEFLAGS::MOVEMENTS | OEFLAGS::SPRITES)) != OEFLAGS::NONE)
 		ret += sizeof(rCom);
-	if ((rHo.OEFlags & OEFLAGS::ANIMATIONS) != OEFLAGS::NONE)
+	if ((rHo.hoOEFlags & OEFLAGS::ANIMATIONS) != OEFLAGS::NONE)
 		ret += sizeof(rAni);
-	if ((rHo.OEFlags & OEFLAGS::MOVEMENTS) != OEFLAGS::NONE)
+	if ((rHo.hoOEFlags & OEFLAGS::MOVEMENTS) != OEFLAGS::NONE)
 		ret += sizeof(rMvt);
-	if ((rHo.OEFlags & OEFLAGS::SPRITES) != OEFLAGS::NONE)
-		ret += sizeof(Sprite);
-	if ((rHo.OEFlags & OEFLAGS::VALUES) != OEFLAGS::NONE)
+	if ((rHo.hoOEFlags & OEFLAGS::SPRITES) != OEFLAGS::NONE)
+		ret += sizeof(RunSprite);
+	if ((rHo.hoOEFlags & OEFLAGS::VALUES) != OEFLAGS::NONE)
 		ret += std::max(sizeof(AltVals::CF25), sizeof(AltVals::MMF2));
-	return *(Extension**)ret;
+	Extension* const ext = *(Extension**)ret;
+	if (!ext)
+	{
+		LOGF(_T("OEFLAGS was altered between Fusion start and this MFA creation.\n")
+			"The MFA uses an object of OEFLAGS %i, but the Extension expects OEFLAGS %i.\n"
+			"This is an unrecoverable error. Restart Fusion editor.",
+			rHo.hoOEFlags, Extension::OEFLAGS);
+	}
+	return ext;
 }
 void RunObject::SetExtension(Extension * const ext) {
 	// RDSize includes Extension * ptr, so subtract it to get offset of it
@@ -313,18 +330,24 @@ std::uint16_t FusionAPI GetRunObjectDataSize(RunHeader * rhPtr, EDITDATA * edPtr
 	return RDSize();
 }
 
-
 std::int16_t FusionAPI PauseRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
 	// Note: PauseRunObject is required, or runtime will crash when pausing.
-	return ((RunObject*)rdPtr)->GetExtension()->FusionRuntimePaused();
+	// TODO: Does the return from PauseRunObject actually change anything?
+#if PAUSABLE_EXTENSION
+	((RunObject*)rdPtr)->GetExtension()->FusionRuntimePaused();
+#endif
+	return 0;
 }
 
 std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 {
 #pragma DllExportHint
-	return ((RunObject*)rdPtr)->GetExtension()->FusionRuntimeContinued();
+#if PAUSABLE_EXTENSION
+	((RunObject*)rdPtr)->GetExtension()->FusionRuntimeContinued();
+#endif
+	return 0;
 }
 
 
@@ -336,15 +359,20 @@ ProjectFunc jint getNumberOfConditions(JNIEnv *, jobject, jlong cptr)
 	return CurLang["Conditions"].u.array.length;
 }
 typedef jobject ByteBufferDirect;
-typedef jobject CCreateObjectInfo;
 
-ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, CCreateObjectInfo coi, jint version)
+struct COIInternals {
+	static CreateObjectInfo&& MakeCreateObjectInfo(jobject o) {
+		return std::move(CreateObjectInfo(o));
+	}
+};
+ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, jobject coi, jint version)
 {
 	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
 	LOGV("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
 
-	Extension * ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr);
+	CreateObjectInfo&& coiReal = COIInternals::MakeCreateObjectInfo(coi);
+	Extension * ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr, &coiReal);
 	ext->Runtime.ObjectSelection.pExtension = ext;
 	return (jlong)ext;
 }
@@ -363,21 +391,56 @@ ProjectFunc REFLAG handleRunObject(JNIEnv *, jobject, jlong ext)
 	return ((Extension *)ext)->Handle();
 }
 
-ProjectFunc REFLAG displayRunObject(JNIEnv *, jobject, jlong ext)
+extern const char* getClassName(jclass myCls, bool fullpath);
+Extension* RunObject::GetExtension()
 {
-	// WARNING: not sure if this will work. Function signature was not in native SDK.
-	return ((Extension *)ext)->Display();
+	if (!runExt.ref)
+	{
+		const jfieldID runExtField = threadEnv->GetFieldID(meClass, "ext", "LExtensions/CRunExtension;");
+		JNIExceptionCheck();
+		if (!runExtField)
+		{
+			threadEnv->ExceptionClear();
+			LOGF(_T("RunObject::GetExtension() error: CExtension class was actually a \"%s\".\n"),
+				getClassName(meClass, false));
+			return nullptr;
+		}
+		runExt = global(threadEnv->GetObjectField(me, runExtField), "CRunExtension variant in RunObject");
+		runExtClass = global(threadEnv->GetObjectClass(runExt), "CRunExtension variant class in RunObject");
+	}
+
+	// Non-DarkEdif won't have cptr
+	const jfieldID cppExtField = threadEnv->GetFieldID(runExtClass, "cptr", "J");
+	if (!cppExtField)
+	{
+		// not found: there's gonna be a FieldDoesNotExist Java exception
+		threadEnv->ExceptionClear();
+		LOGW(_T("RunObject::GetExtension() error: RunObject for extension class \"%s\" does not have an cptr Extension pointer.\n"),
+			getClassName(runExtClass, false));
+		return nullptr;
+	}
+	const jlong extPtr = threadEnv->GetLongField(runExt, cppExtField);
+	JNIExceptionCheck();
+	if (!extPtr)
+	{
+		LOGE(_T("RunObject::GetExtension() warning: cptr was null.\n"));
+		return nullptr;
+	}
+
+	return (Extension*)extPtr;
 }
 
-ProjectFunc short pauseRunObject(JNIEnv *, jobject, jlong ext)
+#if PAUSABLE_EXTENSION
+ProjectFunc void pauseRunObject(JNIEnv *, jobject, jlong ext)
 {
-	return ((Extension *)ext)->FusionRuntimePaused();
+	((Extension *)ext)->FusionRuntimePaused();
 }
 
-ProjectFunc short continueRunObject(JNIEnv *, jobject, jlong ext)
+ProjectFunc void continueRunObject(JNIEnv *, jobject, jlong ext)
 {
-	return ((Extension *)ext)->FusionRuntimeContinued();
+	((Extension *)ext)->FusionRuntimeContinued();
 }
+#endif // PAUSABLE_EXTENSION
 
 extern thread_local JNIEnv * threadEnv;
 
@@ -422,7 +485,7 @@ jstring CStrToJStr(const char * String)
 	size_t strU8Len = strlen(String);
 	jstring jstr = nullptr;
 
-	for (int k = 0; k < strU8Len; k++)
+	for (int k = 0; k < strU8Len; ++k)
 	{
 		// 4-byte UTF-8, welp.
 		if (bytes[k] >= 0xF0 && bytes[k] <= 0xF5)
@@ -551,8 +614,8 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	else
 	{
 		__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
-		exit(EXIT_FAILURE);
 	}
+	exit(EXIT_FAILURE);
 }
 // Call via JNIExceptionCheck(). If a Java exception is pending, instantly dies.
 void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
@@ -684,7 +747,7 @@ static void my_handler(const int code, siginfo_t * const si, void * const sc)
 
 #if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR
 	const char * signalName = "Unknown";
-	for (size_t i = 0; i < std::size(signalCatches); i++)
+	for (std::size_t i = 0; i < std::size(signalCatches); ++i)
 	{
 		if (signalCatches[i].signalNum == code)
 		{
@@ -753,6 +816,19 @@ ProjectFunc jlong conditionJump(JNIEnv*, jobject, jlong extPtr, jint cndID, CCnd
 ProjectFunc void actionJump(JNIEnv*, jobject, jlong extPtr, jint actID, CActExtension act);
 ProjectFunc void expressionJump(JNIEnv*, jobject, jlong extPtr, jint expID, CNativeExpInstance exp);
 
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+ProjectFunc void displayRunObject(JNIEnv*, jobject, jlong extPtr, jobject renderer);
+ProjectFunc jobject getRunObjectCollisionMask(JNIEnv*, jobject, jlong extPtr, int flags);
+ProjectFunc void getZoneInfos(JNIEnv*, jobject, jlong extPtr);
+#endif
+
+#if TEXT_OEFLAG_EXTENSION
+ProjectFunc jobject getRunObjectFont(JNIEnv*, jobject, jlong ext);
+ProjectFunc jint getRunObjectTextColor(JNIEnv*, jobject, jlong ext);
+ProjectFunc void setRunObjectFont(JNIEnv*, jobject, jlong ext, jobject fontInfo, jobject rcPtr);
+ProjectFunc void setRunObjectTextColor(JNIEnv*, jobject, jlong ext, int rgb);
+#endif
+
 ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
 
@@ -806,12 +882,25 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		method(createRunObject, "(Ljava/nio/ByteBuffer;LRunLoop/CCreateObjectInfo;I)J"),
 		method(destroyRunObject, "(JZ)V"),
 		method(handleRunObject, "(J)S"),
-		method(displayRunObject, "(J)S"),
-		method(pauseRunObject, "(J)S"),
-		method(continueRunObject, "(J)S"),
 		method(conditionJump, "(JILConditions/CCndExtension;)J"),
 		method(actionJump, "(JILActions/CActExtension;)V"),
 		method(expressionJump, "(JILExpressions/CNativeExpInstance;)V"),
+#if PAUSABLE_EXTENSION
+		method(pauseRunObject, "(J)V"),
+		method(continueRunObject, "(J)V"),
+#endif
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+		method(displayRunObject, "(JLOpenGL/GLRenderer;)V"),
+		method(getRunObjectCollisionMask, "(JI)LSprites/CMask;"),
+		// method(getRunObjectSurface, "(J)???"), // does not exist in Android :(
+		method(getZoneInfos, "(J)V"),
+#endif
+#if TEXT_OEFLAG_EXTENSION
+		method(getRunObjectFont, "(J)LServices/CFontInfo;"),
+		method(getRunObjectTextColor, "(J)I"),
+		method(setRunObjectFont, "(JLServices/CFontInfo;LServices/CRect;)V"),
+		method(setRunObjectTextColor, "(JI)V"),
+#endif
 		EXTRAFUNCS
 	};
 
@@ -848,7 +937,7 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 	// Reset signals
 	if (didSignals)
 	{
-		for (int i = 0; i < std::size(signalCatches); i++)
+		for (int i = 0; i < std::size(signalCatches); ++i)
 			signal(signalCatches[i].signalNum, SIG_DFL);
 	}
 #endif
@@ -856,12 +945,22 @@ ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
 
 #else // iOS
 #include "Extension.hpp"
+#include "MMF2Lib/CTexture.h"
+#include "MMF2Lib/CImage.h"
+#include "MMF2Lib/CRenderer.h"
+#include "MMF2Lib/CExtension.h"
+#include "MMF2Lib/CRun.h"
+#include "MMF2Lib/CRunApp.h"
+#if MacBuild
+#include "MMF2Lib/CRunViewController.h"
+#endif
 
 // Raw creation func
 ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _init())
 {
 	mv * mV = NULL;
-	if (!Edif::SDK) {
+	if (!Edif::SDK)
+	{
 		LOGV("The SDK is being initialized.\n");
 		Edif::Init(mV, false);
 	}
@@ -877,12 +976,17 @@ ProjectFunc int PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getNumberOfC
 {
 	return CurLang["Conditions"].u.array.length;
 }
-ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRunObject(void * file, int cob, int version, void * objCExtPtr))
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRunObject(void * file, void* cobPtr, int version, void * objCExtPtr))
 {
 	EDITDATA * edPtr = (EDITDATA *)file;
 	LOGV("Note: objCExtPtr is %p, edPtr %p.\n", objCExtPtr, edPtr);
-	Extension * cppExt = new Extension((EDITDATA *)edPtr, objCExtPtr);
+	Extension * cppExt = new Extension((EDITDATA *)edPtr, objCExtPtr, (CreateObjectInfo*)cobPtr);
 	cppExt->Runtime.ObjectSelection.pExtension = cppExt;
+#if MacBuild==0
+	DarkEdif::Internal_WindowHandle = ((CRunExtension*)objCExtPtr)->ho->hoAdRunHeader->rhApp->mainViewController;
+#else
+	DarkEdif::Internal_WindowHandle = ((CRunExtension*)objCExtPtr)->ho->hoAdRunHeader->rhApp->runViewController->window;
+#endif
 	return cppExt;
 }
 ProjectFunc short PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _handleRunObject)(void * cppExt)
@@ -893,5 +997,236 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _destroyRunO
 {
 	delete ((Extension *)cppExt);
 }
+#if PAUSABLE_EXTENSION
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _pauseRunObject)(void* cppExt)
+{
+	((Extension*)cppExt)->FusionRuntimePaused();
+}
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _continueRunObject)(void* cppExt)
+{
+	((Extension*)cppExt)->FusionRuntimeContinued();
+}
+#endif // PAUSABLE_EXTENSION
 
+// Introduced in DarkEdif SDK v20
+extern "C" long DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCPtr)(CExtension* ext);
+Extension* RunObject::GetExtension()
+{
+	return (Extension *)DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, getCPtr)((CExtension *)this);
+}
+
+#endif // Apple
+
+
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+
+struct ForbiddenInternals
+{
+	static void * GetInternalSurface(DarkEdif::Surface* s)
+	{
+#ifdef _WIN32
+		s->Internal_WinZoneHack();
+		return s->surf;
+#elif defined(__ANDROID__)
+		// Android shouldn't need internal surface? but it's s->textSurface
+		return nullptr;
+#elif defined(__APPLE__)
+		return s->bmp;
 #endif
+	}
+	static void * GetSurfCollisionMaskNativePtr(DarkEdif::Surface* s, const bool platform) {
+		return s->GetCollisionMask(platform)->GetNativePointer();
+	}
+	static void* GetCollisionMaskNativePtr(DarkEdif::CollisionMask* colMask) {
+		return colMask->GetNativePointer();
+	}
+	static void Internal_BlitToFrame(DarkEdif::Surface* s) {
+		return s->BlitToFrameWithExtEffects();
+	}
+};
+
+#ifdef _WIN32
+short FusionAPI DisplayRunObject(RUNDATA* rdPtr)
+{
+#pragma DllExportHint
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+#elif defined(__ANDROID__)
+ProjectFunc void displayRunObject(JNIEnv*, jobject, jlong extP, jobject renderer)
+{
+	Extension* const ext = (Extension*)extP;
+#else
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _displayRunObject)(void* cppExtPtr, void* crenderer)
+{
+	Extension* const ext = (Extension*)cppExtPtr;
+#endif
+
+	// Tick display if ext dev has manual drawing
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
+	ext->Display();
+#endif
+
+	// If object has no ANIMATIONS, MOVEMENTS, SPRITES flags,
+	// GetRunObjectSurface will be called, the returned surface drawn,
+	// but not to (hoX, hoY), but to (0, 0) on frame instead. To avoid that,
+	// we draw it ourselves in that scenario.
+	//if constexpr ((Extension::OEFLAGS & OEFLAGS::SPRITES) == OEFLAGS::NONE)
+
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
+#ifdef __ANDROID__
+	// Android always manually draws
+	ext->surf->BlitToFrameWithExtEffects();
+#elif defined(__APPLE__)
+	// We shouldn't be calling this, as CExtension.m should delegate to draw, not drawSprite,
+	// meaning it calls GetRunObjectSurface first and only delegates to DisplayRunObject if it returns null
+	static bool didAppleWarning = false;
+	if (!didAppleWarning)
+	{
+		LOGE(_T("CExtension draw fix not implemented! Are you on latest iOS/Mac exporter?\n"));
+		didAppleWarning = true;
+	}
+	ext->surf->BlitToFrameWithExtEffects();
+#endif
+#endif // display type
+
+#ifdef _WIN32
+	// Although Windows returns a short, Yves confirmed the return value is ignored
+	return 0;
+#endif
+}
+
+// Android does not implement GetRunObjectSurface
+#ifndef __ANDROID__  
+
+#ifdef _WIN32
+cSurface* FusionAPI GetRunObjectSurface(RUNDATA * rdPtr)
+{
+#pragma DllExportHint
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+#else // apple
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getRunObjectSurface)(void* cppExtPtr)
+{
+	Extension* const ext = (Extension*)cppExtPtr;
+#endif
+
+	// Without BACK_SAVE, the extension smears the display
+	if constexpr ((Extension::OEFLAGS & (OEFLAGS::SPRITES | OEFLAGS::BACK_SAVE)) == OEFLAGS::SPRITES)
+	{
+		static bool warningDone = false;
+		if (!warningDone)
+		{
+			warningDone = true;
+			LOGW(_T("Using OEFLAGS::SPRITES without BACK_SAVE will cause display smearing.\n"));
+		}
+	}
+
+	void * intSurf = nullptr;
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
+	if (!ext->surf)
+		LOGF(_T("GetRunObjectSurface found Extension null surface is null.\n"));
+	intSurf = ForbiddenInternals::GetInternalSurface(&*ext->surf);
+#else // manual
+	LOGV(_T("GetRunObjectSurface running.\n"));
+	
+	auto surf = ext->GetDisplaySurface();
+	if (surf)
+		intSurf = ForbiddenInternals::GetInternalSurface(surf);
+	else // null surface delegates to DisplayRunObject
+		LOGV(_T("GetRunObjectSurface got a null surface, returning null."));
+#endif
+#ifdef _WIN32
+	return (cSurface *)intSurf;
+#else
+	return intSurf;
+#endif
+
+}
+#endif // not Android
+
+#ifdef _WIN32
+#pragma warning (suppress: 4996)
+sMask* FusionAPI GetRunObjectCollisionMask(RUNDATA * rdPtr, LPARAM flags)
+{
+#pragma DllExportHint
+	Extension* const ext = ((RunObject*)rdPtr)->GetExtension();
+#elif defined(__ANDROID__)
+ProjectFunc jobject getRunObjectCollisionMask(JNIEnv*, jobject, jlong extP, int flags)
+{
+	Extension* const ext = (Extension *)extP;
+#else // apple
+ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getRunObjectCollisionMask)(void* cppExtPtr, int flags)
+{
+	Extension* const ext = (Extension*)cppExtPtr;
+#endif
+	if ((flags & 1) != flags)
+		LOGF(_T("Unexpected flags passed to GetRunObjectCollisionMask: Expected 0 or 1, got %d.\n"), flags);
+	void * nativeMask = nullptr;
+
+	// No fine collisions? Don't even need this mask then
+	if constexpr ((Extension::OEPREFS & OEPREFS::FINE_COLLISIONS) != OEPREFS::NONE)
+	{
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
+		DarkEdif::Surface* const surf = &*ext->surf;
+		if (surf)
+		{
+			LOGV(_T("GetRunObjectCollisionMask got a non-null surface.\n"));
+			nativeMask = ForbiddenInternals::GetSurfCollisionMaskNativePtr(surf, (flags & 1) != 0);
+		}
+		else
+			LOGV(_T("GetRunObjectSurface got a null surface, returning null.\n"));
+#else // manual display
+		DarkEdif::CollisionMask* const colMask = ext->GetCollisionMask((flags & 1) != 0);
+		if (colMask)
+		{
+			LOGV(_T("GetRunObjectCollisionMask got a non-null mask.\n"));
+			nativeMask = ForbiddenInternals::GetCollisionMaskNativePtr(colMask);
+		}
+		else
+			LOGV(_T("GetRunObjectSurface got a null mask, returning null.\n"));
+#endif
+	}
+
+#ifdef _WIN32
+#pragma warning (suppress: 4996)
+	return (sMask*)nativeMask;
+#elif defined(__ANDROID__)
+	return (jobject)nativeMask;
+#else // Apple
+	return nativeMask;
+#endif
+}
+
+#ifdef _WIN32
+void FusionAPI GetZoneInfos(RUNDATA * rdPtr)
+{
+#pragma DllExportHint
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
+	return ((RunObject*)rdPtr)->GetExtension()->GetZoneInfos();
+#endif // manual display
+}
+#elif defined(__ANDROID__)
+ProjectFunc void getZoneInfos(JNIEnv*, jobject, jlong ext)
+{
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
+	((Extension*)ext)->GetZoneInfos();
+#endif // manual display
+}
+#else // Apple
+ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getZoneInfos)(void* ext)
+{
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_MANUAL
+	((Extension*)ext)->GetZoneInfos();
+#endif // manual display
+}
+#endif // Apple
+
+// else not displaying ext
+#elif defined(__WIN32)
+short FusionAPI DisplayRunObject(RUNDATA* rdPtr)
+{
+	#pragma DllExportHint
+	// TODO: My brain says DisplayRunObject is necessary regardless of whether ext
+	// actually displays. Might crash when pausing and resuming ext, first created, etc.
+	// Need to test that.
+	return 0;
+}
+#endif // displaying ext

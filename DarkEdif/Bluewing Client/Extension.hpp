@@ -7,16 +7,15 @@ void NewEvent(EventToRun *);
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
 static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
 
-class Extension
+class Extension final
 {
 public:
-	// Hide stuff requiring other headers
-	std::shared_ptr<EventToRun> threadData; // Must be first variable in Extension class
-	std::tstring_view loopName;
-	static std::atomic<bool> AppWasClosed;
-
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 #ifdef __ANDROID__
 	global<jobject> javaExtPtr;
 #elif defined(__APPLE__)
@@ -28,32 +27,25 @@ public:
 	static const int MinimumBuild = 251;
 	static const int Version = lacewing::relayclient::buildnum;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 #elif defined(__ANDROID__)
-	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr);
+	Extension(const EDITDATA* const edPtr, const jobject javaExtPtr, const CreateObjectInfo* const cobPtr);
 #else
-	Extension(const EDITDATA* const edPtr, void* const objCExtPtr);
+	Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const CreateObjectInfo* const cobPtr);
 #endif
 	~Extension();
 
+	// ======================================
+	// Extension data
+	// ======================================
 
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr).
-
-		For those using multi-threading, any variables that are modified
-		by the threads should be in EventToRun.
-		See MultiThreading.h.
-
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
+	std::shared_ptr<EventToRun> threadData;
+	std::tstring_view loopName;
+	static std::atomic<bool> AppWasClosed;
 
 	bool isGlobal;
 
@@ -307,25 +299,6 @@ public:
 	int ConvToUTF8_GetByteCount(const TCHAR* tStr);
 	const TCHAR* ConvToUTF8_TestAllowList(const TCHAR* tStr, const TCHAR* charset);
 
-	/* These are called if there's no function linked to an ID */
-
-	void UnlinkedAction(int ID);
-	long UnlinkedCondition(int ID);
-	long UnlinkedExpression(int ID);
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
-
 	struct GlobalInfo
 	{
 		// Lacewing event queue and ticker
@@ -428,9 +401,7 @@ public:
 		void CreateError(PrintFHintInside const char* errorText, ...) PrintFHintAfter(2, 3);
 		void CreateError(PrintFHintInside const char* errorText, va_list v) PrintFHintAfter(2, 0);
 
-
 		// Constructor and destructor
-
 		GlobalInfo(Extension* e, const EDITDATA* const edPtr);
 
 		// Due to Runtime.WriteGlobal() not working if there's no Extension,
@@ -440,4 +411,12 @@ public:
 		void MarkAsPendingDelete();
 		~GlobalInfo() noexcept(false);
 	};
+
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
+
+	// These are called if there's no function linked to an ID
+	void UnlinkedAction(int ID);
+	long UnlinkedCondition(int ID);
+	long UnlinkedExpression(int ID);
 };

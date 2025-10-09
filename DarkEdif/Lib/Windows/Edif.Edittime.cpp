@@ -265,6 +265,98 @@ void * FusionAPI GetExpressionInfos(mv * mV, short code)
 	return NULL;
 }
 
+
+// ============================================================================
+// TEXT PROPERTIES
+// ============================================================================
+
+#if TEXT_OEFLAG_EXTENSION
+
+// Return the text capabilities of the object under the frame editor; affects what options
+// appear if you right-click the object in frame editor and use Text submenu.
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+unsigned int FusionAPI GetTextCaps(mv* mV, EDITDATA* edPtr)
+{
+#pragma DllExportHint
+	// If TextCapacity::Font, implement these functions:
+	// > Edittime: GetTextFont(), SetTextFont().
+	// > Runtime: GetRunObjectFont(), SetRunObjectFont().
+	// If TextCapacity::Color:
+	// > Edittime: GetTextClr(), SetTextClr().
+	// > Runtime: GetRunObjectTextColor(), SetRunObjectTextColor().
+	// If any alignment ones, (e.g. TextCapacity::Left):
+	// > Edittime: GetTextAlignment(), SetTextAlignment()
+	// > Runtime: None
+	// Define this in TextCapacity in Extension.h, combining with |.
+	return (uint32_t)Extension::TextCapacity;
+}
+
+// Return the font used in the object. See GetRunObjectFont().
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if Extension::TextCapacity includes TextCapacity::Font.
+//			The pStyle and cbSize parameters are obsolete since MMF2 and passed for compatibility reasons.
+BOOL FusionAPI GetTextFont(mv* mV, EDITDATA* edPtr, LOGFONT* Font,
+	[[deprecated]] const TCHAR*, [[deprecated]] unsigned int)
+{
+#pragma DllExportHint
+	std::unique_ptr<LOGFONT> logFont = edPtr->font.GetWindowsLogFont();
+	memcpy(Font, logFont.get(), sizeof(LOGFONT));
+	return TRUE;
+}
+
+// Change the font used the object. See SetRunObjectFont().
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if Extension::TextCapacity includes TextCapacity::Font.
+//			The pStyle parameter is obsolete since MMF2 and passed for compatibility reasons.
+BOOL FusionAPI SetTextFont(mv* mV, EDITDATA* edPtr, LOGFONT* Font,
+	[[deprecated]] const char* pStyle)
+{
+#pragma DllExportHint
+	edPtr->font.SetWindowsLogFont(Font);
+	return TRUE;
+}
+
+// Get the text color of the object. See GetRunObjectTextColor().
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if GetTextCaps() return includes TextCapacity::Color.
+COLORREF FusionAPI GetTextClr(mv* mV, EDITDATA* edPtr)
+{
+#pragma DllExportHint
+	return (COLORREF)edPtr->font.fontColor; // see RGB() macro
+}
+
+// Called by Fusion to set the text color of the object. See SetRunObjectTextColor().
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if GetTextCaps() return includes TextCapacity::Color.
+void FusionAPI SetTextClr(mv* mV, EDITDATA* edPtr, COLORREF color)
+{
+#pragma DllExportHint
+	edPtr->font.fontColor = color;
+}
+
+// Get the text alignment of the object.
+// @remarks There is no text alignment expression from OEFLAGS::TEXT, thus
+//			there is no GetRunObjectTextAlignment().
+//			This editor-only expression is used for the text property pane.
+//			Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if GetTextCaps() return includes any TextCapacity alignment flags
+unsigned int FusionAPI GetTextAlignment(mv* mV, EDITDATA* edPtr)
+{
+#pragma DllExportHint
+	return edPtr->font.GetFusionTextAlignment();
+}
+
+// Set the text alignment of the object.
+// @remarks Introduced in MMF1.5, absent in MMF1.2 and below.
+//			Must be defined if GetTextCaps() returns any TextCapacity alignment flags
+void FusionAPI SetTextAlignment(mv* mV, EDITDATA* edPtr, unsigned int alignFlags)
+{
+#pragma DllExportHint
+	edPtr->font.SetFusionTextAlignment((TextCapacity)alignFlags);
+}
+
+#endif // TEXT_OEFLAG_EXTENSION
+
 #ifdef DARKEXT_JSON_FILE_EXTERNAL
 void AddDirectory(std::tstring &From, std::tstring &To)
 {

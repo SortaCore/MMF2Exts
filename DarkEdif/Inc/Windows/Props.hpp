@@ -832,7 +832,9 @@ enum {
 	PROPID_TAB_ANDROID,
 	PROPID_TAB_XNA,
 	PROPID_TAB_MAC,
+	// MMF2 only: smiling face emote tab
 	PROPID_TAB_CUSTOM1 = 18,
+	// MMF2 only: calendar icon tab
 	PROPID_TAB_CUSTOM2,
 	PROPTAB_MAX				// 20
 };

@@ -94,9 +94,9 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 19)
 	this.getCurrentFusionEventNumber = function (ext) {
 		return ext.rh.rhEvtProg.rhEventGroup.evgLine || -1;
 	};
-	this.sdkVersion = 19;
+	this.sdkVersion = 20;
 	this.checkSupportsSDKVersion = function (sdkVer) {
-		if (sdkVer < 16 || sdkVer > 19) {
+		if (sdkVer < 16 || sdkVer > 20) {
 			throw "UWP DarkEdif SDK does not support SDK version " + this.sdkVersion;
 		}
 	};

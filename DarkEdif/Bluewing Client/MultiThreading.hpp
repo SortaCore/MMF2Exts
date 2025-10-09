@@ -3,7 +3,7 @@
 #include "Lacewing.h"
 
 /* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */
-struct EventToRun
+struct EventToRun final
 {
 	// Required for DarkEdif
 	std::uint8_t	numEvents;

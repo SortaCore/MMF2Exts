@@ -1,4 +1,11 @@
 #pragma once
+#ifndef _WIN32
+#error Including header in wrong platform, try SurfaceMultiPlat.hpp
+#endif
+#if !defined(FUSION_INTERNAL_ACCESS) && !defined(SURFACE_MULTI_PLAT_INCLUDING_WINSURF)
+#error To use the Windows-only cSurface, you must define FUSION_INTERNAL_ACCESS
+#endif
+
 #include "AllPlatformDefines.hpp"
 #include "WindowsDefines.hpp"
 
@@ -20,30 +27,25 @@ enum class SurfaceError : unsigned int
 //
 // cSurface class
 //
-#ifdef _WIN32
 #include "Palet.hpp"
 #include <CommDlg.h>
 #pragma comment(lib, "gdi32.lib")
-#endif
 
 class cSurface;
 class cSurfaceImplementation;
 class CFillData;
 class CInputFile;
 
-// Convention : SfSrc.FilterBlit(SfDest, MyCallBack, param)
-// ==========		will call MyCallBack(pixelDest, pixelSrc, param)
-
 typedef	COLORREF (CALLBACK * FILTERBLITPROC)(COLORREF pixelDest, COLORREF pixelSource, ULONG userParam);
 typedef	COLORREF (CALLBACK * MATRIXFILTERBLITPROC)(COLORREF * pixelDest, COLORREF * pixelSrc, ULONG userParam);
 
 // Display mode
 typedef	struct DisplayMode {
-	int		mcx;
-	int		mcy;
-	int		mDepth;
-//	int		mNearestBitCount;
-//	int		mDriver;
+	int mcx;
+	int mcy;
+	int mDepth;
+//	int mNearestBitCount;
+//	int mDriver;
 } DisplayMode;
 
 typedef	BOOL (CALLBACK * LPENUMSCREENMODESPROC)(DisplayMode*, LPVOID);
@@ -69,15 +71,36 @@ class CInputFile;
 //typedef LPSURFACE cSurface *;
 
 // Blit modes
-// Cannot rename, is used by DLL function signatures
+// @remarks This is locked to this name due to cSurface's DLL function signatures
 enum BlitMode {
 	BMODE_OPAQUE,
 	BMODE_TRANSP,
 	BMODE_MAX
 };
 
-// Blit operations. Cannot rename, is used by DLL function signatures
-enum _Enum_is_bitflag_ BlitOp {
+// Blit options
+// @remarks This is an unnamed enum in original SDK
+enum class _Enum_is_bitflag_ WinSurf_BlitOptions : ULONG {
+	None = 0x0000,
+	// Anti-aliasing
+	AntiAliasing = 0x0001,
+	// Copy alpha channel to destination alpha channel instead of applying it
+	CopyAlpha = 0x0002,
+#ifdef HWABETA
+	// TODO: YQ: What is a safe source?
+	// HWA only
+	SafeSource = 0x0010,
+	// TODO: YQ: Tile as in mosaic? Any margins?
+	// HWA only
+	Tile = 0x0020
+#endif // HWABETA
+};
+enum_class_is_a_bitmask(WinSurf_BlitOptions);
+
+// Blit operations
+// @remarks This is locked to this name due to cSurface's DLL function signatures
+enum BlitOp {
+	// Use BlitOperation instead
 	BOP_COPY,					// None
 	BOP_BLEND,					// dest = ((dest * coef) + (src * (128-coef)))/128
 	BOP_INVERT,					// dest = src XOR 0xFFFFFF
@@ -97,55 +120,6 @@ enum _Enum_is_bitflag_ BlitOp {
 	BOP_RGBAFILTER = 0x1000,
 };
 
-enum class _Enum_is_bitflag_ BlitOperation {
-	// Copies by overwriting destination surface
-	Copy,
-	// Blend the destination RGB with source surface RGB
-	// blend_coef is in range 0 to 128, 128 being a full merge
-	// dest = ((dest * blend_coef) + (src * (128-blend_coef)))/128
-	BLEND,
-	// Invert the source RGB before overwriting destination RGB
-	// src XOR 0xFFFFFF
-	INVERT,
-	// Combine the source RGB with dest RGB using XOR
-	// src XOR dest
-	XOR,
-	// Combine the source RGB with dest RGB using AND
-	// src AND dest
-	AND,
-	// Combine the source RGB with dest RGB using OR
-	// src OR dest
-	OR,
-	// Blend the destination RGB with source surface RGB
-	// dest = ((dest * blend_coef) + ((src==transp) ? replace : src * (128-blend_coef) ))/128
-	BlendReplaceTransp,
-	// Removed in Fusion 2.5, possibly 2.0
-	// Blits using the WinGDI raster operation (ROP) specified in the lParam
-	// https://docs.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-bitblt#:~:text=A%20raster-operation%20code
-	DrawWithROP,
-	// Applies INVERT then AND
-	AndNot,
-	// Combines the source RGB with the dest RGB by adding src and dest together by color channels
-	Addition,
-	// Gets the mean average of R,G,B and uses it for dest R,G,B
-	Mono,
-	// Combines the source RGB with the dest RGB by subtracting src from dest by color channels
-	Subtract,
-	// ?
-	BlendDontReplaceColor,
-	// ?
-	EffectEx,
-	// Max possible outside of a bitmask
-	// In Android, this is 15 due to presence of Text, other platforms have it as 14.
-	// @remarks KcBoxA/B on iOS have it as 13, mistakenly
-	Max,
-	// The bitmask for possible blit ops
-	Mask = 0x0FFF,
-	// ?
-	RGBAFilter = 0x1000,
-};
-enum_class_is_a_bitmask(BlitOperation);
-
 constexpr std::uint8_t AlphaToSemiTransp(const std::uint8_t a) {
 	return a == 0 ? 128 : (255 - a) / 2;
 }
@@ -159,7 +133,9 @@ constexpr RGBAREF ColorRefAToRGBA(const COLORREF c, const std::uint8_t a) {
 }
 
 // Surface capabilities
-enum class SurfaceCapabilities
+// @remarks This is locked to this name, due to cSurface's DLL function signatures,
+//			but strangely does not seem to be used.
+enum class SurfaceCap
 {
 	// Capabilities
 	SC_GETPIXEL,
@@ -172,7 +148,7 @@ enum class SurfaceCapabilities
 };
 
 // SetPalette()
-// Cannot be renamed, part of a linked DLL function
+// @remarks This is locked to this name due to cSurface's DLL function signatures
 enum class SetPaletteAction
 {
 	// Just update palette
@@ -182,6 +158,7 @@ enum class SetPaletteAction
 	Max
 };
 // Surface types
+// @remarks This is an unnamed enum in original SDK
 enum class SurfaceType : int
 {
 	// Buffer only
@@ -253,6 +230,7 @@ enum class SurfaceDriver : int
 
 
 // SetAutoVSync() function flags.
+// @remarks This is a series of defines in original SDK
 enum class _Enum_is_bitflag_ SetAutoVSyncFlags : int
 {
 	VSync = 0x0001,
@@ -263,7 +241,8 @@ enum class _Enum_is_bitflag_ SetAutoVSyncFlags : int
 };
 enum_class_is_a_bitmask(SetAutoVSyncFlags);
 
-// LoadImage() function flags. Cannot rename this; part of the function signatures for cSurface.
+// LoadImage() function flags.
+// @remarks This is locked to this name due to cSurface's DLL function signatures
 enum class _Enum_is_bitflag_ LIFlags : int
 {
 	None = 0x0000,
@@ -272,42 +251,23 @@ enum class _Enum_is_bitflag_ LIFlags : int
 	// Do not normalize palette
 	DoNotNormalizePalette = 0x0004
 };
-typedef LIFlags LoadImageFlags;
-enum_class_is_a_bitmask(LoadImageFlags);
+enum_class_is_a_bitmask(LIFlags);
 
-// SaveImage() function flags. Cannot rename this; it's part of the function signatures for cSurface.
+// SaveImage() function flags.
+// @remarks This is locked to this name due to cSurface's DLL function signatures
 enum class _Enum_is_bitflag_ SIFlags : int
 {
 	None = 0x0000,
 	OnlyHeader = 0x0001,
 	SaveAlpha = 0x0002
 };
-typedef SIFlags SaveImageFlags;
-enum_class_is_a_bitmask(SaveImageFlags);
+enum_class_is_a_bitmask(SIFlags);
 
 // TODO: YQ: When is this used? What does LBF_ mean?
+// @remarks This is an unnamed enum in original SDK
 enum {
 	LBF_DONOTCHANGESURFACEDEPTH = 0x0001
 };
-
-// Blit options
-enum class _Enum_is_bitflag_ BlitOptions : ULONG {
-	None			= 0x0000,
-	// Anti-aliasing
-	AntiAliasing	= 0x0001,
-	// Copy alpha channel to destination alpha channel instead of applying it
-	CopyAlpha		= 0x0002,
-#ifdef HWABETA
-	// TODO: YQ: What is a safe source?
-	// HWA only
-	SafeSource		= 0x0010,
-	// TODO: YQ: Tile as in mosaic? Any margins?
-	// HWA only
-	Tile			= 0x0020
-#endif // HWABETA
-};
-enum_class_is_a_bitmask(BlitOptions);
-
 
 // Stretch & BlitEx options
 enum class _Enum_is_bitflag_ StretchFlags : unsigned int {
@@ -327,25 +287,26 @@ enum_class_is_a_bitmask(StretchFlags);
 
 
 // Transparent monochrome mask for collisions
+// You should not use this; use DarkEdif::CollisionMask
 struct sMask
 {
+	DarkEdifInternalAccessProtected:
 	// TODO: YQ: Is this size of CollisionMask (sMask) in bytes?
-	int		mkSize;
+	int mkSize;
 	// Width in pixels
-	int		mkWidth;
+	int mkWidth;
 	// Height in pixels
-	int		mkHeight;
-	// TODO: YQ: Is this width in bytes... that wouldn't ame
+	int mkHeight;
+	// TODO: YQ: Is this width in bytes... that wouldn't make much sense
 	UINT	mkWidthBytes;
 	// TODO: YQ: X/Y based on Hot Spot, Action Point, or something else?
-	int		mkXSpot;
-	int		mkYSpot;
+	int mkXSpot;
+	int mkYSpot;
 	// TODO: YQ: MKFlags? Is this SCMF_XX
 	ULONG	mkFlags;
 	// TODO: YQ: What is this relative to?
 	RECT	mkRect;
 };
-typedef sMask CollisionMask;
 
 enum class CreateCollisionMaskFlags : std::uint16_t {
 	Full,
@@ -364,7 +325,7 @@ FusionAPIImport void FusionAPI DeleteSurface(cSurface * pSurf);
 
 // Get surface prototype. You should NOT free the cSurface proto returned!
 // TODO: YQ: If there is an error, where is it placed?
-FusionAPIImport BOOL FusionAPI GetSurfacePrototype(cSurface * *proto, int depth, int st, int drv);
+FusionAPIImport BOOL FusionAPI GetSurfacePrototype(cSurface ** proto, int depth, int st, int drv);
 
 // DIB
 static_assert(sizeof(ULONG) == 4, "32-bit long expected");
@@ -377,543 +338,563 @@ FusionAPIImport std::byte * FusionAPI GetDIBBitmap(LPBITMAPINFO pBmi);
 class FusionAPIImport cSurface
 {
 public:
-		// ======================
-		// Creation / Destruction
-		// ======================
+	// ======================
+	// Creation / Destruction
+	// ======================
 
-		// TODO: YQ: Prefered over NewSurface()?
-		// TODO: YQ: Are copy and move constructors defined?
-		cSurface();
-		~cSurface();
+	// TODO: YQ: Prefered over NewSurface()?
+	// TODO: YQ: Are copy and move constructors defined?
 
-		// TODO: YQ: Init what, exactly?
-		static void InitializeSurfaces();
-		static void FreeSurfaces();
-		#if HWABETA
-		// TODO: YQ: What is being freed?
-		// HWA only
-		static void FreeExternalModules();
-		#endif
+	// Creates a cSurface container, without creating its internal surface - see Create, Delete
+	cSurface();
+	~cSurface();
 
-		// Operators
+	// Operators
+	cSurface& operator=(const cSurface& source);
 
-		cSurface & operator= (const cSurface & source);
+	// TODO: YQ: Init what, exactly?
+	static void InitializeSurfaces();
+	static void FreeSurfaces();
+#if HWABETA
+	// TODO: YQ: What is being freed?
+	// HWA only
+	static void FreeExternalModules();
+#endif
 
-		// Create surface implementation from surface prototype
-		void Create (int width, int height, cSurface * prototype);
+	// Create surface implementation from surface prototype
+	void Create(int width, int height, cSurface * prototype);
 
-		// Create pure DC surface from DC
-		void Create (HDC hDC);
+	// Create pure DC surface from DC
+	void Create(HDC hDC);
 
-		// Create pure DC surface from a window
-		void Create (HWND hWnd, BOOL IncludeFrame);
+	// Create pure DC surface from a window
+	void Create(HWND hWnd, BOOL IncludeFrame);
 
-		// TODO: YQ: What is a screen surface? What does creating one do?
-		// Create screen surface (fullscreen mode)
-		BOOL CreateScreenSurface();
-		BOOL IsScreenSurface();
+	// TODO: YQ: What is a screen surface? What does creating one do?
+	// Create screen surface(fullscreen mode)
+	BOOL CreateScreenSurface();
+	BOOL IsScreenSurface();
 
-		// TODO: YQ: What makes a surface valid or invalid?
-		// Valid?
-		BOOL IsValid ();
+	// TODO: YQ: What makes a surface valid or invalid?
+	// Valid?
+	BOOL IsValid();
 
-		// TODO: YQ: What is type?
-		// Get driver & type
-		int		GetType();
-		// TODO: YQ: What is driver?
-		int		GetDriver();
-		// TODO: YQ: What is driverinfo? What should be passed to pInfo?
-		ULONG	GetDriverInfo(void * pInfo);
+	// TODO: YQ: What is type?
+	// Get driver & type
+	int GetType();
+	// TODO: YQ: What is driver?
+	int GetDriver();
+	// TODO: YQ: What is driverinfo? What should be passed to pInfo?
+	// DirectDraw only? DDHAL_GETDRIVERINFODATA?
+	// Direct3D 8? DD_GETDRIVERINFODATA
+	ULONG GetDriverInfo(void * pInfo);
 
-		// Clone surface (= create with same size + Blit)
-		void Clone (const cSurface & pSrcSurface, int newW = -1, int newH = -1);
+	// Clone surface(= create with same size + Blit)
+	void Clone(const cSurface & pSrcSurface, int newW = -1, int newH = -1);
 
-		// TODO: YQ: What is "before to create"? Reusing the cSurface *?
-		// YQ: Does this delete this cSurface? Is it suitable for use with Clone() only? just Create()?
-		// Delete surface implementation (before to create another one)
-		void Delete();
+	// TODO: YQ: What is "before to create"? Reusing the cSurface *?
+	// YQ: Does this delete this cSurface? Is it suitable for use with Clone() only? just Create()?
+	// Delete surface implementation(before to create another one)
+	void Delete();
 
-		// ======================
-		// error codes
-		// ======================
-		// This has never returned an error in scenarios where nothing is drawn (e.g. drawing a line 2px in D3D 11)
-		int		GetLastError(void);
+	// ======================
+	// error codes
+	// ======================
+	// This has never returned an error in scenarios where nothing is drawn (e.g. drawing a line 2px in D3D 11)
+	int GetLastError(void);
 
-		// ======================
-	    // Surface info
-		// ======================
-		// TODO: Width in pixels? What if invalid?
-		int		GetWidth(void) const;
-		// TODO: Height in pixels? What if invalid?
-		int		GetHeight(void) const;
+	// ======================
+	// Surface info
+	// ======================
+	// TODO: Width in pixels? What if invalid?
+	int GetWidth(void) const;
+	// TODO: Height in pixels? What if invalid?
+	int GetHeight(void) const;
 
-		// Number of bits per pixel. 8, 15, 16, 24 or 32 (BGRA).
-		// 8 bits = 1 byte index in the color table
-		// TODO: color table = pallete?
-		// 15 = 16 bit per pixel; 5 bits per component, 1 bit ignored. Red mask = 0x7C00, green mask = 0x03E0, blue mask = 0x001F.
-		// 16 = 16 bit per pixel; 5 bits for R/B, 6 for G. Red mask = 0xF800, green mask = 0x07E0, blue mask = 0x001F.
-		// 24 = 8 bits per component, BGR layout.
-		// 32 = 8 bits per component, BGRA layout; A is normally unused, but can be alpha.
-		int		GetDepth(void) const;
-		BOOL	GetInfo(int & width, int & height, int & depth) const;
+	// Number of bits per pixel. 8, 15, 16, 24 or 32(BGRA).
+	// 8 bits = 1 byte index in the color table
+	// TODO: color table = pallete?
+	// 15 = 16 bit per pixel; 5 bits per component, 1 bit ignored. Red mask = 0x7C00, green mask = 0x03E0, blue mask = 0x001F.
+	// 16 = 16 bit per pixel; 5 bits for R/B, 6 for G. Red mask = 0xF800, green mask = 0x07E0, blue mask = 0x001F.
+	// 24 = 8 bits per component, BGR layout.
+	// 32 = 8 bits per component, BGRA layout; A is normally unused, but can be alpha.
+	int GetDepth(void) const;
+	BOOL GetInfo(int & width, int & height, int & depth) const;
 
-		// ======================
-	    // Surface coordinate management
-		// ======================
+	// ======================
+	// Surface coordinate management
+	// ======================
 
-		// TODO: YQ: What does Origin mean? Something relative to Hot Spot? Relative for blit operations?
-		void	SetOrigin(int x, int y);
-		void	SetOrigin(POINT c);
+	// TODO: YQ: What does Origin mean? Something relative to Hot Spot? Relative for blit operations?
+	void SetOrigin(int x, int y);
+	void SetOrigin(POINT c);
 
-		void	GetOrigin(POINT &pt);
-		void	GetOrigin(int & x, int & y);
+	void GetOrigin(POINT &pt);
+	void GetOrigin(int & x, int & y);
 
-		void	OffsetOrigin(int dx, int dy);
-		void	OffsetOrigin(POINT delta);
+	void OffsetOrigin(int dx, int dy);
+	void OffsetOrigin(POINT delta);
 
-		// ======================
-	    // Raster operations
-		// ======================
+	// ======================
+	// Raster operations
+	// ======================
 
-		// Locks the raw memory of the Surface, and returns the address to it. When you're done writing, use UnlockBuffer to return it.
-		// TODO: YQ: Does this work for all surface types?
-		LPBYTE	LockBuffer();
+	// Locks the raw memory of the Surface, and returns the address to it. When you're done writing, use UnlockBuffer to return it.
+	// TODO: YQ: Does this work for all surface types?
+	LPBYTE	LockBuffer();
 
-		// TODO: YQ: Why do you have to unlock with address, won't OOP make that pointless? Can you pass a different address?
-		void	UnlockBuffer(LPBYTE spBuffer);
-		// TODO: YQ: What is pitch? It's not Depth()?
-		int		GetPitch() const;
+	// TODO: YQ: Why do you have to unlock with address, won't OOP make that pointless? Can you pass a different address?
+	void UnlockBuffer(LPBYTE spBuffer);
+	// TODO: YQ: What is pitch? It's not Depth()?
+	int GetPitch() const;
 
-		// ======================
-		// Double-buffer handling
-		// ======================
+	// ======================
+	// Double-buffer handling
+	// ======================
 
-		// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
-		void	SetCurrentDevice();
-		// TODO: YQ: Rendering to GetRenderTargetSurface()? Where and why do we need to call BeginRendering()?
-		int		BeginRendering(BOOL clear, RGBAREF rgba);
-		// TODO: YQ: Rendering to GetRenderTargetSurface()?
-		int		EndRendering();
+	// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
+	void SetCurrentDevice();
+	// TODO: YQ: Rendering to GetRenderTargetSurface()? Where and why do we need to call BeginRendering()?
+	int  BeginRendering(BOOL clear, RGBAREF rgba);
+	// TODO: YQ: Rendering to GetRenderTargetSurface()?
+	int  EndRendering();
+	// TODO: YQ: update how?
+	BOOL UpdateScreen();
+
+	#ifdef HWABETA
 		// TODO: YQ: update how?
-		BOOL	UpdateScreen();
-		#ifdef HWABETA
-			// TODO: YQ: update how?
-			cSurface* GetRenderTargetSurface();
-			void	ReleaseRenderTargetSurface(cSurface* psf);
-			// TODO: YQ: What does this do, how does Max affect it ?
-			void	Flush(BOOL bMax);
-			// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
-			void	SetZBuffer(float z2D);
-		#endif
+		cSurface* GetRenderTargetSurface();
+		void	  ReleaseRenderTargetSurface(cSurface* psf);
+		// TODO: YQ: What does this do, how does Max affect it ?
+		void	  Flush(BOOL bMax);
+		// TODO: YQ: I would guess this is the Z position of the buffer, but a float makes no sense here.
+		void	  SetZBuffer(float z2D);
+	#endif
 
-		// ======================
-	    // Device context for graphic operations
-		// ======================
-		HDC		GetDC(void);
-		void	ReleaseDC(HDC dc);
-		void	AttachWindow (HWND hWnd);
+	// ======================
+	// Device context for graphic operations
+	// ======================
+	HDC	 GetDC(void);
+	void ReleaseDC(HDC dc);
+	void AttachWindow(HWND hWnd);
 
-		// ======================
-	    // Clipping
-		// ======================
+	// ======================
+	// Clipping
+	// ======================
 
-		// TODO: YQ: WHat does clipping apply to? Blit?
-		void	GetClipRect(int & x, int & y, int & w, int & h);
-		void	SetClipRect(int x, int y, int w, int h);
-		void	ClearClipRect(void);
+	// TODO: YQ: WHat does clipping apply to? Blit?
+	void GetClipRect(int & x, int & y, int & w, int & h);
+	void SetClipRect(int x, int y, int w, int h);
+	void ClearClipRect(void);
 
-		// ======================
-		// LoadImage (DIB format) / SaveImage (DIB format)
-		// ======================
-		#undef LoadImage
+	// ======================
+	// LoadImage (DIB format) / SaveImage (DIB format)
+	// ======================
 
-		BOOL	LoadImageA (HFILE hf, ULONG lsize, LoadImageFlags loadFlags = LoadImageFlags::None);
-		// See the _FUSIONT macro for filename!
-		BOOL	LoadImageA (LPCSTR fileName, LoadImageFlags loadFlags = LoadImageFlags::None);
-		BOOL	LoadImageA (HINSTANCE hInst, int bmpID, LoadImageFlags loadFlags = LoadImageFlags::None);
-		BOOL	LoadImageA (LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LoadImageFlags loadFlags = LoadImageFlags::None);
+	// Defined in Win32 header, will mess with these func names if defined here
+	#undef LoadImage
 
-		BOOL	LoadImageW (HFILE hf, ULONG lsize, LoadImageFlags loadFlags = LoadImageFlags::None);
-		// See the _FUSIONT macro for filename!
-		BOOL	LoadImageW (const UShortWCHAR * fileName, LoadImageFlags loadFlags = LoadImageFlags::None);
-		BOOL	LoadImageW (HINSTANCE hInst, int bmpID, LoadImageFlags loadFlags = LoadImageFlags::None);
-		BOOL	LoadImageW (LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LoadImageFlags loadFlags = LoadImageFlags::None);
+	BOOL LoadImageA(HFILE hf, ULONG lsize, LIFlags loadFlags = LIFlags::None);
+	// See the _FUSIONT macro for filename!
+	BOOL LoadImageA(LPCSTR fileName, LIFlags loadFlags = LIFlags::None);
+	BOOL LoadImageA(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None);
+	BOOL LoadImageA(LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None);
 
-		#ifdef _UNICODE
-		#define LoadImage LoadImageW
-		#else
-		#define LoadImage LoadImageA
-		#endif
+	BOOL LoadImageW(HFILE hf, ULONG lsize, LIFlags loadFlags = LIFlags::None);
+	// See the _FUSIONT macro for filename!
+	BOOL LoadImageW(const UShortWCHAR * fileName, LIFlags loadFlags = LIFlags::None);
+	BOOL LoadImageW(HINSTANCE hInst, int bmpID, LIFlags loadFlags = LIFlags::None);
+	BOOL LoadImageW(LPBITMAPINFO pBmi, LPBYTE pBits = NULL, LIFlags loadFlags = LIFlags::None);
 
-		BOOL	SaveImage (HFILE hf, SaveImageFlags saveFlags = SaveImageFlags::None);
-		// See the _FUSIONT macro for filename!
-		BOOL	SaveImage (LPCSTR fileName, SaveImageFlags saveFlags = SaveImageFlags::None);
-		// See the _FUSIONT macro for filename!
-		BOOL	SaveImage (const UShortWCHAR * fileName, SaveImageFlags saveFlags = SaveImageFlags::None);
-		BOOL	SaveImage (LPBITMAPINFO pBmi, LPBYTE pBits, SaveImageFlags saveFlags = SaveImageFlags::None);
-
-		// TODO: YQ: WHat does this mean?
-		ULONG	GetDIBSize ();
-
-		// ======================
-		// Pixel functions
-		// ======================
-		// Set pixel
-		void	SetPixel(int x, int y, COLORREF c);
-		void	SetPixel(int x, int y, BYTE R, BYTE G, BYTE B);
-		void	SetPixel(int x, int y, int index);
-
-		// Faster: assume clipping is done, the origin is at (0,0) and the surface is locked
-		void	SetPixelFast(int x, int y, COLORREF c);
-		void	SetPixelFast8(int x, int y, int index);
-
-		// Get pixel
-		BOOL	GetPixel(int x, int y, COLORREF & c) const;
-		BOOL	GetPixel(int x, int y, BYTE & R, BYTE & G, BYTE & B) const;
-		BOOL	GetPixel(int x, int y, int & index) const;
-
-		// Faster: assume clipping is done, the origin is at (0,0) and the surface is locked
-		COLORREF	GetPixelFast(int x, int y);
-		int			GetPixelFast8(int x, int y);
-
-		// ======================
-		// Blit functions
-		// ======================
-		// Blit surface to surface
-		BOOL	Blit(cSurface & dest) const;
-
-		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
-		// TODO: does it apply to this func?
-		BOOL	Blit(cSurface & dest, int destX, int destY,
-					  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0,
-					  ULONG dwBlitFlags = 0) const;
-
-		// Blit rectangle to surface
-		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
-		// TODO: does it apply to this func?
-		BOOL	Blit(cSurface & dest, int destX, int destY,
-					  int srcX, int srcY, int srcWidth, int srcHeight,
-					  BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0,
-					  ULONG dwBlitFlags = 0) const;
-
-#ifdef HWABETA
-		// Extended blit : can do stretch & rotate at the same time
-		// Only implemented in 3D mode
-		// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
-		// TODO: does it apply to this func?
-		BOOL	BlitEx(cSurface & dest, float dX, float dY, float fScaleX, float fScaleY,
-						int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle,
-						BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
-#endif
-		// Scrolling
-		BOOL	Scroll (int xDest, int yDest, int xSrc, int ySrc, int width, int height);
-
-		// Blit via callback
-		BOOL	FilterBlit (cSurface & dest, int destX, int destY,
-							int srcX, int srcY, int srcWidth, int srcHeight,
-							BlitMode bm, FILTERBLITPROC fbProc, LPARAM lUserParam) const;
-
-		BOOL	FilterBlit (cSurface & dest, FILTERBLITPROC fbProc,
-							LPARAM lUserParam, BlitMode bm = BMODE_OPAQUE) const;
-
-		// Matrix blit via callback
-		BOOL	MatrixFilterBlit (cSurface & dest, int destX, int destY,
-									int srcX, int srcY, int srcWidth, int srcHeight,
-									int mWidth, int mHeight, int mDXCenter, int mDYCenter,
-									MATRIXFILTERBLITPROC fbProc, LPARAM lUserParam) const;
-
-		// Stretch surface to surface
-		BOOL	Stretch(cSurface & dest, ULONG dwFlags = 0) const;
-
-		// Stretch surface to rectangle
-		BOOL	Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
-						BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
-
-		// Stretch rectangle to rectangle
-		BOOL	Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
-						int srcX, int srcY, int srcWidth, int srcHeight,
-						BlitMode bm /*= BMODE_OPAQUE*/, BlitOp bo = BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
-
-		// Revert surface horizontally
-		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-		BOOL	ReverseX();
-
-		// Revert rectangle horizontally
-		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-		BOOL	ReverseX(int x, int y, int width, int height);
-
-		// Revert surface vertically
-		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-		BOOL	ReverseY();
-
-		// Revert rectangle vertically
-		// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
-		BOOL	ReverseY(int x, int y, int width, int height);
-
-		// Remove empty borders
-		BOOL	GetMinimizeRect(RECT *);
-		BOOL	Minimize();
-		BOOL	Minimize(RECT * r);
-
-		// =============================
-		// Blit from screen or memory DC
-		// =============================
-
-		static BOOL CaptureDC(HDC srcDC,HDC dstDC,LONG srcX,LONG srcY,LONG dstX,LONG dstY,LONG srcWidth,LONG srcHeight,LONG dstWidth,LONG dstHeight,BOOL bFlushMessage,BOOL bKeepRatio);
-
-		// ======================
-		// Fill
-		// ======================
-
-		// Fill surface
-		BOOL	Fill(COLORREF c);
-		BOOL	Fill(CFillData * fd);
-		BOOL	Fill(int index);
-		BOOL	Fill(int R, int G, int B);
-
-		// Fill block
-		BOOL	Fill(int x, int y, int w, int h, COLORREF c);
-		BOOL	Fill(int x, int y, int w, int h, CFillData * fd);
-		BOOL	Fill(int x, int y, int w, int h, int index);
-		BOOL	Fill(int x, int y, int w, int h, int R, int G, int B);
-#ifdef HWABETA
-		// TODO: YQ: dwFlags is made from what enum/flags?
-		// HWA only
-		BOOL	Fill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags);
-
-		// Fill with blit mode and RGBA coef
-		// TODO: This may be CF2.5+ only, or D3D11 surfaces only
-		BOOL	fxFill(int x, int y, int w, int h, COLORREF c, BlitMode bm, COLORREF rgbaCoef);
-		BOOL	fxFill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags, BlitMode bm, COLORREF rgbaCoef);
-#endif
-
-		// ======================
-		// Geometric Primitives
-		// ======================
-
-		// 1. Simple routines : call GDI with Surface DC
-		// =============================================
-
-		BOOL	Ellipse(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
-
-		BOOL	Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
-			COLORREF crOutl /* = BLACK */, BOOL Fill = TRUE);
-
-		BOOL	Rectangle(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
-
-		BOOL	Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
-			COLORREF crOutl /* = 0 */, BOOL bFill = TRUE);
-
-		BOOL	Polygon(LPPOINT pts, int nPts, int thickness = 1, COLORREF crOutl = 0);
-
-		BOOL	Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0,
-			COLORREF crOutl = 0, BOOL bFill = TRUE);
-
-		BOOL  Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0);
-
-		// 2. More complex but slower (variable opacity, anti-alias, custom filling, ...)
-		// ==============================================================================
-
-		BOOL	Ellipse(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
-								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData * fdFill,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Ellipse(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-
-		BOOL	Rectangle(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
-								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData * fdFill,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Rectangle(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-
-		BOOL	Polygon(LPPOINT pts, int nPts, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
-								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Polygon(LPPOINT pts, int nPts, CFillData * fdFill,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	Polygon(LPPOINT pts, int nPts, CFillData * fdFill, int thickness, CFillData * fdOutl,
-			BOOL AntiA = FALSE, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
-
-		// Note: has no effect in HWA, if thickness is greater than 1.
-		BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData * fdOutl, BOOL AntiA,
-								  BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		// Filled Primitives
-
-		BOOL	FloodFill(int x, int y, int & left, int & top, int & right, int & bottom, COLORREF crFill, BOOL AntiA = FALSE,
-			int tol = 0, BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		BOOL	FloodFill(int x, int y, COLORREF crFill, BOOL AntiA = FALSE,  int tol = 0,
-							BlitMode bm = BMODE_OPAQUE, BlitOp bo = BOP_COPY, LPARAM param = 0);
-
-		// ======================
-		// Rotation
-		// ======================
-		// Rotate surface in radians
-		BOOL	Rotate(cSurface & dest, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// radian
-		BOOL	Rotate(cSurface & dest, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// degree
-		BOOL	Rotate90(cSurface & dest, BOOL b270);
-
-		// Create rotated surface
-		BOOL	CreateRotatedSurface (cSurface & ps, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
-		BOOL	CreateRotatedSurface (cSurface & ps, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
-
-#ifdef HWABETA
-		static void GetSizeOfRotatedRect (int *pWidth, int *pHeight, float angle);
+	// Redefine it back
+#ifdef _UNICODE
+	#define LoadImage LoadImageW
 #else
-		static void GetSizeOfRotatedRect (int *pWidth, int *pHeight, int angle);
+	#define LoadImage LoadImageA
 #endif
 
-		// ======================
-		// text
-		// ======================
+	BOOL SaveImage(HFILE hf, SIFlags saveFlags = SIFlags::None);
+	// See the _FUSIONT macro for filename!
+	BOOL SaveImage(LPCSTR fileName, SIFlags saveFlags = SIFlags::None);
+	// See the _FUSIONT macro for filename!
+	BOOL SaveImage(const UShortWCHAR * fileName, SIFlags saveFlags = SIFlags::None);
+	BOOL SaveImage(LPBITMAPINFO pBmi, LPBYTE pBits, SIFlags saveFlags = SIFlags::None);
 
-		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-		int		TextOutA(LPCSTR text, ULONG dwCharCount,int x,int y,ULONG alignMode,LPRECT pClipRc, COLORREF color=0, HFONT hFnt=(HFONT)NULL, BlitMode bm=BMODE_TRANSP, BlitOp=BOP_COPY, LPARAM param=0, int AntiA=0);
-		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-		int		TextOutW(const UShortWCHAR * text, ULONG dwCharCount,int x,int y,ULONG alignMode,LPRECT pClipRc, COLORREF color=0, HFONT hFnt=(HFONT)NULL, BlitMode bm=BMODE_TRANSP, BlitOp=BOP_COPY, LPARAM param=0, int AntiA=0);
+	// TODO: YQ: WHat does this mean?
+	ULONG GetDIBSize();
+
+	// ======================
+	// Pixel functions
+	// ======================
+	// Set pixel
+	void SetPixel(int x, int y, COLORREF c);
+	void SetPixel(int x, int y, BYTE R, BYTE G, BYTE B);
+	void SetPixel(int x, int y, int index);
+
+	// Faster: assume clipping is done, the origin is at(0,0) and the surface is locked
+	void SetPixelFast(int x, int y, COLORREF c);
+	void SetPixelFast8(int x, int y, int index);
+
+	// Get pixel
+	BOOL GetPixel(int x, int y, COLORREF & c) const;
+	BOOL GetPixel(int x, int y, BYTE & R, BYTE & G, BYTE & B) const;
+	BOOL GetPixel(int x, int y, int & index) const;
+
+	// Faster: assume clipping is done, the origin is at(0,0) and the surface is locked
+	COLORREF GetPixelFast(int x, int y);
+	int 	 GetPixelFast8(int x, int y);
+
+	// ======================
+	// Blit functions
+	// ======================
+	// Blit surface to surface
+	BOOL Blit(cSurface & dest) const;
+
+	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+	// TODO: does it apply to this func?
+	BOOL Blit(cSurface & dest, int destX, int destY,
+			  BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
+			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const;
+
+	// Blit rectangle to surface
+	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+	// TODO: does it apply to this func?
+	BOOL Blit(cSurface & dest, int destX, int destY,
+			  int srcX, int srcY, int srcWidth, int srcHeight,
+			  BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
+			  /* WinSurf_BlitOptions */ ULONG dwBlitFlags = 0) const;
+
+#ifdef HWABETA
+	// Extended blit : can do stretch & rotate at the same time
+	// Only implemented in 3D mode
+	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
+	// TODO: does it apply to this func?
+	BOOL BlitEx(cSurface & dest, float dX, float dY, float fScaleX, float fScaleY,
+				int sX, int sY, int sW, int sH, LPPOINT pCenter, float fAngle,
+				BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM effectParam = 0,
+				/* WinSurf_BlitOptions */ ULONG dwFlags = 0) const;
+#endif
+	// Scrolling
+	BOOL Scroll(int xDest, int yDest, int xSrc, int ySrc, int width, int height);
+
+	// Blit via callback
+	BOOL FilterBlit(cSurface & dest, int destX, int destY,
+					int srcX, int srcY, int srcWidth, int srcHeight,
+					BlitMode bm, FILTERBLITPROC fbProc, LPARAM lUserParam) const;
+
+	BOOL FilterBlit(cSurface & dest, FILTERBLITPROC fbProc,
+					LPARAM lUserParam, BlitMode bm = BlitMode::BMODE_OPAQUE) const;
+
+	// Matrix blit via callback
+	BOOL MatrixFilterBlit(cSurface & dest, int destX, int destY,
+						  int srcX, int srcY, int srcWidth, int srcHeight,
+						  int mWidth, int mHeight, int mDXCenter, int mDYCenter,
+						  MATRIXFILTERBLITPROC fbProc, LPARAM lUserParam) const;
+
+	// Stretch surface to surface
+	BOOL Stretch(cSurface & dest, ULONG dwFlags = 0) const;
+
+	// Stretch surface to rectangle
+	BOOL Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
+				 BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
+
+	// Stretch rectangle to rectangle
+	BOOL Stretch(cSurface & dest, int destX, int destY, int destWidth, int destHeight,
+				 int srcX, int srcY, int srcWidth, int srcHeight,
+				 BlitMode bm /*= BlitMode::BMODE_OPAQUE*/, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, ULONG dwFlags = 0) const;
+
+	// Revert surface horizontally
+	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
+	BOOL ReverseX();
+
+	// Revert rectangle horizontally
+	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
+	BOOL ReverseX(int x, int y, int width, int height);
+
+	// Revert surface vertically
+	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
+	BOOL ReverseY();
+
+	// Revert rectangle vertically
+	// Note: Slow for HWA, as it implicitly copies to software memory, and flips there
+	BOOL ReverseY(int x, int y, int width, int height);
+
+	// Remove empty borders
+	BOOL GetMinimizeRect(RECT *);
+	BOOL Minimize();
+	BOOL Minimize(RECT * r);
+
+	// =============================
+	// Blit from screen or memory DC
+	// =============================
+
+	static BOOL CaptureDC(HDC srcDC, HDC dstDC, LONG srcX, LONG srcY,
+						  LONG dstX, LONG dstY, LONG srcWidth, LONG srcHeight,
+						  LONG dstWidth, LONG dstHeight, BOOL bFlushMessage, BOOL bKeepRatio);
+
+	// ======================
+	// Fill
+	// ======================
+
+	// Fill surface
+	BOOL Fill(COLORREF c);
+	BOOL Fill(CFillData * fd);
+	BOOL Fill(int index);
+	BOOL Fill(int R, int G, int B);
+
+	// Fill block
+	BOOL Fill(int x, int y, int w, int h, COLORREF c);
+	BOOL Fill(int x, int y, int w, int h, CFillData * fd);
+	BOOL Fill(int x, int y, int w, int h, int index);
+	BOOL Fill(int x, int y, int w, int h, int R, int G, int B);
+#ifdef HWABETA
+	// TODO: YQ: dwFlags is made from what enum/flags?
+	// HWA only
+	BOOL Fill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags);
+
+	// Fill with blit mode and RGBA coef
+	// TODO: This may be CF2.5+ only, or D3D11 surfaces only
+	BOOL fxFill(int x, int y, int w, int h, COLORREF c, BlitMode bm, COLORREF rgbaCoef);
+	BOOL fxFill(int x, int y, int w, int h, COLORREF* pColors, ULONG dwFlags, BlitMode bm, COLORREF rgbaCoef);
+#endif
+
+	// ======================
+	// Geometric Primitives
+	// ======================
+
+	// 1. Simple routines : call GDI with Surface DC
+	// =============================================
+
+	BOOL Ellipse(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
+
+	BOOL Ellipse(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
+				 COLORREF crOutl /* = BLACK */, BOOL Fill = TRUE);
+
+	BOOL Rectangle(int left, int top, int right, int bottom, int thickness = 1, COLORREF crOutl = 0);
+
+	BOOL Rectangle(int left, int top, int right, int bottom, COLORREF crFill, int thickness /*= 0*/,
+				   COLORREF crOutl /* = 0 */, BOOL bFill = TRUE);
+
+	BOOL Polygon(LPPOINT pts, int nPts, int thickness = 1, COLORREF crOutl = 0);
+
+	BOOL Polygon(LPPOINT pts, int nPts, COLORREF crFill, int thickness = 0,
+				 COLORREF crOutl = 0, BOOL bFill = TRUE);
+
+	BOOL Line(int x1, int y1, int x2, int y2, int thickness = 1, COLORREF crOutl = 0);
+
+	// 2. More complex but slower (variable opacity, anti-alias, custom filling, ...)
+	// ==============================================================================
+
+	BOOL Ellipse(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl,
+				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
+				 LPARAM param = 0);
+
+	BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill,
+				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
+				 LPARAM param = 0);
+
+	BOOL Ellipse(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
+				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY,
+				 LPARAM param = 0, BOOL Fill = TRUE);
+
+	BOOL Rectangle(int left, int top, int right, int bottom, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
+				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill,
+				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	BOOL Rectangle(int left, int top, int right, int bottom, CFillData * fdFill, int thickness, CFillData * fdOutl,
+				   BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
+
+	BOOL Polygon(LPPOINT pts, int nPts, int thickness, CFillData * fdOutl, BOOL AntiA = FALSE,
+				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, BOOL AntiA = FALSE,
+				 BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	BOOL Polygon(LPPOINT pts, int nPts, CFillData * fdFill, int thickness, CFillData * fdOutl,
+				 BOOL AntiA = FALSE, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0, BOOL Fill = TRUE);
+
+	// Note: has no effect in HWA, if thickness is greater than 1.
+	BOOL  Line(int x1, int y1, int x2, int y2, int thickness, CFillData * fdOutl, BOOL AntiA,
+			   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	// Filled Primitives
+
+	BOOL FloodFill(int x, int y, int & left, int & top, int & right, int & bottom, COLORREF crFill, BOOL AntiA = FALSE,
+				   int tol = 0, BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	BOOL FloodFill(int x, int y, COLORREF crFill, BOOL AntiA = FALSE,  int tol = 0,
+				   BlitMode bm = BlitMode::BMODE_OPAQUE, BlitOp bo = BlitOp::BOP_COPY, LPARAM param = 0);
+
+	// ======================
+	// Rotation
+	// ======================
+	// Rotate surface in radians
+	BOOL Rotate(cSurface & dest, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// radian
+	BOOL Rotate(cSurface & dest, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);		// degree
+	BOOL Rotate90(cSurface & dest, BOOL b270);
+
+	// Create rotated surface
+	BOOL CreateRotatedSurface(cSurface & ps, double a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
+	BOOL CreateRotatedSurface(cSurface & ps, int a, BOOL bAA, COLORREF clrFill = 0L, BOOL bTransp=TRUE);
+
+#ifdef HWABETA
+	static void GetSizeOfRotatedRect(int *pWidth, int *pHeight, float angle);
+#else
+	static void GetSizeOfRotatedRect(int *pWidth, int *pHeight, int angle);
+#endif
+
+	// ======================
+	// Text
+	// ======================
+
+	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
+	int TextOutA(LPCSTR text, ULONG dwCharCount,int x,int y,ULONG alignMode,
+				 LPRECT pClipRc, COLORREF color = 0, HFONT hFnt =(HFONT)NULL,
+				 BlitMode bm = BlitMode::BMODE_TRANSP, BlitOp bop = BlitOp::BOP_COPY,
+				 LPARAM param = 0, int AntiA = 0);
+	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
+	int TextOutW(const UShortWCHAR * text, ULONG dwCharCount,int x,int y,ULONG alignMode,
+				 LPRECT pClipRc, COLORREF color = 0, HFONT hFnt =(HFONT)NULL,
+				 BlitMode bm = BlitMode::BMODE_TRANSP, BlitOp bop = BlitOp::BOP_COPY,
+				 LPARAM param = 0, int AntiA = 0);
 
 #ifdef _UNICODE
-	#define TextOut TextOutW
+#define TextOut TextOutW
 #else
-	#define TextOut TextOutA
+#define TextOut TextOutA
 #endif
-		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-		int		DrawTextA(LPCSTR text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
-						  BlitMode bm=BMODE_TRANSP, BlitOp bo=BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
-		// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
-		int		DrawTextW(const UShortWCHAR * text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
-						  BlitMode bm=BMODE_TRANSP, BlitOp bo=BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
+	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
+	int DrawTextA(LPCSTR text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
+				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
+	// See the _FUSIONT macro for filename! If failing, check your surface type has a DC.
+	int DrawTextW(const UShortWCHAR * text, ULONG dwCharCount,LPRECT pRc, ULONG dtflags, COLORREF color=0, HFONT hFnt=(HFONT)NULL,
+				  BlitMode bm=BlitMode::BMODE_TRANSP, BlitOp bo=BlitOp::BOP_COPY, LPARAM param=0, int AntiA=0,ULONG dwLeftMargin=0,ULONG dwRightMargin=0,ULONG dwTabSize=8);
 
-		// ======================
-		// Color / Palette functions
-		// ======================
-		// Is transparent
-		BOOL	IsTransparent();
+	// ======================
+	// Color / Palette functions
+	// ======================
+	// Is transparent
+	BOOL IsTransparent();
 
-		// Replace color
-		BOOL	ReplaceColor(COLORREF newColor, COLORREF oldColor);
+	// Replace color
+	BOOL ReplaceColor(COLORREF newColor, COLORREF oldColor);
 
-		// Test collision fine entre deux surfaces
-		BOOL	IsColliding(cSurface & dest, int xDest, int yDest, int xSrc, int ySrc, int rcWidth, int rcHeight);
+	// Test collision fine entre deux surfaces
+	BOOL IsColliding(cSurface & dest, int xDest, int yDest, int xSrc, int ySrc, int rcWidth, int rcHeight);
 
-		// Create icon
-		HICON	CreateIcon(int iconWidth, int iconHeight, COLORREF transpColor, POINT *pHotSpot);
+	// Create icon
+	HICON CreateIcon(int iconWidth, int iconHeight, COLORREF transpColor, POINT *pHotSpot);
 
-	    // Palette support
-		BOOL	Indexed(void);
+	// Palette support
+	BOOL Indexed();
 
-		BOOL	SetPalette(LPLOGPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
-		BOOL	SetPalette(csPalette * pCsPal, SetPaletteAction action = SetPaletteAction::None);
-		BOOL	SetPalette(cSurface & src, SetPaletteAction action = SetPaletteAction::None);
-		BOOL	SetPalette(HPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
+	BOOL SetPalette(LPLOGPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
+	BOOL SetPalette(csPalette * pCsPal, SetPaletteAction action = SetPaletteAction::None);
+	BOOL SetPalette(cSurface & src, SetPaletteAction action = SetPaletteAction::None);
+	BOOL SetPalette(HPALETTE palette, SetPaletteAction action = SetPaletteAction::None);
 
-		void	Remap(cSurface & src);
-		void	Remap(LPBYTE remapTable);
+	void Remap(cSurface & src);
+	void Remap(LPBYTE remapTable);
 
-		csPalette * GetPalette();
-		UINT		GetPaletteEntries(LPPALETTEENTRY paletteEntry, int index, int nbColors);
+	csPalette * GetPalette();
+	UINT		GetPaletteEntries(LPPALETTEENTRY paletteEntry, int index, int nbColors);
 
-		int			GetNearestColorIndex(COLORREF rgb);
-		COLORREF	GetRGB(int index);
-		int			GetOpaqueBlackIndex();
+	int 		GetNearestColorIndex(COLORREF rgb);
+	COLORREF	GetRGB(int index);
+	int 		GetOpaqueBlackIndex();
 
-		// ======================
-		// Full screen
-		// ======================
-		void	EnumScreenModes(LPENUMSCREENMODESPROC pProc, LPVOID lParam);
-		BOOL	SetScreenMode(HWND hWnd, int width, int height, int depth);
-		void	RestoreWindowedMode(HWND hWnd);
-		void	CopyScreenModeInfo(cSurface* pSrc);
+	// ======================
+	// Full screen
+	// ======================
+	void EnumScreenModes(LPENUMSCREENMODESPROC pProc, LPVOID lParam);
+	BOOL SetScreenMode(HWND hWnd, int width, int height, int depth);
+	void RestoreWindowedMode(HWND hWnd);
+	void CopyScreenModeInfo(cSurface* pSrc);
 
 #ifdef HWABETA
-		BOOL	SetAutoVSync(SetAutoVSyncFlags nAutoVSync);
+	BOOL SetAutoVSync(SetAutoVSyncFlags nAutoVSync);
 #endif
-		BOOL	WaitForVBlank();
+	BOOL WaitForVBlank();
 
-		// System colors
-		// COLOR_MENUBAR (30) seems to be the highest sys color index, so we're using a uint8
-		static COLORREF	GetSysColor(int colorIndex);
-		// TODO: YQ: Is this meant to be a callback?
-		static void		OnSysColorChange();
+	// System colors
+	// COLOR_MENUBAR(30) seems to be the highest sys color index, so we're using a uint8
+	static COLORREF	GetSysColor(int colorIndex);
+	// TODO: YQ: Is this meant to be a callback?
+	static void		OnSysColorChange();
 
-		// Transparent color
-		void		SetTransparentColor(COLORREF rgb);
-		COLORREF	GetTransparentColor();
-		int			GetTransparentColorIndex();
+	// Transparent color
+	void 		SetTransparentColor(COLORREF rgb);
+	COLORREF	GetTransparentColor();
+	int 		GetTransparentColorIndex();
 
-		// Alpha channel
-		BOOL		HasAlpha();
-		LPBYTE		LockAlpha();
-		void		UnlockAlpha();
-		int			GetAlphaPitch();
-		void		CreateAlpha();
-		void		SetAlpha(LPBYTE pAlpha, int nPitch);
-		void		AttachAlpha(LPBYTE pAlpha, int nPitch);
-		LPBYTE		DetachAlpha(LPLONG pPitch);
-		cSurface*	GetAlphaSurface();
-		void		ReleaseAlphaSurface(cSurface* pAlphaSf);
+	// Alpha channel
+	BOOL		HasAlpha();
+	LPBYTE		LockAlpha();
+	void		UnlockAlpha();
+	int			GetAlphaPitch();
+	// Warning: makes a completely transparent alpha channel by default
+	void		CreateAlpha();
+	void		SetAlpha(LPBYTE pAlpha, int nPitch);
+	void		AttachAlpha(LPBYTE pAlpha, int nPitch);
+	LPBYTE		DetachAlpha(LPLONG pPitch);
+	cSurface*	GetAlphaSurface();
+	void		ReleaseAlphaSurface(cSurface* pAlphaSf);
 
-		// Transparent monochrome mask
-		ULONG		CreateMask(sMask * pMask, UINT dwFlags);
+	// Transparent monochrome mask
+	ULONG		CreateMask(sMask * pMask, UINT dwFlags);
 
-		// Lost device callback
+	// Lost device callback
 #ifdef HWABETA
-		void		OnLostDevice();
-		void		AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
-		void		RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	void 	OnLostDevice();
+	void 	AddLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
+	void 	RemoveLostDeviceCallBack(LOSTDEVICECALLBACKPROC pCallback, LPARAM lUserParam);
 
-		// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
-		void		SetPremultipliedAlpha(BOOL usePMAlpha, BOOL pmedTextures);
-		void		PremultiplyAlpha();		// Only for surfaces with a lockable buffer
+	// CF2.5+'s Direct3D11 surfaces: Set premultiplied alpha flag
+	void 	SetPremultipliedAlpha(BOOL usePMAlpha, BOOL pmedTextures);
+	void 	PremultiplyAlpha();		// Only for surfaces with a lockable buffer
 
-		// CF2.5+'s Direct3D11 surfaces only.
-		// Only for surfaces with a lockable buffer.
-		// TODO: Which surface types have a lockable buffer?
-		void		DemultiplyAlpha();
+	// CF2.5+'s Direct3D11 surfaces only.
+	// Only for surfaces with a lockable buffer.
+	// TODO: Which surface types have a lockable buffer?
+	void 	DemultiplyAlpha();
 
 #endif
 
 	// Friend functions
 	// ----------------
-		FusionAPIImport friend cSurfaceImplementation * FusionAPI GetSurfaceImplementation(cSurface &cs);
-		FusionAPIImport friend void FusionAPI SetSurfaceImplementation(cSurface &cs, cSurfaceImplementation *psi);
+	FusionAPIImport friend cSurfaceImplementation * FusionAPI GetSurfaceImplementation(cSurface &cs);
+	FusionAPIImport friend void FusionAPI SetSurfaceImplementation(cSurface &cs, cSurfaceImplementation *psi);
 
-	protected:
-		static void		BuildSysColorTable();
+protected:
+	static void		BuildSysColorTable();
 
-	// Clipping
-	//----------
-		// TODO: YQ: What does this apply to?
-		HRGN SetDrawClip(HDC hDC);
-		void RestoreDrawClip(HDC hDC,HRGN hOldClipRgn);
+// Clipping
+//----------
+	// TODO: YQ: What does this apply to?
+	HRGN SetDrawClip(HDC hDC);
+	void RestoreDrawClip(HDC hDC,HRGN hOldClipRgn);
 
-	// Private functions
-	// -----------------
-	private:
-		BOOL	LoadPicture (CInputFile * pFile, ULONG bitmapSize, LoadImageFlags loadFlags);
-		BOOL	LoadDIB (LPBITMAPINFO pBmi, LPBYTE pBits, LoadImageFlags loadFlags);
+// Private functions
+// -----------------
+private:
+	BOOL LoadPicture(CInputFile * pFile, ULONG bitmapSize, LIFlags loadFlags);
+	BOOL LoadDIB(LPBITMAPINFO pBmi, LPBYTE pBits, LIFlags loadFlags);
 
-	// Private data
-	// ------------
-	private:
-		cSurfaceImplementation * m_actual;
-		POINT					origin;
+// Private data
+// ------------
+private:
+	cSurfaceImplementation * m_actual;
+	POINT					origin;
 
-		// System colors
-		static BOOL			m_bSysColorTab;
-		static COLORREF		m_sysColorTab[COLOR_GRADIENTINACTIVECAPTION+1];
+	// System colors
+	static BOOL			m_bSysColorTab;
+	static COLORREF		m_sysColorTab[COLOR_GRADIENTINACTIVECAPTION+1];
 
-	protected:
-		// TODO: YQ: In English? :p
-		int		m_error;		// Est-ce qu'on doit toujours garder ça?
+protected:
+	// TODO: YQ: In English? :p
+	int m_error;		// Est-ce qu'on doit toujours garder ça?
 };
 
 // maximum opacity

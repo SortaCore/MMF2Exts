@@ -51,6 +51,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\SurfaceMultiPlat.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp">
@@ -85,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Functions.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

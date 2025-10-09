@@ -1013,7 +1013,7 @@ int json_clean_comments (const json_char ** json_input, json_state * state, char
 	if (json[0] != '/' || json[1] != '/' || !newlineAt)
 		goto WrongFormat;
 
-	for (const char* j = &json[2]; j < newlineAt; j++)
+	for (const char* j = &json[2]; j < newlineAt; ++j)
 		if (!std::isdigit((unsigned char)*j))
 			goto WrongFormat;
 

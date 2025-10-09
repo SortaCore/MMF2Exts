@@ -129,6 +129,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\MMFWindowsMasterHeader.hpp" />
+    <ClInclude Include="..\Inc\Windows\Props.hpp" />
+    <ClInclude Include="..\Inc\Windows\Surface.hpp" />
+    <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\common.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\compat.h" />
     <ClInclude Include="..\Lib\Shared\Lacewing\src\windows\fdstream.h" />

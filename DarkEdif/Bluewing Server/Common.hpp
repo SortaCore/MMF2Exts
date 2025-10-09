@@ -35,9 +35,9 @@
 #endif
 #include <iomanip>
 
-
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-struct EDITDATA
+#pragma pack (push, 1)
+// Binary block used in Fusion editor and saved in the MFA/CCN/EXE files
+struct EDITDATA final
 {
 	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
 	// Header - required, must be first variable in EDITDATA
@@ -57,10 +57,12 @@ struct EDITDATA
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;
 	bool enableInactivityTimer;
-	char pad1[249];
-
-	// To match Lacewing Relay Server, this struct's size must be 536 bytes.
-	// NOPROPS is used to manually set the size of this struct and access properties in it.
+	char pad1[250];
 };
+#pragma pack (pop)
+
+// To match Lacewing Relay Server, this struct's size must be 536 bytes.
+// NOPROPS is used to manually set the size of this struct and access properties in it.
+static_assert(sizeof(EDITDATA) == 536);
 
 #include "Extension.hpp"

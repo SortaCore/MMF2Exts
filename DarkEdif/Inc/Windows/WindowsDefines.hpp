@@ -10,7 +10,6 @@
 // Expose this function outside the DLL with an undecorated name. Replaces the DEF file.
 // Hat tip to https://stackoverflow.com/a/41910450
 #define DllExportHint comment(linker, "/EXPORT:" __FUNCTION__ "=" __FUNCDNAME__)
-//#define PATH_MAX MAX_PATH
 
 // Replaces the Clang-style "__FUNCTION__ with all arguments" with MSVC-style
 #define __PRETTY_FUNCTION__ __FUNCSIG__
@@ -92,3 +91,6 @@ using WindowHandleType = HWND;
 // a runtime-determined size, rather than compile-time. So some_var is a header of sorts.
 // It IS non-standard to use [0] instead of [] for these members, though GCC supports it.
 #pragma warning (disable: 4200)
+
+// Indicate that Extension does not inherit, as it changes how pointers to members are defined
+class __single_inheritance Extension;

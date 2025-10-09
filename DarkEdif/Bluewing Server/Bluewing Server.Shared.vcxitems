@@ -69,6 +69,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\upload.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\src\webserver\webserver.c" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\ObjectSelection.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Lib\Shared\SurfaceMultiPlat.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Actions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Conditions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Expressions.cpp" />
@@ -87,6 +88,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\NonWindowsDefines.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\ObjectSelection.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\Strings.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Inc\Shared\SurfaceMultiPlat.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\http-parser\http_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\multipart-parser\multipart_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Lib\Shared\Lacewing\deps\utf8proc.h" />

@@ -576,6 +576,7 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 				if (loadedOK && tempIcon->Blit(*Icon) == FALSE)
 					DarkEdif::MsgBox::Error(_T("DarkEdif error"), _T("Blitting to ext icon surface failed. Last error: %i."), tempIcon->GetLastError());
 			}
+			ExtIcon = new DarkEdif::Surface(nullptr, Icon);
 		}
 
 		#if USE_DARKEDIF_UPDATE_CHECKER
@@ -732,14 +733,8 @@ long* actParameters;
 #ifdef _WIN32
 // The access restrictions prevent the ext dev accidentally modifying these, but we have to bypass it to set it ourselves
 struct ForbiddenInternals {
-	static inline void UpdateParamToZero(Extension* ext) {
-		ext->rdPtr->rHo.CurrentParam = ext->Runtime.ParamZero;
-	}
 	static inline int GetEventNumber(RunObject* rdPtr) {
-		return rdPtr->rHo.EventNumber;
-	}
-	static inline EventParam* GetCurrentParam(RunObject* rdPtr) {
-		return rdPtr->rHo.CurrentParam;
+		return rdPtr->rHo.hoEventNumber;
 	}
 };
 
@@ -784,12 +779,12 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 
 	bool isComparisonCondition = false;
 
-	for (int i = 0; i < ParameterCount; ++ i)
+	for (int i = 0; i < ParameterCount; ++i)
 	{
 		switch (info->Parameter[i].p)
 		{
 			case Params::Expression:
-				if (info->FloatFlags & (1 << i))
+				if ((info->FloatFlags & (1 << i)) != 0)
 				{
 					float f = params.GetFloat(i);
 					Parameters[i] = *(int*)(&f);
@@ -839,7 +834,6 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	}
 
 #ifdef _WIN32
-	ForbiddenInternals::UpdateParamToZero(ext);
 	__asm
 	{
 		pushad					; Start new register set (do not interfere with already existing registers)
@@ -898,6 +892,7 @@ endFunc:
 #ifdef __ANDROID__
 	JNIExceptionCheck();
 #endif
+	
 	// Comparisons return an integer or string pointer, pass as-is
 	if (isComparisonCondition)
 		return Result;
@@ -916,19 +911,39 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	ConditionOrActionManager_Windows(bool isCondition, RunObject * rdPtr, long param1, long param2)
 		: rdPtr(rdPtr), ext(rdPtr->GetExtension()), isCondition(isCondition)
 	{
-		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.EventNumber];
-		// param1/param2 are pre-calculated parameters, but we can't use them if the params are float;
-		// Fusion defaults the pre-calculations as integer parameters, and so calculates them incorrectly
-		isTwoOrLess = info->NumOfParams <= 2 && (info->FloatFlags & 0b11) == 0;
+		const ACEInfo* const info = (isCondition ? Edif::SDK->ConditionInfos : Edif::SDK->ActionInfos)[rdPtr->rHo.hoEventNumber];
+
+		ext->Runtime.ParamZero = rdPtr->rHo.hoCurrentParam;
+
+		// param1/param2 are runtime pre-evaluated parameters on Windows, if there is 2 or less params.
+		// This is an old tactic from pre-MMF2 where only two parameters were possible.
+		// But we can't use them as-is, if the params are float.
+		// Fusion provides the pre-calculations for numbers as integer parameters, even if the math
+		// was float, and thus it calculates them incorrectly.
+		isTwoOrLess = info->NumOfParams <= 2;
+
+		// If we auto-read the 2 params pased, we want to increment hoCurrentParam to fix the runtime bug
+		// Using CNC_GetXX to read parameters if <= 2 params is not recommended,
+		// may mess up if the pre-evaluated params generated events.
+		for (int i = 0; isTwoOrLess && i < info->NumOfParams; ++i)
+		{
+			if ((info->FloatFlags & (1 << i)) != 0)
+				(i == 0 ? param1 : param2) = CNC_GetFloatValue(rdPtr, i);
+			
+			rdPtr->rHo.hoCurrentParam = (EventParam*)(((char*)rdPtr->rHo.hoCurrentParam) + rdPtr->rHo.hoCurrentParam->size);
+		}
+
 		ext->Runtime.param1 = param1;
 		ext->Runtime.param2 = param2;
-		ext->Runtime.ParamZero = rdPtr->rHo.CurrentParam;
 	}
+
 	// Inherited via ACEParamReader
 	virtual float GetFloat(int index)
 	{
-		// Cannot use the optimization for float parameters
-		assert(!isTwoOrLess);
+		if (isTwoOrLess)
+			return *(const float*)(index == 0 ? &ext->Runtime.param1 : &ext->Runtime.param2);
+		// CNC_GetFloatValue works more consistently when events are generated inside params,
+		// than CNC_GetFloatParameter does
 		int i = (int)CNC_GetFloatParameter(rdPtr);
 		return *(float*)&i;
 	}
@@ -942,7 +957,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 
 	virtual std::int32_t GetInteger(int index, Params type)
 	{
-		// TODO: Does this work with NewDirection?
+		// TODO: Does pre-evaluated parameters work with NewDirection, or does it loop directions?
 		if (isTwoOrLess)
 			return (index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 
@@ -952,8 +967,9 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		// This value -> bitmask workaround is handled by the DarkEdif wrappers in Android/iOS.
 		if (type == Params::New_Direction)
 		{
-			if (rdPtr->rHo.CurrentParam->Code == (int)Params::New_Direction)
-				return rdPtr->rHo.CurrentParam->evp.L[0];
+			// TODO: Should hoCurrentParam be incremented to next param?
+			if (rdPtr->rHo.hoCurrentParam->Code == (int)Params::New_Direction)
+				return rdPtr->rHo.hoCurrentParam->evp.L[0];
 			// Convert 0-31 to New Direction bitmask; also, -1 becomes empty bitmask (0)
 			int ret = (std::int32_t)CNC_GetIntParameter(rdPtr);
 			if (ret == -1)
@@ -1079,11 +1095,12 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	virtual const TCHAR * GetString(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index);
+		strings[stringIndex].init(
+			(jstring)mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj,
+				isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index));
 		JNIExceptionCheck();
-		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
-		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].ptr);
-		return strings[stringIndex++].ptr;
+		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].str().data());
+		return strings[stringIndex++].str().data();
 	}
 
 	virtual std::int32_t GetInteger(int index, Params type)
@@ -1295,7 +1312,6 @@ short FusionAPI Edif::ActionJump(RUNDATA * rdPtr, long param1, long param2)
 	Extension * const ext = ((RunObject*)rdPtr)->GetExtension();
 	const int ID = ForbiddenInternals::GetEventNumber((RunObject*)rdPtr);
 	ConditionOrActionManager_Windows params(false, (RunObject*)rdPtr, param1, param2);
-	EventParam* curParam = ForbiddenInternals::GetCurrentParam((RunObject*)rdPtr);
 #define actreturn 0
 #elif defined (__ANDROID__)
 ProjectFunc void actionJump(JNIEnv *, jobject, jlong extPtr, jint ID, CActExtension act)
@@ -1406,10 +1422,9 @@ struct ExpressionManager_Android : ACEParamReader {
 	virtual const TCHAR * GetString(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		strings[stringIndex].ctx = (jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString);
-		strings[stringIndex].ptr = mainThreadJNIEnv->GetStringUTFChars(strings[stringIndex].ctx, NULL);
-		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].ptr);
-		return strings[stringIndex++].ptr;
+		strings[stringIndex].init((jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString));
+		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].str().data());
+		return strings[stringIndex++].str().data();
 	}
 
 	virtual std::int32_t GetInteger(int index, Params)
@@ -1486,9 +1501,9 @@ struct ExpressionManager_Windows : ACEParamReader {
 	void SetReturnType(ExpReturnType rt)
 	{
 		if (rt == ExpReturnType::Float)
-			rdPtr->rHo.Flags |= HeaderObjectFlags::Float;
+			rdPtr->rHo.hoFlags |= HeaderObjectFlags::Float;
 		else if (rt == ExpReturnType::String)
-			rdPtr->rHo.Flags |= HeaderObjectFlags::String;
+			rdPtr->rHo.hoFlags |= HeaderObjectFlags::String;
 	}
 	long SetValue(int a) {
 		return (long)a;
@@ -1686,7 +1701,9 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 	{
 		// Ignore undefined memory warning, we know Parameters[0] is inited,
 		// if VariableFunction is our expression function
+#ifdef _WIN32
 #pragma warning(suppress: 6001)
+#endif
 		Result = ext->VariableFunction((const TCHAR *)Parameters[0], *info, Parameters);
 		_CrtCheckMemory();
 		goto endFunc;

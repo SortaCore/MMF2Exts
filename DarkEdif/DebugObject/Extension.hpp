@@ -1,17 +1,20 @@
 #pragma once
-class Extension
+#include "Common.hpp"
+
+class Extension final
 {
 public:
-
+	// ======================================
+	// Required variables
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 
 	Edif::Runtime Runtime;
-
-	GlobalData * data;
 	static const int MinimumBuild = 256;
 	static const int Version = 16;
-	// b16: SDK update to v17...
+	// b16: SDK update to v20...
 	// b15: SDK update to v14, update checker + smart properties, and made the error message readable to a native debugger
 	// b14: Added more details to crash information
 	// b13: Fixed message box about properties failing to convert
@@ -27,81 +30,52 @@ public:
 	// b3: Release due to bug fixes
 	// b2: Release due to new features
 	// b1: First release
-	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
-	static const OEPREFS OEPREFS = OEPREFS::GLOBAL;
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP | OEFLAGS::RUN_BEFORE_FADE_IN;
+	static constexpr OEPREFS OEPREFS = OEPREFS::GLOBAL;
 
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
 
+	// ======================================
+	// Extension data
+	// ======================================
 
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr)
+	GlobalData * data;
 
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
+	// Internal
+	void OutputNow(int intensity, int line, std::string textToOutputU8);
 
-	// int MyVariable;
+	// Actions
+	void SetOutputFile(const TCHAR * fileP, int describeAppI);
+	void Output(int intensity, int line, const TCHAR * textToOutput);
+	void SetOutputTimeFormat(TCHAR * format);
+	void SetOutputOnOff(int onOff);
+	void SetHandler(int reaction, int continuesRemaining);
+	void CauseCrash_ZeroDivisionInt();
+	void CauseCrash_ZeroDivisionFloat();
+	void CauseCrash_WriteAccessViolation();
+	void CauseCrash_ReadAccessViolation();
+	void CauseCrash_ArrayOutOfBoundsRead();
+	void CauseCrash_ArrayOutOfBoundsWrite();
+	void SetConsoleOnOff(int onOff);
+	void SetDumpFile(const TCHAR * path, int flags);
 
-	/*  Add your actions, conditions and expressions as real class member
-		functions here. The arguments (and return type for expressions) must
-		match EXACTLY what you defined in the JSON.
+	// Conditions
+	const bool AlwaysTrue() const;
+	bool OnSpecificConsoleInput(TCHAR * command);
 
-		Remember to link the actions, conditions and expressions to their
-		numeric IDs in the class constructor (Extension.cpp)
-	*/
-	/// Hidden
-		void OutputNow(int intensity, int line, std::string textToOutputU8);
+	// Expressions
+	const TCHAR * FullCommand();
+	const TCHAR * CommandMinusName();
 
-	/// Actions
-		void SetOutputFile(const TCHAR * fileP, int describeAppI);
-		void Output(int intensity, int line, const TCHAR * textToOutput);
-		void SetOutputTimeFormat(TCHAR * format);
-		void SetOutputOnOff(int onOff);
-		void SetHandler(int reaction, int continuesRemaining);
-		void CauseCrash_ZeroDivisionInt();
-		void CauseCrash_ZeroDivisionFloat();
-		void CauseCrash_WriteAccessViolation();
-		void CauseCrash_ReadAccessViolation();
-		void CauseCrash_ArrayOutOfBoundsRead();
-		void CauseCrash_ArrayOutOfBoundsWrite();
-		void SetConsoleOnOff(int onOff);
-		void SetDumpFile(const TCHAR * path, int flags);
+	void LoadDataVariable();
 
-	/// Conditions
-		const bool AlwaysTrue() const;
-		bool OnSpecificConsoleInput(TCHAR * command);
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
-	/// Expressions
-		const TCHAR * FullCommand();
-		const TCHAR * CommandMinusName();
-
-		void LoadDataVariable();
-
-	/* These are called if there's no function linked to an ID */
+	// These are called if there's no function linked to an ID
 
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
-
-	bool SaveFramePosition(HANDLE File);
-	bool LoadFramePosition(HANDLE File);
-
 };

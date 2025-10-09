@@ -1,85 +1,49 @@
 #pragma once
-class Extension
+class Extension final
 {
 public:
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
-	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
+	RunObjectMultiPlatPtr rdPtr;
 
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 254;
 	static const int Version = 7;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NONE;
-	static const OEPREFS OEPREFS = OEPREFS::NONE;
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NONE;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
 	~Extension();
 
+	// ======================================
+	// Extension data
+	// ======================================
 
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr).
-
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
-
-
-
-
-	// int MyVariable;
-
-
-
-
-	/*  Add your actions, conditions and expressions as real class member
-		functions here. The arguments (and return type for expressions) must
-		match EXACTLY what you defined in the JSON.
-
-		Remember to link the actions, conditions and expressions to their
-		numeric IDs in the class constructor (Extension.cpp)
-	*/
-
-		bool IsBadMemoryAddress(const void * const address);
+	bool IsBadMemoryAddress(const void * const address);
 
 	/// Actions
-		void UTF16StrToUTF16Mem(const wchar_t * utf16Str, int addr, int excludeNull);
+	void UTF16StrToUTF16Mem(const wchar_t * utf16Str, int addr, int excludeNull);
 
 	/// Conditions
 
 	/// Expressions
 
-		int UTF16CharToUTF16Int(const wchar_t * utf16Char);
-		const wchar_t * UTF16IntToUTF16Char(unsigned int utf16ints);
-		const wchar_t * UTF16StrFromUTF16Mem(int addr, int numChars);
-		const wchar_t * UTF16StrFromUTF8Mem(int addr, int numChars);
+	int UTF16CharToUTF16Int(const wchar_t * utf16Char);
+	const wchar_t * UTF16IntToUTF16Char(unsigned int utf16ints);
+	const wchar_t * UTF16StrFromUTF16Mem(int addr, int numChars);
+	const wchar_t * UTF16StrFromUTF8Mem(int addr, int numChars);
 
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
-
-	/* These are called if there's no function linked to an ID */
+	// These are called if there's no function linked to an ID
 
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
-
-	bool SaveFramePosition(HANDLE File);
-	bool LoadFramePosition(HANDLE File);
-
 };

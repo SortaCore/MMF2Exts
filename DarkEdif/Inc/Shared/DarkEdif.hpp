@@ -10,7 +10,8 @@
 #include "Edif.hpp"
 
 // Struct contains information about a/c/e
-struct ACEInfo {
+struct ACEInfo final
+{
 	// We can't copy this consistently because of the zero-sized array. Prevent creating copy/move constructors.
 	NO_DEFAULT_CTORS_OR_DTORS(ACEInfo);
 
@@ -68,7 +69,7 @@ namespace Edif {
 namespace DarkEdif {
 
 	// SDK version and changes are documented in repo/DarkEdif/#MFAs and documentation/DarkEdif changelog.md
-	static const int SDKVersion = 19;
+	static const int SDKVersion = 20;
 #if EditorBuild
 
 	// Gets DarkEdif.ini setting. Returns empty if file missing or key not in file.
@@ -308,6 +309,7 @@ namespace DarkEdif {
 
 
 	void BreakIfDebuggerAttached();
+	[[noreturn]]
 	void LOGFInternal(PrintFHintInside const TCHAR* fmt, ...) PrintFHintAfter(1, 2);
 
 	namespace MsgBox
@@ -320,7 +322,6 @@ namespace DarkEdif {
 		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
 
-	void Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
 
 	// =====
@@ -348,19 +349,183 @@ namespace DarkEdif {
 	std::string TStringToUTF8(const std::tstring_view);
 	std::wstring TStringToWide(const std::tstring_view);
 
+#if TEXT_OEFLAG_EXTENSION
+	// Cross-platform safe, Fusion-editor friendly font struct. At runtime, load into a FontInfoMultiPlat.
+	// @remarks This is roughly based on LOGFONT, but uses UTF-8, not ANSI.
+	struct EditDataFont
+	{
+		// This struct's intended use is in EDITDATA's C memory, so it
+		// should not be getting created C++ style.
+		NO_DEFAULT_CTORS_OR_DTORS(EditDataFont);
+
+		// Can be 0 for default height, negative for character height, positive for cell height
+		std::int32_t height;
+		// Width in logical units, can be 0 for default
+		std::int32_t width;
+		// Angle in tenth of degrees
+		std::int32_t escapement;
+		// Angle in tenths of degrees
+		std::int32_t orientation;
+		// Font weight, default FW_DONTCARE (0), with range FW_THIN (100) to FW_HEAVY (900)
+		std::int32_t weight;
+		// Italic, underline, strikeout
+		bool italic, underline, strikeOut;
+		// See Windows define ANSI_CHARSET
+		std::uint8_t charSet;
+		// See Windows define OUT_DEFAULT_PRECIS
+		std::uint8_t outPrecision;
+		// See Windows define CLIP_EMBEDDED
+		std::uint8_t clipPrecision;
+		// See Windows define ANTIALIASED_QUALITY 
+		std::uint8_t quality;
+		// See Windows defines DEFAULT_PITCH, FF_DECORATIVE
+		std::uint8_t pitchAndFamily;
+		// Font name in UTF-8. For TCHAR, see GetFontName().
+		// @remarks LF_FACESIZE (32) is max font name size in LOGFONTW's UTF-16.
+		//			In UTF-8, it can be expanded to 1.5x storage, see https://stackoverflow.com/a/58581109
+		char fontNameU8[(32 / 2) * 3];
+		// Font color - a COLORREF
+		std::uint32_t fontColor;
+		// DrawText DT flags, including text alignment and RTL settings.
+		std::uint32_t dtFlags;
+
+	public:
+#ifdef _WIN32
+		// Gets a LOGFONT from the internal font.
+		std::unique_ptr<LOGFONT> GetWindowsLogFont() const;
+		std::unique_ptr<LOGFONTA> GetWindowsLogFontA() const;
+		std::unique_ptr<LOGFONTW> GetWindowsLogFontW() const;
+
+		void SetWindowsLogFont(const LOGFONT* const);
+		void SetWindowsLogFontA(const LOGFONTA* const);
+		void SetWindowsLogFontW(const LOGFONTW* const);
+
+		// Initializes from frame editor e.g. for CreateObject. Uses the frame default font,
+		// falls back on Arial, default size.
+		void Initialize(mv* mV);
+
+		/* Gets the internal DT_XX text align flags converted to TEXT_ALIGN_XX flags.
+		   @return TEXT_ALIGN_XX align flags, suitable for Fusion's GetTextAlignment */
+		std::uint32_t GetFusionTextAlignment() const;
+
+		/* Sets part of the DT_XX align flags based on TEXT_ALIGN_XX flags read from Extension::TextCapacity.
+		 * @param textAlignFlags TEXT_ALIGN_XX flags from Fusion SetTextAlignment
+		 * @param setSingleLine  If true (default), will set and clear DT_SINGLELINE based on vertical align */
+		void SetFusionTextAlignment(TextCapacity textAlignFlags, bool setSingleLine = true);
+#endif // _WIN32
+		// Gets font name
+		std::tstring GetFontName() const;
+		void SetFontName(std::tstring_view);
+	};
+#endif // TEXT_OEFLAG_EXTENSION
+
+#define MULTIPLAT_FONT
+	// Native Fusion type for runtime fonts
+	struct FontInfoMultiPlat
+	{
+		// Can be 0 for default height, negative for character height, positive for cell height
+		// Always positive on non-Windows
+		std::int32_t height = 0;
+		// Width in logical units, can be 0 for default
+		// Not usable on non-Windows
+		std::int32_t width = 0;
+		// Angle in tenth of degrees
+		// Not usable on non-Windows
+		std::int32_t escapement = 0;
+		// Angle in tenths of degrees
+		// Not usable on non-Windows
+		std::int32_t orientation = 0;
+		// Font weight, default FW_DONTCARE (0), with range FW_THIN (100) to FW_HEAVY (900)
+		// Weight 500+ on Android, 600+ on iOS/Mac, is bold
+		// Bold, italic is ignored on iOS/Mac if font name is specified
+		std::int32_t weight = 0;
+		// Italic, underline, strikeout
+		bool italic = false, underline = false, strikeOut = false;
+		// See Windows define ANSI_CHARSET
+		// Not usable on non-Windows
+		std::uint8_t charSet = 0;
+		// See Windows define OUT_DEFAULT_PRECIS
+		std::uint8_t outPrecision = 0;
+		// See Windows define CLIP_EMBEDDED
+		// Not usable on non-Windows
+		std::uint8_t clipPrecision = 0;
+		// See Windows define ANTIALIASED_QUALITY
+		// Not usable on non-Windows
+		std::uint8_t quality = 0;
+		// See Windows defines DEFAULT_PITCH, FF_DECORATIVE
+		// Not usable on non-Windows
+		std::uint8_t pitchAndFamily = 0;
+		// Font name desired - may be swapped or modified
+		std::tstring fontNameDesired;
+		// Font color - a COLORREF
+		std::uint32_t fontColor = 0;
+		// DT_XX flags, including text alignment and Windows stuff
+		// Text alignment - Fusion alignment and RTL settings.
+		// To convert to DrawText DT_XX flags, use GetDrawTextFlags().
+		std::uint32_t drawTextFlags = 0;
+#ifdef _WIN32
+		HFONT fontHandle = NULL;
+		std::unique_ptr<LOGFONT> logFont;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(HFONT nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(HFONT nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const LOGFONT* nativeFont);
+	private:
+		std::tstring fontName;
+	public:
+#elif defined(__ANDROID__)
+		global<jobject> cfontinfo;
+		global<jclass> cfontinfoClass;
+		static jfieldID lfHeight, lfWeight, lfItalic, lfUnderline, lfStrikeOut, lfFaceName;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(jobject nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const jobject nativeFont);
+#else // Apple
+		CFontInfo* cfontinfo = nullptr;
+		// Creates a font info pointing to a native font
+		FontInfoMultiPlat(CFontInfo* nativeFont);
+		// Creates a copy of font settings of this native font
+		void SetFont(const void* const nativeFont);
+#endif
+#if TEXT_OEFLAG_EXTENSION
+		// Creates a runtime-usable font from a EDITDATA font, tying it to an ext
+		void CopyFromEditFont(Extension* const ext, const DarkEdif::EditDataFont&);
+#endif
+		// Creates a font info pointing to no specific font. See SetFont
+		FontInfoMultiPlat();
+		~FontInfoMultiPlat();
+		void SetFont(const std::tstring_view fontName, int fontSize);
+		std::tstring GetActualFontName();
+		void UpdateNativeSide();
+	};
+
+}
+
+// Included here so the font struct above can be used inside
+#ifndef SURFACE_MULTI_PLAT_DEFINED
+#include "SurfaceMultiPlat.hpp"
+#endif
+
+namespace DarkEdif
+{
 	// =====
 	// This region does JSON-based properties.
 	// =====
-
 
 	// Functions redirected from Fusion DLL calls.
 	// The DLL_XX prefixes are necessary due to DEF files getting confused despite the namespaces.
 	namespace DLL
 	{
+		// TODO: Is this meant to be defined in EditorBuild, or runtime too? Is GetRunObjectInfos called at runtime?
 		// Returns size of EDITDATA and all properties if they were using their default values from JSON
 		std::uint16_t Internal_GetEDITDATASizeFromJSON();
 
+#if EditorBuild
 		void GeneratePropDataFromJSON();
+#endif
 	}
 
 #ifndef NOPROPS
@@ -391,13 +556,10 @@ namespace DarkEdif {
 
 		int DLL_CreateObject(mv* mV, LevelObject* loPtr, EDITDATA* edPtr);
 	}
+	struct RuntimePropSet;
 
-	struct Size
-	{
-		int width, height;
-	};
-
-	struct Properties
+#pragma pack (push, 1)
+	struct Properties final
 	{
 		NO_DEFAULT_CTORS_OR_DTORS(Properties);
 
@@ -407,30 +569,77 @@ namespace DarkEdif {
 
 		// Returns property checked or unchecked from property name.
 		bool IsPropChecked(std::string_view propName) const;
-		// Returns property checked or unchecked from property ID.
-		bool IsPropChecked(int propID) const;
+		// Returns property checked or unchecked from JSON property index.
+		bool IsPropChecked(int jsonPropID) const;
 		// Returns std::tstring property setting from property name.
 		std::tstring GetPropertyStr(std::string_view propName) const;
-		// Returns std::tstring property string from property ID.
-		std::tstring GetPropertyStr(int propID) const;
+		// Returns std::tstring property string from a JSON property index.
+		std::tstring GetPropertyStr(int jsonPropID) const;
 		// Returns a float/int property setting from property name.
 		float GetPropertyNum(std::string_view propName) const;
-		// Returns float/int property setting from a property ID.
-		float GetPropertyNum(int propID) const;
-		// Returns Fusion image bank ID from a image list property ID,
+		// Returns float/int property setting from JSON property index.
+		float GetPropertyNum(int jsonPropID) const;
+		// Returns Fusion image bank ID from a image list JSON property ID,
 		// suitable for DarkEdif::Surface::CreateFromImageBankID()
-		std::uint16_t GetPropertyImageID(int propID, std::size_t index) const;
+		std::uint16_t GetPropertyImageID(int jsonPropID, std::uint16_t imgIndex) const;
 		// Returns Fusion image bank ID from a image list property name,
 		// suitable for DarkEdif::Surface::CreateFromImageBankID()
-		std::uint16_t GetPropertyImageID(std::string_view propName, std::size_t index) const;
-		// Returns number of images in a image list property by property ID
-		std::uint16_t GetPropertyNumImages(int propID, std::size_t index) const;
+		std::uint16_t GetPropertyImageID(std::string_view propName, std::uint16_t imgIndex) const;
+		// Returns number of images in a image list property by JSON property ID
+		std::uint16_t GetPropertyNumImages(int jsonPropID) const;
 		// Returns number of images in a image list property by property name
-		std::uint16_t GetPropertyNumImages(std::string_view propName, std::size_t index) const;
+		std::uint16_t GetPropertyNumImages(std::string_view propName) const;
 		// Returns a Size property value by property name
-		DarkEdif::Size GetSizeProperty(std::string_view propName, std::size_t index) const;
-		// Returns a Size property value by property ID
-		DarkEdif::Size GetSizeProperty(int propID, std::size_t index) const;
+		DarkEdif::Size GetSizeProperty(std::string_view propName) const;
+		// Returns a Size property value by JSON property ID
+		DarkEdif::Size GetSizeProperty(int jsonPropID) const;
+
+		struct Data;
+		// Iterates all the OI List in entire frame
+		struct PropSetIterator
+		{
+			using iterator_category = std::forward_iterator_tag;
+			using value_type = void*;
+			using difference_type = std::ptrdiff_t;
+			using pointer = void*;
+			using reference = void*;
+
+		public:
+			// Iterator for all the OI List in entire frame
+			PropSetIterator& operator++();
+			// x++, instead of ++x
+			PropSetIterator operator++(int);
+			bool operator==(PropSetIterator other) const;
+			bool operator!=(PropSetIterator other) const;
+			reference operator*() const;
+
+			PropSetIterator begin() const;
+			PropSetIterator end() const;
+
+			void SetCurrentIndex(std::uint16_t idx);
+			std::uint16_t GetNumSetRepeats() const;
+		private:
+			const std::size_t nameListJSONIdx;
+			const std::size_t numSkippedSetsBefore;
+			Properties* const props;
+
+			std::uint16_t curEntryIdx = 0;
+			Properties::Data* runSetEntry = nullptr;
+			RuntimePropSet* runPropSet = nullptr;
+
+			explicit PropSetIterator(const std::size_t nameListJSONIdx, const std::size_t setIdx, Data* runSetEntry, Properties* const props, bool);
+
+		protected:
+			friend Properties;
+			PropSetIterator(const std::size_t nameListJSONIdx, const std::size_t setIdx, Data* runSetEntry, Properties* const props);
+		};
+
+		/** Gets a property set iterator, suitable for switching current property set index.
+		 * @param setName  Set name, as specified in JSON.
+		 * @param numSkips Keep as 0, unless using subsets. For subsets, n to skip n parent/grandparent sets. */
+		[[maybe_unused]] PropSetIterator LoopPropSet(std::string_view setName, std::size_t numSkips = 0) const;
+
+		//const PropSetIterator GetPropertySetIterator(std::string_view setName);
 
 #if EditorBuild
 		// =====
@@ -490,7 +699,7 @@ namespace DarkEdif {
 
 			// Was okay to return it, but had a third-party error
 			// Report this error to user
-			void Return_Error(PrintFHintInside const TCHAR * error, ...) PrintFHintAfter(2,3);
+			void Return_Error(PrintFHintInside const TCHAR* error, ...) PrintFHintAfter(2, 3);
 
 			// The source data doesn't have this, and clearly the source is unreliable
 			// This converter should no longer be used
@@ -522,32 +731,53 @@ namespace DarkEdif {
 		struct PreSmartPropertyReader;
 		struct SmartPropertyReader;
 		struct JSONPropertyReader;
-
 #endif // EditorBuild
 
 		// Turn on for lots of logging.
+#if EditorBuild && defined(_DEBUG)
+		static constexpr bool DebugProperties = true;
+#else
 		static constexpr bool DebugProperties = false;
+#endif
 
-		struct Data;
+		// Smart properties can change the version Fusion is told, so a migration from v1 -> v2 smart props
+		// triggers the migration procedure even if Extension::Version is not modified by ext dev
+		// Smart props v1: 0x0000
+		// Smart props v2: 0x0100
+		// Smart props v3: 0x0200?
+		static constexpr std::uint16_t VersionFlags = 0x0100;
+		// All flags, for removing the version increment; this will be 0x0100 | 0x0200 if props v3 is necessary
+		static constexpr std::uint16_t AllVersionFlags = 0x0100;
 
 		// We hide some stuff so newbie ext devs don't mistakenly use it
 		friend DarkEdif::DLL::PropAccesser;
 
 	protected:
-		// Version of this DarkEdif::Properties struct. If smart properties' layouts ever need updating, voila.
-		std::uint32_t propVersion = 'DAR1';
+		struct V1Data;
+		// Version of this DarkEdif::Properties struct.
+		// Currently DAR2. DAR1 had no visibleEditorProps, and no Data::jsonPropIndex.
+		std::uint32_t propVersion;
 		// fnv1a hashes, used to read JSON properties to see if a property layout change has been made.
 		std::uint32_t hash; // property titles and types
 		std::uint32_t hashTypes; // property types only
 		// Number of properties
 		std::uint16_t numProps;
 
-		// VS decided to pad this struct, so let's continue the idiocy officially
+		// VS decided to pad this struct
 		std::uint16_t pad;
 		// Size of DataForProps - including EDITDATA (and thus EDITDATA::Properties)
 		// Note that this is uint32, because initial EDITDATA is capped to uint16 by GetRunObjectInfos()'s EDITDATASize,
 		// but the size after initial setup is in EDITDATA::eHeader::extSize, which is uint32.
 		std::uint32_t sizeBytes;
+
+		union {
+			// If properties are visible. Included but invalid in non-Editor builds.
+			// @remarks This could be optimized to a bitfield but honestly, not worth.
+			bool* visibleEditorProps;
+			// Padding if Fusion editor is 32-bit
+			std::uint64_t ptrPad;
+		};
+
 		// The actual data for properties, merged together
 		// Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
 		std::uint8_t dataForProps[];
@@ -555,16 +785,77 @@ namespace DarkEdif {
 		// Use numProps / 8 for num of bytes used by checkboxes.
 
 		const Data* Internal_FirstData() const;
-		const Data* Internal_DataAt(int ID) const;
+		// Gets entry by its prop index in JSON, using current set selection,
+		// or by num of Next calls
+		const Data* Internal_DataAt(int ID, bool idIsJSON = true) const;
+		// Gets index of prop in Next() calls from its JSON index, interpreting from RuntimePropSets.
+		// Optionally returns the data directly, with the RuntimePropSet that contains it.
+		std::size_t PropIdxFromJSONIdx(std::size_t ID, const Data** dataPtr = nullptr, const Data** rsContainer = nullptr) const;
+		// Gets prop index from name or returns max
+		std::uint16_t PropJSONIdxFromName(const TCHAR * const func, const std::string_view&) const;
+
+		std::tstring Internal_GetPropStr(const Properties::Data* data) const;
+		float Internal_GetPropNum(const Properties::Data* data) const;
+		DarkEdif::Size Internal_GetSizeProperty(const Properties::Data* data) const;
+		std::uint16_t Internal_GetPropertyImageID(const Properties::Data* data, std::uint16_t imgIndex) const;
+		std::uint16_t Internal_GetPropertyNumImages(const Properties::Data* data) const;
 #if EditorBuild
 		Data* Internal_FirstData();
-		Data* Internal_DataAt(int ID);
-		Prop* GetProperty(size_t);
+		// Gets entry by its prop index in JSON, using current set selection,
+		// or by Next index in Prop
+		Data* Internal_DataAt(int ID, bool idIsJSON = true);
+		std::size_t PropIdxFromJSONIdx(std::size_t ID, Data** dataPtr = nullptr, Data** rsContainer = nullptr);
+		Prop* GetProperty(std::size_t);
 
 		static void Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigned int PropID, const void* newData, size_t newSize);
 #endif
 	};
 
+	struct RuntimePropSet
+	{
+		// Always 'S', compared with 'L' for non-set list.
+		std::uint8_t setIndicator;
+		// Number of repeats of this set, 1 is minimum and means one of this set
+		std::uint16_t numRepeats;
+		// Property that ends this set's data, as a JSON index, inclusive
+		std::uint16_t lastSetJSONPropIndex;
+		// First property that begins this set's data, as a JSON index, inclusive
+		std::uint16_t firstSetJSONPropIndex;
+		// Name property JSON index that will appear in list when switching set entry
+		std::uint16_t setNameJSONPropIndex;
+		// Current set index selected (0+), present at runtime too, but not used there
+		std::uint16_t setIndexSelected;
+		// Set name, as specified in JSON. Don't confuse with user-specified set name.
+		char setName[];
+
+		// Number of properties from firstSetJSONPropIndex that are this set's data
+		// Expecting at least one: the setName
+		std::uint16_t GetNumPropsInThisEntry(DarkEdif::Properties::Data* const propHoldingThisRS) const;
+		// Gets the set name
+		std::string GetPropSetName(const Properties::Data* const propHoldingThisRS) const;
+	};
+#pragma pack (pop)
+
+	struct EdittimePropSet
+	{
+		std::string setName;
+		// JSON indexes
+		std::uint16_t addButtonIdx = UINT16_MAX, deleteButtonIdx = UINT16_MAX,
+			nameEditboxIdx = UINT16_MAX, nameListIdx = UINT16_MAX,
+			startSetIdx = UINT16_MAX, endSetIdx = UINT16_MAX;
+	};
+#else // NOPROPS
+
+	// Dummy variables to allow building in NOPROPS mode
+	struct Properties
+	{
+		NO_DEFAULT_CTORS_OR_DTORS(Properties);
+		static constexpr std::uint16_t VersionFlags = 0;
+		static constexpr std::uint16_t AllVersionFlags = 0;
+		static constexpr bool DebugProperties = false;
+		struct Data;
+		struct V1Data;
+	};
 #endif // NOPROPS
 }
 
@@ -894,14 +1185,14 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Action linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ActionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
+	for (std::size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; ++curLangIndex)
 	{
 		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
@@ -979,14 +1270,14 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Condition linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ConditionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 template<class Ret, class Struct, class... Args>
 void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 {
 	std::stringstream errorStream;
-	for (size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; curLangIndex++)
+	for (std::size_t curLangIndex = 0; curLangIndex < Edif::SDK->json.u.object.length; ++curLangIndex)
 	{
 		const json_value &curLang = *Edif::SDK->json.u.object.values[curLangIndex].value;
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
@@ -1078,7 +1369,7 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 	if (errorStream.str().size() > 0)
 		DarkEdif::MsgBox::Error(_T("Expression linking error"), _T("%s"), DarkEdif::UTF8ToTString(errorStream.str()).c_str());
 
-	(Edif::SDK)->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
+	Edif::SDK->ExpressionFunctions[ID] = Edif::MemberFunctionPointer(Function);
 }
 
 // Restore analysis warning C6287

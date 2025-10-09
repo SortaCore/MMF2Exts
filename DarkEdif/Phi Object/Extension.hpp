@@ -9,9 +9,13 @@
 #include <sys/uio.h>
 #endif
 
-class Extension
+class Extension final
 {
 public:
+	// ======================================
+	// Required variables + functions
+	// Variables here must not be moved or swapped around or it can cause future issues
+	// ======================================
 	RunHeader* rhPtr;
 	RunObjectMultiPlatPtr rdPtr; // you should not need to access this
 #ifdef __ANDROID__
@@ -23,7 +27,7 @@ public:
 	Edif::Runtime Runtime;
 
 	static const int MinimumBuild = 251;
-	// b9: Update for iOS fixes, and new app root expression (SDK v19)
+	// b9: Update for iOS fixes, and new app root expression (SDK v20)
 	// b8: Update for [intended] iOS fixes in SDK (SDK v17)
 	// b7: Bugfix to alt string copying (SDK v16)
 	// b6: Added alt string/value bulk copying (SDK v15)
@@ -34,10 +38,8 @@ public:
 	// b1: initial build with RAM, disk, and frame usage.
 	static const int Version = 9;
 
-	static const OEFLAGS OEFLAGS = OEFLAGS::NEVER_KILL | OEFLAGS::NEVER_SLEEP; // Use OEFLAGS namespace
-	static const OEPREFS OEPREFS = OEPREFS::GLOBAL; // Use OEPREFS namespace
-
-	static const int WindowProcPriority = 100;
+	static constexpr OEFLAGS OEFLAGS = OEFLAGS::NONE;
+	static constexpr OEPREFS OEPREFS = OEPREFS::NONE;
 
 #ifdef _WIN32
 	Extension(RunObject* const rdPtr, const EDITDATA* const edPtr, const CreateObjectInfo* const cobPtr);
@@ -48,18 +50,9 @@ public:
 #endif
 	~Extension();
 
-
-	/*  Add any data you want to store in your extension to this class
-		(eg. what you'd normally store in rdPtr).
-
-		For those using multi-threading, any variables that are modified
-		by the threads should be in SaveExtInfo.
-		See MultiThreading.h.
-
-		Unlike rdPtr, you can store real C++ objects with constructors
-		and destructors, without having to call them manually or store
-		a pointer.
-	*/
+	// ======================================
+	// Extension data
+	// ======================================
 
 	std::vector<std::tstring> errorList;
 	Edif::recursive_mutex errorListLock;
@@ -87,7 +80,7 @@ public:
 	bool Sub_GetTrueEffectiveRights(PSID pSid, PACCESS_MASK  pAccessRights);
 #endif // _WIN32
 
-	struct LastReadACL
+	struct LastReadACL final
 	{
 		// User parameter: ACL item path
 		std::tstring itemPath;
@@ -133,111 +126,99 @@ public:
 
 	/// Actions
 
-		std::int32_t physMemTotalMB = 0;
-		std::int32_t physMemFreeMB = 0;
-		// could be system max available, or process assigned max
-		std::int32_t pageFileMemTotalMB = 0;
-		std::int32_t pageFileMemFreeMB = 0;
-		std::int32_t virtualMemTotalMB = 0;
-		std::int32_t virtualMemFreeMB = 0;
+	std::int32_t physMemTotalMB = 0;
+	std::int32_t physMemFreeMB = 0;
+	// could be system max available, or process assigned max
+	std::int32_t pageFileMemTotalMB = 0;
+	std::int32_t pageFileMemFreeMB = 0;
+	std::int32_t virtualMemTotalMB = 0;
+	std::int32_t virtualMemFreeMB = 0;
 
-		void UpdateRAMUsageInfo();
-		void ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * itemTypePtr, int includeSystemACL);
+	void UpdateRAMUsageInfo();
+	void ReadSystemObjectPerms(const TCHAR * itemPathPtr, const TCHAR * itemTypePtr, int includeSystemACL);
 
-		void AddBlankFramesToObject(int objectFV,
-			int animNum, int dirNum,
-			int numOfFrames, int insertIndexAt);
-		//void AddBlankFramesToObject(int objectFV, int numOfFrames, int insertAtIndex);
-		void AddImagesToObject(int objectFV,
-			int animNum, int dirNum,
-			const TCHAR * filenames, int insertIndexAt);
-		void StoreDetails(int objectFV);
-		void CheckForDiff();
-		void Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned short> imgIDs,
-			size_t animNum, size_t animDirNum, size_t insertAtIndex /* = MAXSIZE_T */);
+	void AddBlankFramesToObject(int objectFV,
+		int animNum, int dirNum,
+		int numOfFrames, int insertIndexAt);
+	//void AddBlankFramesToObject(int objectFV, int numOfFrames, int insertAtIndex);
+	void AddImagesToObject(int objectFV,
+		int animNum, int dirNum,
+		const TCHAR * filenames, int insertIndexAt);
+	void StoreDetails(int objectFV);
+	void CheckForDiff();
+	void Sub_AddImagesAtIndex(RunObject * runObj, std::vector<unsigned short> imgIDs,
+		size_t animNum, size_t animDirNum, size_t insertAtIndex /* = MAXSIZE_T */);
 
-		void IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TCHAR * allowDenyBoth, int includeInheritedInt, int includeInheritOnlyInt);
-		void AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TCHAR * allowDenyRevokePtr, const TCHAR * permListPtr, const TCHAR * inheritPtr);
+	void IterateLastReadSystemObjectDACL(const TCHAR * loopName, const TCHAR * allowDenyBoth, int includeInheritedInt, int includeInheritOnlyInt);
+	void AddNewDACLPermToSystemObject(const TCHAR * sidOrAccPtr, const TCHAR * allowDenyRevokePtr, const TCHAR * permListPtr, const TCHAR * inheritPtr);
 
-		void CopyAltVals(RunObject * obj, int startIndex, int numVals, int destIndex);
-		void CopyAltStrings(RunObject * obj, int startIndex, int numVals, int destIndex);
+	void CopyAltVals(RunObject * obj, int startIndex, int numVals, int destIndex);
+	void CopyAltStrings(RunObject * obj, int startIndex, int numVals, int destIndex);
 
 	/// Conditions
 
-		const bool AlwaysTrue() const;
-		bool IsEqual(int a, int b);
-		const bool IsThisFrameASubApp();
-		const bool DoesAccHaveEffectivePerm(const TCHAR * accOrSID, const TCHAR * perm);
-		const bool OnNamedLoop(const TCHAR * loopName);
-		bool InvalidateExplicitSelection();
+	const bool AlwaysTrue() const;
+	bool IsEqual(int a, int b);
+	const bool IsThisFrameASubApp();
+	const bool DoesAccHaveEffectivePerm(const TCHAR * accOrSID, const TCHAR * perm);
+	const bool OnNamedLoop(const TCHAR * loopName);
+	bool InvalidateExplicitSelection();
 
 	/// Expressions
 
-		const TCHAR * Error();
-		int Event_Index();
-		int Frame_IndexFromName(const TCHAR * name);
-		const TCHAR * Frame_NameFromIndex(int index);
+	const TCHAR * Error();
+	int Event_Index();
+	int Frame_IndexFromName(const TCHAR * name);
+	const TCHAR * Frame_NameFromIndex(int index);
 
-		int Active_GetAnimFrameCount(int fixedValue, int animNum, int animDir);
-		int Memory_PhysicalTotal();
-		int Memory_PhysicalFree();
-		int Memory_PageFileTotal();
-		int Memory_PageFileFree();
-		int Memory_VirtualTotal();
-		int Memory_VirtualFree();
-		std::uint32_t Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path);
-		std::uint32_t Disk_GetAvailableSpaceOfDriveInMB(const TCHAR * path);
-		const TCHAR * GetAltValsFromObjName(const TCHAR* objectName, int altValueIndex, int numDecimalDigits);
-		const TCHAR* GetAltStringsFromObjName(const TCHAR* objectName, int altStringIndex, const TCHAR* delim);
-		const TCHAR* GetFlagsFromObjName(const TCHAR* objectName, int flagIndex);
+	int Active_GetAnimFrameCount(int fixedValue, int animNum, int animDir);
+	int Memory_PhysicalTotal();
+	int Memory_PhysicalFree();
+	int Memory_PageFileTotal();
+	int Memory_PageFileFree();
+	int Memory_VirtualTotal();
+	int Memory_VirtualFree();
+	std::uint32_t Disk_GetTotalCapacityOfDriveInMB(const TCHAR * path);
+	std::uint32_t Disk_GetAvailableSpaceOfDriveInMB(const TCHAR * path);
+	const TCHAR * GetAltValsFromObjName(const TCHAR* objectName, int altValueIndex, int numDecimalDigits);
+	const TCHAR* GetAltStringsFromObjName(const TCHAR* objectName, int altStringIndex, const TCHAR* delim);
+	const TCHAR* GetFlagsFromObjName(const TCHAR* objectName, int flagIndex);
 
-		const TCHAR * GetAltValsFromFixedValue(int fixedValue, int altValueIndex, int numDecimalDigits);
-		const TCHAR * GetAltStringsFromFixedValue(int fixedValue, int altStringIndex, const TCHAR * delim);
-		const TCHAR * GetFlagsFromFixedValue(int fixedValue, int flagIndex);
-		int GetCPUTemp();
+	const TCHAR * GetAltValsFromFixedValue(int fixedValue, int altValueIndex, int numDecimalDigits);
+	const TCHAR * GetAltStringsFromFixedValue(int fixedValue, int altStringIndex, const TCHAR * delim);
+	const TCHAR * GetFlagsFromFixedValue(int fixedValue, int flagIndex);
+	int GetCPUTemp();
 
-		const TCHAR * GetLoopedACLEntry_AccountName();
-		const TCHAR * GetLoopedACLEntry_SID();
-		int GetLoopedACLEntry_AccessMask();
+	const TCHAR * GetLoopedACLEntry_AccountName();
+	const TCHAR * GetLoopedACLEntry_SID();
+	int GetLoopedACLEntry_AccessMask();
 
 
-		float TestParamsFunc(int a, float b, const TCHAR* c, float d, int e, float f, const TCHAR* g, int h, float i,
-			const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p);
+	float TestParamsFunc(int a, float b, const TCHAR* c, float d, int e, float f, const TCHAR* g, int h, float i,
+		const TCHAR* j, int k, float l, const TCHAR* m, float n, int o, const TCHAR* p);
 
-		float ProximitySensor();
-		const TCHAR* GetAppRoot(int flags);
-		const TCHAR* GetNetworkType();
+	float ProximitySensor();
+	const TCHAR* GetAppRoot(int flags);
+	const TCHAR* GetNetworkType();
 
 #ifdef __ANDROID__
-		ASensorManager * androidSensorManager = NULL;
-		const ASensor* androidProximitySensor = NULL;
-		ASensorEventQueue* androidSensorEventQueue = NULL;
-		static int StaticAndroidSensorCallback(int fd, int events, void* data);
-		int AndroidSensorCallback(int fd, int events);
-		std::atomic<float> proximityDistance;
+	ASensorManager * androidSensorManager = NULL;
+	const ASensor* androidProximitySensor = NULL;
+	ASensorEventQueue* androidSensorEventQueue = NULL;
+	static int StaticAndroidSensorCallback(int fd, int events, void* data);
+	int AndroidSensorCallback(int fd, int events);
+	std::atomic<float> proximityDistance;
 
-		jmethodID getActiveNetworkInfoMethod = NULL;
-		global<jstring> contextConnectivityString;
-		global<jobject> connectivityService;
+	jmethodID getActiveNetworkInfoMethod = NULL;
+	global<jstring> contextConnectivityString;
+	global<jobject> connectivityService;
 #endif
 
+	// Runs every tick of Fusion's runtime, can be toggled off and back on
+	REFLAG Handle();
 
-	/* These are called if there's no function linked to an ID */
-
+	// These are called if there's no function linked to an ID
 	void UnlinkedAction(int ID);
 	long UnlinkedCondition(int ID);
 	long UnlinkedExpression(int ID);
-
-
-
-	/*  These replace the functions like HandleRunObject that used to be
-		implemented in Runtime.cpp. They work exactly the same, but they're
-		inside the extension class.
-	*/
-
-	REFLAG Handle();
-	REFLAG Display();
-
-	short FusionRuntimePaused();
-	short FusionRuntimeContinued();
 };

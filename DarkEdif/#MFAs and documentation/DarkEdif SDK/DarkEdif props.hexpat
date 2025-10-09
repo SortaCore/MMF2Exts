@@ -68,9 +68,14 @@ struct Data<auto Ver>
             u8 propData[sizeBytes - propNameSize - 9];
     }
 };
+
+bitfield CheckBoxes {
+    chk0 : 1; chk1 : 1; chk2 : 1; chk3 : 1;
+    chk4 : 1; chk5 : 1; chk6 : 1; chk7 : 1;
+};
 struct Properties
 {
-    // Version of this DarkEdif::Properties struct. If smart properties' layouts ever need updating, voila.
+    // Version of this DarkEdif::Properties struct - reversed due to little endian
     char propVersion[4];
 
     // fnv1a hashes, used to read JSON properties to see if a property layout change has been made.
@@ -86,7 +91,7 @@ struct Properties
     // but the size after initial setup is in EDITDATA::eHeader::extSize, which is uint32.
     u32 sizeBytes;
 
-    if (propVersion == "2RAD")
+    if (std::string::reverse(propVersion) == "DAR2")
     {
         u32 edVisiblePtr;
         u32 ptrPad;
@@ -94,8 +99,7 @@ struct Properties
 
     // The actual data for properties, merged together
     // Starts with checkboxes, then data, which is Data struct: type ID followed by binary.
-    u8 checkbox[std::math::ceil(numProps / 8.f)];
-    //bool chk[std::math::ceil(numProps / 8)];
+    CheckBoxes chkBoxes[std::math::ceil(numProps / 8.f)];
     if (std::string::reverse(propVersion) == "DAR2")
         Data<2> props[numProps];
     else if (std::string::reverse(propVersion) == "DAR1")
@@ -104,6 +108,6 @@ struct Properties
         std::print("Prop version \"{}\" is invalid", std::string::reverse(propVersion));
 };
 
-// EDITDATA::eHeader privateData stores offset to EDITDATA::Props
+// EDITDATA::eHeader::privateData stores offset to EDITDATA::Props
 u32 eHeaderPrivData @ 16;
 Properties Props @ eHeaderPrivData;

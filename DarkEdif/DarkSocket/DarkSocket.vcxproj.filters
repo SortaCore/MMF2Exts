@@ -69,6 +69,9 @@
     <ClCompile Include="Structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Lib\Shared\SurfaceMultiPlat.cpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png">
@@ -113,6 +116,9 @@
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
     <ClInclude Include="..\Inc\Shared\AllPlatformDefines.hpp">
+      <Filter>Global to all extensions\Edif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Inc\Shared\SurfaceMultiPlat.hpp">
       <Filter>Global to all extensions\Edif</Filter>
     </ClInclude>
   </ItemGroup>

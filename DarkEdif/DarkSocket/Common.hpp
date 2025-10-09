@@ -15,22 +15,18 @@
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-// edPtr : Used at edittime and saved in the MFA/CCN/EXE files
-
-struct EDITDATA
+#pragma pack (push, 1)
+// Binary block used in Fusion editor and saved in the MFA/CCN/EXE files
+struct EDITDATA final
 {
 	NO_DEFAULT_CTORS_OR_DTORS(EDITDATA);
 	// Header - required, must be first variable in EDITDATA
-	extHeader		eHeader;
+	extHeader eHeader;
 
-	// Object's data
-
-//	short			swidth;
-//	short			sheight;
-
-	// Keep DarkEdif variables as last. Undefined behaviour otherwise.
+	// Keep Properties variable last; its size varies.
 	DarkEdif::Properties Props;
 };
+#pragma pack (pop)
 
 // Include the structs/enums/etc used later on in the object
 #include "Structures.hpp"

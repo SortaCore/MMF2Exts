@@ -50,19 +50,19 @@ constexpr int SD_D3D11 = (int)SurfaceDriver::Direct3D11;
 [[deprecated("Use SurfaceDriver enum")]]
 constexpr int SD_MAX = (int)SurfaceDriver::Max;
 
-constexpr int LI_NONE = (int)LoadImageFlags::None;
-constexpr int LI_REMAP = (int)LoadImageFlags::Remap;
-constexpr int LI_CHANGESURFACEDEPTH = (int)LoadImageFlags::ChangeSurfaceDepth;
-constexpr int LI_DONOTNORMALIZEPALETTE = (int)LoadImageFlags::DoNotNormalizePalette;
+constexpr int LI_NONE = (int)LIFlags::None;
+constexpr int LI_REMAP = (int)LIFlags::Remap;
+constexpr int LI_CHANGESURFACEDEPTH = (int)LIFlags::ChangeSurfaceDepth;
+constexpr int LI_DONOTNORMALIZEPALETTE = (int)LIFlags::DoNotNormalizePalette;
 
 #define ALPHATOSEMITRANSP(a) ((a==0) ? 128:(255-a)/2)
 #define SEMITRANSPTOALPHA(s) ((s==128) ? 0:(255-s*2))
 
 #define COLORREFATORGBA(c,a) ((c & 0x00FFFFFF) | (a << 24))
 
-constexpr int SI_NONE = (int)SaveImageFlags::None;
-constexpr int SI_ONLYHEADER = (int)SaveImageFlags::OnlyHeader;
-constexpr int SI_SAVEALPHA = (int)SaveImageFlags::SaveAlpha;
+constexpr int SI_NONE = (int)SIFlags::None;
+constexpr int SI_ONLYHEADER = (int)SIFlags::OnlyHeader;
+constexpr int SI_SAVEALPHA = (int)SIFlags::SaveAlpha;
 
 constexpr unsigned int BLTF_ANTIA = (unsigned int)BlitOptions::AntiAliasing;
 constexpr unsigned int BLTF_COPYALPHA = (unsigned int)BlitOptions::CopyAlpha;
@@ -92,13 +92,3 @@ constexpr int SPA_NONE = (int)SetPaletteAction::None;
 constexpr int SPA_REMAPSURFACE = (int)SetPaletteAction::RemapSurface;	// remap current surface pixels to new palette
 [[deprecated]]
 constexpr int SPA_MAX = (int)SetPaletteAction::Max;
-
-[[deprecated]]
-typedef CollisionMask sMask;
-[[deprecated]]
-typedef CollisionMask * LPSMASK;
-
-[[deprecated]]
-constexpr int SCMF_FULL = (std::uint16_t)CreateCollisionMaskFlags::Full;
-[[deprecated]]
-constexpr int SCMF_PLATFORM = (std::uint16_t)CreateCollisionMaskFlags::Platform;
