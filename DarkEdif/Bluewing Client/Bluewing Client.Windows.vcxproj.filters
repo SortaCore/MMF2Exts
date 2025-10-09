@@ -84,7 +84,7 @@
     <ClInclude Include="..\Inc\Windows\Props.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
-    <ClInclude Include="..\Inc\Windows\Surface.hpp">
+    <ClInclude Include="..\Inc\Windows\WindowsSurface.hpp">
       <Filter>Global to all extensions</Filter>
     </ClInclude>
   </ItemGroup>

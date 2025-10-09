@@ -1,6 +1,5 @@
 #pragma once
 #define SURFACE_MULTI_PLAT_DEFINED
-#define SURFACE_MULTI_PLAT_INCLUDING_WINSURF
 
 namespace DarkEdif
 {
@@ -8,7 +7,8 @@ namespace DarkEdif
 	class Surface;
 }
 #ifdef _WIN32
-#include "Windows/Surface.hpp"
+#define SURFACE_MULTI_PLAT_INCLUDING_WINSURF
+#include "Windows/WindowsSurface.hpp"
 #endif
 
 #include "DarkEdif.hpp"

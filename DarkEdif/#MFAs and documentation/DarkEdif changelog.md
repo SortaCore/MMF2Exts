@@ -16,6 +16,7 @@ Changes until v20 release
 - All platforms: Added multi-platform display support with DarkEdif::Surface
 - All platforms: Added DarkEdif::Rect, Point, PointF, Size.
 - All platforms: Added multi-platform text support (OEFLAGS::TEXT exts)
+- Windows: Renamed Surface.hpp to WindowsSurface.hpp.
 - iOS/Mac: Message box now operable instead of a crash. On Mac, msg box may not appear synchronously, but will always appear.
 - All platforms: Extension::FusionRuntimePaused/Continued removed by default; use PAUSABLE_EXTENSION define to re-enable.
 - All platforms: Extension::Load/SaveFramePosition removed. Only worked on Windows so you'll have toport again.

@@ -82,7 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Inc\Windows\Props.hpp" />
-    <ClInclude Include="..\Inc\Windows\Surface.hpp" />
+    <ClInclude Include="..\Inc\Windows\WindowsSurface.hpp" />
     <ClInclude Include="..\Inc\Windows\WindowsDefines.hpp" />
     <ClInclude Include="DarkExt.json">
       <FileType>Document</FileType>
