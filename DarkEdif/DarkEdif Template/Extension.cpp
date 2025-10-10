@@ -192,19 +192,21 @@ void Extension::GetZoneInfos()
 	// but it is done automatically in CF2.5, so shouldn't be necessary.
 }
 
-DarkEdif::Surface * Extension::GetDisplaySurface() {
+DarkEdif::Surface * Extension::GetDisplaySurface()
+{
 	// Old style MMF2 fade-in/fade-out transistions requires this function,
 	// Auto-rendering of Sprite effects (alpha coeff etc) will be applied by returning a surface here.
 	// If you have multiple surfaces, you should can return null here and draw them yourself.
 	// If you return null here, Display() will be called instead.
 	return nullptr;
 }
-DarkEdif::CollisionMask * Extension::GetCollisionMask(bool platform) {
+DarkEdif::CollisionMask * Extension::GetCollisionMask(std::uint32_t flags)
+{
 	// If your ext supports fine collision, you should return the collision mask corresponding to
 	// which pixels have collision and which don't. DarkEdif::Surface can generate collision masks,
 	// but it can be computationally expensive.
 	// If your ext uses only box collision, DE will detect that and never call this function.
-	(void)platform;
+	(void)flags;
 
 	return nullptr;
 }

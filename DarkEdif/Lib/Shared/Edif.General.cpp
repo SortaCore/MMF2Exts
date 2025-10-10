@@ -1034,8 +1034,8 @@ struct ForbiddenInternals
 		return s->bmp;
 #endif
 	}
-	static void * GetSurfCollisionMaskNativePtr(DarkEdif::Surface* s, const bool platform) {
-		return s->GetCollisionMask(platform)->GetNativePointer();
+	static void * GetSurfCollisionMaskNativePtr(DarkEdif::Surface* s, const std::uint32_t flags) {
+		return s->GetCollisionMask(flags)->GetNativePointer();
 	}
 	static void* GetCollisionMaskNativePtr(DarkEdif::CollisionMask* colMask) {
 		return colMask->GetNativePointer();
@@ -1169,12 +1169,12 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getRunObj
 		if (surf)
 		{
 			LOGV(_T("GetRunObjectCollisionMask got a non-null surface.\n"));
-			nativeMask = ForbiddenInternals::GetSurfCollisionMaskNativePtr(surf, (flags & 1) != 0);
+			nativeMask = ForbiddenInternals::GetSurfCollisionMaskNativePtr(surf, (std::uint32_t)flags);
 		}
 		else
 			LOGV(_T("GetRunObjectSurface got a null surface, returning null.\n"));
 #else // manual display
-		DarkEdif::CollisionMask* const colMask = ext->GetCollisionMask((flags & 1) != 0);
+		DarkEdif::CollisionMask* const colMask = ext->GetCollisionMask((std::uint32_t)flags);
 		if (colMask)
 		{
 			LOGV(_T("GetRunObjectCollisionMask got a non-null mask.\n"));

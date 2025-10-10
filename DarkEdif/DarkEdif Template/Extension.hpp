@@ -97,7 +97,7 @@ public:
 	void Display();
 	void GetZoneInfos();
 	DarkEdif::Surface * GetDisplaySurface();
-	DarkEdif::CollisionMask * GetCollisionMask(int flags);
+	DarkEdif::CollisionMask * GetCollisionMask(std::uint32_t flags);
 #endif
 
 	// These are called if there's no function linked to an ID
