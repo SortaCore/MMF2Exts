@@ -115,9 +115,9 @@ typedef short HFII;
 struct mv;
 
 namespace Edif {
-	Params ReadActionOrConditionParameterType(const char*, bool&);
-	ExpParams ReadExpressionParameterType(const char*, bool&);
-	ExpReturnType ReadExpressionReturnType(const char* text);
+	Params ReadActionOrConditionParameterType(const std::string_view&, bool&);
+	ExpParams ReadExpressionParameterType(const std::string_view&, bool&);
+	ExpReturnType ReadExpressionReturnType(const std::string_view& text);
 }
 
 // This namespace is #defined to different per ext, preventing multiple of the iOS/Mac DarkEdif exts

@@ -409,7 +409,7 @@ enum class Params : std::uint16_t {
 	// The parameter is int in C++, but can be ignored, as Fusion handles the comparison.
 	// Return the int to compare with the condition function.
 	Comparison,
-	Colour,							// ParamColour
+	Color,							// ParamColor
 	Buffer,							// ParamBuffer
 	Frame,							// ParamFrame - Storyboard frame number
 	Sample_Loop,					// ParamSoundLoop

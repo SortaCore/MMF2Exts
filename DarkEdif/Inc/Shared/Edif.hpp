@@ -319,8 +319,8 @@ namespace Edif
 
 	int GetDependency (char *& Buffer, size_t &size, const TCHAR * FileExtension, int Resource);
 
-	TCHAR * ConvertString(const char* utf8String);
-	TCHAR * ConvertAndCopyString(TCHAR* tstr, const char* utf8String, int maxLength);
+	TCHAR * ConvertString(const std::string_view& utf8String);
+	TCHAR * ConvertAndCopyString(TCHAR* tstr, const std::string_view & utf8String, int maxLength);
 	inline void FreeString(TCHAR* s)
 	{
 		free(s);

@@ -55,9 +55,9 @@ struct ACEInfo final
 };
 
 namespace Edif {
-	Params ReadActionOrConditionParameterType(const char*, bool&);
-	ExpParams ReadExpressionParameterType(const char*, bool&);
-	ExpReturnType ReadExpressionReturnType(const char* text);
+	Params ReadActionOrConditionParameterType(const std::string_view&, bool&);
+	ExpParams ReadExpressionParameterType(const std::string_view&, bool&);
+	ExpReturnType ReadExpressionReturnType(const std::string_view&);
 	ACEInfo* ACEInfoAlloc(unsigned int NumParams);
 
 	bool CreateNewActionInfo();
@@ -948,20 +948,21 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 	do
 	{
 		bool isFloat = false;
-		Params p = Edif::ReadActionOrConditionParameterType(json["Parameters"][acParamIndex][0], isFloat);
+		Params p = Edif::ReadActionOrConditionParameterType(json["Parameters"sv][acParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
 		using cppType = typename std::tuple_element<acParamIndex, std::tuple<Args...>>::type;
 		const std::string cppTypeAsString(typestr(cppType));
 		std::string expCppType = "?"s;
+		const std::string_view title = json["Title"sv];
 
 		// Handles comparisons by adding error and storing in condRetType as applicable
 		const auto ComparisonHandler = [&]() {
 			// Actions can't use comparison types
 			if (condRetType == nullptr)
 			{
-				str << "Action "sv << (const char *)json["Title"] << " uses a comparison JSON parameter, but comparison "sv
+				str << "Action "sv << title << " uses a comparison JSON parameter, but comparison "sv
 					<< "parameters can only be used in conditions.\r\n"sv;
 				return;
 			}
@@ -971,7 +972,7 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 				*condRetType = p;
 			else // Multiple comparison parameter types, error out
 			{
-				str << "Condition "sv << (const char *)json["Title"] << " has two comparison JSON parameters. Only one "sv
+				str << "Condition "sv << title << " has two comparison JSON parameters. Only one "sv
 					<< "comparison parameter can be used.\r\n"sv;
 			}
 		};
@@ -1000,13 +1001,13 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 			expCppType = "const TCHAR *"sv;
 		}
 		else if (p == Params::Integer || p == Params::Expression || p == Params::Comparison || p == Params::Compare_Time || p == Params::Time ||
-			p == Params::Colour || p == Params::Joystick_Direction || p == Params::_8Dirs || p == Params::New_Direction)
+			p == Params::Color || p == Params::Joystick_Direction || p == Params::_8Dirs || p == Params::New_Direction)
 		{
 			if (p == Params::Comparison || p == Params::Compare_Time)
 				ComparisonHandler();
 
 			// Several params expect unsigned int, e.g. COLORREF is unsigned, New Direction is a mask
-			if (!_stricmp(json["Parameters"][acParamIndex][0], "Unsigned Integer") || p == Params::Colour || p == Params::Joystick_Direction ||
+			if (DarkEdif::SVICompare(json["Parameters"sv][acParamIndex][0], "Unsigned Integer"sv) || p == Params::Color || p == Params::Joystick_Direction ||
 				p == Params::_8Dirs || p == Params::New_Direction)
 			{
 				if (std::is_same<cppType, unsigned int>())
@@ -1039,12 +1040,12 @@ forLoopAC(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(
 		}
 		else // unimplemented param type test
 		{
-			str << "Has JSON parameter "sv << (const char*)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char*)json["Parameters"][acParamIndex][0]
+			str << "Has JSON parameter "sv << (std::string_view)json["Parameters"sv][acParamIndex][1] << ", JSON type "sv << (std::string_view)json["Parameters"sv][acParamIndex][0]
 				<< "; C++ type is "sv << cppTypeAsString << ", but DarkEdif SDK does not test that type yet. Please report it to Phi.\r\n"sv;
 			break;
 		}
 
-		str << "Has JSON parameter "sv << (const char *)json["Parameters"][acParamIndex][1] << ", JSON type "sv << (const char *)json["Parameters"][acParamIndex][0]
+		str << "Has JSON parameter "sv << (std::string_view)json["Parameters"sv][acParamIndex][1] << ", JSON type "sv << (std::string_view)json["Parameters"sv][acParamIndex][0]
 			<< "; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
 	} while (false);
 
@@ -1065,7 +1066,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 	do
 	{
 		bool isFloat = false;
-		ExpParams p = Edif::ReadExpressionParameterType(json["Parameters"][expParamIndex][0], isFloat);
+		ExpParams p = Edif::ReadExpressionParameterType(json["Parameters"sv][expParamIndex][0], isFloat);
 
 		// Note that the function signature loses the top-level const-ness of parameters,
 		// so we only need to check for the non-const parameter type.
@@ -1091,7 +1092,7 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		}
 		else if (p == ExpParams::Integer)
 		{
-			if (!_stricmp(json["Parameters"][expParamIndex][0], "Unsigned Integer"))
+			if (DarkEdif::SVICompare(json["Parameters"sv][expParamIndex][0], "Unsigned Integer"sv))
 			{
 				if (std::is_same<cppType, unsigned int>())
 					break;
@@ -1107,8 +1108,10 @@ forLoopE(unsigned int ID, const _json_value &json, std::stringstream &str, Ret(S
 		else // ?
 			break;
 
-		str << "Has JSON parameter \""sv << (const char *)json["Parameters"][expParamIndex][1] << "\", JSON type \""sv << (const char *)json["Parameters"][expParamIndex][0]
-			<< "\"; expected C++ type "sv << expCppType << ", but actual C++ type is "sv << cppTypeAsString << ".\r\n"sv;
+		str << "Has JSON parameter \""sv << (std::string_view)json["Parameters"sv][expParamIndex][1] <<
+			"\", JSON type \""sv << (std::string_view)json["Parameters"sv][expParamIndex][0]
+			<< "\"; expected C++ type "sv << expCppType << ", but actual C++ type is "sv
+			<< cppTypeAsString << ".\r\n"sv;
 	} while (false);
 
 	// Recurse into next iteration
@@ -1131,39 +1134,40 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Actions"].u.array.length <= ID)
+		if (curLang["Actions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking action ID "sv << ID << "; it has no Actions JSON item.\r\n"sv;
 			continue;
 		}
-		const json_value &json = curLang["Actions"][ID];
+		const json_value &json = curLang["Actions"sv][ID];
+		const std::string_view title = json["Title"sv];
 
 		// const void is a thing, mainly because writing checks to prevent it makes template interpretation systems a lot harder.
 		if (!std::is_same<std::remove_const_t<Ret>, void>())
 		{
-			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has return type "sv
+			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << "; it has return type "sv
 				<< typestr(Ret) << " instead of void in the C++ function definition."sv;
 			break;
 		}
 
 		const int cppParamCount = sizeof...(Args);// Also, don't set NumAutoProps to negative.
 
-		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
 		// CNC_XX Expression macros to get parameters themselves.
 		// This lets users decide at runtime whether a parameter is float or integer, which in practice seems the only use.
 		// These initially-unread parameters are not passed to the C++ function and so won't be in the C++ definition.
-		const json_value &numAutoProps = json["NumAutoProps"];
+		const json_value &numAutoProps = json["NumAutoProps"sv];
 		if (numAutoProps.type == json_integer)
 			jsonParamCount = (int)numAutoProps.u.integer;
 
 		if (cppParamCount != jsonParamCount)
 		{
-			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+			errorStream << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << "; it has "sv
 				<< jsonParamCount << " parameters in the Actions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition."sv;
 		}
 		else if (jsonParamCount > 0)
@@ -1174,7 +1178,7 @@ void LinkActionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (errorStream.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking action ID "sv << ID << ", "sv << (const char *)json["Title"] << ":\r\n"sv << errorStream.str();
+				str2 << curLangName << ": error in linking action ID "sv << ID << ", "sv << title << ":\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
 			}
@@ -1198,21 +1202,21 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Conditions"].u.array.length <= ID)
+		if (curLang["Conditions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking condition ID "sv << ID << "; it has no Conditions JSON item.\r\n"sv;
 			continue;
 		}
-		const json_value &json = curLang["Conditions"][ID];
+		const json_value &json = curLang["Conditions"sv][ID];
 
 		const int cppParamCount = sizeof...(Args);
-		const int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		const int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 		if (cppParamCount != jsonParamCount)
 		{
-			errorStream << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "; it has "sv
+			errorStream << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (std::string_view)json["Title"sv] << "; it has "sv
 				<< jsonParamCount << " parameters in the Conditions JSON item, but "sv << cppParamCount << " parameters in the C++ function definition.\r\n"sv;
 		}
 		else if (jsonParamCount > 0)
@@ -1258,7 +1262,7 @@ void LinkConditionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 			if (errorStream.str().size() > 0)
 			{
 				std::stringstream str2;
-				str2 << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (const char *)json["Title"] << "\r\n"sv << errorStream.str();
+				str2 << curLangName << ": error in linking condition ID "sv << ID << ", "sv << (std::string_view)json["Title"sv] << "\r\n"sv << errorStream.str();
 				std::string realError = str2.str();
 				errorStream.str(realError.substr(0U, realError.size() - 2U));
 				break; // We found an error in this language
@@ -1283,10 +1287,10 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		const char * const curLangName = Edif::SDK->json.u.object.values[curLangIndex].name;
 
 		// JSON item is not a language, so ignore it
-		if (curLang.type != json_object || curLang["About"]["Name"].type != json_string)
+		if (curLang.type != json_object || curLang["About"sv]["Name"sv].type != json_string)
 			continue;
 
-		if (curLang["Expressions"].u.array.length <= ID)
+		if (curLang["Expressions"sv].u.array.length <= ID)
 		{
 			errorStream << curLangName << ": error in linking expression ID "sv << ID << "; it has no Expressions JSON item.\r\n"sv;
 			continue;
@@ -1295,12 +1299,12 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		std::string expCppRetType = "<unknown>"s;
 		std::string cppRetType = typestr(Ret);
 		bool retTypeOK = false;
-		const json_value &json = curLang["Expressions"][ID];
-		ExpReturnType jsonRetType = Edif::ReadExpressionReturnType(json["Returns"]);
+		const json_value &json = curLang["Expressions"sv][ID];
+		ExpReturnType jsonRetType = Edif::ReadExpressionReturnType(json["Returns"sv]);
 
 		if (jsonRetType == ExpReturnType::Integer)
 		{
-			if (!_stricmp(json["Returns"], "Unsigned Integer"))
+			if (DarkEdif::SVICompare(json["Returns"sv], "Unsigned Integer"sv))
 			{
 				retTypeOK = std::is_same<std::remove_const_t<Ret>, unsigned int>();
 				expCppRetType = "unsigned int"sv;
@@ -1323,25 +1327,25 @@ void LinkExpressionDebug(unsigned int ID, Ret(Struct::*Function)(Args...) const)
 		}
 		// else failure by default
 
-		std::string exprName = (const char *)json["Title"];
+		std::string_view exprName = json["Title"sv];
 		if (exprName[exprName.size() - 1U] == '(')
-			exprName.resize(exprName.size() - 1U);
+			exprName.remove_suffix(1);
 
 		if (!retTypeOK)
 		{
 			errorStream << curLangName << ": error in linking expression ID "sv << ID << ", "sv << exprName << "; it has return type "sv
-				<< (const char *)json["Returns"] << " in the JSON (C++ type "sv << expCppRetType << "), but "sv << typestr(Ret) << " in the C++ function definition."sv;
+				<< (std::string_view)json["Returns"sv] << " in the JSON (C++ type "sv << expCppRetType << "), but "sv << typestr(Ret) << " in the C++ function definition."sv;
 			break;
 		}
 
 		constexpr int cppParamCount = sizeof...(Args);
-		int jsonParamCount = json["Parameters"].type == json_none ? 0 : json["Parameters"].u.array.length;
+		int jsonParamCount = json["Parameters"sv].type == json_none ? 0 : json["Parameters"sv].u.array.length;
 
 		// If this JSON variable is set, this func doesn't read all the ACE parameters, which allows advanced users to call
 		// CNC_XX Expression macros to get parameters themselves.
 		// This lets users decide at runtime whether a parameter is float or integer, which in practice seems the only use.
 		// These initially-unread parameters are not passed to the C++ function and so won't be in the C++ definition.
-		const json_value &numAutoProps = json["NumAutoProps"];
+		const json_value &numAutoProps = json["NumAutoProps"sv];
 		if (numAutoProps.type == json_integer)
 			jsonParamCount = (int)numAutoProps.u.integer;
 

@@ -5,6 +5,7 @@
 
 // Used for Win32 resource ID numbers
 #include "Resource.h"
+using namespace DarkEdif;
 
 // ============================================================================
 // GLOBAL DEFINES
@@ -94,145 +95,146 @@ void Edif::GetExtensionName(char * const writeTo)
 	strcpy(writeTo, PROJECT_NAME);
 }
 
-Params Edif::ReadActionOrConditionParameterType(const char * Text, bool &IsFloat)
+Params Edif::ReadActionOrConditionParameterType(const std::string_view &Text, bool &IsFloat)
 {
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return Params::String_Expression;
 
-	if (!_stricmp(Text, "Filename") || !_stricmp(Text, "File"))
+	if (SVICompare(Text, "Filename"sv) || SVICompare(Text, "File"sv))
 		return Params::Filename;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 	{
 		IsFloat = true;
 		return Params::Expression;
 	}
 
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return Params::Expression;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return Params::Expression;
 
-	if (!_stricmp(Text, "Object"))
+	if (SVICompare(Text, "Object"sv))
 		return Params::Object;
 
-	if (!_stricmp(Text, "Time"))
+	if (SVICompare(Text, "Time"sv))
 		return Params::Time;
 
-	if (!_stricmp(Text, "Position"))
+	if (SVICompare(Text, "Position"sv))
 		return Params::Position;
 
-	if (!_stricmp(Text, "Create"))
+	if (SVICompare(Text, "Create"sv))
 		return Params::Create;
 
-	if (!_stricmp(Text, "SysCreate"))
+	if (SVICompare(Text, "SysCreate"))
 		return Params::System_Create;
 
-	if (!_stricmp(Text, "Animation"))
+	if (SVICompare(Text, "Animation"))
 		return Params::Animation;
 
-	if (!_stricmp(Text, "Nop"))
+	if (SVICompare(Text, "Nop"))
 		return Params::NoP;
 
-	if (!_stricmp(Text, "Player"))
+	if (SVICompare(Text, "Player"))
 		return Params::Player;
 
-	if (!_stricmp(Text, "Every"))
+	if (SVICompare(Text, "Every"))
 		return Params::Every;
 
-	if (!_stricmp(Text, "Key"))
+	if (SVICompare(Text, "Key"))
 		return Params::Key;
 
-	if (!_stricmp(Text, "Speed"))
+	if (SVICompare(Text, "Speed"))
 		return Params::Speed;
 
-	if (!_stricmp(Text, "JoyDirection"))
+	if (SVICompare(Text, "JoyDirection"))
 		return Params::Joystick_Direction;
 
-	if (!_stricmp(Text, "Shoot"))
+	if (SVICompare(Text, "Shoot"))
 		return Params::Shoot;
 
-	if (!_stricmp(Text, "Zone"))
+	if (SVICompare(Text, "Zone"sv))
 		return Params::Playfield_Zone;
 
-	if (!_stricmp(Text, "Comparison"))
+	if (SVICompare(Text, "Comparison"sv))
 		return Params::Comparison;
 
-	if (!_stricmp(Text, "StringComparison"))
+	if (SVICompare(Text, "StringComparison"sv))
 		return Params::String_Comparison;
 
-	if (!_stricmp(Text, "Colour") || !_stricmp(Text, "Color"))
-		return Params::Colour;
+	if (SVICompare(Text, "Color"sv) || SVICompare(Text, "Colour"sv))
+		return Params::Color;
 
-	if (!_stricmp(Text, "Frame"))
+	if (SVICompare(Text, "Frame"sv))
 		return Params::Frame;
 
-	if (!_stricmp(Text, "SampleLoop"))
+	if (SVICompare(Text, "SampleLoop"sv))
 		return Params::Sample_Loop;
 
-	if (!_stricmp(Text, "MusicLoop"))
+	if (SVICompare(Text, "MusicLoop"sv))
 		return Params::Music_Loop;
 
-	if (!_stricmp(Text, "NewDirection"))
+	if (SVICompare(Text, "NewDirection"sv))
 		return Params::New_Direction;
 
-	if (!_stricmp(Text, "TextNumber"))
+	if (SVICompare(Text, "TextNumber"sv))
 		return Params::Text_Number;
 
-	if (!_stricmp(Text, "Click"))
+	if (SVICompare(Text, "Click"sv))
 		return Params::Click;
 
-	if (!_stricmp(Text, "Program"))
+	if (SVICompare(Text, "Program"sv))
 		return Params::Program;
 
-	if (!_strnicmp(Text, "Custom", sizeof("Custom") - 1))
-		return (Params)((short)Params::Custom_Base + ((short)atoi(Text + sizeof("Custom") - 1)));
+	if (SVIComparePrefix(Text, "Custom"sv))
+		return (Params)((short)Params::Custom_Base + ((short)atoi(Text.data() + sizeof("Custom") - 1)));
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."), DarkEdif::UTF8ToTString(Text).c_str());
+	MsgBox::Error(_T("DarkEdif Params error"), _T("Error reading parameter type \"%s\", couldn't match it to a Params value."),
+		UTF8ToTString(Text).c_str());
 	return (Params)(std::uint16_t)0;
 }
 
-ExpParams Edif::ReadExpressionParameterType(const char * Text, bool &IsFloat)
+ExpParams Edif::ReadExpressionParameterType(const std::string_view& Text, bool &IsFloat)
 {
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return ExpParams::String;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 	{
 		IsFloat = true;
 		return ExpParams::Float;
 	}
 
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return ExpParams::Integer;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return ExpParams::UnsignedInteger;
 
 	DarkEdif::MsgBox::Error(_T("DarkEdif ExpParams error"), _T("Error reading expression parameter type \"%s\", couldn't match it to a ExpParams value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return (ExpParams)(std::uint16_t)0;
 }
 
-ExpReturnType Edif::ReadExpressionReturnType(const char * Text)
+ExpReturnType Edif::ReadExpressionReturnType(const std::string_view & Text)
 {
-	if (!_stricmp(Text, "Integer"))
+	if (SVICompare(Text, "Integer"sv))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(Text, "Float"))
+	if (SVICompare(Text, "Float"sv))
 		return ExpReturnType::Float;
 
-	if (!_stricmp(Text, "Text") || !_stricmp(Text, "String"))
+	if (SVICompare(Text, "Text"sv) || SVICompare(Text, "String"sv))
 		return ExpReturnType::String;
 
 	// More specialised, but not allowed for
-	if (!_stricmp(Text, "Short"))
+	if (SVICompare(Text, "Short"sv))
 		return ExpReturnType::Integer;
 
-	if (!_stricmp(Text, "Unsigned Integer"))
+	if (SVICompare(Text, "Unsigned Integer"sv))
 		return ExpReturnType::UnsignedInteger;
 
-	DarkEdif::MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), DarkEdif::UTF8ToTString(Text).c_str());
+	MsgBox::Error(_T("DarkEdif ExpReturnType error"), _T("Error reading expression return type \"%s\", couldn't match it to a ExpReturnType value."), DarkEdif::UTF8ToTString(Text).c_str());
 	return ExpReturnType::Integer; // default
 }
 
@@ -277,7 +279,7 @@ extern "C" void DarkEdif_Invalid_Parameter(const wchar_t* /*expression - NULL*/,
 
 	// To get proper debug information, build your application under Debug Unicode (or Debug), not Edittime/Runtime.
 	LOGE(_T("CRT invalid parameter crash - since it's not Debug, no trace information."));
-	DarkEdif::MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
+	MsgBox::Error(_T("Invalid parameter crash!"), _T("Intercepted a crash from invalid parameter in a CRT function.\n"
 		"If you're a Fusion extension developer, attach a debugger now for information.\n"
 		"Otherwise, the program will attempt to continue."));
 }
@@ -622,9 +624,9 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 		return;
 	}
 
-	const json_value &Actions = CurLang["Actions"];
-	const json_value &Conditions = CurLang["Conditions"];
-	const json_value &Expressions = CurLang["Expressions"];
+	const json_value &Actions = CurLang["Actions"sv];
+	const json_value &Conditions = CurLang["Conditions"sv];
+	const json_value &Expressions = CurLang["Expressions"sv];
 
 	#ifdef _WIN32
 		ActionJumps = new void * [Actions.u.object.length + 1];
@@ -680,22 +682,22 @@ Edif::SDKClass::SDKClass(mv * mV, json_value &_json) : json (_json)
 	// Object properties, as they appear in Properties tab, in the frame editor only.
 	DarkEdif::DLL::GeneratePropDataFromJSON();
 
-	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"]);
-	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"]);
-	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"]);
+	ActionMenu = LoadMenuJSON(Edif::ActionID(0), CurLang["ActionMenu"sv]);
+	ConditionMenu = LoadMenuJSON(Edif::ConditionID(0), CurLang["ConditionMenu"sv]);
+	ExpressionMenu = LoadMenuJSON(Edif::ExpressionID(0), CurLang["ExpressionMenu"sv]);
 
 	// Check for ext dev forgetting to overwrite some of the Template properties
 	#if defined(_DEBUG) && !defined(IS_DARKEDIF_TEMPLATE)
-		const json_value& about = CurLang["About"];
+		const json_value& about = CurLang["About"sv];
 		bool unchangedPropsFound =
-			!_stricmp(about["Name"], "DarkEdif Template") ||
-			!_stricmp(about["Author"], "Your Name") ||
-			!_stricmp(about["Comment"], "A sentence or two to describe your extension") ||
-			!_stricmp(about["Help"], "Help/Example.chm") ||
-			!_stricmp(about["URL"], "https://www.example.com/");
+			SVICompare(about["Name"sv], "DarkEdif Template"sv) ||
+			SVICompare(about["Author"sv], "Your Name"sv) ||
+			SVICompare(about["Comment"sv], "A sentence or two to describe your extension"sv) ||
+			SVICompare(about["Help"sv], "Help/Example.chm"sv) ||
+			SVICompare(about["URL"sv], "https://www.example.com/"sv);
 		if (!unchangedPropsFound)
 		{
-			std::string copy = about["Copyright"];
+			std::string copy(about["Copyright"sv]);
 			std::transform(copy.begin(), copy.end(), copy.begin(),
 				[](unsigned char c) { return std::tolower(c); });
 			unchangedPropsFound = copy.rfind("by your name"sv) != std::string::npos;
@@ -773,7 +775,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 	// it in the ASM, we can't pass it to the function.
 	// Worth noting that if all non-auto parameters are not interpreted, a crash will occur.
 	// Also, don't set NumAutoProps to negative.
-	const json_value & numAutoProps = CurLang[isCond ? "Conditions" : "Actions"][ID]["NumAutoProps"];
+	const json_value & numAutoProps = CurLang[isCond ? "Conditions"sv : "Actions"sv][ID]["NumAutoProps"sv];
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
@@ -804,7 +806,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 						_T("Error calling %s \"%s\" (ID %i); text parameter index %i was given a null string pointer.\n"
 							"Was the parameter type different when the %s was created in the MFA?"),
 						isCond ? _T("condition") : _T("action"),
-						DarkEdif::UTF8ToTString((const char *)CurLang[isCond ? "Conditions" : "Actions"][ID]["Title"]).c_str(),
+						DarkEdif::UTF8ToTString(CurLang[isCond ? "Conditions"sv : "Actions"sv][ID]["Title"sv]).c_str(),
 						ID, i,
 						isCond ? _T("condition") : _T("action"));
 					goto endFunc;
@@ -1631,7 +1633,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 	// it in the ASM, we can't pass it to the function.
 	// Worth noting that if all non-auto parameters are not interpreted, a crash will occur.
 	// Also, don't set NumAutoProps to negative.
-	const json_value & numAutoProps = CurLang["Expressions"][ID]["NumAutoProps"];
+	const json_value & numAutoProps = CurLang["Expressions"sv][ID]["NumAutoProps"sv];
 	if (numAutoProps.type == json_integer)
 		ParameterCount = (int)numAutoProps.u.integer;
 
@@ -1663,7 +1665,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 				DarkEdif::MsgBox::Error(_T("Edif::Expression() error"),
 					_T("Error calling expression \"%s\" (ID %i); parameter index %i was given a null string pointer.\n"
 					"Was the parameter type different when the expression was created in the MFA?"),
-					DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i);
+					DarkEdif::UTF8ToTString(CurLang["Expressions"sv][ID]["Title"sv]).c_str(), ID, i);
 
 				if (ExpressionRet == ExpReturnType::String)
 					Result = (long)ext->Runtime.CopyString(_T(""));
@@ -1683,7 +1685,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 		default:
 		{
 			DarkEdif::MsgBox::Error(_T("Edif::Expression() error"), _T("Error calling expression \"%s\" (ID %i); parameter index %i has unrecognised ExpParams %hi."),
-				DarkEdif::UTF8ToTString((const char *)CurLang["Expressions"][ID]["Title"]).c_str(), ID, i, (short)info->Parameter[i].ep);
+				DarkEdif::UTF8ToTString(CurLang["Expressions"sv][ID]["Title"sv]).c_str(), ID, i, (short)info->Parameter[i].ep);
 			if (ExpressionRet == ExpReturnType::String)
 				Result = (long)ext->Runtime.CopyString(_T(""));
 			goto endFunc;
@@ -1956,7 +1958,7 @@ void Edif::GetSiblingPath (TCHAR * Buffer, const TCHAR * FileExtension)
 #endif
 
 #ifdef _UNICODE
-wchar_t * Edif::ConvertString(const char* utf8String)
+wchar_t * Edif::ConvertString(const std::string_view & utf8String)
 {
 #ifndef _WIN32
 	std::string s(utf8String);
@@ -1964,16 +1966,15 @@ wchar_t * Edif::ConvertString(const char* utf8String)
 	ws.resize(std::mbstowcs(&ws[0], s.c_str(), s.size())); // Shrink to fit.
 	return wcsdup(ws.c_str());
 #else
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	wchar_t * tstr = (wchar_t *)calloc(Length, sizeof(wchar_t));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, Length);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
+	assert(Length >= 0);
+	wchar_t * tstr = (wchar_t *)calloc(++Length, sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), tstr, Length);
 	return tstr;
 #endif
 }
 
-wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int maxLength)
+wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const std::string_view & utf8String, int maxLength)
 {
 #ifndef _WIN32
 	size_t sSize = strlen(utf8String);
@@ -1995,24 +1996,24 @@ wchar_t * Edif::ConvertAndCopyString(wchar_t * tstr, const char* utf8String, int
 	}
 
 #else
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, maxLength);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size() + 1, tstr, maxLength);
+	if (Length >= 0)
+		tstr[Length] = _T('\0');
 #endif
 	return tstr;
 }
 #else
-char* Edif::ConvertString(const char* utf8String)
+char* Edif::ConvertString(const std::string_view & utf8String)
 {
 #ifndef _WIN32
-	char* str = strdup(utf8String);
+	char* str = strdup(utf8String.data());
 
 	return str;
 #else
 	// Convert string to Unicode
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	wchar_t * wstr = (wchar_t *)calloc(Length, sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, wstr, Length);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
+	wchar_t * wstr = (wchar_t *)calloc(++Length, sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
 
 	// Convert Unicode string using current user code page
 	int len2 = WideCharToMultiByte(CP_ACP, 0, wstr, -1, 0, 0, nullptr, nullptr);
@@ -2026,19 +2027,22 @@ char* Edif::ConvertString(const char* utf8String)
 #endif
 }
 
-char* Edif::ConvertAndCopyString(char* str, const char* utf8String, int maxLength)
+char* Edif::ConvertAndCopyString(char* str, const std::string_view & utf8String, int maxLength)
 {
 #ifndef _WIN32
-	return _strdup(utf8String);
+	std::size_t siz = std::min<std::size_t>(maxLength - 1, utf8String.size());
+	memcpy(str, utf8String.data(), siz);
+	str[siz] = '\0';
+	return _strdup(str);
 #else
 	// MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, tstr, maxLength);
 
 	// Convert string to Unicode
-	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
+	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
 	if ( Length == 0 )
 		Length = 1;
 	WCHAR* wstr = (WCHAR*)calloc(Length, sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, wstr, Length);
+	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
 
 	// Convert Unicode string using current user code page
 	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLength, nullptr, nullptr);

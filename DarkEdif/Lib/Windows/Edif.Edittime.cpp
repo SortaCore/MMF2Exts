@@ -6,28 +6,28 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	TCHAR * ObjCopyright, TCHAR * ObjComment, TCHAR * ObjHttp)
 {
 #pragma DllExportHint
-	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"]["Author"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"sv]["Author"sv], MAX_PATH);
 	// Could make this auto-replace the year, but only the ext author should be doing that.
-	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"]["Copyright"], MAX_PATH);
-	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"]["URL"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"sv]["Copyright"sv], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"sv]["URL"sv], MAX_PATH);
 
 	if (mV && mV->IdAppli)
-		Edif::ConvertAndCopyString(ObjName, CurLang["About"]["Name"], MAX_PATH);
+		Edif::ConvertAndCopyString(ObjName, CurLang["About"sv]["Name"sv], MAX_PATH);
 	else
-		Edif::ConvertAndCopyString(ObjName, (*Edif::SDK->json.u.object.values[2].value)["About"]["Name"], MAX_PATH);
+		Edif::ConvertAndCopyString(ObjName, (*Edif::SDK->json.u.object.values[2].value)["About"sv]["Name"sv], MAX_PATH);
 
 	// Allows user to specify a static variable in the object comment.
 	// e.g. build number, liblacewing version, etc.
 	// Use printf macros as depicted by
 	// https://docs.microsoft.com/en-gb/cpp/c-runtime-library/format-specification-syntax-printf-and-wprintf-functions
 #ifndef JSON_COMMENT_MACRO
-	Edif::ConvertAndCopyString(ObjComment, CurLang["About"]["Comment"], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjComment, CurLang["About"sv]["Comment"sv], MAX_PATH);
 #else
 	char buff[MAX_PATH];
 	bool bad = false;
 	// Prevent crashing. It's not nice code, but it'll stop ext devs getting stuck.
 	try {
-		if (sprintf_s(buff, MAX_PATH, CurLang["About"]["Comment"], JSON_COMMENT_MACRO) == -1)
+		if (sprintf_s(buff, MAX_PATH, CurLang["About"sv]["Comment"sv].c_str(), JSON_COMMENT_MACRO) == -1)
 			bad = true;
 	}
 	catch (...) { bad = true; }
@@ -35,7 +35,7 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 	if (bad)
 	{
 		DarkEdif::MsgBox::Error(_T("JSON error"), _T("%s"), _T("Error in JSON comment macro. Ensure your %'s are escaped (with %%)."));
-		strcpy_s(buff, MAX_PATH, CurLang["About"]["Comment"]);
+		strcpy_s(buff, MAX_PATH, CurLang["About"sv]["Comment"sv].c_str());
 	}
 
 	Edif::ConvertAndCopyString(ObjComment, buff, MAX_PATH);
@@ -46,21 +46,21 @@ const TCHAR * FusionAPI GetHelpFileName()
 {
 #pragma DllExportHint
 	static TCHAR TempString[MAX_PATH];
-	return Edif::ConvertAndCopyString(TempString, CurLang["About"]["Help"], MAX_PATH);
+	return Edif::ConvertAndCopyString(TempString, CurLang["About"sv]["Help"sv], MAX_PATH);
 }
 
 void FusionAPI GetConditionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, CurLang["Conditions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, CurLang["Conditions"sv][code]["Parameters"sv][param][1], maxLen);
 }
 
 void FusionAPI GetActionTitle(mv *mV, short code, short param, TCHAR * strBuf, short maxLen)
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, CurLang["Actions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, CurLang["Actions"sv][code]["Parameters"sv][param][1], maxLen);
 }
 
 #ifndef DARKSCRIPT_EXTENSION
@@ -68,7 +68,7 @@ void FusionAPI GetExpressionParam(mv *mV, short code, short param, TCHAR * strBu
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"][code]["Parameters"][param][1], maxLen);
+		Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"sv][code]["Parameters"sv][param][1], maxLen);
 }
 
 void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxLen)
@@ -76,10 +76,10 @@ void FusionAPI GetExpressionTitle(mv *mV, short code, TCHAR * strBuf, short maxL
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
 	{
-		std::string Return = (const char *)CurLang["Expressions"][code]["Title"];
+		std::string Return(CurLang["Expressions"sv][code]["Title"sv]);
 		if (Return.back() != '(')
 			Return.push_back('(');
-		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
+		Edif::ConvertAndCopyString(strBuf, Return, maxLen);
 	}
 }
 #endif
@@ -88,14 +88,14 @@ void FusionAPI GetConditionString(mv *mV, short code, TCHAR * strPtr, short maxL
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, CurLang["Conditions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, CurLang["Conditions"sv][code]["Title"sv], maxLen);
 }
 
 void FusionAPI GetActionString(mv *mV, short code, TCHAR * strPtr, short maxLen)
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, CurLang["Actions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, CurLang["Actions"sv][code]["Title"sv], maxLen);
 }
 
 #ifndef DARKSCRIPT_EXTENSION
@@ -103,7 +103,7 @@ void FusionAPI GetExpressionString(mv * mV, short code, TCHAR * strPtr, short ma
 {
 #pragma DllExportHint
 	if (Edif::IS_COMPATIBLE(mV))
-		Edif::ConvertAndCopyString(strPtr, CurLang["Expressions"][code]["Title"], maxLen);
+		Edif::ConvertAndCopyString(strPtr, CurLang["Expressions"sv][code]["Title"sv], maxLen);
 }
 #endif
 
@@ -139,7 +139,7 @@ HMENU Edif::LoadMenuJSON(int BaseID, const json_value &Source, HMENU Parent)
 
 		if (MenuItem.type == json_string)
 		{
-			if (!_stricmp(MenuItem, "Separator") || !strcmp(MenuItem, "---"))
+			if (DarkEdif::SVICompare(MenuItem, "Separator"sv) || MenuItem == "---"sv)
 			{
 				AppendMenu(Parent, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 				continue;

@@ -1300,9 +1300,9 @@ struct ParamEffect {
 };
 
 namespace Edif {
-	Params ReadActionOrConditionParameterType(const char*, bool&);
-	ExpParams ReadExpressionParameterType(const char*, bool&);
-	ExpReturnType ReadExpressionReturnType(const char* text);
+	Params ReadActionOrConditionParameterType(const std::string_view&, bool&);
+	ExpParams ReadExpressionParameterType(const std::string_view&, bool&);
+	ExpReturnType ReadExpressionReturnType(const std::string_view&);
 }
 
 ///////////////////////////////////////////////////////////////

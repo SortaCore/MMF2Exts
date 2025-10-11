@@ -403,7 +403,7 @@ std::tstring Extension::Sub_GetValAsString(const Extension::Value &val)
 // Defined in DarkEdif.cpp
 ACEInfo * Edif::ACEInfoAlloc(unsigned int NumParams);
 
-#define lastNonDummyFunc (CurLang["Expressions"].u.array.length)
+#define lastNonDummyFunc (CurLang["Expressions"sv].u.array.length)
 constexpr short lastNonFuncID = 59;
 // 5 parameters seems to be the maximum Fusion supports, because there is a hard cap of around 5,582 expression IDs.
 // Any further and CF2.5 crashes when you try to add an action. MMF2 Standard staggers after 5632, and dies completely at 5647.
@@ -780,11 +780,11 @@ void FusionAPI GetExpressionParam(mv* mV, short code, short param, TCHAR* strBuf
 	if (Edif::IS_COMPATIBLE(mV))
 	{
 		if ((size_t)code < lastNonDummyFunc)
-			Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"][code]["Parameters"][param][1], maxLen);
+			Edif::ConvertAndCopyString(strBuf, CurLang["Expressions"sv][code]["Parameters"sv][param][1], maxLen);
 		else if ((size_t)code <= lastNonFuncID)
 		{
 			DarkEdif::MsgBox::Error(_T("Shouldn't happen"), _T("Should never happen. Param requested for dummy function."));
-			Edif::ConvertAndCopyString(strBuf, "COUGH", maxLen);
+			Edif::ConvertAndCopyString(strBuf, "COUGH"sv, maxLen);
 		}
 		else
 		{
@@ -838,14 +838,14 @@ void FusionAPI GetExpressionTitle(mv* mV, short code, TCHAR* strBuf, short maxLe
 
 	if ((size_t)code < lastNonDummyFunc)
 	{
-		std::string Return(CurLang["Expressions"][code]["Title"]);
+		std::string Return(CurLang["Expressions"sv][code]["Title"sv]);
 		if (Return.back() != '(')
 			Return.push_back('(');
 		Edif::ConvertAndCopyString(strBuf, Return.c_str(), maxLen);
 	}
 	else if ((size_t)code <= lastNonFuncID)
 	{
-		Edif::ConvertAndCopyString(strBuf, "DummyFunc(", maxLen);
+		Edif::ConvertAndCopyString(strBuf, "DummyFunc("sv, maxLen);
 	}
 	else
 	{

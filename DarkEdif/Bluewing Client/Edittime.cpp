@@ -46,14 +46,14 @@ int FusionAPI CreateObject(mv * mV, LevelObject * loPtr, EDITDATA * edPtr)
 	// Set default object settings from DefaultState.
 	memset(((char *)edPtr) + sizeof(edPtr->eHeader), 0, sizeof(EDITDATA) - sizeof(EDITDATA::eHeader));
 
-	const auto & propsJSON = CurLang["Properties"];
-	edPtr->automaticClear = propsJSON[1]["DefaultState"];
-	edPtr->isGlobal = propsJSON[2]["DefaultState"];
-	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), propsJSON[3]["DefaultState"]))
+	const auto & propsJSON = CurLang["Properties"sv];
+	edPtr->automaticClear = propsJSON[1]["DefaultState"sv];
+	edPtr->isGlobal = propsJSON[2]["DefaultState"sv];
+	if (strcpy_s(edPtr->edGlobalID, std::size(edPtr->edGlobalID), propsJSON[3]["DefaultState"sv].c_str()))
 		DarkEdif::MsgBox::Error(_T("CreateObject() error"), _T("Error initialising property 3; error %i copying string."), errno);
-	edPtr->multiThreading = propsJSON[4]["DefaultState"];
-	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"];
-	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"];
+	edPtr->multiThreading = propsJSON[4]["DefaultState"sv];
+	edPtr->timeoutWarningEnabled = propsJSON[5]["DefaultState"sv];
+	edPtr->fullDeleteEnabled = propsJSON[6]["DefaultState"sv];
 
 	// ext version 1 = before Unicode port, 2 = after. Does not mean the properties are UTF16; they're UTF8.
 	edPtr->eHeader.extVersion = 2;
@@ -110,12 +110,12 @@ Prop * FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
-	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
+	if ((unsigned int) CurLang["Properties"sv].u.object.length > ID)
 	{
 		if (ID == 0)
 		{
 			char extVerBuffer[256];
-			sprintf_s(extVerBuffer, CurLang["Properties"][ID]["DefaultState"], lacewing::relayclient::buildnum, STRIFY(CONFIG));
+			sprintf_s(extVerBuffer, CurLang["Properties"sv][ID]["DefaultState"sv].c_str(), lacewing::relayclient::buildnum, STRIFY(CONFIG));
 			return new Prop_Str(DarkEdif::UTF8ToTString(extVerBuffer).c_str());
 		}
 		if (ID == 3)
@@ -138,7 +138,7 @@ BOOL FusionAPI GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
-	if ((unsigned int) CurLang["Properties"].u.object.length > ID)
+	if ((unsigned int) CurLang["Properties"sv].u.object.length > ID)
 	{
 		if (ID == 1)
 			return edPtr->automaticClear;
@@ -185,7 +185,7 @@ void FusionAPI SetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int PropID, BOOL
 
 	unsigned int ID = PropID - PROPID_EXTITEM_CUSTOM_FIRST;
 
-	if (CurLang["Properties"].u.object.length > ID)
+	if (CurLang["Properties"sv].u.object.length > ID)
 	{
 		// The ending ", (void)0" means that the expression evaluates to void overall
 		if (ID == 1)

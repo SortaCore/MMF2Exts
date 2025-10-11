@@ -53,6 +53,7 @@
 #ifdef __cplusplus
 
 	#include <string.h>
+	#include <string_view>
 
 	extern "C"
 	{
@@ -189,19 +190,19 @@ typedef struct _json_value
 			return *u.array.values[index];
 		}
 
-		inline const struct _json_value &operator [] (const char * index) const
+		inline const struct _json_value& operator [] (const std::string_view &index) const
 		{
 			if (type != json_object)
 				return json_value_none;
 
-			for (unsigned int i = 0; i < u.object.length; ++ i)
-				if (!strcmp(u.object.values[i].name, index))
+			for (unsigned int i = 0; i < u.object.length; ++i)
+				if (index == u.object.values[i].name)
 					return *u.object.values[i].value;
 
 			return json_value_none;
 		}
 
-		inline operator const char * () const
+		inline const char * c_str() const
 		{
 			switch (type)
 			{
@@ -211,6 +212,18 @@ typedef struct _json_value
 				default:
 					return "";
 			};
+		}
+
+		inline operator std::string_view () const
+		{
+			switch (type)
+			{
+				case json_string:
+					return std::string_view(u.string.ptr, u.string.length);
+
+				default:
+					return std::string_view();
+			}
 		}
 
 		inline operator json_int_t () const
@@ -272,7 +285,7 @@ typedef json_state json_state;
 
 int json_clean_comments (const json_char ** json_input,
 						 json_state * state,
-						 json_char * const error,
+						 char * const error,
 						 size_t error_len,
 						 size_t * size);
 

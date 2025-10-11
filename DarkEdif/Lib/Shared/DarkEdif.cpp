@@ -29,7 +29,7 @@ static const _json_value * DefaultLanguageIndex()
 	{
 		auto& lang = Edif::SDK->json.u.object.values[i];
 		if ((*lang.value).type == json_object
-			&& (*lang.value)["About"]["Name"].type == json_string)
+			&& (*lang.value)["About"sv]["Name"sv].type == json_string)
 		{
 			StoredCurrentLanguageName = DarkEdif::UTF8ToTString(lang.name);
 			return lang.value;
@@ -108,23 +108,34 @@ const TCHAR* const DarkEdif::JSON::LanguageName()
 
 #endif // EditorBuild
 
+// Case-insensitive comparison of texts. true if same. Uses stricmp or strcasecmp.
+bool DarkEdif::SVICompare(const std::string_view& first, const std::string_view& second)
+{
+	return first.size() == second.size() && !_stricmp(first.data(), second.data());
+}
+// Case-insensitive comparison of texts. true if first param starts with second. Uses strnicmp or strncasecmp.
+bool DarkEdif::SVIComparePrefix(const std::string_view& text, const std::string_view& prefix)
+{
+	return text.size() >= prefix.size() && !_strnicmp(text.data(), prefix.data(), prefix.size());
+}
+
+
 ACEInfo * Edif::ACEInfoAlloc(unsigned int NumParams)
 {
 	// Allocate space for ACEInfo struct, plus Parameter[NumParams] so it has valid memory
 	return (ACEInfo *)calloc(sizeof(ACEInfo) + (NumParams * sizeof(short) * 2), 1);	// The *2 is for reserved variables
 }
-ExpReturnType Edif::ReadExpressionReturnType(const char * Text);
 
 bool Edif::CreateNewActionInfo()
 {
 	// Get ID and thus properties by counting currently existing actions.
-	const json_value & UnlinkedAction = CurLang["Actions"][(std::int32_t)Edif::SDK->ActionInfos.size()];
+	const json_value & UnlinkedAction = CurLang["Actions"sv][(std::int32_t)Edif::SDK->ActionInfos.size()];
 
 	// Invalid JSON reference
 	if (UnlinkedAction.type != json_object)
 		return DarkEdif::MsgBox::Error(_T("Error reading action JSON"), _T("Invalid JSON reference for action ID %zu, expected object."), Edif::SDK->ActionInfos.size()), false;
 
-	const json_value & Param = UnlinkedAction["Parameters"];
+	const json_value & Param = UnlinkedAction["Parameters"sv];
 
 	// Num of parameters is beyond number of bits in FloatFlags
 	if (sizeof(ACEInfo::FloatFlags)*CHAR_BIT < Param.u.object.length)
@@ -163,13 +174,13 @@ bool Edif::CreateNewActionInfo()
 bool Edif::CreateNewConditionInfo()
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Condition = CurLang["Conditions"][(std::int32_t)Edif::SDK->ConditionInfos.size()];
+	const json_value & Condition = CurLang["Conditions"sv][(std::int32_t)Edif::SDK->ConditionInfos.size()];
 
 	// Invalid JSON reference
 	if (Condition.type != json_object)
 		return DarkEdif::MsgBox::Error(_T("Error reading condition JSON"), _T("Invalid JSON reference for condition ID %zu, expected a JSON object."), Edif::SDK->ConditionInfos.size()), false;
 
-	const json_value & Param = Condition["Parameters"];
+	const json_value & Param = Condition["Parameters"sv];
 
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(ACEInfo::FloatFlags) *CHAR_BIT < Param.u.object.length)
@@ -185,7 +196,7 @@ bool Edif::CreateNewConditionInfo()
 	// If a non-triggered condition, set the correct flags
 	CondInfo->ID = (short)Edif::SDK->ConditionInfos.size();
 	CondInfo->NumOfParams = Param.u.object.length;
-	CondInfo->Flags.ev = bool (Condition["Triggered"]) ? EVFLAGS::NONE : (EVFLAGS::ALWAYS | EVFLAGS::NOTABLE);
+	CondInfo->Flags.ev = ((bool) Condition["Triggered"sv]) ? EVFLAGS::NONE : (EVFLAGS::ALWAYS | EVFLAGS::NOTABLE);
 
 	if (CondInfo->NumOfParams > 0)
 	{
@@ -210,13 +221,13 @@ bool Edif::CreateNewConditionInfo()
 bool Edif::CreateNewExpressionInfo()
 {
 	// Get ID and thus properties by counting currently existing conditions.
-	const json_value & Expression = CurLang["Expressions"][(std::int32_t)Edif::SDK->ExpressionInfos.size()];
+	const json_value & Expression = CurLang["Expressions"sv][(std::int32_t)Edif::SDK->ExpressionInfos.size()];
 
 	// Invalid JSON reference
 	if (Expression.type != json_object)
 		return DarkEdif::MsgBox::Error(_T("Error reading expression JSON"), _T("Invalid JSON reference for expression ID %zu, expected a JSON object."), Edif::SDK->ExpressionInfos.size()), false;
 
-	const json_value & Param = Expression["Parameters"];
+	const json_value & Param = Expression["Parameters"sv];
 
 	// Num of parameters is beyond size of FloatFlags
 	if (sizeof(ACEInfo::FloatFlags)*CHAR_BIT < Param.u.object.length)
@@ -232,7 +243,7 @@ bool Edif::CreateNewExpressionInfo()
 	// If a non-triggered condition, set the correct flags
 	ExpInfo->ID = (short)Edif::SDK->ExpressionInfos.size();
 	ExpInfo->NumOfParams = Param.u.object.length;
-	ExpInfo->Flags.ef = Edif::ReadExpressionReturnType(Expression["Returns"]);
+	ExpInfo->Flags.ef = Edif::ReadExpressionReturnType(Expression["Returns"sv]);
 
 	if (ExpInfo->NumOfParams > 0)
 	{
@@ -267,23 +278,23 @@ static void DebugProp_OutputString(PrintFHintInside const TCHAR* msgFormat, ...)
 }
 
 // Any type that has no changeable value (excludes checkbox)
-static bool IsUnchangeablePropExclCheckbox(const char* curStr)
+static bool IsUnchangeablePropExclCheckbox(const std::string_view& curStr)
 {
-	return !_stricmp(curStr, "Text") || !_strnicmp(curStr, "Folder", sizeof("Folder") - 1)
-		|| !_stricmp(curStr, "Edit button") || !_stricmp(curStr, "Group");
+	return SVICompare(curStr, "Text"sv) || SVIComparePrefix(curStr, "Folder"sv)
+		|| SVICompare(curStr, "Edit button"sv) || SVICompare(curStr, "Group"sv);
 }
 // Any type that has no changeable value (includes checkbox, JSON statics, and buttons)
-static bool IsUnchangeablePropInclCheckbox(const char* curStr)
+static bool IsUnchangeablePropInclCheckbox(const std::string_view & curStr)
 {
-	return !_stricmp(curStr, "Checkbox") || IsUnchangeablePropExclCheckbox(curStr);
+	return SVICompare(curStr, "Checkbox"sv) || IsUnchangeablePropExclCheckbox(curStr);
 }
 // If true, a DarkEdif property with a string value in Data. Used for iteration and zero-length checks.
-static bool IsStringPropType(const char* const typeStr, bool includeComboBoxes)
+static bool IsStringPropType(const std::string_view & typeStr, bool includeComboBoxes)
 {
-	return !_strnicmp(typeStr, "Editbox String", sizeof("Editbox String") - 1) ||
-		!_stricmp(typeStr, "Editbox File") || !_stricmp(typeStr, "Editbox Image File") ||
-		!_stricmp(typeStr, "URL button") || !_stricmp(typeStr, "Editbox Folder") ||
-		(includeComboBoxes && !_strnicmp(typeStr, "Combo Box", sizeof("Combo Box") - 1));
+	return SVIComparePrefix(typeStr, "Editbox String"sv) ||
+		SVICompare(typeStr, "Editbox File"sv) || SVICompare(typeStr, "Editbox Image File"sv) ||
+		SVICompare(typeStr, "URL button"sv) || SVICompare(typeStr, "Editbox Folder"sv) ||
+		(includeComboBoxes && SVIComparePrefix(typeStr, "Combo Box"sv));
 }
 #ifndef NOPROPS
 static bool IsStringPropType(int TypeID)
@@ -412,10 +423,10 @@ static std::uint32_t fnv1a(std::string_view const& text)
 // Converts ID to remove the ext custom item prefix, or returns false if not in range
 static bool GetPropRealID(std::uint32_t &fromFusion)
 {
-	if (fromFusion < PROPID_EXTITEM_CUSTOM_FIRST || CurLang["Properties"].type == json_null)
+	if (fromFusion < PROPID_EXTITEM_CUSTOM_FIRST || CurLang["Properties"sv].type == json_null)
 		return false;
 
-	if (fromFusion >= PROPID_EXTITEM_CUSTOM_FIRST + CurLang["Properties"].u.array.length)
+	if (fromFusion >= PROPID_EXTITEM_CUSTOM_FIRST + CurLang["Properties"sv].u.array.length)
 	{
 		DebugProp_OutputString(_T("Accessed property ID %u, outside of custom extension range; ignoring it.\n"),
 			fromFusion - PROPID_EXTITEM_CUSTOM_FIRST);
@@ -578,6 +589,7 @@ struct DarkEdif::DLL::PropAccesser
 };
 #pragma pack (pop)
 
+#if EditorBuild
 // Reads the real offset of EDITDATA::Props from extPrivateData offset, used to find Props
 // for an EDITDATA that may not match C++ current version. Works with DarkEdif smart props v1.
 static DarkEdif::Properties& GetRealPropsAddress(EDITDATA* edPtr)
@@ -609,6 +621,8 @@ static DarkEdif::Properties& GetRealPropsAddress(EDITDATA* edPtr)
 	}
 	return *(DarkEdif::Properties*)(((std::uint8_t*)edPtr) + propOffset);
 }
+
+#endif // EditorBuild
 
 std::uint16_t RuntimePropSet::GetNumPropsInThisEntry(Properties::Data* const propHoldingThisRS) const
 {
@@ -718,12 +732,12 @@ void ReloadPropSet(mv* mV, EDITDATA* edPtr, Properties::Data * dataContainingRS,
 void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigned int PropID,
 	const void* newPropValue, size_t newPropValueSize)
 {
-	const char* curTypeStr = CurLang["Properties"][PropID]["Type"];
+	const char* curTypeStr = CurLang["Properties"sv][PropID]["Type"sv].c_str();
 	Data* const oldPropDataPtr = edPtr->Props.Internal_DataAt(PropID);
 	if (!oldPropDataPtr)
 	{
 		MsgBox::Error(_T("DarkEdif property error"), _T("Couldn't find property %s (JSON type %hs), failed to edit it."),
-			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
+			UTF8ToTString(CurLang["Properties"sv][PropID]["Title"sv]).c_str(), curTypeStr);
 		return;
 	}
 	bool rearrangementRequired = false;
@@ -735,7 +749,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		oldPropDataPtr->propTypeID == Edif::Properties::IDs::PROPTYPE_COMBOBOXBTN)
 	{
 		assert(newPropValueSize == sizeof(unsigned int));
-		const json_value& propjson = CurLang["Properties"][PropID];
+		const json_value& propjson = CurLang["Properties"sv][PropID];
 
 		// It's a set-switcher combo box, we use index
 		if (oldPropDataPtr->ReadPropValue()[0] == 'S')
@@ -753,8 +767,8 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 
 		// It's a regular combo box entry, so we take the passed index and store its data as text
 		newComboBoxValue += std::string_view(
-			(const char*)propjson["Items"][*(unsigned int*)newPropValue].u.string.ptr,
-			propjson["Items"][*(unsigned int*)newPropValue].u.string.length);
+			(const char*)propjson["Items"sv][*(unsigned int*)newPropValue].u.string.ptr,
+			propjson["Items"sv][*(unsigned int*)newPropValue].u.string.length);
 		newPropValue = newComboBoxValue.data();
 		newPropValueSize = newComboBoxValue.size();
 	}
@@ -785,7 +799,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		if (!IsStringPropType(curTypeStr, false))
 		{
 			MsgBox::Error(_T("DarkEdif property error"), _T("Property size of property %s (JSON type %hs) is 0!"),
-				UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr);
+				UTF8ToTString(CurLang["Properties"sv][PropID]["Title"sv]).c_str(), curTypeStr);
 		}
 		if (nameListToRefresh != -1)
 		{
@@ -800,7 +814,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 		if (MsgBox::WarningYesNo(_T("DarkEdif property warning"), _T("Change to property \"%s\" (JSON type \"%hs\") caused reserved size to be different to actual size. "
 			"Press Yes to set it to Fusion's size (may corrupt properties).\n"
 			"Press No to cancel property change."),
-			UTF8ToTString((const char*)CurLang["Properties"][PropID]["Title"]).c_str(), curTypeStr) == IDYES)
+			UTF8ToTString(CurLang["Properties"sv][PropID]["Title"sv]).c_str(), curTypeStr) == IDYES)
 		{
 			edPtr->Props.sizeBytes = edPtr->eHeader.extSize;
 		}
@@ -1058,9 +1072,9 @@ BOOL DarkEdif::DLL::DLL_GetProperties(mv * mV, EDITDATA * edPtr, bool masterItem
 	// but saving it to MFA is not so.
 
 	if (!Props.visibleEditorProps)
-		Props.visibleEditorProps = new bool[CurLang["Properties"].u.array.length];
+		Props.visibleEditorProps = new bool[CurLang["Properties"sv].u.array.length];
 
-	for (std::size_t i = 0; i < CurLang["Properties"].u.array.length; ++i)
+	for (std::size_t i = 0; i < CurLang["Properties"sv].u.array.length; ++i)
 		Props.visibleEditorProps[i] = true;
 #endif
 	
@@ -1096,19 +1110,19 @@ Prop * DarkEdif::Properties::GetProperty(std::size_t PropID)
 		return nullptr;
 	}
 
-	const json_value &propJSON = CurLang["Properties"][Current->propJSONIndex];
-	const char * curStr = propJSON["Type"];
+	const json_value &propJSON = CurLang["Properties"sv][Current->propJSONIndex];
+	const std::string_view curStr = propJSON["Type"sv];
 	Prop * ret = nullptr;
 	bool allConv;
 
 	// Unchanging contents, so read the text from JSON.
-	if (!_stricmp(curStr, "Text") || !_stricmp(curStr, "Edit button"))
+	if (SVICompare(curStr, "Text"sv) || SVICompare(curStr, "Edit button"sv))
 	{
-		ret = new Prop_Str(UTF8ToTString((const char *)propJSON["DefaultState"], &allConv).c_str());
+		ret = new Prop_Str(UTF8ToTString(propJSON["DefaultState"sv], &allConv).c_str());
 		if (!allConv)
 		{
 			MsgBox::WarningOK(_T("DarkEdif property error"), _T("Warning: The property's Unicode string \"%s\" couldn't be converted to ANSI. "
-				"Characters will be replaced with filler."), UTF8ToTString((const char *)propJSON["DefaultState"]).c_str());
+				"Characters will be replaced with filler."), UTF8ToTString(propJSON["DefaultState"sv]).c_str());
 		}
 		return ret;
 	}
@@ -1127,21 +1141,26 @@ Prop * DarkEdif::Properties::GetProperty(std::size_t PropID)
 				"Characters will be replaced with filler."), std::string((const char*)Current->ReadPropValue(), Current->ReadPropValueSize()).c_str());
 		}
 	}
-	else if (!_stricmp(curStr, "Editbox Number") || !_stricmp(curStr, "Edit Spin") || !_stricmp(curStr, "Edit Slider") || !_stricmp(curStr, "Color") || !_stricmp(curStr, "Edit direction"))
+	else if (SVICompare(curStr, "Editbox Number"sv) || SVICompare(curStr, "Edit Spin"sv) ||
+		SVICompare(curStr, "Edit Slider") || SVICompare(curStr, "Color") || SVICompare(curStr, "Edit direction"))
+	{
 		ret = new Prop_SInt(*(const int*)Current->ReadPropValue());
-	else if (!_stricmp(curStr, "Editbox Float") || !_stricmp(curStr, "Edit spin float")) {
+	}
+	else if (SVICompare(curStr, "Editbox Float"sv) || SVICompare(curStr, "Edit spin float"sv))
+	{
 		ret = new Prop_Float(*(const float *)Current->ReadPropValue());
 	}
-	else if (!_stricmp(curStr, "Size")) {
+	else if (SVICompare(curStr, "Size"sv))
+	{
 		const DarkEdif::Size& size = *(DarkEdif::Size *)Current->ReadPropValue();
 		ret = new Prop_Size(size.width, size.height);
 	}
-	else if (!_stricmp(curStr, "Image List")) {
+	else if (SVICompare(curStr, "Image List"sv)) {
 		ret = new Prop_Buff(Current->ReadPropValueSize(),
 			(void *)Current->ReadPropValue());
 	}
 	// Combo boxes return index, not their item text
-	else if (!_strnicmp(curStr, "Combo Box", sizeof("Combo Box") - 1))
+	else if (SVIComparePrefix(curStr, "Combo Box"sv))
 	{
 		// Combo box is a list of a prop set, so index is stored within
 		const RuntimePropSet* const rs = (RuntimePropSet*)Current->ReadPropValue();
@@ -1153,18 +1172,18 @@ Prop * DarkEdif::Properties::GetProperty(std::size_t PropID)
 		assert(rs->setIndicator == 'L');
 
 		std::string str((const char *)&Current->ReadPropValue()[1], Current->ReadPropValueSize() - 1);
-		const json_value & propJSONItems = propJSON["Items"];
+		const json_value & propJSONItems = propJSON["Items"sv];
 		if (propJSONItems.type != json_array)
 		{
 			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items not valid in Combo Box property \"%s\", ID %i, language %s."),
-				UTF8ToTString((const char *)propJSON["Title"]).c_str(), PropID, DarkEdif::JSON::LanguageName());
+				UTF8ToTString(propJSON["Title"sv]).c_str(), PropID, JSON::LanguageName());
 			return nullptr;
 		}
 		std::size_t itemIndex = -1;
-		for (std::size_t i = 0; i < propJSON["Items"].u.array.length; ++i)
+		for (std::size_t i = 0; i < propJSONItems.u.array.length; ++i)
 		{
 			assert(propJSONItems[i].type == json_string);
-			if (str == (const char *)propJSONItems[i])
+			if (str == (std::string_view)propJSONItems[i])
 			{
 				itemIndex = i;
 				break;
@@ -1173,13 +1192,13 @@ Prop * DarkEdif::Properties::GetProperty(std::size_t PropID)
 		if (itemIndex == -1)
 		{
 			MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON Items does not contain given value %s (Combo Box property \"%s\", ID %zu, JSON language %s)."),
-				UTF8ToTString(str).c_str(), UTF8ToTString((const char *)propJSON["Title"]).c_str(), PropID, DarkEdif::JSON::LanguageName());
+				UTF8ToTString(str).c_str(), UTF8ToTString(propJSON["Title"sv]).c_str(), PropID, JSON::LanguageName());
 			return nullptr;
 		}
 		ret = new Prop_UInt(itemIndex);
 	}
 	else
-		MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON property type \"%hs\" is unexpected."), curStr);
+		MsgBox::Error(_T("Property error"), _T("GetProperty error: JSON property type \"%hs\" is unexpected."), curStr.data());
 
 	return ret;
 }
@@ -1229,15 +1248,15 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 	{
 		case 'DATA': // Buffer or string
 		{
-			const json_value & propjson = CurLang["Properties"][PropID];
+			const json_value & propjson = CurLang["Properties"sv][PropID];
 			// Buff can be used for a string property
-			if (IsStringPropType(propjson["Type"], false))
+			if (IsStringPropType(propjson["Type"sv], false))
 			{
 				std::string utf8Str = DarkEdif::TStringToUTF8(((Prop_Str *)prop)->String);
 				Props.Internal_PropChange(mV, edPtr, PropID, utf8Str.c_str(), utf8Str.size());
 			}
 			// If we get a Buff and it's not a string property, DarkEdif doesn't know how to handle it.
-			else if (!_stricmp(propjson["Type"], "Image List"))
+			else if (SVICompare(propjson["Type"sv], "Image List"sv))
 			{
 				DebugProp_OutputString(_T("Setting image list: size %zu."), ((Prop_Buff*)prop)->Size);
 				Props.Internal_PropChange(mV, edPtr, PropID, ((Prop_Buff*)prop)->Address, ((Prop_Buff*)prop)->Size);
@@ -1245,7 +1264,7 @@ void DarkEdif::DLL::DLL_SetPropValue(mv * mV, EDITDATA * edPtr, unsigned int Pro
 			else
 			{
 				MsgBox::Error(_T("DarkEdif property error"), _T("Got Buff type for non-string property \"%s\"."),
-					UTF8ToTString((const char *)propjson["Title"]).c_str());
+					UTF8ToTString(propjson["Title"sv]).c_str());
 			}
 			break;
 		}
@@ -1320,10 +1339,10 @@ BOOL DarkEdif::DLL::DLL_GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int Pro
 }
 // Evaluates the passed property, reading the nth JSON Properties, and the text of the item in that Property
 // and evaluating boolean and text expression.
-int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
+int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const std::string_view & text)
 {
 	auto& elevProps = Elevate(edPtr->Props);
-	const json_value& props = CurLang["Properties"];
+	const json_value& props = CurLang["Properties"sv];
 	const json_value& p = props[i];
 	if (p[text].type != json_string)
 		return 1;
@@ -1336,14 +1355,14 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 		if (end == std::string::npos)
 		{
 			MsgBox::Error(_T("DarkEdif property error"), _T("Malformed JSON: %s value \"%s\" is invalid."),
-				UTF8ToTString(text).c_str(), UTF8ToTString((const char*)p[text]).c_str());
+				UTF8ToTString(text).c_str(), UTF8ToTString(p[text]).c_str());
 			return -1;
 		}
 		std::string propName = req.substr(start + 1, end - (start + 1));
 		std::size_t index = 0;
 		for (std::size_t i = 0; i < props.u.array.length; ++i)
 		{
-			if (!_stricmp(props[i]["Title"], propName.c_str()))
+			if (SVICompare(props[i]["Title"sv], propName.c_str()))
 			{
 				index = i;
 				break;
@@ -1357,14 +1376,14 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 		}
 		const Properties::Data* data = elevProps.Internal_DataAt(index);
 		std::string result;
-		if (IsStringPropType(props[index]["Type"], false))
+		if (IsStringPropType(props[index]["Type"sv], false))
 		{
 			result = '"';
 			result.append((const char*)data->ReadPropValue(), data->ReadPropValueSize());
 			result += '"';
 		}
 		// Combo box (non-set) is L, then item text
-		else if (!_strnicmp(props[index]["Type"], "Combo Box", sizeof("Combo Box") - 1))
+		else if (SVIComparePrefix(props[index]["Type"sv], "Combo Box"sv))
 		{
 			assert(data->ReadPropValue()[0] == 'L'); // if it's S, that's a prop set list, no good
 			result = '"';
@@ -1393,7 +1412,7 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 		if (req == "true"sv || req == "false"sv)
 		{
 			DebugProp_OutputString(_T("Evaluated property %s (JSON ID %zu) item %s: result %s.\n"),
-				UTF8ToTString((const char*)p["Title"]).c_str(), i, UTF8ToTString(text).c_str(), UTF8ToTString(req).c_str());
+				UTF8ToTString(p["Title"sv]).c_str(), i, UTF8ToTString(text).c_str(), UTF8ToTString(req).c_str());
 			return (req == "true"sv) ? 1 : 0;
 		}
 
@@ -1430,7 +1449,7 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 			{
 				MsgBox::Error(_T("DarkEdif property error"), _T("Malformed JSON: %s property name \"%s\" "
 					"uses invalid comparison operator \"%s\"."),
-					UTF8ToTString(text).c_str(), UTF8ToTString((const char*)p["Title"]).c_str(), UTF8ToTString(op).c_str());
+					UTF8ToTString(text).c_str(), UTF8ToTString(p["Title"sv]).c_str(), UTF8ToTString(op).c_str());
 				return -1;
 			}
 			std::transform(partA.begin(), partA.end(), partA.begin(),
@@ -1482,7 +1501,7 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 			{
 				MsgBox::Error(_T("DarkEdif property error"), _T("Malformed JSON: %s property name \"%s\" "
 					"uses invalid combination operator \"%s\"."),
-					UTF8ToTString(text).c_str(), UTF8ToTString((const char*)p["Title"]).c_str(), UTF8ToTString(op).c_str());
+					UTF8ToTString(text).c_str(), UTF8ToTString(p["Title"sv]).c_str(), UTF8ToTString(op).c_str());
 				return -1;
 			}
 			std::transform(partA.begin(), partA.end(), partA.begin(),
@@ -1495,7 +1514,7 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 			{
 				MsgBox::Error(_T("DarkEdif property error"), _T("Malformed JSON: %s property name \"%s\" "
 					"became invalid boolean comparison \"%s\"."),
-					UTF8ToTString(text).c_str(), UTF8ToTString((const char*)p["Title"]).c_str(),
+					UTF8ToTString(text).c_str(), UTF8ToTString(p["Title"sv]).c_str(),
 					UTF8ToTString(results.str()).c_str());
 				return -1;
 			}
@@ -1521,7 +1540,7 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 		}
 
 		MsgBox::Error(_T("DarkEdif property error"), _T("%s property \"%s\" was parsed into\n%s\n... which is unparseable."),
-			UTF8ToTString(text).c_str(), UTF8ToTString((const char*)p["Title"]).c_str(), UTF8ToTString(req).c_str());
+			UTF8ToTString(text).c_str(), UTF8ToTString(p["Title"sv]).c_str(), UTF8ToTString(req).c_str());
 		return -1;
 	}
 
@@ -1532,8 +1551,8 @@ int EvaluateProperty(mv* mV, EDITDATA* edPtr, std::size_t i, const char * text)
 void TriggerShowForRange(const json_value &props, DLL::PropAccesser &elevProps, mv * mV, EDITDATA * edPtr,
 	std::size_t & startRange, std::size_t& endRange, bool recursiveShow = false)
 {
-	DebugProp_OutputString(_T("!!! - Doing a show of property range %hs to %hs (ID %zu to %zu).\n"),
-		(const char *)props[startRange]["Title"], (const char*)props[endRange]["Title"], startRange, endRange);
+	DebugProp_OutputString(_T("Doing a show of property range %hs to %hs (ID %zu to %zu).\n"),
+		props[startRange]["Title"sv].c_str(), props[endRange]["Title"sv].c_str(), startRange, endRange);
 	for (std::size_t i = startRange; i <= endRange; ++i)
 		elevProps.visibleEditorProps[i] = true;
 
@@ -1547,8 +1566,8 @@ void TriggerShowForRange(const json_value &props, DLL::PropAccesser &elevProps, 
 		{
 			if (elevProps.visibleEditorProps[i])
 			{
-				DebugProp_OutputString(_T("!!! - Removing %s (ID %zu).\n"),
-					UTF8ToTString((const char *)props[i]["Title"]).c_str(), i);
+				DebugProp_OutputString(_T("Removing %s (ID %zu).\n"),
+					UTF8ToTString(props[i]["Title"sv]).c_str(), i);
 				mvRemoveProp(mV, edPtr, i + PROPID_EXTITEM_CUSTOM_FIRST);
 
 				if (subEndRange == -1)
@@ -1586,8 +1605,8 @@ void TriggerShowForRange(const json_value &props, DLL::PropAccesser &elevProps, 
 
 	for (auto r : toAddRanges)
 	{
-		DebugProp_OutputString(_T("!!! - Doing re-add of property range %hs to %hs (ID %zu to %zu).\n"),
-			(const char*)props[std::get<0>(r)]["Title"], (const char*)props[std::get<1>(r)]["Title"], std::get<0>(r), std::get<1>(r));
+		DebugProp_OutputString(_T("Doing re-add of property range %hs to %hs (ID %zu to %zu).\n"),
+			props[std::get<0>(r)]["Title"sv].c_str(), props[std::get<1>(r)]["Title"sv].c_str(), std::get<0>(r), std::get<1>(r));
 		TriggerShowForRange(props, elevProps, mV, edPtr, std::get<0>(r), std::get<1>(r), true);
 	}
 
@@ -1605,7 +1624,7 @@ void ScanForDynamicPropChange(mv* mV, EDITDATA* edPtr, unsigned int JSONPropIDAl
 	// A second optimization would be to check all props, but scan for this property name in the text.
 
 	auto& elevProps = Elevate(edPtr->Props);
-	const json_value& props = CurLang["Properties"];
+	const json_value& props = CurLang["Properties"sv];
 
 	auto diffArr = std::make_unique<std::uint8_t[]>(props.u.array.length);
 
@@ -1623,14 +1642,14 @@ void ScanForDynamicPropChange(mv* mV, EDITDATA* edPtr, unsigned int JSONPropIDAl
 			if (elevProps.visibleEditorProps[i])
 			{
 				DebugProp_OutputString(_T("Detected property %s (JSON ID %zu) should be visible, and already is. Doing nothing.\n"),
-					UTF8ToTString((const char*)p["Title"]).c_str(), i);
+					UTF8ToTString(p["Title"sv]).c_str(), i);
 				if (endRange != -1)
 					TriggerShowForRange(props, elevProps, mV, edPtr, startRange, endRange);
 				continue;
 			}
 
 			DebugProp_OutputString(_T("Detected property %s (JSON ID %zu) should be visible, and isn't. Enabling it.\n"),
-				UTF8ToTString((const char*)p["Title"]).c_str(), i);
+				UTF8ToTString(p["Title"sv]).c_str(), i);
 			// We either track or extend a range of newly shown properties
 			// Once we've finished the range, TriggerShowForRange will run and insert all the properties at once.
 			if (startRange == -1)
@@ -1651,11 +1670,11 @@ void ScanForDynamicPropChange(mv* mV, EDITDATA* edPtr, unsigned int JSONPropIDAl
 				elevProps.visibleEditorProps[i] = false;
 
 				DebugProp_OutputString(_T("Detected property %s should be disabled, and isn't. Disabling it.\n"),
-					UTF8ToTString((const char*)p["Title"]).c_str());
+					UTF8ToTString(p["Title"sv]).c_str());
 				mvRemoveProp(mV, edPtr, i + PROPID_EXTITEM_CUSTOM_FIRST);
 			}
 			DebugProp_OutputString(_T("Detected property %s should be invisible, and already is. Doing nothing.\n"),
-				UTF8ToTString((const char*)p["Title"]).c_str());
+				UTF8ToTString(p["Title"sv]).c_str());
 			//mvRefreshProp(mV, edPtr, i + 1 + PROPID_EXTITEM_CUSTOM_FIRST);
 		}
 	}
@@ -1665,7 +1684,7 @@ void ScanForDynamicPropChange(mv* mV, EDITDATA* edPtr, unsigned int JSONPropIDAl
 	// Trigger IsPropEnabled for all properties that specify EnableIf,
 	// as this may affect them
 	for (std::size_t i = 0; i < props.u.array.length; ++i)
-		if (props[i]["EnableIf"].type == json_string)
+		if (props[i]["EnableIf"sv].type == json_string)
 			mvRefreshProp(mV, edPtr, i + PROPID_EXTITEM_CUSTOM_FIRST, FALSE);
 }
 
@@ -1706,7 +1725,8 @@ BOOL DarkEdif::DLL::DLL_IsPropEnabled(mv * mV, EDITDATA * edPtr, unsigned int Pr
 	if (res == -1)
 		return TRUE; // Show by default
 
-	[[maybe_unused]] const char * propName = CurLang["Properties"][PropID]["Title"];
+	const std::string_view propName = CurLang["Properties"sv][PropID]["Title"sv];
+	(void)propName;
 	// A button for deleting set also needs us to check our set isn't the last entry
 	if (res == 1)
 	{
@@ -2007,7 +2027,7 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 			case IDs::PROPTYPE_ICONCOMBOBOX:
 			{
 				// ID stored, read applicable string from JSON
-				const json_value& itemsJSON = convState->jsonProps[atID]["Items"];
+				const json_value& itemsJSON = convState->jsonProps[atID]["Items"sv];
 				if (itemsJSON.type != json_array || atID >= itemsJSON.u.array.length)
 				{
 					DebugProp_OutputString(_T("PreSmartPropertyReader: Can't find stored ID %zu in JSON Items array. Delegating.\n"), atID);
@@ -2024,7 +2044,7 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 				// If there is a return, send it back
 				if (convRet)
 				{
-					std::string res = (const char *)itemsJSON[*(int*)at];
+					std::string res(itemsJSON[*(int*)at]);
 					if (res.size() > 0)
 						convRet->Return_OK(_strdup(res.c_str()), res.size(), [](const void* v) { free((void *)v); }, chkState);
 					else
@@ -2088,10 +2108,10 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 					return false;
 				}
 
-				const json_value & jsonTitle = CurLang["Properties"][atID]["Title"];
-				std::tstring jsonTitleStr = jsonTitle.type == json_none ? _T("<not in JSON>"s) : UTF8ToTString((const char *)jsonTitle);
+				const json_value & jsonTitle = CurLang["Properties"sv][atID]["Title"sv];
+				std::tstring jsonTitleStr = jsonTitle.type == json_none ? _T("<not in JSON>"s) : UTF8ToTString(jsonTitle);
 				DebugProp_OutputString(_T("PreSmartPropertyReader: Custom or unrecognised property name %s, ID %zu, language %s, type ID %i. Delegating.\n"),
-					jsonTitleStr.c_str(), atID, DarkEdif::JSON::LanguageName(), propTypeID);
+					jsonTitleStr.c_str(), atID, JSON::LanguageName(), propTypeID);
 				if (convRet)
 					convRet->Return_Pass();
 				return true;
@@ -2218,18 +2238,18 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 	{
 		const json_value & propJ = convState->jsonProps[id];
 
-		std::string jsonPropName = (const char *)propJ["Title"];
+		const std::string_view jsonPropName = propJ["Title"sv];
 
 		// If a property has "OldTitle", we'll check for that first
 		// Worth noting if you rename a -> b and b -> a, a will simply be put as a.
-		std::string jsonPropOldName = propJ["OldTitle"].type == json_none ? "" : propJ["OldTitle"];
+		const std::string_view jsonPropOldName = propJ["OldTitle"sv];
 
 		int jsonPropTypeID = -1;
 
 		// Loop through Parameter names and compareth them.
 		for (std::size_t j = Edif::Properties::IDs::PROPTYPE_FIRST_ITEM; j < Edif::Properties::IDs::PROPTYPE_LAST_ITEM; ++j)
 		{
-			if (!_stricmp(propJ["Type"], Edif::Properties::Names[j]))
+			if (SVICompare(propJ["Type"sv], Edif::Properties::Names[j]))
 			{
 				jsonPropTypeID = j;
 				break;
@@ -2239,7 +2259,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 		if (jsonPropTypeID == -1)
 		{
 			return convRet->Return_Error(_T("SmartPropertyReader: failed to read Data for property %zu. Type ID in JSON %s could not be converted to ID.\n"),
-				id, UTF8ToTString((const char*)propJ["Type"]).c_str());
+				id, UTF8ToTString(propJ["Type"sv]).c_str());
 		}
 
 		auto f = data.cend();
@@ -2247,7 +2267,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 		if (!jsonPropOldName.empty())
 		{
 			f = std::find_if(data.cbegin(), data.cend(), [&](const Data* d) {
-				return !_stricmp(d->ReadPropName().c_str(), jsonPropOldName.c_str()) && IsSimilar(d->propTypeID, jsonPropTypeID);
+				return SVICompare(d->ReadPropName(), jsonPropOldName) && IsSimilar(d->propTypeID, jsonPropTypeID);
 			});
 			if (f != data.cend())
 			{
@@ -2259,7 +2279,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 		{
 			// Find property by name (the "smart" part)
 			f = std::find_if(data.cbegin(), data.cend(), [&](const Data* d) {
-				return !_stricmp(ReadPropName(d).c_str(), jsonPropName.c_str()) && IsSimilar(d->propTypeID, jsonPropTypeID);
+				return SVICompare(ReadPropName(d), jsonPropName) && IsSimilar(d->propTypeID, jsonPropTypeID);
 			});
 			if (f != data.cend())
 			{
@@ -2391,7 +2411,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		const json_value &prop = *convState->jsonProps.u.array.values[id];
 		if (prop.type != json_object)
 			return convRet->Return_Error(_T("JSDNPropertyReader: Index %zu is not a json_object (but within Properties array)"), id);
-		std::string title = prop["Title"].type == json_string ? (const char *)prop["Title"] : "<missing title>";
+		const std::string_view title = prop["Title"sv].type == json_string ? prop["Title"sv] : "<missing title>"sv;
 
 		using IDs = Edif::Properties::IDs;
 		int propTypeID = Edif::SDK->EdittimeProperties[id].Type_ID % 1000;
@@ -2416,32 +2436,31 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_PICTUREFILENAME:
 		case IDs::PROPTYPE_DIRECTORYNAME:
 		{
-			const size_t maxSize = 4096;
-			size_t sizeOfStr = strnlen(prop["DefaultState"], maxSize);
-			if (sizeOfStr == maxSize)
+			const std::size_t maxSize = 4096;
+			if (((std::string_view)prop["DefaultState"sv]).size() >= maxSize)
 			{
 				// string went past end of properties.
 				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for property %s, ID %zu (language %s). Will "
-					"delegate this property and any further properties."), UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					"delegate this property and any further properties."), UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 				return Abort(convRet);
 			}
 
 			// convState->resetPropertiesStream << bullet << title << " = \"" << (const char *)prop["DefaultState"] << "\"\n";
 			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
-			std::string data = (const char*)prop["DefaultState"];
-			if (!_stricmp(prop["Case"], "Lower"))
+			std::string data(prop["DefaultState"sv]); // copy
+			if (SVICompare(prop["Case"sv], "Lower"sv))
 				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::tolower(c); });
-			else if (!_stricmp(prop["Case"], "Upper"))
+			else if (SVICompare(prop["Case"sv], "Upper"sv))
 				std::transform(data.begin(), data.end(), data.begin(), [](std::uint8_t c) { return std::toupper(c); });
-			return convRet->Return_OK(_strdup(data.c_str()), sizeOfStr, [](const void* v) { free((void *)v); });
+			return convRet->Return_OK(_strdup(data.c_str()), data.size(), [](const void* v) { free((void *)v); });
 		}
 		// Stores text of item, but checks it's in Items
 		case IDs::PROPTYPE_COMBOBOX:
 		case IDs::PROPTYPE_COMBOBOXBTN:
 		case IDs::PROPTYPE_ICONCOMBOBOX:
 		{
-			const json_value& itemsJSON = prop["Items"];
+			const json_value& itemsJSON = prop["Items"sv];
 			// This either stores the text of the drop-down item selected, or a RuntimePropSet
 			// They are prefaced with L or S inside the EDITDATA to indicate which,
 			// as Properties is not in a minifed JSON
@@ -2477,17 +2496,17 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (itemsJSON.type != json_array && itemsJSON.type != json_null)
 			{
 				DebugProp_OutputString(_T("JSONPropertyReader: Can't find Items for JSON item %s, ID %zu, language %s. Passing onto next converter."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 				return convRet->Return_Pass(); // Item ID no longer exists.
 			}
 
 			const size_t maxSize = 4096;
-			size_t sizeOfStr = strnlen(prop["DefaultState"], maxSize);
-			if (sizeOfStr == maxSize)
+			const std::string_view str = prop["DefaultState"sv];
+			if (str.size() >= maxSize)
 			{
 				// string went past end of properties.
 				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't find end of string for JSON item %s, ID %zu, language %s. Will "
-					"pass on this property and any further properties."), UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					"pass on this property and any further properties."), UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 				return Abort(convRet);
 			}
 
@@ -2495,24 +2514,24 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
-			char* strDup = (char *)malloc(1 + sizeOfStr);
+			char* strDup = (char *)malloc(1 + str.size());
 			assert(strDup);
 			strDup[0] = 'L';
-			memcpy(strDup + 1, (const char*)prop["DefaultState"], sizeOfStr);
-			return convRet->Return_OK(strDup, 1 + sizeOfStr, [](const void* v) { free((void*)v); });
+			memcpy(strDup + 1, str.data(), str.size());
+			return convRet->Return_OK(strDup, 1 + str.size(), [](const void* v) { free((void*)v); });
 		}
 		case IDs::PROPTYPE_SIZE:
 		{
-			if (prop["DefaultState"].type != json_array || prop["DefaultState"].u.array.length != 2)
+			if (prop["DefaultState"sv].type != json_array || prop["DefaultState"sv].u.array.length != 2)
 			{
 				DebugProp_OutputString(_T("JSONPropertyReader: Couldn't read default state for JSON item %s, ID %zu, language %s. Erroring."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 				return Abort(convRet);
 			}
 
 			static int both[2] = { 0, 0 };
-			both[0] = (int)(json_int_t)prop["DefaultState"][0];
-			both[1] = (int)(json_int_t)prop["DefaultState"][1];
+			both[0] = (int)(json_int_t)prop["DefaultState"sv][0];
+			both[1] = (int)(json_int_t)prop["DefaultState"sv][1];
 
 			// convState->resetPropertiesStream << bullet << title << " = (" << both[0] << ", " << both[1] << ")\n";
 			convState->resetPropertiesStream << bullet << title << '\n';
@@ -2526,19 +2545,19 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_SPINEDIT:
 		case IDs::PROPTYPE_DIRCTRL:
 		{
-			if (prop["DefaultState"].type != json_integer)
+			if (prop["DefaultState"sv].type != json_integer)
 			{
 				// Wrong data type for this property.
 				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has no default value."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 			}
 
 			// JSON stores integers as long long (64-bit signed), but Fusion only allows 32-bit (signed).
-			std::int64_t intDataAsLong = prop["DefaultState"].u.integer;
+			const std::int64_t intDataAsLong = prop["DefaultState"sv].u.integer;
 			if (intDataAsLong > INT32_MAX || intDataAsLong < INT32_MIN)
 			{
 				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has default value that can't be stored in 32-bit int (value is %lld)."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName(), intDataAsLong);
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName(), intDataAsLong);
 			}
 
 			// convState->resetPropertiesStream << bullet << title << " = " << intDataAsLong << "\n";
@@ -2553,15 +2572,15 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_EDIT_FLOAT:
 		case IDs::PROPTYPE_SPINEDITFLOAT:
 		{
-			if (prop["DefaultState"].type != json_double)
+			if (prop["DefaultState"sv].type != json_double)
 			{
 				// Wrong data type for this property.
 				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has no default value."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 			}
 
 			static float f;
-			f = (float)prop["DefaultState"].u.dbl;
+			f = (float)prop["DefaultState"sv].u.dbl;
 
 			// convState->resetPropertiesStream << bullet << title << " = " << std::setprecision(3) << f << "\n";
 			convState->resetPropertiesStream << bullet << title << "\n";
@@ -2572,10 +2591,10 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		case IDs::PROPTYPE_IMAGELIST:
 		{
 			// Image list should have no images
-			if (prop["DefaultState"].type != json_none)
+			if (prop["DefaultState"sv].type != json_none)
 			{
 				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has a default value, and shouldn't have one."),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 			}
 			// TODO: Check options are valid
 
@@ -2595,12 +2614,12 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			if (propTypeID >= IDs::PROPTYPE_CUSTOM && propTypeID <= IDs::PROPTYPE_CUSTOM + 9)
 			{
 				DebugProp_OutputString(_T("JSONPropertyReader: Custom property name %s, ID %zu, language %s, type ID %d. Passing on, hopefully to user converter.\n"),
-					UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName(), propTypeID);
+					UTF8ToTString(title).c_str(), id, JSON::LanguageName(), propTypeID);
 				return convRet->Return_Pass();
 			}
 
 			DebugProp_OutputString(_T("JSONPropertyReader: Property ID %zu, name %s, language %s, type ID %u. Delegating.\n"),
-				id, UTF8ToTString(title).c_str(), DarkEdif::JSON::LanguageName(), propTypeID);
+				id, UTF8ToTString(title).c_str(), JSON::LanguageName(), propTypeID);
 			return convRet->Return_Pass();
 		}
 		}
@@ -2619,40 +2638,40 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		const json_value &prop = *convState->jsonProps.u.array.values[id];
 		if (prop.type != json_object)
 			return convRet->Return_Error(_T("JSDNPropertyReader: Index %zu is not a json_object (but within Properties array).\n"), id);
-		std::string title = prop["Title"].type == json_string ? (const char *)prop["Title"] : "<missing title>";
+		const std::string_view title = prop["Title"sv].type == json_string ? prop["Title"sv] : "<missing title>"sv;
 
 		using IDs = Edif::Properties::IDs;
 		int propTypeID = Edif::SDK->EdittimeProperties[id].Type_ID % 1000;
 		if (propTypeID == IDs::PROPTYPE_LEFTCHECKBOX)
 		{
-			if (prop["DefaultState"].type == json_boolean)
+			if (prop["DefaultState"sv].type == json_boolean)
 			{
 				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
 				convState->resetPropertiesStream << bullet << title << "\n";
 				++convState->numPropsReset;
-				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["DefaultState"]) ? 1 : 0);
+				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["DefaultState"sv]) ? 1 : 0);
 			}
 
 			return convRet->Return_Error(_T("JSONPropertyReader: DefaultState is not set for checkbox property. Property %s, ID %zu (language %s). Erroring.\n"),
-				UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+				UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 		}
 
-		if (prop["CheckboxDefaultState"].type != json_none)
+		if (prop["CheckboxDefaultState"sv].type != json_none)
 		{
-			if (prop["CheckboxDefaultState"].type == json_boolean)
+			if (prop["CheckboxDefaultState"sv].type == json_boolean)
 			{
 				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
 				convState->resetPropertiesStream << bullet << title << "\n";
 				++convState->numPropsReset;
-				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["CheckboxDefaultState"]) ? 1 : 0);
+				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["CheckboxDefaultState"sv]) ? 1 : 0);
 			}
 
 			return convRet->Return_Error(_T("JSONPropertyReader: the CheckboxDefaultState is not set for property with checkbox flag. Property %s, ID %u (language %s). Erroring.\n"),
-				UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+				UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 		}
 
 		DebugProp_OutputString(_T("JSONPropertyReader: Property %s, ID %u (language %s) is not a checkbox-related property. Delegating.\n"),
-			UTF8ToTString(title).c_str(), id, DarkEdif::JSON::LanguageName());
+			UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 		return convRet->Return_Pass();
 	}
 
@@ -2829,7 +2848,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 
 	std::ostringstream dataToWriteStream;
 
-	const size_t numPropsIncludingStatics = CurLang["Properties"].u.array.length;
+	const size_t numPropsIncludingStatics = CurLang["Properties"sv].u.array.length;
 	// 1 byte per 8 properties, rounded up
 	auto chkboxes = std::make_unique<std::uint8_t[]>((std::size_t)std::ceil((double)numPropsIncludingStatics / 8.0));
 	memset(chkboxes.get(), 0, (std::size_t)std::ceil((double)numPropsIncludingStatics / 8.0));
@@ -2888,7 +2907,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 
 	// so goto is happy
 	{
-		Properties::ConverterState convState(oldEdPtr, CurLang["Properties"]);
+		Properties::ConverterState convState(oldEdPtr, CurLang["Properties"sv]);
 
 		struct reader {
 			Properties::PropertyReader* ptr;	// singleton only, no garbage collect
@@ -2983,15 +3002,15 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 				return NULL; // error should already be reported when reader failed and removed itself
 
 			// Don't include title for static text types
-			if (IsUnchangeablePropExclCheckbox(convState.jsonProps[i]["Type"]))
+			if (IsUnchangeablePropExclCheckbox(convState.jsonProps[i]["Type"sv]))
 				title.clear();
 			else
-				title = convState.jsonProps[i]["Title"];
+				title = convState.jsonProps[i]["Title"sv];
 
 			// Note: Unchangeable props are included for IDs to be consistent.
 			// So if there's a label at ID 0, then a editbox, and property ID 1 is requested, property ID 0 won't be ignored
 			// The JSON property parser will OK the properties.
-			// if (IsUnchangeableProp(convState.jsonProps[i]["Type"]))
+			// if (IsUnchangeableProp(convState.jsonProps[i]["Type"sv]))
 			// 	continue;
 
 			bool ok = false;
@@ -3077,7 +3096,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			if (!ok && RunMode != MFXRunMode::SplashScreen)
 			{
 				MsgBox::Error(_T("Property conversion error"), _T("All converters have failed for property %i (%s). Your property data is corrupt "
-					"beyond recovery or reset. Please re-add the object to frame."), i, UTF8ToTString((const char*)convState.jsonProps[i]["Title"]).c_str());
+					"beyond recovery or reset. Please re-add the object to frame."), i, UTF8ToTString(convState.jsonProps[i]["Title"sv]).c_str());
 			}
 		}
 
@@ -3087,7 +3106,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			Properties::ConverterReturn retState;
 			DLL::ConverterReturnAccessor& retStateAdmin = *(DLL::ConverterReturnAccessor*)&retState;
 			size_t i = chkboxIndexesToRead[k];
-			title = convState.jsonProps[i]["Title"];
+			title = convState.jsonProps[i]["Title"sv];
 
 			for (size_t j = 0; j < readers.size(); ++j)
 			{
@@ -3333,10 +3352,10 @@ bool DarkEdif::Properties::IsPropChecked(std::string_view propName) const
 {
 	const std::uint16_t index = PropJSONIdxFromName(_T("IsPropChecked"), propName);
 #if EditorBuild
-	const json_value& prop = CurLang["Properties"][index];
+	const json_value& prop = CurLang["Properties"sv][index];
 	// Not checkbox prop, and not with checkbox additional
-	if (_stricmp(prop["Type"], Edif::Properties::Names[Edif::Properties::IDs::PROPTYPE_LEFTCHECKBOX]) &&
-		prop["CheckboxDefaultState"].type == json_type::json_none)
+	if (!SVICompare(prop["Type"sv], Edif::Properties::Names[Edif::Properties::IDs::PROPTYPE_LEFTCHECKBOX]) &&
+		prop["CheckboxDefaultState"sv].type == json_type::json_none)
 	{
 		MsgBox::Error(_T("DarkEdif property error"), _T("IsPropChecked() name = \"%s\" does not have a checkbox in the JSON."), UTF8ToTString(propName).c_str());
 		return false;
@@ -3374,7 +3393,7 @@ bool DarkEdif::Properties::IsPropChecked(int propID) const
 	bool yes = ((chkBytes[byteIndex] >> bitIndex) & 1) != 0;
 
 	DebugProp_OutputString(_T("Prop index %zu (%s) real ID %zu checkbox read by JSON reader: result is %s.\n"),
-		propJSONIndex, UTF8ToTString((const char*)CurLang["Properties"][propJSONIndex]["Title"]).c_str(),
+		propJSONIndex, UTF8ToTString(CurLang["Properties"sv][propJSONIndex]["Title"sv]).c_str(),
 		propID, yes ? _T("YES") : _T("NO"));
 	return yes;
 }
@@ -3628,8 +3647,8 @@ const Properties::Data * DarkEdif::Properties::Internal_FirstData() const
 const Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID, bool idIsJSON /* = true */) const
 {
 #if EditorBuild
-	const json_value& j = CurLang["Properties"];
-	if (j.type != json_type::json_array)
+	const json_value& propsJSON = CurLang["Properties"sv];
+	if (propsJSON.type != json_type::json_array)
 	{
 		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() const called for prop ID %u without JSON properties being valid."), ID);
 		return nullptr;
@@ -3637,7 +3656,7 @@ const Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID, bool idIs
 
 	// If it's an unchangable property, no data to return anyway
 	// Note there is a Data made for unchangeable, but they have a name length of 0, and no data.
-	if (IsUnchangeablePropInclCheckbox((const char*)j[ID]["Type"]))
+	if (IsUnchangeablePropInclCheckbox(propsJSON[ID]["Type"sv]))
 		return nullptr;
 #endif
 
@@ -3651,13 +3670,14 @@ const Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID, bool idIs
 		{
 #if EditorBuild
 			DebugProp_OutputString(_T("Locating ID %d, at %zu: type %s, title: %s.\n"),
-				ID, i, UTF8ToTString((const char*)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+				ID, i, UTF8ToTString(propsJSON[ID]["Type"sv]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 #endif
 			data = data->Next();
 		}
 	}
 #if EditorBuild
-	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID,
+		UTF8ToTString(propsJSON[ID]["Type"sv]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 #endif
 	return data;
 }
@@ -3696,17 +3716,14 @@ std::size_t DarkEdif::Properties::PropIdxFromJSONIdx(std::size_t ID, const Data*
 #ifdef _WIN32
 		DebugProp_OutputString(_T("Locating JSON ID %zu, at Prop Index %u: type %s, title: %s.\n"),
 			ID, i,
-			UTF8ToTString((const char*)CurLang["Properties"][data->propJSONIndex]["Type"]).c_str(),
+			UTF8ToTString(CurLang["Properties"sv][data->propJSONIndex]["Type"sv]).c_str(),
 			UTF8ToTString(data->ReadPropName()).c_str());
 		//assert(data->propJSONIndex < ID && i < numProps);
 
-		assert(data->propJSONIndex <= CurLang["Properties"].u.array.length);
+		assert(data->propJSONIndex <= CurLang["Properties"sv].u.array.length);
 #endif
 
-		if ((data->propTypeID == Edif::Properties::IDs::PROPTYPE_COMBOBOX ||
-			data->propTypeID == Edif::Properties::IDs::PROPTYPE_COMBOBOXBTN ||
-			data->propTypeID == Edif::Properties::IDs::PROPTYPE_ICONCOMBOBOX) &&
-			data->ReadPropValue()[0] == 'S')
+		if (IsComboBoxType(data->propTypeID) && data->ReadPropValue()[0] == 'S')
 		{
 			DebugProp_OutputString(_T("Runtime props at %zu...\n"), i);
 
@@ -3734,7 +3751,7 @@ std::size_t DarkEdif::Properties::PropIdxFromJSONIdx(std::size_t ID, const Data*
 						"currently at JSON ID %zu, looking to skip %zu iterations of %zu JSON ID. "
 						"Should end on JSON ID %zu.\n"),
 						rs->lastSetJSONPropIndex, data->propJSONIndex, rs->setIndexSelected, rs->lastSetJSONPropIndex, rs->firstSetJSONPropIndex);
-					for (std::size_t j = 0; /*j < rs->setIndexSelected*/;)
+					for (std::size_t j = 0; ;)
 					{
 						data = data->Next();
 						++i;
@@ -3826,14 +3843,14 @@ std::size_t DarkEdif::Properties::PropIdxFromJSONIdx(std::size_t ID, Data** data
 	{
 		DebugProp_OutputString(_T("Locating JSON ID %zu, at Prop Index %u: type %s, title: %s.\n"),
 			ID, i,
-			UTF8ToTString((const char*)CurLang["Properties"][data->propJSONIndex]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+			UTF8ToTString(CurLang["Properties"sv][data->propJSONIndex]["Type"sv]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 
 		// Went off the end
 		assert(i < numProps);
 		// We went past the JSON index we wanted (ID), and it wasn't from skipping entries deliberately.
 		assert(data->propJSONIndex < ID);
 		// Prop index is invalid - we did a goof
-		assert(data->propJSONIndex <= CurLang["Properties"].u.array.length);
+		assert(data->propJSONIndex <= CurLang["Properties"sv].u.array.length);
 
 		if (IsComboBoxType(data->propTypeID) && data->ReadPropValue()[0] == 'S')
 		{
@@ -3956,11 +3973,11 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID, bool idIsJSON /
 		return nullptr;
 	}
 
-	const json_value& j = CurLang["Properties"];
-	if (j.type != json_type::json_array)
+	const json_value& propsJSON = CurLang["Properties"sv];
+	if (propsJSON.type != json_type::json_array)
 	{
 		MsgBox::Error(_T("Premature function call"), _T("Internal_DataAt() called for prop ID %u without DarkEdif_Props for language %s being valid."),
-			ID, DarkEdif::JSON::LanguageName());
+			ID, JSON::LanguageName());
 		return nullptr;
 	}
 
@@ -3973,16 +3990,16 @@ Properties::Data * DarkEdif::Properties::Internal_DataAt(int ID, bool idIsJSON /
 		for (int i = 0; i < ID; ++i)
 		{
 			DebugProp_OutputString(_T("Locating ID %d, at %u: type %s, title: %s.\n"),
-				ID, i, UTF8ToTString((const char*)j[i]["Type"]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
+				ID, i, UTF8ToTString(propsJSON[i]["Type"sv]).c_str(), UTF8ToTString(data->ReadPropName()).c_str());
 			data = data->Next();
 		}
 	}
 
 	// If it's an unchangable property, no data to return anyway
-	//if (IsUnchangeablePropInclCheckbox((const char*)j[data->propJSONIndex]["Type"]))
+	//if (IsUnchangeablePropInclCheckbox((const char*)j[data->propJSONIndex]["Type"sv]))
 	//	return nullptr;
 
-	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString((const char *)j[ID]["Type"]).c_str(), data ? UTF8ToTString(data->ReadPropName()).c_str() : _T("(null)"));
+	DebugProp_OutputString(_T("DataAt ID %d type %s, title: %s.\n"), ID, UTF8ToTString(propsJSON[ID]["Type"sv]).c_str(), data ? UTF8ToTString(data->ReadPropName()).c_str() : _T("(null)"));
 	return data;
 }
 
@@ -3997,7 +4014,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 
 	auto& Props = Elevate(edPtr->Props);
 	DarkEdif::Properties::Data* data = Props.Internal_DataAt(PropID);
-	const json_value& jsonProp = CurLang["Properties"][data->propJSONIndex];
+	const json_value& jsonProp = CurLang["Properties"sv][data->propJSONIndex];
 	if (jsonProp.type != json_object)
 	{
 		MsgBox::Error(_T("Property error"), _T("Property ID %u (%s) is not correctly formatted."),
@@ -4008,29 +4025,29 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 	{
 		ImgListProperty* thisPropData = (ImgListProperty*)data->ReadPropValue();
 
-		std::tstring windowTitle = UTF8ToTString((const char*)jsonProp["WindowTitle"]).c_str();
+		const std::tstring windowTitle = UTF8ToTString(jsonProp["WindowTitle"sv]);
 
-		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"]);
+		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"sv]);
 		const std::uint32_t imageSize[2] = {
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][0]),
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"][1])
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][0]),
+			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][1])
 		};
 
 		PictureEditOptions opts = PictureEditOptions::None;
-		if (jsonProp["FixedImageSize"])
+		if (jsonProp["FixedImageSize"sv])
 			opts |= PictureEditOptions::FixedImageSize;
-		if (jsonProp["HotSpotAndActionPoint"])
+		if (jsonProp["HotSpotAndActionPoint"sv])
 			opts |= PictureEditOptions::EditableHotSpot | PictureEditOptions::EditableActionPoint;
-		if (jsonProp["NoAlphaChannel"])
+		if (jsonProp["NoAlphaChannel"sv])
 			opts |= PictureEditOptions::NoAlphaChannel;
-		if (jsonProp["NoTransparentColor"])
+		if (jsonProp["NoTransparentColor"sv])
 			opts |= PictureEditOptions::NoTransparentColor;
-		if (jsonProp["16Colors"])
+		if (jsonProp["16Colors"sv])
 			opts |= PictureEditOptions::SixteenColors;
 		// Ignore FixedNumOfImages if only one image, as it'll enable the add image button but make it no-op
-		if (jsonProp["FixedNumOfImages"] || maxNumImages == 1)
+		if (jsonProp["FixedNumOfImages"sv] || maxNumImages == 1)
 			opts |= PictureEditOptions::FixedNumOfImages;
-		if (jsonProp["AllowEmpty"])
+		if (jsonProp["AllowEmpty"sv])
 			opts |= PictureEditOptions::CanBeEmpty;
 
 		BOOL output;
@@ -4058,9 +4075,9 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 		{
 			std::tstring imageTitlesBuffer;
 			std::unique_ptr<TCHAR* []> titles;
-			if (jsonProp["ImageTitles"].type == json_array)
+			if (jsonProp["ImageTitles"sv].type == json_array)
 			{
-				const json_value& imgTitles = jsonProp["ImageTitles"];
+				const json_value& imgTitles = jsonProp["ImageTitles"sv];
 				titles = std::make_unique<TCHAR* []>(imgTitles.u.array.length + 1); // + 1 to end with null ptr
 				std::tstringstream str;
 				std::tstring tstr;
@@ -4128,7 +4145,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 			// Repeat how we generated the JSON properties
 			Properties::ConverterReturn retState;
 			DLL::ConverterReturnAccessor& retStateAdmin = *(DLL::ConverterReturnAccessor*)&retState;
-			Properties::ConverterState convState(edPtr, CurLang["Properties"]);
+			Properties::ConverterState convState(edPtr, CurLang["Properties"sv]);
 			jsonPropertyReader.convState = &convState;
 
 			std::stringstream dataToWriteStream;
@@ -4168,10 +4185,10 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 				++propJSONIndex, ++offsetFromSetStart)
 			{
 				// Don't include title for static text types
-				if (IsUnchangeablePropExclCheckbox(convState.jsonProps[propJSONIndex]["Type"]))
+				if (IsUnchangeablePropExclCheckbox(convState.jsonProps[propJSONIndex]["Type"sv]))
 					title.clear();
 				else
-					title = convState.jsonProps[propJSONIndex]["Title"];
+					title = convState.jsonProps[propJSONIndex]["Title"sv];
 
 				std::uint16_t propTypeID = Edif::SDK->EdittimeProperties[propJSONIndex].Type_ID % 1000;
 
@@ -4180,7 +4197,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 				if (retStateAdmin.convRetType != Properties::ConvReturnType::OK)
 				{
 					MsgBox::Error(_T("Property error"), _T("Couldn't read initial value of property set for JSON ID %zu, title %s."),
-						propJSONIndex, UTF8ToTString((const char*)convState.jsonProps[propJSONIndex]["Title"]).c_str());
+						propJSONIndex, UTF8ToTString(convState.jsonProps[propJSONIndex]["Title"sv]).c_str());
 				}
 
 				assert(title.size() <= UINT8_MAX - 1); // can't store in titleLen
@@ -4229,7 +4246,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 				offsetFromVectorStart < chkboxJSONIndexesToRead.size();)
 			{
 				propJSONIndex = chkboxJSONIndexesToRead[offsetFromVectorStart];
-				title = convState.jsonProps[propJSONIndex]["Title"];
+				title = convState.jsonProps[propJSONIndex]["Title"sv];
 
 				jsonPropertyReader.GetPropertyCheckbox(propJSONIndex, &retState);
 
@@ -4393,7 +4410,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 				edPtr, ((char*)edPtr) + oldEDITDATASize);
 			DebugProp_OutputString(_T("*  Pre-realloc: EdittimeProperties range: %p to %p...\n"),
 				Edif::SDK->EdittimeProperties.get(),
-				&Edif::SDK->EdittimeProperties[CurLang["Properties"].u.array.length - 1]
+				&Edif::SDK->EdittimeProperties[CurLang["Properties"sv].u.array.length - 1]
 			);
 
 			// EDITDATA has been fully reconfigured with set removed, realloc it smaller
@@ -4437,24 +4454,24 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 	PropData* CurrentProperty;
 	const TCHAR* errorPrefix = _T("") PROJECT_NAME _T(" JSON property parser");
 
-	const json_value& props = CurLang["Properties"];
+	const json_value& props = CurLang["Properties"sv];
 
 #ifndef NOPROPS
-	for (const auto propSetItPtr : CurLang["PropertySets"].u.array)
+	for (const auto propSetItPtr : CurLang["PropertySets"sv].u.array)
 	{
 		const auto& propSet = *propSetItPtr;
 		EdittimePropSet es = {};
 
-		const auto IdxFromName = [&propSet, &es, &props](const char * itemNeeded, std::uint16_t &writeTo) {
+		const auto IdxFromName = [&propSet, &es, &props](const std::string_view & itemNeeded, std::uint16_t &writeTo) {
 			if (propSet[itemNeeded].type != json_string)
 			{
 				MsgBox::Error(_T("Property set error"), _T("Missing property set item %s in property set name %s."),
 					UTF8ToTString(itemNeeded).c_str(), es.setName);
 				return false;
 			}
-			const char* itemName = propSet[itemNeeded];
+			const std::string_view itemName = propSet[itemNeeded];
 			const auto idxIt = std::find_if(props.u.array.begin(), props.u.array.end(),
-				[itemName](const json_value* prop) { return !_stricmp((*prop)["Title"], itemName); });
+				[&itemName](const json_value* prop) { return SVICompare((*prop)["Title"sv], itemName); });
 			if (idxIt == props.u.array.end())
 			{
 				MsgBox::Error(_T("Property set error"), _T("Property set \"%s\" requests item name \"%s\", which was not found."),
@@ -4465,28 +4482,28 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			return true;
 		};
 
-		es.setName = propSet["SetName"];
+		es.setName = propSet["SetName"sv];
 		if (es.setName.empty() ||
 			std::any_of(propSets.cbegin(), propSets.cend(),
-				[&es](auto es2) { return es2.setName == es.setName; }))
+				[&es](auto es2) { return SVICompare(es2.setName, es.setName); }))
 		{
 			MsgBox::Error(_T("Property set error"), _T("Property set name \"%s\" is invalid."),
 				UTF8ToTString(es.setName).c_str());
 			continue;
 		}
 
-		if (!IdxFromName("AddButton", es.addButtonIdx) ||
-			!IdxFromName("DeleteButton", es.deleteButtonIdx) ||
-			!IdxFromName("EntryList", es.nameListIdx) ||
-			!IdxFromName("EntryName", es.nameEditboxIdx) ||
-			!IdxFromName("StartItem", es.startSetIdx) ||
-			!IdxFromName("EndItem", es.endSetIdx))
+		if (!IdxFromName("AddButton"sv, es.addButtonIdx) ||
+			!IdxFromName("DeleteButton"sv, es.deleteButtonIdx) ||
+			!IdxFromName("EntryList"sv, es.nameListIdx) ||
+			!IdxFromName("EntryName"sv, es.nameEditboxIdx) ||
+			!IdxFromName("StartItem"sv, es.startSetIdx) ||
+			!IdxFromName("EndItem"sv, es.endSetIdx))
 		{
 			continue; // error already reported in IdxFromName
 		}
 
 		const auto CheckIndexValidOrDie = [&](std::tstring s, std::size_t checkIdx, bool insideSet,
-			std::vector<int> propTypesExpected)
+			const std::vector<int> & propTypesExpected)
 		{
 			if (checkIdx == SIZE_MAX)
 			{
@@ -4499,7 +4516,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			{
 				MsgBox::Error(_T("JSON property error"), _T("Set %s's %s action property \"%s\" is %swithin the set range, which is not allowed."),
 					UTF8ToTString(es.setName).c_str(), s.c_str(),
-					UTF8ToTString((const char *)CurLang["Properties"][checkIdx]["Title"]).c_str(),
+					UTF8ToTString(CurLang["Properties"sv][checkIdx]["Title"sv]).c_str(),
 					insideSet ? _T("not ") : _T(""));
 				return -1;
 			}
@@ -4507,11 +4524,11 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				return 1;
 
 			for (std::size_t i = 0; i < std::size(propTypesExpected); ++i)
-				if (!_stricmp(CurLang["Properties"][checkIdx]["Type"], Edif::Properties::Names[propTypesExpected[i]]))
+				if (SVICompare(CurLang["Properties"sv][checkIdx]["Type"sv], Edif::Properties::Names[propTypesExpected[i]]))
 					return 1;
 			MsgBox::Error(_T("JSON property error"), _T("Set %s's %s action property uses the wrong property type \"%s\"."),
 				UTF8ToTString(es.setName).c_str(), s.c_str(),
-				UTF8ToTString((const char *)CurLang["Properties"][checkIdx]["Type"]).c_str());
+				UTF8ToTString(CurLang["Properties"sv][checkIdx]["Type"sv]).c_str());
 			return -1;
 		};
 		if (!CheckIndexValidOrDie(_T("AddButton"s), es.addButtonIdx, false, {
@@ -4593,7 +4610,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		DebugProp_OutputString(_T("Successfully created object set \"%s\".\n"), UTF8ToTString(es.setName).c_str());
 	}
 #else
-	if (CurLang["PropertySets"].type != json_none)
+	if (CurLang["PropertySets"sv].type != json_none)
 		MsgBox::Error(_T("JSON property error"), _T("PropertySets exists in JSON but is not supported in NOPROPS builds."));
 #endif // NOPROPS
 
@@ -4615,13 +4632,13 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		{
 			MsgBox::Error(errorPrefix, _T("Properties contains a string \"%s\" instead of an object. ")
 				_T("Multiple categories of properties not currently implemented. (%s)"),
-				UTF8ToTString((const char*)Property).c_str(), JSON::LanguageName());
+				UTF8ToTString(Property).c_str(), JSON::LanguageName());
 			continue;
 		}
-		const char* PropertyType = Property["Type"];
+		const std::string_view PropertyType = Property["Type"sv];
 
 		// Reserved/invalid property types are marked with ! at the start.
-		if (PropertyType[0] == '!')
+		if (PropertyType.empty() || PropertyType[0] == '!')
 		{
 			MsgBox::Error(errorPrefix,
 				_T("You have specified an invalid Parameter type \"%s\". These types are reserved. (%s)"),
@@ -4633,12 +4650,12 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		using namespace Edif::Properties;
 
 		// Custom Parameter: Read the number CustomXXX and use that.
-		if (!_strnicmp(PropertyType, "Custom", 6))
+		if (SVIComparePrefix(PropertyType, "Custom"sv))
 		{
 			MsgBox::Info(errorPrefix, _T("Detected a custom property."));
 			CurrentProperty = new PropData(VariableProps.size(), i + PROPTYPE_LAST_ITEM);
 		}
-		else if (!_stricmp(PropertyType, Names[PROPTYPE_FOLDER_END]))
+		else if (SVICompare(PropertyType, Names[PROPTYPE_FOLDER_END]))
 		{
 			CurrentProperty = new PropData(-1, PROPTYPE_FOLDER_END);
 			if (openFolderList.empty())
@@ -4649,7 +4666,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		else // Regular Parameter
 		{
 			// Empty or missing property name is not allowed - apart from folder end
-			if (Property["Title"].type != json_type::json_string)
+			if (Property["Title"sv].type != json_type::json_string)
 			{
 				MsgBox::Error(errorPrefix,
 					_T("Invalid or no title specified for property index %zu. (%s)"),
@@ -4662,11 +4679,11 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				bool ok = true;
 				for (std::size_t j = 0; j < i; ++j)
 				{
-					if (!_stricmp(props[j]["Title"], Property["Title"]))
+					if (SVICompare(props[j]["Title"sv], Property["Title"sv]))
 					{
 						MsgBox::Error(errorPrefix,
 							_T("Property title \"%s\" is reused between JSON index %zu and index %zu. (%s)"),
-							(const char *)Property["Title"], j, i, JSON::LanguageName());
+							Property["Title"sv].c_str(), j, i, JSON::LanguageName());
 						ok = false;
 						break;
 					}
@@ -4679,7 +4696,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			// Loop through Parameter names and compareth them.
 			for (std::size_t j = PROPTYPE_FIRST_ITEM; j < PROPTYPE_LAST_ITEM; ++j)
 			{
-				if (!_stricmp(PropertyType, Names[j]))
+				if (SVICompare(PropertyType, Names[j]))
 				{
 					// Unicode Properties have IDs 1000 greater than their ANSI equivalents.
 #ifdef _UNICODE
@@ -4694,22 +4711,22 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			if (!CurrentProperty)
 			{
 				MsgBox::Error(errorPrefix, _T("Property index %zu \"%s\" has an unrecognised property type \"%s\" in the JSON (under %s language).\n"
-					"Check your spelling of the \"Type\" Parameter."), i, UTF8ToTString((const char*)Property["Title"]).c_str(), UTF8ToTString(PropertyType).c_str(), JSON::LanguageName());
+					"Check your spelling of the \"Type\" Parameter."), i, UTF8ToTString(Property["Title"sv]).c_str(), UTF8ToTString(PropertyType).c_str(), JSON::LanguageName());
 				continue;
 			}
 			// If checkbox is enabled, pass that as flags as well.
 			unsigned int Options =
-				(Property["CheckboxDefaultState"].type != json_type::json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
-				| (bool(Property["Bold"]) ? PROPOPT_BOLD : 0)				// Bold enabled by property option in JSON
-				| (bool(Property["Removable"]) ? PROPOPT_REMOVABLE : 0)		// Removable enabled by property option in JSON
-				| (bool(Property["Renameable"]) ? PROPOPT_RENAMEABLE : 0)	// Renamable enabled by property option in JSON
-				| (bool(Property["Moveable"]) ? PROPOPT_MOVABLE : 0)		// Movable enabled by property option in JSON
-				| (bool(Property["List"]) ? PROPOPT_LIST : 0)				// List enabled by property option in JSON
-				| (bool(Property["SingleSelect"]) ? PROPOPT_SINGLESEL : 0);	// Single-select enabled by property option in JSON
+				(Property["CheckboxDefaultState"sv].type != json_type::json_none ? PROPOPT_CHECKBOX : 0)		// Checkbox enabled by property option in JSON
+				| (bool(Property["Bold"sv]) ? PROPOPT_BOLD : 0)				// Bold enabled by property option in JSON
+				| (bool(Property["Removable"sv]) ? PROPOPT_REMOVABLE : 0)		// Removable enabled by property option in JSON
+				| (bool(Property["Renameable"sv]) ? PROPOPT_RENAMEABLE : 0)	// Renamable enabled by property option in JSON
+				| (bool(Property["Moveable"sv]) ? PROPOPT_MOVABLE : 0)		// Movable enabled by property option in JSON
+				| (bool(Property["List"sv]) ? PROPOPT_LIST : 0)				// List enabled by property option in JSON
+				| (bool(Property["SingleSelect"sv]) ? PROPOPT_SINGLESEL : 0);	// Single-select enabled by property option in JSON
 			bool EnableLParams = false;
 
-			CurrentProperty->Title = Edif::ConvertString((const char*)Property["Title"]);
-			CurrentProperty->Info = Edif::ConvertString((const char*)Property["Info"]);
+			CurrentProperty->Title = Edif::ConvertString(Property["Title"sv]);
+			CurrentProperty->Info = Edif::ConvertString(Property["Info"sv]);
 
 			switch (CurrentProperty->Type_ID % 1000)
 			{
@@ -4720,7 +4737,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			// Folder
 			case PROPTYPE_FOLDER:
 			{
-				openFolderList.push_back(Property["Title"]);
+				openFolderList.push_back(Property["Title"sv].c_str());
 				SetAllProps(0, NULL);
 			}
 			// FolderEnd handled outside of this switch, in the if() above
@@ -4728,11 +4745,11 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			// Edit button, Params1 = button text, or nullptr if Edit
 			case PROPTYPE_EDITBUTTON:
 			{
-				if (Property["DefaultState"] == "") {
+				if (((std::string_view)Property["DefaultState"sv]).empty()) {
 					SetAllProps(0, NULL);
 				}
 				else {
-					SetAllProps(PROPOPT_PARAMREQUIRED, Edif::ConvertString((const char*)Property["DefaultState"]));
+					SetAllProps(PROPOPT_PARAMREQUIRED, Edif::ConvertString(Property["DefaultState"sv]));
 				}
 			}
 
@@ -4743,24 +4760,30 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			{
 				if (CurrentProperty->Type_ID % 1000 == PROPTYPE_EDIT_STRING)
 				{
-					Options |= ((!_stricmp(Property["Case"], "Lower")) ? PROPOPT_EDIT_LOWERCASE : 0)
-						| ((!_stricmp(Property["Case"], "Upper")) ? PROPOPT_EDIT_UPPERCASE : 0)
-						| ((Property["Password"]) ? PROPOPT_EDIT_PASSWORD : 0);
+					Options |= ((SVICompare(Property["Case"sv], "Lower"sv)) ? PROPOPT_EDIT_LOWERCASE : 0)
+						| ((SVICompare(Property["Case"sv], "Upper"sv)) ? PROPOPT_EDIT_UPPERCASE : 0)
+						| ((Property["Password"sv]) ? PROPOPT_EDIT_PASSWORD : 0);
 				}
 				else
 				{
-					if (Property["Case"].type != json_type::json_none)
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"), UTF8ToTString((const char*)Property["Title"]).c_str(), (const char*)Property["Case"], Names[CurrentProperty->Type_ID % 1000]);
-					if (Property["Password"].type != json_type::json_none)
-						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."), UTF8ToTString((const char*)Property["Title"]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
+					if (Property["Case"sv].type != json_type::json_none)
+					{
+						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T(R"(Property "%s" is set to "Case"="%hs", but that won't work with property type %hs.)"),
+							UTF8ToTString(Property["Title"sv]).c_str(), Property["Case"sv].c_str(), Names[CurrentProperty->Type_ID % 1000]);
+					}
+					if (Property["Password"sv].type != json_type::json_none)
+					{
+						MsgBox::WarningOK(_T("DarkEdif JSON property"), _T("Property \"%s\" is set to password mask, but that won't work with property type %hs."),
+							UTF8ToTString(Property["Title"sv]).c_str(), Names[CurrentProperty->Type_ID % 1000]);
+					}
 				}
-				if (Property["MaxLength"].type != json_type::json_integer) {
+				if (Property["MaxLength"sv].type != json_type::json_integer) {
 					SetAllProps(0, NULL);
 				}
 				else
 				{
 					int* textLength = new int;
-					*textLength = (int)(json_int_t)Property["MaxLength"];
+					*textLength = (int)(json_int_t)Property["MaxLength"sv];
 					SetAllProps(PROPOPT_PARAMREQUIRED, textLength);
 				}
 			}
@@ -4775,8 +4798,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_SLIDEREDIT:
 			{
 				int* temp = new int[2];
-				temp[0] = ((json_int_t)Property["Minimum"]) & 0xFFFFFFFF;
-				temp[1] = ((json_int_t)Property["Maximum"]) & 0xFFFFFFFF;
+				temp[0] = ((json_int_t)Property["Minimum"sv]) & 0xFFFFFFFF;
+				temp[1] = ((json_int_t)Property["Maximum"sv]) & 0xFFFFFFFF;
 				SetAllProps(PROPOPT_PARAMREQUIRED, temp);
 			}
 
@@ -4784,7 +4807,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			case PROPTYPE_COMBOBOX:
 			case PROPTYPE_COMBOBOXBTN:
 			{
-				if (Property["Items"].type == json_type::json_none)
+				if (Property["Items"sv].type == json_type::json_none)
 				{
 					SetAllProps(PROPOPT_PARAMREQUIRED, NULL);
 					// expects GetPropCreateParam() to be implemented
@@ -4796,23 +4819,26 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 					[i](const auto& es) { return es.nameListIdx == i; }))
 				{
 					MsgBox::Error(_T("DarkEdif JSON property"), _T("Items detected in a property set list box %s."),
-						UTF8ToTString((const char*)Property["Title"]).c_str());
+						UTF8ToTString(Property["Title"sv]).c_str());
 					SetAllProps(PROPOPT_PARAMREQUIRED, NULL);
 					break;
 				}
 #endif // NOPROPS
+				const json_value& itemsJSON = Property["Items"sv];
+				if (itemsJSON.type != json_type::json_array || itemsJSON.u.array.length == 0)
+				{
+					MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."),
+						UTF8ToTString(Property["Title"sv]).c_str());
+				}
 
-				if (Property["Items"].type != json_type::json_array || Property["Items"].u.array.length == 0)
-					MsgBox::Error(_T("DarkEdif JSON property"), _T("No Items detected in combobox property %s."), UTF8ToTString((const char*)Property["Title"]).c_str());
-
-				const TCHAR** Fixed = new const TCHAR * [Property["Items"].u.array.length + 2];
+				const TCHAR** Fixed = new const TCHAR * [itemsJSON.u.array.length + 2];
 
 				// NULL is required at start and end of array
-				Fixed[0] = Fixed[Property["Items"].u.array.length + 1] = nullptr;
+				Fixed[0] = Fixed[itemsJSON.u.array.length + 1] = nullptr;
 
 				// Use incrementation and copy to fixed list.
-				for (unsigned int index = 1; index < Property["Items"].u.array.length + 1; ++index)
-					Fixed[index] = Edif::ConvertString((const char*)Property["Items"][index - 1]);
+				for (unsigned int index = 1; index < itemsJSON.u.array.length + 1; ++index)
+					Fixed[index] = Edif::ConvertString(itemsJSON[index - 1]);
 
 				// Pass fixed list as Parameter
 				SetAllProps(PROPOPT_PARAMREQUIRED, (LPARAM)Fixed);
@@ -4821,7 +4847,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			// Size
 			case PROPTYPE_SIZE:
 			{
-				const json_value& presetList = Property["PresetSizes"];
+				const json_value& presetList = Property["PresetSizes"sv];
 				if (presetList.type == json_type::json_array && presetList.u.array.length > 0)
 				{
 					int* const predefSizes = new int[(presetList.u.array.length + 1) * 2];
@@ -4835,7 +4861,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 							(json_int_t)sizeEntry[0] < 0 || (json_int_t)sizeEntry[1] < 0)
 						{
 							DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid preset size index %d in size property %s."),
-								index, UTF8ToTString((const char*)Property["Title"]).c_str());
+								index, UTF8ToTString(Property["Title"sv]).c_str());
 						}
 
 						predefSizes[index * 2] = (int)(json_int_t)sizeEntry[0];
@@ -4851,7 +4877,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				if (presetList.type != json_type::json_none)
 				{
 					DarkEdif::MsgBox::Error(_T("DarkEdif JSON property"), _T("Invalid PresetSizes array in size property %s."),
-						UTF8ToTString((const char*)Property["Title"]).c_str());
+						UTF8ToTString(Property["Title"sv]).c_str());
 				}
 
 				SetAllProps(0, NULL);
@@ -4908,7 +4934,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 			// Unrecognised
 			default:
 				MsgBox::Error(errorPrefix, _T("The Parameter type \"%hs\" was unrecognised."),
-					(const char*)Property["Type"]);
+					Property["Type"sv].c_str());
 				SetAllProps(0, NULL);
 			}
 		}
@@ -4938,11 +4964,11 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 		const json_value& p = *props.u.array.values[i];
 
 		// Don't include unchangeable props in the hash. Note there are still Data for those.
-		if (IsUnchangeablePropExclCheckbox(p["Type"]))
+		if (IsUnchangeablePropExclCheckbox(p["Type"sv]))
 			continue;
 
 		// Lowercase the name in case there's a simple typo.
-		std::string propName = (const char*)p["Title"];
+		std::string propName(p["Title"sv]);
 		std::transform(propName.begin(), propName.end(), propName.begin(), ::tolower);
 
 		std::uint32_t propTypeID = Edif::SDK->EdittimeProperties[i].Type_ID % 1000;
@@ -5413,7 +5439,7 @@ std::tstring DarkEdif::FontInfoMultiPlat::GetActualFontName() {
 // Returns size of EDITDATA and all properties if they were using their default values from JSON
 std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 {
-	const json_value& JSON = CurLang["Properties"];
+	const json_value& JSON = CurLang["Properties"sv];
 	size_t fullSize = sizeof(EDITDATA);
 	// Store one bit per property, for checkboxes
 	fullSize += (int)std::ceil(JSON.u.array.length / 8.0f);
@@ -5422,7 +5448,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	for (std::size_t i = 0, j = 0; j < JSON.u.array.length; ++i, ++j)
 	{
 		const json_value& propjson = *JSON.u.array.values[i];
-		const char* curPropType = propjson["Type"];
+		const std::string_view curPropType = propjson["Type"sv];
 
 		// Metadata for all properties
 		fullSize += sizeof(Properties::Data);
@@ -5431,28 +5457,30 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		// by title, so storing the title is unnecessary.
 		if (IsUnchangeablePropExclCheckbox(curPropType))
 		{
-			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"), (const char*)propjson["Title"], curPropType, fullSize);
+			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"),
+				propjson["Title"sv].c_str(), curPropType, fullSize);
 			continue;
 		}
 
-		fullSize += strnlen(propjson["Title"], 254);
+		fullSize += strnlen(propjson["Title"sv].c_str(), 254);
 		// Don't bother checking title length. Other funcs will do that.
 
 		// Checkboxes store title, but not data
 		if (IsUnchangeablePropInclCheckbox(curPropType))
 		{
-			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"), (const char*)propjson["Title"], curPropType, fullSize);
+			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"),
+				propjson["Title"sv].c_str(), curPropType, fullSize);
 			continue;
 		}
 
 		// Stores text
 		if (IsStringPropType(curPropType, false))
 		{
-			const char* defaultText = propjson["DefaultState"];
-			fullSize += (defaultText ? strlen(defaultText) : 0); // UTF-8
+			const std::string_view defaultText = propjson["DefaultState"sv];
+			fullSize += defaultText.size(); // UTF-8
 		}
 		// Combo box: stores either the item text selected, or a RuntimePropSet
-		else if (!_strnicmp(curPropType, "Combo Box", sizeof("Combo Box") - 1))
+		else if (SVIComparePrefix(curPropType, "Combo Box"sv))
 		{
 #if !defined(NOPROPS) && EditorBuild
 			const auto esIt = std::find_if(Edif::SDK->EdittimePropertySets.cbegin(), Edif::SDK->EdittimePropertySets.cend(),
@@ -5460,25 +5488,26 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 			if (esIt != Edif::SDK->EdittimePropertySets.cend())
 			{
 				DebugProp_OutputString(_T("Property %hs is a combo box set list. Adding size of RuntimePropSet + name.\n"),
-					(const char*)propjson["Title"]);
+					propjson["Title"sv].c_str());
 				fullSize += sizeof(RuntimePropSet) + esIt->setName.size();
 			}
 			else
 #endif // NOPROPS
 			{
-				const char* defaultText = propjson["DefaultState"];
-				fullSize += 1 + (defaultText ? strlen(defaultText) : 0); // UTF-8
+				const std::string_view defaultText = propjson["DefaultState"sv];
+				fullSize += 1 + defaultText.size(); // UTF-8, with an L char prefix
 			}
 		}
-		else if (!_stricmp(curPropType, "Editbox Number") || !_stricmp(curPropType, "Edit spin") || !_stricmp(curPropType, "Edit slider") ||
-			!_stricmp(curPropType, "Color") || !_stricmp(curPropType, "Edit direction") || !_stricmp(curPropType, "Editbox Float") || !_stricmp(curPropType, "Edit spin float"))
+		else if (SVICompare(curPropType, "Editbox Number"sv) || SVICompare(curPropType, "Edit spin"sv) || SVICompare(curPropType, "Edit slider"sv) ||
+			SVICompare(curPropType, "Color"sv) || SVICompare(curPropType, "Edit direction"sv) || SVICompare(curPropType, "Editbox Float"sv) ||
+			SVICompare(curPropType, "Edit spin float"sv))
 		{
 			fullSize += sizeof(int); // Floats are same size as int
 		}
 		// Stores two numbers
-		else if (!_stricmp(curPropType, "Size"))
+		else if (SVICompare(curPropType, "Size"sv))
 			fullSize += sizeof(int) * 2;
-		else if (!_stricmp(curPropType, "Image list"))
+		else if (SVICompare(curPropType, "Image list"))
 		{
 			fullSize += sizeof(ImgListProperty);
 			// Required that there is one image added
@@ -5488,9 +5517,10 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		else
 		{
 			MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"), _T("Calculation of edittime property size can't understand property type \"%s\". (%s)"),
-				UTF8ToTString(curPropType).c_str(), DarkEdif::JSON::LanguageName());
+				UTF8ToTString(curPropType).c_str(), JSON::LanguageName());
 		}
-		DebugProp_OutputString(_T("Adding property %hs (type %s) accumulative size is now %zu.\n"), (const char*)propjson["Title"], UTF8ToTString(curPropType).c_str(), fullSize);
+		DebugProp_OutputString(_T("Adding property %hs (type %s) accumulative size is now %zu.\n"),
+			propjson["Title"sv].c_str(), UTF8ToTString(curPropType).c_str(), fullSize);
 	}
 	DebugProp_OutputString(_T("Accumulative size finalized at %zu.\n"), fullSize);
 
@@ -5522,7 +5552,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	if (fullSize >= UINT16_MAX)
 	{
 		MsgBox::Error(_T("EDITDATA too large!"), _T("The JSON extension properties use more than %u bytes to store, and are too large for Fusion. (%s)"),
-			UINT16_MAX, DarkEdif::JSON::LanguageName());
+			UINT16_MAX, JSON::LanguageName());
 	}
 
 	DebugProp_OutputString(_T("GetEDITDATASizeFromJSON: result is %zu bytes.\n"), fullSize);

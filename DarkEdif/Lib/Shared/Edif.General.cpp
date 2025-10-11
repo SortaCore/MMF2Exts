@@ -100,7 +100,7 @@ const TCHAR ** FusionAPI GetDependencies()
 
 	if (!Dependencies)
 	{
-		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"];
+		const json_value &DependenciesJSON = Edif::SDK->json["Dependencies"sv];
 		TCHAR* singletonPtr = singleton;
 
 		std::size_t Offset = 0;
@@ -132,7 +132,7 @@ const TCHAR ** FusionAPI GetDependencies()
 
 		for (unsigned int i = 0; i < DependenciesJSON.u.array.length; ++i)
 		{
-			std::tstring tstr = DarkEdif::UTF8ToTString((const char *)DependenciesJSON[i]);
+			std::tstring tstr = DarkEdif::UTF8ToTString(DependenciesJSON[i]);
 
 			_tcscpy(singletonPtr, tstr.c_str());
 			Dependencies[Offset++] = singletonPtr;
@@ -168,9 +168,9 @@ std::int16_t ForbiddenInternals2::GetRunObjectInfos2(mv * mV, kpxRunInfos * info
 	infoPtr->Actions = &Edif::SDK->ActionJumps[0];
 	infoPtr->Expressions = &Edif::SDK->ExpressionJumps[0];
 
-	infoPtr->NumOfConditions = CurLang["Conditions"].u.object.length;
-	infoPtr->NumOfActions = CurLang["Actions"].u.object.length;
-	infoPtr->NumOfExpressions = CurLang["Expressions"].u.object.length;
+	infoPtr->NumOfConditions = CurLang["Conditions"sv].u.object.length;
+	infoPtr->NumOfActions = CurLang["Actions"sv].u.object.length;
+	infoPtr->NumOfExpressions = CurLang["Expressions"sv].u.object.length;
 #ifdef DARKSCRIPT_EXTENSION
 	infoPtr->NumOfExpressions = Extension::GetNumExpressions();
 #endif
@@ -197,7 +197,10 @@ std::int16_t ForbiddenInternals2::GetRunObjectInfos2(mv * mV, kpxRunInfos * info
 	infoPtr->EditFlags = Extension::OEFLAGS;
 	infoPtr->EditPrefs = Extension::OEPREFS;
 
-	memcpy(&infoPtr->Identifier, Edif::SDK->json["Identifier"], 4);
+	const std::string_view ident = Edif::SDK->json["Identifier"sv];
+	assert(ident.size() == 4);
+
+	memcpy(&infoPtr->Identifier, ident.data(), 4);
 
 	// Smart properties can change the version Fusion is told
 	infoPtr->Version = DarkEdif::Properties::VersionFlags | Extension::Version;
@@ -356,7 +359,7 @@ std::int16_t FusionAPI ContinueRunObject(RUNDATA * rdPtr)
 ProjectFunc jint getNumberOfConditions(JNIEnv *, jobject, jlong cptr)
 {
 	//raise(SIGTRAP);
-	return CurLang["Conditions"].u.array.length;
+	return CurLang["Conditions"sv].u.array.length;
 }
 typedef jobject ByteBufferDirect;
 
@@ -974,7 +977,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _dealloc())
 
 ProjectFunc int PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getNumberOfConditions())
 {
-	return CurLang["Conditions"].u.array.length;
+	return CurLang["Conditions"sv].u.array.length;
 }
 ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _createRunObject(void * file, void* cobPtr, int version, void * objCExtPtr))
 {
