@@ -426,21 +426,9 @@ static bool GetPropRealID(std::uint32_t &fromFusion)
 	fromFusion -= PROPID_EXTITEM_CUSTOM_FIRST;
 	return true;
 }
-static DarkEdif::Properties & GetRealPropsAddress(EDITDATA * edPtr)
-{
-	size_t propOffset = edPtr->eHeader.extPrivateData;
-	if (propOffset < sizeof(edPtr->eHeader))
-	{
-		DarkEdif::MsgBox::WarningOK(_T("Old DarkEdif props"), _T("No offset found. Falling back to default. Resetting properties recommended."));
-		propOffset = ((std::uint8_t *)&edPtr->Props) - ((std::uint8_t *)edPtr);
-	}
-	if (propOffset > edPtr->eHeader.extSize - sizeof(DarkEdif::Properties))
-	{
-		DarkEdif::MsgBox::WarningOK(_T("DarkEdif offset invalid"), _T("Offset is too high!"));
-		propOffset = ((std::uint8_t*)&edPtr->Props) - ((std::uint8_t*)edPtr);
-	}
-	return *(DarkEdif::Properties *)(((std::uint8_t *)edPtr) + propOffset);
-}
+
+DarkEdif::Properties& GetRealPropsAddress(EDITDATA* edPtr);
+
 namespace DarkEdif {
 	namespace DLL
 	{
@@ -589,6 +577,38 @@ struct DarkEdif::DLL::PropAccesser
 #endif // EditorBuild
 };
 #pragma pack (pop)
+
+// Reads the real offset of EDITDATA::Props from extPrivateData offset, used to find Props
+// for an EDITDATA that may not match C++ current version. Works with DarkEdif smart props v1.
+static DarkEdif::Properties& GetRealPropsAddress(EDITDATA* edPtr)
+{
+	std::size_t propOffset = edPtr->eHeader.extPrivateData;
+	std::uint8_t* edPtrFake = (std::uint8_t*)edPtr;
+	if (propOffset < sizeof(edPtr->eHeader) || propOffset > edPtr->eHeader.extSize)
+	{
+		DarkEdif::MsgBox::WarningOK(_T("Old DarkEdif props"), _T("DarkEdif smart props offset not found. Falling back to default. Resetting properties recommended."));
+		propOffset = ((char*)&edPtr->Props) - ((char*)edPtr);
+	}
+	int darVer = Elevate(*(DarkEdif::Properties*)(edPtrFake + propOffset)).propVersion;
+	if (darVer != 'DAR1' && darVer != 'DAR2')
+	{
+		bool found = false;
+		for (propOffset = sizeof(extHeader); propOffset < edPtr->eHeader.extSize - sizeof(DarkEdif::Properties); ++propOffset)
+		{
+			darVer = Elevate(*(DarkEdif::Properties*)(edPtrFake + propOffset)).propVersion;
+			if (darVer == 'DAR1' && darVer == 'DAR2')
+			{
+				propOffset = ((std::uint8_t*)&edPtr->Props) - ((std::uint8_t*)edPtr);
+				found = true;
+			}
+		}
+		if (!found)
+			DarkEdif::MsgBox::Error(_T("DarkEdif offset invalid"), _T("DarkEdif smart properties was not found in edittime data. The MFA is likely corrupt."));
+		else
+			DarkEdif::MsgBox::WarningOK(_T("DarkEdif offset invalid"), _T("DarkEdif smart properties offset was invalid and corrected. The MFA is likely corrupt."));
+	}
+	return *(DarkEdif::Properties*)(((std::uint8_t*)edPtr) + propOffset);
+}
 
 std::uint16_t RuntimePropSet::GetNumPropsInThisEntry(Properties::Data* const propHoldingThisRS) const
 {
