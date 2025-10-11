@@ -1260,8 +1260,6 @@ void Extension::HandleInteractiveEvent(std::shared_ptr<EventToRun> evt)
 			EnterSectionIfMultiThread(globals->lock);
 			Srv.nameset_response(evt->senderClient, NewClientName, DenyReason.c_str());
 
-			if (!DenyReason.empty())
-				evt->senderClient->name(NewClientName);
 			LeaveSectionIfMultiThread(globals->lock);
 		}
 	}
