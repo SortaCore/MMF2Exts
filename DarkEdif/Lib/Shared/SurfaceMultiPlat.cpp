@@ -1091,12 +1091,12 @@ std::size_t DarkEdif::Surface::Internal_CreateMask(void* mask, const std::uint32
 
 DarkEdif::CollisionMask * DarkEdif::Surface::GetCollisionMask(const std::uint32_t flags)
 {
-	static const int SCMF_PLATFORM = 1;
-	auto& mask = flags & SCMF_PLATFORM ? platMask : obstacleMask;
+	static constexpr int SCMF_PLATFORM = 1;
 
 	if ((flags & SCMF_PLATFORM) != flags)
 		LOGE(_T("Unexpected flags supplied: expected 0 or 1, got %u.\n"), flags);
 
+	auto& mask = (flags & SCMF_PLATFORM) != 0 ? platMask : obstacleMask;
 	if (!mask)
 	{
 		if (collisionMaskByteCount == 0)

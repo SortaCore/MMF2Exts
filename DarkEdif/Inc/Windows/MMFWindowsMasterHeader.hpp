@@ -1722,7 +1722,7 @@ DarkEdifInternalAccessProtected:
 	objectsList * rh4ObjectCurCreate;
 	std::int16_t rh4ObjectAddCreate;
 	// For step through : fake key pressed ?
-	std::uint32_t rh4Free10;
+	std::uint16_t rh4Free10;
 	// Application instance
 	HINSTANCE rh4Instance;
 	// STOP window handle
@@ -2868,7 +2868,7 @@ DarkEdifInternalAccessProtected:
 	// user-specified object name, cropped to 24 chars, guaranteed end with NULL
 	TCHAR oilName[OINAME_SIZE];
 	// Selection in a list of events with OR
-	std::int16_t 	oilEventCountOR;
+	std::int32_t 	oilEventCountOR;
 	#ifdef HWABETA
 		// Liste de collisions sprites
 		short *		oilColList;		
