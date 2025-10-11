@@ -1478,10 +1478,14 @@ long Extension::ExecuteFunction(RunObjectMultiPlatPtr objToRunOn, const std::sha
 				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str(),
 				objToRunOn ? _T("Foreach ") : _T(""), rf->funcTemplate->name.c_str());
 			// Return to calling expression - return int and float directly as they occupy same memory address
+			rf->returnValue.type = rf->expectedReturnType;
 			if (rf->returnValue.type != Extension::Type::String)
 				rf->returnValue.dataSize = sizeof(int); // or sizeof float, same thing
 			else
+			{
+				rf->returnValue.dataSize = sizeof(TCHAR);
 				rf->returnValue.data.string = _tcsdup(_T(""));
+			}
 		}
 		// else error: do foreach error, or do normal error
 		else if (objToRunOn)
