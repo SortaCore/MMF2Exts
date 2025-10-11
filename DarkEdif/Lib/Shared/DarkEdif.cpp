@@ -4898,7 +4898,8 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 	}
 
 	Edif::SDK->EdittimeProperties = std::make_unique<PropData[]>(VariableProps.size() + 1);
-	memcpy(Edif::SDK->EdittimeProperties.get(), &VariableProps[0], sizeof(PropData)* VariableProps.size());
+	if (!VariableProps.empty())
+		memcpy(Edif::SDK->EdittimeProperties.get(), &VariableProps[0], sizeof(PropData)* VariableProps.size());
 
 	// End with completely null PropData
 	memset(&Edif::SDK->EdittimeProperties[VariableProps.size()], 0, sizeof(PropData));
