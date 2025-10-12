@@ -707,7 +707,7 @@ size_t captureBacktrace(void ** buffer, size_t max)
 #include <cxxabi.h>
 void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
 {
-	os << "Call stack, last function is bottommost:\n";
+	os << "Call stack, last function is bottommost:\n"sv;
 	size_t outputMemSize = 512;
 	char * outputMem = (char *)malloc(outputMemSize);
 
@@ -723,7 +723,7 @@ void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
 		memset(outputMem, 0, outputMemSize);
 		int status = 0;
 		abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
-		os << "  #" << std::setw(2) << idx << ": " << addr << "  " << (status == 0 ? outputMem : symbol) << "\n";
+		os << "  #"sv << std::setw(2) << idx << ": "sv << addr << "  "sv << (status == 0 ? outputMem : symbol) << '\n';
 	}
 	free(outputMem);
 }

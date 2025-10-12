@@ -2560,7 +2560,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 					UTF8ToTString(title).c_str(), id, JSON::LanguageName(), intDataAsLong);
 			}
 
-			// convState->resetPropertiesStream << bullet << title << " = " << intDataAsLong << "\n";
+			// convState->resetPropertiesStream << bullet << title << " = " << intDataAsLong << '\n';
 			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
@@ -2582,8 +2582,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			static float f;
 			f = (float)prop["DefaultState"sv].u.dbl;
 
-			// convState->resetPropertiesStream << bullet << title << " = " << std::setprecision(3) << f << "\n";
-			convState->resetPropertiesStream << bullet << title << "\n";
+			// convState->resetPropertiesStream << bullet << title << " = " << std::setprecision(3) << f << '\n';
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(&f, sizeof(float));
@@ -2602,7 +2602,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 			prop.numImages = 0;
 
 			// convState->resetPropertiesStream << bullet << title << " = image count 0\n";
-			convState->resetPropertiesStream << bullet << title << "\n";
+			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
 			return convRet->Return_OK(&prop, sizeof(prop));
@@ -2646,8 +2646,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (prop["DefaultState"sv].type == json_boolean)
 			{
-				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
-				convState->resetPropertiesStream << bullet << title << "\n";
+				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << '\n';
+				convState->resetPropertiesStream << bullet << title << '\n';
 				++convState->numPropsReset;
 				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["DefaultState"sv]) ? 1 : 0);
 			}
@@ -2660,8 +2660,8 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 		{
 			if (prop["CheckboxDefaultState"sv].type == json_boolean)
 			{
-				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << "\n";
-				convState->resetPropertiesStream << bullet << title << "\n";
+				// convState->resetPropertiesStream << bullet << title << " = " << (prop["DefaultState"] ? "true" : "false") << '\n';
+				convState->resetPropertiesStream << bullet << title << '\n';
 				++convState->numPropsReset;
 				return convRet->Return_OK(nullptr, 0U, nullptr, ((bool)prop["CheckboxDefaultState"sv]) ? 1 : 0);
 			}
