@@ -1491,6 +1491,21 @@ DarkEdif::Surface DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 	return Surface(rhPtr, false, false, 0, 0, false);
 #endif
 }
+std::unique_ptr<DarkEdif::Surface> DarkEdif::Surface::CreateFromFilePath(Extension * ext,
+	std::tstring filePath, bool needBitmapFuncs, bool needTextFuncs, bool alpha)
+{
+	assert(ext);
+	const auto filePath2 = DarkEdif::MakePathUnembeddedIfNeeded(ext, filePath);
+	if (filePath2[0] == _T('>'))
+		return LOGE(_T("Couldn't make surface from path \"%s\", error: %s"), filePath.c_str(), &filePath2[1]), nullptr;
+
+	auto surf = std::make_unique<Surface>(ext->rhPtr, needBitmapFuncs, needTextFuncs, 1, 1, alpha);
+	if (ImageFileFormat::Unset != surf->LoadImageFromFilePath(filePath2))
+		return surf;
+
+	LOGE(_T("Couldn't init surface from path \"%s\", load failed"), filePath2.c_str());
+	return nullptr;
+}
 
 #ifdef _WIN32
 DarkEdif::Surface * DarkEdif::Surface::FromWindowsSurface(RunHeader * const rhPtr, cSurface * surf)

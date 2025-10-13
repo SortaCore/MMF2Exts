@@ -516,6 +516,16 @@ namespace DarkEdif
 		// Creates a surface tied to the main Fusion window, allowing you to read or write directly.
 		static Surface CreateFromMainWindow(RunHeader* rhPtr);
 
+		/* Creates a surface from filepath, with optional HWA, text or bitmap functionality, creating an image to back it.
+		 * If neither text or bitmap is enabled, will allow the surface to be hardware-backed.
+		 *  @param ext				The Extension opening it
+		 *  @param filePath			File path to open, will be de-embedded if needed.
+		 *  @param needBitmapFuncs	Enables bitmap functions (such as drawing shapes), making a non-HWA surface
+		 *  @param needTextFuncs	Enables text-drawing functions, making a non-HWA surface
+		 *	@param hasalpha			If true, makes per-pixel variable transparency, if false, one chosen color is transparent */
+		static std::unique_ptr<Surface> CreateFromFilePath(Extension * ext, std::tstring filePath, bool needBitmapFuncs,
+			bool needTextFuncs, bool alpha);
+
 #if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
 		// Tells the surface it is the main display for this extension
 		// Surface will then expect X and Y in rdPtr->get_rHo() to be accurate
