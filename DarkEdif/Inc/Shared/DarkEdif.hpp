@@ -712,7 +712,7 @@ namespace DarkEdif
 		struct PropertyReader
 		{
 			// Start the property reader/converter. Return ConverterUnsuitable if the converter isn't usable.
-			virtual void Initialise(ConverterState& convState, ConverterReturn* const convRet) = 0;
+			virtual void Initialize(ConverterState& convState, ConverterReturn* const convRet) = 0;
 
 			// Get property by ID.
 			// Note that IDs will always be increasing, but you should program GetProperty() as if IDs can be skipped (non-monotonic).

@@ -1837,7 +1837,7 @@ struct Properties::PreSmartPropertyReader : Properties::PropertyReader
 	const std::uint8_t * chkBoxAt = nullptr;
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
-	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
+	void Initialize(ConverterState &convState, ConverterReturn * const convRet)
 	{
 		this->convState = &convState;
 		if (!convState.oldEdPtr || convState.oldEdPtr->eHeader.extPrivateData != 0)
@@ -2128,7 +2128,7 @@ struct Properties::SmartPropertyReader : Properties::PropertyReader
 	bool isVersion1Reading = false;
 
 	// Resets the reader for a new run. Return ConverterUnsuitable if the converter isn't necessary.
-	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
+	void Initialize(ConverterState &convState, ConverterReturn * const convRet)
 	{
 		this->convState = &convState;
 		data.clear();
@@ -2376,7 +2376,7 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 	static const char bullet[];
 
 	// Start the reader. Return ConverterUnsuitable if the converter isn't necessary.
-	void Initialise(ConverterState &convState, ConverterReturn * const convRet)
+	void Initialize(ConverterState &convState, ConverterReturn * const convRet)
 	{
 		this->convState = &convState;
 
@@ -2927,7 +2927,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			if constexpr (test_has_UserConverter<EDITDATA>::value)
 			{
 				Properties::PropertyReader* userConv = UserConverterWrap<EDITDATA>();
-				userConv->Initialise(convState, &retState);
+				userConv->Initialize(convState, &retState);
 				if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				{
 					DebugProp_OutputString(_T("User converter init OK; will be used.\n"));
@@ -2951,19 +2951,19 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 				jsonPropertyReader.JSONPropertyReader::JSONPropertyReader();
 			}
 
-			preSmartPropertyReader.Initialise(convState, &retState);
+			preSmartPropertyReader.Initialize(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &preSmartPropertyReader, "PreSmartPropertyReader" });
 			else
 				DebugProp_OutputString(_T("Pre-smart property reader init failed; will be excluded.\n"));
 
-			smartPropertyReader.Initialise(convState, &retState);
+			smartPropertyReader.Initialize(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &smartPropertyReader, "SmartPropertyReader" });
 			else
 				DebugProp_OutputString(_T("Smart property reader init failed; will be excluded.\n"));
 
-			jsonPropertyReader.Initialise(convState, &retState);
+			jsonPropertyReader.Initialize(convState, &retState);
 			if (retStateAdmin.convRetType == Properties::ConvReturnType::OK)
 				readers.push_back({ &jsonPropertyReader, "JSONPropertyReader" });
 			else
