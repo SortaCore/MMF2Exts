@@ -166,14 +166,6 @@ void Edif::Runtime::SetRunObjectTextColor(const std::uint32_t color)
 		return LOGF(_T("Can't set object font: font was not set."));
 	extFont->fontColor = color;
 }
-template <typename T>
-struct function_traits
-{
-	template <typename R, typename ... As>
-	static std::tuple<As...> pro_args(std::function<R(As...)>);
-
-	using arguments = decltype(pro_args(std::function{ std::declval<T>() }));
-};
 
 void Edif::Runtime::SetRunObjectFont(const void* const pLf, const void* const pRc)
 {
@@ -192,7 +184,7 @@ void Edif::Runtime::SetRunObjectFont(const void* const pLf, const void* const pR
 }
 #endif
 
-#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS
+#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
 void Edif::Runtime::SetSurfaceWithSize(int width, int height)
 {
 	if (surf || ext->surf)
