@@ -7,14 +7,11 @@ void FusionAPI GetObjInfos(mv * mV, EDITDATA * edPtr, TCHAR * ObjName, TCHAR * O
 {
 #pragma DllExportHint
 	Edif::ConvertAndCopyString(ObjAuthor, CurLang["About"sv]["Author"sv], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"sv]["URL"sv], MAX_PATH);
+	Edif::ConvertAndCopyString(ObjName, CurLang["About"sv]["Name"sv], MAX_PATH);
+
 	// Could make this auto-replace the year, but only the ext author should be doing that.
 	Edif::ConvertAndCopyString(ObjCopyright, CurLang["About"sv]["Copyright"sv], MAX_PATH);
-	Edif::ConvertAndCopyString(ObjHttp, CurLang["About"sv]["URL"sv], MAX_PATH);
-
-	if (mV && mV->IdAppli)
-		Edif::ConvertAndCopyString(ObjName, CurLang["About"sv]["Name"sv], MAX_PATH);
-	else
-		Edif::ConvertAndCopyString(ObjName, (*Edif::SDK->json.u.object.values[2].value)["About"sv]["Name"sv], MAX_PATH);
 
 	// Allows user to specify a static variable in the object comment.
 	// e.g. build number, liblacewing version, etc.
