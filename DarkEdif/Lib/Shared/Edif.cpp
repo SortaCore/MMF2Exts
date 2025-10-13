@@ -798,6 +798,7 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			case Params::String_Comparison:
 			case Params::String_Expression:
 			case Params::Filename:
+			case Params::Filename_2:
 				Parameters[i] = (long)params.GetString(i);
 				// Catch null string parameters and return default 0
 				if (!Parameters[i])
