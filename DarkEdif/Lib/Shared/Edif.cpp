@@ -2014,11 +2014,12 @@ char* Edif::ConvertString(const std::string_view & utf8String)
 	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
 	wchar_t * wstr = (wchar_t *)calloc(++Length, sizeof(WCHAR));
 	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
+	assert(wstr >= 0);
 
 	// Convert Unicode string using current user code page
 	int len2 = WideCharToMultiByte(CP_ACP, 0, wstr, -1, 0, 0, nullptr, nullptr);
-	if ( len2 == 0 )
-		len2 = 1;
+	assert(len2 >= 0);
+	++len2;
 	char* str = (char*)calloc(len2, sizeof(char));
 	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, len2, nullptr, nullptr);
 	free(wstr);
@@ -2039,13 +2040,14 @@ char* Edif::ConvertAndCopyString(char* str, const std::string_view & utf8String,
 
 	// Convert string to Unicode
 	size_t Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), 0, 0);
-	if ( Length == 0 )
-		Length = 1;
-	WCHAR* wstr = (WCHAR*)calloc(Length, sizeof(WCHAR));
-	MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
+	assert(Length >= 0);
+	WCHAR* wstr = (WCHAR*)calloc(++Length, sizeof(WCHAR));
+	Length = MultiByteToWideChar(CP_UTF8, 0, utf8String.data(), utf8String.size(), wstr, Length);
+	assert(Length >= 0);
 
 	// Convert Unicode string using current user code page
-	WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLength, nullptr, nullptr);
+	Length = WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, maxLength, nullptr, nullptr);
+	assert(Length >= 0);
 	free(wstr);
 
 	return str;
