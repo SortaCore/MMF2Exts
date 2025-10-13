@@ -2596,16 +2596,18 @@ struct Properties::JSONPropertyReader : Properties::PropertyReader
 				return convRet->Return_Error(_T("JSONPropertyReader: JSON item %s, ID %zu, language %s has a default value, and shouldn't have one."),
 					UTF8ToTString(title).c_str(), id, JSON::LanguageName());
 			}
+
 			// TODO: Check options are valid
-
-			static ImgListProperty prop;
-			prop.numImages = 0;
-
+			std::uint16_t numImages = (std::uint16_t)(json_int_t)prop["NumImages"sv];
+			assert(numImages > 0);
+			// increment for numImages prefix
+			ImgListProperty* prop = (ImgListProperty*)calloc(++numImages, 2);
+			prop->numImages = numImages - 1;
 			// convState->resetPropertiesStream << bullet << title << " = image count 0\n";
 			convState->resetPropertiesStream << bullet << title << '\n';
 			++convState->numPropsReset;
 
-			return convRet->Return_OK(&prop, sizeof(prop));
+			return convRet->Return_OK(prop, numImages * 2, [](const void* f) { free((void *) f); });
 		}
 
 		case IDs::PROPTYPE_CUSTOM:
@@ -4027,11 +4029,13 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 
 		const std::tstring windowTitle = UTF8ToTString(jsonProp["WindowTitle"sv]);
 
-		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["MaxNumImages"sv]);
-		const std::uint32_t imageSize[2] = {
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][0]),
-			std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][1])
-		};
+		const std::uint32_t maxNumImages = std::max(1U, (std::uint32_t)std::max<json_int_t>(jsonProp["MaxNumImages"sv], jsonProp["NumImages"sv]));
+		std::uint32_t imageSize[2] = { 32, 32 };
+		if (jsonProp["ImageSize"sv].type == json_array)
+		{
+			imageSize[0] = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][0]);
+			imageSize[1] = std::max(1U, (std::uint32_t)(json_int_t)jsonProp["ImageSize"sv][1]);
+		}
 
 		PictureEditOptions opts = PictureEditOptions::None;
 		if (jsonProp["FixedImageSize"sv])
@@ -4083,7 +4087,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 				std::tstring tstr;
 				for (std::size_t i = 0, j = 0; i < imgTitles.u.array.length; ++i)
 				{
-					tstr = UTF8ToTString((const char*)imgTitles.u.array.values[i]);
+					tstr = UTF8ToTString(imgTitles[i]);
 					str.write(tstr.c_str(), tstr.size() + 1);
 					titles[i] = (TCHAR*)j;
 					j += tstr.size() + 1;
@@ -5509,7 +5513,11 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 			fullSize += sizeof(int) * 2;
 		else if (SVICompare(curPropType, "Image list"))
 		{
-			fullSize += sizeof(ImgListProperty);
+			// TODO: Check options are valid
+			std::uint16_t numImages = (std::uint16_t)(json_int_t)propjson["NumImages"sv];
+			assert(numImages > 0);
+			// increment for numImages prefix
+			fullSize += ++numImages * 2;
 			// Required that there is one image added
 			//if (((bool)propjson["FixedNumOfImages"]) && ((json_int_t)propjson["MaxNumImages"] == 1))
 			//	fullSize += sizeof(std::uint16_t);
