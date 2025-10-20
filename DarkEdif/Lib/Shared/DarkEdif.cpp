@@ -111,12 +111,15 @@ const TCHAR* const DarkEdif::JSON::LanguageName()
 // Case-insensitive comparison of texts. true if same. Uses stricmp or strcasecmp.
 bool DarkEdif::SVICompare(const std::string_view& first, const std::string_view& second)
 {
-	return first.size() == second.size() && !_stricmp(first.data(), second.data());
+	// std::string_view() default ctor makes with null ptr, so if empty, _stricmp may crash from null
+	return first.size() == second.size() && (first.empty() || !_stricmp(first.data(), second.data()));
 }
 // Case-insensitive comparison of texts. true if first param starts with second. Uses strnicmp or strncasecmp.
 bool DarkEdif::SVIComparePrefix(const std::string_view& text, const std::string_view& prefix)
 {
-	return text.size() >= prefix.size() && !_strnicmp(text.data(), prefix.data(), prefix.size());
+	assert(!prefix.empty());
+	// std::string_view() default ctor makes with null ptr, so if empty, _strnicmp may crash from null
+	return text.size() >= prefix.size() && !text.empty() && !_strnicmp(text.data(), prefix.data(), prefix.size());
 }
 
 
