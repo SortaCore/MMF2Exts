@@ -222,7 +222,8 @@ typedef struct _json_value
 					return std::string_view(u.string.ptr, u.string.length);
 
 				default:
-					return std::string_view();
+					// No null ptr from default string_view
+					return std::string_view("", 0);
 			}
 		}
 
