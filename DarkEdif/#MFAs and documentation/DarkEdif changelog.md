@@ -29,9 +29,9 @@ Changes until v20 release
 	- hoCurrentParam was not incremented by runtime, breaking when pre-evaluated events were generated in expressions
 	- This was fixed with hoCurrentParam being reset to first param position, but that breaks CNC_GetXX
 	- Float parameters were read with CNC_GetFloatParameter, not CNC_GetFloatValue, the latter not re-evaluating
-- PreBuildTool: Now v1.0.1.1; supports display and text extensions
+- PreBuildTool: Now v1.0.1.1; supports display and text extensions, fix A/C/E function names reused in Ext sub-structs
 - PostBuildTool: Now v1.0.1.1; supports display and text extensions
-- PrepareDarkEdif: Now v1.0.0.5; support display and text extensions, add OEFLAGS/OEPREFS configuration
+- PrepareDarkEdif: Now v1.0.0.6; support display and text extensions, add OEFLAGS/OEPREFS configuration
 - Android: Builds 16KiB page size libraries on ARM64/x86_64, required by Google Play
 - All platforms: Added support for Size properties
 - PostBuildTool: Now v1.0.1.0; iOS frameworks use spaces instead of underscores, and checks for invalid Mac code-signing keychain
