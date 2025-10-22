@@ -61,6 +61,8 @@ struct EDITDATA final
 };
 #pragma pack (pop)
 
+// MMF2 version of Lacewing Relay Server #14 was version 1, EDITDATA size 22
+// MMF2 version of Lacewing Relay Server #20 was version 1, EDITDATA size 536
 // To match Lacewing Relay Server, this struct's size must be 536 bytes.
 // NOPROPS is used to manually set the size of this struct and access properties in it.
 static_assert(sizeof(EDITDATA) == 536);

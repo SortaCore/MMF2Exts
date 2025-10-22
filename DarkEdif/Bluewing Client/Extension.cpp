@@ -263,7 +263,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	isGlobal = edPtr->isGlobal;
 
 #if EditorBuild
-	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA) || edPtr->eHeader.extVersion != Extension::Version)
 	{
 		DarkEdif::MsgBox::Error(_T("Property size mismatch"), _T("Properties are the wrong size (MFA size %lu, extension size %zu). "
 			"Please re-create the Lacewing Blue Client object in frame, "
