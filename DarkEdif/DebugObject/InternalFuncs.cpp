@@ -233,6 +233,8 @@ LONG WINAPI UnhandledExceptionCatcher(PEXCEPTION_POINTERS pExceptionPtrs)
 			return EXCEPTION_CONTINUE_SEARCH;
 
 		case GlobalData::HandleType::HANDLE_VIA_CONTINUE:
+			// DR6 has the flag for which data breakpoint was reached, if that was used
+			// TODO: x86 continue register? ContinueDebugEvent(DBG_CONTINUE)?
 			if (GlobalExt->data->continuesRemaining > 0)
 			{
 				--(GlobalExt->data->continuesRemaining);
