@@ -307,10 +307,39 @@ namespace DarkEdif {
 	// Checks if path exists, and is a file
 	bool FileExists(const std::tstring_view filePath);
 
+	// =====
+	// This region does logging and debugging
+	// =====
 
+	// Breaks if debugger is attached - on Windows. On Non-Windows, raises SIGINT and may lock the control flow.
 	void BreakIfDebuggerAttached();
+
+	// For use with SetDataBreakpoint()
+	enum class DataBreakpointType
+	{
+		// Breaks when this address is executed as code
+		ExecuteCode = 0,
+		// Breaks on any data write to this address
+		Write = 1,
+		// Breaks on any data read from this address
+		Read = 2,
+		// Breaks on any data reading from or writing to this address
+		ReadWrite = 3,
+	};
+
+	// Windows, Debug only! Sets an area of memory to debugger-pause if modified. Assumes current thread will be modifying it.
+	// Will hard-fail if it cannot set. Only 4 data breakpoints can be active at once.
+	void SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt = DataBreakpointType::Write);
+
 	[[noreturn]]
 	void LOGFInternal(PrintFHintInside const TCHAR* fmt, ...) PrintFHintAfter(1, 2);
+
+	// For calling LOGX variants with va_list, the vprintf to printf
+	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
+
+	// =====
+	// This region does message boxes
+	// =====
 
 	namespace MsgBox
 	{
@@ -321,8 +350,6 @@ namespace DarkEdif {
 		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
 		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
-
-	void LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_list) PrintFHintAfter(2, 0);
 
 	// =====
 	// This region does looking up correct languages from INI.

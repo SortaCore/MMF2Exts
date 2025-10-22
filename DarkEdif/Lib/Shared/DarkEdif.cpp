@@ -5916,12 +5916,106 @@ void DarkEdif::BreakIfDebuggerAttached()
 {
 	raise(SIGINT);
 }
+
+void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
+{
+	// Too Java-ridden.
+	LOGE(_T("SetDataBreakpoint not possible on Android.\n"));
+	(void)memory;
+	(void)size;
+	(void)dbt;
+	return;
+}
+
 #elif defined(_WIN32)
 
 void DarkEdif::BreakIfDebuggerAttached()
 {
 	if (IsDebuggerPresent())
 		DebugBreak();
+}
+
+void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
+{
+	if (!memory || (unsigned long)memory > 0x80000000UL)
+		LOGF(_T("Invalid data breakpoint set: ptr is 0x%p.\n"), memory);
+
+	// I saw a note that negative addresses can only be set from a driver? Might be folklore.
+#ifndef _WIN64
+	if ((unsigned long)memory > 0x80000000UL)
+		LOGW(_T("Invalid data breakpoint set: ptr is 0x%p.\n"), memory);
+#endif
+	// Sizes allowed: 1, 2, 4, 8
+	if (size == 0 || size == 3 || (size >= 5 && size <= 7) || size > 8)
+		LOGF(_T("Invalid data breakpoint set: size is %zu. Sizes allowed: 1, 2, 4, 8. Combine breakpoints if needed.\n"), size);
+
+	// Data breakpoints are sometimes used for anti-DRM or cheating, like most debugger-stuff.
+	// Using it in release builds is probably unintended by ext dev and an accidental overlap from their debug code.
+#ifndef _DEBUG
+	LOGW(_T("It is not recommended to use data breakpoints in Release builds.\n"));
+#endif
+
+	// Originally inspired from hwbrk set on CodeProject.
+	// Now adapted from https://github.com/rad9800/hwbp4mw/blob/main/HWBPP.cpp
+	// We don't monitor access from every thread here; this may be possible in hwbpp.cpp.
+	// The original, less hackerman code spawned a thread to set the current thread's debug registers;
+	// that may be a requirement or might be over-engineering.
+	// Also note https://stackoverflow.com/a/40820763 has useful info
+	static thread_local std::uint8_t numBreakpoints = 0;
+
+	if (numBreakpoints > 4)
+		return LOGF(_T("Setting up a data breakpoint failed: max of 4 breakpoints."));
+
+	DWORD curThreadID = GetCurrentThreadId();
+	bool good = false;
+
+	// Context may be clobbered between instructions if we read  it within same thread, so spawn another one.
+	std::thread setter([&good, memory, curThreadID, size, dbt](int pos)
+	{
+		CONTEXT context = {};
+		context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+		HANDLE callerThread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_SET_CONTEXT, FALSE, curThreadID);
+		if (!callerThread)
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread access, error %u."), GetLastError());
+
+		if (SuspendThread(callerThread) == -1)
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't suspend original thread, error %u."), GetLastError());
+
+		if (!GetThreadContext(callerThread, &context))
+		{
+			ResumeThread(callerThread);
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread context, error %u."), GetLastError());
+		}
+
+		// This weird size conversion is correct, I've tested. Odd, however.
+		const int siz = size == 1 ? 0 : size == 2 ? 1 : size == 4 ? 3 : /* size == 8 */ 2;
+
+		//if constexpr (create) {
+		(&context.Dr0)[pos] = (DWORD)(long)memory;
+
+		const auto SetBits = [](DWORD_PTR* dw, int lowBit, int bits, int newValue) {
+			DWORD_PTR mask = (1 << bits) - 1;
+			*dw = (*dw & ~(mask << lowBit)) | (newValue << lowBit);
+		};
+		SetBits(&context.Dr7, 16 + pos * 4, 2, (int)dbt);
+		SetBits(&context.Dr7, 18 + pos * 4, 2, siz);
+		SetBits(&context.Dr7, pos * 2, 1, 1);
+		/* else remove:
+			if ((&context.Dr0)[pos] == address) {
+				
+			}
+		}*/
+		BOOL ret = SetThreadContext(callerThread, &context);
+		ResumeThread(callerThread);
+		CloseHandle(callerThread);
+		if (!ret)
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't set thread context, error %u."), GetLastError());
+		good = true;
+	}, numBreakpoints);
+	setter.join();
+
+	if (good)
+		++numBreakpoints;
 }
 
 [[noreturn]]
@@ -5937,9 +6031,44 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 }
 #else // APPLE
 
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
 void DarkEdif::BreakIfDebuggerAttached()
 {
-	__builtin_trap();
+	// Taken from https://stackoverflow.com/a/27254064
+	static bool debuggerIsAttached = false;
+
+	static dispatch_once_t debuggerPredicate;
+	dispatch_once(&debuggerPredicate, ^{
+		struct kinfo_proc info;
+		size_t info_size = sizeof(info);
+		int name[4] { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() }; // from unistd.h, included by Foundation
+
+		if (sysctl(name, 4, &info, &info_size, NULL, 0) == -1)
+		{
+			LOGE("DarkEdif::BreakIfDebuggerAttached() couldn't call sysctl(): %s. Assuming true.", strerror(errno));
+			debuggerIsAttached = true;
+		}
+
+		if (!debuggerIsAttached && (info.kp_proc.p_flag & P_TRACED) != 0)
+			debuggerIsAttached = true;
+	});
+
+	if (debuggerIsAttached)
+		__builtin_trap();
+}
+
+void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
+{
+	// Too locked down.
+	LOGE(_T("SetDataBreakpoint not possible on iOS/Mac.\n"));
+	(void)memory;
+	(void)size;
+	(void)dbt;
+	return;
 }
 
 int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR * caption, int iconAndButtons)
