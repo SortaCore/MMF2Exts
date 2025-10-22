@@ -98,7 +98,11 @@ const TCHAR * Extension::GetAllActionInfos()
 	std::tstringstream output;
 
 	short ret = getRunObjectInfosFunc(Edif::SDK->mV, runInfos);
-	output << _T("Size of EDITDATA: "sv) << runInfos->EDITDATASize << _T('.');
+	output << _T("EDITDATA Size: "sv) << runInfos->EDITDATASize << _T(".\r\n"sv);
+	output << _T("EDITDATA Version: "sv) << runInfos->Version << _T(".\r\n"sv);
+	output << _T("EDITDATA OEFLAGS: "sv) << std::hex << (int)runInfos->EditFlags << _T(".\r\n"sv);
+	output << _T("EDITDATA OEPREFS: "sv) << (int)runInfos->EditPrefs << _T(".\r\n"sv) << std::dec;
+
 
 	const short bufferSize = 512;
 	std::unique_ptr<TCHAR[]> buffer = std::make_unique<TCHAR[]>(bufferSize);
