@@ -1196,6 +1196,35 @@ bool DarkEdif::Surface::GetAndResetAltered()
 	return true;
 }
 
+
+#if DARKEDIF_DISPLAY_TYPE > DARKEDIF_DISPLAY_ANIMATIONS && defined(_WIN32)
+void DarkEdif::Surface::Internal_WinZoneHack()
+{
+	static std::unique_ptr<Rect> lastZone;
+	// Software display mode does not redraw on screen automatically.
+	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
+	{
+		WinAddZone(Edif::SDK->mV->IdEditWin, &ext->rdPtr->rHo.hoRect);
+#if 0
+		// If scroll dependent, account for scroll offset in WindowX/Y
+		const bool scrollDependent = (ext->rdPtr->rHo.hoOEFlags & OEFLAGS::SCROLLING_INDEPENDENT) == OEFLAGS::NONE;
+		Rect curZone(
+			Point(
+				ext->rdPtr->rHo.hoX - (scrollDependent ? ext->rhPtr->rhWindowX : 0) - ext->rdPtr->rHo.hoImgXSpot,
+				ext->rdPtr->rHo.hoY - (scrollDependent ? ext->rhPtr->rhWindowY : 0) - ext->rdPtr->rHo.hoImgYSpot, true),
+			GetSize(), true);
+		
+		WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)&curZone);
+		//if (lastZone)
+		//	WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)lastZone.get());
+		//lastZone = std::make_unique<Rect>(curZone);
+#endif
+	}
+	if (surf->IsTransparent())
+		LOGW(_T("Your ext display surface is entirely transparent!\n"));
+}
+#endif // _WIN32
+
 #if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_SIMPLE
 void DarkEdif::Surface::SetAsExtensionDisplay(Extension* ext)
 {
@@ -1215,35 +1244,6 @@ void DarkEdif::Surface::SetAsExtensionDisplay(Extension* ext)
 	const Size imgSize = GetSize();
 	ext->rdPtr->get_rHo()->SetSize(imgSize.width, imgSize.height);
 }
-
-#ifdef _WIN32
-void DarkEdif::Surface::Internal_WinZoneHack()
-{
-	static std::unique_ptr<Rect> lastZone;
-	// Software display mode does not redraw on screen automatically.
-	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
-	{
-		WinAddZone(Edif::SDK->mV->IdEditWin, &ext->rdPtr->rHo.hoRect);
-#if 0
-		// If scroll dependent, account for scroll offset in WindowX/Y
-		const bool scrollDependent = (ext->rdPtr->rHo.hoOEFlags & OEFLAGS::SCROLLING_INDEPENDENT) == OEFLAGS::NONE;
-		Rect curZone(
-			Point(
-				ext->rdPtr->rHo.X - (scrollDependent ? ext->rhPtr->WindowX : 0) - ext->rdPtr->rHo.ImgXSpot,
-				ext->rdPtr->rHo.Y - (scrollDependent ? ext->rhPtr->WindowY : 0) - ext->rdPtr->rHo.ImgYSpot, true),
-			GetSize(), true);
-		
-		WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)&curZone);
-		//if (lastZone)
-		//	WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)lastZone.get());
-		//lastZone = std::make_unique<Rect>(curZone);
-#endif
-	}
-	if (surf->IsTransparent())
-		LOGW(_T("Your ext display surface is entirely transparent!\n"));
-}
-#endif // _WIN32
-
 void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 {
 	assert(ext);
