@@ -1549,6 +1549,11 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		LOGF(_T("Image being allocated of invalid size %s, aborting.\n"), Size{ (int) width, (int)height }.str().c_str());
 
 #ifdef _WIN32
+	// 24-bit depth even for alpha, as Fusion does not use alpha channel in an ARGB surface,
+	// but creates two surfaces, RGB and A.
+	// Direct3D docs refer to this as B8G8R8 format.
+	int depth = 24;
+
 	SurfaceType st;
 	SurfaceDriver sd = SurfaceDriver::Bitmap;
 	if (needTextFuncs && false)
@@ -1560,13 +1565,18 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		st = SurfaceType::HWA_ManagedTexture;
 		cSurface* main = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
 		sd = (SurfaceDriver)main->GetDriver();
+
+		// Although Fusion doesn't use the alpha of 32-bit ARGB surfaces,
+		// 24-bit depth surfaces cannot be made in Direct3D, so we must upgrade.
+		// Direct3D docs refer to this as X8B8G8R8 format.
+		if (sd >= SurfaceDriver::Direct3D8)
+			depth = 32;
 	}
 
 	if (width == 0 || height == 0)
 		LOGF(_T("Invalid surface size.\n"));
 
 	cSurface* proto;
-	const int depth = 24;
 	if (GetSurfacePrototype(&proto, depth, (int)st, (int)sd) == FALSE)
 		LOGF(_T("Couldn't get surface prototype (%d, %d, %d).\n"), depth, (int)st, (int)sd);
 	surf = new cSurface();
@@ -1578,6 +1588,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		surf->SetTransparentColor(RGB(255, 0, 255)); // magneta by default
 	else
 	{
+		// Creates either an 8-bit array, or Direct3D ii format surface. Alpha, 8 bits per pixel.
 		surf->CreateAlpha();
 		cSurface * alpha = surf->GetAlphaSurface();
 		if (!alpha || !alpha->Fill((COLORREF)0xFFFFFFFF))
@@ -1776,7 +1787,7 @@ std::tstring DarkEdif::Surface::Describe() const {
 	}
 	else if (format == PixelFormat::RGB || format == PixelFormat::BGR)
 		sizeBytes *= GetHeight() * 3;
-	else if (format == PixelFormat::RGBX || format == PixelFormat::RGBA ||
+	else if (format == PixelFormat::XBGR || format == PixelFormat::RGBX || format == PixelFormat::RGBA ||
 			format == PixelFormat::ABGR || format == PixelFormat::RGBA)
 		sizeBytes *= GetHeight() * 4;
 	else
