@@ -2803,19 +2803,25 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 		return nullptr;
 	}
 
-	// Fusion may not call it for this scenario either. We'll see.
+	// Fusion will call to upgrade if the MFA is earlier than current ext version.
+	// This means the MFA Ext > MFX Ext, so either Fusion user installed an old ext version,
+	// or ext dev accidentally reverted their Extension::Version
 	if (oldExtVersion > Extension::Version)
 	{
 		DebugProp_OutputString(_T("UpdateEditStructure warning: MFA version is greater than current version.\n"));
 
 #ifdef _DEBUG
 		// If a developer, let them pick what to do. They might've screwed up the MFA version number.
-		int msgRet = MsgBox::WarningYesNoCancel(_T("Property update warning"), _T("UpdateEditStructure has current version %i and MFA has a version of %i. "
-			"Select an action to take:\n"
-			"Yes = run updater.\n"
-			"No = set the EDITDATA's version number to earlier version %i.\n"
-			"Cancel = make no changes and ignore the difference."),
-			Extension::Version, oldExtVersion, Extension::Version);
+		int msgRet = MsgBox::WarningYesNoCancel(_T("Property update warning"),
+			_T("UpdateEditStructure has current ext version %i and MFA has a later version of %i.\n"
+			"Did you install an old ext version or revert Extension::Version? If so, cancel and close MFA immediately without saving.\n\n"
+			"Otherwise, select an action to take:\n"
+			"Yes = run prop updater. Convert MFA version %i to current ext version %i.\n"
+			"No = just set the MFA's version number %i to earlier version %i, without changing properties.\n"
+			"Cancel = do not change anything, ignore the difference - will likely fail."),
+			Extension::Version, oldExtVersion,
+			oldExtVersion, Extension::Version,
+			oldExtVersion, Extension::Version);
 		if (msgRet != IDYES)
 		{
 			if (msgRet == IDNO)
