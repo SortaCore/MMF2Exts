@@ -2119,7 +2119,7 @@ bool Edif::recursive_mutex::try_lock(edif_lock_debugParams)
 		sprintf_s(exc_addr, std::size(exc_addr), "crashlog%p.txt", this);
 		FILE* f = fopen(exc_addr, "wb");
 		if (f == NULL) {
-			LOGF(_T("Failed to write log file, error %d."), errno);
+			LOGF(_T("Failed to write log file, error %d.\n"), errno);
 		}
 		else
 		{

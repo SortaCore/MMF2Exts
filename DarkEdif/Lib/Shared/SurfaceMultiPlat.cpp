@@ -1021,7 +1021,7 @@ DarkEdif::Surface::Surface(RunHeader * rhPtr, cSurface* surf, bool isFrameSurfac
 	{
 		const SurfaceType surfType = (SurfaceType)surf->GetType();
 		if ((int)surfType < 0 || surfType >= SurfaceType::Max)
-			LOGF(_T("%sUnexpected surface type %d."), debugID, (int)surfType);
+			LOGF(_T("%sUnexpected surface type %d.\n"), debugID, (int)surfType);
 		// Memory-backed buffer (CPU based) is needed to do most geometric drawing
 		hasGeometryCapacity = surfType <= SurfaceType::Memory_PermanentDeviceContext;
 		// A device context (DC) is needed to draw text
@@ -1605,7 +1605,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 	else if (depth == 32)
 		format = PixelFormat::XBGR;
 	else
-		LOGF(_T("Unrecognised pixel depth"));
+		LOGF(_T("Unrecognized pixel depth %i\n"), depth);
 	// TODO: We can support unmanaged textures and save RAM, if we implement
 	// the lost device callback and reload the image. For now, let's leave it.
 #elif defined(__ANDROID__)
@@ -2496,7 +2496,7 @@ bool DarkEdif::Surface::IsFullyTransparent() const {
 #ifdef _WIN32
 	return surf->IsTransparent() != FALSE;
 #else
-	LOGF(_T("Cannot check fully transparent; not implemented on this platform"));
+	LOGF(_T("Cannot check fully transparent; not implemented on this platform\n"));
 	return false;
 #endif
 }
@@ -2507,11 +2507,11 @@ bool DarkEdif::Surface::ReplaceColor(std::uint32_t newColor, std::uint32_t oldCo
 #ifdef _WIN32
 	if (!surf->ReplaceColor(newColor, oldColor))
 #else
-	LOGF(_T("Cannot replace color; not implemented on this platform"));
+	LOGF(_T("Cannot replace color; not implemented on this platform\n"));
 	if (true)
 #endif
 	{
-		LOGE(_T("%sError replacing color %s with color %s."),
+		LOGE(_T("%sError replacing color %s with color %s.\n"),
 			debugID, ColorToString(oldColor, includeAlpha).c_str(), ColorToString(newColor, includeAlpha).c_str());
 		return false;
 	}
@@ -2536,9 +2536,9 @@ HICON DarkEdif::Surface::Windows_CreateIcon(Size iconSize, std::uint32_t transpC
 	if (transpColor == -1)
 		transpColor = surf->GetTransparentColor();
 	else if (HasAlpha())
-		LOGW(_T("%sGetting surface transparent color when alpha is present - color may be ignored."), debugID);
+		LOGW(_T("%sGetting surface transparent color when alpha is present - color may be ignored.\n"), debugID);
 	if (pHotSpot && !CheckPointContained(*pHotSpot))
-		LOGW(_T("%sCreating icon warning: hot spot position is outside the surface area."), debugID);
+		LOGW(_T("%sCreating icon warning: hot spot position is outside the surface area.\n"), debugID);
 	return surf->CreateIcon(iconSize.width, iconSize.height, transpColor,
 		pHotSpot && pHotSpot->x == 0 && pHotSpot->y == 0 ? nullptr : (POINT *)pHotSpot);
 }

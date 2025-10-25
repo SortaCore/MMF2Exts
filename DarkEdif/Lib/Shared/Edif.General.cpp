@@ -1132,7 +1132,7 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getRunObj
 	if (surf)
 		intSurf = ForbiddenInternals::GetInternalSurface(surf);
 	else // null surface delegates to DisplayRunObject
-		LOGV(_T("GetRunObjectSurface got a null surface, returning null."));
+		LOGV(_T("GetRunObjectSurface got a null surface, returning null.\n"));
 #endif
 #ifdef _WIN32
 	return (cSurface *)intSurf;

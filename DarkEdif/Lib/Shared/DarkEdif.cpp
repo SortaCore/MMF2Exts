@@ -2709,7 +2709,7 @@ template <typename T>
 {
 	// This function is a dummy so the compiler thinks UserConverterWrap always has a definition, but it shouldn't be run,
 	// because in the scenario where UserConverterWrap is executed, the below override should be what is compiled into the code instead.
-	LOGF(_T("Running dummy UserConverterWrap(). Should not happen."));
+	LOGF(_T("Running dummy UserConverterWrap(). Should not happen.\n"));
 	return nullptr;
 };
 // Wrapper when EDITDATA has a usable UserConverter function: just call it!
@@ -2735,7 +2735,7 @@ template <typename T>
 {
 	// This function is a dummy so the compiler thinks MigrateMiddleWrap always has a definition, but it shouldn't be run,
 	// because in the scenario where MigrateMiddleWrap is executed, the below override should be what is compiled into the code instead.
-	LOGF(_T("Running dummy MigrateMiddleWrap(). Should not happen."));
+	LOGF(_T("Running dummy MigrateMiddleWrap(). Should not happen.\n"));
 	return false;
 };
 // Wrapper when EDITDATA has a usable MigrateMiddle function: just call it!
@@ -3380,7 +3380,7 @@ bool DarkEdif::Properties::IsPropChecked(int propID) const
 	const auto &p = Elevate(*this);
 	if (propID >= p.numProps)
 	{
-		LOGF(_T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu."), propID, p.numProps);
+		LOGF(_T("Can't read property checkbox for property ID %d, the valid ID range is 0 to %hu.\n"), propID, p.numProps);
 		return false;
 	}
 	const std::uint8_t* chkBytes = p.dataForProps;
@@ -3435,9 +3435,9 @@ std::tstring DarkEdif::Properties::Internal_GetPropStr(const Properties::Data* d
 			assert(data2->propTypeID == Edif::Properties::IDs::PROPTYPE_EDIT_STRING);
 			return UTF8ToTString(std::string_view((const char*)data2->ReadPropValue(), data2->ReadPropValueSize()));
 		}
-		LOGF(_T("Unexpected data in list property, expecting L or S prefix, but got '%c'."), (char)rs->setIndicator);
+		LOGF(_T("Unexpected data in list property, expecting L or S prefix, but got '%c'.\n"), (char)rs->setIndicator);
 	}
-	LOGF(_T("GetPropertyStr() error; prop index %hu (name %s) is not a string property."),
+	LOGF(_T("GetPropertyStr() error; prop index %hu (name %s) is not a string property.\n"),
 		data->propJSONIndex, UTF8ToTString(data->ReadPropName()).c_str());
 	return std::tstring();
 }
@@ -3475,7 +3475,7 @@ float DarkEdif::Properties::Internal_GetPropNum(const Properties::Data* data) co
 		return ret;
 	}
 
-	LOGF(_T("GetPropertyNum() error; property name \"%s\", JSON index %hu, is not a numeric property."),
+	LOGF(_T("GetPropertyNum() error; property name \"%s\", JSON index %hu, is not a numeric property.\n"),
 		UTF8ToTString(data->ReadPropName()).c_str(), data->propJSONIndex);
 	return 0.f;
 }
@@ -3497,14 +3497,14 @@ std::uint16_t DarkEdif::Properties::Internal_GetPropertyImageID(const Properties
 		return UINT16_MAX;
 	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
 	{
-		LOGF(_T("GetPropertyImageID() error; property name \"%s\", JSON index %hu, is not an image list."),
+		LOGF(_T("GetPropertyImageID() error; property name \"%s\", JSON index %hu, is not an image list.\n"),
 			UTF8ToTString(data->ReadPropName()).c_str(), data->propJSONIndex);
 		return UINT16_MAX;
 	}
 	const ImgListProperty* imgProp = (ImgListProperty*)data->ReadPropValue();
 	if (imgIndex >= imgProp->numImages)
 	{
-		LOGF(_T("GetPropertyImageID() error; property name \"%s\", JSON index %hu, has %hu images, but reading image index %hu."),
+		LOGF(_T("GetPropertyImageID() error; property name \"%s\", JSON index %hu, has %hu images, but reading image index %hu.\n"),
 			UTF8ToTString(data->ReadPropName()).c_str(), data->propJSONIndex, imgProp->numImages, imgIndex);
 		return UINT16_MAX;
 	}
@@ -3524,7 +3524,7 @@ std::uint16_t DarkEdif::Properties::Internal_GetPropertyNumImages(const Properti
 		return UINT16_MAX;
 	if (data->propTypeID != Edif::Properties::IDs::PROPTYPE_IMAGELIST)
 	{
-		LOGF(_T("GetPropertyNumImages() error; property name \"%s\", JSON ID %d is not an image list."),
+		LOGF(_T("GetPropertyNumImages() error; property name \"%s\", JSON ID %d is not an image list.\n"),
 			UTF8ToTString(data->ReadPropName()).c_str(), data->propJSONIndex);
 		return UINT16_MAX;
 	}
@@ -3704,7 +3704,7 @@ std::uint16_t DarkEdif::Properties::PropJSONIdxFromName(const TCHAR * func, cons
 		data = data->Next();
 	}
 
-	LOGF(_T("%s() error; property name \"%s\" does not exist."),
+	LOGF(_T("%s() error; property name \"%s\" does not exist.\n"),
 		func, UTF8ToTString(propName).c_str());
 	return UINT16_MAX;
 }
@@ -5031,23 +5031,23 @@ std::unique_ptr<LOGFONTW> DarkEdif::EditDataFont::GetWindowsLogFontW() const {
 
 void DarkEdif::EditDataFont::SetWindowsLogFont(const LOGFONT * const fnt) {
 	if (!fnt)
-		return LOGF(_T("Font cannot be null."));
+		return LOGF(_T("Font cannot be null.\n"));
 	if (memcpy_s(&height, offsetof(DarkEdif::EditDataFont, fontNameU8), &fnt->lfHeight, sizeof(LOGFONT) - sizeof(LOGFONT::lfFaceName)))
-		LOGE(_T("Couldn't copy LOGFONT data -> EditDataFont, error %d."), errno);
+		LOGE(_T("Couldn't copy LOGFONT data -> EditDataFont, error %d.\n"), errno);
 	this->SetFontName(fnt->lfFaceName); // calls UpdateLogFont
 }
 void DarkEdif::EditDataFont::SetWindowsLogFontA(const LOGFONTA * const fnt) {
 	if (!fnt)
-		return LOGF(_T("Font cannot be null."));
+		return LOGF(_T("Font cannot be null.\n"));
 	if (memcpy_s(&height, offsetof(DarkEdif::EditDataFont, fontNameU8), &fnt->lfHeight, sizeof(LOGFONT) - sizeof(LOGFONT::lfFaceName)))
-		LOGE(_T("Couldn't copy LOGFONTA data -> EditDataFont, error %d."), errno);
+		LOGE(_T("Couldn't copy LOGFONTA data -> EditDataFont, error %d.\n"), errno);
 	this->SetFontName(ANSIToTString(fnt->lfFaceName));
 }
 void DarkEdif::EditDataFont::SetWindowsLogFontW(const LOGFONTW * const fnt) {
 	if (!fnt)
-		return LOGF(_T("Font cannot be null."));
+		return LOGF(_T("Font cannot be null.\n"));
 	if (memcpy_s(&height, offsetof(DarkEdif::EditDataFont, fontNameU8), &fnt->lfHeight, sizeof(LOGFONT) - sizeof(LOGFONT::lfFaceName)))
-		LOGE(_T("Couldn't copy LOGFONTW data -> EditDataFont, error %d."), errno);
+		LOGE(_T("Couldn't copy LOGFONTW data -> EditDataFont, error %d.\n"), errno);
 	this->SetFontName(WideToTString(fnt->lfFaceName));
 }
 
@@ -5970,7 +5970,7 @@ void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreak
 	static thread_local std::uint8_t numBreakpoints = 0;
 
 	if (numBreakpoints > 4)
-		return LOGF(_T("Setting up a data breakpoint failed: max of 4 breakpoints."));
+		return LOGF(_T("Setting up a data breakpoint failed: max of 4 breakpoints.\n"));
 
 	DWORD curThreadID = GetCurrentThreadId();
 	bool good = false;
@@ -5982,15 +5982,15 @@ void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreak
 		context.ContextFlags = CONTEXT_DEBUG_REGISTERS;
 		HANDLE callerThread = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_SET_CONTEXT, FALSE, curThreadID);
 		if (!callerThread)
-			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread access, error %u."), GetLastError());
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread access, error %u.\n"), GetLastError());
 
 		if (SuspendThread(callerThread) == -1)
-			return LOGF(_T("Setting up a data breakpoint failed: couldn't suspend original thread, error %u."), GetLastError());
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't suspend original thread, error %u.\n"), GetLastError());
 
 		if (!GetThreadContext(callerThread, &context))
 		{
 			ResumeThread(callerThread);
-			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread context, error %u."), GetLastError());
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't get thread context, error %u.\n"), GetLastError());
 		}
 
 		// This weird size conversion is correct, I've tested. Odd, however.
@@ -6015,7 +6015,7 @@ void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreak
 		ResumeThread(callerThread);
 		CloseHandle(callerThread);
 		if (!ret)
-			return LOGF(_T("Setting up a data breakpoint failed: couldn't set thread context, error %u."), GetLastError());
+			return LOGF(_T("Setting up a data breakpoint failed: couldn't set thread context, error %u.\n"), GetLastError());
 		good = true;
 	}, numBreakpoints);
 	setter.join();
@@ -7771,7 +7771,7 @@ void DarkEdif::OutputDebugStringAInternal(const char * debugString)
 		debugStringSafe.resize(debugStringSafe.size() - 1U);
 #endif
 
-	LOGI("OutputDebugStringA: %s.", debugStringSafe.c_str());
+	LOGI("OutputDebugStringA: %s.\n", debugStringSafe.c_str());
 }
 #endif // Android, iOS, and DarkEdif log level INFO or lower level
 

@@ -53,11 +53,11 @@ void objInfoList::SelectAll(RunHeader* rhPtr, bool explicitAll /* = false */) {
 short RunHeader::GetOIListIndexFromOi(const short oi)
 {
 	if (oi == -1)
-		LOGF(_T("OI -1 should not have been passed to GetOIListByOi()."));
+		LOGF(_T("OI -1 should not have been passed to GetOIListIndexFromOi().\n"));
 
 	// Qualifier OI not expected
 	if ((oi & 0x8000) != 0)
-		LOGF(_T("OI %hi is a qualifier or invalid OI; it should not have been passed to GetOIListByOi()."), oi);
+		LOGF(_T("OI %hi is a qualifier or invalid OI; it should not have been passed to GetOIListIndexFromOi().\n"), oi);
 
 	// The OIList is a sparse array, but consistently increasing, as I understand it.
 	// TODO: If this is not the case, the last > j, and j > oi checks need removing,
@@ -157,20 +157,20 @@ std::size_t CRunAppMultiPlat::GetNumFusionFrames() {
 std::uint32_t Edif::Runtime::GetRunObjectTextColor() const
 {
 	if (extFont == NULL)
-		return LOGF(_T("Can't get object text color: font was not set.")), 0;
+		return LOGF(_T("Can't get object text color: font was not set.\n")), 0;
 	return extFont->fontColor;
 }
 void Edif::Runtime::SetRunObjectTextColor(const std::uint32_t color)
 {
 	if (extFont == NULL)
-		return LOGF(_T("Can't set object font: font was not set."));
+		return LOGF(_T("Can't set object font: font was not set.\n"));
 	extFont->fontColor = color;
 }
 
 void Edif::Runtime::SetRunObjectFont(const void* const pLf, const void* const pRc)
 {
 	if (extFont == NULL)
-		return LOGF(_T("Can't set object font: font was not set."));
+		return LOGF(_T("Can't set object font: font was not set.\n"));
 
 #ifdef _WIN32
 	extFont->SetFont((const LOGFONT *)pLf);
@@ -188,7 +188,7 @@ void Edif::Runtime::SetRunObjectFont(const void* const pLf, const void* const pR
 void Edif::Runtime::SetSurfaceWithSize(int width, int height)
 {
 	if (surf || ext->surf)
-		LOGF(_T("Don't double-setup the Extension display\n"));
+		LOGF(_T("Don't double-setup the Extension display.\n"));
 	surf = std::make_unique<DarkEdif::Surface>(ext->rhPtr, true, true, width, height, true);
 	surf->SetAsExtensionDisplay(ext);
 	ext->surf = surf.get();
@@ -548,7 +548,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 	if (i >= GetAltStringCount())
 	{
 		if (!DarkEdif::IsFusion25)
-			return LOGE(_T("Cannot set alt string at index %zu, invalid index."), i);
+			return LOGE(_T("Cannot set alt string at index %zu, invalid index.\n"), i);
 
 		// TODO: if this does not work, just throw
 #ifdef _WIN32
@@ -557,7 +557,7 @@ void AltVals::SetAltStringAtIndex(const std::size_t i, const std::tstring_view& 
 		void* v = malloc(i * sizeof(TCHAR*)); // TODO: test this, and alt value equivalent
 #endif
 		if (!v)
-			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+			return LOGF(_T("Failed to expand alt strings to %zu entries.\n"), i);
 #ifdef _WIN32
 		*(void **)&CF25.Strings = v; // TODO: Simplify
 		CF25.NumAltStrings = (int)i;
@@ -588,7 +588,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const double d)
 	if (i >= GetAltValueCount())
 	{
 		if (!DarkEdif::IsFusion25)
-			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index.\n"), i);
 		
 		// TODO: if this does not work, just throw
 #ifdef _WIN32
@@ -597,7 +597,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const double d)
 		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
 #endif
 		if (!v)
-			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+			return LOGF(_T("Failed to expand alt strings to %zu entries.\n"), i);
 #ifdef _WIN32
 		*(void **)&CF25.Values = v; // TODO: Simplify
 		CF25.NumAltValues = (int)i;
@@ -619,7 +619,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const int l)
 	if (i >= GetAltValueCount())
 	{
 		if (!DarkEdif::IsFusion25)
-			return LOGE(_T("Cannot set alt value at index %zu, invalid index."), i);
+			return LOGE(_T("Cannot set alt value at index %zu, invalid index.\n"), i);
 		
 		// TODO: if this does not work, just throw
 #ifdef _WIN32
@@ -628,7 +628,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const int l)
 		void* v = NULL; // malloc(i * sizeof(CValueMultiPlat));
 #endif
 		if (!v)
-			return LOGF(_T("Failed to expand alt strings to %zu entries."), i);
+			return LOGF(_T("Failed to expand alt strings to %zu entries.\n"), i);
 #ifdef _WIN32
 		*(void **)&CF25.Values = v; // TODO: Simplify
 		CF25.NumAltValues = (int)i;
@@ -987,7 +987,7 @@ rMvt* RunObject::get_rom() {
 		return nullptr;
 	if (roc.get_nMovement() == rCom::MovementID::Launching)
 	{
-		LOGW(_T("Requested NMovement from a launched object."));
+		LOGW(_T("Requested NMovement from a launched object.\n"));
 		return nullptr;
 	}
 	return &rom;
@@ -1065,7 +1065,7 @@ void objInfoList::set_EventCountOR(int ec) {
 }
 short objInfoList::get_QualifierByIndex(const std::size_t index) {
 	if (index > 7) // unsigned
-		LOGF(_T("Invalid qualifier index read: expected 0 to 7, got %zu."), index);
+		LOGF(_T("Invalid qualifier index read: expected 0 to 7, got %zu.\n"), index);
 	return oilQualifiers[index];
 }
 CreateObjectInfo::Flags CreateObjectInfo::get_flags() const {
@@ -1690,7 +1690,7 @@ const char* getClassName(jclass myCls, bool fullpath)
 
 short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (*(long *)&paramIndex < 0)
 		raise(SIGINT);
 	// read evtPtr.evtParams[paramIndex] as PARAM_OBJECT
@@ -1720,7 +1720,7 @@ short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 
 int Edif::Runtime::GetCurrentFusionFrameNumber()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	return 1 + hoPtr->get_AdRunHeader()->get_App()->get_nCurrentFrame();
 }
 
@@ -1746,7 +1746,7 @@ const char * globalToMonitor[] = { NULL };
 // Gets the RH2 event count, used in object selection
 int RunHeader::GetRH2EventCount()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// CEventProgram rh2EventCount
 	// CRun stores this as rhEvtProg
 
@@ -1755,7 +1755,7 @@ int RunHeader::GetRH2EventCount()
 // Gets the RH2 event count, used in object selection
 void RunHeader::SetRH2EventCount(int newEventCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newEventCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newEventCount);
 	// CEventProgram rh2EventCount
 	// CRun stores this as rhEvtProg
 
@@ -1764,7 +1764,7 @@ void RunHeader::SetRH2EventCount(int newEventCount)
 // Gets the RH4 event count for OR, used in object selection in OR-related events.
 int RunHeader::GetRH4EventCountOR()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// CEventProgram rh4EventCountOR
 	return get_EventProgram()->get_rh4EventCountOR();
 }
@@ -1772,14 +1772,14 @@ int RunHeader::GetRH4EventCountOR()
 // Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 int RunHeader::GetRH2ActionCount()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// CEventProgram rh2ActionCount
 	return get_EventProgram()->get_rh2ActionCount();
 }
 // Sets the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 void RunHeader::SetRH2ActionCount(int newActionCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newActionCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newActionCount);
 	// CEventProgram rh2ActionCount
 	return get_EventProgram()->set_rh2ActionCount(newActionCount);
 }
@@ -1787,14 +1787,14 @@ void RunHeader::SetRH2ActionCount(int newActionCount)
 // Reads the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
 int RunHeader::GetRH2ActionLoopCount()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// CEventProgram rh2ActionLoopCount
 	return get_EventProgram()->get_rh2ActionLoopCount();
 }
 // Sets the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
 void RunHeader::SetRH2ActionLoopCount(int newActLoopCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newActLoopCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newActLoopCount);
 	// CEventProgram rh2ActionLoopCount
 	return get_EventProgram()->set_rh2ActionLoopCount(newActLoopCount);
 }
@@ -1802,7 +1802,7 @@ void RunHeader::SetRH2ActionLoopCount(int newActLoopCount)
 // Gets the current expression token index
 int RunHeader::GetRH4CurToken()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	int rh4CurToken = threadEnv->GetIntField(crun, rh4CurTokenFieldID);
 	JNIExceptionCheck();
 	return rh4CurToken;
@@ -1810,7 +1810,7 @@ int RunHeader::GetRH4CurToken()
 // Sets the current expression token index
 void RunHeader::SetRH4CurToken(int newCurToken)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newCurToken);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newCurToken);
 	threadEnv->SetIntField(crun, rh4CurTokenFieldID, newCurToken);
 	JNIExceptionCheck();
 }
@@ -1818,7 +1818,7 @@ void RunHeader::SetRH4CurToken(int newCurToken)
 // Gets the current expression token array; relevant in Android only.
 jobjectArray RunHeader::GetRH4Tokens()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	jobjectArray ptr = (jobjectArray)threadEnv->GetObjectField(crun, rh4TokensFieldID);
 	JNIExceptionCheck();
 	return ptr;
@@ -1826,14 +1826,14 @@ jobjectArray RunHeader::GetRH4Tokens()
 // Sets the current expression token array; relevant in Android only.
 void RunHeader::SetRH4Tokens(jobjectArray newTokensArray)
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	threadEnv->SetObjectField(crun, rh4TokensFieldID, newTokensArray);
 	JNIExceptionCheck();
 }
 
 objInfoList * RunHeader::GetOIListByIndex(std::size_t index)
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (OiList.invalid())
 		GetOiList(); // ignore return
 	if (index >= OiListLength)
@@ -1868,7 +1868,7 @@ jobjectArray RunHeader::GetOiList()
 }
 
 event2 * RunHeader::GetRH4ActionStart() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// During A/C/E curCEvent should be copied out, A/C/E func code run, then copied back after.
 	// Failure to do this will result in curCEvent inconsistency which may affect any expression-function
 	// objects, fastloops, etc., and makes debugging events harder.
@@ -1940,7 +1940,7 @@ void RunHeader::SetRH2ActionOn(bool newActOn) {
 }
 
 CEventProgram* RunHeader::get_EventProgram() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!eventProgram)
 	{
 		jobject eventProgramJava = mainThreadJNIEnv->GetObjectField(crun, eventProgramFieldID);
@@ -2015,7 +2015,7 @@ void RunHeader::InvalidatedByNewGeneratedEvent()
 jfieldID CEventProgram::rh4ActStartFieldID, CEventProgram::rh2ActionOnFieldID;
 
 EventGroupMP * CEventProgram::get_eventGroup() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!eventGrp)
 	{
 		jfieldID rhEventProgFieldID = mainThreadJNIEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
@@ -2026,7 +2026,7 @@ EventGroupMP * CEventProgram::get_eventGroup() {
 		if (eventGroupJava != nullptr)
 		{
 			eventGrp = std::make_unique<EventGroupMP>(eventGroupJava, runtime);
-			LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p."), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
+			LOGV(_T("Running %s() - got a new eventGroup of %p, going to store it in eventGroup struct at %p.\n"), _T(__FUNCTION__), eventGroupJava, eventGrp.get());
 		}
 	}
 	return eventGrp.get();
@@ -2074,7 +2074,7 @@ void CEventProgram::SetEventGroup(jobject grp)
 }
 
 int CEventProgram::get_rh2EventCount() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!rh2EventCount.has_value())
 	{
 		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2EventCount", "I");
@@ -2098,7 +2098,7 @@ int CEventProgram::get_rh2EventCount() {
 }
 void CEventProgram::set_rh2EventCount(int newEventCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newEventCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newEventCount);
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2EventCount", "I");
 	JNIExceptionCheck();
 	rh2EventCount = newEventCount;
@@ -2107,7 +2107,7 @@ void CEventProgram::set_rh2EventCount(int newEventCount)
 }
 int CEventProgram::get_rh4EventCountOR()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!rh4EventCountOR.has_value())
 	{
 		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh4EventCountOR", "I");
@@ -2130,7 +2130,7 @@ int CEventProgram::get_rh4EventCountOR()
 }
 void CEventProgram::set_rh4EventCountOR(int newEventCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newEventCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newEventCount);
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh4EventCountOR", "I");
 	JNIExceptionCheck();
 	rh4EventCountOR = newEventCount;
@@ -2141,7 +2141,7 @@ void CEventProgram::set_rh4EventCountOR(int newEventCount)
 // Reads the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 int CEventProgram::get_rh2ActionCount()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionCount", "I");
 	JNIExceptionCheck();
 	int rh2ActionCount = threadEnv->GetIntField(me, fieldID);
@@ -2151,7 +2151,7 @@ int CEventProgram::get_rh2ActionCount()
 // Sets the rh2.rh2ActionCount variable, used in a fastloop to loop the actions.
 void CEventProgram::set_rh2ActionCount(int newActionCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newActionCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newActionCount);
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionCount", "I");
 	JNIExceptionCheck();
 	rh2ActionCount = newActionCount;
@@ -2162,7 +2162,7 @@ void CEventProgram::set_rh2ActionCount(int newActionCount)
 // Reads the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
 int CEventProgram::get_rh2ActionLoopCount()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionLoopCount", "I");
 	JNIExceptionCheck();
 	int rh2ActionLoopCount = threadEnv->GetIntField(me, fieldID);
@@ -2172,7 +2172,7 @@ int CEventProgram::get_rh2ActionLoopCount()
 // Sets the rh2.rh2ActionLoopCount variable, used in a fastloop to loop the actions.
 void CEventProgram::set_rh2ActionLoopCount(int newActLoopCount)
 {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newActLoopCount);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newActLoopCount);
 	static jfieldID fieldID = threadEnv->GetFieldID(meClass, "rh2ActionLoopCount", "I");
 	JNIExceptionCheck();
 	rh2ActionLoopCount = newActLoopCount;
@@ -2182,24 +2182,24 @@ void CEventProgram::set_rh2ActionLoopCount(int newActLoopCount)
 
 bool CEventProgram::GetRH2ActionOn() {
 	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	bool yes = threadEnv->GetBooleanField(me, rh2ActionOnFieldID);
 	JNIExceptionCheck();
 	return yes;
 }
 void CEventProgram::SetRH2ActionOn(bool newSet) {
 	// TODO: We can possibly optimize this by storing true/false Action/Condition jump funcs
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), newSet ? 1 : 0);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), newSet ? 1 : 0);
 	threadEnv->SetBooleanField(me, rh2ActionOnFieldID, newSet);
 	JNIExceptionCheck();
 }
 
 EventGroupMP * RunHeader::get_EventGroup() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 
 	if (!evntGroup.has_value() || !this->evntGroup.value())
 	{
-		LOGV(_T("Running %s() - eventgroup out of date, updating it."), _T(__FUNCTION__));
+		LOGV(_T("Running %s() - eventgroup out of date, updating it.\n"), _T(__FUNCTION__));
 		evntGroup = get_EventProgram()->get_eventGroup();
 	}
 
@@ -2207,7 +2207,7 @@ EventGroupMP * RunHeader::get_EventGroup() {
 }
 
 std::size_t RunHeader::GetNumberOi() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NumberOi.has_value())
 	{
 		// NumberOi is actually rhMaxOI
@@ -2229,7 +2229,7 @@ qualToOi *RunHeader::GetQualToOiListByOffset(std::size_t index) {
 	}
 
 	index &= 0x7FFF;
-	LOGV(_T("Running %s(%zu)."), _T(__FUNCTION__), index);
+	LOGV(_T("Running %s(%zu).\n"), _T(__FUNCTION__), index);
 
 	// CQualToOiList[] CEventProgram.qualToOiList
 	if (QualToOiList.invalid())
@@ -2265,7 +2265,7 @@ qualToOi *RunHeader::GetQualToOiListByOffset(std::size_t index) {
 	return &QualToOiListArray[index];
 }
 RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index) {
-	LOGV(_T("Running %s(%zu)."), _T(__FUNCTION__), index);
+	LOGV(_T("Running %s(%zu).\n"), _T(__FUNCTION__), index);
 	if (!ObjectList)
 	{
 		// CObject[] CRun.rhObjectsList
@@ -2280,11 +2280,11 @@ RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index
 }
 
 EventGroupFlags RunHeader::GetEVGFlags() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	return get_EventGroup()->get_evgFlags();
 }
 CRunAppMultiPlat* RunHeader::get_App() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!App)
 	{
 		jfieldID fieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhApp", "LApplication/CRunApp;");
@@ -2296,7 +2296,7 @@ CRunAppMultiPlat* RunHeader::get_App() {
 	return App.get();
 }
 size_t RunHeader::get_MaxObjects() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!MaxObjects.has_value())
 	{
 		// Note: CRun has int rhMaxObjects
@@ -2309,7 +2309,7 @@ size_t RunHeader::get_MaxObjects() {
 }
 // Gets number of valid object instances currently in frame
 size_t RunHeader::get_NObjects() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NObjects.has_value())
 	{
 		// Note: CRun has int rhMaxObjects
@@ -2321,7 +2321,7 @@ size_t RunHeader::get_NObjects() {
 	return NObjects.value();
 }
 int RunHeader::get_WindowX() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	static jfieldID windowXFieldID;
 	if (!windowXFieldID)
 	{
@@ -2333,7 +2333,7 @@ int RunHeader::get_WindowX() const {
 	return windowX;
 }
 int RunHeader::get_WindowY() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	static jfieldID windowYFieldID;
 	if (!windowYFieldID)
 	{
@@ -2346,7 +2346,7 @@ int RunHeader::get_WindowY() const {
 }
 
 short HeaderObject::get_NextSelected() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NextSelected.has_value())
 	{
 		// Part of CObject
@@ -2358,7 +2358,7 @@ short HeaderObject::get_NextSelected() {
 	return NextSelected.value();
 }
 unsigned short HeaderObject::get_CreationId() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!CreationId.has_value())
 	{
 		// Part of CObject
@@ -2370,7 +2370,7 @@ unsigned short HeaderObject::get_CreationId() {
 	return CreationId.value();
 }
 short HeaderObject::get_Number() {
-	LOGV(_T("Running %s() on %p."), _T(__FUNCTION__), this);
+	LOGV(_T("Running %s() on %p.\n"), _T(__FUNCTION__), this);
 	if (!Number.has_value())
 	{
 		// Part of CObject
@@ -2382,7 +2382,7 @@ short HeaderObject::get_Number() {
 	return Number.value();
 }
 short HeaderObject::get_NumNext() {
-	LOGV(_T("Running %s() on %p."), _T(__FUNCTION__), this);
+	LOGV(_T("Running %s() on %p.\n"), _T(__FUNCTION__), this);
 	if (!NumNext.has_value())
 	{
 		// Part of CObject
@@ -2394,7 +2394,7 @@ short HeaderObject::get_NumNext() {
 	return NumNext.value();
 }
 short HeaderObject::get_Oi() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Oi.has_value())
 	{
 		// Part of CObject
@@ -2406,7 +2406,7 @@ short HeaderObject::get_Oi() {
 	return Oi.value();
 }
 objInfoList * HeaderObject::get_OiList() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!OiList)
 	{
 		if (get_AdRunHeader()->OiListArray.empty())
@@ -2430,7 +2430,7 @@ objInfoList * HeaderObject::get_OiList() {
 	return OiList;
 }
 bool HeaderObject::get_SelectedInOR() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!SelectedInOR.has_value())
 	{
 		// Part of CObject
@@ -2442,7 +2442,7 @@ bool HeaderObject::get_SelectedInOR() {
 	return SelectedInOR.value();
 }
 HeaderObjectFlags HeaderObject::get_Flags() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Flags.has_value())
 	{
 		// Part of CObject
@@ -2454,11 +2454,11 @@ HeaderObjectFlags HeaderObject::get_Flags() {
 	return Flags.value();
 }
 RunHeader* HeaderObject::get_AdRunHeader() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!AdRunHeader)
 	{
 		// Part of CObject
-		LOGV("Class name of meClass: \"%s\".", getClassName(meClass, true));
+		LOGV("Class name of meClass: \"%s\".\n", getClassName(meClass, true));
 		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoAdRunHeader", "LRunLoop/CRun;");
 		JNIExceptionCheck();
 		jobject rhObject = mainThreadJNIEnv->GetObjectField(me, fieldID);
@@ -2471,7 +2471,7 @@ RunHeader* HeaderObject::get_AdRunHeader() {
 }
 
 void HeaderObject::set_NextSelected(short ns) {
-	LOGV(_T("Running %s(%hi)."), _T(__FUNCTION__), ns);
+	LOGV(_T("Running %s(%hi).\n"), _T(__FUNCTION__), ns);
 	NextSelected = ns;
 	// Part of CObject
 	static jfieldID nextSelectedFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNextSelected", "S");
@@ -2481,7 +2481,7 @@ void HeaderObject::set_NextSelected(short ns) {
 }
 void HeaderObject::set_SelectedInOR(bool b) {
 	// despite being a Java byte field, it's used as bool
-	LOGV(_T("Running %s(bool %i)."), _T(__FUNCTION__), b ? 1 : 0);
+	LOGV(_T("Running %s(bool %i).\n"), _T(__FUNCTION__), b ? 1 : 0);
 	SelectedInOR = b;
 	// Part of CObject
 	static jfieldID selectedInORFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoSelectedInOR", "B");
@@ -2490,13 +2490,13 @@ void HeaderObject::set_SelectedInOR(bool b) {
 	JNIExceptionCheck();
 }
 int HeaderObject::get_X() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int x = mainThreadJNIEnv->GetIntField(me, xFieldID);
 	JNIExceptionCheck();
 	return x;
 }
 void HeaderObject::SetX(int x) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), x);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), x);
 	if (!setXMethodID)
 	{
 		setXMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setX", "(I)V");
@@ -2506,13 +2506,13 @@ void HeaderObject::SetX(int x) {
 	JNIExceptionCheck();
 }
 int HeaderObject::get_Y() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int y = mainThreadJNIEnv->GetIntField(me, yFieldID);
 	JNIExceptionCheck();
 	return y;
 }
 void HeaderObject::SetY(int y) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), y);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), y);
 	if (!setYMethodID)
 	{
 		setYMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setY", "(I)V");
@@ -2522,7 +2522,7 @@ void HeaderObject::SetY(int y) {
 	JNIExceptionCheck();
 }
 void HeaderObject::SetPosition(int x, int y) {
-	LOGV(_T("Running %s(%d, %d)."), _T(__FUNCTION__), x, y);
+	LOGV(_T("Running %s(%d, %d).\n"), _T(__FUNCTION__), x, y);
 	if (!setPosMethodID)
 	{
 		setPosMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setPosition", "(II)V");
@@ -2532,13 +2532,13 @@ void HeaderObject::SetPosition(int x, int y) {
 	JNIExceptionCheck();
 }
 int HeaderObject::get_ImgWidth() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int imgWidth = mainThreadJNIEnv->GetIntField(me, imgWidthFieldID);
 	JNIExceptionCheck();
 	return imgWidth;
 }
 void HeaderObject::SetImgWidth(int w) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), w);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), w);
 	if (!imgWidthMethodID)
 	{
 		imgWidthMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setWidth", "(I)V");
@@ -2548,13 +2548,13 @@ void HeaderObject::SetImgWidth(int w) {
 	JNIExceptionCheck();
 }
 int HeaderObject::get_ImgHeight() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int imgHeight = threadEnv->GetIntField(me, imgHeightFieldID);
 	JNIExceptionCheck();
 	return imgHeight;
 }
 void HeaderObject::SetImgHeight(int h) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), h);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), h);
 	if (!imgHeightMethodID)
 	{
 		imgHeightMethodID = threadEnv->GetMethodID(meClass, "setHeight", "(I)V");
@@ -2564,7 +2564,7 @@ void HeaderObject::SetImgHeight(int h) {
 	JNIExceptionCheck();
 }
 void HeaderObject::SetSize(int w, int h) {
-	LOGV(_T("Running %s(%d, %d)."), _T(__FUNCTION__), w, h);
+	LOGV(_T("Running %s(%d, %d).\n"), _T(__FUNCTION__), w, h);
 	if (!setSizeMethodID)
 	{
 		setSizeMethodID = threadEnv->GetMethodID(meClass, "setSize", "(II)V");
@@ -2574,19 +2574,19 @@ void HeaderObject::SetSize(int w, int h) {
 	JNIExceptionCheck();
 }
 int HeaderObject::get_ImgXSpot() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int xspot = threadEnv->GetIntField(me, imgXSpotFieldID);
 	JNIExceptionCheck();
 	return xspot;
 }
 int HeaderObject::get_ImgYSpot() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int yspot = threadEnv->GetIntField(me, imgYSpotFieldID);
 	JNIExceptionCheck();
 	return yspot;
 }
 int HeaderObject::get_Identifier() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int ident = threadEnv->GetIntField(me, identifierFieldID);
 	JNIExceptionCheck();
 	return ident;
@@ -2643,7 +2643,7 @@ void HeaderObject::InvalidatedByNewGeneratedEvent()
 //
 
 short HeaderObject::GetObjectParamNumber(jobject obj) {
-	LOGV(_T("Running %s() on %p."), _T(__FUNCTION__), obj);
+	LOGV(_T("Running %s() on %p.\n"), _T(__FUNCTION__), obj);
 	if (numberFieldID == nullptr)
 	{
 		// Part of CObject
@@ -2656,89 +2656,89 @@ short HeaderObject::GetObjectParamNumber(jobject obj) {
 }
 
 rCom::MovementID rCom::get_nMovement() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcNMovement = threadEnv->GetIntField(me, nMovementFieldID);
 	JNIExceptionCheck();
 	return (MovementID)rcNMovement;
 }
 int rCom::get_dir() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcDir = threadEnv->GetIntField(me, dirFieldID);
 	JNIExceptionCheck();
 	return rcDir;
 }
 int rCom::get_anim() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcAnim = threadEnv->GetIntField(me, animFieldID);
 	JNIExceptionCheck();
 	return rcAnim;
 }
 int rCom::get_image() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcImage = threadEnv->GetIntField(me, imageFieldID);
 	JNIExceptionCheck();
 	return rcImage;
 }
 float rCom::get_scaleX() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcScaleX = threadEnv->GetFloatField(me, scaleXFieldID);
 	JNIExceptionCheck();
 	return rcScaleX;
 }
 float rCom::get_scaleY() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcScaleY = threadEnv->GetFloatField(me, scaleYFieldID);
 	JNIExceptionCheck();
 	return rcScaleY;
 }
 float rCom::GetAngle() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const float rcAngle = threadEnv->GetFloatField(me, angleFieldID);
 	JNIExceptionCheck();
 	return rcAngle;
 }
 int rCom::get_speed() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcSpeed = threadEnv->GetIntField(me, speedFieldID);
 	JNIExceptionCheck();
 	return rcSpeed;
 }
 int rCom::get_minSpeed() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcMinSpeed = threadEnv->GetIntField(me, minSpeedFieldID);
 	JNIExceptionCheck();
 	return rcMinSpeed;
 }
 int rCom::get_maxSpeed() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int rcMaxSpeed = threadEnv->GetIntField(me, maxSpeedFieldID);
 	JNIExceptionCheck();
 	return rcMaxSpeed;
 }
 bool rCom::get_changed() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const bool rcChanged = threadEnv->GetBooleanField(me, changedFieldID);
 	JNIExceptionCheck();
 	return rcChanged;
 }
 bool rCom::get_checkCollides() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const bool rcChecksColides = threadEnv->GetBooleanField(me, checkCollidesFieldID);
 	JNIExceptionCheck();
 	return rcChecksColides;
 }
 void rCom::set_dir(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetIntField(me, dirFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_anim(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetIntField(me, animFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_image(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	if ((short)val != val) {
 		LOGE(_T("%s: Animation image too large!"), _T(__FUNCTION__));
 	}
@@ -2746,42 +2746,42 @@ void rCom::set_image(int val) {
 	JNIExceptionCheck();
 }
 void rCom::set_scaleX(float val) {
-	LOGV(_T("Running %s(%f)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%f).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetFloatField(me, scaleXFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_scaleY(float val) {
-	LOGV(_T("Running %s(%f)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%f).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetFloatField(me, scaleYFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::SetAngle(float val) {
-	LOGV(_T("Running %s(%f)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%f).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetFloatField(me, angleFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_speed(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetIntField(me, speedFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_minSpeed(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetIntField(me, minSpeedFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_maxSpeed(int val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetIntField(me, maxSpeedFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_changed(bool val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetBooleanField(me, changedFieldID, val);
 	JNIExceptionCheck();
 }
 void rCom::set_checkCollides(bool val) {
-	LOGV(_T("Running %s(%d)."), _T(__FUNCTION__), val);
+	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), val);
 	threadEnv->SetBooleanField(me, checkCollidesFieldID, val);
 	JNIExceptionCheck();
 }
@@ -2857,31 +2857,31 @@ rAni::rAni(RunObject* ro) : ro(ro)
 }
 
 RunSpriteFlag RunSprite::get_Flags() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jint flags = threadEnv->GetShortField(me, flagsFieldID);
 	JNIExceptionCheck();
 	return (RunSpriteFlag)flags;
 }
 int RunSprite::get_EffectShader() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jint effectShader = threadEnv->GetIntField(me, effectShaderFieldID);
 	JNIExceptionCheck();
 	return effectShader;
 }
 BlitOperation RunSprite::get_Effect() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jint effect = threadEnv->GetIntField(me, effectFieldID);
 	JNIExceptionCheck();
 	return (BlitOperation)effect;
 }
 int RunSprite::get_EffectParam() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jint effectParam = threadEnv->GetIntField(me, effectParamFieldID);
 	JNIExceptionCheck();
 	return effectParam;
 }
 std::uint32_t RunSprite::get_layer() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jshort layer = threadEnv->GetShortField(me, layerFieldID);
 	JNIExceptionCheck();
 	return layer;
@@ -2940,7 +2940,7 @@ AltVals::AltVals(RunObject * ro) : ro(ro)
 
 int CRunAppMultiPlat::get_nCurrentFrame()
 {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!nCurrentFrame.has_value())
 	{
 		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "currentFrame", "I");
@@ -3006,31 +3006,31 @@ short event2::get_evtNum() {
 	// In Windows, evtNum is high WORD of evtCode, in a union.
 	// In Android, there is no union; just evtCode, so pull it out and shift it.
 
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jint evtCode = threadEnv->GetIntField(me, evtCodeFieldID);
 	JNIExceptionCheck();
 	return (jshort)(evtCode >> 16);
 }
 OINUM event2::get_evtOi() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jshort evtOi = threadEnv->GetShortField(me, evtOiFieldID);
 	JNIExceptionCheck();
 	return evtOi;
 }
 /*short event2::get_evtSize() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jshort evtSize = threadEnv->GetShortField(me, evtSizeFieldID);
 	JNIExceptionCheck();
 	return evtSize;
 }*/
 std::int8_t event2::get_evtFlags() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const jbyte evtFlags = threadEnv->GetByteField(me, evtFlagsFieldID);
 	JNIExceptionCheck();
 	return evtFlags;
 }
 void event2::set_evtFlags(std::int8_t evtF) {
-	LOGV(_T("Running %s(%hhi)."), _T(__FUNCTION__), evtF);
+	LOGV(_T("Running %s(%hhi).\n"), _T(__FUNCTION__), evtF);
 	threadEnv->SetByteField(me, evtFlagsFieldID, evtF);
 	JNIExceptionCheck();
 }
@@ -3128,14 +3128,14 @@ RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
 	auto ho = ro->get_rHo();
 	ho->get_Number(); // load for log line
-	LOGV(_T("Running %s(%zu), returning jobject %p; ho = %p; num = %hi [index in ObjList], oi = %hi [OI index], oilist = %s."), _T(__FUNCTION__),
+	LOGV(_T("Running %s(%zu), returning jobject %p; ho = %p; num = %hi [index in ObjList], oi = %hi [OI index], oilist = %s.\n"), _T(__FUNCTION__),
 		index, rhObjEntry, ho, ho->get_Number(), ho->get_Oi(), ho->get_OiList()->get_name());
 #endif
 	return ro;
 }
 
 int objInfoList::get_EventCount() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!EventCount.has_value())
 	{
 		EventCount = threadEnv->GetIntField(me, eventCountFieldID);
@@ -3157,7 +3157,7 @@ int objInfoList::get_EventCount() {
 	return EventCount.value();
 }
 int objInfoList::get_EventCountOR() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!EventCountOR.has_value())
 	{
 		EventCountOR = mainThreadJNIEnv->GetIntField(me, eventCountORFieldID);
@@ -3179,7 +3179,7 @@ int objInfoList::get_EventCountOR() {
 	return EventCountOR.value();
 }
 short objInfoList::get_ListSelected() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!ListSelected.has_value())
 	{
 		ListSelected = mainThreadJNIEnv->GetShortField(me, listSelectedFieldID);
@@ -3201,7 +3201,7 @@ short objInfoList::get_ListSelected() {
 	return ListSelected.value();
 }
 int objInfoList::get_NumOfSelected() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NumOfSelected.has_value())
 	{
 		NumOfSelected = mainThreadJNIEnv->GetIntField(me, numOfSelectedFieldID);
@@ -3210,7 +3210,7 @@ int objInfoList::get_NumOfSelected() {
 	return NumOfSelected.value();
 }
 short objInfoList::get_Oi() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Oi.has_value())
 	{
 		Oi = mainThreadJNIEnv->GetShortField(me, oiFieldID);
@@ -3219,7 +3219,7 @@ short objInfoList::get_Oi() {
 	return Oi.value();
 }
 int objInfoList::get_NObjects() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NObjects.has_value())
 	{
 		NObjects = mainThreadJNIEnv->GetIntField(me, nObjectsFieldID);
@@ -3228,7 +3228,7 @@ int objInfoList::get_NObjects() {
 	return NObjects.value();
 }
 short objInfoList::get_Object() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Object.has_value())
 	{
 		Object = mainThreadJNIEnv->GetShortField(me, objectFieldID);
@@ -3237,7 +3237,7 @@ short objInfoList::get_Object() {
 	return Object.value();
 }
 const TCHAR* objInfoList::get_name() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!name.has_value())
 	{
 		JavaAndCString str((jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID));
@@ -3246,26 +3246,26 @@ const TCHAR* objInfoList::get_name() {
 	return name.value().c_str();
 }
 void objInfoList::set_NumOfSelected(int ns) {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), ns);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ns);
 	NumOfSelected = ns;
 	mainThreadJNIEnv->SetIntField(me, numOfSelectedFieldID, ns);
 	JNIExceptionCheck();
 }
 void objInfoList::set_ListSelected(short sh) {
-	LOGV(_T("Running %s(%hi); %p; oilObject %hi, oilOi %hi, name %s."), _T(__FUNCTION__), sh, this,
+	LOGV(_T("Running %s(%hi); %p; oilObject %hi, oilOi %hi, name %s.\n"), _T(__FUNCTION__), sh, this,
 		Object.value_or(-2), Oi.value_or(-2), name.value_or("??"s).c_str());
 	ListSelected = sh;
 	mainThreadJNIEnv->SetShortField(me, listSelectedFieldID, sh);
 	JNIExceptionCheck();
 }
 void objInfoList::set_EventCount(int ec) {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), ec);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ec);
 	EventCount = ec;
 	mainThreadJNIEnv->SetIntField(me, eventCountFieldID, ec);
 	JNIExceptionCheck();
 }
 void objInfoList::set_EventCountOR(int ec) {
-	LOGV(_T("Running %s(%i)."), _T(__FUNCTION__), ec);
+	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ec);
 	EventCountOR = ec;
 	mainThreadJNIEnv->SetIntField(me, eventCountORFieldID, ec);
 	JNIExceptionCheck();
@@ -3287,41 +3287,41 @@ short objInfoList::get_QualifierByIndex(std::size_t index) {
 
 // When an ActionLoop is active, this is the next object number in the loop.
 int objInfoList::get_oilNext() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilNext = mainThreadJNIEnv->GetIntField(me, nextFieldID);
 	JNIExceptionCheck();
 	return oilNext;
 }
 // When an ActionLoop is active, this is whether to iterate further or not.
 bool objInfoList::get_oilNextFlag() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const bool oilNextFlag = mainThreadJNIEnv->GetBooleanField(me, nextFlagFieldID);
 	JNIExceptionCheck();
 	return oilNextFlag;
 }
 int objInfoList::get_oilCurrentRoutine() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilCurrentRoutine = mainThreadJNIEnv->GetIntField(me, currentRoutineFieldID);
 	JNIExceptionCheck();
 	return oilCurrentRoutine;
 }
 // When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
 int objInfoList::get_oilCurrentOi() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilCurrentOi = mainThreadJNIEnv->GetIntField(me, currentOiFieldID);
 	JNIExceptionCheck();
 	return oilCurrentOi;
 }
 // When an Action is active, this applies oilCurrentRountine
 int objInfoList::get_oilActionCount() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilActionCount = mainThreadJNIEnv->GetIntField(me, actionCountFieldID);
 	JNIExceptionCheck();
 	return oilActionCount;
 }
 // When an ActionLoop is active (Action repeating in a fastloop), this applies oilCurrentRountine
 int objInfoList::get_oilActionLoopCount() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int oilActionLoopCount = mainThreadJNIEnv->GetIntField(me, actionLoopCountFieldID);
 	JNIExceptionCheck();
 	return oilActionLoopCount;
@@ -3380,7 +3380,7 @@ objInfoList::objInfoList(int index, RunHeader* containerRH, jobject me2, Edif::R
 	get_Object();
 	get_name();
 	JNIExceptionCheck();
-	LOGV(_T("objInfoList made at index %i, ptr %p."), index, this);
+	LOGV(_T("objInfoList made at index %i, ptr %p.\n"), index, this);
 #endif
 }
 objInfoList::objInfoList(objInfoList&&o)
@@ -3406,7 +3406,7 @@ objInfoList::objInfoList(objInfoList&&o)
 }
 objInfoList::~objInfoList()
 {
-	LOGV(_T("objInfoList destroyed, index %i, ptr %p."), index, this);
+	LOGV(_T("objInfoList destroyed, index %i, ptr %p.\n"), index, this);
 }
 
 void objInfoList::InvalidatedByNewGeneratedEvent()
@@ -3445,25 +3445,25 @@ CreateObjectInfo::CreateObjectInfo(jobject o) :
 	}
 }
 CreateObjectInfo::Flags CreateObjectInfo::get_flags() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const Flags cobFlags = (Flags)(std::uint16_t)mainThreadJNIEnv->GetShortField(me, flagsFieldID);
 	JNIExceptionCheck();
 	return cobFlags;
 }
 std::int32_t CreateObjectInfo::get_X() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int cobX = mainThreadJNIEnv->GetIntField(me, xFieldID);
 	JNIExceptionCheck();
 	return cobX;
 }
 std::int32_t CreateObjectInfo::get_Y() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int cobY = mainThreadJNIEnv->GetIntField(me, yFieldID);
 	JNIExceptionCheck();
 	return cobY;
 }
 std::int32_t CreateObjectInfo::GetDir(RunObjectMultiPlatPtr rdPtr) const {
-	LOGV(_T("Running %s(%p)."), _T(__FUNCTION__), &*rdPtr);
+	LOGV(_T("Running %s(%p).\n"), _T(__FUNCTION__), &*rdPtr);
 	const int cobDir = mainThreadJNIEnv->GetIntField(me, flagsFieldID);
 	if (cobDir != -1 && get_flags() != Flags::None)
 		return cobDir;
@@ -3477,20 +3477,20 @@ std::int32_t CreateObjectInfo::GetDir(RunObjectMultiPlatPtr rdPtr) const {
 	return roc->get_dir();
 }
 std::int32_t CreateObjectInfo::get_layer() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int cobLayer = mainThreadJNIEnv->GetIntField(me, layerFieldID);
 	JNIExceptionCheck();
 	return cobLayer;
 }
 std::int32_t CreateObjectInfo::get_ZOrder() const {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	const int cobZOrder = mainThreadJNIEnv->GetIntField(me, zOrderFieldID);
 	JNIExceptionCheck();
 	return cobZOrder;
 }
 
 short qualToOi::get_Oi(std::size_t i) {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	// Update internal list
 	if (OiAndOiListLength == SIZE_MAX)
 		get_OiList(0);
@@ -3501,7 +3501,7 @@ short qualToOi::get_Oi(std::size_t i) {
 	return OiAndOiList[i * 2];
 }
 short qualToOi::get_OiList(std::size_t i) {
-	LOGV(_T("Running qualToOi::%s()."), _T(__FUNCTION__));
+	LOGV(_T("Running qualToOi::%s().\n"), _T(__FUNCTION__));
 	if (OiAndOiListLength == SIZE_MAX)
 	{
 		jshort* js = threadEnv->GetShortArrayElements(oiAndOiListJava, NULL);
@@ -3512,10 +3512,10 @@ short qualToOi::get_OiList(std::size_t i) {
 		memcpy(OiAndOiList.get(), js, OiAndOiListLength * sizeof(short));
 		threadEnv->ReleaseShortArrayElements(oiAndOiListJava, js, JNI_ABORT); // JNI_ABORT does not copy back changes
 		JNIExceptionCheck();
-		LOGV(_T("qualToOi::%s() - OiAndOiList for qual %i was populated OK with %zu entries."), _T(__FUNCTION__), offsetInQualToOiList, OiAndOiListLength);
+		LOGV(_T("qualToOi::%s() - OiAndOiList for qual %i was populated OK with %zu entries.\n"), _T(__FUNCTION__), offsetInQualToOiList, OiAndOiListLength);
 	}
 	else
-		LOGV(_T("qualToOi::%s() -  OiAndOiList for qual %i was already populated with %zu entries, returning index %zu."), _T(__FUNCTION__), offsetInQualToOiList, OiAndOiListLength, i * 2 + 1);
+		LOGV(_T("qualToOi::%s() -  OiAndOiList for qual %i was already populated with %zu entries, returning index %zu.\n"), _T(__FUNCTION__), offsetInQualToOiList, OiAndOiListLength, i * 2 + 1);
 
 	if (i * 2 + 1 >= OiAndOiListLength)
 		return -1;
@@ -3526,7 +3526,7 @@ short qualToOi::get_OiList(std::size_t i) {
 qualToOi::qualToOi(RunHeader* rh, int offset, jobject me, Edif::Runtime* runtime) :
 	rh(rh), offsetInQualToOiList(offset), me(me, "qualToOi ctor"), runtime(runtime)
 {
-	LOGV(_T("qualToOi::%s() - OiAndOiList not populated, doing so."), _T(__FUNCTION__));
+	LOGV(_T("qualToOi::%s() - OiAndOiList not populated, doing so.\n"), _T(__FUNCTION__));
 	jfieldID fieldID = mainThreadJNIEnv->GetFieldID(rh->QualToOiClass, "qoiList", "[S");
 	JNIExceptionCheck();
 	oiAndOiListJava = global((jshortArray)threadEnv->GetObjectField(me, fieldID), "qoiList grab");
@@ -3556,7 +3556,7 @@ qualToOi::qualToOi(qualToOi&& q) {
 }
 
 std::uint8_t EventGroupMP::get_evgNCond() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!evgNCond.has_value())
 	{
 		evgNCond = (std::uint8_t)threadEnv->GetShortField(me, evgNCondFieldID);
@@ -3565,7 +3565,7 @@ std::uint8_t EventGroupMP::get_evgNCond() {
 	return evgNCond.value();
 }
 std::uint8_t EventGroupMP::get_evgNAct() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!evgNAct.has_value())
 	{
 		evgNAct = (std::uint8_t)threadEnv->GetShortField(me, evgNActFieldID);
@@ -3574,7 +3574,7 @@ std::uint8_t EventGroupMP::get_evgNAct() {
 	return evgNAct.value();
 }
 std::int16_t EventGroupMP::get_evgIdentifier() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!evgIdentifier.has_value())
 	{
 		// We read identifier from evgLine
@@ -3585,7 +3585,7 @@ std::int16_t EventGroupMP::get_evgIdentifier() {
 }
 
 EventGroupFlags EventGroupMP::get_evgFlags() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!evgFlags.has_value())
 	{
 		evgFlags = (EventGroupFlags)threadEnv->GetShortField(me, evgFlagsFieldID);
@@ -3595,7 +3595,7 @@ EventGroupFlags EventGroupMP::get_evgFlags() {
 }
 
 std::unique_ptr<event2> EventGroupMP::GetCAByIndex(std::size_t index) {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (evgEvents.invalid())
 		GetEventList(); // ignore return
 
@@ -3608,17 +3608,17 @@ std::unique_ptr<event2> EventGroupMP::GetCAByIndex(std::size_t index) {
 }
 
 jobjectArray EventGroupMP::GetEventList() {
-	LOGV(_T("Running %s()."), _T(__FUNCTION__));
+	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (evgEvents.invalid())
 	{
 		evgEvents = global((jobjectArray)threadEnv->GetObjectField(me, evgEventsFieldID), "evgEvents inside eventGroup");
 		JNIExceptionCheck();
 		evgEventsLength = threadEnv->GetArrayLength(evgEvents);
 		JNIExceptionCheck();
-		LOGV(_T("Running %s(), line %d, was invalid, new one is %p, size %d, evgID %hi."), _T(__FUNCTION__), __LINE__, evgEvents.ref, evgEventsLength, get_evgIdentifier());
+		LOGV(_T("Running %s(), line %d, was invalid, new one is %p, size %d, evgID %hi.\n"), _T(__FUNCTION__), __LINE__, evgEvents.ref, evgEventsLength, get_evgIdentifier());
 	}
 	else
-		LOGV(_T("Running %s(), line %d. Was already valid."), _T(__FUNCTION__), __LINE__);
+		LOGV(_T("Running %s(), line %d. Was already valid.\n"), _T(__FUNCTION__), __LINE__);
 	return evgEvents;
 }
 
