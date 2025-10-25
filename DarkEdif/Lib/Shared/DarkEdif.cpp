@@ -6032,6 +6032,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 	va_start(va, x);
 	_vstprintf_s(buf, std::size(buf), x, va);
 	va_end(va);
+	DarkEdif::Log(DARKEDIF_LOG_FATAL, _T("%s"), buf);
 	DarkEdif::MsgBox::Error(_T("Fatal error"), _T("%s"), buf);
 	std::abort();
 }
