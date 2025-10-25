@@ -153,12 +153,10 @@ struct ForbiddenInternals2 {
 
 // Called every time the extension is being created from nothing.
 // Default property contents should be loaded from JSON.
+// This is also called in Runtime builds, presumably for Is Unicode/HWA lookup.
 std::int16_t FusionAPI GetRunObjectInfos(mv* mV, kpxRunInfos* infoPtr)
 {
 #pragma DllExportHint
-#if RuntimeBuild
-	DarkEdif::MsgBox::Info(_T("!!"), _T("GetRunObjectInfos() called.\n"));
-#endif
 	return ForbiddenInternals2::GetRunObjectInfos2(mV, infoPtr);
 }
 
