@@ -7,6 +7,13 @@ namespace DarkEdif
 	class Surface;
 }
 #ifdef _WIN32
+// If building an ANSI ext, we're expecting to be going for MMF2, so use cSurface 2.0 functions for drawing only.
+// This can be overriden by defining FUSION_2_0_DRAWING_ONLY=0.
+#if !defined(_UNICODE) && !defined(FUSION_2_0_DRAWING_ONLY)
+#define FUSION_2_0_DRAWING_ONLY 1
+#endif
+
+// The idea is we avoid the ext dev using cSurface directly.
 #define SURFACE_MULTI_PLAT_INCLUDING_WINSURF
 #include "Windows/WindowsSurface.hpp"
 #endif
