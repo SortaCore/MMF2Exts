@@ -521,7 +521,7 @@ namespace DarkEdif
 #endif
 
 		// Creates a surface tied to the main Fusion window, allowing you to read or write directly.
-		static Surface CreateFromMainWindow(RunHeader* rhPtr);
+		static Surface& CreateFromMainWindow(RunHeader* rhPtr);
 
 		/* Creates a surface from filepath, with optional HWA, text or bitmap functionality, creating an image to back it.
 		 * If neither text or bitmap is enabled, will allow the surface to be hardware-backed.

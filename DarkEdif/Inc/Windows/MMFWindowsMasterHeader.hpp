@@ -1891,7 +1891,7 @@ DarkEdifInternalAccessProtected:
 	friend HeaderObject;
 	friend rCom;
 	friend DarkEdif::Surface;
-	void *				rhIdEditWin,			// npWin or Win *, but evaluates to void *
+	void *				rhIdEditWin,		// npWin or Win *, but evaluates to void *
 		 *				rhIdMainWin;
 	void *				rhIdAppli;			// npAppli or Appli *, but evaluates to void *
 
@@ -1900,22 +1900,22 @@ DarkEdifInternalAccessProtected:
 						rhHTopLevelWnd;
 
 	CRunApp *			rhApp;				// Application info
-	CRunFrameMultiPlat*	rhFrame;				// Frame info
+	CRunFrameMultiPlat*	rhFrame;			// Frame info
 
-	unsigned int		rhJoystickPatch;		// To reroute the joystick
+	unsigned int		rhJoystickPatch;	// To reroute the joystick
 
-	unsigned char		rhFree10,				// Current movement needs to be stopped
+	unsigned char		rhFree10,			// Current movement needs to be stopped
 						rhFree12, 			// Event evaluation flag
 						rhNPlayers,			// Number of players
-						rhMouseUsed;			// Players using the mouse
+						rhMouseUsed;		// Players using the mouse
 
-	unsigned short		rhGameFlags,			// Game flags
+	unsigned short		rhGameFlags,		// Game flags
 						rhFree;				// Alignment
-	unsigned int		rhPlayer;				// Current players entry
+	unsigned int		rhPlayer;			// Current players entry
 
 	short 				rhQuit,
 						rhQuitBis; 			// Secondary quit (scrollings)
-	unsigned int		rhFree11,				// Value to return to the editor
+	unsigned int		rhFree11,			// Value to return to the editor
 						rhQuitParam;
 
 	// Buffers
@@ -1925,51 +1925,51 @@ DarkEdifInternalAccessProtected:
 	unsigned int		rhFree2[4];			// !No description in original SDK
 
 	int 				rhNumberOi;			// Number of OI in the list
-	objInfoList *		rhOiList;				// ObjectInfo list
+	objInfoList *		rhOiList;			// ObjectInfo list
 
 	unsigned int *		rhEvents[7+1],		// Events pointers (NUMBER_OF_SYSTEM_TYPES+1)
-				 *		rhEventLists,		 	// Pointers on pointers list
-				 *		rhFree8,				// Timer pointers
+				 *		rhEventLists,		// Pointers on pointers list
+				 *		rhFree8,			// Timer pointers
 				 *		rhEventAlways;		// Pointers on events to see at each loop
 	EventGroupMP*		rhPrograms;			// Program pointers
-	short *				rhLimitLists;			// Movement limitation list
+	short *				rhLimitLists;		// Movement limitation list
 	qualToOi *			rhQualToOiList;		// Conversion qualifier->oilist
 
 	unsigned int		rhSBuffers;			// Buffer size /1024
-	unsigned char * 	rhBuffer,				// Position in current buffer
+	unsigned char * 	rhBuffer,			// Position in current buffer
 				  * 	rhFBuffer,			// End of current buffer
 				  * 	rhBuffer1,			// First buffer
 				  * 	rhBuffer2;			// Second buffer
 
 	int 				rhLevelSx,			// Window size
 						rhLevelSy,
-						rhWindowX,   			// Start of window in X/Y
+						rhWindowX,   		// Start of window in X/Y
 						rhWindowY;
 
 	unsigned int		rhVBLDeltaOld,		// Number of VBL
 						rhVBLObjet,			// For the objects
-						rhVBLOld;				// For the counter
+						rhVBLOld;			// For the counter
 
 	int					rhEventsSize;
-	unsigned short		rhMT_VBLStep,   		// Path movement variables
+	unsigned short		rhMT_VBLStep,   	// Path movement variables
 						rhMT_VBLCount;
 	unsigned int		rhMT_MoveStep;
 
-	int					rhLoopCount;			// Number of loops (FPS) since start of level (including Before Frame Transition?)
-	unsigned int		rhTimer,				// Timer in 1/1000 since start of level
+	int					rhLoopCount;		// Number of loops (FPS) since start of level (including Before Frame Transition?)
+	unsigned int		rhTimer,			// Timer in 1/1000 since start of level
 						rhTimerOld,			// For delta calculation
-						rhTimerDelta;			// For delta calculation again
+						rhTimerDelta;		// For delta calculation again
 
-	EventGroupMP *		rhEventGroup;			// Current group
+	EventGroupMP *		rhEventGroup;		// Current group
 	long 				rhCurCode;			// Current event
 	short				rhCurOi,
-						rhFree4;				// Alignment
+						rhFree4;			// Alignment
 	long				rhCurParam[2];
 	short 				rhCurObjectNumber,	// Object number
 						rhFirstObjectNumber;	// Number, for collisions
 
-	long				rhOiListPtr;			// OI list enumeration
-	short 				rhObListNext,			// Branch label
+	long				rhOiListPtr;		// OI list enumeration
+	short 				rhObListNext,		// Branch label
 
 						rhDestroyPos;
 	long				rhFree5,

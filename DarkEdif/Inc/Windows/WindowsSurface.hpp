@@ -279,7 +279,9 @@ enum class _Enum_is_bitflag_ StretchFlags : unsigned int {
 	// Copy (stretch) alpha channel to destination alpha channel instead of applying it
 	CopyAlpha		= 0x0004,
 #ifdef HWABETA
+	// Assumes surface is locked with LockImageSurface?
 	SafeSource		= 0x0010,
+	// Repeats the surface blit in a tiled fashion, speedy; for 3DFX+ driver surfaces
 	Tile			= 0x0020
 #endif
 };
@@ -313,10 +315,57 @@ enum class CreateCollisionMaskFlags : std::uint16_t {
 	Platform
 };
 
-// TODO: YQ: Why is this defined?
-#ifndef PI
-	#define PI ((double)3.14159265358979323846)
-#endif
+// Direct3D 8-11 info returned by cSurface::GetDriverInfo(). Not all variables will be set.
+struct D3DSURFINFO final
+{
+	// Size of this struct in bytes, varies per D3D level.
+	// It is recommended you set this to whatever GetDriverInfo(NULL) returns.
+	DWORD	m_lSize;
+	// Set to either 8, 9, 11.
+	int		m_nD3DVersion;
+	// D3D Context ptr. Usually null for frame surface.
+	LPVOID	m_pD3DContext;
+	// Device pointer, e.g. LPDIRECT3DDEVICE9. Usually set.
+	LPVOID	m_pD3DDevice;
+	// Texture pointer, e.g. LPDIRECT3DTEXTURE9. Often null for frame surface.
+	LPVOID	m_ppD3DTexture;
+	// PS max level - may come up as Shader Model.
+	// This is capped to min of max supported by D3D version, and max supported by GPU.
+	// D3D8 is limited to PS 1.4, and is set here as 0xFFFF0104.
+	// D3D9 is limited to PS 3.0, and is set here as 0xFFFF0300.
+	// D3D11 is limited to PS 5.1, but Fusion sets this to 0x5.
+	int		m_dwPixelShaderVersion;
+	// VS max level (often matches pixel shader version).
+	// Fusion does not set this for D3D8 or 9, but for 11 it sets it to 0x5.
+	int		m_dwVertexShaderVersion;
+	// Texture size (a power of 2)
+	int		m_dwMaxTextureWidth;
+	int		m_dwMaxTextureHeight;
+	// [D3D11 only] null for frame
+	LPVOID	m_ppD3D11RenderTargetTexture;
+	// [D3D11 only] null for frame
+	LPVOID	m_ppD3D11RenderTargetView;
+	// [D3D11 only] Usually set for frame.
+	LPVOID	m_txtContext;
+};
+
+// Mode for LockImageSurface
+// TODO: Is this a bitflag?
+enum class LockImageSurfaceMode : int
+{
+	// Reading the pixels only
+	// TODO: Does this include alpha?
+	ReadBlitOnly,
+
+	// TODO: What does this include?
+	AllReadAccess,
+
+	// Can be used with SurfaceDriver::_3DFX and later
+	// TODO: Is this required outright, or does it speed things, etc for HWA? What if used for software?
+	HWACompatible
+};
+FusionAPIImport BOOL FusionAPI LockImageSurface(void* idApp, DWORD hImage, cSurface& cs, int flags = (int)LockImageSurfaceMode::ReadBlitOnly);
+FusionAPIImport void FusionAPI UnlockImageSurface(cSurface& cs);
 
 // Allocate/Free surface
 // TODO: YQ: new cSurface, or NewSurface()?
@@ -375,18 +424,19 @@ public:
 	BOOL CreateScreenSurface();
 	BOOL IsScreenSurface();
 
-	// TODO: YQ: What makes a surface valid or invalid?
+	// TODO: YQ: What makes a surface valid or invalid? Create() fail?
 	// Valid?
 	BOOL IsValid();
 
-	// TODO: YQ: What is type?
-	// Get driver & type
+	// Returns ST_XX enum, cast to SurfaceType enum
 	int GetType();
-	// TODO: YQ: What is driver?
+	// Returns SD_XX enum, cast to SurfaceDriver enum
 	int GetDriver();
-	// TODO: YQ: What is driverinfo? What should be passed to pInfo?
-	// DirectDraw only? DDHAL_GETDRIVERINFODATA?
-	// Direct3D 8? DD_GETDRIVERINFODATA
+	// Set of driver info data. See D3DSURFINFO struct. Call with NULL to get the expected struct size to pass as pInfo. 
+	// @remarks This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
+	//			3DFX or DirectDraw does not return D3DSURFINFO struct.
+	//			3DFX has not been tested, as MMF2 does not expose this display mode.
+	//			DirectDraw (MMF2 DirectX mode) returns an as-yet unknown struct of 28 bytes.
 	ULONG GetDriverInfo(void * pInfo);
 
 	// Clone surface(= create with same size + Blit)

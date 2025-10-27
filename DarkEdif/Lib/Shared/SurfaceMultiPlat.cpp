@@ -349,6 +349,11 @@ DarkEdif::SurfaceFill DarkEdif::SurfaceFill::Mosaic(Surface* surf, Rect rect)
 	return setting;
 }
 
+#ifdef _WIN32
+static DarkEdif::Surface* mainWindow = nullptr;
+static D3DSURFINFO drivInfo = {};
+#endif
+
 
 void DarkEdif::Surface::UnlockMain(DarkEdif::Surface* surf, std::uint8_t*)
 {
@@ -399,7 +404,6 @@ int DarkEdif::Surface::GetPitch() const {
 	return INT32_MIN;
 #endif
 }
-
 
 static DarkEdif::Surface::ImageFileFormat FileExtensionToImageFormat(const std::tstring fileName)
 {
@@ -589,13 +593,6 @@ bool DarkEdif::Surface::Windows_SaveImageToBMPMemory(LPBITMAPINFO pBmi, std::uin
 {
 	return surf->SaveImage(pBmi, pBits) != FALSE;
 }
-enum {
-	LOCKIMAGE_READBLITONLY,
-	LOCKIMAGE_ALLREADACCESS,
-	LOCKIMAGE_HWACOMPATIBLE
-};
-FusionAPIImport BOOL FusionAPI LockImageSurface(void*, DWORD hImage, cSurface& cs, int flags = LOCKIMAGE_READBLITONLY);
-FusionAPIImport void FusionAPI UnlockImageSurface(cSurface& cs);
 
 #endif // _WIN32
 
@@ -604,7 +601,7 @@ std::unique_ptr<DarkEdif::Surface> DarkEdif::Surface::CreateFromImageBankID(RunH
 #ifdef _WIN32
 	cSurface fake;
 	if (!LockImageSurface(rhPtr->rhIdAppli, imgID, fake,
-		!needBitmapFuncs && !needTextFuncs ? LOCKIMAGE_HWACOMPATIBLE : LOCKIMAGE_READBLITONLY))
+		(int)(!needBitmapFuncs && !needTextFuncs ? LockImageSurfaceMode::HWACompatible : LockImageSurfaceMode::ReadBlitOnly)))
 	{
 		return LOGE(_T("DarkEdif::Surface error: Couldn't lock image surface to load image ID %hu.\n"), imgID), nullptr;
 	}
@@ -1479,13 +1476,50 @@ DarkEdif::Surface DarkEdif::Surface::CreateFromFrameEditorWindow()
 }
 #endif
 
-DarkEdif::Surface DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
+DarkEdif::Surface& DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 {
 #ifdef _WIN32
-	cSurface * newSurf = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
-	if (!newSurf || !newSurf->IsValid())
-		LOGF(_T("Cannot create Surface from main window, unknown error.\n")); // noreturn, save me
-	return Surface(rhPtr, newSurf, true);
+	if (!mainWindow)
+	{
+		cSurface* newSurf = WinGetSurface((int)Edif::SDK->mV->IdEditWin);
+		if (!newSurf || !newSurf->IsValid())
+			LOGF(_T("Cannot create Surface from main window, unknown error.\n")); // noreturn, save me
+		mainWindow = new Surface(rhPtr, newSurf, true);
+
+		SurfaceDriver driv = mainWindow->GetDriver();
+		// Standard display mode
+		if (driv >= SurfaceDriver::DIB && driv < SurfaceDriver::Direct3D9)
+		{
+			// Set this so it's not still 0
+			drivInfo.m_lSize = -1;
+			drivInfo.m_nD3DVersion = 1 + (int)driv;
+			// This is mostly limited by RAM, but Windows standard display is very slow,
+			// so we'll set a smaller limit of 4096 for sanity.
+			drivInfo.m_dwMaxTextureWidth = drivInfo.m_dwMaxTextureHeight = 4096;
+		}
+		// Note D3D9 enum value is before D3D8
+		else if (driv >= SurfaceDriver::Direct3D9)
+		{
+			DWORD size = newSurf->GetDriverInfo(NULL);
+			if (size > sizeof(drivInfo))
+				LOGF(_T("Unexpected driver info size %u.\n"), size);
+			drivInfo.m_lSize = size;
+			// DDHAL_GETDRIVERINFODATA
+			newSurf->GetDriverInfo(&drivInfo);
+			LOGI(_T("Got Direct3D driver info: size %u (expected %u). D3D version %i. Context ptr: 0x%p. ")
+				"Device ptr: 0x%p. Texture ptr: 0x%p. Pixel Shader version: %i. Vertex Shader version: %i. "
+				"Max Texture Width: %i. Max Texture Height: %i. Render Target Texture: 0x%p. Render Target View: 0x%p. "
+				"Render Target Context: 0x%p.\n",
+				drivInfo.m_lSize, size, drivInfo.m_nD3DVersion, drivInfo.m_pD3DContext,
+				drivInfo.m_pD3DDevice, drivInfo.m_ppD3DTexture, drivInfo.m_dwPixelShaderVersion, drivInfo.m_dwVertexShaderVersion,
+				drivInfo.m_dwMaxTextureWidth, drivInfo.m_dwMaxTextureHeight, drivInfo.m_ppD3D11RenderTargetTexture, drivInfo.m_ppD3D11RenderTargetView,
+				drivInfo.m_txtContext
+			);
+		}
+		else
+			LOGF(_T("Unexpected frame window driver %i.\n"), (int)driv);
+	}
+	return *mainWindow;
 #else
 	LOGF(_T("Not implemented on this platform\n"));
 	return Surface(rhPtr, false, false, 0, 0, false);
@@ -1556,7 +1590,7 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 
 	SurfaceType st;
 	SurfaceDriver sd = SurfaceDriver::Bitmap;
-	if (needTextFuncs && false)
+	if (needTextFuncs)
 		st = SurfaceType::Memory_DeviceContext;
 	else if (needBitmapFuncs)
 		st = SurfaceType::Memory;
@@ -1569,12 +1603,26 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 		// Although Fusion doesn't use the alpha of 32-bit ARGB surfaces,
 		// 24-bit depth surfaces cannot be made in Direct3D, so we must upgrade.
 		// Direct3D docs refer to this as X8B8G8R8 format.
-		if (sd >= SurfaceDriver::Direct3D8)
-			depth = 32;
-	}
 
-	if (width == 0 || height == 0)
-		LOGF(_T("Invalid surface size.\n"));
+		// Note D3D9 enum value is before D3D8
+		if (sd >= SurfaceDriver::Direct3D9)
+			depth = 32;
+		// Standard display mode, DirectDraw, does not do HWA textures
+		else if (sd == SurfaceDriver::DIB)
+			st = SurfaceType::Memory;
+
+		// If set, check texture size, if not, warn we can't
+		if (!drivInfo.m_dwMaxTextureWidth)
+		{
+			LOGW(_T("Warning: Creating a HWA surface of size %s. Unsure what max D3D texture size is.\n"),
+				Size { (int)width, (int)height }.str().c_str());
+		}
+		else if (width > (std::size_t)drivInfo.m_dwMaxTextureWidth || height > (std::size_t)drivInfo.m_dwMaxTextureHeight)
+		{
+			LOGF(_T("Creating a surface too large. Your GPU is limited to %s, attempting to allocate %s. Lower the graphics quality.\n"),
+				Size { drivInfo.m_dwMaxTextureWidth, drivInfo.m_dwMaxTextureHeight }.str().c_str(), Size { (int)width, (int)height }.str().c_str());
+		}
+	}
 
 	cSurface* proto;
 	if (GetSurfacePrototype(&proto, depth, (int)st, (int)sd) == FALSE)
@@ -1768,10 +1816,12 @@ static bool NoAlpha(const TCHAR* const func, const std::uint32_t color)
 std::tstring DarkEdif::Surface::Describe() const {
 
 	static const TCHAR* const formatStr[] = {
+		// -2, -1
 		_T("Monochrome (1bpp)"), _T("Alpha (1bpp)"),
+		// 0
 		_T("Unset (?bpp)"),
 		_T("RGBA (32bpp)"), _T("RGBX (32bpp)"), _T("RGB (24bpp)"),
-		_T("BGR (24bpp)"), _T("BGRA (32bpp)"), _T("ABGR (32bpp)") };
+		_T("BGR (24bpp)"), _T("XBGR (32bpp)"),  _T("BGRA (32bpp)"), _T("ABGR (32bpp)") };
 	const auto RoundUpToNearestMultipleOf = [](std::size_t from, std::size_t multi) {
 		return (std::size_t)((((int)from) + ((int)multi) - 1) & (-(int)multi));
 	};
@@ -1815,6 +1865,8 @@ std::tstring DarkEdif::Surface::Describe() const {
 	}
 	static_assert((int)PixelFormat::Monochrome == -2);
 	result << _T(' ') << formatStr[((std::size_t)format) + 2]; // Monochrome is -2
+	if (HasAlpha() && (format == PixelFormat::XBGR || format == PixelFormat::RGBX))
+		result << _T("+A (8bpp)"sv);
 	return result.str();
 }
 
@@ -1957,6 +2009,10 @@ std::tstring DarkEdif::Surface::ColorToString(std::uint32_t c, bool alpha /* = f
 
 DarkEdif::Surface::~Surface()
 {
+#if defined(_WIN32) && defined(_DEBUG)
+	if (*(std::uint8_t*)&isLocked == 0xDD)
+		LOGF(_T("Invalid surface 0x%p, already freed.\n"), this);
+#endif
 	if (isLocked)
 		LOGF(_T("%sDestroying surface at %s, but has locked buffer.\n"), debugID, Describe().c_str());
 	if (isLockedAlpha)
@@ -1970,6 +2026,8 @@ DarkEdif::Surface::~Surface()
 		surf->Delete();
 		delete surf; // DeleteSurface(surf);
 	}
+	LOGV(_T("%sDealloced surface.\n"), debugID);
+	surf = nullptr;
 #elif defined(__ANDROID__)
 	// Should auto-free the global refs and delete the object by GC
 #else
