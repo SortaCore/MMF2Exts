@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -204,7 +204,7 @@ typedef struct tagRDATABASE
     AddMagnet	            pAddMagnet;
     AddTreadmill            pAddTreadmill;
     AddRope					pAddRope;
-    
+
 	float			angle;
 	DWORD			flags;
 	b2World*		world;
@@ -261,12 +261,12 @@ public:
 	virtual ~CRunMvt() {}
 	virtual void		Initialize(LPHO pHo, CFile* file) {}
     virtual void		Delete(void) { delete this; }
-    
+
 	virtual BOOL		Move(CObject* pHo) { return NO; }
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -296,7 +296,7 @@ public:
     CRunMBase*          m_mBase;
     DWORD               m_identifier;
     CRunMvtExtension*   m_movement;
-    
+
 public:
     virtual void		Initialize(CFile* file, CObject* hoPtr) {}
     virtual void		Delete(void) { delete this; }
@@ -304,7 +304,7 @@ public:
 	virtual void		SetPosition(CObject* pHo, int x, int y) {}
 	virtual void		SetXPosition(CObject* pHo, int x) {}
 	virtual void		SetYPosition(CObject* pHo, int y) {}
-    
+
 	virtual void		Stop(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Bounce(CObject* pHo, BOOL bCurrent) {}
 	virtual void		Reverse(CObject* pHo) {}
@@ -323,7 +323,7 @@ public:
 	virtual int			GetDeceleration(CObject* hoPtr) {return 0;}
 	virtual int			GetGravity(CObject* hoPtr) {return 0;}
 	virtual int			GetDir(CObject* hoPtr) {return 0;}
-    
+
 	virtual void SetCollidingObject(CRunMBase* object){};
 	virtual BOOL CreateBody(CObject* pHo){return NO;};
 	virtual void CreateJoint(CObject* pHo){};
@@ -399,7 +399,7 @@ public:
     BOOL IsStop();
     void PrepareCondition();
     BOOL m_background;
-    CRunMBase(LPRDATABASE base, CObject* pHo, WORD type);    
+    CRunMBase(LPRDATABASE base, CObject* pHo, WORD type);
 };
 
 //#endif

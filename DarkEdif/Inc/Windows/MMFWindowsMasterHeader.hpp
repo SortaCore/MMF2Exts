@@ -620,7 +620,7 @@ struct EventBlockType {
 // Fusion event's header flags.
 // @remarks Despite being named Event Group Flags, in Fusion user terms, it is an event.
 //			Fusion event groups are indicated by using specific conditions,
-//			Was EVGFLAGS_**. 
+//			Was EVGFLAGS_**.
 enum class EventGroupFlags : unsigned short
 {
 	None = 0,
@@ -1751,7 +1751,7 @@ DarkEdifInternalAccessProtected:
 	// Backrgound draw routines list
 	drawRoutine * rh4FirstBackDrawRoutine;
 	// Last routine used
-	drawRoutine * rh4LastBackDrawRoutine;	
+	drawRoutine * rh4LastBackDrawRoutine;
 
 	// Object list offset
 	std::uint32_t rh4ObjectList;
@@ -1779,7 +1779,7 @@ DarkEdifInternalAccessProtected:
 	// ?
 	std::int32_t rh4MouseXCenter, rh4MouseYCenter;
 	// Objects with tabulation
-	std::int32_t rh4TabCounter;				
+	std::int32_t rh4TabCounter;
 
 	// For child window handling
 	std::uint32_t rh4AtomNum;
@@ -1803,16 +1803,16 @@ DarkEdifInternalAccessProtected:
 	TCHAR ** rh4PTempStrings;
 	std::int32_t rh4MaxTempStrings;
 	// Free buffer ?
-	std::int32_t rh4Free4[256-2];		
+	std::int32_t rh4Free4[256-2];
 
 	// Pointer on the current string
-	std::int32_t rh4NCurTempString;					
+	std::int32_t rh4NCurTempString;
 	// Framerate calculation buffer
-	std::uint32_t rh4FrameRateArray[MAX_FRAMERATE];	
+	std::uint32_t rh4FrameRateArray[MAX_FRAMERATE];
 	// Position in rh4FrameRateArray buffer
-	std::int32_t rh4FrameRatePos;					
+	std::int32_t rh4FrameRatePos;
 	// Previous time
-	std::uint32_t rh4FrameRatePrevious;				
+	std::uint32_t rh4FrameRatePrevious;
 };
 
 enum class GAMEFLAGS {
@@ -2871,7 +2871,7 @@ DarkEdifInternalAccessProtected:
 	std::int32_t 	oilEventCountOR;
 	#ifdef HWABETA
 		// Liste de collisions sprites
-		short *		oilColList;		
+		short *		oilColList;
 	#endif
 
 public:
@@ -2887,7 +2887,7 @@ public:
 	// @remarks -1 when no selection. Selection does not apply if EventCount differs to rh2EventCount.
 	short get_ListSelected();
 
-	// The number of selected objects of this type. Is 0 when no selection. Irrelevant if EventCount does not match rh2EventCount. 
+	// The number of selected objects of this type. Is 0 when no selection. Irrelevant if EventCount does not match rh2EventCount.
 	// @remarks The first selected object Number is ListSelected, then HeaderObject::NextSelected,
 	//			and keep selecting NextSelected until HO::NS is negative.
 	//			Selection does not apply if EventCount differs to rh2EventCount.

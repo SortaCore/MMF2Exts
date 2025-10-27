@@ -110,7 +110,7 @@ static void post_receives (lw_udp ctx)
 	{
 		if (ctx->socket == -1)
 			break;
-		
+
 		udp_receive_info receive_info = udp_receive_info_new ();
 
 		if (!receive_info)

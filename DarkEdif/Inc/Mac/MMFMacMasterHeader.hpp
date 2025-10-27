@@ -2,7 +2,7 @@
 
 // This file is a duplicate of iOSMasterHeader, with the main difference being its location,
 // altering its #include/#import search preferences.
-// 
+//
 // On Mac, we want to read the Fusion internal headers from MMF2Lib.framework in DarkEdif/Lib/Mac,
 // and on iOS, we want to read them from DarkEdif/Inc/iOS/MMF2Lib folder.
 // As #include prefers the current folder, using the Inc/iOS header would cause iOS/MMF2Lib to be preferred.
@@ -11,7 +11,7 @@
 	#error Included the wrong header for this OS.
 #endif
 
-// All C/C++ files are expected to be built with Objective-C or Objective-C++ mode. 
+// All C/C++ files are expected to be built with Objective-C or Objective-C++ mode.
 // This should be handled by FusionSDK.props, but for specific files, check
 // project/file property C/C++ > Advanced > Compile As.
 // It should be noted that IntelliSense does not realise they are coded for Objective-C, and will get upset.

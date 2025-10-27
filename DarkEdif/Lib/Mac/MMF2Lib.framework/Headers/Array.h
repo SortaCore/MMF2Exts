@@ -25,100 +25,100 @@
 		void shrinkIfNecessary();
 
 	public:
-        
+
         /* Taken from List to allow for C++11 begin()/end() functions
          */
         class Iterator
         {
             Array * array;
             size_t i;
-            
+
         public:
-            
+
             friend class Array;
-            
+
             inline Iterator (Array * _array, size_t _i)
                 : array(_array), i(_i)
             {
             }
-            
+
             inline Iterator ()
                 : array(NULL), i(-1)
             {
             }
-            
+
             inline T &operator * ()
             {
                 return array->elements[i];
             }
-            
+
             inline T &operator -> ()
             {
                 return array->elements[i];
             }
-            
+
             inline Iterator &operator ++ ()
             {
                 ++ i;
                 return *this;
             }
-            
+
             inline Iterator &operator -- ()
             {
                 -- i;
                 return *this;
             }
-            
+
             inline Iterator next ()
             {
                 return Iterator (array, i + 1);
             }
-            
+
             inline Iterator prev ()
             {
                 return Iterator (array, i - 1);
             }
-            
+
             inline Iterator &operator = (const Iterator &rhs)
             {
                 array = rhs.array;
                 i = rhs.i;
-                
+
                 return *this;
             }
-            
+
             inline bool operator == (const Iterator &rhs)
             {
                 return array == rhs.array && i == rhs.i;
             }
-            
+
             inline bool operator != (const Iterator &rhs)
             {
                 return array != rhs.array || i != rhs.i;
             }
         };
-        
+
         /* begin: returns an Iterator at the beginning of the Array
          */
         inline Iterator begin ()
         {
             return Iterator (this, 0);
         }
-        
+
         /* end: returns an Iterator one element after the end of the Array
          */
-        inline Iterator end () 
+        inline Iterator end ()
         {
             return Iterator (this, numElements);
         }
-        
+
 		Array();
         Array(const Array &);
 		Array(size_t capacity);
         ~ Array();
-        
+
         Array &operator = (const Array &);
-    
+
 		size_t length() const;						//Returns the length of the list (number of items in it)
 		size_t capacity() const;					//Returns the current capacity of the list
 		void ensureCapacity(size_t capacity);		//Expands the list to contain space for at least <capacity> elements
@@ -144,29 +144,29 @@
 		void sort(int (*)(const T &a, const T &b));
 
 		T& operator[] (const size_t index) const;
-        
-        
+
+
         /* TODO optimize
          */
         template<class D> inline Array<D> convert(D (* convertProc)(const T &))
         {
             Array<D> arr;
             arr.ensureCapacity(numElements);
-            
+
             for(auto &elem : *this)
                 arr.push(convertProc(elem));
-            
+
             return arr;
         }
-        
+
         template<class D> inline Array<D> convert()
         {
             Array<D> arr;
             arr.ensureCapacity(numElements);
-            
+
             for(auto &elem : *this)
                 arr.push((D) elem);
-            
+
             return arr;
         }
 	};
@@ -200,7 +200,7 @@ template <class T> Array<T>::Array(const Array &rhs)
     : Array(rhs.m_capacity)
 {
     numElements = rhs.length();
-    
+
     for(unsigned int i = 0; i < numElements; ++ i)
         new (elements + i) T (rhs.elements[i]);
 }
@@ -209,7 +209,7 @@ template <class T> Array<T> &Array<T>::operator =(const Array &rhs)
 {
     this->~ Array();
     new (this) Array (rhs);
-    
+
     return *this;
 }
 
@@ -236,7 +236,7 @@ template <class T> void Array<T>::ensureCapacity(size_t capacity)
 		return;
 
 	//Is the internal storage too small? Allocate new memory and clear the old
-    
+
     //TODO this will invalidate pointers.  either make it clear that you shouldn't
     //have a pointer to an object allocated as part of an Array, or delete and
     //re-construct (via copy constructor) all elements here.
@@ -272,7 +272,7 @@ template <class T> void Array<T>::growAndFill(T &var, size_t count)
 	size_t numExtra = count - numElements;
 	for(size_t i=0; i<numExtra; ++i)
 		push(var);
-    
+
     assert(numElements == count);
 }
 
@@ -390,7 +390,7 @@ template <class T> void Array<T>::set(const T &var, size_t index)
 template <class T> void Array<T>::setExpand(T const &var, size_t index)
 {
     /* TODO may need to destruct old value */
-    
+
 	ensureCapacity(index+1);
 	numElements = MAX(numElements, index+1);
 	new (elements + index) T (var);
@@ -405,10 +405,10 @@ template <class T> T &Array<T>::get(size_t index) const
 template <class T> T Array<T>::pop()
 {
     assert(numElements > 0);
-    
+
 	T ret(elements[numElements-1]);
 	(elements + numElements - 1)->~ T();
-	
+
     -- numElements;
 
 	shrinkIfNecessary();
@@ -426,7 +426,7 @@ template <class T> void Array<T>::deleteIndex(size_t index)
 {
     /* TODO call destructor
      */
-    
+
 	if(index < numElements-1)
 		memmove(&elements[index], &elements[index+1], (numElements-index-1)*sizeof(T));
 	//(elements + numElements - 1)->~ T();
@@ -460,7 +460,7 @@ template <class T> void Array<T>::clear()
 {
 	for (size_t i = 0; i < numElements; ++i)
         (elements + i)->~ T();
-    
+
 	numElements = 0;
 	if(m_capacity > ARRAY_SSO_SIZE)
 	{
@@ -474,7 +474,7 @@ template <class T> void Array<T>::clearRetainingCapacity()
 {
 	for (size_t i = 0; i < numElements; ++i)
         (elements + i)->~ T();
-    
+
 	numElements = 0;
 	memset(elements, 0, sizeof(T)*m_capacity);
 }

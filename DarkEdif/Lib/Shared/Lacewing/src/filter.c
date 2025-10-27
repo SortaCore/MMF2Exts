@@ -308,7 +308,7 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 	  }
 	}
 
-	
+
 	#ifdef _WIN32
 		#pragma warning (suppress: 6385) // No, it's not over-reading
 	#endif

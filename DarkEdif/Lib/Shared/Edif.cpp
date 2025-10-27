@@ -382,7 +382,7 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		{
 			int localeNum = 1033;
 
-			// CF2.5 editor language code is a setting, stored in registry 
+			// CF2.5 editor language code is a setting, stored in registry
 			if (DarkEdif::IsFusion25)
 			{
 				HKEY key = NULL;
@@ -895,7 +895,7 @@ endFunc:
 #ifdef __ANDROID__
 	JNIExceptionCheck();
 #endif
-	
+
 	// Comparisons return an integer or string pointer, pass as-is
 	if (isComparisonCondition)
 		return Result;
@@ -932,7 +932,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		{
 			if ((info->FloatFlags & (1 << i)) != 0)
 				(i == 0 ? param1 : param2) = CNC_GetFloatValue(rdPtr, i);
-			
+
 			rdPtr->rHo.hoCurrentParam = (EventParam*)(((char*)rdPtr->rHo.hoCurrentParam) + rdPtr->rHo.hoCurrentParam->size);
 		}
 

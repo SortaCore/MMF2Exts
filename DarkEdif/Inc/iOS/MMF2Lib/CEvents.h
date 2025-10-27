@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -50,12 +50,12 @@ typedef short OINUM;
 
 // Eventgroup structure, before conditions and actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-typedef struct tagEVG 
+typedef struct tagEVG
 	{
 		short	evgSize;				// 0 Size of the group (<=0)
 		BYTE	evgNCond;				// 2 Number of conditions
 		BYTE	evgNAct;				// 3 Number of actions
-		WORD	evgFlags;				// 4 Flags 
+		WORD	evgFlags;				// 4 Flags
 		WORD	evgFree;				// 6 Alignment
 		DWORD	evgInhibit;				// 8 If the group is inhibited
 		DWORD	evgInhibitCpt;			// 12 Counter
@@ -96,7 +96,7 @@ typedef		eventGroup	*		LPEVG;
 
 #define	 EVENTOPTION_BREAKCHILD  0x0001
 
-typedef struct tagEVT 
+typedef struct tagEVT
 	{
 		short	evtSize;				// 0 Size of the event
 		union
@@ -141,7 +141,7 @@ typedef	event	*	LPEVT;
 //#define		ACTFLAGS_REPEAT			0x0001
 
 // For flags II
-// -------------					
+// -------------
 #define		EVFLAG2_NOT			0x0001
 #define		EVFLAG2_NOTABLE		0x0002
 #define		EVFLAGS_NOTABLE		(EVFLAG2_NOTABLE*256)
@@ -152,7 +152,7 @@ typedef	event	*	LPEVT;
 #define 	EVFLAG2_NOOBJECTINTERDEPENDENCE	0x20
 
 // MACRO: Returns the code for an extension
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)		   
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 #define		GetEventCode(p)			(p&0xFFFF0000)
 #define		EVGDELTA(a, b)			((DWORD)((char*)a-(char*)b))
@@ -164,8 +164,8 @@ typedef	event	*	LPEVT;
 
 // PARAM Structure
 // ~~~~~~~~~~~~~~~
-typedef struct eventParam 
-	{	
+typedef struct eventParam
+	{
 		short		evpSize;
 		short		evpCode;
 		union	{
@@ -195,7 +195,7 @@ typedef	eventParam	*			fpevp;
 #define		EVPNEXT(p)		   		((LPEVP)((char*)p+p->evpSize))
 #define		EVTNEXT(p)		   		((LPEVT)((char*)p+p->evtSize))
 #define		EVTPARAMS(p) 			((LPEVP)(p->evtCode.evtLCode.evtCode<0 ? (char*)p+CND_SIZE : (char*)p+ACT_SIZE ))
-#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)		   
+#define		EXTCONDITIONNUM(i)		(-((short)(i>>16))-1)
 #define		EXTACTIONNUM(i)			((short)(i>>16))
 
 // Operators / expressions parameters
@@ -209,18 +209,18 @@ typedef	eventParam	*			fpevp;
 #define		EXPPARAM_FLAG			5
 #define		EXP_STOP				-1
 #define		OPERATOR_START			0x00000000
-#define		EXPL_END				0x00000000	
+#define		EXPL_END				0x00000000
 #define		EXPL_PLUS				0x00020000
 #define		EXPL_MOINS				0x00040000
 #define		EXPL_MULT				0x00060000
-#define		EXPL_DIV				0x00080000										 
+#define		EXPL_DIV				0x00080000
 #define		EXPL_MOD				0x000A0000
 #define		EXPL_POW				0x000C0000
 #define		EXPL_AND				0x000E0000
 #define		EXPL_OR					0x00100000
 #define		EXPL_XOR				0x00120000
 #define		OPERATOR_END			0x00140000
-typedef struct tagEXP 
+typedef struct tagEXP
 	{
 		union
 		{
@@ -235,7 +235,7 @@ typedef struct tagEXP
 			} expSCode;
 		} expCode;
 		short	expSize;
-		union	
+		union
 		{
 			struct {
 				short	expOi;
@@ -638,7 +638,7 @@ enum {
 #define	EXP_VIRGULE			((-3*256)|255)
 #define	EXPL_VIRGULE		((-3*65536)|65535)
 
-// SPEAKER Conditions / Actions 
+// SPEAKER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #define		TYPE_SPEAKER	  		-2
 //(TYPE_SPEAKER&255)=254
@@ -737,7 +737,7 @@ enum {
 #define	EXP_GETCHANNELFREQ		((11*256)|254)
 
 
-// GAME Conditions / Actions 
+// GAME Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //#define		TYPE_GAME		  		-3
 //(TYPE_GAME&255)=253
@@ -821,7 +821,7 @@ enum {
 #define EXP_FRAMEEFFECTPARAM	((18*256)|253)
 
 
-// TIMER Conditions / Actions 
+// TIMER Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_EVERY2	   	((-8*256)|(OBJ_TIMER&255))
 #define CND_TIMEREQUALS		((-7*256)|(OBJ_TIMER&255))
@@ -879,7 +879,7 @@ enum {
 #define	EXP_MOUSEWHEELDELTA	((2*256)|(OBJ_KEYBOARD&255))
 
 
-// PLAYERS Conditions / Actions 
+// PLAYERS Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_JOYPUSHED		((-6*256)|(OBJ_PLAYER&255))
 #define	CND_NOMORELIVE		((-5*256)|(OBJ_PLAYER&255))
@@ -909,7 +909,7 @@ enum {
 #define	EXP_GETPLAYERNAME	((4*256)|(OBJ_PLAYER&255))
 #define	NUM_JOYPRESSED		-4
 
-// CREATE Conditions / Actions 
+// CREATE Conditions / Actions
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #define	CND_CHOOSEALLINLINE	((-23*256)|(OBJ_CREATE&255))
 #define	CND_CHOOSEFLAGRESET	((-22*256)|(OBJ_CREATE&255))
@@ -1059,7 +1059,7 @@ enum {
 #define	ACT_EXTFORCEDIR				(18*256)
 #define	ACT_EXTFORCESPEED			(19*256)
 #define	ACTL_EXTFORCESPEED			(19*65536)
-#define	ACT_EXTRESTANIM				(20*256)		 
+#define	ACT_EXTRESTANIM				(20*256)
 #define	ACT_EXTRESTDIR				(21*256)
 #define	ACT_EXTRESTSPEED			(22*256)
 #define	ACT_EXTSETDIR				(23*256)
@@ -1185,7 +1185,7 @@ enum {
 #define EXP_NUMBEROFSELECTED		(45*256)
 #define EXP_EXTINSTANCEDATA			(46*256)
 
-// TEXT Conditions / Actions 
+// TEXT Conditions / Actions
 ////////////////////////////////////////////
 #define	ACT_STRDESTROY	  	 (( (EVENTS_EXTBASE+0)*256)|3)
 #define	ACT_STRDISPLAY		 (( (EVENTS_EXTBASE+1)*256)|3)
@@ -1202,7 +1202,7 @@ enum {
 #define	EXP_STRGETNUMERIC	 (( (EVENTS_EXTBASE+3)*256)|3)
 #define EXP_STRGETNPARA		 (( (EVENTS_EXTBASE+4)*256)|3)
 
-// SPRITES Conditions / Actions 
+// SPRITES Conditions / Actions
 /////////////////////////////////////////////
 #define	CND_CMPSCALEY	   	(((-EVENTS_EXTBASE-4)*256)|2)
 #define	CND_CMPSCALEX	   	(((-EVENTS_EXTBASE-3)*256)|2)
@@ -1224,7 +1224,7 @@ enum {
 #define EXP_GETSCALEY		(((EVENTS_EXTBASE+2)*256)|2)
 #define EXP_GETANGLE		(((EVENTS_EXTBASE+3)*256)|2)
 
-// COUNTERS Conditions / Actions 
+// COUNTERS Conditions / Actions
 //////////////////////////////////////////////
 #define	CND_CCOUNTER	   	(((-EVENTS_EXTBASE-1)*256)|7)
 #define	ACT_CSETVALUE		(( (EVENTS_EXTBASE+0)*256)|7)
@@ -1240,7 +1240,7 @@ enum {
 #define	EXP_CGETCOLOR1		(( (EVENTS_EXTBASE+3)*256)|7)
 #define	EXP_CGETCOLOR2		(( (EVENTS_EXTBASE+4)*256)|7)
 
-// QUESTIONS Conditions / Actions 
+// QUESTIONS Conditions / Actions
 ///////////////////////////////////////////////
 #define	CND_QEQUAL			(((-EVENTS_EXTBASE-3)*256)|4)
 #define	CNDL_QEQUAL			(((-EVENTS_EXTBASE-3)*65536)|4)
@@ -1251,7 +1251,7 @@ enum {
 #define	ACT_QASK			(( (EVENTS_EXTBASE+0)*256)|4)
 
 
-// Formatted text Conditions / actions / expressions 
+// Formatted text Conditions / actions / expressions
 //////////////////////////////////////////////////////////////////
 #define	ACT_RTFSETXPOS					(((EVENTS_EXTBASE+0)*256)|(OBJ_RTF&0x00FF))
 #define	ACT_RTFSETYPOS					(((EVENTS_EXTBASE+1)*256)|(OBJ_RTF&0x00FF))
@@ -1354,7 +1354,7 @@ enum {
 
 // -------------------------------- Objects
 // W-Offset list OI
-// W-Number 
+// W-Number
 // W-TYPE *** Version > FVERSION_NEWOBJECTS
 #define		PARAM_OBJECT			1
 #define		PS_OBJ					6
@@ -1406,7 +1406,7 @@ typedef		SoundParam *		LPSND;
 #define		PS_MUS					sizeof(SoundParam)
 
 
-// POSITION PARAM Structure 
+// POSITION PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagPPA {
 	short		posOINUMParent;			//0
@@ -1422,13 +1422,13 @@ typedef struct tagPPA {
 } PositionParam;
 typedef	PositionParam *			 	LPPOS;
 
-// CREATE PARAM Structure 
+// CREATE PARAM Structure
 // ~~~~~~~~~~~~~~~~~~~~~~
 typedef struct tagCDP {
 	PositionParam   cdpPos;			// Position structure
 	short			cdpHFII;		// FrameItemInstance number
 	short			cdpOi;			// OI of the object to create
-	//	DWORD  			cdpFII;			
+	//	DWORD  			cdpFII;
 	DWORD			cdpFree;
 } CreateDuplicateParam;
 typedef	CreateDuplicateParam * 		LPCDP;
@@ -1487,7 +1487,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_POSITION	  		16
 #define		PS_POS				   	sizeof(PositionParam)
 
-// -------------------------------- Joystick Direcion 
+// -------------------------------- Joystick Direcion
 // W- Direction
 #define		PARAM_JOYDIRECTION 		17
 #define		PS_JOY				   	2
@@ -1497,7 +1497,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_SHOOT				18
 #define		PS_SHT				   	sizeof(ShootParam)
 
-// -------------------------------- Playfield Zone 
+// -------------------------------- Playfield Zone
 #define		PARAM_ZONE				19
 #define		PS_ZNE					8
 
@@ -1517,7 +1517,7 @@ typedef	ShootParam 	* 					LPSHT;
 // W1- 0 (au moins!)
 #define		PARAM_COMPARAISON	   	23
 
-// -------------------------------- Text color 
+// -------------------------------- Text color
 // L0- RGB
 // L0- Identificateur!
 #define		PARAM_COLOUR		   	24
@@ -1528,7 +1528,7 @@ typedef	ShootParam 	* 					LPSHT;
 #define		PARAM_BUFFER4		   	25
 #define		PS_BU4  			   	4
 
-// -------------------------------- Storyboard frame number 
+// -------------------------------- Storyboard frame number
 // W0-
 #define		PARAM_FRAME			   	26
 #define		PS_FRA  			   	2
@@ -1536,7 +1536,7 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- Number of loops for a sample
 #define		PARAM_SAMLOOP		   	27
 #define		PS_SLOOP				2
-// -------------------------------- Number of loops for a music 
+// -------------------------------- Number of loops for a music
 #define		PARAM_MUSLOOP		   	28
 #define		PS_MLOOP				2
 // -------------------------------- Direction
@@ -1556,10 +1556,10 @@ typedef	ShootParam 	* 					LPSHT;
 // -------------------------------- External program
 #define		PARAM_PROGRAM			33
 #define		PS_PRG					sizeof(prgParam)
-#define		PRGFLAGS_WAIT			0x0001													
+#define		PRGFLAGS_WAIT			0x0001
 #define		PRGFLAGS_HIDE			0x0002
 
-// -------------------------------- Global variable number 
+// -------------------------------- Global variable number
 #define		OLDPARAM_VARGLO			34
 //#define		PS_VGLO					4
 
@@ -1584,17 +1584,17 @@ typedef struct tagGRP {
 	short		grpFlags;					// Active / Unactive?
 	short		grpId;						// Group identifier
 	char		grpTitle[GROUP_MAXTITLE];	// Title
-	char		grpPassword[GROUP_MAXPASSWORD];		// Protection 
+	char		grpPassword[GROUP_MAXPASSWORD];		// Protection
 	DWORD		grpChecksum;				// Checksum
 } paramGroup;
 #define		PS_GRP				sizeof(paramGroup)
 typedef struct tagOLDGRP {
-	short		grpFlags;					
-	short		grpId;					
+	short		grpFlags;
+	short		grpId;
 	char		grpTitle[GROUP_MAXTITLE];
 } paramOldGroup;
 #define		PS_OLDGRP			sizeof(paramOldGroup)
-typedef		paramGroup *		LPGRP;	
+typedef		paramGroup *		LPGRP;
 
 #define		GRPFLAGS_INACTIVE		0x0001
 #define		GRPFLAGS_CLOSED			0x0002
@@ -1608,7 +1608,7 @@ typedef struct tagGRPLIST {
 	LPEVG		glEvg;
 	short		glId;
 } groupList;
-typedef		groupList *		LPGL;	
+typedef		groupList *		LPGL;
 
 typedef struct tagGroupFind {
 	short id;
@@ -1691,7 +1691,7 @@ typedef struct tagGroupFind {
 // -------------------------------- Extensions parameters
 #define		PARAM_EXTENSION			55
 #define		PARAM_EXTMAXSIZE		512
-typedef struct 
+typedef struct
 	{
 		short pextSize;
 		short pextType;
@@ -1727,7 +1727,7 @@ typedef		MvtParam *			LPMVTP;
 typedef struct tagPRG2 {
 	short	prgFlags;				// Default flags
 } prgParam2;
-typedef		prgParam2 *			LPPRG2;	
+typedef		prgParam2 *			LPPRG2;
 #define		PS_PRG2					sizeof(prgParam2)
 
 // -------------------------------- Alterable strings
@@ -1814,7 +1814,7 @@ typedef struct childEventParam {
 //////////////////////////////////////////////////////////////////////////////
 // Condition/action jumps
 @class CRun;
-@class CObject;	
+@class CObject;
 
 typedef BOOL (*CALLCOND1_ROUTINE)(LPEVT pe, CRun* rhPtr, CObject* pHo);
 typedef BOOL (*CALLCOND2_ROUTINE)(LPEVT pe, CRun* rhPtr);

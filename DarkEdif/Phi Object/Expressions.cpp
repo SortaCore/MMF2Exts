@@ -1,7 +1,7 @@
 #include "Common.hpp"
 #ifdef _WIN32
 #include <WinSock2.h>
-#include <ws2def.h> 
+#include <ws2def.h>
 #include <ws2ipdef.h>
 #include <IPHlpApi.h>
 #include <netioapi.h>

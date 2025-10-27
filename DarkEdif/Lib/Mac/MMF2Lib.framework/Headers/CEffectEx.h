@@ -40,7 +40,7 @@ class Renderer;
 {
 @public
     CRunApp* app;
-    
+
     int handle;
     NSString* name;
 

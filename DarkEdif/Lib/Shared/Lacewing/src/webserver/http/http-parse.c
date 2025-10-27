@@ -43,7 +43,7 @@ static int on_header_field (http_parser * parser, const char * buffer,
 
 		lwp_snprintf (version, sizeof (version), "HTTP/%d.%d",
 			(int) parser->http_major, (int) parser->http_minor);
-	  
+
 		#ifdef _MSC_VER
 			// HTTP version is always 2 digits, so this is always space for zero-terminated
 			#pragma warning (suppress: 6053)

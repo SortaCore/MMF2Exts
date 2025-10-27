@@ -137,7 +137,7 @@ class CRenderer;
     int rh4FrameRateArray[MAX_FRAMERATE];             /// Framerate calculation buffer
     int* rhDestroyList;            /// Destroy list address
     CObject** rhObjectList;            /// Object list address
-    
+
     int rhMaxOI;
     char rhStopFlag;                    /// Current movement needs to be stopped
     char rhEvFlag;                     /// Event evaluation flag
@@ -230,7 +230,7 @@ class CRenderer;
     int rh4MusicLoops;
     int rh4LoadCount;
     //    LPDWORD        rh4TimerEventsBase;                // Timer events base
-    
+
     //    short        rh4DroppedFlag;
     //    short        rh4NDroppedFiles;
     //    LPSTR        rh4DroppedFiles;

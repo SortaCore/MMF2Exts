@@ -511,7 +511,7 @@ void Extension::RunFunction_Foreach_Num(RunObject*, int dummy)
 	// you just run as if the RunObject * is the only instance this action is being run on, and the
 	// Fusion runtime will cycle through each selected object, changing the RunObject * passed by the event.
 	// Otherwise, you cancel this behaviour, and loop the selection yourself.
-	// 
+	//
 	// We want fine-tuned control over loop behaviour - qualifier <-> singular, and stopping loops
 	// midway - so we do it ourselves.
 	// We run this at end of the action, after foreach, as the generated events may cause the cancel
@@ -764,7 +764,7 @@ void Extension::RunFunction_Script(const TCHAR* script)
 			values.push_back(funcTemplate->params[values.size() - 1].defaultVal);
 		}
 	}
-	
+
 	const std::shared_ptr<RunningFunction> runningFunc = std::make_shared<RunningFunction>(funcTemplate, true, repeatCount - 1);
 	for (std::size_t i = 0; i < values.size(); ++i)
 		runningFunc->paramValues[i] = values[i];

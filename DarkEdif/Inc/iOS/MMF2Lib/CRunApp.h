@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -164,7 +164,7 @@ class CRenderer;
 
 @interface CRunApp : NSObject <UIAccelerometerDelegate>
 {
-@public 
+@public
 	CRunView* runView;
 	MainView* mainView;
 	RuntimeIPhoneAppDelegate* appDelegate;
@@ -215,7 +215,7 @@ class CRenderer;
 	short gaFlags;				// Flags
 	short gaNewFlags;				// New flags
 	short gaMode;				// graphic mode
-	short gaOtherFlags;				// Other Flags	
+	short gaOtherFlags;				// Other Flags
 	int gaCxWin;				// Window x-size
 	int gaCyWin;				// Window y-size
 	int gaScoreInit;				// Initial score

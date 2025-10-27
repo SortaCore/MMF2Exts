@@ -136,7 +136,7 @@ public:
     int height;
     int mode;
     bool isUsed; // Indicates if the texture is currently being used
-    
+
     GLTexturePool(GLuint texID, int w, int h, int m, bool used)
     : textureID(texID), width(w), height(h), mode(m), isUsed(used) {}
 };
@@ -150,7 +150,7 @@ public:
     int height;
     bool resampling;
     bool isUsed; // Indicates if the texture is currently being used
-    
+
     CTexturePool(CTexture* tex, GLuint texID, int w, int h, bool resample, bool used)
     : texture(tex), textureID(texID), width(w), height(h), resampling(resample), isUsed(used) {}
 };
@@ -166,7 +166,7 @@ public:
     bool swapProj;
 
     bool isUsed; // Indicates if the texture is currently being used
-    
+
     RenderToTexturePool(CRenderToTexture* r, int w, int h, int m, bool sCoord, bool sProj, bool used)
     : rtt(r), width(w), height(h), mode(m), swapCoord(sCoord), swapProj(sProj), isUsed(used) {}
 
@@ -183,7 +183,7 @@ public:
     CRenderToTexture* layerRtt;
     CRenderToTexture* back1Rtt;
     bool isUsed; // Indicates if the texture is currently being used
-    
+
     SubScenePool(int i, int width, int height, CRenderToTexture* f, CRenderToTexture* l, CRenderToTexture* b, bool used)
     : index(i), w(width), h(height), frameRtt(f), layerRtt(l), back1Rtt(b), isUsed(used) {}
 };
@@ -203,7 +203,7 @@ public:
     CShader* SearchShaderByIndex(int index) const;
     int LastPushedShaderIndex() const;
     int Size() const;
-    
+
     void askEffectsToForgetCache();
 
 private:

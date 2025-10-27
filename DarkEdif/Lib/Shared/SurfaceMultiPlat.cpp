@@ -862,7 +862,7 @@ bool DarkEdif::Surface::SaveImageToFilePath(const std::tstring& file, ImageFileF
 	}
 	// TODO: is pFilter meant to be deleted? CRT suggests no leak
 	pFilter->SetCompressionLevel(-1); // in case old object
-	
+
 	if (ifErr != IF_OK) {
 		return LOGE(_T("%sFailed to save image to file \"%s\" with format %d; image error %d.\n"),
 			debugID, file.c_str(), (int)fmt, ifErr), false;
@@ -877,7 +877,7 @@ bool DarkEdif::Surface::SaveImageToFilePath(const std::tstring& file, ImageFileF
 		return LOGE(_T("%sFailed to write to image file \"%s\", got error %d: %s.\n"),
 			debugID, file.c_str(), err, errStr), false;
 	}
-		
+
 	const bool ret = SaveImageToFileHandle(fil, fmt, quality);
 	if (fclose(fil))
 	{
@@ -899,7 +899,7 @@ DarkEdif::Surface::ImageFileFormat DarkEdif::Surface::LoadImageFromFilePath(cons
 	FILE* fil = fopen(file.c_str(), "rb");
 	int err = errno;
 #endif
-		
+
 	if (fil == NULL)
 	{
 #ifdef _WIN32
@@ -1210,7 +1210,7 @@ void DarkEdif::Surface::Internal_WinZoneHack()
 				ext->rdPtr->rHo.hoX - (scrollDependent ? ext->rhPtr->rhWindowX : 0) - ext->rdPtr->rHo.hoImgXSpot,
 				ext->rdPtr->rHo.hoY - (scrollDependent ? ext->rhPtr->rhWindowY : 0) - ext->rdPtr->rHo.hoImgYSpot, true),
 			GetSize(), true);
-		
+
 		WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)&curZone);
 		//if (lastZone)
 		//	WinAddZone(Edif::SDK->mV->IdEditWin, (RECT*)lastZone.get());
@@ -1309,7 +1309,7 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 	// Windows does not have a hotspot param, merge it into pt
 	pt.x += hotSpot.x;
 	pt.y += hotSpot.y;
-	
+
 	// Software display mode does not redraw on screen automatically.
 	if (ext->Runtime.GetAppDisplayMode() < SurfaceDriver::Direct3D8)
 	{
@@ -1337,7 +1337,7 @@ void DarkEdif::Surface::BlitToFrameWithExtEffects(Point pt /* = Point {}*/)
 		Point center = Rect(pt, srcSize).GetCenter();
 		center.x += hotSpot.x;
 		center.y += hotSpot.y;
-		
+
 		surf->BlitEx(*frameSurf,
 			// Dest position
 			static_cast<float>(pt.x),
@@ -1440,7 +1440,7 @@ void DarkEdif::Surface::CreateFromWindow(HWND hWnd, bool IncludeFrame)
 
 	// TODO: error details?
 	surf->Create(hWnd, IncludeFrame);
-	
+
 	if (surf->IsValid())
 		return LOGE(_T("Cannot create from window, unknown error.\n"));
 }
@@ -1760,7 +1760,7 @@ bool DarkEdif::Surface::Clone(Surface& dest, CloneType type)
 		return LOGE(_T("Cannot clone surface, destination has open DC.\n")), false;
 	if (dcIsOpen)
 		return LOGE(_T("Cannot clone surface, source has open DC.\n")), false;
-	
+
 	if (type == CloneType::DriverTypeOnly)
 	{
 #ifdef _WIN32
@@ -1787,7 +1787,7 @@ bool DarkEdif::Surface::Clone(Surface& dest, CloneType type)
 		LOGF(_T("Cannot clone surface, not implemented on this platform\n"));
 #endif
 	}
-	
+
 #ifdef _WIN32
 	if (surf->Blit(*dest.surf) == FALSE)
 		return LOGE(_T("%sCloning surface failed, strangely.\n"), debugID), false;

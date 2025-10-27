@@ -46,13 +46,13 @@ lw_flashpolicy lw_flashpolicy_new (lw_pump pump)
 		return NULL;
 
 	ctx->server = lw_server_new (pump);
-	
+
 	if (!ctx->server)
 	{
 		free(ctx);
 		return NULL;
 	}
-	
+
 	lw_server_set_tag(ctx->server, ctx);
 
 	lw_server_on_error (ctx->server, on_error);

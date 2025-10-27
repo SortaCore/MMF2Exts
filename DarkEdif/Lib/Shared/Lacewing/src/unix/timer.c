@@ -30,7 +30,7 @@ struct _lw_timer
 	long interval;
 
 	lw_thread timer_thread;
-	
+
 	char * timer_name;
 };
 

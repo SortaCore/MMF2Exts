@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -93,11 +93,11 @@ class CShader
 {
 public:
     CRenderer* render;
-    
+
 	GLuint program;
 	GLuint fragmentProgram;
 	GLuint vertexProgram;
-    
+
 	int uniforms[NUM_UNIFORMS];
 	BOOL usesTexCoord;
 	BOOL usesColor;
@@ -110,26 +110,26 @@ public:
 	int currentEffect;
     float currentParam;
     GLuint currentTexture;
-    
+
 	float currentR, currentG, currentB, currentA;
 	NSString* sname;
-    
-    
+
+
     int extraTexID[NUM_XTRATEX];
     int extraLocNb[NUM_XTRATEX];
     BOOL hasExtras;
-    
+
     GLuint bckgTexID;
     CRenderToTexture* bckgRtt;
     int bckgWidth  = -1;
     int bckgHeight = -1;
-    
+
     bool hasBackground, hasPixelSize;
     int currentPremultiply;
 
 	CShader(CRenderer* renderer);
 	~CShader();
-    
+
     void checkError();
 
 	bool loadShader(NSString* name, NSString* vertexShader, NSString* fragmentShader, bool useTexCoord, bool useColors);
@@ -140,7 +140,7 @@ public:
 	bool validateProgram(GLuint prog);
     void detachShader();
     void forgetCachedState();
-    
+
 	void setTexture(CTexture* texture);
 	void setTexture(CTexture* texture, Mat3f &textureMatrix);
 	void setTexCoord(Mat3f &texCoord);
@@ -157,24 +157,24 @@ public:
     void unbindShader();
     void configVertexArray();
 	void setObjectMatrix(const Mat3f &matrix);
-    
+
     void setBackgroundTexture (GLuint texture);
     void setSurfaceTextureAtIndex(CTexture* texture, const GLchar* name, int index);
     void updateSurfaceTexture();
-    
+
     void setBackgroundUse();
     void getBackground(int x, int y, int w, int h);
     void getBackground(CRenderToTexture *rtt, int x, int y, int w, int h);
     void deleteBackground();
     void releaseBackground();
     void setPixelSizeUse();
-    
+
 	void setGradientColors(int color);
 	void setGradientColors(int a, int b, BOOL horizontal);
 	void setGradientColors(int a, int b, int c, int d);
 	void setGradientColors(GradientColor gradient);
     void setColors (float* gradient);
-    
+
     void setVariable1i(const GLchar* field, int value);
     void setVariable1f(const GLchar* field, float value);
     void setVariable2i(const GLchar* field, int value0, int value1);

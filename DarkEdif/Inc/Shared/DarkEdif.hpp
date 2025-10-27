@@ -403,7 +403,7 @@ namespace DarkEdif {
 		std::uint8_t outPrecision;
 		// See Windows define CLIP_EMBEDDED
 		std::uint8_t clipPrecision;
-		// See Windows define ANTIALIASED_QUALITY 
+		// See Windows define ANTIALIASED_QUALITY
 		std::uint8_t quality;
 		// See Windows defines DEFAULT_PITCH, FF_DECORATIVE
 		std::uint8_t pitchAndFamily;

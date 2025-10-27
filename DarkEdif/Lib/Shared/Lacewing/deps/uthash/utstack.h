@@ -77,7 +77,7 @@ do {									\
 } while (0)
 
 #define STACK_COUNT(head,el,counter)		\
-	 STACK_COUNT2(head,el,counter,next)		
+	 STACK_COUNT2(head,el,counter,next)
 
 #define STACK_COUNT2(head,el,counter,next)						\
 do {															\

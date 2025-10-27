@@ -859,7 +859,7 @@ void DarkEdif::Properties::Internal_PropChange(mv* mV, EDITDATA*& edPtr, unsigne
 	// ((EDITDATA *)newEdPtr.get())->Props.Internal_DataAt(PropID)->sizeBytes = VV;
 	*(std::uint32_t*)(newEdPtr.get() + (((std::uint8_t*)&oldPropDataPtr->sizeBytes) - (std::uint8_t*)edPtr))
 		= (std::uint32_t)(sizeof(DarkEdif::Properties::Data) + oldPropDataPtr->propNameSize + newPropValueSize);
-	
+
 	static_assert(std::is_same_v<decltype(((EDITDATA*)newEdPtr.get())->Props.Internal_DataAt(PropID)->sizeBytes), std::uint32_t>, "Types invalid");
 
 	// Reallocate edPtr
@@ -1080,7 +1080,7 @@ BOOL DarkEdif::DLL::DLL_GetProperties(mv * mV, EDITDATA * edPtr, bool masterItem
 	for (std::size_t i = 0; i < CurLang["Properties"sv].u.array.length; ++i)
 		Props.visibleEditorProps[i] = true;
 #endif
-	
+
 	mvInsertProps(mV, edPtr, Edif::SDK->EdittimeProperties.get(), PROPID_TAB_GENERAL, TRUE);
 	ScanForDynamicPropChange(mV, edPtr, UINT32_MAX);
 	return TRUE; // OK
@@ -1336,7 +1336,7 @@ BOOL DarkEdif::DLL::DLL_GetPropCheck(mv * mV, EDITDATA * edPtr, unsigned int Pro
 
 	if (!GetPropRealID(PropID))
 		return FALSE;
-	
+
 	// converts ID from JSON index to real within IsPropChecked
 	return edPtr->Props.IsPropChecked(PropID);
 }
@@ -1596,7 +1596,7 @@ void TriggerShowForRange(const json_value &props, DLL::PropAccesser &elevProps, 
 		if (subEndRange != -1)
 			toAddRanges.push_back(std::make_pair(subStartRange, subEndRange));
 	}
-			
+
 	PropData* end = &Edif::SDK->EdittimeProperties[props.u.array.length];
 	// Pass a list with all-zero prop data after
 	// There's always a PropData to write to in EdittimeProperties, as it
@@ -1761,7 +1761,7 @@ int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPRO
 	LOGV(_T("Call to %s with edPtr %p.\n"), _T(__FUNCTION__), edPtr);
 	// Note from Yves that the textual font properties - that is, TEXT_OEFLAG_EXTENSION,
 	// GetTextFont(), do not need their fonts enumed here, they are automatically grabbed during build.
-	// 
+	//
 	// Direct3D 11 apps:	All LOGFONT used by TEXT_OEFLAG_EXTENSION automatically stored.
 	//						Only TTF fonts are supported by D3D11.
 	// Direct3D 8 + 9 apps: Will need to use Font Embed object, the one for Windows.
@@ -1774,7 +1774,7 @@ int FusionAPI EnumElts(mv* mV, EDITDATA* edPtr, ENUMELTPROC enumProc, ENUMELTPRO
 	//						the Resources directory, you must link them.
 	//						You may also need to add the font to Build Phases.
 	//						https://community.clickteam.com/forum/thread/67739-custom-fonts/
-	
+
 	// Note that enumProc may change the image or font number passed to it.
 	int error = 0;
 	std::vector<std::pair<std::uint16_t*, int>> IdAndType;
@@ -3171,7 +3171,7 @@ HGLOBAL DarkEdif::DLL::DLL_UpdateEditStructure(mv* mV, EDITDATA* oldEdPtr)
 			// for reset only, once - as above, but once for a MFA, not every frame with ext
 			// never				- never makes popup
 			// Default: for reset only, once
-			// 
+			//
 			// Worth noting that property upgrade errors will always create an error popup box - this is not affected by this setting.
 
 			std::string upgradeBox = DarkEdif::GetIniSetting("SmartPropertiesUpgradeBox"sv);
@@ -3266,7 +3266,7 @@ ReadyToOutput:
 
 	// Copy data between eHeader and Props, if any present
 	// This is either the font for a text ext, or it's nothing.
-	// 
+	//
 	// To reset new edPtr's in-between data to zeros:
 	// memset(((char*)newEdPtr) + sizeof(EDITDATA::eHeader), 0, newOffset - oldOffset);
 	// But the GPTR alloc zero-inits so we don't bother here.
@@ -4447,7 +4447,7 @@ BOOL DarkEdif::DLL::DLL_EditProp(mv* mV, EDITDATA*& edPtr, unsigned int PropID)
 
 			return TRUE;
 		}
-	} // Edit Button for sets 
+	} // Edit Button for sets
 
 	return FALSE;
 }
@@ -4687,7 +4687,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				continue;
 			}
 			// Reused property name is not allowed
-			else 
+			else
 			{
 				bool ok = true;
 				for (std::size_t j = 0; j < i; ++j)
@@ -4864,7 +4864,7 @@ void DarkEdif::DLL::GeneratePropDataFromJSON()
 				if (presetList.type == json_type::json_array && presetList.u.array.length > 0)
 				{
 					int* const predefSizes = new int[(presetList.u.array.length + 1) * 2];
-					
+
 					for (unsigned int index = 0; index < presetList.u.array.length; ++index)
 					{
 						const json_value& sizeEntry = presetList[index];
@@ -5120,7 +5120,7 @@ void DarkEdif::EditDataFont::SetFusionTextAlignment(TextCapacity textAlign, bool
 	// dtFlags |= (textAlign & TextCapacity::Left) != TextCapacity::None ? DT_LEFT : 0; // no-op
 	dtFlags |= (textAlign & TextCapacity::Right) != TextCapacity::None ? DT_RIGHT : 0;
 	dtFlags |= (textAlign & TextCapacity::HCenter) != TextCapacity::None ? DT_CENTER : 0;
-	
+
 	// dtFlags |= (textAlign & TextCapacity::Top) != TextCapacity::None ? DT_TOP : 0; // no-op
 	dtFlags |= (textAlign & TextCapacity::VCenter) != TextCapacity::None ? DT_VCENTER | singleLine : 0;
 	dtFlags |= (textAlign & TextCapacity::Bottom) != TextCapacity::None ? DT_BOTTOM | singleLine : 0;
@@ -5426,7 +5426,7 @@ std::tstring DarkEdif::FontInfoMultiPlat::GetActualFontName() {
 	}
 
 	// TODO: It is not obvious whether GetTextFace ignores thread locale in favour of user default locale.
-	// 
+	//
 	// PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH
 	LCID origLCID = GetThreadLocale();
 	SetThreadLocale(MAKELCID(LGRPID_WESTERN_EUROPE, SORT_DEFAULT));
@@ -6008,7 +6008,7 @@ void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreak
 		SetBits(&context.Dr7, pos * 2, 1, 1);
 		/* else remove:
 			if ((&context.Dr0)[pos] == address) {
-				
+
 			}
 		}*/
 		BOOL ret = SetThreadContext(callerThread, &context);

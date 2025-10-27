@@ -20,7 +20,7 @@
 #ifndef ThreadSafeStaticInitIsSafe
 	// The threadsafe init is disabled, or we're using VS 2017, so it's safe.
 	// Or we're targeting Vista+ (WINVER >= 0x0600), threadsafe init works there, so safe too.
-	#if !defined(__cpp_threadsafe_static_init) || _MSC_VER < 1920 || WINVER > 0x0503 
+	#if !defined(__cpp_threadsafe_static_init) || _MSC_VER < 1920 || WINVER > 0x0503
 		#define ThreadSafeStaticInitIsSafe 1
 	#endif
 // We're still targeting XP, and it's VS 2019, why don't we have the define?
@@ -353,7 +353,7 @@ struct extHeader final
 	std::uint32_t extSize,
 				  extMaxSize,
 				  extVersion;			// Version number
-	std::uint32_t extID;				// object's identifier; pointer to ext, null in Android/iOS! 
+	std::uint32_t extID;				// object's identifier; pointer to ext, null in Android/iOS!
 	std::uint32_t extPrivateData;		// private data; was a pointer
 };
 

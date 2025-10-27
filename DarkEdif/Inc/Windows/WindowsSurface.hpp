@@ -432,7 +432,7 @@ public:
 	int GetType();
 	// Returns SD_XX enum, cast to SurfaceDriver enum
 	int GetDriver();
-	// Set of driver info data. See D3DSURFINFO struct. Call with NULL to get the expected struct size to pass as pInfo. 
+	// Set of driver info data. See D3DSURFINFO struct. Call with NULL to get the expected struct size to pass as pInfo.
 	// @remarks This is only going to return content if Driver is not DIB, possibly 3DFX+ only.
 	//			3DFX or DirectDraw does not return D3DSURFINFO struct.
 	//			3DFX has not been tested, as MMF2 does not expose this display mode.

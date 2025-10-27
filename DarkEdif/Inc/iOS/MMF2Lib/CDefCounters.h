@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -31,7 +31,7 @@
 #define CTA_VBAR 2
 #define CTA_HBAR 3
 #define CTA_ANIM 4
-#define CTA_TEXT 5    
+#define CTA_TEXT 5
 #define BARFLAG_INVERSE 0x0100
 #define CTA_FILLTYPE_GRADIENT 2
 #define CTA_FILLTYPE_SOLID 1
@@ -40,9 +40,9 @@
 
 @class CFile;
 
-@interface CDefCounters : NSObject 
+@interface CDefCounters : NSObject
 {
-@public 
+@public
 	int odCx;					// Size: only lives & counters
     int odCy;
     short odPlayer;				// Player: only score & lives

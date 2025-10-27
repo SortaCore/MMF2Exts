@@ -223,7 +223,7 @@ size_t proc_handshake_data (lwp_winsslclient ctx, const char * buffer, size_t si
 					ctx->Server.Handlers.Error (ctx->Server.Public, Error);
 
 					ctx->Public.Disconnect(); */
-				
+
 				return size;
 			}
 

@@ -38,7 +38,7 @@ namespace DarkEdif {
 		void SelectNone(RunObject& object) const;
 		void SelectOneObject(RunObject& object) const;
 		void SelectObjects(short Oi, RunObjectMultiPlatPtr * objects, std::size_t count) const;
-		// Checks if the passed object is part of qualifier or singular OI 
+		// Checks if the passed object is part of qualifier or singular OI
 		bool ObjectIsOfType(RunObject& object, short oi) const;
 		// Gets number of explicitly selected for qualifier or singular oiList index
 		std::size_t GetNumberOfSelected(short oiList) const;

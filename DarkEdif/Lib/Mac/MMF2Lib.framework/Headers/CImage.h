@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -59,7 +59,7 @@ struct PixelRGBA5551{
 	unsigned red	: 5;
 	unsigned green	: 5;
 	unsigned blue	: 5;
-	unsigned alpha	: 1;	
+	unsigned alpha	: 1;
 };
 struct PixelRGB565{
 	unsigned red	: 5;
@@ -92,7 +92,7 @@ typedef struct ImageInfo ImageInfo;
 
 @interface CImage : CTexture
 {
-@public 
+@public
 	CRunApp* app;
 
     short xSpot;
@@ -103,20 +103,20 @@ typedef struct ImageInfo ImageInfo;
 	int chunkSize;
 	CArrayList* maskRotation;
 	CArrayList* replacedColors;
-    
+
     #define IMGFLAG_REPLACEDCOLORS  0x1000  // Volatil flag used by replaceColor action
-	
+
 //	short format; // is now in CTexture
 	short flags;
 	short bytesPrPixel;
 	int openGLmode;
 	int openGLformat;
-	
+
 	__strong unsigned int* data;
 	NSUInteger dataLength;
     CMask* mask;
     CMask* maskPlatform;
-	
+
 	int lineWidth;
 	int bLineWidth;
 	BOOL bCanRelease;
@@ -188,7 +188,7 @@ static inline bool pixelIsSolid(CImage* img, int x, int y)
 			return ((pixel2 & 0xF) != 0);
 		case RGBA5551:
 			pixel2 = *(short*)((char*)img->data + img->bLineWidth*y + x*img->bytesPrPixel);
-			return ((pixel2 & 0x01) != 0);			
+			return ((pixel2 & 0x01) != 0);
 		case RGB888:
 		case RGB565:
 		default:

@@ -561,9 +561,9 @@ struct CEventProgram {
 	int get_rh4CurToken();
 	// Sets the current expression token number.
 	void set_rh4CurToken(int newCurToken);
-	// Gets the current expression token array; relevant in Android only. 
+	// Gets the current expression token array; relevant in Android only.
 	jobject get_rh4Tokens();
-	// Sets the current expression token array; relevant in Android only. 
+	// Sets the current expression token array; relevant in Android only.
 	void set_rh4Tokens(jobject newTokensArray);
 
 	EventGroupMP* get_eventGroup();

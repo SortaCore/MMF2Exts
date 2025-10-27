@@ -360,7 +360,7 @@ public:
 		// @remarks Firewall hole punching works by having both sides connect to each other at the same time,
 		// using pre-supplied local ports - which can be random, but must be known.
 		// Since outgoing connections are allowed, the routers generate an exception for that connection;
-		// and the incoming connection's matching tuple of 
+		// and the incoming connection's matching tuple of
 		//		(local IP, local port, remote IP, remote port)
 		// plus exception specifically for that, creates a two-way exception through the firewall.
 		// However, when NAT is involved (network address translation, like port forwarding), it can get

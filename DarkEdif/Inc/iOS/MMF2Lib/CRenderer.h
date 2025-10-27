@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -73,7 +73,7 @@ public:
     // The pixel dimensions of the CAEAGLLayer
     GLint backingWidth;
     GLint backingHeight;
-    
+
     GLint backingProgram;
 
 	RenderingState currentRenderState;
@@ -82,20 +82,20 @@ public:
     GLuint vao;
     GLuint buffer;
     GLuint indexbuffer;
-    
+
 	//OpenGL capabilities
 	GLint maxTextureSize;
 
 	int originX, originY;
     int baseX, baseY;
     float scaleX, scaleY;
-    
+
 	CGPoint topLeft;
 
 	int textureUsage;
 	NSMutableSet* usedTextures;
 	NSMutableSet* supportedExtensions;
-    
+
     int backColor;
     int frameColor;
     int frameAlpha;
@@ -104,9 +104,9 @@ public:
     std::vector<CTexturePool> cTexturePool;
     std::vector<RenderToTexturePool> renderTexturePool;
     std::vector<SubScenePool>subScenePool;
-    
+
     DownScaling downScaling;
-    
+
     // The OpenGL ES names for the framebuffer and renderbuffer used to render to this view
     GLuint defaultFramebuffer, colorRenderbuffer, stencilbuffer;
 
@@ -134,24 +134,24 @@ public:
     Mat3f currentTransform;
     Mat3f currentProjection;
     GLuint currentProgram;
-    
+
     bool bPreMultiply;
     bool useClipping;
     int nLayers, clipLeft, clipBottom, clipWidth, clipHeight;
 
     bool downgrade, onLayer, onAlpha, onScreen, onFrame;
     bool newProjection, newTransform;
-    
+
 	CShader* defaultShader;
 	CShader* gradientShader;
     CShader* defaultEllipseShader;
     CShader* gradientEllipseShader;
     CShader* solidColorShader;
 	CShader* currentShader;
-    
+
     CShader* perspectiveShader;
     CShader* sinewaveShader;
-    
+
     CShader* effectShader;
     std::stack<CShader*> shaderStack;
     CShadersVector shaders;
@@ -161,9 +161,9 @@ public:
 
     std::stack<SceneRender> sceneStack;
     std::stack<Scissor> scissors;
-    
+
     NSObject* lock; // Lock object to avoid possible racing over cleanUnused texture function.
-    
+
 	CRenderer(CRunView* runView);
 	~CRenderer();
 
@@ -180,9 +180,9 @@ public:
     void renderToScreen(bool bResampling, int bckcolor, int shaderIndex, int inkEffect, int inkEffectParam);
     void renderBackground(int x, int y, int w, int h);
     void renderColor(int x, int y, int w, int h, int color);
-    
+
 	bool resizeFromLayer(CAEAGLLayer* layer);
-    
+
 	void clear(float red, float green, float blue);
 	void clear();
 	void clearWithRunApp(CRunApp* app);
@@ -190,9 +190,9 @@ public:
 	void flush();
 	void forgetCachedState();
 	void forgetShader();
-   
+
     void setCurrentShader(CShader* shader);
-    
+
 	void bindRenderBuffer();
 	void updateViewport();
 	void setViewport(Viewport viewport);
@@ -206,7 +206,7 @@ public:
 	void setTransformMatrix(const Mat3f matrix);
     void flipProjection();
     void restoreProjection();
-    
+
     void setSurfaceTextureAtIndex(CTexture* image, NSString* name, int index);
     void updateSurfaceTexture();
 
@@ -241,10 +241,10 @@ public:
 
     void draw();
     void drawBackground(bool clearBck, bool flip);
-    
+
 	void useBlending(BOOL useBlending);
     BOOL getBlending();
-    
+
 	void setBlendEquation(GLenum equation);
 	void setBlendEquationSeparate(GLenum equationA, GLenum equationB);
 	void setBlendFunction(GLenum sFactor, GLenum dFactor);
@@ -264,17 +264,17 @@ public:
 	void cleanUnused();
 	void pruneTexture();
 	void clearPruneList();
-    
+
     // to be used with RTT
     void screenAreaToTexture(CRenderToTexture* rtt, int x , int y, int w, int h, int mode);
     void screenPixelsToTexture(CTexture* texture, int x , int y, int w, int h);
     UIImage* screenAreaToImage(int x , int y, int width, int height);
-    
+
     void copyRttToRtt(CRenderToTexture* src, CRenderToTexture* dest, int effect, int effectParam, int flipY);
     void copyRttToTextureAt(CRenderToTexture *src, CTexture *texture, int x, int y);
     void filterLayerRtt(CRenderToTexture *src, CRenderToTexture *dest, float comp);
 
-    
+
     //Shader operation
     int addShader(NSString* shaderName, NSString* vertexShader, NSString* fragmentShader, NSArray* shaderVariables, bool useTexCoord, bool useColors);
     int addShader(NSString* shaderName, NSArray* shaderVariables, bool useTexCoord, bool useColors);
@@ -283,10 +283,10 @@ public:
     void setEffectShader(int shaderIndex);
     void setEffectShaderByIndex(int shaderIndex);
     void removeEffectShader();
-    
+
     void pushScene(int x, int y, int w, int h);
     void popScene();
-    
+
     //Use Background
     void setBackgroundUse(int shaderIndex);
     //Use PixelSize
@@ -296,27 +296,27 @@ public:
     UIImage* readFBO(RenderingState* currentState);
     UIImage* readAreaToImage(int x, int y, int w, int h);
     UIImage* readTextureToImage(GLuint textureID, int w, int h);
-    
+
     void updateVariable1i(NSString* varName, int value);
     void updateVariable1i(int varIndex, int value);
     void updateVariable1f(NSString* varName, float value);
     void updateVariable1f(int varIndex, float value);
-    
+
     void updateVariable2i(NSString* varName, int value0, int value1);
     void updateVariable2i(int varIndex, int value0, int value1);
     void updateVariable2f(NSString* varName, float value0, float value1);
     void updateVariable2f(int varIndex, float value0, float value1);
-    
+
     void updateVariable3i(NSString* varName, int value0, int value1, int value2);
     void updateVariable3i(int varIndex, int value0, int value1, int value2);
     void updateVariable3f(NSString* varName, float value0, float value1, float value2);
     void updateVariable3f(int varIndex, float value0, float value1, float value2);
-    
+
     void updateVariable4i(NSString* varName, int value0, int value1, int value2, int value3);
     void updateVariable4i(int varIndex, int value0, int value1, int value2, int value3);
     void updateVariable4f(NSString* varName, float value0, float value1, float value2, float value3);
     void updateVariable4f(int varIndex, float value0, float value1, float value2, float value3);
-    
+
     GLuint getOrCreatePoolGLTexture(int width, int height, int glMode=GL_RGBA);
     void releaseGLPoolTexture(GLuint textureID);
     void deleteGLPoolTexture(GLuint textureID);
@@ -334,7 +334,7 @@ public:
     int getOrCreatePoolSubScene(int w, int h);
     void releasePoolSubScene(int idx);
     void clearPoolSubScene();
-    
+
     void Mat3fXVec3f(const float mat[9], const float vec[3], float result[3]);
 
 };

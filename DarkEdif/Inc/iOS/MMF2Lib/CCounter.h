@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -44,13 +44,13 @@ class CRenderer;
 @public
 	short rsFlags;			/// Type + flags
     int rsMini;
-    int rsMaxi;				// 
+    int rsMaxi;				//
     CValue* rsValue;
     int rsBoxCx;			/// Dimensions box (for lives, counters, texts)
     int rsBoxCy;
     double rsMiniDouble;
     double rsMaxiDouble;
-    short rsOldFrame;			/// Counter only 
+    short rsOldFrame;			/// Counter only
     unsigned char rsHidden;
     short rsFont;				/// Temporary font for texts
     int rsColor1;			/// Bar color

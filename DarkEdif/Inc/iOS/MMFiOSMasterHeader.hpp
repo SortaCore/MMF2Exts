@@ -4,7 +4,7 @@
 	#error Included the wrong header for this OS.
 #endif
 
-// All C/C++ files are expected to be built with Objective-C or Objective-C++ mode. 
+// All C/C++ files are expected to be built with Objective-C or Objective-C++ mode.
 // This should be handled by FusionSDK.props, but for specific files, check
 // project/file property C/C++ > Advanced > Compile As.
 // It should be noted that IntelliSense does not realise they are coded for Objective-C, and will get upset.
@@ -220,7 +220,7 @@ inline namespace FusionInternals
 		EventGroupFlags get_evgFlags() const;
 		event2 * GetCAByIndex(std::size_t index);
 	};
-	
+
 	struct CRunFrameMultiPlat {
 
 	};

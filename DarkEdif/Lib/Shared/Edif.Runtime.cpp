@@ -76,7 +76,7 @@ short RunHeader::GetOIListIndexFromOi(const short oi)
 			LOGF(_T("Is SOL non-increasing? %hi > %hi. Contact DarkEdif developers.\n"), last, j);
 		last = j;
 
-		// Went past 
+		// Went past
 		if (j > oi)
 			LOGE(_T("Exceeded expected oi %hi with %hi.\n"), oi, j);
 		++i;
@@ -589,7 +589,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const double d)
 	{
 		if (!DarkEdif::IsFusion25)
 			return LOGE(_T("Cannot set alt value at index %zu, invalid index.\n"), i);
-		
+
 		// TODO: if this does not work, just throw
 #ifdef _WIN32
 		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
@@ -620,7 +620,7 @@ void AltVals::SetAltValueAtIndex(const std::size_t i, const int l)
 	{
 		if (!DarkEdif::IsFusion25)
 			return LOGE(_T("Cannot set alt value at index %zu, invalid index.\n"), i);
-		
+
 		// TODO: if this does not work, just throw
 #ifdef _WIN32
 		void * v = mvReAlloc(Edif::SDK->mV, (void *)CF25.Values, (int)i * sizeof(CValueMultiPlat));
@@ -2886,7 +2886,7 @@ std::uint32_t RunSprite::get_layer() const {
 	JNIExceptionCheck();
 	return layer;
 }
-	
+
 // static definition
 jfieldID RunSprite::flagsFieldID, RunSprite::effectFieldID, RunSprite::effectShaderFieldID,
 	RunSprite::effectParamFieldID, RunSprite::layerFieldID;

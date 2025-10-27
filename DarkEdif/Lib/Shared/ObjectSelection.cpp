@@ -106,7 +106,7 @@ void ObjectSelection::SelectNone(RunObject& object) const
 
 	// Go to first object instance of this type, and make sure its next selected is invalid too
 	// There must be at least one obj instance, because we're passing it
-	
+
 	const RunObjectMultiPlatPtr firstObj = rhPtr->GetObjectListOblOffsetByIndex(ho->get_Number());
 	HeaderObject * const firstObjHo = firstObj->get_rHo();
 	firstObjHo->set_NextSelected(-1);
@@ -124,7 +124,7 @@ void ObjectSelection::SelectOneObject(RunObject& object) const
 	objInfo->set_NumOfSelected(1);
 	objInfo->set_ListSelected(ho->get_Number());
 	objInfo->set_EventCount(rhPtr->GetRH2EventCount());
-	
+
 	// Set next object in selection chain to none
 	ho->set_NextSelected(-1);
 }

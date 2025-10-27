@@ -2,11 +2,11 @@
 *
 * This source code is part of the iOS exporter for Clickteam Multimedia Fusion 2
 * and Clickteam Fusion 2.5.
-* 
-* Permission is hereby granted to any person obtaining a legal copy 
-* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source 
-* code for debugging, optimizing, or customizing applications created with 
-* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5. 
+*
+* Permission is hereby granted to any person obtaining a legal copy
+* of Clickteam Multimedia Fusion 2 or Clickteam Fusion 2.5 to use or modify this source
+* code for debugging, optimizing, or customizing applications created with
+* Clickteam Multimedia Fusion 2 and/or Clickteam Fusion 2.5.
 * Any other use of this source code is prohibited.
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -28,7 +28,7 @@
 #import "COI.h"
 
 
-// Flags 
+// Flags
 #define OEFLAG_DISPLAYINFRONT 0x0001
 #define OEFLAG_BACKGROUND 0x0002
 #define OEFLAG_BACKSAVE 0x0004
@@ -85,17 +85,17 @@
 @class COI;
 @class CTransitionData;
 
-@interface CObjectCommon : COC 
+@interface CObjectCommon : COC
 {
-@public 
+@public
 	int ocOEFlags;		    /// New flags
     short ocQualifiers[8];	    /// Qualifier list
     short ocFlags2;		    /// New news flags, before was ocEvents
     short ocOEPrefs;		    /// Automatically modifiable flags
     int ocIdentifier;		    /// Identifier d'objet
     int ocBackColor;		    /// Background color
-	CTransitionData* ocFadeIn;                    /// Fade in 
-	CTransitionData* ocFadeOut;                   /// Fade out 
+	CTransitionData* ocFadeIn;                    /// Fade in
+	CTransitionData* ocFadeOut;                   /// Fade out
     CMoveDefList* ocMovements;     /// La liste des mouvements
     CDefValues* ocValues;          /// Les alterable values par defaut
     CDefStrings* ocStrings;        /// Les alterable strings

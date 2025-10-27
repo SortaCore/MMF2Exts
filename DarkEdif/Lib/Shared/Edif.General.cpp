@@ -1096,7 +1096,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _displayRunO
 }
 
 // Android does not implement GetRunObjectSurface
-#ifndef __ANDROID__  
+#ifndef __ANDROID__
 
 #ifdef _WIN32
 cSurface* FusionAPI GetRunObjectSurface(RUNDATA * rdPtr)
@@ -1127,7 +1127,7 @@ ProjectFunc void * PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _getRunObj
 	intSurf = ForbiddenInternals::GetInternalSurface(&*ext->surf);
 #else // manual
 	LOGV(_T("GetRunObjectSurface running.\n"));
-	
+
 	auto surf = ext->GetDisplaySurface();
 	if (surf)
 		intSurf = ForbiddenInternals::GetInternalSurface(surf);

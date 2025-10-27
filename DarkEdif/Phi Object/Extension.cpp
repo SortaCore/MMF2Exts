@@ -243,7 +243,7 @@ void Extension::GetFrameNames()
 		} \
 	}
 	DieWithError(lA == INVALID_SET_FILE_POINTER, false, "get frame pointer");
-	
+
 
 	for (std::size_t i = 0; i < numFrames; ++i)
 	{

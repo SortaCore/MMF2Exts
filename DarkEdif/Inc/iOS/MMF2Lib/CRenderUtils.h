@@ -190,7 +190,7 @@ public:
     CShader* SearchShaderByIndex(int index) const;
     int LastPushedShaderIndex() const;
     int Size() const;
-    
+
     void askEffectsToForgetCache();
 
 private:

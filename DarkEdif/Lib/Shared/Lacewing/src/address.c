@@ -23,7 +23,7 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 	// Cause the caller to finish initing and return null addr
 	if (!ctx)
 		return;
-	
+
 	char * it;
 
 	memset (ctx, 0, sizeof (*ctx));

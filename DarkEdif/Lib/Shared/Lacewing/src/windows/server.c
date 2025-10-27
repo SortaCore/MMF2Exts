@@ -177,7 +177,7 @@ lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_
 		}
 		u_long mode = 1;  // 1 to enable non-blocking socket
 		ioctlsocket(sock, FIONBIO, &mode);
-			
+
 		int conRet = -1;
 		if (broke == lw_false)
 		{
@@ -1159,7 +1159,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 				// PFXImportCertStore is Unicode only
 				wchar_t * passphrase_wchar = passphrase ? lw_char_to_wchar(passphrase, -1) : NULL;
 				// despite SAL annotation, PFXImportCertStore docs allow null passphrase
-				#pragma warning (suppress: 6387) 
+				#pragma warning (suppress: 6387)
 				cert_store = PFXImportCertStore(&pfx, passphrase_wchar, 0);
 				if (passphrase_wchar)
 				{
