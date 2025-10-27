@@ -290,16 +290,12 @@ enum_class_is_a_bitmask(TextCapacity);
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
 	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
-	void LOGF(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
+	[[noreturn]] void LOGF(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
 	#ifdef _DEBUG
-		#ifdef __ANDROID__
-			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
-		#else
-			#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_VERBOSE
-		#endif
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_DEBUG
 	#else
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
 	#endif

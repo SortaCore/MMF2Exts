@@ -761,7 +761,7 @@ namespace DarkEdif
 #endif // EditorBuild
 
 		// Turn on for lots of logging.
-#if EditorBuild && defined(_DEBUG)
+#if EditorBuild && defined(_DEBUG) && defined (IS_DARKEDIF_TEMPLATE)
 		static constexpr bool DebugProperties = true;
 #else
 		static constexpr bool DebugProperties = false;
