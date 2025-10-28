@@ -67,11 +67,6 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Unicode|Win32'">
-    <ClCompile>
-      <PreprocessorDefinitions>FUSION_INTERNAL_ACCESS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Lib\Windows\Edif.Edittime.cpp" />
     <ClCompile Include="Edittime.cpp" />
