@@ -58,7 +58,7 @@ BEGIN
 			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
 			VALUE "InternalName", PROJECT_NAME ".mfx\0"
-			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "LegalCopyright", "Copyright \xA9 " YEAR " " COMPANY_NAME "\0"
 			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
 			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
 		END
@@ -244,7 +244,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            PROJECT_NAME
 	IDST_AUTHOR             "Your Name"
-	IDST_COPYRIGHT          "Copyright © " YEAR " by Your Name"
+	IDST_Copyright \xA9        "Copyright \xA9 " YEAR " by Your Name"
 	IDST_COMMENT            "Quick description displayed in the Insert Object dialog box and in the object's About properties."
 	IDST_HTTP               "https://www.example.com/"
 END

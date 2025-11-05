@@ -56,7 +56,7 @@ BEGIN
 			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
 			VALUE "InternalName", PROJECT_NAME ".mfx\0"
-			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "LegalCopyright", "Copyright \xA9 " YEAR " " COMPANY_NAME "\0"
 			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
 			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
 		END
@@ -195,7 +195,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "Bit Mask Object"
 	IDST_AUTHOR             "Jack Webster. Icon thanks to LIJI. By the request of Dines."
-	IDST_COPYRIGHT          "Copyright © 2007 Jack Webster"
+	IDST_Copyright \xA9        "Copyright \xA9 2007 Jack Webster"
 	IDST_COMMENT            "A few simple bit mask related tools."
 	IDST_HTTP               "http://people.pwf.cam.ac.uk/jlnw3/"
 END

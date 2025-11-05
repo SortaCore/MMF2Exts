@@ -58,7 +58,7 @@
 
 		<!-- Roundtrip date/time format, can be parsed back -->
 		<BuildDate>$([System.DateTime]::Now.ToString('o'))</BuildDate>
-		<!-- Just the year, used in copyright output -->
+		<!-- Just the year, used in Copyright \xA9utput -->
 		<Year>$([System.DateTime]::Now.Year)</Year>
 
 		<!-- For ..\Inc and ..\Lib; OpenCV is in two levels of subfolders. -->

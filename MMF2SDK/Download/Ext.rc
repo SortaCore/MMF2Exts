@@ -56,7 +56,7 @@ BEGIN
 			VALUE "FileDescription", PROJECT_NAME ", " asStr(CONFIG) " build " asStr(EXTENSION_VERSION) ".\0"
 			VALUE "FileVersion", "2.00" "\0"
 			VALUE "InternalName", PROJECT_NAME ".mfx\0"
-			VALUE "LegalCopyright", "Copyright © " YEAR " " COMPANY_NAME "\0"
+			VALUE "LegalCopyright", "Copyright \xA9 " YEAR " " COMPANY_NAME "\0"
 			VALUE "OriginalFilename", PROJECT_NAME ".mfx\0"
 			VALUE "ProductVersion", "Build " asStr(EXTENSION_VERSION) ", date " BUILD_DATE ".\0"
 		END
@@ -234,7 +234,7 @@ STRINGTABLE
 BEGIN
 	IDST_OBJNAME            "Download Object"
 	IDST_AUTHOR             "François Lionet"
-	IDST_COPYRIGHT          "Copyright © 2006 Clickteam"
+	IDST_Copyright \xA9        "Copyright \xA9 2006 Clickteam"
 	IDST_COMMENT            "Allows you to download file from the Internet."
 	IDST_HTTP               "http://www.clickteam.com"
 END
