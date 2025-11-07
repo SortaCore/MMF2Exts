@@ -125,6 +125,21 @@ typedef lw_i8 lw_bool;
 	typedef int lw_fd;
 #endif
 
+// Used for network changes, e.g. IP expiration.
+typedef enum _lw_network_change_type
+{
+	// The handler for listening to network changes doesn't work.
+	// App restart is necessary to set up monitoring again.
+	lw_network_change_type_handlergone = -1,
+	// An IP/network was added
+	lw_network_change_type_added = 1,
+	// An IP/network was lost
+	// Check ipv6 public interface == -1 to see if existing public IPv6 was dead
+	lw_network_change_type_lost = 2,
+	// An IP/network was either added or lost (treat as either)
+	lw_network_change_type_unspecified = 3,
+} lw_network_change_type;
+
 #if (!defined(_lacewing_internal))
 
 	/* The ugly underscore prefixes are only necessary because we have to
@@ -184,6 +199,9 @@ typedef lw_i8 lw_bool;
 	lw_import			void  lw_dump				(const char * buffer, size_t size);
 	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
 	lw_import		  size_t  lw_min_size_t			(size_t a, size_t b);
+	// Adds or removes a network change handler (e.g. IPs change). Returns false if fails.
+	// Editing handlers must not be done inside the handler func - it will deadlock.
+	lw_import		 lw_bool  lw_network_change_sub (lw_bool add, void (*handler)(lw_network_change_type, void*), void * tag);
 
 /* Thread */
 

@@ -40,6 +40,16 @@ static void * KERNEL32 (const char * fn)
 	return DLL ? (void *) GetProcAddress (DLL, fn) : 0;
 }
 
+static void * IPHlp32 (const char * fn)
+{
+	static HINSTANCE DLL = 0;
+
+	if (!DLL)
+		DLL = LoadLibraryA ("iphlpapi.dll");
+
+	return DLL ? (void *) GetProcAddress (DLL, fn) : 0;
+}
+
 fn_getaddrinfo compat_getaddrinfo ()
 {
 	static fn_getaddrinfo fn = 0;
@@ -90,6 +100,19 @@ fn_SetThreadDescription compat_SetThreadDescription ()
 	static fn_SetThreadDescription fn = 0;
 
 	return fn ? fn : (fn = (fn_SetThreadDescription) KERNEL32 ("SetThreadDescription"));
+}
+
+fn_NotifyIpInterfaceChange compat_NotifyIpInterfaceChange ()
+{
+	static fn_NotifyIpInterfaceChange fn = 0;
+
+	return fn ? fn : (fn = (fn_NotifyIpInterfaceChange)IPHlp32("NotifyIpInterfaceChange"));
+}
+fn_CancelMibChangeNotify2 compat_CancelMibChangeNotify2 ()
+{
+	static fn_CancelMibChangeNotify2 fn = 0;
+
+	return fn ? fn : (fn = (fn_CancelMibChangeNotify2)IPHlp32("CancelMibChangeNotify2"));
 }
 
 #if defined(_WIN32)

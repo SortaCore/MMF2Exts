@@ -130,9 +130,14 @@ void always_log(const char* c, ...);
 #include <time.h>
 #include <ctype.h>
 
-
+// Implemented per-plat
 void lwp_init ();
 void lwp_deinit ();
+
+// Implemented in global.c
+void lwp_network_change_init ();
+void lwp_network_change_deinit ();
+void lwp_on_network_changed (lw_network_change_type how);
 
 #ifdef _lacewing_debug
 	#include "refcount-dbg.h"

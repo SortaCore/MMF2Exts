@@ -56,6 +56,24 @@ fn_CancelIoEx compat_CancelIoEx ();
 typedef HRESULT(WINAPI * fn_SetThreadDescription)(HANDLE, PCWSTR);
 fn_SetThreadDescription compat_SetThreadDescription();
 
+typedef void (WINAPI* param_IPINTERFACE_CHANGE_CALLBACK) (
+	PVOID CallerContext, void* Row, int NotificationType
+);
+typedef DWORD (WINAPI* fn_NotifyIpInterfaceChange)(
+	ADDRESS_FAMILY Family,
+	param_IPINTERFACE_CHANGE_CALLBACK Callback,
+	void* CallerContext,
+	BOOLEAN InitialNotification,
+	HANDLE* NotificationHandle
+);
+
+fn_NotifyIpInterfaceChange compat_NotifyIpInterfaceChange();
+
+typedef DWORD (WINAPI* fn_CancelMibChangeNotify2)
+	(HANDLE notifHandle);
+
+fn_CancelMibChangeNotify2 compat_CancelMibChangeNotify2();
+
 #if defined(_WIN32)
 #if __cplusplus
 extern "C"

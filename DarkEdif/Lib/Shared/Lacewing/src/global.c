@@ -253,4 +253,84 @@ void lw_trace(const char * format, ...)
 }
 #endif
 
+// Non-static so memory leak hunting can find it
+lw_sync lw_network_change_sync = NULL;
 
+typedef struct _lw_handler {
+	void (*handler)(lw_network_change_type, void*);
+	void* tag;
+	struct _lw_handler* next;
+} lw_handler;
+static lw_handler* list = NULL;
+
+void lwp_on_network_changed(lw_network_change_type how)
+{
+	// lwp_init should init this on all plats, as well as setting up handlers
+	assert(lw_network_change_sync);
+
+	lw_sync_lock(lw_network_change_sync);
+	for (const lw_handler* i = list; i; i = i->next)
+		i->handler(how, i->tag);
+	lw_sync_release(lw_network_change_sync);
+}
+void lwp_network_change_init ()
+{
+	assert(!lw_network_change_sync);
+
+	lw_network_change_sync = lw_sync_new();
+	lw_sync_lock(lw_network_change_sync);
+	list = NULL;
+}
+void lwp_network_change_deinit ()
+{
+	assert(lw_network_change_sync);
+
+	lw_sync_lock(lw_network_change_sync);
+	lw_sync_release(lw_network_change_sync);
+
+	// All handlers should've unsubbed before lwp_deinit()
+	assert(!list);
+
+	lw_sync_delete(lw_network_change_sync);
+}
+
+lw_bool lw_network_change_sub(lw_bool add, void (* handler)(lw_network_change_type, void*), void* tag)
+{
+	assert(lw_network_change_sync);
+
+	lw_sync_lock(lw_network_change_sync);
+	lw_bool ret = lw_true;
+	lw_handler* i = list;
+	for (lw_handler* prev = NULL; i; prev = i, i = i->next)
+	{
+		if (i->handler != handler || tag != i->tag)
+			continue;
+
+		if (add)
+		{
+			ret = lw_false;
+			goto exit;
+		}
+
+		*(prev ? &prev->next : &list) = i->next;
+		free(i);
+		i = NULL;
+		goto exit;
+	}
+
+	// Not in list
+	if (add)
+	{
+		lw_handler** const j = i ? &i->next : &list;
+		*j = (lw_handler*)lw_malloc_or_exit(sizeof(lw_handler));
+		(*j)->handler = handler;
+		(*j)->tag = tag;
+		(*j)->next = NULL;
+	}
+	else // can't remove, not found
+		ret = lw_false;
+
+exit:
+	lw_sync_release(lw_network_change_sync);
+	return ret;
+}

@@ -9,8 +9,74 @@
 */
 
 #include "../common.h"
+#include "compat.h"
+#include <IPHlpApi.h> // for NotifyAddrChange
+#include <netioapi.h>
 
 static int init_called = 0;
+OVERLAPPED lwp_network_changed_overlapped;
+
+static HANDLE networkChanged;
+
+void WINAPI lwp_networkChangedCallback(void* CallerContext, PMIB_IPINTERFACE_ROW row, int type)
+{
+	if (type != MibDeleteInstance && type != MibAddInstance)
+		return;
+
+	// IPv6 address likely expired
+	if (type == MibDeleteInstance && (!row || lwp_ipv6_public_fixed_interface_index == row->InterfaceIndex))
+	{
+		lwp_ipv6_public_fixed_addr = in6addr_any;
+		lwp_ipv6_public_fixed_interface_index = -1;
+	}
+	if (type == MibAddInstance && lwp_ipv6_public_fixed_interface_index < 0)
+	{
+		// If failed to find IPv6 entirely, cos no IPv6, this will be -2; we might have new adapter and new system now
+		if (lwp_ipv6_public_fixed_interface_index == -2)
+			lwp_ipv6_public_fixed_interface_index = -1;
+		lwp_trigger_public_address_hunt(lw_false);
+	}
+
+	lwp_on_network_changed ((lw_network_change_type) type);
+}
+
+lw_thread networkLostModeMonitorThread;
+int __stdcall xpNetworkLostMode(void* p)
+{
+	while (1)
+	{
+		DWORD res = WSAWaitForMultipleEvents(1, &lwp_network_changed_overlapped.hEvent, TRUE, INFINITE, TRUE);
+		if (res == WAIT_OBJECT_0)
+		{
+			lwp_ipv6_public_fixed_addr = in6addr_any;
+			lwp_ipv6_public_fixed_interface_index = -1;
+			lwp_trigger_public_address_hunt(lw_false);
+
+			lwp_on_network_changed(lw_network_change_type_unspecified);
+
+			// Re-register for an event
+			WSAResetEvent(lwp_network_changed_overlapped.hEvent);
+			if (NotifyAddrChange(NULL, &lwp_network_changed_overlapped) != ERROR_IO_PENDING)
+			{
+				always_log("Couldn't register network change handler, error %u.", GetLastError());
+				break;
+			}
+			continue;
+		}
+
+		// else assume borked, perhaps deliberately
+		break;
+	};
+
+	CancelIPChangeNotify(&lwp_network_changed_overlapped);
+	WSACloseEvent(&lwp_network_changed_overlapped.hEvent);
+	lwp_network_changed_overlapped.hEvent = NULL;
+	CloseHandle(networkChanged);
+	networkChanged = NULL;
+
+	lwp_on_network_changed(lw_network_change_type_handlergone);
+	return -1;
+}
 
 void lwp_init ()
 {
@@ -26,11 +92,50 @@ void lwp_init ()
 		exit(WSAVERNOTSUPPORTED);
 		return;
 	}
+
+	lwp_network_change_init ();
+
+	memset(&lwp_network_changed_overlapped, 0, sizeof(lwp_network_changed_overlapped));
+	fn_NotifyIpInterfaceChange notif = compat_NotifyIpInterfaceChange();
+	DWORD res;
+	if (notif)
+		res = notif(AF_UNSPEC, &lwp_networkChangedCallback, NULL, FALSE, &lwp_network_changed_overlapped.hEvent);
+	else
+	{
+		lwp_network_changed_overlapped.hEvent = WSACreateEvent();
+		res = NotifyAddrChange(&networkChanged, &lwp_network_changed_overlapped);
+		if (res == 0 || res == WSA_IO_PENDING)
+		{
+			networkLostModeMonitorThread = lw_thread_new("Network status monitor", (void*)xpNetworkLostMode);
+			lw_thread_start(networkLostModeMonitorThread, NULL);
+		}
+	}
+
+	if (res != 0 && res != WSA_IO_PENDING)
+	{
+		always_log("Warning: Network notification could not be registered, error %u. IPv6 may fail after network change.", GetLastError());
+		if (!notif)
+			WSACloseEvent(lwp_network_changed_overlapped.hEvent);
+	}
 }
+
 void lwp_deinit()
 {
 	if (--init_called == 0)
+	{
+		if (!compat_NotifyIpInterfaceChange())
+		{
+			CancelIPChangeNotify(&lwp_network_changed_overlapped);
+			lw_thread_join(networkLostModeMonitorThread);
+			lw_thread_delete(networkLostModeMonitorThread);
+		}
+		else
+			compat_CancelMibChangeNotify2()(&networkChanged);
+
+		lwp_network_change_deinit();
+
 		WSACleanup();
+	}
 }
 
 lw_bool lw_file_exists (const char * filename)
