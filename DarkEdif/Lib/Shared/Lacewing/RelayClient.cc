@@ -90,7 +90,6 @@ namespace lacewing
 
 			udphellotimer->on_tick(nullptr);
 			lacewing::timer_delete(udphellotimer);
-			udphellotimer = nullptr;
 
 			// Lacewing will self-delete on disconnect... we replace with a new, blank client
 			if (socket)
@@ -100,15 +99,13 @@ namespace lacewing
 				socket->on_data(nullptr);
 				socket->on_error(nullptr);
 
-				lacewing::stream_delete(socket);
-				socket = nullptr;
+				lacewing::client_delete(socket);
 			}
 
 			// UDP has no "close" as it's a connectionless protocol, so Lacewing doesn't clean it up automatically
 			udp->on_data(nullptr);
 			udp->on_error(nullptr);
 			lacewing::udp_delete(udp);
-			udp = nullptr;
 		}
 	};
 
@@ -330,10 +327,8 @@ namespace lacewing
 		// to watch it on app close.
 		internal.socket->close(lw_false);
 		// lacewing::stream_delete(internal.socket);
-		// internal.socket = nullptr;
 		internal.udp->unhost();
 		// lacewing::udp_delete(internal.udp);
-		// internal.udp = nullptr;
 	}
 
 	bool relayclient::connected()

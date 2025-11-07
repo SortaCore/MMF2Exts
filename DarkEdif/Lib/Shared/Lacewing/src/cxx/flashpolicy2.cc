@@ -16,9 +16,10 @@ flashpolicy lacewing::flashpolicy_new (lacewing::pump pump)
 	return (flashpolicy) lw_flashpolicy_new ((lw_pump) pump);
 }
 
-void lacewing::flashpolicy_delete (lacewing::flashpolicy flashpolicy)
+void lacewing::flashpolicy_delete (lacewing::flashpolicy &flashpolicy)
 {
 	lw_flashpolicy_delete ((lw_flashpolicy) flashpolicy);
+	flashpolicy = nullptr;
 }
 
 void _flashpolicy::host (const char * filename)

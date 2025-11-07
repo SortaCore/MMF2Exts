@@ -15,9 +15,10 @@ thread lacewing::thread_new (const char * name, void * proc)
 	return (thread) lw_thread_new (name, proc);
 }
 
-void lacewing::thread_delete (lacewing::thread thread)
+void lacewing::thread_delete (lacewing::thread &thread)
 {
 	lw_thread_delete ((lw_thread) thread);
+	thread = nullptr;
 }
 
 void _thread::start (void * param)

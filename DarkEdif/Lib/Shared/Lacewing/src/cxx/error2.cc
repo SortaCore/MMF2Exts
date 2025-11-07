@@ -14,9 +14,10 @@ error lacewing::error_new ()
 	return (error) lw_error_new ();
 }
 
-void lacewing::error_delete (lacewing::error error)
+void lacewing::error_delete (lacewing::error& error)
 {
 	lw_error_delete ((lw_error) error);
+	error = nullptr;
 }
 
 void _error::add (const char * format, ...)

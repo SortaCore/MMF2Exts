@@ -763,7 +763,7 @@ struct _error
 };
 
 lw_import error error_new ();
-void error_delete (error);
+void error_delete (error&);
 
 /** event **/
 
@@ -785,7 +785,7 @@ struct _event
 };
 
 lw_import event event_new ();
-void event_delete (event);
+void event_delete (event&);
 
 
 /** pump **/
@@ -830,7 +830,7 @@ struct _pump
 };
 
 lw_import pump pump_new ();
-lw_import void pump_delete (pump);
+lw_import void pump_delete (pump&);
 
 
 /** eventpump **/
@@ -851,6 +851,7 @@ struct _eventpump : public _pump
 };
 
 lw_import eventpump eventpump_new ();
+lw_import void eventpump_delete(eventpump&);
 
 
 /** thread **/
@@ -871,7 +872,7 @@ struct _thread
 };
 
 lw_import thread thread_new (const char * name, void * proc);
-lw_import void thread_delete (thread);
+lw_import void thread_delete (thread&);
 
 
 /** timer **/
@@ -896,7 +897,7 @@ struct _timer
 };
 
 lw_import timer timer_new (pump, const char *);
-lw_import void timer_delete (timer);
+lw_import void timer_delete (timer&);
 
 
 /** sync **/
@@ -920,7 +921,7 @@ protected:
 };
 
 lw_import sync sync_new ();
-lw_import void sync_delete (sync);
+lw_import void sync_delete (sync&);
 
 
 /** stream **/
@@ -982,7 +983,7 @@ struct _stream
 };
 
 lw_import stream stream_new (const lw_streamdef *, pump);
-lw_import void stream_delete (stream);
+lw_import void stream_delete (stream&);
 
 
 /** pipe **/
@@ -1075,7 +1076,7 @@ lw_import address address_new (const char * hostname, lw_ui16 port);
 lw_import address address_new (const char * hostname, const char * service, int hints);
 lw_import address address_new (const char * hostname, lw_ui16 port, int hints);
 
-lw_import void address_delete (address);
+lw_import void address_delete (address&);
 
 
 /** filter **/
@@ -1109,7 +1110,7 @@ struct _filter
 };
 
 lw_import filter filter_new ();
-lw_import void filter_delete (filter);
+lw_import void filter_delete (filter&);
 
 
 /** client **/
@@ -1144,6 +1145,7 @@ struct _client : public _fdstream
 };
 
 lw_import client client_new (pump);
+lw_import void client_delete (client&);
 
 
 /** server **/
@@ -1197,7 +1199,7 @@ struct _server
 };
 
 lw_import server server_new (pump);
-lw_import void server_delete (server);
+lw_import void server_delete (server&);
 
 struct _server_client : public _fdstream
 {
@@ -1245,7 +1247,7 @@ struct _udp
 };
 
 lw_import udp udp_new (pump);
-lw_import void udp_delete (udp);
+lw_import void udp_delete (udp&);
 
 
 /** webserver **/
@@ -1332,7 +1334,7 @@ struct _webserver
 };
 
 lw_import webserver webserver_new (pump);
-lw_import void webserver_delete (webserver);
+lw_import void webserver_delete (webserver&);
 
 struct _webserver_request : public _stream
 {
@@ -1505,7 +1507,7 @@ struct _flashpolicy
 };
 
 lw_import flashpolicy flashpolicy_new (pump);
-lw_import void flashpolicy_delete (flashpolicy);
+lw_import void flashpolicy_delete (flashpolicy&);
 
 //#pragma region Phi stuff
 // NOTE: if you edit this due to new liblacewing release, note:

@@ -14,6 +14,11 @@ eventpump lacewing::eventpump_new ()
 {
 	return (eventpump) lw_eventpump_new ();
 }
+void lacewing::eventpump_delete(eventpump& pump)
+{
+	lw_pump_delete((lw_pump)pump);
+	pump = nullptr;
+}
 
 error _eventpump::start_eventloop ()
 {

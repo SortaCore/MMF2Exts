@@ -15,9 +15,10 @@ event lacewing::event_new ()
 	return (event) lw_event_new ();
 }
 
-void lacewing::event_delete (lacewing::event event)
+void lacewing::event_delete (lacewing::event & event)
 {
 	lw_event_delete ((lw_event) event);
+	event = nullptr;
 }
 
 void _event::signal ()

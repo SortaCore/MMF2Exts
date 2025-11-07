@@ -145,10 +145,7 @@ struct relayserverinternal
 		channels.clear();
 
 		lacewing::timer_delete(pingtimer);
-		pingtimer = nullptr;
-
 		lacewing::timer_delete(actiontimer);
-		actiontimer = nullptr;
 	}
 
 	IDPool clientids;
@@ -1473,13 +1470,9 @@ relayserver::~relayserver() noexcept
 	delete ((relayserverinternal *) internaltag);
 
 	lacewing::server_delete(socket);
-	socket = nullptr;
 	lacewing::udp_delete(udp);
-	udp = nullptr;
 	lacewing::flashpolicy_delete(flash);
-	flash = nullptr;
 	lacewing::webserver_delete(websocket);
-	websocket = nullptr;
 }
 
 void relayserver::host(lw_ui16 port)

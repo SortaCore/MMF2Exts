@@ -90,6 +90,8 @@ lw_timer lw_timer_new (lw_pump pump, const char * timer_name)
 
 void lw_timer_delete (lw_timer ctx)
 {
+	if (!ctx)
+		return;
 	lw_timer_stop (ctx);
 	lw_event_delete (ctx->stop_event);
 

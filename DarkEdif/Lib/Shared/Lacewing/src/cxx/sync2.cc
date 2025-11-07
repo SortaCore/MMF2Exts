@@ -15,9 +15,10 @@ lacewing::sync lacewing::sync_new ()
 	return (lacewing::sync) lw_sync_new ();
 }
 
-void lacewing::sync_delete (lacewing::sync sync)
+void lacewing::sync_delete (lacewing::sync &sync)
 {
 	lw_sync_delete ((lw_sync) sync);
+	sync = nullptr;
 }
 
 _sync_lock::_sync_lock (lacewing::sync sync)

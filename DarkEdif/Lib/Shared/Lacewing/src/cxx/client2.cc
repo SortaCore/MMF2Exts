@@ -14,6 +14,11 @@ client lacewing::client_new (lacewing::pump pump)
 {
 	return (client) lw_client_new ((lw_pump) pump);
 }
+void lacewing::client_delete (lacewing::client &cli)
+{
+	lw_stream_delete((lw_stream)cli);
+	cli = nullptr;
+}
 
 void _client::connect (const char * host, lw_ui16 port)
 {

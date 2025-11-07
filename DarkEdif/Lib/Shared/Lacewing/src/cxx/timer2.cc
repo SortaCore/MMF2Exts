@@ -15,9 +15,10 @@ timer lacewing::timer_new (lacewing::pump pump, const char * timer_name)
 	return (timer) lw_timer_new ((lw_pump) pump, timer_name);
 }
 
-void lacewing::timer_delete (lacewing::timer timer)
+void lacewing::timer_delete (lacewing::timer &timer)
 {
 	lw_timer_delete ((lw_timer) timer);
+	timer = nullptr;
 }
 
 void _timer::start (long msec)

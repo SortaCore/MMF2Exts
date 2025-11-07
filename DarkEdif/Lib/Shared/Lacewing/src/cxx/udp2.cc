@@ -15,9 +15,10 @@ udp lacewing::udp_new (lacewing::pump pump)
 	return (udp) lw_udp_new ((lw_pump) pump);
 }
 
-void lacewing::udp_delete (lacewing::udp udp)
+void lacewing::udp_delete (lacewing::udp &udp)
 {
 	lw_udp_delete ((lw_udp) udp);
+	udp = nullptr;
 }
 
 void _udp::host (lw_ui16 port)

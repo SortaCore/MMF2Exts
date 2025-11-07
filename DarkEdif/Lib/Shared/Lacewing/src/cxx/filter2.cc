@@ -15,9 +15,10 @@ filter lacewing::filter_new ()
 	return (filter) lw_filter_new ();
 }
 
-void lacewing::filter_delete (lacewing::filter filter)
+void lacewing::filter_delete (lacewing::filter &filter)
 {
 	lw_filter_delete ((lw_filter) filter);
+	filter = nullptr;
 }
 
 void _filter::local (address addr)

@@ -628,7 +628,7 @@ void Extension::GlobalInfo::MarkAsPendingDelete()
 void Extension::eventpumpdeleter(lacewing::eventpump pump)
 {
 	LOGV(_T("" PROJECT_NAME " - pump deleting...\n"));
-	lacewing::pump_delete(pump);
+	lacewing::eventpump_delete(pump);
 	LOGV(_T("" PROJECT_NAME " - pump deleted.\n"));
 	_CrtCheckMemory();
 }

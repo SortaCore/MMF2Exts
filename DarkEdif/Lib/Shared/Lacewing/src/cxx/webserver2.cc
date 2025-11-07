@@ -15,9 +15,10 @@ webserver lacewing::webserver_new (lacewing::pump pump)
 	return (webserver) lw_ws_new ((lw_pump) pump);
 }
 
-void lacewing::webserver_delete (lacewing::webserver webserver)
+void lacewing::webserver_delete (lacewing::webserver &webserver)
 {
 	lw_ws_delete ((lw_ws) webserver);
+	webserver = nullptr;
 }
 
 void _webserver::host (long port)

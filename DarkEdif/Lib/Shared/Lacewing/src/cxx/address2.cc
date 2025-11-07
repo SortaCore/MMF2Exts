@@ -35,9 +35,10 @@ address lacewing::address_new (const char * hostname, lw_ui16 port, int hints)
 	return (address) lw_addr_new_port_hint (hostname, port, hints);
 }
 
-void lacewing::address_delete (lacewing::address address)
+void lacewing::address_delete (lacewing::address &address)
 {
 	lw_addr_delete ((lw_addr) address);
+	address = nullptr;
 }
 
 lw_ui16 _address::port ()
