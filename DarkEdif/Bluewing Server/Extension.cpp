@@ -258,7 +258,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	}
 
 #if EditorBuild
-	if (edPtr->eHeader.extSize < sizeof(EDITDATA) || edPtr->eHeader.extVersion != Extension::Version)
+	// Strangely, ext version is stuck at 2 at runtime. Is it reading it from Lacewing Server?
+	if (edPtr->eHeader.extSize < sizeof(EDITDATA))
 	{
 		DarkEdif::MsgBox::Error(_T("Property size mismatch"), _T("Properties are the wrong size (MFA size %lu, extension size %zu). "
 			"Please re-create the Lacewing Blue Server object in frame, "
