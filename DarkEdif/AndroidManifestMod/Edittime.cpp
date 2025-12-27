@@ -499,6 +499,16 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 			replaceAll(replaceWith, "\\n"sv, "\n"sv);
 			replaceAll(replaceWith, "\\t"sv, "\t"sv);
 			replaceAll(replaceWith, "\\\\"sv, "\\"sv);
+			// $0 is not supported, $& is used instead in std::regex_replace
+			// Swap $0 to $&, but check user is not doing \$0 to escape the dollar
+			if (replaceWith.find("\\$0"sv) != std::string::npos)
+			{
+				return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),
+					_T("The %s TO \"...\n%.40s\n...\" has an escaped $0 that breaks the Mod switch. Use $& instead."),
+					NumberToOrdinal(i).c_str(),
+					DarkEdif::UTF8ToTString(userManifestModifications.substr(toSectionStart)).c_str());
+			}
+			replaceAll(replaceWith, "$0"sv, "$&"sv);
 
 			log << "REGEX ["sv << searchForStr << "]\n"sv
 				<< "REPLACE WITH ["sv << replaceWith << "]\n"sv
@@ -511,7 +521,7 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 				log << "toSectionStart = " << toSectionStart << ", toSectionEnd = " << toSectionEnd
 					<< ".\nnextFrom = " << nextFrom << ".\n";
 				return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),
-					_T("Property format was not found in manifest! The %s FROM...\n%.40s\n... was not found in the manifest."),
+					_T("Property format was not found in manifest! The %s FROM \"...\n%.40s\n...\" was not found in the manifest."),
 					NumberToOrdinal(i).c_str(),
 					DarkEdif::UTF8ToTString(userManifestModifications.substr(fromSectionEnd)).c_str());
 			}
@@ -523,7 +533,7 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 		catch (std::regex_error e)
 		{
 			return DarkEdif::MsgBox::Error(_T("Error modifying manifest"),
-				_T("Property format invalid: Regex error \"%s\".\nThe %s FROM:%.50s\nor the TO:%.50s\nis invalid."),
+				_T("Property format invalid: Regex error \"%s\".\nThe %s FROM:\"%.50s\"\nor the TO:\"%.50s\"\nis invalid."),
 				DarkEdif::UTF8ToTString(e.what()).c_str(),
 				NumberToOrdinal(i).c_str(),
 				DarkEdif::UTF8ToTString(userManifestModifications.substr(fromSectionStart, fromSectionEnd)).c_str(),
