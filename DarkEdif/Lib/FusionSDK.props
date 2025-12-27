@@ -443,8 +443,12 @@
 
 		<!-- If not XP, then use the latest compiler. $(PlatformToolsetVersion) is not available,
 			 so the following "check for toolset" are copied from Microsoft.Cpp.Defaults.props;
-			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022. Note v100 (VS 2010) is MS's default. -->
+			 v141 = VS 2017, v142 = VS 2019, v143 = VS 2022, v144 = VS2026, v145 = VS2028. Note v100 (VS 2010) is MS's default. -->
 		<PlatformToolset Condition="$(PlatformToolset)==''">v100</PlatformToolset>
+		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
+			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v145\Toolset.props')">v145</PlatformToolset>
+		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
+			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v144\Toolset.props')">v144</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
 			Exists('$(VCTargetsPath)Platforms\Win32\PlatformToolsets\v143\Toolset.props')">v143</PlatformToolset>
 		<PlatformToolset Condition="$(PlatformToolset)=='v100' AND
