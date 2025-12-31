@@ -682,9 +682,11 @@
 			 even when NDK is r16b, which comes with VS, and is too early for API 31. -->
 		<_SysrootLinkFix>$(SysrootLink.Replace('\$(AndroidAPILevel)\', '$evil$'))</_SysrootLinkFix>
 
-		<!-- API that's readily accessible. Note 21 is minimum 64-bit API. -->
-		<AndroidAPILevel>android-19</AndroidAPILevel>
-		<AndroidAPILevel Condition="'$(Platform)'=='ARM64' OR '$(Platform)'=='x64'">android-21</AndroidAPILevel>
+		<!-- API that's readily accessible in VS 2019. Note 21 is minimum 64-bit API.
+			 API depends on NDK that VS is using; see later code for API support check. -->
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'=='' AND ('$(Platform)'=='ARM64' OR '$(Platform)'=='x64')">android-21</AndroidAPILevel>
+		<AndroidAPILevel Condition="'$(AndroidAPILevel)'==''">android-19</AndroidAPILevel>
+		
 		<!-- This one sets the __ANDROID_API__ define to same as above.
 			 Note if you get errors for missing stdout/stderr define, this is due to
 			 mismatch of API in library vs C define; those were changed between NDK versions,
@@ -999,5 +1001,70 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 		<Message Text="_FusionSDKAdds = [$(_FusionSDKAdds)]" Importance="High" />
 		<Message Text="_FusionSDKAddsRC = [$(_FusionSDKAddsRC)]" Importance="High" />
 		<Message Text="=========================" Importance="High" />
+	</Target>
+	<!-- Look for NDK/platforms/android-XX folders to find NDK support range.
+		 https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-roslyncodetaskfactory?view=visualstudio -->
+	<UsingTask TaskName="AndroidAPIRangeFinder"
+			TaskFactory="RoslynCodeTaskFactory"
+			AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<NDKPath ParameterType="System.String" Required="true" />
+			<MaxNDKAPI ParameterType="System.Int32" Output="true" />
+			<MinNDKAPI ParameterType="System.Int32" Output="true" />
+		</ParameterGroup>
+		<Task>
+			<Reference Include="Microsoft.Build.Framework" />
+			<Code Type="Method" Language="cs"><![CDATA[
+			public override bool Execute()
+			{
+				MinNDKAPI = 0;
+				MaxNDKAPI = 0;
+				
+				for (int i = 50; i > 1; --i)
+				{
+					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
+					{
+						MaxNDKAPI = i;
+						break;
+					}
+				}
+				if (MaxNDKAPI == 0)
+				{
+					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
+					return false;
+				}
+				for (int i = 1; i < MaxNDKAPI; ++i)
+				{
+					if (System.IO.Directory.Exists($"{NDKPath}/platforms/android-{i}"))	
+					{
+						MinNDKAPI = i;
+						break;
+					}
+				}
+				if (MinNDKAPI == 0)
+				{
+					Log.LogError($"Couldn't find platform folders of format \"{NDKPath}/platforms/android-X\".");
+					return false;
+				}
+				return true;
+			}
+			]]></Code>
+		</Task>
+	</UsingTask>
+	<Target Name="Android API check" Condition="'$(_TargetPlat)'=='Android'" BeforeTargets="BeforeBuild;ClCompile">
+		<PropertyGroup>
+			<MinNDKAPI>0</MinNDKAPI>
+			<MaxNDKAPI>50</MaxNDKAPI>
+			<!-- Sysroot ends with format of "...-r16b\sysroot", take r16b. But r29 doesn't have a letter, so trim the slashes. -->
+			<NDKVerWithLetter>$(Sysroot.Substring($([MSBuild]::Add($(Sysroot.LastIndexOf('-')), 1)),4).Trim('\\/-'))</NDKVerWithLetter>
+		</PropertyGroup>
+		<AndroidAPIRangeFinder NDKPath="$(Sysroot)/../">
+			<Output TaskParameter="MaxNDKAPI" PropertyName="MaxNDKAPI" />
+			<Output TaskParameter="MinNDKAPI" PropertyName="MinNDKAPI" />
+		</AndroidAPIRangeFinder>
+		
+		<Message Importance="Normal" Text="DarkEdif Android build check: Android NDK &quot;$(NDKVerWithLetter)&quot; has support for Android API range $(MinNDKAPI) to $(MaxNDKAPI)." />
+		<Error Condition="($(AndroidAPILevelNumber) &gt; $(MaxNDKAPI)) OR ($(AndroidAPILevelNumber) &lt; $(MinNDKAPI))"
+			Text="Android NDK-API mismatch! You are using Android NDK $(NDKVerWithLetter) which supports API range $(MinNDKAPI) to $(MaxNDKAPI), but you are targeting Android API $(AndroidAPILevelNumber)." />
 	</Target>
 </Project>
