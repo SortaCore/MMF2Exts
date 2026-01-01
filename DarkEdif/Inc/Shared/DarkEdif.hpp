@@ -233,6 +233,38 @@ namespace DarkEdif {
 	// True if running under Wine. Always false for non-Windows builds, as Wine will be using Windows app + exts.
 	constexpr bool IsRunningUnderWine = false;
 #endif
+
+	// CPU type: relates to the true processor CPU arch, not the current project config.
+	enum class CPUArchType
+	{
+		// x86 aka i386 aka IA-32, used in Windows 32-bit and by Fusion's sole Windows runtime.
+		// @remarks x64 Windows can run x86 runtime by emulation, with a performance hit.
+		// i686 to i386 all support i386's IA-32 instruction sets.
+		x86 = 1,
+		// x64 aka x86_64, x86-64, AMD64, CPU, used in Windows, Android, iOS, Mac
+		// @remarks Fusion and thus DarkEdif does not build for x64 Windows,
+		// but x64 Windows can run x86 runtime by emulation
+		x86_64 = 2,
+		// arm64 aka AArch64, ARMv8-a, used in Windows, Android, iOS, Mac
+		// @remarks Fusion and thus DarkEdif does not build for arm64 Windows.
+		// Note arm64 Windows can run x86/x64 Windows runtime by emulation,
+		// with a performance hit.
+		// Android and iOS arm64 can also run armv7-a by emulation, but
+		// Fusion builds for arm64.
+		arm64 = 4,
+		// ARM 32-bit, used for Android armv5, armv7-a, iOS armv5-armv7, armv7s, etc.
+		// @remarks ARMv7s is in iPhone 5, but iPhone 5S has ARM64 support.
+		// What few ARM32 devices are around are likely ARMv7 and likely have 4GB RAM
+		// or less.
+		arm32 = 8,
+	};
+
+	// The true CPU arch, not the running-as arch.
+	// For example, Windows x64 running x86, this will be x64.
+	// For what CPU is running this project as, that's the current VS CPU config,
+	// so use preprocessor defines, like #ifdef __arm__, __aarch64__, __x86_64__.
+	extern DarkEdif::CPUArchType CPUArch;
+
 	// Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 	std::uint16_t GetEventNumber(EventGroupMP *);
 	// Returns the Fusion event number the ext is executing. Works in CF2.5 and MMF2.0

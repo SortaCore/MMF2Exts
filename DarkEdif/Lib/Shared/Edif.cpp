@@ -328,6 +328,8 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
 
 		// Detect wine by presence of wine_get_version() inside their wrapper ntdll
+		// Note GetModuleHandle does not increment ntdll ref count. LoadLibrary would,
+		// but we don't need to call that for a OS dll we import.
 		HMODULE ntDll = GetModuleHandle(_T("ntdll.dll"));
 		if (ntDll == NULL)
 			return DarkEdif::MsgBox::Error(_T("DarkEdif Wine detection error"), _T("Couldn't search for Wine, couldn't load ntdll: error %u."), GetLastError()), -1;
@@ -335,6 +337,75 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		const char* (__cdecl * pwine_get_version)(void) =
 			(decltype(pwine_get_version))GetProcAddress(ntDll, "wine_get_version");
 		DarkEdif::IsRunningUnderWine = pwine_get_version != NULL;
+
+		// Detect true CPU arch
+		HMODULE kernDll = GetModuleHandle(_T("kernel32.dll"));
+		if (kernDll == NULL)
+			return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch, couldn't load kernel32: error %u."), GetLastError()), -1;
+
+		// This section will need updating when Windows Fusion runtime has x64 and possibly ARM64 support,
+		// to create errors when running the ext under 32-bit when runtime is 64-bit,
+		// or warnings when runtime + ext is 32-bit when OS is 64-bit, etc.
+
+		// Assume native CPU arch
+#ifdef _WIN32
+		CPUArch = CPUArchType::x86;
+#elif defined(_M_ARM64)
+		CPUArch = CPUArchType::arm64;
+#elif defined(_M_AMD64)
+		CPUArch = CPUArchType::x86_64;
+#else // MIPS, the deprecated Windows ARM32? can't imagine Fusion runtime will be updated for those, anyway
+#error Unrecognised native arch
+#endif
+
+		// There are two funcs to call, which MS recommends to read by GetProcAddress for compatiiblity
+		// Absence of both doesn't mean we aren't emulating, but I expect that will only apply
+		// for a small Windows OS version window.
+		const HANDLE curProc = GetCurrentProcess();
+		BOOL (WINAPI * pIsWow64Process2)(HANDLE hProcess, _Out_ USHORT * pProcessMachine, _Out_opt_ USHORT * pNativeMachine)
+			= (decltype(pIsWow64Process2))GetProcAddress(kernDll, "IsWow64Process2");
+		BOOL (WINAPI * pIsWow64Process)(HANDLE hProcess, _Out_ PBOOL Wow64Process)
+			= (decltype(pIsWow64Process))GetProcAddress(kernDll, "IsWow64Process");
+		
+		// If this Win10+ func is defined, use it to check if emulation is active
+		// This is the way to distinguish Windows ARM64.
+		if (pIsWow64Process2)
+		{
+			USHORT procMachine, nativeMachine;
+			if (!pIsWow64Process2(curProc, &procMachine, &nativeMachine))
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() error %u."), GetLastError()), -1;
+			
+			// If unknown process machine, it matches native machine, so we're not under emulation.
+			if (procMachine == IMAGE_FILE_MACHINE_UNKNOWN)
+				procMachine = nativeMachine;
+			// else: warn runtime/ext is not 64-bit to match 64-bit runtime
+
+			// Machine is x86
+			if (nativeMachine == IMAGE_FILE_MACHINE_I386)
+				CPUArch = CPUArchType::x86;
+			// ARM64 has one value
+			else if (nativeMachine == 0xAA64 /* IMAGE_FILE_MACHINE_ARM64 */)
+				CPUArch = CPUArchType::arm64;
+			// Conflate AMD64 and IA-64 (Itanium) - they're both 64-bit.
+			// Itanium is an older 64-bit used on server OSes machines.
+			else if (nativeMachine == IMAGE_FILE_MACHINE_AMD64 || procMachine == IMAGE_FILE_MACHINE_IA64)
+				CPUArch = CPUArchType::x86_64;
+			else // Supposedly, there may be values like MIPS Windows, but eh.
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process2() returned proc machine %#04X, native %#04X."), procMachine, nativeMachine), -1;
+		}
+		// If not defined, do we have older WinXP+ func?
+		else if (pIsWow64Process != NULL)
+		{
+			BOOL isWow64Emulation;
+			// Older func exists but can't run it
+			if (!pIsWow64Process(curProc, &isWow64Emulation))
+				return DarkEdif::MsgBox::Error(_T("DarkEdif CPU detection error"), _T("Couldn't detect CPU arch: IsWow64Process() error %u."), GetLastError()), -1;
+
+			// Is a x86 app running under x64
+			if (isWow64Emulation)
+				CPUArch = CPUArchType::x86_64;
+		}
+		// else assume too old and it is native
 
 #if EditorBuild
 		// Calculate run mode

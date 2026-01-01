@@ -5577,11 +5577,6 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	return (std::uint16_t)fullSize;
 }
 
-// =====
-// Get event number (CF2.5+ feature)
-// =====
-
-
 // Static definition; set during SDK::SDK()
 #ifdef _WIN32
 // True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
@@ -5592,6 +5587,14 @@ bool DarkEdif::IsHWAFloatAngles;
 // True if running under Wine, false otherwise.
 bool DarkEdif::IsRunningUnderWine;
 #endif
+// Set during SDK startup, relates to current CPU emulation.
+// For what CPU is running as (e.g. Windows x64 running x86), then use preprocessor defines,
+// like #ifdef __arm__, __aarch64__, __x86_64__.
+DarkEdif::CPUArchType DarkEdif::CPUArch;
+
+// =====
+// Get event number (CF2.5+ feature)
+// =====
 
 // Returns the Fusion event number for this group. Works in CF2.5 and MMF2.0
 std::uint16_t DarkEdif::GetEventNumber(EventGroupMP * evg) {
