@@ -1333,7 +1333,8 @@ enum class DEBUGGER {
 };
 
 // TREE identification
-enum class DBTYPE
+// DBTYPE_XX enum, fixed to not conflict with Windows MFC DBTYPE
+enum class FUSION_DBTYPE
 {
 	SYSTEM,
 	OBJECT,
@@ -3712,13 +3713,13 @@ DarkEdifInternalAccessProtected:
 // ObjInfo/FrameItem ObjectsCommon
 //
 
-// Obstacle types
-enum class OBSTACLE {
-	NONE,
-	SOLID,
-	PLATFORM,
-	LADDER,
-	TRANSPARENT_,		// for Add Backdrop
+// Obstacle types - previously OBSTACLE_XX enum
+enum class FusionObstacleType : std::uint32_t {
+	None,
+	Solid,
+	Platform,
+	Ladder,
+	Transparent,		// for Add Backdrop
 };
 
 ////////////////////////////////
@@ -3732,8 +3733,8 @@ DarkEdifInternalAccessProtected:
 	unsigned int	size;				// OC size?
 
 	// Obstacle type & collision mode
-	unsigned short	ObstacleType;		// Obstacle type
-	unsigned short	ColMode;			// Collision mode (0 = fine, 1 = box)
+	FusionObstacleType	ObstacleType;	// Obstacle type
+	std::uint32_t		ColMode;		// Collision mode (0 = fine, 1 = box)
 
 	int				X, Y;				// Size
 };
@@ -3762,12 +3763,14 @@ enum class SHAPE {
 	ELLIPSE
 };
 
-// Fill types
-enum class FILLTYPE {
-	NONE,
-	SOLID,
-	GRADIENT,
-	MOTIF
+// Fusion Windows cSurface fill type enum - used to be named FILLTYPE_XX, but that is used by Windows
+// @remarks Windows SDK uses FILLTYPE enum in vssym32.h, and FillType in UIAutomationCore.h
+//			This is separately defined to cross-platform DarkEdif::Surface::SurfaceFill::FillType
+enum WinSurf_FillType : uint16_t {
+	None,
+	Solid,
+	Gradient,
+	Motif
 };
 
 // Line flags
@@ -3784,30 +3787,30 @@ enum class FILLTYPE {
 class FillType_Data {
 	NO_DEFAULT_CTORS_OR_DTORS(FillType_Data);
 public:
-	unsigned short			FillType;
+	WinSurf_FillType fillType;
 
 	// Fill type
 	union {
 		// Lines in non-filled mode
 		struct {
-			unsigned int LineFlags;		// Only for lines in non filled mode
+			std::uint32_t LineFlags;
 		};
 
 		// Solid colour
 		struct {
-			COLORREF Color;			// Solid
+			COLORREF Color;
 		};
 
 		// Gradient
 		struct {
 			COLORREF	 Color1,
 						 Color2;
-			unsigned int GradientFlags;
+			std::uint32_t GradientFlags;
 		};
 
 		// Image
 		struct {
-			unsigned short Image;			// Image
+			std::uint16_t Image;
 		};
 	};
 };
