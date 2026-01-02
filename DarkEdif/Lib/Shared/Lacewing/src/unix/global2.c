@@ -11,6 +11,16 @@
 #include "../common.h"
 
 static lw_i32 init_called = 0;
+// If true, this server is running under WSL.
+// @remarks It doesn't matter if this is faked, as it's only used to fix a WSL host Windows -> Linux server UDP routing problem.
+lw_bool lw_in_wsl = lw_false;
+
+// IPv6 mapped IPv4 localhost address, seen in WSL host Windows connecting to WSL server.
+// Text translation: [::ffff:127.0.0.1].
+// @remarks WSL can't route UDP to host properly if you reply via sendmsg() using fixed local IP.
+// sendto() still works for 127.0.0.1.
+// However, sendto() fails too if you connect from host with other 127 variants like 127.0.0.2.
+const struct in6_addr in6addr_loopback_wsl = { { { 0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1 } } };
 
 void lwp_init ()
 {
@@ -30,6 +40,9 @@ void lwp_init ()
 		sk_SSL_COMP_zero (comp_methods);
 
 	#endif
+
+	// WSL requires UDP workarounds, see lw_udp_send()
+	lw_in_wsl = lw_file_exists("/proc/sys/fs/binfmt_misc/WSLInterop");
 }
 void lwp_deinit()
 {

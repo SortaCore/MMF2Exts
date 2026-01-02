@@ -266,6 +266,9 @@ void lw_udp_delete (lw_udp ctx)
 	lwp_release(ctx, "udp_new"); // calls free (ctx)
 }
 
+extern lw_bool lw_in_wsl;
+extern const struct in6_addr in6addr_loopback_wsl;
+
 void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const char * data, size_t size)
 {
 	if (!to || (!lw_addr_ready(to)) || !to->info)
@@ -294,6 +297,18 @@ void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const cha
 
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
+
+	// TODO: Double-check this isn't some sort of IPv6/IPv4 mixup with outgoing local send address
+	// If running under WSL, localhost sendmsg is borked for wsl receiver -> host Windows, but sendto routes properly.
+	if (from && lw_in_wsl &&
+		// Address stored in network order, check 127.x.x.x at big end
+		((from->info->ai_addr->sa_family == AF_INET &&
+			((lw_ui8 *)&(((struct sockaddr_in*)from->info->ai_addr)->sin_addr))[3] == 127) ||
+		// WSL host connecting via localhost: it is likely padded IPv4 of [::ffff:127.0.0.1]
+		!memcmp(&((struct sockaddr_in6*)from->info->ai_addr)->sin6_addr, &in6addr_loopback_wsl, sizeof(struct in6_addr))))
+	{
+		from = NULL;
+	}
 
 	// Unlike Windows, Linux copies the data passed to sendmsg in non-blocking IO
 	ssize_t res;
