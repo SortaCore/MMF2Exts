@@ -1,7 +1,7 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=cpp:
  *
  * liblacewing and Lacewing Relay/Blue source code are available under MIT license.
- * Copyright (C) 2021-2025 Darkwire Software.
+ * Copyright (C) 2021-2026 Darkwire Software.
  * All rights reserved.
  *
  * https://opensource.org/license/mit

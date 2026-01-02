@@ -1,5 +1,5 @@
 /*
-	This Lacewing Blue Client Fusion extension UWP port is copyright © 2025 by Darkwire Software.
+	This Lacewing Blue Client Fusion extension UWP port is copyright © 2026 by Darkwire Software.
 	Any redistribution is expressly prohibited outside of the official channels.
 	It is expressly forbidden to acquire these files from GitHub for free for personal or commercial use;
 	in other words, if there is a fee to acquire or use this port, any developers must pay for it and only

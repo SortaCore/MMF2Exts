@@ -1,7 +1,7 @@
 /* vim: set noet ts=4 sw=4 sts=4 ft=c:
  *
  * Copyright (C) 2011, 2012, 2013, 2014 James McLaughlin et al.
- * Copyright (C) 2012-2025 Darkwire Software.
+ * Copyright (C) 2012-2026 Darkwire Software.
  * All rights reserved.
  *
  *
