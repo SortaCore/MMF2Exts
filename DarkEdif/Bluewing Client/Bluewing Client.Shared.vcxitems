@@ -101,6 +101,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Common.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Extension.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)LacewingFunctions.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)MultiThreading.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)TriggeredFusionEventsData.hpp" />
   </ItemGroup>
 </Project>

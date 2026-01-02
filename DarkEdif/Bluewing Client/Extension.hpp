@@ -1,8 +1,7 @@
 #pragma once
 #include "DarkEdif.hpp"
 #include <functional>
-#include "MultiThreading.hpp"
-void NewEvent(EventToRun *);
+#include "TriggeredFusionEventsData.hpp"
 
 static constexpr std::uint16_t CLEAR_EVTNUM = 0xFFFF;
 static constexpr std::uint16_t DUMMY_EVTNUM = 35353;
@@ -45,6 +44,7 @@ public:
 
 	std::shared_ptr<EventToRun> threadData;
 	std::tstring_view loopName;
+	std::shared_ptr<lacewing::relayclient::channellisting> channelListing;
 	static std::atomic<bool> AppWasClosed;
 
 	bool isGlobal;
@@ -85,7 +85,7 @@ public:
 
 	// Reads string at given position of received binary. If size is -1, will expect a null.
 	// isCursorExpression is used for error messages.
-	std::tstring RecvMsg_Sub_ReadString(size_t index, int size, bool isCursorExpression);
+	std::tstring RecvMsg_Sub_ReadString(const RecvMsg & msg, size_t index, int size, bool isCursorExpression);
 
 	static void eventpumpdeleter(lacewing::eventpump);
 	static void LacewingLoopThread(void* ThisExt);
@@ -159,67 +159,34 @@ public:
 	void SendMsg_Resize(int NewSize);
 	void SetDestroySetting(int enabled);
 	void SetLocalPortForHolePunch(int port);
+	void RunNetworkScan(int port, int timeout);
 
 	/// Conditions
 
+	// A ton of events are only triggered on request from extension. Due to that, their implementation can be merged,
+	// which saves size in the output ext.
+	// For example, OnConnect and OnDisconnect needs to only return true, and take no parameters. Thus, they are
+	// both linked to AlwaysTrue.
+
 	const bool AlwaysTrue() { return true; }
+	// This is only used for deprecated conditions that were in old versions of Relay.
+	// It's good practice not to reuse IDs of old A/C/E, as you never know how old a MFA a client may be opening.
 	const bool AlwaysFalse() { return false; }
-	// Used for triggered events;
+	// Used for triggered events, which check they are handled by event sheet
 	bool MandatoryTriggeredEvent();
 
-	// CheckedEvent
-	// AlwaysTrue:	bool OnConnect();
-	// AlwaysTrue:	bool OnConnectDenied();
-	// AlwaysTrue:	bool OnDisconnect();
-	// AlwaysTrue:	bool OnChannelJoin();
-	// AlwaysTrue:	bool OnChannelJoinDenied();
-	// AlwaysTrue:	bool OnNameSet();
-	// AlwaysTrue:	bool OnNameDenied();
-	bool OnSentTextMessageFromServer(int subchannel);
-	bool OnSentTextMessageFromChannel(int subchannel);
-	// AlwaysTrue:	bool OnPeerConnect();
-	// AlwaysTrue:	bool OnPeerDisonnect();
-	// AlwaysFalse:	bool Replaced_OnChannelJoin();
-	// AlwaysTrue:	bool OnChannelPeerLoop();
-	// AlwaysTrue:	bool OnClientChannelLoop();
-	bool OnSentNumberMessageFromServer(int subchannel);
-	bool OnSentNumberMessageFromChannel(int subchannel);
-	// AlwaysTrue:	bool OnChannelPeerLoopFinished();
-	// AlwaysTrue:	bool OnClientChannelLoopFinished();
-	// AlwaysFalse:	bool ReplacedCondNoParams();
-	bool OnBlastedTextMessageFromServer(int subchannel);
-	bool OnBlastedNumberMessageFromServer(int subchannel);
-	bool OnBlastedTextMessageFromChannel(int subchannel);
-	bool OnBlastedNumberMessageFromChannel(int subchannel);
-	// ReplacedCondNoParams, x3
-	// AlwaysTrue:	bool OnChannelListReceived();
-	// AlwaysTrue:	bool OnChannelListLoop();
-	// AlwaysTrue:	bool OnChannelListLoopFinished();
-	// ReplacedCondNoParams, x3
-	bool OnSentBinaryMessageFromServer(int subchannel);
-	bool OnSentBinaryMessageFromChannel(int subchannel);
-	bool OnBlastedBinaryMessageFromServer(int subchannel);
-	bool OnBlastedBinaryMessageFromChannel(int subchannel);
-	bool OnSentTextMessageFromPeer(int subchannel);
-	bool OnSentNumberMessageFromPeer(int subchannel);
-	bool OnSentBinaryMessageFromPeer(int subchannel);
-	bool OnBlastedTextMessageFromPeer(int subchannel);
-	bool OnBlastedNumberMessageFromPeer(int subchannel);
-	bool OnBlastedBinaryMessageFromPeer(int subchannel);
+	// Used for all messages from server to this client directly
+	bool ServerMessageCondition(int subchannel);
+	// Used for all messages from server to joined channel of this client
+	bool ServerChannelMessageCondition(int subchannel);
+	// Used for all channel-wide messages from a peer of joined channel
+	bool ChannelMessageCondition(int subchannel);
+	// Used for all messages from joined channel peer to this client
+	// @remarks there is no mechanism for peer to peer messaging, outside of via a shared joined channel
+	bool PeerMessageCondition(int subchannel);
+
 	bool IsConnected();
-	// AlwaysTrue:	bool OnChannelLeave();
-	// AlwaysTrue:	bool OnChannelLeaveDenied();
-	// AlwaysTrue:	bool OnPeerChangedName();
-	// ReplacedCondNoParams
-	bool OnAnySentMessageFromServer(int subchannel);
-	bool OnAnySentMessageFromChannel(int subchannel);
-	bool OnAnySentMessageFromPeer(int subchannel);
-	bool OnAnyBlastedMessageFromServer(int subchannel);
-	bool OnAnyBlastedMessageFromChannel(int subchannel);
-	bool OnAnyBlastedMessageFromPeer(int subchannel);
-	// AlwaysTrue:	bool OnNameChanged();
 	bool ClientHasAName();
-	// ReplacedCondNoParams, x2
 	bool SelectedPeerIsChannelMaster();
 	bool YouAreChannelMaster();
 	bool OnChannelListLoopWithName(const TCHAR* LoopName);
@@ -228,14 +195,6 @@ public:
 	bool OnPeerLoopWithNameFinished(const TCHAR* LoopName);
 	bool OnClientChannelLoopWithName(const TCHAR* LoopName);
 	bool OnClientChannelLoopWithNameFinished(const TCHAR* LoopName);
-	bool OnSentTextChannelMessageFromServer(int subchannel);
-	bool OnSentNumberChannelMessageFromServer(int subchannel);
-	bool OnSentBinaryChannelMessageFromServer(int subchannel);
-	bool OnAnySentChannelMessageFromServer(int subchannel);
-	bool OnBlastedTextChannelMessageFromServer(int subchannel);
-	bool OnBlastedNumberChannelMessageFromServer(int subchannel);
-	bool OnBlastedBinaryChannelMessageFromServer(int subchannel);
-	bool OnAnyBlastedChannelMessageFromServer(int subchannel);
 	bool IsJoinedToChannel(const TCHAR* ChannelName);
 	bool IsPeerOnChannel_Name(const TCHAR* PeerName, const TCHAR* ChannelName);
 	bool IsPeerOnChannel_ID(int ID, const TCHAR* ChannelName);
@@ -374,29 +333,40 @@ public:
 		// Another size of note is a bit under 16KiB, due to SSL record size + Lacewing headers.
 		unsigned short maxUDPSize = lacewing::relay_max_udp_payload;
 
-		// Locks and queues an EventToRun with 1 condition ID to trigger
-		void AddEvent1(std::uint16_t event1ID,
-			std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
-			std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
-			std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
-			std::string_view messageOrErrorText = std::string_view(),
-			lw_ui8 subchannel = 255, lw_ui8 variant = 255);
-		// Locks and queues an EventToRun with 2 condition IDs to trigger (e.g. on any message + on text message)
-		void AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
-			std::shared_ptr<lacewing::relayclient::channel> channel = nullptr,
-			std::shared_ptr<lacewing::relayclient::channellisting> channelListing = nullptr,
-			std::shared_ptr<lacewing::relayclient::channel::peer> peer = nullptr,
-			std::string_view messageOrErrorText = std::string_view(),
-			lw_ui8 subchannel = 255, lw_ui8 variant = 255);
-	private:
-		// Locks and queues an EventToRun with either 1 or 2 condition IDs to trigger (used by AddEvent1 & 2)
-		void AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
-			std::shared_ptr<lacewing::relayclient::channel> channel,
-			std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
-			std::shared_ptr<lacewing::relayclient::channel::peer> peer,
-			std::string_view messageOrErrorText,
-			lw_ui8 subchannel, lw_ui8 variant);
-	public:
+		template <typename T>
+		void AddEvent(std::shared_ptr<T>&& newEvent)
+		{
+			lock.edif_lock(); // Needed before we access Extension
+			_eventsToRun.push_back(newEvent);
+
+			lock.edif_unlock(); // We're done accessing Extension
+
+			// Cause Handle() to be triggered, allowing EventsToRun to be parsed
+			if (_ext != nullptr)
+				_ext->Runtime.Rehandle();
+		}
+		template <typename T = NoContextEvent, typename... Args>
+		void AddEvent1(std::uint16_t event1ID, Args... a) {
+			static_assert(std::is_base_of_v<EventToRun, T>, "Must be an EventToRun class");
+			std::shared_ptr<T> newEvent = std::make_shared<T>(a...);
+			newEvent->numEvents = 1;
+			newEvent->condTrig[0] = event1ID;
+			newEvent->type = T::typeCode;
+
+			AddEvent(std::move(newEvent));
+		}
+		template <typename T = NoContextEvent, typename... Args>
+		void AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID, Args... a) {
+			static_assert(std::is_base_of_v<EventToRun, T>, "Must be an EventToRun class");
+			std::shared_ptr<T> newEvent = std::make_shared<T>(a...);
+			newEvent->numEvents = 2;
+			newEvent->condTrig[0] = event1ID;
+			newEvent->condTrig[1] = event2ID;
+			newEvent->type = T::typeCode;
+
+			AddEvent(std::move(newEvent));
+		}
+
 		// Queues an error event, accepts printf-like formatting e.g. printf("number is %d", number);
 		void CreateError(PrintFHintInside const char* errorText, ...) PrintFHintAfter(2, 3);
 		void CreateError(PrintFHintInside const char* errorText, va_list v) PrintFHintAfter(2, 0);

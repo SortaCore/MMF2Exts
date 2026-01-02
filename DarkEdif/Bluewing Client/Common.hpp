@@ -35,7 +35,7 @@
 #endif
 #include <iomanip>
 
-#include "MultiThreading.hpp"
+#include "TriggeredFusionEventsData.hpp"
 
 #pragma pack (push, 1)
 // Binary block used in Fusion editor and saved in the MFA/CCN/EXE files

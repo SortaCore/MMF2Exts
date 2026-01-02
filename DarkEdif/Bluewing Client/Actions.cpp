@@ -367,9 +367,9 @@ void Extension::RequestChannelList()
 void Extension::LoopListedChannels()
 {
 	const auto origLoopName = loopName;
-	const auto origChannelList = threadData->channelListing;
+	const auto origChannelListing = channelListing;
 
-	std::vector<decltype(threadData->channelListing)> channelListingDup;
+	std::vector<decltype(channelListing)> channelListingDup;
 	{
 		auto clientReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
@@ -377,12 +377,12 @@ void Extension::LoopListedChannels()
 
 	for (const auto &chLst : channelListingDup)
 	{
-		threadData->channelListing = chLst;
+		channelListing = chLst;
 		loopName = std::tstring_view();
 		Runtime.GenerateEvent(27);
 	}
 
-	threadData->channelListing = origChannelList;
+	channelListing = origChannelListing;
 	loopName = std::tstring_view();
 	Runtime.GenerateEvent(28);
 
@@ -545,6 +545,8 @@ void Extension::SendMsg_Clear()
 }
 void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filename)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot save received binary to file; not a received message event.");
 	if (position < 0)
 		return CreateError("Cannot save received binary to file; supplied position %i is less than 0.", position);
 	if (size <= 0)
@@ -552,8 +554,9 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot save received binary to file; supplied filename \"\" is invalid.");
 
-	if (((unsigned int)position) + size > threadData->receivedMsg.content.size())
-		return CreateError("Cannot save received binary to file; message doesn't the supplied position range %i to %i.", position, position + size);
+	const RecvMsg& msg = threadData->GetRecvMsg();
+	if (((unsigned int)position) + size > msg.content.size())
+		return CreateError("Cannot save received binary to file; message doesn't have the supplied position range %i to %i.", position, position + size);
 
 #ifdef _WIN32
 	FILE * File = _tfsopen(filename, _T("wb"), SH_DENYWR);
@@ -564,11 +567,12 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 	if (!File)
 	{
 		ErrNoToErrText();
-		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.", DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
+		return CreateError("Cannot save received binary to file \"%s\", error number %i \"%s\" occurred with opening the file.",
+			DarkEdif::TStringToUTF8(filename).c_str(), errno, errtext);
 	}
 
 	size_t amountWritten;
-	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
+	if ((amountWritten = fwrite(msg.content.data() + position, 1, size, File)) != size)
 	{
 		ErrNoToErrText();
 		CreateError("Cannot save received binary to file, error %i \"%s\" occurred with writing the file. Wrote %zu"
@@ -584,6 +588,8 @@ void Extension::RecvMsg_SaveToFile(int position, int size, const TCHAR * filenam
 }
 void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filename)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot append received binary to file; not a received message event.");
 	if (position < 0)
 		return CreateError("Cannot append received binary to file; supplied position %i is less than 0.", position);
 	if (size <= 0)
@@ -591,7 +597,8 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	if (filename[0] == _T('\0'))
 		return CreateError("Cannot append received binary to file; supplied filename \"\" is invalid.");
 
-	if (((unsigned int)position) + size > threadData->receivedMsg.content.size())
+	const RecvMsg& msg = threadData->GetRecvMsg();
+	if (((unsigned int)position) + size > msg.content.size())
 		return CreateError("Cannot append received binary to file; message doesn't have the supplied index range %i to %i.", position, position + size);
 
 	// Open while denying write of other programs
@@ -607,7 +614,7 @@ void Extension::RecvMsg_AppendToFile(int position, int size, const TCHAR * filen
 	}
 
 	size_t amountWritten;
-	if ((amountWritten = fwrite(threadData->receivedMsg.content.data() + position, 1, size, File)) != size)
+	if ((amountWritten = fwrite(msg.content.data() + position, 1, size, File)) != size)
 	{
 		fseek(File, 0, SEEK_END);
 #ifdef _WIN32
@@ -763,7 +770,11 @@ void Extension::SendMsg_CompressBinary()
 }
 void Extension::RecvMsg_DecompressBinary()
 {
-	if (threadData->receivedMsg.content.size() <= 4)
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot decompress received binary; not a received message event.");
+
+	RecvMsg& msg = threadData->GetRecvMsg();
+	if (msg.content.size() <= 4)
 		return CreateError("Cannot decompress received binary; message is too small.");
 
 	z_stream strm = { };
@@ -775,11 +786,11 @@ void Extension::RecvMsg_DecompressBinary()
 	}
 
 	// Lacewing provides a precursor to the compressed data, with uncompressed size.
-	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)threadData->receivedMsg.content.data();
+	lw_ui32 expectedUncompressedSize = *(lw_ui32 *)msg.content.data();
 	if (expectedUncompressedSize > 0x0F000000U)
 		return CreateError("Decompression failed; message anticipated to be too large. Expected %u byte output.", expectedUncompressedSize);
 
-	const std::string_view inputData(threadData->receivedMsg.content.data() + sizeof(lw_ui32), threadData->receivedMsg.content.size() - sizeof(lw_ui32));
+	const std::string_view inputData(msg.content.data() + sizeof(lw_ui32), msg.content.size() - sizeof(lw_ui32));
 
 	// Has exception support
 #if !defined(__clang__) || defined(__EXCEPTIONS)
@@ -811,17 +822,21 @@ void Extension::RecvMsg_DecompressBinary()
 	inflateEnd(&strm);
 
 	// Used to assign all exts in a questionable way, but threadData is now std::shared_ptr, so no need.
-	threadData->receivedMsg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
-	threadData->receivedMsg.cursor = 0;
+	msg.content.assign((char *)output_buffer.get(), expectedUncompressedSize);
+	msg.cursor = 0;
 }
 void Extension::RecvMsg_MoveCursor(int position)
 {
+	if (!threadData->IsRecvMsg())
+		return CreateError("Cannot move cursor; not a received message event.");
+
 	if (position < 0)
 		return CreateError("Cannot move cursor; Position %d is less than 0.", position);
-	if (threadData->receivedMsg.content.size() - position <= 0)
-		return CreateError("Cannot move cursor to position %d; message indexes are 0 to %zu.", position, threadData->receivedMsg.content.size());
+	RecvMsg& msg = threadData->GetRecvMsg();
+	if (msg.content.size() - position <= 0)
+		return CreateError("Cannot move cursor to position %d; message indexes are 0 to %zu.", position, msg.content.size());
 
-	threadData->receivedMsg.cursor = position;
+	msg.cursor = position;
 }
 void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 {
@@ -830,22 +845,22 @@ void Extension::LoopListedChannelsWithLoopName(const TCHAR * passedLoopName)
 
 	const std::tstring_view loopNameDup(passedLoopName);
 	const auto origLoopName = loopName;
-	const auto origChannelList = threadData->channelListing;
+	const auto origThreadData = threadData;
+	const auto origChannelListing = channelListing;
 
-	std::vector<decltype(threadData->channelListing)> channelListingDup;
+	std::vector<decltype(channelListing)> channelListingDup;
 	{
 		auto cliReadLock = Cli.lock.createReadLock();
 		channelListingDup = Cli.getchannellisting();
 	}
-
 	for (const auto &chLst : channelListingDup)
 	{
-		threadData->channelListing = chLst;
+		channelListing = chLst;
 		loopName = loopNameDup;
 		Runtime.GenerateEvent(59);
 	}
 
-	threadData->channelListing = nullptr;
+	channelListing = origChannelListing;
 	loopName = loopNameDup;
 	Runtime.GenerateEvent(60);
 
@@ -941,9 +956,7 @@ void Extension::SendMsg_Resize(int newSize)
 
 	char * NewMsg = (char *)realloc(SendMsg, newSize);
 	if (!NewMsg)
-	{
 		return CreateError("Cannot change size of binary to send: reallocation of memory failed. Size has not been modified.");
-	}
 	// Clear new bytes to 0
 	if ((size_t)newSize > SendMsgSize)
 		memset(NewMsg + SendMsgSize, 0, newSize - SendMsgSize);
@@ -961,5 +974,5 @@ void Extension::SetLocalPortForHolePunch(int port)
 {
 	if (port < 1 || port > std::numeric_limits<unsigned short>::max())
 		return CreateError("Invalid local port passed, expecting 1 through 65535, got %d.", port);
-	globals->_client.setlocalport(globals->localPort = (unsigned short)port);
+	Cli.setlocalport(globals->localPort = (unsigned short)port);
 }

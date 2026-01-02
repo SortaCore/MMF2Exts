@@ -1,6 +1,6 @@
 #include "Common.hpp"
 #include <assert.h>
-#include "MultiThreading.hpp"
+#include "TriggeredFusionEventsData.hpp"
 
 ///
 /// EXTENSION CONSTRUCTOR/DESTRUCTOR
@@ -125,22 +125,22 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkCondition(5, MandatoryTriggeredEvent /* OnChannelJoinDenied */);
 		LinkCondition(6, AlwaysTrue /* OnNameSet */);
 		LinkCondition(7, MandatoryTriggeredEvent /* OnNameDenied */);
-		LinkCondition(8, OnSentTextMessageFromServer);
-		LinkCondition(9, OnSentTextMessageFromChannel);
+		LinkCondition(8, ServerMessageCondition);
+		LinkCondition(9, ChannelMessageCondition);
 		LinkCondition(10, AlwaysTrue /* OnPeerConnect */);
 		LinkCondition(11, AlwaysTrue /* OnPeerDisonnect */);
 		LinkCondition(12, AlwaysFalse /* Replaced_OnChannelJoin */);
 		LinkCondition(13, AlwaysTrue /* OnChannelPeerLoop */);
 		LinkCondition(14, AlwaysTrue /* OnClientChannelLoop */);
-		LinkCondition(15, OnSentNumberMessageFromServer);
-		LinkCondition(16, OnSentNumberMessageFromChannel);
+		LinkCondition(15, ServerMessageCondition);
+		LinkCondition(16, ChannelMessageCondition);
 		LinkCondition(17, AlwaysTrue /* OnChannelPeerLoopFinished */);
 		LinkCondition(18, AlwaysTrue /* OnClientChannelLoopFinished */);
 		LinkCondition(19, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(20, OnBlastedTextMessageFromServer);
-		LinkCondition(21, OnBlastedNumberMessageFromServer);
-		LinkCondition(22, OnBlastedTextMessageFromChannel);
-		LinkCondition(23, OnBlastedNumberMessageFromChannel);
+		LinkCondition(20, ServerMessageCondition);
+		LinkCondition(21, ServerMessageCondition);
+		LinkCondition(22, ChannelMessageCondition);
+		LinkCondition(23, ChannelMessageCondition);
 		LinkCondition(24, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(25, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(26, AlwaysTrue /* OnChannelListReceived */);
@@ -149,27 +149,27 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkCondition(29, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(30, AlwaysFalse /* ReplacedCondNoParams */);
 		LinkCondition(31, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(32, OnSentBinaryMessageFromServer);
-		LinkCondition(33, OnSentBinaryMessageFromChannel);
-		LinkCondition(34, OnBlastedBinaryMessageFromServer);
-		LinkCondition(35, OnBlastedBinaryMessageFromChannel);
-		LinkCondition(36, OnSentTextMessageFromPeer);
-		LinkCondition(37, OnSentNumberMessageFromPeer);
-		LinkCondition(38, OnSentBinaryMessageFromPeer);
-		LinkCondition(39, OnBlastedTextMessageFromPeer);
-		LinkCondition(40, OnBlastedNumberMessageFromPeer);
-		LinkCondition(41, OnBlastedBinaryMessageFromPeer);
+		LinkCondition(32, ServerMessageCondition);
+		LinkCondition(33, ChannelMessageCondition);
+		LinkCondition(34, ServerMessageCondition);
+		LinkCondition(35, ChannelMessageCondition);
+		LinkCondition(36, PeerMessageCondition);
+		LinkCondition(37, PeerMessageCondition);
+		LinkCondition(38, PeerMessageCondition);
+		LinkCondition(39, PeerMessageCondition);
+		LinkCondition(40, PeerMessageCondition);
+		LinkCondition(41, PeerMessageCondition);
 		LinkCondition(42, IsConnected);
 		LinkCondition(43, AlwaysTrue /* OnChannelLeave */);
 		LinkCondition(44, MandatoryTriggeredEvent /* OnChannelLeaveDenied */);
 		LinkCondition(45, AlwaysTrue /* OnPeerChangedName */);
 		LinkCondition(46, AlwaysFalse /* ReplacedCondNoParams */);
-		LinkCondition(47, OnAnySentMessageFromServer);
-		LinkCondition(48, OnAnySentMessageFromChannel);
-		LinkCondition(49, OnAnySentMessageFromPeer);
-		LinkCondition(50, OnAnyBlastedMessageFromServer);
-		LinkCondition(51, OnAnyBlastedMessageFromChannel);
-		LinkCondition(52, OnAnyBlastedMessageFromPeer);
+		LinkCondition(47, ServerMessageCondition);
+		LinkCondition(48, ChannelMessageCondition);
+		LinkCondition(49, PeerMessageCondition);
+		LinkCondition(50, ServerMessageCondition);
+		LinkCondition(51, ChannelMessageCondition);
+		LinkCondition(52, PeerMessageCondition);
 		LinkCondition(53, MandatoryTriggeredEvent /* OnNameChanged */);
 		LinkCondition(54, ClientHasAName);
 		LinkCondition(55, AlwaysFalse /* ReplacedCondNoParams */);
@@ -182,14 +182,14 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkCondition(62, OnPeerLoopWithNameFinished);
 		LinkCondition(63, OnClientChannelLoopWithName);
 		LinkCondition(64, OnClientChannelLoopWithNameFinished);
-		LinkCondition(65, OnSentTextChannelMessageFromServer);
-		LinkCondition(66, OnSentNumberChannelMessageFromServer);
-		LinkCondition(67, OnSentBinaryChannelMessageFromServer);
-		LinkCondition(68, OnAnySentChannelMessageFromServer);
-		LinkCondition(69, OnBlastedTextChannelMessageFromServer);
-		LinkCondition(70, OnBlastedNumberChannelMessageFromServer);
-		LinkCondition(71, OnBlastedBinaryChannelMessageFromServer);
-		LinkCondition(72, OnAnyBlastedChannelMessageFromServer);
+		LinkCondition(65, ServerChannelMessageCondition);
+		LinkCondition(66, ServerChannelMessageCondition);
+		LinkCondition(67, ServerChannelMessageCondition);
+		LinkCondition(68, ServerChannelMessageCondition);
+		LinkCondition(69, ServerChannelMessageCondition);
+		LinkCondition(70, ServerChannelMessageCondition);
+		LinkCondition(71, ServerChannelMessageCondition);
+		LinkCondition(72, ServerChannelMessageCondition);
 		// Added Blue-only conditions
 		LinkCondition(73, IsJoinedToChannel);
 		LinkCondition(74, IsPeerOnChannel_Name);
@@ -415,20 +415,6 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	FusionDebugger.AddItemToDebugger(NULL, selectedPeerDebugItemReader, NULL, 100, NULL);
 }
 
-EventToRun::EventToRun() : numEvents(0), condTrig{ 35353, 35353 }
-{
-	new(&receivedMsg.content)std::string();
-	receivedMsg.cursor = 0;
-	receivedMsg.subchannel = 0;
-	receivedMsg.variant = 0;
-}
-EventToRun::~EventToRun()
-{
-	receivedMsg.content.~basic_string();
-	peer = nullptr;
-	channel = nullptr;
-}
-
 void Extension::LacewingLoopThread(void * thisExt)
 {
 	// If the loop thread is terminated, very few bytes of memory will be leaked.
@@ -478,88 +464,6 @@ void Extension::LacewingLoopThread(void * thisExt)
 #endif
 	LOGV(_T("" PROJECT_NAME " - LacewingLoopThread has exited.\n"));
 	return;
-}
-
-void Extension::GlobalInfo::AddEvent1(std::uint16_t event1ID,
-	std::shared_ptr<lacewing::relayclient::channel> channel,
-	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
-	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
-	std::string_view messageOrErrorText,
-	lw_ui8 subchannel, lw_ui8 variant)
-{
-	return AddEventF(false, event1ID, 35353, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
-}
-void Extension::GlobalInfo::AddEvent2(std::uint16_t event1ID, std::uint16_t event2ID,
-	std::shared_ptr<lacewing::relayclient::channel> channel,
-	std::shared_ptr<lacewing::relayclient::channellisting> channelListing,
-	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
-	std::string_view messageOrErrorText,
-	lw_ui8 subchannel, lw_ui8 variant)
-{
-	return AddEventF(true, event1ID, event2ID, channel, channelListing, peer, messageOrErrorText, subchannel, variant);
-}
-void Extension::GlobalInfo::AddEventF(bool twoEvents, std::uint16_t event1ID, std::uint16_t event2ID,
-	std::shared_ptr<lacewing::relayclient::channel> channel /* = nullptr */,
-	std::shared_ptr<lacewing::relayclient::channellisting> channelListing /* = nullptr */,
-	std::shared_ptr<lacewing::relayclient::channel::peer> peer /* = nullptr */,
-	std::string_view messageOrErrorText /* = std::string_view() */,
-	lw_ui8 subchannel /* = 255 */, lw_ui8 variant /* = 255 */)
-{
-	/*
-		Saves all variables returned by expressions in order to ensure two conditions, triggering simultaneously,
-		do not cause reading of only the last condition's output. Only used in multi-threading.
-
-		For example, if an error event changes an output variable, and immediately afterward a
-		success event changes the same variable, only the success event's output can be read since it overwrote
-		the last event. However, using MMF2 in single-threaded mode, overwriting is impossible to do
-		provided you use GenerateEvent(). Since PushEvent() is not immediate, you can reproduce this
-		multi-threaded bug in single-thread mode. But PushEvent() isn't recommended for use anyway;
-		it's designed so extensions who don't have focus of MMF2 (gained by MMF2 calling, say, Rehandle)
-		can still create events.
-		With GenerateEvent() + multithreading, this would cause crashes as Fusion is forced into the extension
-		at the wrong time.
-		With PushEvent() + multithreading, this  would cause overwriting of old events and possibly access
-		violations as variables are simultaneously written to by the ext and read from by Fusion at the same time.
-
-		But in DarkEdif, you'll note all the GenerateEvents() are handled on a queue, and the queue is
-		iterated through in Handle(), thus it is quite safe. But we still need to protect potentially several
-		AddEvent() functions running at once and corrupting the memory at some point; so we need the
-		CRITICAL_SECTION variable mentioned in Extension.h to ensure this will not happen.
-	*/
-
-	std::shared_ptr<EventToRun> newEvent = std::make_shared<EventToRun>();
-	EventToRun &newEvent2 = *newEvent;
-
-	newEvent2.numEvents = twoEvents ? 2 : 1;
-	newEvent2.condTrig[0] = (unsigned short)event1ID;
-	newEvent2.condTrig[1] = (unsigned short)event2ID;
-	// channel/channelListing overlap, as do message content and error text
-	newEvent2.channel = channel;
-	newEvent2.channelListing = channelListing;
-	newEvent2.peer = peer;
-	newEvent2.receivedMsg.content = messageOrErrorText;
-	newEvent2.receivedMsg.subchannel = subchannel;
-	newEvent2.receivedMsg.variant = variant;
-
-	lock.edif_lock(); // Needed before we access Extension
-#if 0
-	// Copy Extension's data to vector
-	if (memcpy_s(((char *)newEvent) + 5, sizeof(EventToRun) - 5, ((char *)&_ext->ThreadData) + 5, sizeof(EventToRun) - 5))
-	{
-		// Failed to copy memory (error in "errno")
-		// delete newEvent; // Keep it for debugging
-		LeaveCriticalSectionDebug(&lock);
-		throw std::exception("Memory copy failed while doing a lacewing event.");
-	}
-#endif
-	_eventsToRun.push_back(newEvent);
-
-	lock.edif_unlock(); // We're done accessing Extension
-
-	// Cause Handle() to be triggered, allowing EventsToRun to be parsed
-
-	if (_ext != nullptr)
-		_ext->Runtime.Rehandle();
 }
 
 void Extension::CreateError(PrintFHintInside const char * errorFormatU8, ...)
@@ -616,7 +520,7 @@ void Extension::GlobalInfo::CreateError(PrintFHintInside const char * errorForma
 	OutputDebugStringA(errTextU8.c_str());
 	OutputDebugStringA("\n");
 #endif
-	AddEvent1(0, nullptr, nullptr, nullptr, errTextU8);
+	AddEvent1<ErrorEvent>(0, errTextU8);
 }
 
 void Extension::SendMsg_Sub_AddData(const void * data, size_t size)
@@ -675,7 +579,7 @@ bool Extension::IsValidPtr(const void * data)
 
 void Extension::ClearThreadData()
 {
-	threadData = std::make_shared<EventToRun>();
+	threadData = std::make_shared<NoContextEvent>();
 }
 
 std::string Extension::TStringToUTF8Simplified(std::tstring str)
@@ -749,7 +653,7 @@ int Extension::GetNumBytesInUTF8Char(std::string_view sv)
 }
 // Called as a subfunction to read string at given position of received binary. If sizeInCodePoints is -1, will expect a null
 // terminator. The isCursorExpression is used for error messages.
-std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
+std::tstring Extension::RecvMsg_Sub_ReadString(const RecvMsg &msg, size_t recvMsgStartIndex, int sizeInCodePoints, bool isCursorExpression)
 {
 	// User requested empty size, let 'em have it
 	if (sizeInCodePoints == 0)
@@ -760,10 +664,10 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		CreateError("Could not read from received binary, index less than 0.");
 		return std::tstring();
 	}
-	if (recvMsgStartIndex > threadData->receivedMsg.content.size())
+	if (recvMsgStartIndex > msg.content.size())
 	{
 		CreateError("Could not read from received binary, index %zu is outside range of 0 to %zu.",
-			recvMsgStartIndex, std::max((size_t)0, threadData->receivedMsg.content.size()));
+			recvMsgStartIndex, std::max((size_t)0, msg.content.size()));
 		return std::tstring();
 	}
 
@@ -774,8 +678,8 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	}
 	const bool fixedSize = sizeInCodePoints != -1;
 
-	const size_t maxSizePlusOne = threadData->receivedMsg.content.size() - recvMsgStartIndex + 1;
-	const size_t actualStringSizeBytes = strnlen(threadData->receivedMsg.content.c_str() + recvMsgStartIndex, maxSizePlusOne);
+	const size_t maxSizePlusOne = msg.content.size() - recvMsgStartIndex + 1;
+	const size_t actualStringSizeBytes = strnlen(msg.content.c_str() + recvMsgStartIndex, maxSizePlusOne);
 	if (fixedSize)
 	{
 		// Size too small - we assumed every char was 1-byte for this, so it's way under
@@ -804,13 +708,13 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 	}
 
 	// To make sure user hasn't cut off the start/end UTF-8 char, we'll do a quick check
-	const std::string result = threadData->receivedMsg.content.substr(recvMsgStartIndex, actualStringSizeBytes);
+	const std::string result = msg.content.substr(recvMsgStartIndex, actualStringSizeBytes);
 
 	// Start char is invalid
 	if (GetNumBytesInUTF8Char(result) < 0)
 	{
 		CreateError("Could not read text from received binary, UTF-8 char was cut off at %sstart index %u.",
-			isCursorExpression ? "the cursor's " : "", threadData->receivedMsg.cursor);
+			isCursorExpression ? "the cursor's " : "", msg.cursor);
 		return std::tstring();
 	}
 
@@ -853,7 +757,7 @@ std::tstring Extension::RecvMsg_Sub_ReadString(size_t recvMsgStartIndex, int siz
 		{
 			// lw_u8str_validate will do a more thorough investigation of characters, +1 for null terminator
 			if (isCursorExpression)
-				threadData->receivedMsg.cursor += numBytesRead + (fixedSize ? 0 : 1);
+				msg.cursor += numBytesRead + (fixedSize ? 0 : 1);
 
 			const std::string_view resStr(result.data(), numBytesRead);
 			if (lw_u8str_validate(resStr))
@@ -1039,64 +943,27 @@ REFLAG Extension::Handle()
 
 		for (auto i : globals->extsHoldingGlobals)
 		{
-			// Trigger all stored events (more than one may be stored by calling AddEvent(***, true) )
+			auto origSelChannel = selChannel;
+			auto origSelPeer = selPeer;
+			auto origTData = i->threadData; // may not be needed
+
+			i->threadData = evtToRun;
+			i->selChannel = nullptr;
+			i->selPeer = nullptr;
+
+			i->threadData->PreRun(this);
+
 			for (std::size_t u = 0; u < evtToRun->numEvents; ++u)
-			{
-				if (evtToRun->condTrig[u] != CLEAR_EVTNUM)
-				{
-					auto origSelChannel = selChannel;
-					auto origSelPeer = selPeer;
-					auto origTData = i->threadData; // may not be needed
+				i->Runtime.GenerateEvent((int)evtToRun->condTrig[u]);
 
-					i->threadData = evtToRun;
-					i->selChannel = evtToRun->channel;
-					i->selPeer = evtToRun->peer;
+			evtToRun->PostRun(this);
 
-					i->Runtime.GenerateEvent((int)evtToRun->condTrig[u]);
-
-					// Restore old selection - if there was a selection
-					i->threadData = origTData;
-					if (origSelChannel)
-						i->selChannel = origSelChannel;
-					if (origSelPeer)
-						i->selPeer = origSelPeer;
-				}
-				// Clear up data if CLEAR_EVTNUM event number is used
-				else
-				{
-					// On disconnect, clear everything
-					if (!evtToRun->channel)
-					{
-						// After On Disconnect is triggered (cond ID 3), CLEAR_EVTNUM is triggered.
-						// Invalidate the cached server's host IP, old prev name, and old deny reason.
-						HostIP.clear();
-						HostPort = UINT32_MAX;
-						PreviousName.clear();
-						DenyReasonBuffer.clear();
-					}
-
-					// No channel: full clear of all channels/peers
-					// Channel and no peer: this client leaving channel
-					if (!evtToRun->channel || (evtToRun->channel && !evtToRun->peer))
-					{
-						for (auto& dropExt : globals->extsHoldingGlobals)
-						{
-							if (!evtToRun->channel || dropExt->selChannel == evtToRun->channel)
-							{
-								dropExt->selChannel = nullptr;
-								dropExt->selPeer = nullptr;
-							}
-						}
-					}
-
-					// No channel: full clear of all channels/peers
-					// Channel and peer: this peer leaving channel
-					if (!evtToRun->channel || (evtToRun->channel && evtToRun->peer))
-						for (auto& dropExt : globals->extsHoldingGlobals)
-							if (!evtToRun->channel || dropExt->selPeer == evtToRun->peer)
-								dropExt->selPeer = nullptr;
-				}
-			}
+			// Restore old selection - if there was a selection
+			i->threadData = origTData;
+			if (origSelChannel)
+				i->selChannel = origSelChannel;
+			if (origSelPeer)
+				i->selPeer = origSelPeer;
 		}
 
 		// On Error or other mandatory events were not processed by Fusion events. Shameful.
@@ -1113,7 +980,7 @@ REFLAG Extension::Handle()
 
 			// On Error has message
 			if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Error"sv))
-				wstr << _T(". Error message:\n"sv) << DarkEdif::UTF8ToTString(evtToRun->error.text);
+				wstr << _T(". Error message:\n"sv) << DarkEdif::UTF8ToTString(evtToRun->AsC<ErrorEvent>().text);
 			// On Disconnect and On Name Changed has no text included
 			else if (mandatoryEventIDs[mandatoryEventIndex].first == _T("On Disconnect"sv) || mandatoryEventIDs[mandatoryEventIndex].first == _T("On Name Changed"sv))
 				wstr << _T('.');
@@ -1405,4 +1272,75 @@ void Extension::eventpumpdeleter(lacewing::eventpump pump)
 	lacewing::eventpump_delete(pump);
 	LOGV(_T("" PROJECT_NAME " - Pump deleted.\n"));
 	_CrtCheckMemory();
+}
+
+void ChannelJoinOrLeaveSuccessEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+}
+void ChannelLeaveDeniedEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+	ext->DenyReasonBuffer = denyReason;
+}
+void ChannelMsgEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+	ext->selPeer = peer;
+}
+void PeerJoinOrLeaveEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+	ext->selPeer = peer;
+}
+void PeerMsgEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+	ext->selPeer = peer;
+}
+void PeerNameChangedEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+	ext->selPeer = peer;
+}
+void ServerChannelMsgEvent::PreRun(Extension* const ext)
+{
+	ext->selChannel = channel;
+}
+
+void DisconnectEvent::PostRun(Extension* const ext)
+{
+	// After On Disconnect is triggered (cond ID 3).
+	assert(condTrig[0] == 3);
+
+	// Invalidate the cached server's host IP, old prev name, and old deny reason.
+	ext->HostIP.clear();
+	ext->HostPort = UINT32_MAX;
+	ext->PreviousName.clear();
+	ext->DenyReasonBuffer.clear();
+}
+void ChannelJoinOrLeaveSuccessEvent::PostRun(Extension* const ext)
+{
+	// After Channel Leave Success is triggered (cond ID 43)
+	if (condTrig[0] != 43)
+		return;
+	const auto& ch = channel;
+	for (auto& dropExt : ext->globals->extsHoldingGlobals)
+	{
+		if (dropExt->selChannel == ch)
+		{
+			dropExt->selChannel = nullptr;
+			dropExt->selPeer = nullptr;
+		}
+	}
+}
+void PeerJoinOrLeaveEvent::PostRun(Extension* const ext)
+{
+	// After Channel Peer Leave is triggered (cond ID 11)
+	if (condTrig[0] != 11)
+		return;
+
+	for (auto& dropExt : ext->globals->extsHoldingGlobals)
+		if (dropExt->selChannel == channel && dropExt->selPeer == peer)
+			dropExt->selPeer = nullptr;
 }

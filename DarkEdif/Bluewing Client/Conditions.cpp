@@ -1,5 +1,5 @@
 #include "Common.hpp"
-#define MessageMatches() (threadData->receivedMsg.subchannel == subchannel || subchannel == -1)
+#define MessageMatches(T) ( subchannel == -1 || threadData->As<T>()->msg.subchannel == subchannel)
 
 #define LoopNameMatches(cond) \
 	if (loopName[0] == _T('\0')) \
@@ -9,105 +9,25 @@
 	} \
 	return !_tcscmp(loopName.data(), passedLoopName)
 
-bool Extension::OnSentTextMessageFromServer(int subchannel)
+bool Extension::ServerMessageCondition(int subchannel)
 {
-	return MessageMatches();
+	return MessageMatches(ServerMsgEvent);
 }
-bool Extension::OnSentTextMessageFromChannel(int subchannel)
+bool Extension::ChannelMessageCondition(int subchannel)
 {
-	return MessageMatches();
+	return MessageMatches(ChannelMsgEvent);
 }
-bool Extension::OnSentNumberMessageFromServer(int subchannel)
+bool Extension::PeerMessageCondition(int subchannel)
 {
-	return MessageMatches();
+	return MessageMatches(PeerMsgEvent);
 }
-bool Extension::OnSentNumberMessageFromChannel(int subchannel)
+bool Extension::ServerChannelMessageCondition(int subchannel)
 {
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentTextMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentNumberMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
+	return MessageMatches(ServerChannelMsgEvent);
 }
 bool Extension::IsConnected()
 {
 	return Cli.connected();
-}
-bool Extension::OnAnySentMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnySentMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnySentMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageFromChannel(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedMessageFromPeer(int subchannel)
-{
-	return MessageMatches();
 }
 bool Extension::ClientHasAName()
 {
@@ -156,38 +76,6 @@ bool Extension::OnClientChannelLoopWithName(const TCHAR * passedLoopName)
 bool Extension::OnClientChannelLoopWithNameFinished(const TCHAR * passedLoopName)
 {
 	LoopNameMatches("Client Channel Loop With Name Finished");
-}
-bool Extension::OnSentTextChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentNumberChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnSentBinaryChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnySentChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedTextChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedNumberChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnBlastedBinaryChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
-}
-bool Extension::OnAnyBlastedChannelMessageFromServer(int subchannel)
-{
-	return MessageMatches();
 }
 bool Extension::IsJoinedToChannel(const TCHAR * channelNamePtr)
 {

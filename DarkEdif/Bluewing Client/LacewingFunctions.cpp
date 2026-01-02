@@ -7,7 +7,7 @@
 
 void OnError(lacewing::relayclient &client, lacewing::error error)
 {
-	globals->AddEvent1(0, nullptr, nullptr, nullptr, error->tostring());
+	globals->AddEvent1<ErrorEvent>(0, error->tostring());
 }
 void OnConnect(lacewing::relayclient &client)
 {
@@ -40,8 +40,7 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 }
 void OnDisconnect(lacewing::relayclient &client)
 {
-	// CLEAR_EVTNUM: Empty all channels and peers, and reset HostIP
-	globals->AddEvent2(3, CLEAR_EVTNUM);
+	globals->AddEvent1<DisconnectEvent>(3);
 }
 void OnChannelListReceived(lacewing::relayclient &client)
 {
@@ -49,22 +48,7 @@ void OnChannelListReceived(lacewing::relayclient &client)
 }
 void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target)
 {
-#if 0
-	if (GThread)
-		globals->lock.edif_lock();
-
-	// Autoselect the first channel?
-	if (client.getchannelcount() == 1U)
-	{
-		auto cliReadLock = client.lock.createReadLock();
-		selChannel = client.getchannels()[0];
-	}
-
-	if (GThread)
-		globals->lock.edif_unlock();
-#endif
-
-	globals->AddEvent1(4, target);
+	globals->AddEvent1<ChannelJoinOrLeaveSuccessEvent>(4, target);
 }
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason)
 {
@@ -75,12 +59,11 @@ void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channel
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(5, nullptr, nullptr, nullptr, channelName);
+	globals->AddEvent1<NameDeniedEvent>(5, channelName, denyReason);
 }
 void OnLeaveChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target)
 {
-	// CLEAR_EVTNUM: Clear channel copy after this event is handled
-	globals->AddEvent2(43, CLEAR_EVTNUM, target);
+	globals->AddEvent1<ChannelJoinOrLeaveSuccessEvent>(43, target);
 }
 void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target, std::string_view denyReason)
 {
@@ -91,7 +74,7 @@ void OnLeaveChannelDenied(lacewing::relayclient &client, std::shared_ptr<lacewin
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(44, target);
+	globals->AddEvent1<ChannelLeaveDeniedEvent>(44, target, denyReason);
 }
 void OnNameSet(lacewing::relayclient &client)
 {
@@ -106,7 +89,7 @@ void OnNameDenied(lacewing::relayclient &client, std::string_view deniedName, st
 
 	if (GThread.joinable())
 		globals->lock.edif_unlock();
-	globals->AddEvent1(7);
+	globals->AddEvent1<NameDeniedEvent>(7, deniedName, denyReason);
 }
 void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 {
@@ -121,17 +104,17 @@ void OnNameChanged(lacewing::relayclient &client, std::string_view oldName)
 }
 void OnPeerConnect(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer)
 {
-	globals->AddEvent1(10, channel, nullptr, peer);
+	globals->AddEvent1<PeerJoinOrLeaveEvent>(10, channel, peer);
 }
 void OnPeerDisconnect(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer)
 {
-	globals->AddEvent2(11, CLEAR_EVTNUM, channel, nullptr, peer);
+	globals->AddEvent1<PeerJoinOrLeaveEvent>(11, channel, peer);
 }
 void OnPeerNameChanged(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer, std::string oldName)
 {
-	globals->AddEvent1(45, channel, nullptr, peer, oldName);
+	globals->AddEvent1<PeerNameChangedEvent>(45, channel, peer, oldName);
 }
 void OnPeerMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -144,9 +127,10 @@ void OnPeerMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::rela
 	// First pair is text, then number, then binary.
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsBlasted[] = { { 52, 39 }, { 52, 40 }, { 52, 41 } };
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 49, 36 }, { 49, 37 }, { 49, 38 } };
-
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, peer, message, subchannel, variant);
+	globals->AddEvent2<PeerMsgEvent>(eventNums.first, eventNums.second,
+		message, subchannel, variant,
+		channel, peer);
 }
 void OnChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	std::shared_ptr<lacewing::relayclient::channel::peer> peer,
@@ -161,7 +145,7 @@ void OnChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::r
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 48, 9 }, { 48, 16 }, { 48, 33 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, peer, message, subchannel, variant);
+	globals->AddEvent2<ChannelMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant, channel, peer);
 }
 void OnServerMessage(lacewing::relayclient &client,
 	bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
@@ -175,7 +159,7 @@ void OnServerMessage(lacewing::relayclient &client,
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 47, 8 }, { 47, 15 }, { 47, 32 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, nullptr, nullptr, nullptr, message, subchannel, variant);
+	globals->AddEvent2<ServerMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant);
 }
 void OnServerChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel,
 	bool blasted, lw_ui8 subchannel, std::string_view message, lw_ui8 variant)
@@ -189,7 +173,7 @@ void OnServerChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacew
 	static const std::pair<std::uint16_t, std::uint16_t> eventNumsSent[] = { { 68, 65 }, { 68, 66 }, { 68, 67 } };
 
 	const auto & eventNums = blasted ? eventNumsBlasted[variant] : eventNumsSent[variant];
-	globals->AddEvent2(eventNums.first, eventNums.second, channel, nullptr, nullptr, message, subchannel, variant);
+	globals->AddEvent2<ServerChannelMsgEvent>(eventNums.first, eventNums.second, message, subchannel, variant, channel);
 }
 
 extern "C" void always_log(const char* str, ...)
