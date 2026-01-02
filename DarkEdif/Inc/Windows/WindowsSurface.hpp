@@ -167,18 +167,17 @@ enum class SurfaceType : int
 	Memory_DeviceContext,
 	// Buffer + permanent device context (i.e. DIBDC)
 	Memory_PermanentDeviceContext,
-	// Surface Direct Draw in system memory
+	// Surface Direct Draw in system memory. Do not create.
 	DirectDraw_SystemMemory,
-	// Screen surface in HWA mode
-	// TODO: YQ: What?
+	// Screen surface in HWA mode. Used by frame surface (rhIdEditWin). Do not create.
 	HWA_Screen,
-	// Render target texture in HWA mode
+	// Render target texture in HWA mode. CF2.5, 32bpp only.
 	HWA_RenderTargetTexture,
-	// HWA texture created in video memory, unmanaged (lost when device is lost)
+	// HWA texture created in video memory, unmanaged (lost when device is lost). CF2.5, 32bpp only.
 	HWA_UnmanagedTexture,
-	// HWA texture created in video memory, managed (automatically reloaded when the device is lost)
+	// HWA texture created in video memory, managed (automatically reloaded when the device is lost). CF2.5, 32bpp only.
 	HWA_ManagedTexture,
-	// HWA mosaic texture
+	// HWA mosaic texture. CF2.5, prototype is always DIB driver. May be created in CPU memory.
 	HWA_Mosaic,
 	Max
 };
@@ -195,12 +194,15 @@ enum class SurfaceDriver : int
 	// that don't make use of customizable UI frameworks.
 	// Fusion is one of these, using purely GDI calls for the interface, with some optional
 	// Direct3D use for rendering the frame editor.
+	// Not used in MMF2; WinGDI will be switched to DIB.
 	WinGDI,
 
-	// Microsoft DirectDraw, an old tech, part of DirectX; since Vista, is now a translation layer to Direct3D
+	// Microsoft DirectDraw, an old tech, part of DirectX; since Vista, is now a translation layer to Direct3D.
+	// Used in MMF2 DirectX and DirectX+VRAM display type. However, cannot be prototyped consistently. Do not create.
 	DirectDraw,
 
-	// Bitmap introduced in Windows 3.1 and still going strong
+	// Bitmap introduced in Windows 3.1 and still going strong.
+	// Not used in MMF2; Bitmap will be switched to DIB.
 	Bitmap,
 
 	// 3DFX Glide API. Deprecated.
@@ -208,6 +210,7 @@ enum class SurfaceDriver : int
 	// Eventually superceded by Direct3D and OpenGL.
 	// TODO: YQ: Is this a ST_HWATEXTURE-compatible driver? Implied by
 	// https://github.com/clickteam-plugin/Surface/blob/19968f04b67b58b1aaf3585f8558126df14e6fa5/Runtime.cpp#L138
+	// Not used in MMF2; WinGDI will be switched to DIB.
 	_3DFX,
 
 	// Microsoft Direct3D v9, introduced 2002, last update July 2007.
@@ -315,38 +318,152 @@ enum class CreateCollisionMaskFlags : std::uint16_t {
 	Platform
 };
 
+// A dummy class indicating you cannot read this without defining the right Direct3D headers and FUSION_INTERNAL_ACCESS.
+// If you have, then use a different variable in the union.
+// @remarks Although COM uses a long chain of inheritance, it's single-inheritance so this pointer should suffice.
+struct FusionD3DDummy {};
+
+#if defined(FUSION_INTERNAL_ACCESS)
+#pragma pack (push, 1)
+
+// Semi-opaque struct used in D3DSURFINFO; only expert Fusion ext devs should use this.
+// D3D11 only?
+struct FusionD3D11Texture final
+{
+	union {
+#ifdef __d3d11_h__
+		// Contains a ID3D11Texture2D; if grabbing, note GetResource increments the ref count,
+		// so ideally store in an atlbase.h CComPtr smart pointer, or call Release().
+		// CComPtr<ID3D11Texture2D> resTextD3D11;
+		// d3d11ShaderResourceView->GetResource((ID3D11Resource**)&resourceTextureD3D11);
+		ID3D11ShaderResourceView* D3D11ShaderResourceView;
+#endif
+		FusionD3DDummy * D3DGenericTexture;
+	};
+	std::uint32_t unknown1[3];	// set to 1, 0, 0
+	std::uint32_t width, height;
+	std::uint32_t flags;		// Set to 0xF0
+	std::uint32_t unknown2[2];	// set to 0, 0
+	// Struct may continue further, but D3D ended here
+
+	NO_DEFAULT_CTORS_OR_DTORS(FusionD3D11Texture);
+};
+union FusionD3DTexture {
+	// D3D11 has a sub-struct
+	FusionD3D11Texture* D3D11TextureHolder;
+#ifdef _D3D9_H_
+	IDirect3DTexture9* D3D9Texture;
+#endif
+#ifdef _D3D8_H_
+	IDirect3DTexture8* D3D8Texture;
+#endif
+	FusionD3DDummy * D3D8Or9Texture;
+};
+
+union FusionD3DDevice {
+#ifdef __d3d11_h__
+	// Direct3D 11 was introduced in Windows 7, and as of 2025 is the latest supported by Windows Fusion.
+	ID3D11Device* D3D11Device;
+#endif
+#ifdef _D3D9_H_
+	// Direct3D9 device. 9 supports Windows 98+, although support was dropped to Win 2000+ in 9c.
+	// @remarks In later Windows, variants of 9 are usually wrapped into later Direct3D.
+	// 9Ex was introduced in Vista+, but is not used in Fusion Direct3D 9 runtime.
+	// Direct3D 11 tech can also be created with feature level limit to 9, making a ID3D11 interface,
+	// but only using 9 features. Fusion does not use this either.
+	// You cannot debug Direct3D 9 or 9Ex apps on Windows 10 and later.
+	// https://learn.microsoft.com/en-us/windows/win32/api/d3d9/nf-d3d9-idirect3d9-createdevice
+	IDirect3DDevice9* D3D9Device;
+#endif // _D3D9_H_
+#ifdef _D3D8_H_
+	IDirect3DDevice8* D3D8Device;
+#endif
+	FusionD3DDummy* D3DGenericDevice;
+};
+// Two types: IDirect3D9 or ID3D11DeviceContext.
+union FusionD3DDevCtxOrTech {
+#ifdef __d3d11_h__
+	ID3D11DeviceContext* D3D11DevCtx;
+#endif
+	// Direct3D 8-9 don't have a DeviceContext class like D3D11,
+	// but Fusion returns the IDirect3D9 in the place of the device context in GetDriverInfo().
+	// This is not D3D9Ex. See Direct3D9 notes in FusionD3DDevice.
+#ifdef _D3D9_H_
+	IDirect3D9* D3D9;
+#endif
+#ifdef _D3D8_H_
+	IDirect3D8* D3D8;
+#endif
+	// ID3DDeviceContext or IDirect3D9 fallback ptr
+	FusionD3DDummy* D3DGenericDeviceCtxOrTech;
+};
+
+#pragma pack (pop)
+#else // Ext dev didn't want fusion internals, so use opaque types
+typedef FusionD3DDummy FusionD3DTexture, FusionD3DDevice, FusionD3DDevCtxOrTech;
+#endif // Fusion internals
+
 // Direct3D 8-11 info returned by cSurface::GetDriverInfo(). Not all variables will be set.
-struct D3DSURFINFO final
+struct FusionD3DSurfDriverInfo final
 {
 	// Size of this struct in bytes, varies per D3D level.
 	// It is recommended you set this to whatever GetDriverInfo(NULL) returns.
-	DWORD	m_lSize;
-	// Set to either 8, 9, 11.
-	int		m_nD3DVersion;
-	// D3D Context ptr. Usually null for frame surface.
-	LPVOID	m_pD3DContext;
-	// Device pointer, e.g. LPDIRECT3DDEVICE9. Usually set.
-	LPVOID	m_pD3DDevice;
-	// Texture pointer, e.g. LPDIRECT3DTEXTURE9. Often null for frame surface.
-	LPVOID	m_ppD3DTexture;
+	DWORD surfInfoSize;
+
+	// Set to 8, 9, 11.
+	int D3DVersion;
+
+	// D3D9: D3D9, Device, Texture.
+	// D3D11: Faux-Context, Device, Texture.
+
+	// D3D or device context ptr; e.g. D3D9 a IDirectEx9 *, in D3D11 a ID3D11DeviceContext *.
+	// Set for frame surfaces.
+	FusionD3DDevCtxOrTech D3DContextOrTech;
+
+	// Device pointer, e.g. LPDIRECT3DDEVICE9, ID3D11Device *.
+	// @remarks Does not report as a live object in D3D11 Debug on end of app, as it's already deleted.
+	FusionD3DDevice D3DDevice;
+	
+
+	// @brief A direct pointer to a D3D texture in D3D8-9, but a pointer-to-pointer in D3D11.
+	//		  Only inited with cSurface if HWA_RenderTargetTexture type (which is D3D11 only),
+	//		  otherwise null and set on first blit. Not set for frame surface.
+	// @remarks
+	// For D3D9, it is a IDirect3DTexture9 *.
+	// 
+	// For D3D11, set to a ID3D11ShaderResourceView **. Get a ID3D11Texture2D * by calling GetResource.
+	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-cd3d11_texture2d_desc
+	// 
+	// CComPtr<ID3D11Texture2D> texture;
+	// (*((ID3D11ShaderResourceView **)x.m_ppD3DTexture))->GetResource((ID3D11Resource**)&texture);
+	FusionD3DTexture D3DTexture;
+
+	template<typename T = void>
+	inline T * GetTexturePtr() {
+		// Deref twice for D3D11, once for others
+		if (D3DVersion == 11)
+			return (T*)D3DTexture.D3D11TextureHolder->D3DGenericTexture;
+		return (T*)D3DTexture.D3D8Or9Texture;
+	}
+
 	// PS max level - may come up as Shader Model.
 	// This is capped to min of max supported by D3D version, and max supported by GPU.
 	// D3D8 is limited to PS 1.4, and is set here as 0xFFFF0104.
 	// D3D9 is limited to PS 3.0, and is set here as 0xFFFF0300.
 	// D3D11 is limited to PS 5.1, but Fusion sets this to 0x5.
-	int		m_dwPixelShaderVersion;
+	int		PixelShaderVersion;
 	// VS max level (often matches pixel shader version).
 	// Fusion does not set this for D3D8 or 9, but for 11 it sets it to 0x5.
-	int		m_dwVertexShaderVersion;
-	// Texture size (a power of 2)
-	int		m_dwMaxTextureWidth;
-	int		m_dwMaxTextureHeight;
-	// [D3D11 only] null for frame
-	LPVOID	m_ppD3D11RenderTargetTexture;
-	// [D3D11 only] null for frame
-	LPVOID	m_ppD3D11RenderTargetView;
-	// [D3D11 only] Usually set for frame.
-	LPVOID	m_txtContext;
+	int		VertexShaderVersion;
+	// Max texture size (a power of 2, e.g. 16384)
+	int		MaxTextureWidth;
+	int		MaxTextureHeight;
+	// [D3D11 only] Not set for frame
+	LPVOID	ppD3D11RenderTargetTexture;
+	// [D3D11 only] Not set for frame
+	LPVOID	ppD3D11RenderTargetView;
+	// [D3D11 only] Set for frame?
+	LPVOID	txtContext;
 };
 
 // Mode for LockImageSurface
@@ -364,6 +481,7 @@ enum class LockImageSurfaceMode : int
 	// TODO: Is this required outright, or does it speed things, etc for HWA? What if used for software?
 	HWACompatible
 };
+// Call to populate a cSurface from an image bank ID. Warning: invalid ID will cause a crash.
 FusionAPIImport BOOL FusionAPI LockImageSurface(void* idApp, DWORD hImage, cSurface& cs, int flags = (int)LockImageSurfaceMode::ReadBlitOnly);
 FusionAPIImport void FusionAPI UnlockImageSurface(cSurface& cs);
 
@@ -490,12 +608,15 @@ public:
 	// ======================
 
 	// Locks the raw memory of the Surface, and returns the address to it. When you're done writing, use UnlockBuffer to return it.
-	// TODO: YQ: Does this work for all surface types?
+	// Does not work for any HWA surface type; you can only blit into it from another surface.
 	LPBYTE	LockBuffer();
 
 	// TODO: YQ: Why do you have to unlock with address, won't OOP make that pointless? Can you pass a different address?
 	void UnlockBuffer(LPBYTE spBuffer);
-	// TODO: YQ: What is pitch? It's not Depth()?
+
+	// Image stride, aka pitch, is the number of bytes for one row of pixels in image, including memory alignment padding.
+	// If image is upside down in RAM compared to memory (usual for BMP format), pitch will be negative.
+	// https://learn.microsoft.com/en-us/windows/win32/medfound/image-stride
 	int GetPitch() const;
 
 	// ======================
@@ -513,6 +634,7 @@ public:
 
 	#ifdef HWABETA
 		// TODO: YQ: update how?
+		// This seems entirely useless on HWA non-frame surfaces.
 		cSurface* GetRenderTargetSurface();
 		void	  ReleaseRenderTargetSurface(cSurface* psf);
 		// TODO: YQ: What does this do, how does Max affect it ?
@@ -524,6 +646,8 @@ public:
 	// ======================
 	// Device context for graphic operations
 	// ======================
+
+	// Returns a HDC. Ref-counted, you must release the DC with ReleaseDC() once done.
 	HDC	 GetDC(void);
 	void ReleaseDC(HDC dc);
 	void AttachWindow(HWND hWnd);
@@ -597,7 +721,8 @@ public:
 	// ======================
 	// Blit functions
 	// ======================
-	// Blit surface to surface
+
+	// Blit surface to surface. Works with HWA destination.
 	BOOL Blit(cSurface & dest) const;
 
 	// In CF2.5 : HIBYTE(dwBlitFlags) is alpha blend coefficient
@@ -874,7 +999,7 @@ public:
 	// TODO: YQ: Is this meant to be a callback?
 	static void		OnSysColorChange();
 
-	// Transparent color
+	// Transparent color, used if alpha is not present. See HasAlpha(). Defaults to black, RGB(0, 0, 0).
 	void 		SetTransparentColor(COLORREF rgb);
 	COLORREF	GetTransparentColor();
 	int 		GetTransparentColorIndex();
@@ -883,6 +1008,9 @@ public:
 	BOOL		HasAlpha();
 	LPBYTE		LockAlpha();
 	void		UnlockAlpha();
+
+	// Gets image stride for alpha channel. See GetPitch() for a related info.
+	// Alpha is always 8bpp.
 	int			GetAlphaPitch();
 	// Warning: makes a completely transparent alpha channel by default
 	void		CreateAlpha();
@@ -914,6 +1042,8 @@ public:
 
 	// Friend functions
 	// ----------------
+
+	// Useless function for reading m_actual
 	FusionAPIImport friend cSurfaceImplementation * FusionAPI GetSurfaceImplementation(cSurface &cs);
 	FusionAPIImport friend void FusionAPI SetSurfaceImplementation(cSurface &cs, cSurfaceImplementation *psi);
 

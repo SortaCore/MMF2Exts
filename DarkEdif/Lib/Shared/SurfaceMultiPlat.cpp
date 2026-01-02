@@ -351,7 +351,7 @@ DarkEdif::SurfaceFill DarkEdif::SurfaceFill::Mosaic(Surface* surf, Rect rect)
 
 #ifdef _WIN32
 static DarkEdif::Surface* mainWindow = nullptr;
-static D3DSURFINFO drivInfo = {};
+static FusionD3DSurfDriverInfo drivInfo = {};
 #endif
 
 
@@ -1491,11 +1491,11 @@ DarkEdif::Surface& DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 		if (driv >= SurfaceDriver::DIB && driv < SurfaceDriver::Direct3D9)
 		{
 			// Set this so it's not still 0
-			drivInfo.m_lSize = -1;
-			drivInfo.m_nD3DVersion = 1 + (int)driv;
+			drivInfo.surfInfoSize = -1;
+			drivInfo.D3DVersion = 1 + (int)driv;
 			// This is mostly limited by RAM, but Windows standard display is very slow,
 			// so we'll set a smaller limit of 4096 for sanity.
-			drivInfo.m_dwMaxTextureWidth = drivInfo.m_dwMaxTextureHeight = 4096;
+			drivInfo.MaxTextureWidth = drivInfo.MaxTextureHeight = 4096;
 		}
 		// Note D3D9 enum value is before D3D8
 		else if (driv >= SurfaceDriver::Direct3D9)
@@ -1503,17 +1503,17 @@ DarkEdif::Surface& DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 			DWORD size = newSurf->GetDriverInfo(NULL);
 			if (size > sizeof(drivInfo))
 				LOGF(_T("Unexpected driver info size %u.\n"), size);
-			drivInfo.m_lSize = size;
+			drivInfo.surfInfoSize = size;
 			// DDHAL_GETDRIVERINFODATA
 			newSurf->GetDriverInfo(&drivInfo);
-			LOGI(_T("Got Direct3D driver info: size %u (expected %u). D3D version %i. Context ptr: 0x%p. ")
+			LOGI(_T("Got Direct3D driver info: size %u (expected %u). D3D version %i. Context/tech ptr: 0x%p. ")
 				"Device ptr: 0x%p. Texture ptr: 0x%p. Pixel Shader version: %i. Vertex Shader version: %i. "
 				"Max Texture Width: %i. Max Texture Height: %i. Render Target Texture: 0x%p. Render Target View: 0x%p. "
 				"Render Target Context: 0x%p.\n",
-				drivInfo.m_lSize, size, drivInfo.m_nD3DVersion, drivInfo.m_pD3DContext,
-				drivInfo.m_pD3DDevice, drivInfo.m_ppD3DTexture, drivInfo.m_dwPixelShaderVersion, drivInfo.m_dwVertexShaderVersion,
-				drivInfo.m_dwMaxTextureWidth, drivInfo.m_dwMaxTextureHeight, drivInfo.m_ppD3D11RenderTargetTexture, drivInfo.m_ppD3D11RenderTargetView,
-				drivInfo.m_txtContext
+				drivInfo.surfInfoSize, size, drivInfo.D3DVersion, drivInfo.D3DContextOrTech,
+				drivInfo.D3DDevice, drivInfo.D3DTexture, drivInfo.PixelShaderVersion, drivInfo.VertexShaderVersion,
+				drivInfo.MaxTextureWidth, drivInfo.MaxTextureHeight, drivInfo.ppD3D11RenderTargetTexture, drivInfo.ppD3D11RenderTargetView,
+				drivInfo.txtContext
 			);
 		}
 		else
@@ -1522,7 +1522,8 @@ DarkEdif::Surface& DarkEdif::Surface::CreateFromMainWindow(RunHeader* rhPtr)
 	return *mainWindow;
 #else
 	LOGF(_T("Not implemented on this platform\n"));
-	return Surface(rhPtr, false, false, 0, 0, false);
+	Surface * const fake = new Surface(rhPtr, false, false, 0, 0, false);
+	return *fake;
 #endif
 }
 std::unique_ptr<DarkEdif::Surface> DarkEdif::Surface::CreateFromFilePath(Extension * ext,
@@ -1612,15 +1613,15 @@ DarkEdif::Surface::Surface(RunHeader* const rhPtr, bool needBitmapFuncs, bool ne
 			st = SurfaceType::Memory;
 
 		// If set, check texture size, if not, warn we can't
-		if (!drivInfo.m_dwMaxTextureWidth)
+		if (!drivInfo.MaxTextureWidth)
 		{
 			LOGW(_T("Warning: Creating a HWA surface of size %s. Unsure what max D3D texture size is.\n"),
 				Size { (int)width, (int)height }.str().c_str());
 		}
-		else if (width > (std::size_t)drivInfo.m_dwMaxTextureWidth || height > (std::size_t)drivInfo.m_dwMaxTextureHeight)
+		else if (width > (std::size_t)drivInfo.MaxTextureWidth || height > (std::size_t)drivInfo.MaxTextureHeight)
 		{
 			LOGF(_T("Creating a surface too large. Your GPU is limited to %s, attempting to allocate %s. Lower the graphics quality.\n"),
-				Size { drivInfo.m_dwMaxTextureWidth, drivInfo.m_dwMaxTextureHeight }.str().c_str(), Size { (int)width, (int)height }.str().c_str());
+				Size { drivInfo.MaxTextureWidth, drivInfo.MaxTextureHeight }.str().c_str(), Size { (int)width, (int)height }.str().c_str());
 		}
 	}
 
