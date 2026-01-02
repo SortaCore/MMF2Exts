@@ -124,43 +124,39 @@ namespace DarkEdif {
 					(userSuppliedName == testAgainst || !strcmp(userSuppliedName, testAgainst));
 			}
 			const bool isInt;
-			int cachedInt;
+			int cachedInt = -1;
+			const std::tstring intPrefix;
 			std::tstring cachedText;
 
 			std::uint64_t refreshMS;
 			std::uint64_t nextRefreshTime;
-			const char *userSuppliedName;
+			const char * const userSuppliedName;
 
-			int (*intReadFromExt)(Extension *const ext);
-			bool (*intStoreDataToExt)(Extension *const ext, int newValue);
-			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo);
-			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue);
+			int (*intReadFromExt)(Extension *const ext) = nullptr;
+			bool (*intStoreDataToExt)(Extension *const ext, int newValue) = nullptr;
+			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo) = nullptr;
+			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue) = nullptr;
 
-			DebugItem(decltype(intReadFromExt) reader, decltype(intStoreDataToExt) editor,
-				size_t refreshMS, const char *userSuppliedName) :
-				isInt(true), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
-				cachedInt(-1), intReadFromExt(reader), intStoreDataToExt(editor),
-				textReadFromExt(NULL), textStoreDataToExt(NULL)
+			DebugItem(const std::tstring_view intPrefix, const int initialInt,
+				decltype(intReadFromExt) reader, decltype(intStoreDataToExt) editor,
+				std::size_t refreshMS, const char *userSuppliedName) :
+				isInt(true), intPrefix(intPrefix),
+				cachedInt(initialInt), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
+				intReadFromExt(reader), intStoreDataToExt(editor)
 			{
-				cachedText.resize(30);
-				_itot_s(cachedInt, cachedText.data(), cachedText.size(), 10);
+				cachedText.reserve(DB_BUFFERSIZE);
+				cachedText = this->intPrefix + std::to_tstring(initialInt);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
-			DebugItem(decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
-				size_t refreshMS, const char *userSuppliedName) :
+			DebugItem(const TCHAR * initialText, decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
+				std::size_t refreshMS, const char *userSuppliedName) :
 				isInt(false), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
-				cachedInt(-1), intReadFromExt(NULL), intStoreDataToExt(NULL),
 				textReadFromExt(reader), textStoreDataToExt(editor)
 			{
-				cachedText.reserve(256);
+				cachedText.reserve(DB_BUFFERSIZE);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
-			}
-
-			// Run when user has finished editing.
-			void EditDone(Extension *ext, const TCHAR *newText, size_t newTextSize) {
-				if (isInt ? (bool)intStoreDataToExt : (bool)textStoreDataToExt)
-					throw std::exception("Not an editable property.");
-				cachedText = std::tstring_view(newText, newTextSize);
+				if (initialText && initialText[0])
+					cachedText = initialText;
 			}
 		};
 
@@ -169,51 +165,57 @@ namespace DarkEdif {
 		Extension *const ext;
 		std::vector<DebugItem> debugItems;
 		std::vector<std::uint16_t> debugItemIDs;
+		// For internal use, not ext devs
 		void StartEditForItemID(int debugItemID);
+		// For internal use, not ext devs
 		std::uint16_t * GetDebugTree();
+		// For internal use, not ext devs
 		void GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID);
 #endif // EditorBuild
 
 	public:
 
 		/** Adds textual property to Fusion debugger display.
+		 * @param initialText		 Initial text of this item. If NULL, reader will be called.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
 		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
 		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
-		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
+		 *							 If 0, will call every time Fusion requests the value (slow).
+		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if your code will not manually edit.
 		*/
 		void AddItemToDebugger(
-			// Supply NULL if it will not ever change.
+			const TCHAR * initialText,
 			void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
-			// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not accepted.
 			bool (*saveUserInputToExt)(Extension *const ext, std::tstring &newValue),
-			// Supply 0 if no caching should be used, otherwise will re-call reader().
-			size_t refreshMS,
-			// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
-			const char *userSuppliedName
+			std::size_t refreshMS,
+			const char *userSuppliedName = nullptr
 		);
 
 		/** Adds integer property to Fusion debugger display.
+		 * @param intPrefix			 The text to prefix the int value with in debugger; for example, _T("Value: "sv)
+		 * @param initialInt		 The initial value of this item.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
 		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
-		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached text.
+		 * @param refreshMS			 Milliseconds before getLatestFromExt() should be called again to update the cached int.
+		 *							 If 0, will call every time Fusion requests the value (slow).
 		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
 		*/
 		void AddItemToDebugger(
-			// Supply NULL if it will not ever change.
+			const std::tstring_view intPrefix,
+			const int initialInt,
 			int (*getLatestFromExt)(Extension *const ext),
-			// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not
 			bool (*saveUserInputToExt)(Extension *const ext, int newValue),
-			// Supply 0 if no caching should be used, otherwise will re-call reader() every time Fusion requests.
-			size_t refreshMS,
-			// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
-			const char *userSuppliedName
+			std::size_t refreshMS,
+			const char *userSuppliedName = nullptr
 		);
 
 		// Updates the debug item with the given name from the Fusion debugger.
-		void UpdateItemInDebugger(const char *userSuppliedName, const TCHAR *newText);
+		// If name is not found, no error is made.
+		void UpdateItemInDebugger(const char *userSuppliedName, const std::tstring_view & newText);
+		// Updates the debug item with the given name from the Fusion debugger.
+		// If name is not found, no error is made.
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
 
 		FusionDebugger(Extension *const ext);

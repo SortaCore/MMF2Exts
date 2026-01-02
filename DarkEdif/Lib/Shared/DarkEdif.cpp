@@ -6220,18 +6220,20 @@ namespace DarkEdif
 
 	struct FusionDebuggerAdmin { };
 	void FusionDebugger::AddItemToDebugger(
-		void (*getLatestFromExt)(Extension *const, std::tstring &),
-		bool (*saveUserInputToExt)(Extension *const, std::tstring &),
-		size_t, const char *
+		const TCHAR *,
+		void (*)(Extension *const, std::tstring &),
+		bool (*)(Extension *const, std::tstring &),
+		std::size_t, const char *
 	) { /* no op in runtime */ }
 	void FusionDebugger::AddItemToDebugger(
+		const std::tstring_view, int,
 		int (*)(Extension *const),
 		bool (*)(Extension *const, int),
-		size_t, const char *) { /* no op in runtime */ }
+		std::size_t, const char *) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
-		const char *, int) { /* no op in runtime */ }
+		const char *, const std::tstring_view &) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
-		const char *, const TCHAR *) { /* no op in runtime */ }
+		const char *, const int) { /* no op in runtime */ }
 	FusionDebugger::FusionDebugger(Extension *const) { /* runtime debugger not used */ }
 
 #else // It's editor build
@@ -6239,21 +6241,26 @@ namespace DarkEdif
 	struct FusionDebuggerAdmin
 	{
 		inline std::uint16_t * GetDebugTree(Extension *const ext) {
+			DieIfCallerIsNotMainThread("FusionDebugger");
 			return ext->FusionDebugger.GetDebugTree();
 		}
 		inline void StartEditForItemID(Extension *const ext, int debugItemID) {
+			DieIfCallerIsNotMainThread("FusionDebugger");
 			ext->FusionDebugger.StartEditForItemID(debugItemID);
 		}
 		inline void GetDebugItem(Extension *const ext, TCHAR *writeTo, int debugItemID) {
+			DieIfCallerIsNotMainThread("FusionDebugger");
 			ext->FusionDebugger.GetDebugItemFromCacheOrExt(writeTo, debugItemID);
 		}
 	};
 
 	std::uint16_t *FusionDebugger::GetDebugTree() {
+		DieIfCallerIsNotMainThread("FusionDebugger");
 		return debugItemIDs.data();
 	}
 	void FusionDebugger::StartEditForItemID(int debugItemID)
 	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
 		if (debugItemID < 0 || (std::uint16_t)debugItems.size() < debugItemID)
 			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
 		auto &di = debugItems[debugItemID];
@@ -6262,12 +6269,12 @@ namespace DarkEdif
 		if (di.isInt)
 		{
 			if (!di.intStoreDataToExt)
-				throw std::exception("Item not editable.");
+				throw std::runtime_error("Item not editable.");
+
 			edi.value = di.cachedInt;
-			long ret = ext->Runtime.EditInteger(&edi);
-			if (ret == IDOK)
+			if (ext->Runtime.EditInteger(&edi) == IDOK)
 			{
-				int oldInteger = di.cachedInt;
+				const int oldInteger = di.cachedInt;
 				di.cachedInt = edi.value;
 
 				if (!di.intStoreDataToExt(ext, edi.value))
@@ -6275,33 +6282,36 @@ namespace DarkEdif
 					di.cachedInt = oldInteger;
 					di.nextRefreshTime = GetTickCount64();
 				}
+				di.cachedText = di.intPrefix + std::to_tstring(di.cachedInt);
 			}
+			return;
+		}
+		// else text
 
+		if (!di.textStoreDataToExt)
+			throw std::runtime_error("Item not editable.");
+		edi.text = di.cachedText.data();
+		edi.lText = DB_BUFFERSIZE - 1;
+		const std::tstring oldText = di.cachedText;
+		di.cachedText.resize(DB_BUFFERSIZE);
+		if (ext->Runtime.EditText(&edi) == IDOK)
+		{
+			if (!di.textStoreDataToExt(ext, di.cachedText))
+			{
+				di.cachedText = oldText;
+				di.nextRefreshTime = GetTickCount64();
+			}
+			if (di.cachedText.size() >= DB_BUFFERSIZE)
+				di.cachedText.resize(DB_BUFFERSIZE - 1);
 		}
 		else
-		{
-			if (!di.textStoreDataToExt)
-				throw std::exception("Item not editable.");
-			edi.text = di.cachedText.data();
-			di.cachedText.resize(_tcslen(edi.text));
-			edi.lText = di.cachedText.size();
-			long ret = ext->Runtime.EditText(&edi);
-			if (ret == IDOK)
-			{
-				std::tstring oldText = di.cachedText;
-				di.cachedText = edi.text;
-				if (!di.textStoreDataToExt(ext, di.cachedText))
-				{
-					di.cachedText = oldText;
-					di.nextRefreshTime = GetTickCount64();
-				}
-			}
-		}
+			di.cachedText.resize(oldText.size());
 	}
 	void FusionDebugger::GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID)
 	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
 		if (debugItemID < 0 || debugItemID >= (std::uint16_t)debugItems.size())
-			throw std::exception("Couldn't find debug ID in Fusion debugger list.");
+			throw std::runtime_error("Couldn't find debug ID in Fusion debugger list.");
 
 		// Reader function exists, and timer for refreshing (if it exists) has expired
 		auto &di = debugItems[debugItemID];
@@ -6309,104 +6319,123 @@ namespace DarkEdif
 			(!di.refreshMS || GetTickCount64() >= di.nextRefreshTime))
 		{
 			if (di.isInt)
-				di.cachedInt = di.intReadFromExt(ext);
-			else
 			{
-				di.textReadFromExt(ext, di.cachedText);
-				if (di.cachedText.size() > 255)
-				{
-#ifndef _UNICODE
-					const std::tstring ellipse("...");
-#else
-					const std::tstring ellipse(L"…");
-#endif
-					di.cachedText.resize(255 - ellipse.size());
-					di.cachedText += ellipse;
-				}
+				di.cachedInt = di.intReadFromExt(ext);
+				di.cachedText = di.intPrefix + std::to_tstring(di.cachedInt);
 			}
-			if (di.refreshMS)
+			else
+				di.textReadFromExt(ext, di.cachedText);
+
+			if (di.cachedText.size() >= DB_BUFFERSIZE)
+			{
+#ifndef _UNICODE
+				const std::tstring ellipse("...");
+#else
+				const std::tstring ellipse(L"…");
+#endif
+				di.cachedText.resize(DB_BUFFERSIZE - 1 - ellipse.size());
+				di.cachedText += ellipse;
+			}
+			if (di.refreshMS && di.refreshMS != SIZE_MAX)
 				di.nextRefreshTime = GetTickCount64() + di.refreshMS;
 		}
-		_tcscpy_s(writeTo, 256U, di.cachedText.c_str());
+		_tcscpy_s(writeTo, DB_BUFFERSIZE, di.cachedText.c_str());
 	}
 
 	void FusionDebugger::AddItemToDebugger(
+		// Initial text of item - if NULL, reader will be called
+		const TCHAR * initialText,
 		// Supply NULL if it will not ever change.
 		void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
 		// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not accepted.
 		bool (*saveUserInputToExt)(Extension *const ext, std::tstring &newValue),
 		// Supply 0 if no caching should be used, otherwise will re-call reader().
-		size_t refreshMS,
+		std::size_t refreshMS,
 		// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
 		const char *userSuppliedName
 	) {
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		if ((!initialText || !*initialText) && !getLatestFromExt)
+			throw std::runtime_error("Initial text cannot be null or blank if uneditable");
 		if (debugItems.size() == 127)
-			throw std::exception("Too many items added to Fusion debugger.");
+			throw std::runtime_error("Too many items added to Fusion debugger.");
+		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem& d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
+			throw std::runtime_error("name already in use. Must be unique");
 
-		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
+		debugItems.push_back(DebugItem(initialText, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
+
+		// Load initial text via reader
+		if ((!initialText || !*initialText) && getLatestFromExt)
+			getLatestFromExt(ext, debugItems.back().cachedText);
+
 		// End it with DB_END, and second-to-last item is the new debug item ID
 		debugItemIDs.push_back(DB_END);
 		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
 	}
 
 	void FusionDebugger::AddItemToDebugger(
+		// Text prefix for int - will not change
+		const std::tstring_view intPrefix,
+		// Initial int value
+		const int initialInt,
 		// Supply NULL if it will not ever change.
 		int (*getLatestFromExt)(Extension *const ext),
 		// Supply NULL if not editable. In function, return true if cache should be updated, false if edit attempt was not
+		// The text parameter passed must be edited to new int description
 		bool (*saveUserInputToExt)(Extension *const ext, int newValue),
 		// Supply 0 if no caching should be used, otherwise will re-call reader() every time Fusion requests.
-		size_t refreshMS,
+		std::size_t refreshMS,
 		// Supply NULL if not removable. Case-sensitive name, used for removing from Fusion debugger if needed.
 		const char *userSuppliedName
 	) {
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		if (intPrefix.empty())
+			throw std::runtime_error("Int prefix cannot be blank");
+		if (intPrefix.size() > DB_BUFFERSIZE - 12) // 11 is length of min int32, 1 is for null
+			throw std::runtime_error("Int prefix too long");
 		if (debugItems.size() == 127)
-			throw std::exception("too many items added to Fusion debugger");
-
+			throw std::runtime_error("too many items added to Fusion debugger");
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
-			throw std::exception("name already in use. Must be unique");
+			throw std::runtime_error("name already in use. Must be unique");
 
-		debugItems.push_back(DebugItem(getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
+		debugItems.push_back(DebugItem(intPrefix, initialInt, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
 		debugItemIDs.push_back(DB_END);
 		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
 	}
 
-	void FusionDebugger::UpdateItemInDebugger(
-		const char *userSuppliedName, int newValue
-	) {
-		for (std::size_t i = 0; i < debugItems.size(); ++i)
+	void FusionDebugger::UpdateItemInDebugger(const char *userSuppliedName, int newValue)
+	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		const auto it = std::find_if(debugItems.begin(), debugItems.end(),
+			[userSuppliedName](const auto& di) { return di.DoesUserSuppliedNameMatch(userSuppliedName); });
+		if (it != debugItems.end())
 		{
-			if (debugItems[i].DoesUserSuppliedNameMatch(userSuppliedName))
-			{
-				if (debugItems[i].isInt)
-					debugItems[i].cachedInt = newValue;
-				else
-					throw std::exception("Fusion debugger item is text, not int type");
-				return;
-			}
+			if (!it->isInt)
+				throw std::runtime_error("Fusion debugger item is text, not int type");
+			it->cachedInt = newValue;
 		}
 	}
 
-	void FusionDebugger::UpdateItemInDebugger(
-		const char *userSuppliedName, const TCHAR *newText
-	) {
-		if (!newText)
-			throw std::exception("null not allowed");
+	void FusionDebugger::UpdateItemInDebugger(const char *userSuppliedName, const std::tstring_view &newText)
+	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
+		if (!userSuppliedName)
+			throw std::runtime_error("Name cannot be null");
 
-		for (std::size_t i = 0; i < debugItems.size(); ++i)
+		const auto it = std::find_if(debugItems.begin(), debugItems.end(),
+			[userSuppliedName](const auto& di) { return di.DoesUserSuppliedNameMatch(userSuppliedName); });
+		if (it != debugItems.end())
 		{
-			if (debugItems[i].DoesUserSuppliedNameMatch(userSuppliedName))
-			{
-				if (debugItems[i].isInt)
-					throw std::runtime_error("Fusion debugger item is text, not int type");
-				else
-					debugItems[i].cachedText = newText;
-				return;
-			}
+			if (it->isInt)
+				throw std::runtime_error("Fusion debugger item is int, not text type");
+			it->cachedText = newText;
 		}
 	}
 
-	FusionDebugger::FusionDebugger(Extension *const ext) : ext(ext) {
+	FusionDebugger::FusionDebugger(Extension *const ext) : ext(ext)
+	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
 		// due to DB_EDITABLE flag being 0x80 in db value IDs, or 128, we can't have more than 128 editable properties.
 		// DB IDs are 16-bit, so it might be possible to skip all IDs with 0x80's and use IDs 0-127 then 256-383, etc,
 		// leaving 0x80 bit untouched, but haven't tested that.
