@@ -103,8 +103,10 @@ void lw_error_add (lw_error ctx, int error)
 
 		TCHAR message[512];
 
+		// Always use FORMAT_MESSAGE_IGNORE_INSERTS if using FORMAT_MESSAGE_FROM_SYSTEM,
+		// as format message may have expected arguments and will cause errors
 		if (FormatMessage
-			(FORMAT_MESSAGE_FROM_SYSTEM,
+			(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				0,
 				error,
 				MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
@@ -135,6 +137,15 @@ void lw_error_add (lw_error ctx, int error)
 #endif
 			lw_error_addf (ctx, error < 0 ? "%.*s (%08X)" : "%.*s (%d)",
 				size, message2, error);
+		}
+		else
+		{
+			// This path does run sometimes, for example, error 676 formatting in Wine
+			// fails with error 317, message translation not found
+			lw_error_addf(ctx,
+				error < 0 ? "error code %08X (and text translation failed with error %u)" :
+				"error code %d (and text translation failed with error %u)",
+				error, GetLastError());
 		}
 
 	#else
