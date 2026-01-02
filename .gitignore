@@ -8,6 +8,9 @@ Temp/
 # HelpNDoc intermediate files, when you're editing HND files in "MFAs and documentation" folders
 *.lck
 *.hnd-journal
+# FreeFileSync database used for file syncing
+*.ffs_db
+*.ffs_lock
 
 #################
 ## Eclipse
