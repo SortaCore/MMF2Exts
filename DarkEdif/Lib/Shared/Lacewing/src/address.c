@@ -456,13 +456,42 @@ lw_error lw_addr_resolve (lw_addr ctx)
 	return ctx->error;
 }
 
-static lw_bool sockaddr_equal (struct sockaddr * a, struct sockaddr * b)
+lw_bool lwp_sockaddr_equal_netmask (struct sockaddr * a, struct sockaddr* b, struct sockaddr * mask)
+{
+	assert(a && b && mask);
+
+	assert(a->sa_family == b->sa_family && b->sa_family == mask->sa_family);
+
+	// 4 byte
+	if (a->sa_family == AF_INET)
+	{
+		const lw_ui32 ptrA = *(lw_ui32*)&((struct sockaddr_in*)a)->sin_addr;
+		const lw_ui32 ptrB = *(lw_ui32*)&((struct sockaddr_in*)b)->sin_addr;
+		const lw_ui32 ptrM = *(lw_ui32*)&((struct sockaddr_in*)mask)->sin_addr;
+		return (ptrA & ptrM) == (ptrB & ptrM);
+	}
+	// 16 byte
+	if (a->sa_family == AF_INET6)
+	{
+		const lw_ui32* ptrA = (lw_ui32*)&((struct sockaddr_in6*)a)->sin6_addr;
+		const lw_ui32* ptrB = (lw_ui32*)&((struct sockaddr_in6*)b)->sin6_addr;
+		const lw_ui32* ptrM = (lw_ui32*)&((struct sockaddr_in6*)mask)->sin6_addr;
+		return (ptrA[0] & ptrM[0]) == (ptrB[0] & ptrM[0]) &&
+			(ptrA[1] & ptrM[1]) == (ptrB[1] & ptrM[1]) &&
+			(ptrA[2] & ptrM[2]) == (ptrB[2] & ptrM[2]) &&
+			(ptrA[3] & ptrM[3]) == (ptrB[3] & ptrM[3]);
+	}
+	assert(lw_false);
+	return lw_false;
+}
+lw_bool lwp_sockaddr_equal (struct sockaddr * a, struct sockaddr * b)
 {
 	if ((!a) || (!b))
 		return lw_false;
 
 	if (a->sa_family == AF_INET6)
 	{
+		// TODO: Support mapped V4 == unmapped V4?
 		if (b->sa_family != AF_INET6)
 			return lw_false;
 
@@ -476,9 +505,7 @@ static lw_bool sockaddr_equal (struct sockaddr * a, struct sockaddr * b)
 		if (b->sa_family != AF_INET)
 			return lw_false;
 
-		return !memcmp (&((struct sockaddr_in *) a)->sin_addr,
-						&((struct sockaddr_in *) b)->sin_addr,
-						sizeof (struct in_addr));
+		return *(lw_i32 *)&((struct sockaddr_in *) a)->sin_addr == *(lw_i32*)&((struct sockaddr_in *) b)->sin_addr;
 	}
 
 	return lw_false;
@@ -489,7 +516,7 @@ lw_bool lw_addr_equal (lw_addr a, lw_addr b)
 	if ((!a->info) || (!b->info))
 		return lw_true;
 
-	return sockaddr_equal (a->info->ai_addr, b->info->ai_addr);
+	return lwp_sockaddr_equal (a->info->ai_addr, b->info->ai_addr);
 }
 
 lw_bool lw_addr_ipv6 (lw_addr ctx)

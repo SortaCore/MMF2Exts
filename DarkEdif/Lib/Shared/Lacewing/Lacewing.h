@@ -255,6 +255,9 @@ typedef enum _lw_network_change_type
 	lw_import		 void  lw_filter_set_reuse		 (lw_filter, lw_bool);
 	lw_import	  lw_bool  lw_filter_ipv6			 (lw_filter);
 	lw_import		 void  lw_filter_set_ipv6		 (lw_filter, lw_bool);
+	lw_import	  lw_bool  lw_filter_remote_mask	 (lw_filter);
+	lw_import		 void  lw_filter_set_remote_mask (lw_filter, lw_bool);
+	lw_import	  lw_bool  lw_filter_check_remote_addr (lw_filter, lw_addr);
 	lw_import	   void *  lw_filter_tag			 (lw_filter);
 	lw_import		 void  lw_filter_set_tag		 (lw_filter, void *);
 
@@ -1122,6 +1125,9 @@ struct _filter
 
 	lw_import void ipv6 (bool enabled);
 	lw_import bool ipv6 ();
+
+	lw_import void remote_mask (bool enabled);
+	lw_import bool remote_mask ();
 
 	lw_import void tag (void *);
 	lw_import void * tag ();

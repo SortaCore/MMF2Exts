@@ -81,6 +81,16 @@ void _filter::ipv6 (bool ipv6)
 	lw_filter_set_ipv6 ((lw_filter) this, ipv6);
 }
 
+bool _filter::remote_mask ()
+{
+	return lw_filter_remote_mask((lw_filter) this);
+}
+
+void _filter::remote_mask (bool mask)
+{
+	lw_filter_set_remote_mask((lw_filter) this, mask);
+}
+
 void * _filter::tag ()
 {
 	return lw_filter_tag ((lw_filter) this);

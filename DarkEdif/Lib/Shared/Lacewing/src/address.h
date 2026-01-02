@@ -35,6 +35,9 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 
 void lwp_addr_cleanup (lw_addr ctx);
 
+lw_bool lwp_sockaddr_equal_netmask(struct sockaddr* a, struct sockaddr* b, struct sockaddr* netmask);
+lw_bool lwp_sockaddr_equal(struct sockaddr* a, struct sockaddr* b);
+
 lw_addr lwp_addr_new_sockaddr (struct sockaddr *);
 void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr *);
 
