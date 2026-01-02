@@ -5432,7 +5432,7 @@ std::tstring DarkEdif::FontInfoMultiPlat::GetActualFontName() {
 	SetThreadLocale(MAKELCID(LGRPID_WESTERN_EUROPE, SORT_DEFAULT));
 	int res = GetTextFace(ourDC, fontName.size(), fontName.data());
 	if (res <= 0)
-		LOGE(_T("Couldn't get true font name, error %u."), GetLastError()), _T("<error>"s);
+		LOGE(_T("Couldn't get true font name, error %u."), GetLastError());
 	else
 	{
 		fontName.resize(res - 1); // res includes null
@@ -5928,7 +5928,9 @@ void DarkEdif::BreakIfDebuggerAttached()
 
 void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
 {
-	// Too Java-ridden.
+	// Hardware breakpoints are not available in Android non-rooted.
+	// Your best bet is to do a hardware breakpoint inside VS/gdb or whatever native debugger you attach with.
+	// See perf app, and perf_event_open(); they require root, so I've not implemented them.
 	LOGE(_T("SetDataBreakpoint not possible on Android.\n"));
 	(void)memory;
 	(void)size;

@@ -176,13 +176,12 @@ std::int16_t ForbiddenInternals2::GetRunObjectInfos2(mv * mV, kpxRunInfos * info
 	static unsigned short EDITDATASize = UINT16_MAX;
 	if (EDITDATASize == UINT16_MAX)
 	{
-#ifdef NOPROPS
+		// Populate with a guess in runtime builds too, although value shouldn't be used at runtime.
+#if defined(NOPROPS) || defined(RuntimeBuild)
 		EDITDATASize = sizeof(EDITDATA);
 #elif EditorBuild
 		EDITDATASize = DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON();
-#else
-		EDITDATASize = sizeof(EDITDATA);
-#endif // NOPROPS
+#endif
 	}
 	infoPtr->EDITDATASize = EDITDATASize;
 

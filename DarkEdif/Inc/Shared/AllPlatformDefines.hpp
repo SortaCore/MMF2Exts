@@ -297,7 +297,7 @@ namespace DarkEdif {
 	#ifdef _DEBUG
 		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_DEBUG
 	#else
-		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_WARN
+		#define DARKEDIF_LOG_MIN_LEVEL DARKEDIF_LOG_INFO
 	#endif
 #endif
 
