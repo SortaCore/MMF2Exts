@@ -18,6 +18,7 @@
 #include <asm-generic\posix_types.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <iomanip>
 #include <stddef.h>
 

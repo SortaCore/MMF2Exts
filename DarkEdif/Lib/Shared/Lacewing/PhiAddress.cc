@@ -8,6 +8,7 @@
 */
 
 #include "Lacewing.h"
+#include <iostream>
 #ifdef _MSC_VER
 	// suppress complaints about utf8proc C enums not being C++ enum classes
 	#pragma warning (push)
@@ -317,17 +318,20 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
 	// Remove the repository name
-	const char * fileSub = strstr(file, "Lacewing\\");
+	const char * fileSub = strstr(file, "\\Lacewing\\");
+	fileSub = fileSub ? fileSub : strstr(file, "/Lacewing/");
 	fileSub = fileSub ? fileSub : file;
 
 	std::stringstream err;
 	err << "Lacewing fatal error detected.\nFile: "sv << fileSub << "\nFunction: "sv << func << "\nLine: "sv << line;
 #ifdef _WIN32
+	std::wcout.flush();
 	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " fatal error", MB_ICONERROR);
 	std::abort();
 #else
 	char output[512];
 	strcpy(output, err.str().c_str());
+	std::cout.flush();
 	assert(false && "Fatal error. Attach debugger and view output variable.");
 #endif
 }

@@ -599,10 +599,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	va_start(va, x);
 	LogV(DARKEDIF_LOG_ERROR, x, va);
 	va_end(va);
-#if _DEBUG
-	fflush(stdout);
-	fflush(stderr);
-#endif
+	std::cout.flush();
 	__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
 	if (threadEnv)
 	{
