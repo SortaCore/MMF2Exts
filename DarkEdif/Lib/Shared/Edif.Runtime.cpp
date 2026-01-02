@@ -1692,7 +1692,7 @@ short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (*(long *)&paramIndex < 0)
-		raise(SIGINT);
+		raise(SIGTRAP);
 	// read evtPtr.evtParams[paramIndex] as PARAM_OBJECT
 	static jfieldID evtParamsFieldID = mainThreadJNIEnv->GetFieldID(this->javaCEventClass.ref, "evtParams", "[LParams/CParam;");
 	JNIExceptionCheck();
@@ -1843,7 +1843,7 @@ objInfoList * RunHeader::GetOIListByIndex(std::size_t index)
 	}
 
 	if ((long)index < 0)
-		raise(SIGINT);
+		raise(SIGTRAP);
 
 	return &OiListArray[index];
 }
@@ -2256,7 +2256,7 @@ qualToOi *RunHeader::GetQualToOiListByOffset(std::size_t index) {
 
 #ifdef _DEBUG
 	if (*(long *)&index < 0)
-		raise(SIGINT);
+		raise(SIGTRAP);
 #endif
 
 	if (index >= QualToOiListLength)
@@ -2424,7 +2424,7 @@ objInfoList * HeaderObject::get_OiList() {
 
 		// can't find the OiList in the list, something went awry
 		LOGE(_T("Missing OiList of object Java class \"%s\", Oi %hi in the app OiList."), getClassName(meClass, false), get_Oi());
-		raise(SIGINT);
+		raise(SIGTRAP);
 	}
 
 	return OiList;
@@ -3106,7 +3106,7 @@ objectsList::objectsList(jobjectArray me, Edif::Runtime* runtime) :
 RunObjectMultiPlatPtr objectsList::GetOblOffsetByIndex(std::size_t index) {
 #ifdef _DEBUG
 	if (*(long*)&index < 0)
-		raise(SIGINT);
+		raise(SIGTRAP);
 #endif
 
 	if (index >= length)

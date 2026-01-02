@@ -607,7 +607,7 @@ void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
 	if (threadEnv)
 	{
 #if _DEBUG
-		raise(SIGINT);
+		raise(SIGTRAP);
 #endif
 		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_TARGET_NAME_UNDERSCORES " for details.");
 	}
@@ -638,7 +638,7 @@ void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.\n",
 		file, func, line, c);
 
-	raise(SIGINT);
+	raise(SIGTRAP);
 	threadEnv->ReleaseStringUTFChars(excStr, c);
 	return;
 }

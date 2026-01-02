@@ -5923,7 +5923,7 @@ int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR
 
 void DarkEdif::BreakIfDebuggerAttached()
 {
-	raise(SIGINT);
+	raise(SIGTRAP);
 }
 
 void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
