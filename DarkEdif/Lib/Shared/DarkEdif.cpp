@@ -7614,6 +7614,12 @@ std::thread::id DarkEdif::MainThreadID;
 WindowHandleType DarkEdif::Internal_WindowHandle;
 DarkEdif::MFXRunMode DarkEdif::RunMode = DarkEdif::MFXRunMode::Unset;
 
+void DarkEdif::DieIfCallerIsNotMainThread(const char* mod)
+{
+	if (std::this_thread::get_id() != MainThreadID)
+		LOGF(_T("Use of %s outside of main thread is forbidden"), DarkEdif::UTF8ToTString(mod).c_str());
+}
+
 // =====
 // Message boxes that mostly work on all platforms
 // On Android, this makes a small popup on bottom of the screen, called a toast notification

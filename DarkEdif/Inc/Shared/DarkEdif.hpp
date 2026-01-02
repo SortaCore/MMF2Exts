@@ -272,6 +272,9 @@ namespace DarkEdif {
 	// Returns path as is if valid, an extracted binary file's path, or an error; error indicated by returning '>' at start of text
 	std::tstring MakePathUnembeddedIfNeeded(const Extension* ext, const std::tstring_view filePath);
 
+	// If not running under main thread, creates a fatal error
+	void DieIfCallerIsNotMainThread(const char* mod);
+
 	// =====
 	// This region does message boxes
 	// =====
