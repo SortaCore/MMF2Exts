@@ -1479,6 +1479,12 @@
 				"Info": "CAN INTERFERE WITH GLOBAL SETTING. By default, kill the connection if all owning Lacewing Blue Clients are destroyed.",
 				"Type": "Checkbox",
 				"DefaultState": false
+			},
+			{
+				"Title": "Expect LAN use on Android",
+				"Info": "Checks for Android 16+ LAN access permission when building for Android.",
+				"Type": "Checkbox",
+				"DefaultState": true
 			}
 		]
 	}

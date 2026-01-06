@@ -361,18 +361,16 @@ ProjectFunc jint getNumberOfConditions(JNIEnv *, jobject, jlong cptr)
 typedef jobject ByteBufferDirect;
 
 struct COIInternals {
-	static CreateObjectInfo&& MakeCreateObjectInfo(jobject o) {
-		return std::move(CreateObjectInfo(o));
+	static CreateObjectInfo MakeCreateObjectInfo(jobject o) {
+		return CreateObjectInfo(o);
 	}
 };
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, jobject coi, jint version)
 {
-	void * edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
+	void * const edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
 	LOGV("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
-	global<jobject> javaExtP(javaExtPtr, "createRunObject javaExtPtr");
-
-	CreateObjectInfo&& coiReal = COIInternals::MakeCreateObjectInfo(coi);
-	Extension * ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr, &coiReal);
+	CreateObjectInfo coiReal = COIInternals::MakeCreateObjectInfo(coi);
+	Extension * const ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr, &coiReal);
 	ext->Runtime.ObjectSelection.pExtension = ext;
 	return (jlong)ext;
 }

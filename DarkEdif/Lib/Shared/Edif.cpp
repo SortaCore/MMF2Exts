@@ -28,11 +28,13 @@ bool Edif::ExternalJSON;
 // Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
 JNIEnv * mainThreadJNIEnv;
 JavaVM * global_vm;
+// Inits DarkEdif::Android internals
+namespace DarkEdif::Android { void Init_Internals(); }
 #endif
-namespace Edif {
+
 // Checks Fusion runtime is compatible with your extension.
 // In Runtime, this expression should not be called and always returns false.
-bool IS_COMPATIBLE(mv * v)
+bool Edif::IS_COMPATIBLE(mv * v)
 {
 #if RuntimeBuild
 	// mV is not valid at runtime; so someone's trying to use a Runtime MFX as Editor,
@@ -70,7 +72,6 @@ bool IS_COMPATIBLE(mv * v)
 		return true;
 	#endif
 #endif
-}
 }
 
 std::string Edif::CurrentFolder()
@@ -537,7 +538,11 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 		}
 #endif // not Debug
 	}
-#endif // Windows
+#elif defined (__ANDROID__)
+	// Init several useful runtime classes
+	if (!DarkEdif::Android::AppContext)
+		DarkEdif::Android::Init_Internals();
+#endif // Android
 
 	// Get JSON file
 	char * JSON;

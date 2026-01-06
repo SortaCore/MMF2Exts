@@ -58,7 +58,8 @@ struct EDITDATA final
 	char edGlobalID[255];
 	bool timeoutWarningEnabled;
 	bool fullDeleteEnabled;
-	char pad1[259];
+	bool expectLANUseOnAndroid;
+	char pad1[258];
 };
 #pragma pack (pop)
 // MMF2 version of Lacewing Relay Client #20 was version 5, EDITDATA size 544.

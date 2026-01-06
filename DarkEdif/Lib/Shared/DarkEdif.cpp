@@ -5577,7 +5577,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	return (std::uint16_t)fullSize;
 }
 
-// Static definition; set during SDK::SDK()
+// Static definition; set during SDKClass::SDKClass()
 #ifdef _WIN32
 // True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
 bool DarkEdif::IsFusion25;
@@ -5936,6 +5936,92 @@ void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBrea
 	(void)size;
 	(void)dbt;
 	return;
+}
+
+namespace DarkEdif::Android
+{
+	// Static definitions
+	jweak AppContext, MMFRuntimeInst;
+	global<jclass> AppContextClass, MMFRuntimeInstClass;
+	int AppTargetAPI, CurrentDeviceAPI;
+
+	static jmethodID hasGrantedMethodID;
+
+	void Init_Internals()
+	{
+		assert(!hasGrantedMethodID);
+		if (hasGrantedMethodID)
+			return;
+		// MMFRuntime inst grab via static lookup of MMFRuntime, then MMFRuntime.inst read
+		// MMFRuntime is flavor of Android AppActivity
+		jclass mmfRuntimeClass = mainThreadJNIEnv->FindClass("Runtime/MMFRuntime");
+		JNIExceptionCheck();
+		MMFRuntimeInstClass = global(mmfRuntimeClass, "DarkEdif::Android::MMFRuntimeInstClass");
+		jfieldID mmfRuntimeInstFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "inst", "LRuntime/MMFRuntime;");
+		JNIExceptionCheck();
+		jobject mmfRuntimeInst = mainThreadJNIEnv->GetStaticObjectField(mmfRuntimeClass, mmfRuntimeInstFieldID);
+		JNIExceptionCheck();
+		MMFRuntimeInst = mainThreadJNIEnv->NewWeakGlobalRef(mmfRuntimeInst);
+		assert(MMFRuntimeInst);
+
+		// Get AppContext from MMFRuntime.inst; it is stored inside a WeakReference
+		jfieldID appContextFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "appContext", "Ljava/lang/ref/WeakReference;");
+		JNIExceptionCheck();
+		jobject appContextWeakHolder = mainThreadJNIEnv->GetStaticObjectField(mmfRuntimeClass, appContextFieldID);
+		JNIExceptionCheck();
+		// Extract the inner AppContext jobject from inside MMFRuntime.inst's WeakReference
+		jclass weakRef = mainThreadJNIEnv->GetObjectClass(appContextWeakHolder);
+		JNIExceptionCheck();
+		jmethodID weakRefGetMethodID = mainThreadJNIEnv->GetMethodID(weakRef, "get", "()Ljava/lang/Object;");
+		JNIExceptionCheck();
+		jobject appContext = mainThreadJNIEnv->CallObjectMethod(appContextWeakHolder, weakRefGetMethodID);
+		JNIExceptionCheck();
+		AppContext = mainThreadJNIEnv->NewWeakGlobalRef(appContext);
+		JNIExceptionCheck();
+		AppContextClass = global(mainThreadJNIEnv->GetObjectClass(AppContext), "DarkEdif::Android::AppContext");
+
+		// Get Target SDK from MMFRuntime.inst via targetAPI static int
+		jfieldID targetAPIFieldID = mainThreadJNIEnv->GetFieldID(mmfRuntimeClass, "targetApi", "I");
+		JNIExceptionCheck();
+		AppTargetAPI = mainThreadJNIEnv->GetStaticIntField(mmfRuntimeClass, targetAPIFieldID);
+		JNIExceptionCheck();
+		assert(AppTargetAPI > 0);
+
+		// Get Device API via android_get_device_api_level() (API 24+), or grab via static int android.os.Build.VERSION.SDK_INT
+		void* lib = dlopen("libc", 0);
+		assert(lib);
+		const int(*device_api_func)() = (decltype(device_api_func))dlsym(lib, "android_get_device_api_level");
+		int ret;
+		if (!device_api_func || (ret = device_api_func()) == __ANDROID_API_FUTURE__)
+		{
+			// VERSION is a nested class within android.os.Build (hence "$" rather than "/")
+			jclass versionClass = mainThreadJNIEnv->FindClass("android/os/Build$VERSION");
+			JNIExceptionCheck();
+			jfieldID sdkIntFieldID = mainThreadJNIEnv->GetStaticFieldID(versionClass, "SDK_INT", "I");
+			JNIExceptionCheck();
+			ret = mainThreadJNIEnv->GetStaticIntField(versionClass, sdkIntFieldID);
+			JNIExceptionCheck();
+		}
+		dlclose(lib);
+		assert(ret > 0 && ret < 100);
+		CurrentDeviceAPI = ret;
+
+		hasGrantedMethodID = threadEnv->GetMethodID(MMFRuntimeInstClass, "hasPermissionGranted", "Z(Ljava/lang/String;)");
+		JNIExceptionCheck();
+	}
+
+	bool HasPermissionGranted(std::string_view permString)
+	{
+		assert(hasGrantedMethodID);
+		assert(!permString.empty());
+		std::string perm(permString);
+		if (perm.find('.') == std::string::npos)
+			perm.insert(0, "android.permission."sv);
+		jstring jstr = CStrToJStr(perm.c_str());
+		bool granted = threadEnv->CallBooleanMethod(DarkEdif::Android::MMFRuntimeInst, hasGrantedMethodID, jstr);
+		JNIExceptionCheck();
+		return granted;
+	}
 }
 
 #elif defined(_WIN32)

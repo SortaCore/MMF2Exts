@@ -13,6 +13,9 @@
 
 #if EditorBuild
 
+// Used in PrepareAndroidBuild()
+#include <fstream>
+
 // Called once object is created or modified, just after setup.
 // Also called before showing the "Insert an object" dialog if your object
 // has no icon resource
@@ -219,25 +222,55 @@ void FusionAPI PrepareAndroidBuild(mv* mV, EDITDATA* edPtr, LPCTSTR androidDirec
 {
 #pragma DllExportHint
 
+	std::tstring manifestPath = androidDirectoryPathname;
+	manifestPath += _T("app\\src\\main\\AndroidManifest.xml"sv);
+
 	// Android permissions: 4 is access network state, 6 access wifi state, 12 bluetooth, 13 bluetooth admin, 49 internet,
 	// 114 nfc, 24 change network state, 25 change wifi multicast state, 26 change wifi state
 	//
 	// The permissions do not 1:1 match the index in the Fusion properties window, so you'll have to loop through them to work out the ID.
 	// They match between CF2.5 and MMF2.0, but 2.0 lacks some permissions (105+, so including NFC).
 
-	DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 49);
-	if (hasINTERNETPerm == TRUE)
-		return;
+	std::tstring abortFor = _T("INTERNET"s);
+	do {
+		DWORD hasINTERNETPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 49);
+		if (hasINTERNETPerm != TRUE)
+			break;
 
-	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing Server, please enable the INTERNET permission in application "
-		"properties under the Android tab.\nAborting build with a SAXParseException."));
+		// New perm for Android 16+ NEARBY_WIFI_DEVICES needs enabling for LAN support; CF2.5 296.9 doesn't have it.
+		// https://developer.android.com/privacy-and-security/local-network-permission
+		// When you don't use it for location determining, you should pass "neverForLocation"
+		// <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" / >
+		DWORD hasWiFiDevicesPerm = mvGetAppPropCheck(mV, edPtr, PROPID_APP_ANDROID_PERM_FIRST + 129);
+		if (hasWiFiDevicesPerm == TRUE)
+			return; // we have both perms
+
+		abortFor = _T("NEARBY_WIFI_DEVICES"s);
+
+		// We only want nearby wifi devices if targeting 16+.
+		// 258 is prop index of target SDK combo box.
+		Prop* p = mvGetAppPropValue(mV, edPtr, PROPID_APP_FIRST + 258);
+		if (p->GetClassID() != 'DWRD')
+			break;
+
+		// The current combo list in Fusion 296.9:
+		// 6.0, 7.0, 7.1, 8.0, 8.1, 9.0, 10.0, 11.0, 12.0, 12L, 13.0, 14.0, 15.0, 16.0
+		// 16.0 is at 0-based index 13.
+		// This relies on combo list being the same perpetually, so it'll have to be updated if that changes
+		const unsigned int targetSDKComboIndex = ((Prop_UInt*)p)->Value;
+
+		// Required Wi-Fi perm in Android 16+ (API 36+); if it's earlier target, ignore perm missing
+		if (targetSDKComboIndex < 13)
+			return;
+	} while (false);
+
+	DarkEdif::MsgBox::Error(_T("Invalid Android properties!"), _T("To use Bluewing Server, please enable the %s permission in application "
+		"properties under the Android tab.\n"
+		"Aborting Android build by breaking manifest file."), abortFor.c_str());
 
 	// Erase the manifest file so the build will fail
-	std::tstring manifestPath = androidDirectoryPathname;
-	manifestPath += _T("app\\src\\main\\AndroidManifest.xml"sv);
-	FILE * manifest = _tfopen(manifestPath.c_str(), _T("wb"));
-	fputs("<!-- Enable the INTERNET permission! ~love from " PROJECT_NAME " -->", manifest);
-	fclose(manifest);
+	std::ofstream manifestWriter(manifestPath, std::ios::binary);
+	manifestWriter << "Enable the "sv << DarkEdif::TStringToUTF8(abortFor) << " permission! <!-- from " PROJECT_NAME " -->"sv;
 }
 
 #endif // EditorBuild

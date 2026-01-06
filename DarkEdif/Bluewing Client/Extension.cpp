@@ -1164,6 +1164,8 @@ Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA* const edPtr)
 	}
 	timeoutWarningEnabled = edPtr->timeoutWarningEnabled;
 	fullDeleteEnabled = edPtr->fullDeleteEnabled;
+	// Note edPtr->expectLANUseOnAndroid is only read in Edittime.cpp's PrepareAndroidBuild(),
+	// it's of no relevance here at runtime
 
 	_client.onchannellistreceived(::OnChannelListReceived);
 	_client.onmessage_channel(::OnChannelMessage);

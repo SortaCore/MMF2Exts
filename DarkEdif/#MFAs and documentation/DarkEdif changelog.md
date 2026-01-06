@@ -13,6 +13,7 @@ Also note that commit SHAs are based on time and code differences, so it is impo
 Changes until v20 release
 ----
 *v20 not released yet*
+- Android: Added DarkEdif::Android namespace, with app context, app activity, MMFRuntime inst, app Target SDK API and device API, and permission check
 - All platforms: Added multi-platform display support with DarkEdif::Surface
 - All platforms: Added DarkEdif::Rect, Point, PointF, Size.
 - All platforms: Added multi-platform text support (OEFLAGS::TEXT exts)

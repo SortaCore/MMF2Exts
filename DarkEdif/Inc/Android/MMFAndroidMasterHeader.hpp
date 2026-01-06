@@ -21,6 +21,8 @@
 #include <iostream>
 #include <iomanip>
 #include <stddef.h>
+#include <dlfcn.h>
+#include <android/api-level.h>
 
 #define SUBSTRIFY(X) #X
 #define STRIFY(X) #X

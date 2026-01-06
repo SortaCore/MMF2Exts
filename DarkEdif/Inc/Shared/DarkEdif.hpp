@@ -566,6 +566,43 @@ namespace DarkEdif {
 		void UpdateNativeSide();
 	};
 
+#ifdef __ANDROID__
+	// =====
+	// This region does Android-specific functionality
+	// =====
+	namespace Android
+	{
+		// Holds a weak global refernce to MMFRuntime.inst, the app Activity or AppCompatActivity. This is not expected to be null.
+		extern jweak MMFRuntimeInst;
+		extern global<jclass> MMFRuntimeInstClass;
+
+		// Holds a weak global reference to the Activity AppContext. This is not expected to be null.
+		extern jweak AppContext;
+		extern global<jclass> AppContextClass;
+
+		// Gets Android app target API version, usable for runtime checks for Java API presence.
+		// An Android app targeting Android API 30 running on a Android 34 API device will report 30 here.
+		// @remarks Java functions are limited by this app's target SDK.
+		//			NDK functions are limited by true device API only.
+		//			If using JNI, use GetAppTargetAPI() or check the JNI class/method finding works.
+		//			If using NDK, use GetCurrentDeviceAPI(), and possibly dlsym().
+		extern int AppTargetAPI;
+
+		// Gets Android device API version, usable for runtime checks for C/C++ NDK.
+		// An Android app targeting Android API 30 running on a Android 34 API device will report 34 here.
+		// @remarks NDK functions are limited by true device API only.
+		//			Java functions are limited by the app's target SDK.
+		//			If using JNI, use GetAppTargetAPI() or check the JNI class/method finding works.
+		//			If using NDK, use GetCurrentDeviceAPI(), and possibly dlsym();
+		//			you can also limit with __ANDROID__API__ at compile time to change min SDK support.
+		extern int CurrentDeviceAPI;
+
+		/** Returns true if Android has a permission granted. False if not.
+		 * @param perm			Permission. If it has no periods, will prepend "android.permission."
+		*/
+		bool HasPermissionGranted(std::string_view perm);
+	}
+#endif // __ANDROID__
 }
 
 // Included here so the font struct above can be used inside
