@@ -1163,7 +1163,7 @@ void Extension::Client_SelectByName(const TCHAR * clientName)
 void Extension::Client_SelectByID(int clientID)
 {
 	if (clientID < 0 || clientID >= 0xFFFF)
-		return CreateError("Could not select client on channel, ID is below 0 or greater than 65535.");
+		return CreateError("Could not select client by ID, ID %i is below 0 or greater than 65535.", clientID);
 
 	selClient = nullptr;
 	{
