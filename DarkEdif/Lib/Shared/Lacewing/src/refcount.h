@@ -15,7 +15,7 @@
 #if !defined(_MSC_VER) || _STDC_VERSION__ >= 201112
 # include <stdatomic.h>
 #else
-#define msvc_windows_atomic_workaround
+# define msvc_windows_atomic_workaround
 # define _Atomic(X) volatile LONG
 #endif
 #else
@@ -63,18 +63,18 @@ static inline lw_bool _lwp_release (struct lwp_refcount * refcount)
 	return lw_false;
 }
 
-#define lwp_refcounted														\
+#define lwp_refcounted				\
 	struct lwp_refcount refcount
 
-#define lwp_retain(x, name)													\
-	_lwp_retain ((struct lwp_refcount *) (x))								 \
+#define lwp_retain(x, name)						\
+	_lwp_retain ((struct lwp_refcount *) (x))								
 
-#define lwp_release(x, name)												  \
-	_lwp_release ((struct lwp_refcount *) (x))								 \
+#define lwp_release(x, name)					\
+	_lwp_release ((struct lwp_refcount *) (x))	
 
-#define lwp_set_dealloc_proc(x, proc) do {									\
-  *(void **) &(((struct lwp_refcount *) (x))->on_dealloc) = (void *) (proc);  \
-} while (0);																  \
+#define lwp_set_dealloc_proc(x, proc) do {										\
+  *(void **) &(((struct lwp_refcount *) (x))->on_dealloc) = (void *) (proc);	\
+} while (0);																
 
 #define lwp_set_retain_proc(x, proc)
 #define lwp_set_release_proc(x, proc)

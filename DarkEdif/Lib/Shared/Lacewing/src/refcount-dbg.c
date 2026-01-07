@@ -10,7 +10,7 @@
 
 #include "common.h"
 
-#ifdef _lacewing_debug
+#ifdef _lw_refcount_is_debug
 
 static void list_refs (char * buf, struct lwp_refcount * refcount)
 {
@@ -59,7 +59,7 @@ lw_bool _lwp_retain (struct lwp_refcount * refcount, const char * name)
 		char refs [1024];
 		list_refs (refs, refcount);
 
-		lw_trace ("refcount: %s @ %p has %d refs (%s), now retaining (%s)",
+		lw_log_if_debug ("refcount: %s @ %p has %d refs (%s), now retaining (%s)\n",
 					refcount->name,
 					refcount,
 					(int) refcount->refcount,
@@ -101,22 +101,26 @@ lw_bool _lwp_release (struct lwp_refcount * refcount, const char * name)
 
 	-- refcount->refcount;
 
+	lw_bool found = lw_false;
 	for (int i = 0; i < MAX_REFS; ++ i)
 	{
 		if (refcount->refs [i] &&
 			!strcasecmp (refcount->refs [i], name))
 		{
 			refcount->refs [i] = NULL;
+			found = lw_true;
 			break;
 		}
 	}
+	if (!found)
+		lw_log_if_debug("Failed to find ref %s in %s @ %p\n", name, refcount->name, refcount);
 
 	if (refcount->enable_logging)
 	{
 		char refs [1024];
 		list_refs (refs, refcount);
 
-		lw_trace ("refcount: %s @ %p released by %s, now has %d refs (%s)",
+		lw_log_if_debug ("refcount: %s @ %p released by %s, now has %d refs (%s)\n",
 					refcount->name,
 					refcount,
 					name,

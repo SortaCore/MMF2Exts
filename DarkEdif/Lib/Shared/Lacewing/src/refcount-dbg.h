@@ -10,6 +10,7 @@
 
 #ifndef _lw_refcount_h
 #define _lw_refcount_h
+#define _lw_refcount_is_debug
 
 // in C++ mode, define atomic as std::atomic
 // In C, if MSVC and an ancient version of C standard, then use workaround InterlockedXX functions,
