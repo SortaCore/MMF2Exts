@@ -120,7 +120,7 @@ static lw_server_client lwp_server_client_new (lw_server ctx, lw_pump pump, int 
 
 	#endif
 
-	lw_fdstream_set_fd (&client->fdstream, fd, 0, lw_true, lw_true);
+	lw_fdstream_set_fd (&client->fdstream, fd, lw_true, lw_true);
 
 	return client;
 }
@@ -317,7 +317,7 @@ typedef struct _lw_hole_punch_params {
 
 static lw_callback void hole_punch_socket_first_data(lw_hole_punch_params * params)
 {
-	lw_pump_remove(params->server->pump, params->watch);
+	lw_pump_remove(params->server->pump, params->watch, "hole_punch_socket_first_data removing");
 	add_client_internal(params->server, &params->addr, params->sock, lw_false);
 	lwp_release(params->server, "hole punch");
 }
@@ -362,7 +362,9 @@ void lw_server_hole_punch(lw_server ctx, lw_addr addr, lw_ui16 local_port)
 			break;
 		}
 
-		params->watch = lw_pump_add(params->server->pump, params->sock, params, (lw_pump_callback)hole_punch_socket_first_data, NULL, lw_true);
+		params->watch = lw_pump_add(params->server->pump, params->sock,
+			"lw_server doing TCP hole punch",
+			params, (lw_pump_callback)hole_punch_socket_first_data, NULL, lw_true);
 	} while (0);
 
 	if (errStr)
@@ -421,7 +423,9 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 
 	lwp_make_nonblocking(ctx->socket);
 
-	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket, ctx, listen_socket_read_ready, 0, lw_true);
+	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket,
+		"lw_server_host_filter adding server",
+		ctx, listen_socket_read_ready, 0, lw_true);
 
 	lw_error_delete (error);
 }
@@ -434,7 +438,7 @@ void lw_server_unhost (lw_server ctx)
 	close (ctx->socket);
 	ctx->socket = -1;
 
-	lw_pump_remove(ctx->pump, ctx->pump_watch);
+	lw_pump_remove(ctx->pump, ctx->pump_watch, "lw_server_unhost");
 	ctx->pump_watch = NULL;
 
 	// Not having this leaves lw_server_client connections open but server is closed

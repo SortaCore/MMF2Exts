@@ -33,43 +33,43 @@ bool _pump::in_use ()
 
 #ifdef _WIN32
 
- lw_pump_watch _pump::add (HANDLE handle, void * tag,
+ lw_pump_watch _pump::add (HANDLE handle, const char* desc, void * tag,
 							lw_pump_callback callback)
  {
-	return lw_pump_add ((lw_pump) this, handle, tag, callback);
+	return lw_pump_add ((lw_pump) this, handle, desc, tag, callback);
  }
 
- void _pump::update_callbacks (lw_pump_watch watch, void * tag,
+ void _pump::update_callbacks (lw_pump_watch watch, const char* updateReason, void * tag,
 								lw_pump_callback callback)
  {
-	lw_pump_update_callbacks ((lw_pump) this, watch, tag, callback);
+	lw_pump_update_callbacks ((lw_pump) this, watch, updateReason, tag, callback);
  }
 
 #else
 
- lw_pump_watch _pump::add (int fd, void * tag,
+ lw_pump_watch _pump::add (int fd, const char* desc, void * tag,
 							lw_pump_callback on_read_ready,
 							lw_pump_callback on_write_ready,
 							bool edge_triggered)
  {
 	return (lw_pump_watch) lw_pump_add
-		((lw_pump) this, fd, tag, on_read_ready, on_write_ready, edge_triggered);
+		((lw_pump) this, fd, desc, tag, on_read_ready, on_write_ready, edge_triggered);
  }
 
- void _pump::update_callbacks (lw_pump_watch watch, void * tag,
+ void _pump::update_callbacks (lw_pump_watch watch, const char* updateReason, void * tag,
 								lw_pump_callback on_read_ready,
 								lw_pump_callback on_write_ready,
 								bool edge_triggered)
  {
-	lw_pump_update_callbacks ((lw_pump) this, watch, tag, on_read_ready,
+	lw_pump_update_callbacks ((lw_pump) this, watch, updateReason, tag, on_read_ready,
 							  on_write_ready, edge_triggered);
  }
 
 #endif
 
-void _pump::remove (lw_pump_watch watch)
+void _pump::remove (lw_pump_watch watch, const char* deleteReason)
 {
-	lw_pump_remove ((lw_pump) this, watch);
+	lw_pump_remove ((lw_pump) this, watch, deleteReason);
 }
 
 void _pump::post (void * func, void * param)
@@ -77,9 +77,9 @@ void _pump::post (void * func, void * param)
 	lw_pump_post ((lw_pump) this, func, param);
 }
 
-void _pump::post_remove (lw_pump_watch watch)
+void _pump::post_remove (lw_pump_watch watch, const char* deleteReason)
 {
-	lw_pump_post_remove ((lw_pump) this, watch);
+	lw_pump_post_remove ((lw_pump) this, watch, deleteReason);
 }
 
 void * _pump::tag ()

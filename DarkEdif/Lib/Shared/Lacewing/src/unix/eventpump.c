@@ -55,6 +55,7 @@ lw_eventpump lw_eventpump_new ()
 	ctx->queue = lwp_eventqueue_new ();
 
 	lwp_eventqueue_add (ctx->queue, ctx->signalpipe_read,
+						"signal pipe reader for eventpump",
 						lw_true, lw_false, lw_true,
 						NULL);
 
@@ -71,7 +72,7 @@ static void def_cleanup (lw_pump pump)
 		close(ctx->signalpipe_write);
 	}
 
-	lwp_eventqueue_update(ctx->queue, ctx->signalpipe_read,
+	lwp_eventqueue_update(ctx->queue, ctx->signalpipe_read, "eventpump cleanup removing signalpipe",
 		lw_true, lw_false, lw_false, lw_false, lw_true, lw_false, NULL, NULL);
 
 	#ifdef ENABLE_THREADS
@@ -321,7 +322,7 @@ static void watcher (lw_eventpump ctx)
 
 #endif
 
-static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
+static lw_pump_watch def_add (lw_pump pump, int fd, const char * desc, void * tag,
 							  lw_pump_callback on_read_ready,
 							  lw_pump_callback on_write_ready,
 							  lw_bool edge_triggered)
@@ -346,6 +347,7 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 
 	lwp_eventqueue_add (ctx->queue,
 						fd,
+						desc,
 						on_read_ready != NULL,
 						on_write_ready != NULL,
 						edge_triggered,
@@ -359,7 +361,7 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 lw_bool global_delete_block = lw_false;
 
 static void def_update_callbacks (lw_pump pump,
-								  lw_pump_watch watch, void * tag,
+								  lw_pump_watch watch, const char* updateReason, void * tag,
 								  lw_pump_callback on_read_ready,
 								  lw_pump_callback on_write_ready,
 								  lw_bool edge_triggered)
@@ -372,7 +374,7 @@ static void def_update_callbacks (lw_pump pump,
 		 || tag != watch->tag)
 	{
 	  lwp_eventqueue_update (ctx->queue,
-							 watch->fd,
+							 watch->fd, updateReason,
 							 watch->on_read_ready != NULL, on_read_ready != NULL,
 							 watch->on_write_ready != NULL, on_write_ready != NULL,
 							 watch->edge_triggered, edge_triggered,
@@ -385,7 +387,7 @@ static void def_update_callbacks (lw_pump pump,
 	watch->tag = tag;
 }
 
-static void def_remove (lw_pump pump, lw_pump_watch watch)
+static void def_remove (lw_pump pump, lw_pump_watch watch, const char * deleteReason)
 {
 	lw_eventpump ctx = (lw_eventpump) pump;
 
@@ -395,7 +397,7 @@ static void def_remove (lw_pump pump, lw_pump_watch watch)
 		Phi test: Actually, this falls over very quickly if you don't.
 	*/
 
-	lwp_eventqueue_update(ctx->queue, watch->fd,
+	lwp_eventqueue_update(ctx->queue, watch->fd, deleteReason,
 		watch->on_read_ready != NULL, lw_false,
 		watch->on_write_ready != NULL, lw_false,
 		watch->edge_triggered, watch->edge_triggered, watch->tag, watch->tag);
@@ -437,7 +439,7 @@ static void def_post (lw_pump pump, void * func, void * param)
 const lw_pumpdef def_eventpump =
 {
 	.add				= def_add,
-	.update_callbacks = def_update_callbacks,
+	.update_callbacks	= def_update_callbacks,
 	.remove				= def_remove,
 	.post				= def_post,
 	.cleanup			= def_cleanup

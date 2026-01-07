@@ -168,9 +168,11 @@ void lw_stream_delete (lw_stream ctx)
 
 	if (ctx->watch)
 	{
-		lw_pump_post_remove(ctx->pump, ctx->watch);
+		lw_pump_remove(ctx->pump, ctx->watch, "lw_stream_delete");
 		ctx->watch = NULL;
 	}
+	else
+		assert(lw_false);
 
 	/*	This matches the lwp_retain in lw_stream_new, allowing the refcount to
 		become 0 and the stream to be destroyed. */

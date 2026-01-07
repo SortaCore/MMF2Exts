@@ -314,6 +314,7 @@ void lw_server_hole_punch (lw_server ctx, lw_addr addr, lw_ui16 local_port)
 			(int)overlapped->socket, (int)overlapped->punch_listening_server_socket,
 			(int)overlapped->punching_client_socket);*/
 		params->watch = lw_pump_add(params->server->pump, (HANDLE)overlapped->punching_client_socket,
+			"TCP hole punch outgoing socket",
 			params, (lw_pump_callback)hole_punch_socket_first_data);
 		++params->server->num_hole_punches_pending;
 		break;
@@ -382,8 +383,10 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket, lw_pump_wa
 
 	// TODO: LEAK: watch can sometimes be null in caller, but fdstream init always makes one,
 	// do we cancel a watch?
-	assert(!watch);
-	lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, watch, lw_true, lw_true);
+	assert(!client->fdstream.stream.watch);
+	if (watch)
+		client->fdstream.stream.watch = watch;
+	lw_fdstream_set_fd ((lw_fdstream) client, (HANDLE) socket, lw_true, lw_true);
 
 	return client;
 }
@@ -630,7 +633,7 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	}
 
 	ctx->pump_watch = lw_pump_add
-	  (ctx->pump, (HANDLE) ctx->socket, ctx, listen_socket_completion);
+	  (ctx->pump, (HANDLE) ctx->socket, "lw_server_host_filter adding server", ctx, listen_socket_completion);
 
 	while (list_length (ctx->pending_accepts) < (size_t)ideal_pending_accept_count)
 		if (!issue_accept (ctx, NULL))
@@ -667,7 +670,7 @@ void lw_server_unhost (lw_server ctx)
 
 //	list_clear (ctx->pending_accepts);
 
-	lw_pump_post_remove (ctx->pump, ctx->pump_watch);
+	lw_pump_post_remove (ctx->pump, ctx->pump_watch, "lw_server_unhost");
 	ctx->pump_watch = NULL;
 }
 

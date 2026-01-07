@@ -241,7 +241,7 @@ lw_error lw_eventpump_start_sleepy_ticking
 	return 0;
 }
 
-static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
+static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle, const char* desc,
 							  void * tag, lw_pump_callback callback)
 {
 	lw_eventpump ctx = (lw_eventpump) _ctx;
@@ -273,7 +273,7 @@ static lw_pump_watch def_add (lw_pump _ctx, HANDLE handle,
  * before any associated overlapped operations have completed, the behaviour
  * is undefined.
  */
-static void def_remove (lw_pump _ctx, lw_pump_watch watch)
+static void def_remove (lw_pump _ctx, lw_pump_watch watch, const char * deleteReason)
 {
 	lw_eventpump ctx = (lw_eventpump) _ctx;
 
@@ -294,6 +294,7 @@ static void def_post (lw_pump _ctx, void * function, void * parameter)
 
 static void def_update_callbacks (lw_pump ctx,
 								  lw_pump_watch watch,
+								  const char * updateReason,
 								  void * tag,
 								  lw_pump_callback on_completion)
 {

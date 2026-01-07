@@ -17,8 +17,7 @@ struct _lw_client
 {
 	struct _lw_fdstream fdstream;
 
-	lw_pump pump;
-	lw_pump_watch watch;
+	//lw_pump pump;
 
 	lw_client_hook_connect		on_connect;
 	lw_client_hook_disconnect	on_disconnect;
@@ -29,7 +28,7 @@ struct _lw_client
 	lw_addr local_address;
 	lw_ui32 ifidx;
 
-	HANDLE socket;
+	//HANDLE socket;
 	lw_bool connecting;
 	lw_ui16 local_port_next_connect;
 };
@@ -45,10 +44,10 @@ lw_client lw_client_new (lw_pump pump)
 
 	lwp_init();
 	lwp_fdstream_init (&ctx->fdstream, pump);
+	ctx->fdstream.flags |= lwp_fdstream_flag_is_socket;
 
-	ctx->socket = INVALID_HANDLE_VALUE;
-	ctx->pump = pump;
-	ctx->watch = 0;
+	assert(ctx->fdstream.stream.pump == pump);
+	//ctx->pump = pump;
 
 	return ctx;
 }
@@ -91,26 +90,26 @@ static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
 	{
 		ctx->connecting = lw_false;
 
-		lw_error error = lw_error_new ();
+		lw_error error = lw_error_new();
 		if (errorNum == ERROR_NETWORK_UNREACHABLE && lw_addr_ipv6(ctx->remote_address))
 			lw_error_addf(error, "Network unreachable - Non-IPv6 client connecting to IPv6 server?");
 		else
-			lw_error_add (error, errorNum);
-		lw_error_addf (error, "Error connecting");
+			lw_error_add(error, errorNum);
+		lw_error_addf(error, "Error connecting");
 
 		if (ctx->on_error)
-			ctx->on_error (ctx, error);
+			ctx->on_error(ctx, error);
 
-		lw_error_delete (error);
+		lw_error_delete(error);
 		return;
 	}
 
 	// Set to -1 when forced disconnect on local side happens during connecting phase,
 	// by fdstream close handler
-	assert(ctx->socket != INVALID_HANDLE_VALUE);
+	assert(ctx->fdstream.fd != INVALID_HANDLE_VALUE);
 
 	// Switches this first time callback to the standard one
-	lw_fdstream_set_fd(&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
+	lw_fdstream_set_fd(&ctx->fdstream, ctx->fdstream.fd, lw_true, lw_true);
 //	ctx->watch = ctx->fdstream.watch; // PHI: does an update with no return.
 
 	// Store local address
@@ -143,6 +142,19 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 		lw_error_delete (error);
 
+		return;
+	}
+
+	// This is an idiot check so we don't overwrite our FDs
+	if (ctx->fdstream.fd != INVALID_HANDLE_VALUE)
+	{
+		lw_error error = lw_error_new();
+		lw_error_addf(error, "Inconsistent socket state; socket should be invalid or marked connecting/connected");
+
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+
+		lw_error_delete(error);
 		return;
 	}
 
@@ -179,7 +191,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		return;
 	}
 
-	if ((ctx->socket = (HANDLE) WSASocket
+	if ((ctx->fdstream.fd = (HANDLE) WSASocket
 			(lw_addr_ipv6 (address) ? AF_INET6 : AF_INET, SOCK_STREAM, IPPROTO_TCP,
 			 0, 0, WSA_FLAG_OVERLAPPED)) == INVALID_HANDLE_VALUE)
 	{
@@ -197,9 +209,12 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		return;
 	}
 
-	lwp_disable_ipv6_only ((lwp_socket) ctx->socket);
+	lwp_disable_ipv6_only ((lwp_socket) ctx->fdstream.fd);
 
-	ctx->watch = lw_pump_add (ctx->pump, ctx->socket, ctx, first_time_write_ready);
+	if (ctx->fdstream.stream.watch)
+		lw_pump_update_callbacks(ctx->fdstream.stream.pump, ctx->fdstream.stream.watch, "lw_client_connect_addr setting first_time_write_ready", ctx, first_time_write_ready);
+	else
+		ctx->fdstream.stream.watch = lw_pump_add (ctx->fdstream.stream.pump, ctx->fdstream.fd, "lw_client_connect_addr starting with first_time_write_ready", ctx, first_time_write_ready);
 
 	/* LPFN_CONNECTEX and WSAID_CONNECTEX aren't defined w/ MinGW */
 
@@ -219,7 +234,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 	DWORD bytes = 0;
 
-	WSAIoctl ((SOCKET) ctx->socket, SIO_GET_EXTENSION_FUNCTION_POINTER,
+	WSAIoctl ((SOCKET)ctx->fdstream.fd, SIO_GET_EXTENSION_FUNCTION_POINTER,
 		 &ID, sizeof (ID), &lw_ConnectEx, sizeof (lw_ConnectEx),
 		 &bytes, 0, 0);
 
@@ -251,9 +266,9 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	// Reuse port or not, based on reserved port being non-zero
 	const int was_locked_local = ctx->local_port_next_connect != 0 ? 1 : 0;
 	ctx->local_port_next_connect = 0;
-	lwp_setsockopt((SOCKET)ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
+	lwp_setsockopt((SOCKET)ctx->fdstream.fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
 
-	if (bind ((SOCKET) ctx->socket, (struct sockaddr *) &local_address,
+	if (bind ((SOCKET)ctx->fdstream.fd, (struct sockaddr *) &local_address,
 			// sizeof sockaddr_storage doesn't work cross-platform
 			lw_addr_ipv6(ctx->remote_address) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
 	{
@@ -277,7 +292,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 
 	OVERLAPPED * overlapped = (OVERLAPPED *) calloc (sizeof (*overlapped), 1);
 
-	if (!lw_ConnectEx ((SOCKET) ctx->socket, ctx->remote_address->info->ai_addr,
+	if (!lw_ConnectEx ((SOCKET) ctx->fdstream.fd, ctx->remote_address->info->ai_addr,
 			(int) ctx->remote_address->info->ai_addrlen, 0, 0, 0, overlapped))
 	{
 		int code = WSAGetLastError ();

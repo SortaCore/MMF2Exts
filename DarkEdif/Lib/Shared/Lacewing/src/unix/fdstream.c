@@ -146,17 +146,10 @@ long lw_fdstream_get_fd_debug(lw_fdstream ctx)
 	return ctx->fd;
 }
 
-void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
+void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd,
 						 lw_bool auto_close, lw_bool is_socket)
 {
-	if (ctx->stream.watch)
-	{
-		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->stream.watch);
-		ctx->stream.watch = 0;
-	}
-
-	if ( (ctx->flags & lwp_fdstream_flag_autoclose) && ctx->fd != -1)
-		lw_stream_close ((lw_stream) ctx, lw_true);
+	assert(ctx->fd == -1 || ctx->fd == fd);
 
 	ctx->fd = fd;
 
@@ -202,18 +195,15 @@ void lw_fdstream_set_fd (lw_fdstream ctx, lw_fd fd, lw_pump_watch watch,
 
 	lw_pump pump = lw_stream_pump ((lw_stream) ctx);
 
-	if (watch)
+	if (ctx->stream.watch)
 	{
 		/* Given an existing pump watch - change it to use our callbacks */
-
-		ctx->stream.watch = watch;
-
-		lw_pump_update_callbacks (pump, ctx->stream.watch, ctx,
+		lw_pump_update_callbacks (pump, ctx->stream.watch, "lw_fdstream_set_fd", ctx,
 			read_ready, write_ready, lw_true);
 	}
 	else
 	{
-		ctx->stream.watch = lw_pump_add (pump, fd, ctx, read_ready,
+		ctx->stream.watch = lw_pump_add (pump, fd, "lw_fdstream_set_fd", ctx, read_ready,
 			write_ready, lw_true);
 	}
 }
@@ -320,6 +310,8 @@ static void def_cleanup (lw_stream _ctx)
 static void def_read (lw_stream _ctx, size_t bytes)
 {
 	lw_fdstream ctx = (lw_fdstream) _ctx;
+	if (ctx->fd == -1)
+		return;
 
 	lwp_trace ("FDStream %p (FD %d) read " lwp_fmt_size, ctx, ctx->fd, bytes);
 
@@ -363,11 +355,12 @@ static lw_bool def_close (lw_stream stream_ctx, lw_bool immediate)
 	* callbacks from the pump.
 	*/
 
+	/*
 	if (ctx->stream.watch)
 	{
 		lw_pump_remove (lw_stream_pump ((lw_stream) ctx), ctx->stream.watch);
 		ctx->stream.watch = 0;
-	}
+	}*/
 
 	int fd = ctx->fd;
 

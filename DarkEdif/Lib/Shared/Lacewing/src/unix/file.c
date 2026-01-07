@@ -124,7 +124,7 @@ lw_bool lw_file_open (lw_file ctx,
 		return lw_false;
 	}
 
-	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, 0, lw_true, lw_false);
+	lw_fdstream_set_fd ((lw_fdstream) ctx, fd, lw_true, lw_false);
 
 	if (lw_fdstream_valid ((lw_fdstream) ctx))
 	{

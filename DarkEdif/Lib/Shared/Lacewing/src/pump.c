@@ -73,49 +73,49 @@ void lw_pump_post (lw_pump ctx, void * proc, void * param)
 
 #ifdef _WIN32
 
-	lw_pump_watch lw_pump_add (lw_pump ctx, HANDLE handle,
+	lw_pump_watch lw_pump_add (lw_pump ctx, HANDLE handle, const char* desc,
 							  void * tag, lw_pump_callback callback)
 	{
 	  lw_pump_add_user (ctx);
 
-	  return ctx->def->add (ctx, handle, tag, callback);
+	  return ctx->def->add (ctx, handle, desc, tag, callback);
 	}
 
-	void lw_pump_update_callbacks (lw_pump ctx, lw_pump_watch watch,
+	void lw_pump_update_callbacks (lw_pump ctx, lw_pump_watch watch, const char* updateReason,
 								  void * tag, lw_pump_callback callback)
 	{
-	  ctx->def->update_callbacks (ctx, watch, tag, callback);
+	  ctx->def->update_callbacks (ctx, watch, updateReason, tag, callback);
 	}
 
 #else
 
-	lw_pump_watch lw_pump_add (lw_pump ctx, int fd, void * tag,
+	lw_pump_watch lw_pump_add (lw_pump ctx, int fd, const char* desc, void * tag,
 							  lw_pump_callback on_read_ready,
 							  lw_pump_callback on_write_ready,
 							  lw_bool edge_triggered)
 	{
 	  lw_pump_add_user (ctx);
 
-	  return ctx->def->add (ctx, fd, tag, on_read_ready,
+	  return ctx->def->add (ctx, fd, desc, tag, on_read_ready,
 							on_write_ready, edge_triggered);
 	}
 
-	void lw_pump_update_callbacks (lw_pump ctx, lw_pump_watch watch, void * tag,
+	void lw_pump_update_callbacks (lw_pump ctx, lw_pump_watch watch, const char* updateReason, void * tag,
 								  lw_pump_callback on_read_ready,
 								  lw_pump_callback on_write_ready,
 								  lw_bool edge_triggered)
 	{
-	  ctx->def->update_callbacks (ctx, watch, tag, on_read_ready,
+	  ctx->def->update_callbacks (ctx, watch, updateReason, tag, on_read_ready,
 								  on_write_ready, edge_triggered);
 	}
 
 #endif
 
-void lw_pump_remove (lw_pump ctx, lw_pump_watch watch)
+void lw_pump_remove (lw_pump ctx, lw_pump_watch watch, const char * delReason)
 {
 	if (watch == NULL)
 		return;
-	ctx->def->remove (ctx, watch);
+	ctx->def->remove (ctx, watch, delReason);
 
 	lw_pump_remove_user (ctx);
 }
@@ -124,22 +124,24 @@ struct remove_proc_data
 {
 	lw_pump pump;
 	lw_pump_watch watch;
+	const char* delReason; // strdup
 };
 
 static void remove_proc (struct remove_proc_data * data)
 {
-	lw_pump_remove (data->pump, data->watch);
+	lw_pump_remove (data->pump, data->watch, data->delReason);
 
 	free (data);
 }
 
-void lw_pump_post_remove (lw_pump ctx, lw_pump_watch watch)
+void lw_pump_post_remove (lw_pump ctx, lw_pump_watch watch, const char * delReason)
 {
 	struct remove_proc_data * data =
 	  (struct remove_proc_data *) lw_malloc_or_exit (sizeof (*data));
 
 	data->pump = ctx;
 	data->watch = watch;
+	data->delReason = strdup(delReason);
 
 	lw_pump_post (ctx, (void *)remove_proc, data);
 }

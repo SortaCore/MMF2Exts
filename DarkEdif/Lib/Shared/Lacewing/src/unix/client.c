@@ -37,8 +37,8 @@ struct _lw_client
 	//lw_bool connecting; // part of flags, see lw_client_flag_connecting
 	lw_timer connect_timer;
 
-	lw_pump pump;
-	lw_pump_watch watch;
+	//lw_pump pump;
+	//lw_pump_watch watch;
 	// Binds to a specific port, reset to 0 during connect attempt
 	lw_ui16 local_port_next_connect;
 };
@@ -69,7 +69,6 @@ lw_client lw_client_new (lw_pump pump)
 {
 	lw_client ctx = (lw_client)calloc (sizeof (*ctx), 1);
 
-	ctx->pump = pump;
 	ctx->ifidx = -1;
 
 	lwp_init ();
@@ -151,7 +150,8 @@ static void first_time_write_ready (void * tag)
 	// TODO: If a pending write count is kept, akin to Windows, then reset it here.
 	list_clear(ctx->fdstream.stream.back_queue);
 
-	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
+	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, lw_true, lw_true);
+
 	struct sockaddr_storage ss = lwp_socket_addr((lwp_socket)ctx->socket);
 	ctx->local_address = lwp_addr_new_sockaddr((struct sockaddr*)&ss);
 	ctx->ifidx = lwp_get_ifidx(&ss);
@@ -331,7 +331,11 @@ good:
 	lwp_setsockopt(ctx->socket, SOL_SOCKET, TCP_NODELAY, (char *)&b, sizeof(b));
 	}
 
-	ctx->watch = lw_pump_add(ctx->pump, ctx->socket, ctx, 0, first_time_write_ready, lw_true);
+	if (ctx->fdstream.stream.watch)
+		lw_pump_update_callbacks(ctx->fdstream.stream.pump, ctx->fdstream.stream.watch,
+			"lw_client_connect_addr resetting to first_time_write_ready", ctx, 0, first_time_write_ready, lw_true);
+	else
+		ctx->fdstream.stream.watch = lw_pump_add(ctx->fdstream.stream.pump, ctx->socket, "lw_client_connect_addr first init with first_time_write_ready", ctx, 0, first_time_write_ready, lw_true);
 }
 
 void lw_client_set_local_port (lw_client ctx, lw_ui16 localport)

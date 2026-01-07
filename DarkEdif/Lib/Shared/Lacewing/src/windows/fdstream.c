@@ -298,10 +298,12 @@ static void def_cleanup (lw_stream _ctx)
 }
 
 void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
-						lw_pump_watch watch, lw_bool auto_close, lw_bool is_socket)
+						lw_bool auto_close, lw_bool is_socket)
 {
+	assert(ctx->fd == INVALID_HANDLE_VALUE || ctx->fd == fd);
 	lwp_trace ("FDStream %p : set FD to %d, auto_close %d, is_socket %d", ctx, fd, (int) auto_close, (int) is_socket);
 
+	/*
 	if (ctx->stream.watch)
 	{
 		// Occasionally triggers during a disconnect/reconnect spam.
@@ -310,6 +312,10 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		// TODO: The client is unstable at that point, and will not properly disconnect from original connection
 		// nor acknowledge the server on the new connection, resulting in ping disconnect.
 		// Thankfully, after a ping disconnect, it should be back to functional again.
+		// 
+		// Phi note 16th Dec 2025: This situation may have been fixed by adding the lw_stream_close call in first_time_write_ready
+		// connect error handling; at same time I also made disconnects immediate during the mid-connecting stage in relayclient::disconnect,
+		// and added a closing flag check there, which also makes a race less likely
 		assert(!"disconnecting and reconnecting too fast, now unstable.");
 
 		// These following lines prevent an issue where the old callbacks/pump are sent to new callback,
@@ -318,7 +324,7 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		lw_pump_update_callbacks(pump, ctx->stream.watch, NULL, NULL);
 		lw_pump_post_remove(pump, ctx->stream.watch);
 		ctx->stream.watch = NULL;
-	}
+	}*/
 
 	ctx->fd = fd;
 
@@ -374,17 +380,15 @@ void lw_fdstream_set_fd (lw_fdstream ctx, HANDLE fd,
 		assert (ctx->size != -1);
 	}
 
-	if (watch)
+	if (ctx->stream.watch)
 	{
-		ctx->stream.watch = watch;
-
 		lw_pump_update_callbacks (lw_stream_pump ((lw_stream) ctx),
-								watch, ctx, completion);
+								ctx->stream.watch, "lw_fdstream_set_fd", ctx, completion);
 	}
 	else
 	{
 		ctx->stream.watch = lw_pump_add (lw_stream_pump ((lw_stream) ctx),
-								fd, ctx, completion);
+								fd, "lw_fdstream_set_fd", ctx, completion);
 	}
 
 	if (ctx->reading_size != 0)
