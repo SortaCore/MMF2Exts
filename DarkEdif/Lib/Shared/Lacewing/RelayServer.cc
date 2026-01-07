@@ -648,6 +648,10 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 		}
 	}
 
+	// This extends the delay on ID being held; note that some users will still have pending UDP data
+	// after their disconnect handler finishes, and some users have buggy Lacewing that still pummels
+	// its last known ID
+	clientids.releasedIDWasUsed(id);
 	serverClientListReadLock.lw_unlock();
 #if 0
 	// http://web.archive.org/web/20020609030916/http://www.gamehigh.net/document/netdocs/docs/ping_src.htm
@@ -852,6 +856,7 @@ std::shared_ptr<relayserver::channel> relayserver::client::readchannel(messagere
 	if (reader.failed)
 		return nullptr;
 
+	// TODO: Add code to slow-release channel IDs like client IDs?
 	for (const auto& e : channels)
 		if (e->_id == channelid)
 			return e;
