@@ -306,10 +306,13 @@ namespace lacewing
 	{
 		relayclientinternal &internal = *(relayclientinternal *)udp->tag();
 
-		error->add("UDP error");
+		error->add("UDP error; disconnecting");
 
 		if (internal.handler_error)
 			internal.handler_error(internal.client, error);
+
+		// The only UDP errors reported are ICMP
+		internal.client.disconnect();
 	}
 
 	relayclient::relayclient(pump eventpump)

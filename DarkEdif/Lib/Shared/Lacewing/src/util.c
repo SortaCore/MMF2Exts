@@ -1000,6 +1000,279 @@ lw_ui32 lwp_get_ifidx(struct sockaddr_storage* ss)
 
 #endif // _WIN32
 
+// checksum for ICMP (16-bit ones' complement)
+static unsigned short checksum(const void* b, int len, unsigned char* c, int len2) {
+	const unsigned short* buf = b;
+	unsigned int sum = 0;
+	while (len > 1) {
+		sum += *buf++;
+		len -= 2;
+	}
+	if (len == 1) {
+		if (c == NULL)
+			sum += *(unsigned char*)buf;
+		else
+		{
+			sum += ((*(unsigned char*)buf) << 8) | *c;
+			++c;
+			--len2;
+		}
+	}
+	if (len2)
+	{
+		buf = (unsigned short *)c;
+		while (len2 > 1) {
+			sum += *buf++;
+			len2 -= 2;
+		}
+		if (len == 1) {
+			sum += *(unsigned char*)buf;
+		}
+	}
+	// fold 32-bit to 16-bit
+	while (sum >> 16) sum = (sum & 0xffff) + (sum >> 16);
+	return (unsigned short)(~sum);
+}
+
+struct sockaddr_in lwp_in6_to_in4(struct sockaddr_in6* from)
+{
+	// At end of in6_addr is unwrapped IPv4
+	assert(IN6_IS_ADDR_V4MAPPED(&from->sin6_addr));
+	struct sockaddr_in ret = {
+		.sin_zero = {0},
+		.sin_addr = *(struct in_addr*)(&((lw_i16*)&from->sin6_addr)[6]),
+		.sin_port = from->sin6_port,
+		.sin_family = AF_INET
+	};
+	return ret;
+}
+
+lw_error lwp_send_icmp_unreachable(lwp_socket icmp, int proto, lw_addr local, lw_ui32 ifidx, lw_addr remote,
+	const char* data, lw_ui32 datasize)
+{
+	struct sockaddr_in remoteIn4;
+	struct sockaddr_in* remoteAsIPv4 = (struct sockaddr_in*)remote->info->ai_addr;
+
+	lw_bool ipv6 = lw_addr_ipv6(remote);
+	// Remote address is IPv6, and local is IPv4. So remote must be mapped IPv4: ummap it,
+	// as we don't know local IPv6 with flow info etc to use.
+	if (ipv6 && !lw_addr_ipv6(local))
+	{
+		if (!IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)remote->info->ai_addr)->sin6_addr))
+		{
+			lw_error err = lw_error_new();
+			lw_error_addf(err, "Got a local IPv4, remote IPv6 (unmapped), cannot communicate.");
+			return err;
+		}
+
+		remoteIn4 = lwp_in6_to_in4((struct sockaddr_in6*)remote->info->ai_addr);
+		remoteAsIPv4 = &remoteIn4;
+		ipv6 = lw_false;
+	}
+
+	// ICMPv6 was hard failing on Linux with "invalid argument". Windows was fine, but not passing anything.
+	// For now we'll keep it off.
+	if (ipv6)
+		return NULL;
+
+	assert(lw_addr_ipv6(local) == ipv6);
+
+	//! ICMP packet structure.
+	typedef struct _icmpv4
+	{
+		// ICMP message type.
+		uint8_t icmp_type;
+		// ICMP operation code.
+		uint8_t icmp_code;
+		// ICMP checksum.
+		uint16_t icmp_chk;
+		// ICMP requires 8 bytes that are unused?
+		// https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol#Destination_unreachable
+		// https://en.wikipedia.org/wiki/ICMPv6#Checksum?
+		uint32_t icmp_unused;
+		// Optional length
+		//uint8_t icmp_length;
+	} icmpv4;
+
+	typedef struct _icmpv6
+	{
+		// ICMP message type.
+		uint8_t icmp_type;
+		// ICMP operation code.
+		uint8_t icmp_code;
+		// ICMP checksum.
+		uint16_t icmp_chk;
+		uint32_t icmp_unused;
+	} icmpv6;
+	
+	typedef struct _iphdrv4
+	  {
+		// IP version (4) + IP header length in 4-byte counts (min 5, i.e. 20 bytes)
+		uint8_t versionAndIHL;
+		// Differentiated Services Field (leave as 0)
+		uint8_t tos;
+		// Total length of packet, including IP header; see ihl
+		uint16_t tot_len;
+		// Packet number (0+)
+		uint16_t id;
+		// If fragmented, what offset (leave as 0)
+		uint16_t frag_off;
+		// Number of hops?
+		uint8_t ttl;
+		// Sub-protocol (e.g. IPPROTO_UDP)
+		uint8_t protocol;
+		// Checksum of IP, or 0 for disabled
+		uint16_t check;
+		// Source address (IPv4 4 byte)
+		struct in_addr saddr;
+		// Destination address (IPv4 4 byte)
+		struct in_addr daddr;
+		/*The options start here. */
+	  } iphdrv4;
+	static_assert(sizeof(iphdrv4) == 20, "!");
+
+	 typedef struct _ipv6hdr {
+		 uint8_t version : 4;
+		uint8_t priority : 8;
+		uint32_t flow : 20;
+		
+		uint16_t payload_len;
+		uint8_t nexthdr;
+		uint8_t hop_limit;
+		
+		struct in6_addr saddr;
+		struct in6_addr daddr;
+	} iphdrv6;
+	
+	typedef struct _fakeiphdr6
+	{
+		// Source address (IPv6 16 byte)
+		struct in6_addr saddr;
+		// Destination address (IPv6 16 byte)
+		struct in6_addr daddr;
+		// Length including IPv6 header
+		uint32_t len;
+		uint8_t zero[3];
+		// 58
+		uint8_t nextHeader;
+	} fakeiphdrv6;
+
+	typedef struct _udphdr
+	{
+		uint16_t srcport;
+		uint16_t dstport;
+		// These two do not need to be correct
+		uint16_t udplen;
+		uint16_t udpchk;
+	} udphdr;
+
+	int icmp_len;
+	if (ipv6)
+		icmp_len = (lw_ui16)(sizeof(icmpv6) + sizeof(iphdrv6) + sizeof(udphdr) + (lw_ui16)datasize);
+	else
+		icmp_len = sizeof(icmpv4) + sizeof(iphdrv4) + sizeof(udphdr);
+
+	// It's fine to reconstruct IPv4 header rather than as-is, as long as it contains src/dest IP + ports.
+	// IPv6 may be more iffy.
+	char* pkt = (char*)calloc(icmp_len, 1);
+
+	// ICMPv6 does not work - Wireshark shows nothing, and receiver does not get it.
+	// For localhost, Wireshark only shows all the data as under "data", and hasn't finished encoding it.
+	if (ipv6)
+	{
+		icmpv6* icmphdrS = (icmpv6*)(pkt);
+		icmphdrS->icmp_type = 1; // Destination Unreachable
+		icmphdrS->icmp_code = 4; // 3 Address Unreachable, 4 port unreachable
+
+		fakeiphdrv6 fake_ip = { 0 };
+		fake_ip.len = htons((uint16_t)(sizeof(iphdrv6) + sizeof(udphdr) + ((lw_ui16)datasize)));
+		fake_ip.nextHeader = 58;
+		// Note source is remote, dest is local
+		fake_ip.saddr = ((struct sockaddr_in6*)remote->info->ai_addr)->sin6_addr;
+		fake_ip.daddr = ((struct sockaddr_in6*)local->info->ai_addr)->sin6_addr;
+
+		// compute checksum over ICMP header, IP, UDP
+		icmphdrS->icmp_chk = checksum(&fake_ip, sizeof(fakeiphdrv6), (unsigned char*)icmphdrS, sizeof(icmpv6));
+
+		iphdrv6* orig_ip = (iphdrv6*)(pkt + sizeof(icmpv6));
+		orig_ip->payload_len = htons((uint16_t)(sizeof(iphdrv6) + sizeof(udphdr) + ((lw_ui16)datasize)));
+		orig_ip->version = 6;
+		//orig_ip->priority = 0;
+		//orig_ip->flow = 0x065698;
+		//orig_ip->flow = 0;
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#endif
+		orig_ip->flow = ((struct sockaddr_in6*)remote->info->ai_addr)->sin6_flowinfo;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+		orig_ip->nexthdr = 17;
+		orig_ip->hop_limit = 128;
+		// Note source is remote, dest is local
+		orig_ip->saddr = ((struct sockaddr_in6 *)remote->info->ai_addr)->sin6_addr;
+		orig_ip->daddr = ((struct sockaddr_in6*)local->info->ai_addr)->sin6_addr;
+
+		udphdr* orig_udp = (udphdr*)(pkt + sizeof(icmpv6) + sizeof(iphdrv6));
+		orig_udp->srcport = ((struct sockaddr_in6*)remote->info->ai_addr)->sin6_port;
+		orig_udp->dstport = ((struct sockaddr_in6*)local->info->ai_addr)->sin6_port;
+		orig_udp->udplen = htons((uint16_t)(sizeof(udphdr) + ((lw_ui16)datasize)));
+		orig_udp->udpchk = 0; // checksum(orig_ip, sizeof(iphdrv4) + sizeof(udphdr));
+		memcpy(pkt + sizeof(icmpv6) + sizeof(iphdrv6) + sizeof(udphdr), data, datasize);
+	}
+	else
+	{
+		icmpv4* icmphdrS = (icmpv4*)(pkt);
+		icmphdrS->icmp_type = 3; // Destination Unreachable
+		icmphdrS->icmp_code = 3; // 1 Host Unreachable, 3 port unreachable
+
+		iphdrv4* orig_ip = (iphdrv4*)(pkt + sizeof(icmpv4));
+		orig_ip->versionAndIHL = 5 | (4 << 4); // 4 for IPv4, 20 byte header is len 5
+		orig_ip->tot_len = htons(sizeof(iphdrv4) + sizeof(udphdr));
+		orig_ip->protocol = IPPROTO_UDP;
+		orig_ip->ttl = 64; // num hops?
+		// Note source is remote, dest is local
+		orig_ip->saddr = remoteAsIPv4->sin_addr;
+		orig_ip->daddr = ((struct sockaddr_in*)local->info->ai_addr)->sin_addr;;
+		// Checksum must be calc'd last; it only includes the IP header, not the UDP internal
+		orig_ip->check = checksum(orig_ip, sizeof(iphdrv4), NULL, 0);
+
+		udphdr* orig_udp = (udphdr*)(pkt + sizeof(icmpv4) + sizeof(iphdrv4));
+		orig_udp->srcport = remoteAsIPv4->sin_port;
+		orig_udp->dstport = ((struct sockaddr_in*)local->info->ai_addr)->sin_port;
+		orig_udp->udplen = htons(sizeof(udphdr));
+		orig_udp->udpchk = 0; // checksum(orig_ip, sizeof(iphdrv4) + sizeof(udphdr));
+
+		// compute checksum over ICMP header, IP, UDP
+		icmphdrS->icmp_chk = checksum(pkt, icmp_len, NULL, 0);
+	}
+	lw_i32 sent = (lw_i32)sendto(icmp, pkt, icmp_len, 0, (struct sockaddr*)remote->info->ai_addr, (socklen_t) remote->info->ai_addrlen);
+	if (sent < 0) {
+		lw_error err = lw_error_new();
+#ifdef _WIN32
+		if (WSAGetLastError() == WSAEACCES)
+			lw_error_addf(err, "Forbidden to access; are you running as admin?", WSAGetLastError());
+		else
+			lw_error_add(err, WSAGetLastError());
+#else
+		lw_error_add(err, errno);
+#endif
+		lw_error_addf(err, "ICMP send failed");
+		free(pkt);
+		return err;
+	}
+	free(pkt);
+	lw_error err = lw_error_new();
+	lw_error_addf(err, "(not an error) Sent %zd bytes ICMP Unreachable to \"%s\"", sent, lw_addr_tostring(remote, lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_unmap_ipv6));
+	return err;
+}
+
 // Attempts to populate lwp_ipv6_public_fixed_interface_index + lwp_ipv6_public_fixed_addr
 void lwp_trigger_public_address_hunt(lw_bool block)
 {

@@ -396,13 +396,13 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	if ((ctx->socket = lwp_create_server_socket
 			(filter, SOCK_STREAM, IPPROTO_TCP, NULL, error)) == -1)
 	{
-	  lwp_trace ("server: error hosting: %s", lw_error_tostring (error));
+		lw_error_addf(error, "Creating TCP port");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
-	  return;
+		lw_error_delete (error);
+		return;
 	}
 
 	if (listen (ctx->socket, SOMAXCONN) == -1)

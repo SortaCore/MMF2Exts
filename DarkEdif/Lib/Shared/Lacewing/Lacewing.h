@@ -582,6 +582,8 @@ typedef enum _lw_addr_tostring_flags
 		temporary and expire due to RFC 4941, particularly on Windows. */
 	lw_import		void  lw_udp_send		 (lw_udp, lw_addr local_addr, lw_ui32 ifidx, lw_addr remote_addr,
 											  const char* buffer, size_t size);
+	lw_import	    void  lw_udp_send_unreachable (lw_udp, lw_addr local, lw_ui32 ifidx, lw_addr remote,
+												   const char* origMsg, lw_ui32 origMsgSize);
 	lw_import	  void *  lw_udp_tag		 (lw_udp);
 	lw_import		void  lw_udp_set_tag	 (lw_udp, void *);
 
@@ -1306,6 +1308,7 @@ struct _udp
 		you must specify your local address you're sending from, as local IPv6 addresses can be
 		temporary and expire due to RFC 4941, particularly on Windows. */
 	lw_import void send (address from, lw_ui32 ifidx, address to, const char * data, size_t size = -1);
+	lw_import void send_unreachable (address from, lw_ui32 ifidx, address to, const char* data, size_t size);
 
 	typedef void (lw_callback * hook_data)
 		(udp, address, lw_ui32, address, char * buffer, size_t size);

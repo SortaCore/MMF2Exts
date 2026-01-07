@@ -468,6 +468,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	if (id == 0xFFFF)
 		return; // this is a placeholder number, and normally indicates error with client
 
+	const std::string_view foricmp = data;
 	data.remove_prefix(sizeof(type) + sizeof(id));
 
 	auto serverClientListReadLock = server.lock_clientlist.createReadLock();
@@ -517,6 +518,7 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 						error_delete(error);
 					}
 					#endif // _lacewing_debug
+					udp->send_unreachable(local_address, ifidx, remote_address, foricmp.data(), foricmp.size());
 					return;
 				}
 
@@ -554,7 +556,6 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				// faulty clients can use ID 0xFFFF and 0x0000
 				if (id != 0 && id != 0xFFFF)
 				{
-
 					serverClientListReadLock.lw_relock();
 
 					std::shared_ptr<relayserver::client> realSender = nullptr;
@@ -652,174 +653,13 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	// after their disconnect handler finishes, and some users have buggy Lacewing that still pummels
 	// its last known ID
 	clientids.releasedIDWasUsed(id);
+
+	// Send ICMP Unreachable. This will result in UDP error on client side, and requires the server
+	// program to have permissions to make a raw socket.
+	// Blue clients up to b105 will report the UDP error but not cancel connect attempt.
+	// If server program does not have raw socket permissions, this will do nothing.
+	udp->send_unreachable(local_address, ifidx, remote_address, foricmp.data(), foricmp.size());
 	serverClientListReadLock.lw_unlock();
-#if 0
-	// http://web.archive.org/web/20020609030916/http://www.gamehigh.net/document/netdocs/docs/ping_src.htm
-
-	// Craft ICMP Destination Unreachable
-	if (unreachable)
-	{
-		auto sock = [=]() {
-			SOCKET				sockRaw = INVALID_SOCKET;
-			struct sockaddr_in  dest,
-								from;
-			int					bread,
-								fromlen = sizeof(from),
-								timeout = 1000,
-								ret;
-			char			  * icmp_data = NULL,
-							  * recvbuf = NULL;
-			unsigned int		addr = 0;
-			unsigned short		seq_no = 0;
-			struct hostent	  * hp = NULL;
-			IpOptionHeader		ipopt;
-
-#define ICMP_DEST_UNREACH	   3
-#define ICMP_PORT_UNREACH	   3
-
-			//! ICMP packet structure.
-			struct icmp
-			{
-				// ICMP message type.
-				uint8_t icmp_type;
-				// ICMP operation code.
-				uint8_t icmp_code;
-				// ICMP checksum.
-				uint16_t icmp_chk;
-			};
-
-			auto sockRaw = WSASocket(address->ipv6() ? AF_INET6 : AF_INET,
-				SOCK_RAW, IPPROTO_ICMP, NULL, 0, WSA_FLAG_OVERLAPPED);
-			if (sockRaw == INVALID_SOCKET)
-			{
-				printf("WSASocket() failed: %d\n", WSAGetLastError());
-				return -1;
-			}
-
-			// Set the send/recv timeout values
-			//
-			bread = setsockopt(sockRaw, SOL_SOCKET, SO_RCVTIMEO,
-				(char*)&timeout; , sizeof(timeout));
-			if (bread == SOCKET_ERROR)
-			{
-				printf("setsockopt(SO_RCVTIMEO) failed: %d\n",
-					WSAGetLastError());
-				return -1;
-			}
-			timeout = 1000;
-			bread = setsockopt(sockRaw, SOL_SOCKET, SO_SNDTIMEO,
-				(char*)&timeout, sizeof(timeout));
-			if (bread == SOCKET_ERROR)
-			{
-				printf("setsockopt(SO_SNDTIMEO) failed: %d\n",
-					WSAGetLastError());
-				return -1;
-			}
-
-			//
-			// Create the ICMP packet
-			//
-			datasize += sizeof(IcmpHeader);
-
-			icmp_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				MAX_PACKET);
-			recvbuf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-				MAX_PACKET);
-			if (!icmp_data)
-			{
-				printf("HeapAlloc() failed: %d\n", GetLastError());
-				return -1;
-			}
-			memset(icmp_data, 0, MAX_PACKET);
-			FillICMPData(icmp_data, datasize);
-			//
-			// Start sending/receiving ICMP packets
-			//
-			while (1)
-			{
-				static int nCount = 0;
-				int		bwrote;
-
-				if (nCount++ == 4)
-					break;
-
-				((IcmpHeader*)icmp_data) ->i_cksum = 0;
-				((IcmpHeader*)icmp_data) ->timestamp = GetTickCount();
-				((IcmpHeader*)icmp_data) ->i_seq = seq_no++;
-				((IcmpHeader*)icmp_data) ->i_cksum =
-					checksum((USHORT*)icmp_data, datasize);
-
-				bwrote = sendto(sockRaw, icmp_data, datasize, 0,
-					(struct sockaddr*) & dest; , sizeof(dest));
-				if (bwrote == SOCKET_ERROR)
-				{
-					if (WSAGetLastError() == WSAETIMEDOUT)
-					{
-						printf("timed out\n");
-						continue;
-					}
-					printf("sendto() failed: %d\n", WSAGetLastError());
-					return -1;
-				}
-				if (bwrote &lt; datasize)
-				{
-					printf("Wrote %d bytes\n", bwrote);
-		}
-
-		};
-
-	}
-
-#endif
-#if false
-	// This #if handles UDP clients that weren't found.
-	// Part of it drops UDP clients with the same IP as missing sender.
-	// Often in usage the server gets hundreds of UDP messages that are unrecognised.
-	// This can go on for minutes, wasting download bandwidth and processing resources.
-	// As UDP is connection-less, we can't force the connection shut on them like TCP.
-	// As UDP is unreliable, their flooding interferes with other users' traffic.
-	//
-	// The dropping of matching IPs is to prevent a UDP flood.
-	// Doesn't seem particularly effective - and what's worse, in normal operation a client disconnecting
-	// will send a couple UDP messages after their disconnect, so we can't use this.
-	// TODO: This needs a more legitimate "am I being flooded" check
-	// ...and ideally, a ICMP destination-unreachable response.
-	// I've heard that's a way to handle a UDP "connection" that won't shut up.
-	// Unless it's a deliberate attack, killing all clients on that IP is unnecessary.
-	//
-	// If it IS a deliberate attack, there won't even necesssarily BE any Lacewing clients with that IP.
-	// Again, UDP is connection-less, so the format of messages (Lacewing or not) is irrelevant - the OS
-	// will deliver it to this function here.
-	std::vector<std::shared_ptr<relayserver::client> > todrop;
-	for (const auto& clientsocket : clients)
-	{
-		if (*clientsocket->udpaddress == address)
-			todrop.push_back(clientsocket);
-	}
-
-	// No one to drop: don't make an error
-	if (todrop.empty())
-		return;
-	// This occurs in regular usage.
-	error error = error_new();
-	error->add("Received UDP message from Client ID %hu, IP %s, but couldn't find client with that ID. Dropping message",
-		id, address->tostring());
-
-	for (const auto& c : todrop)
-	{
-		try {
-			error->add("Dropping client ID %hu due to shared IP", c->id());
-			c->socket->close();
-		}
-		catch (...)
-		{
-			lw_trace("Dropping failed for ID %hu.", c->id());
-		}
-	}
-
-	handlerudperror(udp, error);
-	error_delete(error);
-#endif
 }
 
 bool relayserverinternal::tcpmessagehandler (void * tag, lw_ui8 type, const char * message, size_t size)

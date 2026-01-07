@@ -77,6 +77,8 @@ struct _lw_udp
 	lw_ui16 port;
 
 	SOCKET socket;
+	SOCKET icmpsocket;
+	SOCKET icmpv6socket;
 
 	lw_list(udp_overlapped, pending_receives);
 
@@ -198,6 +200,9 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 	{
 		case overlapped_type_send:
 		{
+			// Send errors should be reported at sendto/sendmsg
+			if (error != 0 && error != ERROR_OPERATION_ABORTED)
+				always_log("Error in sending message: %d.\n", error);
 			write_completed(ctx);
 			break;
 		}
@@ -358,6 +363,26 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	}
 	lw_log_if_debug("Hosted UDP port %d for %s.\n", (int)ctx->socket, madeipv6 ? "IPv6 + mapped IPv4" : "IPv4");
 
+	if (madeipv6 && (ctx->icmpv6socket = lwp_create_server_socket
+		(filter, SOCK_RAW, IPPROTO_ICMPV6, NULL, error)) == -1)
+	{
+		lw_error_addf(error, "Creating ICMPv6 socket");
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		// Non-fatal, we don't need ICMP
+	}
+	lw_filter ipv4filt = lw_filter_clone(filter);
+	lw_filter_set_ipv6(ipv4filt, lw_false);
+	if ((ctx->icmpsocket = lwp_create_server_socket
+		(ipv4filt, SOCK_RAW, IPPROTO_ICMP, NULL, error)) == -1)
+	{
+		lw_error_addf(error, "Creating ICMPv4 socket");
+		if (ctx->on_error)
+			ctx->on_error(ctx, error);
+		// Non-fatal, we don't need ICMP
+	}
+	lw_filter_delete(ipv4filt);
+
 	lw_error_delete (error);
 
 	ctx->filter = lw_filter_clone (filter);
@@ -386,6 +411,20 @@ void lw_udp_unhost (lw_udp ctx)
 	SOCKET s = ctx->socket;
 	ctx->socket = INVALID_SOCKET;
 	lwp_close_socket (s);
+
+	if (ctx->icmpv6socket != -1)
+	{
+		s = ctx->icmpv6socket;
+		ctx->icmpv6socket = INVALID_SOCKET;
+		lwp_close_socket(s);
+	}
+
+	if (ctx->icmpsocket != -1)
+	{
+		s = ctx->icmpsocket;
+		ctx->icmpsocket = INVALID_SOCKET;
+		lwp_close_socket(s);
+	}
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
@@ -427,6 +466,8 @@ lw_udp lw_udp_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->socket = INVALID_SOCKET;
+	ctx->icmpsocket = INVALID_SOCKET;
+	ctx->icmpv6socket = INVALID_SOCKET;
 
 	return ctx;
 }
@@ -622,6 +663,29 @@ void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const cha
 	} while (0);
 
 	lwp_release(ctx, "udp write");
+}
+
+void lw_udp_send_unreachable(lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const char * data, lw_ui32 size)
+{
+	lwp_socket icmpsock = lw_addr_ipv6(from) ? ctx->icmpv6socket : ctx->icmpsocket;
+	lw_error err;
+	if (icmpsock == -1)
+	{
+		err = lw_error_new();
+		lw_error_addf(err, "ICMP%s send error - no socket", lw_addr_ipv6(from) ? "v6" : "v4");
+		if (ctx->on_error)
+			ctx->on_error(ctx, err);
+		lw_error_delete(err);
+	}
+
+	err = lwp_send_icmp_unreachable(icmpsock, IPPROTO_UDP, from, ifidx, to, data, size);
+	if (err)
+	{
+		lw_error_addf(err, "ICMP send error");
+		if (ctx->on_error)
+			ctx->on_error(ctx, err);
+		lw_error_delete(err);
+	}
 }
 
 void lw_udp_set_tag (lw_udp ctx, void * tag)

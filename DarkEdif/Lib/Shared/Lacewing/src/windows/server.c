@@ -606,6 +606,7 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	if ((ctx->socket = lwp_create_server_socket
 			(filter, SOCK_STREAM, IPPROTO_TCP, &madeipv6, error)) == -1)
 	{
+		lw_error_addf(error, "Creating TCP port");
 		if (ctx->on_error)
 			ctx->on_error (ctx, error);
 

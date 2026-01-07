@@ -223,6 +223,10 @@ time_t lwp_parse_time (const char *);
 
 lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_bool * madeipv6, lw_error);
 
+// Sends a ICMP Port Unreachable message, and reports the result with the handler
+lw_error lwp_send_icmp_unreachable(lwp_socket icmpsock, int proto, lw_addr local, lw_ui32 ifidx, lw_addr remote,
+	const char* origMsg, lw_ui32 origMsgSize);
+
 extern struct in6_addr lwp_ipv6_public_fixed_addr;
 extern int lwp_ipv6_public_fixed_interface_index;
 extern void lwp_trigger_public_address_hunt (lw_bool block);

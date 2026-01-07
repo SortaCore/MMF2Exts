@@ -53,7 +53,12 @@ lw_ui16 _udp::port ()
 
 void _udp::send (lacewing::address from, lw_ui32 ifidx, lacewing::address to, const char * data, size_t size)
 {
-	lw_udp_send ((lw_udp) this, (lw_addr)from, ifidx, (lw_addr) to, data, size);
+	lw_udp_send ((lw_udp) this, (lw_addr) from, ifidx, (lw_addr) to, data, size);
+}
+
+void _udp::send_unreachable (lacewing::address from, lw_ui32 ifidx, lacewing::address to, const char * data, size_t size)
+{
+	lw_udp_send_unreachable ((lw_udp) this, (lw_addr) from, ifidx, (lw_addr) to, data, (lw_ui32) size);
 }
 
 void _udp::on_data (_udp::hook_data hook)

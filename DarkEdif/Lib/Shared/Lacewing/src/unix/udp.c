@@ -23,6 +23,8 @@ struct _lw_udp
 	lw_pump_watch pump_watch;
 
 	int fd;
+	int icmpfd;
+	int icmpv6fd;
 
 	long receives_posted;
 	long writes_posted;
@@ -170,16 +172,37 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	if ((ctx->fd = lwp_create_server_socket
 			(filter, SOCK_DGRAM, IPPROTO_UDP, &madeipv6, error)) == -1)
 	{
+		lw_error_addf(error, "Creating UDP port");
 		if (ctx->on_error)
 			ctx->on_error (ctx, error);
 
 		lw_error_delete (error);
 		return;
 	}
+	if (madeipv6 && (ctx->icmpv6fd = lwp_create_server_socket
+		(filter, SOCK_RAW, IPPROTO_ICMPV6, NULL, error)) == -1)
+	{
+		lw_error_addf(error, "Creating ICMPv6 port");
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
+		// non-fatal, we don't need ICMP
+	}
+	if ((ctx->icmpfd = lwp_create_server_socket
+		(filter, SOCK_RAW, IPPROTO_ICMP, NULL, error)) == -1)
+	{
+		lw_error_addf(error, "Creating ICMP port");
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
+		// non-fatal, we don't need ICMP
+	}
 
 	lw_error_delete (error);
 
 	lwp_make_nonblocking(ctx->fd);
+	if (ctx->icmpfd != -1)
+		lwp_make_nonblocking(ctx->icmpfd);
+	if (ctx->icmpv6fd != -1)
+		lwp_make_nonblocking(ctx->icmpv6fd);
 
 	ctx->filter = lw_filter_clone (filter);
 
@@ -206,7 +229,9 @@ void lw_udp_unhost (lw_udp ctx)
 	ctx->pump_watch = NULL;
 
 	lwp_close_socket(ctx->fd);
-	ctx->fd = -1;
+	lwp_close_socket(ctx->icmpfd);
+	lwp_close_socket(ctx->icmpv6fd);
+	ctx->icmpfd = ctx->icmpv6fd = ctx->fd = -1;
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
@@ -224,7 +249,7 @@ lw_udp lw_udp_new (lw_pump pump)
 	lwp_retain(ctx, "udp_new");
 
 	ctx->pump = pump;
-	ctx->fd = -1;
+	ctx->icmpfd = ctx->icmpv6fd = ctx->fd = -1;
 
 	return ctx;
 }
@@ -350,6 +375,21 @@ void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const cha
 	// For now we'll assume if res is not -1, it is the full message.
 
 	lwp_release(ctx, "udp write");
+}
+
+void lw_udp_send_unreachable(lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const char* data, lw_ui32 size)
+{
+	lwp_socket icmpsock = lw_addr_ipv6(from) ? ctx->icmpv6fd : ctx->icmpfd;
+	if (icmpsock == -1)
+		return;
+	lw_error err = lwp_send_icmp_unreachable(icmpsock, IPPROTO_UDP, from, ifidx, to, data, size);
+	if (err)
+	{
+		lw_error_addf(err, "ICMP error");
+		if (ctx->on_error)
+			ctx->on_error(ctx, err);
+		lw_error_delete(err);
+	}
 }
 
 void lw_udp_set_tag (lw_udp ctx, void * tag)
