@@ -148,7 +148,11 @@ public:
 
 	inline void addheader(lw_ui8 type, lw_ui8 variant, bool forudp = false, int udpclientid = -1)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
+
 		assert(size == 0 && "lacewing framebuilder.addheader() error: adding header to message that already has one.");
+		assert(type <= 0xF && variant <= 0xF);
 
 		if (!forudp)
 		{
@@ -170,6 +174,8 @@ public:
 
 	inline void send(lacewing::server_client client, bool clear = true)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
 		if (wasWebLast == -1 || client->is_websocket() != wasWebLast)
 		{
 			wasWebLast = client->is_websocket();
@@ -188,6 +194,8 @@ public:
 
 	inline void send(lacewing::client client, bool clear = true)
 	{
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
 		preparefortransmission(false);
 		client->write(tosend, tosendsize);
 
@@ -204,6 +212,8 @@ public:
 	inline void send(lacewing::udp udp, lacewing::address address, bool clear = true)
 	{
 		udp->send(address, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
+		if (threadOwner != std::this_thread::get_id())
+			LacewingFatalErrorMsgBox();
 
 		if (clear)
 			framereset();

@@ -26,9 +26,16 @@ public:
 
 	char * buffer = nullptr;
 	lw_ui32 size = 0U;
+	std::thread::id threadOwner;
 
 	messagebuilder()
 	{
+		updatethreadowner();
+	}
+
+	void updatethreadowner()
+	{
+		threadOwner = std::this_thread::get_id();
 	}
 
 	~ messagebuilder()
@@ -49,6 +56,7 @@ public:
 
 		if (this->size + size > allocated)
 		{
+			int origalloc = allocated;
 			if (!allocated)
 				allocated = 1024 * 4;
 			else
@@ -58,6 +66,7 @@ public:
 				allocated += size;
 
 			this->buffer = (char *)lw_realloc_or_exit(this->buffer, allocated);
+			memset(this->buffer + origalloc, 0, allocated - origalloc);
 		}
 
 		memcpy(this->buffer + this->size, buffer, size);
