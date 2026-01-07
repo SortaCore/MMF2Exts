@@ -2178,7 +2178,7 @@ struct relayserver
 		in6_addr addressInt = {};
 
 		// Time the Relay connection was approved - zero timepoint if not yet approved
-		::std::chrono::high_resolution_clock::time_point connectRequestApprovedTime;
+		::std::chrono::steady_clock::time_point connectRequestApprovedTime;
 		::std::chrono::steady_clock::time_point lasttcpmessagetime;
 		::std::chrono::steady_clock::time_point lastudpmessagetime; // UDP problem where unused connections are dropped by router, so must keep these separate
 		::std::chrono::steady_clock::time_point lastchannelorpeermessagetime; // For clients that go idle
@@ -2193,8 +2193,7 @@ struct relayserver
 		std::string clientImplStr;
 
 		// Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
-		bool pseudoUDP = true;
-
+		bool pseudoUDP = false;
 		// Got opening null byte, indicating not a HTTP client.
 		bool gotfirstbyte = false;
 		// After TCP connect approval, Lacewing connect message request was received, and server has said OK to it

@@ -111,6 +111,10 @@ struct relayserverinternal
 		// matter either way.
 		udpKeepAliveMS = 30000 - (tcpPingMS * 3);
 
+		// 7 seconds to send UDPHello after connect; this should be higher than the client's UDP Hello timeout,
+		// which was introduced in Blue Client b106.
+		udpMaxHelloTimeMS = 7 * 1000;
+
 		// Some buggy client versions don't close their connection on end of app, forcing the app to stay
 		// alive. We can't force them to close, but we can disconnect them.
 		maxInactivityMS = 10 * 60 * 1000;
@@ -166,9 +170,17 @@ struct relayserverinternal
 
 	bool channellistingenabled;
 
+	// How long, in ms, a Relay connection can be inactive on TCP before it is sent a TCP ping;
+	// and also how long it has to reply before it is disconnected.
 	long tcpPingMS;
+	// How long, in ms, a raw TCP connection can exist without sending a Relay Connect request.
 	long maxNoConnectApprovedMS;
+	// How long, in ms, a connection can send no data on UDP before a UDP ping is sent to keep the route alive in routers.
+	// This ping does not need a reply to keep the route alive.
 	long udpKeepAliveMS;
+	// How long, in ms, a connection can be approved before zero UDP messages received results in disconnect.
+	long udpMaxHelloTimeMS;
+	// How long, in ms, a connection can send no channel or peer messages, before it results in inactivity disconnect.
 	long maxInactivityMS;
 
 	long actionThreadMS;
@@ -223,7 +235,29 @@ struct relayserverinternal
 			// Psuedo UDP is true unless a UDPHello packet is received, i.e. the client connect handshake UDP packet.
 			decltype(msElapsedTCP) msElapsedUDP = 0;
 			if (!client->pseudoUDP)
+			{
 				msElapsedUDP = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client->lastudpmessagetime).count();
+
+				// UDP handshake timeout: too long between connect approval and a received UDP message,
+				// indicating UDP routing failed entirely for too long.
+				// An exact match here means no UDP was ever exchanged, but if client keeps sending only UDPHello
+				// beyond udpMaxHelloTimeMS, they will be kicked in the UDPHello handler, too.
+				// 
+				// Blue Client b106 introduced client-side UDP handshake timeout. Clients that have a
+				// UDPHello timeout should disconnect themselves before server does, by having a shorter timer.
+				// Currently client is 5s, server is 7s.
+				// 
+				// Before b106, most clients that failed to get a UDP Welcome reply, e.g. by bad NAT,
+				// would send UDP Hello forever, in limbo as they had Relay connect approval but couldn't
+				// progress beyond it to triggering client connect handler, which runs at first UDP Welcome received.
+				// Note the server would trigger "on connect" for the limbo clients though, due to server triggering
+				// at an earlier stage in the Relay connect handshake.
+				if (msElapsedUDP > udpMaxHelloTimeMS && client->lastudpmessagetime == client->connectRequestApprovedTime)
+				{
+					inactivesToDisconnects.push_back(client);
+					continue;
+				}
+			}
 
 			// less than 5 seconds (or tcpPingMS) passed since last TCP message, skip the TCP ping
 			if (msElapsedTCP < tcpPingMS)
@@ -2139,6 +2173,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		// you cannot trust further message content is readable
 		return false;
 	}
+
 	if (blasted)
 		client->lastudpmessagetime = ::std::chrono::steady_clock::now();
 	else
@@ -2645,15 +2680,36 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			if (client->_readonly)
 				break;
 
-			client->pseudoUDP = false;
+			constexpr lw_addr_tostring_flags addrstringflags = (lw_addr_tostring_flags)(lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_remove_port);
+			if (client->pseudoUDP)
+			{
+				errStr << "UDPHello sent for unexpected client. Client ID "sv << client->_id << ", implementation \""sv
+					<< client->getimplementation() << "\", remote IP \""sv << client->address
+					<< "\" (UDP \""sv << client->udpremoteaddress->tostring(addrstringflags) << "\")";
+				reader.failed = true;
+				break;
+			}
+
+			// UDP Hello sent beyond the UDPHello timeout window
+			// We don't want a server that can be inundated with useless UDPHello, so we kick
+			if (std::chrono::duration_cast<std::chrono::milliseconds>(
+					decltype(client->connectRequestApprovedTime)::clock::now() - client->connectRequestApprovedTime
+				).count() > udpMaxHelloTimeMS)
+			{
+				errStr << "UDPHello sent beyond grace window, kicking client ID "sv << client->_id << ", remote IP \""sv
+					<< client->address << "\" (UDP \""sv
+					<< client->udpremoteaddress->tostring(addrstringflags) << "\")";
+				reader.failed = true;
+				trustedClient = false;
+				break;
+			}
 
 			lw_log_if_debug("Got UDPHello from local address \"%s\", ifidx %u, remote \"%s\", attempting UDPWelcome reply.\n",
 				client->udplocaladdress->tostring(lw_addr_tostring_flag_box_ipv6),
 				client->ifidx,
 				client->udpremoteaddress->tostring(lw_addr_tostring_flag_box_ipv6));
 			builder.addheader(10, 0, true); /* udpwelcome */
-			builder.send(
-				client->udppunch ? client->udppunch : server.udp,
+			builder.send(client->udppunch ? client->udppunch : server.udp,
 				client->udplocaladdress, client->ifidx, client->udpremoteaddress);
 			break;
 		}
@@ -2661,7 +2717,8 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 			errStr << "Channel master message ID 8 not allowed"sv;
 			break;
 
-		case 9: /* ping */
+		case 9: /* ping reply */
+			// We don't reply to ping messages
 			if (!blasted)
 				client->pongedOnTCP = true;
 			break;

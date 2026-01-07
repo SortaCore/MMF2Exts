@@ -99,6 +99,8 @@ namespace lacewing
 		std::string welcomemessage;
 		// Indicates connected on a Lacewing level; full Lacewing TCP/UDP handshake finished
 		bool connected = false;
+		// If connected is false, when the UDP Hello gives up and disconnects main client
+		std::chrono::system_clock::time_point udpexpire;
 
 		std::vector<std::shared_ptr<relayclient::channel>> channels;
 
@@ -780,6 +782,9 @@ namespace lacewing
 					}
 					lw_log_if_debug("Got a Relay connect. IPs are set, so starting the UDP hello loop.");
 
+					// Set up UDPHello timeout
+					udpexpire = std::chrono::system_clock::now() + std::chrono::seconds(5);
+
 					// Hole punch setup: use port and specify we want a certain IPvX level
 					// Using dual-stack IPv6 default when remote address is IPv4 causes "pointer is invalid" errors
 					// Worth noting that we could lock down remote IP with host(udpremoteaddress, local_port),
@@ -800,7 +805,6 @@ namespace lacewing
 
 					// Do tick immediately instead of after 500ms
 					udphellotimer->force_tick();
-
 
 					udphellotimer->start(500); // see udphellotick
 
@@ -1518,6 +1522,19 @@ namespace lacewing
 		// Shouldn't be trying to send UDPHello without a remote address,
 		// even in hole punch.
 		assert(udpremoteaddress);
+
+		// UDPHello handshake timeout
+		if (std::chrono::system_clock::now() > udpexpire)
+		{
+			udphellotimer->stop();
+
+			lacewing::error err = lacewing::error_new();
+			err->add("UDP handshake timeout");
+			lacewing::handlererror(socket, err);
+			lacewing::error_delete(err);
+			socket->close();
+			return;
+		}
 
 		message.addheader(7, 0, true, id); /* udphello */
 		message.send(udp, udplocaladdress, ifidx, udpremoteaddress);
