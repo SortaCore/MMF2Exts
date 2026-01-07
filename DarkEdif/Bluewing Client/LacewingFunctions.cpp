@@ -11,11 +11,8 @@ void OnError(lacewing::relayclient &client, lacewing::error error)
 }
 void OnConnect(lacewing::relayclient &client)
 {
-	lacewing::address addr = client.serveraddress();
-	char ipAddr[64];
-	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
-	HostIP = ipAddr;
-	HostPort = addr->port();
+	HostIP = client.serveraddress()->tostring();
+	HostPort = client.serveraddress()->port();
 	globals->AddEvent1(1);
 }
 void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
@@ -23,15 +20,11 @@ void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason)
 	// On Connect is not called during TCP Connect but when a Lacewing Connect Response
 	// message is received. Ditto for On Connect Denied.
 	// The serveraddress() is set during TCP Connect, so it should be valid here.
-	lacewing::address addr = client.serveraddress();
-	char ipAddr[64];
-	lw_addr_prettystring(addr->tostring(), ipAddr, sizeof(ipAddr));
-
 	if (GThread.joinable())
 		globals->lock.edif_lock();
 
-	HostIP = ipAddr;
-	HostPort = addr->port();
+	HostIP = client.serveraddress()->tostring();
+	HostPort = client.serveraddress()->port();
 	DenyReasonBuffer = denyReason;
 
 	if (GThread.joinable())

@@ -8,6 +8,10 @@
  * https://opensource.org/license/mit
 */
 
+#pragma once
+#ifndef lw_addr_h
+#define lw_addr_h
+
 #ifndef _WIN32
 #include <netdb.h>
 #endif
@@ -25,6 +29,7 @@ struct _lw_addr
 
 	lw_error error;
 
+	lw_addr_tostring_flags laststringflags;
 	char buffer [64]; /* for to_string */
 
 	void * tag;
@@ -41,3 +46,4 @@ lw_bool lwp_sockaddr_equal(struct sockaddr* a, struct sockaddr* b);
 lw_addr lwp_addr_new_sockaddr (struct sockaddr *);
 void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr *);
 
+#endif // lw_addr_h - include guard

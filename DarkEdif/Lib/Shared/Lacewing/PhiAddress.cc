@@ -18,6 +18,7 @@
 // Comments for all the below functions can be found in the header file.
 // IntelliSense should display them anyway.
 
+[[deprecated]]
 void lw_addr_prettystring(const char * input, char * const output, size_t outputSize)
 {
 	// It's a pure IPv4 already, or a pure IPv6, not IPv4-mapped-IPv6

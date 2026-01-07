@@ -76,9 +76,9 @@ error _address::resolve ()
 	return (error) lw_addr_resolve ((lw_addr) this);
 }
 
-const char * _address::tostring ()
+const char * _address::tostring (lw_addr_tostring_flags flags)
 {
-	return lw_addr_tostring ((lw_addr) this);
+	return lw_addr_tostring ((lw_addr) this, flags);
 }
 
 in6_addr _address::toin6_addr()
@@ -88,7 +88,7 @@ in6_addr _address::toin6_addr()
 
 _address::operator const char * ()
 {
-	return tostring ();
+	return tostring (lw_addr_tostring_flags_default);
 }
 
 bool _address::operator == (lacewing::address address)

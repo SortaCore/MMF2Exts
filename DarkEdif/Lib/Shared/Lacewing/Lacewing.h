@@ -142,6 +142,19 @@ typedef enum _lw_network_change_type
 	lw_network_change_type_unspecified = 3,
 } lw_network_change_type;
 
+typedef enum _lw_addr_tostring_flags
+{
+	// Adds a [] around IPv6 addresses, resulting in [ip6]:remote_port:local_port
+	// IPv4 addresses will be ip4:remote_port
+	lw_addr_tostring_flag_box_ipv6 = 1,
+	// Removes the remote port, resulting in [ip6]:local_port, ip4:local_port
+	lw_addr_tostring_flag_remove_port = 2,
+	// Converts IPv6-mapped-IPv4 to IPv4 representation (if it is mapped)
+	lw_addr_tostring_flag_unmap_ipv6 = 4,
+	// Default flags: box IPv6, unmap IPv4 mapped into IPv6, and remove port
+	lw_addr_tostring_flags_default = 7,
+} lw_addr_tostring_flags;
+
 #if (!defined(_lacewing_internal))
 
 	/* The ugly underscore prefixes are only necessary because we have to
@@ -233,7 +246,7 @@ typedef enum _lw_network_change_type
 	lw_import		   lw_error  lw_addr_resolve		(lw_addr);
 	lw_import			lw_bool  lw_addr_ipv6			(lw_addr);
 	lw_import			lw_bool  lw_addr_equal			(lw_addr, lw_addr);
-	lw_import	   const char *  lw_addr_tostring		(lw_addr);
+	lw_import	   const char *  lw_addr_tostring		(lw_addr, lw_addr_tostring_flags flags);
 	lw_import   struct in6_addr  lw_addr_toin6_addr		(lw_addr);
 	lw_import			 void *  lw_addr_tag			(lw_addr);
 	lw_import			   void  lw_addr_set_tag		(lw_addr, void *);
@@ -715,8 +728,10 @@ typedef enum _lw_network_change_type
 // For platform compatibility, we use a third-party library; this one is actually used in Julia.
 #include "deps/utf8proc.h"
 
-// Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
+// (Deprecated) Converts a IPv4-mapped-IPv6 address to IPv4, stripping ports.
 // If the address is IPv4 or unmapped IPv6, copies it without the port.
+// Deprecated: use lw_addr_to_string flags
+[[deprecated]]
 void lw_addr_prettystring(const char * input, char * const output, size_t outputSize);
 
 // Compares if two strings match, returns true if so. Does a size check, then does flat buffer comparison;
@@ -1085,7 +1100,7 @@ struct _address
 	lw_import error resolve ();
 
 	lw_import in6_addr toin6_addr ();
-	lw_import const char * tostring ();
+	lw_import const char * tostring (lw_addr_tostring_flags flags = lw_addr_tostring_flags_default);
 	lw_import operator const char *  ();
 
 	lw_import bool operator == (address);
@@ -2095,7 +2110,7 @@ struct relayserver
 
 		lw_ui16 id();
 
-		std::string_view getaddress() const;
+		std::string getaddress() const;
 		in6_addr getaddressasint() const;
 		const char * getimplementation() const;
 		clientimpl getimplementationvalue() const;

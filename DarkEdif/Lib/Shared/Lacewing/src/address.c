@@ -14,6 +14,7 @@
 
 #ifndef _WIN32
 #define __stdcall /* hm */
+#include <signal.h>
 #endif
 static int __stdcall resolver(lw_addr);
 
@@ -27,6 +28,8 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 	char * it;
 
 	memset (ctx, 0, sizeof (*ctx));
+	ctx->laststringflags = -1;
+	ctx->error = NULL;
 
 	ctx->resolver_thread = lw_thread_new ("resolver", (void *) resolver);
 	ctx->hints = hints;
@@ -59,6 +62,7 @@ void lwp_addr_init (lw_addr ctx, const char * hostname,
 			ctx->hints |= lw_addr_hint_ipv6;
 		}
 
+		// : detected on IPv4, or ]: detected on IPv6
 		if (*it == ':' && (!ipv6 || *(it - 1) == ']'))
 		{
 			/* an explicit port overrides the service name */
@@ -150,7 +154,7 @@ void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr * sockaddr)
 	ctx->info->ai_family = sockaddr->sa_family;
 
 	free (ctx->info->ai_addr);
-	ctx->info->ai_addr = (struct sockaddr *) lw_malloc_or_exit (sizeof (struct sockaddr_storage));
+	ctx->info->ai_addr = (struct sockaddr *) lw_calloc_or_exit (sizeof (struct sockaddr_in6), 1);
 
 	switch (sockaddr->sa_family)
 	{
@@ -163,6 +167,9 @@ void lwp_addr_set_sockaddr (lw_addr ctx, struct sockaddr * sockaddr)
 			ctx->info->ai_addrlen = sizeof (struct sockaddr_in6);
 			memcpy (ctx->info->ai_addr, sockaddr, sizeof (struct sockaddr_in6));
 			break;
+			
+		default:
+			assert(lw_false);
 	};
 
 	// clear to_string
@@ -216,6 +223,8 @@ lw_addr lw_addr_clone (lw_addr ctx)
 	addr->hostname = addr->hostname_to_free = ctx->hostname ? strdup(ctx->hostname) : NULL;
 	addr->hints = ctx->hints;
 
+	assert(lw_addr_equal(addr, ctx) && lw_addr_port(addr) == lw_addr_port(ctx));
+
 	return addr;
 }
 
@@ -247,67 +256,124 @@ void lwp_addr_cleanup (lw_addr ctx)
 	}
 }
 
-const char * lw_addr_tostring (lw_addr ctx)
+const char * lw_addr_tostring (lw_addr ctx, lw_addr_tostring_flags flags)
 {
 	if (!lw_addr_ready (ctx))
 		return "";
 
-	if (*ctx->buffer)
+	if (*ctx->buffer && ctx->laststringflags == flags)
 		return ctx->buffer;
 
 	if ((!ctx->info) || (!ctx->info->ai_addr))
 		return "";
 
-	switch (ctx->info->ai_family)
+	// We could optimize this to not use tmp, but that could mess up any other threads relying on ai_addr
+	struct sockaddr_in6* in6 = (struct sockaddr_in6*)ctx->info->ai_addr;
+	struct sockaddr_in tmp = { 0 }, * in4 = (struct sockaddr_in*)ctx->info->ai_addr;
+	if (in6->sin6_family == AF_INET6 && (flags & lw_addr_tostring_flag_unmap_ipv6) != 0 &&
+		IN6_IS_ADDR_V4MAPPED(&in6->sin6_addr))
 	{
-	case AF_INET:
+		tmp.sin_family = AF_INET;
+		tmp.sin_port = in6->sin6_port;
+		*(int*)&tmp.sin_addr = ((int*)&in6->sin6_addr)[3]; // Skip 8 0x00's, 4 0xFF
+		in4 = &tmp;
+		in6 = NULL;
+	}
 
-		lwp_snprintf (ctx->buffer,
-						sizeof (ctx->buffer),
-						"%s:%d",
-						inet_ntoa (((struct sockaddr_in *)
-									ctx->info->ai_addr)->sin_addr),
-						ntohs (((struct sockaddr_in *)
-							ctx->info->ai_addr)->sin_port));
-
-		break;
-
-	case AF_INET6:
+	// WIN32 maps IPv6 to "[ipv6]", Unix maps to "ipv6".
+	// inet_ntop is not available on Windows until Vista, and missing on Win7
+#ifdef _WIN32
+	int length = sizeof(ctx->buffer) - 1;
+	if (WSAAddressToStringA((LPSOCKADDR)in4,
+		in4->sin_family == AF_INET6 ? (DWORD)ctx->info->ai_addrlen : sizeof(struct sockaddr_in),
+		0,
+		ctx->buffer,
+		(LPDWORD)&length) == -1)
 	{
+		strcpy(ctx->buffer, "(invalid ip):0");
+	}
+	// length set to num chars incl null
 
-		// WIN32 maps to "[ipv6]", Unix maps to "ipv6". We merge to Windows' IPv6 format, as it's the standard.
-		// If you do change this to Unix style, then update lw_addr_prettystring().
-		#ifdef _WIN32
-
-			int length = sizeof(ctx->buffer) - 1;
-			WSAAddressToStringA ((LPSOCKADDR) ctx->info->ai_addr,
-								(DWORD) ctx->info->ai_addrlen,
-								0,
-								ctx->buffer,
-								(LPDWORD) &length);
-
-		#else
-
-			unsigned int length = sizeof(ctx->buffer) - 2;
+	// If port is 0, Windows won't print it
+	if (in4->sin_port == 0)
+	{
+		if (in4->sin_family == AF_INET6 && (flags & lw_addr_tostring_flag_box_ipv6))
+		{
+			memmove(ctx->buffer + 1, ctx->buffer, length);
 			ctx->buffer[0] = '[';
-			inet_ntop (AF_INET6,
-						&((struct sockaddr_in6 *)
-						ctx->info->ai_addr)->sin6_addr,
-						&ctx->buffer[1],
-						length);
-			strcat(&ctx->buffer[1], "]");
-
-		#endif
-
-			lwp_snprintf (ctx->buffer + strlen (ctx->buffer),
-						sizeof (ctx->buffer) - strlen (ctx->buffer) - 1,
-						":%d",
-						ntohs (((struct sockaddr_in6 *)
-								ctx->info->ai_addr)->sin6_port));
-
-			break;
+			ctx->buffer[length + 1] = ']';
+			ctx->buffer[length + 2] = '\0';
+			length += 2;
 		}
-	};
+		if ((flags & lw_addr_tostring_flag_remove_port) == 0)
+		{
+			strcat(ctx->buffer, ":0");
+			length += 2;
+		}
+	}
+	// Port added by default on Windows, if non-zero: remove it
+	else if ((flags & lw_addr_tostring_flag_remove_port) != 0)
+	{
+		char* end = strrchr(ctx->buffer, ':');
+		*end = '\0';
+		length = (int)(end - ctx->buffer) + 1;
+		assert(ctx->buffer[length - 1] == '\0');
+	}
+
+	// This is unmapped IPv6, put into a box format: unbox it by moving left everything right of box
+	if (in4->sin_family == AF_INET6 && in4->sin_port && (flags & lw_addr_tostring_flag_box_ipv6) == 0)
+	{
+		assert(ctx->buffer[0] == '[');
+		length -= 2;
+		ctx->buffer[length] = '\0';
+		for (char* s = ctx->buffer; s != ctx->buffer + length; ++s)
+			*s = *(s + 1);
+	}
+
+#else
+	size_t length = sizeof(ctx->buffer) - 1;
+	if (in4->sin_family == AF_INET || (flags & lw_addr_tostring_flag_box_ipv6) == 0)
+	{
+		ctx->buffer[0] = '\0';
+		if (inet_ntop(in4->sin_family,
+			in6 && in6->sin6_family == AF_INET6 ? (void*)&in6->sin6_addr : (void*)&in4->sin_addr,
+			ctx->buffer,
+			(socklen_t)length) == NULL)
+		{
+			always_log("Error %d converting address to string.", errno);
+			assert(lw_false);
+		}
+		length = strlen(ctx->buffer);
+		assert(length);
+	}
+	else // AF_INET6
+	{
+		ctx->buffer[0] = '[';
+		if (inet_ntop(AF_INET6,
+			&((struct sockaddr_in6*)
+				ctx->info->ai_addr)->sin6_addr,
+			&ctx->buffer[1],
+			(socklen_t)--length) == NULL)
+		{
+			always_log("Error %d converting address to string.", errno);
+			assert(lw_false);
+		}
+
+		length = strlen(ctx->buffer);
+		assert(length);
+		ctx->buffer[length] = ']';
+		ctx->buffer[++length] = '\0';
+	}
+
+	// This is unexpected in normal operation
+	if (!strcmp(ctx->buffer, "0.0.0.0"))
+		raise(SIGTRAP);
+
+	// Append port if not set to remove
+	if ((flags & lw_addr_tostring_flag_remove_port) == 0)
+		sprintf(&ctx->buffer[length], ":%hu", ntohs(in4->sin_port));
+#endif
+	ctx->laststringflags = flags;
 
 	return *ctx->buffer ? ctx->buffer: "";
 }
@@ -369,7 +435,7 @@ int __stdcall resolver(lw_addr ctx)
 	if (ctx->hints & lw_addr_hint_ipv6)
 		hints.ai_family = AF_INET6;
 	else
-		hints.ai_family = AF_INET;
+		hints.ai_family = AF_UNSPEC;
 
 	result = getaddrinfo(ctx->hostname, ctx->service, &hints, &ctx->info_list);
 
@@ -453,7 +519,9 @@ lw_error lw_addr_resolve (lw_addr ctx)
 	if (ctx->resolver_thread)
 		lw_thread_join (ctx->resolver_thread);
 
-	return ctx->error;
+	if (!ctx->error)
+		return NULL;
+	return lw_error_clone(ctx->error);
 }
 
 lw_bool lwp_sockaddr_equal_netmask (struct sockaddr * a, struct sockaddr* b, struct sockaddr * mask)

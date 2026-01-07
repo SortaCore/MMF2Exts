@@ -250,9 +250,7 @@ const TCHAR * Extension::Client_IP()
 		return Runtime.CopyString(_T(""));
 	}
 
-	char addr[64];
-	lw_addr_prettystring(selClient->getaddress().data(), addr, 64);
-	return Runtime.CopyString(DarkEdif::ANSIToTString(addr).c_str());
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(selClient->getaddress()).c_str());
 }
 unsigned int Extension::Port()
 {

@@ -855,7 +855,7 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 }
 
 
-std::string_view relayserver::client::getaddress() const
+std::string relayserver::client::getaddress() const
 {
 	// Addresses don't change, so don't require read lock
 	return this->address;
@@ -1149,17 +1149,13 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			client.gotfirstbyte = false;
 			client.trustedClient = false;
 
-			char addr[64];
-			const char* ipAddress = client.address.data();
-			lw_addr_prettystring(ipAddress, addr, sizeof(addr));
-
 			relayserverinternal& internal =	client.server; // server->tag()->tag is not valid if not requesting nicely
 
 			if (internal.handlererror)
 			{
 				lacewing::error error = lacewing::error_new();
 				error->add("New client ID %hu, IP %s is not a Lacewing client. Kicking them.",
-					client._id, addr);
+					client._id, client.getaddress().c_str());
 
 				internal.handlererror(internal.server, error);
 				lacewing::error_delete(error);
@@ -1206,17 +1202,13 @@ void relayserverinternal::generic_handlerreceive(lacewing::server server, lacewi
 			return;
 	}
 
-	char addr[64];
-	const char * ipAddress = client.address.data();
-	lw_addr_prettystring(ipAddress, addr, sizeof(addr));
-
 	relayserverinternal & internal = *(relayserverinternal *)server->tag();
 
 	if (internal.handlererror)
 	{
 		lacewing::error error = lacewing::error_new();
 		error->add("Overload of message stack; server running too slow? Got more than %zu messages pending (sized %zu) from client ID %hu, name %hs, IP %hs.",
-			maxMessagesInOneProcess, data.size(), client._id, client._name.c_str(), addr);
+			maxMessagesInOneProcess, data.size(), client._id, client._name.c_str(), client.address.c_str());
 
 		internal.handlererror(internal.server, error);
 		lacewing::error_delete(error);
@@ -1341,9 +1333,7 @@ void handlerwebserverget(lacewing::webserver webserver, lacewing::webserver_requ
 	else
 	{
 		lacewing::error err = lacewing::error_new();
-		char addr[64];
-		lw_addr_prettystring(req->address()->tostring(), addr, std::size(addr));
-		err->add("Non-WebSocket connection response to URL \"%s\", secure = %s; from IP %s", req->url(), req->secure() ? "YES" : "NO", addr);
+		err->add("Non-WebSocket connection response to URL \"%s\", secure = %s; from IP %s", req->url(), req->secure() ? "YES" : "NO", req->address()->tostring());
 		if (internal.handlererror)
 			internal.handlererror(internal.server, err);
 		lacewing::error_delete(err);
@@ -2194,9 +2184,7 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 		// Note: at this point ID is used from server buffer, but Connect Request hasn't been triggered,
 		// so using ID or name will make no sense as there'd be no preceeding Connect Request.
 
-		char addrLocal[64];
-		lw_addr_prettystring(client->address.c_str(), addrLocal, sizeof(addrLocal));
-		error->add("Dropping connecting client from IP %s for sending messages before connection was approved", addrLocal, 0);
+		error->add("Dropping connecting client from IP %s for sending messages before connection was approved", client->address.c_str(), 0);
 
 		handlererror(server, error);
 
