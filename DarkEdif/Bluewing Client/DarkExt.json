@@ -818,7 +818,7 @@
 			{
 				"Title": "%o : On number message from server on subchannel %0 (blasted)",
 				"Triggered": true,
-				"Parameters":  [
+				"Parameters": [
 					[ "Integer", "Subchannel (-1 for any)" ]
 				]
 			},

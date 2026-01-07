@@ -56,9 +56,11 @@ namespace lacewing
 		// Searches for the first channel by id number, null if no match
 		std::shared_ptr<relayclient::channel> findchannelbyid(lw_ui16 id);
 
-		// message: used by lacewing internal (e.g. automatic ping response)
-		// messageMF: used by program
+		// message: used by lacewing internal - used by event pump thread,
+		// for automatic ping replies, TCP raw connect -> Lacewing connect request
+		// messageMF: used by user code, for sending user messages
 		framebuilder message, messageMF;
+
 		// If set, udp local address that we will use to send from.
 		// This should stay consistent across reconnect attempts.
 		// @remarks If unset, OS pick is used, which may be subject to

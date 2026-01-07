@@ -339,7 +339,7 @@ void client_tick (lwp_ws_client client)
 		if (ctx->client.ws->timeout != 0 &&
 			(time(0) - ctx->last_activity) > ctx->client.ws->timeout)
 		{
-			lwp_trace("Force-closing WebSocket connection due to no acknowledgement of close packet (%s)",
+			always_log ("Force-closing WebSocket connection due to no acknowledgement of close packet (%s)",
 				lw_addr_tostring (lw_server_client_remote_addr (ctx->client.socket), lw_addr_tostring_flag_box_ipv6));
 
 			lw_stream_close((lw_stream)ctx->client.socket, lw_true);
@@ -350,7 +350,7 @@ void client_tick (lwp_ws_client client)
 	if (ctx->request->responded
 		 && (time(0) - ctx->last_activity) > ctx->client.ws->timeout)
 	{
-	  lwp_trace ("Dropping HTTP connection due to inactivity (%s)",
+	  always_log ("Dropping HTTP connection due to inactivity (%s)",
 			lw_addr_tostring (lw_server_client_remote_addr (ctx->client.socket), lw_addr_tostring_flag_box_ipv6));
 
 	  lw_stream_close ((lw_stream) ctx->client.socket, lw_true);

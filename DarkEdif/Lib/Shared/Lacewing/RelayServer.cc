@@ -1431,7 +1431,7 @@ void relayserver::host_websocket(lw_ui16 portNonSecure, lw_ui16 portSecure)
 {
 	if (portNonSecure)
 	{
-		// If hosting on port < 1024 on Unix-based OS, make sure you have root priviledges
+		// If hosting on port < 1024 on Unix-based OS, make sure you have root privileges
 		websocket->host(portNonSecure);
 		assert(websocket->hosting());
 	}
@@ -1451,7 +1451,7 @@ void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::fi
 {
 	if (filterNonSecure->local_port())
 	{
-		// If hosting on port < 1024 on Unix-based OS, make sure you have root priviledges
+		// If hosting on port < 1024 on Unix-based OS, make sure you have root privileges
 		websocket->host(filterNonSecure);
 		assert(websocket->hosting());
 	}
@@ -1816,7 +1816,7 @@ bool relayserverinternal::queue_or_run_action(bool wasDequeued, action::type act
 	std::shared_ptr<lacewing::relayserver::client> cli, std::string_view reason)
 {
 	// We're not the action-applying thread, so we have to wait to run this, to prevent server ticking thread + this thread clashing
-	// In single-threaded server scenarios, this will be true on main thread.
+	// In single-threaded server scenarios, this should be false.
 	if (!isactiontimerthread())
 	{
 		auto aqWriteLock = lock_queueaction.createWriteLock();
@@ -2042,7 +2042,7 @@ bool relayserver::client::checkname(std::string_view name)
 				rejectCharAsStr[numBytesUsed] = '\0';
 			}
 
-			int lenNoNull = lw_sprintf_s(buffer, "name not valid (char U+%0.4X '%s' rejected)", rejectedCodePoint, (char *)rejectCharAsStr);
+			int lenNoNull = lw_sprintf_s(buffer, sizeof(buffer), "name not valid (char U+%0.4X '%s' rejected)", rejectedCodePoint, (char*)rejectCharAsStr);
 			builder.add(buffer, lenNoNull);
 		}
 
@@ -3024,6 +3024,7 @@ void relayserver::setwelcomemessage(std::string_view message)
 {
 	lacewing::writelock serverMetaWriteLock = lock_meta.createWriteLock();
 	relayserverinternal& serverinternal = *(relayserverinternal *)internaltag;
+	assert(message.empty() || message.find_first_of('\0') == std::string_view::npos);
 	serverinternal.welcomemessage = message;
 }
 
@@ -3104,7 +3105,8 @@ bool relayserver::client::istrusted() const
 
 std::vector<std::shared_ptr<lacewing::relayserver::channel>> & relayserver::client::getchannels()
 {
-	lock.checkHoldsRead();
+	// Hack to allow bluewing-cpp-server to acesss channels while it holds write lock
+	lock.checkHoldsWrite(false) || lock.checkHoldsRead();
 	return channels;
 }
 
@@ -3318,7 +3320,7 @@ void relayserver::connect_response(
 	builder.add <lw_ui8>(1);  /* success */
 
 	builder.add <lw_ui16>(client->_id);
-	builder.add(serverI.welcomemessage);
+	builder.add(serverI.welcomemessage); // not null terminated
 
 	builder.send(client->socket);
 
@@ -3600,16 +3602,16 @@ void relayserver::nameset_response(std::shared_ptr<relayserver::client> client,
 	{
 		static char const * const end = "pproved client name is null or empty. Name refused.";
 		if (denyReason != nullptr)
-			lw_sprintf_s(newDenyReason, "%.*s\r\nPlus a%s", (lw_i32)denyReason.size(), denyReason.data(), end);
+			lw_sprintf_s(newDenyReason, sizeof(newDenyReason), "%.*s\r\nPlus a%s", (lw_i32)denyReason.size(), denyReason.data(), end);
 		else
-			lw_sprintf_s(newDenyReason, "A%s", end);
+			lw_sprintf_s(newDenyReason, sizeof(newDenyReason), "A%s", end);
 		denyReason = newDenyReason;
 	}
 	else
 	{
 		if (newClientName.size() > 255U)
 		{
-			lw_sprintf_s(newDenyReason, "New client name \"%.10s...\" (%u chars) is too long. Name must be 255 chars maximum.", newClientName.data(), (std::uint32_t)newClientName.size());
+			lw_sprintf_s(newDenyReason, sizeof(newDenyReason), "New client name \"%.10s...\" (%u chars) is too long. Name must be 255 chars maximum.", newClientName.data(), (std::uint32_t)newClientName.size());
 			denyReason = newDenyReason;
 			newClientName = newClientName.substr(0, 255);
 		}

@@ -740,7 +740,7 @@ typedef enum _lw_addr_tostring_flags
 #ifdef _MSC_VER
 	#define lw_sprintf_s sprintf_s
 #else
-	#define lw_sprintf_s sprintf
+	#define lw_sprintf_s(a,b,...) sprintf(a, __VA_ARGS__)
 #endif // _MSC_VER
 
 // Every Unicode library decomposes into 4-byte chars, probably for the x86 nativeness, and

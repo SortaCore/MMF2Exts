@@ -345,14 +345,14 @@ void * lw_server_tag (lw_server ctx)
 {
 	return ctx->tag;
 }
-void on_ssl_error (lw_server_client client, lw_error error)
+void on_tls_error (lw_server_client client, lw_error error)
 {
-	lw_error_addf(error, "SSL error");
+	lw_error_addf(error, "TLS error");
 
 	if (client->server->on_error)
 		client->server->on_error(client->server, error);
 
-	// SSL errors are generally unrecoverable
+	// TLS errors are generally unrecoverable
 	lw_stream_close((lw_stream)client, lw_true);
 }
 
@@ -378,7 +378,7 @@ lw_server_client lwp_server_client_new (lw_server ctx, SOCKET socket, lw_pump_wa
 	if (ctx->cert_loaded)
 	{
 		lwp_serverssl_init (&client->ssl, ctx->ssl_creds, client);
-		client->ssl.ssl.handle_error = on_ssl_error;
+		client->ssl.ssl.handle_error = on_tls_error;
 	}
 
 	// TODO: LEAK: watch can sometimes be null in caller, but fdstream init always makes one,
@@ -902,12 +902,12 @@ lw_bool lw_server_load_sys_cert (lw_server ctx,
 			if (!tm || strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", tm) < 0)
 				always_log("time conversion failed, error %d", errno);
 			else
-				always_log("SSL certificate will expire at %s (local time).", buff);
+				always_log("TLS certificate will expire at %s (local time).", buff);
 
 			if (difftime(tmt, time(NULL)) < 0)
 			{
 				lw_error error = lw_error_new();
-				lw_error_addf(error, "SSL certificate expired already, at %s (local time)", buff);
+				lw_error_addf(error, "TLS certificate expired already, at %s (local time)", buff);
 
 				if (ctx->on_error)
 					ctx->on_error(ctx, error);
@@ -1028,7 +1028,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 	if (passphrase && passphrase[0] == '\0')
 		passphrase = NULL;
 
-	// Certificates for SSL are managed in three+ layers. Each layer confirms the next one is valid.
+	// Certificates for SSL are managed in a chain of three+ links. Each link confirms the next one is valid.
 	// The root certificate is stored in OS and/or browser, updated regularly and held by the largest security companies.
 	// The intermediate certificate(s) is the resellers and middle-men. There can be more than one of these.
 	// The top-level or end certificate is your personal one.
@@ -1382,12 +1382,12 @@ lw_bool lw_server_load_cert_file (lw_server ctx,
 		if (!tm || strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", tm) < 0)
 			always_log("time conversion failed, error %d", errno);
 		else
-			always_log("SSL certificate will expire at %s (local time).", buff);
+			always_log("TLS certificate will expire at %s (local time).", buff);
 
 		if (difftime(tmt, time(NULL)) < 0)
 		{
 			lw_error error = lw_error_new();
-			lw_error_addf(error, "SSL certificate expired already, at %s (local time)", buff);
+			lw_error_addf(error, "TLS certificate expired already, at %s (local time)", buff);
 
 			if (ctx->on_error)
 				ctx->on_error(ctx, error);
