@@ -277,6 +277,7 @@ public:
 	bool DoesClientNameExist(const TCHAR * clientName);
 	bool DoesClientIDExist(int clientID);
 	bool IsWebSocketHosting(const TCHAR * serverType);
+	bool OnNetworkChange(const TCHAR * changeType);
 
 	/// Expressions
 
@@ -450,6 +451,9 @@ struct Extension::GlobalInfo final
 	void SetLocalData(std::shared_ptr<lacewing::relayserver::channel> channel, std::tstring key, std::tstring value);
 	void ClearLocalData(std::shared_ptr<lacewing::relayserver::client> client);
 	void ClearLocalData(std::shared_ptr<lacewing::relayserver::channel> channel);
+
+	// Used for Lacewing network change callback
+	static void Static_NetworkChanged(lw_network_change_type type, void* globals);
 
 	// Current triggered event's or user-selected channel/client
 	std::shared_ptr<lacewing::relayserver::channel> selChannel = nullptr;

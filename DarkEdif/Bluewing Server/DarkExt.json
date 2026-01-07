@@ -236,6 +236,7 @@
 					[ 35, "On any message to peer" ]
 				]
 			],
+			[ 63, "On network changed"],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -1229,6 +1230,13 @@
 					[ "Text", "Client name to test" ],
 					[ "Integer", "Channel ID to test" ]
 				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", or \"changed\" for both)" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -1797,6 +1805,8 @@
 					[ 35, "Em qualquer mensagem enviada ao par" ]
 				]
 			],
+			// PORTUGUESE: RETRANSLATE 1 LINE
+			[ 63, "On network changed" ],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -2798,6 +2808,13 @@
 					[ "Text", "Client name to test" ],
 					[ "Integer", "Channel ID to test" ]
 				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", \"changed\")" ]
+				]
 			}
 		],
 		"Expressions": [
@@ -3363,6 +3380,7 @@
 					[ 35, "Lors de n'importe quel message à un pair" ]
 				]
 			],
+			[ 63, "On network changed" ],
 			"---"
 		],
 		"ExpressionMenu": [
@@ -4350,6 +4368,13 @@
 				"Parameters": [
 					[ "Text", "Client name to test" ],
 					[ "Integer", "Channel ID to test" ]
+				]
+			},
+			{
+				"Title": "%o : Network was %0",
+				"Triggered": true,
+				"Parameters": [
+					[ "Text", "Change type (\"added\", \"lost\", \"changed\")" ]
 				]
 			}
 		],

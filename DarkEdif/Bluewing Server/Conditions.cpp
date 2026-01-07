@@ -396,3 +396,20 @@ bool Extension::IsWebSocketHosting(const TCHAR * serverTypeParam)
 		DarkEdif::TStringToUTF8(serverTypeParam).c_str());
 	return false;
 }
+bool Extension::OnNetworkChange(const TCHAR* changeTypeParam)
+{
+	const std::string changeType = TStringToUTF8Simplified(changeTypeParam);
+	const bool added = (threadData->networkChanged.networkChangeType & lw_network_change_type_added) != 0,
+		lost = (threadData->networkChanged.networkChangeType & lw_network_change_type_lost) != 0;
+
+	if (changeType == "changed"sv)
+		return added || lost;
+	if (changeType == "added"sv)
+		return added;
+	if (changeType == "lost"sv)
+		return lost;
+
+	CreateError("On Network Changed condition passed an invalid parameter \"%s\". Expecting \"changed\", \"added\", or \"lost\". Returning false.",
+		DarkEdif::TStringToUTF8(changeTypeParam).c_str());
+	return false;
+}

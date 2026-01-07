@@ -198,6 +198,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkCondition(60, IsWebSocketHosting);
 		LinkCondition(61, IsClientOnChannel_ByChannelIDClientID);
 		LinkCondition(62, IsClientOnChannel_ByChannelIDClientName);
+		LinkCondition(63, OnNetworkChange);;
 	}
 	{
 		LinkExpression(0, Error);
@@ -550,10 +551,18 @@ Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA * const edPtr)
 
 	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ClientNames, list);
 	_server.setcodepointsallowedlist(lacewing::relayserver::codepointsallowlistindex::ChannelNames, list);
+
+	if (!lw_network_change_sub(lw_true, Extension::GlobalInfo::Static_NetworkChanged, this))
+		CreateError("Couldn't subscribe extension to network change notifs. OnNetworkChange condition will not trigger if IP changes.");
 }
 
 Extension::GlobalInfo::~GlobalInfo() noexcept(false)
 {
+	// Globals is dying, so there's probably no ext to report this error to,
+	// and if this handler is called it's going to read bad memory.
+	if (!lw_network_change_sub(lw_false, Extension::GlobalInfo::Static_NetworkChanged, this))
+		LOGE(_T("Couldn't unsubscribe extension from network change notifs."));
+
 	if (!extsHoldingGlobals.empty())
 		assert(false && "GlobalInfo dtor called prematurely.");
 
@@ -717,6 +726,10 @@ void Extension::GlobalInfo::AddEventF(bool twoEvents, int event1ID, int event2ID
 	newEvent2.InteractiveType = interactiveType;
 	newEvent2.channelCreate_Hidden = channelCreate_Hidden;
 	newEvent2.channelCreate_AutoClose = channelCreate_AutoClose;
+
+	// Extension::OnNetworkChange
+	if (event1ID == 63)
+		newEvent2.networkChanged.networkChangeType = (lw_network_change_type)subchannel;
 
 	lock.edif_lock(); // Needed before we access Extension
 
@@ -1104,6 +1117,11 @@ void Extension::GlobalInfo::ClearLocalData(std::shared_ptr<lacewing::relayserver
 {
 	channelLocal.erase(std::remove_if(channelLocal.begin(), channelLocal.end(),
 		[&](const auto &c) { return c.ptr == channel; }), channelLocal.end());
+}
+
+void Extension::GlobalInfo::Static_NetworkChanged(lw_network_change_type type, void* globals)
+{
+	((Extension::GlobalInfo*)globals)->AddEvent1(63, nullptr, nullptr, std::string_view(), type);
 }
 
 REFLAG Extension::Handle()

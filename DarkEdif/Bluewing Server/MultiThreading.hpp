@@ -45,6 +45,12 @@ struct EventToRun
 		struct {
 			std::string name;
 		} requested;
+
+		// When network changed (e.g. IP address lost/added)
+		struct {
+			std::string ipAddress; // not used yet, but allows union ctor to work normally
+			lw_network_change_type networkChangeType;
+		} networkChanged;
 	};
 	std::shared_ptr<lacewing::relayserver::channel> channel;
 	std::shared_ptr<lacewing::relayserver::client> senderClient; // By default the same as Client
