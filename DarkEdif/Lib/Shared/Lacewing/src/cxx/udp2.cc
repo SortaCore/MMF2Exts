@@ -51,9 +51,9 @@ lw_ui16 _udp::port ()
 	return lw_udp_port ((lw_udp) this);
 }
 
-void _udp::send (lacewing::address address, const char * data, size_t size)
+void _udp::send (lacewing::address from, lw_ui32 ifidx, lacewing::address to, const char * data, size_t size)
 {
-	lw_udp_send ((lw_udp) this, (lw_addr) address, data, size);
+	lw_udp_send ((lw_udp) this, (lw_addr)from, ifidx, (lw_addr) to, data, size);
 }
 
 void _udp::on_data (_udp::hook_data hook)

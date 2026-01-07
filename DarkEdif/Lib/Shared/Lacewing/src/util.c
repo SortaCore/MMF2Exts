@@ -9,9 +9,11 @@
 */
 
 #include "common.h"
+#include "address.h"
 
 void lwp_make_nonblocking(lwp_socket fd)
 {
+	// In Win32, use an overlapped socket
 #ifndef _WIN32
 	int orig = fcntl(fd, F_GETFL, 0);
 	int e = errno;
@@ -33,7 +35,12 @@ void lwp_setsockopt2(lwp_socket fd, int level, int option, const char * optName,
 {
 	if (setsockopt(fd, level, option, value, value_length) != 0)
 	{
-		always_log("setsockopt for option %s failed with error %d, continuing", optName, errno);
+#ifdef _WIN32
+		int err = WSAGetLastError();
+#else
+		int err = errno;
+#endif
+		always_log("setsockopt for option %s failed with error %d, continuing", optName, err);
 	}
 }
 
@@ -52,8 +59,17 @@ struct sockaddr_storage lwp_socket_addr (lwp_socket socket)
 
 	if (socket != -1)
 	{
-		addr_len = sizeof (addr);
-		getsockname (socket, (struct sockaddr *) &addr, &addr_len);
+		addr_len = sizeof (struct sockaddr_in6);
+		if (getsockname(socket, (struct sockaddr*)&addr, &addr_len) == -1)
+		{
+			always_log("getsockname reported error %i from socket %i.\n",
+#ifdef _WIN32
+				WSAGetLastError(),
+#else
+				errno,
+#endif
+				socket);
+		}
 	}
 
 	return addr;
@@ -138,6 +154,15 @@ lw_bool lwp_find_char (const char ** str, size_t * len, char c)
 	}
 
 	return lw_false;
+}
+
+// Replaces memcmp with something that has a useful return index
+lw_ui32 lw_memcmp_diff_index (const lw_ui8* const a, const lw_ui8* const b, const lw_ui32 size)
+{
+	for (lw_ui32 i = 0; i < size; ++i)
+		if (a[i] != b[i])
+			return i;
+	return -1;
 }
 
 void lwp_close_socket (lwp_socket socket)
@@ -436,6 +461,71 @@ static DWORD WINAPI publicFixedIPv6AddressHunterThread(LPVOID data)
 	free(addr);
 	return 0;
 }
+lw_ui32 lwp_get_ifidx(struct sockaddr_storage* ss)
+{
+	PIP_ADAPTER_ADDRESSES addr = (PIP_ADAPTER_ADDRESSES)malloc(16 * 1024);
+	if (!addr)
+		return -2;
+
+	struct sockaddr_in fake = { 0 };
+	if (ss->ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)ss)->sin6_addr))
+	{
+		fake.sin_port = ((struct sockaddr_in6*)ss)->sin6_port;
+		fake.sin_family = AF_INET;
+		fake.sin_addr.S_un.S_addr = ((lw_ui32*)&((struct sockaddr_in6*)ss)->sin6_addr)[3];
+		ss = (struct sockaddr_storage *)&fake;
+	}
+
+	if ((ss->ss_family == AF_INET && ((struct sockaddr_in*)ss)->sin_addr.s_addr == INADDR_ANY) ||
+		(ss->ss_family == AF_INET6 && !memcmp(&((struct sockaddr_in6*)ss)->sin6_addr, &in6addr_any, sizeof(struct in6_addr))))
+		return -1;
+
+	ULONG size = 16 * 1024; // recommended
+	DWORD errcode = (DWORD)GetAdaptersAddresses(ss->ss_family,
+		GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
+		NULL, (PIP_ADAPTER_ADDRESSES)addr, &size);
+
+	if (errcode != ERROR_SUCCESS)
+	{
+		free(addr);
+		return -2;
+	}
+
+	lw_ui32 ret = -1;
+	lw_addr curAddr = 0, passedAddr = lwp_addr_new_sockaddr((struct sockaddr*)ss);
+	for (PIP_ADAPTER_ADDRESSES addrL = addr; addrL; addrL = addrL->Next)
+	{
+		for (PIP_ADAPTER_UNICAST_ADDRESS unicast = addrL->FirstUnicastAddress; unicast; unicast = unicast->Next)
+		{
+			if (unicast->Address.lpSockaddr->sa_family != ss->ss_family)
+				continue;
+
+			lw_addr_delete(curAddr);
+			curAddr = lwp_addr_new_sockaddr((struct sockaddr*)unicast->Address.lpSockaddr);
+			if (lwp_sockaddr_equal((struct sockaddr *)ss, (struct sockaddr*)unicast->Address.lpSockaddr))
+			{
+				ret = ss->ss_family == AF_INET6 ? addrL->Ipv6IfIndex : addrL->IfIndex;
+				break;
+			}
+
+			lw_log_if_debug("Difference in addresses: \"%s\" does not match \"%s\".\n",
+				lw_addr_tostring(curAddr, lw_addr_tostring_flag_remove_port),
+				lw_addr_tostring(passedAddr, lw_addr_tostring_flag_remove_port));
+		}
+	}
+	if (ret == -1)
+	{
+		lw_log_if_debug("Could not find any matching interface for \"%s\".\n",
+			lw_addr_tostring(passedAddr, lw_addr_tostring_flag_remove_port));
+		LacewingFatalErrorMsgBox();
+	}
+	lw_addr_delete(curAddr);
+	lw_addr_delete(passedAddr);
+
+	free(addr);
+	return ret;
+}
+
 
 #else // not _WIN32
 #include <sys/types.h>
@@ -783,6 +873,126 @@ static void * publicFixedIPv6AddressHunterThread(void * data)
 	if (libc)
 		dlclose(libc);
 	return 0;
+}
+
+lw_ui32 lwp_get_ifidx(struct sockaddr_storage* ss)
+{
+	if (ss->ss_family != AF_INET && ss->ss_family != AF_INET6)
+		return -2;
+
+	struct ifaddrs* ifaddr = NULL, * ifa;
+
+	// Android SDK may target too early, in which case OS libc has getifaddrs,
+	// but we can't link to it at build time
+	getifaddrs_func my_getifaddrs = NULL, my_getifaddrs2 = NULL;
+	freeifaddrs_func my_freeifaddrs = NULL, my_freeifaddrs2 = NULL;
+	void* libc = NULL;
+#if !defined(__APPLE__) || (defined(__ANDROID__) && __ANDROID_API__ < 24)
+	my_getifaddrs2 = netlink_getifaddrs;
+	my_freeifaddrs2 = netlink_freeifaddrs;
+#endif
+#if !defined(__ANDROID__) || __ANDROID_API__ >= 24
+	// iOS, Mac, Linux, and Android SDK 24+: link getifaddrs directly
+	my_getifaddrs = getifaddrs;
+	my_freeifaddrs = freeifaddrs;
+#else
+	libc = dlopen("libc.so", RTLD_LAZY);
+	if (!libc) {
+		lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). SO file could not be dynamically opened. Error %d.", errno);
+	}
+	else
+	{
+		my_getifaddrs = (getifaddrs_func)dlsym(libc, "getifaddrs");
+		my_freeifaddrs = (freeifaddrs_func)dlsym(libc, "freeifaddrs");
+
+		if (!my_getifaddrs || !my_freeifaddrs)
+		{
+			lwp_trace("Couldn't read IPv6 remote address from adapters (getifaddrs). Function could not be dynamically linked. Error %d.", errno);
+			dlclose(libc);
+			libc = NULL;
+		}
+	}
+#endif
+
+	if (!my_getifaddrs || my_getifaddrs(&ifaddr) == -1)
+	{
+		if (my_getifaddrs) {
+			lwp_trace("getifaddrs failed with error %d", errno);
+		}
+		if (libc)
+		{
+			dlclose(libc);
+			libc = NULL;
+		}
+
+		if (!my_getifaddrs2)
+			return -2;
+
+		if (my_getifaddrs2(&ifaddr) == -1)
+		{
+			lwp_trace("netlink_getifaddrs also failed with error %d", errno);
+			return -2;
+		}
+
+		my_freeifaddrs = my_freeifaddrs2;
+	}
+
+	struct sockaddr_in fake = { 0 };
+	if (ss->ss_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)ss)->sin6_addr))
+	{
+		fake.sin_port = ((struct sockaddr_in6*)ss)->sin6_port;
+		fake.sin_family = AF_INET;
+		fake.sin_addr.s_addr = ((lw_ui32*)&((struct sockaddr_in6*)ss)->sin6_addr)[3];
+		ss = (struct sockaddr_storage*)&fake;
+	}
+
+	if ((ss->ss_family == AF_INET && ((struct sockaddr_in*)ss)->sin_addr.s_addr == INADDR_ANY) ||
+		(ss->ss_family == AF_INET6 && !memcmp(&((struct sockaddr_in6*)ss)->sin6_addr, &in6addr_any, sizeof(struct in6_addr))))
+		return -1;
+
+	lw_ui32 ret = -1;
+	lw_addr curAddr = 0, netAddr = 0, passedAddr = lwp_addr_new_sockaddr((struct sockaddr*)ss);
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+	{
+		if (!ifa->ifa_addr || ss->ss_family != ifa->ifa_addr->sa_family)
+			continue;
+
+		if (!curAddr)
+		{
+			curAddr = lwp_addr_new_sockaddr(ifa->ifa_addr);
+			netAddr = lwp_addr_new_sockaddr(ifa->ifa_netmask);
+		}
+		else
+		{
+			lwp_addr_set_sockaddr(curAddr, ifa->ifa_addr);
+			lwp_addr_set_sockaddr(curAddr, ifa->ifa_netmask);
+		}
+		
+		lwp_trace("Difference in addresses: \"%s\" does not match \"%s\". Netmask: \"%s\".",
+			lw_addr_tostring(curAddr, lw_addr_tostring_flag_remove_port),
+			lw_addr_tostring(passedAddr, lw_addr_tostring_flag_remove_port),
+			lw_addr_tostring(netAddr, lw_addr_tostring_flag_remove_port));
+		if (lwp_sockaddr_equal_netmask((struct sockaddr *)ss, ifa->ifa_addr, ifa->ifa_netmask))
+		{
+			ret = if_nametoindex(ifa->ifa_name);
+			break;
+		}
+	}
+
+	if (ret == -1)
+	{
+		always_log("Could not find any matching interface for \"%s\".",
+			lw_addr_tostring(passedAddr, lw_addr_tostring_flag_remove_port));
+		LacewingFatalErrorMsgBox();
+	}
+	lw_addr_delete(curAddr);
+	lw_addr_delete(netAddr);
+	lw_addr_delete(passedAddr);
+
+	my_freeifaddrs(ifaddr);
+	if (libc)
+		dlclose(libc);
+	return ret;
 }
 
 // restore sign conversion complaints

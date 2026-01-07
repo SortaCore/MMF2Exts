@@ -270,7 +270,10 @@ struct relayserverinternal
 			// enough to keep the UDP psuedo-connections open in routers... assuming, of course, that the UDP packet
 			// goes all the way to the client and thus through all the routers.
 			if (!client->socket->is_websocket() && msElapsedUDP >= udpKeepAliveMS)
-				msgBuilderUDP.send(server.udp, client->udpaddress, false);
+			{
+				msgBuilderUDP.send(client->udppunch ? client->udppunch : server.udp,
+					client->udplocaladdress, client->ifidx, client->udpremoteaddress, false);
+			}
 		}
 
 		if (pingUnresponsivesToDisconnect.empty() && inactivesToDisconnects.empty())
@@ -431,7 +434,8 @@ struct relayserverinternal
 	void generic_handlerconnect(lacewing::server server, lacewing::server_client clientsocket);
 	void generic_handlerdisconnect(lacewing::server server, lacewing::server_client clientsocket);
 	void generic_handlerreceive(lacewing::server server, lacewing::server_client clientsocket, std::string_view data);
-	void generic_handlerudpreceive(lacewing::udp udp, lacewing::address address, std::string_view data);
+	void generic_handlerudpreceive(lacewing::udp udp, lacewing::address local_address, lw_ui32 ifidx,
+		lacewing::address remote_address, std::string_view data);
 
 	// Don't ask
 	static bool tcpmessagehandler(void * tag, lw_ui8 type, const char * message, size_t size);
@@ -447,17 +451,19 @@ struct relayserverinternal
 
 void handlerudperror(lacewing::udp udp, lacewing::error error);
 
-void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing::address address, std::string_view data)
+void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing::address local_address, lw_ui32 ifidx,
+	lacewing::address remote_address, std::string_view data)
 {
 	// While we don't process the full message here, we do read the sending UDP client ID,
 	// in order to call the right clientsocket's messagehandler().
 	// Originally outside of relayserverinternal, but we need those delectable protected members.
-
+	assert(local_address && remote_address);
 	if (data.size() < (1 + sizeof(unsigned short)))
 		return;
 
 	const lw_ui8 type = *(lw_ui8 *)data.data();
 	const lw_ui16 id = *(lw_ui16 *)(data.data() + 1);
+	const lw_addr_tostring_flags stringflags = (lw_addr_tostring_flags)(lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_unmap_ipv6);
 
 	if (id == 0xFFFF)
 		return; // this is a placeholder number, and normally indicates error with client
@@ -470,11 +476,12 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 		if (clientsocket->_id == id)
 		{
 			serverClientListReadLock.lw_unlock();
+			auto clientWriteLock = clientsocket->lock.createWriteLock();
 
 			// Note the dereference here. You can do lacewing::address == lacewing::_address,
 			// but not any other combo.
 			// This compares IP only, ignoring ports.
-			if (*clientsocket->udpaddress != address)
+			if (*clientsocket->udpremoteaddress != remote_address)
 			{
 				// A client ID was used by the wrong IPv4... hack attempt, or IP is behind double-NAT,
 				// such as T-Mobile CG-NAT, and the TCP + UDP have different IPs.
@@ -489,21 +496,26 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				// IPv6 doesn't use NAT, so in theory there should never be an IPv6 difference.
 				// Note that IPv6+4 server sockets always report their IPv4 clients as IPv6 addresses
 				// (mapped to IPv4), so we can't use address->ipv6().
-				const struct in6_addr addrIn6 = address->toin6_addr();
-				if (clientsocket->lockedUDPAddress || !IN6_IS_ADDR_V4MAPPED(&addrIn6))
+				const struct in6_addr addrIn6 = remote_address->toin6_addr();
+				if (clientsocket->lockedUDPAddress)
 				{
 					// To prevent log slowing the server down, we don't report UDP impersonation.
-					// Code to reply with ICMP unreachable is in the #if 0 later.
 					#ifdef _lacewing_debug
 					error error = error_new();
 					error->add("Dropping message");
 					error->add("locked = %s, ipv6 = %s, v4 mapped = %s", clientsocket->lockedUDPAddress ? "yes" : "no",
-						address->ipv6() ? "yes" : "no", IN6_IS_ADDR_V4MAPPED(&addrIn6) ? "yes" : "no"
+						remote_address->ipv6() ? "yes" : "no", IN6_IS_ADDR_V4MAPPED(&addrIn6) ? "yes" : "no"
 					);
-					error->add("Message IP \"%s\", client IP \"%s\".", address->tostring(), clientsocket->udpaddress->tostring());
-					error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP.", id);
+					error->add("Message remote IP \"%s\", client remote IP \"%s\".", remote_address->tostring(stringflags), clientsocket->udpremoteaddress->tostring(stringflags));
+					error->add("Received a UDP message (supposedly) from Client ID %i (version %s), but message doesn't have that client's IP.", id,
+						clientsocket->getimplementation());
 					handlerudperror(udp, error);
 					error_delete(error);
+					if (error)
+					{
+						handlerudperror(udp, error);
+						error_delete(error);
+					}
 					#endif // _lacewing_debug
 					return;
 				}
@@ -512,55 +524,107 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				if (clientsocket->pseudoUDP)
 					return;
 
+				// Unlocked UDP remote address: does incoming datagram match TCP remote address?
+				// We don't require a full match for an unlocked IP address.
+				// IP may mismatch between TCP + UDP even for a valid client, if NAT is getting involved on either side.
+				const lw_ui32 cmp = lw_memcmp_diff_index((const unsigned char*)&clientsocket->addressInt, (const unsigned char*)&addrIn6, sizeof(addrIn6));
+				if (cmp != -1)
+				{
+					const lw_bool isIPv4Mapped = IN6_IS_ADDR_V4MAPPED(&addrIn6);
+					lw_log_if_debug("!!! Mismatch %s IP detected. Differs at index %u.\n",
+						remote_address->ipv6() ? (isIPv4Mapped ? "ipv4-mapped" : "ipv6") : "ipv4", cmp);
+					// If IP is IPv4, under CG-NAT, it should match by first two IPv4 bytes, but not necessarily the rest.
+					// IPv6 takes up 4 bytes of padding before IPv4, so we expect at least a match up to 6.
+					if (!isIPv4Mapped || cmp < 6)
+						return;
+				}
+
 				// Got a UDP address for this client
-				lwp_trace("Locked UDP address for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
-					clientsocket->udpaddress->tostring(), address->tostring());
-				auto clientWriteLock = clientsocket->lock.createWriteLock();
-				lacewing::address_delete(clientsocket->udpaddress);
-				clientsocket->udpaddress = lacewing::address_new(address);
+				lwp_trace("Locked UDP address for client ID %hu, from \"%s\" to \"%s\".\n", clientsocket->id(),
+					clientsocket->udpremoteaddress->tostring(stringflags), remote_address->tostring(stringflags));
+
+				//auto clientWriteLock = clientsocket->lock.createWriteLock();
+				lacewing::address_delete(clientsocket->udplocaladdress);
+				lacewing::address_delete(clientsocket->udpremoteaddress);
+				clientsocket->udplocaladdress = lacewing::address_new(local_address);
+				clientsocket->ifidx = ifidx;
+				clientsocket->udpremoteaddress = lacewing::address_new(remote_address);
 				clientsocket->lockedUDPAddress = true;
-
-#if false
-
+#ifdef _DEBUG
 				// faulty clients can use ID 0xFFFF and 0x0000
-
-				serverClientListReadLock.lw_relock();
-
-				std::shared_ptr<relayserver::client> realSender = nullptr;
-				for (const auto& cs : clients)
+				if (id != 0 && id != 0xFFFF)
 				{
-					if (*cs->udpaddress == address)
+
+					serverClientListReadLock.lw_relock();
+
+					std::shared_ptr<relayserver::client> realSender = nullptr;
+					for (const auto& cs : clients)
 					{
-						realSender = cs;
-						break;
+						if (*cs->udpremoteaddress == remote_address)
+						{
+							realSender = cs;
+							break;
+						}
 					}
-				}
 
-				error error = error_new();
-				error->add("Dropping message");
-				if (realSender)
-				{
-					error->add("Message ACTUALLY originated from client ID %hu, on IP %s. Disconnecting client for impersonation attempt. ",
-						realSender->id(), realSender->address);
-					realSender->socket->close();
+					error error = error_new();
+					error->add("Dropping message");
+					if (realSender)
+					{
+						error->add("Message may ACTUALLY have originated from client ID %hu, on IP \"%s\".",
+							realSender->id(), realSender->udpremoteaddress->tostring(stringflags));
+						// realSender->socket->close();
+					}
+					error->add("Message IP \"%s\", client IP \"%s\".", remote_address->tostring(stringflags),
+						clientsocket->udpremoteaddress->tostring(stringflags));
+					error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP.", id);
+					handlerudperror(udp, error);
+					error_delete(error);
 				}
-				error->add("Message IP \"%s\", client IP \"%s\".", address->tostring(), clientsocket->udpaddress->tostring());
-				error->add("Received a UDP message (supposedly) from Client ID %i, but message doesn't have that client's IP.", id);
+#endif // _DEBUG
+			}
+			else if (!clientsocket->lockedUDPAddress)
+			{
+				// IP matches, but port does not; the remote port used by a client on UDP often differs from TCP,
+				// due to NAT
+				if (clientsocket->udpremoteaddress->port() != remote_address->port())
+				{
+					lw_log_if_debug("Locked UDP address (port-only) for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
+						clientsocket->udpremoteaddress->tostring(stringflags), remote_address->tostring(stringflags));
+
+					//auto clientWriteLock = clientsocket->lock.createWriteLock();
+					clientsocket->udpremoteaddress->port(remote_address->port());
+				}
+				if (*local_address != clientsocket->udplocaladdress)
+				{
+					lw_log_if_debug("Switched local UDP address for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
+						clientsocket->udplocaladdress->tostring(stringflags), local_address->tostring(stringflags));
+					//auto clientWriteLock = clientsocket->lock.createWriteLock();
+					clientsocket->udplocaladdress = lacewing::address_new(local_address);
+					clientsocket->ifidx = ifidx;
+				}
+				clientsocket->lockedUDPAddress = true;
+			}
+			// else remote IP matches, and locked: we should be good. If local address changed, something went rather wrong on our side.
+			else if (*local_address != clientsocket->udplocaladdress)
+			{
+				//auto clientWriteLock = clientsocket->lock.createWriteLock();
+				const struct in6_addr addrIn6 = remote_address->toin6_addr();
+				error error = error_new();
+				error->add("locked = %s, ipv6 = %s, v4 mapped = %s", clientsocket->lockedUDPAddress ? "yes" : "no",
+					remote_address->ipv6() ? "yes" : "no", IN6_IS_ADDR_V4MAPPED(&addrIn6) ? "yes" : "no"
+				);
+				error->add("Message local IP \"%s\", client local IP \"%s\"; remote IP \"%s\".",
+					local_address->tostring(stringflags), clientsocket->udplocaladdress->tostring(stringflags),
+					clientsocket->udpremoteaddress->tostring(stringflags));
+				error->add("Received a UDP message from Client ID %i (version %s), but message doesn't have expected local IP. Switching.", id,
+					clientsocket->getimplementation());
 				handlerudperror(udp, error);
 				error_delete(error);
-				return;
-#endif
+				clientsocket->udplocaladdress = lacewing::address_new(local_address);
+				clientsocket->ifidx = ifidx;
 			}
-			// IP matches, but port does not; the remote port used by a client on UDP often differs from TCP
-			else if (!clientsocket->lockedUDPAddress && clientsocket->udpaddress->port() != address->port())
-			{
-				lwp_trace("Locked UDP address (port-only) for client ID %hu, from \"%s\" to \"%s\".", clientsocket->id(),
-					clientsocket->udpaddress->tostring(), address->tostring());
 
-				auto clientWriteLock = clientsocket->lock.createWriteLock();
-				clientsocket->udpaddress->port(address->port());
-				clientsocket->lockedUDPAddress = true;
-			}
 
 			// A client ID is set to only have "fake UDP" but used real UDP.
 			// Pseudo setting is wrong, but IP is correct?
@@ -574,6 +638,11 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 				return;
 			}
 
+			if (*local_address != clientsocket->udplocaladdress)
+				lw_log_if_debug("Local address mismatch: \"%s\" does not match \"%s\".", local_address->tostring(stringflags),
+					clientsocket->udplocaladdress->tostring(stringflags));
+
+			clientWriteLock.lw_unlock();
 			client_messagehandler(clientsocket, type, data, true);
 			return;
 		}
@@ -848,7 +917,8 @@ void relayserver::client::PeerToPeer(relayserver &server, std::shared_ptr<relays
 	if (blasted && !receivingClient->pseudoUDP)
 	{
 		auto serverUDPWriteLock = server.lock_udp.createWriteLock();
-		builder.send(server.udp, receivingClient->udpaddress);
+		builder.send(receivingClient->udppunch ? receivingClient->udppunch : server.udp,
+			receivingClient->udplocaladdress, receivingClient->ifidx, receivingClient->udpremoteaddress);
 	}
 	else
 		builder.send(receivingClient->socket);
@@ -940,7 +1010,8 @@ void relayserverinternal::generic_handlerconnect(lacewing::server server, lacewi
 		if (c == clientsocket)
 			continue;
 
-		if (c->address() == clientsocket->address())
+		// Need a * before first one here
+		if (*c->remote_address() == clientsocket->remote_address())
 		{
 			++numMatchIPTotal;
 			if (numTotalClientsPerIP < numMatchIPTotal)
@@ -975,10 +1046,10 @@ void relayserverinternal::generic_handlerconnect(lacewing::server server, lacewi
 	}
 
 	// Add client to server's client list
-	auto newClient = std::make_shared<relayserver::client>(*this, clientsocket);
-	lw_server_client_set_relay_tag((lw_server_client)clientsocket, newClient.get());
 	{
 		auto serverClientListWriteLock = this->server.lock_clientlist.createWriteLock();
+		auto newClient = std::make_shared<relayserver::client>(*this, clientsocket);
+		lw_server_client_set_relay_tag((lw_server_client)clientsocket, newClient.get());
 		this->clients.push_back(newClient);
 	}
 
@@ -998,7 +1069,13 @@ void relayserverinternal::generic_handlerdisconnect(lacewing::server server, lac
 	if (!client)
 	{
 		std::stringstream err;
-		err << "generic_handlerdisconnect: disconnect by client with null tag."sv;
+		err << "generic_handlerdisconnect: disconnect by client that never Relay connected; remote address \""sv
+			<< clientsocket->remote_address()->tostring() << "\", local address "sv;
+		lacewing::address local = clientsocket->local_address();
+		if (local)
+			err << '"' << local->tostring() << "\"."sv;
+		else
+			err << "NULL."sv;
 		makestrstrerror(err);
 		return;
 	}
@@ -1261,10 +1338,11 @@ void handlerudperror(lacewing::udp udp, lacewing::error error)
 		internal.handlererror(internal.server, error);
 }
 
-void handlerudpreceive(lacewing::udp udp, lacewing::address address, char * data, size_t size)
+void handlerudpreceive(lacewing::udp udp, lacewing::address local_address, lw_ui32 ifidx,
+	lacewing::address remote_address, char* data, size_t size)
 {
 	relayserverinternal &internal = *(relayserverinternal *)udp->tag();
-	internal.generic_handlerudpreceive(udp, address, std::string_view(data, size));
+	internal.generic_handlerudpreceive(udp, local_address, ifidx, remote_address, std::string_view(data, size));
 }
 
 void handlerwebserverget(lacewing::webserver webserver, lacewing::webserver_request req)
@@ -1409,7 +1487,8 @@ relayserver::relayserver(lacewing::pump pump) noexcept :
 	socket(lacewing::server_new(pump)),
 	websocket(lacewing::webserver_new(pump)),
 	udp(lacewing::udp_new(pump)),
-	flash(lacewing::flashpolicy_new(pump))
+	flash(lacewing::flashpolicy_new(pump)),
+	pmp(pump)
 {
 	// lwp_init() not needed
 
@@ -1469,16 +1548,15 @@ void relayserver::host(lw_ui16 port)
 {
 	lacewing::filter filter = lacewing::filter_new();
 	filter->local_port(port);
-	
-	// If hole punch is used, the socket we're about to host from should be reused
-	// as it was initially used for a hole punch connect call
-	if (hole_punch_used)
-	{
-		filter->reuse(true);
-		// TODO: When 1:1 server-client hole punching is removed, note this line
-		// that allows server sockets to inherit from the hole puncher socket
-		hole_punch_used = false;
-	}
+
+	// By default, don't let a second server host on this port.
+	filter->reuse(false);
+
+#ifdef _DEBUG
+	// But in debug, we allow it in case we force-kill the app, so the new server program
+	// won't be unable to host until OS closes the port reservation by time-out
+	filter->reuse(true);
+#endif
 
 	host(filter);
 	filter_delete(filter);
@@ -1487,9 +1565,6 @@ void relayserver::host(lacewing::filter &_filter)
 {
 	// temp copy to override port
 	lacewing::filter filter = (lacewing::filter)lw_filter_clone((lw_filter)_filter);
-
-	// Don't let a second server host on this port.
-	filter->reuse(false);
 
 	// If port is 0, make it 6121
 	if (!filter->local_port())
@@ -1550,8 +1625,26 @@ void relayserver::host_websocket(lacewing::filter& filterNonSecure, lacewing::fi
 
 void relayserver::hole_punch(const char* ip, lw_ui16 local_port)
 {
-	socket->hole_punch(ip, local_port);
-	hole_punch_used = true;
+	lacewing::address remote_addr = lacewing::address_new(ip, (lw_ui16)0); // port should get ignored
+	lacewing::error err = remote_addr->resolve();
+	if (err)
+	{
+		err->add("Invalid remote address for hole punch: \"%s\" could not be resolved.", ip);
+		((relayserverinternal*)internaltag)->handlererror(*this, err);
+		lacewing::error_delete(err);
+		return;
+	}
+	if (!remote_addr->port())
+	{
+		err = lacewing::error_new();
+		err->add("Invalid remote address for hole punch: \"%s\" does not have required remote port.", ip);
+		((relayserverinternal*)internaltag)->handlererror(*this, err);
+		lacewing::error_delete(err);
+		return;
+	}
+
+	socket->hole_punch(remote_addr, local_port);
+	// UDP hole punch is done in connect_response, where we have local address/IP
 }
 
 void relayserver::unhost()
@@ -2709,9 +2802,14 @@ bool relayserverinternal::client_messagehandler(std::shared_ptr<relayserver::cli
 
 			client->pseudoUDP = false;
 
-			builder.addheader (10, 0, true); /* udpwelcome */
-			builder.send	  (server.udp, client->udpaddress);
-
+			lw_log_if_debug("Got UDPHello from local address \"%s\", ifidx %u, remote \"%s\", attempting UDPWelcome reply.\n",
+				client->udplocaladdress->tostring(lw_addr_tostring_flag_box_ipv6),
+				client->ifidx,
+				client->udpremoteaddress->tostring(lw_addr_tostring_flag_box_ipv6));
+			builder.addheader(10, 0, true); /* udpwelcome */
+			builder.send(
+				client->udppunch ? client->udppunch : server.udp,
+				client->udplocaladdress, client->ifidx, client->udpremoteaddress);
 			break;
 		}
 		case 8: /* channelmaster */
@@ -2859,7 +2957,7 @@ void relayserver::client::blast(lw_ui8 subchannel, std::string_view message, lw_
 		if (pseudoUDP)
 			builder.send(this->socket);
 		else
-			builder.send(server.server.udp, udpaddress);
+			builder.send(udppunch ? udppunch : server.server.udp, udplocaladdress, ifidx, udpremoteaddress);
 	}
 }
 
@@ -2923,7 +3021,10 @@ void relayserver::channel::blast(lw_ui8 subchannel, std::string_view message, lw
 				builder.revert();
 			}
 			else
-				builder.send(server.server.udp, e->udpaddress, false);
+			{
+				builder.send(e->udppunch ? e->udppunch : server.server.udp, e->udplocaladdress,
+					e->ifidx, e->udpremoteaddress, false);
+			}
 		}
 	}
 }
@@ -2945,12 +3046,21 @@ void relayserver::channel::close()
 
 relayserver::client::client(relayserverinternal &internal, lacewing::server_client _socket) noexcept
 	: socket(_socket), server(internal),
-	udpaddress(lacewing::address_new(socket->address()))
+	udpremoteaddress(lacewing::address_new(socket->remote_address())),
+	udplocaladdress(lacewing::address_new(socket->local_address())),
+	ifidx(socket->ifidx())
 {
-	//public_.internaltag = this;
+	// Note: local udp address/ifidx of client not confirmed until we receive a packet,
+	// as some NAT may reroute entirely; CG-NAT for example. See lockedUDPAddress variable.
+	// For now, we default to TCP address ^, and lock down later. It is a minor security flaw though,
+	// as IP matching becomes very broad, and anyone in the range can identify as that ID,
+	// and interfere with the original client. I don't think they can become a middle-man for UDP,
+	// as they won't seem like server IP to the real client, but it can break the legit client's connection
+	// attempt.
+
 	tag = 0;
-	address = socket->address()->tostring();
-	addressInt = socket->address()->toin6_addr();
+	address = udpremoteaddress->tostring();
+	addressInt = udpremoteaddress->toin6_addr();
 
 	_id = internal.clientids.borrow();
 
@@ -3238,8 +3348,9 @@ relayserver::client::~client() noexcept
 
 	server.clientids.returnID(_id);
 
-	lacewing::address_delete(udpaddress);
-	udpaddress = nullptr;
+	lacewing::address_delete(udplocaladdress);
+	lacewing::address_delete(udpremoteaddress);
+	ifidx = -1;
 
 	// When refcount for the stream reaches 0, the stream will be freed.
 	// Note lw_stream_delete does not free, as the IO Completion port might still have
@@ -3378,6 +3489,49 @@ void relayserver::connect_response(
 		builder.addheader(12, 0);  /* request implementation */
 		builder.send(client->socket);
 		// response type 10. Only responded to by Bluewing Client b70+, Relay just ignores it
+	}
+
+	// If TCP hole punch connection, we need to send UDP message to open a route
+	// We can't do it much earlier as we don't know the local address/interface to use yet,
+	// and server may not have approved the responding connection, but the incoming TCP will
+	// provide a local address to match
+	if (client->socket->is_hole_punch())
+	{
+		// While we could reply to UDP punch with the regular server UDP socket,
+		// that means the client needs two port numbers to connect to, and socket
+		// inactivity timeout lifetimes might get involved if a socket closes unexpectedly
+		client->udppunch = lacewing::udp_new(pmp);
+		client->udppunch->on_data(handlerudpreceive);
+		client->udppunch->on_error(handlerudperror);
+		client->udppunch->tag(udp->tag());
+
+		// We don't pass remote address, as it will be too strict and prevent
+		// CG-NAT and other partial-match incoming client IPs
+		lacewing::filter filt = lacewing::filter_new();
+		filt->local_port(client->socket->local_address()->port());
+		filt->ipv6(client->socket->remote_address()->ipv6());
+		filt->reuse(true);
+		client->udppunch->host(filt);
+		// client->udplocaladdress = client->socket->local_address();
+		lw_log_if_debug("UDP hosting target port %hu. Attempting from local address \"%s\", ifidx %u, dest \"%s\".\n",
+			client->socket->local_address()->port(),
+			client->udplocaladdress->tostring(lw_addr_tostring_flag_box_ipv6), client->socket->ifidx(),
+			client->socket->remote_address()->tostring(lw_addr_tostring_flag_box_ipv6));
+		lw_log_if_debug("UDP for punch. Filter is %s; local IP is %s; remote IP is %s. For main server...\n",
+			filt->ipv6() ? "IPv6" : "IPv4",
+			client->udplocaladdress->ipv6() ? "IPv6" : "IPv4",
+			client->socket->remote_address()->ipv6() ? "IPv6" : "IPv4"
+		);
+		assert(client->udplocaladdress->ipv6() == client->udpremoteaddress->ipv6());
+		assert(client->udplocaladdress->ipv6() == client->socket->remote_address()->ipv6());
+
+		// UDP ping is type 11, variant 0. No data after, and no ID is sent server to client, just vice versa.
+		// So only 1 byte.
+		const lw_ui8 udpping = (lw_ui8)(11 << 4);
+		client->udppunch->send(client->socket->local_address(),
+			client->socket->ifidx(),
+			client->socket->remote_address(), (const char *)&udpping, 1);
+		lacewing::filter_delete(filt);
 	}
 }
 
@@ -3800,7 +3954,7 @@ void relayserver::channel::PeerToChannel(relayserver &server, std::shared_ptr<re
 			continue;
 
 		if (blasted && !e->pseudoUDP)
-			builder.send(server.udp, e->udpaddress, false);
+			builder.send(e->udppunch ? e->udppunch : server.udp, e->udplocaladdress, e->ifidx, e->udpremoteaddress, false);
 		else
 			builder.send(e->socket, false);
 	}

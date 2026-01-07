@@ -74,6 +74,21 @@ fn_WSASendMsg compat_WSASendMsg()
 	return fn ? fn : (fn = (fn_WSASendMsg) WS2_32 ("WSASendMsg"));
 }
 
+fn_WSARecvMsg compat_WSARecvMsg(SOCKET s)
+{
+	fn_WSARecvMsg fn = 0;
+
+	GUID ID = WSAID_WSARECVMSG;
+	DWORD bytes = 0;
+
+	WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER,
+		&ID, sizeof(ID), &fn, sizeof(fn),
+		&bytes, 0, 0);
+
+	assert(fn);
+	return fn;
+}
+
 fn_mkgmtime64 compat_mkgmtime64 ()
 {
 	static fn_mkgmtime64 fn = 0;

@@ -505,6 +505,8 @@ typedef enum _lw_addr_tostring_flags
 	lw_import		 lw_bool  lw_client_connected			(lw_client);
 	lw_import		 lw_bool  lw_client_connecting			(lw_client);
 	lw_import		 lw_addr  lw_client_server_addr			(lw_client);
+	lw_import		 lw_addr  lw_client_local_addr			(lw_client);
+	lw_import		 lw_ui32  lw_client_ifidx				(lw_client);
 
 	typedef void (lw_callback * lw_client_hook_connect) (lw_client);
 	lw_import void lw_client_on_connect (lw_client, lw_client_hook_connect);
@@ -533,15 +535,21 @@ typedef enum _lw_addr_tostring_flags
 	lw_import			  time_t  lw_server_cert_expiry_time(lw_server);
 	lw_import			 lw_bool  lw_server_can_npn			(lw_server);
 	lw_import				void  lw_server_add_npn			(lw_server, const char * protocol);
-	lw_import		const char *  lw_server_client_npn		(lw_server_client);
-	lw_import			 lw_bool  lw_server_client_is_websocket (lw_server_client);
-	lw_import			 lw_addr  lw_server_client_addr		(lw_server_client);
 	lw_import			  size_t  lw_server_num_clients		(lw_server);
 	lw_import	lw_server_client  lw_server_client_first	(lw_server);
 	lw_import	lw_server_client  lw_server_client_next		(lw_server_client);
 	lw_import			  void *  lw_server_tag				(lw_server);
 	lw_import				void  lw_server_set_tag			(lw_server, void *);
-	lw_import			 lw_ui16  lw_server_hole_punch		(lw_server, const char * remote_ip_and_port, lw_ui16 local_port);
+	lw_import				void  lw_server_hole_punch		(lw_server, lw_addr remote, lw_ui16 local_port);
+
+	/* Server's client */
+
+	lw_import		const char *  lw_server_client_npn			  (lw_server_client);
+	lw_import			 lw_bool  lw_server_client_is_websocket	  (lw_server_client);
+	lw_import			 lw_bool  lw_server_client_is_hole_punch  (lw_server_client);
+	lw_import			 lw_addr  lw_server_client_remote_addr	  (lw_server_client);
+	lw_import			 lw_addr  lw_server_client_local_addr	  (lw_server_client);
+	lw_import			 lw_ui32  lw_server_client_ifidx	  (lw_server_client);
 
 	typedef void (lw_callback * lw_server_hook_connect) (lw_server, lw_server_client);
 	lw_import void lw_server_on_connect (lw_server, lw_server_hook_connect);
@@ -565,11 +573,19 @@ typedef enum _lw_addr_tostring_flags
 	lw_import	 lw_bool  lw_udp_hosting	 (lw_udp);
 	lw_import		void  lw_udp_unhost		 (lw_udp);
 	lw_import	 lw_ui16  lw_udp_port		 (lw_udp);
-	lw_import		void  lw_udp_send		 (lw_udp, lw_addr, const char * buffer, size_t size);
+	/*	You can pass from address NULL, and ifidx 0, if you want no specific outgoing address,
+		or no specific network interface.
+		This is acceptable if the remote side does something other than IP matching to identify you;
+		for example, you send a private phrase with each UDP datagram.
+		If you are using IP matching, e.g. TCP + UDP together, or want a consistent IP,
+		you must specify your local address you're sending from, as local IPv6 addresses can be
+		temporary and expire due to RFC 4941, particularly on Windows. */
+	lw_import		void  lw_udp_send		 (lw_udp, lw_addr local_addr, lw_ui32 ifidx, lw_addr remote_addr,
+											  const char* buffer, size_t size);
 	lw_import	  void *  lw_udp_tag		 (lw_udp);
 	lw_import		void  lw_udp_set_tag	 (lw_udp, void *);
 
-	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, const char * buffer, size_t size);
+	typedef void (lw_callback * lw_udp_hook_data)(lw_udp, lw_addr, lw_ui32, lw_addr, const char * buffer, size_t size);
 	lw_import void lw_udp_on_data (lw_udp, lw_udp_hook_data);
 
 	typedef void (lw_callback * lw_udp_hook_error) (lw_udp, lw_error);
@@ -708,6 +724,8 @@ typedef enum _lw_addr_tostring_flags
 	void * lw_malloc_or_exit (const size_t size);
 	void * lw_calloc_or_exit (const size_t count, const size_t size);
 	void * lw_realloc_or_exit (void * origptr, size_t newsize);
+	// Returns 1+ if success, -1 if not found, -2 if error; use 0 for default
+	lw_ui32 lwp_get_ifidx (struct sockaddr_storage* s);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -1172,6 +1190,8 @@ struct _client : public _fdstream
 	lw_import bool connecting ();
 
 	lw_import address server_address ();
+	lw_import address local_address ();
+	lw_import lw_ui32 ifidx ();
 
 	typedef void (lw_callback * hook_connect) (client);
 	typedef void (lw_callback * hook_disconnect) (client);
@@ -1222,7 +1242,7 @@ struct _server
 	lw_import size_t num_clients ();
 	lw_import server_client client_first ();
 
-	lw_import lw_ui16 hole_punch (const char * ip_and_remote_port, lw_ui16 local_port);
+	lw_import void hole_punch (address remote_addr, lw_ui16 local_port);
 
 	typedef void (lw_callback * hook_connect) (server, server_client);
 	typedef void (lw_callback * hook_disconnect) (server, server_client);
@@ -1248,13 +1268,16 @@ struct _server_client : public _fdstream
 {
 	lw_class_wraps (server_client);
 
-	lw_import lacewing::address address ();
+	lw_import lacewing::address remote_address ();
+	lw_import lacewing::address local_address ();
+	lw_import lw_ui32 ifidx();
 
 	lw_import server_client next ();
 
 	lw_import const char * npn ();
 
 	lw_import lw_bool is_websocket ();
+	lw_import lw_bool is_hole_punch ();
 };
 
 
@@ -1275,10 +1298,17 @@ struct _udp
 
 	lw_import lw_ui16 port ();
 
-	lw_import void send (address, const char * data, size_t size = -1);
+	/*	You can pass from address NULL, and ifidx 0, if you want no specific outgoing address,
+		or no specific network interface.
+		This is acceptable if the remote side does something other than IP matching to identify you;
+		for example, you send a private phrase with each UDP datagram.
+		If you are using IP matching, e.g. TCP + UDP together, or want a consistent IP,
+		you must specify your local address you're sending from, as local IPv6 addresses can be
+		temporary and expire due to RFC 4941, particularly on Windows. */
+	lw_import void send (address from, lw_ui32 ifidx, address to, const char * data, size_t size = -1);
 
 	typedef void (lw_callback * hook_data)
-		(udp, address, char * buffer, size_t size);
+		(udp, address, lw_ui32, address, char * buffer, size_t size);
 
 	typedef void (lw_callback * hook_error) (udp, error);
 
@@ -1982,7 +2012,8 @@ struct relayserver
 	lacewing::webserver websocket;
 	lacewing::udp udp;
 	lacewing::flashpolicy flash;
-	bool hole_punch_used = false;
+	// Pump, used to create new UDP hole punches if required
+	lacewing::pump pmp;
 
 	relayserver(pump) noexcept;
 	~relayserver() noexcept;
@@ -2142,6 +2173,7 @@ struct relayserver
 		// Since there's a logical use for looking up address during closing, we'll keep a copy.
 		std::string address;
 		in6_addr addressInt = {};
+
 		// Time the Relay connection was approved - zero timepoint if not yet approved
 		::std::chrono::high_resolution_clock::time_point connectRequestApprovedTime;
 		::std::chrono::steady_clock::time_point lasttcpmessagetime;
@@ -2157,7 +2189,8 @@ struct relayserver
 
 		std::string clientImplStr;
 
-		bool pseudoUDP = true; // Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
+		// Is UDP not supported (e.g. HTML5, UWP JS) so "faked" by receiver
+		bool pseudoUDP = true;
 
 		// Got opening null byte, indicating not a HTTP client.
 		bool gotfirstbyte = false;
@@ -2169,10 +2202,19 @@ struct relayserver
 		// Has a TCP ping request been sent by server, and was replied to.
 		// If false, next ping timer tick will consider a failed ping and kick the client, so it is true by default.
 		bool pongedOnTCP = true;
+
 		// Has a UDP message received, confirming its UDP address. Implies psuedoUDP is false.
 		bool lockedUDPAddress = false;
-
-		lacewing::address udpaddress;
+		// If lockedUDPAddress is false, this is a dup of TCP remote address. UDP may arrive
+		// from a different IP to TCP if client is behind CG-NAT
+		lacewing::address udpremoteaddress = nullptr;
+		// Local UDP address for replying from - prevents IPv6 swapping out to an unexpected address,
+		// on client machines. These are not set until UDPHello is received.
+		lacewing::address udplocaladdress = nullptr;
+		// Local network interface index. 0 is any (OS picks), neg is invalid, 1+ is index.
+		lw_ui32 ifidx = -1;
+		// Specific socket if it is a direct hole punch connection
+		lacewing::udp udppunch = nullptr;
 
 		lw_ui16 _id = 0xFFFF;
 

@@ -28,15 +28,6 @@ struct _lw_udp
 	long writes_posted;
 
 	void * tag;
-
-	// True if socket is bound for sending to multiple IPv6 clients
-	lw_bool is_ipv6_server;
-
-	// For IPv6 hosters, multiple IPv6 outgoing addresses may be valid.
-	// This will confuse clients who will ignore the messages from a different source.
-	// We lock to one IPv6 address, ideally one with infinite lease, although a limited
-	// lease should be kept active by activity.
-	char public_fixed_ip6_addr_cmsg[CMSG_SPACE(sizeof(struct in6_pktinfo))];
 };
 
 static void read_ready (void * ptr)
@@ -47,30 +38,83 @@ static void read_ready (void * ptr)
 	socklen_t from_size = sizeof (from);
 
 	char buffer [lwp_default_buffer_size];
+	char cmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) + CMSG_SPACE(sizeof(struct in_pktinfo))];
+	struct cmsghdr* const cmsg = (struct cmsghdr*)cmsgbuf;
+	struct iovec iov = { .iov_base = buffer, .iov_len = sizeof(buffer) };
+	struct msghdr msg = {
+		.msg_control = cmsgbuf,
+		.msg_controllen = sizeof(cmsgbuf),
+		.msg_name = &from,
+		.msg_namelen = from_size,
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_flags = 0,
+	};
 
 	lwp_retain(ctx, "udp read");
 
-	lw_addr filter_addr = lw_filter_remote (ctx->filter);
-
-	struct _lw_addr addr = {0};
+	struct _lw_addr remote_addr = { 0 }, local_addr = { 0 };
+	lw_ui32 ifidx;
 
 	for (;;)
 	{
-		ssize_t bytes = recvfrom (ctx->fd, buffer, sizeof (buffer),
-								0, (struct sockaddr *) &from, &from_size);
+		ssize_t bytes = recvmsg(ctx->fd, &msg, MSG_NOSIGNAL);
 
 		if (bytes == -1)
-			break;
-
-		lwp_addr_set_sockaddr (&addr, (struct sockaddr *) &from);
-
-		if (filter_addr && !lw_addr_equal(&addr, filter_addr))
 		{
-			free(addr.info->ai_addr);  // alloc'd by lwp_addr_set_sockaddr
-			addr.info->ai_addr = NULL;
-			free(addr.info);
-			addr.info = NULL;
+			// Ignore, we already processed the messages
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+				break;
+			lw_log_if_debug("Error in recvmsg: %d. read_ready ignored.\n", errno);
 			break;
+		}
+
+		// Success but nothing - 0 bytes of data in UDP datagram?
+		if (bytes == 0)
+		{
+			lw_log_if_debug("Warning from recvmsg: Got 0 bytes. read_ready ignored.\n");
+			break;
+		}
+
+		// Does not match expected incoming filter, discard it
+		if (!lw_filter_check_remote_addr(ctx->filter, &remote_addr))
+		{
+			lw_log_if_debug("Dropping incoming UDP packet from unexpected remote address \"%s\".\n",
+				lw_addr_tostring(&remote_addr, lw_addr_tostring_flag_box_ipv6));
+			lwp_addr_cleanup(&remote_addr);
+			memset(&remote_addr, 0, sizeof(remote_addr));
+			continue;
+		}
+
+		struct cmsghdr* hdr = (struct cmsghdr*)cmsg;
+		
+		// IP4 pkt info given for IP6 incoming address, or vice versa; skip to next
+		if ((from.ss_family == AF_INET6) != (hdr->cmsg_level == IPPROTO_IPV6))
+		{
+			hdr = CMSG_NXTHDR(&msg, hdr);
+		}
+		if (cmsg->cmsg_type == IPV6_PKTINFO)
+		{
+			assert(remote_addr.info->ai_addr->sa_family == AF_INET6);
+			struct in6_pktinfo* const recvLocalAddr = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+			((struct sockaddr_in6*)&from)->sin6_family = AF_INET6;
+			((struct sockaddr_in6*)&from)->sin6_addr = recvLocalAddr->ipi6_addr;
+			lwp_addr_set_sockaddr(&local_addr, (struct sockaddr*)&from);
+			ifidx = recvLocalAddr->ipi6_ifindex;
+		}
+		else if (((struct cmsghdr*)cmsg)->cmsg_type == IP_PKTINFO)
+		{
+			assert(remote_addr.info->ai_addr->sa_family == AF_INET);
+			struct in_pktinfo* const recvLocalAddr = (struct in_pktinfo*)CMSG_DATA(cmsg);
+			((struct sockaddr_in*)&from)->sin_family = AF_INET;
+			((struct sockaddr_in*)&from)->sin_addr.s_addr = recvLocalAddr->ipi_addr.s_addr;
+			lwp_addr_set_sockaddr(&local_addr, (struct sockaddr*)&from);
+			ifidx = (unsigned int)recvLocalAddr->ipi_ifindex;
+		}
+		else
+		{
+			ifidx = 0; // guess
+			assert(!"Invalid cmsg type");
 		}
 
 		buffer [bytes] = 0;
@@ -82,12 +126,13 @@ static void read_ready (void * ptr)
 		// of FD from epoll in the same commit on 17th July 2021, but since it's a cheap test,
 		// we'll keep it.
 		if (ctx->fd != -1 && ctx->on_data)
-			ctx->on_data (ctx, &addr, buffer, (size_t)bytes);
+			ctx->on_data(ctx, ifidx ? &local_addr : NULL, ifidx, &remote_addr, buffer, (size_t)bytes);
 
-		free(addr.info->ai_addr); // alloc'd by lwp_addr_set_sockaddr
-		addr.info->ai_addr = NULL;
-		free(addr.info);
-		addr.info = NULL;
+		lwp_addr_cleanup(&local_addr);
+		memset(&local_addr, 0, sizeof(local_addr));
+
+		lwp_addr_cleanup(&remote_addr);
+		memset(&remote_addr, 0, sizeof(remote_addr));
 	}
 
 	lwp_release(ctx, "udp read");
@@ -120,9 +165,10 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	lw_udp_unhost (ctx);
 
 	lw_error error = lw_error_new ();
+	lw_bool madeipv6;
 
 	if ((ctx->fd = lwp_create_server_socket
-			(filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
+			(filter, SOCK_DGRAM, IPPROTO_UDP, &madeipv6, error)) == -1)
 	{
 		if (ctx->on_error)
 			ctx->on_error (ctx, error);
@@ -136,27 +182,6 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 	lwp_make_nonblocking(ctx->fd);
 
 	ctx->filter = lw_filter_clone (filter);
-
-	/* Each IPv6 adapter uses temporary addresses for outgoing connections for privacy reasons,
-	   as covered in RFC 4941.
-	   If we serve public IPv6 addresses (no filter, or unspec/empty addr filter),
-	   then we'll need a consistent outgoing IPv6 address,
-	   or clients won't recognise the incoming messages as from this server. */
-	const lw_addr remoteFilterAddr = lw_filter_remote(ctx->filter);
-	ctx->is_ipv6_server = !remoteFilterAddr || !remoteFilterAddr->info ||
-		(remoteFilterAddr->info->ai_addr->sa_family == AF_INET6 &&
-			IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6*)&remoteFilterAddr->info->ai_addr)->sin6_addr));
-
-	// Couldn't find a matching IPv6; we'll have to let the OS pick a default
-	if (ctx->is_ipv6_server && !lwp_set_ipv6pktinfo_cmsg(ctx->public_fixed_ip6_addr_cmsg))
-	{
-		lw_error error = lw_error_new();
-		lw_error_addf(error, "Hosting will continue, but remote IPv6 clients may be unable to connect");
-		lw_error_addf(error, "Error hosting UDP - couldn't find a stable global IPv6 address");
-		if (ctx->on_error)
-			ctx->on_error(ctx, error);
-		lw_error_delete(error);
-	}
 
 	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->fd, ctx, read_ready, 0, lw_true);
 }
@@ -185,8 +210,6 @@ void lw_udp_unhost (lw_udp ctx)
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
-
-	ctx->is_ipv6_server = lw_false;
 }
 
 lw_udp lw_udp_new (lw_pump pump)
@@ -202,7 +225,6 @@ lw_udp lw_udp_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->fd = -1;
-	ctx->is_ipv6_server = lw_false;
 
 	return ctx;
 }
@@ -218,19 +240,14 @@ void lw_udp_delete (lw_udp ctx)
 	// and the better behaviour is to let whatever's using it free it by itself.
 	lwp_release(ctx, "udp_new"); // calls free (ctx)
 }
-#ifndef IN6_IS_ADDR_GLOBAL
-#define IN6_IS_ADDR_GLOBAL(a) \
-        ((((const uint32_t *) (a))[0] & htonl(0x70000000)) \
-        == htonl (0x20000000))
-#endif /* IS ADDR GLOBAL */
 
-void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
+void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const char * data, size_t size)
 {
-	if (!lw_addr_ready (addr))
+	if (!to || (!lw_addr_ready(to)) || !to->info)
 	{
 		lw_error error = lw_error_new ();
 
-		lw_error_addf (error, "The address object passed to send() wasn't ready");
+		lw_error_addf (error, "The remote address passed to send() wasn't ready");
 		lw_error_addf (error, "Error sending");
 
 		if (ctx->on_error)
@@ -247,48 +264,91 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * data, size_t size)
 	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
-	if (!addr->info)
+	if (!to->info)
 		return;
 
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
 
+	// Unlike Windows, Linux copies the data passed to sendmsg in non-blocking IO
 	ssize_t res;
-	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
-	if (ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
-		IN6_IS_ADDR_GLOBAL(&((struct sockaddr_in6*)addr->info->ai_addr)->sin6_addr))
+	if (from)
 	{
-		struct iovec iov = { .iov_base = (void *)data, .iov_len = size };
+		assert(*(lw_i32 *)&ifidx >= 0); // negative is invalid
+		struct iovec iov = { .iov_base = (void*)data, .iov_len = size };
+		char cmsgdata[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+		struct msghdr msg = {
+			.msg_name = to->info->ai_addr,
+			.msg_namelen = to->info->ai_addrlen,
+			.msg_iov = &iov,
+			.msg_iovlen = 1,
+			.msg_control = cmsgdata,
+			.msg_flags = 0
+		};
+		struct cmsghdr* const cmsg = (struct cmsghdr*)cmsgdata;
+		if (from->info->ai_family == AF_INET)
+		{
+			msg.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
+			cmsg->cmsg_level = IPPROTO_IP;
+			cmsg->cmsg_type = IP_PKTINFO;
+			cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
 
-		struct msghdr msg;
-		msg.msg_name = addr->info->ai_addr;
-		msg.msg_namelen = addr->info->ai_addrlen;
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
-		msg.msg_control = ctx->public_fixed_ip6_addr_cmsg;
-		msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-		msg.msg_flags = 0;
-		res = sendmsg(ctx->fd, &msg, 0);
+			struct in_pktinfo* const pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+			pktinfo->ipi_addr = ((struct sockaddr_in*)from->info->ai_addr)->sin_addr;
+			pktinfo->ipi_ifindex = (int)ifidx;
+		}
+		else // AF_INET6
+		{
+			msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
+			cmsg->cmsg_level = IPPROTO_IPV6;
+			cmsg->cmsg_type = IPV6_PKTINFO;
+			cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+
+			struct in6_pktinfo* const pktinfo = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+			pktinfo->ipi6_addr = ((struct sockaddr_in6*)from->info->ai_addr)->sin6_addr;
+			pktinfo->ipi6_ifindex = ifidx;
+		}
+
+		res = sendmsg(ctx->fd, &msg, MSG_NOSIGNAL);
 	}
 	else
-		res = sendto(ctx->fd, data, size, 0, addr->info->ai_addr,
-			addr->info->ai_addrlen);
-
-	// Ignore EAGAIN since we're sending UDP; if there's not outgoing room to send, just discard
-	if (res == -1 && errno != EAGAIN)
 	{
-		lw_error error = lw_error_new ();
+		res = sendto(ctx->fd, data, size, MSG_NOSIGNAL, to->info->ai_addr,
+			to->info->ai_addrlen);
+	}
 
-		lw_error_add (error, errno);
-		lw_error_addf (error, "Error sending");
+	// Something went awry
+	if (res == -1)
+	{
+		--ctx->writes_posted;
 
-		if (ctx->on_error)
-			ctx->on_error (ctx, error);
+		// Ignore EAGAIN/EWOULDBLOCK since we're sending UDP; if there's not outgoing room
+		// to immediately send, then just discard
+		if (errno != EAGAIN && errno != EWOULDBLOCK)
+		{
+			lw_error error = lw_error_new();
 
-		lw_error_delete (error);
+			lw_error_add(error, errno);
+			lw_error_addf(error, "Error sending to %s from local address %s, ifidx %u",
+				lw_addr_tostring(to, lw_addr_tostring_flag_box_ipv6),
+				lw_addr_tostring(from, lw_addr_tostring_flag_box_ipv6), ifidx);
+
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
+
+			lw_error_delete(error);
+		}
 
 		// fall through to lwp_release
 	}
+
+	// Although sendmsg() allows partial write, it's not expected for UDP.
+	// The docs on Linux are vague, saying partial writes are possible in general,
+	// and explicitly speaking about UDP, but not noting UDP as an exception to that rule.
+	// But other places lay out that the meaning of a datagram is all or nothing write, e.g.
+	// https://github.com/libuv/libuv/blob/6b5aa669db4d57231e21b1ee97c63a06167e117e/src/unix/udp.c#L458
+	// For now we'll assume if res is not -1, it is the full message.
+
 	lwp_release(ctx, "udp write");
 }
 

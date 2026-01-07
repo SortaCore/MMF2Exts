@@ -83,9 +83,9 @@ server_client _server::client_first ()
 	return (server_client) lw_server_client_first ((lw_server) this);
 }
 
-lw_ui16 _server::hole_punch (const char* remote_ip_and_port, lw_ui16 local_port)
+void _server::hole_punch (lacewing::address remote_addr, lw_ui16 local_port)
 {
-	return lw_server_hole_punch ((lw_server) this, remote_ip_and_port, local_port);
+	lw_server_hole_punch ((lw_server) this, (lw_addr)remote_addr, local_port);
 }
 
 void _server::on_connect (_server::hook_connect hook)
@@ -108,9 +108,17 @@ void _server::on_error (_server::hook_error hook)
 	lw_server_on_error ((lw_server) this, (lw_server_hook_error) hook);
 }
 
-lacewing::address _server_client::address ()
+lacewing::address _server_client::remote_address ()
 {
-	return (lacewing::address) lw_server_client_addr ((lw_server_client) this);
+	return (lacewing::address) lw_server_client_remote_addr ((lw_server_client) this);
+}
+lacewing::address _server_client::local_address()
+{
+	return (lacewing::address)lw_server_client_local_addr((lw_server_client)this);
+}
+lw_ui32 _server_client::ifidx()
+{
+	return lw_server_client_ifidx((lw_server_client)this);
 }
 
 server_client _server_client::next ()
@@ -126,6 +134,11 @@ const char * _server_client::npn ()
 lw_bool _server_client::is_websocket ()
 {
 	return lw_server_client_is_websocket ((lw_server_client) this);
+}
+
+lw_bool _server_client::is_hole_punch()
+{
+	return lw_server_client_is_hole_punch ((lw_server_client) this);
 }
 
 void * _server::tag ()

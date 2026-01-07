@@ -136,9 +136,9 @@ public:
 		socket->write(buffer + offset, size - offset);
 	}
 
-	void send(lacewing::udp udp, lacewing::address address, int offset = 0)
+	void send(lacewing::udp udp, lacewing::address from, lw_ui32 ifidx, lacewing::address to, int offset = 0)
 	{
-		udp->send(address, buffer + offset, size - offset);
+		udp->send(from, ifidx, to, buffer + offset, size - offset);
 	}
 
 };

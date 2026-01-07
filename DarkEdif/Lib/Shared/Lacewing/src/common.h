@@ -208,6 +208,8 @@ lw_bool lwp_begins_with (const char * string, const char * substring);
 
 void lwp_copy_string (char * dest, const char * source, size_t size);
 
+// Replaces memcmp with something that has a useful return index. Returns -1 if both match.
+lw_ui32 lw_memcmp_diff_index (const lw_ui8* const a, const lw_ui8* const b, const lw_ui32 size);
 lw_bool lwp_find_char (const char ** str, size_t * len, char c);
 
 ssize_t lwp_format (char ** output, const char * format, va_list args);
@@ -219,7 +221,7 @@ extern const char * const lwp_months [];
 
 time_t lwp_parse_time (const char *);
 
-lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_error);
+lwp_socket lwp_create_server_socket (lw_filter, int type, int protocol, lw_bool * madeipv6, lw_error);
 
 extern struct in6_addr lwp_ipv6_public_fixed_addr;
 extern int lwp_ipv6_public_fixed_interface_index;

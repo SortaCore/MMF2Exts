@@ -478,7 +478,7 @@ void lwp_ws_req_respond (lw_ws_req ctx)
 
 lw_addr lw_ws_req_addr (lw_ws_req ctx)
 {
-	return lw_server_client_addr (ctx->client->socket);
+	return lw_server_client_remote_addr (ctx->client->socket);
 }
 
 void lw_ws_req_disconnect (lw_ws_req ctx, unsigned int websocket_exit_reason)

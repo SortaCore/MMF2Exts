@@ -63,6 +63,7 @@ struct _lw_server_client
 
 	lw_bool on_connect_called;
 	lw_bool is_websocket;
+	lw_bool is_hole_punch;
 
 	void* relay_tag;
 
@@ -70,7 +71,9 @@ struct _lw_server_client
 		lwp_sslclient ssl;
 	#endif
 
-	lw_addr address;
+	lw_addr remote_address;
+	lw_addr local_address;
+	lw_ui32 ifidx;
 
 	lw_server_client * elem;
 };
@@ -202,6 +205,82 @@ void * lw_server_tag (lw_server ctx)
 	return ctx->tag;
 }
 
+static lw_bool add_client_internal(lw_server ctx,
+	struct sockaddr_storage * remote_addr, lwp_socket fd, lw_bool accepted)
+{
+	lwp_trace("%s FD %d", accepted ? "hole punch adding" : "accepted", fd);
+
+	lw_server_client client = lwp_server_client_new(ctx, ctx->pump, fd);
+
+	if (!client)
+	{
+		lwp_trace("Failed allocating client");
+		return lw_false;
+	}
+
+	struct sockaddr_storage local_addr = lwp_socket_addr(fd);
+	client->remote_address = lwp_addr_new_sockaddr((struct sockaddr*)remote_addr);
+	client->local_address = lwp_addr_new_sockaddr((struct sockaddr*)&local_addr);
+	client->ifidx = lwp_get_ifidx(&local_addr);
+
+	lw_bool should_read = lw_false;
+
+	if (ctx->on_data)
+	{
+		lw_stream_add_hook_data((lw_stream)client, on_client_data, client);
+		should_read = lw_true;
+	}
+
+#ifdef ENABLE_SSL
+	if (!client->ssl)
+	{
+#endif
+
+		client->on_connect_called = lw_true;
+
+		lwp_retain(client, "on_connect");
+
+		if (ctx->on_connect)
+			ctx->on_connect(ctx, client);
+
+		if (lwp_release(client, "on_connect") ||
+			((lw_stream)client)->flags & lwp_stream_flag_dead)
+		{
+			if (ctx->on_disconnect)
+				ctx->on_disconnect(ctx, client);
+			/* Client was deleted by connect hook
+			 */
+			return lw_false;
+		}
+
+		list_push(lw_server_client, ctx->clients, client);
+		client->elem = list_elem_back(lw_server_client, ctx->clients);
+
+#ifdef ENABLE_SSL
+	}
+	else
+	{
+		should_read = lw_true;
+	}
+#endif
+
+	if (should_read)
+	{
+		lwp_retain(client, "client initial read");
+
+		lw_stream_read((lw_stream)client, SIZE_MAX);
+
+		if (lwp_release(client, "client initial read") ||
+			((lw_stream)client)->flags & lwp_stream_flag_dead)
+		{
+			/* Client was deleted when performing initial read
+			 */
+			return lw_false;
+		}
+	}
+	return lw_true;
+}
+
 static void listen_socket_read_ready (void * tag)
 {
 	lw_server ctx = (lw_server)tag;
@@ -222,242 +301,82 @@ static void listen_socket_read_ready (void * tag)
 		 break;
 	  }
 
-	  lwp_trace ("Accepted FD %d", fd);
-
-	  lw_server_client client = lwp_server_client_new (ctx, ctx->pump, fd);
-
-	  if (!client)
-	  {
-		 lwp_trace ("Failed allocating client");
-		 break;
-	  }
-
-	  client->address = lwp_addr_new_sockaddr ((struct sockaddr *) &address);
-
-	  lw_bool should_read = lw_false;
-
-	  if (ctx->on_data)
-	  {
-		 lw_stream_add_hook_data ((lw_stream) client, on_client_data, client);
-		 should_read = lw_true;
-	  }
-
-	  #ifdef ENABLE_SSL
-	  if (!client->ssl)
-	  {
-	  #endif
-
-		 client->on_connect_called = lw_true;
-
-		 lwp_retain (client, "on_connect");
-
-		 if (ctx->on_connect)
-			ctx->on_connect (ctx, client);
-
-		 if (lwp_release (client, "on_connect") ||
-				((lw_stream)client)->flags & lwp_stream_flag_dead)
-		 {
-			 if (ctx->on_disconnect)
-				 ctx->on_disconnect(ctx, client);
-			/* Client was deleted by connect hook
-			 */
-			return;
-		 }
-
-		 list_push (lw_server_client, ctx->clients, client);
-		 client->elem = list_elem_back (lw_server_client, ctx->clients);
-
-	  #ifdef ENABLE_SSL
-	  }
-	  else
-	  {
-		 should_read = lw_true;
-	  }
-	  #endif
-
-	  if (should_read)
-	  {
-		 lwp_retain (client, "client initial read");
-
-		 lw_stream_read ((lw_stream) client, SIZE_MAX);
-
-		 if (lwp_release (client, "client initial read") ||
-				((lw_stream) client)->flags & lwp_stream_flag_dead)
-		 {
-			/* Client was deleted when performing initial read
-			 */
-			return;
-		 }
-	  }
+	  if (add_client_internal(ctx, &address, fd, lw_true))
+		  return;
 	}
 }
 
-lw_ui16 lw_server_hole_punch (lw_server ctx, const char* remote_ip_and_port, lw_ui16 local_port)
+typedef struct _lw_hole_punch_params {
+	lw_server server;
+	lwp_socket sock;
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	lw_ui16 local_port;
+	lw_pump_watch watch;
+} lw_hole_punch_params;
+
+static lw_callback void hole_punch_socket_first_data(lw_hole_punch_params * params)
 {
-	lw_addr addr = lw_addr_new(remote_ip_and_port, "");
-	lw_error err = lw_addr_resolve(addr);
-	if (err)
-	{
-		lw_error_addf(err, "Error resolving hole punch address");
-		if (ctx->on_error)
-			ctx->on_error(ctx, err);
-		lw_addr_delete(addr);
-		return 0;
-	}
-	err = lw_error_new();
+	lw_pump_remove(params->server->pump, params->watch);
+	add_client_internal(params->server, &params->addr, params->sock, lw_false);
+	lwp_release(params->server, "hole punch");
+}
 
-	if (ctx->socket != -1)
-	{
-		lw_error_addf(err, "Server already hosting, cannot hole punch");
-		if (ctx->on_error)
-			ctx->on_error(ctx, err);
-		lw_error_delete(err);
-		lw_addr_delete(addr);
-		return 0;
-	}
+void lw_server_hole_punch(lw_server ctx, lw_addr addr, lw_ui16 local_port)
+{
+	lwp_retain(ctx, "hole punch");
+	lw_hole_punch_params* params = (lw_hole_punch_params*)lw_malloc_or_exit(sizeof(lw_hole_punch_params));
+	params->server = ctx;
+	params->addr = *(struct sockaddr_storage *)addr->info->ai_addr;
+	params->addrlen = addr->info->ai_addrlen;
+	params->local_port = local_port;
+	params->sock = -1;
+	params->watch = NULL;
 
-	// Init to an invalid ID ping message
-	struct iovec b;
-	b.iov_base = (char[]){ (char)(11 << 4), (char)0xFF, (char)0xFF };
-	b.iov_len = 3;
-	int type = lw_addr_type_tcp;
-	lw_bool broke = lw_false;
-	lw_bool isIPV6 = lw_addr_ipv6(addr);
+	params->sock = socket(params->addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+	char* errStr = NULL;
 	do {
-		int sock = socket(isIPV6 ? AF_INET6 : AF_INET,
-			type == lw_addr_type_tcp ? SOCK_STREAM : SOCK_DGRAM,
-			type == lw_addr_type_tcp ? IPPROTO_TCP : IPPROTO_UDP);
-		int yes = 1;
-		if (sock == -1)
+		if (params->sock == -1)
 		{
-			lw_error_add(err, errno);
-			lw_error_addf(err, "create for %s hole punch failed", type == lw_addr_type_tcp ? "tcp" : "udp");
-			broke = lw_true;
+			errStr = "Creating TCP hole punch failed";
 			break;
 		}
+
 		// reuse addr on
-		lwp_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
+		//lwp_setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
 		struct sockaddr_storage s = { 0 };
-		s.ss_family = isIPV6 ? AF_INET6 : AF_INET;
+		s.ss_family = params->addr.ss_family;
 		// Port is at same offset in both sockaddr_in and sockaddr_in6
-		((struct sockaddr_in6*)&s)->sin6_port = htons((lw_ui16)local_port);
+		((struct sockaddr_in6*)&s)->sin6_port = htons((lw_ui16)params->local_port);
 
-		/*// Tiny timeout?
-		int timeout = 3000;  // user timeout in milliseconds [ms]
-		int SOL_TCP = 6, TCP_USER_TIMEOUT = 18;
-		lwp_setsockopt(sock, SOL_TCP, TCP_USER_TIMEOUT, (char*)&timeout, sizeof(timeout));
-		*/
-
-		if (bind(sock, (struct sockaddr*)&s, isIPV6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
+		if (bind(params->sock, (struct sockaddr*)&s, params->addrlen) == -1)
 		{
-			lw_error_addf(err, "bind on hole punch failed, continuing");
-			lw_error_add(err, errno);
-			broke = lw_true;
+			errStr = "bind on TCP hole punch failed";
+			break;
 		}
-		u_long mode = 1;  // 1 to enable non-blocking socket
-		ioctl(sock, FIONBIO, &mode);
-
-		ssize_t conRet = -1;
-		if (broke == lw_false)
+		lwp_make_nonblocking(params->sock);
+		ssize_t conRet = connect(params->sock, (struct sockaddr *)&params->addr, params->addrlen);
+		if (conRet == -1 && errno != EWOULDBLOCK)
 		{
-			if (type == lw_addr_type_tcp)
-				conRet = connect(sock, addr->info->ai_addr, addr->info->ai_addrlen);
-			// UDP v4: send plainly
-			else if (!isIPV6)
-				conRet = sendto(sock, b.iov_base, b.iov_len, 0, addr->info->ai_addr, addr->info->ai_addrlen);
-			// UDP v6: set fixed output public IP, and send
-			else
-			{
-				struct cmsghdr * cmsg = (struct cmsghdr*)lw_calloc_or_exit(CMSG_SPACE(sizeof(struct in6_pktinfo)), 1);
-				if (!lwp_set_ipv6pktinfo_cmsg(cmsg))
-				{
-					lw_error_addf(err, "no suitable public IPv6 found");
-					conRet = -1;
-				}
-				else
-				{
-					struct msghdr msg;
-					msg.msg_name = addr->info->ai_addr;
-					msg.msg_namelen = addr->info->ai_addrlen;
-					msg.msg_iov = &b;
-					msg.msg_iovlen = 1;
-					msg.msg_control = cmsg;
-					msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-					msg.msg_flags = 0;
-
-					conRet = sendmsg(ctx->socket, &msg, 0);
-				}
-				free(cmsg);
-			}
+			errStr = "connect on TCP hole punch failed";
+			break;
 		}
 
-		if (conRet == -1 && errno == EWOULDBLOCK)
-		{
-			// 0.5 second timeout
-			struct timeval t;
-			t.tv_sec = 0;
-			t.tv_usec = (long)(0.5 * 1000000);
-			fd_set fdset;
-			FD_ZERO(&fdset);
-			FD_SET(sock, &fdset);
-			conRet = select(sock + 1, NULL, &fdset, NULL, &t);
-			// if conRet == 0, connect timeout - which we ignore
+		params->watch = lw_pump_add(params->server->pump, params->sock, params, (lw_pump_callback)hole_punch_socket_first_data, NULL, lw_true);
+	} while (0);
 
-			// these errors are OK! Refused connection mean we got there, hopefully.
-			if (conRet == -1 &&
-				errno != ETIMEDOUT &&
-				errno != ECONNREFUSED)
-			{
-				lw_error_add(err, errno);
-				lw_error_addf(err, "connect/send on hole punch likely failed");
-				broke = lw_true;
-			}
-		}
-		else if (conRet == -1)
-		{
-			lw_error_add(err, errno);
-			lw_error_addf(err, "connect/send on hole punch failed");
-			broke = lw_true;
-		}
-		// else success
-
-		if (local_port == 0)
-		{
-			// TODO: lwp_socket_port(sock) equiv?
-			socklen_t socklen = (socklen_t)sizeof(s);
-			if (getsockname(sock, (struct sockaddr*)&s, &socklen) == -1)
-			{
-				lw_error_add(err, errno);
-				lw_error_addf(err, "Couldn't get auto-port");
-			}
-			else
-			{
-				local_port = ntohs(((struct sockaddr_in6*)&s)->sin6_port);
-				lw_error_addf(err, "auto-assigned port %hu", local_port);
-			}
-		}
-		else
-			lw_error_addf(err, "sendTo on hole punch, local port %hu should be OK; you can now host", local_port);
-
-		// If tcp connection is active, end it fast without trying to push through (disable lingering)
-		if (broke && type == lw_addr_type_tcp)
-		{
-			struct linger sl = { 0 };
-			lwp_setsockopt(sock, SOL_SOCKET, SO_LINGER, (const char *)&sl, sizeof(sl));
-		}
-
-		close(sock);
-	} while (++type != lw_addr_type_udp + 1);
-
-	// In debug, always report
-#ifdef _DEBUG
-	broke = lw_true;
-#endif
-	if (broke && ctx->on_error)
-		ctx->on_error(ctx, err);
-	lw_error_delete(err);
-	lw_addr_delete(addr);
-	return local_port;
+	if (errStr)
+	{
+		lw_error err = lw_error_new();
+		lw_error_add(err, errno);
+		lw_error_addf(err, "%s", errStr);
+		if (params->sock != -1)
+			lwp_close_socket(params->sock);
+		if (params->server->on_error)
+			params->server->on_error(params->server, err);
+		lw_error_delete(err);
+		free(params);
+	}
 }
 
 void lw_server_host (lw_server ctx, long port)
@@ -475,7 +394,7 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 	lw_error error = lw_error_new ();
 
 	if ((ctx->socket = lwp_create_server_socket
-			(filter, SOCK_STREAM, IPPROTO_TCP, error)) == -1)
+			(filter, SOCK_STREAM, IPPROTO_TCP, NULL, error)) == -1)
 	{
 	  lwp_trace ("server: error hosting: %s", lw_error_tostring (error));
 
@@ -679,7 +598,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename_cert_chai
 		if (strftime(buff, sizeof(buff), "%I:%M:%S%p on %A %d %B %Y AD", &tm) <= 0)
 			always_log("time conversion failed, error %d", errno);
 		else
-			always_log("SSL certificate will expire at %s (local time).", buff);
+			always_log("TLS certificate will expire at %s (local time).", buff);
 
 		if (day > 0 || sec > 0)
 			ctx->cert_expiry_time = timegm(&tm);
@@ -689,7 +608,7 @@ lw_bool lw_server_load_cert_file (lw_server ctx, const char * filename_cert_chai
 			ctx->ssl_context = 0;
 
 			lw_error error = lw_error_new ();
-			lw_error_addf(error, "SSL certificate has already expired, at %s (local time)", buff);
+			lw_error_addf(error, "TLS certificate has already expired, at %s (local time)", buff);
 			if (ctx->on_error)
 				ctx->on_error(ctx, error);
 			lw_error_delete(error);
@@ -780,14 +699,27 @@ const char * lw_server_client_npn (lw_server_client client)
 	#endif
 }
 
-lw_addr lw_server_client_addr (lw_server_client client)
+lw_addr lw_server_client_remote_addr (lw_server_client client)
 {
-	return client->address;
+	return client->remote_address;
+}
+lw_addr lw_server_client_local_addr (lw_server_client client)
+{
+	return client->local_address;
+}
+lw_ui32 lw_server_client_ifidx (lw_server_client client)
+{
+	return client->ifidx;
 }
 
 lw_bool lw_server_client_is_websocket(lw_server_client client)
 {
 	return client->is_websocket;
+}
+
+lw_bool lw_server_client_is_hole_punch(lw_server_client client)
+{
+	return client->is_hole_punch;
 }
 
 void* lw_server_client_get_relay_tag(lw_server_client client)

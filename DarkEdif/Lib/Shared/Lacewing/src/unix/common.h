@@ -99,3 +99,8 @@ typedef int lwp_socket;
 #define lwp_snprintf snprintf
 #define lwp_fmt_size "%zd"
 
+// From Microsoft's implementation in ws2ipdef.h; on Windows, is defined there
+#ifndef IN6_IS_ADDR_GLOBAL
+	// Gets if an IPv6 address is global-scope (as opposed to link-local, site-local, loopback)
+	#define IN6_IS_ADDR_GLOBAL(a) ((((const uint32_t *) (a))[0] & htonl(0x70000000)) == htonl (0x20000000))
+#endif /* IS ADDR GLOBAL */

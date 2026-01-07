@@ -212,13 +212,15 @@ void lw_filter_set_remote_port (lw_filter ctx, long port)
 }
 
 lwp_socket lwp_create_server_socket (lw_filter filter, int type,
-									 int protocol, lw_error error)
+									 int protocol, lw_bool* madeipv6, lw_error error)
 {
 	lwp_socket s;
 	socklen_t addr_len;
 	struct sockaddr_storage addr;
 	lw_bool ipv6;
-	int reuse;
+	int reuse, yes = 1;
+	if (madeipv6)
+		*madeipv6 = lw_false;
 
 	ipv6 = lw_filter_ipv6 (filter);
 
@@ -303,9 +305,27 @@ lwp_socket lwp_create_server_socket (lw_filter filter, int type,
 
 	#endif
 
-	ipv6success:
+ipv6success:
+
 	if (ipv6)
-	  lwp_disable_ipv6_only (s);
+	{
+		lwp_disable_ipv6_only (s);
+		// Turn on PKTINFO options to get local IP address/interface receiving incoming datagrams,
+		// useful for consistent routing/outgoing IP
+		// https://stackoverflow.com/a/12398774
+#ifndef IPV6_RECVPKTINFO
+#define IPV6_RECVPKTINFO IPV6_PKTINFO
+#endif
+		if (protocol == IPPROTO_UDP)
+			lwp_setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, (char*)&yes, sizeof(yes));
+		if (madeipv6)
+			*madeipv6 = lw_true;
+	}
+
+	// Windows docs recommend turning on both for dual-stack
+	// Note that Windows only provides an IPv4 local address if remote address is IPv6-mapped
+	if (protocol == IPPROTO_UDP)
+		lwp_setsockopt(s, IPPROTO_IP, IP_PKTINFO, (char*)&yes, sizeof(yes));
 
 	reuse = lw_filter_reuse (filter) ? 1 : 0;
 	lwp_setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(reuse));

@@ -44,6 +44,13 @@ typedef INT (WSAAPI * fn_WSASendMsg) (SOCKET Handle,
 	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
 fn_WSASendMsg compat_WSASendMsg ();
 
+typedef INT(WSAAPI* fn_WSARecvMsg) (SOCKET Handle,
+	LPWSAMSG lpMsg,
+	LPDWORD lpNumberOfBytesRecvd,
+	LPWSAOVERLAPPED lpOverlapped,
+	LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+fn_WSARecvMsg compat_WSARecvMsg();
+
 typedef __time64_t (__stdcall * fn_mkgmtime64) (struct tm *);
 fn_mkgmtime64 compat_mkgmtime64 ();
 

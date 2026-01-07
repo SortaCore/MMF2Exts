@@ -49,6 +49,16 @@ address _client::server_address ()
 {
 	return (address) lw_client_server_addr ((lw_client) this);
 }
+address _client::local_address()
+{
+	return (address)lw_client_local_addr((lw_client)this);
+}
+lw_ui32 _client::ifidx()
+{
+	lw_ui32 i = lw_client_ifidx((lw_client)this);
+	assert(*(lw_i32*)&i > 0);
+	return i;
+}
 
 void _client::on_connect (_client::hook_connect hook)
 {

@@ -29,7 +29,9 @@ struct _lw_client
 
 	lw_i8 flags;
 
-	lw_addr address;
+	lw_addr remote_address;
+	lw_addr local_address;
+	lw_ui32 ifidx;
 
 	lwp_socket socket;
 	//lw_bool connecting; // part of flags, see lw_client_flag_connecting
@@ -37,6 +39,7 @@ struct _lw_client
 
 	lw_pump pump;
 	lw_pump_watch watch;
+	// Binds to a specific port, reset to 0 during connect attempt
 	lw_ui16 local_port_next_connect;
 };
 
@@ -67,6 +70,7 @@ lw_client lw_client_new (lw_pump pump)
 	lw_client ctx = (lw_client)calloc (sizeof (*ctx), 1);
 
 	ctx->pump = pump;
+	ctx->ifidx = -1;
 
 	lwp_init ();
 
@@ -89,7 +93,11 @@ void lw_client_delete (lw_client ctx)
 
 	lw_stream_close ((lw_stream) ctx, lw_true);
 
-	lw_addr_delete(ctx->address);
+	lw_addr_delete(ctx->local_address);
+	ctx->local_address = NULL;
+	lw_addr_delete(ctx->remote_address);
+	ctx->remote_address = NULL;
+	ctx->ifidx = -1;
 
 	lwp_deinit();
 	free (ctx);
@@ -144,6 +152,9 @@ static void first_time_write_ready (void * tag)
 	list_clear(ctx->fdstream.stream.back_queue);
 
 	lw_fdstream_set_fd (&ctx->fdstream, ctx->socket, ctx->watch, lw_true, lw_true);
+	struct sockaddr_storage ss = lwp_socket_addr((lwp_socket)ctx->socket);
+	ctx->local_address = lwp_addr_new_sockaddr((struct sockaddr*)&ss);
+	ctx->ifidx = lwp_get_ifidx(&ss);
 
 	ctx->flags &= ~ lw_client_flag_connecting;
 
@@ -190,15 +201,15 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		}
 	}
 
-	lw_addr_delete (ctx->address);
-	ctx->address = lw_addr_clone (address);
+	lw_addr_delete (ctx->remote_address);
+	ctx->remote_address = lw_addr_clone (address);
 
-	if (!ctx->address->info)
+	if (!ctx->remote_address->info)
 	{
 		ctx->flags &= ~lw_client_flag_connecting;
 
 		lw_error error = lw_error_new();
-		lw_error_addf(error, "The provided Address object is not ready for use");
+		lw_error_addf(error, "The provided remote address is not ready for use");
 
 		if (ctx->on_error)
 			ctx->on_error(ctx, error);
@@ -208,7 +219,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		return;
 	}
 
-	if ((ctx->socket = socket (lw_addr_ipv6 (ctx->address) ? AF_INET6 : AF_INET,
+	if ((ctx->socket = socket (lw_addr_ipv6 (ctx->remote_address) ? AF_INET6 : AF_INET,
 				SOCK_STREAM,
 				IPPROTO_TCP)) == -1)
 	{
@@ -231,34 +242,41 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	// Android doesn't support AI_V4MAPPED, despite defining it.
 	// Due to that, https://stackoverflow.com/questions/5587935/cant-turn-off-socket-option-ipv6-v6only#comment15775318_8213504
 #if !defined(__ANDROID__) && !defined(__APPLE__)
-	if (lw_addr_ipv6(ctx->address))
+	if (lw_addr_ipv6(ctx->remote_address))
 		lwp_disable_ipv6_only((lwp_socket)ctx->socket);
 #endif
 
-	struct sockaddr_storage local_address = {0};
+	struct sockaddr_storage local_address = { 0 };
 
-	if (lw_addr_ipv6(ctx->address))
+	// Lock to last outgoing local address if local port is being re-used,
+	// which only happens for hole punch
+	if (ctx->local_address && ctx->local_port_next_connect)
+	{
+		memcpy(&local_address, ctx->local_address->info->ai_addr, ctx->local_address->info->ai_addrlen);
+		assert(lw_addr_ipv6(address) == lw_addr_ipv6(ctx->local_address));
+	}
+	// else bind to receiving from any address in remote's IPvX; possibly using a fixed local port,
+	// but not using a fixed local address. Local port will be 0 by default, which is OS-pick local port.
+	// inaddr_any/in6addr_any is all-zero, which we inited local_address to already.
+	else if (lw_addr_ipv6(ctx->remote_address))
 	{
 		((struct sockaddr_in6 *)&local_address)->sin6_family = AF_INET6;
-		((struct sockaddr_in6 *)&local_address)->sin6_addr = in6addr_any;
 		((struct sockaddr_in6 *)&local_address)->sin6_port = htons(ctx->local_port_next_connect);
 	}
 	else
 	{
 		((struct sockaddr_in *)&local_address)->sin_family = AF_INET;
-		((struct sockaddr_in *)&local_address)->sin_addr.s_addr = INADDR_ANY;
 		((struct sockaddr_in *)&local_address)->sin_port = htons(ctx->local_port_next_connect);
 	}
 
+	// Reuse port or not, based on reserved port being non-zero
 	const int was_locked_local = ctx->local_port_next_connect != 0 ? 1 : 0;
+	lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
 	ctx->local_port_next_connect = 0;
 
-	// reuse or not, based on reserved port
-	lwp_setsockopt(ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&was_locked_local, sizeof(was_locked_local));
-
 	if (bind(ctx->socket, (struct sockaddr *)&local_address,
-		// iOS does not work with sizeof sockaddr_storage
-		lw_addr_ipv6(ctx->address) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
+		// sizeof sockaddr_storage doesn't work cross-platform
+		lw_addr_ipv6(ctx->remote_address) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)) == -1)
 	{
 		ctx->flags &= ~lw_client_flag_connecting;
 		close(ctx->socket);
@@ -267,7 +285,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 		lw_error error = lw_error_new();
 
 		lw_error_add(error, errno);
-		lw_error_addf(error, "Error binding socket%s", was_locked_local ? " with fixed port" : "");
+		lw_error_addf(error, "Error binding socket%s", was_locked_local != 0 ? " with fixed port" : "");
 
 		if (ctx->on_error)
 			ctx->on_error(ctx, error);
@@ -333,17 +351,27 @@ lw_bool lw_client_connecting (lw_client ctx)
 
 lw_addr lw_client_server_addr (lw_client ctx)
 {
-	if (!lw_addr_ready(ctx->address))
+	if (!lw_addr_ready(ctx->remote_address))
 	{
-		lwp_trace("addr not ready for lw_client; ctx %p, ctx->address %p.", ctx, ctx->address);
-		lw_error err = lw_addr_resolve(ctx->address);
+		lw_log_if_debug("lw_client server addr not ready; client %p, address %p.", ctx, ctx->remote_address);
+		lw_error err = lw_addr_resolve(ctx->remote_address);
 		if (err)
 		{
 			lw_error_addf(err, "lw_client_server_addr()");
-			ctx->on_error(ctx, err);
+			if (ctx->on_error)
+				ctx->on_error(ctx, err);
+			lw_error_delete(err);
 		}
 	}
-	return ctx->address;
+	return ctx->remote_address;
+}
+lw_addr lw_client_local_addr (lw_client ctx)
+{
+	return ctx->local_address;
+}
+lw_ui32 lw_client_ifidx (lw_client ctx)
+{
+	return ctx->ifidx;
 }
 
 static void on_stream_data (lw_stream stream, void * tag,

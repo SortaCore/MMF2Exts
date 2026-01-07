@@ -30,7 +30,11 @@ typedef struct _udp_overlapped
 typedef struct _udp_receive_info
 {
 	char buffer [lwp_default_buffer_size];
+	WSAMSG winsock_msg;
 	WSABUF winsock_buffer;
+
+	// Size varies, but is based on cmsg size of ipv6_pktinfo + ip_pktinfo
+	char cmsg[64];
 
 	struct sockaddr_storage from;
 	int from_length;
@@ -46,8 +50,14 @@ udp_receive_info udp_receive_info_new ()
 
 	info->winsock_buffer.buf = info->buffer;
 	info->winsock_buffer.len = sizeof (info->buffer);
-
-	info->from_length = sizeof (info->from);
+	info->winsock_msg.lpBuffers = &info->winsock_buffer;
+	info->winsock_msg.dwBufferCount = 1;
+	info->winsock_msg.name = (LPSOCKADDR)&info->from;
+	info->winsock_msg.namelen = info->from_length = sizeof (info->from);
+	info->winsock_msg.Control.buf = info->cmsg;
+	info->winsock_msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in6_pktinfo))
+		+ WSA_CMSG_SPACE(sizeof(struct in_pktinfo));
+	assert(sizeof(info->cmsg) >= info->winsock_msg.Control.len);
 
 	return info;
 }
@@ -76,17 +86,10 @@ struct _lw_udp
 
 	void * tag;
 
-	// True if socket is bound for sending to multiple IPv6 clients
-	lw_bool is_ipv6_server;
-
-	// For IPv6 hosters, multiple IPv6 outgoing addresses may be valid.
-	// This will confuse clients who will ignore the messages from a different source.
-	// We lock to one IPv6 address, ideally one with infinite lease, although a limited
-	// lease should be kept active by activity.
-	char public_fixed_ip6_addr_cmsg[WSA_CMSG_SPACE(sizeof(struct in6_pktinfo))];
-
-	// Function for sending with a specified outgoing address - null if not necessary
+	// Function for sending with a specified outgoing address. Null on WinXP.
 	fn_WSASendMsg WSASendMsgPtr;
+	// Function for receiving msg and storing local address it was received to. Null on WinXP.
+	fn_WSARecvMsg WSARecvMsgPtr;
 };
 
 // Returns true if lw_udp was freed.
@@ -131,15 +134,31 @@ static void post_receives (lw_udp ctx)
 		DWORD flags = 0;
 		lwp_retain(ctx, "udp read");
 
-		if (WSARecvFrom (ctx->socket,
-						&receive_info->winsock_buffer,
-						1,
-						0,
-						&flags,
-						(struct sockaddr *) &receive_info->from,
-						&receive_info->from_length,
-						&overlapped->overlapped,
-						0) == SOCKET_ERROR)
+
+		fn_WSARecvMsg recvMsg = ctx->WSARecvMsgPtr;
+		int res;
+		if (recvMsg)
+		{
+			res = recvMsg(ctx->socket,
+				&receive_info->winsock_msg,
+				NULL,
+				&overlapped->overlapped,
+				0);
+		}
+		else
+		{
+			res = WSARecvFrom(ctx->socket,
+				&receive_info->winsock_buffer,
+				1,
+				0,
+				&flags,
+				(struct sockaddr*)&receive_info->from,
+				&receive_info->from_length,
+				&overlapped->overlapped,
+				0);
+		}
+
+		if (res == SOCKET_ERROR)
 		{
 			int error = WSAGetLastError();
 
@@ -191,24 +210,68 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 			{
 				info->buffer[bytes_transferred] = 0;
 
-				struct _lw_addr addr = { 0 };
-				lwp_addr_set_sockaddr(&addr, (struct sockaddr*)&info->from);
-
-				lw_addr filter_addr = lw_filter_remote(ctx->filter);
+				struct _lw_addr remoteAddr = { 0 };
+				lwp_addr_set_sockaddr(&remoteAddr,
+					ctx->WSARecvMsgPtr ? info->winsock_msg.name : (struct sockaddr*)&info->from);
 
 				// If address doesn't match filter, it's a UDP message from unauthorised source.
 				// There's no way to block UDP messages like that on Lacewing's side; firewall perhaps,
 				// but user is unlikely to link up automatic firewall changes to Lacewing's error reports.
 				// To avoid flooding server with reports, we don't report in release builds.
-				if (filter_addr && !lw_addr_equal(&addr, filter_addr))
+				if (!lw_filter_check_remote_addr(ctx->filter, &remoteAddr))
 				{
+					lw_addr filter_addr = lw_filter_remote(ctx->filter);
 					lwp_trace("UDP from unexpected source \"%s\", outside of filter \"%s\".\n",
 						lw_addr_tostring(&addr), lw_addr_tostring(filter_addr));
 				}
 				else if (ctx->on_data)
-					ctx->on_data(ctx, &addr, info->buffer, bytes_transferred);
+				{
+					struct _lw_addr localAddr = { 0 };
+					int ifIdx = -1;
+					WSACMSGHDR* hdr = (WSACMSGHDR *)info->winsock_msg.Control.buf;
+					if (hdr)
+					{
+						// In Windows, a dual-stack socket will provide local IPv4 if address is IPv6-mapped,
+						// which is what you have to use to send back anyway. Linux provides local IPv6 mapped.
+						//
+						// IP4 pkt info given for IP6 incoming address, or vice versa
+						// IPv6 dual-stack will pass both IPv6-mapped + IPv4 pktinfo, pick the second
+						// note cmsg_type IP_PKTINFO + IPV6_PKTINFO are equal
+						/*
+						if ((info->winsock_msg.name->sa_family == AF_INET6) !=
+							(hdr->cmsg_level == IPPROTO_IPV6))
+						{
+							hdr = WSA_CMSG_NXTHDR(&info->winsock_msg, hdr);
+						}*/
 
-				lwp_addr_cleanup(&addr);
+						struct sockaddr_storage store = { 0 };
+						if (hdr->cmsg_level == IPPROTO_IP)
+						{
+							store.ss_family = AF_INET;
+							struct in_pktinfo* pktInfo = (struct in_pktinfo*)WSA_CMSG_DATA(info->winsock_msg.Control.buf);
+							((struct sockaddr_in*)&store)->sin_addr = pktInfo->ipi_addr;
+							((struct sockaddr_in*)&store)->sin_port = htons(ctx->port);
+							lwp_addr_set_sockaddr(&localAddr, (struct sockaddr *)&store);
+							ifIdx = pktInfo->ipi_ifindex;
+						}
+						else if (hdr->cmsg_level == IPPROTO_IPV6)
+						{
+							store.ss_family = AF_INET6;
+							struct in6_pktinfo* pktInfo = (struct in6_pktinfo*)WSA_CMSG_DATA(info->winsock_msg.Control.buf);
+							((struct sockaddr_in6*)&store)->sin6_addr = pktInfo->ipi6_addr;
+							((struct sockaddr_in6*)&store)->sin6_port = htons(ctx->port);
+							lwp_addr_set_sockaddr(&localAddr, (struct sockaddr*)&store);
+							ifIdx = pktInfo->ipi6_ifindex;
+						}
+						else
+							lwp_trace("Unrecognised control data level %d, type %d", hdr->cmsg_level, hdr->cmsg_type);
+					}
+
+					ctx->on_data(ctx, ifIdx == -1 ? 0 : &localAddr, ifIdx, &remoteAddr, info->buffer, bytes_transferred);
+					lwp_addr_cleanup(&localAddr);
+				}
+
+				lwp_addr_cleanup(&remoteAddr);
 			}
 			// ignore aborted, it indicates socket was closed abruptly by something higher up,
 			// i.e. udp unhost
@@ -222,6 +285,7 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 					ctx->on_error(ctx, err);
 				lw_error_delete(err);
 			}
+
 			free (info);
 
 			list_remove(udp_overlapped, ctx->pending_receives, overlapped);
@@ -281,9 +345,10 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 		lw_udp_unhost(ctx);
 
 	lw_error error = lw_error_new ();
+	lw_bool madeipv6;
 
 	if ((ctx->socket = lwp_create_server_socket
-			(filter, SOCK_DGRAM, IPPROTO_UDP, error)) == -1)
+			(filter, SOCK_DGRAM, IPPROTO_UDP, &madeipv6, error)) == -1)
 	{
 		if (ctx->on_error)
 			ctx->on_error (ctx, error);
@@ -291,6 +356,7 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
 		return;
 	}
+	lw_log_if_debug("Hosted UDP port %d for %s.\n", (int)ctx->socket, madeipv6 ? "IPv6 + mapped IPv4" : "IPv4");
 
 	lw_error_delete (error);
 
@@ -298,30 +364,10 @@ void lw_udp_host_filter (lw_udp ctx, lw_filter filter)
 
 	ctx->port = lwp_socket_port(ctx->socket);
 
-	/* Each IPv6 adapter uses temporary addresses for outgoing connections for privacy reasons,
-	   as covered in RFC 4941.
-	   If we serve public IPv6 addresses (no filter, or unspec/empty addr filter),
-	   then we'll need a consistent outgoing IPv6 address,
-	   or clients won't recognise the incoming messages as from this server. */
-	const lw_addr remoteFilterAddr = lw_filter_remote(ctx->filter);
-	ctx->is_ipv6_server = !remoteFilterAddr || !remoteFilterAddr->info ||
-		(remoteFilterAddr->info->ai_addr->sa_family == AF_INET6 &&
-			IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6*)&remoteFilterAddr->info->ai_addr)->sin6_addr));
+	// Not available on WinXP, but all IPv6 stuff is half-baked there
+	ctx->WSASendMsgPtr = compat_WSASendMsg(ctx->socket);
+	ctx->WSARecvMsgPtr = compat_WSARecvMsg(ctx->socket);
 
-	if (ctx->is_ipv6_server)
-	{
-		if (lwp_set_ipv6pktinfo_cmsg(ctx->public_fixed_ip6_addr_cmsg))
-			ctx->WSASendMsgPtr = compat_WSASendMsg(ctx->socket);
-		else // Couldn't find a matching IPv6; we'll have to let the OS pick a default
-		{
-			lw_error error = lw_error_new();
-			lw_error_addf(error, "Hosting will continue, but some remote IPv6 clients may be unable to connect");
-			lw_error_addf(error, "Error hosting UDP - couldn't find a stable global IPv6 address");
-			if (ctx->on_error)
-				ctx->on_error(ctx, error);
-			lw_error_delete(error);
-		}
-	}
 	ctx->pump_watch = lw_pump_add (ctx->pump, (HANDLE) ctx->socket, ctx, udp_socket_completion);
 
 	post_receives (ctx);
@@ -343,8 +389,6 @@ void lw_udp_unhost (lw_udp ctx)
 
 	lw_filter_delete (ctx->filter);
 	ctx->filter = 0;
-
-	ctx->is_ipv6_server = lw_false;
 }
 
 lw_ui16 lw_udp_port (lw_udp ctx)
@@ -373,7 +417,7 @@ lw_udp lw_udp_new (lw_pump pump)
 	lw_udp ctx = (lw_udp) calloc (sizeof (*ctx), 1);
 
 	if (!ctx)
-	  return 0;
+		return 0;
 
 	lwp_enable_refcount_logging(ctx, "udp");
 	lwp_set_dealloc_proc(ctx, lw_udp_dealloc);
@@ -383,7 +427,6 @@ lw_udp lw_udp_new (lw_pump pump)
 
 	ctx->pump = pump;
 	ctx->socket = INVALID_SOCKET;
-	ctx->is_ipv6_server = lw_false;
 
 	return ctx;
 }
@@ -407,21 +450,21 @@ void lw_udp_delete (lw_udp ctx)
 	// free (ctx) called by refcount reaching zero
 }
 
-void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
+void lw_udp_send (lw_udp ctx, lw_addr from, lw_ui32 ifidx, lw_addr to, const char * buffer, size_t size)
 {
-	if (!addr || (!lw_addr_ready (addr)) || !addr->info)
+	if (!to || (!lw_addr_ready (to)) || !to->info)
 	{
-	  lw_error error = lw_error_new ();
+		lw_error error = lw_error_new ();
 
-	  lw_error_addf (error, "The address object passed to write() wasn't ready");
-	  lw_error_addf (error, "Error sending datagram");
+		lw_error_addf (error, "The remote address passed to send() wasn't ready");
+		lw_error_addf (error, "Error sending datagram");
 
-	  if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+		if (ctx->on_error)
+			ctx->on_error (ctx, error);
 
-	  lw_error_delete (error);
+		lw_error_delete (error);
 
-	  return;
+		return;
 	}
 
 	if (size == -1)
@@ -430,14 +473,7 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 	if (sizeof(size) > 4)
 		assert(size < 0xFFFFFFFF);
 
-	udp_overlapped overlapped = (udp_overlapped) calloc (sizeof (*overlapped) + size, 1);
-
-	if (!overlapped)
-	{
-		// no point trying to allocate lw_error
-		exit(ENOMEM);
-		return;
-	}
+	udp_overlapped overlapped = (udp_overlapped) lw_calloc_or_exit (sizeof (*overlapped) + size, 1);
 
 	lwp_retain(ctx, "udp write");
 	++ctx->writes_posted;
@@ -449,57 +485,143 @@ void lw_udp_send (lw_udp ctx, lw_addr addr, const char * buffer, size_t size)
 
 	int res;
 	// if a non-local IPv6 destination, then specify the outgoing IP we send from explicitly
-	fn_WSASendMsg wsaSendMsg = ctx->is_ipv6_server && lw_addr_ipv6(addr) &&
-		IN6_IS_ADDR_GLOBAL(&((struct sockaddr_in6 *)addr->info->ai_addr)->sin6_addr) ?
-		ctx->WSASendMsgPtr : NULL;
+	fn_WSASendMsg wsaSendMsg = from ? ctx->WSASendMsgPtr : NULL;
 	if (!wsaSendMsg)
-		res = WSASendTo(ctx->socket, &winsock_buf, 1, 0, /* MSG_XX flags */ 0, addr->info->ai_addr,
-			(int)addr->info->ai_addrlen, (OVERLAPPED*)overlapped, 0);
+	{
+		res = WSASendTo(ctx->socket, &winsock_buf, 1, 0, /* MSG_XX flags */ 0, to->info->ai_addr,
+			(int)to->info->ai_addrlen, (OVERLAPPED*)overlapped, 0);
+	}
 	else // specify source address
 	{
+		assert((int)ifidx > -1);
+		char cmsgbuf[WSA_CMSG_SPACE(sizeof(struct in6_pktinfo)) + WSA_CMSG_SPACE(sizeof(struct in_pktinfo))];
+		memset(cmsgbuf, 0, sizeof(cmsgbuf));
+		WSACMSGHDR* cmsg = (WSACMSGHDR*)cmsgbuf;
 		WSAMSG msg;
-		msg.name = addr->info->ai_addr;
-		msg.namelen = (int)addr->info->ai_addrlen;
+
+		// This will vomit if you use IPv4 address on an IPv6 dual-stack socket, claiming invalid pointer detection
+		// It will also vomit if you pass a sizeof sockaddr_storage. So I guess it only wants mapped.
+		// If you host a IPv6 dual-stack, only use IPv6 local and remote addresses.
+		// If you host IPv4, only use IPv4 local and remote addresses.
+		// Note that udp->host(port) will make IPv6 dual-stack by default.
+		msg.name = to->info->ai_addr;
+		msg.namelen = (int)to->info->ai_addrlen; // 16 = IPv4, 28 = IPv6, 128 = storage
+		//assert(msg.namelen == sizeof(struct sockaddr_in6));
+
 		msg.lpBuffers = &winsock_buf;
 		msg.dwBufferCount = 1;
-		msg.Control.buf = ctx->public_fixed_ip6_addr_cmsg;
-		msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in6_pktinfo));
 		msg.dwFlags = 0;
+		msg.Control.buf = (CHAR *)cmsg;
+
+		//if (ctx->is_ipv6)
+		// If destination is IPv4 or IPv4-mapped IPv6, the cmsg must be in_pktinfo
+		// If destination is IPv6 non-mapped, source must be IPv6 in in6_pktinfo
+		if ((to->info->ai_family == AF_INET || IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)to->info->ai_addr)->sin6_addr)) &&
+			from->info->ai_family != AF_INET)
+		{
+			lw_log_if_debug("Warning: expecting IPv4 outgoing for this scenario: from \"%s\", to \"%s\".",
+				lw_addr_tostring(from, lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_remove_port),
+				lw_addr_tostring(to, lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_remove_port));
+		}
+		if ((to->info->ai_family == AF_INET6 && !IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)to->info->ai_addr)->sin6_addr)) &&
+			from->info->ai_family != AF_INET6)
+		{
+			lw_log_if_debug("Warning: expecting IPv6 outgoing for this scenario: from \"%s\" to \"%s\".",
+				lw_addr_tostring(from, lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_remove_port),
+				lw_addr_tostring(to, lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_remove_port));
+		}
+		if (from->info->ai_family == AF_INET)
+		{
+			msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in_pktinfo));
+			cmsg->cmsg_level = IPPROTO_IP;
+			cmsg->cmsg_type = IP_PKTINFO;
+			cmsg->cmsg_len = WSA_CMSG_LEN(sizeof(struct in_pktinfo));
+
+			struct in_pktinfo* const pktinfo = (struct in_pktinfo*)WSA_CMSG_DATA(cmsg);
+			pktinfo->ipi_addr = ((struct sockaddr_in*)from->info->ai_addr)->sin_addr;
+			pktinfo->ipi_ifindex = ifidx;
+		}
+		else // AF_INET6
+		{
+			assert(from->info->ai_family == AF_INET6);
+			msg.Control.len = WSA_CMSG_SPACE(sizeof(struct in6_pktinfo));
+			cmsg->cmsg_level = IPPROTO_IPV6;
+			cmsg->cmsg_type = IPV6_PKTINFO;
+			cmsg->cmsg_len = WSA_CMSG_LEN(sizeof(struct in6_pktinfo));
+			struct in6_pktinfo* const pktinfo = (struct in6_pktinfo*)WSA_CMSG_DATA(cmsg);
+			pktinfo->ipi6_addr = ((struct sockaddr_in6*)from->info->ai_addr)->sin6_addr;
+			pktinfo->ipi6_ifindex = ifidx;
+		}
 
 		res = wsaSendMsg(ctx->socket, &msg, 0, NULL, &overlapped->overlapped, NULL);
 	}
 
-	if (res == SOCKET_ERROR)
-	{
-		const int code = WSAGetLastError();
+	const lw_addr_tostring_flags addrstringflags = lw_addr_tostring_flag_box_ipv6;
+	do {
+		if (res == SOCKET_ERROR)
+		{
+			const int code = WSAGetLastError();
 
-		// no error, running as async
-		if (code == WSA_IO_PENDING)
-			return;
+			// no error, running as async
+			if (code == WSA_IO_PENDING)
+				break;
 
-		// outgoing is overloaded; as it's UDP, just discard the message
-		// Closest to the EAGAIN exception on Unix servers, but since we use overlapped, it's unlikely this will apply
-		// This code as a response to WSASendTo may be Windows NT only
-		// TODO: Do we need to undo writes_posted and lwp_retain?
-		if (code == WSAEWOULDBLOCK)
-			return;
+			--ctx->writes_posted;
+			free(overlapped);
 
-		free(overlapped);
+			// outgoing is overloaded; as it's UDP, just discard the message
+			// Closest to the EAGAIN exception on Unix servers, but since we use overlapped, it's unlikely this will apply
+			// This code as a response to WSASendTo may be Windows NT only
+			if (code == WSAEWOULDBLOCK)
+				break;
 
-		// genuine error, whine about it
-		lw_error error = lw_error_new ();
+			// genuine error, whine about it
+			lw_error error = lw_error_new();
+			lw_error_add(error, code);
+			lw_error_addf(error, "Error sending datagram via %s", wsaSendMsg ? "sendmsg" : "sendto");
+#ifdef _DEBUG
+			if (wsaSendMsg)
+			{
+				lw_error_addf(error, "Sending UDP from socket %i, local address \"%s\", addrlen %i, ifidx %u), to remote \"%s\" (addrlen %i)",
+					(int)ctx->socket,
+					lw_addr_tostring(from, addrstringflags),
+					from->info->ai_addrlen,
+					ifidx,
+					lw_addr_tostring(to, addrstringflags),
+					to->info->ai_addrlen);
+			}
+			else
+			{
+				lw_error_addf(error, "Sending from OS default local address/interface, to remote \"%s\" (addrlen %i)",
+					lw_addr_tostring(to, addrstringflags), to->info->ai_addrlen);
+			}
+#endif
 
-		lw_error_add (error, code);
-		lw_error_addf (error, "Error sending datagram");
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
 
-		if (ctx->on_error)
-			ctx->on_error (ctx, error);
+			lw_error_delete(error);
+			break;
+		}
+		// else no error, completed as sync already (IOCP still has posted completion status)
+#ifdef _DEBUG
+		if (wsaSendMsg)
+		{
+			lw_log_if_debug("Sending UDP from socket %i, local address \"%s\" net interface ID %u), to remote \"%s\", success (instant).\n",
+				(int)ctx->socket,
+				lw_addr_tostring(from, addrstringflags),
+				ifidx,
+				lw_addr_tostring(to, addrstringflags));
+		}
+		else
+		{
+			lw_log_if_debug("Sending from OS default local address/interface, to remote \"%s\", success (instant).\n",
+				lw_addr_tostring(to, addrstringflags));
+		}
+#endif
+	} while (0);
 
-		lw_error_delete (error);
-
-		// fall through
-	}
-	// else no error, completed as sync already (IOCP still has posted completion status)
+	lwp_release(ctx, "udp write");
 }
 
 void lw_udp_set_tag (lw_udp ctx, void * tag)

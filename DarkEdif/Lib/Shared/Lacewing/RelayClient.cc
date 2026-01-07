@@ -59,6 +59,27 @@ namespace lacewing
 		// message: used by lacewing internal (e.g. automatic ping response)
 		// messageMF: used by program
 		framebuilder message, messageMF;
+		// If set, udp local address that we will use to send from.
+		// This should stay consistent across reconnect attempts.
+		// @remarks If unset, OS pick is used, which may be subject to
+		// IPv6 RFC4941 Privacy Extensions (particularly on Windows),
+		// which means the outgoing UDP IP address:
+		// > may not match TCP outgoing, if both TCP and UDP use different temp IPs.
+		// > may be a temporary IPv6 and its lease may expire, changing its used IP.
+		// Both mean the server may ignore our UDP messages as they don't match
+		// our expected address. Server will assume we are someone pretending
+		// to be our client ID and drop the message.
+		// For IPv4, this should not vary (for us) even when CG-NAT is in play,
+		// as while TCP will not match UDP in CG-NAT, the change is seen only
+		// on receiver (server) end and imperceivable to the sending client.
+		// Even if server told us our perceived address, it will vary the next
+		// connection anyway.
+		lacewing::address udplocaladdress = nullptr;
+		lw_ui32 ifidx = -1;
+
+		// If set, the address we received UDPWelcome from.
+		// If we are operating under IPv4 CG-NAT, this may not match the TCP address?
+		lacewing::address udpremoteaddress = nullptr;
 
 		std::vector<std::shared_ptr<relayclient::channellisting>> channellist;
 
@@ -118,6 +139,11 @@ namespace lacewing
 		id = 0xffff;
 		connected = false;
 		name.clear();
+
+		udp->unhost();
+		lacewing::address_delete(udplocaladdress);
+		lacewing::address_delete(udpremoteaddress);
+		ifidx = -1;
 	}
 	void relayclientinternal::disconnect_mark_all_as_readonly()
 	{
@@ -146,9 +172,24 @@ namespace lacewing
 		/* opening 0 byte */
 		socket->write("", 1);
 
-		// internal.udp->host(socket->server_address(), nullptr, 0U);
+		lacewing::address address = socket->server_address();
 
-		framebuilder &message = internal.message;
+		assert(address);
+
+		// We don't lock UDP remote address now in case of CG-NAT, where incoming address differs
+		// per connection; TCP + UDP are different addresses
+
+		internal.udpremoteaddress = lacewing::address_new(address);
+		internal.udplocaladdress = lacewing::address_new(socket->local_address());
+		internal.ifidx = socket->ifidx();
+		if (internal.local_port)
+			internal.udplocaladdress->port(internal.local_port);
+
+		framebuilder& message = internal.message;
+
+		// Update thread to whatever thread the event pump is using,
+		// rather than the main thread that created it
+		message.updatethreadowner();
 
 		message.addheader(0, 0);	 /* request */
 		message.add<lw_ui8>(0);		 /* connect */
@@ -173,7 +214,7 @@ namespace lacewing
 			internal.handler_disconnect(internal.client);
 
 		cliWriteLock.lw_relock();
-		internal.clear();
+		internal.clear(); // cleans udp
 
 		// Lacewing self-deletes streams on socket close - while client variable is valid here,
 		// it won't be after calling function continues. We quietly replace it with something usable.
@@ -220,13 +261,44 @@ namespace lacewing
 			internal.handler_error(internal.client, error);
 	}
 
-	void handlerclientudpreceive(udp udp, address address, char * data, size_t size)
+	void handlerclientudpreceive(udp udp, address local_addr, lw_ui32 ifidx, address remote_addr, char * data, size_t size)
 	{
 		relayclientinternal &internal = *(relayclientinternal *)udp->tag();
 
 		if (!size)
 			return;
 
+		if (!internal.udplocaladdress)
+		{
+			lw_log_if_debug("Setting local UDP address to \"%s\", remote to \"%s\".\n",
+				local_addr->tostring(), remote_addr->tostring());
+			lacewing::writelock wl = internal.client.lock.createWriteLock();
+			internal.udplocaladdress = lacewing::address_new(local_addr);
+			internal.ifidx = ifidx;
+			lacewing::address_delete(internal.udpremoteaddress);
+			internal.udpremoteaddress = lacewing::address_new(remote_addr);
+		}
+		else
+		{
+			if (*internal.udpremoteaddress != remote_addr)
+			{
+				lacewing::error err = lacewing::error_new();
+				err->add("Dropping incoming UDP message from \"%s\", does not match expected \"%s\".",
+					remote_addr->tostring(), internal.udpremoteaddress->tostring());
+				internal.handler_error(internal.client, err);
+				lacewing::error_delete(err);
+				return;
+			}
+			if (*internal.udplocaladdress != local_addr)
+			{
+				lacewing::error err = lacewing::error_new();
+				err->add("Dropping incoming UDP message from \"%s\", local address changed; \"%s\" does not match expected \"%s\".",
+					remote_addr->tostring(), local_addr->tostring(), internal.udplocaladdress->tostring());
+				internal.handler_error(internal.client, err);
+				lacewing::error_delete(err);
+				return;
+			}
+		}
 		internal.messagehandler(*data, data + 1, size - 1, true);
 	}
 
@@ -234,7 +306,7 @@ namespace lacewing
 	{
 		relayclientinternal &internal = *(relayclientinternal *)udp->tag();
 
-		error->add("socket error");
+		error->add("UDP error");
 
 		if (internal.handler_error)
 			internal.handler_error(internal.client, error);
@@ -259,42 +331,32 @@ namespace lacewing
 
 	void relayclient::connect(const char * host, lw_ui16 remote_port)
 	{
-		lacewing::writelock wl = this->lock.createWriteLock();
-		relayclientinternal &internal = *((relayclientinternal *)internaltag);
-		internal.socket->connect(host, remote_port);
-		if (internal.local_port)
-		{
-			address addr = internal.socket->server_address();
-			const lw_bool makeAddr = addr == nullptr;
-			if (makeAddr)
-				addr = lacewing::address_new(host, remote_port);
-
-			// Host early for UDP hole punch message - which must be sent closely with TCP connect
-			internal.udp->host(addr, internal.local_port);
-
-			// UDPHello with an ignored ID 0xFFFF, which will be ignored by server,
-			// but its reception at all will cause hole punch success
-			internal.udp->send(addr, "\xa0\xFF\xFF", 3);
-			internal.local_port = 0;
-			if (makeAddr)
-				lacewing::address_delete(addr);
-		}
+		lacewing::address addr = lacewing::address_new(host, remote_port);
+		this->connect(addr);
+		lacewing::address_delete(addr);
 	}
 
 	void relayclient::connect(address address)
 	{
-		lacewing::writelock wl = this->lock.createWriteLock();
 		if (!address->port())
 			address->port(6121);
 
+		relayclientinternal& internal = *((relayclientinternal*)internaltag);
+
+		// We may re-use this address for hole punch, so resolve it once
+		lacewing::error err = address->resolve();
+		if (err)
+		{
+			err->add("Error resolving address to connect to");
+			internal.handler_error(internal.client, err);
+			lacewing::error_delete(err);
+			return;
+		}
+
+		lacewing::writelock wl = this->lock.createWriteLock();
+
 		// Socket will fuss if we're connecting/connected already, so don't bother checking.
-		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 		internal.socket->connect(address);
-		// Host early for possible UDP hole punch
-		internal.udp->host(internal.socket->server_address(), internal.local_port);
-		// UDPHello, although we probably won't receive response in time for it to be processed
-		internal.udp->send(internal.socket->server_address(), "\xa0\xFF\xFF", 3);
-		internal.local_port = 0;
 	}
 
 	void relayclient::setlocalport(lw_ui16 port)
@@ -325,6 +387,7 @@ namespace lacewing
 		// In future versions we could use a timer to immediate close after a while,
 		// in case server is lagging with the polite close response, but we'd have
 		// to watch it on app close.
+		// Phi note 16th Dec 2025: that might be unnecessary as stream delete happens with dtor.
 		internal.socket->close(lw_false);
 		// lacewing::stream_delete(internal.socket);
 		internal.udp->unhost();
@@ -457,7 +520,7 @@ namespace lacewing
 		message.add (subchannel);
 		message.add (data);
 
-		message.send(internal.udp, internal.socket->server_address());
+		message.send(internal.udp, internal.udplocaladdress,  internal.ifidx, internal.udpremoteaddress);
 	}
 
 	const std::vector<std::shared_ptr<relayclient::channel>> & relayclient::getchannels() const
@@ -504,7 +567,8 @@ namespace lacewing
 		message.add <lw_ui16>(this->_id);
 		message.add (data);
 
-		message.send(clientinternal.udp, clientinternal.socket->server_address());
+		message.send(clientinternal.udp, clientinternal.udplocaladdress, clientinternal.ifidx,
+			clientinternal.udpremoteaddress);
 	}
 
 	void relayclient::channel::peer::send(lw_ui8 subchannel, std::string_view data, lw_ui8 variant) const
@@ -547,7 +611,8 @@ namespace lacewing
 		message.add <lw_ui16>(_id);
 		message.add (data);
 
-		message.send(internal.udp, internal.socket->server_address());
+		message.send(internal.udp, internal.udplocaladdress, internal.ifidx,
+			internal.udpremoteaddress);
 	}
 
 	void relayclient::channel::leave() const
@@ -684,6 +749,8 @@ namespace lacewing
 					if (reader.failed)
 						break;
 
+					// Lacewing Relay connect approval
+
 					this->welcomemessage = welcomemessage;
 					lacewing::error error = nullptr;
 					// If midway during connection when Disconnect is called, returned address can be null.
@@ -704,10 +771,29 @@ namespace lacewing
 						error_delete(error);
 						break;
 					}
+					lw_log_if_debug("Got a Relay connect. IPs are set, so starting the UDP hello loop.");
 
-					if (!udp->hosting())
-						udp->host(srvAddress);
-					udphellotick();
+					// Hole punch setup: use port and specify we want a certain IPvX level
+					// Using dual-stack IPv6 default when remote address is IPv4 causes "pointer is invalid" errors
+					// Worth noting that we could lock down remote IP with host(udpremoteaddress, local_port),
+					// but if there is any sort of NAT on other side - such as CG-NAT - the remote IP or port won't match.
+					if (local_port)
+					{
+						lacewing::filter filt = lacewing::filter_new();
+						// TODO: This locks down outgoing local IP, merging UDP + TCP. Worth for IPv6 due to Privacy Extensions,
+						// probably irrelevant for IPv4 as outgoing public IP will be determined by router/ISP NAT.
+						// filt->local(socket->local_address());
+						filt->local_port(local_port);
+						filt->ipv6(udpremoteaddress->ipv6());
+						udp->host(filt);
+						local_port = 0;
+					}
+					else
+						udp->host(udpremoteaddress);
+
+					// Do tick immediately instead of after 500ms
+					udphellotimer->force_tick();
+
 
 					udphellotimer->start(500); // see udphellotick
 
@@ -1237,18 +1323,18 @@ namespace lacewing
 
 			if (connected)
 			{
-				lwp_trace("Swallowing extra UDPWelcome at message address %p, already connected.", message);
+				lwp_trace("Discarding extra UDPWelcome at message address %p, already connected.", message);
 				break;
 			}
 
 			// UDP connection completed before TCP, possibly from bad use of hole punch.
 			if (!socket->connected())
 			{
-				lwp_trace("Swallowing UDPWelcome at message address %p, TCP is not ready.", message);
+				lw_log_if_debug("Discarding UDPWelcome at message address %p, TCP is not ready.", message);
 				break;
 			}
 
-			lwp_trace("UDPWelcome received for message address %p, now connected.", message);
+			lw_log_if_debug("UDPWelcome received for message address %p, now connected.", message);
 
 			udphellotimer->stop();
 			connected = true;
@@ -1267,12 +1353,12 @@ namespace lacewing
 				// Continuing here is bad as server_address() is not guaranteed to be set
 				if (!connected)
 				{
-					always_log("Swallowing early UDP ping (assuming it was a hole punch).\n");
+					always_log("Discarding early UDP ping (assuming it was a hole punch).\n");
 					break;
 				}
 
 				this->message.addheader(9, 0, true, id); /* pong */
-				this->message.send(this->udp, this->socket->server_address());
+				this->message.send(udp, udplocaladdress, ifidx, udpremoteaddress);
 			}
 			else
 			{
@@ -1400,12 +1486,29 @@ namespace lacewing
 
 	void relayclientinternal::udphellotick()
 	{
+		if (!socket->connected())
+		{
+			lwp_trace("TCP is not connected, aborted connect midway?");
+			return;
+		}
+
 		// udphellotick just sends UDPHello every 0.5s, and is managed by the relayclientinternal::udphellotimer var.
 		// It starts from the time the Connect Request Success message is sent.
 		assert(udp->hosting() && "udphellotick() called, but not hosting UDP.");
 
+		if (connected)
+		{
+			lwp_trace("Connected is true, already done?");
+			return;
+		}
+
+		// Shouldn't be trying to send UDPHello without a remote address,
+		// even in hole punch.
+		assert(udpremoteaddress);
+
 		message.addheader(7, 0, true, id); /* udphello */
-		message.send(udp, socket->server_address());
+		message.send(udp, udplocaladdress, ifidx, udpremoteaddress);
+
 	}
 
 	void relayclientinternal::initsocket(lacewing::pump pump)

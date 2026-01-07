@@ -209,11 +209,11 @@ public:
 		tosendsize = 0;
 	}
 
-	inline void send(lacewing::udp udp, lacewing::address address, bool clear = true)
+	inline void send(lacewing::udp udp, lacewing::address from, lw_ui32 ifidx, lacewing::address to, bool clear = true)
 	{
-		udp->send(address, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
 		if (threadOwner != std::this_thread::get_id())
 			LacewingFatalErrorMsgBox();
+		udp->send (from, ifidx, to, &buffer[isudpclient ? 5 : 7], size - (isudpclient ? 5 : 7));
 
 		if (clear)
 			framereset();
