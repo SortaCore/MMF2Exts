@@ -56,11 +56,11 @@ struct _lw_fdstream
 	lw_fdstream transmitfile_from, transmitfile_to;
 };
 
-#define lwp_fdstream_flag_read_pending	 1
+#define lwp_fdstream_flag_read_pending	1
 #define lwp_fdstream_flag_nagle			2
 #define lwp_fdstream_flag_is_socket		4
-#define lwp_fdstream_flag_close_asap		8  /* FD close pending on write? */
-#define lwp_fdstream_flag_auto_close		16
+#define lwp_fdstream_flag_close_asap	8  /* FD close when all writes are done */
+#define lwp_fdstream_flag_auto_close	16
 
 void lwp_fdstream_init (lw_fdstream, lw_pump);
 

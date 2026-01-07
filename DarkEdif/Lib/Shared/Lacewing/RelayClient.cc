@@ -100,8 +100,6 @@ namespace lacewing
 
 		std::vector<std::shared_ptr<relayclient::channel>> channels;
 
-		void initsocket(lacewing::pump pump);
-
 		void disconnect_mark_all_as_readonly();
 
 		~relayclientinternal() noexcept(false)
@@ -112,7 +110,7 @@ namespace lacewing
 			udphellotimer->on_tick(nullptr);
 			lacewing::timer_delete(udphellotimer);
 
-			// Lacewing will self-delete on disconnect... we replace with a new, blank client
+			// Lacewing client delete
 			if (socket)
 			{
 				socket->on_connect(nullptr);
@@ -203,6 +201,9 @@ namespace lacewing
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
 		auto cliWriteLock = internal.client.lock.createWriteLock();
+
+		assert(internal.socket == socket);
+
 		internal.udphellotimer->stop();
 
 		internal.connected = false;
@@ -215,11 +216,6 @@ namespace lacewing
 
 		cliWriteLock.lw_relock();
 		internal.clear(); // cleans udp
-
-		// Lacewing self-deletes streams on socket close - while client variable is valid here,
-		// it won't be after calling function continues. We quietly replace it with something usable.
-		internal.socket = nullptr;
-		internal.initsocket(socket->pump());
 	}
 
 	void handlerreceive(client socket, const char * data, size_t size)
@@ -373,6 +369,8 @@ namespace lacewing
 	{ 
 		relayclientinternal &internal = *((relayclientinternal *)internaltag);
 
+		lacewing::writelock wl = this->lock.createWriteLock();
+
 		// If you run relayclient::disconnect() while a connection/connect attempt isn't pending,
 		// the disconnect is effectively "stored" inside the socket, causing the next
 		// successful connection to be met with an instant disconnect.
@@ -380,18 +378,22 @@ namespace lacewing
 		if (!internal.socket->connecting() && !internal.socket->connected())
 			return;
 
+		bool connected = internal.connected;
 		internal.connected = false;
 
 		if (internal.udphellotimer)
 			internal.udphellotimer->stop();
 
-		lacewing::writelock wl = this->lock.createWriteLock();
+		// Killing a client connection gracefully while still in the connecting phase is a bad idea,
+		// as sockets by default have a connect timeout of ~21 seconds on Windows, sending 4 TCP SYNs,
+		// and a graceful close will wait until they're all sent and timed-out before closing.
+		internal.socket->close(!connected);
 
-		// In future versions we could use a timer to immediate close after a while,
+		// TODO: In future versions we could use a timer to immediate close after a while,
 		// in case server is lagging with the polite close response, but we'd have
 		// to watch it on app close.
 		// Phi note 16th Dec 2025: that might be unnecessary as stream delete happens with dtor.
-		internal.socket->close(lw_false);
+
 		// lacewing::stream_delete(internal.socket);
 		internal.udp->unhost();
 		// lacewing::udp_delete(internal.udp);
@@ -1431,11 +1433,17 @@ namespace lacewing
 	}
 
 	relayclientinternal::relayclientinternal(relayclient &_client, pump _eventpump) :
-		client(_client), socket(nullptr), udp(udp_new(_eventpump)),
+		client(_client), socket(client_new(_eventpump)), udp(udp_new(_eventpump)),
 		udphellotimer(timer_new(_eventpump, "udphello")),
 		message(true), messageMF(true)
 	{
-		initsocket(_eventpump);
+		socket->tag(this);
+		socket->on_connect(lacewing::handlerconnect);
+		socket->on_disconnect(lacewing::handlerdisconnect);
+		socket->on_data(lacewing::handlerreceive);
+		socket->on_error(lacewing::handlererror);
+
+		socket->nagle(false);
 
 		udp->on_data(lacewing::handlerclientudpreceive);
 		udp->on_error(lacewing::handlerclientudperror);
@@ -1513,20 +1521,6 @@ namespace lacewing
 		message.send(udp, udplocaladdress, ifidx, udpremoteaddress);
 
 	}
-
-	void relayclientinternal::initsocket(lacewing::pump pump)
-	{
-		socket = lacewing::client_new(pump);
-
-		socket->tag(this);
-		socket->on_connect(lacewing::handlerconnect);
-		socket->on_disconnect(lacewing::handlerdisconnect);
-		socket->on_data(lacewing::handlerreceive);
-		socket->on_error(lacewing::handlererror);
-
-		socket->nagle(false);
-	}
-
 
 	relayclient::channel::channel(relayclientinternal &_client) noexcept : client(_client)
 	{

@@ -158,47 +158,37 @@ static void close_fd (lw_fdstream ctx)
 		ctx->transmit_file_to = 0;
 	}
 
-	// No need to run CancelIoEx(), closesocket() will run it internally
-
-	if (ctx->flags & lwp_fdstream_flag_auto_close)
+	if (ctx->flags & lwp_fdstream_flag_is_socket)
 	{
-		if (ctx->flags & lwp_fdstream_flag_is_socket)
+		shutdown((SOCKET)ctx->fd, SD_BOTH);
+
+		// No need to run CancelIoEx(), closesocket() will run it internally
+		if (closesocket ((SOCKET) ctx->fd) == SOCKET_ERROR)
 		{
-			shutdown((SOCKET)ctx->fd, SD_BOTH);
-
-			if (closesocket ((SOCKET) ctx->fd) == SOCKET_ERROR)
-			{
-				// There's no error reporting function here, and it's not worth killing the app over.
-				#ifdef _lacewing_debug
-
-				lw_error err = lw_error_new();
-				lw_error_add(err, WSAGetLastError());
-				lwp_trace("closesocket() returned %s", lw_error_tostring(err));
-				lw_error_delete(err);
-
-				#endif
-			}
-			else
-				ctx->fd = INVALID_HANDLE_VALUE;
+			// TODO: There's no error reporting function here, what do?
+			// see below as well
+			lw_error err = lw_error_new();
+			lw_error_add(err, WSAGetLastError());
+			always_log("closesocket() returned %s", lw_error_tostring(err));
+			lw_error_delete(err);
 		}
 		else
-		{
-			if (CloseHandle(ctx->fd) == FALSE)
-			{
-				// There's no error reporting function here, and it's not worth killing the app over.
-				#ifdef _lacewing_debug
-
-				lw_error err = lw_error_new();
-				lw_error_add(err, GetLastError());
-				lwp_trace("CloseHandle() returned %s", lw_error_tostring(err));
-				lw_error_delete(err);
-
-				#endif
-			}
-			else
-				ctx->fd = INVALID_HANDLE_VALUE;
-		}
+			ctx->fd = INVALID_HANDLE_VALUE;
 	}
+	else
+	{
+		if (CloseHandle(ctx->fd) == FALSE)
+		{
+			lw_error err = lw_error_new();
+			lw_error_add(err, GetLastError());
+			always_log("CloseHandle() returned %s", lw_error_tostring(err));
+			lw_error_delete(err);
+		}
+		else
+			ctx->fd = INVALID_HANDLE_VALUE;
+	}
+
+	ctx->flags &= ~lwp_fdstream_flag_close_asap;
 
 	//list_clear(ctx->pending_writes);
 }

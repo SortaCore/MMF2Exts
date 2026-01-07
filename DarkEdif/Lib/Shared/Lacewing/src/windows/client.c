@@ -90,17 +90,24 @@ static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
 	{
 		ctx->connecting = lw_false;
 
-		lw_error error = lw_error_new();
-		if (errorNum == ERROR_NETWORK_UNREACHABLE && lw_addr_ipv6(ctx->remote_address))
-			lw_error_addf(error, "Network unreachable - Non-IPv6 client connecting to IPv6 server?");
-		else
-			lw_error_add(error, errorNum);
-		lw_error_addf(error, "Error connecting");
+		// Aborted = user cancelled connect
+		if (errorNum != ERROR_OPERATION_ABORTED)
+		{
+			lw_error error = lw_error_new();
+			if (errorNum == ERROR_NETWORK_UNREACHABLE && lw_addr_ipv6(ctx->remote_address))
+				lw_error_addf(error, "Network unreachable - Non-IPv6 client connecting to IPv6 server?");
+			else
+				lw_error_add(error, errorNum);
+			lw_error_addf(error, "Error connecting");
 
-		if (ctx->on_error)
-			ctx->on_error(ctx, error);
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
 
-		lw_error_delete(error);
+			lw_error_delete(error);
+		}
+
+		// This is a connection error, so we immediately close
+		lw_stream_close (&ctx->fdstream.stream, lw_true);
 		return;
 	}
 
@@ -123,7 +130,8 @@ static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
 	if (ctx->on_connect)
 		ctx->on_connect (ctx);
 
-	if (ctx->on_data)
+	// Check on_connect did not result in disconnect
+	if ((ctx->fdstream.flags & (lwp_fdstream_flag_auto_close | lwp_fdstream_flag_close_asap)) == 0 && ctx->on_data)
 		lw_stream_read ((lw_stream) ctx, -1);
 }
 
@@ -370,6 +378,7 @@ static void on_close (lw_stream stream, void * tag)
 {
 	lw_client ctx = (lw_client) tag;
 
+	// ctx->connecting reset to false by first_time_write_ready callback
 	ctx->on_disconnect (ctx);
 }
 

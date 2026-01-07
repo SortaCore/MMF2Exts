@@ -15,7 +15,7 @@
 #define lw_client_flag_connecting	((lw_i8)1)
 #define lw_client_flag_connected	((lw_i8)2)
 
-// 3 second timeout
+// 3 second TCP connect timeout
 static const int lw_client_timeout_ms = 3 * 1000;
 
 struct _lw_client
@@ -134,14 +134,21 @@ static void first_time_write_ready (void * tag)
 
 		ctx->flags &= ~ lw_client_flag_connecting;
 
-		lw_error error = lw_error_new ();
-		lw_error_add (error, errorNum);
-		lw_error_addf (error, "Error connecting");
+		// Aborted = user cancelled connect
+		if (errorNum != ECONNABORTED)
+		{
+			lw_error error = lw_error_new();
+			lw_error_add(error, errorNum);
+			lw_error_addf(error, "Error connecting");
 
-		if (ctx->on_error)
-		 ctx->on_error (ctx, error);
+			if (ctx->on_error)
+				ctx->on_error(ctx, error);
 
-		lw_error_delete (error);
+			lw_error_delete(error);
+		}
+
+		// This is a connection error, so we immediately close
+		lw_stream_close(&ctx->fdstream.stream, lw_true);
 
 		return;
 	}
@@ -156,7 +163,7 @@ static void first_time_write_ready (void * tag)
 	ctx->local_address = lwp_addr_new_sockaddr((struct sockaddr*)&ss);
 	ctx->ifidx = lwp_get_ifidx(&ss);
 
-	ctx->flags &= ~ lw_client_flag_connecting;
+	ctx->flags = (ctx->flags & (~lw_client_flag_connecting)) | lw_client_flag_connected;
 
 	if (ctx->on_connect)
 		ctx->on_connect (ctx);
@@ -345,12 +352,12 @@ void lw_client_set_local_port (lw_client ctx, lw_ui16 localport)
 
 lw_bool lw_client_connected (lw_client ctx)
 {
-	return lw_fdstream_valid ((lw_fdstream) ctx);
+	return (ctx->flags & lw_client_flag_connected) != 0;
 }
 
 lw_bool lw_client_connecting (lw_client ctx)
 {
-	return ctx->flags & lw_client_flag_connecting;
+	return (ctx->flags & lw_client_flag_connecting) != 0;
 }
 
 lw_addr lw_client_server_addr (lw_client ctx)

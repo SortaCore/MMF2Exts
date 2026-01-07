@@ -423,8 +423,9 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 
 	lwp_make_nonblocking(ctx->socket);
 
-	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket,
-		"lw_server_host_filter adding server",
+	char name[128];
+	lwp_snprintf(name, sizeof(name), "lw_server tcp port %li", lw_filter_local_port(filter));
+	ctx->pump_watch = lw_pump_add (ctx->pump, ctx->socket, name,
 		ctx, listen_socket_read_ready, 0, lw_true);
 
 	lw_error_delete (error);

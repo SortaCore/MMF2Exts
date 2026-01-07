@@ -632,8 +632,9 @@ void lw_server_host_filter (lw_server ctx, lw_filter filter)
 		return;
 	}
 
-	ctx->pump_watch = lw_pump_add
-	  (ctx->pump, (HANDLE) ctx->socket, "lw_server_host_filter adding server", ctx, listen_socket_completion);
+	char name[128];
+	lwp_snprintf(name, sizeof(name), "lw_server tcp port %li", lw_filter_local_port(filter));
+	ctx->pump_watch = lw_pump_add(ctx->pump, (HANDLE) ctx->socket, name, ctx, listen_socket_completion);
 
 	while (list_length (ctx->pending_accepts) < (size_t)ideal_pending_accept_count)
 		if (!issue_accept (ctx, NULL))
