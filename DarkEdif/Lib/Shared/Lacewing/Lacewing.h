@@ -102,6 +102,7 @@
 #include <thread>
 #include <cctype>
 #include <cstring>
+#include <stdexcept>
 
 // std::string_view requires C++17
 #if (__cplusplus < 201703L && _MSVC_LANG < 201703L) || (defined(__clang__) && !__has_include(<string_view>))
@@ -193,10 +194,12 @@ typedef enum _lw_network_change_type
 	lw_import			void  lw_md5_hex			(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1				(char * output, const char * input, size_t length);
 	lw_import			void  lw_sha1_hex			(char * output, const char * input, size_t length);
+#ifdef _lacewing_debug
 #if defined(_MSC_VER) || (defined(__unix__) && !defined(__ANDROID__))
 	#define __printflike(a,b) /* no op */
 #endif
 	lw_import			void  lw_trace				(const char * format, ...) __printflike(1, 2);
+#endif // _lacewing_debug
 	lw_import			void  lw_dump				(const char * buffer, size_t size);
 	lw_import		 lw_bool  lw_random				(char * buffer, size_t size);
 	lw_import		  size_t  lw_min_size_t			(size_t a, size_t b);

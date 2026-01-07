@@ -109,7 +109,7 @@ static void read_ready (void * tag)
 			if (errno == EAGAIN)
 				break;
 
-			lw_trace("read_ready: Abort for bytes == -1, errno %d (not -1), fd %d, ctx/tag %p (tag is fd_stream) - closing stream", errno, ctx->fd, ctx);
+			lwp_trace("read_ready: Abort for bytes == -1, errno %d (not -1), fd %d, ctx/tag %p (tag is fd_stream) - closing stream", errno, ctx->fd, ctx);
 			close_stream = lw_true;
 			break;
 		}

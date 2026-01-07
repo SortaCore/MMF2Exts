@@ -280,7 +280,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	if (connect (ctx->socket, address->info->ai_addr,
 			address->info->ai_addrlen) == -1)
 	{
-		lw_trace("connect() done, error %d", errno);
+		lwp_trace("connect() done, error %d", errno);
 		if (errno == EINPROGRESS)
 		{
 			// Start the connect timeout timer
@@ -305,7 +305,7 @@ void lw_client_connect_addr (lw_client ctx, lw_addr address)
 	}
 
 	// Else
-	lw_trace("connect() done, no error");
+	lwp_trace("connect() done, no error");
 good:
 
 	// Set Nagle. We can't do this in first_time_write_ready(), it causes EPERM on Android
@@ -335,7 +335,7 @@ lw_addr lw_client_server_addr (lw_client ctx)
 {
 	if (!lw_addr_ready(ctx->address))
 	{
-		lw_trace("addr not ready for lw_client; ctx %p, ctx->address %p.", ctx, ctx->address);
+		lwp_trace("addr not ready for lw_client; ctx %p, ctx->address %p.", ctx, ctx->address);
 		lw_error err = lw_addr_resolve(ctx->address);
 		if (err)
 		{

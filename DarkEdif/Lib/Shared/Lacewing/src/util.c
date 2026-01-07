@@ -19,7 +19,7 @@ void lwp_make_nonblocking(lwp_socket fd)
 	assert(orig != -1);
 	// Don't set to non-blocking if it is already. Gets OS upset.
 	if (orig & O_NONBLOCK)
-		lw_trace("Not setting socket/FD %d to non-blocking, already set to that.", fd);
+		lwp_trace("Not setting socket/FD %d to non-blocking, already set to that.", fd);
 	else
 	{
 		int newVal = fcntl(fd, F_SETFL, orig | O_NONBLOCK);

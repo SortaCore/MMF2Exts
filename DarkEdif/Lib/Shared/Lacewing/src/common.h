@@ -170,10 +170,16 @@ void lwp_on_network_changed (lw_network_change_type how);
 	#include <malloc/malloc.h>
 #endif
 
-#if defined(_lacewing_debug) || defined(_lacewing_debug_output)
+#if defined(_lacewing_debug)
 	#define lwp_trace lw_trace
 #else
 	#define lwp_trace(x, ...) (void)0
+#endif
+// Temp, until we revamp Lacewing logging system to allow excluding some
+#ifdef _DEBUG
+	#define lw_log_if_debug(x, ...) always_log(x, ## __VA_ARGS__)
+#else
+	#define lw_log_if_debug lwp_trace
 #endif
 
 /* TODO : find the optimal value for this?  make adjustable? */

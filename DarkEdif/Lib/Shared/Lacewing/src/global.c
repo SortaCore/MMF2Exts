@@ -246,11 +246,6 @@ void lwp_refcount_log_release(struct lwp_refcount * refcount)
 				refcount->name,
 				(int) refcount->refcount);
 }
-#else
-void lw_trace(const char * format, ...)
-{
-	// Do nothing
-}
 #endif
 
 // Non-static so memory leak hunting can find it

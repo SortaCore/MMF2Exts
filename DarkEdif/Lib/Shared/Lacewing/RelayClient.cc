@@ -214,7 +214,7 @@ namespace lacewing
 		relayclientinternal &internal = *(relayclientinternal *)socket->tag();
 
 		error->add("socket error");
-		lw_trace("Error event: \"%s\".", error->tostring());
+		lwp_trace("Error event: \"%s\".", error->tostring());
 
 		if (internal.handler_error)
 			internal.handler_error(internal.client, error);
@@ -781,7 +781,7 @@ namespace lacewing
 
 				if (reader.failed)
 				{
-					lw_trace("Reader failed getting channel name.");
+					lwp_trace("Reader failed getting channel name.");
 					break;
 				}
 
@@ -791,7 +791,7 @@ namespace lacewing
 
 					if (reader.failed)
 					{
-						lw_trace("Reader failed getting channel ID.");
+						lwp_trace("Reader failed getting channel ID.");
 						break;
 					}
 
@@ -1237,18 +1237,18 @@ namespace lacewing
 
 			if (connected)
 			{
-				lw_trace("Swallowing extra UDPWelcome at message address %p, already connected.", message);
+				lwp_trace("Swallowing extra UDPWelcome at message address %p, already connected.", message);
 				break;
 			}
 
 			// UDP connection completed before TCP, possibly from bad use of hole punch.
 			if (!socket->connected())
 			{
-				lw_trace("Swallowing UDPWelcome at message address %p, TCP is not ready.", message);
+				lwp_trace("Swallowing UDPWelcome at message address %p, TCP is not ready.", message);
 				break;
 			}
 
-			lw_trace("UDPWelcome received for message address %p, now connected.", message);
+			lwp_trace("UDPWelcome received for message address %p, now connected.", message);
 
 			udphellotimer->stop();
 			connected = true;

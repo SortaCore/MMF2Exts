@@ -150,14 +150,14 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 		{
 		case sig_exit_eventloop:
 		{
-			lw_trace("eventpump process_event: signal is exit eventloop.");
+			lwp_trace("eventpump process_event: signal is exit eventloop.");
 			lw_sync_release(ctx->sync_signals);
 			return lw_false;
 		}
 
 		case sig_remove:
 		{
-			lw_trace("eventpump process_event: signal is remove.");
+			lwp_trace("eventpump process_event: signal is remove.");
 			lw_pump_watch to_remove = (lw_pump_watch)list_front(void*, ctx->signalparams);
 			list_pop_front(void*, ctx->signalparams);
 
@@ -171,7 +171,7 @@ lw_bool process_event (lw_eventpump ctx, lwp_eventqueue_event event)
 
 		case sig_post:
 		{
-			lw_trace("eventpump process_event: signal is post.");
+			lwp_trace("eventpump process_event: signal is post.");
 			void* func = list_front(void*, ctx->signalparams);
 			list_pop_front(void*, ctx->signalparams);
 
@@ -341,7 +341,7 @@ static lw_pump_watch def_add (lw_pump pump, int fd, void * tag,
 	watch->on_write_ready = on_write_ready;
 	watch->edge_triggered = edge_triggered;
 	watch->tag = tag;
-	lw_trace("def_add calling lwp_eventqueue_add: fd %d; watch %p, tag %p, on_read_ready set to %p, on_write_ready set to %p.", fd, (void *)watch, watch->tag,
+	lwp_trace("def_add calling lwp_eventqueue_add: fd %d; watch %p, tag %p, on_read_ready set to %p, on_write_ready set to %p.", fd, (void *)watch, watch->tag,
 		(void *)on_read_ready, (void *)on_write_ready);
 
 	lwp_eventqueue_add (ctx->queue,

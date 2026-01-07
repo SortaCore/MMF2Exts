@@ -3257,7 +3257,7 @@ relayserver::client::~client() noexcept
 	// Note lw_stream_delete does not free, as the IO Completion port might still have
 	// pending reads/writes that will try to access the freed memory.
 	//
-	lw_trace("Should now delete stream %p.", socket);
+	lwp_trace("Should now delete stream %p.", socket);
 	socket = nullptr;
 }
 
@@ -3498,7 +3498,7 @@ void relayserver::joinchannel_response(std::shared_ptr<relayserver::channel> cha
 		builder.send(client->socket);
 
 		// A shared pointer will be destroyed upon close?
-		lw_trace("Channel %s should be auto-destroyed...\n", channel->_name.c_str());
+		lwp_trace("Channel %s should be auto-destroyed...\n", channel->_name.c_str());
 
 		// Join request for new channel; request refused, so channel needs to be dropped.
 		// Can't use channelinternal client count, autoclose may be off.
