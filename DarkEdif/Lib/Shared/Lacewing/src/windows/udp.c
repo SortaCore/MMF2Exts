@@ -201,7 +201,8 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 		case overlapped_type_send:
 		{
 			// Send errors should be reported at sendto/sendmsg
-			if (error != 0 && error != ERROR_OPERATION_ABORTED)
+			// Abort is a user close of udp, Wine reports as handles closed
+			if (error != 0 && error != ERROR_OPERATION_ABORTED && error != ERROR_HANDLES_CLOSED)
 				always_log("Error in sending message: %d.\n", error);
 			write_completed(ctx);
 			break;
@@ -278,9 +279,10 @@ static void udp_socket_completion (void * tag, OVERLAPPED * _overlapped,
 
 				lwp_addr_cleanup(&remoteAddr);
 			}
-			// ignore aborted, it indicates socket was closed abruptly by something higher up,
-			// i.e. udp unhost
-			else if (error != ERROR_OPERATION_ABORTED)
+			// else, an error. Ignore op aborted, it indicates socket was closed abruptly
+			// by something higher up, i.e. udp unhost.
+			// Wine reports it as handles closed.
+			else if (error != ERROR_OPERATION_ABORTED && error != ERROR_HANDLES_CLOSED)
 			{
 				lw_error err = lw_error_new();
 				lw_error_addf(err, "Error receiving datagram (completion)");

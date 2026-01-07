@@ -90,8 +90,8 @@ static void first_time_write_ready (void * tag, OVERLAPPED * overlapped,
 	{
 		ctx->connecting = lw_false;
 
-		// Aborted = user cancelled connect
-		if (errorNum != ERROR_OPERATION_ABORTED)
+		// Aborted = user cancelled connect, Wine uses handles closed
+		if (errorNum != ERROR_OPERATION_ABORTED && errorNum != ERROR_HANDLES_CLOSED)
 		{
 			lw_error error = lw_error_new();
 			if (errorNum == ERROR_NETWORK_UNREACHABLE && lw_addr_ipv6(ctx->remote_address))

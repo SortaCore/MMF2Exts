@@ -58,7 +58,7 @@ static void completion (void * tag, OVERLAPPED * _overlapped,
 
 		read_completed (ctx);
 
-		if (error == ERROR_OPERATION_ABORTED)
+		if (error == ERROR_OPERATION_ABORTED || error == ERROR_HANDLES_CLOSED)
 			break;
 
 		if (ctx->stream.flags & lwp_stream_flag_dead)
