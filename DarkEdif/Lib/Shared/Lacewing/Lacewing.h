@@ -110,9 +110,10 @@
 #include <string_view>
 using namespace std::string_view_literals;
 
+extern "C"
 #endif // __cplusplus
+void LacewingFatalErrorMsgBox2(const char* const func, const char* const file, const int line);
 #define LacewingFatalErrorMsgBox() LacewingFatalErrorMsgBox2(__FUNCTION__, __FILE__, __LINE__)
-void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line);
 
 typedef lw_i8 lw_bool;
 

@@ -315,7 +315,7 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 #define SUB_STRIFY(X) #X
 #define STRIFY(X) SUB_STRIFY(X)
 #endif
-void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
+extern "C" void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
 	// Remove the repository name
 	const char * fileSub = strstr(file, "\\Lacewing\\");
