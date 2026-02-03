@@ -1401,6 +1401,16 @@ function CRunBluewing_Client() {
 		}
 		this.CreateError("Setting local port is not available in UWP.");
 	};
+	this.Action_RunNetworkScan = function (port, timeout) {
+		if (port < 1 || port > 0xFFFF) {
+			return this.CreateError("Invalid port passed to RunNetworkScan, expecting 1 through 65535, got " + port + ".");
+		}
+		// Unlike HTML5, UWP provides raw sockets in JS interface...
+		// but if we're doing that we might as well switch to doing non-WebSocket entirely...
+		// but if we're doing that we might as well port the entire thing...
+		// and wait for CT to release their private UWP C++ based exporter that they currently use for console ports
+		this.CreateError("Running network scan is not yet available in UWP. If needed, contact Blue developers.");
+	};
 
 	// ======================================================================================================
 	// Conditions
@@ -2060,6 +2070,18 @@ function CRunBluewing_Client() {
 		this.CreateError("\"Convert to UTF-8 and test allowlist\" expression is not available in UWP port.");
 		return "(not available in UWP)";
 	};
+	this.Expression_NetScan_ServerIP = function () {
+		this.CreateError("Running network scan is not yet available in UWP port.");
+		return "(not yet available in UWP)";
+	};
+	this.Expression_NetScan_ServerVersion = function () {
+		this.CreateError("Running network scan is not yet available in UWP port.");
+		return "(not yet available in UWP)";
+	};
+	this.Expression_NetScan_ServerWelcomeMessage = function () {
+		this.CreateError("Running network scan is not yet available in UWP port.");
+		return "(not yet available in UWP)";
+	};
 	// =============================
 	// Macros
 	// =============================
@@ -2387,7 +2409,8 @@ function CRunBluewing_Client() {
 	/* 74 */ this.Action_ResizeBinaryToSend,
 	// Blue-only actions
 	/* 75 */ this.Action_SetDestroySetting,
-	/* 76 */ this.Action_SetLocalPortForHolePunch
+	/* 76 */ this.Action_SetLocalPortForHolePunch,
+	/* 77 */ this.Action_RunNetworkScan,
 	];
 	this.$conditionFuncs = [
 	/* 0 */ this.Condition_MandatoryTriggeredEvent, /* OnError */
@@ -2466,7 +2489,10 @@ function CRunBluewing_Client() {
 	// Added Blue-only conditions
 	/* 73 */ this.Condition_IsJoinedToChannel,
 	/* 74 */ this.Condition_IsPeerOnChannel_Name,
-	/* 75 */ this.Condition_IsPeerOnChannel_ID
+	/* 75 */ this.Condition_IsPeerOnChannel_ID,
+	// Blue Client b106
+	/* 76 */ this.Condition_AlwaysTrue, /* On netscan server reply */
+	/* 77 */ this.Condition_AlwaysTrue, /* On netscan search done */
 
 	// update getNumOfConditions function if you edit this!!!!
 	];
@@ -2532,7 +2558,10 @@ function CRunBluewing_Client() {
 	/* 57 */ this.Expression_ConvToUTF8_GetCompleteCodePointCount,
 	/* 58 */ this.Expression_ConvToUTF8_GetVisibleCharCount,
 	/* 59 */ this.Expression_ConvToUTF8_GetByteCount,
-	/* 60 */ this.Expression_ConvToUTF8_TestAllowList
+	/* 60 */ this.Expression_ConvToUTF8_TestAllowList,
+	/* 61 */ this.Expression_NetScan_ServerIP,
+	/* 62 */ this.Expression_NetScan_ServerVersion,
+	/* 63 */ this.Expression_NetScan_ServerWelcomeMessage,
 	];
 }
 //
@@ -2547,7 +2576,7 @@ CRunBluewing_Client.prototype = {
 	getNumberOfConditions: function() {
 		/// <summary> Returns the number of conditions </summary>
 		/// <returns type="Number" isInteger="true"> Warning, if this number is not correct, the application _will_ crash</returns>
-		return 76; // $conditionFuncs not available yet
+		return 78; // $conditionFuncs not available yet
 	},
 
 	createRunObject: function(file, cob, version) {

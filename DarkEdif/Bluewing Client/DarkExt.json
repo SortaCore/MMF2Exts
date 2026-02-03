@@ -13,6 +13,7 @@
 		"ActionMenu": [
 			[ 73, "Connect" ],
 			[ 1, "Disconnect" ],
+			[ 77, "Scan for LAN servers" ],
 			"---",
 			[ 2, "Set name" ],
 			"---",
@@ -120,6 +121,10 @@
 				[ 42, "Is connected" ],
 				"---",
 				[ 3, "On disconnect" ]
+			],
+			[ "Network scan",
+				[ 76, "On LAN server scan reply"],
+				[ 77, "On LAN server scan done" ]
 			],
 			[ "Channel listing",
 				[ 26, "On list received" ],
@@ -242,6 +247,11 @@
 			[ "Connection",
 				[ 38, "Host IP address" ],
 				[ 39, "Host port" ]
+			],
+			[ "Network scan reply",
+				[ 61, "Server IP" ],
+				[ 62, "Server version" ],
+				[ 63, "Server welcome message" ]
 			],
 			[ "Channel listing",
 				[ 12, "Get name [ Channel listing loop ]" ],
@@ -713,6 +723,13 @@
 				"Parameters": [
 					[ "Integer", "Local port to connect from (1 to 65535, 1025+ recommended)" ]
 				]
+			},
+			{
+				"Title": "Run scan for LAN servers on port %0, scan for %1 milliseconds",
+				"Parameters": [
+					[ "Integer", "Server port (1 - 65535)" ],
+					[ "Integer", "Timeout in milliseconds (recommended: 5000)" ]
+				]
 			}
 		],
 		"Conditions": [
@@ -1137,6 +1154,14 @@
 					[ "Integer", "Peer ID to test" ],
 					[ "Text", "Channel name to test (use \"\" for currently selected)" ]
 				]
+			},
+			{
+				"Title": "%o : On LAN server scan reply",
+				"Triggered": true
+			},
+			{
+				"Title": "%o : On LAN server scan end",
+				"Triggered": true
 			}
 		],
 		"Expressions": [
@@ -1434,6 +1459,18 @@
 					[ "Text", "Text to test" ],
 					[ "Text", "Codepoint allowlist to test against" ]
 				]
+			},
+			{
+				"Title": "NetScanServerIP$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "NetScanServerVersion$(",
+				"Returns": "Text"
+			},
+			{
+				"Title": "NetScanServerWelcomeMessage$(",
+				"Returns": "Text"
 			}
 		],
 		"Properties": [

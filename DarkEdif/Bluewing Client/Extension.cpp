@@ -115,6 +115,7 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		// Added Blue-only actions
 		LinkAction(75, SetDestroySetting);
 		LinkAction(76, SetLocalPortForHolePunch);
+		LinkAction(77, RunNetworkScan);
 	}
 	{
 		LinkCondition(0, MandatoryTriggeredEvent /* OnError */);
@@ -194,6 +195,8 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkCondition(73, IsJoinedToChannel);
 		LinkCondition(74, IsPeerOnChannel_Name);
 		LinkCondition(75, IsPeerOnChannel_ID);
+		LinkCondition(76, AlwaysTrue /* OnNetscanServerReply */);
+		LinkCondition(77, AlwaysTrue /* OnNetscanDone */)
 	}
 	{
 		LinkExpression(0, Error);
@@ -258,6 +261,9 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 		LinkExpression(58, ConvToUTF8_GetVisibleCharCount);
 		LinkExpression(59, ConvToUTF8_GetByteCount);
 		LinkExpression(60, ConvToUTF8_TestAllowList);
+		LinkExpression(61, NetScan_ServerIP);
+		LinkExpression(62, NetScan_ServerVersion);
+		LinkExpression(63, NetScan_ServerWelcomeMessage);
 	}
 
 	isGlobal = edPtr->isGlobal;
@@ -1172,6 +1178,8 @@ Extension::GlobalInfo::GlobalInfo(Extension * e, const EDITDATA* const edPtr)
 	_client.onconnect(::OnConnect);
 	_client.onconnectiondenied(::OnConnectDenied);
 	_client.ondisconnect(::OnDisconnect);
+	_client.onnetworkscanreply(::OnNetworkScanReply);
+	_client.onnetworkscancomplete(::OnNetworkScanComplete);
 	_client.onerror(::OnError);
 	_client.onchannel_join(::OnJoinChannel);
 	_client.onchannel_joindenied(::OnJoinChannelDenied);

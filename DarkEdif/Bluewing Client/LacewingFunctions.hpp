@@ -8,6 +8,8 @@ void OnChannelMessage(lacewing::relayclient &client, std::shared_ptr<lacewing::r
 void OnConnect(lacewing::relayclient &client);
 void OnConnectDenied(lacewing::relayclient &client, std::string_view denyReason);
 void OnDisconnect(lacewing::relayclient &client);
+void OnNetworkScanReply(lacewing::relayclient& client, lacewing::relayclient::netscanreply & rply);
+void OnNetworkScanComplete(lacewing::relayclient& client);
 void OnError(lacewing::relayclient &client, lacewing::error error);
 void OnJoinChannel(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> target);
 void OnJoinChannelDenied(lacewing::relayclient &client, std::string_view channelName, std::string_view denyReason);

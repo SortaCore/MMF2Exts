@@ -976,3 +976,17 @@ void Extension::SetLocalPortForHolePunch(int port)
 		return CreateError("Invalid local port passed, expecting 1 through 65535, got %d.", port);
 	Cli.setlocalport(globals->localPort = (unsigned short)port);
 }
+void Extension::RunNetworkScan(int port, int timeout)
+{
+	if (port < 1 || port > std::numeric_limits<unsigned short>::max())
+		return CreateError("Invalid remote port passed, expecting 1 through 65535, got %d.", port);
+	if (timeout == 0 || timeout > std::numeric_limits<unsigned short>::max())
+		return CreateError("Invalid timeout passed, expecting 1ms through 65535ms, got %d.", timeout);
+#ifdef __ANDROID__
+	if (DarkEdif::Android::AppTargetAPI >= 36 && !DarkEdif::Android::HasPermissionGranted("NEARBY_WIFI_DEVICES"sv))
+		return CreateError("Can't run network scan: don't have NEARBY_WIFI_DEVICES perm. "
+			"Android apps targeting API 36+ require NEARBY_WIFI_DEVICES perm to broadcast or receive broadcast replies.");
+#endif
+
+	Cli.scanforservers((lw_ui16)port, (lw_ui16)timeout);
+}

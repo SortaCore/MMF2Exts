@@ -203,6 +203,33 @@ extern "C" void always_log(const char* str, ...)
 #endif
 }
 
+void OnNetworkScanReply(lacewing::relayclient& client, lacewing::relayclient::netscanreply& rply)
+{
+	const std::string remoteIP = rply.remoteAddr->tostring((lw_addr_tostring_flags)(lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_unmap_ipv6));
+
+	// Server requests a client build later than we have; this is likely to cause issues
+	if (rply.minClientBuild > lacewing::relayclient::buildnum)
+	{
+		globals->CreateError("Server \"%s\" replied to scan, but network client build is too low for server (client build is b%i, server minimum is b%i).",
+			remoteIP.c_str(), lacewing::relayclient::buildnum, rply.minClientBuild);
+		return;
+	}
+	// Server was released earlier than this client version - new client features may be unrecognised.
+	// We'll treat this as non-error, as we change how client/server works very rarely.
+	if (rply.clientBuildNum > lacewing::relayclient::buildnum)
+	{
+		always_log("Server \"%s\" replied to scan, but this client build b%i is later than server had at release (b%i). Server may not understand client features added after b%i.",
+			remoteIP.c_str(), lacewing::relayclient::buildnum, rply.clientBuildNum, rply.clientBuildNum);
+	}
+	std::stringstream srvVersion;
+	srvVersion << "Bluewing Server b"sv << (lw_ui32)rply.serverBuildNum << " running on "sv << rply.serverVersion;
+	globals->AddEvent1<NetScanReplyEvent>(76, remoteIP, srvVersion.str(), rply.welcomeMessage, rply.minClientBuild, rply.clientBuildNum, rply.serverBuildNum, rply.responseTime);
+}
+void OnNetworkScanComplete(lacewing::relayclient& client)
+{
+	globals->AddEvent1(77);
+}
+
 
 #undef Ext
 #undef globals

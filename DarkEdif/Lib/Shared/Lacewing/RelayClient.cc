@@ -43,6 +43,8 @@ namespace lacewing
 		relayclient::handler_peer_disconnect		handler_peer_disconnect;
 		relayclient::handler_peer_changename		handler_peer_changename;
 		relayclient::handler_channellistreceived	handler_channellistreceived;
+		relayclient::handler_networkscanreply		handler_networkscanreply;
+		relayclient::handler_networkscancomplete	handler_networkscancomplete;
 
 		relayclientinternal(relayclient &_client, pump _eventpump);
 		framereader reader;
@@ -52,6 +54,10 @@ namespace lacewing
 
 		static void udphellotick(lacewing::timer timer);
 		void		udphellotick();
+
+		// LAN search for servers broadcast reply timeout
+		static void netscantimeout(lacewing::timer timer);
+		void		netscantimeout();
 
 		// Searches for the first channel by id number, null if no match
 		std::shared_ptr<relayclient::channel> findchannelbyid(lw_ui16 id);
@@ -83,6 +89,10 @@ namespace lacewing
 		// If we are operating under IPv4 CG-NAT, this may not match the TCP address?
 		lacewing::address udpremoteaddress = nullptr;
 
+		// LAN search for servers + reply
+		bool netscanning = false;
+		std::chrono::time_point<std::chrono::steady_clock> netscanstart;
+
 		std::vector<std::shared_ptr<relayclient::channellisting>> channellist;
 
 		// Empties the channel list.
@@ -99,12 +109,14 @@ namespace lacewing
 		std::string welcomemessage;
 		// Indicates connected on a Lacewing level; full Lacewing TCP/UDP handshake finished
 		bool connected = false;
-		// If connected is false, when the UDP Hello gives up and disconnects main client
+		// If connected is false, when the UDP Hello times out and disconnects the client
 		std::chrono::system_clock::time_point udpexpire;
 
 		std::vector<std::shared_ptr<relayclient::channel>> channels;
 
 		void disconnect_mark_all_as_readonly();
+
+		void scanforservers(lw_ui16 port, lw_ui16 timeoutMS);
 
 		~relayclientinternal() noexcept(false)
 		{
@@ -147,6 +159,7 @@ namespace lacewing
 		lacewing::address_delete(udpremoteaddress);
 		ifidx = -1;
 	}
+
 	void relayclientinternal::disconnect_mark_all_as_readonly()
 	{
 		// Private members
@@ -157,6 +170,57 @@ namespace lacewing
 			for (auto& p : ch->peers)
 				p->_readonly = true;
 		}
+	}
+
+	void relayclientinternal::scanforservers(lw_ui16 port, lw_ui16 timeoutMS)
+	{
+		if (socket->connected() || socket->connecting() || netscanning)
+		{
+			lacewing::error err = lacewing::error_new();
+			err->add("Can't scan for servers when connected, connecting or already scanning");
+			handler_error(client, err);
+			lacewing::error_delete(err);
+			return;
+		}
+
+		if (timeoutMS == 0)
+		{
+			lacewing::error err = lacewing::error_new();
+			err->add("Net scan timeout %hu MS was too small", timeoutMS);
+			handler_error(client, err);
+			lacewing::error_delete(err);
+			return;
+		}
+
+		if (!port)
+			port = 6121;
+
+		writelock clientWriteLock = client.lock.createWriteLock();
+		netscanning = true;
+		netscanstart = decltype(netscanstart)::clock::now();
+		assert(!udpremoteaddress);
+		udpremoteaddress = lacewing::address_new("255.255.255.255", port); // INADDR_BROADCAST
+
+		// Fake UDP ping: ping type message with client ID -1. Older servers will not reply to UDP ping,
+		// much less to one from -1 ID, but newer server will check for broadcast source address, and reply.
+		// This is IPv4 broadcast, so it requires an IPv4 machine/LAN.
+		// But it's rare that a machine or LAN is IPv4 disabled entirely, even if ISP is IPv6 only.
+		// It's more likely, but still uncommon, that a firewall or router is set to not allow broadcasts,
+		// or to not allow unicast response to a broadcast message.
+		// An IPv6 broadcast (multicast, rather) requires a net interface loop, and multiple sockets.
+		char broadcast[128] = { (lw_i8)(9 << 4), (lw_i8)0xFF, (lw_i8)0xFF };
+		memcpy(broadcast, "\xa0\xFF\xFF", 3);
+		const int len = 3 + lw_sprintf_s(broadcast + 3, sizeof(broadcast) - 3, "Bluewing Client b%d running %s", relayclient::buildnum, lw_version());
+		assert(len > 3);
+		lacewing::filter filt = lacewing::filter_new();
+		filt->remote(udpremoteaddress);
+		filt->remote_mask(true);
+		filt->ipv6(false);
+		udphellotimer->on_tick(netscantimeout);
+		udphellotimer->start(timeoutMS);
+		udp->host(filt);
+		udp->send(nullptr, 0, udpremoteaddress, broadcast, len);
+		lacewing::filter_delete(filt);
 	}
 
 	std::shared_ptr<relayclient::channel> relayclientinternal::findchannelbyid(lw_ui16 id)
@@ -268,6 +332,52 @@ namespace lacewing
 		if (!size)
 			return;
 
+		if (internal.netscanning)
+		{
+			// Data 0 should be server ping request, 11
+			if ((lw_ui8)data[0] != 11 << 4 || size < 20)
+				return always_log("Got IP broadcast response, but not a Bluewing server. Ignoring.\n");
+
+			// Message format is a faux server ping request.
+			// byte 0: Ping 11
+			// byte 1: server build number
+			// byte 2: min client build number server supports
+			// byte 3: current client build number server expects
+			// bytes 4+: server version string, null terminator, welcome message.
+			std::string_view strSplit(data + 4, size - 4);
+			const std::size_t verSplit = strSplit.find('\0');
+			if (verSplit == std::string_view::npos)
+			{
+				lacewing::error err = lacewing::error_new();
+				err->add("Couldn't interpret netscan response from \"%s\".", remote_addr->tostring());
+				internal.handler_error(internal.client, err);
+				lacewing::error_delete(err);
+				return;
+			}
+
+			relayclient::netscanreply rply;
+			rply.ifidx = ifidx;
+			rply.responseTime = (decltype(internal.netscanstart)::clock::now() - internal.netscanstart);
+			rply.serverBuildNum = ((lw_ui8 *)data)[1];
+			rply.minClientBuild = ((lw_ui8 *)data)[2];
+			rply.clientBuildNum = ((lw_ui8 *)data)[3];
+			rply.serverVersion = strSplit.substr(0, verSplit);
+			rply.welcomeMessage = strSplit.substr(verSplit + 1);
+			if (!lw_u8str_validate(rply.serverVersion) || !lw_u8str_validate(rply.welcomeMessage))
+			{
+				lacewing::error err = lacewing::error_new();
+				err->add("Couldn't interpret netscan response from \"%s\", bad UTF-8.", remote_addr->tostring());
+				internal.handler_error(internal.client, err);
+				lacewing::error_delete(err);
+				return;
+			}
+
+			rply.localAddr = lacewing::address_new(local_addr);
+			rply.remoteAddr = lacewing::address_new(remote_addr);
+			internal.handler_networkscanreply(internal.client, rply);
+			return;
+		}
+
 		if (!internal.udplocaladdress)
 		{
 			lw_log_if_debug("Setting local UDP address to \"%s\", remote to \"%s\".\n",
@@ -358,6 +468,14 @@ namespace lacewing
 
 		lacewing::writelock wl = this->lock.createWriteLock();
 
+		// If this is set, we're currently scanning for servers, and udphellotimer is set to network scan
+		if (internal.netscanning)
+		{
+			internal.udphellotimer->stop();
+			internal.netscanning = false;
+			internal.udphellotimer->force_tick(); // make udphellotimer clean up itself and switch to normal ticker
+		}
+
 		// Socket will fuss if we're connecting/connected already, so don't bother checking.
 		internal.socket->connect(address);
 	}
@@ -367,6 +485,12 @@ namespace lacewing
 		relayclientinternal& internal = *((relayclientinternal*)internaltag);
 		internal.local_port = port;
 		internal.socket->setlocalport(port);
+	}
+
+	void relayclient::scanforservers(lw_ui16 port, lw_ui16 timeoutMS)
+	{
+		relayclientinternal& internal = *((relayclientinternal*)internaltag);
+		internal.scanforservers(port, timeoutMS);
 	}
 
 	void relayclient::disconnect()
@@ -1501,6 +1625,28 @@ namespace lacewing
 		((relayclientinternal *)timer->tag())->udphellotick();
 	}
 
+	void relayclientinternal::netscantimeout(lacewing::timer timer)
+	{
+		((relayclientinternal*)timer->tag())->netscantimeout();
+	}
+
+	void relayclientinternal::netscantimeout()
+	{
+		// if netscanning is false when this is called, it was aborted due to a connect
+		bool runHandler;
+		{
+			lacewing::writelock clientWriteLock = client.lock.createWriteLock();
+			udphellotimer->stop();
+			udphellotimer->on_tick(udphellotick);
+			udp->unhost();
+			lacewing::address_delete(udpremoteaddress);
+			runHandler = netscanning;
+			netscanning = false;
+		} // ~clientWriteLock
+		if (runHandler)
+			handler_networkscancomplete(client);
+	}
+
 	void relayclientinternal::udphellotick()
 	{
 		if (!socket->connected())
@@ -1688,6 +1834,8 @@ namespace lacewing
 
 	autohandlerfunctions(relayclient, relayclientinternal, connect)
 	autohandlerfunctions(relayclient, relayclientinternal, connectiondenied)
+	autohandlerfunctions(relayclient, relayclientinternal, networkscanreply)
+	autohandlerfunctions(relayclient, relayclientinternal, networkscancomplete)
 	autohandlerfunctions(relayclient, relayclientinternal, disconnect)
 	autohandlerfunctions(relayclient, relayclientinternal, message_server)
 	autohandlerfunctions(relayclient, relayclientinternal, message_channel)

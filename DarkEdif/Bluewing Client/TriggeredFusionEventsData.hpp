@@ -29,6 +29,7 @@ enum class EventType
 	PeerJoinOrLeave,
 	PeerNameChanged,
 	ChannelListing,
+	NetScanReply
 };
 
 /* Make sure any pointers in ExtVariables are free'd in ~EventToRun(). */
@@ -198,6 +199,22 @@ struct NameDeniedEvent : EventToRun {
 	NO_DEFAULT_CTORS(NameDeniedEvent);
 	NameDeniedEvent(std::string_view name, std::string_view denyReason) : name(name), denyReason(denyReason) {}
 	~NameDeniedEvent() override = default;
+};
+
+// When a network scan entry replies
+struct NetScanReplyEvent : EventToRun {
+	static constexpr EventType typeCode = EventType::NetScanReply;
+	std::string	remoteIP;
+	std::string serverVersion;
+	std::string welcomeMessage;
+	lw_ui8 minClientBuild, curClientBuild, serverBuild;
+	std::chrono::steady_clock::duration responseTime;
+	NetScanReplyEvent(std::string remoteIP, std::string serverVersion, std::string welcomeMessage,
+		lw_ui8 minClientBuild, lw_ui8 curClientBuild, lw_ui8 serverBuild, std::chrono::steady_clock::duration responseTime)
+		: remoteIP(remoteIP), serverVersion(serverVersion), welcomeMessage(welcomeMessage),
+		minClientBuild(minClientBuild), curClientBuild(curClientBuild), serverBuild(serverBuild), responseTime(responseTime){ }
+	NO_DEFAULT_CTORS(NetScanReplyEvent);
+	~NetScanReplyEvent() override = default;
 };
 
 inline RecvMsg& EventToRun::GetRecvMsg() {

@@ -499,8 +499,43 @@ void relayserverinternal::generic_handlerudpreceive(lacewing::udp udp, lacewing:
 	const lw_ui16 id = *(lw_ui16 *)(data.data() + 1);
 	const lw_addr_tostring_flags stringflags = (lw_addr_tostring_flags)(lw_addr_tostring_flag_box_ipv6 | lw_addr_tostring_flag_unmap_ipv6);
 
+	// This is a placeholder number, and normally indicates error with client
+	// Older servers will ignore messages from this ID, so we use it for LAN broadcast
 	if (id == 0xFFFF)
-		return; // this is a placeholder number, and normally indicates error with client
+	{
+		// We expect a client ping request format if it's a LAN broadcast
+		if (data.size() == 3)
+			return;
+
+		// Shouldn't happen, but if we get a LAN search request from a non-LAN message, ignore it
+		struct in6_addr remoteIn6 = remote_address->toin6_addr();
+		if (IN6_IS_ADDR_GLOBAL(&remoteIn6))
+			return;
+
+		// It's LAN search for server, reply with version + welcome message,
+		// disguised as a UDP ping reply message, as they can be any length and old clients will ignore it.
+		// 512 is recommended max for broadcast request, but reply is standard UDP so it's up to 65k;
+		// but the lower the better; 1500 is Ethernet MTU.
+		const std::size_t capacity = std::min<std::size_t>(1400, welcomemessage.size() + 200);
+		auto broadcastreply = std::make_unique<char[]>(capacity);
+		// Broadcast reply message - disguised as UDP ping request
+		(lw_ui8&)broadcastreply[0] = 11 << 4;
+		// Server build number as byte
+		(lw_ui8&)broadcastreply[1] = relayserver::buildnum;
+		// Minimum client supported by server (currently we support pretty far back)
+		(lw_ui8&)broadcastreply[2] = 0;
+		// Current client build as server understands it (if a client adds features beyond this ver, server may not understand it)
+		(lw_ui8&)broadcastreply[3] = relayclient::buildnum;
+
+		// Skip 4 at start, and add 1 so we include the null at end of sprintf
+		int len = 4 + 1 + lw_sprintf_s(broadcastreply.get() + 4, capacity - 4, "%s", lw_version());
+		assert(len > 4 + 1);
+		len += lw_sprintf_s(broadcastreply.get() + len, capacity - len, "%s", welcomemessage.c_str());
+		udp->send(nullptr, 0, remote_address, broadcastreply.get(), len);
+
+		always_log("LAN search received from client IP \"%s\".", remote_address->tostring(stringflags));
+		return;
+	}
 
 	const std::string_view foricmp = data;
 	data.remove_prefix(sizeof(type) + sizeof(id));

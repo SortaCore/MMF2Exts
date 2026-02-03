@@ -813,3 +813,37 @@ const TCHAR * Extension::ConvToUTF8_TestAllowList(const TCHAR * toTest, const TC
 		idx, rejectedChar, rejectedChar, utf8proc_codepoint_valid(rejectedChar) ? _T("yes") : _T("no"), DarkEdif::UTF8ToTString(utf8proc_category_string(rejectedChar)).c_str());
 	return Runtime.CopyString(output);
 }
+
+const TCHAR * Extension::NetScan_ServerIP()
+{
+	if (!threadData->Is<NetScanReplyEvent>())
+	{
+		CreateError("Reading network scan IP when not in an On Network Scan Reply event.");
+		return Runtime.CopyString(_T(""));
+	}
+
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->AsC<NetScanReplyEvent>().remoteIP).c_str());
+}
+
+const TCHAR* Extension::NetScan_ServerVersion()
+{
+	if (!threadData->Is<NetScanReplyEvent>())
+	{
+		CreateError("Reading network scan server version when not in an On Network Scan Reply event.");
+		return Runtime.CopyString(_T(""));
+	}
+
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->AsC<NetScanReplyEvent>().serverVersion).c_str());
+}
+
+const TCHAR* Extension::NetScan_ServerWelcomeMessage()
+{
+	// Condition 76: On network scan
+	if (!threadData->Is<NetScanReplyEvent>())
+	{
+		CreateError("Reading network scan welcome message when not in an On Network Scan Reply event.");
+		return Runtime.CopyString(_T(""));
+	}
+
+	return Runtime.CopyString(DarkEdif::UTF8ToTString(threadData->AsC<NetScanReplyEvent>().welcomeMessage).c_str());
+}

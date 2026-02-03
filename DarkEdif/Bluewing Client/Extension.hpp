@@ -257,6 +257,9 @@ public:
 	int ConvToUTF8_GetCompleteCodePointCount(const TCHAR* tStr);
 	int ConvToUTF8_GetByteCount(const TCHAR* tStr);
 	const TCHAR* ConvToUTF8_TestAllowList(const TCHAR* tStr, const TCHAR* charset);
+	const TCHAR* NetScan_ServerIP();
+	const TCHAR* NetScan_ServerVersion();
+	const TCHAR* NetScan_ServerWelcomeMessage();
 
 	struct GlobalInfo final
 	{

@@ -1796,6 +1796,7 @@ public:
 	void connect(lacewing::address);
 	// For pinholing connections, set before connect()
 	void setlocalport(lw_ui16 port);
+	void scanforservers(lw_ui16 port, lw_ui16 numMsgs);
 
 	bool connecting();
 	bool connected();
@@ -1829,6 +1830,33 @@ public:
 		lw_ui16 peercount() const;
 		std::string name() const;
 		std::string namesimplified() const;
+	};
+	struct netscanreply
+	{
+		// Local address response was received to (generally broadcast address)
+		lacewing::address localAddr = nullptr;
+		// Network interface index (1+)
+		lw_ui32 ifidx;
+		// Remote address response was received from
+		lacewing::address remoteAddr = nullptr;
+		// Time between multicast request and response
+		std::chrono::steady_clock::duration responseTime;
+		// Build number of server
+		lw_ui8 serverBuildNum;
+		// Minimum build of client expected by server
+		lw_ui8 minClientBuild;
+		// Build number of client at time server was built - not a hard limit
+		lw_ui8 clientBuildNum;
+		// Server liblacewing version and platform info
+		std::string serverVersion;
+		// Server welcome message, UTF-8, may be blank
+		std::string welcomeMessage;
+
+		~netscanreply()
+		{
+			lacewing::address_delete(localAddr);
+			lacewing::address_delete(remoteAddr);
+		}
 	};
 
 	size_t channellistingcount() const;
@@ -1962,10 +1990,14 @@ public:
 	typedef void(*handler_peer_disconnect)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer);
 	typedef void(*handler_peer_changename)		(lacewing::relayclient &client, std::shared_ptr<lacewing::relayclient::channel> channel, std::shared_ptr<lacewing::relayclient::channel::peer> peer, std::string oldname);
 	typedef void(*handler_channellistreceived)	(lacewing::relayclient &client);
+	typedef void(*handler_networkscanreply)		(lacewing::relayclient &client, lacewing::relayclient::netscanreply & rply);
+	typedef void(*handler_networkscancomplete)	(lacewing::relayclient &client);
 
 	void onconnect(handler_connect);
 	void onconnectiondenied(handler_connectiondenied);
 	void ondisconnect(handler_disconnect);
+	void onnetworkscanreply(handler_networkscanreply);
+	void onnetworkscancomplete(handler_networkscancomplete);
 	void onmessage_server(handler_message_server);
 	void onmessage_channel(handler_message_channel);
 	void onmessage_peer(handler_message_peer);
