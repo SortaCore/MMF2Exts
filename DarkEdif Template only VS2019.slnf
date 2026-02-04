@@ -1,0 +1,12 @@
+{
+  "solution": {
+    "path": "AllExts VS2019.sln",
+    "projects": [
+      "DarkEdif\\DarkEdif Template\\DarkEdif Template.Android.vcxproj",
+      "DarkEdif\\DarkEdif Template\\DarkEdif Template.Mac.vcxproj",
+      "DarkEdif\\DarkEdif Template\\DarkEdif Template.Shared.vcxitems",
+      "DarkEdif\\DarkEdif Template\\DarkEdif Template.Windows.vcxproj",
+      "DarkEdif\\DarkEdif Template\\DarkEdif Template.iOS.vcxproj"
+    ]
+  }
+}
