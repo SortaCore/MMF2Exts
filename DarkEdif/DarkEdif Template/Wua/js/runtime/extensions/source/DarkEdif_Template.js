@@ -138,10 +138,10 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 				// Name property JSON index that will appear in list when switching set entry
 				setNameJSONPropIndex: rsDV.getUint16(1 + (2 * 3), true),
 				// Current set index selected (0+), present at runtime too, but not used there
-				get setIndexSelected() {
+				getIndexSelected: function() {
 					return rsDV.getUint16(1 + (2 * 4), true);
 				},
-				set setIndexSelected(i) {
+				setIndexSelected: function(i) {
 					rsDV.setUint16(1 + (2 * 4), i, true);
 				},
 				// Set name, as specified in JSON. Don't confuse with user-specified set name.
@@ -185,13 +185,13 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 						}
 						// It's within this set's range
 						else if (jsonIdx >= rs.firstSetJSONPropIndex && jsonIdx <= rs.lastSetJSONPropIndex) {
-							if (rs.setIndexSelected > 0) {
+							if (rs.getIndexSelected() > 0) {
 								for (let j = 0; ;) {
 									data = that.props[++i];
 									
 									// Skip until end of this entry, then move to next prop
 									if (data.propJSONIndex == rs.lastSetJSONPropIndex) {
-										if (++j == rs.setIndexSelected) {
+										if (++j == rs.getIndexSelected()) {
 											data = that.props[++i];
 											break;
 										}
@@ -342,7 +342,7 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 			this.runSetEntry = runSetEntry;
 			
 			this.runPropSet = new RuntimePropSet(runSetEntry);
-			this.runPropSet.setIndexSelected = 0;
+			this.runPropSet.setIndexSelected(0);
 			this.firstIt = true;
 			let thatToo = this;
 			this.next = function() {
@@ -350,11 +350,11 @@ window['darkEdif'] = (window['darkEdif'] && window['darkEdif'].sdkVersion >= 20)
 				if (thatToo.firstIt) {
 					thatToo.firstIt = false;
 				} else {
-					++thatToo.runPropSet.setIndexSelected;
+					thatToo.runPropSet.setIndexSelected(thatToo.runPropSet.getIndexSelected() + 1);
 				}
 				return {
-					value: thatToo.runPropSet.setIndexSelected,
-					done: thatToo.runPropSet.setIndexSelected >= thatToo.runPropSet.numRepeats
+					value: thatToo.runPropSet.getIndexSelected(),
+					done: thatToo.runPropSet.getIndexSelected() >= thatToo.runPropSet.numRepeats
 				};
 			};
 			this[Symbol.iterator] = function () { return this; };
