@@ -490,11 +490,12 @@ struct RunObject;
 
 // Generic class for reading actions, conditions and expression parameters
 struct ACEParamReader {
-	virtual float GetFloat(int i) = 0;
-	virtual const TCHAR* GetString(int i) = 0;
-	virtual int GetInteger(int i, Params type) = 0;
+	virtual float GetFloatParam(int i) = 0;
+	virtual const TCHAR* GetStringParam(int i) = 0;
+	virtual int GetIntegerParam(int i, Params type) = 0;
 	// Returns RunObject * for Action, qualifier or singular OI for Condition
-	virtual long GetObject(int i) = 0;
+	// @remarks Can't be GetObject due to fighting Windows functions
+	virtual long GetObjectParam(int i) = 0;
 };
 
 // Definition of conditions / actions flags

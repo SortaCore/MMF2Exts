@@ -816,11 +816,6 @@ struct ForbiddenInternals {
 	}
 };
 
-// WinGDI intercepts our reasonable function name to GetObjectA/W, prevent that
-#ifdef GetObject
-	#undef GetObject
-#endif
-
 #endif
 
 
@@ -864,18 +859,18 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 			case Params::Expression:
 				if ((info->FloatFlags & (1 << i)) != 0)
 				{
-					float f = params.GetFloat(i);
+					float f = params.GetFloatParam(i);
 					Parameters[i] = *(int*)(&f);
 				}
 				else
-					Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
+					Parameters[i] = params.GetIntegerParam(i, info->Parameter[i].p);
 				break;
 
 			case Params::String_Comparison:
 			case Params::String_Expression:
 			case Params::Filename:
 			case Params::Filename_2:
-				Parameters[i] = (long)params.GetString(i);
+				Parameters[i] = (long)params.GetStringParam(i);
 				// Catch null string parameters and return default 0
 				if (!Parameters[i])
 				{
@@ -898,16 +893,16 @@ long ActionOrCondition(void * Function, int ID, Extension * ext, const ACEInfo *
 				[[fallthrough]];
 			case Params::New_Direction:
 			case Params::Time:
-				Parameters[i] = params.GetInteger(i, info->Parameter[i].p);
+				Parameters[i] = params.GetIntegerParam(i, info->Parameter[i].p);
 				break;
 			// Returns a RunObject * for actions, and a OINUM for conditions
 			case Params::Object:
-				Parameters[i] = params.GetObject(i);
+				Parameters[i] = params.GetObjectParam(i);
 				break;
 
 			default:
-				// GetString uses GetParam, as opposed to GetIntParam.
-				Parameters[i] = (long)params.GetString(i);
+				// GetStringParam uses a param-generic Get Param call, as opposed to GetIntParam which is int only.
+				Parameters[i] = (long)params.GetStringParam(i);
 				break;
 		}
 	}
@@ -981,6 +976,7 @@ endFunc:
 }
 
 #ifdef _WIN32
+
 struct ConditionOrActionManager_Windows : ACEParamReader
 {
 	RunObject * const rdPtr;
@@ -1017,7 +1013,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		if (isTwoOrLess)
 			return *(const float*)(index == 0 ? &ext->Runtime.param1 : &ext->Runtime.param2);
@@ -1027,14 +1023,14 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		return *(float*)&i;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		if (isTwoOrLess)
 			return (const TCHAR *)(index == 0 ? ext->Runtime.param1 : ext->Runtime.param2);
 		return (const TCHAR *)CNC_GetStringParameter(rdPtr);
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		// TODO: Does pre-evaluated parameters work with NewDirection, or does it loop directions?
 		if (isTwoOrLess)
@@ -1063,7 +1059,7 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 		return (std::int32_t)CNC_GetIntParameter(rdPtr);
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		long ret;
 		if (isTwoOrLess)
@@ -1162,7 +1158,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const float f = mainThreadJNIEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
@@ -1171,7 +1167,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return f;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		strings[stringIndex].init(
@@ -1182,7 +1178,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
 		const std::int32_t in = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
@@ -1191,7 +1187,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		return in;
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		// If condition, getParamObject() returns a PARAM_OBJECT; dereference it and read its OIList var via Java side
 		if (isCondition)
@@ -1280,7 +1276,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		double f = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpDouble) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpDouble))(ext->objCExtPtr, objCActOrCndObj, index);
@@ -1288,7 +1284,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return (float)f;
 	}
 
-	virtual const TCHAR* GetString(int index)
+	virtual const TCHAR* GetStringParam(int index)
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		const TCHAR* str = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpString) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpString))(ext->objCExtPtr, objCActOrCndObj, index);
@@ -1296,7 +1292,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return str;
 	}
 
-	virtual std::int32_t GetInteger(int index, Params type)
+	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
 		std::int32_t in = (isCondition ? DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, cndGetParamExpression) : DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, actGetParamExpression))(ext->objCExtPtr, objCActOrCndObj, index, (int)type);
@@ -1304,7 +1300,7 @@ struct ConditionOrActionManager_iOS : ACEParamReader
 		return in;
 	}
 
-	virtual long GetObject(int index)
+	virtual long GetObjectParam(int index)
 	{
 		// If condition, the parameter look-up gets an EventParam from runtime, which we dereference into a OINUM
 		if (isCondition)
@@ -1490,7 +1486,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
 		const float f = mainThreadJNIEnv->CallFloatMethod(expJavaObj, getParamFloat);
@@ -1498,7 +1494,7 @@ struct ExpressionManager_Android : ACEParamReader {
 		return f;
 	}
 
-	virtual const TCHAR * GetString(int index)
+	virtual const TCHAR * GetStringParam(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		strings[stringIndex].init((jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString));
@@ -1506,14 +1502,14 @@ struct ExpressionManager_Android : ACEParamReader {
 		return strings[stringIndex++].str().data();
 	}
 
-	virtual std::int32_t GetInteger(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		const std::int32_t i = mainThreadJNIEnv->CallIntMethod(expJavaObj, getParamInt);
 		LOGV("Got integer param, expr, index %d OK: %i.\n", index, i);
 		return i;
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1549,7 +1545,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index) override
+	virtual float GetFloatParam(int index) override
 	{
 		if (isOneOrLess && index == 0)
 			return *(float*)&param;
@@ -1557,7 +1553,7 @@ struct ExpressionManager_Windows : ACEParamReader {
 		return *(float*)&i;
 	}
 
-	virtual const TCHAR * GetString(int index) override
+	virtual const TCHAR * GetStringParam(int index) override
 	{
 		if (isOneOrLess && index == 0)
 			return (const TCHAR*)param;
@@ -1565,13 +1561,13 @@ struct ExpressionManager_Windows : ACEParamReader {
 		return (const TCHAR *)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_STRING, index);
 	}
 
-	virtual std::int32_t GetInteger(int index, Params) override
+	virtual std::int32_t GetIntegerParam(int index, Params) override
 	{
 		if (isOneOrLess && index == 0)
 			return param;
 		return (std::int32_t)CallRunTimeFunction(rdPtr, RFUNCTION::GET_PARAM_1 + (index > 0), TYPE_INT, index);
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1617,7 +1613,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 	}
 
 	// Inherited via ACEParamReader
-	virtual float GetFloat(int index)
+	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
 		float f = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamFloat)(ext->objCExtPtr);
@@ -1625,7 +1621,7 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return f;
 	}
 
-	virtual const TCHAR* GetString(int index)
+	virtual const TCHAR* GetStringParam(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
 		const TCHAR* str = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamString)(ext->objCExtPtr);
@@ -1633,14 +1629,14 @@ struct ExpressionManager_iOS : ACEParamReader {
 		return str;
 	}
 
-	virtual std::int32_t GetInteger(int index, Params)
+	virtual std::int32_t GetIntegerParam(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
 		std::int32_t i = DarkEdifObjCFunc(PROJECT_TARGET_NAME_UNDERSCORES_RAW, expGetParamInt)(ext->objCExtPtr);
 		LOGV("Got integer param, expr, index %d OK: %d.\n", index, i);
 		return i;
 	}
-	virtual long GetObject(int)
+	virtual long GetObjectParam(int)
 	{
 		// Expressions can't use object parameters
 		return 0;
@@ -1734,7 +1730,7 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 		switch (info->Parameter[i].ep)
 		{
 		case ExpParams::String:
-			Parameters[i] = (long)params.GetString(i);
+			Parameters[i] = (long)params.GetStringParam(i);
 
 			// Catch null string parameters and return "" or 0 as appropriate
 			if (!Parameters[i])
@@ -1753,11 +1749,11 @@ ProjectFunc void PROJ_FUNC_GEN(PROJECT_TARGET_NAME_UNDERSCORES_RAW, _expressionJ
 		case ExpParams::Integer: // Handles float as well
 			if ((info->FloatFlags & (1 << i)) != 0)
 			{
-				float f = params.GetFloat(i);
+				float f = params.GetFloatParam(i);
 				Parameters[i] = *(int*)&f;
 			}
 			else
-				Parameters[i] = params.GetInteger(i, (Params)0);
+				Parameters[i] = params.GetIntegerParam(i, (Params)0);
 			break;
 		default:
 		{
