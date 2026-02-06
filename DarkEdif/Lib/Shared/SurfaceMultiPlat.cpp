@@ -49,6 +49,11 @@
 			class CBitmap {};
 			class CRenderToTexture {};
 		#endif // not IntelliSense
+		// Hide voluminous iOS/Mac warnings from "not implemented"
+		#if DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_NONE
+			#pragma clang diagnostic push
+			#pragma clang diagnostic ignored "-Wunreachable-code"
+		#endif
 	#endif // iOS/Mac
 #endif // not Windows
 
@@ -2628,3 +2633,7 @@ std::uint32_t DarkEdif::Surface::GetTransparentColor() const
 	return 0;
 #endif
 }
+
+#if defined(__APPLE__) && DARKEDIF_DISPLAY_TYPE == DARKEDIF_DISPLAY_NONE
+#pragma clang diagnostic pop
+#endif
