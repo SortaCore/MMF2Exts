@@ -440,8 +440,6 @@ ProjectFunc void continueRunObject(JNIEnv *, jobject, jlong ext)
 }
 #endif // PAUSABLE_EXTENSION
 
-extern thread_local JNIEnv * threadEnv;
-
 static std::uint8_t UTF8_CHAR_WIDTH[] = {
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // 0x1F
@@ -461,8 +459,11 @@ static std::uint8_t UTF8_CHAR_WIDTH[] = {
 	4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0xFF
 };
 
-// This is set in Edif::Runtime
-thread_local JNIEnv * threadEnv = nullptr;
+// JNIEnv, used for C++ to Java access via JNI
+// https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html
+// Main thread's threadEnv is singleton-inited in Edif::Init() called by JNI_OnLoad().
+// If this is null for your thread, call ext->Runtime.AttachJVMAccessForThisThread(), and detach when done.
+thread_local DE_JNIEnv * threadEnv = nullptr;
 
 jstring CStrToJStr(const char * String)
 {
@@ -839,7 +840,7 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 	args.version = JNI_VERSION_1_6; // choose your JNI version
 	args.name = PROJECT_NAME ", JNI_Load"; // you might want to give the java thread a name
 	args.group = NULL; // you might want to assign the java thread to a ThreadGroup
-	if ((error = vm->AttachCurrentThread(&mainThreadJNIEnv, NULL)) != JNI_OK) {
+	if ((error = vm->AttachCurrentThread((JNIEnv **)&mainThreadJNIEnv, NULL)) != JNI_OK) {
 		LOGF("AttachCurrentThread failed with error %d.\n", error);
 		return -1;
 	}

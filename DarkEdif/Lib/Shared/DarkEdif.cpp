@@ -5229,8 +5229,6 @@ void DarkEdif::FontInfoMultiPlat::SetFont(const LOGFONT* ptr) {
 
 #elif defined(__ANDROID__)
 
-extern thread_local JNIEnv* threadEnv;
-
 JavaAndCString::JavaAndCString(jstring javaLocalRefStr, bool promoteToGlobal /* = false */)
 {
 	init(javaLocalRefStr, promoteToGlobal);
@@ -5895,7 +5893,6 @@ std::wstring DarkEdif::TStringToWide(const std::tstring_view input) {
 #endif
 
 #ifdef __ANDROID__
-extern thread_local JNIEnv * threadEnv;
 static jobject getGlobalContext()
 {
 	jclass activityThread = threadEnv->FindClass("android/app/ActivityThread");
@@ -5947,6 +5944,11 @@ void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBrea
 	(void)dbt;
 	return;
 }
+
+// Inited in DarkEdif::Android::Init_Internals
+static jmethodID loadClassMethodID;
+static global<jobject> mainThreadClassLoader;
+static global<jclass> mainThreadClassLoaderClass;
 
 namespace DarkEdif::Android
 {
@@ -6018,6 +6020,22 @@ namespace DarkEdif::Android
 
 		hasGrantedMethodID = threadEnv->GetMethodID(MMFRuntimeInstClass, "hasPermissionGranted", "Z(Ljava/lang/String;)");
 		JNIExceptionCheck();
+
+		// Used to swap the system class loader to app-level class loader, see Edif::Runtime::AttachJVMAccessForThread().
+		// https://developer.android.com/ndk/guides/jni-tips#faq:-why-didnt-findclass-find-my-class
+		mainThreadClassLoaderClass = global(mainThreadJNIEnv->FindClass("java/lang/ClassLoader"), "Main thread ClassLoader class");
+		// Get class of class (java/lang/Class), then get classLoader from it
+		jclass classClass = mainThreadJNIEnv->GetObjectClass(MMFRuntimeInstClass);
+		JNIExceptionCheck();
+		jmethodID getClassLoaderMethod = mainThreadJNIEnv->GetMethodID(classClass, "getClassLoader", "()Ljava/lang/ClassLoader;");
+		JNIExceptionCheck();
+		mainThreadClassLoader = global(mainThreadJNIEnv->CallObjectMethod(MMFRuntimeInstClass, getClassLoaderMethod), "Main thread ClassLoader object");
+
+		// From the class loader, get the loadClass method
+		// findClass will work too, but only if thread already constructed that class
+		loadClassMethodID = mainThreadJNIEnv->GetMethodID(mainThreadClassLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+		JNIExceptionCheck();
+		// Discard classClass
 	}
 
 	bool HasPermissionGranted(std::string_view permString)
@@ -6032,6 +6050,62 @@ namespace DarkEdif::Android
 		JNIExceptionCheck();
 		return granted;
 	}
+}
+
+jclass DE_JNIEnv::FindClass(const char* name) {
+	// Non-null, non-blank name required
+	if (!name || !*name)
+		LOGF("FindClass passed a null or blank class name.\n");
+
+#ifdef _DEBUG
+	// Fully qualified name is not a.b.c, it's a/b/c
+	const std::string_view chk(name);
+	if (chk.find('.') != std::string_view::npos)
+		LOGF("FindClass passed an invalid format name \"%s\", Java expects slash-delimited.\n", name);
+
+	// Only time L-; is part of it is when it's typed array of class:
+	// "[Ljava/lang/String;" for string[]
+	// "[[Ljava/lang/String;" for string[][]
+	// Standard arrays are "[I"
+	const bool isArr = chk[0] == '[';
+	// If it starts with 'L', it's wrong; if it doesn't and has a ';' anyway, it's wrong
+	if (chk[0] == 'L' || (!isArr && chk.rfind(';') != std::string_view::npos))
+		LOGF("FindClass passed an invalid format name \"%s\", Java doesn't expect L; format outside of typed array.\n", name);
+	// else it's an array, so it's either got no L after [ or it ends with a ;
+	else if (isArr)
+	{
+		const std::size_t shouldBeL = chk.find_first_not_of('['); // npos is idiot check for "[[["
+		if (shouldBeL == std::string_view::npos || (chk[shouldBeL] != 'L') || chk.back() != ';')
+			LOGF("FindClass passed an invalid typed-array format \"%s\".\n", name);
+	}
+#endif // _DEBUG
+
+	// Main thread: use base FindClass.
+	if (std::this_thread::get_id() == DarkEdif::MainThreadID)
+		return JNIEnv::FindClass(name);
+
+	// Pre-requisite check
+	assert(mainThreadClassLoader && loadClassMethodID);
+
+	// If it's not valid UTF-8, then the user playing games
+	jstring className = NewStringUTF(name);
+	if (!className)
+		LOGF("Couldn't translate class name in FindClass, invalid UTF-8. Name: \"%s\", error: %s", name, GetJavaExceptionStr().c_str());
+
+	LOGV("FindClass searching for name \"%s\".", name);
+
+	// Invoke Java's ClassLoader::loadClass(className) method
+	jclass cls = (jclass)CallObjectMethod(mainThreadClassLoader, loadClassMethodID, className);
+	DeleteLocalRef(className);
+	if (!cls)
+		LOGW("FindClass didn't find class by name \"%s\".", name);
+	return cls; // Ignore null and any possible exceptions, vanilla FindClass behavior
+}
+
+jclass DE_JNIEnv::DefineClass(const char*, jobject, const jbyte*, jsize)
+{
+	LOGF("Cannot use DefineClass; Android OS doesn't support it.");
+	return NULL;
 }
 
 #elif defined(_WIN32)

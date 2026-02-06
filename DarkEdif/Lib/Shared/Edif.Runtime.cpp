@@ -1320,7 +1320,6 @@ Edif::Runtime::~Runtime()
 {
 }
 
-extern thread_local JNIEnv * threadEnv;
 void Edif::Runtime::Rehandle()
 {
 	static jmethodID javaMethodID = threadEnv->GetMethodID(javaHoClass.ref, "reHandle", "()V");
@@ -1412,14 +1411,12 @@ wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
 	return (wchar_t *)String;
 }
 
-JNIEnv * Edif::Runtime::AttachJVMAccessForThisThread(const char * threadName, bool asDaemon)
+void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool asDaemon)
 {
 	const auto thisThreadID = std::this_thread::get_id();
+
 	if (threadEnv != nullptr)
-	{
-		LOGF("Thread ID %s already has JNI access.\n", ThreadIDToStr(thisThreadID).c_str());
-		return nullptr;
-	}
+		return LOGF("Thread ID %s already has JNI access.\n", ThreadIDToStr(thisThreadID).c_str());
 
 	pthread_setname_np(pthread_self(), threadName);
 
@@ -1428,23 +1425,18 @@ JNIEnv * Edif::Runtime::AttachJVMAccessForThisThread(const char * threadName, bo
 		.group = NULL,
 		.version = JNI_VERSION_1_6
 	};
-
 	// Daemon means the JVM won't keep the app running if this thread is still alive.
 	// Do you want main thread exiting to choose whether the app is running or not?
 	jint error;
 	if (asDaemon)
-		error = global_vm->AttachCurrentThreadAsDaemon(&threadEnv, &args);
+		error = global_vm->AttachCurrentThreadAsDaemon((JNIEnv**)&threadEnv, &args);
 	else
-		error = global_vm->AttachCurrentThread(&threadEnv, &args);
+		error = global_vm->AttachCurrentThread((JNIEnv **)&threadEnv, &args);
 	if (error != JNI_OK)
-	{
-		LOGF("Couldn't attach thread %s (ID %s) to JNI, AttachCurrentThread%s error %i.\n",
+		return LOGF("Couldn't attach thread %s (ID %s) to JNI, AttachCurrentThread%s error %i.\n",
 			threadName, ThreadIDToStr(thisThreadID).c_str(), asDaemon ? "AsDaemon" : "", error);
-		return nullptr;
-	}
 	LOGV("Attached thread %s (ID %s) to JNI.\n", threadName, ThreadIDToStr(thisThreadID).c_str());
 	JNIExceptionCheck();
-	return threadEnv;
 }
 void Edif::Runtime::DetachJVMAccessForThisThread()
 {
@@ -1464,10 +1456,6 @@ void Edif::Runtime::DetachJVMAccessForThisThread()
 	LOGV("Detached thread ID %s from JNI OK.\n", ThreadIDToStr(thisThreadID).c_str());
 
 	threadEnv = nullptr;
-}
-JNIEnv * Edif::Runtime::GetJNIEnvForThisThread()
-{
-	return threadEnv;
 }
 
 

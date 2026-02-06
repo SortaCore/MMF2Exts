@@ -19,7 +19,6 @@
 		global<jobject> DarkEdif::Surface::renderer;
 		bool DarkEdif::Surface::isOpenGL2Or3;
 		DarkEdif::Surface::renderScaledRotImageFuncType DarkEdif::Surface::renderScaledRotImageFunc;
-		extern thread_local JNIEnv* threadEnv;
 		// Skip past Java with direct C calls
 		// ESxRenderer does OpenGL 2 and 3, not 1: see SurfaceView.setRenderer()
 		extern "C" void Java_OpenGL_ESxRenderer_renderScaledRotatedImage(JNIEnv * env, jobject renderer,

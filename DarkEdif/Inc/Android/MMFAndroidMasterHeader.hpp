@@ -41,13 +41,40 @@ void Sleep(unsigned int milliseconds);
 #include <math.h>
 #include <optional>
 
-// Note: doesn't use underlying_type due to incompatibility with one of the Android C++ STL libraries (stlport_static).
-
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
-// Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
-extern JNIEnv * mainThreadJNIEnv;
+// JNIEnv with a FindClass that works on Android apps, used for C++ to Java access via JNI
+// https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html
+struct DE_JNIEnv : _JNIEnv {
+	/** This function returns a local ref of Java class (jclass) by name.
+	 * The expected class format is / delimited, and does not include L ; around it.
+	 * In debug builds, this is fatal if bad format.
+	 * @param name Class name, e.g. "java/lang/String", "Runtime/CRunMy_Extension", "android/app/AlarmManager"
+	 * @return Local jclass ref, or NULL if a pending Java exception (e.g. ClassNotFoundException).
+	 * @remarks By default, native-spawned threads use the system class loader, not app-context class loader.
+	 * So base Java classes and base Android system Java classes will be available,
+	 * but not our specific apk's classes, so we wouldn't have access to Fusion app classes or our ext.
+	 * https://developer.android.com/ndk/guides/jni-tips#faq:-why-didnt-findclass-find-my-class
+	 * https://developer.android.com/ndk/guides/jni-tips#native_libraries:~:text=The%20system%20class%20loader%20does%20not%20know
+	 * So DE_JNIEnv overrides FindClass by using cached main thread's class loader directly.
+	 * As FindClass is non-virtual, we can't use override/final keyword. */
+	jclass FindClass(const char* name);
+
+	/** DefineClass is not available in Android OS.
+	 * @remarks https://developer.android.com/ndk/guides/jni-tips#unsupported-featuresbackwards-compatibility */
+	[[deprecated("Not available in Android!")]]
+	jclass DefineClass(const char* name, jobject loader, const jbyte* buf, jsize bufLen);
+};
+
+// JNIEnv, used for C++ to Java access via JNI
+// https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html
+// Main thread's threadEnv is singleton-inited in Edif::Init() called by JNI_OnLoad().
+// If this is null for your thread, call ext->Runtime.AttachJVMAccessForThisThread(), and detach when done.
+extern thread_local DE_JNIEnv* threadEnv;
+
+// Do not use everywhere! JNIEnv * are thread-specific. Use threadEnv instead.
+extern DE_JNIEnv* mainThreadJNIEnv;
 extern JavaVM * global_vm;
 
 struct CTransition;
@@ -181,8 +208,6 @@ enum_class_is_a_bitmask(EventGroupFlags);
 jstring CStrToJStr(const char* u8str);
 // Converts std::thread::id to a std::string
 std::string ThreadIDToStr(std::thread::id);
-
-extern thread_local JNIEnv* threadEnv;
 // Gets and returns a Java Exception. Pre-supposes there is one. Clears the exception.
 std::string GetJavaExceptionStr();
 

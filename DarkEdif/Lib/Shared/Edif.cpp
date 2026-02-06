@@ -25,8 +25,8 @@ bool Edif::IsEdittime;
 bool Edif::ExternalJSON;
 
 #ifdef __ANDROID__
-// Do not use everywhere! JNIEnv * are thread-specific. Use Edif::Runtime JNI functions to get a thread-local one.
-JNIEnv * mainThreadJNIEnv;
+// Do not use this main thread env. JNIEnv * are thread-specific. Use threadEnv instead.
+DE_JNIEnv * mainThreadJNIEnv;
 JavaVM * global_vm;
 // Inits DarkEdif::Android internals
 namespace DarkEdif::Android { void Init_Internals(); }

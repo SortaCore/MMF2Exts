@@ -213,10 +213,8 @@ namespace Edif
 		void InvalidateByNewACE();
 
 		// Attaches current thread, and gets JNIEnv for it; errors are fatal
-		static JNIEnv * AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
+		static void AttachJVMAccessForThisThread(const char * threadName, bool asDaemon = false);
 		static void DetachJVMAccessForThisThread();
-		// Gets JNIEnv * for this thread, or null.
-		static JNIEnv * GetJNIEnvForThisThread();
 #else
 		Runtime(Extension* ext, void * const objCExtPtr);
 		void * curCEvent;
