@@ -32,9 +32,6 @@
 // msize() may return the size of memory BLOCK allocated, not the requested size.
 #define _msize(a) malloc_usable_size(a)
 
-#define SUBSTRIFY(X) #X
-#define STRIFY(X) #X
-
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
 // Hide in namespace for iOS, which cannot share global functions without conflict
 namespace DarkEdif {

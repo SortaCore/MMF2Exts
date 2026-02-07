@@ -24,9 +24,6 @@
 #include <dlfcn.h>
 #include <android/api-level.h>
 
-#define SUBSTRIFY(X) #X
-#define STRIFY(X) #X
-
 void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
 
