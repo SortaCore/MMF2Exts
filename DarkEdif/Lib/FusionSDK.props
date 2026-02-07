@@ -406,10 +406,10 @@
 	<PropertyGroup Label="UserMacros" Condition="$(_TargetPlat)=='Windows'">
 		<!-- Do not include full build date in the C++ compilation. It causes VS to think the whole
 			 project needs rebuilding on every run. -->
-		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix))"
-			/D "PROJECT_NAME=STRIFY($(ExtName))"
-			/D "AUTHOR_NAME=STRIFY($(AuthorName))" /D "COMPANY_NAME=STRIFY($(CompanyName))"
-			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=STRIFY($(Year))"
+		<_FusionSDKAdds>/D "CONFIG=$(Configuration)" /D "PROJECT_TARGET_NAME=DE_STRIFY($(TargetNameNoPrefix))"
+			/D "PROJECT_NAME=DE_STRIFY($(ExtName))"
+			/D "AUTHOR_NAME=DE_STRIFY($(AuthorName))" /D "COMPANY_NAME=DE_STRIFY($(CompanyName))"
+			/D "EXTENSION_VERSION=$(ExtVersion)" /D "YEAR=DE_STRIFY($(Year))"
 			/D "USE_DARKEDIF_UPDATE_CHECKER=$(DarkEdif_UpdateChecker)"
 			/D "USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger)"
 			/D "TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent)"
@@ -423,7 +423,7 @@
 		<_FusionSDKAdds>$(_FusionSDKAdds.Replace('\n',' ').Replace('\t',' '))</_FusionSDKAdds>
 		<!-- #if EditorBuild needs to evaluate to true.
 			 Worth noting in ResourceCompiler, "true" is not true. 1 is apparently true though. -->
-		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
+		<_FusionSDKAddsRC>$(_FusionSDKAdds.Replace('\n',' ').Replace('\','\\\').Replace('DE_STRIFY(','asStr(')) /D "BUILD_DATE=asStr($(BuildDate))"</_FusionSDKAddsRC>
 	</PropertyGroup>
 
 <!--#################################
@@ -653,7 +653,7 @@
 			-D BUILD_DATE=\"$(BuildDate)\" -D YEAR=\"$(Year)\"		-->
 		<!-- Doesn't work due to MS bug.
 		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_NAME="$(ExtName)";AUTHOR_NAME="$(AuthorName)";COMPANY_NAME="$(CompanyName)";EXTENSION_VERSION=$(ExtVersion);YEAR="$(Year)"</_FusionSDKAdds> -->
-		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=STRIFY($(AuthorName));COMPANY_NAME=STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1;TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent);WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent);DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType);PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)</_FusionSDKAdds>
+		<_FusionSDKAdds>CONFIG=$(Configuration);PROJECT_TARGET_NAME=DE_STRIFY($(TargetNameNoPrefix));PROJECT_TARGET_NAME_UNDERSCORES=DE_STRIFY($(TargetNameUnderscores));PROJECT_TARGET_NAME_UNDERSCORES_RAW=$(TargetNameUnderscores);PROJECT_NAME=DE_STRIFY($(ExtName));PROJECT_NAME_UNDERSCORES=DE_STRIFY($(ExtName.Replace(' ','_')));AUTHOR_NAME=DE_STRIFY($(AuthorName));COMPANY_NAME=DE_STRIFY($(CompanyName));EXTENSION_VERSION=$(ExtVersion);YEAR=DE_STRIFY($(Year));USE_DARKEDIF_FUSION_DEBUGGER=$(DarkEdif_FusionDebugger);EditorBuild=$(EditorBuild);RuntimeBuild=$(RuntimeBuild);UniBuild=$(UniBuild);MacBuild=$(MacBuild);ThreadSafeStaticInitIsSafe=1;TEXT_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGTextPresent);WNDPROC_OEFLAG_EXTENSION=$(DarkEdif_OEFLAGWndProcPresent);DARKEDIF_DISPLAY_TYPE=$(DarkEdif_DisplayType);PAUSABLE_EXTENSION=$(DarkEdif_PausableExt)</_FusionSDKAdds>
 
 		<!-- Not defined by Clang, just MSVC. -->
 		<_FusionSDKAdds Condition="$(DbgBuild)==1">$(_FusionSDKAdds);_DEBUG=1</_FusionSDKAdds>

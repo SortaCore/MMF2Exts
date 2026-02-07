@@ -124,7 +124,7 @@ Prop *FusionAPI GetPropValue(mv * mV, EDITDATA * edPtr, unsigned int PropID)
 		if (ID == 0)
 		{
 			char extVerBuffer[256];
-			sprintf_s(extVerBuffer, CurLang["Properties"sv][ID]["DefaultState"sv].c_str(), lacewing::relayserver::buildnum, STRIFY(CONFIG));
+			sprintf_s(extVerBuffer, CurLang["Properties"sv][ID]["DefaultState"sv].c_str(), lacewing::relayserver::buildnum, DE_STRIFY(CONFIG));
 			return new Prop_Str(DarkEdif::UTF8ToTString(extVerBuffer).c_str());
 		}
 		if (ID == 3)

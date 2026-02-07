@@ -7162,7 +7162,7 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 #endif
 	}
 
-	std::string projConfig = STRIFY(CONFIG);
+	std::string projConfig = DE_STRIFY(CONFIG);
 	while ((semiSpace = projConfig.find(' ')) != std::string::npos)
 		projConfig.replace(semiSpace, 1, "%20"sv);
 

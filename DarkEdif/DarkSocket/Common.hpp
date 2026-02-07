@@ -4,7 +4,7 @@
 // #define TGFEXT	// TGF2, Fusion 2.x Std, Fusion 2.x Dev
 #define MMFEXT		// Fusion 2.x, Fusion 2.x Dev
 // #define PROEXT	// Fusion 2.x Dev only
-#define JSON_COMMENT_MACRO Extension::Version, STRIFY(CONFIG)
+#define JSON_COMMENT_MACRO Extension::Version, DE_STRIFY(CONFIG)
 
 #include "DarkEdif.hpp"
 

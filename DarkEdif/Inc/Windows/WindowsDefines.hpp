@@ -14,10 +14,6 @@
 // Replaces the Clang-style "__FUNCTION__ with all arguments" with MSVC-style
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 
-// Preprocessor hack to turns any plain text into "plain text", with the quotes.
-#define SUB_STRIFY(X) #X
-#define STRIFY(X) SUB_STRIFY(X)
-
 // If the user hasn't specified a target Windows version via _WIN32_WINNT, and is using an _xp toolset (indicated by _USING_V110_SDK71_),
 // then _WIN32_WINNT will be set to Windows XP (0x0501), to target XP and above.
 #if !defined(_WIN32_WINNT) && defined(_USING_V110_SDK71_)

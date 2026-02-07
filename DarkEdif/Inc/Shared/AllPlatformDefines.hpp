@@ -84,6 +84,26 @@ using namespace std::string_view_literals;
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
 #endif
 
+// ==================================================================================================
+// Preprocessor expansion macros
+// Two-step expansion macros, used to expand a preprocessor define into its full size.
+// If you do foo(abc ## __LINE__), C/C++ will expand to foo(abc__LINE__), not foo(abc89).
+// ==================================================================================================
+
+// Final one-step of two-step DE_CONCAT(a,b) macro
+#define DE_1CONCAT(a,b) a##b
+// Final one-step of two-step DE_STRIFY(str) macro
+#define DE_1STRIFY(X) #X
+
+// Expands and concats two macros together; DE_CONCAT(123,abc) becomes 123abc
+#define DE_CONCAT(a,b) DE_1CONCAT(a,b)
+// Expands the passed param and makes it into a string literal; DE_STRIFY(__LINE__) becomes "101"
+#define DE_STRIFY(X) DE_1STRIFY(X)
+
+// ==================================================================================================
+// Editor and runtime flags
+// ==================================================================================================
+
 // Editor and runtime flags telling Fusion runtime your ext capacity,
 // and what its RUNDATA should implement. Note that in DarkEdif, all RUNDATA
 // layout is handled for you, with most functions passed to Extension.

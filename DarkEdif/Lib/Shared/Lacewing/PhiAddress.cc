@@ -9,6 +9,7 @@
 
 #include "Lacewing.h"
 #include <iostream>
+#include <sstream>
 #ifdef _MSC_VER
 	// suppress complaints about utf8proc C enums not being C++ enum classes
 	#pragma warning (push)
@@ -310,12 +311,6 @@ std::string_view lw_u8str_trim(std::string_view toTrim, bool abortOnTrimNeeded)
 }
 
 
-#include <sstream>
-#ifndef STRIFY
-// Turns any plain text into "plain text", with the quotes.
-#define SUB_STRIFY(X) #X
-#define STRIFY(X) SUB_STRIFY(X)
-#endif
 extern "C" void LacewingFatalErrorMsgBox2(const char * const func, const char * const file, const int line)
 {
 	// Remove the repository name
@@ -326,6 +321,12 @@ extern "C" void LacewingFatalErrorMsgBox2(const char * const func, const char * 
 	std::stringstream err;
 	err << "Lacewing fatal error detected.\nFile: "sv << fileSub << "\nFunction: "sv << func << "\nLine: "sv << line;
 #ifdef _WIN32
+#ifndef DE_STRIFY
+	#define DE_1STRIFY(X) #X
+	// Expands the passed param and makes it into a string literal; DE_STRIFY(__LINE__) becomes "82".
+	// Used for PROJECT_NAME define
+	#define DE_STRIFY(X) DE_1STRIFY(X)
+#endif
 	std::wcout.flush();
 	MessageBoxA(NULL, err.str().c_str(), "" PROJECT_NAME " fatal error", MB_ICONERROR);
 	std::abort();
