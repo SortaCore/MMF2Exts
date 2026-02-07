@@ -121,6 +121,16 @@ bool DarkEdif::SVIComparePrefix(const std::string_view& text, const std::string_
 	// std::string_view() default ctor makes with null ptr, so if empty, _strnicmp may crash from null
 	return text.size() >= prefix.size() && !text.empty() && !_strnicmp(text.data(), prefix.data(), prefix.size());
 }
+// Case-sensitive comparison of texts. True if first param starts with second.
+bool DarkEdif::SVComparePrefix(const std::string_view& text, const std::string_view& prefix)
+{
+	assert(!prefix.empty());
+#if __cplusplus >= 202002L
+	return text.starts_with(prefix);
+#else
+	return text.size() >= prefix.size() && text.substr(0, prefix.size()) == prefix;
+#endif
+}
 
 
 ACEInfo * Edif::ACEInfoAlloc(unsigned int NumParams)

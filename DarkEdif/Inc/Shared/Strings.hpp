@@ -118,5 +118,7 @@ namespace DarkEdif
 	[[nodiscard]] bool SVICompare(const std::string_view& first, const std::string_view& second);
 	// Case-insensitive comparison of texts. true if first param starts with second. Uses strnicmp or strncasecmp.
 	[[nodiscard]] bool SVIComparePrefix(const std::string_view& text, const std::string_view& prefix);
+	// Case-sensitive comparison of texts. true if first param starts with second.
+	[[nodiscard]] bool SVComparePrefix(const std::string_view& text, const std::string_view& prefix);
 }
 
