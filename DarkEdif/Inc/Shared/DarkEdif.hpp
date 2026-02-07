@@ -735,12 +735,17 @@ namespace DarkEdif
 			PropSetIterator(const std::size_t nameListJSONIdx, const std::size_t setIdx, Data* runSetEntry, Properties* const props);
 		};
 
-		/** Gets a property set iterator, suitable for switching current property set index.
+		// Obscures the dummy iterator of LoopPropSet(). Usage:
+		// for (DarkEdif_IteratePropSet(edPtr->Props, "Set Name"sv)) { ... }
+		#define DarkEdif_IteratePropSet(props, ...) \
+			[[maybe_unused]] const auto DE_CONCAT(_anonit_,__LINE__) : props.LoopPropSet(__VA_ARGS__)
+
+		/** Gets a property set dummy iterator, suitable for switching current property set index.
+		 *  Use with DarkEdif_ForEachPropSet(edPtr->Props, "setname"sv)
+		 *  The range-for loop is used only to advance internal property-set index; the iterator is not readable.
 		 * @param setName  Set name, as specified in JSON.
 		 * @param numSkips Keep as 0, unless using subsets. For subsets, n to skip n parent/grandparent sets. */
-		[[maybe_unused]] PropSetIterator LoopPropSet(std::string_view setName, std::size_t numSkips = 0) const;
-
-		//const PropSetIterator GetPropertySetIterator(std::string_view setName);
+		PropSetIterator LoopPropSet(std::string_view setName, std::size_t numSkips = 0) const;
 
 #if EditorBuild
 		// =====
