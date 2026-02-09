@@ -461,7 +461,7 @@ static std::uint8_t UTF8_CHAR_WIDTH[] = {
 
 // JNIEnv, used for C++ to Java access via JNI
 // https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html
-// Main thread's threadEnv is singleton-inited in Edif::Init() called by JNI_OnLoad().
+// Main thread's threadEnv is inited in JNI_OnLoad().
 // If this is null for your thread, call ext->Runtime.AttachJVMAccessForThisThread(), and detach when done.
 thread_local DE_JNIEnv * threadEnv = nullptr;
 
@@ -802,7 +802,7 @@ static void prepareSignals()
 
 // Included from root dir
 #if __has_include("ExtraAndroidNatives.h")
-#include <ExtraAndroidNatives.h>
+#include "ExtraAndroidNatives.h"
 #endif
 #ifndef EXTRAFUNCS
 #define EXTRAFUNCS /* none*/
@@ -824,54 +824,48 @@ ProjectFunc jint getRunObjectTextColor(JNIEnv*, jobject, jlong ext);
 ProjectFunc void setRunObjectFont(JNIEnv*, jobject, jlong ext, jobject fontInfo, jobject rcPtr);
 ProjectFunc void setRunObjectTextColor(JNIEnv*, jobject, jlong ext, int rgb);
 #endif
+static int JNI_LoadError(const char * err) {
+	jclass ex = threadEnv->FindClass("java/lang/UnsatisfiedLinkError");
+	if (ex)
+		threadEnv->ThrowNew(ex, err);
+	return JNI_ERR;
+}
 
-ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
-	// https://developer.android.com/training/articles/perf-jni.html#native_libraries
-
+// Called by Java during System.loadLibrary on app start. Sets up extension's native functions, and Edif SDK.
+// Multiple loadLibrary on same SO won't load the library again or call JNI_OnLoad again.
+ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserved) {
+	// Get JNIEnv from VM; store in a DE_JNIEnv
 	jint error = vm->GetEnv(reinterpret_cast<void **>(&mainThreadJNIEnv), JNI_VERSION_1_6);
 	if (error != JNI_OK) {
+		// We don't have threadEnv, so we have to perish with native abort, instead of a Java error
 		LOGF("GetEnv failed with error %d.\n", error);
-		return -1;
+		return JNI_ERR;
 	}
 	global_vm = vm;
-	LOGV("GetEnv OK, returned %p.\n", mainThreadJNIEnv);
+	LOGV("GetEnv OK, returned %p.\n", threadEnv);
 
-	JavaVMAttachArgs args;
-	args.version = JNI_VERSION_1_6; // choose your JNI version
-	args.name = PROJECT_NAME ", JNI_Load"; // you might want to give the java thread a name
-	args.group = NULL; // you might want to assign the java thread to a ThreadGroup
-	if ((error = vm->AttachCurrentThread((JNIEnv **)&mainThreadJNIEnv, NULL)) != JNI_OK) {
-		LOGF("AttachCurrentThread failed with error %d.\n", error);
-		return -1;
+	threadEnv = mainThreadJNIEnv;
+	// Get jclass with threadEnv->FindClass.
+	// Fusion uses CRunExtension_Name consistently, so we always expect that on Java side.
+	const char * const classNameCRun = "Extensions/CRun" PROJECT_TARGET_NAME_UNDERSCORES;
+	LOGV("Looking for Java class \"%s\"... [1/2]\n", classNameCRun);
+
+	// DE_JNIEnv * does extra FindClass checks, like formatting
+	jclass clazz = threadEnv->FindClass(classNameCRun);
+	if (!clazz)
+	{
+		// If not found, there is always an exception, e.g. ClassNotFoundException,
+		// but as it's initial init and vital that we always log error, we'll check
+		const std::string excStr = threadEnv->ExceptionCheck() ? GetJavaExceptionStr() : "(none)"s;
+		LOGE("Couldn't find Java class \"%s\". Exception: %s\n", classNameCRun, excStr.c_str());
+		return JNI_LoadError("Native init of " PROJECT_NAME " SO failed: couldn't find Java class "
+			"CRun" PROJECT_TARGET_NAME_UNDERSCORES " in Extensions package.");
 	}
 
-	// Get jclass with mainThreadJNIEnv->FindClass.
-	// Register methods with mainThreadJNIEnv->RegisterNatives.
-	const std::string classNameCRun("Extensions/" "CRun" PROJECT_TARGET_NAME_UNDERSCORES);
-	const std::string className("Extensions/" PROJECT_TARGET_NAME_UNDERSCORES);
-	LOGV("Looking for class %s... [1/2]\n", classNameCRun.c_str());
-	jclass clazz = mainThreadJNIEnv->FindClass(classNameCRun.c_str());
-	if (clazz == NULL) {
-		LOGV("Couldn't find %s, now looking for %s... [2/2]\n", classNameCRun.c_str(), className.c_str());
-		if (mainThreadJNIEnv->ExceptionCheck()) {
-			mainThreadJNIEnv->ExceptionClear();
-			LOGV("EXCEPTION [1] %d\n", 0);
-		}
-		clazz = mainThreadJNIEnv->FindClass(className.c_str());
-		if (clazz == NULL)
-		{
-			if (mainThreadJNIEnv->ExceptionCheck()) {
-				mainThreadJNIEnv->ExceptionClear();
-				LOGV("EXCEPTION [2] %d\n", 0);
-			}
-			LOGF("Couldn't find class %s. Aborting load of extension.\n", className.c_str());
-			return JNI_VERSION_1_6;
-		}
-		LOGV("Found %s. [2/2]\n", className.c_str());
-	}
-	else
-		LOGV("Found %s. [1/2]\n", classNameCRun.c_str());
+	LOGV("Found ext's Java class \"%s\".\n", classNameCRun);
 
+	// Register the C methods of native-marked Java functions threadEnv->RegisterNatives.
+	// To distinguish between Java side and C/C++ side, the Java side has a "darkedif_" prefix.
 #define method(a,b) { "darkedif_" #a, b, (void *)&a }
 	static JNINativeMethod methods[] = {
 		method(getNumberOfConditions, "(J)I"),
@@ -900,32 +894,33 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, void * reserved) {
 		EXTRAFUNCS
 	};
 
-	LOGV("Registering natives for %s...\n", PROJECT_NAME);
-	if (mainThreadJNIEnv->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
-		threadEnv = mainThreadJNIEnv;
+	LOGV("Registering %zu native functions for %s class...\n", std::size(methods), classNameCRun);
+	if (threadEnv->RegisterNatives(clazz, methods, (jint)std::size(methods)) != JNI_OK) {
 		const std::string excStr = GetJavaExceptionStr();
-		LOGF("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
+		LOGE("Failed to register natives for ext %s; error %s.\n", PROJECT_NAME, excStr.c_str());
+		return JNI_LoadError("Native init of " PROJECT_NAME " SO failed: RegisterNatives failed.");
 	}
-	else
-		LOGV("Registered natives for ext %s successfully.\n", PROJECT_NAME);
-	mainThreadJNIEnv->DeleteLocalRef(clazz);
+	threadEnv->DeleteLocalRef(clazz);
+	LOGV("Registered natives for ext %s, class %s successfully.\n", PROJECT_NAME, classNameCRun);
 
-	threadEnv = mainThreadJNIEnv;
+	// First init, we shouldn't have Edif::SDK set yet
+	assert(!Edif::SDK);
 
 #ifdef _DEBUG
 	if (!didSignals)
 		prepareSignals();
 #endif
-
-	mv * mV = NULL;
-	if (!Edif::SDK) {
-		LOGV("The SDK is being initialized.\n");
-		Edif::Init(mV, false);
-	}
+	LOGV("The SDK is being initialized.\n");
+	if (Edif::Init(nullptr, false) != 0)
+		return JNI_LoadError("Native init of " PROJECT_NAME " SO failed: Edif::Init() had an error.");
 
 	return JNI_VERSION_1_6;
 }
-ProjectFunc void JNICALL JNI_OnUnload(JavaVM * vm, void * reserved)
+
+// Rarely called by Java side; app normally terminates before it does.
+// If it runs, it may not run on main thread.
+// Even app's Java onDestroy may not be called; only onPause is guaranteed, so cleanup/save state should happen there.
+ProjectFunc void JNICALL JNI_OnUnload([[maybe_unused]] JavaVM * vm, [[maybe_unused]] void * reserved)
 {
 	LOGV("JNI_Unload.\n");
 

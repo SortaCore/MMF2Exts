@@ -69,7 +69,7 @@ struct DE_JNIEnv : _JNIEnv {
 
 // JNIEnv, used for C++ to Java access via JNI
 // https://docs.oracle.com/en/java/javase/11/docs/specs/jni/functions.html
-// Main thread's threadEnv is singleton-inited in Edif::Init() called by JNI_OnLoad().
+// Main thread's threadEnv is inited in JNI_OnLoad().
 // If this is null for your thread, call ext->Runtime.AttachJVMAccessForThisThread(), and detach when done.
 extern thread_local DE_JNIEnv* threadEnv;
 
@@ -1037,11 +1037,7 @@ protected:
 #define MMFVERSION_20		0x02000000		// MMF 2.0
 #define	MMF_CURRENTVERSION	MMFVERSION_20
 
-// WARNING: Android has a complete mismatch with actual SDK mV.
-struct mv {
-	//void * ReAllocEditData(EDITDATA * edPTr, unsigned int dwNewSize);
-	//void InvalidateObject();
-};
+struct mv; // never used in Android, but we make an empty define to keep func signatures
 
 static int globalCount;
 
