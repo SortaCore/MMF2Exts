@@ -5993,14 +5993,14 @@ namespace DarkEdif::Android
 		AppContextClass = global(mainThreadJNIEnv->GetObjectClass(AppContext), "DarkEdif::Android::AppContext");
 
 		// Get Target SDK from MMFRuntime.inst via targetAPI static int
-		jfieldID targetAPIFieldID = mainThreadJNIEnv->GetFieldID(mmfRuntimeClass, "targetApi", "I");
+		jfieldID targetAPIFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "targetApi", "I");
 		JNIExceptionCheck();
 		AppTargetAPI = mainThreadJNIEnv->GetStaticIntField(mmfRuntimeClass, targetAPIFieldID);
 		JNIExceptionCheck();
 		assert(AppTargetAPI > 0);
 
 		// Get Device API via android_get_device_api_level() (API 24+), or grab via static int android.os.Build.VERSION.SDK_INT
-		void* lib = dlopen("libc", 0);
+		void* lib = dlopen("libc.so", RTLD_NOLOAD | RTLD_NOW);
 		assert(lib);
 		const int(*device_api_func)() = (decltype(device_api_func))dlsym(lib, "android_get_device_api_level");
 		int ret;
@@ -6018,7 +6018,7 @@ namespace DarkEdif::Android
 		assert(ret > 0 && ret < 100);
 		CurrentDeviceAPI = ret;
 
-		hasGrantedMethodID = threadEnv->GetMethodID(MMFRuntimeInstClass, "hasPermissionGranted", "Z(Ljava/lang/String;)");
+		hasGrantedMethodID = threadEnv->GetMethodID(MMFRuntimeInstClass, "hasPermissionGranted", "(Ljava/lang/String;)Z");
 		JNIExceptionCheck();
 
 		// Used to swap the system class loader to app-level class loader, see Edif::Runtime::AttachJVMAccessForThread().
