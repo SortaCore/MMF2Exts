@@ -5959,6 +5959,11 @@ namespace DarkEdif::Android
 
 	static jmethodID hasGrantedMethodID;
 
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+	void SetupSignalHandlers(const char *);
+	void RemoveSignalHandlers();
+#endif // DARKEDIF_SIGNAL_HANDLERS
+
 	void Init_Internals()
 	{
 		assert(!hasGrantedMethodID);
@@ -6036,6 +6041,10 @@ namespace DarkEdif::Android
 		loadClassMethodID = threadEnv->GetMethodID(mainThreadClassLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 		JNIExceptionCheck();
 		// Discard classClass
+
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+		SetupSignalHandlers("Main Thread");
+#endif // DARKEDIF_SIGNAL_HANDLERS
 	}
 
 	bool HasPermissionGranted(std::string_view permString)

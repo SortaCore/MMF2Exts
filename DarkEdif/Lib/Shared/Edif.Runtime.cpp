@@ -1411,6 +1411,165 @@ wchar_t * Edif::Runtime::CopyStringEx(const wchar_t * String) {
 	return (wchar_t *)String;
 }
 
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+#include <iostream>
+#include <iomanip>
+#include <unwind.h>
+#include <dlfcn.h>
+#include <cxxabi.h>
+
+namespace DarkEdif::Android { void SetupSignalHandlers(const char*); void RemoveSignalHandlers(); }
+struct BacktraceState
+{
+	void ** current;
+	void ** end;
+};
+
+static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context * context, void * arg)
+{
+	BacktraceState * state = static_cast<BacktraceState *>(arg);
+	uintptr_t pc = _Unwind_GetIP(context);
+	if (pc) {
+		if (state->current == state->end) {
+			return _URC_END_OF_STACK;
+		}
+		else {
+			*state->current++ = reinterpret_cast<void *>(pc);
+		}
+	}
+	return _URC_NO_REASON;
+}
+
+// Taken from https://stackoverflow.com/a/28858941
+size_t captureBacktrace(void ** buffer, size_t max)
+{
+	BacktraceState state = { buffer, buffer + max };
+	_Unwind_Backtrace(unwindCallback, &state);
+
+	return state.current - buffer;
+}
+void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
+{
+	os << "Call stack, last function is bottommost:\n"sv;
+	size_t outputMemSize = 512;
+	char outputMem[outputMemSize];
+
+	for (int idx = count - 1; idx >= 0; idx--) {
+		//	for (size_t idx = 0; idx < count; ++idx) {
+		const void * addr = buffer[idx];
+		const char * symbol = "";
+
+		Dl_info info;
+		if (dladdr(addr, &info) && info.dli_sname) {
+			symbol = info.dli_sname;
+		}
+		memset(outputMem, 0, outputMemSize);
+		int status = 0;
+		abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
+		os << "  #"sv << std::setw(2) << idx << ": "sv << addr << "  "sv << (status == 0 ? outputMem : symbol) << '\n';
+	}
+}
+//int signalCatches[] = { SIGABRT, SIGSEGV, SIGBUS, SIGPIPE };
+struct Signal {
+	int signalNum;
+	const char * signalName;
+	Signal(int s, const char * n) : signalNum(s), signalName(n) {}
+};
+static Signal signalCatches[] = {
+	// sync signals (always sent to causing thread)
+	{SIGSEGV, "SIGSEGV"},
+	{SIGBUS, "SIGBUS"},
+	{SIGFPE, "SIGFPE"},
+	{SIGILL, "SIGILL"},
+	{SIGSYS, "SIGSYS"},
+	// SIGABRT: ignore, we want aborts to abort; if this is changed, note LOGF calls it
+	// SIGTRAP: ignore, used for breakpoints; note DarkEdif::BreakIfDebuggerAttached() only raises SIGTRAP if debugger not detected
+	// async signals:
+	{SIGPIPE, "SIGPIPE"},
+	// Don't try to catch 33, SIGLWP?, it's the signal used for dumping threads post-abort
+};
+
+#define ALT_STACK_SIZE (SIGSTKSZ + 4096)
+
+stack_t alt_stack;
+
+static void signal_handler(const int code, siginfo_t * const si, void * const sc)
+{
+	static size_t numCatches = 0;
+	if (++numCatches > 3) {
+		exit(0);
+		return;
+	}
+
+#if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR
+	const char * signalName = "Unknown";
+	for (std::size_t i = 0; i < std::size(signalCatches); ++i)
+	{
+		if (signalCatches[i].signalNum == code)
+		{
+			signalName = signalCatches[i].signalName;
+			break;
+		}
+	}
+#endif
+
+	const size_t max = 30;
+	void * buffer[max];
+	std::ostringstream oss;
+
+	dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
+
+	LOGE("signal code raised: %d, %s.\n", code, signalName);
+	LOGI("%s\n", oss.str().c_str());
+	// Breakpoint
+#ifdef _DEBUG
+	raise(SIGTRAP);
+#endif
+}
+void DarkEdif::Android::SetupSignalHandlers(const char * threadName)
+{
+	if (DarkEdif::IsDebuggerAttached())
+		return LOGI(_T("Not setting up signal handlers on thread %s: attached debugger detected."), threadName);
+
+	alt_stack.ss_sp = malloc(ALT_STACK_SIZE);
+	if (!alt_stack.ss_sp)
+		LOGF(_T("Setup of alt stack failed, couldn't allocate %d"), ALT_STACK_SIZE);
+	alt_stack.ss_size = ALT_STACK_SIZE;
+	alt_stack.ss_flags = 0;
+
+	if (sigaltstack(&alt_stack, NULL) != 0)
+		LOGF(_T("Setup of alt stack failed, error %d"), errno);
+
+	for (std::size_t i = 0; i < std::size(signalCatches); ++i)
+	{
+		struct sigaction sa;
+		struct sigaction sa_old;
+		memset(&sa, 0, sizeof(sa));
+		sigemptyset(&sa.sa_mask);
+#ifdef __INTELLISENSE__
+		sa.sa_handler = (sig_t)(void*)signal_handler;
+#else
+		sa.sa_sigaction = signal_handler;
+#endif
+		// Flags: handler takes three params, and should run on alternative stack (good for memory corruption)
+		sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+		if (sigaction(signalCatches[i].signalNum, &sa, &sa_old) != 0) {
+			LOGW("Failed to set up %s sigaction.\n", signalCatches[i].signalName);
+		}
+		// sigaction64 is not needed; on 64-bit variants it is basically the same as sigaction
+	}
+
+	LOGI("Set up %zu signal handlers.\n", std::size(signalCatches));
+}
+
+void DarkEdif::Android::RemoveSignalHandlers()
+{
+	for (int i = 0; i < std::size(signalCatches); ++i)
+		signal(signalCatches[i].signalNum, SIG_DFL);
+}
+
+#endif // DARKEDIF_SIGNAL_HANDLERS
+
 void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool asDaemon)
 {
 	const auto thisThreadID = std::this_thread::get_id();
@@ -1437,6 +1596,10 @@ void Edif::Runtime::AttachJVMAccessForThisThread(const char* threadName, bool as
 			threadName, ThreadIDToStr(thisThreadID).c_str(), asDaemon ? "AsDaemon" : "", error);
 	LOGV("Attached thread %s (ID %s) to JNI.\n", threadName, ThreadIDToStr(thisThreadID).c_str());
 	JNIExceptionCheck();
+
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+	DarkEdif::Android::SetupSignalHandlers(threadName);
+#endif // DARKEDIF_SIGNAL_HANDLERS
 }
 void Edif::Runtime::DetachJVMAccessForThisThread()
 {

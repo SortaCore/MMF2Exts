@@ -656,150 +656,6 @@ std::string GetJavaExceptionStr()
 	return ret;
 }
 
-
-#ifdef _DEBUG
-
-#include <iostream>
-#include <iomanip>
-#include <unwind.h>
-#include <dlfcn.h>
-
-namespace {
-
-	struct BacktraceState
-	{
-		void ** current;
-		void ** end;
-	};
-
-	static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context * context, void * arg)
-	{
-		BacktraceState * state = static_cast<BacktraceState *>(arg);
-		uintptr_t pc = _Unwind_GetIP(context);
-		if (pc) {
-			if (state->current == state->end) {
-				return _URC_END_OF_STACK;
-			}
-			else {
-				*state->current++ = reinterpret_cast<void *>(pc);
-			}
-		}
-		return _URC_NO_REASON;
-	}
-
-}
-
-// Taken from https://stackoverflow.com/a/28858941
-size_t captureBacktrace(void ** buffer, size_t max)
-{
-	BacktraceState state = { buffer, buffer + max };
-	_Unwind_Backtrace(unwindCallback, &state);
-
-	return state.current - buffer;
-}
-#include <cxxabi.h>
-void dumpBacktrace(std::ostream & os, void ** buffer, size_t count)
-{
-	os << "Call stack, last function is bottommost:\n"sv;
-	size_t outputMemSize = 512;
-	char * outputMem = (char *)malloc(outputMemSize);
-
-	for (int idx = count - 1; idx >= 0; idx--) {
-		//	for (size_t idx = 0; idx < count; ++idx) {
-		const void * addr = buffer[idx];
-		const char * symbol = "";
-
-		Dl_info info;
-		if (dladdr(addr, &info) && info.dli_sname) {
-			symbol = info.dli_sname;
-		}
-		memset(outputMem, 0, outputMemSize);
-		int status = 0;
-		abi::__cxa_demangle(symbol, outputMem, &outputMemSize, &status);
-		os << "  #"sv << std::setw(2) << idx << ": "sv << addr << "  "sv << (status == 0 ? outputMem : symbol) << '\n';
-	}
-	free(outputMem);
-}
-//int signalCatches[] = { SIGABRT, SIGSEGV, SIGBUS, SIGPIPE };
-struct Signal {
-	int signalNum;
-	const char * signalName;
-	Signal(int s, const char * n) : signalNum(s), signalName(n) {}
-};
-static Signal signalCatches[] = {
-	//{SIGSEGV, "SIGSEGV" },
-	{SIGBUS, "SIGBUS"},
-	{SIGPIPE, "SIGPIPE"}
-	// Don't try to catch 33, SIGLWP?, it's the signal used for dumping thrreads post-abort
-};
-
-static void my_handler(const int code, siginfo_t * const si, void * const sc)
-{
-	static size_t numCatches = 0;
-	if (++numCatches > 3) {
-		exit(0);
-		return;
-	}
-
-#if DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR
-	const char * signalName = "Unknown";
-	for (std::size_t i = 0; i < std::size(signalCatches); ++i)
-	{
-		if (signalCatches[i].signalNum == code)
-		{
-			signalName = signalCatches[i].signalName;
-			break;
-		}
-	}
-#endif
-
-	const size_t max = 30;
-	void * buffer[max];
-	std::ostringstream oss;
-
-	dumpBacktrace(oss, buffer, captureBacktrace(buffer, max));
-
-	LOGI("%s\n", oss.str().c_str());
-	LOGE("signal code raised: %d, %s.\n", code, signalName);
-	// Breakpoint
-#ifdef _DEBUG
-	raise(SIGTRAP);
-#endif
-}
-static bool didSignals = false;
-
-static void prepareSignals()
-{
-	didSignals = true;
-
-	for (int i = 0; i < std::size(signalCatches); i++) {
-
-		struct sigaction sa;
-		struct sigaction sa_old;
-		memset(&sa, 0, sizeof(sa));
-		sigemptyset(&sa.sa_mask);
-		sa.sa_sigaction = my_handler;
-		sa.sa_flags = SA_SIGINFO;
-		if (sigaction(signalCatches[i].signalNum, &sa, &sa_old) != 0) {
-			LOGW("Failed to set up %s sigaction.\n", signalCatches[i].signalName);
-		}
-#if 0 && __ANDROID_API__ >= 28
-		struct sigaction64 sa64;
-		struct sigaction64 sa64_old;
-		memset(&sa64, 0, sizeof(sa64));
-		sigemptyset(&sa64.sa_mask);
-		sa.sa_sigaction = my_handler;
-		sa.sa_flags = SA_SIGINFO;
-		if (sigaction64(signalCatches[i].signalNum, &sa64, &sa64_old) != 0) {
-			LOGW("Failed to set up %s sigaction (64 bit).\n", signalCatches[i].signalName);
-		}
-#endif
-	}
-
-	LOGI("Set up %zu sigactions.\n", std::size(signalCatches));
-}
-#endif // _DEBUG
-
 // Included from root dir
 #if __has_include("ExtraAndroidNatives.h")
 #include "ExtraAndroidNatives.h"
@@ -905,16 +761,16 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserve
 	// First init, we shouldn't have Edif::SDK set yet
 	assert(!Edif::SDK);
 
-#ifdef _DEBUG
-	if (!didSignals)
-		prepareSignals();
-#endif
 	LOGV("The SDK is being initialized.\n");
 	if (Edif::Init(nullptr, false) != 0)
 		return JNI_LoadError("Native init of " PROJECT_NAME " SO failed: Edif::Init() had an error.");
 
 	return JNI_VERSION_1_6;
 }
+
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+namespace DarkEdif::Android { void RemoveSignalHandlers(); }
+#endif // DARKEDIF_SIGNAL_HANDLERS
 
 // Rarely called by Java side; app normally terminates before it does.
 // If it runs, it may not run on main thread.
@@ -923,14 +779,10 @@ ProjectFunc void JNICALL JNI_OnUnload([[maybe_unused]] JavaVM * vm, [[maybe_unus
 {
 	LOGV("JNI_Unload.\n");
 
-#ifdef _DEBUG
-	// Reset signals
-	if (didSignals)
-	{
-		for (int i = 0; i < std::size(signalCatches); ++i)
-			signal(signalCatches[i].signalNum, SIG_DFL);
-	}
-#endif
+#ifdef DARKEDIF_SIGNAL_HANDLERS
+	if (threadEnv)
+		DarkEdif::Android::RemoveSignalHandlers();
+#endif // DARKEDIF_SIGNAL_HANDLERS
 }
 
 #else // iOS
