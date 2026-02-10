@@ -1063,7 +1063,7 @@ https://forums.developer.apple.com/forums/thread/113746?answerId=349757022#34975
 			<Output TaskParameter="MinNDKAPI" PropertyName="MinNDKAPI" />
 		</AndroidAPIRangeFinder>
 		
-		<Message Importance="Normal" Text="DarkEdif Android build check: Android NDK &quot;$(NDKVerWithLetter)&quot; has support for Android API range $(MinNDKAPI) to $(MaxNDKAPI)." />
+		<Message Importance="High" Text="DarkEdif Android build check: Android NDK &quot;$(NDKVerWithLetter)&quot; has support for Android API range $(MinNDKAPI) to $(MaxNDKAPI)." />
 		<Error Condition="($(AndroidAPILevelNumber) &gt; $(MaxNDKAPI)) OR ($(AndroidAPILevelNumber) &lt; $(MinNDKAPI))"
 			Text="Android NDK-API mismatch! You are using Android NDK $(NDKVerWithLetter) which supports API range $(MinNDKAPI) to $(MaxNDKAPI), but you are targeting Android API $(AndroidAPILevelNumber)." />
 	</Target>
