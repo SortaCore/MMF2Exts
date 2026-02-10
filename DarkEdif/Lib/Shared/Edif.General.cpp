@@ -367,8 +367,8 @@ struct COIInternals {
 };
 ProjectFunc jlong createRunObject(JNIEnv * env, jobject javaExtPtr, ByteBufferDirect edPtr, jobject coi, jint version)
 {
-	void * const edPtrReal = mainThreadJNIEnv->GetDirectBufferAddress(edPtr);
-	LOGV("Note: mainThreadJNIEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", mainThreadJNIEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
+	void * const edPtrReal = threadEnv->GetDirectBufferAddress(edPtr);
+	LOGV("Note: threadEnv is %p, env is %p; javaExtPtr is %p, edPtr %p, edPtrReal %p, coi %p.\n", threadEnv, env, javaExtPtr, edPtr, edPtrReal, coi);
 	CreateObjectInfo coiReal = COIInternals::MakeCreateObjectInfo(coi);
 	Extension * const ext = new Extension((EDITDATA *)edPtrReal, javaExtPtr, &coiReal);
 	ext->Runtime.ObjectSelection.pExtension = ext;
@@ -835,7 +835,7 @@ static int JNI_LoadError(const char * err) {
 // Multiple loadLibrary on same SO won't load the library again or call JNI_OnLoad again.
 ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserved) {
 	// Get JNIEnv from VM; store in a DE_JNIEnv
-	jint error = vm->GetEnv(reinterpret_cast<void **>(&mainThreadJNIEnv), JNI_VERSION_1_6);
+	jint error = vm->GetEnv(reinterpret_cast<void **>(&threadEnv), JNI_VERSION_1_6);
 	if (error != JNI_OK) {
 		// We don't have threadEnv, so we have to perish with native abort, instead of a Java error
 		LOGF("GetEnv failed with error %d.\n", error);
@@ -844,7 +844,6 @@ ProjectFunc jint JNICALL JNI_OnLoad(JavaVM * vm, [[maybe_unused]] void * reserve
 	global_vm = vm;
 	LOGV("GetEnv OK, returned %p.\n", threadEnv);
 
-	threadEnv = mainThreadJNIEnv;
 	// Get jclass with threadEnv->FindClass.
 	// Fusion uses CRunExtension_Name consistently, so we always expect that on Java side.
 	const char * const classNameCRun = "Extensions/CRun" PROJECT_TARGET_NAME_UNDERSCORES;

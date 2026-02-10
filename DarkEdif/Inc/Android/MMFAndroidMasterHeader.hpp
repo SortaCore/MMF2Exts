@@ -73,8 +73,7 @@ struct DE_JNIEnv : _JNIEnv {
 // If this is null for your thread, call ext->Runtime.AttachJVMAccessForThisThread(), and detach when done.
 extern thread_local DE_JNIEnv* threadEnv;
 
-// Do not use everywhere! JNIEnv * are thread-specific. Use threadEnv instead.
-extern DE_JNIEnv* mainThreadJNIEnv;
+// Java VM; ext devs shouldn't access this, see threadEnv comments
 extern JavaVM * global_vm;
 
 struct CTransition;

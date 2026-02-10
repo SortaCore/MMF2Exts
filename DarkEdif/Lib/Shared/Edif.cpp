@@ -25,8 +25,7 @@ bool Edif::IsEdittime;
 bool Edif::ExternalJSON;
 
 #ifdef __ANDROID__
-// Do not use this main thread env. JNIEnv * are thread-specific. Use threadEnv instead.
-DE_JNIEnv * mainThreadJNIEnv;
+// Declared master header, not for ext dev use
 JavaVM * global_vm;
 // Inits DarkEdif::Android internals
 namespace DarkEdif::Android { void Init_Internals(); }
@@ -1094,19 +1093,6 @@ struct ConditionOrActionManager_Windows : ACEParamReader
 // how many a/c/e are running in this ext at the mo
 int aceIndex = 0;
 
-/*typedef jobject CRun;
-
-jclass GetExtClass(void* javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static global<jclass> clazz(mainThreadJNIEnv->GetObjectClass((jobject)javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
-	return clazz;
-};
-jobject GetRH(void* javaExtPtr) {
-	assert(threadEnv && mainThreadJNIEnv == threadEnv);
-	static jfieldID getRH(mainThreadJNIEnv->GetFieldID(GetExtClass(javaExtPtr), "rh", "LRunLoop/CRun;"));
-	return mainThreadJNIEnv->GetObjectField((jobject)javaExtPtr, getRH);
-};*/
-
 struct ConditionOrActionManager_Android : ACEParamReader
 {
 	jobject javaActOrCndObj, javaExtPtr, javaExtRHPtr;
@@ -1135,25 +1121,25 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 		if (extClass.invalid())
 		{
-			extClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
+			extClass = global<jclass>(threadEnv->GetObjectClass(javaExtPtr), "static global<> ext class, GetExtClass(), from javaExtPtr");
 
 			// Shared by both A/C, has special cases for Direction, Time and Object
-			getActOrCondParamInt = mainThreadJNIEnv->GetMethodID(extClass, "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I");
+			getActOrCondParamInt = threadEnv->GetMethodID(extClass, "darkedif_jni_getActionOrConditionIntParam", "(LEvents/CEvent;II)I");
 
 			// init one from passed param, the counterpart from a search
-			(isCondition ? cndClass : actClass) = global<jclass>(mainThreadJNIEnv->GetObjectClass(javaActOrCndObj), "Act or Cnd class in ConditionOrActionManager ctor [1]");
-			(isCondition ? actClass : cndClass) = global<jclass>(mainThreadJNIEnv->FindClass(isCondition ? "Actions/CActExtension" : "Conditions/CCndExtension"), "Act or Cnd class in ConditionOrActionManager ctor [2]");
+			(isCondition ? cndClass : actClass) = global<jclass>(threadEnv->GetObjectClass(javaActOrCndObj), "Act or Cnd class in ConditionOrActionManager ctor [1]");
+			(isCondition ? actClass : cndClass) = global<jclass>(threadEnv->FindClass(isCondition ? "Actions/CActExtension" : "Conditions/CCndExtension"), "Act or Cnd class in ConditionOrActionManager ctor [2]");
 
 			// getParamFilename2 handles both filename params and plain string expressions, so we use that
-			getActParamString = mainThreadJNIEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
-			getActParamFloat = mainThreadJNIEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
-			getActParamObject = mainThreadJNIEnv->GetMethodID(actClass, "getParamObject", "(LRunLoop/CRun;I)LObjects/CObject;");
+			getActParamString = threadEnv->GetMethodID(actClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getActParamFloat = threadEnv->GetMethodID(actClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getActParamObject = threadEnv->GetMethodID(actClass, "getParamObject", "(LRunLoop/CRun;I)LObjects/CObject;");
 
-			getCndParamString = mainThreadJNIEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
-			getCndParamFloat = mainThreadJNIEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
-			getCndParamObject = mainThreadJNIEnv->GetMethodID(cndClass, "getParamObject", "(LRunLoop/CRun;I)LParams/PARAM_OBJECT;");
+			getCndParamString = threadEnv->GetMethodID(cndClass, "getParamFilename2", "(LRunLoop/CRun;I)Ljava/lang/String;");
+			getCndParamFloat = threadEnv->GetMethodID(cndClass, "getParamExpFloat", "(LRunLoop/CRun;I)F");
+			getCndParamObject = threadEnv->GetMethodID(cndClass, "getParamObject", "(LRunLoop/CRun;I)LParams/PARAM_OBJECT;");
 
-			getRH = mainThreadJNIEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
+			getRH = threadEnv->GetFieldID(extClass, "rh", "LRunLoop/CRun;");
 		}
 	}
 
@@ -1161,7 +1147,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
-		const float f = mainThreadJNIEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
+		const float f = threadEnv->CallFloatMethod(javaActOrCndObj, isCondition ? getCndParamFloat : getActParamFloat, javaExtRHPtr, index);
 		JNIExceptionCheck();
 		LOGV("Got float param, cond=%d, index %d OK: %f.\n", isCondition ? 1 : 0, index, f);
 		return f;
@@ -1171,7 +1157,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	{
 		LOGV("Getting string param, cond=%d, index %d.\n", isCondition ? 1 : 0, index);
 		strings[stringIndex].init(
-			(jstring)mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj,
+			(jstring)threadEnv->CallObjectMethod(javaActOrCndObj,
 				isCondition ? getCndParamString : getActParamString, javaExtRHPtr, index));
 		JNIExceptionCheck();
 		LOGV("Got string param, cond=%d, index %d OK: \"%s\".\n", isCondition ? 1 : 0, index, strings[stringIndex].str().data());
@@ -1181,7 +1167,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 	virtual std::int32_t GetIntegerParam(int index, Params type)
 	{
 		LOGV("Getting integer param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)type);
-		const std::int32_t in = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
+		const std::int32_t in = threadEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, type);
 		JNIExceptionCheck();
 		LOGV("Got integer param, cond=%d, index %d, type %d OK: %d.\n", isCondition ? 1 : 0, index, (int)type, in);
 		return in;
@@ -1193,7 +1179,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 		if (isCondition)
 		{
 			LOGV("Getting object param, cond=%d, index %d, type %d.\n", isCondition ? 1 : 0, index, (int)Params::Object);
-			const std::int32_t oiListInt = mainThreadJNIEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, (int)Params::Object);
+			const std::int32_t oiListInt = threadEnv->CallIntMethod(javaExtPtr, getActOrCondParamInt, javaActOrCndObj, index, (int)Params::Object);
 			JNIExceptionCheck();
 			LOGV("Got object param, cond=%d, index %d OK: %i.\n", isCondition ? 1 : 0, index, oiListInt);
 			return oiListInt;
@@ -1203,7 +1189,7 @@ struct ConditionOrActionManager_Android : ACEParamReader
 
 		// Not sure if this can have a zero selection and thus return null, but allow it
 		JNIExceptionCheck();
-		jobject jObj = mainThreadJNIEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamObject : getActParamObject, javaExtRHPtr, index);
+		jobject jObj = threadEnv->CallObjectMethod(javaActOrCndObj, isCondition ? getCndParamObject : getActParamObject, javaExtRHPtr, index);
 		JNIExceptionCheck();
 		if (jObj == nullptr)
 			return 0; // null
@@ -1458,29 +1444,29 @@ struct ExpressionManager_Android : ACEParamReader {
 		ourAceIndex = aceIndex++;
 		if (expClass.invalid())
 		{
-			expClass = global<jclass>(mainThreadJNIEnv->GetObjectClass(expJavaObj), "static global<> expClass, from ExpressionManager ctor");
+			expClass = global<jclass>(threadEnv->GetObjectClass(expJavaObj), "static global<> expClass, from ExpressionManager ctor");
 			// these aren't memory, just ID numbers, which don't change during app lifetime
-			getParamInt = mainThreadJNIEnv->GetMethodID(expClass, "getParamInt", "()I");
-			getParamFloat = mainThreadJNIEnv->GetMethodID(expClass, "getParamFloat", "()F");
-			getParamString = mainThreadJNIEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;");
-			setRetInt = mainThreadJNIEnv->GetMethodID(expClass, "setReturnInt", "(I)V");
-			setRetFloat = mainThreadJNIEnv->GetMethodID(expClass, "setReturnFloat", "(F)V");
-			setRetString = mainThreadJNIEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
+			getParamInt = threadEnv->GetMethodID(expClass, "getParamInt", "()I");
+			getParamFloat = threadEnv->GetMethodID(expClass, "getParamFloat", "()F");
+			getParamString = threadEnv->GetMethodID(expClass, "getParamString", "()Ljava/lang/String;");
+			setRetInt = threadEnv->GetMethodID(expClass, "setReturnInt", "(I)V");
+			setRetFloat = threadEnv->GetMethodID(expClass, "setReturnFloat", "(F)V");
+			setRetString = threadEnv->GetMethodID(expClass, "setReturnString", "(Ljava/lang/String;)V");
 		}
 	}
 	void SetValue(int a) {
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetInt, a);
+		threadEnv->CallVoidMethod(expJavaObj, setRetInt, a);
 	}
 	void SetValue(float a) {
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj, setRetFloat, a);
+		threadEnv->CallVoidMethod(expJavaObj, setRetFloat, a);
 	}
 	void SetValue(const char * a) {
 		LOGV("Setting expression return as text...\n");
 		// Convert into Java memory
 		jstring jStr = CStrToJStr(a);
-		mainThreadJNIEnv->CallVoidMethod(expJavaObj,  setRetString, jStr);
+		threadEnv->CallVoidMethod(expJavaObj,  setRetString, jStr);
 		JNIExceptionCheck();
-		mainThreadJNIEnv->DeleteLocalRef(jStr); // not strictly needed, it should auto-free when expressionJump ends, but can't hurt
+		threadEnv->DeleteLocalRef(jStr); // not strictly needed, it should auto-free when expressionJump ends, but can't hurt
 		JNIExceptionCheck();
 		LOGV("Setting expression return as text \"%s\" OK.\n", a);
 	}
@@ -1489,7 +1475,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	virtual float GetFloatParam(int index)
 	{
 		LOGV("Getting float param, expr, index %d OK.\n", index);
-		const float f = mainThreadJNIEnv->CallFloatMethod(expJavaObj, getParamFloat);
+		const float f = threadEnv->CallFloatMethod(expJavaObj, getParamFloat);
 		LOGV("Got float param, expr, index %d OK: %f.\n", index, (double)f);
 		return f;
 	}
@@ -1497,7 +1483,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	virtual const TCHAR * GetStringParam(int index)
 	{
 		LOGV("Getting string param, expr, index %d.\n", index);
-		strings[stringIndex].init((jstring)mainThreadJNIEnv->CallObjectMethod(expJavaObj, getParamString));
+		strings[stringIndex].init((jstring)threadEnv->CallObjectMethod(expJavaObj, getParamString));
 		LOGV("Got string param, expr, index %d OK: %s.\n", index, strings[stringIndex].str().data());
 		return strings[stringIndex++].str().data();
 	}
@@ -1505,7 +1491,7 @@ struct ExpressionManager_Android : ACEParamReader {
 	virtual std::int32_t GetIntegerParam(int index, Params)
 	{
 		LOGV("Getting integer param, expr, index %d OK.\n", index);
-		const std::int32_t i = mainThreadJNIEnv->CallIntMethod(expJavaObj, getParamInt);
+		const std::int32_t i = threadEnv->CallIntMethod(expJavaObj, getParamInt);
 		LOGV("Got integer param, expr, index %d OK: %i.\n", index, i);
 		return i;
 	}

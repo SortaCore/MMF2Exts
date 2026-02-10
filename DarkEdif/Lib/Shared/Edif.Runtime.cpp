@@ -1263,31 +1263,31 @@ Edif::Runtime::Runtime(Extension* ext, jobject javaExtPtr2) : ext(ext),
 {
 	SDKPointer = Edif::SDK;
 	std::string exc;
-	javaExtPtrClass = global(mainThreadJNIEnv->GetObjectClass(javaExtPtr), "Extension::javaExtPtrClass from Extension ctor");
+	javaExtPtrClass = global(threadEnv->GetObjectClass(javaExtPtr), "Extension::javaExtPtrClass from Extension ctor");
 	if (javaExtPtrClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaExtPtrClass, got exception %s.\n", exc.c_str());
 	}
 
-	jfieldID javaHoField = mainThreadJNIEnv->GetFieldID(javaExtPtrClass, "ho", "LObjects/CExtension;");
+	jfieldID javaHoField = threadEnv->GetFieldID(javaExtPtrClass, "ho", "LObjects/CExtension;");
 	if (javaHoField == NULL) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaHoField, got exception %s.\n", exc.c_str());
 	}
 
-	javaHoObject = global(mainThreadJNIEnv->GetObjectField(javaExtPtr, javaHoField), "Extension::javaHoObject from Extension ctor");
+	javaHoObject = global(threadEnv->GetObjectField(javaExtPtr, javaHoField), "Extension::javaHoObject from Extension ctor");
 	if (javaHoObject.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not get javaHoObject, got exception %s.\n", exc.c_str());
 	}
 
-	javaHoClass = global(mainThreadJNIEnv->GetObjectClass(javaHoObject), "Extension::javaHoClass from Extension ctor");
+	javaHoClass = global(threadEnv->GetObjectClass(javaHoObject), "Extension::javaHoClass from Extension ctor");
 	if (javaHoClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not find javaHoClass method, got exception %s.\n", exc.c_str());
 	}
 
-	javaCEventClass = global(mainThreadJNIEnv->FindClass("Events/CEvent"), "CEvent class");
+	javaCEventClass = global(threadEnv->FindClass("Events/CEvent"), "CEvent class");
 	if (javaCEventClass.invalid()) {
 		exc = GetJavaExceptionStr();
 		LOGE("Could not find javaCEventClass method, got exception %s.\n", exc.c_str());
@@ -1682,23 +1682,23 @@ short Edif::Runtime::GetOIListIndexFromObjectParam(std::size_t paramIndex)
 	if (*(long *)&paramIndex < 0)
 		raise(SIGTRAP);
 	// read evtPtr.evtParams[paramIndex] as PARAM_OBJECT
-	static jfieldID evtParamsFieldID = mainThreadJNIEnv->GetFieldID(this->javaCEventClass.ref, "evtParams", "[LParams/CParam;");
+	static jfieldID evtParamsFieldID = threadEnv->GetFieldID(this->javaCEventClass.ref, "evtParams", "[LParams/CParam;");
 	JNIExceptionCheck();
-	jobjectArray evtParams = (jobjectArray)mainThreadJNIEnv->GetObjectField(curCEvent, evtParamsFieldID);
+	jobjectArray evtParams = (jobjectArray)threadEnv->GetObjectField(curCEvent, evtParamsFieldID);
 	JNIExceptionCheck();
-	jobject thisParam = mainThreadJNIEnv->GetObjectArrayElement(evtParams, paramIndex);
+	jobject thisParam = threadEnv->GetObjectArrayElement(evtParams, paramIndex);
 	JNIExceptionCheck();
 #ifdef _DEBUG
-	jint pParamCode = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "code", "S"));
+	jint pParamCode = threadEnv->GetShortField(thisParam, threadEnv->GetFieldID(threadEnv->GetObjectClass(thisParam), "code", "S"));
 	JNIExceptionCheck();
 	if ((Params)pParamCode != Params::Object)
 		LOGE(_T("GetOIListIndexFromObjectParam: Returning a OI for a non-Object parameter.\n"));
 #endif
 	// Read the equivalent of evp.W[0]
-	jshort oiList = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oiList", "S"));
+	jshort oiList = threadEnv->GetShortField(thisParam, threadEnv->GetFieldID(threadEnv->GetObjectClass(thisParam), "oiList", "S"));
 	JNIExceptionCheck();
 #if defined(_DEBUG) && (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
-	jshort oi = mainThreadJNIEnv->GetShortField(thisParam, mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(thisParam), "oi", "S"));
+	jshort oi = threadEnv->GetShortField(thisParam, threadEnv->GetFieldID(threadEnv->GetObjectClass(thisParam), "oi", "S"));
 	JNIExceptionCheck();
 	LOGD(_T("GetOIListIndexFromObjectParam: Returning OiList %hi (%#04hx; non-qual: %hi, %#04hx), oi is %hi (%#04hx; non-qual: %hi, %#04hx).\n"),
 		oiList, oiList, (short)(oiList & 0x7FFF), (short)(oiList & 0x7FFF), oi, oi, (short)(oi & 0x7FFF), (short)(oi & 0x7FFF));
@@ -1847,7 +1847,7 @@ jobjectArray RunHeader::GetOiList()
 	JNIExceptionCheck();
 	for (int i = 0; i < OiListLength; ++i)
 	{
-		jobject item = mainThreadJNIEnv->GetObjectArrayElement(OiList, i);
+		jobject item = threadEnv->GetObjectArrayElement(OiList, i);
 		JNIExceptionCheck();
 		OiListArray.emplace_back(objInfoList{ i, this, item, runtime });
 	}
@@ -1931,7 +1931,7 @@ CEventProgram* RunHeader::get_EventProgram() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!eventProgram)
 	{
-		jobject eventProgramJava = mainThreadJNIEnv->GetObjectField(crun, eventProgramFieldID);
+		jobject eventProgramJava = threadEnv->GetObjectField(crun, eventProgramFieldID);
 		JNIExceptionCheck();
 
 		eventProgram = std::make_unique<CEventProgram>(eventProgramJava, runtime);
@@ -1949,7 +1949,7 @@ RunHeader::RunHeader(jobject me, jclass meClass, Edif::Runtime* runtime) :
 		// CEventProgram rh4CurToken
 		rh4CurTokenFieldID = threadEnv->GetFieldID(crunClass, "rh4CurToken", "I");
 		JNIExceptionCheck();
-		eventProgramFieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhEvtProg", "LEvents/CEventProgram;");
+		eventProgramFieldID = threadEnv->GetFieldID(crunClass, "rhEvtProg", "LEvents/CEventProgram;");
 		JNIExceptionCheck();
 
 		oiListFieldID = threadEnv->GetFieldID(crunClass, "rhOiList", "[LRunLoop/CObjInfo;");
@@ -2006,9 +2006,9 @@ EventGroupMP * CEventProgram::get_eventGroup() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!eventGrp)
 	{
-		jfieldID rhEventProgFieldID = mainThreadJNIEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
+		jfieldID rhEventProgFieldID = threadEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
 		JNIExceptionCheck();
-		jobject eventGroupJava = mainThreadJNIEnv->GetObjectField(me, rhEventProgFieldID);
+		jobject eventGroupJava = threadEnv->GetObjectField(me, rhEventProgFieldID);
 		JNIExceptionCheck();
 		// This can be null, if running events from Handle tick.
 		if (eventGroupJava != nullptr)
@@ -2053,9 +2053,9 @@ void CEventProgram::InvalidatedByNewGeneratedEvent()
 }
 void CEventProgram::SetEventGroup(jobject grp)
 {
-	jfieldID rhEventProgFieldID = mainThreadJNIEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
+	jfieldID rhEventProgFieldID = threadEnv->GetFieldID(meClass, "rhEventGroup", "LEvents/CEventGroup;");
 	JNIExceptionCheck();
-	mainThreadJNIEnv->SetObjectField(me, rhEventProgFieldID, grp);
+	threadEnv->SetObjectField(me, rhEventProgFieldID, grp);
 	JNIExceptionCheck();
 	eventGrp = grp ? std::make_unique<EventGroupMP>(grp, runtime) : nullptr;
 	runtime->ObjectSelection.pExtension->rhPtr->evntGroup = grp ? eventGrp.get() : nullptr;
@@ -2201,9 +2201,9 @@ std::size_t RunHeader::GetNumberOi() {
 		// NumberOi is actually rhMaxOI
 		// Note: EventProgram has short maxOi, but CRun has int maxOi
 		JNIExceptionCheck();
-		jfieldID fieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhMaxOI", "I");
+		jfieldID fieldID = threadEnv->GetFieldID(crunClass, "rhMaxOI", "I");
 		JNIExceptionCheck();
-		NumberOi = (std::size_t)mainThreadJNIEnv->GetIntField(crun, fieldID);
+		NumberOi = (std::size_t)threadEnv->GetIntField(crun, fieldID);
 		JNIExceptionCheck();
 	}
 
@@ -2257,9 +2257,9 @@ RunObjectMultiPlatPtr RunHeader::GetObjectListOblOffsetByIndex(std::size_t index
 	if (!ObjectList)
 	{
 		// CObject[] CRun.rhObjectsList
-		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhObjectList", "[LObjects/CObject;");
+		static jfieldID fieldID = threadEnv->GetFieldID(crunClass, "rhObjectList", "[LObjects/CObject;");
 		JNIExceptionCheck();
-		jobjectArray jobArr = (jobjectArray)mainThreadJNIEnv->GetObjectField(crun, fieldID);
+		jobjectArray jobArr = (jobjectArray)threadEnv->GetObjectField(crun, fieldID);
 		JNIExceptionCheck();
 		ObjectList = std::make_unique<objectsList>(jobArr, runtime);
 	}
@@ -2275,9 +2275,9 @@ CRunAppMultiPlat* RunHeader::get_App() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!App)
 	{
-		jfieldID fieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhApp", "LApplication/CRunApp;");
+		jfieldID fieldID = threadEnv->GetFieldID(crunClass, "rhApp", "LApplication/CRunApp;");
 		JNIExceptionCheck();
-		jobject appJava = mainThreadJNIEnv->GetObjectField(crun, fieldID);
+		jobject appJava = threadEnv->GetObjectField(crun, fieldID);
 		JNIExceptionCheck();
 		App = std::make_unique<CRunAppMultiPlat>(appJava, runtime);
 	}
@@ -2288,9 +2288,9 @@ size_t RunHeader::get_MaxObjects() {
 	if (!MaxObjects.has_value())
 	{
 		// Note: CRun has int rhMaxObjects
-		static jfieldID maxObjectsFieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhMaxObjects", "I");
+		static jfieldID maxObjectsFieldID = threadEnv->GetFieldID(crunClass, "rhMaxObjects", "I");
 		JNIExceptionCheck();
-		MaxObjects = mainThreadJNIEnv->GetIntField(crun, maxObjectsFieldID);
+		MaxObjects = threadEnv->GetIntField(crun, maxObjectsFieldID);
 		JNIExceptionCheck();
 	}
 	return MaxObjects.value();
@@ -2301,9 +2301,9 @@ size_t RunHeader::get_NObjects() {
 	if (!NObjects.has_value())
 	{
 		// Note: CRun has int rhMaxObjects
-		static jfieldID nObjectsFieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhNObjects", "I");
+		static jfieldID nObjectsFieldID = threadEnv->GetFieldID(crunClass, "rhNObjects", "I");
 		JNIExceptionCheck();
-		NObjects = mainThreadJNIEnv->GetIntField(crun, nObjectsFieldID);
+		NObjects = threadEnv->GetIntField(crun, nObjectsFieldID);
 		JNIExceptionCheck();
 	}
 	return NObjects.value();
@@ -2313,10 +2313,10 @@ int RunHeader::get_WindowX() const {
 	static jfieldID windowXFieldID;
 	if (!windowXFieldID)
 	{
-		windowXFieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhWindowX", "I");
+		windowXFieldID = threadEnv->GetFieldID(crunClass, "rhWindowX", "I");
 		JNIExceptionCheck();
 	}
-	const int windowX = mainThreadJNIEnv->GetIntField(crun, windowXFieldID);
+	const int windowX = threadEnv->GetIntField(crun, windowXFieldID);
 	JNIExceptionCheck();
 	return windowX;
 }
@@ -2325,10 +2325,10 @@ int RunHeader::get_WindowY() const {
 	static jfieldID windowYFieldID;
 	if (!windowYFieldID)
 	{
-		windowYFieldID = mainThreadJNIEnv->GetFieldID(crunClass, "rhWindowY", "I");
+		windowYFieldID = threadEnv->GetFieldID(crunClass, "rhWindowY", "I");
 		JNIExceptionCheck();
 	}
-	const int windowY = mainThreadJNIEnv->GetIntField(crun, windowYFieldID);
+	const int windowY = threadEnv->GetIntField(crun, windowYFieldID);
 	JNIExceptionCheck();
 	return windowY;
 }
@@ -2338,9 +2338,9 @@ short HeaderObject::get_NextSelected() {
 	if (!NextSelected.has_value())
 	{
 		// Part of CObject
-		jfieldID nextSelectedFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNextSelected", "S");
+		jfieldID nextSelectedFieldID = threadEnv->GetFieldID(meClass, "hoNextSelected", "S");
 		JNIExceptionCheck();
-		NextSelected = mainThreadJNIEnv->GetShortField(me, nextSelectedFieldID);
+		NextSelected = threadEnv->GetShortField(me, nextSelectedFieldID);
 		JNIExceptionCheck();
 	}
 	return NextSelected.value();
@@ -2350,9 +2350,9 @@ unsigned short HeaderObject::get_CreationId() {
 	if (!CreationId.has_value())
 	{
 		// Part of CObject
-		jfieldID CreationIdFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoCreationId", "S");
+		jfieldID CreationIdFieldID = threadEnv->GetFieldID(meClass, "hoCreationId", "S");
 		JNIExceptionCheck();
-		CreationId = mainThreadJNIEnv->GetShortField(me, CreationIdFieldID);
+		CreationId = threadEnv->GetShortField(me, CreationIdFieldID);
 		JNIExceptionCheck();
 	}
 	return CreationId.value();
@@ -2362,9 +2362,9 @@ short HeaderObject::get_Number() {
 	if (!Number.has_value())
 	{
 		// Part of CObject
-		jfieldID NumberFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNumber", "S");
+		jfieldID NumberFieldID = threadEnv->GetFieldID(meClass, "hoNumber", "S");
 		JNIExceptionCheck();
-		Number = mainThreadJNIEnv->GetShortField(me, NumberFieldID);
+		Number = threadEnv->GetShortField(me, NumberFieldID);
 		JNIExceptionCheck();
 	}
 	return Number.value();
@@ -2374,9 +2374,9 @@ short HeaderObject::get_NumNext() {
 	if (!NumNext.has_value())
 	{
 		// Part of CObject
-		static jfieldID NumNextFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNumNext", "S");
+		static jfieldID NumNextFieldID = threadEnv->GetFieldID(meClass, "hoNumNext", "S");
 		JNIExceptionCheck();
-		NumNext = mainThreadJNIEnv->GetShortField(me, NumNextFieldID);
+		NumNext = threadEnv->GetShortField(me, NumNextFieldID);
 		JNIExceptionCheck();
 	}
 	return NumNext.value();
@@ -2386,9 +2386,9 @@ short HeaderObject::get_Oi() {
 	if (!Oi.has_value())
 	{
 		// Part of CObject
-		static jfieldID OiFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoOi", "S");
+		static jfieldID OiFieldID = threadEnv->GetFieldID(meClass, "hoOi", "S");
 		JNIExceptionCheck();
-		Oi = mainThreadJNIEnv->GetShortField(me, OiFieldID);
+		Oi = threadEnv->GetShortField(me, OiFieldID);
 		JNIExceptionCheck();
 	}
 	return Oi.value();
@@ -2422,9 +2422,9 @@ bool HeaderObject::get_SelectedInOR() {
 	if (!SelectedInOR.has_value())
 	{
 		// Part of CObject
-		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoSelectedInOR", "B");
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "hoSelectedInOR", "B");
 		JNIExceptionCheck();
-		SelectedInOR = mainThreadJNIEnv->GetByteField(me, fieldID) != 0;
+		SelectedInOR = threadEnv->GetByteField(me, fieldID) != 0;
 		JNIExceptionCheck();
 	}
 	return SelectedInOR.value();
@@ -2434,9 +2434,9 @@ HeaderObjectFlags HeaderObject::get_Flags() {
 	if (!Flags.has_value())
 	{
 		// Part of CObject
-		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoFlags", "S");
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "hoFlags", "S");
 		JNIExceptionCheck();
-		Flags = (HeaderObjectFlags)mainThreadJNIEnv->GetShortField(me, fieldID);
+		Flags = (HeaderObjectFlags)threadEnv->GetShortField(me, fieldID);
 		JNIExceptionCheck();
 	}
 	return Flags.value();
@@ -2447,9 +2447,9 @@ RunHeader* HeaderObject::get_AdRunHeader() {
 	{
 		// Part of CObject
 		LOGV("Class name of meClass: \"%s\".\n", getClassName(meClass, true));
-		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoAdRunHeader", "LRunLoop/CRun;");
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "hoAdRunHeader", "LRunLoop/CRun;");
 		JNIExceptionCheck();
-		jobject rhObject = mainThreadJNIEnv->GetObjectField(me, fieldID);
+		jobject rhObject = threadEnv->GetObjectField(me, fieldID);
 		JNIExceptionCheck();
 		jclass rhObjectClass = threadEnv->GetObjectClass(rhObject);
 		AdRunHeader = std::make_unique<RunHeader>(rhObject, rhObjectClass, runtime);
@@ -2462,9 +2462,9 @@ void HeaderObject::set_NextSelected(short ns) {
 	LOGV(_T("Running %s(%hi).\n"), _T(__FUNCTION__), ns);
 	NextSelected = ns;
 	// Part of CObject
-	static jfieldID nextSelectedFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNextSelected", "S");
+	static jfieldID nextSelectedFieldID = threadEnv->GetFieldID(meClass, "hoNextSelected", "S");
 	JNIExceptionCheck();
-	mainThreadJNIEnv->SetShortField(me, nextSelectedFieldID, ns);
+	threadEnv->SetShortField(me, nextSelectedFieldID, ns);
 	JNIExceptionCheck();
 }
 void HeaderObject::set_SelectedInOR(bool b) {
@@ -2472,14 +2472,14 @@ void HeaderObject::set_SelectedInOR(bool b) {
 	LOGV(_T("Running %s(bool %i).\n"), _T(__FUNCTION__), b ? 1 : 0);
 	SelectedInOR = b;
 	// Part of CObject
-	static jfieldID selectedInORFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoSelectedInOR", "B");
+	static jfieldID selectedInORFieldID = threadEnv->GetFieldID(meClass, "hoSelectedInOR", "B");
 	JNIExceptionCheck();
-	mainThreadJNIEnv->SetByteField(me, selectedInORFieldID, b);
+	threadEnv->SetByteField(me, selectedInORFieldID, b);
 	JNIExceptionCheck();
 }
 int HeaderObject::get_X() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int x = mainThreadJNIEnv->GetIntField(me, xFieldID);
+	const int x = threadEnv->GetIntField(me, xFieldID);
 	JNIExceptionCheck();
 	return x;
 }
@@ -2487,15 +2487,15 @@ void HeaderObject::SetX(int x) {
 	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), x);
 	if (!setXMethodID)
 	{
-		setXMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setX", "(I)V");
+		setXMethodID = threadEnv->GetMethodID(meClass, "setX", "(I)V");
 		JNIExceptionCheck();
 	}
-	mainThreadJNIEnv->CallVoidMethod(me, setXMethodID, x);
+	threadEnv->CallVoidMethod(me, setXMethodID, x);
 	JNIExceptionCheck();
 }
 int HeaderObject::get_Y() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int y = mainThreadJNIEnv->GetIntField(me, yFieldID);
+	const int y = threadEnv->GetIntField(me, yFieldID);
 	JNIExceptionCheck();
 	return y;
 }
@@ -2503,25 +2503,25 @@ void HeaderObject::SetY(int y) {
 	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), y);
 	if (!setYMethodID)
 	{
-		setYMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setY", "(I)V");
+		setYMethodID = threadEnv->GetMethodID(meClass, "setY", "(I)V");
 		JNIExceptionCheck();
 	}
-	mainThreadJNIEnv->CallVoidMethod(me, setYMethodID, y);
+	threadEnv->CallVoidMethod(me, setYMethodID, y);
 	JNIExceptionCheck();
 }
 void HeaderObject::SetPosition(int x, int y) {
 	LOGV(_T("Running %s(%d, %d).\n"), _T(__FUNCTION__), x, y);
 	if (!setPosMethodID)
 	{
-		setPosMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setPosition", "(II)V");
+		setPosMethodID = threadEnv->GetMethodID(meClass, "setPosition", "(II)V");
 		JNIExceptionCheck();
 	}
-	mainThreadJNIEnv->CallVoidMethod(me, setPosMethodID, y);
+	threadEnv->CallVoidMethod(me, setPosMethodID, y);
 	JNIExceptionCheck();
 }
 int HeaderObject::get_ImgWidth() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int imgWidth = mainThreadJNIEnv->GetIntField(me, imgWidthFieldID);
+	const int imgWidth = threadEnv->GetIntField(me, imgWidthFieldID);
 	JNIExceptionCheck();
 	return imgWidth;
 }
@@ -2529,10 +2529,10 @@ void HeaderObject::SetImgWidth(int w) {
 	LOGV(_T("Running %s(%d).\n"), _T(__FUNCTION__), w);
 	if (!imgWidthMethodID)
 	{
-		imgWidthMethodID = mainThreadJNIEnv->GetMethodID(meClass, "setWidth", "(I)V");
+		imgWidthMethodID = threadEnv->GetMethodID(meClass, "setWidth", "(I)V");
 		JNIExceptionCheck();
 	}
-	mainThreadJNIEnv->CallVoidMethod(me, imgWidthMethodID, w);
+	threadEnv->CallVoidMethod(me, imgWidthMethodID, w);
 	JNIExceptionCheck();
 }
 int HeaderObject::get_ImgHeight() const {
@@ -2596,23 +2596,23 @@ HeaderObject::HeaderObject(RunObject * ro, jobject me, jclass meClass, Edif::Run
 	if (numberFieldID == nullptr)
 	{
 		// Parts of CObject
-		numberFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoNumber", "S");
+		numberFieldID = threadEnv->GetFieldID(meClass, "hoNumber", "S");
 		JNIExceptionCheck();
-		xFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoX", "I");
+		xFieldID = threadEnv->GetFieldID(meClass, "hoX", "I");
 		JNIExceptionCheck();
-		yFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoY", "I");
+		yFieldID = threadEnv->GetFieldID(meClass, "hoY", "I");
 		JNIExceptionCheck();
-		imgWidthFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoImgWidth", "I");
+		imgWidthFieldID = threadEnv->GetFieldID(meClass, "hoImgWidth", "I");
 		JNIExceptionCheck();
-		imgHeightFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoImgHeight", "I");
+		imgHeightFieldID = threadEnv->GetFieldID(meClass, "hoImgHeight", "I");
 		JNIExceptionCheck();
-		imgXSpotFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoImgXSpot", "I");
+		imgXSpotFieldID = threadEnv->GetFieldID(meClass, "hoImgXSpot", "I");
 		JNIExceptionCheck();
-		imgYSpotFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoImgYSpot", "I");
+		imgYSpotFieldID = threadEnv->GetFieldID(meClass, "hoImgYSpot", "I");
 		JNIExceptionCheck();
-		identifierFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoIdentifier", "I");
+		identifierFieldID = threadEnv->GetFieldID(meClass, "hoIdentifier", "I");
 		JNIExceptionCheck();
-		oeFlagsFieldID = mainThreadJNIEnv->GetFieldID(meClass, "hoOEFlags", "I");
+		oeFlagsFieldID = threadEnv->GetFieldID(meClass, "hoOEFlags", "I");
 		JNIExceptionCheck();
 	}
 	oeFlags = (OEFLAGS) threadEnv->GetIntField(me, oeFlagsFieldID);
@@ -2635,10 +2635,10 @@ short HeaderObject::GetObjectParamNumber(jobject obj) {
 	if (numberFieldID == nullptr)
 	{
 		// Part of CObject
-		numberFieldID = mainThreadJNIEnv->GetFieldID(mainThreadJNIEnv->GetObjectClass(obj), "hoNumber", "S");
+		numberFieldID = threadEnv->GetFieldID(threadEnv->GetObjectClass(obj), "hoNumber", "S");
 		JNIExceptionCheck();
 	}
-	const short num = mainThreadJNIEnv->GetShortField(obj, numberFieldID);
+	const short num = threadEnv->GetShortField(obj, numberFieldID);
 	JNIExceptionCheck();
 	return num;
 }
@@ -2931,9 +2931,9 @@ int CRunAppMultiPlat::get_nCurrentFrame()
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!nCurrentFrame.has_value())
 	{
-		static jfieldID fieldID = mainThreadJNIEnv->GetFieldID(meClass, "currentFrame", "I");
+		static jfieldID fieldID = threadEnv->GetFieldID(meClass, "currentFrame", "I");
 		JNIExceptionCheck();
-		nCurrentFrame = mainThreadJNIEnv->GetIntField(me, fieldID);
+		nCurrentFrame = threadEnv->GetIntField(me, fieldID);
 		JNIExceptionCheck();
 	}
 	return nCurrentFrame.value();
@@ -3132,7 +3132,7 @@ int objInfoList::get_EventCount() {
 #ifdef _DEBUG
 	else
 	{
-		int newOilEventCount = mainThreadJNIEnv->GetIntField(me, eventCountFieldID);
+		int newOilEventCount = threadEnv->GetIntField(me, eventCountFieldID);
 		JNIExceptionCheck();
 		if (EventCount != newOilEventCount)
 		{
@@ -3148,13 +3148,13 @@ int objInfoList::get_EventCountOR() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!EventCountOR.has_value())
 	{
-		EventCountOR = mainThreadJNIEnv->GetIntField(me, eventCountORFieldID);
+		EventCountOR = threadEnv->GetIntField(me, eventCountORFieldID);
 		JNIExceptionCheck();
 	}
 #ifdef _DEBUG
 	else
 	{
-		int newOilEventCount = mainThreadJNIEnv->GetIntField(me, eventCountORFieldID);
+		int newOilEventCount = threadEnv->GetIntField(me, eventCountORFieldID);
 		JNIExceptionCheck();
 		if (EventCountOR != newOilEventCount)
 		{
@@ -3170,14 +3170,14 @@ short objInfoList::get_ListSelected() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!ListSelected.has_value())
 	{
-		ListSelected = mainThreadJNIEnv->GetShortField(me, listSelectedFieldID);
+		ListSelected = threadEnv->GetShortField(me, listSelectedFieldID);
 		JNIExceptionCheck();
 	}
 #ifdef _DEBUG
 	else
 	{
 		short oldValue = ListSelected.value();
-		short curValue = mainThreadJNIEnv->GetShortField(me, listSelectedFieldID);
+		short curValue = threadEnv->GetShortField(me, listSelectedFieldID);
 		JNIExceptionCheck();
 		if (oldValue != curValue)
 		{
@@ -3192,7 +3192,7 @@ int objInfoList::get_NumOfSelected() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NumOfSelected.has_value())
 	{
-		NumOfSelected = mainThreadJNIEnv->GetIntField(me, numOfSelectedFieldID);
+		NumOfSelected = threadEnv->GetIntField(me, numOfSelectedFieldID);
 		JNIExceptionCheck();
 	}
 	return NumOfSelected.value();
@@ -3201,7 +3201,7 @@ short objInfoList::get_Oi() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Oi.has_value())
 	{
-		Oi = mainThreadJNIEnv->GetShortField(me, oiFieldID);
+		Oi = threadEnv->GetShortField(me, oiFieldID);
 		JNIExceptionCheck();
 	}
 	return Oi.value();
@@ -3210,7 +3210,7 @@ int objInfoList::get_NObjects() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!NObjects.has_value())
 	{
-		NObjects = mainThreadJNIEnv->GetIntField(me, nObjectsFieldID);
+		NObjects = threadEnv->GetIntField(me, nObjectsFieldID);
 		JNIExceptionCheck();
 	}
 	return NObjects.value();
@@ -3219,7 +3219,7 @@ short objInfoList::get_Object() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!Object.has_value())
 	{
-		Object = mainThreadJNIEnv->GetShortField(me, objectFieldID);
+		Object = threadEnv->GetShortField(me, objectFieldID);
 		JNIExceptionCheck();
 	}
 	return Object.value();
@@ -3228,7 +3228,7 @@ const TCHAR* objInfoList::get_name() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
 	if (!name.has_value())
 	{
-		JavaAndCString str((jstring)mainThreadJNIEnv->GetObjectField(me, nameFieldID));
+		JavaAndCString str((jstring)threadEnv->GetObjectField(me, nameFieldID));
 		name = str.str();
 	}
 	return name.value().c_str();
@@ -3236,26 +3236,26 @@ const TCHAR* objInfoList::get_name() {
 void objInfoList::set_NumOfSelected(int ns) {
 	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ns);
 	NumOfSelected = ns;
-	mainThreadJNIEnv->SetIntField(me, numOfSelectedFieldID, ns);
+	threadEnv->SetIntField(me, numOfSelectedFieldID, ns);
 	JNIExceptionCheck();
 }
 void objInfoList::set_ListSelected(short sh) {
 	LOGV(_T("Running %s(%hi); %p; oilObject %hi, oilOi %hi, name %s.\n"), _T(__FUNCTION__), sh, this,
 		Object.value_or(-2), Oi.value_or(-2), name.value_or("??"s).c_str());
 	ListSelected = sh;
-	mainThreadJNIEnv->SetShortField(me, listSelectedFieldID, sh);
+	threadEnv->SetShortField(me, listSelectedFieldID, sh);
 	JNIExceptionCheck();
 }
 void objInfoList::set_EventCount(int ec) {
 	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ec);
 	EventCount = ec;
-	mainThreadJNIEnv->SetIntField(me, eventCountFieldID, ec);
+	threadEnv->SetIntField(me, eventCountFieldID, ec);
 	JNIExceptionCheck();
 }
 void objInfoList::set_EventCountOR(int ec) {
 	LOGV(_T("Running %s(%i).\n"), _T(__FUNCTION__), ec);
 	EventCountOR = ec;
-	mainThreadJNIEnv->SetIntField(me, eventCountORFieldID, ec);
+	threadEnv->SetIntField(me, eventCountORFieldID, ec);
 	JNIExceptionCheck();
 }
 short objInfoList::get_QualifierByIndex(std::size_t index) {
@@ -3276,41 +3276,41 @@ short objInfoList::get_QualifierByIndex(std::size_t index) {
 // When an ActionLoop is active, this is the next object number in the loop.
 int objInfoList::get_oilNext() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int oilNext = mainThreadJNIEnv->GetIntField(me, nextFieldID);
+	const int oilNext = threadEnv->GetIntField(me, nextFieldID);
 	JNIExceptionCheck();
 	return oilNext;
 }
 // When an ActionLoop is active, this is whether to iterate further or not.
 bool objInfoList::get_oilNextFlag() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const bool oilNextFlag = mainThreadJNIEnv->GetBooleanField(me, nextFlagFieldID);
+	const bool oilNextFlag = threadEnv->GetBooleanField(me, nextFlagFieldID);
 	JNIExceptionCheck();
 	return oilNextFlag;
 }
 int objInfoList::get_oilCurrentRoutine() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int oilCurrentRoutine = mainThreadJNIEnv->GetIntField(me, currentRoutineFieldID);
+	const int oilCurrentRoutine = threadEnv->GetIntField(me, currentRoutineFieldID);
 	JNIExceptionCheck();
 	return oilCurrentRoutine;
 }
 // When an Action is active, this specifies which object is currently being iterated. -1 if invalid.
 int objInfoList::get_oilCurrentOi() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int oilCurrentOi = mainThreadJNIEnv->GetIntField(me, currentOiFieldID);
+	const int oilCurrentOi = threadEnv->GetIntField(me, currentOiFieldID);
 	JNIExceptionCheck();
 	return oilCurrentOi;
 }
 // When an Action is active, this applies oilCurrentRountine
 int objInfoList::get_oilActionCount() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int oilActionCount = mainThreadJNIEnv->GetIntField(me, actionCountFieldID);
+	const int oilActionCount = threadEnv->GetIntField(me, actionCountFieldID);
 	JNIExceptionCheck();
 	return oilActionCount;
 }
 // When an ActionLoop is active (Action repeating in a fastloop), this applies oilCurrentRountine
 int objInfoList::get_oilActionLoopCount() {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int oilActionLoopCount = mainThreadJNIEnv->GetIntField(me, actionLoopCountFieldID);
+	const int oilActionLoopCount = threadEnv->GetIntField(me, actionLoopCountFieldID);
 	JNIExceptionCheck();
 	return oilActionLoopCount;
 }
@@ -3434,25 +3434,25 @@ CreateObjectInfo::CreateObjectInfo(jobject o) :
 }
 CreateObjectInfo::Flags CreateObjectInfo::get_flags() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const Flags cobFlags = (Flags)(std::uint16_t)mainThreadJNIEnv->GetShortField(me, flagsFieldID);
+	const Flags cobFlags = (Flags)(std::uint16_t)threadEnv->GetShortField(me, flagsFieldID);
 	JNIExceptionCheck();
 	return cobFlags;
 }
 std::int32_t CreateObjectInfo::get_X() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int cobX = mainThreadJNIEnv->GetIntField(me, xFieldID);
+	const int cobX = threadEnv->GetIntField(me, xFieldID);
 	JNIExceptionCheck();
 	return cobX;
 }
 std::int32_t CreateObjectInfo::get_Y() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int cobY = mainThreadJNIEnv->GetIntField(me, yFieldID);
+	const int cobY = threadEnv->GetIntField(me, yFieldID);
 	JNIExceptionCheck();
 	return cobY;
 }
 std::int32_t CreateObjectInfo::GetDir(RunObjectMultiPlatPtr rdPtr) const {
 	LOGV(_T("Running %s(%p).\n"), _T(__FUNCTION__), &*rdPtr);
-	const int cobDir = mainThreadJNIEnv->GetIntField(me, flagsFieldID);
+	const int cobDir = threadEnv->GetIntField(me, flagsFieldID);
 	if (cobDir != -1 && get_flags() != Flags::None)
 		return cobDir;
 	const auto roc = rdPtr->get_roc();
@@ -3466,13 +3466,13 @@ std::int32_t CreateObjectInfo::GetDir(RunObjectMultiPlatPtr rdPtr) const {
 }
 std::int32_t CreateObjectInfo::get_layer() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int cobLayer = mainThreadJNIEnv->GetIntField(me, layerFieldID);
+	const int cobLayer = threadEnv->GetIntField(me, layerFieldID);
 	JNIExceptionCheck();
 	return cobLayer;
 }
 std::int32_t CreateObjectInfo::get_ZOrder() const {
 	LOGV(_T("Running %s().\n"), _T(__FUNCTION__));
-	const int cobZOrder = mainThreadJNIEnv->GetIntField(me, zOrderFieldID);
+	const int cobZOrder = threadEnv->GetIntField(me, zOrderFieldID);
 	JNIExceptionCheck();
 	return cobZOrder;
 }
@@ -3515,7 +3515,7 @@ qualToOi::qualToOi(RunHeader* rh, int offset, jobject me, Edif::Runtime* runtime
 	rh(rh), offsetInQualToOiList(offset), me(me, "qualToOi ctor"), runtime(runtime)
 {
 	LOGV(_T("qualToOi::%s() - OiAndOiList not populated, doing so.\n"), _T(__FUNCTION__));
-	jfieldID fieldID = mainThreadJNIEnv->GetFieldID(rh->QualToOiClass, "qoiList", "[S");
+	jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiList", "[S");
 	JNIExceptionCheck();
 	oiAndOiListJava = global((jshortArray)threadEnv->GetObjectField(me, fieldID), "qoiList grab");
 	JNIExceptionCheck();
@@ -3528,7 +3528,7 @@ void qualToOi::InvalidatedByNewCondition()
 	// The object inside main CRun QualToOiList is out of date, not just its qoiList variable
 	this->me = global(threadEnv->GetObjectArrayElement(rh->QualToOiList, offsetInQualToOiList), "qualToOi refresh");
 	JNIExceptionCheck();
-	jfieldID fieldID = mainThreadJNIEnv->GetFieldID(rh->QualToOiClass, "qoiList", "[S");
+	jfieldID fieldID = threadEnv->GetFieldID(rh->QualToOiClass, "qoiList", "[S");
 	JNIExceptionCheck();
 	oiAndOiListJava = global((jshortArray)threadEnv->GetObjectField(me, fieldID), "qoiList grab");
 	JNIExceptionCheck();

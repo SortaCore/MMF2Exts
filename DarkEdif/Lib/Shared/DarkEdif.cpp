@@ -5966,36 +5966,36 @@ namespace DarkEdif::Android
 			return;
 		// MMFRuntime inst grab via static lookup of MMFRuntime, then MMFRuntime.inst read
 		// MMFRuntime is flavor of Android AppActivity
-		jclass mmfRuntimeClass = mainThreadJNIEnv->FindClass("Runtime/MMFRuntime");
+		jclass mmfRuntimeClass = threadEnv->FindClass("Runtime/MMFRuntime");
 		JNIExceptionCheck();
 		MMFRuntimeInstClass = global(mmfRuntimeClass, "DarkEdif::Android::MMFRuntimeInstClass");
-		jfieldID mmfRuntimeInstFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "inst", "LRuntime/MMFRuntime;");
+		jfieldID mmfRuntimeInstFieldID = threadEnv->GetStaticFieldID(mmfRuntimeClass, "inst", "LRuntime/MMFRuntime;");
 		JNIExceptionCheck();
-		jobject mmfRuntimeInst = mainThreadJNIEnv->GetStaticObjectField(mmfRuntimeClass, mmfRuntimeInstFieldID);
+		jobject mmfRuntimeInst = threadEnv->GetStaticObjectField(mmfRuntimeClass, mmfRuntimeInstFieldID);
 		JNIExceptionCheck();
-		MMFRuntimeInst = mainThreadJNIEnv->NewWeakGlobalRef(mmfRuntimeInst);
+		MMFRuntimeInst = threadEnv->NewWeakGlobalRef(mmfRuntimeInst);
 		assert(MMFRuntimeInst);
 
 		// Get AppContext from MMFRuntime.inst; it is stored inside a WeakReference
-		jfieldID appContextFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "appContext", "Ljava/lang/ref/WeakReference;");
+		jfieldID appContextFieldID = threadEnv->GetStaticFieldID(mmfRuntimeClass, "appContext", "Ljava/lang/ref/WeakReference;");
 		JNIExceptionCheck();
-		jobject appContextWeakHolder = mainThreadJNIEnv->GetStaticObjectField(mmfRuntimeClass, appContextFieldID);
+		jobject appContextWeakHolder = threadEnv->GetStaticObjectField(mmfRuntimeClass, appContextFieldID);
 		JNIExceptionCheck();
 		// Extract the inner AppContext jobject from inside MMFRuntime.inst's WeakReference
-		jclass weakRef = mainThreadJNIEnv->GetObjectClass(appContextWeakHolder);
+		jclass weakRef = threadEnv->GetObjectClass(appContextWeakHolder);
 		JNIExceptionCheck();
-		jmethodID weakRefGetMethodID = mainThreadJNIEnv->GetMethodID(weakRef, "get", "()Ljava/lang/Object;");
+		jmethodID weakRefGetMethodID = threadEnv->GetMethodID(weakRef, "get", "()Ljava/lang/Object;");
 		JNIExceptionCheck();
-		jobject appContext = mainThreadJNIEnv->CallObjectMethod(appContextWeakHolder, weakRefGetMethodID);
+		jobject appContext = threadEnv->CallObjectMethod(appContextWeakHolder, weakRefGetMethodID);
 		JNIExceptionCheck();
-		AppContext = mainThreadJNIEnv->NewWeakGlobalRef(appContext);
+		AppContext = threadEnv->NewWeakGlobalRef(appContext);
 		JNIExceptionCheck();
-		AppContextClass = global(mainThreadJNIEnv->GetObjectClass(AppContext), "DarkEdif::Android::AppContext");
+		AppContextClass = global(threadEnv->GetObjectClass(AppContext), "DarkEdif::Android::AppContext");
 
 		// Get Target SDK from MMFRuntime.inst via targetAPI static int
-		jfieldID targetAPIFieldID = mainThreadJNIEnv->GetStaticFieldID(mmfRuntimeClass, "targetApi", "I");
+		jfieldID targetAPIFieldID = threadEnv->GetStaticFieldID(mmfRuntimeClass, "targetApi", "I");
 		JNIExceptionCheck();
-		AppTargetAPI = mainThreadJNIEnv->GetStaticIntField(mmfRuntimeClass, targetAPIFieldID);
+		AppTargetAPI = threadEnv->GetStaticIntField(mmfRuntimeClass, targetAPIFieldID);
 		JNIExceptionCheck();
 		assert(AppTargetAPI > 0);
 
@@ -6007,11 +6007,11 @@ namespace DarkEdif::Android
 		if (!device_api_func || (ret = device_api_func()) == __ANDROID_API_FUTURE__)
 		{
 			// VERSION is a nested class within android.os.Build (hence "$" rather than "/")
-			jclass versionClass = mainThreadJNIEnv->FindClass("android/os/Build$VERSION");
+			jclass versionClass = threadEnv->FindClass("android/os/Build$VERSION");
 			JNIExceptionCheck();
-			jfieldID sdkIntFieldID = mainThreadJNIEnv->GetStaticFieldID(versionClass, "SDK_INT", "I");
+			jfieldID sdkIntFieldID = threadEnv->GetStaticFieldID(versionClass, "SDK_INT", "I");
 			JNIExceptionCheck();
-			ret = mainThreadJNIEnv->GetStaticIntField(versionClass, sdkIntFieldID);
+			ret = threadEnv->GetStaticIntField(versionClass, sdkIntFieldID);
 			JNIExceptionCheck();
 		}
 		dlclose(lib);
@@ -6023,17 +6023,17 @@ namespace DarkEdif::Android
 
 		// Used to swap the system class loader to app-level class loader, see Edif::Runtime::AttachJVMAccessForThread().
 		// https://developer.android.com/ndk/guides/jni-tips#faq:-why-didnt-findclass-find-my-class
-		mainThreadClassLoaderClass = global(mainThreadJNIEnv->FindClass("java/lang/ClassLoader"), "Main thread ClassLoader class");
+		mainThreadClassLoaderClass = global(threadEnv->FindClass("java/lang/ClassLoader"), "Main thread ClassLoader class");
 		// Get class of class (java/lang/Class), then get classLoader from it
-		jclass classClass = mainThreadJNIEnv->GetObjectClass(MMFRuntimeInstClass);
+		jclass classClass = threadEnv->GetObjectClass(MMFRuntimeInstClass);
 		JNIExceptionCheck();
-		jmethodID getClassLoaderMethod = mainThreadJNIEnv->GetMethodID(classClass, "getClassLoader", "()Ljava/lang/ClassLoader;");
+		jmethodID getClassLoaderMethod = threadEnv->GetMethodID(classClass, "getClassLoader", "()Ljava/lang/ClassLoader;");
 		JNIExceptionCheck();
-		mainThreadClassLoader = global(mainThreadJNIEnv->CallObjectMethod(MMFRuntimeInstClass, getClassLoaderMethod), "Main thread ClassLoader object");
+		mainThreadClassLoader = global(threadEnv->CallObjectMethod(MMFRuntimeInstClass, getClassLoaderMethod), "Main thread ClassLoader object");
 
 		// From the class loader, get the loadClass method
 		// findClass will work too, but only if thread already constructed that class
-		loadClassMethodID = mainThreadJNIEnv->GetMethodID(mainThreadClassLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+		loadClassMethodID = threadEnv->GetMethodID(mainThreadClassLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 		JNIExceptionCheck();
 		// Discard classClass
 	}
