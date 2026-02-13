@@ -407,10 +407,6 @@ namespace DarkEdif {
 	#define LOGE(x,...) (void)0
 #endif
 
-// objInfoList::name size, define copied from original SDK
-#ifndef OINAME_SIZE
-	#define	OINAME_SIZE			24
-#endif	// OINAME_SIZE
 // Logs with fatal level severity to debugger's output window or Android logcat,
 // then aborts the app. Does not return to caller.
 // On Windows, creates a modal message box between logging and app quit.
@@ -631,6 +627,10 @@ enum_class_is_a_bitmask(REFLAG);
 // Maximum number of qualifiers an object can have
 #define MAX_QUALIFIERS 8
 
+#ifndef OINAME_SIZE
+	// objInfoList::name size, including null terminator
+	#define	OINAME_SIZE			24
+#endif	// OINAME_SIZE
 
 // Useful functions
 #include <thread>
