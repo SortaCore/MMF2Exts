@@ -34,6 +34,15 @@ __declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE hDLL, std::uint32_t dwReason
 int FusionAPI Initialize(mv *mV, int quiet)
 {
 #pragma DllExportHint
+	// Prevent double-initialization, when Fusion calls this for main app and sub-apps at runtime.
+	// Our ext could be only in a sub-app, or only in a main app, or both, so we don't check mv->get_ParentApp(),
+	// we just init SDK in singleton and rely on Initialize being only called by the main thread to prevent races.
+	if (Edif::SDK)
+	{
+		LOGV(_T("Discarding excessive Initialize() call; Edif::SDK already initialized.\n"));
+		return 0;
+	}
+
 	return Edif::Init(mV, quiet != FALSE);
 }
 
