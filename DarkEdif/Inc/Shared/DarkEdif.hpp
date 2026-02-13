@@ -386,11 +386,38 @@ namespace DarkEdif {
 
 	namespace MsgBox
 	{
+		/** Creates a warning message box with OK button. No return value. On Windows, is modal.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		*/
 		void WarningOK(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a warning message box with Yes, No buttons. Returns IDYES or IDNO (default).
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDNO immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDYES, IDNO (default). */
 		int WarningYesNo(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a warning message box with Yes, No, Cancel buttons. Returns IDYES, IDNO, IDCANCEL (default).
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDCANCEL immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDYES, IDNO, IDCANCEL (default). */
 		int WarningYesNoCancel(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates an error message box with OK buttons.
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like. */
 		void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates an info message box with OK buttons.
+		 * On Windows, blocks until button is pressed; on non-Windows, always returns IDOK immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like. */
 		void Info(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(2, 3);
+		/** Creates a message box with custom icon, buttons and settings. See MessageBoxA().
+		 * On Windows, blocks until button is pressed. On non-Windows, always returns IDOK immediately.
+		 * @param titlePrefix The prefix to put in the message box title. TCHAR. Extension name is appended.
+		 * @param msgFormat The message box contents. TCHAR. Printf-like.
+		 * @return IDOK, IDCANCEL, IDYES, IDNO, IDABORT etc. */
 		int Custom(const int flags, const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...) PrintFHintAfter(3, 4);
 	}
 
