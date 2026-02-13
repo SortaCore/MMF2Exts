@@ -5471,7 +5471,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 	for (std::size_t i = 0, j = 0; j < JSON.u.array.length; ++i, ++j)
 	{
 		const json_value& propjson = *JSON.u.array.values[i];
-		const std::string_view curPropType = propjson["Type"sv];
+		const std::string curPropType(propjson["Type"sv]);
 
 		// Metadata for all properties
 		fullSize += sizeof(Properties::Data);
@@ -5480,8 +5480,8 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		// by title, so storing the title is unnecessary.
 		if (IsUnchangeablePropExclCheckbox(curPropType))
 		{
-			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"),
-				propjson["Title"sv].c_str(), curPropType, fullSize);
+			DebugProp_OutputString(_T("Adding property \"%s\" (type \"%s\"), accumulative size is now %zu.\n"),
+				UTF8ToTString(propjson["Title"sv]).c_str(), UTF8ToTString(curPropType).c_str(), fullSize);
 			continue;
 		}
 
@@ -5491,8 +5491,8 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		// Checkboxes store title, but not data
 		if (IsUnchangeablePropInclCheckbox(curPropType))
 		{
-			DebugProp_OutputString(_T("Adding property %hs (type %hs) accumulative size is now %zu.\n"),
-				propjson["Title"sv].c_str(), curPropType, fullSize);
+			DebugProp_OutputString(_T("Adding property \"%s\" (type \"%s\"), accumulative size is now %zu.\n"),
+				UTF8ToTString(propjson["Title"sv]).c_str(), UTF8ToTString(curPropType).c_str(), fullSize);
 			continue;
 		}
 
@@ -5510,8 +5510,8 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 				[i](const auto& es) { return es.nameListIdx == i; });
 			if (esIt != Edif::SDK->EdittimePropertySets.cend())
 			{
-				DebugProp_OutputString(_T("Property %hs is a combo box set list. Adding size of RuntimePropSet + name.\n"),
-					propjson["Title"sv].c_str());
+				DebugProp_OutputString(_T("Property \"%s\" is a combo box set list. Adding size of RuntimePropSet + name.\n"),
+					UTF8ToTString(propjson["Title"sv]).c_str());
 				fullSize += sizeof(RuntimePropSet) + esIt->setName.size();
 			}
 			else
@@ -5543,17 +5543,18 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 		}
 		else
 		{
-			MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"), _T("Calculation of edittime property size can't understand property type \"%s\". (%s)"),
+			MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"),
+				_T("Calculation of edittime property size can't understand property type \"%s\". (%s)"),
 				UTF8ToTString(curPropType).c_str(), JSON::LanguageName());
 		}
-		DebugProp_OutputString(_T("Adding property %hs (type %s) accumulative size is now %zu.\n"),
-			propjson["Title"sv].c_str(), UTF8ToTString(curPropType).c_str(), fullSize);
+		DebugProp_OutputString(_T("Adding property \"%s\" (type \"%s\"), accumulative size is now %zu.\n"),
+			UTF8ToTString(propjson["Title"sv]).c_str(), UTF8ToTString(curPropType).c_str(), fullSize);
 	}
-	DebugProp_OutputString(_T("Accumulative size finalized at %zu.\n"), fullSize);
+	DebugProp_OutputString(_T("Properties final accumulated size is %zu.\n"), fullSize);
 
 #if !defined(NOPROPS) && EditorBuild
 	// This function estimates the size of a fresh edPtr without generating one.
-	// To check it's working, generate an actual fresh edPtr and see if it's different
+	// To check the above code is working, generate an actual fresh edPtr and see if it's different
 	if constexpr (DarkEdif::Properties::DebugProperties)
 	{
 		HGLOBAL data = DLL_UpdateEditStructure(Edif::SDK->mV, nullptr);
@@ -5571,15 +5572,18 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 		if (fullSize != actualResult)
 		{
-			MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"), _T("Mismatch of calculation and actual: calculated %zu bytes, but the actual new EDITDATA was %zu bytes."),
-				actualResult, fullSize);
+			MsgBox::Error(_T("GetEDITDATASizeFromJSON failed"),
+				_T("Mismatch of calculated initial EDITDATA and generated initial EDITDATA: calculated %zu bytes, but "
+				"the actual new EDITDATA was %zu bytes."), actualResult, fullSize
+			);
 		}
 	}
 #endif
 	if (fullSize >= UINT16_MAX)
 	{
-		MsgBox::Error(_T("EDITDATA too large!"), _T("The JSON extension properties use more than %u bytes to store, and are too large for Fusion. (%s)"),
-			UINT16_MAX, JSON::LanguageName());
+		MsgBox::Error(_T("EDITDATA too large!"), _T("The JSON extension properties use more than %u bytes to store, and "
+			"are too large for Fusion. (%s)"), UINT16_MAX, JSON::LanguageName()
+		);
 	}
 
 	DebugProp_OutputString(_T("GetEDITDATASizeFromJSON: result is %zu bytes.\n"), fullSize);
