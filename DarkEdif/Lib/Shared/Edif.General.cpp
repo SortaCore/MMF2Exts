@@ -592,68 +592,41 @@ std::string ThreadIDToStr(std::thread::id id)
 	return str.str();
 }
 
-void DarkEdif::LOGFInternal(PrintFHintInside const char * x, ...)
-{
-	va_list va;
-	va_start(va, x);
-	LogV(DARKEDIF_LOG_ERROR, x, va);
-	va_end(va);
-	std::cout.flush();
-	__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed by extension " PROJECT_NAME ".");
-	if (threadEnv)
-	{
-#if _DEBUG
-		raise(SIGTRAP);
-#endif
-		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_TARGET_NAME_UNDERSCORES " for details.");
-	}
-	else
-	{
-		__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
-	}
-	exit(EXIT_FAILURE);
-}
-// Call via JNIExceptionCheck(). If a Java exception is pending, instantly dies.
+// Call via JNIExceptionCheck(). If a Java exception is pending, logs with fatal intensity and does not return to caller.
 void Indirect_JNIExceptionCheck(const char * file, const char * func, int line)
 {
 	if (!threadEnv)
 	{
 		LOGF("JNIExceptionCheck() called before threadEnv was initialized.\n");
-		return;
+		return; // LOGF() won't return, but it might code analysis a little confused
 	}
+
+	// No Java exception, exit cleanly
 	if (!threadEnv->ExceptionCheck())
 		return;
-	jthrowable exc = threadEnv->ExceptionOccurred();
+
+	// Describes exception to logcat under System.err or libc module
 	threadEnv->ExceptionDescribe();
-	threadEnv->ExceptionClear(); // else GetObjectClass fails, which is dumb enough.
-	jclass exccls = threadEnv->GetObjectClass(exc);
-	jmethodID getMsgMeth = threadEnv->GetMethodID(exccls, "toString", "()Ljava/lang/String;");
 
-	jstring excStr = (jstring)threadEnv->CallObjectMethod(exc, getMsgMeth);
-	const char * c = threadEnv->GetStringUTFChars(excStr, NULL);
+	std::string excStr = GetJavaExceptionStr();
 	LOGF("JNIExceptionCheck() in file \"%s\", func \"%s\", line %d, found a JNI exception: %s.\n",
-		file, func, line, c);
-
-	raise(SIGTRAP);
-	threadEnv->ReleaseStringUTFChars(excStr, c);
-	return;
+		file, func, line, excStr.c_str());
 }
 std::string GetJavaExceptionStr()
 {
 	if (!threadEnv->ExceptionCheck())
-		return std::string("No exception!");
+		LOGF("Do not call GetJavaExceptionStr() without a Java exception pending.\n");
 	jthrowable exc = threadEnv->ExceptionOccurred();
-	threadEnv->ExceptionClear(); // else GetObjectClass fails, which is dumb enough.
+
+	// clear, else GetObjectClass fails, which is dumb enough.
+	threadEnv->ExceptionClear();
 	jclass exccls = threadEnv->GetObjectClass(exc);
+	assert(exccls);
 	jmethodID getMsgMeth = threadEnv->GetMethodID(exccls, "toString", "()Ljava/lang/String;");
+	assert(getMsgMeth);
 
-	jstring excStr = (jstring)threadEnv->CallObjectMethod(exc, getMsgMeth);
-	const char * c = threadEnv->GetStringUTFChars(excStr, NULL);
-
-	std::string ret(c);
-
-	threadEnv->ReleaseStringUTFChars(excStr, c);
-	return ret;
+	const JavaAndCString excStr((jstring)threadEnv->CallObjectMethod(exc, getMsgMeth));
+	return std::string(excStr.str()); // return string copy
 }
 
 // Included from root dir

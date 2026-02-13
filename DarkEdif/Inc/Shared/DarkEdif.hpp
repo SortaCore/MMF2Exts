@@ -348,7 +348,10 @@ namespace DarkEdif {
 	// This region does logging and debugging
 	// =====
 
-	// Breaks if debugger is attached - on Windows. On Non-Windows, raises SIGINT and may lock the control flow.
+	// Returns true if a debugger is attached.
+	bool IsDebuggerAttached();
+
+	// Breaks if debugger is attached, otherwise continues.
 	void BreakIfDebuggerAttached();
 
 	// For use with SetDataBreakpoint()
@@ -368,6 +371,9 @@ namespace DarkEdif {
 	// Will hard-fail if it cannot set. Only 4 data breakpoints can be active at once.
 	void SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt = DataBreakpointType::Write);
 
+	// Logs with fatal level severity to debugger's output window or Android logcat,
+	// then aborts the app. Does not return to caller.
+	// On Windows, creates a modal message box between logging and app quit.
 	[[noreturn]]
 	void LOGFInternal(PrintFHintInside const TCHAR* fmt, ...) PrintFHintAfter(1, 2);
 

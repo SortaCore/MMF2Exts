@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef __ANDROID__
-#error Included the wrong header for this OS. Include MMFMasterHeader.h instead
+#error Included the wrong header for this OS
 #endif
 
 // Cover up clang warnings about unused features we make available
@@ -23,18 +23,19 @@
 #include <stddef.h>
 #include <dlfcn.h>
 #include <android/api-level.h>
+#include <jni.h>
 
-void Sleep(unsigned int milliseconds);
 #define _CrtCheckMemory() /* no op */
 
 #include <signal.h>
 #include <map>
 
+// C extern linkage, and explicitly set to export the function
 #define ProjectFunc extern "C" JNIEXPORT
+// Fusion library on Android is not used; even if it was, it's not usual to change calling convention in Android
 #define FusionAPI /* no declarator */
 #include <fcntl.h>
 #include <errno.h>
-#include <jni.h>
 #include <unistd.h>
 #include <sys/resource.h>
 #include <android/log.h>
@@ -207,7 +208,7 @@ enum_class_is_a_bitmask(EventGroupFlags);
 jstring CStrToJStr(const char* u8str);
 // Converts std::thread::id to a std::string
 std::string ThreadIDToStr(std::thread::id);
-// Gets and returns a Java Exception. Pre-supposes there is one. Clears the exception.
+// Gets and returns a Java Exception. Requires that there is one. Clears the exception.
 std::string GetJavaExceptionStr();
 
 // JNI global ref wrapper for Java objects. You risk your jobject/jclass expiring without use of this.
@@ -1038,18 +1039,14 @@ protected:
 
 struct mv; // never used in Android, but we make an empty define to keep func signatures
 
-static int globalCount;
-
-#define JAVACHKNULL(x) x; \
-	if (threadEnv->ExceptionCheck()) { \
-		std::string s = GetJavaExceptionStr(); \
-		LOGE("Dead in %s, %i: %s.\n", __PRETTY_FUNCTION__, __LINE__, s.c_str()); \
-	}
-
+// Call via JNIExceptionCheck(). If a Java exception is pending, logs with fatal intensity and does not return to caller.
 void Indirect_JNIExceptionCheck(const char * file, const char * func, int line);
 #ifdef _DEBUG
+	// If a Java exception is pending, logs with fatal intensity and does not return to caller.
 	#define JNIExceptionCheck() Indirect_JNIExceptionCheck(__FILE__, __FUNCTION__, __LINE__)
 #else
+	// If a Java exception is pending, logs with fatal intensity and does not return to caller.
+	// Disabled in current project config (not a Debug build).
 	#define JNIExceptionCheck() (void)0
 #endif
 
@@ -1058,7 +1055,6 @@ struct ExpressionManager_Android;
 
 const int REFLAG_DISPLAY = 1;
 const int REFLAG_ONESHOT = 2;
-
 
 // Defined in DarkEdif.cpp with ASM instructions to embed the binary.
 extern char darkExtJSON[];

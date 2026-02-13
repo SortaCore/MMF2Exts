@@ -38,6 +38,8 @@
 #include <stddef.h>
 // Include std::string_view
 #include <string_view>
+// Include assert(x) preprocessor macro; if x is false, it aborts the app. No-op on Release builds.
+#include <assert.h>
 
 // Activate the ""s and ""sv string literals (C++17)
 using namespace std::string_literals;
@@ -328,8 +330,19 @@ enum class TextCapacity : std::uint32_t {
 };
 enum_class_is_a_bitmask(TextCapacity);
 
-// These are based on the ANDROID_LOG_XXX enum.
-
+// ==================================================================================================
+// DarkEdif logging and macros.
+// 
+// These are printf-based, and expect a newline at end:
+// LOGI(_T("Some text with variable: %d\n"), 50);
+// 
+// Log levels are based on the ANDROID_LOG_XXX enum; in order of highest to lowest severity:
+// LOGF, LOGE, LOGW, LOGI, LOGD, LOGV.
+//
+// DARKEDIF_LOG_MIN_LEVEL can be set by preprocessor. Default for Release is Info+, Debug is Debug+.
+// If min level is higher than the LOGX() level, then it will not be in output code at all.
+// OutputDebugStringA() is equivalent to LOGI() with a prefix.
+// ================================================================================================== */
 #define DARKEDIF_LOG_VERBOSE 2
 #define DARKEDIF_LOG_DEBUG 3
 #define DARKEDIF_LOG_INFO 4
@@ -338,7 +351,6 @@ enum_class_is_a_bitmask(TextCapacity);
 #define DARKEDIF_LOG_FATAL 7
 namespace DarkEdif {
 	void Log(int logLevel, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2,3);
-	[[noreturn]] void LOGF(PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(1, 2);
 }
 
 #ifndef DARKEDIF_LOG_MIN_LEVEL
@@ -350,28 +362,48 @@ namespace DarkEdif {
 #endif
 
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_VERBOSE)
+	// Logs with verbose level severity to debugger output window or Android logcat.
+	// Intended for high-volume logging only during extreme debugging scenarios.
 	#define LOGV(x,...) DarkEdif::Log(DARKEDIF_LOG_VERBOSE, x, ##__VA_ARGS__)
 #else
+	// Logs with verbose level severity. (verbose level is disabled in current project config)
+	// Intended for high-volume logging only during extreme debugging scenarios.
 	#define LOGV(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_DEBUG)
+	// Logs with debug level severity to debugger's output window or Android logcat.
+	// Intended for logging that is only relevant in debugging, not notable during release builds.
 	#define LOGD(x,...) DarkEdif::Log(DARKEDIF_LOG_DEBUG, x, ##__VA_ARGS__)
 #else
+	// Logs with debug level severity. (debug level is disabled in current project config)
+	// Intended for logging that is only relevant in debugging, not notable during release builds.
 	#define LOGD(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_INFO)
+	// Logs with information level severity to debugger's output window or Android logcat.
+	// Intended for logging that is relevant in debugging or release builds.
 	#define LOGI(x,...) DarkEdif::Log(DARKEDIF_LOG_INFO, x, ##__VA_ARGS__)
 #else
+	// Logs with information level severity. (information level is disabled in current project config)
+	// Intended for logging that is relevant in debugging or release builds.
 	#define LOGI(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_WARN)
+	// Logs with warning level severity to debugger's output window or Android logcat.
+	// Intended for scenarios that MAY indicate an error or bad state.
 	#define LOGW(x,...) DarkEdif::Log(DARKEDIF_LOG_WARN, x, ##__VA_ARGS__)
 #else
+	// Logs with warning level severity. (warning level is disabled in current project config)
+	// Intended for scenarios that MAY indicate an error or bad state.
 	#define LOGW(x,...) (void)0
 #endif
 #if (DARKEDIF_LOG_MIN_LEVEL <= DARKEDIF_LOG_ERROR)
+	// Logs with error level severity to debugger's output window or Android logcat.
+	// Intended for scenarios that indicate a non-fatal error.
 	#define LOGE(x,...) DarkEdif::Log(DARKEDIF_LOG_ERROR, x, ##__VA_ARGS__)
 #else
+	// Logs with error level severity. (error level is disabled in current project config)
+	// Intended for scenarios that indicate a non-fatal error.
 	#define LOGE(x,...) (void)0
 #endif
 
@@ -379,6 +411,10 @@ namespace DarkEdif {
 #ifndef OINAME_SIZE
 	#define	OINAME_SIZE			24
 #endif	// OINAME_SIZE
+// Logs with fatal level severity to debugger's output window or Android logcat,
+// then aborts the app. Does not return to caller.
+// On Windows, creates a modal message box between logging and app quit.
+#define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Tells the compiler not to generate any default constructor/destructor for this class
 #define NO_DEFAULT_CTORS_OR_DTORS(className) \
@@ -595,7 +631,6 @@ enum_class_is_a_bitmask(REFLAG);
 // Maximum number of qualifiers an object can have
 #define MAX_QUALIFIERS 8
 
-#define LOGF(x, ...) DarkEdif::LOGFInternal(x, ##__VA_ARGS__)
 
 // Useful functions
 #include <thread>

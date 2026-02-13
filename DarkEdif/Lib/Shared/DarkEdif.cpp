@@ -7,6 +7,8 @@
 extern HINSTANCE hInstLib;
 // For props that alter other props with some expression
 #include <regex>
+#elif defined (__ANDROID__)
+#include <fstream> // for detecting debugger
 #elif defined (__APPLE__)
 #include "MMF2Lib/CFontInfo.h"
 #endif
@@ -5703,8 +5705,6 @@ std::tstring DarkEdif::MakePathUnembeddedIfNeeded(const Extension * ext, const s
 // Text conversion - definitions
 // =====
 
-#include <assert.h>
-
 #ifdef _WIN32
 // For Windows, TString can be Wide or ANSI.
 // ANSI function calls are internally converted to Wide by Windows.
@@ -5928,11 +5928,6 @@ int DarkEdif::MessageBoxA(WindowHandleType hwnd, const TCHAR * text, const TCHAR
 	return 0;
 }
 
-void DarkEdif::BreakIfDebuggerAttached()
-{
-	raise(SIGTRAP);
-}
-
 void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
 {
 	// Hardware breakpoints are not available in Android non-rooted.
@@ -5949,6 +5944,45 @@ void DarkEdif::SetDataBreakpoint(const void * memory, std::size_t size, DataBrea
 static jmethodID loadClassMethodID;
 static global<jobject> mainThreadClassLoader;
 static global<jclass> mainThreadClassLoaderClass;
+// Used so LOGF() can call LOGV() and maintain noreturn status
+static bool runningLOGF;
+
+// On Android, called by LOGF() and LogV(FATAL, ...) after logging
+[[noreturn]] static void AndroidFatalExit()
+{
+	// Flush in case console output is applicable
+	std::cout.flush();
+
+	// If we have a debugger, signal it
+	DarkEdif::BreakIfDebuggerAttached();
+
+	// Both of these raise SIGABRT and make a dump file, we either do with Java or via libc.
+	// If we have JNI access, abort with Java's FatalError()
+	if (threadEnv)
+		threadEnv->FatalError("Killed by extension " PROJECT_NAME ". Look at previous logcat entries from " PROJECT_TARGET_NAME_UNDERSCORES " for details.");
+	else
+		__android_log_write(ANDROID_LOG_FATAL, PROJECT_TARGET_NAME_UNDERSCORES, "Killed from unattached thread! Running exit.");
+
+	// This won't run, but any code-checker analysing if this func is actually noreturn will see that it is.
+	// FatalError doesn't return, but was in JNI too early before noreturn tagging was invented,
+	// so a code-checker might see it as returning.
+	std::abort();
+}
+
+[[noreturn]]
+void DarkEdif::LOGFInternal(const TCHAR* x, ...)
+{
+	// Prevent LogV(FATAL, x) aborting; we still log so any DE log intercepter can see it
+	runningLOGF = true;
+
+	va_list va;
+	va_start(va, x);
+	LogV(DARKEDIF_LOG_FATAL, x, va);
+	va_end(va);
+
+	// Final log and kills app, doesn't return
+	AndroidFatalExit();
+}
 
 namespace DarkEdif::Android
 {
@@ -6119,12 +6153,6 @@ jclass DE_JNIEnv::DefineClass(const char*, jobject, const jbyte*, jsize)
 
 #elif defined(_WIN32)
 
-void DarkEdif::BreakIfDebuggerAttached()
-{
-	if (IsDebuggerPresent())
-		DebugBreak();
-}
-
 void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
 {
 	if (!memory || (unsigned long)memory > 0x80000000UL)
@@ -6226,31 +6254,6 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-
-void DarkEdif::BreakIfDebuggerAttached()
-{
-	// Taken from https://stackoverflow.com/a/27254064
-	static bool debuggerIsAttached = false;
-
-	static dispatch_once_t debuggerPredicate;
-	dispatch_once(&debuggerPredicate, ^{
-		struct kinfo_proc info;
-		size_t info_size = sizeof(info);
-		int name[4] { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() }; // from unistd.h, included by Foundation
-
-		if (sysctl(name, 4, &info, &info_size, NULL, 0) == -1)
-		{
-			LOGE("DarkEdif::BreakIfDebuggerAttached() couldn't call sysctl(): %s. Assuming true.", strerror(errno));
-			debuggerIsAttached = true;
-		}
-
-		if (!debuggerIsAttached && (info.kp_proc.p_flag & P_TRACED) != 0)
-			debuggerIsAttached = true;
-	});
-
-	if (debuggerIsAttached)
-		__builtin_trap();
-}
 
 void DarkEdif::SetDataBreakpoint(const void* memory, std::size_t size, DataBreakpointType dbt /* = DataBreakpointType::Write */)
 {
@@ -6386,11 +6389,67 @@ void DarkEdif::LOGFInternal(PrintFHintInside const TCHAR * x, ...)
 
 
 // ============================================================================
-//
-// DEBUGGER (Interaction with Fusion debugger)
-//
+// DEBUGGER (Native)
 // ============================================================================
 
+bool DarkEdif::IsDebuggerAttached()
+{
+#ifdef _WIN32
+	// Call WinAPI's detection func
+	return ::IsDebuggerPresent();
+#else // non-Windows
+#ifdef __ANDROID__
+	std::ifstream status("/proc/self/status");
+	if (!status.is_open())
+		LOGE(_T("Couldn't detect debugger: self status open had error %d\n"), errno);
+	else
+	{
+		std::string line;
+		constexpr std::string_view tracerPidStr = "TracerPid:"sv;
+		while (std::getline(status, line))
+			if (DarkEdif::SVComparePrefix(line, tracerPidStr))
+				return std::stoi(line.substr(10)) != 0;
+		// if no match, fall thru
+	}
+#else // APPLE
+	// Apple is heavily sandboxed. This solution seems like it should work on non-jailbroken iOS.
+	// Other possible alternatives for Apple: getppid() != 1 or isatty(STDERR_FILENO)
+	int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid() };
+	struct kinfo_proc info;
+	info.kp_proc.p_flag = 0;
+	size_t size = sizeof(info);
+
+	if (!sysctl(mib, 4, &info, &size, nullptr, 0))
+		return (info.kp_proc.p_flag & P_TRACED) != 0;
+	LOGE(_T("Couldn't detect debugger: sysctl() returned error %d\n"), errno);
+#endif // Apple
+
+#ifdef _DEBUG
+	// If debug, if debugger detect fails, we'll assume a debugger is present.
+	// If not, the app will make an uncaught signal and OS will normally coredump (in Windows terms, minidump).
+	return true;
+#else // not Debug
+	// In release, if debugger detect fails, we'll assume a debugger is not present.
+	return false;
+#endif // Release
+#endif // non-Windows
+}
+
+void DarkEdif::BreakIfDebuggerAttached()
+{
+	if (!IsDebuggerAttached())
+		return;
+#ifdef _WIN32
+	__debugbreak(); // DebugBreak() requires system symbols
+#else
+	raise(SIGTRAP); // SIGTRAP will terminate process if no handler
+#endif
+}
+
+
+// ============================================================================
+// DEBUGGER (Interaction with Fusion debugger)
+// ============================================================================
 #if USE_DARKEDIF_FUSION_DEBUGGER
 
 namespace DarkEdif
@@ -6660,8 +6719,6 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 #endif // EditorBuild
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
-
-
 
 // Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
 bool DarkEdif::RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive /*= true */)
@@ -7921,6 +7978,7 @@ int DarkEdif::MsgBox::Custom(const int flags, const TCHAR * titlePrefix, PrintFH
 	va_end(v);
 	return ret;
 }
+
 extern int aceIndex;
 void DarkEdif::Log(int logLevel, PrintFHintInside const TCHAR * msgFormat, ...)
 {
@@ -7945,7 +8003,7 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 	}
 
 #ifdef _WIN32
-	static TCHAR outputBuff[8192];
+	TCHAR outputBuff[2024];
 	int didTrunc = _vsntprintf_s(outputBuff, std::size(outputBuff), _TRUNCATE, msgFormat, v);
 
 	// Truncated the log; trim it
@@ -7968,10 +8026,16 @@ void DarkEdif::LogV(int logLevel, PrintFHintInside const TCHAR* msgFormat, va_li
 			OutputDebugString(outputBuff);
 
 #elif defined(__ANDROID__)
-	std::string msgFormatT = std::string(aceIndex, '>');
+	std::string msgFormatT(aceIndex, '>');
 	msgFormatT += ' ';
 	msgFormatT += msgFormat;
-	__android_log_vprint(logLevel, PROJECT_TARGET_NAME_UNDERSCORES, msgFormatT.c_str(), v);
+	// if LOGF(), don't kill by logging with fatal priority
+	__android_log_vprint(std::min<int>(logLevel, ANDROID_LOG_ERROR),
+		PROJECT_TARGET_NAME_UNDERSCORES, msgFormatT.c_str(), v);
+
+	// LOGF() calls here; but if this was LogV(FATAL,...) direct call instead of LOGF(), then abort ourselves
+	if (logLevel == ANDROID_LOG_FATAL && !runningLOGF)
+		AndroidFatalExit();
 #else // iOS
 	static const char* logLevels[] = {
 		"", "", "verbose", "debug", "info", "warn", "error", "fatal"

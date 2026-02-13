@@ -11,6 +11,14 @@
 #include <tchar.h>
 #include "Windows\WindowsDefines.hpp"
 
+#ifndef PrintFHintInside
+#define PrintFHintInside _In_z_ _Printf_format_string_
+#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* hm */
+#endif
+namespace DarkEdif::MsgBox {
+	void Error(const TCHAR* titlePrefix, PrintFHintInside const TCHAR* msgFormat, ...) PrintFHintAfter(2, 3);
+}
+
 ///////////////////////////////////////////////////////
 // Property data - used in property definition table.
 ///////////////////////////////////////////////////////
@@ -95,15 +103,6 @@ public:
 	// Data
 	int Value;
 };
-
-#ifndef _WIN32
-extern void LOGF(const TCHAR * x, ...);
-#else
-#define PrintFHintInside _In_z_ _Printf_format_string_
-namespace DarkEdif::MsgBox {
-	void Error(const TCHAR * titlePrefix, PrintFHintInside const TCHAR * msgFormat, ...);
-}
-#endif
 
 // Unsigned integer
 class Prop_UInt : public Prop
@@ -370,8 +369,6 @@ public:
 	void * Address = nullptr;
 };
 
-
-
 // String (ANSI)
 class Prop_AStr : public Prop
 {
@@ -381,28 +378,6 @@ public:
 	Prop_AStr(const char * Str = nullptr) {
 		String = _strdup(Str ? Str : "");
 	}
-#ifndef _WIN32
-	Prop_AStr(const wchar_t * Str)
-	{
-		if (Str == NULL)
-			String = _strdup("");
-		else
-		{
-			std::size_t length = wcslen(Str);
-			String = (char *)calloc(length+1, sizeof(char));
-
-			if (!String)
-				return; // Stops bad-access crashes
-
-			// TODO : change that if we use something else than CP_ACP (ACSII codepage);
-			// Use mvGetAppCodePage?
-
-			WideCharToMultiByte(CP_ACP, 0, Str, length, String, length, NULL, NULL);
-
-			String[length] = 0;	// Force null ending
-		}
-	}
-#endif
 	Prop_AStr(std::size_t size)
 	{
 		if (size > 0)
@@ -449,31 +424,22 @@ public:
 	char * String = nullptr;
 };
 
-// String (UNICODE)
+// String (UNICODE, UTF-16)
 class Prop_WStr : public Prop
 {
 protected:
 	virtual ~Prop_WStr() {}
 public:
-	Prop_WStr(const wchar_t * Str = NULL)
-	{
+	Prop_WStr(const wchar_t * Str = NULL) {
 		String = _wcsdup(Str ? Str : L"");
 	}
-	Prop_WStr(char * Str)
-		: Prop_WStr((const char *)Str)
-	{
-
-	}
-	Prop_WStr(const char * utf8String)
+	Prop_WStr(char * Str) : Prop_WStr((const char *)Str) { }
+	Prop_WStr(const char* utf8String)
 	{
 		if (utf8String == NULL || utf8String[0] == '\0')
 			String = _wcsdup(L"");
 		else
 		{
-#ifndef _WIN32
-			// Shouldn't need implementing
-			LOGF("Unimplemented Prop_WStr function.\n");
-#else
 			// Convert string to Unicode
 			size_t length = MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, 0, 0);
 			if (length == 0)
@@ -483,7 +449,6 @@ public:
 				if (!String || MultiByteToWideChar(CP_UTF8, 0, utf8String, -1, String, length) == 0)
 					DarkEdif::MsgBox::Error(_T("Property error"), _T("Conversion of JSON default UTF-8 text to UTF-16 failed."));
 			}
-#endif
 		}
 	}
 	Prop_WStr(std::size_t Size)
@@ -523,7 +488,6 @@ public:
 		return !wcscpy_s((wchar_t *)((char *)addr + sizeof(Prop_WStr) + sizeof(bool)), wcslen(String) + 1, (*(Prop_WStr *)addr).String);
 	}
 
-
 	// Data
 	unsigned int pad = 0;	// This is a required waste of space or MMF will die trying to read it.
 	wchar_t * String = nullptr;
@@ -538,8 +502,6 @@ public:
 #else
 	#define Prop_Str	Prop_AStr
 #endif
-
-#ifdef _WIN32
 
 //////////////////
 // Custom property
@@ -614,8 +576,6 @@ typedef struct _NMPROPWND
 // Internal symbol used by MMF, not important
 #define IDC_CUSTOMITEM	1500
 
-#endif
-
 ////////////////////////////////////////////////
 //
 // Property types
@@ -624,7 +584,7 @@ typedef struct _NMPROPWND
 /**
  *  List of property types.
  */
-/*
+/* See Edif::Properties::IDs instead
 enum {
 	PROPTYPE_STATIC = 1,		//! Simple static text
 	PROPTYPE_FOLDER,			//! Folder
