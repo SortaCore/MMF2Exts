@@ -32,6 +32,8 @@ class Prop;
 #else
 	#include "../Mac/MMFMacMasterHeader.hpp"
 #endif
+#else
+	#error Unexpected platform
 #endif
 
 #include "ObjectSelection.hpp"
