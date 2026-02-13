@@ -38,8 +38,6 @@
 #include <stddef.h>
 // Include std::string_view
 #include <string_view>
-// vardiac args
-#include <stdarg.h>
 
 // Activate the ""s and ""sv string literals (C++17)
 using namespace std::string_literals;
@@ -69,20 +67,6 @@ using namespace std::string_view_literals;
 		return en; \
 	}
 
-// allows the compiler to check printf format matches parameters
-#ifdef _MSC_VER
-	#define PrintFHintInside _In_z_ _Printf_format_string_
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#elif defined(__clang__) && !defined (__INTELLISENSE__)
-	#define PrintFHintInside /* no op */
-	// Where formatParamIndex is 1-based index of the format param, and dots is the 1-based index of ...
-	// Note class member functions should include the "this" pointer in the indexing.
-	// You can use 0 for dotsParamIndex for vprintf-like format instead.
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
-#else
-	#define PrintFHintInside /* no op */
-	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
-#endif
 
 // ==================================================================================================
 // Preprocessor expansion macros
@@ -99,6 +83,50 @@ using namespace std::string_view_literals;
 #define DE_CONCAT(a,b) DE_1CONCAT(a,b)
 // Expands the passed param and makes it into a string literal; DE_STRIFY(__LINE__) becomes "101"
 #define DE_STRIFY(X) DE_1STRIFY(X)
+
+// ==================================================================================================
+// printf-like helpers for code-analysis and pointer output
+// ==================================================================================================
+
+// Include support for C style vardiac args, such as printf
+#include <stdarg.h>
+
+// Allows the compiler to check printf format matches parameters. See DarkEdif help file.
+#ifdef _MSC_VER
+	// Defined inside a C printf-style function declaration + definition to allow code analysers to check argument types.
+	#define PrintFHintInside _In_z_ _Printf_format_string_
+	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
+	// @param formatParamIndex 1-based index of format string parameter
+	// @param dotsParamIndex 1-based index of first variadic parameter; if va_list style, put 0
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex)
+#elif defined(__clang__) && !defined (__INTELLISENSE__)
+	#define PrintFHintInside /* no op */
+	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) __printflike(formatParamIndex, dotsParamIndex)
+#else
+	// Defined inside a C printf-style function declaration + definition to allow code analysers to check argument types.
+	#define PrintFHintInside /* no op */
+	// Defined after a C printf-style function declaration to allow code analysers to check the %x are correct type
+	// @param formatParamIndex 1-based index of format param in the printf-like func declaration
+	// @param dotsParamIndex 1-based index of first variadic arg in the printf-like func declaration; if va_list style, 0
+	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
+#endif
+
+#if !defined(UINTPTR_MAX) || !defined(UINT32_MAX) || (UINTPTR_MAX != UINT32_MAX && UINTPTR_MAX != UINT64_MAX)
+#error Missing pointers or unrecognised pointer width
+#elif UINTPTR_MAX == UINT32_MAX
+// Width of a pointer in bytes. For use as a part of 0x output in printf-style functions,
+// e.g. printf("0x" DE_PTRLEN PRIxPTR, ptr);
+#define DE_PTRHEXLEN "8"
+#elif UINTPTR_MAX == UINT64_MAX
+// Width of a pointer in bytes. For use as a part of 0x output in printf-style functions,
+// e.g. printf("0x" DE_PTRLEN PRIxPTR, ptr);
+#define DE_PTRHEXLEN "16"
+#endif
+// printf format string for zero-padded pointer in lowercase hex, 0x prefix, zero-padded to full width
+#define DE_PRIxPTR DE_PTRHEXLEN PRIxPTR
+// printf format string for zero-padded pointer in uppercase hex, 0x prefix, zero-padded to full width
+#define DE_0xPRIXPTR "0x%0" DE_PTRHEXLEN PRIXPTR
 
 // ==================================================================================================
 // Editor and runtime flags
