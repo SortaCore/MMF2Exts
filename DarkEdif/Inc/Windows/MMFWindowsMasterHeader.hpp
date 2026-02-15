@@ -49,6 +49,7 @@ namespace DarkEdif {
 	class ObjectSelection;
 	struct FontInfoMultiPlat;
 	class Surface;
+	void LateInit(Extension* ext);
 }
 namespace Edif {
 	class Runtime;
@@ -1892,6 +1893,7 @@ DarkEdifInternalAccessProtected:
 	friend HeaderObject;
 	friend rCom;
 	friend DarkEdif::Surface;
+	friend void DarkEdif::LateInit(Extension*);
 	void *				rhIdEditWin,		// npWin or Win *, but evaluates to void *
 		 *				rhIdMainWin;
 	void *				rhIdAppli;			// npAppli or Appli *, but evaluates to void *

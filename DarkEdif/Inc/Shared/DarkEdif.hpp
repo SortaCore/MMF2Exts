@@ -260,12 +260,14 @@ namespace DarkEdif {
 		FusionDebugger(FusionDebugger &&) = delete;
 	};
 
+	// True if Fusion 2.5+. False if Fusion 2.5 or 2.0.
+	extern bool IsFusion25Plus;
 #ifdef _WIN32
 	extern bool IsFusion25;
 	extern bool IsHWAFloatAngles;
 	extern bool IsRunningUnderWine;
 #else
-	// True if Fusion 2.5. False if Fusion 2.0. Always true for non-Windows builds.
+	// True if Fusion 2.5 or 2.5+. False if Fusion 2.0. Always true for non-Windows builds.
 	constexpr bool IsFusion25 = true;
 	// True if angle variables are degrees as floats. Always true for non-Windows builds.
 	constexpr bool IsHWAFloatAngles = true;
@@ -371,6 +373,10 @@ namespace DarkEdif {
 	};
 	// Returns a path relative to this MFX, with an appended slash.
 	std::tstring_view GetMFXRelativeFolder(GetFusionFolderType type);
+
+	// Used for things that are only initializable once a Fusion frame has fully loaded;
+	// for example, access to the app's image bank.
+	void LateInit(Extension* ext);
 
 	// Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
 	bool RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive = true);

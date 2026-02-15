@@ -1086,3 +1086,74 @@ extern "C" FusionAPIImport BOOL	WINAPI BuildRemapTable	(LPBYTE, LOGPALETTE *, LO
 
 // Used by EditorDisplay of most Fusion exts
 FusionAPIImport cSurface* FusionAPI WinGetSurface(int idWin, int surfID = 0);
+
+// Required struct name due to Cnpdll.h GetImageInfos() func
+// Corresponds to image bank entry?
+struct Img final
+{
+	// Img struct flags; bitmask
+	enum class Flags : BYTE {
+		// For bit ops
+		None	= 0,
+		// Lossless image compression using Run-Length Encoding
+		// Replaces repeating bytes with a single value + repeat count
+		RLE		= 0b1,
+		// Lossless image compression using Run-Length Encoding, word-aligned
+		// Replaces repeating words (16-bit values) with a single value + repeat count
+		RLEW	= 0b10,
+		// Lossless image compression using Run-Length Encoding, transposed
+		// Image is rotated 90 and repeating bytes? words? are replaced with a single value + repeat count
+		RLET	= 0b100,
+		// CF2.5+ only: Lossless image compression using Lempel-Ziv Extended
+		// CF2.5+ always compresses all images
+		LZX		= 0b1000,
+		// Image has alpha channel; if not set, image uses transparent color
+		Alpha	= 0b10000,
+		// ?
+		ACE		= 0b100000,
+		// ?
+		Mac		= 0b1000000,
+		// CF2.5+ only: image is stored as RGBA, not RGBX or RGB + A
+		// See ImageBankFormat::Normal_32bpp_8bpc
+		RGBA	= 0b10000000
+	};
+
+	// Checksum algorithm; not sure what is used or what it's run on
+	DWORD		imgCheckSum;
+	// Probably ref count
+	DWORD		imgCount;
+	// Byte count, including both color and alpha, not including this header
+	DWORD		imgSize;
+	// Why is this signed?
+	short		imgWidth;
+	// Why is this signed?
+	short		imgHeight;
+	// Format, may affect flags
+	BYTE		imgFormat;
+	// Flags, including alpha and compression
+	Flags		imgFlags;
+	WORD		imgNotUsed;
+	// XY coord of this image hot spot (display offset relative to object's hoX/hoY)
+	short		imgXSpot, imgYSpot;
+	// X coord of this image hot spot (display offset relative to object's hoX/hoY)
+	short		imgXAction;
+	short		imgYAction;
+	// Image transparent color (ignored if imgFlags say it's alpha)
+	COLORREF	imgTrspColor;
+};
+enum_class_is_a_bitmask(Img::Flags);
+
+extern "C" {
+	/** Returns number of elements in the Fusion bank. Returns 0+.
+	 * @param appli mv->mvAppli or rhPtr->rhAppli.
+	 * @param bkNum Bank number: see BK_XX enum.
+	 * @return Number of elements in bank, 0+. */
+	FusionAPIImport int FusionAPI Bank_GetEltCount(void * appli, UINT bkNum);
+
+	/** Returns the image ID's info to the given struct.
+	 * @param appli mv->mvAppli or rhPtr->rhAppli.
+	 * @param imgID Image ID number (1-65535).
+	 * @param imgPtr Output image info struct.
+	 * @return 1 if successful. 0 if failed. */
+	FusionAPIImport int FusionAPI GetImageInfos(void* appli, DWORD imgID, Img* imgPtr);
+}

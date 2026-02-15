@@ -251,7 +251,11 @@ void Edif::Init(mv * mV, EDITDATA * edPtr)
 		if (DarkEdif::RunMode == DarkEdif::MFXRunMode::Editor)
 			mvInvalidateObject(mV, edPtr);
 	#endif
-#endif
+
+	// Note: mv does not have all its loaded items yet. Noteably, mvIdAppli may be set, but be unusable.
+	// See DarkEdif::LateInit() instead if you want to make sure Fusion app data and a frame is loaded.
+	// LateInit happens just prior to first instance of this ext created at runtime.
+#endif // _WIN32
 }
 
 void Edif::Free(mv * mV)
@@ -314,15 +318,15 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 #endif
 		{
 			DarkEdif::MsgBox::Error(_T("Unexpected mV"), _T("The extension is incorrectly initialized. Pass a valid mV struct."));
-			std::abort(); // ZipToJSON ignores return 0
-			return 0;
+			std::abort(); // ZipToJSON ignores return
+			return -1;
 		}
 	}
 	else // mv functions are available
 	{
-		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
 		DarkEdif::Internal_WindowHandle = mV->HMainWin;
-
+		DarkEdif::IsFusion25 = ((mV->GetVersion() & MMFVERSION_MASK) == CFVERSION_25);
+		
 		// 2.0 uses floats for angles if it's a Direct3D display, Software or DirectDraw uses int
 		// Fusion 2.5 always uses floats, even in Software, and doesn't use DirectDraw at all
 		DarkEdif::IsHWAFloatAngles = DarkEdif::IsFusion25 || mvIsHWAVersion(mV) != FALSE;
@@ -508,6 +512,17 @@ int Edif::Init(mv * mV, bool fusionStartupScreen)
 				break;
 			}
 		}
+
+		// Detect CF2.5+ DLC, editor only, by looking for CF2.5+ only DLL cfex.dll.
+		// Runtime detection is in the other Edif::Init(),
+		// as it relies on reading image bank and mvAppli isn't available on app start.
+		if (DarkEdif::IsFusion25 && DarkEdif::RunMode != DarkEdif::MFXRunMode::BuiltEXE)
+		{
+			std::tstring dllPath(DarkEdif::GetMFXRelativeFolder(DarkEdif::GetFusionFolderType::FusionRoot));
+			dllPath += _T("cfex.dll"sv);
+			DarkEdif::IsFusion25Plus = DarkEdif::FileExists(dllPath);
+		}
+
 #else // Not editor build, missing things that will let Fusion use it in editor.
 		DarkEdif::RunMode = DarkEdif::MFXRunMode::BuiltEXE;
 #endif

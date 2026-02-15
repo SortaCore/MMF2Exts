@@ -5593,7 +5593,7 @@ std::uint16_t DarkEdif::DLL::Internal_GetEDITDATASizeFromJSON()
 
 // Static definition; set during SDKClass::SDKClass()
 #ifdef _WIN32
-// True if Fusion 2.5. False if Fusion 2.0. Set during SDK ctor.
+// True if Fusion 2.5 or Fusion 2.5+. False if Fusion 2.0. Set during SDK ctor.
 bool DarkEdif::IsFusion25;
 // True if angle variables are degrees as floats, false if they are ints.
 // Ints are used in MMF2 non-Direct3D display modes.
@@ -5605,6 +5605,8 @@ bool DarkEdif::IsRunningUnderWine;
 // For what CPU is running as (e.g. Windows x64 running x86), then use preprocessor defines,
 // like #ifdef __arm__, __aarch64__, __x86_64__.
 DarkEdif::CPUArchType DarkEdif::CPUArch;
+// True if Fusion 2.5+. False if Fusion 2.5 or Fusion 2.0. Set during SDK ctor in editor, and just before Ext ctor in runtime.
+bool DarkEdif::IsFusion25Plus;
 
 // =====
 // Get event number (CF2.5+ feature)
@@ -6807,7 +6809,7 @@ namespace DarkEdif
 			CF25PlusEditBoxHandleSearched = true;
 
 			// Not CF2.5+, or not Run App
-			if (!IsFusion25 && RunMode != MFXRunMode::RunApplication)
+			if (!IsFusion25Plus && RunMode != MFXRunMode::RunApplication)
 				return;
 
 			// If CF25+, look for CF2.5+ debugger window's text box, which has ID 1012
@@ -6879,6 +6881,75 @@ void FusionAPI EditDebugItem(RUNDATA *rdPtr, int id)
 #endif // EditorBuild
 
 #endif // USE_DARKEDIF_FUSION_DEBUGGER
+
+static bool didLateInit = false;
+void DarkEdif::LateInit(Extension* ext)
+{
+	// LateInit runs in Edif Runtime ctor, which means a bit earlier than Ext ctor.
+	// Might be worth moving it to StartApp instead; Initialize and LoadObject is too early for IdAppli.
+	// But StartApp is currently only implemented by exts, so we'd have to make some sort of DE handler
+	// that can also call the ext one, which is kinda ugly.
+
+	// Singleton; any thread can run LateInit, but the only one that should be first and actually init, is main thread.
+	if (didLateInit)
+		return;
+	didLateInit = true;
+
+	DieIfCallerIsNotMainThread("LateInit");
+
+#ifdef _WIN32
+	// Tests JIC
+	assert(Edif::SDK->mV == ext->rhPtr->rh4.rh4Mv);
+	assert(Internal_WindowHandle == ext->rhPtr->rhHMainWin &&
+		Internal_WindowHandle == ext->rhPtr->rh4.rh4Mv->HMainWin);
+
+	// Runtime detection of CF2.5+ DLC.
+	// CF2.5+ uses same RunApp, mmfs2.dll, edrt.exe as CF2.5.
+	// Both have 48 sample channels, even if user can only access 32.
+	// But CF2.5+ always compresses all its images using LZX.
+	if (IsFusion25 && RunMode == MFXRunMode::BuiltEXE)
+	{
+		assert(ext && ext->rhPtr && ext->rhPtr->rhIdAppli);
+
+		Img firstImg;
+		if (GetImageInfos(ext->rhPtr->rhIdAppli, 1, &firstImg) == 0)
+		{
+			constexpr std::uint32_t BK_IMG = 0; // Bank ID for Images
+
+			// No images at all in this app (e.g. blank app); can't check for LZX
+			if (Bank_GetEltCount(ext->rhPtr->rhIdAppli, BK_IMG) == 0)
+			{
+				// Fall back on a quick check for Direct3D11
+				constexpr int GAOF_D3D11 = GAOF_D3D9 | GAOF_D3D8;
+				IsFusion25Plus = ext->Runtime.GetAppDisplayMode() == SurfaceDriver::Direct3D11;
+
+				// If not D3D11 and no images, give up and assume not CF2.5+.
+				// It's a tiny 0-image app anyway. Log so ext dev knows if they are reliant on CF2.5+.
+				if (!IsFusion25Plus)
+					LOGW(_T("App has no images; can't check for CF2.5+ DLC reliably. Add an Active. Assuming not CF2.5+.\n"));
+				return;
+			}
+
+			// Otherwise, some other error happened and Fusion refused to give us the image. Hard fail.
+			LOGF(_T("Failed to read image bank.\n"));
+		}
+
+		// If LZX compression was used, then it's CF2.5+; if not, it's not
+		IsFusion25Plus = (firstImg.imgFlags & Img::Flags::LZX) == Img::Flags::LZX;
+		MsgBox::Info(_T("!!"), _T("Is CF2.5+: %s"), IsFusion25Plus ? _T("YES") : _T("NO"));
+		BreakIfDebuggerAttached();
+	}
+#else
+	// I have not seen any non-Windows runtime code that indicates it checks for CF2.5+ at all.
+	// In Android, the chunk 0x224F is not read, the sample channel count is hardcoded to 48,
+	// premultiplied flag is read without any pre-cursor check, CImageInfo doesn't store format,
+	// and CImage doesn't seem to store the flags or even read them.
+	// If that ever changes, we could read ext->rhPtr->rhApp->imageBank as we do in Windows.
+	//
+	// For iOS/Mac I have also had a look; same story, no reading of CF2.5+ chunk, 48 is hardcoded.
+	DarkEdif::IsFusion25Plus = true;
+#endif
+}
 
 // Removes the ending text if it exists, and returns true. If it doesn't exist, changes nothing and returns false.
 bool DarkEdif::RemoveSuffixIfExists(std::tstring_view &tstr, const std::tstring_view suffix, bool caseInsensitive /*= true */)
