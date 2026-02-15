@@ -200,6 +200,7 @@ Edif::Runtime::Runtime(Extension * ext) : hoPtr(ext->rdPtr->get_rHo()), ext(ext)
 	ObjectSelection(hoPtr->get_AdRunHeader())
 {
 	SDKPointer = Edif::SDK;
+	DarkEdif::LateInit(ext);
 }
 
 Edif::Runtime::~Runtime()

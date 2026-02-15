@@ -16,7 +16,7 @@ namespace DarkEdif
 // The idea is we avoid the ext dev using cSurface directly.
 #define SURFACE_MULTI_PLAT_INCLUDING_WINSURF
 #include "Windows/WindowsSurface.hpp"
-#endif
+#endif // _WIN32
 
 #include "DarkEdif.hpp"
 #undef SURFACE_MULTI_PLAT_INCLUDING_WINSURF
