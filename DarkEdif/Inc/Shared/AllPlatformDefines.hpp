@@ -114,6 +114,9 @@ using namespace std::string_view_literals;
 	#define PrintFHintAfter(formatParamIndex,dotsParamIndex) /* no op */
 #endif
 
+// Define the PRI PTR macros
+#include <inttypes.h>
+
 #if !defined(UINTPTR_MAX) || !defined(UINT32_MAX) || (UINTPTR_MAX != UINT32_MAX && UINTPTR_MAX != UINT64_MAX)
 #error Missing pointers or unrecognised pointer width
 #elif UINTPTR_MAX == UINT32_MAX

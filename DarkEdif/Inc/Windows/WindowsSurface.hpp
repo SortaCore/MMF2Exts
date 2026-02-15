@@ -499,7 +499,7 @@ static_assert(sizeof(ULONG) == 4, "32-bit long expected");
 FusionAPIImport ULONG FusionAPI GetDIBHeaderSize(int depth);
 FusionAPIImport ULONG FusionAPI GetDIBWidthBytes(int width, int depth);
 FusionAPIImport ULONG FusionAPI GetDIBSize(int width, int height, int depth);
-FusionAPIImport std::byte * FusionAPI GetDIBBitmap(LPBITMAPINFO pBmi);
+FusionAPIImport std::uint8_t * FusionAPI GetDIBBitmap(LPBITMAPINFO pBmi);
 
 // cSurface class
 class FusionAPIImport cSurface
@@ -626,6 +626,7 @@ public:
 	// Sets this cSurface as the current one in a double-buffer... in what context? How are surfaces paired, and how do we know what the pairs target?
 	void SetCurrentDevice();
 	// TODO: YQ: Rendering to GetRenderTargetSurface()? Where and why do we need to call BeginRendering()?
+	// Implemented in Direct3D 9 and 11 on CF2.5+. Not available in Direct3D 8.
 	int  BeginRendering(BOOL clear, RGBAREF rgba);
 	// TODO: YQ: Rendering to GetRenderTargetSurface()?
 	int  EndRendering();

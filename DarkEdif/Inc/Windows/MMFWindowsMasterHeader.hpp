@@ -1357,7 +1357,7 @@ enum
 };
 #define DB_EDITABLE		0x80
 
-// Communication buffer size
+// Communication buffer size; used for Fusion debugger text item length
 #define DB_BUFFERSIZE			256
 
 #define DB_MAXGLOBALVALUES		1000	// Maximum number of global values displayed in the debugger
@@ -3438,34 +3438,42 @@ DarkEdifInternalAccessProtected:
 #define	GAOF_D3D9					0x4000
 #define	GAOF_D3D8					0x8000
 
-// Optional header
-struct AppHeader2 {
-	NO_DEFAULT_CTORS_OR_DTORS(AppHeader2);
-DarkEdifInternalAccessProtected:
-	unsigned int	Options,
-					BuildType,
-					BuildFlags;
-	unsigned short	ScreenRatioTolerance,
-					ScreenAngle;			// 0 (no rotation/portrait), 1 (90 clockwise/landscape left), 2 (90 anticlockwise/landscape right), 3 (automatic portrait), 4 (automatic landscape), 5 (fully automatic)
-	unsigned int	Unused2;
-};
-
-enum class AH2OPT {
+enum class AH2OPT : std::uint32_t {
 	KEEPSCREENRATIO = 0x1,
-	FRAMETRANSITION = 0x2,		// (HWA only) a frame has a transition
-	RESAMPLESTRETCH = 0x4,		// (HWA only) "resample when resizing" (works with "resize to fill window" option)
-	GLOBALREFRESH = 0x8,		// (Mobile) force global refresh
-	MULTITASK = 0x10,			// (iPhone) Multitask
-	RTL = 0x20,					// (Unicode) Right-to-left reading
-	STATUSLINE = 0x40,			// (iPhone/Android) Display status line
-	RTLLAYOUT = 0x80,			// (Unicode) Right-to-left layout
-	ENABLEIAD = 0x100,			// (iPhone) Enable iAd
-	IADBOTTOM = 0x200,			// (iPhone) Display ad at bottom
-	AUTOEND = 0x400,			// (Android) Exits app when switched away
-	DISABLEBACKBUTTON = 0x800,	// (Android) Disable Back button behavior (ending app when no ext intercepts the Back key)
-	ANTIALIASED = 0x1000,		// (iPhone) Smooth resizing on bigger screens
-	CRASHREPORTING = 0x2000,	// (Android) Enable online crash reporting
+	FRAMETRANSITION = 0x2,				// (HWA only) a frame has a transition
+	RESAMPLESTRETCH = 0x4,				// (HWA only) "resample when resizing" (works with "resize to fill window" option)
+	GLOBALREFRESH = 0x8,				// (Mobile) force global refresh
+	MULTITASK = 0x10,					// (iPhone) Multitask
+	RTL = 0x20,							// (Unicode) Right-to-left reading
+	STATUSLINE = 0x40,					// (iPhone/Android) Display status line
+	RTLLAYOUT = 0x80,					// (Unicode) Right-to-left layout
+	ENABLEIAD = 0x100,					// (iPhone) Enable iAd
+	IADBOTTOM = 0x200,					// (iPhone) Display ad at bottom
+	AUTOEND = 0x400,					// (Android) Exits app when switched away
+	DISABLEBACKBUTTON = 0x800,			// (Android) Disable Back button behavior (ending app when no ext intercepts the Back key)
+	ANTIALIASED = 0x1000,				// (iPhone) Smooth resizing on bigger screens
+	CRASHREPORTING = 0x2000,			// (Android) Enable online crash reporting
+	REQUIREGPU = 0x4000,				// (Android) Application requires a GPU
+	KEEPRESOURCESBETWEENFRAMES = 0x8000,// (HTML5) Keep resources between frames
+	WEBGL = 0x10000,					// (HTML5) WebGL
+	OPENGL1 = 0x10000,					// (Android) Open GL 1.1
+	OPENGL30 = 0x20000,					// (Android) Open GL 3.0
+	OPENGL31 = 0x40000,					// (Android) Open GL 3.1
+	SYSTEMFONT = 0x80000,				// (Android) Use system font in text objects
+	RUNEVENIFNOTFOCUS = 0x100000,		// (HTML5) Run even if not focus
+	KEYBOVERAPPWINDOW = 0x200000,		// (Android) Display keyboard over app window
+	OUYA = 0x400000,					// (Android) OUYA application
+	PRELOADERQUIT = 0x800000,			// (HTML5) Allow HTML5 preloader to quit when data is loaded
+	LOADALLDATAATSTART = 0x1000000,		// (HTML5) Load all HTML5 resources at start
+	LOADSOUNDSONTOUCH = 0x2000000,		// (HTML5) On iOS wait for a touch to start the sounds
+	DESTROYIFNOINACTIVATE = 0x4000000,	// (All) Allow "Destroy if too far from frame" when "Inactivate if too far from window" is set to No
+	DISABLEIME = 0x8000000,				// (Windows) Disable IME
+	REDUCECPUUSAGE = 0x10000000,		// (Windows) Reduce CPU usage on idle
+	MACAUTOFILEREDIRECT = 0x20000000,	// (Mac) Automatic file redirection
+	PREMULTIPLIEDALPHA = 0x40000000,	// Premultiplied alpha
+	OPTIMPLAYSAMPLE = 0x80000000,		// (Windows) Optimize Play Sample
 };
+enum_class_is_a_bitmask(AH2OPT);
 
 enum class SCREENORIENTATION {
 	PORTRAIT,
@@ -3474,6 +3482,18 @@ enum class SCREENORIENTATION {
 	AUTO,
 	LANDSCAPE_AUTO,
 	PORTRAIT_AUTO,
+};
+
+// Optional header
+struct AppHeader2 {
+	NO_DEFAULT_CTORS_OR_DTORS(AppHeader2);
+DarkEdifInternalAccessProtected:
+	AH2OPT			Options;
+	std::uint32_t	BuildType,
+					BuildFlags;
+	unsigned short	ScreenRatioTolerance,
+					ScreenAngle;			// 0 (no rotation/portrait), 1 (90 clockwise/landscape left), 2 (90 anticlockwise/landscape right), 3 (automatic portrait), 4 (automatic landscape), 5 (fully automatic)
+	unsigned int	Unused2;
 };
 
 #ifndef	  _H2INC
