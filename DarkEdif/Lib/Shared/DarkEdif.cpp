@@ -6478,6 +6478,7 @@ namespace DarkEdif
 		const char *, const std::tstring_view &) { /* no op in runtime */ }
 	void FusionDebugger::UpdateItemInDebugger(
 		const char *, const int) { /* no op in runtime */ }
+	void FusionDebugger::CF25PlusLog(PrintFHintInside const TCHAR * const, ...) { /* no op in runtime */ }
 	FusionDebugger::FusionDebugger(Extension *const) { /* runtime debugger not used */ }
 
 #else // It's editor build
@@ -6706,6 +6707,72 @@ namespace DarkEdif
 		}
 	}
 
+	void FusionDebugger::CF25PlusLog(PrintFHintInside const TCHAR* text, ...)
+	{
+		DieIfCallerIsNotMainThread("FusionDebugger");
+
+		// Null input not allowed
+		if (!text)
+			LOGF(_T("Null pointer passed"));
+
+		// No text to write, or not CF2.5+, or CF2.5+ debugger isn't open
+		if (!*text || !CF25PlusEditBoxHandle)
+			return;
+
+		int numChars = 0;
+		std::tstring buf(1024, _T('\0'));
+		va_list va;
+		va_start(va, text);
+
+		// This is a lazy catch to prevent a crash
+		try {
+			numChars = _vstprintf_s(buf.data(), buf.size(), text, va);
+		}
+		catch (...) {}
+		va_end(va);
+
+		// Error occurred in the format: die with message box and log
+		if (numChars < 0)
+			LOGF(_T("Invalid data passed to %s, format \"%s\"."), _T("") __FUNCTION__, text);
+
+		// If numChars is 0, then could be a %s with blank data. Anyway, nothing to append.
+		if (numChars == 0)
+			return;
+		buf.resize(numChars);
+
+		// Newlines in text must be CRLF
+		for (std::size_t i = buf.find_first_of(_T("\r\n"sv)); i != std::tstring::npos; i = buf.find_first_of(_T("\r\n"sv), i + 1))
+		{
+			// LF by itself; insert CR
+			if (buf[i] == _T('\n'))
+				buf.insert(i++, 1, _T('\r'));
+			// CR by itself, insert LF
+			else if (buf[i] == _T('\r') && (++i == buf.size() || buf[i] != _T('\n')))
+				buf.insert(i, 1, _T('\n'));
+		}
+
+		// Always end on a newline
+		if (!EndsWith(buf, _T("\r\n"sv), false))
+			buf += _T("\r\n"sv);
+
+		// To not make this ANSI ext clobber the debugger's text with replacement characters,
+		// we always talk to CF2.5+ with Wide characters
+		
+		// Move caret to end of Fusion debugger text
+		int curTextLen = GetWindowTextLengthW(CF25PlusEditBoxHandle);
+		// On error, default to passing -1, -1, which resets caret
+		if (!curTextLen && GetLastError() == 0)
+			curTextLen = -1;
+		SendMessageW(CF25PlusEditBoxHandle, EM_SETSEL, (WPARAM)curTextLen, (LPARAM)curTextLen);
+
+#ifdef _UNICODE
+		SendMessageW(CF25PlusEditBoxHandle, EM_REPLACESEL, FALSE, (LPARAM)buf.c_str());
+#else
+		const std::wstring wideBuf = TStringToWide(buf);
+		SendMessageW(CF25PlusEditBoxHandle, EM_REPLACESEL, FALSE, (LPARAM)wideBuf.c_str());
+#endif
+	}
+
 	FusionDebugger::FusionDebugger(Extension *const ext) : ext(ext)
 	{
 		DieIfCallerIsNotMainThread("FusionDebugger");
@@ -6715,6 +6782,50 @@ namespace DarkEdif
 		debugItems.reserve(128);
 		debugItemIDs.reserve(129);
 		debugItemIDs.push_back(DB_END);
+
+		// We init here, because FusionDebugger is created with CreateRunObject.
+		// Edif::Init() is too early; the window hasn't been created yet.
+		if (!CF25PlusEditBoxHandleSearched)
+		{
+			// Do not repeat the search; we don't want every ext instance hunting
+			CF25PlusEditBoxHandleSearched = true;
+
+			// Not CF2.5+, or not Run App
+			if (!IsFusion25 && RunMode != MFXRunMode::RunApplication)
+				return;
+
+			// If CF25+, look for CF2.5+ debugger window's text box, which has ID 1012
+			static constexpr int dbEditBoxID = 1012;
+
+			struct findCtx {
+				const DWORD pid = GetCurrentProcessId(); // input
+				HWND logEdit = nullptr; // output
+			} ctx;
+
+			// Spin up window enumeration callback
+			// The debugger window is owned by the main window, but is not a child of it, so there's no direct lookup
+			EnumThreadWindows(GetCurrentThreadId(),
+				static_cast<BOOL(__stdcall*)(HWND, LPARAM)>([](HWND hWnd, LPARAM lp) -> BOOL {
+					findCtx* const ctx = reinterpret_cast<findCtx*>(lp);
+					DWORD pid;
+					GetWindowThreadProcessId(hWnd, &pid);
+					LOGI(_T("Got window ID ") DE_0xPRIXPTR ", pid %i.\n", hWnd, pid);
+					// Is window correct process (Fusion)?
+					if (pid == ctx->pid)
+					{
+						// Is text box found in that window?
+						const HWND edit = GetDlgItem(hWnd, dbEditBoxID);
+						if (edit) {
+							ctx->logEdit = edit;
+							return FALSE; // stop window enum, found edit box of debugger
+						}
+					}
+					return TRUE; // continue window enum
+				}), reinterpret_cast<LPARAM>(&ctx)
+			);
+
+			CF25PlusEditBoxHandle = ctx.logEdit;
+		}
 	}
 #endif // EditorBuild
 }
@@ -7912,6 +8023,9 @@ DWORD WINAPI DarkEdifUpdateThread(void * pIsUniVer)
 
 #endif // USE_DARKEDIF_UPDATE_CHECKER
 
+// Static definition
+HWND DarkEdif::FusionDebugger::CF25PlusEditBoxHandle;
+bool DarkEdif::FusionDebugger::CF25PlusEditBoxHandleSearched;
 
 #endif // EditorBuild
 

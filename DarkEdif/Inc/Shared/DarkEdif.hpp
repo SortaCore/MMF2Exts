@@ -175,6 +175,11 @@ namespace DarkEdif {
 		Extension *const ext;
 		std::vector<DebugItem> debugItems;
 		std::vector<std::uint16_t> debugItemIDs;
+
+		// CF2.5+ text box used by debugger
+		static HWND CF25PlusEditBoxHandle;
+		static bool CF25PlusEditBoxHandleSearched;
+
 		// For internal use, not ext devs
 		void StartEditForItemID(int debugItemID);
 		// For internal use, not ext devs
@@ -231,6 +236,10 @@ namespace DarkEdif {
 		// Updates the debug item with the given name from the Fusion debugger.
 		// If name is not found, no error is made.
 		void UpdateItemInDebugger(const char *userSuppliedName, int newValue);
+
+		// Appends the given text to the CF2.5+ debugger's second pane.
+		// In other Fusion 2.x variants, this func does nothing.
+		void CF25PlusLog(PrintFHintInside const TCHAR* text, ...);
 
 		FusionDebugger(Extension *const ext);
 		//~FusionDebugger() = delete;
