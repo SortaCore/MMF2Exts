@@ -44,10 +44,11 @@ Extension::Extension(const EDITDATA* const edPtr, void* const objCExtPtr, const 
 	// If you're not sure about lambdas, you can remove this debugger stuff without any side effects;
 	// it's just an example of how to use the debugger. You can view it in Fusion itself to see.
 	FusionDebugger.AddItemToDebugger(
-		_T("Initial text"),
+		// Prefix before debugger value, and initial text; if we pass null for initial text, it uses reader func
+		_T("My text is: "sv), exampleDebuggerTextItem.c_str(),
 		// reader function for your debug item
 		[](Extension* const ext, std::tstring& writeTo) {
-			writeTo = _T("My text is: ") + ext->exampleDebuggerTextItem;
+			writeTo = ext->exampleDebuggerTextItem;
 		},
 		// writer function (can be null if you don't want user to be able to edit it in debugger)
 		[](Extension* const ext, std::tstring& newText) {

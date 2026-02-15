@@ -125,7 +125,7 @@ namespace DarkEdif {
 			}
 			const bool isInt;
 			int cachedInt = -1;
-			const std::tstring intPrefix;
+			const std::tstring prefix;
 			std::tstring cachedText;
 
 			std::uint64_t refreshMS;
@@ -137,27 +137,37 @@ namespace DarkEdif {
 			void (*textReadFromExt)(Extension *const ext, std::tstring &writeTo) = nullptr;
 			bool (*textStoreDataToExt)(Extension *const ext, std::tstring &newValue) = nullptr;
 
-			DebugItem(const std::tstring_view intPrefix, const int initialInt,
+			// Ctors are inline as they are only used by one func
+			inline DebugItem(const std::tstring_view prefix, const int initialInt,
 				decltype(intReadFromExt) reader, decltype(intStoreDataToExt) editor,
 				std::size_t refreshMS, const char *userSuppliedName) :
-				isInt(true), intPrefix(intPrefix),
+				isInt(true), prefix(prefix),
 				cachedInt(initialInt), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
 				intReadFromExt(reader), intStoreDataToExt(editor)
 			{
 				cachedText.reserve(DB_BUFFERSIZE);
-				cachedText = this->intPrefix + std::to_tstring(initialInt);
+				cachedText = this->prefix + std::to_tstring(initialInt);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
 			}
-			DebugItem(const TCHAR * initialText, decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
+			inline DebugItem(const std::tstring_view prefix, const TCHAR * initialText,
+				decltype(textReadFromExt) reader, decltype(textStoreDataToExt) editor,
 				std::size_t refreshMS, const char *userSuppliedName) :
-				isInt(false), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
+				isInt(false), prefix(prefix), refreshMS(refreshMS), userSuppliedName(userSuppliedName),
 				textReadFromExt(reader), textStoreDataToExt(editor)
 			{
-				cachedText.reserve(DB_BUFFERSIZE);
 				nextRefreshTime = refreshMS ? GetTickCount64() + refreshMS : -1;
+				cachedText = prefix;
 				if (initialText && initialText[0])
-					cachedText = initialText;
+					ClipText(*this, initialText, false);
+				cachedText.reserve(prefix.size() + DB_BUFFERSIZE);
 			}
+		public:
+			// Explicitly not copiable
+			DebugItem(DebugItem&) = delete;
+			DebugItem(const DebugItem&) = delete;
+			// Explicitly moveable - moves are done by std::vector adding
+			DebugItem(DebugItem&&) = default;
+			//DebugItem(const DebugItem&&) = delete;
 		};
 
 	protected:
@@ -171,12 +181,15 @@ namespace DarkEdif {
 		std::uint16_t * GetDebugTree();
 		// For internal use, not ext devs
 		void GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID);
+		// Clips text and inserts ellipsis, for internal use
+		static void ClipText(DebugItem& di, std::tstring newText, bool fromUserInput = true);
 #endif // EditorBuild
 
 	public:
 
 		/** Adds textual property to Fusion debugger display.
-		 * @param initialText		 Initial text of this item. If NULL, reader will be called.
+		 * @param prefix			 The text to prefix the int value with; for example, _T("Value: "sv)
+		 * @param initialText		 Initial text of this item. If NULL, reader func will be called.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
 		 *							 Null if you want it uneditable. Return true if edit was accepted by your ext.
@@ -185,6 +198,7 @@ namespace DarkEdif {
 		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if your code will not manually edit.
 		*/
 		void AddItemToDebugger(
+			const std::tstring_view prefix,
 			const TCHAR * initialText,
 			void (*getLatestFromExt)(Extension *const ext, std::tstring &writeTo),
 			bool (*saveUserInputToExt)(Extension *const ext, std::tstring &newValue),
@@ -193,7 +207,7 @@ namespace DarkEdif {
 		);
 
 		/** Adds integer property to Fusion debugger display.
-		 * @param intPrefix			 The text to prefix the int value with in debugger; for example, _T("Value: "sv)
+		 * @param prefix			 The text to prefix the int value with; for example, _T("Value: "sv)
 		 * @param initialInt		 The initial value of this item.
 		 * @param getLatestFromExt	 Pointer to function to read the current text from your code. Null if it never changes.
 		 * @param saveUserInputToExt Pointer to function to run if user submits a new value via Fusion debugger.
@@ -203,7 +217,7 @@ namespace DarkEdif {
 		 * @param userSuppliedName	 The property name, case-sensitive. Null is allowed if property is not removable.
 		*/
 		void AddItemToDebugger(
-			const std::tstring_view intPrefix,
+			const std::tstring_view prefix,
 			const int initialInt,
 			int (*getLatestFromExt)(Extension *const ext),
 			bool (*saveUserInputToExt)(Extension *const ext, int newValue),

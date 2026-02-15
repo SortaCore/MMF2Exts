@@ -6464,7 +6464,7 @@ namespace DarkEdif
 
 	struct FusionDebuggerAdmin { };
 	void FusionDebugger::AddItemToDebugger(
-		const TCHAR *,
+		const std::tstring_view, const TCHAR *,
 		void (*)(Extension *const, std::tstring &),
 		bool (*)(Extension *const, std::tstring &),
 		std::size_t, const char *
@@ -6502,6 +6502,11 @@ namespace DarkEdif
 		DieIfCallerIsNotMainThread("FusionDebugger");
 		return debugItemIDs.data();
 	}
+#ifndef _UNICODE
+	static constexpr std::tstring_view ellipse("..."sv);
+#else
+	static constexpr std::tstring_view ellipse(L"…"sv);
+#endif
 	void FusionDebugger::StartEditForItemID(int debugItemID)
 	{
 		DieIfCallerIsNotMainThread("FusionDebugger");
@@ -6510,6 +6515,13 @@ namespace DarkEdif
 		auto &di = debugItems[debugItemID];
 
 		EditDebugInfo edi = {};
+#ifndef _UNICODE
+		// Last build of Fusion 2.0 Unicode (258.2) reads garbage if you are ANSI ext and pass null for Title
+		// Being a Unicode ext, or using Fusion 2.0 ANSI or CF2.5 works fine
+		if (!DarkEdif::IsFusion25 && mvIsUnicodeVersion(Edif::SDK->mV))
+			edi.Title = di.isInt ? "Please enter a new number" : "Please enter a new text";
+#endif
+
 		if (di.isInt)
 		{
 			if (!di.intStoreDataToExt)
@@ -6518,15 +6530,15 @@ namespace DarkEdif
 			edi.value = di.cachedInt;
 			if (ext->Runtime.EditInteger(&edi) == IDOK)
 			{
-				const int oldInteger = di.cachedInt;
-				di.cachedInt = edi.value;
-
-				if (!di.intStoreDataToExt(ext, edi.value))
+				// If edit accepted
+				if (di.intStoreDataToExt(ext, edi.value))
 				{
-					di.cachedInt = oldInteger;
-					di.nextRefreshTime = GetTickCount64();
+					di.cachedText = di.prefix + std::to_tstring(di.cachedInt);
+					di.cachedInt = edi.value;
 				}
-				di.cachedText = di.intPrefix + std::to_tstring(di.cachedInt);
+
+				// Mark for redrawing the item in debugger, accepted or not
+				di.nextRefreshTime = GetTickCount64();
 			}
 			return;
 		}
@@ -6534,22 +6546,34 @@ namespace DarkEdif
 
 		if (!di.textStoreDataToExt)
 			throw std::runtime_error("Item not editable.");
-		edi.text = di.cachedText.data();
+
+		std::tstring buff(di.cachedText, di.prefix.size());
+		buff.resize(DB_BUFFERSIZE);
+		edi.text = buff.data();
 		edi.lText = DB_BUFFERSIZE - 1;
-		const std::tstring oldText = di.cachedText;
-		di.cachedText.resize(DB_BUFFERSIZE);
 		if (ext->Runtime.EditText(&edi) == IDOK)
 		{
-			if (!di.textStoreDataToExt(ext, di.cachedText))
-			{
-				di.cachedText = oldText;
-				di.nextRefreshTime = GetTickCount64();
-			}
-			if (di.cachedText.size() >= DB_BUFFERSIZE)
-				di.cachedText.resize(DB_BUFFERSIZE - 1);
+			// If user input is too long, we pass as-is, and trim it after ext sees full length
+			// But if user input was short enough, but ext made it too long, we get mad at ext dev
+			const bool userInputWasTooLong = buff.size() + di.prefix.size() >= DB_EDITABLE;
+			// Edit accepted
+			if (di.textStoreDataToExt(ext, buff))
+				ClipText(di, buff, userInputWasTooLong);
+			// Mark for redrawing the item in debugger, accepted or not
+			di.nextRefreshTime = GetTickCount64();
 		}
-		else
-			di.cachedText.resize(oldText.size());
+	}
+	void FusionDebugger::ClipText(DebugItem &di, std::tstring newText, bool fromUserInput)
+	{
+		// Fusion mandates a max text size that can be passed to debugger
+		if (di.prefix.size() + newText.size() > DB_BUFFERSIZE - 1)
+		{
+			// If ext dev wrote too long text, not the Fusion user, then get upset
+			if (!fromUserInput)
+				LOGF(_T("Text passed to Fusion debugger item is too long."));
+			newText.replace(DB_BUFFERSIZE - 1 - ellipse.size() - di.prefix.size(), std::tstring::npos, ellipse);
+		}
+		di.cachedText.replace(di.prefix.size(), std::tstring::npos, newText);
 	}
 	void FusionDebugger::GetDebugItemFromCacheOrExt(TCHAR *writeTo, int debugItemID)
 	{
@@ -6565,20 +6589,13 @@ namespace DarkEdif
 			if (di.isInt)
 			{
 				di.cachedInt = di.intReadFromExt(ext);
-				di.cachedText = di.intPrefix + std::to_tstring(di.cachedInt);
+				di.cachedText = di.prefix + std::to_tstring(di.cachedInt);
 			}
 			else
-				di.textReadFromExt(ext, di.cachedText);
-
-			if (di.cachedText.size() >= DB_BUFFERSIZE)
 			{
-#ifndef _UNICODE
-				const std::tstring ellipse("...");
-#else
-				const std::tstring ellipse(L"…");
-#endif
-				di.cachedText.resize(DB_BUFFERSIZE - 1 - ellipse.size());
-				di.cachedText += ellipse;
+				std::tstring buff(di.cachedText, di.prefix.size());
+				di.textReadFromExt(ext, buff);
+				ClipText(di, buff);
 			}
 			if (di.refreshMS && di.refreshMS != SIZE_MAX)
 				di.nextRefreshTime = GetTickCount64() + di.refreshMS;
@@ -6587,6 +6604,8 @@ namespace DarkEdif
 	}
 
 	void FusionDebugger::AddItemToDebugger(
+		// Text prefix for text - will not change, can be blank
+		const std::tstring_view prefix,
 		// Initial text of item - if NULL, reader will be called
 		const TCHAR * initialText,
 		// Supply NULL if it will not ever change.
@@ -6605,21 +6624,29 @@ namespace DarkEdif
 			throw std::runtime_error("Too many items added to Fusion debugger.");
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem& d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
 			throw std::runtime_error("name already in use. Must be unique");
+		if (prefix.size() > 40) // Prefix isn't the value, shouldn't be long
+			throw std::runtime_error("Text prefix too long");
 
-		debugItems.push_back(DebugItem(initialText, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
+		DebugItem& newItem = debugItems.emplace_back(DebugItem(prefix, initialText, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 
 		// Load initial text via reader
 		if ((!initialText || !*initialText) && getLatestFromExt)
-			getLatestFromExt(ext, debugItems.back().cachedText);
+		{
+			std::tstring buff(newItem.cachedText, newItem.prefix.size());
+			getLatestFromExt(ext, buff);
+			newItem.cachedText = newItem.prefix + buff;
+			ClipText(newItem, buff, false);
+		}
 
 		// End it with DB_END, and second-to-last item is the new debug item ID
 		debugItemIDs.push_back(DB_END);
+		// If the item is editable, set the DB_EDITABLE flag
 		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
 	}
 
 	void FusionDebugger::AddItemToDebugger(
-		// Text prefix for int - will not change
-		const std::tstring_view intPrefix,
+		// Text prefix for int - will not change. This is the "Something describing: " part of text.
+		const std::tstring_view prefix,
 		// Initial int value
 		const int initialInt,
 		// Supply NULL if it will not ever change.
@@ -6633,18 +6660,19 @@ namespace DarkEdif
 		const char *userSuppliedName
 	) {
 		DieIfCallerIsNotMainThread("FusionDebugger");
-		if (intPrefix.empty())
+		if (prefix.empty())
 			throw std::runtime_error("Int prefix cannot be blank");
-		if (intPrefix.size() > DB_BUFFERSIZE - 12) // 11 is length of min int32, 1 is for null
+		if (prefix.size() > DB_BUFFERSIZE - 12) // 11 is length of min int32, 1 is for null
 			throw std::runtime_error("Int prefix too long");
 		if (debugItems.size() == 127)
 			throw std::runtime_error("too many items added to Fusion debugger");
 		if (userSuppliedName && std::any_of(debugItems.cbegin(), debugItems.cend(), [=](const DebugItem &d) { return d.DoesUserSuppliedNameMatch(userSuppliedName); }))
 			throw std::runtime_error("name already in use. Must be unique");
 
-		debugItems.push_back(DebugItem(intPrefix, initialInt, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
+		debugItems.push_back(DebugItem(prefix, initialInt, getLatestFromExt, saveUserInputToExt, refreshMS, userSuppliedName));
 		// End it with DB_END, and second-to-last item is the new debug item ID
 		debugItemIDs.push_back(DB_END);
+		// If the item is editable, set the DB_EDITABLE flag
 		debugItemIDs[debugItemIDs.size() - 2] = (((std::uint16_t)debugItems.size()) - 1) | (saveUserInputToExt != NULL ? DB_EDITABLE : 0);
 	}
 
@@ -6658,6 +6686,7 @@ namespace DarkEdif
 			if (!it->isInt)
 				throw std::runtime_error("Fusion debugger item is text, not int type");
 			it->cachedInt = newValue;
+			it->cachedText.replace(it->prefix.size(), std::tstring::npos, std::to_tstring(newValue));
 		}
 	}
 
@@ -6673,7 +6702,7 @@ namespace DarkEdif
 		{
 			if (it->isInt)
 				throw std::runtime_error("Fusion debugger item is int, not text type");
-			it->cachedText = newText;
+			ClipText(*it, std::tstring(newText), false);
 		}
 	}
 
