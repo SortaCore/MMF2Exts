@@ -15,6 +15,12 @@ You should install either the Express edition, or get the free **Community** edi
 * VS 2026 - Android, Windows Vista+ support, iOS\*, Mac\* - can be downloaded here: [VS 2026 Express], [VS 2026 Community]  
   \*= _Microsoft will deprecate remote building for iOS/Mac in VS 2026. If this means removal, this will no longer be usable for DarkEdif._
 
+To build iOS/Mac, you need a Mac, running Xcode 10.4.3, or later. This runs on Mac OS 12 (Monterey).  
+Your Mac should be a model released in 2014.  
+Earlier Xcode 10.2+ (Mac 2012 Q3+) and later Xcode can be used, with some compatibility loss.
+
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
 ### Contributing ###
 It is encouraged to contribute to this repository by PRs. 🙂
 
@@ -56,7 +62,7 @@ You will also need a Windows SDK:
 * Windows 11 SDK: VS 2022-2026, install from Visual Studio Installer's Components tab.
 
 
-### Android targeting ###
+### Android targeting
 To target Android, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ Android development tools". That should be all you need.
 
 You'll need Visual Studio 2019 or 2022. VS 2017 can't use C++17 standard on Android.
@@ -65,7 +71,9 @@ For more details on Android, such as pitfalls, features and setting up debugging
 
 You don't need the Fusion Android exporter to build Android extensions, but you'll be unable to test your extensions without it, and as any developer can tell you, there's no way you'll write code that works as expected first try.
 
-### iOS/Mac targeting ####
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
+### iOS/Mac targeting
 To target iOS and/or Mac, in the Visual Studio Installer, under Individual Components tab, you need to enable "C++ iOS development tools".  
 You will also need to download the free [PuTTY tools][Link to PuTTY], and set up how to use it in FusionSDKConfig.ini; the FusionSDKConfig.Template.ini file should describe how to do it.
 
@@ -81,7 +89,9 @@ Likewise, DarkEdif will automatically package your built Mac files into a DAT fi
 
 For more details on iOS/Mac, such as pitfalls, features and setting up debugging, make sure you read the iOS section of the [MultiTarget guide] under DarkEdif documentation.
 
-### Using a single project ###
+For more details on setting up on each platform, refer to the [DarkEdif help file].
+
+### Using a single project
 For exporting a single project, you will need to download the project folder, the Lib, and the Inc folder.
 For example, DarkEdif Template can be extracted by downloading DarkEdif\DarkEdif Template, DarkEdif\Inc, and DarkEdif\Lib.
 
@@ -161,4 +171,5 @@ If you don't want to provide Fusion 2.0 ANSI compatiblity, you can remove the no
 [Edif Clickteam forum thread]: https://community.clickteam.com/threads/61692-Edif-Extension-Development-Is-Fun
 [Windows SDK archive]: https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/
 [Link to PuTTY]: https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+[DarkEdif help file]: https://github.com/SortaCore/MMF2Exts/raw/refs/heads/master/DarkEdif/-%20MFAs%20and%20documentation/DarkEdif%20SDK/DarkEdif%20Help.chm
 
